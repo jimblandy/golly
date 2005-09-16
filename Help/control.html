@@ -1,0 +1,155 @@
+<html>
+<title>Golly Help: Control Menu</title>
+<body bgcolor="#FFFFCE">
+<font size=-1>
+
+<p>
+NOTE: [key] next to a menu item indicates a keyboard shortcut.
+
+<p>
+<font size=+1><b>Go</b></font>&nbsp;&nbsp;[g]
+
+<p>
+Starts generating the current pattern.
+
+<p>
+<font size=+1><b>Stop</b></font>&nbsp;&nbsp;[. or escape]
+
+<p>
+Stops generating.
+
+<p>
+<font size=+1><b>Next</b></font>&nbsp;&nbsp;[space]
+
+<p>
+Advances to the next generation.
+
+<p>
+<font size=+1><b>Next Step</b></font>&nbsp;&nbsp;[tab]
+
+<p>
+Advances to the next step.  The current step size is displayed in the status bar
+and can be changed by the Faster/Slower items (see below).
+
+<p>
+<font size=+1><b>Reset</b></font>
+
+<p>
+Restores the starting pattern, resetting the generation count to 0 and the
+step size to 1 generation.
+
+<p>
+<font size=+1><b>Faster</b></font>&nbsp;&nbsp;[+ or =]
+
+<p>
+Increases the speed by displaying fewer generations.
+If Use Hashing is not ticked then the step size increases by a factor of 10.
+If Use Hashing is ticked then the step size increases by a factor of 8.
+(The hashing algorithm is most efficient when step sizes are powers of 2
+and 8 is the power of 2 closest to 10.)
+
+<p>
+<font size=+1><b>Slower</b></font>&nbsp;&nbsp;[- or _]
+
+<p>
+Decreases the speed by displaying more generations.
+If Use Hashing is not ticked then the step size decreases by a factor of 10.
+If Use Hashing is ticked then the step size decreases by a factor of 8.
+
+<p>
+If the step size is 1 (ie. 10^0 or 8^0) when you select this item then
+a delay of 0.25 seconds occurs between each generation.
+Further slowing will double the delay until a maximum value of 2 seconds
+is reached.
+
+<p>
+<font size=+1><b>Auto Fit</b></font>&nbsp;&nbsp;[t]
+
+<p>
+If ticked then Golly will automatically fit a generating pattern inside
+the view if any part of the pattern moves out of view.
+This option is only used when doing many generations via Go or Next Step
+(that's why it's in the Control menu rather than the View menu).
+
+<p>
+Note that if you are generating a pattern and decide to change scale or
+do any sort of scrolling then the Auto Fit option is automatically
+turned off (the assumption being that you now want manual control
+over the scale and/or location).
+
+<p>
+TIP: If you find the Auto Fit option too confusing then leave it off
+and hit "f" to manually fit the pattern inside the view whenever you like.
+
+<a name="hashing"></a>
+<p>
+<font size=+1><b>Use Hashing</b></font>
+
+<p>
+If ticked then Golly will use a hashing algorithm to generate patterns.
+The algorithm performs brilliantly on patterns that have a lot of regularity
+in time or space.  Conversely, it can perform very poorly on chaotic patterns.
+Hashing mode may initially appear to be slow, but as the hash table fills
+up with knowledge about the pattern, it will run faster and faster,
+so be patient.
+
+<p>
+Note that the hashing option cannot be changed while generating a pattern,
+and changing it will reset the step size to 1 generation.
+Hashing is automatically turned on after loading a macrocell pattern,
+and automatically turned off if a loaded rule contains B0 but not S8.
+
+<p>
+The status bar background is pale blue when hashing is turned on
+and pale yellow when it's off.
+You can also use the tool bar's "H" button to toggle hashing.
+
+<p>
+<font size=+1><b>Hyperspeed</b></font>
+
+<p>
+If ticked, and Use Hashing is ticked, then Golly will automatically
+increase the step size (by a factor of 8) at regular intervals (every 64 steps).
+Hyperspeed mode is a convenient way to run a complex pattern as far as possible.
+(For very chaotic patterns, not using hashing may actually run it further.)
+For highly regular patterns, hyperspeed mode quickly "runs away", generating
+exponentially fast.
+
+<p>
+<font size=+1><b>Max Hash Memory...</b></font>
+
+<p>
+Brings up a dialog to set the maximum amount of memory used when generating
+patterns with the hashing option ticked (see above).
+The initial setting is 300MB.
+
+<p>
+The higher you set the memory limit, the larger
+patterns you can run and the farther and faster you can run them.
+However, setting this limit high also increases the amount of time
+required to change the step size (both manually and in hyperspeed mode)
+and increases the length of the garbage collection pauses.  Nonetheless,
+it is generally best to set this as high as possible -- typically
+80-90% of the amount of physical memory in your computer.  Setting
+this number high enough often makes more than a difference of 1000
+in performance.  How high is high enough depends greatly on the
+pattern and the step size, however, in unpredictable ways.
+
+<p>
+<font size=+1><b>Rule...</b></font>
+
+<p>
+Brings up a dialog to change the current rule (which is displayed
+inside square brackets in the main window's title bar).
+Rules can be entered using standard "B0..8/S0..8" notation.
+Case is not significant and the S part can come before the B part.
+For example, Conway's Life rule can be entered as B3/S23 or s23/b3.
+If a given rule is not valid then the original rule will be restored.
+
+<p>
+[The dialog will eventually have a pop-up menu allowing you to select
+from a list of named rules: Life, HighLife, Diamoeba, etc!!!]
+
+</font>
+</body>
+</html>

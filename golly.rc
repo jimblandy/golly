@@ -1,0 +1,23 @@
+// the first icon file is used by Windows Explorer
+aaaaaaaa ICON "appicon.ico"
+// these icons are for the frame
+appicon0 ICON "appicon32.ico"
+appicon1 ICON "appicon16.ico"
+
+#include "wx/msw/wx.rc"
+
+new     BITMAP "bitmaps/new.bmp"
+open    BITMAP "bitmaps/open.bmp"
+save    BITMAP "bitmaps/save.bmp"
+play    BITMAP "bitmaps/play.bmp"
+stop    BITMAP "bitmaps/stop.bmp"
+hash    BITMAP "bitmaps/hash.bmp"
+info    BITMAP "bitmaps/info.bmp"
+draw    BITMAP "bitmaps/draw.bmp"
+select  BITMAP "bitmaps/select.bmp"
+move    BITMAP "bitmaps/move.bmp"
+zoomin  BITMAP "bitmaps/zoomin.bmp"
+zoomout BITMAP "bitmaps/zoomout.bmp"
+
+zoomin_curs  BITMAP "bitmaps/zoomin_curs.bmp"
+zoomout_curs BITMAP "bitmaps/zoomout_curs.bmp"

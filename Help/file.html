@@ -1,0 +1,51 @@
+<html>
+<title>Golly Help: File Menu</title>
+<body bgcolor="#FFFFCE">
+<font size=-1>
+
+<p>
+<font size=+1><b>New Pattern</b></font>
+
+<p>
+Creates a new, empty universe and switches to the maximum scale (1:16)
+ready for editing cells.
+
+<p>
+<font size=+1><b>Open Pattern...</b></font>
+
+<p>
+Brings up the standard file browser so you can select a pattern file.
+Golly can read all the common pattern formats:
+RLE, PC Life 1.05/1.06, and text patterns like "ooo...ooo".
+It can also read patterns in a "macrocell" format which allows huge,
+highly repetitive patterns to be stored in a very compact way.
+Note that Golly automatically turns on the
+<a href="control.html#hashing">Use Hashing</a>
+option when it reads a macrocell file.
+Such files usually have a .mc extension.
+
+<p>
+All the above formats are text based and can have DOS/Mac/Unix line endings,
+or they can be compressed in a .gz file.
+[The latter feature is not yet available in the Windows version.]
+
+<p>
+<font size=+1><b>Open Clipboard</b></font>
+
+<p>
+Opens a pattern stored in the clipboard.
+The <a href="refs.html">References</a> section has links to
+a number of good sources for clipboard patterns.
+[There is currently no global clipboard support in the X11 version; you can
+only open a pattern that has been saved by the Edit menu's Cut/Copy commands.]
+
+<p>
+<font size=+1><b>Save Pattern...</b></font>
+
+<p>
+Brings up the standard file saving dialog so you can save the current pattern.
+[Only RLE format is implemented at the moment!!!]
+
+</font>
+</body>
+</html>

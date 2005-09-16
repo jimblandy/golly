@@ -1,0 +1,52 @@
+# Makefile for X11 version of Golly using wxWidgets.
+# It assumes you've built and installed wxWidgets with commands like these:
+#
+# cd <wx-install-dir>
+# ./configure --with-x11 --disable-shared
+# make
+# sudo make install
+# ldconfig (if using Linux)
+
+VERSION = 0.3
+RELEASENAME = golly-$(VERSION)
+SHAREDFILES = Help README LICENSE
+SRCFILES = INSTALL TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
+           *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
+BINFILES = golly bgolly
+
+CXXFLAGS = `wx-config --cxxflags` -O5 -Wall -DZLIB -DVERSION=$(VERSION)
+ifeq ($(OSTYPE),darwin)
+   LDFLAGS = `wx-config --libs` -lz
+else
+   LDFLAGS = `wx-config --libs` -lz -static
+endif
+
+SRCH = bigint.h lifealgo.h hlifealgo.h qlifealgo.h liferender.h viewport.h \
+       readpattern.h writepattern.h liferules.h util.h lifepoll.h
+SRCC = bigint.cpp lifealgo.cpp hlifealgo.cpp hlifedraw.cpp qlifealgo.cpp qlifedraw.cpp \
+       liferender.cpp viewport.cpp readpattern.cpp writepattern.cpp liferules.cpp \
+       util.cpp lifepoll.cpp wxgolly.cpp
+OBJ  = bigint.o lifealgo.o hlifealgo.o hlifedraw.o qlifealgo.o qlifedraw.o liferender.o \
+       viewport.o readpattern.o writepattern.o liferules.o util.o lifepoll.o
+
+all: golly bgolly
+
+golly: $(OBJ) wxgolly.o
+	g++ $(CXXFLAGS) -o golly $(OBJ) wxgolly.o $(LDFLAGS)
+
+bgolly: $(OBJ) bgolly.o
+	g++ $(CXXFLAGS) -o bgolly $(OBJ) bgolly.o $(LDFLAGS)
+
+srcdist:
+	-rm -rf $(RELEASENAME)-src
+	mkdir $(RELEASENAME)-src
+	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
+	find $(RELEASENAME)-src -name CVS | xargs rm -rf
+	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
+
+bindist: all
+	-rm -rf $(RELEASENAME)-linux
+	mkdir $(RELEASENAME)-linux
+	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-linux
+	find $(RELEASENAME)-linux -name CVS | xargs rm -rf
+	tar -cf - ./$(RELEASENAME)-linux | gzip > $(RELEASENAME)-linux.tar.gz

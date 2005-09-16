@@ -1,0 +1,36 @@
+Welcome to Golly, a Game of Life simulator
+by Tomas Rokicki and Andrew Trevorrow.
+
+***** NOTE THAT THIS IS A BETA RELEASE *****
+
+Features:
+
+- Run bigger patterns, faster and further than ever before!
+- Unbounded universe (even larger than 2^32 on a side).
+- Fast, memory-efficient conventional algorithm.
+- Use hashing to see large patterns evolve at huge time scales.
+- Responsive even while generating or garbage collecting.
+- Reads RLE, Life 1.05/1.06, and macrocell formats.
+- Paste in patterns from the clipboard.
+- Fast loading of large patterns.
+- Unbounded zooming out for astronomical patterns.
+- Auto fit option keeps your pattern sized to the window.
+- Full screen option (no menu/status/tool/scroll bars).
+- Black on white or white on black.
+- HTML-based help system.
+- Free, open source and cross-platform (Linux, Windows, Mac).
+
+And this is just the beginning. :)
+
+The Golly application can be installed anywhere you like, but
+make sure you move the whole folder because the Help subfolder
+must be kept with the application.
+
+To run Golly, just click on the application icon or type golly
+on the command line.  See the Help menu for all the details.
+
+Please visit the Golly web site for the latest information:
+
+   http://golly.sourceforge.net/
+
+Now go forth and generate!

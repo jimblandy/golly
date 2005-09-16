@@ -1,0 +1,62 @@
+Changes in version 0.3 (released September 2005)
+
+AKT: Can now display comments in pattern files.
+AKT: Reduced edit/save limits to +/- 10^9 (see min_coord, max_coord).
+AKT: Fixed selection bug in Win app if main window was resized very small.
+AKT: Fixed bug on WinXP using shift key to toggle zoom in/out cursor.
+TGR: Implemented unzoom(x,y) and screenPosOf(bigx,bigy,algo).
+AKT: The help window's cursor now gets updated while generating.
+AKT: Added limited clipboard support to X11 app.
+AKT: Toggling hashing no longer resets the pattern or gen count.
+AKT: The Rule dialog restores the old rule if a given rule is invalid.
+AKT: Fixed help window location bug in X11 app.
+AKT: NewPattern and LoadPattern reset step to 1.
+AKT: Generating calls save starting pattern for later use by Reset.
+AKT: Show progress dialog for long Open/Save/Cut/Copy/Clear/Paste operations.
+AKT: Can now paste RLE/text patterns that are empty or have empty borders.
+AKT: Added writepattern.h/cpp and implemented saving as RLE.
+AKT: Removed scale arg from killrect call (no longer used).
+AKT: Made thumb-box scrolling more responsive in X11 app.
+AKT: Implemented Cut, Copy, Clear.
+AKT: Implemented Paste, Paste Mode, Paste Location, Paste to Selection.
+AKT: Added Open Clipboard item to File menu.
+AKT: Implemented findedges routine for use by Select All.
+AKT: Shift-clicking can be used to expand/shrink current selection.
+AKT: Implemented rectangular selections.
+AKT: Fixed Mac problem reading files with 8-bit chars in their name.
+AKT: Implemented scrolling via hand cursor.
+AKT: Moved Tom's hashing & hyperspeed tips into control.html.
+AKT: Shift key can be used to temporarily toggle zoom in/out cursor.
+AKT: Edit menu has Cursor Mode submenu (items correspond to tool bar buttons).
+AKT: Fixed directory problem if user dropped file onto Win app.
+AKT: Created first draft of new app icon (galaxy oscillator).
+AKT: Added new bitmap buttons to tool bar.
+AKT: Added simple cell editing.
+AKT: Improved Warning and Fatal dialogs in Mac app.
+AKT: Added animated galaxy.gif to about box.
+AKT: Fixed a few cursor problems.
+TGR: Implemented getcell routine.
+AKT: Fixed colored frame after dropping pattern file onto Mac app's main window.
+AKT: Fixed horizontal scroll bar problem in Mac app's help window.
+AKT: Updated all makefiles and help files to version 0.3.
+
+Changes in version 0.2 (released July 2005)
+
+TGR: Fixed stale popcount problem.
+TGR: Added VERSION to all makefiles for use in Golly's banner message.
+AKT: Text in the help window can be selected and copied to the clipboard.
+AKT: Fixed keyboard shortcuts in help window.
+AKT: Help window can be moved behind main window in Win/X11 apps.
+AKT: Golly comes to the front after dropping pattern file onto main window.
+AKT: Fixed menu and tool bar update problem in Mac/Win apps.
+AKT: Added support for B0 rules.
+TGR: Changed source headers to use gmail instead of Stanford.
+AKT: Changed help files to use Tom's gmail.com address.
+AKT: Fixed RLE rule problem (only occurred in Mac app).
+AKT: Raised text in status bar by 2 pixels on Win XP.
+AKT: Made about box a bit wider to avoid bad line break on Win.
+AKT: Avoid -static option if using makefile-x11 on Mac OS X.
+AKT: Added CHANGES file to SRCFILES list in all makefiles.
+AKT: Updated all makefiles and help files to version 0.2.
+
+Initial version 0.1 released July 2005

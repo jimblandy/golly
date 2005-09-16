@@ -1,0 +1,103 @@
+TODO:
+
+High priority:
+--------------
+
+T - Make readpattern handle gzip'ed files (only Windows left to do).
+
+T - Implement pattern saving.  Note that macrocell files will need
+    to store rule if non-Conway Life (and readmacrocell will have to
+    look for that rule info and call setrule).
+
+A - Create Patterns folder for distribution [Dave Greene is doing it].
+
+A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
+    and display suitable message in status bar.
+
+B - Finish 1D rule support.  Basically works except for qlife display being
+    upside down (so just alter rule0 table in qlifealgo::setrule?).
+    Prevent odd-numbered W rules (only feasible in toroidal universe).
+
+A - Polish .html files (eg. remove all "!!!" stuff).
+
+B - Add more info to INSTALL file:
+    - how to install wxWidgets, esp on Windows (point to wxWiki page)
+    - briefly describe each module
+    - list steps needed to add a new life algo (eg. toroidal universe)
+    - describe batch version
+
+B - Add a "built with wxWidgets" logo+link (see www.wxwidgets.org/develop2.htm)
+    to Golly's web site.
+
+For future versions:
+--------------------
+
+T - Improve batchmode.
+
+B - Requested by Nick Gotts: Need a way to see the exact number of generations,
+    population size, and mouse coordinates (and copy them to clipboard?).
+    Simplest soln might be to hit some special key like "?" and above info
+    would appear in a scrollable text dialog for viewing/copying.
+
+A - Split up wxgolly.cpp into smaller modules:
+    wxmain, wxstatus, wxfile, wxedit, wxcontrol, wxview, wxhelp, wxprefs, etc.
+
+A - Tidy up wx code (follow http://www.wxwidgets.org/standard.htm?).
+
+A - Add an "Open Recent" submenu in File menu to keep track of up to 50(?)
+    most recently loaded pattern files.  Just display full paths?
+    Use wxArrayString to store and manipulate the paths.
+
+A - Add a pop-up menu with named rules to rule dialog.
+
+A - Try to answer/resolve all "???" and "!!!" comments in source files.
+
+A - See if we can reduce app size.  If wx docs no help then ask wx-users.
+
+A - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
+    avoid wxToolBar and implement our own simple tool bar stuff.
+
+A - Need white crosshair cursor for Win app when white-on-black.
+    Or does Win support an XOR cursor mode?
+
+A - Check if wx can support vbr synchronization when buffering.
+
+- Add Gabriel's oscillation detection as an option (see LifeLab).
+
+- Support toroidal universes (see LifeLab).
+
+- Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
+  NB. Means creating non-XBM bitmaps (ie. no bit reversal).
+
+- Add more sophisticated editing (rotate selection, etc).
+
+- Implement Undo (even just undoing the last draw would be very useful).
+
+- Allow non-rectangular (and disjoint?) selections.
+
+- Create nicer tool bitmaps; ie. make them more like buttons.
+  PROBLEM: wxMac scales 22x22 buttons down to 16x16!
+
+- Let user change spacing of dark grid lines.
+
+- Let user specify colors for live/dead cells.  Only slightly tricky
+  part is dynamically choosing nice colors for the grid lines.
+
+- Implement a history bar for hlife.
+
+- Add ability to let users assign their own keyboard shortcuts.
+  See KeyBinder code at wxcode.sourceforge.net.
+
+- If other X11 apps like xlife or fontforge allow clipboard support
+  then examine their source code and use it.
+
+- Build the Help menu items dynamically by looking at the .html files
+  inside the Help folder.  Or maybe read a special Help/menu.data file?
+
+- Allow app to be automated by some sort of scripting language.
+  Devise our own cross-platform language or use something else.
+  See wxScript code at wxcode.sourceforge.net.
+
+- Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
+
+- Add isolated glider deletion as an option -- why bother???
