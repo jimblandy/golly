@@ -59,7 +59,8 @@ unsigned int buffcount;    // buffers read so far (for showing in progress dialo
 bool progaborted;          // user cancelled progress dialog?
 
 // use buffered getchar instead of slow fgetc
-int getchar() {
+// don't override the "getchar" name which is likely to be a macro
+int mgetchar() {
    if (buffpos == BUFFSIZE) {
 #ifdef ZLIB
       bytesread = gzread(zinstream, filebuff, BUFFSIZE);
@@ -80,7 +81,7 @@ int getchar() {
 char *getline(char *line, int maxlinelen) {
    int i = 0;
    while (i < maxlinelen) {
-      int ch = getchar();
+      int ch = mgetchar();
       if (progaborted) return NULL;
       switch (ch) {
          case CR:
