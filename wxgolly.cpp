@@ -247,6 +247,21 @@ private:
    DECLARE_EVENT_TABLE()
 };
 
+// define a child window for viewing comments
+class TextView : public wxTextCtrl {
+public:
+   TextView(wxWindow *parent, wxWindowID id, const wxString& value,
+            const wxPoint& pos, const wxSize& size, long style)
+      : wxTextCtrl(parent, id, value, pos, size, style) { }
+
+private:
+   void OnChar(wxKeyEvent& event);
+   void OnSetFocus(wxFocusEvent& event);
+
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
+};
+
 // -----------------------------------------------------------------------------
 
 // IDs for controls and menu commands (other than standard wxID_* commands)
@@ -340,8 +355,8 @@ enum {
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char *BANNER1 = "This is Golly version " STRINGIFY(VERSION) ".  Copyright 2005 Tomas Rokicki and Andrew Trevorrow.";
-const char *BANNER2 = "This is Golly version " STRINGIFY(VERSION) ".  Copyright 2005 Andrew Trevorrow and Tomas Rokicki.";
+const char *BANNER = "This is Golly version " STRINGIFY(VERSION)
+                     ".  Copyright 2005 The Golly Gang.";
 
 lifealgo *curralgo = NULL;    // current life algorithm (qlife or hlife)
 viewport currview(10, 10);    // current viewport for displaying patterns
@@ -4107,6 +4122,23 @@ BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
    EVT_CLOSE      (              InfoFrame::OnClose)
 END_EVENT_TABLE()
 
+BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
+   EVT_CHAR       (TextView::OnChar)
+   EVT_SET_FOCUS  (TextView::OnSetFocus)
+END_EVENT_TABLE()
+
+void TextView::OnChar(wxKeyEvent& event) {
+   // let return/enter/escape key close info window
+   //!!!wxBell();
+   event.Skip();
+}
+
+void TextView::OnSetFocus(wxFocusEvent& WXUNUSED(event)) {
+   //!!!wxBell();
+   // wxMac prob: remove focus ring around read-only textctrl???!!!
+   infoptr->SetFocus();
+}
+
 // create the pattern info window
 InfoFrame::InfoFrame(char *comments)
    : wxFrame(NULL, wxID_ANY, _("Pattern Info"),
@@ -4117,12 +4149,10 @@ InfoFrame::InfoFrame(char *comments)
       SetBackgroundColour(*wxLIGHT_GREY);
    #endif
 
-   wxTextCtrl* textctrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString,
+   TextView* textctrl = new TextView(this, wxID_ANY, wxEmptyString,
                                  wxDefaultPosition, wxDefaultSize,
                                  wxTE_RICH | // needed for font changing on Windows
                                  wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
-   // wxMac bug: fix text position prob due to horiz scroll bar!!!
-   // wxMac bug: cursor doesn't change to arrow over vert scroll bar!!!
 
    // use a fixed-width font
    wxTextAttr textattr = wxTextAttr(wxNullColour, wxNullColour,
@@ -4131,18 +4161,14 @@ InfoFrame::InfoFrame(char *comments)
                                  #else
                                     wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
                                  #endif
-   if (!textctrl->SetDefaultStyle(textattr)) {
-      Warning("SetDefaultStyle failed!");
-   }
+   textctrl->SetDefaultStyle(textattr);   // doesn't change font on X11!!!
    textctrl->WriteText(comments[0] == 0 ? "No comments found." : comments);
    textctrl->ShowPosition(0);
+   textctrl->SetInsertionPoint(0);        // needed to change pos on X11
 
    wxButton *closebutt = new wxButton(this, wxID_CLOSE, "Close");
    closebutt->SetDefault();
    
-   // can we remove focus ring around textctrl on Mac (so we can hit return)???!!!
-   closebutt->SetFocus();
-
    wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
    vbox->Add(textctrl, 1, wxLEFT | wxRIGHT | wxTOP | wxEXPAND | wxALIGN_TOP, 10);
    vbox->Add(closebutt, 0, wxALL | wxALIGN_CENTER, 10);
@@ -4153,19 +4179,6 @@ InfoFrame::InfoFrame(char *comments)
    #ifdef __WXMAC__
       // expand sizer now to avoid seeing small htmlwin and buttons in top left corner
       vbox->SetDimension(0, 0, infowd, infoht);
-   #endif
-
-   Show(true);
-
-   #ifdef __WXX11__
-      // avoid wxX11 bug (probably caused by earlier SetMinSize call);
-      // info window needs to be moved to infox,infoy
-      Lower();
-      // don't call Yield -- doesn't work if we're generating
-      while (wxGetApp().Pending()) wxGetApp().Dispatch();
-      Move(infox, infoy);
-      // note that Move clobbers effect of SetMinSize!!!
-      Raise();
    #endif
 }
 
@@ -4191,6 +4204,9 @@ void ShowPatternInfo() {
    if (infoptr) {
       // info window exists so just bring it to front
       infoptr->Raise();
+      #ifdef __WXX11__
+         infoptr->SetFocus();    // activate window
+      #endif
       return;
    }
 
@@ -4212,6 +4228,18 @@ void ShowPatternInfo() {
       infoptr = new InfoFrame(commptr);
       if (infoptr == NULL) {
          Warning("Could not create info window!");
+      } else {
+         infoptr->Show(true);
+         #ifdef __WXX11__
+            // avoid wxX11 bug (probably caused by earlier SetMinSize call);
+            // info window needs to be moved to infox,infoy
+            infoptr->Lower();
+            // don't call Yield -- doesn't work if we're generating
+            while (wxGetApp().Pending()) wxGetApp().Dispatch();
+            infoptr->Move(infox, infoy);
+            // note that Move clobbers effect of SetMinSize!!!
+            infoptr->Raise();
+         #endif
       }
    }
    
@@ -5680,6 +5708,9 @@ bool MyApp::OnInit()
    #ifdef __WXMAC__
       // prevent rectangle animation when windows open/close
       wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
+      // prevent position problem in wxTextCtrl with wxTE_DONTWRAP style
+      // (but doesn't fix problem with I-beam cursor over scroll bars)
+      wxSystemOptions::SetOption(wxMAC_TEXTCONTROL_USE_MLTE, 1);
    #endif
 
    // let non-wx modules call Fatal, Warning, etc
@@ -5711,10 +5742,7 @@ bool MyApp::OnInit()
    InitSelection();
    InitMagnifyTable();
    SetViewSize();
-   if (wxGetUTCTime() & 1)
-      SetMessage(BANNER1);
-   else
-      SetMessage(BANNER2);
+   SetMessage(BANNER);
    
    // load pattern if file supplied on Win/Unix command line
    if (argc > 1) {
