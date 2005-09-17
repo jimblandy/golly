@@ -5,8 +5,8 @@
 wxdir = /HD/wxWidgets/wxAll-2.6.1
 builddir = $(wxdir)/build-osx
 APP_NAME = Golly
-APP_VERSION = 0.3
-COPYRIGHT = 2005 Tomas Rokicki and Andrew Trevorrow
+APP_VERSION = 0.9
+COPYRIGHT = 2005 The Golly Gang
 BUNDLE_ID = net.sourceforge.golly
 ICON_FILE = app.icns
 

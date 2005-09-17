@@ -1,4 +1,4 @@
-Changes in version 0.3 (released September 2005)
+Changes in version 0.9 (released September 2005)
 
 AKT: Can now display comments in pattern files.
 AKT: Reduced edit/save limits to +/- 10^9 (see min_coord, max_coord).
@@ -38,7 +38,7 @@ AKT: Fixed a few cursor problems.
 TGR: Implemented getcell routine.
 AKT: Fixed colored frame after dropping pattern file onto Mac app's main window.
 AKT: Fixed horizontal scroll bar problem in Mac app's help window.
-AKT: Updated all makefiles and help files to version 0.3.
+AKT: Updated all makefiles and help files to version 0.9.
 
 Changes in version 0.2 (released July 2005)
 

@@ -1,4 +1,4 @@
-# Makefile for Windows version of Golly using wxWidgets 2.6.0.
+# Makefile for Windows version of Golly using wxWidgets.
 # To compile the wxWidgets libraries on Windows I used:
 # 
 #    cd \wxWidgets\build\msw
@@ -16,7 +16,7 @@
 WXDIR = \wxWidgets-2.6.1
 
 ### Variables: ###
-VERSION = 0.3
+VERSION = 0.9
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help

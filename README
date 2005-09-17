@@ -1,5 +1,4 @@
-Welcome to Golly, a Game of Life simulator
-by Tomas Rokicki and Andrew Trevorrow.
+Welcome to Golly, a Game of Life simulator.
 
 ***** NOTE THAT THIS IS A BETA RELEASE *****
 
@@ -16,7 +15,6 @@ Features:
 - Unbounded zooming out for astronomical patterns.
 - Auto fit option keeps your pattern sized to the window.
 - Full screen option (no menu/status/tool/scroll bars).
-- Black on white or white on black.
 - HTML-based help system.
 - Free, open source and cross-platform (Linux, Windows, Mac).
 
@@ -34,3 +32,6 @@ Please visit the Golly web site for the latest information:
    http://golly.sourceforge.net/
 
 Now go forth and generate!
+
+Tomas Rokicki <rokicki@gmail.com>
+Andrew Trevorrow <andrew@trevorrow.com>
