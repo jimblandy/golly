@@ -953,6 +953,19 @@ void EndProgress() {
    }
 }
 
+void SetFrameIcon(wxFrame *frame) {
+   // set frame icon
+   #ifdef __WXMSW__
+      // create a bundle with 32x32 and 16x16 icons
+      wxIconBundle icb(wxICON(appicon0));
+      icb.AddIcon(wxICON(appicon1));
+      frame->SetIcons(icb);
+   #else
+      // use appicon.xpm on other platforms (ignored on Mac)
+      frame->SetIcon(wxICON(appicon));
+   #endif
+}
+
 void DisplayMessage(const char *s);
 
 class wxlifeerrors : public lifeerrors {
@@ -4128,15 +4141,25 @@ BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
 END_EVENT_TABLE()
 
 void TextView::OnChar(wxKeyEvent& event) {
-   // let return/enter/escape key close info window
-   //!!!wxBell();
-   event.Skip();
+   int key = event.GetKeyCode();
+   if ( event.CmdDown() || event.AltDown() ) {
+      // let default handler see things like cmd-C 
+      event.Skip();
+   } else {
+      // let escape/return/enter key close info window
+      if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER) {
+         infoptr->Close(true);
+      } else {
+         event.Skip();
+      }
+   }
 }
 
 void TextView::OnSetFocus(wxFocusEvent& WXUNUSED(event)) {
-   //!!!wxBell();
-   // wxMac prob: remove focus ring around read-only textctrl???!!!
-   infoptr->SetFocus();
+   #ifdef __WXMAC__
+      // wxMac prob: remove focus ring around read-only textctrl???!!!
+      //!!! infopanel->SetFocus();
+   #endif
 }
 
 // create the pattern info window
@@ -4144,6 +4167,8 @@ InfoFrame::InfoFrame(char *comments)
    : wxFrame(NULL, wxID_ANY, _("Pattern Info"),
              wxPoint(infox,infoy), wxSize(infowd,infoht))
 {
+   SetFrameIcon(this);
+
    #ifdef __WXMSW__
       // avoid default background colour (dark grey)
       SetBackgroundColour(*wxLIGHT_GREY);
@@ -4273,6 +4298,8 @@ char currhelp[64] = "Help/index.html";
 HelpFrame::HelpFrame()
    : wxFrame(NULL, wxID_ANY, _(""), wxPoint(helpx,helpy), wxSize(helpwd,helpht))
 {
+   SetFrameIcon(this);
+
    #ifdef __WXMSW__
       // avoid default background colour (dark grey)
       SetBackgroundColour(*wxLIGHT_GREY);
@@ -5421,16 +5448,7 @@ void CreateCursors() {
 MainFrame::MainFrame()
    : wxFrame(NULL, wxID_ANY, _(""), wxPoint(mainx,mainy), wxSize(mainwd,mainht))
 {
-   // set the frame icon
-   #ifdef __WXMSW__
-      // create a bundle with 32x32 and 16x16 icons
-      wxIconBundle icb(wxICON(appicon0));
-      icb.AddIcon(wxICON(appicon1));
-      SetIcons(icb);
-   #else
-      // use appicon.xpm on X11
-      SetIcon(wxICON(appicon));
-   #endif
+   SetFrameIcon(this);
 
    // create one-shot timer
    onetimer = new wxTimer(this, ID_ONE_TIMER);
@@ -5463,60 +5481,60 @@ MainFrame::MainFrame()
    cmodeSubMenu->AppendCheckItem(ID_ZOOMIN, _("Zoom In"));
    cmodeSubMenu->AppendCheckItem(ID_ZOOMOUT, _("Zoom Out"));
 
-   fileMenu->Append(wxID_NEW, _("New Pattern\tCtrl-N"));
+   fileMenu->Append(wxID_NEW, _("New Pattern\tCtrl+N"));
    fileMenu->AppendSeparator();
-   fileMenu->Append(wxID_OPEN, _("Open Pattern...\tCtrl-O"));
-   fileMenu->Append(ID_OPENCLIP, _("Open Clipboard\tShift-Ctrl-O"));
+   fileMenu->Append(wxID_OPEN, _("Open Pattern...\tCtrl+O"));
+   fileMenu->Append(ID_OPENCLIP, _("Open Clipboard\tShift+Ctrl+O"));
    fileMenu->AppendSeparator();
-   fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl-S"));
+   fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
-   // on the Mac the Alt-X gets converted to Cmd-Q
-   fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_T("Alt-X")));
+   // on the Mac the Alt+X gets converted to Cmd-Q
+   fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_T("Alt+X")));
 
-   editMenu->Append(ID_CUT, _("Cut\tCtrl-X"));
-   editMenu->Append(ID_COPY, _("Copy\tCtrl-C"));
+   editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
+   editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
    editMenu->Append(ID_CLEAR, _("Clear"));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_PASTE, _("Paste\tCtrl-V"));
+   editMenu->Append(ID_PASTE, _("Paste\tCtrl+V"));
    editMenu->Append(ID_PMODE, _("Paste Mode"), pmodeSubMenu);
    editMenu->Append(ID_PLOCATION, _("Paste Location"), plocSubMenu);
    editMenu->Append(ID_PASTE_SEL, _("Paste to Selection"));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_SELALL, _("Select All\tCtrl-A"));
-   editMenu->Append(ID_REMOVE, _("Remove Selection\tCtrl-K"));
+   editMenu->Append(ID_SELALL, _("Select All\tCtrl+A"));
+   editMenu->Append(ID_REMOVE, _("Remove Selection\tCtrl+K"));
    editMenu->AppendSeparator();
    editMenu->Append(ID_CMODE, _("Cursor Mode"), cmodeSubMenu);
 
-   controlMenu->Append(ID_GO, _("Go\tCtrl-G"));
+   controlMenu->Append(ID_GO, _("Go\tCtrl+G"));
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl-<non-alpha> menu shortcuts
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
       controlMenu->Append(ID_STOP, _("Stop\t."));
    #else
-      controlMenu->Append(ID_STOP, _("Stop\tCtrl-."));
+      controlMenu->Append(ID_STOP, _("Stop\tCtrl+."));
    #endif
    // why no space symbol/word after Next item on wxMac???!!!
    controlMenu->Append(ID_NEXT, _("Next\tSpace"));
    controlMenu->Append(ID_STEP, _("Next Step\tTab"));
-   controlMenu->Append(ID_RESET, _("Reset\tCtrl-R"));
+   controlMenu->Append(ID_RESET, _("Reset\tCtrl+R"));
    controlMenu->AppendSeparator();
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl-<non-alpha> menu shortcuts
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
       controlMenu->Append(ID_FASTER, _("Faster\t+"));
       controlMenu->Append(ID_SLOWER, _("Slower\t-"));
    #else
-      controlMenu->Append(ID_FASTER, _("Faster\tCtrl-+"));
-      controlMenu->Append(ID_SLOWER, _("Slower\tCtrl--"));
+      controlMenu->Append(ID_FASTER, _("Faster\tCtrl++"));
+      controlMenu->Append(ID_SLOWER, _("Slower\tCtrl+-"));
    #endif
    controlMenu->AppendSeparator();
-   controlMenu->AppendCheckItem(ID_AUTO, _("Auto Fit\tCtrl-T"));
-   controlMenu->AppendCheckItem(ID_HASH, _("Use Hashing\tCtrl-U"));
+   controlMenu->AppendCheckItem(ID_AUTO, _("Auto Fit\tCtrl+T"));
+   controlMenu->AppendCheckItem(ID_HASH, _("Use Hashing\tCtrl+U"));
    controlMenu->AppendCheckItem(ID_HYPER, _("Hyperspeed"));
    controlMenu->Append(ID_MAXMEM, _("Max Hash Memory..."));
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_RULE, _("Rule..."));
 
-   viewMenu->Append(ID_FIT, _("Fit Pattern\tCtrl-F"));
-   viewMenu->Append(ID_MIDDLE, _("Middle\tCtrl-M"));
+   viewMenu->Append(ID_FIT, _("Fit Pattern\tCtrl+F"));
+   viewMenu->Append(ID_MIDDLE, _("Middle\tCtrl+M"));
    #ifdef __WXMAC__
       // F11 is a default activation key for Expose so use F1 instead
       viewMenu->Append(ID_FULL, _("Full Screen\tF1"));
@@ -5525,24 +5543,24 @@ MainFrame::MainFrame()
    #endif
    viewMenu->AppendSeparator();
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl-<non-alpha> menu shortcuts
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
       viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\t]"));
       viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\t["));
       viewMenu->AppendSeparator();
       viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\t;"));
       viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\t'"));
    #else
-      viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\tCtrl-]"));
-      viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\tCtrl-["));
+      viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\tCtrl+]"));
+      viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\tCtrl+["));
       viewMenu->AppendSeparator();
-      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\tCtrl-;"));
-      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\tCtrl-'"));
+      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\tCtrl+;"));
+      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\tCtrl+'"));
    #endif
-   viewMenu->AppendCheckItem(ID_GRID, _("Show Grid Lines\tCtrl-L"));
-   viewMenu->AppendCheckItem(ID_VIDEO, _("Black on White\tCtrl-B"));
+   viewMenu->AppendCheckItem(ID_GRID, _("Show Grid Lines\tCtrl+L"));
+   viewMenu->AppendCheckItem(ID_VIDEO, _("Black on White\tCtrl+B"));
    viewMenu->AppendCheckItem(ID_BUFF, _("Buffered"));
    viewMenu->AppendSeparator();
-   viewMenu->Append(ID_INFO, _("Pattern Info\tCtrl-I"));
+   viewMenu->Append(ID_INFO, _("Pattern Info\tCtrl+I"));
 
    helpMenu->Append(ID_HELP_INDEX, _("Contents"));
    helpMenu->Append(ID_HELP_INTRO, _("Introduction"));
