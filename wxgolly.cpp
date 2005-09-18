@@ -3847,11 +3847,10 @@ void ToggleHashing() {
       int ileft = left.toint();
       int ibottom = bottom.toint();
       int iright = right.toint();
-      int wd = iright - ileft + 1;
       int ht = ibottom - itop + 1;
       int cx, cy;
    
-      double maxcount = (double)wd * (double)ht;
+      double maxcount = ht + curralgo->getPopulation().todouble() ;
       int currcount = 0;
       bool abort = false;
       BeginProgress("Converting pattern");
@@ -3860,9 +3859,13 @@ void ToggleHashing() {
       // write fast qlife<->hlife conversion routines???
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            if ( curralgo->getcell(cx, cy) == 1 ) {
-               newalgo->setcell(cx, cy, 1);
-            }
+	    int skip = curralgo->nextcell(cx, cy) ;
+	    if (skip >= 0) {
+	       cx += skip ;
+	       newalgo->setcell(cx, cy, 1) ;
+	    } else {
+	       cx = iright ;
+	    }
             currcount++;
             if ( (currcount % 1000) == 0 ) {
                abort = AbortProgress((double)currcount / maxcount, "");

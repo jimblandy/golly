@@ -5,10 +5,6 @@ High priority:
 
 T - Make readpattern handle gzip'ed files (only Windows left to do).
 
-T - Implement pattern saving.  Note that macrocell files will need
-    to store rule if non-Conway Life (and readmacrocell will have to
-    look for that rule info and call setrule).
-
 A - Create Patterns folder for distribution [Dave Greene is doing it].
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)

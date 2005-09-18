@@ -102,7 +102,7 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
       int cx, cy;
       
       // for showing progress
-      double maxcount = (double)wd * (double)ht;
+      double maxcount = (double)ht + imp.getPopulation().todouble() ;
       int cntr = 0;
 
       for ( cy=top; cy<=bottom; cy++ ) {
@@ -149,8 +149,7 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
             if ((cntr & 4096) == 0) {
                char msg[128];
                sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
-               double prog = ((cy - top) * (double)(right - left + 1) +
-                              (cx - left)) / maxcount;
+               double prog = cntr / maxcount ;
                aborted = lifeabortprogress(prog, msg);
                if (aborted) break;
             }
@@ -178,7 +177,7 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
    return 0;
 }
 
-const char *writelife105(FILE *, lifealgo &imp)
+const char *writelife105(FILE *, lifealgo &)
 {
    return "Not yet implemented!!!";
 }
