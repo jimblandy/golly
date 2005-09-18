@@ -178,14 +178,16 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
    return 0;
 }
 
-const char *writelife105(FILE *f, lifealgo &imp)
+const char *writelife105(FILE *, lifealgo &imp)
 {
    return "Not yet implemented!!!";
 }
 
 const char *writemacrocell(FILE *f, lifealgo &imp)
 {
-   return "Not yet implemented!!!";
+   if (imp.hyperCapable())
+      return imp.writeNativeFormat(f) ;
+   return "Not yet implemented." ;
 }
 
 const char *writepattern(const char *filename, lifealgo &imp, pattern_format format,

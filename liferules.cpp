@@ -66,8 +66,10 @@ void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) {
 }
 
 const char *liferules::setrule(const char *rulestring) {
-   int rulebits=0, i, hexmask=0x777, addend=17 ;
-   int wolfram = -1 ;
+   wolfram = -1 ;
+   rulebits = 0 ;
+   hexmask = 0x777 ;
+   int i, addend=17 ;
 
    // AKT: set rule string even if bad character detected
    if (rule)
@@ -149,6 +151,14 @@ const char *liferules::setrule(const char *rulestring) {
    }
 
    return 0 ;
+}
+// B3S23 -> (1 << 3) + (1 << (17 + 2)) + (1 << (17 + 3)) =
+//          0x180008
+bool liferules::isRegularLife() {
+  if (hexmask == 0x777 && rulebits == 0x180008 &&
+      wolfram < 0)
+     return 1 ;
+  return 0 ;
 }
 
 liferules global_liferules ;

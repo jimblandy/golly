@@ -189,6 +189,7 @@ public:
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
+   virtual const char *writeNativeFormat(FILE *f) ;
 private:
 /*
  *   Some globals representing our universe.  The root is the
@@ -242,6 +243,7 @@ private:
    char *llxb, *llyb ;
    int hashed ;
    int cacheinvalid ;
+   int cellcounter ; // used when writing
 //
    void leafres(leaf *n) ;
    void resize() ;
@@ -287,5 +289,9 @@ private:
    void fill_ll(int d) ;
    void drawnode(node *n, int llx, int lly, int depth, node *z) ;
    void ensure_hashed() ;
+   int writecell(FILE *f, node *root, int depth) ;
+   void unpack8x8(unsigned short nw, unsigned short ne,
+		  unsigned short sw, unsigned short se,
+		  unsigned int *top, unsigned int *bot) ;
 } ;
 #endif

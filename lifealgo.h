@@ -62,6 +62,7 @@ public:
    virtual void fit(viewport &view, int force) = 0 ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) = 0 ;
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) = 0 ;
+   virtual const char *writeNativeFormat(FILE *f) = 0 ;
    void setpoll(lifepoll *pollerarg) { poller = pollerarg ; }
    virtual const char *readmacrocell(char *) { return cannotreadhash ; }
 protected:

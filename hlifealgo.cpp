@@ -1407,6 +1407,18 @@ default:       return "! saw illegal character in readmacrocell" ;
             }
          }
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
+      } else if (line[0] == '#') {
+	 switch (line[1]) {
+	 case 'R':
+	   char *p = line + 2 ;
+	   while (*p && *p <= ' ')
+	     p++ ;
+	   char *pp = p ;
+	   while (*pp > ' ')
+	     pp++ ;
+	   *pp = 0 ;
+	   global_liferules.setrule(p) ;
+	 }
       } else {
          n = sscanf(line, "%d %d %d %d %d %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n == 0)
@@ -1435,4 +1447,73 @@ const char *hlifealgo::setrule(char *s) {
    poller->bailIfCalculating() ;
    clearcache() ;
    return global_liferules.setrule(s) ;
+}
+void hlifealgo::unpack8x8(unsigned short nw, unsigned short ne,
+			  unsigned short sw, unsigned short se,
+			  unsigned int *top, unsigned int *bot) {
+   *top = ((nw & 0xf000) << 16) | (((ne & 0xf000) | (nw & 0xf00)) << 12) |
+          (((ne & 0xf00) | (nw & 0xf0)) << 8) |
+          (((ne & 0xf0) | (nw & 0xf)) << 4) | (ne & 0xf) ;
+   *bot = ((sw & 0xf000) << 16) | (((se & 0xf000) | (sw & 0xf00)) << 12) |
+          (((se & 0xf00) | (sw & 0xf0)) << 8) |
+          (((se & 0xf0) | (sw & 0xf)) << 4) | (se & 0xf) ;
+}
+/**
+ *   Write out the native macrocell format.
+ */
+int hlifealgo::writecell(FILE *f, node *root, int depth) {
+   int thiscell = 0 ;
+   if (root == zeronode(depth))
+      return 0 ;
+   if (depth == 2) {
+      if (root->nw != 0)
+         return (int)(root->nw) ;
+   } else {
+      if (marked2(root))
+         return (int)(root->next) ;
+      unhash_node(root) ;
+      mark2(root) ;
+   }
+   if (depth == 2) {
+      int i, j ;
+      unsigned int top, bot ;
+      leaf *n = (leaf *)root ;
+      thiscell = ++cellcounter ;
+      root->nw = (node *)thiscell ;
+      unpack8x8(n->nw, n->ne, n->sw, n->se, &top, &bot) ;
+      for (j=7; (top | bot) && j>=0; j--) {
+         int bits = (top >> 24) ;
+         top = (top << 8) | (bot >> 24) ;
+         bot = (bot << 8) ;
+         for (i=0; bits && i<8; i++, bits = (bits << 1) & 255)
+            if (bits & 128)
+               fputs("*", f) ;
+            else
+               fputs(".", f) ;
+         fputs("$", f) ;
+      }
+      fputs("\n", f) ;
+   } else {
+      int nw = writecell(f, root->nw, depth-1) ;
+      int ne = writecell(f, root->ne, depth-1) ;
+      int sw = writecell(f, root->sw, depth-1) ;
+      int se = writecell(f, root->se, depth-1) ;
+      thiscell = ++cellcounter ;
+      root->next = (node *)thiscell ;
+      fprintf(f, "%d %d %d %d %d\n", depth+1, nw, ne, sw, se) ;
+   }
+   return thiscell ;
+}
+#define STRINGIFY(arg) STR2(arg)
+#define STR2(arg) #arg
+const char *hlifealgo::writeNativeFormat(FILE *f) {
+   int depth = node_depth(root) ;
+   fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
+   fputs("\n", f) ;
+   if (!global_liferules.isRegularLife())
+      fprintf(f, "#R %s\n", global_liferules.getrule()) ;
+   cellcounter = 0 ;
+   writecell(f, root, depth) ;
+   aftercalcpop2(root, depth, 0) ;
+   return 0 ;
 }

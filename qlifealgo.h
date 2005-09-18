@@ -241,6 +241,9 @@ public:
    virtual void fit(viewport &view, int force) ;
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
+   virtual const char *writeNativeFormat(FILE *) {
+      return "No native format for qlifealgo yet." ;
+   }
 private:
    linkedmem *filllist(int size) ;
    brick *newbrick() ;

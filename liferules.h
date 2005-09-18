@@ -49,8 +49,12 @@ public:
                            // or for all gens if rule has no B0, or it has B0 *and* S8
    char rule1[65536];      // rule table for odd gens if rule has B0 but not S8
    bool hasB0notS8;        // set by setrule; true if rule has B0 but not S8
+   bool isRegularLife() ;  // is this s23b3?
 private:
    const char *rule ;      // copy of string passed into setrule
+   int hexmask ;           // really neighbormask
+   int rulebits ;
+   int wolfram ;
 } ;
 extern liferules global_liferules ;
 #endif
