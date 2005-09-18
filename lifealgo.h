@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #ifndef LIFEALGO_H
 #define LIFEALGO_H
+#include <cstdio>
 #include "bigint.h"
 #include "viewport.h"
 #include "liferender.h"
