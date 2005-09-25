@@ -3690,6 +3690,8 @@ void GeneratePattern() {
          } else {
             // process events while we wait
             if (wx_poller.checkevents()) break;
+            // don't hog CPU
+            wxMilliSleep(10);
          }
       } else {
          // warp >= 0 so only show results every curralgo->getIncrement() gens
@@ -3850,22 +3852,20 @@ void ToggleHashing() {
       int ht = ibottom - itop + 1;
       int cx, cy;
    
-      double maxcount = ht + curralgo->getPopulation().todouble() ;
+      double maxcount = ht + curralgo->getPopulation().todouble();
       int currcount = 0;
       bool abort = false;
       BeginProgress("Converting pattern");
    
-      // very slow for large patterns -- ask Tom if it's possible to
-      // write fast qlife<->hlife conversion routines???
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-	    int skip = curralgo->nextcell(cx, cy) ;
-	    if (skip >= 0) {
-	       cx += skip ;
-	       newalgo->setcell(cx, cy, 1) ;
-	    } else {
-	       cx = iright ;
-	    }
+            int skip = curralgo->nextcell(cx, cy);
+            if (skip >= 0) {
+               cx += skip;
+               newalgo->setcell(cx, cy, 1);
+            } else {
+               cx = iright;
+            }
             currcount++;
             if ( (currcount % 1000) == 0 ) {
                abort = AbortProgress((double)currcount / maxcount, "");
