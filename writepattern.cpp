@@ -102,7 +102,7 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
       int cx, cy;
       
       // for showing progress
-      double maxcount = (double)ht + imp.getPopulation().todouble() ;
+      double maxcntr = imp.getPopulation().todouble();
       int cntr = 0;
 
       for ( cy=top; cy<=bottom; cy++ ) {
@@ -142,16 +142,15 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
                   lastchar = 'o';
                   orun = 1;
                }
+               cntr++;
+               if ((cntr % 4096) == 0) {
+                  char msg[128];
+                  sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
+                  aborted = lifeabortprogress(double(cntr) / maxcntr, msg);
+                  if (aborted) break;
+               }
             } else {
                cx = right + 1;  // done
-            }
-            cntr++;
-            if ((cntr & 4096) == 0) {
-               char msg[128];
-               sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
-               double prog = cntr / maxcount ;
-               aborted = lifeabortprogress(prog, msg);
-               if (aborted) break;
             }
          }
          // end of current row
@@ -212,7 +211,7 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
          break;
 
       case MC_format:
-         // macrocell format ignores given edges???
+         // macrocell format ignores given edges
          errmsg = writemacrocell(f, imp);
          break;
 

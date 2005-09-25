@@ -920,8 +920,8 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
       // too bad wxMac and wxX11 don't let user hit escape key!!!
       return !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg);
    } else {
-      // note that fraction_done is not a very accurate estimator for how long
-      // the task will take, especially now that we use nextcell for cut/copy
+      // note that fraction_done is not always an accurate estimator for how long
+      // the task will take, especially when we use nextcell for cut/copy
       long msecs = t - progstart;
       if ( (msecs > 1000 && fraction_done < 0.3) || msecs > 2500 ) {
          // task is probably going to take a while so create progress dialog
@@ -2169,6 +2169,10 @@ void OpenPattern() {
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
+      #ifdef __WXMAC__
+         // Mac bug: need to update window now to avoid crash
+         RefreshWindow();
+      #endif
       wxFileName fullpath = wxFileName( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
       SetCurrentFile( opendlg.GetPath() );
@@ -2399,7 +2403,7 @@ void ClearSelection() {
       for ( cx=ileft; cx<=iright; cx++ ) {
          curralgo->setcell(cx, cy, 0);
          currcount++;
-         if ( (currcount % 1000) == 0 ) {
+         if ( (currcount % 1024) == 0 ) {
             abort = AbortProgress((double)currcount / maxcount, "");
             if (abort) break;
          }
@@ -2563,7 +2567,7 @@ void CopyToClipboard(bool cut) {
             cx = iright + 1;  // done
          }
          cntr++;
-         if ((cntr & 4096) == 0) {
+         if ((cntr % 4096) == 0) {
             double prog = ((cy - itop) * (double)(iright - ileft + 1) +
                            (cx - ileft)) / maxcount;
             abort = AbortProgress(prog, "");
@@ -2895,7 +2899,7 @@ void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          }
          cx++;
          currcount++;
-         if ( (currcount % 1000) == 0 ) {
+         if ( (currcount % 1024) == 0 ) {
             abort = AbortProgress((double)currcount / maxcount, "");
             if (abort) break;
          }
@@ -3582,29 +3586,29 @@ bool SaveStartingPattern() {
    }
    gen0algo->setpoll(&wx_poller);
 
-   // copy (non-empty) pattern in current universe to gen0algo;
-   // slow for large patterns so ask Tom if it's possible to
-   // write a fast universe duplicator???
+   // copy (non-empty) pattern in current universe to gen0algo
    int itop = top.toint();
    int ileft = left.toint();
    int ibottom = bottom.toint();
    int iright = right.toint();
-   int wd = iright - ileft + 1;
-   int ht = ibottom - itop + 1;
    int cx, cy;
-   double maxcount = (double)wd * (double)ht;
+   double maxcount = curralgo->getPopulation().todouble();
    int currcount = 0;
    bool abort = false;
    BeginProgress("Saving starting pattern");
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         if ( curralgo->getcell(cx, cy) == 1 ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip >= 0) {
+            cx += skip;
             gen0algo->setcell(cx, cy, 1);
-         }
-         currcount++;
-         if ( (currcount % 1000) == 0 ) {
-            abort = AbortProgress((double)currcount / maxcount, "");
-            if (abort) break;
+            currcount++;
+            if ( (currcount % 1024) == 0 ) {
+               abort = AbortProgress((double)currcount / maxcount, "");
+               if (abort) break;
+            }
+         } else {
+            cx = iright;
          }
       }
       if (abort) break;
@@ -3849,10 +3853,9 @@ void ToggleHashing() {
       int ileft = left.toint();
       int ibottom = bottom.toint();
       int iright = right.toint();
-      int ht = ibottom - itop + 1;
       int cx, cy;
    
-      double maxcount = ht + curralgo->getPopulation().todouble();
+      double maxcount = curralgo->getPopulation().todouble();
       int currcount = 0;
       bool abort = false;
       BeginProgress("Converting pattern");
@@ -3863,13 +3866,13 @@ void ToggleHashing() {
             if (skip >= 0) {
                cx += skip;
                newalgo->setcell(cx, cy, 1);
+               currcount++;
+               if ( (currcount % 1024) == 0 ) {
+                  abort = AbortProgress((double)currcount / maxcount, "");
+                  if (abort) break;
+               }
             } else {
                cx = iright;
-            }
-            currcount++;
-            if ( (currcount % 1000) == 0 ) {
-               abort = AbortProgress((double)currcount / maxcount, "");
-               if (abort) break;
             }
          }
          if (abort) break;

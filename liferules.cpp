@@ -46,7 +46,7 @@ static int bc(int v) {
    return r ;
 }
 
-// AKT: initialize current rule table (rptr points to rule0 or rule1)
+// initialize current rule table (rptr points to rule0 or rule1)
 void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) {
    int i;
    if (wolfram >= 0) {
@@ -71,12 +71,12 @@ const char *liferules::setrule(const char *rulestring) {
    hexmask = 0x777 ;
    int i, addend=17 ;
 
-   // AKT: set rule string even if bad character detected
+   // set rule string even if bad character detected
    if (rule)
       free((void *)rule) ;
    rule = strdup(rulestring) ;
 
-   // AKT: need to emulate B0-not-S8 rule?
+   // need to emulate B0-not-S8 rule?
    hasB0notS8 = false;
 
    for (i=0; rulestring[i]; i++) {
@@ -97,7 +97,7 @@ const char *liferules::setrule(const char *rulestring) {
       }
    }
 
-   // AKT: check if rule contains B0
+   // check if rule contains B0
    if (rulebits & 1) {
       /* Use David Eppstein's idea to change the current rule depending on gen parity.
          If original rule has B0 but not S8:
@@ -152,13 +152,11 @@ const char *liferules::setrule(const char *rulestring) {
 
    return 0 ;
 }
+
 // B3S23 -> (1 << 3) + (1 << (17 + 2)) + (1 << (17 + 3)) =
 //          0x180008
 bool liferules::isRegularLife() {
-  if (hexmask == 0x777 && rulebits == 0x180008 &&
-      wolfram < 0)
-     return 1 ;
-  return 0 ;
+  return (hexmask == 0x777 && rulebits == 0x180008 && wolfram < 0) ;
 }
 
 liferules global_liferules ;

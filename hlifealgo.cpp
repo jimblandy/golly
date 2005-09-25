@@ -1408,17 +1408,17 @@ default:       return "! saw illegal character in readmacrocell" ;
          }
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
       } else if (line[0] == '#') {
-	 switch (line[1]) {
-	 case 'R':
-	   char *p = line + 2 ;
-	   while (*p && *p <= ' ')
-	     p++ ;
-	   char *pp = p ;
-	   while (*pp > ' ')
-	     pp++ ;
-	   *pp = 0 ;
-	   global_liferules.setrule(p) ;
-	 }
+         switch (line[1]) {
+         case 'R':
+            char *p = line + 2 ;
+            while (*p && *p <= ' ')
+              p++ ;
+            char *pp = p ;
+            while (*pp > ' ')
+              pp++ ;
+            *pp = 0 ;
+            global_liferules.setrule(p) ;
+         }
       } else {
          n = sscanf(line, "%d %d %d %d %d %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n == 0)
