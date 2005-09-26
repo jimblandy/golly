@@ -503,7 +503,9 @@ paste_mode pmode = Copy;
 char currfile[4096];          // full path of current pattern file
 char currname[256];           // file name displayed in main window title
 wxString opensavedir;         // directory for open and save dialogs
-wxString appdir;              // location of application
+
+// location of pattern collection (relative to app)
+const char pattdir[] = "Patterns";
 
 // temporary file for storing clipboard data
 const char clipfile[] = ".golly_clipboard";
@@ -759,15 +761,15 @@ void GetPrefs() {
             opensavedir = value;
             opensavedir.RemoveLast();  // remove \n
             if ( !wxFileName::DirExists(opensavedir) ) {
-               // reset to application directory
-               opensavedir = appdir;
+               // reset to pattern directory
+               opensavedir = pattdir;
             }
          }
       }
       fclose(f);
    } else {
       // prefs file doesn't exist yet
-      opensavedir = appdir;
+      opensavedir = pattdir;
    }
 }
 
@@ -1921,19 +1923,35 @@ wx_poll wx_poller;
 
 const char B0message[] = "Hashing has been turned off due to B0-not-S8 rule.";
 
-void SetAppDirectory() {
+void SetAppDirectory(const char *argv0) {
    #ifdef __WXMSW__
       // on Windows we need to reset current directory to app directory if user
       // dropped file from somewhere else onto app to start it up (otherwise we
       // can't find Help files and prefs file gets saved to wrong location)
       wxStandardPaths wxstdpaths;
-      appdir = wxstdpaths.GetDataDir();
+      wxString appdir = wxstdpaths.GetDataDir();
       wxString currdir = wxGetCwd();
       if ( currdir.CmpNoCase(appdir) != 0 )
          wxSetWorkingDirectory(appdir);
-   #else
-      // need to fix this on Mac!!! use wx book's example???
-      appdir = wxGetCwd();
+   #elif __WXMAC__
+      // wxMac has set current directory to location of .app bundle so no need
+      // to do anything; note that wxGetCwd() returns empty string
+   #elif __UNIX__
+      // user might have started app from a different directory so find
+      // last "/" in argv0 and change cwd if "/" isn't part of "./" prefix
+      unsigned int pos = strlen(argv0);
+      while (pos > 0) {
+         pos--;
+         if (argv0[pos] == '/') break;
+      }
+      if ( pos > 0 && !(pos == 1 && argv0[0] == '.') ) {
+         char appdir[2048];
+         if (pos < sizeof(appdir)) {
+            strncpy(appdir, argv0, pos);
+            appdir[pos] = 0;
+            wxSetWorkingDirectory(appdir);
+         }
+      }
    #endif
 }
 
@@ -2285,9 +2303,12 @@ void SavePattern() {
       ileft = left.toint();
       ibottom = bottom.toint();
       iright = right.toint();
-      filetypes = _("RLE (*.rle)|*.rle|Life 1.05 (*.lif)|*.lif");
+      // Life 1.05 format not yet implemented!!!
+      // filetypes = _("RLE (*.rle)|*.rle|Life 1.05 (*.lif)|*.lif");
+      filetypes = _("RLE (*.rle)|*.rle");
       RLEindex = 0;
-      L105index = 1;
+      // Life 1.05 format not yet implemented!!!
+      // L105index = 1;
    }
 
    wxFileDialog savedlg( frameptr, _("Save pattern"),
@@ -2303,8 +2324,9 @@ void SavePattern() {
       // it is allowed, otherwise use current format specified in filter menu
       if ( ext.IsSameAs("rle",false) && RLEindex >= 0 ) {
          format = RLE_format;
-      } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
-         format = L105_format;
+      // Life 1.05 format not yet implemented!!!
+      // } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
+      //   format = L105_format;
       } else if ( ext.IsSameAs("mc",false) && MCindex >= 0 ) {
          format = MC_format;
       } else if ( savedlg.GetFilterIndex() == RLEindex ) {
@@ -5737,6 +5759,10 @@ bool MyApp::OnInit()
       wxSystemOptions::SetOption(wxMAC_TEXTCONTROL_USE_MLTE, 1);
    #endif
 
+   // make sure current working directory contains application otherwise
+   // we can't open Help files and prefs file gets saved to wrong location
+   SetAppDirectory(argv[0]);
+
    // let non-wx modules call Fatal, Warning, etc
    lifeerrors::seterrorhandler(&wxerrhandler);
 
@@ -5748,9 +5774,6 @@ bool MyApp::OnInit()
    wxImage::AddHandler(new wxPNGHandler);
    wxImage::AddHandler(new wxGIFHandler);
    wxImage::AddHandler(new wxJPEGHandler);
-
-   // set appdir -- must do before GetPrefs
-   SetAppDirectory();
     
    // get main window location and other user preferences
    GetPrefs();
