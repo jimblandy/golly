@@ -97,17 +97,17 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
       unsigned int orun = 0;
       unsigned int dollrun = 0;
       char lastchar;
-      double accumprog = 0 ;
       int cx, cy;
       
       // for showing progress
-      double maxcntr = imp.getPopulation().todouble() + bottom - top + 1;
+      double maxcntr = imp.getPopulation().todouble() + ht;
+      double accumprog = 0;
       int cntr = 0;
 
       for ( cy=top; cy<=bottom; cy++ ) {
          // set lastchar to anything except 'o' or 'b'
          lastchar = 0;
-	 cntr++ ;
+         cntr++;
          for ( cx=left; cx<=right; cx++ ) {
             int skip = imp.nextcell(cx, cy);
             if (skip + cx > right)
@@ -143,12 +143,12 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
                   orun = 1;
                }
                cntr++;
-               if ((cntr > 1024)) {
+               if (cntr > 1024) {
                   char msg[128];
-		  accumprog += cntr ;
-		  cntr = 0 ;
+                  accumprog += cntr;
+                  cntr = 0;
                   sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
-                  if (lifeabortprogress(accumprog / maxcntr, msg)) break ;
+                  if (lifeabortprogress(accumprog / maxcntr, msg)) break;
                }
             } else {
                cx = right + 1;  // done
@@ -185,8 +185,8 @@ const char *writelife105(FILE *, lifealgo &)
 const char *writemacrocell(FILE *f, lifealgo &imp)
 {
    if (imp.hyperCapable())
-      return imp.writeNativeFormat(f) ;
-   return "Not yet implemented." ;
+      return imp.writeNativeFormat(f);
+   return "Not yet implemented.";
 }
 
 const char *writepattern(const char *filename, lifealgo &imp, pattern_format format,

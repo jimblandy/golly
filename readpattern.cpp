@@ -69,8 +69,6 @@ int mgetchar() {
       buffpos = 0;
       buffcount++;
       lifeabortprogress((double)buffcount / maxbuffs, "");
-      // don't do following -- safer to return NULL in getline
-      // if (progaborted) return EOF;
    }
    if (buffpos >= bytesread) return EOF;
    return filebuff[buffpos++];

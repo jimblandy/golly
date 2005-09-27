@@ -1612,16 +1612,19 @@ const char *hlifealgo::writeNativeFormat(FILE *f) {
    writecell(f, root, depth) ;
    */
    /* this is the new two-pass way */
-   lifebeginprogress("Writing pattern file") ;
+   // AKT: writepattern() does this:
+   // lifebeginprogress("Writing pattern file") ;
    cellcounter = 0 ;
    writecell_2p1(root, depth) ;
    writecells = cellcounter ;
    cellcounter = 0 ;
    writecell_2p2(f, root, depth) ;
-   lifeendprogress() ;
+   // AKT: writepattern() does this:
+   // lifeendprogress() ;
    /* end new two-pass way */
    aftercalcpop2(root, depth, 0) ;
-   if (isaborted())
-      return "File contains truncated pattern.";
+   // AKT: writepattern() does this:
+   // if (isaborted())
+   //    return "File contains truncated pattern.";
    return 0 ;
 }

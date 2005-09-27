@@ -41,8 +41,7 @@ public:
       fprintf(stderr, "%s\n", s) ;
    }
    virtual void beginprogress(const char *) {
-      aborted = 0 ;
-      // do nothing
+      aborted = false ;
    }
    virtual bool abortprogress(double, const char *) {
       return false ;
@@ -80,7 +79,7 @@ void lifebeginprogress(const char *dlgtitle) {
 
 bool lifeabortprogress(double fracdone, const char *newmsg) {
    return errorhandler->aborted |=
-     errorhandler->abortprogress(fracdone, newmsg) ;
+      errorhandler->abortprogress(fracdone, newmsg) ;
 }
 
 bool isaborted() {

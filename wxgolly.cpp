@@ -975,7 +975,10 @@ public:
    virtual void fatal(const char *s) { Fatal(s); }
    virtual void warning(const char *s) { Warning(s); }
    virtual void status(const char *s) { DisplayMessage(s); }
-   virtual void beginprogress(const char *s) { BeginProgress(s); }
+   virtual void beginprogress(const char *s) {
+      BeginProgress(s);
+      aborted = false;     // needed for isaborted() calls in non-wx modules
+   }
    virtual bool abortprogress(double f, const char *s) { return AbortProgress(f, s); }
    virtual void endprogress() { EndProgress(); }
 };
@@ -4121,8 +4124,12 @@ void ToggleFullScreen() {
          // first show tool bar if necessary
          if (restoretoolbar && tbar && !tbar->IsShown()) {
             tbar->Show(true);
+            if (statusht > 0) {
+               // reduce width of status bar below
+               restorestatus = true;
+            }
          }
-         // now show status bar if necessary
+         // now show status bar if necessary;
          // note that even if statusht > 0 we may have to resize width
          if (restorestatus) {
             statusht = STATUS_HT;
