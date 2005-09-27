@@ -37,8 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 char outbuff[BUFFSIZE];
 int outpos;
 unsigned int currsize;     // current file size (for showing in progress dialog)
-bool aborted;              // user cancelled progress dialog?
-
 // using buffered putchar instead of fputc is about 20% faster on Mac OS X
 void putchar(char ch, FILE *f) {
    if (outpos == BUFFSIZE) {
@@ -99,15 +97,17 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
       unsigned int orun = 0;
       unsigned int dollrun = 0;
       char lastchar;
+      double accumprog = 0 ;
       int cx, cy;
       
       // for showing progress
-      double maxcntr = imp.getPopulation().todouble();
+      double maxcntr = imp.getPopulation().todouble() + bottom - top + 1;
       int cntr = 0;
 
       for ( cy=top; cy<=bottom; cy++ ) {
          // set lastchar to anything except 'o' or 'b'
          lastchar = 0;
+	 cntr++ ;
          for ( cx=left; cx<=right; cx++ ) {
             int skip = imp.nextcell(cx, cy);
             if (skip + cx > right)
@@ -143,18 +143,19 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
                   orun = 1;
                }
                cntr++;
-               if ((cntr % 4096) == 0) {
+               if ((cntr > 1024)) {
                   char msg[128];
+		  accumprog += cntr ;
+		  cntr = 0 ;
                   sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
-                  aborted = lifeabortprogress(double(cntr) / maxcntr, msg);
-                  if (aborted) break;
+                  if (lifeabortprogress(accumprog / maxcntr, msg)) break ;
                }
             } else {
                cx = right + 1;  // done
             }
          }
          // end of current row
-         if (aborted) break;
+         if (isaborted()) break;
          if (lastchar == 'b') {
             // forget dead cells at end of row
             brun = 0;
@@ -195,7 +196,6 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
    f = fopen(filename, "w");
    if (f == 0) return "Can't create pattern file!";
 
-   aborted = false;
    currsize = 0;
    lifebeginprogress("Writing pattern file");
 
@@ -221,7 +221,7 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
    
    lifeendprogress();
    fclose(f);
-   if (aborted)
+   if (isaborted())
       return "File contains truncated pattern.";
    else
       return errmsg;

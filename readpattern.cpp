@@ -56,7 +56,6 @@ int buffpos, bytesread, prevchar;
 long filesize;             // length of file in bytes
 double maxbuffs;           // length of file in buffers
 unsigned int buffcount;    // buffers read so far (for showing in progress dialog)
-bool progaborted;          // user cancelled progress dialog?
 
 // use buffered getchar instead of slow fgetc
 // don't override the "getchar" name which is likely to be a macro
@@ -69,7 +68,7 @@ int mgetchar() {
 #endif
       buffpos = 0;
       buffcount++;
-      progaborted = lifeabortprogress((double)buffcount / maxbuffs, "");
+      lifeabortprogress((double)buffcount / maxbuffs, "");
       // don't do following -- safer to return NULL in getline
       // if (progaborted) return EOF;
    }
@@ -82,7 +81,7 @@ char *getline(char *line, int maxlinelen) {
    int i = 0;
    while (i < maxlinelen) {
       int ch = mgetchar();
-      if (progaborted) return NULL;
+      if (isaborted()) return NULL;
       switch (ch) {
          case CR:
             prevchar = CR;
@@ -286,7 +285,6 @@ const char *loadpattern(lifealgo &imp) {
    // always reset rules to Conway's Life
    imp.setrule("B3/S23") ;
 
-   progaborted = false;
    buffcount = 0;
    maxbuffs = (double)filesize / (double)BUFFSIZE;
    if (maxbuffs < 1.0) maxbuffs = 1.0;
@@ -414,7 +412,6 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
    // loading comments is likely to be quite fast so no real need to
    // display the progress dialog, but getchar calls lifeabortprogress
    // so safer just to assume the progress dialog might appear
-   progaborted = false;
    buffcount = 0;
    maxbuffs = (double)filesize / (double)BUFFSIZE;
    if (maxbuffs < 1.0) maxbuffs = 1.0;

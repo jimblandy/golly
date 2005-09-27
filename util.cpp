@@ -40,10 +40,11 @@ public:
    virtual void status(const char *s) {
       fprintf(stderr, "%s\n", s) ;
    }
-   virtual void beginprogress(const char *dlgtitle) {
+   virtual void beginprogress(const char *) {
+      aborted = 0 ;
       // do nothing
    }
-   virtual bool abortprogress(double fracdone, const char *newmsg) {
+   virtual bool abortprogress(double, const char *) {
       return false ;
    }
    virtual void endprogress() {
@@ -78,7 +79,12 @@ void lifebeginprogress(const char *dlgtitle) {
 }
 
 bool lifeabortprogress(double fracdone, const char *newmsg) {
-   return errorhandler->abortprogress(fracdone, newmsg) ;
+   return errorhandler->aborted |=
+     errorhandler->abortprogress(fracdone, newmsg) ;
+}
+
+bool isaborted() {
+   return errorhandler->aborted ;
 }
 
 void lifeendprogress() {

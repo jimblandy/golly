@@ -1459,7 +1459,8 @@ void hlifealgo::unpack8x8(unsigned short nw, unsigned short ne,
           (((se & 0xf0) | (sw & 0xf)) << 4) | (se & 0xf) ;
 }
 /**
- *   Write out the native macrocell format.
+ *   Write out the native macrocell format.  This is the one we use when
+ *   we're not interactive and displaying a progress dialog.
  */
 int hlifealgo::writecell(FILE *f, node *root, int depth) {
    int thiscell = 0 ;
@@ -1504,6 +1505,100 @@ int hlifealgo::writecell(FILE *f, node *root, int depth) {
    }
    return thiscell ;
 }
+/**
+ *   This new two-pass method works by doing a prepass that numbers the
+ *   nodes and counts the number of nodes that should be sent, so we can
+ *   display an accurate progress dialog.
+ */
+int hlifealgo::writecell_2p1(node *root, int depth) {
+   int thiscell = 0 ;
+   if (root == zeronode(depth))
+      return 0 ;
+   if (depth == 2) {
+      if (root->nw != 0)
+         return (int)(root->nw) ;
+   } else {
+      if (marked2(root))
+         return (int)(root->next) ;
+      unhash_node(root) ;
+      mark2(root) ;
+   }
+   if (depth == 2) {
+      thiscell = ++cellcounter ;
+      // note:  we *must* not abort this prescan
+      if ((cellcounter & 4095) == 0)
+	 lifeabortprogress(0, "Scanning tree") ;
+      root->nw = (node *)thiscell ;
+   } else {
+      writecell_2p1(root->nw, depth-1) ;
+      writecell_2p1(root->ne, depth-1) ;
+      writecell_2p1(root->sw, depth-1) ;
+      writecell_2p1(root->se, depth-1) ;
+      thiscell = ++cellcounter ;
+      // note:  we *must* not abort this prescan
+      if ((cellcounter & 4095) == 0)
+	 lifeabortprogress(0, "Scanning tree") ;
+      root->next = (node *)thiscell ;
+   }
+   return thiscell ;
+}
+/**
+ *   This one writes the cells, but assuming they've already been
+ *   numbered, and displaying a progress dialog.
+ */
+static char progressmsg[80] ;
+int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
+   int thiscell = 0 ;
+   if (root == zeronode(depth))
+      return 0 ;
+   if (depth == 2) {
+      if (cellcounter + 1 != (int)(root->nw))
+	 return (int)(root->nw) ;
+      thiscell = ++cellcounter ;
+      if ((cellcounter & 4095) == 0) {
+	 unsigned long siz = ftell(f) ;
+         sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
+	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
+      }
+      int i, j ;
+      unsigned int top, bot ;
+      leaf *n = (leaf *)root ;
+      root->nw = (node *)thiscell ;
+      unpack8x8(n->nw, n->ne, n->sw, n->se, &top, &bot) ;
+      for (j=7; (top | bot) && j>=0; j--) {
+         int bits = (top >> 24) ;
+         top = (top << 8) | (bot >> 24) ;
+         bot = (bot << 8) ;
+         for (i=0; bits && i<8; i++, bits = (bits << 1) & 255)
+            if (bits & 128)
+               fputs("*", f) ;
+            else
+               fputs(".", f) ;
+         fputs("$", f) ;
+      }
+      fputs("\n", f) ;
+   } else {
+      if (cellcounter + 1 > (int)(root->next) || isaborted())
+	 return (int)(root->next) ;
+      int nw = writecell_2p2(f, root->nw, depth-1) ;
+      int ne = writecell_2p2(f, root->ne, depth-1) ;
+      int sw = writecell_2p2(f, root->sw, depth-1) ;
+      int se = writecell_2p2(f, root->se, depth-1) ;
+      if (cellcounter + 1 != (int)(root->next)) { // this should never happen
+	 lifefatal("Internal in writecell_2p2") ;
+	 return (int)(root->next) ;
+      }
+      thiscell = ++cellcounter ;
+      if ((cellcounter & 4095) == 0) {
+	 unsigned long siz = ftell(f) ;
+         sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
+	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
+      }
+      root->next = (node *)thiscell ;
+      fprintf(f, "%d %d %d %d %d\n", depth+1, nw, ne, sw, se) ;
+   }
+   return thiscell ;
+}
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 const char *hlifealgo::writeNativeFormat(FILE *f) {
@@ -1512,8 +1607,21 @@ const char *hlifealgo::writeNativeFormat(FILE *f) {
    fputs("\n", f) ;
    if (!global_liferules.isRegularLife())
       fprintf(f, "#R %s\n", global_liferules.getrule()) ;
+   /* this is the old way; commented out.
    cellcounter = 0 ;
    writecell(f, root, depth) ;
+   */
+   /* this is the new two-pass way */
+   lifebeginprogress("Writing pattern file") ;
+   cellcounter = 0 ;
+   writecell_2p1(root, depth) ;
+   writecells = cellcounter ;
+   cellcounter = 0 ;
+   writecell_2p2(f, root, depth) ;
+   lifeendprogress() ;
+   /* end new two-pass way */
    aftercalcpop2(root, depth, 0) ;
+   if (isaborted())
+      return "File contains truncated pattern.";
    return 0 ;
 }

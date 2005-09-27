@@ -244,6 +244,7 @@ private:
    int hashed ;
    int cacheinvalid ;
    int cellcounter ; // used when writing
+   int writecells ; // how many to write
 //
    void leafres(leaf *n) ;
    void resize() ;
@@ -290,6 +291,8 @@ private:
    void drawnode(node *n, int llx, int lly, int depth, node *z) ;
    void ensure_hashed() ;
    int writecell(FILE *f, node *root, int depth) ;
+   int writecell_2p1(node *root, int depth) ;
+   int writecell_2p2(FILE *f, node *root, int depth) ;
    void unpack8x8(unsigned short nw, unsigned short ne,
 		  unsigned short sw, unsigned short se,
 		  unsigned int *top, unsigned int *bot) ;
