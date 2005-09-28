@@ -1503,13 +1503,7 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
                   curralgo == NULL ? "0" : stringify(curralgo->getGeneration()));
          DisplayText(dc, strbuf, h_gen, BASELINE1);
       
-         double pop;
-         if (0 && progdlg) { // should be okay now
-            // avoid calling getPopulation() if progress dialog is open
-            pop = -1.0;
-         } else {
-            pop = curralgo == NULL ? 0.0 : curralgo->getPopulation().todouble();
-         }
+         double pop = curralgo == NULL ? 0.0 : curralgo->getPopulation().todouble();
          if (pop >= 0) {
             sprintf(strbuf, "Population=%s", stringify(pop));
          } else {
@@ -2186,7 +2180,11 @@ void OpenPattern() {
 
    wxFileDialog opendlg(frameptr, _("Choose a pattern file"),
                         opensavedir, wxEmptyString,
-   _("All files (*)|*|RLE (*.rle)|*.rle|Life 1.05/1.06 (*.lif)|*.lif|Macrocell (*.mc)|*.mc"),
+                        _T("All files (*)|*")
+                        _T("|RLE (*.rle)|*.rle")
+                        _T("|Life 1.05/1.06 (*.lif)|*.lif")
+                        _T("|Macrocell (*.mc)|*.mc")
+                        _T("|Gzip (*.gz)|*.gz"),
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {

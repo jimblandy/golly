@@ -1,5 +1,6 @@
 Changes in version 0.9 (released September 2005)
 
+TGR: Windows app can now read .gz files.
 TGR: Implemented saving pattern as macrocell file.
 AKT: Can now display comments in pattern files.
 AKT: Reduced edit/save limits to +/- 10^9 (see min_coord, max_coord).

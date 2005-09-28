@@ -12,9 +12,7 @@ B - Finish 1D rule support.  Basically works except for qlife display being
     upside down (so just alter rule0 table in qlifealgo::setrule?).
     Prevent odd-numbered W rules (only feasible in toroidal universe).
 
-A - Polish .html files (eg. remove all "!!!" stuff).
-
-B - Add more info to INSTALL file:
+B - Add more info to INSTALL file (and rename to BUILD?):
     - how to install wxWidgets, esp on Windows (point to wxWiki page)
     - briefly describe each module
     - list steps needed to add a new life algo (eg. toroidal universe)
