@@ -900,7 +900,8 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
  *   Our nonrecurse top-level bit setting routine simply expands the
  *   universe as necessary to encompass the passed-in coordinates, and
  *   then invokes the recursive setbit.  Right now it works hashed or
- *   unhashed (but it's faster when unhashed).
+ *   unhashed (but it's faster when unhashed).  We also turn on the inGC
+ *   flag to inhibit popcount.
  */
 void hlifealgo::setcell(int x, int y, int newstate) {
    if (hashed) {
@@ -908,6 +909,7 @@ void hlifealgo::setcell(int x, int y, int newstate) {
       save(root) ;
       okaytogc = 1 ;
    }
+   inGC = 1 ;
    y = - y ;
    int sx = x ;
    int sy = y ;
@@ -1013,6 +1015,7 @@ void hlifealgo::endofpattern() {
    }
    popValid = 0 ;
    needPop = 0 ;
+   inGC = 0 ;
 }
 void hlifealgo::ensure_hashed() {
    if (!hashed)

@@ -1504,7 +1504,7 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
          DisplayText(dc, strbuf, h_gen, BASELINE1);
       
          double pop;
-         if (progdlg) {
+         if (0 && progdlg) { // should be okay now
             // avoid calling getPopulation() if progress dialog is open
             pop = -1.0;
          } else {
