@@ -25,7 +25,7 @@ SRCFILES = INSTALL TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc 
 SRCDIRS = bitmaps
 BINFILES = golly.exe bgolly.exe
 
-CXXFLAGS = /EHsc /DVERSION=$(VERSION)
+CXXFLAGS = /EHsc /DVERSION=$(VERSION) /DZLIB /I$(WXDIR)\src\zlib
 
 WX_RELEASE_NODOT = 26
 LIBDIRNAME = $(WXDIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
@@ -321,7 +321,8 @@ golly.res: golly.rc
 	rc /fo$@  /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) $(__UNICODE_DEFINE_p_1) /i $(WXDIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS /i $(WXDIR)\samples /d NOPCH $**
 
 bgolly.exe: $(BASEOBJS)
-	$(CXX) /o bgolly.exe $(MY_CXXFLAGS) bgolly.cpp $(BASEOBJS)
+	$(CXX) /c $(MY_CXXFLAGS) bgolly.cpp
+	link /out:bgolly.exe $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) bgolly.obj $(BASEOBJS) wxzlib$(WXDEBUGFLAG).lib
 
 srcdist:
 	-rmdir /s /q $(RELEASENAME)-src

@@ -3,8 +3,6 @@ TODO:
 High priority:
 --------------
 
-T - Make readpattern handle gzip'ed files (only Windows left to do).
-
 A - Create Patterns folder for distribution [Dave Greene is doing it].
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)

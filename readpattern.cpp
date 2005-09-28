@@ -330,7 +330,7 @@ const char *loadpattern(lifealgo &imp) {
 const char *readpattern(const char *filename, lifealgo &imp) {
    filesize = getfilesize(filename);
 #ifdef ZLIB
-   zinstream = gzopen(filename, "r") ;
+   zinstream = gzopen(filename, "rb") ;
    if (zinstream == 0)
       return "Can't open pattern file!" ;
 #else
@@ -353,7 +353,7 @@ const char *readclipboard(const char *filename, lifealgo &imp,
                           bigint *t, bigint *l, bigint *b, bigint *r) {
    filesize = getfilesize(filename);
 #ifdef ZLIB
-   zinstream = gzopen(filename, "r") ;
+   zinstream = gzopen(filename, "rb") ;
    if (zinstream == 0)
       return "Can't open clipboard file!" ;
 #else
@@ -394,7 +394,7 @@ const char *readclipboard(const char *filename, lifealgo &imp,
 const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
    filesize = getfilesize(filename);
 #ifdef ZLIB
-   zinstream = gzopen(filename, "r") ;
+   zinstream = gzopen(filename, "rb") ;
    if (zinstream == 0)
       return "Can't open pattern file!" ;
 #else
