@@ -3614,28 +3614,39 @@ bool SaveStartingPattern() {
    int ileft = left.toint();
    int ibottom = bottom.toint();
    int iright = right.toint();
+   int ht = ibottom - itop + 1;
    int cx, cy;
-   double maxcount = curralgo->getPopulation().todouble();
+
+   // for showing accurate progress we need to add pattern height to pop count
+   // in case this is a huge pattern with many blank rows
+   double maxcount = curralgo->getPopulation().todouble() + ht;
+   double accumcount = 0;
    int currcount = 0;
    bool abort = false;
    BeginProgress("Saving starting pattern");
+
    for ( cy=itop; cy<=ibottom; cy++ ) {
+      currcount++;
       for ( cx=ileft; cx<=iright; cx++ ) {
          int skip = curralgo->nextcell(cx, cy);
          if (skip >= 0) {
+            // found next live cell in this row
             cx += skip;
             gen0algo->setcell(cx, cy, 1);
             currcount++;
-            if ( (currcount % 1024) == 0 ) {
-               abort = AbortProgress((double)currcount / maxcount, "");
-               if (abort) break;
-            }
          } else {
-            cx = iright;
+            cx = iright;  // done this row
+         }
+         if (currcount > 1024) {
+            accumcount += currcount;
+            currcount = 0;
+            abort = AbortProgress(accumcount / maxcount, "");
+            if (abort) break;
          }
       }
       if (abort) break;
    }
+
    gen0algo->endofpattern();
    EndProgress();
 
@@ -3876,32 +3887,40 @@ void ToggleHashing() {
       int ileft = left.toint();
       int ibottom = bottom.toint();
       int iright = right.toint();
+      int ht = ibottom - itop + 1;
       int cx, cy;
    
-      double maxcount = curralgo->getPopulation().todouble();
+      // for showing accurate progress we need to add pattern height to pop count
+      // in case this is a huge pattern with many blank rows
+      double maxcount = curralgo->getPopulation().todouble() + ht;
+      double accumcount = 0;
       int currcount = 0;
       bool abort = false;
       BeginProgress("Converting pattern");
    
       for ( cy=itop; cy<=ibottom; cy++ ) {
+         currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
             int skip = curralgo->nextcell(cx, cy);
             if (skip >= 0) {
+               // found next live cell in this row
                cx += skip;
                newalgo->setcell(cx, cy, 1);
                currcount++;
-               if ( (currcount % 1024) == 0 ) {
-                  abort = AbortProgress((double)currcount / maxcount, "");
-                  if (abort) break;
-               }
             } else {
-               cx = iright;
+               cx = iright;  // done this row
+            }
+            if (currcount > 1024) {
+               accumcount += currcount;
+               currcount = 0;
+               abort = AbortProgress(accumcount / maxcount, "");
+               if (abort) break;
             }
          }
          if (abort) break;
       }
-      newalgo->endofpattern();
       
+      newalgo->endofpattern();
       EndProgress();
    }
    

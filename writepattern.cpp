@@ -99,15 +99,16 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
       char lastchar;
       int cx, cy;
       
-      // for showing progress
-      double maxcntr = imp.getPopulation().todouble() + ht;
-      double accumprog = 0;
-      int cntr = 0;
+      // for showing accurate progress we need to add pattern height to pop count
+      // in case this is a huge pattern with many blank rows
+      double maxcount = imp.getPopulation().todouble() + ht;
+      double accumcount = 0;
+      int currcount = 0;
 
       for ( cy=top; cy<=bottom; cy++ ) {
          // set lastchar to anything except 'o' or 'b'
          lastchar = 0;
-         cntr++;
+         currcount++;
          for ( cx=left; cx<=right; cx++ ) {
             int skip = imp.nextcell(cx, cy);
             if (skip + cx > right)
@@ -126,7 +127,7 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
                }
             }
             if (skip >= 0) {
-               // found next live cell
+               // found next live cell in this row
                cx += skip;
                if (lastchar == 'o') {
                   orun++;
@@ -142,16 +143,16 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
                   lastchar = 'o';
                   orun = 1;
                }
-               cntr++;
-               if (cntr > 1024) {
-                  char msg[128];
-                  accumprog += cntr;
-                  cntr = 0;
-                  sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
-                  if (lifeabortprogress(accumprog / maxcntr, msg)) break;
-               }
+               currcount++;
             } else {
-               cx = right + 1;  // done
+               cx = right + 1;  // done this row
+            }
+            if (currcount > 1024) {
+               char msg[128];
+               accumcount += currcount;
+               currcount = 0;
+               sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
+               if (lifeabortprogress(accumcount / maxcount, msg)) break;
             }
          }
          // end of current row
