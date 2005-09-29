@@ -62,7 +62,7 @@ options options[] = {
   { "-m", "--generation", "How far to run", 'I', &maxgen },
   { "-i", "--stepsize", "Step size", 'I', &inc },
   { "-M", "--maxmemory", "Max memory to use in megabytes", 'i', &maxmem },
-//{ "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
+  { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
   { "-h", "--hashlife", "Use Hashlife algorithm", 'b', &hashlife },
@@ -89,7 +89,7 @@ void usage(const char *s) {
 #define STR2(ARG) #ARG
 int main(int argc, char *argv[]) {
    cout << 
-    "This is bgolly " STRINGIFY(VERSION) " Copyright 2005 Tomas Rokicki and Andrew Trevorrow"
+    "This is bgolly " STRINGIFY(VERSION) " Copyright 2005 The Golly Gang."
                                                             << endl << flush ;
    while (argc > 1 && argv[1][0] == '-') {
       argc-- ;
@@ -167,6 +167,8 @@ case 's':
       if (maxgen >= 0 && imp->getGeneration() >= maxgen)
          break ;
       imp->step() ;
+      if (hyper)
+         imp->setIncrement(imp->getGeneration()) ;
    }
    exit(0) ;
 }
