@@ -422,9 +422,13 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
-      // extract "#D..." lines from Life 1.05/1.06 file
-      while (line[0] == '#') {
-         if (line[1] == 'D') {
+      // extract comment lines from Life 1.05/1.06 file
+      int linecount = 0;
+      while (linecount < 10000) {
+         linecount++;
+         if (line[0] == '#' &&
+               !(line[1] == 'P' && line[2] == ' ') &&
+               !(line[1] == 'N' && line[2] == 0)) {
             int linelen = strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
             strncpy(commptr + commlen, line, linelen);
@@ -436,7 +440,7 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
       }
 
    } else if (line[0] == '#' || line[0] == 'x') {
-      // extract "#..." lines from RLE file
+      // extract comment lines from RLE file
       while (line[0] == '#') {
          int linelen = strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
