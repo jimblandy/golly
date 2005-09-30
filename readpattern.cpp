@@ -291,10 +291,9 @@ const char *loadpattern(lifealgo &imp) {
    else
       lifebeginprogress("Reading pattern file");
 
-   if (getline(line, LINESIZE) == 0) {
-      // file is probably empty, so better just to continue
-      // return "Can't read pattern file!" ;
-   } 
+   // skip any blank lines at start of file to avoid problems
+   // when copying patterns from Internet Explorer
+   while (getline(line, LINESIZE) && line[0] == 0) ;
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
@@ -415,10 +414,9 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
    if (maxbuffs < 1.0) maxbuffs = 1.0;
    lifebeginprogress("Loading comments");
 
-   if (getline(line, LINESIZE) == 0) {
-      // file is probably empty, so better just to continue
-      // return "Can't read pattern file!" ;
-   } 
+   // skip any blank lines at start of file to avoid problems
+   // when copying patterns from Internet Explorer
+   while (getline(line, LINESIZE) && line[0] == 0) ;
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
