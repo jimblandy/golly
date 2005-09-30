@@ -470,7 +470,18 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
       }
 
    } else if (line[0] == '[') {
-      // extract "#C..." lines from macrocell file??? check with Tom!!!
+      // extract "#C..." lines from macrocell file
+      while (getline(line, LINESIZE)) {
+         if (line[0] != '#') break;
+         if (line[1] == 'C') {
+            int linelen = strlen(line);
+            if (commlen + linelen + 1 > maxcommlen) break;
+            strncpy(commptr + commlen, line, linelen);
+            commlen += linelen;
+            commptr[commlen] = '\n';         // getline strips off eol char(s)
+            commlen++;
+         }
+      }
 
    } else {
       // no comments in text pattern file???
