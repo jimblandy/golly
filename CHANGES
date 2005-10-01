@@ -1,5 +1,6 @@
-Changes in version 0.9 (released September 2005)
+Changes in version 0.9 (released October 2005)
 
+AKT: Ignore blank lines at start of pattern file (eg. copying from IE).
 TGR: Windows app can now read .gz files.
 TGR: Implemented saving pattern as macrocell file.
 AKT: Can now display comments in pattern files.
