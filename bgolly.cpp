@@ -108,7 +108,7 @@ void usage(const char *s) {
 void writepat(int fc) {
    char *thisfilename = outfilename ;
    char tmpfilename[256] ;
-   if (fc > 0) {
+   if (fc >= 0) {
       strcpy(tmpfilename, outfilename) ;
       char *p = tmpfilename + numberoffset ;
       *p++ = '-' ;
@@ -198,13 +198,10 @@ case 's':
          outputgzip = 1 ;
 #endif
       } else {
-#ifdef ZLIB
-         lifefatal(
-               "Output filename must end with .rle, .mc, .rle.gz, or .mc.gz") ;
-#else
          lifefatal("Output filename must end with .rle or .mc.") ;
-#endif
       }
+      if (outputgzip)
+         lifefatal("Gzipped output files not supported yet") ;
       if (outputismc && !hashlife)
          lifefatal("Cannot write MC files if not using hash") ;
       if (strlen(outfilename) > 200)
@@ -250,11 +247,11 @@ case 's':
       }
       imp->step() ;
       if (maxgen < 0 && outfilename != 0)
-         writepat(++fc) ;
+         writepat(fc++) ;
       if (hyper)
          imp->setIncrement(imp->getGeneration()) ;
    }
    if (maxgen >= 0 && outfilename != 0)
-      writepat(0) ;
+      writepat(-1) ;
    exit(0) ;
 }
