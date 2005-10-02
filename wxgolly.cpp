@@ -4287,9 +4287,10 @@ void ShowPatternInfo() {
       return;
    }
 
-   // create a 32K buffer for receiving comment data
+   // create a 128K buffer for receiving comment data (big enough
+   // for the comments in Dean Hickerson's stamp collection)
    char *commptr;
-   const int maxcommsize = 32 * 1024;
+   const int maxcommsize = 128 * 1024;
    commptr = (char *)malloc(maxcommsize);
    if (commptr == NULL) {
       ErrorMessage("Not enough memory for comments!");

@@ -36,9 +36,16 @@ A - Split up wxgolly.cpp into smaller modules:
 
 A - Tidy up wx code (follow http://www.wxwidgets.org/standard.htm?).
 
-A - Add an "Open Recent" submenu in File menu to keep track of up to 50(?)
+A - Add an "Open Recent" submenu in File menu to keep track of up to 20(?)
     most recently loaded pattern files.  Just display full paths?
     Use wxArrayString to store and manipulate the paths.
+
+A - Create a scrollable navigation panel to view contents of a selected
+    folder (initially Patterns) so users can load patterns easily.
+    
+A - Provide some way to open current pattern file in user's text editor.
+    Maybe just an "Edit Pattern" item in File menu?  And/or option-click
+    on pattern in navigation panel?
 
 A - Add a pop-up menu with named rules to rule dialog.
 
