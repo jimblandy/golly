@@ -115,6 +115,7 @@ public:
    int even() const ;
    int odd() const ;
    int low31() const ; // return the low 31 bits quickly
+   int lowbitset() const ; // return the index of the lowest set bit
    const char *tostring() const ;
    int sign() const ;
    // note: a should be a small positive int, say 1..10,000

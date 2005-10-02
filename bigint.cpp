@@ -643,6 +643,28 @@ int bigint::bitsreq() const {
    return v.p[0] * 31 ;
 }
 /**
+ *   Find the lowest bit set.
+ */
+int bigint::lowbitset() const {
+   int r = 0 ;
+   if (v.i & 1) {
+      if (v.i == 1)
+         return -1 ;
+      for (int i=1; i<32; i++)
+         if ((v.i >> i) & 1)
+            return i-1 ;
+   }
+   int o = 0 ;
+   while (v.p[o] == 0) {
+      o++ ;
+      r += 31 ;
+   }
+   for (int i=0; i<32; i++)
+      if ((v.p[o] >> i) & 1)
+         return i + r ;
+   return -1 ;
+}
+/**
  *   Fill a character array with the bits.  Top one is always
  *   the sign bit.
  */
