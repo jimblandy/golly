@@ -40,7 +40,11 @@ bgolly: $(OBJ) bgolly.o
 srcdist:
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
-	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
+	mkdir $(RELEASENAME)-src/src
+	mkdir $(RELEASENAME)-src/patterns
+	mkdir $(RELEASENAME)-src/patterns/Patterns
+	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src/src
+	cp -rp ../patterns/Patterns $(RELEASENAME)-src/patterns
 	find $(RELEASENAME)-src -name CVS | xargs rm -rf
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
@@ -48,5 +52,6 @@ bindist: all
 	-rm -rf $(RELEASENAME)-linux
 	mkdir $(RELEASENAME)-linux
 	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-linux
+	cp -rp ../patterns/Patterns $(RELEASENAME)-linux
 	find $(RELEASENAME)-linux -name CVS | xargs rm -rf
 	tar -cf - ./$(RELEASENAME)-linux | gzip > $(RELEASENAME)-linux.tar.gz
