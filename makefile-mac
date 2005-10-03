@@ -146,9 +146,9 @@ srcdist:
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
 bindist: all
-	-rm -rf $(RELEASENAME)-linux
-	mkdir $(RELEASENAME)-linux
-	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-linux
-	cp -rp ../patterns/Patterns $(RELEASENAME)-linux
-	find $(RELEASENAME)-linux -name CVS | xargs rm -rf
-	tar -cf - ./$(RELEASENAME)-linux | gzip > $(RELEASENAME)-linux.tar.gz
+	-rm -rf $(RELEASENAME)-mac
+	mkdir $(RELEASENAME)-mac
+	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
+	cp -rp ../patterns/Patterns $(RELEASENAME)-mac
+	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
+	tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz
