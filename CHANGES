@@ -1,3 +1,7 @@
+Changes in version 0.91
+
+TGR: Fixed bug in hlifealgo when +/- pressed while scanning hash.
+
 Changes in version 0.9 (released October 2005)
 
 AKT: Ignore blank lines at start of pattern file (eg. copying from IE).

@@ -7,7 +7,7 @@
 # sudo make install
 # ldconfig (if using Linux)
 
-VERSION = 0.9
+VERSION = 0.91
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = Help README LICENSE
 SRCFILES = INSTALL TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \

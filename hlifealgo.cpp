@@ -567,9 +567,14 @@ void hlifealgo::setIncrement(bigint inc) {
  */
 void hlifealgo::step() {
    poller->bailIfCalculating() ;
-   if (increment != setincrement) {
+   // we use while here because the increment may be changed while we are
+   // doing the hashtable sweep; if that happens, we may need to sweep
+   // again.
+   int cleareddownto = 1000000000 ;
+   while (increment != setincrement) {
+      bigint pendingincrement = increment ;
       int newpow2 = 0 ;
-      bigint t = increment ;
+      bigint t = pendingincrement ;
       while (t > 0 && t.even()) {
          newpow2++ ;
          t.div2() ;
@@ -577,9 +582,14 @@ void hlifealgo::step() {
       nonpow2 = t.low31() ;
       if (t != nonpow2)
          lifefatal("bad increment") ;
-      if (newpow2 != ngens)
+      int downto = newpow2 ;
+      if (ngens < newpow2)
+	 downto = ngens ;
+      if (newpow2 != ngens && cleareddownto > downto) {
          new_ngens(newpow2) ;
-      setincrement = increment ;
+	 cleareddownto = downto ;
+      }
+      setincrement = pendingincrement ;
       pow2step = 1 ;
       while (newpow2--)
          pow2step += pow2step ;
