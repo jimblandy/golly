@@ -3,34 +3,6 @@ TODO:
 High priority:
 --------------
 
-A - Create Patterns folder for distribution [Dave Greene is doing it].
-
-A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
-    and display suitable message in status bar.
-
-B - Finish 1D rule support.  Basically works except for qlife display being
-    upside down (so just alter rule0 table in qlifealgo::setrule?).
-    Prevent odd-numbered W rules (only feasible in toroidal universe).
-
-B - Add more info to INSTALL file (and rename to BUILD?):
-    - how to install wxWidgets, esp on Windows (point to wxWiki page)
-    - briefly describe each module
-    - list steps needed to add a new life algo (eg. toroidal universe)
-    - describe batch version
-
-B - Add a "built with wxWidgets" logo+link (see www.wxwidgets.org/develop2.htm)
-    to Golly's web site.
-
-For future versions:
---------------------
-
-T - Improve batchmode.
-
-B - Requested by Nick Gotts: Need a way to see the exact number of generations,
-    population size, and mouse coordinates (and copy them to clipboard?).
-    Simplest soln might be to hit some special key like "?" and above info
-    would appear in a scrollable text dialog for viewing/copying.
-
 A - Split up wxgolly.cpp into smaller modules:
     wxmain, wxstatus, wxfile, wxedit, wxcontrol, wxview, wxhelp, wxprefs, etc.
 
@@ -42,12 +14,36 @@ A - Add an "Open Recent" submenu in File menu to keep track of up to 20(?)
 
 A - Create a scrollable navigation panel to view contents of a selected
     folder (initially Patterns) so users can load patterns easily.
+
+A - Add a pop-up menu with named rules to rule dialog.
+
+A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
+    and display suitable message in status bar.
+
+B - Finish 1D rule support.  Basically works except for qlife display being
+    upside down (so just alter rule0 table in qlifealgo::setrule?).
+    Also prevent odd-numbered W rules (only feasible in toroidal universe).
+    Decide how to store 1D rule in RLE file -- time for #RLE+ extensions?!
+
+B - Add more info to INSTALL file (and rename to BUILD?):
+    - how to install wxWidgets, esp on Windows (point to wxWiki page)
+    - briefly describe each module
+    - list steps needed to add a new life algo (eg. toroidal universe)
+    - describe batch version
+
+For future versions:
+--------------------
+
+T - Improve batchmode.
+
+B - Requested by Nick Gotts: Need a way to see the exact number of generations,
+    population size, and mouse coordinates (and copy them to clipboard?).
+    Simplest soln might be to hit some special key like "?" and above info
+    would appear in a scrollable text dialog for viewing/copying.
     
 A - Provide some way to open current pattern file in user's text editor.
     Maybe just an "Edit Pattern" item in File menu?  And/or option-click
     on pattern in navigation panel?
-
-A - Add a pop-up menu with named rules to rule dialog.
 
 A - Try to answer/resolve all "???" and "!!!" comments in source files.
 
@@ -100,3 +96,34 @@ A - Check if wx can support vbr synchronization when buffering.
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
 
 - Add isolated glider deletion as an option -- why bother???
+
+User suggestions:
+-----------------
+
+[Paul Chapman]
+- Allow grid display for zoom level 1:4.
+- Combine the start and stop toolbar buttons into a single toggle.
+- Add commas to separate the 000s in the pop and gen counts.
+
+[Gabriel Nivasch]
+- The shortest delay should be much shorter than 0.25s; maybe 0.01s.
+- Finer control of the running speed; ie. allow step inc of 2.
+
+[Jason Summers]
+- Reset shouldn't do a Fit or, at least, there ought to be some way to
+  go to generation 0 without changing the viewport or anything else.
+- The "move" cursor should be an open hand.
+- "Open Pattern" and "New Pattern" should remove any existing selection.
+- More available zoom scales would be nice, e.g. 1:3 and 1:6.
+- Shrink the scrollbar thumbs and/or increase their scroll rate, to allow
+  scrolling more than 1 screenful at a time.
+- Need faster way to select cursor modes; eg. use F5 to F8.
+- For better viewing of patterns that move, have a way to, while animating,
+  automatically move the viewport X cells horizontally and Y cells vertically
+  every Z generation.
+- Display a ghost image when pasting pattern.
+- Diagonal selection rectangles.
+- Modify the source code to better support Visual C++ 6.
+
+[Stephen Silver]
+- Add a "Fit Selection" command in the View menu.
