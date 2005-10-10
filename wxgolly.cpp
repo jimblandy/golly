@@ -1136,12 +1136,13 @@ wxUint16 Magnify2[256];
 void InitMagnifyTable() {
    int inttest = 1;
    unsigned char *p = (unsigned char *)&inttest;
-   for (int i=0; i<8; i++)
+   int i;
+   for (i=0; i<8; i++)
       if (*p)
          Magnify2[1<<i] = 3 << (2 * i);
       else
          Magnify2[1<<i] = 3 << (2 * (i ^ 4));
-   for (int i=0; i<256; i++)
+   for (i=0; i<256; i++)
       if (i & (i-1))
          Magnify2[i] = Magnify2[i & (i-1)] + Magnify2[i & - i];
 }
@@ -1930,10 +1931,10 @@ void SetAppDirectory(const char *argv0) {
       wxString currdir = wxGetCwd();
       if ( currdir.CmpNoCase(appdir) != 0 )
          wxSetWorkingDirectory(appdir);
-   #elif __WXMAC__
+   #elif defined(__WXMAC__)
       // wxMac has set current directory to location of .app bundle so no need
       // to do anything; note that wxGetCwd() returns empty string
-   #elif __UNIX__
+   #elif defined(__UNIX__)
       // user might have started app from a different directory so find
       // last "/" in argv0 and change cwd if "/" isn't part of "./" prefix
       unsigned int pos = strlen(argv0);
@@ -2457,11 +2458,20 @@ void CreateX11Clipboard(char *textptr, size_t textlen) {
 
 const unsigned int maxrleline = 70;    // max line length for RLE data
 
-#ifdef __WXMAC__
-   const char EOL = '\r';              // nicer for stupid apps like LifeLab :)
-#else
-   const char EOL = '\n';
-#endif
+void AppendEOL (char **chptr) {
+   #ifdef __WXMAC__
+      **chptr = '\r';      // nicer for stupid apps like LifeLab :)
+      *chptr += 1;
+   #elif defined(__WXMSW__)
+      **chptr = '\r';
+      *chptr += 1;
+      **chptr = '\n';
+      *chptr += 1;
+   #else
+      **chptr = '\n';
+      *chptr += 1;
+   #endif
+}
 
 void AddRun (char ch,
              unsigned int *run,        // in and out
@@ -2481,8 +2491,7 @@ void AddRun (char ch,
    }
    // keep linelen <= maxrleline
    if ( *linelen + numlen + 1 > maxrleline ) {
-      **chptr = EOL;
-      *chptr += 1;
+      AppendEOL(chptr);
       *linelen = 0;
    }
    i = 0;
@@ -2524,9 +2533,10 @@ void CopyToClipboard(bool cut) {
    etextptr = textptr + cursize;
 
    // add RLE header line
-   sprintf(textptr, "x = %u, y = %u, rule = %s%c", wd, ht, curralgo->getrule(), EOL);
+   sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, curralgo->getrule());
    char *chptr = textptr;
    chptr += strlen(textptr);
+   AppendEOL(&chptr);
    // save start of data in case livecount is zero
    int datastart = chptr - textptr;
    
@@ -2638,8 +2648,7 @@ void CopyToClipboard(bool cut) {
          savestart = true;
       }
    }
-   *chptr = EOL;
-   chptr++;
+   AppendEOL(&chptr);
    *chptr = 0;
    
    EndProgress();
@@ -3786,7 +3795,7 @@ void DisplayTimingInfo() {
 
 void NextGeneration(bool useinc) {
    if (generating || drawingcells || waitingforclick) {
-      // don't play sound here because it'll be heard if user holds down space/tab key
+      // don't play sound here because it'll be heard if user holds down tab key
       // wxBell();
       return;
    }
@@ -4639,8 +4648,8 @@ void ProcessKey(int key) {
          FitPattern();
          break;
 
-      case WXK_HOME:
       case 'm':
+      case WXK_HOME:
          ViewMiddle();
          break;
 
@@ -4681,10 +4690,11 @@ void ProcessKey(int key) {
          break;
 
       case 'g':
+      case WXK_RETURN:           // not generating -- see PatternView::OnChar
          GeneratePattern();
          break;
 
-      case ' ':
+      case ' ':                  // not generating -- see PatternView::OnChar
          NextGeneration(false);  // do only 1 gen
          break;
 
@@ -5133,7 +5143,8 @@ void PatternView::OnKeyUp(wxKeyEvent& event) {
 void PatternView::OnChar(wxKeyEvent& event) {
    int key = event.GetKeyCode();
    ClearMessage();
-   if ( generating && (key == WXK_ESCAPE || key == '.') ) {
+   if ( generating &&
+         (key == WXK_ESCAPE || key == WXK_RETURN || key == '.' || key == ' ') ) {
       StopGenerating();
       return;
    }
@@ -5665,7 +5676,7 @@ MainFrame::MainFrame()
    #ifdef __WXMAC__
       // this results in a tool bar that is 32 pixels wide (matches STATUS_HT)
       toolBar->SetMargins(4, 8);
-   #elif __WXMSW__
+   #elif defined(__WXMSW__)
       // Windows seems to ignore *any* margins!!!
       toolBar->SetMargins(0, 0);
    #else
