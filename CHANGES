@@ -1,5 +1,8 @@
-Changes in version 0.91
+Changes in version 0.91 (released October 2005)
 
+AKT: Return key can be used to start/stop generating.
+AKT: Space bar can be used to stop generating.
+AKT: Win app puts CR+LF in clipboard data.
 TGR: Fixed bug in hlifealgo when +/- pressed while scanning hash.
 
 Changes in version 0.9 (released October 2005)
