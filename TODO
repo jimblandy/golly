@@ -95,8 +95,6 @@ A - Check if wx can support vbr synchronization when buffering.
 
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
 
-- Add isolated glider deletion as an option -- why bother???
-
 User suggestions:
 -----------------
 
@@ -127,3 +125,14 @@ User suggestions:
 
 [Stephen Silver]
 - Add a "Fit Selection" command in the View menu.
+
+[Dave Greene]
+- Delete key should be shortcut to clear a selection.
+- When extending selection, draw arrows to indicate which edges will move.
+  And/or allow escape key to cancel change and restore original selection.
+- Allow isolated glider deletion as an option, or make it easy to do
+  manually via a "Clear Outside" menu item (with shift-delete as shortcut).
+- Allow shrinking a selection to the bounding box of it's live cells.
+- Animate just the selection, or everything outside the selection.
+  Use LifeLab's method: shift-space and control-space.
+- Support a split-screen view of the universe.
