@@ -340,6 +340,7 @@ enum {
    ID_HELP_INTRO,
    ID_HELP_TIPS,
    ID_HELP_SHORTCUTS,
+   ID_HELP_LEXICON,
    ID_HELP_FILE,
    ID_HELP_EDIT,
    ID_HELP_CONTROL,
@@ -2441,24 +2442,40 @@ void ClearSelection() {
    RefreshPatternAndStatus();
 }
 
-#ifdef __WXX11__
-// no global clipboard support on X11 so we save data in a file
-void CreateX11Clipboard(char *textptr, size_t textlen) {
-   wxFile tmpfile(clipfile, wxFile::write);
-   if ( tmpfile.IsOpened() ) {
-      if ( tmpfile.Write( textptr, textlen ) < textlen ) {
-         Warning("Could not write all data to clipboard file!");
+bool CopyTextToClipboard(wxString &text) {
+   bool result = true;
+   #ifdef __WXX11__
+      // no global clipboard support on X11 so we save data in a file
+      wxFile tmpfile(clipfile, wxFile::write);
+      if ( tmpfile.IsOpened() ) {
+         size_t textlen = text.Length();
+         if ( tmpfile.Write( text.c_str(), textlen ) < textlen ) {
+            Warning("Could not write all data to clipboard file!");
+            result = false;
+         }
+         tmpfile.Close();
+      } else {
+         Warning("Could not create clipboard file!");
+         result = false;
       }
-      tmpfile.Close();
-   } else {
-      Warning("Could not create clipboard file!");
-   }
+   #else
+      if (wxTheClipboard->Open()) {
+         if ( !wxTheClipboard->SetData(new wxTextDataObject(text)) ) {
+            Warning("Could not copy text to clipboard!");
+            result = false;
+         }
+         wxTheClipboard->Close();
+      } else {
+         Warning("Could not open clipboard!");
+         result = false;
+      }
+   #endif
+   return result;
 }
-#endif
 
 const unsigned int maxrleline = 70;    // max line length for RLE data
 
-void AppendEOL (char **chptr) {
+void AppendEOL(char **chptr) {
    #ifdef __WXMAC__
       **chptr = '\r';      // nicer for stupid apps like LifeLab :)
       *chptr += 1;
@@ -2467,7 +2484,7 @@ void AppendEOL (char **chptr) {
       *chptr += 1;
       **chptr = '\n';
       *chptr += 1;
-   #else
+   #else // assume Unix
       **chptr = '\n';
       *chptr += 1;
    #endif
@@ -2506,7 +2523,7 @@ void AddRun (char ch,
    *run = 0;                           // reset run count
 }
 
-void CopyToClipboard(bool cut) {
+void CopySelectionToClipboard(bool cut) {
    // can only use getcell/setcell in limited domain
    if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
       ErrorMessage(selection_too_big);
@@ -2656,32 +2673,19 @@ void CopyToClipboard(bool cut) {
    if (cut && livecount > 0)
       RefreshPatternAndStatus();
    
-   // copy text to clipboard
-   #ifdef __WXX11__
-      CreateX11Clipboard(textptr, strlen(textptr));
-   #else
-      if (wxTheClipboard->Open()) {
-         if ( !wxTheClipboard->SetData(new wxTextDataObject(textptr)) ) {
-            ErrorMessage("Could not copy selection to clipboard!");
-         }
-         wxTheClipboard->Close();
-      } else {
-         ErrorMessage("Could not open clipboard!");
-      }
-   #endif
-   
-   // tidy up
+   wxString text(textptr);
+   CopyTextToClipboard(text);
    free(textptr);
 }
 
 void CutSelection() {
    if (generating || !SelectionExists()) return;
-   CopyToClipboard(true);
+   CopySelectionToClipboard(true);
 }
 
 void CopySelection() {
    if (generating || !SelectionExists()) return;
-   CopyToClipboard(false);
+   CopySelectionToClipboard(false);
 }
 
 void EnableAllMenus(bool enable) {
@@ -4219,7 +4223,6 @@ void TextView::OnChar(wxKeyEvent& event) {
 void TextView::OnSetFocus(wxFocusEvent& WXUNUSED(event)) {
    #ifdef __WXMAC__
       // wxMac prob: remove focus ring around read-only textctrl???!!!
-      //!!! infopanel->SetFocus();
    #endif
 }
 
@@ -4514,6 +4517,59 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
    helpptr = NULL;
 }
 
+void AddEOL(wxString &str) {
+   // append eol char(s) to given string
+   #ifdef __WXMAC__
+      str += '\r';
+   #elif defined(__WXMSW__)
+      str += '\r';
+      str += '\n';
+   #else // assume Unix
+      str += '\n';
+   #endif
+}
+
+void LoadLexiconPattern(const wxHtmlCell *htmlcell) {
+   if (generating) {
+      Warning("Another pattern is currently generating.");
+      return;
+   }
+   if (htmlcell) {
+      wxHtmlContainerCell *parent = htmlcell->GetParent();
+      if (parent) {
+         parent = parent->GetParent();
+         if (parent) {
+            wxHtmlCell *container = parent->GetFirstChild();
+            wxString textpict;
+            while (container) {
+               wxHtmlCell *cell = container->GetFirstChild();
+               while (cell) {
+                  wxString celltext = cell->ConvertToText(NULL);
+                  if (celltext.IsEmpty()) {
+                     // probably a formatting cell
+                  } else {
+                     textpict += celltext;
+                     AddEOL(textpict);
+                  }
+                  cell = cell->GetNext();
+               }
+               container = container->GetNext();
+            }
+            if (!textpict.IsEmpty() && CopyTextToClipboard(textpict)) {
+               frameptr->Raise();
+               #ifdef __WXX11__
+                  frameptr->SetFocus();    // activate window
+               #endif
+               // need to process pending events to update window
+               // and to update clipboard on Windows
+               while (wxGetApp().Pending()) wxGetApp().Dispatch();
+               OpenClipboard();
+            }
+         }
+      }
+   }
+}
+
 void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link) {
    wxString url = link.GetHref();
    if ( url.StartsWith("http:") || url.StartsWith("mailto:") ) {
@@ -4527,6 +4583,9 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link) {
          if ( !wxLaunchDefaultBrowser(url) )
             Warning("Could not launch browser!");
       #endif
+   } else if ( url.StartsWith("lexpatt:") ) {
+      // user clicked on pattern in Life Lexicon
+      LoadLexiconPattern( link.GetHtmlCell() );
    } else {
       // assume it's a link to a local target or another help file
       LoadPage(url);
@@ -4543,18 +4602,27 @@ void HtmlView::OnChar(wxKeyEvent& event) {
          // copy any selected text to the clipboard
          wxString text = SelectionToText();
          if ( text.Length() > 0 ) {
-            #ifdef __WXX11__
-               CreateX11Clipboard( (char *)text.c_str(), text.Length() );
-            #else
-               if ( wxTheClipboard->Open() ) {
-                  if ( !wxTheClipboard->SetData(new wxTextDataObject(text)) ) {
-                     Warning("Could not copy selected text to clipboard!");
+            if ( helpptr && helpptr->IsActive() &&
+                 GetOpenedPageTitle().StartsWith("Life Lexicon") ) {
+               // fix wxHTML bug when copying text inside <pre>...</pre>!!!
+               // if there are at least 2 lines and the 1st line is twice
+               // the size of the 2nd line then insert \n in middle of 1st line
+               if ( text.Freq('\n') > 0 ) {
+                  wxString line1 = text.BeforeFirst('\n');
+                  wxString aftern = text.AfterFirst('\n');
+                  wxString line2 = aftern.BeforeFirst('\n');
+                  size_t line1len = line1.Length();
+                  size_t line2len = line2.Length();
+                  if ( line1len == 2 * line2len ) {
+                     wxString left = text.Left(line2len);
+                     wxString right = text.Mid(line2len);
+                     text = left;
+                     text += '\n';
+                     text += right;
                   }
-                  wxTheClipboard->Close();
-               } else {
-                  Warning("Could not open clipboard!");
                }
-            #endif
+            }
+            CopyTextToClipboard(text);
          }
       } else {
          event.Skip();
@@ -4888,6 +4956,7 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_HELP_INTRO:     ShowHelp("Help/intro.html"); break;
       case ID_HELP_TIPS:      ShowHelp("Help/tips.html"); break;
       case ID_HELP_SHORTCUTS: ShowHelp("Help/shortcuts.html"); break;
+      case ID_HELP_LEXICON:   ShowHelp("Help/Lexicon/lex.htm"); break;
       case ID_HELP_FILE:      ShowHelp("Help/file.html"); break;
       case ID_HELP_EDIT:      ShowHelp("Help/edit.html"); break;
       case ID_HELP_CONTROL:   ShowHelp("Help/control.html"); break;
@@ -5630,6 +5699,7 @@ MainFrame::MainFrame()
    helpMenu->Append(ID_HELP_INTRO, _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS, _("Hints and Tips"));
    helpMenu->Append(ID_HELP_SHORTCUTS, _("Shortcuts"));
+   helpMenu->Append(ID_HELP_LEXICON, _("Life Lexicon"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_FILE, _("File Menu"));
    helpMenu->Append(ID_HELP_EDIT, _("Edit Menu"));
