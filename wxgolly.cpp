@@ -224,7 +224,12 @@ public:
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
 
 private:
-   void OnChar(wxKeyEvent& event);
+   #ifdef __WXMSW__
+      // see HtmlView::OnKeyUp for why we do this
+      void OnKeyUp(wxKeyEvent& event);
+   #else
+      void OnKeyDown(wxKeyEvent& event);
+   #endif
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -255,7 +260,7 @@ public:
       : wxTextCtrl(parent, id, value, pos, size, style) { }
 
 private:
-   void OnChar(wxKeyEvent& event);
+   void OnKeyDown(wxKeyEvent& event);
    void OnSetFocus(wxFocusEvent& event);
 
    // any class wishing to process wxWidgets events must use this macro
@@ -1932,6 +1937,8 @@ void SetAppDirectory(const char *argv0) {
       wxString currdir = wxGetCwd();
       if ( currdir.CmpNoCase(appdir) != 0 )
          wxSetWorkingDirectory(appdir);
+      // avoid VC++ warning
+      if (argv0) currdir = wxEmptyString;
    #elif defined(__WXMAC__)
       // wxMac has set current directory to location of .app bundle so no need
       // to do anything; note that wxGetCwd() returns empty string
@@ -4201,18 +4208,18 @@ BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
-   EVT_CHAR       (TextView::OnChar)
+   EVT_KEY_DOWN   (TextView::OnKeyDown)
    EVT_SET_FOCUS  (TextView::OnSetFocus)
 END_EVENT_TABLE()
 
-void TextView::OnChar(wxKeyEvent& event) {
+void TextView::OnKeyDown(wxKeyEvent& event) {
    int key = event.GetKeyCode();
    if ( event.CmdDown() || event.AltDown() ) {
       // let default handler see things like cmd-C 
       event.Skip();
    } else {
       // let escape/return/enter key close info window
-      if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER) {
+      if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ) {
          infoptr->Close(true);
       } else {
          event.Skip();
@@ -4349,7 +4356,12 @@ BEGIN_EVENT_TABLE(HelpFrame, wxFrame)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
-   EVT_CHAR       (HtmlView::OnChar)
+#ifdef __WXMSW__
+   // see HtmlView::OnKeyUp for why we do this
+   EVT_KEY_UP     (HtmlView::OnKeyUp)
+#else
+   EVT_KEY_DOWN   (HtmlView::OnKeyDown)
+#endif
 END_EVENT_TABLE()
 
 wxButton *backbutt;        // back button
@@ -4438,7 +4450,7 @@ void UpdateHelpButtons() {
       // resizing also resets pos to top so restore using ypos saved above
       if (ypos > 0) htmlwin->Scroll(-1, ypos);
    #endif
-   htmlwin->SetFocus();          // for keyboard shortcuts in HtmlView::OnChar
+   htmlwin->SetFocus();          // for keyboard shortcuts
 }
 
 void ShowHelp(const char *helpname) {
@@ -4450,7 +4462,7 @@ void ShowHelp(const char *helpname) {
       helpptr->Raise();
       #ifdef __WXX11__
          helpptr->SetFocus();    // activate window
-         htmlwin->SetFocus();    // for keyboard shortcuts in HtmlView::OnChar
+         htmlwin->SetFocus();    // for keyboard shortcuts
       #endif
    } else {
       helpptr = new HelpFrame();
@@ -4595,16 +4607,25 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link) {
    }
 }
 
-void HtmlView::OnChar(wxKeyEvent& event) {
+#ifdef __WXMSW__
+// we have to use OnKeyUp handler on Windows otherwise wxHtmlWindow's OnKeyUp
+// gets called which detects ctrl-C and clobbers our clipboard fix
+void HtmlView::OnKeyUp(wxKeyEvent& event)
+#else
+// we have to use OnKeyDown handler on Mac -- if OnKeyUp handler is used and
+// cmd-C is pressed quickly then key code is 400!!!
+void HtmlView::OnKeyDown(wxKeyEvent& event)
+#endif
+{
    int key = event.GetKeyCode();
    if ( event.CmdDown() || event.AltDown() ) {
-      if (key == 'c') {
+      if ( key == 'C' ) {
          // copy any selected text to the clipboard
          wxString text = SelectionToText();
          if ( text.Length() > 0 ) {
             if ( helpptr && helpptr->IsActive() &&
                  GetOpenedPageTitle().StartsWith("Life Lexicon") ) {
-               // fix wxHTML bug when copying text inside <pre>...</pre>!!!
+               // avoid wxHTML bug when copying text inside <pre>...</pre>!!!
                // if there are at least 2 lines and the 1st line is twice
                // the size of the 2nd line then insert \n in middle of 1st line
                if ( text.Freq('\n') > 0 ) {
@@ -4633,7 +4654,8 @@ void HtmlView::OnChar(wxKeyEvent& event) {
          event.Skip();
          return;
       }
-      if ( key == WXK_ESCAPE || key == WXK_RETURN ) {
+      // let escape/return/enter key close help window
+      if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ) {
          helpptr->Close(true);
       } else if ( key == WXK_HOME ) {
          ShowHelp("Help/index.html");
@@ -4799,7 +4821,7 @@ void ProcessKey(int key) {
             helpptr->Raise();
             #ifdef __WXX11__
                helpptr->SetFocus();    // activate window
-               htmlwin->SetFocus();    // for keyboard shortcuts in HtmlView::OnChar
+               htmlwin->SetFocus();    // for keyboard shortcuts
             #endif
          } else {
             ShowHelp(currhelp);
