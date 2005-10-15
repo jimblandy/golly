@@ -269,7 +269,7 @@ private:
 
 // -----------------------------------------------------------------------------
 
-#define MAX_RECENT (20)    // maximum number of recent files
+#define MAX_RECENT (100)    // maximum value of maxrecent
 
 // IDs for controls and menu commands (other than standard wxID_* commands)
 enum {
@@ -519,6 +519,7 @@ wxString opensavedir;         // directory for open and save dialogs
 // recent patterns
 wxMenu *recentSubMenu;        // menu of recent files
 int numrecent = 0;            // current number of recent files
+int maxrecent = 20;           // maximum number of recent files (1..MAX_RECENT)
 
 // location of pattern collection (relative to app)
 const char pattdir[] = "Patterns";
@@ -660,6 +661,7 @@ void SavePrefs() {
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
+   fprintf(f, "max_recent=%d (1..%d)\n", maxrecent, MAX_RECENT);
    if (numrecent > 0) {
       int i;
       for (i=0; i<numrecent; i++) {
@@ -791,11 +793,17 @@ void GetPrefs() {
                // reset to pattern directory
                opensavedir = pattdir;
             }
+         } else if (strcmp(keyword, "max_recent") == 0) {
+            sscanf(value, "%d", &maxrecent);
+            if (maxrecent < 1) maxrecent = 1;
+            if (maxrecent > MAX_RECENT) maxrecent = MAX_RECENT;
          } else if (strcmp(keyword, "recent_file") == 0) {
             wxString path = value;
             path.RemoveLast();  // remove \n
-            numrecent++;
-            recentSubMenu->Insert(numrecent - 1, ID_RECENT + numrecent, path);
+            if (numrecent < maxrecent) {
+               numrecent++;
+               recentSubMenu->Insert(numrecent - 1, ID_RECENT + numrecent, path);
+            }
          }
       }
       fclose(f);
@@ -2211,16 +2219,16 @@ void AddRecentFile() {
    wxString path = currfile;
    int id = recentSubMenu->FindItem(path);
    if ( id == wxNOT_FOUND ) {
-      if ( numrecent < MAX_RECENT ) {
+      if ( numrecent < maxrecent ) {
          // add new path
          numrecent++;
          id = ID_RECENT + numrecent;
          recentSubMenu->Insert(numrecent - 1, id, path);
       } else {
          // replace last item with new path
-         wxMenuItem *item = recentSubMenu->FindItemByPosition(MAX_RECENT - 1);
+         wxMenuItem *item = recentSubMenu->FindItemByPosition(maxrecent - 1);
          item->SetText(path);
-         id = ID_RECENT + MAX_RECENT;
+         id = ID_RECENT + maxrecent;
       }
    }
    // path exists in recentSubMenu 
