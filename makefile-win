@@ -16,7 +16,7 @@
 WXDIR = \wxWidgets-2.6.1
 
 ### Variables: ###
-VERSION = 0.91
+VERSION = 0.92
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help

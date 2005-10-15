@@ -269,6 +269,8 @@ private:
 
 // -----------------------------------------------------------------------------
 
+#define MAX_RECENT (20)    // maximum number of recent files
+
 // IDs for controls and menu commands (other than standard wxID_* commands)
 enum {
    // timers
@@ -282,7 +284,11 @@ enum {
    // wxID_CLOSE,
 
    // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE)
-   ID_OPENCLIP,
+   ID_OPEN_CLIP,
+   ID_RECENT,
+   
+   // last item in Open Recent submenu
+   ID_RECENT_CLEAR = ID_RECENT + MAX_RECENT + 1,
    
    // Edit menu
    ID_CUT,
@@ -510,6 +516,10 @@ char currfile[4096];          // full path of current pattern file
 char currname[256];           // file name displayed in main window title
 wxString opensavedir;         // directory for open and save dialogs
 
+// recent patterns
+wxMenu *recentSubMenu;        // menu of recent files
+int numrecent = 0;            // current number of recent files
+
 // location of pattern collection (relative to app)
 const char pattdir[] = "Patterns";
 
@@ -650,6 +660,13 @@ void SavePrefs() {
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
+   if (numrecent > 0) {
+      int i;
+      for (i=0; i<numrecent; i++) {
+         wxMenuItem *item = recentSubMenu->FindItemByPosition(i);
+         if (item) fprintf(f, "recent_file=%s\n", item->GetText().c_str());
+      }
+   }
    fclose(f);
 }
 
@@ -684,6 +701,10 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht) {
 }
 
 void GetPrefs() {
+   recentSubMenu = new wxMenu();
+   recentSubMenu->AppendSeparator();
+   recentSubMenu->Append(ID_RECENT_CLEAR, _("Clear Menu"));
+   
    if ( wxFileExists(prefsname) ) {
       FILE *f = fopen(prefsname, "r");
       if (f == 0) {
@@ -770,6 +791,11 @@ void GetPrefs() {
                // reset to pattern directory
                opensavedir = pattdir;
             }
+         } else if (strcmp(keyword, "recent_file") == 0) {
+            wxString path = value;
+            path.RemoveLast();  // remove \n
+            numrecent++;
+            recentSubMenu->Insert(numrecent - 1, ID_RECENT + numrecent, path);
          }
       }
       fclose(f);
@@ -1681,13 +1707,14 @@ void UpdateMenuItems(bool active) {
          active = false;
       mbar->Enable(wxID_NEW,     active && !generating);
       mbar->Enable(wxID_OPEN,    active && !generating);
-      mbar->Enable(ID_OPENCLIP,  active && (!generating) && textinclip);
+      mbar->Enable(ID_OPEN_CLIP, active && !generating && textinclip);
+      mbar->Enable(ID_RECENT,    active && !generating && numrecent > 0);
       mbar->Enable(wxID_SAVE,    active && !generating);
-      mbar->Enable(ID_CUT,       active && (!generating) && SelectionExists());
-      mbar->Enable(ID_COPY,      active && (!generating) && SelectionExists());
-      mbar->Enable(ID_CLEAR,     active && (!generating) && SelectionExists());
-      mbar->Enable(ID_PASTE,     active && (!generating) && textinclip);
-      mbar->Enable(ID_PASTE_SEL, active && (!generating) &&
+      mbar->Enable(ID_CUT,       active && !generating && SelectionExists());
+      mbar->Enable(ID_COPY,      active && !generating && SelectionExists());
+      mbar->Enable(ID_CLEAR,     active && !generating && SelectionExists());
+      mbar->Enable(ID_PASTE,     active && !generating && textinclip);
+      mbar->Enable(ID_PASTE_SEL, active && !generating &&
                                  SelectionExists() && textinclip);
       mbar->Enable(ID_PLOCATION, active);
       mbar->Enable(ID_PMODE,     active);
@@ -2150,16 +2177,11 @@ void ResetPattern() {
 }
 
 const char *GetBaseName(const char *fullpath) {
-   // there's probably a better/safer way to do this using wxFileName::GetFullName???!!!
-   #ifdef __WXMSW__
-      char separator = '\\';
-   #else
-      char separator = '/';
-   #endif
+   // extract basename from given path
    int len = strlen(fullpath);
    while (len > 0) {
       len--;
-      if (fullpath[len] == separator) {
+      if (fullpath[len] == wxFILE_SEP_PATH) {
          len++;
          break;
       }
@@ -2184,6 +2206,39 @@ void SetCurrentFile(const char *inpath) {
    #endif
 }
 
+void AddRecentFile() {
+   // put currfile at start of recentSubMenu
+   wxString path = currfile;
+   int id = recentSubMenu->FindItem(path);
+   if ( id == wxNOT_FOUND ) {
+      if ( numrecent < MAX_RECENT ) {
+         // add new path
+         numrecent++;
+         id = ID_RECENT + numrecent;
+         recentSubMenu->Insert(numrecent - 1, id, path);
+      } else {
+         // replace last item with new path
+         wxMenuItem *item = recentSubMenu->FindItemByPosition(MAX_RECENT - 1);
+         item->SetText(path);
+         id = ID_RECENT + MAX_RECENT;
+      }
+   }
+   // path exists in recentSubMenu 
+   if ( id > ID_RECENT + 1 ) {
+      // move path to start of menu (item IDs don't change)
+      wxMenuItem *item;
+      while ( id > ID_RECENT + 1 ) {
+         wxMenuItem *previtem = recentSubMenu->FindItem(id - 1);
+         wxString prevpath = previtem->GetText();
+         item = recentSubMenu->FindItem(id);
+         item->SetText(prevpath);
+         id--;
+      }
+      item = recentSubMenu->FindItem(id);
+      item->SetText(path);
+   }
+}
+
 void OpenPattern() {
    if (generating) return;
 
@@ -2204,6 +2259,7 @@ void OpenPattern() {
       wxFileName fullpath = wxFileName( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
       SetCurrentFile( opendlg.GetPath() );
+      AddRecentFile();
       LoadPattern( opendlg.GetFilename() );
    }
 }
@@ -2237,25 +2293,11 @@ void OpenClipboard() {
    #ifdef __WXX11__
       // on X11 the clipboard data is in non-temporary clipfile, so copy
       // clipfile to gen0file (for use by ResetPattern and ShowPatternInfo)
-      wxFFile infile(clipfile, "r");
-      if ( infile.IsOpened() ) {
-         wxString data;
-         if ( infile.ReadAll(&data) ) {
-            wxFile outfile(gen0file, wxFile::write);
-            if ( outfile.IsOpened() ) {
-               outfile.Write(data);
-               outfile.Close();
-               strncpy(currfile, gen0file, sizeof(currfile));
-               LoadPattern("clipboard");
-            } else {
-               ErrorMessage("Could not create gen0file!");
-            }
-         } else {
-            ErrorMessage("Could not read clipfile data!");
-         }
-         infile.Close();
+      if ( wxCopyFile(clipfile, gen0file, true) ) {
+         strncpy(currfile, gen0file, sizeof(currfile));
+         LoadPattern("clipboard");
       } else {
-         ErrorMessage("Could not open clipfile!");
+         ErrorMessage("Could not copy clipfile!");
       }
    #else
       wxTextDataObject data;
@@ -2275,6 +2317,24 @@ void OpenClipboard() {
          }
       }
    #endif
+}
+
+void OpenRecentFile(int id) {
+   wxMenuItem *item = recentSubMenu->FindItem(id);
+   if (item) {
+      strncpy(currfile, item->GetText().c_str(), sizeof(currfile));
+      AddRecentFile();
+      LoadPattern(GetBaseName(currfile));
+   }
+}
+
+void ClearRecentFiles() {
+   while (numrecent > 0) {
+      recentSubMenu->Delete( recentSubMenu->FindItemByPosition(0) );
+      numrecent--;
+   }
+   wxMenuBar *mbar = frameptr->GetMenuBar();
+   if (mbar) mbar->Enable(ID_RECENT, false);
 }
 
 void SavePattern() {
@@ -4575,6 +4635,8 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell) {
                // need to process pending events to update window
                // and to update clipboard on Windows
                while (wxGetApp().Pending()) wxGetApp().Dispatch();
+               // may need to call wxMilliSleep or Yield here
+               // to avoid occasional clipboard error dlg on Windows???
                OpenClipboard();
             }
          }
@@ -4866,6 +4928,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames) {
    size_t numfiles = filenames.GetCount();
    for ( size_t n = 0; n < numfiles; n++ ) {
       SetCurrentFile(filenames[n]);
+      AddRecentFile();
       LoadPattern(GetBaseName(filenames[n]));
    }
 
@@ -4919,12 +4982,14 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event)) {
 void MainFrame::OnMenu(wxCommandEvent& event) {
    showbanner = false;
    ClearMessage();
-   switch (event.GetId())
+   int id = event.GetId();
+   switch (id)
    {
       // File menu
       case wxID_NEW:          NewPattern(); break;
       case wxID_OPEN:         OpenPattern(); break;
-      case ID_OPENCLIP:       OpenClipboard(); break;
+      case ID_OPEN_CLIP:      OpenClipboard(); break;
+      case ID_RECENT_CLEAR:   ClearRecentFiles(); break;
       case wxID_SAVE:         SavePattern(); break;
       case wxID_EXIT:         Close(true); break;        // true forces frame to close
       // Edit menu
@@ -4989,6 +5054,9 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_HELP_CHANGES:   ShowHelp("Help/changes.html"); break;
       case ID_HELP_CREDITS:   ShowHelp("Help/credits.html"); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
+      default:
+         if ( id > ID_RECENT && id <= ID_RECENT + numrecent )
+            OpenRecentFile(id);
    }
    UpdateUserInterface(frameptr->IsActive());
 }
@@ -5639,7 +5707,8 @@ MainFrame::MainFrame()
    fileMenu->Append(wxID_NEW, _("New Pattern\tCtrl+N"));
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_OPEN, _("Open Pattern...\tCtrl+O"));
-   fileMenu->Append(ID_OPENCLIP, _("Open Clipboard\tShift+Ctrl+O"));
+   fileMenu->Append(ID_OPEN_CLIP, _("Open Clipboard\tShift+Ctrl+O"));
+   fileMenu->Append(ID_RECENT, _("Open Recent"), recentSubMenu);
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
@@ -5872,6 +5941,7 @@ void MyApp::MacOpenFile(const wxString &fullPath)
 
    // set currfile using UTF8 encoding so fopen will work
    SetCurrentFile(fullPath);
+   AddRecentFile();
    LoadPattern(GetBaseName(fullPath));
 }
 #endif
@@ -5922,6 +5992,7 @@ bool MyApp::OnInit()
    // load pattern if file supplied on Win/Unix command line
    if (argc > 1) {
       strncpy(currfile, argv[1], sizeof(currfile));
+      AddRecentFile();
       LoadPattern(GetBaseName(currfile));
    } else {
       NewPattern();
