@@ -1,5 +1,10 @@
 Changes in version 0.92 (released ???)
 
+AKT: Escape key can cancel a new or modified selection and restore original.
+AKT: Escape key can no longer be used to stop generating (too overloaded).
+AKT: Delete key is a shortcut for the Clear command.
+AKT: Shift-delete is a shortcut for the new Clear Outside command.
+AKT: Reset restores most settings to their gen 0 values.
 AKT: Added "Open Recent" submenu to File menu.
 AKT: Integrated Stephen Silver's Life Lexicon into help.
 

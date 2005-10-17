@@ -294,6 +294,7 @@ enum {
    ID_CUT,
    ID_COPY,
    ID_CLEAR,
+   ID_OUTSIDE,
    ID_PASTE,
    ID_PMODE,
    ID_PLOCATION,
@@ -473,12 +474,16 @@ int initselx, initsely;       // location of initial selection click
 bool forceh;                  // resize selection horizontally?
 bool forcev;                  // resize selection vertically?
 bigint anchorx, anchory;      // anchor cell of current selection
-bigint seltop;                // current edges of selection
+bigint seltop;                // edges of current selection
 bigint selbottom;
 bigint selleft;
 bigint selright;
-bigint prevtop;               // previous edges of selection
-bigint prevbottom;
+bigint origtop;               // edges of original selection
+bigint origbottom;            // (used to restore selection if user hits escape)
+bigint origleft;
+bigint origright;
+bigint prevtop;               // previous edges of new selection
+bigint prevbottom;            // (used to decide if new selection has to be drawn)
 bigint prevleft;
 bigint prevright;
 int drawstate;                // new cell state (0 or 1)
@@ -531,9 +536,13 @@ const char clipfile[] = ".golly_clipboard";
 // it can be used to reset pattern or to show comments
 const char gen0file[] = ".golly_gen0";
 
-// globals for saving starting pattern
+// globals for saving and resetting starting pattern
 lifealgo *gen0algo = NULL;
 char gen0rule[128];
+int gen0warp;
+int gen0mag;
+bigint gen0x;
+bigint gen0y;
 bool gen0hash;
 bool savestart = false;
 
@@ -1721,6 +1730,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_CUT,       active && !generating && SelectionExists());
       mbar->Enable(ID_COPY,      active && !generating && SelectionExists());
       mbar->Enable(ID_CLEAR,     active && !generating && SelectionExists());
+      mbar->Enable(ID_OUTSIDE,   active && !generating && SelectionExists());
       mbar->Enable(ID_PASTE,     active && !generating && textinclip);
       mbar->Enable(ID_PASTE_SEL, active && !generating &&
                                  SelectionExists() && textinclip);
@@ -2091,6 +2101,7 @@ void LoadPattern(const char *newtitle) {
    initrule[0] = 0;
    if (newtitle) {
       savestart = false;
+      warp = 0;
       currcurs = curs_zoomin;
       if (infoptr) {
          // comments will no longer be relevant so close info window
@@ -2098,7 +2109,6 @@ void LoadPattern(const char *newtitle) {
       }
    }
    if (!showbanner) ClearMessage();
-   warp = 0;
 
    if (curralgo) {
       // delete old universe and set NULL so status bar shows gen=0 and pop=0
@@ -2139,49 +2149,50 @@ void LoadPattern(const char *newtitle) {
    nopattupdate = false;
    if (err != 0) Warning(err);
 
-   // show full window title after readpattern has set rule
-   if (newtitle) SetWindowTitle(newtitle);
-   FitInView();
-   RefreshWindow();
-   showbanner = false;
+   if (newtitle) {
+      // show full window title after readpattern has set rule
+      SetWindowTitle(newtitle);
+      FitInView();
+      RefreshWindow();
+      showbanner = false;
+   } else {
+      // ResetPattern sets rule, window title, scale and location
+   }
 }
 
 void ResetPattern() {
-   if ( !generating && curralgo->getGeneration() > bigint::zero ) {
-      if ( gen0algo ) {
-         // restore starting pattern saved in gen0algo
-         delete curralgo;
-         curralgo = gen0algo;
-         gen0algo = NULL;
-         savestart = true;
-         hashing = gen0hash;
-         warp = 0;
-         SetGenIncrement();
-         curralgo->setMaxMemory(maxhmem);
-         curralgo->setGeneration(bigint::zero);
-         curralgo->setrule(gen0rule);
-         SetWindowTitle(currname);
-         FitInView();
-         RefreshWindow();
-      } else {
-         // restore starting pattern from currfile
-         if ( currfile[0] == 0 ) {
-            // if this happens then savestart logic is probably wrong
-            Warning("There is no pattern file to reload!");
-         } else {
-            // save rule in case user changed it after loading pattern
-            char saverule[128];
-            strncpy(saverule, curralgo->getrule(), sizeof(saverule));
-      
-            // pass in NULL so window title, savestart and currcurs won't change
-            LoadPattern(NULL);
-            // warp and gen count have been reset to 0
-            
-            // restore saved rule
-            curralgo->setrule(saverule);
-         }
-      }
+   if ( generating || curralgo->getGeneration() == bigint::zero ) return;
+   
+   if ( gen0algo == NULL && currfile[0] == 0 ) {
+      // if this happens then savestart logic is wrong
+      Warning("Starting pattern cannot be restored!");
+      return;
    }
+   
+   // restore pattern and settings saved by SaveStartingPattern;
+   // first restore step size, hashing option and starting pattern
+   warp = gen0warp;
+   hashing = gen0hash;
+   if ( gen0algo ) {
+      // restore starting pattern saved in gen0algo
+      delete curralgo;
+      curralgo = gen0algo;
+      gen0algo = NULL;
+      savestart = true;
+      SetGenIncrement();
+      curralgo->setMaxMemory(maxhmem);
+      curralgo->setGeneration(bigint::zero);
+   } else {
+      // restore starting pattern from currfile;
+      // pass in NULL so savestart, warp and currcurs won't change
+      LoadPattern(NULL);
+      // gen count has been reset to 0
+   }
+   // now restore rule, scale and location
+   curralgo->setrule(gen0rule);
+   SetWindowTitle(currname);
+   currview.setpositionmag(gen0x, gen0y, gen0mag);
+   RefreshWindow();
 }
 
 const char *GetBaseName(const char *fullpath) {
@@ -2440,6 +2451,22 @@ void SavePattern() {
 const char empty_pattern[] = "All cells are dead.";
 const char selection_too_big[] = "Selection is outside +/- 10^9 boundary.";
 
+void EmptyUniverse() {
+   // kill all live cells in current universe
+   int savewarp = warp;
+   int savemag = currview.getmag();
+   bigint savex = currview.x;
+   bigint savey = currview.y;
+   bigint savegen = curralgo->getGeneration();
+   CreateUniverse();
+   // restore various settings
+   warp = savewarp;
+   SetGenIncrement();
+   currview.setpositionmag(savex, savey, savemag);
+   curralgo->setGeneration(savegen);
+   RefreshPatternAndStatus();
+}
+
 void ClearSelection() {
    if (generating || !SelectionExists()) return;
    
@@ -2450,19 +2477,8 @@ void ClearSelection() {
    curralgo->findedges(&top, &left, &bottom, &right);
    if ( seltop <= top && selbottom >= bottom &&
         selleft <= left && selright >= right ) {
-      // selection encloses entire pattern so just create new universe
-      int savewarp = warp;
-      int savemag = currview.getmag();
-      bigint savex = currview.x;
-      bigint savey = currview.y;
-      bigint savegen = curralgo->getGeneration();
-      CreateUniverse();
-      // restore various settings
-      warp = savewarp;
-      SetGenIncrement();
-      currview.setpositionmag(savex, savey, savemag);
-      curralgo->setGeneration(savegen);
-      RefreshPatternAndStatus();
+      // selection encloses entire pattern so just create empty universe
+      EmptyUniverse();
       return;
    }
 
@@ -2484,6 +2500,7 @@ void ClearSelection() {
       return;
    }
 
+   // clear all live cells in selection
    int itop = top.toint();
    int ileft = left.toint();
    int ibottom = bottom.toint();
@@ -2491,20 +2508,27 @@ void ClearSelection() {
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    int cx, cy;
-
    double maxcount = (double)wd * (double)ht;
-   int currcount = 0;
+   int cntr = 0;
    bool abort = false;
    BeginProgress("Clearing selection");
-
-   // this is likely to be very slow for large selections;
-   // need to implement a fast setrect routine for each algo???!!!
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         curralgo->setcell(cx, cy, 0);
-         currcount++;
-         if ( (currcount % 1024) == 0 ) {
-            abort = AbortProgress((double)currcount / maxcount, "");
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            curralgo->setcell(cx, cy, 0);
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, "");
             if (abort) break;
          }
       }
@@ -2512,9 +2536,105 @@ void ClearSelection() {
    }
    curralgo->endofpattern();
    savestart = true;
-   
    EndProgress();
+   
    RefreshPatternAndStatus();
+}
+
+void ClearOutsideSelection() {
+   if (generating || !SelectionExists()) return;
+   
+   // no need to do anything if there is no pattern
+   if (curralgo->isEmpty()) return;
+   
+   // no need to do anything if selection encloses entire pattern
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   if ( seltop <= top && selbottom >= bottom &&
+        selleft <= left && selright >= right ) {
+      return;
+   }
+
+   // create empty universe if selection is completely outside pattern edges
+   if ( seltop > bottom || selbottom < top ||
+        selleft > right || selright < left ) {
+      EmptyUniverse();
+      return;
+   }
+   
+   // find intersection of selection and pattern to minimize work
+   if (seltop > top) top = seltop;
+   if (selleft > left) left = selleft;
+   if (selbottom < bottom) bottom = selbottom;
+   if (selright < right) right = selright;
+
+   // check that selection is small enough to save
+   if ( OutsideLimits(top, left, bottom, right) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
+   
+   // create a new universe
+   lifealgo *newalgo;
+   if ( hashing ) {
+      newalgo = new hlifealgo();
+      newalgo->setMaxMemory(maxhmem);
+   } else {
+      newalgo = new qlifealgo();
+   }
+   newalgo->setpoll(&wx_poller);
+
+   // set same gen count
+   newalgo->setGeneration( curralgo->getGeneration() );
+   
+   // copy live cells in selection to new universe
+   int itop = top.toint();
+   int ileft = left.toint();
+   int ibottom = bottom.toint();
+   int iright = right.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   BeginProgress("Saving selection");
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            newalgo->setcell(cx, cy, 1);
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, "");
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   newalgo->endofpattern();
+   EndProgress();
+
+   if (abort) {
+      // don't change current universe -- just delete new universe
+      delete newalgo;
+   } else {
+      // delete old universe and point current universe to new universe
+      savestart = true;
+      delete curralgo;
+      curralgo = newalgo;
+      SetGenIncrement();
+      RefreshPatternAndStatus();
+   }
 }
 
 bool CopyTextToClipboard(wxString &text) {
@@ -2689,7 +2809,7 @@ void CopySelectionToClipboard(bool cut) {
                orun = 1;
             }
          } else {
-            cx = iright + 1;  // done
+            cx = iright + 1;     // done this row
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -3460,6 +3580,12 @@ void StartSelectingCells(int x, int y, bool shiftkey) {
    anchorx = cellpos.first;
    anchory = cellpos.second;
 
+   // save original selection so it can be restored if user hits escape
+   origtop = seltop;
+   origbottom = selbottom;
+   origleft = selleft;
+   origright = selright;
+
    // set previous selection to anything impossible
    prevtop = 1;
    prevleft = 1;
@@ -3573,12 +3699,22 @@ void MoveView(int x, int y) {
 
 void StopDraggingMouse() {
    if (selectingcells)
-      UpdateMenuItems(true);        // update Edit menu items
+      UpdateMenuItems(true);     // update Edit menu items
    drawingcells = false;
    selectingcells = false;
    movingview = false;
    if ( viewptr->HasCapture() ) viewptr->ReleaseMouse();
    if ( dragtimer->IsRunning() ) dragtimer->Stop();
+}
+
+void RestoreSelection() {
+   seltop = origtop;
+   selbottom = origbottom;
+   selleft = origleft;
+   selright = origright;
+   StopDraggingMouse();
+   RefreshPatternAndStatus();
+   DisplayMessage("New selection aborted.");
 }
 
 void TestAutoFit() {
@@ -3669,6 +3805,14 @@ bool SaveStartingPattern() {
       gen0algo = NULL;
    }
    
+   // save current rule, scale, location, step size and hashing option
+   strncpy(gen0rule, curralgo->getrule(), sizeof(gen0rule));
+   gen0mag = currview.getmag();
+   gen0x = currview.x;
+   gen0y = currview.y;
+   gen0warp = warp;
+   gen0hash = hashing;
+   
    if ( !savestart ) {
       // no need to save pattern stored in currfile
       return true;
@@ -3682,12 +3826,6 @@ bool SaveStartingPattern() {
       // ask user if they want to continue generating???
       return false;
    }   
-   
-   // save current rule
-   strncpy(gen0rule, curralgo->getrule(), sizeof(gen0rule));
-   
-   // save type of universe
-   gen0hash = hashing;
    
    // create gen0algo and duplicate current pattern
    if ( hashing ) {
@@ -4767,7 +4905,7 @@ void ShowAboutBox() {
 
 // -----------------------------------------------------------------------------
 
-void ProcessKey(int key) {
+void ProcessKey(int key, bool shiftkey) {
    showbanner = false;
    switch (key) {
       case WXK_LEFT:    PanLeft( SmallScroll(currview.getwidth()) ); break;
@@ -4780,6 +4918,14 @@ void ProcessKey(int key) {
       case '4':   SetPixelsPerCell(4); break;
       case '8':   SetPixelsPerCell(8); break;
 
+      case WXK_BACK:       // delete key generates backspace code
+      case WXK_DELETE:     // probably never happens but play safe
+         if (shiftkey)
+            ClearOutsideSelection();
+         else
+            ClearSelection();
+         break;
+      
       case 'a':
          SelectAll();
          break;
@@ -5004,6 +5150,7 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_CUT:            CutSelection(); break;
       case ID_COPY:           CopySelection(); break;
       case ID_CLEAR:          ClearSelection(); break;
+      case ID_OUTSIDE:        ClearOutsideSelection(); break;
       case ID_PASTE:          PasteClipboard(false); break;
       case ID_PASTE_SEL:      PasteClipboard(true); break;
       case ID_PL_TL:          SetPasteLocation(TopLeft); break;
@@ -5276,6 +5423,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event)) {
 
 void PatternView::OnKeyDown(wxKeyEvent& event) {
    int key = event.GetKeyCode();
+   ClearMessage();
    if (key == WXK_SHIFT) {
       // pressing shift key temporarily toggles zoom in/out cursor;
       // some platforms (eg. WinXP) send multiple key-down events while
@@ -5309,9 +5457,7 @@ void PatternView::OnKeyUp(wxKeyEvent& event) {
 // handle translated keyboard events
 void PatternView::OnChar(wxKeyEvent& event) {
    int key = event.GetKeyCode();
-   ClearMessage();
-   if ( generating &&
-         (key == WXK_ESCAPE || key == WXK_RETURN || key == '.' || key == ' ') ) {
+   if ( generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
       StopGenerating();
       return;
    }
@@ -5322,10 +5468,14 @@ void PatternView::OnChar(wxKeyEvent& event) {
       waitingforclick = false;
       return;
    }
+   if ( selectingcells && key == WXK_ESCAPE ) {
+      RestoreSelection();
+      return;
+   }
    if ( event.CmdDown() || event.AltDown() ) {
       event.Skip();
    } else {
-      ProcessKey(key);
+      ProcessKey(key, event.ShiftDown());
       UpdateUserInterface(frameptr->IsActive());
    }
 }
@@ -5725,7 +5875,8 @@ MainFrame::MainFrame()
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
    editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
-   editMenu->Append(ID_CLEAR, _("Clear"));
+   editMenu->Append(ID_CLEAR, _("Clear\tDelete"));
+   editMenu->Append(ID_OUTSIDE, _("Clear Outside\tShift+Delete"));
    editMenu->AppendSeparator();
    editMenu->Append(ID_PASTE, _("Paste\tCtrl+V"));
    editMenu->Append(ID_PMODE, _("Paste Mode"), pmodeSubMenu);

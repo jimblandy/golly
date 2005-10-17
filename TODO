@@ -32,17 +32,6 @@ For future versions:
 
 T - Improve batchmode.
 
-B - Requested by Nick Gotts: Need a way to see the exact number of generations,
-    population size, and mouse coordinates (and copy them to clipboard?).
-    Simplest soln might be to hit some special key like "?" and above info
-    would appear in a scrollable text dialog for viewing/copying.
-    
-A - Provide some way to open current pattern file in user's text editor.
-    Maybe just an "Edit Pattern" item in File menu?  And/or option-click
-    on pattern in navigation panel?
-
-A - Try to answer/resolve all "???" and "!!!" comments in source files.
-
 A - See if we can reduce app size.  If wx docs no help then ask wx-users.
 
 A - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
@@ -94,41 +83,42 @@ A - Check if wx can support vbr synchronization when buffering.
 User suggestions:
 -----------------
 
+[Nick Gotts]
+- Need a way to see the exact number of generations, population size, and
+  mouse coordinates (and copy them to clipboard?).
+  Simplest soln would be to hit some special key like "?" and above info
+  would appear in a modal, scrollable text dialog for viewing/copying.
+
 [Paul Chapman]
 - Allow grid display for zoom level 1:4.
 - Combine the start and stop toolbar buttons into a single toggle.
-- Add commas to separate the 000s in the pop and gen counts.
+- Optionally add commas to separate the 000s in the pop and gen counts.
 
 [Gabriel Nivasch]
 - The shortest delay should be much shorter than 0.25s; maybe 0.01s.
 - Finer control of the running speed; ie. allow step inc of 2.
 
 [Jason Summers]
-- Reset shouldn't do a Fit or, at least, there ought to be some way to
-  go to generation 0 without changing the viewport or anything else.
 - The "move" cursor should be an open hand.
 - "Open Pattern" and "New Pattern" should remove any existing selection.
 - More available zoom scales would be nice, e.g. 1:3 and 1:6.
 - Shrink the scrollbar thumbs and/or increase their scroll rate, to allow
   scrolling more than 1 screenful at a time.
 - Need faster way to select cursor modes; eg. use F5 to F8.
-- For better viewing of patterns that move, have a way to, while animating,
-  automatically move the viewport X cells horizontally and Y cells vertically
-  every Z generation.
+- For better viewing of patterns that move, have a way to automatically
+  move the view X cells horizontally and Y cells vertically every Z gens.
 - Display a ghost image when pasting pattern.
-- Diagonal selection rectangles.
+- Allow diagonal selection rectangles.
 - Modify the source code to better support Visual C++ 6.
 
 [Stephen Silver]
 - Add a "Fit Selection" command in the View menu.
 
 [Dave Greene]
-- Delete key should be shortcut to clear a selection.
-- When extending selection, draw arrows to indicate which edges will move.
-  And/or allow escape key to cancel change and restore original selection.
-- Allow isolated glider deletion as an option, or make it easy to do
-  manually via a "Clear Outside" menu item (with shift-delete as shortcut).
 - Allow shrinking a selection to the bounding box of it's live cells.
 - Animate just the selection, or everything outside the selection.
   Use LifeLab's method: shift-space and control-space.
 - Support a split-screen view of the universe.
+- Provide some way to open current pattern file in user's text editor.
+  Maybe just an "Edit Pattern" item in File menu?  And/or option-click
+  on pattern in navigation panel?
