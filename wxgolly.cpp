@@ -1506,9 +1506,25 @@ const char *stringify(double d) {
    static char *p = buf;
    if (p + STRINGIFYSIZE + 1 >= buf + sizeof(buf))
       p = buf;
-   if (d <= 99999999999.0 && d >= -9999999999.0)
+   if (d <= 99999999999.0 && d >= -9999999999.0) {
+      if (d < 0) {
+	 d = - d ;
+         *p++ = '-' ;
+      }
       sprintf(p, "%.f", d);
-   else
+      int len = strlen(p) ;
+      int commas = ((len + 2) / 3) - 1 ;
+      int dest = len + commas ;
+      int src = len ;
+      p[dest] = 0 ;
+      while (commas > 0) {
+	 p[--dest] = p[--src] ;
+	 p[--dest] = p[--src] ;
+	 p[--dest] = p[--src] ;
+	 p[--dest] = ',' ;
+	 commas-- ;
+      }
+   } else
       sprintf(p, "%g", d);
    char *r = p;
    p += strlen(p)+1;
@@ -1584,9 +1600,9 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
       if (showxy) {
          // if we ever provide an option to display standard math coords
          // (ie. y increasing upwards) then use -curry - 1
-         sprintf(strbuf, "X,Y=%s,%s", stringify(currx), stringify(curry));
+         sprintf(strbuf, "X Y=%s %s", stringify(currx), stringify(curry));
       } else {
-         sprintf(strbuf, "X,Y=");
+         sprintf(strbuf, "X Y=");
       }
       DisplayText(dc, strbuf, h_xy, BASELINE1);
    }
