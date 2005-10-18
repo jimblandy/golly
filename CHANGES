@@ -1,5 +1,7 @@
 Changes in version 0.92 (released ???)
 
+AKT: Fixed bug returning from full screen mode in Mac app.
+AKT: Space bar can be used to stop generating in Win app.
 AKT: Escape key can cancel a new or modified selection and restore original.
 AKT: Escape key can no longer be used to stop generating (too overloaded).
 AKT: Delete key is a shortcut for the Clear command.

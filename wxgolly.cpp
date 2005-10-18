@@ -4385,8 +4385,12 @@ void ToggleFullScreen() {
       int wd, ht;
       frameptr->GetClientSize(&wd, &ht);
       viewptr->SetSize(0, statusht, wd, ht > statusht ? ht - statusht : 0);
+      if (!fullscreen) {
+         // restore scroll bars BEFORE setting viewport size
+         UpdateScrollBars();
+      }
       SetViewSize();
-      RefreshWindow();     // calls UpdateScrollBars
+      RefreshWindow();
    #endif
 }
 
@@ -5424,6 +5428,16 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event)) {
 void PatternView::OnKeyDown(wxKeyEvent& event) {
    int key = event.GetKeyCode();
    ClearMessage();
+   
+   #ifdef __WXMSW__
+      // on Windows, space is an accelerator for ID_NEXT which is disabled
+      // when generating so space won't be seen by PatternView::OnChar
+      if ( generating && key == ' ' ) {
+         StopGenerating();
+         return;
+      }
+   #endif
+   
    if (key == WXK_SHIFT) {
       // pressing shift key temporarily toggles zoom in/out cursor;
       // some platforms (eg. WinXP) send multiple key-down events while
