@@ -92,7 +92,6 @@ User suggestions:
 [Paul Chapman]
 - Allow grid display for zoom level 1:4.
 - Combine the start and stop toolbar buttons into a single toggle.
-- Optionally add commas to separate the 000s in the pop and gen counts.
 
 [Gabriel Nivasch]
 - The shortest delay should be much shorter than 0.25s; maybe 0.01s.

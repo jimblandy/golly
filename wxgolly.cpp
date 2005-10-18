@@ -410,7 +410,7 @@ int h_gen;                    // horizontal position of "Generation"
 int h_pop;                    // horizontal position of "Population"
 int h_scale;                  // horizontal position of "Scale"
 int h_step;                   // horizontal position of "Step"
-int h_xy;                     // horizontal position of "X,Y"
+int h_xy;                     // horizontal position of "XY"
 int textascent;               // vertical adjustment used in DrawText calls
 int statusht = STATUS_HT;     // status bar is initially visible
 char statusmsg[256];          // for messages on 2nd line
@@ -1504,26 +1504,28 @@ const int STRINGIFYSIZE = 11;
 const char *stringify(double d) {
    static char buf[120];
    static char *p = buf;
-   if (p + STRINGIFYSIZE + 1 >= buf + sizeof(buf))
+   if ( p + STRINGIFYSIZE + 1 >= buf + sizeof(buf) )
       p = buf;
-   if (d <= 99999999999.0 && d >= -9999999999.0) {
-      if (d < 0) {
-	 d = - d ;
-         *p++ = '-' ;
+   // use e notation for abs values > 1 billion (agrees with min & max_coord)
+   if ( fabs(d) <= 1000000000.0 ) {
+      if ( d < 0 ) {
+         d = - d;
+         *p++ = '-';
       }
       sprintf(p, "%.f", d);
-      int len = strlen(p) ;
-      int commas = ((len + 2) / 3) - 1 ;
-      int dest = len + commas ;
-      int src = len ;
-      p[dest] = 0 ;
+      int len = strlen(p);
+      int commas = ((len + 2) / 3) - 1;
+      int dest = len + commas;
+      int src = len;
+      p[dest] = 0;
       while (commas > 0) {
-	 p[--dest] = p[--src] ;
-	 p[--dest] = p[--src] ;
-	 p[--dest] = p[--src] ;
-	 p[--dest] = ',' ;
-	 commas-- ;
+         p[--dest] = p[--src];
+         p[--dest] = p[--src];
+         p[--dest] = p[--src];
+         p[--dest] = ',';
+         commas--;
       }
+      if ( p[-1] == '-' ) p--;
    } else
       sprintf(p, "%g", d);
    char *r = p;
@@ -1600,9 +1602,9 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
       if (showxy) {
          // if we ever provide an option to display standard math coords
          // (ie. y increasing upwards) then use -curry - 1
-         sprintf(strbuf, "X Y=%s %s", stringify(currx), stringify(curry));
+         sprintf(strbuf, "XY=%s %s", stringify(currx), stringify(curry));
       } else {
-         sprintf(strbuf, "X Y=");
+         sprintf(strbuf, "XY=");
       }
       DisplayText(dc, strbuf, h_xy, BASELINE1);
    }
@@ -1850,13 +1852,13 @@ void CheckMouseLocation(bool active) {
       return;
 
    if ( !active ) {
-      // main window is not in front so clear X,Y location
+      // main window is not in front so clear XY location
       showxy = false;
       UpdateXYLocation();
       return;
    }
 
-   // may need to update X,Y location in status bar
+   // may need to update XY location in status bar
    wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
    if (PointInView(pt.x, pt.y)) {
       // get location in cell coords
@@ -1869,7 +1871,7 @@ void CheckMouseLocation(bool active) {
       if (fabs(coor.first) < 1) coor.first = 0;
       if (fabs(coor.second) < 1) coor.second = 0;
       if ( coor.first != currx || coor.second != curry ) {
-         // show new X,Y location
+         // show new XY location
          currx = coor.first;
          curry = coor.second;
          showxy = true;
@@ -1879,7 +1881,7 @@ void CheckMouseLocation(bool active) {
          UpdateXYLocation();
       }
    } else {
-      // outside viewport so clear X,Y location
+      // outside viewport so clear XY location
       showxy = false;
       UpdateXYLocation();
    }
@@ -3274,7 +3276,7 @@ void DisplaySelectionSize() {
    bigint wd = selright;    wd -= selleft;   wd += bigint::one;
    bigint ht = selbottom;   ht -= seltop;    ht += bigint::one;
    char s[128];
-   sprintf(s, "Selection wd x ht = %g x %g", wd.todouble(), ht.todouble() );
+   sprintf(s, "Selection wd x ht = %s x %s", stringify(wd), stringify(ht));
    SetMessage(s);
 }
 
@@ -4020,7 +4022,8 @@ void DisplayTimingInfo() {
    if (endtime > starttime) {
       char s[128];
       sprintf(s,"%g gens in %g secs (%g gens/sec)",
-                endgen - startgen, (double)(endtime - starttime) / 1000.0,
+                endgen - startgen,
+                (double)(endtime - starttime) / 1000.0,
                 (double)(endgen - startgen) / ((double)(endtime - starttime) / 1000.0));
       DisplayMessage(s);
    }
