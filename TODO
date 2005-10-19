@@ -5,8 +5,7 @@ High priority:
 
 A - Split up wxgolly.cpp into smaller modules:
     wxmain, wxstatus, wxfile, wxedit, wxcontrol, wxview, wxhelp, wxprefs, etc.
-
-A - Tidy up wx code (follow http://www.wxwidgets.org/standard.htm?).
+    Also tidy up the code (follow http://www.wxwidgets.org/standard.htm?).
 
 A - Create a scrollable navigation panel to view contents of a selected
     folder (initially Patterns) so users can load patterns easily.
@@ -85,9 +84,7 @@ User suggestions:
 
 [Nick Gotts]
 - Need a way to see the exact number of generations, population size, and
-  mouse coordinates (and copy them to clipboard?).
-  Simplest soln would be to hit some special key like "?" and above info
-  would appear in a modal, scrollable text dialog for viewing/copying.
+  mouse coordinates (and copy them to clipboard).
 
 [Paul Chapman]
 - Allow grid display for zoom level 1:4.
@@ -114,7 +111,6 @@ User suggestions:
 - Add a "Fit Selection" command in the View menu.
 
 [Dave Greene]
-- Allow shrinking a selection to the bounding box of it's live cells.
 - Animate just the selection, or everything outside the selection.
   Use LifeLab's method: shift-space and control-space.
 - Support a split-screen view of the universe.

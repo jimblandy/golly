@@ -301,6 +301,7 @@ enum {
    ID_PASTE_SEL,
    ID_SELALL,
    ID_REMOVE,
+   ID_SHRINK,
    ID_CMODE,
 
    // Paste Location submenu
@@ -1756,6 +1757,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_PMODE,     active);
       mbar->Enable(ID_SELALL,    active);
       mbar->Enable(ID_REMOVE,    active && SelectionExists());
+      mbar->Enable(ID_SHRINK,    active && SelectionExists());
       mbar->Enable(ID_CMODE,     active);
       mbar->Enable(ID_GO,        active && !generating);
       mbar->Enable(ID_STOP,      active && generating);
@@ -2467,6 +2469,7 @@ void SavePattern() {
 // editing functions
 
 const char empty_pattern[] = "All cells are dead.";
+const char empty_selection[] = "Selection is empty.";
 const char selection_too_big[] = "Selection is outside +/- 10^9 boundary.";
 
 void EmptyUniverse() {
@@ -2483,6 +2486,49 @@ void EmptyUniverse() {
    currview.setpositionmag(savex, savey, savemag);
    curralgo->setGeneration(savegen);
    RefreshPatternAndStatus();
+}
+
+bool SaveRect(bigint top, bigint left, bigint bottom, bigint right,
+              lifealgo *newalgo) {
+   // copy live cells in given rectangle to new universe
+   int itop = top.toint();
+   int ileft = left.toint();
+   int ibottom = bottom.toint();
+   int iright = right.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   
+   BeginProgress("Saving cells");
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            newalgo->setcell(cx, cy, 1);
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, "");
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   newalgo->endofpattern();
+   EndProgress();
+   
+   return !abort;
 }
 
 void ClearSelection() {
@@ -2606,52 +2652,16 @@ void ClearOutsideSelection() {
    newalgo->setGeneration( curralgo->getGeneration() );
    
    // copy live cells in selection to new universe
-   int itop = top.toint();
-   int ileft = left.toint();
-   int ibottom = bottom.toint();
-   int iright = right.toint();
-   int wd = iright - ileft + 1;
-   int ht = ibottom - itop + 1;
-   int cx, cy;
-   double maxcount = (double)wd * (double)ht;
-   int cntr = 0;
-   bool abort = false;
-   BeginProgress("Saving selection");
-   for ( cy=itop; cy<=ibottom; cy++ ) {
-      for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
-         if (skip + cx > iright)
-            skip = -1;           // pretend we found no more live cells
-         if (skip >= 0) {
-            // found next live cell
-            cx += skip;
-            newalgo->setcell(cx, cy, 1);
-         } else {
-            cx = iright + 1;     // done this row
-         }
-         cntr++;
-         if ((cntr % 4096) == 0) {
-            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
-                           (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, "");
-            if (abort) break;
-         }
-      }
-      if (abort) break;
-   }
-   newalgo->endofpattern();
-   EndProgress();
-
-   if (abort) {
-      // don't change current universe -- just delete new universe
-      delete newalgo;
-   } else {
+   if ( SaveRect(top, left, bottom, right, newalgo) ) {
       // delete old universe and point current universe to new universe
       savestart = true;
       delete curralgo;
       curralgo = newalgo;
       SetGenIncrement();
       RefreshPatternAndStatus();
+   } else {
+      // aborted, so don't change current universe
+      delete newalgo;
    }
 }
 
@@ -3203,6 +3213,7 @@ void PasteClipboard(bool toselection) {
             tempalgo = new qlifealgo();
          else
             tempalgo = new hlifealgo();
+         tempalgo->setpoll(&wx_poller);
          err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
          if (err != 0)
             Warning(err);   // give up
@@ -3287,7 +3298,7 @@ void SelectAll() {
    }
 
    if (curralgo->isEmpty()) {
-      DisplayMessage(empty_pattern);
+      ErrorMessage(empty_pattern);
       return;
    }
    
@@ -3301,6 +3312,71 @@ void RemoveSelection() {
       NoSelection();
       RefreshPatternAndStatus();
    }
+}
+
+void ShrinkSelection() {
+   if (!SelectionExists()) return;
+   
+   // check if there is no pattern
+   if (curralgo->isEmpty()) {
+      ErrorMessage(empty_selection);
+      return;
+   }
+   
+   // check if selection encloses entire pattern
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   if ( seltop <= top && selbottom >= bottom &&
+        selleft <= left && selright >= right ) {
+      // shrink edges
+      seltop = top;
+      selbottom = bottom;
+      selleft = left;
+      selright = right;
+      DisplaySelectionSize();
+      RefreshPatternAndStatus();
+      return;
+   }
+
+   // check if selection is completely outside pattern edges
+   if ( seltop > bottom || selbottom < top ||
+        selleft > right || selright < left ) {
+      ErrorMessage(empty_selection);
+      return;
+   }
+   
+   // find intersection of selection and pattern to minimize work
+   if (seltop > top) top = seltop;
+   if (selleft > left) left = selleft;
+   if (selbottom < bottom) bottom = selbottom;
+   if (selright < right) right = selright;
+
+   // check that selection is small enough to save
+   if ( OutsideLimits(top, left, bottom, right) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
+   
+   // create a new temporary universe
+   lifealgo *tempalgo;
+   if ( hashing )
+      tempalgo = new hlifealgo();
+   else
+      tempalgo = new qlifealgo();
+   tempalgo->setpoll(&wx_poller);
+   
+   // copy live cells in selection to temporary universe
+   if ( SaveRect(top, left, bottom, right, tempalgo) ) {
+      if ( tempalgo->isEmpty() ) {
+         ErrorMessage(empty_selection);
+      } else {
+         tempalgo->findedges(&seltop, &selleft, &selbottom, &selright);
+         DisplaySelectionSize();
+         RefreshPatternAndStatus();
+      }
+   }
+   
+   delete tempalgo;
 }
 
 void SetCursorMode(wxCursor *newcurs) {
@@ -5186,6 +5262,7 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_PM_XOR:         SetPasteMode(Xor); break;
       case ID_SELALL:         SelectAll(); break;
       case ID_REMOVE:         RemoveSelection(); break;
+      case ID_SHRINK:         ShrinkSelection(); break;
       case ID_DRAW:           SetCursorMode(curs_pencil); break;
       case ID_SELECT:         SetCursorMode(curs_cross); break;
       case ID_MOVE:           SetCursorMode(curs_hand); break;
@@ -5918,6 +5995,7 @@ MainFrame::MainFrame()
    editMenu->AppendSeparator();
    editMenu->Append(ID_SELALL, _("Select All\tCtrl+A"));
    editMenu->Append(ID_REMOVE, _("Remove Selection\tCtrl+K"));
+   editMenu->Append(ID_SHRINK, _("Shrink Selection"));
    editMenu->AppendSeparator();
    editMenu->Append(ID_CMODE, _("Cursor Mode"), cmodeSubMenu);
 

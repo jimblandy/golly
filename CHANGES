@@ -1,13 +1,14 @@
 Changes in version 0.92 (released ???)
 
+AKT: Added Shrink Selection item to Edit menu.
 AKT: Change to e notation occurs outside +/- 1 billion (ie. edit limits).
-TGR: Commas are used to make large numbers more readble.
+TGR: Commas are used to make large numbers more readable.
 AKT: Fixed bug returning from full screen mode in Mac app.
 AKT: Space bar can be used to stop generating in Win app.
 AKT: Escape key can cancel a new or modified selection and restore original.
 AKT: Escape key can no longer be used to stop generating (too overloaded).
-AKT: Delete key is a shortcut for the Clear command.
-AKT: Shift-delete is a shortcut for the new Clear Outside command.
+AKT: Delete key is a shortcut for the Clear item.
+AKT: Shift-delete is a shortcut for the new Clear Outside item.
 AKT: Reset restores most settings to their gen 0 values.
 AKT: Added "Open Recent" submenu to File menu.
 AKT: Integrated Stephen Silver's Life Lexicon into help.
