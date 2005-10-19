@@ -1,6 +1,7 @@
 Changes in version 0.92 (released ???)
 
-AKT: Added Shrink Selection item to Edit menu.
+AKT: Added Fit Selection item to the View menu.
+AKT: Added Shrink Selection item to the Edit menu.
 AKT: Change to e notation occurs outside +/- 1 billion (ie. edit limits).
 TGR: Commas are used to make large numbers more readable.
 AKT: Fixed bug returning from full screen mode in Mac app.

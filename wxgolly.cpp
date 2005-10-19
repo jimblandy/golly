@@ -339,6 +339,7 @@ enum {
    
    // View menu (see also wxID_ZOOM_IN, wxID_ZOOM_OUT)
    ID_FIT,
+   ID_FIT_SEL,
    ID_MIDDLE,
    ID_FULL,
    ID_STATUS,
@@ -1769,10 +1770,11 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_SLOWER,    active && warp > MIN_WARP);
       mbar->Enable(ID_AUTO,      active);
       mbar->Enable(ID_HASH,      active && !generating);
-      mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable() != 0);
+      mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
       mbar->Enable(ID_MAXMEM,    active && hashing && !generating);
       mbar->Enable(ID_RULE,      active && !generating);
       mbar->Enable(ID_FIT,       active);
+      mbar->Enable(ID_FIT_SEL,   active && SelectionExists());
       mbar->Enable(ID_MIDDLE,    active);
       mbar->Enable(ID_FULL,      active);
       mbar->Enable(ID_STATUS,    active);
@@ -2488,13 +2490,8 @@ void EmptyUniverse() {
    RefreshPatternAndStatus();
 }
 
-bool SaveRect(bigint top, bigint left, bigint bottom, bigint right,
-              lifealgo *newalgo) {
+bool SaveRect(int itop, int ileft, int ibottom, int iright, lifealgo *newalgo) {
    // copy live cells in given rectangle to new universe
-   int itop = top.toint();
-   int ileft = left.toint();
-   int ibottom = bottom.toint();
-   int iright = right.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    int cx, cy;
@@ -2652,7 +2649,7 @@ void ClearOutsideSelection() {
    newalgo->setGeneration( curralgo->getGeneration() );
    
    // copy live cells in selection to new universe
-   if ( SaveRect(top, left, bottom, right, newalgo) ) {
+   if ( SaveRect(top.toint(), left.toint(), bottom.toint(), right.toint(), newalgo) ) {
       // delete old universe and point current universe to new universe
       savestart = true;
       delete curralgo;
@@ -3366,7 +3363,7 @@ void ShrinkSelection() {
    tempalgo->setpoll(&wx_poller);
    
    // copy live cells in selection to temporary universe
-   if ( SaveRect(top, left, bottom, right, tempalgo) ) {
+   if ( SaveRect(top.toint(), left.toint(), bottom.toint(), right.toint(), tempalgo) ) {
       if ( tempalgo->isEmpty() ) {
          ErrorMessage(empty_selection);
       } else {
@@ -4368,6 +4365,34 @@ void FitPattern() {
    RefreshWindow();
 }
 
+void FitSelection() {
+   if (!SelectionExists()) return;
+
+   bigint newx = selright;
+   newx -= selleft;
+   newx += bigint::one;
+   newx.div2();
+   newx += selleft;
+
+   bigint newy = selbottom;
+   newy -= seltop;
+   newy += bigint::one;
+   newy.div2();
+   newy += seltop;
+
+   int newmag = MAX_MAG;
+   while (true) {
+      currview.setpositionmag(newx, newy, newmag);
+      if ( currview.contains(selleft, seltop) &&
+           currview.contains(selright, selbottom) )
+         break;
+      newmag--;
+   }
+   
+   TestAutoFit();
+   RefreshWindow();
+}
+
 void ViewMiddle() {
    // put 0,0 in middle of view
    currview.center();
@@ -5053,6 +5078,11 @@ void ProcessKey(int key, bool shiftkey) {
          FitPattern();
          break;
 
+      case 'F':
+      case 's':
+         FitSelection();
+         break;
+
       case 'm':
       case WXK_HOME:
          ViewMiddle();
@@ -5283,6 +5313,7 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_RULE:           ChangeRule(); break;
       // View menu
       case ID_FIT:            FitPattern(); break;
+      case ID_FIT_SEL:        FitSelection(); break;
       case ID_MIDDLE:         ViewMiddle(); break;
       case ID_FULL:           ToggleFullScreen(); break;
       case wxID_ZOOM_IN:      ZoomIn(); break;
@@ -6028,6 +6059,7 @@ MainFrame::MainFrame()
    controlMenu->Append(ID_RULE, _("Rule..."));
 
    viewMenu->Append(ID_FIT, _("Fit Pattern\tCtrl+F"));
+   viewMenu->Append(ID_FIT_SEL, _("Fit Selection\tShift+Ctrl+F"));
    viewMenu->Append(ID_MIDDLE, _("Middle\tCtrl+M"));
    #ifdef __WXMAC__
       // F11 is a default activation key for Expose so use F1 instead

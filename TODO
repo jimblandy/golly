@@ -107,9 +107,6 @@ User suggestions:
 - Allow diagonal selection rectangles.
 - Modify the source code to better support Visual C++ 6.
 
-[Stephen Silver]
-- Add a "Fit Selection" command in the View menu.
-
 [Dave Greene]
 - Animate just the selection, or everything outside the selection.
   Use LifeLab's method: shift-space and control-space.
