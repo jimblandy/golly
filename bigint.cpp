@@ -654,7 +654,7 @@ int bigint::lowbitset() const {
          if ((v.i >> i) & 1)
             return i-1 ;
    }
-   int o = 0 ;
+   int o = 1 ;
    while (v.p[o] == 0) {
       o++ ;
       r += 31 ;
