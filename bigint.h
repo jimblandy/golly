@@ -92,11 +92,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #ifndef BIGINT_H
 #define BIGINT_H
+
+#ifdef _MSC_VER
+#if _MSC_VER < 1300  // 12xx = VC6; 13xx = VC7
+#define G_INT64          __int64
+#define G_MAKEINT64(x)   x ## i64
+#define G_INT64_FMT      "I64d"
+#endif
+#endif
+
+#ifndef G_INT64
+#define G_INT64          long long
+#define G_MAKEINT64(x)   x ## LL
+#define G_INT64_FMT      "lld"
+#endif
+
 class bigint {
 public:
    bigint() ;
    bigint(int i) ;
-   bigint(long long i) ;
+   bigint(G_INT64 i) ;
    bigint(const char *s) ;
    bigint(const bigint &a) ;
    ~bigint() ;

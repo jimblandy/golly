@@ -853,8 +853,8 @@ int qlifealgo::nextcell(int x, int y, supertile *n, int lev) {
  *   This subroutine calculates the population count of the universe.  It
  *   uses dirty bits number 1 and 2 of supertiles.
  */
-long long qlifealgo::find_set_bits(supertile *p, int lev, int gm1) {
-   long long pop = 0 ;
+G_INT64 qlifealgo::find_set_bits(supertile *p, int lev, int gm1) {
+   G_INT64 pop = 0 ;
    int i, j, k, b ;
    if (lev == 0) {
       tile *pp = (tile *)p ;
@@ -994,7 +994,7 @@ supertile *qlifealgo::mdelete(supertile *p, int lev) {
    }
    return p ;
 }
-long long qlifealgo::popcount() {
+G_INT64 qlifealgo::popcount() {
    return find_set_bits(root, rootlev, generation.odd()) ;
 }
 const bigint &qlifealgo::getPopulation() {

@@ -256,10 +256,10 @@ private:
                 supertile *par, supertile *cor, int lev) ;
    int p01(tile *p, tile *pr, tile *pd, tile *prd) ;
    int p10(tile *plu, tile *pu, tile *pl, tile *p) ;
-   long long find_set_bits(supertile *p, int lev, int gm1) ;
+   G_INT64 find_set_bits(supertile *p, int lev, int gm1) ;
    int isEmpty(supertile *p, int lev, int gm1) ;
    supertile *mdelete(supertile *p, int lev) ;
-   long long popcount() ;
+   G_INT64 popcount() ;
    int uproot_needed() ;
    void dogen() ;
    void renderbm(int x, int y) ;

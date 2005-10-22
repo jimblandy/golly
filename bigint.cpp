@@ -49,7 +49,7 @@ bigint::bigint() {
 bigint::bigint(int i) {
    fromint(i) ;
 }
-bigint::bigint(long long i) {
+bigint::bigint(G_INT64 i) {
    if (i <= INT_MAX && i >= INT_MIN)
       fromint((int)i) ;
    else {
@@ -179,12 +179,12 @@ const char *bigint::tostring() const {
       int allbits = 0 ;
       int carry = 0 ;
       for (int i=sz-1; i>=0; i--) {
-         long long c = carry * 0x80000000LL + work[i] ;
+         G_INT64 c = carry * G_MAKEINT64(0x80000000) + work[i] ;
          carry = (int)(c % bigradix) ;
          work[i] = (int)(c / bigradix) ;
          allbits |= work[i] ;
       }
-      for (int i=0; i<9; i++) { // put the nine digits in
+      for (i=0; i<9; i++) { // put the nine digits in
          *p++ = (char)(carry % 10 + '0') ;
          carry /= 10 ;
       }
@@ -408,7 +408,7 @@ void bigint::div_smallint(int a) {
    int carry = 0 ;
    int pos = v.p[0] ;
    while (pos > 0) {
-      long long t = ((long long)carry << 31LL) + v.p[pos] ;
+      G_INT64 t = ((G_INT64)carry << G_MAKEINT64(31)) + v.p[pos] ;
       carry = (int)(t % a) ;
       v.p[pos] = (int)(t / a) ;
       pos-- ;
@@ -488,7 +488,7 @@ bigint& bigint::operator<<=(int i) {
    if (bigsh) {
       for (int j=v.p[0]-1; j>bigsh; j--)
          v.p[j] = v.p[j-bigsh] ;
-      for (int j=bigsh; j>0; j--)
+      for (j=bigsh; j>0; j--)
          v.p[j] = 0 ;
       i -= bigsh * 31 ;
    }
