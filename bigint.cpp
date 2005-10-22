@@ -178,7 +178,8 @@ const char *bigint::tostring() const {
    for (;;) {
       int allbits = 0 ;
       int carry = 0 ;
-      for (int i=sz-1; i>=0; i--) {
+      int i;
+      for (i=sz-1; i>=0; i--) {
          G_INT64 c = carry * G_MAKEINT64(0x80000000) + work[i] ;
          carry = (int)(c % bigradix) ;
          work[i] = (int)(c / bigradix) ;
@@ -486,7 +487,8 @@ bigint& bigint::operator<<=(int i) {
    int nsize = v.p[0] + bigsh + 1 ; // how big we need it to be, worst case
    grow(v.p[0], nsize) ;
    if (bigsh) {
-      for (int j=v.p[0]-1; j>bigsh; j--)
+      int j ;
+      for (j=v.p[0]-1; j>bigsh; j--)
          v.p[j] = v.p[j-bigsh] ;
       for (j=bigsh; j>0; j--)
          v.p[j] = 0 ;
