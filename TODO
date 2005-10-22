@@ -100,7 +100,6 @@ User suggestions:
 - More available zoom scales would be nice, e.g. 1:3 and 1:6.
 - Shrink the scrollbar thumbs and/or increase their scroll rate, to allow
   scrolling more than 1 screenful at a time.
-- Need faster way to select cursor modes; eg. use F5 to F8.
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
 - Display a ghost image when pasting pattern.

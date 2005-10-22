@@ -1,7 +1,13 @@
 Changes in version 0.92 (released ???)
 
+AKT: Added Restore Origin to the View menu.
+AKT: Hit "0" to change the origin to the cell under the cursor.
+AKT: Added Set Scale submenu to the View menu.
+AKT: Hit "6" to set the scale to 1:16.
+AKT: F5 to F9 can be used to set cursor modes.
 AKT: Added Fit Selection item to the View menu.
 AKT: Added Shrink Selection item to the Edit menu.
+AKT: Hit "s" to shrink the selection and fit it in the current view.
 AKT: Change to e notation occurs outside +/- 1 billion (ie. edit limits).
 TGR: Commas are used to make large numbers more readable.
 AKT: Fixed bug returning from full screen mode in Mac app.

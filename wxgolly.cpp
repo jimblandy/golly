@@ -271,17 +271,16 @@ private:
 
 #define MAX_RECENT (100)    // maximum value of maxrecent
 
-// IDs for controls and menu commands (other than standard wxID_* commands)
+// IDs for timers, controls and menu commands
 enum {
    // timers
    ID_DRAG_TIMER = wxID_HIGHEST,
    ID_ONE_TIMER,
 
-   // buttons in help window
+   // buttons in help window (see also wxID_CLOSE)
    ID_BACK_BUTT,
    ID_FORWARD_BUTT,
    ID_CONTENTS_BUTT,
-   // wxID_CLOSE,
 
    // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE)
    ID_OPEN_CLIP,
@@ -338,16 +337,25 @@ enum {
    ID_RULE,
    
    // View menu (see also wxID_ZOOM_IN, wxID_ZOOM_OUT)
+   ID_FULL,
    ID_FIT,
    ID_FIT_SEL,
    ID_MIDDLE,
-   ID_FULL,
+   ID_RESTORE00,
+   ID_SET_SCALE,
    ID_STATUS,
    ID_TOOL,
    ID_GRID,
    ID_VIDEO,
    ID_BUFF,
    ID_INFO,
+
+   // Set Scale submenu
+   ID_SCALE_1,
+   ID_SCALE_2,
+   ID_SCALE_4,
+   ID_SCALE_8,
+   ID_SCALE_16,
    
    // Help menu
    ID_HELP_INDEX,
@@ -416,8 +424,10 @@ int h_xy;                     // horizontal position of "XY"
 int textascent;               // vertical adjustment used in DrawText calls
 int statusht = STATUS_HT;     // status bar is initially visible
 char statusmsg[256];          // for messages on 2nd line
-double currx, curry;          // cursor location in cell coords
-bool showxy = false;          // show cursor location?
+bigint currx, curry;          // cursor location in cell coords
+bigint offsety = 0;           // X offset set by ChangeOrigin
+bigint offsetx = 0;           // Y offset set by ChangeOrigin
+bool showxy = false;          // show cursor's XY location?
 
 // timing stuff
 long starttime, endtime;
@@ -494,7 +504,7 @@ bool selectingcells = false;  // selecting cells due to dragging mouse?
 bool movingview = false;      // moving view due to dragging mouse?
 wxTimer *dragtimer;           // timer used while dragging mouse
 const int dragrate = 20;      // call OnDragTimer 50 times per sec
-bool waitingforclick = false; // waiting for user to paste clipboard pattern?
+bool waitingforclick = false; // waiting for user to click?
 int pastex, pastey;           // where user wants to paste clipboard pattern
 wxRect pasterect;             // shows area to be pasted
 
@@ -1450,7 +1460,7 @@ void DisplayPattern() {
 
 // empty statusmsg and erase 2nd line (ie. bottom half) of status bar
 void ClearMessage() {
-   if (waitingforclick) return;     // don't clobber paste msg
+   if (waitingforclick) return;     // don't clobber message
    statusmsg[0] = 0;
    if (statusht > 0) {
       int wd, ht;
@@ -1604,7 +1614,9 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
       if (showxy) {
          // if we ever provide an option to display standard math coords
          // (ie. y increasing upwards) then use -curry - 1
-         sprintf(strbuf, "XY=%s %s", stringify(currx), stringify(curry));
+         bigint xpos = currx;   xpos -= offsetx;
+         bigint ypos = curry;   ypos -= offsety;
+         sprintf(strbuf, "XY=%s %s", stringify(xpos), stringify(ypos));
       } else {
          sprintf(strbuf, "XY=");
       }
@@ -1747,6 +1759,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_OPEN_CLIP, active && !generating && textinclip);
       mbar->Enable(ID_RECENT,    active && !generating && numrecent > 0);
       mbar->Enable(wxID_SAVE,    active && !generating);
+
       mbar->Enable(ID_CUT,       active && !generating && SelectionExists());
       mbar->Enable(ID_COPY,      active && !generating && SelectionExists());
       mbar->Enable(ID_CLEAR,     active && !generating && SelectionExists());
@@ -1760,6 +1773,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_REMOVE,    active && SelectionExists());
       mbar->Enable(ID_SHRINK,    active && SelectionExists());
       mbar->Enable(ID_CMODE,     active);
+
       mbar->Enable(ID_GO,        active && !generating);
       mbar->Enable(ID_STOP,      active && generating);
       mbar->Enable(ID_NEXT,      active && !generating);
@@ -1773,24 +1787,38 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
       mbar->Enable(ID_MAXMEM,    active && hashing && !generating);
       mbar->Enable(ID_RULE,      active && !generating);
+
+      mbar->Enable(ID_FULL,      active);
       mbar->Enable(ID_FIT,       active);
       mbar->Enable(ID_FIT_SEL,   active && SelectionExists());
       mbar->Enable(ID_MIDDLE,    active);
-      mbar->Enable(ID_FULL,      active);
+      mbar->Enable(ID_RESTORE00, active &&
+                                 (offsetx != bigint::zero || offsety != bigint::zero));
+      mbar->Enable(wxID_ZOOM_IN, active && currview.getmag() < MAX_MAG);
+      mbar->Enable(wxID_ZOOM_OUT, active);
+      mbar->Enable(ID_SET_SCALE, active);
       mbar->Enable(ID_STATUS,    active);
       mbar->Enable(ID_TOOL,      active);
       mbar->Enable(ID_GRID,      active);
       mbar->Enable(ID_VIDEO,     active);
       #ifdef __WXMAC__
          // windows on Mac OS X are automatically buffered
-         mbar->Enable(ID_BUFF, false);
+         mbar->Enable(ID_BUFF,   false);
+         mbar->Check(ID_BUFF,    true);
       #else
-         mbar->Enable(ID_BUFF, active);
+         mbar->Enable(ID_BUFF,   active);
+         mbar->Check(ID_BUFF,    buffered);
       #endif
-      mbar->Enable(wxID_ZOOM_IN, active && currview.getmag() < MAX_MAG);
-      mbar->Enable(wxID_ZOOM_OUT, active);
       mbar->Enable(ID_INFO,      currfile[0] != 0);
+
       // tick/untick menu items created using AppendCheckItem
+      mbar->Check(ID_AUTO,       autofit);
+      mbar->Check(ID_HASH,       hashing);
+      mbar->Check(ID_HYPER,      hyperspeed);
+      mbar->Check(ID_STATUS,     statusht > 0);
+      mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
+      mbar->Check(ID_GRID,       showgridlines);
+      mbar->Check(ID_VIDEO,      blackcells);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
       mbar->Check(ID_PL_TR,      plocation == TopRight);
       mbar->Check(ID_PL_BR,      plocation == BottomRight);
@@ -1804,19 +1832,12 @@ void UpdateMenuItems(bool active) {
       mbar->Check(ID_MOVE,       currcurs == curs_hand);
       mbar->Check(ID_ZOOMIN,     currcurs == curs_zoomin);
       mbar->Check(ID_ZOOMOUT,    currcurs == curs_zoomout);
-      mbar->Check(ID_AUTO,       autofit);
-      mbar->Check(ID_HASH,       hashing);
-      mbar->Check(ID_HYPER,      hyperspeed);
-      mbar->Check(ID_STATUS,     statusht > 0);
-      mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
-      mbar->Check(ID_GRID,       showgridlines);
-      mbar->Check(ID_VIDEO,      blackcells);
-      #ifdef __WXMAC__
-         // windows on Mac OS X are automatically buffered
-         mbar->Check(ID_BUFF, true);
-      #else
-         mbar->Check(ID_BUFF, buffered);
-      #endif
+      mbar->Check(ID_SCALE_1,    currview.getmag() == 0);
+      mbar->Check(ID_SCALE_2,    currview.getmag() == 1);
+      mbar->Check(ID_SCALE_4,    currview.getmag() == 2);
+      mbar->Check(ID_SCALE_8,    currview.getmag() == 3);
+      mbar->Check(ID_SCALE_16,   currview.getmag() == 4);
+
    }
 }
 
@@ -1866,18 +1887,11 @@ void CheckMouseLocation(bool active) {
    wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
    if (PointInView(pt.x, pt.y)) {
       // get location in cell coords
-      pair<double, double> coor = currview.atf(pt.x, pt.y);
-      if (currview.getmag() > 0) {
-         coor.first = floor(coor.first);
-         coor.second = floor(coor.second);
-      }
-      // need next 2 lines to avoid seeing "-0"
-      if (fabs(coor.first) < 1) coor.first = 0;
-      if (fabs(coor.second) < 1) coor.second = 0;
-      if ( coor.first != currx || coor.second != curry ) {
+      pair<bigint, bigint> cellpos = currview.at(pt.x, pt.y);
+      if ( cellpos.first != currx || cellpos.second != curry ) {
          // show new XY location
-         currx = coor.first;
-         curry = coor.second;
+         currx = cellpos.first;
+         curry = cellpos.second;
          showxy = true;
          UpdateXYLocation();
       } else if (!showxy) {
@@ -3061,11 +3075,16 @@ void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                // viewptr->Update();
             }
          }
-         wxMilliSleep(10);             // sleep for a bit
-         wxGetApp().Yield(true);       // process events
+         wxMilliSleep(10);             // don't hog CPU
+         wxGetApp().Yield(true);
+         // waitingforclick becomes false if PatternView::OnMouseDown is called
          #ifdef __WXMAC__
             // need to check if button down due to CaptureMouse bug in wxMac!!!
-            if ( Button() ) {
+            // test if bug fixed in wxMac 2.6.2???!!!
+            if ( waitingforclick && Button() ) {
+               pt = viewptr->ScreenToClient( wxGetMousePosition() );
+               pastex = pt.x;
+               pastey = pt.y;
                waitingforclick = false;
                FlushEvents(mDownMask + mUpMask, 0);   // avoid wx seeing click
             }
@@ -3311,12 +3330,15 @@ void RemoveSelection() {
    }
 }
 
-void ShrinkSelection() {
+void FitSelection();
+
+void ShrinkSelection(bool fit) {
    if (!SelectionExists()) return;
    
    // check if there is no pattern
    if (curralgo->isEmpty()) {
       ErrorMessage(empty_selection);
+      if (fit) FitSelection();
       return;
    }
    
@@ -3331,7 +3353,10 @@ void ShrinkSelection() {
       selleft = left;
       selright = right;
       DisplaySelectionSize();
-      RefreshPatternAndStatus();
+      if (fit)
+         FitSelection();   // calls RefreshWindow
+      else
+         RefreshPatternAndStatus();
       return;
    }
 
@@ -3339,6 +3364,7 @@ void ShrinkSelection() {
    if ( seltop > bottom || selbottom < top ||
         selleft > right || selright < left ) {
       ErrorMessage(empty_selection);
+      if (fit) FitSelection();
       return;
    }
    
@@ -3351,10 +3377,14 @@ void ShrinkSelection() {
    // check that selection is small enough to save
    if ( OutsideLimits(top, left, bottom, right) ) {
       ErrorMessage(selection_too_big);
+      if (fit) FitSelection();
       return;
    }
    
-   // create a new temporary universe
+   // the easy way to shrink selection is to create a new temporary universe,
+   // copy selection into new universe and then call findedges;
+   // a faster way would be to scan selection from top to bottom until first
+   // live cell found, then from bottom to top, left to right and right to left!!!
    lifealgo *tempalgo;
    if ( hashing )
       tempalgo = new hlifealgo();
@@ -3369,11 +3399,12 @@ void ShrinkSelection() {
       } else {
          tempalgo->findedges(&seltop, &selleft, &selbottom, &selright);
          DisplaySelectionSize();
-         RefreshPatternAndStatus();
+         if (!fit) RefreshPatternAndStatus();
       }
    }
    
    delete tempalgo;
+   if (fit) FitSelection();
 }
 
 void SetCursorMode(wxCursor *newcurs) {
@@ -3383,6 +3414,7 @@ void SetCursorMode(wxCursor *newcurs) {
 void CycleCursorMode() {
    if (drawingcells || selectingcells || movingview || waitingforclick)
       return;
+
    if (currcurs == curs_pencil)
       currcurs = curs_cross;
    else if (currcurs == curs_cross)
@@ -4362,6 +4394,7 @@ void SetPixelsPerCell(int pxlspercell) {
 
 void FitPattern() {
    FitInView();
+   // best not to call TestAutoFit
    RefreshWindow();
 }
 
@@ -4393,10 +4426,44 @@ void FitSelection() {
    RefreshWindow();
 }
 
-void ViewMiddle() {
-   // put 0,0 in middle of view
-   currview.center();
+void ViewOrigin() {
+   // put 0,0 cell in middle of view
+   if ( offsetx == bigint::zero && offsety == bigint::zero ) {
+      currview.center();
+   } else {
+      // put cell saved by ChangeOrigin in middle
+      currview.setpositionmag(offsetx, offsety, currview.getmag());
+   }
+   TestAutoFit();
    RefreshWindow();
+}
+
+void ToggleStatusBar();
+
+void ChangeOrigin() {
+   if (waitingforclick) return;
+   // change cell under cursor to 0,0
+   wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
+   if ( pt.x < 0 || pt.x > currview.getxmax() ||
+        pt.y < 0 || pt.y > currview.getymax() ) {
+      ErrorMessage("Origin not changed.");
+   } else {
+      pair<bigint, bigint> cellpos = currview.at(pt.x, pt.y);
+      offsety = cellpos.second;
+      offsetx = cellpos.first;
+      DisplayMessage("Origin changed.");
+      UpdateXYLocation();
+   }
+}
+
+void RestoreOrigin() {
+   if (waitingforclick) return;
+   if (offsetx != bigint::zero || offsety != bigint::zero) {
+      offsety = 0;
+      offsetx = 0;
+      DisplayMessage("True origin has been restored.");
+      UpdateXYLocation();
+   }
 }
 
 // set viewport size
@@ -5037,99 +5104,40 @@ void ProcessKey(int key, bool shiftkey) {
       case WXK_UP:      PanUp( SmallScroll(currview.getheight()) ); break;
       case WXK_DOWN:    PanDown( SmallScroll(currview.getheight()) ); break;
 
-      case '1':   SetPixelsPerCell(1); break;
-      case '2':   SetPixelsPerCell(2); break;
-      case '4':   SetPixelsPerCell(4); break;
-      case '8':   SetPixelsPerCell(8); break;
-
-      case WXK_BACK:       // delete key generates backspace code
-      case WXK_DELETE:     // probably never happens but play safe
+      case WXK_BACK:    // delete key generates backspace code
+      case WXK_DELETE:  // probably never happens but play safe
          if (shiftkey)
             ClearOutsideSelection();
          else
             ClearSelection();
          break;
       
-      case 'a':
-         SelectAll();
-         break;
+      case 'a':   SelectAll(); break;
+      case 'k':   RemoveSelection(); break;
+      case 's':   ShrinkSelection(true); break;
+      case 'v':   PasteClipboard(false); break;
+      case 'L':   CyclePasteLocation(); break;
+      case 'M':   CyclePasteMode(); break;
+      case 'c':   CycleCursorMode(); break;
 
-      case 'k':
-         RemoveSelection();
-         break;
-
-      case 'v':
-         PasteClipboard(false);
-         break;
-
-      case 'L':
-         CyclePasteLocation();
-         break;
-
-      case 'M':
-         CyclePasteMode();
-         break;
-
-      case 'c':
-         CycleCursorMode();
-         break;
-
-      case 'f':
-         FitPattern();
-         break;
-
-      case 'F':
-      case 's':
-         FitSelection();
-         break;
-
-      case 'm':
-      case WXK_HOME:
-         ViewMiddle();
-         break;
-
-      case WXK_F1:            // F11 is also used on non-Mac platforms (handled by OnMenu)
-         ToggleFullScreen();
-         break;
-
-      case 'i':
-         ShowPatternInfo();
-         break;
-
-      case '[':
-      case '/':
-      case WXK_DIVIDE:        // for X11
-         ZoomOut();
-         break;
-
-      case ']':
-      case '*':
-      case WXK_MULTIPLY:      // for X11
-         ZoomIn();
-         break;
-
-      case ';':
-         ToggleStatusBar();
-         break;
-
-      case '\'':
-         ToggleToolBar();
-         break;
-
-      case 'l':
-         ToggleGridLines();
-         break;
-
-      case 'b':
-         ToggleVideo();
-         break;
+      #ifdef __WXX11__
+         // need this so we can use function keys immediately without having
+         // to open Edit menu -- sheesh
+         case WXK_F5:   SetCursorMode(curs_pencil); break;
+         case WXK_F6:   SetCursorMode(curs_cross); break;
+         case WXK_F7:   SetCursorMode(curs_hand); break;
+         case WXK_F8:   SetCursorMode(curs_zoomin); break;
+         case WXK_F9:   SetCursorMode(curs_zoomout); break;
+      #endif
 
       case 'g':
-      case WXK_RETURN:           // not generating -- see PatternView::OnChar
+      case WXK_RETURN:
+         // not generating -- see PatternView::OnChar
          GeneratePattern();
          break;
 
-      case ' ':                  // not generating -- see PatternView::OnChar
+      case ' ':
+         // not generating -- see PatternView::OnChar
          NextGeneration(false);  // do only 1 gen
          break;
 
@@ -5137,25 +5145,47 @@ void ProcessKey(int key, bool shiftkey) {
          NextGeneration(true);   // use current increment
          break;
 
-      case 't':
-         ToggleAutoFit();
-         break;
+      case 't':   ToggleAutoFit(); break;
+      case 'T':   DisplayTimingInfo(); break;
 
-      case 'T':                  // 't' is for toggling autofit
-         DisplayTimingInfo();
-         break;
-
+      case WXK_ADD:        // for X11
       case '+':
-      case '=':
-      case WXK_ADD:              // for X11
-         GoFaster();
-         break;
+      case '=':   GoFaster(); break;
 
+      case WXK_SUBTRACT:   // for X11
       case '-':
-      case '_':
-      case WXK_SUBTRACT:         // for X11
-         GoSlower();
-         break;
+      case '_':   GoSlower(); break;
+
+      // F11 is also used on non-Mac platforms (handled by OnMenu)
+      case WXK_F1: ToggleFullScreen(); break;
+
+      case 'f':   FitPattern(); break;
+      case 'F':   FitSelection(); break;
+
+      case WXK_HOME:
+      case 'm':   ViewOrigin(); break;
+      case '0':   ChangeOrigin(); break;
+      case '9':   RestoreOrigin(); break;
+
+      case WXK_DIVIDE:     // for X11
+      case '[':
+      case '/':   ZoomOut(); break;
+
+      case WXK_MULTIPLY:   // for X11
+      case ']':
+      case '*':   ZoomIn(); break;
+
+      case '1':   SetPixelsPerCell(1); break;
+      case '2':   SetPixelsPerCell(2); break;
+      case '4':   SetPixelsPerCell(4); break;
+      case '8':   SetPixelsPerCell(8); break;
+      case '6':   SetPixelsPerCell(16); break;
+
+      case ';':   ToggleStatusBar(); break;
+      case '\'':  ToggleToolBar(); break;
+      case 'l':   ToggleGridLines(); break;
+      case 'b':   ToggleVideo(); break;
+      case 'i':   ShowPatternInfo(); break;
    
       case 'h':
       case WXK_HELP:
@@ -5292,7 +5322,7 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_PM_XOR:         SetPasteMode(Xor); break;
       case ID_SELALL:         SelectAll(); break;
       case ID_REMOVE:         RemoveSelection(); break;
-      case ID_SHRINK:         ShrinkSelection(); break;
+      case ID_SHRINK:         ShrinkSelection(false); break;
       case ID_DRAW:           SetCursorMode(curs_pencil); break;
       case ID_SELECT:         SetCursorMode(curs_cross); break;
       case ID_MOVE:           SetCursorMode(curs_hand); break;
@@ -5312,12 +5342,18 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_MAXMEM:         ChangeMaxMemory(); break;
       case ID_RULE:           ChangeRule(); break;
       // View menu
+      case ID_FULL:           ToggleFullScreen(); break;
       case ID_FIT:            FitPattern(); break;
       case ID_FIT_SEL:        FitSelection(); break;
-      case ID_MIDDLE:         ViewMiddle(); break;
-      case ID_FULL:           ToggleFullScreen(); break;
+      case ID_MIDDLE:         ViewOrigin(); break;
+      case ID_RESTORE00:      RestoreOrigin(); break;
       case wxID_ZOOM_IN:      ZoomIn(); break;
       case wxID_ZOOM_OUT:     ZoomOut(); break;
+      case ID_SCALE_1:        SetPixelsPerCell(1); break;
+      case ID_SCALE_2:        SetPixelsPerCell(2); break;
+      case ID_SCALE_4:        SetPixelsPerCell(4); break;
+      case ID_SCALE_8:        SetPixelsPerCell(8); break;
+      case ID_SCALE_16:       SetPixelsPerCell(16); break;
       case ID_STATUS:         ToggleStatusBar(); break;
       case ID_TOOL:           ToggleToolBar(); break;
       case ID_GRID:           ToggleGridLines(); break;
@@ -5623,7 +5659,7 @@ void PatternView::OnChar(wxKeyEvent& event) {
 
 void PatternView::OnMouseDown(wxMouseEvent& event) {
    if (waitingforclick) {
-      // set paste location
+      // save paste location
       pastex = event.GetX();
       pastey = event.GetY();
       waitingforclick = false;
@@ -5986,6 +6022,7 @@ MainFrame::MainFrame()
    wxMenu *plocSubMenu = new wxMenu();
    wxMenu *pmodeSubMenu = new wxMenu();
    wxMenu *cmodeSubMenu = new wxMenu();
+   wxMenu *scaleSubMenu = new wxMenu();
 
    plocSubMenu->AppendCheckItem(ID_PL_TL, _("Top Left"));
    plocSubMenu->AppendCheckItem(ID_PL_TR, _("Top Right"));
@@ -5997,11 +6034,18 @@ MainFrame::MainFrame()
    pmodeSubMenu->AppendCheckItem(ID_PM_OR, _("Or"));
    pmodeSubMenu->AppendCheckItem(ID_PM_XOR, _("Xor"));
 
-   cmodeSubMenu->AppendCheckItem(ID_DRAW, _("Draw"));
-   cmodeSubMenu->AppendCheckItem(ID_SELECT, _("Select"));
-   cmodeSubMenu->AppendCheckItem(ID_MOVE, _("Move"));
-   cmodeSubMenu->AppendCheckItem(ID_ZOOMIN, _("Zoom In"));
-   cmodeSubMenu->AppendCheckItem(ID_ZOOMOUT, _("Zoom Out"));
+   cmodeSubMenu->AppendCheckItem(ID_DRAW, _("Draw\tF5"));
+   cmodeSubMenu->AppendCheckItem(ID_SELECT, _("Select\tF6"));
+   cmodeSubMenu->AppendCheckItem(ID_MOVE, _("Move\tF7"));
+   cmodeSubMenu->AppendCheckItem(ID_ZOOMIN, _("Zoom In\tF8"));
+   // F9 might be reserved in Mac OS 10.4???
+   cmodeSubMenu->AppendCheckItem(ID_ZOOMOUT, _("Zoom Out\tF9"));
+
+   scaleSubMenu->AppendCheckItem(ID_SCALE_1, _("1:1\tCtrl+1"));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_2, _("1:2\tCtrl+2"));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_4, _("1:4\tCtrl+4"));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_8, _("1:8\tCtrl+8"));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_16, _("1:16\tCtrl+6"));
 
    fileMenu->Append(wxID_NEW, _("New Pattern\tCtrl+N"));
    fileMenu->AppendSeparator();
@@ -6058,9 +6102,6 @@ MainFrame::MainFrame()
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_RULE, _("Rule..."));
 
-   viewMenu->Append(ID_FIT, _("Fit Pattern\tCtrl+F"));
-   viewMenu->Append(ID_FIT_SEL, _("Fit Selection\tShift+Ctrl+F"));
-   viewMenu->Append(ID_MIDDLE, _("Middle\tCtrl+M"));
    #ifdef __WXMAC__
       // F11 is a default activation key for Expose so use F1 instead
       viewMenu->Append(ID_FULL, _("Full Screen\tF1"));
@@ -6068,17 +6109,26 @@ MainFrame::MainFrame()
       viewMenu->Append(ID_FULL, _("Full Screen\tF11"));
    #endif
    viewMenu->AppendSeparator();
+   viewMenu->Append(ID_FIT, _("Fit Pattern\tCtrl+F"));
+   viewMenu->Append(ID_FIT_SEL, _("Fit Selection\tShift+Ctrl+F"));
+   viewMenu->Append(ID_MIDDLE, _("Middle\tCtrl+M"));
+   viewMenu->Append(ID_RESTORE00, _("Restore Origin\tCtrl+9"));
+   viewMenu->AppendSeparator();
    #ifdef __WXMSW__
       // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
       viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\t]"));
       viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\t["));
-      viewMenu->AppendSeparator();
-      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\t;"));
-      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\t'"));
    #else
       viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\tCtrl+]"));
       viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\tCtrl+["));
-      viewMenu->AppendSeparator();
+   #endif
+   viewMenu->Append(ID_SET_SCALE, _("Set Scale"), scaleSubMenu);
+   viewMenu->AppendSeparator();
+   #ifdef __WXMSW__
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
+      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\t;"));
+      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\t'"));
+   #else
       viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\tCtrl+;"));
       viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\tCtrl+'"));
    #endif
