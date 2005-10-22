@@ -53,10 +53,11 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
 }
 static unsigned char rev8[256] ;
 static void init_rev8() {
-   for (int i=0; i<8; i++) {
+   int i;
+   for (i=0; i<8; i++) {
       rev8[1<<i] = (unsigned char)(1<<(7-i)) ;
    }
-   for (int i=0; i<256; i++)
+   for (i=0; i<256; i++)
       if (i & (i-1)) {
          rev8[i] = rev8[i & (i-1)] + rev8[i & -i] ;
       }
@@ -479,7 +480,8 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
      maxd = viewh ;
    int llx=-llxb[llbits-1], lly=-llyb[llbits-1] ;
 /*   Skip down to top of tree. */
-   for (int i=llbits-1; i>=d && i>=mag; i--) { /* go down to d, but not further than mag */
+   int i;
+   for (i=llbits-1; i>=d && i>=mag; i--) { /* go down to d, but not further than mag */
       llx = (llx << 1) + llxb[i] ;
       lly = (lly << 1) + llyb[i] ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
@@ -548,7 +550,7 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
    find_set_bits(se, curlev, oddgen) ;
 // getPopulation() ;
    /*  At this point we know we can use 32-bit arithmetic. */
-   for (int i=d-1; i>=mag; i--) {
+   for (i=d-1; i>=mag; i--) {
       llx = (llx << 1) + llxb[i] ;
       lly = (lly << 1) + llyb[i] ;
    }
@@ -706,9 +708,10 @@ void qlifealgo::allsub(vector<supertile*> &src, vector<supertile*> &dst,
 }
 int qlifealgo::gethbitsfromleaves(vector<supertile *> v) {
   int h[8] ;
-  for (int i=0; i<8; i++)
+  int i;
+  for (i=0; i<8; i++)
     h[i] = 0 ;
-  for (int i=0; i<(int)v.size(); i++) {
+  for (i=0; i<(int)v.size(); i++) {
     tile *p = (tile *)v[i] ;
     for (int j=0; j<4; j++)
       if (p->b[j] != emptybrick)
@@ -716,7 +719,7 @@ int qlifealgo::gethbitsfromleaves(vector<supertile *> v) {
 	  h[k] |= p->b[j]->d[k+kadd] ;
   }
   int r = 0 ;
-  for (int i=0; i<8; i++) {
+  for (i=0; i<8; i++) {
     int v = h[i] ;
     v |= (v >> 16) ;
     v |= (v >> 8) ;
@@ -727,9 +730,10 @@ int qlifealgo::gethbitsfromleaves(vector<supertile *> v) {
 }
 int qlifealgo::getvbitsfromleaves(vector<supertile *> vec) {
   int v[4] ;
-  for (int i=0; i<4; i++)
+  int i;
+  for (i=0; i<4; i++)
     v[i] = 0 ;
-  for (int i=0; i<(int)vec.size(); i++) {
+  for (i=0; i<(int)vec.size(); i++) {
     tile *p = (tile *)vec[i] ;
     for (int j=0; j<4; j++)
       if (p->b[j] != emptybrick)
@@ -737,7 +741,7 @@ int qlifealgo::getvbitsfromleaves(vector<supertile *> vec) {
 	  v[j] |= p->b[j]->d[k+kadd] ;
   }
   int r = 0 ;
-  for (int i=3; i>=0; i--) {
+  for (i=3; i>=0; i--) {
     int vv = v[i] ;
     for (int j=0; j<8; j++) {
       r += r ;

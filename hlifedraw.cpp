@@ -190,11 +190,12 @@ void hlifealgo::fill_ll(int d) {
    coor.second.tochararr(llyb, llbits) ;
 }
 static void init_rev8() {
-   for (int i=0; i<8; i++) {
+   int i;
+   for (i=0; i<8; i++) {
       rev8[1<<i] = (unsigned char)(1<<(7-i)) ;
       compress4x4[1<<i] = (unsigned char)(0x11 << ((7 - i) >> 1)) ;
    }
-   for (int i=0; i<256; i++)
+   for (i=0; i<256; i++)
       if (i & (i-1)) {
          rev8[i] = rev8[i & (i-1)] + rev8[i & -i] ;
          compress4x4[i] = compress4x4[i & (i-1)] | compress4x4[i & -i] ;
@@ -334,7 +335,8 @@ bail:
 }
 int getbitsfromleaves(const vector<node *> &v) {
   unsigned short nw=0, ne=0, sw=0, se=0 ;
-  for (int i=0; i<(int)v.size(); i++) {
+  int i;
+  for (i=0; i<(int)v.size(); i++) {
     leaf *p = (leaf *)v[i] ;
     nw |= p->nw ;
     ne |= p->ne ;
@@ -348,7 +350,7 @@ int getbitsfromleaves(const vector<node *> &v) {
   // vertical bits are next 8
   unsigned short n = nw | ne ;
   unsigned short s = sw | se ;
-  for (int i=0; i<4; i++) {
+  for (i=0; i<4; i++) {
     if (w & (0x1111 << i))
       r |= 0x1000 << i ;
     if (e & (0x1111 << i))
@@ -370,6 +372,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
    bigint ymin = -1 ;
    bigint ymax = 1 ;
    int currdepth = node_depth(root) ;
+   int i;
    if (root == zeronode(currdepth)) {
       // AKT: return impossible edges to indicate empty pattern;
       // not really a problem because caller should check first
@@ -425,7 +428,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
             z = zeronode(currdepth) ;
          vector<node *> newv ;
          int outer = 0 ;
-         for (int i=0; i<(int)top.size(); i++) {
+         for (i=0; i<(int)top.size(); i++) {
             node *t = top[i] ;
             if (!outer && (t->nw != z || t->ne != z)) {
                newv.clear() ;
@@ -450,7 +453,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
             ymax.add_smallint(-2) ;
          }
          outer = 0 ;
-         for (int i=0; i<(int)bottom.size(); i++) {
+         for (i=0; i<(int)bottom.size(); i++) {
             node *t = bottom[i] ;
             if (!outer && (t->sw != z || t->se != z)) {
                newv.clear() ;
@@ -475,7 +478,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
             ymin.add_smallint(2) ;
          }
          outer = 0 ;
-         for (int i=0; i<(int)right.size(); i++) {
+         for (i=0; i<(int)right.size(); i++) {
             node *t = right[i] ;
             if (!outer && (t->ne != z || t->se != z)) {
                newv.clear() ;
@@ -500,7 +503,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
             xmax.add_smallint(-2) ;
          }
          outer = 0 ;
-         for (int i=0; i<(int)left.size(); i++) {
+         for (i=0; i<(int)left.size(); i++) {
             node *t = left[i] ;
             if (!outer && (t->nw != z || t->sw != z)) {
                newv.clear() ;
@@ -560,6 +563,7 @@ void hlifealgo::fit(viewport &view, int force) {
    int xsize = 2 ;
    int ysize = 2 ;
    int currdepth = node_depth(root) ;
+   int i;
    if (root == zeronode(currdepth)) {
       view.center() ;
       view.setmag(MAX_MAG) ;
@@ -617,7 +621,7 @@ void hlifealgo::fit(viewport &view, int force) {
             z = zeronode(currdepth) ;
          vector<node *> newv ;
          int outer = 0 ;
-         for (int i=0; i<(int)top.size(); i++) {
+         for (i=0; i<(int)top.size(); i++) {
             node *t = top[i] ;
             if (!outer && (t->nw != z || t->ne != z)) {
                newv.clear() ;
@@ -643,7 +647,7 @@ void hlifealgo::fit(viewport &view, int force) {
             ysize-- ;
          }
          outer = 0 ;
-         for (int i=0; i<(int)bottom.size(); i++) {
+         for (i=0; i<(int)bottom.size(); i++) {
             node *t = bottom[i] ;
             if (!outer && (t->sw != z || t->se != z)) {
                newv.clear() ;
@@ -670,7 +674,7 @@ void hlifealgo::fit(viewport &view, int force) {
          }
          ysize *= 2 ;
          outer = 0 ;
-         for (int i=0; i<(int)right.size(); i++) {
+         for (i=0; i<(int)right.size(); i++) {
             node *t = right[i] ;
             if (!outer && (t->ne != z || t->se != z)) {
                newv.clear() ;
@@ -696,7 +700,7 @@ void hlifealgo::fit(viewport &view, int force) {
             xsize-- ;
          }
          outer = 0 ;
-         for (int i=0; i<(int)left.size(); i++) {
+         for (i=0; i<(int)left.size(); i++) {
             node *t = left[i] ;
             if (!outer && (t->nw != z || t->sw != z)) {
                newv.clear() ;
