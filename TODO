@@ -57,10 +57,10 @@ A - Check if wx can support vbr synchronization when buffering.
 - Create nicer tool bitmaps; ie. make them more like buttons.
   PROBLEM: wxMac scales 22x22 buttons down to 16x16!
 
-- Let user change spacing of dark grid lines.
-
 - Let user specify colors for live/dead cells.  Only slightly tricky
   part is dynamically choosing nice colors for the grid lines.
+  Also let user specify selection color.
+  Replace "Black on White" flag with "Swap Colors".
 
 - Implement a history bar for hlife.
 
@@ -87,7 +87,6 @@ User suggestions:
   mouse coordinates (and copy them to clipboard).
 
 [Paul Chapman]
-- Allow grid display for zoom level 1:4.
 - Combine the start and stop toolbar buttons into a single toggle.
 
 [Gabriel Nivasch]
@@ -104,7 +103,6 @@ User suggestions:
   move the view X cells horizontally and Y cells vertically every Z gens.
 - Display a ghost image when pasting pattern.
 - Allow diagonal selection rectangles.
-- Modify the source code to better support Visual C++ 6.
 
 [Dave Greene]
 - Animate just the selection, or everything outside the selection.

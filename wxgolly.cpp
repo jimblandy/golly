@@ -425,8 +425,8 @@ int textascent;               // vertical adjustment used in DrawText calls
 int statusht = STATUS_HT;     // status bar is initially visible
 char statusmsg[256];          // for messages on 2nd line
 bigint currx, curry;          // cursor location in cell coords
-bigint offsety = 0;           // X offset set by ChangeOrigin
-bigint offsetx = 0;           // Y offset set by ChangeOrigin
+bigint originy = 0;           // new X coord set by ChangeOrigin
+bigint originx = 0;           // new Y coord set by ChangeOrigin
 bool showxy = false;          // show cursor's XY location?
 
 // timing stuff
@@ -572,7 +572,8 @@ char progtitle[128];                      // title for progress dialog
 // -----------------------------------------------------------------------------
 
 // Golly's preferences file is a simple text file created in the same directory
-// as the application.  This makes backing up and uninstalling easy.
+// as the application.  This makes uninstalling simple and allows multiple
+// copies of the app to have separate settings.
 
 char prefsname[] = "GollyPrefs";
 const int prefsversion = 1;
@@ -600,7 +601,11 @@ bool showstatus = true;          // show status bar?
 bool showtool = true;            // show tool bar?
 int maxhmem = 300;               // maximum hash memory (in megabytes)
 const int minhashmb = 10;        // minimum value of maxhmem
-const int maxhashmb = 4000;      // make bigger when hlifealgo is 64-bit clean???
+const int maxhashmb = 4000;      // make bigger when hlifealgo is 64-bit clean
+int mingridmag = 2;              // minimum mag to draw grid lines
+int mingridscale = 4;            // minimum scale to draw grid lines (2^mingridmag)
+int majorspacing = 10;           // spacing of major grid lines
+bool mathcoords = false;         // show Y values increasing upwards?
 char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
 
 void Warning(const char *s);
@@ -679,6 +684,9 @@ void SavePrefs() {
    fprintf(f, "show_status=%d\n", statusht > 0 ? 1 : 0);
    fprintf(f, "show_tool=%d\n", frameptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
+   fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
+   fprintf(f, "major_spacing=%d (> 1)\n", majorspacing);
+   fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
@@ -743,24 +751,29 @@ void GetPrefs() {
             if (sscanf(value, "%d", &currversion) == 1 && currversion < prefsversion) {
                // may need to do something in the future if syntax changes
             }
+
          } else if (strcmp(keyword, "main_window") == 0) {
             sscanf(value, "%d,%d,%d,%d", &mainx, &mainy, &mainwd, &mainht);
             // avoid very small window -- can cause nasty probs on X11
             if (mainwd < minmainwd) mainwd = minmainwd;
             if (mainht < minmainht) mainht = minmainht;
             CheckVisibility(&mainx, &mainy, &mainwd, &mainht);
+
          } else if (strcmp(keyword, "maximize") == 0) {
             maximize = value[0] == '1';
+
          } else if (strcmp(keyword, "help_window") == 0) {
             sscanf(value, "%d,%d,%d,%d", &helpx, &helpy, &helpwd, &helpht);
             if (helpwd < minhelpwd) helpwd = minhelpwd;
             if (helpht < minhelpht) helpht = minhelpht;
             CheckVisibility(&helpx, &helpy, &helpwd, &helpht);
+
          } else if (strcmp(keyword, "info_window") == 0) {
             sscanf(value, "%d,%d,%d,%d", &infox, &infoy, &infowd, &infoht);
             if (infowd < mininfowd) infowd = mininfowd;
             if (infoht < mininfoht) infoht = mininfoht;
             CheckVisibility(&infox, &infoy, &infowd, &infoht);
+
          } else if (strcmp(keyword, "paste_location") == 0) {
             char val[16];
             sscanf(value, "%s\n", val);
@@ -775,6 +788,7 @@ void GetPrefs() {
             } else if (strcmp(val, "Middle") == 0) {
                plocation = Middle;
             }
+
          } else if (strcmp(keyword, "paste_mode") == 0) {
             char val[16];
             sscanf(value, "%s\n", val);
@@ -785,28 +799,58 @@ void GetPrefs() {
             } else if (strcmp(val, "Xor") == 0) {
                pmode = Xor;
             }
+
          } else if (strcmp(keyword, "auto_fit") == 0) {
             autofit = value[0] == '1';
+
          } else if (strcmp(keyword, "hashing") == 0) {
             hashing = value[0] == '1';
+
          } else if (strcmp(keyword, "hyperspeed") == 0) {
             hyperspeed = value[0] == '1';
+
          } else if (strcmp(keyword, "max_hash_mem") == 0) {
             sscanf(value, "%d", &maxhmem);
             if (maxhmem < minhashmb) maxhmem = minhashmb;
             if (maxhmem > maxhashmb) maxhmem = maxhashmb;
+
          } else if (strcmp(keyword, "rule") == 0) {
             sscanf(value, "%s\n", initrule);
+
          } else if (strcmp(keyword, "show_status") == 0) {
             showstatus = value[0] == '1';
+
          } else if (strcmp(keyword, "show_tool") == 0) {
             showtool = value[0] == '1';
+
          } else if (strcmp(keyword, "grid_lines") == 0) {
             showgridlines = value[0] == '1';
+
+         } else if (strcmp(keyword, "min_grid_mag") == 0) {
+            sscanf(value, "%d", &mingridmag);
+            if (mingridmag < 2) mingridmag = 2;
+            if (mingridmag > MAX_MAG) mingridmag = MAX_MAG;
+            // set mingridscale to 2^mingridmag
+            mingridscale = 4;
+            int i = 2;
+            while (i < mingridmag) {
+               mingridscale *= 2;
+               i++;
+            }
+
+         } else if (strcmp(keyword, "major_spacing") == 0) {
+            sscanf(value, "%d", &majorspacing);
+            if (majorspacing < 2) majorspacing = 2;
+
+         } else if (strcmp(keyword, "math_coords") == 0) {
+            mathcoords = value[0] == '1';
+
          } else if (strcmp(keyword, "black_on_white") == 0) {
             blackcells = value[0] == '1';
+
          } else if (strcmp(keyword, "buffered") == 0) {
             buffered = value[0] == '1';
+
          } else if (strcmp(keyword, "open_save_dir") == 0) {
             opensavedir = value;
             opensavedir.RemoveLast();  // remove \n
@@ -814,10 +858,12 @@ void GetPrefs() {
                // reset to pattern directory
                opensavedir = pattdir;
             }
+
          } else if (strcmp(keyword, "max_recent") == 0) {
             sscanf(value, "%d", &maxrecent);
             if (maxrecent < 1) maxrecent = 1;
             if (maxrecent > MAX_RECENT) maxrecent = MAX_RECENT;
+
          } else if (strcmp(keyword, "recent_file") == 0) {
             wxString path = value;
             path.RemoveLast();  // remove \n
@@ -1214,13 +1260,6 @@ wxBitmap magmap;
 wxUint16 magarray[MAGSIZE * MAGSIZE / 16];
 unsigned char* magbuf = (unsigned char *)magarray;
 
-#define MIN_GRID_MAG (3)      // minimum mag at which to draw grid lines
-#define MIN_GRID_SCALE (8)    // minimum scale at which to draw grid lines (2^mag)
-
-bool GridVisible() {
-   return ( showgridlines && currview.getmag() >= MIN_GRID_MAG );
-}
-
 // magnify given bitmap by pmag (2, 4, ... 2^MAX_MAG)
 void DrawStretchedBitmap(int xoff, int yoff, int *bmdata, int bmsize, int pmag) {
 
@@ -1248,8 +1287,8 @@ void DrawStretchedBitmap(int xoff, int yoff, int *bmdata, int bmsize, int pmag) 
    
    // nicer to have gaps between cells at scales > 1:2
    wxUint16 gapmask = 0;
-   if ( (pmag > 2 && pmag < MIN_GRID_SCALE) ||
-        (pmag >= MIN_GRID_SCALE && !showgridlines) ) {
+   if ( (pmag > 2 && pmag < mingridscale) ||
+        (pmag >= mingridscale && !showgridlines) ) {
       // we use 7/7F rather than E/FE because of XBM bit reversal
       if (pmag == 4) {
          gapmask = 0x7777;
@@ -1325,61 +1364,68 @@ void DrawStretchedBitmap(int xoff, int yoff, int *bmdata, int bmsize, int pmag) 
 }
 
 void DrawGridLines(wxDC &dc, wxRect &r, int pmag) {
-   int h, v, i, topmod10, leftmod10;
+   int h, v, i, topmajor, leftmajor;
 
-   // ensure that 0,0 cell is next to mod-10 lines;
-   // ie. mod-10 lines will scroll when pattern is scrolled
+   // ensure that origin cell stays next to major lines;
+   // ie. major lines will scroll when pattern is scrolled
    pair<bigint, bigint> lefttop = currview.at(0, 0);
-   leftmod10 = lefttop.first.mod_smallint(10);
-   topmod10 = lefttop.second.mod_smallint(10);
+   leftmajor = lefttop.first.mod_smallint(majorspacing);
+   topmajor = lefttop.second.mod_smallint(majorspacing);
+   if (originx != bigint::zero) {
+      leftmajor -= originx.mod_smallint(majorspacing);
+   }
+   if (originy != bigint::zero) {
+      topmajor -= originy.mod_smallint(majorspacing);
+   }
+   if (mathcoords) topmajor--;   // show origin cell above major line
 
-   // draw all non mod-10 lines first
+   // draw all minor lines first
    if (blackcells) {
       dc.SetPen(*pen_ltgray);
    } else {
       dc.SetPen(*pen_verydark);
    }   
-   i = topmod10;
-   v = - 1;
+   i = topmajor;
+   v = -1;
    while (true) {
       v += pmag;
       if (v >= currview.getheight()) break;
       i++;
-      if (i % 10 != 0 && v >= r.y && v < r.y + r.height)
+      if (i % majorspacing != 0 && v >= r.y && v < r.y + r.height)
          dc.DrawLine(r.x, v, r.GetRight() + 1, v);
    }
-   i = leftmod10;
-   h = - 1;
+   i = leftmajor;
+   h = -1;
    while (true) {
       h += pmag;
       if (h >= currview.getwidth()) break;
       i++;
-      if (i % 10 != 0 && h >= r.x && h < r.x + r.width)
+      if (i % majorspacing != 0 && h >= r.x && h < r.x + r.width)
          dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
    }
 
-   // now overlay mod-10 lines
+   // now overlay major lines
    if (blackcells) {
       dc.SetPen(*pen_dkgray);
    } else {
       dc.SetPen(*pen_notsodark);
    }
-   i = topmod10;
-   v = - 1;
+   i = topmajor;
+   v = -1;
    while (true) {
       v += pmag;
       if (v >= currview.getheight()) break;
       i++;
-      if (i % 10 == 0 && v >= r.y && v < r.y + r.height)
+      if (i % majorspacing == 0 && v >= r.y && v < r.y + r.height)
          dc.DrawLine(r.x, v, r.GetRight() + 1, v);
    }
-   i = leftmod10;
-   h = - 1;
+   i = leftmajor;
+   h = -1;
    while (true) {
       h += pmag;
       if (h >= currview.getwidth()) break;
       i++;
-      if (i % 10 == 0 && h >= r.x && h < r.x + r.width)
+      if (i % majorspacing == 0 && h >= r.x && h < r.x + r.width)
          dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
    }
    
@@ -1421,6 +1467,10 @@ void wx_render::blit(int x, int y, int w, int h, int *bmdata, int bmscale) {
 }
 
 wx_render renderer;
+
+bool GridVisible() {
+   return ( showgridlines && currview.getmag() >= mingridmag );
+}
 
 // display pattern visible in viewport
 void DisplayPattern() {
@@ -1612,10 +1662,14 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
          DisplayText(dc, strbuf, h_step, BASELINE1);
       }
       if (showxy) {
-         // if we ever provide an option to display standard math coords
-         // (ie. y increasing upwards) then use -curry - 1
-         bigint xpos = currx;   xpos -= offsetx;
-         bigint ypos = curry;   ypos -= offsety;
+         bigint xpos = currx;   xpos -= originx;
+         bigint ypos = curry;   ypos -= originy;
+         if (mathcoords) {
+            // Y values increase upwards
+            bigint temp = bigint::zero;
+            temp -= ypos;
+            ypos = temp;
+         }
          sprintf(strbuf, "XY=%s %s", stringify(xpos), stringify(ypos));
       } else {
          sprintf(strbuf, "XY=");
@@ -1793,7 +1847,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_FIT_SEL,   active && SelectionExists());
       mbar->Enable(ID_MIDDLE,    active);
       mbar->Enable(ID_RESTORE00, active &&
-                                 (offsetx != bigint::zero || offsety != bigint::zero));
+                                 (originx != bigint::zero || originy != bigint::zero));
       mbar->Enable(wxID_ZOOM_IN, active && currview.getmag() < MAX_MAG);
       mbar->Enable(wxID_ZOOM_OUT, active);
       mbar->Enable(ID_SET_SCALE, active);
@@ -2244,12 +2298,12 @@ const char *GetBaseName(const char *fullpath) {
    return (const char *)&fullpath[len];
 }
 
-void SetCurrentFile(const char *inpath) {
+void SetCurrentFile(const char *path) {
    #ifdef __WXMAC__
       // copy given path to currfile but with UTF8 encoding so fopen will work
       CFURLRef url = CFURLCreateWithBytes(NULL,
-                                          (const UInt8*)inpath,
-                                          strlen(inpath),
+                                          (const UInt8*)path,
+                                          strlen(path),
                                           kCFStringEncodingMacRoman,
                                           NULL);
       CFStringRef str = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
@@ -2257,13 +2311,12 @@ void SetCurrentFile(const char *inpath) {
       CFStringGetCString(str, currfile, sizeof(currfile), kCFStringEncodingUTF8);
       CFRelease(str);
    #else
-      strncpy(currfile, inpath, sizeof(currfile));
+      strncpy(currfile, path, sizeof(currfile));
    #endif
 }
 
-void AddRecentFile() {
-   // put currfile at start of recentSubMenu
-   wxString path = currfile;
+void AddRecentFile(const char *path) {
+   // put given path at start of recentSubMenu
    int id = recentSubMenu->FindItem(path);
    if ( id == wxNOT_FOUND ) {
       if ( numrecent < maxrecent ) {
@@ -2314,7 +2367,7 @@ void OpenPattern() {
       wxFileName fullpath = wxFileName( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
       SetCurrentFile( opendlg.GetPath() );
-      AddRecentFile();
+      AddRecentFile( opendlg.GetPath() );
       LoadPattern( opendlg.GetFilename() );
    }
 }
@@ -2377,9 +2430,10 @@ void OpenClipboard() {
 void OpenRecentFile(int id) {
    wxMenuItem *item = recentSubMenu->FindItem(id);
    if (item) {
-      strncpy(currfile, item->GetText().c_str(), sizeof(currfile));
-      AddRecentFile();
-      LoadPattern(GetBaseName(currfile));
+      wxString path = item->GetText();
+      SetCurrentFile(path);
+      AddRecentFile(path);
+      LoadPattern(GetBaseName(path));
    }
 }
 
@@ -4428,11 +4482,11 @@ void FitSelection() {
 
 void ViewOrigin() {
    // put 0,0 cell in middle of view
-   if ( offsetx == bigint::zero && offsety == bigint::zero ) {
+   if ( originx == bigint::zero && originy == bigint::zero ) {
       currview.center();
    } else {
       // put cell saved by ChangeOrigin in middle
-      currview.setpositionmag(offsetx, offsety, currview.getmag());
+      currview.setpositionmag(originx, originy, currview.getmag());
    }
    TestAutoFit();
    RefreshWindow();
@@ -4449,20 +4503,26 @@ void ChangeOrigin() {
       ErrorMessage("Origin not changed.");
    } else {
       pair<bigint, bigint> cellpos = currview.at(pt.x, pt.y);
-      offsety = cellpos.second;
-      offsetx = cellpos.first;
+      originy = cellpos.second;
+      originx = cellpos.first;
       DisplayMessage("Origin changed.");
-      UpdateXYLocation();
+      if ( GridVisible() )
+         RefreshPatternAndStatus();
+      else
+         UpdateXYLocation();
    }
 }
 
 void RestoreOrigin() {
    if (waitingforclick) return;
-   if (offsetx != bigint::zero || offsety != bigint::zero) {
-      offsety = 0;
-      offsetx = 0;
-      DisplayMessage("True origin has been restored.");
-      UpdateXYLocation();
+   if (originx != bigint::zero || originy != bigint::zero) {
+      originy = 0;
+      originx = 0;
+      DisplayMessage("Origin restored.");
+      if ( GridVisible() )
+         RefreshPatternAndStatus();
+      else
+         UpdateXYLocation();
    }
 }
 
@@ -4583,7 +4643,7 @@ void ToggleFullScreen() {
 
 void ToggleGridLines() {
    showgridlines = !showgridlines;
-   if (currview.getmag() >= MIN_GRID_MAG)
+   if (currview.getmag() >= mingridmag)
       RefreshWindow();
 }
 
@@ -5241,7 +5301,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames) {
    size_t numfiles = filenames.GetCount();
    for ( size_t n = 0; n < numfiles; n++ ) {
       SetCurrentFile(filenames[n]);
-      AddRecentFile();
+      AddRecentFile(filenames[n]);
       LoadPattern(GetBaseName(filenames[n]));
    }
 
@@ -6293,7 +6353,7 @@ void MyApp::MacOpenFile(const wxString &fullPath)
 
    // set currfile using UTF8 encoding so fopen will work
    SetCurrentFile(fullPath);
-   AddRecentFile();
+   AddRecentFile(fullPath);
    LoadPattern(GetBaseName(fullPath));
 }
 #endif
@@ -6344,7 +6404,7 @@ bool MyApp::OnInit()
    // load pattern if file supplied on Win/Unix command line
    if (argc > 1) {
       strncpy(currfile, argv[1], sizeof(currfile));
-      AddRecentFile();
+      AddRecentFile(currfile);
       LoadPattern(GetBaseName(currfile));
    } else {
       NewPattern();
