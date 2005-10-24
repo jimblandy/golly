@@ -3,6 +3,8 @@ TODO:
 High priority:
 --------------
 
+A - Add a Preferences dialog.
+
 A - Split up wxgolly.cpp into smaller modules:
     wxmain, wxstatus, wxfile, wxedit, wxcontrol, wxview, wxhelp, wxprefs, etc.
     Also tidy up the code (follow http://www.wxwidgets.org/standard.htm?).
@@ -31,15 +33,14 @@ For future versions:
 
 T - Improve batchmode.
 
-A - See if we can reduce app size.  If wx docs no help then ask wx-users.
+- Add more sophisticated editing (rotate selection, etc).
 
-A - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
-    avoid wxToolBar and implement our own simple tool bar stuff.
+- See if we can reduce app size.  If wx docs no help then ask wx-users.
 
-A - Need white crosshair cursor for Win app when white-on-black.
-    Or does Win support an XOR cursor mode?
+- Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
+  avoid wxToolBar and implement our own simple tool bar stuff.
 
-A - Check if wx can support vbr synchronization when buffering.
+- Check if wx can support vbr synchronization when buffering.
 
 - Add Gabriel's oscillation detection as an option (see LifeLab).
 
@@ -47,8 +48,6 @@ A - Check if wx can support vbr synchronization when buffering.
 
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).
-
-- Add more sophisticated editing (rotate selection, etc).
 
 - Implement Undo (even just undoing the last draw would be very useful).
 
