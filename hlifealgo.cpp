@@ -588,6 +588,8 @@ void hlifealgo::step() {
       if (newpow2 != ngens && cleareddownto > downto) {
          new_ngens(newpow2) ;
 	 cleareddownto = downto ;
+      } else {
+         ngens = newpow2 ;
       }
       setincrement = pendingincrement ;
       pow2step = 1 ;
