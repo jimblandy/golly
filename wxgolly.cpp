@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    MainFrame::OnMenu       - handles menu commands
    ProcessKey              - handles key presses
    ProcessClick            - handles mouse clicks
-   RefreshWindow           - updates main window
+   UpdateEverything        - updates main window, menu bar, cursor, etc
    PatternView::OnPaint    - wxPaintEvent handler for viewport
    StatusBar::OnPaint      - wxPaintEvent handler for status bar
    GeneratePattern         - does pattern generation
@@ -1564,7 +1564,7 @@ void DisplayText(wxDC &dc, const char *s, wxCoord x, wxCoord y) {
 }
 
 // Ping-pong in the buffer so we can use multiple at a time.
-const int STRINGIFYSIZE = 11;
+const int STRINGIFYSIZE = 20;
 const char *stringify(double d) {
    static char buf[120];
    static char *p = buf;
@@ -1968,9 +1968,13 @@ void UpdateUserInterface(bool active) {
    CheckMouseLocation(active);
 }
 
-// update everything in main window
-void RefreshWindow() {
-   if (frameptr->IsIconized()) return;    // do nothing if we've been minimized
+// update everything in main window, and menu bar and cursor
+void UpdateEverything() {
+   if (frameptr->IsIconized()) {
+      // main window has been minimized, so only update menu bar items
+      UpdateMenuItems(false);
+      return;
+   }
 
    int wd, ht;
    frameptr->GetClientSize(&wd, &ht);     // includes status bar and viewport
@@ -1986,11 +1990,12 @@ void RefreshWindow() {
       statusptr->Update();                // call StatusBar::OnPaint
    }
    
+   // update tool bar, menu bar and cursor
    UpdateUserInterface(frameptr->IsActive());
 }
 
 // only update pattern and status bar
-void RefreshPatternAndStatus() {
+void UpdatePatternAndStatus() {
    if (!frameptr->IsIconized()) {
       viewptr->Refresh(false, NULL);
       viewptr->Update();
@@ -2003,7 +2008,7 @@ void RefreshPatternAndStatus() {
 }
 
 // only update status bar
-void RefreshStatus() {
+void UpdateStatus() {
    if (!frameptr->IsIconized()) {
       if (statusht > 0) {
          CheckMouseLocation(frameptr->IsActive());
@@ -2185,7 +2190,7 @@ void NewPattern() {
    // window title will also show curralgo->getrule()
    SetWindowTitle("untitled");
    FitInView();
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void LoadPattern(const char *newtitle) {
@@ -2208,7 +2213,7 @@ void LoadPattern(const char *newtitle) {
       curralgo = NULL;
    }
    // update all of status bar so we don't see different colored lines
-   RefreshStatus();
+   UpdateStatus();
    // set curralgo after drawing status bar otherwise getPopulation would
    // get called and slow down hlife pattern loading
    CreateUniverse();
@@ -2227,14 +2232,14 @@ void LoadPattern(const char *newtitle) {
       hashing = true;
       SetMessage("Hashing has been turned on for macrocell format.");
       // update all of status bar so we don't see different colored lines
-      RefreshStatus();
+      UpdateStatus();
       CreateUniverse();
       err = readpattern(currfile, *curralgo);
    } else if (global_liferules.hasB0notS8 && hashing && newtitle) {
       hashing = false;
       SetMessage(B0message);
       // update all of status bar so we don't see different colored lines
-      RefreshStatus();
+      UpdateStatus();
       CreateUniverse();
       err = readpattern(currfile, *curralgo);
    }
@@ -2245,7 +2250,7 @@ void LoadPattern(const char *newtitle) {
       // show full window title after readpattern has set rule
       SetWindowTitle(newtitle);
       FitInView();
-      RefreshWindow();
+      UpdateEverything();
       showbanner = false;
    } else {
       // ResetPattern sets rule, window title, scale and location
@@ -2284,7 +2289,7 @@ void ResetPattern() {
    curralgo->setrule(gen0rule);
    SetWindowTitle(currname);
    currview.setpositionmag(gen0x, gen0y, gen0mag);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 const char *GetBaseName(const char *fullpath) {
@@ -2364,7 +2369,7 @@ void OpenPattern() {
    if ( opendlg.ShowModal() == wxID_OK ) {
       #ifdef __WXMAC__
          // Mac bug: need to update window now to avoid crash
-         RefreshWindow();
+         UpdateEverything();
       #endif
       wxFileName fullpath = wxFileName( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
@@ -2557,7 +2562,7 @@ void EmptyUniverse() {
    SetGenIncrement();
    currview.setpositionmag(savex, savey, savemag);
    curralgo->setGeneration(savegen);
-   RefreshPatternAndStatus();
+   UpdatePatternAndStatus();
 }
 
 bool SaveRect(int itop, int ileft, int ibottom, int iright, lifealgo *newalgo) {
@@ -2669,7 +2674,7 @@ void ClearSelection() {
    savestart = true;
    EndProgress();
    
-   RefreshPatternAndStatus();
+   UpdatePatternAndStatus();
 }
 
 void ClearOutsideSelection() {
@@ -2725,7 +2730,7 @@ void ClearOutsideSelection() {
       delete curralgo;
       curralgo = newalgo;
       SetGenIncrement();
-      RefreshPatternAndStatus();
+      UpdatePatternAndStatus();
    } else {
       // aborted, so don't change current universe
       delete newalgo;
@@ -2961,7 +2966,7 @@ void CopySelectionToClipboard(bool cut) {
    EndProgress();
    
    if (cut && livecount > 0)
-      RefreshPatternAndStatus();
+      UpdatePatternAndStatus();
    
    wxString text(textptr);
    CopyTextToClipboard(text);
@@ -3245,7 +3250,7 @@ void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    
    // tidy up and display result
    ClearMessage();
-   RefreshPatternAndStatus();
+   UpdatePatternAndStatus();
 }
 
 void PasteClipboard(bool toselection) {
@@ -3366,7 +3371,7 @@ void DisplaySelectionSize() {
 void SelectAll() {
    if (SelectionExists()) {
       NoSelection();
-      RefreshPatternAndStatus();
+      UpdatePatternAndStatus();
    }
 
    if (curralgo->isEmpty()) {
@@ -3376,13 +3381,13 @@ void SelectAll() {
    
    curralgo->findedges(&seltop, &selleft, &selbottom, &selright);
    DisplaySelectionSize();
-   RefreshPatternAndStatus();
+   UpdatePatternAndStatus();
 }
 
 void RemoveSelection() {
    if (SelectionExists()) {
       NoSelection();
-      RefreshPatternAndStatus();
+      UpdatePatternAndStatus();
    }
 }
 
@@ -3410,9 +3415,9 @@ void ShrinkSelection(bool fit) {
       selright = right;
       DisplaySelectionSize();
       if (fit)
-         FitSelection();   // calls RefreshWindow
+         FitSelection();   // calls UpdateEverything
       else
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
       return;
    }
 
@@ -3455,7 +3460,7 @@ void ShrinkSelection(bool fit) {
       } else {
          tempalgo->findedges(&seltop, &selleft, &selbottom, &selright);
          DisplaySelectionSize();
-         if (!fit) RefreshPatternAndStatus();
+         if (!fit) UpdatePatternAndStatus();
       }
    }
    
@@ -3784,11 +3789,11 @@ void StartSelectingCells(int x, int y, bool shiftkey) {
          // modify current selection
          ModifySelection(cellpos.first, cellpos.second);
          DisplaySelectionSize();
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
       } else {
          // remove current selection
          NoSelection();
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
       }
    }
    
@@ -3827,7 +3832,7 @@ void SelectCells(int x, int y) {
         selleft != prevleft || selright != prevright ) {
       // selection has changed
       DisplaySelectionSize();
-      RefreshPatternAndStatus();
+      UpdatePatternAndStatus();
       prevtop = seltop;
       prevbottom = selbottom;
       prevleft = selleft;
@@ -3869,7 +3874,7 @@ void MoveView(int x, int y) {
 
    if ( xamount != 0 || yamount != 0 ) {
       currview.move(xamount, yamount);
-      RefreshPatternAndStatus();
+      UpdatePatternAndStatus();
       cellpos = currview.at(x, y);
       bigcellx = cellpos.first;
       bigcelly = cellpos.second;
@@ -3892,7 +3897,7 @@ void RestoreSelection() {
    selleft = origleft;
    selright = origright;
    StopDraggingMouse();
-   RefreshPatternAndStatus();
+   UpdatePatternAndStatus();
    DisplayMessage("New selection aborted.");
 }
 
@@ -3931,7 +3936,7 @@ void ProcessClick(int x, int y, bool shiftkey) {
       // zoom in so that clicked cell stays under cursor
       if (currview.getmag() < MAX_MAG) {
          currview.zoom(x, y);
-         RefreshWindow();
+         UpdateEverything();
       } else {
          wxBell();   // can't zoom in any further
       }
@@ -3940,7 +3945,7 @@ void ProcessClick(int x, int y, bool shiftkey) {
       TestAutoFit();
       // zoom out so that clicked cell stays under cursor
       currview.unzoom(x, y);
-      RefreshWindow();
+      UpdateEverything();
    }
 }
 
@@ -4066,7 +4071,7 @@ void GoFaster() {
    warp++;
    SetGenIncrement();
    // only need to refresh status bar
-   RefreshStatus();
+   UpdateStatus();
    if (generating && warp < 0) {
       gendelay = MIN_DELAY * (1 << (-warp - 1));
       whentosee -= gendelay;
@@ -4078,7 +4083,7 @@ void GoSlower() {
       warp--;
       SetGenIncrement();
       // only need to refresh status bar
-      RefreshStatus();
+      UpdateStatus();
       if (generating && warp < 0) {
          gendelay = MIN_DELAY * (1 << (-warp - 1));
          whentosee += gendelay;
@@ -4126,8 +4131,8 @@ void GeneratePattern() {
          if (currmsec >= whentosee) {
             curralgo->step();
             if (autofit) curralgo->fit(currview, 0);
-            // don't call RefreshWindow() -- no need to update menu/tool/scroll bars
-            RefreshPatternAndStatus();
+            // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
+            UpdatePatternAndStatus();
             if (wx_poller.checkevents()) break;
             whentosee = currmsec + gendelay;
          } else {
@@ -4140,8 +4145,8 @@ void GeneratePattern() {
          // warp >= 0 so only show results every curralgo->getIncrement() gens
          curralgo->step();
          if (autofit) curralgo->fit(currview, 0);
-         // don't call RefreshWindow() -- no need to update menu/tool/scroll bars
-         RefreshPatternAndStatus();
+         // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
+         UpdatePatternAndStatus();
          if (wx_poller.checkevents()) break;
          if (hyperspeed && curralgo->hyperCapable()) {
             hypdown--;
@@ -4163,8 +4168,7 @@ void GeneratePattern() {
    
    // display the final pattern
    if (autofit) curralgo->fit(currview, 0);
-   RefreshWindow();
-   // UpdateUserInterface has been called
+   UpdateEverything();
 }
 
 void StopGenerating() {
@@ -4234,7 +4238,7 @@ void NextGeneration(bool useinc) {
    // autofit is only used when doing many gens
    if (autofit && useinc && curralgo->getIncrement() > bigint::one)
       curralgo->fit(currview, 0);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void ToggleAutoFit() {
@@ -4243,7 +4247,7 @@ void ToggleAutoFit() {
    // is in the Control menu and not in the View menu
    if (autofit && generating) {
       curralgo->fit(currview, 0);
-      RefreshWindow();
+      UpdateEverything();
    }
 }
 
@@ -4272,7 +4276,7 @@ void ToggleHashing() {
    // toggle hashing option and update status bar immediately
    hashing = !hashing;
    warp = 0;
-   RefreshStatus();
+   UpdateStatus();
 
    // create a new universe of the right flavor
    lifealgo *newalgo;
@@ -4334,7 +4338,7 @@ void ToggleHashing() {
    delete curralgo;
    curralgo = newalgo;
    SetGenIncrement();
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void ToggleHyperspeed() {
@@ -4397,32 +4401,32 @@ void ChangeMaxMemory() {
 void PanUp(int amount) {
    TestAutoFit();
    currview.move(0, -amount);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void PanDown(int amount) {
    TestAutoFit();
    currview.move(0, amount);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void PanLeft(int amount) {
    TestAutoFit();
    currview.move(-amount, 0);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void PanRight(int amount) {
    TestAutoFit();
    currview.move(amount, 0);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 // zoom out so that central cell stays central
 void ZoomOut() {
    TestAutoFit();
    currview.unzoom();
-   RefreshWindow();
+   UpdateEverything();
 }
 
 // zoom in so that central cell stays central
@@ -4430,7 +4434,7 @@ void ZoomIn() {
    TestAutoFit();
    if (currview.getmag() < MAX_MAG) {
       currview.zoom();
-      RefreshWindow();
+      UpdateEverything();
    } else {
       wxBell();
    }
@@ -4445,13 +4449,13 @@ void SetPixelsPerCell(int pxlspercell) {
    if (newmag == currview.getmag()) return;
    TestAutoFit();
    currview.setmag(newmag);
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void FitPattern() {
    FitInView();
    // best not to call TestAutoFit
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void FitSelection() {
@@ -4479,7 +4483,7 @@ void FitSelection() {
    }
    
    TestAutoFit();
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void ViewOrigin() {
@@ -4491,7 +4495,7 @@ void ViewOrigin() {
       currview.setpositionmag(originx, originy, currview.getmag());
    }
    TestAutoFit();
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void ToggleStatusBar();
@@ -4509,7 +4513,7 @@ void ChangeOrigin() {
       originx = cellpos.first;
       DisplayMessage("Origin changed.");
       if ( GridVisible() )
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
       else
          UpdateXYLocation();
    }
@@ -4522,7 +4526,7 @@ void RestoreOrigin() {
       originx = 0;
       DisplayMessage("Origin restored.");
       if ( GridVisible() )
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
       else
          UpdateXYLocation();
    }
@@ -4557,7 +4561,7 @@ void ToggleStatusBar() {
    }
    viewptr->SetSize(0, statusht, wd, ht > statusht ? ht - statusht : 0);
    SetViewSize();
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void ToggleToolBar() {
@@ -4581,7 +4585,7 @@ void ToggleToolBar() {
          // adjust size of viewport
          viewptr->SetSize(0, statusht, wd, ht > statusht ? ht - statusht : 0);
          SetViewSize();
-         RefreshWindow();
+         UpdateEverything();
       }
    #endif
 }
@@ -4639,24 +4643,24 @@ void ToggleFullScreen() {
          UpdateScrollBars();
       }
       SetViewSize();
-      RefreshWindow();
+      UpdateEverything();
    #endif
 }
 
 void ToggleGridLines() {
    showgridlines = !showgridlines;
    if (currview.getmag() >= mingridmag)
-      RefreshWindow();
+      UpdateEverything();
 }
 
 void ToggleVideo() {
    blackcells = !blackcells;
-   RefreshWindow();
+   UpdateEverything();
 }
 
 void ToggleBuffering() {
    buffered = !buffered;
-   RefreshWindow();
+   UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -5552,7 +5556,7 @@ void StatusBar::OnMouseDown(wxMouseEvent& event) {
          warp = 0;
          SetGenIncrement();
          // only update status bar
-         RefreshStatus();
+         UpdateStatus();
       }
    }
    #ifdef __WXX11__
@@ -5767,8 +5771,7 @@ void PatternView::OnMouseWheel(wxMouseEvent& event) {
 		currview.zoom();
 	}
 
-	RefreshWindow();
-	UpdateUserInterface(frameptr->IsActive());
+	UpdateEverything();
 }
 
 void PatternView::OnMouseMotion(wxMouseEvent& WXUNUSED(event)) {
@@ -5820,11 +5823,11 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event)) {
 
       if ( drawingcells ) {
          currview.move(xamount, yamount);
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
 
       } else if ( selectingcells ) {
          currview.move(xamount, yamount);
-         // no need to call RefreshPatternAndStatus() here because
+         // no need to call UpdatePatternAndStatus() here because
          // it will be called soon in SelectCells, except in this case:
          if (forceh || forcev) {
             // selection might not change so must update pattern
@@ -5842,7 +5845,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event)) {
             }
          }
          currview.move(-xamount, -yamount);
-         RefreshPatternAndStatus();
+         UpdatePatternAndStatus();
          // adjust x,y and bigcellx,bigcelly for MoveView call below
          x += xamount;
          y += yamount;
@@ -5918,14 +5921,14 @@ void PatternView::OnScroll(wxScrollWinEvent& event) {
          if (orient == wxHORIZONTAL) {
             hthumb = newpos;
             currview.move(amount, 0);
-            // don't call RefreshWindow here because it calls UpdateScrollBars
+            // don't call UpdateEverything here because it calls UpdateScrollBars
             viewptr->Refresh(false, NULL);
             // don't update immediately (more responsive, especially on X11)
             // viewptr->Update();
          } else {
             vthumb = newpos;
             currview.move(0, amount);
-            // don't call RefreshWindow here because it calls UpdateScrollBars
+            // don't call UpdateEverything here because it calls UpdateScrollBars
             viewptr->Refresh(false, NULL);
             // don't update immediately (more responsive, especially on X11)
             // viewptr->Update();
@@ -5939,7 +5942,7 @@ void PatternView::OnScroll(wxScrollWinEvent& event) {
    else if (type == wxEVT_SCROLLWIN_THUMBRELEASE)
    {
       // now we can call UpdateScrollBars
-      RefreshWindow();
+      UpdateEverything();
    }
 }
 
