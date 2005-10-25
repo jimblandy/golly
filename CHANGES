@@ -5,15 +5,16 @@ Help/changes.html when a new release is ready.
 
 AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
-JXS = Jason Summers <jason1@pobox.com>
+JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
-JXS: Fixed Win app's crosshair cursor (now seen on black background).
+JES: Mouse wheel can be used for zooming.
+JES: Fixed Win app's crosshair cursor (now seen on black background).
 AKT: math_coords parameter specifies if Y values increase upwards.
 AKT: min_grid_mag parameter sets minimum scale for grid (initially 1:4).
 AKT: major_spacing parameter sets spacing of major grid lines.
-JXS: Added G_INT64 and other changes to support VC6.
+JES: Added G_INT64 and other changes to support VC6.
 AKT: Added Restore Origin to the View menu.
 AKT: Hit "0" to change the origin to the cell under the cursor.
 AKT: Added Set Scale submenu to the View menu.

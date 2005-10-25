@@ -166,6 +166,7 @@ private:
    void OnChar(wxKeyEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnMouseUp(wxMouseEvent& event);
+   void OnMouseWheel(wxMouseEvent& event);
    void OnMouseMotion(wxMouseEvent& event);
    void OnMouseEnter(wxMouseEvent& event);
    void OnMouseExit(wxMouseEvent& event);
@@ -607,6 +608,7 @@ int mingridscale = 4;            // minimum scale to draw grid lines (2^mingridm
 int majorspacing = 10;           // spacing of major grid lines
 bool mathcoords = false;         // show Y values increasing upwards?
 char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
+int invertmousewheel = 0;
 
 void Warning(const char *s);
 void ToggleFullScreen();
@@ -5578,6 +5580,7 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_MOTION           (                 PatternView::OnMouseMotion)
    EVT_ENTER_WINDOW     (                 PatternView::OnMouseEnter)
    EVT_LEAVE_WINDOW     (                 PatternView::OnMouseExit)
+   EVT_MOUSEWHEEL       (                 PatternView::OnMouseWheel)
    EVT_TIMER            (ID_DRAG_TIMER,   PatternView::OnDragTimer)
    EVT_SCROLLWIN        (                 PatternView::OnScroll)
    EVT_ERASE_BACKGROUND (                 PatternView::OnEraseBackground)
@@ -5736,6 +5739,36 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event)) {
    if (drawingcells || selectingcells || movingview) {
       StopDraggingMouse();
    }
+}
+
+void PatternView::OnMouseWheel(wxMouseEvent& event) {
+	// wheelpos should be persistent, because in theory we should keep track of
+	// the remainder if the amount scrolled was not an even number of deltas.
+	static int wheelpos = 0;
+	int delta;
+
+	// delta is the amount that represents one "step" of rotation. Normally 120.
+	delta = event.GetWheelDelta();
+
+	if(invertmousewheel)
+		wheelpos -= event.GetWheelRotation();
+	else
+		wheelpos += event.GetWheelRotation();
+
+	while(wheelpos >= delta) {
+		wheelpos -= delta;
+		TestAutoFit();
+		currview.unzoom();
+	}
+
+	while(wheelpos <= -delta) {
+		wheelpos += delta;
+		TestAutoFit();
+		currview.zoom();
+	}
+
+	RefreshWindow();
+	UpdateUserInterface(frameptr->IsActive());
 }
 
 void PatternView::OnMouseMotion(wxMouseEvent& WXUNUSED(event)) {
