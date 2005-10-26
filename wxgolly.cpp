@@ -166,6 +166,7 @@ private:
    void OnChar(wxKeyEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnMouseUp(wxMouseEvent& event);
+   void OnRMouseDown(wxMouseEvent& event);
    void OnMouseWheel(wxMouseEvent& event);
    void OnMouseMotion(wxMouseEvent& event);
    void OnMouseEnter(wxMouseEvent& event);
@@ -5581,6 +5582,8 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_LEFT_DOWN        (                 PatternView::OnMouseDown)
    EVT_LEFT_DCLICK      (                 PatternView::OnMouseDown)
    EVT_LEFT_UP          (                 PatternView::OnMouseUp)
+   EVT_RIGHT_DOWN       (                 PatternView::OnRMouseDown)
+   EVT_RIGHT_DCLICK     (                 PatternView::OnRMouseDown)
    EVT_MOTION           (                 PatternView::OnMouseMotion)
    EVT_ENTER_WINDOW     (                 PatternView::OnMouseEnter)
    EVT_LEAVE_WINDOW     (                 PatternView::OnMouseExit)
@@ -5742,6 +5745,18 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event)) {
    // even if CaptureMouse has been called!!! soln: use Button() in OnDragTimer
    if (drawingcells || selectingcells || movingview) {
       StopDraggingMouse();
+   }
+}
+
+void PatternView::OnRMouseDown(wxMouseEvent& event) {
+   if (currcurs == curs_zoomin) {
+      TestAutoFit();
+      currview.unzoom(event.GetX(), event.GetY());
+      UpdateEverything();
+   } else if (currcurs == curs_zoomout) {
+      TestAutoFit();
+      currview.zoom(event.GetX(), event.GetY());
+      UpdateEverything();
    }
 }
 

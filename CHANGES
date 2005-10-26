@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+JES: In zoom mode, right mouse button zooms in the opposite direction.
 JES: Mouse wheel can be used for zooming.
 JES: Fixed Win app's crosshair cursor (now seen on black background).
 AKT: math_coords parameter specifies if Y values increase upwards.
