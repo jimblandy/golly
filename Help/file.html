@@ -4,11 +4,16 @@
 <font size=-1>
 
 <p>
+NOTE: [key] next to a menu item indicates a keyboard shortcut.
+
+<p>
 <font size=+1><b>New Pattern</b></font>
 
 <p>
-Creates a new, empty universe and switches to the maximum scale (1:16)
+Creates a new, empty universe and switches to a large scale
 ready for editing cells.
+Use the Preferences dialog to set the scale (initially 1:16),
+the cursor mode, and whether any selection should be removed.
 
 <p>
 <font size=+1><b>Open Pattern...</b></font>
@@ -29,6 +34,10 @@ All the above formats are text based and can have DOS/Mac/Unix line endings,
 or they can be compressed in a .gz file.
 
 <p>
+Use the Preferences dialog to set the cursor mode, and whether any
+selection should be removed.
+
+<p>
 <font size=+1><b>Open Clipboard</b></font>
 
 <p>
@@ -44,8 +53,8 @@ only open a pattern that has been saved by the Edit menu's Cut/Copy commands.]
 <p>
 This submenu lets you open a recently loaded pattern file.
 The most recent file is always at the top.
-The maximum number of files remembered is determined by the <tt>max_recent</tt>
-parameter (initially 20) which you can change by editing the GollyPrefs file.
+The maximum number of files remembered is determined by a setting
+(initially 20) which you can change in the Preferences dialog.
 
 <p>
 <font size=+1><b>Save Pattern...</b></font>
@@ -54,6 +63,13 @@ parameter (initially 20) which you can change by editing the GollyPrefs file.
 Brings up the standard file saving dialog so you can save the current pattern
 in RLE format (but only if all live cells are within coordinates of +/- 1 billion).
 If the hashing option is on then you can also save the pattern in macrocell format.
+
+<p>
+<font size=+1><b>Preferences...</b></font>&nbsp;&nbsp;[,]
+
+<p>
+Opens the Preferences dialog so you can change various settings.
+[On the Mac, this item is in the application menu.]
 
 </font>
 </body>

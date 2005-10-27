@@ -3,8 +3,6 @@ TODO:
 High priority:
 --------------
 
-A - Add a Preferences dialog.
-
 A - Split up wxgolly.cpp into smaller modules:
     wxmain, wxstatus, wxfile, wxedit, wxcontrol, wxview, wxhelp, wxprefs, etc.
     Also tidy up the code (follow http://www.wxwidgets.org/standard.htm?).
@@ -94,7 +92,6 @@ User suggestions:
 
 [Jason Summers]
 - The "move" cursor should be an open hand.
-- "Open Pattern" and "New Pattern" should remove any existing selection.
 - More available zoom scales would be nice, e.g. 1:3 and 1:6.
 - Shrink the scrollbar thumbs and/or increase their scroll rate, to allow
   scrolling more than 1 screenful at a time.

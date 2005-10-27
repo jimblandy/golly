@@ -58,6 +58,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/image.h"         // for wxImage
 #include "wx/stdpaths.h"      // for wxStandardPaths
 #include "wx/progdlg.h"       // for wxProgressDialog
+#include "wx/propdlg.h"       // for wxPropertySheetDialog
+#include "wx/bookctrl.h"      // for wxBookCtrlBase
+#include "wx/notebook.h"      // for wxNotebookEvent
+#include "wx/spinctrl.h"      // for wxSpinCtrl
+#include "wx/valgen.h"        // for wxGenericValidator
 #include "wx/sysopt.h"        // for wxSystemOptions
 #include "wx/ffile.h"         // for wxFFile
 
@@ -473,6 +478,12 @@ wxCursor *curs_zoomout;
 
 wxCursor *oldzoom = NULL;     // non-NULL if shift key has toggled zoom in/out cursor
 
+wxCursor *newcurs;            // cursor after creating new pattern (if not NULL)
+wxCursor *opencurs;           // cursor after opening pattern (if not NULL)
+
+int newcursindex;
+int opencursindex;
+
 // most editing and saving operations are limited to abs coords <= 10^9
 // because getcell/setcell take int parameters (the limits must be smaller
 // than INT_MIN and INT_MAX to avoid boundary conditions)
@@ -605,14 +616,19 @@ int maxhmem = 300;               // maximum hash memory (in megabytes)
 const int minhashmb = 10;        // minimum value of maxhmem
 const int maxhashmb = 4000;      // make bigger when hlifealgo is 64-bit clean
 int mingridmag = 2;              // minimum mag to draw grid lines
-int mingridscale = 4;            // minimum scale to draw grid lines (2^mingridmag)
+int mingridindex;                // mingridmag - 2
+#define MAX_SPACING (1000)       // maximum value of majorspacing
 int majorspacing = 10;           // spacing of major grid lines
+bool showmajor = true;           // show major grid lines?
 bool mathcoords = false;         // show Y values increasing upwards?
+int newmag = MAX_MAG;            // mag setting for new pattern
+bool newremovesel = true;        // new pattern removes selection?
+bool openremovesel = true;       // opening pattern removes selection?
 char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
 int invertmousewheel = 0;
+size_t prefspage = 0;            // current page in PrefsDialog
 
 void Warning(const char *s);
-void ToggleFullScreen();
 
 const char *GetPasteLocation() {
    switch (plocation) {
@@ -634,13 +650,49 @@ const char *GetPasteMode() {
    }
 }
 
+const char *CursorToString(wxCursor *curs) {
+   if (curs == curs_pencil) return "Draw";
+   if (curs == curs_cross) return "Select";
+   if (curs == curs_hand) return "Move";
+   if (curs == curs_zoomin) return "Zoom In";
+   if (curs == curs_zoomout) return "Zoom Out";
+   return "No Change";   // curs is NULL
+}
+
+wxCursor *StringToCursor(const char *s) {
+   if (strcmp(s, "Draw") == 0) return curs_pencil;
+   if (strcmp(s, "Select") == 0) return curs_cross;
+   if (strcmp(s, "Move") == 0) return curs_hand;
+   if (strcmp(s, "Zoom In") == 0) return curs_zoomin;
+   if (strcmp(s, "Zoom Out") == 0) return curs_zoomout;
+   return NULL;   // "No Change"
+}
+
+int CursorToIndex(wxCursor *curs) {
+   if (curs == curs_pencil) return 0;
+   if (curs == curs_cross) return 1;
+   if (curs == curs_hand) return 2;
+   if (curs == curs_zoomin) return 3;
+   if (curs == curs_zoomout) return 4;
+   return 5;   // curs is NULL
+}
+
+wxCursor *IndexToCursor(int i) {
+   if (i == 0) return curs_pencil;
+   if (i == 1) return curs_cross;
+   if (i == 2) return curs_hand;
+   if (i == 3) return curs_zoomin;
+   if (i == 4) return curs_zoomout;
+   return NULL;   // "No Change"
+}
+
 void SavePrefs() {
    if (frameptr == NULL) {
       // probably called very early from Fatal, so best not to write prefs
       return;
    }
    FILE *f = fopen(prefsname, "w");
-   if (f == 0) {
+   if (f == NULL) {
       Warning("Could not save preferences file!");
       return;
    }
@@ -648,12 +700,15 @@ void SavePrefs() {
    fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n");
    fprintf(f, "version=%d\n", prefsversion);
    // save main window's location and size
-   if (fullscreen) ToggleFullScreen();
-   wxRect r = frameptr->GetRect();
-   mainx = r.x;
-   mainy = r.y;
-   mainwd = r.width;
-   mainht = r.height;
+   if (fullscreen) {
+      // use mainx, mainy, mainwd, mainht set by ToggleFullScreen
+   } else {
+      wxRect r = frameptr->GetRect();
+      mainx = r.x;
+      mainy = r.y;
+      mainwd = r.width;
+      mainht = r.height;
+   }
    fprintf(f, "main_window=%d,%d,%d,%d\n", mainx, mainy, mainwd, mainht);
    #ifdef __WXX11__
       // frameptr->IsMaximized() is always true on X11 so avoid it!!!
@@ -688,10 +743,16 @@ void SavePrefs() {
    fprintf(f, "show_tool=%d\n", frameptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
    fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
-   fprintf(f, "major_spacing=%d (> 1)\n", majorspacing);
+   fprintf(f, "major_spacing=%d (2..%d)\n", majorspacing, MAX_SPACING);
+   fprintf(f, "show_major=%d\n", showmajor ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
+   fprintf(f, "new_mag=%d (0..%d)\n", newmag, MAX_MAG);
+   fprintf(f, "new_remove_sel=%d\n", newremovesel ? 1 : 0);
+   fprintf(f, "new_cursor=%s\n", CursorToString(newcurs));
+   fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
+   fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
    fprintf(f, "max_recent=%d (1..%d)\n", maxrecent, MAX_RECENT);
    if (numrecent > 0) {
@@ -741,7 +802,7 @@ void GetPrefs() {
    
    if ( wxFileExists(prefsname) ) {
       FILE *f = fopen(prefsname, "r");
-      if (f == 0) {
+      if (f == NULL) {
          Warning("Could not read preferences file!");
          return;
       }
@@ -749,6 +810,12 @@ void GetPrefs() {
       char *keyword;
       char *value;
       while ( GetKeyVal(f, line, &keyword, &value) ) {
+         // remove \n from end of value
+         int len = strlen(value);
+         if ( len > 0 && value[len-1] == '\n' ) {
+            value[len-1] = 0;
+         }
+
          if (strcmp(keyword, "version") == 0) {
             int currversion;
             if (sscanf(value, "%d", &currversion) == 1 && currversion < prefsversion) {
@@ -778,28 +845,24 @@ void GetPrefs() {
             CheckVisibility(&infox, &infoy, &infowd, &infoht);
 
          } else if (strcmp(keyword, "paste_location") == 0) {
-            char val[16];
-            sscanf(value, "%s\n", val);
-            if (strcmp(val, "TopLeft") == 0) {
+            if (strcmp(value, "TopLeft") == 0) {
                plocation = TopLeft;
-            } else if (strcmp(val, "TopRight") == 0) {
+            } else if (strcmp(value, "TopRight") == 0) {
                plocation = TopRight;
-            } else if (strcmp(val, "BottomRight") == 0) {
+            } else if (strcmp(value, "BottomRight") == 0) {
                plocation = BottomRight;
-            } else if (strcmp(val, "BottomLeft") == 0) {
+            } else if (strcmp(value, "BottomLeft") == 0) {
                plocation = BottomLeft;
-            } else if (strcmp(val, "Middle") == 0) {
+            } else if (strcmp(value, "Middle") == 0) {
                plocation = Middle;
             }
 
          } else if (strcmp(keyword, "paste_mode") == 0) {
-            char val[16];
-            sscanf(value, "%s\n", val);
-            if (strcmp(val, "Copy") == 0) {
+            if (strcmp(value, "Copy") == 0) {
                pmode = Copy;
-            } else if (strcmp(val, "Or") == 0) {
+            } else if (strcmp(value, "Or") == 0) {
                pmode = Or;
-            } else if (strcmp(val, "Xor") == 0) {
+            } else if (strcmp(value, "Xor") == 0) {
                pmode = Xor;
             }
 
@@ -818,7 +881,7 @@ void GetPrefs() {
             if (maxhmem > maxhashmb) maxhmem = maxhashmb;
 
          } else if (strcmp(keyword, "rule") == 0) {
-            sscanf(value, "%s\n", initrule);
+            strncpy(initrule, value, sizeof(initrule));
 
          } else if (strcmp(keyword, "show_status") == 0) {
             showstatus = value[0] == '1';
@@ -833,17 +896,14 @@ void GetPrefs() {
             sscanf(value, "%d", &mingridmag);
             if (mingridmag < 2) mingridmag = 2;
             if (mingridmag > MAX_MAG) mingridmag = MAX_MAG;
-            // set mingridscale to 2^mingridmag
-            mingridscale = 4;
-            int i = 2;
-            while (i < mingridmag) {
-               mingridscale *= 2;
-               i++;
-            }
 
          } else if (strcmp(keyword, "major_spacing") == 0) {
             sscanf(value, "%d", &majorspacing);
             if (majorspacing < 2) majorspacing = 2;
+            if (majorspacing > MAX_SPACING) majorspacing = MAX_SPACING;
+
+         } else if (strcmp(keyword, "show_major") == 0) {
+            showmajor = value[0] == '1';
 
          } else if (strcmp(keyword, "math_coords") == 0) {
             mathcoords = value[0] == '1';
@@ -854,9 +914,25 @@ void GetPrefs() {
          } else if (strcmp(keyword, "buffered") == 0) {
             buffered = value[0] == '1';
 
+         } else if (strcmp(keyword, "new_mag") == 0) {
+            sscanf(value, "%d", &newmag);
+            if (newmag < 0) newmag = 0;
+            if (newmag > MAX_MAG) newmag = MAX_MAG;
+            
+         } else if (strcmp(keyword, "new_remove_sel") == 0) {
+            newremovesel = value[0] == '1';
+
+         } else if (strcmp(keyword, "new_cursor") == 0) {
+            newcurs = StringToCursor(value);
+            
+         } else if (strcmp(keyword, "open_remove_sel") == 0) {
+            openremovesel = value[0] == '1';
+
+         } else if (strcmp(keyword, "open_cursor") == 0) {
+            opencurs = StringToCursor(value);
+
          } else if (strcmp(keyword, "open_save_dir") == 0) {
             opensavedir = value;
-            opensavedir.RemoveLast();  // remove \n
             if ( !wxFileName::DirExists(opensavedir) ) {
                // reset to pattern directory
                opensavedir = pattdir;
@@ -869,7 +945,6 @@ void GetPrefs() {
 
          } else if (strcmp(keyword, "recent_file") == 0) {
             wxString path = value;
-            path.RemoveLast();  // remove \n
             if (numrecent < maxrecent) {
                numrecent++;
                recentSubMenu->Insert(numrecent - 1, ID_RECENT + numrecent, path);
@@ -880,6 +955,288 @@ void GetPrefs() {
    } else {
       // prefs file doesn't exist yet
       opensavedir = pattdir;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+// multi-panel dialog for changing various preferences
+
+class PrefsDialog : public wxPropertySheetDialog
+{
+   DECLARE_CLASS(PrefsDialog)
+
+public:
+   PrefsDialog(wxWindow* parent);
+
+// why not private???
+protected:
+   enum {
+      // File prefs
+      PREF_NEW_REM_SEL = 100,
+      PREF_NEW_CURSOR,
+      PREF_NEW_SCALE,
+      PREF_OPEN_REM_SEL,
+      PREF_OPEN_CURSOR,
+      PREF_MAX_RECENT,
+      // View prefs
+      PREF_Y_UP,
+      PREF_SHOW_MAJOR,
+      PREF_MAJOR_SPACING,
+      PREF_MIN_GRID_SCALE
+   };
+
+   wxPanel* CreateFilePrefs(wxWindow* parent);
+   wxPanel* CreateViewPrefs(wxWindow* parent);
+   
+   void OnPageChanged(wxNotebookEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+IMPLEMENT_CLASS(PrefsDialog, wxPropertySheetDialog)
+
+BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
+   EVT_NOTEBOOK_PAGE_CHANGED (wxID_ANY, PrefsDialog::OnPageChanged)
+END_EVENT_TABLE()
+
+PrefsDialog::PrefsDialog(wxWindow* parent)
+{
+   SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
+   Create(parent, wxID_ANY, _("Preferences"), wxDefaultPosition, wxDefaultSize);
+   CreateButtons(wxOK | wxCANCEL);
+   
+   wxBookCtrlBase* notebook = GetBookCtrl();
+   
+   wxPanel* filePrefs = CreateFilePrefs(notebook);
+   wxPanel* viewPrefs = CreateViewPrefs(notebook);
+   
+   // AddPage causes OnPageChange to change prefspage
+   size_t savepage = prefspage;
+   notebook->AddPage(filePrefs, _("File"));
+   notebook->AddPage(viewPrefs, _("View"));
+   prefspage = savepage;
+   
+   // show last selected page
+   notebook->SetSelection(prefspage);
+
+   #ifdef __WXMAC__
+      // wxMac fix: give focus to first edit box and allow use of escape
+      notebook->GetCurrentPage()->SetFocus();
+   #endif
+   
+   LayoutDialog();
+}
+
+wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+
+   wxArrayString newcursorChoices;
+   newcursorChoices.Add(wxT("Draw"));
+   newcursorChoices.Add(wxT("Select"));
+   newcursorChoices.Add(wxT("Move"));
+   newcursorChoices.Add(wxT("Zoom In"));
+   newcursorChoices.Add(wxT("Zoom Out"));
+   newcursorChoices.Add(wxT("No Change"));
+
+   wxArrayString opencursorChoices = newcursorChoices;
+
+   wxArrayString newscaleChoices;
+   newscaleChoices.Add(wxT("1:1"));
+   newscaleChoices.Add(wxT("1:2"));
+   newscaleChoices.Add(wxT("1:4"));
+   newscaleChoices.Add(wxT("1:8"));
+   newscaleChoices.Add(wxT("1:16"));
+   
+   // on new pattern
+   
+   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("On new pattern:"));
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer( sbox1, wxVERTICAL );
+   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+
+   #ifdef __WXX11__
+      ssizer1->AddSpacer(10);
+   #endif
+
+   wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL,
+                                       _("Remove selection"),
+                                       wxDefaultPosition, wxDefaultSize);
+   ssizer1->Add(check1, 0, wxALL, 2);
+   
+   ssizer1->AddSpacer(3);
+
+   wxBoxSizer* setcursbox = new wxBoxSizer( wxHORIZONTAL );
+   setcursbox->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
+
+   wxBoxSizer* setscalebox = new wxBoxSizer( wxHORIZONTAL );
+   setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
+
+   // nicer if setscalebox is same width as setcursbox
+   setscalebox->SetMinSize( setcursbox->GetMinSize() );
+   
+   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
+   wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
+                                    wxDefaultPosition, wxDefaultSize,
+                                    newcursorChoices);
+   hbox3->Add(setcursbox, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   hbox3->Add(choice3, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   ssizer1->Add(hbox3, 0, wxGROW | wxALL, 2);
+   
+   ssizer1->AddSpacer(3);
+   
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxChoice* choice1 = new wxChoice(panel, PREF_NEW_SCALE,
+                                    wxDefaultPosition, wxDefaultSize,
+                                    newscaleChoices);
+   hbox1->Add(setscalebox, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   hbox1->Add(choice1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   ssizer1->Add(hbox1, 0, wxGROW | wxALL, 2);
+   
+   // on opening pattern
+   
+   vbox->AddSpacer(5);
+   wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening pattern:"));
+   wxBoxSizer* ssizer2 = new wxStaticBoxSizer( sbox2, wxVERTICAL );
+   vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
+
+   #ifdef __WXX11__
+      ssizer2->AddSpacer(10);
+   #endif
+   
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL,
+                                       _("Remove selection"),
+                                       wxDefaultPosition, wxDefaultSize);
+   ssizer2->Add(check2, 0, wxALL, 2);
+   
+   ssizer2->AddSpacer(3);
+   
+   wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
+   wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
+                                    wxDefaultPosition, wxDefaultSize,
+                                    opencursorChoices);
+   hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")),
+              0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   hbox4->Add(choice4, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   ssizer2->Add(hbox4, 0, wxGROW | wxALL, 2);
+   
+   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
+   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent files:")),
+              0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_RECENT, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 1, MAX_RECENT, maxrecent);
+   hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 2);
+   ssizer2->Add(hbox2, 0, wxGROW | wxALL, 2);
+
+   #ifdef __WXX11__
+      vbox->AddSpacer(10);
+   #endif
+     
+   // validators handle data transfer to/from window
+   check1->SetValidator( wxGenericValidator(&newremovesel) );
+   check2->SetValidator( wxGenericValidator(&openremovesel) );
+   spin2->SetValidator( wxGenericValidator(&maxrecent) );
+   choice1->SetValidator( wxGenericValidator(&newmag) );
+   newcursindex = CursorToIndex(newcurs);
+   opencursindex = CursorToIndex(opencurs);
+   choice3->SetValidator( wxGenericValidator(&newcursindex) );
+   choice4->SetValidator( wxGenericValidator(&opencursindex) );
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
+wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   
+   // math_coords
+   
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP,
+                                       _("Y coordinates increase upwards"),
+                                       wxDefaultPosition, wxDefaultSize);
+
+   hbox1->Add(check1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+   vbox->Add(hbox1, 0, wxGROW | wxALL, 3);
+   
+   // show_major and major_spacing
+   
+   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_SHOW_MAJOR,
+                                       _("Show major grid lines every"),
+                                       wxDefaultPosition, wxDefaultSize);
+   
+   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAJOR_SPACING, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 2, MAX_SPACING, majorspacing);
+   
+   hbox2->Add(check2, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+   hbox2->Add(spin2, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("cells")),
+              0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 5);
+   vbox->Add(hbox2, 0, wxGROW | wxALL, 3);
+   
+   // min_grid_mag (2..MAX_MAG)
+
+   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
+   
+   wxArrayString mingridChoices;
+   mingridChoices.Add(wxT("1:4"));
+   mingridChoices.Add(wxT("1:8"));
+   mingridChoices.Add(wxT("1:16"));
+   wxChoice* choice3 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
+                                    wxDefaultPosition, wxDefaultSize,
+                                    mingridChoices);
+   
+   hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum scale for grid:")),
+              0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+   hbox3->Add(choice3, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   
+   vbox->Add(hbox3, 0, wxGROW | wxALL, 3);
+
+   // validators handle data transfer to/from window
+   check1->SetValidator( wxGenericValidator(&mathcoords) );
+   check2->SetValidator( wxGenericValidator(&showmajor) );
+   spin2->SetValidator( wxGenericValidator(&majorspacing) );
+   mingridindex = mingridmag - 2;
+   choice3->SetValidator( wxGenericValidator(&mingridindex) );
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
+void PrefsDialog::OnPageChanged(wxNotebookEvent& event) {
+   prefspage = event.GetSelection();
+}
+
+void UpdateEverything();
+
+void ChangePrefs() {
+   PrefsDialog dialog(frameptr);
+   if ( dialog.ShowModal() == wxID_OK ) {
+      // update globals corresponding to the wxChoice menu selections
+      mingridmag = mingridindex + 2;
+      newcurs = IndexToCursor(newcursindex);
+      opencurs = IndexToCursor(opencursindex);
+      
+      // if maxrecent was reduced then we may need to remove oldest paths
+      while (numrecent > maxrecent) {
+         numrecent--;
+         recentSubMenu->Delete( recentSubMenu->FindItemByPosition(numrecent) );
+      }
+      
+      SavePrefs();
+      UpdateEverything();
    }
 }
 
@@ -1290,8 +1647,8 @@ void DrawStretchedBitmap(int xoff, int yoff, int *bmdata, int bmsize, int pmag) 
    
    // nicer to have gaps between cells at scales > 1:2
    wxUint16 gapmask = 0;
-   if ( (pmag > 2 && pmag < mingridscale) ||
-        (pmag >= mingridscale && !showgridlines) ) {
+   if ( (pmag > 2 && pmag < (1 << mingridmag)) ||
+        (pmag >= (1 << mingridmag) && !showgridlines) ) {
       // we use 7/7F rather than E/FE because of XBM bit reversal
       if (pmag == 4) {
          gapmask = 0x7777;
@@ -1369,18 +1726,23 @@ void DrawStretchedBitmap(int xoff, int yoff, int *bmdata, int bmsize, int pmag) 
 void DrawGridLines(wxDC &dc, wxRect &r, int pmag) {
    int h, v, i, topmajor, leftmajor;
 
-   // ensure that origin cell stays next to major lines;
-   // ie. major lines will scroll when pattern is scrolled
-   pair<bigint, bigint> lefttop = currview.at(0, 0);
-   leftmajor = lefttop.first.mod_smallint(majorspacing);
-   topmajor = lefttop.second.mod_smallint(majorspacing);
-   if (originx != bigint::zero) {
-      leftmajor -= originx.mod_smallint(majorspacing);
+   if (showmajor) {
+      // ensure that origin cell stays next to major lines;
+      // ie. major lines will scroll when pattern is scrolled
+      pair<bigint, bigint> lefttop = currview.at(0, 0);
+      leftmajor = lefttop.first.mod_smallint(majorspacing);
+      topmajor = lefttop.second.mod_smallint(majorspacing);
+      if (originx != bigint::zero) {
+         leftmajor -= originx.mod_smallint(majorspacing);
+      }
+      if (originy != bigint::zero) {
+         topmajor -= originy.mod_smallint(majorspacing);
+      }
+      if (mathcoords) topmajor--;   // show origin cell above major line
+   } else {
+      // avoid spurious gcc warning
+      topmajor = leftmajor = 0;
    }
-   if (originy != bigint::zero) {
-      topmajor -= originy.mod_smallint(majorspacing);
-   }
-   if (mathcoords) topmajor--;   // show origin cell above major line
 
    // draw all minor lines first
    if (blackcells) {
@@ -1388,48 +1750,50 @@ void DrawGridLines(wxDC &dc, wxRect &r, int pmag) {
    } else {
       dc.SetPen(*pen_verydark);
    }   
-   i = topmajor;
+   i = showmajor ? topmajor : 1;
    v = -1;
    while (true) {
       v += pmag;
       if (v >= currview.getheight()) break;
-      i++;
+      if (showmajor) i++;
       if (i % majorspacing != 0 && v >= r.y && v < r.y + r.height)
          dc.DrawLine(r.x, v, r.GetRight() + 1, v);
    }
-   i = leftmajor;
+   i = showmajor ? leftmajor : 1;
    h = -1;
    while (true) {
       h += pmag;
       if (h >= currview.getwidth()) break;
-      i++;
+      if (showmajor) i++;
       if (i % majorspacing != 0 && h >= r.x && h < r.x + r.width)
          dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
    }
 
-   // now overlay major lines
-   if (blackcells) {
-      dc.SetPen(*pen_dkgray);
-   } else {
-      dc.SetPen(*pen_notsodark);
-   }
-   i = topmajor;
-   v = -1;
-   while (true) {
-      v += pmag;
-      if (v >= currview.getheight()) break;
-      i++;
-      if (i % majorspacing == 0 && v >= r.y && v < r.y + r.height)
-         dc.DrawLine(r.x, v, r.GetRight() + 1, v);
-   }
-   i = leftmajor;
-   h = -1;
-   while (true) {
-      h += pmag;
-      if (h >= currview.getwidth()) break;
-      i++;
-      if (i % majorspacing == 0 && h >= r.x && h < r.x + r.width)
-         dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+   if (showmajor) {
+      // overlay major lines
+      if (blackcells) {
+         dc.SetPen(*pen_dkgray);
+      } else {
+         dc.SetPen(*pen_notsodark);
+      }
+      i = topmajor;
+      v = -1;
+      while (true) {
+         v += pmag;
+         if (v >= currview.getheight()) break;
+         i++;
+         if (i % majorspacing == 0 && v >= r.y && v < r.y + r.height)
+            dc.DrawLine(r.x, v, r.GetRight() + 1, v);
+      }
+      i = leftmajor;
+      h = -1;
+      while (true) {
+         h += pmag;
+         if (h >= currview.getwidth()) break;
+         i++;
+         if (i % majorspacing == 0 && h >= r.x && h < r.x + r.width)
+            dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+      }
    }
    
    dc.SetPen(*wxBLACK_PEN);
@@ -2165,17 +2529,13 @@ void CreateUniverse() {
    SetGenIncrement();
 }
 
-void FitInView() {
-   curralgo->fit(currview, 1);
-}
-
 void NewPattern() {
    if (generating) return;
    savestart = false;
-   currcurs = curs_pencil;
    currfile[0] = 0;
    warp = 0;
    CreateUniverse();
+
    if (initrule[0]) {
       // this is the first call of NewPattern when app starts
       const char *err = curralgo->setrule(initrule);
@@ -2188,9 +2548,21 @@ void NewPattern() {
       }
       initrule[0] = 0;        // don't use it again
    }
+
    // window title will also show curralgo->getrule()
    SetWindowTitle("untitled");
-   FitInView();
+
+   if (newremovesel) NoSelection();
+   if (newcurs) currcurs = newcurs;
+   currview.setpositionmag(bigint::zero, bigint::zero, newmag);
+
+   // best to restore true origin
+   if (originx != bigint::zero || originy != bigint::zero) {
+      originy = 0;
+      originx = 0;
+      SetMessage("Origin restored.");
+   }
+
    UpdateEverything();
 }
 
@@ -2200,7 +2572,6 @@ void LoadPattern(const char *newtitle) {
    if (newtitle) {
       savestart = false;
       warp = 0;
-      currcurs = curs_zoomin;
       if (infoptr) {
          // comments will no longer be relevant so close info window
          infoptr->Close(true);
@@ -2250,7 +2621,9 @@ void LoadPattern(const char *newtitle) {
    if (newtitle) {
       // show full window title after readpattern has set rule
       SetWindowTitle(newtitle);
-      FitInView();
+      if (openremovesel) NoSelection();
+      if (opencurs) currcurs = opencurs;
+      curralgo->fit(currview, 1);
       UpdateEverything();
       showbanner = false;
    } else {
@@ -2986,7 +3359,7 @@ void CopySelection() {
 
 void EnableAllMenus(bool enable) {
    #ifdef __WXMAC__
-      // enable/disable all menus, including Help menu and About/Quit items in app menu
+      // enable/disable all menus, including Help menu and items in app menu
       if (enable)
          EndAppModalStateForWindow(FrontWindow());
       else
@@ -3469,8 +3842,8 @@ void ShrinkSelection(bool fit) {
    if (fit) FitSelection();
 }
 
-void SetCursorMode(wxCursor *newcurs) {
-   currcurs = newcurs;
+void SetCursorMode(wxCursor *curs) {
+   currcurs = curs;
 }
 
 void CycleCursorMode() {
@@ -4442,19 +4815,19 @@ void ZoomIn() {
 }
 
 void SetPixelsPerCell(int pxlspercell) {
-   int newmag = 0;
+   int mag = 0;
    while (pxlspercell > 1) {
-      newmag++;
+      mag++;
       pxlspercell >>= 1;
    }
-   if (newmag == currview.getmag()) return;
+   if (mag == currview.getmag()) return;
    TestAutoFit();
-   currview.setmag(newmag);
+   currview.setmag(mag);
    UpdateEverything();
 }
 
 void FitPattern() {
-   FitInView();
+   curralgo->fit(currview, 1);
    // best not to call TestAutoFit
    UpdateEverything();
 }
@@ -4474,13 +4847,13 @@ void FitSelection() {
    newy.div2();
    newy += seltop;
 
-   int newmag = MAX_MAG;
+   int mag = MAX_MAG;
    while (true) {
-      currview.setpositionmag(newx, newy, newmag);
+      currview.setpositionmag(newx, newy, mag);
       if ( currview.contains(selleft, seltop) &&
            currview.contains(selright, selbottom) )
          break;
-      newmag--;
+      mag--;
    }
    
    TestAutoFit();
@@ -4596,6 +4969,14 @@ void ToggleFullScreen() {
       // ShowFullScreen(true) does nothing!!!
       ErrorMessage("Sorry, full screen mode is not implemented for X11.");
    #else
+      if (!fullscreen) {
+         // save current location and size for use in SavePrefs
+         wxRect r = frameptr->GetRect();
+         mainx = r.x;
+         mainy = r.y;
+         mainwd = r.width;
+         mainht = r.height;
+      }
       fullscreen = !fullscreen;
       frameptr->ShowFullScreen(fullscreen,
                    // don't use wxFULLSCREEN_ALL because that prevents tool bar being
@@ -5153,7 +5534,7 @@ void ShowAboutBox() {
    topsizer->Add(html, 1, wxALL, 10);
    wxButton *okbutt = new wxButton(&dlg, wxID_OK, "OK");
    okbutt->SetDefault();
-   topsizer->Add(okbutt, 0, wxBOTTOM | wxALIGN_CENTRE, 10);
+   topsizer->Add(okbutt, 0, wxBOTTOM | wxALIGN_CENTER, 10);
    dlg.SetSizer(topsizer);
    topsizer->Fit(&dlg);
    dlg.CenterOnParent(wxBOTH);
@@ -5253,6 +5634,8 @@ void ProcessKey(int key, bool shiftkey) {
       case 'l':   ToggleGridLines(); break;
       case 'b':   ToggleVideo(); break;
       case 'i':   ShowPatternInfo(); break;
+
+      case ',':   ChangePrefs(); break;
    
       case 'h':
       case WXK_HELP:
@@ -5371,6 +5754,7 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_OPEN_CLIP:      OpenClipboard(); break;
       case ID_RECENT_CLEAR:   ClearRecentFiles(); break;
       case wxID_SAVE:         SavePattern(); break;
+      case wxID_PREFERENCES:  ChangePrefs(); break;
       case wxID_EXIT:         Close(true); break;        // true forces frame to close
       // Edit menu
       case ID_CUT:            CutSelection(); break;
@@ -6109,8 +6493,10 @@ void CreateCursors() {
    #endif
    */
    
-   // set currcurs in case we decide not to in NewPattern/LoadPattern
+   // set currcurs in case it's not done in NewPattern/LoadPattern
    currcurs = curs_pencil;
+   newcurs = curs_pencil;
+   opencurs = curs_zoomin;
 }
 
 // create the main window
@@ -6166,7 +6552,15 @@ MainFrame::MainFrame()
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
-   // on the Mac the Alt+X gets converted to Cmd-Q
+   #ifdef __WXMSW__
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
+      fileMenu->Append(wxID_PREFERENCES, _("Preferences...\t,"));
+   #else
+      // on the Mac the Preferences item gets moved to the app menu
+      fileMenu->Append(wxID_PREFERENCES, _("Preferences...\tCtrl+,"));
+   #endif
+   fileMenu->AppendSeparator();
+   // on the Mac the Alt+X is changed to Cmd-Q and the item is moved to the app menu
    fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_T("Alt+X")));
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
@@ -6268,8 +6662,8 @@ MainFrame::MainFrame()
    #ifndef __WXMAC__
       helpMenu->AppendSeparator();
    #endif
-   // the About item will be in the app menu on Mac or Help menu on other platforms
-   helpMenu->Append(wxID_ABOUT, _("&About Golly"));
+   // on the Mac the About item gets moved to the app menu
+   helpMenu->Append(wxID_ABOUT, _("About Golly"));
 
    // create the menu bar and append menus
    wxMenuBar *menuBar = new wxMenuBar();
@@ -6435,7 +6829,12 @@ bool MyApp::OnInit()
    wxImage::AddHandler(new wxPNGHandler);
    wxImage::AddHandler(new wxGIFHandler);
    wxImage::AddHandler(new wxJPEGHandler);
-    
+   
+   // create various objects
+   CreatePens();
+   CreateBrushes();
+   CreateCursors();     // must be before GetPrefs
+   
    // get main window location and other user preferences
    GetPrefs();
    
@@ -6444,9 +6843,6 @@ bool MyApp::OnInit()
    if (frameptr == NULL) Fatal("Failed to create main window!");
    
    // initialize some stuff before showing main window
-   CreatePens();
-   CreateBrushes();
-   CreateCursors();
    InitSelection();
    InitMagnifyTable();
    SetViewSize();
