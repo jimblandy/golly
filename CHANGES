@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+AKT: Added Control panel to Preferences dialog.
 AKT: New/Open Pattern can optionally change cursor (see Prefs).
 AKT: New/Open Pattern remove selection by default (change in Prefs).
 AKT: Added Preferences dialog.

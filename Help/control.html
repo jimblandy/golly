@@ -44,24 +44,21 @@ to the values they had at generation 0.
 
 <p>
 Increases the speed by displaying fewer generations.
-If Use Hashing is not ticked then the step size increases by a factor of 10.
-If Use Hashing is ticked then the step size increases by a factor of 8.
-(The hashing algorithm is most efficient when step sizes are powers of 2
-and 8 is the power of 2 closest to 10.)
+The step size increases by a user-settable factor, initially 8 if the
+Use Hashing option is ticked or 10 if it isn't.
+Both factors can be changed in the Preferences dialog.
+Note that the hashing algorithm is most efficient when step sizes are powers of 2.
 
 <p>
 <font size=+1><b>Slower</b></font>&nbsp;&nbsp;[- or _]
 
 <p>
 Decreases the speed by displaying more generations.
-If Use Hashing is not ticked then the step size decreases by a factor of 10.
-If Use Hashing is ticked then the step size decreases by a factor of 8.
-
-<p>
-If the step size is 1 (ie. 10^0 or 8^0) when you select this item then
-a delay of 0.25 seconds occurs between each generation.
-Further slowing will double the delay until a maximum value of 2 seconds
-is reached.
+The step size decreases by a user-settable factor (see above).
+If the step size is 1 (n^0) when you select this item then a small delay
+will occur between each generation.  Further slowing will double the delay
+until a maximum value is reached.  The Preferences dialog can be used to
+set the minimum and maximum delay times.
 
 <p>
 <font size=+1><b>Auto Fit</b></font>&nbsp;&nbsp;[t]
@@ -110,7 +107,7 @@ You can also use the tool bar's "H" button to toggle hashing.
 
 <p>
 If ticked, and Use Hashing is ticked, then Golly will automatically
-increase the step size (by a factor of 8) at regular intervals (every 64 steps).
+increase the step size at regular intervals (every 64 steps).
 Hyperspeed mode is a convenient way to run a complex pattern as far as possible.
 (For very chaotic patterns, not using hashing may actually run it further.)
 For highly regular patterns, hyperspeed mode quickly "runs away", generating

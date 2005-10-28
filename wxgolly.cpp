@@ -435,15 +435,19 @@ bigint currx, curry;          // cursor location in cell coords
 bigint originy = 0;           // new X coord set by ChangeOrigin
 bigint originx = 0;           // new Y coord set by ChangeOrigin
 bool showxy = false;          // show cursor's XY location?
+int qbasestep = 10;           // qlife's base step
+int hbasestep = 8;            // hlife's base step (best if power of 2)
+#define MAX_BASESTEP (100)    // maximum qbasestep or hbasestep
 
 // timing stuff
 long starttime, endtime;
 double startgen, endgen;
 long whentosee;               // when to do next gen (if warp < 0)
-long gendelay;                // delay in millisecs between each gen (if warp < 0)
-int warp;                     // current speed setting
-#define MIN_WARP (-4)         // determines maximum delay
-#define MIN_DELAY (250)       // minimum millisec delay (when warp = -1)
+int warp = 0;                 // current speed setting
+int minwarp;                  // warp value at maximum delay (must be <= 0)
+int mindelay = 250;           // minimum millisec delay (when warp = -1)
+int maxdelay = 2000;          // maximum millisec delay
+#define MAX_DELAY (5000)      // maximum mindelay or maxdelay
 
 // various colors
 wxColour paleyellow = wxColour(0xFF,0xFF,0xCE);    // for status bar if not hashing
@@ -734,6 +738,10 @@ void SavePrefs() {
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
+   fprintf(f, "q_base_step=%d (2..%d)\n", qbasestep, MAX_BASESTEP);
+   fprintf(f, "h_base_step=%d (2..%d, best if power of 2)\n", hbasestep, MAX_BASESTEP);
+   fprintf(f, "min_delay=%d (0..%d millisecs)\n", mindelay, MAX_DELAY);
+   fprintf(f, "max_delay=%d (0..%d millisecs)\n", maxdelay, MAX_DELAY);
    fprintf(f, "auto_fit=%d\n", autofit ? 1 : 0);
    fprintf(f, "hashing=%d\n", hashing ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
@@ -866,6 +874,26 @@ void GetPrefs() {
                pmode = Xor;
             }
 
+         } else if (strcmp(keyword, "q_base_step") == 0) {
+            sscanf(value, "%d", &qbasestep);
+            if (qbasestep < 2) qbasestep = 2;
+            if (qbasestep > MAX_BASESTEP) qbasestep = MAX_BASESTEP;
+
+         } else if (strcmp(keyword, "h_base_step") == 0) {
+            sscanf(value, "%d", &hbasestep);
+            if (hbasestep < 2) hbasestep = 2;
+            if (hbasestep > MAX_BASESTEP) hbasestep = MAX_BASESTEP;
+
+         } else if (strcmp(keyword, "min_delay") == 0) {
+            sscanf(value, "%d", &mindelay);
+            if (mindelay < 0) mindelay = 0;
+            if (mindelay > MAX_DELAY) mindelay = MAX_DELAY;
+
+         } else if (strcmp(keyword, "max_delay") == 0) {
+            sscanf(value, "%d", &maxdelay);
+            if (maxdelay < 0) maxdelay = 0;
+            if (maxdelay > MAX_DELAY) maxdelay = MAX_DELAY;
+
          } else if (strcmp(keyword, "auto_fit") == 0) {
             autofit = value[0] == '1';
 
@@ -972,13 +1000,22 @@ public:
 // why not private???
 protected:
    enum {
+      // *_PAGE values must correspond to prefspage values
+      FILE_PAGE = 0,
+      CONTROL_PAGE,
+      VIEW_PAGE,
       // File prefs
-      PREF_NEW_REM_SEL = 100,
+      PREF_NEW_REM_SEL,
       PREF_NEW_CURSOR,
       PREF_NEW_SCALE,
       PREF_OPEN_REM_SEL,
       PREF_OPEN_CURSOR,
       PREF_MAX_RECENT,
+      // Control prefs
+      PREF_QBASE,
+      PREF_HBASE,
+      PREF_MIN_DELAY,
+      PREF_MAX_DELAY,
       // View prefs
       PREF_Y_UP,
       PREF_SHOW_MAJOR,
@@ -987,6 +1024,7 @@ protected:
    };
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
+   wxPanel* CreateControlPrefs(wxWindow* parent);
    wxPanel* CreateViewPrefs(wxWindow* parent);
    
    void OnPageChanged(wxNotebookEvent& event);
@@ -1009,11 +1047,13 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxBookCtrlBase* notebook = GetBookCtrl();
    
    wxPanel* filePrefs = CreateFilePrefs(notebook);
+   wxPanel* ctrlPrefs = CreateControlPrefs(notebook);
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
    
    // AddPage causes OnPageChange to change prefspage
    size_t savepage = prefspage;
    notebook->AddPage(filePrefs, _("File"));
+   notebook->AddPage(ctrlPrefs, _("Control"));
    notebook->AddPage(viewPrefs, _("View"));
    prefspage = savepage;
    
@@ -1021,8 +1061,14 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    notebook->SetSelection(prefspage);
 
    #ifdef __WXMAC__
-      // wxMac fix: give focus to first edit box and allow use of escape
-      notebook->GetCurrentPage()->SetFocus();
+      // wxMac fix: give focus to first edit box and allow use of escape;
+      // this is no good because it selects all text in all edit boxes:
+      //    notebook->GetCurrentPage()->SetFocus();
+      // so select first edit box in current page:
+      if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_RECENT)->SetFocus();
+      if (prefspage == CONTROL_PAGE) FindWindow(PREF_QBASE)->SetFocus();
+      if (prefspage == VIEW_PAGE) FindWindow(PREF_MAJOR_SPACING)->SetFocus();
+      // this didn't fix the problem either!!! maybe bug is in Validators???
    #endif
    
    LayoutDialog();
@@ -1151,6 +1197,92 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    return panel;
 }
 
+wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   
+   // q_base_step and h_base_step
+
+   wxBoxSizer* longbox = new wxBoxSizer( wxHORIZONTAL );
+   longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if not hashing:")),
+                0, wxALL, 0);
+
+   wxBoxSizer* shortbox = new wxBoxSizer( wxHORIZONTAL );
+   shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if hashing:")),
+                 0, wxALL, 0);
+
+   // align spin controls be setting shortbox same width as longbox
+   shortbox->SetMinSize( longbox->GetMinSize() );
+
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   hbox1->Add(longbox, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_QBASE, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 2, MAX_BASESTEP, qbasestep);
+   hbox1->AddSpacer(3);
+   hbox1->Add(spin1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, 5);
+
+   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
+   hbox2->Add(shortbox, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_HBASE, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 2, MAX_BASESTEP, hbasestep);
+   hbox2->AddSpacer(3);
+   hbox2->Add(spin2, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)")),
+              0, wxLEFT | wxALIGN_CENTER_VERTICAL, 3);
+   vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, 5);
+   
+   // min_delay and max_delay
+
+   vbox->AddSpacer(10);
+
+   wxBoxSizer* minbox = new wxBoxSizer( wxHORIZONTAL );
+   minbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum delay:")), 0, wxALL, 0);
+
+   wxBoxSizer* maxbox = new wxBoxSizer( wxHORIZONTAL );
+   maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum delay:")), 0, wxALL, 0);
+
+   // align spin controls be setting minbox same width as maxbox
+   minbox->SetMinSize( maxbox->GetMinSize() );
+
+   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
+   hbox3->Add(minbox, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin3 = new wxSpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 0, MAX_DELAY, mindelay);
+   hbox3->AddSpacer(3);
+   hbox3->Add(spin3, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
+              0, wxLEFT | wxALIGN_CENTER_VERTICAL, 3);
+   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, 5);
+   
+   wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
+   hbox4->Add(maxbox, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin4 = new wxSpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 0, MAX_DELAY, maxdelay);
+   hbox4->AddSpacer(3);
+   hbox4->Add(spin4, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
+              0, wxLEFT | wxALIGN_CENTER_VERTICAL, 3);
+   vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, 5);
+   
+   // validators handle data transfer to/from window
+   spin1->SetValidator( wxGenericValidator(&qbasestep) );
+   spin2->SetValidator( wxGenericValidator(&hbasestep) );
+   spin3->SetValidator( wxGenericValidator(&mindelay) );
+   spin4->SetValidator( wxGenericValidator(&maxdelay) );
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
 wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
@@ -1219,6 +1351,44 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event) {
    prefspage = event.GetSelection();
 }
 
+void SetMinimumWarp() {
+   // set minwarp depending on mindelay and maxdelay
+   minwarp = 0;
+   if (mindelay > 0) {
+      int d = mindelay;
+      minwarp--;
+      while (d < maxdelay) {
+         d *= 2;
+         minwarp--;
+      }
+   }
+}
+
+void SetGenIncrement() {
+   if (warp > 0) {
+      bigint inc = 1;
+      // WARNING: if this code changes then also change DrawStatusBar
+      if (hashing) {
+         // set inc to hbasestep^warp
+         int i = warp;
+         while (i > 0) { inc.mul_smallint(hbasestep); i--; }
+      } else {
+         // set inc to qbasestep^warp
+         int i = warp;
+         while (i > 0) { inc.mul_smallint(qbasestep); i--; }
+      }
+      curralgo->setIncrement(inc);
+   } else {
+      curralgo->setIncrement(1);
+   }
+}
+
+int CurrentDelay() {
+   int gendelay = mindelay * (1 << (-warp - 1));
+   if (gendelay > maxdelay) gendelay = maxdelay;
+   return gendelay;
+}
+
 void UpdateEverything();
 
 void ChangePrefs() {
@@ -1229,10 +1399,22 @@ void ChangePrefs() {
       newcurs = IndexToCursor(newcursindex);
       opencurs = IndexToCursor(opencursindex);
       
-      // if maxrecent was reduced then we may need to remove oldest paths
+      // if maxrecent was reduced then we may need to remove some paths
       while (numrecent > maxrecent) {
          numrecent--;
          recentSubMenu->Delete( recentSubMenu->FindItemByPosition(numrecent) );
+      }
+      
+      // if mindelay/maxdelay changed then may need to change minwarp and warp
+      SetMinimumWarp();
+      if (warp < minwarp) {
+         warp = minwarp;
+         curralgo->setIncrement(1);    // warp is <= 0
+      } else if (warp > 0) {
+         SetGenIncrement();
+      }
+      if (generating && warp < 0) {
+         whentosee = 0;                // best to see immediately
       }
       
       SavePrefs();
@@ -2017,13 +2199,13 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
          
          if (warp < 0) {
             // show delay in secs
-            sprintf(strbuf, "Delay=%gs", (double)(MIN_DELAY * (1 << (-warp - 1))) / 1000.0);
+            sprintf(strbuf, "Delay=%gs", (double)CurrentDelay() / 1000.0);
          } else {
             // show gen increment that matches code in SetGenIncrement
             if (hashing) {
-               sprintf(strbuf, "Step=8^%d", warp);
+               sprintf(strbuf, "Step=%d^%d", hbasestep, warp);
             } else {
-               sprintf(strbuf, "Step=10^%d", warp);
+               sprintf(strbuf, "Step=%d^%d", qbasestep, warp);
             }
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
@@ -2033,7 +2215,7 @@ void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
          bigint ypos = curry;   ypos -= originy;
          if (mathcoords) {
             // Y values increase upwards
-            bigint temp = bigint::zero;
+            bigint temp = 0;
             temp -= ypos;
             ypos = temp;
          }
@@ -2202,7 +2384,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_RESET,     active && !generating &&
                                  curralgo->getGeneration() > bigint::zero);
       mbar->Enable(ID_FASTER,    active);
-      mbar->Enable(ID_SLOWER,    active && warp > MIN_WARP);
+      mbar->Enable(ID_SLOWER,    active && warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
       mbar->Enable(ID_HASH,      active && !generating);
       mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
@@ -2490,24 +2672,6 @@ void SetWindowTitle(const char *filename) {
    strncpy(currname, filename, sizeof(currname));
    sprintf(wtitle, "Golly: %s [%s]", filename, curralgo->getrule());
    MySetTitle(wtitle);
-}
-
-void SetGenIncrement() {
-   if (warp > 0) {
-      bigint inc = 1;
-      // WARNING: if this code changes then we'll need changes to DrawStatusBar
-      if (hashing) {
-         // set inc to 8^warp
-         inc.mulpow2(warp * 3);
-      } else {
-         // set inc to 10^warp
-         int i = warp;
-         while (i > 0) { inc.mul_smallint(10); i--; }
-      }
-      curralgo->setIncrement(inc);
-   } else {
-      curralgo->setIncrement(1);
-   }
 }
 
 void CreateUniverse() {
@@ -4447,20 +4611,18 @@ void GoFaster() {
    // only need to refresh status bar
    UpdateStatus();
    if (generating && warp < 0) {
-      gendelay = MIN_DELAY * (1 << (-warp - 1));
-      whentosee -= gendelay;
+      whentosee -= CurrentDelay();
    }
 }
 
 void GoSlower() {
-   if (warp > MIN_WARP) {
+   if (warp > minwarp) {
       warp--;
       SetGenIncrement();
       // only need to refresh status bar
       UpdateStatus();
       if (generating && warp < 0) {
-         gendelay = MIN_DELAY * (1 << (-warp - 1));
-         whentosee += gendelay;
+         whentosee += CurrentDelay();
       }
    } else {
       wxBell();
@@ -4493,14 +4655,13 @@ void GeneratePattern() {
    UpdateUserInterface(frameptr->IsActive());
    
    if (warp < 0) {
-      gendelay = MIN_DELAY * (1 << (-warp - 1));
-      whentosee = wxGetElapsedTime(false) + gendelay;
+      whentosee = wxGetElapsedTime(false) + CurrentDelay();
    }
    int hypdown = 64;
 
    while (true) {
       if (warp < 0) {
-         // slow down by only doing one gen every gendelay millisecs
+         // slow down by only doing one gen every CurrentDelay() millisecs
          long currmsec = wxGetElapsedTime(false);
          if (currmsec >= whentosee) {
             curralgo->step();
@@ -4508,7 +4669,7 @@ void GeneratePattern() {
             // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
             UpdatePatternAndStatus();
             if (wx_poller.checkevents()) break;
-            whentosee = currmsec + gendelay;
+            whentosee = currmsec + CurrentDelay();
          } else {
             // process events while we wait
             if (wx_poller.checkevents()) break;
@@ -6145,32 +6306,32 @@ void PatternView::OnRMouseDown(wxMouseEvent& event) {
 }
 
 void PatternView::OnMouseWheel(wxMouseEvent& event) {
-	// wheelpos should be persistent, because in theory we should keep track of
-	// the remainder if the amount scrolled was not an even number of deltas.
-	static int wheelpos = 0;
-	int delta;
+   // wheelpos should be persistent, because in theory we should keep track of
+   // the remainder if the amount scrolled was not an even number of deltas.
+   static int wheelpos = 0;
+   int delta;
 
-	// delta is the amount that represents one "step" of rotation. Normally 120.
-	delta = event.GetWheelDelta();
+   // delta is the amount that represents one "step" of rotation. Normally 120.
+   delta = event.GetWheelDelta();
 
-	if(invertmousewheel)
-		wheelpos -= event.GetWheelRotation();
-	else
-		wheelpos += event.GetWheelRotation();
+   if(invertmousewheel)
+      wheelpos -= event.GetWheelRotation();
+   else
+      wheelpos += event.GetWheelRotation();
 
-	while(wheelpos >= delta) {
-		wheelpos -= delta;
-		TestAutoFit();
-		currview.unzoom();
-	}
+   while(wheelpos >= delta) {
+      wheelpos -= delta;
+      TestAutoFit();
+      currview.unzoom();
+   }
 
-	while(wheelpos <= -delta) {
-		wheelpos += delta;
-		TestAutoFit();
-		currview.zoom();
-	}
+   while(wheelpos <= -delta) {
+      wheelpos += delta;
+      TestAutoFit();
+      currview.zoom();
+   }
 
-	UpdateEverything();
+   UpdateEverything();
 }
 
 void PatternView::OnMouseMotion(wxMouseEvent& WXUNUSED(event)) {
@@ -6846,6 +7007,7 @@ bool MyApp::OnInit()
    InitSelection();
    InitMagnifyTable();
    SetViewSize();
+   SetMinimumWarp();
    SetMessage(BANNER);
    
    // load pattern if file supplied on Win/Unix command line

@@ -86,10 +86,6 @@ User suggestions:
 [Paul Chapman]
 - Combine the start and stop toolbar buttons into a single toggle.
 
-[Gabriel Nivasch]
-- The shortest delay should be much shorter than 0.25s; maybe 0.01s.
-- Finer control of the running speed; ie. allow step inc of 2.
-
 [Jason Summers]
 - The "move" cursor should be an open hand.
 - More available zoom scales would be nice, e.g. 1:3 and 1:6.
@@ -107,3 +103,8 @@ User suggestions:
 - Provide some way to open current pattern file in user's text editor.
   Maybe just an "Edit Pattern" item in File menu?  And/or option-click
   on pattern in navigation panel?
+
+[H Koenig]
+- Mulitiple undo/redo.
+- Multiple windows.
+- If we provide an animating stop button then make it optional.
