@@ -629,7 +629,7 @@ int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
 char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
-int invertmousewheel = 0;
+int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 size_t prefspage = 0;            // current page in PrefsDialog
 
 void Warning(const char *s);
@@ -756,6 +756,7 @@ void SavePrefs() {
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
+   fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
    fprintf(f, "new_mag=%d (0..%d)\n", newmag, MAX_MAG);
    fprintf(f, "new_remove_sel=%d\n", newremovesel ? 1 : 0);
    fprintf(f, "new_cursor=%s\n", CursorToString(newcurs));
@@ -941,6 +942,9 @@ void GetPrefs() {
 
          } else if (strcmp(keyword, "buffered") == 0) {
             buffered = value[0] == '1';
+
+         } else if (strcmp(keyword, "mouse_wheel_mode") == 0) {
+            sscanf(value, "%d", &mousewheelmode);
 
          } else if (strcmp(keyword, "new_mag") == 0) {
             sscanf(value, "%d", &newmag);
@@ -1334,12 +1338,31 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    
    vbox->Add(hbox3, 0, wxGROW | wxALL, 3);
 
+   // mouse_wheel_mode
+
+   wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
+   
+   wxArrayString mousewheelChoices;
+   mousewheelChoices.Add(wxT("Disabled"));
+   mousewheelChoices.Add(wxT("Forward zooms out"));
+   mousewheelChoices.Add(wxT("Forward zooms in"));
+   wxChoice* choice4 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
+                                    wxDefaultPosition, wxDefaultSize,
+                                    mousewheelChoices);
+   
+   hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")),
+              0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+   hbox4->Add(choice4, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+   
+   vbox->Add(hbox4, 0, wxGROW | wxALL, 3);
+
    // validators handle data transfer to/from window
    check1->SetValidator( wxGenericValidator(&mathcoords) );
    check2->SetValidator( wxGenericValidator(&showmajor) );
    spin2->SetValidator( wxGenericValidator(&majorspacing) );
    mingridindex = mingridmag - 2;
    choice3->SetValidator( wxGenericValidator(&mingridindex) );
+   choice4->SetValidator( wxGenericValidator(&mousewheelmode) );
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -6315,10 +6338,16 @@ void PatternView::OnMouseWheel(wxMouseEvent& event) {
    static int wheelpos = 0;
    int delta;
 
+   if (mousewheelmode == 0) {
+      // ignore wheel, according to user preference
+      event.Skip();
+      return;
+   }
+
    // delta is the amount that represents one "step" of rotation. Normally 120.
    delta = event.GetWheelDelta();
 
-   if(invertmousewheel)
+   if (mousewheelmode == 2)
       wheelpos -= event.GetWheelRotation();
    else
       wheelpos += event.GetWheelRotation();

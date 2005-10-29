@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+JES: Added a preference for the mouse wheel.
 JES: Changed window title to make filename visible on taskbar.
 AKT: Added Control panel to Preferences dialog.
 AKT: New/Open Pattern can optionally change cursor (see Prefs).
