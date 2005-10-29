@@ -49,6 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/stockitem.h"     // for wxGetStockLabel
+#include "wx/menuitem.h"      // for SetText
 #include "wx/dcbuffer.h"      // for wxBufferedPaintDC
 #include "wx/clipbrd.h"       // for wxTheClipboard
 #include "wx/dataobj.h"       // for wxTextDataObject
@@ -308,6 +309,11 @@ enum {
    ID_SELALL,
    ID_REMOVE,
    ID_SHRINK,
+   ID_RANDOM,
+   ID_FLIPV,
+   ID_FLIPH,
+   ID_ROTATEC,
+   ID_ROTATEA,
    ID_CMODE,
 
    // Paste Location submenu
@@ -614,6 +620,7 @@ int infowd = 600;                // info window's default size
 int infoht = 400;
 const int mininfowd = 400;       // info window's minimum size
 const int mininfoht = 100;
+int randomfill = 50;             // random fill percentage (1..100)
 bool showstatus = true;          // show status bar?
 bool showtool = true;            // show tool bar?
 int maxhmem = 300;               // maximum hash memory (in megabytes)
@@ -738,6 +745,7 @@ void SavePrefs() {
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
+   fprintf(f, "random_fill=%d (1..100)\n", randomfill);
    fprintf(f, "q_base_step=%d (2..%d)\n", qbasestep, MAX_BASESTEP);
    fprintf(f, "h_base_step=%d (2..%d, best if power of 2)\n", hbasestep, MAX_BASESTEP);
    fprintf(f, "min_delay=%d (0..%d millisecs)\n", mindelay, MAX_DELAY);
@@ -875,6 +883,11 @@ void GetPrefs() {
                pmode = Xor;
             }
 
+         } else if (strcmp(keyword, "random_fill") == 0) {
+            sscanf(value, "%d", &randomfill);
+            if (randomfill < 1) randomfill = 1;
+            if (randomfill > 100) randomfill = 100;
+
          } else if (strcmp(keyword, "q_base_step") == 0) {
             sscanf(value, "%d", &qbasestep);
             if (qbasestep < 2) qbasestep = 2;
@@ -945,6 +958,8 @@ void GetPrefs() {
 
          } else if (strcmp(keyword, "mouse_wheel_mode") == 0) {
             sscanf(value, "%d", &mousewheelmode);
+            if (mousewheelmode < 0) mousewheelmode = 0;
+            if (mousewheelmode > 2) mousewheelmode = 2;
 
          } else if (strcmp(keyword, "new_mag") == 0) {
             sscanf(value, "%d", &newmag);
@@ -1004,8 +1019,9 @@ public:
 // why not private???
 protected:
    enum {
-      // *_PAGE values must correspond to prefspage values
+      // these *_PAGE values must correspond to prefspage values
       FILE_PAGE = 0,
+      EDIT_PAGE,
       CONTROL_PAGE,
       VIEW_PAGE,
       // File prefs
@@ -1015,6 +1031,8 @@ protected:
       PREF_OPEN_REM_SEL,
       PREF_OPEN_CURSOR,
       PREF_MAX_RECENT,
+      // Edit prefs
+      PREF_RANDOM_FILL,
       // Control prefs
       PREF_QBASE,
       PREF_HBASE,
@@ -1024,10 +1042,12 @@ protected:
       PREF_Y_UP,
       PREF_SHOW_MAJOR,
       PREF_MAJOR_SPACING,
-      PREF_MIN_GRID_SCALE
+      PREF_MIN_GRID_SCALE,
+      PREF_MOUSE_WHEEL
    };
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
+   wxPanel* CreateEditPrefs(wxWindow* parent);
    wxPanel* CreateControlPrefs(wxWindow* parent);
    wxPanel* CreateViewPrefs(wxWindow* parent);
    
@@ -1051,12 +1071,14 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxBookCtrlBase* notebook = GetBookCtrl();
    
    wxPanel* filePrefs = CreateFilePrefs(notebook);
+   wxPanel* editPrefs = CreateEditPrefs(notebook);
    wxPanel* ctrlPrefs = CreateControlPrefs(notebook);
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
    
    // AddPage causes OnPageChange to change prefspage
    size_t savepage = prefspage;
    notebook->AddPage(filePrefs, _("File"));
+   notebook->AddPage(editPrefs, _("Edit"));
    notebook->AddPage(ctrlPrefs, _("Control"));
    notebook->AddPage(viewPrefs, _("View"));
    prefspage = savepage;
@@ -1070,6 +1092,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
       //    notebook->GetCurrentPage()->SetFocus();
       // so select first edit box in current page:
       if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_RECENT)->SetFocus();
+      if (prefspage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
       if (prefspage == CONTROL_PAGE) FindWindow(PREF_QBASE)->SetFocus();
       if (prefspage == VIEW_PAGE) FindWindow(PREF_MAJOR_SPACING)->SetFocus();
       // this didn't fix the problem either!!! maybe bug is in Validators???
@@ -1194,6 +1217,33 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    opencursindex = CursorToIndex(opencurs);
    choice3->SetValidator( wxGenericValidator(&newcursindex) );
    choice4->SetValidator( wxGenericValidator(&opencursindex) );
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
+wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   
+   // random_fill
+
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("Random fill percentage:")),
+              0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 1, 100, randomfill);
+   hbox1->AddSpacer(3);
+   hbox1->Add(spin1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, 5);
+   
+   // validators handle data transfer to/from window
+   spin1->SetValidator( wxGenericValidator(&randomfill) );
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1346,7 +1396,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    mousewheelChoices.Add(wxT("Disabled"));
    mousewheelChoices.Add(wxT("Forward zooms out"));
    mousewheelChoices.Add(wxT("Forward zooms in"));
-   wxChoice* choice4 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
+   wxChoice* choice4 = new wxChoice(panel, PREF_MOUSE_WHEEL,
                                     wxDefaultPosition, wxDefaultSize,
                                     mousewheelChoices);
    
@@ -1412,6 +1462,16 @@ int CurrentDelay() {
    return gendelay;
 }
 
+void ShowRandomFillPercentage() {
+   // update Random Fill menu item to show randomfill value
+   wxMenuBar *mbar = frameptr->GetMenuBar();
+   if (mbar) {
+      wxString randlabel;
+      randlabel.Printf("Random Fill (%d%c)\tCtrl+5", randomfill, '%');
+      mbar->SetLabel(ID_RANDOM, randlabel);
+   }
+}
+
 void UpdateEverything();
 
 void ChangePrefs() {
@@ -1434,11 +1494,13 @@ void ChangePrefs() {
          warp = minwarp;
          curralgo->setIncrement(1);    // warp is <= 0
       } else if (warp > 0) {
-         SetGenIncrement();
+         SetGenIncrement();            // in case qbasestep/hbasestep changed
       }
       if (generating && warp < 0) {
          whentosee = 0;                // best to see immediately
       }
+      
+      ShowRandomFillPercentage();      // in case randomfill changed
       
       SavePrefs();
       UpdateEverything();
@@ -2398,6 +2460,11 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_SELALL,    active);
       mbar->Enable(ID_REMOVE,    active && SelectionExists());
       mbar->Enable(ID_SHRINK,    active && SelectionExists());
+      mbar->Enable(ID_RANDOM,    active && !generating && SelectionExists());
+      mbar->Enable(ID_FLIPV,     active && !generating && SelectionExists());
+      mbar->Enable(ID_FLIPH,     active && !generating && SelectionExists());
+      mbar->Enable(ID_ROTATEC,   active && !generating && SelectionExists());
+      mbar->Enable(ID_ROTATEA,   active && !generating && SelectionExists());
       mbar->Enable(ID_CMODE,     active);
 
       mbar->Enable(ID_GO,        active && !generating);
@@ -2730,7 +2797,7 @@ void NewPattern() {
    if (initrule[0]) {
       // this is the first call of NewPattern when app starts
       const char *err = curralgo->setrule(initrule);
-      if (err != 0)
+      if (err)
          Warning(err);
       if (global_liferules.hasB0notS8 && hashing) {
          hashing = false;
@@ -2807,7 +2874,7 @@ void LoadPattern(const char *newtitle) {
       err = readpattern(currfile, *curralgo);
    }
    nopattupdate = false;
-   if (err != 0) Warning(err);
+   if (err) Warning(err);
 
    if (newtitle) {
       // show full window title after readpattern has set rule
@@ -3094,7 +3161,7 @@ void SavePattern() {
       SetWindowTitle( savedlg.GetFilename() );
       const char *err = writepattern(savedlg.GetPath(), *curralgo, format,
                                      itop, ileft, ibottom, iright);
-      if ( err != 0 ) {
+      if (err) {
          ErrorMessage(err);
       } else {
          DisplayMessage("Pattern saved in file.");
@@ -3848,7 +3915,7 @@ void PasteClipboard(bool toselection) {
       // read clipboard pattern into temporary universe
       bigint top, left, bottom, right;
       const char *err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
-      if (err != 0) {
+      if (err) {
          // try toggling temporary universe's type
          delete tempalgo;
          if (hashing)
@@ -3857,8 +3924,7 @@ void PasteClipboard(bool toselection) {
             tempalgo = new hlifealgo();
          tempalgo->setpoll(&wx_poller);
          err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
-         if (err != 0)
-            Warning(err);   // give up
+         if (err) Warning(err);   // give up
       }
       
       // if we got a pattern then paste it into current universe
@@ -4031,6 +4097,68 @@ void ShrinkSelection(bool fit) {
    
    delete tempalgo;
    if (fit) FitSelection();
+}
+
+void RandomFill() {
+   if (generating || !SelectionExists()) return;
+
+   // can only use getcell/setcell in limited domain
+   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
+   
+   int itop = seltop.toint();
+   int ileft = selleft.toint();
+   int ibottom = selbottom.toint();
+   int iright = selright.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   BeginProgress("Randomly filling selection");
+   int cx, cy;
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         // randomfill is from 1..100
+         curralgo->setcell(cx, cy, (rand() % 100) <= (randomfill - 1));
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            abort = AbortProgress((double)cntr / maxcount, "");
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   curralgo->endofpattern();
+   savestart = true;
+   EndProgress();
+   UpdatePatternAndStatus();
+}
+
+void FlipVertically() {
+   if (generating || !SelectionExists()) return;
+   
+   ErrorMessage("Not yet implemented!!!");
+}
+
+void FlipHorizontally() {
+   if (generating || !SelectionExists()) return;
+   
+   ErrorMessage("Not yet implemented!!!");
+}
+
+void RotateClockwise() {
+   if (generating || !SelectionExists()) return;
+   
+   ErrorMessage("Not yet implemented!!!");
+}
+
+void RotateAnticlockwise() {
+   if (generating || !SelectionExists()) return;
+   
+   ErrorMessage("Not yet implemented!!!");
 }
 
 void SetCursorMode(wxCursor *curs) {
@@ -4924,7 +5052,7 @@ void ChangeRule() {
       if ( !newrule.empty() ) {
          const char *err = curralgo->setrule( (char *)newrule.c_str() );
          // restore old rule if an error occurred
-         if ( err != 0 ) {
+         if (err) {
             Warning(err);
             curralgo->setrule( (char *)oldrule.c_str() );
          } else if ( global_liferules.hasB0notS8 && hashing ) {
@@ -5352,7 +5480,7 @@ void ShowPatternInfo() {
    // read and display comments in current pattern file
    const char *err;
    err = readcomments(currfile, commptr, maxcommsize);
-   if (err != 0) {
+   if (err) {
       Warning(err);
    } else {
       infoptr = new InfoFrame(commptr);
@@ -5962,6 +6090,11 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_SELALL:         SelectAll(); break;
       case ID_REMOVE:         RemoveSelection(); break;
       case ID_SHRINK:         ShrinkSelection(false); break;
+      case ID_RANDOM:         RandomFill(); break;
+      case ID_FLIPV:          FlipVertically(); break;
+      case ID_FLIPH:          FlipHorizontally(); break;
+      case ID_ROTATEC:        RotateClockwise(); break;
+      case ID_ROTATEA:        RotateAnticlockwise(); break;
       case ID_DRAW:           SetCursorMode(curs_pencil); break;
       case ID_SELECT:         SetCursorMode(curs_cross); break;
       case ID_MOVE:           SetCursorMode(curs_hand); break;
@@ -6352,13 +6485,13 @@ void PatternView::OnMouseWheel(wxMouseEvent& event) {
    else
       wheelpos += event.GetWheelRotation();
 
-   while(wheelpos >= delta) {
+   while (wheelpos >= delta) {
       wheelpos -= delta;
       TestAutoFit();
       currview.unzoom();
    }
 
-   while(wheelpos <= -delta) {
+   while (wheelpos <= -delta) {
       wheelpos += delta;
       TestAutoFit();
       currview.zoom();
@@ -6770,6 +6903,12 @@ MainFrame::MainFrame()
    editMenu->Append(ID_SELALL, _("Select All\tCtrl+A"));
    editMenu->Append(ID_REMOVE, _("Remove Selection\tCtrl+K"));
    editMenu->Append(ID_SHRINK, _("Shrink Selection"));
+   // full label will be set later by ShowRandomFillPercentage
+   editMenu->Append(ID_RANDOM, _("Random Fill"));
+   editMenu->Append(ID_FLIPV, _("Flip Vertically"));
+   editMenu->Append(ID_FLIPH, _("Flip Horizontally"));
+   editMenu->Append(ID_ROTATEC, _("Rotate Clockwise"));
+   editMenu->Append(ID_ROTATEA, _("Rotate Anticlockwise"));
    editMenu->AppendSeparator();
    editMenu->Append(ID_CMODE, _("Cursor Mode"), cmodeSubMenu);
 
@@ -7037,6 +7176,7 @@ bool MyApp::OnInit()
    if (frameptr == NULL) Fatal("Failed to create main window!");
    
    // initialize some stuff before showing main window
+   ShowRandomFillPercentage();
    InitSelection();
    InitMagnifyTable();
    SetViewSize();

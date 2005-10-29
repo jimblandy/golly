@@ -31,8 +31,6 @@ For future versions:
 
 T - Improve batchmode.
 
-- Add more sophisticated editing (rotate selection, etc).
-
 - See if we can reduce app size.  If wx docs no help then ask wx-users.
 
 - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
