@@ -2670,7 +2670,11 @@ void SetWindowTitle(const char *filename) {
    char wtitle[128];
    // save filename for use when changing rule
    strncpy(currname, filename, sizeof(currname));
+#ifdef __WXMAC__
    sprintf(wtitle, "Golly: %s [%s]", filename, curralgo->getrule());
+#else
+   sprintf(wtitle, "%s [%s] - Golly", filename, curralgo->getrule());
+#endif
    MySetTitle(wtitle);
 }
 
