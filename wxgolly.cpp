@@ -3357,7 +3357,7 @@ void ClearOutsideSelection() {
    
    // copy live cells in selection to new universe
    if ( SaveRect(top.toint(), left.toint(), bottom.toint(), right.toint(), newalgo) ) {
-      // delete old universe and point current universe to new universe
+      // delete old universe and point curralgo at new universe
       savestart = true;
       delete curralgo;
       curralgo = newalgo;
@@ -3916,7 +3916,8 @@ void PasteClipboard(bool toselection) {
       bigint top, left, bottom, right;
       const char *err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
       if (err) {
-         // try toggling temporary universe's type
+         // clipboard might contain macrocell data so try toggling
+         // temporary universe's type
          delete tempalgo;
          if (hashing)
             tempalgo = new qlifealgo();
@@ -4078,10 +4079,7 @@ void ShrinkSelection(bool fit) {
    // a faster way would be to scan selection from top to bottom until first
    // live cell found, then from bottom to top, left to right and right to left!!!
    lifealgo *tempalgo;
-   if ( hashing )
-      tempalgo = new hlifealgo();
-   else
-      tempalgo = new qlifealgo();
+   tempalgo = new qlifealgo();         // qlife's findedges is faster
    tempalgo->setpoll(&wx_poller);
    
    // copy live cells in selection to temporary universe
@@ -4122,7 +4120,7 @@ void RandomFill() {
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
-         curralgo->setcell(cx, cy, (rand() % 100) <= (randomfill - 1));
+         curralgo->setcell(cx, cy, (rand() % 100) < randomfill);
          cntr++;
          if ((cntr % 4096) == 0) {
             abort = AbortProgress((double)cntr / maxcount, "");
@@ -4149,16 +4147,152 @@ void FlipHorizontally() {
    ErrorMessage("Not yet implemented!!!");
 }
 
-void RotateClockwise() {
+void RotateSelection(bool clockwise) {
    if (generating || !SelectionExists()) return;
    
-   ErrorMessage("Not yet implemented!!!");
-}
+   // determine rotated selection edges
+   bigint halfht = selbottom;   halfht -= seltop;    halfht.div2();
+   bigint halfwd = selright;    halfwd -= selleft;   halfwd.div2();
+   bigint midy = seltop;    midy += halfht;
+   bigint midx = selleft;   midx += halfwd;
+   bigint newtop    = midy;   newtop    += selleft;     newtop    -= midx;
+   bigint newbottom = midy;   newbottom += selright;    newbottom -= midx;
+   bigint newleft   = midx;   newleft   += seltop;      newleft   -= midy;
+   bigint newright  = midx;   newright  += selbottom;   newright  -= midy;
+   
+   // things are simple if there is no pattern
+   if (curralgo->isEmpty()) {
+      seltop    = newtop;
+      selbottom = newbottom;
+      selleft   = newleft;
+      selright  = newright;
+      DisplaySelectionSize();
+      UpdatePatternAndStatus();
+      return;
+   }
+   
+   // things are also simple if selection and rotated selection are BOTH
+   // outside the pattern edges
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   if ( ( seltop > bottom || selbottom < top ||
+          selleft > right || selright < left) &&
+        ( newtop > bottom || newbottom < top ||
+          newleft > right || newright < left) ) {
+      seltop    = newtop;
+      selbottom = newbottom;
+      selleft   = newleft;
+      selright  = newright;
+      DisplaySelectionSize();
+      UpdatePatternAndStatus();
+      return;
+   }
 
-void RotateAnticlockwise() {
-   if (generating || !SelectionExists()) return;
+   // can only use getcell/setcell in limited domain
+   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
+
+   // make sure rotated selection edges are also within limits
+   if ( OutsideLimits(newtop, newbottom, newleft, newright) ) {
+      ErrorMessage("New selection would be outside +/- 10^9 boundary.");
+      return;
+   }   
    
-   ErrorMessage("Not yet implemented!!!");
+   // create temporary universe (doesn't need to match current universe)
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();      // qlife's setcell/getcell are faster
+   tempalgo->setpoll(&wx_poller);
+   
+   // copy (and kill) live cells in selection to temporary universe,
+   // rotating the new coords by +/- 90 degrees
+   int itop    = seltop.toint();
+   int ileft   = selleft.toint();
+   int ibottom = selbottom.toint();
+   int iright  = selright.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   // note that we'll be scanning selection rect twice
+   double maxcount = (double)wd * (double)ht * 2.0;
+   int cntr = 0;
+   bool abort = false;
+   int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
+   if (clockwise) {
+      BeginProgress("Rotating selection +90 degrees");
+      firstnewy = newtop.toint();
+      newx = newright.toint();
+      newyinc = 1;
+      newxinc = -1;
+   } else {
+      BeginProgress("Rotating selection -90 degrees");
+      firstnewy = newbottom.toint();
+      newx = newleft.toint();
+      newyinc = -1;
+      newxinc = 1;
+   }
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      newy = firstnewy;
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            curralgo->setcell(cx, cy, 0);
+            newy += newyinc * skip;
+            tempalgo->setcell(newx, newy, 1);
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, "");
+            if (abort) break;
+         }
+         newy += newyinc;
+      }
+      if (abort) break;
+      newx += newxinc;
+   }
+   
+   if (!abort) {
+      // copy new selection from temporary universe to current universe
+      maxcount = (double)wd * (double)ht;
+      cntr = 0;
+      itop    = newtop.toint();
+      ileft   = newleft.toint();
+      ibottom = newbottom.toint();
+      iright  = newright.toint();
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            curralgo->setcell(cx, cy, tempalgo->getcell(cx, cy));
+            cntr++;
+            if ((cntr % 4096) == 0) {
+               abort = AbortProgress((double)cntr / maxcount, "");
+               if (abort) break;
+            }
+         }
+         if (abort) break;
+      }
+      // rotate the selection edges
+      seltop    = newtop;
+      selbottom = newbottom;
+      selleft   = newleft;
+      selright  = newright;
+   }
+
+   curralgo->endofpattern();
+   savestart = true;
+   EndProgress();
+   
+   // delete temporary universe and display results
+   delete tempalgo;
+   DisplaySelectionSize();
+   UpdatePatternAndStatus();
 }
 
 void SetCursorMode(wxCursor *curs) {
@@ -6093,8 +6227,8 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_RANDOM:         RandomFill(); break;
       case ID_FLIPV:          FlipVertically(); break;
       case ID_FLIPH:          FlipHorizontally(); break;
-      case ID_ROTATEC:        RotateClockwise(); break;
-      case ID_ROTATEA:        RotateAnticlockwise(); break;
+      case ID_ROTATEC:        RotateSelection(true); break;
+      case ID_ROTATEA:        RotateSelection(false); break;
       case ID_DRAW:           SetCursorMode(curs_pencil); break;
       case ID_SELECT:         SetCursorMode(curs_cross); break;
       case ID_MOVE:           SetCursorMode(curs_hand); break;
@@ -6149,8 +6283,9 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_HELP_CREDITS:   ShowHelp("Help/credits.html"); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
       default:
-         if ( id > ID_RECENT && id <= ID_RECENT + numrecent )
+         if ( id > ID_RECENT && id <= ID_RECENT + numrecent ) {
             OpenRecentFile(id);
+         }
    }
    UpdateUserInterface(frameptr->IsActive());
 }
