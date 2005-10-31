@@ -79,7 +79,7 @@ bigint::bigint(const char *s) {
          v.p[0] = sz ;
          for (int i=1; i<=sz; i++)
             v.p[i] = 0 ;
-         v.p[sz-1] = 1 << (sz % 31) ;
+         v.p[sz-1] = 1 << (x % 31) ;
       }
    } else {
       int neg = 0 ;

@@ -60,6 +60,7 @@ int stepthresh, stepfactor ;
 char *liferule = 0 ;
 char *outfilename = 0 ;
 char *renderscale = "1" ;
+char *testscript = 0 ;
 int outputgzip, outputismc ;
 int numberoffset ; // where to insert file name numbers
 options options[] = {
@@ -80,6 +81,7 @@ options options[] = {
 //{ "",   "--stepfactor", "How much to scale step by (default 2)",
 //                                                        'i', &stepfactor },
   { "",   "--autofit", "Autofit before each render", 'b', &autofit },
+  { "",   "--exec", "Run testing script", 's', &testscript },
   { 0, 0, 0, 0, 0 }
 } ;
 int endswith(const char *s, const char *suff) {
@@ -137,6 +139,250 @@ void writepat(int fc) {
       lifewarning(err) ;
    cerr << ")" << flush ;
 }
+const int MAXCMDLENGTH = 2048 ;
+struct cmdbase {
+   cmdbase(char *cmdarg, char *argsarg) {
+      verb = cmdarg ;
+      args = argsarg ;
+      next = list ;
+      list = this ;
+   }
+   const char *verb ;
+   const char *args ;
+   int iargs[4] ;
+   char *sarg ;
+   bigint barg ;
+   virtual void doit() {}
+   // for convenience, we put the generic loop here that takes a
+   // 4x bounding box and runs getnext on all y values until
+   // they are done.  Input is assumed to be a bounding box in the
+   // form minx miny maxx maxy
+   void runnextloop() {
+      int minx = iargs[0] ;
+      int miny = iargs[1] ;
+      int maxx = iargs[2] ;
+      int maxy = iargs[3] ;
+      for (int y=miny; y<=maxy; y++) {
+	 for (int x=minx; x<=maxx; x++) {
+	    int dx = imp->nextcell(x, y) ;
+	    if (dx < 0)
+	       break ;
+	    if (x > 0 && (x + dx) < 0)
+	       break ;
+	    x += dx ;
+	    if (x > maxx)
+	       break ;
+	    nextloopinner(x, y) ;
+	 }
+      }
+   }
+   virtual void nextloopinner(int, int) {}
+   int parseargs(const char *cmdargs) {
+      int iargn = 0 ;
+      char sbuf[MAXCMDLENGTH+2] ;
+      for (const char *rargs = args; *rargs; rargs++) {
+	 while (*cmdargs && *cmdargs <= ' ')
+	    cmdargs++ ;
+	 if (*cmdargs == 0) {
+	    lifewarning("Missing needed argument") ;
+	    return 0 ;
+	 }
+	 switch (*rargs) {
+	 case 'i':
+	   if (sscanf(cmdargs, "%d", iargs+iargn) != 1) {
+	     lifewarning("Missing needed integer argument") ;
+	     return 0 ;
+	   }
+	   iargn++ ;
+	   break ;
+	 case 'b':
+	   {
+	      int i = 0 ;
+	      for (i=0; cmdargs[i] > ' '; i++)
+		 sbuf[i] = cmdargs[i] ;
+	      sbuf[i] = 0 ;
+	      barg = bigint(sbuf) ;
+	   }
+	   break ;
+	 case 's':
+	   if (sscanf(cmdargs, "%s", &sbuf) != 1) {
+	     lifewarning("Missing needed string argument") ;
+	     return 0 ;
+	   }
+	   sarg = strdup(sbuf) ;
+	   break ;
+	 default:
+	   lifefatal("Internal error in parseargs") ;
+	 }
+	 while (*cmdargs && *cmdargs > ' ')
+	   cmdargs++ ;
+      }
+      return 1 ;
+   }
+   static void docmd(const char *cmdline) {
+      for (cmdbase *cmd=list; cmd; cmd = cmd->next)
+	 if (strncmp(cmdline, cmd->verb, strlen(cmd->verb)) == 0 &&
+	     cmdline[strlen(cmd->verb)] <= ' ') {
+	    if (cmd->parseargs(cmdline+strlen(cmd->verb))) {
+	       cmd->doit() ;
+	    }
+	    return ;
+	 }
+      lifewarning("Didn't understand command") ;
+   }
+   cmdbase *next ;
+   static cmdbase *list ;
+} ;
+cmdbase *cmdbase::list = 0 ;
+struct loadcmd : public cmdbase {
+   loadcmd() : cmdbase("load", "s") {}
+   virtual void doit() {
+     const char *err = readpattern(sarg, *imp) ;
+     if (err != 0)
+       lifewarning(err) ;
+   }
+} load_inst ;
+struct stepcmd : public cmdbase {
+   stepcmd() : cmdbase("step", "b") {}
+   virtual void doit() {
+      imp->setIncrement(barg) ;
+      imp->step() ;
+      cout << imp->getGeneration().tostring() << ": " ;
+      cout << imp->getPopulation().tostring() << endl ;
+   }
+} step_inst ;
+struct showcmd : public cmdbase {
+   showcmd() : cmdbase("show", "") {}
+   virtual void doit() {
+      cout << imp->getGeneration().tostring() << ": " ;
+      cout << imp->getPopulation().tostring() << endl ;
+   }
+} show_inst ;
+struct quitcmd : public cmdbase {
+   quitcmd() : cmdbase("quit", "") {}
+   virtual void doit() {
+      cout << "Buh-bye!" << endl ;
+      exit(10) ;
+   }
+} quit_inst ;
+struct setcmd : public cmdbase {
+   setcmd() : cmdbase("set", "ii") {}
+   virtual void doit() {
+      imp->setcell(iargs[0], iargs[1], 1) ;
+   }
+} set_inst ;
+struct unsetcmd : public cmdbase {
+   unsetcmd() : cmdbase("unset", "ii") {}
+   virtual void doit() {
+      imp->setcell(iargs[0], iargs[1], 0) ;
+   }
+} unset_inst ;
+struct helpcmd : public cmdbase {
+   helpcmd() : cmdbase("help", "") {}
+   virtual void doit() {
+      for (cmdbase *cmd=list; cmd; cmd = cmd->next)
+	 cout << cmd->verb << " " << cmd->args << endl ;
+   }
+} help_inst ;
+struct getcmd : public cmdbase {
+   getcmd() : cmdbase("get", "ii") {}
+   virtual void doit() {
+     cout << "At " << iargs[0] << "," << iargs[1] << " -> " <<
+        imp->getcell(iargs[0], iargs[1]) << endl ;
+   }
+} get_inst ;
+struct getnextcmd : public cmdbase {
+   getnextcmd() : cmdbase("getnext", "ii") {}
+   virtual void doit() {
+     cout << "At " << iargs[0] << "," << iargs[1] << " next is " <<
+        imp->nextcell(iargs[0], iargs[1]) << endl ;
+   }
+} getnext_inst ;
+vector<pair<int, int> > cutbuf ;
+struct copycmd : public cmdbase {
+   copycmd() : cmdbase("copy", "iiii") {}
+   virtual void nextloopinner(int x, int y) {
+      cutbuf.push_back(make_pair(x-iargs[0], y-iargs[1])) ;
+   }
+   virtual void doit() {
+      cutbuf.clear() ;
+      runnextloop() ;
+      cout << cutbuf.size() << " pixels copied." << endl ;
+   }
+} copy_inst ;
+struct cutcmd : public cmdbase {
+   cutcmd() : cmdbase("cut", "iiii") {}
+   virtual void nextloopinner(int x, int y) {
+      cutbuf.push_back(make_pair(x-iargs[0], y-iargs[1])) ;
+      imp->setcell(x, y, 0) ;
+   }
+   virtual void doit() {
+      cutbuf.clear() ;
+      runnextloop() ;
+      cout << cutbuf.size() << " pixels cut." << endl ;
+   }
+} cut_inst ;
+// this paste only sets cells, never clears cells
+struct pastecmd : public cmdbase {
+   pastecmd() : cmdbase("paste", "ii") {}
+   virtual void doit() {
+      for (unsigned int i=0; i<cutbuf.size(); i++)
+	 imp->setcell(cutbuf[i].first, cutbuf[i].second, 1) ;
+      cout << cutbuf.size() << " pixels pasted." << endl ;
+   }
+} paste_inst ;
+struct showcutcmd : public cmdbase {
+   showcutcmd() : cmdbase("showcut", "") {}
+   virtual void doit() {
+      for (unsigned int i=0; i<cutbuf.size(); i++)
+	 cout << cutbuf[i].first << " " << cutbuf[i].second << endl ;
+   }
+} showcut_inst ;
+struct newcmd : public cmdbase {
+   newcmd() : cmdbase("new", "") {}
+   virtual void doit() {
+     if (imp != 0)
+       delete imp ;
+     if (hashlife)
+       imp = new hlifealgo() ;
+     else
+       imp = new qlifealgo() ;
+     imp->setMaxMemory(maxmem) ;
+   }
+} new_inst ;
+struct sethashingcmd : public cmdbase {
+   sethashingcmd() : cmdbase("sethashing", "i") {}
+   virtual void doit() {
+      hashlife = iargs[0] ;
+   }
+} sethashing_inst ;
+struct setmaxmemcmd : public cmdbase {
+   setmaxmemcmd() : cmdbase("setmaxmem", "i") {}
+   virtual void doit() {
+      maxmem = iargs[0] ;
+   }
+} setmaxmem_inst ;
+void runtestscript(const char *testscript) {
+   FILE *cmdfile = 0 ;
+   if (strcmp(testscript, "-") != 0)
+      cmdfile = fopen(testscript, "r") ;
+   else
+      cmdfile = stdin ;
+   char cmdline[MAXCMDLENGTH + 10] ;
+   if (cmdfile == 0)
+      lifefatal("Cannot open testscript") ;
+   for (;;) {
+     cerr << flush ;
+     if (cmdfile == stdin)
+       cout << "bgolly> " << flush ;
+     else
+       cout << flush ;
+     if (fgets(cmdline, MAXCMDLENGTH, cmdfile) == 0)
+        break ;
+     cmdbase::docmd(cmdline) ;
+   }
+   exit(0) ;
+}
 int main(int argc, char *argv[]) {
    cout << 
     "This is bgolly " STRINGIFY(VERSION) " Copyright 2005 The Golly Gang."
@@ -182,7 +428,7 @@ case 's':
       if (!hit)
 	usage("Bad option given") ;
    }
-   if (argc < 2)
+   if (argc < 2 && !testscript)
      usage("No pattern argument given") ;
    if (argc > 2)
      usage("Extra stuff after pattern argument") ;
@@ -212,6 +458,15 @@ case 's':
    else
      imp = new qlifealgo() ;
    imp->setMaxMemory(maxmem) ;
+   if (testscript) {
+     if (argc > 1) {
+       filename = argv[1] ;
+       const char *err = readpattern(argv[1], *imp) ;
+       if (err)
+	 lifefatal(err) ;
+     }
+     runtestscript(testscript) ;
+   }
    filename = argv[1] ;
    const char *err = readpattern(argv[1], *imp) ;
    if (err)

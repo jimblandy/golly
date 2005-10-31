@@ -881,8 +881,7 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
       return -1 ; // none found
    } else {
       int w = 1 << depth ;
-      if (depth > 31)
-	 w = 0 ;
+      int wh = 1 << (depth - 1) ;
       node *lft, *rght ;
       depth-- ;
       if (y < 0) {
@@ -894,15 +893,15 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
       }
       int r = 0 ;
       if (x < 0) {
-	int t = nextbit(lft, (x & (w-1)) - (w >> 1),
-			(y & (w - 1)) - (w >> 1), depth) ;
+	int t = nextbit(lft, (x & (w-1)) - wh,
+			(y & (w - 1)) - wh, depth) ;
 	if (t >= 0)
 	  return t ;
 	r = -x ;
 	x = 0 ;
       }
-      int t = nextbit(rght, (x & (w-1)) - (w >> 1),
-		      (y & (w - 1)) - (w >> 1), depth) ;
+      int t = nextbit(rght, (x & (w-1)) - wh,
+		      (y & (w - 1)) - wh, depth) ;
       if (t >= 0)
 	return r + t ;
       return -1 ;
@@ -991,6 +990,18 @@ int hlifealgo::nextcell(int x, int y) {
       }
       sx >>= 1 ;
       sy >>= 1 ;
+   }
+   if (depth > 30) {
+      struct node tnode = *root ;
+      int mdepth = depth ;
+      while (mdepth > 30) {
+	 tnode.nw = tnode.nw->se ;
+	 tnode.ne = tnode.ne->sw ;
+	 tnode.sw = tnode.sw->ne ;
+	 tnode.se = tnode.se->nw ;
+	 mdepth-- ;
+      }
+      return nextbit(&tnode, x, y, mdepth) ;
    }
    return nextbit(root, x, y, depth) ;
 }
