@@ -628,9 +628,9 @@ const int minhashmb = 10;        // minimum value of maxhmem
 const int maxhashmb = 4000;      // make bigger when hlifealgo is 64-bit clean
 int mingridmag = 2;              // minimum mag to draw grid lines
 int mingridindex;                // mingridmag - 2
-#define MAX_SPACING (1000)       // maximum value of majorspacing
-int majorspacing = 10;           // spacing of major grid lines
-bool showmajor = true;           // show major grid lines?
+#define MAX_SPACING (1000)       // maximum value of boldspacing
+int boldspacing = 10;            // spacing of bold grid lines
+bool showboldlines = true;       // show bold grid lines?
 bool mathcoords = false;         // show Y values increasing upwards?
 int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
@@ -759,8 +759,8 @@ void SavePrefs() {
    fprintf(f, "show_tool=%d\n", frameptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
    fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
-   fprintf(f, "major_spacing=%d (2..%d)\n", majorspacing, MAX_SPACING);
-   fprintf(f, "show_major=%d\n", showmajor ? 1 : 0);
+   fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
+   fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
@@ -939,13 +939,13 @@ void GetPrefs() {
             if (mingridmag < 2) mingridmag = 2;
             if (mingridmag > MAX_MAG) mingridmag = MAX_MAG;
 
-         } else if (strcmp(keyword, "major_spacing") == 0) {
-            sscanf(value, "%d", &majorspacing);
-            if (majorspacing < 2) majorspacing = 2;
-            if (majorspacing > MAX_SPACING) majorspacing = MAX_SPACING;
+         } else if (strcmp(keyword, "bold_spacing") == 0) {
+            sscanf(value, "%d", &boldspacing);
+            if (boldspacing < 2) boldspacing = 2;
+            if (boldspacing > MAX_SPACING) boldspacing = MAX_SPACING;
 
-         } else if (strcmp(keyword, "show_major") == 0) {
-            showmajor = value[0] == '1';
+         } else if (strcmp(keyword, "show_bold_lines") == 0) {
+            showboldlines = value[0] == '1';
 
          } else if (strcmp(keyword, "math_coords") == 0) {
             mathcoords = value[0] == '1';
@@ -1040,8 +1040,8 @@ protected:
       PREF_MAX_DELAY,
       // View prefs
       PREF_Y_UP,
-      PREF_SHOW_MAJOR,
-      PREF_MAJOR_SPACING,
+      PREF_SHOW_BOLD,
+      PREF_BOLD_SPACING,
       PREF_MIN_GRID_SCALE,
       PREF_MOUSE_WHEEL
    };
@@ -1094,7 +1094,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
       if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_RECENT)->SetFocus();
       if (prefspage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
       if (prefspage == CONTROL_PAGE) FindWindow(PREF_QBASE)->SetFocus();
-      if (prefspage == VIEW_PAGE) FindWindow(PREF_MAJOR_SPACING)->SetFocus();
+      if (prefspage == VIEW_PAGE) FindWindow(PREF_BOLD_SPACING)->SetFocus();
       // this didn't fix the problem either!!! maybe bug is in Validators???
    #endif
    
@@ -1353,16 +1353,16 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    hbox1->Add(check1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
    vbox->Add(hbox1, 0, wxGROW | wxALL, 3);
    
-   // show_major and major_spacing
+   // show_bold_lines and bold_spacing
    
    wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
-   wxCheckBox* check2 = new wxCheckBox(panel, PREF_SHOW_MAJOR,
-                                       _("Show major grid lines every"),
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_SHOW_BOLD,
+                                       _("Show bold grid lines every"),
                                        wxDefaultPosition, wxDefaultSize);
    
-   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAJOR_SPACING, wxEmptyString,
+   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_BOLD_SPACING, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 2, MAX_SPACING, majorspacing);
+                                      wxSP_ARROW_KEYS, 2, MAX_SPACING, boldspacing);
    
    hbox2->Add(check2, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
    hbox2->Add(spin2, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -1408,8 +1408,8 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
    // validators handle data transfer to/from window
    check1->SetValidator( wxGenericValidator(&mathcoords) );
-   check2->SetValidator( wxGenericValidator(&showmajor) );
-   spin2->SetValidator( wxGenericValidator(&majorspacing) );
+   check2->SetValidator( wxGenericValidator(&showboldlines) );
+   spin2->SetValidator( wxGenericValidator(&boldspacing) );
    mingridindex = mingridmag - 2;
    choice3->SetValidator( wxGenericValidator(&mingridindex) );
    choice4->SetValidator( wxGenericValidator(&mousewheelmode) );
@@ -1991,74 +1991,74 @@ void DrawStretchedBitmap(int xoff, int yoff, int *bmdata, int bmsize, int pmag) 
 }
 
 void DrawGridLines(wxDC &dc, wxRect &r, int pmag) {
-   int h, v, i, topmajor, leftmajor;
+   int h, v, i, topbold, leftbold;
 
-   if (showmajor) {
-      // ensure that origin cell stays next to major lines;
-      // ie. major lines will scroll when pattern is scrolled
+   if (showboldlines) {
+      // ensure that origin cell stays next to bold lines;
+      // ie. bold lines will scroll when pattern is scrolled
       pair<bigint, bigint> lefttop = currview.at(0, 0);
-      leftmajor = lefttop.first.mod_smallint(majorspacing);
-      topmajor = lefttop.second.mod_smallint(majorspacing);
+      leftbold = lefttop.first.mod_smallint(boldspacing);
+      topbold = lefttop.second.mod_smallint(boldspacing);
       if (originx != bigint::zero) {
-         leftmajor -= originx.mod_smallint(majorspacing);
+         leftbold -= originx.mod_smallint(boldspacing);
       }
       if (originy != bigint::zero) {
-         topmajor -= originy.mod_smallint(majorspacing);
+         topbold -= originy.mod_smallint(boldspacing);
       }
-      if (mathcoords) topmajor--;   // show origin cell above major line
+      if (mathcoords) topbold--;   // show origin cell above bold line
    } else {
       // avoid spurious gcc warning
-      topmajor = leftmajor = 0;
+      topbold = leftbold = 0;
    }
 
-   // draw all minor lines first
+   // draw all plain lines first
    if (blackcells) {
       dc.SetPen(*pen_ltgray);
    } else {
       dc.SetPen(*pen_verydark);
    }   
-   i = showmajor ? topmajor : 1;
+   i = showboldlines ? topbold : 1;
    v = -1;
    while (true) {
       v += pmag;
       if (v >= currview.getheight()) break;
-      if (showmajor) i++;
-      if (i % majorspacing != 0 && v >= r.y && v < r.y + r.height)
+      if (showboldlines) i++;
+      if (i % boldspacing != 0 && v >= r.y && v < r.y + r.height)
          dc.DrawLine(r.x, v, r.GetRight() + 1, v);
    }
-   i = showmajor ? leftmajor : 1;
+   i = showboldlines ? leftbold : 1;
    h = -1;
    while (true) {
       h += pmag;
       if (h >= currview.getwidth()) break;
-      if (showmajor) i++;
-      if (i % majorspacing != 0 && h >= r.x && h < r.x + r.width)
+      if (showboldlines) i++;
+      if (i % boldspacing != 0 && h >= r.x && h < r.x + r.width)
          dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
    }
 
-   if (showmajor) {
-      // overlay major lines
+   if (showboldlines) {
+      // overlay bold lines
       if (blackcells) {
          dc.SetPen(*pen_dkgray);
       } else {
          dc.SetPen(*pen_notsodark);
       }
-      i = topmajor;
+      i = topbold;
       v = -1;
       while (true) {
          v += pmag;
          if (v >= currview.getheight()) break;
          i++;
-         if (i % majorspacing == 0 && v >= r.y && v < r.y + r.height)
+         if (i % boldspacing == 0 && v >= r.y && v < r.y + r.height)
             dc.DrawLine(r.x, v, r.GetRight() + 1, v);
       }
-      i = leftmajor;
+      i = leftbold;
       h = -1;
       while (true) {
          h += pmag;
          if (h >= currview.getwidth()) break;
          i++;
-         if (i % majorspacing == 0 && h >= r.x && h < r.x + r.width)
+         if (i % boldspacing == 0 && h >= r.x && h < r.x + r.width)
             dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
       }
    }
@@ -3906,30 +3906,22 @@ void PasteClipboard(bool toselection) {
 #endif         
       // create a temporary universe for storing clipboard pattern
       lifealgo *tempalgo;
-      if (hashing)
-         tempalgo = new hlifealgo();
-      else
-         tempalgo = new qlifealgo();
+      tempalgo = new qlifealgo();      // qlife's setcell/getcell are faster
       tempalgo->setpoll(&wx_poller);
 
       // read clipboard pattern into temporary universe
       bigint top, left, bottom, right;
       const char *err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
-      if (err) {
-         // clipboard might contain macrocell data so try toggling
-         // temporary universe's type
+      if (err && strcmp(err,cannotreadhash) == 0) {
+         // clipboard contains macrocell data so we have to use hlife
          delete tempalgo;
-         if (hashing)
-            tempalgo = new qlifealgo();
-         else
-            tempalgo = new hlifealgo();
+         tempalgo = new hlifealgo();
          tempalgo->setpoll(&wx_poller);
          err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
-         if (err) Warning(err);   // give up
       }
-      
-      // if we got a pattern then paste it into current universe
-      if (err == 0) {
+      if (err) {
+         Warning(err);
+      } else {
          PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
       }
       
@@ -4137,14 +4129,92 @@ void RandomFill() {
 
 void FlipVertically() {
    if (generating || !SelectionExists()) return;
+
+   // can only use getcell/setcell in limited domain
+   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
    
-   ErrorMessage("Not yet implemented!!!");
+   int itop = seltop.toint();
+   int ileft = selleft.toint();
+   int ibottom = selbottom.toint();
+   int iright = selright.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   
+   if (wd == 1) return;
+   
+   double maxcount = (double)wd * (double)ht / 2.0;
+   int cntr = 0;
+   bool abort = false;
+   BeginProgress("Flipping selection vertically");
+   int cx, cy;
+   int oppx = iright;
+   iright = (ileft - 1) + wd / 2;
+   for ( cx=ileft; cx<=iright; cx++ ) {
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         int currstate = curralgo->getcell(cx, cy);
+         curralgo->setcell(cx, cy, curralgo->getcell(oppx, cy));
+         curralgo->setcell(oppx, cy, currstate);
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            abort = AbortProgress((double)cntr / maxcount, "");
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+      oppx--;
+   }
+   curralgo->endofpattern();
+   savestart = true;
+   EndProgress();
+   UpdatePatternAndStatus();
 }
 
 void FlipHorizontally() {
    if (generating || !SelectionExists()) return;
+
+   // can only use getcell/setcell in limited domain
+   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
    
-   ErrorMessage("Not yet implemented!!!");
+   int itop = seltop.toint();
+   int ileft = selleft.toint();
+   int ibottom = selbottom.toint();
+   int iright = selright.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   
+   if (ht == 1) return;
+   
+   double maxcount = (double)wd * (double)ht / 2.0;
+   int cntr = 0;
+   bool abort = false;
+   BeginProgress("Flipping selection horizontally");
+   int cx, cy;
+   int oppy = ibottom;
+   ibottom = (itop - 1) + ht / 2;
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int currstate = curralgo->getcell(cx, cy);
+         curralgo->setcell(cx, cy, curralgo->getcell(cx, oppy));
+         curralgo->setcell(cx, oppy, currstate);
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            abort = AbortProgress((double)cntr / maxcount, "");
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+      oppy--;
+   }
+   curralgo->endofpattern();
+   savestart = true;
+   EndProgress();
+   UpdatePatternAndStatus();
 }
 
 void RotateSelection(bool clockwise) {
@@ -4261,7 +4331,7 @@ void RotateSelection(bool clockwise) {
    
    if (!abort) {
       // copy new selection from temporary universe to current universe
-      maxcount = (double)wd * (double)ht;
+      double done = (double)wd * (double)ht;
       cntr = 0;
       itop    = newtop.toint();
       ileft   = newleft.toint();
@@ -4272,7 +4342,7 @@ void RotateSelection(bool clockwise) {
             curralgo->setcell(cx, cy, tempalgo->getcell(cx, cy));
             cntr++;
             if ((cntr % 4096) == 0) {
-               abort = AbortProgress((double)cntr / maxcount, "");
+               abort = AbortProgress((done + (double)cntr) / maxcount, "");
                if (abort) break;
             }
          }

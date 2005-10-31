@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+AKT: Implemented Flip Vertically/Horizontally.
 AKT: Implemented Rotate Clockwise/Anticlockwise.
 AKT: Implemented Random Fill.
 AKT: Added Edit panel to Prefs dialog.
