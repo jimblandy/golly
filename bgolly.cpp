@@ -205,7 +205,7 @@ struct cmdbase {
 	   }
 	   break ;
 	 case 's':
-	   if (sscanf(cmdargs, "%s", &sbuf) != 1) {
+	   if (sscanf(cmdargs, "%s", sbuf) != 1) {
 	     lifewarning("Missing needed string argument") ;
 	     return 0 ;
 	   }
@@ -231,6 +231,7 @@ struct cmdbase {
       lifewarning("Didn't understand command") ;
    }
    cmdbase *next ;
+   virtual ~cmdbase() {}
    static cmdbase *list ;
 } ;
 cmdbase *cmdbase::list = 0 ;
