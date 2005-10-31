@@ -363,6 +363,17 @@ struct setmaxmemcmd : public cmdbase {
       maxmem = iargs[0] ;
    }
 } setmaxmem_inst ;
+struct edgescmd : public cmdbase {
+   edgescmd() : cmdbase("edges", "") {}
+   virtual void doit() {
+      bigint t, l, b, r ;
+      imp->findedges(&t, &l, &b, &r) ;
+      cout << "Bounding box " << l.tostring() ;
+      cout << " " << t.tostring() ;
+      cout << " .. " << r.tostring() ;
+      cout << " " << b.tostring() << endl ;
+   }
+} edges_inst ;
 void runtestscript(const char *testscript) {
    FILE *cmdfile = 0 ;
    if (strcmp(testscript, "-") != 0)
