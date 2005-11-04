@@ -2,7 +2,7 @@
 # This is a modified version of the automatically generated
 # Makefile used to build the wxWidgets minimal sample.
 
-wxdir = /HD/wxWidgets/wxAll-2.6.1
+wxdir = /HD/wxWidgets/wxAll-2.6.2
 builddir = $(wxdir)/build-osx
 APP_NAME = Golly
 APP_VERSION = 0.92
