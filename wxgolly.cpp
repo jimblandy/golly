@@ -346,7 +346,6 @@ enum {
    ID_AUTO,
    ID_HASH,
    ID_HYPER,
-   ID_MAXMEM,
    ID_RULE,
    
    // View menu (see also wxID_ZOOM_IN, wxID_ZOOM_OUT)
@@ -623,8 +622,8 @@ const int mininfoht = 100;
 int randomfill = 50;             // random fill percentage (1..100)
 bool showstatus = true;          // show status bar?
 bool showtool = true;            // show tool bar?
-int maxhmem = 300;               // maximum hash memory (in megabytes)
-const int minhashmb = 10;        // minimum value of maxhmem
+int maxhashmem = 300;            // maximum hash memory (in megabytes)
+const int minhashmb = 10;        // minimum value of maxhashmem
 const int maxhashmb = 4000;      // make bigger when hlifealgo is 64-bit clean
 int mingridmag = 2;              // minimum mag to draw grid lines
 int mingridindex;                // mingridmag - 2
@@ -753,7 +752,7 @@ void SavePrefs() {
    fprintf(f, "auto_fit=%d\n", autofit ? 1 : 0);
    fprintf(f, "hashing=%d\n", hashing ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
-   fprintf(f, "max_hash_mem=%d\n", maxhmem);
+   fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    if (curralgo) fprintf(f, "rule=%s\n", curralgo->getrule());
    fprintf(f, "show_status=%d\n", statusht > 0 ? 1 : 0);
    fprintf(f, "show_tool=%d\n", frameptr->GetToolBar()->IsShown() ? 1 : 0);
@@ -918,9 +917,9 @@ void GetPrefs() {
             hyperspeed = value[0] == '1';
 
          } else if (strcmp(keyword, "max_hash_mem") == 0) {
-            sscanf(value, "%d", &maxhmem);
-            if (maxhmem < minhashmb) maxhmem = minhashmb;
-            if (maxhmem > maxhashmb) maxhmem = maxhashmb;
+            sscanf(value, "%d", &maxhashmem);
+            if (maxhashmem < minhashmb) maxhashmem = minhashmb;
+            if (maxhashmem > maxhashmb) maxhashmem = maxhashmb;
 
          } else if (strcmp(keyword, "rule") == 0) {
             strncpy(initrule, value, sizeof(initrule));
@@ -1011,14 +1010,15 @@ void GetPrefs() {
 
 class PrefsDialog : public wxPropertySheetDialog
 {
-   DECLARE_CLASS(PrefsDialog)
+   // no need???
+   // DECLARE_CLASS(PrefsDialog)
 
 public:
    PrefsDialog(wxWindow* parent);
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
-// why not private???
-protected:
+// needs to be protected???
+private:
    enum {
       // these *_PAGE values must correspond to prefspage values
       FILE_PAGE = 0,
@@ -1039,6 +1039,7 @@ protected:
       PREF_HBASE,
       PREF_MIN_DELAY,
       PREF_MAX_DELAY,
+      PREF_MAX_HASH_MEM,
       // View prefs
       PREF_Y_UP,
       PREF_SHOW_BOLD,
@@ -1066,7 +1067,8 @@ protected:
    DECLARE_EVENT_TABLE()
 };
 
-IMPLEMENT_CLASS(PrefsDialog, wxPropertySheetDialog)
+// no need???
+// IMPLEMENT_CLASS(PrefsDialog, wxPropertySheetDialog)
 
 BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_CHECKBOX               (wxID_ANY, PrefsDialog::OnCheckBoxClicked)
@@ -1113,6 +1115,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
       sp = (wxSpinCtrl*) FindWindow(PREF_HBASE); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_MIN_DELAY); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_MAX_DELAY); sp->SetSelection(0,0);
+      sp = (wxSpinCtrl*) FindWindow(PREF_MAX_HASH_MEM); sp->SetSelection(0,0);
    #endif
    
    LayoutDialog();
@@ -1372,11 +1375,28 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    
+   // max_hash_mem
+
+   vbox->AddSpacer(GROUPGAP);
+
+   wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, minhashmb, maxhashmb, maxhashmem);
+   hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
+   
    // init control values
    spin1->SetValue(qbasestep);
    spin2->SetValue(hbasestep);
    spin3->SetValue(mindelay);
    spin4->SetValue(maxdelay);
+   spin5->SetValue(maxhashmem);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1560,6 +1580,8 @@ bool PrefsDialog::ValidateCurrentPage() {
          return false;
       if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, "Maximum delay") )
          return false;
+      if ( BadSpinVal(PREF_MAX_HASH_MEM, minhashmb, maxhashmb, "Maximum memory for hashing") )
+         return false;
 
    } else if (prefspage == VIEW_PAGE) {
       if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, "Spacing of bold grid lines") )
@@ -1582,38 +1604,6 @@ void PrefsDialog::OnPageChanging(wxNotebookEvent& event) {
 void PrefsDialog::OnPageChanged(wxNotebookEvent& event) {
    if (ignore_page_event) return;
    prefspage = event.GetSelection();
-}
-
-bool PrefsDialog::TransferDataFromWindow() {
-   if (!ValidateCurrentPage()) return false;
-   
-   // set global prefs to current control values
-
-   // FILE_PAGE
-   newremovesel  = GetCheckVal(PREF_NEW_REM_SEL);
-   newcursindex  = GetChoiceVal(PREF_NEW_CURSOR);
-   newmag        = GetChoiceVal(PREF_NEW_SCALE);
-   openremovesel = GetCheckVal(PREF_OPEN_REM_SEL);
-   opencursindex = GetChoiceVal(PREF_OPEN_CURSOR);
-   maxrecent     = GetSpinVal(PREF_MAX_RECENT);
-
-   // EDIT_PAGE
-   randomfill = GetSpinVal(PREF_RANDOM_FILL);
-
-   // CONTROL_PAGE
-   qbasestep = GetSpinVal(PREF_QBASE);
-   hbasestep = GetSpinVal(PREF_HBASE);
-   mindelay  = GetSpinVal(PREF_MIN_DELAY);
-   maxdelay  = GetSpinVal(PREF_MAX_DELAY);
-
-   // VIEW_PAGE
-   mathcoords     = GetCheckVal(PREF_Y_UP);
-   showboldlines  = GetCheckVal(PREF_SHOW_BOLD);
-   boldspacing    = GetSpinVal(PREF_BOLD_SPACING);
-   mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);
-   mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
-   
-   return true;
 }
 
 void SetMinimumWarp() {
@@ -1664,52 +1654,82 @@ void ShowRandomFillPercentage() {
    }
 }
 
+bool PrefsDialog::TransferDataFromWindow() {
+   if (!ValidateCurrentPage()) return false;
+   
+   // set global prefs to current control values
+
+   // FILE_PAGE
+   newremovesel  = GetCheckVal(PREF_NEW_REM_SEL);
+   newcursindex  = GetChoiceVal(PREF_NEW_CURSOR);
+   newmag        = GetChoiceVal(PREF_NEW_SCALE);
+   openremovesel = GetCheckVal(PREF_OPEN_REM_SEL);
+   opencursindex = GetChoiceVal(PREF_OPEN_CURSOR);
+   maxrecent     = GetSpinVal(PREF_MAX_RECENT);
+
+   // EDIT_PAGE
+   randomfill = GetSpinVal(PREF_RANDOM_FILL);
+
+   // CONTROL_PAGE
+   qbasestep  = GetSpinVal(PREF_QBASE);
+   hbasestep  = GetSpinVal(PREF_HBASE);
+   mindelay   = GetSpinVal(PREF_MIN_DELAY);
+   maxdelay   = GetSpinVal(PREF_MAX_DELAY);
+   maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);
+
+   // VIEW_PAGE
+   mathcoords     = GetCheckVal(PREF_Y_UP);
+   showboldlines  = GetCheckVal(PREF_SHOW_BOLD);
+   boldspacing    = GetSpinVal(PREF_BOLD_SPACING);
+   mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);
+   mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
+
+   // update globals corresponding to the wxChoice menu selections
+   mingridmag = mingridindex + 2;
+   newcurs = IndexToCursor(newcursindex);
+   opencurs = IndexToCursor(opencursindex);
+   
+   // if maxrecent was reduced then we may need to remove some paths
+   while (numrecent > maxrecent) {
+      numrecent--;
+      recentSubMenu->Delete( recentSubMenu->FindItemByPosition(numrecent) );
+   }
+   
+   // randomfill might have changed
+   ShowRandomFillPercentage();
+   
+   // if mindelay/maxdelay changed then may need to change minwarp and warp
+   SetMinimumWarp();
+   if (warp < minwarp) {
+      warp = minwarp;
+      curralgo->setIncrement(1);    // warp is <= 0
+   } else if (warp > 0) {
+      SetGenIncrement();            // in case qbasestep/hbasestep changed
+   }
+   if (generating && warp < 0) {
+      whentosee = 0;                // best to see immediately
+   }
+   
+   // maxhashmem might have changed
+   if (hashing) curralgo->setMaxMemory(maxhashmem);
+   
+   return true;
+}
+
 void UpdateEverything();
 
 void ChangePrefs() {
+   if (generating) return;
+   
    PrefsDialog dialog(frameptr);
    if ( dialog.ShowModal() == wxID_OK ) {
-      // update globals corresponding to the wxChoice menu selections
-      mingridmag = mingridindex + 2;
-      newcurs = IndexToCursor(newcursindex);
-      opencurs = IndexToCursor(opencursindex);
-      
-      // if maxrecent was reduced then we may need to remove some paths
-      while (numrecent > maxrecent) {
-         numrecent--;
-         recentSubMenu->Delete( recentSubMenu->FindItemByPosition(numrecent) );
-      }
-      
-      // if mindelay/maxdelay changed then may need to change minwarp and warp
-      SetMinimumWarp();
-      if (warp < minwarp) {
-         warp = minwarp;
-         curralgo->setIncrement(1);    // warp is <= 0
-      } else if (warp > 0) {
-         SetGenIncrement();            // in case qbasestep/hbasestep changed
-      }
-      if (generating && warp < 0) {
-         whentosee = 0;                // best to see immediately
-      }
-      
-      ShowRandomFillPercentage();      // in case randomfill changed
-      
+      // TransferDataFromWindow has updated all pref-related globals
       SavePrefs();
       UpdateEverything();
    }
 }
 
 // -----------------------------------------------------------------------------
-
-void FinishApp() {
-   // WARNING: infinite recursion will occur if Fatal is called in here
-   
-   // save main window location and other user preferences
-   SavePrefs();
-   
-   // delete gen0file if it exists
-   if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
-}
 
 #ifdef __WXMAC__
 
@@ -1809,6 +1829,15 @@ void Warning(const char *s) {
    #endif
 }
 
+void FinishApp() {
+   // WARNING: infinite recursion will occur if Fatal is called in here
+   
+   // save main window location and other user preferences
+   SavePrefs();
+   
+   if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
+}
+
 void Fatal(const char *s) {
    FinishApp();
    wxBell();
@@ -1820,6 +1849,27 @@ void Fatal(const char *s) {
    #endif
    // calling wxExit() results in a bus error on X11
    exit(1);
+}
+
+bool PointInView(int x, int y) {
+   return (x >= 0) && (x <= currview.getxmax()) &&
+          (y >= 0) && (y <= currview.getymax());
+}
+
+void CheckCursor(bool active) {
+   if ( active ) {
+      // make sure cursor is up to date
+      wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
+      if (PointInView(pt.x, pt.y)) {
+         // need both calls to fix Mac probs after toggling status/tool bar
+         wxSetCursor(*currcurs);
+         viewptr->SetCursor(*currcurs);
+      } else {
+         wxSetCursor(*wxSTANDARD_CURSOR);
+      }
+   } else {
+      // main window is not active so don't change cursor
+   }
 }
 
 void BeginProgress(const char *dlgtitle) {
@@ -1844,8 +1894,8 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
       #else
          prognext = t + 100;     // call Update about 10 times per sec
       #endif
-      // Update returns false if user hits Cancel button;
-      // too bad wxMac and wxX11 don't let user hit escape key!!!
+      // wxMac and wxX11 don't let user hit escape key to cancel dialog!!!
+      // Update returns false if user hits Cancel button
       return !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg);
    } else {
       // note that fraction_done is not always an accurate estimator for how long
@@ -1855,7 +1905,8 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
          // task is probably going to take a while so create progress dialog
          progdlg = new wxProgressDialog(_T(progtitle), _T(""),
                                         maxprogrange, frameptr,
-                                        wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH |
+                                        wxPD_AUTO_HIDE | wxPD_APP_MODAL |
+                                        wxPD_CAN_ABORT | wxPD_SMOOTH |
                                         wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
          #ifdef __WXMAC__
             // avoid user selecting Quit or bringing another window to front
@@ -1877,7 +1928,13 @@ void EndProgress() {
       #ifdef __WXX11__
          // fix activate problem on X11 if user hit Cancel button
          frameptr->SetFocus();
+         // OnActivate not called on X11
+         CheckCursor(frameptr->IsActive());
       #endif
+      // OnActivate will call CheckCursor
+   } else {
+      // BeginProgress changed cursor so reset it
+      CheckCursor(frameptr->IsActive());
    }
 }
 
@@ -2639,6 +2696,7 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_OPEN_CLIP, active && !generating && textinclip);
       mbar->Enable(ID_RECENT,    active && !generating && numrecent > 0);
       mbar->Enable(wxID_SAVE,    active && !generating);
+      mbar->Enable(wxID_PREFERENCES, !generating);
 
       mbar->Enable(ID_CUT,       active && !generating && SelectionExists());
       mbar->Enable(ID_COPY,      active && !generating && SelectionExists());
@@ -2670,7 +2728,6 @@ void UpdateMenuItems(bool active) {
       mbar->Enable(ID_AUTO,      active);
       mbar->Enable(ID_HASH,      active && !generating);
       mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
-      mbar->Enable(ID_MAXMEM,    active && hashing && !generating);
       mbar->Enable(ID_RULE,      active && !generating);
 
       mbar->Enable(ID_FULL,      active);
@@ -2723,27 +2780,6 @@ void UpdateMenuItems(bool active) {
       mbar->Check(ID_SCALE_8,    currview.getmag() == 3);
       mbar->Check(ID_SCALE_16,   currview.getmag() == 4);
 
-   }
-}
-
-bool PointInView(int x, int y) {
-   return (x >= 0) && (x <= currview.getxmax()) &&
-          (y >= 0) && (y <= currview.getymax());
-}
-
-void CheckCursor(bool active) {
-   if ( active ) {
-      // make sure cursor is up to date
-      wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
-      if (PointInView(pt.x, pt.y)) {
-         // need both calls to fix Mac probs after toggling status/tool bar
-         wxSetCursor(*currcurs);
-         viewptr->SetCursor(*currcurs);
-      } else {
-         wxSetCursor(*wxSTANDARD_CURSOR);
-      }
-   } else {
-      // main window is not active so don't change cursor
    }
 }
 
@@ -2966,7 +3002,7 @@ void CreateUniverse() {
 
    if (hashing) {
       curralgo = new hlifealgo();
-      curralgo->setMaxMemory(maxhmem);
+      curralgo->setMaxMemory(maxhashmem);
    } else {
       curralgo = new qlifealgo();
    }
@@ -3101,7 +3137,7 @@ void ResetPattern() {
       gen0algo = NULL;
       savestart = true;
       SetGenIncrement();
-      curralgo->setMaxMemory(maxhmem);
+      curralgo->setMaxMemory(maxhashmem);
       curralgo->setGeneration(bigint::zero);
    } else {
       // restore starting pattern from currfile;
@@ -3369,9 +3405,11 @@ void SavePattern() {
 
 // editing functions
 
-const char empty_pattern[] = "All cells are dead.";
-const char empty_selection[] = "Selection is empty.";
-const char selection_too_big[] = "Selection is outside +/- 10^9 boundary.";
+const char empty_pattern[]       = "All cells are dead.";
+const char empty_selection[]     = "There are no live cells in the selection.";
+const char empty_outside[]       = "There are no live cells outside the selection.";
+const char no_selection[]        = "There is no selection.";
+const char selection_too_big[]   = "Selection is outside +/- 10^9 boundary.";
 
 void EmptyUniverse() {
    // kill all live cells in current universe
@@ -3389,8 +3427,9 @@ void EmptyUniverse() {
    UpdatePatternAndStatus();
 }
 
-bool SaveRect(int itop, int ileft, int ibottom, int iright, lifealgo *newalgo) {
-   // copy live cells in given rectangle to new universe
+bool CopyRect(int itop, int ileft, int ibottom, int iright,
+              lifealgo *srcalgo, lifealgo *destalgo,
+              bool erasesrc, const char *progmsg) {
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    int cx, cy;
@@ -3398,16 +3437,19 @@ bool SaveRect(int itop, int ileft, int ibottom, int iright, lifealgo *newalgo) {
    int cntr = 0;
    bool abort = false;
    
-   BeginProgress("Saving cells");
+   // copy (and erase if requested) live cells from given rect
+   // in source universe to same rect in destination universe
+   BeginProgress(progmsg);
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
+         int skip = srcalgo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
             // found next live cell
             cx += skip;
-            newalgo->setcell(cx, cy, 1);
+            destalgo->setcell(cx, cy, 1);
+            if (erasesrc) srcalgo->setcell(cx, cy, 0);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -3421,10 +3463,36 @@ bool SaveRect(int itop, int ileft, int ibottom, int iright, lifealgo *newalgo) {
       }
       if (abort) break;
    }
-   newalgo->endofpattern();
+   destalgo->endofpattern();
    EndProgress();
    
    return !abort;
+}
+
+void CopyAllRect(int itop, int ileft, int ibottom, int iright,
+                 lifealgo *srcalgo, lifealgo *destalgo, const char *progmsg) {
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   
+   // copy all cells from given rect in srcalgo to same rect in destalgo
+   BeginProgress(progmsg);
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         destalgo->setcell(cx, cy, srcalgo->getcell(cx, cy));
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            abort = AbortProgress((double)cntr / maxcount, "");
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   destalgo->endofpattern();
+   EndProgress();
 }
 
 void ClearSelection() {
@@ -3538,7 +3606,7 @@ void ClearOutsideSelection() {
    lifealgo *newalgo;
    if ( hashing ) {
       newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhmem);
+      newalgo->setMaxMemory(maxhashmem);
    } else {
       newalgo = new qlifealgo();
    }
@@ -3548,7 +3616,8 @@ void ClearOutsideSelection() {
    newalgo->setGeneration( curralgo->getGeneration() );
    
    // copy live cells in selection to new universe
-   if ( SaveRect(top.toint(), left.toint(), bottom.toint(), right.toint(), newalgo) ) {
+   if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                 curralgo, newalgo, false, "Saving selection") ) {
       // delete old universe and point curralgo at new universe
       savestart = true;
       delete curralgo;
@@ -4267,7 +4336,8 @@ void ShrinkSelection(bool fit) {
    tempalgo->setpoll(&wx_poller);
    
    // copy live cells in selection to temporary universe
-   if ( SaveRect(top.toint(), left.toint(), bottom.toint(), right.toint(), tempalgo) ) {
+   if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                 curralgo, tempalgo, false, "Saving selection") ) {
       if ( tempalgo->isEmpty() ) {
          ErrorMessage(empty_selection);
       } else {
@@ -4848,7 +4918,7 @@ void ModifySelection(bigint &xclick, bigint &yclick) {
    }
 }
 
-void StartSelectingCells(int x, int y, bool shiftkey) {
+void StartSelectingCells(int x, int y, bool shiftdown) {
    pair<bigint, bigint> cellpos = currview.at(x, y);
    anchorx = cellpos.first;
    anchory = cellpos.second;
@@ -4874,7 +4944,7 @@ void StartSelectingCells(int x, int y, bool shiftkey) {
    forcev = false;
    
    if (SelectionExists()) {
-      if (shiftkey) {
+      if (shiftdown) {
          // modify current selection
          ModifySelection(cellpos.first, cellpos.second);
          DisplaySelectionSize();
@@ -4997,10 +5067,26 @@ void TestAutoFit() {
    }
 }
 
-// user has clicked somewhere in viewport
-void ProcessClick(int x, int y, bool shiftkey) {
-   showbanner = false;
+void ZoomInPos(int x, int y) {
+   // zoom in so that clicked cell stays under cursor
+   TestAutoFit();
+   if (currview.getmag() < MAX_MAG) {
+      currview.zoom(x, y);
+      UpdateEverything();
+   } else {
+      wxBell();   // can't zoom in any further
+   }
+}
 
+void ZoomOutPos(int x, int y) {
+   // zoom out so that clicked cell stays under cursor
+   TestAutoFit();
+   currview.unzoom(x, y);
+   UpdateEverything();
+}
+
+// user has clicked somewhere in viewport
+void ProcessClick(int x, int y, bool shiftdown) {
    if (currcurs == curs_pencil) {
       if (generating) {
          ErrorMessage("Drawing is not allowed while generating.");
@@ -5014,27 +5100,17 @@ void ProcessClick(int x, int y, bool shiftkey) {
 
    } else if (currcurs == curs_cross) {
       TestAutoFit();
-      StartSelectingCells(x, y, shiftkey);
+      StartSelectingCells(x, y, shiftdown);
 
    } else if (currcurs == curs_hand) {
       TestAutoFit();
       StartMovingView(x, y);
 
    } else if (currcurs == curs_zoomin) {
-      TestAutoFit();
-      // zoom in so that clicked cell stays under cursor
-      if (currview.getmag() < MAX_MAG) {
-         currview.zoom(x, y);
-         UpdateEverything();
-      } else {
-         wxBell();   // can't zoom in any further
-      }
+      ZoomInPos(x, y);
 
    } else if (currcurs == curs_zoomout) {
-      TestAutoFit();
-      // zoom out so that clicked cell stays under cursor
-      currview.unzoom(x, y);
-      UpdateEverything();
+      ZoomOutPos(x, y);
    }
 }
 
@@ -5187,7 +5263,7 @@ void GeneratePattern() {
    }
    
    if (curralgo->isEmpty()) {
-      DisplayMessage(empty_pattern);
+      ErrorMessage(empty_pattern);
       return;
    }
    
@@ -5280,15 +5356,295 @@ void DisplayTimingInfo() {
    }
 }
 
+void AdvanceOutsideSelection() {
+   if (generating || drawingcells || waitingforclick) return;
+
+   if (!SelectionExists()) {
+      ErrorMessage(no_selection);
+      return;
+   }
+
+   if (curralgo->isEmpty()) {
+      ErrorMessage(empty_outside);
+      return;
+   }
+   
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+
+   // check if selection encloses entire pattern
+   if ( seltop <= top && selbottom >= bottom &&
+        selleft <= left && selright >= right ) {
+      ErrorMessage(empty_outside);
+      return;
+   }
+
+   // check if selection is completely outside pattern edges;
+   // can't do this if qlife because it uses gen parity to decide which bits to draw
+   if ( hashing &&
+         ( seltop > bottom || selbottom < top ||
+           selleft > right || selright < left ) ) {
+      generating = true;
+      ChangeGoToStop();
+      wx_poller.resetInterrupted();
+      wx_poller.nextcheck = 0;
+
+      // step by one gen without changing gen count
+      bigint savegen = curralgo->getGeneration();
+      bigint saveinc = curralgo->getIncrement();
+      curralgo->setIncrement(1);
+      curralgo->step();
+      curralgo->setIncrement(saveinc);
+      curralgo->setGeneration(savegen);
+   
+      generating = false;
+      ChangeStopToGo();
+      
+      // if pattern expanded then may need to clear ONE edge of selection!!!
+      ClearSelection();
+      UpdateEverything();
+      return;
+   }
+
+   // check that pattern is within setcell/getcell limits
+   if ( OutsideLimits(top, left, bottom, right) ) {
+      ErrorMessage("Pattern is outside +/- 10^9 boundary.");
+      return;
+   }
+   
+   // create a new universe of same type
+   lifealgo *newalgo;
+   if ( hashing ) {
+      newalgo = new hlifealgo();
+      newalgo->setMaxMemory(maxhashmem);
+   } else {
+      newalgo = new qlifealgo();
+   }
+   newalgo->setpoll(&wx_poller);
+   newalgo->setGeneration( curralgo->getGeneration() );
+   
+   // copy (and kill) live cells in selection to new universe
+   int iseltop = seltop.toint();
+   int iselleft = selleft.toint();
+   int iselbottom = selbottom.toint();
+   int iselright = selright.toint();
+   if ( !CopyRect(iseltop, iselleft, iselbottom, iselright,
+                  curralgo, newalgo, true, "Saving and erasing selection") ) {
+      // aborted, so best to restore selection
+      if ( !newalgo->isEmpty() ) {
+         newalgo->findedges(&top, &left, &bottom, &right);
+         CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                  newalgo, curralgo, false, "Restoring selection");
+      }
+      delete newalgo;
+      UpdateEverything();
+      return;
+   }
+   
+   // advance current universe by 1 generation
+   generating = true;
+   ChangeGoToStop();
+   wx_poller.resetInterrupted();
+   wx_poller.nextcheck = 0;
+   curralgo->setIncrement(1);
+   curralgo->step();
+   generating = false;
+   ChangeStopToGo();
+   
+   // note that we have to copy advanced pattern to new universe because
+   // qlife uses gen parity to decide which bits to draw
+   
+   if ( !curralgo->isEmpty() ) {
+      // find new edges and copy current pattern to new universe,
+      // except for any cells that were created in selection
+      curralgo->findedges(&top, &left, &bottom, &right);
+      int itop = top.toint();
+      int ileft = left.toint();
+      int ibottom = bottom.toint();
+      int iright = right.toint();
+      int ht = ibottom - itop + 1;
+      int cx, cy;
+   
+      // for showing accurate progress we need to add pattern height to pop count
+      // in case this is a huge pattern with many blank rows
+      double maxcount = curralgo->getPopulation().todouble() + ht;
+      double accumcount = 0;
+      int currcount = 0;
+      bool abort = false;
+      BeginProgress("Copying advanced pattern");
+   
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         currcount++;
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            int skip = curralgo->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row
+               cx += skip;
+               
+               // only copy cell if outside selection
+               if ( cx < iselleft || cx > iselright ||
+                    cy < iseltop || cy > iselbottom ) {
+                  newalgo->setcell(cx, cy, 1);
+               }
+               
+               currcount++;
+            } else {
+               cx = iright;  // done this row
+            }
+            if (currcount > 1024) {
+               accumcount += currcount;
+               currcount = 0;
+               abort = AbortProgress(accumcount / maxcount, "");
+               if (abort) break;
+            }
+         }
+         if (abort) break;
+      }
+      
+      newalgo->endofpattern();
+      EndProgress();
+   }
+   
+   // switch to new universe (best to do this even if aborted)
+   savestart = true;
+   delete curralgo;
+   curralgo = newalgo;
+   SetGenIncrement();
+   UpdateEverything();
+}
+
+void AdvanceSelection() {
+   if (generating || drawingcells || waitingforclick) return;
+
+   if (!SelectionExists()) {
+      ErrorMessage(no_selection);
+      return;
+   }
+
+   if (curralgo->isEmpty()) {
+      ErrorMessage(empty_selection);
+      return;
+   }
+   
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+
+   // check if selection is completely outside pattern edges
+   if ( seltop > bottom || selbottom < top ||
+        selleft > right || selright < left ) {
+      ErrorMessage(empty_selection);
+      return;
+   }
+
+   // check if selection encloses entire pattern;
+   // can't do this if qlife because it uses gen parity to decide which bits to draw
+   if ( hashing &&
+        seltop <= top && selbottom >= bottom &&
+        selleft <= left && selright >= right ) {
+      generating = true;
+      ChangeGoToStop();
+      wx_poller.resetInterrupted();
+      wx_poller.nextcheck = 0;
+
+      // step by one gen without changing gen count
+      bigint savegen = curralgo->getGeneration();
+      bigint saveinc = curralgo->getIncrement();
+      curralgo->setIncrement(1);
+      curralgo->step();
+      curralgo->setIncrement(saveinc);
+      curralgo->setGeneration(savegen);
+   
+      generating = false;
+      ChangeStopToGo();
+      
+      // only need to clear 1-cell thick strips just outside selection!!!
+      ClearOutsideSelection();
+      UpdateEverything();
+      return;
+   }
+   
+   // find intersection of selection and pattern to minimize work
+   if (seltop > top) top = seltop;
+   if (selleft > left) left = selleft;
+   if (selbottom < bottom) bottom = selbottom;
+   if (selright < right) right = selright;
+
+   // check that intersection is within setcell/getcell limits
+   if ( OutsideLimits(top, left, bottom, right) ) {
+      ErrorMessage(selection_too_big);
+      return;
+   }
+   
+   // create a new temporary universe
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();         // qlife's setcell/getcell are faster
+   tempalgo->setpoll(&wx_poller);
+   
+   // copy live cells in selection to temporary universe
+   if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                 curralgo, tempalgo, false, "Saving selection") ) {
+      if ( tempalgo->isEmpty() ) {
+         ErrorMessage(empty_selection);
+      } else {
+         // advance temporary universe by one gen
+         generating = true;
+         ChangeGoToStop();
+         wx_poller.resetInterrupted();
+         wx_poller.nextcheck = 0;
+         tempalgo->setIncrement(1);
+         tempalgo->step();
+         generating = false;
+         ChangeStopToGo();
+         
+         // temporary pattern might have expanded
+         bigint temptop, templeft, tempbottom, tempright;
+         tempalgo->findedges(&temptop, &templeft, &tempbottom, &tempright);
+         if (temptop < top) top = temptop;
+         if (templeft < left) left = templeft;
+         if (tempbottom > bottom) bottom = tempbottom;
+         if (tempright > right) right = tempright;
+
+         // but ignore live cells created outside selection edges
+         if (top < seltop) top = seltop;
+         if (left < selleft) left = selleft;
+         if (bottom > selbottom) bottom = selbottom;
+         if (right > selright) right = selright;
+         
+         // copy all cells in new selection from tempalgo to curralgo
+         CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                     tempalgo, curralgo, "Copying advanced selection");
+         savestart = true;
+
+         UpdateEverything();
+      }
+   }
+   
+   delete tempalgo;
+}
+
 void NextGeneration(bool useinc) {
    if (generating || drawingcells || waitingforclick) {
       // don't play sound here because it'll be heard if user holds down tab key
       // wxBell();
       return;
    }
+   
+   #ifdef __WXMSW__
+      // on Windows we do these tests here because space is an accelerator
+      // for ID_NEXT and so we get called from OnMenu;
+      // NOTE: we avoid using wxGetKeyState on wxMac because the first call
+      // causes a ridiculously long delay -- 2 secs on my 400MHz G4!!!
+      if ( !useinc && wxGetKeyState(WXK_SHIFT) ) {
+         AdvanceOutsideSelection();
+         return;
+      } else if ( !useinc && wxGetKeyState(WXK_CONTROL) ) {
+         AdvanceSelection();
+         return;
+      }
+   #endif
 
    if (curralgo->isEmpty()) {
-      DisplayMessage(empty_pattern);
+      ErrorMessage(empty_pattern);
       return;
    }
    
@@ -5368,7 +5724,7 @@ void ToggleHashing() {
    lifealgo *newalgo;
    if ( hashing ) {
       newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhmem);
+      newalgo->setMaxMemory(maxhashmem);
    } else {
       newalgo = new qlifealgo();
    }
@@ -5458,24 +5814,6 @@ void ChangeRule() {
             // show new rule in window title
             SetWindowTitle(currname);
          }
-      }
-   }
-}
-
-void ChangeMaxMemory() {
-   if (generating || !hashing) {
-      wxBell();
-   } else {
-      long res = wxGetNumberFromUser( _T("Specify the maximum amount of memory\n")
-                                      _T("to be used when hashing patterns."),
-                                      _T("In megabytes:"), _T("Maximum hash memory"),
-                                      curralgo->getMaxMemory(), minhashmb, maxhashmb,
-                                      frameptr );
-      if (res != -1) {
-         if (res < minhashmb) res = minhashmb;
-         if (res > maxhashmb) res = maxhashmb;
-         maxhmem = res;
-         curralgo->setMaxMemory(maxhmem);
       }
    }
 }
@@ -5954,10 +6292,12 @@ HelpFrame::HelpFrame()
    wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
 
-   backbutt = new wxButton(this, ID_BACK_BUTT, "<");
+   backbutt = new wxButton(this, ID_BACK_BUTT, "<",
+                           wxDefaultPosition, wxSize(40,wxDefaultCoord));
    hbox->Add(backbutt, 0, wxALL | wxALIGN_LEFT, 10);
 
-   forwbutt = new wxButton(this, ID_FORWARD_BUTT, ">");
+   forwbutt = new wxButton(this, ID_FORWARD_BUTT, ">",
+                           wxDefaultPosition, wxSize(40,wxDefaultCoord));
    hbox->Add(forwbutt, 0, wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
 
    contbutt = new wxButton(this, ID_CONTENTS_BUTT, "Contents");
@@ -6256,7 +6596,7 @@ void ShowAboutBox() {
 
 // -----------------------------------------------------------------------------
 
-void ProcessKey(int key, bool shiftkey) {
+void ProcessKey(int key, bool shiftdown) {
    showbanner = false;
    switch (key) {
       case WXK_LEFT:    PanLeft( SmallScroll(currview.getwidth()) ); break;
@@ -6266,7 +6606,7 @@ void ProcessKey(int key, bool shiftkey) {
 
       case WXK_BACK:    // delete key generates backspace code
       case WXK_DELETE:  // probably never happens but play safe
-         if (shiftkey)
+         if (shiftdown)
             ClearOutsideSelection();
          else
             ClearSelection();
@@ -6507,7 +6847,6 @@ void MainFrame::OnMenu(wxCommandEvent& event) {
       case ID_AUTO:           ToggleAutoFit(); break;
       case ID_HASH:           ToggleHashing(); break;
       case ID_HYPER:          ToggleHyperspeed(); break;
-      case ID_MAXMEM:         ChangeMaxMemory(); break;
       case ID_RULE:           ChangeRule(); break;
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
@@ -6767,6 +7106,7 @@ void PatternView::OnKeyDown(wxKeyEvent& event) {
    #ifdef __WXMSW__
       // on Windows, space is an accelerator for ID_NEXT which is disabled
       // when generating so space won't be seen by PatternView::OnChar
+      // (for some reason wxMac has no such problem)
       if ( generating && key == ' ' ) {
          StopGenerating();
          return;
@@ -6806,10 +7146,12 @@ void PatternView::OnKeyUp(wxKeyEvent& event) {
 // handle translated keyboard events
 void PatternView::OnChar(wxKeyEvent& event) {
    int key = event.GetKeyCode();
+
    if ( generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
       StopGenerating();
       return;
    }
+
    if ( waitingforclick && key == WXK_ESCAPE ) {
       // cancel paste
       pastex = -1;
@@ -6817,15 +7159,48 @@ void PatternView::OnChar(wxKeyEvent& event) {
       waitingforclick = false;
       return;
    }
+
    if ( selectingcells && key == WXK_ESCAPE ) {
       RestoreSelection();
       return;
    }
+
+   #ifndef __WXMSW__
+      // need these tests here because wxX11 doesn't seem to process accelerators
+      // before EVT_CHAR handler and so NextGeneration is not called from OnMenu;
+      // and 1st call of wxGetKeyState on wxMac causes a long delay -- sheesh
+      if ( key == ' ' && event.ShiftDown() ) {
+         AdvanceOutsideSelection();
+         return;
+      } else if ( key == ' ' && event.ControlDown() ) {
+         AdvanceSelection();
+         return;
+      }
+   #endif
+
    if ( event.CmdDown() || event.AltDown() ) {
       event.Skip();
    } else {
       ProcessKey(key, event.ShiftDown());
       UpdateUserInterface(frameptr->IsActive());
+   }
+}
+
+void ProcessControlClick(int x, int y) {
+   if (currcurs == curs_zoomin) {
+      ZoomOutPos(x, y);
+   } else if (currcurs == curs_zoomout) {
+      ZoomInPos(x, y);
+   } else {
+      /* let all other cursor modes advance clicked region -- probably unwise
+      pair<bigint, bigint> cellpos = currview.at(x, y);
+      if ( cellpos.first < selleft || cellpos.first > selright ||
+           cellpos.second < seltop || cellpos.second > selbottom ) {
+         AdvanceOutsideSelection();
+      } else {
+         AdvanceSelection();
+      }
+      */
    }
 }
 
@@ -6837,6 +7212,16 @@ void PatternView::OnMouseDown(wxMouseEvent& event) {
       waitingforclick = false;
    } else {
       ClearMessage();
+      showbanner = false;
+      
+      #ifdef __WXX11__
+         // control-click is detected here rather than in OnRMouseDown
+         if ( event.ControlDown() ) {
+            ProcessControlClick(event.GetX(), event.GetY());
+            return;
+         }
+      #endif
+      
       ProcessClick(event.GetX(), event.GetY(), event.ShiftDown());
       UpdateUserInterface(frameptr->IsActive());
    }
@@ -6851,15 +7236,10 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event)) {
 }
 
 void PatternView::OnRMouseDown(wxMouseEvent& event) {
-   if (currcurs == curs_zoomin) {
-      TestAutoFit();
-      currview.unzoom(event.GetX(), event.GetY());
-      UpdateEverything();
-   } else if (currcurs == curs_zoomout) {
-      TestAutoFit();
-      currview.zoom(event.GetX(), event.GetY());
-      UpdateEverything();
-   }
+   // this is equivalent to control-click in wxMac/wxMSW but not in wxX11 -- sigh
+   ClearMessage();
+   showbanner = false;
+   ProcessControlClick(event.GetX(), event.GetY());
 }
 
 void PatternView::OnMouseWheel(wxMouseEvent& event) {
@@ -6891,7 +7271,12 @@ void PatternView::OnMouseWheel(wxMouseEvent& event) {
    while (wheelpos <= -delta) {
       wheelpos += delta;
       TestAutoFit();
-      currview.zoom();
+      if (currview.getmag() < MAX_MAG) {
+         currview.zoom();
+      } else {
+         wxBell();
+         break;      // best not to beep lots of times
+      }
    }
 
    UpdateEverything();
@@ -7333,7 +7718,6 @@ MainFrame::MainFrame()
    controlMenu->AppendCheckItem(ID_AUTO, _("Auto Fit\tCtrl+T"));
    controlMenu->AppendCheckItem(ID_HASH, _("Use Hashing\tCtrl+U"));
    controlMenu->AppendCheckItem(ID_HYPER, _("Hyperspeed"));
-   controlMenu->Append(ID_MAXMEM, _("Max Hash Memory..."));
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_RULE, _("Rule..."));
 

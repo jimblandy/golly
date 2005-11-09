@@ -95,8 +95,6 @@ User suggestions:
 - Allow diagonal selection rectangles.
 
 [Dave Greene]
-- Animate just the selection, or everything outside the selection.
-  Use LifeLab's method: shift-space and control-space.
 - Support a split-screen view of the universe.
 - Provide some way to open current pattern file in user's text editor.
   Maybe just an "Edit Pattern" item in File menu?  And/or option-click
@@ -105,4 +103,4 @@ User suggestions:
 [H Koenig]
 - Mulitiple undo/redo.
 - Multiple windows.
-- If we provide an animating stop button then make it optional.
+- If we provide an animating stop button then make it optional (via Prefs).

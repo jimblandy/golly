@@ -23,6 +23,9 @@ Stops generating.
 
 <p>
 Advances to the next generation.
+Note that you can hit control-space to advance only the current selection,
+or shift-space to advance everything outside the selection (in both cases
+the generation count will not change).
 
 <p>
 <font size=+1><b>Next Step</b></font>&nbsp;&nbsp;[tab]
@@ -92,6 +95,20 @@ up with knowledge about the pattern, it will run faster and faster,
 so be patient.
 
 <p>
+Use the Preferences dialog to set the maximum amount of memory when
+hashing patterns.  The initial setting is 300MB.
+The higher you set the memory limit, the larger
+patterns you can run and the farther and faster you can run them.
+However, setting this limit high also increases the amount of time
+required to change the step size (both manually and in hyperspeed mode)
+and increases the length of the garbage collection pauses.  Nonetheless,
+it is generally best to set this as high as possible -- typically
+80-90% of the amount of physical memory in your computer.  Setting
+this number high enough often makes more than a difference of 1000
+in performance.  How high is high enough depends greatly on the
+pattern and the step size, however, in unpredictable ways.
+
+<p>
 Note that the hashing option cannot be changed while generating a pattern,
 and changing it will reset the step size to 1 generation.
 Hashing is automatically turned on after loading a macrocell pattern,
@@ -112,26 +129,6 @@ Hyperspeed mode is a convenient way to run a complex pattern as far as possible.
 (For very chaotic patterns, not using hashing may actually run it further.)
 For highly regular patterns, hyperspeed mode quickly "runs away", generating
 exponentially fast.
-
-<p>
-<font size=+1><b>Max Hash Memory...</b></font>
-
-<p>
-Brings up a dialog to set the maximum amount of memory used when generating
-patterns with the hashing option ticked (see above).
-The initial setting is 300MB.
-
-<p>
-The higher you set the memory limit, the larger
-patterns you can run and the farther and faster you can run them.
-However, setting this limit high also increases the amount of time
-required to change the step size (both manually and in hyperspeed mode)
-and increases the length of the garbage collection pauses.  Nonetheless,
-it is generally best to set this as high as possible -- typically
-80-90% of the amount of physical memory in your computer.  Setting
-this number high enough often makes more than a difference of 1000
-in performance.  How high is high enough depends greatly on the
-pattern and the step size, however, in unpredictable ways.
 
 <p>
 <font size=+1><b>Rule...</b></font>
