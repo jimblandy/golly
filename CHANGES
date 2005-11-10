@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+AKT: Makefiles use correct dependencies and put object files in subdir.
 AKT: Control-space and shift-space advance inside and outside selection.
 AKT: Removed Max Hash Memory item from Control menu (now set in Prefs).
 AKT: Improved validation and spacing in Prefs dialog.

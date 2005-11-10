@@ -697,7 +697,7 @@ wxCursor *IndexToCursor(int i) {
 
 void SavePrefs() {
    if (frameptr == NULL) {
-      // probably called very early from Fatal, so best not to write prefs
+      // should never happen but play safe
       return;
    }
    FILE *f = fopen(prefsname, "w");
@@ -1538,6 +1538,7 @@ int PrefsDialog::GetSpinVal(long id) {
 }
 
 bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix) {
+   wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
 #ifdef __WXMSW__
    // spinctrl->GetValue() always returns a value within range even if
    // the text ctrl doesn't contain a valid number -- yuk!!!
@@ -1546,13 +1547,14 @@ bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
 #else
    // GetTextValue returns FALSE if text ctrl doesn't contain a valid number
    // or the number is out of range, but it's not available in wxMSW
-   wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
    int i;
    if ( !spinctrl->GetTextValue(&i) || i < minval || i > maxval ) {
 #endif
       wxString msg;
       msg.Printf("%s must be from %d to %d.", prefix, minval, maxval);
       Warning(msg);
+      spinctrl->SetFocus();
+      spinctrl->SetSelection(0,999);
       return true;
    } else {
       return false;
@@ -1766,13 +1768,13 @@ void NotifyUser() {
    }
 }
 
-void MacWarning(const char *s) {
+void MacWarning(const char *title, const char *msg) {
    short itemHit;
    AlertStdAlertParamRec alertParam;
    Str255 ptitle, pmsg;
 
-   CopyCStringToPascal("Golly warning:", ptitle);
-   CopyCStringToPascal(s, pmsg);
+   CopyCStringToPascal(title, ptitle);
+   CopyCStringToPascal(msg, pmsg);
 
    NotifyUser();
    alertParam.movable = true;
@@ -1787,13 +1789,13 @@ void MacWarning(const char *s) {
    StandardAlert(kAlertCautionAlert, ptitle, pmsg, &alertParam, &itemHit);
 }
 
-void MacFatal(const char *s) {
+void MacFatal(const char *title, const char *msg) {
    short itemHit;
    AlertStdAlertParamRec alertParam;
    Str255 ptitle, pmsg, pquit;
 
-   CopyCStringToPascal("Golly error:", ptitle);
-   CopyCStringToPascal(s, pmsg);
+   CopyCStringToPascal(title, ptitle);
+   CopyCStringToPascal(msg, pmsg);
    CopyCStringToPascal("Quit", pquit);
 
    NotifyUser();
@@ -1811,33 +1813,25 @@ void MacFatal(const char *s) {
 
 #endif // __WXMAC__
 
-void Warning(const char *s) {
+void Warning(const char *msg) {
    wxBell();
    wxSetCursor(*wxSTANDARD_CURSOR);
+   // use wxGetApp().GetAppName() and append " warning:" !!!
    #ifdef __WXMAC__
-      MacWarning(s);
+      MacWarning("Golly warning:", msg);
    #else
-      wxMessageBox(_(s), _("Golly warning:"), wxOK | wxICON_EXCLAMATION, frameptr);
+      wxMessageBox(_(msg), _("Golly warning:"), wxOK | wxICON_EXCLAMATION, frameptr);
    #endif
 }
 
-void FinishApp() {
-   // WARNING: infinite recursion will occur if Fatal is called in here
-   
-   // save main window location and other user preferences
-   SavePrefs();
-   
-   if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
-}
-
-void Fatal(const char *s) {
-   FinishApp();
+void Fatal(const char *msg) {
    wxBell();
    wxSetCursor(*wxSTANDARD_CURSOR);
+   // use wxGetApp().GetAppName() and append " error:" !!!
    #ifdef __WXMAC__
-      MacFatal(s);
+      MacFatal("Golly error:", msg);
    #else
-      wxMessageBox(_(s), _("Golly error:"), wxOK | wxICON_ERROR, frameptr);
+      wxMessageBox(_(msg), _("Golly error:"), wxOK | wxICON_ERROR, frameptr);
    #endif
    // calling wxExit() results in a bus error on X11
    exit(1);
@@ -6927,7 +6921,13 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event)) {
 void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
    if (helpptr) helpptr->Close(true);
    if (infoptr) infoptr->Close(true);
-   FinishApp();
+
+   // save main window location and other user preferences
+   SavePrefs();
+   
+   // delete any temporary files
+   if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
+
    #ifdef __WXX11__
       // avoid seg fault on X11
       if (generating) exit(0);

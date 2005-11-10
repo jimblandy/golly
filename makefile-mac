@@ -16,15 +16,17 @@ SHAREDFILES = Help README LICENSE
 SRCFILES = INSTALL TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 
-CXX = g++
 CXXFLAGS = -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -fno-common
-CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${builddir}/lib/wx/include/mac-ansi-release-static-2.6 -I${wxdir}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings -I${wxdir}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
+CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${builddir}/lib/wx/include/mac-ansi-release-static-2.6 \
+   -I${wxdir}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
+   -I${wxdir}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
 LDFLAGS = -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
 WX_LIB_FLAVOUR = 
 TOOLKIT = MAC
 TOOLKIT_LOWERCASE = mac
 TOOLKIT_VERSION = 
-EXTRALIBS = -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System  -lz -lpthread -liconv 
+EXTRALIBS = -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System \
+   -lz -lpthread -liconv 
 EXTRALIBS_GUI = -lpng -lz -ljpeg -ltiff -framework WebKit
 
 ### Variables: ###
@@ -35,10 +37,12 @@ MY_CXXFLAGS = -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) \
 	$(__DLLFLAG_p) $(CPPFLAGS) $(CXXFLAGS)
 
-### use .mo extension to avoid conflict with .o files created by X11 build
-MY_OBJECTS = bigint.mo lifealgo.mo hlifealgo.mo hlifedraw.mo qlifealgo.mo qlifedraw.mo \
-   liferender.mo viewport.mo readpattern.mo writepattern.mo liferules.mo util.mo \
-   lifepoll.mo wxgolly.mo
+### put .o files in a Mac-specific subdir to avoid conflict with .o files created by X11 build
+OBJDIR = ObjMac
+MY_OBJECTS = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
+   $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
+   $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
+   $(OBJDIR)/lifepoll.o $(OBJDIR)/wxgolly.o
 
 SRCC = bigint.cpp lifealgo.cpp hlifealgo.cpp hlifedraw.cpp qlifealgo.cpp qlifedraw.cpp \
    liferender.cpp viewport.cpp readpattern.cpp writepattern.cpp liferules.cpp util.cpp \
@@ -49,7 +53,6 @@ SRC = $(SRCC) $(SRCH)
 
 ### Conditionally set variables: ###
 
-CXXC = $(builddir)/bk-deps $(CXX)
 PORTNAME = $(TOOLKIT_LOWERCASE)$(TOOLKIT_VERSION)
 WXBASEPORT = _carbon
 EXTRALIBS_FOR_BASE = $(EXTRALIBS)
@@ -60,18 +63,26 @@ __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX
 __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)-$(WX_RELEASE)
 __LIB_EXPAT_p = -lwxexpat$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)-$(WX_RELEASE)
 
+CXXC = g++
+### bk-deps script can be used to create *.d files containing all dependences
+### CXXC = $(builddir)/bk-deps g++
+
 ### Targets: ###
 
-all: golly.bin golly_bundle
+all: $(OBJDIR) golly.bin golly_bundle
 
-install: all
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 clean: 
-	rm -f $(MY_OBJECTS)
+	rm -f $(OBJDIR)/*.o
 	rm -rf $(APP_NAME).app
 
 golly.bin: $(MY_OBJECTS)
-	$(CXX) -o $@ $(MY_OBJECTS) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(__LIB_ZLIB_p) $(__LIB_ODBC_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(EXTRALIBS_FOR_GUI)
+	g++ -o $@ $(MY_OBJECTS) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) \
+   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) \
+   $(__LIB_PNG_p) $(__LIB_ZLIB_p) $(__LIB_ODBC_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) \
+   $(EXTRALIBS_FOR_BASE) $(EXTRALIBS_FOR_GUI)
 
 $(APP_NAME).app/Contents/PkgInfo: golly.bin Info.plist.in $(ICON_FILE)
 	mkdir -p $(APP_NAME).app/Contents
@@ -93,46 +104,60 @@ $(APP_NAME).app/Contents/PkgInfo: golly.bin Info.plist.in $(ICON_FILE)
 
 golly_bundle: $(APP_NAME).app/Contents/PkgInfo
 
-lifealgo.mo: lifealgo.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) lifealgo.cpp
-
-hlifealgo.mo: hlifealgo.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) hlifealgo.cpp
-
-hlifedraw.mo: hlifedraw.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) hlifedraw.cpp
-
-qlifealgo.mo: qlifealgo.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) qlifealgo.cpp
-
-qlifedraw.mo: qlifedraw.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) qlifedraw.cpp
-
-liferules.mo: liferules.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) liferules.cpp
-
-liferender.mo: liferender.cpp
-	$(CXXC) -c -o $@ $(MY_CXXFLAGS) liferender.cpp
-
-bigint.mo: bigint.cpp
+$(OBJDIR)/bigint.o: bigint.cpp bigint.h util.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) bigint.cpp
 
-readpattern.mo: readpattern.cpp
+$(OBJDIR)/lifealgo.o: lifealgo.cpp lifealgo.h bigint.h viewport.h \
+liferender.h lifepoll.h readpattern.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) lifealgo.cpp
+
+$(OBJDIR)/hlifealgo.o: hlifealgo.cpp hlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) hlifealgo.cpp
+
+$(OBJDIR)/hlifedraw.o: hlifedraw.cpp hlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) hlifedraw.cpp
+
+$(OBJDIR)/qlifealgo.o: qlifealgo.cpp qlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) qlifealgo.cpp
+
+$(OBJDIR)/qlifedraw.o: qlifedraw.cpp qlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) qlifedraw.cpp
+
+$(OBJDIR)/liferules.o: liferules.cpp liferules.h util.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) liferules.cpp
+
+$(OBJDIR)/liferender.o: liferender.cpp liferender.h
+	$(CXXC) -c -o $@ $(MY_CXXFLAGS) liferender.cpp
+
+$(OBJDIR)/readpattern.o: readpattern.cpp readpattern.h bigint.h lifealgo.h \
+viewport.h liferender.h lifepoll.h util.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) readpattern.cpp
 
-writepattern.mo: writepattern.cpp
+$(OBJDIR)/writepattern.o: writepattern.cpp writepattern.h lifealgo.h \
+bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) writepattern.cpp
 
-util.mo: util.cpp
+$(OBJDIR)/util.o: util.cpp util.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) util.cpp
 
-viewport.mo: viewport.cpp
+$(OBJDIR)/viewport.o: viewport.cpp viewport.h bigint.h lifealgo.h \
+liferender.h lifepoll.h readpattern.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) viewport.cpp
 
-lifepoll.mo: lifepoll.cpp
+$(OBJDIR)/lifepoll.o: lifepoll.cpp lifepoll.h util.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) lifepoll.cpp
 
-wxgolly.mo: wxgolly.cpp
+$(OBJDIR)/wxgolly.o: wxgolly.cpp appicon.xpm \
+bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm bitmaps/play.xpm \
+bitmaps/stop.xpm bitmaps/hash.xpm bitmaps/draw.xpm bitmaps/select.xpm \
+bitmaps/move.xpm bitmaps/zoomin.xpm bitmaps/zoomout.xpm \
+bitmaps/info.xpm bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
 	$(CXXC) -c -o $@ $(MY_CXXFLAGS) wxgolly.cpp
 
 srcdist:

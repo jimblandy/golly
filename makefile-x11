@@ -23,19 +23,93 @@ endif
 
 SRCH = bigint.h lifealgo.h hlifealgo.h qlifealgo.h liferender.h viewport.h \
        readpattern.h writepattern.h liferules.h util.h lifepoll.h
+
 SRCC = bigint.cpp lifealgo.cpp hlifealgo.cpp hlifedraw.cpp qlifealgo.cpp qlifedraw.cpp \
        liferender.cpp viewport.cpp readpattern.cpp writepattern.cpp liferules.cpp \
        util.cpp lifepoll.cpp wxgolly.cpp
-OBJ  = bigint.o lifealgo.o hlifealgo.o hlifedraw.o qlifealgo.o qlifedraw.o liferender.o \
-       viewport.o readpattern.o writepattern.o liferules.o util.o lifepoll.o
 
-all: golly bgolly
+### put .o files in an X11-specific subdir to avoid conflict with .o files created by Mac build
+OBJDIR = ObjX11
+OBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
+   $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
+   $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
+   $(OBJDIR)/lifepoll.o
 
-golly: $(OBJ) wxgolly.o
-	g++ $(CXXFLAGS) -o golly $(OBJ) wxgolly.o $(LDFLAGS)
+all: $(OBJDIR) golly bgolly
 
-bgolly: $(OBJ) bgolly.o
-	g++ $(CXXFLAGS) -o bgolly $(OBJ) bgolly.o $(LDFLAGS)
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+clean: 
+	rm -f $(OBJDIR)/*.o
+	rm -f golly bgolly
+
+golly: $(OBJ) $(OBJDIR)/wxgolly.o
+	g++ $(CXXFLAGS) -o golly $(OBJ) $(OBJDIR)/wxgolly.o $(LDFLAGS)
+
+bgolly: $(OBJ) $(OBJDIR)/bgolly.o
+	g++ $(CXXFLAGS) -o bgolly $(OBJ) $(OBJDIR)/bgolly.o $(LDFLAGS)
+
+$(OBJDIR)/bigint.o: bigint.cpp bigint.h util.h
+	g++ $(CXXFLAGS) -c -o $@ bigint.cpp
+
+$(OBJDIR)/lifealgo.o: lifealgo.cpp lifealgo.h bigint.h viewport.h \
+liferender.h lifepoll.h readpattern.h
+	g++ $(CXXFLAGS) -c -o $@ lifealgo.cpp
+
+$(OBJDIR)/hlifealgo.o: hlifealgo.cpp hlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	g++ $(CXXFLAGS) -c -o $@ hlifealgo.cpp
+
+$(OBJDIR)/hlifedraw.o: hlifedraw.cpp hlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h
+	g++ $(CXXFLAGS) -c -o $@ hlifedraw.cpp
+
+$(OBJDIR)/qlifealgo.o: qlifealgo.cpp qlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	g++ $(CXXFLAGS) -c -o $@ qlifealgo.cpp
+
+$(OBJDIR)/qlifedraw.o: qlifedraw.cpp qlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	g++ $(CXXFLAGS) -c -o $@ qlifedraw.cpp
+
+$(OBJDIR)/liferules.o: liferules.cpp liferules.h util.h
+	g++ $(CXXFLAGS) -c -o $@ liferules.cpp
+
+$(OBJDIR)/liferender.o: liferender.cpp liferender.h
+	g++ $(CXXFLAGS) -c -o $@ liferender.cpp
+
+$(OBJDIR)/readpattern.o: readpattern.cpp readpattern.h bigint.h lifealgo.h \
+viewport.h liferender.h lifepoll.h util.h
+	g++ $(CXXFLAGS) -c -o $@ readpattern.cpp
+
+$(OBJDIR)/writepattern.o: writepattern.cpp writepattern.h lifealgo.h \
+bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h
+	g++ $(CXXFLAGS) -c -o $@ writepattern.cpp
+
+$(OBJDIR)/util.o: util.cpp util.h
+	g++ $(CXXFLAGS) -c -o $@ util.cpp
+
+$(OBJDIR)/viewport.o: viewport.cpp viewport.h bigint.h lifealgo.h \
+liferender.h lifepoll.h readpattern.h
+	g++ $(CXXFLAGS) -c -o $@ viewport.cpp
+
+$(OBJDIR)/lifepoll.o: lifepoll.cpp lifepoll.h util.h
+	g++ $(CXXFLAGS) -c -o $@ lifepoll.cpp
+
+$(OBJDIR)/wxgolly.o: wxgolly.cpp appicon.xpm \
+bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm bitmaps/play.xpm \
+bitmaps/stop.xpm bitmaps/hash.xpm bitmaps/draw.xpm bitmaps/select.xpm \
+bitmaps/move.xpm bitmaps/zoomin.xpm bitmaps/zoomout.xpm \
+bitmaps/info.xpm bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
+	g++ $(CXXFLAGS) -c -o $@ wxgolly.cpp
+
+$(OBJDIR)/bgolly.o: bgolly.cpp \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
+	g++ $(CXXFLAGS) -c -o $@ bgolly.cpp
 
 srcdist:
 	-rm -rf $(RELEASENAME)-src
