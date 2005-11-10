@@ -636,7 +636,6 @@ bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
 char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
 int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
-size_t prefspage = 0;            // current page in PrefsDialog
 
 void Warning(const char *s);
 
@@ -1006,21 +1005,20 @@ void GetPrefs() {
 
 // -----------------------------------------------------------------------------
 
-// multi-panel dialog for changing various preferences
+// define a multi-page dialog for changing various preferences
+
+size_t prefspage = 0;      // current page in PrefsDialog
+bool ignore_page_event;    // used to prevent prefspage being changed
 
 class PrefsDialog : public wxPropertySheetDialog
 {
-   // no need???
-   // DECLARE_CLASS(PrefsDialog)
-
 public:
    PrefsDialog(wxWindow* parent);
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
-// needs to be protected???
 private:
    enum {
-      // these *_PAGE values must correspond to prefspage values
+      // the *_PAGE values must correspond to prefspage values
       FILE_PAGE = 0,
       EDIT_PAGE,
       CONTROL_PAGE,
@@ -1052,23 +1050,19 @@ private:
    wxPanel* CreateEditPrefs(wxWindow* parent);
    wxPanel* CreateControlPrefs(wxWindow* parent);
    wxPanel* CreateViewPrefs(wxWindow* parent);
-   
-   void OnCheckBoxClicked(wxCommandEvent& event);
-   void OnPageChanging(wxNotebookEvent& event);
-   void OnPageChanged(wxNotebookEvent& event);
+
    bool GetCheckVal(long id);
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
    bool BadSpinVal(int id, int minval, int maxval, const char *prefix);
    bool ValidateCurrentPage();
-
-   bool ignore_page_event;
+   
+   void OnCheckBoxClicked(wxCommandEvent& event);
+   void OnPageChanging(wxNotebookEvent& event);
+   void OnPageChanged(wxNotebookEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
-
-// no need???
-// IMPLEMENT_CLASS(PrefsDialog, wxPropertySheetDialog)
 
 BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_CHECKBOX               (wxID_ANY, PrefsDialog::OnCheckBoxClicked)
@@ -1092,8 +1086,9 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
    
    // AddPage and SetSelection cause OnPageChanging and OnPageChanged to be called
-   // so we use a flag to prevent unnecessary validation and prefspage being changed
+   // so we use a flag to prevent prefspage being changed (and unnecessary validation)
    ignore_page_event = true;
+
    notebook->AddPage(filePrefs, _("File"));
    notebook->AddPage(editPrefs, _("Edit"));
    notebook->AddPage(ctrlPrefs, _("Control"));
@@ -1101,6 +1096,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    
    // show last selected page
    notebook->SetSelection(prefspage);
+
    ignore_page_event = false;
 
    #ifdef __WXMAC__
@@ -1121,36 +1117,38 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    LayoutDialog();
 }
 
+// the following consts are used to get nicely spaced controls on each platform
+
 #ifdef __WXMAC__
-   #define GROUPGAP (12)      // vertical space between a group of controls
+   #define GROUPGAP (12)      // vertical gap between a group of controls
    #define SBTOPGAP (0)       // vertical gap before first item in wxStaticBoxSizer
    #define SBBOTGAP (0)       // vertical gap after last item in wxStaticBoxSizer
-   #define SPINGAP (3)        // horizontal space around each wxSpinCtrl box
-   #define CHOICEGAP (6)      // horizontal space to left of wxChoice box
+   #define SPINGAP (3)        // horizontal gap around each wxSpinCtrl box
+   #define CHOICEGAP (6)      // horizontal gap to left of wxChoice box
    #define SVGAP (2)          // vertical gap above wxSpinCtrl box
    #define S2VGAP (0)         // vertical gap between 2 wxSpinCtrl boxes
    #define CVGAP (7)          // vertical gap above wxChoice box
    #define LRGAP (5)          // space left and right of vertically stacked boxes
 #elif defined(__WXMSW__)
-   #define GROUPGAP (10)      // vertical space between a group of controls
-   #define SBTOPGAP (5)       // vertical gap before first item in wxStaticBoxSizer
-   #define SBBOTGAP (5)       // vertical gap after last item in wxStaticBoxSizer
-   #define SPINGAP (6)        // horizontal space around each wxSpinCtrl box
-   #define CHOICEGAP (8)      // horizontal space to left of wxChoice box
-   #define SVGAP (5)          // vertical gap above wxSpinCtrl box
-   #define S2VGAP (5)         // vertical gap between 2 wxSpinCtrl boxes
-   #define CVGAP (5)          // vertical gap above wxChoice box
-   #define LRGAP (5)          // space left and right of vertically stacked boxes
+   #define GROUPGAP (10)
+   #define SBTOPGAP (5)
+   #define SBBOTGAP (5)
+   #define SPINGAP (6)
+   #define CHOICEGAP (8)
+   #define SVGAP (5)
+   #define S2VGAP (5)
+   #define CVGAP (5)
+   #define LRGAP (5)
 #else
-   #define GROUPGAP (10)      // vertical space between a group of controls
-   #define SBTOPGAP (10)      // vertical gap before first item in wxStaticBoxSizer
-   #define SBBOTGAP (5)       // vertical gap after last item in wxStaticBoxSizer
-   #define SPINGAP (6)        // horizontal space around each wxSpinCtrl box
-   #define CHOICEGAP (8)      // horizontal space to left of wxChoice box
-   #define SVGAP (5)          // vertical gap above wxSpinCtrl box
-   #define S2VGAP (5)         // vertical gap between 2 wxSpinCtrl boxes
-   #define CVGAP (5)          // vertical gap above wxChoice box
-   #define LRGAP (5)          // space left and right of vertically stacked boxes
+   #define GROUPGAP (10)
+   #define SBTOPGAP (10)
+   #define SBBOTGAP (5)
+   #define SPINGAP (6)
+   #define CHOICEGAP (8)
+   #define SVGAP (5)
+   #define S2VGAP (5)
+   #define CVGAP (5)
+   #define LRGAP (5)
 #endif
 
 wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
@@ -1636,12 +1634,6 @@ void SetGenIncrement() {
    } else {
       curralgo->setIncrement(1);
    }
-}
-
-int CurrentDelay() {
-   int gendelay = mindelay * (1 << (-warp - 1));
-   if (gendelay > maxdelay) gendelay = maxdelay;
-   return gendelay;
 }
 
 void ShowRandomFillPercentage() {
@@ -2479,6 +2471,12 @@ const char *stringify(double d) {
 }
 const char *stringify(const bigint &b) {
    return stringify(b.todouble());
+}
+
+int CurrentDelay() {
+   int gendelay = mindelay * (1 << (-warp - 1));
+   if (gendelay > maxdelay) gendelay = maxdelay;
+   return gendelay;
 }
 
 void DrawStatusBar(wxDC &dc, wxRect &updaterect) {
@@ -7929,7 +7927,7 @@ bool MyApp::OnInit()
    #endif
 
    // make sure current working directory contains application otherwise
-   // we can't open Help files and prefs file gets saved to wrong location
+   // we can't open Help files and prefs file gets saved in wrong location
    SetAppDirectory(argv[0]);
 
    // let non-wx modules call Fatal, Warning, etc
