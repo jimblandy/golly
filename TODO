@@ -3,14 +3,10 @@ TODO:
 High priority:
 --------------
 
-A - Split up wxgolly.cpp into smaller modules:
-    wxmain, wxstatus, wxfile, wxedit, wxcontrol, wxview, wxhelp, wxprefs, etc.
-    Also tidy up the code (follow http://www.wxwidgets.org/standard.htm?).
+A - Add a pop-up menu with named rules to rule dialog.
 
 A - Create a scrollable navigation panel to view contents of a selected
     folder (initially Patterns) so users can load patterns easily.
-
-A - Add a pop-up menu with named rules to rule dialog.
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar.
@@ -19,12 +15,6 @@ B - Finish 1D rule support.  Basically works except for qlife display being
     upside down (so just alter rule0 table in qlifealgo::setrule?).
     Also prevent odd-numbered W rules (only feasible in toroidal universe).
     Decide how to store 1D rule in RLE file -- time for #RLE+ extensions?!
-
-B - Add more info to INSTALL file (and rename to BUILD?):
-    - how to install wxWidgets, esp on Windows (point to wxWiki page)
-    - briefly describe each module
-    - list steps needed to add a new life algo (eg. toroidal universe)
-    - describe batch version
 
 For future versions:
 --------------------

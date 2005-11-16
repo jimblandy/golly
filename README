@@ -10,13 +10,13 @@ Features:
 - Use hashing to see large patterns evolve at huge time scales.
 - Responsive even while generating or garbage collecting.
 - Reads RLE, Life 1.05/1.06, and macrocell formats.
-- Paste in patterns from the clipboard.
 - Fast loading of large patterns.
+- Paste in patterns from the clipboard.
 - Unbounded zooming out for astronomical patterns.
 - Auto fit option keeps your pattern sized to the window.
 - Full screen option (no menu/status/tool/scroll bars).
-- HTML-based help system.
-- Free, open source and cross-platform (Linux, Windows, Mac).
+- HTML-based help with integrated Life Lexicon.
+- Free, open source and cross-platform (Windows, Mac, Linux).
 
 And this is just the beginning. :)
 

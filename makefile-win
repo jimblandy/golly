@@ -20,31 +20,32 @@ VERSION = 0.92
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help
-SRCFILES = INSTALL TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc \
+SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 SRCDIRS = bitmaps
 BINFILES = golly.exe bgolly.exe
 
-CXXFLAGS = /EHsc /DVERSION=$(VERSION) /DZLIB /I$(WXDIR)\src\zlib
-
 WX_RELEASE_NODOT = 26
 LIBDIRNAME = $(WXDIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
-SETUPHDIR = \
-	$(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
-MY_CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
+SETUPHDIR = $(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
+
+CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 	$(__DEBUGINFO_0) /Fdgolly.pdb $(____DEBUGRUNTIME_2_p) \
 	$(__OPTIMIZEFLAG_4) $(__NO_VC_CRTDBG_p) /D__WXMSW__ $(__WXUNIV_DEFINE_p) \
 	$(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
 	$(__THREAD_DEFINE_p) $(__UNICODE_DEFINE_p) /I$(WXDIR)\include /I$(SETUPHDIR) \
 	/W4 /I. $(__DLLFLAG_p) /D_WINDOWS /I$(WXDIR)\samples /DNOPCH $(__RTTIFLAG_9) \
-	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) $(CXXFLAGS)
+	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) \
+	/EHsc /DVERSION=$(VERSION) /DZLIB /I$(WXDIR)\src\zlib
 
 OBJDIR = ObjWin
-BASEOBJS = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(OBJDIR)/hlifedraw.obj \
+BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(OBJDIR)/hlifedraw.obj \
    $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj \
    $(OBJDIR)/readpattern.obj $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/lifepoll.obj
-MY_OBJECTS = $(OBJDIR)/wxgolly.obj $(BASEOBJS) golly.res
+WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxrule.obj \
+   $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj \
+   $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -277,9 +278,9 @@ clean:
 	-if exist golly.exe del golly.exe
 	-if exist golly.pdb del golly.pdb
 
-golly.exe: $(MY_OBJECTS)
+golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	link /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) /LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" /SUBSYSTEM:WINDOWS @<<
-	$(MY_OBJECTS) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
+	$(BASEOBJ) $(WXOBJ) golly.res $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
 <<
 
 golly.res: golly.rc
@@ -288,65 +289,106 @@ golly.res: golly.rc
 	$(__UNICODE_DEFINE_p_1) /i $(WXDIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS \
 	/i $(WXDIR)\samples /d NOPCH golly.rc
 
-bgolly.exe: $(BASEOBJS) $(OBJDIR)/bgolly.obj
-	link /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) $(OBJDIR)/bgolly.obj $(BASEOBJS) wxzlib$(WXDEBUGFLAG).lib
+bgolly.exe: $(BASEOBJ) $(OBJDIR)/bgolly.obj
+	link /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) $(OBJDIR)/bgolly.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
 
 $(OBJDIR)/bigint.obj: bigint.cpp bigint.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) bigint.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bigint.cpp
 
 $(OBJDIR)/lifealgo.obj: lifealgo.cpp lifealgo.h bigint.h viewport.h \
 liferender.h lifepoll.h readpattern.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) lifealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) lifealgo.cpp
 
 $(OBJDIR)/hlifealgo.obj: hlifealgo.cpp hlifealgo.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) hlifealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) hlifealgo.cpp
 
 $(OBJDIR)/hlifedraw.obj: hlifedraw.cpp hlifealgo.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) hlifedraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) hlifedraw.cpp
 
 $(OBJDIR)/qlifealgo.obj: qlifealgo.cpp qlifealgo.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) qlifealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) qlifealgo.cpp
 
 $(OBJDIR)/qlifedraw.obj: qlifedraw.cpp qlifealgo.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) qlifedraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) qlifedraw.cpp
 
 $(OBJDIR)/liferules.obj: liferules.cpp liferules.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) liferules.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) liferules.cpp
 
 $(OBJDIR)/liferender.obj: liferender.cpp liferender.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) liferender.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) liferender.cpp
 
 $(OBJDIR)/readpattern.obj: readpattern.cpp readpattern.h bigint.h lifealgo.h \
 viewport.h liferender.h lifepoll.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) readpattern.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) readpattern.cpp
 
 $(OBJDIR)/writepattern.obj: writepattern.cpp writepattern.h lifealgo.h \
 bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) writepattern.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) writepattern.cpp
 
 $(OBJDIR)/util.obj: util.cpp util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) util.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) util.cpp
 
 $(OBJDIR)/viewport.obj: viewport.cpp viewport.h bigint.h lifealgo.h \
 liferender.h lifepoll.h readpattern.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) viewport.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) viewport.cpp
 
 $(OBJDIR)/lifepoll.obj: lifepoll.cpp lifepoll.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) lifepoll.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) lifepoll.cpp
 
-$(OBJDIR)/wxgolly.obj: wxgolly.cpp \
+$(OBJDIR)/wxutils.obj: wxutils.cpp wxutils.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
-	$(CXX) /c /TP /nologo /Fo$@ $(MY_CXXFLAGS) wxgolly.cpp
+wxgolly.h wxview.h wxmain.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxutils.cpp
+
+$(OBJDIR)/wxprefs.obj: wxprefs.cpp wxprefs.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxmain.h wxview.h wxutils.h wxhelp.h wxinfo.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp
+
+$(OBJDIR)/wxrule.obj: wxrule.cpp wxrule.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
+wxgolly.h wxutils.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrule.cpp
+
+$(OBJDIR)/wxinfo.obj: wxinfo.cpp wxinfo.h \
+readpattern.h bigint.h wxgolly.h wxutils.h wxprefs.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxinfo.cpp
+
+$(OBJDIR)/wxhelp.obj: wxhelp.cpp wxhelp.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxmain.h wxutils.h wxprefs.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxhelp.cpp
+
+$(OBJDIR)/wxstatus.obj: wxstatus.cpp wxstatus.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxstatus.cpp
+
+$(OBJDIR)/wxview.obj: wxview.cpp wxview.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxutils.h wxprefs.h wxhelp.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxview.cpp
+
+$(OBJDIR)/wxmain.obj: wxmain.cpp wxmain.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h writepattern.h \
+wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxmain.cpp
+
+$(OBJDIR)/wxgolly.obj: wxgolly.cpp wxgolly.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
+wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h
+	$(CXX) /c /TP /nologo /Fo$@ $(CXXFLAGS) wxgolly.cpp
 
 $(OBJDIR)/bgolly.obj: bgolly.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
-	$(CXX) /c /nologo /Fo$@ $(MY_CXXFLAGS) bgolly.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bgolly.cpp
 
 srcdist:
 	-rmdir /s /q $(RELEASENAME)-src
@@ -359,7 +401,7 @@ srcdist:
 	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-src\src\%F
 	ren $(RELEASENAME)-src\src\README README.txt
 	ren $(RELEASENAME)-src\src\LICENSE LICENSE.txt
-	ren $(RELEASENAME)-src\src\INSTALL INSTALL.txt
+	ren $(RELEASENAME)-src\src\BUILD BUILD.txt
 	ren $(RELEASENAME)-src\src\TODO TODO.txt
 	ren $(RELEASENAME)-src\src\CHANGES CHANGES.txt
 	xcopy /I /S ..\patterns\Patterns $(RELEASENAME)-src\patterns\Patterns

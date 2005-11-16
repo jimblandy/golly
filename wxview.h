@@ -1,0 +1,237 @@
+                        /*** /
+
+This file is part of Golly, a Game of Life Simulator.
+Copyright (C) 2005 Andrew Trevorrow and Tomas Rokicki.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ Web site:  http://sourceforge.net/projects/golly
+ Authors:   rokicki@gmail.com  andrew@trevorrow.com
+
+                        / ***/
+#ifndef _WXVIEW_H_
+#define _WXVIEW_H_
+
+#include "bigint.h"
+
+// Define a child window for viewing patterns:
+
+class PatternView : public wxWindow
+{
+public:
+    PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
+    ~PatternView();
+
+   // edit functions
+   void CutSelection();
+   void CopySelection();
+   void ClearSelection();
+   void ClearOutsideSelection();
+   void CopySelectionToClipboard(bool cut);
+   void PasteClipboard(bool toselection);
+   void CyclePasteLocation();
+   void CyclePasteMode();
+   void DisplaySelectionSize();
+   void NoSelection();
+   bool SelectionExists();
+   void SelectAll();
+   void RemoveSelection();
+   void ShrinkSelection(bool fit);
+   void RandomFill();
+   void FlipVertically();
+   void FlipHorizontally();
+   void RotateSelection(bool clockwise);
+   void SetCursorMode(wxCursor *curs);
+   void CycleCursorMode();
+   bool CopyRect(int itop, int ileft, int ibottom, int iright,
+                 lifealgo *srcalgo, lifealgo *destalgo,
+                 bool erasesrc, const char *progmsg);
+   void CopyAllRect(int itop, int ileft, int ibottom, int iright,
+                    lifealgo *srcalgo, lifealgo *destalgo,
+                    const char *progmsg);
+
+   // return true if given rect is outside getcell/setcell limits
+   bool OutsideLimits(bigint &t, bigint &l, bigint &b, bigint &r);
+
+   // return true and get mouse location's cell coords if over viewport
+   bool GetCellPos(bigint &xpos, bigint &ypos);
+
+   // return true if given screen position is in viewport
+   bool PointInView(int x, int y);
+
+   // view functions
+   void ZoomOut();
+   void ZoomIn();
+   void SetPixelsPerCell(int pxlspercell);
+   void FitPattern();
+   void FitSelection();
+   void ViewOrigin();
+   void ChangeOrigin();
+   void RestoreOrigin();
+   void SetViewSize();
+   void ToggleGridLines();
+   void ToggleVideo();
+   void ToggleBuffering();
+   void UpdateScrollBars();         // update thumb positions
+   void CheckCursor(bool active);   // make sure cursor is up to date
+   int GetMag();                    // get magnification (..., -1=2:1, 0=1:1, 1=1:2, ...)
+   void SetMag(int newmag);
+   void SetPosMag(const bigint &x, const bigint &y, int mag);
+   void GetPos(bigint &x, bigint &y);
+   void FitInView(int force);
+
+   // data
+   bool waitingforclick;         // waiting for paste click?
+   bool drawingcells;            // drawing cells due to dragging mouse?
+   bool selectingcells;          // selecting cells due to dragging mouse?
+   bool movingview;              // moving view due to dragging mouse?
+   bigint seltop;                // edges of current selection
+   bigint selbottom;
+   bigint selleft;
+   bigint selright;
+   bigint originy;               // new X coord set by ChangeOrigin
+   bigint originx;               // new Y coord set by ChangeOrigin
+
+private:
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
+
+   // event handlers
+   void OnPaint(wxPaintEvent& event);
+   void OnKeyDown(wxKeyEvent& event);
+   void OnKeyUp(wxKeyEvent& event);
+   void OnChar(wxKeyEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
+   void OnMouseUp(wxMouseEvent& event);
+   void OnRMouseDown(wxMouseEvent& event);
+   void OnMouseWheel(wxMouseEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnMouseEnter(wxMouseEvent& event);
+   void OnMouseExit(wxMouseEvent& event);
+   void OnDragTimer(wxTimerEvent& event);
+   void OnScroll(wxScrollWinEvent& event);
+   void OnEraseBackground(wxEraseEvent& event);
+
+   // process keyboard and mouse events
+   void ProcessKey(int key, bool shiftdown);
+   void ProcessControlClick(int x, int y);
+   void ProcessClick(int x, int y, bool shiftdown);
+
+   // display functions
+   bool GridVisible();
+   void DrawGridLines(wxDC &dc, wxRect &r, int pmag);
+   void DrawPasteRect(wxDC &dc);
+   void InitSelection();
+   bool SelectionVisible(wxRect *visrect);
+   void DrawSelection(wxDC &dc, wxRect &rect);
+   void DisplayPattern(wxDC &dc);
+   
+   // edit functions
+   void ShowDrawing();
+   void DrawOneCell(int cx, int cy, wxDC &dc);
+   void StartDrawingCells(int x, int y);
+   void DrawCells(int x, int y);
+   void ModifySelection(bigint &xclick, bigint &yclick);
+   void StartSelectingCells(int x, int y, bool shiftdown);
+   void SelectCells(int x, int y);
+   void StartMovingView(int x, int y);
+   void MoveView(int x, int y);
+   void StopDraggingMouse();
+   void RestoreSelection();
+   void TestAutoFit();
+   void ZoomInPos(int x, int y);
+   void ZoomOutPos(int x, int y);
+   void EmptyUniverse();
+   void EnableAllMenus(bool enable);
+   void SetPasteRect(wxRect &rect, bigint &wd, bigint &ht);
+   void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
+                                bigint top, bigint left, bigint bottom, bigint right);
+
+   // scroll functions
+   void PanUp(int amount);
+   void PanDown(int amount);
+   void PanLeft(int amount);
+   void PanRight(int amount);
+   int SmallScroll(int xysize);
+   int BigScroll(int xysize);
+
+   // data
+   wxTimer *dragtimer;           // timer used while dragging mouse
+   int cellx, celly;             // current cell's 32-bit position
+   bigint bigcellx, bigcelly;    // current cell's position
+   int initselx, initsely;       // location of initial selection click
+   bool forceh;                  // resize selection horizontally?
+   bool forcev;                  // resize selection vertically?
+   bigint anchorx, anchory;      // anchor cell of current selection
+   bigint origtop;               // edges of original selection
+   bigint origbottom;            // (used to restore selection if user hits escape)
+   bigint origleft;
+   bigint origright;
+   bigint prevtop;               // previous edges of new selection
+   bigint prevbottom;            // (used to decide if new selection has to be drawn)
+   bigint prevleft;
+   bigint prevright;
+   int drawstate;                // new cell state (0 or 1)
+   int pastex, pastey;           // where user wants to paste clipboard pattern
+   wxRect pasterect;             // shows area to be pasted
+   wxCursor *oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
+   int hthumb, vthumb;           // current thumb box positions
+};
+
+const char empty_pattern[]       = "All cells are dead.";
+const char empty_selection[]     = "There are no live cells in the selection.";
+const char empty_outside[]       = "There are no live cells outside the selection.";
+const char no_selection[]        = "There is no selection.";
+const char selection_too_big[]   = "Selection is outside +/- 10^9 boundary.";
+const char origin_restored[]     = "Origin restored.";
+
+// Following must be static -- they are used by GetPrefs() before the view window
+// is created.
+
+typedef enum {
+   TopLeft, TopRight, BottomRight, BottomLeft, Middle
+} paste_location;
+
+typedef enum {
+   Copy, Or, Xor
+} paste_mode;
+
+extern paste_location plocation;    // location of cursor in paste rectangle
+extern paste_mode pmode;            // logical paste mode
+
+// get/set location of cursor relative to paste rectangle
+const char* GetPasteLocation();
+void SetPasteLocation(const char *s);
+
+// get/set paste mode (copy, or, xor)
+const char* GetPasteMode();
+void SetPasteMode(const char *s);
+
+extern wxCursor *currcurs;          // set to one of the following cursors
+extern wxCursor *curs_pencil;       // for drawing cells
+extern wxCursor *curs_cross;        // for selecting cells
+extern wxCursor *curs_hand;         // for moving view by dragging
+extern wxCursor *curs_zoomin;       // for zooming in to a clicked cell
+extern wxCursor *curs_zoomout;      // for zooming out from a clicked cell
+
+// convert cursor to string and vice versa
+const char* CursorToString(wxCursor *curs);
+wxCursor* StringToCursor(const char *s);
+
+// convert cursor to zero-based index and vice versa
+int CursorToIndex(wxCursor *curs);
+wxCursor* IndexToCursor(int i);
+
+#endif
