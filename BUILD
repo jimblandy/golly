@@ -39,9 +39,8 @@ Note that you don't need to install wxWidgets to build bgolly.
 Source code road map
 --------------------
 
-If you'd like to modify Golly then the following road map should help
-you get started.  Each module is described and their key routines are
-mentioned.
+If you'd like to modify Golly then the following notes should help you
+get started.  Each module is described, along with some key routines.
 
 All of Golly's wxWidgets code is in these wx* modules:
 
@@ -57,9 +56,9 @@ wxmain.*       - Implements the main window.
 wxview.*       - Viewport for displaying and editing patterns.
                  ProcessKey() processes keyboard shortcuts.
                  ProcessClick() processes mouse clicks.
-                 DisplayPattern() draws pattern, grid lines, etc.
+                 DisplayPattern() draws the pattern, grid lines, etc.
 
-wxstatus.*     - Status bar (child window of main frame).
+wxstatus.*     - Status bar.
                  DrawStatusBar() shows gen count, pop count, etc.
                  DisplayMessage() shows message in bottom line.
 
@@ -82,7 +81,7 @@ wxutils.*      - Utility dialogs for showing errors and progress.
                  Fatal() displays message and exits app.
 
 The following non-wx modules are sufficient to build bgolly, but they
-also define abstract viewport and rendering routines used by the
+also define abstract viewport and rendering interfaces used by the
 above GUI code:
 
 bgolly.cpp     - The batch mode program.
@@ -114,7 +113,7 @@ qlifedraw.cpp  - Rendering routines for qlifealgo.
 
 hlifedraw.cpp  - Rendering routines for hlifealgo.
 
-liferules.*    - Implements rules supported by lifealgo.
+liferules.*    - Implements rules used by lifealgo.
                  setrule() parses and validates a given rule.
 
 lifepoll.*     - Allows lifealgo routines to do event processing.
