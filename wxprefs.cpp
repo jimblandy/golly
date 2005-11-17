@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/bookctrl.h"   // for wxBookCtrlBase
 #include "wx/notebook.h"   // for wxNotebookEvent
 #include "wx/spinctrl.h"   // for wxSpinCtrl
+#include "wx/image.h"      // for wxImage
 
 #include "lifealgo.h"      // for curralgo->...
 #include "viewport.h"      // for MAX_MAG
@@ -46,6 +47,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxprefs.h"
+
+#ifdef __WXMSW__
+   // cursor bitmaps are loaded via .rc file
+#else
+   #ifdef __WXX11__
+      // wxX11 doesn't support creating cursors from a bitmap file -- darn it!
+   #else
+      #include "bitmaps/zoomin_curs.xpm"
+      #include "bitmaps/zoomout_curs.xpm"
+   #endif
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -113,11 +125,173 @@ wxMenu *recentSubMenu = NULL;    // menu of recent files
 int numrecent = 0;               // current number of recent files
 int maxrecent = 20;              // maximum number of recent files (1..MAX_RECENT)
 
+// these settings must be static -- they are changed by GetPrefs *before* the
+// view window is created
+paste_location plocation = TopLeft;
+paste_mode pmode = Copy;
+
+// these must be static -- they are created before the view window is created
+wxCursor *curs_pencil;           // for drawing cells
+wxCursor *curs_cross;            // for selecting cells
+wxCursor *curs_hand;             // for moving view by dragging
+wxCursor *curs_zoomin;           // for zooming in to a clicked cell
+wxCursor *curs_zoomout;          // for zooming out from a clicked cell
+wxCursor *currcurs;              // set to one of the above cursors
+
 // local (ie. non-exported) globals:
 
-int mingridindex;       // mingridmag - 2
+int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
+
+// -----------------------------------------------------------------------------
+
+void CreateCursors()
+{
+   curs_pencil = new wxCursor(wxCURSOR_PENCIL);
+   if (curs_pencil == NULL) Fatal("Failed to create pencil cursor!");
+
+   curs_cross = new wxCursor(wxCURSOR_CROSS);
+   if (curs_cross == NULL) Fatal("Failed to create cross cursor!");
+
+   curs_hand = new wxCursor(wxCURSOR_HAND);
+   if (curs_hand == NULL) Fatal("Failed to create hand cursor!");
+
+   #ifdef __WXX11__
+      // wxX11 doesn't support creating cursor from wxImage or from bits!!!
+      // don't use plus sign -- confusing with crosshair, and no minus sign for zoom out
+      // curs_zoomin = new wxCursor(wxCURSOR_MAGNIFIER);
+      curs_zoomin = new wxCursor(wxCURSOR_POINT_RIGHT);
+   #else
+      wxBitmap bitmap_zoomin = wxBITMAP(zoomin_curs);
+      wxImage image_zoomin = bitmap_zoomin.ConvertToImage();
+      image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
+      image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
+      curs_zoomin = new wxCursor(image_zoomin);
+   #endif
+   if (curs_zoomin == NULL) Fatal("Failed to create zoomin cursor!");
+
+   #ifdef __WXX11__
+      // wxX11 doesn't support creating cursor from wxImage or bits!!!
+      curs_zoomout = new wxCursor(wxCURSOR_POINT_LEFT);
+   #else
+      wxBitmap bitmap_zoomout = wxBITMAP(zoomout_curs);
+      wxImage image_zoomout = bitmap_zoomout.ConvertToImage();
+      image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
+      image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
+      curs_zoomout = new wxCursor(image_zoomout);
+   #endif
+   if (curs_zoomout == NULL) Fatal("Failed to create zoomout cursor!");
+
+   /* no longer use busy cursor when generating
+   #ifdef __WXMSW__
+      curs_busy = new wxCursor(wxCURSOR_ARROWWAIT);
+      if (curs_busy == NULL) Fatal("Failed to create busy cursor!");
+   #else
+      curs_busy = wxHOURGLASS_CURSOR;
+   #endif
+   */
+   
+   // set currcurs in case newcurs/opencurs are set to "No Change"
+   currcurs = curs_pencil;
+   
+   // default cursors for new pattern or after opening pattern
+   newcurs = curs_pencil;
+   opencurs = curs_zoomin;
+}
+
+const char* CursorToString(wxCursor *curs)
+{
+   if (curs == curs_pencil) return "Draw";
+   if (curs == curs_cross) return "Select";
+   if (curs == curs_hand) return "Move";
+   if (curs == curs_zoomin) return "Zoom In";
+   if (curs == curs_zoomout) return "Zoom Out";
+   return "No Change";   // curs is NULL
+}
+
+wxCursor* StringToCursor(const char *s)
+{
+   if (strcmp(s, "Draw") == 0) return curs_pencil;
+   if (strcmp(s, "Select") == 0) return curs_cross;
+   if (strcmp(s, "Move") == 0) return curs_hand;
+   if (strcmp(s, "Zoom In") == 0) return curs_zoomin;
+   if (strcmp(s, "Zoom Out") == 0) return curs_zoomout;
+   return NULL;   // "No Change"
+}
+
+int CursorToIndex(wxCursor *curs)
+{
+   if (curs == curs_pencil) return 0;
+   if (curs == curs_cross) return 1;
+   if (curs == curs_hand) return 2;
+   if (curs == curs_zoomin) return 3;
+   if (curs == curs_zoomout) return 4;
+   return 5;   // curs is NULL
+}
+
+wxCursor* IndexToCursor(int i)
+{
+   if (i == 0) return curs_pencil;
+   if (i == 1) return curs_cross;
+   if (i == 2) return curs_hand;
+   if (i == 3) return curs_zoomin;
+   if (i == 4) return curs_zoomout;
+   return NULL;   // "No Change"
+}
+
+// -----------------------------------------------------------------------------
+
+// following routines cannot be PatternView methods -- they are called by
+// GetPrefs() before the view window is created
+
+const char* GetPasteLocation()
+{
+   switch (plocation) {
+      case TopLeft:     return "TopLeft";
+      case TopRight:    return "TopRight";
+      case BottomRight: return "BottomRight";
+      case BottomLeft:  return "BottomLeft";
+      case Middle:      return "Middle";
+      default:          return "unknown";
+   }
+}
+
+void SetPasteLocation(const char *s)
+{
+   if (strcmp(s, "TopLeft") == 0) {
+      plocation = TopLeft;
+   } else if (strcmp(s, "TopRight") == 0) {
+      plocation = TopRight;
+   } else if (strcmp(s, "BottomRight") == 0) {
+      plocation = BottomRight;
+   } else if (strcmp(s, "BottomLeft") == 0) {
+      plocation = BottomLeft;
+   } else {
+      plocation = Middle;
+   }
+}
+
+const char* GetPasteMode()
+{
+   switch (pmode) {
+      case Copy:  return "Copy";
+      case Or:    return "Or";
+      case Xor:   return "Xor";
+      default:    return "unknown";
+   }
+}
+
+void SetPasteMode(const char *s)
+{
+   if (strcmp(s, "Copy") == 0) {
+      pmode = Copy;
+   } else if (strcmp(s, "Or") == 0) {
+      pmode = Or;
+   } else {
+      pmode = Xor;
+   }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -239,6 +413,9 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht) {
 }
 
 void GetPrefs() {
+   // create curs_* and initialize newcurs, opencurs and currcurs
+   CreateCursors();
+   
    // initialize Open Recent submenu
    recentSubMenu = new wxMenu();
    recentSubMenu->AppendSeparator();

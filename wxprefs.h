@@ -97,4 +97,33 @@ const int mininfoht = 100;       // info window's minimum height
 
 const int MAX_RECENT = 100;      // maximum value of maxrecent
 
+// Following must be static -- they are used by GetPrefs() before the view window
+// is created.
+
+typedef enum {
+   TopLeft, TopRight, BottomRight, BottomLeft, Middle
+} paste_location;
+
+typedef enum {
+   Copy, Or, Xor
+} paste_mode;
+
+extern paste_location plocation;    // location of cursor in paste rectangle
+extern paste_mode pmode;            // logical paste mode
+
+// get/set location of cursor relative to paste rectangle
+const char* GetPasteLocation();
+void SetPasteLocation(const char *s);
+
+// get/set paste mode (copy, or, xor)
+const char* GetPasteMode();
+void SetPasteMode(const char *s);
+
+extern wxCursor *curs_pencil;       // for drawing cells
+extern wxCursor *curs_cross;        // for selecting cells
+extern wxCursor *curs_hand;         // for moving view by dragging
+extern wxCursor *curs_zoomin;       // for zooming in to a clicked cell
+extern wxCursor *curs_zoomout;      // for zooming out from a clicked cell
+extern wxCursor *currcurs;          // set to one of the above cursors
+
 #endif

@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"
 
 #ifdef __WXMAC__
-   #include <Carbon/Carbon.h>    // for Button(), etc
+   #include <Carbon/Carbon.h>    // for *AppModalStateForWindow, Button
 #endif
 
 // -----------------------------------------------------------------------------
@@ -61,19 +61,6 @@ viewport currview(10, 10);
 // current device context for viewport;
 // used in wx_render routines so make this static data
 wxDC *currdc;
-
-// these settings must be static -- they are changed by GetPrefs *before* the
-// view window is created
-paste_location plocation = TopLeft;
-paste_mode pmode = Copy;
-
-// these must be static -- they are created before the view window is created
-wxCursor *currcurs;           // set to one of the following cursors
-wxCursor *curs_pencil;        // for drawing cells
-wxCursor *curs_cross;         // for selecting cells
-wxCursor *curs_hand;          // for moving view by dragging
-wxCursor *curs_zoomin;        // for zooming in to a clicked cell
-wxCursor *curs_zoomout;       // for zooming out from a clicked cell
 
 // bitmap for drawing magnified cells (see DrawStretchedBitmap)
 wxBitmap magmap;
@@ -128,99 +115,6 @@ void InitMagnifyTable()
    for (i=0; i<256; i++)
       if (i & (i-1))
          Magnify2[i] = Magnify2[i & (i-1)] + Magnify2[i & - i];
-}
-
-// -----------------------------------------------------------------------------
-
-// following routines cannot be PatternView methods -- they are called by
-// GetPrefs() before the view window is created
-
-const char* GetPasteLocation()
-{
-   switch (plocation) {
-      case TopLeft:     return "TopLeft";
-      case TopRight:    return "TopRight";
-      case BottomRight: return "BottomRight";
-      case BottomLeft:  return "BottomLeft";
-      case Middle:      return "Middle";
-      default:          return "unknown";
-   }
-}
-
-void SetPasteLocation(const char *s)
-{
-   if (strcmp(s, "TopLeft") == 0) {
-      plocation = TopLeft;
-   } else if (strcmp(s, "TopRight") == 0) {
-      plocation = TopRight;
-   } else if (strcmp(s, "BottomRight") == 0) {
-      plocation = BottomRight;
-   } else if (strcmp(s, "BottomLeft") == 0) {
-      plocation = BottomLeft;
-   } else {
-      plocation = Middle;
-   }
-}
-
-const char* GetPasteMode()
-{
-   switch (pmode) {
-      case Copy:  return "Copy";
-      case Or:    return "Or";
-      case Xor:   return "Xor";
-      default:    return "unknown";
-   }
-}
-
-void SetPasteMode(const char *s)
-{
-   if (strcmp(s, "Copy") == 0) {
-      pmode = Copy;
-   } else if (strcmp(s, "Or") == 0) {
-      pmode = Or;
-   } else {
-      pmode = Xor;
-   }
-}
-
-const char* CursorToString(wxCursor *curs)
-{
-   if (curs == curs_pencil) return "Draw";
-   if (curs == curs_cross) return "Select";
-   if (curs == curs_hand) return "Move";
-   if (curs == curs_zoomin) return "Zoom In";
-   if (curs == curs_zoomout) return "Zoom Out";
-   return "No Change";   // curs is NULL
-}
-
-wxCursor* StringToCursor(const char *s)
-{
-   if (strcmp(s, "Draw") == 0) return curs_pencil;
-   if (strcmp(s, "Select") == 0) return curs_cross;
-   if (strcmp(s, "Move") == 0) return curs_hand;
-   if (strcmp(s, "Zoom In") == 0) return curs_zoomin;
-   if (strcmp(s, "Zoom Out") == 0) return curs_zoomout;
-   return NULL;   // "No Change"
-}
-
-int CursorToIndex(wxCursor *curs)
-{
-   if (curs == curs_pencil) return 0;
-   if (curs == curs_cross) return 1;
-   if (curs == curs_hand) return 2;
-   if (curs == curs_zoomin) return 3;
-   if (curs == curs_zoomout) return 4;
-   return 5;   // curs is NULL
-}
-
-wxCursor* IndexToCursor(int i)
-{
-   if (i == 0) return curs_pencil;
-   if (i == 1) return curs_cross;
-   if (i == 2) return curs_hand;
-   if (i == 3) return curs_zoomin;
-   if (i == 4) return curs_zoomout;
-   return NULL;   // "No Change"
 }
 
 // -----------------------------------------------------------------------------
@@ -1716,8 +1610,9 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          wxGetApp().Yield(true);
          // waitingforclick becomes false if PatternView::OnMouseDown is called
          #ifdef __WXMAC__
-            // need to check if button down due to CaptureMouse bug in wxMac!!!
-            // test if bug fixed in wxMac 2.6.2???!!!
+            // need to check for click here because PatternView::OnMouseDown
+            // does not get called if click is in menu bar or another window;
+            // is this a CaptureMouse bug in wxMac???
             if ( waitingforclick && Button() ) {
                pt = ScreenToClient( wxGetMousePosition() );
                pastex = pt.x;
@@ -2972,8 +2867,6 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
 
 void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
 {
-   // Mac bug: we don't get this event if button released outside window,
-   // even if CaptureMouse has been called!!! soln: use Button() in OnDragTimer
    if (drawingcells || selectingcells || movingview) {
       StopDraggingMouse();
    }
@@ -3054,15 +2947,6 @@ void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
 {
    // called periodically while drawing/selecting/moving
-   #ifdef __WXMAC__
-      // check if button no longer down due to CaptureMouse bug in wxMac???!!!
-      // if bug fixed in 2.6.2 then no longer need to include Carbon.h???
-      if ( !Button() ) {
-         StopDraggingMouse();
-         return;
-      }
-   #endif
-
    wxPoint pt = ScreenToClient( wxGetMousePosition() );
    int x = pt.x;
    int y = pt.y;

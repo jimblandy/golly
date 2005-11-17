@@ -100,6 +100,7 @@ wxgolly.h wxview.h wxmain.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
+bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 wxgolly.h wxmain.h wxview.h wxutils.h wxhelp.h wxinfo.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
@@ -132,14 +133,14 @@ wxgolly.h wxutils.h wxprefs.h wxhelp.h
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
 bitmaps/open.xpm bitmaps/save.xpm bitmaps/play.xpm bitmaps/stop.xpm \
 bitmaps/hash.xpm bitmaps/draw.xpm bitmaps/select.xpm bitmaps/move.xpm \
-bitmaps/zoomin.xpm bitmaps/zoomout.xpm bitmaps/info.xpm bitmaps/new.xpm \
+bitmaps/info.xpm bitmaps/new.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp wxgolly.h \
-appicon.xpm bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
+appicon.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
 wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp

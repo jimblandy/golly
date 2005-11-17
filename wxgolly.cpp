@@ -35,23 +35,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"
 #endif
 
-#include "wx/image.h"         // for wxImage
-#include "wx/stdpaths.h"      // for wxStandardPaths
-#include "wx/sysopt.h"        // for wxSystemOptions
-
-#ifdef __WXMSW__
-   // app icons are loaded via .rc file
-#else
-   // application icon
-   #include "appicon.xpm"
-   // cursors
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursors from a bitmap file -- darn it!
-   #else
-      #include "bitmaps/zoomin_curs.xpm"
-      #include "bitmaps/zoomout_curs.xpm"
-   #endif
-#endif
+#include "wx/image.h"      // for wxImage
+#include "wx/stdpaths.h"   // for wxStandardPaths
+#include "wx/sysopt.h"     // for wxSystemOptions
 
 #include "lifealgo.h"
 #include "lifepoll.h"
@@ -65,11 +51,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxprefs.h"       // for GetPrefs
 
-// no need???!!!
-// using namespace std;
-
-#ifdef __WXMAC__
-   #include <Carbon/Carbon.h>
+#ifdef __WXMSW__
+   // app icons are loaded via .rc file
+#else
+   #include "appicon.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -221,62 +206,6 @@ void SetAppDirectory(const char *argv0)
 
 // -----------------------------------------------------------------------------
 
-void CreateCursors()
-{
-   curs_pencil = new wxCursor(wxCURSOR_PENCIL);
-   if (curs_pencil == NULL) Fatal("Failed to create pencil cursor!");
-
-   curs_cross = new wxCursor(wxCURSOR_CROSS);
-   if (curs_cross == NULL) Fatal("Failed to create cross cursor!");
-
-   curs_hand = new wxCursor(wxCURSOR_HAND);
-   if (curs_hand == NULL) Fatal("Failed to create hand cursor!");
-
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or from bits!!!
-      // don't use plus sign -- confusing with crosshair, and no minus sign for zoom out
-      // curs_zoomin = new wxCursor(wxCURSOR_MAGNIFIER);
-      curs_zoomin = new wxCursor(wxCURSOR_POINT_RIGHT);
-   #else
-      wxBitmap bitmap_zoomin = wxBITMAP(zoomin_curs);
-      wxImage image_zoomin = bitmap_zoomin.ConvertToImage();
-      image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
-      image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
-      curs_zoomin = new wxCursor(image_zoomin);
-   #endif
-   if (curs_zoomin == NULL) Fatal("Failed to create zoomin cursor!");
-
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or bits!!!
-      curs_zoomout = new wxCursor(wxCURSOR_POINT_LEFT);
-   #else
-      wxBitmap bitmap_zoomout = wxBITMAP(zoomout_curs);
-      wxImage image_zoomout = bitmap_zoomout.ConvertToImage();
-      image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
-      image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
-      curs_zoomout = new wxCursor(image_zoomout);
-   #endif
-   if (curs_zoomout == NULL) Fatal("Failed to create zoomout cursor!");
-
-   /* no longer use busy cursor when generating
-   #ifdef __WXMSW__
-      curs_busy = new wxCursor(wxCURSOR_ARROWWAIT);
-      if (curs_busy == NULL) Fatal("Failed to create busy cursor!");
-   #else
-      curs_busy = wxHOURGLASS_CURSOR;
-   #endif
-   */
-   
-   // set currcurs in case it's not done in NewPattern/LoadPattern
-   currcurs = curs_pencil;
-   
-   // default cursors for NewPattern/LoadPattern
-   newcurs = curs_pencil;
-   opencurs = curs_zoomin;
-}
-
-// -----------------------------------------------------------------------------
-
 void GollyApp::SetFrameIcon(wxFrame *frame)
 {
    // set frame icon
@@ -337,8 +266,8 @@ bool GollyApp::OnInit()
    wxImage::AddHandler(new wxGIFHandler);
    wxImage::AddHandler(new wxJPEGHandler);
    
-   CreateCursors();     // must be before GetPrefs
-   GetPrefs();          // get main window location and other user preferences
+   // get main window location and other user preferences
+   GetPrefs();
    
    // create main window (also inits viewptr and statusptr)
    mainptr = new MainFrame();

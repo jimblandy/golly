@@ -197,41 +197,4 @@ const char no_selection[]        = "There is no selection.";
 const char selection_too_big[]   = "Selection is outside +/- 10^9 boundary.";
 const char origin_restored[]     = "Origin restored.";
 
-// Following must be static -- they are used by GetPrefs() before the view window
-// is created.
-
-typedef enum {
-   TopLeft, TopRight, BottomRight, BottomLeft, Middle
-} paste_location;
-
-typedef enum {
-   Copy, Or, Xor
-} paste_mode;
-
-extern paste_location plocation;    // location of cursor in paste rectangle
-extern paste_mode pmode;            // logical paste mode
-
-// get/set location of cursor relative to paste rectangle
-const char* GetPasteLocation();
-void SetPasteLocation(const char *s);
-
-// get/set paste mode (copy, or, xor)
-const char* GetPasteMode();
-void SetPasteMode(const char *s);
-
-extern wxCursor *currcurs;          // set to one of the following cursors
-extern wxCursor *curs_pencil;       // for drawing cells
-extern wxCursor *curs_cross;        // for selecting cells
-extern wxCursor *curs_hand;         // for moving view by dragging
-extern wxCursor *curs_zoomin;       // for zooming in to a clicked cell
-extern wxCursor *curs_zoomout;      // for zooming out from a clicked cell
-
-// convert cursor to string and vice versa
-const char* CursorToString(wxCursor *curs);
-wxCursor* StringToCursor(const char *s);
-
-// convert cursor to zero-based index and vice versa
-int CursorToIndex(wxCursor *curs);
-wxCursor* IndexToCursor(int i);
-
 #endif
