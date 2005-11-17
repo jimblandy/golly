@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"
 
-// Define a child window for viewing patterns:
+// Define a child window for viewing and editing patterns:
 
 class PatternView : public wxWindow
 {
@@ -71,6 +71,10 @@ public:
    // return true if given screen position is in viewport
    bool PointInView(int x, int y);
 
+   // display functions
+   bool GridVisible();
+   bool SelectionVisible(wxRect *visrect);
+
    // view functions
    void ZoomOut();
    void ZoomIn();
@@ -103,6 +107,7 @@ public:
    bigint selright;
    bigint originy;               // new X coord set by ChangeOrigin
    bigint originx;               // new Y coord set by ChangeOrigin
+   wxRect pasterect;             // area to be pasted
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -128,15 +133,6 @@ private:
    void ProcessKey(int key, bool shiftdown);
    void ProcessControlClick(int x, int y);
    void ProcessClick(int x, int y, bool shiftdown);
-
-   // display functions
-   bool GridVisible();
-   void DrawGridLines(wxDC &dc, wxRect &r, int pmag);
-   void DrawPasteRect(wxDC &dc);
-   void InitSelection();
-   bool SelectionVisible(wxRect *visrect);
-   void DrawSelection(wxDC &dc, wxRect &rect);
-   void DisplayPattern(wxDC &dc);
    
    // edit functions
    void ShowDrawing();
@@ -185,7 +181,6 @@ private:
    bigint prevright;
    int drawstate;                // new cell state (0 or 1)
    int pastex, pastey;           // where user wants to paste clipboard pattern
-   wxRect pasterect;             // shows area to be pasted
    wxCursor *oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions
 };

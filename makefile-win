@@ -45,7 +45,7 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(
    $(OBJDIR)/lifepoll.obj
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxrule.obj \
    $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj \
-   $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
+   $(OBJDIR)/wxrender.obj $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -371,13 +371,19 @@ wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
 $(OBJDIR)/wxview.obj: wxview.cpp wxview.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxhelp.h
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxview.cpp
+
+$(OBJDIR)/wxrender.obj: wxrender.cpp wxrender.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxview.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrender.cpp
 
 $(OBJDIR)/wxmain.obj: wxmain.cpp wxmain.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
-wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h
+wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h wxrender.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxmain.cpp
 
 $(OBJDIR)/wxgolly.obj: wxgolly.cpp wxgolly.h \

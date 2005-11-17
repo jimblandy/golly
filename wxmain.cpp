@@ -71,6 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for ShowHelp
 #include "wxstatus.h"      // for StatusBar
 #include "wxview.h"        // for PatternView
+#include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -2367,16 +2368,19 @@ MainFrame::MainFrame()
                        ht > statusptr->statusht ? ht - statusptr->statusht : 0);
    statusptr->SetSize(0, 0, wd, statusptr->statusht);
 
-   generating = false;      // not generating pattern
-   fullscreen = false;      // not in full screen mode
-   showbanner = true;       // avoid first file clearing banner message
-   nopattupdate = false;    // enable pattern updates
-   savestart = false;       // no need to save starting pattern just yet
-   gen0algo = NULL;         // no starting pattern
-   warp = 0;                // initial speed setting
+   InitDrawingData();      // do this after viewport size has been set
+
+   generating = false;     // not generating pattern
+   fullscreen = false;     // not in full screen mode
+   showbanner = true;      // avoid first file clearing banner message
+   nopattupdate = false;   // enable pattern updates
+   savestart = false;      // no need to save starting pattern just yet
+   gen0algo = NULL;        // no starting pattern
+   warp = 0;               // initial speed setting
 }
 
 MainFrame::~MainFrame()
 {
    delete onetimer;
+   DestroyDrawingData();
 }

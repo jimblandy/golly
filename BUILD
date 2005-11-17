@@ -56,9 +56,11 @@ wxmain.*       - Implements the main window.
 wxview.*       - Viewport for displaying and editing patterns.
                  ProcessKey() processes keyboard shortcuts.
                  ProcessClick() processes mouse clicks.
-                 DisplayPattern() draws the pattern, grid lines, etc.
 
-wxstatus.*     - Status bar.
+wxrender.*     - Rendering routines for viewport.
+                 DrawView() draws the pattern, grid lines, etc.
+
+wxstatus.*     - Status bar at top of main window.
                  DrawStatusBar() shows gen count, pop count, etc.
                  DisplayMessage() shows message in bottom line.
 
