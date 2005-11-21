@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for ShowHelp
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxrender.h"      // for DrawView, DrawSelection
+#include "wxrender.h"      // for DrawView, DrawSelection, CreatePasteImage
 #include "wxview.h"
 
 #ifdef __WXMAC__
@@ -1089,44 +1089,39 @@ void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
 {
    int x, y, pastewd, pasteht;
    int mag = currview.getmag();
-   int cellsize = 1 << mag;
-   if (mag >= 0) {
-      x = pastex - (pastex % cellsize);
-      y = pastey - (pastey % cellsize);
-      // if wd or ht are large then we need to avoid overflow but still
-      // ensure that rect edges won't be seen
-      bigint viswd = (currview.getwidth() + 1) >> mag;
-      bigint visht = (currview.getheight() + 1) >> mag;
-      // we use twice viewport wd/ht in case cursor is in middle of pasterect
-      viswd.mul_smallint(2);
-      visht.mul_smallint(2);
-      pastewd = (wd <= viswd) ? wd.toint() << mag : 2*currview.getwidth() + 2;
-      pasteht = (ht <= visht) ? ht.toint() << mag : 2*currview.getheight() + 2;
+   
+   // find cell coord of current paste cursor position
+   pair<bigint, bigint> pcell = currview.at(pastex, pastey);
+
+   // determine bottom right cell
+   bigint right = pcell.first;     right += wd;    right -= 1;
+   bigint bottom = pcell.second;   bottom += ht;   bottom -= 1;
+   
+   // best to use same method as in SelectionVisible
+   pair<int,int> lt = currview.screenPosOf(pcell.first, pcell.second, curralgo);
+   pair<int,int> rb = currview.screenPosOf(right, bottom, curralgo);
+
+   // correct for mag if needed
+   if (mag > 0) {
+      rb.first += (1 << mag) - 1;
+      rb.second += (1 << mag) - 1;
       if (mag > 1) {
-         pastewd--;
-         pasteht--;
-      }
-   } else {
-      // mag < 0
-      x = pastex;
-      y = pastey;
-      // following results in too small a rect???!!!
-      pastewd = wd.toint() >> -mag;
-      pasteht = ht.toint() >> -mag;      
-      if (pastewd <= 0) {
-         pastewd = 1;
-      } else if (pastewd > 2*currview.getwidth()) {
-         // avoid DrawRectangle problem on Mac (QD rect wd should not exceed 32K)
-         pastewd = 2*currview.getwidth() + 1;
-      }
-      if (pasteht <= 0) {
-         pasteht = 1;
-      } else if (pasteht > 2*currview.getheight()) {
-         // avoid DrawRectangle problem on Mac (QD rect ht should not exceed 32K)
-         pasteht = 2*currview.getheight() + 1;
+         // avoid covering gaps
+         rb.first--;
+         rb.second--;
       }
    }
+   x = lt.first;
+   y = lt.second;
+   pastewd = rb.first - lt.first + 1;
+   pasteht = rb.second - lt.second + 1;
+
+   // this should never happen but play safe
+   if (pastewd <= 0) pastewd = 1;
+   if (pasteht <= 0) pasteht = 1;
+   
    rect = wxRect(x, y, pastewd, pasteht);
+   int cellsize = 1 << mag;
    int xoffset, yoffset;
    switch (plocation) {
       case TopLeft:
@@ -1191,6 +1186,12 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       wxSetCursor(*currcurs);
       SetCursor(*currcurs);
 
+      // create image for drawing pattern to be pasted; note that given box
+      // is not necessarily the minimal bounding box because clipboard pattern
+      // might have blank borders (in fact it could be empty)
+      wxRect bbox = wxRect(ileft, itop, wd.toint(), ht.toint());
+      CreatePasteImage(tempalgo, bbox);
+
       waitingforclick = true;
       EnableAllMenus(false);           // disable all menu items
       mainptr->UpdateToolBar(false);   // disable all tool bar buttons
@@ -1223,10 +1224,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          }
          wxMilliSleep(10);             // don't hog CPU
          wxGetApp().Yield(true);
-         // waitingforclick becomes false if PatternView::OnMouseDown is called
+         // waitingforclick becomes false if OnMouseDown is called
          #ifdef __WXMAC__
-            // need to check for click here because PatternView::OnMouseDown
-            // does not get called if click is in menu bar or another window;
+            // need to check for click here because OnMouseDown does not
+            // get called if click is in menu bar or in another window;
             // is this a CaptureMouse bug in wxMac???
             if ( waitingforclick && Button() ) {
                pt = ScreenToClient( wxGetMousePosition() );
@@ -1240,6 +1241,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
 
       ReleaseMouse();
       EnableAllMenus(true);
+      DestroyPasteImage();
    
       // restore cursor
       currcurs = savecurs;
@@ -2717,6 +2719,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    selectingcells = false;    // selecting cells due to dragging mouse?
    movingview = false;        // moving view due to dragging mouse?
    waitingforclick = false;   // waiting for user to click?
+   nopattupdate = false;      // enable pattern updates
 
    oldzoom = NULL;
    originy = 0;

@@ -101,6 +101,7 @@ public:
    bool drawingcells;            // drawing cells due to dragging mouse?
    bool selectingcells;          // selecting cells due to dragging mouse?
    bool movingview;              // moving view due to dragging mouse?
+   bool nopattupdate;            // disable pattern updates?
    bigint seltop;                // edges of current selection
    bigint selbottom;
    bigint selleft;

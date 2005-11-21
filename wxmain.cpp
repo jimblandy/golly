@@ -63,14 +63,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "readpattern.h"
 #include "writepattern.h"
 
-#include "wxgolly.h"       // so wxGetApp returns reference to GollyApp
+#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
 #include "wxutils.h"       // for Warning, Fatal, etc
 #include "wxprefs.h"       // for SavePrefs, etc
 #include "wxrule.h"        // for ChangeRule
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
-#include "wxstatus.h"      // for StatusBar
-#include "wxview.h"        // for PatternView
+#include "wxstatus.h"      // for statusptr->...
+#include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxmain.h"
 
@@ -579,7 +579,7 @@ void MainFrame::LoadPattern(const char *newtitle)
       MySetTitle(wtitle);
    }
 
-   nopattupdate = true;
+   viewptr->nopattupdate = true;
    const char *err = readpattern(currfile, *curralgo);
    if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
       hashing = true;
@@ -596,7 +596,7 @@ void MainFrame::LoadPattern(const char *newtitle)
       CreateUniverse();
       err = readpattern(currfile, *curralgo);
    }
-   nopattupdate = false;
+   viewptr->nopattupdate = false;
    if (err) Warning(err);
 
    if (newtitle) {
@@ -935,6 +935,7 @@ void MainFrame::SavePattern()
          return;
       }
       SetCurrentFile( savedlg.GetPath() );
+      AddRecentFile( savedlg.GetPath() );
       SetWindowTitle( savedlg.GetFilename() );
       const char *err = writepattern(savedlg.GetPath(), *curralgo, format,
                                      itop, ileft, ibottom, iright);
@@ -2373,7 +2374,6 @@ MainFrame::MainFrame()
    generating = false;     // not generating pattern
    fullscreen = false;     // not in full screen mode
    showbanner = true;      // avoid first file clearing banner message
-   nopattupdate = false;   // enable pattern updates
    savestart = false;      // no need to save starting pattern just yet
    gen0algo = NULL;        // no starting pattern
    warp = 0;               // initial speed setting

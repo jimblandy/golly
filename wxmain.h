@@ -89,7 +89,6 @@ public:
    bool generating;              // currently generating pattern?
    bool fullscreen;              // in full screen mode?
    bool showbanner;              // showing banner message?
-   bool nopattupdate;            // disable pattern updates?
    bool savestart;               // need to save starting pattern?
 
 private:

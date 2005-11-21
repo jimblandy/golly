@@ -36,22 +36,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for mainptr, viewptr, statusptr
+#include "wxgolly.h"       // for viewptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal, FillRect
-#include "wxprefs.h"       // for blackcells, showgridlines, mingridmag
-#include "wxmain.h"        // for mainptr->...
+#include "wxprefs.h"       // for blackcells, showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"
 
 // -----------------------------------------------------------------------------
 
-// current device context for viewport;
-// used in wx_render routines so make this static data
-wxDC *currdc;
-
-// current viewport width and height (needed in DrawStretchedBitmap)
-int currwd, currht;
+// static data used in wx_render routines
+wxDC *currdc;              // current device context for viewport
+int currwd, currht;        // current width and height of viewport
 
 // bitmap for drawing magnified cells (see DrawStretchedBitmap)
 wxBitmap magmap;
@@ -71,11 +67,35 @@ wxPen pen_verydark   (wxColour(0x40,0x40,0x40));
 wxPen pen_notsodark  (wxColour(0x70,0x70,0x70));
 
 // selection image (initialized in InitDrawingData)
-#ifndef __WXX11__                // wxX11's Blit doesn't support alpha channel
-   wxImage selimage;             // semi-transparent overlay for selections
-   wxBitmap *selbitmap;          // selection bitmap
-   int selbitmapwd;              // width of selection bitmap
-   int selbitmapht;              // height of selection bitmap
+#ifdef __WXX11__
+   // wxX11's Blit doesn't support alpha channel
+#else
+   wxImage selimage;       // translucent overlay for drawing selections
+   wxBitmap *selbitmap;    // selection bitmap
+   int selimagewd;         // width of selection image
+   int selimageht;         // height of selection image
+#endif
+
+// paste image (initialized in CreatePasteImage)
+wxImage pasteimage;        // translucent image for drawing paste pattern
+wxBitmap *pastebitmap;     // paste bitmap
+int pimagewd;              // width of paste image
+int pimageht;              // height of paste image
+int prectwd;               // must match viewptr->pasterect.width
+int prectht;               // must match viewptr->pasterect.height
+int pastemag;              // must match current viewport's scale
+int cvwd, cvht;            // must match current viewport's width and height
+bool pcolor;               // must match blackcells flag
+paste_location pasteloc;   // must match plocation
+lifealgo* pastealgo;       // universe containing paste pattern
+wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
+
+// make this a user preference on Mac/Win???
+// problem: if usemask is false then translucent image on Win is not correct!!!
+#ifdef __WXX11__
+   bool usemask = true;    // no alpha channel support so must use mask
+#else
+   bool usemask = true;    // use masked bitmap instead of translucent image?
 #endif
 
 // -----------------------------------------------------------------------------
@@ -106,7 +126,7 @@ void InitDrawingData()
    #ifdef __WXX11__
       // wxX11's Blit doesn't support alpha channel
    #else
-      // create semi-transparent selection image
+      // create translucent selection image
       if ( !selimage.Create(1,1) )
          Fatal("Failed to create selection image!");
       selimage.SetRGB(0, 0, 75, 175, 0);     // darkish green
@@ -127,8 +147,8 @@ void InitDrawingData()
       selimage.Rescale(wd, ht);
       selbitmap = new wxBitmap(selimage);
       if (selbitmap == NULL) Warning("Not enough memory for selection image!");
-      selbitmapwd = wd;
-      selbitmapht = ht;
+      selimagewd = wd;
+      selimageht = ht;
    #endif
 }
 
@@ -136,7 +156,9 @@ void InitDrawingData()
 
 void DestroyDrawingData()
 {
-   #ifndef __WXX11__
+   #ifdef __WXX11__
+      // wxX11 doesn't support alpha channel
+   #else
       selimage.Destroy();
       if (selbitmap) delete selbitmap;
    #endif
@@ -145,70 +167,6 @@ void DestroyDrawingData()
    pen_dkgray.~wxPen();
    pen_verydark.~wxPen();
    pen_notsodark.~wxPen();
-}
-
-// -----------------------------------------------------------------------------
-
-void CheckSelectionImage(int viewwd, int viewht)
-{
-   #ifdef __WXX11__
-      // avoid compiler warnings
-      if ( viewwd == viewht ) {}
-   #else
-      // wxX11's Blit doesn't support alpha channel
-      if ( viewwd != selbitmapwd || viewht != selbitmapht ) {
-         // rescale selection image and create new bitmap
-         selimage.Rescale(viewwd, viewht);
-         if (selbitmap) delete selbitmap;
-         selbitmap = new wxBitmap(selimage);
-         // don't check if selbitmap is NULL here -- done in DrawSelection
-         selbitmapwd = viewwd;
-         selbitmapht = viewht;
-      }
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawSelection(wxDC &dc, wxRect &rect)
-{
-   #ifdef __WXX11__
-      // wxX11's Blit doesn't support alpha channel so we just invert rect
-      dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-   #else
-      if (selbitmap) {
-         // draw semi-transparent green rect
-         wxMemoryDC memDC;
-         memDC.SelectObject(*selbitmap);
-         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memDC, 0, 0, wxCOPY, true);
-      } else {
-         // probably not enough memory
-         wxBell();
-      }
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawPasteRect(wxDC &dc)
-{
-   dc.SetPen(*wxRED_PEN);
-   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-
-   dc.DrawRectangle(viewptr->pasterect);
-   
-   dc.SetFont(*statusptr->GetStatusFont());
-   dc.SetBackgroundMode(wxSOLID);
-   dc.SetTextForeground(*wxRED);
-   dc.SetTextBackground(*wxWHITE);
-
-   const char *pmodestr = GetPasteMode();
-   int pmodex = viewptr->pasterect.x + 2;
-   int pmodey = viewptr->pasterect.y - 4;
-   dc.DrawText(pmodestr, pmodex, pmodey - statusptr->GetTextAscent());
-   
-   dc.SetBrush(wxNullBrush);
-   dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------
@@ -319,86 +277,6 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
-{
-   int pmag = 1 << currview.getmag();
-   int h, v, i, topbold, leftbold;
-
-   if (showboldlines) {
-      // ensure that origin cell stays next to bold lines;
-      // ie. bold lines scroll when pattern is scrolled
-      pair<bigint, bigint> lefttop = currview.at(0, 0);
-      leftbold = lefttop.first.mod_smallint(boldspacing);
-      topbold = lefttop.second.mod_smallint(boldspacing);
-      if (viewptr->originx != bigint::zero) {
-         leftbold -= viewptr->originx.mod_smallint(boldspacing);
-      }
-      if (viewptr->originy != bigint::zero) {
-         topbold -= viewptr->originy.mod_smallint(boldspacing);
-      }
-      if (mathcoords) topbold--;   // show origin cell above bold line
-   } else {
-      // avoid spurious gcc warning
-      topbold = leftbold = 0;
-   }
-
-   // draw all plain lines first
-   if (blackcells) {
-      dc.SetPen(pen_ltgray);
-   } else {
-      dc.SetPen(pen_verydark);
-   }   
-   i = showboldlines ? topbold : 1;
-   v = -1;
-   while (true) {
-      v += pmag;
-      if (v >= r.height) break;
-      if (showboldlines) i++;
-      if (i % boldspacing != 0 && v >= r.y && v < r.y + r.height)
-         dc.DrawLine(r.x, v, r.GetRight() + 1, v);
-   }
-   i = showboldlines ? leftbold : 1;
-   h = -1;
-   while (true) {
-      h += pmag;
-      if (h >= r.width) break;
-      if (showboldlines) i++;
-      if (i % boldspacing != 0 && h >= r.x && h < r.x + r.width)
-         dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
-   }
-
-   if (showboldlines) {
-      // overlay bold lines
-      if (blackcells) {
-         dc.SetPen(pen_dkgray);
-      } else {
-         dc.SetPen(pen_notsodark);
-      }
-      i = topbold;
-      v = -1;
-      while (true) {
-         v += pmag;
-         if (v >= r.height) break;
-         i++;
-         if (i % boldspacing == 0 && v >= r.y && v < r.y + r.height)
-            dc.DrawLine(r.x, v, r.GetRight() + 1, v);
-      }
-      i = leftbold;
-      h = -1;
-      while (true) {
-         h += pmag;
-         if (h >= r.width) break;
-         i++;
-         if (i % boldspacing == 0 && h >= r.x && h < r.x + r.width)
-            dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
-      }
-   }
-   
-   dc.SetPen(*wxBLACK_PEN);
-}
-
-// -----------------------------------------------------------------------------
-
 class wx_render : public liferender
 {
 public:
@@ -439,33 +317,465 @@ wx_render renderer;     // create instance
 
 // -----------------------------------------------------------------------------
 
-void DrawView(wxDC &dc, viewport &currview)
+void CheckSelectionImage(int viewwd, int viewht)
 {
-   currdc = &dc;     // for use in blit and killrect
-
-   // set foreground and background colors for DrawBitmap calls
-   #ifdef __WXMSW__
-   // use opposite bit meaning on Windows -- sigh
-   if ( !blackcells ) {
+   #ifdef __WXX11__
+      // wxX11 doesn't support alpha channel;
+      // avoid compiler warnings
+      if ( viewwd == viewht ) {}
    #else
-   if ( blackcells ) {
+      if ( viewwd != selimagewd || viewht != selimageht ) {
+         // rescale selection image and create new bitmap
+         selimage.Rescale(viewwd, viewht);
+         if (selbitmap) delete selbitmap;
+         selbitmap = new wxBitmap(selimage);
+         // don't check if selbitmap is NULL here -- done in DrawSelection
+         selimagewd = viewwd;
+         selimageht = viewht;
+      }
    #endif
-      dc.SetTextForeground(*wxBLACK);
-      dc.SetTextBackground(*wxWHITE);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawSelection(wxDC &dc, wxRect &rect)
+{
+   #ifdef __WXX11__
+      // wxX11's Blit doesn't support alpha channel so we just invert rect
+      dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+   #else
+      if (selbitmap) {
+         // draw translucent green rect
+         wxMemoryDC memdc;
+         memdc.SelectObject(*selbitmap);
+         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      }
+   #endif
+}
+
+// -----------------------------------------------------------------------------
+
+void CreatePasteImage(lifealgo *palgo, wxRect &bbox)
+{
+   pastealgo = palgo;      // save for use in CheckPasteImage
+   pastebbox = bbox;       // ditto
+   
+   if (!usemask) {
+      // create translucent image for drawing given pattern
+      if ( !pasteimage.Create(1,1) )
+         Fatal("Failed to create paste image!");
+      // color here doesn't matter coz we paint entire image
+      // pasteimage.SetRGB(0, 0, 128, 128, 128);
+      pasteimage.SetAlpha();                       // add alpha channel
+      if ( pasteimage.HasAlpha() ) {
+         pasteimage.SetAlpha(0, 0, 128);           // 50% opaque
+      } else {
+         Warning("Paste image has no alpha channel!");
+      }
+   }
+   pastebitmap = NULL;
+   prectwd = -1;           // force CheckPasteImage to update paste image
+   prectht = -1;
+   pimagewd = -1;          // force CheckPasteImage to rescale paste image
+   pimageht = -1;
+   pastemag = viewptr->GetMag();
+}
+
+// -----------------------------------------------------------------------------
+
+void DestroyPasteImage()
+{
+   if (!usemask) pasteimage.Destroy();
+   if (pastebitmap) delete pastebitmap;
+}
+
+// -----------------------------------------------------------------------------
+
+int PixelsToCells(int pixels) {
+   // convert given # of pixels to corresponding # of cells
+   int mag = viewptr->GetMag();
+   if (mag >= 0) {
+      int cellsize = 1 << mag;
+      return (pixels + cellsize - 1) / cellsize;
    } else {
-      dc.SetTextForeground(*wxWHITE);
-      dc.SetTextBackground(*wxBLACK);
+      // mag < 0; no need to worry about overflow
+      return pixels << -mag;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CheckPasteImage(viewport &currview)
+{
+   // paste image needs to be updated if pasterect size changed
+   // or viewport size changed or cell colors changed or plocation changed
+   if ( prectwd != viewptr->pasterect.width ||
+        prectht != viewptr->pasterect.height ||
+        cvwd != currview.getwidth() ||
+        cvht != currview.getheight() ||
+        pcolor != blackcells ||
+        pasteloc != plocation
+      ) {
+      prectwd = viewptr->pasterect.width;
+      prectht = viewptr->pasterect.height;
+      pastemag = currview.getmag();
+      cvwd = currview.getwidth();
+      cvht = currview.getheight();
+      pcolor = blackcells;
+      pasteloc = plocation;
+
+      // calculate size of paste image; we could just set it to pasterect size
+      // but that would be slow and wasteful for large pasterects, so we use
+      // the following code (the only tricky bit is when plocation = Middle)
+      int pastewd = prectwd;
+      int pasteht = prectht;
+      
+      if (pastewd <= 2 || pasteht <= 2) {
+         // no need to draw paste image because border lines will cover it
+         if (pastebitmap) delete pastebitmap;
+         pastebitmap = NULL;
+         if (pimagewd != 1 || pimageht != 1) {
+            pimagewd = 1;
+            pimageht = 1;
+            if (!usemask) {
+               // wxMac bug??? Rescale values must change to avoid loss of alpha channel
+               pasteimage.Rescale(pimagewd, pimageht);
+            }
+         }
+         return;
+      }
+      
+      wxRect cellbox = pastebbox;
+      if (pastewd > currview.getwidth() || pasteht > currview.getheight()) {
+         if (plocation == Middle) {
+            // temporary viewport may need to be TWICE size of current viewport
+            if (pastewd > 2 * currview.getwidth()) pastewd = 2 * currview.getwidth();
+            if (pasteht > 2 * currview.getheight()) pasteht = 2 * currview.getheight();
+            if (pastemag > 0) {
+               // make sure pastewd/ht don't have partial cells
+               int cellsize = 1 << pastemag;
+               if ((pastewd + 1) % cellsize > 0)
+                  pastewd += cellsize - ((pastewd + 1) % cellsize);
+               if ((pasteht + 1) % cellsize != 0)
+                  pasteht += cellsize - ((pasteht + 1) % cellsize);
+            }
+            if (prectwd > pastewd) {
+               // make sure prectwd - pastewd is an even number of *cells*
+               // to simplify shifting in DrawPasteImage
+               if (pastemag > 0) {
+                  int cellsize = 1 << pastemag;
+                  int celldiff = (prectwd - pastewd) / cellsize;
+                  if (celldiff & 1) pastewd += cellsize;
+               } else {
+                  if ((prectwd - pastewd) & 1) pastewd++;
+               }
+            }
+            if (prectht > pasteht) {
+               // make sure prectht - pasteht is an even number of *cells*
+               // to simplify shifting in DrawPasteImage
+               if (pastemag > 0) {
+                  int cellsize = 1 << pastemag;
+                  int celldiff = (prectht - pasteht) / cellsize;
+                  if (celldiff & 1) pasteht += cellsize;
+               } else {
+                  if ((prectht - pasteht) & 1) pasteht++;
+               }
+            }
+         } else {
+            // plocation is at a corner of pasterect so temporary viewport
+            // may need to be size of current viewport
+            if (pastewd > currview.getwidth()) pastewd = currview.getwidth();
+            if (pasteht > currview.getheight()) pasteht = currview.getheight();
+            if (pastemag > 0) {
+               // make sure pastewd/ht don't have partial cells
+               int cellsize = 1 << pastemag;
+               if ((pastewd + 1) % cellsize > 0)
+                  pastewd += cellsize - ((pastewd + 1) % cellsize);
+               if ((pasteht + 1) % cellsize != 0)
+                  pasteht += cellsize - ((pasteht + 1) % cellsize);
+            }
+            cellbox.width = PixelsToCells(pastewd);
+            cellbox.height = PixelsToCells(pasteht);
+            if (plocation == TopLeft) {
+               // show top left corner of pasterect
+               cellbox.x = pastebbox.x;
+               cellbox.y = pastebbox.y;
+            } else if (plocation == TopRight) {
+               // show top right corner of pasterect
+               cellbox.x = pastebbox.x + pastebbox.width - cellbox.width;
+               cellbox.y = pastebbox.y;
+            } else if (plocation == BottomRight) {
+               // show bottom right corner of pasterect
+               cellbox.x = pastebbox.x + pastebbox.width - cellbox.width;
+               cellbox.y = pastebbox.y + pastebbox.height - cellbox.height;
+            } else { // plocation == BottomLeft
+               // show bottom left corner of pasterect
+               cellbox.x = pastebbox.x;
+               cellbox.y = pastebbox.y + pastebbox.height - cellbox.height;
+            }
+         }
+      }
+      
+      if (usemask) {
+         // delete old bitmap and corresponding mask, even if size hasn't changed
+         if (pastebitmap) delete pastebitmap;
+         pimagewd = pastewd;
+         pimageht = pasteht;
+         // create new bitmap (-1 means screen depth)
+         pastebitmap = new wxBitmap(pimagewd, pimageht, -1);
+         // mask will be created after drawing pattern into bitmap
+      } else if ( pimagewd != pastewd || pimageht != pasteht ) {
+         // rescale paste image and create new bitmap
+         pimagewd = pastewd;
+         pimageht = pasteht;
+         pasteimage.Rescale(pimagewd, pimageht);
+         if (pastebitmap) delete pastebitmap;
+         pastebitmap = new wxBitmap(pasteimage);
+      }
+      
+      if (pastebitmap) {
+         // create temporary viewport and draw pattern into pastebitmap
+         // for later use in DrawPasteImage
+         viewport tempview(pimagewd, pimageht);
+         int midx, midy;
+         if (pastemag > 0) {
+            midx = cellbox.x + cellbox.width / 2;
+            midy = cellbox.y + cellbox.height / 2;
+         } else {
+            midx = cellbox.x + (cellbox.width - 1) / 2;
+            midy = cellbox.y + (cellbox.height - 1) / 2;
+         }
+         tempview.setpositionmag(midx, midy, pastemag);
+         
+         wxMemoryDC pattdc;
+         pattdc.SelectObject(*pastebitmap);
+         
+         // set foreground and background colors for DrawBitmap calls
+         #ifdef __WXMSW__
+            // use opposite meaning on Windows -- sheesh
+            if (blackcells || usemask) {
+               pattdc.SetTextForeground(*wxWHITE);
+               pattdc.SetTextBackground(*wxRED);
+            } else {
+               pattdc.SetTextForeground(*wxBLACK);
+               pattdc.SetTextBackground(*wxRED);
+            }
+         #else
+            if (blackcells || usemask) {
+               pattdc.SetTextForeground(*wxRED);
+               pattdc.SetTextBackground(*wxWHITE);
+            } else {
+               pattdc.SetTextForeground(*wxRED);
+               pattdc.SetTextBackground(*wxBLACK);
+            }
+         #endif
+         
+         // temporarily turn off grid lines for DrawStretchedBitmap
+         bool saveshow = showgridlines;
+         showgridlines = false;
+         
+         currdc = &pattdc;
+         currwd = tempview.getwidth();
+         currht = tempview.getheight();
+         pastealgo->draw(tempview, renderer);
+         
+         showgridlines = saveshow;
+
+         if (usemask) {
+            // add new mask to pastebitmap
+            #ifdef __WXMSW__
+               // temporarily change depth to avoid bug in wxMSW 2.6.0
+               int d = pastebitmap->GetDepth();
+               pastebitmap->SetDepth(1);
+               pastebitmap->SetMask( new wxMask(*pastebitmap,*wxWHITE) );
+               pastebitmap->SetDepth(d);
+            #else
+               // white background will be transparent
+               pastebitmap->SetMask( new wxMask(*pastebitmap,*wxWHITE) );
+            #endif
+         }
+      } else {
+         // give some indication that pastebitmap could not be created
+         wxBell();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawPasteImage(wxDC &dc, viewport &currview)
+{
+   if (pastebitmap) {
+      // draw paste image
+      wxMemoryDC memdc;
+      memdc.SelectObject(*pastebitmap);
+      wxRect r = viewptr->pasterect;
+      if (r.width > pimagewd || r.height > pimageht) {
+         // paste image is smaller than pasterect (which can't fit in currview)
+         // so shift image depending on plocation
+         switch (plocation) {
+            case TopLeft:
+               // no need to do any shifting
+               break;
+            case TopRight:
+               // shift image to top right corner of pasterect
+               r.x += r.width - pimagewd;
+               break;
+            case BottomRight:
+               // shift image to bottom right corner of pasterect
+               r.x += r.width - pimagewd;
+               r.y += r.height - pimageht;
+               break;
+            case BottomLeft:
+               // shift image to bottom left corner of pasterect
+               r.y += r.height - pimageht;
+               break;
+            case Middle:
+               // shift image to middle of pasterect; note that CheckPasteImage
+               // has ensured (r.width - pimagewd) and (r.height - pimageht)
+               // are an even number of *cells* if pastemag > 0
+               r.x += (r.width - pimagewd) / 2;
+               r.y += (r.height - pimageht) / 2;
+               break;
+         }
+      }
+      dc.Blit(r.x, r.y, pimagewd, pimageht, &memdc, 0, 0, wxCOPY, true);
    }
 
+   // now overlay border rectangle
+   dc.SetPen(*wxRED_PEN);
+   dc.SetBrush(*wxTRANSPARENT_BRUSH);
+
+   // if large rect then we need to avoid overflow because DrawRectangle
+   // has problems on Mac if given a size that exceeds 32K
+   wxRect r = viewptr->pasterect;
+   if (r.x < 0) { int diff = -1 - r.x;  r.x = -1;  r.width -= diff; }
+   if (r.y < 0) { int diff = -1 - r.y;  r.y = -1;  r.height -= diff; }
+   if (r.width > currview.getwidth()) r.width = currview.getwidth() + 2;
+   if (r.height > currview.getheight()) r.height = currview.getheight() + 2;
+   dc.DrawRectangle(r);
+   
+   if (r.y > 0) {
+      dc.SetFont(*statusptr->GetStatusFont());
+      dc.SetBackgroundMode(wxSOLID);
+      dc.SetTextForeground(*wxRED);
+      dc.SetTextBackground(*wxWHITE);
+      const char *pmodestr = GetPasteMode();
+      int pmodex = r.x + 2;
+      int pmodey = r.y - 4;
+      dc.DrawText(pmodestr, pmodex, pmodey - statusptr->GetTextAscent());
+   }
+   
+   dc.SetBrush(wxNullBrush);
+   dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
+{
+   int cellsize = 1 << currview.getmag();
+   int h, v, i, topbold, leftbold;
+
+   if (showboldlines) {
+      // ensure that origin cell stays next to bold lines;
+      // ie. bold lines scroll when pattern is scrolled
+      pair<bigint, bigint> lefttop = currview.at(0, 0);
+      leftbold = lefttop.first.mod_smallint(boldspacing);
+      topbold = lefttop.second.mod_smallint(boldspacing);
+      if (viewptr->originx != bigint::zero) {
+         leftbold -= viewptr->originx.mod_smallint(boldspacing);
+      }
+      if (viewptr->originy != bigint::zero) {
+         topbold -= viewptr->originy.mod_smallint(boldspacing);
+      }
+      if (mathcoords) topbold--;   // show origin cell above bold line
+   } else {
+      // avoid spurious gcc warning
+      topbold = leftbold = 0;
+   }
+
+   // draw all plain lines first
+   if (blackcells) {
+      dc.SetPen(pen_ltgray);
+   } else {
+      dc.SetPen(pen_verydark);
+   }   
+   i = showboldlines ? topbold : 1;
+   v = -1;
+   while (true) {
+      v += cellsize;
+      if (v >= r.height) break;
+      if (showboldlines) i++;
+      if (i % boldspacing != 0 && v >= r.y && v < r.y + r.height)
+         dc.DrawLine(r.x, v, r.GetRight() + 1, v);
+   }
+   i = showboldlines ? leftbold : 1;
+   h = -1;
+   while (true) {
+      h += cellsize;
+      if (h >= r.width) break;
+      if (showboldlines) i++;
+      if (i % boldspacing != 0 && h >= r.x && h < r.x + r.width)
+         dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+   }
+
+   if (showboldlines) {
+      // overlay bold lines
+      if (blackcells) {
+         dc.SetPen(pen_dkgray);
+      } else {
+         dc.SetPen(pen_notsodark);
+      }
+      i = topbold;
+      v = -1;
+      while (true) {
+         v += cellsize;
+         if (v >= r.height) break;
+         i++;
+         if (i % boldspacing == 0 && v >= r.y && v < r.y + r.height)
+            dc.DrawLine(r.x, v, r.GetRight() + 1, v);
+      }
+      i = leftbold;
+      h = -1;
+      while (true) {
+         h += cellsize;
+         if (h >= r.width) break;
+         i++;
+         if (i % boldspacing == 0 && h >= r.x && h < r.x + r.width)
+            dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+      }
+   }
+   
+   dc.SetPen(*wxBLACK_PEN);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawView(wxDC &dc, viewport &currview)
+{
    wxRect r;
 
-   if (mainptr->nopattupdate) {
-      // don't update pattern, just fill background
+   if ( viewptr->nopattupdate ) {
+      // don't draw pattern, just fill background
       r = wxRect(0, 0, currview.getwidth(), currview.getheight());
       FillRect(dc, r, blackcells ? *wxWHITE_BRUSH : *wxBLACK_BRUSH);
    } else {
-      // update the pattern via a sequence of blit and killrect calls;
-      // set currwd and currht for use in DrawStretchedBitmap
+      // set foreground and background colors for DrawBitmap calls
+      #ifdef __WXMSW__
+      // use opposite meaning on Windows
+      if ( !blackcells ) {
+      #else
+      if ( blackcells ) {
+      #endif
+         dc.SetTextForeground(*wxBLACK);
+         dc.SetTextBackground(*wxWHITE);
+      } else {
+         dc.SetTextForeground(*wxWHITE);
+         dc.SetTextBackground(*wxBLACK);
+      }
+      // draw pattern using a sequence of blit and killrect calls
+      currdc = &dc;
       currwd = currview.getwidth();
       currht = currview.getheight();
       curralgo->draw(currview, renderer);
@@ -482,6 +792,15 @@ void DrawView(wxDC &dc, viewport &currview)
    }
    
    if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
-      DrawPasteRect(dc);
+      // this test is not really necessary, but it avoids unnecessary
+      // drawing of the paste image when user changes scale
+      if ( pastemag != viewptr->GetMag() &&
+           prectwd == viewptr->pasterect.width && prectwd > 1 &&
+           prectht == viewptr->pasterect.height && prectht > 1 ) {
+         // don't draw old paste image, a new one is coming very soon
+      } else {
+         CheckPasteImage(currview);
+         DrawPasteImage(dc, currview);
+      }
    }
 }

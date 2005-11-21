@@ -81,7 +81,6 @@ User suggestions:
   scrolling more than 1 screenful at a time.
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
-- Display a ghost image when pasting pattern.
 - Allow diagonal selection rectangles.
 
 [Dave Greene]

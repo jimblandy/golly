@@ -1412,7 +1412,7 @@ const char *hlifealgo::readmacrocell(char *line) {
          for (p=line; *p > ' '; p++) {
             switch(*p) {
 case '*':      if (x > 7 || y < 0)
-                  return "! illegal coordinates in readmacrocell" ;
+                  return "Illegal coordinates in readmacrocell." ;
                if (x < 4)
                   if (y < 4)
                      lsw |= 1 << (3 - (x & 3) + 4 * (y & 3)) ;
@@ -1429,7 +1429,7 @@ case '.':      x++ ;
 case '$':      x = 0 ;
                y-- ;
                break ;
-default:       return "! saw illegal character in readmacrocell" ;
+default:       return "Illegal character in readmacrocell." ;
             }
          }
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
@@ -1448,17 +1448,20 @@ default:       return "! saw illegal character in readmacrocell" ;
       } else {
          n = sscanf(line, "%d %d %d %d %d %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n == 0)
+            // AKT: shouldn't this be an error???!!!
             continue ;
          if (n < 5)
-            lifefatal("Parse error in readmacrocell") ;
+            // AKT: best not to use lifefatal here because user won't see any
+            // error message when reading clipboard data starting with "[..."
+            return "Parse error in readmacrocell." ;
          if (d < 4)
-            return "! Oops; bad depth in readmacrocell" ;
+            return "Oops; bad depth in readmacrocell." ;
          ind[0] = zeronode(d-2) ; /* allow zeros to work right */
          if (nw < 0 || nw >= i || ind[nw] == 0 ||
              ne < 0 || ne >= i || ind[ne] == 0 ||
              sw < 0 || sw >= i || ind[sw] == 0 ||
              se < 0 || se >= i || ind[se] == 0) {
-            return "! Node out of range in readmacrocell" ;
+            return "Node out of range in readmacrocell." ;
          }
          root = ind[i++] = find_node(ind[nw], ind[ne], ind[sw], ind[se]) ;
          depth = d - 1 ;

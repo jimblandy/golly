@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXRENDER_H_
 #define _WXRENDER_H_
 
+class lifealgo;
+
 // Routines for rendering the viewport window:
 
 // Initialize drawing data (such as the image used to draw selections).
@@ -36,6 +38,14 @@ void DrawView(wxDC &dc, viewport &currview);
 // Draw the translucent selection image in the given rectangle.
 // We need to export this for drawing individual cells.
 void DrawSelection(wxDC &dc, wxRect &rect);
+
+// Create an image used to draw the given paste pattern.
+// The given bounding box is not necessarily the *minimal* bounding box because
+// the paste pattern might have blank borders (in fact it could be empty).
+void CreatePasteImage(lifealgo *pastealgo, wxRect &bbox);
+
+// Destroy the image created above (call when user clicks to end paste).
+void DestroyPasteImage();
 
 // Call this when the main window is destroyed.
 void DestroyDrawingData();

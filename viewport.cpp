@@ -120,6 +120,8 @@ pair<double, double> viewport::atf(int x, int y) {
  *
  *   If the pixel is offscreen, it will return a value that is also
  *   offscreen, but only by one pixel.
+ *   AKT: This code has been commented out because it makes it
+ *   harder to calculate an accurate paste rectangle.
  */
 pair<int,int> viewport::screenPosOf(bigint x, bigint y, lifealgo *algo) {
    if (mag < 0) {
@@ -137,18 +139,25 @@ pair<int,int> viewport::screenPosOf(bigint x, bigint y, lifealgo *algo) {
 
    int xx = 0 ;
    int yy = 0 ;
+   
+/* AKT: don't do this clipping
    if (x < 0)
      xx = -1 ;
    else if (x > getxmax())
      xx = getxmax() + 1 ;
    else
+*/
      xx = x.toint() ;
+     
+/* AKT: don't do this clipping
    if (y < 0)
      yy = -1 ;
    else if (y > getymax())
      yy = getymax() + 1 ;
    else
+*/
      yy = y.toint() ;
+     
    return pair<int,int>(xx,yy) ;
 }
 void viewport::move(int dx, int dy) {

@@ -299,7 +299,7 @@ const char *loadpattern(lifealgo &imp) {
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
       readpclife(imp, line) ;
       imp.endofpattern() ;
-      if (getedges) {
+      if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
       }
 
@@ -311,7 +311,7 @@ const char *loadpattern(lifealgo &imp) {
    } else if (line[0] == '[') {
       errmsg = imp.readmacrocell(line) ;
       imp.endofpattern() ;
-      if (errmsg == 0 && getedges) {
+      if (errmsg == 0 && getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
       }
 
