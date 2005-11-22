@@ -59,6 +59,7 @@ private:
    DECLARE_EVENT_TABLE()
 
    // event handlers
+   void OnActivate(wxActivateEvent& event);
    void OnBackButton(wxCommandEvent& event);
    void OnForwardButton(wxCommandEvent& event);
    void OnContentsButton(wxCommandEvent& event);
@@ -104,6 +105,7 @@ wxWindow* GetHtmlWindow() {
 // we use wxHTML to display .html files stored in the Help folder
 
 BEGIN_EVENT_TABLE(HelpFrame, wxFrame)
+   EVT_ACTIVATE   (                    HelpFrame::OnActivate)
    EVT_BUTTON     (ID_BACK_BUTT,       HelpFrame::OnBackButton)
    EVT_BUTTON     (ID_FORWARD_BUTT,    HelpFrame::OnForwardButton)
    EVT_BUTTON     (ID_CONTENTS_BUTT,   HelpFrame::OnContentsButton)
@@ -126,6 +128,8 @@ wxButton *contbutt;        // Contents button
 
 // current help file
 char currhelp[64] = "Help/index.html";
+
+long whenactive;           // when help window became active (elapsed millisecs)
 
 // create the help window
 HelpFrame::HelpFrame()
@@ -256,6 +260,16 @@ void ShowHelp(const char *filepath) {
       
       UpdateHelpButtons();    // must be after Show to avoid hbar appearing on Mac
    }
+   whenactive = 0;
+}
+
+void HelpFrame::OnActivate(wxActivateEvent& event)
+{
+   if ( event.GetActive() ) {
+      // help window is being activated
+      whenactive = wxGetElapsedTime(false);
+   }
+   event.Skip();
 }
 
 void HelpFrame::OnBackButton(wxCommandEvent& WXUNUSED(event)) {
@@ -350,6 +364,17 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell) {
 }
 
 void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link) {
+   #ifdef __WXMAC__
+      if ( wxGetElapsedTime(false) - whenactive < 500 ) {
+         // avoid problem on Mac:
+         // ignore click in link if the help window was in the background;
+         // this isn't fail safe because OnLinkClicked is only called AFTER
+         // the mouse button is released (better soln would be to set an
+         // ignoreclick flag in OnMouseDown handler if click occurred very
+         // soon after activate)
+         return;
+      }
+   #endif
    wxString url = link.GetHref();
    if ( url.StartsWith("http:") || url.StartsWith("mailto:") ) {
       // pass http/mailto URL to user's preferred browser/emailer

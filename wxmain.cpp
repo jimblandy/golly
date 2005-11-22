@@ -688,8 +688,8 @@ void MainFrame::ConvertPathAndOpen(const char *path, bool convertUTF8)
    } else {
       strncpy(currfile, path, sizeof(currfile));
    }
-   AddRecentFile(currfile);
-   LoadPattern( GetBaseName(currfile) );
+   AddRecentFile(path);
+   LoadPattern( GetBaseName(path) );
 }
 
 void MainFrame::AddRecentFile(const char *path)
@@ -743,7 +743,7 @@ void MainFrame::OpenPattern()
          // Mac bug: need to update window now to avoid crash
          UpdateEverything();
       #endif
-      wxFileName fullpath = wxFileName( opendlg.GetPath() );
+      wxFileName fullpath( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
       SetCurrentFile( opendlg.GetPath() );
       AddRecentFile( opendlg.GetPath() );
@@ -911,7 +911,7 @@ void MainFrame::SavePattern()
                          wxSAVE | wxOVERWRITE_PROMPT );
 
    if ( savedlg.ShowModal() == wxID_OK ) {
-      wxFileName fullpath = wxFileName( savedlg.GetPath() );
+      wxFileName fullpath( savedlg.GetPath() );
       opensavedir = fullpath.GetPath();
       wxString ext = fullpath.GetExt();
       pattern_format format;

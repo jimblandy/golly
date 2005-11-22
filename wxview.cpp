@@ -2363,6 +2363,7 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
    }
+   
    event.Skip();
 }
 
@@ -2415,6 +2416,11 @@ void PatternView::OnChar(wxKeyEvent& event)
          return;
       }
    #endif
+
+   // this was added to test Fatal, but could be useful to quit without saving prefs
+   if ( key == 17 || (key == 'q' && event.ControlDown()) ) {
+      Fatal("Quitting without saving preferences.");
+   }
 
    if ( event.CmdDown() || event.AltDown() ) {
       event.Skip();

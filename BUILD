@@ -42,7 +42,7 @@ Source code road map
 If you'd like to modify Golly then the following notes should help you
 get started.  Each module is described, along with some key routines.
 
-All of Golly's wxWidgets code is in these wx* modules:
+The GUI code is implemented in wxWidgets in these wx* modules:
 
 wxgolly.*      - The GUI application.
                  OnInit() is where it all starts.
