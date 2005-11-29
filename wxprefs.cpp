@@ -22,12 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
-// for compilers that support precompilation
-#include "wx/wxprec.h"
-
-// for all others, include the necessary headers
+#include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"
+   #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
 #include "wx/filename.h"   // for wxFileName
@@ -40,9 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"      // for curralgo->...
 #include "viewport.h"      // for MAX_MAG
 
-#include "wxgolly.h"       // for wxGetApp, etc
+#include "wxgolly.h"       // for mainptr
 #include "wxmain.h"        // for GetID_RECENT_CLEAR, GetID_RECENT, mainptr->...
-#include "wxview.h"        // for GetPasteLocation, viewptr->...
 #include "wxutils.h"       // for Warning
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
@@ -89,6 +85,11 @@ int helpx = 60;                  // help window's initial location
 int helpy = 60;
 int helpwd = 600;                // help window's initial size
 int helpht = 400;
+#ifdef __WXMSW__
+   int helpfontsize = 10;        // font size in help window
+#else
+   int helpfontsize = 12;        // font size in help window
+#endif
 
 int infox = 100;                 // info window's initial location
 int infoy = 100;
@@ -124,6 +125,7 @@ wxString opensavedir = PATTDIR;  // directory for open and save dialogs
 wxMenu *recentSubMenu = NULL;    // menu of recent files
 int numrecent = 0;               // current number of recent files
 int maxrecent = 20;              // maximum number of recent files (1..MAX_RECENT)
+wxArrayString namedrules;        // initialized in GetPrefs
 
 // these settings must be static -- they are changed by GetPrefs *before* the
 // view window is created
@@ -295,7 +297,8 @@ void SetPasteMode(const char *s)
 
 // -----------------------------------------------------------------------------
 
-void SavePrefs() {
+void SavePrefs()
+{
    if (mainptr == NULL || curralgo == NULL) {
       // should never happen but play safe
       return;
@@ -335,6 +338,7 @@ void SavePrefs() {
       helpht = r.height;
    }
    fprintf(f, "help_window=%d,%d,%d,%d\n", helpx, helpy, helpwd, helpht);
+   fprintf(f, "help_font_size=%d (%d..%d)\n", helpfontsize, minfontsize, maxfontsize);
    if (GetInfoFrame()) {
       wxRect r = GetInfoFrame()->GetRect();
       infox = r.x;
@@ -355,6 +359,11 @@ void SavePrefs() {
    fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    fprintf(f, "rule=%s\n", curralgo->getrule());
+   if (namedrules.GetCount() > 1) {
+      size_t i;
+      for (i=1; i<namedrules.GetCount(); i++)
+         fprintf(f, "named_rule=%s\n", namedrules[i].c_str());
+   }
    fprintf(f, "show_status=%d\n", mainptr->StatusVisible() ? 1 : 0);
    fprintf(f, "show_tool=%d\n", mainptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
@@ -382,7 +391,32 @@ void SavePrefs() {
    fclose(f);
 }
 
-bool GetKeyVal(FILE *f, char *line, char **keyword, char **value) {
+// -----------------------------------------------------------------------------
+
+void AddDefaultRules()
+{
+   namedrules.Add("3-4 Life|B34/S34");
+   namedrules.Add("HighLife|B36/S23");
+   namedrules.Add("AntiLife|B0123478/S01234678");
+   namedrules.Add("Life without Death|B3/S012345678");
+   namedrules.Add("Plow World|B378/S012345678");
+   namedrules.Add("Day and Night|B3678/S34678");
+   namedrules.Add("Diamoeba|B35678/S5678");
+   namedrules.Add("LongLife|B345/S5");
+   namedrules.Add("Seeds|B2");
+   namedrules.Add("Persian Rug|B234");
+   namedrules.Add("Replicator|B1357/S1357");
+   namedrules.Add("Fredkin|B1357/S02468");
+   namedrules.Add("Morley|B368/S245");
+   namedrules.Add("Wolfram 22|W22");
+   namedrules.Add("Wolfram 30|W30");
+   namedrules.Add("Wolfram 110|W110");
+}
+
+// -----------------------------------------------------------------------------
+
+bool GetKeyVal(FILE *f, char *line, char **keyword, char **value)
+{
    while ( fgets(line, PREFLINESIZE, f) != 0 ) {
       if ( line[0] == '#' || line[0] == '\n' ) {
          // skip comment line or empty line
@@ -399,7 +433,10 @@ bool GetKeyVal(FILE *f, char *line, char **keyword, char **value) {
    return false;
 }
 
-void CheckVisibility(int *x, int *y, int *wd, int *ht) {
+// -----------------------------------------------------------------------------
+
+void CheckVisibility(int *x, int *y, int *wd, int *ht)
+{
    wxRect maxrect = wxGetClientDisplayRect();
    // reset x,y if title bar isn't clearly visible
    if ( *y + 10 < maxrect.y || *y + 10 > maxrect.GetBottom() ||
@@ -412,7 +449,10 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht) {
    if (*ht > maxrect.height) *ht = maxrect.height;
 }
 
-void GetPrefs() {
+// -----------------------------------------------------------------------------
+
+void GetPrefs()
+{
    // create curs_* and initialize newcurs, opencurs and currcurs
    CreateCursors();
    
@@ -421,8 +461,11 @@ void GetPrefs() {
    recentSubMenu->AppendSeparator();
    recentSubMenu->Append(GetID_RECENT_CLEAR(), _("Clear Menu"));
 
+   namedrules.Add("Life|B3/S23");      // must be 1st entry
+
    if ( !wxFileExists(PREFSNAME) ) {
-      // use initial preference values assigned above
+      // use initial preference values
+      AddDefaultRules();
       return;
    }
    
@@ -463,6 +506,11 @@ void GetPrefs() {
          if (helpwd < minhelpwd) helpwd = minhelpwd;
          if (helpht < minhelpht) helpht = minhelpht;
          CheckVisibility(&helpx, &helpy, &helpwd, &helpht);
+
+      } else if (strcmp(keyword, "help_font_size") == 0) {
+         sscanf(value, "%d", &helpfontsize);
+         if (helpfontsize < minfontsize) helpfontsize = minfontsize;
+         if (helpfontsize > maxfontsize) helpfontsize = maxfontsize;
 
       } else if (strcmp(keyword, "info_window") == 0) {
          sscanf(value, "%d,%d,%d,%d", &infox, &infoy, &infowd, &infoht);
@@ -517,6 +565,9 @@ void GetPrefs() {
 
       } else if (strcmp(keyword, "rule") == 0) {
          strncpy(initrule, value, sizeof(initrule));
+
+      } else if (strcmp(keyword, "named_rule") == 0) {
+         namedrules.Add(value);
 
       } else if (strcmp(keyword, "show_status") == 0) {
          showstatus = value[0] == '1';
@@ -592,6 +643,9 @@ void GetPrefs() {
       }
    }
    fclose(f);
+   
+   // if no named_rule entries then add default names
+   if (namedrules.GetCount() == 1) AddDefaultRules();
 }
 
 // -----------------------------------------------------------------------------
@@ -661,6 +715,8 @@ BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
 END_EVENT_TABLE()
 
+// -----------------------------------------------------------------------------
+
 PrefsDialog::PrefsDialog(wxWindow* parent)
 {
    // not using validators so no need for this:
@@ -708,7 +764,9 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    LayoutDialog();
 }
 
-// the following consts are used to get nicely spaced controls on each platform
+// -----------------------------------------------------------------------------
+
+// these consts are used to get nicely spaced controls on each platform:
 
 #ifdef __WXMAC__
    #define GROUPGAP (12)      // vertical gap between a group of controls
@@ -741,6 +799,8 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    #define CVGAP (5)
    #define LRGAP (5)
 #endif
+
+// -----------------------------------------------------------------------------
 
 wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 {
@@ -859,6 +919,8 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    return panel;
 }
 
+// -----------------------------------------------------------------------------
+
 wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
@@ -885,6 +947,8 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    topSizer->Fit(panel);
    return panel;
 }
+
+// -----------------------------------------------------------------------------
 
 wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 {
@@ -993,6 +1057,8 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    return panel;
 }
 
+// -----------------------------------------------------------------------------
+
 wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
@@ -1085,7 +1151,10 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    return panel;
 }
 
-void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event) {
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
+{
    if ( event.GetId() == PREF_SHOW_BOLD ) {
       // enable/disable PREF_BOLD_SPACING spin control
       wxCheckBox* checkbox = (wxCheckBox*) FindWindow(PREF_SHOW_BOLD);
@@ -1098,7 +1167,10 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event) {
    }
 }
 
-bool PrefsDialog::GetCheckVal(long id) {
+// -----------------------------------------------------------------------------
+
+bool PrefsDialog::GetCheckVal(long id)
+{
    wxCheckBox* checkbox = (wxCheckBox*) FindWindow(id);
    if (checkbox) {
       return checkbox->GetValue();
@@ -1108,7 +1180,10 @@ bool PrefsDialog::GetCheckVal(long id) {
    }
 }
 
-int PrefsDialog::GetChoiceVal(long id) {
+// -----------------------------------------------------------------------------
+
+int PrefsDialog::GetChoiceVal(long id)
+{
    wxChoice* choice = (wxChoice*) FindWindow(id);
    if (choice) {
       return choice->GetSelection();
@@ -1118,7 +1193,10 @@ int PrefsDialog::GetChoiceVal(long id) {
    }
 }
 
-int PrefsDialog::GetSpinVal(long id) {
+// -----------------------------------------------------------------------------
+
+int PrefsDialog::GetSpinVal(long id)
+{
    wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
    if (spinctrl) {
       return spinctrl->GetValue();
@@ -1128,7 +1206,10 @@ int PrefsDialog::GetSpinVal(long id) {
    }
 }
 
-bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix) {
+// -----------------------------------------------------------------------------
+
+bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
+{
    wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
 #ifdef __WXMSW__
    // spinctrl->GetValue() always returns a value within range even if
@@ -1145,14 +1226,17 @@ bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
       msg.Printf("%s must be from %d to %d.", prefix, minval, maxval);
       Warning(msg);
       spinctrl->SetFocus();
-      spinctrl->SetSelection(0,999);
+      spinctrl->SetSelection(-1,-1);
       return true;
    } else {
       return false;
    }
 }
 
-bool PrefsDialog::ValidateCurrentPage() {
+// -----------------------------------------------------------------------------
+
+bool PrefsDialog::ValidateCurrentPage()
+{
    // validate all spin control values on current page
    if (prefspage == FILE_PAGE) {
       if ( BadSpinVal(PREF_MAX_RECENT, 1, MAX_RECENT, "Maximum number of recent files") )
@@ -1186,18 +1270,27 @@ bool PrefsDialog::ValidateCurrentPage() {
    return true;
 }
 
-void PrefsDialog::OnPageChanging(wxNotebookEvent& event) {
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnPageChanging(wxNotebookEvent& event)
+{
    if (ignore_page_event) return;
    // validate current page and veto change if invalid
    if (!ValidateCurrentPage()) event.Veto();
 }
 
-void PrefsDialog::OnPageChanged(wxNotebookEvent& event) {
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
+{
    if (ignore_page_event) return;
    prefspage = event.GetSelection();
 }
 
-bool PrefsDialog::TransferDataFromWindow() {
+// -----------------------------------------------------------------------------
+
+bool PrefsDialog::TransferDataFromWindow()
+{
    if (!ValidateCurrentPage()) return false;
    
    // set global prefs to current control values
@@ -1235,9 +1328,12 @@ bool PrefsDialog::TransferDataFromWindow() {
    return true;
 }
 
-bool ChangePrefs() {
-   PrefsDialog dialog( mainptr );
-   if ( dialog.ShowModal() == wxID_OK ) {
+// -----------------------------------------------------------------------------
+
+bool ChangePrefs()
+{
+   PrefsDialog dialog(mainptr);
+   if (dialog.ShowModal() == wxID_OK) {
       // TransferDataFromWindow has updated pref-related globals
       return true;
    } else {

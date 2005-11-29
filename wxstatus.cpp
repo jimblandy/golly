@@ -22,12 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
-// for compilers that support precompilation
-#include "wx/wxprec.h"
-
-// for all others, include the necessary headers
+#include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"
+   #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
 #include "wx/dcbuffer.h"   // for wxBufferedPaintDC
@@ -47,6 +44,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 const int BASELINE1 = 12;     // baseline of 1st line
 const int BASELINE2 = 26;     // baseline of 2nd line
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::ClearMessage()
 {
    if (viewptr->waitingforclick) return;     // don't clobber message
@@ -63,6 +62,8 @@ void StatusBar::ClearMessage()
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::DisplayMessage(const char *s)
 {
    strncpy(statusmsg, s, sizeof(statusmsg));
@@ -78,17 +79,23 @@ void StatusBar::DisplayMessage(const char *s)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::ErrorMessage(const char *s)
 {
    wxBell();
    DisplayMessage(s);
 }
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::SetMessage(const char *s)
 {
    // set message string without displaying it
    strncpy(statusmsg, s, sizeof(statusmsg));
 }
+
+// -----------------------------------------------------------------------------
 
 void StatusBar::UpdateXYLocation()
 {
@@ -100,6 +107,8 @@ void StatusBar::UpdateXYLocation()
       // no need to Update() immediately
    }
 }
+
+// -----------------------------------------------------------------------------
 
 void StatusBar::CheckMouseLocation(bool active)
 {
@@ -133,6 +142,8 @@ void StatusBar::CheckMouseLocation(bool active)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::SetStatusFont(wxDC &dc)
 {
    dc.SetFont(*statusfont);
@@ -141,12 +152,16 @@ void StatusBar::SetStatusFont(wxDC &dc)
    dc.SetBackgroundMode(wxTRANSPARENT);
 }
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::DisplayText(wxDC &dc, const char *s, wxCoord x, wxCoord y)
 {
    // DrawText's y parameter is top of text box but we pass in baseline
    // so adjust by textascent which depends on platform and OS version -- yuk!
    dc.DrawText(_(s), x, y - textascent);
 }
+
+// -----------------------------------------------------------------------------
 
 // ping-pong in the buffer so we can use multiple at a time
 const int STRINGIFYSIZE = 20;
@@ -189,12 +204,16 @@ const char* StatusBar::Stringify(const bigint &b)
    return Stringify(b.todouble());
 }
 
+// -----------------------------------------------------------------------------
+
 int StatusBar::GetCurrentDelay()
 {
    int gendelay = mindelay * (1 << (-mainptr->GetWarp() - 1));
    if (gendelay > maxdelay) gendelay = maxdelay;
    return gendelay;
 }
+
+// -----------------------------------------------------------------------------
 
 void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
 {
@@ -293,6 +312,8 @@ BEGIN_EVENT_TABLE(StatusBar, wxWindow)
    EVT_ERASE_BACKGROUND (StatusBar::OnEraseBackground)
 END_EVENT_TABLE()
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
    #ifdef __WXMAC__
@@ -322,15 +343,21 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    dc.EndDrawing();
 }
 
+// -----------------------------------------------------------------------------
+
 bool StatusBar::ClickInScaleBox(int x, int y)
 {
    return x >= h_scale && x <= h_step - 20 && y <= statusht/2;
 }
 
+// -----------------------------------------------------------------------------
+
 bool StatusBar::ClickInStepBox(int x, int y)
 {
    return x >= h_step && x <= h_xy - 20 && y <= statusht/2;
 }
+
+// -----------------------------------------------------------------------------
 
 void StatusBar::OnMouseDown(wxMouseEvent& event)
 {
@@ -355,6 +382,8 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void StatusBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 {
    // do nothing because we'll be painting the entire status bar
@@ -363,6 +392,7 @@ void StatusBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 // -----------------------------------------------------------------------------
 
 // create the status bar window
+
 StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
               wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
@@ -421,7 +451,8 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    #endif
 }
 
-// destroy the status bar window
+// -----------------------------------------------------------------------------
+
 StatusBar::~StatusBar()
 {
    if (brush_qlife) delete brush_qlife;

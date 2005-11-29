@@ -1,7 +1,7 @@
-A chronological record of code changes and version releases.  The most recent
-changes are at the top.  All important changes should be recorded, especially
-if they affect the user interface -- such changes can then be copied to
-Help/changes.html when a new release is ready.
+This file is a chronological record of code changes and version releases.
+The most recent changes are at the top.  All important changes should be
+recorded, especially if they affect the user interface -- such changes can
+then be copied to Help/changes.html when a new release is ready.
 
 AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
@@ -9,6 +9,9 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+AKT: If the help window is active, hit "+" and "-" to change font size.
+AKT: If rule has a name then name is shown in main window's title bar.
+AKT: The Rule dialog lets you select/add/delete named rules.
 AKT: The clipboard pattern is displayed when pasting.
 AKT: Save Pattern adds file path to Open Recent submenu.
 AKT: Moved all viewport rendering code into wxrender.h/cpp.

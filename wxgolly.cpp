@@ -27,12 +27,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    Uncertain code is flagged by "???".
 */
 
-// for compilers that support precompilation
-#include "wx/wxprec.h"
-
-// for all others, include the necessary headers
+#include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"
+   #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
 #include "wx/image.h"      // for wxImage

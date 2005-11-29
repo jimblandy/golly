@@ -22,12 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
-// for compilers that support precompilation
-#include "wx/wxprec.h"
-
-// for all others, include the necessary headers
+#include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"
+   #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
 #include "wx/wxhtml.h"     // for wxHtmlWindow
@@ -35,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for helpx/y/wd/ht and minhelp*
+#include "wxprefs.h"       // for helpx/y/wd/ht, helpfontsize, etc
 #include "wxhelp.h"
 
 // -----------------------------------------------------------------------------
@@ -55,9 +52,6 @@ private:
       ID_CONTENTS_BUTT
    };
 
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
-
    // event handlers
    void OnActivate(wxActivateEvent& event);
    void OnBackButton(wxCommandEvent& event);
@@ -65,7 +59,21 @@ private:
    void OnContentsButton(wxCommandEvent& event);
    void OnCloseButton(wxCommandEvent& event);
    void OnClose(wxCloseEvent& event);
+
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
 };
+
+BEGIN_EVENT_TABLE(HelpFrame, wxFrame)
+   EVT_ACTIVATE   (                    HelpFrame::OnActivate)
+   EVT_BUTTON     (ID_BACK_BUTT,       HelpFrame::OnBackButton)
+   EVT_BUTTON     (ID_FORWARD_BUTT,    HelpFrame::OnForwardButton)
+   EVT_BUTTON     (ID_CONTENTS_BUTT,   HelpFrame::OnContentsButton)
+   EVT_BUTTON     (wxID_CLOSE,         HelpFrame::OnCloseButton)
+   EVT_CLOSE      (                    HelpFrame::OnClose)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
 
 // define a child window for displaying html info:
 
@@ -78,19 +86,44 @@ public:
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
 
 private:
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
-
    #ifdef __WXMSW__
       // see HtmlView::OnKeyUp for why we do this
       void OnKeyUp(wxKeyEvent& event);
    #else
       void OnKeyDown(wxKeyEvent& event);
    #endif
+   
+   void OnChar(wxKeyEvent& event);
+
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
 };
+
+BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
+#ifdef __WXMSW__
+   // see HtmlView::OnKeyUp for why we do this
+   EVT_KEY_UP     (HtmlView::OnKeyUp)
+#else
+   EVT_KEY_DOWN   (HtmlView::OnKeyDown)
+#endif
+   EVT_CHAR       (HtmlView::OnChar)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
 
 HelpFrame *helpptr = NULL;    // help window
 HtmlView *htmlwin = NULL;     // html child window
+
+wxButton *backbutt;           // back button
+wxButton *forwbutt;           // forwards button
+wxButton *contbutt;           // Contents button
+
+long whenactive;              // when help window became active (elapsed millisecs)
+
+// current help file
+char currhelp[64] = "Help/index.html";
+
+// -----------------------------------------------------------------------------
 
 wxFrame* GetHelpFrame() {
    return helpptr;
@@ -102,34 +135,41 @@ wxWindow* GetHtmlWindow() {
 
 // -----------------------------------------------------------------------------
 
-// we use wxHTML to display .html files stored in the Help folder
+void SetFontSizes(int size)
+{
+   // set font sizes for <FONT SIZE=-2> to <FONT SIZE=+4>
+   int f_sizes[7];
+   f_sizes[0] = int(size * 0.6);
+   f_sizes[1] = int(size * 0.8);
+   f_sizes[2] = size;
+   f_sizes[3] = int(size * 1.2);
+   f_sizes[4] = int(size * 1.4);
+   f_sizes[5] = int(size * 1.6);
+   f_sizes[6] = int(size * 1.8);
+   htmlwin->SetFonts(wxEmptyString, wxEmptyString, f_sizes);
+}
 
-BEGIN_EVENT_TABLE(HelpFrame, wxFrame)
-   EVT_ACTIVATE   (                    HelpFrame::OnActivate)
-   EVT_BUTTON     (ID_BACK_BUTT,       HelpFrame::OnBackButton)
-   EVT_BUTTON     (ID_FORWARD_BUTT,    HelpFrame::OnForwardButton)
-   EVT_BUTTON     (ID_CONTENTS_BUTT,   HelpFrame::OnContentsButton)
-   EVT_BUTTON     (wxID_CLOSE,         HelpFrame::OnCloseButton)
-   EVT_CLOSE      (                    HelpFrame::OnClose)
-END_EVENT_TABLE()
+// -----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
-#ifdef __WXMSW__
-   // see HtmlView::OnKeyUp for why we do this
-   EVT_KEY_UP     (HtmlView::OnKeyUp)
-#else
-   EVT_KEY_DOWN   (HtmlView::OnKeyDown)
-#endif
-END_EVENT_TABLE()
+void ChangeFontSizes(int size)
+{
+   // changing font sizes resets pos to top, so save now and restore below
+   int x, y;
+   htmlwin->GetViewStart(&x, &y);
+   SetFontSizes(size);
+   #ifdef __WXMAC__
+      // prevent horizontal scroll bar appearing
+      int wd, ht;
+      htmlwin->GetSize(&wd, &ht);
+      // resizing makes scroll bar go away
+      htmlwin->SetSize(wd - 1, -1);
+      htmlwin->SetSize(wd, -1);
+   #endif
+   // restore old position
+   if (y > 0) htmlwin->Scroll(-1, y);
+}
 
-wxButton *backbutt;        // back button
-wxButton *forwbutt;        // forwards button
-wxButton *contbutt;        // Contents button
-
-// current help file
-char currhelp[64] = "Help/index.html";
-
-long whenactive;           // when help window became active (elapsed millisecs)
+// -----------------------------------------------------------------------------
 
 // create the help window
 HelpFrame::HelpFrame()
@@ -153,6 +193,7 @@ HelpFrame::HelpFrame()
       htmlwin->SetScrollRate(0, yunit);
    #endif
    htmlwin->SetBorders(4);
+   SetFontSizes(helpfontsize);
 
    wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
@@ -190,7 +231,10 @@ HelpFrame::HelpFrame()
    #endif
 }
 
-void UpdateHelpButtons() {
+// -----------------------------------------------------------------------------
+
+void UpdateHelpButtons()
+{
    backbutt->Enable( htmlwin->HistoryCanBack() );
    forwbutt->Enable( htmlwin->HistoryCanForward() );
    contbutt->Enable( !htmlwin->GetOpenedPageTitle().Contains("Contents") );
@@ -215,7 +259,10 @@ void UpdateHelpButtons() {
    htmlwin->SetFocus();          // for keyboard shortcuts
 }
 
-void ShowHelp(const char *filepath) {
+// -----------------------------------------------------------------------------
+
+void ShowHelp(const char *filepath)
+{
    // display given html file in help window
    if (helpptr) {
       // help window exists so bring it to front and display given file
@@ -263,6 +310,8 @@ void ShowHelp(const char *filepath) {
    whenactive = 0;
 }
 
+// -----------------------------------------------------------------------------
+
 void HelpFrame::OnActivate(wxActivateEvent& event)
 {
    if ( event.GetActive() ) {
@@ -272,7 +321,10 @@ void HelpFrame::OnActivate(wxActivateEvent& event)
    event.Skip();
 }
 
-void HelpFrame::OnBackButton(wxCommandEvent& WXUNUSED(event)) {
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnBackButton(wxCommandEvent& WXUNUSED(event))
+{
    if ( htmlwin->HistoryBack() ) {
       UpdateHelpButtons();
    } else {
@@ -280,7 +332,10 @@ void HelpFrame::OnBackButton(wxCommandEvent& WXUNUSED(event)) {
    }
 }
 
-void HelpFrame::OnForwardButton(wxCommandEvent& WXUNUSED(event)) {
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnForwardButton(wxCommandEvent& WXUNUSED(event))
+{
    if ( htmlwin->HistoryForward() ) {
       UpdateHelpButtons();
    } else {
@@ -288,15 +343,24 @@ void HelpFrame::OnForwardButton(wxCommandEvent& WXUNUSED(event)) {
    }
 }
 
-void HelpFrame::OnContentsButton(wxCommandEvent& WXUNUSED(event)) {
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnContentsButton(wxCommandEvent& WXUNUSED(event))
+{
    ShowHelp("Help/index.html");
 }
 
-void HelpFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event))
+{
    Close(true);
 }
 
-void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
+{
    // save current location and size for later use in SavePrefs
    wxRect r = helpptr->GetRect();
    helpx = r.x;
@@ -308,7 +372,10 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
    helpptr = NULL;
 }
 
-void AddEOL(wxString &str) {
+// -----------------------------------------------------------------------------
+
+void AddEOL(wxString &str)
+{
    // append eol char(s) to given string
    #ifdef __WXMAC__
       str += '\r';
@@ -320,7 +387,10 @@ void AddEOL(wxString &str) {
    #endif
 }
 
-void LoadLexiconPattern(const wxHtmlCell *htmlcell) {
+// -----------------------------------------------------------------------------
+
+void LoadLexiconPattern(const wxHtmlCell *htmlcell)
+{
    if (mainptr->generating) {
       Warning("Another pattern is currently generating.");
       return;
@@ -363,7 +433,10 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell) {
    }
 }
 
-void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link) {
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
+{
    #ifdef __WXMAC__
       if ( wxGetElapsedTime(false) - whenactive < 500 ) {
          // avoid problem on Mac:
@@ -398,6 +471,8 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link) {
       }
    }
 }
+
+// -----------------------------------------------------------------------------
 
 #ifdef __WXMSW__
 // we have to use OnKeyUp handler on Windows otherwise wxHtmlWindow's OnKeyUp
@@ -443,6 +518,11 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
    } else {
       // this handler is also called from ShowAboutBox
       if ( helpptr == NULL || !helpptr->IsActive() ) {
+         if ( key == WXK_NUMPAD_ENTER ) {
+            // fix wxMac problem: allow enter key to close about box
+            GetParent()->Close(true);
+            return;
+         }
          event.Skip();
          return;
       }
@@ -451,21 +531,49 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
          helpptr->Close(true);
       } else if ( key == WXK_HOME ) {
          ShowHelp("Help/index.html");
-      } else if ( key == '[' ) {
-         if ( HistoryBack() ) {
-            UpdateHelpButtons();
-         }
-      } else if ( key == ']' ) {
-         if ( HistoryForward() ) {
-            UpdateHelpButtons();
-         }      
       } else {
          event.Skip();
       }
    }
 }
 
-void ShowAboutBox() {
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnChar(wxKeyEvent& event)
+{
+   // this handler is also called from ShowAboutBox
+   if ( helpptr == NULL || !helpptr->IsActive() ) {
+      event.Skip();
+      return;
+   }
+   int key = event.GetKeyCode();
+   if ( key == '+' || key == '=' || key == WXK_ADD ) {
+      if ( helpfontsize < maxfontsize ) {
+         helpfontsize++;
+         ChangeFontSizes(helpfontsize);
+      }
+   } else if ( key == '-' || key == WXK_SUBTRACT ) {
+      if ( helpfontsize > minfontsize ) {
+         helpfontsize--;
+         ChangeFontSizes(helpfontsize);
+      }
+   } else if ( key == '[' || key == WXK_LEFT ) {
+      if ( HistoryBack() ) {
+         UpdateHelpButtons();
+      }
+   } else if ( key == ']' || key == WXK_RIGHT ) {
+      if ( HistoryForward() ) {
+         UpdateHelpButtons();
+      }
+   } else {
+      event.Skip();     // so up/down arrows and pg up/down keys work
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ShowAboutBox()
+{
    wxDialog dlg(mainptr, wxID_ANY, wxString("About Golly"));
    
    HtmlView *html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition, wxSize(386, 220),
@@ -477,12 +585,14 @@ void ShowAboutBox() {
    
    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
    topsizer->Add(html, 1, wxALL, 10);
+
    wxButton *okbutt = new wxButton(&dlg, wxID_OK, "OK");
    okbutt->SetDefault();
    topsizer->Add(okbutt, 0, wxBOTTOM | wxALIGN_CENTER, 10);
+   
    dlg.SetSizer(topsizer);
    topsizer->Fit(&dlg);
-   dlg.CenterOnParent(wxBOTH);
+   dlg.Centre();
    dlg.ShowModal();
    // all child windows have been deleted
 }

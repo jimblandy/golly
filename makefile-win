@@ -346,12 +346,12 @@ wxgolly.h wxview.h wxmain.h
 
 $(OBJDIR)/wxprefs.obj: wxprefs.cpp wxprefs.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxview.h wxutils.h wxhelp.h wxinfo.h
+wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp
 
 $(OBJDIR)/wxrule.obj: wxrule.cpp wxrule.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
-wxgolly.h wxutils.h
+wxgolly.h wxutils.h wxprefs.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrule.cpp
 
 $(OBJDIR)/wxinfo.obj: wxinfo.cpp wxinfo.h \

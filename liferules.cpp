@@ -69,7 +69,8 @@ const char *liferules::setrule(const char *rulestring) {
    wolfram = -1 ;
    rulebits = 0 ;
    hexmask = 0x777 ;
-   int i, addend=17 ;
+   int addend = 17 ;
+   int i ;
 
    // set rule string even if bad character detected
    if (rule)
@@ -82,15 +83,18 @@ const char *liferules::setrule(const char *rulestring) {
    for (i=0; rulestring[i]; i++) {
       if (rulestring[i] == 'h' || rulestring[i] == 'H') {
          hexmask = 0x673 ;
-      } else if (rulestring[i] == 'b' || rulestring[i] == 'B' ||
-                 rulestring[i] == '/') {
+      } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
          addend = 0 ;
       } else if (rulestring[i] == 's' || rulestring[i] == 'S') {
          addend = 17 ;
-      } else if (rulestring[i] >= '0' && rulestring[i] <= '9') {
+      } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
          rulebits |= 1 << (addend + rulestring[i] - '0') ;
       } else if (rulestring[i] == 'w' || rulestring[i] == 'W') {
          wolfram = atol(rulestring+i+1) ;
+         if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
+            // when we support toroidal universe we can allow all numbers from 0..255!!!
+            return "Wolfram rule must be an even number from 0 to 254." ;
+         }
          break ;
       } else {
          return "Bad character in rule string." ;

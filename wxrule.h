@@ -25,8 +25,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXRULE_H_
 
 // Open a dialog that lets the user change the current rule.
-// The given flag is used to prevent B0-not-S8 rules when hashing.
 // Return true if the rule change succeeds.
-bool ChangeRule(bool hashing);
+bool ChangeRule();
+
+// If given rule has a name then return name, otherwise return the rule.
+const char* GetRuleName(const char* rulestring);
 
 #endif

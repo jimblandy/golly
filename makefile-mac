@@ -146,12 +146,12 @@ wxgolly.h wxview.h wxmain.h
 $(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
 bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxview.h wxutils.h wxhelp.h wxinfo.h
+wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
 
 $(OBJDIR)/wxrule.o: wxrule.cpp wxrule.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
-wxgolly.h wxutils.h
+wxgolly.h wxutils.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrule.cpp
 
 $(OBJDIR)/wxinfo.o: wxinfo.cpp wxinfo.h \

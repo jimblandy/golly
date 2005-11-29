@@ -3,8 +3,6 @@ TODO:
 High priority:
 --------------
 
-A - Add a pop-up menu with named rules to rule dialog.
-
 A - Create a scrollable navigation panel to view contents of a selected
     folder (initially Patterns) so users can load patterns easily.
 
@@ -21,6 +19,12 @@ For future versions:
 
 T - Improve batchmode.
 
+- Add Gabriel's oscillation detection as an option (see LifeLab).
+
+- Implement Undo (even just undoing the last draw would be very useful).
+
+- Support toroidal universes (see LifeLab).
+
 - See if we can reduce app size.  If wx docs no help then ask wx-users.
 
 - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
@@ -28,14 +32,8 @@ T - Improve batchmode.
 
 - Check if wx can support vbr synchronization when buffering.
 
-- Add Gabriel's oscillation detection as an option (see LifeLab).
-
-- Support toroidal universes (see LifeLab).
-
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).
-
-- Implement Undo (even just undoing the last draw would be very useful).
 
 - Allow non-rectangular (and disjoint?) selections.
 
@@ -45,7 +43,7 @@ T - Improve batchmode.
 - Let user specify colors for live/dead cells.  Only slightly tricky
   part is dynamically choosing nice colors for the grid lines.
   Also let user specify selection color.
-  Replace "Black on White" flag with "Swap Colors".
+  Replace "Black on White" flag with "Invert Colors".
 
 - Implement a history bar for hlife.
 
@@ -73,15 +71,15 @@ User suggestions:
 
 [Paul Chapman]
 - Combine the start and stop toolbar buttons into a single toggle.
+  If we provide an animating stop button then make it optional (via Prefs).
 
 [Jason Summers]
 - The "move" cursor should be an open hand.
-- More available zoom scales would be nice, e.g. 1:3 and 1:6.
-- Shrink the scrollbar thumbs and/or increase their scroll rate, to allow
-  scrolling more than 1 screenful at a time.
+- Shrink the scrollbar thumbs to allow scrolling more than 1 screenful.
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
 - Allow diagonal selection rectangles.
+- More available zoom scales would be nice, e.g. 1:3 and 1:6.
 
 [Dave Greene]
 - Support a split-screen view of the universe.
@@ -92,4 +90,3 @@ User suggestions:
 [H Koenig]
 - Mulitiple undo/redo.
 - Multiple windows.
-- If we provide an animating stop button then make it optional (via Prefs).

@@ -48,6 +48,7 @@ extern int helpx;                // help window's location
 extern int helpy;
 extern int helpwd;               // help window's size
 extern int helpht;
+extern int helpfontsize;         // font size in help window
 
 extern int infox;                // info window's location
 extern int infoy;
@@ -84,6 +85,10 @@ extern wxMenu *recentSubMenu;    // menu of recent files
 extern int numrecent;            // current number of recent files
 extern int maxrecent;            // maximum number of recent files
 
+// We maintain an array of named rules, where each string is of the form
+// "name of rule|B.../S...".  The first string is always "Life|B3/S23".
+extern wxArrayString namedrules;
+
 // Various constants:
 
 const int minmainwd = 200;       // main window's minimum width
@@ -92,13 +97,15 @@ const int minmainht = 100;       // main window's minimum height
 const int minhelpwd = 400;       // help window's minimum width
 const int minhelpht = 100;       // help window's minimum height
 
+const int minfontsize = 6;       // minimum value of helpfontsize
+const int maxfontsize = 30;      // maximum value of helpfontsize
+
 const int mininfowd = 400;       // info window's minimum width
 const int mininfoht = 100;       // info window's minimum height
 
 const int MAX_RECENT = 100;      // maximum value of maxrecent
 
-// Following must be static -- they are used by GetPrefs() before the view window
-// is created.
+// Following are used by GetPrefs() before the view window is created:
 
 typedef enum {
    TopLeft, TopRight, BottomRight, BottomLeft, Middle
@@ -108,22 +115,24 @@ typedef enum {
    Copy, Or, Xor
 } paste_mode;
 
-extern paste_location plocation;    // location of cursor in paste rectangle
-extern paste_mode pmode;            // logical paste mode
+extern paste_location plocation; // location of cursor in paste rectangle
+extern paste_mode pmode;         // logical paste mode
 
-// get/set location of cursor relative to paste rectangle
+// get/set plocation
 const char* GetPasteLocation();
 void SetPasteLocation(const char *s);
 
-// get/set paste mode (copy, or, xor)
+// get/set pmode
 const char* GetPasteMode();
 void SetPasteMode(const char *s);
 
-extern wxCursor *curs_pencil;       // for drawing cells
-extern wxCursor *curs_cross;        // for selecting cells
-extern wxCursor *curs_hand;         // for moving view by dragging
-extern wxCursor *curs_zoomin;       // for zooming in to a clicked cell
-extern wxCursor *curs_zoomout;      // for zooming out from a clicked cell
-extern wxCursor *currcurs;          // set to one of the above cursors
+// Cursor modes:
+
+extern wxCursor *curs_pencil;    // for drawing cells
+extern wxCursor *curs_cross;     // for selecting cells
+extern wxCursor *curs_hand;      // for moving view by dragging
+extern wxCursor *curs_zoomin;    // for zooming in to a clicked cell
+extern wxCursor *curs_zoomout;   // for zooming out from a clicked cell
+extern wxCursor *currcurs;       // set to one of the above cursors
 
 #endif

@@ -22,21 +22,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
-// for compilers that support precompilation
-#include "wx/wxprec.h"
-
-// for all others, include the necessary headers
+#include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"
+   #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/stockitem.h"     // for wxGetStockLabel
-#include "wx/dnd.h"           // for wxFileDropTarget
-#include "wx/file.h"          // for wxFile
-#include "wx/filename.h"      // for wxFileName
-#include "wx/menuitem.h"      // for SetText
-#include "wx/clipbrd.h"       // for wxTheClipboard
-#include "wx/dataobj.h"       // for wxTextDataObject
+#include "wx/stockitem.h"  // for wxGetStockLabel
+#include "wx/dnd.h"        // for wxFileDropTarget
+#include "wx/file.h"       // for wxFile
+#include "wx/filename.h"   // for wxFileName
+#include "wx/menuitem.h"   // for SetText
+#include "wx/clipbrd.h"    // for wxTheClipboard
+#include "wx/dataobj.h"    // for wxTextDataObject
 
 #ifdef __WXMSW__
    // tool bar bitmaps are loaded via .rc file
@@ -66,7 +63,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
 #include "wxutils.h"       // for Warning, Fatal, etc
 #include "wxprefs.h"       // for SavePrefs, etc
-#include "wxrule.h"        // for ChangeRule
+#include "wxrule.h"        // for ChangeRule, GetRuleName
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxstatus.h"      // for statusptr->...
@@ -461,9 +458,9 @@ void MainFrame::SetWindowTitle(const char *filename)
    // save filename for use when changing rule
    strncpy(currname, filename, sizeof(currname));
 #ifdef __WXMAC__
-   sprintf(wtitle, "Golly: %s [%s]", filename, curralgo->getrule());
+   sprintf(wtitle, "Golly: %s [%s]", filename, GetRuleName(curralgo->getrule()));
 #else
-   sprintf(wtitle, "%s [%s] - Golly", filename, curralgo->getrule());
+   sprintf(wtitle, "%s [%s] - Golly", filename, GetRuleName(curralgo->getrule()));
 #endif
    MySetTitle(wtitle);
 }
@@ -1710,8 +1707,8 @@ void MainFrame::SetWarp(int newwarp)
 void MainFrame::ShowRuleDialog()
 {
    if (generating) return;
-   if (ChangeRule(hashing)) {
-      // show valid rule in window title (current file name doesn't change)
+   if (ChangeRule()) {
+      // show rule in window title (current file name doesn't change)
       SetWindowTitle(currname);
    }
 }

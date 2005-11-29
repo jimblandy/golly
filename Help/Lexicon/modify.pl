@@ -6,7 +6,7 @@ for $file (@files) {
    close F ;
    $f = join('', @f) ;
    for (($f)) {
-      s/<body>/<body bgcolor="#FFFFCE"><font size=-1>/g ;
+      s/<body>/<body bgcolor="#FFFFCE">/g ;
       s!<center><a HREF="http://www.argentum.freeserve.co.uk/lex_home.htm">Life Lexicon Home Page</a>!<center><A HREF="lex.htm">Introduction</A> \| <A HREF="lex_bib.htm">Bibliography</A></center>!g ;
       s|<center><b class=l>Life Lexicon</b></center>||g ;
       s:^<A HREF="lex.htm">Introduction</A> \|:<font size=-1><b>:gm ;
@@ -22,8 +22,6 @@ for $file (@files) {
       s/&oacute;/o/g ;
       s|^<pre>|<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">|gm ;
       s|^</pre>|</a></pre></td></tr></table></center>|gm ;
-      s|^</BODY>|</font></body>|gm ;
-      s|^</body>|</font></body>|gm ;
       # fix problems in lex_[hps].htm
       s|<a href="lexpatt:">\n-|<font size=-1>\n-|g ; s|-\n</a>|-\n</font>|g ;
       # fix problem in lex_l.htm
