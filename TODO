@@ -75,7 +75,6 @@ User suggestions:
 
 [Jason Summers]
 - The "move" cursor should be an open hand.
-- Shrink the scrollbar thumbs to allow scrolling more than 1 screenful.
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
 - Allow diagonal selection rectangles.

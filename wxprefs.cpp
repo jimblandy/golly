@@ -72,6 +72,7 @@ const int MINHASHMB = 10;        // minimum value of maxhashmem
 const int MAXHASHMB = 4000;      // make bigger when hlifealgo is 64-bit clean
 const int MAX_BASESTEP = 100;    // maximum qbasestep or hbasestep
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
+const int MAX_THUMBRANGE = 500;  // maximum thumbrange
 
 // initialize exported preferences:
 
@@ -117,6 +118,7 @@ wxCursor *newcurs = NULL;        // cursor after creating new pattern (if not NU
 wxCursor *opencurs = NULL;       // cursor after opening pattern (if not NULL)
 char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
 int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
+int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
 int qbasestep = 10;              // qlife's base step
 int hbasestep = 8;               // hlife's base step (best if power of 2)
 int mindelay = 250;              // minimum millisec delay (when warp = -1)
@@ -374,6 +376,7 @@ void SavePrefs()
    fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
+   fprintf(f, "thumb_range=%d (2..%d)\n", thumbrange, MAX_THUMBRANGE);
    fprintf(f, "new_mag=%d (0..%d)\n", newmag, MAX_MAG);
    fprintf(f, "new_remove_sel=%d\n", newremovesel ? 1 : 0);
    fprintf(f, "new_cursor=%s\n", CursorToString(newcurs));
@@ -605,6 +608,11 @@ void GetPrefs()
          if (mousewheelmode < 0) mousewheelmode = 0;
          if (mousewheelmode > 2) mousewheelmode = 2;
 
+      } else if (strcmp(keyword, "thumb_range") == 0) {
+         sscanf(value, "%d", &thumbrange);
+         if (thumbrange < 2) thumbrange = 2;
+         if (thumbrange > MAX_THUMBRANGE) thumbrange = MAX_THUMBRANGE;
+
       } else if (strcmp(keyword, "new_mag") == 0) {
          sscanf(value, "%d", &newmag);
          if (newmag < 0) newmag = 0;
@@ -663,7 +671,7 @@ public:
 
 private:
    enum {
-      // the *_PAGE values must correspond to prefspage values
+      // these *_PAGE values must correspond to prefspage values
       FILE_PAGE = 0,
       EDIT_PAGE,
       CONTROL_PAGE,
@@ -678,17 +686,18 @@ private:
       // Edit prefs
       PREF_RANDOM_FILL,
       // Control prefs
+      PREF_MAX_HASH_MEM,
       PREF_QBASE,
       PREF_HBASE,
       PREF_MIN_DELAY,
       PREF_MAX_DELAY,
-      PREF_MAX_HASH_MEM,
       // View prefs
       PREF_Y_UP,
       PREF_SHOW_BOLD,
       PREF_BOLD_SPACING,
       PREF_MIN_GRID_SCALE,
-      PREF_MOUSE_WHEEL
+      PREF_MOUSE_WHEEL,
+      PREF_THUMB_RANGE
    };
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
@@ -747,18 +756,27 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    ignore_page_event = false;
 
    #ifdef __WXMAC__
-      // give focus to first edit box on each page to allow use of escape
+      // give focus to first edit box on each page; also allows use of escape
       if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_RECENT)->SetFocus();
       if (prefspage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
-      if (prefspage == CONTROL_PAGE) FindWindow(PREF_QBASE)->SetFocus();
-      if (prefspage == VIEW_PAGE && showboldlines)
-         FindWindow(PREF_BOLD_SPACING)->SetFocus();
-      // nicer to deselect other spin controls on CONTROL_PAGE
+      if (prefspage == CONTROL_PAGE) FindWindow(PREF_MAX_HASH_MEM)->SetFocus();
+      if (prefspage == VIEW_PAGE)
+         if (showboldlines)
+            FindWindow(PREF_BOLD_SPACING)->SetFocus();
+         else
+            FindWindow(PREF_THUMB_RANGE)->SetFocus();
+      // deselect other spin controls on CONTROL_PAGE
       wxSpinCtrl* sp;
+      sp = (wxSpinCtrl*) FindWindow(PREF_QBASE); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_HBASE); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_MIN_DELAY); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_MAX_DELAY); sp->SetSelection(0,0);
-      sp = (wxSpinCtrl*) FindWindow(PREF_MAX_HASH_MEM); sp->SetSelection(0,0);
+      // deselect other spin control on VIEW_PAGE
+      if (showboldlines) {
+         sp = (wxSpinCtrl*) FindWindow(PREF_THUMB_RANGE); sp->SetSelection(0,0);
+      } else {
+         sp = (wxSpinCtrl*) FindWindow(PREF_BOLD_SPACING); sp->SetSelection(0,0);
+      }
    #endif
    
    LayoutDialog();
@@ -770,34 +788,34 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
 
 #ifdef __WXMAC__
    #define GROUPGAP (12)      // vertical gap between a group of controls
-   #define SBTOPGAP (0)       // vertical gap before first item in wxStaticBoxSizer
-   #define SBBOTGAP (0)       // vertical gap after last item in wxStaticBoxSizer
+   #define SBTOPGAP (2)       // vertical gap before first item in wxStaticBoxSizer
+   #define SBBOTGAP (2)       // vertical gap after last item in wxStaticBoxSizer
+   #define SVGAP (4)          // vertical gap above wxSpinCtrl box
+   #define S2VGAP (0)         // vertical gap between 2 wxSpinCtrl boxes
+   #define CVGAP (9)          // vertical gap above wxChoice box
+   #define LRGAP (5)          // space left and right of vertically stacked boxes
    #define SPINGAP (3)        // horizontal gap around each wxSpinCtrl box
    #define CHOICEGAP (6)      // horizontal gap to left of wxChoice box
-   #define SVGAP (2)          // vertical gap above wxSpinCtrl box
-   #define S2VGAP (0)         // vertical gap between 2 wxSpinCtrl boxes
-   #define CVGAP (7)          // vertical gap above wxChoice box
-   #define LRGAP (5)          // space left and right of vertically stacked boxes
 #elif defined(__WXMSW__)
    #define GROUPGAP (10)
-   #define SBTOPGAP (5)
-   #define SBBOTGAP (5)
-   #define SPINGAP (6)
-   #define CHOICEGAP (8)
-   #define SVGAP (5)
+   #define SBTOPGAP (7)
+   #define SBBOTGAP (7)
+   #define SVGAP (7)
    #define S2VGAP (5)
-   #define CVGAP (5)
+   #define CVGAP (7)
    #define LRGAP (5)
+   #define SPINGAP (6)
+   #define CHOICEGAP (6)
 #else
    #define GROUPGAP (10)
-   #define SBTOPGAP (10)
-   #define SBBOTGAP (5)
-   #define SPINGAP (6)
-   #define CHOICEGAP (8)
-   #define SVGAP (5)
+   #define SBTOPGAP (12)
+   #define SBBOTGAP (7)
+   #define SVGAP (7)
    #define S2VGAP (5)
-   #define CVGAP (5)
+   #define CVGAP (7)
    #define LRGAP (5)
+   #define SPINGAP (6)
+   #define CHOICEGAP (6)
 #endif
 
 // -----------------------------------------------------------------------------
@@ -868,6 +886,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    // on opening pattern
    
    vbox->AddSpacer(5);
+   
    wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening pattern:"));
    wxBoxSizer* ssizer2 = new wxStaticBoxSizer( sbox2, wxVERTICAL );
    vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
@@ -956,7 +975,23 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
    wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
    
+   // max_hash_mem
+
+   wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, MINHASHMB, MAXHASHMB, maxhashmem);
+   hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
+   
    // q_base_step and h_base_step
+
+   vbox->AddSpacer(GROUPGAP);
 
    wxBoxSizer* longbox = new wxBoxSizer( wxHORIZONTAL );
    longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if not hashing:")),
@@ -966,7 +1001,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if hashing:")),
                  0, wxALL, 0);
 
-   // align spin controls be setting shortbox same width as longbox
+   // align spin controls by setting shortbox same width as longbox
    shortbox->SetMinSize( longbox->GetMinSize() );
 
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
@@ -1003,7 +1038,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* maxbox = new wxBoxSizer( wxHORIZONTAL );
    maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum delay:")), 0, wxALL, 0);
 
-   // align spin controls be setting minbox same width as maxbox
+   // align spin controls by setting minbox same width as maxbox
    minbox->SetMinSize( maxbox->GetMinSize() );
 
    wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
@@ -1027,22 +1062,6 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
               0, wxALIGN_CENTER_VERTICAL, 0);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
-   
-   // max_hash_mem
-
-   vbox->AddSpacer(GROUPGAP);
-
-   wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
-   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, MINHASHMB, MAXHASHMB, maxhashmem);
-   hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // init control values
    spin1->SetValue(qbasestep);
@@ -1111,12 +1130,12 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")),
                  0, wxALL, 0);
 
-   // align controls be setting shortbox same width as longbox
+   // align controls by setting shortbox same width as longbox
    shortbox->SetMinSize( longbox->GetMinSize() );
    
    hbox3->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   vbox->AddSpacer(CVGAP);
+   vbox->AddSpacer(SVGAP);
    vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
 
    // mouse_wheel_mode
@@ -1136,6 +1155,27 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    vbox->AddSpacer(CVGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
 
+   // thumb_range
+
+   wxBoxSizer* thumblabel = new wxBoxSizer( wxHORIZONTAL );
+   thumblabel->Add(new wxStaticText(panel, wxID_STATIC, _("Thumb scroll range:")),
+                   0, wxALL, 0);
+
+   // align controls
+   thumblabel->SetMinSize( longbox->GetMinSize() );
+
+   wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
+   hbox5->Add(thumblabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_THUMB_RANGE, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 2, MAX_THUMBRANGE, thumbrange);
+   hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("times view size")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
+
+
    // init control values
    check1->SetValue(mathcoords);
    check2->SetValue(showboldlines);
@@ -1144,6 +1184,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    mingridindex = mingridmag - 2;
    choice3->SetSelection(mingridindex);
    choice4->SetSelection(mousewheelmode);
+   spin5->SetValue(thumbrange);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1247,6 +1288,8 @@ bool PrefsDialog::ValidateCurrentPage()
          return false;
 
    } else if (prefspage == CONTROL_PAGE) {
+      if ( BadSpinVal(PREF_MAX_HASH_MEM, MINHASHMB, MAXHASHMB, "Maximum memory for hashing") )
+         return false;
       if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, "Base step if not hashing") )
          return false;
       if ( BadSpinVal(PREF_HBASE, 2, MAX_BASESTEP, "Base step if hashing") )
@@ -1255,11 +1298,11 @@ bool PrefsDialog::ValidateCurrentPage()
          return false;
       if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, "Maximum delay") )
          return false;
-      if ( BadSpinVal(PREF_MAX_HASH_MEM, MINHASHMB, MAXHASHMB, "Maximum memory for hashing") )
-         return false;
 
    } else if (prefspage == VIEW_PAGE) {
       if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, "Spacing of bold grid lines") )
+         return false;
+      if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, "Thumb scrolling range") )
          return false;
    
    } else {
@@ -1307,11 +1350,11 @@ bool PrefsDialog::TransferDataFromWindow()
    randomfill = GetSpinVal(PREF_RANDOM_FILL);
 
    // CONTROL_PAGE
+   maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);
    qbasestep  = GetSpinVal(PREF_QBASE);
    hbasestep  = GetSpinVal(PREF_HBASE);
    mindelay   = GetSpinVal(PREF_MIN_DELAY);
    maxdelay   = GetSpinVal(PREF_MAX_DELAY);
-   maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);
 
    // VIEW_PAGE
    mathcoords     = GetCheckVal(PREF_Y_UP);
@@ -1319,6 +1362,7 @@ bool PrefsDialog::TransferDataFromWindow()
    boldspacing    = GetSpinVal(PREF_BOLD_SPACING);
    mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);
    mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
+   thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
 
    // update globals corresponding to the wxChoice menu selections
    mingridmag = mingridindex + 2;
@@ -1334,7 +1378,7 @@ bool ChangePrefs()
 {
    PrefsDialog dialog(mainptr);
    if (dialog.ShowModal() == wxID_OK) {
-      // TransferDataFromWindow has updated pref-related globals
+      // TransferDataFromWindow has validated and updated all global prefs
       return true;
    } else {
       return false;

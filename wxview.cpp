@@ -2141,17 +2141,21 @@ int PatternView::BigScroll(int xysize)
 void PatternView::UpdateScrollBars()
 {
    if (mainptr->fullscreen) return;
+
+   int viewwd, viewht;
    if (currview.getmag() > 0) {
       // scroll by integral number of cells to avoid rounding probs
-      hthumb = currview.getwidth() >> currview.getmag();
-      vthumb = currview.getheight() >> currview.getmag();
+      viewwd = currview.getwidth() >> currview.getmag();
+      viewht = currview.getheight() >> currview.getmag();
    } else {
-      hthumb = currview.getwidth();
-      vthumb = currview.getheight();
+      viewwd = currview.getwidth();
+      viewht = currview.getheight();
    }
    // keep thumb boxes in middle of scroll bars
-   SetScrollbar(wxHORIZONTAL, hthumb, hthumb, 3 * hthumb, true);
-   SetScrollbar(wxVERTICAL, vthumb, vthumb, 3 * vthumb, true);
+   hthumb = (thumbrange - 1) * viewwd / 2;
+   vthumb = (thumbrange - 1) * viewht / 2;
+   SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
+   SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
 }
 
 // -----------------------------------------------------------------------------

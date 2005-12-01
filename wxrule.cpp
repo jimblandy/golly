@@ -235,7 +235,7 @@ bool MatchingRules(wxString &rule1, wxString &rule2)
    if (rule1 == rule2) {
       return true;
    } else {
-      // we want "s2233 b3" to match "B3/S23" so convert given rules to
+      // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules to
       // a canonical bit pattern and compare
       int canon1 = CanonicalRule(rule1);
       int canon2 = CanonicalRule(rule2);

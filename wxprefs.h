@@ -76,6 +76,7 @@ extern wxCursor *newcurs;        // cursor after creating new pattern
 extern wxCursor *opencurs;       // cursor after opening pattern
 extern char initrule[];          // for first NewPattern before prefs saved
 extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
+extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
 extern int qbasestep;            // qlife's base step
 extern int hbasestep;            // hlife's base step (best if power of 2)
 extern int mindelay;             // minimum millisec delay (when warp = -1)
