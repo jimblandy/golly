@@ -34,6 +34,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/menuitem.h"   // for SetText
 #include "wx/clipbrd.h"    // for wxTheClipboard
 #include "wx/dataobj.h"    // for wxTextDataObject
+#include "wx/splitter.h"   // for wxSplitterWindow
+#include "wx/dirctrl.h"    // for wxGenericDirCtrl
 
 #ifdef __WXMSW__
    // tool bar bitmaps are loaded via .rc file
@@ -82,12 +84,13 @@ enum {
    // one-shot timer
    ID_ONE_TIMER = wxID_HIGHEST,
 
-   // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE)
+   // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE, wxID_PREFERENCES)
    ID_OPEN_CLIP,
    ID_RECENT,
-   
    // last item in Open Recent submenu
    ID_RECENT_CLEAR = ID_RECENT + MAX_RECENT + 1,
+   ID_SHOWPATT,
+   ID_PATTDIR,
    
    // Edit menu
    ID_CUT,
@@ -195,6 +198,10 @@ wxTimer *onetimer;
 // it can be used to reset pattern or to show comments
 const char gen0file[] = ".golly_gen0";
 
+// a splittable window is used to display pattern directory and viewport
+wxSplitterWindow* splitwin = NULL;
+wxGenericDirCtrl* dirctrl = NULL;
+
 // -----------------------------------------------------------------------------
 
 // update functions:
@@ -281,6 +288,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(wxID_OPEN,    active && !generating);
       mbar->Enable(ID_OPEN_CLIP, active && !generating && textinclip);
       mbar->Enable(ID_RECENT,    active && !generating && numrecent > 0);
+      mbar->Enable(ID_SHOWPATT,  active);
+      mbar->Enable(ID_PATTDIR,   active);
       mbar->Enable(wxID_SAVE,    active && !generating);
       mbar->Enable(wxID_PREFERENCES, !generating);
 
@@ -340,6 +349,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_INFO,      currfile[0] != 0);
 
       // tick/untick menu items created using AppendCheckItem
+      mbar->Check(ID_SHOWPATT,   showpatterns);
       mbar->Check(ID_AUTO,       autofit);
       mbar->Check(ID_HASH,       hashing);
       mbar->Check(ID_HYPER,      hyperspeed);
@@ -457,11 +467,11 @@ void MainFrame::SetWindowTitle(const char *filename)
    char wtitle[128];
    // save filename for use when changing rule
    strncpy(currname, filename, sizeof(currname));
-#ifdef __WXMAC__
-   sprintf(wtitle, "Golly: %s [%s]", filename, GetRuleName(curralgo->getrule()));
-#else
-   sprintf(wtitle, "%s [%s] - Golly", filename, GetRuleName(curralgo->getrule()));
-#endif
+   #ifdef __WXMAC__
+      sprintf(wtitle, "%s [%s]", filename, GetRuleName(curralgo->getrule()));
+   #else
+      sprintf(wtitle, "%s [%s] - Golly", filename, GetRuleName(curralgo->getrule()));
+   #endif
    MySetTitle(wtitle);
 }
 
@@ -572,7 +582,7 @@ void MainFrame::LoadPattern(const char *newtitle)
       // show new file name in window title but no rule (which readpattern can change);
       // nicer if user can see file name while loading a very large pattern
       char wtitle[128];
-      sprintf(wtitle, "Golly: Loading %s", newtitle);
+      sprintf(wtitle, "Loading %s", newtitle);
       MySetTitle(wtitle);
    }
 
@@ -943,6 +953,102 @@ void MainFrame::SavePattern()
          if ( curralgo->getGeneration() == bigint::zero ) {
             // no need to save starting pattern (ResetPattern can load file)
             savestart = false;
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PruneTree(wxTreeCtrl* treectrl, wxTreeItemId root)
+{
+   // remove non-expanded items that don't have patterndir as prefix;
+   // ideally we'd only like to see the contents of patterndir but that
+   // doesn't seem possible!!!
+
+   wxTreeItemId id = treectrl->GetSelection();
+   while ( id.IsOk() && id != root ) {
+      wxTreeItemId sib;
+      while (true) {
+         sib = treectrl->GetNextSibling(id);
+         if ( sib.IsOk() )
+            treectrl->Delete(sib);
+         else
+            break;
+      }
+      while (true) {
+         sib = treectrl->GetPrevSibling(id);
+         if ( sib.IsOk() )
+            treectrl->Delete(sib);
+         else
+            break;
+      }
+      id = treectrl->GetItemParent(id);
+   }
+   
+   /* can't use this method because GetNext is not available in wxMSW
+   wxTreeItemId id = treectrl->GetNext(root);
+   while ( id.IsOk() ) {
+      wxDirItemData* data = (wxDirItemData*) treectrl->GetItemData(id);
+      if ( !treectrl->IsExpanded(id) && data && !data->m_path.StartsWith(patterndir) ) {
+         wxTreeItemId next = treectrl->GetNext(id);
+         treectrl->Delete(id);
+         id = next;
+      } else {
+         id = treectrl->GetNext(id);
+      }
+   }
+   */
+}
+
+void ResizeSplitWindow()
+{
+   if (!mainptr) return;
+   int wd, ht;
+   mainptr->GetClientSize(&wd, &ht);
+
+   splitwin->SetSize(0, statusptr->statusht, wd,
+                     ht > statusptr->statusht ? ht - statusptr->statusht : 0);
+
+   // wxSplitterWindow automatically resizes left and right panes
+   // but we still need to resize viewport (ie. currview)
+   viewptr->SetViewSize();
+}
+
+void MainFrame::ToggleShowPatterns()
+{
+   showpatterns = !showpatterns;
+   if (splitwin->IsSplit()) {
+      // hide left pane
+      pattdirwd = splitwin->GetSashPosition();
+      splitwin->Unsplit(dirctrl);
+   } else {
+      splitwin->SplitVertically(dirctrl, viewptr, pattdirwd);
+   }
+   // resize viewport (ie. currview)
+   viewptr->SetViewSize();
+   viewptr->SetFocus();
+}
+
+void MainFrame::ChangePatternDir()
+{
+   wxDirDialog dirdlg(this, wxT("Choose a new pattern folder"),
+                      patterndir, wxDD_NEW_DIR_BUTTON);
+   if ( dirdlg.ShowModal() == wxID_OK ) {
+      wxString newdir = dirdlg.GetPath();
+      if ( patterndir != newdir ) {
+         patterndir = newdir;
+         if ( dirctrl ) {
+            // show new pattern directory
+            dirctrl->CollapseTree();
+            // fix wxMac bug!!! path on non-boot volume is not selected
+            dirctrl->SetPath(patterndir);
+            // remove non-expanded items that don't have patterndir as prefix
+            PruneTree(dirctrl->GetTreeCtrl(), dirctrl->GetRootId());
+            #ifndef __WXMSW__
+               // causes crash on Windows!!!
+               dirctrl->GetTreeCtrl()->ScrollTo(dirctrl->GetRootId());
+            #endif
          }
       }
    }
@@ -1732,9 +1838,7 @@ void MainFrame::ToggleStatusBar()
       statusptr->statusht = STATUS_HT;
       statusptr->SetSize(0, 0, wd, statusptr->statusht);
    }
-   viewptr->SetSize(0, statusptr->statusht, wd,
-                       ht > statusptr->statusht ? ht - statusptr->statusht : 0);
-   viewptr->SetViewSize();
+   ResizeSplitWindow();
    UpdateEverything();
 }
 
@@ -1757,10 +1861,7 @@ void MainFrame::ToggleToolBar()
             // adjust size of status bar
             statusptr->SetSize(0, 0, wd, statusptr->statusht);
          }
-         // adjust size of viewport
-         viewptr->SetSize(0, statusptr->statusht, wd,
-                             ht > statusptr->statusht ? ht - statusptr->statusht : 0);
-         viewptr->SetViewSize();
+         ResizeSplitWindow();
          UpdateEverything();
       }
    #endif
@@ -1772,6 +1873,9 @@ void MainFrame::ToggleFullScreen()
       // ShowFullScreen(true) does nothing!!!
       statusptr->ErrorMessage("Sorry, full screen mode is not implemented for X11.");
    #else
+      static bool restorestatus;    // restore status bar at end of full screen mode?
+      static bool restoretoolbar;   // restore tool bar?
+      static bool restorepattdir;   // restore pattern directory?
       if (!fullscreen) {
          // save current location and size for use in SavePrefs
          wxRect r = GetRect();
@@ -1798,8 +1902,15 @@ void MainFrame::ToggleFullScreen()
          }
          // hide tool bar if necessary
          restoretoolbar = tbar && tbar->IsShown();
-         if (tbar && tbar->IsShown()) {
+         if (restoretoolbar) {
             tbar->Show(false);
+         }
+         // hide pattern directory if necessary
+         restorepattdir = splitwin->IsSplit();
+         if (restorepattdir) {
+            pattdirwd = splitwin->GetSashPosition();
+            splitwin->Unsplit(dirctrl);
+            showpatterns = false;
          }
       } else {
          // first show tool bar if necessary
@@ -1818,17 +1929,18 @@ void MainFrame::ToggleFullScreen()
             GetClientSize(&wd, &ht);
             statusptr->SetSize(0, 0, wd, statusptr->statusht);
          }
+         // now restore pattern directory if necessary
+         if (restorepattdir && !splitwin->IsSplit()) {
+            splitwin->SplitVertically(dirctrl, viewptr, pattdirwd);
+            showpatterns = true;
+         }
       }
-      // adjust size of viewport
-      int wd, ht;
-      GetClientSize(&wd, &ht);
-      viewptr->SetSize(0, statusptr->statusht, wd,
-                          ht > statusptr->statusht ? ht - statusptr->statusht : 0);
       if (!fullscreen) {
          // restore scroll bars BEFORE setting viewport size
          viewptr->UpdateScrollBars();
       }
-      viewptr->SetViewSize();
+      // adjust size of viewport (and pattern directory if visible)
+      ResizeSplitWindow();
       UpdateEverything();
    #endif
 }
@@ -1844,12 +1956,18 @@ void MainFrame::ShowPatternInfo()
 // event table and handlers for main window:
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
-   EVT_MENU       (wxID_ANY,     MainFrame::OnMenu)
-   EVT_SET_FOCUS  (              MainFrame::OnSetFocus)
-   EVT_ACTIVATE   (              MainFrame::OnActivate)
-   EVT_SIZE       (              MainFrame::OnSize)
-   EVT_TIMER      (ID_ONE_TIMER, MainFrame::OnOneTimer)
-   EVT_CLOSE      (              MainFrame::OnClose)
+   EVT_MENU             (wxID_ANY,        MainFrame::OnMenu)
+   EVT_SET_FOCUS        (                 MainFrame::OnSetFocus)
+   EVT_ACTIVATE         (                 MainFrame::OnActivate)
+   EVT_SIZE             (                 MainFrame::OnSize)
+   EVT_IDLE             (                 MainFrame::OnIdle)
+   EVT_TREE_SEL_CHANGED (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
+#ifdef __WXX11__
+   EVT_TREE_KEY_DOWN    (wxID_TREECTRL,   MainFrame::OnDirTreeKey)
+#endif
+   EVT_SPLITTER_DCLICK  (wxID_ANY,        MainFrame::OnSashDblClick)
+   EVT_TIMER            (ID_ONE_TIMER,    MainFrame::OnOneTimer)
+   EVT_CLOSE            (                 MainFrame::OnClose)
 END_EVENT_TABLE()
 
 void MainFrame::OnMenu(wxCommandEvent& event)
@@ -1864,6 +1982,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_OPEN:         OpenPattern(); break;
       case ID_OPEN_CLIP:      OpenClipboard(); break;
       case ID_RECENT_CLEAR:   ClearRecentFiles(); break;
+      case ID_SHOWPATT:       ToggleShowPatterns(); break;
+      case ID_PATTDIR:        ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
       case wxID_EXIT:         Close(true); break;        // true forces frame to close
@@ -1982,7 +2102,7 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
 #endif
 {
    int wd, ht;
-   GetClientSize(&wd, &ht);      // includes status bar and viewport
+   GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0) {
       // note that statusptr and viewptr might be NULL if OnSize gets called
       // from MainFrame::MainFrame (true if X11)
@@ -1991,15 +2111,58 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
          statusptr->SetSize(0, 0, wd, statusptr->statusht);
       }
       if (viewptr && statusptr && ht > statusptr->statusht) {
-         // adjust size of viewport
-         viewptr->SetSize(0, statusptr->statusht, wd, ht - statusptr->statusht);
-         viewptr->SetViewSize();
+         // adjust size of viewport (and pattern directory if visible)
+         ResizeSplitWindow();
       }
    }
    #ifdef __WXX11__
       // need to do default processing for X11 menu bar and tool bar
       event.Skip();
    #endif
+}
+
+void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
+{
+   #ifdef __WXX11__
+      // don't change focus because it prevents menus staying open!!!
+      return;
+   #endif
+   
+   // ensure viewport window has keyboard focus if main window is active
+   if ( IsActive() && viewptr ) viewptr->SetFocus();
+}
+
+void MainFrame::OnDirTreeSelection(wxTreeEvent& WXUNUSED(event))
+{
+   // note that viewptr will be NULL if called from MainFrame::MainFrame
+   if ( dirctrl && viewptr ) {
+      wxString filepath = dirctrl->GetFilePath();
+      if ( !filepath.IsEmpty() && !generating ) {
+         ConvertPathAndOpen(filepath, true);
+      }
+      // changing focus here works on X11 but not on Mac (probably because
+      // it sets focus to tree ctrl after this call)
+      viewptr->SetFocus();
+   }
+}
+
+// this handler is currently used only on X11; it gets called but the
+// key event isn't seen by PatternView::OnKeyDown for some reason!!!
+void MainFrame::OnDirTreeKey(wxTreeEvent& event)
+{
+   if (viewptr) {
+      viewptr->SetFocus();
+      // send key down event to viewptr
+      wxKeyEvent keyevent = event.GetKeyEvent();
+      keyevent.SetEventObject(viewptr);
+      viewptr->GetEventHandler()->ProcessEvent(keyevent);
+   }
+}
+
+void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
+{
+   // splitwin's sash was double-clicked
+   ToggleShowPatterns();
 }
 
 void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
@@ -2015,6 +2178,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
    if (GetHelpFrame()) GetHelpFrame()->Close(true);
    if (GetInfoFrame()) GetInfoFrame()->Close(true);
+   if (splitwin && splitwin->IsSplit()) pattdirwd = splitwin->GetSashPosition();
 
    // save main window location and other user preferences
    SavePrefs();
@@ -2027,6 +2191,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
       if (generating) exit(0);
    #endif
    if (generating) StopGenerating();
+   
    Destroy();
 }
 
@@ -2129,6 +2294,9 @@ MainFrame::MainFrame()
    fileMenu->Append(wxID_OPEN, _("Open Pattern...\tCtrl+O"));
    fileMenu->Append(ID_OPEN_CLIP, _("Open Clipboard\tShift+Ctrl+O"));
    fileMenu->Append(ID_RECENT, _("Open Recent"), recentSubMenu);
+   fileMenu->AppendSeparator();
+   fileMenu->AppendCheckItem(ID_SHOWPATT, _("Show Patterns\tCtrl+P"));
+   fileMenu->Append(ID_PATTDIR, _("Change Folder..."));
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
@@ -2345,26 +2513,60 @@ MainFrame::MainFrame()
    // wd or ht might be < 1 on Win/X11 platforms
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
-   
-   // create viewport first so it gets focus whenever frame becomes active;
-   // specify minimal size to avoid scroll bars being clipped on Mac
-   viewptr = new PatternView(this, 0, 0, 40, 40);
-   if (viewptr == NULL) Fatal("Failed to create pattern view!");
-
-   #if wxUSE_DRAG_AND_DROP
-      // let users drop files onto pattern view
-      viewptr->SetDropTarget(new DnDFile());
-   #endif
 
    // wxStatusBar can only appear at bottom of frame so we use our own
    // status bar class which creates a child window at top of frame
-   statusptr = new StatusBar(this, 0, 0, 100, 100);
+   statusptr = new StatusBar(this, 0, 0, wd, STATUS_HT);
    if (statusptr == NULL) Fatal("Failed to create status bar!");
+   
+   // create a split window with pattern directory in left pane
+   // and pattern viewport in right pane
+   splitwin = new wxSplitterWindow(this, wxID_ANY,
+                                   wxPoint(0, STATUS_HT),
+                                   wxSize(wd, ht - STATUS_HT),
+                                   #ifdef __WXMSW__
+                                   wxSP_BORDER |
+                                   #endif
+                                   wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
+   if (splitwin == NULL) Fatal("Failed to create split window!");
 
-   // now set width and height to what we really want
-   viewptr->SetSize(0, statusptr->statusht, wd,
-                       ht > statusptr->statusht ? ht - statusptr->statusht : 0);
-   statusptr->SetSize(0, 0, wd, statusptr->statusht);
+   dirctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
+                                  wxDefaultPosition, wxDefaultSize,
+                                  wxNO_BORDER, _T("All files (*.*)|*.*"));
+   if (dirctrl == NULL) Fatal("Failed to create directory control!");
+
+   // reduce indent
+   wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
+   treectrl->SetIndent(4);
+   
+   // reduce font size -- doesn't seem to reduce line height
+   // wxFont font = *(statusptr->GetStatusFont());
+   // treectrl->SetFont(font);
+   
+   if ( wxFileName::DirExists(patterndir) ) {
+      dirctrl->SetPath(patterndir);
+      // remove non-expanded items that don't have patterndir as prefix
+      PruneTree(treectrl, dirctrl->GetRootId());
+      #ifndef __WXMSW__
+         // causes crash on Windows!!!
+         treectrl->ScrollTo(dirctrl->GetRootId());
+      #endif
+   }
+   
+   // create viewport at minimum size to avoid scroll bars being clipped on Mac
+   viewptr = new PatternView(splitwin, 0, 0, 40, 40);
+   if (viewptr == NULL) Fatal("Failed to create viewport window!");
+   
+   #if wxUSE_DRAG_AND_DROP
+      // let users drop files onto viewport
+      viewptr->SetDropTarget(new DnDFile());
+   #endif
+      
+   splitwin->SplitVertically(dirctrl, viewptr, pattdirwd);
+   splitwin->SetSashPosition(pattdirwd);
+   splitwin->SetMinimumPaneSize(50);
+   if (!showpatterns) splitwin->Unsplit(dirctrl);
+   splitwin->UpdateSize();
 
    InitDrawingData();      // do this after viewport size has been set
 

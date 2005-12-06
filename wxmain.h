@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXMAIN_H_
 
 #include "wx/dataobj.h"    // for wxTextDataObject
+#include "wx/treectrl.h"   // for wxTreeEvent
+#include "wx/splitter.h"   // for wxSplitterEvent
 #include "bigint.h"        // for bigint
 #include "lifealgo.h"      // for lifealgo
 
@@ -55,6 +57,7 @@ public:
    void CreateUniverse();
    void ConvertPathAndOpen(const char *path, bool convertUTF8);
    void OpenPattern();
+   void ToggleShowPatterns();
    void SavePattern();
    
    // prefs functions
@@ -100,6 +103,10 @@ private:
    void OnSetFocus(wxFocusEvent& event);
    void OnActivate(wxActivateEvent& event);
    void OnSize(wxSizeEvent& event);
+   void OnIdle(wxIdleEvent& event);
+   void OnDirTreeSelection(wxTreeEvent& event);
+   void OnDirTreeKey(wxTreeEvent& event);
+   void OnSashDblClick(wxSplitterEvent& event);
    void OnOneTimer(wxTimerEvent& event);
    void OnClose(wxCloseEvent& event);
 
@@ -112,6 +119,7 @@ private:
    void AddRecentFile(const char *path);
    void OpenRecentFile(int id);
    void ClearRecentFiles();
+   void ChangePatternDir();
 
    // control functions
    void ChangeGoToStop();
@@ -135,9 +143,6 @@ private:
    int gen0mag;                  // starting scale
    bigint gen0x, gen0y;          // starting location
    bool gen0hash;                // hashing was on at start?
-
-   bool restorestatus;           // restore status bar at end of full screen mode?
-   bool restoretoolbar;          // restore tool bar at end of full screen mode?
 
    wxToolBarToolBase *gotool;    // go button in tool bar
    wxToolBarToolBase *stoptool;  // stop button in tool bar

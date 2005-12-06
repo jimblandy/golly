@@ -1295,6 +1295,11 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    bool abort = false;
    BeginProgress("Pasting pattern");
    
+   // !!! speed up following code by using nextcell in these cases:
+   // - when using Or mode (make this the default mode???)
+   // - when current universe is empty
+   // - when destination rect is outside current pattern edges
+   
    // copy pattern from temporary universe to current universe
    int tempstate, currstate, tx, ty, cx, cy;
    cy = pastey;
@@ -2253,6 +2258,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case '\'':  mainptr->ToggleToolBar(); break;
       case 'i':   mainptr->ShowPatternInfo(); break;
       case ',':   mainptr->ShowPrefsDialog(); break;
+      case 'p':   mainptr->ToggleShowPatterns(); break;
    
       case 'h':
       case WXK_HELP:
@@ -2705,12 +2711,7 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 // create the viewport window
 PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-               #ifdef __WXMSW__
-                  // nicer because Windows tool bar has no border
-                  wxSIMPLE_BORDER |
-               #else
                   wxNO_BORDER |
-               #endif
                   wxWANTS_CHARS |              // receive all keyboard events
                   wxFULL_REPAINT_ON_RESIZE |
                   wxVSCROLL | wxHSCROLL

@@ -82,6 +82,9 @@ extern int hbasestep;            // hlife's base step (best if power of 2)
 extern int mindelay;             // minimum millisec delay (when warp = -1)
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for open and save dialogs
+extern wxString patterndir;      // directory used by Show Patterns
+extern int pattdirwd;            // width of pattern directory window
+extern bool showpatterns;        // show pattern directory?
 extern wxMenu *recentSubMenu;    // menu of recent files
 extern int numrecent;            // current number of recent files
 extern int maxrecent;            // maximum number of recent files

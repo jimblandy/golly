@@ -3,9 +3,6 @@ TODO:
 High priority:
 --------------
 
-A - Create a scrollable navigation panel to view contents of a selected
-    folder (initially Patterns) so users can load patterns easily.
-
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar.
 

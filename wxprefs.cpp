@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/filename.h"   // for wxFileName
+#include "wx/stdpaths.h"   // for wxStandardPaths
 #include "wx/propdlg.h"    // for wxPropertySheetDialog
 #include "wx/bookctrl.h"   // for wxBookCtrlBase
 #include "wx/notebook.h"   // for wxNotebookEvent
@@ -37,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"      // for curralgo->...
 #include "viewport.h"      // for MAX_MAG
 
-#include "wxgolly.h"       // for mainptr
+#include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for GetID_RECENT_CLEAR, GetID_RECENT, mainptr->...
 #include "wxutils.h"       // for Warning
 #include "wxhelp.h"        // for GetHelpFrame
@@ -60,19 +61,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Golly's preferences file is a simple text file created in the same directory
 // as the application.  This makes uninstalling simple and allows multiple
 // copies of the app to have separate settings.
-const char PREFSNAME[] = "GollyPrefs";
+const char PREFS_NAME[] = "GollyPrefs";
 
-// location of pattern collection (relative to app)
-const char PATTDIR[] = "Patterns";
+// location of supplied pattern collection (relative to app)
+const char PATT_DIR[] = "Patterns";
 
-const int PREFSVERSION = 1;      // may change if file syntax changes
-const int PREFLINESIZE = 5000;   // must be quite long for storing file paths
+const int PREFS_VERSION = 1;     // may change if file syntax changes
+const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 const int MAX_SPACING = 1000;    // maximum value of boldspacing
-const int MINHASHMB = 10;        // minimum value of maxhashmem
-const int MAXHASHMB = 4000;      // make bigger when hlifealgo is 64-bit clean
+const int MIN_HASHMB = 10;       // minimum value of maxhashmem
+const int MAX_HASHMB = 4000;     // make bigger when hlifealgo is 64-bit clean
 const int MAX_BASESTEP = 100;    // maximum qbasestep or hbasestep
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
 const int MAX_THUMBRANGE = 500;  // maximum thumbrange
+const int MIN_PATTDIRWD = 50;    // minimum pattdirwd
 
 // initialize exported preferences:
 
@@ -123,7 +125,10 @@ int qbasestep = 10;              // qlife's base step
 int hbasestep = 8;               // hlife's base step (best if power of 2)
 int mindelay = 250;              // minimum millisec delay (when warp = -1)
 int maxdelay = 2000;             // maximum millisec delay
-wxString opensavedir = PATTDIR;  // directory for open and save dialogs
+wxString opensavedir;            // directory for open and save dialogs
+wxString patterndir;             // directory used by Show Patterns
+int pattdirwd = 180;             // width of pattern directory window
+bool showpatterns = true;        // show pattern directory?
 wxMenu *recentSubMenu = NULL;    // menu of recent files
 int numrecent = 0;               // current number of recent files
 int maxrecent = 20;              // maximum number of recent files (1..MAX_RECENT)
@@ -132,7 +137,7 @@ wxArrayString namedrules;        // initialized in GetPrefs
 // these settings must be static -- they are changed by GetPrefs *before* the
 // view window is created
 paste_location plocation = TopLeft;
-paste_mode pmode = Copy;
+paste_mode pmode = Or;
 
 // these must be static -- they are created before the view window is created
 wxCursor *curs_pencil;           // for drawing cells
@@ -147,6 +152,8 @@ wxCursor *currcurs;              // set to one of the above cursors
 int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
+
+wxString appdir;                 // path of directory containing app
 
 // -----------------------------------------------------------------------------
 
@@ -306,7 +313,7 @@ void SavePrefs()
       return;
    }
    
-   FILE *f = fopen(PREFSNAME, "w");
+   FILE *f = fopen(PREFS_NAME, "w");
    if (f == NULL) {
       Warning("Could not save preferences file!");
       return;
@@ -314,7 +321,7 @@ void SavePrefs()
    
    fprintf(f, "# NOTE: If you edit this file then do so when Golly isn't running\n");
    fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n");
-   fprintf(f, "version=%d\n", PREFSVERSION);
+   fprintf(f, "version=%d\n", PREFS_VERSION);
    // save main window's location and size
    if (mainptr->fullscreen) {
       // use mainx, mainy, mainwd, mainht set by mainptr->ToggleFullScreen()
@@ -383,6 +390,9 @@ void SavePrefs()
    fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
    fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
+   fprintf(f, "pattern_dir=%s\n", patterndir.c_str());
+   fprintf(f, "patt_dir_width=%d\n", pattdirwd);
+   fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
    fprintf(f, "max_recent=%d (1..%d)\n", maxrecent, MAX_RECENT);
    if (numrecent > 0) {
       int i;
@@ -392,6 +402,52 @@ void SavePrefs()
       }
    }
    fclose(f);
+}
+
+// -----------------------------------------------------------------------------
+
+wxString FindAppDir()
+{
+   // return path to app's directory, terminated by path separator
+   wxString argv0 = wxGetApp().argv[0];
+   wxString currdir = wxGetCwd();
+
+   #ifdef __WXMSW__
+
+      // on Windows we don't need to use argv0 or currdir
+      wxStandardPaths wxstdpaths;
+      wxString str = wxstdpaths.GetDataDir();
+      if (str.Last() != wxFILE_SEP_PATH) str += wxFILE_SEP_PATH;
+      return str;
+
+   #elif defined(__WXMAC__)
+
+      // on Mac OS X argv0 is an absolute path to the executable:
+      // eg. "/Volumes/HD/Apps/foo.app/Contents/MacOS/foo"
+      // and currdir is an absolute path to the bundled app's location:
+      // eg. "/Volumes/HD/Apps"
+      if (currdir.Last() != wxFILE_SEP_PATH) currdir += wxFILE_SEP_PATH;
+      return currdir;
+
+   #elif defined(__UNIX__)
+
+      // argv0 is 1st string on command line: eg. "./golly" or "/usr/apps/golly"
+      // and currdir is the current working directory where the command was
+      // invoked, which is not necessarily where the app is located
+      wxString str;
+      if (wxIsAbsolutePath(argv0)) {
+         str = wxPathOnly(argv0);
+      } else {
+         // relative path so remove "./" prefix if present
+         if (argv0.StartsWith("./")) argv0 = argv0.AfterFirst('/');
+         if (currdir.Last() != wxFILE_SEP_PATH) currdir += wxFILE_SEP_PATH;
+         str = currdir + argv0;
+         str = wxPathOnly(str);
+      }
+      if (str.Last() != wxFILE_SEP_PATH) str += wxFILE_SEP_PATH;
+      return str;
+   
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -420,7 +476,7 @@ void AddDefaultRules()
 
 bool GetKeyVal(FILE *f, char *line, char **keyword, char **value)
 {
-   while ( fgets(line, PREFLINESIZE, f) != 0 ) {
+   while ( fgets(line, PREF_LINE_SIZE, f) != 0 ) {
       if ( line[0] == '#' || line[0] == '\n' ) {
          // skip comment line or empty line
       } else {
@@ -456,6 +512,10 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht)
 
 void GetPrefs()
 {
+   appdir = FindAppDir();
+   opensavedir = appdir + PATT_DIR;
+   patterndir = appdir + PATT_DIR;
+
    // create curs_* and initialize newcurs, opencurs and currcurs
    CreateCursors();
    
@@ -466,19 +526,19 @@ void GetPrefs()
 
    namedrules.Add("Life|B3/S23");      // must be 1st entry
 
-   if ( !wxFileExists(PREFSNAME) ) {
+   if ( !wxFileExists(PREFS_NAME) ) {
       // use initial preference values
       AddDefaultRules();
       return;
    }
    
-   FILE *f = fopen(PREFSNAME, "r");
+   FILE *f = fopen(PREFS_NAME, "r");
    if (f == NULL) {
       Warning("Could not read preferences file!");
       return;
    }
    
-   char line[PREFLINESIZE];
+   char line[PREF_LINE_SIZE];
    char *keyword;
    char *value;
    while ( GetKeyVal(f, line, &keyword, &value) ) {
@@ -490,7 +550,7 @@ void GetPrefs()
 
       if (strcmp(keyword, "version") == 0) {
          int currversion;
-         if (sscanf(value, "%d", &currversion) == 1 && currversion < PREFSVERSION) {
+         if (sscanf(value, "%d", &currversion) == 1 && currversion < PREFS_VERSION) {
             // may need to do something in the future if syntax changes
          }
 
@@ -563,8 +623,8 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "max_hash_mem") == 0) {
          sscanf(value, "%d", &maxhashmem);
-         if (maxhashmem < MINHASHMB) maxhashmem = MINHASHMB;
-         if (maxhashmem > MAXHASHMB) maxhashmem = MAXHASHMB;
+         if (maxhashmem < MIN_HASHMB) maxhashmem = MIN_HASHMB;
+         if (maxhashmem > MAX_HASHMB) maxhashmem = MAX_HASHMB;
 
       } else if (strcmp(keyword, "rule") == 0) {
          strncpy(initrule, value, sizeof(initrule));
@@ -633,9 +693,23 @@ void GetPrefs()
       } else if (strcmp(keyword, "open_save_dir") == 0) {
          opensavedir = value;
          if ( !wxFileName::DirExists(opensavedir) ) {
-            // reset to pattern directory
-            opensavedir = PATTDIR;
+            // reset to supplied pattern directory
+            opensavedir = appdir + PATT_DIR;
          }
+
+      } else if (strcmp(keyword, "pattern_dir") == 0) {
+         patterndir = value;
+         if ( !wxFileName::DirExists(patterndir) ) {
+            // reset to supplied pattern directory
+            patterndir = appdir + PATT_DIR;
+         }
+         
+      } else if (strcmp(keyword, "patt_dir_width") == 0) {
+         sscanf(value, "%d", &pattdirwd);
+         if (pattdirwd < MIN_PATTDIRWD) pattdirwd = MIN_PATTDIRWD;
+         
+      } else if (strcmp(keyword, "show_patterns") == 0) {
+         showpatterns = value[0] == '1';
 
       } else if (strcmp(keyword, "max_recent") == 0) {
          sscanf(value, "%d", &maxrecent);
@@ -982,7 +1056,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, MINHASHMB, MAXHASHMB, maxhashmem);
+                                      wxSP_ARROW_KEYS, MIN_HASHMB, MAX_HASHMB, maxhashmem);
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1288,7 +1362,7 @@ bool PrefsDialog::ValidateCurrentPage()
          return false;
 
    } else if (prefspage == CONTROL_PAGE) {
-      if ( BadSpinVal(PREF_MAX_HASH_MEM, MINHASHMB, MAXHASHMB, "Maximum memory for hashing") )
+      if ( BadSpinVal(PREF_MAX_HASH_MEM, MIN_HASHMB, MAX_HASHMB, "Maximum memory for hashing") )
          return false;
       if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, "Base step if not hashing") )
          return false;

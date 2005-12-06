@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.92 (released ???)
 
+AKT: Added Show Patterns and Change Folder to File menu.
 AKT: Thumb scroll range is adjustable (via Prefs > View).
 AKT: If the help window is active, hit "+" and "-" to change font size.
 AKT: If rule has a name then name is shown in main window's title bar.
