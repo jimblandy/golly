@@ -105,7 +105,7 @@ viewport.*     - Abstract viewport operations:
                  zoom() zooms into a given location.
                  unzoom() zooms out from a given location.
                  setmag() sets the magnification.
-                 move() scrolls view by given amount (in pixels).
+                 move() scrolls view by given number of pixels.
 
 liferender.*   - Abstract routines for rendering a pattern:
                  killrect() fills rectangle with dead cell color.

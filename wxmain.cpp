@@ -960,45 +960,24 @@ void MainFrame::SavePattern()
 
 // -----------------------------------------------------------------------------
 
-void PruneTree(wxTreeCtrl* treectrl, wxTreeItemId root)
+void SimplifyTree(wxTreeCtrl* treectrl, wxTreeItemId root)
 {
-   // remove non-expanded items that don't have patterndir as prefix;
-   // ideally we'd only like to see the contents of patterndir but that
-   // doesn't seem possible!!!
+   // delete old tree (except root)
+   treectrl->DeleteChildren(root);
 
-   wxTreeItemId id = treectrl->GetSelection();
-   while ( id.IsOk() && id != root ) {
-      wxTreeItemId sib;
-      while (true) {
-         sib = treectrl->GetNextSibling(id);
-         if ( sib.IsOk() )
-            treectrl->Delete(sib);
-         else
-            break;
-      }
-      while (true) {
-         sib = treectrl->GetPrevSibling(id);
-         if ( sib.IsOk() )
-            treectrl->Delete(sib);
-         else
-            break;
-      }
-      id = treectrl->GetItemParent(id);
+   // append patterndir as only child
+   wxDirItemData* diritem = new wxDirItemData(patterndir, patterndir, true);
+   wxTreeItemId id;
+   id = treectrl->AppendItem(root, patterndir.AfterLast(wxFILE_SEP_PATH),
+                             0, 0, diritem);
+   if ( diritem->HasFiles() || diritem->HasSubDirs() ) {
+      treectrl->SetItemHasChildren(id);
+      treectrl->Expand(id);
+      #ifndef __WXMSW__
+         // causes crash on Windows!!!
+         treectrl->ScrollTo(root);
+      #endif
    }
-   
-   /* can't use this method because GetNext is not available in wxMSW
-   wxTreeItemId id = treectrl->GetNext(root);
-   while ( id.IsOk() ) {
-      wxDirItemData* data = (wxDirItemData*) treectrl->GetItemData(id);
-      if ( !treectrl->IsExpanded(id) && data && !data->m_path.StartsWith(patterndir) ) {
-         wxTreeItemId next = treectrl->GetNext(id);
-         treectrl->Delete(id);
-         id = next;
-      } else {
-         id = treectrl->GetNext(id);
-      }
-   }
-   */
 }
 
 void ResizeSplitWindow()
@@ -1040,15 +1019,7 @@ void MainFrame::ChangePatternDir()
          patterndir = newdir;
          if ( dirctrl ) {
             // show new pattern directory
-            dirctrl->CollapseTree();
-            // fix wxMac bug!!! path on non-boot volume is not selected
-            dirctrl->SetPath(patterndir);
-            // remove non-expanded items that don't have patterndir as prefix
-            PruneTree(dirctrl->GetTreeCtrl(), dirctrl->GetRootId());
-            #ifndef __WXMSW__
-               // causes crash on Windows!!!
-               dirctrl->GetTreeCtrl()->ScrollTo(dirctrl->GetRootId());
-            #endif
+            SimplifyTree(dirctrl->GetTreeCtrl(), dirctrl->GetRootId());
          }
       }
    }
@@ -1876,6 +1847,7 @@ void MainFrame::ToggleFullScreen()
       static bool restorestatus;    // restore status bar at end of full screen mode?
       static bool restoretoolbar;   // restore tool bar?
       static bool restorepattdir;   // restore pattern directory?
+
       if (!fullscreen) {
          // save current location and size for use in SavePrefs
          wxRect r = GetRect();
@@ -1884,13 +1856,16 @@ void MainFrame::ToggleFullScreen()
          mainwd = r.width;
          mainht = r.height;
       }
+
       fullscreen = !fullscreen;
       ShowFullScreen(fullscreen,
           // don't use wxFULLSCREEN_ALL because that prevents tool bar being
           // toggled in full screen mode on Windows
           wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
       wxToolBar *tbar = GetToolBar();
+
       if (fullscreen) {
+         // wxMac: can we also hide grow box???!!!
          // hide scroll bars
          viewptr->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
          viewptr->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
@@ -1935,6 +1910,7 @@ void MainFrame::ToggleFullScreen()
             showpatterns = true;
          }
       }
+
       if (!fullscreen) {
          // restore scroll bars BEFORE setting viewport size
          viewptr->UpdateScrollBars();
@@ -2178,6 +2154,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
    if (GetHelpFrame()) GetHelpFrame()->Close(true);
    if (GetInfoFrame()) GetInfoFrame()->Close(true);
+   
    if (splitwin && splitwin->IsSplit()) pattdirwd = splitwin->GetSashPosition();
 
    // save main window location and other user preferences
@@ -2544,13 +2521,8 @@ MainFrame::MainFrame()
    // treectrl->SetFont(font);
    
    if ( wxFileName::DirExists(patterndir) ) {
-      dirctrl->SetPath(patterndir);
-      // remove non-expanded items that don't have patterndir as prefix
-      PruneTree(treectrl, dirctrl->GetRootId());
-      #ifndef __WXMSW__
-         // causes crash on Windows!!!
-         treectrl->ScrollTo(dirctrl->GetRootId());
-      #endif
+      // only show patterndir and its contents
+      SimplifyTree(treectrl, dirctrl->GetRootId());
    }
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac

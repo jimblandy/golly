@@ -146,7 +146,7 @@ wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h wxr
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp wxgolly.h \
-appicon.xpm \
+Help/about.html appicon.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
 wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp
