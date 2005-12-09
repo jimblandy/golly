@@ -119,6 +119,7 @@ int wx_poll::checkevents()
          wxIdleEvent event;
          wxGetApp().SendIdleEvents(GetHtmlWindow(), event);
       }
+      if (showpatterns) viewptr->SetFocus();
    #else
       // on Mac and X11 it is much faster to avoid calling Yield too often
       long t = wxGetElapsedTime(false);
@@ -131,6 +132,7 @@ int wx_poll::checkevents()
                wxIdleEvent event;
                wxGetApp().SendIdleEvents(GetHtmlWindow(), event);
             }
+            if (showpatterns) viewptr->SetFocus();
          #endif
       }
    #endif

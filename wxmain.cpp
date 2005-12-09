@@ -201,6 +201,9 @@ const char gen0file[] = ".golly_gen0";
 // a splittable window is used to display pattern directory and viewport
 wxSplitterWindow* splitwin = NULL;
 wxGenericDirCtrl* dirctrl = NULL;
+#ifdef __WXMSW__
+bool callUnselect = false;          // OnIdle needs to call Unselect?
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -968,8 +971,7 @@ void SimplifyTree(wxTreeCtrl* treectrl, wxTreeItemId root)
    // append patterndir as only child
    wxDirItemData* diritem = new wxDirItemData(patterndir, patterndir, true);
    wxTreeItemId id;
-   id = treectrl->AppendItem(root, patterndir.AfterLast(wxFILE_SEP_PATH),
-                             0, 0, diritem);
+   id = treectrl->AppendItem(root, patterndir.AfterLast(wxFILE_SEP_PATH), 0, 0, diritem);
    if ( diritem->HasFiles() || diritem->HasSubDirs() ) {
       treectrl->SetItemHasChildren(id);
       treectrl->Expand(id);
@@ -977,6 +979,24 @@ void SimplifyTree(wxTreeCtrl* treectrl, wxTreeItemId root)
          // causes crash on Windows!!!
          treectrl->ScrollTo(root);
       #endif
+   }
+}
+
+void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
+{
+   // recursively traverse tree and reset each file item background to white
+   wxTreeItemIdValue cookie;
+   wxTreeItemId id = treectrl->GetFirstChild(root, cookie);
+   while ( id.IsOk() ) {
+      if ( treectrl->ItemHasChildren(id) ) {
+         DeselectTree(treectrl, id);
+      } else {
+         wxColour currcolor = treectrl->GetItemBackgroundColour(id);
+         if ( currcolor != *wxWHITE ) {
+            treectrl->SetItemBackgroundColour(id, *wxWHITE);
+         }
+      }
+      id = treectrl->GetNextChild(root, cookie);
    }
 }
 
@@ -2106,18 +2126,68 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
    
    // ensure viewport window has keyboard focus if main window is active
    if ( IsActive() && viewptr ) viewptr->SetFocus();
+
+   #ifdef __WXMSW__
+      if ( callUnselect ) {
+         // deselect file/folder so user can click the same item
+         dirctrl->GetTreeCtrl()->Unselect();
+         callUnselect = false;
+      }
+   #endif
 }
 
-void MainFrame::OnDirTreeSelection(wxTreeEvent& WXUNUSED(event))
+void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 {
    // note that viewptr will be NULL if called from MainFrame::MainFrame
    if ( dirctrl && viewptr ) {
+      wxTreeItemId id = event.GetItem();
+      if ( !id.IsOk() ) return;
       wxString filepath = dirctrl->GetFilePath();
-      if ( !filepath.IsEmpty() && !generating ) {
-         ConvertPathAndOpen(filepath, true);
+
+      // deselect file/folder so this handler will be called if user clicks same item
+      wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
+      #ifdef __WXMSW__
+         // can't call UnselectAll() or Unselect() here
+      #else
+         treectrl->UnselectAll();
+      #endif
+
+      if ( filepath.IsEmpty() ) {
+         // user clicked on a folder name so expand or collapse it???
+         // unfortunately, using Collapse/Expand causes this handler to be
+         // called again and there's no easy way to distinguish between
+         // a click in the folder name or a dbl-click (or a click in the
+         // +/-/arrow image)
+         /*
+         if ( treectrl->IsExpanded(id) ) {
+            treectrl->Collapse(id);
+         } else {
+            treectrl->Expand(id);
+         }
+         */
+      } else {
+         // user clicked on a file name
+         if ( generating ) {
+            statusptr->ErrorMessage("Cannot load pattern file while generating.");
+         } else {
+            // reset background of previously selected file by traversing entire tree;
+            // we can't just remember previously selected id because ids don't persist
+            // after a folder has been collapsed and expanded
+            DeselectTree(treectrl, treectrl->GetRootItem());
+
+            // indicate the selected file and load it in
+            treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
+            ConvertPathAndOpen(filepath, true);
+         }
       }
-      // changing focus here works on X11 but not on Mac (probably because
-      // it sets focus to tree ctrl after this call)
+
+      #ifdef __WXMSW__
+         // calling Unselect() here causes a crash so do later in OnIdle
+         callUnselect = true;
+      #endif
+
+      // changing focus here works on X11 but not on Mac (presumably because
+      // wxMac sets focus to treectrl after this call)
       viewptr->SetFocus();
    }
 }
@@ -2155,7 +2225,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    if (GetHelpFrame()) GetHelpFrame()->Close(true);
    if (GetInfoFrame()) GetInfoFrame()->Close(true);
    
-   if (splitwin && splitwin->IsSplit()) pattdirwd = splitwin->GetSashPosition();
+   if (splitwin->IsSplit()) pattdirwd = splitwin->GetSashPosition();
 
    // save main window location and other user preferences
    SavePrefs();
@@ -2166,8 +2236,9 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    #ifdef __WXX11__
       // avoid seg fault on X11
       if (generating) exit(0);
+   #else
+      if (generating) StopGenerating();
    #endif
-   if (generating) StopGenerating();
    
    Destroy();
 }
