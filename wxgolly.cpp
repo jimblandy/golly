@@ -109,17 +109,24 @@ public:
    long nextcheck;
 };
 
+void CallYield()
+{
+   wxGetApp().Yield(true);
+   if (GetHelpFrame() && GetHelpFrame()->IsActive()) {
+      // send idle events to html window so cursor gets updated
+      wxIdleEvent event;
+      wxGetApp().SendIdleEvents(GetHtmlWindow(), event);
+   } else if (mainptr->IsActive()) {
+      // make sure viewport keeps keyboard focus
+      viewptr->SetFocus();
+   }
+}
+
 int wx_poll::checkevents()
 {
    #ifdef __WXMSW__
       // on Windows wxGetElapsedTime has a higher overhead than Yield
-      wxGetApp().Yield(true);
-      if (GetHelpFrame() && GetHelpFrame()->IsActive()) {
-         // send idle events to html window so cursor gets updated
-         wxIdleEvent event;
-         wxGetApp().SendIdleEvents(GetHtmlWindow(), event);
-      }
-      if (showpatterns) viewptr->SetFocus();
+      CallYield();
    #else
       // on Mac and X11 it is much faster to avoid calling Yield too often
       long t = wxGetElapsedTime(false);
@@ -127,12 +134,7 @@ int wx_poll::checkevents()
          nextcheck = t + 50;        // 20th of a sec
          wxGetApp().Yield(true);
          #ifdef __WXMAC__
-            if (GetHelpFrame() && GetHelpFrame()->IsActive()) {
-               // send idle events to html window so cursor gets updated
-               wxIdleEvent event;
-               wxGetApp().SendIdleEvents(GetHtmlWindow(), event);
-            }
-            if (showpatterns) viewptr->SetFocus();
+            CallYield();
          #endif
       }
    #endif

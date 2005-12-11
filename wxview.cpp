@@ -1221,6 +1221,8 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          }
          wxMilliSleep(10);             // don't hog CPU
          wxGetApp().Yield(true);
+         // make sure viewport retains focus so we can use keyboard shortcuts
+         viewptr->SetFocus();
          // waitingforclick becomes false if OnMouseDown is called
          #ifdef __WXMAC__
             // need to check for click here because OnMouseDown does not
@@ -1290,52 +1292,93 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    pastex = left.toint();
    pastey = top.toint();
 
+   // copy pattern from temporary universe to current universe
+   int tx, ty, cx, cy;
    double maxcount = wd.todouble() * ht.todouble();
-   int currcount = 0;
+   int cntr = 0;
    bool abort = false;
    BeginProgress("Pasting pattern");
    
-   // !!! speed up following code by using nextcell in these cases:
-   // - when using Or mode (make this the default mode???)
-   // - when current universe is empty
-   // - when destination rect is outside current pattern edges
-   
-   // copy pattern from temporary universe to current universe
-   int tempstate, currstate, tx, ty, cx, cy;
-   cy = pastey;
-   for ( ty=itop; ty<=ibottom; ty++ ) {
-      cx = pastex;
-      for ( tx=ileft; tx<=iright; tx++ ) {
-         tempstate = tempalgo->getcell(tx, ty);
-         switch (pmode) {
-            case Copy:
-               curralgo->setcell(cx, cy, tempstate);
-               break;
-            case Or:
-               if (tempstate == 1) curralgo->setcell(cx, cy, 1);
-               break;
-            case Xor:
-               currstate = curralgo->getcell(cx, cy);
-               if (tempstate == currstate) {
-                  if (currstate != 0) curralgo->setcell(cx, cy, 0);
-               } else {
-                  if (currstate != 1) curralgo->setcell(cx, cy, 1);
-               }
-               break;
-         }
-         cx++;
-         currcount++;
-         if ( (currcount % 1024) == 0 ) {
-            abort = AbortProgress((double)currcount / maxcount, "");
-            if (abort) break;
-         }
-      }
-      if (abort) break;
-      cy++;
+   // we can speed up pasting sparse patterns by using nextcell in these cases:
+   // - if using Or mode
+   // - if current universe is empty
+   // - if paste rect is outside current pattern edges
+   bool usenextcell;
+   if ( pmode == Or || curralgo->isEmpty() ) {
+      usenextcell = true;
+   } else {
+      bigint ctop, cleft, cbottom, cright;
+      curralgo->findedges(&ctop, &cleft, &cbottom, &cright);
+      usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
    }
+   
+   if ( usenextcell ) {
+      cy = pastey;
+      for ( ty=itop; ty<=ibottom; ty++ ) {
+         cx = pastex;
+         for ( tx=ileft; tx<=iright; tx++ ) {
+            int skip = tempalgo->nextcell(tx, ty);
+            if (skip + tx > iright)
+               skip = -1;           // pretend we found no more live cells
+            if (skip >= 0) {
+               // found next live cell so paste it into current universe
+               tx += skip;
+               cx += skip;
+               curralgo->setcell(cx, cy, 1);
+               cx++;
+            } else {
+               tx = iright + 1;     // done this row
+            }
+            cntr++;
+            if ((cntr % 4096) == 0) {
+               double prog = ((ty - itop) * (double)(iright - ileft + 1) +
+                              (tx - ileft)) / maxcount;
+               abort = AbortProgress(prog, "");
+               if (abort) break;
+            }
+         }
+         if (abort) break;
+         cy++;
+      }
+   } else {
+      // have to use slower getcell/setcell calls
+      int tempstate, currstate;
+      cy = pastey;
+      for ( ty=itop; ty<=ibottom; ty++ ) {
+         cx = pastex;
+         for ( tx=ileft; tx<=iright; tx++ ) {
+            tempstate = tempalgo->getcell(tx, ty);
+            switch (pmode) {
+               case Copy:
+                  curralgo->setcell(cx, cy, tempstate);
+                  break;
+               case Or:
+                  // Or mode is done using above nextcell loop;
+                  // we only include this case to avoid compiler warning
+                  break;
+               case Xor:
+                  currstate = curralgo->getcell(cx, cy);
+                  if (tempstate == currstate) {
+                     if (currstate != 0) curralgo->setcell(cx, cy, 0);
+                  } else {
+                     if (currstate != 1) curralgo->setcell(cx, cy, 1);
+                  }
+                  break;
+            }
+            cx++;
+            cntr++;
+            if ( (cntr % 4096) == 0 ) {
+               abort = AbortProgress((double)cntr / maxcount, "");
+               if (abort) break;
+            }
+         }
+         if (abort) break;
+         cy++;
+      }
+   }
+
    curralgo->endofpattern();
    mainptr->savestart = true;
-   
    EndProgress();
    
    // tidy up and display result
@@ -1731,14 +1774,12 @@ void PatternView::RotateSelection(bool clockwise)
       return;
    }
    
-   // things are also simple if selection and rotated selection are BOTH
-   // outside the pattern edges
+   // things are also simple if selection and rotated selection are BOTH outside
+   // the pattern edges
    bigint top, left, bottom, right;
    curralgo->findedges(&top, &left, &bottom, &right);
-   if ( ( seltop > bottom || selbottom < top ||
-          selleft > right || selright < left) &&
-        ( newtop > bottom || newbottom < top ||
-          newleft > right || newright < left) ) {
+   if ( ( seltop > bottom || selbottom < top || selleft > right || selright < left) &&
+        ( newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
       seltop    = newtop;
       selbottom = newbottom;
       selleft   = newleft;
@@ -1760,9 +1801,10 @@ void PatternView::RotateSelection(bool clockwise)
       return;
    }   
    
-   // create temporary universe (doesn't need to match current universe)
+   // create temporary universe; doesn't need to match current universe so
+   // use qlife because its setcell/getcell are faster
    lifealgo *tempalgo;
-   tempalgo = new qlifealgo();      // qlife's setcell/getcell are faster
+   tempalgo = new qlifealgo();
    tempalgo->setpoll(wxGetApp().Poller());
    
    // copy (and kill) live cells in selection to temporary universe,
@@ -1791,6 +1833,7 @@ void PatternView::RotateSelection(bool clockwise)
       newyinc = -1;
       newxinc = 1;
    }
+
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
@@ -2717,22 +2760,20 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
                   wxVSCROLL | wxHSCROLL
              )
 {
-   // avoid erasing background (only on GTK+)
+   // avoid erasing background on GTK+
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
    dragtimer = new wxTimer(this, ID_DRAG_TIMER);
    if (dragtimer == NULL) Fatal("Failed to create drag timer!");
 
-   drawingcells = false;      // drawing cells due to dragging mouse?
-   selectingcells = false;    // selecting cells due to dragging mouse?
-   movingview = false;        // moving view due to dragging mouse?
-   waitingforclick = false;   // waiting for user to click?
+   drawingcells = false;      // not drawing cells
+   selectingcells = false;    // not selecting cells
+   movingview = false;        // not moving view
+   waitingforclick = false;   // not waiting for user to click
    nopattupdate = false;      // enable pattern updates
-
-   oldzoom = NULL;
-   originy = 0;
+   oldzoom = NULL;            // not shift zooming
+   originy = 0;               // no origin offset
    originx = 0;
-
    NoSelection();             // initially no selection
 }
 
