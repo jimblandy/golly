@@ -43,8 +43,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 // static data used in wx_render routines
-wxDC *currdc;              // current device context for viewport
+wxDC* currdc;              // current device context for viewport
 int currwd, currht;        // current width and height of viewport
+wxBrush* deadbrush;        // brush used in killrect
 
 // bitmap for drawing magnified cells (see DrawStretchedBitmap)
 wxBitmap magmap;
@@ -68,14 +69,14 @@ wxPen pen_notsodark  (wxColour(0x70,0x70,0x70));
    // wxX11's Blit doesn't support alpha channel
 #else
    wxImage selimage;       // translucent overlay for drawing selections
-   wxBitmap *selbitmap;    // selection bitmap
+   wxBitmap* selbitmap;    // selection bitmap
    int selimagewd;         // width of selection image
    int selimageht;         // height of selection image
 #endif
 
 // paste image (initialized in CreatePasteImage)
 wxImage pasteimage;        // translucent image for drawing paste pattern
-wxBitmap *pastebitmap;     // paste bitmap
+wxBitmap* pastebitmap;     // paste bitmap
 int pimagewd;              // width of paste image
 int pimageht;              // height of paste image
 int prectwd;               // must match viewptr->pasterect.width
@@ -88,7 +89,7 @@ lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
 
 // make this a user preference on Mac/Win???
-// problem: if usemask is false then translucent image on Win is not correct!!!
+// PROBLEM: if usemask is false then translucent image on Win is not correct!!!
 #ifdef __WXX11__
    bool usemask = true;    // no alpha channel support so must use mask
 #else
@@ -295,7 +296,7 @@ void wx_render::killrect(int x, int y, int w, int h)
       FillRect(*currdc, r, *randbrush);
       delete randbrush;
    #else
-      FillRect(*currdc, r, blackcells ? *wxWHITE_BRUSH : *wxBLACK_BRUSH);
+      FillRect(*currdc, r, *deadbrush);
    #endif
 }
 
@@ -383,7 +384,10 @@ void CreatePasteImage(lifealgo *palgo, wxRect &bbox)
 void DestroyPasteImage()
 {
    if (!usemask) pasteimage.Destroy();
-   if (pastebitmap) delete pastebitmap;
+   if (pastebitmap) {
+      delete pastebitmap;
+      pastebitmap = NULL;
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -566,6 +570,9 @@ void CheckPasteImage(viewport &currview)
                pattdc.SetTextBackground(*wxBLACK);
             }
          #endif
+
+         // set brush color used in killrect
+         deadbrush = blackcells || usemask ? wxWHITE_BRUSH : wxBLACK_BRUSH;
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -771,6 +778,8 @@ void DrawView(wxDC &dc, viewport &currview)
          dc.SetTextForeground(*wxWHITE);
          dc.SetTextBackground(*wxBLACK);
       }
+      // set brush color used in killrect
+      deadbrush = blackcells ? wxWHITE_BRUSH : wxBLACK_BRUSH;
       // draw pattern using a sequence of blit and killrect calls
       currdc = &dc;
       currwd = currview.getwidth();
