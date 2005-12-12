@@ -155,6 +155,8 @@ private:
    void SetPasteRect(wxRect &rect, bigint &wd, bigint &ht);
    void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);
+   void RotatePattern(bool clockwise, bigint &newtop, bigint &newbottom,
+                                      bigint &newleft, bigint &newright);
 
    // scroll functions
    void PanUp(int amount);

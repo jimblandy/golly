@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal, FillRect
 #include "wxprefs.h"       // for hashing, etc
 #include "wxhelp.h"        // for ShowHelp
@@ -1151,7 +1151,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    if ( OutsideLimits(top, left, bottom, right) ) {
       statusptr->ErrorMessage("Clipboard pattern is too big.");
       return;
-   }   
+   }
    int itop = top.toint();
    int ileft = left.toint();
    int ibottom = bottom.toint();
@@ -1222,7 +1222,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          wxMilliSleep(10);             // don't hog CPU
          wxGetApp().Yield(true);
          // make sure viewport retains focus so we can use keyboard shortcuts
-         viewptr->SetFocus();
+         SetFocus();
          // waitingforclick becomes false if OnMouseDown is called
          #ifdef __WXMAC__
             // need to check for click here because OnMouseDown does not
@@ -1681,13 +1681,16 @@ void PatternView::FlipVertically()
    bool abort = false;
    BeginProgress("Flipping selection vertically");
    int cx, cy;
-   int oppx = iright;
+   int mirrorx = iright;
    iright = (ileft - 1) + wd / 2;
    for ( cx=ileft; cx<=iright; cx++ ) {
       for ( cy=itop; cy<=ibottom; cy++ ) {
          int currstate = curralgo->getcell(cx, cy);
-         curralgo->setcell(cx, cy, curralgo->getcell(oppx, cy));
-         curralgo->setcell(oppx, cy, currstate);
+         int mirrstate = curralgo->getcell(mirrorx, cy);
+         if ( currstate != mirrstate ) {
+            curralgo->setcell(cx, cy, mirrstate);
+            curralgo->setcell(mirrorx, cy, currstate);
+         }
          cntr++;
          if ((cntr % 4096) == 0) {
             abort = AbortProgress((double)cntr / maxcount, "");
@@ -1695,7 +1698,7 @@ void PatternView::FlipVertically()
          }
       }
       if (abort) break;
-      oppx--;
+      mirrorx--;
    }
    curralgo->endofpattern();
    mainptr->savestart = true;
@@ -1727,13 +1730,16 @@ void PatternView::FlipHorizontally()
    bool abort = false;
    BeginProgress("Flipping selection horizontally");
    int cx, cy;
-   int oppy = ibottom;
+   int mirrory = ibottom;
    ibottom = (itop - 1) + ht / 2;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          int currstate = curralgo->getcell(cx, cy);
-         curralgo->setcell(cx, cy, curralgo->getcell(cx, oppy));
-         curralgo->setcell(cx, oppy, currstate);
+         int mirrstate = curralgo->getcell(cx, mirrory);
+         if ( currstate != mirrstate ) {
+            curralgo->setcell(cx, cy, mirrstate);
+            curralgo->setcell(cx, mirrory, currstate);
+         }
          cntr++;
          if ((cntr % 4096) == 0) {
             abort = AbortProgress((double)cntr / maxcount, "");
@@ -1741,12 +1747,105 @@ void PatternView::FlipHorizontally()
          }
       }
       if (abort) break;
-      oppy--;
+      mirrory--;
    }
    curralgo->endofpattern();
    mainptr->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
+}
+
+const char rotate_clockwise[]       = "Rotating selection +90 degrees";
+const char rotate_anticlockwise[]   = "Rotating selection -90 degrees";
+
+void PatternView::RotatePattern(bool clockwise,
+                                bigint &newtop, bigint &newbottom,
+                                bigint &newleft, bigint &newright)
+{
+   // create new universe of same type as current universe
+   lifealgo *newalgo;
+   if ( hashing ) {
+      newalgo = new hlifealgo();
+      newalgo->setMaxMemory(maxhashmem);
+   } else {
+      newalgo = new qlifealgo();
+   }
+   newalgo->setpoll(wxGetApp().Poller());
+
+   // set same gen count
+   newalgo->setGeneration( curralgo->getGeneration() );
+   
+   // copy all live cells to new universe, rotating the coords by +/- 90 degrees
+   int itop    = seltop.toint();
+   int ileft   = selleft.toint();
+   int ibottom = selbottom.toint();
+   int iright  = selright.toint();
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
+   if (clockwise) {
+      BeginProgress(rotate_clockwise);
+      firstnewy = newtop.toint();
+      newx = newright.toint();
+      newyinc = 1;
+      newxinc = -1;
+   } else {
+      BeginProgress(rotate_anticlockwise);
+      firstnewy = newbottom.toint();
+      newx = newleft.toint();
+      newyinc = -1;
+      newxinc = 1;
+   }
+
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      newy = firstnewy;
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            newy += newyinc * skip;
+            newalgo->setcell(newx, newy, 1);
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, "");
+            if (abort) break;
+         }
+         newy += newyinc;
+      }
+      if (abort) break;
+      newx += newxinc;
+   }
+
+   newalgo->endofpattern();
+   EndProgress();
+   
+   if (abort) {
+      delete newalgo;
+   } else {
+      // rotate the selection edges
+      seltop    = newtop;
+      selbottom = newbottom;
+      selleft   = newleft;
+      selright  = newright;
+      // switch to new universe and display results
+      mainptr->savestart = true;
+      delete curralgo;
+      curralgo = newalgo;
+      mainptr->SetGenIncrement();
+      DisplaySelectionSize();
+      mainptr->UpdatePatternAndStatus();
+   }
 }
 
 void PatternView::RotateSelection(bool clockwise)
@@ -1774,12 +1873,12 @@ void PatternView::RotateSelection(bool clockwise)
       return;
    }
    
-   // things are also simple if selection and rotated selection are BOTH outside
-   // the pattern edges
+   // things are also simple if the selection and rotated selection are both
+   // outside the pattern edges (ie. both are empty)
    bigint top, left, bottom, right;
    curralgo->findedges(&top, &left, &bottom, &right);
-   if ( ( seltop > bottom || selbottom < top || selleft > right || selright < left) &&
-        ( newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
+   if ( (seltop > bottom || selbottom < top || selleft > right || selright < left) &&
+        (newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
       seltop    = newtop;
       selbottom = newbottom;
       selleft   = newleft;
@@ -1789,7 +1888,7 @@ void PatternView::RotateSelection(bool clockwise)
       return;
    }
 
-   // can only use getcell/setcell in limited domain
+   // can only use nextcell/getcell/setcell in limited domain
    if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return;
@@ -1799,8 +1898,15 @@ void PatternView::RotateSelection(bool clockwise)
    if ( OutsideLimits(newtop, newbottom, newleft, newright) ) {
       statusptr->ErrorMessage("New selection would be outside +/- 10^9 boundary.");
       return;
-   }   
+   }
    
+   // use faster method if selection encloses entire pattern
+   if ( seltop <= top && selbottom >= bottom &&
+        selleft <= left && selright >= right ) {
+      RotatePattern(clockwise, newtop, newbottom, newleft, newright);
+      return;
+   }
+
    // create temporary universe; doesn't need to match current universe so
    // use qlife because its setcell/getcell are faster
    lifealgo *tempalgo;
@@ -1815,19 +1921,18 @@ void PatternView::RotateSelection(bool clockwise)
    int iright  = selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
-   // note that we'll be scanning selection rect twice
-   double maxcount = (double)wd * (double)ht * 2.0;
+   double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
    int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
    if (clockwise) {
-      BeginProgress("Rotating selection +90 degrees");
+      BeginProgress(rotate_clockwise);
       firstnewy = newtop.toint();
       newx = newright.toint();
       newyinc = 1;
       newxinc = -1;
    } else {
-      BeginProgress("Rotating selection -90 degrees");
+      BeginProgress(rotate_anticlockwise);
       firstnewy = newbottom.toint();
       newx = newleft.toint();
       newyinc = -1;
@@ -1862,37 +1967,38 @@ void PatternView::RotateSelection(bool clockwise)
       newx += newxinc;
    }
    
-   if (!abort) {
-      // copy new selection from temporary universe to current universe
-      double done = (double)wd * (double)ht;
-      cntr = 0;
+   tempalgo->endofpattern();
+   curralgo->endofpattern();
+   EndProgress();
+   
+   if (abort) {
+      // perhaps we should restore original selection???
+   } else {
+      // copy rotated selection from temporary universe to current universe
       itop    = newtop.toint();
       ileft   = newleft.toint();
       ibottom = newbottom.toint();
       iright  = newright.toint();
-      for ( cy=itop; cy<=ibottom; cy++ ) {
-         for ( cx=ileft; cx<=iright; cx++ ) {
-            curralgo->setcell(cx, cy, tempalgo->getcell(cx, cy));
-            cntr++;
-            if ((cntr % 4096) == 0) {
-               abort = AbortProgress((done + (double)cntr) / maxcount, "");
-               if (abort) break;
-            }
-         }
-         if (abort) break;
-      }
+      // check if new selection rect is outside modified pattern edges
+      curralgo->findedges(&top, &left, &bottom, &right);
+      if ( newtop > bottom || newbottom < top || newleft > right || newright < left ) {
+         // safe to use fast nextcell calls
+         CopyRect(itop, ileft, ibottom, iright,
+                  tempalgo, curralgo, false, "Merging rotated selection");
+      } else {
+         // have to use slow getcell calls
+         CopyAllRect(itop, ileft, ibottom, iright,
+                     tempalgo, curralgo, "Pasting rotated selection");
+      }      
       // rotate the selection edges
       seltop    = newtop;
       selbottom = newbottom;
       selleft   = newleft;
       selright  = newright;
    }
-
-   curralgo->endofpattern();
-   mainptr->savestart = true;
-   EndProgress();
    
    // delete temporary universe and display results
+   mainptr->savestart = true;
    delete tempalgo;
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();
