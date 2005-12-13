@@ -1,6 +1,7 @@
-// the first icon file is used by Windows Explorer
+// first icon file is used by Windows Explorer:
 aaaaaaaa ICON "appicon.ico"
-// these icons are for the frame
+
+// these icons are for the frame:
 appicon0 ICON "appicon32.ico"
 appicon1 ICON "appicon16.ico"
 
@@ -19,5 +20,6 @@ move    BITMAP "bitmaps/move.bmp"
 zoomin  BITMAP "bitmaps/zoomin.bmp"
 zoomout BITMAP "bitmaps/zoomout.bmp"
 
+cross_curs   BITMAP "bitmaps/cross_curs.bmp"
 zoomin_curs  BITMAP "bitmaps/zoomin_curs.bmp"
 zoomout_curs BITMAP "bitmaps/zoomout_curs.bmp"

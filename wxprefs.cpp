@@ -162,7 +162,16 @@ void CreateCursors()
    curs_pencil = new wxCursor(wxCURSOR_PENCIL);
    if (curs_pencil == NULL) Fatal("Failed to create pencil cursor!");
 
-   curs_cross = new wxCursor(wxCURSOR_CROSS);
+   #ifdef __WXMSW__
+      // don't use wxCURSOR_CROSS because it disappears on black background
+      wxBitmap bitmap_cross = wxBITMAP(cross_curs);
+      wxImage image_cross = bitmap_cross.ConvertToImage();
+      image_cross.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
+      image_cross.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
+      curs_cross = new wxCursor(image_cross);
+   #else
+      curs_cross = new wxCursor(wxCURSOR_CROSS);
+   #endif
    if (curs_cross == NULL) Fatal("Failed to create cross cursor!");
 
    curs_hand = new wxCursor(wxCURSOR_HAND);
@@ -193,15 +202,6 @@ void CreateCursors()
       curs_zoomout = new wxCursor(image_zoomout);
    #endif
    if (curs_zoomout == NULL) Fatal("Failed to create zoomout cursor!");
-
-   /* no longer use busy cursor when generating
-   #ifdef __WXMSW__
-      curs_busy = new wxCursor(wxCURSOR_ARROWWAIT);
-      if (curs_busy == NULL) Fatal("Failed to create busy cursor!");
-   #else
-      curs_busy = wxHOURGLASS_CURSOR;
-   #endif
-   */
    
    // set currcurs in case newcurs/opencurs are set to "No Change"
    currcurs = curs_pencil;
