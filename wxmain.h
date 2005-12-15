@@ -100,6 +100,7 @@ private:
 
    // event handlers
    void OnMenu(wxCommandEvent& event);
+   void OnButton(wxCommandEvent& event);
    void OnSetFocus(wxFocusEvent& event);
    void OnActivate(wxActivateEvent& event);
    void OnSize(wxSizeEvent& event);
@@ -143,9 +144,6 @@ private:
    int gen0mag;                  // starting scale
    bigint gen0x, gen0y;          // starting location
    bool gen0hash;                // hashing was on at start?
-
-   wxToolBarToolBase *gotool;    // go button in tool bar
-   wxToolBarToolBase *stoptool;  // stop button in tool bar
 };
 
 // temporary file for storing clipboard data

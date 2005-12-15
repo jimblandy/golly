@@ -35,6 +35,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/spinctrl.h"   // for wxSpinCtrl
 #include "wx/image.h"      // for wxImage
 
+#ifdef __WXMSW__
+   // can't seem to disable tool tips on Windows!!!
+   // ie. wxToolTip::Enable and wxToolTip::SetDelay are both ignored;
+   // yet another reason to eventually implement our own custom tool bar!!!
+   #undef wxUSE_TOOLTIPS
+   #define wxUSE_TOOLTIPS 0
+#endif
+#if wxUSE_TOOLTIPS
+   #include "wx/tooltip.h" // for wxToolTip
+#endif
+
 #include "lifealgo.h"      // for curralgo->...
 #include "viewport.h"      // for MAX_MAG
 
@@ -149,11 +160,11 @@ wxCursor *currcurs;              // set to one of the above cursors
 
 // local (ie. non-exported) globals:
 
+wxString appdir;                 // path of directory containing app
+bool showtips = true;            // show tool tips?
 int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
-
-wxString appdir;                 // path of directory containing app
 
 // -----------------------------------------------------------------------------
 
@@ -375,6 +386,7 @@ void SavePrefs()
    }
    fprintf(f, "show_status=%d\n", mainptr->StatusVisible() ? 1 : 0);
    fprintf(f, "show_tool=%d\n", mainptr->GetToolBar()->IsShown() ? 1 : 0);
+   fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
    fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
@@ -638,6 +650,9 @@ void GetPrefs()
       } else if (strcmp(keyword, "show_tool") == 0) {
          showtool = value[0] == '1';
 
+      } else if (strcmp(keyword, "show_tips") == 0) {
+         showtips = value[0] == '1';
+
       } else if (strcmp(keyword, "grid_lines") == 0) {
          showgridlines = value[0] == '1';
 
@@ -728,6 +743,11 @@ void GetPrefs()
    
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();
+   
+   #if wxUSE_TOOLTIPS
+      wxToolTip::Enable(showtips);
+      wxToolTip::SetDelay(1000);    // 1 sec
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -766,6 +786,7 @@ private:
       PREF_MIN_DELAY,
       PREF_MAX_DELAY,
       // View prefs
+      PREF_SHOW_TIPS,
       PREF_Y_UP,
       PREF_SHOW_BOLD,
       PREF_BOLD_SPACING,
@@ -866,6 +887,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    #define SBBOTGAP (2)       // vertical gap after last item in wxStaticBoxSizer
    #define SVGAP (4)          // vertical gap above wxSpinCtrl box
    #define S2VGAP (0)         // vertical gap between 2 wxSpinCtrl boxes
+   #define CH2VGAP (9)        // vertical gap between 2 check boxes
    #define CVGAP (9)          // vertical gap above wxChoice box
    #define LRGAP (5)          // space left and right of vertically stacked boxes
    #define SPINGAP (3)        // horizontal gap around each wxSpinCtrl box
@@ -876,6 +898,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    #define SBBOTGAP (7)
    #define SVGAP (7)
    #define S2VGAP (5)
+   #define CH2VGAP (11)
    #define CVGAP (7)
    #define LRGAP (5)
    #define SPINGAP (6)
@@ -886,6 +909,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    #define SBBOTGAP (7)
    #define SVGAP (7)
    #define S2VGAP (5)
+   #define CH2VGAP (11)
    #define CVGAP (7)
    #define LRGAP (5)
    #define SPINGAP (6)
@@ -1158,13 +1182,19 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
    wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
    
+   // show_tips
+   
+#if wxUSE_TOOLTIPS
+   wxCheckBox* check3 = new wxCheckBox(panel, PREF_SHOW_TIPS,
+                                       _("Show tool tips"),
+                                       wxDefaultPosition, wxDefaultSize);
+#endif
+   
    // math_coords
    
-   vbox->AddSpacer(5);
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP,
                                        _("Y coordinates increase upwards"),
                                        wxDefaultPosition, wxDefaultSize);
-   vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // show_bold_lines and bold_spacing
    
@@ -1181,8 +1211,6 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("cells")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // min_grid_mag (2..MAX_MAG)
 
@@ -1209,8 +1237,6 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    
    hbox3->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
 
    // mouse_wheel_mode
 
@@ -1226,8 +1252,6 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    
    hbox4->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   vbox->AddSpacer(CVGAP);
-   vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
 
    // thumb_range
 
@@ -1246,13 +1270,28 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("times view size")),
               0, wxALIGN_CENTER_VERTICAL, 0);
+
+   vbox->AddSpacer(5);
+#if wxUSE_TOOLTIPS
+   vbox->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(CH2VGAP);
+#endif
+   vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(CVGAP);
+   vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
-
 
    // init control values
    check1->SetValue(mathcoords);
    check2->SetValue(showboldlines);
+#if wxUSE_TOOLTIPS
+   check3->SetValue(showtips);
+#endif
    spin2->SetValue(boldspacing);
    spin2->Enable(showboldlines);
    mingridindex = mingridmag - 2;
@@ -1431,6 +1470,10 @@ bool PrefsDialog::TransferDataFromWindow()
    maxdelay   = GetSpinVal(PREF_MAX_DELAY);
 
    // VIEW_PAGE
+#if wxUSE_TOOLTIPS
+   showtips       = GetCheckVal(PREF_SHOW_TIPS);
+   wxToolTip::Enable(showtips);
+#endif
    mathcoords     = GetCheckVal(PREF_Y_UP);
    showboldlines  = GetCheckVal(PREF_SHOW_BOLD);
    boldspacing    = GetSpinVal(PREF_BOLD_SPACING);
@@ -1442,7 +1485,7 @@ bool PrefsDialog::TransferDataFromWindow()
    mingridmag = mingridindex + 2;
    newcurs = IndexToCursor(newcursindex);
    opencurs = IndexToCursor(opencursindex);
-   
+      
    return true;
 }
 

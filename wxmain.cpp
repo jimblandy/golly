@@ -84,6 +84,9 @@ enum {
    // one-shot timer
    ID_ONE_TIMER = wxID_HIGHEST,
 
+   // go/stop button
+   ID_GO_STOP,
+
    // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE, wxID_PREFERENCES)
    ID_OPEN_CLIP,
    ID_RECENT,
@@ -207,6 +210,60 @@ bool callUnselect = false;          // OnIdle needs to call Unselect?
 
 // -----------------------------------------------------------------------------
 
+// bitmaps for tool bar buttons
+const int go_index = 0;
+const int stop_index = 1;
+const int new_index = 2;
+const int open_index = 3;
+const int save_index = 4;
+const int draw_index = 5;
+const int sel_index = 6;
+const int move_index = 7;
+const int zoomin_index = 8;
+const int zoomout_index = 9;
+const int info_index = 10;
+const int hash_index = 11;
+wxBitmap tbBitmaps[12];          // normal state
+
+/*!!!
+wxBitmap tbSelected[12];         // selected state
+
+class ToolButton : public wxBitmapButton
+{
+public:
+   ToolButton(wxToolBar* toolbar, wxWindowID id, int bitmap_index,
+              const wxString& tooltip)
+      : wxBitmapButton(toolbar, id, tbBitmaps[bitmap_index])
+   {
+      toolbar->AddControl(this);
+      SetToolTip(tooltip);
+      // this is not right!!!
+      tbSelected[bitmap_index] = GetBitmapSelected();
+      // probably need to create tbSelected[bitmap_index] by darkening
+      // tbBitmaps[bitmap_index] --
+      // modify wxCreateGreyedImage in src/common/tbarbase.cpp???
+   }
+   
+   // need OnMouseDown and OnMouseUp handlers to fix prob on Windows!!!
+   // ie. prevent OnIdle changing focus to viewptr while button is pressed
+};
+
+// tool bar buttons
+ToolButton* gostopbutt;
+ToolButton* hashbutt;
+ToolButton* newbutt;
+ToolButton* openbutt;
+ToolButton* savebutt;
+ToolButton* drawbutt;
+ToolButton* selbutt;
+ToolButton* movebutt;
+ToolButton* zoominbutt;
+ToolButton* zoomoutbutt;
+ToolButton* infobutt;
+*/
+
+// -----------------------------------------------------------------------------
+
 // update functions:
 
 // update tool bar buttons according to the current state
@@ -214,8 +271,33 @@ void MainFrame::UpdateToolBar(bool active)
 {
    wxToolBar *tbar = GetToolBar();
    if (tbar && tbar->IsShown()) {
+      if (viewptr->waitingforclick) active = false;
+      
+      /* new tools!!!
+      if (hashing)
+         hashbutt->SetBitmapLabel(tbSelected[hash_index]);
+      else
+         hashbutt->SetBitmapLabel(tbBitmaps[hash_index]);
+      hashbutt->Refresh(false, NULL);
+      
+      // on X11 this is not showing disabled image!!! see EnableTool code???
+      gostopbutt->Enable(active);
+      hashbutt->Enable(active && !generating);
+      newbutt->Enable(active && !generating);
+      openbutt->Enable(active && !generating);
+      savebutt->Enable(active && !generating);
+      drawbutt->Enable(active);
+      selbutt->Enable(active);
+      movebutt->Enable(active);
+      zoominbutt->Enable(active);
+      zoomoutbutt->Enable(active);
+      infobutt->Enable(active && currfile[0] != 0);
+      */
+      
       #ifdef __WXX11__
-         // reduce probs by first toggling all buttons off
+         // avoid problems by first toggling off all buttons
+         tbar->ToggleTool(ID_GO,          false);
+         tbar->ToggleTool(ID_STOP,        false);
          tbar->ToggleTool(wxID_NEW,       false);
          tbar->ToggleTool(wxID_OPEN,      false);
          tbar->ToggleTool(wxID_SAVE,      false);
@@ -224,13 +306,11 @@ void MainFrame::UpdateToolBar(bool active)
          tbar->ToggleTool(ID_MOVE,        false);
          tbar->ToggleTool(ID_ZOOMIN,      false);
          tbar->ToggleTool(ID_ZOOMOUT,     false);
-         tbar->ToggleTool(ID_GO,          false);
-         tbar->ToggleTool(ID_STOP,        false);
          tbar->ToggleTool(ID_HASH,        false);
          tbar->ToggleTool(ID_INFO,        false);
       #endif
-      if (viewptr->waitingforclick)
-         active = false;
+      tbar->EnableTool(ID_GO,          active && !generating);
+      tbar->EnableTool(ID_STOP,        active && generating);
       tbar->EnableTool(wxID_NEW,       active && !generating);
       tbar->EnableTool(wxID_OPEN,      active && !generating);
       tbar->EnableTool(wxID_SAVE,      active && !generating);
@@ -239,8 +319,6 @@ void MainFrame::UpdateToolBar(bool active)
       tbar->EnableTool(ID_MOVE,        active);
       tbar->EnableTool(ID_ZOOMIN,      active);
       tbar->EnableTool(ID_ZOOMOUT,     active);
-      tbar->EnableTool(ID_GO,          active && !generating);
-      tbar->EnableTool(ID_STOP,        active && generating);
       tbar->EnableTool(ID_HASH,        active && !generating);
       tbar->EnableTool(ID_INFO,        active && currfile[0] != 0);
       // call ToggleTool for tools added via AddCheckTool or AddRadioTool
@@ -1119,27 +1197,26 @@ void MainFrame::ShowPrefsDialog()
 
 void MainFrame::ChangeGoToStop()
 {
-   /* doesn't work on Windows -- all the other tools go missing!!!
-   // replace tool bar's go button with stop button
-   wxToolBar *tbar = GetToolBar();
-   if (tbar) {
-      tbar->RemoveTool(ID_GO);
-      tbar->InsertTool(0, stoptool);
-      tbar->Realize();
-   }
+   /*!!!
+   gostopbutt->SetBitmapLabel(tbBitmaps[stop_index]);
+   gostopbutt->Refresh(false, NULL);
+   gostopbutt->Update();
+   gostopbutt->SetToolTip(_("Stop generating"));
    */
 }
 
 void MainFrame::ChangeStopToGo()
 {
-   /* doesn't work on Windows!!!
-   // replace tool bar's stop button with go button
-   wxToolBar *tbar = GetToolBar();
-   if (tbar) {
-      tbar->RemoveTool(ID_STOP);
-      tbar->InsertTool(0, gotool);
-      tbar->Realize();
-   }
+   /*!!!
+   gostopbutt->SetBitmapLabel(tbBitmaps[go_index]);
+   gostopbutt->Refresh(false, NULL);
+   gostopbutt->Update();
+   #ifdef __WXX11__
+      // need this kludge to avoid seeing two bitmap images
+      gostopbutt->Enable(false);
+      gostopbutt->Enable(IsActive());
+   #endif
+   gostopbutt->SetToolTip(_("Start generating"));
    */
 }
 
@@ -1953,6 +2030,7 @@ void MainFrame::ShowPatternInfo()
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_MENU             (wxID_ANY,        MainFrame::OnMenu)
+   EVT_BUTTON           (wxID_ANY,        MainFrame::OnButton)
    EVT_SET_FOCUS        (                 MainFrame::OnSetFocus)
    EVT_ACTIVATE         (                 MainFrame::OnActivate)
    EVT_SIZE             (                 MainFrame::OnSize)
@@ -2064,6 +2142,35 @@ void MainFrame::OnMenu(wxCommandEvent& event)
          }
    }
    UpdateUserInterface(IsActive());
+}
+
+void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
+{
+   /*!!!
+   showbanner = false;
+   statusptr->ClearMessage();
+   viewptr->SetFocus();
+   switch ( event.GetId() ) {
+      case ID_GO_STOP:
+         if (generating) {
+            StopGenerating();
+         } else {
+            GeneratePattern();
+         }
+         break;
+      case ID_HASH:     ToggleHashing(); break;
+      case wxID_NEW:    NewPattern(); break;
+      case wxID_OPEN:   OpenPattern(); break;      // nasty prob on X11!!!
+      case wxID_SAVE:   SavePattern(); break;      // ditto!!!
+      case ID_DRAW:     viewptr->SetCursorMode(curs_pencil); break;
+      case ID_SELECT:   viewptr->SetCursorMode(curs_cross); break;
+      case ID_MOVE:     viewptr->SetCursorMode(curs_hand); break;
+      case ID_ZOOMIN:   viewptr->SetCursorMode(curs_zoomin); break;
+      case ID_ZOOMOUT:  viewptr->SetCursorMode(curs_zoomout); break;
+      case ID_INFO:     ShowPatternInfo(); break;
+   }
+   UpdateUserInterface(IsActive());
+   */
 }
 
 void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
@@ -2495,6 +2602,8 @@ MainFrame::MainFrame()
    #ifdef __WXMAC__
       // this results in a tool bar that is 32 pixels wide (matches STATUS_HT)
       toolBar->SetMargins(4, 8);
+      //!!! if we use ToolButton code:
+      // toolBar->SetMargins(0, 0);
    #elif defined(__WXMSW__)
       // Windows seems to ignore *any* margins!!!
       toolBar->SetMargins(0, 0);
@@ -2504,19 +2613,36 @@ MainFrame::MainFrame()
    #endif
 
    toolBar->SetToolBitmapSize(wxSize(16, 16));
-   wxBitmap tbBitmaps[12];
-   tbBitmaps[0] = wxBITMAP(play);
-   tbBitmaps[1] = wxBITMAP(stop);
-   tbBitmaps[2] = wxBITMAP(new);
-   tbBitmaps[3] = wxBITMAP(open);
-   tbBitmaps[4] = wxBITMAP(save);
-   tbBitmaps[5] = wxBITMAP(draw);
-   tbBitmaps[6] = wxBITMAP(select);
-   tbBitmaps[7] = wxBITMAP(move);
-   tbBitmaps[8] = wxBITMAP(zoomin);
-   tbBitmaps[9] = wxBITMAP(zoomout);
-   tbBitmaps[10] = wxBITMAP(info);
-   tbBitmaps[11] = wxBITMAP(hash);
+
+   tbBitmaps[go_index] = wxBITMAP(play);
+   tbBitmaps[stop_index] = wxBITMAP(stop);
+   tbBitmaps[new_index] = wxBITMAP(new);
+   tbBitmaps[open_index] = wxBITMAP(open);
+   tbBitmaps[save_index] = wxBITMAP(save);
+   tbBitmaps[draw_index] = wxBITMAP(draw);
+   tbBitmaps[sel_index] = wxBITMAP(select);
+   tbBitmaps[move_index] = wxBITMAP(move);
+   tbBitmaps[zoomin_index] = wxBITMAP(zoomin);
+   tbBitmaps[zoomout_index] = wxBITMAP(zoomout);
+   tbBitmaps[info_index] = wxBITMAP(info);
+   tbBitmaps[hash_index] = wxBITMAP(hash);
+   
+   /* new tools!!!
+   gostopbutt = new ToolButton(toolBar, ID_GO_STOP, go_index, "Start generating");
+   hashbutt = new ToolButton(toolBar, ID_HASH, hash_index, "Toggle hashing");
+   toolBar->AddSeparator();
+   newbutt = new ToolButton(toolBar, wxID_NEW, new_index, _("New pattern"));
+   openbutt = new ToolButton(toolBar, wxID_OPEN, open_index, _("Open pattern"));
+   savebutt = new ToolButton(toolBar, wxID_SAVE, save_index, _("Save pattern"));
+   toolBar->AddSeparator();
+   drawbutt = new ToolButton(toolBar, ID_DRAW, draw_index, _("Draw"));
+   selbutt = new ToolButton(toolBar, ID_SELECT, sel_index, _("Select"));
+   movebutt = new ToolButton(toolBar, ID_MOVE, move_index, _("Move"));
+   zoominbutt = new ToolButton(toolBar, ID_ZOOMIN, zoomin_index, _("Zoom in"));
+   zoomoutbutt = new ToolButton(toolBar, ID_ZOOMOUT, zoomout_index, _("Zoom out"));
+   toolBar->AddSeparator();
+   infobutt = new ToolButton(toolBar, ID_INFO, info_index, _("Pattern information"));
+   */
 
    #ifdef __WXX11__
       // reduce update probs by using toggle buttons
@@ -2533,28 +2659,23 @@ MainFrame::MainFrame()
    #define ADD_CHECK(id, bmp, tooltip) \
       toolBar->AddCheckTool(id, "", bmp, wxNullBitmap, tooltip)
 
-   gotool = ADD_TOOL(ID_GO, tbBitmaps[0], _("Start generating"));
-   stoptool = ADD_TOOL(ID_STOP, tbBitmaps[1], _("Stop generating"));
-   ADD_CHECK(ID_HASH, tbBitmaps[11], _("Toggle hashing"));
+   ADD_TOOL(ID_GO, tbBitmaps[go_index], _("Start generating"));
+   ADD_TOOL(ID_STOP, tbBitmaps[stop_index], _("Stop generating"));
+   ADD_CHECK(ID_HASH, tbBitmaps[hash_index], _("Toggle hashing"));
    toolBar->AddSeparator();
-   ADD_TOOL(wxID_NEW, tbBitmaps[2], _("New pattern"));
-   ADD_TOOL(wxID_OPEN, tbBitmaps[3], _("Open pattern"));
-   ADD_TOOL(wxID_SAVE, tbBitmaps[4], _("Save pattern"));
+   ADD_TOOL(wxID_NEW, tbBitmaps[new_index], _("New pattern"));
+   ADD_TOOL(wxID_OPEN, tbBitmaps[open_index], _("Open pattern"));
+   ADD_TOOL(wxID_SAVE, tbBitmaps[save_index], _("Save pattern"));
    toolBar->AddSeparator();
-   ADD_RADIO(ID_DRAW, tbBitmaps[5], _("Draw"));
-   ADD_RADIO(ID_SELECT, tbBitmaps[6], _("Select"));
-   ADD_RADIO(ID_MOVE, tbBitmaps[7], _("Move"));
-   ADD_RADIO(ID_ZOOMIN, tbBitmaps[8], _("Zoom in"));
-   ADD_RADIO(ID_ZOOMOUT, tbBitmaps[9], _("Zoom out"));
+   ADD_RADIO(ID_DRAW, tbBitmaps[draw_index], _("Draw"));
+   ADD_RADIO(ID_SELECT, tbBitmaps[sel_index], _("Select"));
+   ADD_RADIO(ID_MOVE, tbBitmaps[move_index], _("Move"));
+   ADD_RADIO(ID_ZOOMIN, tbBitmaps[zoomin_index], _("Zoom in"));
+   ADD_RADIO(ID_ZOOMOUT, tbBitmaps[zoomout_index], _("Zoom out"));
    toolBar->AddSeparator();
-   ADD_TOOL(ID_INFO, tbBitmaps[10], _("Pattern information"));
+   ADD_TOOL(ID_INFO, tbBitmaps[info_index], _("Pattern information"));
    
    toolBar->Realize();
-   
-   /* ChangeGoToStop and ChangeStopToGo don't work on Windows!!!
-   // stop button will replace go button when generating = true
-   toolBar->RemoveTool(ID_STOP);
-   */
 
    int wd, ht;
    GetClientSize(&wd, &ht);
