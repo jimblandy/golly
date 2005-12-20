@@ -529,15 +529,11 @@ const char B0message[] = "Hashing has been turned off due to B0-not-S8 rule.";
 void MainFrame::MySetTitle(const char *title)
 {
    #ifdef __WXMAC__
-      if (FrontWindow() != NULL) {
-         // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
-         Str255 ptitle;
-         CopyCStringToPascal(title, ptitle);
-         SetWTitle(FrontWindow(), (unsigned char const *)ptitle);
-      } else {
-         // this can happen before main window is shown
-         SetTitle(title);
-      }
+      // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
+      Str255 ptitle;
+      CopyCStringToPascal(title, ptitle);
+      SetWTitle( (OpaqueWindowPtr*)this->MacGetWindowRef(),
+                 (unsigned char const *)ptitle);
    #else
       SetTitle(title);
    #endif
@@ -2602,7 +2598,7 @@ MainFrame::MainFrame()
    #ifdef __WXMAC__
       // this results in a tool bar that is 32 pixels wide (matches STATUS_HT)
       toolBar->SetMargins(4, 8);
-      //!!! if we use ToolButton code:
+      // if we use ToolButton code:
       // toolBar->SetMargins(0, 0);
    #elif defined(__WXMSW__)
       // Windows seems to ignore *any* margins!!!

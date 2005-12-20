@@ -1067,9 +1067,9 @@ void PatternView::EnableAllMenus(bool enable)
    #ifdef __WXMAC__
       // enable/disable all menus, including Help menu and items in app menu
       if (enable)
-         EndAppModalStateForWindow(FrontWindow());
+         EndAppModalStateForWindow( (OpaqueWindowPtr*)mainptr->MacGetWindowRef() );
       else
-         BeginAppModalStateForWindow(FrontWindow());
+         BeginAppModalStateForWindow( (OpaqueWindowPtr*)mainptr->MacGetWindowRef() );
    #else
       wxMenuBar *mbar = mainptr->GetMenuBar();
       if (mbar) {

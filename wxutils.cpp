@@ -206,7 +206,8 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
                                         wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
          #ifdef __WXMAC__
             // avoid user selecting Quit or bringing another window to front
-            if (progdlg) BeginAppModalStateForWindow(FrontWindow());
+            if (progdlg)
+               BeginAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
          #endif
       }
       prognext = t + 10;      // short delay until 1st Update
@@ -217,7 +218,7 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
 void EndProgress() {
    if (progdlg) {
       #ifdef __WXMAC__
-         EndAppModalStateForWindow(FrontWindow());
+         EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
       #endif
       delete progdlg;
       progdlg = NULL;
