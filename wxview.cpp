@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2005 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1676,6 +1676,10 @@ void PatternView::FlipVertically()
    
    if (wd == 1) return;
    
+   // following code can be optimized by using faster nextcell calls!!!
+   // ie. if entire pattern is selected then flip into new universe and
+   // switch to that universe
+   
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
@@ -1724,6 +1728,10 @@ void PatternView::FlipHorizontally()
    int ht = ibottom - itop + 1;
    
    if (ht == 1) return;
+   
+   // following code can be optimized by using faster nextcell calls!!!
+   // ie. if entire pattern is selected then flip into new universe and
+   // switch to that universe
    
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
@@ -1908,7 +1916,7 @@ void PatternView::RotateSelection(bool clockwise)
    }
 
    // create temporary universe; doesn't need to match current universe so
-   // use qlife because its setcell/getcell are faster
+   // use qlife because its setcell/getcell calls are faster
    lifealgo *tempalgo;
    tempalgo = new qlifealgo();
    tempalgo->setpoll(wxGetApp().Poller());

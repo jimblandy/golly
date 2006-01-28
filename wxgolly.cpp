@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2005 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -68,7 +68,7 @@ IMPLEMENT_APP(GollyApp)
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 const char *BANNER = "This is Golly version " STRINGIFY(VERSION)
-                     ".  Copyright 2005 The Golly Gang.";
+                     ".  Copyright 2006 The Golly Gang.";
 
 MainFrame *mainptr = NULL;       // main window
 PatternView *viewptr = NULL;     // viewport child window (in main window)
