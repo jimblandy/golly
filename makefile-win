@@ -19,7 +19,7 @@ WXDIR = \wxWidgets-2.6.1
 VERSION = 0.95
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
-SHAREDDIRS = Help
+SHAREDDIRS = Help Help\Lexicon
 SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 SRCDIRS = bitmaps
@@ -403,6 +403,7 @@ srcdist:
 	mkdir $(RELEASENAME)-src\src
 	mkdir $(RELEASENAME)-src\patterns
 	mkdir $(RELEASENAME)-src\src\Help
+	mkdir $(RELEASENAME)-src\src\Help\Lexicon
 	mkdir $(RELEASENAME)-src\src\bitmaps
 	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-src\src
 	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-src\src\%F
