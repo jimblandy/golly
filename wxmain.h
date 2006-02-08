@@ -59,7 +59,8 @@ public:
    void OpenPattern();
    void ToggleShowPatterns();
    void SavePattern();
-   
+   void OpenScript();
+
    // prefs functions
    void SetRandomFillPercentage();
    void SetMinimumWarp();

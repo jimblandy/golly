@@ -1,8 +1,9 @@
-Welcome to Golly, a Game of Life simulator.
+Welcome to Golly, a Game of Life simulator.  Please visit the
+Golly web site for the latest information:
 
-***** NOTE THAT THIS IS A BETA RELEASE *****
+  http://golly.sourceforge.net/
 
-Features:
+Main features:
 
 - Run bigger patterns, faster and further than ever before!
 - Unbounded universe (even larger than 2^32 on a side).
@@ -18,18 +19,12 @@ Features:
 - HTML-based help with integrated Life Lexicon.
 - Free, open source and cross-platform (Windows, Mac, Linux).
 
-And this is just the beginning. :)
-
 The Golly application can be installed anywhere you like, but
 make sure you move the whole folder because the Help subfolder
 must be kept with the application.
 
 To run Golly, just click on the application icon or type golly
 on the command line.  See the Help menu for all the details.
-
-Please visit the Golly web site for the latest information:
-
-   http://golly.sourceforge.net/
 
 Now go forth and generate!
 

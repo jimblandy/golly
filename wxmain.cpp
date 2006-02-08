@@ -71,6 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
+#include "wxscript.h"      // for RunScript
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -94,6 +95,7 @@ enum {
    ID_RECENT_CLEAR = ID_RECENT + MAX_RECENT + 1,
    ID_SHOWPATT,
    ID_PATTDIR,
+   ID_RUN_SCRIPT,
    
    // Edit menu
    ID_CUT,
@@ -372,6 +374,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SHOWPATT,  active);
       mbar->Enable(ID_PATTDIR,   active);
       mbar->Enable(wxID_SAVE,    active && !generating);
+      mbar->Enable(ID_RUN_SCRIPT,    active && !generating);
       mbar->Enable(wxID_PREFERENCES, !generating);
 
       mbar->Enable(ID_CUT,       active && !generating && viewptr->SelectionExists());
@@ -766,14 +769,20 @@ void MainFrame::SetCurrentFile(const char *path)
 
 void MainFrame::ConvertPathAndOpen(const char *path, bool convertUTF8)
 {
-   if (convertUTF8) {
-      // on Mac we need to convert path to UTF8 so fopen will work
-      SetCurrentFile(path);
+   if ( IsScript(path) ) {
+      // execute script
+      RunScript(path);
    } else {
-      strncpy(currfile, path, sizeof(currfile));
+      // load pattern
+      if (convertUTF8) {
+         // on Mac we need to convert path to UTF8 so fopen will work
+         SetCurrentFile(path);
+      } else {
+         strncpy(currfile, path, sizeof(currfile));
+      }
+      AddRecentFile(path);
+      LoadPattern( GetBaseName(path) );
    }
-   AddRecentFile(path);
-   LoadPattern( GetBaseName(path) );
 }
 
 void MainFrame::AddRecentFile(const char *path)
@@ -832,6 +841,26 @@ void MainFrame::OpenPattern()
       SetCurrentFile( opendlg.GetPath() );
       AddRecentFile( opendlg.GetPath() );
       LoadPattern( opendlg.GetFilename() );
+   }
+}
+
+void MainFrame::OpenScript()
+{
+   if (generating) return;
+
+   wxFileDialog opendlg(this, _("Choose a Python script"),
+                        opensavedir, wxEmptyString,         // need scriptdir???!!!
+                        _T("Python script (*.py)|*.py"),
+                        wxOPEN | wxFILE_MUST_EXIST);
+
+   if ( opendlg.ShowModal() == wxID_OK ) {
+      #ifdef __WXMAC__
+         // Mac bug: need to update window now to avoid crash
+         UpdateEverything();
+      #endif
+      wxFileName fullpath( opendlg.GetPath() );
+      opensavedir = fullpath.GetPath();               // need scriptdir???!!!
+      RunScript( opendlg.GetPath() );
    }
 }
 
@@ -2055,6 +2084,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SHOWPATT:       ToggleShowPatterns(); break;
       case ID_PATTDIR:        ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
+      case ID_RUN_SCRIPT:     OpenScript(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
       case wxID_EXIT:         Close(true); break;        // true forces frame to close
       // Edit menu
@@ -2450,6 +2480,8 @@ MainFrame::MainFrame()
    fileMenu->Append(ID_PATTDIR, _("Change Folder..."));
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
+   fileMenu->AppendSeparator();
+   fileMenu->Append(ID_RUN_SCRIPT, _("Run Script..."));
    fileMenu->AppendSeparator();
    #ifdef __WXMSW__
       // Windows doesn't support Ctrl+<non-alpha> menu shortcuts

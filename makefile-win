@@ -11,12 +11,16 @@
 # 
 # So now I don't have to specify those settings to nmake.
 
-# NOTE: Change the next 2 lines to specify where you installed wxWidgets:
+### Change the next 2 lines to specify where you installed wxWidgets:
 !include </wxWidgets-2.6.1/build/msw/config.vc>
-WXDIR = \wxWidgets-2.6.1
+WXDIR = c:\wxWidgets-2.6.1
+
+### Change the next 2 lines depending on where you installed Python:
+PYTHON_DIR = c:\Python24
+PYTHON_LIB = python24.lib
 
 ### Variables: ###
-VERSION = 0.95
+VERSION = 0.96
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Help\Lexicon
@@ -45,7 +49,7 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(
    $(OBJDIR)/lifepoll.obj
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxrule.obj \
    $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj \
-   $(OBJDIR)/wxrender.obj $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
+   $(OBJDIR)/wxrender.obj $(OBJDIR)/wxscript.obj $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -279,8 +283,9 @@ clean:
 	-if exist golly.pdb del golly.pdb
 
 golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
-	link /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) /LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" /SUBSYSTEM:WINDOWS @<<
-	$(BASEOBJ) $(WXOBJ) golly.res $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
+	link /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) \
+	/LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" /LIBPATH:$(PYTHON_DIR)\libs /SUBSYSTEM:WINDOWS @<<
+	$(BASEOBJ) $(WXOBJ) golly.res $(PYTHON_LIB) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
 <<
 
 golly.res: golly.rc
@@ -380,16 +385,22 @@ qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrender.cpp
 
+$(OBJDIR)/wxscript.obj: wxscript.cpp wxscript.h \
+bigint.h \
+wxgolly.h wxutils.h wxstatus.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) /I$(PYTHON_DIR)\include wxscript.cpp
+
 $(OBJDIR)/wxmain.obj: wxmain.cpp wxmain.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
-wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h wxrender.h
+wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h \
+wxview.h wxrender.h wxscript.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxmain.cpp
 
 $(OBJDIR)/wxgolly.obj: wxgolly.cpp wxgolly.h \
 Help/about.html \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
-wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h
+wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h wxscript.h
 	$(CXX) /c /TP /nologo /Fo$@ $(CXXFLAGS) wxgolly.cpp
 
 $(OBJDIR)/bgolly.obj: bgolly.cpp \

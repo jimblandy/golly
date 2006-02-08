@@ -3,9 +3,6 @@ please visit the Golly web site:
 
    http://golly.sourceforge.net/
 
-Tomas Rokicki <rokicki@gmail.com>
-Andrew Trevorrow <andrew@trevorrow.com>
-
 
 How to build Golly
 ------------------
@@ -18,22 +15,23 @@ do that, building Golly is easy.  Just use the appropriate makefile:
    nmake -f makefile-win   (on Windows 98 or later)
    make -f makefile-mac    (on Mac OS X)
    make -f makefile-x11    (on Linux or other X11 platforms)
-   
+
 NOTE 1: You need to edit makefile-win and makefile-mac to specify
 where you installed wxWidgets.
 
 NOTE 2: The code will only compile and run if your compiler is set
 to use 32-bit integers and 32-bit pointers.
 
+NOTE 3: Golly requires wxWidgets 2.6.1 or later.
+
 
 How to build bgolly (the batch mode version)
 --------------------------------------------
 
-Golly has been designed so it can also run as a command line program
-without any GUI.  To build this "batch mode" version, just specify
-bgolly as the target of the make command.
-
-Note that you don't need to install wxWidgets to build bgolly.
+Golly can also be run as a command line program without any GUI.
+To build this "batch mode" version, just specify bgolly as the target
+of the make command.  Note that you don't need to install wxWidgets
+to build bgolly.
 
 
 Source code road map
@@ -77,6 +75,9 @@ wxprefs.*      - For loading, saving and changing user preferences.
 
 wxrule.*       - Lets user change the current rule.
                  ChangeRule() opens the Rule dialog.
+
+wxscript.*     - Implements Python script support.
+                 RunScript() executes the given .py file.
 
 wxutils.*      - Utility dialogs for showing errors and progress.
                  Warning() displays message in modal dialog.
@@ -134,4 +135,8 @@ util.*         - Utilities for displaying errors and progress info.
                  warning() displays error message.
                  fatal() displays error message and exits.
 
+
 Have fun, and please let us know if you make any changes!
+
+Tomas Rokicki <rokicki@gmail.com>
+Andrew Trevorrow <andrew@trevorrow.com>

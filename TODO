@@ -1,10 +1,12 @@
 TODO:
 
-High priority:
---------------
+For version 1.0:
+----------------
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar.
+
+A - Add Gabriel's oscillation detection as an option (see LifeLab).
 
 B - Finish 1D rule support.  Basically works except for qlife display being
     upside down (so just alter rule0 table in qlifealgo::setrule?).
@@ -16,11 +18,20 @@ For future versions:
 
 T - Improve batchmode.
 
-- Add Gabriel's oscillation detection as an option (see LifeLab).
+- Add ability to let users assign their own keyboard shortcuts.
+  See KeyBinder code at wxcode.sourceforge.net.
 
 - Implement Undo (even just undoing the last draw would be very useful).
 
+- Let user specify colors for live/dead cells.  Only slightly tricky
+  part is dynamically choosing nice colors for the grid lines.
+  Also let user specify selection color.
+  Replace "Black on White" flag with "Invert Colors".
+
 - Support toroidal universes (see LifeLab).
+
+- Support reading/writing of PNG/JPEG/GIF/TIFF files.  When reading,
+  use wxImage to convert graphic to b&w bitmap.
 
 - See if we can reduce app size.  If wx docs no help then ask wx-users.
 
@@ -31,31 +42,20 @@ T - Improve batchmode.
 
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).
+  Or turn on wx_USE_CORE_GRAPHICS and see if that improves speed?
 
 - Allow non-rectangular (and disjoint?) selections.
 
 - Create nicer tool bitmaps; ie. make them more like buttons.
   PROBLEM: wxMac scales 22x22 buttons down to 16x16!
 
-- Let user specify colors for live/dead cells.  Only slightly tricky
-  part is dynamically choosing nice colors for the grid lines.
-  Also let user specify selection color.
-  Replace "Black on White" flag with "Invert Colors".
-
 - Implement a history bar for hlife.
-
-- Add ability to let users assign their own keyboard shortcuts.
-  See KeyBinder code at wxcode.sourceforge.net.
 
 - If other X11 apps like xlife or fontforge allow clipboard support
   then examine their source code and use it.
 
 - Build the Help menu items dynamically by looking at the .html files
   inside the Help folder.  Or maybe read a special Help/menu.data file?
-
-- Allow app to be automated by some sort of scripting language.
-  Devise our own cross-platform language or use something else.
-  See wxScript code at wxcode.sourceforge.net.
 
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
 

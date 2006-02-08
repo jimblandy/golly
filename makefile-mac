@@ -5,10 +5,14 @@
 wxdir = /HD/wxWidgets/wxAll-2.6.2
 builddir = $(wxdir)/build-osx
 APP_NAME = Golly
-APP_VERSION = 0.95
+APP_VERSION = 0.96
 COPYRIGHT = 2006 The Golly Gang
 BUNDLE_ID = net.sourceforge.golly
 ICON_FILE = app.icns
+
+# for Python script support
+PYTHON_INCLUDE = -I/System/Library/Frameworks/Python.framework/Versions/2.3/include/python2.3
+PYTHON_LIB = -framework Python
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -46,7 +50,7 @@ OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDI
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/lifepoll.o $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
-   $(OBJDIR)/wxrender.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
+   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 PORTNAME = $(TOOLKIT_LOWERCASE)$(TOOLKIT_VERSION)
 WXBASEPORT = _carbon
@@ -69,7 +73,7 @@ clean:
 
 golly.bin: $(OBJFILES)
 	g++ -o $@ $(OBJFILES) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
-   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(EXTRALIBS) $(EXTRALIBS_GUI)
+   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LIB)
 
 $(APP_NAME).app/Contents/PkgInfo: golly.bin Info.plist.in $(ICON_FILE)
 	mkdir -p $(APP_NAME).app/Contents
@@ -180,19 +184,25 @@ qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
+$(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
+bigint.h \
+wxgolly.h wxutils.h wxstatus.h
+	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
+
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
 bitmaps/open.xpm bitmaps/save.xpm bitmaps/play.xpm bitmaps/stop.xpm \
 bitmaps/hash.xpm bitmaps/draw.xpm bitmaps/select.xpm bitmaps/move.xpm \
 bitmaps/info.xpm bitmaps/new.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
-wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h wxview.h wxrender.h
+wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxhelp.h wxstatus.h \
+wxview.h wxrender.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp wxgolly.h \
 Help/about.html appicon.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
-wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h
+wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp
 
 srcdist:

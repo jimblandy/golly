@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxprefs.h"       // for GetPrefs
+#include "wxscript.h"      // for IsScript
 
 #ifdef __WXMSW__
    // app icons are loaded via .rc file
@@ -280,8 +281,9 @@ bool GollyApp::OnInit()
    viewptr->SetViewSize();
    statusptr->SetMessage(BANNER);
    
-   // load pattern if file supplied on Win/Unix command line
-   if (argc > 1) {
+   // load pattern file if supplied on Win/Unix command line; best to do this
+   // before showing window to avoid an irritating flash
+   if (argc > 1 && !IsScript(argv[1])) {
       // no need to convert path to UTF8
       mainptr->ConvertPathAndOpen(argv[1], false);
    } else {
@@ -295,6 +297,12 @@ bool GollyApp::OnInit()
    // now show main window
    mainptr->Show(true);
    SetTopWindow(mainptr);
+
+   // load script file AFTER showing main window to avoid crash in Win/X11 app
+   if (argc > 1 && IsScript(argv[1])) {
+      // no need to convert path to UTF8
+      mainptr->ConvertPathAndOpen(argv[1], false);
+   }
 
    #ifdef __WXX11__
       // prevent main window being resized very small to avoid nasty errors
