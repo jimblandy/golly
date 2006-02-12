@@ -56,6 +56,7 @@ public:
    void NewPattern();
    void CreateUniverse();
    void ConvertPathAndOpen(const char *path, bool convertUTF8);
+   void SetWindowTitle(const char *filename);
    void OpenPattern();
    void ToggleShowPatterns();
    void SavePattern();
@@ -113,9 +114,8 @@ private:
    void OnClose(wxCloseEvent& event);
 
    // file functions
-   void MySetTitle(const char *title);
-   void SetWindowTitle(const char *filename);
    void LoadPattern(const char *newtitle);
+   void MySetTitle(const char *title);
    void SetCurrentFile(const char *path);
    const char* GetBaseName(const char *fullpath);
    void AddRecentFile(const char *path);

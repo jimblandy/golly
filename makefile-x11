@@ -142,8 +142,9 @@ wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
-bigint.h \
-wxgolly.h wxutils.h wxstatus.h
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \

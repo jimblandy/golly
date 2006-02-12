@@ -1,9 +1,9 @@
 # Makefile for Mac OS X version of Golly using wxWidgets.
-# This is a modified version of the automatically generated
-# Makefile used to build the wxWidgets minimal sample.
+# Change WX_DIR to where you installed wxWidgets and
+# BUILD_DIR to where you built the wx libraries.
 
-wxdir = /HD/wxWidgets/wxAll-2.6.2
-builddir = $(wxdir)/build-osx
+WX_DIR = /HD/wxWidgets/wxAll-2.6.2
+BUILD_DIR = $(WX_DIR)/build-osx
 APP_NAME = Golly
 APP_VERSION = 0.96
 COPYRIGHT = 2006 The Golly Gang
@@ -11,7 +11,7 @@ BUNDLE_ID = net.sourceforge.golly
 ICON_FILE = app.icns
 
 # for Python script support
-PYTHON_INCLUDE = -I/System/Library/Frameworks/Python.framework/Versions/2.3/include/python2.3
+PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 PYTHON_LIB = -framework Python
 
 # for building source and binary distributions:
@@ -20,9 +20,9 @@ SHAREDFILES = Help README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 
-CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${builddir}/lib/wx/include/mac-ansi-release-static-2.6 \
-   -I${wxdir}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
-   -I${wxdir}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
+CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${BUILD_DIR}/lib/wx/include/mac-ansi-release-static-2.6 \
+   -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
+   -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
 LDFLAGS = -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
 TOOLKIT = MAC
 TOOLKIT_LOWERCASE = mac
@@ -34,14 +34,14 @@ EXTRALIBS_GUI = -lpng -lz -ljpeg -ltiff -framework WebKit
 ### Variables: ###
 
 WX_RELEASE = 2.6
-LIBDIRNAME = $(builddir)/lib
+LIBDIRNAME = $(BUILD_DIR)/lib
 CXXFLAGS = -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
    $(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) $(__DLLFLAG_p) $(CPPFLAGS) \
    -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -fno-common
 
 CXXC = g++
 ### bk-deps script can be used to create *.d files containing all dependences
-### CXXC = $(builddir)/bk-deps g++
+### CXXC = $(BUILD_DIR)/bk-deps g++
 
 ### put .o files in a Mac-specific subdir to avoid conflict with .o files created by X11 build
 OBJDIR = ObjMac
@@ -185,8 +185,9 @@ wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
-bigint.h \
-wxgolly.h wxutils.h wxstatus.h
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \

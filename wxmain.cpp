@@ -545,12 +545,14 @@ void MainFrame::MySetTitle(const char *title)
 void MainFrame::SetWindowTitle(const char *filename)
 {
    char wtitle[128];
-   // save filename for use when changing rule
-   strncpy(currname, filename, sizeof(currname));
+   if (filename[0] != 0) {
+      // new file name in title
+      strncpy(currname, filename, sizeof(currname));
+   }
    #ifdef __WXMAC__
-      sprintf(wtitle, "%s [%s]", filename, GetRuleName(curralgo->getrule()));
+      sprintf(wtitle, "%s [%s]", currname, GetRuleName(curralgo->getrule()));
    #else
-      sprintf(wtitle, "%s [%s] - Golly", filename, GetRuleName(curralgo->getrule()));
+      sprintf(wtitle, "%s [%s] - Golly", currname, GetRuleName(curralgo->getrule()));
    #endif
    MySetTitle(wtitle);
 }
@@ -730,7 +732,7 @@ void MainFrame::ResetPattern()
    }
    // now restore rule, scale and location
    curralgo->setrule(gen0rule);
-   SetWindowTitle(currname);
+   SetWindowTitle("");
    viewptr->SetPosMag(gen0x, gen0y, gen0mag);
    UpdateEverything();
 }
@@ -1907,8 +1909,8 @@ void MainFrame::ShowRuleDialog()
 {
    if (generating) return;
    if (ChangeRule()) {
-      // show rule in window title (current file name doesn't change)
-      SetWindowTitle(currname);
+      // show rule in window title (file name doesn't change)
+      SetWindowTitle("");
    }
 }
 

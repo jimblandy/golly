@@ -329,7 +329,7 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
    
    // validate new rule
    wxString newrule = ruletext->GetValue();
-   const char *err = curralgo->setrule( (char*) newrule.c_str() );
+   const char *err = curralgo->setrule( (char*)newrule.c_str() );
    if (err) {
       Warning("Rule is not valid.");
       ruletext->SetFocus();
@@ -419,7 +419,7 @@ bool RuleDialog::TransferDataFromWindow()
       curralgo->setrule("B3/S23");
       return true;
    }
-   const char *err = curralgo->setrule( (char*) newrule.c_str() );
+   const char *err = curralgo->setrule( (char*)newrule.c_str() );
    if (err) {
       Warning(err);
       return false;
@@ -443,8 +443,8 @@ bool ChangeRule()
       return true;
    } else {
       // user hit Cancel so restore rule and name array
-      curralgo->setrule( (char*) oldrule.c_str() );
-      namedrules.Clear();       // safer to free memory???
+      curralgo->setrule( (char*)oldrule.c_str() );
+      namedrules.Clear();
       namedrules = oldnames;
       return false;
    }
