@@ -5,6 +5,18 @@ import golly as golly
 
 __doc__ = """Pattern construction for Golly.""";
 
+# Catch error messages sent to stderr and send them to Golly:
+
+class StderrCatcher:
+     def __init__(self):
+         self.data = ''
+     def write(self, stuff):
+         self.data = self.data + stuff
+         golly.stderr (self.data)
+  
+import sys
+sys.stderr = StderrCatcher()
+
 # Define some transformation matrices:
 
 identity = ( 1,  0,  0,  1)
@@ -139,5 +151,6 @@ When P is a string, an optional transformation
       return None
 
 def load (fn):
+   # top left cell of bounding box will be at 0,0
    return pattern (golly.load (fn))
 

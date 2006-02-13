@@ -62,6 +62,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "liferules.h"     // for global_liferules
+#include "readpattern.h"
+#include "writepattern.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
@@ -69,6 +71,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for hashing etc
+#include "wxinfo.h"        // for ShowInfo
+#include "wxhelp.h"        // for ShowHelp
 #include "wxscript.h"
 
 // Python includes
@@ -423,24 +427,6 @@ public:
 
 
 
-//! The types of the script files recognized by wxScriptFile
-enum wxScriptFileType {
-
-   //! The extension of the script file will be used to recognize it.
-   wxRECOGNIZE_FROM_EXTENSION = -2,
-
-   //! The first non-whitespace characters found will be compared
-   //! to the various types of comments in the different scripting
-   //! languages supported to recognize the script file type.
-   wxRECOGNIZE_FROM_COMMENT = -1,
-
-   wxPYTHON_SCRIPTFILE = 0,            // extension = "py"
-
-   wxSCRIPT_SUPPORTED_FORMATS = 1      // this must be the last
-};
-
-
-
 //! A script file.
 class wxScriptFile
 {
@@ -449,28 +435,11 @@ protected:
    //! The name of the file containing the scripted functions.
    wxString m_strFileName;
 
-   //! The default script file type.
-   wxScriptFileType m_tScriptFile;
-
-public:
-
-   //! The array of the extensions recognized by wxScriptFile.
-   static wxString m_strFileExt[wxSCRIPT_SUPPORTED_FORMATS];
-
-   //! Returns a string in the form
-   //!               EXT1;EXT2;EXT3;EXT4 .....
-   //! where EXT1, EXT2 ... are the extensions supported by the auto-recognition
-   //! algorithm of the wxScriptFile class (which uses wxScriptFile::m_strFileExt
-   //! to store the extensions associated with each allowed script format).
-   static wxString GetAllowedExtString();
-   static wxArrayString GetAllowedExt();
-
 public:
    wxScriptFile() {}
    virtual ~wxScriptFile() {}
    
    virtual bool Load(const wxString &file) = 0;
-   wxScriptFileType GetScriptFileType() const { return m_tScriptFile; }   
 };
 
 
@@ -511,17 +480,12 @@ public:      // static functions
    //! Returns TRUE if the script interpreter is ready to work.
    static bool areAllReady();
 
-   //! Returns the description of the last occured error (an empty
-   //! string if there were no errors).
-   static wxString GetLastErr() { return m_strLastErr; }
-
    //! Returns the list of the functions currently recognized by the interpreter.
    static void GetTotalFunctionList(wxScriptFunctionArray &);
 
    //! Load the given scriptfile and then returns an instance to the
    //! scriptfile wrapper, or NULL if the file couldn't be loaded.
-   static wxScriptFile *Load(const wxString &filename, 
-         wxScriptFileType type = wxRECOGNIZE_FROM_EXTENSION);
+   static wxScriptFile *Load(const wxString &filename);
 
 public:      // virtual functions
 
@@ -615,7 +579,6 @@ class wxScriptFilePython : public wxScriptFile
 {
 public:
    wxScriptFilePython(const wxString &toload = wxEmptyString) {      
-      m_tScriptFile = wxPYTHON_SCRIPTFILE;
       if (!toload.IsEmpty())
          Load(toload);      
    }
@@ -668,7 +631,6 @@ public:
 // Francesco's script.cpp
 
 // setup static
-wxString wxScriptFile::m_strFileExt[];
 wxString wxScriptInterpreter::m_strLastErr;
 wxPython *wxScriptInterpreter::m_pPython = NULL;
 
@@ -767,111 +729,27 @@ void wxScriptInterpreter::GetTotalFunctionList(wxScriptFunctionArray &arr)
    arr.Append(arrpy);
 }
 
-wxScriptFile *wxScriptInterpreter::Load(const wxString &file, wxScriptFileType type)
+wxScriptFile *wxScriptInterpreter::Load(const wxString &filename)
 {
-   // first of all, check that the file exists...
-   if (!wxFileName::FileExists(file)) {
-      wxScriptInterpreter::m_strLastErr = wxT("The file [") + file + wxT("] does not exist.");
+   if (!wxFileName::FileExists(filename)) {
+      wxScriptInterpreter::m_strLastErr = wxT("The script file does not exist: ") + filename;
       return NULL;
    }
 
-   wxScriptFileType t = wxRECOGNIZE_FROM_EXTENSION;
-
-   // try to recognize the type of scriptfile
-   if (type == wxRECOGNIZE_FROM_EXTENSION) {
-      wxString ext = file.AfterLast(wxT('.'));
-
-      for (int i=0; i < wxSCRIPT_SUPPORTED_FORMATS; i++) {
-
-         // perform a case-insensitive comparison
-         if (ext.IsSameAs(wxScriptFile::m_strFileExt[i], FALSE))
-            t = (wxScriptFileType)i;
-      }
-
-   } else if (type == wxRECOGNIZE_FROM_COMMENT) {
-
-      // we have to read the first chunk of the file...
-      wxFile scriptfile(file, wxFile::read);
-      int chunksize = 256;
-
-      if (scriptfile.Length() < chunksize)
-         chunksize = scriptfile.Length();
-      if (chunksize < 2) {
-         wxScriptInterpreter::m_strLastErr = wxT("The file is too short.");
-         return NULL;
-      }
-
-      // read an arbitrary long (256 should be enough) piece of file 
-      char *buf = new char[chunksize+10];
-      if ((int)scriptfile.Read(buf, chunksize) != chunksize) {
-         wxScriptInterpreter::m_strLastErr = wxT("Couldn't read the file.");
-         return NULL;
-      }
-
-      // now, try to recognize the type of the code interpreting the
-      // first non-whitespace characters as a comment declaration...
-      buf[chunksize] = '\0';
-      wxString tmp(buf, wxConvUTF8);
-      delete [] buf;
-      tmp.Trim(FALSE);
-
-      if (tmp.GetChar(0) == wxT('#'))      // # is used by python
-         t = wxPYTHON_SCRIPTFILE;
-   }
-
-   // the result
-   wxScriptFile *p = NULL;
-
-   switch (t) {
-      
-   case wxPYTHON_SCRIPTFILE:
-      p = new wxScriptFilePython();
-      break;
-
-   default:
-       wxScriptInterpreter::m_strLastErr = wxT("Interpreter unavailable.");
-      break;
-   }
+   wxScriptFile *p = new wxScriptFilePython();
    
-   // unrecognized type or interpreter interface not compiled ?
-   if (p == NULL)
+   if (p == NULL) {
+      wxScriptInterpreter::m_strLastErr = wxT("Could not create wxScriptFilePython!");
       return NULL;
+   }
 
-   // actually load the scriptfile
-   if (!p->Load(file)) {
+   if (!p->Load(filename)) {
+      // assume wxScriptFilePython::Load has set wxScriptInterpreter::m_strLastErr
       delete p;
       return NULL;
    }
    
    return p;
-}
-
-
-// --------------------
-// wxSCRIPTFILE
-// --------------------
-
-wxString wxScriptFile::GetAllowedExtString()
-{
-   wxString ret;
-
-   for (int i=0; i < wxSCRIPT_SUPPORTED_FORMATS; i++)
-      if (!wxScriptFile::m_strFileExt[i].IsEmpty())
-         ret += wxScriptFile::m_strFileExt[i].MakeUpper() + wxT(";");
-   ret.RemoveLast();
-
-   return ret;
-}
-
-wxArrayString wxScriptFile::GetAllowedExt()
-{
-   wxArrayString ret;
-
-   for (int i=0; i < wxSCRIPT_SUPPORTED_FORMATS; i++)
-      if (!wxScriptFile::m_strFileExt[i].IsEmpty())
-         ret.Add(wxScriptFile::m_strFileExt[i].MakeUpper());
-
-   return ret;
 }
 
 
@@ -1334,9 +1212,6 @@ bool wxPython::Init()
 {
    // inizialize the python interpreter
    Py_Initialize();
-   
-   // add our extension to the list of the available for loading extensions:
-   wxScriptFile::m_strFileExt[wxPYTHON_SCRIPTFILE] = wxT("PY");
 
    // initialize our "execution frame"
    m_pModule = PyImport_AddModule("__main__");
@@ -1419,8 +1294,8 @@ void wxPython::OnException()
    wxASSERT(PyErr_Occurred() != NULL);
    wxString err;
 
-#define pyEXC_HANDLE(x)                  \
-   else if (PyErr_ExceptionMatches(PyExc_##x))      \
+#define pyEXC_HANDLE(x)                         \
+   else if (PyErr_ExceptionMatches(PyExc_##x))  \
       err = wxString(wxT(#x));
 
    // a generic exception description
@@ -1458,7 +1333,6 @@ void wxPython::OnException()
       err = wxT("Unknown error");
 
    wxScriptInterpreter::m_strLastErr = wxT("Exception occurred: ") + err;
-   Warning(wxScriptInterpreter::m_strLastErr.c_str());
    
    PyErr_Clear();
 }
@@ -1505,9 +1379,7 @@ void wxScriptFunctionPython::Set(const wxString &name, PyObject *dict, PyObject 
    m_pDict = dict;
    m_pFunc = func;
 
-   // do we need to proceed ?
-   if (!dict || !func)
-      return;      // don't proceed
+   if (!dict || !func) return;      // don't proceed
 
    // we now own a reference to these python objects
    Py_INCREF(m_pDict);
@@ -1538,8 +1410,7 @@ bool wxScriptFunctionPython::Exec(wxScriptVar &ret, wxScriptVar *arg) const
       // CreatePyObjFromScriptVar so refcount should be okay doing nothing
       if (PyTuple_SetItem(t, i, CreatePyObjFromScriptVar(arg[i])) != 0) {
 
-         wxScriptInterpreter::m_strLastErr = 
-            wxT("Could not create the argument tuple.");
+         wxScriptInterpreter::m_strLastErr = wxT("Could not create the argument tuple.");
          return FALSE;
       }
    }
@@ -1687,11 +1558,10 @@ bool wxScriptFilePython::Load(const wxString &filename)
 {
    try {
 
-      // execute an initialization file before given script
+      // check that initialization script exists
       wxString initfile = wxT("Scripts/init.py");
       if (!wxFileName::FileExists(initfile)) {
-         wxString err = wxT("Could not find init script: ") + initfile;
-         Warning(err.c_str());
+         wxScriptInterpreter::m_strLastErr = wxT("Could not find init script: ") + initfile;
          return FALSE;
       }
 
@@ -1700,7 +1570,7 @@ bool wxScriptFilePython::Load(const wxString &filename)
       wxString fname = filename;
       fname.Replace("\\", "\\\\");
 
-      // use PyRun_SimpleString to execute initfile, followed by given script
+      // use PyRun_SimpleString to execute initfile, then the given script
       wxString command = wxT("execfile(\"") + initfile + wxT("\") ;");
       command += wxT("execfile(\"") + fname + wxT("\")");
       PyRun_SimpleString(command.c_str());
@@ -1776,11 +1646,42 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
 }
 
 // helper routine used in calls that build cell lists
-static void add_cell(PyObject *list, long x, long y)
+static void AddCell(PyObject *list, long x, long y)
 {
    PyList_Append(list, PyInt_FromLong(x));
    PyList_Append(list, PyInt_FromLong(y));
 }   
+
+// helper routine to extract cell list from given universe
+static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
+{
+   if ( !universe->isEmpty() ) {
+      bigint top, left, bottom, right;
+      universe->findedges(&top, &left, &bottom, &right);
+      int itop = top.toint();
+      int ileft = left.toint();
+      int ibottom = bottom.toint();
+      int iright = right.toint();
+      int cx, cy;
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            int skip = universe->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row
+               cx += skip;
+               if (shift) {
+                  // shift cells so that top left cell of bounding box is at 0,0
+                  AddCell(list, cx - ileft, cy - itop);
+               } else {
+                  AddCell(list, cx, cy);
+               }
+            } else {
+               cx = iright;  // done this row
+            }
+         }
+      }
+   }
+}
 
 static PyObject *golly_parse(PyObject *self, PyObject *args)
 {
@@ -1798,22 +1699,24 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
 
    if (strchr(s, '*')) {
       // parsing 'visual' format
-      int c;
-      while ((c = *s++))
+      int c = *s++;
+      while (c) {
          switch (c) {
          case '\n': if (x) { x = 0; y++; } break;
          case '.': x++; break;
          case '*':
-            add_cell(list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+            AddCell(list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
             x++;
             break;
          }
+         c = *s++;
+      }
    } else {
       // parsing 'RLE' format
-      int c;
       int prefix = 0;
       bool done = false;
-      while ((c = *s++) && !done)
+      int c = *s++;
+      while (c && !done) {
          if (isdigit(c))
             prefix = 10 * prefix + (c - '0');
          else {
@@ -1824,11 +1727,13 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
             case 'b': x += prefix; break;
             case 'o':
                for (int k = 0; k < prefix; k++, x++)
-                  add_cell(list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+                  AddCell(list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
                break;
             }
             prefix = 0;
          }
+         c = *s++;
+      }
    }
 
    return list;
@@ -1852,7 +1757,7 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
       long x = PyInt_AsLong (PyList_GetItem (list, 2 * n));
       long y = PyInt_AsLong (PyList_GetItem (list, 2 * n + 1));
 
-      add_cell(new_list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+      AddCell(new_list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
    }
 
    return new_list;
@@ -1893,7 +1798,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &N)) return NULL;
 
-   // create a temporary qlife universe
+   // create temporary qlife universe
    lifealgo *tempalgo;
    tempalgo = new qlifealgo();
    tempalgo->setpoll(wxGetApp().Poller());
@@ -1917,31 +1822,9 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    tempalgo->step();
    mainptr->generating = false;
 
-   // extract new pattern into a new cell list
+   // convert new pattern into a new cell list
    evolved_list = PyList_New(0);
-
-   if ( !tempalgo->isEmpty() ) {
-      bigint top, left, bottom, right;
-      tempalgo->findedges(&top, &left, &bottom, &right);
-      int itop = top.toint();
-      int ileft = left.toint();
-      int ibottom = bottom.toint();
-      int iright = right.toint();
-      int cx, cy;
-      for ( cy=itop; cy<=ibottom; cy++ ) {
-         for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = tempalgo->nextcell(cx, cy);
-            if (skip >= 0) {
-               // found next live cell in this row
-               cx += skip;
-               add_cell(evolved_list, cx, cy);
-            } else {
-               cx = iright;  // done this row
-            }
-         }
-      }
-   }
-   
+   ExtractCells(evolved_list, tempalgo);
    delete tempalgo;
 
    return evolved_list;
@@ -1951,36 +1834,41 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 {
    wxUnusedVar(self);
    PyObject *list;
-
    char *file_name;
+
    if (!PyArg_ParseTuple(args, "z", &file_name)) return NULL;
 
-/*!!!
-   field f;
+   // create temporary qlife universe
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();
+   tempalgo->setpoll(wxGetApp().Poller());
+   
+   // readpatterm might change global rule table
+   wxString oldrule = wxT( curralgo->getrule() );
+   
+   // read pattern into temporary universe
+   const char *err = readpattern(file_name, *tempalgo);
+   if (err && strcmp(err,cannotreadhash) == 0) {
+      // macrocell file, so switch to hlife universe
+      delete tempalgo;
+      tempalgo = new hlifealgo();
+      tempalgo->setpoll(wxGetApp().Poller());
+      err = readpattern(file_name, *tempalgo);
+   }
+   
+   // restore rule
+   curralgo->setrule( (char*)oldrule.c_str() );
 
-   fprintf (stderr, "loading: %s\n", file_name);
-   if (!f.load (file_name))
+   if (err) {
+      delete tempalgo;
+      Warning(err);
       return NULL;
-
-   list = PyList_New (0);
-
-   node *p = f.get_phead ();
-   int index = f.get_index ();
-
-   do {
-      key_t mn = p->key;
-
-      int x0 = x0_from_key (mn);
-      int y0 = y0_from_key (mn);
-
-      for (int x = x0; x < x0 + 8; x++)
-         for (int y = y0; y < y0 + 8; y++)
-            if (p->B[index].qc[j_from_y (y)][i_from_x (x)] & mask_from_x_y (x, y))
-               add_cell(list, x, y);
-
-      p = p->next;
-   } while (p->key);
-*/
+   }
+   
+   // convert pattern into a cell list
+   list = PyList_New(0);
+   ExtractCells(list, tempalgo, true);    // true = shift so bbox's top left cell is at 0,0
+   delete tempalgo;
 
    return list;
 }
@@ -1988,54 +1876,34 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 static PyObject *golly_save(PyObject *self, PyObject *args)
 {
    wxUnusedVar(self);
-   PyObject *list;
+   PyObject *given_list;
    char *file_name;
-   char *s = NULL;      // the description string
+   char *s = NULL;      // the description string is currently ignored!!!
 
-   if (!PyArg_ParseTuple(args, "O!z|z", &PyList_Type, &list, &file_name, &s))
+   if (!PyArg_ParseTuple(args, "O!z|z", &PyList_Type, &given_list, &file_name, &s))
       return NULL;
 
-/*!!!
-   FILE *output;
-
-   if ((output = fopen (file_name, "w"))) {
-      fprintf (stderr, "saving: %s\n", file_name);
-
-      if (s) {
-         bool start_of_line = true;
-         int c;
-         while ((c = *s++)) {
-            if (start_of_line)
-               fprintf (output, "#C ");
-            fputc (c, output);
-            start_of_line = (c == '\n');
-         }
-         if (!start_of_line)
-            fputc ('\n', output);
-      }
-
-      field f;
-
-      int num_cells = PyList_Size (list) / 2;
-      for (int n = 0; n < num_cells; n++) {
-         long x = PyInt_AsLong (PyList_GetItem (list, 2 * n));
-         long y = PyInt_AsLong (PyList_GetItem (list, 2 * n + 1));
-
-         f.set_cell (x, y);
-      }
-
-      rect r = f.bounding_rect ();
-      char *rle = f.new_rle_from_rect (r);
-      if (rle)
-         fwrite (rle, strlen (rle), 1, output);
-      delete rle;
-
-      fclose (output);
-   } else {
-      perror (file_name);
-      return NULL;
+   // create temporary qlife universe
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();
+   tempalgo->setpoll(wxGetApp().Poller());
+   
+   // copy cell list into temporary universe
+   int num_cells = PyList_Size (given_list) / 2;
+   for (int n = 0; n < num_cells; n++) {
+      long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
+      long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
+      tempalgo->setcell(x, y, 1);
    }
-*/
+   tempalgo->endofpattern();
+
+   // write pattern to given file in RLE format
+   bigint top, left, bottom, right;
+   tempalgo->findedges(&top, &left, &bottom, &right);
+   const char *err = writepattern(file_name, *tempalgo, RLE_format,
+                                  top.toint(), left.toint(), bottom.toint(), right.toint());
+   delete tempalgo;
+   if (err) Warning(err);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2067,6 +1935,22 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
    return Py_None;
 }
 
+wxString pyerror;
+
+static PyObject *golly_stderr(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+   char *s = NULL;
+
+   if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
+
+   // save Python's stderr messages in global string for display after script finishes
+   pyerror = wxT(s);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 /* this example shows how to take 2 int args and return an int value
 static PyObject *golly_sum (PyObject *self, PyObject *args)
 {
@@ -2092,9 +1976,10 @@ static PyMethodDef golly_methods[] = {
    { "putcells",  golly_putcells,   METH_VARARGS, "paste given cell list into Golly universe" },
    { "evolve",    golly_evolve,     METH_VARARGS, "evolve pattern contained in given cell list" },
    { "load",      golly_load,       METH_VARARGS, "load pattern from file and return cell list" },
-   { "save",      golly_save,       METH_VARARGS, "save pattern to a file (in RLE format)" },
+   { "save",      golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
    { "show",      golly_show,       METH_VARARGS, "show given string in status bar" },
    { "warn",      golly_warn,       METH_VARARGS, "show given string in warning dialog" },
+   { "stderr",    golly_stderr,     METH_VARARGS, "show Python error message" },
    { NULL, NULL, 0, NULL }
 };
 
@@ -2102,6 +1987,9 @@ static PyMethodDef golly_methods[] = {
 
 void RunScript(const char* filename)
 {
+   statusptr->ClearMessage();
+   pyerror = wxEmptyString;
+   
    if (!wxScriptInterpreter::Init()) {
       Warning("Could not initialize the Python interpreter!  Is it installed?");
       wxScriptInterpreter::Cleanup();
@@ -2115,10 +2003,9 @@ void RunScript(const char* filename)
    Py_InitModule3("golly", golly_methods, "Internal golly routines");
 
    // load the script
-   wxString fname = wxT(filename);
-   wxScriptFile *pf = wxScriptInterpreter::Load(fname, wxRECOGNIZE_FROM_EXTENSION);
+   wxScriptFile *pf = wxScriptInterpreter::Load( wxT(filename) );
    if (pf == NULL) {
-      wxScriptInterpreter::m_strLastErr = wxT("Failed to load script: ") + fname;
+      // assume wxScriptInterpreter::m_strLastErr has been set
       Warning(wxScriptInterpreter::m_strLastErr.c_str());
    } else {
       delete pf;
@@ -2126,7 +2013,14 @@ void RunScript(const char* filename)
 
    wxScriptInterpreter::Cleanup();
    
-   // restore cursor
+   // display any Python error message
+   if (!pyerror.IsEmpty()) {
+      wxBell();
+      wxSetCursor(*wxSTANDARD_CURSOR);
+      wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+   }
+   
+   // update cursor
    viewptr->CheckCursor(mainptr->IsActive());
 }
 
@@ -2142,6 +2036,3 @@ bool IsScript(const char *filename)
    // false means case-insensitive comparison
    return ext.IsSameAs(wxT("PY"), false);
 }
-
-
-

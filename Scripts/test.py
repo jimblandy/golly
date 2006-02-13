@@ -16,12 +16,24 @@ blinker = pattern("ooo!")
 blinker.put(1, 2)
 blinker.put(6, 7, rcw)   # rotate clockwise
 
+# NOTE:
+# - load simply returns pattern(g.load(filename))
+# - g.load ensures top left cell of bounding box is at 0,0
+# - paths are relative to Golly app, regardless of where script is
+rabbits = load("Patterns/Methuselahs/rabbits.lif");
+rabbits.put(10,10)
+mctest = load("Patterns/Hashing-Examples/wolfram22.mc");
+mctest.put(20,20)
+
 # test deliberate errors:
-# g.xxx(3)
+# xxx(3)
 # g.setrule()
 
 # g.warn("Seeya later.")     # show message in Golly's warning dialog
 # import sys ; sys.exit(0)   # exits Golly too!
 
 g.fit()
-g.show("Seeya!")
+
+all = blinker(1,2) + blinker(6,7,rcw) + rabbits(10,10) + mctest(20,20)
+all.save("test.rle")
+g.show("Pattern saved in test.rle")
