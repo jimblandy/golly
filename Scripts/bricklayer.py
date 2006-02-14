@@ -1,8 +1,6 @@
-# Construct and display the bricklayer.
+from glife import *
 
-import golly as g
-
-g.setrule("")  # Life
+rule ()  # Life
 
 p22_half = pattern("2o$bo$bobo$2b2o3bo$6bob2o$5bo4bo$6bo3bo$7b3o!")
 p22 = p22_half + p22_half(26, 9, flip)
@@ -20,6 +18,6 @@ pre_lom = pattern("2bo$2ob2o$2ob2o2$b2ob2o$b2ob2o$3bo!")
 all = gun154[210](-52, -38) + gun154[254](52, -38, flip_x) + p7_reflector(8, 23) \
       + pre_lom(-3, 30)
 
-g.new("bricklayer")
-all.put()
-g.fit()
+### all.save ("bricklayer.lif", "David Bell, 29 Sep 2002")
+
+all.display("bricklayer")

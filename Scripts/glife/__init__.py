@@ -1,9 +1,9 @@
-# Initialization file automatically executed by Golly before running a script.
+# Initialization script executed by using "from glife import *".
 # Very similar to python/life/__init__.py in PLife.
 
 import golly as golly
 
-__doc__ = """Pattern construction for Golly.""";
+__doc__ = """Pattern construction helpers for Golly.""";
 
 # Catch error messages sent to stderr and send them to Golly:
 
@@ -91,8 +91,15 @@ rcw (rotate clockwise) and rccw (rotate counter-clockwise)."""
       return self (0, 0, A)
 
    def put (self, x = 0, y = 0, A = identity):
-      """Paste transformed pattern into Golly's current universe."""
+      """Paste pattern into current universe."""
       golly.putcells (self, x, y, *A)
+      return None
+
+   def display (self, title = "untitled", x = 0, y = 0, A = identity):
+      """Paste pattern into new universe and display it all."""
+      golly.new (title)
+      golly.putcells (self, x, y, *A)
+      golly.fit ()
       return None
 
    def save (self, fn, desc = None):

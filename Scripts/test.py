@@ -1,5 +1,7 @@
 # A simple test script for Golly.
-# Note that Scripts/init.py has been executed.
+
+# execute Scripts/glife/__init__.py
+from glife import *
 
 import golly as g
 
@@ -11,18 +13,18 @@ g.setrule("b34/s34")
 ### g.putcells(blinker, 1, 2, 1, 0, 0, 1)
 ### g.putcells(blinker, 6, 7, 0, -1,  1,  0)   # rotate clockwise
 
-# equivalent code using calls defined in init.py
+# equivalent code using calls defined in life module
 blinker = pattern("ooo!")
 blinker.put(1, 2)
 blinker.put(6, 7, rcw)   # rotate clockwise
 
 # NOTE:
 # - load simply returns pattern(g.load(filename))
-# - g.load ensures top left cell of bounding box is at 0,0
-# - paths are relative to Golly app, regardless of where script is
-rabbits = load("Patterns/Methuselahs/rabbits.lif");
+# - g.load ensures the top left cell of the bounding box is at 0,0
+# - paths are relative to the location of the script
+rabbits = load("../Patterns/Methuselahs/rabbits.lif");
 rabbits.put(10,10)
-mctest = load("Patterns/Hashing-Examples/wolfram22.mc");
+mctest = load("../Patterns/Hashing-Examples/wolfram22.mc");
 mctest.put(20,20)
 
 # test deliberate errors:
