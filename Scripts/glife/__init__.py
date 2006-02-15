@@ -1,5 +1,5 @@
 # Initialization script executed by using "from glife import *".
-# Very similar to python/life/__init__.py in PLife.
+# Based on python/life/__init__.py in PLife.
 
 import golly as golly
 
@@ -16,6 +16,26 @@ class StderrCatcher:
   
 import sys
 sys.stderr = StderrCatcher()
+
+# A simple class to make it easier to manipulate rectangles:
+
+class rect (list):
+   def __init__ (self, R = []):
+      if len(R) == 0:
+         self.empty = True
+      elif len(R) == 4:
+         self.empty = False
+         self.x  = self.left   = R[0]
+         self.y  = self.top    = R[1]
+         self.wd = self.width  = R[2]
+         self.ht = self.height = R[3]
+         if self.wd <= 0: raise ValueError ("rect width must be > 0")
+         if self.ht <= 0: raise ValueError ("rect height must be > 0")
+         self.right  = self.left + self.wd - 1
+         self.bottom = self.top  + self.ht - 1
+      else:
+         raise TypeError ("rect arg must be [] or [x,y,wd,ht]")
+      return None
 
 # Define some transformation matrices:
 

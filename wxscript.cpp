@@ -81,9 +81,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 #include <Python.h>
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
-// Francesco's script.h
+// Francesco's script.h:
 
 // Defines & macros
 // ------------------
@@ -510,9 +510,9 @@ public:      // virtual functions
       newf->DeepCopy(this);                     \
       return newf; }    
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
-// Francesco's scpython.h
+// Francesco's scpython.h:
 
 // String conversions (all python functions use chars)
 // ---------------------------------------------------
@@ -626,9 +626,9 @@ public:
       { return wxT("Python ") + PY2WX(Py_GetVersion()); }
 };
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
-// Francesco's script.cpp
+// Francesco's script.cpp:
 
 // setup static
 wxString wxScriptInterpreter::m_strLastErr;
@@ -1193,9 +1193,9 @@ void wxScriptFunctionArray::Clear()
    m_arr.Clear();
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
-// Francesco's scpython.cpp
+// Francesco's scpython.cpp:
 
 // Since I don't know any way to check the python version, I'll use this
 // simple trick to know if we have BOOL support
@@ -1587,10 +1587,15 @@ bool wxScriptFilePython::Load(const wxString &filename)
    return TRUE;
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
-// the following golly_* routines can be called from Python scripts; some are
-// based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/)
+bool autoupdate;     // update display after each change to current universe?
+wxString pyerror;    // Python error message
+
+// The following golly_* routines can be called from Python scripts; some are
+// based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_new(PyObject *self, PyObject *args)
 {
@@ -1607,6 +1612,8 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
    return Py_None;
 }
 
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_fit(PyObject *self, PyObject *args)
 {
    wxUnusedVar(self);
@@ -1618,6 +1625,46 @@ static PyObject *golly_fit(PyObject *self, PyObject *args)
    Py_INCREF(Py_None);
    return Py_None;
 }
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_fitsel(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      viewptr->FitSelection();
+   } else {
+      // or maybe ignore call if no selection???
+      Warning("Bad fitsel call: there is no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_view(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+   int x, y;
+
+   if (!PyArg_ParseTuple(args, "ii" , &x, &y)) return NULL;
+
+   bigint bigx = x;
+   bigint bigy = y;
+   viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
+   mainptr->UpdatePatternAndStatus();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_setrule(PyObject *self, PyObject *args)
 {
@@ -1661,6 +1708,9 @@ static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
    if ( !universe->isEmpty() ) {
       bigint top, left, bottom, right;
       universe->findedges(&top, &left, &bottom, &right);
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         Warning("Universe is too big to extract all cells!");
+      }
       int itop = top.toint();
       int ileft = left.toint();
       int ibottom = bottom.toint();
@@ -1685,6 +1735,8 @@ static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
       }
    }
 }
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_parse(PyObject *self, PyObject *args)
 {
@@ -1742,6 +1794,8 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
    return list;
 }
 
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_transform(PyObject *self, PyObject *args)
 {
    wxUnusedVar(self);
@@ -1757,14 +1811,91 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
 
    int num_cells = PyList_Size (list) / 2;
    for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong (PyList_GetItem (list, 2 * n));
-      long y = PyInt_AsLong (PyList_GetItem (list, 2 * n + 1));
+      long x = PyInt_AsLong( PyList_GetItem (list, 2 * n) );
+      long y = PyInt_AsLong( PyList_GetItem (list, 2 * n + 1) );
 
       AddCell(new_list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
    }
 
    return new_list;
 }
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_select(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+   PyObject *rect_list;
+
+   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
+
+   int numitems = PyList_Size(rect_list);
+   if (numitems == 0) {
+      // remove any existing selection
+      viewptr->NoSelection();
+   } else if (numitems == 4) {
+      int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+      int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+      int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+      int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+      // first check that wd & ht are > 0
+      if (wd <= 0) {
+         Warning("Bad select call: width must be > 0.");
+         return NULL;
+      }
+      if (ht <= 0) {
+         Warning("Bad select call: height must be > 0.");
+         return NULL;
+      }
+      // set selection edges
+      viewptr->selleft = x;
+      viewptr->seltop = y;
+      viewptr->selright = x + wd - 1;
+      viewptr->selbottom = y + ht - 1;
+   } else {
+      Warning("Bad select call: arg must be [] or [x,y,wd,ht].");
+      return NULL;
+   }
+
+   if (autoupdate) {
+      mainptr->UpdatePatternAndStatus();
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getselrect(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *rect_list = PyList_New(0);
+
+   if (viewptr->SelectionExists()) {
+      if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
+                                  viewptr->selbottom, viewptr->selright) ) {
+         Warning("Error in getselrect: selection is too big.");
+         return rect_list;
+      }
+      long x = viewptr->selleft.toint();
+      long y = viewptr->seltop.toint();
+      long wd = viewptr->selright.toint() - x + 1;
+      long ht = viewptr->selbottom.toint() - y + 1;
+        
+      PyList_Append(rect_list, PyInt_FromLong(x));
+      PyList_Append(rect_list, PyInt_FromLong(y));
+      PyList_Append(rect_list, PyInt_FromLong(wd));
+      PyList_Append(rect_list, PyInt_FromLong(ht));
+   }
+   
+   return rect_list;
+}
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_putcells(PyObject *self, PyObject *args)
 {
@@ -1785,11 +1916,63 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
    }
    curralgo->endofpattern();
    mainptr->savestart = true;
-   mainptr->UpdatePatternAndStatus();
+   if (autoupdate) {
+      mainptr->UpdatePatternAndStatus();
+   }
 
    Py_INCREF(Py_None);
    return Py_None;
 }
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setcell(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+   int x, y, state;
+
+   if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
+
+   curralgo->setcell(x, y, state);
+   curralgo->endofpattern();
+   mainptr->savestart = true;
+   if (autoupdate) {
+      mainptr->UpdatePatternAndStatus();
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getcell (PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+   int x, y;
+
+   if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
+
+   PyObject *result = Py_BuildValue("i", curralgo->getcell(x, y));
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
+{
+   wxUnusedVar(self);
+   int flag;
+
+   if (!PyArg_ParseTuple(args, "i", &flag)) return NULL;
+
+   autoupdate = (flag != 0);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_evolve(PyObject *self, PyObject *args)
 {
@@ -1832,6 +2015,8 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
    return evolved_list;
 }
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_load(PyObject *self, PyObject *args)
 {
@@ -1876,6 +2061,8 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    return list;
 }
 
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_save(PyObject *self, PyObject *args)
 {
    wxUnusedVar(self);
@@ -1912,6 +2099,8 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    return Py_None;
 }
 
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_show(PyObject *self, PyObject *args)
 {
    wxUnusedVar(self);
@@ -1924,6 +2113,8 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
    Py_INCREF(Py_None);
    return Py_None;
 }
+
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_warn(PyObject *self, PyObject *args)
 {
@@ -1938,7 +2129,7 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
    return Py_None;
 }
 
-wxString pyerror;
+// -----------------------------------------------------------------------------
 
 static PyObject *golly_stderr(PyObject *self, PyObject *args)
 {
@@ -1954,45 +2145,42 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
    return Py_None;
 }
 
-/* this example shows how to take 2 int args and return an int value
-static PyObject *golly_sum (PyObject *self, PyObject *args)
-{
-   wxUnusedVar(self);
-   int n1 = 0;
-   int n2 = 0;
-
-   if (!PyArg_ParseTuple(args, "ii", &n1, &n2)) return NULL;
-
-   PyObject *result = Py_BuildValue("i", n1 + n2);
-   return result;
-}
-*/
-
 // -----------------------------------------------------------------------------
 
 static PyMethodDef golly_methods[] = {
-   { "new",       golly_new,        METH_VARARGS, "create new universe and optionally set title" },
-   { "fit",       golly_fit,        METH_VARARGS, "fit entire pattern in current view" },
-   { "setrule",   golly_setrule,    METH_VARARGS, "set current rule according to string" },
-   { "parse",     golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
-   { "transform", golly_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
-   { "putcells",  golly_putcells,   METH_VARARGS, "paste given cell list into Golly universe" },
-   { "evolve",    golly_evolve,     METH_VARARGS, "evolve pattern contained in given cell list" },
-   { "load",      golly_load,       METH_VARARGS, "load pattern from file and return cell list" },
-   { "save",      golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
-   { "show",      golly_show,       METH_VARARGS, "show given string in status bar" },
-   { "warn",      golly_warn,       METH_VARARGS, "show given string in warning dialog" },
-   { "stderr",    golly_stderr,     METH_VARARGS, "show Python error message" },
+   { "new",          golly_new,        METH_VARARGS, "create new universe and optionally set title" },
+   { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
+   { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "view",         golly_view,       METH_VARARGS, "display given cell in middle of viewport" },
+   { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
+   { "parse",        golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
+   { "transform",    golly_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
+   { "select",       golly_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
+   { "getselrect",   golly_getselrect, METH_VARARGS, "return selection rectangle as [x, y, wd, ht]" },
+   { "putcells",     golly_putcells,   METH_VARARGS, "paste given cell list into Golly universe" },
+   { "setcell",      golly_setcell,    METH_VARARGS, "set given cell to given state" },
+   { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
+   { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
+   { "evolve",       golly_evolve,     METH_VARARGS, "evolve pattern contained in given cell list" },
+   { "load",         golly_load,       METH_VARARGS, "load pattern from file and return cell list" },
+   { "save",         golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
+   { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
+   { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
+   { "stderr",       golly_stderr,     METH_VARARGS, "show Python error message" },
    { NULL, NULL, 0, NULL }
 };
 
-// -----------------------------------------------------------------------------
+// =============================================================================
+
+// Exported routines:
 
 void RunScript(const char* filename)
 {
    wxString fname = wxT(filename);
+   mainptr->showbanner = false;
    statusptr->ClearMessage();
    pyerror = wxEmptyString;
+   autoupdate = false;
    
    if (!wxScriptInterpreter::Init()) {
       Warning("Could not initialize the Python interpreter!  Is it installed?");
