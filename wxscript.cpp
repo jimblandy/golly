@@ -2166,7 +2166,7 @@ static PyMethodDef golly_methods[] = {
    { "save",         golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
-   { "stderr",       golly_stderr,     METH_VARARGS, "show Python error message" },
+   { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
 };
 
