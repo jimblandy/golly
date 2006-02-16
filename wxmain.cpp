@@ -71,7 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
-#include "wxscript.h"      // for RunScript
+#include "wxscript.h"      // for IsScript, RunScript
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -90,12 +90,15 @@ enum {
 
    // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE, wxID_PREFERENCES)
    ID_OPEN_CLIP,
-   ID_RECENT,
+   ID_OPEN_RECENT,
    // last item in Open Recent submenu
-   ID_RECENT_CLEAR = ID_RECENT + MAX_RECENT + 1,
+   ID_CLEAR_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
    ID_SHOWPATT,
    ID_PATTDIR,
    ID_RUN_SCRIPT,
+   ID_RUN_RECENT,
+   // last item in Run Recent submenu
+   ID_CLEAR_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
    
    // Edit menu
    ID_CUT,
@@ -186,12 +189,14 @@ enum {
    ID_HELP_CREDITS
 };
 
-// static routines used by GetPrefs() to get IDs for items in Open Recent submenu;
+// static routines used by GetPrefs() to get IDs for items in Open/Run Recent submenus;
 // can't be MainFrame methods because GetPrefs() is called before creating main window
 // and I'd rather not expose the IDs in the header file
 
-int GetID_RECENT_CLEAR() { return ID_RECENT_CLEAR; }
-int GetID_RECENT() { return ID_RECENT; }
+int GetID_CLEAR_PATTERNS() { return ID_CLEAR_PATTERNS; }
+int GetID_OPEN_RECENT()    { return ID_OPEN_RECENT; }
+int GetID_CLEAR_SCRIPTS()  { return ID_CLEAR_SCRIPTS; }
+int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
 
 // -----------------------------------------------------------------------------
 
@@ -367,15 +372,16 @@ void MainFrame::UpdateMenuItems(bool active)
       // disable most items if main window is inactive
       if (viewptr->waitingforclick)
          active = false;
-      mbar->Enable(wxID_NEW,     active && !generating);
-      mbar->Enable(wxID_OPEN,    active && !generating);
-      mbar->Enable(ID_OPEN_CLIP, active && !generating && textinclip);
-      mbar->Enable(ID_RECENT,    active && !generating && numrecent > 0);
-      mbar->Enable(ID_SHOWPATT,  active);
-      mbar->Enable(ID_PATTDIR,   active);
-      mbar->Enable(wxID_SAVE,    active && !generating);
-      mbar->Enable(ID_RUN_SCRIPT,    active && !generating);
-      mbar->Enable(wxID_PREFERENCES, !generating);
+      mbar->Enable(wxID_NEW,           active && !generating);
+      mbar->Enable(wxID_OPEN,          active && !generating);
+      mbar->Enable(ID_OPEN_CLIP,       active && !generating && textinclip);
+      mbar->Enable(ID_OPEN_RECENT,     active && !generating && numpatterns > 0);
+      mbar->Enable(ID_SHOWPATT,        active);
+      mbar->Enable(ID_PATTDIR,         active);
+      mbar->Enable(wxID_SAVE,          active && !generating);
+      mbar->Enable(ID_RUN_SCRIPT,      active && !generating);
+      mbar->Enable(ID_RUN_RECENT,      active && !generating && numscripts > 0);
+      mbar->Enable(wxID_PREFERENCES,   !generating);
 
       mbar->Enable(ID_CUT,       active && !generating && viewptr->SelectionExists());
       mbar->Enable(ID_COPY,      active && !generating && viewptr->SelectionExists());
@@ -773,6 +779,7 @@ void MainFrame::ConvertPathAndOpen(const char *path, bool convertUTF8)
 {
    if ( IsScript(path) ) {
       // execute script
+      AddRecentScript(path);
       RunScript(path);
    } else {
       // load pattern
@@ -782,40 +789,73 @@ void MainFrame::ConvertPathAndOpen(const char *path, bool convertUTF8)
       } else {
          strncpy(currfile, path, sizeof(currfile));
       }
-      AddRecentFile(path);
+      AddRecentPattern(path);
       LoadPattern( GetBaseName(path) );
    }
 }
 
-void MainFrame::AddRecentFile(const char *path)
+void MainFrame::AddRecentPattern(const char *path)
 {
-   // put given path at start of recentSubMenu
-   int id = recentSubMenu->FindItem(path);
+   // put given path at start of patternSubMenu
+   int id = patternSubMenu->FindItem(path);
    if ( id == wxNOT_FOUND ) {
-      if ( numrecent < maxrecent ) {
+      if ( numpatterns < maxpatterns ) {
          // add new path
-         numrecent++;
-         id = ID_RECENT + numrecent;
-         recentSubMenu->Insert(numrecent - 1, id, path);
+         numpatterns++;
+         id = ID_OPEN_RECENT + numpatterns;
+         patternSubMenu->Insert(numpatterns - 1, id, path);
       } else {
          // replace last item with new path
-         wxMenuItem *item = recentSubMenu->FindItemByPosition(maxrecent - 1);
+         wxMenuItem *item = patternSubMenu->FindItemByPosition(maxpatterns - 1);
          item->SetText(path);
-         id = ID_RECENT + maxrecent;
+         id = ID_OPEN_RECENT + maxpatterns;
       }
    }
-   // path exists in recentSubMenu 
-   if ( id > ID_RECENT + 1 ) {
+   // path exists in patternSubMenu 
+   if ( id > ID_OPEN_RECENT + 1 ) {
       // move path to start of menu (item IDs don't change)
       wxMenuItem *item;
-      while ( id > ID_RECENT + 1 ) {
-         wxMenuItem *previtem = recentSubMenu->FindItem(id - 1);
+      while ( id > ID_OPEN_RECENT + 1 ) {
+         wxMenuItem *previtem = patternSubMenu->FindItem(id - 1);
          wxString prevpath = previtem->GetText();
-         item = recentSubMenu->FindItem(id);
+         item = patternSubMenu->FindItem(id);
          item->SetText(prevpath);
          id--;
       }
-      item = recentSubMenu->FindItem(id);
+      item = patternSubMenu->FindItem(id);
+      item->SetText(path);
+   }
+}
+
+void MainFrame::AddRecentScript(const char *path)
+{
+   // put given path at start of scriptSubMenu
+   int id = scriptSubMenu->FindItem(path);
+   if ( id == wxNOT_FOUND ) {
+      if ( numscripts < maxscripts ) {
+         // add new path
+         numscripts++;
+         id = ID_RUN_RECENT + numscripts;
+         scriptSubMenu->Insert(numscripts - 1, id, path);
+      } else {
+         // replace last item with new path
+         wxMenuItem *item = scriptSubMenu->FindItemByPosition(maxscripts - 1);
+         item->SetText(path);
+         id = ID_RUN_RECENT + maxscripts;
+      }
+   }
+   // path exists in scriptSubMenu 
+   if ( id > ID_RUN_RECENT + 1 ) {
+      // move path to start of menu (item IDs don't change)
+      wxMenuItem *item;
+      while ( id > ID_RUN_RECENT + 1 ) {
+         wxMenuItem *previtem = scriptSubMenu->FindItem(id - 1);
+         wxString prevpath = previtem->GetText();
+         item = scriptSubMenu->FindItem(id);
+         item->SetText(prevpath);
+         id--;
+      }
+      item = scriptSubMenu->FindItem(id);
       item->SetText(path);
    }
 }
@@ -841,7 +881,7 @@ void MainFrame::OpenPattern()
       wxFileName fullpath( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
       SetCurrentFile( opendlg.GetPath() );
-      AddRecentFile( opendlg.GetPath() );
+      AddRecentPattern( opendlg.GetPath() );
       LoadPattern( opendlg.GetFilename() );
    }
 }
@@ -851,7 +891,7 @@ void MainFrame::OpenScript()
    if (generating) return;
 
    wxFileDialog opendlg(this, _("Choose a Python script"),
-                        opensavedir, wxEmptyString,         // need scriptdir???!!!
+                        rundir, wxEmptyString,
                         _T("Python script (*.py)|*.py"),
                         wxOPEN | wxFILE_MUST_EXIST);
 
@@ -861,7 +901,8 @@ void MainFrame::OpenScript()
          UpdateEverything();
       #endif
       wxFileName fullpath( opendlg.GetPath() );
-      opensavedir = fullpath.GetPath();               // need scriptdir???!!!
+      rundir = fullpath.GetPath();
+      AddRecentScript( opendlg.GetPath() );
       RunScript( opendlg.GetPath() );
    }
 }
@@ -955,25 +996,45 @@ void MainFrame::OpenClipboard()
    #endif
 }
 
-void MainFrame::OpenRecentFile(int id)
+void MainFrame::OpenRecentPattern(int id)
 {
-   wxMenuItem *item = recentSubMenu->FindItem(id);
+   wxMenuItem *item = patternSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
       SetCurrentFile(path);
-      AddRecentFile(path);
+      AddRecentPattern(path);
       LoadPattern(GetBaseName(path));
    }
 }
 
-void MainFrame::ClearRecentFiles()
+void MainFrame::OpenRecentScript(int id)
 {
-   while (numrecent > 0) {
-      recentSubMenu->Delete( recentSubMenu->FindItemByPosition(0) );
-      numrecent--;
+   wxMenuItem *item = scriptSubMenu->FindItem(id);
+   if (item) {
+      wxString path = item->GetText();
+      AddRecentScript(path);
+      RunScript(path);
+   }
+}
+
+void MainFrame::ClearRecentPatterns()
+{
+   while (numpatterns > 0) {
+      patternSubMenu->Delete( patternSubMenu->FindItemByPosition(0) );
+      numpatterns--;
    }
    wxMenuBar *mbar = GetMenuBar();
-   if (mbar) mbar->Enable(ID_RECENT, false);
+   if (mbar) mbar->Enable(ID_OPEN_RECENT, false);
+}
+
+void MainFrame::ClearRecentScripts()
+{
+   while (numscripts > 0) {
+      scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(0) );
+      numscripts--;
+   }
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) mbar->Enable(ID_RUN_RECENT, false);
 }
 
 void MainFrame::SavePattern()
@@ -1050,7 +1111,7 @@ void MainFrame::SavePattern()
          return;
       }
       SetCurrentFile( savedlg.GetPath() );
-      AddRecentFile( savedlg.GetPath() );
+      AddRecentPattern( savedlg.GetPath() );
       SetWindowTitle( savedlg.GetFilename() );
       const char *err = writepattern(savedlg.GetPath(), *curralgo, format,
                                      itop, ileft, ibottom, iright);
@@ -1186,10 +1247,10 @@ void MainFrame::ShowPrefsDialog()
    if (ChangePrefs()) {
       // user hit OK button
    
-      // if maxrecent was reduced then we may need to remove some paths
-      while (numrecent > maxrecent) {
-         numrecent--;
-         recentSubMenu->Delete( recentSubMenu->FindItemByPosition(numrecent) );
+      // if maxpatterns was reduced then we may need to remove some paths
+      while (numpatterns > maxpatterns) {
+         numpatterns--;
+         patternSubMenu->Delete( patternSubMenu->FindItemByPosition(numpatterns) );
       }
       
       // randomfill might have changed
@@ -2082,11 +2143,12 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_NEW:          NewPattern(); break;
       case wxID_OPEN:         OpenPattern(); break;
       case ID_OPEN_CLIP:      OpenClipboard(); break;
-      case ID_RECENT_CLEAR:   ClearRecentFiles(); break;
+      case ID_CLEAR_PATTERNS: ClearRecentPatterns(); break;
       case ID_SHOWPATT:       ToggleShowPatterns(); break;
       case ID_PATTDIR:        ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
       case ID_RUN_SCRIPT:     OpenScript(); break;
+      case ID_CLEAR_SCRIPTS:  ClearRecentScripts(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
       case wxID_EXIT:         Close(true); break;        // true forces frame to close
       // Edit menu
@@ -2165,8 +2227,11 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_CREDITS:   ShowHelp("Help/credits.html"); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
       default:
-         if ( id > ID_RECENT && id <= ID_RECENT + numrecent ) {
-            OpenRecentFile(id);
+         if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
+            OpenRecentPattern(id);
+         }
+         if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
+            OpenRecentScript(id);
          }
    }
    UpdateUserInterface(IsActive());
@@ -2476,7 +2541,7 @@ MainFrame::MainFrame()
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_OPEN, _("Open Pattern...\tCtrl+O"));
    fileMenu->Append(ID_OPEN_CLIP, _("Open Clipboard\tShift+Ctrl+O"));
-   fileMenu->Append(ID_RECENT, _("Open Recent"), recentSubMenu);
+   fileMenu->Append(ID_OPEN_RECENT, _("Open Recent"), patternSubMenu);
    fileMenu->AppendSeparator();
    fileMenu->AppendCheckItem(ID_SHOWPATT, _("Show Patterns\tCtrl+P"));
    fileMenu->Append(ID_PATTDIR, _("Change Folder..."));
@@ -2484,6 +2549,7 @@ MainFrame::MainFrame()
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
    fileMenu->Append(ID_RUN_SCRIPT, _("Run Script..."));
+   fileMenu->Append(ID_RUN_RECENT, _("Run Recent"), scriptSubMenu);
    fileMenu->AppendSeparator();
    #ifdef __WXMSW__
       // Windows doesn't support Ctrl+<non-alpha> menu shortcuts

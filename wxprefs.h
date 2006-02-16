@@ -81,13 +81,17 @@ extern int qbasestep;            // qlife's base step
 extern int hbasestep;            // hlife's base step (best if power of 2)
 extern int mindelay;             // minimum millisec delay (when warp = -1)
 extern int maxdelay;             // maximum millisec delay
-extern wxString opensavedir;     // directory for open and save dialogs
+extern wxString opensavedir;     // directory for Open and Save dialogs
+extern wxString rundir;          // directory for Run Script dialog
 extern wxString patterndir;      // directory used by Show Patterns
 extern int pattdirwd;            // width of pattern directory window
 extern bool showpatterns;        // show pattern directory?
-extern wxMenu *recentSubMenu;    // menu of recent files
-extern int numrecent;            // current number of recent files
-extern int maxrecent;            // maximum number of recent files
+extern wxMenu *patternSubMenu;   // submenu of recent pattern files
+extern int numpatterns;          // current number of recent pattern files
+extern int maxpatterns;          // maximum number of recent pattern files
+extern wxMenu *scriptSubMenu;    // submenu of recent script files
+extern int numscripts;           // current number of recent script files
+extern int maxscripts;           // maximum number of recent script files
 
 // We maintain an array of named rules, where each string is of the form
 // "name of rule|B.../S...".  The first string is always "Life|B3/S23".
@@ -107,7 +111,7 @@ const int maxfontsize = 30;      // maximum value of helpfontsize
 const int mininfowd = 400;       // info window's minimum width
 const int mininfoht = 100;       // info window's minimum height
 
-const int MAX_RECENT = 100;      // maximum value of maxrecent
+const int MAX_RECENT = 100;      // maximum value of maxpatterns and maxscripts
 
 // Following are used by GetPrefs() before the view window is created:
 

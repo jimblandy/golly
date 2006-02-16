@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"      // for MAX_MAG
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
-#include "wxmain.h"        // for GetID_RECENT_CLEAR, GetID_RECENT, mainptr->...
+#include "wxmain.h"        // for GetID_CLEAR_PATTERNS, GetID_OPEN_RECENT, mainptr->...
 #include "wxutils.h"       // for Warning
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
@@ -76,6 +76,9 @@ const char PREFS_NAME[] = "GollyPrefs";
 
 // location of supplied pattern collection (relative to app)
 const char PATT_DIR[] = "Patterns";
+
+// location of supplied scripts (relative to app)
+const char SCRIPT_DIR[] = "Scripts";
 
 const int PREFS_VERSION = 1;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
@@ -136,13 +139,17 @@ int qbasestep = 10;              // qlife's base step
 int hbasestep = 8;               // hlife's base step (best if power of 2)
 int mindelay = 250;              // minimum millisec delay (when warp = -1)
 int maxdelay = 2000;             // maximum millisec delay
-wxString opensavedir;            // directory for open and save dialogs
+wxString opensavedir;            // directory for Open and Save dialogs
+wxString rundir;                 // directory for Run Script dialog
 wxString patterndir;             // directory used by Show Patterns
 int pattdirwd = 180;             // width of pattern directory window
 bool showpatterns = true;        // show pattern directory?
-wxMenu *recentSubMenu = NULL;    // menu of recent files
-int numrecent = 0;               // current number of recent files
-int maxrecent = 20;              // maximum number of recent files (1..MAX_RECENT)
+wxMenu *patternSubMenu = NULL;   // submenu of recent pattern files
+int numpatterns = 0;             // current number of recent pattern files
+int maxpatterns = 20;            // maximum number of recent pattern files (1..MAX_RECENT)
+wxMenu *scriptSubMenu = NULL;    // submenu of recent script files
+int numscripts = 0;              // current number of recent script files
+int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
 // these settings must be static -- they are changed by GetPrefs *before* the
@@ -402,15 +409,24 @@ void SavePrefs()
    fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
    fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
+   fprintf(f, "run_dir=%s\n", rundir.c_str());
    fprintf(f, "pattern_dir=%s\n", patterndir.c_str());
    fprintf(f, "patt_dir_width=%d\n", pattdirwd);
    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
-   fprintf(f, "max_recent=%d (1..%d)\n", maxrecent, MAX_RECENT);
-   if (numrecent > 0) {
+   fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
+   fprintf(f, "max_scripts=%d (1..%d)\n", maxscripts, MAX_RECENT);
+   if (numpatterns > 0) {
       int i;
-      for (i=0; i<numrecent; i++) {
-         wxMenuItem *item = recentSubMenu->FindItemByPosition(i);
-         if (item) fprintf(f, "recent_file=%s\n", item->GetText().c_str());
+      for (i=0; i<numpatterns; i++) {
+         wxMenuItem *item = patternSubMenu->FindItemByPosition(i);
+         if (item) fprintf(f, "recent_pattern=%s\n", item->GetText().c_str());
+      }
+   }
+   if (numscripts > 0) {
+      int i;
+      for (i=0; i<numscripts; i++) {
+         wxMenuItem *item = scriptSubMenu->FindItemByPosition(i);
+         if (item) fprintf(f, "recent_script=%s\n", item->GetText().c_str());
       }
    }
    fclose(f);
@@ -527,14 +543,20 @@ void GetPrefs()
    appdir = FindAppDir();
    opensavedir = appdir + PATT_DIR;
    patterndir = appdir + PATT_DIR;
+   rundir = appdir + SCRIPT_DIR;
 
    // create curs_* and initialize newcurs, opencurs and currcurs
    CreateCursors();
    
    // initialize Open Recent submenu
-   recentSubMenu = new wxMenu();
-   recentSubMenu->AppendSeparator();
-   recentSubMenu->Append(GetID_RECENT_CLEAR(), _("Clear Menu"));
+   patternSubMenu = new wxMenu();
+   patternSubMenu->AppendSeparator();
+   patternSubMenu->Append(GetID_CLEAR_PATTERNS(), _("Clear Menu"));
+   
+   // initialize Run Recent submenu
+   scriptSubMenu = new wxMenu();
+   scriptSubMenu->AppendSeparator();
+   scriptSubMenu->Append(GetID_CLEAR_SCRIPTS(), _("Clear Menu"));
 
    namedrules.Add("Life|B3/S23");      // must be 1st entry
 
@@ -712,6 +734,13 @@ void GetPrefs()
             opensavedir = appdir + PATT_DIR;
          }
 
+      } else if (strcmp(keyword, "run_dir") == 0) {
+         rundir = value;
+         if ( !wxFileName::DirExists(rundir) ) {
+            // reset to supplied script directory
+            rundir = appdir + SCRIPT_DIR;
+         }
+
       } else if (strcmp(keyword, "pattern_dir") == 0) {
          patterndir = value;
          if ( !wxFileName::DirExists(patterndir) ) {
@@ -726,16 +755,30 @@ void GetPrefs()
       } else if (strcmp(keyword, "show_patterns") == 0) {
          showpatterns = value[0] == '1';
 
-      } else if (strcmp(keyword, "max_recent") == 0) {
-         sscanf(value, "%d", &maxrecent);
-         if (maxrecent < 1) maxrecent = 1;
-         if (maxrecent > MAX_RECENT) maxrecent = MAX_RECENT;
+      } else if (strcmp(keyword, "max_patterns") == 0 ||
+                 strcmp(keyword, "max_recent") == 0) {         // old name
+         sscanf(value, "%d", &maxpatterns);
+         if (maxpatterns < 1) maxpatterns = 1;
+         if (maxpatterns > MAX_RECENT) maxpatterns = MAX_RECENT;
 
-      } else if (strcmp(keyword, "recent_file") == 0) {
+      } else if (strcmp(keyword, "max_scripts") == 0) {
+         sscanf(value, "%d", &maxscripts);
+         if (maxscripts < 1) maxscripts = 1;
+         if (maxscripts > MAX_RECENT) maxscripts = MAX_RECENT;
+
+      } else if (strcmp(keyword, "recent_pattern") == 0 ||
+                 strcmp(keyword, "recent_file") == 0) {        // old name
          // append path to Open Recent submenu
-         if (numrecent < maxrecent) {
-            numrecent++;
-            recentSubMenu->Insert(numrecent - 1, GetID_RECENT() + numrecent, value);
+         if (numpatterns < maxpatterns) {
+            numpatterns++;
+            patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns, value);
+         }
+
+      } else if (strcmp(keyword, "recent_script") == 0) {
+         // append path to Run Recent submenu
+         if (numscripts < maxscripts) {
+            numscripts++;
+            scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts, value);
          }
       }
    }
@@ -776,7 +819,7 @@ private:
       PREF_NEW_SCALE,
       PREF_OPEN_REM_SEL,
       PREF_OPEN_CURSOR,
-      PREF_MAX_RECENT,
+      PREF_MAX_PATTERNS,
       // Edit prefs
       PREF_RANDOM_FILL,
       // Control prefs
@@ -852,7 +895,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
 
    #ifdef __WXMAC__
       // give focus to first edit box on each page; also allows use of escape
-      if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_RECENT)->SetFocus();
+      if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_PATTERNS)->SetFocus();
       if (prefspage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
       if (prefspage == CONTROL_PAGE) FindWindow(PREF_MAX_HASH_MEM)->SetFocus();
       if (prefspage == VIEW_PAGE)
@@ -1006,11 +1049,11 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    ssizer2->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    
    wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
-   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent files:")),
+   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent patterns:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_RECENT, wxEmptyString,
+   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 1, MAX_RECENT, maxrecent);
+                                      wxSP_ARROW_KEYS, 1, MAX_RECENT, maxpatterns);
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    ssizer2->AddSpacer(SVGAP);
    ssizer2->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -1023,7 +1066,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    // init control values
    check1->SetValue(newremovesel);
    check2->SetValue(openremovesel);
-   spin2->SetValue(maxrecent);
+   spin2->SetValue(maxpatterns);
    choice1->SetSelection(newmag);
    newcursindex = CursorToIndex(newcurs);
    opencursindex = CursorToIndex(opencurs);
@@ -1393,7 +1436,7 @@ bool PrefsDialog::ValidateCurrentPage()
 {
    // validate all spin control values on current page
    if (prefspage == FILE_PAGE) {
-      if ( BadSpinVal(PREF_MAX_RECENT, 1, MAX_RECENT, "Maximum number of recent files") )
+      if ( BadSpinVal(PREF_MAX_PATTERNS, 1, MAX_RECENT, "Maximum number of recent patterns") )
          return false;
 
    } else if (prefspage == EDIT_PAGE) {
@@ -1457,7 +1500,7 @@ bool PrefsDialog::TransferDataFromWindow()
    newmag        = GetChoiceVal(PREF_NEW_SCALE);
    openremovesel = GetCheckVal(PREF_OPEN_REM_SEL);
    opencursindex = GetChoiceVal(PREF_OPEN_CURSOR);
-   maxrecent     = GetSpinVal(PREF_MAX_RECENT);
+   maxpatterns   = GetSpinVal(PREF_MAX_PATTERNS);
 
    // EDIT_PAGE
    randomfill = GetSpinVal(PREF_RANDOM_FILL);

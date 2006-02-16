@@ -118,10 +118,13 @@ private:
    void MySetTitle(const char *title);
    void SetCurrentFile(const char *path);
    const char* GetBaseName(const char *fullpath);
-   void AddRecentFile(const char *path);
-   void OpenRecentFile(int id);
-   void ClearRecentFiles();
+   void AddRecentPattern(const char *path);
+   void OpenRecentPattern(int id);
+   void ClearRecentPatterns();
    void ChangePatternDir();
+   void AddRecentScript(const char *path);
+   void OpenRecentScript(int id);
+   void ClearRecentScripts();
 
    // control functions
    void ChangeGoToStop();
@@ -150,10 +153,12 @@ private:
 // temporary file for storing clipboard data
 const char clipfile[] = ".golly_clipboard";
 
-// static routines needed by GetPrefs() to get IDs for items in Open Recent submenu;
-// can't be MainFrame methods because GetPrefs() is called before the main window
-// is created -- what a kludge!
-int GetID_RECENT_CLEAR();
-int GetID_RECENT();
+// static routines needed by GetPrefs() to get IDs for items in Open Recent and
+// Run Recent submenus; they can't be MainFrame methods because GetPrefs() is
+// called before the main window is created -- what a kludge!
+int GetID_CLEAR_PATTERNS();
+int GetID_OPEN_RECENT();
+int GetID_CLEAR_SCRIPTS();
+int GetID_RUN_RECENT();
 
 #endif
