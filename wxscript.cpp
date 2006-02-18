@@ -899,7 +899,7 @@ void wxScriptVar::ResetContent()
       if (m_tType.GetPointerType().GetGenericType() == wxSTG_CHAR) {
          delete [] ((char*)m_content);
       } else {
-         // AKT: safe way to avoid gcc warning???!!!
+         // safe way to avoid gcc warning???!!!
          // delete ((void*)m_content);
          delete ((char*)m_content);
       }
@@ -1011,10 +1011,7 @@ wxString wxScriptVar::GetContentString() const
       if (m_tType.GetPointerType().GetGenericType() == wxSTG_CHAR) {
          
          char *pmem = (char *)m_content;
-         
-         // AKT: return LUA2WX(pmem);
          return wxString(pmem, wxConvUTF8);
-
 
       } else {
 
@@ -1322,7 +1319,7 @@ void wxPython::OnException()
    pyEXC_HANDLE(ValueError)
    pyEXC_HANDLE(ZeroDivisionError)
 
-   // AKT: added these
+   // ok to add these???
    pyEXC_HANDLE(Exception)
    pyEXC_HANDLE(StandardError)
    pyEXC_HANDLE(ArithmeticError)
@@ -1554,9 +1551,8 @@ void wxScriptFunctionPython::DeepCopy(const wxScriptFunction *tocopy)
 // wxSCRIPTFILEPYTHON
 // --------------------
 
-// AKT:
-wxString gollydir;      // location of Golly app
-wxString scriptdir;     // location of script file
+wxString gollyloc;      // location of Golly app
+wxString scriptloc;     // location of script file
 
 bool wxScriptFilePython::Load(const wxString &filename)
 {
@@ -1568,7 +1564,7 @@ bool wxScriptFilePython::Load(const wxString &filename)
       fname.Replace("\\", "\\\\");
 
       // build absolute path to Golly's Scripts folder
-      wxString scriptsdir = gollydir + wxT("Scripts");
+      wxString scriptsdir = gollyloc + wxT("Scripts");
       scriptsdir.Replace("\\", "\\\\");
 
       // use PyRun_SimpleString to add Golly's Scripts folder to Python's
@@ -2195,16 +2191,14 @@ void RunScript(const char* filename)
    Py_InitModule3("golly", golly_methods, "Internal golly routines");
 
    // temporarily change current directory to location of script
-   gollydir = wxFileName::GetCwd();
-   if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
-   //!!!Warning(gollydir.c_str());
+   gollyloc = wxFileName::GetCwd();
+   if (gollyloc.Last() != wxFILE_SEP_PATH) gollyloc += wxFILE_SEP_PATH;
    wxFileName fullname(fname);
    fullname.Normalize();
-   scriptdir = fullname.GetPath();
-   if (!scriptdir.IsEmpty()) {
-      if (scriptdir.Last() != wxFILE_SEP_PATH) scriptdir += wxFILE_SEP_PATH;
-      wxSetWorkingDirectory(scriptdir);
-      //!!!Warning(scriptdir.c_str());
+   scriptloc = fullname.GetPath();
+   if (!scriptloc.IsEmpty()) {
+      if (scriptloc.Last() != wxFILE_SEP_PATH) scriptloc += wxFILE_SEP_PATH;
+      wxSetWorkingDirectory(scriptloc);
    }
 
    // load the script
@@ -2217,8 +2211,8 @@ void RunScript(const char* filename)
    }
    
    // restore current directory to location of Golly app
-   if (!scriptdir.IsEmpty()) {
-      wxSetWorkingDirectory(gollydir);
+   if (!scriptloc.IsEmpty()) {
+      wxSetWorkingDirectory(gollyloc);
    }
 
    wxScriptInterpreter::Cleanup();

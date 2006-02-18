@@ -88,7 +88,7 @@ const int MAX_HASHMB = 4000;     // make bigger when hlifealgo is 64-bit clean
 const int MAX_BASESTEP = 100;    // maximum qbasestep or hbasestep
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
 const int MAX_THUMBRANGE = 500;  // maximum thumbrange
-const int MIN_PATTDIRWD = 50;    // minimum pattdirwd
+const int MIN_DIRWD = 50;        // minimum dirwinwd
 
 // initialize exported preferences:
 
@@ -142,13 +142,15 @@ int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
 wxString patterndir;             // directory used by Show Patterns
-int pattdirwd = 180;             // width of pattern directory window
+wxString scriptdir;              // directory used by Show Scripts
+int dirwinwd = 180;              // width of directory window
 bool showpatterns = true;        // show pattern directory?
+bool showscripts = false;        // show script directory?
 wxMenu *patternSubMenu = NULL;   // submenu of recent pattern files
-int numpatterns = 0;             // current number of recent pattern files
-int maxpatterns = 20;            // maximum number of recent pattern files (1..MAX_RECENT)
 wxMenu *scriptSubMenu = NULL;    // submenu of recent script files
+int numpatterns = 0;             // current number of recent pattern files
 int numscripts = 0;              // current number of recent script files
+int maxpatterns = 20;            // maximum number of recent pattern files (1..MAX_RECENT)
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
@@ -411,8 +413,10 @@ void SavePrefs()
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
    fprintf(f, "run_dir=%s\n", rundir.c_str());
    fprintf(f, "pattern_dir=%s\n", patterndir.c_str());
-   fprintf(f, "patt_dir_width=%d\n", pattdirwd);
+   fprintf(f, "script_dir=%s\n", scriptdir.c_str());
+   fprintf(f, "dir_width=%d\n", dirwinwd);
    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
+   fprintf(f, "show_scripts=%d\n", showscripts ? 1 : 0);
    fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
    fprintf(f, "max_scripts=%d (1..%d)\n", maxscripts, MAX_RECENT);
    if (numpatterns > 0) {
@@ -542,8 +546,9 @@ void GetPrefs()
 {
    appdir = FindAppDir();
    opensavedir = appdir + PATT_DIR;
-   patterndir = appdir + PATT_DIR;
    rundir = appdir + SCRIPT_DIR;
+   patterndir = appdir + PATT_DIR;
+   scriptdir = appdir + SCRIPT_DIR;
 
    // create curs_* and initialize newcurs, opencurs and currcurs
    CreateCursors();
@@ -747,13 +752,24 @@ void GetPrefs()
             // reset to supplied pattern directory
             patterndir = appdir + PATT_DIR;
          }
+
+      } else if (strcmp(keyword, "script_dir") == 0) {
+         scriptdir = value;
+         if ( !wxFileName::DirExists(scriptdir) ) {
+            // reset to supplied script directory
+            scriptdir = appdir + SCRIPT_DIR;
+         }
          
-      } else if (strcmp(keyword, "patt_dir_width") == 0) {
-         sscanf(value, "%d", &pattdirwd);
-         if (pattdirwd < MIN_PATTDIRWD) pattdirwd = MIN_PATTDIRWD;
+      } else if (strcmp(keyword, "dir_width") == 0 ||
+                 strcmp(keyword, "patt_dir_width") == 0) {     // old name
+         sscanf(value, "%d", &dirwinwd);
+         if (dirwinwd < MIN_DIRWD) dirwinwd = MIN_DIRWD;
          
       } else if (strcmp(keyword, "show_patterns") == 0) {
          showpatterns = value[0] == '1';
+         
+      } else if (strcmp(keyword, "show_scripts") == 0) {
+         showscripts = value[0] == '1';
 
       } else if (strcmp(keyword, "max_patterns") == 0 ||
                  strcmp(keyword, "max_recent") == 0) {         // old name
@@ -783,6 +799,9 @@ void GetPrefs()
       }
    }
    fclose(f);
+   
+   // showpatterns and showscripts must not both be true
+   if (showpatterns && showscripts) showscripts = false;
    
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();

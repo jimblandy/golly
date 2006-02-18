@@ -84,13 +84,15 @@ extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
 extern wxString patterndir;      // directory used by Show Patterns
-extern int pattdirwd;            // width of pattern directory window
+extern wxString scriptdir;       // directory used by Show Scripts
+extern int dirwinwd;             // width of directory window
 extern bool showpatterns;        // show pattern directory?
+extern bool showscripts;         // show script directory?
 extern wxMenu *patternSubMenu;   // submenu of recent pattern files
-extern int numpatterns;          // current number of recent pattern files
-extern int maxpatterns;          // maximum number of recent pattern files
 extern wxMenu *scriptSubMenu;    // submenu of recent script files
+extern int numpatterns;          // current number of recent pattern files
 extern int numscripts;           // current number of recent script files
+extern int maxpatterns;          // maximum number of recent pattern files
 extern int maxscripts;           // maximum number of recent script files
 
 // We maintain an array of named rules, where each string is of the form

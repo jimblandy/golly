@@ -88,17 +88,23 @@ enum {
    // go/stop button
    ID_GO_STOP,
 
-   // File menu (see also wxID_NEW, wxID_OPEN, wxID_SAVE, wxID_PREFERENCES)
+   // File menu
+   // wxID_NEW,
+   // wxID_OPEN,
    ID_OPEN_CLIP,
    ID_OPEN_RECENT,
    // last item in Open Recent submenu
    ID_CLEAR_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
-   ID_SHOWPATT,
-   ID_PATTDIR,
+   ID_SHOW_PATTERNS,
+   ID_PATTERN_DIR,
+   // wxID_SAVE,
    ID_RUN_SCRIPT,
    ID_RUN_RECENT,
    // last item in Run Recent submenu
    ID_CLEAR_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
+   ID_SHOW_SCRIPTS,
+   ID_SCRIPT_DIR,
+   // wxID_PREFERENCES,
    
    // Edit menu
    ID_CUT,
@@ -151,12 +157,14 @@ enum {
    ID_HYPER,
    ID_RULE,
    
-   // View menu (see also wxID_ZOOM_IN, wxID_ZOOM_OUT)
+   // View menu
    ID_FULL,
    ID_FIT,
    ID_FIT_SEL,
    ID_MIDDLE,
    ID_RESTORE00,
+   // wxID_ZOOM_IN,
+   // wxID_ZOOM_OUT,
    ID_SET_SCALE,
    ID_STATUS,
    ID_TOOL,
@@ -177,6 +185,7 @@ enum {
    ID_HELP_INTRO,
    ID_HELP_TIPS,
    ID_HELP_SHORTCUTS,
+   ID_HELP_SCRIPTING,
    ID_HELP_LEXICON,
    ID_HELP_FILE,
    ID_HELP_EDIT,
@@ -208,9 +217,10 @@ wxTimer *onetimer;
 // it can be used to reset pattern or to show comments
 const char gen0file[] = ".golly_gen0";
 
-// a splittable window is used to display pattern directory and viewport
+// a splittable window is used to display pattern/script directory and viewport
 wxSplitterWindow* splitwin = NULL;
-wxGenericDirCtrl* dirctrl = NULL;
+wxGenericDirCtrl* patternctrl = NULL;
+wxGenericDirCtrl* scriptctrl = NULL;
 #ifdef __WXMSW__
 bool callUnselect = false;          // OnIdle needs to call Unselect?
 #endif
@@ -376,11 +386,13 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(wxID_OPEN,          active && !generating);
       mbar->Enable(ID_OPEN_CLIP,       active && !generating && textinclip);
       mbar->Enable(ID_OPEN_RECENT,     active && !generating && numpatterns > 0);
-      mbar->Enable(ID_SHOWPATT,        active);
-      mbar->Enable(ID_PATTDIR,         active);
+      mbar->Enable(ID_SHOW_PATTERNS,   active);
+      mbar->Enable(ID_PATTERN_DIR,     active);
       mbar->Enable(wxID_SAVE,          active && !generating);
       mbar->Enable(ID_RUN_SCRIPT,      active && !generating);
       mbar->Enable(ID_RUN_RECENT,      active && !generating && numscripts > 0);
+      mbar->Enable(ID_SHOW_SCRIPTS,    active);
+      mbar->Enable(ID_SCRIPT_DIR,      active);
       mbar->Enable(wxID_PREFERENCES,   !generating);
 
       mbar->Enable(ID_CUT,       active && !generating && viewptr->SelectionExists());
@@ -439,7 +451,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_INFO,      currfile[0] != 0);
 
       // tick/untick menu items created using AppendCheckItem
-      mbar->Check(ID_SHOWPATT,   showpatterns);
+      mbar->Check(ID_SHOW_PATTERNS,   showpatterns);
+      mbar->Check(ID_SHOW_SCRIPTS,    showscripts);
       mbar->Check(ID_AUTO,       autofit);
       mbar->Check(ID_HASH,       hashing);
       mbar->Check(ID_HYPER,      hyperspeed);
@@ -1129,15 +1142,15 @@ void MainFrame::SavePattern()
 
 // -----------------------------------------------------------------------------
 
-void SimplifyTree(wxTreeCtrl* treectrl, wxTreeItemId root)
+void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root)
 {
    // delete old tree (except root)
    treectrl->DeleteChildren(root);
 
-   // append patterndir as only child
-   wxDirItemData* diritem = new wxDirItemData(patterndir, patterndir, true);
+   // append dir as only child
+   wxDirItemData* diritem = new wxDirItemData(dir, dir, true);
    wxTreeItemId id;
-   id = treectrl->AppendItem(root, patterndir.AfterLast(wxFILE_SEP_PATH), 0, 0, diritem);
+   id = treectrl->AppendItem(root, dir.AfterLast(wxFILE_SEP_PATH), 0, 0, diritem);
    if ( diritem->HasFiles() || diritem->HasSubDirs() ) {
       treectrl->SetItemHasChildren(id);
       treectrl->Expand(id);
@@ -1183,29 +1196,74 @@ void ResizeSplitWindow()
 void MainFrame::ToggleShowPatterns()
 {
    showpatterns = !showpatterns;
-   if (splitwin->IsSplit()) {
-      // hide left pane
-      pattdirwd = splitwin->GetSashPosition();
-      splitwin->Unsplit(dirctrl);
+   if (showpatterns && showscripts) {
+      showscripts = false;
+      splitwin->Unsplit(scriptctrl);
+      splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
    } else {
-      splitwin->SplitVertically(dirctrl, viewptr, pattdirwd);
+      if (splitwin->IsSplit()) {
+         // hide left pane
+         dirwinwd = splitwin->GetSashPosition();
+         splitwin->Unsplit(patternctrl);
+      } else {
+         splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+      }
+      // resize viewport (ie. currview)
+      viewptr->SetViewSize();
+      viewptr->SetFocus();
    }
-   // resize viewport (ie. currview)
-   viewptr->SetViewSize();
-   viewptr->SetFocus();
+}
+
+void MainFrame::ToggleShowScripts()
+{
+   showscripts = !showscripts;
+   if (showscripts && showpatterns) {
+      showpatterns = false;
+      splitwin->Unsplit(patternctrl);
+      splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+   } else {
+      if (splitwin->IsSplit()) {
+         // hide left pane
+         dirwinwd = splitwin->GetSashPosition();
+         splitwin->Unsplit(scriptctrl);
+      } else {
+         splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+      }
+      // resize viewport (ie. currview)
+      viewptr->SetViewSize();
+      viewptr->SetFocus();
+   }
 }
 
 void MainFrame::ChangePatternDir()
 {
+   // wxMac bug: 3rd parameter seems to be ignored!!!
    wxDirDialog dirdlg(this, wxT("Choose a new pattern folder"),
                       patterndir, wxDD_NEW_DIR_BUTTON);
    if ( dirdlg.ShowModal() == wxID_OK ) {
       wxString newdir = dirdlg.GetPath();
       if ( patterndir != newdir ) {
          patterndir = newdir;
-         if ( dirctrl ) {
+         if ( showpatterns ) {
             // show new pattern directory
-            SimplifyTree(dirctrl->GetTreeCtrl(), dirctrl->GetRootId());
+            SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
+         }
+      }
+   }
+}
+
+void MainFrame::ChangeScriptDir()
+{
+   // wxMac bug: 3rd parameter seems to be ignored!!!
+   wxDirDialog dirdlg(this, wxT("Choose a new script folder"),
+                      scriptdir, wxDD_NEW_DIR_BUTTON);
+   if ( dirdlg.ShowModal() == wxID_OK ) {
+      wxString newdir = dirdlg.GetPath();
+      if ( scriptdir != newdir ) {
+         scriptdir = newdir;
+         if ( showscripts ) {
+            // show new script directory
+            SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
          }
       }
    }
@@ -2032,6 +2090,7 @@ void MainFrame::ToggleFullScreen()
       static bool restorestatus;    // restore status bar at end of full screen mode?
       static bool restoretoolbar;   // restore tool bar?
       static bool restorepattdir;   // restore pattern directory?
+      static bool restorescrdir;    // restore script directory?
 
       if (!fullscreen) {
          // save current location and size for use in SavePrefs
@@ -2065,12 +2124,17 @@ void MainFrame::ToggleFullScreen()
          if (restoretoolbar) {
             tbar->Show(false);
          }
-         // hide pattern directory if necessary
-         restorepattdir = splitwin->IsSplit();
+         // hide pattern/script directory if necessary
+         restorepattdir = showpatterns;
+         restorescrdir = showscripts;
          if (restorepattdir) {
-            pattdirwd = splitwin->GetSashPosition();
-            splitwin->Unsplit(dirctrl);
+            dirwinwd = splitwin->GetSashPosition();
+            splitwin->Unsplit(patternctrl);
             showpatterns = false;
+         } else if (restorescrdir) {
+            dirwinwd = splitwin->GetSashPosition();
+            splitwin->Unsplit(scriptctrl);
+            showscripts = false;
          }
       } else {
          // first show tool bar if necessary
@@ -2089,10 +2153,13 @@ void MainFrame::ToggleFullScreen()
             GetClientSize(&wd, &ht);
             statusptr->SetSize(0, 0, wd, statusptr->statusht);
          }
-         // now restore pattern directory if necessary
-         if (restorepattdir && !splitwin->IsSplit()) {
-            splitwin->SplitVertically(dirctrl, viewptr, pattdirwd);
+         // now restore pattern/script directory if necessary
+         if ( restorepattdir && !splitwin->IsSplit() ) {
+            splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
             showpatterns = true;
+         } else if ( restorescrdir && !splitwin->IsSplit() ) {
+            splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+            showscripts = true;
          }
       }
 
@@ -2100,7 +2167,7 @@ void MainFrame::ToggleFullScreen()
          // restore scroll bars BEFORE setting viewport size
          viewptr->UpdateScrollBars();
       }
-      // adjust size of viewport (and pattern directory if visible)
+      // adjust size of viewport (and pattern/script directory if visible)
       ResizeSplitWindow();
       UpdateEverything();
    #endif
@@ -2144,11 +2211,13 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_OPEN:         OpenPattern(); break;
       case ID_OPEN_CLIP:      OpenClipboard(); break;
       case ID_CLEAR_PATTERNS: ClearRecentPatterns(); break;
-      case ID_SHOWPATT:       ToggleShowPatterns(); break;
-      case ID_PATTDIR:        ChangePatternDir(); break;
+      case ID_SHOW_PATTERNS:  ToggleShowPatterns(); break;
+      case ID_PATTERN_DIR:    ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
       case ID_RUN_SCRIPT:     OpenScript(); break;
       case ID_CLEAR_SCRIPTS:  ClearRecentScripts(); break;
+      case ID_SHOW_SCRIPTS:   ToggleShowScripts(); break;
+      case ID_SCRIPT_DIR:     ChangeScriptDir(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
       case wxID_EXIT:         Close(true); break;        // true forces frame to close
       // Edit menu
@@ -2215,6 +2284,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_INTRO:     ShowHelp("Help/intro.html"); break;
       case ID_HELP_TIPS:      ShowHelp("Help/tips.html"); break;
       case ID_HELP_SHORTCUTS: ShowHelp("Help/shortcuts.html"); break;
+      case ID_HELP_SCRIPTING: ShowHelp("Help/scripting.html"); break;
       case ID_HELP_LEXICON:   ShowHelp("Help/Lexicon/lex.htm"); break;
       case ID_HELP_FILE:      ShowHelp("Help/file.html"); break;
       case ID_HELP_EDIT:      ShowHelp("Help/edit.html"); break;
@@ -2307,7 +2377,7 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
          statusptr->SetSize(0, 0, wd, statusptr->statusht);
       }
       if (viewptr && statusptr && ht > statusptr->statusht) {
-         // adjust size of viewport (and pattern directory if visible)
+         // adjust size of viewport (and pattern/script directory if visible)
          ResizeSplitWindow();
       }
    }
@@ -2330,7 +2400,8 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
    #ifdef __WXMSW__
       if ( callUnselect ) {
          // deselect file/folder so user can click the same item
-         dirctrl->GetTreeCtrl()->Unselect();
+         if (showpatterns) patternctrl->GetTreeCtrl()->Unselect();
+         if (showscripts) scriptctrl->GetTreeCtrl()->Unselect();
          callUnselect = false;
       }
    #endif
@@ -2339,9 +2410,15 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 {
    // note that viewptr will be NULL if called from MainFrame::MainFrame
-   if ( dirctrl && viewptr ) {
+   if ( viewptr ) {
       wxTreeItemId id = event.GetItem();
       if ( !id.IsOk() ) return;
+
+      wxGenericDirCtrl* dirctrl = NULL;
+      if (showpatterns) dirctrl = patternctrl;
+      if (showscripts) dirctrl = scriptctrl;
+      if (dirctrl == NULL) return;
+      
       wxString filepath = dirctrl->GetFilePath();
 
       // deselect file/folder so this handler will be called if user clicks same item
@@ -2408,7 +2485,9 @@ void MainFrame::OnDirTreeKey(wxTreeEvent& event)
 void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
 {
    // splitwin's sash was double-clicked
-   ToggleShowPatterns();
+   if (showpatterns) ToggleShowPatterns();
+   if (showscripts) ToggleShowScripts();
+   UpdateMenuItems(IsActive());              // untick flag
 }
 
 void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
@@ -2425,7 +2504,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    if (GetHelpFrame()) GetHelpFrame()->Close(true);
    if (GetInfoFrame()) GetInfoFrame()->Close(true);
    
-   if (splitwin->IsSplit()) pattdirwd = splitwin->GetSashPosition();
+   if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
 
    // save main window location and other user preferences
    SavePrefs();
@@ -2543,13 +2622,16 @@ MainFrame::MainFrame()
    fileMenu->Append(ID_OPEN_CLIP, _("Open Clipboard\tShift+Ctrl+O"));
    fileMenu->Append(ID_OPEN_RECENT, _("Open Recent"), patternSubMenu);
    fileMenu->AppendSeparator();
-   fileMenu->AppendCheckItem(ID_SHOWPATT, _("Show Patterns\tCtrl+P"));
-   fileMenu->Append(ID_PATTDIR, _("Change Folder..."));
+   fileMenu->AppendCheckItem(ID_SHOW_PATTERNS, _("Show Patterns\tCtrl+P"));
+   fileMenu->Append(ID_PATTERN_DIR, _("Set Pattern Folder..."));
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
    fileMenu->Append(ID_RUN_SCRIPT, _("Run Script..."));
    fileMenu->Append(ID_RUN_RECENT, _("Run Recent"), scriptSubMenu);
+   fileMenu->AppendSeparator();
+   fileMenu->AppendCheckItem(ID_SHOW_SCRIPTS, _("Show Scripts\tShift+Ctrl+P"));
+   fileMenu->Append(ID_SCRIPT_DIR, _("Set Script Folder..."));
    fileMenu->AppendSeparator();
    #ifdef __WXMSW__
       // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
@@ -2651,6 +2733,7 @@ MainFrame::MainFrame()
    helpMenu->Append(ID_HELP_INTRO, _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS, _("Hints and Tips"));
    helpMenu->Append(ID_HELP_SHORTCUTS, _("Shortcuts"));
+   helpMenu->Append(ID_HELP_SCRIPTING, _("Scripting"));
    helpMenu->Append(ID_HELP_LEXICON, _("Life Lexicon"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_FILE, _("File Menu"));
@@ -2784,7 +2867,7 @@ MainFrame::MainFrame()
    statusptr = new StatusBar(this, 0, 0, wd, STATUS_HT);
    if (statusptr == NULL) Fatal("Failed to create status bar!");
    
-   // create a split window with pattern directory in left pane
+   // create a split window with pattern/script directory in left pane
    // and pattern viewport in right pane
    splitwin = new wxSplitterWindow(this, wxID_ANY,
                                    wxPoint(0, STATUS_HT),
@@ -2795,22 +2878,32 @@ MainFrame::MainFrame()
                                    wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
    if (splitwin == NULL) Fatal("Failed to create split window!");
 
-   dirctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
-                                  wxDefaultPosition, wxDefaultSize,
-                                  wxNO_BORDER, _T("All files (*.*)|*.*"));
-   if (dirctrl == NULL) Fatal("Failed to create directory control!");
+   patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
+                                      wxDefaultPosition, wxDefaultSize,
+                                      wxNO_BORDER, _T("All files (*.*)|*.*"));
+   if (patternctrl == NULL) Fatal("Failed to create pattern directory control!");
+
+   scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
+                                     wxDefaultPosition, wxDefaultSize,
+                                     wxNO_BORDER, _T("Python scripts (*.py)|*.py"));
+   if (scriptctrl == NULL) Fatal("Failed to create script directory control!");
 
    // reduce indent
-   wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
-   treectrl->SetIndent(4);
+   patternctrl->GetTreeCtrl()->SetIndent(4);
+   scriptctrl->GetTreeCtrl()->SetIndent(4);
    
    // reduce font size -- doesn't seem to reduce line height
    // wxFont font = *(statusptr->GetStatusFont());
-   // treectrl->SetFont(font);
+   // patternctrl->GetTreeCtrl()->SetFont(font);
+   // scriptctrl->GetTreeCtrl()->SetFont(font);
    
    if ( wxFileName::DirExists(patterndir) ) {
       // only show patterndir and its contents
-      SimplifyTree(treectrl, dirctrl->GetRootId());
+      SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
+   }
+   if ( wxFileName::DirExists(scriptdir) ) {
+      // only show scriptdir and its contents
+      SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
    }
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
@@ -2821,12 +2914,22 @@ MainFrame::MainFrame()
       // let users drop files onto viewport
       viewptr->SetDropTarget(new DnDFile());
    #endif
-      
-   splitwin->SplitVertically(dirctrl, viewptr, pattdirwd);
-   splitwin->SetSashPosition(pattdirwd);
+   
+   // these seemingly redundant steps are needed to avoid problems on Windows
+   splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+   splitwin->SetSashPosition(dirwinwd);
    splitwin->SetMinimumPaneSize(50);
-   if (!showpatterns) splitwin->Unsplit(dirctrl);
+   splitwin->Unsplit(patternctrl);
    splitwin->UpdateSize();
+
+   splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+   splitwin->SetSashPosition(dirwinwd);
+   splitwin->SetMinimumPaneSize(50);
+   splitwin->Unsplit(scriptctrl);
+   splitwin->UpdateSize();
+
+   if ( showpatterns ) splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+   if ( showscripts ) splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
 
    InitDrawingData();      // do this after viewport size has been set
 

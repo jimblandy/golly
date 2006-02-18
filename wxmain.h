@@ -59,6 +59,7 @@ public:
    void SetWindowTitle(const char *filename);
    void OpenPattern();
    void ToggleShowPatterns();
+   void ToggleShowScripts();
    void SavePattern();
    void OpenScript();
 
@@ -125,6 +126,7 @@ private:
    void AddRecentScript(const char *path);
    void OpenRecentScript(int id);
    void ClearRecentScripts();
+   void ChangeScriptDir();
 
    // control functions
    void ChangeGoToStop();

@@ -52,7 +52,7 @@ only open a pattern that has been saved by the Edit menu's Cut/Copy commands.]
 <p>
 This submenu lets you open a recently loaded pattern file.
 The most recent file is always at the top.
-The maximum number of files remembered is determined by a setting
+The maximum number of pattern files remembered is determined by a setting
 (initially 20) which you can change in the Preferences dialog.
 
 <p>
@@ -62,10 +62,10 @@ The maximum number of files remembered is determined by a setting
 if ticked then a scrollable pattern folder is displayed next to the viewport.
 Clicking on a pattern file will load it in.  The initial pattern folder is
 the Patterns collection supplied with Golly.  If you have your own collection
-then use Change Folder (see below) to select a different folder.
+then use Set Pattern Folder (see below) to select a different folder.
 
 <p>
-<font size=+1><b>Change Folder...</b></font>
+<font size=+1><b>Set Pattern Folder...</b></font>
 
 <p>
 Lets you change the pattern folder displayed by Show Patterns (see above).
@@ -77,6 +77,41 @@ Lets you change the pattern folder displayed by Show Patterns (see above).
 Brings up the standard file saving dialog so you can save the current pattern
 in RLE format (but only if all live cells are within coordinates of +/- 1 billion).
 If the hashing option is on then you can also save the pattern in macrocell format.
+
+<p>
+<font size=+1><b>Run Script...</b></font>
+
+<p>
+Brings up the standard file browser so you can run a selected Python script.
+Such scripts can be used to automate or extend Golly's user interface,
+or to construct complex patterns.  A number of sample scripts are provided
+in the Scripts folder.  More details about Golly's scripting capabilities
+can be found in the <a href="scripting.html">Scripting</a> help topic.
+
+<p>
+<font size=+1><b>Run Recent</b></font>
+
+<p>
+This submenu lets you run a recently executed Python script.
+The most recent script is always at the top.
+The maximum number of scripts remembered is determined by a setting
+(initially 20) which you can change in the Preferences dialog.
+
+<p>
+<font size=+1><b>Show Scripts</b></font>&nbsp;&nbsp;[P]
+
+<p>
+if ticked then a scrollable script folder is displayed next to the viewport.
+Clicking on a Python script file will execute it.  The initial script folder is
+the Scripts folder supplied with Golly.  If you want to write your own scripts
+then best to do so in a new folder and use Set Script Folder (see below)
+to select that folder.
+
+<p>
+<font size=+1><b>Set Script Folder...</b></font>
+
+<p>
+Lets you change the script folder displayed by Show Scripts (see above).
 
 <p>
 <font size=+1><b>Preferences...</b></font>&nbsp;&nbsp;[,]

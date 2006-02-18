@@ -2416,6 +2416,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case 'i':   mainptr->ShowPatternInfo(); break;
       case ',':   mainptr->ShowPrefsDialog(); break;
       case 'p':   mainptr->ToggleShowPatterns(); break;
+      case 'P':   mainptr->ToggleShowScripts(); break;
    
       case 'h':
       case WXK_HELP:

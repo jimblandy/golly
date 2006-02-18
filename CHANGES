@@ -9,6 +9,9 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: More File menu items: Show Scripts, Set Script Folder.
+AKT: New File menu items: Run Script, Run Recent.
+AKT: Added PLife-like scripting commands for pattern construction.
 AKT: Added Python script support (simple proof-of-concept stuff).
 
 Changes in version 0.95 (released January 2006)
