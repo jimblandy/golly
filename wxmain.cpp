@@ -1310,6 +1310,12 @@ void MainFrame::ShowPrefsDialog()
          numpatterns--;
          patternSubMenu->Delete( patternSubMenu->FindItemByPosition(numpatterns) );
       }
+
+      // if maxscripts was reduced then we may need to remove some paths
+      while (numscripts > maxscripts) {
+         numscripts--;
+         scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(numscripts) );
+      }
       
       // randomfill might have changed
       SetRandomFillPercentage();

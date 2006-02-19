@@ -839,6 +839,7 @@ private:
       PREF_OPEN_REM_SEL,
       PREF_OPEN_CURSOR,
       PREF_MAX_PATTERNS,
+      PREF_MAX_SCRIPTS,
       // Edit prefs
       PREF_RANDOM_FILL,
       // Control prefs
@@ -922,8 +923,10 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
             FindWindow(PREF_BOLD_SPACING)->SetFocus();
          else
             FindWindow(PREF_THUMB_RANGE)->SetFocus();
-      // deselect other spin controls on CONTROL_PAGE
       wxSpinCtrl* sp;
+      // deselect other spin control on FILE_PAGE
+      sp = (wxSpinCtrl*) FindWindow(PREF_MAX_SCRIPTS); sp->SetSelection(0,0);
+      // deselect other spin controls on CONTROL_PAGE
       sp = (wxSpinCtrl*) FindWindow(PREF_QBASE); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_HBASE); sp->SetSelection(0,0);
       sp = (wxSpinCtrl*) FindWindow(PREF_MIN_DELAY); sp->SetSelection(0,0);
@@ -1005,7 +1008,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    
    // on new pattern
    
-   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("On new pattern:"));
+   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("On creating a new pattern:"));
    wxBoxSizer* ssizer1 = new wxStaticBoxSizer( sbox1, wxVERTICAL );
    vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
 
@@ -1021,33 +1024,37 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    wxBoxSizer* setscalebox = new wxBoxSizer( wxHORIZONTAL );
    setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
 
-   // nicer if setscalebox is same width as setcursbox
-   setscalebox->SetMinSize( setcursbox->GetMinSize() );
-   
-   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
    wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
                                     wxDefaultPosition, wxDefaultSize,
                                     newcursorChoices);
+
+   wxChoice* choice1 = new wxChoice(panel, PREF_NEW_SCALE,
+                                    #ifdef __WXX11__
+                                    wxDefaultPosition, wxSize(60, wxDefaultCoord),
+                                    #else
+                                    wxDefaultPosition, wxDefaultSize,
+                                    #endif
+                                    newscaleChoices);
+   
+   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
    hbox3->Add(setcursbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+   hbox3->AddSpacer(20);
+   hbox3->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hbox3->Add(choice1, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+   #ifdef __WXX11__
+      hbox3->AddSpacer(10);
+   #endif
+
    ssizer1->AddSpacer(CVGAP);
    ssizer1->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
-   
-   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
-   wxChoice* choice1 = new wxChoice(panel, PREF_NEW_SCALE,
-                                    wxDefaultPosition, wxDefaultSize,
-                                    newscaleChoices);
-   hbox1->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   hbox1->Add(choice1, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   ssizer1->AddSpacer(CVGAP);
-   ssizer1->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
    
    // on opening pattern
    
-   vbox->AddSpacer(5);
+   vbox->AddSpacer(10);
    
-   wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening pattern:"));
+   wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening a pattern file:"));
    wxBoxSizer* ssizer2 = new wxStaticBoxSizer( sbox2, wxVERTICAL );
    vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
    
@@ -1064,19 +1071,45 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+
    ssizer2->AddSpacer(CVGAP);
    ssizer2->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer2->AddSpacer(SBBOTGAP);
    
-   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
-   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent patterns:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
+   // max_patterns and max_scripts
+   
+   vbox->AddSpacer(10);
+
+   wxBoxSizer* maxbox = new wxBoxSizer( wxHORIZONTAL );
+   maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent patterns:")),
+                                0, wxALL, 0);
+
+   wxBoxSizer* minbox = new wxBoxSizer( wxHORIZONTAL );
+   minbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent scripts:")),
+                                0, wxALL, 0);
+
+   // align spin controls by setting minbox same width as maxbox
+   minbox->SetMinSize( maxbox->GetMinSize() );
+
+   wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord),
                                       wxSP_ARROW_KEYS, 1, MAX_RECENT, maxpatterns);
-   hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-   ssizer2->AddSpacer(SVGAP);
-   ssizer2->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
-   ssizer2->AddSpacer(SBBOTGAP);
+   
+   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_SCRIPTS, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
+                                      wxSP_ARROW_KEYS, 1, MAX_RECENT, maxscripts);
+
+   wxBoxSizer* hpbox = new wxBoxSizer( wxHORIZONTAL );
+   hpbox->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hpbox->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+
+   wxBoxSizer* hsbox = new wxBoxSizer( wxHORIZONTAL );
+   hsbox->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hsbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+
+   vbox->Add(hpbox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(S2VGAP);
+   vbox->Add(hsbox, 0, wxLEFT | wxRIGHT, LRGAP);
 
    #ifdef __WXX11__
       vbox->AddSpacer(15);
@@ -1085,12 +1118,13 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    // init control values
    check1->SetValue(newremovesel);
    check2->SetValue(openremovesel);
-   spin2->SetValue(maxpatterns);
    choice1->SetSelection(newmag);
    newcursindex = CursorToIndex(newcurs);
    opencursindex = CursorToIndex(opencurs);
    choice3->SetSelection(newcursindex);
    choice4->SetSelection(opencursindex);
+   spin1->SetValue(maxpatterns);
+   spin2->SetValue(maxscripts);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1283,7 +1317,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    mingridChoices.Add(wxT("1:8"));
    mingridChoices.Add(wxT("1:16"));
    wxChoice* choice3 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
+                                    #ifdef __WXX11__
+                                    wxDefaultPosition, wxSize(60, wxDefaultCoord),
+                                    #else
                                     wxDefaultPosition, wxDefaultSize,
+                                    #endif
                                     mingridChoices);
 
    wxBoxSizer* longbox = new wxBoxSizer( wxHORIZONTAL );
@@ -1457,6 +1495,8 @@ bool PrefsDialog::ValidateCurrentPage()
    if (prefspage == FILE_PAGE) {
       if ( BadSpinVal(PREF_MAX_PATTERNS, 1, MAX_RECENT, "Maximum number of recent patterns") )
          return false;
+      if ( BadSpinVal(PREF_MAX_SCRIPTS, 1, MAX_RECENT, "Maximum number of recent scripts") )
+         return false;
 
    } else if (prefspage == EDIT_PAGE) {
       if ( BadSpinVal(PREF_RANDOM_FILL, 1, 100, "Random fill percentage") )
@@ -1520,6 +1560,7 @@ bool PrefsDialog::TransferDataFromWindow()
    openremovesel = GetCheckVal(PREF_OPEN_REM_SEL);
    opencursindex = GetChoiceVal(PREF_OPEN_CURSOR);
    maxpatterns   = GetSpinVal(PREF_MAX_PATTERNS);
+   maxscripts    = GetSpinVal(PREF_MAX_SCRIPTS);
 
    // EDIT_PAGE
    randomfill = GetSpinVal(PREF_RANDOM_FILL);
