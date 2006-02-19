@@ -2451,14 +2451,17 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
       } else {
          // user clicked on a file name
          if ( generating ) {
-            statusptr->ErrorMessage("Cannot load pattern file while generating.");
+            if ( showpatterns )
+               statusptr->ErrorMessage("Cannot load pattern while generating.");
+            else
+               statusptr->ErrorMessage("Cannot run script while generating.");
          } else {
             // reset background of previously selected file by traversing entire tree;
             // we can't just remember previously selected id because ids don't persist
             // after a folder has been collapsed and expanded
             DeselectTree(treectrl, treectrl->GetRootItem());
 
-            // indicate the selected file and load it in
+            // indicate the selected file and open it
             treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
             ConvertPathAndOpen(filepath, true);
          }
