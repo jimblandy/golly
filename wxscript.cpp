@@ -143,10 +143,6 @@ public:
    // The current dictionaries being used.
    PyObject *m_pLocals, *m_pGlobals;
 
-   // Recognizes the given type of python exception and sets
-   // wxScriptInterpreter::m_strLastErr accordingly.
-   void OnException();
-
 public:
    wxPython() {}
    virtual ~wxPython() { Cleanup(); }
@@ -241,81 +237,29 @@ void wxPython::Cleanup()
    Py_Finalize();
 }
 
-void wxPython::OnException()
-{
-   wxASSERT(PyErr_Occurred() != NULL);
-   wxString err;
-
-#define pyEXC_HANDLE(x)                         \
-   else if (PyErr_ExceptionMatches(PyExc_##x))  \
-      err = wxString(wxT(#x));
-
-   // a generic exception description
-   if (PyErr_ExceptionMatches(PyExc_AssertionError))
-      err = wxT("Assertion error");
-   pyEXC_HANDLE(AttributeError)
-   pyEXC_HANDLE(EOFError)
-   pyEXC_HANDLE(FloatingPointError)
-   pyEXC_HANDLE(IOError)
-   pyEXC_HANDLE(ImportError)
-   pyEXC_HANDLE(IndexError)
-   pyEXC_HANDLE(KeyError)
-   pyEXC_HANDLE(KeyboardInterrupt)
-   pyEXC_HANDLE(MemoryError)
-   pyEXC_HANDLE(NameError)
-   pyEXC_HANDLE(NotImplementedError)
-   pyEXC_HANDLE(OSError)
-   pyEXC_HANDLE(OverflowError)
-   pyEXC_HANDLE(RuntimeError)
-   pyEXC_HANDLE(SyntaxError)
-   pyEXC_HANDLE(SystemError)
-   pyEXC_HANDLE(SystemExit)
-   pyEXC_HANDLE(TypeError)
-   pyEXC_HANDLE(ValueError)
-   pyEXC_HANDLE(ZeroDivisionError)
-
-   // ok to add these???
-   pyEXC_HANDLE(Exception)
-   pyEXC_HANDLE(StandardError)
-   pyEXC_HANDLE(ArithmeticError)
-   pyEXC_HANDLE(LookupError)
-   pyEXC_HANDLE(EnvironmentError)
-
-   else
-      err = wxT("Unknown error");
-
-   wxScriptInterpreter::m_strLastErr = wxT("Exception occurred: ") + err;
-   
-   PyErr_Clear();
-}
-
 bool wxPython::Load(const wxString &filename)
 {
-   try {
+   // if filename contains backslashes then we must convert them to "\\"
+   // to avoid "\a" being treated as escape char
+   wxString fname = filename;
+   fname.Replace("\\", "\\\\");
 
-      // if filename contains backslashes then we must convert them to "\\"
-      // to avoid "\a" being treated as escape char
-      wxString fname = filename;
-      fname.Replace("\\", "\\\\");
+   // build absolute path to Golly's Scripts folder
+   wxString scriptsdir = gollyloc + wxT("Scripts");
+   scriptsdir.Replace("\\", "\\\\");
 
-      // build absolute path to Golly's Scripts folder
-      wxString scriptsdir = gollyloc + wxT("Scripts");
-      scriptsdir.Replace("\\", "\\\\");
+   // use PyRun_SimpleString to add Golly's Scripts folder to Python's
+   // import search list (so scripts anywhere can do "from glife import *")
+   // and then execute the given script
+   wxString command = wxT("import sys ; sys.path.append(\"") + scriptsdir + wxT("\")");
+   command += wxT(" ; execfile(\"") + fname + wxT("\")");
+   PyRun_SimpleString(command.c_str());
+   
+   // note that PyRun_SimpleString returns -1 if an exception occurred,
+   // but we always return true because the error message (in pyerror)
+   // will be checked later at the end of RunScript
 
-      // use PyRun_SimpleString to add Golly's Scripts folder to Python's
-      // import search list (so scripts anywhere can do "from glife import *")
-      // and then execute the given script
-      wxString command = wxT("import sys ; sys.path.append(\"") + scriptsdir + wxT("\")");
-      command += wxT(" ; execfile(\"") + fname + wxT("\")");
-      PyRun_SimpleString(command.c_str());
-
-   } catch (...) {
-
-      OnException();
-      return FALSE;
-   }
-
-   return TRUE;
+   return true;
 }
 
 // =============================================================================
@@ -323,9 +267,23 @@ bool wxPython::Load(const wxString &filename)
 // The following golly_* routines can be called from Python scripts; some are
 // based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
 
-static PyObject *golly_new(PyObject *self, PyObject *args)
+static bool ScriptAborted()
 {
    wxGetApp().Poller()->checkevents();
+   
+   // if user hit escape key then AbortScript has raised an exception
+   // and PyErr_Occurred will be true; if so, caller must return NULL
+   // otherwise Python can abort app with this message:
+   // Fatal Python error: unexpected exception during garbage collection
+
+   return PyErr_Occurred() != NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_new(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *title = NULL;
 
@@ -343,7 +301,7 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
 
 static PyObject *golly_fit(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -358,7 +316,7 @@ static PyObject *golly_fit(PyObject *self, PyObject *args)
 
 static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -379,7 +337,7 @@ static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 
 static PyObject *golly_view(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y;
 
@@ -398,7 +356,7 @@ static PyObject *golly_view(PyObject *self, PyObject *args)
 
 static PyObject *golly_setrule(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *rule_string = NULL;
 
@@ -426,12 +384,16 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
    return Py_None;
 }
 
+// -----------------------------------------------------------------------------
+
 // helper routine used in calls that build cell lists
 static void AddCell(PyObject *list, long x, long y)
 {
    PyList_Append(list, PyInt_FromLong(x));
    PyList_Append(list, PyInt_FromLong(y));
 }   
+
+// -----------------------------------------------------------------------------
 
 // helper routine to extract cell list from given universe
 static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
@@ -471,7 +433,7 @@ static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
 
 static PyObject *golly_parse(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s;
 
@@ -530,7 +492,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
 
 static PyObject *golly_transform(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
 
@@ -557,7 +519,7 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
 
 static PyObject *golly_select(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *rect_list;
 
@@ -601,7 +563,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
 
 static PyObject *golly_getselrect(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -632,7 +594,7 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
 
 static PyObject *golly_putcells(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
    PyObject *list;
@@ -660,7 +622,7 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
 
 static PyObject *golly_setcell(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y, state;
 
@@ -679,7 +641,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
 
 static PyObject *golly_getcell (PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y;
 
@@ -693,7 +655,7 @@ static PyObject *golly_getcell (PyObject *self, PyObject *args)
 
 static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int flag;
 
@@ -709,7 +671,7 @@ static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 
 static PyObject *golly_evolve(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int N = 0;
 
@@ -753,7 +715,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
 static PyObject *golly_load(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *list;
    char *file_name;
@@ -799,7 +761,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 
 static PyObject *golly_save(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *given_list;
    char *file_name;
@@ -838,7 +800,7 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
 
 static PyObject *golly_appdir(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -851,7 +813,7 @@ static PyObject *golly_appdir(PyObject *self, PyObject *args)
 
 static PyObject *golly_show(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -867,7 +829,7 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
 
 static PyObject *golly_warn(PyObject *self, PyObject *args)
 {
-   wxGetApp().Poller()->checkevents();
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -884,7 +846,7 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
 static PyObject *golly_stderr(PyObject *self, PyObject *args)
 {
    // probably safer not to call checkevents here
-   // wxGetApp().Poller()->checkevents();
+   // if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -988,13 +950,12 @@ void RunScript(const char* filename)
    // display any Python error message
    if (!pyerror.IsEmpty()) {
       if (pyerror.Find(abortmsg) >= 0) {
-         // error caused by AbortScript so don't display pyerror
+         // error was caused by AbortScript so don't display pyerror
          statusptr->DisplayMessage("Script aborted.");
       } else {
          wxBell();
          wxSetCursor(*wxSTANDARD_CURSOR);
-         wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION,
-                      wxGetActiveWindow());
+         wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
       }
    }
 }
@@ -1003,8 +964,8 @@ void RunScript(const char* filename)
 
 bool IsScript(const char *filename)
 {
-   // currently we only support Python scripts so return true if filename
-   // ends with ".py", ignoring case
+   // currently we only support Python scripts, so return true only if filename
+   // ends with ".py" (ignoring case)
    wxString fname = wxT(filename);
    wxString ext = fname.AfterLast(wxT('.'));
 
@@ -1021,6 +982,7 @@ bool InScript()
 
 // -----------------------------------------------------------------------------
 
+// this will be called from checkevents() if user hits escape key
 void AbortScript()
 {
    if (inscript) {
