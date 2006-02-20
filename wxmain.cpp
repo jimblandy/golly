@@ -71,7 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
-#include "wxscript.h"      // for IsScript, RunScript
+#include "wxscript.h"      // for IsScript, RunScript, InScript, AbortScript
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -370,6 +370,26 @@ bool MainFrame::ClipboardHasText()
 bool MainFrame::StatusVisible()
 {
    return (statusptr && statusptr->statusht > 0);
+}
+
+void MainFrame::EnableAllMenus(bool enable)
+{
+   #ifdef __WXMAC__
+      // enable/disable all menus, including Help menu and items in app menu
+      if (enable)
+         EndAppModalStateForWindow( (OpaqueWindowPtr*)MacGetWindowRef() );
+      else
+         BeginAppModalStateForWindow( (OpaqueWindowPtr*)MacGetWindowRef() );
+   #else
+      wxMenuBar *mbar = GetMenuBar();
+      if (mbar) {
+         int count = mbar->GetMenuCount();
+         int i;
+         for (i = 0; i<count; i++) {
+            mbar->EnableTop(i, enable);
+         }
+      }
+   #endif
 }
 
 // update menu bar items according to the current state
@@ -1177,20 +1197,6 @@ void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
       }
       id = treectrl->GetNextChild(root, cookie);
    }
-}
-
-void ResizeSplitWindow()
-{
-   if (!mainptr) return;
-   int wd, ht;
-   mainptr->GetClientSize(&wd, &ht);
-
-   splitwin->SetSize(0, statusptr->statusht, wd,
-                     ht > statusptr->statusht ? ht - statusptr->statusht : 0);
-
-   // wxSplitterWindow automatically resizes left and right panes
-   // but we still need to resize viewport (ie. currview)
-   viewptr->SetViewSize();
 }
 
 void MainFrame::ToggleShowPatterns()
@@ -2043,6 +2049,19 @@ void MainFrame::ShowRuleDialog()
 
 // view functions:
 
+void MainFrame::ResizeSplitWindow()
+{
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+
+   splitwin->SetSize(0, statusptr->statusht, wd,
+                     ht > statusptr->statusht ? ht - statusptr->statusht : 0);
+
+   // wxSplitterWindow automatically resizes left and right panes
+   // but we still need to resize viewport (ie. currview)
+   viewptr->SetViewSize();
+}
+
 void MainFrame::ToggleStatusBar()
 {
    int wd, ht;
@@ -2523,8 +2542,9 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
    #ifdef __WXX11__
       // avoid seg fault on X11
-      if (generating) exit(0);
+      if (generating || InScript()) exit(0);
    #else
+      if (InScript()) AbortScript();
       if (generating) StopGenerating();
    #endif
    

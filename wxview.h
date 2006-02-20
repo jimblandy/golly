@@ -151,7 +151,6 @@ private:
    void ZoomInPos(int x, int y);
    void ZoomOutPos(int x, int y);
    void EmptyUniverse();
-   void EnableAllMenus(bool enable);
    void SetPasteRect(wxRect &rect, bigint &wd, bigint &ht);
    void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);

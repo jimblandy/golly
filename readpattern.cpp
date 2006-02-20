@@ -326,16 +326,22 @@ const char *loadpattern(lifealgo &imp) {
    return errmsg ;
 }
 
+const char *build_err_str(const char *filename) {
+   static char file_err_str[2048];
+   sprintf(file_err_str, "Can't open pattern file: %s", filename);
+   return file_err_str;
+}
+
 const char *readpattern(const char *filename, lifealgo &imp) {
    filesize = getfilesize(filename);
 #ifdef ZLIB
    zinstream = gzopen(filename, "rb") ;      // rb needed on Windows
    if (zinstream == 0)
-      return "Can't open pattern file!" ;
+      return build_err_str(filename) ;
 #else
    pattfile = fopen(filename, "r") ;
    if (pattfile == 0)
-      return "Can't open pattern file!" ;
+      return build_err_str(filename) ;
 #endif
    buffpos = BUFFSIZE;                       // for 1st getchar call
    prevchar = 0;                             // for 1st getline call
@@ -395,11 +401,11 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
 #ifdef ZLIB
    zinstream = gzopen(filename, "rb") ;      // rb needed on Windows
    if (zinstream == 0)
-      return "Can't open pattern file!" ;
+      return build_err_str(filename) ;
 #else
    pattfile = fopen(filename, "r") ;
    if (pattfile == 0)
-      return "Can't open pattern file!" ;
+      return build_err_str(filename) ;
 #endif
    char line[LINESIZE + 1] ;
    buffpos = BUFFSIZE;                       // for 1st getchar call

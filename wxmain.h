@@ -42,6 +42,7 @@ public:
    void UpdateEverything();
    void UpdateUserInterface(bool active);
    void UpdateToolBar(bool active);
+   void EnableAllMenus(bool enable);
    void UpdateMenuItems(bool active);
    void UpdatePatternAndStatus();
    void UpdateStatus();
@@ -90,6 +91,7 @@ public:
    void ToggleToolBar();
    void ToggleFullScreen();
    void ShowPatternInfo();
+   void ResizeSplitWindow();
 
    // flags
    bool generating;              // currently generating pattern?

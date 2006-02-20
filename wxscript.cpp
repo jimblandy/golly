@@ -90,6 +90,8 @@ wxString pyerror;          // Python error message
 wxString gollyloc;         // location of Golly app
 wxString scriptloc;        // location of script file
 
+const char abortmsg[] = "GOLLY: ABORT SCRIPT";
+
 // =============================================================================
 
 // from Francesco's script.h:
@@ -323,6 +325,7 @@ bool wxPython::Load(const wxString &filename)
 
 static PyObject *golly_new(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    char *title = NULL;
 
@@ -340,6 +343,7 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
 
 static PyObject *golly_fit(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -354,6 +358,7 @@ static PyObject *golly_fit(PyObject *self, PyObject *args)
 
 static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -374,6 +379,7 @@ static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 
 static PyObject *golly_view(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    int x, y;
 
@@ -392,6 +398,7 @@ static PyObject *golly_view(PyObject *self, PyObject *args)
 
 static PyObject *golly_setrule(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    char *rule_string = NULL;
 
@@ -464,6 +471,7 @@ static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
 
 static PyObject *golly_parse(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    char *s;
 
@@ -522,6 +530,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
 
 static PyObject *golly_transform(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
 
@@ -548,6 +557,7 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
 
 static PyObject *golly_select(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    PyObject *rect_list;
 
@@ -581,9 +591,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
       return NULL;
    }
 
-   if (autoupdate) {
-      mainptr->UpdatePatternAndStatus();
-   }
+   if (autoupdate) mainptr->UpdatePatternAndStatus();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -593,6 +601,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
 
 static PyObject *golly_getselrect(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -623,6 +632,7 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
 
 static PyObject *golly_putcells(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
    PyObject *list;
@@ -640,9 +650,7 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
    }
    curralgo->endofpattern();
    mainptr->savestart = true;
-   if (autoupdate) {
-      mainptr->UpdatePatternAndStatus();
-   }
+   if (autoupdate) mainptr->UpdatePatternAndStatus();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -652,6 +660,7 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
 
 static PyObject *golly_setcell(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    int x, y, state;
 
@@ -660,10 +669,8 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
    curralgo->setcell(x, y, state);
    curralgo->endofpattern();
    mainptr->savestart = true;
-   if (autoupdate) {
-      mainptr->UpdatePatternAndStatus();
-   }
-
+   if (autoupdate) mainptr->UpdatePatternAndStatus();
+   
    Py_INCREF(Py_None);
    return Py_None;
 }
@@ -672,6 +679,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
 
 static PyObject *golly_getcell (PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    int x, y;
 
@@ -685,6 +693,7 @@ static PyObject *golly_getcell (PyObject *self, PyObject *args)
 
 static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    int flag;
 
@@ -700,6 +709,7 @@ static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 
 static PyObject *golly_evolve(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    int N = 0;
 
@@ -727,7 +737,6 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
    // advance pattern by N gens
    mainptr->generating = true;
-   wxGetApp().PollerReset();
    tempalgo->setIncrement(N);
    tempalgo->step();
    mainptr->generating = false;
@@ -744,6 +753,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
 static PyObject *golly_load(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    PyObject *list;
    char *file_name;
@@ -789,6 +799,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 
 static PyObject *golly_save(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    PyObject *given_list;
    char *file_name;
@@ -825,8 +836,22 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_appdir(PyObject *self, PyObject *args)
+{
+   wxGetApp().Poller()->checkevents();
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("z", gollyloc.c_str());
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_show(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -842,6 +867,7 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
 
 static PyObject *golly_warn(PyObject *self, PyObject *args)
 {
+   wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -857,6 +883,8 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
 
 static PyObject *golly_stderr(PyObject *self, PyObject *args)
 {
+   // probably safer not to call checkevents here
+   // wxGetApp().Poller()->checkevents();
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -888,6 +916,7 @@ static PyMethodDef golly_methods[] = {
    { "evolve",       golly_evolve,     METH_VARARGS, "evolve pattern contained in given cell list" },
    { "load",         golly_load,       METH_VARARGS, "load pattern from file and return cell list" },
    { "save",         golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
+   { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
@@ -913,9 +942,6 @@ void RunScript(const char* filename)
       wxScriptInterpreter::Cleanup();
       return;
    }
-   
-   // let user know we're busy running a script
-   wxSetCursor(*wxHOURGLASS_CURSOR);
 
    // allow Python to call the above golly_* routines
    Py_InitModule3("golly", golly_methods, "Internal golly routines");
@@ -931,7 +957,14 @@ void RunScript(const char* filename)
       wxSetWorkingDirectory(scriptloc);
    }
    
+   // let user know we're busy running a script
+   wxSetCursor(*wxHOURGLASS_CURSOR);
+   viewptr->SetCursor(*wxHOURGLASS_CURSOR);
+   mainptr->UpdateToolBar(false);
+   mainptr->EnableAllMenus(false);
+   
    inscript = true;
+   wxGetApp().PollerReset();
 
    // execute the script
    if (!wxScriptInterpreter::Load(fname)) {
@@ -948,15 +981,22 @@ void RunScript(const char* filename)
    
    inscript = false;
    
+   // update menu bar, cursor, viewport, status bar, tool bar, etc
+   mainptr->EnableAllMenus(true);
+   mainptr->UpdateEverything();
+   
    // display any Python error message
    if (!pyerror.IsEmpty()) {
-      wxBell();
-      wxSetCursor(*wxSTANDARD_CURSOR);
-      wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+      if (pyerror.Find(abortmsg) >= 0) {
+         // error caused by AbortScript so don't display pyerror
+         statusptr->DisplayMessage("Script aborted.");
+      } else {
+         wxBell();
+         wxSetCursor(*wxSTANDARD_CURSOR);
+         wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION,
+                      wxGetActiveWindow());
+      }
    }
-   
-   // update cursor
-   viewptr->CheckCursor(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
@@ -970,4 +1010,21 @@ bool IsScript(const char *filename)
 
    // false means case-insensitive comparison
    return ext.IsSameAs(wxT("PY"), false);
+}
+
+// -----------------------------------------------------------------------------
+
+bool InScript()
+{
+   return inscript;
+}
+
+// -----------------------------------------------------------------------------
+
+void AbortScript()
+{
+   if (inscript) {
+      // raise an exception with a special message
+      PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
+   }
 }

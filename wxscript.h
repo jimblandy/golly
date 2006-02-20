@@ -31,4 +31,10 @@ bool IsScript(const char *filename);
 // Run the given script file by passing it to the Python interpreter.
 void RunScript(const char* filename);
 
+// Return true if a script is currently running.
+bool InScript();
+
+// Abort the currently running script.
+void AbortScript();
+
 #endif

@@ -43,10 +43,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection, CreatePasteImage
+#include "wxscript.h"      // for InScript, AbortScript
 #include "wxview.h"
 
 #ifdef __WXMAC__
-   #include <Carbon/Carbon.h>    // for *AppModalStateForWindow, Button
+   #include <Carbon/Carbon.h>    // for Button
 #endif
 
 // -----------------------------------------------------------------------------
@@ -1062,26 +1063,6 @@ void PatternView::CopySelection()
    CopySelectionToClipboard(false);
 }
 
-void PatternView::EnableAllMenus(bool enable)
-{
-   #ifdef __WXMAC__
-      // enable/disable all menus, including Help menu and items in app menu
-      if (enable)
-         EndAppModalStateForWindow( (OpaqueWindowPtr*)mainptr->MacGetWindowRef() );
-      else
-         BeginAppModalStateForWindow( (OpaqueWindowPtr*)mainptr->MacGetWindowRef() );
-   #else
-      wxMenuBar *mbar = mainptr->GetMenuBar();
-      if (mbar) {
-         int count = mbar->GetMenuCount();
-         int i;
-         for (i = 0; i<count; i++) {
-            mbar->EnableTop(i, enable);
-         }
-      }
-   #endif
-}
-
 void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
 {
    int x, y, pastewd, pasteht;
@@ -1190,7 +1171,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       CreatePasteImage(tempalgo, bbox);
 
       waitingforclick = true;
-      EnableAllMenus(false);           // disable all menu items
+      mainptr->EnableAllMenus(false);  // disable all menu items
       mainptr->UpdateToolBar(false);   // disable all tool bar buttons
       CaptureMouse();                  // get mouse down event even if outside view
       pasterect = wxRect(-1,-1,0,0);
@@ -1239,7 +1220,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       }
 
       ReleaseMouse();
-      EnableAllMenus(true);
+      mainptr->EnableAllMenus(true);
       DestroyPasteImage();
    
       // restore cursor
@@ -2180,6 +2161,7 @@ bool PatternView::PointInView(int x, int y)
 
 void PatternView::CheckCursor(bool active)
 {
+   if (InScript()) return;    // don't change cursor while script is running
    if (active) {
       // make sure cursor is up to date
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
@@ -2553,6 +2535,11 @@ void PatternView::OnChar(wxKeyEvent& event)
 
    if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
       mainptr->StopGenerating();
+      return;
+   }
+
+   if ( InScript() && key == WXK_ESCAPE ) {
+      AbortScript();
       return;
    }
 

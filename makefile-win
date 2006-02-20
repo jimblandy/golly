@@ -376,7 +376,7 @@ wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
 $(OBJDIR)/wxview.obj: wxview.cpp wxview.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h wxscript.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxview.cpp
 
 $(OBJDIR)/wxrender.obj: wxrender.cpp wxrender.h \
