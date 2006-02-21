@@ -11,6 +11,4 @@ else:
       for col in range (r.left, r.left + r.width):
          g.setcell(col, row, 1 - g.getcell(col, row))
 
-   # only fit selection if it's not completely visible in viewport???
-   # ie. if not r.visible: g.fitsel()
-   g.fitsel()
+   if not r.visible(): g.fitsel()

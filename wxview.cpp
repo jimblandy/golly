@@ -2211,6 +2211,11 @@ void PatternView::FitInView(int force)
    curralgo->fit(currview, force);
 }
 
+int PatternView::CellVisible(const bigint &x, const bigint &y)
+{
+   return currview.contains(x, y);
+}
+
 // -----------------------------------------------------------------------------
 
 // scrolling functions:

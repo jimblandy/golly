@@ -95,6 +95,7 @@ public:
    void SetPosMag(const bigint &x, const bigint &y, int mag);
    void GetPos(bigint &x, bigint &y);
    void FitInView(int force);
+   int CellVisible(const bigint &x, const bigint &y);
 
    // data
    bool waitingforclick;         // waiting for paste click?

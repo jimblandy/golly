@@ -370,11 +370,13 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
       err = curralgo->setrule(rule_string);
    }
    if (err) {
+      curralgo->setrule( (char*)oldrule.c_str() );
       Warning(err);
-      curralgo->setrule( (char*)oldrule.c_str() );
+      return NULL;
    } else if ( global_liferules.hasB0notS8 && hashing ) {
-      Warning("B0-not-S8 rules are not allowed when hashing.");
       curralgo->setrule( (char*)oldrule.c_str() );
+      Warning("B0-not-S8 rules are not allowed when hashing.");
+      return NULL;
    } else {
       // show new rule in main window's title
       mainptr->SetWindowTitle("");
@@ -396,13 +398,14 @@ static void AddCell(PyObject *list, long x, long y)
 // -----------------------------------------------------------------------------
 
 // helper routine to extract cell list from given universe
-static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
+static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
 {
    if ( !universe->isEmpty() ) {
       bigint top, left, bottom, right;
       universe->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          Warning("Universe is too big to extract all cells!");
+         return false;
       }
       int itop = top.toint();
       int ileft = left.toint();
@@ -427,6 +430,7 @@ static void ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
          }
       }
    }
+   return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -517,158 +521,6 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_select(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-   PyObject *rect_list;
-
-   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
-
-   int numitems = PyList_Size(rect_list);
-   if (numitems == 0) {
-      // remove any existing selection
-      viewptr->NoSelection();
-   } else if (numitems == 4) {
-      int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-      int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-      int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-      int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
-      // first check that wd & ht are > 0
-      if (wd <= 0) {
-         Warning("Bad select call: width must be > 0.");
-         return NULL;
-      }
-      if (ht <= 0) {
-         Warning("Bad select call: height must be > 0.");
-         return NULL;
-      }
-      // set selection edges
-      viewptr->selleft = x;
-      viewptr->seltop = y;
-      viewptr->selright = x + wd - 1;
-      viewptr->selbottom = y + ht - 1;
-   } else {
-      Warning("Bad select call: arg must be [] or [x,y,wd,ht].");
-      return NULL;
-   }
-
-   if (autoupdate) mainptr->UpdatePatternAndStatus();
-
-   Py_INCREF(Py_None);
-   return Py_None;
-}
-
-// -----------------------------------------------------------------------------
-
-static PyObject *golly_getselrect(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-
-   if (!PyArg_ParseTuple(args, "")) return NULL;
-
-   PyObject *rect_list = PyList_New(0);
-
-   if (viewptr->SelectionExists()) {
-      if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
-                                  viewptr->selbottom, viewptr->selright) ) {
-         Warning("Error in getselrect: selection is too big.");
-         return rect_list;
-      }
-      long x = viewptr->selleft.toint();
-      long y = viewptr->seltop.toint();
-      long wd = viewptr->selright.toint() - x + 1;
-      long ht = viewptr->selbottom.toint() - y + 1;
-        
-      PyList_Append(rect_list, PyInt_FromLong(x));
-      PyList_Append(rect_list, PyInt_FromLong(y));
-      PyList_Append(rect_list, PyInt_FromLong(wd));
-      PyList_Append(rect_list, PyInt_FromLong(ht));
-   }
-   
-   return rect_list;
-}
-
-// -----------------------------------------------------------------------------
-
-static PyObject *golly_putcells(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-   long x0, y0, axx, axy, ayx, ayy;
-   PyObject *list;
-
-   if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy))
-      return NULL;
-
-   int num_cells = PyList_Size(list) / 2;
-   for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
-
-      // paste (possibly transformed) cell into current universe
-      curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
-   }
-   curralgo->endofpattern();
-   mainptr->savestart = true;
-   if (autoupdate) mainptr->UpdatePatternAndStatus();
-
-   Py_INCREF(Py_None);
-   return Py_None;
-}
-
-// -----------------------------------------------------------------------------
-
-static PyObject *golly_setcell(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-   int x, y, state;
-
-   if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
-
-   curralgo->setcell(x, y, state);
-   curralgo->endofpattern();
-   mainptr->savestart = true;
-   if (autoupdate) mainptr->UpdatePatternAndStatus();
-   
-   Py_INCREF(Py_None);
-   return Py_None;
-}
-
-// -----------------------------------------------------------------------------
-
-static PyObject *golly_getcell (PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-   int x, y;
-
-   if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
-
-   PyObject *result = Py_BuildValue("i", curralgo->getcell(x, y));
-   return result;
-}
-
-// -----------------------------------------------------------------------------
-
-static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-   int flag;
-
-   if (!PyArg_ParseTuple(args, "i", &flag)) return NULL;
-
-   autoupdate = (flag != 0);
-
-   Py_INCREF(Py_None);
-   return Py_None;
-}
-
-// -----------------------------------------------------------------------------
-
 static PyObject *golly_evolve(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -705,8 +557,9 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
    // convert new pattern into a new cell list
    evolved_list = PyList_New(0);
-   ExtractCells(evolved_list, tempalgo);
+   bool done = ExtractCells(evolved_list, tempalgo);
    delete tempalgo;
+   if (!done) return NULL;
 
    return evolved_list;
 }
@@ -751,8 +604,10 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    
    // convert pattern into a cell list
    list = PyList_New(0);
-   ExtractCells(list, tempalgo, true);    // true = shift so bbox's top left cell is at 0,0
+   // shift cell coords so bbox's top left cell is at 0,0
+   bool done = ExtractCells(list, tempalgo, true);
    delete tempalgo;
+   if (!done) return NULL;
 
    return list;
 }
@@ -790,7 +645,303 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    const char *err = writepattern(file_name, *tempalgo, RLE_format,
                                   top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
-   if (err) Warning(err);
+   if (err) {
+      Warning(err);
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_putcells(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   long x0, y0, axx, axy, ayx, ayy;
+   PyObject *list;
+
+   if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy))
+      return NULL;
+
+   int num_cells = PyList_Size(list) / 2;
+   for (int n = 0; n < num_cells; n++) {
+      long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
+      long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+
+      // paste (possibly transformed) cell into current universe
+      curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
+   }
+   curralgo->endofpattern();
+   mainptr->savestart = true;
+   if (autoupdate) mainptr->UpdatePatternAndStatus();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getcells(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   PyObject *rect_list;
+
+   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
+   
+   // convert pattern in given rect into a cell list
+   PyObject *cell_list = PyList_New(0);
+
+   int numitems = PyList_Size(rect_list);
+   if (numitems == 0) {
+      // return empty cell list
+   } else if (numitems == 4) {
+      int ileft = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+      int itop = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+      int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+      int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+      // first check that wd & ht are > 0
+      if (wd <= 0) {
+         Warning("Bad getcells call: width must be > 0.");
+         return NULL;
+      }
+      if (ht <= 0) {
+         Warning("Bad getcells call: height must be > 0.");
+         return NULL;
+      }
+      int iright = ileft + wd - 1;
+      int ibottom = itop + ht - 1;
+      int cx, cy;
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            int skip = curralgo->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row
+               cx += skip;
+               if (cx <= iright) AddCell(cell_list, cx, cy);
+            } else {
+               cx = iright;  // done this row
+            }
+         }
+      }
+   } else {
+      Warning("Bad getcells call: arg must be [] or [x,y,wd,ht].");
+      return NULL;
+   }
+
+   return cell_list;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_visrect(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   PyObject *rect_list;
+
+   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
+
+   int numitems = PyList_Size(rect_list);
+   if (numitems != 4) {
+      Warning("Bad visrect call: arg must be [x,y,wd,ht].");
+      return NULL;
+   }
+
+   int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+   int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+   int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+   int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+   // check that wd & ht are > 0
+   if (wd <= 0) {
+      Warning("Bad visrect call: width must be > 0.");
+      return NULL;
+   }
+   if (ht <= 0) {
+      Warning("Bad visrect call: height must be > 0.");
+      return NULL;
+   }
+   
+   bigint left = x;
+   bigint top = y;
+   bigint right = x + wd - 1;
+   bigint bottom = y + ht - 1;
+   int visible = viewptr->CellVisible(left, top) &&
+                 viewptr->CellVisible(right, bottom);
+   
+   PyObject *result = Py_BuildValue("i", visible);
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_select(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   PyObject *rect_list;
+
+   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
+
+   int numitems = PyList_Size(rect_list);
+   if (numitems == 0) {
+      // remove any existing selection
+      viewptr->NoSelection();
+   } else if (numitems == 4) {
+      int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+      int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+      int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+      int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+      // first check that wd & ht are > 0
+      if (wd <= 0) {
+         Warning("Bad select call: width must be > 0.");
+         return NULL;
+      }
+      if (ht <= 0) {
+         Warning("Bad select call: height must be > 0.");
+         return NULL;
+      }
+      // set selection edges
+      viewptr->selleft = x;
+      viewptr->seltop = y;
+      viewptr->selright = x + wd - 1;
+      viewptr->selbottom = y + ht - 1;
+   } else {
+      Warning("Bad select call: arg must be [] or [x,y,wd,ht].");
+      return NULL;
+   }
+
+   if (autoupdate) mainptr->UpdatePatternAndStatus();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getrect(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *rect_list = PyList_New(0);
+
+   if (!curralgo->isEmpty()) {
+      bigint top, left, bottom, right;
+      curralgo->findedges(&top, &left, &bottom, &right);
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         Warning("Error in getrect: pattern is too big.");
+         return NULL;
+      }
+      long x = left.toint();
+      long y = top.toint();
+      long wd = right.toint() - x + 1;
+      long ht = bottom.toint() - y + 1;
+        
+      PyList_Append(rect_list, PyInt_FromLong(x));
+      PyList_Append(rect_list, PyInt_FromLong(y));
+      PyList_Append(rect_list, PyInt_FromLong(wd));
+      PyList_Append(rect_list, PyInt_FromLong(ht));
+   }
+   
+   return rect_list;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getselrect(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *rect_list = PyList_New(0);
+
+   if (viewptr->SelectionExists()) {
+      if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
+                                  viewptr->selbottom, viewptr->selright) ) {
+         Warning("Error in getselrect: selection is too big.");
+         return NULL;
+      }
+      long x = viewptr->selleft.toint();
+      long y = viewptr->seltop.toint();
+      long wd = viewptr->selright.toint() - x + 1;
+      long ht = viewptr->selbottom.toint() - y + 1;
+        
+      PyList_Append(rect_list, PyInt_FromLong(x));
+      PyList_Append(rect_list, PyInt_FromLong(y));
+      PyList_Append(rect_list, PyInt_FromLong(wd));
+      PyList_Append(rect_list, PyInt_FromLong(ht));
+   }
+   
+   return rect_list;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setcell(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int x, y, state;
+
+   if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
+
+   curralgo->setcell(x, y, state);
+   curralgo->endofpattern();
+   mainptr->savestart = true;
+   if (autoupdate) mainptr->UpdatePatternAndStatus();
+   
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getcell (PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int x, y;
+
+   if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
+
+   PyObject *result = Py_BuildValue("i", curralgo->getcell(x, y));
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_update(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   mainptr->UpdatePatternAndStatus();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int flag;
+
+   if (!PyArg_ParseTuple(args, "i", &flag)) return NULL;
+
+   autoupdate = (flag != 0);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -869,15 +1020,19 @@ static PyMethodDef golly_methods[] = {
    { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
    { "parse",        golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
    { "transform",    golly_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
-   { "select",       golly_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
-   { "getselrect",   golly_getselrect, METH_VARARGS, "return selection rectangle as [x, y, wd, ht]" },
-   { "putcells",     golly_putcells,   METH_VARARGS, "paste given cell list into Golly universe" },
-   { "setcell",      golly_setcell,    METH_VARARGS, "set given cell to given state" },
-   { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
-   { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
-   { "evolve",       golly_evolve,     METH_VARARGS, "evolve pattern contained in given cell list" },
+   { "evolve",       golly_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
    { "load",         golly_load,       METH_VARARGS, "load pattern from file and return cell list" },
    { "save",         golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
+   { "putcells",     golly_putcells,   METH_VARARGS, "paste given cell list into current universe" },
+   { "getcells",     golly_getcells,   METH_VARARGS, "return cell list in given rectangle" },
+   { "visrect",      golly_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
+   { "select",       golly_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
+   { "getrect",      golly_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
+   { "getselrect",   golly_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
+   { "setcell",      golly_setcell,    METH_VARARGS, "set given cell to given state" },
+   { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
+   { "update",       golly_update,     METH_VARARGS, "update display (viewport and status bar)" },
+   { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
    { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },

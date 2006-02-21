@@ -3,23 +3,26 @@
 
 import golly as golly
 
-__doc__ = """Pattern construction helpers for Golly.""";
-
-# Catch error messages sent to stderr and send them to Golly:
+__doc__ = """Scripting aids for Golly.""";
 
 class StderrCatcher:
-     def __init__(self):
-         self.data = ''
-     def write(self, stuff):
-         self.data = self.data + stuff
-         golly.stderr (self.data)
-  
+   """Catch error messages sent to stderr and send them to Golly."""
+   def __init__(self):
+      self.data = ''
+   def write(self, stuff):
+      self.data = self.data + stuff
+      golly.stderr (self.data)
+
 import sys
 sys.stderr = StderrCatcher()
 
-# A simple class to make it easier to manipulate rectangles:
-
 class rect (list):
+   """A simple class to make it easier to manipulate rectangles."""
+
+   def visible (self):
+      """Return true if rect is completely visible in viewport."""
+      return golly.visrect ( [self.x, self.y, self.wd, self.ht] )
+
    def __init__ (self, R = []):
       if len(R) == 0:
          self.empty = True
@@ -178,6 +181,20 @@ When P is a string, an optional transformation
       return None
 
 def load (fn):
-   # top left cell of bounding box will be at 0,0
+   # note that top left cell of bounding box will be at 0,0
    return pattern (golly.load (fn))
 
+def getminbox (patt):
+   # return minimal bounding box of given pattern
+   minx =  sys.maxint
+   maxx = -sys.maxint
+   miny =  sys.maxint
+   maxy = -sys.maxint
+   clist = list(patt)
+   for x in range(0, len(clist), 2):
+      if clist[x] < minx: minx = clist[x]
+      if clist[x] > maxx: maxx = clist[x]
+   for y in range(1, len(clist), 2):
+      if clist[y] < miny: miny = clist[y]
+      if clist[y] > maxy: maxy = clist[y]
+   return rect( [ minx, miny, maxx - minx + 1, maxy - miny + 1 ] )
