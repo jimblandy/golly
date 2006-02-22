@@ -1367,55 +1367,65 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    mainptr->UpdatePatternAndStatus();
 }
 
-void PatternView::PasteClipboard(bool toselection)
+bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
+                                      bigint *t, bigint *l, bigint *b, bigint *r)
 {
-   if (mainptr->generating || waitingforclick || !mainptr->ClipboardHasText()) return;
-   if (toselection && !SelectionExists()) return;
-
-#ifdef __WXX11__
-   if ( wxFileExists(clipfile) ) {
-#else
-   wxTextDataObject data;
-   if ( mainptr->GetTextFromClipboard(&data) ) {
+   #ifdef __WXX11__
+      if ( !wxFileExists(clipfile) ) return false;
+   #else
+      wxTextDataObject data;
+      if ( !mainptr->GetTextFromClipboard(&data) ) return false;
+   
       // copy clipboard data to temporary file so we can handle all formats
       // supported by readclipboard
       wxFile tmpfile(clipfile, wxFile::write);
       if ( !tmpfile.IsOpened() ) {
          statusptr->ErrorMessage("Could not create temporary file!");
-         return;
+         return false;
       }
       tmpfile.Write( data.GetText() );
       tmpfile.Close();
-#endif         
-      // create a temporary universe for storing clipboard pattern
-      lifealgo *tempalgo;
-      tempalgo = new qlifealgo();      // qlife's setcell/getcell are faster
-      tempalgo->setpoll(wxGetApp().Poller());
+   #endif         
 
-      // read clipboard pattern into temporary universe
-      bigint top, left, bottom, right;
-      const char *err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
-      if (err && strcmp(err,cannotreadhash) == 0) {
-         // clipboard contains macrocell data so we have to use hlife
-         delete tempalgo;
-         tempalgo = new hlifealgo();
-         tempalgo->setpoll(wxGetApp().Poller());
-         err = readclipboard(clipfile, *tempalgo, &top, &left, &bottom, &right);
-      }
-      if (err) {
-         Warning(err);
-      } else {
-         PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
-      }
-      
-      // delete temporary universe and clipboard file
+   const char *err = readclipboard(clipfile, *tempalgo, t, l, b, r);
+   if (err && strcmp(err,cannotreadhash) == 0) {
+      // clipboard contains macrocell data so we have to use hlife
       delete tempalgo;
-      #ifdef __WXX11__
-         // don't delete clipboard file
-      #else
-         wxRemoveFile(clipfile);
-      #endif
+      tempalgo = new hlifealgo();
+      tempalgo->setpoll(wxGetApp().Poller());
+      err = readclipboard(clipfile, *tempalgo, t, l, b, r);
    }
+   #ifdef __WXX11__
+      // don't delete clipboard file
+   #else
+      wxRemoveFile(clipfile);
+   #endif
+
+   if (err) {
+      Warning(err);
+      return false;
+   }
+
+   return true;
+}
+
+void PatternView::PasteClipboard(bool toselection)
+{
+   if (mainptr->generating || waitingforclick || !mainptr->ClipboardHasText()) return;
+   if (toselection && !SelectionExists()) return;
+
+   // create a temporary universe for storing clipboard pattern
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();               // qlife's setcell/getcell are faster
+   tempalgo->setpoll(wxGetApp().Poller());
+
+   // read clipboard pattern into temporary universe
+   bigint top, left, bottom, right;
+   if ( GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
+      PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
+   }
+
+   delete tempalgo;
 }
 
 void PatternView::CyclePasteLocation()

@@ -281,6 +281,17 @@ static bool ScriptAborted()
 
 // -----------------------------------------------------------------------------
 
+static void DoAutoUpdate()
+{
+   if (autoupdate) {
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      inscript = true;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_new(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -290,8 +301,12 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "z", &title)) return NULL;
 
    mainptr->NewPattern();
-   if (title != NULL && title[0] != 0)
+   if (title != NULL && title[0] != 0) {
       mainptr->SetWindowTitle(title);
+   } else {
+      // NewPattern has set title to "untitled"
+   }
+   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -307,6 +322,7 @@ static PyObject *golly_fit(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    viewptr->FitPattern();
+   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -323,9 +339,61 @@ static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 
    if (viewptr->SelectionExists()) {
       viewptr->FitSelection();
+      DoAutoUpdate();
    } else {
-      // or maybe ignore call if no selection???
-      Warning("Bad fitsel call: there is no selection.");
+      Warning("Bad fitsel call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_clear(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int where;
+
+   if (!PyArg_ParseTuple(args, "i", &where)) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      if (where == 0)
+         viewptr->ClearSelection();
+      else
+         viewptr->ClearOutsideSelection();
+      DoAutoUpdate();
+   } else {
+      Warning("Bad clear call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_randfill(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int perc;
+
+   if (!PyArg_ParseTuple(args, "i", &perc)) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      if (perc < 1) perc = 1;
+      if (perc > 100) perc = 100;
+      int oldperc = randomfill;
+      randomfill = perc;
+      viewptr->RandomFill();
+      randomfill = oldperc;
+      DoAutoUpdate();
+   } else {
+      Warning("Bad randfill call: no selection.");
       return NULL;
    }
 
@@ -346,7 +414,7 @@ static PyObject *golly_view(PyObject *self, PyObject *args)
    bigint bigx = x;
    bigint bigy = y;
    viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
-   mainptr->UpdatePatternAndStatus();
+   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -378,7 +446,7 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
       Warning("B0-not-S8 rules are not allowed when hashing.");
       return NULL;
    } else {
-      // show new rule in main window's title
+      // show new rule in main window's title (but don't change name)
       mainptr->SetWindowTitle("");
    }
 
@@ -620,9 +688,9 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    PyObject *given_list;
    char *file_name;
-   char *s = NULL;      // the description string is currently ignored!!!
+   char *desc = NULL;      // the description string is currently ignored!!!
 
-   if (!PyArg_ParseTuple(args, "O!z|z", &PyList_Type, &given_list, &file_name, &s))
+   if (!PyArg_ParseTuple(args, "O!z|z", &PyList_Type, &given_list, &file_name, &desc))
       return NULL;
 
    // create temporary qlife universe
@@ -676,7 +744,7 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
    }
    curralgo->endofpattern();
    mainptr->savestart = true;
-   if (autoupdate) mainptr->UpdatePatternAndStatus();
+   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -733,6 +801,73 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
    }
 
    return cell_list;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getclip(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+   
+   // convert pattern in clipboard into a cell list, but where the first 2 items
+   // are the pattern's width and height (not necessarily the minimal bounding box
+   // because the pattern might have empty borders, or it might even be empty)
+   PyObject *clip_list = PyList_New(0);
+
+   if (!mainptr->ClipboardHasText()) {
+      Warning("Error in getclip: no pattern in clipboard.");
+      return NULL;
+   }
+
+   // create a temporary universe for storing clipboard pattern
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();               // qlife's setcell/getcell are faster
+   tempalgo->setpoll(wxGetApp().Poller());
+
+   // read clipboard pattern into temporary universe and set edges
+   // (not a minimal bounding box if pattern is empty or has empty borders)
+   bigint top, left, bottom, right;
+   if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         Warning("Error in getclip: pattern is too big.");
+         return NULL;
+      }
+      int itop = top.toint();
+      int ileft = left.toint();
+      int ibottom = bottom.toint();
+      int iright = right.toint();
+      int wd = iright - ileft + 1;
+      int ht = ibottom - itop + 1;
+
+      AddCell(clip_list, wd, ht);
+
+      // extract cells from tempalgo
+      int cx, cy;
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            int skip = tempalgo->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row
+               cx += skip;
+               // shift cells so that top left cell of bounding box is at 0,0
+               AddCell(clip_list, cx - ileft, cy - itop);
+            } else {
+               cx = iright;  // done this row
+            }
+         }
+      }
+
+      delete tempalgo;
+   } else {
+      // assume error message has been displayed
+      delete tempalgo;
+      return NULL;
+   }
+
+   return clip_list;
 }
 
 // -----------------------------------------------------------------------------
@@ -814,7 +949,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
       return NULL;
    }
 
-   if (autoupdate) mainptr->UpdatePatternAndStatus();
+   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -896,7 +1031,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
    curralgo->setcell(x, y, state);
    curralgo->endofpattern();
    mainptr->savestart = true;
-   if (autoupdate) mainptr->UpdatePatternAndStatus();
+   DoAutoUpdate();
    
    Py_INCREF(Py_None);
    return Py_None;
@@ -925,7 +1060,10 @@ static PyObject *golly_update(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
+   // update viewport and status bar
+   inscript = false;
    mainptr->UpdatePatternAndStatus();
+   inscript = true;
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -978,6 +1116,22 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_error(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *s = NULL;
+
+   if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
+
+   statusptr->ErrorMessage(s);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_warn(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -1003,7 +1157,8 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
 
-   // save Python's stderr messages in global string for display after script finishes
+   // save Python's stderr messages in global string for display after script finishes;
+   // relies on StderrCatcher code in Scripts/glife/__init__.py
    pyerror = wxT(s);
 
    Py_INCREF(Py_None);
@@ -1016,6 +1171,8 @@ static PyMethodDef golly_methods[] = {
    { "new",          golly_new,        METH_VARARGS, "create new universe and optionally set title" },
    { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
    { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "clear",        golly_clear,      METH_VARARGS, "clear inside/outside selection" },
+   { "randfill",     golly_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
    { "view",         golly_view,       METH_VARARGS, "display given cell in middle of viewport" },
    { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
    { "parse",        golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
@@ -1025,6 +1182,7 @@ static PyMethodDef golly_methods[] = {
    { "save",         golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
    { "putcells",     golly_putcells,   METH_VARARGS, "paste given cell list into current universe" },
    { "getcells",     golly_getcells,   METH_VARARGS, "return cell list in given rectangle" },
+   { "getclip",      golly_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
    { "visrect",      golly_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
    { "select",       golly_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
    { "getrect",      golly_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
@@ -1035,6 +1193,7 @@ static PyMethodDef golly_methods[] = {
    { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
    { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
+   { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
@@ -1090,9 +1249,7 @@ void RunScript(const char* filename)
    }
    
    // restore current directory to location of Golly app
-   if (!scriptloc.IsEmpty()) {
-      wxSetWorkingDirectory(gollyloc);
-   }
+   if (!scriptloc.IsEmpty()) wxSetWorkingDirectory(gollyloc);
 
    wxScriptInterpreter::Cleanup();
    

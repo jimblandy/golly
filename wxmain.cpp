@@ -288,7 +288,7 @@ void MainFrame::UpdateToolBar(bool active)
 {
    wxToolBar *tbar = GetToolBar();
    if (tbar && tbar->IsShown()) {
-      if (viewptr->waitingforclick) active = false;
+      if (viewptr->waitingforclick || InScript()) active = false;
       
       /* new tools!!!
       if (hashing)
@@ -512,6 +512,8 @@ void MainFrame::UpdateUserInterface(bool active)
 // update everything in main window, and menu bar and cursor
 void MainFrame::UpdateEverything()
 {
+   if (InScript()) return;
+
    if (IsIconized()) {
       // main window has been minimized, so only update menu bar items
       UpdateMenuItems(false);
@@ -539,6 +541,8 @@ void MainFrame::UpdateEverything()
 // only update viewport and status bar
 void MainFrame::UpdatePatternAndStatus()
 {
+   if (InScript()) return;
+
    if (!IsIconized()) {
       viewptr->Refresh(false, NULL);
       viewptr->Update();
@@ -657,9 +661,6 @@ void MainFrame::NewPattern()
       initrule[0] = 0;        // don't use it again
    }
 
-   // window title will also show curralgo->getrule()
-   SetWindowTitle("untitled");
-
    if (newremovesel) viewptr->NoSelection();
    if (newcurs) currcurs = newcurs;
    viewptr->SetPosMag(bigint::zero, bigint::zero, newmag);
@@ -670,6 +671,9 @@ void MainFrame::NewPattern()
       viewptr->originx = 0;
       statusptr->SetMessage(origin_restored);
    }
+
+   // window title will also show curralgo->getrule()
+   SetWindowTitle("untitled");
 
    UpdateEverything();
 }

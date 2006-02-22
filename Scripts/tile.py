@@ -57,12 +57,12 @@ def main ():
    selrect = rect( g.getselrect() )
    
    if selrect.empty:
-      g.warn("There is no selection.")
+      g.error("There is no selection.")
       return
 
    selpatt = pattern( g.getcells(g.getselrect()) )
    if len(selpatt) == 0:
-      g.warn("No pattern in selection.")
+      g.error("No pattern in selection.")
       return
 
    # find selpatt's minimal bounding box
@@ -111,7 +111,7 @@ def main ():
          clip_bottom( selpatt(0, bbox.height * i), selrect.bottom ).put()
 
    if not selrect.visible(): g.fitsel()
-   return None
+   return
 
 # ------------------------------------------------------------------------------
 

@@ -40,6 +40,7 @@ public:
    void ClearSelection();
    void ClearOutsideSelection();
    void CopySelectionToClipboard(bool cut);
+   bool GetClipboardPattern(lifealgo *tempalgo, bigint *t, bigint *l, bigint *b, bigint *r);
    void PasteClipboard(bool toselection);
    void CyclePasteLocation();
    void CyclePasteMode();

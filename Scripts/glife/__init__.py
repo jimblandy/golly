@@ -40,6 +40,12 @@ class rect (list):
          raise TypeError ("rect arg must be [] or [x,y,wd,ht]")
       return None
 
+# Define some useful synonyms:
+
+# for golly.clear and golly.advance
+inside = 0
+outside = 1
+
 # Define some transformation matrices:
 
 identity = ( 1,  0,  0,  1)

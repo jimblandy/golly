@@ -4,7 +4,7 @@ import golly as g
 r = rect( g.getselrect() )
 
 if r.empty:
-   g.warn("There is no selection.")
+   g.error("There is no selection.")
 
 else:
    for row in range (r.top, r.top + r.height):
