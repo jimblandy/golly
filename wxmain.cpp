@@ -71,7 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
-#include "wxscript.h"      // for IsScript, RunScript, InScript, AbortScript
+#include "wxscript.h"      // for IsScript, RunScript, InScript, etc
 #include "wxmain.h"
 
 #ifdef __WXMAC__

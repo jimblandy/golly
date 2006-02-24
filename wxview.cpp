@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection, CreatePasteImage
-#include "wxscript.h"      // for InScript, AbortScript
+#include "wxscript.h"      // for InScript, AbortScript, SetScriptKey
 #include "wxview.h"
 
 #ifdef __WXMAC__
@@ -2548,13 +2548,18 @@ void PatternView::OnChar(wxKeyEvent& event)
    // get translated keyboard event
    int key = event.GetKeyCode();
 
-   if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
-      mainptr->StopGenerating();
-      return;
+   if ( InScript() ) {
+      if (key == WXK_ESCAPE) {
+         AbortScript();
+         return;
+      } else {
+         SetScriptKey(key);
+         return;                 // prevent all user interaction???!!!
+      }
    }
 
-   if ( InScript() && key == WXK_ESCAPE ) {
-      AbortScript();
+   if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
+      mainptr->StopGenerating();
       return;
    }
 

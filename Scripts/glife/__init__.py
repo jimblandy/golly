@@ -2,19 +2,9 @@
 # Based on python/life/__init__.py in PLife.
 
 import golly as golly
+import sys
 
 __doc__ = """Scripting aids for Golly.""";
-
-class StderrCatcher:
-   """Catch error messages sent to stderr and send them to Golly."""
-   def __init__(self):
-      self.data = ''
-   def write(self, stuff):
-      self.data = self.data + stuff
-      golly.stderr (self.data)
-
-import sys
-sys.stderr = StderrCatcher()
 
 class rect (list):
    """A simple class to make it easier to manipulate rectangles."""

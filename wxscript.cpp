@@ -89,6 +89,7 @@ bool autoupdate;           // update display after each change to current univer
 wxString pyerror;          // Python error message
 wxString gollyloc;         // location of Golly app
 wxString scriptloc;        // location of script file
+char scriptkey;            // see golly_getkey and SetScriptKey
 
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 
@@ -254,7 +255,7 @@ bool wxPython::Load(const wxString &filename)
    wxString command = wxT("import sys ; sys.path.append(\"") + scriptsdir + wxT("\")");
    command += wxT(" ; execfile(\"") + fname + wxT("\")");
    PyRun_SimpleString(command.c_str());
-   
+
    // note that PyRun_SimpleString returns -1 if an exception occurred,
    // but we always return true because the error message (in pyerror)
    // will be checked later at the end of RunScript
@@ -306,6 +307,30 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
    } else {
       // NewPattern has set title to "untitled"
    }
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_open(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *file_name;
+
+   if (!PyArg_ParseTuple(args, "z", &file_name)) return NULL;
+
+   if (IsScript(file_name)) {
+      // avoid re-entrancy
+      Warning("Error in open: cannot open a script file.");
+      return NULL;
+   }
+
+   // this will add file to recent patterns -- nicer to avoid that???!!!
+   mainptr->ConvertPathAndOpen(file_name, true);
    DoAutoUpdate();
 
    Py_INCREF(Py_None);
@@ -1087,6 +1112,29 @@ static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_getkey(PyObject *self, PyObject *args)
+{
+   // ScriptAborted() is called below
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   scriptkey = 0;
+   while (scriptkey == 0) {
+      // call checkevents until SetScriptKey or AbortScript is called
+      if (ScriptAborted()) return NULL;
+   }
+
+   char s[2];
+   s[0] = scriptkey;
+   s[1] = 0;
+   
+   PyObject *result = Py_BuildValue("z", s);
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_appdir(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -1157,8 +1205,7 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
 
-   // save Python's stderr messages in global string for display after script finishes;
-   // relies on StderrCatcher code in Scripts/glife/__init__.py
+   // save Python's stderr messages in global string for display after script finishes
    pyerror = wxT(s);
 
    Py_INCREF(Py_None);
@@ -1169,6 +1216,7 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
 
 static PyMethodDef golly_methods[] = {
    { "new",          golly_new,        METH_VARARGS, "create new universe and optionally set title" },
+   { "open",         golly_open,       METH_VARARGS, "open given pattern file" },
    { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
    { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
    { "clear",        golly_clear,      METH_VARARGS, "clear inside/outside selection" },
@@ -1191,6 +1239,7 @@ static PyMethodDef golly_methods[] = {
    { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
    { "update",       golly_update,     METH_VARARGS, "update display (viewport and status bar)" },
    { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
+   { "getkey",       golly_getkey,     METH_VARARGS, "wait for user to hit a key, then return it" },
    { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
@@ -1198,6 +1247,36 @@ static PyMethodDef golly_methods[] = {
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
 };
+
+// -----------------------------------------------------------------------------
+
+static bool InitGollyModule()
+{
+   // allow Python to call the above golly_* routines
+   Py_InitModule3("golly", golly_methods, "Internal golly routines");
+
+   // accumulate Python messages sent to stderr and pass to golly_stderr;
+   // note that we have to do this here rather than in __init__.py so
+   // we can detect SyntaxError exceptions
+   int result = PyRun_SimpleString(
+   "import golly\n"
+   "import sys\n"
+   "class StderrCatcher:\n"
+   "   def __init__(self):\n"
+   "      self.data = ''\n"
+   "   def write(self, stuff):\n"
+   "      self.data = self.data + stuff\n"
+   "      golly.stderr(self.data)\n"
+   "sys.stderr = StderrCatcher()\n"
+   );
+
+   if (result < 0) {
+      Warning("PyRun_SimpleString failed!");
+      return false;
+   }
+   
+   return true;
+}
 
 // =============================================================================
 
@@ -1218,9 +1297,11 @@ void RunScript(const char* filename)
       wxScriptInterpreter::Cleanup();
       return;
    }
-
-   // allow Python to call the above golly_* routines
-   Py_InitModule3("golly", golly_methods, "Internal golly routines");
+   
+   if (!InitGollyModule()) {
+      wxScriptInterpreter::Cleanup();
+      return;
+   }
 
    // temporarily change current directory to location of script
    gollyloc = wxFileName::GetCwd();
@@ -1294,11 +1375,19 @@ bool InScript()
 
 // -----------------------------------------------------------------------------
 
-// this will be called from checkevents() if user hits escape key
+// this is called from checkevents() if user hits escape key
 void AbortScript()
 {
    if (inscript) {
       // raise an exception with a special message
       PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+// this is called from checkevents() if user hits non-escape key
+void SetScriptKey(char key)
+{
+   scriptkey = key;
 }
