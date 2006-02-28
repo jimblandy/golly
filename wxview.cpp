@@ -1387,13 +1387,13 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
       tmpfile.Close();
    #endif         
 
-   const char *err = readclipboard(clipfile, *tempalgo, t, l, b, r);
+   const char *err = readclipboard(clipfile.c_str(), *tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so we have to use hlife
       delete tempalgo;
       tempalgo = new hlifealgo();
       tempalgo->setpoll(wxGetApp().Poller());
-      err = readclipboard(clipfile, *tempalgo, t, l, b, r);
+      err = readclipboard(clipfile.c_str(), *tempalgo, t, l, b, r);
    }
    #ifdef __WXX11__
       // don't delete clipboard file

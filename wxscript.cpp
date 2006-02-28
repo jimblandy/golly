@@ -188,7 +188,7 @@ void wxScriptInterpreter::Cleanup()
 bool wxScriptInterpreter::Load(const wxString &filename)
 {
    if (!wxFileName::FileExists(filename)) {
-      wxScriptInterpreter::m_strLastErr = wxT("The script file does not exist: ") + filename;
+      wxScriptInterpreter::m_strLastErr = wxT("The script file does not exist:\n") + filename;
       return false;
    }
 
@@ -240,9 +240,16 @@ void wxPython::Cleanup()
 
 bool wxPython::Load(const wxString &filename)
 {
+   wxString fname = filename;
+
+   #ifdef __WXMAC__
+      // convert fname from MacRoman to UTF8 so execfile can open names with 8-bit chars;
+      // may not be needed after switching to CVS HEAD???!!!
+      fname = wxString( fname.wc_str(wxConvLocal), wxConvUTF8 );
+   #endif
+
    // if filename contains backslashes then we must convert them to "\\"
    // to avoid "\a" being treated as escape char
-   wxString fname = filename;
    fname.Replace("\\", "\\\\");
 
    // build absolute path to Golly's Scripts folder
@@ -252,8 +259,8 @@ bool wxPython::Load(const wxString &filename)
    // use PyRun_SimpleString to add Golly's Scripts folder to Python's
    // import search list (so scripts anywhere can do "from glife import *")
    // and then execute the given script
-   wxString command = wxT("import sys ; sys.path.append(\"") + scriptsdir + wxT("\")");
-   command += wxT(" ; execfile(\"") + fname + wxT("\")");
+   wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
+   command += wxT(" ; execfile('") + fname + wxT("')");
    PyRun_SimpleString(command.c_str());
 
    // note that PyRun_SimpleString returns -1 if an exception occurred,
@@ -320,8 +327,9 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *file_name;
+   int remember;
 
-   if (!PyArg_ParseTuple(args, "z", &file_name)) return NULL;
+   if (!PyArg_ParseTuple(args, "zi", &file_name, &remember)) return NULL;
 
    if (IsScript(file_name)) {
       // avoid re-entrancy
@@ -329,8 +337,13 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
       return NULL;
    }
 
-   // this will add file to recent patterns -- nicer to avoid that???!!!
-   mainptr->ConvertPathAndOpen(file_name, true);
+   // convert non-absolute file_name to absolute path relative to scriptloc
+   // so it can be selected later from Open Recent submenu
+   wxFileName fullname(file_name);
+   if (!fullname.IsAbsolute()) fullname = scriptloc + wxT(file_name);
+
+   // only add file to Open Recent submenu if remember flag is non-zero
+   mainptr->OpenFile(fullname.GetFullPath(), remember != 0);
    DoAutoUpdate();
 
    Py_INCREF(Py_None);
@@ -1256,8 +1269,8 @@ static bool InitGollyModule()
    Py_InitModule3("golly", golly_methods, "Internal golly routines");
 
    // accumulate Python messages sent to stderr and pass to golly_stderr;
-   // note that we have to do this here rather than in __init__.py so
-   // we can detect SyntaxError exceptions
+   // note that we have to do this here rather than in __init__.py, otherwise
+   // we can't detect SyntaxError exceptions
    int result = PyRun_SimpleString(
    "import golly\n"
    "import sys\n"
@@ -1309,10 +1322,8 @@ void RunScript(const char* filename)
    wxFileName fullname(fname);
    fullname.Normalize();
    scriptloc = fullname.GetPath();
-   if (!scriptloc.IsEmpty()) {
-      if (scriptloc.Last() != wxFILE_SEP_PATH) scriptloc += wxFILE_SEP_PATH;
-      wxSetWorkingDirectory(scriptloc);
-   }
+   if (scriptloc.Last() != wxFILE_SEP_PATH) scriptloc += wxFILE_SEP_PATH;
+   wxSetWorkingDirectory(scriptloc);
    
    // let user know we're busy running a script
    wxSetCursor(*wxHOURGLASS_CURSOR);
@@ -1324,13 +1335,13 @@ void RunScript(const char* filename)
    wxGetApp().PollerReset();
 
    // execute the script
-   if (!wxScriptInterpreter::Load(fname)) {
+   if (!wxScriptInterpreter::Load( fullname.GetFullPath() )) {
       // assume m_strLastErr has been set
       Warning(wxScriptInterpreter::m_strLastErr.c_str());
    }
    
    // restore current directory to location of Golly app
-   if (!scriptloc.IsEmpty()) wxSetWorkingDirectory(gollyloc);
+   wxSetWorkingDirectory(gollyloc);
 
    wxScriptInterpreter::Cleanup();
    

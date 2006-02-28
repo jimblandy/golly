@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: Renamed Flip Horizontally/Vertically to Flip Up-Down/Left-Right.
 AKT: More File menu items: Show Scripts, Set Script Folder.
 AKT: New File menu items: Run Script, Run Recent.
 AKT: Added PLife-like scripting commands for pattern construction.

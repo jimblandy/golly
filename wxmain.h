@@ -54,9 +54,9 @@ public:
    void OpenClipboard();
 
    // file functions
+   void OpenFile(const char *path, bool remember = true);
    void NewPattern();
    void CreateUniverse();
-   void ConvertPathAndOpen(const char *path, bool convertUTF8);
    void SetWindowTitle(const char *filename);
    void OpenPattern();
    void ToggleShowPatterns();
@@ -155,7 +155,7 @@ private:
 };
 
 // temporary file for storing clipboard data
-const char clipfile[] = ".golly_clipboard";
+extern wxString clipfile;
 
 // static routines needed by GetPrefs() to get IDs for items in Open Recent and
 // Run Recent submenus; they can't be MainFrame methods because GetPrefs() is

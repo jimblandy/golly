@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/image.h"      // for wxImage
 #include "wx/stdpaths.h"   // for wxStandardPaths
 #include "wx/sysopt.h"     // for wxSystemOptions
+#include "wx/filename.h"   // for wxFileName
 
 #include "lifealgo.h"
 #include "lifepoll.h"
@@ -183,7 +184,7 @@ void SetAppDirectory(const char *argv0)
       if ( currdir.CmpNoCase(appdir) != 0 )
          wxSetWorkingDirectory(appdir);
       // avoid VC++ warning
-      if (argv0) currdir = wxEmptyString;
+      wxUnusedVar(argv0);
    #elif defined(__WXMAC__)
       // wxMac has set current directory to location of .app bundle so no need
       // to do anything
@@ -234,8 +235,7 @@ void GollyApp::MacOpenFile(const wxString &fullPath)
    // need to process events to avoid crash if info window was in front
    while (wxGetApp().Pending()) wxGetApp().Dispatch();
 
-   // convert path to UTF8 encoding so fopen will work
-   mainptr->ConvertPathAndOpen(fullPath, true);
+   mainptr->OpenFile(fullPath);
 }
 #endif
 
@@ -251,6 +251,10 @@ bool GollyApp::OnInit()
       // (but doesn't fix problem with I-beam cursor over scroll bars)
       wxSystemOptions::SetOption(wxMAC_TEXTCONTROL_USE_MLTE, 1);
    #endif
+
+   // get current working directory before calling SetAppDirectory
+   wxString initdir = wxFileName::GetCwd();
+   if (initdir.Last() != wxFILE_SEP_PATH) initdir += wxFILE_SEP_PATH;
 
    // make sure current working directory contains application otherwise
    // we can't open Help files and prefs file gets saved in wrong location
@@ -281,11 +285,18 @@ bool GollyApp::OnInit()
    viewptr->SetViewSize();
    statusptr->SetMessage(BANNER);
    
-   // load pattern file if supplied on Win/Unix command line; best to do this
-   // before showing window to avoid an irritating flash
-   if (argc > 1 && !IsScript(argv[1])) {
-      // no need to convert path to UTF8
-      mainptr->ConvertPathAndOpen(argv[1], false);
+   wxFileName filename;
+   if (argc > 1) {
+      // convert argv[1] to a full path if not one already; this allows users
+      // to do things like "../golly bricklayer.py" from within Scripts folder
+      filename = argv[1];
+      if (!filename.IsAbsolute()) filename = initdir + argv[1];
+   }
+   
+   // load pattern file if supplied on Win/Unix command line;
+   // do before showing window to avoid an irritating flash
+   if (argc > 1 && !IsScript(filename.GetFullPath())) {
+      mainptr->OpenFile(filename.GetFullPath());
    } else {
       mainptr->NewPattern();
    }   
@@ -299,9 +310,8 @@ bool GollyApp::OnInit()
    SetTopWindow(mainptr);
 
    // load script file AFTER showing main window to avoid crash in Win/X11 app
-   if (argc > 1 && IsScript(argv[1])) {
-      // no need to convert path to UTF8
-      mainptr->ConvertPathAndOpen(argv[1], false);
+   if (argc > 1 && IsScript(filename.GetFullPath())) {
+      mainptr->OpenFile(filename.GetFullPath());
    }
 
    #ifdef __WXX11__

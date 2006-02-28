@@ -14,7 +14,7 @@ def slideshow ():
          # ignore hidden files (like .DS_Store on Mac)
          if not name.startswith('.'):
             fullname = join(root, name)
-            g.open(fullname)
+            g.open(fullname, 0)           # don't add file to Open Recent submenu
             g.update()
             g.show("Hit space to continue or any other key to stop the slide show...")
             if g.getkey() != " ": return

@@ -1,4 +1,4 @@
-from glife import *     # for rect class
+from glife import rect
 import golly as g
 
 r = rect( g.getselrect() )
@@ -11,4 +11,5 @@ else:
       for col in range (r.left, r.left + r.width):
          g.setcell(col, row, 1 - g.getcell(col, row))
 
-   if not r.visible(): g.fitsel()
+   if not r.visible():
+      g.fitsel()

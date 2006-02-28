@@ -119,8 +119,8 @@ enum {
    ID_REMOVE,
    ID_SHRINK,
    ID_RANDOM,
-   ID_FLIPV,
    ID_FLIPH,
+   ID_FLIPV,
    ID_ROTATEC,
    ID_ROTATEA,
    ID_CMODE,
@@ -215,7 +215,10 @@ wxTimer *onetimer;
 
 // temporary file created by OpenClipboard;
 // it can be used to reset pattern or to show comments
-const char gen0file[] = ".golly_gen0";
+wxString gen0file;
+
+// temporary file for storing clipboard data
+wxString clipfile;
 
 // a splittable window is used to display pattern/script directory and viewport
 wxSplitterWindow* splitwin = NULL;
@@ -428,8 +431,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_REMOVE,    active && viewptr->SelectionExists());
       mbar->Enable(ID_SHRINK,    active && viewptr->SelectionExists());
       mbar->Enable(ID_RANDOM,    active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_FLIPV,     active && !generating && viewptr->SelectionExists());
       mbar->Enable(ID_FLIPH,     active && !generating && viewptr->SelectionExists());
+      mbar->Enable(ID_FLIPV,     active && !generating && viewptr->SelectionExists());
       mbar->Enable(ID_ROTATEC,   active && !generating && viewptr->SelectionExists());
       mbar->Enable(ID_ROTATEA,   active && !generating && viewptr->SelectionExists());
       mbar->Enable(ID_CMODE,     active);
@@ -812,21 +815,16 @@ void MainFrame::SetCurrentFile(const char *path)
    #endif
 }
 
-void MainFrame::ConvertPathAndOpen(const char *path, bool convertUTF8)
+void MainFrame::OpenFile(const char *path, bool remember)
 {
    if ( IsScript(path) ) {
       // execute script
-      AddRecentScript(path);
+      if (remember) AddRecentScript(path);
       RunScript(path);
    } else {
       // load pattern
-      if (convertUTF8) {
-         // on Mac we need to convert path to UTF8 so fopen will work
-         SetCurrentFile(path);
-      } else {
-         strncpy(currfile, path, sizeof(currfile));
-      }
-      AddRecentPattern(path);
+      SetCurrentFile(path);
+      if (remember) AddRecentPattern(path);
       LoadPattern( GetBaseName(path) );
    }
 }
@@ -1008,7 +1006,7 @@ void MainFrame::OpenClipboard()
       // on X11 the clipboard data is in non-temporary clipfile, so copy
       // clipfile to gen0file (for use by ResetPattern and ShowPatternInfo)
       if ( wxCopyFile(clipfile, gen0file, true) ) {
-         strncpy(currfile, gen0file, sizeof(currfile));
+         strncpy(currfile, gen0file.c_str(), sizeof(currfile));
          LoadPattern("clipboard");
       } else {
          statusptr->ErrorMessage("Could not copy clipfile!");
@@ -1022,7 +1020,7 @@ void MainFrame::OpenClipboard()
          if ( outfile.IsOpened() ) {
             outfile.Write( data.GetText() );
             outfile.Close();
-            strncpy(currfile, gen0file, sizeof(currfile));
+            strncpy(currfile, gen0file.c_str(), sizeof(currfile));
             LoadPattern("clipboard");
             // do NOT delete gen0file -- it can be reloaded by ResetPattern
             // or used by ShowPatternInfo
@@ -2268,8 +2266,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_REMOVE:         viewptr->RemoveSelection(); break;
       case ID_SHRINK:         viewptr->ShrinkSelection(false); break;
       case ID_RANDOM:         viewptr->RandomFill(); break;
-      case ID_FLIPV:          viewptr->FlipVertically(); break;
       case ID_FLIPH:          viewptr->FlipHorizontally(); break;
+      case ID_FLIPV:          viewptr->FlipVertically(); break;
       case ID_ROTATEC:        viewptr->RotateSelection(true); break;
       case ID_ROTATEA:        viewptr->RotateSelection(false); break;
       case ID_DRAW:           viewptr->SetCursorMode(curs_pencil); break;
@@ -2486,7 +2484,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 
             // indicate the selected file and open it
             treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
-            ConvertPathAndOpen(filepath, true);
+            OpenFile(filepath);
          }
       }
 
@@ -2588,7 +2586,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
    
    size_t numfiles = filenames.GetCount();
    for ( size_t n = 0; n < numfiles; n++ ) {
-      mainptr->ConvertPathAndOpen(filenames[n], true);
+      mainptr->OpenFile(filenames[n]);
    }
 
    #ifdef __WXMAC__
@@ -2609,6 +2607,14 @@ MainFrame::MainFrame()
    : wxFrame(NULL, wxID_ANY, _(""), wxPoint(mainx,mainy), wxSize(mainwd,mainht))
 {
    wxGetApp().SetFrameIcon(this);
+
+   // initialize gen0file and clipfile to hidden files in same folder as Golly app;
+   // they must be absolute paths in case they are used from a script command when
+   // the current directory has been changed to the location of the script file
+   wxString gollydir = wxFileName::GetCwd();
+   if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
+   gen0file = gollydir + wxT(".golly_gen0");
+   clipfile = gollydir + wxT(".golly_clipboard");
 
    // create one-shot timer
    onetimer = new wxTimer(this, ID_ONE_TIMER);
@@ -2692,8 +2698,8 @@ MainFrame::MainFrame()
    editMenu->Append(ID_SHRINK, _("Shrink Selection"));
    // full label will be set later by SetRandomFillPercentage
    editMenu->Append(ID_RANDOM, _("Random Fill\tCtrl+5"));
-   editMenu->Append(ID_FLIPV, _("Flip Vertically"));
-   editMenu->Append(ID_FLIPH, _("Flip Horizontally"));
+   editMenu->Append(ID_FLIPH, _("Flip Up-Down"));
+   editMenu->Append(ID_FLIPV, _("Flip Left-Right"));
    editMenu->Append(ID_ROTATEC, _("Rotate Clockwise"));
    editMenu->Append(ID_ROTATEA, _("Rotate Anticlockwise"));
    editMenu->AppendSeparator();
