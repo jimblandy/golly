@@ -333,7 +333,7 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
 
    if (IsScript(file_name)) {
       // avoid re-entrancy
-      Warning("Error in open: cannot open a script file.");
+      PyErr_SetString(PyExc_RuntimeError, "Error in open: cannot open a script file.");
       return NULL;
    }
 
@@ -379,7 +379,7 @@ static PyObject *golly_fitsel(PyObject *self, PyObject *args)
       viewptr->FitSelection();
       DoAutoUpdate();
    } else {
-      Warning("Bad fitsel call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad fitsel call: no selection.");
       return NULL;
    }
 
@@ -404,7 +404,7 @@ static PyObject *golly_clear(PyObject *self, PyObject *args)
          viewptr->ClearOutsideSelection();
       DoAutoUpdate();
    } else {
-      Warning("Bad clear call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad clear call: no selection.");
       return NULL;
    }
 
@@ -431,7 +431,7 @@ static PyObject *golly_randfill(PyObject *self, PyObject *args)
       randomfill = oldperc;
       DoAutoUpdate();
    } else {
-      Warning("Bad randfill call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad randfill call: no selection.");
       return NULL;
    }
 
@@ -477,11 +477,11 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
    }
    if (err) {
       curralgo->setrule( (char*)oldrule.c_str() );
-      Warning(err);
+      PyErr_SetString(PyExc_RuntimeError, err);
       return NULL;
    } else if ( global_liferules.hasB0notS8 && hashing ) {
       curralgo->setrule( (char*)oldrule.c_str() );
-      Warning("B0-not-S8 rules are not allowed when hashing.");
+      PyErr_SetString(PyExc_RuntimeError, "B0-not-S8 rules are not allowed when hashing.");
       return NULL;
    } else {
       // show new rule in main window's title (but don't change name)
@@ -510,7 +510,7 @@ static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
       bigint top, left, bottom, right;
       universe->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         Warning("Universe is too big to extract all cells!");
+         PyErr_SetString(PyExc_RuntimeError, "Universe is too big to extract all cells!");
          return false;
       }
       int itop = top.toint();
@@ -704,7 +704,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 
    if (err) {
       delete tempalgo;
-      Warning(err);
+      PyErr_SetString(PyExc_RuntimeError, err);
       return NULL;
    }
    
@@ -752,7 +752,7 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
                                   top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
    if (err) {
-      Warning(err);
+      PyErr_SetString(PyExc_RuntimeError, err);
       return NULL;
    }
 
@@ -811,11 +811,11 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
-         Warning("Bad getcells call: width must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: width must be > 0.");
          return NULL;
       }
       if (ht <= 0) {
-         Warning("Bad getcells call: height must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: height must be > 0.");
          return NULL;
       }
       int iright = ileft + wd - 1;
@@ -834,7 +834,7 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
          }
       }
    } else {
-      Warning("Bad getcells call: arg must be [] or [x,y,wd,ht].");
+      PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: arg must be [] or [x,y,wd,ht].");
       return NULL;
    }
 
@@ -856,7 +856,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    PyObject *clip_list = PyList_New(0);
 
    if (!mainptr->ClipboardHasText()) {
-      Warning("Error in getclip: no pattern in clipboard.");
+      PyErr_SetString(PyExc_RuntimeError, "Error in getclip: no pattern in clipboard.");
       return NULL;
    }
 
@@ -870,7 +870,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    bigint top, left, bottom, right;
    if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         Warning("Error in getclip: pattern is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "Error in getclip: pattern is too big.");
          return NULL;
       }
       int itop = top.toint();
@@ -920,7 +920,7 @@ static PyObject *golly_visrect(PyObject *self, PyObject *args)
 
    int numitems = PyList_Size(rect_list);
    if (numitems != 4) {
-      Warning("Bad visrect call: arg must be [x,y,wd,ht].");
+      PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: arg must be [x,y,wd,ht].");
       return NULL;
    }
 
@@ -930,11 +930,11 @@ static PyObject *golly_visrect(PyObject *self, PyObject *args)
    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
    // check that wd & ht are > 0
    if (wd <= 0) {
-      Warning("Bad visrect call: width must be > 0.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: width must be > 0.");
       return NULL;
    }
    if (ht <= 0) {
-      Warning("Bad visrect call: height must be > 0.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: height must be > 0.");
       return NULL;
    }
    
@@ -970,11 +970,11 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
-         Warning("Bad select call: width must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad select call: width must be > 0.");
          return NULL;
       }
       if (ht <= 0) {
-         Warning("Bad select call: height must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad select call: height must be > 0.");
          return NULL;
       }
       // set selection edges
@@ -983,7 +983,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
       viewptr->selright = x + wd - 1;
       viewptr->selbottom = y + ht - 1;
    } else {
-      Warning("Bad select call: arg must be [] or [x,y,wd,ht].");
+      PyErr_SetString(PyExc_RuntimeError, "Bad select call: arg must be [] or [x,y,wd,ht].");
       return NULL;
    }
 
@@ -1008,7 +1008,7 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
       bigint top, left, bottom, right;
       curralgo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         Warning("Error in getrect: pattern is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "Error in getrect: pattern is too big.");
          return NULL;
       }
       long x = left.toint();
@@ -1039,7 +1039,7 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
                                   viewptr->selbottom, viewptr->selright) ) {
-         Warning("Error in getselrect: selection is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "Error in getselrect: selection is too big.");
          return NULL;
       }
       long x = viewptr->selleft.toint();

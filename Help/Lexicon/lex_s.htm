@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html lang="en">
 <head>
-<TITLE>Life Lexicon (S)</TITLE>
+<title>Life Lexicon (S)</title>
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
@@ -84,8 +84,7 @@ returns to some fixed value.) Conway's preferred plural is
 "sawteeth".
 <p>The first sawtooth was constructed by Dean Hickerson in April 1991.
 The least infinitely repeating population of any known sawtooth is
-275 (Stephen Silver, January 2005, as a minor modification of David
-Bell's sawtooth of May 2004).
+262 (David Bell, July 2005).
 <p>See also <a href="lex_t.htm#tractorbeam">tractor beam</a>.
 <p><a name=sbm>:</a><b>SBM</b> = <a href="#slidingblockmemory">sliding block memory</a>
 <p><a name=schickengine>:</a><b>Schick engine</b> (<i>c</i>/2 orthogonally, p12) This <a href="#spaceship">spaceship</a>, found by
@@ -131,6 +130,45 @@ OO.O...O...
 ......O....
 </a></pre></td></tr></table></center>
 <p><a name=se>:</a><b>SE</b> = <a href="#switchengine">switch engine</a>
+<p><a name=seal>:</a><b>seal</b> (<i>c</i>/6 diagonally, p6) The first <i>c</i>/6 diagonal <a href="#spaceship">spaceship</a>, found
+by Nicolay Beluchenko in September 2005.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...O..OO..........................
+.OOO.O.O.O........................
+.O..OOO..OO.......................
+O..OOOOOO.O.OOO...................
+.O..OOO.O.OOOOO...................
+......O.O.O.O.....................
+O.O...O.O.OOOOO...................
+O..O.O..O.OO...O..................
+...O..OO.......OOO................
+.O...OOOOO.OOO..OO................
+....O.........O...................
+..O.O.........O...................
+....OO.OOOOO...O..................
+......O.OOO..O.....OO.............
+......O..O...O.OOO.OO.............
+........OO...OOO.O..O...O.........
+........OO....OO.OOOO...OOO.......
+...................O.O..O.........
+.............O.O.....OO..OO.......
+.............O..O.....O.OOO.....O.
+.............O...O....OO..O...O..O
+...............OOO.....OO........O
+...............O.O..O..O.....OO..O
+.................O..OO.OO.O..O....
+................O.......O.O.......
+.................O...OOOO.........
+..................O...O...........
+..................................
+.......................O..........
+......................O.O.........
+.....................OO...........
+.....................O.O..........
+.....................OO...........
+.......................O..........
+......................O...........
+</a></pre></td></tr></table></center>
 <p><a name=secondgliderdomain>:</a><b>second glider domain</b> The second glider domain of an <a href="lex_e.htm#edgeshooter">edge shooter</a>
 is the set of displacements (in space and time, relative to the
 glider stream emitted by the edge shooter) that a glider stream
@@ -437,8 +475,13 @@ a block-laying switch engine from a block, using a slow salvo of
 53 gliders. Constructions like this are important in the study of
 <a href="#sparselife">sparse Life</a>, as they will occur naturally as gliders created in
 the first few generations collide with <a href="lex_b.htm#blonk">blonks</a> and other debris.
-<p>Slow glider constructions are also useful in some designs for
-<a href="lex_u.htm#universalconstructor">universal constructors</a>.
+<p>Slow glider constructions are also useful in some designs
+for <a href="lex_u.htm#universalconstructor">universal constructors</a>. However, in this case the above
+definition is usually too restrictive, and it is desirable to allow
+constructions in which some gliders in the salvo are required to have
+a particular timing modulo 2 (a "p2 slow salvo"). This gives much
+greater flexibility, as <a href="lex_b.htm#blinker">blinkers</a> can now be freely used in the
+intermediate construction steps.
 <p><a name=slowsalvo>:</a><b>slow salvo</b> See <a href="#slowgliderconstruction">slow glider construction</a>.
 <p><a name=smallfish>:</a><b>small fish</b> = <a href="lex_l.htm#lwss">LWSS</a>
 <p><a name=smalllake>:</a><b>small lake</b> (p1) See also <a href="lex_l.htm#lake">lake</a>.
@@ -493,7 +536,7 @@ OO................OO
 OO................OO
 </a></pre></td></tr></table></center>
 The stabilizers make the <a href="lex_d.htm#domino">domino</a> spark largely inaccessible, but the
-snacker is extensible, as shown in the next diagram, and so a more
+snacker is <a href="lex_e.htm#extensible">extensible</a>, as shown in the next diagram, and so a more
 accessible p9 domino spark can be obtained. In April 1998 Dean
 Hickerson found an alternative stabilizer that is less obtrusive than
 the original one, and this is also shown in this diagram.
@@ -684,13 +727,14 @@ O...O............O..O.
 <p><a name=spaceship>:</a><b>spaceship</b> Any finite pattern that reappears (without additions or
 losses) after a number of generations and displaced by a non-zero
 amount. By far the most <a href="lex_n.htm#natural">natural</a> spaceships are the <a href="lex_g.htm#glider">glider</a>,
-<a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a> and <a href="lex_h.htm#hwss">HWSS</a>. For further examples see <a href="lex_b.htm#bigglider">big glider</a>,
-<a href="lex_b.htm#brain">brain</a>, <a href="lex_c.htm#canadagoose">Canada goose</a>, <a href="lex_c.htm#coeship">Coe ship</a>, <a href="lex_c.htm#cordership">Cordership</a>, <a href="lex_d.htm#dart">dart</a>, <a href="lex_d.htm#dragon">dragon</a>,
-<a href="lex_e.htm#ecologist">ecologist</a>, <a href="lex_e.htm#edgerepairspaceship">edge-repair spaceship</a>, <a href="lex_e.htm#enterprise">Enterprise</a>, <a href="lex_f.htm#flotilla">flotilla</a>,
-<a href="lex_f.htm#fly">fly</a>, <a href="lex_h.htm#hammerhead">hammerhead</a>, <a href="lex_h.htm#hivenudger">hivenudger</a>, <a href="lex_n.htm#nonmonotonic">non-monotonic</a>, <a href="lex_o.htm#orion">Orion</a>,
-<a href="lex_p.htm#puffsuppressor">puff suppressor</a>, <a href="lex_p.htm#pushalong">pushalong</a>, <a href="#schickengine">Schick engine</a>, <a href="#sidecar">sidecar</a>,
-<a href="#snail">snail</a>, <a href="#stilllifetagalong">still life tagalong</a>, <a href="#sparky">sparky</a>, <a href="#swan">swan</a>, <a href="lex_t.htm#turtle">turtle</a>, <a href="lex_w.htm#wasp">wasp</a>,
-<a href="lex_w.htm#weekender">weekender</a> and <a href="lex_x.htm#x66">x66</a>. See also <a href="lex_c.htm#caterpillar">Caterpillar</a>.
+<a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a> and <a href="lex_h.htm#hwss">HWSS</a>. For further examples see <a href="lex_b.htm#b29">B29</a>,
+<a href="lex_b.htm#bigglider">big glider</a>, <a href="lex_b.htm#brain">brain</a>, <a href="lex_c.htm#canadagoose">Canada goose</a>, <a href="lex_c.htm#coeship">Coe ship</a>, <a href="lex_c.htm#cordership">Cordership</a>,
+<a href="lex_c.htm#crane">crane</a>, <a href="lex_d.htm#dart">dart</a>, <a href="lex_d.htm#dragon">dragon</a>, <a href="lex_e.htm#ecologist">ecologist</a>, <a href="lex_e.htm#edgerepairspaceship">edge-repair spaceship</a>,
+<a href="lex_e.htm#enterprise">Enterprise</a>, <a href="lex_f.htm#flotilla">flotilla</a>, <a href="lex_f.htm#fly">fly</a>, <a href="lex_h.htm#hammerhead">hammerhead</a>, <a href="lex_h.htm#hivenudger">hivenudger</a>,
+<a href="lex_n.htm#nonmonotonic">non-monotonic</a>, <a href="lex_o.htm#orion">Orion</a>, <a href="lex_p.htm#puffsuppressor">puff suppressor</a>, <a href="lex_p.htm#pushalong">pushalong</a>, <a href="lex_q.htm#quarter">quarter</a>,
+<a href="#schickengine">Schick engine</a>, <a href="#seal">seal</a>, <a href="#sidecar">sidecar</a>, <a href="#snail">snail</a>, <a href="#stilllifetagalong">still life tagalong</a>,
+<a href="#sparky">sparky</a>, <a href="#swan">swan</a>, <a href="lex_t.htm#turtle">turtle</a>, <a href="lex_w.htm#wasp">wasp</a>, <a href="lex_w.htm#weekender">weekender</a> and <a href="lex_x.htm#x66">x66</a>. See also
+<a href="lex_c.htm#caterpillar">Caterpillar</a>.
 <p>It is known that there exist spaceships travelling in all
 rational directions and at arbitrarily slow speeds (see
 <a href="lex_u.htm#universalconstructor">universal constructor</a>). Before 1989, however, the only known
@@ -699,7 +743,7 @@ examples travelled at <i>c</i>/4 diagonally (gliders) or <i>c</i>/2 orthogonally
 searches to look for new spaceships, and had considerable success.
 Other people have continued these searches using tools such as
 <a href="lex_l.htm#lifesrc">lifesrc</a> and <a href="lex_g.htm#gfind">gfind</a>, and as a result we now have a great variety of
-spaceships travelling at eleven different velocities. The following
+spaceships travelling at twelve different velocities. The following
 table details the discovery of spaceships with new velocities.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><font size=-1>
 -----------------------------------------------------
@@ -716,6 +760,7 @@ c/5     orthogonal   Tim Coe                 Jan 1996
 c/6     orthogonal   Paul Tooke              Apr 2000
 c/5     diagonal     Jason Summers           Nov 2000
 17c/45  orthogonal   Gabriel Nivasch et al.  Dec 2004
+c/6     diagonal     Nicolay Beluchenko      Sep 2005
 -----------------------------------------------------
 </font></pre></td></tr></table></center>
 <p>A period <i>p</i> spaceship that displaces itself (<i>m</i>,<i>n</i>) during its
@@ -997,35 +1042,30 @@ for the proportion of cells involved in a period <i>n</i> <a href="lex_o.htm#osc
 themselves oscillate with period <i>n</i>. For prime <i>n</i> this is the same
 as the ordinary <a href="lex_v.htm#volatility">volatility</a>.
 <p><a name=superbeehive>:</a><b>super beehive</b> = <a href="lex_h.htm#honeycomb">honeycomb</a>
-<p><a name=superfountain>:</a><b>superfountain</b> (p4) This <a href="#sparker">sparker</a> was found by Noam Elkies in
-February 1998 (shown here with a slightly smaller <a href="#stator">stator</a>).
-The resulting <a href="#spark">spark</a> is more isolated than in the <a href="lex_f.htm#fountain">fountain</a>.
+<p><a name=superfountain>:</a><b>superfountain</b> (p4) A p4 <a href="#sparker">sparker</a> which produces a 1-cell spark that
+is separated from the rest of the oscillator by two clear rows of
+cells. The first superfountain was found by Noam Elkies in February
+1998. In January 2006 Nicolay Beluchenko found the much smaller one
+shown below. See also <a href="lex_f.htm#fountain">fountain</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-...............OO......OO......OO..OO.........
-.........OO.....O......O.....O..O..O..O.OO....
-....O....O.O.OOO....OO.O.....OO.....OOO.O.O...
-...O.O.....O.O.....O..O........OOOOO....O..O..
-....O.....O..O....O.O......OOOO..O...OO..O.O..
-....O.......OOOO..O.OO....O....OOOOO...O.O..OO
-....OOO...O.....O.O..O....OO..O...O..OO.O.O.O.
-........OO..O.OO.O.OO....OO..O....O......OO.O.
-....O...O......O.O...OO.OO...OOOO....OO.O..O..
-...O.....O.O.....O...O.O.OOOOO.O......O.OOO...
-....O...OOO.....O....O..........OOO..O........
-....OOO.OO..OO..O..OOOO..O.O.OO.O.O..O.OO.....
-O...O.........O...OO.OO.O..O......O..O..O.....
-....OOO.OO..OO..O..O...OOO......OO....OO......
-....O...OOO.....O...O...O.....................
-...O.....O.O.....O.....O...O..................
-....O...O......O.O..OOO...OO..................
-........OO..O.OO.O.O...OO.....................
-....OOO...O.....O..O.O...OOO..................
-....O.......OOOO...O.OOOO..O..................
-....O.....O..O......O....O....................
-...O.O.....O.O........O..OO...................
-....O....O.O.OOO.....OO.......................
-.........OO.....O.............................
-...............OO.............................
+...........O...........
+.......................
+.......................
+.....O..O.....O..O.....
+...OO..O.OOOOO.O..OO...
+.....O...........O.....
+...O.OO.........OO.O...
+.O.O...OOO...OOO...O.O.
+OOO.O.............O.OOO
+..........O.O..........
+....OOO...O.O...OOO....
+....O..O...O...O..O....
+...OOOO..O.O.O..OOOO...
+...OO..OOO.O.OOO..OO...
+..O...O...O.O...O...O..
+...O..O.O.O.O.O.O..O...
+....O.O.OO...OO.O.O....
+.....O...........O.....
 </a></pre></td></tr></table></center>
 <p><a name=superstring>:</a><b>superstring</b> An infinite orthogonal row of cells stabilized on one
 side so that it moves at the <a href="#speedoflight">speed of light</a>, often leaving debris
@@ -1091,8 +1131,7 @@ OO.O.OO..O
 OO....O...
 </a></pre></td></tr></table></center>
 <p><a name=swan>:</a><b>swan</b> (<i>c</i>/4 diagonally, p4) A diagonal <a href="#spaceship">spaceship</a> producing some
-useful sparks (see <a href="lex_b.htm#boatstretcher">boatstretcher</a> for one simple use). Found
-by Tim Coe in February 1996.
+useful sparks. Found by Tim Coe in February 1996.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .O..........OO..........
 OOOOO......OO...........
@@ -1127,37 +1166,37 @@ under <a href="lex_i.htm#infinitegrowth">infinite growth</a>, and one giving ris
 switch engine is shown under <a href="lex_t.htm#timebomb">time bomb</a>. See also <a href="lex_c.htm#cordership">Cordership</a>
 and <a href="lex_a.htm#ark">ark</a>.
 <p><a name=synthesis>:</a><b>synthesis</b> = <a href="lex_g.htm#glidersynthesis">glider synthesis</a>
-<HR>
-<CENTER>
+<hr>
+<center>
 <font size=-1><b>
-<A HREF="lex_1.htm">1-9</A> |
-<A HREF="lex_a.htm">A</A> |
-<A HREF="lex_b.htm">B</A> |
-<A HREF="lex_c.htm">C</A> |
-<A HREF="lex_d.htm">D</A> |
-<A HREF="lex_e.htm">E</A> |
-<A HREF="lex_f.htm">F</A> |
-<A HREF="lex_g.htm">G</A> |
-<A HREF="lex_h.htm">H</A> |
-<A HREF="lex_i.htm">I</A> |
-<A HREF="lex_j.htm">J</A> |
-<A HREF="lex_k.htm">K</A> |
-<A HREF="lex_l.htm">L</A> |
-<A HREF="lex_m.htm">M</A> |
-<A HREF="lex_n.htm">N</A> |
-<A HREF="lex_o.htm">O</A> |
-<A HREF="lex_p.htm">P</A> |
-<A HREF="lex_q.htm">Q</A> |
-<A HREF="lex_r.htm">R</A> |
-<A HREF="lex_s.htm">S</A> |
-<A HREF="lex_t.htm">T</A> |
-<A HREF="lex_u.htm">U</A> |
-<A HREF="lex_v.htm">V</A> |
-<A HREF="lex_w.htm">W</A> |
-<A HREF="lex_x.htm">X</A> |
-<A HREF="lex_y.htm">Y</A> |
+<a href="lex_1.htm">1-9</a> |
+<a href="lex_a.htm">A</a> |
+<a href="lex_b.htm">B</a> |
+<a href="lex_c.htm">C</a> |
+<a href="lex_d.htm">D</a> |
+<a href="lex_e.htm">E</a> |
+<a href="lex_f.htm">F</a> |
+<a href="lex_g.htm">G</a> |
+<a href="lex_h.htm">H</a> |
+<a href="lex_i.htm">I</a> |
+<a href="lex_j.htm">J</a> |
+<a href="lex_k.htm">K</a> |
+<a href="lex_l.htm">L</a> |
+<a href="lex_m.htm">M</a> |
+<a href="lex_n.htm">N</a> |
+<a href="lex_o.htm">O</a> |
+<a href="lex_p.htm">P</a> |
+<a href="lex_q.htm">Q</a> |
+<a href="lex_r.htm">R</a> |
+<a href="lex_s.htm">S</a> |
+<a href="lex_t.htm">T</a> |
+<a href="lex_u.htm">U</a> |
+<a href="lex_v.htm">V</a> |
+<a href="lex_w.htm">W</a> |
+<a href="lex_x.htm">X</a> |
+<a href="lex_y.htm">Y</a> |
 <A href="lex_z.htm">Z</A></b></font>
 
-</CENTER>
-<HR>
-</BODY>
+</center>
+<hr>
+</body>
