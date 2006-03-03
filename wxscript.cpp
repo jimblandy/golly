@@ -335,7 +335,7 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
 
    if (IsScript(file_name)) {
       // avoid re-entrancy
-      PyErr_SetString(PyExc_RuntimeError, "Error in open: cannot open a script file.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad open call: cannot open a script file.");
       return NULL;
    }
 
@@ -347,6 +347,33 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
    // only add file to Open Recent submenu if remember flag is non-zero
    mainptr->OpenFile(fullname.GetFullPath(), remember != 0);
    DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_save(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *file_name;
+   char *format;
+   int remember;
+
+   if (!PyArg_ParseTuple(args, "zzi", &file_name, &format, &remember)) return NULL;
+
+   // convert non-absolute file_name to absolute path relative to scriptloc
+   // so it can be selected later from Open Recent submenu
+   wxFileName fullname(file_name);
+   if (!fullname.IsAbsolute()) fullname = scriptloc + wxT(file_name);
+
+   // check given format
+   //!!!
+
+   // only add file to Open Recent submenu if remember flag is non-zero
+   //!!! err = mainptr->SavePattern(fullname.GetFullPath(), format, remember != 0);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -606,13 +633,13 @@ static PyObject *golly_rotate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_view(PyObject *self, PyObject *args)
+static PyObject *golly_setpos(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y;
 
-   if (!PyArg_ParseTuple(args, "ii" , &x, &y)) return NULL;
+   if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
 
    bigint bigx = x;
    bigint bigy = y;
@@ -621,6 +648,61 @@ static PyObject *golly_view(PyObject *self, PyObject *args)
 
    Py_INCREF(Py_None);
    return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getpos(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   bigint bigx, bigy;
+   viewptr->GetPos(bigx, bigy);
+   if (viewptr->OutsideLimits(bigy, bigx, bigy, bigx)) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad getpos call: cell outside integer limits.");
+      return NULL;
+   }
+
+   // convert position to x,y tuple
+   PyObject *xytuple = PyTuple_New(2);
+   PyObject *x = PyInt_FromLong(bigx.toint());
+   PyObject *y = PyInt_FromLong(bigy.toint());
+   PyTuple_SetItem(xytuple, 0, x);
+   PyTuple_SetItem(xytuple, 1, y);
+   return xytuple;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setmag(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int mag;
+
+   if (!PyArg_ParseTuple(args, "i", &mag)) return NULL;
+
+   viewptr->SetMag(mag);
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getmag(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("i", viewptr->GetMag());
+   return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -767,6 +849,32 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_run(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int ngens;
+
+   if (!PyArg_ParseTuple(args, "i", &ngens)) return NULL;
+
+   if (ngens > 0) {
+      if (ngens > 1) {
+         bigint saveinc = curralgo->getIncrement();
+         curralgo->setIncrement(ngens);
+         mainptr->NextGeneration(true);      // step by current increment
+         curralgo->setIncrement(saveinc);
+      } else {
+         mainptr->NextGeneration(false);     // step 1 gen
+      }
+      DoAutoUpdate();
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_setrule(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -797,6 +905,45 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
 
    Py_INCREF(Py_None);
    return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getrule(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("z", curralgo->getrule());
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getgen(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("z", curralgo->getGeneration().tostring());
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getpop(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("z", curralgo->getPopulation().tostring());
+   return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -938,12 +1085,12 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
-   int N = 0;
+   int ngens = 0;
 
    PyObject *given_list;
    PyObject *evolved_list;
 
-   if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &N)) return NULL;
+   if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &ngens)) return NULL;
 
    // create temporary qlife universe
    lifealgo *tempalgo;
@@ -962,9 +1109,9 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    }
    tempalgo->endofpattern();
 
-   // advance pattern by N gens
+   // advance pattern by ngens
    mainptr->generating = true;
-   tempalgo->setIncrement(N);
+   tempalgo->setIncrement(ngens);
    tempalgo->step();
    mainptr->generating = false;
 
@@ -1027,7 +1174,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_save(PyObject *self, PyObject *args)
+static PyObject *golly_store(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1163,7 +1310,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    PyObject *clip_list = PyList_New(0);
 
    if (!mainptr->ClipboardHasText()) {
-      PyErr_SetString(PyExc_RuntimeError, "Error in getclip: no pattern in clipboard.");
+      PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: no pattern in clipboard.");
       return NULL;
    }
 
@@ -1177,7 +1324,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    bigint top, left, bottom, right;
    if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PyErr_SetString(PyExc_RuntimeError, "Error in getclip: pattern is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: pattern is too big.");
          return NULL;
       }
       int itop = top.toint();
@@ -1316,7 +1463,7 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
       bigint top, left, bottom, right;
       curralgo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PyErr_SetString(PyExc_RuntimeError, "Error in getrect: pattern is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad getrect call: pattern is too big.");
          return NULL;
       }
       long x = left.toint();
@@ -1347,7 +1494,7 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
                                   viewptr->selbottom, viewptr->selright) ) {
-         PyErr_SetString(PyExc_RuntimeError, "Error in getselrect: selection is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "Bad getselrect call: selection is too big.");
          return NULL;
       }
       long x = viewptr->selleft.toint();
@@ -1536,10 +1683,14 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
 // -----------------------------------------------------------------------------
 
 static PyMethodDef golly_methods[] = {
-   { "new",          golly_new,        METH_VARARGS, "create new universe and optionally set title" },
+   // filing
    { "open",         golly_open,       METH_VARARGS, "open given pattern file" },
-   { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
-   { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "save",         golly_save,       METH_VARARGS, "save pattern in given file using given format" },
+   { "load",         golly_load,       METH_VARARGS, "read pattern file and return cell list" },
+   { "store",        golly_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
+   { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
+   // editing
+   { "new",          golly_new,        METH_VARARGS, "create new universe and optionally set title" },
    { "cut",          golly_cut,        METH_VARARGS, "cut selection to clipboard" },
    { "copy",         golly_copy,       METH_VARARGS, "copy selection to clipboard" },
    { "clear",        golly_clear,      METH_VARARGS, "clear inside/outside selection" },
@@ -1548,31 +1699,41 @@ static PyMethodDef golly_methods[] = {
    { "randfill",     golly_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
    { "flip",         golly_flip,       METH_VARARGS, "flip selection left-right or up-down" },
    { "rotate",       golly_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
-   { "view",         golly_view,       METH_VARARGS, "display given cell in middle of viewport" },
-   { "setoption",    golly_setoption,  METH_VARARGS, "set given option to given value" },
-   { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
-   { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
    { "parse",        golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
    { "transform",    golly_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
    { "evolve",       golly_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
-   { "load",         golly_load,       METH_VARARGS, "load pattern from file and return cell list" },
-   { "save",         golly_save,       METH_VARARGS, "save cell list to a file (in RLE format)" },
    { "putcells",     golly_putcells,   METH_VARARGS, "paste given cell list into current universe" },
    { "getcells",     golly_getcells,   METH_VARARGS, "return cell list in given rectangle" },
    { "getclip",      golly_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
-   { "visrect",      golly_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
    { "select",       golly_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
    { "getrect",      golly_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
    { "getselrect",   golly_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
    { "setcell",      golly_setcell,    METH_VARARGS, "set given cell to given state" },
    { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
+   // control
+   { "run",          golly_run,        METH_VARARGS, "run current pattern for given number of gens" },
+   { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
+   { "getrule",      golly_getrule,    METH_VARARGS, "return current rule string" },
+   { "getgen",       golly_getgen,     METH_VARARGS, "return current generation as string" },
+   { "getpop",       golly_getpop,     METH_VARARGS, "return current population as string" },
+   // viewing
+   { "setpos",       golly_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
+   { "getpos",       golly_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
+   { "setmag",       golly_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },
+   { "getmag",       golly_getmag,     METH_VARARGS, "return current magnification" },
+   { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
+   { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "visrect",      golly_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
    { "update",       golly_update,     METH_VARARGS, "update display (viewport and status bar)" },
    { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
+   // miscellaneous
+   { "setoption",    golly_setoption,  METH_VARARGS, "set given option to given value" },
+   { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
    { "getkey",       golly_getkey,     METH_VARARGS, "wait for user to hit a key, then return it" },
-   { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
+   // for internal use only (don't document)
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
 };

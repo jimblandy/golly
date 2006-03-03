@@ -133,7 +133,7 @@ rcw (rotate clockwise) and rccw (rotate counter-clockwise)."""
       """\
 Save the pattern to file 'fn' in RLE format.
 An optional description 'desc' may be given."""
-      golly.save (self, fn, desc)
+      golly.store (self, fn, desc)
       return None
 
    def evolve (self, N):

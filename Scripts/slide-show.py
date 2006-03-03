@@ -6,7 +6,8 @@ import golly as g
 import os
 from os.path import join
 
-hashstate = g.getoption("hashing")
+# remember initial hashing state so we can restore it if changed by a pattern file
+inithash = g.getoption("hashing")
 
 # ------------------------------------------------------------------------------
 
@@ -14,15 +15,21 @@ def slideshow ():
    for root, dirs, files in os.walk(g.appdir() + "Patterns"):
       for name in files:
          # ignore hidden files (like .DS_Store on Mac)
-         if not name.startswith('.'):
+         if not name.startswith("."):
             fullname = join(root, name)
             g.open(fullname, 0)           # don't add file to Open Recent submenu
             g.update()
             g.show("Hit space to continue or any other key to stop the slide show...")
             if g.getkey() != " ": return
-            if hashstate != g.getoption("hashing"):
-               # turn off hashing in case a .mc file turned it on
-               g.setoption("hashing", False)
+            g.new("")
+            if inithash != g.getoption("hashing"):
+               if inithash:
+                  # turn on hashing (B0-not-S8 rule turned it off)
+                  g.setrule("b3/s23")
+                  g.setoption("hashing", True)
+               else:
+                  # turn off hashing (.mc file turned it on)
+                  g.setoption("hashing", False)
       
       if "CVS" in dirs:
          dirs.remove("CVS")  # don't visit CVS directories
