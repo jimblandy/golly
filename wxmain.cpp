@@ -695,6 +695,17 @@ void MainFrame::LoadPattern(const char *newtitle)
    }
    if (!showbanner) statusptr->ClearMessage();
 
+   /* no longer need this if viewptr->nopattupdate is set before UpdateStatus???
+   #ifdef __WXMAC__
+      // need to process all pending events now to avoid crash
+      while (wxGetApp().Pending()) wxGetApp().Dispatch();
+   #endif
+   */
+
+   // must set this flag BEFORE UpdateStatus() call because on Mac it also
+   // causes DrawView to get called if there are pending updates
+   viewptr->nopattupdate = true;
+
    if (curralgo) {
       // delete old universe and set NULL so status bar shows gen=0 and pop=0
       delete curralgo;
@@ -714,7 +725,6 @@ void MainFrame::LoadPattern(const char *newtitle)
       MySetTitle(wtitle);
    }
 
-   viewptr->nopattupdate = true;
    const char *err = readpattern(currfile, *curralgo);
    if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
       hashing = true;
@@ -909,10 +919,6 @@ void MainFrame::OpenPattern()
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
-      #ifdef __WXMAC__
-         // Mac bug: need to update window now to avoid crash
-         UpdateEverything();
-      #endif
       wxFileName fullpath( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
       SetCurrentFile( opendlg.GetPath() );
@@ -931,10 +937,6 @@ void MainFrame::OpenScript()
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
-      #ifdef __WXMAC__
-         // Mac bug: need to update window now to avoid crash
-         UpdateEverything();
-      #endif
       wxFileName fullpath( opendlg.GetPath() );
       rundir = fullpath.GetPath();
       AddRecentScript( opendlg.GetPath() );
@@ -1306,6 +1308,17 @@ void MainFrame::SetMinimumWarp()
    }
 }
 
+void MainFrame::UpdateWarp()
+{
+   SetMinimumWarp();
+   if (warp < minwarp) {
+      warp = minwarp;
+      curralgo->setIncrement(1);    // warp is <= 0
+   } else if (warp > 0) {
+      SetGenIncrement();            // in case qbasestep/hbasestep changed
+   }
+}
+
 void MainFrame::ShowPrefsDialog()
 {
    if (generating || viewptr->waitingforclick) return;
@@ -1329,13 +1342,7 @@ void MainFrame::ShowPrefsDialog()
       SetRandomFillPercentage();
       
       // if mindelay/maxdelay changed then may need to change minwarp and warp
-      SetMinimumWarp();
-      if (warp < minwarp) {
-         warp = minwarp;
-         curralgo->setIncrement(1);    // warp is <= 0
-      } else if (warp > 0) {
-         SetGenIncrement();            // in case qbasestep/hbasestep changed
-      }
+      UpdateWarp();
       
       // we currently don't allow user to edit prefs while generating,
       // but in case that changes:
@@ -2581,8 +2588,6 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
       SetForegroundWindow( (HWND)mainptr->GetHandle() );
    #endif
    mainptr->Raise();
-   // need to process events to avoid crash if info window was in front
-   while (wxGetApp().Pending()) wxGetApp().Dispatch();
    
    size_t numfiles = filenames.GetCount();
    for ( size_t n = 0; n < numfiles; n++ ) {

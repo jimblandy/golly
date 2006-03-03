@@ -588,6 +588,10 @@ void PatternView::ZoomOutPos(int x, int y)
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked somewhere in viewport
+   if (InScript()) {
+      return;           // prevent all user interaction???!!!
+   }
+   
    if (currcurs == curs_pencil) {
       if (mainptr->generating) {
          statusptr->ErrorMessage("Drawing is not allowed while generating.");
@@ -2177,7 +2181,7 @@ void PatternView::CheckCursor(bool active)
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
       if (PointInView(pt.x, pt.y)) {
          // need both calls to fix Mac probs after toggling status/tool bar;
-         // test if bug still exists in 2.6.2!!!
+         // test if bug still exists in CVS HEAD!!!
          wxSetCursor(*currcurs);
          SetCursor(*currcurs);
       } else {

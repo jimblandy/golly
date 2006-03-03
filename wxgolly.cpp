@@ -230,11 +230,7 @@ void GollyApp::SetFrameIcon(wxFrame *frame)
 void GollyApp::MacOpenFile(const wxString &fullPath)
 {
    if (mainptr->generating) return;
-
    mainptr->Raise();
-   // need to process events to avoid crash if info window was in front
-   while (wxGetApp().Pending()) wxGetApp().Dispatch();
-
    mainptr->OpenFile(fullPath);
 }
 #endif

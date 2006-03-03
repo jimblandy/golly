@@ -56,6 +56,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/filename.h"   // for wxFileName
 
+#include <limits.h>        // for INT_MAX
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -389,6 +391,48 @@ static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_cut(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      viewptr->CutSelection();
+      DoAutoUpdate();
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad cut call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_copy(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      viewptr->CopySelection();
+      DoAutoUpdate();
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad copy call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_clear(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -405,6 +449,80 @@ static PyObject *golly_clear(PyObject *self, PyObject *args)
       DoAutoUpdate();
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad clear call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_paste(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int x, y;
+   char *mode;
+
+   if (!PyArg_ParseTuple(args, "iiz", &x, &y, &mode)) return NULL;
+
+   if (!mainptr->ClipboardHasText()) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad paste call: no pattern in clipboard.");
+      return NULL;
+   }
+
+   // temporarily change selection rect and paste mode
+   bigint oldleft = viewptr->selleft;
+   bigint oldtop = viewptr->seltop;
+   bigint oldright = viewptr->selright;
+   bigint oldbottom = viewptr->selbottom;
+   
+   // create huge selection rect so no possibility of error message
+   viewptr->selleft = x;
+   viewptr->seltop = y;
+   viewptr->selright = viewptr->selleft;   viewptr->selright += INT_MAX;
+   viewptr->selbottom = viewptr->seltop;   viewptr->selbottom += INT_MAX;
+   
+   const char *oldmode = GetPasteMode();
+   wxString modestr = wxT(mode);
+   if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
+   else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
+   else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
+   else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad paste call: unknown mode.");
+      return NULL;
+   }
+
+   viewptr->PasteClipboard(true);      // true = paste to selection
+
+   // restore selection rect and paste mode
+   viewptr->selleft = oldleft;
+   viewptr->seltop = oldtop;
+   viewptr->selright = oldright;
+   viewptr->selbottom = oldbottom;
+   SetPasteMode(oldmode);
+
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_shrink(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      viewptr->ShrinkSelection(false);    // false = don't fit in viewport
+      DoAutoUpdate();
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad shrink call: no selection.");
       return NULL;
    }
 
@@ -441,6 +559,53 @@ static PyObject *golly_randfill(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_flip(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int direction;
+
+   if (!PyArg_ParseTuple(args, "i", &direction)) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      if (direction == 0)
+         viewptr->FlipVertically();       // left-right
+      else
+         viewptr->FlipHorizontally();     // up-down
+      DoAutoUpdate();
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad flip call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_rotate(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int direction;
+
+   if (!PyArg_ParseTuple(args, "i", &direction)) return NULL;
+
+   if (viewptr->SelectionExists()) {
+      viewptr->RotateSelection(direction == 0);    // 0 = clockwise
+      DoAutoUpdate();
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad rotate call: no selection.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_view(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -456,6 +621,148 @@ static PyObject *golly_view(PyObject *self, PyObject *args)
 
    Py_INCREF(Py_None);
    return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setoption(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *optname;
+   int optval;
+
+   if (!PyArg_ParseTuple(args, "zi", &optname, &optval)) return NULL;
+
+   if (strcmp(optname, "autofit") == 0) {
+      if (autofit != (bool) optval)
+         mainptr->ToggleAutoFit();
+
+   } else if (strcmp(optname, "hashing") == 0) {
+      if (hashing != (bool) optval) {
+         mainptr->ToggleHashing();
+         DoAutoUpdate();               // status bar color might change
+      }
+
+   } else if (strcmp(optname, "hyperspeed") == 0) {
+      if (hyperspeed != (bool) optval)
+         mainptr->ToggleHyperspeed();
+
+   } else if (strcmp(optname, "fullscreen") == 0) {
+      if (mainptr->fullscreen != (bool) optval) {
+         mainptr->ToggleFullScreen();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "mindelay") == 0) {
+      if (optval < 0) optval = 0;
+      if (optval > MAX_DELAY) optval = MAX_DELAY;
+      if (mindelay != optval) {
+         mindelay = optval;
+         mainptr->UpdateWarp();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "maxdelay") == 0) {
+      if (optval < 0) optval = 0;
+      if (optval > MAX_DELAY) optval = MAX_DELAY;
+      if (maxdelay != optval) {
+         maxdelay = optval;
+         mainptr->UpdateWarp();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showpatterns") == 0) {
+      if (showpatterns != (bool) optval) {
+         mainptr->ToggleShowPatterns();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showscripts") == 0) {
+      if (showscripts != (bool) optval) {
+         mainptr->ToggleShowScripts();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showstatusbar") == 0) {
+      if (mainptr->StatusVisible() != (bool) optval) {
+         mainptr->ToggleStatusBar();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showtoolbar") == 0) {
+      if (mainptr->GetToolBar()->IsShown() != (bool) optval) {
+         mainptr->ToggleToolBar();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "blackcells") == 0) {
+      if (blackcells != (bool) optval) {
+         blackcells = (bool) optval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showgrid") == 0) {
+      if (showgridlines != (bool) optval) {
+         showgridlines = (bool) optval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showboldlines") == 0) {
+      if (showboldlines != (bool) optval) {
+         showboldlines = (bool) optval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "boldspacing") == 0) {
+      if (optval < 2) optval = 2;
+      if (optval > MAX_SPACING) optval = MAX_SPACING;
+      if (boldspacing != optval) {
+         boldspacing = optval;
+         DoAutoUpdate();
+      }
+   
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad setoption call: unknown option.");
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getoption(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *optname;
+   int optval;
+
+   if (!PyArg_ParseTuple(args, "z", &optname)) return NULL;
+
+   if      (strcmp(optname, "autofit") == 0)       optval = autofit ? 1 : 0;
+   else if (strcmp(optname, "hashing") == 0)       optval = hashing ? 1 : 0;
+   else if (strcmp(optname, "hyperspeed") == 0)    optval = hyperspeed ? 1 : 0;
+   else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
+   else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
+   else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
+   else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
+   else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
+   else if (strcmp(optname, "showstatusbar") == 0) optval = mainptr->StatusVisible() ? 1 : 0;
+   else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
+   else if (strcmp(optname, "blackcells") == 0)    optval = blackcells ? 1 : 0;
+   else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
+   else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
+   else if (strcmp(optname, "boldspacing") == 0)   optval = boldspacing;
+   else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad getoption call: unknown option.");
+      return NULL;
+   }
+
+   PyObject *result = Py_BuildValue("i", optval);
+   return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -957,6 +1264,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    PyObject *rect_list;
 
+   // also allow select() and select(x,y,wd,ht) ???!!!
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
    int numitems = PyList_Size(rect_list);
@@ -1232,9 +1540,17 @@ static PyMethodDef golly_methods[] = {
    { "open",         golly_open,       METH_VARARGS, "open given pattern file" },
    { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
    { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "cut",          golly_cut,        METH_VARARGS, "cut selection to clipboard" },
+   { "copy",         golly_copy,       METH_VARARGS, "copy selection to clipboard" },
    { "clear",        golly_clear,      METH_VARARGS, "clear inside/outside selection" },
+   { "paste",        golly_paste,      METH_VARARGS, "paste clipboard pattern at x,y using given mode" },
+   { "shrink",       golly_shrink,     METH_VARARGS, "shrink selection" },
    { "randfill",     golly_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
+   { "flip",         golly_flip,       METH_VARARGS, "flip selection left-right or up-down" },
+   { "rotate",       golly_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
    { "view",         golly_view,       METH_VARARGS, "display given cell in middle of viewport" },
+   { "setoption",    golly_setoption,  METH_VARARGS, "set given option to given value" },
+   { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
    { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
    { "parse",        golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
    { "transform",    golly_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
@@ -1373,8 +1689,7 @@ bool IsScript(const char *filename)
    wxString fname = wxT(filename);
    wxString ext = fname.AfterLast(wxT('.'));
 
-   // false means case-insensitive comparison
-   return ext.IsSameAs(wxT("PY"), false);
+   return ext.IsSameAs(wxT("py"), false);    // false = match any case
 }
 
 // -----------------------------------------------------------------------------

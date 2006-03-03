@@ -67,6 +67,7 @@ public:
    // prefs functions
    void SetRandomFillPercentage();
    void SetMinimumWarp();
+   void UpdateWarp();
    void ShowPrefsDialog();
 
    // control functions

@@ -36,6 +36,14 @@ class rect (list):
 inside = 0
 outside = 1
 
+# for golly.flip
+left_right = 0
+up_down = 1
+
+# for golly.rotate
+clockwise = 0
+anticlockwise = 1
+
 # Define some transformation matrices:
 
 identity = ( 1,  0,  0,  1)

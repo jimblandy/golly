@@ -85,7 +85,7 @@ extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
 extern wxString patterndir;      // directory used by Show Patterns
 extern wxString scriptdir;       // directory used by Show Scripts
-extern int dirwinwd;             // width of directory window
+extern int dirwinwd;             // width of pattern/script directory window
 extern bool showpatterns;        // show pattern directory?
 extern bool showscripts;         // show script directory?
 extern wxMenu *patternSubMenu;   // submenu of recent pattern files
@@ -114,6 +114,13 @@ const int mininfowd = 400;       // info window's minimum width
 const int mininfoht = 100;       // info window's minimum height
 
 const int MAX_RECENT = 100;      // maximum value of maxpatterns and maxscripts
+const int MAX_SPACING = 1000;    // maximum value of boldspacing
+const int MIN_HASHMB = 10;       // minimum value of maxhashmem
+const int MAX_HASHMB = 4000;     // make bigger when hlifealgo is 64-bit clean
+const int MAX_BASESTEP = 100;    // maximum qbasestep or hbasestep
+const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
+const int MAX_THUMBRANGE = 500;  // maximum thumbrange
+const int MIN_DIRWD = 50;        // minimum dirwinwd
 
 // Following are used by GetPrefs() before the view window is created:
 

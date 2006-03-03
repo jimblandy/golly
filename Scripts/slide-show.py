@@ -6,6 +6,8 @@ import golly as g
 import os
 from os.path import join
 
+hashstate = g.getoption("hashing")
+
 # ------------------------------------------------------------------------------
 
 def slideshow ():
@@ -18,18 +20,32 @@ def slideshow ():
             g.update()
             g.show("Hit space to continue or any other key to stop the slide show...")
             if g.getkey() != " ": return
+            if hashstate != g.getoption("hashing"):
+               # turn off hashing in case a .mc file turned it on
+               g.setoption("hashing", False)
       
       if "CVS" in dirs:
          dirs.remove("CVS")  # don't visit CVS directories
 
 # ------------------------------------------------------------------------------
 
-# save hashing state and turn it off!!!
-# switch to full screen!!!
-# show status bar so user sees message!!!
+# show status bar so user sees messages
+hidestatus = not g.getoption("showstatusbar")
+g.setoption("showstatusbar", True)
+
+# hide other stuff to maximize the viewport
+showtoolbar = g.getoption("showtoolbar")
+showscripts = g.getoption("showscripts")
+showpatterns = g.getoption("showpatterns")
+g.setoption("showtoolbar", False)
+g.setoption("showscripts", False)
+g.setoption("showpatterns", False)
 
 slideshow()
 g.show("")
 
-# restore original hashing state
-# turn off full screen mode!!!
+# restore original state
+if hidestatus: g.setoption("showstatusbar", False)
+if showtoolbar: g.setoption("showtoolbar", True)
+if showscripts: g.setoption("showscripts", True)
+if showpatterns: g.setoption("showpatterns", True)
