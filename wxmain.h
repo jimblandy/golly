@@ -85,6 +85,7 @@ public:
    int GetWarp();
    void SetWarp(int newwarp);
    void SetGenIncrement();
+   void ResetPattern();
 
    // view functions
    bool StatusVisible();
@@ -135,7 +136,6 @@ private:
    void ChangeGoToStop();
    void ChangeStopToGo();
    bool SaveStartingPattern();
-   void ResetPattern();
    void ShowRuleDialog();
 
    char currfile[4096];          // full path of current pattern file

@@ -22,15 +22,19 @@ Note that scripts don't have to use the glife package.
 - Describe each of Golly's scripting commands.
 
 <p>
-- Describe how Python errors are caught.
+- Discuss Golly's coordinate system (also used by glife).
+
+<p>
+- Describe how Python errors are caught and displayed???
 
 <p>
 - Describe how to abort a running script.
 
 <p>
 - Note that the current working directory is temporarily changed to the location
-of the selected script file.  Explain why.  Discuss use of appdir command (returns
-location of Golly app).
+of the selected script file.  This is so a save("foo.rle",...) command will save
+the file in the same directory as the script.
+Discuss use of appdir command which returns location of Golly app.
 
 </body>
 </html>

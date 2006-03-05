@@ -712,95 +712,109 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *optname;
-   int optval;
+   int oldval, newval;
 
-   if (!PyArg_ParseTuple(args, "zi", &optname, &optval)) return NULL;
+   if (!PyArg_ParseTuple(args, "zi", &optname, &newval)) return NULL;
 
    if (strcmp(optname, "autofit") == 0) {
-      if (autofit != (bool) optval)
+      oldval = autofit ? 1 : 0;
+      if (autofit != (bool) newval)
          mainptr->ToggleAutoFit();
 
    } else if (strcmp(optname, "hashing") == 0) {
-      if (hashing != (bool) optval) {
+      oldval = hashing ? 1 : 0;
+      if (hashing != (bool) newval) {
          mainptr->ToggleHashing();
          DoAutoUpdate();               // status bar color might change
       }
 
    } else if (strcmp(optname, "hyperspeed") == 0) {
-      if (hyperspeed != (bool) optval)
+      oldval = hyperspeed ? 1 : 0;
+      if (hyperspeed != (bool) newval)
          mainptr->ToggleHyperspeed();
 
    } else if (strcmp(optname, "fullscreen") == 0) {
-      if (mainptr->fullscreen != (bool) optval) {
+      oldval = mainptr->fullscreen ? 1 : 0;
+      if (mainptr->fullscreen != (bool) newval) {
          mainptr->ToggleFullScreen();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "mindelay") == 0) {
-      if (optval < 0) optval = 0;
-      if (optval > MAX_DELAY) optval = MAX_DELAY;
-      if (mindelay != optval) {
-         mindelay = optval;
+      oldval = mindelay;
+      if (newval < 0) newval = 0;
+      if (newval > MAX_DELAY) newval = MAX_DELAY;
+      if (mindelay != newval) {
+         mindelay = newval;
          mainptr->UpdateWarp();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "maxdelay") == 0) {
-      if (optval < 0) optval = 0;
-      if (optval > MAX_DELAY) optval = MAX_DELAY;
-      if (maxdelay != optval) {
-         maxdelay = optval;
+      oldval = maxdelay;
+      if (newval < 0) newval = 0;
+      if (newval > MAX_DELAY) newval = MAX_DELAY;
+      if (maxdelay != newval) {
+         maxdelay = newval;
          mainptr->UpdateWarp();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showpatterns") == 0) {
-      if (showpatterns != (bool) optval) {
+      oldval = showpatterns ? 1 : 0;
+      if (showpatterns != (bool) newval) {
          mainptr->ToggleShowPatterns();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showscripts") == 0) {
-      if (showscripts != (bool) optval) {
+      oldval = showscripts ? 1 : 0;
+      if (showscripts != (bool) newval) {
          mainptr->ToggleShowScripts();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showstatusbar") == 0) {
-      if (mainptr->StatusVisible() != (bool) optval) {
+      oldval = mainptr->StatusVisible() ? 1 : 0;
+      if (mainptr->StatusVisible() != (bool) newval) {
          mainptr->ToggleStatusBar();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showtoolbar") == 0) {
-      if (mainptr->GetToolBar()->IsShown() != (bool) optval) {
+      oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
+      if (mainptr->GetToolBar()->IsShown() != (bool) newval) {
          mainptr->ToggleToolBar();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "blackcells") == 0) {
-      if (blackcells != (bool) optval) {
-         blackcells = (bool) optval;
+      oldval = blackcells ? 1 : 0;
+      if (blackcells != (bool) newval) {
+         blackcells = (bool) newval;
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showgrid") == 0) {
-      if (showgridlines != (bool) optval) {
-         showgridlines = (bool) optval;
+      oldval = showgridlines ? 1 : 0;
+      if (showgridlines != (bool) newval) {
+         showgridlines = (bool) newval;
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showboldlines") == 0) {
-      if (showboldlines != (bool) optval) {
-         showboldlines = (bool) optval;
+      oldval = showboldlines ? 1 : 0;
+      if (showboldlines != (bool) newval) {
+         showboldlines = (bool) newval;
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "boldspacing") == 0) {
-      if (optval < 2) optval = 2;
-      if (optval > MAX_SPACING) optval = MAX_SPACING;
-      if (boldspacing != optval) {
-         boldspacing = optval;
+      oldval = boldspacing;
+      if (newval < 2) newval = 2;
+      if (newval > MAX_SPACING) newval = MAX_SPACING;
+      if (boldspacing != newval) {
+         boldspacing = newval;
          DoAutoUpdate();
       }
    
@@ -809,8 +823,9 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   // return old value (simplifies saving and restoring settings)
+   PyObject *result = Py_BuildValue("i", oldval);
+   return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -861,11 +876,143 @@ static PyObject *golly_run(PyObject *self, PyObject *args)
       if (ngens > 1) {
          bigint saveinc = curralgo->getIncrement();
          curralgo->setIncrement(ngens);
-         mainptr->NextGeneration(true);      // step by current increment
+         mainptr->NextGeneration(true);      // step by ngens
          curralgo->setIncrement(saveinc);
       } else {
          mainptr->NextGeneration(false);     // step 1 gen
       }
+      DoAutoUpdate();
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_step(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   mainptr->NextGeneration(true);      // step by current increment
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setstep(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int exp;
+
+   if (!PyArg_ParseTuple(args, "i", &exp)) return NULL;
+
+   mainptr->SetWarp(exp);
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getstep(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("i", mainptr->GetWarp());
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setbase(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int base;
+
+   if (!PyArg_ParseTuple(args, "i", &base)) return NULL;
+
+   if (base < 2) base = 2;
+   if (base > MAX_BASESTEP) base = MAX_BASESTEP;
+
+   if (hashing) {
+      hbasestep = base;
+   } else {
+      qbasestep = base;
+   }
+   mainptr->UpdateWarp();
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getbase(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("i", hashing ? hbasestep : qbasestep);
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_advance(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int where, ngens;
+
+   if (!PyArg_ParseTuple(args, "ii", &where, &ngens)) return NULL;
+
+   if (ngens > 0) {
+      if (viewptr->SelectionExists()) {
+         while (ngens > 0) {
+            ngens--;
+            if (where == 0)
+               mainptr->AdvanceSelection();
+            else
+               mainptr->AdvanceOutsideSelection();
+         }
+         DoAutoUpdate();
+      } else {
+         PyErr_SetString(PyExc_RuntimeError, "Bad advance call: no selection.");
+         return NULL;
+      }
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_reset(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (curralgo->getGeneration() != bigint::zero) {
+      mainptr->ResetPattern();
       DoAutoUpdate();
    }
 
@@ -1410,8 +1557,8 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *rect_list;
-
-   // also allow select() and select(x,y,wd,ht) ???!!!
+   int x, y, wd, ht;
+   
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
    int numitems = PyList_Size(rect_list);
@@ -1419,10 +1566,10 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
       // remove any existing selection
       viewptr->NoSelection();
    } else if (numitems == 4) {
-      int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-      int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-      int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-      int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+      x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+      y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+      wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+      ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
          PyErr_SetString(PyExc_RuntimeError, "Bad select call: width must be > 0.");
@@ -1690,7 +1837,7 @@ static PyMethodDef golly_methods[] = {
    { "store",        golly_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
    { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
    // editing
-   { "new",          golly_new,        METH_VARARGS, "create new universe and optionally set title" },
+   { "new",          golly_new,        METH_VARARGS, "create new universe and set window title" },
    { "cut",          golly_cut,        METH_VARARGS, "cut selection to clipboard" },
    { "copy",         golly_copy,       METH_VARARGS, "copy selection to clipboard" },
    { "clear",        golly_clear,      METH_VARARGS, "clear inside/outside selection" },
@@ -1712,10 +1859,17 @@ static PyMethodDef golly_methods[] = {
    { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
    // control
    { "run",          golly_run,        METH_VARARGS, "run current pattern for given number of gens" },
-   { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
-   { "getrule",      golly_getrule,    METH_VARARGS, "return current rule string" },
+   { "step",         golly_step,       METH_VARARGS, "run current pattern for current step" },
+   { "setstep",      golly_setstep,    METH_VARARGS, "set step exponent" },
+   { "getstep",      golly_getstep,    METH_VARARGS, "return current step exponent" },
+   { "setbase",      golly_setbase,    METH_VARARGS, "set base step" },
+   { "getbase",      golly_getbase,    METH_VARARGS, "return current base step" },
+   { "advance",      golly_advance,    METH_VARARGS, "advance inside/outside selection by given gens" },
+   { "reset",        golly_reset,      METH_VARARGS, "restore starting pattern" },
    { "getgen",       golly_getgen,     METH_VARARGS, "return current generation as string" },
    { "getpop",       golly_getpop,     METH_VARARGS, "return current population as string" },
+   { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
+   { "getrule",      golly_getrule,    METH_VARARGS, "return current rule string" },
    // viewing
    { "setpos",       golly_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       golly_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
@@ -1733,7 +1887,7 @@ static PyMethodDef golly_methods[] = {
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
-   // for internal use only (don't document)
+   // for internal use (don't document)
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
 };
@@ -1755,7 +1909,7 @@ static bool InitGollyModule()
    "   def __init__(self):\n"
    "      self.data = ''\n"
    "   def write(self, stuff):\n"
-   "      self.data = self.data + stuff\n"
+   "      self.data += stuff\n"
    "      golly.stderr(self.data)\n"
    "sys.stderr = StderrCatcher()\n"
    );
