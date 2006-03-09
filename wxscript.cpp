@@ -22,33 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
-// NOTE: Some of the code in this module is from the wxScript package
-// by Francesco Montorsi.  Here is Francesco's copyright notice:
-
-///////////////////////////////////////////////////////////////////////
-// wxScript classes                                                  //
-// Copyright (C) 2003 by Francesco Montorsi                          //
-//                                                                   //
-// This program is free software; you can redistribute it and/or     //
-// modify it under the terms of the GNU General Public License       //
-// as published by the Free Software Foundation; either version 2    //
-// of the License, or (at your option) any later version.            //
-//                                                                   //
-// This program is distributed in the hope that it will be useful,   //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of    //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the      //
-// GNU General Public License for more details.                      //
-//                                                                   //
-// You should have received a copy of the GNU General Public         //
-// License along with this program; if not, write to the Free        //
-// Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,   //
-// MA 02111-1307, USA.                                               //
-//                                                                   //
-// For any comment, suggestion or feature request, please contact    //
-// frm@users.sourceforge.net                                         //
-//                                                                   //
-///////////////////////////////////////////////////////////////////////
-
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
    #include "wx/wx.h"      // for all others include the necessary headers
@@ -57,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/filename.h"   // for wxFileName
 
 #include <limits.h>        // for INT_MAX
+#include <sys/wait.h>      // for wait!!!
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -78,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Python includes
 #ifdef HAVE_WCHAR_H
-#undef HAVE_WCHAR_H        // Python.h redefines this if we use Unicode mode
+#undef HAVE_WCHAR_H        // Python.h redefines this if we use Unicode
 #endif
 #include <Python.h>
 
@@ -86,191 +60,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // globals
 
-bool inscript = false;     // script is running?
+bool inscript = false;     // a script is running?
 bool autoupdate;           // update display after each change to current universe?
 wxString pyerror;          // Python error message
 wxString gollyloc;         // location of Golly app
 wxString scriptloc;        // location of script file
 char scriptkey;            // see golly_getkey and SetScriptKey
 
+// exception message set by AbortScript
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
-
-// =============================================================================
-
-// from Francesco's script.h:
-
-// this will be defined later
-class wxPython;
-
-// A singleton class.
-class wxScriptInterpreter
-{
-protected:
-
-   // The shared instance of the wxScriptInterpreter.
-   static wxPython *m_pPython;
-
-public:      // ctor & dtor
-
-   wxScriptInterpreter() {}
-   virtual ~wxScriptInterpreter() {}
-
-   //! The description of the last error.
-   static wxString m_strLastErr;
-
-public:      // static functions
-
-   //! Initializes the script interpreter.
-   static bool Init();
-
-   //! Deallocates the script interpreter.
-   static void Cleanup();
-
-   //! Load the given scriptfile and then returns an instance to the
-   //! scriptfile wrapper, or NULL if the file couldn't be loaded.
-   static bool Load(const wxString &filename);
-};
-
-// =============================================================================
-
-// from Francesco's scpython.h:
-
-// The wxPython interpreter.
-class wxPython : public wxScriptInterpreter
-{
-public:
-
-   // The current python module.
-   PyObject *m_pModule;
-
-   // The current dictionaries being used.
-   PyObject *m_pLocals, *m_pGlobals;
-
-public:
-   wxPython() {}
-   virtual ~wxPython() { Cleanup(); }
-
-   // Inits Python interpreter.
-   virtual bool Init();
-
-   // Undoes what Init() does.
-   virtual void Cleanup();
-
-   // Return true if the given script is loaded and executed.
-   virtual bool Load(const wxString &filename);
-};
-
-// =============================================================================
-
-// from Francesco's script.cpp:
-
-// setup static
-wxString wxScriptInterpreter::m_strLastErr;
-wxPython *wxScriptInterpreter::m_pPython = NULL;
-
-// ----------------------
-// wxSCRIPTINTERPRETER
-// ----------------------
-
-bool wxScriptInterpreter::Init()
-{
-   // remove previous instance, if present
-   Cleanup();
-
-   m_pPython = new wxPython();
-   return m_pPython->Init();
-}
-
-void wxScriptInterpreter::Cleanup()
-{
-   if (m_pPython) delete m_pPython;
-   m_pPython = NULL;
-}
-
-bool wxScriptInterpreter::Load(const wxString &filename)
-{
-   if (!wxFileName::FileExists(filename)) {
-      wxScriptInterpreter::m_strLastErr = wxT("The script file does not exist:\n") + filename;
-      return false;
-   }
-
-   return m_pPython->Load(filename);
-}
-
-// =============================================================================
-
-// from Francesco's scpython.cpp:
-
-// -----------------
-// wxPYTHON
-// -----------------
-
-bool wxPython::Init()
-{
-   // inizialize the python interpreter
-   Py_Initialize();
-
-   // initialize our "execution frame"
-   m_pModule = PyImport_AddModule("__main__");
-
-   // PyImport_AddModule returns a borrowed reference: we'll now transform
-   // it to a full reference...
-   Py_INCREF(m_pModule);
-
-   // we'll do the same for our dictionary...
-   m_pGlobals = PyModule_GetDict(m_pModule);
-   Py_INCREF(m_pGlobals);
-
-   // our locals dict will be a reference to the global one...
-   m_pLocals = m_pGlobals;
-   Py_INCREF(m_pLocals);
-
-   // everything was okay ?
-   return Py_IsInitialized() != 0;
-}
-
-void wxPython::Cleanup()
-{
-   // free all our references
-   Py_DECREF(m_pModule);
-   Py_DECREF(m_pGlobals);
-   Py_DECREF(m_pLocals);
-
-   // and everything else which is python-related
-   Py_Finalize();
-}
-
-bool wxPython::Load(const wxString &filename)
-{
-   wxString fname = filename;
-
-   #ifdef __WXMAC__
-      // convert fname from MacRoman to UTF8 so execfile can open names with 8-bit chars;
-      // may not be needed after switching to CVS HEAD???!!!
-      fname = wxString( fname.wc_str(wxConvLocal), wxConvUTF8 );
-   #endif
-
-   // if filename contains backslashes then we must convert them to "\\"
-   // to avoid "\a" being treated as escape char
-   fname.Replace("\\", "\\\\");
-
-   // build absolute path to Golly's Scripts folder
-   wxString scriptsdir = gollyloc + wxT("Scripts");
-   scriptsdir.Replace("\\", "\\\\");
-
-   // use PyRun_SimpleString to add Golly's Scripts folder to Python's
-   // import search list (so scripts anywhere can do "from glife import *")
-   // and then execute the given script
-   wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
-   command += wxT(" ; execfile('") + fname + wxT("')");
-   PyRun_SimpleString(command.c_str());
-
-   // note that PyRun_SimpleString returns -1 if an exception occurred,
-   // but we always return true because the error message (in pyerror)
-   // will be checked later at the end of RunScript
-
-   return true;
-}
 
 // =============================================================================
 
@@ -718,24 +516,24 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
 
    if (strcmp(optname, "autofit") == 0) {
       oldval = autofit ? 1 : 0;
-      if (autofit != (bool) newval)
+      if (autofit != (newval != 0))
          mainptr->ToggleAutoFit();
 
    } else if (strcmp(optname, "hashing") == 0) {
       oldval = hashing ? 1 : 0;
-      if (hashing != (bool) newval) {
+      if (hashing != (newval != 0)) {
          mainptr->ToggleHashing();
          DoAutoUpdate();               // status bar color might change
       }
 
    } else if (strcmp(optname, "hyperspeed") == 0) {
       oldval = hyperspeed ? 1 : 0;
-      if (hyperspeed != (bool) newval)
+      if (hyperspeed != (newval != 0))
          mainptr->ToggleHyperspeed();
 
    } else if (strcmp(optname, "fullscreen") == 0) {
       oldval = mainptr->fullscreen ? 1 : 0;
-      if (mainptr->fullscreen != (bool) newval) {
+      if (mainptr->fullscreen != (newval != 0)) {
          mainptr->ToggleFullScreen();
          DoAutoUpdate();
       }
@@ -762,50 +560,50 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
 
    } else if (strcmp(optname, "showpatterns") == 0) {
       oldval = showpatterns ? 1 : 0;
-      if (showpatterns != (bool) newval) {
+      if (showpatterns != (newval != 0)) {
          mainptr->ToggleShowPatterns();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showscripts") == 0) {
       oldval = showscripts ? 1 : 0;
-      if (showscripts != (bool) newval) {
+      if (showscripts != (newval != 0)) {
          mainptr->ToggleShowScripts();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showstatusbar") == 0) {
       oldval = mainptr->StatusVisible() ? 1 : 0;
-      if (mainptr->StatusVisible() != (bool) newval) {
+      if (mainptr->StatusVisible() != (newval != 0)) {
          mainptr->ToggleStatusBar();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showtoolbar") == 0) {
       oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
-      if (mainptr->GetToolBar()->IsShown() != (bool) newval) {
+      if (mainptr->GetToolBar()->IsShown() != (newval != 0)) {
          mainptr->ToggleToolBar();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "blackcells") == 0) {
       oldval = blackcells ? 1 : 0;
-      if (blackcells != (bool) newval) {
-         blackcells = (bool) newval;
+      if (blackcells != (newval != 0)) {
+         blackcells = (newval != 0);
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showgrid") == 0) {
       oldval = showgridlines ? 1 : 0;
-      if (showgridlines != (bool) newval) {
-         showgridlines = (bool) newval;
+      if (showgridlines != (newval != 0)) {
+         showgridlines = (newval != 0);
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showboldlines") == 0) {
       oldval = showboldlines ? 1 : 0;
-      if (showboldlines != (bool) newval) {
-         showboldlines = (bool) newval;
+      if (showboldlines != (newval != 0)) {
+         showboldlines = (newval != 0);
          DoAutoUpdate();
       }
 
@@ -1892,97 +1690,122 @@ static PyMethodDef golly_methods[] = {
    { NULL, NULL, 0, NULL }
 };
 
+// =============================================================================
+
+bool InitPython()
+{
+   // inizialize the python interpreter
+   Py_Initialize();
+
+   // everything was okay?
+   if (!Py_IsInitialized()) {
+      Warning("Could not initialize the Python interpreter!");
+      return false;
+   } else {
+      return true;
+   }
+}
+
 // -----------------------------------------------------------------------------
 
-static bool InitGollyModule()
+void CleanupPython()
+{
+   //!!! Py_Finalize();
+   
+   //!!! still see bad memory leaks (but at least no delays due to Py_Finalize)
+   int result = PyRun_SimpleString(
+      "sys.stderr.data = ''\n"
+      "import gc\n"
+      "gc.collect()\n"
+      "del gc.garbage[:]\n"
+   );
+   if (result < 0) Warning("PyRun_SimpleString failed!");
+}
+
+// -----------------------------------------------------------------------------
+
+bool InitGollyModule()
 {
    // allow Python to call the above golly_* routines
-   Py_InitModule3("golly", golly_methods, "Internal golly routines");
+   Py_InitModule3("golly", golly_methods, "internal golly routines");
 
    // accumulate Python messages sent to stderr and pass to golly_stderr;
    // note that we have to do this here rather than in __init__.py, otherwise
    // we can't detect SyntaxError exceptions
    int result = PyRun_SimpleString(
-   "import golly\n"
-   "import sys\n"
-   "class StderrCatcher:\n"
-   "   def __init__(self):\n"
-   "      self.data = ''\n"
-   "   def write(self, stuff):\n"
-   "      self.data += stuff\n"
-   "      golly.stderr(self.data)\n"
-   "sys.stderr = StderrCatcher()\n"
+      "import golly\n"
+      "import sys\n"
+      "class StderrCatcher:\n"
+      "   def __init__(self):\n"
+      "      self.data = ''\n"
+      "   def write(self, stuff):\n"
+      "      self.data += stuff\n"
+      "      golly.stderr(self.data)\n"
+      "sys.stderr = StderrCatcher()\n"
    );
 
    if (result < 0) {
       Warning("PyRun_SimpleString failed!");
       return false;
+   } else {
+      return true;
    }
-   
-   return true;
 }
 
-// =============================================================================
+// -----------------------------------------------------------------------------
 
-// Exported routines:
-
-void RunScript(const char* filename)
+void ExecuteScript(const wxString &filename)
 {
-   if ( inscript ) return;    // play safe and avoid re-entrancy
-
-   wxString fname = wxT(filename);
-   mainptr->showbanner = false;
-   statusptr->ClearMessage();
-   pyerror = wxEmptyString;
-   autoupdate = false;
-   
-   if (!wxScriptInterpreter::Init()) {
-      Warning("Could not initialize the Python interpreter!  Is it installed?");
-      wxScriptInterpreter::Cleanup();
-      return;
-   }
-   
-   if (!InitGollyModule()) {
-      wxScriptInterpreter::Cleanup();
+   if (!wxFileName::FileExists(filename)) {
+      wxString err = wxT("The script file does not exist:\n") + filename;
+      Warning(err.c_str());
       return;
    }
 
-   // temporarily change current directory to location of script
-   gollyloc = wxFileName::GetCwd();
-   if (gollyloc.Last() != wxFILE_SEP_PATH) gollyloc += wxFILE_SEP_PATH;
-   wxFileName fullname(fname);
-   fullname.Normalize();
-   scriptloc = fullname.GetPath();
-   if (scriptloc.Last() != wxFILE_SEP_PATH) scriptloc += wxFILE_SEP_PATH;
-   wxSetWorkingDirectory(scriptloc);
-   
-   // let user know we're busy running a script
-   wxSetCursor(*wxHOURGLASS_CURSOR);
-   viewptr->SetCursor(*wxHOURGLASS_CURSOR);
-   mainptr->UpdateToolBar(false);
-   mainptr->EnableAllMenus(false);
-   
-   inscript = true;
-   wxGetApp().PollerReset();
-
-   // execute the script
-   if (!wxScriptInterpreter::Load( fullname.GetFullPath() )) {
-      // assume m_strLastErr has been set
-      Warning(wxScriptInterpreter::m_strLastErr.c_str());
+   //!!! use this flag if we only want to initialize the interpreter once
+   static bool pyinited = false;
+   if (!pyinited) {
+      if (!InitPython()) return;
+       if (!InitGollyModule()) {
+         CleanupPython();
+         return;
+      }
+      pyinited = true;
    }
-   
-   // restore current directory to location of Golly app
-   wxSetWorkingDirectory(gollyloc);
 
-   wxScriptInterpreter::Cleanup();
-   
-   inscript = false;
-   
-   // update menu bar, cursor, viewport, status bar, tool bar, etc
-   mainptr->EnableAllMenus(true);
-   mainptr->UpdateEverything();
-   
-   // display any Python error message
+   wxString fname = filename;
+
+   #ifdef __WXMAC__
+      // convert fname from MacRoman to UTF8 so execfile can open names with 8-bit chars;
+      // may not be needed after switching to CVS HEAD???!!!
+      fname = wxString( fname.wc_str(wxConvLocal), wxConvUTF8 );
+   #endif
+
+   // if filename contains backslashes then we must convert them to "\\"
+   // to avoid "\a" being treated as escape char
+   fname.Replace("\\", "\\\\");
+
+   // build absolute path to Golly's Scripts folder
+   wxString scriptsdir = gollyloc + wxT("Scripts");
+   scriptsdir.Replace("\\", "\\\\");
+
+   // use PyRun_SimpleString to add Golly's Scripts folder to Python's
+   // import search list (so scripts anywhere can do "from glife import *")
+   // and then execute the given script
+   wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
+   command += wxT(" ; execfile('") + fname + wxT("')");
+   PyRun_SimpleString(command.c_str());
+
+   // note that PyRun_SimpleString returns -1 if an exception occurred;
+   // the error message (in pyerror) is checked at the end of RunScript
+
+   CleanupPython();
+}
+
+// -----------------------------------------------------------------------------
+
+void CheckPythonError()
+{
    if (!pyerror.IsEmpty()) {
       if (pyerror.Find(abortmsg) >= 0) {
          // error was caused by AbortScript so don't display pyerror
@@ -1993,6 +1816,67 @@ void RunScript(const char* filename)
          wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
       }
    }
+}
+
+// =============================================================================
+
+// exported routines
+
+void RunScript(const char* filename)
+{
+   if ( inscript ) return;    // play safe and avoid re-entrancy
+
+   wxString fname = wxT(filename);
+   mainptr->showbanner = false;
+   statusptr->ClearMessage();
+   pyerror = wxEmptyString;
+   autoupdate = false;
+
+   // temporarily change current directory to location of script
+   gollyloc = wxFileName::GetCwd();
+   if ( gollyloc.Last() != wxFILE_SEP_PATH ) gollyloc += wxFILE_SEP_PATH;
+   wxFileName fullname(fname);
+   fullname.Normalize();
+   scriptloc = fullname.GetPath();
+   if ( scriptloc.Last() != wxFILE_SEP_PATH ) scriptloc += wxFILE_SEP_PATH;
+   wxSetWorkingDirectory(scriptloc);
+   
+   // let user know we're busy running a script
+   wxSetCursor(*wxHOURGLASS_CURSOR);
+   viewptr->SetCursor(*wxHOURGLASS_CURSOR);
+   mainptr->UpdateToolBar(false);
+   mainptr->EnableAllMenus(false);
+   
+   wxGetApp().PollerReset();
+
+   /* avoid memory leaks??? can't seem to use fork in a wx app!!!
+   pid_t pid = fork();
+   if (pid == -1) {
+      Warning("fork failed!");
+   } else if (pid == 0) {
+      // in child process
+      Warning("in child");    // never see this!!!
+   */
+      inscript = true;
+      ExecuteScript( fullname.GetFullPath() );
+      inscript = false;
+   /*!!!
+      exit(0);
+   } else {
+      // in parent process, so wait for child to finish
+      wait(NULL);
+   }
+   */
+
+   // restore current directory to location of Golly app
+   wxSetWorkingDirectory(gollyloc);
+      
+   // update menu bar, cursor, viewport, status bar, tool bar, etc
+   mainptr->EnableAllMenus(true);
+   mainptr->UpdateEverything();
+   
+   // display any Python error message
+   CheckPythonError();
 }
 
 // -----------------------------------------------------------------------------

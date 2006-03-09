@@ -1,4 +1,4 @@
-# Oscar is an OSCillation AnalyzeR.
+# Oscar is an OSCillation AnalyzeR for Golly.
 # It uses Gabriel Nivasch's "keep minima" algorithm:
 #
 # For each generation, calculate a hash value for the pattern.  Keep all of
@@ -14,9 +14,9 @@
 # When the current hash matches one of the saved hashes, it is highly likely
 # the pattern is oscillating.  By keeping a corresponding list of generation
 # counts we can calculate the period.  We also keep lists of population
-# counts and bounding boxes that are used to reduce the chance of spurious
+# counts and bounding boxes; they are used to reduce the chance of spurious
 # oscillator detection due to hash collisions.  The bounding box info also
-# allows us to detect spaceships/knightships.
+# allows us to detect moving oscillators (spaceships/knightships).
 
 from glife import *
 import golly as g
@@ -39,7 +39,7 @@ def bigs2int(bigs):
 # ------------------------------------------------------------------------------
 
 def same_rects(r1, r2):
-   # return True if given rectangles are identical
+   # return True if the given rectangles are identical
    return (r1.x == r2.x) and (r1.wd == r2.wd) and \
           (r1.y == r2.y) and (r1.ht == r2.ht)
 
@@ -58,15 +58,17 @@ def show_spaceship_speed(period, deltax, deltay):
          # diagonal spaceship (deltax == deltay)
          if deltax > 1:
             speed += str(deltax)
-      g.show("Spaceship detected (speed = " + str(speed) + "c/" +str(period) + ")")
+      g.show("Spaceship detected (speed = " + speed + "c/" +str(period) + ")")
    else:
       # deltax != deltay and both > 0
       speed = str(deltay) + "," + str(deltax)
-      g.show("Knightship detected (speed = " + str(speed) + "c/" + str(period) + ")")
+      g.show("Knightship detected (speed = " + speed + "c/" + str(period) + ")")
 
 # ------------------------------------------------------------------------------
 
-def oscillation_detected():
+def oscillating():
+   # return True if the pattern is empty, stable or oscillating
+   
    # first get current pattern's bounding box
    prect = g.getrect()
    pbox = rect(prect)
@@ -136,7 +138,7 @@ g.setoption("showstatusbar", True)
 g.show("Checking for oscillation... (hit escape to abort)")
 
 oldsecs = clock()
-while not oscillation_detected():
+while not oscillating():
    g.run(1)
    newsecs = clock()
    if newsecs - oldsecs >= 1.0:     # show pattern every second
