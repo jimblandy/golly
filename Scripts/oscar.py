@@ -1,4 +1,4 @@
-# Oscar is an OSCillation AnalyzeR for Golly.
+# Oscar is an OSCillation AnalyzeR for use with Golly.
 # It uses Gabriel Nivasch's "keep minima" algorithm:
 #
 # For each generation, calculate a hash value for the pattern.  Keep all of
@@ -18,7 +18,7 @@
 # oscillator detection due to hash collisions.  The bounding box info also
 # allows us to detect moving oscillators (spaceships/knightships).
 
-from glife import *
+from glife import rect, pattern
 import golly as g
 from time import clock
 
@@ -40,6 +40,7 @@ def bigs2int(bigs):
 
 def same_rects(r1, r2):
    # return True if the given rectangles are identical
+   # (probably should add an "equal" method to rect class)
    return (r1.x == r2.x) and (r1.wd == r2.wd) and \
           (r1.y == r2.y) and (r1.ht == r2.ht)
 
@@ -78,8 +79,8 @@ def oscillating():
    
    # get current pattern and create hash of "normalized" version -- ie. shift
    # its top left corner to 0,0 -- so we can detect spaceships and knightships
-   patt = pattern( g.getcells(prect) )
-   h = hash( tuple( patt(-pbox.left, -pbox.top) ) )
+   currpatt = pattern( g.getcells(prect) )
+   h = hash( tuple( currpatt(-pbox.left, -pbox.top) ) )
    
    # determine where to insert h into hashlist
    pos = 0

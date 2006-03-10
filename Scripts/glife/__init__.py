@@ -1,5 +1,5 @@
 # Initialization script executed by using "from glife import *".
-# Based on python/life/__init__.py in PLife.
+# Based on python/life/__init__.py in Eugene Langvagen's PLife.
 
 import golly as golly
 import sys

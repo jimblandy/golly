@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/filename.h"   // for wxFileName
 
 #include <limits.h>        // for INT_MAX
-#include <sys/wait.h>      // for wait!!!
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -167,11 +166,8 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    wxFileName fullname(file_name);
    if (!fullname.IsAbsolute()) fullname = scriptloc + wxT(file_name);
 
-   // check given format
-   //!!!
-
    // only add file to Open Recent submenu if remember flag is non-zero
-   //!!! err = mainptr->SavePattern(fullname.GetFullPath(), format, remember != 0);
+   //!!! err = mainptr->SaveFile(fullname.GetFullPath(), format, remember != 0);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -466,10 +462,11 @@ static PyObject *golly_getpos(PyObject *self, PyObject *args)
 
    // convert position to x,y tuple
    PyObject *xytuple = PyTuple_New(2);
-   PyObject *x = PyInt_FromLong(bigx.toint());
-   PyObject *y = PyInt_FromLong(bigy.toint());
-   PyTuple_SetItem(xytuple, 0, x);
-   PyTuple_SetItem(xytuple, 1, y);
+   PyTuple_SetItem(xytuple, 0, PyInt_FromLong(bigx.toint()));
+   PyTuple_SetItem(xytuple, 1, PyInt_FromLong(bigy.toint()));
+   // note that PyTuple_SetItem steals the reference from PyInt_FromLong
+   // so we don't need to use Py_DECREF
+   
    return xytuple;
 }
 
@@ -896,8 +893,13 @@ static PyObject *golly_getpop(PyObject *self, PyObject *args)
 // helper routine used in calls that build cell lists
 static void AddCell(PyObject *list, long x, long y)
 {
-   PyList_Append(list, PyInt_FromLong(x));
-   PyList_Append(list, PyInt_FromLong(y));
+   PyObject *xo = PyInt_FromLong(x);
+   PyObject *yo = PyInt_FromLong(y);
+   PyList_Append(list, xo);
+   PyList_Append(list, yo);
+   // must decrement references to avoid Python memory leaks
+   Py_DECREF(xo);
+   Py_DECREF(yo);
 }   
 
 // -----------------------------------------------------------------------------
@@ -951,7 +953,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "zllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
-   PyObject *list = PyList_New (0);
+   PyObject *list = PyList_New(0);
 
    long x = 0, y = 0;
 
@@ -1011,12 +1013,12 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
-   new_list = PyList_New (0);
+   new_list = PyList_New(0);
 
-   int num_cells = PyList_Size (list) / 2;
+   int num_cells = PyList_Size(list) / 2;
    for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem (list, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem (list, 2 * n + 1) );
+      long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
+      long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
 
       AddCell(new_list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
    }
@@ -1046,7 +1048,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    // tempalgo->setrule( curralgo->getrule() );
    
    // copy cell list into temporary universe
-   int num_cells = PyList_Size (given_list) / 2;
+   int num_cells = PyList_Size(given_list) / 2;
    for (int n = 0; n < num_cells; n++) {
       long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
       long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
@@ -1136,7 +1138,7 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    tempalgo->setpoll(wxGetApp().Poller());
    
    // copy cell list into temporary universe
-   int num_cells = PyList_Size (given_list) / 2;
+   int num_cells = PyList_Size(given_list) / 2;
    for (int n = 0; n < num_cells; n++) {
       long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
       long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
@@ -1415,11 +1417,9 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
       long y = top.toint();
       long wd = right.toint() - x + 1;
       long ht = bottom.toint() - y + 1;
-        
-      PyList_Append(rect_list, PyInt_FromLong(x));
-      PyList_Append(rect_list, PyInt_FromLong(y));
-      PyList_Append(rect_list, PyInt_FromLong(wd));
-      PyList_Append(rect_list, PyInt_FromLong(ht));
+      
+      AddCell(rect_list, x, y);
+      AddCell(rect_list, wd, ht);
    }
    
    return rect_list;
@@ -1447,10 +1447,8 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
       long wd = viewptr->selright.toint() - x + 1;
       long ht = viewptr->selbottom.toint() - y + 1;
         
-      PyList_Append(rect_list, PyInt_FromLong(x));
-      PyList_Append(rect_list, PyInt_FromLong(y));
-      PyList_Append(rect_list, PyInt_FromLong(wd));
-      PyList_Append(rect_list, PyInt_FromLong(ht));
+      AddCell(rect_list, x, y);
+      AddCell(rect_list, wd, ht);
    }
    
    return rect_list;
@@ -1694,62 +1692,57 @@ static PyMethodDef golly_methods[] = {
 
 bool InitPython()
 {
-   // inizialize the python interpreter
-   Py_Initialize();
+   // only initialize the interpreter once (multiple Py_Initialize/Py_Finalize
+   // calls cause leaks of about 12K each time!)
+   static bool pyinited = false;
+   if (!pyinited) {
+      Py_Initialize();
+      if (!Py_IsInitialized()) {
+         Warning("Could not initialize the Python interpreter!");
+         return false;
+      }
+   
+      // allow Python to call the above golly_* routines
+      Py_InitModule3("golly", golly_methods, "internal golly routines");
+   
+      // accumulate Python messages sent to stderr and pass to golly_stderr;
+      // note that we have to do this here rather than in __init__.py
+      // otherwise we can't detect SyntaxError exceptions
+      int result = PyRun_SimpleString(
+         "import golly\n"
+         "import sys\n"
+         "class StderrCatcher:\n"
+         "   def __init__(self):\n"
+         "      self.data = ''\n"
+         "   def write(self, stuff):\n"
+         "      self.data += stuff\n"
+         "      golly.stderr(self.data)\n"
+         "sys.stderr = StderrCatcher()\n"
+      );
+      if (result < 0) Warning("StderrCatcher code failed!");
 
-   // everything was okay?
-   if (!Py_IsInitialized()) {
-      Warning("Could not initialize the Python interpreter!");
-      return false;
-   } else {
-      return true;
-   }
+      pyinited = true;
+   }   
+   return true;
 }
 
 // -----------------------------------------------------------------------------
 
 void CleanupPython()
 {
-   //!!! Py_Finalize();
+   // avoid calling Py_Finalize (except once when app quits and pyinited is true???!!!)
+   // Py_Finalize();
    
-   //!!! still see bad memory leaks (but at least no delays due to Py_Finalize)
+   // we don't call Py_Finalize to close stderr so we have to reset the data
    int result = PyRun_SimpleString(
       "sys.stderr.data = ''\n"
+      /* this is pointless
       "import gc\n"
       "gc.collect()\n"
       "del gc.garbage[:]\n"
+      */
    );
-   if (result < 0) Warning("PyRun_SimpleString failed!");
-}
-
-// -----------------------------------------------------------------------------
-
-bool InitGollyModule()
-{
-   // allow Python to call the above golly_* routines
-   Py_InitModule3("golly", golly_methods, "internal golly routines");
-
-   // accumulate Python messages sent to stderr and pass to golly_stderr;
-   // note that we have to do this here rather than in __init__.py, otherwise
-   // we can't detect SyntaxError exceptions
-   int result = PyRun_SimpleString(
-      "import golly\n"
-      "import sys\n"
-      "class StderrCatcher:\n"
-      "   def __init__(self):\n"
-      "      self.data = ''\n"
-      "   def write(self, stuff):\n"
-      "      self.data += stuff\n"
-      "      golly.stderr(self.data)\n"
-      "sys.stderr = StderrCatcher()\n"
-   );
-
-   if (result < 0) {
-      Warning("PyRun_SimpleString failed!");
-      return false;
-   } else {
-      return true;
-   }
+   if (result < 0) Warning("CleanupPython failed!");
 }
 
 // -----------------------------------------------------------------------------
@@ -1762,16 +1755,7 @@ void ExecuteScript(const wxString &filename)
       return;
    }
 
-   //!!! use this flag if we only want to initialize the interpreter once
-   static bool pyinited = false;
-   if (!pyinited) {
-      if (!InitPython()) return;
-       if (!InitGollyModule()) {
-         CleanupPython();
-         return;
-      }
-      pyinited = true;
-   }
+   if (!InitPython()) return;
 
    wxString fname = filename;
 
@@ -1849,24 +1833,9 @@ void RunScript(const char* filename)
    
    wxGetApp().PollerReset();
 
-   /* avoid memory leaks??? can't seem to use fork in a wx app!!!
-   pid_t pid = fork();
-   if (pid == -1) {
-      Warning("fork failed!");
-   } else if (pid == 0) {
-      // in child process
-      Warning("in child");    // never see this!!!
-   */
-      inscript = true;
-      ExecuteScript( fullname.GetFullPath() );
-      inscript = false;
-   /*!!!
-      exit(0);
-   } else {
-      // in parent process, so wait for child to finish
-      wait(NULL);
-   }
-   */
+   inscript = true;
+   ExecuteScript( fullname.GetFullPath() );
+   inscript = false;
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollyloc);
