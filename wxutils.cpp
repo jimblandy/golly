@@ -34,122 +34,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"
 
-// -----------------------------------------------------------------------------
-
 #ifdef __WXMAC__
-
 #include <Carbon/Carbon.h>
-
-// do our own Mac-specific warning and fatal dialogs using StandardAlert
-// so we can center dialogs on front window and also see modified app icon
-
-bool AppInBackground() {
-   ProcessSerialNumber frontPSN, currentPSN;
-   bool sameProcess = false;
-
-   GetCurrentProcess(&currentPSN);
-   GetFrontProcess(&frontPSN);
-   SameProcess(&currentPSN, &frontPSN, (Boolean *)&sameProcess);
-
-   return sameProcess == false;
-}
-
-void NotifyUser() {
-   NMRec myNMRec;
-   if ( AppInBackground() ) {
-      myNMRec.qType = nmType;
-      myNMRec.nmMark = 1;
-      myNMRec.nmIcon = NULL;
-      myNMRec.nmSound = NULL;
-      myNMRec.nmStr = NULL;
-      myNMRec.nmResp = NULL;
-      myNMRec.nmRefCon = 0;
-      if ( NMInstall(&myNMRec) == noErr ) {
-         // wait for resume event to bring us to foreground
-         do {
-            EventRef event;
-            EventTargetRef target;
-            if ( ReceiveNextEvent(0, NULL, kEventDurationNoWait, true, &event) == noErr ) {
-               target = GetEventDispatcherTarget();
-               SendEventToEventTarget(event, target);
-               ReleaseEvent(event);
-            }
-            Delay(6,NULL);                // don't hog CPU
-         } while ( AppInBackground() );
-         NMRemove(&myNMRec);
-      }
-   }
-}
-
-void MacWarning(const char *title, const char *msg) {
-   short itemHit;
-   AlertStdAlertParamRec alertParam;
-   Str255 ptitle, pmsg;
-
-   CopyCStringToPascal(title, ptitle);
-   CopyCStringToPascal(msg, pmsg);
-
-   NotifyUser();
-   alertParam.movable = true;
-   alertParam.helpButton = false;
-   alertParam.filterProc = NULL;
-   alertParam.defaultText = NULL;
-   alertParam.cancelText = NULL;
-   alertParam.otherText = NULL;
-   alertParam.defaultButton = kAlertStdAlertOKButton;
-   alertParam.cancelButton = 0;
-   alertParam.position = kWindowAlertPositionParentWindow;
-   StandardAlert(kAlertCautionAlert, ptitle, pmsg, &alertParam, &itemHit);
-}
-
-void MacFatal(const char *title, const char *msg) {
-   short itemHit;
-   AlertStdAlertParamRec alertParam;
-   Str255 ptitle, pmsg, pquit;
-
-   CopyCStringToPascal(title, ptitle);
-   CopyCStringToPascal(msg, pmsg);
-   CopyCStringToPascal("Quit", pquit);
-
-   NotifyUser();
-   alertParam.movable = true;
-   alertParam.helpButton = false;
-   alertParam.filterProc = NULL;
-   alertParam.defaultText = pquit;
-   alertParam.cancelText = NULL;
-   alertParam.otherText = NULL;
-   alertParam.defaultButton = kAlertStdAlertOKButton;
-   alertParam.cancelButton = 0;
-   alertParam.position = kWindowAlertPositionParentWindow;
-   StandardAlert(kAlertStopAlert, ptitle, pmsg, &alertParam, &itemHit);
-}
-
-#endif // __WXMAC__
+#endif
 
 // -----------------------------------------------------------------------------
 
 void Warning(const char *msg) {
    wxBell();
    wxSetCursor(*wxSTANDARD_CURSOR);
-   // use wxGetApp().GetAppName() and append " warning:" !!!
-   #ifdef __WXMAC__
-      MacWarning("Golly warning:", msg);
-   #else
-      wxMessageBox(_(msg), _("Golly warning:"), wxOK | wxICON_EXCLAMATION,
-                   wxGetActiveWindow());  // NULL on X11, ie. centered on screen
-   #endif
+   wxString title = wxGetApp().GetAppName() + _(" warning:");
+   wxMessageBox(_(msg), title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
 }
+
+// -----------------------------------------------------------------------------
 
 void Fatal(const char *msg) {
    wxBell();
    wxSetCursor(*wxSTANDARD_CURSOR);
-   // use wxGetApp().GetAppName() and append " error:" !!!
-   #ifdef __WXMAC__
-      MacFatal("Golly error:", msg);
-   #else
-      wxMessageBox(_(msg), _("Golly error:"), wxOK | wxICON_ERROR,
-                   wxGetActiveWindow());  // NULL on X11, ie. centered on screen
-   #endif
+   wxString title = wxGetApp().GetAppName() + _(" error:");
+   wxMessageBox(_(msg), title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
    exit(1);
 }
@@ -157,6 +61,7 @@ void Fatal(const char *msg) {
 // -----------------------------------------------------------------------------
 
 // globals for showing progress
+
 wxProgressDialog *progdlg = NULL;         // progress dialog
 #ifdef __WXX11__
    const int maxprogrange = 10000;        // maximum range must be < 32K on X11?
@@ -166,6 +71,8 @@ wxProgressDialog *progdlg = NULL;         // progress dialog
 long progstart;                           // starting time (in millisecs)
 long prognext;                            // when to update progress dialog
 char progtitle[128];                      // title for progress dialog
+
+// -----------------------------------------------------------------------------
 
 void BeginProgress(const char *dlgtitle) {
    if (progdlg) {
@@ -180,6 +87,8 @@ void BeginProgress(const char *dlgtitle) {
    // do we really need to do this???!!! maybe only on Mac???
    viewptr->SetCursor(*wxHOURGLASS_CURSOR);
 }
+
+// -----------------------------------------------------------------------------
 
 bool AbortProgress(double fraction_done, const char *newmsg) {
    long t = wxGetElapsedTime(false);
@@ -214,6 +123,8 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
       return false;           // don't abort
    }
 }
+
+// -----------------------------------------------------------------------------
 
 void EndProgress() {
    if (progdlg) {

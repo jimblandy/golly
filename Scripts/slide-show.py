@@ -1,4 +1,5 @@
 # Display all patterns in Golly's Patterns folder.
+# Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
 
 from glife import *
 import golly as g
@@ -11,16 +12,23 @@ inithash = g.getoption("hashing")
 
 # ------------------------------------------------------------------------------
 
+def readkey ():
+   while True:
+      ch = g.getkey()
+      if len(ch) > 0: return ch
+
+# ------------------------------------------------------------------------------
+
 def slideshow ():
    for root, dirs, files in os.walk(g.appdir() + "Patterns"):
       for name in files:
          # ignore hidden files (like .DS_Store on Mac)
          if not name.startswith("."):
             fullname = join(root, name)
-            g.open(fullname, 0)           # don't add file to Open Recent submenu
+            g.open(fullname, False)       # don't add file to Open Recent submenu
             g.update()
             g.show("Hit space to continue or any other key to stop the slide show...")
-            if g.getkey() != " ": return
+            if readkey() != " ": return
             g.new("")
             if inithash != g.getoption("hashing"):
                if inithash:

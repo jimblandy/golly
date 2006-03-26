@@ -328,7 +328,7 @@ const char *loadpattern(lifealgo &imp) {
 
 const char *build_err_str(const char *filename) {
    static char file_err_str[2048];
-   sprintf(file_err_str, "Can't open pattern file: %s", filename);
+   sprintf(file_err_str, "Can't open pattern file:\n%s", filename);
    return file_err_str;
 }
 

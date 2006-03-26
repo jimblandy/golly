@@ -34,11 +34,11 @@ void RunScript(const char* filename);
 // Return true if a script is currently running.
 bool InScript();
 
-// Call this in checkevents() if script is running and user hits escape key.
-void AbortScript();
+// Called from checkevents() if a script is running and user hits a key.
+// Returns true if the key is reserved for potential use by the script.
+bool PassKeyToScript(char key);
 
-// Call this in checkevents() if script is running and user hits non-escape key.
-// It allows a Python script to wait for keyboard input from the user.
-void SetScriptKey(char key);
+// Called when app quits to abort a running script and tidy up the Python interpreter.
+void FinishScripting();
 
 #endif

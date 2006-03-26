@@ -1,9 +1,13 @@
+# Glider guns used in this script are 'aligned', which means gliders start in the
+# origin and go SE.
+# Based on gun_demo.py from PLife (http://plife.sourceforge.net/).
+
 from glife.base import *
 from glife.gun24 import *
 from glife.gun30 import *
 from glife.gun46 import *
 
-# Glider guns used in this file are 'aligned', which means gliders start in the origin and go SE
+rule ()  # Life
 
 def mirror_gun (glider_gun):
 	"""mirror an 'aligned' glider gun and preserve its timing"""
@@ -34,6 +38,4 @@ all = \
 	compose_lwss_gun (gun30, 13, 11, 4) (0,  70) + lwss_eater (100,  70) + \
 	compose_lwss_gun (gun46, 22, 13, 3) (0, 130) + lwss_eater (100, 130)
 
-### all.save ("gun_demo.lif", "The same LWSS synthesis with different glider guns.")
-
-all.display ("gun_demo")
+all.display ("gun-demo")

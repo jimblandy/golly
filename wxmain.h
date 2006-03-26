@@ -55,13 +55,14 @@ public:
 
    // file functions
    void OpenFile(const char *path, bool remember = true);
-   void NewPattern();
+   void NewPattern(const char *title = "untitled");
    void CreateUniverse();
    void SetWindowTitle(const char *filename);
    void OpenPattern();
    void ToggleShowPatterns();
    void ToggleShowScripts();
    void SavePattern();
+   const char* SaveFile(const char *path, const char *format, bool remember);
    void OpenScript();
 
    // prefs functions

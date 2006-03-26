@@ -1,3 +1,5 @@
+# Based on alt_wicks.py from PLife (http://plife.sourceforge.net/).
+
 from glife import *
 
 rule ("B3/S135")
@@ -39,4 +41,4 @@ B = (head_b_c5[84] + converter_bc_c5 (0, -31)) [100] + tail_c_c5 (0, -56)
 ### Growing ship with c/3 head and c/5 tail.
 ### Extensible ship with two types of wicks inside.""")
 
-(A (-25, 0) + B (24, 0)).display("alt_wicks")
+(A (-25, 0) + B (24, 0)).display("alt-wicks")

@@ -16,7 +16,7 @@ PYTHON_LIB = -framework Python
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
-SHAREDFILES = Help README LICENSE
+SHAREDFILES = Help Scripts README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 
@@ -169,7 +169,7 @@ wxgolly.h wxmain.h wxutils.h wxprefs.h
 
 $(OBJDIR)/wxstatus.o: wxstatus.cpp wxstatus.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
 
 $(OBJDIR)/wxview.o: wxview.cpp wxview.h \

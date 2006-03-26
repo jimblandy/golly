@@ -1,3 +1,5 @@
+# Based on text_test.py from PLife (http://plife.sourceforge.net/).
+
 from glife.text import *
 from glife.gun256 import *
 
@@ -14,6 +16,4 @@ all += coe_rake_2 (0, 100)
 all += make_text ('010-212-323-434-545-656-767-878-989-090') (-160, -200)
 all += gun256_full
 
-### all.save ("text_test.lif")
-
-all.display ("text_test")
+all.display ("text-test")

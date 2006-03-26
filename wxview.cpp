@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection, CreatePasteImage
-#include "wxscript.h"      // for InScript, AbortScript, SetScriptKey
+#include "wxscript.h"      // for InScript, PassKeyToScript
 #include "wxview.h"
 
 #ifdef __WXMAC__
@@ -2504,6 +2504,11 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
    statusptr->ClearMessage();
+
+   if (InScript()) {
+      // some keys are reserved for potential use by the script
+      if (PassKeyToScript(key)) return;
+   }
    
    #ifdef __WXMSW__
       // space is an accelerator for Next menu item which is disabled
@@ -2551,16 +2556,6 @@ void PatternView::OnChar(wxKeyEvent& event)
 {
    // get translated keyboard event
    int key = event.GetKeyCode();
-
-   if ( InScript() ) {
-      if (key == WXK_ESCAPE) {
-         AbortScript();
-         return;
-      } else {
-         SetScriptKey(key);
-         return;                 // prevent all user interaction???!!!
-      }
-   }
 
    if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
       mainptr->StopGenerating();
@@ -2803,6 +2798,12 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
 
 void PatternView::OnScroll(wxScrollWinEvent& event)
 {
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+
    WXTYPE type = (WXTYPE)event.GetEventType();
    int orient = event.GetOrientation();
 

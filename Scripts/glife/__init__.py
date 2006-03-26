@@ -44,6 +44,13 @@ up_down = 1
 clockwise = 0
 anticlockwise = 1
 
+# for golly.setcursor
+draw = 0
+select = 1
+move = 2
+zoomin = 3
+zoomout = 4
+
 # Define some transformation matrices:
 
 identity = ( 1,  0,  0,  1)
@@ -127,6 +134,7 @@ rcw (rotate clockwise) and rccw (rotate counter-clockwise)."""
       golly.new (title)
       golly.putcells (self, x, y, *A)
       golly.fit ()
+      golly.setcursor (zoomin)
       return None
 
    def save (self, fn, desc = None):

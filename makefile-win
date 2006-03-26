@@ -23,7 +23,7 @@ PYTHON_LIB = python24.lib
 VERSION = 0.96
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
-SHAREDDIRS = Help Help\Lexicon
+SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife
 SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 SRCDIRS = bitmaps
@@ -370,7 +370,7 @@ wxgolly.h wxmain.h wxutils.h wxprefs.h
 
 $(OBJDIR)/wxstatus.obj: wxstatus.cpp wxstatus.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxstatus.cpp
 
 $(OBJDIR)/wxview.obj: wxview.cpp wxview.h \
@@ -416,6 +416,8 @@ srcdist:
 	mkdir $(RELEASENAME)-src\patterns
 	mkdir $(RELEASENAME)-src\src\Help
 	mkdir $(RELEASENAME)-src\src\Help\Lexicon
+	mkdir $(RELEASENAME)-src\src\Scripts
+	mkdir $(RELEASENAME)-src\src\Scripts\glife
 	mkdir $(RELEASENAME)-src\src\bitmaps
 	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-src\src
 	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-src\src\%F
@@ -433,6 +435,7 @@ bindist: all
 	-rmdir /s /q $(RELEASENAME)-win
 	mkdir $(RELEASENAME)-win
 	mkdir $(RELEASENAME)-win\Help
+	mkdir $(RELEASENAME)-win\Scripts
 	for %%F IN ($(BINFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-win
 	for %%F IN ($(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-win\%F
 	ren $(RELEASENAME)-win\README README.txt

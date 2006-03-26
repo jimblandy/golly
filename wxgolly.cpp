@@ -134,9 +134,10 @@ int wx_poll::checkevents()
       long t = wxGetElapsedTime(false);
       if (t > nextcheck) {
          nextcheck = t + 50;        // 20th of a sec
-         wxGetApp().Yield(true);
          #ifdef __WXMAC__
             CallYield();
+         #else
+            wxGetApp().Yield(true);
          #endif
       }
    #endif
@@ -240,6 +241,8 @@ void GollyApp::MacOpenFile(const wxString &fullPath)
 // app execution starts here
 bool GollyApp::OnInit()
 {
+   SetAppName(_("Golly"));    // for use in Warning/Fatal dialogs
+
    #ifdef __WXMAC__
       // prevent rectangle animation when windows open/close
       wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
@@ -315,7 +318,7 @@ bool GollyApp::OnInit()
       // mainptr->SetMinSize(wxSize(minmainwd, minmainht));
       // above works but moves window to default pos!!!
       // and calling Move clobbers effect of SetMinSize!!! sigh
-      // wxGetApp().Yield(true);
+      // Yield(true);
       // mainptr->Move(mainx, mainy);
    #endif
 

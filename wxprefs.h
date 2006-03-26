@@ -152,4 +152,10 @@ extern wxCursor *curs_zoomin;    // for zooming in to a clicked cell
 extern wxCursor *curs_zoomout;   // for zooming out from a clicked cell
 extern wxCursor *currcurs;       // set to one of the above cursors
 
+// convert given cursor to an index: 0 for curs_pencil, 1 for curs_cross, etc
+int CursorToIndex(wxCursor *curs);
+
+// convert given index to a cursor (NULL if i is not in 0..4)
+wxCursor* IndexToCursor(int i);
+
 #endif

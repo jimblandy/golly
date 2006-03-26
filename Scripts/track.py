@@ -1,3 +1,5 @@
+# Based on track.py from PLife (http://plife.sourceforge.net/).
+
 from glife.herschel import *
 
 text = """This file reproduces 'BTRACK' from Alan Hensel's collection

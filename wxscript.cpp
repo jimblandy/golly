@@ -59,12 +59,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // globals
 
+bool pyinited = false;     // Py_Initialize has been successfully called?
 bool inscript = false;     // a script is running?
 bool autoupdate;           // update display after each change to current universe?
 wxString pyerror;          // Python error message
 wxString gollyloc;         // location of Golly app
 wxString scriptloc;        // location of script file
-char scriptkey;            // see golly_getkey and SetScriptKey
+wxString scriptkeys;       // non-escape keys saved by PassKeyToScript
 
 // exception message set by AbortScript
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
@@ -74,7 +75,15 @@ const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 // The following golly_* routines can be called from Python scripts; some are
 // based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
 
-static bool ScriptAborted()
+void AbortScript()
+{
+   // raise an exception with a special message
+   PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
+}
+
+// -----------------------------------------------------------------------------
+
+bool ScriptAborted()
 {
    wxGetApp().Poller()->checkevents();
    
@@ -88,7 +97,7 @@ static bool ScriptAborted()
 
 // -----------------------------------------------------------------------------
 
-static void DoAutoUpdate()
+void DoAutoUpdate()
 {
    if (autoupdate) {
       inscript = false;
@@ -103,16 +112,11 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *title = NULL;
+   char *title;
 
    if (!PyArg_ParseTuple(args, "z", &title)) return NULL;
 
-   mainptr->NewPattern();
-   if (title != NULL && title[0] != 0) {
-      mainptr->SetWindowTitle(title);
-   } else {
-      // NewPattern has set title to "untitled"
-   }
+   mainptr->NewPattern(title);
    DoAutoUpdate();
 
    Py_INCREF(Py_None);
@@ -126,9 +130,9 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *file_name;
-   int remember;
+   int remember = 0;
 
-   if (!PyArg_ParseTuple(args, "zi", &file_name, &remember)) return NULL;
+   if (!PyArg_ParseTuple(args, "z|i", &file_name, &remember)) return NULL;
 
    if (IsScript(file_name)) {
       // avoid re-entrancy
@@ -157,9 +161,9 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *file_name;
    char *format;
-   int remember;
+   int remember = 0;
 
-   if (!PyArg_ParseTuple(args, "zzi", &file_name, &format, &remember)) return NULL;
+   if (!PyArg_ParseTuple(args, "zz|i", &file_name, &format, &remember)) return NULL;
 
    // convert non-absolute file_name to absolute path relative to scriptloc
    // so it can be selected later from Open Recent submenu
@@ -167,7 +171,11 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    if (!fullname.IsAbsolute()) fullname = scriptloc + wxT(file_name);
 
    // only add file to Open Recent submenu if remember flag is non-zero
-   //!!! err = mainptr->SaveFile(fullname.GetFullPath(), format, remember != 0);
+   const char *err = mainptr->SaveFile(fullname.GetFullPath().c_str(), format, remember != 0);
+   if (err) {
+      PyErr_SetString(PyExc_RuntimeError, err);
+      return NULL;
+   }
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -340,7 +348,7 @@ static PyObject *golly_shrink(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (viewptr->SelectionExists()) {
-      viewptr->ShrinkSelection(false);    // false = don't fit in viewport
+      viewptr->ShrinkSelection(false);    // false == don't fit in viewport
       DoAutoUpdate();
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad shrink call: no selection.");
@@ -361,9 +369,12 @@ static PyObject *golly_randfill(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "i", &perc)) return NULL;
 
+   if (perc < 1 || perc > 100) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad randfill call: percentage must be from 1 to 100.");
+      return NULL;
+   }
+
    if (viewptr->SelectionExists()) {
-      if (perc < 1) perc = 1;
-      if (perc > 100) perc = 100;
       int oldperc = randomfill;
       randomfill = perc;
       viewptr->RandomFill();
@@ -897,7 +908,7 @@ static void AddCell(PyObject *list, long x, long y)
    PyObject *yo = PyInt_FromLong(y);
    PyList_Append(list, xo);
    PyList_Append(list, yo);
-   // must decrement references to avoid Python memory leaks
+   // must decrement references to avoid Python memory leak
    Py_DECREF(xo);
    Py_DECREF(yo);
 }   
@@ -919,6 +930,7 @@ static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
       int ibottom = bottom.toint();
       int iright = right.toint();
       int cx, cy;
+      int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
             int skip = universe->nextcell(cx, cy);
@@ -934,6 +946,8 @@ static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
             } else {
                cx = iright;  // done this row
             }
+            cntr++;
+            if ((cntr % 4096) == 0 && ScriptAborted()) return false;
          }
       }
    }
@@ -947,13 +961,12 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s;
-
    long x0, y0, axx, axy, ayx, ayy;
 
    if (!PyArg_ParseTuple(args, "zllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
-   PyObject *list = PyList_New(0);
+   PyObject *outlist = PyList_New(0);
 
    long x = 0, y = 0;
 
@@ -965,7 +978,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
          case '\n': if (x) { x = 0; y++; } break;
          case '.': x++; break;
          case '*':
-            AddCell(list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+            AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
             x++;
             break;
          }
@@ -987,7 +1000,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
             case 'b': x += prefix; break;
             case 'o':
                for (int k = 0; k < prefix; k++, x++)
-                  AddCell(list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+                  AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
                break;
             }
             prefix = 0;
@@ -996,7 +1009,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
       }
    }
 
-   return list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1006,24 +1019,27 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
+   PyObject *inlist;
 
-   PyObject *list;
-   PyObject *new_list;
-
-   if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy))
+   if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &inlist, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
-   new_list = PyList_New(0);
+   PyObject *outlist = PyList_New(0);
 
-   int num_cells = PyList_Size(list) / 2;
+   int num_cells = PyList_Size(inlist) / 2;
    for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+      long x = PyInt_AsLong( PyList_GetItem(inlist, 2 * n) );
+      long y = PyInt_AsLong( PyList_GetItem(inlist, 2 * n + 1) );
 
-      AddCell(new_list, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+      AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+
+      if ((n % 4096) == 0 && ScriptAborted()) {
+         Py_DECREF(outlist);
+         return NULL;
+      }
    }
 
-   return new_list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1033,9 +1049,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int ngens = 0;
-
    PyObject *given_list;
-   PyObject *evolved_list;
 
    if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &ngens)) return NULL;
 
@@ -1052,7 +1066,14 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    for (int n = 0; n < num_cells; n++) {
       long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
       long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
+
       tempalgo->setcell(x, y, 1);
+
+      if ((n % 4096) == 0 && ScriptAborted()) {
+         tempalgo->endofpattern();
+         delete tempalgo;
+         return NULL;
+      }
    }
    tempalgo->endofpattern();
 
@@ -1063,12 +1084,15 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    mainptr->generating = false;
 
    // convert new pattern into a new cell list
-   evolved_list = PyList_New(0);
-   bool done = ExtractCells(evolved_list, tempalgo);
+   PyObject *outlist = PyList_New(0);
+   bool done = ExtractCells(outlist, tempalgo);
    delete tempalgo;
-   if (!done) return NULL;
+   if (!done) {
+      Py_DECREF(outlist);
+      return NULL;
+   }
 
-   return evolved_list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1077,7 +1101,6 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
-   PyObject *list;
    char *file_name;
 
    if (!PyArg_ParseTuple(args, "z", &file_name)) return NULL;
@@ -1109,14 +1132,17 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
       return NULL;
    }
    
-   // convert pattern into a cell list
-   list = PyList_New(0);
-   // shift cell coords so bbox's top left cell is at 0,0
-   bool done = ExtractCells(list, tempalgo, true);
+   // convert pattern into a cell list, shifting cell coords so that the
+   // bounding box's top left cell is at 0,0
+   PyObject *outlist = PyList_New(0);
+   bool done = ExtractCells(outlist, tempalgo, true);
    delete tempalgo;
-   if (!done) return NULL;
+   if (!done) {
+      Py_DECREF(outlist);
+      return NULL;
+   }
 
-   return list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1142,7 +1168,14 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    for (int n = 0; n < num_cells; n++) {
       long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
       long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
+
       tempalgo->setcell(x, y, 1);
+
+      if ((n % 4096) == 0 && ScriptAborted()) {
+         tempalgo->endofpattern();
+         delete tempalgo;
+         return NULL;
+      }
    }
    tempalgo->endofpattern();
 
@@ -1180,6 +1213,12 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
 
       // paste (possibly transformed) cell into current universe
       curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
+      
+      if ((n % 4096) == 0 && ScriptAborted()) {
+         curralgo->endofpattern();
+         mainptr->savestart = true;
+         return NULL;
+      }
    }
    curralgo->endofpattern();
    mainptr->savestart = true;
@@ -1200,7 +1239,7 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
    
    // convert pattern in given rect into a cell list
-   PyObject *cell_list = PyList_New(0);
+   PyObject *outlist = PyList_New(0);
 
    int numitems = PyList_Size(rect_list);
    if (numitems == 0) {
@@ -1213,33 +1252,42 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
       // first check that wd & ht are > 0
       if (wd <= 0) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: width must be > 0.");
+         Py_DECREF(outlist);
          return NULL;
       }
       if (ht <= 0) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: height must be > 0.");
+         Py_DECREF(outlist);
          return NULL;
       }
       int iright = ileft + wd - 1;
       int ibottom = itop + ht - 1;
       int cx, cy;
+      int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
             int skip = curralgo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
-               if (cx <= iright) AddCell(cell_list, cx, cy);
+               if (cx <= iright) AddCell(outlist, cx, cy);
             } else {
                cx = iright;  // done this row
+            }
+            cntr++;
+            if ((cntr % 4096) == 0 && ScriptAborted()) {
+               Py_DECREF(outlist);
+               return NULL;
             }
          }
       }
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: arg must be [] or [x,y,wd,ht].");
+      Py_DECREF(outlist);
       return NULL;
    }
 
-   return cell_list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1250,16 +1298,16 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
-   
-   // convert pattern in clipboard into a cell list, but where the first 2 items
-   // are the pattern's width and height (not necessarily the minimal bounding box
-   // because the pattern might have empty borders, or it might even be empty)
-   PyObject *clip_list = PyList_New(0);
 
    if (!mainptr->ClipboardHasText()) {
       PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: no pattern in clipboard.");
       return NULL;
    }
+   
+   // convert pattern in clipboard into a cell list, but where the first 2 items
+   // are the pattern's width and height (not necessarily the minimal bounding box
+   // because the pattern might have empty borders, or it might even be empty)
+   PyObject *outlist = PyList_New(0);
 
    // create a temporary universe for storing clipboard pattern
    lifealgo *tempalgo;
@@ -1272,6 +1320,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: pattern is too big.");
+         Py_DECREF(outlist);
          return NULL;
       }
       int itop = top.toint();
@@ -1281,10 +1330,11 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
       int wd = iright - ileft + 1;
       int ht = ibottom - itop + 1;
 
-      AddCell(clip_list, wd, ht);
+      AddCell(outlist, wd, ht);
 
       // extract cells from tempalgo
       int cx, cy;
+      int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
             int skip = tempalgo->nextcell(cx, cy);
@@ -1292,9 +1342,15 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
                // found next live cell in this row
                cx += skip;
                // shift cells so that top left cell of bounding box is at 0,0
-               AddCell(clip_list, cx - ileft, cy - itop);
+               AddCell(outlist, cx - ileft, cy - itop);
             } else {
                cx = iright;  // done this row
+            }
+            cntr++;
+            if ((cntr % 4096) == 0 && ScriptAborted()) {
+               delete tempalgo;
+               Py_DECREF(outlist);
+               return NULL;
             }
          }
       }
@@ -1303,10 +1359,11 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
    } else {
       // assume error message has been displayed
       delete tempalgo;
+      Py_DECREF(outlist);
       return NULL;
    }
 
-   return clip_list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1404,13 +1461,14 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *rect_list = PyList_New(0);
+   PyObject *outlist = PyList_New(0);
 
    if (!curralgo->isEmpty()) {
       bigint top, left, bottom, right;
       curralgo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getrect call: pattern is too big.");
+         Py_DECREF(outlist);
          return NULL;
       }
       long x = left.toint();
@@ -1418,11 +1476,11 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
       long wd = right.toint() - x + 1;
       long ht = bottom.toint() - y + 1;
       
-      AddCell(rect_list, x, y);
-      AddCell(rect_list, wd, ht);
+      AddCell(outlist, x, y);
+      AddCell(outlist, wd, ht);
    }
    
-   return rect_list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1434,12 +1492,13 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *rect_list = PyList_New(0);
+   PyObject *outlist = PyList_New(0);
 
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
                                   viewptr->selbottom, viewptr->selright) ) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getselrect call: selection is too big.");
+         Py_DECREF(outlist);
          return NULL;
       }
       long x = viewptr->selleft.toint();
@@ -1447,11 +1506,11 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
       long wd = viewptr->selright.toint() - x + 1;
       long ht = viewptr->selbottom.toint() - y + 1;
         
-      AddCell(rect_list, x, y);
-      AddCell(rect_list, wd, ht);
+      AddCell(outlist, x, y);
+      AddCell(outlist, wd, ht);
    }
    
-   return rect_list;
+   return outlist;
 }
 
 // -----------------------------------------------------------------------------
@@ -1475,7 +1534,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getcell (PyObject *self, PyObject *args)
+static PyObject *golly_getcell(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1484,6 +1543,43 @@ static PyObject *golly_getcell (PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
 
    PyObject *result = Py_BuildValue("i", curralgo->getcell(x, y));
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setcursor(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int newindex;
+
+   if (!PyArg_ParseTuple(args, "i", &newindex)) return NULL;
+
+   int oldindex = CursorToIndex(currcurs);
+   wxCursor* curs = IndexToCursor(newindex);
+   if (curs) {
+      viewptr->SetCursorMode(curs);
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad setcursor call: unexpected cursor index.");
+      return NULL;
+   }
+
+   // return old index (simplifies saving and restoring cursor)
+   PyObject *result = Py_BuildValue("i", oldindex);
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getcursor(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   PyObject *result = Py_BuildValue("i", CursorToIndex(currcurs));
    return result;
 }
 
@@ -1525,21 +1621,21 @@ static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 
 static PyObject *golly_getkey(PyObject *self, PyObject *args)
 {
-   // ScriptAborted() is called below
+   if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
-
-   scriptkey = 0;
-   while (scriptkey == 0) {
-      // call checkevents until SetScriptKey or AbortScript is called
-      if (ScriptAborted()) return NULL;
-   }
-
-   char s[2];
-   s[0] = scriptkey;
-   s[1] = 0;
    
+   char s[2];
+   if (scriptkeys.Length() == 0) {
+      // return empty string
+      s[0] = '\0';
+   } else {
+      // return first char in scriptkeys and then remove it
+      s[0] = scriptkeys.GetChar(0);
+      s[1] = '\0';
+      scriptkeys = scriptkeys.AfterFirst(s[0]);
+   }
    PyObject *result = Py_BuildValue("z", s);
    return result;
 }
@@ -1616,7 +1712,7 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
 
-   // save Python's stderr messages in global string for display after script finishes
+   // accumulate stderr messages in global string for display after script finishes
    pyerror = wxT(s);
 
    Py_INCREF(Py_None);
@@ -1653,6 +1749,8 @@ static PyMethodDef golly_methods[] = {
    { "getselrect",   golly_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
    { "setcell",      golly_setcell,    METH_VARARGS, "set given cell to given state" },
    { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
+   { "setcursor",    golly_setcursor,  METH_VARARGS, "set cursor (returns old cursor)" },
+   { "getcursor",    golly_getcursor,  METH_VARARGS, "return current cursor" },
    // control
    { "run",          golly_run,        METH_VARARGS, "run current pattern for given number of gens" },
    { "step",         golly_step,       METH_VARARGS, "run current pattern for current step" },
@@ -1677,9 +1775,9 @@ static PyMethodDef golly_methods[] = {
    { "update",       golly_update,     METH_VARARGS, "update display (viewport and status bar)" },
    { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
    // miscellaneous
-   { "setoption",    golly_setoption,  METH_VARARGS, "set given option to given value" },
+   { "setoption",    golly_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
    { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
-   { "getkey",       golly_getkey,     METH_VARARGS, "wait for user to hit a key, then return it" },
+   { "getkey",       golly_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
@@ -1692,10 +1790,9 @@ static PyMethodDef golly_methods[] = {
 
 bool InitPython()
 {
-   // only initialize the interpreter once (multiple Py_Initialize/Py_Finalize
-   // calls cause leaks of about 12K each time!)
-   static bool pyinited = false;
    if (!pyinited) {
+      // only initialize the Python interpreter once, mainly because multiple
+      // Py_Initialize/Py_Finalize calls cause leaks of about 12K each time!
       Py_Initialize();
       if (!Py_IsInitialized()) {
          Warning("Could not initialize the Python interpreter!");
@@ -1705,24 +1802,71 @@ bool InitPython()
       // allow Python to call the above golly_* routines
       Py_InitModule3("golly", golly_methods, "internal golly routines");
    
-      // accumulate Python messages sent to stderr and pass to golly_stderr;
-      // note that we have to do this here rather than in __init__.py
-      // otherwise we can't detect SyntaxError exceptions
-      int result = PyRun_SimpleString(
-         "import golly\n"
-         "import sys\n"
-         "class StderrCatcher:\n"
-         "   def __init__(self):\n"
-         "      self.data = ''\n"
-         "   def write(self, stuff):\n"
-         "      self.data += stuff\n"
-         "      golly.stderr(self.data)\n"
-         "sys.stderr = StderrCatcher()\n"
-      );
-      if (result < 0) Warning("StderrCatcher code failed!");
+      // catch Python messages sent to stderr and pass them to golly_stderr
+      if ( PyRun_SimpleString(
+            "import golly\n"
+            "import sys\n"
+            "class StderrCatcher:\n"
+            "   def __init__(self):\n"
+            "      self.data = ''\n"
+            "   def write(self, stuff):\n"
+            "      self.data += stuff\n"
+            "      golly.stderr(self.data)\n"
+            "sys.stderr = StderrCatcher()\n"
+            ) < 0
+         ) Warning("StderrCatcher code failed!");
 
+      // nicer to reload all modules in case changes were made by user;
+      // code comes from http://pyunit.sourceforge.net/notes/reloading.html
+      /* unfortunately it causes an AttributeError!!!
+      if ( PyRun_SimpleString(
+            "import __builtin__\n"
+            "class RollbackImporter:\n"
+            "   def __init__(self):\n"
+            "      self.previousModules = sys.modules.copy()\n"
+            "      self.realImport = __builtin__.__import__\n"
+            "      __builtin__.__import__ = self._import\n"
+            "      self.newModules = {}\n"
+            "   def _import(self, name, globals=None, locals=None, fromlist=[]):\n"
+            "      result = apply(self.realImport, (name, globals, locals, fromlist))\n"
+            "      self.newModules[name] = 1\n"
+            "      return result\n"
+            "   def uninstall(self):\n"
+            "      for modname in self.newModules.keys():\n"
+            "         if not self.previousModules.has_key(modname):\n"
+            "            del(sys.modules[modname])\n"
+            "      __builtin__.__import__ = self.realImport\n"
+            "rollbackImporter = RollbackImporter()\n"
+            ) < 0
+         ) Warning("RollbackImporter code failed!");
+      */
+      
       pyinited = true;
-   }   
+   } else {
+      // Py_Initialize has already been successfully called
+      if ( PyRun_SimpleString(
+            // Py_Finalize is not used to close stderr so reset it here
+            "sys.stderr.data = ''\n"
+
+            // reload all modules in case changes were made by user
+            /* this almost works except for strange error the 2nd time we run gun-demo.py!!!
+            "import sys\n"
+            "for m in sys.modules.keys():\n"
+            "   t = str(type(sys.modules[m]))\n"
+            "   if t.find('module') < 0 or m == 'golly' or m == 'sys' or m[0] == '_':\n"
+            "      pass\n"
+            "   else:\n"
+            "      reload(sys.modules[m])\n"
+            */
+
+            /* RollbackImporter code causes an error!!!
+            "if rollbackImporter: rollbackImporter.uninstall()\n"
+            "rollbackImporter = RollbackImporter()\n"
+            */
+            ) < 0
+         ) Warning("PyRun_SimpleString failed!");
+   }
+
    return true;
 }
 
@@ -1730,31 +1874,14 @@ bool InitPython()
 
 void CleanupPython()
 {
-   // avoid calling Py_Finalize (except once when app quits and pyinited is true???!!!)
+   // no longer call Py_Finalize here
    // Py_Finalize();
-   
-   // we don't call Py_Finalize to close stderr so we have to reset the data
-   int result = PyRun_SimpleString(
-      "sys.stderr.data = ''\n"
-      /* this is pointless
-      "import gc\n"
-      "gc.collect()\n"
-      "del gc.garbage[:]\n"
-      */
-   );
-   if (result < 0) Warning("CleanupPython failed!");
 }
 
 // -----------------------------------------------------------------------------
 
 void ExecuteScript(const wxString &filename)
 {
-   if (!wxFileName::FileExists(filename)) {
-      wxString err = wxT("The script file does not exist:\n") + filename;
-      Warning(err.c_str());
-      return;
-   }
-
    if (!InitPython()) return;
 
    wxString fname = filename;
@@ -1793,12 +1920,13 @@ void CheckPythonError()
    if (!pyerror.IsEmpty()) {
       if (pyerror.Find(abortmsg) >= 0) {
          // error was caused by AbortScript so don't display pyerror
-         statusptr->DisplayMessage("Script aborted.");
       } else {
+         pyerror.Replace("  File \"<string>\", line 1, in ?\n", "");
          wxBell();
          wxSetCursor(*wxSTANDARD_CURSOR);
-         wxMessageBox(pyerror, wxT("Python error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+         wxMessageBox(pyerror, wxT("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
       }
+      statusptr->DisplayMessage("Script aborted.");
    }
 }
 
@@ -1813,7 +1941,8 @@ void RunScript(const char* filename)
    wxString fname = wxT(filename);
    mainptr->showbanner = false;
    statusptr->ClearMessage();
-   pyerror = wxEmptyString;
+   pyerror.Clear();
+   scriptkeys.Clear();
    autoupdate = false;
 
    // temporarily change current directory to location of script
@@ -1833,9 +1962,14 @@ void RunScript(const char* filename)
    
    wxGetApp().PollerReset();
 
-   inscript = true;
-   ExecuteScript( fullname.GetFullPath() );
-   inscript = false;
+   if ( !wxFileName::FileExists(fullname.GetFullPath()) ) {
+      wxString err = wxT("The script file does not exist:\n") + fullname.GetFullPath();
+      Warning(err.c_str());
+   } else {
+      inscript = true;
+      ExecuteScript( fullname.GetFullPath() );
+      inscript = false;
+   }
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollyloc);
@@ -1852,12 +1986,12 @@ void RunScript(const char* filename)
 
 bool IsScript(const char *filename)
 {
-   // currently we only support Python scripts, so return true only if filename
+   // currently we only support Python scripts, so return true if filename
    // ends with ".py" (ignoring case)
    wxString fname = wxT(filename);
    wxString ext = fname.AfterLast(wxT('.'));
 
-   return ext.IsSameAs(wxT("py"), false);    // false = match any case
+   return ext.IsSameAs(wxT("py"), false);    // false == match any case
 }
 
 // -----------------------------------------------------------------------------
@@ -1869,19 +2003,36 @@ bool InScript()
 
 // -----------------------------------------------------------------------------
 
-// this is called from checkevents() if user hits escape key
-void AbortScript()
+bool PassKeyToScript(char key)
 {
+   // called from checkevents
    if (inscript) {
-      // raise an exception with a special message
-      PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
+      if (key == WXK_ESCAPE) {
+         AbortScript();
+         return true;
+      } else /* if (key == ' ' || key == 'Q' || key == WXK_RETURN || key == WXK_TAB) */ {
+               // if we want to allow some keyboard interaction while running a script
+               // then we'll need to change the way we disable UpdatePatternAndStatus!!!
+         
+         // save key for possible consumption by golly_getkey
+         scriptkeys += key;
+         return true;
+      }
    }
+   return false;
 }
 
 // -----------------------------------------------------------------------------
 
-// this is called from checkevents() if user hits non-escape key
-void SetScriptKey(char key)
+void FinishScripting()
 {
-   scriptkey = key;
+   // called when main window is closing (ie. app is quitting)
+   if (inscript) {
+      AbortScript();
+      wxSetWorkingDirectory(gollyloc);
+      inscript = false;
+   }
+   
+   // Py_Finalize can cause an obvious delay, so best not to call it
+   // if (pyinited) Py_Finalize();
 }

@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for hashing, mindelay, maxdelay, etc
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
+#include "wxscript.h"      // for InScript
 #include "wxstatus.h"
 
 // -----------------------------------------------------------------------------
@@ -48,6 +49,7 @@ const int BASELINE2 = 26;     // baseline of 2nd line
 
 void StatusBar::ClearMessage()
 {
+   if (InScript()) return;                   // let script control messages
    if (viewptr->waitingforclick) return;     // don't clobber message
    statusmsg[0] = 0;
    if (statusht > 0) {
@@ -361,6 +363,7 @@ bool StatusBar::ClickInStepBox(int x, int y)
 
 void StatusBar::OnMouseDown(wxMouseEvent& event)
 {
+   if (InScript()) return;    // let script control scale and step
    ClearMessage();
    if ( ClickInScaleBox(event.GetX(), event.GetY()) ) {
       if (viewptr->GetMag() != 0) {

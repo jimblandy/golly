@@ -1,15 +1,17 @@
 # Oscar is an OSCillation AnalyzeR for use with Golly.
+# Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
+
 # It uses Gabriel Nivasch's "keep minima" algorithm:
 #
 # For each generation, calculate a hash value for the pattern.  Keep all of
 # the record-breaking minimal hashes in a list, with the oldest first.
 # For example, after 5 generations the saved hash values might be:
 # 
-# 8 12 16 24 25,
+#   8 12 16 24 25,
 # 
 # If the next hash goes down to 13 then the list can be shortened:
 # 
-# 8 12 13.
+#   8 12 13.
 # 
 # When the current hash matches one of the saved hashes, it is highly likely
 # the pattern is oscillating.  By keeping a corresponding list of generation
@@ -47,6 +49,7 @@ def same_rects(r1, r2):
 # ------------------------------------------------------------------------------
 
 def show_spaceship_speed(period, deltax, deltay):
+   # we found a moving oscillator
    if period == 1:
       g.show("Spaceship detected (speed = c)")
    elif (deltax == deltay) or (deltax == 0) or (deltay == 0):

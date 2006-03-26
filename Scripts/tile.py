@@ -1,4 +1,5 @@
 # Tile current selection with pattern inside selection.
+# Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
 
 from glife import *
 import golly as g

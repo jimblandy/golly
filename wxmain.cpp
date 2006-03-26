@@ -643,7 +643,7 @@ void MainFrame::CreateUniverse()
    SetGenIncrement();
 }
 
-void MainFrame::NewPattern()
+void MainFrame::NewPattern(const char *title)
 {
    if (generating) return;
    savestart = false;
@@ -676,7 +676,7 @@ void MainFrame::NewPattern()
    }
 
    // window title will also show curralgo->getrule()
-   SetWindowTitle("untitled");
+   SetWindowTitle(title);
 
    UpdateEverything();
 }
@@ -1162,6 +1162,50 @@ void MainFrame::SavePattern()
          }
       }
    }
+}
+
+// called by script command to save current pattern to given file
+const char* MainFrame::SaveFile(const char *path, const char *format, bool remember)
+{
+   // check that given format is valid and allowed
+   bigint top, left, bottom, right;
+   int itop, ileft, ibottom, iright;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   
+   wxString fstring = wxT(format);
+   pattern_format pattfmt;
+   if ( fstring.IsSameAs("rle",false) ) {
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         return "Pattern is too big to save as RLE.";
+      }   
+      pattfmt = RLE_format;
+      itop = top.toint();
+      ileft = left.toint();
+      ibottom = bottom.toint();
+      iright = right.toint();
+   } else if ( fstring.IsSameAs("mc",false) ) {
+      if (!hashing) {
+         return "Macrocell format is only allowed if hashing.";
+      }
+      pattfmt = MC_format;
+      // writepattern will ignore itop, ileft, ibottom, iright
+      itop = ileft = ibottom = iright = 0;
+   } else {
+      return "Unknown pattern format.";
+   }   
+   
+   SetCurrentFile(path);
+   if (remember) AddRecentPattern(path);
+   SetWindowTitle( GetBaseName(path) );
+   const char *err = writepattern(path, *curralgo, pattfmt,
+                                  itop, ileft, ibottom, iright);
+   if (!err) {
+      if ( curralgo->getGeneration() == bigint::zero ) {
+         // no need to save starting pattern (ResetPattern can load file)
+         savestart = false;
+      }
+   }
+   return err;
 }
 
 // -----------------------------------------------------------------------------
@@ -2543,6 +2587,10 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    
    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
 
+   // abort any running script and tidy up; also restores current directory
+   // to location of Golly app so prefs file will be saved in correct place
+   FinishScripting();
+
    // save main window location and other user preferences
    SavePrefs();
    
@@ -2551,9 +2599,8 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
    #ifdef __WXX11__
       // avoid seg fault on X11
-      if (generating || InScript()) exit(0);
+      if (generating) exit(0);
    #else
-      if (InScript()) AbortScript();
       if (generating) StopGenerating();
    #endif
    
