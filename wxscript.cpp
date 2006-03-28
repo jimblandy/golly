@@ -22,6 +22,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
+/*
+   Golly uses an embedded Python interpreter to execute scripts.
+   Here is the official Python copyright notice:
+   
+   Copyright (c) 2001-2005 Python Software Foundation.
+   All Rights Reserved.
+   
+   Copyright (c) 2000 BeOpen.com.
+   All Rights Reserved.
+   
+   Copyright (c) 1995-2001 Corporation for National Research Initiatives.
+   All Rights Reserved.
+   
+   Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.
+   All Rights Reserved.
+*/
+
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
    #include "wx/wx.h"      // for all others include the necessary headers
