@@ -109,11 +109,12 @@ int infoht = 400;
 bool autofit = false;            // auto fit pattern while generating?
 bool hashing = false;            // use hlife algorithm?
 bool hyperspeed = false;         // use hyperspeed if supported by current algo?
-bool blackcells = true;          // live cells are black?
-bool showgridlines = true;       // display grid lines?
-bool buffered = true;            // use wxWdgets buffering to avoid flicker?
-bool showstatus = true;          // show status bar?
 bool showtool = true;            // show tool bar?
+bool showstatus = true;          // show status bar?
+bool showexact = false;          // show exact numbers in status bar?
+bool showgridlines = true;       // display grid lines?
+bool blackcells = true;          // live cells are black?
+bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 int randomfill = 50;             // random fill percentage (1..100)
 int maxhashmem = 300;            // maximum hash memory (in megabytes)
 int mingridmag = 2;              // minimum mag to draw grid lines
@@ -386,9 +387,10 @@ void SavePrefs()
       for (i=1; i<namedrules.GetCount(); i++)
          fprintf(f, "named_rule=%s\n", namedrules[i].c_str());
    }
-   fprintf(f, "show_status=%d\n", mainptr->StatusVisible() ? 1 : 0);
    fprintf(f, "show_tool=%d\n", mainptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
+   fprintf(f, "show_status=%d\n", mainptr->StatusVisible() ? 1 : 0);
+   fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
    fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
@@ -664,14 +666,17 @@ void GetPrefs()
       } else if (strcmp(keyword, "named_rule") == 0) {
          namedrules.Add(value);
 
-      } else if (strcmp(keyword, "show_status") == 0) {
-         showstatus = value[0] == '1';
-
       } else if (strcmp(keyword, "show_tool") == 0) {
          showtool = value[0] == '1';
 
       } else if (strcmp(keyword, "show_tips") == 0) {
          showtips = value[0] == '1';
+
+      } else if (strcmp(keyword, "show_status") == 0) {
+         showstatus = value[0] == '1';
+
+      } else if (strcmp(keyword, "show_exact") == 0) {
+         showexact = value[0] == '1';
 
       } else if (strcmp(keyword, "grid_lines") == 0) {
          showgridlines = value[0] == '1';

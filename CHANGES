@@ -9,6 +9,10 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: Added Show Exact Numbers option to View menu.
+AKT: getkey() command no longer returns an untranslated character.
+AKT: Fixed disabled menu item bug on OS 10.4 after closing a modal dlg.
+AKT: Mac app is now a Universal Binary.
 AKT: Renamed Flip Horizontally/Vertically to Flip Up-Down/Left-Right.
 AKT: More File menu items: Show Scripts, Set Script Folder.
 AKT: New File menu items: Run Script, Run Recent.

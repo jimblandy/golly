@@ -42,8 +42,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-const int BASELINE1 = 12;     // baseline of 1st line
-const int BASELINE2 = 26;     // baseline of 2nd line
+// the following is a bit messy but gives good results on all platforms
+
+const int LINEHT = 14;                    // distance between each baseline
+const int DESCHT = 4;                     // descender height
+const int STATUS_HT = 2*LINEHT+DESCHT;    // normal status bar height
+const int STATUS_EXHT = 7*LINEHT+DESCHT;  // height when showing exact numbers
+
+const int BASELINE1 = LINEHT-2;           // baseline of 1st line
+const int BOTGAP = 6;                     // to get baseline of message line
+
+// these baseline values are used when showexact is true
+const int GENLINE = 1*LINEHT-2;
+const int POPLINE = 2*LINEHT-2;
+const int SCALELINE = 3*LINEHT-2;
+const int STEPLINE = 4*LINEHT-2;
+const int XLINE = 5*LINEHT-2;
+const int YLINE = 6*LINEHT-2;
+
+// these horizontal offets are used when showexact is true
+int h_gen_ex, h_pop_ex, h_x_ex, h_y_ex;
 
 // -----------------------------------------------------------------------------
 
@@ -56,7 +74,9 @@ void StatusBar::ClearMessage()
       int wd, ht;
       GetClientSize(&wd, &ht);
       if (wd > 0 && ht > 0) {
-         wxRect r = wxRect( wxPoint(0,statusht/2), wxPoint(wd-1,ht-2) );
+         // update bottom line
+         wxRect r = wxRect( wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
+                            wxPoint(wd-1,ht-1) );
          Refresh(false, &r);
          // don't call Update() otherwise Win/X11 users see blue & yellow bands
          // when toggling hashing option
@@ -73,7 +93,9 @@ void StatusBar::DisplayMessage(const char *s)
       int wd, ht;
       GetClientSize(&wd, &ht);
       if (wd > 0 && ht > 0) {
-         wxRect r = wxRect( wxPoint(0,statusht/2), wxPoint(wd-1,ht-2) );
+         // update bottom line
+         wxRect r = wxRect( wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
+                            wxPoint(wd-1,ht-1) );
          Refresh(false, &r);
          // show message immediately
          Update();
@@ -104,7 +126,11 @@ void StatusBar::UpdateXYLocation()
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > h_xy && ht > 0) {
-      wxRect r = wxRect( wxPoint(h_xy, 0), wxPoint(wd-1, statusht/2) );
+      wxRect r;
+      if (showexact)
+         r = wxRect( wxPoint(0, XLINE+DESCHT-LINEHT), wxPoint(wd-1, YLINE+DESCHT) );
+      else
+         r = wxRect( wxPoint(h_xy, 0), wxPoint(wd-1, BASELINE1+DESCHT) );
       Refresh(false, &r);
       // no need to Update() immediately
    }
@@ -245,12 +271,64 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
 
    char strbuf[256];
    
-   if (updaterect.y < statusht/2) {
+   if (updaterect.y >= statusht-BOTGAP+DESCHT-LINEHT) {
+      // only show possible message in bottom line -- see below
+      
+   } else if (showexact) {
+      // might only need to display X and Y lines
+      if (updaterect.y < XLINE+DESCHT-LINEHT) {
+         DisplayText(dc, "Generation =", h_gen, GENLINE);
+         DisplayText(dc, curralgo == NULL ? "0" : curralgo->getGeneration().tostring(),
+                     h_gen_ex, GENLINE);
+   
+         DisplayText(dc, "Population =", h_gen, POPLINE);
+         const char *p = curralgo == NULL ? "0" : curralgo->getPopulation().tostring();
+         DisplayText(dc, *p == '-' ? "(pending)" : p, h_pop_ex, POPLINE);
+         
+         // no real need to show scale as an exact number???
+         if (viewptr->GetMag() < 0) {
+            sprintf(strbuf, "Scale = 2^%d:1", -viewptr->GetMag());
+         } else {
+            sprintf(strbuf, "Scale = 1:%d", 1 << viewptr->GetMag());
+         }
+         DisplayText(dc, strbuf, h_gen, SCALELINE);
+         
+         if (mainptr->GetWarp() < 0) {
+            // show delay in secs
+            sprintf(strbuf, "Delay = %gs", (double)GetCurrentDelay() / 1000.0);
+         } else {
+            // no real need to show step as an exact number???
+            if (hashing) {
+               sprintf(strbuf, "Step = %d^%d", hbasestep, mainptr->GetWarp());
+            } else {
+               sprintf(strbuf, "Step = %d^%d", qbasestep, mainptr->GetWarp());
+            }
+         }
+         DisplayText(dc, strbuf, h_gen, STEPLINE);
+      }
+      
+      DisplayText(dc, "X =", h_gen, XLINE);
+      DisplayText(dc, "Y =", h_gen, YLINE);
+      if (showxy) {
+         bigint xo, yo;
+         bigint xpos = currx;   xpos -= viewptr->originx;
+         bigint ypos = curry;   ypos -= viewptr->originy;
+         if (mathcoords) {
+            // Y values increase upwards
+            bigint temp = 0;
+            temp -= ypos;
+            ypos = temp;
+         }
+         DisplayText(dc, xpos.tostring(), h_x_ex, XLINE);
+         DisplayText(dc, ypos.tostring(), h_y_ex, YLINE);
+      }
+
+   } else {
       // show info in top line
       if (updaterect.x < h_xy) {
          // show all info
          sprintf(strbuf, "Generation=%s",
-                  curralgo == NULL ? "0" : Stringify(curralgo->getGeneration()));
+                 curralgo == NULL ? "0" : Stringify(curralgo->getGeneration()));
          DisplayText(dc, strbuf, h_gen, BASELINE1);
       
          double pop = curralgo == NULL ? 0.0 : curralgo->getPopulation().todouble();
@@ -298,8 +376,8 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
    }
 
    if (statusmsg[0]) {
-      // display status message on 2nd line
-      DisplayText(dc, statusmsg, h_gen, BASELINE2);
+      // display status message on bottom line
+      DisplayText(dc, statusmsg, h_gen, statusht - BOTGAP);
    }
 }
 
@@ -349,14 +427,20 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 bool StatusBar::ClickInScaleBox(int x, int y)
 {
-   return x >= h_scale && x <= h_step - 20 && y <= statusht/2;
+   if (showexact)
+      return x >= 0 && y > (SCALELINE+DESCHT-LINEHT) && y <= (SCALELINE+DESCHT);
+   else
+      return x >= h_scale && x <= h_step - 20 && y <= (BASELINE1+DESCHT);
 }
 
 // -----------------------------------------------------------------------------
 
 bool StatusBar::ClickInStepBox(int x, int y)
 {
-   return x >= h_step && x <= h_xy - 20 && y <= statusht/2;
+   if (showexact)
+      return x >= 0 && y > (STEPLINE+DESCHT-LINEHT) && y <= (STEPLINE+DESCHT);
+   else
+      return x >= h_step && x <= h_xy - 20 && y <= (BASELINE1+DESCHT);
 }
 
 // -----------------------------------------------------------------------------
@@ -435,6 +519,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    int mingap = 10;
    SetStatusFont(dc);
    h_gen = 6;
+   // when showexact is false:
    dc.GetTextExtent("Generation=9.999999e+999", &textwd, &textht);
    h_pop = h_gen + textwd + mingap;
    dc.GetTextExtent("Population=9.999999e+999", &textwd, &textht);
@@ -443,9 +528,19 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    h_step = h_scale + textwd + mingap;
    dc.GetTextExtent("Step=10^9999", &textwd, &textht);
    h_xy = h_step + textwd + mingap;
+   // when showexact is true:
+   dc.GetTextExtent("Generation = ", &textwd, &textht);
+   h_gen_ex = h_gen + textwd;
+   dc.GetTextExtent("Population = ", &textwd, &textht);
+   h_pop_ex = h_gen + textwd;
+   dc.GetTextExtent("X = ", &textwd, &textht);
+   h_x_ex = h_gen + textwd;
+   dc.GetTextExtent("Y = ", &textwd, &textht);
+   h_y_ex = h_gen + textwd;
    dc.EndDrawing();
 
-   statusht = STATUS_HT;     // status bar is initially visible
+   // status bar is initially visible
+   statusht = showexact ? STATUS_EXHT : STATUS_HT;
    showxy = false;
    #ifndef __WXMAC__
       statbitmap = NULL;

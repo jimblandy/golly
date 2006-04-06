@@ -6,14 +6,21 @@ For version 1.0:
 A - Preserve comments in rle/mc file when saving pattern to an existing file.
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
-    and display suitable message in status bar.
+    and display suitable message in status bar. Or maybe just add
+    Gabriel's oscillation detection as an option (see oscar.py).
 
-A - Add Gabriel's oscillation detection as an option (see oscar.py).
+B - Finish 1D rule support:
+  - qlife display needs to be turned upside down.  Simplest solution
+    may be to alter rule0 table in qlifealgo::setrule().
+  - Change text in Rule dialog.
+  - Prevent odd-numbered 1D rules (only feasible in toroidal universe).
+  - Decide how to store 1D rule in RLE file -- probably time to implement
+    some simple RLE extensions via comment lines like this:
+    #RLE+ rule=w110 gen=23
 
-B - Finish 1D rule support.  Basically works except for qlife display being
-    upside down (so just alter rule0 table in qlifealgo::setrule?).
-    Also prevent odd-numbered W rules (only feasible in toroidal universe).
-    Decide how to store 1D rule in RLE file -- time for #RLE+ extensions?!
+A - Replace separate Go and Stop buttons with a single button, optionally
+    animated to show galaxy phases.  Looks like I'll need to avoid using
+    wxToolBar (probably good anyway, as it causes other bugs).
 
 For future versions:
 --------------------
@@ -34,8 +41,6 @@ T - Improve batchmode.
 
 - Support reading/writing of PNG/JPEG/GIF/TIFF files.  When reading,
   use wxImage to convert graphic to b&w bitmap.
-
-- See if we can reduce app size.  If wx docs no help then ask wx-users.
 
 - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
   avoid wxToolBar and implement our own simple tool bar stuff.
@@ -65,8 +70,7 @@ User suggestions:
 -----------------
 
 [Nick Gotts]
-- Need a way to see the exact number of generations, population size, and
-  mouse coordinates (and copy them to clipboard).
+- Need a way to copy exact gen/pop counts to clipboard.
 
 [Paul Chapman]
 - Combine the start and stop toolbar buttons into a single toggle.
@@ -77,7 +81,6 @@ User suggestions:
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
 - Allow diagonal selection rectangles.
-- More available zoom scales would be nice, e.g. 1:3 and 1:6.
 
 [Dave Greene]
 - Support a split-screen view of the universe.

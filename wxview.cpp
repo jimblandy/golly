@@ -2410,10 +2410,11 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case '8':   SetPixelsPerCell(8); break;
       case '6':   SetPixelsPerCell(16); break;
 
+      case '\'':  mainptr->ToggleToolBar(); break;
+      case ';':   mainptr->ToggleStatusBar(); break;
+      case 'e':   mainptr->ToggleExactNumbers(); break;
       case 'l':   ToggleGridLines(); break;
       case 'b':   ToggleVideo(); break;
-      case ';':   mainptr->ToggleStatusBar(); break;
-      case '\'':  mainptr->ToggleToolBar(); break;
       case 'i':   mainptr->ShowPatternInfo(); break;
       case ',':   mainptr->ShowPrefsDialog(); break;
       case 'p':   mainptr->ToggleShowPatterns(); break;
@@ -2504,21 +2505,6 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
    statusptr->ClearMessage();
-
-   if (InScript()) {
-      // some keys are reserved for potential use by the script
-      if (PassKeyToScript(key)) return;
-   }
-   
-   #ifdef __WXMSW__
-      // space is an accelerator for Next menu item which is disabled
-      // when generating so space won't be seen by PatternView::OnChar
-      // (for some reason wxMac has no such problem)
-      if ( mainptr->generating && key == ' ' ) {
-         mainptr->StopGenerating();
-         return;
-      }
-   #endif
    
    if (key == WXK_SHIFT) {
       // pressing shift key temporarily toggles zoom in/out cursor;
@@ -2557,6 +2543,11 @@ void PatternView::OnChar(wxKeyEvent& event)
    // get translated keyboard event
    int key = event.GetKeyCode();
 
+   if (InScript()) {
+      // let script decide what to do with the key
+      if (PassKeyToScript(key)) return;
+   }
+
    if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
       mainptr->StopGenerating();
       return;
@@ -2575,18 +2566,13 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
-   #ifndef __WXMSW__
-      // need these tests here because wxX11 doesn't seem to process accelerators
-      // before EVT_CHAR handler and so NextGeneration is not called from OnMenu;
-      // and 1st call of wxGetKeyState on wxMac causes a long delay -- sheesh
-      if ( key == ' ' && event.ShiftDown() ) {
-         mainptr->AdvanceOutsideSelection();
-         return;
-      } else if ( key == ' ' && event.ControlDown() ) {
-         mainptr->AdvanceSelection();
-         return;
-      }
-   #endif
+   if ( key == ' ' && event.ShiftDown() ) {
+      mainptr->AdvanceOutsideSelection();
+      return;
+   } else if ( key == ' ' && event.ControlDown() ) {
+      mainptr->AdvanceSelection();
+      return;
+   }
 
    // this was added to test Fatal, but could be useful to quit without saving prefs
    if ( key == 17 || (key == 'q' && event.ControlDown()) ) {

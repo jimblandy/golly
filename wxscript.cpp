@@ -1932,9 +1932,11 @@ void ExecuteScript(const wxString &filename)
 
 // -----------------------------------------------------------------------------
 
-void CheckPythonError()
+bool CheckPythonError()
 {
-   if (!pyerror.IsEmpty()) {
+   if (pyerror.IsEmpty()) {
+      return false;
+   } else {
       if (pyerror.Find(abortmsg) >= 0) {
          // error was caused by AbortScript so don't display pyerror
       } else {
@@ -1944,6 +1946,7 @@ void CheckPythonError()
          wxMessageBox(pyerror, wxT("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
       }
       statusptr->DisplayMessage("Script aborted.");
+      return true;
    }
 }
 
@@ -1961,6 +1964,12 @@ void RunScript(const char* filename)
    pyerror.Clear();
    scriptkeys.Clear();
    autoupdate = false;
+
+   // save some settings for restoring later
+   bool oldscripts = showscripts;
+   bool oldpatterns = showpatterns;
+   bool oldstatus = mainptr->StatusVisible();
+   bool oldtool = mainptr->GetToolBar()->IsShown();
 
    // temporarily change current directory to location of script
    gollyloc = wxFileName::GetCwd();
@@ -1990,13 +1999,19 @@ void RunScript(const char* filename)
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollyloc);
+   
+   // display any Python error message
+   if (CheckPythonError()) {
+      // error occurred or script aborted so best to restore some settings
+      if (showscripts != oldscripts) mainptr->ToggleShowScripts();
+      if (showpatterns != oldpatterns) mainptr->ToggleShowPatterns();
+      if (mainptr->StatusVisible() != oldstatus) mainptr->ToggleStatusBar();
+      if (mainptr->GetToolBar()->IsShown() != oldtool) mainptr->ToggleToolBar();
+   }
       
    // update menu bar, cursor, viewport, status bar, tool bar, etc
    mainptr->EnableAllMenus(true);
    mainptr->UpdateEverything();
-   
-   // display any Python error message
-   CheckPythonError();
 }
 
 // -----------------------------------------------------------------------------
@@ -2024,12 +2039,19 @@ bool PassKeyToScript(char key)
 {
    // called from checkevents
    if (inscript) {
-      if (key == WXK_ESCAPE) {
+      // !!! allow golly_getkey to see escape by having a global abortkey which is
+      // set to WXK_ESCAPE at the start of each script but can be changed by
+      // a golly_setabort(ch) command;  setabort("") would disable any escape key
+      if (key == (char)WXK_ESCAPE) {
          AbortScript();
          return true;
-      } else /* if (key == ' ' || key == 'Q' || key == WXK_RETURN || key == WXK_TAB) */ {
-               // if we want to allow some keyboard interaction while running a script
-               // then we'll need to change the way we disable UpdatePatternAndStatus!!!
+      } else {
+         // !!! scripts could allow normal keyboard interaction by doing this:
+         // g.dokey( g.getkey() )
+         // the golly_dokey(ch) command would pass ch (if not \0) to viewptr->ProcessKey
+         // and then do an update;
+         // ditto for mouse interaction???!!! ie. g.doclick( g.getclick() ) where
+         // getclick returns [] or [x,y,button,shift,ctrl,alt]
          
          // save key for possible consumption by golly_getkey
          scriptkeys += key;

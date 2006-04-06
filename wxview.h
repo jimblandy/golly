@@ -98,6 +98,11 @@ public:
    void FitInView(int force);
    int CellVisible(const bigint &x, const bigint &y);
 
+   // process keyboard and mouse events
+   void ProcessKey(int key, bool shiftdown);
+   void ProcessControlClick(int x, int y);
+   void ProcessClick(int x, int y, bool shiftdown);
+
    // data
    bool waitingforclick;         // waiting for paste click?
    bool drawingcells;            // drawing cells due to dragging mouse?
@@ -131,11 +136,6 @@ private:
    void OnDragTimer(wxTimerEvent& event);
    void OnScroll(wxScrollWinEvent& event);
    void OnEraseBackground(wxEraseEvent& event);
-
-   // process keyboard and mouse events
-   void ProcessKey(int key, bool shiftdown);
-   void ProcessControlClick(int x, int y);
-   void ProcessClick(int x, int y, bool shiftdown);
    
    // edit functions
    void ShowDrawing();

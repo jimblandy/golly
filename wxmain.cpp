@@ -166,8 +166,9 @@ enum {
    // wxID_ZOOM_IN,
    // wxID_ZOOM_OUT,
    ID_SET_SCALE,
-   ID_STATUS,
    ID_TOOL,
+   ID_STATUS,
+   ID_EXACT,
    ID_GRID,
    ID_VIDEO,
    ID_BUFF,
@@ -395,16 +396,23 @@ void MainFrame::EnableAllMenus(bool enable)
    #endif
 }
 
-// update menu bar items according to the current state
+// update menu bar items according to the given state
 void MainFrame::UpdateMenuItems(bool active)
 {
    wxMenuBar *mbar = GetMenuBar();
    wxToolBar *tbar = GetToolBar();
    bool textinclip = ClipboardHasText();
    if (mbar) {
-      // disable most items if main window is inactive
-      if (viewptr->waitingforclick)
-         active = false;
+      if (viewptr->waitingforclick) active = false;
+      
+      #ifdef __WXMAC__
+         // fix prob on OS 10.4 after a modal dialog closes??? test on G4!!!
+         if (!active && (!GetHelpFrame() || !GetHelpFrame()->IsActive())
+                     && (!GetInfoFrame() || !GetInfoFrame()->IsActive()) ) {
+            return;
+         }
+      #endif
+      
       mbar->Enable(wxID_NEW,           active && !generating);
       mbar->Enable(wxID_OPEN,          active && !generating);
       mbar->Enable(ID_OPEN_CLIP,       active && !generating && textinclip);
@@ -459,8 +467,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(wxID_ZOOM_IN, active && viewptr->GetMag() < MAX_MAG);
       mbar->Enable(wxID_ZOOM_OUT, active);
       mbar->Enable(ID_SET_SCALE, active);
-      mbar->Enable(ID_STATUS,    active);
       mbar->Enable(ID_TOOL,      active);
+      mbar->Enable(ID_STATUS,    active);
+      mbar->Enable(ID_EXACT,     active);
       mbar->Enable(ID_GRID,      active);
       mbar->Enable(ID_VIDEO,     active);
       #ifdef __WXMAC__
@@ -479,8 +488,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_AUTO,       autofit);
       mbar->Check(ID_HASH,       hashing);
       mbar->Check(ID_HYPER,      hyperspeed);
-      mbar->Check(ID_STATUS,     StatusVisible());
       mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
+      mbar->Check(ID_STATUS,     StatusVisible());
+      mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_VIDEO,      blackcells);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
@@ -579,8 +589,18 @@ void MainFrame::MySetTitle(const char *title)
 {
    #ifdef __WXMAC__
       // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
+      /* CopyCStringToPascal is deprecated
       Str255 ptitle;
       CopyCStringToPascal(title, ptitle);
+      */
+      unsigned char ptitle[255];
+      unsigned int tlen = strlen(title);
+      if (tlen > sizeof(ptitle) - 1) tlen = sizeof(ptitle) - 1;
+      ptitle[0] = (unsigned char)tlen;
+      if (tlen > 0) {
+         char *dest = (char *)&ptitle[1];
+         strncpy(dest, title, tlen);
+      }
       SetWTitle( (OpaqueWindowPtr*)this->MacGetWindowRef(),
                  (unsigned char const *)ptitle);
    #else
@@ -1917,20 +1937,6 @@ void MainFrame::NextGeneration(bool useinc)
       // wxBell();
       return;
    }
-   
-   #ifdef __WXMSW__
-      // on Windows we do these tests here because space is an accelerator
-      // for ID_NEXT and so we get called from OnMenu;
-      // NOTE: we avoid using wxGetKeyState on wxMac because the first call
-      // causes a ridiculously long delay -- 2 secs on my 400MHz G4!!!
-      if ( !useinc && wxGetKeyState(WXK_SHIFT) ) {
-         AdvanceOutsideSelection();
-         return;
-      } else if ( !useinc && wxGetKeyState(WXK_CONTROL) ) {
-         AdvanceSelection();
-         return;
-      }
-   #endif
 
    if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
@@ -2127,11 +2133,27 @@ void MainFrame::ToggleStatusBar()
          statusptr->Move(-100, -100);
       #endif
    } else {
-      statusptr->statusht = STATUS_HT;
+      statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
       statusptr->SetSize(0, 0, wd, statusptr->statusht);
    }
    ResizeSplitWindow();
    UpdateEverything();
+}
+
+void MainFrame::ToggleExactNumbers()
+{
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   showexact = !showexact;
+   if (StatusVisible()) {
+      statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
+      statusptr->SetSize(0, 0, wd, statusptr->statusht);
+      ResizeSplitWindow();
+      UpdateEverything();
+   } else {
+      // show the status bar using new size
+      ToggleStatusBar();
+   }
 }
 
 void MainFrame::ToggleToolBar()
@@ -2226,7 +2248,7 @@ void MainFrame::ToggleFullScreen()
          // now show status bar if necessary;
          // note that even if it's visible we may have to resize width
          if (restorestatus) {
-            statusptr->statusht = STATUS_HT;
+            statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
             int wd, ht;
             GetClientSize(&wd, &ht);
             statusptr->SetSize(0, 0, wd, statusptr->statusht);
@@ -2351,8 +2373,9 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SCALE_4:        viewptr->SetPixelsPerCell(4); break;
       case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
       case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
-      case ID_STATUS:         ToggleStatusBar(); break;
       case ID_TOOL:           ToggleToolBar(); break;
+      case ID_STATUS:         ToggleStatusBar(); break;
+      case ID_EXACT:          ToggleExactNumbers(); break;
       case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_VIDEO:          viewptr->ToggleVideo(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
@@ -2725,8 +2748,9 @@ MainFrame::MainFrame()
    fileMenu->Append(ID_SCRIPT_DIR, _("Set Script Folder..."));
    fileMenu->AppendSeparator();
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
-      fileMenu->Append(wxID_PREFERENCES, _("Preferences...\t,"));
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
+      // use non-Ctrl shortcut because it can't be used when menu is disabled
+      fileMenu->Append(wxID_PREFERENCES, _("Preferences..."));
    #else
       // on the Mac the Preferences item gets moved to the app menu
       fileMenu->Append(wxID_PREFERENCES, _("Preferences...\tCtrl+,"));
@@ -2737,8 +2761,14 @@ MainFrame::MainFrame()
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
    editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
-   editMenu->Append(ID_CLEAR, _("Clear\tDelete"));
-   editMenu->Append(ID_OUTSIDE, _("Clear Outside\tShift+Delete"));
+   #ifdef __WXMSW__
+      // avoid non-Ctrl shortcut because it can't be used when menu is disabled
+      editMenu->Append(ID_CLEAR, _("Clear"));
+      editMenu->Append(ID_OUTSIDE, _("Clear Outside"));
+   #else
+      editMenu->Append(ID_CLEAR, _("Clear\tDelete"));
+      editMenu->Append(ID_OUTSIDE, _("Clear Outside\tShift+Delete"));
+   #endif
    editMenu->AppendSeparator();
    editMenu->Append(ID_PASTE, _("Paste\tCtrl+V"));
    editMenu->Append(ID_PMODE, _("Paste Mode"), pmodeSubMenu);
@@ -2759,20 +2789,23 @@ MainFrame::MainFrame()
 
    controlMenu->Append(ID_GO, _("Go\tCtrl+G"));
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
-      controlMenu->Append(ID_STOP, _("Stop\t."));
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
+      // use non-Ctrl shortcut because it can't be used when menu is disabled
+      controlMenu->Append(ID_STOP, _("Stop"));
+      controlMenu->Append(ID_NEXT, _("Next"));
+      controlMenu->Append(ID_STEP, _("Next Step"));
    #else
       controlMenu->Append(ID_STOP, _("Stop\tCtrl+."));
+      controlMenu->Append(ID_NEXT, _("Next\tSpace"));
+      controlMenu->Append(ID_STEP, _("Next Step\tTab"));
    #endif
-   // why no space symbol/word after Next item on wxMac???!!!
-   controlMenu->Append(ID_NEXT, _("Next\tSpace"));
-   controlMenu->Append(ID_STEP, _("Next Step\tTab"));
    controlMenu->Append(ID_RESET, _("Reset\tCtrl+R"));
    controlMenu->AppendSeparator();
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
-      controlMenu->Append(ID_FASTER, _("Faster\t+"));
-      controlMenu->Append(ID_SLOWER, _("Slower\t-"));
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
+      // use non-Ctrl shortcut because it can't be used when menu is disabled
+      controlMenu->Append(ID_FASTER, _("Faster"));
+      controlMenu->Append(ID_SLOWER, _("Slower"));
    #else
       controlMenu->Append(ID_FASTER, _("Faster\tCtrl++"));
       controlMenu->Append(ID_SLOWER, _("Slower\tCtrl+-"));
@@ -2797,9 +2830,10 @@ MainFrame::MainFrame()
    viewMenu->Append(ID_RESTORE00, _("Restore Origin\tCtrl+9"));
    viewMenu->AppendSeparator();
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
-      viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\t]"));
-      viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\t["));
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
+      // use non-Ctrl shortcut because it can't be used when menu is disabled
+      viewMenu->Append(wxID_ZOOM_IN, _("Zoom In"));
+      viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out"));
    #else
       viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\tCtrl+]"));
       viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\tCtrl+["));
@@ -2807,13 +2841,15 @@ MainFrame::MainFrame()
    viewMenu->Append(ID_SET_SCALE, _("Set Scale"), scaleSubMenu);
    viewMenu->AppendSeparator();
    #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcuts
-      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\t;"));
-      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\t'"));
+      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
+      // use non-Ctrl shortcut because it can't be used when menu is disabled
+      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar"));
+      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar"));
    #else
-      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\tCtrl+;"));
       viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\tCtrl+'"));
+      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\tCtrl+;"));
    #endif
+   viewMenu->AppendCheckItem(ID_EXACT, _("Show Exact Numbers\tCtrl+E"));
    viewMenu->AppendCheckItem(ID_GRID, _("Show Grid Lines\tCtrl+L"));
    viewMenu->AppendCheckItem(ID_VIDEO, _("Black on White\tCtrl+B"));
    viewMenu->AppendCheckItem(ID_BUFF, _("Buffered"));
@@ -2955,14 +2991,15 @@ MainFrame::MainFrame()
 
    // wxStatusBar can only appear at bottom of frame so we use our own
    // status bar class which creates a child window at top of frame
-   statusptr = new StatusBar(this, 0, 0, wd, STATUS_HT);
+   int statht = showexact ? STATUS_EXHT : STATUS_HT;
+   statusptr = new StatusBar(this, 0, 0, wd, statht);
    if (statusptr == NULL) Fatal("Failed to create status bar!");
    
    // create a split window with pattern/script directory in left pane
    // and pattern viewport in right pane
    splitwin = new wxSplitterWindow(this, wxID_ANY,
-                                   wxPoint(0, STATUS_HT),
-                                   wxSize(wd, ht - STATUS_HT),
+                                   wxPoint(0, statht),
+                                   wxSize(wd, ht - statht),
                                    #ifdef __WXMSW__
                                    wxSP_BORDER |
                                    #endif
@@ -2971,12 +3008,18 @@ MainFrame::MainFrame()
 
    patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
                                       wxDefaultPosition, wxDefaultSize,
-                                      wxNO_BORDER, _T("All files (*.*)|*.*"));
+                                      wxNO_BORDER,
+                                      _T("All files (*)|*")
+                                     );
    if (patternctrl == NULL) Fatal("Failed to create pattern directory control!");
 
    scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
                                      wxDefaultPosition, wxDefaultSize,
-                                     wxNO_BORDER, _T("Python scripts (*.py)|*.py"));
+                                     wxNO_BORDER,
+                                     // using *.py prevents seeing a folder alias or
+                                     // sym link so best to show all files???
+                                     _T("Python scripts|*.py")
+                                    );
    if (scriptctrl == NULL) Fatal("Failed to create script directory control!");
 
    // reduce indent

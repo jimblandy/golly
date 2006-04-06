@@ -91,6 +91,7 @@ public:
    // view functions
    bool StatusVisible();
    void ToggleStatusBar();
+   void ToggleExactNumbers();
    void ToggleToolBar();
    void ToggleFullScreen();
    void ShowPatternInfo();

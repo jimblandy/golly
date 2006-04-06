@@ -58,11 +58,12 @@ extern int infoht;
 extern bool autofit;             // auto fit pattern while generating?
 extern bool hashing;             // use hlife algorithm?
 extern bool hyperspeed;          // use hyperspeed if supported by current algo?
-extern bool blackcells;          // live cells are black?
-extern bool showgridlines;       // display grid lines?
-extern bool buffered;            // use wxWdgets buffering to avoid flicker?
-extern bool showstatus;          // show status bar?
 extern bool showtool;            // show tool bar?
+extern bool showstatus;          // show status bar?
+extern bool showexact;           // show exact numbers in status bar?
+extern bool showgridlines;       // display grid lines?
+extern bool blackcells;          // live cells are black?
+extern bool buffered;            // use wxWdgets buffering to avoid flicker?
 extern int randomfill;           // random fill percentage (1..100)
 extern int maxhashmem;           // maximum hash memory (in megabytes)
 extern int mingridmag;           // minimum mag to draw grid lines

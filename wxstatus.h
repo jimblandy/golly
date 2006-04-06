@@ -60,7 +60,7 @@ public:
    wxFont* GetStatusFont() { return statusfont; }
    int GetTextAscent() { return textascent; }
 
-   // status bar height (STATUS_HT if visible, 0 if not visible)
+   // status bar height (0 if not visible, else STATUS_HT or STATUS_EXHT)
    int statusht;
    
 private:
@@ -99,6 +99,7 @@ private:
    wxBrush *brush_hlife;         // for background if hashing
 };
 
-const int STATUS_HT = 32;        // status bar height (enough for 2 lines)
+extern const int STATUS_HT;      // normal status bar height
+extern const int STATUS_EXHT;    // height when showing exact numbers
 
 #endif

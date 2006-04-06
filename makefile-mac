@@ -1,8 +1,16 @@
-# Makefile for Mac OS X version of Golly using wxWidgets.
+# Makefile for building Mac OS X version of Golly using wxWidgets.
+# It assumes you've installed wxWidgets with commands like these:
+#
+# cd <BUILD_DIR>
+# ../configure --with-mac --enable-universal_binary --disable-shared
+# make
+#
+# If necessary, change WX_RELEASE to a newer version (eg. 2.7).
 # Change WX_DIR to where you installed wxWidgets and
-# BUILD_DIR to where you built the wx libraries.
+# chANGE BUILD_DIR to where you built the wx libraries.
 
-WX_DIR = /HD/wxWidgets/wxAll-2.6.2
+WX_RELEASE = 2.6
+WX_DIR = /HD/wxWidgets/wxMac-2.6.3
 BUILD_DIR = $(WX_DIR)/build-osx
 APP_NAME = Golly
 APP_VERSION = 0.96
@@ -12,7 +20,9 @@ ICON_FILE = app.icns
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
-PYTHON_LIB = -framework Python
+PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework Python -framework CoreServices -framework Foundation
+#!!! PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+#!!! -u __dummy -u _PyMac_Error -framework System Python.framework/Versions/2.3/Python -framework CoreServices -framework Foundation
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -20,28 +30,32 @@ SHAREDFILES = Help Scripts README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 
-CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${BUILD_DIR}/lib/wx/include/mac-ansi-release-static-2.6 \
-   -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
-   -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
-LDFLAGS = -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
+### Variables: ###
+
+LIBDIRNAME = $(BUILD_DIR)/lib
 TOOLKIT = MAC
 TOOLKIT_LOWERCASE = mac
 TOOLKIT_VERSION = 
-EXTRALIBS = -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System \
-   -lz -lpthread -liconv
-EXTRALIBS_GUI = -lpng -lz -ljpeg -ltiff -framework WebKit
-
-### Variables: ###
-
-WX_RELEASE = 2.6
-LIBDIRNAME = $(BUILD_DIR)/lib
-CXXFLAGS = -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
-   $(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) $(__DLLFLAG_p) $(CPPFLAGS) \
-   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -fno-common
 
 CXXC = g++
 ### bk-deps script can be used to create *.d files containing all dependences
 ### CXXC = $(BUILD_DIR)/bk-deps g++
+
+CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${BUILD_DIR}/lib/wx/include/mac-ansi-release-static-2.6 \
+   -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
+   -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
+
+CXXFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
+   -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
+   $(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) $(__DLLFLAG_p) $(CPPFLAGS) \
+   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -fno-strict-aliasing -fno-common
+
+LDFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
+   -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
+
+EXTRALIBS = -lz -lpthread -liconv
+EXTRALIBS_GUI = -framework WebKit
 
 ### put .o files in a Mac-specific subdir to avoid conflict with .o files created by X11 build
 OBJDIR = ObjMac
@@ -54,11 +68,16 @@ OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDI
 
 PORTNAME = $(TOOLKIT_LOWERCASE)$(TOOLKIT_VERSION)
 WXBASEPORT = _carbon
+###WXDEBUGFLAG = d
+###WXUNICODEFLAG = u
 __WXLIB_HTML_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_html-$(WX_RELEASE)
 __WXLIB_ADV_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_adv-$(WX_RELEASE)
 __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_core-$(WX_RELEASE)
 __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_EXPAT_p = -lwxexpat$(WXDEBUGFLAG)-$(WX_RELEASE)
+__LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
+__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
+__LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 ### Targets: ###
 
@@ -72,8 +91,9 @@ clean:
 	rm -rf $(APP_NAME).app
 
 golly.bin: $(OBJFILES)
-	g++ -o $@ $(OBJFILES) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
-   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LIB)
+	$(CXXC) -o $@ $(OBJFILES) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
+   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) \
+   $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LINK)
 
 $(APP_NAME).app/Contents/PkgInfo: golly.bin Info.plist.in $(ICON_FILE)
 	mkdir -p $(APP_NAME).app/Contents
