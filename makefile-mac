@@ -20,9 +20,9 @@ ICON_FILE = app.icns
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
+# following python command doesn't generate correct info on OS 10.4!!!
+# PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework Python -framework CoreServices -framework Foundation
-#!!! PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
-#!!! -u __dummy -u _PyMac_Error -framework System Python.framework/Versions/2.3/Python -framework CoreServices -framework Foundation
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)

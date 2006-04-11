@@ -1630,30 +1630,29 @@ int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
 }
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char *hlifealgo::writeNativeFormat(FILE *f) {
+const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    int depth = node_depth(root) ;
    fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
    fputs("\n", f) ;
-   if (!global_liferules.isRegularLife())
+   if (!global_liferules.isRegularLife()) {
+      // write non-Life rule
       fprintf(f, "#R %s\n", global_liferules.getrule()) ;
+   }
+   if (comments && comments[0]) {
+      // write given comment line(s)
+      fputs(comments, f);
+   }
    /* this is the old way; commented out.
    cellcounter = 0 ;
    writecell(f, root, depth) ;
    */
    /* this is the new two-pass way */
-   // AKT: writepattern() does this:
-   // lifebeginprogress("Writing pattern file") ;
    cellcounter = 0 ;
    writecell_2p1(root, depth) ;
    writecells = cellcounter ;
    cellcounter = 0 ;
    writecell_2p2(f, root, depth) ;
-   // AKT: writepattern() does this:
-   // lifeendprogress() ;
    /* end new two-pass way */
    aftercalcpop2(root, depth, 0) ;
-   // AKT: writepattern() does this:
-   // if (isaborted())
-   //    return "File contains truncated pattern.";
    return 0 ;
 }

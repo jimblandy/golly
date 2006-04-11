@@ -79,8 +79,28 @@ void AddRun (FILE *f,
 }
 
 // write current pattern to file using RLE format
-const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int right)
+const char *writerle(FILE *f, char *comments, lifealgo &imp,
+                     int top, int left, int bottom, int right)
 {
+   char *endcomms = NULL;
+   if (comments && comments[0]) {
+      // write given comment line(s) -- can't just do fputs(comments,f)
+      // because comments might include arbitrary text after the "!"
+      char *p = comments;
+      while (*p == '#') {
+         while (*p != '\n') p++;
+         p++;
+      }
+      if (p != comments) {
+         char savech = *p;
+         *p = '\0';
+         fputs(comments, f);
+         *p = savech;
+      }
+      // any comment lines not starting with # will be written after "!"
+      if (*p != '\0') endcomms = p;
+   }
+
    if ( imp.isEmpty() || top > bottom || left > right ) {
       // empty pattern
       fprintf(f, "x = 0, y = 0, rule = %s\n!\n", imp.getrule());
@@ -175,18 +195,27 @@ const char *writerle(FILE *f, lifealgo &imp, int top, int left, int bottom, int 
       // flush outbuff
       fwrite(outbuff, 1, outpos, f);
    }
+   
+   if (endcomms) fputs(endcomms, f);
+   
    return 0;
 }
 
-const char *writelife105(FILE *, lifealgo &)
+const char *writelife105(FILE *f, char *comments, lifealgo &imp)
 {
+   fputs("#Life 1.05\n", f);
+   fprintf(f, "#R %s\n", imp.getrule());
+   if (comments && comments[0]) {
+      // write given comment line(s)
+      fputs(comments, f);
+   }
    return "Not yet implemented!!!";
 }
 
-const char *writemacrocell(FILE *f, lifealgo &imp)
+const char *writemacrocell(FILE *f, char *comments, lifealgo &imp)
 {
    if (imp.hyperCapable())
-      return imp.writeNativeFormat(f);
+      return imp.writeNativeFormat(f, comments);
    return "Not yet implemented.";
 }
 
@@ -194,8 +223,24 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
                          int top, int left, int bottom, int right)
 {
    FILE *f;
+   
+   // extract any comments if file exists so we can copy them to new file
+   char *commptr = NULL;
+   f = fopen(filename, "r");
+   if (f) {
+      fclose(f);
+      const char *err = readcomments(filename, &commptr);
+      if (err) {
+         if (commptr) free(commptr);
+         return err;
+      }
+   }
+   
    f = fopen(filename, "w");
-   if (f == 0) return "Can't create pattern file!";
+   if (f == 0) {
+      if (commptr) free(commptr);
+      return "Can't create pattern file!";
+   }
 
    currsize = 0;
    lifebeginprogress("Writing pattern file");
@@ -203,17 +248,17 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
    const char *errmsg;
    switch (format) {
       case RLE_format:
-         errmsg = writerle(f, imp, top, left, bottom, right);
+         errmsg = writerle(f, commptr, imp, top, left, bottom, right);
          break;
 
       case L105_format:
-         // Life 1.05 format ignores given edges???
-         errmsg = writelife105(f, imp);
+         // Life 1.05 format ignores given edges
+         errmsg = writelife105(f, commptr, imp);
          break;
 
       case MC_format:
          // macrocell format ignores given edges
-         errmsg = writemacrocell(f, imp);
+         errmsg = writemacrocell(f, commptr, imp);
          break;
 
       default:
@@ -222,6 +267,9 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
    
    lifeendprogress();
    fclose(f);
+   
+   if (commptr) free(commptr);
+   
    if (isaborted())
       return "File contains truncated pattern.";
    else

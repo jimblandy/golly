@@ -3,8 +3,6 @@ TODO:
 For version 1.0:
 ----------------
 
-A - Preserve comments in rle/mc file when saving pattern to an existing file.
-
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar. Or maybe just add
     Gabriel's oscillation detection as an option (see oscar.py).

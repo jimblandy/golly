@@ -125,7 +125,7 @@ void writepat(int fc) {
       FILE *f = fopen(thisfilename, "w") ;
       if (f == 0)
          lifefatal("Cannot open file for writing") ;
-      err = imp->writeNativeFormat(f) ;
+      err = imp->writeNativeFormat(f, NULL) ;   // AKT: NULL means no comments
       fclose(f) ;
    } else {
       bigint t, l, b, r ;

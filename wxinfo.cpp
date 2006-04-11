@@ -181,19 +181,11 @@ void ShowInfo(const char *filepath) {
       return;
    }
 
-   // create a 128K buffer for receiving comment data (big enough
-   // for the comments in Dean Hickerson's stamp collection)
-   char *commptr;
-   const int maxcommsize = 128 * 1024;
-   commptr = (char *)malloc(maxcommsize);
-   if (commptr == NULL) {
-      Warning("Not enough memory for comments!");
-      return;
-   }
+   // buffer for receiving comment data (allocated by readcomments)
+   char *commptr = NULL;
 
    // read and display comments in current pattern file
-   const char *err;
-   err = readcomments(filepath, commptr, maxcommsize);
+   const char *err = readcomments(filepath, &commptr);
    if (err) {
       Warning(err);
    } else {
@@ -215,5 +207,5 @@ void ShowInfo(const char *filepath) {
       }
    }
    
-   free(commptr);
+   if (commptr) free(commptr);
 }

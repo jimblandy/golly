@@ -45,8 +45,9 @@ const char *readclipboard(const char *filename, lifealgo &imp,
                           bigint *t, bigint *l, bigint *b, bigint *r) ;
 
 /*
- *   Extract comments from pattern file into given buffer.
+ *   Extract comments from pattern file and store in given buffer.
+ *   It is the caller's job to free commptr when done (if not NULL).
  */
-const char *readcomments(const char *filename, char *commptr, int maxcommlen) ;
+const char *readcomments(const char *filename, char **commptr) ;
 
 #endif

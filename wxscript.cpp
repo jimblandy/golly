@@ -597,6 +597,13 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
          DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "showtoolbar") == 0) {
+      oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
+      if (mainptr->GetToolBar()->IsShown() != (newval != 0)) {
+         mainptr->ToggleToolBar();
+         DoAutoUpdate();
+      }
+
    } else if (strcmp(optname, "showstatusbar") == 0) {
       oldval = mainptr->StatusVisible() ? 1 : 0;
       if (mainptr->StatusVisible() != (newval != 0)) {
@@ -604,10 +611,10 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
          DoAutoUpdate();
       }
 
-   } else if (strcmp(optname, "showtoolbar") == 0) {
-      oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
-      if (mainptr->GetToolBar()->IsShown() != (newval != 0)) {
-         mainptr->ToggleToolBar();
+   } else if (strcmp(optname, "showexact") == 0) {
+      oldval = showexact ? 1 : 0;
+      if (showexact != (newval != 0)) {
+         mainptr->ToggleExactNumbers();
          DoAutoUpdate();
       }
 
@@ -670,8 +677,9 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
-   else if (strcmp(optname, "showstatusbar") == 0) optval = mainptr->StatusVisible() ? 1 : 0;
    else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
+   else if (strcmp(optname, "showstatusbar") == 0) optval = mainptr->StatusVisible() ? 1 : 0;
+   else if (strcmp(optname, "showexact") == 0)     optval = showexact ? 1 : 0;
    else if (strcmp(optname, "blackcells") == 0)    optval = blackcells ? 1 : 0;
    else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
    else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
@@ -1830,6 +1838,10 @@ bool InitPython()
             "      self.data += stuff\n"
             "      golly.stderr(self.data)\n"
             "sys.stderr = StderrCatcher()\n"
+            
+            // also create dummy sys.argv so scripts can import Tkinter
+            "sys.argv = ['golly-app']\n"
+            // works, but Golly's menus get permanently changed!!!
             ) < 0
          ) Warning("StderrCatcher code failed!");
 

@@ -189,7 +189,7 @@ public:
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
-   virtual const char *writeNativeFormat(FILE *f) ;
+   virtual const char *writeNativeFormat(FILE *f, char *comments) ;
 private:
 /*
  *   Some globals representing our universe.  The root is the

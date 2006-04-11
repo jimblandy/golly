@@ -396,7 +396,17 @@ const char *readclipboard(const char *filename, lifealgo &imp,
    return errmsg ;
 }
 
-const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
+const char *readcomments(const char *filename, char **commptr)
+{
+   // allocate a 128K buffer for storing comment data (big enough
+   // for the comments in Dean Hickerson's stamp collection)
+   const int maxcommlen = 128 * 1024;
+   *commptr = (char *)malloc(maxcommlen);
+   if (*commptr == NULL) {
+      return "Not enough memory for comments!";
+   }
+   char *cptr = *commptr;
+
    filesize = getfilesize(filename);
 #ifdef ZLIB
    zinstream = gzopen(filename, "rb") ;      // rb needed on Windows
@@ -435,9 +445,9 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
                !(line[1] == 'N' && line[2] == 0)) {
             int linelen = strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
-            strncpy(commptr + commlen, line, linelen);
+            strncpy(cptr + commlen, line, linelen);
             commlen += linelen;
-            commptr[commlen] = '\n';      // getline strips off eol char(s)
+            cptr[commlen] = '\n';      // getline strips off eol char(s)
             commlen++;
          }
          if (getline(line, LINESIZE) == 0) break;
@@ -448,9 +458,9 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
       while (line[0] == '#') {
          int linelen = strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
-         strncpy(commptr + commlen, line, linelen);
+         strncpy(cptr + commlen, line, linelen);
          commlen += linelen;
-         commptr[commlen] = '\n';         // getline strips off eol char(s)
+         cptr[commlen] = '\n';         // getline strips off eol char(s)
          commlen++;
          if (getline(line, LINESIZE) == 0) break;
       }
@@ -465,9 +475,9 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
             while ( getline(line, LINESIZE) != 0 ) {
                int linelen = strlen(line);
                if (commlen + linelen + 1 > maxcommlen) break;
-               strncpy(commptr + commlen, line, linelen);
+               strncpy(cptr + commlen, line, linelen);
                commlen += linelen;
-               commptr[commlen] = '\n';      // getline strips off eol char(s)
+               cptr[commlen] = '\n';      // getline strips off eol char(s)
                commlen++;
             }
          }
@@ -480,9 +490,9 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
          if (line[1] == 'C') {
             int linelen = strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
-            strncpy(commptr + commlen, line, linelen);
+            strncpy(cptr + commlen, line, linelen);
             commlen += linelen;
-            commptr[commlen] = '\n';         // getline strips off eol char(s)
+            cptr[commlen] = '\n';         // getline strips off eol char(s)
             commlen++;
          }
       }
@@ -493,7 +503,7 @@ const char *readcomments(const char *filename, char *commptr, int maxcommlen) {
    
    lifeendprogress();
    if (commlen == maxcommlen) commlen--;
-   commptr[commlen] = 0;
+   cptr[commlen] = 0;
 
 #ifdef ZLIB
    gzclose(zinstream) ;
