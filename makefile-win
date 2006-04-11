@@ -27,7 +27,7 @@ SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife
 SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc \
    *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 SRCDIRS = bitmaps
-BINFILES = golly.exe bgolly.exe
+BINFILES = Golly.exe bgolly.exe
 
 WX_RELEASE_NODOT = 26
 LIBDIRNAME = $(WXDIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
@@ -271,7 +271,7 @@ __UNICOWS_LIB_p = unicows.lib
 
 ### Targets: ###
 
-all: $(OBJDIR) golly.exe bgolly.exe
+all: $(OBJDIR) Golly.exe bgolly.exe
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
@@ -279,10 +279,10 @@ $(OBJDIR):
 clean: 
 	-if exist $(OBJDIR)/*.obj del $(OBJDIR)/*.obj
 	-if exist *.res del *.res
-	-if exist golly.exe del golly.exe
+	-if exist Golly.exe del Golly.exe
 	-if exist golly.pdb del golly.pdb
 
-golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
+Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	link /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) \
 	/LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" /LIBPATH:$(PYTHON_DIR)\libs /SUBSYSTEM:WINDOWS @<<
 	$(BASEOBJ) $(WXOBJ) golly.res $(PYTHON_LIB) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
