@@ -1689,6 +1689,8 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
 
    statusptr->DisplayMessage(s);
+   // make sure show status bar is visible
+   if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -1705,6 +1707,8 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
 
    statusptr->ErrorMessage(s);
+   // make sure show status bar is visible
+   if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -1977,7 +1981,7 @@ void RunScript(const char* filename)
    scriptkeys.Clear();
    autoupdate = false;
 
-   // save some settings for restoring later
+   // save some settings for restoring below
    bool oldscripts = showscripts;
    bool oldpatterns = showpatterns;
    bool oldstatus = mainptr->StatusVisible();

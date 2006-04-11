@@ -8,7 +8,6 @@ def bigs2float(bigs):
    # convert a bigint string like "1,234,..." to a floating point number
    return float( bigs.replace(",","") )
 
-g.setoption("showstatusbar", True)
 bbox = rect( g.getrect() )
 if bbox.empty:
    g.error("The pattern is empty.")

@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: The show and error commands force the status bar to become visible.
 AKT: Save Pattern preserves comments when writing to an existing file.
 AKT: Added Show Exact Numbers option to View menu.
 AKT: getkey() command no longer returns an untranslated character.

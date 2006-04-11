@@ -45,19 +45,19 @@ def slideshow ():
 # ------------------------------------------------------------------------------
 
 # show status bar so user sees messages
-initstatus = g.setoption("showstatusbar", True)
+oldstatus = g.setoption("showstatusbar", True)
 
 # hide other stuff to maximize the viewport
 # (don't switch to fullscreen because user won't see pattern name in title)
-inittoolbar = g.setoption("showtoolbar", False)
-initscripts = g.setoption("showscripts", False)
-initpatterns = g.setoption("showpatterns", False)
+oldtoolbar = g.setoption("showtoolbar", False)
+oldscripts = g.setoption("showscripts", False)
+oldpatterns = g.setoption("showpatterns", False)
 
 slideshow()
 g.show("")
 
 # restore original state
-g.setoption("showstatusbar", initstatus)
-g.setoption("showtoolbar", inittoolbar)
-g.setoption("showscripts", initscripts)
-g.setoption("showpatterns", initpatterns)
+g.setoption("showstatusbar", oldstatus)
+g.setoption("showtoolbar", oldtoolbar)
+g.setoption("showscripts", oldscripts)
+g.setoption("showpatterns", oldpatterns)

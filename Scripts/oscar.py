@@ -138,7 +138,6 @@ def fit_if_not_visible():
 
 # ------------------------------------------------------------------------------
 
-g.setoption("showstatusbar", True)
 g.show("Checking for oscillation... (hit escape to abort)")
 
 oldsecs = clock()
