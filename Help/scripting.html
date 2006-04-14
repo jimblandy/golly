@@ -22,8 +22,8 @@
 <font size=+1><b>Installing Python</b></font>
 
 <p>
-Python scripts can be executed by Golly.  This is a very powerful
-feature that allows you to do lots of interesting things:
+Python scripts can be executed by Golly.
+This is a very powerful feature that allows you to
 automate Golly's user interface, extend its editing capabilities,
 construct complicated patterns, perform collision experiments, etc.
 
@@ -46,6 +46,10 @@ The Scripts folder supplied with Golly contains a number of example Python scrip
 <tr>
    <td><b>density.py</b></td><td width=10> </td>
    <td> -- calculates the density of the current pattern</td>
+</tr>
+<tr>
+   <td><b>goto.py</b></td><td width=10> </td>
+   <td> -- goes to a requested generation</td>
 </tr>
 <tr>
    <td><b>gun-demo.py</b></td><td width=10> </td>
@@ -119,6 +123,7 @@ Or you can search for individual commands alphabetically:
 <a href="#clear"><b>clear</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
+<a href="#empty"><b>empty</b></a><br>
 <a href="#error"><b>error</b></a><br>
 <a href="#evolve"><b>evolve</b></a><br>
 <a href="#fit"><b>fit</b></a>
@@ -133,11 +138,11 @@ Or you can search for individual commands alphabetically:
 <a href="#getclip"><b>getclip</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
 <a href="#getgen"><b>getgen</b></a><br>
-<a href="#getkey"><b>getkey</b></a>
+<a href="#getkey"><b>getkey</b></a><br>
+<a href="#getmag"><b>getmag</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
-<a href="#getmag"><b>getmag</b></a><br>
 <a href="#getoption"><b>getoption</b></a><br>
 <a href="#getpop"><b>getpop</b></a><br>
 <a href="#getpos"><b>getpos</b></a><br>
@@ -145,38 +150,38 @@ Or you can search for individual commands alphabetically:
 <a href="#getrule"><b>getrule</b></a><br>
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
-<a href="#load"><b>load</b></a>
+<a href="#load"><b>load</b></a><br>
+<a href="#new"><b>new</b></a><br>
+<a href="#open"><b>open</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
-<a href="#new"><b>new</b></a><br>
-<a href="#open"><b>open</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#putcells"><b>putcells</b></a><br>
 <a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
-<a href="#run"><b>run</b></a>
+<a href="#run"><b>run</b></a><br>
+<a href="#save"><b>save</b></a><br>
+<a href="#select"><b>select</b></a><br>
+<a href="#setbase"><b>setbase</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
-<a href="#save"><b>save</b></a><br>
-<a href="#select"><b>select</b></a><br>
-<a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setoption"><b>setoption</b></a><br>
 <a href="#setpos"><b>setpos</b></a><br>
-<a href="#setrule"><b>setrule</b></a>
-</td>
-<td valign=top width=10> </td>
-<td valign=top>
+<a href="#setrule"><b>setrule</b></a><br>
 <a href="#setstep"><b>setstep</b></a><br>
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
-<a href="#step"><b>step</b></a><br>
+<a href="#step"><b>step</b></a>
+</td>
+<td valign=top width=10> </td>
+<td valign=top>
 <a href="#store"><b>store</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
@@ -403,6 +408,14 @@ Return the current cursor index.
 &nbsp;<br>
 CONTROL COMMANDS
 
+<a name="empty"></a><p><dt><b>empty()</b></dt>
+<dd>
+Return True if the universe is empty or False if there is at least one live cell.
+This is much more efficient than testing <b>getpop() == "0"</b>.
+</dd>
+<dd> Example: <b>if empty(): show("All cells are dead.")</b></dd>
+</p>
+
 <a name="run"></a><p><dt><b>run(<i>numgens</i>)</b></dt>
 <dd>
 Run the current pattern for the specified number of generations.
@@ -510,17 +523,24 @@ VIEWING COMMANDS
 
 <a name="setpos"></a><p><dt><b>setpos(<i>x, y</i>)</b></dt>
 <dd>
-Put the given cell in the middle of the viewport.
+Change the position of the viewport so the given cell is in the middle.
+The x,y coordinates are given as strings so the viewport can be moved
+to any location in the unbounded universe.
+Commas can be used to make large numbers more readable.
+Note that in Golly's coordinate system, positive y values increase downwards.
 </dd>
-<dd> Example: <b>setpos(-100, -100)</b></dd>
+<dd> Example: <b>setpos("1,000,000,000,000", "-123456")</b></dd>
 </p>
 
 <a name="getpos"></a><p><dt><b>getpos()</b></dt>
 <dd>
 Get the x,y position of the cell currently in the middle of the viewport.
-Note that it returns a Python tuple, not a list.
+Note that it returns a Python tuple (not a list) and the x,y values are
+arbitrarily long strings such as "1,234,567".
+Use code like <b>intx = int(x.replace(",",""))</b> to convert such a
+string to an integer.
 </dd>
-<dd> Example: <b>midx, midy = getpos()</b></dd>
+<dd> Example: <b>x, y = getpos()</b></dd>
 </p>
 
 <a name="setmag"></a><p><dt><b>setmag(<i>mag</i>)</b></dt>

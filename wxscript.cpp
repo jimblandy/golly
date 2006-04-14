@@ -459,12 +459,13 @@ static PyObject *golly_setpos(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
-   int x, y;
+   char *x;
+   char *y;
 
-   if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
+   if (!PyArg_ParseTuple(args, "zz", &x, &y)) return NULL;
 
-   bigint bigx = x;
-   bigint bigy = y;
+   bigint bigx(x);
+   bigint bigy(y);
    viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
    DoAutoUpdate();
 
@@ -483,17 +484,11 @@ static PyObject *golly_getpos(PyObject *self, PyObject *args)
 
    bigint bigx, bigy;
    viewptr->GetPos(bigx, bigy);
-   if (viewptr->OutsideLimits(bigy, bigx, bigy, bigx)) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad getpos call: cell outside integer limits.");
-      return NULL;
-   }
 
    // convert position to x,y tuple
    PyObject *xytuple = PyTuple_New(2);
-   PyTuple_SetItem(xytuple, 0, PyInt_FromLong(bigx.toint()));
-   PyTuple_SetItem(xytuple, 1, PyInt_FromLong(bigy.toint()));
-   // note that PyTuple_SetItem steals the reference from PyInt_FromLong
-   // so we don't need to use Py_DECREF
+   PyTuple_SetItem(xytuple, 0, Py_BuildValue("z",bigx.tostring()));
+   PyTuple_SetItem(xytuple, 1, Py_BuildValue("z",bigy.tostring()));
    
    return xytuple;
 }
@@ -695,6 +690,19 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_empty(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+   
+   PyObject *result = Py_BuildValue("i", curralgo->isEmpty() ? 1 : 0);
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_run(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -703,7 +711,7 @@ static PyObject *golly_run(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "i", &ngens)) return NULL;
 
-   if (ngens > 0) {
+   if (ngens > 0 && !curralgo->isEmpty()) {
       if (ngens > 1) {
          bigint saveinc = curralgo->getIncrement();
          curralgo->setIncrement(ngens);
@@ -728,8 +736,10 @@ static PyObject *golly_step(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   mainptr->NextGeneration(true);      // step by current increment
-   DoAutoUpdate();
+   if (!curralgo->isEmpty()) {
+      mainptr->NextGeneration(true);      // step by current increment
+      DoAutoUpdate();
+   }
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -1781,6 +1791,7 @@ static PyMethodDef golly_methods[] = {
    { "setcursor",    golly_setcursor,  METH_VARARGS, "set cursor (returns old cursor)" },
    { "getcursor",    golly_getcursor,  METH_VARARGS, "return current cursor" },
    // control
+   { "empty",        golly_empty,      METH_VARARGS, "return true if universe is empty" },
    { "run",          golly_run,        METH_VARARGS, "run current pattern for given number of gens" },
    { "step",         golly_step,       METH_VARARGS, "run current pattern for current step" },
    { "setstep",      golly_setstep,    METH_VARARGS, "set step exponent" },

@@ -9,10 +9,13 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
-AKT: The show and error commands force the status bar to become visible.
+AKT: Added goto.py to Scripts folder.
+AKT: Added empty() command.
+AKT: The setpos/getpos commands take/return bigint strings instead of ints.
+AKT: The show/error commands force the status bar to become visible.
 AKT: Save Pattern preserves comments when writing to an existing file.
 AKT: Added Show Exact Numbers option to View menu.
-AKT: getkey() command no longer returns an untranslated character.
+AKT: The getkey() command no longer returns an untranslated character.
 AKT: Fixed disabled menu item bug on OS 10.4 after closing a modal dlg.
 AKT: Mac app is now a Universal Binary (requires OS 10.3.9 or later).
 AKT: Renamed Flip Horizontally/Vertically to Flip Up-Down/Left-Right.
