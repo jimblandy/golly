@@ -16,13 +16,16 @@ do that, building Golly is easy.  Just use the appropriate makefile:
    make -f makefile-mac    (on Mac OS X)
    make -f makefile-x11    (on Linux or other X11 platforms)
 
-NOTE 1: You need to edit makefile-win and makefile-mac to specify
-where you installed wxWidgets.
+NOTES:
 
-NOTE 2: The code will only compile and run if your compiler is set
-to use 32-bit integers and 32-bit pointers.
+- You need to edit makefile-win and makefile-mac to specify where
+  wxWidgets is installed.
 
-NOTE 3: Golly requires wxWidgets 2.6.1 or later.
+- You need to edit makefile-win to specify where Python is installed.
+
+- Your compiler must use 32-bit integers and 32-bit pointers.
+
+- Golly requires wxWidgets 2.6.1 or later.
 
 
 How to build bgolly (the batch mode version)
@@ -77,7 +80,7 @@ wxrule.*       - Lets user change the current rule.
                  ChangeRule() opens the Rule dialog.
 
 wxscript.*     - Implements Python script support.
-                 RunScript() executes the given .py file.
+                 RunScript() executes a given .py file.
 
 wxutils.*      - Utility dialogs for showing errors and progress.
                  Warning() displays message in modal dialog.

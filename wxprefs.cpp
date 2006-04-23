@@ -137,6 +137,7 @@ wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
 wxString patterndir;             // directory used by Show Patterns
 wxString scriptdir;              // directory used by Show Scripts
+wxString pythonlib;              // name of Python library (loaded at runtime)
 int dirwinwd = 180;              // width of directory window
 bool showpatterns = true;        // show pattern directory?
 bool showscripts = false;        // show script directory?
@@ -409,6 +410,7 @@ void SavePrefs()
    fprintf(f, "run_dir=%s\n", rundir.c_str());
    fprintf(f, "pattern_dir=%s\n", patterndir.c_str());
    fprintf(f, "script_dir=%s\n", scriptdir.c_str());
+   fprintf(f, "python_lib=%s\n", pythonlib.c_str());
    fprintf(f, "dir_width=%d\n", dirwinwd);
    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
    fprintf(f, "show_scripts=%d\n", showscripts ? 1 : 0);
@@ -544,6 +546,14 @@ void GetPrefs()
    rundir = appdir + SCRIPT_DIR;
    patterndir = appdir + PATT_DIR;
    scriptdir = appdir + SCRIPT_DIR;
+   
+   #ifdef __WXMSW__
+      pythonlib = "python24.dll";
+   #elif defined(__WXMAC__)
+      pythonlib = "not used";
+   #elif defined(__UNIX__)
+      pythonlib = "libpython2.4.so";      // check this!!!
+   #endif
 
    // create curs_* and initialize newcurs, opencurs and currcurs
    CreateCursors();
@@ -757,6 +767,9 @@ void GetPrefs()
             // reset to supplied script directory
             scriptdir = appdir + SCRIPT_DIR;
          }
+
+      } else if (strcmp(keyword, "python_lib") == 0) {
+         pythonlib = value;
          
       } else if (strcmp(keyword, "dir_width") == 0 ||
                  strcmp(keyword, "patt_dir_width") == 0) {     // old name

@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: Win app loads Python library at runtime.
 AKT: Added goto.py to Scripts folder.
 AKT: Added empty() command.
 AKT: The setpos/getpos commands take/return bigint strings instead of ints.

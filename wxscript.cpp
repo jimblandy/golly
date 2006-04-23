@@ -61,16 +61,231 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for hashing etc
+#include "wxprefs.h"       // for hashing, pythonlib, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxscript.h"
 
-// Python includes
-#ifdef HAVE_WCHAR_H
-#undef HAVE_WCHAR_H        // Python.h redefines this if we use Unicode
+// =============================================================================
+
+// On Windows (and maybe Linux eventually???!!!) we load the Python library
+// at runtime so Golly will start up even if Python isn't installed.
+// Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
+
+// do this instead if we also need to dynamically load library on Linux???!!!
+// #ifndef __WXMAC__
+#ifdef __WXMSW__
+   // load Python DLL at runtime
+   #define USE_PYTHON_DYNAMIC
+
+   // prevent Python.h from adding Python library to link settings
+   #define USE_DL_EXPORT
 #endif
+
 #include <Python.h>
+
+#ifdef USE_PYTHON_DYNAMIC
+
+#include "wx/dynlib.h"     // for wxDynamicLibrary
+
+// declare G_* wrappers for the functions we want to use from Python DLL
+extern "C"
+{
+   // startup/shutdown
+   void(*G_Py_Initialize)(void) = NULL;
+   PyObject*(*G_Py_InitModule4)(char *, struct PyMethodDef *, char *, PyObject *, int) = NULL;
+   void(*G_Py_Finalize)(void) = NULL;
+
+   // errors
+   PyObject*(*G_PyErr_Occurred)(void) = NULL;
+   void(*G_PyErr_SetString)(PyObject *, const char *) = NULL;
+
+   // ints
+   long(*G_PyInt_AsLong)(PyObject *) = NULL;
+   PyObject*(*G_PyInt_FromLong)(long) = NULL;
+   PyTypeObject *G_PyInt_Type = NULL;
+
+   // lists
+   PyObject*(*G_PyList_New)(int size) = NULL;
+   int(*G_PyList_Append)(PyObject *, PyObject *) = NULL;
+   PyObject*(*G_PyList_GetItem)(PyObject *, int) = NULL;
+   int(*G_PyList_SetItem)(PyObject *, int, PyObject *) = NULL;
+   int(*G_PyList_Size)(PyObject *) = NULL;
+   PyTypeObject* G_PyList_Type = NULL;
+
+   // tuples
+   PyObject *(*G_PyTuple_New)(int) = NULL;
+   int(*G_PyTuple_SetItem)(PyObject *, int, PyObject *) = NULL;
+   PyObject *(*G_PyTuple_GetItem)(PyObject *, int) = NULL;
+
+   // misc
+   int(*G_PyArg_Parse)(PyObject *, char *, ...) = NULL;
+   int(*G_PyArg_ParseTuple)(PyObject *, char *, ...) = NULL;
+   PyObject*(*G_PyImport_ImportModule)(const char *) = NULL;
+   PyObject*(*G_PyDict_GetItemString)(PyObject *, const char *) = NULL;
+   PyObject*(*G_PyModule_GetDict)(PyObject *) = NULL;
+   PyObject*(*G_Py_BuildValue)(char *, ...) = NULL;
+   PyObject*(*G_Py_FindMethod)(PyMethodDef[], PyObject *, char *) = NULL;
+   int(*G_PyRun_SimpleString)(const char *) = NULL;
+   PyObject* G__Py_NoneStruct = NULL;                    // used by Py_None
+}
+
+// redefine the Py* functions to their equivalent G_* wrappers
+#define Py_Initialize G_Py_Initialize
+#define Py_InitModule4 G_Py_InitModule4
+#define Py_Finalize G_Py_Finalize
+#define PyErr_Occurred G_PyErr_Occurred
+#define PyErr_SetString G_PyErr_SetString
+#define PyInt_AsLong G_PyInt_AsLong
+#define PyInt_FromLong G_PyInt_FromLong
+#define PyInt_Type (*G_PyInt_Type)
+#define PyList_New G_PyList_New
+#define PyList_Append G_PyList_Append
+#define PyList_GetItem G_PyList_GetItem
+#define PyList_SetItem G_PyList_SetItem
+#define PyList_Size G_PyList_Size
+#define PyList_Type (*G_PyList_Type)
+#define PyTuple_New G_PyTuple_New
+#define PyTuple_SetItem G_PyTuple_SetItem
+#define PyTuple_GetItem G_PyTuple_GetItem
+#define Py_BuildValue G_Py_BuildValue
+#define PyArg_Parse G_PyArg_Parse
+#define PyArg_ParseTuple G_PyArg_ParseTuple
+#define PyDict_GetItemString G_PyDict_GetItemString
+#define PyImport_ImportModule G_PyImport_ImportModule
+#define PyModule_GetDict G_PyModule_GetDict
+#define PyRun_SimpleString G_PyRun_SimpleString
+#define _Py_NoneStruct (*G__Py_NoneStruct)
+
+#ifdef __WXMSW__
+   #define PYTHON_PROC FARPROC
+#else
+   #define PYTHON_PROC void *
+#endif
+#define PYTHON_FUNC(func) { _T(#func), (PYTHON_PROC *)&G_ ## func },
+
+// store function names and their addresses in Python DLL
+static struct PythonFunc
+{
+   const wxChar *name;     // function name
+   PYTHON_PROC *ptr;       // function pointer
+} pythonFuncs[] =
+{
+   PYTHON_FUNC(Py_Initialize)
+   PYTHON_FUNC(Py_InitModule4)
+   PYTHON_FUNC(Py_Finalize)
+   PYTHON_FUNC(PyErr_Occurred)
+   PYTHON_FUNC(PyErr_SetString)
+   PYTHON_FUNC(PyInt_AsLong)
+   PYTHON_FUNC(PyInt_FromLong)
+   PYTHON_FUNC(PyInt_Type)
+   PYTHON_FUNC(PyList_New)
+   PYTHON_FUNC(PyList_Append)
+   PYTHON_FUNC(PyList_GetItem)
+   PYTHON_FUNC(PyList_SetItem)
+   PYTHON_FUNC(PyList_Size)
+   PYTHON_FUNC(PyList_Type)
+   PYTHON_FUNC(PyTuple_New)
+   PYTHON_FUNC(PyTuple_SetItem)
+   PYTHON_FUNC(PyTuple_GetItem)
+   PYTHON_FUNC(Py_BuildValue)
+   PYTHON_FUNC(PyArg_Parse)
+   PYTHON_FUNC(PyArg_ParseTuple)
+   PYTHON_FUNC(PyDict_GetItemString)
+   PYTHON_FUNC(PyImport_ImportModule)
+   PYTHON_FUNC(PyModule_GetDict)
+   PYTHON_FUNC(PyRun_SimpleString)
+   PYTHON_FUNC(_Py_NoneStruct)
+   { "", NULL }
+};
+
+// imported exception objects -- we can't import the symbols from the
+// DLL as this can cause errors (importing data symbols is not reliable)
+static PyObject *imp_PyExc_RuntimeError = NULL;
+static PyObject *imp_PyExc_KeyboardInterrupt = NULL;
+
+#define PyExc_RuntimeError imp_PyExc_RuntimeError
+#define PyExc_KeyboardInterrupt imp_PyExc_KeyboardInterrupt
+
+static void GetPythonExceptions()
+{
+   PyObject *exmod = PyImport_ImportModule("exceptions");
+   PyObject *exdict = PyModule_GetDict(exmod);
+   PyExc_RuntimeError = PyDict_GetItemString(exdict, "RuntimeError");
+   PyExc_KeyboardInterrupt = PyDict_GetItemString(exdict, "KeyboardInterrupt");
+   Py_XINCREF(PyExc_RuntimeError);
+   Py_XINCREF(PyExc_KeyboardInterrupt);
+   Py_XDECREF(exmod);
+}
+
+// handle for Python DLL
+static wxDllType pythondll = NULL;
+
+static void FreePythonDLL()
+{
+   if ( pythondll ) {
+      wxDynamicLibrary::Unload(pythondll);
+      pythondll = NULL;
+   }
+}
+
+static bool LoadPythonDLL()
+{
+   // load the Python library
+   wxDynamicLibrary dynlib;
+
+   // don't log errors in here
+   wxLogNull noLog;
+
+   while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM) ) {
+      // prompt user for a different Python library;
+      // on Windows pythonlib should be something like "python24.dll"
+      // and on Linux it should be something like "libpython2.4.so"
+      wxBell();
+      wxTextEntryDialog dialog( wxGetActiveWindow(),
+                                _T("If Python isn't installed then you'll have to Cancel,\n")
+                                _T("otherwise change the version numbers and try again."),
+                                _T("Could not load the Python library"),
+                                pythonlib,
+                                wxOK | wxCANCEL );
+      if (dialog.ShowModal() == wxID_OK) {
+         pythonlib = dialog.GetValue();
+      } else {
+         return false;
+      }
+   }
+
+   if ( dynlib.IsLoaded() ) {
+      // load all functions named in pythonFuncs
+      void *funcptr;
+      PythonFunc *pf = pythonFuncs;
+      while ( pf->ptr ) {
+         funcptr = dynlib.GetSymbol(pf->name);
+         if ( !funcptr ) {
+            wxString err = wxT("Python library does not have this symbol:\n");
+            err += pf->name;
+            Warning(err.c_str());
+            FreePythonDLL();
+            break;
+         }
+
+         *(pf++->ptr) = (PYTHON_PROC)funcptr;
+      }
+
+      if ( !pf->ptr ) {
+         pythondll = dynlib.Detach();
+      }
+   }
+   
+   if ( pythondll == NULL ) {
+      // should never happen
+      Warning("Oh dear, the Python library is not loaded!");
+   }
+
+   return pythondll != NULL;
+}
+
+#endif // USE_PYTHON_DYNAMIC
 
 // =============================================================================
 
@@ -1831,16 +2046,21 @@ static PyMethodDef golly_methods[] = {
 bool InitPython()
 {
    if (!pyinited) {
+      #ifdef USE_PYTHON_DYNAMIC
+         // try to load Python library
+         if ( !LoadPythonDLL() ) return false;
+      #endif
+
       // only initialize the Python interpreter once, mainly because multiple
       // Py_Initialize/Py_Finalize calls cause leaks of about 12K each time!
       Py_Initialize();
-      if (!Py_IsInitialized()) {
-         Warning("Could not initialize the Python interpreter!");
-         return false;
-      }
-   
+
+      #ifdef USE_PYTHON_DYNAMIC
+         GetPythonExceptions();
+      #endif
+
       // allow Python to call the above golly_* routines
-      Py_InitModule3("golly", golly_methods, "internal golly routines");
+      Py_InitModule("golly", golly_methods);
    
       // catch Python messages sent to stderr and pass them to golly_stderr
       if ( PyRun_SimpleString(
@@ -2066,7 +2286,7 @@ bool PassKeyToScript(char key)
 {
    // called from checkevents
    if (inscript) {
-      // !!! allow golly_getkey to see escape by having a global abortkey which is
+      // ??? allow golly_getkey to see escape by having a global abortkey which is
       // set to WXK_ESCAPE at the start of each script but can be changed by
       // a golly_setabort(ch) command;  setabort("") would disable any escape key
       if (key == (char)WXK_ESCAPE) {
@@ -2101,4 +2321,9 @@ void FinishScripting()
    
    // Py_Finalize can cause an obvious delay, so best not to call it
    // if (pyinited) Py_Finalize();
+
+   // probably don't really need this either
+   #ifdef USE_PYTHON_DYNAMIC
+      FreePythonDLL();
+   #endif
 }

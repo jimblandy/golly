@@ -86,6 +86,7 @@ extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
 extern wxString patterndir;      // directory used by Show Patterns
 extern wxString scriptdir;       // directory used by Show Scripts
+extern wxString pythonlib;       // name of Python library (loaded at runtime)
 extern int dirwinwd;             // width of pattern/script directory window
 extern bool showpatterns;        // show pattern directory?
 extern bool showscripts;         // show script directory?
