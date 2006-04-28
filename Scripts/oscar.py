@@ -20,11 +20,11 @@
 # oscillator detection due to hash collisions.  The bounding box info also
 # allows us to detect moving oscillators (spaceships/knightships).
 
-from glife import rect, pattern
-import golly as g
+from glife import rect, pattern, getgenint, getpopint
 from time import clock
+import golly as g
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 # initialize lists
 hashlist = []        # for pattern hash values
@@ -32,13 +32,7 @@ genlist = []         # corresponding generation counts
 poplist = []         # corresponding population counts
 boxlist = []         # corresponding bounding boxes
 
-# ------------------------------------------------------------------------------
-
-def bigs2int(bigs):
-   # convert a bigint string like "1,234,..." to an int < 10^9
-   return int( bigs.replace(",", "")[-9:] )
-
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 def same_rects(r1, r2):
    # return True if the given rectangles are identical
@@ -46,7 +40,7 @@ def same_rects(r1, r2):
    return (r1.x == r2.x) and (r1.wd == r2.wd) and \
           (r1.y == r2.y) and (r1.ht == r2.ht)
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 def show_spaceship_speed(period, deltax, deltay):
    # we found a moving oscillator
@@ -68,7 +62,7 @@ def show_spaceship_speed(period, deltax, deltay):
       speed = str(deltay) + "," + str(deltax)
       g.show("Knightship detected (speed = " + speed + "c/" + str(period) + ")")
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 def oscillating():
    # return True if the pattern is empty, stable or oscillating
@@ -101,10 +95,10 @@ def oscillating():
       else:
          # h == hashlist[pos] so pattern is probably oscillating, but just in
          # case this is a hash collision we also compare pop count and box size
-         if (g.getpop() == poplist[pos]) and \
+         if (getpopint() == poplist[pos]) and \
             (pbox.wd == boxlist[pos].wd) and \
             (pbox.ht == boxlist[pos].ht):
-            period = bigs2int(g.getgen()) - bigs2int(genlist[pos])
+            period = getgenint() - genlist[pos]
             if period == 1:
                if same_rects(pbox, boxlist[pos]):
                   g.show("The pattern is stable.")
@@ -123,20 +117,20 @@ def oscillating():
    
    # store hash/gen/pop/box info at same position in various lists
    hashlist.insert(pos, h)
-   genlist.insert(pos, g.getgen())
-   poplist.insert(pos, g.getpop())
+   genlist.insert(pos, getgenint())
+   poplist.insert(pos, getpopint())
    boxlist.insert(pos, pbox)
 
    return False
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 def fit_if_not_visible():
    # fit pattern in viewport if not empty and not completely visible
    r = rect(g.getrect())
    if (not r.empty) and (not r.visible()): g.fit()
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 g.show("Checking for oscillation... (hit escape to abort)")
 

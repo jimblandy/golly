@@ -1,7 +1,7 @@
 # Initialization script executed by using "from glife import *".
 # Based on python/life/__init__.py in Eugene Langvagen's PLife.
 
-import golly as golly
+import golly
 from sys import maxint
 from time import clock
 
@@ -76,11 +76,9 @@ rccw = ( 0,  1, -1,  0)
 
 # --------------------------------------------------------------------
 
-def rule(s = "23/3"):
+def rule(s = "B3/S23"):
    """\
 Set the rule for the Game of Life.
-The argument to this function is a string like '23/3'
-(here '23' and '3' are conditions for cell survival and birth respectively).
 Although it affects subsequent calls to pattern.evolve(),
 only the last call to this function matters for the viewer."""
    golly.setrule(s)

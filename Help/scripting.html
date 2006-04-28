@@ -536,7 +536,7 @@ Change the position of the viewport so the given cell is in the middle.
 The x,y coordinates are given as strings so the viewport can be moved
 to any location in the unbounded universe.
 Commas can be used to make large numbers more readable.
-Note that in Golly's coordinate system, positive y values increase downwards.
+Note that positive y values increase downwards in Golly's coordinate system.
 </dd>
 <dd> Example: <b>golly.setpos("1,000,000,000,000", "-123456")</b></dd>
 </p>
@@ -693,7 +693,7 @@ A cell list is simply a Python list containing integer cell coordinates:
 <p>
 A cell list should always contain an even number of integers.
 The ordering of cells within the list doesn't matter.
-Note that in Golly's coordinate system, positive y values increase downwards.
+Note that positive y values increase downwards in Golly's coordinate system.
 
 <p>
 Some commands manipulate rectangles in the form of lists.
@@ -713,13 +713,13 @@ The width and height must be greater than zero.
 
 <p>
 The glife folder included in the Scripts folder is a Python package that
-provides a high-level interface to some of Golly's scripting commands.
-(It's based on Eugene Langvagen's <b>life</b> package included in
-<a href="http://plife.sourceforge.net/">PLife</a>.)
-When a script imports <b>glife</b> (or any of its submodules), Python
+provides a high-level interface to some of Golly's scripting commands
+(it's based on Eugene Langvagen's <b>life</b> package included in
+<a href="http://plife.sourceforge.net/">PLife</a>).
+When a script imports <b>glife</b> or any of its submodules, Python
 automatically executes the <b>__init__.py</b> module.  This module defines
 the <b>pattern</b> and <b>rect</b> classes as well as a number of
-useful synonyms.  For example, consider this script:
+useful synonyms and helper functions.  For example, consider this script:
 <p>
 <dd><b>from glife import *</b></dd>
 <dd><b>blinker = pattern("3o!")</b></dd>
@@ -735,12 +735,45 @@ Here is the equivalent script without using <b>glife</b>:
 <dd><b>g.putcells(blinker, 6, 7, 0, -1,  1,  0)</b></dd>
 </p>
 <p>
-Some helper functions are also defined in <b>glife</b>:
-!!!
+Here are some of the helper functions defined in <b>glife</b>:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td><b>getminbox(patt)</b></td><td width=10> </td>
+   <td> -- return minimal bounding box of given pattern</td>
+</tr>
+<tr>
+   <td><b>getstring(prompt)</b></td><td width=10> </td>
+   <td> -- prompt user and return entered string</td>
+</tr>
+<tr>
+   <td><b>validint(s)</b></td><td width=10> </td>
+   <td> -- return True if given string is a valid integer</td>
+</tr>
+<tr>
+   <td><b>getgenint()</b></td><td width=10> </td>
+   <td> -- return current generation string as an integer</td>
+</tr>
+<tr>
+   <td><b>getpopint()</b></td><td width=10> </td>
+   <td> -- return current population string as an integer</td>
+</tr>
+<tr>
+   <td><b>getposint()</b></td><td width=10> </td>
+   <td> -- return current viewport position as integer coords</td>
+</tr>
+<tr>
+   <td><b>setposint(x,y)</b></td><td width=10> </td>
+   <td> -- use given integer coords to set viewport position</td>
+</tr>
+</table>
+</dd>
+</p>
 <p>
 Most of the examples in the Scripts folder import <b>glife</b>,
-but it isn't compulsory.  For the scripts you write you might prefer to
-create your own high-level interface.
+but it isn't compulsory.  You might prefer to create your own high-level
+interface for the scripts you write.
 
 
 <p><a name="problems">
