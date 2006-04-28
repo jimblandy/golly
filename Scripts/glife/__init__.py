@@ -2,18 +2,21 @@
 # Based on python/life/__init__.py in Eugene Langvagen's PLife.
 
 import golly as golly
-import sys
+from sys import maxint
+from time import clock
 
-__doc__ = """Scripting aids for Golly.""";
+__doc__ = """High-level scripting aids for Golly.""";
 
-class rect (list):
+# --------------------------------------------------------------------
+
+class rect(list):
    """A simple class to make it easier to manipulate rectangles."""
 
-   def visible (self):
+   def visible(self):
       """Return true if rect is completely visible in viewport."""
-      return golly.visrect ( [self.x, self.y, self.wd, self.ht] )
+      return golly.visrect( [self.x, self.y, self.wd, self.ht] )
 
-   def __init__ (self, R = []):
+   def __init__(self, R = []):
       if len(R) == 0:
          self.empty = True
       elif len(R) == 4:
@@ -22,13 +25,15 @@ class rect (list):
          self.y  = self.top    = R[1]
          self.wd = self.width  = R[2]
          self.ht = self.height = R[3]
-         if self.wd <= 0: raise ValueError ("rect width must be > 0")
-         if self.ht <= 0: raise ValueError ("rect height must be > 0")
+         if self.wd <= 0: raise ValueError("rect width must be > 0")
+         if self.ht <= 0: raise ValueError("rect height must be > 0")
          self.right  = self.left + self.wd - 1
          self.bottom = self.top  + self.ht - 1
       else:
-         raise TypeError ("rect arg must be [] or [x,y,wd,ht]")
+         raise TypeError("rect arg must be [] or [x,y,wd,ht]")
       return None
+
+# --------------------------------------------------------------------
 
 # Define some useful synonyms:
 
@@ -51,6 +56,8 @@ move = 2
 zoomin = 3
 zoomout = 4
 
+# --------------------------------------------------------------------
+
 # Define some transformation matrices:
 
 identity = ( 1,  0,  0,  1)
@@ -67,23 +74,29 @@ swap_xy_flip = ( 0, -1, -1,  0)
 rcw  = ( 0, -1,  1,  0)
 rccw = ( 0,  1, -1,  0)
 
-def rule (s = "23/3"):
+# --------------------------------------------------------------------
+
+def rule(s = "23/3"):
    """\
 Set the rule for the Game of Life.
 The argument to this function is a string like '23/3'
 (here '23' and '3' are conditions for cell survival and birth respectively).
 Although it affects subsequent calls to pattern.evolve(),
 only the last call to this function matters for the viewer."""
-   golly.setrule (s)
+   golly.setrule(s)
    return None
 
-def description (s):
+# --------------------------------------------------------------------
+
+def description(s):
    """Supply a textual description to the whole pattern."""
-   for line in s.split ("\n"):
+   for line in s.split("\n"):
       print "#D", line
    return None
 
-def compose (S, T):
+# --------------------------------------------------------------------
+
+def compose(S, T):
    """\
 Return the composition of two transformations S and T.
 A transformation is a tuple of the form (x, y, A), which denotes
@@ -95,71 +108,73 @@ These tuples can be passed to pattern.__call__()."""
       (A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1],
        A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3]))
 
-class pattern (list):
+# --------------------------------------------------------------------
+
+class pattern(list):
    """This class represents a cell list."""
 
-   def __add__ (self, q):
+   def __add__(self, q):
       """Join patterns."""
-      return pattern (list.__add__ (self, q))
+      return pattern(list.__add__(self, q))
 
-   def __getitem__ (self, N):
+   def __getitem__(self, N):
       """\
 The __getitem__() function is an alias to evolve().
 It allows to access the pattern's phases as elements of an array."""
-      return self.evolve (N)
+      return self.evolve(N)
 
-   def __call__ (self, x, y, A = identity):
+   def __call__(self, x, y, A = identity):
       """The same as 'apply(A).translate(x, y)'."""
-      return pattern (golly.transform (self, x, y, *A))
+      return pattern(golly.transform(self, x, y, *A))
 
-   def translate (self, x, y):
+   def translate(self, x, y):
       """Translate the pattern."""
-      return self (x, y)
+      return self(x, y)
 
-   def apply (self, A):
+   def apply(self, A):
       """\
 Apply a matrix transformation to the pattern.
 Predefined matrices are:
 identity, flip, flip_x, flip_y, swap_xy, swap_xy_flip,
 rcw (rotate clockwise) and rccw (rotate counter-clockwise)."""
-      return self (0, 0, A)
+      return self(0, 0, A)
 
-   def put (self, x = 0, y = 0, A = identity):
+   def put(self, x = 0, y = 0, A = identity):
       """Paste pattern into current universe."""
-      golly.putcells (self, x, y, *A)
+      golly.putcells(self, x, y, *A)
       return None
 
-   def display (self, title = "untitled", x = 0, y = 0, A = identity):
+   def display(self, title = "untitled", x = 0, y = 0, A = identity):
       """Paste pattern into new universe and display it all."""
-      golly.new (title)
-      golly.putcells (self, x, y, *A)
-      golly.fit ()
-      golly.setcursor (zoomin)
+      golly.new(title)
+      golly.putcells(self, x, y, *A)
+      golly.fit()
+      golly.setcursor(zoomin)
       return None
 
-   def save (self, fn, desc = None):
+   def save(self, fn, desc = None):
       """\
 Save the pattern to file 'fn' in RLE format.
 An optional description 'desc' may be given."""
-      golly.store (self, fn, desc)
+      golly.store(self, fn, desc)
       return None
 
-   def evolve (self, N):
+   def evolve(self, N):
       """\
 Return N-th generation of the pattern.
 Once computed, the N-th generation is remembered and quickly accessible.
 It is also the base for computing generations subsequent to N-th."""
       if N < 0:
-         raise ValueError ("backward evolving requested")
-      if self.__phases.has_key (N):
+         raise ValueError("backward evolving requested")
+      if self.__phases.has_key(N):
          return self.__phases[N]
       M = 0
-      for k in self.__phases.keys ():
+      for k in self.__phases.keys():
          if M < k < N: M = k
-      p = self.__phases[N] = pattern (golly.evolve (self.__phases[M], N - M))
+      p = self.__phases[N] = pattern(golly.evolve(self.__phases[M], N - M))
       return p
 
-   def __init__ (self, P = [], x0 = 0, y0 = 0, A = identity):
+   def __init__(self, P = [], x0 = 0, y0 = 0, A = identity):
       """\
 Initialize a pattern from argument P.
 P may be another pattern, a cell list, or a multi-line string.
@@ -179,29 +194,33 @@ o  'RLE' format means that a string is Run-Length Encoded.
 When P is a string, an optional transformation
 (x0, y0, A) may be specified.
 """
-      self.__phases = dict ()
+      self.__phases = dict()
 
-      if type (P) == list:
-         list.__init__ (self, P)
-      elif type (P) == pattern:
-         list.__init__ (self, list (P))
-      elif type (P) == str:
-         list.__init__ (self, golly.parse (P, x0, y0, *A))
+      if type(P) == list:
+         list.__init__(self, P)
+      elif type(P) == pattern:
+         list.__init__(self, list(P))
+      elif type(P) == str:
+         list.__init__(self, golly.parse(P, x0, y0, *A))
       else:
-         raise TypeError ("list or string is required here")
+         raise TypeError("list or string is required here")
       self.__phases[0] = self
       return None
 
-def load (fn):
-   # note that top left cell of bounding box will be at 0,0
-   return pattern (golly.load (fn))
+# --------------------------------------------------------------------
 
-def getminbox (patt):
-   # return minimal bounding box of given pattern
-   minx =  sys.maxint
-   maxx = -sys.maxint
-   miny =  sys.maxint
-   maxy = -sys.maxint
+def load(fn):
+   # note that top left cell of bounding box will be at 0,0
+   return pattern(golly.load(fn))
+
+# --------------------------------------------------------------------
+
+def getminbox(patt):
+   # return a rect which is the minimal bounding box of given pattern
+   minx =  maxint
+   maxx = -maxint
+   miny =  maxint
+   maxy = -maxint
    clist = list(patt)
    for x in range(0, len(clist), 2):
       if clist[x] < minx: minx = clist[x]
@@ -210,3 +229,67 @@ def getminbox (patt):
       if clist[y] < miny: miny = clist[y]
       if clist[y] > maxy: maxy = clist[y]
    return rect( [ minx, miny, maxx - minx + 1, maxy - miny + 1 ] )
+
+# --------------------------------------------------------------------
+
+def getstring(prompt):
+   # prompt user and return entered string
+   cursor1 = "_"
+   cursor2 = ""
+
+   golly.show(prompt + " " + cursor1)
+   inp = ""
+   oldsecs = clock()
+   
+   while True:
+      newsecs = clock()
+      if newsecs - oldsecs >= 0.5:   # blink cursor each sec
+         oldsecs = newsecs
+         cursor1, cursor2 = cursor2, cursor1
+         golly.show(prompt + " " + inp + cursor1)
+
+      ch = golly.getkey()
+      if len(ch) > 0:
+         if ord(ch) == 13:    # return
+         	golly.show("")
+         	return inp
+         if ord(ch) == 8:     # backspace
+            inp = inp[:-1]
+            ch = ""
+         inp += ch
+         golly.show(prompt + " " + inp + cursor1)
+
+# --------------------------------------------------------------------
+
+def validint(s):
+   # return True if given string represents a valid integer
+   n = s.replace(",","")
+   if n[0] == '+' or n[0] == '-': n = n[1:]
+   return n.isdigit()
+
+# --------------------------------------------------------------------
+
+def getgenint():
+   # return current generation string as an integer
+   return int( golly.getgen().replace(",","") )
+
+# --------------------------------------------------------------------
+
+def getpopint():
+   # return current population string as an integer
+   return int( golly.getpop().replace(",","") )
+
+# --------------------------------------------------------------------
+
+def getposint():
+   # return current viewport position as integer coords
+   xstr, ystr = golly.getpos()
+   x = int( xstr.replace(",","") )
+   y = int( ystr.replace(",","") )
+   return x, y
+
+# --------------------------------------------------------------------
+
+def setposint(x,y):
+   # convert integer coords to strings and set viewport position
+   golly.setpos(str(x), str(y))
