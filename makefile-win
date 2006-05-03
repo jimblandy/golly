@@ -12,8 +12,8 @@
 # So now I don't have to specify those settings to nmake.
 
 ### Change the next 2 lines to specify where you installed wxWidgets:
-!include </wxWidgets-2.6.1/build/msw/config.vc>
-WXDIR = c:\wxWidgets-2.6.1
+!include </wxWidgets/build/msw/config.vc>
+WXDIR = c:\wxWidgets
 
 ### Change the next line depending on where you installed Python:
 PYTHON_DIR = c:\Python24
