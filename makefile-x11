@@ -22,16 +22,17 @@ ifeq ($(OSTYPE),darwin)
    # on Mac OS 10.4 we must avoid /usr/bin/wx-config
    CXXFLAGS = `/usr/local/bin/wx-config --cxxflags` -O5 -Wall -Wno-non-virtual-dtor -DZLIB -DVERSION=$(VERSION)
    LDFLAGS = `/usr/local/bin/wx-config --libs` -lz
-   #old!!! PYTHON_INCLUDE = -I/System/Library/Frameworks/Python.framework/Versions/2.3/include/python2.3
    # on Mac OS 10.4 the following python command does not spit out the right info -- sheesh
    # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
    PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework Python -framework CoreServices -framework Foundation
 else
    CXXFLAGS = `wx-config --cxxflags` -O5 -Wall -DZLIB -DVERSION=$(VERSION)
-   LDFLAGS = `wx-config --libs` -lz -static
-   #old!!! PYTHON_INCLUDE = -I/usr/include/python2.3
-   #old!!! PYTHON_LINK = -lpython2.3
-   PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+   # can't use -static: LDFLAGS = `wx-config --libs` -lz -static
+   LDFLAGS = `wx-config --libs` -lz
+   # we don't want to link against a specific library: PYTHON_LINK = -lpython2.3
+   # following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
+   # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+   PYTHON_LINK = 
 endif
 
 ### put .o files in an X11-specific subdir to avoid conflict with .o files created by Mac build

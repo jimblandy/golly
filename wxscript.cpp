@@ -68,15 +68,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // =============================================================================
 
-// On Windows (and maybe Linux eventually???!!!) we load the Python library
-// at runtime so Golly will start up even if Python isn't installed.
+// On Windows and Linux we need to load the Python library at runtime
+// so Golly will start up even if Python isn't installed.
 // Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
 
-// do this instead if we also need to dynamically load library on Linux???!!!
-// #ifndef __WXMAC__
-#ifdef __WXMSW__
-   // load Python DLL at runtime
+#ifndef __WXMAC__
+   // load Python lib at runtime
    #define USE_PYTHON_DYNAMIC
+   
+   #ifdef __UNIX__
+      // avoid warning on Linux
+      #undef _POSIX_C_SOURCE
+   #endif
 
    // prevent Python.h from adding Python library to link settings
    #define USE_DL_EXPORT
@@ -88,7 +91,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/dynlib.h"     // for wxDynamicLibrary
 
-// declare G_* wrappers for the functions we want to use from Python DLL
+// declare G_* wrappers for the functions we want to use from Python lib
 extern "C"
 {
    // startup/shutdown
@@ -164,7 +167,7 @@ extern "C"
 #endif
 #define PYTHON_FUNC(func) { _T(#func), (PYTHON_PROC *)&G_ ## func },
 
-// store function names and their addresses in Python DLL
+// store function names and their addresses in Python lib
 static struct PythonFunc
 {
    const wxChar *name;     // function name
@@ -200,7 +203,7 @@ static struct PythonFunc
 };
 
 // imported exception objects -- we can't import the symbols from the
-// DLL as this can cause errors (importing data symbols is not reliable)
+// lib as this can cause errors (importing data symbols is not reliable)
 static PyObject *imp_PyExc_RuntimeError = NULL;
 static PyObject *imp_PyExc_KeyboardInterrupt = NULL;
 
@@ -218,10 +221,10 @@ static void GetPythonExceptions()
    Py_XDECREF(exmod);
 }
 
-// handle for Python DLL
+// handle for Python lib
 static wxDllType pythondll = NULL;
 
-static void FreePythonDLL()
+static void FreePythonLib()
 {
    if ( pythondll ) {
       wxDynamicLibrary::Unload(pythondll);
@@ -229,7 +232,7 @@ static void FreePythonDLL()
    }
 }
 
-static bool LoadPythonDLL()
+static bool LoadPythonLib()
 {
    // load the Python library
    wxDynamicLibrary dynlib;
@@ -237,7 +240,9 @@ static bool LoadPythonDLL()
    // don't log errors in here
    wxLogNull noLog;
 
-   while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM) ) {
+   // wxDL_GLOBAL corresponds to RTLD_GLOBAL on Linux (ignored on Windows) and
+   // is needed to avoid an ImportError when importing some modules (eg. time)
+   while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
       // prompt user for a different Python library;
       // on Windows pythonlib should be something like "python24.dll"
       // and on Linux it should be something like "libpython2.4.so"
@@ -265,7 +270,7 @@ static bool LoadPythonDLL()
             wxString err = wxT("Python library does not have this symbol:\n");
             err += pf->name;
             Warning(err.c_str());
-            FreePythonDLL();
+            FreePythonLib();
             break;
          }
 
@@ -2048,7 +2053,7 @@ bool InitPython()
    if (!pyinited) {
       #ifdef USE_PYTHON_DYNAMIC
          // try to load Python library
-         if ( !LoadPythonDLL() ) return false;
+         if ( !LoadPythonLib() ) return false;
       #endif
 
       // only initialize the Python interpreter once, mainly because multiple
@@ -2324,6 +2329,6 @@ void FinishScripting()
 
    // probably don't really need this either
    #ifdef USE_PYTHON_DYNAMIC
-      FreePythonDLL();
+      FreePythonLib();
    #endif
 }

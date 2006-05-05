@@ -34,9 +34,11 @@ Windows and Linux users can download a Python installer from
 <a href="http://www.python.org/download/">www.python.org/download</a>.
 
 <p>
-On Windows, the Python library is loaded at runtime (the first time you try
-to run a script).  Golly initially attempts to load python24.dll which is
-installed by Python 2.4.  If that library can't be found then you'll be
+On Windows and Linux, the Python library is loaded at runtime (the first time
+you try to run a script).  Golly initially attempts to load a particular
+version of the Python library: python24.dll on Windows or libpython2.4.so
+on Linux.  The numbers correspond to Python version 2.4.
+If that library can't be found then you'll be
 prompted to enter a different library name matching the version of Python
 installed on your system.  A successfully loaded library is remembered
 (in your GollyPrefs file) so you won't get the prompt again unless you

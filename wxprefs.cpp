@@ -552,7 +552,7 @@ void GetPrefs()
    #elif defined(__WXMAC__)
       pythonlib = "not used";
    #elif defined(__UNIX__)
-      pythonlib = "libpython2.4.so";      // check this!!!
+      pythonlib = "libpython2.4.so";
    #endif
 
    // create curs_* and initialize newcurs, opencurs and currcurs
