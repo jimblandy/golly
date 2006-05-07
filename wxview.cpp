@@ -2544,6 +2544,17 @@ void PatternView::OnChar(wxKeyEvent& event)
    int key = event.GetKeyCode();
 
    if (InScript()) {
+      #ifdef __WXX11__
+         // sigh... pressing shift key by itself causes key = 306, control key = 308
+         // and other keys like caps lock and option = -1
+         /*
+         char msg[64];
+         char ch = key;
+         sprintf(msg, "key=%d char=%c shifted=%d", key, ch, event.ShiftDown() );
+         Warning(msg);
+         */
+         if ( key < 0 || key > 255 ) return;
+      #endif
       // let script decide what to do with the key
       if (PassKeyToScript(key)) return;
    }

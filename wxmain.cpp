@@ -2556,8 +2556,15 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
             // after a folder has been collapsed and expanded
             DeselectTree(treectrl, treectrl->GetRootItem());
 
-            // indicate the selected file and open it
+            // indicate the selected file
             treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
+            
+            #ifdef __WXX11__
+               // needed for scripts like goto.py which prompt user to enter string
+               viewptr->SetFocus();
+            #endif
+            
+            // load pattern or run script
             OpenFile(filepath);
          }
       }
