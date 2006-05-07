@@ -6,7 +6,7 @@
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 
 from glife import getstring, validint, getgenint
-from time import clock
+from time import time
 import golly
 
 # --------------------------------------------------------------------
@@ -39,7 +39,7 @@ def goto(gen):
       currgen = 0
    
    golly.show("Hit escape to abort...")
-   oldsecs = clock()
+   oldsecs = time()
    while currgen < newgen:
       if golly.empty():
          golly.show("Pattern is empty.")
@@ -48,7 +48,7 @@ def goto(gen):
       # is left as an exercise for the reader :)
       golly.run(1)
       currgen += 1
-      newsecs = clock()
+      newsecs = time()
       if newsecs - oldsecs >= 1.0:     # do an update every sec
          oldsecs = newsecs
          golly.update()

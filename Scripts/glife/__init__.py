@@ -3,7 +3,7 @@
 
 import golly
 from sys import maxint
-from time import clock
+from time import time
 
 __doc__ = """High-level scripting aids for Golly.""";
 
@@ -237,10 +237,10 @@ def getstring(prompt):
 
    golly.show(prompt + " " + cursor1)
    inp = ""
-   oldsecs = clock()
+   oldsecs = time()
    
    while True:
-      newsecs = clock()
+      newsecs = time()
       if newsecs - oldsecs >= 0.5:   # blink cursor each sec
          oldsecs = newsecs
          cursor1, cursor2 = cursor2, cursor1

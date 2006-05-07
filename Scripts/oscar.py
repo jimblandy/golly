@@ -21,7 +21,7 @@
 # allows us to detect moving oscillators (spaceships/knightships).
 
 from glife import rect, pattern, getgenint, getpopint
-from time import clock
+from time import time
 import golly as g
 
 # --------------------------------------------------------------------
@@ -134,10 +134,10 @@ def fit_if_not_visible():
 
 g.show("Checking for oscillation... (hit escape to abort)")
 
-oldsecs = clock()
+oldsecs = time()
 while not oscillating():
    g.run(1)
-   newsecs = clock()
+   newsecs = time()
    if newsecs - oldsecs >= 1.0:     # show pattern every second
       oldsecs = newsecs
       fit_if_not_visible()
