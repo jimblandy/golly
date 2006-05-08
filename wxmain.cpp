@@ -1949,13 +1949,18 @@ void MainFrame::NextGeneration(bool useinc)
       
    // curralgo->step() calls checkevents so set generating flag to avoid recursion
    generating = true;
-   ChangeGoToStop();
-   wxGetApp().PollerReset();
-   viewptr->CheckCursor(IsActive());
+   
+   // avoid doing some things if NextGeneration is called from a script;
+   // note in particular that RunScript calls PollerReset which sets nextcheck to 0
+   if (!InScript()) {
+      ChangeGoToStop();
+      wxGetApp().PollerReset();
+      viewptr->CheckCursor(IsActive());
+   }
 
    if (useinc) {
       // step by current increment
-      if (curralgo->getIncrement() > bigint::one) {
+      if (curralgo->getIncrement() > bigint::one && !InScript()) {
          UpdateToolBar(IsActive());
          UpdateMenuItems(IsActive());
       }
@@ -1969,12 +1974,14 @@ void MainFrame::NextGeneration(bool useinc)
    }
 
    generating = false;
-   ChangeStopToGo();
-   
-   // autofit is only used when doing many gens
-   if (autofit && useinc && curralgo->getIncrement() > bigint::one)
-      viewptr->FitInView(0);
-   UpdateEverything();
+
+   if (!InScript()) {
+      ChangeStopToGo();
+      // autofit is only used when doing many gens
+      if (autofit && useinc && curralgo->getIncrement() > bigint::one)
+         viewptr->FitInView(0);
+      UpdateEverything();
+   }
 }
 
 void MainFrame::ToggleAutoFit()

@@ -133,7 +133,7 @@ int wx_poll::checkevents()
       // on Mac and X11 it is much faster to avoid calling Yield too often
       long t = wxGetElapsedTime(false);
       if (t > nextcheck) {
-         nextcheck = t + 50;        // 20th of a sec
+         nextcheck = t + 100;        // 10 times per sec
          #ifdef __WXMAC__
             CallYield();
          #else
