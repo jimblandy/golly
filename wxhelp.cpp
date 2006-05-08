@@ -576,7 +576,12 @@ void ShowAboutBox()
 {
    wxDialog dlg(mainptr, wxID_ANY, wxString("About Golly"));
    
-   HtmlView *html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition, wxSize(386, 220),
+   HtmlView *html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
+                                 #ifdef __WXX11__
+                                    wxSize(440, 220),
+                                 #else
+                                    wxSize(386, 220),
+                                 #endif
                                  wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
    html->SetBorders(0);
    html->LoadPage("Help/about.html");

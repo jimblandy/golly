@@ -2770,8 +2770,8 @@ MainFrame::MainFrame()
       fileMenu->Append(wxID_PREFERENCES, _("Preferences...\tCtrl+,"));
    #endif
    fileMenu->AppendSeparator();
-   // on the Mac the Alt+X is changed to Cmd-Q and the item is moved to the app menu
-   fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_T("Alt+X")));
+   // on the Mac the Ctrl+Q is changed to Cmd-Q and the item is moved to the app menu
+   fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_("Ctrl+Q")));
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
    editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
