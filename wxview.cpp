@@ -2585,10 +2585,11 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
-   // this was added to test Fatal, but could be useful to quit without saving prefs
-   if ( key == 'Q' && event.ControlDown() ) {
+   /* could be useful to quit without saving prefs???
+   if ( key == 'Q' ) {
       Fatal("Quitting without saving preferences.");
    }
+   */
 
    if ( event.CmdDown() || event.AltDown() ) {
       event.Skip();
