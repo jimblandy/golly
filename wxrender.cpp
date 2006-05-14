@@ -125,8 +125,9 @@ void InitDrawingData()
       // wxX11's Blit doesn't support alpha channel
    #else
       // create translucent selection image
-      if ( !selimage.Create(1,1) )
+      if ( !selimage.Create(1,1) ) {
          Fatal("Failed to create selection image!");
+      }
       selimage.SetRGB(0, 0, 75, 175, 0);     // darkish green
       selimage.SetAlpha();                   // add alpha channel
       if ( selimage.HasAlpha() ) {
