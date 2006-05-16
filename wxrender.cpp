@@ -139,11 +139,15 @@ void InitDrawingData()
       if (selbitmap == NULL) {
          Warning("Not enough memory for selection image!");
       } else {
-         // can't use alpha channel if depth < 32
-         if (selbitmap->GetDepth() < 32) {
-            delete selbitmap;
-            selbitmap = NULL;
-         }
+         #ifdef __WXMAC__
+            // bug??? GetDepth returns -1 even if screen depth is really 32
+         #else
+            // can't use alpha channel if depth < 32
+            if (selbitmap->GetDepth() < 32) {
+               delete selbitmap;
+               selbitmap = NULL;
+            }
+         #endif
       }
    #endif
 }
