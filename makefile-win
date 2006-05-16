@@ -22,9 +22,13 @@ PYTHON_DIR = c:\Python24
 VERSION = 0.96
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
-SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife
-SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win golly.rc \
-   *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
+SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife \
+   Patterns Patterns\Breeders Patterns\Guns Patterns\Hashing-Examples Patterns\Methuselahs \
+   Patterns\Miscellaneous Patterns\Oscillators Patterns\Other-Rules Patterns\Puffers \
+   Patterns\Rakes Patterns\Signal-Circuitry Patterns\Still-Lifes Patterns\Spaceships \
+   Patterns\Syntheses
+SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
+   golly.rc *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe
 
@@ -411,12 +415,10 @@ hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
 srcdist:
 	-rmdir /s /q $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
-	mkdir $(RELEASENAME)-src\patterns
-	mkdir $(RELEASENAME)-src\Help
-	mkdir $(RELEASENAME)-src\Help\Lexicon
-	mkdir $(RELEASENAME)-src\Scripts
-	mkdir $(RELEASENAME)-src\Scripts\glife
 	mkdir $(RELEASENAME)-src\bitmaps
+	mkdir $(RELEASENAME)-src\Help
+	mkdir $(RELEASENAME)-src\Patterns
+	mkdir $(RELEASENAME)-src\Scripts
 	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-src
 	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-src\%F
 	ren $(RELEASENAME)-src\README README.txt
@@ -424,21 +426,16 @@ srcdist:
 	ren $(RELEASENAME)-src\BUILD BUILD.txt
 	ren $(RELEASENAME)-src\TODO TODO.txt
 	ren $(RELEASENAME)-src\CHANGES CHANGES.txt
-	xcopy /I /S ..\patterns\Patterns $(RELEASENAME)-src\patterns\Patterns
-	dir /b /s /AD $(RELEASENAME)-src\patterns\Patterns | find "CVS" >dirnames
-	for /f %%F in (dirnames) do rmdir /s /q %%F
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip
 
 bindist: all
 	-rmdir /s /q $(RELEASENAME)-win
 	mkdir $(RELEASENAME)-win
 	mkdir $(RELEASENAME)-win\Help
+	mkdir $(RELEASENAME)-win\Patterns
 	mkdir $(RELEASENAME)-win\Scripts
 	for %%F IN ($(BINFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-win
 	for %%F IN ($(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-win\%F
 	ren $(RELEASENAME)-win\README README.txt
 	ren $(RELEASENAME)-win\LICENSE LICENSE.txt
-	xcopy /I /S ..\patterns\Patterns $(RELEASENAME)-win\Patterns
-	dir /b /s /AD $(RELEASENAME)-win\Patterns | find "CVS" >dirnames
-	for /f %%F in (dirnames) do rmdir /s /q %%F
 	echo Now zip $(RELEASENAME)-win into $(RELEASENAME)-win.zip
