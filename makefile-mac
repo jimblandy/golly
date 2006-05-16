@@ -26,9 +26,9 @@ PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework Python -fr
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
-SHAREDFILES = Help Scripts README LICENSE
-SRCFILES = BUILD TODO CHANGES makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
-   *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
+SHAREDFILES = Help Patterns Scripts README LICENSE
+SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
+   bitmaps golly.rc *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 
 ### Variables: ###
 
@@ -229,11 +229,7 @@ wxmain.h wxstatus.h wxview.h wxutils.h wxhelp.h wxprefs.h wxscript.h
 srcdist:
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
-	mkdir $(RELEASENAME)-src/src
-	mkdir $(RELEASENAME)-src/patterns
-	mkdir $(RELEASENAME)-src/patterns/Patterns
-	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src/src
-	cp -rp ../patterns/Patterns $(RELEASENAME)-src/patterns
+	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
 	find $(RELEASENAME)-src -name CVS | xargs rm -rf
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
@@ -241,6 +237,5 @@ bindist: all
 	-rm -rf $(RELEASENAME)-mac
 	mkdir $(RELEASENAME)-mac
 	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
-	cp -rp ../patterns/Patterns $(RELEASENAME)-mac
 	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
 	tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz

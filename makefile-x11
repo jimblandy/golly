@@ -10,9 +10,9 @@ WXDIR = ~/wxX11-2.6.3
 
 VERSION = 0.96
 RELEASENAME = golly-$(VERSION)
-SHAREDFILES = Help Scripts README LICENSE
-SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win bitmaps golly.rc \
-   *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
+SHAREDFILES = Help Patterns Scripts README LICENSE
+SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
+   bitmaps golly.rc *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
 BINFILES = golly bgolly
 
 CXXC = g++
@@ -181,18 +181,13 @@ hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
 srcdist:
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
-	mkdir $(RELEASENAME)-src/src
-	mkdir $(RELEASENAME)-src/patterns
-	mkdir $(RELEASENAME)-src/patterns/Patterns
-	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src/src
-	cp -rp ../patterns/Patterns $(RELEASENAME)-src/patterns
+	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
 	find $(RELEASENAME)-src -name CVS | xargs rm -rf
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
 bindist: all
-	-rm -rf $(RELEASENAME)-linux
-	mkdir $(RELEASENAME)-linux
-	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-linux
-	cp -rp ../patterns/Patterns $(RELEASENAME)-linux
-	find $(RELEASENAME)-linux -name CVS | xargs rm -rf
-	tar -cf - ./$(RELEASENAME)-linux | gzip > $(RELEASENAME)-linux.tar.gz
+	-rm -rf $(RELEASENAME)-x11
+	mkdir $(RELEASENAME)-x11
+	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-x11
+	find $(RELEASENAME)-x11 -name CVS | xargs rm -rf
+	tar -cf - ./$(RELEASENAME)-x11 | gzip > $(RELEASENAME)-x11.tar.gz
