@@ -1,0 +1,78 @@
+#C A very long period oscillator: 1800 generations. In more humorous
+#C moments, known as the glider racetrack. Sometimes you're a glider,
+#C sometimes a spaceship, and sometimes just a hole
+#C -- David Goodenough
+#C
+#C This uses several reactions:
+#C
+#C The glider starts travelling SW, and enters a three-glider->LWSS
+#C synthesis found by David Buckingham. There are two parallel streams
+#C of gliders moving in opposite directions, a NW P30 and and a SE
+#C P60. When idling, these fall into eaters, but when *THE* glider
+#C arrives, a single instance of the synthesis takes place, sending a
+#C LWSS west. The gun firing SE has to be P60 to let the LWSS escape.
+#C
+#C Next, the LWSS hits a glider going NE from another P60 gun, and is
+#C converted back into a glider going SE. I'm not sure who this
+#C reaction is due to.
+#C
+#C Next, the kickback reaction with a NE stream from a P30 gun is used
+#C to turn the glider around so it's going NW, and send it back
+#C through the stream from the P60. As far as the LWSS + glider to
+#C glider synthesis goes, a P30 gun would be OK. However, since you
+#C can't get a glider back through a P30 stream without a crash, I
+#C need a P60 stream to let the glider back through.
+#C
+#C Now it goes to a shuttle that turns it NE, and then it hits a
+#C stream of SE gliders from a P30 gun. When it hits the stream, it
+#C destroys exactly one glider in the stream, creating a hole. When
+#C idling, the stream hits another shuttle that turns it NW, and then
+#C runs into what would be a P30 gun, except that the inbound stream
+#C keeps it permanently turned off. This is part of the switchable P30
+#C LWSS gun found by David I. Bell, AKA an in-line NOT gate for glider
+#C guns. When the hole arrives, it allows a single glider to escape
+#C NE, which is promptly turned SE by another shuttle.
+#C
+#C The glider then runs into the westbound output of a P120 LWSS gun,
+#C in a reaction found by Dean Hickerson. It undergoes the same
+#C glider+LWSS->glider reaction, creating a glider going NE. This is
+#C then reversed to SW by the "ping" reaction with a PD, and at that
+#C point it's on its starting path. It continues SW, and once again
+#C enters the three glider LWSS synthesis, and thus the cycle repeats.
+#C
+#C David Goodenough, January 1995
+x = 308, y = 176, rule = B3/S23
+161boo$162bo$162bobo7bo$163boo5bobo$168boo71b3o$168boo12boo56bo3bo$
+168boo12boo55bo5bo$170bobo$172bo65bo7bo$238bo7bo$$239bo5bo$240bo3bo$
+241b3o4$84bo$83bobo$66boo15boobo$66bobo14booboo3boo$61boo6bo13boobo4b
+oo$57boobobbobbobbo13bobo$57boobboo6bo8bo5bo$66bobo7bobo$66boo9boo5$
+85bo$86bo$84b3o40boo$127bobo8bo$118b3oboo4b3o6bo7bo$118b4obbo4b3o5boo
+5bobo$122boo4b3o7bo4bo3boo3boo$127bobo13bo3boo3boo$93bo33boo14bo3boo$
+91bobo50bobo$92boo51bo$268bo$267bobo$266boboo15boo$131bo117boo9boo3boo
+boo14bobo$100bo30boo112b4o4boo5boo4boboo13bo6boo$101bo28bobo112b3oboo
+bboo12bobo13bobbobbobboboo$99b3o148bo17bo5bo8bo6boobboo$274bobo7bobo$
+274boo9boo$175bobbo56bobbo26bobbo$174bo59bo29bo$123boo49bo3bo55bo3bo
+25bo3bo$108bo15boo48b4o56b4o26b4o$106bobo14bo155bo$107boo169boo$278bob
+o$159boobb3obboo81boo7boo$159bobb5obbo81bo9bo9bo$116bo43b9o83b9o10boo$
+116boo5bo33b3o9b3o77b3obb5obb3o6bobo$115bobo5bobo31bobbo7bobbo77bobbo
+bb3obbobbo$126boo4boo24boo9boo79boo9boo23boo9boo$126boo4boo151boo9bobo
+$126boo152bo6bo7b3o4boob3o$113boo8bobo126bo26bobo12b3o4bobb4o$112bobo
+8bo126b4o6boobboo11boo3bo12b3o4boo$112bo131boo3boboboo5b4obobbobo6boo
+3bo13bobo$111boo131boobbobbob3o5boobo3bo3bo4boo3bo14boo$249boboboo4bo
+12bo6bobo$250b4o14bo4bo6bo$252bo19bo$268bo3bo$268bobo11$20boo$20boo4$
+19b3o$19b3o$18bo3bo$17bo5bo142bo$18bo3bo101bobo39bobo$19b3o101bobbo39b
+oo$114boo6boo10bo6bo$114boo4boo3bo8bo5bobo$122boo9bo6boobo$123bobbobb
+oo9booboo3boo$124bobobbobb3o5boobo4boo$107boo20b4o7bobo$109bo20boo9bo$
+96boo12bo8boo$17boo77boo4bo7bo8boo$18bo74boo5boo8bo$15b3o67boo5b3o5bo
+bboo4bo13bo$15bo69boo6boo6b5oboo12boo$96boo4bo19boo$96boo$$110bo$111bo
+$109b3o$114bobo$114boo$115bo3$64bo53bo$62b3o51bobo$61bo55boo$61boo49bo
+$112b3o$115bo$114boo$$117boo$116boo$118bo3$50boo$51boo$50bo74bo$124boo
+$124bobo6boo$133bo$134b3o$136bo$99bo$34boo61b3o$34bo61bo35boo$25bo6bob
+o61boo33boo$22b4o6boo99bo$13bo7b4o68boo$12bobo6bobbo67bobo50boo$11bo3b
+oo4b4o10boo57bo50bobbo$oo9bo3boo5b4o10boo97bo3b3o7bo6boo$oo9bo3boo8bo
+9bo98b5o3bo6bo6boo$12bobo107boo9booboo3bo7bo$13bo108boo8b3oboo3bo3bobb
+o$22bobo108boob4o5boo$23boo60b3o46b4o$23bo63bo47bo$86bo$27boo$27boo$$
+14boo$13b3o3boobo55boo$3boo5boboo5bo3bobbo50bobo$3boo5bobbo4bo4bobboo
+51bo$10boboo4b4o5boo8boo$13b3o3bo7b3o7boo$14boo11boo$26boo$26bo$59boo
+9b3o$51bo7bobbo9bo$50bo3boo7bo7bo5bo$50bo5bo6bo12b4o$51b5o7bo11boobobo
+3boo$59bobbo11b3obobbobboo$59boo14boobobo$76b4o$77bo!

@@ -1,0 +1,6 @@
+#C White Whale - an oscillator with a very long period (160,000,346).
+#D Discovered by Andrew Trevorrow.
+x = 19, y = 29, rule = B345/S5
+8b2o2$6b6o2$4b7ob2o2$2b14o$2o15bo$2bo7b5obo$2o15b2o$2b2o3b5o2b3o$2o15b
+2o$2bob7o3b3o$2o15b2o$2b13obo$2o15b2o$2b4o2b3ob5o$2o15b2o$2b5ob4o4bo$
+2o15b2o$2b6o2b2o3b2o$2o15bo$2bo2b4o2b5o$2o$2b2ob5o2b2o2$4b2ob5o2$6b4o!

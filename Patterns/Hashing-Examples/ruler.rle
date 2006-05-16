@@ -1,0 +1,43 @@
+#N Ruler
+#C This produces groups of LWSSs headed west, with gaps of fixed size
+#C between them.  The lengths of the groups form the 'ruler' sequence,
+#C 1 2 1 3 1 2 1 4 1 2 1 3 1 2 1 5 ... (Sloane's A001511).  The first
+#C group of length n is emitted about generation 96*2^n.
+#C The pattern uses a Corderman eater puffer found by Paul Tooke (Jan 2004),
+#C a p48 glider gun by Noam Elkies (Jun 1997), a p8 glider reflector by
+#C Noam Elkies (Sep 1998), and a p24 LWSS puffer (source unknown).
+#C Dean Hickerson, 4/20/2005
+x = 169, y = 116
+25bo$23b2ob2o2$23b2o$23bo$8b2o15bo$8bo16bo3$27bo$24b3o3$2o22b3o$o23b3o
+$22b2ob2o$22bo$22b3o6$31b3o$31b3o$32bo$30b2o23bo$30bo23bobo2b2o7b2o$
+31bo21bo3b4o6b3o$56bo7bobob2o$51b2obo10b2o$52bobo$43b2o8bo$43bo3$63bob
+o$63bo2bo2bo7bobo$63bob2obobo5b2ob2o$69bo6b2obo$39bo21b3o11bo$38b2o21b
+2o13bo$37bob2o21b2o12bo$36b3o2bo$38bobobo87b4o$39bobobo85b6o$40bo2b3o
+83b4ob2o$41b2obo88b2o$42b2o$42bo3bo97b2o$45bobo95b4o$46b2o95b2ob2o$42b
+2o88bo3bo2bo5b2o$41bobo87b2o3bo3bo$41bo5b2o24b2o56b2o2bo4b2o$40b2o5b2o
+24bo62bo3bo$136bo2bo5b2o$143b2ob2o$143b4o$144b2o$67b2o60b6o$67bo52b4o
+4bo5bo$120bo3bo9bo$120bo12bo$121bo2$151b4o$51b2o3bo3b2o31b2o3bo3b2o46b
+6o$51bo2b5o2bo31bo2b5o2bo46b4ob2o$52b2o5b2o33b2o5b2o51b2o$54b5o37b5o
+37bo$50b3obobobob3o29b3obobobob3o32b2o26b4o$49bo2b3o3b3o2bo27bo2b3o3b
+3o2bo31bobo24bo3bo$49b2o11b2o27b2o11b2o25bo22bo4b2o7bo$51b4o3b4o31b4o
+3b4o28bo21bo3b4o2bo2bo$51bo2bo3bo2bo19b2o10bo2bo3bo2bo24bo3bo24bo3b2o$
+81bo47b4o20b2o3b4o2bo2bo$52bob2ob2obo33bob2ob2obo49bobo4b2o7bo$50bobo
+7bobo29bobo7bobo59bo3bo$49bo3bo5bo3bo27bo3bo5bo3bo59b4o$52bo7bo33bo7bo
+40b2o$49bo13bo27bo13bo20b2o13b2ob2o9bo$49bob2ob2ob2ob2obo27bob2ob2ob2o
+b2obo21b2o8bo3b4o11bo$50b2o4bo4b2o29b2o4bo4b2o21bo11bo3b2o6bo5bo$53bo
+5bo35bo5bo34bo2bo11b6o$40b2ob2o65b2ob2o23bo3b2o$41bobobo11bo19b2o30bob
+obo23bo3b4o$41bo2b4o2b3o24bo24b3o2b4o2bo27b2ob2o$39b2ob2o3bo2b3o3b3o
+37b3o3b3o2bo3b2ob2o27b2o$40bobo4bo2b2o51b2o2bo4bobo$40bobo3bo2bo55bo2b
+o3bobo20bo$37b2obo5bob3obo49bob3obo5bob2o18bo$38bobobo2bo6bo49bo6bo2bo
+bobo13bo5bo$38bobobobo4b2o2bo13b2o17b2o13bo2b2o4bobobobo14b6o$37b2obo
+2bo6bo3bo12bo19bo12bo3bo6bo2bob2o$38bob2obobo7bo11bobo19bobo6bo4bo7bob
+ob2obo6b4o$38bo4bob3o17b2o21b2o5b2o10b3obo4bo5bo3bo$39b5o4bo46bobo8bo
+4b5o10bo$45b2obo3bobo45bobo3bob2o15bo$39b2o2b2obob2obo2bo45bo2bob2obob
+2o2b2o$39bo2bo3bo2bobo8bo33bo8bobo2bo3bo2bo$40b2o4b2o6bo4b3o32bo5bo6b
+2o4b2o$41bo5bo3bobo5b3o32bo6bobo3bo5bo$40bo2bobo2bob2o51b2obo2bobo2bo$
+40b2obo2bobobo9b3o29b3o9bobobo2bob2o$41bob2obobobo4b2ob7ob2o19b2ob7ob
+2o4bobobob2obo$41bobo2bo2bo5bo3bobobo3bo19bo3bobobo3bo5bo2bo2bobo$42bo
+2b2o9b4o3b4o21b4o3b4o9b2o2bo$58bo5bo25bo5bo$51b2o5bo5bo5b2o11b2o5bo5bo
+5b2o$51bo2b2ob2o5b2ob2o2bo11bo2b2ob2o5b2ob2o2bo$52bobob4obob4obobo13bo
+bob4obob4obobo$51b2o2bo4b3o4bo2b2o11b2o2bo4b3o4bo2b2o$53bobo11bobo15bo
+bo11bobo$53bo2bo9bo2bo15bo2bo9bo2bo$54b2o11b2o17b2o11b2o!
