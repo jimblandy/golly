@@ -130,14 +130,14 @@ int wx_poll::checkevents()
       // on Windows wxGetElapsedTime has a higher overhead than Yield
       CallYield();
    #else
-      // on Mac and X11 it is much faster to avoid calling Yield too often
+      // on Mac/Linux it is much faster to avoid calling Yield too often
       long t = wxGetElapsedTime(false);
       if (t > nextcheck) {
          nextcheck = t + 100;        // 10 times per sec
-         #ifdef __WXMAC__
-            CallYield();
+         #ifdef __WXX11__
+            wxGetApp().Yield(true);            
          #else
-            wxGetApp().Yield(true);
+            CallYield();
          #endif
       }
    #endif

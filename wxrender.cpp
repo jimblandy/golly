@@ -69,13 +69,12 @@ wxPen pen_notsodark  (wxColour(0x70,0x70,0x70));
    // wxX11's Blit doesn't support alpha channel
 #else
    wxImage selimage;       // translucent overlay for drawing selections
-   wxBitmap* selbitmap;    // selection bitmap
    int selimagewd;         // width of selection image
    int selimageht;         // height of selection image
 #endif
+wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is used)
 
 // paste image (initialized in CreatePasteImage)
-wxImage pasteimage;        // translucent image for drawing paste pattern
 wxBitmap* pastebitmap;     // paste bitmap
 int pimagewd;              // width of paste image
 int pimageht;              // height of paste image
@@ -87,14 +86,6 @@ bool pcolor;               // must match blackcells flag
 paste_location pasteloc;   // must match plocation
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
-
-// make this a user preference on Mac/Win???
-// PROBLEM: if usemask is false then translucent image on Win is not correct!!!
-#ifdef __WXX11__
-   bool usemask = true;    // no alpha channel support so must use mask
-#else
-   bool usemask = true;    // use masked bitmap instead of translucent image?
-#endif
 
 // -----------------------------------------------------------------------------
 
@@ -135,19 +126,25 @@ void InitDrawingData()
       } else {
          Warning("Selection image has no alpha channel!");
       }
-      // scale selection image to viewport size and create selbitmap;
-      // it's not strictly necessary to do this here because CheckSelectionImage
-      // will do it, but it avoids delay when user makes their first selection
+      // scale selection image to viewport size and create selbitmap
       int wd, ht;
       viewptr->GetClientSize(&wd, &ht);
       // wd or ht might be < 1 on Win/X11 platforms
       if (wd < 1) wd = 1;
       if (ht < 1) ht = 1;
       selimage.Rescale(wd, ht);
-      selbitmap = new wxBitmap(selimage);
-      if (selbitmap == NULL) Warning("Not enough memory for selection image!");
       selimagewd = wd;
       selimageht = ht;
+      selbitmap = new wxBitmap(selimage);
+      if (selbitmap == NULL) {
+         Warning("Not enough memory for selection image!");
+      } else {
+         // can't use alpha channel if depth < 32
+         if (selbitmap->GetDepth() < 32) {
+            delete selbitmap;
+            selbitmap = NULL;
+         }
+      }
    #endif
 }
 
@@ -319,18 +316,18 @@ wx_render renderer;     // create instance
 void CheckSelectionImage(int viewwd, int viewht)
 {
    #ifdef __WXX11__
-      // wxX11 doesn't support alpha channel;
-      // avoid compiler warnings
-      if ( viewwd == viewht ) {}
+      // wxX11 doesn't support alpha channel
    #else
-      if ( viewwd != selimagewd || viewht != selimageht ) {
-         // rescale selection image and create new bitmap
-         selimage.Rescale(viewwd, viewht);
-         if (selbitmap) delete selbitmap;
-         selbitmap = new wxBitmap(selimage);
-         // don't check if selbitmap is NULL here -- done in DrawSelection
-         selimagewd = viewwd;
-         selimageht = viewht;
+      if (selbitmap) {
+         if ( viewwd != selimagewd || viewht != selimageht ) {
+            // rescale selection image and create new bitmap
+            selimage.Rescale(viewwd, viewht);
+            delete selbitmap;
+            selbitmap = new wxBitmap(selimage);
+            // don't check if selbitmap is NULL here -- done in DrawSelection
+            selimagewd = viewwd;
+            selimageht = viewht;
+         }
       }
    #endif
 }
@@ -339,17 +336,15 @@ void CheckSelectionImage(int viewwd, int viewht)
 
 void DrawSelection(wxDC &dc, wxRect &rect)
 {
-   #ifdef __WXX11__
-      // wxX11's Blit doesn't support alpha channel so we just invert rect
+   if (selbitmap) {
+      // draw translucent green rect
+      wxMemoryDC memdc;
+      memdc.SelectObject(*selbitmap);
+      dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+   } else {
+      // no alpha channel so just invert rect
       dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-   #else
-      if (selbitmap) {
-         // draw translucent green rect
-         wxMemoryDC memdc;
-         memdc.SelectObject(*selbitmap);
-         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-      }
-   #endif
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -358,20 +353,6 @@ void CreatePasteImage(lifealgo *palgo, wxRect &bbox)
 {
    pastealgo = palgo;      // save for use in CheckPasteImage
    pastebbox = bbox;       // ditto
-   
-   if (!usemask) {
-      // create translucent image for drawing given pattern
-      if ( !pasteimage.Create(1,1) )
-         Fatal("Failed to create paste image!");
-      // color here doesn't matter coz we paint entire image
-      // pasteimage.SetRGB(0, 0, 128, 128, 128);
-      pasteimage.SetAlpha();                       // add alpha channel
-      if ( pasteimage.HasAlpha() ) {
-         pasteimage.SetAlpha(0, 0, 128);           // 50% opaque
-      } else {
-         Warning("Paste image has no alpha channel!");
-      }
-   }
    pastebitmap = NULL;
    prectwd = -1;           // force CheckPasteImage to update paste image
    prectht = -1;
@@ -384,7 +365,6 @@ void CreatePasteImage(lifealgo *palgo, wxRect &bbox)
 
 void DestroyPasteImage()
 {
-   if (!usemask) pasteimage.Destroy();
    if (pastebitmap) {
       delete pastebitmap;
       pastebitmap = NULL;
@@ -439,10 +419,6 @@ void CheckPasteImage(viewport &currview)
          if (pimagewd != 1 || pimageht != 1) {
             pimagewd = 1;
             pimageht = 1;
-            if (!usemask) {
-               // wxMac bug??? Rescale values must change to avoid loss of alpha channel
-               pasteimage.Rescale(pimagewd, pimageht);
-            }
          }
          return;
       }
@@ -518,22 +494,13 @@ void CheckPasteImage(viewport &currview)
          }
       }
       
-      if (usemask) {
-         // delete old bitmap and corresponding mask, even if size hasn't changed
-         if (pastebitmap) delete pastebitmap;
-         pimagewd = pastewd;
-         pimageht = pasteht;
-         // create new bitmap (-1 means screen depth)
-         pastebitmap = new wxBitmap(pimagewd, pimageht, -1);
-         // mask will be created after drawing pattern into bitmap
-      } else if ( pimagewd != pastewd || pimageht != pasteht ) {
-         // rescale paste image and create new bitmap
-         pimagewd = pastewd;
-         pimageht = pasteht;
-         pasteimage.Rescale(pimagewd, pimageht);
-         if (pastebitmap) delete pastebitmap;
-         pastebitmap = new wxBitmap(pasteimage);
-      }
+      // delete old bitmap and corresponding mask, even if size hasn't changed
+      if (pastebitmap) delete pastebitmap;
+      pimagewd = pastewd;
+      pimageht = pasteht;
+      // create new bitmap (-1 means screen depth)
+      pastebitmap = new wxBitmap(pimagewd, pimageht, -1);
+      // mask will be created after drawing pattern into bitmap
       
       if (pastebitmap) {
          // create temporary viewport and draw pattern into pastebitmap
@@ -555,7 +522,7 @@ void CheckPasteImage(viewport &currview)
          // set foreground and background colors for DrawBitmap calls
          #if defined(__WXMAC__) || defined(__WXMSW__)
             // use opposite meaning on Mac/Windows -- sheesh
-            if (blackcells || usemask) {
+            if (blackcells) {
                pattdc.SetTextForeground(*wxWHITE);
                pattdc.SetTextBackground(*wxRED);
             } else {
@@ -563,7 +530,7 @@ void CheckPasteImage(viewport &currview)
                pattdc.SetTextBackground(*wxRED);
             }
          #else
-            if (blackcells || usemask) {
+            if (blackcells) {
                pattdc.SetTextForeground(*wxRED);
                pattdc.SetTextBackground(*wxWHITE);
             } else {
@@ -573,7 +540,7 @@ void CheckPasteImage(viewport &currview)
          #endif
 
          // set brush color used in killrect
-         deadbrush = blackcells || usemask ? wxWHITE_BRUSH : wxBLACK_BRUSH;
+         deadbrush = blackcells ? wxWHITE_BRUSH : wxBLACK_BRUSH;
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -586,19 +553,24 @@ void CheckPasteImage(viewport &currview)
          
          showgridlines = saveshow;
 
-         if (usemask) {
-            // add new mask to pastebitmap
-            #ifdef __WXMSW__
-               // temporarily change depth to avoid bug in wxMSW 2.6.0
-               int d = pastebitmap->GetDepth();
-               pastebitmap->SetDepth(1);
-               pastebitmap->SetMask( new wxMask(*pastebitmap,*wxWHITE) );
-               pastebitmap->SetDepth(d);
-            #else
-               // white background will be transparent
-               pastebitmap->SetMask( new wxMask(*pastebitmap,*wxWHITE) );
-            #endif
+         // add new mask to pastebitmap
+         #ifdef __WXMSW__
+            // temporarily change depth to avoid bug in wxMSW 2.6.0 (fixed in 2.6.3???)
+            int d = pastebitmap->GetDepth();
+            pastebitmap->SetDepth(1);
+         #endif
+         if (blackcells) {
+            // white background will be transparent
+            pastebitmap->SetMask( new wxMask(*pastebitmap,*wxWHITE) );
+         } else {
+            // black background will be transparent
+            pastebitmap->SetMask( new wxMask(*pastebitmap,*wxBLACK) );
          }
+         #ifdef __WXMSW__
+            // restore depth
+            pastebitmap->SetDepth(d);
+         #endif
+
       } else {
          // give some indication that pastebitmap could not be created
          wxBell();

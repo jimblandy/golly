@@ -484,7 +484,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
               wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
 {
-   // avoid erasing background (only on GTK+)
+   // avoid erasing background on GTK+
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
    // create colored brushes for background
@@ -506,6 +506,10 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
       } else {
          textascent = 10;
       }
+   #elif defined(__WXGTK__)
+      // use smaller font on GTK
+      statusfont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
+      textascent = 11;
    #else
       statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 10;

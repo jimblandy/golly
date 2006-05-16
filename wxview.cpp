@@ -2454,7 +2454,18 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_LEAVE_WINDOW     (                 PatternView::OnMouseExit)
    EVT_MOUSEWHEEL       (                 PatternView::OnMouseWheel)
    EVT_TIMER            (ID_DRAG_TIMER,   PatternView::OnDragTimer)
+#ifdef __WXGTK__
+   // wxGTK bug??? can't use EVT_SCROLLWIN -- OnScroll handler only sees
+   // wxEVT_SCROLLWIN_THUMBTRACK events
+   EVT_SCROLLWIN_LINEUP       (           PatternView::OnLineUp)
+   EVT_SCROLLWIN_LINEDOWN     (           PatternView::OnLineDown)
+   EVT_SCROLLWIN_PAGEUP       (           PatternView::OnPageUp)
+   EVT_SCROLLWIN_PAGEDOWN     (           PatternView::OnPageDown)
+   EVT_SCROLLWIN_THUMBTRACK   (           PatternView::OnThumbTrack)
+   EVT_SCROLLWIN_THUMBRELEASE (           PatternView::OnThumbRelease)
+#else
    EVT_SCROLLWIN        (                 PatternView::OnScroll)
+#endif
    EVT_ERASE_BACKGROUND (                 PatternView::OnEraseBackground)
 END_EVENT_TABLE()
 
@@ -2585,11 +2596,10 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
-   /* could be useful to quit without saving prefs???
-   if ( key == 'Q' ) {
+   // this was added to test Fatal, but could be useful to quit without saving prefs
+   if ( key == 'Q' && event.ControlDown() ) {
       Fatal("Quitting without saving preferences.");
    }
-   */
 
    if ( event.CmdDown() || event.AltDown() ) {
       event.Skip();
@@ -2794,6 +2804,113 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
    }
 }
 
+#ifdef __WXGTK__
+
+// wxGTK bug??? can't use single OnScroll handler -- sigh
+
+void PatternView::OnLineUp(wxScrollWinEvent& event)
+{
+   wxBell();//!!!
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+   int orient = event.GetOrientation();
+   if (orient == wxHORIZONTAL)
+      PanLeft( SmallScroll(currview.getwidth()) );
+   else
+      PanUp( SmallScroll(currview.getheight()) );
+}
+
+void PatternView::OnLineDown(wxScrollWinEvent& event)
+{
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+   int orient = event.GetOrientation();
+   if (orient == wxHORIZONTAL)
+      PanRight( SmallScroll(currview.getwidth()) );
+   else
+      PanDown( SmallScroll(currview.getheight()) );
+}
+
+void PatternView::OnPageUp(wxScrollWinEvent& event)
+{
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+   int orient = event.GetOrientation();
+   if (orient == wxHORIZONTAL)
+      PanLeft( BigScroll(currview.getwidth()) );
+   else
+      PanUp( BigScroll(currview.getheight()) );
+}
+
+void PatternView::OnPageDown(wxScrollWinEvent& event)
+{
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+   int orient = event.GetOrientation();
+   if (orient == wxHORIZONTAL)
+      PanRight( BigScroll(currview.getwidth()) );
+   else
+      PanDown( BigScroll(currview.getheight()) );
+}
+
+void PatternView::OnThumbTrack(wxScrollWinEvent& event)
+{
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+   int orient = event.GetOrientation();
+   int newpos = event.GetPosition();
+   int amount = newpos - (orient == wxHORIZONTAL ? hthumb : vthumb);
+   if (amount != 0) {
+      TestAutoFit();
+      if (currview.getmag() > 0) {
+         // amount is in cells so convert to pixels
+         amount = amount << currview.getmag();
+      }
+      if (orient == wxHORIZONTAL) {
+         hthumb = newpos;
+         currview.move(amount, 0);
+         // don't call UpdateEverything here because it calls UpdateScrollBars
+         Refresh(false, NULL);
+         // don't Update() immediately -- more responsive, especially on X11
+      } else {
+         vthumb = newpos;
+         currview.move(0, amount);
+         // don't call UpdateEverything here because it calls UpdateScrollBars
+         Refresh(false, NULL);
+         // don't Update() immediately -- more responsive
+      }
+   }
+}
+
+void PatternView::OnThumbRelease(wxScrollWinEvent& WXUNUSED(event))
+{
+   wxBell();//!!!
+   if (InScript()) {
+      // don't allow scrolling while script is running???!!!
+      UpdateScrollBars();
+      return;
+   }
+   // now we can call UpdateScrollBars
+   mainptr->UpdateEverything();
+}
+
+#else
+
 void PatternView::OnScroll(wxScrollWinEvent& event)
 {
    if (InScript()) {
@@ -2802,7 +2919,7 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       return;
    }
 
-   WXTYPE type = (WXTYPE)event.GetEventType();
+   WXTYPE type = event.GetEventType();
    int orient = event.GetOrientation();
 
    if (type == wxEVT_SCROLLWIN_LINEUP)
@@ -2868,6 +2985,8 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       mainptr->UpdateEverything();
    }
 }
+
+#endif // __WXGTK__
 
 void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 {

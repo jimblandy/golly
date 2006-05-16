@@ -405,7 +405,7 @@ void MainFrame::UpdateMenuItems(bool active)
    if (mbar) {
       if (viewptr->waitingforclick) active = false;
       
-      #ifdef __WXMAC__
+      #if defined(__WXMAC__) || defined(__WXGTK__)
          // fix prob on OS 10.4 after a modal dialog closes??? test on G4!!!
          if (!active && (!GetHelpFrame() || !GetHelpFrame()->IsActive())
                      && (!GetInfoFrame() || !GetInfoFrame()->IsActive()) ) {
@@ -2177,6 +2177,12 @@ void MainFrame::ToggleToolBar()
             tbar->Show(true);
          }
          int wd, ht;
+         #ifdef __WXGTK__
+            // wxGTK bug??? do a temporary size change to force origin to change -- sheesh
+            GetSize(&wd, &ht);
+            SetSize(wd-1, ht-1);
+            SetSize(wd, ht);
+         #endif
          GetClientSize(&wd, &ht);
          if (StatusVisible()) {
             // adjust size of status bar
@@ -2469,7 +2475,7 @@ void MainFrame::OnActivate(wxActivateEvent& event)
    event.Skip();
 }
 
-#ifdef __WXX11__
+#if defined(__WXX11__) || defined(__WXGTK__)
 void MainFrame::OnSize(wxSizeEvent& event)
 #else
 void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
@@ -2489,8 +2495,8 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
          ResizeSplitWindow();
       }
    }
-   #ifdef __WXX11__
-      // need to do default processing for X11 menu bar and tool bar
+   #if defined(__WXX11__) || defined(__WXGTK__)
+      // need to do default processing for menu bar and tool bar
       event.Skip();
    #endif
 }
@@ -2634,8 +2640,8 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    // delete any temporary files
    if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
 
-   #ifdef __WXX11__
-      // avoid seg fault on X11
+   #if defined(__WXX11__) || defined(__WXGTK__)
+      // avoid seg fault on Linux
       if (generating) exit(0);
    #else
       if (generating) StopGenerating();

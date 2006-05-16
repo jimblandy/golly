@@ -1,12 +1,14 @@
-# Makefile for X11 version of Golly using wxWidgets.
+# Makefile for GTK version of Golly using wxWidgets.
 # It assumes you've built and installed wxWidgets with commands like these:
 #
-# cd WXDIR
-# ./configure --with-x11 --disable-shared
+# cd <wx-install-dir>
+# mkdir buildgtk
+# cd buildgtk
+# ../configure --with-gtk --disable-shared
 # make
-
-# change next line to specify where you installed wxX11
-WXDIR = ~/wxX11-2.6.3
+# su
+# make install
+# ldconfig
 
 VERSION = 0.96
 RELEASENAME = golly-$(VERSION)
@@ -16,29 +18,17 @@ SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-wi
 BINFILES = golly bgolly
 
 CXXC = g++
+CXXFLAGS = `wx-config --cxxflags` -O5 -Wall -DZLIB -DVERSION=$(VERSION)
+LDFLAGS = `wx-config --libs` -lz
 
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
+# we don't want to link against a specific library: PYTHON_LINK = -lpython2.3
+# following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
+# PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+PYTHON_LINK = 
 
-ifeq ($(OSTYPE),darwin)
-   # on Mac OS 10.4 we must avoid /usr/bin/wx-config
-   # and use --inplace to force wxX11 build in case wxMac is installed
-   CXXFLAGS = `$(WXDIR)/wx-config --cxxflags --inplace` -O5 -Wall -Wno-non-virtual-dtor -DZLIB -DVERSION=$(VERSION)
-   LDFLAGS = `$(WXDIR)/wx-config --libs --inplace` -lz
-   # on Mac OS 10.4 the following python command does not spit out the right info -- sheesh
-   # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
-   PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework Python -framework CoreServices -framework Foundation
-else
-   # use --inplace to force wxX11 build in case wxGTK is installed
-   CXXFLAGS = `$(WXDIR)/wx-config --cxxflags --inplace` -O5 -Wall -DZLIB -DVERSION=$(VERSION)
-   LDFLAGS = `$(WXDIR)/wx-config --libs --inplace` -lz
-   # we don't want to link against a specific library: PYTHON_LINK = -lpython2.3
-   # following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
-   # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
-   PYTHON_LINK = 
-endif
-
-### put .o files in an X11-specific subdir to avoid conflict with .o files created by GTK build
-OBJDIR = ObjX11
+### put .o files in a GTK-specific subdir to avoid conflict with .o files created by X11 build
+OBJDIR = ObjGTK
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \

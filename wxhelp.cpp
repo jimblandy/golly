@@ -577,8 +577,8 @@ void ShowAboutBox()
    wxDialog dlg(mainptr, wxID_ANY, wxString("About Golly"));
    
    HtmlView *html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
-                                 #ifdef __WXX11__
-                                    wxSize(440, 220),
+                                 #if defined(__WXX11__) || defined(__WXGTK__)
+                                    wxSize(460, 220),
                                  #else
                                     wxSize(386, 220),
                                  #endif
