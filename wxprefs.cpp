@@ -827,24 +827,32 @@ void GetPrefs()
 
 // define a multi-page dialog for changing various preferences
 
-size_t prefspage = 0;      // current page in PrefsDialog
-bool ignore_page_event;    // used to prevent prefspage being changed
+size_t currpage = 0;       // current page in PrefsDialog
+bool ignore_page_event;    // used to prevent currpage being changed
 
 class PrefsDialog : public wxPropertySheetDialog
 {
 public:
    PrefsDialog(wxWindow* parent);
+
+   wxPanel* CreateFilePrefs(wxWindow* parent);
+   wxPanel* CreateEditPrefs(wxWindow* parent);
+   wxPanel* CreateControlPrefs(wxWindow* parent);
+   wxPanel* CreateViewPrefs(wxWindow* parent);
+
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
 private:
    enum {
-      // these *_PAGE values must correspond to prefspage values
+      // these *_PAGE values must correspond to currpage values
       FILE_PAGE = 0,
       EDIT_PAGE,
       CONTROL_PAGE,
-      VIEW_PAGE,
+      VIEW_PAGE
+   };
+   enum {
       // File prefs
-      PREF_NEW_REM_SEL,
+      PREF_NEW_REM_SEL = 100,
       PREF_NEW_CURSOR,
       PREF_NEW_SCALE,
       PREF_OPEN_REM_SEL,
@@ -869,16 +877,11 @@ private:
       PREF_THUMB_RANGE
    };
 
-   wxPanel* CreateFilePrefs(wxWindow* parent);
-   wxPanel* CreateEditPrefs(wxWindow* parent);
-   wxPanel* CreateControlPrefs(wxWindow* parent);
-   wxPanel* CreateViewPrefs(wxWindow* parent);
-
    bool GetCheckVal(long id);
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
    bool BadSpinVal(int id, int minval, int maxval, const char *prefix);
-   bool ValidateCurrentPage();
+   bool ValidatePage(size_t page);
    
    void OnCheckBoxClicked(wxCommandEvent& event);
    void OnPageChanging(wxNotebookEvent& event);
@@ -911,25 +914,25 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
    
    // AddPage and SetSelection cause OnPageChanging and OnPageChanged to be called
-   // so we use a flag to prevent prefspage being changed (and unnecessary validation)
+   // so we use a flag to prevent currpage being changed (and unnecessary validation)
    ignore_page_event = true;
 
    notebook->AddPage(filePrefs, _("File"));
    notebook->AddPage(editPrefs, _("Edit"));
    notebook->AddPage(ctrlPrefs, _("Control"));
    notebook->AddPage(viewPrefs, _("View"));
-   
+
    // show last selected page
-   notebook->SetSelection(prefspage);
+   notebook->SetSelection(currpage);
 
    ignore_page_event = false;
 
    #ifdef __WXMAC__
       // give focus to first edit box on each page; also allows use of escape
-      if (prefspage == FILE_PAGE) FindWindow(PREF_MAX_PATTERNS)->SetFocus();
-      if (prefspage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
-      if (prefspage == CONTROL_PAGE) FindWindow(PREF_MAX_HASH_MEM)->SetFocus();
-      if (prefspage == VIEW_PAGE)
+      if (currpage == FILE_PAGE) FindWindow(PREF_MAX_PATTERNS)->SetFocus();
+      if (currpage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
+      if (currpage == CONTROL_PAGE) FindWindow(PREF_MAX_HASH_MEM)->SetFocus();
+      if (currpage == VIEW_PAGE)
          if (showboldlines)
             FindWindow(PREF_BOLD_SPACING)->SetFocus();
          else
@@ -1103,12 +1106,10 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    minbox->SetMinSize( maxbox->GetMinSize() );
 
    wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 1, MAX_RECENT, maxpatterns);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    
    wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_SCRIPTS, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 1, MAX_RECENT, maxscripts);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
 
    wxBoxSizer* hpbox = new wxBoxSizer( wxHORIZONTAL );
    hpbox->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1134,8 +1135,8 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    opencursindex = CursorToIndex(opencurs);
    choice3->SetSelection(newcursindex);
    choice4->SetSelection(opencursindex);
-   spin1->SetValue(maxpatterns);
-   spin2->SetValue(maxscripts);
+   spin1->SetRange(1, MAX_RECENT); spin1->SetValue(maxpatterns);
+   spin2->SetRange(1, MAX_RECENT); spin2->SetValue(maxscripts);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1157,14 +1158,13 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("Random fill percentage:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 1, 100, randomfill);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // init control value
-   spin1->SetValue(randomfill);
+   spin1->SetRange(1, 100); spin1->SetValue(randomfill);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1186,8 +1186,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, MIN_HASHMB, MAX_HASHMB, maxhashmem);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1212,8 +1211,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_QBASE, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 2, MAX_BASESTEP, qbasestep);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -1221,8 +1219,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
    hbox2->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_HBASE, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 2, MAX_BASESTEP, hbasestep);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 #ifdef __WXX11__
    hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)  ")),
@@ -1249,8 +1246,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
    hbox3->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin3 = new wxSpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 0, MAX_DELAY, mindelay);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox3->Add(spin3, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1260,20 +1256,21 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
    hbox4->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin4 = new wxSpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 0, MAX_DELAY, maxdelay);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox4->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    
-   // init control values
-   spin1->SetValue(qbasestep);
-   spin2->SetValue(hbasestep);
-   spin3->SetValue(mindelay);
-   spin4->SetValue(maxdelay);
-   spin5->SetValue(maxhashmem);
+   // init control values;
+   // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying
+   // the min,max,init values in the wxSpinCtrl constructor
+   spin1->SetRange(2, MAX_BASESTEP);        spin1->SetValue(qbasestep);
+   spin2->SetRange(2, MAX_BASESTEP);        spin2->SetValue(hbasestep);
+   spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
+   spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
+   spin5->SetRange(MIN_HASHMB, MAX_HASHMB); spin5->SetValue(maxhashmem);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1311,8 +1308,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
                                        wxDefaultPosition, wxDefaultSize);
    
    wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_BOLD_SPACING, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 2, MAX_SPACING, boldspacing);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    
    hbox2->Add(check2, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
@@ -1376,8 +1372,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
    hbox5->Add(thumblabel, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_THUMB_RANGE, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord),
-                                      wxSP_ARROW_KEYS, 2, MAX_THUMBRANGE, thumbrange);
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("times view size")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1403,12 +1398,12 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 #if wxUSE_TOOLTIPS
    check3->SetValue(showtips);
 #endif
-   spin2->SetValue(boldspacing);
+   spin5->SetRange(2, MAX_THUMBRANGE); spin5->SetValue(thumbrange);
+   spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
    spin2->Enable(showboldlines);
    mingridindex = mingridmag - 2;
    choice3->SetSelection(mingridindex);
    choice4->SetSelection(mousewheelmode);
-   spin5->SetValue(thumbrange);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1500,20 +1495,20 @@ bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
 
 // -----------------------------------------------------------------------------
 
-bool PrefsDialog::ValidateCurrentPage()
+bool PrefsDialog::ValidatePage(size_t page)
 {
    // validate all spin control values on current page
-   if (prefspage == FILE_PAGE) {
+   if (page == FILE_PAGE) {
       if ( BadSpinVal(PREF_MAX_PATTERNS, 1, MAX_RECENT, "Maximum number of recent patterns") )
          return false;
       if ( BadSpinVal(PREF_MAX_SCRIPTS, 1, MAX_RECENT, "Maximum number of recent scripts") )
          return false;
 
-   } else if (prefspage == EDIT_PAGE) {
+   } else if (page == EDIT_PAGE) {
       if ( BadSpinVal(PREF_RANDOM_FILL, 1, 100, "Random fill percentage") )
          return false;
 
-   } else if (prefspage == CONTROL_PAGE) {
+   } else if (page == CONTROL_PAGE) {
       if ( BadSpinVal(PREF_MAX_HASH_MEM, MIN_HASHMB, MAX_HASHMB, "Maximum memory for hashing") )
          return false;
       if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, "Base step if not hashing") )
@@ -1525,14 +1520,14 @@ bool PrefsDialog::ValidateCurrentPage()
       if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, "Maximum delay") )
          return false;
 
-   } else if (prefspage == VIEW_PAGE) {
+   } else if (page == VIEW_PAGE) {
       if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, "Spacing of bold grid lines") )
          return false;
       if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, "Thumb scrolling range") )
          return false;
    
    } else {
-      Warning("Bug in ValidateCurrentPage!");
+      Warning("Bug in ValidatePage!");
       return false;
    }
    
@@ -1545,7 +1540,7 @@ void PrefsDialog::OnPageChanging(wxNotebookEvent& event)
 {
    if (ignore_page_event) return;
    // validate current page and veto change if invalid
-   if (!ValidateCurrentPage()) event.Veto();
+   if (!ValidatePage(currpage)) event.Veto();
 }
 
 // -----------------------------------------------------------------------------
@@ -1553,14 +1548,14 @@ void PrefsDialog::OnPageChanging(wxNotebookEvent& event)
 void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 {
    if (ignore_page_event) return;
-   prefspage = event.GetSelection();
+   currpage = event.GetSelection();
 }
 
 // -----------------------------------------------------------------------------
 
 bool PrefsDialog::TransferDataFromWindow()
 {
-   if (!ValidateCurrentPage()) return false;
+   if (!ValidatePage(currpage)) return false;
    
    // set global prefs to current control values
 
