@@ -118,8 +118,8 @@ InfoFrame::InfoFrame(char *comments)
    wxGetApp().SetFrameIcon(this);
 
    #ifdef __WXMSW__
-      // avoid default background colour (dark grey)
-      SetBackgroundColour(*wxLIGHT_GREY);
+      // use current theme's background colour
+      SetBackgroundColour(wxNullColour);
    #endif
 
    TextView* textctrl = new TextView(this, wxID_ANY, wxEmptyString,
