@@ -2126,6 +2126,11 @@ void MainFrame::ResizeSplitWindow()
    // wxSplitterWindow automatically resizes left and right panes
    // but we still need to resize viewport (ie. currview)
    viewptr->SetViewSize();
+
+   #ifdef __WXGTK__
+      // need to reset scroll bars
+      viewptr->UpdateScrollBars();
+   #endif
 }
 
 void MainFrame::ToggleStatusBar()

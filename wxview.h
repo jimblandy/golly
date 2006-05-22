@@ -134,18 +134,7 @@ private:
    void OnMouseEnter(wxMouseEvent& event);
    void OnMouseExit(wxMouseEvent& event);
    void OnDragTimer(wxTimerEvent& event);
-#ifdef __WXGTK__
-   // wxGTK bug??? can't use EVT_SCROLLWIN -- OnScroll handler only sees
-   // wxEVT_SCROLLWIN_THUMBTRACK events
-   void OnLineUp(wxScrollWinEvent& event);
-   void OnLineDown(wxScrollWinEvent& event);
-   void OnPageUp(wxScrollWinEvent& event);
-   void OnPageDown(wxScrollWinEvent& event);
-   void OnThumbTrack(wxScrollWinEvent& event);
-   void OnThumbRelease(wxScrollWinEvent& event);
-#else
    void OnScroll(wxScrollWinEvent& event);
-#endif
    void OnEraseBackground(wxEraseEvent& event);
    
    // edit functions
