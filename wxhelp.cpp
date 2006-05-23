@@ -187,10 +187,11 @@ HelpFrame::HelpFrame()
                           wxDefaultPosition, wxSize(30,30),
                           wxHW_DEFAULT_STYLE | wxSUNKEN_BORDER);
    #ifdef __WXMAC__
+      // no longer need this??? (prevention done in UpdateHelpButtons)
       // prevent horizontal scroll bar appearing in Mac html window
-      int xunit, yunit;
-      htmlwin->GetScrollPixelsPerUnit(&xunit, &yunit);
-      htmlwin->SetScrollRate(0, yunit);
+      // int xunit, yunit;
+      // htmlwin->GetScrollPixelsPerUnit(&xunit, &yunit);
+      // htmlwin->SetScrollRate(0, yunit);
    #endif
    htmlwin->SetBorders(4);
    SetFontSizes(helpfontsize);
