@@ -457,10 +457,9 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          if ( wxExecute("open " + url, wxEXEC_ASYNC) == -1 )
             Warning("Could not open URL!");
       #elif defined(__WXGTK__)
-         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we execute a Python command,
-         // but we really need a better solution because Python might not be installed, and
-         // the command does not bring the browser to the front if it's already running!!!
-         if ( wxExecute("python -c \"import webbrowser; webbrowser.open('" + url + "')\"", wxEXEC_ASYNC) == -1 )
+         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we execute a gnome-open command;
+         // unfortunately it does not bring the browser to the front if it's already running!!!
+         if ( wxExecute("gnome-open " + url, wxEXEC_ASYNC) == -1 )
             Warning("Could not open URL!");
       #else
          if ( !wxLaunchDefaultBrowser(url) )
