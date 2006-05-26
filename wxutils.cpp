@@ -42,7 +42,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 void Warning(const char *msg) {
    wxBell();
-   //!!!wxSetCursor(*wxSTANDARD_CURSOR);
+   #ifdef __WXMAC__
+      wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
    wxString title = wxGetApp().GetAppName() + _(" warning:");
    wxMessageBox(_(msg), title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
 }
@@ -51,7 +53,9 @@ void Warning(const char *msg) {
 
 void Fatal(const char *msg) {
    wxBell();
-   //!!!wxSetCursor(*wxSTANDARD_CURSOR);
+   #ifdef __WXMAC__
+      wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
    wxString title = wxGetApp().GetAppName() + _(" error:");
    wxMessageBox(_(msg), title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
@@ -83,8 +87,9 @@ void BeginProgress(const char *dlgtitle) {
    strncpy(progtitle, dlgtitle, sizeof(progtitle));
    progstart = wxGetElapsedTime(false);
    // let user know they'll have to wait
-   //!!!wxSetCursor(*wxHOURGLASS_CURSOR);
-   // do we really need to do this???!!! maybe only on Mac???
+   #ifdef __WXMAC__
+      wxSetCursor(*wxHOURGLASS_CURSOR);
+   #endif
    viewptr->SetCursor(*wxHOURGLASS_CURSOR);
 }
 

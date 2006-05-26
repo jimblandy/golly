@@ -2467,9 +2467,9 @@ void MainFrame::OnActivate(wxActivateEvent& event)
    // this is never called on X11!!!
    // note that IsActive() doesn't always match event.GetActive()
    UpdateUserInterface(event.GetActive());
-   if ( !event.GetActive() ) {
-      //!!!wxSetCursor(*wxSTANDARD_CURSOR);
-   }
+   #ifdef __WXMAC__
+      if (!event.GetActive()) wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
    event.Skip();
 }
 

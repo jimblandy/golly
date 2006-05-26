@@ -1168,7 +1168,9 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       wxCursor *savecurs = currcurs;
       currcurs = curs_cross;
       // CheckCursor(true);            // probs on Mac if Paste menu item selected
-      //!!!wxSetCursor(*currcurs);
+      #ifdef __WXMAC__
+         wxSetCursor(*currcurs);
+      #endif
       SetCursor(*currcurs);
 
       // create image for drawing pattern to be pasted; note that given box
@@ -2183,12 +2185,16 @@ void PatternView::CheckCursor(bool active)
       // make sure cursor is up to date
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
       if (PointInView(pt.x, pt.y)) {
-         // need both calls to fix Mac probs after toggling status/tool bar;
-         // test if bug still exists in CVS HEAD!!!
-         //!!!wxSetCursor(*currcurs);
+         #ifdef __WXMAC__
+            // need both calls to fix Mac probs after toggling status/tool bar;
+            // test if bug still exists in CVS HEAD!!!
+            wxSetCursor(*currcurs);
+         #endif
          SetCursor(*currcurs);
       } else {
-         //!!!wxSetCursor(*wxSTANDARD_CURSOR);
+         #ifdef __WXMAC__
+            wxSetCursor(*wxSTANDARD_CURSOR);
+         #endif
       }
    } else {
       // main window is not active so don't change cursor
