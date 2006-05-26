@@ -458,8 +458,8 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          if ( wxExecute("open " + url, wxEXEC_ASYNC) == -1 )
             Warning("Could not open URL!");
       #elif defined(__WXGTK__)
-         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we execute a gnome-open command;
-         // unfortunately it does not bring the browser to the front if it's already running!!!
+         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open;
+         // unfortunately it does not bring browser to front if it's already running!!!
          if ( wxExecute("gnome-open " + url, wxEXEC_ASYNC) == -1 )
             Warning("Could not open URL!");
       #else

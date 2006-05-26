@@ -35,8 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/spinctrl.h"   // for wxSpinCtrl
 #include "wx/image.h"      // for wxImage
 
-#ifdef __WXMSW__
-   // can't seem to disable tool tips on Windows!!!
+#if defined(__WXMSW__) || defined(__WXGTK__)
+   // can't seem to disable tool tips on Windows or Linux/GTK!!!
    // ie. wxToolTip::Enable and wxToolTip::SetDelay are both ignored;
    // yet another reason to eventually implement our own custom tool bar!!!
    #undef wxUSE_TOOLTIPS

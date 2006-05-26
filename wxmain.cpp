@@ -715,13 +715,6 @@ void MainFrame::LoadPattern(const char *newtitle)
    }
    if (!showbanner) statusptr->ClearMessage();
 
-   /* no longer need this if viewptr->nopattupdate is set before UpdateStatus???
-   #ifdef __WXMAC__
-      // need to process all pending events now to avoid crash
-      while (wxGetApp().Pending()) wxGetApp().Dispatch();
-   #endif
-   */
-
    // must set this flag BEFORE UpdateStatus() call because on Mac it also
    // causes DrawView to get called if there are pending updates
    viewptr->nopattupdate = true;
@@ -2939,7 +2932,7 @@ MainFrame::MainFrame()
       // Windows seems to ignore *any* margins!!!
       toolBar->SetMargins(0, 0);
    #else
-      // X11 tool bar looks better with these margins
+      // X11/GTK tool bar looks better with these margins
       toolBar->SetMargins(2, 2);
    #endif
 
@@ -3026,7 +3019,7 @@ MainFrame::MainFrame()
                                    wxPoint(0, statht),
                                    wxSize(wd, ht - statht),
                                    #ifdef __WXMSW__
-                                   wxSP_BORDER |
+                                      wxSP_BORDER |
                                    #endif
                                    wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
    if (splitwin == NULL) Fatal("Failed to create split window!");
