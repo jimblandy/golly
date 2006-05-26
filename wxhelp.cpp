@@ -603,7 +603,6 @@ void ShowAboutBox()
    
    dlg.SetSizer(topsizer);
    topsizer->Fit(&dlg);
-   dlg.Centre();
+   dlg.Centre();   
    dlg.ShowModal();
-   // all child windows have been deleted
 }

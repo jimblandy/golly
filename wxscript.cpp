@@ -2194,7 +2194,7 @@ bool CheckPythonError()
       } else {
          pyerror.Replace("  File \"<string>\", line 1, in ?\n", "");
          wxBell();
-         wxSetCursor(*wxSTANDARD_CURSOR);
+         //!!!wxSetCursor(*wxSTANDARD_CURSOR);
          wxMessageBox(pyerror, wxT("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
       }
       statusptr->DisplayMessage("Script aborted.");
@@ -2233,7 +2233,7 @@ void RunScript(const char* filename)
    wxSetWorkingDirectory(scriptloc);
    
    // let user know we're busy running a script
-   wxSetCursor(*wxHOURGLASS_CURSOR);
+   //!!!wxSetCursor(*wxHOURGLASS_CURSOR);
    viewptr->SetCursor(*wxHOURGLASS_CURSOR);
    mainptr->UpdateToolBar(false);
    mainptr->EnableAllMenus(false);

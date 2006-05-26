@@ -2468,7 +2468,7 @@ void MainFrame::OnActivate(wxActivateEvent& event)
    // note that IsActive() doesn't always match event.GetActive()
    UpdateUserInterface(event.GetActive());
    if ( !event.GetActive() ) {
-      wxSetCursor(*wxSTANDARD_CURSOR);
+      //!!!wxSetCursor(*wxSTANDARD_CURSOR);
    }
    event.Skip();
 }
