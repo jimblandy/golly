@@ -1,5 +1,3 @@
-TODO:
-
 For version 1.0:
 ----------------
 
@@ -29,11 +27,6 @@ T - Improve batchmode.
   See KeyBinder code at wxcode.sourceforge.net.
 
 - Implement Undo (even just undoing the last draw would be very useful).
-
-- Let user specify colors for live/dead cells.  Only slightly tricky
-  part is dynamically choosing nice colors for the grid lines.
-  Also let user specify selection color.
-  Replace "Black on White" flag with "Invert Colors".
 
 - Support toroidal universes (see LifeLab).
 

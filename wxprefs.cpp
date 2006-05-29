@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/filename.h"   // for wxFileName
 #include "wx/stdpaths.h"   // for wxStandardPaths
 #include "wx/propdlg.h"    // for wxPropertySheetDialog
+#include "wx/colordlg.h"   // for wxColourDialog
 #include "wx/bookctrl.h"   // for wxBookCtrlBase
 #include "wx/notebook.h"   // for wxNotebookEvent
 #include "wx/spinctrl.h"   // for wxSpinCtrl
@@ -38,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #if defined(__WXMSW__) || defined(__WXGTK__)
    // can't seem to disable tool tips on Windows or Linux/GTK!!!
    // ie. wxToolTip::Enable and wxToolTip::SetDelay are both ignored;
-   // yet another reason to eventually implement our own custom tool bar!!!
+   // yet another reason to eventually implement our own custom tool bar
    #undef wxUSE_TOOLTIPS
    #define wxUSE_TOOLTIPS 0
 #endif
@@ -51,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for GetID_CLEAR_PATTERNS, GetID_OPEN_RECENT, mainptr->...
-#include "wxutils.h"       // for Warning
+#include "wxutils.h"       // for Warning, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxprefs.h"
@@ -83,6 +84,9 @@ const char SCRIPT_DIR[] = "Scripts";
 const int PREFS_VERSION = 1;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
+const int BITMAP_WD = 60;        // width of bitmap in color buttons
+const int BITMAP_HT = 20;        // height of bitmap in color buttons
+
 // initialize exported preferences:
 
 int mainx = 30;                  // main window's initial location
@@ -113,7 +117,7 @@ bool showtool = true;            // show tool bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showgridlines = true;       // display grid lines?
-bool blackcells = true;          // live cells are black?
+bool swapcolors = false;         // swap colors used for cell states?
 bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 int randomfill = 50;             // random fill percentage (1..100)
 int maxhashmem = 300;            // maximum hash memory (in megabytes)
@@ -148,6 +152,20 @@ int numscripts = 0;              // current number of recent script files
 int maxpatterns = 20;            // maximum number of recent pattern files (1..MAX_RECENT)
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
+
+wxColor *livergb;                // color for live cells
+wxColor *deadrgb;                // color for dead cells
+wxColor *pastergb;               // color for pasted pattern
+wxColor *selectrgb;              // color for selected cells
+wxColor *qlifergb;               // status bar background when using qlifealgo
+wxColor *hlifergb;               // status bar background when using hlifealgo
+
+wxBrush *livebrush;              // brush for drawing live cells
+wxBrush *deadbrush;              // brush for drawing dead cells
+wxBrush *qlifebrush;             // brush for status bar background when using qlifealgo
+wxBrush *hlifebrush;             // brush for status bar background when using hlifealgo
+wxPen *gridpen;                  // pen for drawing plain grid lines
+wxPen *boldpen;                  // pen for drawing bold grid lines
 
 // these settings must be static -- they are changed by GetPrefs *before* the
 // view window is created
@@ -321,6 +339,75 @@ void SetPasteMode(const char *s)
 
 // -----------------------------------------------------------------------------
 
+void CreateDefaultColors()
+{
+   livergb = new wxColor(0, 0, 0);              // black
+   deadrgb = new wxColor(255, 255, 255);        // white
+   pastergb = new wxColor(255, 0, 0);           // red
+   selectrgb = new wxColor(75, 175, 0);         // darkish green (becomes 50% transparent)
+   qlifergb = new wxColor(0xFF, 0xFF, 0xCE);    // pale yellow
+   hlifergb = new wxColor(0xE2, 0xFA, 0xF8);    // pale blue
+
+   // create dependent brushes and pens but don't set correct colors yet
+   livebrush = new wxBrush(*wxBLACK);
+   deadbrush = new wxBrush(*wxBLACK);
+   qlifebrush = new wxBrush(*wxBLACK);
+   hlifebrush = new wxBrush(*wxBLACK);
+   gridpen = new wxPen(*wxBLACK);
+   boldpen = new wxPen(*wxBLACK);
+}
+
+void SetBrushColors()
+{
+   livebrush->SetColour(*livergb);
+   deadbrush->SetColour(*deadrgb);
+   qlifebrush->SetColour(*qlifergb);
+   hlifebrush->SetColour(*hlifergb);
+}
+
+void SetGridPens()
+{
+   wxColor* c = swapcolors ? livergb : deadrgb;
+   int r = c->Red();
+   int g = c->Green();
+   int b = c->Blue();
+   // no need to use this standard grayscale conversion???
+   // gray = (int) (0.299*r + 0.587*g + 0.114*b);
+   int gray = (int) ((r + g + b) / 3.0);
+   // lighter grids tend to look nicer, unless the color is too light
+   if (gray > 180) {
+      // use darker grid colors
+      gridpen->SetColour(r > 32 ? r - 32 : 0,
+                         g > 32 ? g - 32 : 0,
+                         b > 32 ? b - 32 : 0);
+      boldpen->SetColour(r > 64 ? r - 64 : 0,
+                         g > 64 ? g - 64 : 0,
+                         b > 64 ? b - 64 : 0);
+   } else {
+      // use lighter grid colors
+      gridpen->SetColour(r + 32 < 256 ? r + 32 : 255,
+                         g + 32 < 256 ? g + 32 : 255,
+                         b + 32 < 256 ? b + 32 : 255);
+      boldpen->SetColour(r + 64 < 256 ? r + 64 : 255,
+                         g + 64 < 256 ? g + 64 : 255,
+                         b + 64 < 256 ? b + 64 : 255);
+   }
+}
+
+void GetColor(const char *value, wxColor *rgb)
+{
+   unsigned int r, g, b;
+   sscanf(value, "%u,%u,%u", &r, &g, &b);
+   rgb->Set(r, g, b);
+}
+
+void SaveColor(FILE *f, const char *name, const wxColor *rgb)
+{
+   fprintf(f, "%s=%d,%d,%d\n", name, rgb->Red(), rgb->Green(), rgb->Blue());
+}
+
+// -----------------------------------------------------------------------------
+
 void SavePrefs()
 {
    if (mainptr == NULL || curralgo == NULL) {
@@ -397,7 +484,15 @@ void SavePrefs()
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
    fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
-   fprintf(f, "black_on_white=%d\n", blackcells ? 1 : 0);
+   fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
+   
+   SaveColor(f, "live_rgb", livergb);
+   SaveColor(f, "dead_rgb", deadrgb);
+   SaveColor(f, "paste_rgb", pastergb);
+   SaveColor(f, "select_rgb", selectrgb);
+   SaveColor(f, "qlife_rgb", qlifergb);
+   SaveColor(f, "hlife_rgb", hlifergb);
+   
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
    fprintf(f, "thumb_range=%d (2..%d)\n", thumbrange, MAX_THUMBRANGE);
@@ -558,6 +653,8 @@ void GetPrefs()
    // create curs_* and initialize newcurs, opencurs and currcurs
    CreateCursors();
    
+   CreateDefaultColors();
+   
    // initialize Open Recent submenu
    patternSubMenu = new wxMenu();
    patternSubMenu->AppendSeparator();
@@ -707,8 +804,30 @@ void GetPrefs()
       } else if (strcmp(keyword, "math_coords") == 0) {
          mathcoords = value[0] == '1';
 
+      } else if (strcmp(keyword, "swap_colors") == 0) {
+         swapcolors = value[0] == '1';
+
       } else if (strcmp(keyword, "black_on_white") == 0) {
-         blackcells = value[0] == '1';
+         // this parameter has been replaced by swap_colors and has opposite meaning
+         swapcolors = value[0] != '1';
+
+      } else if (strcmp(keyword, "live_rgb") == 0) {
+         GetColor(value, livergb);
+
+      } else if (strcmp(keyword, "dead_rgb") == 0) {
+         GetColor(value, deadrgb);
+
+      } else if (strcmp(keyword, "paste_rgb") == 0) {
+         GetColor(value, pastergb);
+
+      } else if (strcmp(keyword, "select_rgb") == 0) {
+         GetColor(value, selectrgb);
+
+      } else if (strcmp(keyword, "qlife_rgb") == 0) {
+         GetColor(value, qlifergb);
+
+      } else if (strcmp(keyword, "hlife_rgb") == 0) {
+         GetColor(value, hlifergb);
 
       } else if (strcmp(keyword, "buffered") == 0) {
          buffered = value[0] == '1';
@@ -810,6 +929,10 @@ void GetPrefs()
       }
    }
    fclose(f);
+
+   // now set colors for brushes and grid pens
+   SetBrushColors();
+   SetGridPens();
    
    // showpatterns and showscripts must not both be true
    if (showpatterns && showscripts) showscripts = false;
@@ -834,11 +957,13 @@ class PrefsDialog : public wxPropertySheetDialog
 {
 public:
    PrefsDialog(wxWindow* parent);
+   ~PrefsDialog();
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
    wxPanel* CreateEditPrefs(wxWindow* parent);
    wxPanel* CreateControlPrefs(wxWindow* parent);
    wxPanel* CreateViewPrefs(wxWindow* parent);
+   wxPanel* CreateColorPrefs(wxWindow* parent);
 
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
@@ -848,11 +973,10 @@ private:
       FILE_PAGE = 0,
       EDIT_PAGE,
       CONTROL_PAGE,
-      VIEW_PAGE
-   };
-   enum {
+      VIEW_PAGE,
+      COLOR_PAGE,
       // File prefs
-      PREF_NEW_REM_SEL = 100,
+      PREF_NEW_REM_SEL,
       PREF_NEW_CURSOR,
       PREF_NEW_SCALE,
       PREF_OPEN_REM_SEL,
@@ -874,24 +998,43 @@ private:
       PREF_BOLD_SPACING,
       PREF_MIN_GRID_SCALE,
       PREF_MOUSE_WHEEL,
-      PREF_THUMB_RANGE
+      PREF_THUMB_RANGE,
+      // Color prefs
+      PREF_LIVE_RGB,
+      PREF_DEAD_RGB,
+      PREF_PASTE_RGB,
+      PREF_SELECT_RGB,
+      PREF_QLIFE_RGB,
+      PREF_HLIFE_RGB
    };
 
    bool GetCheckVal(long id);
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
-   bool BadSpinVal(int id, int minval, int maxval, const char *prefix);
+   bool BadSpinVal(int id, int minval, int maxval, const char* prefix);
    bool ValidatePage(size_t page);
+   void ChangeColor(int id, wxColor* rgb);
+   void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
+                       int id, wxColor* rgb, const wxString& text);
    
    void OnCheckBoxClicked(wxCommandEvent& event);
+   void OnColorButton(wxCommandEvent& event);
    void OnPageChanging(wxNotebookEvent& event);
    void OnPageChanged(wxNotebookEvent& event);
+
+   wxColor *new_livergb;       // new color for live cells
+   wxColor *new_deadrgb;       // new color for dead cells
+   wxColor *new_pastergb;      // new color for pasted pattern
+   wxColor *new_selectrgb;     // new color for selected cells
+   wxColor *new_qlifergb;      // new status bar color when using qlifealgo
+   wxColor *new_hlifergb;      // new status bar color when using hlifealgo
 
    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_CHECKBOX               (wxID_ANY, PrefsDialog::OnCheckBoxClicked)
+   EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnColorButton)
    EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY, PrefsDialog::OnPageChanging)
    EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
 END_EVENT_TABLE()
@@ -912,6 +1055,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxPanel* editPrefs = CreateEditPrefs(notebook);
    wxPanel* ctrlPrefs = CreateControlPrefs(notebook);
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
+   wxPanel* colorPrefs = CreateColorPrefs(notebook);
    
    // AddPage and SetSelection cause OnPageChanging and OnPageChanged to be called
    // so we use a flag to prevent currpage being changed (and unnecessary validation)
@@ -921,6 +1065,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    notebook->AddPage(editPrefs, _("Edit"));
    notebook->AddPage(ctrlPrefs, _("Control"));
    notebook->AddPage(viewPrefs, _("View"));
+   notebook->AddPage(colorPrefs, _("Color"));
 
    // show last selected page
    notebook->SetSelection(currpage);
@@ -1000,8 +1145,8 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
 wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
 
    wxArrayString newcursorChoices;
    newcursorChoices.Add(wxT("Draw"));
@@ -1149,8 +1294,8 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
    // random_fill
 
@@ -1177,8 +1322,8 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
    // max_hash_mem
 
@@ -1283,8 +1428,8 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer *vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
    // show_tips
    
@@ -1413,6 +1558,62 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
+void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
+                                 int id, wxColor* rgb, const wxString& text)
+{
+   wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+   wxMemoryDC dc;
+   dc.SelectObject(bitmap);
+   wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+   wxBrush brush(*rgb);
+   FillRect(dc, rect, brush);
+   dc.SelectObject(wxNullBitmap);
+   
+   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0, 0));
+   if (bb == NULL) {
+      Warning("Failed to create color button!");
+   } else {
+      wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
+      hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
+      hbox->Add(new wxStaticText(parent, wxID_STATIC, text),
+                 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+      vbox->AddSpacer(SVGAP);
+      vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   
+   AddColorButton(panel, vbox, PREF_LIVE_RGB, livergb, _("Live cells"));
+   AddColorButton(panel, vbox, PREF_DEAD_RGB, deadrgb, _("Dead cells"));
+   vbox->AddSpacer(GROUPGAP);
+   AddColorButton(panel, vbox, PREF_PASTE_RGB, pastergb, _("Pasted pattern"));
+   AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
+   vbox->AddSpacer(GROUPGAP);
+   AddColorButton(panel, vbox, PREF_QLIFE_RGB, qlifergb, _("Status bar background if not hashing"));
+   AddColorButton(panel, vbox, PREF_HLIFE_RGB, hlifergb, _("Status bar background if hashing"));
+
+   new_livergb = new wxColor(*livergb);
+   new_deadrgb = new wxColor(*deadrgb);
+   new_pastergb = new wxColor(*pastergb);
+   new_selectrgb = new wxColor(*selectrgb);
+   new_qlifergb = new wxColor(*qlifergb);
+   new_hlifergb = new wxColor(*hlifergb);
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
+// -----------------------------------------------------------------------------
+
 void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
 {
    if ( event.GetId() == PREF_SHOW_BOLD ) {
@@ -1424,6 +1625,67 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
          spinctrl->Enable(ticked);
          if (ticked) spinctrl->SetFocus();
       }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::ChangeColor(int id, wxColor* rgb)
+{
+   wxColourData data;
+   data.SetColour(*rgb);
+   
+   wxColourDialog dialog(this, &data);
+   if ( dialog.ShowModal() == wxID_OK ) {
+      wxColourData retData = dialog.GetColourData();
+      wxColour c = retData.GetColour();
+      
+      // change given color
+      rgb->Set(c.Red(), c.Green(), c.Blue());
+      
+      // also change color of bitmap in corresponding button
+      wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
+      if (bb) {
+         wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+         wxMemoryDC dc;
+         dc.SelectObject(bitmap);
+         wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+         wxBrush brush(*rgb);
+         FillRect(dc, rect, brush);
+         dc.SelectObject(wxNullBitmap);
+
+         bb->SetBitmapLabel(bitmap);
+         bb->Refresh();
+         bb->Update();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnColorButton(wxCommandEvent& event)
+{
+   if ( event.GetId() == PREF_LIVE_RGB ) {
+      ChangeColor(PREF_LIVE_RGB, new_livergb);
+
+   } else if ( event.GetId() == PREF_DEAD_RGB ) {
+      ChangeColor(PREF_DEAD_RGB, new_deadrgb);
+
+   } else if ( event.GetId() == PREF_PASTE_RGB ) {
+      ChangeColor(PREF_PASTE_RGB, new_pastergb);
+
+   } else if ( event.GetId() == PREF_SELECT_RGB ) {
+      ChangeColor(PREF_SELECT_RGB, new_selectrgb);
+
+   } else if ( event.GetId() == PREF_QLIFE_RGB ) {
+      ChangeColor(PREF_QLIFE_RGB, new_qlifergb);
+
+   } else if ( event.GetId() == PREF_HLIFE_RGB ) {
+      ChangeColor(PREF_HLIFE_RGB, new_hlifergb);
+
+   } else {
+      // process other buttons like Cancel and OK
+      event.Skip();
    }
 }
 
@@ -1525,6 +1787,9 @@ bool PrefsDialog::ValidatePage(size_t page)
          return false;
       if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, "Thumb scrolling range") )
          return false;
+
+   } else if (page == COLOR_PAGE) {
+      // no spin controls on this page
    
    } else {
       Warning("Bug in ValidatePage!");
@@ -1549,6 +1814,12 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 {
    if (ignore_page_event) return;
    currpage = event.GetSelection();
+   #ifdef __WXMAC__
+      if (currpage == COLOR_PAGE) {
+         // wxMac bug??? allow escape/return keys to select Cancel/OK buttons
+         // FindWindow(wxID_OK)->SetFocus(); //!!! didn't work -- add hidden spinctrl instead???
+      }
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1590,12 +1861,36 @@ bool PrefsDialog::TransferDataFromWindow()
    mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
 
+   // COLOR_PAGE
+   *livergb     = *new_livergb;
+   *deadrgb     = *new_deadrgb;
+   *pastergb    = *new_pastergb;
+   *selectrgb   = *new_selectrgb;
+   *qlifergb    = *new_qlifergb;
+   *hlifergb    = *new_hlifergb;
+
+   // update colors for brushes and grid pens
+   SetBrushColors();
+   SetGridPens();
+
    // update globals corresponding to the wxChoice menu selections
    mingridmag = mingridindex + 2;
    newcurs = IndexToCursor(newcursindex);
    opencurs = IndexToCursor(opencursindex);
       
    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+PrefsDialog::~PrefsDialog()
+{
+   delete new_livergb;
+   delete new_deadrgb;
+   delete new_pastergb;
+   delete new_selectrgb;
+   delete new_qlifergb;
+   delete new_hlifergb;
 }
 
 // -----------------------------------------------------------------------------

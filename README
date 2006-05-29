@@ -17,6 +17,7 @@ Main features:
 - Auto fit option keeps your pattern sized to the window.
 - Full screen option (no menu/status/tool/scroll bars).
 - HTML-based help with integrated Life Lexicon.
+- Scriptable via Python.
 - Free, open source and cross-platform (Windows, Mac, Linux).
 
 The Golly application can be installed anywhere you like, but

@@ -39,6 +39,9 @@ void DrawView(wxDC &dc, viewport &currview);
 // We need to export this for drawing individual cells.
 void DrawSelection(wxDC &dc, wxRect &rect);
 
+// Update the selection image's color.
+void SetSelectionColor();
+
 // Create an image used to draw the given paste pattern.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).

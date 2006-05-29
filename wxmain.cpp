@@ -170,7 +170,7 @@ enum {
    ID_STATUS,
    ID_EXACT,
    ID_GRID,
-   ID_VIDEO,
+   ID_COLORS,
    ID_BUFF,
    ID_INFO,
 
@@ -471,7 +471,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_STATUS,    active);
       mbar->Enable(ID_EXACT,     active);
       mbar->Enable(ID_GRID,      active);
-      mbar->Enable(ID_VIDEO,     active);
+      mbar->Enable(ID_COLORS,    active);
       #ifdef __WXMAC__
          // windows on Mac OS X are automatically buffered
          mbar->Enable(ID_BUFF,   false);
@@ -492,7 +492,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_STATUS,     StatusVisible());
       mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
-      mbar->Check(ID_VIDEO,      blackcells);
+      mbar->Check(ID_COLORS,     swapcolors);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
       mbar->Check(ID_PL_TR,      plocation == TopRight);
       mbar->Check(ID_PL_BR,      plocation == BottomRight);
@@ -1251,7 +1251,7 @@ void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
       if ( treectrl->ItemHasChildren(id) ) {
          DeselectTree(treectrl, id);
       } else {
-         wxColour currcolor = treectrl->GetItemBackgroundColour(id);
+         wxColor currcolor = treectrl->GetItemBackgroundColour(id);
          if ( currcolor != *wxWHITE ) {
             treectrl->SetItemBackgroundColour(id, *wxWHITE);
          }
@@ -1383,6 +1383,9 @@ void MainFrame::ShowPrefsDialog()
    if (ChangePrefs()) {
       // user hit OK button
    
+      // selection color may have changed
+      SetSelectionColor();
+
       // if maxpatterns was reduced then we may need to remove some paths
       while (numpatterns > maxpatterns) {
          numpatterns--;
@@ -2388,7 +2391,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_STATUS:         ToggleStatusBar(); break;
       case ID_EXACT:          ToggleExactNumbers(); break;
       case ID_GRID:           viewptr->ToggleGridLines(); break;
-      case ID_VIDEO:          viewptr->ToggleVideo(); break;
+      case ID_COLORS:         viewptr->ToggleCellColors(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
       case ID_INFO:           ShowPatternInfo(); break;
       // Help menu
@@ -2869,7 +2872,7 @@ MainFrame::MainFrame()
    #endif
    viewMenu->AppendCheckItem(ID_EXACT, _("Show Exact Numbers\tCtrl+E"));
    viewMenu->AppendCheckItem(ID_GRID, _("Show Grid Lines\tCtrl+L"));
-   viewMenu->AppendCheckItem(ID_VIDEO, _("Black on White\tCtrl+B"));
+   viewMenu->AppendCheckItem(ID_COLORS, _("Swap Cell Colors\tCtrl+B"));
    viewMenu->AppendCheckItem(ID_BUFF, _("Buffered"));
    viewMenu->AppendSeparator();
    viewMenu->Append(ID_INFO, _("Pattern Info\tCtrl+I"));

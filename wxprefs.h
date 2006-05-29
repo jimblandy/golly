@@ -62,7 +62,7 @@ extern bool showtool;            // show tool bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
-extern bool blackcells;          // live cells are black?
+extern bool swapcolors;          // swap colors used for cell states?
 extern bool buffered;            // use wxWdgets buffering to avoid flicker?
 extern int randomfill;           // random fill percentage (1..100)
 extern int maxhashmem;           // maximum hash memory (in megabytes)
@@ -100,6 +100,27 @@ extern int maxscripts;           // maximum number of recent script files
 // We maintain an array of named rules, where each string is of the form
 // "name of rule|B.../S...".  The first string is always "Life|B3/S23".
 extern wxArrayString namedrules;
+
+// Colors:
+
+extern wxColor *livergb;         // color for live cells
+extern wxColor *deadrgb;         // color for dead cells
+extern wxColor *gridrgb;         // color for grid lines
+extern wxColor *boldrgb;         // color for bold grid lines
+extern wxColor *pastergb;        // color for pasted pattern
+extern wxColor *selectrgb;       // color for selected cells
+extern wxColor *qlifergb;        // for status bar background if not hashing
+extern wxColor *hlifergb;        // for status bar background if hashing
+
+// these brushes and pens depend on the above colors
+extern wxBrush *livebrush;       // for drawing live cells
+extern wxBrush *deadbrush;       // for drawing dead cells
+extern wxBrush *qlifebrush;      // for status bar background if not hashing
+extern wxBrush *hlifebrush;      // for status bar background if hashing
+extern wxPen *gridpen;           // pen for drawing plain grid lines
+extern wxPen *boldpen;           // pen for drawing bold grid lines
+
+void SetGridPens();              // set colors for above grid-related pens
 
 // Various constants:
 

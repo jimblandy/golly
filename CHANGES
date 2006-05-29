@@ -9,6 +9,8 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: Replaced Black on White flag with Swap Cell Colors.
+AKT: Added ability to change colors (via Prefs > Color).
 AKT: Added makefile-gtk to build Linux/GTK version of Golly.
 AKT: Linux app loads Python library at runtime.
 AKT: Win app loads Python library at runtime.

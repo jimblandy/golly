@@ -87,7 +87,7 @@ public:
    void RestoreOrigin();
    void SetViewSize();
    void ToggleGridLines();
-   void ToggleVideo();
+   void ToggleCellColors();
    void ToggleBuffering();
    void UpdateScrollBars();         // update thumb positions
    void CheckCursor(bool active);   // make sure cursor is up to date

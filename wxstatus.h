@@ -94,9 +94,6 @@ private:
    bigint currx, curry;          // cursor location in cell coords
    bool showxy;                  // show cursor's XY location?
    wxFont *statusfont;           // status bar font
-   
-   wxBrush *brush_qlife;         // for background if not hashing
-   wxBrush *brush_hlife;         // for background if hashing
 };
 
 extern const int STATUS_HT;      // normal status bar height

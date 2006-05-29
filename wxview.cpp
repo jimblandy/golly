@@ -196,7 +196,7 @@ void PatternView::StartDrawingCells(int x, int y)
    wxClientDC dc(this);
    dc.BeginDrawing();
    dc.SetPen(*wxTRANSPARENT_PEN);
-   dc.SetBrush(drawstate == (int)blackcells ? *wxBLACK_BRUSH : *wxWHITE_BRUSH);
+   dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush);
    DrawOneCell(cellx, celly, dc);
    dc.SetBrush(wxNullBrush);        // restore brush
    dc.SetPen(wxNullPen);            // restore pen
@@ -223,7 +223,7 @@ void PatternView::DrawCells(int x, int y)
       wxClientDC dc(this);
       dc.BeginDrawing();
       dc.SetPen(*wxTRANSPARENT_PEN);
-      dc.SetBrush(drawstate == (int)blackcells ? *wxBLACK_BRUSH : *wxWHITE_BRUSH);
+      dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush);
 
       int numchanged = 0;
       
@@ -2145,9 +2145,10 @@ void PatternView::ToggleGridLines()
       mainptr->UpdateEverything();
 }
 
-void PatternView::ToggleVideo()
+void PatternView::ToggleCellColors()
 {
-   blackcells = !blackcells;
+   swapcolors = !swapcolors;
+   SetGridPens();
    mainptr->UpdateEverything();
 }
 
@@ -2423,7 +2424,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case ';':   mainptr->ToggleStatusBar(); break;
       case 'e':   mainptr->ToggleExactNumbers(); break;
       case 'l':   ToggleGridLines(); break;
-      case 'b':   ToggleVideo(); break;
+      case 'b':   ToggleCellColors(); break;
       case 'i':   mainptr->ShowPatternInfo(); break;
       case ',':   mainptr->ShowPrefsDialog(); break;
       case 'p':   mainptr->ToggleShowPatterns(); break;

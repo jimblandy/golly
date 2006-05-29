@@ -250,7 +250,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
    if (wd < 1 || ht < 1) return;
 
    wxRect r = wxRect(0, 0, wd, ht);
-   FillRect(dc, r, hashing ? *brush_hlife : *brush_qlife);
+   FillRect(dc, r, hashing ? *hlifebrush : *qlifebrush);
 
    #ifdef __WXMSW__
       // draw gray lines at top, left and right edges
@@ -487,12 +487,6 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    // avoid erasing background on GTK+
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
-   // create colored brushes for background
-   brush_qlife = new wxBrush(wxColour(0xFF,0xFF,0xCE));     // pale yellow
-   brush_hlife = new wxBrush(wxColour(0xE2,0xFA,0xF8));     // pale blue
-   if (brush_qlife == NULL || brush_hlife == NULL)
-      Fatal("Failed to create brushes for status bar!");
-
    // create font for text in status bar and set textascent for use in DisplayText
    #ifdef __WXMSW__
       // use smaller, narrower font on Windows
@@ -557,8 +551,6 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
 
 StatusBar::~StatusBar()
 {
-   if (brush_qlife) delete brush_qlife;
-   if (brush_hlife) delete brush_hlife;
    if (statusfont) delete statusfont;
    #ifndef __WXMAC__
       if (statbitmap) delete statbitmap;

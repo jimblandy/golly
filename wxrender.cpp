@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for viewptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal, FillRect
-#include "wxprefs.h"       // for blackcells, showgridlines, mingridmag, etc
+#include "wxprefs.h"       // for swapcolors, showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"
@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // static data used in wx_render routines
 wxDC* currdc;              // current device context for viewport
 int currwd, currht;        // current width and height of viewport
-wxBrush* deadbrush;        // brush used in killrect
+wxBrush* killbrush;        // brush used in killrect
 
 // bitmap for drawing magnified cells (see DrawStretchedBitmap)
 wxBitmap magmap;
@@ -57,12 +57,6 @@ unsigned char* magbuf = (unsigned char *)magarray;
 // it assumes input and output are in XBM format (bits in each byte are reversed)
 // because that's what wxWidgets requires when creating a monochrome bitmap
 wxUint16 Magnify2[256];
-
-// pens for drawing grid lines
-wxPen pen_ltgray     (wxColour(0xD0,0xD0,0xD0));
-wxPen pen_dkgray     (wxColour(0xA0,0xA0,0xA0));
-wxPen pen_verydark   (wxColour(0x40,0x40,0x40));
-wxPen pen_notsodark  (wxColour(0x70,0x70,0x70));
 
 // selection image (initialized in InitDrawingData)
 #ifdef __WXX11__
@@ -82,7 +76,7 @@ int prectwd;               // must match viewptr->pasterect.width
 int prectht;               // must match viewptr->pasterect.height
 int pastemag;              // must match current viewport's scale
 int cvwd, cvht;            // must match current viewport's width and height
-bool pcolor;               // must match blackcells flag
+bool pcolor;               // must match swapcolors flag
 paste_location pasteloc;   // must match plocation
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
@@ -119,7 +113,7 @@ void InitDrawingData()
       if ( !selimage.Create(1,1) ) {
          Fatal("Failed to create selection image!");
       }
-      selimage.SetRGB(0, 0, 75, 175, 0);     // darkish green
+      selimage.SetRGB(0, 0, selectrgb->Red(), selectrgb->Green(), selectrgb->Blue());
       selimage.SetAlpha();                   // add alpha channel
       if ( selimage.HasAlpha() ) {
          selimage.SetAlpha(0, 0, 128);       // 50% opaque
@@ -162,11 +156,6 @@ void DestroyDrawingData()
       selimage.Destroy();
       if (selbitmap) delete selbitmap;
    #endif
-
-   pen_ltgray.~wxPen();
-   pen_dkgray.~wxPen();
-   pen_verydark.~wxPen();
-   pen_notsodark.~wxPen();
 }
 
 // -----------------------------------------------------------------------------
@@ -289,16 +278,15 @@ public:
 void wx_render::killrect(int x, int y, int w, int h)
 {
    if (w <= 0 || h <= 0) return;
-   wxRect r = wxRect(x, y, w, h);
+   wxRect r(x, y, w, h);
    #if 0
       // use a different pale color each time to see any probs
-      wxBrush *randbrush = new wxBrush(wxColour((rand()&127)+128,
-                                                (rand()&127)+128,
-                                                (rand()&127)+128));
-      FillRect(*currdc, r, *randbrush);
-      delete randbrush;
+      wxBrush randbrush(wxColor((rand()&127)+128,
+                                (rand()&127)+128,
+                                (rand()&127)+128));
+      FillRect(*currdc, r, randbrush);
    #else
-      FillRect(*currdc, r, *deadbrush);
+      FillRect(*currdc, r, *killbrush);
    #endif
 }
 
@@ -328,7 +316,7 @@ void CheckSelectionImage(int viewwd, int viewht)
             selimage.Rescale(viewwd, viewht);
             delete selbitmap;
             selbitmap = new wxBitmap(selimage);
-            // don't check if selbitmap is NULL here -- done in DrawSelection
+            // don't check if selbitmap is NULL here (done in DrawSelection)
             selimagewd = viewwd;
             selimageht = viewht;
          }
@@ -338,10 +326,30 @@ void CheckSelectionImage(int viewwd, int viewht)
 
 // -----------------------------------------------------------------------------
 
+void SetSelectionColor()
+{
+   #ifdef __WXX11__
+      // wxX11 doesn't support alpha channel
+   #else
+      if (selbitmap) {
+         // shrink selection image so we can update color
+         selimage.Rescale(1, 1);
+         selimage.SetRGB(0, 0, selectrgb->Red(), selectrgb->Green(), selectrgb->Blue());
+         // restore image size and create new bitmap
+         selimage.Rescale(selimagewd, selimageht);
+         delete selbitmap;
+         selbitmap = new wxBitmap(selimage);
+         // don't check if selbitmap is NULL here (done in DrawSelection)
+      }
+   #endif
+}
+
+// -----------------------------------------------------------------------------
+
 void DrawSelection(wxDC &dc, wxRect &rect)
 {
    if (selbitmap) {
-      // draw translucent green rect
+      // draw translucent rect
       wxMemoryDC memdc;
       memdc.SelectObject(*selbitmap);
       dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
@@ -399,7 +407,7 @@ void CheckPasteImage(viewport &currview)
         prectht != viewptr->pasterect.height ||
         cvwd != currview.getwidth() ||
         cvht != currview.getheight() ||
-        pcolor != blackcells ||
+        pcolor != swapcolors ||
         pasteloc != plocation
       ) {
       prectwd = viewptr->pasterect.width;
@@ -407,7 +415,7 @@ void CheckPasteImage(viewport &currview)
       pastemag = currview.getmag();
       cvwd = currview.getwidth();
       cvht = currview.getheight();
-      pcolor = blackcells;
+      pcolor = swapcolors;
       pasteloc = plocation;
 
       // calculate size of paste image; we could just set it to pasterect size
@@ -526,25 +534,25 @@ void CheckPasteImage(viewport &currview)
          // set foreground and background colors for DrawBitmap calls
          #if defined(__WXMAC__) || defined(__WXMSW__)
             // use opposite meaning on Mac/Windows -- sheesh
-            if (blackcells) {
-               pattdc.SetTextForeground(*wxWHITE);
-               pattdc.SetTextBackground(*wxRED);
+            if (swapcolors) {
+               pattdc.SetTextForeground(*livergb);
+               pattdc.SetTextBackground(*pastergb);
             } else {
-               pattdc.SetTextForeground(*wxBLACK);
-               pattdc.SetTextBackground(*wxRED);
+               pattdc.SetTextForeground(*deadrgb);
+               pattdc.SetTextBackground(*pastergb);
             }
          #else
-            if (blackcells) {
-               pattdc.SetTextForeground(*wxRED);
-               pattdc.SetTextBackground(*wxWHITE);
+            if (swapcolors) {
+               pattdc.SetTextForeground(*pastergb);
+               pattdc.SetTextBackground(*livergb);
             } else {
-               pattdc.SetTextForeground(*wxRED);
-               pattdc.SetTextBackground(*wxBLACK);
+               pattdc.SetTextForeground(*pastergb);
+               pattdc.SetTextBackground(*deadrgb);
             }
          #endif
 
          // set brush color used in killrect
-         deadbrush = blackcells ? wxWHITE_BRUSH : wxBLACK_BRUSH;
+         killbrush = swapcolors ? livebrush : deadbrush;
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -563,12 +571,10 @@ void CheckPasteImage(viewport &currview)
             int d = pastebitmap->GetDepth();
             pastebitmap->SetDepth(1);
          #endif
-         if (blackcells) {
-            // white background will be transparent
-            pastebitmap->SetMask( new wxMask(*pastebitmap,*wxWHITE) );
+         if (swapcolors) {
+            pastebitmap->SetMask( new wxMask(*pastebitmap,*livergb) );
          } else {
-            // black background will be transparent
-            pastebitmap->SetMask( new wxMask(*pastebitmap,*wxBLACK) );
+            pastebitmap->SetMask( new wxMask(*pastebitmap,*deadrgb) );
          }
          #ifdef __WXMSW__
             // restore depth
@@ -624,7 +630,7 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
    }
 
    // now overlay border rectangle
-   dc.SetPen(*wxRED_PEN);
+   dc.SetPen(wxPen(*pastergb));
    dc.SetBrush(*wxTRANSPARENT_BRUSH);
 
    // if large rect then we need to avoid overflow because DrawRectangle
@@ -638,9 +644,10 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
    
    if (r.y > 0) {
       dc.SetFont(*statusptr->GetStatusFont());
-      dc.SetBackgroundMode(wxSOLID);
-      dc.SetTextForeground(*wxRED);
-      dc.SetTextBackground(*wxWHITE);
+      //dc.SetBackgroundMode(wxSOLID);
+      //dc.SetTextBackground(*wxWHITE);
+      dc.SetBackgroundMode(wxTRANSPARENT);   // better if pastergb is white
+      dc.SetTextForeground(*pastergb);
       const char *pmodestr = GetPasteMode();
       int pmodex = r.x + 2;
       int pmodey = r.y - 4;
@@ -677,11 +684,7 @@ void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
    }
 
    // draw all plain lines first
-   if (blackcells) {
-      dc.SetPen(pen_ltgray);
-   } else {
-      dc.SetPen(pen_verydark);
-   }   
+   dc.SetPen(*gridpen);
    i = showboldlines ? topbold : 1;
    v = -1;
    while (true) {
@@ -703,11 +706,7 @@ void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
 
    if (showboldlines) {
       // overlay bold lines
-      if (blackcells) {
-         dc.SetPen(pen_dkgray);
-      } else {
-         dc.SetPen(pen_notsodark);
-      }
+      dc.SetPen(*boldpen);
       i = topbold;
       v = -1;
       while (true) {
@@ -740,23 +739,23 @@ void DrawView(wxDC &dc, viewport &currview)
    if ( viewptr->nopattupdate ) {
       // don't draw pattern, just fill background
       r = wxRect(0, 0, currview.getwidth(), currview.getheight());
-      FillRect(dc, r, blackcells ? *wxWHITE_BRUSH : *wxBLACK_BRUSH);
+      FillRect(dc, r, swapcolors ? *livebrush : *deadbrush);
    } else {
       // set foreground and background colors for DrawBitmap calls
       #if defined(__WXMAC__) || defined(__WXMSW__)
       // use opposite meaning on Mac/Windows -- sheesh
-      if ( !blackcells ) {
+      if ( swapcolors ) {
       #else
-      if ( blackcells ) {
+      if ( !swapcolors ) {
       #endif
-         dc.SetTextForeground(*wxBLACK);
-         dc.SetTextBackground(*wxWHITE);
+         dc.SetTextForeground(*livergb);
+         dc.SetTextBackground(*deadrgb);
       } else {
-         dc.SetTextForeground(*wxWHITE);
-         dc.SetTextBackground(*wxBLACK);
+         dc.SetTextForeground(*deadrgb);
+         dc.SetTextBackground(*livergb);
       }
       // set brush color used in killrect
-      deadbrush = blackcells ? wxWHITE_BRUSH : wxBLACK_BRUSH;
+      killbrush = swapcolors ? livebrush : deadbrush;
       // draw pattern using a sequence of blit and killrect calls
       currdc = &dc;
       currwd = currview.getwidth();
