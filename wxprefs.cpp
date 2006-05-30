@@ -1633,6 +1633,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
 void PrefsDialog::ChangeColor(int id, wxColor* rgb)
 {
    wxColourData data;
+   data.SetChooseFull(true);    // for Windows
    data.SetColour(*rgb);
    
    wxColourDialog dialog(this, &data);
