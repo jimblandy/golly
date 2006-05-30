@@ -341,8 +341,8 @@ void SetPasteMode(const char *s)
 
 void CreateDefaultColors()
 {
-   livergb = new wxColor(0, 0, 0);              // black
-   deadrgb = new wxColor(255, 255, 255);        // white
+   livergb = new wxColor(255, 255, 255);        // white
+   deadrgb = new wxColor(48, 48, 48);           // dark gray (nicer if no alpha channel support)
    pastergb = new wxColor(255, 0, 0);           // red
    selectrgb = new wxColor(75, 175, 0);         // darkish green (becomes 50% transparent)
    qlifergb = new wxColor(0xFF, 0xFF, 0xCE);    // pale yellow
@@ -950,8 +950,7 @@ void GetPrefs()
 
 // define a multi-page dialog for changing various preferences
 
-size_t currpage = 0;       // current page in PrefsDialog
-bool ignore_page_event;    // used to prevent currpage being changed
+size_t currpage = 0;    // current page in PrefsDialog
 
 class PrefsDialog : public wxPropertySheetDialog
 {
@@ -1022,12 +1021,15 @@ private:
    void OnPageChanging(wxNotebookEvent& event);
    void OnPageChanged(wxNotebookEvent& event);
 
-   wxColor *new_livergb;       // new color for live cells
-   wxColor *new_deadrgb;       // new color for dead cells
-   wxColor *new_pastergb;      // new color for pasted pattern
-   wxColor *new_selectrgb;     // new color for selected cells
-   wxColor *new_qlifergb;      // new status bar color when using qlifealgo
-   wxColor *new_hlifergb;      // new status bar color when using hlifealgo
+   bool ignore_page_event;       // used to prevent currpage being changed
+   bool color_changed;           // have one or more colors changed?
+
+   wxColor *new_livergb;         // new color for live cells
+   wxColor *new_deadrgb;         // new color for dead cells
+   wxColor *new_pastergb;        // new color for pasted pattern
+   wxColor *new_selectrgb;       // new color for selected cells
+   wxColor *new_qlifergb;        // new status bar color when using qlifealgo
+   wxColor *new_hlifergb;        // new status bar color when using hlifealgo
 
    DECLARE_EVENT_TABLE()
 };
@@ -1071,17 +1073,10 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    notebook->SetSelection(currpage);
 
    ignore_page_event = false;
+   color_changed = false;
 
    #ifdef __WXMAC__
-      // give focus to first edit box on each page; also allows use of escape
-      if (currpage == FILE_PAGE) FindWindow(PREF_MAX_PATTERNS)->SetFocus();
-      if (currpage == EDIT_PAGE) FindWindow(PREF_RANDOM_FILL)->SetFocus();
-      if (currpage == CONTROL_PAGE) FindWindow(PREF_MAX_HASH_MEM)->SetFocus();
-      if (currpage == VIEW_PAGE)
-         if (showboldlines)
-            FindWindow(PREF_BOLD_SPACING)->SetFocus();
-         else
-            FindWindow(PREF_THUMB_RANGE)->SetFocus();
+      // wxMac bug??? avoid ALL spin control values being selected
       wxSpinCtrl* sp;
       // deselect other spin control on FILE_PAGE
       sp = (wxSpinCtrl*) FindWindow(PREF_MAX_SCRIPTS); sp->SetSelection(0,0);
@@ -1599,6 +1594,13 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    AddColorButton(panel, vbox, PREF_QLIFE_RGB, qlifergb, _("Status bar background if not hashing"));
    AddColorButton(panel, vbox, PREF_HLIFE_RGB, hlifergb, _("Status bar background if hashing"));
 
+   #ifdef __WXMAC__
+      // wxMac bug: need this hidden control so escape/return keys select Cancel/OK buttons
+      wxSpinCtrl* dummy = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString,
+                                         wxPoint(-666,-666), wxDefaultSize);
+      if (!dummy) Warning("Bug in CreateColorPrefs!");
+   #endif
+
    new_livergb = new wxColor(*livergb);
    new_deadrgb = new wxColor(*deadrgb);
    new_pastergb = new wxColor(*pastergb);
@@ -1643,6 +1645,7 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
       
       // change given color
       rgb->Set(c.Red(), c.Green(), c.Blue());
+      color_changed = true;
       
       // also change color of bitmap in corresponding button
       wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
@@ -1815,12 +1818,6 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 {
    if (ignore_page_event) return;
    currpage = event.GetSelection();
-   #ifdef __WXMAC__
-      if (currpage == COLOR_PAGE) {
-         // wxMac bug??? allow escape/return keys to select Cancel/OK buttons
-         // FindWindow(wxID_OK)->SetFocus(); //!!! didn't work -- add hidden spinctrl instead???
-      }
-   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1863,16 +1860,20 @@ bool PrefsDialog::TransferDataFromWindow()
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
 
    // COLOR_PAGE
-   *livergb     = *new_livergb;
-   *deadrgb     = *new_deadrgb;
-   *pastergb    = *new_pastergb;
-   *selectrgb   = *new_selectrgb;
-   *qlifergb    = *new_qlifergb;
-   *hlifergb    = *new_hlifergb;
-
-   // update colors for brushes and grid pens
-   SetBrushColors();
-   SetGridPens();
+   if (color_changed) {
+      // strictly speaking we shouldn't need the color_changed flag but it
+      // minimizes problems caused by a bug in wxX11
+      *livergb     = *new_livergb;
+      *deadrgb     = *new_deadrgb;
+      *pastergb    = *new_pastergb;
+      *selectrgb   = *new_selectrgb;
+      *qlifergb    = *new_qlifergb;
+      *hlifergb    = *new_hlifergb;
+   
+      // update colors for brushes and grid pens
+      SetBrushColors();
+      SetGridPens();
+   }
 
    // update globals corresponding to the wxChoice menu selections
    mingridmag = mingridindex + 2;
