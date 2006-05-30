@@ -374,8 +374,7 @@ void SetGridPens()
    // no need to use this standard grayscale conversion???
    // gray = (int) (0.299*r + 0.587*g + 0.114*b);
    int gray = (int) ((r + g + b) / 3.0);
-   // lighter grids tend to look nicer, unless the color is too light
-   if (gray > 180) {
+   if (gray > 127) {
       // use darker grid colors
       gridpen->SetColour(r > 32 ? r - 32 : 0,
                          g > 32 ? g - 32 : 0,
@@ -392,6 +391,16 @@ void SetGridPens()
                          g + 64 < 256 ? g + 64 : 255,
                          b + 64 < 256 ? b + 64 : 255);
    }
+
+   /* wxX11 bug is not in here!!! -- following info is correct
+   wxColor gridcol = gridpen->GetColour();
+   wxColor boldcol = boldpen->GetColour();
+   char msg[128];
+   sprintf(msg, "r,g,b=%d,%d,%d gray=%d\ngridpen=%d,%d,%d\nboldpen=%d,%d,%d",
+                r, g, b, gray, gridcol.Red(), gridcol.Green(), gridcol.Blue(),
+                         boldcol.Red(), boldcol.Green(), boldcol.Blue() );
+   Warning(msg);
+   */
 }
 
 void GetColor(const char *value, wxColor *rgb)
@@ -1634,6 +1643,11 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
 
 void PrefsDialog::ChangeColor(int id, wxColor* rgb)
 {
+#ifdef __WXX11__
+   // avoid horrible wxX11 bugs
+   Warning("Sorry, but due to wxX11 bugs you'll have to change colors\n"
+           "by quitting Golly, editing GollyPrefs and restarting.");
+#else
    wxColourData data;
    data.SetChooseFull(true);    // for Windows
    data.SetColour(*rgb);
@@ -1663,6 +1677,7 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
          bb->Update();
       }
    }
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1686,7 +1701,7 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
 
    } else if ( event.GetId() == PREF_HLIFE_RGB ) {
       ChangeColor(PREF_HLIFE_RGB, new_hlifergb);
-
+   
    } else {
       // process other buttons like Cancel and OK
       event.Skip();
@@ -1862,7 +1877,7 @@ bool PrefsDialog::TransferDataFromWindow()
    // COLOR_PAGE
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
-      // minimizes problems caused by a bug in wxX11
+      // minimizes problems caused by bug in wxX11
       *livergb     = *new_livergb;
       *deadrgb     = *new_deadrgb;
       *pastergb    = *new_pastergb;

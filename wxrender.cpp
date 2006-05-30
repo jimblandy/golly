@@ -727,7 +727,7 @@ void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
       }
    }
    
-   dc.SetPen(*wxBLACK_PEN);
+   dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------

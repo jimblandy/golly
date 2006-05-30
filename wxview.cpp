@@ -2150,6 +2150,12 @@ void PatternView::ToggleCellColors()
    swapcolors = !swapcolors;
    SetGridPens();
    mainptr->UpdateEverything();
+   #ifdef __WXX11__
+      // warn about wxX11 bug!!!
+      if (currview.getmag() >= mingridmag)
+         statusptr->ErrorMessage("Due to a wxX11 bug you will have to quit Golly"
+                                 " and restart to see the correct grid colors.");
+   #endif
 }
 
 void PatternView::ToggleBuffering()
