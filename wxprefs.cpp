@@ -1577,7 +1577,7 @@ void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
       hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
       hbox->Add(new wxStaticText(parent, wxID_STATIC, text),
                  0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
-      vbox->AddSpacer(SVGAP);
+      vbox->AddSpacer(5);
       vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
    }
 }
