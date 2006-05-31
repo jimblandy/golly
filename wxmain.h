@@ -52,6 +52,7 @@ public:
    bool CopyTextToClipboard(wxString &text);
    bool GetTextFromClipboard(wxTextDataObject *data);
    void OpenClipboard();
+   void RunClipboard();
 
    // file functions
    void OpenFile(const char *path, bool remember = true);

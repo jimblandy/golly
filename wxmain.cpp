@@ -99,6 +99,7 @@ enum {
    ID_PATTERN_DIR,
    // wxID_SAVE,
    ID_RUN_SCRIPT,
+   ID_RUN_CLIP,
    ID_RUN_RECENT,
    // last item in Run Recent submenu
    ID_CLEAR_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
@@ -214,11 +215,14 @@ int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
 // must be static because it's used in DnDFile::OnDropFiles
 wxTimer *onetimer;
 
-// temporary file created by OpenClipboard;
+// name of temporary file created by OpenClipboard;
 // it can be used to reset pattern or to show comments
 wxString gen0file;
 
-// temporary file for storing clipboard data
+// name of temporary file created by RunClipboard
+wxString scriptfile;
+
+// name of temporary file for storing clipboard data (only in X11 app)
 wxString clipfile;
 
 // a splittable window is used to display pattern/script directory and viewport
@@ -421,6 +425,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_PATTERN_DIR,     active);
       mbar->Enable(wxID_SAVE,          active && !generating);
       mbar->Enable(ID_RUN_SCRIPT,      active && !generating);
+      mbar->Enable(ID_RUN_CLIP,        active && !generating && textinclip);
       mbar->Enable(ID_RUN_RECENT,      active && !generating && numscripts > 0);
       mbar->Enable(ID_SHOW_SCRIPTS,    active);
       mbar->Enable(ID_SCRIPT_DIR,      active);
@@ -1044,6 +1049,24 @@ void MainFrame::OpenClipboard()
          }
       }
    #endif
+}
+
+void MainFrame::RunClipboard()
+{
+   if (generating) return;
+   // run script stored in clipboard
+   wxTextDataObject data;
+   if (GetTextFromClipboard(&data)) {
+      // copy clipboard data to scriptfile
+      wxFile outfile(scriptfile, wxFile::write);
+      if ( outfile.IsOpened() ) {
+         outfile.Write( data.GetText() );
+         outfile.Close();
+         RunScript(scriptfile);
+      } else {
+         statusptr->ErrorMessage("Could not create script file!");
+      }
+   }
 }
 
 void MainFrame::OpenRecentPattern(int id)
@@ -2329,6 +2352,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_PATTERN_DIR:    ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
       case ID_RUN_SCRIPT:     OpenScript(); break;
+      case ID_RUN_CLIP:       RunClipboard(); break;
       case ID_CLEAR_SCRIPTS:  ClearRecentScripts(); break;
       case ID_SHOW_SCRIPTS:   ToggleShowScripts(); break;
       case ID_SCRIPT_DIR:     ChangeScriptDir(); break;
@@ -2640,6 +2664,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    
    // delete any temporary files
    if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
+   if (wxFileExists(scriptfile)) wxRemoveFile(scriptfile);
 
    #if defined(__WXX11__) || defined(__WXGTK__)
       // avoid seg fault on Linux
@@ -2704,12 +2729,13 @@ MainFrame::MainFrame()
 {
    wxGetApp().SetFrameIcon(this);
 
-   // initialize gen0file and clipfile to hidden files in same folder as Golly app;
+   // initialize hidden files to be in same folder as Golly app;
    // they must be absolute paths in case they are used from a script command when
    // the current directory has been changed to the location of the script file
    wxString gollydir = wxFileName::GetCwd();
    if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
    gen0file = gollydir + wxT(".golly_gen0");
+   scriptfile = gollydir + wxT(".golly_clip.py");
    clipfile = gollydir + wxT(".golly_clipboard");
 
    // create one-shot timer
@@ -2763,6 +2789,7 @@ MainFrame::MainFrame()
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
    fileMenu->AppendSeparator();
    fileMenu->Append(ID_RUN_SCRIPT, _("Run Script..."));
+   fileMenu->Append(ID_RUN_CLIP, _("Run Clipboard"));
    fileMenu->Append(ID_RUN_RECENT, _("Run Recent"), scriptSubMenu);
    fileMenu->AppendSeparator();
    fileMenu->AppendCheckItem(ID_SHOW_SCRIPTS, _("Show Scripts\tShift+Ctrl+P"));
