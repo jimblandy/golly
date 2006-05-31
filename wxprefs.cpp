@@ -160,12 +160,15 @@ wxColor *selectrgb;              // color for selected cells
 wxColor *qlifergb;               // status bar background when using qlifealgo
 wxColor *hlifergb;               // status bar background when using hlifealgo
 
-wxBrush *livebrush;              // brush for drawing live cells
-wxBrush *deadbrush;              // brush for drawing dead cells
-wxBrush *qlifebrush;             // brush for status bar background when using qlifealgo
-wxBrush *hlifebrush;             // brush for status bar background when using hlifealgo
-wxPen *gridpen;                  // pen for drawing plain grid lines
-wxPen *boldpen;                  // pen for drawing bold grid lines
+wxBrush *livebrush;              // for drawing live cells
+wxBrush *deadbrush;              // for drawing dead cells
+wxBrush *qlifebrush;             // for status bar background when using qlifealgo
+wxBrush *hlifebrush;             // for status bar background when using hlifealgo
+wxPen *pastepen;                 // for drawing paste rect
+wxPen *gridpen;                  // for drawing plain grid
+wxPen *boldpen;                  // for drawing bold grid
+wxPen *sgridpen;                 // for drawing plain grid if swapcolors is true
+wxPen *sboldpen;                 // for drawing bold grid if swapcolors is true
 
 // these settings must be static -- they are changed by GetPrefs *before* the
 // view window is created
@@ -348,26 +351,21 @@ void CreateDefaultColors()
    qlifergb = new wxColor(0xFF, 0xFF, 0xCE);    // pale yellow
    hlifergb = new wxColor(0xE2, 0xFA, 0xF8);    // pale blue
 
-   // create dependent brushes and pens but don't set correct colors yet
+   // create brushes and pens but don't set correct colors yet;
+   // that will be done later in SetBrushesAndPens
    livebrush = new wxBrush(*wxBLACK);
    deadbrush = new wxBrush(*wxBLACK);
    qlifebrush = new wxBrush(*wxBLACK);
    hlifebrush = new wxBrush(*wxBLACK);
+   pastepen = new wxPen(*wxBLACK);
    gridpen = new wxPen(*wxBLACK);
    boldpen = new wxPen(*wxBLACK);
+   sgridpen = new wxPen(*wxBLACK);
+   sboldpen = new wxPen(*wxBLACK);
 }
 
-void SetBrushColors()
+void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 {
-   livebrush->SetColour(*livergb);
-   deadbrush->SetColour(*deadrgb);
-   qlifebrush->SetColour(*qlifergb);
-   hlifebrush->SetColour(*hlifergb);
-}
-
-void SetGridPens()
-{
-   wxColor* c = swapcolors ? livergb : deadrgb;
    int r = c->Red();
    int g = c->Green();
    int b = c->Blue();
@@ -375,32 +373,34 @@ void SetGridPens()
    // gray = (int) (0.299*r + 0.587*g + 0.114*b);
    int gray = (int) ((r + g + b) / 3.0);
    if (gray > 127) {
-      // use darker grid colors
-      gridpen->SetColour(r > 32 ? r - 32 : 0,
-                         g > 32 ? g - 32 : 0,
-                         b > 32 ? b - 32 : 0);
-      boldpen->SetColour(r > 64 ? r - 64 : 0,
-                         g > 64 ? g - 64 : 0,
-                         b > 64 ? b - 64 : 0);
+      // use darker grid
+      ppen->SetColour(r > 32 ? r - 32 : 0,
+                      g > 32 ? g - 32 : 0,
+                      b > 32 ? b - 32 : 0);
+      bpen->SetColour(r > 64 ? r - 64 : 0,
+                      g > 64 ? g - 64 : 0,
+                      b > 64 ? b - 64 : 0);
    } else {
-      // use lighter grid colors
-      gridpen->SetColour(r + 32 < 256 ? r + 32 : 255,
-                         g + 32 < 256 ? g + 32 : 255,
-                         b + 32 < 256 ? b + 32 : 255);
-      boldpen->SetColour(r + 64 < 256 ? r + 64 : 255,
-                         g + 64 < 256 ? g + 64 : 255,
-                         b + 64 < 256 ? b + 64 : 255);
+      // use lighter grid
+      ppen->SetColour(r + 32 < 256 ? r + 32 : 255,
+                      g + 32 < 256 ? g + 32 : 255,
+                      b + 32 < 256 ? b + 32 : 255);
+      bpen->SetColour(r + 64 < 256 ? r + 64 : 255,
+                      g + 64 < 256 ? g + 64 : 255,
+                      b + 64 < 256 ? b + 64 : 255);
    }
+}
 
-   /* wxX11 bug is not in here!!! -- following info is correct
-   wxColor gridcol = gridpen->GetColour();
-   wxColor boldcol = boldpen->GetColour();
-   char msg[128];
-   sprintf(msg, "r,g,b=%d,%d,%d gray=%d\ngridpen=%d,%d,%d\nboldpen=%d,%d,%d",
-                r, g, b, gray, gridcol.Red(), gridcol.Green(), gridcol.Blue(),
-                         boldcol.Red(), boldcol.Green(), boldcol.Blue() );
-   Warning(msg);
-   */
+void SetBrushesAndPens()
+{
+   livebrush->SetColour(*livergb);
+   deadbrush->SetColour(*deadrgb);
+   qlifebrush->SetColour(*qlifergb);
+   hlifebrush->SetColour(*hlifergb);
+   
+   pastepen->SetColour(*pastergb);
+   SetGridPens(deadrgb, gridpen, boldpen);
+   SetGridPens(livergb, sgridpen, sboldpen);
 }
 
 void GetColor(const char *value, wxColor *rgb)
@@ -431,7 +431,7 @@ void SavePrefs()
    }
    
    fprintf(f, "# NOTE: If you edit this file then do so when Golly isn't running\n");
-   fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n");
+   fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n\n");
    fprintf(f, "version=%d\n", PREFS_VERSION);
    // save main window's location and size
    if (mainptr->fullscreen) {
@@ -478,12 +478,18 @@ void SavePrefs()
    fprintf(f, "hashing=%d\n", hashing ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
+   
+   fprintf(f, "\n");
+   
    fprintf(f, "rule=%s\n", curralgo->getrule());
    if (namedrules.GetCount() > 1) {
       size_t i;
       for (i=1; i<namedrules.GetCount(); i++)
          fprintf(f, "named_rule=%s\n", namedrules[i].c_str());
    }
+   
+   fprintf(f, "\n");
+
    fprintf(f, "show_tool=%d\n", mainptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
    fprintf(f, "show_status=%d\n", mainptr->StatusVisible() ? 1 : 0);
@@ -493,14 +499,18 @@ void SavePrefs()
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
    fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
-   fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    
+   fprintf(f, "\n");
+
+   fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    SaveColor(f, "live_rgb", livergb);
    SaveColor(f, "dead_rgb", deadrgb);
    SaveColor(f, "paste_rgb", pastergb);
    SaveColor(f, "select_rgb", selectrgb);
    SaveColor(f, "qlife_rgb", qlifergb);
    SaveColor(f, "hlife_rgb", hlifergb);
+   
+   fprintf(f, "\n");
    
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
@@ -510,6 +520,9 @@ void SavePrefs()
    fprintf(f, "new_cursor=%s\n", CursorToString(newcurs));
    fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
    fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
+   
+   fprintf(f, "\n");
+
    fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
    fprintf(f, "run_dir=%s\n", rundir.c_str());
    fprintf(f, "pattern_dir=%s\n", patterndir.c_str());
@@ -520,20 +533,25 @@ void SavePrefs()
    fprintf(f, "show_scripts=%d\n", showscripts ? 1 : 0);
    fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
    fprintf(f, "max_scripts=%d (1..%d)\n", maxscripts, MAX_RECENT);
+
    if (numpatterns > 0) {
+      fprintf(f, "\n");
       int i;
       for (i=0; i<numpatterns; i++) {
          wxMenuItem *item = patternSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_pattern=%s\n", item->GetText().c_str());
       }
    }
+
    if (numscripts > 0) {
+      fprintf(f, "\n");
       int i;
       for (i=0; i<numscripts; i++) {
          wxMenuItem *item = scriptSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_script=%s\n", item->GetText().c_str());
       }
    }
+   
    fclose(f);
 }
 
@@ -816,10 +834,6 @@ void GetPrefs()
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
 
-      } else if (strcmp(keyword, "black_on_white") == 0) {
-         // this parameter has been replaced by swap_colors and has opposite meaning
-         swapcolors = value[0] != '1';
-
       } else if (strcmp(keyword, "live_rgb") == 0) {
          GetColor(value, livergb);
 
@@ -939,9 +953,8 @@ void GetPrefs()
    }
    fclose(f);
 
-   // now set colors for brushes and grid pens
-   SetBrushColors();
-   SetGridPens();
+   // now set colors for brushes and pens
+   SetBrushesAndPens();
    
    // showpatterns and showscripts must not both be true
    if (showpatterns && showscripts) showscripts = false;
@@ -1885,9 +1898,8 @@ bool PrefsDialog::TransferDataFromWindow()
       *qlifergb    = *new_qlifergb;
       *hlifergb    = *new_hlifergb;
    
-      // update colors for brushes and grid pens
-      SetBrushColors();
-      SetGridPens();
+      // update colors for brushes and pens
+      SetBrushesAndPens();
    }
 
    // update globals corresponding to the wxChoice menu selections

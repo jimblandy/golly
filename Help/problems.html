@@ -15,11 +15,16 @@ or Tom Rokicki
 
 <p>
 <ul>
-<li>
-Golly is still a work in progress and we hope to add more features:
-support for toroidal universes, more editing functions (eg. undo).
-<li>
-Pattern rendering needs to be optimized.
+<li> Golly is still a work in progress and we hope to add more features:
+     support for toroidal universes, more editing functions (eg. undo),
+     configurable keyboard shortcuts.
+<li> All editing operations are restricted to cells whose coordinates
+     are within +/- one billion.  There is also a bug in the hashing
+     algorithm that prevents you from editing cell states if the pattern
+     is very large (outside the +/- one billion limits).
+<li> Support for 1D rules like "W110" is incomplete.  In particular,
+     1D patterns advance upwards when using the non-hashing algorithm.
+<li> Pattern rendering needs to be optimized.
 </ul>
 
 <p>
@@ -50,14 +55,20 @@ Pattern rendering needs to be optimized.
 <font size=+1><b>Linux/X11 problems</b></font>
 
 <p>
+Linux users are strongly advised to install GTK+ and run the GTK
+version of Golly.  Unfortunately the X11 version has lots of bugs:
+
+<p>
 <ul>
-<li> Resizing main window very small can cause app to crash
-(and another bug prevents setting the window's minimum size -- sheesh!).
+<li> Resizing the main window very small can cause Golly to crash
+     (and another bug prevents setting the window's minimum size -- sheesh!).
 <li> The tool bar has to be horizontal to avoid menu bar bugs.
 <li> The tool bar cannot be toggled on/off.
 <li> No support for full screen mode.
 <li> No support for dropping pattern files onto the main window.
 <li> Limited clipboard support (you can only Paste after using Cut/Copy).
+<li> You can't use Preferences > Color to change any colors.
+     You'll have to quit Golly and edit the *_rgb settings in GollyPrefs.
 <li> Links in the help window can lose their color.
 <li> No alpha channel support so inversion is used for selections.
 <li> Can't create our own magnifying-glass cursors so arrows are used.

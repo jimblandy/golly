@@ -105,22 +105,19 @@ extern wxArrayString namedrules;
 
 extern wxColor *livergb;         // color for live cells
 extern wxColor *deadrgb;         // color for dead cells
-extern wxColor *gridrgb;         // color for grid lines
-extern wxColor *boldrgb;         // color for bold grid lines
 extern wxColor *pastergb;        // color for pasted pattern
 extern wxColor *selectrgb;       // color for selected cells
-extern wxColor *qlifergb;        // for status bar background if not hashing
-extern wxColor *hlifergb;        // for status bar background if hashing
 
-// these brushes and pens depend on the above colors
+// colored brushes and pens
 extern wxBrush *livebrush;       // for drawing live cells
 extern wxBrush *deadbrush;       // for drawing dead cells
 extern wxBrush *qlifebrush;      // for status bar background if not hashing
 extern wxBrush *hlifebrush;      // for status bar background if hashing
-extern wxPen *gridpen;           // pen for drawing plain grid lines
-extern wxPen *boldpen;           // pen for drawing bold grid lines
-
-void SetGridPens();              // set colors for above grid-related pens
+extern wxPen *pastepen;          // for drawing paste rect
+extern wxPen *gridpen;           // for drawing plain grid
+extern wxPen *boldpen;           // for drawing bold grid
+extern wxPen *sgridpen;          // for drawing plain grid if swapcolors is true
+extern wxPen *sboldpen;          // for drawing bold grid if swapcolors is true
 
 // Various constants:
 

@@ -630,7 +630,7 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
    }
 
    // now overlay border rectangle
-   dc.SetPen(wxPen(*pastergb));
+   dc.SetPen(*pastepen);
    dc.SetBrush(*wxTRANSPARENT_BRUSH);
 
    // if large rect then we need to avoid overflow because DrawRectangle
@@ -684,7 +684,7 @@ void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
    }
 
    // draw all plain lines first
-   dc.SetPen(*gridpen);
+   dc.SetPen(swapcolors ? *sgridpen : *gridpen);
    i = showboldlines ? topbold : 1;
    v = -1;
    while (true) {
@@ -706,7 +706,7 @@ void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
 
    if (showboldlines) {
       // overlay bold lines
-      dc.SetPen(*boldpen);
+      dc.SetPen(swapcolors ? *sboldpen : *boldpen);
       i = topbold;
       v = -1;
       while (true) {
