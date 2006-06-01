@@ -68,7 +68,10 @@ viewport currview(10, 10);
 const int DRAG_RATE = 20;
 const int ID_DRAG_TIMER = 1000;
 
-long releasemsec = 0;            // when OnScroll saw wxEVT_SCROLLWIN_THUMBRELEASE
+#ifdef __WXGTK__
+   // avoid wxGTK scroll bug???
+   bool ignorescroll = false;    // ignore next wxEVT_SCROLLWIN_* event?
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -2809,6 +2812,15 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       UpdateScrollBars();
       return;
    }
+   
+   #ifdef __WXGTK__
+      // avoid unwanted scroll event
+      if (ignorescroll) {
+         ignorescroll = false;
+         UpdateScrollBars();
+         return;
+      }
+   #endif
 
    WXTYPE type = event.GetEventType();
    int orient = event.GetOrientation();
@@ -2843,14 +2855,6 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
    }
    else if (type == wxEVT_SCROLLWIN_THUMBTRACK)
    {
-      #ifdef __WXGTK__
-         // avoid unwanted THUMBTRACK event immediately after THUMBRELEASE
-         if ( wxGetElapsedTime(false) - releasemsec < 50 ) {
-            UpdateScrollBars();
-            return;
-         }
-      #endif
-
       int newpos = event.GetPosition();
       int amount = newpos - (orient == wxHORIZONTAL ? hthumb : vthumb);
       if (amount != 0) {
@@ -2882,12 +2886,14 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
    {
       // now we can call UpdateScrollBars
       mainptr->UpdateEverything();
-
-      #ifdef __WXGTK__
-         // avoid a THUMBTRACK event immediately after THUMBRELEASE
-         releasemsec = wxGetElapsedTime(false);
-      #endif
    }
+
+   #ifdef __WXGTK__
+      if (type != wxEVT_SCROLLWIN_THUMBTRACK) {
+         // avoid next scroll event
+         ignorescroll = true;
+      }
+   #endif
 }
 
 void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
