@@ -44,6 +44,7 @@ public:
    // string returned by setrule is any error
    const char *setrule(const char *s) ;
    const char *getrule() const { return rule ; }
+   bool vertically_symmetrical() const { return !wolfram ; }
    // AKT: we need 2 tables to support B0-not-S8 rule emulation
    char rule0[65536];      // rule table for even gens if rule has B0 but not S8,
                            // or for all gens if rule has no B0, or it has B0 *and* S8
