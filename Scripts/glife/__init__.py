@@ -220,10 +220,11 @@ def getminbox(patt):
    miny =  maxint
    maxy = -maxint
    clist = list(patt)
-   for x in range(0, len(clist), 2):
+   clen = len(clist)
+   for x in xrange(0, clen, 2):
       if clist[x] < minx: minx = clist[x]
       if clist[x] > maxx: maxx = clist[x]
-   for y in range(1, len(clist), 2):
+   for y in xrange(1, clen, 2):
       if clist[y] < miny: miny = clist[y]
       if clist[y] > maxy: maxy = clist[y]
    return rect( [ minx, miny, maxx - minx + 1, maxy - miny + 1 ] )

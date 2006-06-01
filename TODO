@@ -10,9 +10,6 @@ B - Finish 1D rule support:
     may be to alter rule0 table in qlifealgo::setrule().
   - Change text in Rule dialog.
   - Prevent odd-numbered 1D rules (only feasible in toroidal universe).
-  - Decide how to store 1D rule in RLE file -- probably time to implement
-    some simple RLE extensions via comment lines like this:
-    #RLE+ rule=w110 gen=23
 
 A - Replace separate Go and Stop buttons with a single button, optionally
     animated to show galaxy phases.  Looks like I'll need to avoid using
