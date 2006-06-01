@@ -304,7 +304,7 @@ int qlifealgo::doquad01(supertile *zis, supertile *edge,
  *   their changing bits are shifted up 10 positions in c.
  */
    poller->poll() ;
-   int changing = (zis->flags | (par->flags >> 19) |
+   int changing = (zis->flags | (par->flags >> 19) | deltaforward |
                    (((edge->flags >> 18) | (cor->flags >> 27)) & 1)) & 0xff ;
    int x, b, nchanging = (zis->flags & 0x3ff00) << 10 ;
    supertile *p, *pf, *pu, *pfu ;
@@ -369,7 +369,7 @@ int qlifealgo::doquad01(supertile *zis, supertile *edge,
 int qlifealgo::doquad10(supertile *zis, supertile *edge,
                         supertile *par, supertile *cor, int lev) {
    poller->poll() ;
-   int changing = (zis->flags | (par->flags >> 19) |
+   int changing = (zis->flags | (par->flags >> 19) | deltaforward |
                    (((edge->flags >> 18) | (cor->flags >> 27)) & 1)) & 0xff ;
    int x, b, nchanging = (zis->flags & 0x3ff00) << 10 ;
    supertile *p, *pf, *pu, *pfu ;
@@ -419,7 +419,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
  *   the only place we need to pull in changing from the down and corner
  *   neighbor.
  */
-   int i, recomp = (p->c[4] | pd->c[0] | (pr->c[4] >> 9) | (prd->c[0] >> 8)) & 0xff ;
+   int i, recomp = (deltaforward | p->c[4] | pd->c[0] | (pr->c[4] >> 9) | (prd->c[0] >> 8)) & 0xff ;
    STAT(dq++) ;
    p->c[5] = 0 ;
    p->flags |= 0xfff00000 ;
@@ -533,7 +533,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
 /*
  *   Calculate recomp for the next row down.
  */
-      recomp = (p->c[i] | (pr->c[i] >> 9)) & 0xff ;
+      recomp = (deltaforward | p->c[i] | (pr->c[i] >> 9)) & 0xff ;
       db = b ;
       rdb = rb ;
    }
@@ -541,7 +541,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
  *   Propogate the changing information for this tile to the supertile on
  *   the next level up.
  */
-   recomp = p->c[5] ;
+   recomp = deltaforward | p->c[5] ;
    i = recomp | p->c[0] | p->c[1] | p->c[2] | p->c[3] | p->c[4] ;
    if (recomp)
       return 0x201 | ((recomp & 0x100) << 2) | ((i & 0x100) >> 7) ;
@@ -554,7 +554,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
  */
 int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
    brick *ub = pu->b[3], *lub = plu->b[3] ;
-   int i, recomp = (p->c[1] | pu->c[5] | (pl->c[1] >> 9) | (plu->c[5] >> 8)) & 0xff ;
+   int i, recomp = (deltaforward | p->c[1] | pu->c[5] | (pl->c[1] >> 9) | (plu->c[5] >> 8)) & 0xff ;
    STAT(dq++) ;
    p->c[0] = 0 ;
    p->flags |= 0x000fff00 ;
@@ -621,11 +621,11 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
          p->c[i] |= (maskprev >> j) & 0x1ff ;
       } else
          p->c[i+1] = 0 ;
-      recomp = (p->c[i+2] | (pl->c[i+2] >> 9)) & 0xff ;
+      recomp = (deltaforward | p->c[i+2] | (pl->c[i+2] >> 9)) & 0xff ;
       ub = b ;
       lub = lb ;
    }
-   recomp = p->c[0] ;
+   recomp = deltaforward | p->c[0] ;
    i = recomp | p->c[1] | p->c[2] | p->c[3] | p->c[4] | p->c[5] ;
    if (recomp)
       return 0x201 | ((recomp & 0x100) << 2) | ((i & 0x100) >> 7) ;
