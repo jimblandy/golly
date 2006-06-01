@@ -128,7 +128,8 @@ void RuleDialog::CreateControls()
    
    ruletext = new wxTextCtrl(this, RULE_TEXT, wxT(curralgo->getrule()));
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC,
-                                 _("Enter rule using B0..8/S0..8 notation:"));
+      wxT("Enter a 2D rule using B0..8/S0..8 notation\n")
+      wxT("or a 1D rule as Wn (n = 0 to 254 and even):") );
    
    wxArrayString namearray;
    size_t i;
@@ -146,7 +147,7 @@ void RuleDialog::CreateControls()
    UpdateName();
 
    wxStaticText* namelabel = new wxStaticText(this, wxID_STATIC,
-                                 _("Or select named rule:"));
+                                 _("Or select a named rule:"));
 
    wxButton* delbutt = new wxButton(this, RULE_DEL_BUTT, _("Delete"),
                                     wxDefaultPosition, wxDefaultSize, 0);

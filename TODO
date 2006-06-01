@@ -5,12 +5,6 @@ A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar. Or maybe just add
     Gabriel's oscillation detection as an option (see oscar.py).
 
-B - Finish 1D rule support:
-  - qlife display needs to be turned upside down.  Simplest solution
-    may be to alter rule0 table in qlifealgo::setrule().
-  - Change text in Rule dialog.
-  - Prevent odd-numbered 1D rules (only feasible in toroidal universe).
-
 A - Replace separate Go and Stop buttons with a single button, optionally
     animated to show galaxy phases.  Looks like I'll need to avoid using
     wxToolBar (probably good anyway, as it causes other bugs).

@@ -615,16 +615,17 @@ void MainFrame::MySetTitle(const char *title)
 
 void MainFrame::SetWindowTitle(const char *filename)
 {
-   char wtitle[128];
+   wxString wtitle;
    if (filename[0] != 0) {
       // new file name in title
       strncpy(currname, filename, sizeof(currname));
    }
    #ifdef __WXMAC__
-      sprintf(wtitle, "%s [%s]", currname, GetRuleName(curralgo->getrule()));
+      wtitle.Printf("%s [%s]", currname, GetRuleName(curralgo->getrule()));
    #else
-      sprintf(wtitle, "%s [%s] - Golly", currname, GetRuleName(curralgo->getrule()));
+      wtitle.Printf("%s [%s] - Golly", currname, GetRuleName(curralgo->getrule()));
    #endif
+   // better to truncate a really long title???!!!
    MySetTitle(wtitle);
 }
 
@@ -738,8 +739,8 @@ void MainFrame::LoadPattern(const char *newtitle)
    if (newtitle) {
       // show new file name in window title but no rule (which readpattern can change);
       // nicer if user can see file name while loading a very large pattern
-      char wtitle[128];
-      sprintf(wtitle, "Loading %s", newtitle);
+      wxString wtitle;
+      wtitle.Printf("Loading %s", newtitle);
       MySetTitle(wtitle);
    }
 
@@ -1676,11 +1677,11 @@ void MainFrame::DisplayTimingInfo()
       endgen = curralgo->getGeneration().todouble();
    }
    if (endtime > starttime) {
-      char s[128];
-      sprintf(s,"%g gens in %g secs (%g gens/sec)",
-                endgen - startgen,
-                (double)(endtime - starttime) / 1000.0,
-                (double)(endgen - startgen) / ((double)(endtime - starttime) / 1000.0));
+      wxString s;
+      s.Printf("%g gens in %g secs (%g gens/sec)",
+               endgen - startgen,
+               (double)(endtime - starttime) / 1000.0,
+               (double)(endgen - startgen) / ((double)(endtime - starttime) / 1000.0));
       statusptr->DisplayMessage(s);
    }
 }
@@ -2048,6 +2049,10 @@ void MainFrame::ToggleHashing()
       newalgo = new qlifealgo();
    }
    newalgo->setpoll(wxGetApp().Poller());
+   
+   // even though universes share a global rule table we still need to call setrule
+   // due to internal differences in the handling of Wolfram rules
+   newalgo->setrule( (char*)curralgo->getrule() );
 
    // set same gen count
    newalgo->setGeneration( curralgo->getGeneration() );

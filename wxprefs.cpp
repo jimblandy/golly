@@ -90,10 +90,10 @@ const int BITMAP_HT = 20;        // height of bitmap in color buttons
 // initialize exported preferences:
 
 int mainx = 30;                  // main window's initial location
-int mainy = 30;
-int mainwd = 640;                // main window's initial size
-int mainht = 480;
-bool maximize = true;            // maximize main window?
+int mainy = 40;
+int mainwd = 800;                // main window's initial size
+int mainht = 600;
+bool maximize = false;           // maximize main window?
 
 int helpx = 60;                  // help window's initial location
 int helpy = 60;
@@ -342,28 +342,6 @@ void SetPasteMode(const char *s)
 
 // -----------------------------------------------------------------------------
 
-void CreateDefaultColors()
-{
-   livergb = new wxColor(255, 255, 255);        // white
-   deadrgb = new wxColor(48, 48, 48);           // dark gray (nicer if no alpha channel support)
-   pastergb = new wxColor(255, 0, 0);           // red
-   selectrgb = new wxColor(75, 175, 0);         // darkish green (becomes 50% transparent)
-   qlifergb = new wxColor(0xFF, 0xFF, 0xCE);    // pale yellow
-   hlifergb = new wxColor(0xE2, 0xFA, 0xF8);    // pale blue
-
-   // create brushes and pens but don't set correct colors yet;
-   // that will be done later in SetBrushesAndPens
-   livebrush = new wxBrush(*wxBLACK);
-   deadbrush = new wxBrush(*wxBLACK);
-   qlifebrush = new wxBrush(*wxBLACK);
-   hlifebrush = new wxBrush(*wxBLACK);
-   pastepen = new wxPen(*wxBLACK);
-   gridpen = new wxPen(*wxBLACK);
-   boldpen = new wxPen(*wxBLACK);
-   sgridpen = new wxPen(*wxBLACK);
-   sboldpen = new wxPen(*wxBLACK);
-}
-
 void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 {
    int r = c->Red();
@@ -397,10 +375,33 @@ void SetBrushesAndPens()
    deadbrush->SetColour(*deadrgb);
    qlifebrush->SetColour(*qlifergb);
    hlifebrush->SetColour(*hlifergb);
-   
    pastepen->SetColour(*pastergb);
    SetGridPens(deadrgb, gridpen, boldpen);
    SetGridPens(livergb, sgridpen, sboldpen);
+}
+
+void CreateDefaultColors()
+{
+   livergb = new wxColor(255, 255, 255);        // white
+   deadrgb = new wxColor(48, 48, 48);           // dark gray (nicer if no alpha channel support)
+   pastergb = new wxColor(255, 0, 0);           // red
+   selectrgb = new wxColor(75, 175, 0);         // darkish green (becomes 50% transparent)
+   qlifergb = new wxColor(0xFF, 0xFF, 0xCE);    // pale yellow
+   hlifergb = new wxColor(0xE2, 0xFA, 0xF8);    // pale blue
+
+   // create brushes and pens
+   livebrush = new wxBrush(*wxBLACK);
+   deadbrush = new wxBrush(*wxBLACK);
+   qlifebrush = new wxBrush(*wxBLACK);
+   hlifebrush = new wxBrush(*wxBLACK);
+   pastepen = new wxPen(*wxBLACK);
+   gridpen = new wxPen(*wxBLACK);
+   boldpen = new wxPen(*wxBLACK);
+   sgridpen = new wxPen(*wxBLACK);
+   sboldpen = new wxPen(*wxBLACK);
+   
+   // set their default colors (in case prefs file doesn't exist)
+   SetBrushesAndPens();
 }
 
 void GetColor(const char *value, wxColor *rgb)
@@ -695,7 +696,6 @@ void GetPrefs()
    namedrules.Add("Life|B3/S23");      // must be 1st entry
 
    if ( !wxFileExists(PREFS_NAME) ) {
-      // use initial preference values
       AddDefaultRules();
       return;
    }
@@ -953,7 +953,7 @@ void GetPrefs()
    }
    fclose(f);
 
-   // now set colors for brushes and pens
+   // colors for brushes and pens may have changed
    SetBrushesAndPens();
    
    // showpatterns and showscripts must not both be true

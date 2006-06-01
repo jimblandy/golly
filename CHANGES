@@ -9,6 +9,10 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 0.96 (released !!! 2006)
 
+AKT: Fixed crash due to very long rule string.
+TGR: Fixed rule-changing bug in qlifealgo.
+TGR: Fixed qlifealgo so 1D rules expand downwards.
+AKT: Very first window is now 800x600 (no longer maximized).
 AKT: Added Run Clipboard item to File menu.
 AKT: Replaced Black on White flag with Swap Cell Colors.
 AKT: Added ability to change colors (via Prefs > Color).
