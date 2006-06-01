@@ -139,7 +139,7 @@ bigint::~bigint() {
    if (0 == (v.i & 1))
       delete [] v.p ;
 }
-const char *bigint::tostring() const {
+const char *bigint::tostring(char sep) const {
    int lenreq = 32 ;
    if ((v.i & 1) == 0)
       lenreq = size() * 32 ;
@@ -199,8 +199,8 @@ const char *bigint::tostring() const {
       *r++ = '-' ;
    for (int i=p-printbuf-1; i>=0; i--) {
       *r++ = printbuf[i] ;
-      if (i && sepchar && (i % sepcount == 0))
-         *r++ = sepchar ;
+      if (i && sep && (i % sepcount == 0))
+         *r++ = sep ;
    }
    *r++ = 0 ;
    return p ;

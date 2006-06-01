@@ -131,7 +131,7 @@ public:
    int odd() const ;
    int low31() const ; // return the low 31 bits quickly
    int lowbitset() const ; // return the index of the lowest set bit
-   const char *tostring() const ;
+   const char *tostring(char sep=sepchar) const ;
    int sign() const ;
    // note: a should be a small positive int, say 1..10,000
    void mul_smallint(int a) ;
