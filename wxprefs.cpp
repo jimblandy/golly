@@ -97,18 +97,18 @@ bool maximize = false;           // maximize main window?
 
 int helpx = 60;                  // help window's initial location
 int helpy = 60;
-int helpwd = 600;                // help window's initial size
-int helpht = 400;
-#ifdef __WXMSW__
-   int helpfontsize = 10;        // font size in help window
-#else
+int helpwd = 700;                // help window's initial size
+int helpht = 500;
+#ifdef __WXMAC__
    int helpfontsize = 12;        // font size in help window
+#else
+   int helpfontsize = 10;        // font size in help window
 #endif
 
-int infox = 100;                 // info window's initial location
-int infoy = 100;
-int infowd = 600;                // info window's initial size
-int infoht = 400;
+int infox = 90;                  // info window's initial location
+int infoy = 90;
+int infowd = 700;                // info window's initial size
+int infoht = 500;
 
 bool autofit = false;            // auto fit pattern while generating?
 bool hashing = false;            // use hlife algorithm?
