@@ -14,12 +14,13 @@ do that, building Golly is easy.  Just use the appropriate makefile:
 
    nmake -f makefile-win   (on Windows 98 or later)
    make -f makefile-mac    (on Mac OS X)
-   make -f makefile-x11    (on Linux or other X11 platforms)
+   make -f makefile-gtk    (on Linux or other Unix platforms)
+   make -f makefile-x11    (ditto)
 
 NOTES:
 
-- You need to edit makefile-win and makefile-mac to specify where
-  wxWidgets is installed.
+- You need to edit makefile-win, makefile-mac and makefile-x11 to
+  specify where wxWidgets is installed.
 
 - You need to edit makefile-win to specify where Python is installed.
 
@@ -43,7 +44,7 @@ Source code road map
 If you'd like to modify Golly then the following notes should help you
 get started.  Each module is described, along with some key routines.
 
-The GUI code is implemented in wxWidgets in these wx* modules:
+The GUI code is implemented in these wx* modules:
 
 wxgolly.*      - The GUI application.
                  OnInit() is where it all starts.
@@ -86,9 +87,9 @@ wxutils.*      - Utility dialogs for showing errors and progress.
                  Warning() displays message in modal dialog.
                  Fatal() displays message and exits app.
 
-The following non-wx modules are sufficient to build bgolly, but they
-also define abstract viewport and rendering interfaces used by the
-above GUI code:
+The following non-wx modules are sufficient to build bgolly.
+They also define abstract viewport and rendering interfaces used
+by the above GUI code:
 
 bgolly.cpp     - The batch mode program.
                  main() does all the option parsing.

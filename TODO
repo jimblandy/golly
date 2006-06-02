@@ -1,5 +1,5 @@
-For version 1.0:
-----------------
+For future versions:
+--------------------
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar. Or maybe just add
@@ -9,13 +9,12 @@ A - Replace separate Go and Stop buttons with a single button, optionally
     animated to show galaxy phases.  Looks like I'll need to avoid using
     wxToolBar (probably good anyway, as it causes other bugs).
 
-For future versions:
---------------------
-
 T - Improve batchmode.
 
 - Add ability to let users assign their own keyboard shortcuts.
-  See KeyBinder code at wxcode.sourceforge.net.
+  First step would be to allow users to edit *_key=char settings in
+  GollyPrefs, then (much harder) write a nice UI to change settings
+  in Prefs > Keys.  Use KeyBinder code at wxcode.sourceforge.net?
 
 - Implement Undo (even just undoing the last draw would be very useful).
 
@@ -69,6 +68,8 @@ User suggestions:
 - Provide some way to open current pattern file in user's text editor.
   Maybe just an "Edit Pattern" item in File menu?  And/or option-click
   on pattern in navigation panel?
+- Provide a way to click-and-drag a selection to move it around.
+- Make page and arrow scrolling amounts configurable (in Prefs > View).
 
 [H Koenig]
 - Mulitiple undo/redo.

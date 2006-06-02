@@ -7,7 +7,7 @@ AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 
-Changes in version 0.96 (released !!! 2006)
+Changes in version 1.0 (released June 2006)
 
 AKT: Fixed crash due to very long rule string.
 TGR: Fixed rule-changing bug in qlifealgo.
