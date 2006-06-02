@@ -78,6 +78,39 @@ char progtitle[128];                      // title for progress dialog
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+
+// define a key event handler to allow escape key to cancel progress dialog
+class ProgressHandler : public wxEvtHandler
+{
+public:
+   void OnKeyDown(wxKeyEvent& event);
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(ProgressHandler, wxEvtHandler)
+   EVT_KEY_DOWN (ProgressHandler::OnKeyDown)
+END_EVENT_TABLE()
+
+void ProgressHandler::OnKeyDown(wxKeyEvent& event)
+{
+   int key = event.GetKeyCode();
+   if ( key == WXK_ESCAPE || key == '.' ) {
+      wxCommandEvent cancel(wxEVT_COMMAND_BUTTON_CLICKED, wxID_CANCEL);
+      wxWindow* buttwin = progdlg->FindWindow(wxID_CANCEL);
+      if (buttwin) {
+         cancel.SetEventObject(buttwin);
+         buttwin->ProcessEvent(cancel);
+      }
+   } else {
+      event.Skip();
+   }
+}
+
+#endif // __WXMAC__
+
+// -----------------------------------------------------------------------------
+
 void BeginProgress(const char *dlgtitle) {
    if (progdlg) {
       // better do this in case of nested call
@@ -119,9 +152,12 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
                                         wxPD_CAN_ABORT | wxPD_SMOOTH |
                                         wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
          #ifdef __WXMAC__
-            // avoid user selecting Quit or bringing another window to front
-            if (progdlg)
+            if (progdlg) {
+               // avoid user selecting Quit or bringing another window to front
                BeginAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
+               // install key event handler
+               progdlg->PushEventHandler(new ProgressHandler());
+            }
          #endif
       }
       prognext = t + 10;      // short delay until 1st Update
@@ -135,6 +171,8 @@ void EndProgress() {
    if (progdlg) {
       #ifdef __WXMAC__
          EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
+         // remove and delete ProgressHandler
+         progdlg->PopEventHandler(true);
       #endif
       delete progdlg;
       progdlg = NULL;

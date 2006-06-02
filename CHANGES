@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.0 (released June 2006)
 
+AKT: Escape key can be used to cancel progress dialog in Mac app.
 AKT: Fixed crash due to very long rule string.
 TGR: Fixed rule-changing bug in qlifealgo.
 TGR: Fixed qlifealgo so 1D rules expand downwards.
