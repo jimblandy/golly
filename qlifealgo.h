@@ -191,10 +191,6 @@ struct linkedmem {
  *
  *   The rootlev variable contains the supertile level of the root node.
  *
- *   The deltaforward variable is set to 0xffffffff whenever a
- *   modification to the universe is done via `set'.  Then, this is
- *   used to propogate changes caused by this changed cell to neighbors.
- *
  *   The tilelist, supertilelist, and bricklist are freelists for the
  *   appropriate type of structure.
  *
@@ -275,8 +271,10 @@ private:
    void allsub(vector<supertile*> &src, vector<supertile*> &dst, int lev) ;
    int gethbitsfromleaves(vector<supertile *> v) ;
    int getvbitsfromleaves(vector<supertile *> v) ;
+   void markglobalchange(supertile *, int) ;
+   void markglobalchange() ; // call if the rule changes
    /* data elements */
-   int min, max, rootlev, deltaforward ;
+   int min, max, rootlev ;
    int minlow32 ;
    bigint bmin, bmax ;
    bigint generation ;

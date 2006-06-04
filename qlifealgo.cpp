@@ -56,6 +56,15 @@ static unsigned char ai[129] ;
  *   links all the substructures together into a linked list which is then
  *   returned.
  */
+/*
+ *   This preprocessor directive is used to workaround a bug in
+ *   register allocation when using function inlining (-O3 or
+ *   better) and gcc 3.4.2, which is very common having shipped with
+ *   Fedora Core 3.
+ */
+#ifdef __GNUC__
+__attribute__((noinline))
+#endif
 linkedmem *qlifealgo::filllist(int size) {
    usedmemory += MEMCHUNK ;
    if (maxmemory != 0 && usedmemory > maxmemory)
@@ -223,7 +232,6 @@ void qlifealgo::clearall() {
    supertilelist = 0 ;
    bricklist = 0 ;
    rootlev = 0 ;
-   deltaforward = 0 ;
    cleandowncounter = 63 ;
    usedmemory = 0 ;
    ai[0] = 4 ; ai[1] = 0 ; ai[2] = 1 ; ai[4] = 2 ; ai[8] = 3 ;
@@ -488,12 +496,12 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
                           (ruletable[otherdata & 0xffff] << 8) +
                            ruletable[otherunderdata & 0xffff] ;
 /*
- *   Has anything changed?  (If deltaforward is set, the answer is always
- *   yes.)  Keep track of what has changed in the entire cell, the rightmost
+ *   Has anything changed?
+ *   Keep track of what has changed in the entire cell, the rightmost
  *   two columns, the lowest two rows, and the lowest rightmost 2x2 cell, into
  *   the maskprev int.  Do all of this without conditionals.
  */
-               int delta = (b->d[j + 8] ^ newv) | deltaforward ;
+               int delta = (b->d[j + 8] ^ newv) ;
                STAT(rcc++) ;
                b->d[j + 8] = newv ;
                maska = cdelta | (delta & 0x33333333) ;
@@ -593,7 +601,7 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
                           (ruletable[zisdata >> 16] << 16) +
                           (ruletable[overdata & 0xffff] << 8) +
                            ruletable[zisdata & 0xffff] ;
-               int delta = (b->d[j] ^ newv) | deltaforward ;
+               int delta = (b->d[j] ^ newv) ;
                STAT(rcc++) ;
                maska = cdelta | (delta & 0xcccccccc) ;
                maskprev = (maskprev << 1) |
@@ -631,6 +639,28 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
       return 0x201 | ((recomp & 0x100) << 2) | ((i & 0x100) >> 7) ;
    else
       return i ? ((i & 0x100) >> 7) | 1 : 0 ;
+}
+/**
+ *   Mark a node and its subnodes as needing recomputation.
+ */
+void qlifealgo::markglobalchange(supertile *p, int lev) {
+   int i ;
+   if (lev == 0) {
+      tile *pp = (tile *)p ;
+      if (pp != emptytile) {
+         pp->c[0] = pp->c[5] = 0x1ff ;
+         pp->c[1] = pp->c[2] = pp->c[3] = pp->c[4] = 0x3ff ;
+      }
+   } else {
+      if (p != nullroots[lev]) {
+         p->flags |= 0xfffffff ;
+         for (i=0; i<8; i++)
+            markglobalchange(p->d[i], lev-1) ;
+      }
+   }
+}
+void qlifealgo::markglobalchange() {
+   markglobalchange(root, rootlev) ;
 }
 /*
  *   This subroutine sets a bit at a particular location.
@@ -688,7 +718,6 @@ void qlifealgo::setcell(int x, int y, int newstate) {
       lev -= 1 ;
       b = b->d[i] ;
    }
-   deltaforward = 0xffffffff ;
    x &= 31 ;
    y &= 31 ;
    p = (tile *)b ;
@@ -1046,7 +1075,6 @@ void qlifealgo::dogen() {
       doquad01(root, nullroot, nullroot, nullroot, rootlev) ;
    generation += bigint::one ;
    popValid = 0 ;
-   deltaforward = 0 ;
    if (--cleandowncounter == 0) {
       cleandowncounter = 63 ;
       mdelete(root, rootlev) ;
@@ -1083,7 +1111,7 @@ void qlifealgo::step() {
  *   If we change the rule we need to mark everything dirty.
  */
 const char *qlifealgo::setrule(char *s) {
-   deltaforward = 0xffffffff ;
+   markglobalchange() ;
    const char *p = global_liferules.setrule(s) ;
    // AKT: hasB0notS8 flag has been set
    if (!global_liferules.hasB0notS8) {
