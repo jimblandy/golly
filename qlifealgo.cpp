@@ -234,6 +234,7 @@ void qlifealgo::clearall() {
    rootlev = 0 ;
    cleandowncounter = 63 ;
    usedmemory = 0 ;
+   deltaforward = 0 ;
    ai[0] = 4 ; ai[1] = 0 ; ai[2] = 1 ; ai[4] = 2 ; ai[8] = 3 ;
    ai[16] = 4 ; ai[32] = 5 ; ai[64] = 6 ; ai[128] = 7 ;
    minlow32 = min = 0 ;
@@ -501,7 +502,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
  *   two columns, the lowest two rows, and the lowest rightmost 2x2 cell, into
  *   the maskprev int.  Do all of this without conditionals.
  */
-               int delta = (b->d[j + 8] ^ newv) ;
+               int delta = (b->d[j + 8] ^ newv) | deltaforward ;
                STAT(rcc++) ;
                b->d[j + 8] = newv ;
                maska = cdelta | (delta & 0x33333333) ;
@@ -601,7 +602,7 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
                           (ruletable[zisdata >> 16] << 16) +
                           (ruletable[overdata & 0xffff] << 8) +
                            ruletable[zisdata & 0xffff] ;
-               int delta = (b->d[j] ^ newv) ;
+               int delta = (b->d[j] ^ newv) | deltaforward ;
                STAT(rcc++) ;
                maska = cdelta | (delta & 0xcccccccc) ;
                maskprev = (maskprev << 1) |
@@ -661,6 +662,7 @@ void qlifealgo::markglobalchange(supertile *p, int lev) {
 }
 void qlifealgo::markglobalchange() {
    markglobalchange(root, rootlev) ;
+   deltaforward = 0xffffffff ;
 }
 /*
  *   This subroutine sets a bit at a particular location.
@@ -748,6 +750,7 @@ void qlifealgo::setcell(int x, int y, int newstate) {
          p->b[(y >> 3) & 0x3]->d[(x >> 2) & 0x7]
                                   &= ~(1 << (31 - (y & 7) * 4 - (x & 3))) ;
    }
+   deltaforward = 0xffffffff ;
 }
 /*
  *   This subroutine gets a bit at a particular location.
@@ -1073,6 +1076,7 @@ void qlifealgo::dogen() {
       doquad10(root, nullroot, nullroot, nullroot, rootlev) ;
    else
       doquad01(root, nullroot, nullroot, nullroot, rootlev) ;
+   deltaforward = 0 ;
    generation += bigint::one ;
    popValid = 0 ;
    if (--cleandowncounter == 0) {

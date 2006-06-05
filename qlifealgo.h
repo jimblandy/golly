@@ -296,7 +296,7 @@ private:
    int uviewh, uvieww, viewh, vieww, mag, pmag, kadd ;
    int oddgen ;
    int bmleft, bmtop, bmlev, shbmsize, logshbmsize ;
-   int quickb ;
+   int quickb, deltaforward ;
    int llbits, llsize ;
    char *llxb, *llyb ;
 } ;
