@@ -418,6 +418,10 @@ void SaveColor(FILE *f, const char *name, const wxColor *rgb)
 
 // -----------------------------------------------------------------------------
 
+#define STRINGIFY(arg) STR2(arg)
+#define STR2(arg) #arg
+const char *GOLLY_VERSION = STRINGIFY(VERSION);
+
 void SavePrefs()
 {
    if (mainptr == NULL || curralgo == NULL) {
@@ -433,7 +437,19 @@ void SavePrefs()
    
    fprintf(f, "# NOTE: If you edit this file then do so when Golly isn't running\n");
    fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n\n");
-   fprintf(f, "version=%d\n", PREFS_VERSION);
+   fprintf(f, "prefs_version=%d\n", PREFS_VERSION);
+   fprintf(f, "golly_version=%s\n", GOLLY_VERSION);
+   #if defined(__WXMAC__)
+      fprintf(f, "platform=Mac\n");
+   #elif defined(__WXMSW__)
+      fprintf(f, "platform=Windows\n");
+   #elif defined(__WXX11__)
+      fprintf(f, "platform=Linux/X11\n");
+   #elif defined(__WXGTK__)
+      fprintf(f, "platform=Linux/GTK\n");
+   #else
+      fprintf(f, "platform=unknown\n");
+   #endif
    // save main window's location and size
    if (mainptr->fullscreen) {
       // use mainx, mainy, mainwd, mainht set by mainptr->ToggleFullScreen()
@@ -716,7 +732,7 @@ void GetPrefs()
          value[len-1] = 0;
       }
 
-      if (strcmp(keyword, "version") == 0) {
+      if (strcmp(keyword, "prefs_version") == 0) {
          int currversion;
          if (sscanf(value, "%d", &currversion) == 1 && currversion < PREFS_VERSION) {
             // may need to do something in the future if syntax changes
@@ -988,6 +1004,11 @@ public:
 
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
+   #ifdef __WXMAC__
+      // allow hitting tab to switch focus
+      void OnSpinCtrlChar(wxKeyEvent& event);
+   #endif
+
 private:
    enum {
       // these *_PAGE values must correspond to currpage values
@@ -1033,7 +1054,7 @@ private:
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
    bool BadSpinVal(int id, int minval, int maxval, const char* prefix);
-   bool ValidatePage(size_t page);
+   bool ValidatePage();
    void ChangeColor(int id, wxColor* rgb);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
                        int id, wxColor* rgb, const wxString& text);
@@ -1062,6 +1083,94 @@ BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY, PrefsDialog::OnPageChanging)
    EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
 END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXMAC__
+
+// fix wxMac bug???
+// override key event handler for wxSpinCtrl to allow tab key handling
+class MySpinCtrl : public wxSpinCtrl
+{
+public:
+   MySpinCtrl(wxWindow *parent, wxWindowID id, const wxString& str,
+              const wxPoint& pos, const wxSize& size)
+      : wxSpinCtrl(parent, id, str, pos, size)
+   {
+      // create a dynamic event handler for the underlying wxTextCtrl
+      wxTextCtrl* textctrl = GetText();
+      if (textctrl) {
+         textctrl->Connect(wxID_ANY, wxEVT_CHAR,
+                           wxKeyEventHandler(PrefsDialog::OnSpinCtrlChar));
+      }
+   }
+};
+
+void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
+{
+   int key = event.GetKeyCode();
+
+   if ( key == WXK_TAB ) {
+      // wxMac bug??? FindFocus() returns pointer to wxTextCtrl window in wxSpinCtrl!!!
+      // does that explain why Navigate() does nothing???
+      if ( currpage == FILE_PAGE ) {
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_PATTERNS);
+         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_MAX_SCRIPTS);
+         wxTextCtrl* t1 = s1->GetText();
+         wxTextCtrl* t2 = s2->GetText();
+         wxWindow* focus = FindFocus();
+         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(-1,-1); }
+         if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+      } else if ( currpage == EDIT_PAGE ) {
+         // only 1 spin ctrl on this page
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
+         if ( s1 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+      } else if ( currpage == CONTROL_PAGE ) {
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_HASH_MEM);
+         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_QBASE);
+         wxSpinCtrl* s3 = (wxSpinCtrl*) FindWindowById(PREF_HBASE);
+         wxSpinCtrl* s4 = (wxSpinCtrl*) FindWindowById(PREF_MIN_DELAY);
+         wxSpinCtrl* s5 = (wxSpinCtrl*) FindWindowById(PREF_MAX_DELAY);
+         wxTextCtrl* t1 = s1->GetText();
+         wxTextCtrl* t2 = s2->GetText();
+         wxTextCtrl* t3 = s3->GetText();
+         wxTextCtrl* t4 = s4->GetText();
+         wxTextCtrl* t5 = s5->GetText();
+         wxWindow* focus = FindFocus();
+         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(-1,-1); }
+         if ( focus == t2 ) { s3->SetFocus(); s3->SetSelection(-1,-1); }
+         if ( focus == t3 ) { s4->SetFocus(); s4->SetSelection(-1,-1); }
+         if ( focus == t4 ) { s5->SetFocus(); s5->SetSelection(-1,-1); }
+         if ( focus == t5 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+      } else if ( currpage == VIEW_PAGE ) {
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_BOLD_SPACING);
+         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_THUMB_RANGE);
+         wxTextCtrl* t1 = s1->GetText();
+         wxTextCtrl* t2 = s2->GetText();
+         wxWindow* focus = FindFocus();
+         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(-1,-1); }
+         if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+      }
+
+   } else if ( key >= ' ' && key <= '~' ) {
+      if ( key >= '0' && key <= '9' ) {
+         // allow digits
+         event.Skip();
+      } else {
+         // disallow any other displayable ascii char
+         wxBell();
+      }
+
+   } else {
+      event.Skip();
+   }
+}
+
+#else
+
+#define MySpinCtrl wxSpinCtrl
+
+#endif // __WXMAC__
 
 // -----------------------------------------------------------------------------
 
@@ -1267,10 +1376,10 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    // align spin controls by setting minbox same width as maxbox
    minbox->SetMinSize( maxbox->GetMinSize() );
 
-   wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    
-   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_MAX_SCRIPTS, wxEmptyString,
+   wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_MAX_SCRIPTS, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
 
    wxBoxSizer* hpbox = new wxBoxSizer( wxHORIZONTAL );
@@ -1319,7 +1428,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("Random fill percentage:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    vbox->AddSpacer(SVGAP);
@@ -1347,7 +1456,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
+   wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
@@ -1372,7 +1481,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin1 = new wxSpinCtrl(panel, PREF_QBASE, wxEmptyString,
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_QBASE, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    vbox->AddSpacer(SVGAP);
@@ -1380,7 +1489,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
    hbox2->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_HBASE, wxEmptyString,
+   wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_HBASE, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 #ifdef __WXX11__
@@ -1407,7 +1516,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
    hbox3->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin3 = new wxSpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
+   wxSpinCtrl* spin3 = new MySpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox3->Add(spin3, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
@@ -1417,7 +1526,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    
    wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
    hbox4->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin4 = new wxSpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
+   wxSpinCtrl* spin4 = new MySpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox4->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
@@ -1469,7 +1578,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
                                        _("Show bold grid lines every"),
                                        wxDefaultPosition, wxDefaultSize);
    
-   wxSpinCtrl* spin2 = new wxSpinCtrl(panel, PREF_BOLD_SPACING, wxEmptyString,
+   wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_BOLD_SPACING, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    
    hbox2->Add(check2, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1533,7 +1642,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
    hbox5->Add(thumblabel, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin5 = new wxSpinCtrl(panel, PREF_THUMB_RANGE, wxEmptyString,
+   wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_THUMB_RANGE, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("times view size")),
@@ -1618,7 +1727,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
 
    #ifdef __WXMAC__
       // wxMac bug: need this hidden control so escape/return keys select Cancel/OK buttons
-      wxSpinCtrl* dummy = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString,
+      wxSpinCtrl* dummy = new MySpinCtrl(panel, wxID_ANY, wxEmptyString,
                                          wxPoint(-666,-666), wxDefaultSize);
       if (!dummy) Warning("Bug in CreateColorPrefs!");
    #endif
@@ -1789,20 +1898,20 @@ bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
 
 // -----------------------------------------------------------------------------
 
-bool PrefsDialog::ValidatePage(size_t page)
+bool PrefsDialog::ValidatePage()
 {
    // validate all spin control values on current page
-   if (page == FILE_PAGE) {
+   if (currpage == FILE_PAGE) {
       if ( BadSpinVal(PREF_MAX_PATTERNS, 1, MAX_RECENT, "Maximum number of recent patterns") )
          return false;
       if ( BadSpinVal(PREF_MAX_SCRIPTS, 1, MAX_RECENT, "Maximum number of recent scripts") )
          return false;
 
-   } else if (page == EDIT_PAGE) {
+   } else if (currpage == EDIT_PAGE) {
       if ( BadSpinVal(PREF_RANDOM_FILL, 1, 100, "Random fill percentage") )
          return false;
 
-   } else if (page == CONTROL_PAGE) {
+   } else if (currpage == CONTROL_PAGE) {
       if ( BadSpinVal(PREF_MAX_HASH_MEM, MIN_HASHMB, MAX_HASHMB, "Maximum memory for hashing") )
          return false;
       if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, "Base step if not hashing") )
@@ -1814,13 +1923,13 @@ bool PrefsDialog::ValidatePage(size_t page)
       if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, "Maximum delay") )
          return false;
 
-   } else if (page == VIEW_PAGE) {
+   } else if (currpage == VIEW_PAGE) {
       if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, "Spacing of bold grid lines") )
          return false;
       if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, "Thumb scrolling range") )
          return false;
 
-   } else if (page == COLOR_PAGE) {
+   } else if (currpage == COLOR_PAGE) {
       // no spin controls on this page
    
    } else {
@@ -1837,7 +1946,7 @@ void PrefsDialog::OnPageChanging(wxNotebookEvent& event)
 {
    if (ignore_page_event) return;
    // validate current page and veto change if invalid
-   if (!ValidatePage(currpage)) event.Veto();
+   if (!ValidatePage()) event.Veto();
 }
 
 // -----------------------------------------------------------------------------
@@ -1852,7 +1961,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 
 bool PrefsDialog::TransferDataFromWindow()
 {
-   if (!ValidatePage(currpage)) return false;
+   if (!ValidatePage()) return false;
    
    // set global prefs to current control values
 

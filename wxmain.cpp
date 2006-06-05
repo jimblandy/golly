@@ -2052,11 +2052,7 @@ void MainFrame::ToggleHashing()
    
    // even though universes share a global rule table we still need to call setrule
    // due to internal differences in the handling of Wolfram rules
-   char rule[128];
-   strncpy(rule, curralgo->getrule(), sizeof(rule));
-   newalgo->setrule(rule);
-   // note that newalgo->setrule( (char*)curralgo->getrule() )
-   // resulted in garbage on Windows -- compiler bug???
+   newalgo->setrule( (char*)curralgo->getrule() );
    
    // set same gen count
    newalgo->setGeneration( curralgo->getGeneration() );
