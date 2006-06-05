@@ -73,9 +73,10 @@ const char *liferules::setrule(const char *rulestring) {
    int i ;
 
    // set rule string even if bad character detected
+   rulestring = strdup(rulestring) ;
    if (rule)
       free((void *)rule) ;
-   rule = strdup(rulestring) ;
+   rule = rulestring ;
 
    // need to emulate B0-not-S8 rule?
    hasB0notS8 = false;
