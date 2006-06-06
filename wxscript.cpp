@@ -302,7 +302,7 @@ bool autoupdate;           // update display after each change to current univer
 wxString pyerror;          // Python error message
 wxString gollyloc;         // location of Golly app
 wxString scriptloc;        // location of script file
-wxString scriptkeys;       // non-escape keys saved by PassKeyToScript
+wxString scriptkeys;       // keys saved by PassKeyToScript
 
 // exception message set by AbortScript
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
@@ -2284,23 +2284,15 @@ bool IsScript(const char *filename)
 
 // -----------------------------------------------------------------------------
 
-bool InScript()
-{
-   return inscript;
-}
-
-// -----------------------------------------------------------------------------
-
-bool PassKeyToScript(char key)
+void PassKeyToScript(int key)
 {
    // called from checkevents
    if (inscript) {
-      // ??? allow golly_getkey to see escape by having a global abortkey which is
-      // set to WXK_ESCAPE at the start of each script but can be changed by
+      // !!! allow golly_getkey to see escape by having a global abortkey which is
+      // set to chr(27) or WXK_ESCAPE? at the start of each script but can be changed by
       // a golly_setabort(ch) command;  setabort("") would disable any escape key
-      if (key == (char)WXK_ESCAPE) {
+      if (key == WXK_ESCAPE) {
          AbortScript();
-         return true;
       } else {
          // !!! scripts could allow normal keyboard interaction by doing this:
          // g.dokey( g.getkey() )
@@ -2311,10 +2303,8 @@ bool PassKeyToScript(char key)
          
          // save key for possible consumption by golly_getkey
          scriptkeys += key;
-         return true;
       }
    }
-   return false;
 }
 
 // -----------------------------------------------------------------------------

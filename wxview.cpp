@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection, CreatePasteImage
-#include "wxscript.h"      // for InScript, PassKeyToScript
+#include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxview.h"
 
 #ifdef __WXMAC__
@@ -594,7 +594,7 @@ void PatternView::ZoomOutPos(int x, int y)
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked somewhere in viewport
-   if (InScript()) {
+   if (inscript) {
       return;           // prevent all user interaction???!!!
    }
    
@@ -2183,7 +2183,7 @@ bool PatternView::PointInView(int x, int y)
 
 void PatternView::CheckCursor(bool active)
 {
-   if (InScript()) return;    // don't change cursor while script is running
+   if (inscript) return;    // don't change cursor while script is running
    if (active) {
       // make sure cursor is up to date
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
@@ -2555,7 +2555,7 @@ void PatternView::OnChar(wxKeyEvent& event)
    // get translated keyboard event
    int key = event.GetKeyCode();
 
-   if (InScript()) {
+   if (inscript) {
       #ifdef __WXX11__
          // sigh... pressing shift key by itself causes key = 306, control key = 308
          // and other keys like caps lock and option = -1
@@ -2568,7 +2568,8 @@ void PatternView::OnChar(wxKeyEvent& event)
          if ( key < 0 || key > 255 ) return;
       #endif
       // let script decide what to do with the key
-      if (PassKeyToScript(key)) return;
+      PassKeyToScript(key);
+      return;
    }
 
    if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
@@ -2807,12 +2808,6 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
 
 void PatternView::OnScroll(wxScrollWinEvent& event)
 {
-   if (InScript()) {
-      // don't allow scrolling while script is running???!!!
-      UpdateScrollBars();
-      return;
-   }
-   
    #ifdef __WXGTK__
       // avoid unwanted scroll event
       if (ignorescroll) {
@@ -2822,6 +2817,10 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       }
    #endif
 
+   // allow scrolling while script is running
+   bool saveflag = inscript;
+   inscript = false;
+   
    WXTYPE type = event.GetEventType();
    int orient = event.GetOrientation();
 
@@ -2887,6 +2886,8 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       // now we can call UpdateScrollBars
       mainptr->UpdateEverything();
    }
+   
+   inscript = saveflag;
 
    #ifdef __WXGTK__
       if (type != wxEVT_SCROLLWIN_THUMBTRACK) {

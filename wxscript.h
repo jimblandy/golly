@@ -31,14 +31,15 @@ bool IsScript(const char *filename);
 // Run the given script file by passing it to the Python interpreter.
 void RunScript(const char* filename);
 
-// Return true if a script is currently running.
-bool InScript();
+// Is a script currently running?  We allow access to global flag
+// so clients can temporarily save and restore its setting.
+extern bool inscript;
 
-// Called from checkevents() if a script is running and user hits a key.
-// Returns true if the key is reserved for potential use by the script.
-bool PassKeyToScript(char key);
+// Called if a script is running and user hits a key.
+void PassKeyToScript(int key);
 
-// Called when app quits to abort a running script and tidy up the Python interpreter.
+// Called when app quits to abort a running script and tidy up
+// the Python interpreter.
 void FinishScripting();
 
 #endif

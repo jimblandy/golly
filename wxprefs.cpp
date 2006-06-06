@@ -1457,7 +1457,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+                                      wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1482,7 +1482,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_QBASE, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+                                      wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -1490,7 +1490,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
    hbox2->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_HBASE, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+                                      wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 #ifdef __WXX11__
    hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)  ")),
@@ -1517,7 +1517,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
    hbox3->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin3 = new MySpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+                                      wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox3->Add(spin3, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1527,7 +1527,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
    hbox4->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin4 = new MySpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+                                      wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox4->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);

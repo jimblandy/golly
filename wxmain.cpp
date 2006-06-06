@@ -71,7 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
-#include "wxscript.h"      // for IsScript, RunScript, InScript, etc
+#include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -296,7 +296,7 @@ void MainFrame::UpdateToolBar(bool active)
 {
    wxToolBar *tbar = GetToolBar();
    if (tbar && tbar->IsShown()) {
-      if (viewptr->waitingforclick || InScript()) active = false;
+      if (viewptr->waitingforclick || inscript) active = false;
       
       /* new tools!!!
       if (hashing)
@@ -530,7 +530,7 @@ void MainFrame::UpdateUserInterface(bool active)
 // update everything in main window, and menu bar and cursor
 void MainFrame::UpdateEverything()
 {
-   if (InScript()) return;
+   if (inscript) return;
 
    if (IsIconized()) {
       // main window has been minimized, so only update menu bar items
@@ -559,7 +559,7 @@ void MainFrame::UpdateEverything()
 // only update viewport and status bar
 void MainFrame::UpdatePatternAndStatus()
 {
-   if (InScript()) return;
+   if (inscript) return;
 
    if (!IsIconized()) {
       viewptr->Refresh(false, NULL);
@@ -1972,7 +1972,7 @@ void MainFrame::NextGeneration(bool useinc)
    
    // avoid doing some things if NextGeneration is called from a script;
    // note in particular that RunScript calls PollerReset which sets nextcheck to 0
-   if (!InScript()) {
+   if (!inscript) {
       ChangeGoToStop();
       wxGetApp().PollerReset();
       viewptr->CheckCursor(IsActive());
@@ -1980,7 +1980,7 @@ void MainFrame::NextGeneration(bool useinc)
 
    if (useinc) {
       // step by current increment
-      if (curralgo->getIncrement() > bigint::one && !InScript()) {
+      if (curralgo->getIncrement() > bigint::one && !inscript) {
          UpdateToolBar(IsActive());
          UpdateMenuItems(IsActive());
       }
@@ -1995,7 +1995,7 @@ void MainFrame::NextGeneration(bool useinc)
 
    generating = false;
 
-   if (!InScript()) {
+   if (!inscript) {
       ChangeStopToGo();
       // autofit is only used when doing many gens
       if (autofit && useinc && curralgo->getIncrement() > bigint::one)
