@@ -59,6 +59,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
+#include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for hashing, pythonlib, etc
@@ -705,11 +706,10 @@ static PyObject *golly_getpos(PyObject *self, PyObject *args)
    bigint bigx, bigy;
    viewptr->GetPos(bigx, bigy);
 
-   // convert position to x,y tuple
+   // return position as x,y tuple
    PyObject *xytuple = PyTuple_New(2);
    PyTuple_SetItem(xytuple, 0, Py_BuildValue("z",bigx.tostring()));
    PyTuple_SetItem(xytuple, 1, Py_BuildValue("z",bigy.tostring()));
-   
    return xytuple;
 }
 
@@ -906,6 +906,112 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
 
    PyObject *result = Py_BuildValue("i", optval);
    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setcolor(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* colname;
+   int r, g, b;
+   wxColor oldcol;
+
+   if (!PyArg_ParseTuple(args, "ziii", &colname, &r, &g, &b)) return NULL;
+
+   wxColor newcol(r, g, b);
+   
+   if (strcmp(colname, "livecells") == 0) {
+      oldcol = *livergb;
+      if (oldcol != newcol) {
+         *livergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "deadcells") == 0) {
+      oldcol = *deadrgb;
+      if (oldcol != newcol) {
+         *deadrgb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "paste") == 0) {
+      oldcol = *pastergb;
+      if (oldcol != newcol) {
+         *pastergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "select") == 0) {
+      oldcol = *selectrgb;
+      if (oldcol != newcol) {
+         *selectrgb = newcol;
+         SetBrushesAndPens();
+         SetSelectionColor();    // see wxrender.cpp
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "hashing") == 0) {
+      oldcol = *hlifergb;
+      if (oldcol != newcol) {
+         *hlifergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "nothashing") == 0) {
+      oldcol = *qlifergb;
+      if (oldcol != newcol) {
+         *qlifergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+   
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad setcolor call: unknown color.");
+      return NULL;
+   }
+
+   // return old r,g,b values (simplifies saving and restoring colors)
+   PyObject* rgbtuple = PyTuple_New(3);
+   PyTuple_SetItem(rgbtuple, 0, Py_BuildValue("i",oldcol.Red()));
+   PyTuple_SetItem(rgbtuple, 1, Py_BuildValue("i",oldcol.Green()));
+   PyTuple_SetItem(rgbtuple, 2, Py_BuildValue("i",oldcol.Blue()));
+   return rgbtuple;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getcolor(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* colname;
+   wxColor* cptr;
+
+   if (!PyArg_ParseTuple(args, "z", &colname)) return NULL;
+
+   if      (strcmp(colname, "livecells") == 0)     cptr = livergb;
+   else if (strcmp(colname, "deadcells") == 0)     cptr = deadrgb;
+   else if (strcmp(colname, "paste") == 0)         cptr = pastergb;
+   else if (strcmp(colname, "select") == 0)        cptr = selectrgb;
+   else if (strcmp(colname, "hashing") == 0)       cptr = hlifergb;
+   else if (strcmp(colname, "nothashing") == 0)    cptr = qlifergb;
+   else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad getcolor call: unknown color.");
+      return NULL;
+   }
+
+   // return r,g,b tuple
+   PyObject* rgbtuple = PyTuple_New(3);
+   PyTuple_SetItem(rgbtuple, 0, Py_BuildValue("i",cptr->Red()));
+   PyTuple_SetItem(rgbtuple, 1, Py_BuildValue("i",cptr->Green()));
+   PyTuple_SetItem(rgbtuple, 2, Py_BuildValue("i",cptr->Blue()));
+   return rgbtuple;
 }
 
 // -----------------------------------------------------------------------------
@@ -2037,6 +2143,8 @@ static PyMethodDef golly_methods[] = {
    // miscellaneous
    { "setoption",    golly_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
    { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
+   { "setcolor",     golly_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
+   { "getcolor",     golly_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
    { "getkey",       golly_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },

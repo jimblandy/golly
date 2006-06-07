@@ -107,6 +107,8 @@ extern wxColor *livergb;         // color for live cells
 extern wxColor *deadrgb;         // color for dead cells
 extern wxColor *pastergb;        // color for pasted pattern
 extern wxColor *selectrgb;       // color for selected cells
+extern wxColor *qlifergb;        // status bar background if not hashing
+extern wxColor *hlifergb;        // status bar background if hashing
 
 // colored brushes and pens
 extern wxBrush *livebrush;       // for drawing live cells
@@ -118,6 +120,9 @@ extern wxPen *gridpen;           // for drawing plain grid
 extern wxPen *boldpen;           // for drawing bold grid
 extern wxPen *sgridpen;          // for drawing plain grid if swapcolors is true
 extern wxPen *sboldpen;          // for drawing bold grid if swapcolors is true
+
+// update colors for brushes and pens
+void SetBrushesAndPens();
 
 // Various constants:
 

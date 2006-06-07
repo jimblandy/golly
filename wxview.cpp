@@ -2816,44 +2816,35 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
          return;
       }
    #endif
-
-   // allow scrolling while script is running
-   bool saveflag = inscript;
-   inscript = false;
    
    WXTYPE type = event.GetEventType();
    int orient = event.GetOrientation();
 
-   if (type == wxEVT_SCROLLWIN_LINEUP)
-   {
+   if (type == wxEVT_SCROLLWIN_LINEUP) {
       if (orient == wxHORIZONTAL)
          PanLeft( SmallScroll(currview.getwidth()) );
       else
          PanUp( SmallScroll(currview.getheight()) );
-   }
-   else if (type == wxEVT_SCROLLWIN_LINEDOWN)
-   {
+
+   } else if (type == wxEVT_SCROLLWIN_LINEDOWN) {
       if (orient == wxHORIZONTAL)
          PanRight( SmallScroll(currview.getwidth()) );
       else
          PanDown( SmallScroll(currview.getheight()) );
-   }
-   else if (type == wxEVT_SCROLLWIN_PAGEUP)
-   {
+
+   } else if (type == wxEVT_SCROLLWIN_PAGEUP) {
       if (orient == wxHORIZONTAL)
          PanLeft( BigScroll(currview.getwidth()) );
       else
          PanUp( BigScroll(currview.getheight()) );
-   }
-   else if (type == wxEVT_SCROLLWIN_PAGEDOWN)
-   {
+
+   } else if (type == wxEVT_SCROLLWIN_PAGEDOWN) {
       if (orient == wxHORIZONTAL)
          PanRight( BigScroll(currview.getwidth()) );
       else
          PanDown( BigScroll(currview.getheight()) );
-   }
-   else if (type == wxEVT_SCROLLWIN_THUMBTRACK)
-   {
+
+   } else if (type == wxEVT_SCROLLWIN_THUMBTRACK) {
       int newpos = event.GetPosition();
       int amount = newpos - (orient == wxHORIZONTAL ? hthumb : vthumb);
       if (amount != 0) {
@@ -2876,18 +2867,19 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
             // don't Update() immediately -- more responsive, especially on X11
          }
       }
-      #ifdef __WXX11__
-         // in 2.6.3 there's no need to change the thumb position manually
-         // SetScrollPos(orient, newpos, true);
-      #endif
-   }
-   else if (type == wxEVT_SCROLLWIN_THUMBRELEASE)
-   {
+
+   } else if (type == wxEVT_SCROLLWIN_THUMBRELEASE) {
       // now we can call UpdateScrollBars
       mainptr->UpdateEverything();
    }
    
-   inscript = saveflag;
+   // need an update if script is running
+   if (inscript && type != wxEVT_SCROLLWIN_THUMBTRACK) {
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      UpdateScrollBars();
+      inscript = true;
+   }
 
    #ifdef __WXGTK__
       if (type != wxEVT_SCROLLWIN_THUMBTRACK) {

@@ -382,12 +382,12 @@ void SetBrushesAndPens()
 
 void CreateDefaultColors()
 {
-   livergb = new wxColor(255, 255, 255);        // white
-   deadrgb = new wxColor(48, 48, 48);           // dark gray (nicer if no alpha channel support)
-   pastergb = new wxColor(255, 0, 0);           // red
-   selectrgb = new wxColor(75, 175, 0);         // darkish green (becomes 50% transparent)
-   qlifergb = new wxColor(0xFF, 0xFF, 0xCE);    // pale yellow
-   hlifergb = new wxColor(0xE2, 0xFA, 0xF8);    // pale blue
+   livergb = new wxColor(255, 255, 255);     // white
+   deadrgb = new wxColor(48, 48, 48);        // dark gray (nicer if no alpha channel support)
+   pastergb = new wxColor(255, 0, 0);        // red
+   selectrgb = new wxColor(75, 175, 0);      // darkish green (becomes 50% transparent)
+   qlifergb = new wxColor(255, 255, 206);    // pale yellow
+   hlifergb = new wxColor(226, 250, 248);    // pale blue
 
    // create brushes and pens
    livebrush = new wxBrush(*wxBLACK);
@@ -1779,24 +1779,26 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
       wxColourData retData = dialog.GetColourData();
       wxColour c = retData.GetColour();
       
-      // change given color
-      rgb->Set(c.Red(), c.Green(), c.Blue());
-      color_changed = true;
-      
-      // also change color of bitmap in corresponding button
-      wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
-      if (bb) {
-         wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
-         wxMemoryDC dc;
-         dc.SelectObject(bitmap);
-         wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
-         wxBrush brush(*rgb);
-         FillRect(dc, rect, brush);
-         dc.SelectObject(wxNullBitmap);
-
-         bb->SetBitmapLabel(bitmap);
-         bb->Refresh();
-         bb->Update();
+      if (*rgb != c) {
+         // change given color
+         rgb->Set(c.Red(), c.Green(), c.Blue());
+         color_changed = true;
+         
+         // also change color of bitmap in corresponding button
+         wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
+         if (bb) {
+            wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+            wxMemoryDC dc;
+            dc.SelectObject(bitmap);
+            wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+            wxBrush brush(*rgb);
+            FillRect(dc, rect, brush);
+            dc.SelectObject(wxNullBitmap);
+   
+            bb->SetBitmapLabel(bitmap);
+            bb->Refresh();
+            bb->Update();
+         }
       }
    }
 #endif
