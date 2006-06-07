@@ -262,30 +262,16 @@ def getstring(prompt):
 
 def validint(s):
    # return True if given string represents a valid integer
-   n = s.replace(",","")
-   if n[0] == '+' or n[0] == '-': n = n[1:]
-   return n.isdigit()
-
-# --------------------------------------------------------------------
-
-def getgenint():
-   # return current generation string as an integer
-   return int( golly.getgen().replace(",","") )
-
-# --------------------------------------------------------------------
-
-def getpopint():
-   # return current population string as an integer
-   return int( golly.getpop().replace(",","") )
+   s = s.replace(",","")
+   if s[0] == '+' or s[0] == '-': s = s[1:]
+   return s.isdigit()
 
 # --------------------------------------------------------------------
 
 def getposint():
    # return current viewport position as integer coords
-   xstr, ystr = golly.getpos()
-   x = int( xstr.replace(",","") )
-   y = int( ystr.replace(",","") )
-   return x, y
+   x, y = golly.getpos()
+   return int(x), int(y)
 
 # --------------------------------------------------------------------
 

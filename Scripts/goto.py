@@ -5,14 +5,14 @@
 # to the starting generation (0) and advance to the target.
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 
-from glife import getstring, validint, getgenint
+from glife import getstring, validint
 from time import time
 import golly
 
 # --------------------------------------------------------------------
 
 def goto(gen):
-   currgen = getgenint()
+   currgen = int(golly.getgen())
    if gen[0] == '+':
       n = int(gen[1:])
       newgen = currgen + n

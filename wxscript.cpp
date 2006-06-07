@@ -700,16 +700,17 @@ static PyObject *golly_getpos(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
+   char sepchar = '\0';
 
-   if (!PyArg_ParseTuple(args, "")) return NULL;
+   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
    bigint bigx, bigy;
    viewptr->GetPos(bigx, bigy);
 
    // return position as x,y tuple
    PyObject *xytuple = PyTuple_New(2);
-   PyTuple_SetItem(xytuple, 0, Py_BuildValue("z",bigx.tostring()));
-   PyTuple_SetItem(xytuple, 1, Py_BuildValue("z",bigy.tostring()));
+   PyTuple_SetItem(xytuple, 0, Py_BuildValue("z",bigx.tostring(sepchar)));
+   PyTuple_SetItem(xytuple, 1, Py_BuildValue("z",bigy.tostring(sepchar)));
    return xytuple;
 }
 
@@ -1240,10 +1241,11 @@ static PyObject *golly_getgen(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
+   char sepchar = '\0';
 
-   if (!PyArg_ParseTuple(args, "")) return NULL;
+   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   PyObject *result = Py_BuildValue("z", curralgo->getGeneration().tostring());
+   PyObject *result = Py_BuildValue("z", curralgo->getGeneration().tostring(sepchar));
    return result;
 }
 
@@ -1253,10 +1255,11 @@ static PyObject *golly_getpop(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
+   char sepchar = '\0';
 
-   if (!PyArg_ParseTuple(args, "")) return NULL;
+   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   PyObject *result = Py_BuildValue("z", curralgo->getPopulation().tostring());
+   PyObject *result = Py_BuildValue("z", curralgo->getPopulation().tostring(sepchar));
    return result;
 }
 

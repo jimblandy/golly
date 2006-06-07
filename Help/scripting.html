@@ -117,13 +117,13 @@ command will save the file in the same directory as the script.
 
 <p>
 This section describes all the commands that can be used in a script after
-importing the <b>golly</b> module.  Commands are grouped by function:
-<a href="#filing"><b>filing</b></a>,
+importing the <b>golly</b> module.  Commands are grouped by function
+(<a href="#filing"><b>filing</b></a>,
 <a href="#editing"><b>editing</b></a>,
 <a href="#control"><b>control</b></a>,
 <a href="#viewing"><b>viewing</b></a>
-and <a href="#miscellaneous"><b>miscellaneous</b></a>.
-Or you can search for individual commands alphabetically:
+and <a href="#miscellaneous"><b>miscellaneous</b></a>)
+or you can search for individual commands alphabetically:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
@@ -211,7 +211,7 @@ Or you can search for individual commands alphabetically:
 &nbsp;<br>
 FILING COMMANDS
 
-<a name="open"></a><p><dt><b>open(<i>filename[, remember]</i>)</b></dt>
+<a name="open"></a><p><dt><b>open(<i>filename, remember=False</i>)</b></dt>
 <dd>
 Open the given pattern file.
 A non-absolute path is relative to the location of the script.
@@ -221,7 +221,7 @@ should be remembered in the Open Recent submenu.
 <dd> Example: <b>golly.open("my-patterns/foo.rle")</b></dd>
 </p>
 
-<a name="save"></a><p><dt><b>save(<i>filename, format[, remember]</i>)</b></dt>
+<a name="save"></a><p><dt><b>save(<i>filename, format, remember=False</i>)</b></dt>
 <dd>
 Save the current pattern in a given file using the specified format ("rle" or "mc").
 A non-absolute path is relative to the location of the script.
@@ -490,21 +490,31 @@ to the values they had at generation 0.
 </dd>
 </p>
 
-<a name="getgen"></a><p><dt><b>getgen()</b></dt>
+<a name="getgen"></a><p><dt><b>getgen(<i>sepchar='\0'</i>)</b></dt>
 <dd>
-Return the current generation count as a string of the form "1,234,567,...".
-The following example converts the generation count to an integer.
+Return the current generation count as a string.
+The optional parameter (default = '\0') specifies a separator
+character that can be used to make the resulting string more readable.
+For example, <b>golly.getgen(',')</b> would return a string like "1,234,567"
+but <b>golly.getgen()</b> would return "1234567".  Use the latter call if
+you want to do arithmetic on the generation count because then it's
+easy to use <b>int</b> to convert the string to an integer.
 Note that Python supports arbitrarily large integers.
 </dd>
-<dd> Example: <b>gen = int( golly.getgen().replace(",","") )</b></dd>
+<dd> Example: <b>gen = int( golly.getgen() )</b></dd>
 </p>
 
-<a name="getpop"></a><p><dt><b>getpop()</b></dt>
+<a name="getpop"></a><p><dt><b>getpop(<i>sepchar='\0'</i>)</b></dt>
 <dd>
-Return the current population as a string of the form "1,234,567,...".
+Return the current population as a string.
+The optional parameter (default = '\0') specifies a separator
+character that can be used to make the resulting string more readable.
+For example, <b>golly.getpop(',')</b> would return a string like "1,234,567"
+but <b>golly.getpop()</b> would return "1234567".  Use the latter call if
+you want to do arithmetic on the population count.
 The following example converts the population to a floating point number.
 </dd>
-<dd> Example: <b>pop = float( golly.getpop().replace(",","") )</b></dd>
+<dd> Example: <b>pop = float( golly.getpop() )</b></dd>
 </p>
 
 <a name="empty"></a><p><dt><b>empty()</b></dt>
@@ -545,13 +555,16 @@ Note that positive y values increase downwards in Golly's coordinate system.
 <dd> Example: <b>golly.setpos("1,000,000,000,000", "-123456")</b></dd>
 </p>
 
-<a name="getpos"></a><p><dt><b>getpos()</b></dt>
+<a name="getpos"></a><p><dt><b>getpos(<i>sepchar='\0'</i>)</b></dt>
 <dd>
-Get the x,y position of the cell currently in the middle of the viewport.
-Note that it returns a Python tuple (not a list) and the x,y values are
-arbitrarily long strings such as "1,234,567".
-Use code like <b>intx = int(x.replace(",",""))</b> to convert such a
-string to an integer, or simply use the <b>getposint()</b> function defined
+Return the x,y position of the viewport's middle cell in the form
+of a Python tuple containing two strings.
+The optional parameter (default = '\0') specifies a separator
+character that can be used to make the resulting strings more readable.
+For example, <b>golly.getpos(',')</b> might return two strings like "1,234"
+and "-5,678" but <b>golly.getpos()</b> would return "1234" and "-5678".
+Use the latter call if you want to do arithmetic on the x,y values,
+or just use the <b>getposint()</b> function defined
 in the <a href="#glife"><b>glife</b></a> package.
 </dd>
 <dd> Example: <b>x, y = golly.getpos()</b></dd>
@@ -768,7 +781,7 @@ Here is the equivalent script without using <b>glife</b>:
 <dd><b>g.putcells(blinker, 6, 7, 0, -1,  1,  0)</b></dd>
 </p>
 <p>
-Here are some of the helper functions defined in <b>glife</b>:
+Here are some helper functions defined in <b>glife</b>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
@@ -785,20 +798,12 @@ Here are some of the helper functions defined in <b>glife</b>:
    <td> -- return True if given string is a valid integer</td>
 </tr>
 <tr>
-   <td><b>getgenint()</b></td><td width=10> </td>
-   <td> -- return current generation string as an integer</td>
-</tr>
-<tr>
-   <td><b>getpopint()</b></td><td width=10> </td>
-   <td> -- return current population string as an integer</td>
-</tr>
-<tr>
    <td><b>getposint()</b></td><td width=10> </td>
-   <td> -- return current viewport position as integer coords</td>
+   <td> -- return viewport position as a tuple with 2 integers</td>
 </tr>
 <tr>
    <td><b>setposint(x,y)</b></td><td width=10> </td>
-   <td> -- use given integer coords to set viewport position</td>
+   <td> -- use given integers to set viewport position</td>
 </tr>
 </table>
 </dd>

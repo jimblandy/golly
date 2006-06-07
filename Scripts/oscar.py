@@ -20,7 +20,7 @@
 # oscillator detection due to hash collisions.  The bounding box info also
 # allows us to detect moving oscillators (spaceships/knightships).
 
-from glife import rect, pattern, getgenint, getpopint
+from glife import rect, pattern
 from time import time
 import golly as g
 
@@ -95,10 +95,10 @@ def oscillating():
       else:
          # h == hashlist[pos] so pattern is probably oscillating, but just in
          # case this is a hash collision we also compare pop count and box size
-         if (getpopint() == poplist[pos]) and \
+         if (int(g.getpop()) == poplist[pos]) and \
             (pbox.wd == boxlist[pos].wd) and \
             (pbox.ht == boxlist[pos].ht):
-            period = getgenint() - genlist[pos]
+            period = int(g.getgen()) - genlist[pos]
             if period == 1:
                if same_rects(pbox, boxlist[pos]):
                   g.show("The pattern is stable.")
@@ -117,8 +117,8 @@ def oscillating():
    
    # store hash/gen/pop/box info at same position in various lists
    hashlist.insert(pos, h)
-   genlist.insert(pos, getgenint())
-   poplist.insert(pos, getpopint())
+   genlist.insert(pos, int(g.getgen()))
+   poplist.insert(pos, int(g.getpop()))
    boxlist.insert(pos, pbox)
 
    return False
