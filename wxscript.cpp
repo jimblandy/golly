@@ -352,7 +352,7 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *title;
 
-   if (!PyArg_ParseTuple(args, "z", &title)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &title)) return NULL;
 
    mainptr->NewPattern(title);
    DoAutoUpdate();
@@ -370,7 +370,7 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
    char *file_name;
    int remember = 0;
 
-   if (!PyArg_ParseTuple(args, "z|i", &file_name, &remember)) return NULL;
+   if (!PyArg_ParseTuple(args, "s|i", &file_name, &remember)) return NULL;
 
    if (IsScript(file_name)) {
       // avoid re-entrancy
@@ -401,7 +401,7 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
    char *format;
    int remember = 0;
 
-   if (!PyArg_ParseTuple(args, "zz|i", &file_name, &format, &remember)) return NULL;
+   if (!PyArg_ParseTuple(args, "ss|i", &file_name, &format, &remember)) return NULL;
 
    // convert non-absolute file_name to absolute path relative to scriptloc
    // so it can be selected later from Open Recent submenu
@@ -532,7 +532,7 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
    int x, y;
    char *mode;
 
-   if (!PyArg_ParseTuple(args, "iiz", &x, &y, &mode)) return NULL;
+   if (!PyArg_ParseTuple(args, "iis", &x, &y, &mode)) return NULL;
 
    if (!mainptr->ClipboardHasText()) {
       PyErr_SetString(PyExc_RuntimeError, "Bad paste call: no pattern in clipboard.");
@@ -683,7 +683,22 @@ static PyObject *golly_setpos(PyObject *self, PyObject *args)
    char *x;
    char *y;
 
-   if (!PyArg_ParseTuple(args, "zz", &x, &y)) return NULL;
+   if (!PyArg_ParseTuple(args, "ss", &x, &y)) return NULL;
+   
+   // disallow alphabetic chars in x,y
+   int i;
+   int xlen = strlen(x);
+   for (i=0; i<xlen; i++)
+      if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') ) {
+         PyErr_SetString(PyExc_RuntimeError, "Bad setpos call: illegal character in x value.");
+         return NULL;
+      }
+   int ylen = strlen(y);
+   for (i=0; i<ylen; i++)
+      if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') ) {
+         PyErr_SetString(PyExc_RuntimeError, "Bad setpos call: illegal character in y value.");
+         return NULL;
+      }
 
    bigint bigx(x);
    bigint bigy(y);
@@ -709,8 +724,8 @@ static PyObject *golly_getpos(PyObject *self, PyObject *args)
 
    // return position as x,y tuple
    PyObject *xytuple = PyTuple_New(2);
-   PyTuple_SetItem(xytuple, 0, Py_BuildValue("z",bigx.tostring(sepchar)));
-   PyTuple_SetItem(xytuple, 1, Py_BuildValue("z",bigy.tostring(sepchar)));
+   PyTuple_SetItem(xytuple, 0, Py_BuildValue("s",bigx.tostring(sepchar)));
+   PyTuple_SetItem(xytuple, 1, Py_BuildValue("s",bigy.tostring(sepchar)));
    return xytuple;
 }
 
@@ -753,7 +768,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    char *optname;
    int oldval, newval;
 
-   if (!PyArg_ParseTuple(args, "zi", &optname, &newval)) return NULL;
+   if (!PyArg_ParseTuple(args, "si", &optname, &newval)) return NULL;
 
    if (strcmp(optname, "autofit") == 0) {
       oldval = autofit ? 1 : 0;
@@ -883,7 +898,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    char *optname;
    int optval;
 
-   if (!PyArg_ParseTuple(args, "z", &optname)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &optname)) return NULL;
 
    if      (strcmp(optname, "autofit") == 0)       optval = autofit ? 1 : 0;
    else if (strcmp(optname, "hashing") == 0)       optval = hashing ? 1 : 0;
@@ -919,7 +934,7 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
    int r, g, b;
    wxColor oldcol;
 
-   if (!PyArg_ParseTuple(args, "ziii", &colname, &r, &g, &b)) return NULL;
+   if (!PyArg_ParseTuple(args, "siii", &colname, &r, &g, &b)) return NULL;
 
    wxColor newcol(r, g, b);
    
@@ -994,7 +1009,7 @@ static PyObject *golly_getcolor(PyObject *self, PyObject *args)
    char* colname;
    wxColor* cptr;
 
-   if (!PyArg_ParseTuple(args, "z", &colname)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &colname)) return NULL;
 
    if      (strcmp(colname, "livecells") == 0)     cptr = livergb;
    else if (strcmp(colname, "deadcells") == 0)     cptr = deadrgb;
@@ -1196,7 +1211,7 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *rule_string = NULL;
 
-   if (!PyArg_ParseTuple(args, "z", &rule_string)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &rule_string)) return NULL;
 
    wxString oldrule = wxT( curralgo->getrule() );
    const char *err;
@@ -1231,7 +1246,7 @@ static PyObject *golly_getrule(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("z", curralgo->getrule());
+   PyObject *result = Py_BuildValue("s", curralgo->getrule());
    return result;
 }
 
@@ -1245,7 +1260,7 @@ static PyObject *golly_getgen(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   PyObject *result = Py_BuildValue("z", curralgo->getGeneration().tostring(sepchar));
+   PyObject *result = Py_BuildValue("s", curralgo->getGeneration().tostring(sepchar));
    return result;
 }
 
@@ -1259,7 +1274,7 @@ static PyObject *golly_getpop(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   PyObject *result = Py_BuildValue("z", curralgo->getPopulation().tostring(sepchar));
+   PyObject *result = Py_BuildValue("s", curralgo->getPopulation().tostring(sepchar));
    return result;
 }
 
@@ -1327,7 +1342,7 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
    char *s;
    long x0, y0, axx, axy, ayx, ayy;
 
-   if (!PyArg_ParseTuple(args, "zllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
+   if (!PyArg_ParseTuple(args, "sllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
    PyObject *outlist = PyList_New(0);
@@ -1467,7 +1482,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *file_name;
 
-   if (!PyArg_ParseTuple(args, "z", &file_name)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &file_name)) return NULL;
 
    // create temporary qlife universe
    lifealgo *tempalgo;
@@ -1519,7 +1534,7 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    char *file_name;
    char *desc = NULL;      // the description string is currently ignored!!!
 
-   if (!PyArg_ParseTuple(args, "O!z|z", &PyList_Type, &given_list, &file_name, &desc))
+   if (!PyArg_ParseTuple(args, "O!s|s", &PyList_Type, &given_list, &file_name, &desc))
       return NULL;
 
    // create temporary qlife universe
@@ -2000,7 +2015,7 @@ static PyObject *golly_getkey(PyObject *self, PyObject *args)
       s[1] = '\0';
       scriptkeys = scriptkeys.AfterFirst(s[0]);
    }
-   PyObject *result = Py_BuildValue("z", s);
+   PyObject *result = Py_BuildValue("s", s);
    return result;
 }
 
@@ -2013,7 +2028,7 @@ static PyObject *golly_appdir(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("z", gollyloc.c_str());
+   PyObject *result = Py_BuildValue("s", gollyloc.c_str());
    return result;
 }
 
@@ -2025,7 +2040,7 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *s = NULL;
 
-   if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    statusptr->DisplayMessage(s);
    // make sure show status bar is visible
@@ -2043,7 +2058,7 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *s = NULL;
 
-   if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    statusptr->ErrorMessage(s);
    // make sure show status bar is visible
@@ -2061,7 +2076,7 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *s = NULL;
 
-   if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    Warning(s);
 
@@ -2078,7 +2093,7 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char *s = NULL;
 
-   if (!PyArg_ParseTuple(args, "z", &s)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    // accumulate stderr messages in global string for display after script finishes
    pyerror = wxT(s);

@@ -63,7 +63,9 @@ bigint::bigint(G_INT64 i) {
    }
 }
 // we can parse ####, 2^###, -#####
-// we also allow sepchars so we can parse what we write
+// AKT: we ignore all non-digits (except for leading '-')
+// so we can parse strings like "1,234" or "+1.234";
+// it is up to caller to impose smarter restrictions
 bigint::bigint(const char *s) {
    if (*s == '2' && s[1] == '^') {
       long x = atol(s+2) ;
@@ -89,7 +91,8 @@ bigint::bigint(const char *s) {
       }
       fromint(0) ;
       while (*s) {
-         if (*s != sepchar) {
+         // AKT: was *s != sepchar
+         if (*s >= '0' && *s <= '9') {
             mul_smallint(10) ;
             if (neg)
                add_smallint('0'-*s) ;

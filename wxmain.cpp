@@ -156,6 +156,7 @@ enum {
    ID_AUTO,
    ID_HASH,
    ID_HYPER,
+   ID_HINFO,
    ID_RULE,
    
    // View menu
@@ -461,6 +462,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_AUTO,      active);
       mbar->Enable(ID_HASH,      active && !generating);
       mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
+      mbar->Enable(ID_HINFO,     active && curralgo->hyperCapable());
       mbar->Enable(ID_RULE,      active && !generating);
 
       mbar->Enable(ID_FULL,      active);
@@ -493,6 +495,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_AUTO,       autofit);
       mbar->Check(ID_HASH,       hashing);
       mbar->Check(ID_HYPER,      hyperspeed);
+      mbar->Check(ID_HINFO,      true /*!!! hashinfo */);
       mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
       mbar->Check(ID_STATUS,     StatusVisible());
       mbar->Check(ID_EXACT,      showexact);
@@ -2114,6 +2117,15 @@ void MainFrame::ToggleHyperspeed()
    }
 }
 
+void MainFrame::ToggleHashInfo()
+{
+   if ( curralgo->hyperCapable() ) {
+      /*!!!
+      hashinfo = !hashinfo;
+      */
+   }
+}
+
 int MainFrame::GetWarp()
 {
    return warp;
@@ -2402,6 +2414,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_AUTO:           ToggleAutoFit(); break;
       case ID_HASH:           ToggleHashing(); break;
       case ID_HYPER:          ToggleHyperspeed(); break;
+      case ID_HINFO:          ToggleHashInfo(); break;
       case ID_RULE:           ShowRuleDialog(); break;
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
@@ -2867,6 +2880,7 @@ MainFrame::MainFrame()
    controlMenu->AppendCheckItem(ID_AUTO, _("Auto Fit\tCtrl+T"));
    controlMenu->AppendCheckItem(ID_HASH, _("Use Hashing\tCtrl+U"));
    controlMenu->AppendCheckItem(ID_HYPER, _("Hyperspeed"));
+   controlMenu->AppendCheckItem(ID_HINFO, _("Show Hash Info"));
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_RULE, _("Rule..."));
 

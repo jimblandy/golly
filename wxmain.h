@@ -84,6 +84,7 @@ public:
    void ToggleAutoFit();
    void ToggleHashing();
    void ToggleHyperspeed();
+   void ToggleHashInfo();
    int GetWarp();
    void SetWarp(int newwarp);
    void SetGenIncrement();

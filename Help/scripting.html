@@ -549,7 +549,9 @@ VIEWING COMMANDS
 Change the position of the viewport so the given cell is in the middle.
 The x,y coordinates are given as strings so the viewport can be moved
 to any location in the unbounded universe.
-Commas can be used to make large numbers more readable.
+Commas and other punctuation marks can be used to make large numbers more readable.
+Apart from a leading minus sign, most non-digits are simply ignored;
+only alphabetic characters will cause an error message.
 Note that positive y values increase downwards in Golly's coordinate system.
 </dd>
 <dd> Example: <b>golly.setpos("1,000,000,000,000", "-123456")</b></dd>

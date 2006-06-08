@@ -494,6 +494,9 @@ void SavePrefs()
    fprintf(f, "auto_fit=%d\n", autofit ? 1 : 0);
    fprintf(f, "hashing=%d\n", hashing ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
+   /*!!!
+   fprintf(f, "hash_info=%d\n", hashinfo ? 1 : 0);
+   */
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    
    fprintf(f, "\n");
@@ -804,6 +807,11 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
          hyperspeed = value[0] == '1';
+
+      /*!!!
+      } else if (strcmp(keyword, "hash_info") == 0) {
+         hashinfo = value[0] == '1';
+      */
 
       } else if (strcmp(keyword, "max_hash_mem") == 0) {
          sscanf(value, "%d", &maxhashmem);
