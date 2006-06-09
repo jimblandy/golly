@@ -249,12 +249,14 @@ def getstring(prompt):
 
       ch = golly.getkey()
       if len(ch) > 0:
-         if ord(ch) == 13:    # return
+         if ch == chr(13):    # return
          	golly.show("")
          	return inp
-         if ord(ch) == 8:     # backspace
+         if ch == chr(8):     # backspace
             inp = inp[:-1]
             ch = ""
+         elif ch < ' ':
+            ch = ""           # ignore tab, arrow keys, etc
          inp += ch
          golly.show(prompt + " " + inp + cursor1)
 

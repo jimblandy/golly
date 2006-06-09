@@ -137,6 +137,7 @@ g.show("Checking for oscillation... (hit escape to abort)")
 oldsecs = time()
 while not oscillating():
    g.run(1)
+   g.dokey( g.getkey() )            # allow keyboard interaction
    newsecs = time()
    if newsecs - oldsecs >= 1.0:     # show pattern every second
       oldsecs = newsecs

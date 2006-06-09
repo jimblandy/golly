@@ -69,6 +69,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // =============================================================================
 
+// globals
+
+bool pyinited = false;     // Py_Initialize has been successfully called?
+bool inscript = false;     // a script is running?
+bool autoupdate;           // update display after each change to current universe?
+wxString pyerror;          // Python error message
+wxString gollyloc;         // location of Golly app
+wxString scriptloc;        // location of script file
+wxString scriptchars;      // non-escape chars saved by PassKeyToScript
+
+// exception message set by AbortScript
+const char abortmsg[] = "GOLLY: ABORT SCRIPT";
+
+// =============================================================================
+
 // On Windows and Linux we need to load the Python library at runtime
 // so Golly will start up even if Python isn't installed.
 // Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
@@ -292,21 +307,6 @@ static bool LoadPythonLib()
 }
 
 #endif // USE_PYTHON_DYNAMIC
-
-// =============================================================================
-
-// globals
-
-bool pyinited = false;     // Py_Initialize has been successfully called?
-bool inscript = false;     // a script is running?
-bool autoupdate;           // update display after each change to current universe?
-wxString pyerror;          // Python error message
-wxString gollyloc;         // location of Golly app
-wxString scriptloc;        // location of script file
-wxString scriptkeys;       // keys saved by PassKeyToScript
-
-// exception message set by AbortScript
-const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 
 // =============================================================================
 
@@ -2006,17 +2006,59 @@ static PyObject *golly_getkey(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
    
    char s[2];
-   if (scriptkeys.Length() == 0) {
+   if (scriptchars.Length() == 0) {
       // return empty string
       s[0] = '\0';
    } else {
-      // return first char in scriptkeys and then remove it
-      s[0] = scriptkeys.GetChar(0);
+      // return first char in scriptchars and then remove it
+      s[0] = scriptchars.GetChar(0);
       s[1] = '\0';
-      scriptkeys = scriptkeys.AfterFirst(s[0]);
+      scriptchars = scriptchars.AfterFirst(s[0]);
    }
    PyObject *result = Py_BuildValue("s", s);
    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+// also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
+// getclick returns [] or [x,y,button,shift,ctrl,alt]  
+
+static PyObject *golly_dokey(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* ascii = 0;
+
+   if (!PyArg_ParseTuple(args, "s", &ascii)) return NULL;
+   
+   if (*ascii) {
+      // convert ascii char to corresponding wx key code;
+      // note that PassKeyToScript does the reverse conversion
+      int key;
+      switch (*ascii) {
+         case 8:  key = WXK_BACK;   break;
+         case 9:  key = WXK_TAB;    break;
+         case 10: // play safe
+         case 13: key = WXK_RETURN; break;
+         case 28: key = WXK_LEFT;   break;
+         case 29: key = WXK_RIGHT;  break;
+         case 30: key = WXK_UP;     break;
+         case 31: key = WXK_DOWN;   break;
+         default: key = *ascii;
+      }
+
+      viewptr->ProcessKey(key, false);
+
+      // update viewport, status bar and scroll bars
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      viewptr->UpdateScrollBars();
+      inscript = true;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
 }
 
 // -----------------------------------------------------------------------------
@@ -2164,6 +2206,7 @@ static PyMethodDef golly_methods[] = {
    { "setcolor",     golly_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
    { "getcolor",     golly_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
    { "getkey",       golly_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
+   { "dokey",        golly_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
@@ -2342,7 +2385,7 @@ void RunScript(const char* filename)
    mainptr->showbanner = false;
    statusptr->ClearMessage();
    pyerror.Clear();
-   scriptkeys.Clear();
+   scriptchars.Clear();
    autoupdate = false;
 
    // save some settings for restoring below
@@ -2412,24 +2455,43 @@ bool IsScript(const char *filename)
 
 void PassKeyToScript(int key)
 {
-   // called from checkevents
-   if (inscript) {
-      // !!! allow golly_getkey to see escape by having a global abortkey which is
-      // set to chr(27) or WXK_ESCAPE? at the start of each script but can be changed by
-      // a golly_setabort(ch) command;  setabort("") would disable any escape key
-      if (key == WXK_ESCAPE) {
-         AbortScript();
-      } else {
-         // !!! scripts could allow normal keyboard interaction by doing this:
-         // g.dokey( g.getkey() )
-         // the golly_dokey(ch) command would pass ch (if not \0) to viewptr->ProcessKey
-         // and then do an update;
-         // ditto for mouse interaction???!!! ie. g.doclick( g.getclick() ) where
-         // getclick returns [] or [x,y,button,shift,ctrl,alt]
-         
-         // save key for possible consumption by golly_getkey
-         scriptkeys += key;
+   // allow golly_getkey to see escape by having a global abortkey which is
+   // set to chr(27) at the start of each script but could be changed by
+   // setabort(ch); setabort("") would disable any escape key???
+   // too dangerous???
+   
+   if (key == WXK_ESCAPE) {
+      AbortScript();
+   } else {
+      // convert wx key code to corresponding ascii char (if possible)
+      // so that scripts can be platform-independent;
+      // note that golly_dokey does the reverse conversion
+      char ascii;
+      switch (key) {
+         case WXK_DELETE:
+         case WXK_BACK:       ascii = 8;     break;
+         case WXK_TAB:        ascii = 9;     break;
+         case WXK_RETURN:     ascii = 13;    break;
+         case WXK_LEFT:       ascii = 28;    break;
+         case WXK_RIGHT:      ascii = 29;    break;
+         case WXK_UP:         ascii = 30;    break;
+         case WXK_DOWN:       ascii = 31;    break;
+         case WXK_ADD:        ascii = '+';   break;
+         case WXK_SUBTRACT:   ascii = '-';   break;
+         case WXK_DIVIDE:     ascii = '/';   break;
+         case WXK_MULTIPLY:   ascii = '*';   break;
+         // map F1..F12 to ascii 14..25???
+         default:
+            if (key >= ' ' && key <= '~') {
+               ascii = key;
+            } else {
+               // ignore all other key codes???
+               // or maybe allow codes < ' ' but ignore > '~'???
+               return;
+            }
       }
+      // save ascii char for possible consumption by golly_getkey
+      scriptchars += ascii;
    }
 }
 

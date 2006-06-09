@@ -2346,16 +2346,17 @@ void PatternView::ProcessKey(int key, bool shiftdown)
 
       case WXK_BACK:    // delete key generates backspace code
       case WXK_DELETE:  // probably never happens but play safe
-         if (shiftdown)
-            ClearOutsideSelection();
-         else
-            ClearSelection();
+         if (shiftdown) {
+            if (!inscript) ClearOutsideSelection();
+         } else {
+            if (!inscript) ClearSelection();
+         }
          break;
       
       case 'a':   SelectAll(); break;
       case 'k':   RemoveSelection(); break;
       case 's':   ShrinkSelection(true); break;
-      case 'v':   PasteClipboard(false); break;
+      case 'v':   if (!inscript) PasteClipboard(false); break;
       
       case 'L':   CyclePasteLocation(); break;
       case 'M':   CyclePasteMode(); break;
@@ -2374,16 +2375,16 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case 'g':
       case WXK_RETURN:
          // not generating -- see PatternView::OnChar
-         mainptr->GeneratePattern();
+         if (!inscript) mainptr->GeneratePattern();
          break;
 
       case ' ':
          // not generating -- see PatternView::OnChar
-         mainptr->NextGeneration(false);  // do only 1 gen
+         if (!inscript) mainptr->NextGeneration(false);  // do only 1 gen
          break;
 
       case WXK_TAB:
-         mainptr->NextGeneration(true);   // use current increment
+         if (!inscript) mainptr->NextGeneration(true);   // use current increment
          break;
 
       case 't':   mainptr->ToggleAutoFit(); break;

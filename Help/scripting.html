@@ -135,13 +135,14 @@ or you can search for individual commands alphabetically:
 <a href="#clear"><b>clear</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
+<a href="#dokey"><b>dokey</b></a><br>
 <a href="#empty"><b>empty</b></a><br>
 <a href="#error"><b>error</b></a><br>
-<a href="#evolve"><b>evolve</b></a><br>
-<a href="#fit"><b>fit</b></a>
+<a href="#evolve"><b>evolve</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#fit"><b>fit</b></a><br>
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
 <a href="#getbase"><b>getbase</b></a><br>
@@ -150,11 +151,11 @@ or you can search for individual commands alphabetically:
 <a href="#getclip"><b>getclip</b></a><br>
 <a href="#getcolor"><b>getcolor</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
-<a href="#getgen"><b>getgen</b></a><br>
-<a href="#getkey"><b>getkey</b></a>
+<a href="#getgen"><b>getgen</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#getkey"><b>getkey</b></a><br>
 <a href="#getmag"><b>getmag</b></a><br>
 <a href="#getoption"><b>getoption</b></a><br>
 <a href="#getpop"><b>getpop</b></a><br>
@@ -163,11 +164,11 @@ or you can search for individual commands alphabetically:
 <a href="#getrule"><b>getrule</b></a><br>
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
-<a href="#load"><b>load</b></a><br>
-<a href="#new"><b>new</b></a>
+<a href="#load"><b>load</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#new"><b>new</b></a><br>
 <a href="#open"><b>open</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
@@ -176,11 +177,11 @@ or you can search for individual commands alphabetically:
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
 <a href="#run"><b>run</b></a><br>
-<a href="#save"><b>save</b></a><br>
-<a href="#select"><b>select</b></a>
+<a href="#save"><b>save</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#select"><b>select</b></a><br>
 <a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
@@ -189,11 +190,11 @@ or you can search for individual commands alphabetically:
 <a href="#setoption"><b>setoption</b></a><br>
 <a href="#setpos"><b>setpos</b></a><br>
 <a href="#setrule"><b>setrule</b></a><br>
-<a href="#setstep"><b>setstep</b></a><br>
-<a href="#show"><b>show</b></a>
+<a href="#setstep"><b>setstep</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
 <a href="#step"><b>step</b></a><br>
 <a href="#store"><b>store</b></a><br>
@@ -698,10 +699,31 @@ See above for a list of all the valid color names.
 
 <a name="getkey"></a><p><dt><b>getkey()</b></dt>
 <dd>
-Return a key hit by the user, or an empty string if no key was hit.
-Keys are buffered in a first-in first-out queue.
+Return a key hit by the user as a single character,
+or an empty string if no key was hit.
+The characters returned by this command are a subset of ASCII:
 </dd>
-<dd> Example: <b>if golly.getkey() == "\n": return</b></dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>' '</b> to <b>'~'</b></td><td width=20> </td><td>all displayable characters (space to tilde)</td></tr>
+<tr><td><b>chr(8)</b></td><td width=20>            </td><td>backspace or delete</td></tr>
+<tr><td><b>chr(9)</b></td><td width=20>            </td><td>tab</td></tr>
+<tr><td><b>chr(13)</b></td><td width=20>           </td><td>return or enter</td></tr>
+<tr><td><b>chr(28)</b> to <b>chr(31)</b></td><td width=20> </td><td>left, right, up, down arrows</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>ch = golly.getkey()</b></dd>
+</p>
+
+<a name="dokey"></a><p><dt><b>dokey(char)</b></dt>
+<dd>
+This command allows limited keyboard interaction while a script is running.
+The given character is passed to Golly's keyboard event handler, but all
+keyboard shortcuts that can change the current pattern will be ignored.
+</dd>
+<dd> Example: <b>golly.dokey( golly.getkey() )</b></dd>
 </p>
 
 <a name="show"></a><p><dt><b>show(<i>message</i>)</b></dt>

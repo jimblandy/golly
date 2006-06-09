@@ -1,4 +1,4 @@
-# Inverts all cell states in the current selection.
+# Invert all cell states in the current selection.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2006.
 
 from glife import rect
@@ -13,13 +13,17 @@ if r.empty:
 else:
    oldsecs = time()
    for row in xrange(r.top, r.top + r.height):
+
+      # when inverting large selections it's nicer to
+      # give some indication of progress
       newsecs = time()
       if newsecs - oldsecs >= 1.0:
-         # when inverting large selections its nicer to
-         # give some indication of progress
          oldsecs = newsecs
-         if not r.visible(): g.fitsel()
          g.update()
+
+      # also allow keyboard interaction
+      g.dokey( g.getkey() )
+
       for col in xrange(r.left, r.left + r.width):
          g.setcell(col, row, 1 - g.getcell(col, row))
 

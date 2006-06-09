@@ -48,6 +48,7 @@ def goto(gen):
       # is left as an exercise for the reader :)
       golly.run(1)
       currgen += 1
+      golly.dokey( golly.getkey() )    # allow keyboard interaction
       newsecs = time()
       if newsecs - oldsecs >= 1.0:     # do an update every sec
          oldsecs = newsecs
