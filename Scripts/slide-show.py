@@ -12,23 +12,26 @@ inithash = g.getoption("hashing")
 
 # ------------------------------------------------------------------------------
 
-def readkey ():
-   while True:
-      ch = g.getkey()
-      if len(ch) > 0: return ch
-
-# ------------------------------------------------------------------------------
-
 def slideshow ():
    for root, dirs, files in os.walk(g.appdir() + "Patterns"):
       for name in files:
-         # ignore hidden files (like .DS_Store on Mac)
-         if not name.startswith("."):
+         if name.startswith("."):
+            # ignore hidden files (like .DS_Store on Mac)
+            pass
+         elif name.endswith(".py"):
+            # ignore Python scripts (Golly's RunScript is not re-entrant)
+            pass
+         else:
             fullname = join(root, name)
             g.open(fullname, False)       # don't add file to Open Recent submenu
             g.update()
-            g.show("Hit space to continue or any other key to stop the slide show...")
-            if readkey() != " ": return
+            
+            g.show("Hit space to continue or escape to exit the slide show...")
+            while True:
+               ch = g.getkey()
+               if ch == " ": break
+               g.dokey(ch)                # allow keyboard interaction
+            
             g.new("")
             if inithash != g.getoption("hashing"):
                if inithash:

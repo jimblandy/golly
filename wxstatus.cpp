@@ -88,6 +88,7 @@ void StatusBar::ClearMessage()
 
 void StatusBar::DisplayMessage(const char *s)
 {
+   if (inscript) return;                     // let script control messages
    strncpy(statusmsg, s, sizeof(statusmsg));
    if (statusht > 0) {
       int wd, ht;
@@ -107,6 +108,7 @@ void StatusBar::DisplayMessage(const char *s)
 
 void StatusBar::ErrorMessage(const char *s)
 {
+   if (inscript) return;                     // let script control messages
    wxBell();
    DisplayMessage(s);
 }
@@ -115,6 +117,8 @@ void StatusBar::ErrorMessage(const char *s)
 
 void StatusBar::SetMessage(const char *s)
 {
+   if (inscript) return;                     // let script control messages
+
    // set message string without displaying it
    strncpy(statusmsg, s, sizeof(statusmsg));
 }

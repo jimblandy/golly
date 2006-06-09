@@ -112,7 +112,6 @@ def main ():
          clip_bottom( selpatt(0, bbox.height * i), selrect.bottom ).put()
 
    if not selrect.visible(): g.fitsel()
-   return
 
 # ------------------------------------------------------------------------------
 

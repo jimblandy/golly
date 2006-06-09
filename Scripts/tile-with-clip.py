@@ -51,7 +51,6 @@ def main ():
          y += pbox.height
 
    if not selrect.visible(): g.fitsel()
-   return
 
 # ------------------------------------------------------------------------------
 

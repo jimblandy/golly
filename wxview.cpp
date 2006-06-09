@@ -1116,15 +1116,18 @@ void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
          break;
       case TopRight:
          xoffset = mag > 0 ? -(pastewd - cellsize + 1) : -pastewd + 1;
+         if (mag == 1) xoffset++;
          rect.Offset(xoffset, 0);
          break;
       case BottomRight:
          xoffset = mag > 0 ? -(pastewd - cellsize + 1) : -pastewd + 1;
          yoffset = mag > 0 ? -(pasteht - cellsize + 1) : -pasteht + 1;
+         if (mag == 1) { xoffset++; yoffset++; }
          rect.Offset(xoffset, yoffset);
          break;
       case BottomLeft:
          yoffset = mag > 0 ? -(pasteht - cellsize + 1) : -pasteht + 1;
+         if (mag == 1) yoffset++;
          rect.Offset(0, yoffset);
          break;
       case Middle:
@@ -2344,8 +2347,11 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case WXK_UP:      PanUp( SmallScroll(currview.getheight()) ); break;
       case WXK_DOWN:    PanDown( SmallScroll(currview.getheight()) ); break;
 
-      case WXK_BACK:    // delete key generates backspace code
-      case WXK_DELETE:  // probably never happens but play safe
+      // ProcessKey is called from the golly_dokey command (inscript is true)
+      // so best to avoid changing pattern while running a script
+
+      case WXK_BACK:       // delete key generates backspace code
+      case WXK_DELETE:     // probably never happens but play safe
          if (shiftdown) {
             if (!inscript) ClearOutsideSelection();
          } else {
@@ -2388,7 +2394,9 @@ void PatternView::ProcessKey(int key, bool shiftdown)
          break;
 
       case 't':   mainptr->ToggleAutoFit(); break;
-      case 'T':   mainptr->DisplayTimingInfo(); break;
+      
+      // timing info is only for GeneratePattern calls
+      case 'T':   if (!inscript) mainptr->DisplayTimingInfo(); break;
 
       case WXK_ADD:        // for X11
       case '+':

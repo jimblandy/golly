@@ -9,6 +9,8 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.0 (released June 2006)
 
+AKT: Fixed bottom/right paste location bug at scale 1:2.
+AKT: Added setcolor/getcolor/dokey commands.
 AKT: Increased base step limit from 100 to 10,000.
 AKT: Allow tab handling in Mac app's Prefs dialog.
 AKT: Escape key can be used to cancel progress dialog in Mac app.

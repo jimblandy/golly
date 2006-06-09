@@ -2084,7 +2084,9 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
+   inscript = false;
    statusptr->DisplayMessage(s);
+   inscript = true;
    // make sure show status bar is visible
    if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
 
@@ -2102,7 +2104,9 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
+   inscript = false;
    statusptr->ErrorMessage(s);
+   inscript = true;
    // make sure show status bar is visible
    if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
 
@@ -2466,11 +2470,18 @@ void PassKeyToScript(int key)
       // convert wx key code to corresponding ascii char (if possible)
       // so that scripts can be platform-independent;
       // note that golly_dokey does the reverse conversion
+      /*
+      char msg[64];
+      sprintf(msg, "key=%d ch=%c", key, (char)key);
+      Warning(msg);
+      */
       char ascii;
       switch (key) {
          case WXK_DELETE:
          case WXK_BACK:       ascii = 8;     break;
          case WXK_TAB:        ascii = 9;     break;
+         // treat enter key like return key on Mac???
+         // case WXK_NUMPAD_ENTER:
          case WXK_RETURN:     ascii = 13;    break;
          case WXK_LEFT:       ascii = 28;    break;
          case WXK_RIGHT:      ascii = 29;    break;
