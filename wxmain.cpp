@@ -501,7 +501,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_AUTO,       autofit);
       mbar->Check(ID_HASH,       hashing);
       mbar->Check(ID_HYPER,      hyperspeed);
-      mbar->Check(ID_HINFO,      true /*!!! hashinfo */);
+      mbar->Check(ID_HINFO,      hlifealgo::getVerbose() != 0);
       mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
       mbar->Check(ID_STATUS,     StatusVisible());
       mbar->Check(ID_EXACT,      showexact);
@@ -2126,9 +2126,7 @@ void MainFrame::ToggleHyperspeed()
 void MainFrame::ToggleHashInfo()
 {
    if ( curralgo->hyperCapable() ) {
-      /*!!!
-      hashinfo = !hashinfo;
-      */
+      hlifealgo::setVerbose(!hlifealgo::getVerbose()) ;
    }
 }
 

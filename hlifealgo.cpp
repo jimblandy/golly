@@ -141,6 +141,10 @@ void hlifealgo::resize() {
          return ;
       }
    }
+   if (verbose) {
+     strcpy(statusline, "Resizing hash...") ;
+     lifestatus(statusline) ;
+   }
    nhashtab = (node **)calloc(nhashprime, sizeof(node *)) ;
    alloced += sizeof(node *) * (nhashprime - hashprime) ;
    for (i=0; i<(int)hashprime; i++) {
@@ -163,6 +167,10 @@ void hlifealgo::resize() {
    hashtab = nhashtab ;
    hashprime = nhashprime ;
    hashlimit = hashprime ;
+   if (verbose) {
+     strcpy(statusline+strlen(statusline), " done.") ;
+     lifestatus(statusline) ;
+   }
 }
 /*
  *   These next two routines are (nearly) our only hash table access
@@ -536,6 +544,8 @@ hlifealgo::hlifealgo() {
    needPop = 0 ;
    inGC = 0 ;
    cacheinvalid = 0 ;
+   gccount = 0 ;
+   gcstep = 0 ;
 }
 /**
  *   Destructor frees memory.
@@ -596,6 +606,7 @@ void hlifealgo::step() {
       while (newpow2--)
          pow2step += pow2step ;
    }
+   gcstep = 0 ;
    for (int i=0; i<nonpow2; i++) {
       node *newroot = runpattern() ;
       if (newroot == 0 || poller->isInterrupted()) // we *were* interrupted
@@ -1215,6 +1226,15 @@ void hlifealgo::do_gc(int invalidate) {
    unsigned int freed_nodes=0 ;
    node *p, *pp ;
    inGC = 1 ;
+   gccount++ ;
+   gcstep++ ;
+   if (verbose) {
+     if (gcstep > 1)
+       sprintf(statusline, "GC #%d(%d) ", gccount, gcstep) ;
+     else
+       sprintf(statusline, "GC #%d ", gccount) ;
+     lifestatus(statusline) ;
+   }
    for (i=nzeros-1; i>=0; i--)
       if (zeronodea[i] != 0)
          break ;
@@ -1251,6 +1271,11 @@ void hlifealgo::do_gc(int invalidate) {
       }
    }
    inGC = 0 ;
+   if (verbose) {
+     int perc = freed_nodes / (totalthings / 100) ;
+     sprintf(statusline+strlen(statusline), " freed %d percent.", perc) ;
+     lifestatus(statusline) ;
+   }
    if (needPop) {
       calcPopulation(root) ;
       popValid = 1 ;
@@ -1299,6 +1324,10 @@ void hlifealgo::new_ngens(int newval) {
       ngens = newval ;
       return ;
    }
+   if (verbose) {
+     strcpy(statusline, "Changing increment...") ;
+     lifestatus(statusline) ;
+   }
    if (newval < clearto)
       clearto = newval ;
    clearto++ ; /* clear this depth and above */
@@ -1322,6 +1351,10 @@ void hlifealgo::new_ngens(int newval) {
       popValid = 1 ;
       needPop = 0 ;
       poller->updatePop() ;
+   }
+   if (verbose) {
+     strcpy(statusline+strlen(statusline), " done.") ;
+     lifestatus(statusline) ;
    }
 }
 /*
@@ -1656,3 +1689,5 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    aftercalcpop2(root, depth, 0) ;
    return 0 ;
 }
+int hlifealgo::verbose = 0 ;
+char hlifealgo::statusline[120] ;
