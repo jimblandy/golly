@@ -44,6 +44,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "bitmaps/new.xpm"
    #include "bitmaps/open.xpm"
    #include "bitmaps/save.xpm"
+   #include "bitmaps/patterns.xpm"
+   #include "bitmaps/scripts.xpm"
    #include "bitmaps/play.xpm"
    #include "bitmaps/stop.xpm"
    #include "bitmaps/hash.xpm"
@@ -242,17 +244,19 @@ const int stop_index = 1;
 const int new_index = 2;
 const int open_index = 3;
 const int save_index = 4;
-const int draw_index = 5;
-const int sel_index = 6;
-const int move_index = 7;
-const int zoomin_index = 8;
-const int zoomout_index = 9;
-const int info_index = 10;
-const int hash_index = 11;
-wxBitmap tbBitmaps[12];          // normal state
+const int patterns_index = 5;
+const int scripts_index = 6;
+const int draw_index = 7;
+const int sel_index = 8;
+const int move_index = 9;
+const int zoomin_index = 10;
+const int zoomout_index = 11;
+const int info_index = 12;
+const int hash_index = 13;
+wxBitmap tbBitmaps[14];          // normal state
 
 /*!!!
-wxBitmap tbSelected[12];         // selected state
+wxBitmap tbSelected[14];         // selected state
 
 class ToolButton : public wxBitmapButton
 {
@@ -322,43 +326,45 @@ void MainFrame::UpdateToolBar(bool active)
       
       #ifdef __WXX11__
          // avoid problems by first toggling off all buttons
-         tbar->ToggleTool(ID_GO,          false);
-         tbar->ToggleTool(ID_STOP,        false);
-         tbar->ToggleTool(wxID_NEW,       false);
-         tbar->ToggleTool(wxID_OPEN,      false);
-         tbar->ToggleTool(wxID_SAVE,      false);
-         tbar->ToggleTool(ID_DRAW,        false);
-         tbar->ToggleTool(ID_SELECT,      false);
-         tbar->ToggleTool(ID_MOVE,        false);
-         tbar->ToggleTool(ID_ZOOMIN,      false);
-         tbar->ToggleTool(ID_ZOOMOUT,     false);
-         tbar->ToggleTool(ID_HASH,        false);
-         tbar->ToggleTool(ID_INFO,        false);
+         tbar->ToggleTool(ID_GO, false);
+         tbar->ToggleTool(ID_STOP, false);
+         tbar->ToggleTool(wxID_NEW, false);
+         tbar->ToggleTool(wxID_OPEN, false);
+         tbar->ToggleTool(wxID_SAVE, false);
+         tbar->ToggleTool(ID_SHOW_PATTERNS, false);
+         tbar->ToggleTool(ID_SHOW_SCRIPTS, false);
+         tbar->ToggleTool(ID_DRAW, false);
+         tbar->ToggleTool(ID_SELECT, false);
+         tbar->ToggleTool(ID_MOVE, false);
+         tbar->ToggleTool(ID_ZOOMIN, false);
+         tbar->ToggleTool(ID_ZOOMOUT, false);
+         tbar->ToggleTool(ID_HASH, false);
+         tbar->ToggleTool(ID_INFO, false);
       #endif
-      tbar->EnableTool(ID_GO,          active && !generating);
-      tbar->EnableTool(ID_STOP,        active && generating);
-      tbar->EnableTool(wxID_NEW,       active && !generating);
-      tbar->EnableTool(wxID_OPEN,      active && !generating);
-      tbar->EnableTool(wxID_SAVE,      active && !generating);
-      tbar->EnableTool(ID_DRAW,        active);
-      tbar->EnableTool(ID_SELECT,      active);
-      tbar->EnableTool(ID_MOVE,        active);
-      tbar->EnableTool(ID_ZOOMIN,      active);
-      tbar->EnableTool(ID_ZOOMOUT,     active);
-      tbar->EnableTool(ID_HASH,        active && !generating);
-      tbar->EnableTool(ID_INFO,        active && currfile[0] != 0);
+      tbar->EnableTool(ID_GO,             active && !generating);
+      tbar->EnableTool(ID_STOP,           active && generating);
+      tbar->EnableTool(wxID_NEW,          active && !generating);
+      tbar->EnableTool(wxID_OPEN,         active && !generating);
+      tbar->EnableTool(wxID_SAVE,         active && !generating);
+      tbar->EnableTool(ID_SHOW_PATTERNS,  active);
+      tbar->EnableTool(ID_SHOW_SCRIPTS,   active);
+      tbar->EnableTool(ID_DRAW,           active);
+      tbar->EnableTool(ID_SELECT,         active);
+      tbar->EnableTool(ID_MOVE,           active);
+      tbar->EnableTool(ID_ZOOMIN,         active);
+      tbar->EnableTool(ID_ZOOMOUT,        active);
+      tbar->EnableTool(ID_HASH,           active && !generating);
+      tbar->EnableTool(ID_INFO,           active && currfile[0] != 0);
+
       // call ToggleTool for tools added via AddCheckTool or AddRadioTool
-      tbar->ToggleTool(ID_HASH,        hashing);
-      if (currcurs == curs_pencil)
-         tbar->ToggleTool(ID_DRAW, true);
-      else if (currcurs == curs_cross)
-         tbar->ToggleTool(ID_SELECT, true);
-      else if (currcurs == curs_hand)
-         tbar->ToggleTool(ID_MOVE, true);
-      else if (currcurs == curs_zoomin)
-         tbar->ToggleTool(ID_ZOOMIN, true);
-      else if (currcurs == curs_zoomout)
-         tbar->ToggleTool(ID_ZOOMOUT, true);
+      tbar->ToggleTool(ID_HASH,           hashing);
+      tbar->ToggleTool(ID_SHOW_PATTERNS,  showpatterns);
+      tbar->ToggleTool(ID_SHOW_SCRIPTS,   showscripts);
+      tbar->ToggleTool(ID_DRAW,           currcurs == curs_pencil);
+      tbar->ToggleTool(ID_SELECT,         currcurs == curs_cross);
+      tbar->ToggleTool(ID_MOVE,           currcurs == curs_hand);
+      tbar->ToggleTool(ID_ZOOMIN,         currcurs == curs_zoomin);
+      tbar->ToggleTool(ID_ZOOMOUT,        currcurs == curs_zoomout);
    }
 }
 
@@ -2992,6 +2998,8 @@ MainFrame::MainFrame()
    tbBitmaps[new_index] = wxBITMAP(new);
    tbBitmaps[open_index] = wxBITMAP(open);
    tbBitmaps[save_index] = wxBITMAP(save);
+   tbBitmaps[patterns_index] = wxBITMAP(patterns);
+   tbBitmaps[scripts_index] = wxBITMAP(scripts);
    tbBitmaps[draw_index] = wxBITMAP(draw);
    tbBitmaps[sel_index] = wxBITMAP(select);
    tbBitmaps[move_index] = wxBITMAP(move);
@@ -3039,6 +3047,9 @@ MainFrame::MainFrame()
    ADD_TOOL(wxID_NEW, tbBitmaps[new_index], _("New pattern"));
    ADD_TOOL(wxID_OPEN, tbBitmaps[open_index], _("Open pattern"));
    ADD_TOOL(wxID_SAVE, tbBitmaps[save_index], _("Save pattern"));
+   toolBar->AddSeparator();
+   ADD_RADIO(ID_SHOW_PATTERNS, tbBitmaps[patterns_index], _("Show/hide patterns"));
+   ADD_RADIO(ID_SHOW_SCRIPTS, tbBitmaps[scripts_index], _("Show/hide scripts"));
    toolBar->AddSeparator();
    ADD_RADIO(ID_DRAW, tbBitmaps[draw_index], _("Draw"));
    ADD_RADIO(ID_SELECT, tbBitmaps[sel_index], _("Select"));
