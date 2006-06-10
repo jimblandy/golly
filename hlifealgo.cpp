@@ -629,6 +629,7 @@ void hlifealgo::setMaxMemory(int newmemlimit) {
       return ;
    }
    maxmem = newmemlimit << 20 ;
+   hashlimit = hashprime ;
 }
 /**
  *   Clear everything.
