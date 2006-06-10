@@ -3048,8 +3048,8 @@ MainFrame::MainFrame()
    ADD_TOOL(wxID_OPEN, tbBitmaps[open_index], _("Open pattern"));
    ADD_TOOL(wxID_SAVE, tbBitmaps[save_index], _("Save pattern"));
    toolBar->AddSeparator();
-   ADD_RADIO(ID_SHOW_PATTERNS, tbBitmaps[patterns_index], _("Show/hide patterns"));
-   ADD_RADIO(ID_SHOW_SCRIPTS, tbBitmaps[scripts_index], _("Show/hide scripts"));
+   ADD_CHECK(ID_SHOW_PATTERNS, tbBitmaps[patterns_index], _("Show/hide patterns"));
+   ADD_CHECK(ID_SHOW_SCRIPTS, tbBitmaps[scripts_index], _("Show/hide scripts"));
    toolBar->AddSeparator();
    ADD_RADIO(ID_DRAW, tbBitmaps[draw_index], _("Draw"));
    ADD_RADIO(ID_SELECT, tbBitmaps[sel_index], _("Select"));
