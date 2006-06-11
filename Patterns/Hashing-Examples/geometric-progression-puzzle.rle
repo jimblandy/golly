@@ -1,0 +1,10 @@
+#C At 2.3e12 (www.tweedledum.com/rwg/gottspuzz.png) this pattern seems 
+#C to have regularized: the last twelve bursts from the left formed
+#C a geometric progression of trapezoids. But the top two corners
+#C of the next "trapezoid" are missing, as were several previous.
+#C To see that the trapezoid progression is exactly doubling,
+#C click with the up/down scaling cursor on the limit point.
+#C Bill Gosper, 27 Feb 2006
+x = 127, y = 28, rule = B3/S23
+o$o$o9$4bo3bo$5bobo$6bo2bo100b5o$9bo99bo4bo$9bo104bo$113bo$125bo$126bo
+$122bo3bo$123b4o$119bo$120b2o$119bo$123b4o$122bo3bo$126bo$125bo!

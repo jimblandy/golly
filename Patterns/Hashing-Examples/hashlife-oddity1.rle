@@ -1,0 +1,7 @@
+#C forward-shooting switchengine interacts with a dirty Schickoidal
+#C backrake to produce complex long-term behavior
+#C Bill Gosper, 26 February 2006
+x = 114, y = 25, rule = B3/S23
+3o4$11bo$12bo$13bo$12bo$11bo$13b3o$100bo$101bo$96bo4bo$97b5o3$110b4o$
+109bo3bo$113bo$105b2o2bo2bo$105b3o$105b2o2bo2bo$113bo$109bo3bo$110b4o!
+

@@ -1,0 +1,6 @@
+#C slight variation on hashlife-oddity1
+#C emits an unprecedented glider burst at 5e10.
+#C Bill Gosper, 26 February 2006
+x = 119, y = 25, rule = B3/S23
+3o4$11bo$12bo$13bo$12bo$11bo$13b3o$102b5o$101bo4bo$106bo$105bo$117bo$
+118bo$114bo3bo$115b4o$111bo$112b2o$111bo$115b4o$114bo3bo$118bo$117bo!

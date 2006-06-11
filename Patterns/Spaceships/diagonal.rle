@@ -1,0 +1,31 @@
+#C c/4 Diagonal Spaceships (and one c/5)
+#C Tiny one in front: the glider.
+#C Top right: Orion by Hartmut Holzwart, simplified by Jason Summers, 
+#C followed by Canada goose by Jason Summers.
+#C Middle: c/4 grammar by Hartmut Holzwart.
+#C Bottom left: Swan by Tim Coe.
+#C Bottom right: a rather large c/5 found by Jason Summers.
+#C From Alan Hensel's "bclife" pattern collection.
+x = 114, y = 92, skip = 1, fps = 10
+67boo$66boo$68bo$70bo4b3o$70b3o4boo$71b3obobo$78bo$71bobo$70boobo$71bo
+$69boobo$21boo49bo$21bobo46boo$21bo4$49boo28b3o$48boo29bo9boo$50bo29bo
+6b3obo$46bo6bo28boobboo$45boo4boo7bo22bo$45bobo7bo3b4o24bo$49bo4boobbo
+bboo20boo3bo$49bo7boo4boobo15boboboo$41boo5bo7boboo4bobo15bobobboboo$
+40boo9bo3b3o6bobbo13bo4boo$42bo7boobbobbo23boo$38bo6bo7boo8boo16boo$
+37boo4boo7boboo9bo$37bobo7bo3b3o$41bo4boobbobbo$41bo7boo$33boo5bo7bob
+oo$32boo9bo3b3o$34bo7boobbobbo$30bo6bo7boo$29boo4boo7boboo$29bobo7bo3b
+3o$33bo4boobbobbo$33bo7boo32boo$25boo5bo7boboo23boo4boobobo$24boo9bo3b
+3o24b3o4b4o$26bo7boobbobbo23boo6boo5bo$22bo6bo7boo25boobboo3bobbobbo$
+21boo4boo7boboo23boo5bo7bobboo$21bobo7bo3b3o25boobo3b4o$25bo4boobbobbo
+28bo3boobboobo$25bo7boo32b3o4bobo$24bo7boboo32boo3boobbo$27bo3b3o34bo
+5bo$26boobbobbo29b4obobbobbo3bo$29boo32b3o3b5obb7obo$28boboo30bobo4bo
+10bobboo$27b3o32b3obo3bo3bo5b3o$26bobbo39bobobbo7boo$25boo36bo3bo5boo
+8boobbobo$26boo38bo7bo8b3obob3o$26boo37bo8b3o6bo4bo$28bo3bo34bo6bobo5b
+obo$28b3obo34bo6boboo3bo4bo$33bo41bob4o3bo5bobbo$28boo44boobboobobo3bo
+b3o$30bo48bo6bobb3o3b3o$82bobbo6boo$oobo7b3o64boo4bobbo10boo$o3bo6bo
+68bo13bo3bo$o4bo7bo7boo55boo4boo8bo$bboo7bobo4boobo57bo3b3o8bobobobo$
+4bobo4b3obobboo59bo4boo8bo5boo$10bo3boobboo66bo8bobb3o$6boob4oboo67bo
+bbo8bo8bo$7b7o74b4o8boo3bo$85bo6boo6boo3bo$85bo4bo12bo$85bo15bo$87boob
+obo7bobbo$87bo4bo9b3o$90b3oboobbo3bo3boboo$91bobboobo5bo3bobbo$99boobb
+o3bo$96bobooboobobboo3bo$93bo5bo3bo7bobo$94boo12boo3bo$100bo7boo$101b
+3o3boobbo$100bobbob3o$100bo4boo$101bo$104bobbo$103bo$104boo!

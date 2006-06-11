@@ -1,0 +1,11 @@
+#C 26-cell quadratic growth pattern: a forward-glider-producing switch
+#C engine repeatedly overtakes a crystal formed by collision with
+#C sideways gliders produced by a c/12 rake assembly.  When the
+#C switch engine reaches the crystal, a reaction produces an
+#C orthogonal block-laying switch engine and restarts the crystal
+#C production at the c/12 rake boundary.
+#C Nick Gotts, 17 March 2006 -- closely based on Bill Gosper's
+#C 41-cell O(t ln t)-growth pattern from 11 March.
+x = 16193, y = 15089, rule = B3/S23
+boo$oo$bo29$16bo$15bobo$15bo$14bo15024$16187bo3bo$16188bobo$16189bobbo
+$16192bo$16192bo21$16159bo$16160bo$16161bo$16160bo$16159bo$16161b3o!

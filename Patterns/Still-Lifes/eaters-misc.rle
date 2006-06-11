@@ -1,0 +1,16 @@
+#C Some examples of eater-like objects consuming
+#C things that aren't gliders or spaceships.
+#C Pattern from Jason Summers' "jslife" archive.
+x = 99, y = 49, rule = B3/S23
+36bo5boo$4bo32bo5bo17bo14bo$3bobo31bo5boboo8bo4bobo14b3o$3bobo9boo16bo
+3bo4boobbo7bobo3bob3o13bo8boobbobbooboo$4bo10boo17b3obbo4boo7bobbobboo
+4bo22boboo3boboo$39b5o10boobbo3b3o12bobo9bo5bo$4boo11boobo16boo4bo14b
+5o14boobo11boobo$4boo11boob3o15bobboo13boo22bo10bobbo$23bo14bobo14bobo
+bb3o17boo8boboo$17boob3o10bobbobobo12b3obobobbo27bo$18bobo12b4oboo12bo
+4bobo29boo$18bobo16bo15boobooboo$19bo15bobo16bobo$35boo17bobo$55bo8$
+27bo52b3o$26bobo15bo22bo$3o22bobbo11boboo9bo$3o10b3o10boo13bo25boo13b
+ooboboo$54b3o11boo9boboboboobo$3boo11boo10boo12boo34boboobo$3bo12bo11b
+o14bo12bo11bo9bo3boo$4b3o10b3o9b3o10bo12bobo9bobo9boo$6bo12bo11bo10boo
+12bo11boo11boobo$81boboo10$67bo$33boobboo12boo14bo$35b3o9boboo16bo10bo
+6bo$48bo29bo6bo$38bo12bo11b3obboo8bobboobbo$38b3o9bobo14bobo10bobbo$
+41bo9bo15boo12boo$40boo!

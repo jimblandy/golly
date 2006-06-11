@@ -1,0 +1,11 @@
+#C Spaceship eaters.
+#C Eater+tub MWSS eater by Dean Hickerson, 4-May-1997.
+#C Stable HWSS eater by Dean Hickerson, 24-Apr-1999.
+#C Pattern from Jason Summers' "jslife" archive.
+x = 89, y = 34, rule = B3/S23
+80bo$79bobo$80bo$$78b5o$15boo30boo29bo4bo$15bo31bo32boobo$13bobo29bobo
+33boboboobo$13boo30boo33bobboboboo$b4o27b5o29b6o9b3o$o3bo26bo4bo28bo5b
+o12bo$4bo31bo34bo11bobo$obbo27bo3bo29bo4bo11bobbo$33bo33boo12bo3boo$
+82b3o$84bo7$12boo$12boo$46bo34b3o$45bobo32b3o$b4o8boo17b5o9bo19b6o$o3b
+o8boo16bo4bo28bo5bo$4bo31bo34bo$obbo27bo3bo29bo4bo9b3o$33bo10boo21boo
+12b3o$44bo$45b3o$47bo!
