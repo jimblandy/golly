@@ -9,9 +9,12 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.0 (released June 2006)
 
+TGR: Added option to show extra info while hashing.
 AKT: Added tool bar buttons for toggling patterns and scripts.
 AKT: Fixed bottom/right paste location bug at scale 1:2.
-AKT: Added setcolor/getcolor/dokey commands.
+AKT: Scroll bars can be used while a script is running.
+AKT: Added dokey command to allow limited keyboard interaction.
+AKT: Added setcolor/getcolor commands.
 AKT: Increased base step limit from 100 to 10,000.
 AKT: Allow tab handling in Mac app's Prefs dialog.
 AKT: Escape key can be used to cancel progress dialog in Mac app.

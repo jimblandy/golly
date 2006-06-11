@@ -48,7 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "lifealgo.h"      // for curralgo->...
-#include "hlifealgo.h"     // for hash->verbose
+#include "hlifealgo.h"     // for setVerbose, getVerbose
 #include "viewport.h"      // for MAX_MAG
 
 #include "wxgolly.h"       // for wxGetApp, mainptr

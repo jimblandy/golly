@@ -130,6 +130,28 @@ For highly regular patterns, hyperspeed mode quickly "runs away", generating
 exponentially fast.
 
 <p>
+<font size=+1><b>Show Hash Info</b></font>
+
+<p>
+Tick this option to turn on status messages that inform you when the
+hashing algorithm is doing garbage collection, resizing its internal
+hash table, or changing the step size (which can involve walking the
+entire hash).  The garbage collection messages say which garbage
+collection it is overall, and if it is a subsequent garbage collection
+for the same step (the count will be in parentheses), and the
+percentage of memory reclaimed.
+
+<p>
+Interpreting these numbers is more an art than a science because some
+patterns exhibit odd behavior, but in general, if a garbage collection
+is reclaiming less than 70% of the total memory, or more than ten
+garbage collections occur for a single step, you can be fairly certain
+that the algorithm is effectively stalled and further progress will be
+extremely slow.  Reducing the step size may help, but it may need to
+be reduced substantially in order to have an impact.  Increasing the
+maximum memory that hashing can use may also help.
+
+<p>
 <font size=+1><b>Rule...</b></font>
 
 <p>
