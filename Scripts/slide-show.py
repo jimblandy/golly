@@ -7,6 +7,8 @@ import golly as g
 import os
 from os.path import join
 
+from time import sleep
+
 # remember initial hashing state so we can restore it if changed by a pattern file
 inithash = g.getoption("hashing")
 
@@ -28,6 +30,7 @@ def slideshow ():
             
             g.show("Hit space to continue or escape to exit the slide show...")
             while True:
+               sleep(0.01)                # avoid hogging cpu
                ch = g.getkey()
                if ch == " ": break
                g.dokey(ch)                # allow keyboard interaction

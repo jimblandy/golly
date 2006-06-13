@@ -417,7 +417,7 @@ void MainFrame::UpdateMenuItems(bool active)
       if (viewptr->waitingforclick) active = false;
       
       #if defined(__WXMAC__) || defined(__WXGTK__)
-         // fix prob on OS 10.4 after a modal dialog closes??? test on G4!!!
+         // fix problem (on OS 10.4) after a modal dialog closes
          if (!active && (!GetHelpFrame() || !GetHelpFrame()->IsActive())
                      && (!GetInfoFrame() || !GetInfoFrame()->IsActive()) ) {
             return;

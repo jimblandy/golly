@@ -238,4 +238,5 @@ bindist: all
 	mkdir $(RELEASENAME)-mac
 	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
 	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
-	tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz
+	echo Now create zip archive of $(RELEASENAME)-mac
+###tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz

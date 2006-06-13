@@ -94,6 +94,7 @@ private:
    #endif
    
    void OnChar(wxKeyEvent& event);
+   //!!! void OnSize(wxSizeEvent& event);
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -107,6 +108,7 @@ BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
    EVT_KEY_DOWN   (HtmlView::OnKeyDown)
 #endif
    EVT_CHAR       (HtmlView::OnChar)
+   //!!! EVT_SIZE       (HtmlView::OnSize)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -186,13 +188,6 @@ HelpFrame::HelpFrame()
                           // specify small size to avoid clipping scroll bar on resize
                           wxDefaultPosition, wxSize(30,30),
                           wxHW_DEFAULT_STYLE | wxSUNKEN_BORDER);
-   #ifdef __WXMAC__
-      // no longer need this??? (prevention done in UpdateHelpButtons)
-      // prevent horizontal scroll bar appearing in Mac html window
-      // int xunit, yunit;
-      // htmlwin->GetScrollPixelsPerUnit(&xunit, &yunit);
-      // htmlwin->SetScrollRate(0, yunit);
-   #endif
    htmlwin->SetBorders(4);
    SetFontSizes(helpfontsize);
 
@@ -575,6 +570,25 @@ void HtmlView::OnChar(wxKeyEvent& event)
       event.Skip();     // so up/down arrows and pg up/down keys work
    }
 }
+
+// -----------------------------------------------------------------------------
+
+// avoid scroll position being reset to top when window is resized
+/* couldn't get this to work!!!
+void HtmlView::OnSize(wxSizeEvent& event)
+{
+   wxString currpage = GetOpenedPage();
+   int x, y;
+   GetViewStart(&x, &y);         // save current position
+
+   wxHtmlWindow::OnSize(event);
+
+   if ( !currpage.IsEmpty() ) {
+      LoadPage(currpage);        // reload page
+      Scroll(x, y);              // scroll to old position
+   }
+}
+*/
 
 // -----------------------------------------------------------------------------
 

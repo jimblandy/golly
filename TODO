@@ -74,3 +74,7 @@ User suggestions:
 [H Koenig]
 - Mulitiple undo/redo.
 - Multiple windows.
+
+[Gabriel Nivasch]
+- Make paste pattern semi-transparent.
+- Add a Default button to each Preferences pane (at bottom left?).

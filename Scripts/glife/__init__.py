@@ -3,7 +3,7 @@
 
 import golly
 from sys import maxint
-from time import time
+from time import time, sleep
 
 __doc__ = """High-level scripting aids for Golly.""";
 
@@ -247,6 +247,7 @@ def getstring(prompt):
          cursor1, cursor2 = cursor2, cursor1
          golly.show(prompt + " " + inp + cursor1)
 
+      sleep(0.05)             # avoid hogging cpu
       ch = golly.getkey()
       if len(ch) > 0:
          if ch == chr(13):    # return
