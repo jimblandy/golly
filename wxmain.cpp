@@ -2971,6 +2971,9 @@ MainFrame::MainFrame()
    #ifdef __WXX11__
       // creating vertical tool bar stuffs up X11 menu bar!!!
       wxToolBar *toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_HORIZONTAL);
+   #elif defined(__WXGTK__)
+      // create vertical tool bar at left edge of frame
+      wxToolBar *toolBar = CreateToolBar(wxTB_VERTICAL);
    #else
       // create vertical tool bar at left edge of frame
       wxToolBar *toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_VERTICAL);
@@ -3098,9 +3101,20 @@ MainFrame::MainFrame()
                                     );
    if (scriptctrl == NULL) Fatal("Failed to create script directory control!");
 
-   // reduce indent
-   patternctrl->GetTreeCtrl()->SetIndent(4);
-   scriptctrl->GetTreeCtrl()->SetIndent(4);
+   #ifdef __WXGTK__
+      // make sure background is white when using KDE's GTK theme
+      patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+      scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+      patternctrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
+      scriptctrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
+      // reduce indent a bit
+      patternctrl->GetTreeCtrl()->SetIndent(8);
+      scriptctrl->GetTreeCtrl()->SetIndent(8);
+   #else
+      // reduce indent a lot
+      patternctrl->GetTreeCtrl()->SetIndent(4);
+      scriptctrl->GetTreeCtrl()->SetIndent(4);
+   #endif
    
    // reduce font size -- doesn't seem to reduce line height
    // wxFont font = *(statusptr->GetStatusFont());
