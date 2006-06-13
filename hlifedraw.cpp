@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstring>
 #include <iostream>
 #include <cstdio>
+#include <algorithm>
 using namespace std ;
 
 const int logbmsize = 7 ;                 // 6=64x64  7=128x128  8=256x256
@@ -363,6 +364,18 @@ int getbitsfromleaves(const vector<node *> &v) {
   return r ;
 }
 
+/**
+ *   Copy the vector, but sort it and uniquify it so we don't have a ton
+ *   of duplicate nodes.
+ */
+void sortunique(vector<node *> &dest, vector<node *> &src) {
+  swap(src, dest) ; // note:  this is superfast
+  sort(dest.begin(), dest.end()) ;
+  vector<node *>::iterator new_end = unique(dest.begin(), dest.end()) ;
+  dest.erase(new_end, dest.end()) ;
+  src.clear() ;
+}
+
 void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pright) {
    // AKT: following code is from fit() but all goal/size stuff
    // has been removed so it finds the exact pattern edges
@@ -446,8 +459,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->se) ;
             }
          }
-         top = newv ;
-         newv.clear() ;
+	 sortunique(top, newv) ;
          ymax += ymax ;
          if (!outer) {
             ymax.add_smallint(-2) ;
@@ -471,8 +483,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->ne) ;
             }
          }
-         bottom = newv ;
-         newv.clear() ;
+	 sortunique(bottom, newv) ;
          ymin += ymin ;
          if (!outer) {
             ymin.add_smallint(2) ;
@@ -496,8 +507,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->sw) ;
             }
          }
-         right = newv ;
-         newv.clear() ;
+	 sortunique(right, newv) ;
          xmax += xmax ;
          if (!outer) {
             xmax.add_smallint(-2) ;
@@ -521,8 +531,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->se) ;
             }
          }
-         left = newv ;
-         newv.clear() ;
+	 sortunique(left, newv) ;
          xmin += xmin ;
          if (!outer) {
             xmin.add_smallint(2) ;
