@@ -2686,6 +2686,8 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    if (GetInfoFrame()) GetInfoFrame()->Close(true);
    
    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
+   
+   bool wasinscript = inscript;
 
    // abort any running script and tidy up; also restores current directory
    // to location of Golly app so prefs file will be saved in correct place
@@ -2704,7 +2706,12 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    #else
       if (generating) StopGenerating();
    #endif
-   
+ 
+   #ifdef __WXMSW__
+      // avoid error message on Windows
+      if (wasinscript) exit(0);
+   #endif
+  
    Destroy();
 }
 

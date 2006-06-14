@@ -160,12 +160,18 @@ void InfoFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
-   // save current location and size for later use in SavePrefs
-   wxRect r = infoptr->GetRect();
-   infox = r.x;
-   infoy = r.y;
-   infowd = r.width;
-   infoht = r.height;
+   #ifdef __WXMSW__
+   if (!IsIconized()) {
+   #endif
+      // save current location and size for later use in SavePrefs
+      wxRect r = GetRect();
+      infox = r.x;
+      infoy = r.y;
+      infowd = r.width;
+      infoht = r.height;
+   #ifdef __WXMSW__
+   }
+   #endif
    
    Destroy();        // also deletes all child windows (buttons, etc)
    infoptr = NULL;

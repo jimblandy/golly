@@ -357,13 +357,19 @@ void HelpFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event))
 
 void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
-   // save current location and size for later use in SavePrefs
-   wxRect r = helpptr->GetRect();
-   helpx = r.x;
-   helpy = r.y;
-   helpwd = r.width;
-   helpht = r.height;
-   
+   #ifdef __WXMSW__
+   if (!IsIconized()) {
+   #endif
+      // save current location and size for later use in SavePrefs
+      wxRect r = GetRect();
+      helpx = r.x;
+      helpy = r.y;
+      helpwd = r.width;
+      helpht = r.height;
+   #ifdef __WXMSW__
+   }
+   #endif
+  
    Destroy();        // also deletes all child windows (buttons, etc)
    helpptr = NULL;
 }
