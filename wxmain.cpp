@@ -2528,6 +2528,16 @@ void MainFrame::OnSize(wxSizeEvent& event)
 void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
 #endif
 {
+   #ifdef __WXMSW__
+      // save current location and size for use in SavePrefs if app
+      // is closed when window is minimized
+      wxRect r = GetRect();
+      mainx = r.x;
+      mainy = r.y;
+      mainwd = r.width;
+      mainht = r.height;
+   #endif
+
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0) {

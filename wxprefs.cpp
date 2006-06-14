@@ -451,9 +451,16 @@ void SavePrefs()
    #else
       fprintf(f, "platform=unknown\n");
    #endif
+
    // save main window's location and size
+   #ifdef __WXMSW__
+   if (mainptr->fullscreen || mainptr->IsIconized()) {
+      // use mainx, mainy, mainwd, mainht set by mainptr->ToggleFullScreen()
+      // or by mainptr->OnSize
+   #else
    if (mainptr->fullscreen) {
       // use mainx, mainy, mainwd, mainht set by mainptr->ToggleFullScreen()
+   #endif
    } else {
       wxRect r = mainptr->GetRect();
       mainx = r.x;
@@ -462,13 +469,19 @@ void SavePrefs()
       mainht = r.height;
    }
    fprintf(f, "main_window=%d,%d,%d,%d\n", mainx, mainy, mainwd, mainht);
+
    #ifdef __WXX11__
       // mainptr->IsMaximized() is always true on X11 so avoid it
       fprintf(f, "maximize=%d\n", 0);
    #else
       fprintf(f, "maximize=%d\n", mainptr->IsMaximized() ? 1 : 0);
    #endif
+
+   #ifdef __WXMSW__
+   if (GetHelpFrame() && !GetHelpFrame()->IsIconized()) {
+   #else
    if (GetHelpFrame()) {
+   #endif
       wxRect r = GetHelpFrame()->GetRect();
       helpx = r.x;
       helpy = r.y;
@@ -477,7 +490,12 @@ void SavePrefs()
    }
    fprintf(f, "help_window=%d,%d,%d,%d\n", helpx, helpy, helpwd, helpht);
    fprintf(f, "help_font_size=%d (%d..%d)\n", helpfontsize, minfontsize, maxfontsize);
+
+   #ifdef __WXMSW__
+   if (GetInfoFrame() && !GetInfoFrame()->IsIconized()) {
+   #else
    if (GetInfoFrame()) {
+   #endif
       wxRect r = GetInfoFrame()->GetRect();
       infox = r.x;
       infoy = r.y;
@@ -485,6 +503,7 @@ void SavePrefs()
       infoht = r.height;
    }
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
+
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
    fprintf(f, "random_fill=%d (1..100)\n", randomfill);

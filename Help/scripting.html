@@ -715,6 +715,12 @@ The characters returned by this command are a subset of ASCII:
 </dd>
 <p>
 <dd> Example: <b>ch = golly.getkey()</b></dd>
+<p>
+<dd>
+Note that the <a href="#glife"><b>glife</b></a> package defines a helper function
+called <b>getstring</b> which displays a prompt in the status bar and uses
+<b>getkey</b> to read user input.  See also the <b>goto.py</b> script.
+</dd>
 </p>
 
 <a name="dokey"></a><p><dt><b>dokey(char)</b></dt>
@@ -810,10 +816,6 @@ Here are some helper functions defined in <b>glife</b>:
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr>
-   <td><b>getminbox(patt)</b></td><td width=10> </td>
-   <td> -- return minimal bounding box of given pattern</td>
-</tr>
-<tr>
    <td><b>getstring(prompt)</b></td><td width=10> </td>
    <td> -- prompt user and return entered string</td>
 </tr>
@@ -828,6 +830,10 @@ Here are some helper functions defined in <b>glife</b>:
 <tr>
    <td><b>setposint(x,y)</b></td><td width=10> </td>
    <td> -- use given integers to set viewport position</td>
+</tr>
+<tr>
+   <td><b>getminbox(patt)</b></td><td width=10> </td>
+   <td> -- return minimal bounding box of given pattern</td>
 </tr>
 </table>
 </dd>
