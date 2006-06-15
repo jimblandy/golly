@@ -9,6 +9,8 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.0 (released June 2006)
 
+AKT: Fixed error if Win app is closed while script is running.
+AKT: Fixed problem if Win app is closed when window(s) minimized.
 TGR: Added option to show extra info while hashing.
 AKT: Added tool bar buttons for toggling patterns and scripts.
 AKT: Fixed bottom/right paste location bug at scale 1:2.
