@@ -136,8 +136,8 @@ void InitDrawingData()
          #ifdef __WXMAC__
             // bug??? GetDepth returns -1 even if screen depth is really 32
          #else
-            // can't use alpha channel if depth < 32
-            if (selbitmap->GetDepth() < 32) {
+            // use inversion if depth is < 24
+            if (selbitmap->GetDepth() < 24) {
                delete selbitmap;
                selbitmap = NULL;
             }
@@ -350,9 +350,12 @@ void DrawSelection(wxDC &dc, wxRect &rect)
 {
    if (selbitmap) {
       // draw translucent rect
+      dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+      /* wxGTK Blit doesn't support alpha channel
       wxMemoryDC memdc;
       memdc.SelectObject(*selbitmap);
       dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      */
    } else {
       // no alpha channel so just invert rect
       dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
