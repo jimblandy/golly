@@ -3105,21 +3105,37 @@ MainFrame::MainFrame()
                                    wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
    if (splitwin == NULL) Fatal("Failed to create split window!");
 
-   patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
+   patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
                                       wxDefaultPosition, wxDefaultSize,
-                                      wxNO_BORDER,
-                                      _T("All files (*)|*")
+                                      #ifdef __WXMSW__
+                                         // speed up a bit
+                                         wxDIRCTRL_DIR_ONLY | wxNO_BORDER,
+                                      #else
+                                         wxNO_BORDER,
+                                      #endif
+                                      wxEmptyString   // see all file types
                                      );
    if (patternctrl == NULL) Fatal("Failed to create pattern directory control!");
 
-   scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, _T(""),
+   scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
                                      wxDefaultPosition, wxDefaultSize,
-                                     wxNO_BORDER,
+                                     #ifdef __WXMSW__
+                                        // speed up a bit
+                                        wxDIRCTRL_DIR_ONLY | wxNO_BORDER,
+                                     #else
+                                        wxNO_BORDER,
+                                     #endif
                                      // using *.py prevents seeing a folder alias or
                                      // sym link so best to show all files???
                                      _T("Python scripts|*.py")
                                     );
    if (scriptctrl == NULL) Fatal("Failed to create script directory control!");
+   
+   #ifdef __WXMSW__
+      // now remove wxDIRCTRL_DIR_ONLY so we see files
+      patternctrl->SetWindowStyle(wxNO_BORDER);
+      scriptctrl->SetWindowStyle(wxNO_BORDER);
+   #endif
 
    #ifdef __WXGTK__
       // make sure background is white when using KDE's GTK theme
