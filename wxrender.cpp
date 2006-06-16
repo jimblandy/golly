@@ -350,12 +350,15 @@ void DrawSelection(wxDC &dc, wxRect &rect)
 {
    if (selbitmap) {
       // draw translucent rect
-      dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-      /* wxGTK Blit doesn't support alpha channel
-      wxMemoryDC memdc;
-      memdc.SelectObject(*selbitmap);
-      dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-      */
+      #ifdef __WXGTK__
+         // wxGTK Blit doesn't support alpha channel
+         dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+      #else
+         // Blit seems to be about 10% faster (on Mac at least)
+         wxMemoryDC memdc;
+         memdc.SelectObject(*selbitmap);
+         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      #endif
    } else {
       // no alpha channel so just invert rect
       dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
