@@ -1,4 +1,4 @@
-#C "Achim's p11" oscillator.synthesized from 96 gliders
+#C "Achim's p11" oscillator synthesized from 96 gliders
 #C Mark Niemiec, 2/2000; pattern from Jason Summers' "jslife" archive
 x = 266, y = 266, rule = B3/S23
 245bobo$8bo236boo$9boo235bo$8boo$233bo$231boo$232boo15bo$14bo232boo$
