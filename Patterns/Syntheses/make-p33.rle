@@ -1,5 +1,5 @@
 #C Synthesis of p33 oscillator from 68 gliders.
-#C by Jason Summers and Mark Niemiec, 2/2001
+#C By Jason Summers and Mark Niemiec, 2/2001.
 #C Pattern from Jason Summers' "jslife" archive.
 x = 149, y = 149, rule = B3/S23
 32bo$33boo79bo$32boo78boo$113boo$$41bo$42bo$40b3o$$30bobo60bobo$31boo
