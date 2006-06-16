@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.0 (released June 2006)
 
+AKT: Fixed another pasting bug at scale 1:2.
 AKT: Fixed error if Win app is closed while script is running.
 AKT: Fixed problem if Win app is closed when window(s) minimized.
 TGR: Added option to show extra info while hashing.

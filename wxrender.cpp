@@ -386,14 +386,13 @@ void DestroyPasteImage()
 // -----------------------------------------------------------------------------
 
 int PixelsToCells(int pixels) {
-   // convert given # of pixels to corresponding # of cells
-   int mag = viewptr->GetMag();
-   if (mag >= 0) {
-      int cellsize = 1 << mag;
+   // convert given # of screen pixels to corresponding # of cells
+   if (pastemag >= 0) {
+      int cellsize = 1 << pastemag;
       return (pixels + cellsize - 1) / cellsize;
    } else {
-      // mag < 0; no need to worry about overflow
-      return pixels << -mag;
+      // pastemag < 0; no need to worry about overflow
+      return pixels << -pastemag;
    }
 }
 
@@ -479,10 +478,12 @@ void CheckPasteImage(viewport &currview)
             if (pastemag > 0) {
                // make sure pastewd/ht don't have partial cells
                int cellsize = 1 << pastemag;
-               if ((pastewd + 1) % cellsize > 0)
-                  pastewd += cellsize - ((pastewd + 1) % cellsize);
-               if ((pasteht + 1) % cellsize != 0)
-                  pasteht += cellsize - ((pasteht + 1) % cellsize);
+               int gap = 1;                        // gap between cells
+               if (pastemag == 1) gap = 0;         // no gap at scale 1:2
+               if ((pastewd + gap) % cellsize > 0)
+                  pastewd += cellsize - ((pastewd + gap) % cellsize);
+               if ((pasteht + gap) % cellsize != 0)
+                  pasteht += cellsize - ((pasteht + gap) % cellsize);
             }
             cellbox.width = PixelsToCells(pastewd);
             cellbox.height = PixelsToCells(pasteht);
@@ -646,7 +647,7 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
       dc.SetFont(*statusptr->GetStatusFont());
       //dc.SetBackgroundMode(wxSOLID);
       //dc.SetTextBackground(*wxWHITE);
-      dc.SetBackgroundMode(wxTRANSPARENT);   // better if pastergb is white
+      dc.SetBackgroundMode(wxTRANSPARENT);   // better in case pastergb is white
       dc.SetTextForeground(*pastergb);
       const char *pmodestr = GetPasteMode();
       int pmodex = r.x + 2;

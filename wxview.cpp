@@ -107,12 +107,12 @@ bool PatternView::SelectionVisible(wxRect *visrect)
    if (visrect) {
       if (lt.first < 0) lt.first = 0;
       if (lt.second < 0) lt.second = 0;
-      // correct for mag if needed
       if (currview.getmag() > 0) {
+         // move rb to pixel at bottom right corner of cell
          rb.first += (1 << currview.getmag()) - 1;
          rb.second += (1 << currview.getmag()) - 1;
          if (currview.getmag() > 1) {
-            // avoid covering gaps
+            // avoid covering gaps at scale 1:4 and above
             rb.first--;
             rb.second--;
          }
@@ -595,7 +595,8 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked somewhere in viewport
    if (inscript) {
-      return;           // prevent all user interaction???!!!
+      // best to prevent use of mouse while script is running???
+      return;
    }
    
    if (currcurs == curs_pencil) {
@@ -1089,16 +1090,17 @@ void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
    pair<int,int> lt = currview.screenPosOf(pcell.first, pcell.second, curralgo);
    pair<int,int> rb = currview.screenPosOf(right, bottom, curralgo);
 
-   // correct for mag if needed
    if (mag > 0) {
+      // move rb to pixel at bottom right corner of cell
       rb.first += (1 << mag) - 1;
       rb.second += (1 << mag) - 1;
       if (mag > 1) {
-         // avoid covering gaps
+         // avoid covering gaps at scale 1:4 and above
          rb.first--;
          rb.second--;
       }
    }
+
    x = lt.first;
    y = lt.second;
    pastewd = rb.first - lt.first + 1;
@@ -1109,25 +1111,24 @@ void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
    if (pasteht <= 0) pasteht = 1;
    
    rect = wxRect(x, y, pastewd, pasteht);
-   int cellsize = 1 << mag;
    int xoffset, yoffset;
+   int cellsize = 1 << mag;      // only used if mag > 0
+   int gap = 1;                  // ditto
+   if (mag == 1) gap = 0;        // but no gap between cells at scale 1:2
    switch (plocation) {
       case TopLeft:
          break;
       case TopRight:
-         xoffset = mag > 0 ? -(pastewd - cellsize + 1) : -pastewd + 1;
-         if (mag == 1) xoffset++;
+         xoffset = mag > 0 ? -(pastewd - cellsize + gap) : -pastewd + 1;
          rect.Offset(xoffset, 0);
          break;
       case BottomRight:
-         xoffset = mag > 0 ? -(pastewd - cellsize + 1) : -pastewd + 1;
-         yoffset = mag > 0 ? -(pasteht - cellsize + 1) : -pasteht + 1;
-         if (mag == 1) { xoffset++; yoffset++; }
+         xoffset = mag > 0 ? -(pastewd - cellsize + gap) : -pastewd + 1;
+         yoffset = mag > 0 ? -(pasteht - cellsize + gap) : -pasteht + 1;
          rect.Offset(xoffset, yoffset);
          break;
       case BottomLeft:
-         yoffset = mag > 0 ? -(pasteht - cellsize + 1) : -pasteht + 1;
-         if (mag == 1) yoffset++;
+         yoffset = mag > 0 ? -(pasteht - cellsize + gap) : -pasteht + 1;
          rect.Offset(0, yoffset);
          break;
       case Middle:
@@ -1204,7 +1205,6 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                pasterect = newrect;
                Refresh(false, NULL);
                // don't update immediately
-               // Update();
             }
          } else {
             // mouse outside viewport so erase old pasterect if necessary
@@ -1212,7 +1212,6 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                pasterect = wxRect(-1,-1,0,0);
                Refresh(false, NULL);
                // don't update immediately
-               // Update();
             }
          }
          wxMilliSleep(10);             // don't hog CPU
