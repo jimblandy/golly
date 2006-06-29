@@ -31,6 +31,7 @@ class rect(list):
          self.bottom = self.top  + self.ht - 1
       else:
          raise TypeError("rect arg must be [] or [x,y,wd,ht]")
+      list.__init__(self, R)
       return None
 
 # --------------------------------------------------------------------

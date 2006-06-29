@@ -7,6 +7,10 @@ AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 
+Changes in version 1.1 (released ???!!!)
+
+AKT: Fixed rect bug in glife/__init__.py (thanks to Dan Hoey).
+
 Changes in version 1.0 (released June 2006)
 
 AKT: Fixed another pasting bug at scale 1:2.
