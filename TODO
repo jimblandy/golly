@@ -20,8 +20,10 @@ T - Improve batchmode.
 
 - Support toroidal universes (see LifeLab).
 
-- Support reading/writing of PNG/JPEG/GIF/TIFF files.  When reading,
-  use wxImage to convert graphic to b&w bitmap.
+- Add note(str) command to display multi-line text (without a beep).
+  Add info() command to display current pattern info.
+  Add help(html-file) to open the help window and display contents of
+  given html file (not necessarily in Help folder).
 
 - Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
   avoid wxToolBar and implement our own simple tool bar stuff.
@@ -70,6 +72,8 @@ User suggestions:
   on pattern in navigation panel?
 - Provide a way to click-and-drag a selection to move it around.
 - Make page and arrow scrolling amounts configurable (in Prefs > View).
+- Add a getvisrect() script command that returns current viewport rect
+  and a setvisrect(rect) command to change viewport size and location.
 
 [H Koenig]
 - Mulitiple undo/redo.

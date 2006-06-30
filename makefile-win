@@ -56,12 +56,7 @@ WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxrule.obj \
 
 ### Conditionally set variables: ###
 
-!if "$(USE_GUI)" == "0"
-PORTNAME = base
-!endif
-!if "$(USE_GUI)" == "1"
 PORTNAME = msw
-!endif
 !if "$(BUILD)" == "debug" && "$(DEBUG_FLAG)" == "default"
 WXDEBUGFLAG = d
 !endif
@@ -259,18 +254,13 @@ __WXLIB_BASE_p = \
 __WXLIB_MONO_p = \
 	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE_NODOT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
 !endif
-!if "$(USE_GUI)" == "1"
-__LIB_TIFF_p = wxtiff$(WXDEBUGFLAG).lib
-!endif
-!if "$(USE_GUI)" == "1"
-__LIB_JPEG_p = wxjpeg$(WXDEBUGFLAG).lib
-!endif
-!if "$(USE_GUI)" == "1"
-__LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
-!endif
 !if "$(MSLU)" == "1"
 __UNICOWS_LIB_p = unicows.lib
 !endif
+
+__LIB_TIFF_p = wxtiff$(WXDEBUGFLAG).lib
+###__LIB_JPEG_p = wxjpeg$(WXDEBUGFLAG).lib
+__LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
 
 ### Targets: ###
 
@@ -288,7 +278,7 @@ clean:
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	link /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) \
 	/LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" /SUBSYSTEM:WINDOWS @<<
-	$(BASEOBJ) $(WXOBJ) golly.res $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
+	$(BASEOBJ) $(WXOBJ) golly.res $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
 <<
 
 golly.res: golly.rc

@@ -267,9 +267,9 @@ bool GollyApp::OnInit()
 
    // allow our .html files to include common graphic formats;
    // note that wxBMPHandler is always installed
-   wxImage::AddHandler(new wxPNGHandler);
    wxImage::AddHandler(new wxGIFHandler);
-   wxImage::AddHandler(new wxJPEGHandler);
+   wxImage::AddHandler(new wxPNGHandler);
+   wxImage::AddHandler(new wxTIFFHandler);
    
    // get main window location and other user preferences
    GetPrefs();

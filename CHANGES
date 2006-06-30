@@ -7,8 +7,9 @@ AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 
-Changes in version 1.1 (released ???!!!)
+Changes in version 1.1 (or 1.0.1??? released !!!)
 
+AKT: Golly can read BMP/GIF/PNG/TIFF files and paste bitmap data.
 AKT: Fixed rect bug in glife/__init__.py (thanks to Dan Hoey).
 
 Changes in version 1.0 (released June 2006)

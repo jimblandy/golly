@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dataobj.h"    // for wxTextDataObject
 #include "wx/splitter.h"   // for wxSplitterWindow
 #include "wx/dirctrl.h"    // for wxGenericDirCtrl
+#include "wx/image.h"      // for wxImage
 
 #ifdef __WXMSW__
    // tool bar bitmaps are loaded via .rc file
@@ -376,6 +377,10 @@ bool MainFrame::ClipboardHasText()
       bool hastext = false;
       if ( wxTheClipboard->Open() ) {
          hastext = wxTheClipboard->IsSupported( wxDF_TEXT );
+         if (!hastext) {
+            // we'll try to convert bitmap data to text pattern
+            hastext = wxTheClipboard->IsSupported( wxDF_BITMAP );
+         }
          wxTheClipboard->Close();
       }
       return hastext;
@@ -716,6 +721,46 @@ void MainFrame::NewPattern(const char *title)
    UpdateEverything();
 }
 
+bool MainFrame::LoadImage()
+{
+   wxString fname = wxT(currfile);
+   wxString ext = fname.AfterLast(wxT('.'));
+   
+   // supported extensions match image handlers added in GollyApp::OnInit()
+   if ( ext.IsSameAs(wxT("bmp"),false) ||
+        ext.IsSameAs(wxT("gif"),false) ||
+        ext.IsSameAs(wxT("png"),false) ||
+        ext.IsSameAs(wxT("tif"),false) ||
+        ext.IsSameAs(wxT("tiff"),false) ) {
+      wxImage image;
+      if ( image.LoadFile(fname) ) {
+         curralgo->setrule("B3/S23");
+         
+         int wd = image.GetWidth();
+         int ht = image.GetHeight();
+         unsigned char *data = image.GetData();
+         int x, y;
+         for (y = 0; y < ht; y++)
+            for (x = 0; x < wd; x++) {
+               long pos = (y * wd + x) * 3;
+               if ( data[pos  ] < 255 ||
+                    data[pos+1] < 255 ||
+                    data[pos+2] < 255 ) {
+                  // treat any non-white pixel as a live cell
+                  curralgo->setcell(x, y, 1);
+               }
+            }
+         
+         curralgo->endofpattern();
+      } else {
+         Warning("Could not load image from file!");
+      }
+      return true;
+   } else {
+      return false;
+   }
+}
+
 void MainFrame::LoadPattern(const char *newtitle)
 {
    // don't use initrule in future NewPattern calls
@@ -753,24 +798,28 @@ void MainFrame::LoadPattern(const char *newtitle)
       MySetTitle(wtitle);
    }
 
-   const char *err = readpattern(currfile, *curralgo);
-   if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
-      hashing = true;
-      statusptr->SetMessage("Hashing has been turned on for macrocell format.");
-      // update all of status bar so we don't see different colored lines
-      UpdateStatus();
-      CreateUniverse();
-      err = readpattern(currfile, *curralgo);
-   } else if (global_liferules.hasB0notS8 && hashing && newtitle) {
-      hashing = false;
-      statusptr->SetMessage(B0message);
-      // update all of status bar so we don't see different colored lines
-      UpdateStatus();
-      CreateUniverse();
-      err = readpattern(currfile, *curralgo);
+   if (LoadImage()) {
+      viewptr->nopattupdate = false;
+   } else {
+      const char *err = readpattern(currfile, *curralgo);
+      if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
+         hashing = true;
+         statusptr->SetMessage("Hashing has been turned on for macrocell format.");
+         // update all of status bar so we don't see different colored lines
+         UpdateStatus();
+         CreateUniverse();
+         err = readpattern(currfile, *curralgo);
+      } else if (global_liferules.hasB0notS8 && hashing && newtitle) {
+         hashing = false;
+         statusptr->SetMessage(B0message);
+         // update all of status bar so we don't see different colored lines
+         UpdateStatus();
+         CreateUniverse();
+         err = readpattern(currfile, *curralgo);
+      }
+      viewptr->nopattupdate = false;
+      if (err) Warning(err);
    }
-   viewptr->nopattupdate = false;
-   if (err) Warning(err);
 
    if (newtitle) {
       // show full window title after readpattern has set rule
@@ -943,7 +992,11 @@ void MainFrame::OpenPattern()
                         _T("|RLE (*.rle)|*.rle")
                         _T("|Life 1.05/1.06 (*.lif)|*.lif")
                         _T("|Macrocell (*.mc)|*.mc")
-                        _T("|Gzip (*.gz)|*.gz"),
+                        _T("|Gzip (*.gz)|*.gz")
+                        _T("|BMP (*.bmp)|*.bmp")
+                        _T("|GIF (*.gif)|*.gif")
+                        _T("|PNG (*.png)|*.png")
+                        _T("|TIFF (*.tiff;*.tif)|*.tiff;*.tif"),
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
@@ -1004,27 +1057,68 @@ bool MainFrame::CopyTextToClipboard(wxString &text)
    return result;
 }
 
-bool MainFrame::GetTextFromClipboard(wxTextDataObject *data)
+bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
 {
    bool gotdata = false;
+   
    if ( wxTheClipboard->Open() ) {
       if ( wxTheClipboard->IsSupported( wxDF_TEXT ) ) {
-         gotdata = wxTheClipboard->GetData( *data );
+         gotdata = wxTheClipboard->GetData( *textdata );
          if (!gotdata) {
-            statusptr->ErrorMessage("Could not get clipboard data!");
+            statusptr->ErrorMessage("Could not get clipboard text!");
          }
+
+      } else if ( wxTheClipboard->IsSupported( wxDF_BITMAP ) ) {
+         wxBitmapDataObject bmapdata;
+         gotdata = wxTheClipboard->GetData( bmapdata );
+         if (gotdata) {
+            // convert bitmap data to text data
+            wxString str;
+            wxBitmap bmap = bmapdata.GetBitmap();
+            wxImage image = bmap.ConvertToImage();
+            if (image.Ok()) {
+               int wd = image.GetWidth();
+               int ht = image.GetHeight();
+               unsigned char *imgdata = image.GetData();
+               int x, y;
+               for (y = 0; y < ht; y++) {
+                  for (x = 0; x < wd; x++) {
+                     long pos = (y * wd + x) * 3;
+                     if ( imgdata[pos  ] < 255 ||
+                          imgdata[pos+1] < 255 ||
+                          imgdata[pos+2] < 255 ) {
+                        // non-white pixel is a live cell
+                        str += 'o';
+                     } else {
+                        // white pixel is a dead cell
+                        str += '.';
+                     }
+                  }
+                  str += '\n';
+               }
+               textdata->SetText(str);
+            } else {
+               statusptr->ErrorMessage("Could not convert clipboard bitmap!");
+               gotdata = false;
+            }
+         } else {
+            statusptr->ErrorMessage("Could not get clipboard bitmap!");
+         }
+
       } else {
          #ifdef __WXX11__
             statusptr->ErrorMessage("Sorry, but there is no clipboard support for X11.");
             // do X11 apps like xlife or fontforge have clipboard support???!!!
          #else
-            statusptr->ErrorMessage("No text in clipboard.");
+            statusptr->ErrorMessage("No data in clipboard.");
          #endif
       }
       wxTheClipboard->Close();
+
    } else {
       statusptr->ErrorMessage("Could not open clipboard!");
    }
+   
    return gotdata;
 }
 

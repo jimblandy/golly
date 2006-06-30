@@ -76,7 +76,7 @@ __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_cor
 __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_EXPAT_p = -lwxexpat$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
-__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
+###__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 ### Targets: ###
@@ -92,7 +92,7 @@ clean:
 
 golly.bin: $(OBJFILES)
 	$(CXXC) -o $@ $(OBJFILES) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
-   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) \
+   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LINK)
 
 $(APP_NAME).app/Contents/PkgInfo: golly.bin Info.plist.in $(ICON_FILE)

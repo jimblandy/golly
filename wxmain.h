@@ -123,6 +123,7 @@ private:
    void OnClose(wxCloseEvent& event);
 
    // file functions
+   bool LoadImage();
    void LoadPattern(const char *newtitle);
    void MySetTitle(const char *title);
    void SetCurrentFile(const char *path);
