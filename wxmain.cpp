@@ -736,17 +736,22 @@ bool MainFrame::LoadImage()
       if ( image.LoadFile(fname) ) {
          curralgo->setrule("B3/S23");
          
+         unsigned char maskr, maskg, maskb;
+         bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
          int wd = image.GetWidth();
          int ht = image.GetHeight();
-         unsigned char *data = image.GetData();
+         unsigned char *idata = image.GetData();
          int x, y;
          for (y = 0; y < ht; y++)
             for (x = 0; x < wd; x++) {
                long pos = (y * wd + x) * 3;
-               if ( data[pos  ] < 255 ||
-                    data[pos+1] < 255 ||
-                    data[pos+2] < 255 ) {
-                  // treat any non-white pixel as a live cell
+               unsigned char r = idata[pos];
+               unsigned char g = idata[pos+1];
+               unsigned char b = idata[pos+2];
+               if ( hasmask && r == maskr && g == maskg && b == maskb ) {
+                  // treat transparent pixel as a dead cell
+               } else if ( r < 255 || g < 255 || b < 255 ) {
+                  // treat non-white pixel as a live cell
                   curralgo->setcell(x, y, 1);
                }
             }
@@ -1077,16 +1082,15 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
             wxBitmap bmap = bmapdata.GetBitmap();
             wxImage image = bmap.ConvertToImage();
             if (image.Ok()) {
+               // no need to check for mask???
                int wd = image.GetWidth();
                int ht = image.GetHeight();
-               unsigned char *imgdata = image.GetData();
+               unsigned char *idata = image.GetData();
                int x, y;
                for (y = 0; y < ht; y++) {
                   for (x = 0; x < wd; x++) {
                      long pos = (y * wd + x) * 3;
-                     if ( imgdata[pos  ] < 255 ||
-                          imgdata[pos+1] < 255 ||
-                          imgdata[pos+2] < 255 ) {
+                     if ( idata[pos] < 255 || idata[pos+1] < 255 || idata[pos+2] < 255 ) {
                         // non-white pixel is a live cell
                         str += 'o';
                      } else {
