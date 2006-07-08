@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.1 (or 1.0.1??? released !!!)
 
+AKT: Script path is only added to Python's sys.path once.
 AKT: Golly can read BMP/GIF/PNG/TIFF files and paste bitmap data.
 AKT: Fixed rect bug in glife/__init__.py (thanks to Dan Hoey).
 

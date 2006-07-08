@@ -2258,6 +2258,14 @@ bool InitPython()
             ) < 0
          ) Warning("StderrCatcher code failed!");
 
+      // build absolute path to Golly's Scripts folder and add to Python's
+      // import search list so scripts can import glife from anywhere
+      wxString scriptsdir = gollyloc + wxT("Scripts");
+      scriptsdir.Replace("\\", "\\\\");
+      wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
+      if ( PyRun_SimpleString(command.c_str()) < 0 )
+         Warning("Failed to append Scripts path!");
+
       // nicer to reload all modules in case changes were made by user;
       // code comes from http://pyunit.sourceforge.net/notes/reloading.html
       /* unfortunately it causes an AttributeError!!!
@@ -2314,14 +2322,6 @@ bool InitPython()
 
 // -----------------------------------------------------------------------------
 
-void CleanupPython()
-{
-   // no longer call Py_Finalize here
-   // Py_Finalize();
-}
-
-// -----------------------------------------------------------------------------
-
 void ExecuteScript(const wxString &filename)
 {
    if (!InitPython()) return;
@@ -2338,21 +2338,12 @@ void ExecuteScript(const wxString &filename)
    // to avoid "\a" being treated as escape char
    fname.Replace("\\", "\\\\");
 
-   // build absolute path to Golly's Scripts folder
-   wxString scriptsdir = gollyloc + wxT("Scripts");
-   scriptsdir.Replace("\\", "\\\\");
-
-   // use PyRun_SimpleString to add Golly's Scripts folder to Python's
-   // import search list (so scripts anywhere can do "from glife import *")
-   // and then execute the given script
-   wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
-   command += wxT(" ; execfile('") + fname + wxT("')");
+   // execute the given script
+   wxString command = wxT("execfile('") + fname + wxT("')");
    PyRun_SimpleString(command.c_str());
 
    // note that PyRun_SimpleString returns -1 if an exception occurred;
    // the error message (in pyerror) is checked at the end of RunScript
-
-   CleanupPython();
 }
 
 // -----------------------------------------------------------------------------

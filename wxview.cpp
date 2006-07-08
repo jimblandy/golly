@@ -595,7 +595,7 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked somewhere in viewport
    if (inscript) {
-      // best to prevent use of mouse while script is running???
+      // best to prevent mouse use while script is running???
       return;
    }
    
@@ -605,7 +605,7 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          return;
       }
       if (currview.getmag() < 0) {
-         statusptr->ErrorMessage("Drawing is not allowed if more than 1 cell per pixel.");
+         statusptr->ErrorMessage("Drawing is not allowed at scales greater than 1 cell per pixel.");
          return;
       }
       StartDrawingCells(x, y);
