@@ -63,5 +63,6 @@ extern MainFrame *mainptr;       // main window
 extern PatternView *viewptr;     // viewport child window
 extern StatusBar *statusptr;     // status bar child window
 extern lifealgo *curralgo;       // current universe (qlife or hlife)
+extern wxStopWatch *stopwatch;   // global stopwatch (started in OnInit)
 
 #endif

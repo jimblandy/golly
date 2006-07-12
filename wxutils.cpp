@@ -118,7 +118,7 @@ void BeginProgress(const char *dlgtitle) {
       progdlg = NULL;
    }
    strncpy(progtitle, dlgtitle, sizeof(progtitle));
-   progstart = wxGetElapsedTime(false);
+   progstart = stopwatch->Time();
    // let user know they'll have to wait
    #ifdef __WXMAC__
       wxSetCursor(*wxHOURGLASS_CURSOR);
@@ -129,7 +129,7 @@ void BeginProgress(const char *dlgtitle) {
 // -----------------------------------------------------------------------------
 
 bool AbortProgress(double fraction_done, const char *newmsg) {
-   long t = wxGetElapsedTime(false);
+   long t = stopwatch->Time();
    if (progdlg) {
       if (t < prognext) return false;
       #ifdef __WXX11__

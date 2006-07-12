@@ -312,7 +312,7 @@ void HelpFrame::OnActivate(wxActivateEvent& event)
 {
    if ( event.GetActive() ) {
       // help window is being activated
-      whenactive = wxGetElapsedTime(false);
+      whenactive = stopwatch->Time();
    }
    event.Skip();
 }
@@ -440,7 +440,7 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell)
 void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
 {
    #ifdef __WXMAC__
-      if ( wxGetElapsedTime(false) - whenactive < 500 ) {
+      if ( stopwatch->Time() - whenactive < 500 ) {
          // avoid problem on Mac:
          // ignore click in link if the help window was in the background;
          // this isn't fail safe because OnLinkClicked is only called AFTER

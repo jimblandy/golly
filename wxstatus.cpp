@@ -422,9 +422,7 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    #endif
 
    wxRect updaterect = GetUpdateRegion().GetBox();
-   dc.BeginDrawing();
    DrawStatusBar(dc, updaterect);
-   dc.EndDrawing();
 }
 
 // -----------------------------------------------------------------------------
@@ -516,7 +514,6 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    
    // determine horizontal offsets for info in status bar
    wxClientDC dc(this);
-   dc.BeginDrawing();
    int textwd, textht;
    int mingap = 10;
    SetStatusFont(dc);
@@ -539,7 +536,6 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    h_x_ex = h_gen + textwd;
    dc.GetTextExtent("Y = ", &textwd, &textht);
    h_y_ex = h_gen + textwd;
-   dc.EndDrawing();
 
    // status bar is initially visible
    statusht = showexact ? STATUS_EXHT : STATUS_HT;

@@ -892,16 +892,15 @@ const char* MainFrame::GetBaseName(const char *fullpath)
 void MainFrame::SetCurrentFile(const char *path)
 {
    #ifdef __WXMAC__
-      // copy given path to currfile but with UTF8 encoding so fopen will work
-      CFURLRef url = CFURLCreateWithBytes(NULL,
-                                          (const UInt8*)path,
-                                          strlen(path),
-                                          kCFStringEncodingMacRoman,
-                                          NULL);
-      CFStringRef str = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-      CFRelease(url);
-      CFStringGetCString(str, currfile, sizeof(currfile), kCFStringEncodingUTF8);
-      CFRelease(str);
+      // copy given path to currfile but as decomposed UTF8 so fopen will work
+      wxString fpath = wxT(path);
+      #if wxCHECK_VERSION(2, 7, 0)
+         strncpy(currfile, fpath.fn_str(), sizeof(currfile));
+      #else
+         // wxMac 2.6.x or older: conversion doesn't always work on OS 10.4
+         fpath = wxString( fpath.wc_str(wxConvLocal), wxConvUTF8 );
+         strncpy(currfile, fpath.c_str(), sizeof(currfile));
+      #endif
    #else
       strncpy(currfile, path, sizeof(currfile));
    #endif
@@ -1711,7 +1710,7 @@ void MainFrame::GeneratePattern()
    }
 
    // for DisplayTimingInfo
-   starttime = wxGetElapsedTime(false);
+   starttime = stopwatch->Time();
    startgen = curralgo->getGeneration().todouble();
    
    generating = true;               // avoid recursion
@@ -1720,14 +1719,14 @@ void MainFrame::GeneratePattern()
    UpdateUserInterface(IsActive());
    
    if (warp < 0) {
-      whentosee = wxGetElapsedTime(false) + statusptr->GetCurrentDelay();
+      whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
    }
    int hypdown = 64;
 
    while (true) {
       if (warp < 0) {
          // slow down by only doing one gen every GetCurrentDelay() millisecs
-         long currmsec = wxGetElapsedTime(false);
+         long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
             curralgo->step();
             if (autofit) viewptr->FitInView(0);
@@ -1761,7 +1760,7 @@ void MainFrame::GeneratePattern()
    generating = false;
 
    // for DisplayTimingInfo
-   endtime = wxGetElapsedTime(false);
+   endtime = stopwatch->Time();
    endgen = curralgo->getGeneration().todouble();
    
    ChangeStopToGo();
@@ -1780,7 +1779,7 @@ void MainFrame::DisplayTimingInfo()
 {
    if (viewptr->waitingforclick) return;
    if (generating) {
-      endtime = wxGetElapsedTime(false);
+      endtime = stopwatch->Time();
       endgen = curralgo->getGeneration().todouble();
    }
    if (endtime > starttime) {
@@ -2847,7 +2846,23 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
    
    size_t numfiles = filenames.GetCount();
    for ( size_t n = 0; n < numfiles; n++ ) {
-      mainptr->OpenFile(filenames[n]);
+      #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+         // fix wxMac CVS HEAD bug???!!! filenames seem to be in decomposed UTF8
+         // so convert back to system encoding for passing to OpenFile
+         char path[PATH_MAX];
+         CFURLRef url = CFURLCreateWithBytes(NULL,
+                                             (const UInt8*)filenames[n].c_str(),
+                                             strlen(filenames[n].c_str()),
+                                             kCFStringEncodingUTF8,
+                                             NULL);
+         CFStringRef str = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+         CFStringGetCString(str, path, sizeof(path), CFStringGetSystemEncoding());
+         CFRelease(url);
+         CFRelease(str);
+         mainptr->OpenFile(path);
+      #else
+         mainptr->OpenFile(filenames[n]);
+      #endif
    }
 
    #ifdef __WXMAC__

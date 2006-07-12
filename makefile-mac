@@ -5,15 +5,16 @@
 # ../configure --with-mac --enable-universal_binary --disable-shared
 # make
 #
-# If necessary, change WX_RELEASE to a newer version (eg. 2.7).
+# If necessary, change WX_RELEASE to your wxWidgets version.
 # Change WX_DIR to where you installed wxWidgets and
-# chANGE BUILD_DIR to where you built the wx libraries.
+# change BUILD_DIR to where you built the wx libraries.
 
-WX_RELEASE = 2.6
-WX_DIR = /HD/wxWidgets/wxMac-2.6.3
+WX_RELEASE = 2.7
+WX_DIR = /HD/wxWidgets/CVS-HEAD/wxWidgets
 BUILD_DIR = $(WX_DIR)/build-osx
+
 APP_NAME = Golly
-APP_VERSION = 1.0
+APP_VERSION = 1.1
 COPYRIGHT = 2006 The Golly Gang
 BUNDLE_ID = net.sourceforge.golly
 ICON_FILE = app.icns
@@ -22,7 +23,13 @@ ICON_FILE = app.icns
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 # following python command doesn't generate correct info on OS 10.4!!!
 # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
-PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework Python -framework CoreServices -framework Foundation
+PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
+   -framework Foundation -framework Python
+
+# use -F/Library/Frameworks to force linking against newer Python, but it would
+# probably cause app to fail on systems that don't have that Python installed
+# PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
+#   -framework Foundation -F/Library/Frameworks -framework Python
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -41,7 +48,8 @@ CXXC = g++
 ### bk-deps script can be used to create *.d files containing all dependences
 ### CXXC = $(BUILD_DIR)/bk-deps g++
 
-CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -I${BUILD_DIR}/lib/wx/include/mac-ansi-release-static-2.6 \
+CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA \
+   -I${BUILD_DIR}/lib/wx/include/mac-ansi-release-static-$(WX_RELEASE) \
    -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
    -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
 
@@ -168,6 +176,7 @@ wxgolly.h wxview.h wxmain.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
+Help/about.html \
 bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h

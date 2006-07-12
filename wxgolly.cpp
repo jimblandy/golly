@@ -76,6 +76,7 @@ MainFrame *mainptr = NULL;       // main window
 PatternView *viewptr = NULL;     // viewport child window (in main window)
 StatusBar *statusptr = NULL;     // status bar child window (in main window)
 lifealgo *curralgo = NULL;       // current life algorithm (qlife or hlife)
+wxStopWatch *stopwatch;          // global stopwatch
 
 // -----------------------------------------------------------------------------
 
@@ -127,11 +128,11 @@ void CallYield()
 int wx_poll::checkevents()
 {
    #ifdef __WXMSW__
-      // on Windows wxGetElapsedTime has a higher overhead than Yield
+      // on Windows it seems that Time has a higher overhead than Yield
       CallYield();
    #else
       // on Mac/Linux it is much faster to avoid calling Yield too often
-      long t = wxGetElapsedTime(false);
+      long t = stopwatch->Time();
       if (t > nextcheck) {
          nextcheck = t + 100;        // 10 times per sec
          #ifdef __WXX11__
@@ -243,6 +244,9 @@ bool GollyApp::OnInit()
 {
    SetAppName(_("Golly"));    // for use in Warning/Fatal dialogs
 
+   // create a stopwatch so we can use Time() to get elapsed millisecs
+   stopwatch = new wxStopWatch();
+
    #ifdef __WXMAC__
       // prevent rectangle animation when windows open/close
       wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
@@ -261,9 +265,6 @@ bool GollyApp::OnInit()
 
    // let non-wx modules call Fatal, Warning, BeginProgress, etc
    lifeerrors::seterrorhandler(&wxerrhandler);
-
-   // start timer so we can use wxGetElapsedTime(false) to get elapsed millisecs
-   wxStartTimer();
 
    // allow our .html files to include common graphic formats;
    // note that wxBMPHandler is always installed

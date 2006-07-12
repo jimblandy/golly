@@ -270,13 +270,15 @@ void RuleDialog::UpdateName()
    }
    if (newindex >= 0) {
       // matching rule found so remove "UNNAMED" item if it exists
-      if ( namechoice->GetCount() > (int) namedrules.GetCount() ) {
+      // use (int) twice to avoid warnings on wx 2.6.x/2.7
+      if ( (int) namechoice->GetCount() > (int) namedrules.GetCount() ) {
          namechoice->Delete( namechoice->GetCount() - 1 );
       }
    } else {
       // no match found so use index of "UNNAMED" item,
       // appending it if it doesn't exist
-      if ( namechoice->GetCount() == (int) namedrules.GetCount() ) {
+      // use (int) twice to avoid warnings on wx 2.6.x/2.7
+      if ( (int) namechoice->GetCount() == (int) namedrules.GetCount() ) {
          namechoice->Append("UNNAMED");
       }
       newindex = namechoice->GetCount() - 1;
@@ -306,7 +308,8 @@ void RuleDialog::OnChooseName(wxCommandEvent& WXUNUSED(event))
       return;
    } else {
       // remove "UNNAMED" item if it exists
-      if ( namechoice->GetCount() > (int) namedrules.GetCount() ) {
+      // use (int) twice to avoid warnings on wx 2.6.x/2.7
+      if ( (int) namechoice->GetCount() > (int) namedrules.GetCount() ) {
          namechoice->Delete( namechoice->GetCount() - 1 );
       }
    }

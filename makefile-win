@@ -19,7 +19,7 @@ WXDIR = c:\wxWidgets
 PYTHON_DIR = c:\Python24
 
 ### Variables: ###
-VERSION = 1.0
+VERSION = 1.1
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife \
@@ -343,6 +343,7 @@ wxgolly.h wxview.h wxmain.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxutils.cpp
 
 $(OBJDIR)/wxprefs.obj: wxprefs.cpp wxprefs.h \
+Help/about.html \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp

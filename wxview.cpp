@@ -197,13 +197,11 @@ void PatternView::StartDrawingCells(int x, int y)
    curralgo->setcell(cellx, celly, drawstate);
 
    wxClientDC dc(this);
-   dc.BeginDrawing();
    dc.SetPen(*wxTRANSPARENT_PEN);
    dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush);
    DrawOneCell(cellx, celly, dc);
    dc.SetBrush(wxNullBrush);        // restore brush
    dc.SetPen(wxNullPen);            // restore pen
-   dc.EndDrawing();
    
    ShowDrawing();
 
@@ -224,7 +222,6 @@ void PatternView::DrawCells(int x, int y)
    int newy = cellpos.second.toint();
    if ( newx != cellx || newy != celly ) {
       wxClientDC dc(this);
-      dc.BeginDrawing();
       dc.SetPen(*wxTRANSPARENT_PEN);
       dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush);
 
@@ -286,7 +283,6 @@ void PatternView::DrawCells(int x, int y)
       
       dc.SetBrush(wxNullBrush);     // restore brush
       dc.SetPen(wxNullPen);         // restore pen
-      dc.EndDrawing();
       
       if ( numchanged > 0 ) ShowDrawing();
    }
@@ -2494,9 +2490,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    #ifdef __WXMAC__
       // windows on Mac OS X are automatically buffered
       wxPaintDC dc(this);
-      dc.BeginDrawing();
       DrawView(dc, currview);
-      dc.EndDrawing();
    #else
       if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ) {
          // use wxWidgets buffering to avoid flicker
@@ -2509,14 +2503,10 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
             viewbitmapht = ht;
          }
          wxBufferedPaintDC dc(this, *viewbitmap);
-         dc.BeginDrawing();
          DrawView(dc, currview);
-         dc.EndDrawing();
       } else {
          wxPaintDC dc(this);
-         dc.BeginDrawing();
          DrawView(dc, currview);
-         dc.EndDrawing();
       }
    #endif
 }

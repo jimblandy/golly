@@ -2322,24 +2322,34 @@ bool InitPython()
 
 // -----------------------------------------------------------------------------
 
-void ExecuteScript(const wxString &filename)
+void ExecuteScript(const wxString &filepath)
 {
    if (!InitPython()) return;
 
-   wxString fname = filename;
+   if ( !wxFileName::FileExists(filepath) ) {
+      wxString err = wxT("The script file does not exist:\n") + filepath;
+      Warning(err.c_str());
+      return;
+   }
+
+   wxString fpath = filepath;
 
    #ifdef __WXMAC__
-      // convert fname from MacRoman to UTF8 so execfile can open names with 8-bit chars;
-      // may not be needed after switching to CVS HEAD???!!!
-      fname = wxString( fname.wc_str(wxConvLocal), wxConvUTF8 );
+      // convert fpath to decomposed UTF8 so execfile can open names with non-ASCII chars
+      #if wxCHECK_VERSION(2, 7, 0)
+         fpath = wxString( filepath.fn_str() );
+      #else
+         // wxMac 2.6.x or older
+         fpath = wxString( fpath.wc_str(wxConvLocal), wxConvUTF8 );
+      #endif
    #endif
 
-   // if filename contains backslashes then we must convert them to "\\"
+   // if file name contains backslashes then we must convert them to "\\"
    // to avoid "\a" being treated as escape char
-   fname.Replace("\\", "\\\\");
+   fpath.Replace("\\", "\\\\");
 
    // execute the given script
-   wxString command = wxT("execfile('") + fname + wxT("')");
+   wxString command = wxT("execfile('") + fpath + wxT("')");
    PyRun_SimpleString(command.c_str());
 
    // note that PyRun_SimpleString returns -1 if an exception occurred;
@@ -2408,14 +2418,9 @@ void RunScript(const char* filename)
    
    wxGetApp().PollerReset();
 
-   if ( !wxFileName::FileExists(fullname.GetFullPath()) ) {
-      wxString err = wxT("The script file does not exist:\n") + fullname.GetFullPath();
-      Warning(err.c_str());
-   } else {
-      inscript = true;
-      ExecuteScript( fullname.GetFullPath() );
-      inscript = false;
-   }
+   inscript = true;
+   ExecuteScript( fullname.GetFullPath() );
+   inscript = false;
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollyloc);

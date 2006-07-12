@@ -12,6 +12,7 @@
 <dd><a href="#lists"><b>Cell lists and rectangle lists</b></a></dd>
 <dd><a href="#glife"><b>Using the glife package</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
+<dd><a href="#macpython"><b>Universal Python on Mac OS X</b></a></dd>
 <dd><a href="#pycopy"><b>Python copyright notice</b></a></dd>
 
 </p>
@@ -879,6 +880,41 @@ The escape key check to abort a running script is not done by Python but
 by each Golly scripting command.  This means that very long Python computations
 should call an occasional "no-op" command like <b>run(0)</b> to allow the
 script to be aborted in a timely manner.
+
+
+<p><a name="macpython">
+&nbsp;<br>
+<font size=+1><b>Universal Python on Mac OS X</b></font>
+
+<p>
+Even though Apple supply Python with OS X, it is usually not the latest version.
+If you have an Intel Mac then it's a good idea to download and install
+Universal Python 2.4 from
+<a href="http://pythonmac.org/packages/py24-fat/">pythonmac.org</a>.
+This will install Python 2.4 in /Library/Frameworks.
+However, Golly is linked against the Python 2.3 framework stored in
+/System/Library/Frameworks and won't use the newer Python.
+Fortunately there is a simple solution that forces Golly to load the Python 2.4
+framework.  Quit Golly, open Terminal and do this command:
+<p>
+<dd><b>install_name_tool -change \</b></dd>
+<dd><b>/System/Library/Frameworks/Python.framework/Versions/2.3/Python \</b></dd>
+<dd><b>/Library/Frameworks/Python.framework/Versions/2.4/Python \</b></dd>
+<dd><b>/path/to/Golly/folder/Golly.app/Contents/MacOS/Golly</b></dd>
+</p>
+<p>
+If you ever need to switch back to the system-supplied Python then just
+run the command again with the framework paths swapped.
+To verify which version of Python Golly is using, copy the following code,
+start up Golly and select <b>Run Clipboard</b> from the File menu:
+<p>
+<dd><b>import golly as g</b></dd>
+<dd><b>import sys</b></dd>
+<dd><b>g.warn(sys.version)</b></dd>
+</p>
+<p>
+On an Intel Mac your scripts will run significantly faster when using
+Universal Python.
 
 
 <p><a name="pycopy">
