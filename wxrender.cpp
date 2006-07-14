@@ -22,6 +22,84 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
+/* -------------------- Some notes on Golly's display code ---------------------
+
+The rectangular area used to display patterns is called the viewport.
+It's represented by a window of class PatternView defined in wxview.h.
+The global viewptr points to a PatternView window which is created near
+the bottom of MainFrame::MainFrame() in wxmain.cpp.
+
+Nearly all drawing in the viewport is done in this module.  The only other
+places are in wxview.cpp: PatternView::StartDrawingCells() is called when
+the pencil cursor is used to click a cell, and PatternView::DrawCells() is
+called while the user drags the pencil cursor around to draw many cells.
+These exceptions were done for performance reasons -- using update events
+to do the drawing was just too slow.
+
+The main rendering routine is DrawView() -- see the end of this module.
+DrawView() is called from PatternView::OnPaint(), the update event handler
+for the viewport window.  Update events are generated automatically by the
+wxWidgets event dispatcher, or they can be generated manually by calling
+MainFrame::UpdateEverything() or MainFrame::UpdatePatternAndStatus().
+
+DrawView() does the following tasks:
+
+- Calls curralgo->draw() to draw the current pattern.  It passes in
+  renderer, an instance of wx_render (derived from liferender) which
+  has 2 methods: killrect() draws a rectangular area of dead cells,
+  and blit() draws a monochrome bitmap with at least one live cell.
+  
+  Note that curralgo->draw() does all the hard work of figuring out
+  which parts of the viewport are dead and building all the bitmaps
+  for the live parts.  The bitmaps contain suitably shrunken images
+  when the scale is < 1:1 (ie. mag < 0).  At scales 1:2 and above,
+  DrawStretchedBitmap() is called from wx_render::blit().
+  
+  Each lifealgo needs to implement its own draw() method.  Currently
+  we have hlifealgo::draw() in hlifedraw.cpp and qlifealgo::draw()
+  in qlifedraw.cpp.
+
+- Calls DrawGridLines() to overlay grid lines if they are visible.
+
+- Calls DrawSelection() to overlay a translucent selection rectangle
+  if a selection exists and any part of it is visible.
+
+- If the user is doing a paste, CheckPasteImage() creates a temporary
+  viewport (tempview) and draws the paste pattern (stored in pastealgo)
+  into a masked bitmap which is then used by DrawPasteImage().
+
+Potential optimizations:
+
+- Every time DrawView() is called it draws the entire viewport, so
+  there's plenty of room for improvement!  One fairly simple change
+  would be to maintain a list of rects seen by wx_render::killrect()
+  and only draw new rects when necessary (the list would need to be
+  emptied after various UI changes).  Other more complicated schemes
+  that only do incremental drawing might also be worth trying.
+
+- The bitmap data passed into wx_render::blit() is an XBM image where
+  the bit order in each byte is reversed.  This is required by the
+  wxBitmap constructor when creating monochrome bitmaps.  Presumably
+  the bit order needs to be reversed back before it can be used with
+  the Mac's native blitter (and Windows?) so it would probably be good
+  to avoid the bit reversal and call the native blitter directly.
+
+Other points of interest:
+
+- The decision to use buffered drawing is made in PatternView::OnPaint().
+  To avoid flicker, buffering is always used when the user is doing a
+  paste or the grid lines are visible or the selection is visible.
+
+- Change the "#if 0" to "#if 1" in wx_render::killrect() to see randomly
+  colored rects.  Gives an insight into how curralgo->draw() works.
+
+- The viewport window is actually the right-hand pane of a wxSplitWindow.
+  The left-hand pane is a directory control (wxGenericDirCtrl) that
+  displays the user's preferred pattern or script folder.  This is all
+  handled in wxmain.cpp.
+
+----------------------------------------------------------------------------- */
+
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
    #include "wx/wx.h"      // for all others include the necessary headers
@@ -47,8 +125,7 @@ wxDC* currdc;              // current device context for viewport
 int currwd, currht;        // current width and height of viewport
 wxBrush* killbrush;        // brush used in killrect
 
-// bitmap for drawing magnified cells (see DrawStretchedBitmap)
-wxBitmap magmap;
+// bitmap memory for drawing magnified cells (see DrawStretchedBitmap)
 const int MAGSIZE = 256;
 wxUint16 magarray[MAGSIZE * MAGSIZE / 16];
 unsigned char* magbuf = (unsigned char *)magarray;
@@ -160,8 +237,7 @@ void DestroyDrawingData()
 
 // -----------------------------------------------------------------------------
 
-// magnify given bitmap by pmag (2, 4, ... 2^MAX_MAG);
-// called from wx_render::blit so best if this is NOT a PatternView method
+// called from wx_render::blit to magnify given bitmap by pmag (2, 4, ... 2^MAX_MAG)
 void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, int pmag)
 {
    int blocksize, magsize, rowshorts, numblocks, numshorts, numbytes;
@@ -215,10 +291,10 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
             unsigned char *bptr = (unsigned char *)bmdata + (row * blocksize * rowbytes) +
                                                             (col * blocksize / 8);
             
-            int rowindex = 0;       // first row in magmap
+            int rowindex = 0;       // first row in magbuf
             int i, j;
             for ( i = 0; i < blocksize; i++ ) {
-               // use lookup table to convert bytes in bmdata to 16-bit ints in magmap
+               // use lookup table to convert bytes in bmdata to 16-bit ints in magbuf
                numshorts = numbytes / pmag;
                for ( j = 0; j < numshorts; j++ ) {
                   magarray[rowindex + j] = Magnify2[ bptr[j] ];
@@ -236,7 +312,7 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
                   // erase pixel at right edge of each cell
                   for ( j = 0; j < rowshorts; j++ )
                      magarray[rowindex + j] &= gapmask;
-                  // duplicate current magmap row pmag-2 times
+                  // duplicate current magbuf row pmag-2 times
                   for ( j = 2; j < pmag; j++ ) {
                      memcpy(&magarray[rowindex + rowshorts], &magarray[rowindex], rowshorts*2);
                      rowindex += rowshorts;
@@ -245,17 +321,17 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
                   // erase pixel at bottom edge of each cell
                   memset(&magarray[rowindex], 0, rowshorts*2);
                } else {
-                  // duplicate current magmap row pmag-1 times
+                  // duplicate current magbuf row pmag-1 times
                   for ( j = 1; j < pmag; j++ ) {
                      memcpy(&magarray[rowindex + rowshorts], &magarray[rowindex], rowshorts*2);
                      rowindex += rowshorts;
                   }
                }
-               rowindex += rowshorts;     // start of next row in magmap
+               rowindex += rowshorts;     // start of next row in magbuf
                bptr += rowbytes;          // start of next row in current block
             }
             
-            magmap = wxBitmap((const char *)magbuf, magsize, magsize, 1);
+            wxBitmap magmap = wxBitmap((const char *)magbuf, magsize, magsize, 1);
             dc.DrawBitmap(magmap, xw, yw, false);
          }
          xw += magsize;     // across to next block
