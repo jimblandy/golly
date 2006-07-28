@@ -187,7 +187,7 @@ void PatternView::StartDrawingCells(int x, int y)
    pair<bigint, bigint> cellpos = currview.at(x, y);
    // check that cellpos is within getcell/setcell limits
    if ( OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
-      statusptr->ErrorMessage("Drawing is not allowed outside +/- 10^9 boundary.");
+      statusptr->ErrorMessage(_("Drawing is not allowed outside +/- 10^9 boundary."));
       return;
    }
 
@@ -556,7 +556,7 @@ void PatternView::RestoreSelection()
    selright = origright;
    StopDraggingMouse();
    mainptr->UpdatePatternAndStatus();
-   statusptr->DisplayMessage("New selection aborted.");
+   statusptr->DisplayMessage(_("New selection aborted."));
 }
 
 void PatternView::TestAutoFit()
@@ -597,11 +597,11 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
    
    if (currcurs == curs_pencil) {
       if (mainptr->generating) {
-         statusptr->ErrorMessage("Drawing is not allowed while generating.");
+         statusptr->ErrorMessage(_("Drawing is not allowed while generating."));
          return;
       }
       if (currview.getmag() < 0) {
-         statusptr->ErrorMessage("Drawing is not allowed at scales greater than 1 cell per pixel.");
+         statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
          return;
       }
       StartDrawingCells(x, y);
@@ -645,7 +645,7 @@ void PatternView::EmptyUniverse()
 
 bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
                            lifealgo *srcalgo, lifealgo *destalgo,
-                           bool erasesrc, const char *progmsg)
+                           bool erasesrc, const wxString &progmsg)
 {
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
@@ -674,7 +674,7 @@ bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
          if ((cntr % 4096) == 0) {
             double prog = ((cy - itop) * (double)(iright - ileft + 1) +
                            (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, "");
+            abort = AbortProgress(prog, wxEmptyString);
             if (abort) break;
          }
       }
@@ -688,7 +688,7 @@ bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
 
 void PatternView::CopyAllRect(int itop, int ileft, int ibottom, int iright,
                               lifealgo *srcalgo, lifealgo *destalgo,
-                              const char *progmsg)
+                              const wxString &progmsg)
 {
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
@@ -704,7 +704,7 @@ void PatternView::CopyAllRect(int itop, int ileft, int ibottom, int iright,
          destalgo->setcell(cx, cy, srcalgo->getcell(cx, cy));
          cntr++;
          if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, "");
+            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
             if (abort) break;
          }
       }
@@ -759,7 +759,7 @@ void PatternView::ClearSelection()
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
-   BeginProgress("Clearing selection");
+   BeginProgress(_("Clearing selection"));
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          int skip = curralgo->nextcell(cx, cy);
@@ -776,7 +776,7 @@ void PatternView::ClearSelection()
          if ((cntr % 4096) == 0) {
             double prog = ((cy - itop) * (double)(iright - ileft + 1) +
                            (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, "");
+            abort = AbortProgress(prog, wxEmptyString);
             if (abort) break;
          }
       }
@@ -838,7 +838,7 @@ void PatternView::ClearOutsideSelection()
    
    // copy live cells in selection to new universe
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                 curralgo, newalgo, false, "Saving selection") ) {
+                 curralgo, newalgo, false, _("Saving selection")) ) {
       // delete old universe and point curralgo at new universe
       mainptr->savestart = true;
       delete curralgo;
@@ -924,7 +924,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
    
    textptr = (char *)malloc(cursize);
    if (textptr == NULL) {
-      statusptr->ErrorMessage("Not enough memory for clipboard data!");
+      statusptr->ErrorMessage(_("Not enough memory for clipboard data!"));
       return;
    }
    etextptr = textptr + cursize;
@@ -950,9 +950,9 @@ void PatternView::CopySelectionToClipboard(bool cut)
    int cntr = 0;
    bool abort = false;
    if (cut)
-      BeginProgress("Cutting selection");
+      BeginProgress(_("Cutting selection"));
    else
-      BeginProgress("Copying selection");
+      BeginProgress(_("Copying selection"));
 
    for ( cy=itop; cy<=ibottom; cy++ ) {
       // set lastchar to anything except 'o' or 'b'
@@ -1000,14 +1000,14 @@ void PatternView::CopySelectionToClipboard(bool cut)
          if ((cntr % 4096) == 0) {
             double prog = ((cy - itop) * (double)(iright - ileft + 1) +
                            (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, "");
+            abort = AbortProgress(prog, wxEmptyString);
             if (abort) break;
          }
          if (chptr + 60 >= etextptr) {
             // nearly out of space; try to increase allocation
             char *ntxtptr = (char *)realloc(textptr, 2*cursize);
             if (ntxtptr == 0) {
-               statusptr->ErrorMessage("No more memory for clipboard data!");
+               statusptr->ErrorMessage(_("No more memory for clipboard data!"));
                // don't return here -- best to set abort flag and break so that
                // partially cut/copied portion gets saved to clipboard
                abort = true;
@@ -1053,7 +1053,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
    if (cut && livecount > 0)
       mainptr->UpdatePatternAndStatus();
    
-   wxString text(textptr);
+   wxString text = wxString(textptr,wxConvLibc);
    mainptr->CopyTextToClipboard(text);
    free(textptr);
 }
@@ -1140,7 +1140,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
 {
    // make sure given edges are within getcell/setcell limits
    if ( OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage("Clipboard pattern is too big.");
+      statusptr->ErrorMessage(_("Clipboard pattern is too big."));
       return;
    }
    int itop = top.toint();
@@ -1154,7 +1154,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       bigint selht = selbottom;  selht -= seltop;   selht += 1;
       bigint selwd = selright;   selwd -= selleft;  selwd += 1;
       if ( ht > selht || wd > selwd ) {
-         statusptr->ErrorMessage("Clipboard pattern is bigger than selection.");
+         statusptr->ErrorMessage(_("Clipboard pattern is bigger than selection."));
          return;
       }
 
@@ -1165,7 +1165,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    } else {
 
       // ask user where to paste the clipboard pattern
-      statusptr->DisplayMessage("Click where you want to paste...");
+      statusptr->DisplayMessage(_("Click where you want to paste..."));
 
       // temporarily change cursor to cross
       wxCursor *savecurs = currcurs;
@@ -1246,7 +1246,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       
       if ( pastex < 0 || pastex > currview.getxmax() ||
            pastey < 0 || pastey > currview.getymax() ) {
-         statusptr->DisplayMessage("Paste aborted.");
+         statusptr->DisplayMessage(_("Paste aborted."));
          return;
       }
       
@@ -1275,7 +1275,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    bottom = top;   bottom += ht;   bottom -= 1;
    right = left;   right += wd;    right -= 1;
    if ( OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage("Pasting is not allowed outside +/- 10^9 boundary.");
+      statusptr->ErrorMessage(_("Pasting is not allowed outside +/- 10^9 boundary."));
       return;
    }
 
@@ -1288,7 +1288,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    double maxcount = wd.todouble() * ht.todouble();
    int cntr = 0;
    bool abort = false;
-   BeginProgress("Pasting pattern");
+   BeginProgress(_("Pasting pattern"));
    
    // we can speed up pasting sparse patterns by using nextcell in these cases:
    // - if using Or mode
@@ -1324,7 +1324,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
             if ((cntr % 4096) == 0) {
                double prog = ((ty - itop) * (double)(iright - ileft + 1) +
                               (tx - ileft)) / maxcount;
-               abort = AbortProgress(prog, "");
+               abort = AbortProgress(prog, wxEmptyString);
                if (abort) break;
             }
          }
@@ -1359,7 +1359,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
             cx++;
             cntr++;
             if ( (cntr % 4096) == 0 ) {
-               abort = AbortProgress((double)cntr / maxcount, "");
+               abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
                if (abort) break;
             }
          }
@@ -1390,20 +1390,20 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
       // supported by readclipboard
       wxFile tmpfile(clipfile, wxFile::write);
       if ( !tmpfile.IsOpened() ) {
-         statusptr->ErrorMessage("Could not create temporary file!");
+         statusptr->ErrorMessage(_("Could not create temporary file!"));
          return false;
       }
       tmpfile.Write( data.GetText() );
       tmpfile.Close();
    #endif         
 
-   const char *err = readclipboard(clipfile.c_str(), *tempalgo, t, l, b, r);
+   const char *err = readclipboard(clipfile.mb_str(), *tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so we have to use hlife
       delete tempalgo;
       tempalgo = new hlifealgo();
       tempalgo->setpoll(wxGetApp().Poller());
-      err = readclipboard(clipfile.c_str(), *tempalgo, t, l, b, r);
+      err = readclipboard(clipfile.mb_str(), *tempalgo, t, l, b, r);
    }
    #ifdef __WXX11__
       // don't delete clipboard file
@@ -1412,7 +1412,7 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
    #endif
 
    if (err) {
-      Warning(err);
+      Warning(wxString(err,wxConvLibc));
       return false;
    }
 
@@ -1442,19 +1442,19 @@ void PatternView::CyclePasteLocation()
 {
    if (plocation == TopLeft) {
       plocation = TopRight;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste location is Top Right.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste location is Top Right."));
    } else if (plocation == TopRight) {
       plocation = BottomRight;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste location is Bottom Right.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste location is Bottom Right."));
    } else if (plocation == BottomRight) {
       plocation = BottomLeft;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste location is Bottom Left.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste location is Bottom Left."));
    } else if (plocation == BottomLeft) {
       plocation = Middle;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste location is Middle.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste location is Middle."));
    } else {
       plocation = TopLeft;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste location is Top Left.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste location is Top Left."));
    }
    if (waitingforclick) {
       // force redraw of paste rectangle if mouse is inside viewport
@@ -1466,13 +1466,13 @@ void PatternView::CyclePasteMode()
 {
    if (pmode == Copy) {
       pmode = Or;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste mode is Or.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Or."));
    } else if (pmode == Or) {
       pmode = Xor;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste mode is Xor.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Xor."));
    } else {
       pmode = Copy;
-      if (!waitingforclick) statusptr->DisplayMessage("Paste mode is Copy.");
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Copy."));
    }
    if (waitingforclick) {
       // force redraw of paste rectangle if mouse is inside viewport
@@ -1485,10 +1485,11 @@ void PatternView::DisplaySelectionSize()
    if (waitingforclick) return;
    bigint wd = selright;    wd -= selleft;   wd += bigint::one;
    bigint ht = selbottom;   ht -= seltop;    ht += bigint::one;
-   char s[128];
-   sprintf(s, "Selection wd x ht = %s x %s",
-              statusptr->Stringify(wd), statusptr->Stringify(ht));
-   statusptr->SetMessage(s);
+   wxString msg = _("Selection wd x ht = ");
+   msg += statusptr->Stringify(wd);
+   msg += _(" x ");
+   msg += statusptr->Stringify(ht);
+   statusptr->SetMessage(msg);
 }
 
 void PatternView::SelectAll()
@@ -1605,7 +1606,7 @@ void PatternView::ShrinkSelection(bool fit)
    
    // copy live cells in selection to temporary universe
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                 curralgo, tempalgo, false, "Saving selection") ) {
+                 curralgo, tempalgo, false, _("Saving selection")) ) {
       if ( tempalgo->isEmpty() ) {
          statusptr->ErrorMessage(empty_selection);
       } else {
@@ -1638,7 +1639,7 @@ void PatternView::RandomFill()
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
-   BeginProgress("Randomly filling selection");
+   BeginProgress(_("Randomly filling selection"));
    int cx, cy;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1646,7 +1647,7 @@ void PatternView::RandomFill()
          curralgo->setcell(cx, cy, (rand() % 100) < randomfill);
          cntr++;
          if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, "");
+            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
             if (abort) break;
          }
       }
@@ -1684,7 +1685,7 @@ void PatternView::FlipVertically()
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
-   BeginProgress("Flipping selection vertically");
+   BeginProgress(_("Flipping selection vertically"));
    int cx, cy;
    int mirrorx = iright;
    iright = (ileft - 1) + wd / 2;
@@ -1698,7 +1699,7 @@ void PatternView::FlipVertically()
          }
          cntr++;
          if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, "");
+            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
             if (abort) break;
          }
       }
@@ -1737,7 +1738,7 @@ void PatternView::FlipHorizontally()
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
-   BeginProgress("Flipping selection horizontally");
+   BeginProgress(_("Flipping selection horizontally"));
    int cx, cy;
    int mirrory = ibottom;
    ibottom = (itop - 1) + ht / 2;
@@ -1751,7 +1752,7 @@ void PatternView::FlipHorizontally()
          }
          cntr++;
          if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, "");
+            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
             if (abort) break;
          }
       }
@@ -1764,8 +1765,8 @@ void PatternView::FlipHorizontally()
    mainptr->UpdatePatternAndStatus();
 }
 
-const char rotate_clockwise[]       = "Rotating selection +90 degrees";
-const char rotate_anticlockwise[]   = "Rotating selection -90 degrees";
+const wxString rotate_clockwise       = _("Rotating selection +90 degrees");
+const wxString rotate_anticlockwise   = _("Rotating selection -90 degrees");
 
 void PatternView::RotatePattern(bool clockwise,
                                 bigint &newtop, bigint &newbottom,
@@ -1827,7 +1828,7 @@ void PatternView::RotatePattern(bool clockwise,
          if ((cntr % 4096) == 0) {
             double prog = ((cy - itop) * (double)(iright - ileft + 1) +
                            (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, "");
+            abort = AbortProgress(prog, wxEmptyString);
             if (abort) break;
          }
          newy += newyinc;
@@ -1905,7 +1906,7 @@ void PatternView::RotateSelection(bool clockwise)
 
    // make sure rotated selection edges are also within limits
    if ( OutsideLimits(newtop, newbottom, newleft, newright) ) {
-      statusptr->ErrorMessage("New selection would be outside +/- 10^9 boundary.");
+      statusptr->ErrorMessage(_("New selection would be outside +/- 10^9 boundary."));
       return;
    }
    
@@ -1967,7 +1968,7 @@ void PatternView::RotateSelection(bool clockwise)
          if ((cntr % 4096) == 0) {
             double prog = ((cy - itop) * (double)(iright - ileft + 1) +
                            (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, "");
+            abort = AbortProgress(prog, wxEmptyString);
             if (abort) break;
          }
          newy += newyinc;
@@ -1993,11 +1994,11 @@ void PatternView::RotateSelection(bool clockwise)
       if ( newtop > bottom || newbottom < top || newleft > right || newright < left ) {
          // safe to use fast nextcell calls
          CopyRect(itop, ileft, ibottom, iright,
-                  tempalgo, curralgo, false, "Merging rotated selection");
+                  tempalgo, curralgo, false, _("Merging rotated selection"));
       } else {
          // have to use slow getcell calls
          CopyAllRect(itop, ileft, ibottom, iright,
-                     tempalgo, curralgo, "Pasting rotated selection");
+                     tempalgo, curralgo, _("Pasting rotated selection"));
       }      
       // rotate the selection edges
       seltop    = newtop;
@@ -2099,12 +2100,12 @@ void PatternView::ChangeOrigin()
    wxPoint pt = ScreenToClient( wxGetMousePosition() );
    if ( pt.x < 0 || pt.x > currview.getxmax() ||
         pt.y < 0 || pt.y > currview.getymax() ) {
-      statusptr->ErrorMessage("Origin not changed.");
+      statusptr->ErrorMessage(_("Origin not changed."));
    } else {
       pair<bigint, bigint> cellpos = currview.at(pt.x, pt.y);
       originy = cellpos.second;
       originx = cellpos.first;
-      statusptr->DisplayMessage("Origin changed.");
+      statusptr->DisplayMessage(_("Origin changed."));
       if ( GridVisible() )
          mainptr->UpdatePatternAndStatus();
       else
@@ -2441,7 +2442,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
          if (!waitingforclick) {
             // if help window is open then bring it to the front,
             // otherwise open it and display last help file
-            ShowHelp("");
+            ShowHelp(wxEmptyString);
          }
          break;
 
@@ -2498,7 +2499,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
             // need to create a new bitmap for viewport
             if (viewbitmap) delete viewbitmap;
             viewbitmap = new wxBitmap(wd, ht);
-            if (viewbitmap == NULL) Fatal("Not enough memory to do buffering!");
+            if (viewbitmap == NULL) Fatal(_("Not enough memory to do buffering!"));
             viewbitmapwd = wd;
             viewbitmapht = ht;
          }
@@ -2598,7 +2599,7 @@ void PatternView::OnChar(wxKeyEvent& event)
 
    // this was added to test Fatal, but could be useful to quit without saving prefs
    if ( key == 'Q' && event.ControlDown() ) {
-      Fatal("Quitting without saving preferences.");
+      Fatal(_("Quitting without saving preferences."));
    }
 
    if ( event.CmdDown() || event.AltDown() ) {
@@ -2907,7 +2908,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
    dragtimer = new wxTimer(this, ID_DRAG_TIMER);
-   if (dragtimer == NULL) Fatal("Failed to create drag timer!");
+   if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
 
    drawingcells = false;      // not drawing cells
    selectingcells = false;    // not selecting cells

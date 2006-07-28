@@ -188,14 +188,14 @@ void InitDrawingData()
    #else
       // create translucent selection image
       if ( !selimage.Create(1,1) ) {
-         Fatal("Failed to create selection image!");
+         Fatal(_("Failed to create selection image!"));
       }
       selimage.SetRGB(0, 0, selectrgb->Red(), selectrgb->Green(), selectrgb->Blue());
       selimage.SetAlpha();                   // add alpha channel
       if ( selimage.HasAlpha() ) {
          selimage.SetAlpha(0, 0, 128);       // 50% opaque
       } else {
-         Warning("Selection image has no alpha channel!");
+         Warning(_("Selection image has no alpha channel!"));
       }
       // scale selection image to viewport size and create selbitmap
       int wd, ht;
@@ -208,7 +208,7 @@ void InitDrawingData()
       selimageht = ht;
       selbitmap = new wxBitmap(selimage);
       if (selbitmap == NULL) {
-         Warning("Not enough memory for selection image!");
+         Warning(_("Not enough memory for selection image!"));
       } else {
          #ifdef __WXMAC__
             // bug??? GetDepth returns -1 even if screen depth is really 32
@@ -259,7 +259,7 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
    // pmag must be <= numbytes so numshorts (see below) will be > 0
    if (pmag > numbytes) {
       // this should never happen if max pmag is 16 (MAX_MAG = 4) and min bmsize is 64
-      Fatal("DrawStretchedBitmap cannot magnify by this amount!");
+      Fatal(_("DrawStretchedBitmap cannot magnify by this amount!"));
    }
    
    // nicer to have gaps between cells at scales > 1:2
@@ -731,7 +731,7 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
       //dc.SetTextBackground(*wxWHITE);
       dc.SetBackgroundMode(wxTRANSPARENT);   // better in case pastergb is white
       dc.SetTextForeground(*pastergb);
-      const char *pmodestr = GetPasteMode();
+      wxString pmodestr = wxString(GetPasteMode(),wxConvLibc);
       int pmodex = r.x + 2;
       int pmodey = r.y - 4;
       dc.DrawText(pmodestr, pmodex, pmodey - statusptr->GetTextAscent());

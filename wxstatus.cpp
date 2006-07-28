@@ -61,7 +61,7 @@ const int XLINE = 5*LINEHT-2;
 const int YLINE = 6*LINEHT-2;
 
 // these horizontal offets are used when showexact is true
-int h_gen_ex, h_pop_ex, h_x_ex, h_y_ex;
+int h_x_ex, h_y_ex;
 
 // -----------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ void StatusBar::ClearMessage()
 {
    if (inscript) return;                     // let script control messages
    if (viewptr->waitingforclick) return;     // don't clobber message
-   statusmsg[0] = 0;
+   statusmsg.Clear();
    if (statusht > 0) {
       int wd, ht;
       GetClientSize(&wd, &ht);
@@ -86,10 +86,10 @@ void StatusBar::ClearMessage()
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::DisplayMessage(const char *s)
+void StatusBar::DisplayMessage(const wxString &s)
 {
    if (inscript) return;                     // let script control messages
-   strncpy(statusmsg, s, sizeof(statusmsg));
+   statusmsg = s;
    if (statusht > 0) {
       int wd, ht;
       GetClientSize(&wd, &ht);
@@ -106,7 +106,7 @@ void StatusBar::DisplayMessage(const char *s)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::ErrorMessage(const char *s)
+void StatusBar::ErrorMessage(const wxString &s)
 {
    if (inscript) return;                     // let script control messages
    wxBell();
@@ -115,12 +115,12 @@ void StatusBar::ErrorMessage(const char *s)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::SetMessage(const char *s)
+void StatusBar::SetMessage(const wxString &s)
 {
    if (inscript) return;                     // let script control messages
 
    // set message string without displaying it
-   strncpy(statusmsg, s, sizeof(statusmsg));
+   statusmsg = s;
 }
 
 // -----------------------------------------------------------------------------
@@ -186,11 +186,11 @@ void StatusBar::SetStatusFont(wxDC &dc)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::DisplayText(wxDC &dc, const char *s, wxCoord x, wxCoord y)
+void StatusBar::DisplayText(wxDC &dc, const wxString &s, wxCoord x, wxCoord y)
 {
    // DrawText's y parameter is top of text box but we pass in baseline
    // so adjust by textascent which depends on platform and OS version -- yuk!
-   dc.DrawText(_(s), x, y - textascent);
+   dc.DrawText(s, x, y - textascent);
 }
 
 // -----------------------------------------------------------------------------
@@ -198,7 +198,7 @@ void StatusBar::DisplayText(wxDC &dc, const char *s, wxCoord x, wxCoord y)
 // ping-pong in the buffer so we can use multiple at a time
 const int STRINGIFYSIZE = 20;
 
-const char* StatusBar::Stringify(double d)
+wxString StatusBar::Stringify(double d)
 {
    static char buf[120];
    static char *p = buf;
@@ -228,10 +228,11 @@ const char* StatusBar::Stringify(double d)
       sprintf(p, "%g", d);
    char *r = p;
    p += strlen(p)+1;
-   return r;
+   wxString output = wxString(r, wxConvLibc);
+   return output;
 }
 
-const char* StatusBar::Stringify(const bigint &b)
+wxString StatusBar::Stringify(const bigint &b)
 {
    return Stringify(b.todouble());
 }
@@ -273,7 +274,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
    // some call resets the font
    SetStatusFont(dc);
 
-   char strbuf[256];
+   wxString strbuf;
    
    if (updaterect.y >= statusht-BOTGAP+DESCHT-LINEHT) {
       // only show possible message in bottom line -- see below
@@ -281,38 +282,47 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
    } else if (showexact) {
       // might only need to display X and Y lines
       if (updaterect.y < XLINE+DESCHT-LINEHT) {
-         DisplayText(dc, "Generation =", h_gen, GENLINE);
-         DisplayText(dc, curralgo == NULL ? "0" : curralgo->getGeneration().tostring(),
-                     h_gen_ex, GENLINE);
-   
-         DisplayText(dc, "Population =", h_gen, POPLINE);
-         const char *p = curralgo == NULL ? "0" : curralgo->getPopulation().tostring();
-         DisplayText(dc, *p == '-' ? "(pending)" : p, h_pop_ex, POPLINE);
-         
-         // no real need to show scale as an exact number???
-         if (viewptr->GetMag() < 0) {
-            sprintf(strbuf, "Scale = 2^%d:1", -viewptr->GetMag());
+         strbuf = _("Generation = ");
+         if (curralgo == NULL) {
+            strbuf += _("0");
          } else {
-            sprintf(strbuf, "Scale = 1:%d", 1 << viewptr->GetMag());
+            strbuf += wxString(curralgo->getGeneration().tostring(), wxConvLibc);
+         }
+         DisplayText(dc, strbuf, h_gen, GENLINE);
+   
+         strbuf = _("Population = ");
+         const char *p = curralgo == NULL ? "0" : curralgo->getPopulation().tostring();
+         if (*p == '-') {
+            strbuf += _("(pending)");
+         } else {
+            strbuf += wxString(p, wxConvLibc);
+         }
+         DisplayText(dc, strbuf, h_gen, POPLINE);
+         
+         // no need to show scale as an exact number
+         if (viewptr->GetMag() < 0) {
+            strbuf.Printf(_("Scale = 2^%d:1"), -viewptr->GetMag());
+         } else {
+            strbuf.Printf(_("Scale = 1:%d"), 1 << viewptr->GetMag());
          }
          DisplayText(dc, strbuf, h_gen, SCALELINE);
          
          if (mainptr->GetWarp() < 0) {
             // show delay in secs
-            sprintf(strbuf, "Delay = %gs", (double)GetCurrentDelay() / 1000.0);
+            strbuf.Printf(_("Delay = %gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
             // no real need to show step as an exact number???
             if (hashing) {
-               sprintf(strbuf, "Step = %d^%d", hbasestep, mainptr->GetWarp());
+               strbuf.Printf(_("Step = %d^%d"), hbasestep, mainptr->GetWarp());
             } else {
-               sprintf(strbuf, "Step = %d^%d", qbasestep, mainptr->GetWarp());
+               strbuf.Printf(_("Step = %d^%d"), qbasestep, mainptr->GetWarp());
             }
          }
          DisplayText(dc, strbuf, h_gen, STEPLINE);
       }
       
-      DisplayText(dc, "X =", h_gen, XLINE);
-      DisplayText(dc, "Y =", h_gen, YLINE);
+      DisplayText(dc, _("X ="), h_gen, XLINE);
+      DisplayText(dc, _("Y ="), h_gen, YLINE);
       if (showxy) {
          bigint xo, yo;
          bigint xpos = currx;   xpos -= viewptr->originx;
@@ -323,45 +333,52 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
             temp -= ypos;
             ypos = temp;
          }
-         DisplayText(dc, xpos.tostring(), h_x_ex, XLINE);
-         DisplayText(dc, ypos.tostring(), h_y_ex, YLINE);
+         DisplayText(dc, wxString(xpos.tostring(), wxConvLibc),
+                     h_x_ex, XLINE);
+         DisplayText(dc, wxString(ypos.tostring(), wxConvLibc),
+                     h_y_ex, YLINE);
       }
 
    } else {
       // show info in top line
       if (updaterect.x < h_xy) {
          // show all info
-         sprintf(strbuf, "Generation=%s",
-                 curralgo == NULL ? "0" : Stringify(curralgo->getGeneration()));
+         if (curralgo == NULL) {
+            strbuf = _("Generation=0");
+         } else {
+            strbuf = _("Generation=") + Stringify(curralgo->getGeneration());
+         }
          DisplayText(dc, strbuf, h_gen, BASELINE1);
       
          double pop = curralgo == NULL ? 0.0 : curralgo->getPopulation().todouble();
          if (pop >= 0) {
-            sprintf(strbuf, "Population=%s", Stringify(pop));
+            strbuf = _("Population=") + Stringify(pop);
          } else {
-            sprintf(strbuf, "Population=(pending)");
+            strbuf = _("Population=(pending)");
          }
          DisplayText(dc, strbuf, h_pop, BASELINE1);
       
          if (viewptr->GetMag() < 0) {
-            sprintf(strbuf, "Scale=2^%d:1", -viewptr->GetMag());
+            strbuf.Printf(_("Scale=2^%d:1"), -viewptr->GetMag());
          } else {
-            sprintf(strbuf, "Scale=1:%d", 1 << viewptr->GetMag());
+            strbuf.Printf(_("Scale=1:%d"), 1 << viewptr->GetMag());
          }
          DisplayText(dc, strbuf, h_scale, BASELINE1);
          
          if (mainptr->GetWarp() < 0) {
             // show delay in secs
-            sprintf(strbuf, "Delay=%gs", (double)GetCurrentDelay() / 1000.0);
+            strbuf.Printf(_("Delay=%gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
             if (hashing) {
-               sprintf(strbuf, "Step=%d^%d", hbasestep, mainptr->GetWarp());
+               strbuf.Printf(_("Step=%d^%d"), hbasestep, mainptr->GetWarp());
             } else {
-               sprintf(strbuf, "Step=%d^%d", qbasestep, mainptr->GetWarp());
+               strbuf.Printf(_("Step=%d^%d"), qbasestep, mainptr->GetWarp());
             }
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
       }
+
+      strbuf = _("XY=");
       if (showxy) {
          bigint xo, yo;
          bigint xpos = currx;   xpos -= viewptr->originx;
@@ -372,14 +389,14 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
             temp -= ypos;
             ypos = temp;
          }
-         sprintf(strbuf, "XY=%s %s", Stringify(xpos), Stringify(ypos));
-      } else {
-         sprintf(strbuf, "XY=");
+         strbuf += Stringify(xpos);
+         strbuf += _(" ");
+         strbuf += Stringify(ypos);
       }
       DisplayText(dc, strbuf, h_xy, BASELINE1);
    }
 
-   if (statusmsg[0]) {
+   if (!statusmsg.IsEmpty()) {
       // display status message on bottom line
       DisplayText(dc, statusmsg, h_gen, statusht - BOTGAP);
    }
@@ -417,7 +434,7 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
          statbitmapwd = wd;
          statbitmapht = ht;
       }
-      if (statbitmap == NULL) Fatal("Not enough memory to render status bar!");
+      if (statbitmap == NULL) Fatal(_("Not enough memory to render status bar!"));
       wxBufferedPaintDC dc(this, *statbitmap);
    #endif
 
@@ -510,7 +527,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
       statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 10;
    #endif
-   if (statusfont == NULL) Fatal("Failed to create status bar font!");
+   if (statusfont == NULL) Fatal(_("Failed to create status bar font!"));
    
    // determine horizontal offsets for info in status bar
    wxClientDC dc(this);
@@ -519,22 +536,18 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    SetStatusFont(dc);
    h_gen = 6;
    // when showexact is false:
-   dc.GetTextExtent("Generation=9.999999e+999", &textwd, &textht);
+   dc.GetTextExtent(_("Generation=9.999999e+999"), &textwd, &textht);
    h_pop = h_gen + textwd + mingap;
-   dc.GetTextExtent("Population=9.999999e+999", &textwd, &textht);
+   dc.GetTextExtent(_("Population=9.999999e+999"), &textwd, &textht);
    h_scale = h_pop + textwd + mingap;
-   dc.GetTextExtent("Scale=2^9999:1", &textwd, &textht);
+   dc.GetTextExtent(_("Scale=2^9999:1"), &textwd, &textht);
    h_step = h_scale + textwd + mingap;
-   dc.GetTextExtent("Step=10^9999", &textwd, &textht);
+   dc.GetTextExtent(_("Step=10^9999"), &textwd, &textht);
    h_xy = h_step + textwd + mingap;
    // when showexact is true:
-   dc.GetTextExtent("Generation = ", &textwd, &textht);
-   h_gen_ex = h_gen + textwd;
-   dc.GetTextExtent("Population = ", &textwd, &textht);
-   h_pop_ex = h_gen + textwd;
-   dc.GetTextExtent("X = ", &textwd, &textht);
+   dc.GetTextExtent(_("X = "), &textwd, &textht);
    h_x_ex = h_gen + textwd;
-   dc.GetTextExtent("Y = ", &textwd, &textht);
+   dc.GetTextExtent(_("Y = "), &textwd, &textht);
    h_y_ex = h_gen + textwd;
 
    // status bar is initially visible

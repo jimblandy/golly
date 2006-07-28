@@ -69,8 +69,6 @@ IMPLEMENT_APP(GollyApp)
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char *BANNER = "This is Golly version " STRINGIFY(VERSION)
-                     ".  Copyright 2006 The Golly Gang.";
 
 MainFrame *mainptr = NULL;       // main window
 PatternView *viewptr = NULL;     // viewport child window (in main window)
@@ -85,17 +83,26 @@ wxStopWatch *stopwatch;          // global stopwatch
 class wx_errors : public lifeerrors
 {
 public:
-   virtual void fatal(const char *s) { Fatal(s); }
-   virtual void warning(const char *s) { Warning(s); }
-   virtual void status(const char *s) { statusptr->DisplayMessage(s); }
+   virtual void fatal(const char *s) {
+      Fatal(wxString(s,wxConvLibc));
+   }
+   virtual void warning(const char *s) {
+      Warning(wxString(s,wxConvLibc));
+   }
+   virtual void status(const char *s) {
+      statusptr->DisplayMessage(wxString(s,wxConvLibc));
+   }
    virtual void beginprogress(const char *s) {
-      BeginProgress(s);
-      aborted = false;     // needed for isaborted() calls in non-wx modules
+      BeginProgress(wxString(s,wxConvLibc));
+      // init flag for isaborted() calls in non-wx modules
+      aborted = false;
    }
    virtual bool abortprogress(double f, const char *s) {
-      return AbortProgress(f, s);
+      return AbortProgress(f, wxString(s,wxConvLibc));
    }
-   virtual void endprogress() { EndProgress(); }
+   virtual void endprogress() {
+      EndProgress();
+   }
 };
 
 wx_errors wxerrhandler;    // create instance
@@ -203,7 +210,7 @@ void SetAppDirectory(const char *argv0)
          if (pos < sizeof(appdir)) {
             strncpy(appdir, argv0, pos);
             appdir[pos] = 0;
-            wxSetWorkingDirectory(appdir);
+            wxSetWorkingDirectory(wxString(appdir,wxConvLibc));
          }
       }
    #endif
@@ -234,6 +241,35 @@ void GollyApp::MacOpenFile(const wxString &fullPath)
    if (mainptr->generating) return;
    mainptr->Raise();
    mainptr->OpenFile(fullPath);
+
+   /*!!! wxMac CVS HEAD bug in mb_str in Unicode build???
+   wxTextEntryDialog dlg(NULL, _("Test non-ascii chars"));
+   if (dlg.ShowModal() == wxID_OK) {
+      wxString s = dlg.GetValue();
+      FILE *f = fopen("test.txt", "w");
+      fprintf(f, "mb_str=%s\n", (const char*)s.mb_str());
+
+      //!!! BUG in wxWidgets book p.376: following won't compile if Unicode build
+      // printf(wxT("c_str=%s\n"), s.c_str());
+
+      // only works 1st time!!!
+      fprintf(f, "mb_str+macroman=%s\n",
+                 (const char*)s.mb_str(wxCSConv(wxFONTENCODING_MACROMAN)));
+      fprintf(f, "mb_str+macroman=%s\n",
+                 (const char*)s.mb_str(wxCSConv(wxFONTENCODING_MACROMAN)));
+
+      fprintf(f, "mb_str+system=%s\n",
+                 (const char*)s.mb_str(wxCSConv(wxFONTENCODING_SYSTEM)));
+                 // same result with wxFONTENCODING_DEFAULT
+      
+      const wxWX2MBbuf tmp_buf = wxConvCurrent->cWX2MB(s);
+      fprintf(f, "cWX2MB=%s\n", (const char*)tmp_buf);
+
+      fprintf(f, "fn_str=%s\n", (const char*)s.fn_str());
+      
+      fclose(f);
+   }
+   */
 }
 #endif
 
@@ -261,7 +297,7 @@ bool GollyApp::OnInit()
 
    // make sure current working directory contains application otherwise
    // we can't open Help files and prefs file gets saved in wrong location
-   SetAppDirectory(argv[0]);
+   SetAppDirectory( wxString(argv[0]).mb_str() );
 
    // let non-wx modules call Fatal, Warning, BeginProgress, etc
    lifeerrors::seterrorhandler(&wxerrhandler);
@@ -277,13 +313,17 @@ bool GollyApp::OnInit()
    
    // create main window (also inits viewptr and statusptr)
    mainptr = new MainFrame();
-   if (mainptr == NULL) Fatal("Failed to create main window!");
+   if (mainptr == NULL) Fatal(_("Failed to create main window!"));
    
    // initialize some stuff before showing main window
    mainptr->SetRandomFillPercentage();
    mainptr->SetMinimumWarp();
    viewptr->SetViewSize();
-   statusptr->SetMessage(BANNER);
+
+   wxString banner = _("This is Golly version ");
+   banner +=         _(STRINGIFY(VERSION));
+   banner +=         _(".  Copyright 2006 The Golly Gang.");
+   statusptr->SetMessage(banner);
    
    wxFileName filename;
    if (argc > 1) {

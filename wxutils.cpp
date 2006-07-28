@@ -40,24 +40,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-void Warning(const char *msg) {
+void Warning(const wxString &msg) {
    wxBell();
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
    #endif
    wxString title = wxGetApp().GetAppName() + _(" warning:");
-   wxMessageBox(_(msg), title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+   wxMessageBox(msg, title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
 }
 
 // -----------------------------------------------------------------------------
 
-void Fatal(const char *msg) {
+void Fatal(const wxString &msg) {
    wxBell();
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
    #endif
    wxString title = wxGetApp().GetAppName() + _(" error:");
-   wxMessageBox(_(msg), title, wxOK | wxICON_ERROR, wxGetActiveWindow());
+   wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
    exit(1);
 }
@@ -74,7 +74,7 @@ wxProgressDialog *progdlg = NULL;         // progress dialog
 #endif
 long progstart;                           // starting time (in millisecs)
 long prognext;                            // when to update progress dialog
-char progtitle[128];                      // title for progress dialog
+wxString progtitle;                       // title for progress dialog
 
 // -----------------------------------------------------------------------------
 
@@ -111,13 +111,13 @@ void ProgressHandler::OnKeyDown(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void BeginProgress(const char *dlgtitle) {
+void BeginProgress(const wxString &dlgtitle) {
    if (progdlg) {
       // better do this in case of nested call
       delete progdlg;
       progdlg = NULL;
    }
-   strncpy(progtitle, dlgtitle, sizeof(progtitle));
+   progtitle = dlgtitle;
    progstart = stopwatch->Time();
    // let user know they'll have to wait
    #ifdef __WXMAC__
@@ -128,7 +128,7 @@ void BeginProgress(const char *dlgtitle) {
 
 // -----------------------------------------------------------------------------
 
-bool AbortProgress(double fraction_done, const char *newmsg) {
+bool AbortProgress(double fraction_done, const wxString &newmsg) {
    long t = stopwatch->Time();
    if (progdlg) {
       if (t < prognext) return false;
@@ -146,7 +146,7 @@ bool AbortProgress(double fraction_done, const char *newmsg) {
       long msecs = t - progstart;
       if ( (msecs > 1000 && fraction_done < 0.3) || msecs > 2500 ) {
          // task is probably going to take a while so create progress dialog
-         progdlg = new wxProgressDialog(_T(progtitle), _T(""),
+         progdlg = new wxProgressDialog(progtitle, wxEmptyString,
                                         maxprogrange, mainptr,
                                         wxPD_AUTO_HIDE | wxPD_APP_MODAL |
                                         wxPD_CAN_ABORT | wxPD_SMOOTH |

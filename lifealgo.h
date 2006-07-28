@@ -53,11 +53,11 @@ public:
    virtual int isEmpty() = 0 ;
    // can we do the gen count doubling? only hashlife
    virtual int hyperCapable() = 0 ;
-   virtual void setMaxMemory(int m) = 0 ;       // never alloc more than this
+   virtual void setMaxMemory(int m) = 0 ;          // never alloc more than this
    virtual int getMaxMemory() = 0 ;
-   virtual const char *setrule(char *) = 0 ;    // new rules; returns err msg
-   virtual const char *getrule() = 0 ;          // get current rule set
-   virtual void step() = 0 ;                    // do inc gens
+   virtual const char *setrule(const char *) = 0 ; // new rules; returns err msg
+   virtual const char *getrule() = 0 ;             // get current rule set
+   virtual void step() = 0 ;                       // do inc gens
    virtual ~lifealgo() = 0 ;
    virtual void draw(viewport &view, liferender &renderer) = 0 ;
    virtual void fit(viewport &view, int force) = 0 ;

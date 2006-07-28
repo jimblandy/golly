@@ -1114,7 +1114,7 @@ void qlifealgo::step() {
 /**
  *   If we change the rule we need to mark everything dirty.
  */
-const char *qlifealgo::setrule(char *s) {
+const char *qlifealgo::setrule(const char *s) {
    markglobalchange() ;
    const char *p = global_liferules.setrule(s) ;
    // AKT: hasB0notS8 flag has been set

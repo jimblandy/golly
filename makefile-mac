@@ -11,7 +11,17 @@
 
 WX_RELEASE = 2.7
 WX_DIR = /HD/wxWidgets/CVS-HEAD/wxWidgets
-BUILD_DIR = $(WX_DIR)/build-osx
+
+# To build a Unicode version of wxWidgets add "--enable-unicode" to the
+# above configure command and append "UNICODE=1" when you make Golly.
+ifeq ($(UNICODE),1)
+	BUILD_DIR = $(WX_DIR)/build-osx-u
+	WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-unicode-release-static-$(WX_RELEASE)
+	WXUNICODEFLAG = u
+else
+	BUILD_DIR = $(WX_DIR)/build-osx
+	WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-ansi-release-static-$(WX_RELEASE)
+endif
 
 APP_NAME = Golly
 APP_VERSION = 1.1
@@ -21,7 +31,7 @@ ICON_FILE = app.icns
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
-# following python command doesn't generate correct info on OS 10.4!!!
+# following python command doesn't generate correct info on OS 10.4
 # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
    -framework Foundation -framework Python
@@ -49,7 +59,7 @@ CXXC = g++
 ### CXXC = $(BUILD_DIR)/bk-deps g++
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA \
-   -I${BUILD_DIR}/lib/wx/include/mac-ansi-release-static-$(WX_RELEASE) \
+   -I${WXINC_DIR} \
    -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
    -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
 
@@ -65,8 +75,7 @@ LDFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
 EXTRALIBS = -lz -lpthread -liconv
 EXTRALIBS_GUI = -framework WebKit
 
-### put .o files in a Mac-specific subdir to avoid conflict with .o files created by X11 build
-OBJDIR = ObjMac
+OBJDIR = ObjMac$(WXUNICODEFLAG)
 OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
@@ -77,7 +86,6 @@ OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDI
 PORTNAME = $(TOOLKIT_LOWERCASE)$(TOOLKIT_VERSION)
 WXBASEPORT = _carbon
 ###WXDEBUGFLAG = d
-###WXUNICODEFLAG = u
 __WXLIB_HTML_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_html-$(WX_RELEASE)
 __WXLIB_ADV_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_adv-$(WX_RELEASE)
 __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_core-$(WX_RELEASE)

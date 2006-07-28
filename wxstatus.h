@@ -32,17 +32,17 @@ public:
     StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
     ~StatusBar();
 
-   // erase 2nd line of status bar
+   // erase bottom line of status bar
    void ClearMessage();
 
-   // display message on 2nd line of status bar
-   void DisplayMessage(const char *s);
+   // display message on bottom line of status bar
+   void DisplayMessage(const wxString &s);
 
-   // beep and display message on 2nd line of status bar
-   void ErrorMessage(const char *s);
+   // beep and display message on bottom line of status bar
+   void ErrorMessage(const wxString &s);
 
    // set message string without displaying it (until next update)
-   void SetMessage(const char *s);
+   void SetMessage(const wxString &s);
 
    // XY location needs to be updated
    void UpdateXYLocation();
@@ -51,8 +51,8 @@ public:
    void CheckMouseLocation(bool active);
 
    // convert given number to string suitable for display
-   const char* Stringify(double d);
-   const char* Stringify(const bigint &b);
+   wxString Stringify(double d);
+   wxString Stringify(const bigint &b);
    
    // return current delay (in millisecs)
    int GetCurrentDelay();
@@ -75,7 +75,7 @@ private:
    bool ClickInScaleBox(int x, int y);
    bool ClickInStepBox(int x, int y);
    void SetStatusFont(wxDC &dc);
-   void DisplayText(wxDC &dc, const char *s, wxCoord x, wxCoord y);
+   void DisplayText(wxDC &dc, const wxString &s, wxCoord x, wxCoord y);
    void DrawStatusBar(wxDC &dc, wxRect &updaterect);
 
    #ifndef __WXMAC__
@@ -90,7 +90,7 @@ private:
    int h_step;                   // horizontal position of "Step"
    int h_xy;                     // horizontal position of "XY"
    int textascent;               // vertical adjustment used in DrawText calls
-   char statusmsg[256];          // for messages on 2nd line
+   wxString statusmsg;           // for messages on bottom line
    bigint currx, curry;          // cursor location in cell coords
    bool showxy;                  // show cursor's XY location?
    wxFont *statusfont;           // status bar font

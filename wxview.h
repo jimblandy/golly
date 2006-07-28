@@ -58,10 +58,10 @@ public:
    void CycleCursorMode();
    bool CopyRect(int itop, int ileft, int ibottom, int iright,
                  lifealgo *srcalgo, lifealgo *destalgo,
-                 bool erasesrc, const char *progmsg);
+                 bool erasesrc, const wxString &progmsg);
    void CopyAllRect(int itop, int ileft, int ibottom, int iright,
                     lifealgo *srcalgo, lifealgo *destalgo,
-                    const char *progmsg);
+                    const wxString &progmsg);
 
    // return true if given rect is outside getcell/setcell limits
    bool OutsideLimits(bigint &t, bigint &l, bigint &b, bigint &r);
@@ -189,11 +189,11 @@ private:
    int hthumb, vthumb;           // current thumb box positions
 };
 
-const char empty_pattern[]       = "All cells are dead.";
-const char empty_selection[]     = "There are no live cells in the selection.";
-const char empty_outside[]       = "There are no live cells outside the selection.";
-const char no_selection[]        = "There is no selection.";
-const char selection_too_big[]   = "Selection is outside +/- 10^9 boundary.";
-const char origin_restored[]     = "Origin restored.";
+const wxString empty_pattern       = _("All cells are dead.");
+const wxString empty_selection     = _("There are no live cells in the selection.");
+const wxString empty_outside       = _("There are no live cells outside the selection.");
+const wxString no_selection        = _("There is no selection.");
+const wxString selection_too_big   = _("Selection is outside +/- 10^9 boundary.");
+const wxString origin_restored     = _("Origin restored.");
 
 #endif

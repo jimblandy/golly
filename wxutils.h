@@ -27,21 +27,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Various utility routines:
 
 // Beep and display message in a modal dialog.
-void Warning(const char *msg);
+void Warning(const wxString &msg);
 
 // Beep, display message in a modal dialog, then exit app.
-void Fatal(const char *msg);
+void Fatal(const wxString &msg);
 
 // Call at the start of a lengthy task.  The cursor changes to indicate
 // the app is busy but the progress dialog won't appear immediately.
-void BeginProgress(const char *dlgtitle);
+void BeginProgress(const wxString &dlgtitle);
 
 // Call frequently while the task is being carried out.  The progress
 // dialog only appears if the task is likely to take more than a few secs.
 // Pass in a fraction from 0.0 to 1.0 indicating how much has been done.
 // The given string can be used to display extra information.
 // The call returns true if the user cancels the progress dialog.
-bool AbortProgress(double fraction_done, const char *newmsg);
+bool AbortProgress(double fraction_done, const wxString &newmsg);
 
 // Call when the task has finished (even if it was aborted).
 void EndProgress();

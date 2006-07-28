@@ -1506,7 +1506,7 @@ default:       return "Illegal character in readmacrocell." ;
    hashed = 1 ;
    return 0 ;
 }
-const char *hlifealgo::setrule(char *s) {
+const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
    clearcache() ;
    return global_liferules.setrule(s) ;

@@ -77,10 +77,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 const char PREFS_NAME[] = "GollyPrefs";
 
 // location of supplied pattern collection (relative to app)
-const char PATT_DIR[] = "Patterns";
+const wxString PATT_DIR = wxT("Patterns");
 
 // location of supplied scripts (relative to app)
-const char SCRIPT_DIR[] = "Scripts";
+const wxString SCRIPT_DIR = wxT("Scripts");
 
 const int PREFS_VERSION = 1;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
@@ -197,7 +197,7 @@ int opencursindex;
 void CreateCursors()
 {
    curs_pencil = new wxCursor(wxCURSOR_PENCIL);
-   if (curs_pencil == NULL) Fatal("Failed to create pencil cursor!");
+   if (curs_pencil == NULL) Fatal(_("Failed to create pencil cursor!"));
 
    #ifdef __WXMSW__
       // don't use wxCURSOR_CROSS because it disappears on black background
@@ -209,10 +209,10 @@ void CreateCursors()
    #else
       curs_cross = new wxCursor(wxCURSOR_CROSS);
    #endif
-   if (curs_cross == NULL) Fatal("Failed to create cross cursor!");
+   if (curs_cross == NULL) Fatal(_("Failed to create cross cursor!"));
 
    curs_hand = new wxCursor(wxCURSOR_HAND);
-   if (curs_hand == NULL) Fatal("Failed to create hand cursor!");
+   if (curs_hand == NULL) Fatal(_("Failed to create hand cursor!"));
 
    #ifdef __WXX11__
       // wxX11 doesn't support creating cursor from wxImage or from bits!!!
@@ -226,7 +226,7 @@ void CreateCursors()
       image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
       curs_zoomin = new wxCursor(image_zoomin);
    #endif
-   if (curs_zoomin == NULL) Fatal("Failed to create zoomin cursor!");
+   if (curs_zoomin == NULL) Fatal(_("Failed to create zoomin cursor!"));
 
    #ifdef __WXX11__
       // wxX11 doesn't support creating cursor from wxImage or bits!!!
@@ -238,7 +238,7 @@ void CreateCursors()
       image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
       curs_zoomout = new wxCursor(image_zoomout);
    #endif
-   if (curs_zoomout == NULL) Fatal("Failed to create zoomout cursor!");
+   if (curs_zoomout == NULL) Fatal(_("Failed to create zoomout cursor!"));
    
    // set currcurs in case newcurs/opencurs are set to "No Change"
    currcurs = curs_pencil;
@@ -432,7 +432,7 @@ void SavePrefs()
    
    FILE *f = fopen(PREFS_NAME, "w");
    if (f == NULL) {
-      Warning("Could not save preferences file!");
+      Warning(_("Could not save preferences file!"));
       return;
    }
    
@@ -518,12 +518,20 @@ void SavePrefs()
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    
    fprintf(f, "\n");
-   
+
+#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0) && wxUSE_UNICODE
+   //!!! avoid wxMac 2.7 bug in mb_str() in Unicode build
+   wxCSConv convto(wxFONTENCODING_MACROMAN);
+   #define MY_STR() mb_str(convto)
+#else
+   #define MY_STR() mb_str()
+#endif
+
    fprintf(f, "rule=%s\n", curralgo->getrule());
    if (namedrules.GetCount() > 1) {
       size_t i;
       for (i=1; i<namedrules.GetCount(); i++)
-         fprintf(f, "named_rule=%s\n", namedrules[i].c_str());
+         fprintf(f, "named_rule=%s\n", (const char*)namedrules[i].MY_STR());
    }
    
    fprintf(f, "\n");
@@ -561,11 +569,11 @@ void SavePrefs()
    
    fprintf(f, "\n");
 
-   fprintf(f, "open_save_dir=%s\n", opensavedir.c_str());
-   fprintf(f, "run_dir=%s\n", rundir.c_str());
-   fprintf(f, "pattern_dir=%s\n", patterndir.c_str());
-   fprintf(f, "script_dir=%s\n", scriptdir.c_str());
-   fprintf(f, "python_lib=%s\n", pythonlib.c_str());
+   fprintf(f, "open_save_dir=%s\n", (const char*)opensavedir.MY_STR());
+   fprintf(f, "run_dir=%s\n", (const char*)rundir.MY_STR());
+   fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.MY_STR());
+   fprintf(f, "script_dir=%s\n", (const char*)scriptdir.MY_STR());
+   fprintf(f, "python_lib=%s\n", (const char*)pythonlib.MY_STR());
    fprintf(f, "dir_width=%d\n", dirwinwd);
    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
    fprintf(f, "show_scripts=%d\n", showscripts ? 1 : 0);
@@ -577,7 +585,8 @@ void SavePrefs()
       int i;
       for (i=0; i<numpatterns; i++) {
          wxMenuItem *item = patternSubMenu->FindItemByPosition(i);
-         if (item) fprintf(f, "recent_pattern=%s\n", item->GetText().c_str());
+         if (item) fprintf(f, "recent_pattern=%s\n",
+                           (const char*)item->GetText().MY_STR());
       }
    }
 
@@ -586,7 +595,8 @@ void SavePrefs()
       int i;
       for (i=0; i<numscripts; i++) {
          wxMenuItem *item = scriptSubMenu->FindItemByPosition(i);
-         if (item) fprintf(f, "recent_script=%s\n", item->GetText().c_str());
+         if (item) fprintf(f, "recent_script=%s\n",
+                           (const char*)item->GetText().MY_STR());
       }
    }
    
@@ -628,7 +638,7 @@ wxString FindAppDir()
          str = wxPathOnly(argv0);
       } else {
          // relative path so remove "./" prefix if present
-         if (argv0.StartsWith("./")) argv0 = argv0.AfterFirst('/');
+         if (argv0.StartsWith(wxT("./"))) argv0 = argv0.AfterFirst('/');
          if (currdir.Last() != wxFILE_SEP_PATH) currdir += wxFILE_SEP_PATH;
          str = currdir + argv0;
          str = wxPathOnly(str);
@@ -643,22 +653,22 @@ wxString FindAppDir()
 
 void AddDefaultRules()
 {
-   namedrules.Add("3-4 Life|B34/S34");
-   namedrules.Add("HighLife|B36/S23");
-   namedrules.Add("AntiLife|B0123478/S01234678");
-   namedrules.Add("Life without Death|B3/S012345678");
-   namedrules.Add("Plow World|B378/S012345678");
-   namedrules.Add("Day and Night|B3678/S34678");
-   namedrules.Add("Diamoeba|B35678/S5678");
-   namedrules.Add("LongLife|B345/S5");
-   namedrules.Add("Seeds|B2");
-   namedrules.Add("Persian Rug|B234");
-   namedrules.Add("Replicator|B1357/S1357");
-   namedrules.Add("Fredkin|B1357/S02468");
-   namedrules.Add("Morley|B368/S245");
-   namedrules.Add("Wolfram 22|W22");
-   namedrules.Add("Wolfram 30|W30");
-   namedrules.Add("Wolfram 110|W110");
+   namedrules.Add(wxT("3-4 Life|B34/S34"));
+   namedrules.Add(wxT("HighLife|B36/S23"));
+   namedrules.Add(wxT("AntiLife|B0123478/S01234678"));
+   namedrules.Add(wxT("Life without Death|B3/S012345678"));
+   namedrules.Add(wxT("Plow World|B378/S012345678"));
+   namedrules.Add(wxT("Day and Night|B3678/S34678"));
+   namedrules.Add(wxT("Diamoeba|B35678/S5678"));
+   namedrules.Add(wxT("LongLife|B345/S5"));
+   namedrules.Add(wxT("Seeds|B2"));
+   namedrules.Add(wxT("Persian Rug|B234"));
+   namedrules.Add(wxT("Replicator|B1357/S1357"));
+   namedrules.Add(wxT("Fredkin|B1357/S02468"));
+   namedrules.Add(wxT("Morley|B368/S245"));
+   namedrules.Add(wxT("Wolfram 22|W22"));
+   namedrules.Add(wxT("Wolfram 30|W30"));
+   namedrules.Add(wxT("Wolfram 110|W110"));
 }
 
 // -----------------------------------------------------------------------------
@@ -708,11 +718,11 @@ void GetPrefs()
    scriptdir = appdir + SCRIPT_DIR;
    
    #ifdef __WXMSW__
-      pythonlib = "python24.dll";
+      pythonlib = wxT("python24.dll");
    #elif defined(__WXMAC__)
-      pythonlib = "not used";
+      pythonlib = wxT("not used");
    #elif defined(__UNIX__)
-      pythonlib = "libpython2.4.so";
+      pythonlib = wxT("libpython2.4.so");
    #endif
 
    // create curs_* and initialize newcurs, opencurs and currcurs
@@ -730,19 +740,27 @@ void GetPrefs()
    scriptSubMenu->AppendSeparator();
    scriptSubMenu->Append(GetID_CLEAR_SCRIPTS(), _("Clear Menu"));
 
-   namedrules.Add("Life|B3/S23");      // must be 1st entry
+   namedrules.Add(wxT("Life|B3/S23"));      // must be 1st entry
 
-   if ( !wxFileExists(PREFS_NAME) ) {
+   if ( !wxFileExists(wxString(PREFS_NAME,wxConvLibc)) ) {
       AddDefaultRules();
       return;
    }
    
    FILE *f = fopen(PREFS_NAME, "r");
    if (f == NULL) {
-      Warning("Could not read preferences file!");
+      Warning(_("Could not read preferences file!"));
       return;
    }
-   
+
+#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0) && wxUSE_UNICODE
+   //!!! avoid wxMac 2.7 bug in mb_str() in Unicode build
+   wxCSConv convfrom(wxFONTENCODING_MACROMAN);
+   #define MY_CONV convfrom
+#else
+   #define MY_CONV wxConvLibc
+#endif
+
    char line[PREF_LINE_SIZE];
    char *keyword;
    char *value;
@@ -838,7 +856,7 @@ void GetPrefs()
          strncpy(initrule, value, sizeof(initrule));
 
       } else if (strcmp(keyword, "named_rule") == 0) {
-         namedrules.Add(value);
+         namedrules.Add(wxString(value,MY_CONV));
 
       } else if (strcmp(keyword, "show_tool") == 0) {
          showtool = value[0] == '1';
@@ -923,38 +941,37 @@ void GetPrefs()
          opencurs = StringToCursor(value);
 
       } else if (strcmp(keyword, "open_save_dir") == 0) {
-         opensavedir = value;
+         opensavedir = wxString(value,MY_CONV);
          if ( !wxFileName::DirExists(opensavedir) ) {
             // reset to supplied pattern directory
             opensavedir = appdir + PATT_DIR;
          }
 
       } else if (strcmp(keyword, "run_dir") == 0) {
-         rundir = value;
+         rundir = wxString(value,MY_CONV);
          if ( !wxFileName::DirExists(rundir) ) {
             // reset to supplied script directory
             rundir = appdir + SCRIPT_DIR;
          }
 
       } else if (strcmp(keyword, "pattern_dir") == 0) {
-         patterndir = value;
+         patterndir = wxString(value,MY_CONV);
          if ( !wxFileName::DirExists(patterndir) ) {
             // reset to supplied pattern directory
             patterndir = appdir + PATT_DIR;
          }
 
       } else if (strcmp(keyword, "script_dir") == 0) {
-         scriptdir = value;
+         scriptdir = wxString(value,MY_CONV);
          if ( !wxFileName::DirExists(scriptdir) ) {
             // reset to supplied script directory
             scriptdir = appdir + SCRIPT_DIR;
          }
 
       } else if (strcmp(keyword, "python_lib") == 0) {
-         pythonlib = value;
+         pythonlib = wxString(value,MY_CONV);
          
-      } else if (strcmp(keyword, "dir_width") == 0 ||
-                 strcmp(keyword, "patt_dir_width") == 0) {     // old name
+      } else if (strcmp(keyword, "dir_width") == 0) {
          sscanf(value, "%d", &dirwinwd);
          if (dirwinwd < MIN_DIRWD) dirwinwd = MIN_DIRWD;
          
@@ -964,8 +981,7 @@ void GetPrefs()
       } else if (strcmp(keyword, "show_scripts") == 0) {
          showscripts = value[0] == '1';
 
-      } else if (strcmp(keyword, "max_patterns") == 0 ||
-                 strcmp(keyword, "max_recent") == 0) {         // old name
+      } else if (strcmp(keyword, "max_patterns") == 0) {
          sscanf(value, "%d", &maxpatterns);
          if (maxpatterns < 1) maxpatterns = 1;
          if (maxpatterns > MAX_RECENT) maxpatterns = MAX_RECENT;
@@ -975,19 +991,20 @@ void GetPrefs()
          if (maxscripts < 1) maxscripts = 1;
          if (maxscripts > MAX_RECENT) maxscripts = MAX_RECENT;
 
-      } else if (strcmp(keyword, "recent_pattern") == 0 ||
-                 strcmp(keyword, "recent_file") == 0) {        // old name
+      } else if (strcmp(keyword, "recent_pattern") == 0) {
          // append path to Open Recent submenu
          if (numpatterns < maxpatterns) {
             numpatterns++;
-            patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns, value);
+            patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns,
+                                   wxString(value,MY_CONV));
          }
 
       } else if (strcmp(keyword, "recent_script") == 0) {
          // append path to Run Recent submenu
          if (numscripts < maxscripts) {
             numscripts++;
-            scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts, value);
+            scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts,
+                                  wxString(value,MY_CONV));
          }
       }
    }
@@ -1077,7 +1094,7 @@ private:
    bool GetCheckVal(long id);
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
-   bool BadSpinVal(int id, int minval, int maxval, const char* prefix);
+   bool BadSpinVal(int id, int minval, int maxval, const wxString& prefix);
    bool ValidatePage();
    void ChangeColor(int id, wxColor* rgb);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
@@ -1721,7 +1738,7 @@ void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
    
    wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0, 0));
    if (bb == NULL) {
-      Warning("Failed to create color button!");
+      Warning(_("Failed to create color button!"));
    } else {
       wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
       hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1753,7 +1770,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
       // wxMac bug: need this hidden control so escape/return keys select Cancel/OK buttons
       wxSpinCtrl* dummy = new MySpinCtrl(panel, wxID_ANY, wxEmptyString,
                                          wxPoint(-666,-666), wxDefaultSize);
-      if (!dummy) Warning("Bug in CreateColorPrefs!");
+      if (!dummy) Warning(_("Bug in CreateColorPrefs!"));
    #endif
 
    new_livergb = new wxColor(*livergb);
@@ -1791,8 +1808,8 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
 {
 #ifdef __WXX11__
    // avoid horrible wxX11 bugs
-   Warning("Sorry, but due to wxX11 bugs you'll have to change colors\n"
-           "by quitting Golly, editing GollyPrefs and restarting.");
+   Warning(_("Sorry, but due to wxX11 bugs you'll have to change colors\n"
+             "by quitting Golly, editing GollyPrefs and restarting."));
 #else
    wxColourData data;
    data.SetChooseFull(true);    // for Windows
@@ -1864,7 +1881,7 @@ bool PrefsDialog::GetCheckVal(long id)
    if (checkbox) {
       return checkbox->GetValue();
    } else {
-      Warning("Bug in GetCheckVal!");
+      Warning(_("Bug in GetCheckVal!"));
       return false;
    }
 }
@@ -1877,7 +1894,7 @@ int PrefsDialog::GetChoiceVal(long id)
    if (choice) {
       return choice->GetSelection();
    } else {
-      Warning("Bug in GetChoiceVal!");
+      Warning(_("Bug in GetChoiceVal!"));
       return 0;
    }
 }
@@ -1890,14 +1907,14 @@ int PrefsDialog::GetSpinVal(long id)
    if (spinctrl) {
       return spinctrl->GetValue();
    } else {
-      Warning("Bug in GetSpinVal!");
+      Warning(_("Bug in GetSpinVal!"));
       return 0;
    }
 }
 
 // -----------------------------------------------------------------------------
 
-bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
+bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const wxString &prefix)
 {
    wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
 #if defined(__WXMSW__) || defined(__WXGTK__)
@@ -1912,7 +1929,7 @@ bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const char *prefix)
    if ( !spinctrl->GetTextValue(&i) || i < minval || i > maxval ) {
 #endif
       wxString msg;
-      msg.Printf("%s must be from %d to %d.", prefix, minval, maxval);
+      msg.Printf(_("%s must be from %d to %d."), prefix.c_str(), minval, maxval);
       Warning(msg);
       spinctrl->SetFocus();
       spinctrl->SetSelection(-1,-1);
@@ -1928,38 +1945,38 @@ bool PrefsDialog::ValidatePage()
 {
    // validate all spin control values on current page
    if (currpage == FILE_PAGE) {
-      if ( BadSpinVal(PREF_MAX_PATTERNS, 1, MAX_RECENT, "Maximum number of recent patterns") )
+      if ( BadSpinVal(PREF_MAX_PATTERNS, 1, MAX_RECENT, _("Maximum number of recent patterns")) )
          return false;
-      if ( BadSpinVal(PREF_MAX_SCRIPTS, 1, MAX_RECENT, "Maximum number of recent scripts") )
+      if ( BadSpinVal(PREF_MAX_SCRIPTS, 1, MAX_RECENT, _("Maximum number of recent scripts")) )
          return false;
 
    } else if (currpage == EDIT_PAGE) {
-      if ( BadSpinVal(PREF_RANDOM_FILL, 1, 100, "Random fill percentage") )
+      if ( BadSpinVal(PREF_RANDOM_FILL, 1, 100, _("Random fill percentage")) )
          return false;
 
    } else if (currpage == CONTROL_PAGE) {
-      if ( BadSpinVal(PREF_MAX_HASH_MEM, MIN_HASHMB, MAX_HASHMB, "Maximum memory for hashing") )
+      if ( BadSpinVal(PREF_MAX_HASH_MEM, MIN_HASHMB, MAX_HASHMB, _("Maximum memory for hashing")) )
          return false;
-      if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, "Base step if not hashing") )
+      if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, _("Base step if not hashing")) )
          return false;
-      if ( BadSpinVal(PREF_HBASE, 2, MAX_BASESTEP, "Base step if hashing") )
+      if ( BadSpinVal(PREF_HBASE, 2, MAX_BASESTEP, _("Base step if hashing")) )
          return false;
-      if ( BadSpinVal(PREF_MIN_DELAY, 0, MAX_DELAY, "Minimum delay") )
+      if ( BadSpinVal(PREF_MIN_DELAY, 0, MAX_DELAY, _("Minimum delay")) )
          return false;
-      if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, "Maximum delay") )
+      if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, _("Maximum delay")) )
          return false;
 
    } else if (currpage == VIEW_PAGE) {
-      if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, "Spacing of bold grid lines") )
+      if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, _("Spacing of bold grid lines")) )
          return false;
-      if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, "Thumb scrolling range") )
+      if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, _("Thumb scrolling range")) )
          return false;
 
    } else if (currpage == COLOR_PAGE) {
       // no spin controls on this page
    
    } else {
-      Warning("Bug in ValidatePage!");
+      Warning(_("Bug in ValidatePage!"));
       return false;
    }
    

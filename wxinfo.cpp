@@ -135,11 +135,15 @@ InfoFrame::InfoFrame(char *comments)
                                     wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
                                  #endif
    textctrl->SetDefaultStyle(textattr);   // doesn't change font on X11!!!
-   textctrl->WriteText(comments[0] == 0 ? "No comments found." : comments);
+   if (comments[0] == 0) {
+      textctrl->WriteText(_("No comments found."));
+   } else {
+      textctrl->WriteText(wxString(comments,wxConvLibc));
+   }
    textctrl->ShowPosition(0);
    textctrl->SetInsertionPoint(0);        // needed to change pos on X11
 
-   wxButton *closebutt = new wxButton(this, wxID_CLOSE, "Close");
+   wxButton *closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
    closebutt->SetDefault();
    
    wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
@@ -177,7 +181,7 @@ void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
    infoptr = NULL;
 }
 
-void ShowInfo(const char *filepath) {
+void ShowInfo(const wxString &filepath) {
    if (infoptr) {
       // info window exists so just bring it to front
       infoptr->Raise();
@@ -191,13 +195,13 @@ void ShowInfo(const char *filepath) {
    char *commptr = NULL;
 
    // read and display comments in current pattern file
-   const char *err = readcomments(filepath, &commptr);
+   const char *err = readcomments(filepath.mb_str(), &commptr);
    if (err) {
-      Warning(err);
+      Warning(wxString(err,wxConvLibc));
    } else {
       infoptr = new InfoFrame(commptr);
       if (infoptr == NULL) {
-         Warning("Could not create info window!");
+         Warning(_("Could not create info window!"));
       } else {
          infoptr->Show(true);
          #ifdef __WXX11__

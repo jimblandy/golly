@@ -49,22 +49,22 @@ public:
 
    // clipboard functions
    bool ClipboardHasText();
-   bool CopyTextToClipboard(wxString &text);
-   bool GetTextFromClipboard(wxTextDataObject *data);
+   bool CopyTextToClipboard(wxString& text);
+   bool GetTextFromClipboard(wxTextDataObject* data);
    void OpenClipboard();
    void RunClipboard();
 
    // file functions
-   void OpenFile(const char *path, bool remember = true);
-   void NewPattern(const char *title = "untitled");
+   void OpenFile(const wxString& path, bool remember = true);
+   void NewPattern(const wxString& title = _("untitled"));
    void CreateUniverse();
-   void SetWindowTitle(const char *filename);
+   void SetWindowTitle(const wxString& filename);
    void OpenPattern();
+   void OpenScript();
    void ToggleShowPatterns();
    void ToggleShowScripts();
    void SavePattern();
-   const char* SaveFile(const char *path, const char *format, bool remember);
-   void OpenScript();
+   wxString SaveFile(const wxString& path, const wxString& format, bool remember);
 
    // prefs functions
    void SetRandomFillPercentage();
@@ -124,15 +124,15 @@ private:
 
    // file functions
    bool LoadImage();
-   void LoadPattern(const char *newtitle);
-   void MySetTitle(const char *title);
-   void SetCurrentFile(const char *path);
-   const char* GetBaseName(const char *fullpath);
-   void AddRecentPattern(const char *path);
+   void LoadPattern(const wxString& newtitle);
+   void MySetTitle(const wxString& title);
+   void SetCurrentFile(const wxString& path);
+   wxString GetBaseName(const wxString& fullpath);
+   void AddRecentPattern(const wxString& path);
    void OpenRecentPattern(int id);
    void ClearRecentPatterns();
    void ChangePatternDir();
-   void AddRecentScript(const char *path);
+   void AddRecentScript(const wxString& path);
    void OpenRecentScript(int id);
    void ClearRecentScripts();
    void ChangeScriptDir();
@@ -143,8 +143,8 @@ private:
    bool SaveStartingPattern();
    void ShowRuleDialog();
 
-   char currfile[4096];          // full path of current pattern file
-   char currname[256];           // file name displayed in main window title
+   wxString currfile;            // full path of current pattern file
+   wxString currname;            // file name displayed in main window title
    
    int warp;                     // current speed setting
    int minwarp;                  // warp value at maximum delay (must be <= 0)
@@ -152,15 +152,15 @@ private:
    long starttime, endtime;      // for timing info
    double startgen, endgen;      // ditto
 
-   lifealgo *gen0algo;           // starting pattern
-   char gen0rule[128];           // starting rule
+   lifealgo* gen0algo;           // starting pattern
+   wxString gen0rule;            // starting rule
    int gen0warp;                 // starting speed
    int gen0mag;                  // starting scale
    bigint gen0x, gen0y;          // starting location
    bool gen0hash;                // hashing was on at start?
 };
 
-// temporary file for storing clipboard data
+// name of temporary file for storing clipboard data
 extern wxString clipfile;
 
 // static routines needed by GetPrefs() to get IDs for items in Open Recent and

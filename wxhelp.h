@@ -27,10 +27,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Routines for displaying html help files stored in the Help folder:
 
 // Open a modeless window and display the given html file.
-// If filepath is "" then either the help window is brought to the
+// If filepath is empty then either the help window is brought to the
 // front if it's open, or it is opened and the most recent html file
 // is displayed.
-void ShowHelp(const char *filepath);
+void ShowHelp(const wxString &filepath);
 
 // Open a modal dialog and display info about the app.
 void ShowAboutBox();

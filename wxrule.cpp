@@ -105,6 +105,8 @@ RuleDialog::RuleDialog(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
+const wxString UNNAMED = _("UNNAMED");
+
 const int HGAP = 12;
 const int BIGVGAP = 12;
 const int SMALLVGAP = 5;
@@ -126,10 +128,11 @@ void RuleDialog::CreateControls()
    
    // create the controls:
    
-   ruletext = new wxTextCtrl(this, RULE_TEXT, wxT(curralgo->getrule()));
-   wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC,
-      wxT("Enter a 2D rule using B0..8/S0..8 notation\n")
-      wxT("or a 1D rule as Wn (n = 0 to 254 and even):") );
+   ruletext = new wxTextCtrl(this, RULE_TEXT,
+                             wxString(curralgo->getrule(),wxConvLibc));
+   wxString title = _("Enter a 2D rule using B0..8/S0..8 notation\n");
+   title +=         _("or a 1D rule as Wn (n = 0 to 254 and even):");
+   wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
    
    wxArrayString namearray;
    size_t i;
@@ -231,15 +234,15 @@ int CanonicalRule(const char *rulestring)
 // -----------------------------------------------------------------------------
 
 // return true if given strings are equivalent rules
-bool MatchingRules(wxString &rule1, wxString &rule2)
+bool MatchingRules(const wxString &rule1, const wxString &rule2)
 {
    if (rule1 == rule2) {
       return true;
    } else {
       // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules to
       // a canonical bit pattern and compare
-      int canon1 = CanonicalRule(rule1);
-      int canon2 = CanonicalRule(rule2);
+      int canon1 = CanonicalRule(rule1.mb_str());
+      int canon2 = CanonicalRule(rule2.mb_str());
       // both rules must also be valid (non-negative) for a match
       return canon1 >= 0 && canon2 >= 0 && canon1 == canon2;
    }
@@ -269,17 +272,17 @@ void RuleDialog::UpdateName()
       }
    }
    if (newindex >= 0) {
-      // matching rule found so remove "UNNAMED" item if it exists
+      // matching rule found so remove UNNAMED item if it exists
       // use (int) twice to avoid warnings on wx 2.6.x/2.7
       if ( (int) namechoice->GetCount() > (int) namedrules.GetCount() ) {
          namechoice->Delete( namechoice->GetCount() - 1 );
       }
    } else {
-      // no match found so use index of "UNNAMED" item,
+      // no match found so use index of UNNAMED item,
       // appending it if it doesn't exist
       // use (int) twice to avoid warnings on wx 2.6.x/2.7
       if ( (int) namechoice->GetCount() == (int) namedrules.GetCount() ) {
-         namechoice->Append("UNNAMED");
+         namechoice->Append(UNNAMED);
       }
       newindex = namechoice->GetCount() - 1;
    }
@@ -304,10 +307,10 @@ void RuleDialog::OnChooseName(wxCommandEvent& WXUNUSED(event))
    // update rule text based on chosen name
    nameindex = namechoice->GetSelection();
    if ( nameindex == (int) namedrules.GetCount() ) {
-      // do nothing if "UNNAMED" item was chosen
+      // do nothing if UNNAMED item was chosen
       return;
    } else {
-      // remove "UNNAMED" item if it exists
+      // remove UNNAMED item if it exists
       // use (int) twice to avoid warnings on wx 2.6.x/2.7
       if ( (int) namechoice->GetCount() > (int) namedrules.GetCount() ) {
          namechoice->Delete( namechoice->GetCount() - 1 );
@@ -333,9 +336,9 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
    
    // validate new rule
    wxString newrule = ruletext->GetValue();
-   const char *err = curralgo->setrule( (char*)newrule.c_str() );
+   const char *err = curralgo->setrule( newrule.mb_str() );
    if (err) {
-      Warning("Rule is not valid.");
+      Warning(_("Rule is not valid."));
       ruletext->SetFocus();
       ruletext->SetSelection(-1,-1);
       return;
@@ -344,27 +347,27 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
    // validate new name
    wxString newname = addtext->GetValue();
    if ( newname.IsEmpty() ) {
-      Warning("Type in a name for the new rule.");
+      Warning(_("Type in a name for the new rule."));
       addtext->SetFocus();
       return;
    } else if ( newname.Find('|') >= 0 ) {
-      Warning("Sorry, but rule names must not contain \"|\".");
+      Warning(_("Sorry, but rule names must not contain \"|\"."));
       addtext->SetFocus();
       addtext->SetSelection(-1,-1);
       return;
-   } else if ( newname == "UNNAMED" ) {
-      Warning("You can't use that name smarty pants.");
+   } else if ( newname == UNNAMED ) {
+      Warning(_("You can't use that name smarty pants."));
       addtext->SetFocus();
       addtext->SetSelection(-1,-1);
       return;
    } else if ( namechoice->FindString(newname) != wxNOT_FOUND ) {
-      Warning("That name is already used for another rule.");
+      Warning(_("That name is already used for another rule."));
       addtext->SetFocus();
       addtext->SetSelection(-1,-1);
       return;
    }
    
-   // replace "UNNAMED" with new name
+   // replace UNNAMED with new name
    namechoice->Delete( namechoice->GetCount() - 1 );
    namechoice->Append( newname );
    
@@ -392,7 +395,7 @@ void RuleDialog::OnDeleteName(wxCommandEvent& WXUNUSED(event))
    namechoice->Delete(nameindex);
    namedrules.RemoveAt((size_t) nameindex);
    
-   // force a change to "UNNAMED" item
+   // force a change to UNNAMED item
    nameindex = -1;
    UpdateName();
 }
@@ -401,7 +404,7 @@ void RuleDialog::OnDeleteName(wxCommandEvent& WXUNUSED(event))
 
 void RuleDialog::OnUpdateAdd(wxUpdateUIEvent& event)
 {
-   // Add button is only enabled if "UNNAMED" item is selected
+   // Add button is only enabled if UNNAMED item is selected
    event.Enable( nameindex == (int) namedrules.GetCount() );
 }
 
@@ -423,12 +426,12 @@ bool RuleDialog::TransferDataFromWindow()
       curralgo->setrule("B3/S23");
       return true;
    }
-   const char *err = curralgo->setrule( (char*)newrule.c_str() );
+   const char *err = curralgo->setrule( newrule.mb_str() );
    if (err) {
-      Warning(err);
+      Warning(wxString(err,wxConvLibc));
       return false;
    } else if ( global_liferules.hasB0notS8 && hashing ) {
-      Warning("B0-not-S8 rules are not allowed when hashing.");
+      Warning(_("B0-not-S8 rules are not allowed when hashing."));
       return false;
    }
    return true;
@@ -439,7 +442,7 @@ bool RuleDialog::TransferDataFromWindow()
 bool ChangeRule()
 {
    wxArrayString oldnames = namedrules;
-   wxString oldrule = wxT( curralgo->getrule() );
+   wxString oldrule = wxString(curralgo->getrule(),wxConvLibc);
 
    RuleDialog dialog( wxGetApp().GetTopWindow() );
    if ( dialog.ShowModal() == wxID_OK ) {
@@ -447,7 +450,7 @@ bool ChangeRule()
       return true;
    } else {
       // user hit Cancel so restore rule and name array
-      curralgo->setrule( (char*)oldrule.c_str() );
+      curralgo->setrule( oldrule.mb_str() );
       namedrules.Clear();
       namedrules = oldnames;
       return false;
@@ -456,21 +459,21 @@ bool ChangeRule()
 
 // -----------------------------------------------------------------------------
 
-wxString rulename;
-
-const char* GetRuleName(const char* rulestring)
+wxString GetRuleName(const wxString &rulestring)
 {
    // search namedrules array for matching rule
-   wxString givenrule = rulestring;
+   wxString rulename;
    size_t i;
    for (i=0; i<namedrules.GetCount(); i++) {
       // extract rule after '|'
       wxString thisrule = namedrules[i].AfterFirst('|');
-      if ( MatchingRules(givenrule, thisrule) ) {
+      if ( MatchingRules(rulestring, thisrule) ) {
          // extract name before '|'
          rulename = namedrules[i].BeforeFirst('|');
-         return rulename.c_str();
+         return rulename;
       }
    }
-   return rulestring;      // not named
+   // given rulestring has not been named
+   rulename = rulestring;
+   return rulename;
 }

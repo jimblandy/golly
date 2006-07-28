@@ -78,7 +78,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"
 
 #ifdef __WXMAC__
-   #include <Carbon/Carbon.h>    // for GetCurrentProcess, etc
+   #include <Carbon/Carbon.h>                      // for GetCurrentProcess, etc
+   #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
 #endif
 
 // -----------------------------------------------------------------------------
@@ -233,8 +234,9 @@ wxString clipfile;
 wxSplitterWindow* splitwin = NULL;
 wxGenericDirCtrl* patternctrl = NULL;
 wxGenericDirCtrl* scriptctrl = NULL;
+
 #ifdef __WXMSW__
-bool callUnselect = false;          // OnIdle needs to call Unselect?
+bool callUnselect = false;    // OnIdle needs to call Unselect?
 #endif
 
 // -----------------------------------------------------------------------------
@@ -322,7 +324,7 @@ void MainFrame::UpdateToolBar(bool active)
       movebutt->Enable(active);
       zoominbutt->Enable(active);
       zoomoutbutt->Enable(active);
-      infobutt->Enable(active && currfile[0] != 0);
+      infobutt->Enable(active && !currfile.IsEmpty());
       */
       
       #ifdef __WXX11__
@@ -355,7 +357,7 @@ void MainFrame::UpdateToolBar(bool active)
       tbar->EnableTool(ID_ZOOMIN,         active);
       tbar->EnableTool(ID_ZOOMOUT,        active);
       tbar->EnableTool(ID_HASH,           active && !generating);
-      tbar->EnableTool(ID_INFO,           active && currfile[0] != 0);
+      tbar->EnableTool(ID_INFO,           active && !currfile.IsEmpty());
 
       // call ToggleTool for tools added via AddCheckTool or AddRadioTool
       tbar->ToggleTool(ID_HASH,           hashing);
@@ -397,9 +399,9 @@ void MainFrame::EnableAllMenus(bool enable)
    #ifdef __WXMAC__
       // enable/disable all menus, including Help menu and items in app menu
       if (enable)
-         EndAppModalStateForWindow( (OpaqueWindowPtr*)MacGetWindowRef() );
+         EndAppModalStateForWindow( (OpaqueWindowPtr*)this->MacGetWindowRef() );
       else
-         BeginAppModalStateForWindow( (OpaqueWindowPtr*)MacGetWindowRef() );
+         BeginAppModalStateForWindow( (OpaqueWindowPtr*)this->MacGetWindowRef() );
    #else
       wxMenuBar *mbar = GetMenuBar();
       if (mbar) {
@@ -498,7 +500,7 @@ void MainFrame::UpdateMenuItems(bool active)
          mbar->Enable(ID_BUFF,   active);
          mbar->Check(ID_BUFF,    buffered);
       #endif
-      mbar->Enable(ID_INFO,      currfile[0] != 0);
+      mbar->Enable(ID_INFO,      !currfile.IsEmpty());
 
       // tick/untick menu items created using AppendCheckItem
       mbar->Check(ID_SHOW_PATTERNS,   showpatterns);
@@ -602,42 +604,31 @@ void MainFrame::UpdateStatus()
 
 // file functions:
 
-const char B0message[] = "Hashing has been turned off due to B0-not-S8 rule.";
+const wxString B0message = _("Hashing has been turned off due to B0-not-S8 rule.");
 
-void MainFrame::MySetTitle(const char *title)
+void MainFrame::MySetTitle(const wxString& title)
 {
    #ifdef __WXMAC__
       // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
-      /* CopyCStringToPascal is deprecated
-      Str255 ptitle;
-      CopyCStringToPascal(title, ptitle);
-      */
-      unsigned char ptitle[255];
-      unsigned int tlen = strlen(title);
-      if (tlen > sizeof(ptitle) - 1) tlen = sizeof(ptitle) - 1;
-      ptitle[0] = (unsigned char)tlen;
-      if (tlen > 0) {
-         char *dest = (char *)&ptitle[1];
-         strncpy(dest, title, tlen);
-      }
-      SetWTitle( (OpaqueWindowPtr*)this->MacGetWindowRef(),
-                 (unsigned char const *)ptitle);
+      SetWindowTitleWithCFString((OpaqueWindowPtr*)this->MacGetWindowRef(),
+                                 wxMacCFStringHolder(title, wxFONTENCODING_DEFAULT)) ;
    #else
       SetTitle(title);
    #endif
 }
 
-void MainFrame::SetWindowTitle(const char *filename)
+void MainFrame::SetWindowTitle(const wxString& filename)
 {
    wxString wtitle;
-   if (filename[0] != 0) {
-      // new file name in title
-      strncpy(currname, filename, sizeof(currname));
+   if ( !filename.IsEmpty() ) {
+      // remember current file name
+      currname = filename;
    }
+   wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLibc) );
    #ifdef __WXMAC__
-      wtitle.Printf("%s [%s]", currname, GetRuleName(curralgo->getrule()));
+      wtitle.Printf(_("%s [%s]"), currname.c_str(), rule.c_str());
    #else
-      wtitle.Printf("%s [%s] - Golly", currname, GetRuleName(curralgo->getrule()));
+      wtitle.Printf(_("%s [%s] - Golly"), currname.c_str(), rule.c_str());
    #endif
    // better to truncate a really long title???!!!
    MySetTitle(wtitle);
@@ -683,19 +674,18 @@ void MainFrame::CreateUniverse()
    SetGenIncrement();
 }
 
-void MainFrame::NewPattern(const char *title)
+void MainFrame::NewPattern(const wxString& title)
 {
    if (generating) return;
    savestart = false;
-   currfile[0] = 0;
+   currfile.Clear();
    warp = 0;
    CreateUniverse();
 
    if (initrule[0]) {
       // this is the first call of NewPattern when app starts
       const char *err = curralgo->setrule(initrule);
-      if (err)
-         Warning(err);
+      if (err) Warning(wxString(err,wxConvLibc));
       if (global_liferules.hasB0notS8 && hashing) {
          hashing = false;
          statusptr->SetMessage(B0message);
@@ -723,8 +713,7 @@ void MainFrame::NewPattern(const char *title)
 
 bool MainFrame::LoadImage()
 {
-   wxString fname = wxT(currfile);
-   wxString ext = fname.AfterLast(wxT('.'));
+   wxString ext = currfile.AfterLast(wxT('.'));
    
    // supported extensions match image handlers added in GollyApp::OnInit()
    if ( ext.IsSameAs(wxT("bmp"),false) ||
@@ -733,7 +722,7 @@ bool MainFrame::LoadImage()
         ext.IsSameAs(wxT("tif"),false) ||
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
-      if ( image.LoadFile(fname) ) {
+      if ( image.LoadFile(currfile) ) {
          curralgo->setrule("B3/S23");
          
          unsigned char maskr, maskg, maskb;
@@ -758,7 +747,7 @@ bool MainFrame::LoadImage()
          
          curralgo->endofpattern();
       } else {
-         Warning("Could not load image from file!");
+         Warning(_("Could not load image from file!"));
       }
       return true;
    } else {
@@ -766,11 +755,11 @@ bool MainFrame::LoadImage()
    }
 }
 
-void MainFrame::LoadPattern(const char *newtitle)
+void MainFrame::LoadPattern(const wxString& newtitle)
 {
    // don't use initrule in future NewPattern calls
    initrule[0] = 0;
-   if (newtitle) {
+   if (!newtitle.IsEmpty()) {
       savestart = false;
       warp = 0;
       if (GetInfoFrame()) {
@@ -795,38 +784,37 @@ void MainFrame::LoadPattern(const char *newtitle)
    // get called and slow down hlife pattern loading
    CreateUniverse();
 
-   if (newtitle) {
+   if (!newtitle.IsEmpty()) {
       // show new file name in window title but no rule (which readpattern can change);
       // nicer if user can see file name while loading a very large pattern
-      wxString wtitle;
-      wtitle.Printf("Loading %s", newtitle);
+      wxString wtitle = _("Loading ") + newtitle;
       MySetTitle(wtitle);
    }
 
    if (LoadImage()) {
       viewptr->nopattupdate = false;
    } else {
-      const char *err = readpattern(currfile, *curralgo);
+      const char *err = readpattern(currfile.mb_str(), *curralgo);
       if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
          hashing = true;
-         statusptr->SetMessage("Hashing has been turned on for macrocell format.");
+         statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currfile, *curralgo);
-      } else if (global_liferules.hasB0notS8 && hashing && newtitle) {
+         err = readpattern(currfile.mb_str(), *curralgo);
+      } else if (global_liferules.hasB0notS8 && hashing && !newtitle.IsEmpty()) {
          hashing = false;
          statusptr->SetMessage(B0message);
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currfile, *curralgo);
+         err = readpattern(currfile.mb_str(), *curralgo);
       }
       viewptr->nopattupdate = false;
-      if (err) Warning(err);
+      if (err) Warning(wxString(err,wxConvLibc));
    }
 
-   if (newtitle) {
+   if (!newtitle.IsEmpty()) {
       // show full window title after readpattern has set rule
       SetWindowTitle(newtitle);
       if (openremovesel) viewptr->NoSelection();
@@ -843,9 +831,9 @@ void MainFrame::ResetPattern()
 {
    if (generating || curralgo->getGeneration() == bigint::zero) return;
    
-   if (gen0algo == NULL && currfile[0] == 0) {
+   if (gen0algo == NULL && currfile.IsEmpty()) {
       // if this happens then savestart logic is wrong
-      Warning("Starting pattern cannot be restored!");
+      Warning(_("Starting pattern cannot be restored!"));
       return;
    }
    
@@ -864,49 +852,39 @@ void MainFrame::ResetPattern()
       curralgo->setGeneration(bigint::zero);
    } else {
       // restore starting pattern from currfile;
-      // pass in NULL so savestart, warp and currcurs won't change
-      LoadPattern(NULL);
+      // pass in empty string so savestart, warp and currcurs won't change
+      LoadPattern(wxEmptyString);
       // gen count has been reset to 0
    }
    // now restore rule, scale and location
-   curralgo->setrule(gen0rule);
-   SetWindowTitle("");
+   curralgo->setrule(gen0rule.mb_str());
+   SetWindowTitle(wxEmptyString);
    viewptr->SetPosMag(gen0x, gen0y, gen0mag);
    UpdateEverything();
 }
 
-const char* MainFrame::GetBaseName(const char *fullpath)
+wxString MainFrame::GetBaseName(const wxString& fullpath)
 {
    // extract basename from given path
-   int len = strlen(fullpath);
-   while (len > 0) {
-      len--;
-      if (fullpath[len] == wxFILE_SEP_PATH) {
-         len++;
-         break;
-      }
-   }
-   return (const char *)&fullpath[len];
+   return fullpath.AfterLast(wxFILE_SEP_PATH);
 }
 
-void MainFrame::SetCurrentFile(const char *path)
+void MainFrame::SetCurrentFile(const wxString& path)
 {
    #ifdef __WXMAC__
       // copy given path to currfile but as decomposed UTF8 so fopen will work
-      wxString fpath = wxT(path);
       #if wxCHECK_VERSION(2, 7, 0)
-         strncpy(currfile, fpath.fn_str(), sizeof(currfile));
+         currfile = wxString(path.fn_str(), wxConvLibc);
       #else
-         // wxMac 2.6.x or older: conversion doesn't always work on OS 10.4
-         fpath = wxString( fpath.wc_str(wxConvLocal), wxConvUTF8 );
-         strncpy(currfile, fpath.c_str(), sizeof(currfile));
+         // wxMac 2.6.x or older (but conversion doesn't always work on OS 10.4)
+         currfile = wxString(path.wc_str(wxConvLibc), wxConvUTF8);
       #endif
    #else
-      strncpy(currfile, path, sizeof(currfile));
+      currfile = path;
    #endif
 }
 
-void MainFrame::OpenFile(const char *path, bool remember)
+void MainFrame::OpenFile(const wxString& path, bool remember)
 {
    if ( IsScript(path) ) {
       // execute script
@@ -920,7 +898,7 @@ void MainFrame::OpenFile(const char *path, bool remember)
    }
 }
 
-void MainFrame::AddRecentPattern(const char *path)
+void MainFrame::AddRecentPattern(const wxString& path)
 {
    // put given path at start of patternSubMenu
    int id = patternSubMenu->FindItem(path);
@@ -953,7 +931,7 @@ void MainFrame::AddRecentPattern(const char *path)
    }
 }
 
-void MainFrame::AddRecentScript(const char *path)
+void MainFrame::AddRecentScript(const wxString& path)
 {
    // put given path at start of scriptSubMenu
    int id = scriptSubMenu->FindItem(path);
@@ -990,17 +968,18 @@ void MainFrame::OpenPattern()
 {
    if (generating) return;
 
+   wxString filetypes = _("All files (*)|*");
+   filetypes +=         _("|RLE (*.rle)|*.rle");
+   filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
+   filetypes +=         _("|Macrocell (*.mc)|*.mc");
+   filetypes +=         _("|Gzip (*.gz)|*.gz");
+   filetypes +=         _("|BMP (*.bmp)|*.bmp");
+   filetypes +=         _("|GIF (*.gif)|*.gif");
+   filetypes +=         _("|PNG (*.png)|*.png");
+   filetypes +=         _("|TIFF (*.tiff;*.tif)|*.tiff;*.tif");
+   
    wxFileDialog opendlg(this, _("Choose a pattern file"),
-                        opensavedir, wxEmptyString,
-                        _T("All files (*)|*")
-                        _T("|RLE (*.rle)|*.rle")
-                        _T("|Life 1.05/1.06 (*.lif)|*.lif")
-                        _T("|Macrocell (*.mc)|*.mc")
-                        _T("|Gzip (*.gz)|*.gz")
-                        _T("|BMP (*.bmp)|*.bmp")
-                        _T("|GIF (*.gif)|*.gif")
-                        _T("|PNG (*.png)|*.png")
-                        _T("|TIFF (*.tiff;*.tif)|*.tiff;*.tif"),
+                        opensavedir, wxEmptyString, filetypes,
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
@@ -1018,7 +997,7 @@ void MainFrame::OpenScript()
 
    wxFileDialog opendlg(this, _("Choose a Python script"),
                         rundir, wxEmptyString,
-                        _T("Python script (*.py)|*.py"),
+                        _("Python script (*.py)|*.py"),
                         wxOPEN | wxFILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
@@ -1038,23 +1017,23 @@ bool MainFrame::CopyTextToClipboard(wxString &text)
       if ( tmpfile.IsOpened() ) {
          size_t textlen = text.Length();
          if ( tmpfile.Write( text.c_str(), textlen ) < textlen ) {
-            Warning("Could not write all data to clipboard file!");
+            Warning(_("Could not write all data to clipboard file!"));
             result = false;
          }
          tmpfile.Close();
       } else {
-         Warning("Could not create clipboard file!");
+         Warning(_("Could not create clipboard file!"));
          result = false;
       }
    #else
       if (wxTheClipboard->Open()) {
          if ( !wxTheClipboard->SetData(new wxTextDataObject(text)) ) {
-            Warning("Could not copy text to clipboard!");
+            Warning(_("Could not copy text to clipboard!"));
             result = false;
          }
          wxTheClipboard->Close();
       } else {
-         Warning("Could not open clipboard!");
+         Warning(_("Could not open clipboard!"));
          result = false;
       }
    #endif
@@ -1069,7 +1048,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
       if ( wxTheClipboard->IsSupported( wxDF_TEXT ) ) {
          gotdata = wxTheClipboard->GetData( *textdata );
          if (!gotdata) {
-            statusptr->ErrorMessage("Could not get clipboard text!");
+            statusptr->ErrorMessage(_("Could not get clipboard text!"));
          }
 
       } else if ( wxTheClipboard->IsSupported( wxDF_BITMAP ) ) {
@@ -1101,25 +1080,25 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
                }
                textdata->SetText(str);
             } else {
-               statusptr->ErrorMessage("Could not convert clipboard bitmap!");
+               statusptr->ErrorMessage(_("Could not convert clipboard bitmap!"));
                gotdata = false;
             }
          } else {
-            statusptr->ErrorMessage("Could not get clipboard bitmap!");
+            statusptr->ErrorMessage(_("Could not get clipboard bitmap!"));
          }
 
       } else {
          #ifdef __WXX11__
-            statusptr->ErrorMessage("Sorry, but there is no clipboard support for X11.");
+            statusptr->ErrorMessage(_("Sorry, but there is no clipboard support for X11."));
             // do X11 apps like xlife or fontforge have clipboard support???!!!
          #else
-            statusptr->ErrorMessage("No data in clipboard.");
+            statusptr->ErrorMessage(_("No data in clipboard."));
          #endif
       }
       wxTheClipboard->Close();
 
    } else {
-      statusptr->ErrorMessage("Could not open clipboard!");
+      statusptr->ErrorMessage(_("Could not open clipboard!"));
    }
    
    return gotdata;
@@ -1133,10 +1112,10 @@ void MainFrame::OpenClipboard()
       // on X11 the clipboard data is in non-temporary clipfile, so copy
       // clipfile to gen0file (for use by ResetPattern and ShowPatternInfo)
       if ( wxCopyFile(clipfile, gen0file, true) ) {
-         strncpy(currfile, gen0file.c_str(), sizeof(currfile));
-         LoadPattern("clipboard");
+         currfile = gen0file;
+         LoadPattern(_("clipboard"));
       } else {
-         statusptr->ErrorMessage("Could not copy clipfile!");
+         statusptr->ErrorMessage(_("Could not copy clipfile!"));
       }
    #else
       wxTextDataObject data;
@@ -1147,12 +1126,12 @@ void MainFrame::OpenClipboard()
          if ( outfile.IsOpened() ) {
             outfile.Write( data.GetText() );
             outfile.Close();
-            strncpy(currfile, gen0file.c_str(), sizeof(currfile));
-            LoadPattern("clipboard");
+            currfile = gen0file;
+            LoadPattern(_("clipboard"));
             // do NOT delete gen0file -- it can be reloaded by ResetPattern
             // or used by ShowPatternInfo
          } else {
-            statusptr->ErrorMessage("Could not create gen0file!");
+            statusptr->ErrorMessage(_("Could not create gen0file!"));
          }
       }
    #endif
@@ -1171,7 +1150,7 @@ void MainFrame::RunClipboard()
          outfile.Close();
          RunScript(scriptfile);
       } else {
-         statusptr->ErrorMessage("Could not create script file!");
+         statusptr->ErrorMessage(_("Could not create script file!"));
       }
    }
 }
@@ -1247,7 +1226,7 @@ void MainFrame::SavePattern()
    } else {
       // allow saving as RLE or Life 1.05 file if pattern is small enough
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         statusptr->ErrorMessage("Pattern is outside +/- 10^9 boundary.");
+         statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
          return;
       }   
       itop = top.toint();
@@ -1273,12 +1252,12 @@ void MainFrame::SavePattern()
       pattern_format format;
       // if user supplied a known extension (rle/lif/mc) then use that format if
       // it is allowed, otherwise use current format specified in filter menu
-      if ( ext.IsSameAs("rle",false) && RLEindex >= 0 ) {
+      if ( ext.IsSameAs(wxT("rle"),false) && RLEindex >= 0 ) {
          format = RLE_format;
       // Life 1.05 format not yet implemented!!!
       // } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
       //   format = L105_format;
-      } else if ( ext.IsSameAs("mc",false) && MCindex >= 0 ) {
+      } else if ( ext.IsSameAs(wxT("mc"),false) && MCindex >= 0 ) {
          format = MC_format;
       } else if ( savedlg.GetFilterIndex() == RLEindex ) {
          format = RLE_format;
@@ -1287,18 +1266,18 @@ void MainFrame::SavePattern()
       } else if ( savedlg.GetFilterIndex() == MCindex ) {
          format = MC_format;
       } else {
-         statusptr->ErrorMessage("Bug in SavePattern!");
+         statusptr->ErrorMessage(_("Bug in SavePattern!"));
          return;
       }
       SetCurrentFile( savedlg.GetPath() );
       AddRecentPattern( savedlg.GetPath() );
       SetWindowTitle( savedlg.GetFilename() );
-      const char *err = writepattern(savedlg.GetPath(), *curralgo, format,
+      const char *err = writepattern(savedlg.GetPath().mb_str(), *curralgo, format,
                                      itop, ileft, ibottom, iright);
       if (err) {
-         statusptr->ErrorMessage(err);
+         statusptr->ErrorMessage(wxString(err,wxConvLibc));
       } else {
-         statusptr->DisplayMessage("Pattern saved in file.");
+         statusptr->DisplayMessage(_("Pattern saved in file."));
          if ( curralgo->getGeneration() == bigint::zero ) {
             // no need to save starting pattern (ResetPattern can load file)
             savestart = false;
@@ -1308,39 +1287,38 @@ void MainFrame::SavePattern()
 }
 
 // called by script command to save current pattern to given file
-const char* MainFrame::SaveFile(const char *path, const char *format, bool remember)
+wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool remember)
 {
    // check that given format is valid and allowed
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    curralgo->findedges(&top, &left, &bottom, &right);
    
-   wxString fstring = wxT(format);
    pattern_format pattfmt;
-   if ( fstring.IsSameAs("rle",false) ) {
+   if ( format.IsSameAs(wxT("rle"),false) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         return "Pattern is too big to save as RLE.";
+         return _("Pattern is too big to save as RLE.");
       }   
       pattfmt = RLE_format;
       itop = top.toint();
       ileft = left.toint();
       ibottom = bottom.toint();
       iright = right.toint();
-   } else if ( fstring.IsSameAs("mc",false) ) {
+   } else if ( format.IsSameAs(wxT("mc"),false) ) {
       if (!hashing) {
-         return "Macrocell format is only allowed if hashing.";
+         return _("Macrocell format is only allowed if hashing.");
       }
       pattfmt = MC_format;
       // writepattern will ignore itop, ileft, ibottom, iright
       itop = ileft = ibottom = iright = 0;
    } else {
-      return "Unknown pattern format.";
+      return _("Unknown pattern format.");
    }   
    
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
    SetWindowTitle( GetBaseName(path) );
-   const char *err = writepattern(path, *curralgo, pattfmt,
+   const char *err = writepattern(path.mb_str(), *curralgo, pattfmt,
                                   itop, ileft, ibottom, iright);
    if (!err) {
       if ( curralgo->getGeneration() == bigint::zero ) {
@@ -1348,7 +1326,7 @@ const char* MainFrame::SaveFile(const char *path, const char *format, bool remem
          savestart = false;
       }
    }
-   return err;
+   return wxString(err, wxConvLibc);
 }
 
 // -----------------------------------------------------------------------------
@@ -1476,7 +1454,7 @@ void MainFrame::SetRandomFillPercentage()
    wxMenuBar *mbar = GetMenuBar();
    if (mbar) {
       wxString randlabel;
-      randlabel.Printf("Random Fill (%d%c)\tCtrl+5", randomfill, '%');
+      randlabel.Printf(_("Random Fill (%d%c)\tCtrl+5"), randomfill, '%');
       mbar->SetLabel(ID_RANDOM, randlabel);
    }
 }
@@ -1591,7 +1569,7 @@ bool MainFrame::SaveStartingPattern()
    }
    
    // save current rule, scale, location, step size and hashing option
-   strncpy(gen0rule, curralgo->getrule(), sizeof(gen0rule));
+   gen0rule = wxString(curralgo->getrule(), wxConvLibc);
    gen0mag = viewptr->GetMag();
    viewptr->GetPos(gen0x, gen0y);
    gen0warp = warp;
@@ -1606,7 +1584,7 @@ bool MainFrame::SaveStartingPattern()
    bigint top, left, bottom, right;
    curralgo->findedges(&top, &left, &bottom, &right);
    if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage("Starting pattern is outside +/- 10^9 boundary.");
+      statusptr->ErrorMessage(_("Starting pattern is outside +/- 10^9 boundary."));
       // ask user if they want to continue generating???
       return false;
    }   
@@ -1633,7 +1611,7 @@ bool MainFrame::SaveStartingPattern()
    double accumcount = 0;
    int currcount = 0;
    bool abort = false;
-   BeginProgress("Saving starting pattern");
+   BeginProgress(_("Saving starting pattern"));
 
    for ( cy=itop; cy<=ibottom; cy++ ) {
       currcount++;
@@ -1650,7 +1628,7 @@ bool MainFrame::SaveStartingPattern()
          if (currcount > 1024) {
             accumcount += currcount;
             currcount = 0;
-            abort = AbortProgress(accumcount / maxcount, "");
+            abort = AbortProgress(accumcount / maxcount, wxEmptyString);
             if (abort) break;
          }
       }
@@ -1784,7 +1762,7 @@ void MainFrame::DisplayTimingInfo()
    }
    if (endtime > starttime) {
       wxString s;
-      s.Printf("%g gens in %g secs (%g gens/sec)",
+      s.Printf(_("%g gens in %g secs (%g gens/sec)"),
                endgen - startgen,
                (double)(endtime - starttime) / 1000.0,
                (double)(endgen - startgen) / ((double)(endtime - starttime) / 1000.0));
@@ -1844,7 +1822,7 @@ void MainFrame::AdvanceOutsideSelection()
 
    // check that pattern is within setcell/getcell limits
    if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage("Pattern is outside +/- 10^9 boundary.");
+      statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
       return;
    }
    
@@ -1865,12 +1843,12 @@ void MainFrame::AdvanceOutsideSelection()
    int iselbottom = viewptr->selbottom.toint();
    int iselright = viewptr->selright.toint();
    if ( !viewptr->CopyRect(iseltop, iselleft, iselbottom, iselright,
-                           curralgo, newalgo, true, "Saving and erasing selection") ) {
+                           curralgo, newalgo, true, _("Saving and erasing selection")) ) {
       // aborted, so best to restore selection
       if ( !newalgo->isEmpty() ) {
          newalgo->findedges(&top, &left, &bottom, &right);
          viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                           newalgo, curralgo, false, "Restoring selection");
+                           newalgo, curralgo, false, _("Restoring selection"));
       }
       delete newalgo;
       UpdateEverything();
@@ -1906,7 +1884,7 @@ void MainFrame::AdvanceOutsideSelection()
       double accumcount = 0;
       int currcount = 0;
       bool abort = false;
-      BeginProgress("Copying advanced pattern");
+      BeginProgress(_("Copying advanced pattern"));
    
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
@@ -1929,7 +1907,7 @@ void MainFrame::AdvanceOutsideSelection()
             if (currcount > 1024) {
                accumcount += currcount;
                currcount = 0;
-               abort = AbortProgress(accumcount / maxcount, "");
+               abort = AbortProgress(accumcount / maxcount, wxEmptyString);
                if (abort) break;
             }
          }
@@ -2017,7 +1995,7 @@ void MainFrame::AdvanceSelection()
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                          curralgo, tempalgo, false, "Saving selection") ) {
+                          curralgo, tempalgo, false, _("Saving selection")) ) {
       if ( tempalgo->isEmpty() ) {
          statusptr->ErrorMessage(empty_selection);
       } else {
@@ -2046,7 +2024,7 @@ void MainFrame::AdvanceSelection()
          
          // copy all cells in new selection from tempalgo to curralgo
          viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                              tempalgo, curralgo, "Copying advanced selection");
+                              tempalgo, curralgo, _("Copying advanced selection"));
          savestart = true;
 
          UpdateEverything();
@@ -2126,7 +2104,7 @@ void MainFrame::ToggleHashing()
    if (generating) return;
 
    if ( global_liferules.hasB0notS8 && !hashing ) {
-      statusptr->ErrorMessage("Hashing cannot be used with a B0-not-S8 rule.");
+      statusptr->ErrorMessage(_("Hashing cannot be used with a B0-not-S8 rule."));
       return;
    }
 
@@ -2135,7 +2113,7 @@ void MainFrame::ToggleHashing()
    if ( !curralgo->isEmpty() ) {
       curralgo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         statusptr->ErrorMessage("Pattern cannot be converted (outside +/- 10^9 boundary).");
+         statusptr->ErrorMessage(_("Pattern cannot be converted (outside +/- 10^9 boundary)."));
          // ask user if they want to continue anyway???
          return;
       }
@@ -2178,7 +2156,7 @@ void MainFrame::ToggleHashing()
       double accumcount = 0;
       int currcount = 0;
       bool abort = false;
-      BeginProgress("Converting pattern");
+      BeginProgress(_("Converting pattern"));
    
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
@@ -2195,7 +2173,7 @@ void MainFrame::ToggleHashing()
             if (currcount > 1024) {
                accumcount += currcount;
                currcount = 0;
-               abort = AbortProgress(accumcount / maxcount, "");
+               abort = AbortProgress(accumcount / maxcount, wxEmptyString);
                if (abort) break;
             }
          }
@@ -2244,7 +2222,7 @@ void MainFrame::ShowRuleDialog()
    if (generating) return;
    if (ChangeRule()) {
       // show rule in window title (file name doesn't change)
-      SetWindowTitle("");
+      SetWindowTitle(wxEmptyString);
    }
 }
 
@@ -2309,7 +2287,7 @@ void MainFrame::ToggleToolBar()
 {
    #ifdef __WXX11__
       // Show(false) does not hide tool bar!!!
-      statusptr->ErrorMessage("Sorry, tool bar hiding is not implemented for X11.");
+      statusptr->ErrorMessage(_("Sorry, tool bar hiding is not implemented for X11."));
    #else
       wxToolBar *tbar = GetToolBar();
       if (tbar) {
@@ -2340,7 +2318,7 @@ void MainFrame::ToggleFullScreen()
 {
    #ifdef __WXX11__
       // ShowFullScreen(true) does nothing!!!
-      statusptr->ErrorMessage("Sorry, full screen mode is not implemented for X11.");
+      statusptr->ErrorMessage(_("Sorry, full screen mode is not implemented for X11."));
    #else
       static bool restorestatus;    // restore status bar at end of full screen mode?
       static bool restoretoolbar;   // restore tool bar?
@@ -2430,7 +2408,7 @@ void MainFrame::ToggleFullScreen()
 
 void MainFrame::ShowPatternInfo()
 {
-   if (viewptr->waitingforclick || currfile[0] == 0) return;
+   if (viewptr->waitingforclick || currfile.IsEmpty()) return;
    ShowInfo(currfile);
 }
 
@@ -2538,21 +2516,21 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
       case ID_INFO:           ShowPatternInfo(); break;
       // Help menu
-      case ID_HELP_INDEX:     ShowHelp("Help/index.html"); break;
-      case ID_HELP_INTRO:     ShowHelp("Help/intro.html"); break;
-      case ID_HELP_TIPS:      ShowHelp("Help/tips.html"); break;
-      case ID_HELP_SHORTCUTS: ShowHelp("Help/shortcuts.html"); break;
-      case ID_HELP_SCRIPTING: ShowHelp("Help/scripting.html"); break;
-      case ID_HELP_LEXICON:   ShowHelp("Help/Lexicon/lex.htm"); break;
-      case ID_HELP_FILE:      ShowHelp("Help/file.html"); break;
-      case ID_HELP_EDIT:      ShowHelp("Help/edit.html"); break;
-      case ID_HELP_CONTROL:   ShowHelp("Help/control.html"); break;
-      case ID_HELP_VIEW:      ShowHelp("Help/view.html"); break;
-      case ID_HELP_HELP:      ShowHelp("Help/help.html"); break;
-      case ID_HELP_REFS:      ShowHelp("Help/refs.html"); break;
-      case ID_HELP_PROBLEMS:  ShowHelp("Help/problems.html"); break;
-      case ID_HELP_CHANGES:   ShowHelp("Help/changes.html"); break;
-      case ID_HELP_CREDITS:   ShowHelp("Help/credits.html"); break;
+      case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
+      case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
+      case ID_HELP_TIPS:      ShowHelp(_("Help/tips.html")); break;
+      case ID_HELP_SHORTCUTS: ShowHelp(_("Help/shortcuts.html")); break;
+      case ID_HELP_SCRIPTING: ShowHelp(_("Help/scripting.html")); break;
+      case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
+      case ID_HELP_FILE:      ShowHelp(_("Help/file.html")); break;
+      case ID_HELP_EDIT:      ShowHelp(_("Help/edit.html")); break;
+      case ID_HELP_CONTROL:   ShowHelp(_("Help/control.html")); break;
+      case ID_HELP_VIEW:      ShowHelp(_("Help/view.html")); break;
+      case ID_HELP_HELP:      ShowHelp(_("Help/help.html")); break;
+      case ID_HELP_REFS:      ShowHelp(_("Help/refs.html")); break;
+      case ID_HELP_PROBLEMS:  ShowHelp(_("Help/problems.html")); break;
+      case ID_HELP_CHANGES:   ShowHelp(_("Help/changes.html")); break;
+      case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
       default:
          if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
@@ -2714,9 +2692,9 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
          // user clicked on a file name
          if ( generating ) {
             if ( showpatterns )
-               statusptr->ErrorMessage("Cannot load pattern while generating.");
+               statusptr->ErrorMessage(_("Cannot load pattern while generating."));
             else
-               statusptr->ErrorMessage("Cannot run script while generating.");
+               statusptr->ErrorMessage(_("Cannot run script while generating."));
          } else {
             // reset background of previously selected file by traversing entire tree;
             // we can't just remember previously selected id because ids don't persist
@@ -2846,23 +2824,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
    
    size_t numfiles = filenames.GetCount();
    for ( size_t n = 0; n < numfiles; n++ ) {
-      #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
-         // fix wxMac CVS HEAD bug???!!! filenames seem to be in decomposed UTF8
-         // so convert back to system encoding for passing to OpenFile
-         char path[PATH_MAX];
-         CFURLRef url = CFURLCreateWithBytes(NULL,
-                                             (const UInt8*)filenames[n].c_str(),
-                                             strlen(filenames[n].c_str()),
-                                             kCFStringEncodingUTF8,
-                                             NULL);
-         CFStringRef str = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-         CFStringGetCString(str, path, sizeof(path), CFStringGetSystemEncoding());
-         CFRelease(url);
-         CFRelease(str);
-         mainptr->OpenFile(path);
-      #else
-         mainptr->OpenFile(filenames[n]);
-      #endif
+      mainptr->OpenFile(filenames[n]);
    }
 
    #ifdef __WXMAC__
@@ -2880,7 +2842,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
 
 // create the main window
 MainFrame::MainFrame()
-   : wxFrame(NULL, wxID_ANY, _(""), wxPoint(mainx,mainy), wxSize(mainwd,mainht))
+   : wxFrame(NULL, wxID_ANY, wxEmptyString, wxPoint(mainx,mainy), wxSize(mainwd,mainht))
 {
    wxGetApp().SetFrameIcon(this);
 
@@ -3085,7 +3047,7 @@ MainFrame::MainFrame()
 
    // create the menu bar and append menus
    wxMenuBar *menuBar = new wxMenuBar();
-   if (menuBar == NULL) Fatal("Failed to create menu bar!");
+   if (menuBar == NULL) Fatal(_("Failed to create menu bar!"));
    menuBar->Append(fileMenu, _("&File"));
    menuBar->Append(editMenu, _("&Edit"));
    menuBar->Append(controlMenu, _("&Control"));
@@ -3162,17 +3124,17 @@ MainFrame::MainFrame()
    #ifdef __WXX11__
       // reduce update probs by using toggle buttons
       #define ADD_TOOL(id, bmp, tooltip) \
-         toolBar->AddCheckTool(id, "", bmp, wxNullBitmap, tooltip)
+         toolBar->AddCheckTool(id, wxEmptyString, bmp, wxNullBitmap, tooltip)
    #else
       #define ADD_TOOL(id, bmp, tooltip) \
-         toolBar->AddTool(id, "", bmp, tooltip)
+         toolBar->AddTool(id, wxEmptyString, bmp, tooltip)
    #endif
 
    #define ADD_RADIO(id, bmp, tooltip) \
-      toolBar->AddRadioTool(id, "", bmp, wxNullBitmap, tooltip)
+      toolBar->AddRadioTool(id, wxEmptyString, bmp, wxNullBitmap, tooltip)
    
    #define ADD_CHECK(id, bmp, tooltip) \
-      toolBar->AddCheckTool(id, "", bmp, wxNullBitmap, tooltip)
+      toolBar->AddCheckTool(id, wxEmptyString, bmp, wxNullBitmap, tooltip)
 
    ADD_TOOL(ID_GO, tbBitmaps[go_index], _("Start generating"));
    ADD_TOOL(ID_STOP, tbBitmaps[stop_index], _("Stop generating"));
@@ -3205,7 +3167,7 @@ MainFrame::MainFrame()
    // status bar class which creates a child window at top of frame
    int statht = showexact ? STATUS_EXHT : STATUS_HT;
    statusptr = new StatusBar(this, 0, 0, wd, statht);
-   if (statusptr == NULL) Fatal("Failed to create status bar!");
+   if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
    
    // create a split window with pattern/script directory in left pane
    // and pattern viewport in right pane
@@ -3216,7 +3178,7 @@ MainFrame::MainFrame()
                                       wxSP_BORDER |
                                    #endif
                                    wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
-   if (splitwin == NULL) Fatal("Failed to create split window!");
+   if (splitwin == NULL) Fatal(_("Failed to create split window!"));
 
    patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
                                       wxDefaultPosition, wxDefaultSize,
@@ -3228,7 +3190,7 @@ MainFrame::MainFrame()
                                       #endif
                                       wxEmptyString   // see all file types
                                      );
-   if (patternctrl == NULL) Fatal("Failed to create pattern directory control!");
+   if (patternctrl == NULL) Fatal(_("Failed to create pattern directory control!"));
 
    scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
                                      wxDefaultPosition, wxDefaultSize,
@@ -3242,7 +3204,7 @@ MainFrame::MainFrame()
                                      // sym link so best to show all files???
                                      _T("Python scripts|*.py")
                                     );
-   if (scriptctrl == NULL) Fatal("Failed to create script directory control!");
+   if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
    
    #ifdef __WXMSW__
       // now remove wxDIRCTRL_DIR_ONLY so we see files
@@ -3281,7 +3243,7 @@ MainFrame::MainFrame()
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
    viewptr = new PatternView(splitwin, 0, 0, 40, 40);
-   if (viewptr == NULL) Fatal("Failed to create viewport window!");
+   if (viewptr == NULL) Fatal(_("Failed to create viewport window!"));
    
    #if wxUSE_DRAG_AND_DROP
       // let users drop files onto viewport

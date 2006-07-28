@@ -176,7 +176,7 @@ public:
    virtual int hyperCapable() { return 1 ; }
    virtual void setMaxMemory(int m) ;
    virtual int getMaxMemory() { return maxmem >> 20 ; }
-   virtual const char *setrule(char *s) ;
+   virtual const char *setrule(const char *s) ;
    virtual const char *getrule() { return global_liferules.getrule() ; }
    virtual void step() ;
    static void setVerbose(int v) { verbose = v ; }

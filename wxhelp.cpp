@@ -122,8 +122,11 @@ wxButton *contbutt;           // Contents button
 
 long whenactive;              // when help window became active (elapsed millisecs)
 
+// contents page
+const wxString helphome = _("Help/index.html");
+
 // current help file
-char currhelp[64] = "Help/index.html";
+wxString currhelp = helphome;
 
 // -----------------------------------------------------------------------------
 
@@ -194,20 +197,20 @@ HelpFrame::HelpFrame()
    wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
 
-   backbutt = new wxButton(this, ID_BACK_BUTT, "<",
+   backbutt = new wxButton(this, ID_BACK_BUTT, _("<"),
                            wxDefaultPosition, wxSize(40,wxDefaultCoord));
    hbox->Add(backbutt, 0, wxALL | wxALIGN_LEFT, 10);
 
-   forwbutt = new wxButton(this, ID_FORWARD_BUTT, ">",
+   forwbutt = new wxButton(this, ID_FORWARD_BUTT, _(">"),
                            wxDefaultPosition, wxSize(40,wxDefaultCoord));
    hbox->Add(forwbutt, 0, wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
 
-   contbutt = new wxButton(this, ID_CONTENTS_BUTT, "Contents");
+   contbutt = new wxButton(this, ID_CONTENTS_BUTT, _("Contents"));
    hbox->Add(contbutt, 0, wxALL | wxALIGN_LEFT, 10);
 
    hbox->AddStretchSpacer(1);
 
-   wxButton *closebutt = new wxButton(this, wxID_CLOSE, "Close");
+   wxButton *closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
    closebutt->SetDefault();
    hbox->Add(closebutt, 0, wxALL | wxALIGN_RIGHT, 10);
 
@@ -233,12 +236,12 @@ void UpdateHelpButtons()
 {
    backbutt->Enable( htmlwin->HistoryCanBack() );
    forwbutt->Enable( htmlwin->HistoryCanForward() );
-   contbutt->Enable( !htmlwin->GetOpenedPageTitle().Contains("Contents") );
+   contbutt->Enable( !htmlwin->GetOpenedPageTitle().Contains(_("Contents")) );
    
    wxString location = htmlwin->GetOpenedPage();
    if ( !location.IsEmpty() ) {
       // set currhelp so user can close help window and then open same page
-      strncpy(currhelp, location.c_str(), sizeof(currhelp));
+      currhelp = location;
    }
    
    #ifdef __WXMAC__
@@ -257,12 +260,12 @@ void UpdateHelpButtons()
 
 // -----------------------------------------------------------------------------
 
-void ShowHelp(const char *filepath)
+void ShowHelp(const wxString &filepath)
 {
    // display given html file in help window
    if (helpptr) {
       // help window exists so bring it to front and display given file
-      if (filepath[0] != 0) {
+      if (!filepath.IsEmpty()) {
          htmlwin->LoadPage(filepath);
          UpdateHelpButtons();
       }
@@ -274,13 +277,13 @@ void ShowHelp(const char *filepath)
    } else {
       helpptr = new HelpFrame();
       if (helpptr == NULL) {
-         Warning("Could not create help window!");
+         Warning(_("Could not create help window!"));
          return;
       }
       // assume our .html files contain a <title> tag
       htmlwin->SetRelatedFrame(helpptr, _("%s"));
       
-      if (filepath[0] != 0) {
+      if (!filepath.IsEmpty()) {
          htmlwin->LoadPage(filepath);
       } else {
          htmlwin->LoadPage(currhelp);
@@ -343,7 +346,7 @@ void HelpFrame::OnForwardButton(wxCommandEvent& WXUNUSED(event))
 
 void HelpFrame::OnContentsButton(wxCommandEvent& WXUNUSED(event))
 {
-   ShowHelp("Help/index.html");
+   ShowHelp(helphome);
 }
 
 // -----------------------------------------------------------------------------
@@ -394,7 +397,7 @@ void AddEOL(wxString &str)
 void LoadLexiconPattern(const wxHtmlCell *htmlcell)
 {
    if (mainptr->generating) {
-      Warning("Another pattern is currently generating.");
+      Warning(_("Another pattern is currently generating."));
       return;
    }
    if (htmlcell) {
@@ -451,23 +454,23 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       }
    #endif
    wxString url = link.GetHref();
-   if ( url.StartsWith("http:") || url.StartsWith("mailto:") ) {
+   if ( url.StartsWith(wxT("http:")) || url.StartsWith(wxT("mailto:")) ) {
       // pass http/mailto URL to user's preferred browser/emailer
       #ifdef __WXMAC__
          // wxLaunchDefaultBrowser doesn't work on Mac with IE (get msg in console.log)
          // but it's easier just to use the Mac OS X open command
-         if ( wxExecute("open " + url, wxEXEC_ASYNC) == -1 )
-            Warning("Could not open URL!");
+         if ( wxExecute(wxT("open ") + url, wxEXEC_ASYNC) == -1 )
+            Warning(_("Could not open URL!"));
       #elif defined(__WXGTK__)
          // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open;
          // unfortunately it does not bring browser to front if it's already running!!!
-         if ( wxExecute("gnome-open " + url, wxEXEC_ASYNC) == -1 )
-            Warning("Could not open URL!");
+         if ( wxExecute(wxT("gnome-open ") + url, wxEXEC_ASYNC) == -1 )
+            Warning(_("Could not open URL!"));
       #else
          if ( !wxLaunchDefaultBrowser(url) )
-            Warning("Could not launch browser!");
+            Warning(_("Could not launch browser!"));
       #endif
-   } else if ( url.StartsWith("lexpatt:") ) {
+   } else if ( url.StartsWith(wxT("lexpatt:")) ) {
       // user clicked on pattern in Life Lexicon
       LoadLexiconPattern( link.GetHtmlCell() );
    } else {
@@ -498,7 +501,7 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
          wxString text = SelectionToText();
          if ( text.Length() > 0 ) {
             if ( helpptr && helpptr->IsActive() &&
-                 GetOpenedPageTitle().StartsWith("Life Lexicon") ) {
+                 GetOpenedPageTitle().StartsWith(wxT("Life Lexicon")) ) {
                // avoid wxHTML bug when copying text inside <pre>...</pre>!!!
                // if there are at least 2 lines and the 1st line is twice
                // the size of the 2nd line then insert \n in middle of 1st line
@@ -537,7 +540,7 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
       if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ) {
          helpptr->Close(true);
       } else if ( key == WXK_HOME ) {
-         ShowHelp("Help/index.html");
+         ShowHelp(helphome);
       } else {
          event.Skip();
       }
@@ -600,7 +603,8 @@ void HtmlView::OnSize(wxSizeEvent& event)
 
 void ShowAboutBox()
 {
-   wxDialog dlg(mainptr, wxID_ANY, wxString("About Golly"));
+   const wxString title = _("About Golly");
+   wxDialog dlg(mainptr, wxID_ANY, title);
    
    HtmlView *html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
                                  #if defined(__WXX11__) || defined(__WXGTK__)
@@ -610,14 +614,14 @@ void ShowAboutBox()
                                  #endif
                                  wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
    html->SetBorders(0);
-   html->LoadPage("Help/about.html");
+   html->LoadPage(_("Help/about.html"));
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                  html->GetInternalRepresentation()->GetHeight());
    
    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
    topsizer->Add(html, 1, wxALL, 10);
 
-   wxButton *okbutt = new wxButton(&dlg, wxID_OK, "OK");
+   wxButton *okbutt = new wxButton(&dlg, wxID_OK, _("OK"));
    okbutt->SetDefault();
    topsizer->Add(okbutt, 0, wxBOTTOM | wxALIGN_CENTER, 10);
    

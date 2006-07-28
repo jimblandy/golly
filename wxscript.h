@@ -26,10 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Return true if the given file is a Python script.
 // It simply checks if the file's extension is ".py" (ignoring case).
-bool IsScript(const char *filename);
+bool IsScript(const wxString& filename);
 
 // Run the given script file by passing it to the Python interpreter.
-void RunScript(const char* filename);
+void RunScript(const wxString& filename);
 
 // Is a script currently running?  We allow access to global flag
 // so clients can temporarily save and restore its setting.

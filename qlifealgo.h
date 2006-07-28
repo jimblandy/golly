@@ -230,7 +230,7 @@ public:
    virtual int hyperCapable() { return 0 ; }
    virtual void setMaxMemory(int m) ;
    virtual int getMaxMemory() { return maxmemory >> 20 ; }
-   virtual const char *setrule(char *s) ;
+   virtual const char *setrule(const char *s) ;
    virtual const char *getrule() { return global_liferules.getrule() ; }
    virtual void step() ;
    virtual void draw(viewport &view, liferender &renderer) ;
