@@ -1491,7 +1491,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    tempalgo = new qlifealgo();
    tempalgo->setpoll(wxGetApp().Poller());
    
-   // readpatterm might change global rule table
+   // readpattern might change global rule table
    wxString oldrule = wxString(curralgo->getrule(), wxConvLibc);
    
    // read pattern into temporary universe

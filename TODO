@@ -9,6 +9,9 @@ A - Replace separate Go and Stop buttons with a single button, optionally
     animated to show galaxy phases.  Looks like I'll need to avoid using
     wxToolBar (probably good anyway, as it causes other bugs).
 
+A - Speed up saving of start pattern when hashing is on by writing it
+    to a temporary macrocell file.
+
 T - Improve batchmode.
 
 - Add ability to let users assign their own keyboard shortcuts.
@@ -69,11 +72,13 @@ User suggestions:
 - Support a split-screen view of the universe.
 - Provide some way to open current pattern file in user's text editor.
   Maybe just an "Edit Pattern" item in File menu?  And/or option-click
-  on pattern in navigation panel?
+  on pattern/script in navigation panel?
 - Provide a way to click-and-drag a selection to move it around.
 - Make page and arrow scrolling amounts configurable (in Prefs > View).
 - Add a getvisrect() script command that returns current viewport rect
   and a setvisrect(rect) command to change viewport size and location.
+- Nicer if getrule always returned a standard form; eg. "B3/S23".
+  Could then remove horrible CanonicalRule code in wxrule.cpp.
 
 [H Koenig]
 - Mulitiple undo/redo.
@@ -82,3 +87,10 @@ User suggestions:
 [Gabriel Nivasch]
 - Make paste pattern semi-transparent.
 - Add a Default button to each Preferences pane (at bottom left?).
+
+[Bill Gosper]
+- Save generation count in pattern file for restoring it when loaded.
+  Also let user change it at any time, including via a setgen(str)
+  script command.
+- Modify info window so it can be used to edit and save comments.
+- For scales > 1:1 make the pixel color depend on lg(# of ones in it).

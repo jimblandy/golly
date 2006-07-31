@@ -769,26 +769,20 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    }
    if (!showbanner) statusptr->ClearMessage();
 
-   // must set this flag BEFORE UpdateStatus() call because on Mac it also
-   // causes DrawView to get called if there are pending updates
+   // set this flag BEFORE UpdateStatus() call so we see gen=0 and pop=0;
+   // in particular, it avoids getPopulation being called which would
+   // slow down hlife pattern loading
    viewptr->nopattupdate = true;
-
-   if (curralgo) {
-      // delete old universe and set NULL so status bar shows gen=0 and pop=0
-      delete curralgo;
-      curralgo = NULL;
-   }
-   // update all of status bar so we don't see different colored lines
+   
+   // update all of status bar so we don't see different colored lines;
+   // on Mac, DrawView also gets called if there are pending updates
    UpdateStatus();
-   // set curralgo after drawing status bar otherwise getPopulation would
-   // get called and slow down hlife pattern loading
    CreateUniverse();
 
    if (!newtitle.IsEmpty()) {
       // show new file name in window title but no rule (which readpattern can change);
       // nicer if user can see file name while loading a very large pattern
-      wxString wtitle = _("Loading ") + newtitle;
-      MySetTitle(wtitle);
+      MySetTitle(_("Loading ") + newtitle);
    }
 
    if (LoadImage()) {

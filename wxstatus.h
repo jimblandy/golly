@@ -51,7 +51,6 @@ public:
    void CheckMouseLocation(bool active);
 
    // convert given number to string suitable for display
-   wxString Stringify(double d);
    wxString Stringify(const bigint &b);
    
    // return current delay (in millisecs)

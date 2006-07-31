@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.1 (released !!!)
 
+AKT: Fixed a bug loading huge macrocell files into hlife.
 AKT: Golly can be compiled with a Unicode build of wxWidgets.
 AKT: Script path is only added to Python's sys.path once.
 AKT: Golly can read BMP/GIF/PNG/TIFF files and paste bitmap data.

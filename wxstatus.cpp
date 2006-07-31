@@ -195,17 +195,16 @@ void StatusBar::DisplayText(wxDC &dc, const wxString &s, wxCoord x, wxCoord y)
 
 // -----------------------------------------------------------------------------
 
-// ping-pong in the buffer so we can use multiple at a time
-const int STRINGIFYSIZE = 20;
-
-wxString StatusBar::Stringify(double d)
+wxString StatusBar::Stringify(const bigint &b)
 {
-   static char buf[120];
-   static char *p = buf;
-   if ( p + STRINGIFYSIZE + 1 >= buf + sizeof(buf) )
-      p = buf;
-   // use e notation for abs values > 1 billion (agrees with min & max_coord)
-   if ( fabs(d) <= 1000000000.0 ) {
+   static char buf[32];
+   char *p = buf;
+   double d = b.todouble();
+   if ( fabs(d) > 1000000000.0 ) {
+      // use e notation for abs value > 10^9 (agrees with min & max_coord)
+      sprintf(p, "%g", d);
+   } else {
+      // show exact value with commas inserted for readability
       if ( d < 0 ) {
          d = - d;
          *p++ = '-';
@@ -224,17 +223,8 @@ wxString StatusBar::Stringify(double d)
          commas--;
       }
       if ( p[-1] == '-' ) p--;
-   } else
-      sprintf(p, "%g", d);
-   char *r = p;
-   p += strlen(p)+1;
-   wxString output = wxString(r, wxConvLibc);
-   return output;
-}
-
-wxString StatusBar::Stringify(const bigint &b)
-{
-   return Stringify(b.todouble());
+   }
+   return wxString(p, wxConvLibc);
 }
 
 // -----------------------------------------------------------------------------
@@ -283,7 +273,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
       // might only need to display X and Y lines
       if (updaterect.y < XLINE+DESCHT-LINEHT) {
          strbuf = _("Generation = ");
-         if (curralgo == NULL) {
+         if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
             strbuf += wxString(curralgo->getGeneration().tostring(), wxConvLibc);
@@ -291,11 +281,10 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          DisplayText(dc, strbuf, h_gen, GENLINE);
    
          strbuf = _("Population = ");
-         const char *p = curralgo == NULL ? "0" : curralgo->getPopulation().tostring();
-         if (*p == '-') {
-            strbuf += _("(pending)");
+         if (viewptr->nopattupdate) {
+            strbuf += _("0");
          } else {
-            strbuf += wxString(p, wxConvLibc);
+            strbuf += wxString(curralgo->getPopulation().tostring(), wxConvLibc);
          }
          DisplayText(dc, strbuf, h_gen, POPLINE);
          
@@ -340,21 +329,22 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
       }
 
    } else {
-      // show info in top line
+      // showexact is false so show info in top line
       if (updaterect.x < h_xy) {
          // show all info
-         if (curralgo == NULL) {
-            strbuf = _("Generation=0");
+         strbuf = _("Generation=");
+         if (viewptr->nopattupdate) {
+            strbuf += _("0");
          } else {
-            strbuf = _("Generation=") + Stringify(curralgo->getGeneration());
+            strbuf += Stringify(curralgo->getGeneration());
          }
          DisplayText(dc, strbuf, h_gen, BASELINE1);
       
-         double pop = curralgo == NULL ? 0.0 : curralgo->getPopulation().todouble();
-         if (pop >= 0) {
-            strbuf = _("Population=") + Stringify(pop);
+         strbuf = _("Population=");
+         if (viewptr->nopattupdate) {
+            strbuf += _("0");
          } else {
-            strbuf = _("Population=(pending)");
+            strbuf += Stringify(curralgo->getPopulation());
          }
          DisplayText(dc, strbuf, h_pop, BASELINE1);
       

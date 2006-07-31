@@ -820,7 +820,7 @@ void DrawView(wxDC &dc, viewport &currview)
    wxRect r;
 
    if ( viewptr->nopattupdate ) {
-      // don't draw pattern, just fill background
+      // don't draw incomplete pattern, just fill background
       r = wxRect(0, 0, currview.getwidth(), currview.getheight());
       FillRect(dc, r, swapcolors ? *livebrush : *deadbrush);
    } else {
