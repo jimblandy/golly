@@ -129,7 +129,7 @@ void RuleDialog::CreateControls()
    // create the controls:
    
    ruletext = new wxTextCtrl(this, RULE_TEXT,
-                             wxString(curralgo->getrule(),wxConvLibc));
+                             wxString(curralgo->getrule(),wxConvLocal));
    wxString title = _("Enter a 2D rule using B0..8/S0..8 notation\n");
    title +=         _("or a 1D rule as Wn (n = 0 to 254 and even):");
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
@@ -241,8 +241,8 @@ bool MatchingRules(const wxString &rule1, const wxString &rule2)
    } else {
       // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules to
       // a canonical bit pattern and compare
-      int canon1 = CanonicalRule(rule1.mb_str());
-      int canon2 = CanonicalRule(rule2.mb_str());
+      int canon1 = CanonicalRule(rule1.mb_str(wxConvLocal));
+      int canon2 = CanonicalRule(rule2.mb_str(wxConvLocal));
       // both rules must also be valid (non-negative) for a match
       return canon1 >= 0 && canon2 >= 0 && canon1 == canon2;
    }
@@ -336,7 +336,7 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
    
    // validate new rule
    wxString newrule = ruletext->GetValue();
-   const char *err = curralgo->setrule( newrule.mb_str() );
+   const char *err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
       Warning(_("Rule is not valid."));
       ruletext->SetFocus();
@@ -426,9 +426,9 @@ bool RuleDialog::TransferDataFromWindow()
       curralgo->setrule("B3/S23");
       return true;
    }
-   const char *err = curralgo->setrule( newrule.mb_str() );
+   const char *err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
-      Warning(wxString(err,wxConvLibc));
+      Warning(wxString(err,wxConvLocal));
       return false;
    } else if ( global_liferules.hasB0notS8 && hashing ) {
       Warning(_("B0-not-S8 rules are not allowed when hashing."));
@@ -442,7 +442,7 @@ bool RuleDialog::TransferDataFromWindow()
 bool ChangeRule()
 {
    wxArrayString oldnames = namedrules;
-   wxString oldrule = wxString(curralgo->getrule(),wxConvLibc);
+   wxString oldrule = wxString(curralgo->getrule(),wxConvLocal);
 
    RuleDialog dialog( wxGetApp().GetTopWindow() );
    if ( dialog.ShowModal() == wxID_OK ) {
@@ -450,7 +450,7 @@ bool ChangeRule()
       return true;
    } else {
       // user hit Cancel so restore rule and name array
-      curralgo->setrule( oldrule.mb_str() );
+      curralgo->setrule( oldrule.mb_str(wxConvLocal) );
       namedrules.Clear();
       namedrules = oldnames;
       return false;

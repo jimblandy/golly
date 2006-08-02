@@ -731,7 +731,7 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
       //dc.SetTextBackground(*wxWHITE);
       dc.SetBackgroundMode(wxTRANSPARENT);   // better in case pastergb is white
       dc.SetTextForeground(*pastergb);
-      wxString pmodestr = wxString(GetPasteMode(),wxConvLibc);
+      wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);
       int pmodex = r.x + 2;
       int pmodey = r.y - 4;
       dc.DrawText(pmodestr, pmodex, pmodey - statusptr->GetTextAscent());

@@ -138,7 +138,7 @@ InfoFrame::InfoFrame(char *comments)
    if (comments[0] == 0) {
       textctrl->WriteText(_("No comments found."));
    } else {
-      textctrl->WriteText(wxString(comments,wxConvLibc));
+      textctrl->WriteText(wxString(comments,wxConvLocal));
    }
    textctrl->ShowPosition(0);
    textctrl->SetInsertionPoint(0);        // needed to change pos on X11
@@ -195,9 +195,9 @@ void ShowInfo(const wxString &filepath) {
    char *commptr = NULL;
 
    // read and display comments in current pattern file
-   const char *err = readcomments(filepath.mb_str(), &commptr);
+   const char *err = readcomments(filepath.mb_str(wxConvLocal), &commptr);
    if (err) {
-      Warning(wxString(err,wxConvLibc));
+      Warning(wxString(err,wxConvLocal));
    } else {
       infoptr = new InfoFrame(commptr);
       if (infoptr == NULL) {

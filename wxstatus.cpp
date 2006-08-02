@@ -224,7 +224,7 @@ wxString StatusBar::Stringify(const bigint &b)
       }
       if ( p[-1] == '-' ) p--;
    }
-   return wxString(p, wxConvLibc);
+   return wxString(p, wxConvLocal);
 }
 
 // -----------------------------------------------------------------------------
@@ -276,7 +276,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += wxString(curralgo->getGeneration().tostring(), wxConvLibc);
+            strbuf += wxString(curralgo->getGeneration().tostring(), wxConvLocal);
          }
          DisplayText(dc, strbuf, h_gen, GENLINE);
    
@@ -284,7 +284,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += wxString(curralgo->getPopulation().tostring(), wxConvLibc);
+            strbuf += wxString(curralgo->getPopulation().tostring(), wxConvLocal);
          }
          DisplayText(dc, strbuf, h_gen, POPLINE);
          
@@ -322,9 +322,9 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
             temp -= ypos;
             ypos = temp;
          }
-         DisplayText(dc, wxString(xpos.tostring(), wxConvLibc),
+         DisplayText(dc, wxString(xpos.tostring(), wxConvLocal),
                      h_x_ex, XLINE);
-         DisplayText(dc, wxString(ypos.tostring(), wxConvLibc),
+         DisplayText(dc, wxString(ypos.tostring(), wxConvLocal),
                      h_y_ex, YLINE);
       }
 

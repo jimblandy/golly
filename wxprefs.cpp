@@ -519,19 +519,11 @@ void SavePrefs()
    
    fprintf(f, "\n");
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0) && wxUSE_UNICODE
-   //!!! avoid wxMac 2.7 bug in mb_str() in Unicode build
-   #define MY_STR() mb_str(wxConvLocal)
-#else
-   #define MY_STR() mb_str(wxConvLocal)
-   //!!! #define MY_STR() mb_str()
-#endif
-
    fprintf(f, "rule=%s\n", curralgo->getrule());
    if (namedrules.GetCount() > 1) {
       size_t i;
       for (i=1; i<namedrules.GetCount(); i++)
-         fprintf(f, "named_rule=%s\n", (const char*)namedrules[i].MY_STR());
+         fprintf(f, "named_rule=%s\n", (const char*)namedrules[i].mb_str(wxConvLocal));
    }
    
    fprintf(f, "\n");
@@ -569,11 +561,11 @@ void SavePrefs()
    
    fprintf(f, "\n");
 
-   fprintf(f, "open_save_dir=%s\n", (const char*)opensavedir.MY_STR());
-   fprintf(f, "run_dir=%s\n", (const char*)rundir.MY_STR());
-   fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.MY_STR());
-   fprintf(f, "script_dir=%s\n", (const char*)scriptdir.MY_STR());
-   fprintf(f, "python_lib=%s\n", (const char*)pythonlib.MY_STR());
+   fprintf(f, "open_save_dir=%s\n", (const char*)opensavedir.mb_str(wxConvLocal));
+   fprintf(f, "run_dir=%s\n", (const char*)rundir.mb_str(wxConvLocal));
+   fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.mb_str(wxConvLocal));
+   fprintf(f, "script_dir=%s\n", (const char*)scriptdir.mb_str(wxConvLocal));
+   fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
    fprintf(f, "dir_width=%d\n", dirwinwd);
    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
    fprintf(f, "show_scripts=%d\n", showscripts ? 1 : 0);
@@ -586,7 +578,7 @@ void SavePrefs()
       for (i=0; i<numpatterns; i++) {
          wxMenuItem *item = patternSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_pattern=%s\n",
-                           (const char*)item->GetText().MY_STR());
+                           (const char*)item->GetText().mb_str(wxConvLocal));
       }
    }
 
@@ -596,7 +588,7 @@ void SavePrefs()
       for (i=0; i<numscripts; i++) {
          wxMenuItem *item = scriptSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_script=%s\n",
-                           (const char*)item->GetText().MY_STR());
+                           (const char*)item->GetText().mb_str(wxConvLocal));
       }
    }
    
@@ -753,14 +745,6 @@ void GetPrefs()
       return;
    }
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0) && wxUSE_UNICODE
-   //!!! avoid wxMac 2.7 bug in Unicode build
-   #define MY_CONV wxConvLocal
-#else
-   #define MY_CONV wxConvLocal
-   //!!! wxConvLibc
-#endif
-
    char line[PREF_LINE_SIZE];
    char *keyword;
    char *value;
@@ -856,7 +840,7 @@ void GetPrefs()
          strncpy(initrule, value, sizeof(initrule));
 
       } else if (strcmp(keyword, "named_rule") == 0) {
-         namedrules.Add(wxString(value,MY_CONV));
+         namedrules.Add(wxString(value,wxConvLocal));
 
       } else if (strcmp(keyword, "show_tool") == 0) {
          showtool = value[0] == '1';
@@ -941,35 +925,35 @@ void GetPrefs()
          opencurs = StringToCursor(value);
 
       } else if (strcmp(keyword, "open_save_dir") == 0) {
-         opensavedir = wxString(value,MY_CONV);
+         opensavedir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(opensavedir) ) {
             // reset to supplied pattern directory
             opensavedir = appdir + PATT_DIR;
          }
 
       } else if (strcmp(keyword, "run_dir") == 0) {
-         rundir = wxString(value,MY_CONV);
+         rundir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(rundir) ) {
             // reset to supplied script directory
             rundir = appdir + SCRIPT_DIR;
          }
 
       } else if (strcmp(keyword, "pattern_dir") == 0) {
-         patterndir = wxString(value,MY_CONV);
+         patterndir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(patterndir) ) {
             // reset to supplied pattern directory
             patterndir = appdir + PATT_DIR;
          }
 
       } else if (strcmp(keyword, "script_dir") == 0) {
-         scriptdir = wxString(value,MY_CONV);
+         scriptdir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(scriptdir) ) {
             // reset to supplied script directory
             scriptdir = appdir + SCRIPT_DIR;
          }
 
       } else if (strcmp(keyword, "python_lib") == 0) {
-         pythonlib = wxString(value,MY_CONV);
+         pythonlib = wxString(value,wxConvLocal);
          
       } else if (strcmp(keyword, "dir_width") == 0) {
          sscanf(value, "%d", &dirwinwd);
@@ -996,7 +980,7 @@ void GetPrefs()
          if (numpatterns < maxpatterns) {
             numpatterns++;
             patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns,
-                                   wxString(value,MY_CONV));
+                                   wxString(value,wxConvLocal));
          }
 
       } else if (strcmp(keyword, "recent_script") == 0) {
@@ -1004,7 +988,7 @@ void GetPrefs()
          if (numscripts < maxscripts) {
             numscripts++;
             scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts,
-                                  wxString(value,MY_CONV));
+                                  wxString(value,wxConvLocal));
          }
       }
    }

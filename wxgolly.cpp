@@ -84,21 +84,21 @@ class wx_errors : public lifeerrors
 {
 public:
    virtual void fatal(const char *s) {
-      Fatal(wxString(s,wxConvLibc));
+      Fatal(wxString(s,wxConvLocal));
    }
    virtual void warning(const char *s) {
-      Warning(wxString(s,wxConvLibc));
+      Warning(wxString(s,wxConvLocal));
    }
    virtual void status(const char *s) {
-      statusptr->DisplayMessage(wxString(s,wxConvLibc));
+      statusptr->DisplayMessage(wxString(s,wxConvLocal));
    }
    virtual void beginprogress(const char *s) {
-      BeginProgress(wxString(s,wxConvLibc));
+      BeginProgress(wxString(s,wxConvLocal));
       // init flag for isaborted() calls in non-wx modules
       aborted = false;
    }
    virtual bool abortprogress(double f, const char *s) {
-      return AbortProgress(f, wxString(s,wxConvLibc));
+      return AbortProgress(f, wxString(s,wxConvLocal));
    }
    virtual void endprogress() {
       EndProgress();
@@ -210,7 +210,7 @@ void SetAppDirectory(const char *argv0)
          if (pos < sizeof(appdir)) {
             strncpy(appdir, argv0, pos);
             appdir[pos] = 0;
-            wxSetWorkingDirectory(wxString(appdir,wxConvLibc));
+            wxSetWorkingDirectory(wxString(appdir,wxConvLocal));
          }
       }
    #endif
@@ -241,35 +241,6 @@ void GollyApp::MacOpenFile(const wxString &fullPath)
    if (mainptr->generating) return;
    mainptr->Raise();
    mainptr->OpenFile(fullPath);
-
-   /*!!! wxMac CVS HEAD bug in mb_str in Unicode build???
-   wxTextEntryDialog dlg(NULL, _("Test non-ascii chars"));
-   if (dlg.ShowModal() == wxID_OK) {
-      wxString s = dlg.GetValue();
-      FILE *f = fopen("test.txt", "w");
-      fprintf(f, "mb_str=%s\n", (const char*)s.mb_str());
-
-      //!!! BUG in wxWidgets book p.376: following won't compile if Unicode build
-      // printf(wxT("c_str=%s\n"), s.c_str());
-
-      // only works 1st time!!!
-      fprintf(f, "mb_str+macroman=%s\n",
-                 (const char*)s.mb_str(wxCSConv(wxFONTENCODING_MACROMAN)));
-      fprintf(f, "mb_str+macroman=%s\n",
-                 (const char*)s.mb_str(wxCSConv(wxFONTENCODING_MACROMAN)));
-
-      fprintf(f, "mb_str+system=%s\n",
-                 (const char*)s.mb_str(wxCSConv(wxFONTENCODING_SYSTEM)));
-                 // same result with wxFONTENCODING_DEFAULT
-      
-      const wxWX2MBbuf tmp_buf = wxConvCurrent->cWX2MB(s);
-      fprintf(f, "cWX2MB=%s\n", (const char*)tmp_buf);
-
-      fprintf(f, "fn_str=%s\n", (const char*)s.fn_str());
-      
-      fclose(f);
-   }
-   */
 }
 #endif
 
@@ -297,7 +268,7 @@ bool GollyApp::OnInit()
 
    // make sure current working directory contains application otherwise
    // we can't open Help files and prefs file gets saved in wrong location
-   SetAppDirectory( wxString(argv[0]).mb_str() );
+   SetAppDirectory( wxString(argv[0]).mb_str(wxConvLocal) );
 
    // let non-wx modules call Fatal, Warning, BeginProgress, etc
    lifeerrors::seterrorhandler(&wxerrhandler);

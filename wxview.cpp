@@ -1053,7 +1053,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
    if (cut && livecount > 0)
       mainptr->UpdatePatternAndStatus();
    
-   wxString text = wxString(textptr,wxConvLibc);
+   wxString text = wxString(textptr,wxConvLocal);
    mainptr->CopyTextToClipboard(text);
    free(textptr);
 }
@@ -1397,13 +1397,15 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
       tmpfile.Close();
    #endif         
 
-   const char *err = readclipboard(clipfile.mb_str(), *tempalgo, t, l, b, r);
+   const char *err = readclipboard(clipfile.mb_str(wxConvLocal),
+                                   *tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so we have to use hlife
       delete tempalgo;
       tempalgo = new hlifealgo();
       tempalgo->setpoll(wxGetApp().Poller());
-      err = readclipboard(clipfile.mb_str(), *tempalgo, t, l, b, r);
+      err = readclipboard(clipfile.mb_str(wxConvLocal),
+                          *tempalgo, t, l, b, r);
    }
    #ifdef __WXX11__
       // don't delete clipboard file
@@ -1412,7 +1414,7 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
    #endif
 
    if (err) {
-      Warning(wxString(err,wxConvLibc));
+      Warning(wxString(err,wxConvLocal));
       return false;
    }
 

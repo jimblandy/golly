@@ -624,7 +624,7 @@ void MainFrame::SetWindowTitle(const wxString& filename)
       // remember current file name
       currname = filename;
    }
-   wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLibc) );
+   wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLocal) );
    #ifdef __WXMAC__
       wtitle.Printf(_("%s [%s]"), currname.c_str(), rule.c_str());
    #else
@@ -685,7 +685,7 @@ void MainFrame::NewPattern(const wxString& title)
    if (initrule[0]) {
       // this is the first call of NewPattern when app starts
       const char *err = curralgo->setrule(initrule);
-      if (err) Warning(wxString(err,wxConvLibc));
+      if (err) Warning(wxString(err,wxConvLocal));
       if (global_liferules.hasB0notS8 && hashing) {
          hashing = false;
          statusptr->SetMessage(B0message);
@@ -788,24 +788,24 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    if (LoadImage()) {
       viewptr->nopattupdate = false;
    } else {
-      const char *err = readpattern(currfile.mb_str(), *curralgo);
+      const char *err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
       if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
          hashing = true;
          statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currfile.mb_str(), *curralgo);
+         err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
       } else if (global_liferules.hasB0notS8 && hashing && !newtitle.IsEmpty()) {
          hashing = false;
          statusptr->SetMessage(B0message);
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currfile.mb_str(), *curralgo);
+         err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
       }
       viewptr->nopattupdate = false;
-      if (err) Warning(wxString(err,wxConvLibc));
+      if (err) Warning(wxString(err,wxConvLocal));
    }
 
    if (!newtitle.IsEmpty()) {
@@ -851,7 +851,7 @@ void MainFrame::ResetPattern()
       // gen count has been reset to 0
    }
    // now restore rule, scale and location
-   curralgo->setrule(gen0rule.mb_str());
+   curralgo->setrule(gen0rule.mb_str(wxConvLocal));
    SetWindowTitle(wxEmptyString);
    viewptr->SetPosMag(gen0x, gen0y, gen0mag);
    UpdateEverything();
@@ -868,10 +868,10 @@ void MainFrame::SetCurrentFile(const wxString& path)
    #ifdef __WXMAC__
       // copy given path to currfile but as decomposed UTF8 so fopen will work
       #if wxCHECK_VERSION(2, 7, 0)
-         currfile = wxString(path.fn_str(), wxConvLibc);
+         currfile = wxString(path.fn_str(), wxConvLocal);
       #else
          // wxMac 2.6.x or older (but conversion doesn't always work on OS 10.4)
-         currfile = wxString(path.wc_str(wxConvLibc), wxConvUTF8);
+         currfile = wxString(path.wc_str(wxConvLocal), wxConvUTF8);
       #endif
    #else
       currfile = path;
@@ -1266,10 +1266,10 @@ void MainFrame::SavePattern()
       SetCurrentFile( savedlg.GetPath() );
       AddRecentPattern( savedlg.GetPath() );
       SetWindowTitle( savedlg.GetFilename() );
-      const char *err = writepattern(savedlg.GetPath().mb_str(), *curralgo, format,
-                                     itop, ileft, ibottom, iright);
+      const char *err = writepattern(savedlg.GetPath().mb_str(wxConvLocal),
+                                     *curralgo, format, itop, ileft, ibottom, iright);
       if (err) {
-         statusptr->ErrorMessage(wxString(err,wxConvLibc));
+         statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
          statusptr->DisplayMessage(_("Pattern saved in file."));
          if ( curralgo->getGeneration() == bigint::zero ) {
@@ -1312,7 +1312,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
    SetWindowTitle( GetBaseName(path) );
-   const char *err = writepattern(path.mb_str(), *curralgo, pattfmt,
+   const char *err = writepattern(path.mb_str(wxConvLocal), *curralgo, pattfmt,
                                   itop, ileft, ibottom, iright);
    if (!err) {
       if ( curralgo->getGeneration() == bigint::zero ) {
@@ -1320,7 +1320,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
          savestart = false;
       }
    }
-   return wxString(err, wxConvLibc);
+   return wxString(err, wxConvLocal);
 }
 
 // -----------------------------------------------------------------------------
@@ -1563,7 +1563,7 @@ bool MainFrame::SaveStartingPattern()
    }
    
    // save current rule, scale, location, step size and hashing option
-   gen0rule = wxString(curralgo->getrule(), wxConvLibc);
+   gen0rule = wxString(curralgo->getrule(), wxConvLocal);
    gen0mag = viewptr->GetMag();
    viewptr->GetPos(gen0x, gen0y);
    gen0warp = warp;

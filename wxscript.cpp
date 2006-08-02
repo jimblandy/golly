@@ -353,7 +353,7 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &title)) return NULL;
 
-   mainptr->NewPattern(wxString(title,wxConvLibc));
+   mainptr->NewPattern(wxString(title,wxConvLocal));
    DoAutoUpdate();
 
    Py_INCREF(Py_None);
@@ -371,7 +371,7 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s|i", &filename, &remember)) return NULL;
 
-   if (IsScript(wxString(filename,wxConvLibc))) {
+   if (IsScript(wxString(filename,wxConvLocal))) {
       // avoid re-entrancy
       PyErr_SetString(PyExc_RuntimeError, "Bad open call: cannot open a script file.");
       return NULL;
@@ -379,7 +379,7 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
 
    // convert non-absolute filename to absolute path relative to scriptloc
    // so it can be selected later from Open Recent submenu
-   wxString fname = wxString(filename,wxConvLibc);
+   wxString fname = wxString(filename,wxConvLocal);
    wxFileName fullname(fname);
    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
 
@@ -405,15 +405,15 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
 
    // convert non-absolute filename to absolute path relative to scriptloc
    // so it can be selected later from Open Recent submenu
-   wxString fname = wxString(filename,wxConvLibc);
+   wxString fname = wxString(filename,wxConvLocal);
    wxFileName fullname(fname);
    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
 
    // only add file to Open Recent submenu if remember flag is non-zero
    wxString err = mainptr->SaveFile(fullname.GetFullPath(),
-                                    wxString(format,wxConvLibc), remember != 0);
+                                    wxString(format,wxConvLocal), remember != 0);
    if (!err.IsEmpty()) {
-      PyErr_SetString(PyExc_RuntimeError, err.mb_str());
+      PyErr_SetString(PyExc_RuntimeError, err.mb_str(wxConvLocal));
       return NULL;
    }
 
@@ -554,7 +554,7 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
    viewptr->selbottom = viewptr->seltop;   viewptr->selbottom += INT_MAX;
    
    const char *oldmode = GetPasteMode();
-   wxString modestr = wxString(mode, wxConvLibc);
+   wxString modestr = wxString(mode, wxConvLocal);
    if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
    else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
@@ -1215,7 +1215,7 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &rule_string)) return NULL;
 
-   wxString oldrule = wxString(curralgo->getrule(), wxConvLibc);
+   wxString oldrule = wxString(curralgo->getrule(), wxConvLocal);
    const char *err;
    if (rule_string == NULL || rule_string[0] == 0) {
       err = curralgo->setrule("B3/S23");
@@ -1223,11 +1223,11 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
       err = curralgo->setrule(rule_string);
    }
    if (err) {
-      curralgo->setrule( oldrule.mb_str() );
+      curralgo->setrule( oldrule.mb_str(wxConvLocal) );
       PyErr_SetString(PyExc_RuntimeError, err);
       return NULL;
    } else if ( global_liferules.hasB0notS8 && hashing ) {
-      curralgo->setrule( oldrule.mb_str() );
+      curralgo->setrule( oldrule.mb_str(wxConvLocal) );
       PyErr_SetString(PyExc_RuntimeError, "B0-not-S8 rules are not allowed when hashing.");
       return NULL;
    } else {
@@ -1492,7 +1492,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    tempalgo->setpoll(wxGetApp().Poller());
    
    // readpattern might change global rule table
-   wxString oldrule = wxString(curralgo->getrule(), wxConvLibc);
+   wxString oldrule = wxString(curralgo->getrule(), wxConvLocal);
    
    // read pattern into temporary universe
    const char *err = readpattern(filename, *tempalgo);
@@ -1505,7 +1505,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    }
    
    // restore rule
-   curralgo->setrule( oldrule.mb_str() );
+   curralgo->setrule( oldrule.mb_str(wxConvLocal) );
 
    if (err) {
       delete tempalgo;
@@ -2072,7 +2072,7 @@ static PyObject *golly_appdir(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("s", (const char*)gollyloc.mb_str());
+   PyObject *result = Py_BuildValue("s", (const char*)gollyloc.mb_str(wxConvLocal));
    return result;
 }
 
@@ -2087,7 +2087,7 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    inscript = false;
-   statusptr->DisplayMessage(wxString(s,wxConvLibc));
+   statusptr->DisplayMessage(wxString(s,wxConvLocal));
    inscript = true;
    // make sure show status bar is visible
    if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
@@ -2107,7 +2107,7 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    inscript = false;
-   statusptr->ErrorMessage(wxString(s,wxConvLibc));
+   statusptr->ErrorMessage(wxString(s,wxConvLocal));
    inscript = true;
    // make sure show status bar is visible
    if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
@@ -2126,7 +2126,7 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
-   Warning(wxString(s,wxConvLibc));
+   Warning(wxString(s,wxConvLocal));
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2144,7 +2144,7 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    // accumulate stderr messages in global string for display after script finishes
-   pyerror = wxString(s,wxConvLibc);
+   pyerror = wxString(s,wxConvLocal);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2265,7 +2265,7 @@ bool InitPython()
       wxString scriptsdir = gollyloc + _("Scripts");
       scriptsdir.Replace(wxT("\\"), wxT("\\\\"));
       wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
-      if ( PyRun_SimpleString(command.mb_str()) < 0 )
+      if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
          Warning(_("Failed to append Scripts path!"));
 
       // nicer to reload all modules in case changes were made by user;
@@ -2339,10 +2339,10 @@ void ExecuteScript(const wxString &filepath)
    #ifdef __WXMAC__
       // convert fpath to decomposed UTF8 so execfile can open names with non-ASCII chars
       #if wxCHECK_VERSION(2, 7, 0)
-         fpath = wxString(filepath.fn_str(), wxConvLibc);
+         fpath = wxString(filepath.fn_str(), wxConvLocal);
       #else
          // wxMac 2.6.x or older
-         fpath = wxString(filepath.wc_str(wxConvLibc), wxConvUTF8);
+         fpath = wxString(filepath.wc_str(wxConvLocal), wxConvUTF8);
       #endif
    #else
       fpath = filepath;
@@ -2354,7 +2354,7 @@ void ExecuteScript(const wxString &filepath)
 
    // execute the given script
    wxString command = wxT("execfile('") + fpath + wxT("')");
-   PyRun_SimpleString(command.mb_str());
+   PyRun_SimpleString(command.mb_str(wxConvLocal));
 
    // note that PyRun_SimpleString returns -1 if an exception occurred;
    // the error message (in pyerror) is checked at the end of RunScript
@@ -2367,7 +2367,7 @@ bool CheckPythonError()
    if (pyerror.IsEmpty()) {
       return false;
    } else {
-      if (pyerror.Find(wxString(abortmsg,wxConvLibc)) >= 0) {
+      if (pyerror.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
          // error was caused by AbortScript so don't display pyerror
       } else {
          pyerror.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
