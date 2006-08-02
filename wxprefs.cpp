@@ -521,10 +521,10 @@ void SavePrefs()
 
 #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0) && wxUSE_UNICODE
    //!!! avoid wxMac 2.7 bug in mb_str() in Unicode build
-   wxCSConv convto(wxFONTENCODING_MACROMAN);
-   #define MY_STR() mb_str(convto)
+   #define MY_STR() mb_str(wxConvLocal)
 #else
-   #define MY_STR() mb_str()
+   #define MY_STR() mb_str(wxConvLocal)
+   //!!! #define MY_STR() mb_str()
 #endif
 
    fprintf(f, "rule=%s\n", curralgo->getrule());
@@ -742,7 +742,7 @@ void GetPrefs()
 
    namedrules.Add(wxT("Life|B3/S23"));      // must be 1st entry
 
-   if ( !wxFileExists(wxString(PREFS_NAME,wxConvLibc)) ) {
+   if ( !wxFileExists(wxString(PREFS_NAME,wxConvLocal)) ) {
       AddDefaultRules();
       return;
    }
@@ -754,11 +754,11 @@ void GetPrefs()
    }
 
 #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0) && wxUSE_UNICODE
-   //!!! avoid wxMac 2.7 bug in mb_str() in Unicode build
-   wxCSConv convfrom(wxFONTENCODING_MACROMAN);
-   #define MY_CONV convfrom
+   //!!! avoid wxMac 2.7 bug in Unicode build
+   #define MY_CONV wxConvLocal
 #else
-   #define MY_CONV wxConvLibc
+   #define MY_CONV wxConvLocal
+   //!!! wxConvLibc
 #endif
 
    char line[PREF_LINE_SIZE];
