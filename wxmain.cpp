@@ -1266,8 +1266,13 @@ void MainFrame::SavePattern()
       SetCurrentFile( savedlg.GetPath() );
       AddRecentPattern( savedlg.GetPath() );
       SetWindowTitle( savedlg.GetFilename() );
-      const char *err = writepattern(savedlg.GetPath().mb_str(wxConvLocal),
-                                     *curralgo, format, itop, ileft, ibottom, iright);
+      #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+         // use decomposed UTF8 so fopen will work
+         const char *err = writepattern(savedlg.GetPath().fn_str(),
+      #else
+         const char *err = writepattern(savedlg.GetPath().mb_str(wxConvLocal),
+      #endif
+                           *curralgo, format, itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
@@ -1312,8 +1317,13 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
    SetWindowTitle( GetBaseName(path) );
-   const char *err = writepattern(path.mb_str(wxConvLocal), *curralgo, pattfmt,
-                                  itop, ileft, ibottom, iright);
+   #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+      // use decomposed UTF8 so fopen will work
+      const char *err = writepattern(path.fn_str(),
+   #else
+      const char *err = writepattern(path.mb_str(wxConvLocal),
+   #endif
+                        *curralgo, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
       if ( curralgo->getGeneration() == bigint::zero ) {
          // no need to save starting pattern (ResetPattern can load file)

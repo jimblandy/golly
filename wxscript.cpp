@@ -1478,6 +1478,13 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+   // use decomposed UTF8 so fopen will work
+   #define FILENAME wxString(filename,wxConvLocal).fn_str()
+#else
+   #define FILENAME filename
+#endif
+
 static PyObject *golly_load(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -1495,13 +1502,13 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    wxString oldrule = wxString(curralgo->getrule(), wxConvLocal);
    
    // read pattern into temporary universe
-   const char *err = readpattern(filename, *tempalgo);
+   const char *err = readpattern(FILENAME, *tempalgo);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // macrocell file, so switch to hlife universe
       delete tempalgo;
       tempalgo = new hlifealgo();
       tempalgo->setpoll(wxGetApp().Poller());
-      err = readpattern(filename, *tempalgo);
+      err = readpattern(FILENAME, *tempalgo);
    }
    
    // restore rule
@@ -1563,8 +1570,8 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    // write pattern to given file in RLE format
    bigint top, left, bottom, right;
    tempalgo->findedges(&top, &left, &bottom, &right);
-   const char *err = writepattern(filename, *tempalgo, RLE_format,
-                                  top.toint(), left.toint(), bottom.toint(), right.toint());
+   const char *err = writepattern(FILENAME, *tempalgo, RLE_format,
+                        top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
    if (err) {
       PyErr_SetString(PyExc_RuntimeError, err);
