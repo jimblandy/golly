@@ -757,8 +757,7 @@ static PyObject *golly_getmag(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("i", viewptr->GetMag());
-   return result;
+   return Py_BuildValue("i", viewptr->GetMag());
 }
 
 // -----------------------------------------------------------------------------
@@ -887,8 +886,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    }
 
    // return old value (simplifies saving and restoring settings)
-   PyObject *result = Py_BuildValue("i", oldval);
-   return result;
+   return Py_BuildValue("i", oldval);
 }
 
 // -----------------------------------------------------------------------------
@@ -922,8 +920,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
       return NULL;
    }
 
-   PyObject *result = Py_BuildValue("i", optval);
-   return result;
+   return Py_BuildValue("i", optval);
 }
 
 // -----------------------------------------------------------------------------
@@ -1041,8 +1038,7 @@ static PyObject *golly_empty(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
    
-   PyObject *result = Py_BuildValue("i", curralgo->isEmpty() ? 1 : 0);
-   return result;
+   return Py_BuildValue("i", curralgo->isEmpty() ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -1115,8 +1111,7 @@ static PyObject *golly_getstep(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("i", mainptr->GetWarp());
-   return result;
+   return Py_BuildValue("i", mainptr->GetWarp());
 }
 
 // -----------------------------------------------------------------------------
@@ -1153,8 +1148,7 @@ static PyObject *golly_getbase(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("i", hashing ? hbasestep : qbasestep);
-   return result;
+   return Py_BuildValue("i", hashing ? hbasestep : qbasestep);
 }
 
 // -----------------------------------------------------------------------------
@@ -1248,8 +1242,7 @@ static PyObject *golly_getrule(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("s", curralgo->getrule());
-   return result;
+   return Py_BuildValue("s", curralgo->getrule());
 }
 
 // -----------------------------------------------------------------------------
@@ -1262,8 +1255,7 @@ static PyObject *golly_getgen(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   PyObject *result = Py_BuildValue("s", curralgo->getGeneration().tostring(sepchar));
-   return result;
+   return Py_BuildValue("s", curralgo->getGeneration().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -1276,8 +1268,7 @@ static PyObject *golly_getpop(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   PyObject *result = Py_BuildValue("s", curralgo->getPopulation().tostring(sepchar));
-   return result;
+   return Py_BuildValue("s", curralgo->getPopulation().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -1791,8 +1782,7 @@ static PyObject *golly_visrect(PyObject *self, PyObject *args)
    int visible = viewptr->CellVisible(left, top) &&
                  viewptr->CellVisible(right, bottom);
    
-   PyObject *result = Py_BuildValue("i", visible);
-   return result;
+   return Py_BuildValue("i", visible);
 }
 
 // -----------------------------------------------------------------------------
@@ -1930,8 +1920,7 @@ static PyObject *golly_getcell(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
 
-   PyObject *result = Py_BuildValue("i", curralgo->getcell(x, y));
-   return result;
+   return Py_BuildValue("i", curralgo->getcell(x, y));
 }
 
 // -----------------------------------------------------------------------------
@@ -1954,8 +1943,7 @@ static PyObject *golly_setcursor(PyObject *self, PyObject *args)
    }
 
    // return old index (simplifies saving and restoring cursor)
-   PyObject *result = Py_BuildValue("i", oldindex);
-   return result;
+   return Py_BuildValue("i", oldindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -1967,8 +1955,7 @@ static PyObject *golly_getcursor(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("i", CursorToIndex(currcurs));
-   return result;
+   return Py_BuildValue("i", CursorToIndex(currcurs));
 }
 
 // -----------------------------------------------------------------------------
@@ -2024,8 +2011,8 @@ static PyObject *golly_getkey(PyObject *self, PyObject *args)
       s[1] = '\0';
       scriptchars = scriptchars.AfterFirst(s[0]);
    }
-   PyObject *result = Py_BuildValue("s", s);
-   return result;
+   
+   return Py_BuildValue("s", s);
 }
 
 // -----------------------------------------------------------------------------
@@ -2079,8 +2066,7 @@ static PyObject *golly_appdir(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *result = Py_BuildValue("s", (const char*)gollyloc.mb_str(wxConvLocal));
-   return result;
+   return Py_BuildValue("s", (const char*)gollyloc.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
