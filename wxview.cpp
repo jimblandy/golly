@@ -1631,6 +1631,24 @@ void PatternView::RandomFill()
       statusptr->ErrorMessage(selection_too_big);
       return;
    }
+
+   // no need to kill cells if selection is empty
+   bool killcells = !curralgo->isEmpty();
+   if ( killcells ) {
+      // find pattern edges and compare with selection edges
+      bigint top, left, bottom, right;
+      curralgo->findedges(&top, &left, &bottom, &right);
+      if ( seltop <= top && selbottom >= bottom &&
+           selleft <= left && selright >= right ) {
+         // selection encloses entire pattern so create empty universe
+         EmptyUniverse();
+         killcells = false;
+      } else if ( seltop > bottom || selbottom < top ||
+                  selleft > right || selright < left ) {
+         // selection is completely outside pattern edges
+         killcells = false;
+      }
+   }
    
    int itop = seltop.toint();
    int ileft = selleft.toint();
@@ -1646,7 +1664,11 @@ void PatternView::RandomFill()
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
-         curralgo->setcell(cx, cy, (rand() % 100) < randomfill);
+         if ((rand() % 100) < randomfill) {
+            curralgo->setcell(cx, cy, 1);
+         } else if (killcells) {
+            curralgo->setcell(cx, cy, 0);
+         }
          cntr++;
          if ((cntr % 4096) == 0) {
             abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
@@ -1661,7 +1683,7 @@ void PatternView::RandomFill()
    mainptr->UpdatePatternAndStatus();
 }
 
-void PatternView::FlipVertically()
+void PatternView::FlipLeftRight()
 {
    if (mainptr->generating || !SelectionExists()) return;
 
@@ -1687,7 +1709,7 @@ void PatternView::FlipVertically()
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
-   BeginProgress(_("Flipping selection vertically"));
+   BeginProgress(_("Flipping selection left-right"));
    int cx, cy;
    int mirrorx = iright;
    iright = (ileft - 1) + wd / 2;
@@ -1714,7 +1736,7 @@ void PatternView::FlipVertically()
    mainptr->UpdatePatternAndStatus();
 }
 
-void PatternView::FlipHorizontally()
+void PatternView::FlipUpDown()
 {
    if (mainptr->generating || !SelectionExists()) return;
 
@@ -1740,7 +1762,7 @@ void PatternView::FlipHorizontally()
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
-   BeginProgress(_("Flipping selection horizontally"));
+   BeginProgress(_("Flipping selection up-down"));
    int cx, cy;
    int mirrory = ibottom;
    ibottom = (itop - 1) + ht / 2;
