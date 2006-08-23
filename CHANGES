@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.1 (released !!!)
 
+AKT: Resizing help window no longer changes scroll position.
 AKT: Optimized random fill's typical cases.
 AKT: Fixed a bug loading huge macrocell files.
 AKT: Golly can be compiled with a Unicode build of wxWidgets.

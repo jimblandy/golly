@@ -1765,11 +1765,10 @@ void MainFrame::DisplayTimingInfo()
       endgen = curralgo->getGeneration().todouble();
    }
    if (endtime > starttime) {
+      double secs = (double)(endtime - starttime) / 1000.0;
+      double gens = endgen - startgen;
       wxString s;
-      s.Printf(_("%g gens in %g secs (%g gens/sec)"),
-               endgen - startgen,
-               (double)(endtime - starttime) / 1000.0,
-               (double)(endgen - startgen) / ((double)(endtime - starttime) / 1000.0));
+      s.Printf(_("%g gens in %g secs (%g gens/sec)"), gens, secs, gens / secs);
       statusptr->DisplayMessage(s);
    }
 }

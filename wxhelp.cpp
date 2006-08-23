@@ -94,7 +94,7 @@ private:
    #endif
    
    void OnChar(wxKeyEvent& event);
-   //!!! void OnSize(wxSizeEvent& event);
+   void OnSize(wxSizeEvent& event);
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -108,7 +108,7 @@ BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
    EVT_KEY_DOWN   (HtmlView::OnKeyDown)
 #endif
    EVT_CHAR       (HtmlView::OnChar)
-   //!!! EVT_SIZE       (HtmlView::OnSize)
+   EVT_SIZE       (HtmlView::OnSize)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -582,22 +582,23 @@ void HtmlView::OnChar(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
-// avoid scroll position being reset to top when window is resized
-/* couldn't get this to work!!!
+// avoid scroll position being reset to top when wxHtmlWindow is resized
 void HtmlView::OnSize(wxSizeEvent& event)
 {
-   wxString currpage = GetOpenedPage();
    int x, y;
    GetViewStart(&x, &y);         // save current position
 
    wxHtmlWindow::OnSize(event);
 
+   wxString currpage = GetOpenedPage();
    if ( !currpage.IsEmpty() ) {
       LoadPage(currpage);        // reload page
       Scroll(x, y);              // scroll to old position
    }
+   
+   // prevent wxHtmlWindow::OnSize being called again
+   event.Skip(false);
 }
-*/
 
 // -----------------------------------------------------------------------------
 

@@ -72,7 +72,7 @@ wxProgressDialog *progdlg = NULL;         // progress dialog
 #else
    const int maxprogrange = 1000000000;   // maximum range (best if very large)
 #endif
-long progstart;                           // starting time (in millisecs)
+wxStopWatch *progwatch = NULL;            // stopwatch for progress dialog
 long prognext;                            // when to update progress dialog
 wxString progtitle;                       // title for progress dialog
 
@@ -117,8 +117,11 @@ void BeginProgress(const wxString &dlgtitle) {
       delete progdlg;
       progdlg = NULL;
    }
+   if (progwatch) {
+      delete progwatch;
+   }
+   progwatch = new wxStopWatch();
    progtitle = dlgtitle;
-   progstart = stopwatch->Time();
    // let user know they'll have to wait
    #ifdef __WXMAC__
       wxSetCursor(*wxHOURGLASS_CURSOR);
@@ -129,21 +132,19 @@ void BeginProgress(const wxString &dlgtitle) {
 // -----------------------------------------------------------------------------
 
 bool AbortProgress(double fraction_done, const wxString &newmsg) {
-   long t = stopwatch->Time();
+   long msecs = progwatch->Time();
    if (progdlg) {
-      if (t < prognext) return false;
+      if (msecs < prognext) return false;
       #ifdef __WXX11__
-         prognext = t + 1000;    // call Update about once per sec on X11
+         prognext = msecs + 1000;    // call Update about once per sec on X11
       #else
-         prognext = t + 100;     // call Update about 10 times per sec
+         prognext = msecs + 100;     // call Update about 10 times per sec
       #endif
-      // wxMac and wxX11 don't let user hit escape key to cancel dialog!!!
       // Update returns false if user hits Cancel button
       return !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg);
    } else {
       // note that fraction_done is not always an accurate estimator for how long
       // the task will take, especially when we use nextcell for cut/copy
-      long msecs = t - progstart;
       if ( (msecs > 1000 && fraction_done < 0.3) || msecs > 2500 ) {
          // task is probably going to take a while so create progress dialog
          progdlg = new wxProgressDialog(progtitle, wxEmptyString,
@@ -160,8 +161,8 @@ bool AbortProgress(double fraction_done, const wxString &newmsg) {
             }
          #endif
       }
-      prognext = t + 10;      // short delay until 1st Update
-      return false;           // don't abort
+      prognext = msecs + 10;     // short delay until 1st Update
+      return false;              // don't abort
    }
 }
 
@@ -180,6 +181,10 @@ void EndProgress() {
          // fix activate problem on X11 if user hit Cancel button
          mainptr->SetFocus();
       #endif
+   }
+   if (progwatch) {
+      delete progwatch;
+      progwatch = NULL;
    }
    // BeginProgress changed cursor so reset it
    viewptr->CheckCursor(mainptr->IsActive());
