@@ -32,7 +32,6 @@ class rect(list):
       else:
          raise TypeError("rect arg must be [] or [x,y,wd,ht]")
       list.__init__(self, R)
-      return None
 
 # --------------------------------------------------------------------
 
@@ -83,7 +82,6 @@ Set the rule for the Game of Life.
 Although it affects subsequent calls to pattern.evolve(),
 only the last call to this function matters for the viewer."""
    golly.setrule(s)
-   return None
 
 # --------------------------------------------------------------------
 
@@ -91,7 +89,6 @@ def description(s):
    """Supply a textual description to the whole pattern."""
    for line in s.split("\n"):
       print "#D", line
-   return None
 
 # --------------------------------------------------------------------
 
@@ -141,7 +138,6 @@ rcw (rotate clockwise) and rccw (rotate counter-clockwise)."""
    def put(self, x = 0, y = 0, A = identity):
       """Paste pattern into current universe."""
       golly.putcells(self, x, y, *A)
-      return None
 
    def display(self, title = "untitled", x = 0, y = 0, A = identity):
       """Paste pattern into new universe and display it all."""
@@ -149,14 +145,12 @@ rcw (rotate clockwise) and rccw (rotate counter-clockwise)."""
       golly.putcells(self, x, y, *A)
       golly.fit()
       golly.setcursor(zoomin)
-      return None
 
    def save(self, fn, desc = None):
       """\
 Save the pattern to file 'fn' in RLE format.
 An optional description 'desc' may be given."""
       golly.store(self, fn, desc)
-      return None
 
    def evolve(self, N):
       """\
@@ -204,7 +198,6 @@ When P is a string, an optional transformation
       else:
          raise TypeError("list or string is required here")
       self.__phases[0] = self
-      return None
 
 # --------------------------------------------------------------------
 

@@ -34,14 +34,6 @@ boxlist = []         # corresponding bounding boxes
 
 # --------------------------------------------------------------------
 
-def same_rects(r1, r2):
-   # return True if the given rectangles are identical
-   # (probably should add an "equal" method to rect class)
-   return (r1.x == r2.x) and (r1.wd == r2.wd) and \
-          (r1.y == r2.y) and (r1.ht == r2.ht)
-
-# --------------------------------------------------------------------
-
 def show_spaceship_speed(period, deltax, deltay):
    # we found a moving oscillator
    if period == 1:
@@ -100,11 +92,11 @@ def oscillating():
             (pbox.ht == boxlist[pos].ht):
             period = int(g.getgen()) - genlist[pos]
             if period == 1:
-               if same_rects(pbox, boxlist[pos]):
+               if pbox == boxlist[pos]:
                   g.show("The pattern is stable.")
                else:
                   show_spaceship_speed(1, 0, 0)
-            elif same_rects(pbox, boxlist[pos]):
+            elif pbox == boxlist[pos]:
                g.show("Oscillator detected (period = " + str(period) + ")")
             else:
                deltax = abs(boxlist[pos].x - pbox.x)
