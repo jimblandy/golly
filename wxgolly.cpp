@@ -46,7 +46,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // defines StatusBar class
 #include "wxview.h"        // defines PatternView class
 #include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
-#include "wxhelp.h"        // for GetHelpFrame
 #include "wxprefs.h"       // for GetPrefs
 #include "wxscript.h"      // for IsScript
 
@@ -122,11 +121,7 @@ public:
 void CallYield()
 {
    wxGetApp().Yield(true);
-   if (GetHelpFrame() && GetHelpFrame()->IsActive()) {
-      // send idle events to html window so cursor gets updated
-      wxIdleEvent event;
-      wxGetApp().SendIdleEvents(GetHtmlWindow(), event);
-   } else if (mainptr->IsActive()) {
+   if (mainptr->IsActive()) {
       // make sure viewport keeps keyboard focus
       viewptr->SetFocus();
    }

@@ -83,7 +83,19 @@ public:
    HtmlView(wxWindow *parent, wxWindowID id, const wxPoint& pos,
             const wxSize& size, long style)
       : wxHtmlWindow(parent, id, pos, size, style) { }
+
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
+
+   void StartTimer() {
+      htmltimer = new wxTimer(this, wxID_ANY);
+      // call OnTimer 10 times per sec
+      htmltimer->Start(100, wxTIMER_CONTINUOUS);
+   }
+
+   void StopTimer() {
+      htmltimer->Stop();
+      delete htmltimer;
+   }
 
 private:
    #ifdef __WXMSW__
@@ -95,6 +107,9 @@ private:
    
    void OnChar(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
+   void OnTimer(wxTimerEvent& event);
+
+   wxTimer *htmltimer;
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -109,6 +124,7 @@ BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
 #endif
    EVT_CHAR       (HtmlView::OnChar)
    EVT_SIZE       (HtmlView::OnSize)
+   EVT_TIMER      (wxID_ANY, HtmlView::OnTimer)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -132,10 +148,6 @@ wxString currhelp = helphome;
 
 wxFrame* GetHelpFrame() {
    return helpptr;
-}
-
-wxWindow* GetHtmlWindow() {
-   return htmlwin;
 }
 
 // -----------------------------------------------------------------------------
@@ -191,6 +203,7 @@ HelpFrame::HelpFrame()
                           // specify small size to avoid clipping scroll bar on resize
                           wxDefaultPosition, wxSize(30,30),
                           wxHW_DEFAULT_STYLE | wxSUNKEN_BORDER);
+   htmlwin->StartTimer();
    htmlwin->SetBorders(4);
    SetFontSizes(helpfontsize);
 
@@ -372,7 +385,11 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    #ifdef __WXMSW__
    }
    #endif
-  
+   
+   // stop htmltimer immediately (if we do it in ~HtmlView dtor then timer
+   // only stops when app becomes idle)
+   htmlwin->StopTimer();
+   
    Destroy();        // also deletes all child windows (buttons, etc)
    helpptr = NULL;
 }
@@ -598,6 +615,22 @@ void HtmlView::OnSize(wxSizeEvent& event)
    
    // prevent wxHtmlWindow::OnSize being called again
    event.Skip(false);
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnTimer(wxTimerEvent& WXUNUSED(event))
+{
+   #ifdef __WXX11__
+      // no need to do anything
+   #else
+      if (helpptr && helpptr->IsActive()) {
+         // send idle event to html window so cursor gets updated
+         // even while app is busy doing something else (eg. generating)
+         wxIdleEvent idleevent;
+         wxGetApp().SendIdleEvents(this, idleevent);
+      }
+   #endif
 }
 
 // -----------------------------------------------------------------------------

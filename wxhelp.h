@@ -38,7 +38,4 @@ void ShowAboutBox();
 // Return a pointer to the help window.
 wxFrame* GetHelpFrame();
 
-// Return a pointer to the html child window.
-wxWindow* GetHtmlWindow();
-
 #endif
