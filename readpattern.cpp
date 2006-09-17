@@ -128,9 +128,45 @@ void readtextpattern(lifealgo &imp, char *line) {
       y++ ;
       if (getedges && right.toint() < x - 1) right = x - 1;
       x = 0;
-   } while (getline(line, LINESIZE) != 0);
+   } while (getline(line, LINESIZE));
 
    if (getedges) bottom = y - 1;
+}
+
+/*
+ *   Parse "#CXRLE key=value key=value ..." line and extract values.
+ */
+void ParseXRLELine(char *line, int *xoff, int *yoff, bigint &gen) {
+   char *key = line;
+   while (true) {
+      // set key to start of next key word
+      while (*key && *key != ' ') key++;
+      while (*key == ' ') key++;
+      if (*key == 0) return;
+      
+      // set value to pos of char after next '='
+      char *value = key;
+      while (*value && *value != '=') value++;
+      if (*value == 0) return;
+      value++;
+   
+      if (strncmp(key, "Pos", 3) == 0) {
+         // extract Pos=int,int
+         sscanf(value, "%d,%d", xoff, yoff);
+
+      } else if (strncmp(key, "Gen", 3) == 0) {
+         // extract Gen=bigint
+         char *p = value;
+         while (*p >= '0' && *p <= '9') p++;
+         char savech = *p;
+         *p = 0;
+         gen = bigint(value);
+         *p = savech;
+         value = p;
+      }
+
+      key = value;
+   }
 }
 
 /*
@@ -139,32 +175,41 @@ void readtextpattern(lifealgo &imp, char *line) {
 void readrle(lifealgo &imp, char *line) {
    int n=0, x=0, y=0 ;
    char *p ;
-   char *cliferules;
+   char *ruleptr;
    int wd=0, ht=0, xoff=0, yoff=0;
+   bigint gen = bigint::zero;
+   bool xrle = false;               // extended RLE format?
 
-   // getline at end of while loop so we see 1st line
    do {
       if (line[0] == '#') {
-         if (line[1] == 'r') {
-            cliferules = line;
-            cliferules += 2;
-            while (*cliferules && *cliferules <= ' ')
-               cliferules++;
-            p = cliferules;
-            while (*p > ' ')
-               p++;
+         if (strncmp(line, "#CXRLE", 6) == 0) {
+            // parse extended RLE line and extract values
+            ParseXRLELine(line, &xoff, &yoff, gen);
+            imp.setGeneration(gen);
+            xrle = true;
+         } else if (line[1] == 'r') {
+            ruleptr = line;
+            ruleptr += 2;
+            while (*ruleptr && *ruleptr <= ' ') ruleptr++;
+            p = ruleptr;
+            while (*p > ' ') p++;
             *p = 0;
-            imp.setrule(cliferules) ;
+            imp.setrule(ruleptr) ;
          }
       } else if (line[0] == 'x') {
-         // extract wd and ht and use to center pattern around 0,0
+         // extract wd and ht
          p = line;
          while (*p && *p != '=') p++; p++;
          sscanf(p, "%d", &wd);
          while (*p && *p != '=') p++; p++;
          sscanf(p, "%d", &ht);
-         xoff = -(wd / 2);
-         yoff = -(ht / 2);
+         
+         if (!xrle) {
+            /* center RLE pattern around 0,0 -- not such a good idea
+            xoff = -(wd / 2);
+            yoff = -(ht / 2);
+            */
+         }
 
          if (getedges) {
             bigint bigwd = wd - 1;
@@ -175,17 +220,14 @@ void readrle(lifealgo &imp, char *line) {
             right = left;   right += bigwd;
          }
          
-         for (p=line; *p && *p != 'r'; p++)
-            ;
+         while (*p && *p != 'r') p++;
          if (strncmp(p, "rule", 4) == 0) {
             p += 4;
-            while (*p && (*p <= ' ' || *p == '='))
-               p++;
-            cliferules = p;
-            while (*p > ' ')
-               p++;
+            while (*p && (*p <= ' ' || *p == '=')) p++;
+            ruleptr = p;
+            while (*p > ' ') p++;
             *p = 0;
-            imp.setrule(cliferules) ;
+            imp.setrule(ruleptr) ;
          }
       } else {
          n = 0 ;
@@ -212,7 +254,7 @@ void readrle(lifealgo &imp, char *line) {
             }
          }
       }
-   } while (getline(line, LINESIZE) != 0);
+   } while (getline(line, LINESIZE));
 }
 
 /*
@@ -223,9 +265,9 @@ void readpclife(lifealgo &imp, char *line) {
    int x=0, y=0 ;
    int leftx = x ;
    char *p ;
-   char *cliferules;
+   char *ruleptr;
 
-   for (;getline(line, LINESIZE);) {
+   while (getline(line, LINESIZE)) {
       if (line[0] == '#') {
          if (line[1] == 'P') {
             sscanf(line + 2, " %d %d", &x, &y) ;
@@ -233,15 +275,13 @@ void readpclife(lifealgo &imp, char *line) {
          } else if (line[1] == 'N') {
             // already done so no need for this
          } else if (line[1] == 'R') {
-            cliferules = line;
-            cliferules += 2;
-            while (*cliferules && *cliferules <= ' ')
-               cliferules++;
-            p = cliferules;
-            while (*p > ' ')
-               p++;
+            ruleptr = line;
+            ruleptr += 2;
+            while (*ruleptr && *ruleptr <= ' ') ruleptr++;
+            p = ruleptr;
+            while (*p > ' ') p++;
             *p = 0;
-            imp.setrule(cliferules) ;
+            imp.setrule(ruleptr) ;
          }
       } else if (line[0] == '-' || ('0' <= line[0] && line[0] <= '9')) {
          sscanf(line, "%d %d", &x, &y) ;
@@ -254,6 +294,37 @@ void readpclife(lifealgo &imp, char *line) {
          }
          x = leftx ;
          y++ ;
+      }
+   }
+}
+
+/*
+ *   This routine reads David Bell's dblife format.
+ */
+void readdblife(lifealgo &imp, char *line) {
+   int n=0, x=0, y=0;
+   char *p;
+
+   while (getline(line, LINESIZE)) {
+      if (line[0] != '!') {
+         // parse line like "23.O15.3O15.3O15.O4.4O"
+         n = x = 0;
+         for (p=line; *p; p++) {
+            if ('0' <= *p && *p <= '9') {
+               n = n * 10 + *p - '0';
+            } else {
+               if (n == 0) n = 1;
+               if (*p == '.') {
+                  x += n;
+               } else if (*p == 'O') {
+                  while (n-- > 0) imp.setcell(x++, y, 1);
+               } else {
+                  // ignore dblife commands like "5k10h@"
+               }
+               n = 0;
+            }
+         }
+         y++;
       }
    }
 }
@@ -307,6 +378,13 @@ const char *loadpattern(lifealgo &imp) {
       readrle(imp, line) ;
       imp.endofpattern() ;
       // if getedges is true then readrle has set top,left,bottom,right
+
+   } else if (line[0] == '!') {
+      readdblife(imp, line) ;
+      imp.endofpattern() ;
+      if (getedges && !imp.isEmpty()) {
+         imp.findedges(&top, &left, &bottom, &right) ;
+      }
 
    } else if (line[0] == '[') {
       errmsg = imp.readmacrocell(line) ;
@@ -450,7 +528,7 @@ const char *readcomments(const char *filename, char **commptr)
             cptr[commlen] = '\n';      // getline strips off eol char(s)
             commlen++;
          }
-         if (getline(line, LINESIZE) == 0) break;
+         if (getline(line, LINESIZE) == NULL) break;
       }
 
    } else if (line[0] == '#' || line[0] == 'x') {
@@ -462,17 +540,17 @@ const char *readcomments(const char *filename, char **commptr)
          commlen += linelen;
          cptr[commlen] = '\n';         // getline strips off eol char(s)
          commlen++;
-         if (getline(line, LINESIZE) == 0) break;
+         if (getline(line, LINESIZE) == NULL) break;
       }
       // also look for any lines after "!" but only if file is < 1MB
       // (ZLIB doesn't seem to provide a fast way to go to eof)
       if (filesize < 1024*1024) {
          bool foundexcl = false;
-         while ( getline(line, LINESIZE) != 0 ) {
-            if ( strrchr(line, '!') ) { foundexcl = true; break; }
+         while (getline(line, LINESIZE)) {
+            if (strrchr(line, '!')) { foundexcl = true; break; }
          }
          if (foundexcl) {
-            while ( getline(line, LINESIZE) != 0 ) {
+            while (getline(line, LINESIZE)) {
                int linelen = strlen(line);
                if (commlen + linelen + 1 > maxcommlen) break;
                strncpy(cptr + commlen, line, linelen);
@@ -481,6 +559,18 @@ const char *readcomments(const char *filename, char **commptr)
                commlen++;
             }
          }
+      }
+
+   } else if (line[0] == '!') {
+      // extract "!..." lines from dblife file
+      while (line[0] == '!') {
+         int linelen = strlen(line);
+         if (commlen + linelen + 1 > maxcommlen) break;
+         strncpy(cptr + commlen, line, linelen);
+         commlen += linelen;
+         cptr[commlen] = '\n';            // getline strips off eol char(s)
+         commlen++;
+         if (getline(line, LINESIZE) == NULL) break;
       }
 
    } else if (line[0] == '[') {

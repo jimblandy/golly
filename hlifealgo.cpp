@@ -1469,15 +1469,23 @@ default:       return "Illegal character in readmacrocell." ;
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
       } else if (line[0] == '#') {
          switch (line[1]) {
+         char *p, *pp ;
          case 'R':
-            char *p = line + 2 ;
-            while (*p && *p <= ' ')
-              p++ ;
-            char *pp = p ;
-            while (*pp > ' ')
-              pp++ ;
+            p = line + 2 ;
+            while (*p && *p <= ' ') p++ ;
+            pp = p ;
+            while (*pp > ' ') pp++ ;
             *pp = 0 ;
             global_liferules.setrule(p) ;
+            break ;
+         case 'G':
+            p = line + 2 ;
+            while (*p && *p <= ' ') p++ ;
+            pp = p ;
+            while (*pp >= '0' && *pp <= '9') pp++ ;
+            *pp = 0 ;
+            generation = bigint(p) ;
+            break ;
          }
       } else {
          n = sscanf(line, "%d %d %d %d %d %d", &d, &nw, &ne, &sw, &se, &r) ;
@@ -1672,11 +1680,15 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
       // write non-Life rule
       fprintf(f, "#R %s\n", global_liferules.getrule()) ;
    }
+   if (generation > bigint::zero) {
+      // write non-zero gen count
+      fprintf(f, "#G %s\n", generation.tostring('\0')) ;
+   }
    if (comments && comments[0]) {
       // write given comment line(s)
-      fputs(comments, f);
+      fputs(comments, f) ;
    }
-   /* this is the old way; commented out.
+   /* this is the old way:
    cellcounter = 0 ;
    writecell(f, root, depth) ;
    */

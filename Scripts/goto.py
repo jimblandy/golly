@@ -26,9 +26,10 @@ def goto(gen):
       newgen = int(gen)
    
    if newgen < currgen:
-      # go back to gen 0 and then forwards to newgen; note that reset()
-      # also restores rule and hashing option, so too bad if user
-      # changed those options after gen 0 info was saved;
+      # try to go back to starting gen (not necessarily 0) and
+      # then forwards to newgen; note that reset() also restores
+      # rule and hashing option, so too bad if user changed
+      # those options after the starting info was saved;
       # first save current location and scale
       midx, midy = golly.getpos()
       mag = golly.getmag()
@@ -36,7 +37,12 @@ def goto(gen):
       # restore location and scale
       golly.setpos(midx, midy)
       golly.setmag(mag)
-      currgen = 0
+      # current gen might be > 0 if user loaded a pattern file
+      # that set the gen count
+      currgen = int(golly.getgen())
+      if newgen < currgen:
+         golly.error("Can't go back any further.")
+         return
    
    golly.show("Hit escape to abort...")
    oldsecs = time()

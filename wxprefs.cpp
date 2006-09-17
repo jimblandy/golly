@@ -517,7 +517,7 @@ void SavePrefs()
    fprintf(f, "hash_info=%d\n", hlifealgo::getVerbose() ? 1 : 0);
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    
-   fprintf(f, "\n");
+   fputs("\n", f);
 
    fprintf(f, "rule=%s\n", curralgo->getrule());
    if (namedrules.GetCount() > 1) {
@@ -526,7 +526,7 @@ void SavePrefs()
          fprintf(f, "named_rule=%s\n", (const char*)namedrules[i].mb_str(wxConvLocal));
    }
    
-   fprintf(f, "\n");
+   fputs("\n", f);
 
    fprintf(f, "show_tool=%d\n", mainptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
@@ -538,7 +538,7 @@ void SavePrefs()
    fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
    
-   fprintf(f, "\n");
+   fputs("\n", f);
 
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    SaveColor(f, "live_rgb", livergb);
@@ -548,7 +548,7 @@ void SavePrefs()
    SaveColor(f, "qlife_rgb", qlifergb);
    SaveColor(f, "hlife_rgb", hlifergb);
    
-   fprintf(f, "\n");
+   fputs("\n", f);
    
    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
    fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
@@ -559,7 +559,7 @@ void SavePrefs()
    fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
    fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
    
-   fprintf(f, "\n");
+   fputs("\n", f);
 
    fprintf(f, "open_save_dir=%s\n", (const char*)opensavedir.mb_str(wxConvLocal));
    fprintf(f, "run_dir=%s\n", (const char*)rundir.mb_str(wxConvLocal));
@@ -573,7 +573,7 @@ void SavePrefs()
    fprintf(f, "max_scripts=%d (1..%d)\n", maxscripts, MAX_RECENT);
 
    if (numpatterns > 0) {
-      fprintf(f, "\n");
+      fputs("\n", f);
       int i;
       for (i=0; i<numpatterns; i++) {
          wxMenuItem *item = patternSubMenu->FindItemByPosition(i);
@@ -583,7 +583,7 @@ void SavePrefs()
    }
 
    if (numscripts > 0) {
-      fprintf(f, "\n");
+      fputs("\n", f);
       int i;
       for (i=0; i<numscripts; i++) {
          wxMenuItem *item = scriptSubMenu->FindItemByPosition(i);

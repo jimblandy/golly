@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/treectrl.h"   // for wxTreeEvent
 #include "wx/splitter.h"   // for wxSplitterEvent
 #include "bigint.h"        // for bigint
-#include "lifealgo.h"      // for lifealgo
 
 // Define the main window:
 
@@ -149,15 +148,16 @@ private:
    int warp;                     // current speed setting
    int minwarp;                  // warp value at maximum delay (must be <= 0)
    long whentosee;               // when to do next gen (if warp < 0)
-   long starttime, endtime;      // for timing info
-   double startgen, endgen;      // ditto
+   long begintime, endtime;      // for timing info
+   double begingen, endgen;      // ditto
 
-   lifealgo* gen0algo;           // starting pattern
-   wxString gen0rule;            // starting rule
-   int gen0warp;                 // starting speed
-   int gen0mag;                  // starting scale
-   bigint gen0x, gen0y;          // starting location
-   bool gen0hash;                // hashing was on at start?
+   wxString startfile;           // file for saving starting pattern
+   wxString startrule;           // starting rule
+   bigint startgen;              // starting generation (>= 0)
+   bigint startx, starty;        // starting location
+   int startwarp;                // starting speed
+   int startmag;                 // starting scale
+   bool starthash;               // hashing was on at start?
 };
 
 // name of temporary file for storing clipboard data

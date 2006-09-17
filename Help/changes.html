@@ -11,13 +11,20 @@ The CHANGES file in the source distribution has a more comprehensive list.
 
 <p>
 <ul>
-<li> Golly can read BMP/GIF/PNG/TIFF files (non-white pixels become live cells).
-<li> Added ability to paste bitmap data.
+<li> Golly can read BMP/GIF/PNG/TIFF files and paste bitmap data.
+     All non-white pixels become live cells.
+<li> Golly can read pattern files using David Bell's dblife format.
+<li> Pattern position is saved in RLE file and restored when loaded.
+<li> Generation count is saved in RLE/macrocell file and restored when loaded.
+<li> Starting patterns are saved in a temporary file rather than in memory.
+     This is much faster when hashing (saving a macrocell file is very quick).
 <li> Random Fill is much faster in typical cases.
 <li> Added metafier.py to Scripts folder.
 <li> Resizing help window no longer changes scroll position.
 <li> Fixed a bug loading huge macrocell files.
-<li> Golly can be compiled with a Unicode build of wxWidgets.
+<li> Script path is only added to Python's sys.path once.
+<li> Fixed rect bug in Scripts/glife/__init__.py (thanks to Dan Hoey).
+<li> Golly's code can be compiled with a Unicode build of wxWidgets.
 </ul>
 
 <p>

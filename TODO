@@ -2,15 +2,12 @@ For future versions:
 --------------------
 
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
-    and display suitable message in status bar. Or maybe just add
+    and display suitable message in status bar.  Or maybe just add
     Gabriel's oscillation detection as an option (see oscar.py).
 
 A - Replace separate Go and Stop buttons with a single button, optionally
     animated to show galaxy phases.  Looks like I'll need to avoid using
     wxToolBar (probably good anyway, as it causes other bugs).
-
-A - Speed up saving of start pattern when hashing is on by writing it
-    to a temporary macrocell file.
 
 T - Improve batchmode.
 
@@ -57,6 +54,7 @@ User suggestions:
 
 [Nick Gotts]
 - Need a way to copy exact gen/pop counts to clipboard.
+  No longer necessary now that Python commands can get such info?
 
 [Paul Chapman]
 - Combine the start and stop toolbar buttons into a single toggle.
@@ -89,8 +87,6 @@ User suggestions:
 - Add a Default button to each Preferences pane (at bottom left?).
 
 [Bill Gosper]
-- Save generation count in pattern file for restoring it when loaded.
-  Also let user change it at any time, including via a setgen(str)
-  script command.
+- Add a setgen(str) script command.
 - Modify info window so it can be used to edit and save comments.
 - For scales > 1:1 make the pixel color depend on lg(# of ones in it).

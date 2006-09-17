@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 char outbuff[BUFFSIZE];
 int outpos;
 unsigned int currsize;     // current file size (for showing in progress dialog)
+
 // using buffered putchar instead of fputc is about 20% faster on Mac OS X
 void putchar(char ch, FILE *f) {
    if (outpos == BUFFSIZE) {
@@ -78,10 +79,17 @@ void AddRun (FILE *f,
    *run = 0;                           // reset run count
 }
 
-// write current pattern to file using RLE format
+// write current pattern to file using extended RLE format
 const char *writerle(FILE *f, char *comments, lifealgo &imp,
                      int top, int left, int bottom, int right)
 {
+   // write out #CXRLE line; note that we prefix our XRLE indicator
+   // with #C so apps like Life32 and MCell will ignore the line
+   fprintf(f, "#CXRLE Pos=%d,%d", left, top);
+   if (imp.getGeneration() > bigint::zero)
+      fprintf(f, " Gen=%s", imp.getGeneration().tostring('\0'));
+   fputs("\n", f);
+
    char *endcomms = NULL;
    if (comments && comments[0]) {
       // write given comment line(s) -- can't just do fputs(comments,f)
@@ -216,7 +224,8 @@ const char *writemacrocell(FILE *f, char *comments, lifealgo &imp)
 {
    if (imp.hyperCapable())
       return imp.writeNativeFormat(f, comments);
-   return "Not yet implemented.";
+   else
+      return "Not yet implemented.";
 }
 
 const char *writepattern(const char *filename, lifealgo &imp, pattern_format format,
@@ -242,23 +251,32 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
       return "Can't create pattern file!";
    }
 
+   // skip past any old #CXRLE lines at start of existing RLE file
+   char *comments = commptr;
+   if (comments) {
+      while (strncmp(comments, "#CXRLE", 6) == 0) {
+         while (*comments != '\n') comments++;
+         comments++;
+      }
+   }
+
    currsize = 0;
    lifebeginprogress("Writing pattern file");
 
    const char *errmsg;
    switch (format) {
       case RLE_format:
-         errmsg = writerle(f, commptr, imp, top, left, bottom, right);
+         errmsg = writerle(f, comments, imp, top, left, bottom, right);
          break;
 
       case L105_format:
          // Life 1.05 format ignores given edges
-         errmsg = writelife105(f, commptr, imp);
+         errmsg = writelife105(f, comments, imp);
          break;
 
       case MC_format:
          // macrocell format ignores given edges
-         errmsg = writemacrocell(f, commptr, imp);
+         errmsg = writemacrocell(f, comments, imp);
          break;
 
       default:

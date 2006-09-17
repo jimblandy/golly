@@ -220,14 +220,14 @@ int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
 // must be static because it's used in DnDFile::OnDropFiles
 wxTimer *onetimer;
 
-// name of temporary file created by OpenClipboard;
+// name of temporary file created by SaveStartingPattern and OpenClipboard;
 // it can be used to reset pattern or to show comments
-wxString gen0file;
+wxString tempstart;
 
 // name of temporary file created by RunClipboard
 wxString scriptfile;
 
-// name of temporary file for storing clipboard data (only in X11 app)
+// name of temporary file for storing clipboard data
 wxString clipfile;
 
 // a splittable window is used to display pattern/script directory and viewport
@@ -469,7 +469,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_NEXT,      active && !generating);
       mbar->Enable(ID_STEP,      active && !generating);
       mbar->Enable(ID_RESET,     active && !generating &&
-                                 curralgo->getGeneration() > bigint::zero);
+                                 curralgo->getGeneration() > startgen);
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
@@ -679,6 +679,7 @@ void MainFrame::NewPattern(const wxString& title)
    if (generating) return;
    savestart = false;
    currfile.Clear();
+   startgen = 0;
    warp = 0;
    CreateUniverse();
 
@@ -814,6 +815,7 @@ void MainFrame::LoadPattern(const wxString& newtitle)
       if (openremovesel) viewptr->NoSelection();
       if (opencurs) currcurs = opencurs;
       viewptr->FitInView(1);
+      startgen = curralgo->getGeneration();     // might be > 0
       UpdateEverything();
       showbanner = false;
    } else {
@@ -823,9 +825,15 @@ void MainFrame::LoadPattern(const wxString& newtitle)
 
 void MainFrame::ResetPattern()
 {
-   if (generating || curralgo->getGeneration() == bigint::zero) return;
+   if (generating || curralgo->getGeneration() == startgen) return;
    
-   if (gen0algo == NULL && currfile.IsEmpty()) {
+   if (curralgo->getGeneration() < startgen) {
+      // if this happens then startgen logic is wrong
+      Warning(_("Current gen < starting gen!"));
+      return;
+   }
+   
+   if (startfile.IsEmpty() && currfile.IsEmpty()) {
       // if this happens then savestart logic is wrong
       Warning(_("Starting pattern cannot be restored!"));
       return;
@@ -833,27 +841,31 @@ void MainFrame::ResetPattern()
    
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, hashing option and starting pattern
-   warp = gen0warp;
-   hashing = gen0hash;
-   if (gen0algo) {
-      // restore starting pattern saved in gen0algo
-      delete curralgo;
-      curralgo = gen0algo;
-      gen0algo = NULL;
-      savestart = true;
-      SetGenIncrement();
-      curralgo->setMaxMemory(maxhashmem);
-      curralgo->setGeneration(bigint::zero);
-   } else {
-      // restore starting pattern from currfile;
-      // pass in empty string so savestart, warp and currcurs won't change
-      LoadPattern(wxEmptyString);
-      // gen count has been reset to 0
+   warp = startwarp;
+   hashing = starthash;
+
+   wxString oldfile;
+   if ( !startfile.IsEmpty() ) {
+      // temporarily change currfile to startfile
+      oldfile = currfile;
+      currfile = startfile;
    }
-   // now restore rule, scale and location
-   curralgo->setrule(gen0rule.mb_str(wxConvLocal));
+   
+   // restore starting pattern from currfile;
+   // pass in empty string so savestart, warp and currcurs won't change
+   LoadPattern(wxEmptyString);
+   // gen count has been reset to startgen
+   
+   if ( !startfile.IsEmpty() ) {
+      // restore currfile
+      currfile = oldfile;
+      savestart = true;       // should not be necessary, but play safe
+   }
+   
+   // now restore rule, window title, scale and location
+   curralgo->setrule(startrule.mb_str(wxConvLocal));
    SetWindowTitle(wxEmptyString);
-   viewptr->SetPosMag(gen0x, gen0y, gen0mag);
+   viewptr->SetPosMag(startx, starty, startmag);
    UpdateEverything();
 }
 
@@ -964,8 +976,9 @@ void MainFrame::OpenPattern()
 
    wxString filetypes = _("All files (*)|*");
    filetypes +=         _("|RLE (*.rle)|*.rle");
-   filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
    filetypes +=         _("|Macrocell (*.mc)|*.mc");
+   filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
+   filetypes +=         _("|dblife (*.l)|*.l");
    filetypes +=         _("|Gzip (*.gz)|*.gz");
    filetypes +=         _("|BMP (*.bmp)|*.bmp");
    filetypes +=         _("|GIF (*.gif)|*.gif");
@@ -1104,9 +1117,9 @@ void MainFrame::OpenClipboard()
    // load and view pattern data stored in clipboard
    #ifdef __WXX11__
       // on X11 the clipboard data is in non-temporary clipfile, so copy
-      // clipfile to gen0file (for use by ResetPattern and ShowPatternInfo)
-      if ( wxCopyFile(clipfile, gen0file, true) ) {
-         currfile = gen0file;
+      // clipfile to tempstart (for use by ResetPattern and ShowPatternInfo)
+      if ( wxCopyFile(clipfile, tempstart, true) ) {
+         currfile = tempstart;
          LoadPattern(_("clipboard"));
       } else {
          statusptr->ErrorMessage(_("Could not copy clipfile!"));
@@ -1114,18 +1127,18 @@ void MainFrame::OpenClipboard()
    #else
       wxTextDataObject data;
       if (GetTextFromClipboard(&data)) {
-         // copy clipboard data to gen0file so we can handle all formats
+         // copy clipboard data to tempstart so we can handle all formats
          // supported by readpattern
-         wxFile outfile(gen0file, wxFile::write);
+         wxFile outfile(tempstart, wxFile::write);
          if ( outfile.IsOpened() ) {
             outfile.Write( data.GetText() );
             outfile.Close();
-            currfile = gen0file;
+            currfile = tempstart;
             LoadPattern(_("clipboard"));
-            // do NOT delete gen0file -- it can be reloaded by ResetPattern
+            // do NOT delete tempstart -- it can be reloaded by ResetPattern
             // or used by ShowPatternInfo
          } else {
-            statusptr->ErrorMessage(_("Could not create gen0file!"));
+            statusptr->ErrorMessage(_("Could not create tempstart file!"));
          }
       }
    #endif
@@ -1190,35 +1203,50 @@ void MainFrame::ClearRecentScripts()
    if (mbar) mbar->Enable(ID_RUN_RECENT, false);
 }
 
+const char *WritePattern(const wxString& path,
+                         pattern_format format,
+                         int top, int left, int bottom, int right)
+{
+   #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+      // use decomposed UTF8 so fopen will work
+      const char *err = writepattern(path.fn_str(),
+                        *curralgo, format, top, left, bottom, right);
+   #else
+      const char *err = writepattern(path.mb_str(wxConvLocal),
+                        *curralgo, format, top, left, bottom, right);
+   #endif
+   return err;
+}
+
 void MainFrame::SavePattern()
 {
    if (generating) return;
    
    wxString filetypes;
    int RLEindex, L105index, MCindex;
-   RLEindex = L105index = MCindex = -1;   // format not allowed (any -ve number)
+   
+   // initially all formats are not allowed (use any -ve number)
+   RLEindex = L105index = MCindex = -1;
    
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    curralgo->findedges(&top, &left, &bottom, &right);
    if (hashing) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         // too big for RLE so only allow saving as MC file
+         // too big so only allow saving as MC file
          itop = ileft = ibottom = iright = 0;
-         filetypes = _("Macrocell (*.mc)|*.mc");
-         MCindex = 0;
+         filetypes = _("Macrocell (*.mc)|*.mc");   MCindex = 0;
       } else {
-         // allow saving as MC or RLE file
+         // allow saving as RLE/MC file
          itop = top.toint();
          ileft = left.toint();
          ibottom = bottom.toint();
          iright = right.toint();
-         filetypes = _("RLE (*.rle)|*.rle|Macrocell (*.mc)|*.mc");
-         RLEindex = 0;
-         MCindex = 1;
+         filetypes =  _("RLE (*.rle)|*.rle");      RLEindex = 0;
+         filetypes += _("|Macrocell (*.mc)|*.mc"); MCindex = 1;
       }
    } else {
-      // allow saving as RLE or Life 1.05 file if pattern is small enough
+      // allow saving file only if pattern is small enough
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
          return;
@@ -1227,12 +1255,9 @@ void MainFrame::SavePattern()
       ileft = left.toint();
       ibottom = bottom.toint();
       iright = right.toint();
+      filetypes = _("RLE (*.rle)|*.rle");   RLEindex = 0;
       // Life 1.05 format not yet implemented!!!
-      // filetypes = _("RLE (*.rle)|*.rle|Life 1.05 (*.lif)|*.lif");
-      filetypes = _("RLE (*.rle)|*.rle");
-      RLEindex = 0;
-      // Life 1.05 format not yet implemented!!!
-      // L105index = 1;
+      // filetypes += _("|Life 1.05 (*.lif)|*.lif"); L105index = 1;
    }
 
    wxFileDialog savedlg( this, _("Save pattern"),
@@ -1244,8 +1269,8 @@ void MainFrame::SavePattern()
       opensavedir = fullpath.GetPath();
       wxString ext = fullpath.GetExt();
       pattern_format format;
-      // if user supplied a known extension (rle/lif/mc) then use that format if
-      // it is allowed, otherwise use current format specified in filter menu
+      // if user supplied a known extension then use that format if it is
+      // allowed, otherwise use current format specified in filter menu
       if ( ext.IsSameAs(wxT("rle"),false) && RLEindex >= 0 ) {
          format = RLE_format;
       // Life 1.05 format not yet implemented!!!
@@ -1266,19 +1291,14 @@ void MainFrame::SavePattern()
       SetCurrentFile( savedlg.GetPath() );
       AddRecentPattern( savedlg.GetPath() );
       SetWindowTitle( savedlg.GetFilename() );
-      #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
-         // use decomposed UTF8 so fopen will work
-         const char *err = writepattern(savedlg.GetPath().fn_str(),
-      #else
-         const char *err = writepattern(savedlg.GetPath().mb_str(wxConvLocal),
-      #endif
-                           *curralgo, format, itop, ileft, ibottom, iright);
+      const char *err = WritePattern(savedlg.GetPath(), format,
+                                     itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
          statusptr->DisplayMessage(_("Pattern saved in file."));
-         if ( curralgo->getGeneration() == bigint::zero ) {
-            // no need to save starting pattern (ResetPattern can load file)
+         if ( curralgo->getGeneration() == startgen ) {
+            // no need to save starting pattern (ResetPattern can load currfile)
             savestart = false;
          }
       }
@@ -1317,16 +1337,10 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
    SetWindowTitle( GetBaseName(path) );
-   #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
-      // use decomposed UTF8 so fopen will work
-      const char *err = writepattern(path.fn_str(),
-   #else
-      const char *err = writepattern(path.mb_str(wxConvLocal),
-   #endif
-                        *curralgo, pattfmt, itop, ileft, ibottom, iright);
+   const char *err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
-      if ( curralgo->getGeneration() == bigint::zero ) {
-         // no need to save starting pattern (ResetPattern can load file)
+      if ( curralgo->getGeneration() == startgen ) {
+         // no need to save starting pattern (ResetPattern can load currfile)
          savestart = false;
       }
    }
@@ -1561,91 +1575,59 @@ void MainFrame::ChangeStopToGo()
 
 bool MainFrame::SaveStartingPattern()
 {
-   if ( curralgo->getGeneration() > bigint::zero ) {
-      // don't save pattern if gen count > 0
+   if ( curralgo->getGeneration() > startgen ) {
+      // don't do anything if current gen count > starting gen
       return true;
-   }
-
-   if ( gen0algo ) {
-      // delete old starting pattern
-      delete gen0algo;
-      gen0algo = NULL;
    }
    
    // save current rule, scale, location, step size and hashing option
-   gen0rule = wxString(curralgo->getrule(), wxConvLocal);
-   gen0mag = viewptr->GetMag();
-   viewptr->GetPos(gen0x, gen0y);
-   gen0warp = warp;
-   gen0hash = hashing;
+   startrule = wxString(curralgo->getrule(), wxConvLocal);
+   startmag = viewptr->GetMag();
+   viewptr->GetPos(startx, starty);
+   startwarp = warp;
+   starthash = hashing;
    
    if ( !savestart ) {
-      // no need to save pattern stored in currfile
+      // no need to save pattern; ResetPattern will load currfile
+      // (note that currfile == tempstart if pattern created via OpenClipboard)
+      startfile.Clear();
       return true;
    }
 
-   // only save pattern if its edges are within getcell/setcell limits
-   bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage(_("Starting pattern is outside +/- 10^9 boundary."));
-      // ask user if they want to continue generating???
-      return false;
-   }   
-   
-   // create gen0algo and duplicate current pattern
+   // save starting pattern in tempstart file
    if ( hashing ) {
-      gen0algo = new hlifealgo();
-   } else {
-      gen0algo = new qlifealgo();
-   }
-   gen0algo->setpoll(wxGetApp().Poller());
-
-   // copy (non-empty) pattern in current universe to gen0algo
-   int itop = top.toint();
-   int ileft = left.toint();
-   int ibottom = bottom.toint();
-   int iright = right.toint();
-   int ht = ibottom - itop + 1;
-   int cx, cy;
-
-   // for showing accurate progress we need to add pattern height to pop count
-   // in case this is a huge pattern with many blank rows
-   double maxcount = curralgo->getPopulation().todouble() + ht;
-   double accumcount = 0;
-   int currcount = 0;
-   bool abort = false;
-   BeginProgress(_("Saving starting pattern"));
-
-   for ( cy=itop; cy<=ibottom; cy++ ) {
-      currcount++;
-      for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
-         if (skip >= 0) {
-            // found next live cell in this row
-            cx += skip;
-            gen0algo->setcell(cx, cy, 1);
-            currcount++;
-         } else {
-            cx = iright;  // done this row
-         }
-         if (currcount > 1024) {
-            accumcount += currcount;
-            currcount = 0;
-            abort = AbortProgress(accumcount / maxcount, wxEmptyString);
-            if (abort) break;
-         }
+      // much faster to save hlife pattern in a macrocell file
+      const char *err = WritePattern(tempstart, MC_format, 0, 0, 0, 0);
+      if (err) {
+         statusptr->ErrorMessage(wxString(err,wxConvLocal));
+         // don't allow user to continue generating
+         return false;
       }
-      if (abort) break;
+   } else {
+      // can only save qlife pattern if edges are within getcell/setcell limits
+      bigint top, left, bottom, right;
+      curralgo->findedges(&top, &left, &bottom, &right);
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         statusptr->ErrorMessage(_("Starting pattern is outside +/- 10^9 boundary."));
+         // don't allow user to continue generating
+         return false;
+      }
+      int itop = top.toint();
+      int ileft = left.toint();
+      int ibottom = bottom.toint();
+      int iright = right.toint();
+      // note that pattern's top left location is stored in file
+      // so pattern will be put at same location when file is read
+      const char *err = WritePattern(tempstart, RLE_format,
+                                     itop, ileft, ibottom, iright);
+      if (err) {
+         statusptr->ErrorMessage(wxString(err,wxConvLocal));
+         // don't allow user to continue generating
+         return false;
+      }
    }
-
-   gen0algo->endofpattern();
-   EndProgress();
-
-   // if (abort) return false; ???
-   // or put following in a modal dlg with Cancel (default) and Continue buttons:
-   // "The starting pattern has not been saved and cannot be restored if you continue."
    
+   startfile = tempstart;   // ResetPattern will load tempstart
    return true;
 }
 
@@ -1692,8 +1674,8 @@ void MainFrame::GeneratePattern()
    }
 
    // for DisplayTimingInfo
-   starttime = stopwatch->Time();
-   startgen = curralgo->getGeneration().todouble();
+   begintime = stopwatch->Time();
+   begingen = curralgo->getGeneration().todouble();
    
    generating = true;               // avoid recursion
    ChangeGoToStop();
@@ -1764,9 +1746,9 @@ void MainFrame::DisplayTimingInfo()
       endtime = stopwatch->Time();
       endgen = curralgo->getGeneration().todouble();
    }
-   if (endtime > starttime) {
-      double secs = (double)(endtime - starttime) / 1000.0;
-      double gens = endgen - startgen;
+   if (endtime > begintime) {
+      double secs = (double)(endtime - begintime) / 1000.0;
+      double gens = endgen - begingen;
       wxString s;
       s.Printf(_("%g gens in %g secs (%g gens/sec)"), gens, secs, gens / secs);
       statusptr->DisplayMessage(s);
@@ -2345,7 +2327,6 @@ void MainFrame::ToggleFullScreen()
       wxToolBar *tbar = GetToolBar();
 
       if (fullscreen) {
-         // wxMac: can we also hide grow box???!!!
          // hide scroll bars
          viewptr->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
          viewptr->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
@@ -2778,7 +2759,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    SavePrefs();
    
    // delete any temporary files
-   if (wxFileExists(gen0file)) wxRemoveFile(gen0file);
+   if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
    if (wxFileExists(scriptfile)) wxRemoveFile(scriptfile);
 
    #if defined(__WXX11__) || defined(__WXGTK__)
@@ -2854,7 +2835,7 @@ MainFrame::MainFrame()
    // the current directory has been changed to the location of the script file
    wxString gollydir = wxFileName::GetCwd();
    if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
-   gen0file = gollydir + wxT(".golly_gen0");
+   tempstart = gollydir + wxT(".golly_start");
    scriptfile = gollydir + wxT(".golly_clip.py");
    clipfile = gollydir + wxT(".golly_clipboard");
 
@@ -3275,7 +3256,8 @@ MainFrame::MainFrame()
    fullscreen = false;     // not in full screen mode
    showbanner = true;      // avoid first file clearing banner message
    savestart = false;      // no need to save starting pattern just yet
-   gen0algo = NULL;        // no starting pattern
+   startfile.Clear();      // no starting pattern
+   startgen = 0;           // initial starting generation
    warp = 0;               // initial speed setting
 }
 

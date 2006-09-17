@@ -9,12 +9,17 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.1 (released !!!)
 
+AKT: Top left corner of RLE file (not XRLE) is positioned at 0,0.
+AKT: Golly can read pattern files using David Bell's dblife format.
+AKT: Pattern position is saved in RLE file and restored when loaded.
+AKT: Generation count is saved in RLE/MC file and restored when loaded.
+AKT: Starting pattern is saved in a temporary file (faster if hashing).
 AKT: Resizing help window no longer changes scroll position.
 AKT: Optimized random fill's typical cases.
 AKT: Fixed a bug loading huge macrocell files.
 AKT: Golly can be compiled with a Unicode build of wxWidgets.
-AKT: Script path is only added to Python's sys.path once.
 AKT: Golly can read BMP/GIF/PNG/TIFF files and paste bitmap data.
+AKT: Script path is only added to Python's sys.path once.
 AKT: Fixed rect bug in glife/__init__.py (thanks to Dan Hoey).
 
 Changes in version 1.0 (released June 2006)

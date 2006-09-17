@@ -23,21 +23,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #ifndef WRITEPATTERN_H
 #define WRITEPATTERN_H
-class lifealgo ;
+class lifealgo;
 
 typedef enum {
-   RLE_format,
-   L105_format,
-   MC_format
+   RLE_format,       // run length encoded
+   L105_format,      // Life 1.05 (not yet implemented!!!)
+   MC_format         // macrocell (native hlife format)
 } pattern_format;
 
 /*
- *   Save current pattern to a file.  The given edges are only correct
- *   for the RLE and Life 1.05 formats.
+ *   Save current pattern to a file.  The given edges are ignored
+ *   for L105_format and MC_format.
  */
 const char *writepattern(const char *filename,
                          lifealgo &imp,
                          pattern_format format,
-                         int top, int left, int bottom, int right) ;
+                         int top, int left, int bottom, int right);
 
 #endif
