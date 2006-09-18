@@ -86,6 +86,21 @@ Brings up the standard file saving dialog so you can save the current pattern
 in RLE format (but only if all live cells are within coordinates of +/- 1 billion).
 If the hashing option is on then you can also save the pattern in macrocell format.
 
+<a name="xrle"></a>
+<p>
+<font size=+1><b>Save Extended RLE</b></font>
+
+<p>
+If ticked, Golly will include additional information whenever it saves
+a pattern in an RLE file via the above Save Pattern item or the
+<b>save</b>/<b>store</b> script commands.
+The pattern's position is recorded, along with the current generation count
+if it's greater than zero.  This allows Golly to restore the pattern's
+position and generation count when the file is loaded at a later date.
+The extra information is stored in a special "#CXRLE" comment line at the
+start of the file.  Because it's a comment, other RLE-reading programs
+should have no problem loading such files.
+
 <p>
 <font size=+1><b>Run Script...</b></font>
 

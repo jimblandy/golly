@@ -229,6 +229,8 @@ Save the current pattern in a given file using the specified format ("rle" or "m
 A non-absolute path is relative to the location of the script.
 The 3rd parameter is optional (default = False) and specifies if the file
 should be remembered in the Open Recent submenu.
+If the <b>savexrle</b> option is True then extended RLE format is used
+(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
 </dd>
 <dd> Example: <b>golly.save("foo.rle", "rle", True)</b></dd>
 </p>
@@ -242,7 +244,9 @@ Read the given pattern file and return a cell list.
 
 <a name="store"></a><p><dt><b>store(<i>cell-list, filename</i>)</b></dt>
 <dd>
-Write the given cell list to the specified file (only in RLE format).
+Write the given cell list to the specified file in RLE format.
+If the <b>savexrle</b> option is True then extended RLE format is used
+(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
 </dd>
 <dd> Example: <b>golly.store(clist, "foo.rle")</b></dd>
 </p>
@@ -486,9 +490,11 @@ specified number of generations.  The generation count does not change.
 
 <a name="reset"></a><p><dt><b>reset()</b></dt>
 <dd>
-Restore the starting pattern and reset the generation count to 0.
+Restore the starting pattern and generation count.
 Also reset the rule, scale, location, step exponent and hashing option
-to the values they had at generation 0.
+to the values they had at the starting generation.
+The starting generation is usually zero, but it can be larger after
+loading an RLE/macrocell file that stores a non-zero generation count.
 </dd>
 </p>
 
@@ -647,6 +653,7 @@ Here are all the valid option names and their possible values:
 <tr><td><b>"hyperspeed"</b></td><td width=20>    </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"maxdelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
 <tr><td><b>"mindelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
+<tr><td><b>"savexrle"</b></td><td width=20>      </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showboldlines"</b></td><td width=20> </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showexact"</b></td><td width=20>     </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showgrid"</b></td><td width=20>      </td><td>1 or 0 (True or False)</td></tr>

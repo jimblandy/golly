@@ -81,14 +81,17 @@ void AddRun (FILE *f,
 
 // write current pattern to file using extended RLE format
 const char *writerle(FILE *f, char *comments, lifealgo &imp,
-                     int top, int left, int bottom, int right)
+                     int top, int left, int bottom, int right,
+                     bool xrle)
 {
-   // write out #CXRLE line; note that we prefix our XRLE indicator
-   // with #C so apps like Life32 and MCell will ignore the line
-   fprintf(f, "#CXRLE Pos=%d,%d", left, top);
-   if (imp.getGeneration() > bigint::zero)
-      fprintf(f, " Gen=%s", imp.getGeneration().tostring('\0'));
-   fputs("\n", f);
+   if (xrle) {
+      // write out #CXRLE line; note that the XRLE indicator is prefixed
+      // with #C so apps like Life32 and MCell will ignore the line
+      fprintf(f, "#CXRLE Pos=%d,%d", left, top);
+      if (imp.getGeneration() > bigint::zero)
+         fprintf(f, " Gen=%s", imp.getGeneration().tostring('\0'));
+      fputs("\n", f);
+   }
 
    char *endcomms = NULL;
    if (comments && comments[0]) {
@@ -251,7 +254,7 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
       return "Can't create pattern file!";
    }
 
-   // skip past any old #CXRLE lines at start of existing RLE file
+   // skip past any old #CXRLE lines at start of existing XRLE file
    char *comments = commptr;
    if (comments) {
       while (strncmp(comments, "#CXRLE", 6) == 0) {
@@ -266,7 +269,11 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
    const char *errmsg;
    switch (format) {
       case RLE_format:
-         errmsg = writerle(f, comments, imp, top, left, bottom, right);
+         errmsg = writerle(f, comments, imp, top, left, bottom, right, false);
+         break;
+
+      case XRLE_format:
+         errmsg = writerle(f, comments, imp, top, left, bottom, right, true);
          break;
 
       case L105_format:

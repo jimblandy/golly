@@ -102,6 +102,7 @@ enum {
    ID_SHOW_PATTERNS,
    ID_PATTERN_DIR,
    // wxID_SAVE,
+   ID_SAVE_XRLE,
    ID_RUN_SCRIPT,
    ID_RUN_CLIP,
    ID_RUN_RECENT,
@@ -438,6 +439,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SHOW_PATTERNS,   active);
       mbar->Enable(ID_PATTERN_DIR,     active);
       mbar->Enable(wxID_SAVE,          active && !generating);
+      mbar->Enable(ID_SAVE_XRLE,       active);
       mbar->Enable(ID_RUN_SCRIPT,      active && !generating);
       mbar->Enable(ID_RUN_CLIP,        active && !generating && textinclip);
       mbar->Enable(ID_RUN_RECENT,      active && !generating && numscripts > 0);
@@ -503,8 +505,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_INFO,      !currfile.IsEmpty());
 
       // tick/untick menu items created using AppendCheckItem
-      mbar->Check(ID_SHOW_PATTERNS,   showpatterns);
-      mbar->Check(ID_SHOW_SCRIPTS,    showscripts);
+      mbar->Check(ID_SAVE_XRLE,     savexrle);
+      mbar->Check(ID_SHOW_PATTERNS, showpatterns);
+      mbar->Check(ID_SHOW_SCRIPTS,  showscripts);
       mbar->Check(ID_AUTO,       autofit);
       mbar->Check(ID_HASH,       hashing);
       mbar->Check(ID_HYPER,      hyperspeed);
@@ -1231,19 +1234,29 @@ void MainFrame::SavePattern()
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    curralgo->findedges(&top, &left, &bottom, &right);
+   
+   wxString RLEstring;
+   if (savexrle)
+      RLEstring = _("Extended RLE (*.rle)|*.rle");
+   else
+      RLEstring = _("RLE (*.rle)|*.rle");
+   
    if (hashing) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          // too big so only allow saving as MC file
          itop = ileft = ibottom = iright = 0;
-         filetypes = _("Macrocell (*.mc)|*.mc");   MCindex = 0;
+         filetypes = _("Macrocell (*.mc)|*.mc");
+         MCindex = 0;
       } else {
          // allow saving as RLE/MC file
          itop = top.toint();
          ileft = left.toint();
          ibottom = bottom.toint();
          iright = right.toint();
-         filetypes =  _("RLE (*.rle)|*.rle");      RLEindex = 0;
-         filetypes += _("|Macrocell (*.mc)|*.mc"); MCindex = 1;
+         filetypes = RLEstring;
+         RLEindex = 0;
+         filetypes += _("|Macrocell (*.mc)|*.mc");
+         MCindex = 1;
       }
    } else {
       // allow saving file only if pattern is small enough
@@ -1255,9 +1268,12 @@ void MainFrame::SavePattern()
       ileft = left.toint();
       ibottom = bottom.toint();
       iright = right.toint();
-      filetypes = _("RLE (*.rle)|*.rle");   RLEindex = 0;
-      // Life 1.05 format not yet implemented!!!
-      // filetypes += _("|Life 1.05 (*.lif)|*.lif"); L105index = 1;
+      filetypes = RLEstring;
+      RLEindex = 0;
+      /* Life 1.05 format not yet implemented!!!
+      filetypes += _("|Life 1.05 (*.lif)|*.lif");
+      L105index = 1;
+      */
    }
 
    wxFileDialog savedlg( this, _("Save pattern"),
@@ -1272,14 +1288,15 @@ void MainFrame::SavePattern()
       // if user supplied a known extension then use that format if it is
       // allowed, otherwise use current format specified in filter menu
       if ( ext.IsSameAs(wxT("rle"),false) && RLEindex >= 0 ) {
-         format = RLE_format;
-      // Life 1.05 format not yet implemented!!!
-      // } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
-      //   format = L105_format;
+         format = savexrle ? XRLE_format : RLE_format;
+      /* Life 1.05 format not yet implemented!!!
+      } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
+         format = L105_format;
+      */
       } else if ( ext.IsSameAs(wxT("mc"),false) && MCindex >= 0 ) {
          format = MC_format;
       } else if ( savedlg.GetFilterIndex() == RLEindex ) {
-         format = RLE_format;
+         format = savexrle ? XRLE_format : RLE_format;
       } else if ( savedlg.GetFilterIndex() == L105index ) {
          format = L105_format;
       } else if ( savedlg.GetFilterIndex() == MCindex ) {
@@ -1318,7 +1335,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          return _("Pattern is too big to save as RLE.");
       }   
-      pattfmt = RLE_format;
+      pattfmt = savexrle ? XRLE_format : RLE_format;
       itop = top.toint();
       ileft = left.toint();
       ibottom = bottom.toint();
@@ -1616,9 +1633,9 @@ bool MainFrame::SaveStartingPattern()
       int ileft = left.toint();
       int ibottom = bottom.toint();
       int iright = right.toint();
-      // note that pattern's top left location is stored in file
-      // so pattern will be put at same location when file is read
-      const char *err = WritePattern(tempstart, RLE_format,
+      // use XRLE format so the pattern's top left location and the current
+      // generation count are stored in the file
+      const char *err = WritePattern(tempstart, XRLE_format,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
@@ -2431,6 +2448,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SHOW_PATTERNS:  ToggleShowPatterns(); break;
       case ID_PATTERN_DIR:    ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
+      case ID_SAVE_XRLE:      savexrle = !savexrle; break;
       case ID_RUN_SCRIPT:     OpenScript(); break;
       case ID_RUN_CLIP:       RunClipboard(); break;
       case ID_CLEAR_SCRIPTS:  ClearRecentScripts(); break;
@@ -2888,6 +2906,7 @@ MainFrame::MainFrame()
    fileMenu->Append(ID_PATTERN_DIR, _("Set Pattern Folder..."));
    fileMenu->AppendSeparator();
    fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
+   fileMenu->AppendCheckItem(ID_SAVE_XRLE, _("Save Extended RLE"));
    fileMenu->AppendSeparator();
    fileMenu->Append(ID_RUN_SCRIPT, _("Run Script..."));
    fileMenu->Append(ID_RUN_CLIP, _("Run Clipboard"));

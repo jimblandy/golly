@@ -879,6 +879,13 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
          boldspacing = newval;
          DoAutoUpdate();
       }
+
+   } else if (strcmp(optname, "savexrle") == 0) {
+      oldval = savexrle ? 1 : 0;
+      if (savexrle != (newval != 0)) {
+         savexrle = (newval != 0);
+         // no need: DoAutoUpdate();
+      }
    
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad setoption call: unknown option.");
@@ -915,6 +922,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
    else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
    else if (strcmp(optname, "boldspacing") == 0)   optval = boldspacing;
+   else if (strcmp(optname, "savexrle") == 0)      optval = savexrle ? 1 : 0;
    else {
       PyErr_SetString(PyExc_RuntimeError, "Bad getoption call: unknown option.");
       return NULL;
@@ -1558,10 +1566,11 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    }
    tempalgo->endofpattern();
 
-   // write pattern to given file in RLE format
+   // write pattern to given file in RLE/XRLE format
    bigint top, left, bottom, right;
    tempalgo->findedges(&top, &left, &bottom, &right);
-   const char *err = writepattern(FILENAME, *tempalgo, RLE_format,
+   const char *err = writepattern(FILENAME, *tempalgo,
+                        savexrle ? XRLE_format : RLE_format,
                         top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
    if (err) {

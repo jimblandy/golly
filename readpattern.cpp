@@ -205,7 +205,7 @@ void readrle(lifealgo &imp, char *line) {
          sscanf(p, "%d", &ht);
          
          if (!xrle) {
-            /* center RLE pattern around 0,0 -- not such a good idea
+            /* no longer center RLE pattern around 0,0
             xoff = -(wd / 2);
             yoff = -(ht / 2);
             */

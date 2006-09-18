@@ -11,18 +11,22 @@ The CHANGES file in the source distribution has a more comprehensive list.
 
 <p>
 <ul>
+<li> Added Save Extended RLE option (initially ticked) to the File menu.
+     An extended RLE file stores the pattern position and generation count
+     (if > 0) so they can be restored when the file is loaded.
+<li> Macrocell files also store the generation count if > 0.
+<li> Non-extended RLE files are now loaded so that 0,0 is at the top left
+     corner of the pattern rather than in the middle of the pattern.
 <li> Golly can read BMP/GIF/PNG/TIFF files and paste bitmap data.
      All non-white pixels become live cells.
 <li> Golly can read pattern files using David Bell's dblife format.
-<li> Pattern position is saved in RLE file and restored when loaded.
-<li> Generation count is saved in RLE/macrocell file and restored when loaded.
 <li> Starting patterns are saved in a temporary file rather than in memory.
      This is much faster when hashing (saving a macrocell file is very quick).
 <li> Random Fill is much faster in typical cases.
 <li> Added metafier.py to Scripts folder.
 <li> Resizing help window no longer changes scroll position.
 <li> Fixed a bug loading huge macrocell files.
-<li> Script path is only added to Python's sys.path once.
+<li> Scripts folder path is only added to Python's sys.path once.
 <li> Fixed rect bug in Scripts/glife/__init__.py (thanks to Dan Hoey).
 <li> Golly's code can be compiled with a Unicode build of wxWidgets.
 </ul>

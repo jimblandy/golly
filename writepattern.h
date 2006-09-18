@@ -27,6 +27,7 @@ class lifealgo;
 
 typedef enum {
    RLE_format,       // run length encoded
+   XRLE_format,      // extended RLE
    L105_format,      // Life 1.05 (not yet implemented!!!)
    MC_format         // macrocell (native hlife format)
 } pattern_format;

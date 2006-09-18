@@ -111,6 +111,7 @@ int infoy = 90;
 int infowd = 700;                // info window's initial size
 int infoht = 500;
 
+bool savexrle = true;            // save RLE file using XRLE format?
 bool autofit = false;            // auto fit pattern while generating?
 bool hashing = false;            // use hlife algorithm?
 bool hyperspeed = false;         // use hyperspeed if supported by current algo?
@@ -558,6 +559,7 @@ void SavePrefs()
    fprintf(f, "new_cursor=%s\n", CursorToString(newcurs));
    fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
    fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
+   fprintf(f, "save_xrle=%d\n", savexrle ? 1 : 0);
    
    fputs("\n", f);
 
@@ -923,6 +925,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "open_cursor") == 0) {
          opencurs = StringToCursor(value);
+         
+      } else if (strcmp(keyword, "save_xrle") == 0) {
+         savexrle = value[0] == '1';
 
       } else if (strcmp(keyword, "open_save_dir") == 0) {
          opensavedir = wxString(value,wxConvLocal);

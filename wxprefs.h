@@ -36,7 +36,7 @@ void SavePrefs();
 // Returns true if the user hits OK (so client can call SavePrefs).
 bool ChangePrefs();
 
-// Global preference data:
+// Global preferences:
 
 extern int mainx;                // main window's location
 extern int mainy;
@@ -55,6 +55,7 @@ extern int infoy;
 extern int infowd;               // info window's size
 extern int infoht;
 
+extern bool savexrle;            // save RLE file using XRLE format?
 extern bool autofit;             // auto fit pattern while generating?
 extern bool hashing;             // use hlife algorithm?
 extern bool hyperspeed;          // use hyperspeed if supported by current algo?
