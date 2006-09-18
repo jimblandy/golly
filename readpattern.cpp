@@ -180,14 +180,17 @@ void readrle(lifealgo &imp, char *line) {
    bigint gen = bigint::zero;
    bool xrle = false;               // extended RLE format?
 
+   // parse any #CXRLE line(s) at start
+   while (strncmp(line, "#CXRLE", 6) == 0) {
+      ParseXRLELine(line, &xoff, &yoff, gen);
+      imp.setGeneration(gen);
+      xrle = true;
+      if (getline(line, LINESIZE) == NULL) return;
+   }
+   
    do {
       if (line[0] == '#') {
-         if (strncmp(line, "#CXRLE", 6) == 0) {
-            // parse extended RLE line and extract values
-            ParseXRLELine(line, &xoff, &yoff, gen);
-            imp.setGeneration(gen);
-            xrle = true;
-         } else if (line[1] == 'r') {
+         if (line[1] == 'r') {
             ruleptr = line;
             ruleptr += 2;
             while (*ruleptr && *ruleptr <= ' ') ruleptr++;
@@ -247,8 +250,6 @@ void readrle(lifealgo &imp, char *line) {
                   y += n ;
                } else if (*p == '!') {
                   return ;
-               } else if (*p > ' ') {
-                  // ignore illegal chars
                }
                n = 0 ;
             }
