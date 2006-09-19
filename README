@@ -5,12 +5,14 @@ Golly web site for the latest information:
 
 Main features:
 
-- Run bigger patterns, faster and further than ever before!
-- Unbounded universe (even larger than 2^32 on a side).
+- Unbounded universe (limited only by memory).
 - Fast, memory-efficient conventional algorithm.
 - Use hashing to see large patterns evolve at huge time scales.
 - Responsive even while generating or garbage collecting.
-- Reads RLE, Life 1.05/1.06, and macrocell formats.
+- Reads RLE, Life 1.05/1.06, dblife, and macrocell formats.
+- Can also read common graphic formats: BMP, PNG, GIF, TIFF.
+- Includes a state-of-the-art pattern collection.
+- Supports Wolfram's 1D rules.
 - Fast loading of large patterns.
 - Paste in patterns from the clipboard.
 - Unbounded zooming out for astronomical patterns.
