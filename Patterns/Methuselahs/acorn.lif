@@ -2,8 +2,7 @@
 #D Acorn
 #D The most vigorously growing 7-cell methuselah pattern.
 #D Found by Charles Corderman.
-#N
-#P -3 -1
+#P
 .*
 ...*
 **..***

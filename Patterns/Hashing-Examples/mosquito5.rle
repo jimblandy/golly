@@ -1,6 +1,5 @@
-#C mosquito5
-#C 71-cell pattern with a quadratic growth rate
-#C Nick Gotts, 21-Oct-1998
+#C mosquito5 -- a 71-cell pattern with a quadratic growth rate.
+#C Nick Gotts, 21 Oct 1998
 x = 2754, y = 650, rule = B3/S23
 2622bo$2623bo$2619bo3bo$2620b4o29$2752bo$2753bo$2749bo3bo$2750b4o4$
 2749bo$2750boo$2751bo$2751bo$2750bo3$2752bo$2753bo$2749bo3bo$2750b4o

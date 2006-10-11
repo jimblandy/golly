@@ -1,6 +1,7 @@
 #C A variant of the jagged line pattern in which some of the gliders
 #C from the LWSS collision undergo 3 kickback reactions.
-x = 125, y = 86
+#C Dean Hickerson, 7 May 2005
+x = 125, y = 86, rule = B3/S23
 45b3o11b3o$45bo2bo10bo2bo$45bo6b3o4bo$45bo5bo2bo4bo$46bo4bo3bo4bo$50b
 2o2bobo$52bo$53b2obo$53b3o4bo$46bo6b3o3b3o$45b3o11bob2o$44b2obo12b3o$
 44b3o13b2o$44b3o$45b2o6bo$53b2o$52bo2bo$54b2o2$68bo13bo$67b3o11b3o$67b

@@ -1,12 +1,10 @@
 #C Without the block, this is Gosper's "total aperiodic"
 #C  pattern (Nov '97), in which every cell in the universe
 #C  eventually becomes aperiodic.
-#C
 #C With the block, every cell eventually becomes periodic,
 #C  but incredibly slowly. The block remains untouched for
 #C  very roughly 3^63 generations. It deletes the nth glider
 #C  (and is shifted) at about generation 3^(57.5+5.5n).
-#C
 #C Bill Gosper, 24 Jun 2004
 x = 60, y = 59, rule = B3/S23
 40b3o$39bobbo$42bo4b3o$42bo4bobbo4bo$39bobo4bo3bo3b3o$46b4o4boboo$47bo

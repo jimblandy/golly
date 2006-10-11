@@ -1,5 +1,5 @@
-#CPatterns whose population grows logarithmically have
-#Clong been known, but this is believed to be the first pattern
+#C Patterns whose population grows logarithmically have
+#C long been known, but this is believed to be the first pattern
 #C whose *diameter* grows logarithmically. It is based on a
 #C blinker puffer that can be deleted by its own output (a blinker),
 #C or push a block out by 8 cells.

@@ -2,12 +2,12 @@
 #C This produces groups of LWSSs headed west, with gaps of fixed size
 #C between them.  The lengths of the groups form the 'ruler' sequence,
 #C 1 2 1 3 1 2 1 4 1 2 1 3 1 2 1 5 ... (Sloane's A001511).  The first
-#C group of length n is emitted about generation 96*2^n.
-#C The pattern uses a Corderman eater puffer found by Paul Tooke (Jan 2004),
-#C a p48 glider gun by Noam Elkies (Jun 1997), a p8 glider reflector by
+#C group of length n is emitted about generation 96*2^n. The pattern
+#C uses a Corderman eater puffer found by Paul Tooke (Jan 2004), a
+#C p48 glider gun by Noam Elkies (Jun 1997), a p8 glider reflector by
 #C Noam Elkies (Sep 1998), and a p24 LWSS puffer (source unknown).
 #C Dean Hickerson, 4/20/2005
-x = 169, y = 116
+x = 169, y = 116, rule = B3/S23
 25bo$23b2ob2o2$23b2o$23bo$8b2o15bo$8bo16bo3$27bo$24b3o3$2o22b3o$o23b3o
 $22b2ob2o$22bo$22b3o6$31b3o$31b3o$32bo$30b2o23bo$30bo23bobo2b2o7b2o$
 31bo21bo3b4o6b3o$56bo7bobob2o$51b2obo10b2o$52bobo$43b2o8bo$43bo3$63bob

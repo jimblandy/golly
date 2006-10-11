@@ -1,11 +1,10 @@
-#C Jagged lines
-#C Jagged lines of gliders, formed by a drifting collision of two LWSS
-#C streams, crash to form an approximately vertical jagged line of pairs
-#C of blocks.  I don't know if the line stays within a bounded distance
-#C of the center line, or extends infinitely far to the left, or to the
-#C right, or both.
+#C Jagged lines of gliders, formed by a drifting collision of two
+#C LWSS streams, crash to form an approximately vertical jagged line
+#C of pairs of blocks. I don't know if the line stays within a
+#C bounded distance of the center line, or extends infinitely far to
+#C the left, or to the right, or both.
 #C Dean Hickerson, 5/3/2005
-x = 125, y = 67
+x = 125, y = 67, rule = B3/S23
 42bo13bo11bo13bo$41b3o11b3o9b3o11b3o$40b2obo5bo4b2obo9bob2o4bo5bob2o$
 40b3o5b3o3b3o11b3o3b3o5b3o$41b2o4bo2b2o3b2o11b2o3b2o2bo4b2o$47bo3bo21b
 o3bo$48b2obo21bob2o$50b2o21b2o2$55b3o9b3o$33b3o5b3o11bo2bo7bo2bo11b3o

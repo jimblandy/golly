@@ -1,5 +1,4 @@
-#C "catacryct", a 58-cell quadratic growth pattern
-#C Nick Gotts, 21 Apr 2000
+#C catacryst -- a 58-cell quadratic growth pattern
 #C
 #C This was at one time the smallest pattern known pattern
 #C with a faster-than-linear growth rate. It has since been
@@ -7,6 +6,7 @@
 #C
 #C You need to run this at least 41,000 generations to
 #C see anything interesting happen.
+#C Nick Gotts, 21 Apr 2000
 x = 2555, y = 1772, rule = B3/S23
 2350bo$2350bo$2348boo$2347bo$2347bo$2347bo$2347bo6$2377bo$2376boo$
 2374bobbo$$2374bobo$2375bo133$2552boo$2553boo$2553bo29$2538bo$2537bobo
