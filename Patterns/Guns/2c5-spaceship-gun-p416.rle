@@ -1,7 +1,7 @@
 #C p416 2c/5 spaceship gun: Dave Greene, 11 Apr 2003
 #C 64 p416 guns driving 60 Herschel-based glider inserters
 #C to produce four construction salvos totalling 63 gliders.
-#C Sythesis of 2c/5 spaceship mostly by Noam Elkies.
+#C Synthesis of 2c/5 spaceship mostly by Noam Elkies.
 x = 990, y = 979, rule = B3/S23
 864bobo$867bo9boo$863bo4bobboo3bobbo$863boobobboboo3bobobo34boo$867boo
 8bobbo22boo10b3o$881bo20bobbo3boobbobbobo$878bobo22bobo3boobboobboo$

@@ -1,6 +1,6 @@
 #C p165 MWSS gun based on a three-gliders -> MWSS+glider+LoM reaction
 #C  by Dietrich Leithner.  David Bell and Jason Summers, 5/2002.
-#C From "jslife" pattern collection.
+#C From Jason Summers' "jslife" pattern collection.
 x = 178, y = 218, rule = B3/S23
 125b3o$125bobo$125b3o6bo$125b3o5b3o$125b3o$125b3o$125bobo5b3o$125b3o$
 133bobo$133bobo$$133b3o$111boo6boo$110bobbo4bobbo$110bobbo4bobbo11b3o$

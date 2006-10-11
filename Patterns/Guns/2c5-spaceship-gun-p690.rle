@@ -2,8 +2,8 @@
 #C Based on a glider synthesis primarily by Noam Elkies.
 #C Jason Summers, 28 Oct 03
 #C (Note: The first gun for this spaceship was built by
-#C Dave Greene in April '03. This one was constructed
-#C independently.)
+#C  Dave Greene in April 2003 -- see 2c5-spaceship-gun-p416.rle.
+#C  This one was constructed independently.)
 x = 871, y = 854, rule = B3/S23
 21boo$21boo5$844boo$844boo$21b3o$20bo3bo$844bo$19bo5bo817b3o$19boo3boo
 816bo3bo$844bo$38b4o799bo5bo$22bo6boo6boobbo14boo783bo5bo$21bobo5boo5b
