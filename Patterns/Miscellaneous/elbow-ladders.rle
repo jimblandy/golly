@@ -2,7 +2,7 @@
 #C  side-shooting pseudoperiod 124 glider gun (improved by Dean H.)
 #C Scot Ellison, April 1997 [posted 9 May 1997]
 #C Right: Elbow Ladder based on a p92(104) slide gun from
-#C   Jason Summers. Scot Ellison, 23 Oct 2002
+#C  Jason Summers. Scot Ellison, 23 Oct 2002
 x = 463, y = 206, rule = B3/S23
 141boo160boo$141bo162bo$159boo143bobo$128boo29bo145boo7bo$128bo184boo$
 173boo137boo$173bo139boo$300boo37b3o$300bobo38bo$139boo3boo101boo53bo

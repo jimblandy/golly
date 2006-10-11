@@ -12,9 +12,9 @@
 #C  previously injected gliders are repeatedly flying through the
 #C  injection point, that point is guaranteed to be empty when it is
 #C  time for the next glider to be injected!
-#C David Bell, May 29 2001, based on his original version, Oct 9 1992.
+#C David Bell, 29 May 2001, based on his original version, 9 Oct 1992.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 274, y = 206, skip = 5, fps = 30
+x = 274, y = 206, rule = B3/S23
 99bo82b3o$87bo11b3o80bobo$85b3o14bo23boo38boo14bobo$69bo14bo16boo23bo
 38bobbo9boo4bo$69b3o12boo38bobo38b3o10boo3b3o$72bo47boob3o39boo12bo$
 71boo17bo4bo24boboo42bo13b4o$88boob3obbo3boo19b3o41boobo12boo$89boobo

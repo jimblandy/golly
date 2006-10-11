@@ -1,10 +1,10 @@
-#C "infinite LWSS hotel"
+#C "Infinite LWSS hotel"
 #C A new LWSS is added to the loop every 250 generations.
 #C The old LWSSs reenter the stream at a point 12/25ths of the
 #C way between the new LWSSs. Unlike earlier patterns of this
 #C type, this one will not work (for long) if the old spaceships
-#C reenter exactly halfway between the new ones.
-#C Jason Summers, 20 Oct 02; c/3 portions by David Bell.
+#C re-enter exactly halfway between the new ones.
+#C Jason Summers, 20 October 2002; c/3 portions by David Bell.
 #C From "jslife" pattern collection.
 x = 515, y = 298, rule = B3/S23
 196boo141boo$196bobbobo133bobobbo$198boob3o129b3oboo$204bo127bo$198boo

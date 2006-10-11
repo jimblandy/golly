@@ -1,7 +1,7 @@
-#C original Infinite Glider Hotel -- combine with #1 and #2?
-#C David Bell, Oct 9 1992
+#C original Infinite Glider Hotel
+#C David Bell, 9 October 1992
 #C "InfinityHotel_old" from Alan Hensel's "lifebc" pattern collection.
-x = 566, y = 572, skip = 13, fps = 60
+x = 566, y = 572, rule = B3/S23
 13boo$13boo6$13b3o$$13bobo$12b5o$11boo3boo$11boo3boo4$bbo6bo$boo6boo$
 3o6b3o$boo6boo$bbo6bo165$301bo$$297bo7bo$291b3obbo8bo$291b3obbo3boo4bo
 $289bobboobbo6bobo$289bobo10boobo$289b3o$280boo18bo$280boo$316bo$314b

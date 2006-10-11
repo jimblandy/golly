@@ -1,9 +1,9 @@
 #C Twin prime generator
 #C A LWSS escapes past the p240 gun about generation 720n+420 iff
 #C both 6n-1 and 6n+1 are prime.
-#C Dean Hickerson, drhickerson@ucdavis.edu  9/9/94
+#C Dean Hickerson, drhickerson@ucdavis.edu  9 September 1994
 #C From Jason Summers' "jslife" pattern collection.
-x = 440, y = 294
+x = 440, y = 294, rule = B3/S23
 412boo$410booboo13boo$410b4o13b4o$411boo14booboo$93b3o11b3o319boo$93bo
 bbo10bobbo$93bo6b3o4bo16b3o11b3o$93bo5bobbo4bo15bobbo10bobbo$94bo4boob
 o5bo17bo4b3o6bo285boo$126bo4bobbo5bo284bobbo$125bo5boboo4bo285bobboo$

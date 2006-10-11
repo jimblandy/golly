@@ -1,6 +1,5 @@
-#C May be the smallest known sawtooth pattern by
-#C population. The minimum population is 278
-#C (at generation 0, 768, ...)
+#C May be the smallest known sawtooth pattern by population.
+#C The minimum population is 278 (at generation 0, 768, ...)
 #C David Bell, 5/04; from Jason Summers' "jslife" pattern collection.
 x = 140, y = 90, rule = B3/S23
 122boo$122boo5boo$129boo3$98boo8boo17boo$98boo9bo17boo$109bobo21boo$

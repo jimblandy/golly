@@ -3,9 +3,9 @@
 #C  prime numbers:  a LWSS escapes past the pentadecathlon around
 #C  generation  120n+100  if and only if n is prime. This is probably
 #C  not a good way to look for the largest primes!
-#C Dean Hickerson, dean@math.ucdavis.edu  11/1/91
+#C Dean Hickerson, 1 November 1991
 #C From Alan Hensel's "bclife" pattern collection.
-x = 440, y = 294, skip = 17, fps = 40
+x = 440, y = 294, rule = B3/S23
 412boo$410booboo13boo$410b4o13b4o$411boo14booboo$93b3o11b3o319boo$93bo
 bbo10bobbo$93bo6b3o4bo16b3o11b3o$93bo5bobbo4bo15bobbo10bobbo$94bo4boob
 o5bo17bo4b3o6bo285boo$126bo4bobbo5bo284bobbo$125bo5boboo4bo285bobboo$

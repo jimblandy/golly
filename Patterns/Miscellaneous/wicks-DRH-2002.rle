@@ -2,8 +2,8 @@
 #C found before; probably some of the others have too. Periods are:
 #C 3, 4, 6, 7, 8, 9, 10, 12, 16, 20, 21, 24, 26, 29, 32, 38, 40, 56,
 #C 176, 190, 224, 360, 376, 525, 1056
-#C Dean Hickerson, 8/31/2002
-x = 1172, y = 450
+#C Dean Hickerson, 31 August 2002
+x = 1172, y = 450, rule = B3/S23
 9b2obo$9bob2o$13b2o125b2o650bo15bo15bo15bo15bo15bo15bo15bo15bo15bo15bo
 15bo15bo15bo15bo15bo15bo15bo15bo15bo15bo15bo15bo$13bo125bobo649b3o13b
 3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b3o13b

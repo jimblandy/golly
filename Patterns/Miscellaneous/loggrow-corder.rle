@@ -1,5 +1,5 @@
-#C A cordership-based object whose population grows logarithmically.
-#C David Bell, 10 Jul 04; from Jason Summers' "jslife" collection.
+#C A Cordership-based object whose population grows logarithmically.
+#C David Bell, 10 July 2004; from Jason Summers' "jslife" collection.
 x = 158, y = 168, rule = B3/S23
 94bo$86b3o3b4o$86bobo3booboo$86b3obbo$91boo3bo$92b4o$93b3o10boo$106boo
 7$114boo$101bo12boo$90boo9b3o$89bobobo7b3o$89bo3boo5bo3bo$90boo8b4o$

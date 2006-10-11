@@ -1,4 +1,4 @@
-#C Jason Summers, 25-Aug-1999 (minor optimizations made later)
+#C Jason Summers, 25 Aug 1999 (minor optimizations made later).
 #C From "jslife" pattern collection.
 x = 127, y = 133, rule = B3/S23
 56boo$52b4oboo$25b3o24b6o$53b4o$25bo37b4o$62bo3bo$57boo7bo$46bo9b4obbo
