@@ -1,8 +1,7 @@
 #C Period 46 pure Heisenburp device
-#C Detects and duplicates a stream of gliders without
-#C influencing it, even temporarily. The reaction used
-#C can work for any period 35 or greater.
-#C Jason Summers, 29-Jun-1999; from "jslife" collection.
+#C Detects and duplicates a stream of gliders without influencing it,
+#C even temporarily. The reaction used works for any period >= 35.
+#C Jason Summers, 29 Jun 1999; from "jslife" collection.
 x = 213, y = 209, rule = B3/S23
 187boo$186booboo$187bobbo$160boo25bobbo4bo$150boo7bobo26boo5b3o$150boo
 6boobo36bo$159boo27boo5b3o$160bo26bobbo4bo$187bobbo$160bo25booboo$159b

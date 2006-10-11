@@ -1,11 +1,14 @@
 #C Deep Cell by Jared James Prince.  A slight modification of David
-#C  Bell's Unit Cell, see Unit Cell for background.  Runs two Life
-#C  universes instead of 1 (referred to as A0 and B0).  The two
-#C  universes do not interact.  The ON/OFF state of A0 is found every
-#C  7680 ticks and is indicated by the presence/absence of a glider 
-#C  between the 6 boats in the upper left quadrant.  The state of B0
-#C  is indicated the same way but offset by 3840 ticks -- thus the
-#C  state readout occurs every n*7680 for A0 and n*7680+3840 for B0.
+#C  Bell's Unit Cell (for original pattern and some background, see
+#C  http://radicaleye.com/lifepage/patterns/unitcell/ucdesc.html. )
+#C
+#C The Deep Cell runs two Life universes instead of one. The two
+#C  universes (referred to as A0 and B0) do not interact with each
+#C  other.  The ON/OFF state of A0 is found every 7680 ticks and is
+#C  indicated by the presence or absence of a glider between the
+#C  6 boats in the upper left quadrant.  The state of B0 is indicated
+#C  the same way but offset by 3840 ticks -- thus the state readout
+#C  occurs every n*7680 for A0 and n*7680+3840 for B0.
 #C
 #C This version is set with A0 initially ON (indicated by glider in
 #C  boats) and B0 in a pre-start ON state (indicated by 3 blocks in
@@ -24,8 +27,8 @@
 #C  This new layer has two universes, called A3 and B3...
 #C
 #C Written in 1998 but couldn't be tested properly, forgotten, then 
-#C  remembered and tested 2004.  jared@psychoticdeath.com 
-x = 499, y = 516, rule = s23/b3
+#C  remembered and tested in 2004.
+x = 499, y = 516, rule = B3/S23
 49boo$49boo4$48b3o$48b3o$47bo3bo$46bo5bo$47bo3bo10boo$48b3o11boo5$47bo
 bo13bo$47bobbo12bo$oo47boobo9bobo432boo$obo58booboo430bobo$bobo45bo10b
 o5bo428bobo$bbo46boboo10bo432bo$50bo9boo3boo3$44boo3boo10b4o$45b5o11bo

@@ -9,7 +9,7 @@
 #C lower-right. As a demonstration, it eventually causes the
 #C nearby HWSS to be shot down.
 #C
-#C Jason Summers, 2/2003
+#C Jason Summers, February 2003
 x = 9108, y = 3469, rule = B3/S23
 8199bo$8198boo$8182boo13boo4boobboo$8182b3o11b3o4boobboo$8173boo9boobo
 9boo4boo$8173bo5bo4bobbo10boo$8178bo5boobo11bo$8174bo3bo3b3o10bo$8176b

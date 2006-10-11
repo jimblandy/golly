@@ -6,7 +6,7 @@
 #C Next row: p16 forward and backward rakes by Tim Coe, 1996.
 #C Back row: a p240 forward rake, to show one alternative rake.
 #C "Rakes.lif" from Alan Hensel's "bclife" pattern collection.
-x = 263, y = 79, skip = 1, fps = 20
+x = 263, y = 79, rule = B3/S23
 18boo$16bo4bo$22bo$16bo5bo$17b6o3$33boo$31bo4bo$37bo$31bo5bo213boo8bo$
 32b6o132b6o74b4o8bo$169bo5bo74booboo3bo3bo$159b6o10bo76boo5b4o$107b5o
 46bo5bo9bo$106bo4bo52bo$41b6o64bo5b4o42bo$40bo5bo59bo3bo5b6o61boo73bo$

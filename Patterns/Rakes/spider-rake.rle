@@ -12,7 +12,7 @@
 #C  reflects the forward gliders, making this a backward rake.
 #C By David Bell, June 3, 1998
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 500, y = 127, skip = 9, fps = 40
+x = 500, y = 127, rule = B3/S23
 34bo5bo346bo5bo$33bobo3bobo344bobo3bobo$32bo3bobo3bo342bo3bobo3bo$33bo
 bo3bobo344bobo3bobo$34bo5bo346bo5bo$5boo5boo5boo5boo19boo5boo5boo5boo
 288boo5boo5boo5boo19boo5boo5boo5boo$3bo3bo3bobbo3bobbo3bo3bo15bo3bo3bo

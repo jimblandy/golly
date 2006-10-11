@@ -7,7 +7,7 @@
 #C Force Field which allows LWSSs to travel by way of a tunnel effect.
 #C Dieter Leithner, 26 Oct 1996
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 155, y = 133, skip = 5, fps = 20
+x = 155, y = 133, rule = B3/S23
 25boo85boo$24bobo44bobo37bobo$10bo12b3o4boo34bo4bobbo35bo13bobo$5bo4b
 4o8b3o4bobb4o31boo5boo8bo16boo7bobbo6boobbobbo$5bo5b4o8b3o4boob3o26boo
 8bo3boo5bobo15boo7bo8bobo5boo$oo9bobbo9bobo35boo10boo6boboo25bobo3bo3b

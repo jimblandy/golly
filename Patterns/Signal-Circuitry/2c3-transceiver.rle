@@ -1,3 +1,4 @@
+#C first-draft 2c3 transceiver:  Dave Greene, 29 May 2005 
 x = 1135, y = 644, rule = B3/S23
 427boo$422bo5bo$421bobo4bobo$422bo6bobo$430bo3boo$434boo$416boo$416boo
 23boo$408boo31bo$409bo29bobo$409bobo27boo$410boo4boo$416boo$$450boo$
@@ -473,3 +474,63 @@ o28bobo$2537boo63bo5boo29bo$2556boboo42boo$2556boobo$2579bo$2579b3o$
 oo$2585bo$2537boo36boo9b3o28boo$2536bobo37bo11bo28bo$2536bo38bo42b3o$
 2535boo38boo43bo5$2540boo3boobo$2541bo3boob3o$2538b3o10bo$2538bo6boob
 3o$2544bobboo$2544boo!
+
+This is the first draft of a Game-of-Life circuit with a faster type
+of signal, two-thirds of the speed of light diagonally. This is a big
+improvement in signal speed. Even Jason Summers' light-speed
+'telegraph' can theoretically approach only half the speed of light
+diagonally, and it is considerably more unwieldy and harder to re-use
+even than this pattern. Besides the telegraph, the fastest repeatable
+diagonal signal was a simple glider, at c/4.
+
+It is possible using known technology to construct repeatable signal
+mechanisms that travel more quickly than 2c/3.  For example, a
+lightspeed diagonal transceiver could simply ignite a simple diagonal
+fuse, detect the decay at the other end, and then painstakingly
+rebuild the fuse, perhaps by using slide guns.  For another
+alternative, see lightspeed.rle in the Miscellaneous folder.
+However, no actual transceiver constructions have been completed
+along these lines.
+
+In the draft 2c/3 transceiver, input is a Herschel near the upper
+left corner; output is a glider in the lower right. For reference,
+an extra glider starts near the location of the input Herschel.
+Despite the horrific and unnecessary inefficiency of the
+Herchel-to-2c/3 converter, and the fact that the output glider
+is produced from a 'backward' part of the 2c/3-to-glider converter,
+the output signal still manages to catch up to the reference glider!
+
+_Nothing_ about this pattern is properly optimized. For example,
+there's no good reason for the input Herschel ever to travel north;
+the conduit delivering the sacrificial beehive to the key point of
+the 2c/3 transmitter is ridiculously long; and the four boojum
+reflectors had to be moved embarrassingly far to the northwest
+to get the timings to work out.
+
+The stair-step diagonal Herschel conduit at the left edge of the
+pattern is an artifact of an old toolkit I put together a year or
+two ago, which allows a shotgun for a synchronized glider salvo 
+(like the three closely-spaced gliders traveling northeast from
+this area) to be constructed relatively quickly, though at
+considerable cost in efficiency. This part of the pattern took me
+less than an hour to put together, but it should be possible to
+fit a shotgun that fires twice as quickly into less than half the
+space.
+
+After some optimization on the transmitter, it will be possible to
+use this technology to build the world's first period-independent
+pseudo-Heisenburp device, which can absorb a glider and produce as
+many output signals as needed -- including a new glider with exactly
+the same path and timing as the original!
+
+[Previous Heisenburp devices all require the input glider to be
+aligned to some particular period, or they fail catastrophically.
+On the other hand, these periodic patterns can be "true" rather
+than "pseudo" Heisenburp devices: they produce output signals
+without destroying, or even temporarily affecting, the input glider.]
+
+The 2c/3 signal track was discovered by Dean Hickerson in March 1997;
+Noam Elkies came up with several ingenious recipes for getting a
+repeatable signal started in a 2c/3 track, early in 2005, after 
+I came up with a convoluted way of getting a signal out of a
+2c/3 track. Further optimization is no doubt possible at both ends.

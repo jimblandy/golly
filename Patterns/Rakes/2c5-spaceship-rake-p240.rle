@@ -2,7 +2,7 @@
 #C This is the first rake in which the output travels in the
 #C same direction as the rake, but at a slower speed.
 #C Rake constructed by Jason Summers, March 2003.
-#C Sythesis of 2c/5 spaceship mostly by Noam Elkies.
+#C Synthesis of 2c/5 spaceship mostly by Noam Elkies.
 x = 1376, y = 297, rule = B3/S23
 1215boo$1199boo13booboo$1198b4o13b4o$944bobbo249booboo14boo$943bo254b
 oo$943bo3bo$926b4o13b4o$926bo3bo281boo4bo$926bo274boo9boo3b3o7bo$927bo

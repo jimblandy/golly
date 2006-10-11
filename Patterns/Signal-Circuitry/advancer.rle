@@ -1,4 +1,4 @@
-#C p30 glider advancer #6, advances gliders by 60 generations
+#C p30 glider advancer #6, advances gliders by 60 generations.
 #C The device uses six copies of David Bell's p30 in-line NOT gate.
 #C Speed of information transmission within the device: 13/36 = 0.361c
 #C Dieter Leithner, 27 Dec 1993; from Jason Summers' jslife collection.

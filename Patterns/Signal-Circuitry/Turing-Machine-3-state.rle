@@ -1,6 +1,6 @@
 #C 3-state, 3-symbol Turing machine:  Paul Rendell, 3 February 2000
 #C http://rendell.server.org.uk/gol/tm.htm
-x = 1714, y = 1647, rule = S23/B3
+x = 1714, y = 1647, rule = B3/S23
 247boo$248bo$248bobo$249boo6$257boo$256boo$258bo5$265bo$264boo$264bobo
 6$272boo$271boo$273bo5$280bo$279boo$279bobo6$287boo$286boo$288bo3$244b
 oo$242bobbo$241bo15bobo35bo$233boo6bo10b3obbo3bo32boo$233boo6bo19bo32b

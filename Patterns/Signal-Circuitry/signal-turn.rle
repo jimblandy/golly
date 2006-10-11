@@ -5,7 +5,7 @@
 #C 2: 29 Jul 1997
 #C 3: 24 Jul 1997
 #C From Jason Summers' "jslife" pattern collection.
-x = 68, y = 179
+x = 68, y = 179, rule = B3/S23
 15bobbo37boo$13b6o38bo6bo$9boobo42bo7bobo$9boobobob5o34boo4b3obbo$12bo
 bo6bo31boobbobbo3bobo$12bobobb5o32bobobbobooboboo$13boobo7bo29bob4obo
 bbobbo$16bobb6o26boobo6bobobbo$16bobo29boobbobob4obobboo$15boobobb6o

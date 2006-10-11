@@ -12,7 +12,7 @@
 #C The program is represented as a string of boats (1s)
 #C  and blocks (0s). Each Emitter cycle, the Emitter in
 #C  the SW fires a salvo to read a program instruction bit 
-#C  and move the read head; an Emitter cycle is 850 ticks.
+#C  and move the read head; an Emitter cycle is 754 ticks.
 #C
 #C The Collector/Decoder in the centre converts sequences
 #C  of PULL (0) and TRIGGER (1) instructions into TRIGGERi
@@ -20,7 +20,7 @@
 #C  TRIGGER3=BLACKDEC, TRIGGER4=WHITEDEC, TRIGGER5=SHUTDOWN
 #C
 #C A TRIGGERi instruction takes i Collector cycles to execute;
-#C  a Collector cycle is 754 ticks.
+#C  a Collector cycle is 850 ticks.
 #C
 #C These instructions cause the Shoulder in the NE to emit
 #C  salvos to manipulate a construction arm in the far NE.
@@ -32,7 +32,7 @@
 #C  constructor shuts down cleanly when finished; in this
 #C  example, shutdown occurs after 122,221 generations.
 #C
-#C Paul Chapman, 24 May 2004.
+#C Paul Chapman, 24 May 2004
 x = 4235, y = 2765, rule = B3/S23
 252bo$251bobo$252boo11$264boo$264boo11$276boo$276boo10$288bo$287bobo$
 288boo10$300bo$299bobo$300boo11$312boo$312boo11$324boo$324boo10$336bo$

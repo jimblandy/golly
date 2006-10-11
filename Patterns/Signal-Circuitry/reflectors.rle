@@ -1,15 +1,13 @@
-#C Fast, low-period glider reflectors. These work
-#C for any period 22 or higher that is a multiple
-#C of their period.
+#C Fast, low-period glider reflectors. These work for any
+#C period 22 or higher that is a multiple of their period.
 #C
 #C Periods 5, 6, 8: Noam Elkies, 16-Sep-1998
 #C Period 7: Noam Elkies, 1-Aug-1999
 #C Period 15: oscillator by Karel Suhajda, Dec-02.
-#C P5 reflector later improved by David Eppstein
-#C and Noam Elkies.
+#C P5 reflector later improved by David Eppstein and Noam Elkies.
 #C
-#C Note that there are two possible positions for the
-#C spark in the p6, p7, and p15 versions.
+#C Note that there are two possible positions for the spark  
+#C in the p6, p7, and p15 versions.
 #C From Jason Summers' "jslife" pattern collection.
 x = 420, y = 141, rule = B3/S23
 41boboo84boobo75boboo96boobo77boo5boboo$41boobo84boboo75boobo96boboo

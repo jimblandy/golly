@@ -7,7 +7,7 @@
 #C  impossible to detect a particle without affecting it in some way.
 #C  Clearly this is not the case in the Life universe!
 #C By David Bell.  From Alan Hensel's "bclife" pattern collection.
-x = 139, y = 157, skip = 1, fps = 30
+x = 139, y = 157, rule = B3/S23
 48boo$47bobo$46b3o$46boo$46boo$47bobo$48bo3$45boo3boo$45boo3boo$$47b3o
 $47b3o$48bo6boo23boo$56bo22bobo$56bobo5bobo11bo6boo$57boo5bobbo10bobbo
 bbobbo6boo$67boo9bo6boo6b3o$65bo3boo8bobo8boboo15bo$50bo16boo11boo8bo
