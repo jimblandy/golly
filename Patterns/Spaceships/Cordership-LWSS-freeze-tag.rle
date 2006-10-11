@@ -1,7 +1,7 @@
 #C eight p384 c/12 forward rakes playing Freeze Tag with an LWSS
 #C to produce a p384 spaceship: David Bell, 5 June 2005
 #C (adapted from a previous version from 29 February 2004)
-x = 642, y = 598, h = 0, v = 400, rule = B3/S23
+x = 642, y = 598, rule = B3/S23
 7bo$6boo$6bobo$bb3o$bbobbo$bbo$bbo$3bobo20$33boo$33bobo$33bo4$26bo$25b
 oo$25bobo8$39bo$38boo$38bobo$15boo$14boo$16bo10$314b3o$314b3o$$314bob
 oo$314bo3bo$316b3o$71bo259boo$70boo259boo$70bobo$$315bo$314bobo$315bo$

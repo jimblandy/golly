@@ -10,7 +10,7 @@
 #C  who named them after the discoverer of the switch engine,
 #C Charles Corderman.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 244, y = 255, skip = 1, fps = 100
+x = 244, y = 255, rule = B3/S23
 95bo$78b3o8bo5bo$77bo3bo6bo7bo$78boo9b4obboo$80booboo9b3o$82boo11bobo$
 96bo7boo$96bo7boo3$88bo$87bobo$87bobo$74b3o11bo$75bo36boo$75bobbo33boo
 $75bobbo$76bobo$96bo$95bobo$95bobo$96bo$$75boo129bo$53bobo18boo116bobo

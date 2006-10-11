@@ -6,7 +6,7 @@
 #C Bottom left: Swan by Tim Coe.
 #C Bottom right: a rather large c/5 found by Jason Summers.
 #C From Alan Hensel's "bclife" pattern collection.
-x = 114, y = 92, skip = 1, fps = 10
+x = 114, y = 92, rule = B3/S23
 67boo$66boo$68bo$70bo4b3o$70b3o4boo$71b3obobo$78bo$71bobo$70boobo$71bo
 $69boobo$21boo49bo$21bobo46boo$21bo4$49boo28b3o$48boo29bo9boo$50bo29bo
 6b3obo$46bo6bo28boobboo$45boo4boo7bo22bo$45bobo7bo3b4o24bo$49bo4boobbo
