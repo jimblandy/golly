@@ -5,7 +5,7 @@
 #C up. This is an example of a spaceship that grows while traveling.
 #C By Dean Hickerson and Al Hensel, May 1994.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 21, y = 87, skip = 1, fps = 100
+x = 21, y = 87, rule = B3/S23
 4bobo$4bobbo5bo$7boo4b4o$9bo5boo$7b4o7bo$6bo4bo3b4o$8bobbo7bo$8bobbo3b
 obb3o$10bo6b3o$4bob4o8bo$4bo3bo4bob3o$7bo5boobbo$5bobo6b3o$14bo$6b3o7b
 o$7boo5bobo$6b3o8bo$14bobo$5bobo8bo$5bobbo5bo$8bo5b3o$6bobbo5b3o$8boo
