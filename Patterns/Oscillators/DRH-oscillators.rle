@@ -1538,7 +1538,7 @@
 #C             farther right changes the 10 above to  K=10+4N  (N>=0).
 #C             The period of the sequence depends on K as indicated in
 #C             the description of 15240.0.0.
-x = 3145, y = 396
+x = 3145, y = 396, rule = B3/S23
 6b2o5b2o4bo14b2o14b2o5bo5b2o4b2o4b2o15b2o5b2o7b2o4b2o18b2obo128b2o4b2o
 111b2o18bob2o42bo11b2o56b2o130bo137bo131bo72b2o3b2o46b2o3b2o128bo195b
 2o10b2o27b2o4b2o4b2obo31bo68bo124bo4bo50b2obo6b2obo130bob2o6b2obo25bo

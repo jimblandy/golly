@@ -4,7 +4,7 @@
 #C  (see Oscillators-TrafficLightHasslers) or Herschel conduits
 #C  (see HerschelTrack).
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 254, y = 174, skip = 1, fps = 20
+x = 254, y = 174, rule = B3/S23
 152boo$151bobbo$150bobobo$149b3obo58boo16boo$149b3o61bo16bo$129bo11bob
 o69bobo12bobo$bboobo6boobo76boboo6boobo21b3o14bo36boobo6boobo19boo12b
 oo$bboboo6boboo76boobo6boboo9boo9bo13bobbo37boboo6boboo$6boobboo4boo

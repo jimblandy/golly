@@ -7,7 +7,7 @@
 #C  a pair of traffic lights, but if left on their own, would form a
 #C  single pulsar instead.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 514, y = 244, skip = 1, fps = 20
+x = 514, y = 244, rule = B3/S23
 114boobo6boobo30boo111bo7bo220boo$114boboo6boboo21bo8boo5boo103bobo5bo
 bo219boo$36boo6boo72boobboo4boo17boobo14bo105bo7bo$5boo5boobo20boo6boo
 72bo3bo5bo17bo16bobo317bo$6bo5boboo103bo3bo5bo15bobobbo12boo212boo4boo

@@ -4,7 +4,7 @@
 #C  extensible oscillators typically depend on some mechanism of
 #C  "bouncing off" of copies of themselves.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 328, y = 205, skip = 1, fps = 6
+x = 328, y = 205, rule = B3/S23
 324boo$231boo26bo64boo$230b4o24bobo63boo$32boo34bo160bobbobo22bobobo
 63bo$bboobo25bobo10bo7bo13bobo127boboo28bobobboo22bo3b3o60bobo$bboboo
 36bobo5bobo12bo4bo125boobo27bobo24booboo60b3obobo$6boo21bobo14bobo5bo

@@ -1,5 +1,5 @@
 #C Demonstration of a queen bee shuttle turning reaction
-#C (p88 oscillator). David I. Bell, 21 Mar 1996; updated 7/2002
+#C (p88 oscillator). David I. Bell, 21 March 1996; updated July 2002
 #C From Jason Summers' "jslife" pattern collection.
 x = 155, y = 155, rule = B3/S23
 69boo6boo$69boo6boo7$53boo38boo21boo6boo$52bobo38bobo20boo6boo$52bobob

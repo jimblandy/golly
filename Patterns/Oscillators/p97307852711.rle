@@ -1,7 +1,7 @@
 #C p1450*4^13-89 = p97307852711 (prime-period) oscillator, shown at
 #C  the critical cycle [the next Herschel pulse gets through all
 #C  13 period quadruplers and activates the glider booster circuit]
-#C Dave Greene, 25 Oct 2003 -- corrected 30 Mar 2006 after Golly test
+#C Dave Greene, 25 Oct 2003 -- corrected 30 Mar 2006 after Golly test.
 #C Based on a p97307852687 oscillator by Gabriel Nivasch (7 Aug 2003)
 x = 412, y = 243, rule = B3/S23
 174boo32boo$174boo32boo5$186bo33bo$185bobo31bobo$86boo97bobo31bobo$83b

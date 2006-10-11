@@ -11,7 +11,7 @@
 #C  are not accessible from outside.  However, Dave Buckingham later
 #C  succeeded in producing glider recipes for some billiard tables.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 347, y = 222, skip = 1, fps = 6
+x = 347, y = 222, rule = B3/S23
 57boo$boo3boo14boo15boo16boo$boo3boo14boo15boo$57b4o19bo$boo3boo14b4o
 13b4o13bo4bo17bobo103bo$bobobobo13bobobboboo8bobobboboo8bobobooboboo
 12bobobo61bo16boboo19bobo17boo$3bobo15bobboboboo8bobboboboo8bobo4boboo

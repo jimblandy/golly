@@ -12,7 +12,7 @@
 #C  of a rift of known oscillators between periods 16-30, with only a
 #C  few filled in by low-period or engineered patterns.
 #C From Alan Hensel's "lifebc" pattern collection.
-x = 491, y = 249, skip = 1, fps = 6
+x = 491, y = 249, rule = B3/S23
 225booboo13bo$bboobo20bo112boboo82booboo12bobo47boobo67boo54boo3boo3b
 oo$bboboo11b3o6boo111boobo99bobo47boboo7boo12boo40boobbo56bo3boo3boo$
 6boo18boo9boobo10bo85boo10boo16boo54b9o6booboobooboo41boo4boo6bo12bo
