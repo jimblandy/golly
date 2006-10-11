@@ -1,10 +1,10 @@
 #C A puffer train that creates switch engines.
 #C This is another type of pattern which grows quadratically.
-#C  Half of a quadrant of the space is filled with blocks.
-#C  Every 80 generations a new block-laying switch engine is created.
+#C Half of a quadrant of the space is filled with blocks.
+#C Every 80 generations a new block-laying switch engine is created.
 #C By Helmut Postl, 1997.
 #C "SwitchEnginePuffer" from Alan Hensel's "lifebc" pattern collection
-x = 85, y = 164, skip = 5, fps = 20
+x = 85, y = 164, rule = B3/S23
 58boo5b4o$56booboo3bo3bo$56b4o8bo$57boo5bobbo$$52boo9bo$50b5o8b3o$50b
 oo4bo5bo3bo$50boo5b5o4bo$52boo4b4oboboo$55b3oboo3bo$61bobo$24boo$22boo
 boo14bo$22b4o13boo24b4o$23boo15boo22bo3bo$18bo28b4o17bo$11boo6boo25bo
