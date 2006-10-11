@@ -1,10 +1,9 @@
-#N Syntheses of 29 still lifes
-#C Most of these were found by running random patterns with various
-#C types of symmetry on tori.  Occasionally an unusual still life
-#C shows up in such experiments, and sometimes it's possible to
-#C deduce a glider synthesis.
-#O Dean Hickerson, drhickerson@ucdavis.edu  5/30/93
-x = 229, y = 229
+#C Most of these 29 glider syntheses were found by running
+#C  random patterns with various types of symmetry on tori.
+#C  Occasionally an unusual still life shows up in such experiments,
+#C  and sometimes it's possible to deduce a glider synthesis.
+#C Dean Hickerson, 30 May 1993
+x = 229, y = 229, rule = B3/S23
 o2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo
 2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo
 2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo

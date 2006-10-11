@@ -3,12 +3,12 @@
 #C Lower left: Blockish 1-glider eater2 seed (pure Blockic except
 #C for pinwheel quadruplicators for gliders): 29 Jan 2004,
 #C eater2 variant synthesis due to Mark Niemiec.
-#C Middle: early version of Blockic turner table, used in eater2
-#C recipe. Delay for each turner is shown in Snakial font.
+#C Middle: early version of Blockic turner table, used in the
+#C eater2 recipe. Delay for each turner is shown in Snakial font.
 #C First column is turners that do not change the glider square color
 #C Second column is similar, but for color-changing turners.
-#C Right side: unclustered Blockic 1-glider starseed --
-#C blocks separated from each other by at least two empty cells.
+#C Right side is an 'unclustered Blockic 1-glider starseed' --
+#C blocks are separated from each other by at least two empty cells.
 #C Dave Greene, 24 Aug 2004; star synthesis found by Jason Summers.
 x = 691, y = 391, rule = B3/S23
 302boo83boo$302boo83boo20$114boo$114boo3$109boo$96boo11boo$96boo46boo$

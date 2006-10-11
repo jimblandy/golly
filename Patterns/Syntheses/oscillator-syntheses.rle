@@ -2,7 +2,7 @@
 #C Pentadecathlon, tumbler, mold, figure 8, unix, mazing,
 #C A for All, washing machine, octagon II, cloverleaf.
 #C From Alan Hensel's "lifebc" pattern collection
-x = 187, y = 79, skip = 1, fps = 6
+x = 187, y = 79, rule = B3/S23
 obbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbo
 bbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbo
 bbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbo3$o17bo38bo20bo20bo26b

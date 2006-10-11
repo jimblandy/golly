@@ -1,5 +1,5 @@
 #C Stripey still life, created by Gabriel Nivasch.
-x = 66, y = 65
+x = 66, y = 65, rule = B3/S23
 bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo$b64o
 2$b64o$o24bo39bo$b23o3b38o$24b3o$b20o2bo3b38o$o20bo2bo2bo37bo$b20ob2o
 6b35o$20bo5bo2bo$b19o2b5o2b36o$o19b2o43bo$b17obo2b43o$10bo6bobobo$b8o

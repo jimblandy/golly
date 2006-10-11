@@ -1,7 +1,6 @@
-#N Still life syntheses by Buckingham
 #C A collection of 109 still life syntheses by David Buckingham.
-#C (Collection assembled by Dean Hickerson, 2/11/93)
-x = 246, y = 279
+#C (Collection assembled by Dean Hickerson, 11 February 1993)
+x = 246, y = 279, rule = B3/S23
 20bobo30bobo12bobo61bo26b2o2b2o$20b2o32b2o13b2o3bo19bo8bo29bo24bobob2o
 $21bo19bo12bo14bo2b2o20bobo7bo26b3o26bo3bo$14bo26bobo29b2o19b2o6b3o$
 15bo22b2ob2o8bo$13b3o21bobo9bobo43bo16bo$39bo10b2o4b2o8bo6bo19b3o16bob

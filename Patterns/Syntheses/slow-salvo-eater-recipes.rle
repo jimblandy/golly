@@ -2,7 +2,7 @@
 #C asynchronous slow-salvo glider constructions of four orientations
 #C of a fishhook eater. [A mirror image provides recipes for the other
 #C four orientations.] Salvos contain 13, 13, 15 and 18 gliders.
-#C Paul Chapman, 30 December 2003.
+#C Paul Chapman, 30 December 2003
 x = 1361, y = 1434, rule = B3/S23
 150bo$151bo$149b3o11$189bo$190bo$188b3o53$234bo$235bo$233b3o19$1359bo$
 1358bo$1358b3o20$1320bo$277bo1041bo$278bo1040b3o$276b3o37$1279bo$1278b

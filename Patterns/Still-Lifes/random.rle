@@ -1,5 +1,5 @@
 #C Random-looking still life, created by Gabriel Nivasch.
-x = 98, y = 98
+x = 98, y = 98, rule = B3/S23
 2obob2o3b2ob2o2bob2o3b2o3b2o2bo5bo8b2o2b2obob2ob2o3b2ob2o3b2o5b2ob2obo
 3b2ob2obo$ob2obo5bobo2bob2o3bo2bobobo2b3o3b3o5bo2bo2bob2obobo4b2obobo
 3bo2b2o2bobob2o2bobobob2o$6bo4bo2bobo4bo2bobobo7bo5bobo2bo2bobo5bobobo
