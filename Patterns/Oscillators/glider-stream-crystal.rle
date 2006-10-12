@@ -1,9 +1,10 @@
 #C High-period oscillator built by David Dauthier, showing
-#C  a common crystal forming on a glider stream. A number of
-#C  higher-period guns have been constructed that make use of two
+#C  a common crystal forming on a glider stream. Several adjustable
+#C  high-period guns have been constructed that make use of two
 #C  identical copies of this repeatable growth-and-decay reaction.
 #C  It is also possible to support a single crystal of adjustable
-#C  length, and extract a glider from the either end of the reaction.
+#C  length, and extract a glider from either end of the reaction.
+#C See, e.g., p08832.lif in Jason Summers' "guns2j" collection.
 x = 252, y = 221, rule = B3/S23
 90b2o68b2o$90b2o16b2o32b2o16b2o$108b2o32b2o4$89b3o8b2o48b2o8b3o$89b3o
 8b2o48b2o8b3o$88bo3bo66bo3bo$108b3o30b3o$27b2o58b2o3b2o6bo6bo3bo28bo3b
