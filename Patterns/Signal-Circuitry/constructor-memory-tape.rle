@@ -12,7 +12,7 @@
 #C The program is represented as a string of boats (1s)
 #C  and blocks (0s). Each Emitter cycle, the Emitter in
 #C  the SW fires a salvo to read a program instruction bit 
-#C  and move the read head; an Emitter cycle is 754 ticks.
+#C  and move the read head; an Emitter cycle is 850 ticks.
 #C
 #C The Collector/Decoder in the centre converts sequences
 #C  of PULL (0) and TRIGGER (1) instructions into TRIGGERi
@@ -20,13 +20,17 @@
 #C  TRIGGER3=BLACKDEC, TRIGGER4=WHITEDEC, TRIGGER5=SHUTDOWN
 #C
 #C A TRIGGERi instruction takes i Collector cycles to execute;
-#C  a Collector cycle is 850 ticks.
+#C  a Collector cycle is 754 ticks -- slightly shorter than the
+#C  Emitter cycle because of the Doppler effect of the tape
+#C  being read from the far end.  A near-end-first tape read
+#C  would require a Collector cycle longer than the Emitter
+#C  cycle, again proportional to the bit spacing on the tape.
 #C
-#C These instructions cause the Shoulder in the NE to emit
-#C  salvos to manipulate a construction arm in the far NE.
-#C  The arm consists of an Elbow (lower right block) and 
-#C  a Hand (upper left block). The Hand is where the actual
-#C  construction is done.
+#C The TRIGGERi instructions cause the Shoulder in the NE
+#C  to emit salvos to manipulate a construction arm in the
+#C  far NE.  The arm consists of an Elbow (lower right block)
+#C  and a Hand (upper left block). The Hand is where the
+#C  actual construction is done.
 #C
 #C A single glider in the SE starts the constructor. The
 #C  constructor shuts down cleanly when finished; in this

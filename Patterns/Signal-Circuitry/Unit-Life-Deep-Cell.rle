@@ -1,5 +1,6 @@
 #C Deep Cell by Jared James Prince.  A slight modification of David
-#C  Bell's Unit Cell (for original pattern and some background, see
+#C  Bell's Unit Cell -- see Unit-Life-Cell-512x512.rle in the same
+#C  folder.  For the original pattern and some background, see
 #C  http://radicaleye.com/lifepage/patterns/unitcell/ucdesc.html. )
 #C
 #C The Deep Cell runs two Life universes instead of one. The two
@@ -18,7 +19,7 @@
 #C
 #C An infinite tiling of Deep Cells allows for an infinite hierarchy
 #C  as follows:  Set universe A0 to generate an arbitrary Life pattern.
-#C  Set universe B0 to genererate another layer of Deep Cells.  This
+#C  Set universe B0 to generate another layer of Deep Cells.  This
 #C  new layer has two universes, called A1 and B1. Set universe A1
 #C  to generate an arbitrary Life pattern. Set universe B1 to generate
 #C  another layer of Deep Cells.  This new layer has two universes,
