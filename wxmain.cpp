@@ -1070,7 +1070,11 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
             wxBitmap bmap = bmapdata.GetBitmap();
             wxImage image = bmap.ConvertToImage();
             if (image.Ok()) {
-               // no need to check for mask???
+               /* there doesn't seem to be any mask or alpha info, at least on Mac
+               if (bmap.GetMask() != NULL) Warning("Bitmap has mask!");
+               if (image.HasMask()) Warning("Image has mask!");
+               if (image.HasAlpha()) Warning("Image has alpha!");
+               */
                int wd = image.GetWidth();
                int ht = image.GetHeight();
                unsigned char *idata = image.GetData();
@@ -2925,7 +2929,11 @@ MainFrame::MainFrame()
    #endif
    fileMenu->AppendSeparator();
    // on the Mac the Ctrl+Q is changed to Cmd-Q and the item is moved to the app menu
-   fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_("Ctrl+Q")));
+   #if wxCHECK_VERSION(2, 7, 1)
+      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT));
+   #else
+      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_("Ctrl+Q")));
+   #endif
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
    editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));

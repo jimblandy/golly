@@ -2,7 +2,7 @@
 # absolute number like 1,000,000 (commas are optional) or a number
 # relative to the current generation like +9 or -6.  If the target
 # generation is less than the current generation then we go back
-# to the starting generation (0) and advance to the target.
+# to the starting generation (normally 0) and advance to the target.
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 
 from glife import getstring, validint

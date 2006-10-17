@@ -85,8 +85,14 @@ const wxString SCRIPT_DIR = wxT("Scripts");
 const int PREFS_VERSION = 1;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
-const int BITMAP_WD = 60;        // width of bitmap in color buttons
-const int BITMAP_HT = 20;        // height of bitmap in color buttons
+#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 1)
+   //!!! CoreGraphics only supports square buttons with power-of-2 sizes
+   const int BITMAP_WD = 16;        // width of bitmap in color buttons
+   const int BITMAP_HT = 16;        // height of bitmap in color buttons
+#else
+   const int BITMAP_WD = 60;        // width of bitmap in color buttons
+   const int BITMAP_HT = 20;        // height of bitmap in color buttons
+#endif
 
 // initialize exported preferences:
 

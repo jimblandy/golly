@@ -1,6 +1,10 @@
 For future versions:
 --------------------
 
+A - Show relative paths in Recent menus for files inside Golly folder.
+    Automatically remove missing files at startup (too dangerous?)
+    or else add a Clear Missing Files item above Clear All Files.
+
 A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
     and display suitable message in status bar.  Or maybe just add
     Gabriel's oscillation detection as an option (see oscar.py).

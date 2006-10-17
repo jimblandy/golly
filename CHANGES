@@ -7,8 +7,10 @@ AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 
-Changes in version 1.1 (released !!!)
+Changes in version 1.1 (released October 2006)
 
+AKT: Added metafier.py and shift.py to Scripts folder.
+AKT: Fixed back/forwards bug in help window (only in Mac app).
 AKT: Added Save Extended RLE option to the File menu.
 AKT: Top left corner of RLE file (not XRLE) is positioned at 0,0.
 AKT: Golly can read pattern files using David Bell's dblife format.

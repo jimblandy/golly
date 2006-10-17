@@ -30,7 +30,9 @@ construct complicated patterns, perform collision experiments, etc.
 
 <p>
 Before you can run a script, Python needs to be installed on your system.
-Mac OS X users don't need to do anything because Python is already installed.
+Mac OS X users don't need to do anything because Python is already installed
+(but see <a href="#macpython">below</a> for how to force Golly to use a newer
+version of Python).
 Windows and Linux users can download a Python installer from
 <a href="http://www.python.org/download/">www.python.org/download</a>.
 
@@ -62,7 +64,7 @@ The Scripts folder supplied with Golly contains a number of example Python scrip
 </tr>
 <tr>
    <td><b>goto.py</b></td><td width=10> </td>
-   <td> -- goes to a requested generation</td>
+   <td> -- goes to a given generation</td>
 </tr>
 <tr>
    <td><b>gun-demo.py</b></td><td width=10> </td>
@@ -73,12 +75,20 @@ The Scripts folder supplied with Golly contains a number of example Python scrip
    <td> -- inverts all cell states in the current selection</td>
 </tr>
 <tr>
+   <td><b>metafier.py</b></td><td width=10> </td>
+   <td> -- converts the current selection into a meta pattern</td>
+</tr>
+<tr>
    <td><b>oscar.py</b></td><td width=10> </td>
    <td> -- detects oscillating patterns, including spaceships</td>
 </tr>
 <tr>
    <td><b>pd-glider.py</b></td><td width=10> </td>
    <td> -- creates a set of pentadecathlon+glider collisions</td>
+</tr>
+<tr>
+   <td><b>shift.py</b></td><td width=10> </td>
+   <td> -- shifts the current selection by given x y amounts</td>
 </tr>
 <tr>
    <td><b>slide-show.py</b></td><td width=10> </td>
@@ -902,7 +912,7 @@ This will install Python 2.4 in /Library/Frameworks.
 However, Golly is linked against the Python 2.3 framework stored in
 /System/Library/Frameworks and won't use the newer Python.
 Fortunately there is a simple solution that forces Golly to load the Python 2.4
-framework.  Quit Golly, open Terminal and do this command:
+framework.  Quit Golly, open Terminal and enter this command (on one line):
 <p>
 <dd><b>install_name_tool -change \</b></dd>
 <dd><b>/System/Library/Frameworks/Python.framework/Versions/2.3/Python \</b></dd>
@@ -915,9 +925,9 @@ run the command again with the framework paths swapped.
 To verify which version of Python Golly is using, copy the following code,
 start up Golly and select <b>Run Clipboard</b> from the File menu:
 <p>
-<dd><b>import golly as g</b></dd>
+<dd><b>import golly</b></dd>
 <dd><b>import sys</b></dd>
-<dd><b>g.warn(sys.version)</b></dd>
+<dd><b>golly.warn(sys.version)</b></dd>
 </p>
 <p>
 On an Intel Mac your scripts will run significantly faster when using

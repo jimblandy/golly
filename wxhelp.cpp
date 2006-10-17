@@ -170,19 +170,10 @@ void SetFontSizes(int size)
 
 void ChangeFontSizes(int size)
 {
-   // changing font sizes resets pos to top, so save now and restore below
+   // changing font sizes resets pos to top, so save and restore pos
    int x, y;
    htmlwin->GetViewStart(&x, &y);
    SetFontSizes(size);
-   #ifdef __WXMAC__
-      // prevent horizontal scroll bar appearing
-      int wd, ht;
-      htmlwin->GetSize(&wd, &ht);
-      // resizing makes scroll bar go away
-      htmlwin->SetSize(wd - 1, -1);
-      htmlwin->SetSize(wd, -1);
-   #endif
-   // restore old position
    if (y > 0) htmlwin->Scroll(-1, y);
 }
 
@@ -257,18 +248,7 @@ void UpdateHelpButtons()
       currhelp = location;
    }
    
-   #ifdef __WXMAC__
-      // prevent horizontal scroll bar appearing in Mac html window
-      int wd, ht, xpos, ypos;
-      htmlwin->GetViewStart(&xpos, &ypos);
-      htmlwin->GetSize(&wd, &ht);
-      // resizing makes scroll bar go away
-      htmlwin->SetSize(wd - 1, -1);
-      htmlwin->SetSize(wd, -1);
-      // resizing also resets pos to top so restore using ypos saved above
-      if (ypos > 0) htmlwin->Scroll(-1, ypos);
-   #endif
-   htmlwin->SetFocus();          // for keyboard shortcuts
+   htmlwin->SetFocus();    // for keyboard shortcuts
 }
 
 // -----------------------------------------------------------------------------
