@@ -202,6 +202,9 @@ void qlifealgo::uproot() {
        nullroots[rootlev] = nullroot = root ;
      }
    }
+   // Need to clear this because we don't have valid population values
+   // in the new root.  This bug and its fix was found by AKT.
+   popValid = 0 ;
 }
 /*
  *   This subroutine allocates a new empty universe.  The universe starts
