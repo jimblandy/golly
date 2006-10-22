@@ -247,7 +247,7 @@ void qlifealgo::clearall() {
    emptybrick = newbrick() ;
    nullroots[0] = nullroot = root = (supertile *)(emptytile = newtile()) ;
    uproot() ;
-   // AKT: best to do this in after setrule call
+   // AKT: best to set ruletable after setrule call
    // ruletable = global_liferules.rule0 ;
    popValid = 0 ;
    llxb = 0 ;

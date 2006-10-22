@@ -89,7 +89,7 @@ enum {
    // one-shot timer
    ID_ONE_TIMER = wxID_HIGHEST,
 
-   // go/stop button
+   // go/stop button (not yet implemented!!!)
    ID_GO_STOP,
 
    // File menu
@@ -257,44 +257,7 @@ const int zoomin_index = 10;
 const int zoomout_index = 11;
 const int info_index = 12;
 const int hash_index = 13;
-wxBitmap tbBitmaps[14];          // normal state
-
-/*!!!
-wxBitmap tbSelected[14];         // selected state
-
-class ToolButton : public wxBitmapButton
-{
-public:
-   ToolButton(wxToolBar* toolbar, wxWindowID id, int bitmap_index,
-              const wxString& tooltip)
-      : wxBitmapButton(toolbar, id, tbBitmaps[bitmap_index])
-   {
-      toolbar->AddControl(this);
-      SetToolTip(tooltip);
-      // this is not right!!!
-      tbSelected[bitmap_index] = GetBitmapSelected();
-      // probably need to create tbSelected[bitmap_index] by darkening
-      // tbBitmaps[bitmap_index] --
-      // modify wxCreateGreyedImage in src/common/tbarbase.cpp???
-   }
-   
-   // need OnMouseDown and OnMouseUp handlers to fix prob on Windows!!!
-   // ie. prevent OnIdle changing focus to viewptr while button is pressed
-};
-
-// tool bar buttons
-ToolButton* gostopbutt;
-ToolButton* hashbutt;
-ToolButton* newbutt;
-ToolButton* openbutt;
-ToolButton* savebutt;
-ToolButton* drawbutt;
-ToolButton* selbutt;
-ToolButton* movebutt;
-ToolButton* zoominbutt;
-ToolButton* zoomoutbutt;
-ToolButton* infobutt;
-*/
+wxBitmap tbBitmaps[14];
 
 // -----------------------------------------------------------------------------
 
@@ -306,28 +269,7 @@ void MainFrame::UpdateToolBar(bool active)
    wxToolBar *tbar = GetToolBar();
    if (tbar && tbar->IsShown()) {
       if (viewptr->waitingforclick || inscript) active = false;
-      
-      /* new tools!!!
-      if (hashing)
-         hashbutt->SetBitmapLabel(tbSelected[hash_index]);
-      else
-         hashbutt->SetBitmapLabel(tbBitmaps[hash_index]);
-      hashbutt->Refresh(false, NULL);
-      
-      // on X11 this is not showing disabled image!!! see EnableTool code???
-      gostopbutt->Enable(active);
-      hashbutt->Enable(active && !generating);
-      newbutt->Enable(active && !generating);
-      openbutt->Enable(active && !generating);
-      savebutt->Enable(active && !generating);
-      drawbutt->Enable(active);
-      selbutt->Enable(active);
-      movebutt->Enable(active);
-      zoominbutt->Enable(active);
-      zoomoutbutt->Enable(active);
-      infobutt->Enable(active && !currfile.IsEmpty());
-      */
-      
+            
       #ifdef __WXX11__
          // avoid problems by first toggling off all buttons
          tbar->ToggleTool(ID_GO, false);
@@ -425,7 +367,7 @@ void MainFrame::UpdateMenuItems(bool active)
       if (viewptr->waitingforclick) active = false;
       
       #if defined(__WXMAC__) || defined(__WXGTK__)
-         // fix problem (on OS 10.4) after a modal dialog closes
+         // fix problem (eg. on OS 10.4) after a modal dialog closes
          if (!active && (!GetHelpFrame() || !GetHelpFrame()->IsActive())
                      && (!GetInfoFrame() || !GetInfoFrame()->IsActive()) ) {
             return;
@@ -1571,7 +1513,7 @@ void MainFrame::ShowPrefsDialog()
 
 void MainFrame::ChangeGoToStop()
 {
-   /*!!!
+   /* single go/stop button is not yet implemented!!!
    gostopbutt->SetBitmapLabel(tbBitmaps[stop_index]);
    gostopbutt->Refresh(false, NULL);
    gostopbutt->Update();
@@ -1581,15 +1523,10 @@ void MainFrame::ChangeGoToStop()
 
 void MainFrame::ChangeStopToGo()
 {
-   /*!!!
+   /* single go/stop button is not yet implemented!!!
    gostopbutt->SetBitmapLabel(tbBitmaps[go_index]);
    gostopbutt->Refresh(false, NULL);
    gostopbutt->Update();
-   #ifdef __WXX11__
-      // need this kludge to avoid seeing two bitmap images
-      gostopbutt->Enable(false);
-      gostopbutt->Enable(IsActive());
-   #endif
    gostopbutt->SetToolTip(_("Start generating"));
    */
 }
@@ -1627,7 +1564,7 @@ bool MainFrame::SaveStartingPattern()
    } else {
       // can only save qlife pattern if edges are within getcell/setcell limits
       bigint top, left, bottom, right;
-      curralgo->findedges(&top, &left, &bottom, &right);
+      curralgo->findedges(&top, &left, &bottom, &right);      
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Starting pattern is outside +/- 10^9 boundary."));
          // don't allow user to continue generating
@@ -1636,7 +1573,7 @@ bool MainFrame::SaveStartingPattern()
       int itop = top.toint();
       int ileft = left.toint();
       int ibottom = bottom.toint();
-      int iright = right.toint();
+      int iright = right.toint();      
       // use XRLE format so the pattern's top left location and the current
       // generation count are stored in the file
       const char *err = WritePattern(tempstart, XRLE_format,
@@ -2429,9 +2366,6 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_SIZE             (                 MainFrame::OnSize)
    EVT_IDLE             (                 MainFrame::OnIdle)
    EVT_TREE_SEL_CHANGED (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
-#ifdef __WXX11__
-   EVT_TREE_KEY_DOWN    (wxID_TREECTRL,   MainFrame::OnDirTreeKey)
-#endif
    EVT_SPLITTER_DCLICK  (wxID_ANY,        MainFrame::OnSashDblClick)
    EVT_TIMER            (ID_ONE_TIMER,    MainFrame::OnOneTimer)
    EVT_CLOSE            (                 MainFrame::OnClose)
@@ -2551,30 +2485,17 @@ void MainFrame::OnMenu(wxCommandEvent& event)
 
 void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
 {
-   /*!!!
+   /* when we have a working go/stop button we may need code like this!!!
    showbanner = false;
    statusptr->ClearMessage();
    viewptr->SetFocus();
-   switch ( event.GetId() ) {
-      case ID_GO_STOP:
-         if (generating) {
-            StopGenerating();
-         } else {
-            GeneratePattern();
-         }
-         break;
-      case ID_HASH:     ToggleHashing(); break;
-      case wxID_NEW:    NewPattern(); break;
-      case wxID_OPEN:   OpenPattern(); break;      // nasty prob on X11!!!
-      case wxID_SAVE:   SavePattern(); break;      // ditto!!!
-      case ID_DRAW:     viewptr->SetCursorMode(curs_pencil); break;
-      case ID_SELECT:   viewptr->SetCursorMode(curs_cross); break;
-      case ID_MOVE:     viewptr->SetCursorMode(curs_hand); break;
-      case ID_ZOOMIN:   viewptr->SetCursorMode(curs_zoomin); break;
-      case ID_ZOOMOUT:  viewptr->SetCursorMode(curs_zoomout); break;
-      case ID_INFO:     ShowPatternInfo(); break;
+   if ( event.GetId() == ID_GO_STOP ) {
+      if (generating) {
+         StopGenerating();
+      } else {
+         GeneratePattern();
+      }
    }
-   UpdateUserInterface(IsActive());
    */
 }
 
@@ -2642,7 +2563,7 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
 void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 {
    #ifdef __WXX11__
-      // don't change focus because it prevents menus staying open!!!
+      // don't change focus here because it prevents menus staying open
       return;
    #endif
    
@@ -2728,19 +2649,6 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
       // changing focus here works on X11 but not on Mac (presumably because
       // wxMac sets focus to treectrl after this call)
       viewptr->SetFocus();
-   }
-}
-
-// this handler is currently used only on X11; it gets called but the
-// key event isn't seen by PatternView::OnKeyDown for some reason!!!
-void MainFrame::OnDirTreeKey(wxTreeEvent& event)
-{
-   if (viewptr) {
-      viewptr->SetFocus();
-      // send key down event to viewptr
-      wxKeyEvent keyevent = event.GetKeyEvent();
-      keyevent.SetEventObject(viewptr);
-      viewptr->GetEventHandler()->ProcessEvent(keyevent);
    }
 }
 
@@ -3088,8 +2996,6 @@ MainFrame::MainFrame()
    #ifdef __WXMAC__
       // this results in a tool bar that is 32 pixels wide (matches STATUS_HT)
       toolBar->SetMargins(4, 8);
-      // if we use ToolButton code:
-      // toolBar->SetMargins(0, 0);
    #elif defined(__WXMSW__)
       // Windows seems to ignore *any* margins!!!
       toolBar->SetMargins(0, 0);
@@ -3114,23 +3020,6 @@ MainFrame::MainFrame()
    tbBitmaps[zoomout_index] = wxBITMAP(zoomout);
    tbBitmaps[info_index] = wxBITMAP(info);
    tbBitmaps[hash_index] = wxBITMAP(hash);
-   
-   /* new tools!!!
-   gostopbutt = new ToolButton(toolBar, ID_GO_STOP, go_index, "Start generating");
-   hashbutt = new ToolButton(toolBar, ID_HASH, hash_index, "Toggle hashing");
-   toolBar->AddSeparator();
-   newbutt = new ToolButton(toolBar, wxID_NEW, new_index, _("New pattern"));
-   openbutt = new ToolButton(toolBar, wxID_OPEN, open_index, _("Open pattern"));
-   savebutt = new ToolButton(toolBar, wxID_SAVE, save_index, _("Save pattern"));
-   toolBar->AddSeparator();
-   drawbutt = new ToolButton(toolBar, ID_DRAW, draw_index, _("Draw"));
-   selbutt = new ToolButton(toolBar, ID_SELECT, sel_index, _("Select"));
-   movebutt = new ToolButton(toolBar, ID_MOVE, move_index, _("Move"));
-   zoominbutt = new ToolButton(toolBar, ID_ZOOMIN, zoomin_index, _("Zoom in"));
-   zoomoutbutt = new ToolButton(toolBar, ID_ZOOMOUT, zoomout_index, _("Zoom out"));
-   toolBar->AddSeparator();
-   infobutt = new ToolButton(toolBar, ID_INFO, info_index, _("Pattern information"));
-   */
 
    #ifdef __WXX11__
       // reduce update probs by using toggle buttons

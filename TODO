@@ -81,6 +81,8 @@ User suggestions:
   and a setvisrect(rect) command to change viewport size and location.
 - Nicer if getrule always returned a standard form; eg. "B3/S23".
   Could then remove horrible CanonicalRule code in wxrule.cpp.
+- Make info window a floating window and keep it open (but update
+  its contents) when user loads another pattern.
 
 [H Koenig]
 - Mulitiple undo/redo.

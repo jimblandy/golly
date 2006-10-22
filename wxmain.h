@@ -116,7 +116,6 @@ private:
    void OnSize(wxSizeEvent& event);
    void OnIdle(wxIdleEvent& event);
    void OnDirTreeSelection(wxTreeEvent& event);
-   void OnDirTreeKey(wxTreeEvent& event);
    void OnSashDblClick(wxSplitterEvent& event);
    void OnOneTimer(wxTimerEvent& event);
    void OnClose(wxCloseEvent& event);
