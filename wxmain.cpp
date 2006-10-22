@@ -1655,12 +1655,14 @@ void MainFrame::GeneratePattern()
             // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
             UpdatePatternAndStatus();
             if (wxGetApp().Poller()->checkevents()) break;
-            whentosee = currmsec + statusptr->GetCurrentDelay();
+            // add delay to current time rather than currmsec
+            // otherwise pauses can occur in Win app???
+            whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
             // process events while we wait
             if (wxGetApp().Poller()->checkevents()) break;
             // don't hog CPU
-            wxMilliSleep(10);
+            wxMilliSleep(1);     // keep small (ie. <= mindelay)
          }
       } else {
          // warp >= 0 so only show results every curralgo->getIncrement() gens
