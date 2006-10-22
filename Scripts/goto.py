@@ -8,9 +8,9 @@
 
 from glife import getstring, validint
 from time import time
+import os
 import golly
 
-global previousgen # store current entry to use as default next time
 # --------------------------------------------------------------------
 
 def goto(gen):
@@ -65,30 +65,33 @@ def goto(gen):
    golly.show("")
 
 # --------------------------------------------------------------------
-# the following code allows previousgen to be initialized
-# the first time goto.py is run, without disturbing the
-# saved default value on successive runs.
-try:
-   if previousgen=="":
-      prevdefault=""
-   else:
-      prevdefault=" (default is " + previousgen + ")"
-except:
-   previousgen=prevdefault=""
-# I didn't find any other way to check if a global had
-# been previously initialized, except maybe
-#  if previousgen not in globals():
-# Apparently the try: ... except: ... syntax is fairly common.
+GotoINIFileName = golly.appdir() + "Scripts/goto.ini" # should maybe use 'join' here?
+previousgen=prevdefault=""
+if os.access(GotoINIFileName, os.F_OK):
+   f=open(GotoINIFileName, 'r')
+   previousgen=f.readline()
+   f.close()
+   # should maybe change validint in __init__.py
+   # (add "if len(s)==0: return False")
+   # to avoid this initial conditional...
+   if len(previousgen):
+      if not validint(previousgen):
+         previousgen=""
+if previousgen!="":
+   prevdefault=" (default is " + previousgen + ")"
 
 gen = getstring("Go to what generation" + prevdefault + "?")
 if len(gen) == 0:
    gen = previousgen
 if len(gen) == 0:
    golly.show("")
-elif not validint(gen):
-   if gen!="+" and gen!="-":
-      golly.error('Sorry, but "' + gen + '" is not a valid integer.')
+elif gen=="+" or gen=="-":
    previousgen="" # provides a way to clear the default
+elif not validint(gen):
+   golly.error('Sorry, but "' + gen + '" is not a valid integer.')
 else:
    previousgen=gen
    goto(gen.replace(",",""))
+f=open(GotoINIFileName, 'w')
+f.write(previousgen)
+f.close()

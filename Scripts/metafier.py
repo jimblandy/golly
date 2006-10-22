@@ -7,6 +7,7 @@
 # Original author: Dave Greene, 12 June 2006.
 # Modified by Andrew Trevorrow, 20 July 2006 (faster, simpler and
 # doesn't change the current clipboard).
+#
 # Dave Greene, 23 June 2006:  added non-Conway's-Life rule support.
 # Also reduced the script size by a factor of six, at the expense of
 # adding a moderate-sized [constant] performance hit at the start
@@ -21,12 +22,15 @@
 # two or more, by replacing the four main types of P46 oscillators
 # [which are often quoted as flat patterns] with predefined library
 # versions in the correct phase; see samples in the slide-24 section.
+#
 # 24 June 2006: the script now saves a reference copy of the OFFcell
 # and (particularly) the slow-to-construct ONcell, so these only have
 # to be constructed from scratch once, the first time the script runs.
+#
+# If metapixel-ON.rle and metapixel-OFF.rle become corrupted, they
+# should be deleted so the script can re-generate them.
 
 import os
-from os import *
 import golly as g
 from glife import *
 
@@ -63,7 +67,7 @@ def main():
 
     # load or generate the OFFcell tile:
     OFFcellFileName = g.appdir() + "Scripts/metapixel-OFF.rle"
-    if os.access(OFFcellFileName, F_OK):
+    if os.access(OFFcellFileName, os.F_OK):
         g.show("Opening from saved pattern file.")
         OFFcell = pattern(g.transform(g.load(OFFcellFileName),-5,-5,1,0,0,1))
     else:
@@ -735,7 +739,7 @@ def main():
 
     # load or generate the ONcell tile, based on the OFFcell tile:
     ONcellFileName = g.appdir() + "Scripts/metapixel-ON.rle"
-    if os.access(ONcellFileName, F_OK):
+    if os.access(ONcellFileName, os.F_OK):
         g.show("Opening metapixel-ON from saved pattern file.")
         g.open(ONcellFileName)
         ONcell = pattern(g.transform(g.load(ONcellFileName),-5,-5,1,0,0,1))
@@ -749,7 +753,11 @@ def main():
         # add rest of pattern after the center area is filled in
         # and p184 HWSS guns are in the same phase (3680 = 184 * 40)
         ONcell = all + CellCenter[3680]
-        ONcell.save (ONcellFileName, "Metapixel ON cell: Brice Due, Spring 2006")
+        try:
+           ONcell.save (ONcellFileName, "Metapixel ON cell: Brice Due, Spring 2006")
+        except:
+           # if tile can't be saved, it will be rebuilt next time
+           pass
     
     OFFcell += RuleBits; ONcell += RuleBits
     
