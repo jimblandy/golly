@@ -4,11 +4,13 @@
 # generation is less than the current generation then we go back
 # to the starting generation (normally 0) and advance to the target.
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
+# Updated Sept-Oct 2006 -- XRLE support and reusable default value.
 
 from glife import getstring, validint
 from time import time
 import golly
 
+global previousgen # store current entry to use as default next time
 # --------------------------------------------------------------------
 
 def goto(gen):
@@ -41,7 +43,8 @@ def goto(gen):
       # that set the gen count
       currgen = int(golly.getgen())
       if newgen < currgen:
-         golly.error("Can't go back any further.")
+         golly.error("Can't go back any further; pattern was saved "\
+         + "at generation " + str(currgen) + ".")
          return
    
    golly.show("Hit escape to abort...")
@@ -62,11 +65,30 @@ def goto(gen):
    golly.show("")
 
 # --------------------------------------------------------------------
+# the following code allows previousgen to be initialized
+# the first time goto.py is run, without disturbing the
+# saved default value on successive runs.
+try:
+   if previousgen=="":
+      prevdefault=""
+   else:
+      prevdefault=" (default is " + previousgen + ")"
+except:
+   previousgen=prevdefault=""
+# I didn't find any other way to check if a global had
+# been previously initialized, except maybe
+#  if previousgen not in globals():
+# Apparently the try: ... except: ... syntax is fairly common.
 
-gen = getstring("Go to this generation:")
+gen = getstring("Go to what generation" + prevdefault + "?")
+if len(gen) == 0:
+   gen = previousgen
 if len(gen) == 0:
    golly.show("")
 elif not validint(gen):
-   golly.error('Sorry, but "' + gen + '" is not a valid integer.')
+   if gen!="+" and gen!="-":
+      golly.error('Sorry, but "' + gen + '" is not a valid integer.')
+   previousgen="" # provides a way to clear the default
 else:
+   previousgen=gen
    goto(gen.replace(",",""))
