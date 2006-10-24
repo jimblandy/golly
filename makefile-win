@@ -16,7 +16,7 @@
 WXDIR = c:\wxWidgets
 
 ### Change the next line depending on where you installed Python:
-PYTHON_DIR = c:\Python24
+PYTHON_DIR = c:\Python25
 
 ### Variables: ###
 VERSION = 1.1
