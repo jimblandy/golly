@@ -42,7 +42,7 @@ def main():
 
     # build a patch pattern based on the current rule
     #  that fixes the appropriate broken eaters in the rules table
-    r1, r2 = g.getrule().split("/")
+    r1, r2 = g.getrule().upper().split("/")
     if r1[:1] == "B":
         Bvalues, Svalues = r1.replace("B",""), r2.replace("S","")
     elif r1[:1] == "S":

@@ -105,6 +105,11 @@ const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 
 #ifdef USE_PYTHON_DYNAMIC
 
+#ifdef __WXMSW__
+   // avoid warning on Windows
+   #undef PyRun_SimpleString
+#endif
+
 #include "wx/dynlib.h"     // for wxDynamicLibrary
 
 // declare G_* wrappers for the functions we want to use from Python lib
@@ -267,7 +272,7 @@ static bool LoadPythonLib()
       str +=         _("\notherwise change the version numbers and try again.");
       #ifdef __WXMSW__
          str +=      _("\nDepending on where you installed Python you might have");
-         str +=      _("\nto enter a full path like C:\Python25\python25.dll.");
+         str +=      _("\nto enter a full path like C:\\Python25\\python25.dll.");
       #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Python library"),
