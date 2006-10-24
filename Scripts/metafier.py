@@ -772,7 +772,7 @@ def main():
   
     for j in xrange(selheight):
         for i in xrange(selwidth):
-            golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile." \
+            golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile" \
               + " in a " + str(selwidth) + " by " + str(selheight) + " rectangle.")
             if livecell[i][j]:
                 ONcell.put(2048 * i - 5, 2048 * j - 5)

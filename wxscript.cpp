@@ -263,8 +263,12 @@ static bool LoadPythonLib()
       // on Windows pythonlib should be something like "python24.dll"
       // and on Linux it should be something like "libpython2.4.so"
       wxBell();
-      wxString str = _("If Python isn't installed then you'll have to Cancel,\n");
-      str +=         _("otherwise change the version numbers and try again.");
+      wxString str = _("If Python isn't installed then you'll have to Cancel,");
+      str +=         _("\notherwise change the version numbers and try again.");
+      #ifdef __WXMSW__
+         str +=      _("\nDepending on where you installed Python you might have");
+         str +=      _("\nto enter a full path like C:\Python25\python25.dll.");
+      #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Python library"),
                                 pythonlib, wxOK | wxCANCEL );
