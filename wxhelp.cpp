@@ -32,7 +32,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for helpx/y/wd/ht, helpfontsize, etc
+#include "wxprefs.h"       // for helpx/y/wd/ht, helpfontsize, gollydir, etc
+#include "wxscript.h"      // for inscript
 #include "wxhelp.h"
 
 // -----------------------------------------------------------------------------
@@ -85,6 +86,8 @@ public:
       : wxHtmlWindow(parent, id, pos, size, style) { }
 
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
+
+   void CheckAndLoad(const wxString &filepath);
 
    void StartTimer() {
       htmltimer = new wxTimer(this, wxID_ANY);
@@ -259,7 +262,7 @@ void ShowHelp(const wxString &filepath)
    if (helpptr) {
       // help window exists so bring it to front and display given file
       if (!filepath.IsEmpty()) {
-         htmlwin->LoadPage(filepath);
+         htmlwin->CheckAndLoad(filepath);
          UpdateHelpButtons();
       }
       helpptr->Raise();
@@ -277,9 +280,9 @@ void ShowHelp(const wxString &filepath)
       htmlwin->SetRelatedFrame(helpptr, _("%s"));
       
       if (!filepath.IsEmpty()) {
-         htmlwin->LoadPage(filepath);
+         htmlwin->CheckAndLoad(filepath);
       } else {
-         htmlwin->LoadPage(currhelp);
+         htmlwin->CheckAndLoad(currhelp);
       }
 
       helpptr->Show(true);
@@ -393,6 +396,10 @@ void AddEOL(wxString &str)
 
 void LoadLexiconPattern(const wxHtmlCell *htmlcell)
 {
+   if (inscript) {
+      Warning(_("A script is currently running."));
+      return;
+   }
    if (mainptr->generating) {
       Warning(_("Another pattern is currently generating."));
       return;
@@ -472,10 +479,24 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       LoadLexiconPattern( link.GetHtmlCell() );
    } else {
       // assume it's a link to a local target or another help file
-      LoadPage(url);
+      CheckAndLoad(url);
       if ( helpptr && helpptr->IsActive() ) {
          UpdateHelpButtons();
       }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::CheckAndLoad(const wxString &filepath)
+{
+   if ( filepath.StartsWith(_("Help/")) ) {
+      // prepend location of Golly so user can open help while running a script
+      wxString fullpath = gollydir + filepath;
+      LoadPage(fullpath);
+   } else {
+      // assume full path or local link
+      LoadPage(filepath);
    }
 }
 
@@ -589,7 +610,7 @@ void HtmlView::OnSize(wxSizeEvent& event)
 
    wxString currpage = GetOpenedPage();
    if ( !currpage.IsEmpty() ) {
-      LoadPage(currpage);        // reload page
+      CheckAndLoad(currpage);    // reload page
       Scroll(x, y);              // scroll to old position
    }
    
@@ -628,7 +649,7 @@ void ShowAboutBox()
                                  #endif
                                  wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
    html->SetBorders(0);
-   html->LoadPage(_("Help/about.html"));
+   html->CheckAndLoad(_("Help/about.html"));
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                  html->GetInternalRepresentation()->GetHeight());
    

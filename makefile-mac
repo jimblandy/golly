@@ -201,7 +201,7 @@ readpattern.h bigint.h wxgolly.h wxutils.h wxprefs.h
 
 $(OBJDIR)/wxhelp.o: wxhelp.cpp wxhelp.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxprefs.h
+wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxhelp.cpp
 
 $(OBJDIR)/wxstatus.o: wxstatus.cpp wxstatus.h \

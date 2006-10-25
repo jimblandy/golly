@@ -38,6 +38,8 @@ bool ChangePrefs();
 
 // Global preferences:
 
+extern wxString gollydir;        // path of directory containing app
+
 extern int mainx;                // main window's location
 extern int mainy;
 extern int mainwd;               // main window's size

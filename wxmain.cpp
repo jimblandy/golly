@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
 #include "wxutils.h"       // for Warning, Fatal, etc
-#include "wxprefs.h"       // for SavePrefs, etc
+#include "wxprefs.h"       // for gollydir, SavePrefs, etc
 #include "wxrule.h"        // for ChangeRule, GetRuleName
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
@@ -2765,8 +2765,6 @@ MainFrame::MainFrame()
    // initialize hidden files to be in same folder as Golly app;
    // they must be absolute paths in case they are used from a script command when
    // the current directory has been changed to the location of the script file
-   wxString gollydir = wxFileName::GetCwd();
-   if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
    tempstart = gollydir + wxT(".golly_start");
    scriptfile = gollydir + wxT(".golly_clip.py");
    clipfile = gollydir + wxT(".golly_clipboard");

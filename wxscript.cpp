@@ -62,7 +62,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for hashing, pythonlib, etc
+#include "wxprefs.h"       // for hashing, pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxscript.h"
@@ -75,7 +75,6 @@ bool pyinited = false;     // Py_Initialize has been successfully called?
 bool inscript = false;     // a script is running?
 bool autoupdate;           // update display after each change to current universe?
 wxString pyerror;          // Python error message
-wxString gollyloc;         // location of Golly app
 wxString scriptloc;        // location of script file
 wxString scriptchars;      // non-escape chars saved by PassKeyToScript
 
@@ -2084,7 +2083,7 @@ static PyObject *golly_appdir(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("s", (const char*)gollyloc.mb_str(wxConvLocal));
+   return Py_BuildValue("s", (const char*)gollydir.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2273,7 +2272,7 @@ bool InitPython()
 
       // build absolute path to Golly's Scripts folder and add to Python's
       // import search list so scripts can import glife from anywhere
-      wxString scriptsdir = gollyloc + _("Scripts");
+      wxString scriptsdir = gollydir + _("Scripts");
       scriptsdir.Replace(wxT("\\"), wxT("\\\\"));
       wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
       if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
@@ -2414,8 +2413,6 @@ void RunScript(const wxString& filename)
    bool oldtool = mainptr->GetToolBar()->IsShown();
 
    // temporarily change current directory to location of script
-   gollyloc = wxFileName::GetCwd();
-   if ( gollyloc.Last() != wxFILE_SEP_PATH ) gollyloc += wxFILE_SEP_PATH;
    wxFileName fullname(filename);
    fullname.Normalize();
    scriptloc = fullname.GetPath();
@@ -2437,7 +2434,7 @@ void RunScript(const wxString& filename)
    inscript = false;
 
    // restore current directory to location of Golly app
-   wxSetWorkingDirectory(gollyloc);
+   wxSetWorkingDirectory(gollydir);
    
    // display any Python error message
    if (CheckPythonError()) {
@@ -2521,7 +2518,7 @@ void FinishScripting()
    // called when main window is closing (ie. app is quitting)
    if (inscript) {
       AbortScript();
-      wxSetWorkingDirectory(gollyloc);
+      wxSetWorkingDirectory(gollydir);
       inscript = false;
    }
    

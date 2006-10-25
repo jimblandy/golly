@@ -96,6 +96,8 @@ const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
 // initialize exported preferences:
 
+wxString gollydir;               // path of directory containing app
+
 int mainx = 30;                  // main window's initial location
 int mainy = 40;
 int mainwd = 800;                // main window's initial size
@@ -193,7 +195,6 @@ wxCursor *currcurs;              // set to one of the above cursors
 
 // local (ie. non-exported) globals:
 
-wxString appdir;                 // path of directory containing app
 bool showtips = true;            // show tool tips?
 int mingridindex;                // mingridmag - 2
 int newcursindex;
@@ -711,11 +712,15 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht)
 
 void GetPrefs()
 {
-   appdir = FindAppDir();
-   opensavedir = appdir + PATT_DIR;
-   rundir = appdir + SCRIPT_DIR;
-   patterndir = appdir + PATT_DIR;
-   scriptdir = appdir + SCRIPT_DIR;
+   //!!! gollydir = FindAppDir();
+   // use this simpler code???
+   gollydir = wxFileName::GetCwd();
+   if ( gollydir.Last() != wxFILE_SEP_PATH ) gollydir += wxFILE_SEP_PATH;
+   
+   opensavedir = gollydir + PATT_DIR;
+   rundir = gollydir + SCRIPT_DIR;
+   patterndir = gollydir + PATT_DIR;
+   scriptdir = gollydir + SCRIPT_DIR;
    
    #ifdef __WXMSW__
       pythonlib = wxT("python24.dll");
@@ -939,28 +944,28 @@ void GetPrefs()
          opensavedir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(opensavedir) ) {
             // reset to supplied pattern directory
-            opensavedir = appdir + PATT_DIR;
+            opensavedir = gollydir + PATT_DIR;
          }
 
       } else if (strcmp(keyword, "run_dir") == 0) {
          rundir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(rundir) ) {
             // reset to supplied script directory
-            rundir = appdir + SCRIPT_DIR;
+            rundir = gollydir + SCRIPT_DIR;
          }
 
       } else if (strcmp(keyword, "pattern_dir") == 0) {
          patterndir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(patterndir) ) {
             // reset to supplied pattern directory
-            patterndir = appdir + PATT_DIR;
+            patterndir = gollydir + PATT_DIR;
          }
 
       } else if (strcmp(keyword, "script_dir") == 0) {
          scriptdir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(scriptdir) ) {
             // reset to supplied script directory
-            scriptdir = appdir + SCRIPT_DIR;
+            scriptdir = gollydir + SCRIPT_DIR;
          }
 
       } else if (strcmp(keyword, "python_lib") == 0) {
