@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/filename.h"   // for wxFileName
-#include "wx/stdpaths.h"   // for wxStandardPaths
 #include "wx/propdlg.h"    // for wxPropertySheetDialog
 #include "wx/colordlg.h"   // for wxColourDialog
 #include "wx/bookctrl.h"   // for wxBookCtrlBase
@@ -606,52 +605,6 @@ void SavePrefs()
 
 // -----------------------------------------------------------------------------
 
-wxString FindAppDir()
-{
-   // return path to app's directory, terminated by path separator
-   wxString argv0 = wxGetApp().argv[0];
-   wxString currdir = wxGetCwd();
-
-   #ifdef __WXMSW__
-
-      // on Windows we don't need to use argv0 or currdir
-      wxStandardPaths wxstdpaths;
-      wxString str = wxstdpaths.GetDataDir();
-      if (str.Last() != wxFILE_SEP_PATH) str += wxFILE_SEP_PATH;
-      return str;
-
-   #elif defined(__WXMAC__)
-
-      // on Mac OS X argv0 is an absolute path to the executable:
-      // eg. "/Volumes/HD/Apps/foo.app/Contents/MacOS/foo"
-      // and currdir is an absolute path to the bundled app's location:
-      // eg. "/Volumes/HD/Apps"
-      if (currdir.Last() != wxFILE_SEP_PATH) currdir += wxFILE_SEP_PATH;
-      return currdir;
-
-   #elif defined(__UNIX__)
-
-      // argv0 is 1st string on command line: eg. "./golly" or "/usr/apps/golly"
-      // and currdir is the current working directory where the command was
-      // invoked, which is not necessarily where the app is located
-      wxString str;
-      if (wxIsAbsolutePath(argv0)) {
-         str = wxPathOnly(argv0);
-      } else {
-         // relative path so remove "./" prefix if present
-         if (argv0.StartsWith(wxT("./"))) argv0 = argv0.AfterFirst('/');
-         if (currdir.Last() != wxFILE_SEP_PATH) currdir += wxFILE_SEP_PATH;
-         str = currdir + argv0;
-         str = wxPathOnly(str);
-      }
-      if (str.Last() != wxFILE_SEP_PATH) str += wxFILE_SEP_PATH;
-      return str;
-   
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
 void AddDefaultRules()
 {
    namedrules.Add(wxT("3-4 Life|B34/S34"));
@@ -712,11 +665,6 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht)
 
 void GetPrefs()
 {
-   //!!! gollydir = FindAppDir();
-   // use this simpler code???
-   gollydir = wxFileName::GetCwd();
-   if ( gollydir.Last() != wxFILE_SEP_PATH ) gollydir += wxFILE_SEP_PATH;
-   
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
    patterndir = gollydir + PATT_DIR;

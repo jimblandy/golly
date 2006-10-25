@@ -2361,16 +2361,21 @@ void MainFrame::ShowPatternInfo()
 // event table and handlers for main window:
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
-   EVT_MENU             (wxID_ANY,        MainFrame::OnMenu)
-   EVT_BUTTON           (wxID_ANY,        MainFrame::OnButton)
-   EVT_SET_FOCUS        (                 MainFrame::OnSetFocus)
-   EVT_ACTIVATE         (                 MainFrame::OnActivate)
-   EVT_SIZE             (                 MainFrame::OnSize)
-   EVT_IDLE             (                 MainFrame::OnIdle)
-   EVT_TREE_SEL_CHANGED (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
-   EVT_SPLITTER_DCLICK  (wxID_ANY,        MainFrame::OnSashDblClick)
-   EVT_TIMER            (ID_ONE_TIMER,    MainFrame::OnOneTimer)
-   EVT_CLOSE            (                 MainFrame::OnClose)
+   EVT_MENU                (wxID_ANY,        MainFrame::OnMenu)
+   EVT_BUTTON              (wxID_ANY,        MainFrame::OnButton)
+   EVT_SET_FOCUS           (                 MainFrame::OnSetFocus)
+   EVT_ACTIVATE            (                 MainFrame::OnActivate)
+   EVT_SIZE                (                 MainFrame::OnSize)
+   EVT_IDLE                (                 MainFrame::OnIdle)
+#ifdef __WXMAC__
+   EVT_TREE_ITEM_EXPANDED  (wxID_TREECTRL,   MainFrame::OnDirTreeExpand)
+   // wxMac bug??? EVT_TREE_ITEM_COLLAPSED doesn't get called
+   EVT_TREE_ITEM_COLLAPSING(wxID_TREECTRL,   MainFrame::OnDirTreeCollapse)
+#endif
+   EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
+   EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
+   EVT_TIMER               (ID_ONE_TIMER,    MainFrame::OnOneTimer)
+   EVT_CLOSE               (                 MainFrame::OnClose)
 END_EVENT_TABLE()
 
 void MainFrame::OnMenu(wxCommandEvent& event)
@@ -2582,6 +2587,24 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
    #endif
 }
 
+void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
+{
+   if ((generating || inscript) && (showpatterns || showscripts)) {
+      // send idle event so wxGenericDirCtrl gets updated
+      wxIdleEvent idleevent;
+      wxGetApp().SendIdleEvents(this, idleevent);
+   }
+}
+
+void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
+{
+   if ((generating || inscript) && (showpatterns || showscripts)) {
+      // send idle event so wxGenericDirCtrl gets updated
+      wxIdleEvent idleevent;
+      wxGetApp().SendIdleEvents(this, idleevent);
+   }
+}
+
 void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 {
    // note that viewptr will be NULL if called from MainFrame::MainFrame
@@ -2619,7 +2642,13 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
          */
       } else {
          // user clicked on a file name
-         if ( generating ) {
+         if ( inscript ) {
+            // use Warning because statusptr->ErrorMessage does nothing if inscript
+            if ( showpatterns )
+               Warning(_("Cannot load pattern while a script is running."));
+            else
+               Warning(_("Cannot run script while another one is running."));
+         } else if ( generating ) {
             if ( showpatterns )
                statusptr->ErrorMessage(_("Cannot load pattern while generating."));
             else

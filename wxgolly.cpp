@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // defines StatusBar class
 #include "wxview.h"        // defines PatternView class
 #include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
-#include "wxprefs.h"       // for GetPrefs
+#include "wxprefs.h"       // for GetPrefs, gollydir
 #include "wxscript.h"      // for IsScript
 
 #ifdef __WXMSW__
@@ -120,11 +120,11 @@ public:
 
 void CallYield()
 {
-   wxGetApp().Yield(true);
    if (mainptr->IsActive()) {
       // make sure viewport keeps keyboard focus
       viewptr->SetFocus();
    }
+   wxGetApp().Yield(true);
 }
 
 int wx_poll::checkevents()
@@ -265,6 +265,10 @@ bool GollyApp::OnInit()
    // we can't open Help files and prefs file gets saved in wrong location
    SetAppDirectory( wxString(argv[0]).mb_str(wxConvLocal) );
 
+   // now set global gollydir for use in GetPrefs and elsewhere
+   gollydir = wxFileName::GetCwd();
+   if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
+   
    // let non-wx modules call Fatal, Warning, BeginProgress, etc
    lifeerrors::seterrorhandler(&wxerrhandler);
 
