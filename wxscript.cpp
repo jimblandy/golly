@@ -1954,6 +1954,8 @@ static PyObject *golly_setcursor(PyObject *self, PyObject *args)
    wxCursor* curs = IndexToCursor(newindex);
    if (curs) {
       viewptr->SetCursorMode(curs);
+      // see the cursor change, including in tool bar
+      mainptr->UpdateUserInterface(mainptr->IsActive());
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad setcursor call: unexpected cursor index.");
       return NULL;
@@ -2405,8 +2407,9 @@ void RunScript(const wxString& filename)
    pyerror.Clear();
    scriptchars.Clear();
    autoupdate = false;
+   wxGetApp().PollerReset();
 
-   // save some settings for restoring below
+   // save some settings for restoring below if script is aborted
    bool oldscripts = showscripts;
    bool oldpatterns = showpatterns;
    bool oldstatus = mainptr->StatusVisible();
@@ -2419,17 +2422,8 @@ void RunScript(const wxString& filename)
    if ( scriptloc.Last() != wxFILE_SEP_PATH ) scriptloc += wxFILE_SEP_PATH;
    wxSetWorkingDirectory(scriptloc);
    
-   // let user know we're busy running a script
-   #ifdef __WXMAC__
-      wxSetCursor(*wxHOURGLASS_CURSOR);
-   #endif
-   viewptr->SetCursor(*wxHOURGLASS_CURSOR);
-   mainptr->UpdateToolBar(false);
-   mainptr->EnableAllMenus(false);
-   
-   wxGetApp().PollerReset();
-
    inscript = true;
+   mainptr->UpdateUserInterface(mainptr->IsActive());
    ExecuteScript( fullname.GetFullPath() );
    inscript = false;
 
@@ -2446,7 +2440,6 @@ void RunScript(const wxString& filename)
    }
       
    // update menu bar, cursor, viewport, status bar, tool bar, etc
-   mainptr->EnableAllMenus(true);
    mainptr->UpdateEverything();
 }
 

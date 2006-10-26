@@ -268,12 +268,13 @@ void MainFrame::UpdateToolBar(bool active)
 {
    wxToolBar *tbar = GetToolBar();
    if (tbar && tbar->IsShown()) {
-      if (viewptr->waitingforclick || inscript) active = false;
+      if (viewptr->waitingforclick) active = false;
             
       #ifdef __WXX11__
          // avoid problems by first toggling off all buttons
          tbar->ToggleTool(ID_GO, false);
          tbar->ToggleTool(ID_STOP, false);
+         tbar->ToggleTool(ID_HASH, false);
          tbar->ToggleTool(wxID_NEW, false);
          tbar->ToggleTool(wxID_OPEN, false);
          tbar->ToggleTool(wxID_SAVE, false);
@@ -284,14 +285,17 @@ void MainFrame::UpdateToolBar(bool active)
          tbar->ToggleTool(ID_MOVE, false);
          tbar->ToggleTool(ID_ZOOMIN, false);
          tbar->ToggleTool(ID_ZOOMOUT, false);
-         tbar->ToggleTool(ID_HASH, false);
          tbar->ToggleTool(ID_INFO, false);
       #endif
-      tbar->EnableTool(ID_GO,             active && !generating);
-      tbar->EnableTool(ID_STOP,           active && generating);
-      tbar->EnableTool(wxID_NEW,          active && !generating);
-      tbar->EnableTool(wxID_OPEN,         active && !generating);
-      tbar->EnableTool(wxID_SAVE,         active && !generating);
+      
+      bool busy = generating || inscript;
+      
+      tbar->EnableTool(ID_GO,             active && !busy);
+      tbar->EnableTool(ID_STOP,           active && busy);
+      tbar->EnableTool(ID_HASH,           active && !busy);
+      tbar->EnableTool(wxID_NEW,          active && !busy);
+      tbar->EnableTool(wxID_OPEN,         active && !busy);
+      tbar->EnableTool(wxID_SAVE,         active && !busy);
       tbar->EnableTool(ID_SHOW_PATTERNS,  active);
       tbar->EnableTool(ID_SHOW_SCRIPTS,   active);
       tbar->EnableTool(ID_DRAW,           active);
@@ -299,7 +303,6 @@ void MainFrame::UpdateToolBar(bool active)
       tbar->EnableTool(ID_MOVE,           active);
       tbar->EnableTool(ID_ZOOMIN,         active);
       tbar->EnableTool(ID_ZOOMOUT,        active);
-      tbar->EnableTool(ID_HASH,           active && !generating);
       tbar->EnableTool(ID_INFO,           active && !currfile.IsEmpty());
 
       // call ToggleTool for tools added via AddCheckTool or AddRadioTool
@@ -362,7 +365,6 @@ void MainFrame::UpdateMenuItems(bool active)
 {
    wxMenuBar *mbar = GetMenuBar();
    wxToolBar *tbar = GetToolBar();
-   bool textinclip = ClipboardHasText();
    if (mbar) {
       if (viewptr->waitingforclick) active = false;
       
@@ -374,57 +376,59 @@ void MainFrame::UpdateMenuItems(bool active)
          }
       #endif
       
-      mbar->Enable(wxID_NEW,           active && !generating);
-      mbar->Enable(wxID_OPEN,          active && !generating);
-      mbar->Enable(ID_OPEN_CLIP,       active && !generating && textinclip);
-      mbar->Enable(ID_OPEN_RECENT,     active && !generating && numpatterns > 0);
+      bool textinclip = ClipboardHasText();
+      bool selexists = viewptr->SelectionExists();
+      bool busy = generating || inscript;
+      
+      mbar->Enable(wxID_NEW,           active && !busy);
+      mbar->Enable(wxID_OPEN,          active && !busy);
+      mbar->Enable(ID_OPEN_CLIP,       active && !busy && textinclip);
+      mbar->Enable(ID_OPEN_RECENT,     active && !busy && numpatterns > 0);
       mbar->Enable(ID_SHOW_PATTERNS,   active);
       mbar->Enable(ID_PATTERN_DIR,     active);
-      mbar->Enable(wxID_SAVE,          active && !generating);
+      mbar->Enable(wxID_SAVE,          active && !busy);
       mbar->Enable(ID_SAVE_XRLE,       active);
-      mbar->Enable(ID_RUN_SCRIPT,      active && !generating);
-      mbar->Enable(ID_RUN_CLIP,        active && !generating && textinclip);
-      mbar->Enable(ID_RUN_RECENT,      active && !generating && numscripts > 0);
+      mbar->Enable(ID_RUN_SCRIPT,      active && !busy);
+      mbar->Enable(ID_RUN_CLIP,        active && !busy && textinclip);
+      mbar->Enable(ID_RUN_RECENT,      active && !busy && numscripts > 0);
       mbar->Enable(ID_SHOW_SCRIPTS,    active);
       mbar->Enable(ID_SCRIPT_DIR,      active);
-      mbar->Enable(wxID_PREFERENCES,   !generating);
+      mbar->Enable(wxID_PREFERENCES,   !busy);
 
-      mbar->Enable(ID_CUT,       active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_COPY,      active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_CLEAR,     active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_OUTSIDE,   active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_PASTE,     active && !generating && textinclip);
-      mbar->Enable(ID_PASTE_SEL, active && !generating &&
-                                 viewptr->SelectionExists() && textinclip);
+      mbar->Enable(ID_CUT,       active && !busy && selexists);
+      mbar->Enable(ID_COPY,      active && !busy && selexists);
+      mbar->Enable(ID_CLEAR,     active && !busy && selexists);
+      mbar->Enable(ID_OUTSIDE,   active && !busy && selexists);
+      mbar->Enable(ID_PASTE,     active && !busy && textinclip);
+      mbar->Enable(ID_PASTE_SEL, active && !busy && textinclip && selexists);
       mbar->Enable(ID_PLOCATION, active);
       mbar->Enable(ID_PMODE,     active);
       mbar->Enable(ID_SELALL,    active);
-      mbar->Enable(ID_REMOVE,    active && viewptr->SelectionExists());
-      mbar->Enable(ID_SHRINK,    active && viewptr->SelectionExists());
-      mbar->Enable(ID_RANDOM,    active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_FLIPUD,    active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_FLIPLR,    active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_ROTATEC,   active && !generating && viewptr->SelectionExists());
-      mbar->Enable(ID_ROTATEA,   active && !generating && viewptr->SelectionExists());
+      mbar->Enable(ID_REMOVE,    active && selexists);
+      mbar->Enable(ID_SHRINK,    active && selexists);
+      mbar->Enable(ID_RANDOM,    active && !busy && selexists);
+      mbar->Enable(ID_FLIPUD,    active && !busy && selexists);
+      mbar->Enable(ID_FLIPLR,    active && !busy && selexists);
+      mbar->Enable(ID_ROTATEC,   active && !busy && selexists);
+      mbar->Enable(ID_ROTATEA,   active && !busy && selexists);
       mbar->Enable(ID_CMODE,     active);
 
-      mbar->Enable(ID_GO,        active && !generating);
-      mbar->Enable(ID_STOP,      active && generating);
-      mbar->Enable(ID_NEXT,      active && !generating);
-      mbar->Enable(ID_STEP,      active && !generating);
-      mbar->Enable(ID_RESET,     active && !generating &&
-                                 curralgo->getGeneration() > startgen);
+      mbar->Enable(ID_GO,        active && !busy);
+      mbar->Enable(ID_STOP,      active && busy);
+      mbar->Enable(ID_NEXT,      active && !busy);
+      mbar->Enable(ID_STEP,      active && !busy);
+      mbar->Enable(ID_RESET,     active && !busy && curralgo->getGeneration() > startgen);
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
-      mbar->Enable(ID_HASH,      active && !generating);
+      mbar->Enable(ID_HASH,      active && !busy);
       mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
       mbar->Enable(ID_HINFO,     active && curralgo->hyperCapable());
-      mbar->Enable(ID_RULE,      active && !generating);
+      mbar->Enable(ID_RULE,      active && !busy);
 
       mbar->Enable(ID_FULL,      active);
       mbar->Enable(ID_FIT,       active);
-      mbar->Enable(ID_FIT_SEL,   active && viewptr->SelectionExists());
+      mbar->Enable(ID_FIT_SEL,   active && selexists);
       mbar->Enable(ID_MIDDLE,    active);
       mbar->Enable(ID_RESTORE00, active && (viewptr->originx != bigint::zero ||
                                             viewptr->originy != bigint::zero));
@@ -491,13 +495,16 @@ void MainFrame::UpdateUserInterface(bool active)
 // update everything in main window, and menu bar and cursor
 void MainFrame::UpdateEverything()
 {
-   if (inscript) return;
-
    if (IsIconized()) {
       // main window has been minimized, so only update menu bar items
       UpdateMenuItems(false);
       return;
    }
+
+   // update tool bar, menu bar and cursor
+   UpdateUserInterface(IsActive());
+
+   if (inscript) return;
 
    int wd, ht;
    GetClientSize(&wd, &ht);      // includes status bar and viewport
@@ -512,9 +519,6 @@ void MainFrame::UpdateEverything()
       statusptr->Refresh(false, NULL);
       statusptr->Update();
    }
-   
-   // update tool bar, menu bar and cursor
-   UpdateUserInterface(IsActive());
 }
 
 // only update viewport and status bar
@@ -1467,7 +1471,7 @@ void MainFrame::UpdateWarp()
 
 void MainFrame::ShowPrefsDialog()
 {
-   if (generating || viewptr->waitingforclick) return;
+   if (inscript || generating || viewptr->waitingforclick) return;
    
    if (ChangePrefs()) {
       // user hit OK button
@@ -1696,7 +1700,11 @@ void MainFrame::GeneratePattern()
 
 void MainFrame::StopGenerating()
 {
-   if (generating) wxGetApp().PollerInterrupt();
+   if (inscript) {
+      PassKeyToScript(WXK_ESCAPE);
+   } else if (generating) {
+      wxGetApp().PollerInterrupt();
+   }
 }
 
 void MainFrame::DisplayTimingInfo()

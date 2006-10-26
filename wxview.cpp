@@ -573,7 +573,11 @@ void PatternView::ZoomInPos(int x, int y)
    TestAutoFit();
    if (currview.getmag() < MAX_MAG) {
       currview.zoom(x, y);
+      // allow mouse interaction if script is running
+      bool saveinscript = inscript;
+      inscript = false;
       mainptr->UpdateEverything();
+      inscript = saveinscript;
    } else {
       wxBell();   // can't zoom in any further
    }
@@ -584,20 +588,24 @@ void PatternView::ZoomOutPos(int x, int y)
    // zoom out so that clicked cell stays under cursor
    TestAutoFit();
    currview.unzoom(x, y);
+   // allow mouse interaction if script is running
+   bool saveinscript = inscript;
+   inscript = false;
    mainptr->UpdateEverything();
+   inscript = saveinscript;
 }
 
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
-   // user has clicked somewhere in viewport
-   if (inscript) {
-      // best to prevent mouse use while script is running???
-      return;
-   }
-   
+   // user has clicked somewhere in viewport   
    if (currcurs == curs_pencil) {
+      if (inscript) {
+         // statusptr->ErrorMessage does nothing if inscript is true
+         Warning(_("Drawing is not allowed while a script is running."));
+         return;
+      }
       if (mainptr->generating) {
-         statusptr->ErrorMessage(_("Drawing is not allowed while generating."));
+         statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
          return;
       }
       if (currview.getmag() < 0) {
@@ -607,6 +615,11 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
       StartDrawingCells(x, y);
 
    } else if (currcurs == curs_cross) {
+      if (inscript) {
+         // statusptr->ErrorMessage does nothing if inscript is true
+         Warning(_("Selecting is not allowed while a script is running."));
+         return;
+      }
       TestAutoFit();
       StartSelectingCells(x, y, shiftdown);
 
@@ -2206,14 +2219,12 @@ bool PatternView::PointInView(int x, int y)
 
 void PatternView::CheckCursor(bool active)
 {
-   if (inscript) return;    // don't change cursor while script is running
    if (active) {
       // make sure cursor is up to date
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
       if (PointInView(pt.x, pt.y)) {
          #ifdef __WXMAC__
-            // need both calls to fix Mac probs after toggling status/tool bar;
-            // test if bug still exists in CVS HEAD!!!
+            // wxMac bug??? need this to fix probs after toggling status/tool bar
             wxSetCursor(*currcurs);
          #endif
          SetCursor(*currcurs);
@@ -2367,7 +2378,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case WXK_UP:      PanUp( SmallScroll(currview.getheight()) ); break;
       case WXK_DOWN:    PanDown( SmallScroll(currview.getheight()) ); break;
 
-      // ProcessKey is called from the golly_dokey command (inscript is true)
+      // note that ProcessKey can be called from the golly_dokey command
       // so best to avoid changing pattern while running a script
 
       case WXK_BACK:       // delete key generates backspace code
@@ -2595,11 +2606,6 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
-   if ( mainptr->generating && (key == '.' || key == WXK_RETURN || key == ' ') ) {
-      mainptr->StopGenerating();
-      return;
-   }
-
    if ( waitingforclick && key == WXK_ESCAPE ) {
       // cancel paste
       pastex = -1;
@@ -2610,6 +2616,11 @@ void PatternView::OnChar(wxKeyEvent& event)
 
    if ( selectingcells && key == WXK_ESCAPE ) {
       RestoreSelection();
+      return;
+   }
+   
+   if ( mainptr->generating && (key == WXK_ESCAPE || key == WXK_RETURN || key == ' ' || key == '.') ) {
+      mainptr->StopGenerating();
       return;
    }
 
@@ -2730,7 +2741,11 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
       }
    }
 
+   // allow mouse interaction if script is running
+   bool saveinscript = inscript;
+   inscript = false;
    mainptr->UpdateEverything();
+   inscript = saveinscript;
 }
 
 void PatternView::OnMouseMotion(wxMouseEvent& WXUNUSED(event))
