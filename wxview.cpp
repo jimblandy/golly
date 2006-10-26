@@ -615,11 +615,6 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
       StartDrawingCells(x, y);
 
    } else if (currcurs == curs_cross) {
-      if (inscript) {
-         // statusptr->ErrorMessage does nothing if inscript is true
-         Warning(_("Selecting is not allowed while a script is running."));
-         return;
-      }
       TestAutoFit();
       StartSelectingCells(x, y, shiftdown);
 
