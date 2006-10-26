@@ -555,12 +555,6 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
    bigint oldright = viewptr->selright;
    bigint oldbottom = viewptr->selbottom;
    
-   // create huge selection rect so no possibility of error message
-   viewptr->selleft = x;
-   viewptr->seltop = y;
-   viewptr->selright = viewptr->selleft;   viewptr->selright += INT_MAX;
-   viewptr->selbottom = viewptr->seltop;   viewptr->selbottom += INT_MAX;
-   
    const char *oldmode = GetPasteMode();
    wxString modestr = wxString(mode, wxConvLocal);
    if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
@@ -570,6 +564,12 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, "Bad paste call: unknown mode.");
       return NULL;
    }
+   
+   // create huge selection rect so no possibility of error message
+   viewptr->selleft = x;
+   viewptr->seltop = y;
+   viewptr->selright = viewptr->selleft;   viewptr->selright += INT_MAX;
+   viewptr->selbottom = viewptr->seltop;   viewptr->selbottom += INT_MAX;
 
    viewptr->PasteClipboard(true);      // true = paste to selection
 
@@ -2064,6 +2064,9 @@ static PyObject *golly_dokey(PyObject *self, PyObject *args)
       }
 
       viewptr->ProcessKey(key, false);
+
+      // see any cursor change, including in tool bar
+      mainptr->UpdateUserInterface(mainptr->IsActive());
 
       // update viewport, status bar and scroll bars
       inscript = false;

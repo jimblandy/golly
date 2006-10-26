@@ -207,7 +207,7 @@ void PatternView::StartDrawingCells(int x, int y)
 
    drawingcells = true;
    CaptureMouse();                  // get mouse up event even if outside view
-   dragtimer->Start(DRAG_RATE);
+   dragtimer->Start(DRAG_RATE);     // see OnDragTimer
 }
 
 void PatternView::DrawCells(int x, int y)
@@ -442,17 +442,20 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
          // modify current selection
          ModifySelection(cellpos.first, cellpos.second);
          DisplaySelectionSize();
-         mainptr->UpdatePatternAndStatus();
       } else {
          // remove current selection
          NoSelection();
-         mainptr->UpdatePatternAndStatus();
       }
+      // allow mouse interaction if script is running
+      bool saveinscript = inscript;
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      inscript = saveinscript;
    }
    
    selectingcells = true;
-   CaptureMouse();               // get mouse up event even if outside view
-   dragtimer->Start(DRAG_RATE);
+   CaptureMouse();                  // get mouse up event even if outside view
+   dragtimer->Start(DRAG_RATE);     // see OnDragTimer
 }
 
 void PatternView::SelectCells(int x, int y)
@@ -486,7 +489,13 @@ void PatternView::SelectCells(int x, int y)
         selleft != prevleft || selright != prevright ) {
       // selection has changed
       DisplaySelectionSize();
+      
+      // allow mouse interaction if script is running
+      bool saveinscript = inscript;
+      inscript = false;
       mainptr->UpdatePatternAndStatus();
+      inscript = saveinscript;
+      
       prevtop = seltop;
       prevbottom = selbottom;
       prevleft = selleft;
@@ -500,8 +509,8 @@ void PatternView::StartMovingView(int x, int y)
    bigcellx = cellpos.first;
    bigcelly = cellpos.second;
    movingview = true;
-   CaptureMouse();               // get mouse up event even if outside view
-   dragtimer->Start(DRAG_RATE);
+   CaptureMouse();                  // get mouse up event even if outside view
+   dragtimer->Start(DRAG_RATE);     // see OnDragTimer
 }
 
 void PatternView::MoveView(int x, int y)
@@ -530,7 +539,13 @@ void PatternView::MoveView(int x, int y)
 
    if ( xamount != 0 || yamount != 0 ) {
       currview.move(xamount, yamount);
+      
+      // allow mouse interaction if script is running
+      bool saveinscript = inscript;
+      inscript = false;
       mainptr->UpdatePatternAndStatus();
+      inscript = saveinscript;
+      
       cellpos = currview.at(x, y);
       bigcellx = cellpos.first;
       bigcelly = cellpos.second;
@@ -555,7 +570,13 @@ void PatternView::RestoreSelection()
    selleft = origleft;
    selright = origright;
    StopDraggingMouse();
+   
+   // allow mouse interaction if script is running
+   bool saveinscript = inscript;
+   inscript = false;
    mainptr->UpdatePatternAndStatus();
+   inscript = saveinscript;
+   
    statusptr->DisplayMessage(_("New selection aborted."));
 }
 
@@ -2584,6 +2605,13 @@ void PatternView::OnChar(wxKeyEvent& event)
    // get translated keyboard event
    int key = event.GetKeyCode();
 
+   // do this check first because we allow user to make a selection while
+   // generating a pattern or running a script
+   if ( selectingcells && key == WXK_ESCAPE ) {
+      RestoreSelection();
+      return;
+   }
+
    if (inscript) {
       #ifdef __WXX11__
          // sigh... pressing shift key by itself causes key = 306, control key = 308
@@ -2606,11 +2634,6 @@ void PatternView::OnChar(wxKeyEvent& event)
       pastex = -1;
       pastey = -1;
       waitingforclick = false;
-      return;
-   }
-
-   if ( selectingcells && key == WXK_ESCAPE ) {
-      RestoreSelection();
       return;
    }
    
@@ -2795,6 +2818,12 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          if (forceh || forcev) {
             // selection might not change so must update pattern
             Refresh(false, NULL);
+            // need to update now if script is running
+            if (inscript) {
+               inscript = false;
+               mainptr->UpdatePatternAndStatus();
+               inscript = true;
+            }
          }
 
       } else if ( movingview ) {
@@ -2808,7 +2837,13 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
             }
          }
          currview.move(-xamount, -yamount);
+         
+         // allow mouse interaction if script is running
+         bool saveinscript = inscript;
+         inscript = false;
          mainptr->UpdatePatternAndStatus();
+         inscript = saveinscript;
+         
          // adjust x,y and bigcellx,bigcelly for MoveView call below
          x += xamount;
          y += yamount;

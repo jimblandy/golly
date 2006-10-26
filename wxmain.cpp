@@ -504,7 +504,11 @@ void MainFrame::UpdateEverything()
    // update tool bar, menu bar and cursor
    UpdateUserInterface(IsActive());
 
-   if (inscript) return;
+   if (inscript) {
+      // make sure scroll bars are accurate while running script
+      viewptr->UpdateScrollBars();
+      return;
+   }
 
    int wd, ht;
    GetClientSize(&wd, &ht);      // includes status bar and viewport
@@ -2496,6 +2500,13 @@ void MainFrame::OnMenu(wxCommandEvent& event)
          }
    }
    UpdateUserInterface(IsActive());
+   
+   // allow user interaction while running script
+   if (inscript) {
+      inscript = false;
+      UpdatePatternAndStatus();
+      inscript = true;
+   }
 }
 
 void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
