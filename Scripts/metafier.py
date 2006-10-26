@@ -1,4 +1,4 @@
-# metafier-struct.py:
+# metafier.py:
 # Builds the current selection into a Brice Due metapixel pattern
 # and places the result in a new Life universe.
 # Based on http://www.trevorrow.com/golly/metafier2.py.
@@ -66,10 +66,13 @@ def main():
     selheight = selrect[3]
 
     # load or generate the OFFcell tile:
-    OFFcellFileName = g.appdir() + "Scripts/metapixel-OFF.rle"
-    if os.access(OFFcellFileName, os.F_OK):
-        g.show("Opening from saved pattern file.")
+    OFFcellFileName = os.path.join(g.appdir() + "Scripts","metapixel-OFF.rle")
+    ONcellFileName = os.path.join(g.appdir() + "Scripts","metapixel-ON.rle")
+    if os.access(OFFcellFileName, os.R_OK) and os.access(ONcellFileName, os.R_OK):
+        g.show("Opening metapixel-OFF and metapixel-ON from saved pattern file.")
         OFFcell = pattern(g.transform(g.load(OFFcellFileName),-5,-5,1,0,0,1))
+	ONcell = pattern(g.transform(g.load(ONcellFileName),-5,-5,1,0,0,1))
+
     else:
         g.show("Building OFF metacell definition...")
         # slide #21: programmables --------------------
@@ -733,17 +736,19 @@ def main():
         CellCenter = HWSSHalfControl + HWSSHalfControl(2047, 2047, swap_xy_flip)
         
         OFFcell = all + CellCenter + StateBit
-        OFFcell.save (OFFcellFileName, "Metapixel OFF cell: Brice Due, Spring 2006")
+        
+        # The metafier-OFF and -ON files technically should not exist (we just checked
+        #  at the beginning of the script).  Shouldn't do any harm to check again, though:
+        if os.access(OFFcellFileName, os.W_OK) or not os.access(OFFcellFileName, os.F_OK):
+           try:
+              OFFcell.save (OFFcellFileName, "Metapixel OFF cell: Brice Due, Spring 2006")
+           except:
+              # if tile can't be saved, it will be rebuilt next time --
+              # no need for an annoying error, just a note in the status bar
+              g.show("Failed to save file version of OFF cell: " + OFFcellFileName)
+              os.remove (OFFcellFileName)
 
-    # slide 31: display on --------------------
-
-    # load or generate the ONcell tile, based on the OFFcell tile:
-    ONcellFileName = g.appdir() + "Scripts/metapixel-ON.rle"
-    if os.access(ONcellFileName, os.F_OK):
-        g.show("Opening metapixel-ON from saved pattern file.")
-        g.open(ONcellFileName)
-        ONcell = pattern(g.transform(g.load(ONcellFileName),-5,-5,1,0,0,1))
-    else:
+        # slide 31: display on --------------------
         g.show("Building ON metacell definition...")
     
         # switch on the HWSS guns:
@@ -753,13 +758,16 @@ def main():
         # add rest of pattern after the center area is filled in
         # and p184 HWSS guns are in the same phase (3680 = 184 * 40)
         ONcell = all + CellCenter[3680]
-        try:
-           ONcell.save (ONcellFileName, "Metapixel ON cell: Brice Due, Spring 2006")
-        except:
-           # if tile can't be saved, it will be rebuilt next time
-           pass
-    
-    OFFcell += RuleBits; ONcell += RuleBits
+        
+        if os.access(ONcellFileName, os.W_OK) or not os.access(ONcellFileName, os.F_OK):
+           try:
+              ONcell.save (ONcellFileName, "Metapixel ON cell: Brice Due, Spring 2006")
+           except:
+              g.show("Failed to save file version of ON cell: " + ONcellFileName)
+              os.remove(ONcellFileName)
+              
+    OFFcell += RuleBits
+    ONcell += RuleBits
     
     # create a 2D list of 0s and 1s representing entire selection
     livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
@@ -781,12 +789,24 @@ def main():
             g.fit()
        
     g.show("")
-    g.setoption("hashing", True)    # not much point in running a metapattern without hashing
-    g.setoption("hyperspeed", False) # otherwise it tends to ratchet too high eventually
+    g.setoption("hashing", True) # not much point in running a metapattern without hashing
     g.setstep(4)
-    g.step() # force Golly to save the starting pattern
-    # g.run(35328), to do a complete cycle, doesn't seem to use hashing
+    g.setoption("hyperspeed", False) # otherwise it tends to ratchet too high eventually
+    g.step() # (forces Golly to save start pattern, populate hash tables)
+    
+    # g.run(35328) # run one full cycle (can lock up Golly if construction has failed)
+    #
+    # Note that the first cycle is abnormal, since it does not advance the metapattern by
+    # one metageneration:  the first set of communication signals to adjacent cells is 
+    # generated during this first cycle.  Thus at the end of 35328 ticks, the pattern
+    # is ready to start its first "normal" metageneration (where cell states may change).
+    #
+    # It should be possible to define a version of ONcell that is not fully populated
+    # with LWSSs and HWSSs until the end of the first full cycle.  This would be much
+    # quicker to generate from a script definition, and so it wouldn't be necessary to
+    # save it to a file.  The only disadvantage is that ONcells would be visually
+    # indistinguishable from OFFcells until after the initial construction phase.
 
 # ---------------------------------
-main()
 
+main()

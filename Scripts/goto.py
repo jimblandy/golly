@@ -65,9 +65,9 @@ def goto(gen):
    golly.show("")
 
 # --------------------------------------------------------------------
-GotoINIFileName = golly.appdir() + "Scripts/goto.ini" # should maybe use 'join' here?
+GotoINIFileName = os.path.join(golly.appdir() + "Scripts","goto.ini")
 previousgen=prevdefault=""
-if os.access(GotoINIFileName, os.F_OK):
+if os.access(GotoINIFileName, os.R_OK):
    f=open(GotoINIFileName, 'r')
    previousgen=f.readline()
    f.close()
@@ -92,6 +92,10 @@ elif not validint(gen):
 else:
    previousgen=gen
    goto(gen.replace(",",""))
-f=open(GotoINIFileName, 'w')
-f.write(previousgen)
-f.close()
+if os.access(GotoINIFileName, os.W_OK) or not os.access(GotoINIFileName, os.F_OK):
+   try:
+      f=open(GotoINIFileName, 'w')
+      f.write(previousgen)
+      f.close()
+   except:
+      golly.show("Unable to save defaults to " + GotoINIFileName)
