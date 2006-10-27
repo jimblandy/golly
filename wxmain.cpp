@@ -2537,14 +2537,16 @@ void MainFrame::OnActivate(wxActivateEvent& event)
 
    #ifdef __WXMAC__
       if (!event.GetActive()) wxSetCursor(*wxSTANDARD_CURSOR);
-   #endif
-   
-   #if defined(__WXMAC__) || defined(__WXGTK__)
       // to avoid disabled menu items after a modal dialog closes
       // don't call UpdateMenuItems on deactivation
       if (event.GetActive()) UpdateUserInterface(true);
    #else
       UpdateUserInterface(event.GetActive());
+   #endif
+   
+   #ifdef __WXGTK__
+      if (event.GetActive()) onetimer->Start(20, wxTIMER_ONE_SHOT);
+      // OnOneTimer will be called after delay of 0.02 secs
    #endif
    
    event.Skip();
@@ -2716,6 +2718,11 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
    #ifdef __WXMAC__
       // remove colored frame
       if (viewptr) viewptr->Refresh(false, NULL);
+   #endif
+   
+   // fix menu item problem on Linux after modal dialog has closed
+   #ifdef __WXGTK__
+      UpdateMenuItems(true);
    #endif
 }
 
