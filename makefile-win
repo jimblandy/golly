@@ -354,7 +354,7 @@ wxgolly.h wxutils.h wxprefs.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrule.cpp
 
 $(OBJDIR)/wxinfo.obj: wxinfo.cpp wxinfo.h \
-readpattern.h bigint.h wxgolly.h wxutils.h wxprefs.h
+readpattern.h bigint.h wxgolly.h wxmain.h wxutils.h wxprefs.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxinfo.cpp
 
 $(OBJDIR)/wxhelp.obj: wxhelp.cpp wxhelp.h \

@@ -367,15 +367,6 @@ void MainFrame::UpdateMenuItems(bool active)
    wxToolBar *tbar = GetToolBar();
    if (mbar) {
       if (viewptr->waitingforclick) active = false;
-      
-      #if defined(__WXMAC__) || defined(__WXGTK__)
-         // fix problem (eg. on OS 10.4) after a modal dialog closes
-         if (!active && (!GetHelpFrame() || !GetHelpFrame()->IsActive())
-                     && (!GetInfoFrame() || !GetInfoFrame()->IsActive()) ) {
-            return;
-         }
-      #endif
-      
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
       bool busy = generating || inscript;
@@ -2541,12 +2532,21 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 
 void MainFrame::OnActivate(wxActivateEvent& event)
 {
-   // this is never called on X11!!!
+   // this is never called in X11 app!!!
    // note that IsActive() doesn't always match event.GetActive()
-   UpdateUserInterface(event.GetActive());
+
    #ifdef __WXMAC__
       if (!event.GetActive()) wxSetCursor(*wxSTANDARD_CURSOR);
    #endif
+   
+   #if defined(__WXMAC__) || defined(__WXGTK__)
+      // to avoid disabled menu items after a modal dialog closes
+      // don't call UpdateMenuItems on deactivation
+      if (event.GetActive()) UpdateUserInterface(true);
+   #else
+      UpdateUserInterface(event.GetActive());
+   #endif
+   
    event.Skip();
 }
 

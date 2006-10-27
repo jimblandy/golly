@@ -196,7 +196,7 @@ wxgolly.h wxutils.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrule.cpp
 
 $(OBJDIR)/wxinfo.o: wxinfo.cpp wxinfo.h \
-readpattern.h bigint.h wxgolly.h wxutils.h wxprefs.h
+readpattern.h bigint.h wxgolly.h wxmain.h wxutils.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxinfo.cpp
 
 $(OBJDIR)/wxhelp.o: wxhelp.cpp wxhelp.h \

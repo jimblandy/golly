@@ -312,6 +312,10 @@ void HelpFrame::OnActivate(wxActivateEvent& event)
    if ( event.GetActive() ) {
       // help window is being activated
       whenactive = stopwatch->Time();
+      
+      // ensure correct menu items, esp after help window
+      // is clicked while app is in background
+      mainptr->UpdateMenuItems(false);
    }
    event.Skip();
 }

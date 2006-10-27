@@ -29,7 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "readpattern.h"   // for readcomments
 
-#include "wxgolly.h"       // so wxGetApp returns reference to GollyApp
+#include "wxgolly.h"       // for wxGetApp, mainptr
+#include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for infox/y/wd/ht and mininfo*
 #include "wxinfo.h"
@@ -44,12 +45,13 @@ public:
    InfoFrame(char *comments);
 
 private:
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
-
    // event handlers
+   void OnActivate(wxActivateEvent& event);
    void OnCloseButton(wxCommandEvent& event);
    void OnClose(wxCloseEvent& event);
+
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
 };
 
 InfoFrame *infoptr = NULL;    // pattern info window
@@ -57,6 +59,12 @@ InfoFrame *infoptr = NULL;    // pattern info window
 wxFrame* GetInfoFrame() {
    return infoptr;
 }
+
+BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
+   EVT_ACTIVATE   (              InfoFrame::OnActivate)
+   EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
+   EVT_CLOSE      (              InfoFrame::OnClose)
+END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
@@ -70,24 +78,20 @@ public:
       : wxTextCtrl(parent, id, value, pos, size, style) { }
 
 private:
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
-
+   // event handlers
    void OnKeyDown(wxKeyEvent& event);
    void OnSetFocus(wxFocusEvent& event);
+
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
 };
-
-// -----------------------------------------------------------------------------
-
-BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
-   EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
-   EVT_CLOSE      (              InfoFrame::OnClose)
-END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
    EVT_KEY_DOWN   (TextView::OnKeyDown)
    EVT_SET_FOCUS  (TextView::OnSetFocus)
 END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
 
 void TextView::OnKeyDown(wxKeyEvent& event) {
    int key = event.GetKeyCode();
@@ -109,6 +113,8 @@ void TextView::OnSetFocus(wxFocusEvent& WXUNUSED(event)) {
       // wxMac prob: remove focus ring around read-only textctrl???!!!
    #endif
 }
+
+// -----------------------------------------------------------------------------
 
 // create the pattern info window
 InfoFrame::InfoFrame(char *comments)
@@ -159,6 +165,16 @@ InfoFrame::InfoFrame(char *comments)
    #endif
 }
 
+void InfoFrame::OnActivate(wxActivateEvent& event)
+{
+   if ( event.GetActive() ) {
+      // ensure correct menu items, esp after info window
+      // is clicked while app is in background
+      mainptr->UpdateMenuItems(false);
+   }
+   event.Skip();
+}
+
 void InfoFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
    Close(true);
 }
@@ -180,6 +196,8 @@ void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
    Destroy();        // also deletes all child windows (buttons, etc)
    infoptr = NULL;
 }
+
+// -----------------------------------------------------------------------------
 
 void ShowInfo(const wxString &filepath) {
    if (infoptr) {
