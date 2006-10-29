@@ -2569,9 +2569,8 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
-   int key = event.GetKeyCode();
    statusptr->ClearMessage();
-   
+   int key = event.GetKeyCode();
    if (key == WXK_SHIFT) {
       // pressing shift key temporarily toggles zoom in/out cursor;
       // some platforms (eg. WinXP) send multiple key-down events while
@@ -2586,7 +2585,6 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
    }
-   
    event.Skip();
 }
 
@@ -2655,7 +2653,8 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
 
    // this was added to test Fatal, but could be useful to quit without saving prefs
-   if ( key == 'Q' && event.ControlDown() ) {
+   if ( key == 17 && event.ShiftDown() ) {
+      // ^Q == 17
       Fatal(_("Quitting without saving preferences."));
    }
 

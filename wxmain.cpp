@@ -1393,7 +1393,7 @@ void MainFrame::ToggleShowScripts()
 void MainFrame::ChangePatternDir()
 {
    // wxMac bug: 3rd parameter seems to be ignored!!!
-   wxDirDialog dirdlg(this, wxT("Choose a new pattern folder"),
+   wxDirDialog dirdlg(this, _("Choose a new pattern folder"),
                       patterndir, wxDD_NEW_DIR_BUTTON);
    if ( dirdlg.ShowModal() == wxID_OK ) {
       wxString newdir = dirdlg.GetPath();
@@ -1410,7 +1410,7 @@ void MainFrame::ChangePatternDir()
 void MainFrame::ChangeScriptDir()
 {
    // wxMac bug: 3rd parameter seems to be ignored!!!
-   wxDirDialog dirdlg(this, wxT("Choose a new script folder"),
+   wxDirDialog dirdlg(this, _("Choose a new script folder"),
                       scriptdir, wxDD_NEW_DIR_BUTTON);
    if ( dirdlg.ShowModal() == wxID_OK ) {
       wxString newdir = dirdlg.GetPath();
