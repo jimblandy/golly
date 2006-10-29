@@ -2733,7 +2733,7 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    
    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
    
-   #ifdef __WXMSW__
+   #ifndef __WXMAC__
       // if script is running we need to call exit below
       bool wasinscript = inscript;
    #endif
@@ -2749,18 +2749,18 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
    if (wxFileExists(scriptfile)) wxRemoveFile(scriptfile);
 
+   #ifndef __WXMAC__
+      // avoid error message on Windows or seg fault on Linux
+      if (wasinscript) exit(0);
+   #endif
+
    #if defined(__WXX11__) || defined(__WXGTK__)
       // avoid seg fault on Linux
       if (generating) exit(0);
    #else
       if (generating) StopGenerating();
    #endif
- 
-   #ifdef __WXMSW__
-      // avoid error message on Windows (not sure why it happens!)
-      if (wasinscript) exit(0);
-   #endif
-  
+   
    Destroy();
 }
 
