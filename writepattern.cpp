@@ -290,6 +290,9 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
          errmsg = "Unsupported pattern format!";
    }
    
+   if (ferror(f))
+      errmsg = "Error occurred writing file; maybe disk is full?";
+   
    lifeendprogress();
    fclose(f);
    

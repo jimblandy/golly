@@ -1419,10 +1419,14 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
       // supported by readclipboard
       wxFile tmpfile(clipfile, wxFile::write);
       if ( !tmpfile.IsOpened() ) {
-         statusptr->ErrorMessage(_("Could not create temporary file!"));
+         Warning(_("Could not create temporary file for clipboard data!"));
          return false;
       }
-      tmpfile.Write( data.GetText() );
+      if ( !tmpfile.Write(data.GetText()) ) {
+         Warning(_("Could not write clipboard data to temporary file!  Maybe disk is full?"));
+         tmpfile.Close();
+         return false;
+      }
       tmpfile.Close();
    #endif         
 

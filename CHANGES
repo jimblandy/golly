@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.1 (released October 2006)
 
+AKT: Added ferror test at end of writepattern() to detect if disk is full.
 AKT: Menu items are correctly updated in all situations.
 AKT: Escape key can be used to stop generating.
 AKT: More mouse interaction is allowed while a script is running.
