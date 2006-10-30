@@ -9,7 +9,7 @@
 #C c/4: smallest orthogonal c/4, by Tim Coe.
 #C c/5: Spiders by David Bell, pushing pre-pulsars in various forms.
 #C c/6: "Dragon", by Paul Tooke, April 2000.
-#C From Alan Hensel's "bclife" pattern collection.
+#C From Alan Hensel's "lifebc" pattern collection.
 x = 194, y = 76, rule = B3/S23
 126boo$122boobobboboo24bo12bo$85bo36boo6boo11bo12bo12bo8bo11bo$84b3o
 35bobo4bobo10bobo10bobo10bobo7bo11bo$30b3o3b3o9b3o15b3o14booboo36boobb

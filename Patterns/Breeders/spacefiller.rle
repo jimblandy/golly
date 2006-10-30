@@ -21,7 +21,7 @@
 #C  and top/bottom stretchers by Hartmut Holzwart; size optimization
 #C  by David Bell, Al Hensel, and Tim Coe.
 #C This spacefiller by Hartmut Holzwart, 4 Nov 1998.
-#C From Alan Hensel's "bclife" pattern collection.
+#C From Alan Hensel's "lifebc" pattern collection.
 x = 49, y = 26, rule = B3/S23
 20b3o3b3o$19bobbo3bobbo$4o18bo3bo18b4o$o3bo17bo3bo17bo3bo$o8bo12bo3bo
 12bo8bo$bobbobboobbo25bobboobbobbo$6bo5bo7b3o3b3o7bo5bo$6bo5bo8bo5bo8b
