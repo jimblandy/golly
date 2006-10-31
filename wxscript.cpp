@@ -2441,6 +2441,11 @@ void RunScript(const wxString& filename)
       if (mainptr->StatusVisible() != oldstatus) mainptr->ToggleStatusBar();
       if (mainptr->GetToolBar()->IsShown() != oldtool) mainptr->ToggleToolBar();
    }
+   
+   // avoid up/down arrow selecting another script???
+   // doesn't always work -- probably need an OnKeyDown handler for the dirctrl
+   // which posts the event to viewptr and then calls event.Skip(false)
+   // if (mainptr->IsActive()) viewptr->SetFocus();
       
    // update menu bar, cursor, viewport, status bar, tool bar, etc
    mainptr->UpdateEverything();
