@@ -24,9 +24,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXMAIN_H_
 #define _WXMAIN_H_
 
-#include "wx/dataobj.h"    // for wxTextDataObject
+#include "wx/splitter.h"   // for wxSplitterWindow, wxSplitterEvent
+#include "wx/dirctrl.h"    // for wxGenericDirCtrl
 #include "wx/treectrl.h"   // for wxTreeEvent
-#include "wx/splitter.h"   // for wxSplitterEvent
+#include "wx/dataobj.h"    // for wxTextDataObject
 #include "bigint.h"        // for bigint
 
 // Define the main window:
@@ -142,6 +143,16 @@ private:
    void ChangeStopToGo();
    bool SaveStartingPattern();
    void ShowRuleDialog();
+
+   // miscellaneous
+   void CreateMenus();
+   void CreateToolbar();
+   void CreateDirControls();
+   
+   // splittable window contains pattern/script directory and viewport
+   wxSplitterWindow* splitwin;
+   wxGenericDirCtrl* patternctrl;
+   wxGenericDirCtrl* scriptctrl;
 
    wxString currfile;            // full path of current pattern file
    wxString currname;            // file name displayed in main window title

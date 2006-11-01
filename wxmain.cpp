@@ -34,8 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/menuitem.h"   // for SetText
 #include "wx/clipbrd.h"    // for wxTheClipboard
 #include "wx/dataobj.h"    // for wxTextDataObject
-#include "wx/splitter.h"   // for wxSplitterWindow
-#include "wx/dirctrl.h"    // for wxGenericDirCtrl
 #include "wx/image.h"      // for wxImage
 
 #ifdef __WXMSW__
@@ -217,7 +215,7 @@ int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
 
 // -----------------------------------------------------------------------------
 
-// one-shot timer to fix wxMac bug;
+// one-shot timer to fix problems in wxMac and wxGTK -- see OnOneTimer;
 // must be static because it's used in DnDFile::OnDropFiles
 wxTimer *onetimer;
 
@@ -230,11 +228,6 @@ wxString scriptfile;
 
 // name of temporary file for storing clipboard data
 wxString clipfile;
-
-// a splittable window is used to display pattern/script directory and viewport
-wxSplitterWindow* splitwin = NULL;
-wxGenericDirCtrl* patternctrl = NULL;
-wxGenericDirCtrl* scriptctrl = NULL;
 
 #ifdef __WXMSW__
 bool callUnselect = false;    // OnIdle needs to call Unselect?
@@ -2518,10 +2511,21 @@ void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
 
 void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 {
+   // this is never called in Mac app, presumably because it doesn't
+   // make any sense for a wxFrame to get the keyboard focus,
+   // so we'll need a different solution!!!
+   /*
+   #ifdef __WXMAC__
+      // avoid pattern/script directory getting keyboard focus
+      if (viewptr) viewptr->SetFocus();
+   #endif
+   */
+
    #ifdef __WXMSW__
       // fix wxMSW bug: don't let main window get focus after being minimized
       if (viewptr) viewptr->SetFocus();
    #endif
+
    #ifdef __WXX11__
       // make sure viewport keeps keyboard focus whenever main window is active
       if (viewptr && IsActive()) viewptr->SetFocus();
@@ -2611,7 +2615,7 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
 {
    if ((generating || inscript) && (showpatterns || showscripts)) {
-      // send idle event so wxGenericDirCtrl gets updated
+      // send idle event so directory tree gets updated
       wxIdleEvent idleevent;
       wxGetApp().SendIdleEvents(this, idleevent);
    }
@@ -2620,7 +2624,7 @@ void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
 void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 {
    if ((generating || inscript) && (showpatterns || showscripts)) {
-      // send idle event so wxGenericDirCtrl gets updated
+      // send idle event so directory tree gets updated
       wxIdleEvent idleevent;
       wxGetApp().SendIdleEvents(this, idleevent);
    }
@@ -2709,7 +2713,8 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
    // splitwin's sash was double-clicked
    if (showpatterns) ToggleShowPatterns();
    if (showscripts) ToggleShowScripts();
-   UpdateMenuItems(IsActive());              // untick flag
+   UpdateMenuItems(IsActive());
+   UpdateToolBar(IsActive());
 }
 
 void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
@@ -2811,23 +2816,8 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
 
 // -----------------------------------------------------------------------------
 
-// create the main window
-MainFrame::MainFrame()
-   : wxFrame(NULL, wxID_ANY, wxEmptyString, wxPoint(mainx,mainy), wxSize(mainwd,mainht))
+void MainFrame::CreateMenus()
 {
-   wxGetApp().SetFrameIcon(this);
-
-   // initialize hidden files to be in same folder as Golly app;
-   // they must be absolute paths in case they are used from a script command when
-   // the current directory has been changed to the location of the script file
-   tempstart = gollydir + wxT(".golly_start");
-   scriptfile = gollydir + wxT(".golly_clip.py");
-   clipfile = gollydir + wxT(".golly_clipboard");
-
-   // create one-shot timer
-   onetimer = new wxTimer(this, ID_ONE_TIMER);
-
-   // create the menus
    wxMenu *fileMenu = new wxMenu();
    wxMenu *editMenu = new wxMenu();
    wxMenu *controlMenu = new wxMenu();
@@ -2854,7 +2844,6 @@ MainFrame::MainFrame()
    cmodeSubMenu->AppendCheckItem(ID_SELECT, _("Select\tF6"));
    cmodeSubMenu->AppendCheckItem(ID_MOVE, _("Move\tF7"));
    cmodeSubMenu->AppendCheckItem(ID_ZOOMIN, _("Zoom In\tF8"));
-   // F9 might be reserved in Mac OS 10.4???
    cmodeSubMenu->AppendCheckItem(ID_ZOOMOUT, _("Zoom Out\tF9"));
 
    scaleSubMenu->AppendCheckItem(ID_SCALE_1, _("1:1\tCtrl+1"));
@@ -3035,8 +3024,12 @@ MainFrame::MainFrame()
 
    // attach menu bar to the frame
    SetMenuBar(menuBar);
+}
 
-   // create tool bar
+// -----------------------------------------------------------------------------
+
+void MainFrame::CreateToolbar()
+{
    #ifdef __WXX11__
       // creating vertical tool bar stuffs up X11 menu bar!!!
       wxToolBar *toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_HORIZONTAL);
@@ -3052,7 +3045,7 @@ MainFrame::MainFrame()
       // this results in a tool bar that is 32 pixels wide (matches STATUS_HT)
       toolBar->SetMargins(4, 8);
    #elif defined(__WXMSW__)
-      // Windows seems to ignore *any* margins!!!
+      // Windows seems to ignore *any* margins
       toolBar->SetMargins(0, 0);
    #else
       // X11/GTK tool bar looks better with these margins
@@ -3111,30 +3104,12 @@ MainFrame::MainFrame()
    ADD_TOOL(ID_INFO, tbBitmaps[info_index], _("Pattern information"));
    
    toolBar->Realize();
+}
 
-   int wd, ht;
-   GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
-   if (wd < 1) wd = 1;
-   if (ht < 1) ht = 1;
+// -----------------------------------------------------------------------------
 
-   // wxStatusBar can only appear at bottom of frame so we use our own
-   // status bar class which creates a child window at top of frame
-   int statht = showexact ? STATUS_EXHT : STATUS_HT;
-   statusptr = new StatusBar(this, 0, 0, wd, statht);
-   if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
-   
-   // create a split window with pattern/script directory in left pane
-   // and pattern viewport in right pane
-   splitwin = new wxSplitterWindow(this, wxID_ANY,
-                                   wxPoint(0, statht),
-                                   wxSize(wd, ht - statht),
-                                   #ifdef __WXMSW__
-                                      wxSP_BORDER |
-                                   #endif
-                                   wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
-   if (splitwin == NULL) Fatal(_("Failed to create split window!"));
-
+void MainFrame::CreateDirControls()
+{
    patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
                                       wxDefaultPosition, wxDefaultSize,
                                       #ifdef __WXMSW__
@@ -3195,6 +3170,54 @@ MainFrame::MainFrame()
       // only show scriptdir and its contents
       SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
    }
+}
+
+// -----------------------------------------------------------------------------
+
+// create the main window
+MainFrame::MainFrame()
+   : wxFrame(NULL, wxID_ANY, wxEmptyString, wxPoint(mainx,mainy), wxSize(mainwd,mainht))
+{
+   wxGetApp().SetFrameIcon(this);
+
+   // initialize hidden files to be in same folder as Golly app;
+   // they must be absolute paths in case they are used from a script command when
+   // the current directory has been changed to the location of the script file
+   tempstart = gollydir + wxT(".golly_start");
+   scriptfile = gollydir + wxT(".golly_clip.py");
+   clipfile = gollydir + wxT(".golly_clipboard");
+
+   // create one-shot timer (see OnOneTimer)
+   onetimer = new wxTimer(this, ID_ONE_TIMER);
+
+   CreateMenus();
+   CreateToolbar();
+
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   // wd or ht might be < 1 on Win/X11 platforms
+   if (wd < 1) wd = 1;
+   if (ht < 1) ht = 1;
+
+   // wxStatusBar can only appear at bottom of frame so we use our own
+   // status bar class which creates a child window at top of frame
+   int statht = showexact ? STATUS_EXHT : STATUS_HT;
+   statusptr = new StatusBar(this, 0, 0, wd, statht);
+   if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
+   
+   // create a split window with pattern/script directory in left pane
+   // and pattern viewport in right pane
+   splitwin = new wxSplitterWindow(this, wxID_ANY,
+                                   wxPoint(0, statht),
+                                   wxSize(wd, ht - statht),
+                                   #ifdef __WXMSW__
+                                      wxSP_BORDER |
+                                   #endif
+                                   wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
+   if (splitwin == NULL) Fatal(_("Failed to create split window!"));
+
+   // create patternctrl and scriptctrl
+   CreateDirControls();
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
    viewptr = new PatternView(splitwin, 0, 0, 40, 40);
@@ -3218,8 +3241,8 @@ MainFrame::MainFrame()
    splitwin->Unsplit(scriptctrl);
    splitwin->UpdateSize();
 
-   if ( showpatterns ) splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
-   if ( showscripts ) splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+   if (showpatterns) splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+   if (showscripts) splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
 
    InitDrawingData();      // do this after viewport size has been set
 

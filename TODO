@@ -1,6 +1,12 @@
 For future versions:
 --------------------
 
+A - Reduce size of wxmain.cpp by factoring out file/edit/control code
+    into wx[file/edit/control].cpp (no corresponding .h files needed).
+    Maybe also factor out selection code from wxview.cpp.
+    And probably no need for wxrender.h if we make those routines
+    public methods of PatternView in wxview.h.
+
 A - Show relative paths in Recent menus for files inside Golly folder.
     Automatically remove missing files at startup (too dangerous?)
     or else add a Clear Missing Files item above Clear All Files.
