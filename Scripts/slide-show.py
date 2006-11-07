@@ -50,20 +50,20 @@ def slideshow ():
 
 # ------------------------------------------------------------------------------
 
-# show status bar so user sees messages
+# show status bar but hide other info to maximize viewport
 oldstatus = g.setoption("showstatusbar", True)
-
-# hide other stuff to maximize the viewport
-# (don't switch to fullscreen because user won't see pattern name in title)
 oldtoolbar = g.setoption("showtoolbar", False)
 oldscripts = g.setoption("showscripts", False)
 oldpatterns = g.setoption("showpatterns", False)
 
-slideshow()
-g.show("")
-
-# restore original state
-g.setoption("showstatusbar", oldstatus)
-g.setoption("showtoolbar", oldtoolbar)
-g.setoption("showscripts", oldscripts)
-g.setoption("showpatterns", oldpatterns)
+try:
+   slideshow()
+finally:
+   # this code is always executed, even after escape/error;
+   # clear message line in case there was no escape/error
+   g.show("")
+   # restore original state
+   g.setoption("showstatusbar", oldstatus)
+   g.setoption("showtoolbar", oldtoolbar)
+   g.setoption("showscripts", oldscripts)
+   g.setoption("showpatterns", oldpatterns)
