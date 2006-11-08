@@ -29,12 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/stockitem.h"  // for wxGetStockLabel
 #include "wx/dnd.h"        // for wxFileDropTarget
-#include "wx/file.h"       // for wxFile
 #include "wx/filename.h"   // for wxFileName
-#include "wx/menuitem.h"   // for SetText
 #include "wx/clipbrd.h"    // for wxTheClipboard
-#include "wx/dataobj.h"    // for wxTextDataObject
-#include "wx/image.h"      // for wxImage
 
 #ifdef __WXMSW__
    // tool bar bitmaps are loaded via .rc file
@@ -60,24 +56,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "readpattern.h"
-#include "writepattern.h"
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
-#include "wxutils.h"       // for Warning, Fatal, etc
-#include "wxprefs.h"       // for gollydir, SavePrefs, etc
-#include "wxrule.h"        // for ChangeRule, GetRuleName
-#include "wxinfo.h"        // for ShowInfo
-#include "wxhelp.h"        // for ShowHelp
+#include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
+#include "wxprefs.h"       // for gollydir, SavePrefs, SetPasteMode, etc
+#include "wxinfo.h"        // for ShowInfo, GetInfoFrame
+#include "wxhelp.h"        // for ShowHelp, GetHelpFrame
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
-#include "wxscript.h"      // for IsScript, RunScript, inscript
+#include "wxscript.h"      // for inscript
 #include "wxmain.h"
 
 #ifdef __WXMAC__
-   #include <Carbon/Carbon.h>                      // for GetCurrentProcess, etc
-   #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
+   #include <Carbon/Carbon.h>    // for GetCurrentProcess, etc
 #endif
 
 // -----------------------------------------------------------------------------
@@ -206,7 +198,7 @@ enum {
 
 // static routines used by GetPrefs() to get IDs for items in Open/Run Recent submenus;
 // can't be MainFrame methods because GetPrefs() is called before creating main window
-// and I'd rather not expose the IDs in the header file
+// and I'd rather not expose the IDs in a header file
 
 int GetID_CLEAR_PATTERNS() { return ID_CLEAR_PATTERNS; }
 int GetID_OPEN_RECENT()    { return ID_OPEN_RECENT; }
@@ -219,6 +211,10 @@ int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
 // must be static because it's used in DnDFile::OnDropFiles
 wxTimer *onetimer;
 
+#ifdef __WXMSW__
+bool callUnselect = false;    // OnIdle needs to call Unselect?
+#endif
+
 // name of temporary file created by SaveStartingPattern and OpenClipboard;
 // it can be used to reset pattern or to show comments
 wxString tempstart;
@@ -228,10 +224,6 @@ wxString scriptfile;
 
 // name of temporary file for storing clipboard data
 wxString clipfile;
-
-#ifdef __WXMSW__
-bool callUnselect = false;    // OnIdle needs to call Unselect?
-#endif
 
 // -----------------------------------------------------------------------------
 
@@ -310,6 +302,8 @@ void MainFrame::UpdateToolBar(bool active)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 bool MainFrame::ClipboardHasText()
 {
    #ifdef __WXX11__
@@ -328,10 +322,14 @@ bool MainFrame::ClipboardHasText()
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 bool MainFrame::StatusVisible()
 {
    return (statusptr && statusptr->statusht > 0);
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::EnableAllMenus(bool enable)
 {
@@ -352,6 +350,8 @@ void MainFrame::EnableAllMenus(bool enable)
       }
    #endif
 }
+
+// -----------------------------------------------------------------------------
 
 // update menu bar items according to the given state
 void MainFrame::UpdateMenuItems(bool active)
@@ -468,6 +468,8 @@ void MainFrame::UpdateMenuItems(bool active)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::UpdateUserInterface(bool active)
 {
    UpdateToolBar(active);
@@ -475,6 +477,8 @@ void MainFrame::UpdateUserInterface(bool active)
    viewptr->CheckCursor(active);
    statusptr->CheckMouseLocation(active);
 }
+
+// -----------------------------------------------------------------------------
 
 // update everything in main window, and menu bar and cursor
 void MainFrame::UpdateEverything()
@@ -509,6 +513,8 @@ void MainFrame::UpdateEverything()
    }
 }
 
+// -----------------------------------------------------------------------------
+
 // only update viewport and status bar
 void MainFrame::UpdatePatternAndStatus()
 {
@@ -525,6 +531,8 @@ void MainFrame::UpdatePatternAndStatus()
    }
 }
 
+// -----------------------------------------------------------------------------
+
 // only update status bar
 void MainFrame::UpdateStatus()
 {
@@ -539,772 +547,7 @@ void MainFrame::UpdateStatus()
 
 // -----------------------------------------------------------------------------
 
-// file functions:
-
-const wxString B0message = _("Hashing has been turned off due to B0-not-S8 rule.");
-
-void MainFrame::MySetTitle(const wxString& title)
-{
-   #ifdef __WXMAC__
-      // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
-      SetWindowTitleWithCFString((OpaqueWindowPtr*)this->MacGetWindowRef(),
-                                 wxMacCFStringHolder(title, wxFONTENCODING_DEFAULT)) ;
-   #else
-      SetTitle(title);
-   #endif
-}
-
-void MainFrame::SetWindowTitle(const wxString& filename)
-{
-   wxString wtitle;
-   if ( !filename.IsEmpty() ) {
-      // remember current file name
-      currname = filename;
-   }
-   wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLocal) );
-   #ifdef __WXMAC__
-      wtitle.Printf(_("%s [%s]"), currname.c_str(), rule.c_str());
-   #else
-      wtitle.Printf(_("%s [%s] - Golly"), currname.c_str(), rule.c_str());
-   #endif
-   // better to truncate a really long title???!!!
-   MySetTitle(wtitle);
-}
-
-void MainFrame::SetGenIncrement()
-{
-   if (warp > 0) {
-      bigint inc = 1;
-      // WARNING: if this code changes then also change StatusBar::DrawStatusBar
-      if (hashing) {
-         // set inc to hbasestep^warp
-         int i = warp;
-         while (i > 0) { inc.mul_smallint(hbasestep); i--; }
-      } else {
-         // set inc to qbasestep^warp
-         int i = warp;
-         while (i > 0) { inc.mul_smallint(qbasestep); i--; }
-      }
-      curralgo->setIncrement(inc);
-   } else {
-      curralgo->setIncrement(1);
-   }
-}
-
-void MainFrame::CreateUniverse()
-{
-   // first delete old universe if it exists
-   if (curralgo) delete curralgo;
-
-   if (hashing) {
-      curralgo = new hlifealgo();
-      curralgo->setMaxMemory(maxhashmem);
-   } else {
-      curralgo = new qlifealgo();
-   }
-
-   // curralgo->step() will call wx_poll::checkevents()
-   curralgo->setpoll(wxGetApp().Poller());
-
-   // increment has been reset to 1 but that's probably not always desirable
-   // so set increment using current warp value
-   SetGenIncrement();
-}
-
-void MainFrame::NewPattern(const wxString& title)
-{
-   if (generating) return;
-   savestart = false;
-   currfile.Clear();
-   startgen = 0;
-   warp = 0;
-   CreateUniverse();
-
-   if (initrule[0]) {
-      // this is the first call of NewPattern when app starts
-      const char *err = curralgo->setrule(initrule);
-      if (err) Warning(wxString(err,wxConvLocal));
-      if (global_liferules.hasB0notS8 && hashing) {
-         hashing = false;
-         statusptr->SetMessage(B0message);
-         CreateUniverse();
-      }
-      initrule[0] = 0;        // don't use it again
-   }
-
-   if (newremovesel) viewptr->NoSelection();
-   if (newcurs) currcurs = newcurs;
-   viewptr->SetPosMag(bigint::zero, bigint::zero, newmag);
-
-   // best to restore true origin
-   if (viewptr->originx != bigint::zero || viewptr->originy != bigint::zero) {
-      viewptr->originy = 0;
-      viewptr->originx = 0;
-      statusptr->SetMessage(origin_restored);
-   }
-
-   // window title will also show curralgo->getrule()
-   SetWindowTitle(title);
-
-   UpdateEverything();
-}
-
-bool MainFrame::LoadImage()
-{
-   wxString ext = currfile.AfterLast(wxT('.'));
-   
-   // supported extensions match image handlers added in GollyApp::OnInit()
-   if ( ext.IsSameAs(wxT("bmp"),false) ||
-        ext.IsSameAs(wxT("gif"),false) ||
-        ext.IsSameAs(wxT("png"),false) ||
-        ext.IsSameAs(wxT("tif"),false) ||
-        ext.IsSameAs(wxT("tiff"),false) ) {
-      wxImage image;
-      if ( image.LoadFile(currfile) ) {
-         curralgo->setrule("B3/S23");
-         
-         unsigned char maskr, maskg, maskb;
-         bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
-         int wd = image.GetWidth();
-         int ht = image.GetHeight();
-         unsigned char *idata = image.GetData();
-         int x, y;
-         for (y = 0; y < ht; y++)
-            for (x = 0; x < wd; x++) {
-               long pos = (y * wd + x) * 3;
-               unsigned char r = idata[pos];
-               unsigned char g = idata[pos+1];
-               unsigned char b = idata[pos+2];
-               if ( hasmask && r == maskr && g == maskg && b == maskb ) {
-                  // treat transparent pixel as a dead cell
-               } else if ( r < 255 || g < 255 || b < 255 ) {
-                  // treat non-white pixel as a live cell
-                  curralgo->setcell(x, y, 1);
-               }
-            }
-         
-         curralgo->endofpattern();
-      } else {
-         Warning(_("Could not load image from file!"));
-      }
-      return true;
-   } else {
-      return false;
-   }
-}
-
-void MainFrame::LoadPattern(const wxString& newtitle)
-{
-   // don't use initrule in future NewPattern calls
-   initrule[0] = 0;
-   if (!newtitle.IsEmpty()) {
-      savestart = false;
-      warp = 0;
-      if (GetInfoFrame()) {
-         // comments will no longer be relevant so close info window
-         GetInfoFrame()->Close(true);
-      }
-   }
-   if (!showbanner) statusptr->ClearMessage();
-
-   // set this flag BEFORE UpdateStatus() call so we see gen=0 and pop=0;
-   // in particular, it avoids getPopulation being called which would
-   // slow down hlife pattern loading
-   viewptr->nopattupdate = true;
-   
-   // update all of status bar so we don't see different colored lines;
-   // on Mac, DrawView also gets called if there are pending updates
-   UpdateStatus();
-   CreateUniverse();
-
-   if (!newtitle.IsEmpty()) {
-      // show new file name in window title but no rule (which readpattern can change);
-      // nicer if user can see file name while loading a very large pattern
-      MySetTitle(_("Loading ") + newtitle);
-   }
-
-   if (LoadImage()) {
-      viewptr->nopattupdate = false;
-   } else {
-      const char *err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
-      if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
-         hashing = true;
-         statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
-         // update all of status bar so we don't see different colored lines
-         UpdateStatus();
-         CreateUniverse();
-         err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
-      } else if (global_liferules.hasB0notS8 && hashing && !newtitle.IsEmpty()) {
-         hashing = false;
-         statusptr->SetMessage(B0message);
-         // update all of status bar so we don't see different colored lines
-         UpdateStatus();
-         CreateUniverse();
-         err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
-      }
-      viewptr->nopattupdate = false;
-      if (err) Warning(wxString(err,wxConvLocal));
-   }
-
-   if (!newtitle.IsEmpty()) {
-      // show full window title after readpattern has set rule
-      SetWindowTitle(newtitle);
-      if (openremovesel) viewptr->NoSelection();
-      if (opencurs) currcurs = opencurs;
-      viewptr->FitInView(1);
-      startgen = curralgo->getGeneration();     // might be > 0
-      UpdateEverything();
-      showbanner = false;
-   } else {
-      // ResetPattern sets rule, window title, scale and location
-   }
-}
-
-void MainFrame::ResetPattern()
-{
-   if (generating || curralgo->getGeneration() == startgen) return;
-   
-   if (curralgo->getGeneration() < startgen) {
-      // if this happens then startgen logic is wrong
-      Warning(_("Current gen < starting gen!"));
-      return;
-   }
-   
-   if (startfile.IsEmpty() && currfile.IsEmpty()) {
-      // if this happens then savestart logic is wrong
-      Warning(_("Starting pattern cannot be restored!"));
-      return;
-   }
-   
-   // restore pattern and settings saved by SaveStartingPattern;
-   // first restore step size, hashing option and starting pattern
-   warp = startwarp;
-   hashing = starthash;
-
-   wxString oldfile;
-   if ( !startfile.IsEmpty() ) {
-      // temporarily change currfile to startfile
-      oldfile = currfile;
-      currfile = startfile;
-   }
-   
-   // restore starting pattern from currfile;
-   // pass in empty string so savestart, warp and currcurs won't change
-   LoadPattern(wxEmptyString);
-   // gen count has been reset to startgen
-   
-   if ( !startfile.IsEmpty() ) {
-      // restore currfile
-      currfile = oldfile;
-      savestart = true;       // should not be necessary, but play safe
-   }
-   
-   // now restore rule, window title, scale and location
-   curralgo->setrule(startrule.mb_str(wxConvLocal));
-   SetWindowTitle(wxEmptyString);
-   viewptr->SetPosMag(startx, starty, startmag);
-   UpdateEverything();
-}
-
-wxString MainFrame::GetBaseName(const wxString& fullpath)
-{
-   // extract basename from given path
-   return fullpath.AfterLast(wxFILE_SEP_PATH);
-}
-
-void MainFrame::SetCurrentFile(const wxString& path)
-{
-   #ifdef __WXMAC__
-      // copy given path to currfile but as decomposed UTF8 so fopen will work
-      #if wxCHECK_VERSION(2, 7, 0)
-         currfile = wxString(path.fn_str(), wxConvLocal);
-      #else
-         // wxMac 2.6.x or older (but conversion doesn't always work on OS 10.4)
-         currfile = wxString(path.wc_str(wxConvLocal), wxConvUTF8);
-      #endif
-   #else
-      currfile = path;
-   #endif
-}
-
-void MainFrame::OpenFile(const wxString& path, bool remember)
-{
-   if ( IsScript(path) ) {
-      // execute script
-      if (remember) AddRecentScript(path);
-      RunScript(path);
-   } else {
-      // load pattern
-      SetCurrentFile(path);
-      if (remember) AddRecentPattern(path);
-      LoadPattern( GetBaseName(path) );
-   }
-}
-
-void MainFrame::AddRecentPattern(const wxString& path)
-{
-   // put given path at start of patternSubMenu
-   int id = patternSubMenu->FindItem(path);
-   if ( id == wxNOT_FOUND ) {
-      if ( numpatterns < maxpatterns ) {
-         // add new path
-         numpatterns++;
-         id = ID_OPEN_RECENT + numpatterns;
-         patternSubMenu->Insert(numpatterns - 1, id, path);
-      } else {
-         // replace last item with new path
-         wxMenuItem *item = patternSubMenu->FindItemByPosition(maxpatterns - 1);
-         item->SetText(path);
-         id = ID_OPEN_RECENT + maxpatterns;
-      }
-   }
-   // path exists in patternSubMenu 
-   if ( id > ID_OPEN_RECENT + 1 ) {
-      // move path to start of menu (item IDs don't change)
-      wxMenuItem *item;
-      while ( id > ID_OPEN_RECENT + 1 ) {
-         wxMenuItem *previtem = patternSubMenu->FindItem(id - 1);
-         wxString prevpath = previtem->GetText();
-         item = patternSubMenu->FindItem(id);
-         item->SetText(prevpath);
-         id--;
-      }
-      item = patternSubMenu->FindItem(id);
-      item->SetText(path);
-   }
-}
-
-void MainFrame::AddRecentScript(const wxString& path)
-{
-   // put given path at start of scriptSubMenu
-   int id = scriptSubMenu->FindItem(path);
-   if ( id == wxNOT_FOUND ) {
-      if ( numscripts < maxscripts ) {
-         // add new path
-         numscripts++;
-         id = ID_RUN_RECENT + numscripts;
-         scriptSubMenu->Insert(numscripts - 1, id, path);
-      } else {
-         // replace last item with new path
-         wxMenuItem *item = scriptSubMenu->FindItemByPosition(maxscripts - 1);
-         item->SetText(path);
-         id = ID_RUN_RECENT + maxscripts;
-      }
-   }
-   // path exists in scriptSubMenu 
-   if ( id > ID_RUN_RECENT + 1 ) {
-      // move path to start of menu (item IDs don't change)
-      wxMenuItem *item;
-      while ( id > ID_RUN_RECENT + 1 ) {
-         wxMenuItem *previtem = scriptSubMenu->FindItem(id - 1);
-         wxString prevpath = previtem->GetText();
-         item = scriptSubMenu->FindItem(id);
-         item->SetText(prevpath);
-         id--;
-      }
-      item = scriptSubMenu->FindItem(id);
-      item->SetText(path);
-   }
-}
-
-void MainFrame::OpenPattern()
-{
-   if (generating) return;
-
-   wxString filetypes = _("All files (*)|*");
-   filetypes +=         _("|RLE (*.rle)|*.rle");
-   filetypes +=         _("|Macrocell (*.mc)|*.mc");
-   filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
-   filetypes +=         _("|dblife (*.l)|*.l");
-   filetypes +=         _("|Gzip (*.gz)|*.gz");
-   filetypes +=         _("|BMP (*.bmp)|*.bmp");
-   filetypes +=         _("|GIF (*.gif)|*.gif");
-   filetypes +=         _("|PNG (*.png)|*.png");
-   filetypes +=         _("|TIFF (*.tiff;*.tif)|*.tiff;*.tif");
-   
-   wxFileDialog opendlg(this, _("Choose a pattern file"),
-                        opensavedir, wxEmptyString, filetypes,
-                        wxOPEN | wxFILE_MUST_EXIST);
-
-   if ( opendlg.ShowModal() == wxID_OK ) {
-      wxFileName fullpath( opendlg.GetPath() );
-      opensavedir = fullpath.GetPath();
-      SetCurrentFile( opendlg.GetPath() );
-      AddRecentPattern( opendlg.GetPath() );
-      LoadPattern( opendlg.GetFilename() );
-   }
-}
-
-void MainFrame::OpenScript()
-{
-   if (generating) return;
-
-   wxFileDialog opendlg(this, _("Choose a Python script"),
-                        rundir, wxEmptyString,
-                        _("Python script (*.py)|*.py"),
-                        wxOPEN | wxFILE_MUST_EXIST);
-
-   if ( opendlg.ShowModal() == wxID_OK ) {
-      wxFileName fullpath( opendlg.GetPath() );
-      rundir = fullpath.GetPath();
-      AddRecentScript( opendlg.GetPath() );
-      RunScript( opendlg.GetPath() );
-   }
-}
-
-bool MainFrame::CopyTextToClipboard(wxString &text)
-{
-   bool result = true;
-   #ifdef __WXX11__
-      // no global clipboard support on X11 so we save data in a file
-      wxFile tmpfile(clipfile, wxFile::write);
-      if ( tmpfile.IsOpened() ) {
-         size_t textlen = text.Length();
-         if ( tmpfile.Write( text.c_str(), textlen ) < textlen ) {
-            Warning(_("Could not write all data to clipboard file!"));
-            result = false;
-         }
-         tmpfile.Close();
-      } else {
-         Warning(_("Could not create clipboard file!"));
-         result = false;
-      }
-   #else
-      if (wxTheClipboard->Open()) {
-         if ( !wxTheClipboard->SetData(new wxTextDataObject(text)) ) {
-            Warning(_("Could not copy text to clipboard!"));
-            result = false;
-         }
-         wxTheClipboard->Close();
-      } else {
-         Warning(_("Could not open clipboard!"));
-         result = false;
-      }
-   #endif
-   return result;
-}
-
-bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
-{
-   bool gotdata = false;
-   
-   if ( wxTheClipboard->Open() ) {
-      if ( wxTheClipboard->IsSupported( wxDF_TEXT ) ) {
-         gotdata = wxTheClipboard->GetData( *textdata );
-         if (!gotdata) {
-            statusptr->ErrorMessage(_("Could not get clipboard text!"));
-         }
-
-      } else if ( wxTheClipboard->IsSupported( wxDF_BITMAP ) ) {
-         wxBitmapDataObject bmapdata;
-         gotdata = wxTheClipboard->GetData( bmapdata );
-         if (gotdata) {
-            // convert bitmap data to text data
-            wxString str;
-            wxBitmap bmap = bmapdata.GetBitmap();
-            wxImage image = bmap.ConvertToImage();
-            if (image.Ok()) {
-               /* there doesn't seem to be any mask or alpha info, at least on Mac
-               if (bmap.GetMask() != NULL) Warning("Bitmap has mask!");
-               if (image.HasMask()) Warning("Image has mask!");
-               if (image.HasAlpha()) Warning("Image has alpha!");
-               */
-               int wd = image.GetWidth();
-               int ht = image.GetHeight();
-               unsigned char *idata = image.GetData();
-               int x, y;
-               for (y = 0; y < ht; y++) {
-                  for (x = 0; x < wd; x++) {
-                     long pos = (y * wd + x) * 3;
-                     if ( idata[pos] < 255 || idata[pos+1] < 255 || idata[pos+2] < 255 ) {
-                        // non-white pixel is a live cell
-                        str += 'o';
-                     } else {
-                        // white pixel is a dead cell
-                        str += '.';
-                     }
-                  }
-                  str += '\n';
-               }
-               textdata->SetText(str);
-            } else {
-               statusptr->ErrorMessage(_("Could not convert clipboard bitmap!"));
-               gotdata = false;
-            }
-         } else {
-            statusptr->ErrorMessage(_("Could not get clipboard bitmap!"));
-         }
-
-      } else {
-         #ifdef __WXX11__
-            statusptr->ErrorMessage(_("Sorry, but there is no clipboard support for X11."));
-            // do X11 apps like xlife or fontforge have clipboard support???!!!
-         #else
-            statusptr->ErrorMessage(_("No data in clipboard."));
-         #endif
-      }
-      wxTheClipboard->Close();
-
-   } else {
-      statusptr->ErrorMessage(_("Could not open clipboard!"));
-   }
-   
-   return gotdata;
-}
-
-void MainFrame::OpenClipboard()
-{
-   if (generating) return;
-   // load and view pattern data stored in clipboard
-   #ifdef __WXX11__
-      // on X11 the clipboard data is in non-temporary clipfile, so copy
-      // clipfile to tempstart (for use by ResetPattern and ShowPatternInfo)
-      if ( wxCopyFile(clipfile, tempstart, true) ) {
-         currfile = tempstart;
-         LoadPattern(_("clipboard"));
-      } else {
-         statusptr->ErrorMessage(_("Could not copy clipfile!"));
-      }
-   #else
-      wxTextDataObject data;
-      if (GetTextFromClipboard(&data)) {
-         // copy clipboard data to tempstart so we can handle all formats
-         // supported by readpattern
-         wxFile outfile(tempstart, wxFile::write);
-         if ( outfile.IsOpened() ) {
-            outfile.Write( data.GetText() );
-            outfile.Close();
-            currfile = tempstart;
-            LoadPattern(_("clipboard"));
-            // do NOT delete tempstart -- it can be reloaded by ResetPattern
-            // or used by ShowPatternInfo
-         } else {
-            statusptr->ErrorMessage(_("Could not create tempstart file!"));
-         }
-      }
-   #endif
-}
-
-void MainFrame::RunClipboard()
-{
-   if (generating) return;
-   // run script stored in clipboard
-   wxTextDataObject data;
-   if (GetTextFromClipboard(&data)) {
-      // copy clipboard data to scriptfile
-      wxFile outfile(scriptfile, wxFile::write);
-      if ( outfile.IsOpened() ) {
-         outfile.Write( data.GetText() );
-         outfile.Close();
-         RunScript(scriptfile);
-      } else {
-         statusptr->ErrorMessage(_("Could not create script file!"));
-      }
-   }
-}
-
-void MainFrame::OpenRecentPattern(int id)
-{
-   wxMenuItem *item = patternSubMenu->FindItem(id);
-   if (item) {
-      wxString path = item->GetText();
-      SetCurrentFile(path);
-      AddRecentPattern(path);
-      LoadPattern(GetBaseName(path));
-   }
-}
-
-void MainFrame::OpenRecentScript(int id)
-{
-   wxMenuItem *item = scriptSubMenu->FindItem(id);
-   if (item) {
-      wxString path = item->GetText();
-      AddRecentScript(path);
-      RunScript(path);
-   }
-}
-
-void MainFrame::ClearRecentPatterns()
-{
-   while (numpatterns > 0) {
-      patternSubMenu->Delete( patternSubMenu->FindItemByPosition(0) );
-      numpatterns--;
-   }
-   wxMenuBar *mbar = GetMenuBar();
-   if (mbar) mbar->Enable(ID_OPEN_RECENT, false);
-}
-
-void MainFrame::ClearRecentScripts()
-{
-   while (numscripts > 0) {
-      scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(0) );
-      numscripts--;
-   }
-   wxMenuBar *mbar = GetMenuBar();
-   if (mbar) mbar->Enable(ID_RUN_RECENT, false);
-}
-
-const char *WritePattern(const wxString& path,
-                         pattern_format format,
-                         int top, int left, int bottom, int right)
-{
-   #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
-      // use decomposed UTF8 so fopen will work
-      const char *err = writepattern(path.fn_str(),
-                        *curralgo, format, top, left, bottom, right);
-   #else
-      const char *err = writepattern(path.mb_str(wxConvLocal),
-                        *curralgo, format, top, left, bottom, right);
-   #endif
-   return err;
-}
-
-void MainFrame::SavePattern()
-{
-   if (generating) return;
-   
-   wxString filetypes;
-   int RLEindex, L105index, MCindex;
-   
-   // initially all formats are not allowed (use any -ve number)
-   RLEindex = L105index = MCindex = -1;
-   
-   bigint top, left, bottom, right;
-   int itop, ileft, ibottom, iright;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   
-   wxString RLEstring;
-   if (savexrle)
-      RLEstring = _("Extended RLE (*.rle)|*.rle");
-   else
-      RLEstring = _("RLE (*.rle)|*.rle");
-   
-   if (hashing) {
-      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         // too big so only allow saving as MC file
-         itop = ileft = ibottom = iright = 0;
-         filetypes = _("Macrocell (*.mc)|*.mc");
-         MCindex = 0;
-      } else {
-         // allow saving as RLE/MC file
-         itop = top.toint();
-         ileft = left.toint();
-         ibottom = bottom.toint();
-         iright = right.toint();
-         filetypes = RLEstring;
-         RLEindex = 0;
-         filetypes += _("|Macrocell (*.mc)|*.mc");
-         MCindex = 1;
-      }
-   } else {
-      // allow saving file only if pattern is small enough
-      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
-         return;
-      }   
-      itop = top.toint();
-      ileft = left.toint();
-      ibottom = bottom.toint();
-      iright = right.toint();
-      filetypes = RLEstring;
-      RLEindex = 0;
-      /* Life 1.05 format not yet implemented!!!
-      filetypes += _("|Life 1.05 (*.lif)|*.lif");
-      L105index = 1;
-      */
-   }
-
-   wxFileDialog savedlg( this, _("Save pattern"),
-                         opensavedir, wxEmptyString, filetypes,
-                         wxSAVE | wxOVERWRITE_PROMPT );
-
-   if ( savedlg.ShowModal() == wxID_OK ) {
-      wxFileName fullpath( savedlg.GetPath() );
-      opensavedir = fullpath.GetPath();
-      wxString ext = fullpath.GetExt();
-      pattern_format format;
-      // if user supplied a known extension then use that format if it is
-      // allowed, otherwise use current format specified in filter menu
-      if ( ext.IsSameAs(wxT("rle"),false) && RLEindex >= 0 ) {
-         format = savexrle ? XRLE_format : RLE_format;
-      /* Life 1.05 format not yet implemented!!!
-      } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
-         format = L105_format;
-      */
-      } else if ( ext.IsSameAs(wxT("mc"),false) && MCindex >= 0 ) {
-         format = MC_format;
-      } else if ( savedlg.GetFilterIndex() == RLEindex ) {
-         format = savexrle ? XRLE_format : RLE_format;
-      } else if ( savedlg.GetFilterIndex() == L105index ) {
-         format = L105_format;
-      } else if ( savedlg.GetFilterIndex() == MCindex ) {
-         format = MC_format;
-      } else {
-         statusptr->ErrorMessage(_("Bug in SavePattern!"));
-         return;
-      }
-      SetCurrentFile( savedlg.GetPath() );
-      AddRecentPattern( savedlg.GetPath() );
-      SetWindowTitle( savedlg.GetFilename() );
-      const char *err = WritePattern(savedlg.GetPath(), format,
-                                     itop, ileft, ibottom, iright);
-      if (err) {
-         statusptr->ErrorMessage(wxString(err,wxConvLocal));
-      } else {
-         statusptr->DisplayMessage(_("Pattern saved in file."));
-         if ( curralgo->getGeneration() == startgen ) {
-            // no need to save starting pattern (ResetPattern can load currfile)
-            savestart = false;
-         }
-      }
-   }
-}
-
-// called by script command to save current pattern to given file
-wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool remember)
-{
-   // check that given format is valid and allowed
-   bigint top, left, bottom, right;
-   int itop, ileft, ibottom, iright;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   
-   pattern_format pattfmt;
-   if ( format.IsSameAs(wxT("rle"),false) ) {
-      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         return _("Pattern is too big to save as RLE.");
-      }   
-      pattfmt = savexrle ? XRLE_format : RLE_format;
-      itop = top.toint();
-      ileft = left.toint();
-      ibottom = bottom.toint();
-      iright = right.toint();
-   } else if ( format.IsSameAs(wxT("mc"),false) ) {
-      if (!hashing) {
-         return _("Macrocell format is only allowed if hashing.");
-      }
-      pattfmt = MC_format;
-      // writepattern will ignore itop, ileft, ibottom, iright
-      itop = ileft = ibottom = iright = 0;
-   } else {
-      return _("Unknown pattern format.");
-   }   
-   
-   SetCurrentFile(path);
-   if (remember) AddRecentPattern(path);
-   SetWindowTitle( GetBaseName(path) );
-   const char *err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
-   if (!err) {
-      if ( curralgo->getGeneration() == startgen ) {
-         // no need to save starting pattern (ResetPattern can load currfile)
-         savestart = false;
-      }
-   }
-   return wxString(err, wxConvLocal);
-}
-
-// -----------------------------------------------------------------------------
-
-void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root)
+void MainFrame::SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root)
 {
    // delete old tree (except root)
    treectrl->DeleteChildren(root);
@@ -1323,7 +566,9 @@ void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root)
    }
 }
 
-void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
+// -----------------------------------------------------------------------------
+
+void MainFrame::DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
 {
    // recursively traverse tree and reset each file item background to white
    wxTreeItemIdValue cookie;
@@ -1338,832 +583,6 @@ void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
          }
       }
       id = treectrl->GetNextChild(root, cookie);
-   }
-}
-
-void MainFrame::ToggleShowPatterns()
-{
-   showpatterns = !showpatterns;
-   if (showpatterns && showscripts) {
-      showscripts = false;
-      splitwin->Unsplit(scriptctrl);
-      splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
-   } else {
-      if (splitwin->IsSplit()) {
-         // hide left pane
-         dirwinwd = splitwin->GetSashPosition();
-         splitwin->Unsplit(patternctrl);
-      } else {
-         splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
-      }
-      // resize viewport (ie. currview)
-      viewptr->SetViewSize();
-      viewptr->SetFocus();
-   }
-}
-
-void MainFrame::ToggleShowScripts()
-{
-   showscripts = !showscripts;
-   if (showscripts && showpatterns) {
-      showpatterns = false;
-      splitwin->Unsplit(patternctrl);
-      splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
-   } else {
-      if (splitwin->IsSplit()) {
-         // hide left pane
-         dirwinwd = splitwin->GetSashPosition();
-         splitwin->Unsplit(scriptctrl);
-      } else {
-         splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
-      }
-      // resize viewport (ie. currview)
-      viewptr->SetViewSize();
-      viewptr->SetFocus();
-   }
-}
-
-void MainFrame::ChangePatternDir()
-{
-   // wxMac bug: 3rd parameter seems to be ignored!!!
-   wxDirDialog dirdlg(this, _("Choose a new pattern folder"),
-                      patterndir, wxDD_NEW_DIR_BUTTON);
-   if ( dirdlg.ShowModal() == wxID_OK ) {
-      wxString newdir = dirdlg.GetPath();
-      if ( patterndir != newdir ) {
-         patterndir = newdir;
-         if ( showpatterns ) {
-            // show new pattern directory
-            SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
-         }
-      }
-   }
-}
-
-void MainFrame::ChangeScriptDir()
-{
-   // wxMac bug: 3rd parameter seems to be ignored!!!
-   wxDirDialog dirdlg(this, _("Choose a new script folder"),
-                      scriptdir, wxDD_NEW_DIR_BUTTON);
-   if ( dirdlg.ShowModal() == wxID_OK ) {
-      wxString newdir = dirdlg.GetPath();
-      if ( scriptdir != newdir ) {
-         scriptdir = newdir;
-         if ( showscripts ) {
-            // show new script directory
-            SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
-         }
-      }
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-// prefs functions:
-
-void MainFrame::SetRandomFillPercentage()
-{
-   // update Random Fill menu item to show randomfill value
-   wxMenuBar *mbar = GetMenuBar();
-   if (mbar) {
-      wxString randlabel;
-      randlabel.Printf(_("Random Fill (%d%c)\tCtrl+5"), randomfill, '%');
-      mbar->SetLabel(ID_RANDOM, randlabel);
-   }
-}
-
-void MainFrame::SetMinimumWarp()
-{
-   // set minwarp depending on mindelay and maxdelay
-   minwarp = 0;
-   if (mindelay > 0) {
-      int d = mindelay;
-      minwarp--;
-      while (d < maxdelay) {
-         d *= 2;
-         minwarp--;
-      }
-   }
-}
-
-void MainFrame::UpdateWarp()
-{
-   SetMinimumWarp();
-   if (warp < minwarp) {
-      warp = minwarp;
-      curralgo->setIncrement(1);    // warp is <= 0
-   } else if (warp > 0) {
-      SetGenIncrement();            // in case qbasestep/hbasestep changed
-   }
-}
-
-void MainFrame::ShowPrefsDialog()
-{
-   if (inscript || generating || viewptr->waitingforclick) return;
-   
-   if (ChangePrefs()) {
-      // user hit OK button
-   
-      // selection color may have changed
-      SetSelectionColor();
-
-      // if maxpatterns was reduced then we may need to remove some paths
-      while (numpatterns > maxpatterns) {
-         numpatterns--;
-         patternSubMenu->Delete( patternSubMenu->FindItemByPosition(numpatterns) );
-      }
-
-      // if maxscripts was reduced then we may need to remove some paths
-      while (numscripts > maxscripts) {
-         numscripts--;
-         scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(numscripts) );
-      }
-      
-      // randomfill might have changed
-      SetRandomFillPercentage();
-      
-      // if mindelay/maxdelay changed then may need to change minwarp and warp
-      UpdateWarp();
-      
-      // we currently don't allow user to edit prefs while generating,
-      // but in case that changes:
-      if (generating && warp < 0) {
-         whentosee = 0;                // best to see immediately
-      }
-      
-      // maxhashmem might have changed
-      if (hashing) curralgo->setMaxMemory(maxhashmem);
-      
-      SavePrefs();
-      UpdateEverything();
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-// control functions:
-
-void MainFrame::ChangeGoToStop()
-{
-   /* single go/stop button is not yet implemented!!!
-   gostopbutt->SetBitmapLabel(tbBitmaps[stop_index]);
-   gostopbutt->Refresh(false, NULL);
-   gostopbutt->Update();
-   gostopbutt->SetToolTip(_("Stop generating"));
-   */
-}
-
-void MainFrame::ChangeStopToGo()
-{
-   /* single go/stop button is not yet implemented!!!
-   gostopbutt->SetBitmapLabel(tbBitmaps[go_index]);
-   gostopbutt->Refresh(false, NULL);
-   gostopbutt->Update();
-   gostopbutt->SetToolTip(_("Start generating"));
-   */
-}
-
-bool MainFrame::SaveStartingPattern()
-{
-   if ( curralgo->getGeneration() > startgen ) {
-      // don't do anything if current gen count > starting gen
-      return true;
-   }
-   
-   // save current rule, scale, location, step size and hashing option
-   startrule = wxString(curralgo->getrule(), wxConvLocal);
-   startmag = viewptr->GetMag();
-   viewptr->GetPos(startx, starty);
-   startwarp = warp;
-   starthash = hashing;
-   
-   if ( !savestart ) {
-      // no need to save pattern; ResetPattern will load currfile
-      // (note that currfile == tempstart if pattern created via OpenClipboard)
-      startfile.Clear();
-      return true;
-   }
-
-   // save starting pattern in tempstart file
-   if ( hashing ) {
-      // much faster to save hlife pattern in a macrocell file
-      const char *err = WritePattern(tempstart, MC_format, 0, 0, 0, 0);
-      if (err) {
-         statusptr->ErrorMessage(wxString(err,wxConvLocal));
-         // don't allow user to continue generating
-         return false;
-      }
-   } else {
-      // can only save qlife pattern if edges are within getcell/setcell limits
-      bigint top, left, bottom, right;
-      curralgo->findedges(&top, &left, &bottom, &right);      
-      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         statusptr->ErrorMessage(_("Starting pattern is outside +/- 10^9 boundary."));
-         // don't allow user to continue generating
-         return false;
-      }
-      int itop = top.toint();
-      int ileft = left.toint();
-      int ibottom = bottom.toint();
-      int iright = right.toint();      
-      // use XRLE format so the pattern's top left location and the current
-      // generation count are stored in the file
-      const char *err = WritePattern(tempstart, XRLE_format,
-                                     itop, ileft, ibottom, iright);
-      if (err) {
-         statusptr->ErrorMessage(wxString(err,wxConvLocal));
-         // don't allow user to continue generating
-         return false;
-      }
-   }
-   
-   startfile = tempstart;   // ResetPattern will load tempstart
-   return true;
-}
-
-void MainFrame::GoFaster()
-{
-   warp++;
-   SetGenIncrement();
-   // only need to refresh status bar
-   UpdateStatus();
-   if (generating && warp < 0) {
-      whentosee -= statusptr->GetCurrentDelay();
-   }
-}
-
-void MainFrame::GoSlower()
-{
-   if (warp > minwarp) {
-      warp--;
-      SetGenIncrement();
-      // only need to refresh status bar
-      UpdateStatus();
-      if (generating && warp < 0) {
-         whentosee += statusptr->GetCurrentDelay();
-      }
-   } else {
-      wxBell();
-   }
-}
-
-void MainFrame::GeneratePattern()
-{
-   if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
-      wxBell();
-      return;
-   }
-   
-   if (curralgo->isEmpty()) {
-      statusptr->ErrorMessage(empty_pattern);
-      return;
-   }
-   
-   if (!SaveStartingPattern()) {
-      return;
-   }
-
-   // for DisplayTimingInfo
-   begintime = stopwatch->Time();
-   begingen = curralgo->getGeneration().todouble();
-   
-   generating = true;               // avoid recursion
-   ChangeGoToStop();
-   wxGetApp().PollerReset();
-   UpdateUserInterface(IsActive());
-   
-   if (warp < 0) {
-      whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-   }
-   int hypdown = 64;
-
-   while (true) {
-      if (warp < 0) {
-         // slow down by only doing one gen every GetCurrentDelay() millisecs
-         long currmsec = stopwatch->Time();
-         if (currmsec >= whentosee) {
-            curralgo->step();
-            if (autofit) viewptr->FitInView(0);
-            // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
-            UpdatePatternAndStatus();
-            if (wxGetApp().Poller()->checkevents()) break;
-            // add delay to current time rather than currmsec
-            // otherwise pauses can occur in Win app???
-            whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-         } else {
-            // process events while we wait
-            if (wxGetApp().Poller()->checkevents()) break;
-            // don't hog CPU
-            wxMilliSleep(1);     // keep small (ie. <= mindelay)
-         }
-      } else {
-         // warp >= 0 so only show results every curralgo->getIncrement() gens
-         curralgo->step();
-         if (autofit) viewptr->FitInView(0);
-         // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
-         UpdatePatternAndStatus();
-         if (wxGetApp().Poller()->checkevents()) break;
-         if (hyperspeed && curralgo->hyperCapable()) {
-            hypdown--;
-            if (hypdown == 0) {
-               hypdown = 64;
-               GoFaster();
-            }
-         }
-      }
-   }
-
-   generating = false;
-
-   // for DisplayTimingInfo
-   endtime = stopwatch->Time();
-   endgen = curralgo->getGeneration().todouble();
-   
-   ChangeStopToGo();
-   
-   // display the final pattern
-   if (autofit) viewptr->FitInView(0);
-   UpdateEverything();
-}
-
-void MainFrame::StopGenerating()
-{
-   if (inscript) {
-      PassKeyToScript(WXK_ESCAPE);
-   } else if (generating) {
-      wxGetApp().PollerInterrupt();
-   }
-}
-
-void MainFrame::DisplayTimingInfo()
-{
-   if (viewptr->waitingforclick) return;
-   if (generating) {
-      endtime = stopwatch->Time();
-      endgen = curralgo->getGeneration().todouble();
-   }
-   if (endtime > begintime) {
-      double secs = (double)(endtime - begintime) / 1000.0;
-      double gens = endgen - begingen;
-      wxString s;
-      s.Printf(_("%g gens in %g secs (%g gens/sec)"), gens, secs, gens / secs);
-      statusptr->DisplayMessage(s);
-   }
-}
-
-void MainFrame::AdvanceOutsideSelection()
-{
-   if (generating || viewptr->drawingcells || viewptr->waitingforclick) return;
-
-   if (!viewptr->SelectionExists()) {
-      statusptr->ErrorMessage(no_selection);
-      return;
-   }
-
-   if (curralgo->isEmpty()) {
-      statusptr->ErrorMessage(empty_outside);
-      return;
-   }
-   
-   bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-
-   // check if selection encloses entire pattern
-   if ( viewptr->seltop <= top && viewptr->selbottom >= bottom &&
-        viewptr->selleft <= left && viewptr->selright >= right ) {
-      statusptr->ErrorMessage(empty_outside);
-      return;
-   }
-
-   // check if selection is completely outside pattern edges;
-   // can't do this if qlife because it uses gen parity to decide which bits to draw
-   if ( hashing &&
-         ( viewptr->seltop > bottom || viewptr->selbottom < top ||
-           viewptr->selleft > right || viewptr->selright < left ) ) {
-      generating = true;
-      ChangeGoToStop();
-      wxGetApp().PollerReset();
-
-      // step by one gen without changing gen count
-      bigint savegen = curralgo->getGeneration();
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
-      curralgo->setGeneration(savegen);
-   
-      generating = false;
-      ChangeStopToGo();
-      
-      // if pattern expanded then may need to clear ONE edge of selection!!!
-      viewptr->ClearSelection();
-      UpdateEverything();
-      return;
-   }
-
-   // check that pattern is within setcell/getcell limits
-   if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
-      return;
-   }
-   
-   // create a new universe of same type
-   lifealgo *newalgo;
-   if ( hashing ) {
-      newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-   }
-   newalgo->setpoll(wxGetApp().Poller());
-   newalgo->setGeneration( curralgo->getGeneration() );
-   
-   // copy (and kill) live cells in selection to new universe
-   int iseltop = viewptr->seltop.toint();
-   int iselleft = viewptr->selleft.toint();
-   int iselbottom = viewptr->selbottom.toint();
-   int iselright = viewptr->selright.toint();
-   if ( !viewptr->CopyRect(iseltop, iselleft, iselbottom, iselright,
-                           curralgo, newalgo, true, _("Saving and erasing selection")) ) {
-      // aborted, so best to restore selection
-      if ( !newalgo->isEmpty() ) {
-         newalgo->findedges(&top, &left, &bottom, &right);
-         viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                           newalgo, curralgo, false, _("Restoring selection"));
-      }
-      delete newalgo;
-      UpdateEverything();
-      return;
-   }
-   
-   // advance current universe by 1 generation
-   generating = true;
-   ChangeGoToStop();
-   wxGetApp().PollerReset();
-   curralgo->setIncrement(1);
-   curralgo->step();
-   generating = false;
-   ChangeStopToGo();
-   
-   // note that we have to copy advanced pattern to new universe because
-   // qlife uses gen parity to decide which bits to draw
-   
-   if ( !curralgo->isEmpty() ) {
-      // find new edges and copy current pattern to new universe,
-      // except for any cells that were created in selection
-      curralgo->findedges(&top, &left, &bottom, &right);
-      int itop = top.toint();
-      int ileft = left.toint();
-      int ibottom = bottom.toint();
-      int iright = right.toint();
-      int ht = ibottom - itop + 1;
-      int cx, cy;
-   
-      // for showing accurate progress we need to add pattern height to pop count
-      // in case this is a huge pattern with many blank rows
-      double maxcount = curralgo->getPopulation().todouble() + ht;
-      double accumcount = 0;
-      int currcount = 0;
-      bool abort = false;
-      BeginProgress(_("Copying advanced pattern"));
-   
-      for ( cy=itop; cy<=ibottom; cy++ ) {
-         currcount++;
-         for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
-            if (skip >= 0) {
-               // found next live cell in this row
-               cx += skip;
-               
-               // only copy cell if outside selection
-               if ( cx < iselleft || cx > iselright ||
-                    cy < iseltop || cy > iselbottom ) {
-                  newalgo->setcell(cx, cy, 1);
-               }
-               
-               currcount++;
-            } else {
-               cx = iright;  // done this row
-            }
-            if (currcount > 1024) {
-               accumcount += currcount;
-               currcount = 0;
-               abort = AbortProgress(accumcount / maxcount, wxEmptyString);
-               if (abort) break;
-            }
-         }
-         if (abort) break;
-      }
-      
-      newalgo->endofpattern();
-      EndProgress();
-   }
-   
-   // switch to new universe (best to do this even if aborted)
-   savestart = true;
-   delete curralgo;
-   curralgo = newalgo;
-   SetGenIncrement();
-   UpdateEverything();
-}
-
-void MainFrame::AdvanceSelection()
-{
-   if (generating || viewptr->drawingcells || viewptr->waitingforclick) return;
-
-   if (!viewptr->SelectionExists()) {
-      statusptr->ErrorMessage(no_selection);
-      return;
-   }
-
-   if (curralgo->isEmpty()) {
-      statusptr->ErrorMessage(empty_selection);
-      return;
-   }
-   
-   bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-
-   // check if selection is completely outside pattern edges
-   if ( viewptr->seltop > bottom || viewptr->selbottom < top ||
-        viewptr->selleft > right || viewptr->selright < left ) {
-      statusptr->ErrorMessage(empty_selection);
-      return;
-   }
-
-   // check if selection encloses entire pattern;
-   // can't do this if qlife because it uses gen parity to decide which bits to draw
-   if ( hashing &&
-        viewptr->seltop <= top && viewptr->selbottom >= bottom &&
-        viewptr->selleft <= left && viewptr->selright >= right ) {
-      generating = true;
-      ChangeGoToStop();
-      wxGetApp().PollerReset();
-
-      // step by one gen without changing gen count
-      bigint savegen = curralgo->getGeneration();
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
-      curralgo->setGeneration(savegen);
-   
-      generating = false;
-      ChangeStopToGo();
-      
-      // only need to clear 1-cell thick strips just outside selection!!!
-      viewptr->ClearOutsideSelection();
-      UpdateEverything();
-      return;
-   }
-   
-   // find intersection of selection and pattern to minimize work
-   if (viewptr->seltop > top) top = viewptr->seltop;
-   if (viewptr->selleft > left) left = viewptr->selleft;
-   if (viewptr->selbottom < bottom) bottom = viewptr->selbottom;
-   if (viewptr->selright < right) right = viewptr->selright;
-
-   // check that intersection is within setcell/getcell limits
-   if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage(selection_too_big);
-      return;
-   }
-   
-   // create a new temporary universe
-   lifealgo *tempalgo;
-   tempalgo = new qlifealgo();         // qlife's setcell/getcell are faster
-   tempalgo->setpoll(wxGetApp().Poller());
-   
-   // copy live cells in selection to temporary universe
-   if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                          curralgo, tempalgo, false, _("Saving selection")) ) {
-      if ( tempalgo->isEmpty() ) {
-         statusptr->ErrorMessage(empty_selection);
-      } else {
-         // advance temporary universe by one gen
-         generating = true;
-         ChangeGoToStop();
-         wxGetApp().PollerReset();
-         tempalgo->setIncrement(1);
-         tempalgo->step();
-         generating = false;
-         ChangeStopToGo();
-         
-         // temporary pattern might have expanded
-         bigint temptop, templeft, tempbottom, tempright;
-         tempalgo->findedges(&temptop, &templeft, &tempbottom, &tempright);
-         if (temptop < top) top = temptop;
-         if (templeft < left) left = templeft;
-         if (tempbottom > bottom) bottom = tempbottom;
-         if (tempright > right) right = tempright;
-
-         // but ignore live cells created outside selection edges
-         if (top < viewptr->seltop) top = viewptr->seltop;
-         if (left < viewptr->selleft) left = viewptr->selleft;
-         if (bottom > viewptr->selbottom) bottom = viewptr->selbottom;
-         if (right > viewptr->selright) right = viewptr->selright;
-         
-         // copy all cells in new selection from tempalgo to curralgo
-         viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                              tempalgo, curralgo, _("Copying advanced selection"));
-         savestart = true;
-
-         UpdateEverything();
-      }
-   }
-   
-   delete tempalgo;
-}
-
-void MainFrame::NextGeneration(bool useinc)
-{
-   if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
-      // don't play sound here because it'll be heard if user holds down tab key
-      // wxBell();
-      return;
-   }
-
-   if (curralgo->isEmpty()) {
-      statusptr->ErrorMessage(empty_pattern);
-      return;
-   }
-   
-   if (!SaveStartingPattern()) {
-      return;
-   }
-      
-   // curralgo->step() calls checkevents so set generating flag to avoid recursion
-   generating = true;
-   
-   // avoid doing some things if NextGeneration is called from a script;
-   // note in particular that RunScript calls PollerReset which sets nextcheck to 0
-   if (!inscript) {
-      ChangeGoToStop();
-      wxGetApp().PollerReset();
-      viewptr->CheckCursor(IsActive());
-   }
-
-   if (useinc) {
-      // step by current increment
-      if (curralgo->getIncrement() > bigint::one && !inscript) {
-         UpdateToolBar(IsActive());
-         UpdateMenuItems(IsActive());
-      }
-      curralgo->step();
-   } else {
-      // make sure we only step by one gen
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
-   }
-
-   generating = false;
-
-   if (!inscript) {
-      ChangeStopToGo();
-      // autofit is only used when doing many gens
-      if (autofit && useinc && curralgo->getIncrement() > bigint::one)
-         viewptr->FitInView(0);
-      UpdateEverything();
-   }
-}
-
-void MainFrame::ToggleAutoFit()
-{
-   autofit = !autofit;
-   // we only use autofit when generating; that's why the Auto Fit item
-   // is in the Control menu and not in the View menu
-   if (autofit && generating) {
-      viewptr->FitInView(0);
-      UpdateEverything();
-   }
-}
-
-void MainFrame::ToggleHashing()
-{
-   if (generating) return;
-
-   if ( global_liferules.hasB0notS8 && !hashing ) {
-      statusptr->ErrorMessage(_("Hashing cannot be used with a B0-not-S8 rule."));
-      return;
-   }
-
-   // check if current pattern is too big to use getcell/setcell
-   bigint top, left, bottom, right;
-   if ( !curralgo->isEmpty() ) {
-      curralgo->findedges(&top, &left, &bottom, &right);
-      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         statusptr->ErrorMessage(_("Pattern cannot be converted (outside +/- 10^9 boundary)."));
-         // ask user if they want to continue anyway???
-         return;
-      }
-   }
-
-   // toggle hashing option and update status bar immediately
-   hashing = !hashing;
-   warp = 0;
-   UpdateStatus();
-
-   // create a new universe of the right flavor
-   lifealgo *newalgo;
-   if ( hashing ) {
-      newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-   }
-   newalgo->setpoll(wxGetApp().Poller());
-   
-   // even though universes share a global rule table we still need to call setrule
-   // due to internal differences in the handling of Wolfram rules
-   newalgo->setrule( (char*)curralgo->getrule() );
-   
-   // set same gen count
-   newalgo->setGeneration( curralgo->getGeneration() );
-
-   if ( !curralgo->isEmpty() ) {
-      // copy pattern in current universe to new universe
-      int itop = top.toint();
-      int ileft = left.toint();
-      int ibottom = bottom.toint();
-      int iright = right.toint();
-      int ht = ibottom - itop + 1;
-      int cx, cy;
-   
-      // for showing accurate progress we need to add pattern height to pop count
-      // in case this is a huge pattern with many blank rows
-      double maxcount = curralgo->getPopulation().todouble() + ht;
-      double accumcount = 0;
-      int currcount = 0;
-      bool abort = false;
-      BeginProgress(_("Converting pattern"));
-   
-      for ( cy=itop; cy<=ibottom; cy++ ) {
-         currcount++;
-         for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
-            if (skip >= 0) {
-               // found next live cell in this row
-               cx += skip;
-               newalgo->setcell(cx, cy, 1);
-               currcount++;
-            } else {
-               cx = iright;  // done this row
-            }
-            if (currcount > 1024) {
-               accumcount += currcount;
-               currcount = 0;
-               abort = AbortProgress(accumcount / maxcount, wxEmptyString);
-               if (abort) break;
-            }
-         }
-         if (abort) break;
-      }
-      
-      newalgo->endofpattern();
-      EndProgress();
-   }
-   
-   // delete old universe and point current universe to new universe
-   delete curralgo;
-   curralgo = newalgo;   
-   SetGenIncrement();
-   UpdateEverything();
-}
-
-void MainFrame::ToggleHyperspeed()
-{
-   if ( curralgo->hyperCapable() ) {
-      hyperspeed = !hyperspeed;
-   }
-}
-
-void MainFrame::ToggleHashInfo()
-{
-   if ( curralgo->hyperCapable() ) {
-      hlifealgo::setVerbose(!hlifealgo::getVerbose()) ;
-   }
-}
-
-int MainFrame::GetWarp()
-{
-   return warp;
-}
-
-void MainFrame::SetWarp(int newwarp)
-{
-   warp = newwarp;
-   if (warp < minwarp) warp = minwarp;
-   SetGenIncrement();
-}
-
-void MainFrame::ShowRuleDialog()
-{
-   if (generating) return;
-   if (ChangeRule()) {
-      // show rule in window title (file name doesn't change)
-      SetWindowTitle(wxEmptyString);
    }
 }
 
@@ -2189,6 +608,8 @@ void MainFrame::ResizeSplitWindow()
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::ToggleStatusBar()
 {
    int wd, ht;
@@ -2208,6 +629,8 @@ void MainFrame::ToggleStatusBar()
    UpdateEverything();
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::ToggleExactNumbers()
 {
    int wd, ht;
@@ -2223,6 +646,8 @@ void MainFrame::ToggleExactNumbers()
       ToggleStatusBar();
    }
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::ToggleToolBar()
 {
@@ -2254,6 +679,8 @@ void MainFrame::ToggleToolBar()
       }
    #endif
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::ToggleFullScreen()
 {
@@ -2346,6 +773,8 @@ void MainFrame::ToggleFullScreen()
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::ShowPatternInfo()
 {
    if (viewptr->waitingforclick || currfile.IsEmpty()) return;
@@ -2373,6 +802,8 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_TIMER               (ID_ONE_TIMER,    MainFrame::OnOneTimer)
    EVT_CLOSE               (                 MainFrame::OnClose)
 END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::OnMenu(wxCommandEvent& event)
 {
@@ -2440,6 +871,10 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_RULE:           ShowRuleDialog(); break;
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
+      case ID_TOOL:           ToggleToolBar(); break;
+      case ID_STATUS:         ToggleStatusBar(); break;
+      case ID_EXACT:          ToggleExactNumbers(); break;
+      case ID_INFO:           ShowPatternInfo(); break;
       case ID_FIT:            viewptr->FitPattern(); break;
       case ID_FIT_SEL:        viewptr->FitSelection(); break;
       case ID_MIDDLE:         viewptr->ViewOrigin(); break;
@@ -2451,13 +886,9 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SCALE_4:        viewptr->SetPixelsPerCell(4); break;
       case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
       case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
-      case ID_TOOL:           ToggleToolBar(); break;
-      case ID_STATUS:         ToggleStatusBar(); break;
-      case ID_EXACT:          ToggleExactNumbers(); break;
       case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_COLORS:         viewptr->ToggleCellColors(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
-      case ID_INFO:           ShowPatternInfo(); break;
       // Help menu
       case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
@@ -2493,6 +924,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
 {
    /* when we have a working go/stop button we may need code like this!!!
@@ -2508,6 +941,8 @@ void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
    }
    */
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 {
@@ -2534,6 +969,8 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnActivate(wxActivateEvent& event)
 {
    // this is never called in X11 app!!!
@@ -2555,6 +992,8 @@ void MainFrame::OnActivate(wxActivateEvent& event)
    
    event.Skip();
 }
+
+// -----------------------------------------------------------------------------
 
 #if defined(__WXX11__) || defined(__WXGTK__)
 void MainFrame::OnSize(wxSizeEvent& event)
@@ -2592,6 +1031,8 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 {
    #ifdef __WXX11__
@@ -2612,6 +1053,8 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
 {
    if ((generating || inscript) && (showpatterns || showscripts)) {
@@ -2621,6 +1064,8 @@ void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 {
    if ((generating || inscript) && (showpatterns || showscripts)) {
@@ -2629,6 +1074,8 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
       wxGetApp().SendIdleEvents(this, idleevent);
    }
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 {
@@ -2708,6 +1155,8 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
 {
    // splitwin's sash was double-clicked
@@ -2716,6 +1165,8 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
    UpdateMenuItems(IsActive());
    UpdateToolBar(IsActive());
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 {
@@ -2730,6 +1181,8 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
       UpdateMenuItems(true);
    #endif
 }
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
@@ -2813,6 +1266,19 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
 }
 
 #endif // wxUSE_DRAG_AND_DROP
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetRandomFillPercentage()
+{
+   // update Random Fill menu item to show randomfill value
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) {
+      wxString randlabel;
+      randlabel.Printf(_("Random Fill (%d%c)\tCtrl+5"), randomfill, '%');
+      mbar->SetLabel(ID_RANDOM, randlabel);
+   }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -3254,6 +1720,8 @@ MainFrame::MainFrame()
    startgen = 0;           // initial starting generation
    warp = 0;               // initial speed setting
 }
+
+// -----------------------------------------------------------------------------
 
 MainFrame::~MainFrame()
 {

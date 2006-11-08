@@ -24,7 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXVIEW_H_
 #define _WXVIEW_H_
 
-#include "bigint.h"
+#include "bigint.h"     // for bigint
+#include "viewport.h"   // for viewport
 
 // Define a child window for viewing and editing patterns:
 
@@ -158,6 +159,8 @@ private:
                                 bigint top, bigint left, bigint bottom, bigint right);
    void RotatePattern(bool clockwise, bigint &newtop, bigint &newbottom,
                                       bigint &newleft, bigint &newright);
+   void AddEOL(char **chptr);
+   void AddRun(char ch, unsigned int *run, unsigned int *linelen, char **chptr);
 
    // scroll functions
    void PanUp(int amount);
@@ -168,6 +171,7 @@ private:
    int BigScroll(int xysize);
 
    // data
+   viewport *currview;           // viewport for displaying patterns
    wxTimer *dragtimer;           // timer used while dragging mouse
    int cellx, celly;             // current cell's 32-bit position
    bigint bigcellx, bigcelly;    // current cell's position

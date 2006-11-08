@@ -51,9 +51,20 @@ wxgolly.*      - The GUI application.
 
 wxmain.*       - Implements the main window.
                  OnMenu() handles all menu commands.
+                 UpdateEverything() updates all parts of the GUI.
+
+wxfile.cpp     - File menu functions.
                  NewPattern() creates a new, empty universe.
-                 OpenPattern() loads a pattern file.
-                 GeneratePattern() generates the current pattern.
+                 LoadPattern() reads in a pattern file.
+
+wxedit.cpp     - Edit menu functions.
+                 CopySelection() copies selection to clipboard.
+                 PasteClipboard() pastes in clipboard pattern.
+                 RotateSelection() rotates current selection.
+
+wxcontrol.cpp  - Control menu functions.
+                 GeneratePattern() runs the current pattern.
+                 ToggleHashing() toggles the hashing algorithm.
 
 wxview.*       - Viewport for displaying and editing patterns.
                  ProcessKey() processes keyboard shortcuts.

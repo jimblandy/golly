@@ -26,9 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/splitter.h"   // for wxSplitterWindow, wxSplitterEvent
 #include "wx/dirctrl.h"    // for wxGenericDirCtrl
-#include "wx/treectrl.h"   // for wxTreeEvent
+#include "wx/treectrl.h"   // for wxTreeCtrl, wxTreeEvent
 #include "wx/dataobj.h"    // for wxTextDataObject
 #include "bigint.h"        // for bigint
+#include "writepattern.h"  // for pattern_format
 
 // Define the main window:
 
@@ -137,6 +138,9 @@ private:
    void OpenRecentScript(int id);
    void ClearRecentScripts();
    void ChangeScriptDir();
+   const char *WritePattern(const wxString& path,
+                            pattern_format format,
+                            int top, int left, int bottom, int right);
 
    // control functions
    void ChangeGoToStop();
@@ -148,6 +152,8 @@ private:
    void CreateMenus();
    void CreateToolbar();
    void CreateDirControls();
+   void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root);
+   void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
    
    // splittable window contains pattern/script directory and viewport
    wxSplitterWindow* splitwin;
@@ -172,12 +178,19 @@ private:
    bool starthash;               // hashing was on at start?
 };
 
+// name of temporary file created by SaveStartingPattern and OpenClipboard;
+// it can be used to reset pattern or to show comments
+extern wxString tempstart;
+
+// name of temporary file created by RunClipboard
+extern wxString scriptfile;
+
 // name of temporary file for storing clipboard data
 extern wxString clipfile;
 
 // static routines needed by GetPrefs() to get IDs for items in Open Recent and
 // Run Recent submenus; they can't be MainFrame methods because GetPrefs() is
-// called before the main window is created -- what a kludge!
+// called before the main window is created
 int GetID_CLEAR_PATTERNS();
 int GetID_OPEN_RECENT();
 int GetID_CLEAR_SCRIPTS();
