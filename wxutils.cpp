@@ -40,6 +40,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
+void Note(const wxString &msg) {
+   #ifdef __WXMAC__
+      wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
+   wxString title = wxGetApp().GetAppName() + _(" note:");
+   wxMessageBox(msg, title, wxOK | wxICON_INFORMATION, wxGetActiveWindow());
+}
+
+// -----------------------------------------------------------------------------
+
 void Warning(const wxString &msg) {
    wxBell();
    #ifdef __WXMAC__

@@ -7,6 +7,11 @@ AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 
+Changes in version 1.2 (released !!!)
+
+AKT: Added abort() and note() commands.
+AKT: Modified slide-show.py to use try ... finally ... code.
+
 Changes in version 1.1 (released November 2006)
 
 AKT: Added ferror test at end of writepattern() to detect if disk is full.

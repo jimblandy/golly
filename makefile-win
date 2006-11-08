@@ -19,7 +19,7 @@ WXDIR = c:\wxWidgets
 PYTHON_DIR = c:\Python25
 
 ### Variables: ###
-VERSION = 1.1
+VERSION = 1.2
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife \

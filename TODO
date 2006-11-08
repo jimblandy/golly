@@ -1,11 +1,12 @@
 For future versions:
 --------------------
 
-A - Reduce size of wxmain.cpp by factoring out file/edit/control code
-    into wx[file/edit/control].cpp (no corresponding .h files needed).
-    Maybe also factor out selection code from wxview.cpp.
-    And probably no need for wxrender.h if we make those routines
+A - Reduce size of wxmain.cpp and wxview.cpp by factoring out
+    file/edit/control code into wx[file/edit/control].cpp
+    (no corresponding .h files needed).
+    Maybe no need for wxrender.h if we make those routines
     public methods of PatternView in wxview.h.
+    Update makefile-* and BUILD docs.
 
 A - Show relative paths in Recent menus for files inside Golly folder.
     Automatically remove missing files at startup (too dangerous?)
@@ -30,8 +31,7 @@ T - Improve batchmode.
 
 - Support toroidal universes (see LifeLab).
 
-- Add note(str) command to display multi-line text (without a beep).
-  Add info() command to display current pattern info.
+- Add info() command to display current pattern info.
   Add help(html-file) to open the help window and display contents of
   given html file (not necessarily in Help folder).
 

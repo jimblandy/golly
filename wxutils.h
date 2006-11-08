@@ -26,6 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Various utility routines:
 
+// Display given message in a modal dialog.
+void Note(const wxString &msg);
+
 // Beep and display message in a modal dialog.
 void Warning(const wxString &msg);
 

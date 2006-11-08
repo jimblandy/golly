@@ -61,7 +61,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning
+#include "wxutils.h"       // for Warning, Note
 #include "wxprefs.h"       // for hashing, pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
@@ -1217,6 +1217,32 @@ static PyObject *golly_reset(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_getgen(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char sepchar = '\0';
+
+   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
+
+   return Py_BuildValue("s", curralgo->getGeneration().tostring(sepchar));
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getpop(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char sepchar = '\0';
+
+   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
+
+   return Py_BuildValue("s", curralgo->getPopulation().tostring(sepchar));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_setrule(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -1263,28 +1289,17 @@ static PyObject *golly_getrule(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getgen(PyObject *self, PyObject *args)
+static PyObject *golly_abort(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char sepchar = '\0';
 
-   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
+   if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("s", curralgo->getGeneration().tostring(sepchar));
-}
+   AbortScript();
 
-// -----------------------------------------------------------------------------
-
-static PyObject *golly_getpop(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-   char sepchar = '\0';
-
-   if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
-
-   return Py_BuildValue("s", curralgo->getPopulation().tostring(sepchar));
+   Py_INCREF(Py_None);
+   return Py_None;
 }
 
 // -----------------------------------------------------------------------------
@@ -2149,6 +2164,22 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_note(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *s = NULL;
+
+   if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
+
+   Note(wxString(s,wxConvLocal));
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_stderr(PyObject *self, PyObject *args)
 {
    // probably safer not to call checkevents here
@@ -2211,6 +2242,7 @@ static PyMethodDef golly_methods[] = {
    { "getpop",       golly_getpop,     METH_VARARGS, "return current population as string" },
    { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
    { "getrule",      golly_getrule,    METH_VARARGS, "return current rule string" },
+   { "abort",        golly_abort,      METH_VARARGS, "terminate script" },
    // viewing
    { "setpos",       golly_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       golly_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
@@ -2231,6 +2263,7 @@ static PyMethodDef golly_methods[] = {
    { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
+   { "note",         golly_note,       METH_VARARGS, "show given string in note dialog" },
    // for internal use (don't document)
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
@@ -2377,24 +2410,21 @@ void ExecuteScript(const wxString &filepath)
 
 // -----------------------------------------------------------------------------
 
-bool CheckPythonError()
+void CheckPythonError()
 {
    if (pyerror.IsEmpty()) {
-      return false;
+      return;
+   } else if (pyerror.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
+      // error was caused by AbortScript so don't display pyerror
    } else {
-      if (pyerror.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
-         // error was caused by AbortScript so don't display pyerror
-      } else {
-         pyerror.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
-         wxBell();
-         #ifdef __WXMAC__
-            wxSetCursor(*wxSTANDARD_CURSOR);
-         #endif
-         wxMessageBox(pyerror, _("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
-      }
-      statusptr->DisplayMessage(_("Script aborted."));
-      return true;
+      pyerror.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
+      wxBell();
+      #ifdef __WXMAC__
+         wxSetCursor(*wxSTANDARD_CURSOR);
+      #endif
+      wxMessageBox(pyerror, _("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
    }
+   statusptr->DisplayMessage(_("Script aborted."));
 }
 
 // =============================================================================
@@ -2412,12 +2442,6 @@ void RunScript(const wxString& filename)
    autoupdate = false;
    wxGetApp().PollerReset();
 
-   // save some settings for restoring below if script is aborted
-   bool oldscripts = showscripts;
-   bool oldpatterns = showpatterns;
-   bool oldstatus = mainptr->StatusVisible();
-   bool oldtool = mainptr->GetToolBar()->IsShown();
-
    // temporarily change current directory to location of script
    wxFileName fullname(filename);
    fullname.Normalize();
@@ -2434,13 +2458,7 @@ void RunScript(const wxString& filename)
    wxSetWorkingDirectory(gollydir);
    
    // display any Python error message
-   if (CheckPythonError()) {
-      // error occurred or script aborted so best to restore some settings
-      if (showscripts != oldscripts) mainptr->ToggleShowScripts();
-      if (showpatterns != oldpatterns) mainptr->ToggleShowPatterns();
-      if (mainptr->StatusVisible() != oldstatus) mainptr->ToggleStatusBar();
-      if (mainptr->GetToolBar()->IsShown() != oldtool) mainptr->ToggleToolBar();
-   }
+   CheckPythonError();
    
    // update menu bar, cursor, viewport, status bar, tool bar, etc
    mainptr->UpdateEverything();

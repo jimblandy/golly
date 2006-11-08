@@ -141,6 +141,7 @@ or you can search for individual commands alphabetically:
 <table cellspacing=0 cellpadding=0>
 <tr>
 <td valign=top>
+<a href="#abort"><b>abort</b></a><br>
 <a href="#advance"><b>advance</b></a><br>
 <a href="#appdir"><b>appdir</b></a><br>
 <a href="#autoupdate"><b>autoupdate</b></a><br>
@@ -149,11 +150,11 @@ or you can search for individual commands alphabetically:
 <a href="#cut"><b>cut</b></a><br>
 <a href="#dokey"><b>dokey</b></a><br>
 <a href="#empty"><b>empty</b></a><br>
-<a href="#error"><b>error</b></a><br>
-<a href="#evolve"><b>evolve</b></a>
+<a href="#error"><b>error</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#evolve"><b>evolve</b></a><br>
 <a href="#fit"><b>fit</b></a><br>
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
@@ -162,11 +163,11 @@ or you can search for individual commands alphabetically:
 <a href="#getcells"><b>getcells</b></a><br>
 <a href="#getclip"><b>getclip</b></a><br>
 <a href="#getcolor"><b>getcolor</b></a><br>
-<a href="#getcursor"><b>getcursor</b></a><br>
-<a href="#getgen"><b>getgen</b></a>
+<a href="#getcursor"><b>getcursor</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#getgen"><b>getgen</b></a><br>
 <a href="#getkey"><b>getkey</b></a><br>
 <a href="#getmag"><b>getmag</b></a><br>
 <a href="#getoption"><b>getoption</b></a><br>
@@ -175,24 +176,25 @@ or you can search for individual commands alphabetically:
 <a href="#getrect"><b>getrect</b></a><br>
 <a href="#getrule"><b>getrule</b></a><br>
 <a href="#getselrect"><b>getselrect</b></a><br>
-<a href="#getstep"><b>getstep</b></a><br>
-<a href="#load"><b>load</b></a>
+<a href="#getstep"><b>getstep</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#load"><b>load</b></a><br>
 <a href="#new"><b>new</b></a><br>
+<a href="#note"><b>note</b></a><br>
 <a href="#open"><b>open</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#putcells"><b>putcells</b></a><br>
 <a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
-<a href="#rotate"><b>rotate</b></a><br>
-<a href="#run"><b>run</b></a><br>
-<a href="#save"><b>save</b></a>
+<a href="#rotate"><b>rotate</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#run"><b>run</b></a><br>
+<a href="#save"><b>save</b></a><br>
 <a href="#select"><b>select</b></a><br>
 <a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
@@ -200,12 +202,12 @@ or you can search for individual commands alphabetically:
 <a href="#setcursor"><b>setcursor</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setoption"><b>setoption</b></a><br>
-<a href="#setpos"><b>setpos</b></a><br>
-<a href="#setrule"><b>setrule</b></a><br>
-<a href="#setstep"><b>setstep</b></a>
+<a href="#setpos"><b>setpos</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
+<a href="#setrule"><b>setrule</b></a><br>
+<a href="#setstep"><b>setstep</b></a><br>
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
 <a href="#step"><b>step</b></a><br>
@@ -557,6 +559,15 @@ be aborted (and the original rule will be restored).
 <dd>
 Return the current rule as a string.
 </dd>
+<dd> Example: <b>oldrule = golly.getrule()</b></dd>
+</dd>
+</p>
+
+<a name="abort"></a><p><dt><b>abort()</b></dt>
+<dd>
+Terminate the script by raising a special exception (the same one raised when
+the user hits the escape key or clicks on the stop button).
+Useful for aborting a script from inside a deeply nested function.
 </p>
 
 <p><a name="viewing">
@@ -769,10 +780,18 @@ The status bar is automatically shown if necessary.
 
 <a name="warn"></a><p><dt><b>warn(<i>message</i>)</b></dt>
 <dd>
-Show the given string in Golly's warning dialog.
-Useful for debugging Python scripts.
+Beep and show the given string in a modal warning dialog.
+Useful for debugging Python scripts or displaying error messages.
 </dd>
 <dd> Example: <b>golly.warn("xxx = " + str(xxx))</b></dd>
+</p>
+
+<a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt>
+<dd>
+Show the given string in a modal information dialog.
+Useful for displaying results.
+</dd>
+<dd> Example: <b>golly.note("The population is " + golly.getpop(','))</b></dd>
 </p>
 
 
@@ -926,9 +945,8 @@ run the command again with the framework paths swapped.
 To verify which version of Python Golly is using, copy the following code,
 start up Golly and select <b>Run Clipboard</b> from the File menu:
 <p>
-<dd><b>import golly</b></dd>
-<dd><b>import sys</b></dd>
-<dd><b>golly.warn(sys.version)</b></dd>
+<dd><b>import golly, sys</b></dd>
+<dd><b>golly.note(sys.version)</b></dd>
 </p>
 <p>
 On an Intel Mac your scripts will run significantly faster when using

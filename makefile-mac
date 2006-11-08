@@ -24,7 +24,7 @@ else
 endif
 
 APP_NAME = Golly
-APP_VERSION = 1.1
+APP_VERSION = 1.2
 COPYRIGHT = 2006 The Golly Gang
 BUNDLE_ID = net.sourceforge.golly
 ICON_FILE = app.icns
