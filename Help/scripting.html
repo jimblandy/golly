@@ -141,7 +141,6 @@ or you can search for individual commands alphabetically:
 <table cellspacing=0 cellpadding=0>
 <tr>
 <td valign=top>
-<a href="#abort"><b>abort</b></a><br>
 <a href="#advance"><b>advance</b></a><br>
 <a href="#appdir"><b>appdir</b></a><br>
 <a href="#autoupdate"><b>autoupdate</b></a><br>
@@ -150,11 +149,12 @@ or you can search for individual commands alphabetically:
 <a href="#cut"><b>cut</b></a><br>
 <a href="#dokey"><b>dokey</b></a><br>
 <a href="#empty"><b>empty</b></a><br>
-<a href="#error"><b>error</b></a>
+<a href="#error"><b>error</b></a><br>
+<a href="#evolve"><b>evolve</b></a>
 </td>
 <td valign=top width=10> </td>
 <td valign=top>
-<a href="#evolve"><b>evolve</b></a><br>
+<a href="#exit"><b>exit</b></a><br>
 <a href="#fit"><b>fit</b></a><br>
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
@@ -563,13 +563,6 @@ Return the current rule as a string.
 </dd>
 </p>
 
-<a name="abort"></a><p><dt><b>abort()</b></dt>
-<dd>
-Terminate the script by raising a special exception (the same one raised when
-the user hits the escape key or clicks on the stop button).
-Useful for aborting a script from inside a deeply nested function.
-</p>
-
 <p><a name="viewing">
 &nbsp;<br>
 VIEWING COMMANDS
@@ -789,9 +782,20 @@ Useful for debugging Python scripts or displaying error messages.
 <a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt>
 <dd>
 Show the given string in a modal information dialog.
-Useful for displaying results.
+Useful for displaying multi-line results.
 </dd>
-<dd> Example: <b>golly.note("The population is " + golly.getpop(','))</b></dd>
+<dd> Example: <b>golly.note("Line 1\nLine 2\nLine 3")</b></dd>
+</p>
+
+<a name="exit"></a><p><dt><b>exit(<i>message=""</i>)</b></dt>
+<dd>
+Exit the script with an optional error message.
+If a non-empty string is supplied then it will be displayed in the status bar
+along with a beep, just like the <a href="#error"><b>error</b></a> command.
+If no message is supplied, or if the string is empty, then there is no beep
+and the current status bar message will not be changed.
+</dd>
+<dd> Example: <b>if golly.empty(): golly.exit("There is no pattern.")</b></dd>
 </p>
 
 

@@ -73,6 +73,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 bool pyinited = false;     // Py_Initialize has been successfully called?
 bool inscript = false;     // a script is running?
+bool exitcalled = false;   // golly_exit was called?
 bool autoupdate;           // update display after each change to current universe?
 wxString pyerror;          // Python error message
 wxString scriptloc;        // location of script file
@@ -1289,21 +1290,6 @@ static PyObject *golly_getrule(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_abort(PyObject *self, PyObject *args)
-{
-   if (ScriptAborted()) return NULL;
-   wxUnusedVar(self);
-
-   if (!PyArg_ParseTuple(args, "")) return NULL;
-
-   AbortScript();
-
-   Py_INCREF(Py_None);
-   return Py_None;
-}
-
-// -----------------------------------------------------------------------------
-
 // helper routine used in calls that build cell lists
 static void AddCell(PyObject *list, long x, long y)
 {
@@ -2119,7 +2105,7 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
    inscript = false;
    statusptr->DisplayMessage(wxString(s,wxConvLocal));
    inscript = true;
-   // make sure show status bar is visible
+   // make sure status bar is visible
    if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
 
    Py_INCREF(Py_None);
@@ -2139,7 +2125,7 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
    inscript = false;
    statusptr->ErrorMessage(wxString(s,wxConvLocal));
    inscript = true;
-   // make sure show status bar is visible
+   // make sure status bar is visible
    if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
 
    Py_INCREF(Py_None);
@@ -2176,6 +2162,32 @@ static PyObject *golly_note(PyObject *self, PyObject *args)
 
    Py_INCREF(Py_None);
    return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_exit(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *errmsg = NULL;
+
+   if (!PyArg_ParseTuple(args, "|s", &errmsg)) return NULL;
+
+   if (errmsg && errmsg[0] != 0) {
+      // display given error message
+      inscript = false;
+      statusptr->ErrorMessage(wxString(errmsg,wxConvLocal));
+      inscript = true;
+      // make sure status bar is visible
+      if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
+   }
+   
+   exitcalled = true;   // prevent CheckPythonError changing message
+   AbortScript();
+
+   // exception raised so must return NULL
+   return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -2242,7 +2254,6 @@ static PyMethodDef golly_methods[] = {
    { "getpop",       golly_getpop,     METH_VARARGS, "return current population as string" },
    { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
    { "getrule",      golly_getrule,    METH_VARARGS, "return current rule string" },
-   { "abort",        golly_abort,      METH_VARARGS, "terminate script" },
    // viewing
    { "setpos",       golly_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       golly_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
@@ -2264,6 +2275,7 @@ static PyMethodDef golly_methods[] = {
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
    { "note",         golly_note,       METH_VARARGS, "show given string in note dialog" },
+   { "exit",         golly_exit,       METH_VARARGS, "exit script with optional error message" },
    // for internal use (don't document)
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
@@ -2424,7 +2436,8 @@ void CheckPythonError()
       #endif
       wxMessageBox(pyerror, _("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
    }
-   statusptr->DisplayMessage(_("Script aborted."));
+   // don't change message if golly_exit was used to stop script
+   if (!exitcalled) statusptr->DisplayMessage(_("Script aborted."));
 }
 
 // =============================================================================
@@ -2440,6 +2453,7 @@ void RunScript(const wxString& filename)
    pyerror.Clear();
    scriptchars.Clear();
    autoupdate = false;
+   exitcalled = false;
    wxGetApp().PollerReset();
 
    // temporarily change current directory to location of script

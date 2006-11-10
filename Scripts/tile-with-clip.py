@@ -1,5 +1,6 @@
 # Tile current selection with clipboard pattern.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
+# Updated to use exit command, Nov 2006.
 
 from glife import *
 import golly as g
@@ -22,36 +23,28 @@ def clip_rb (patt, right, bottom):
 
 # ------------------------------------------------------------------------------
 
-def main ():
-   selrect = rect( g.getselrect() )
-   
-   if selrect.empty:
-      g.error("There is no selection.")
-      return
+selrect = rect( g.getselrect() )
+if selrect.empty: g.exit("There is no selection.")
 
-   cliplist = g.getclip()                    # 1st 2 items are wd,ht
-   pbox = rect( [0, 0] + cliplist[0 : 2] )
-   cliplist[0 : 2] = []                      # remove wd,ht
-   p = pattern( cliplist )
-   
-   g.clear(inside)
-   if len(p) > 0:
-      # tile selrect with p, clipping right & bottom edges if necessary
-      y = selrect.top
-      while y <= selrect.bottom:
-         bottom = y + pbox.height - 1
-         x = selrect.left
-         while x <= selrect.right:
-            right = x + pbox.width - 1
-            if (right <= selrect.right) and (bottom <= selrect.bottom):
-               p.put(x, y)
-            else:
-               clip_rb( p(x, y), selrect.right, selrect.bottom ).put()
-            x += pbox.width
-         y += pbox.height
+cliplist = g.getclip()                    # 1st 2 items are wd,ht
+pbox = rect( [0, 0] + cliplist[0 : 2] )
+cliplist[0 : 2] = []                      # remove wd,ht
+p = pattern( cliplist )
 
-   if not selrect.visible(): g.fitsel()
+g.clear(inside)
+if len(p) > 0:
+   # tile selrect with p, clipping right & bottom edges if necessary
+   y = selrect.top
+   while y <= selrect.bottom:
+      bottom = y + pbox.height - 1
+      x = selrect.left
+      while x <= selrect.right:
+         right = x + pbox.width - 1
+         if (right <= selrect.right) and (bottom <= selrect.bottom):
+            p.put(x, y)
+         else:
+            clip_rb( p(x, y), selrect.right, selrect.bottom ).put()
+         x += pbox.width
+      y += pbox.height
 
-# ------------------------------------------------------------------------------
-
-main()
+if not selrect.visible(): g.fitsel()

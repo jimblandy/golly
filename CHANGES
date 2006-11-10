@@ -9,9 +9,10 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
-AKT: Moved File/Edit/Control menu functions into wx[file/edit/control].cpp.
-AKT: Added abort() and note() commands.
+AKT: Modified some scripts to use exit() command.
+AKT: Added exit() and note() commands.
 AKT: Modified slide-show.py to use try ... finally ... code.
+AKT: Moved File/Edit/Control menu functions into wx[file/edit/control].cpp.
 
 Changes in version 1.1 (released November 2006)
 
