@@ -30,9 +30,9 @@ BUNDLE_ID = net.sourceforge.golly
 ICON_FILE = app.icns
 
 # for Python script support
-PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
+PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 # following python command doesn't generate correct info on OS 10.4
-# PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+# PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
    -framework Foundation -framework Python
 

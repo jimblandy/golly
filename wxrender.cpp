@@ -615,7 +615,7 @@ void CheckPasteImage(viewport &currview)
          pattdc.SelectObject(*pastebitmap);
          
          // set foreground and background colors for DrawBitmap calls
-         #if defined(__WXMAC__) || defined(__WXMSW__)
+         #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
             // use opposite meaning on Mac/Windows -- sheesh
             if (swapcolors) {
                pattdc.SetTextForeground(*livergb);
@@ -825,7 +825,7 @@ void DrawView(wxDC &dc, viewport &currview)
       FillRect(dc, r, swapcolors ? *livebrush : *deadbrush);
    } else {
       // set foreground and background colors for DrawBitmap calls
-      #if defined(__WXMAC__) || defined(__WXMSW__)
+      #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
       // use opposite meaning on Mac/Windows -- sheesh
       if ( swapcolors ) {
       #else

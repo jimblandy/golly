@@ -704,11 +704,11 @@ void MainFrame::ToggleFullScreen()
 
       fullscreen = !fullscreen;
       ShowFullScreen(fullscreen,
-          // don't use wxFULLSCREEN_ALL because that prevents tool bar being
-          // toggled in full screen mode on Windows
-          wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
-      wxToolBar *tbar = GetToolBar();
+         // don't use wxFULLSCREEN_ALL because that prevents tool bar being
+         // toggled in full screen mode on Windows
+         wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
 
+      wxToolBar *tbar = GetToolBar();
       if (fullscreen) {
          // hide scroll bars
          viewptr->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);

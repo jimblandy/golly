@@ -249,7 +249,7 @@ bool GollyApp::OnInit()
    // create a stopwatch so we can use Time() to get elapsed millisecs
    stopwatch = new wxStopWatch();
 
-   #ifdef __WXMAC__
+   #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
       // prevent rectangle animation when windows open/close
       wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
       // prevent position problem in wxTextCtrl with wxTE_DONTWRAP style

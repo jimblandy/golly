@@ -84,14 +84,8 @@ const wxString SCRIPT_DIR = wxT("Scripts");
 const int PREFS_VERSION = 1;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 1)
-   //!!! CoreGraphics only supports square buttons with power-of-2 sizes
-   const int BITMAP_WD = 16;        // width of bitmap in color buttons
-   const int BITMAP_HT = 16;        // height of bitmap in color buttons
-#else
-   const int BITMAP_WD = 60;        // width of bitmap in color buttons
-   const int BITMAP_HT = 20;        // height of bitmap in color buttons
-#endif
+const int BITMAP_WD = 60;        // width of bitmap in color buttons
+const int BITMAP_HT = 20;        // height of bitmap in color buttons
 
 // initialize exported preferences:
 
@@ -994,7 +988,6 @@ public:
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
    #ifdef __WXMAC__
-      // allow hitting tab to switch focus
       void OnSpinCtrlChar(wxKeyEvent& event);
    #endif
 
@@ -1075,10 +1068,18 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
+   // fix wxMac 2.7.2 bug in wxTextCtrl::SetSelection
+   #define ALL_TEXT 0,999999
+#else
+   #define ALL_TEXT -1,-1
+#endif
+
+// -----------------------------------------------------------------------------
+
 #ifdef __WXMAC__
 
-// fix wxMac bug???
-// override key event handler for wxSpinCtrl to allow tab key handling
+// override key event handler for wxSpinCtrl to allow key checking
 class MySpinCtrl : public wxSpinCtrl
 {
 public:
@@ -1100,20 +1101,19 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
    int key = event.GetKeyCode();
 
    if ( key == WXK_TAB ) {
-      // wxMac bug??? FindFocus() returns pointer to wxTextCtrl window in wxSpinCtrl!!!
-      // does that explain why Navigate() does nothing???
+      // note that FindFocus() returns pointer to wxTextCtrl window in wxSpinCtrl
       if ( currpage == FILE_PAGE ) {
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_PATTERNS);
          wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_MAX_SCRIPTS);
          wxTextCtrl* t1 = s1->GetText();
          wxTextCtrl* t2 = s2->GetText();
          wxWindow* focus = FindFocus();
-         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(-1,-1); }
-         if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+         if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == EDIT_PAGE ) {
          // only 1 spin ctrl on this page
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
-         if ( s1 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+         if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == CONTROL_PAGE ) {
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_HASH_MEM);
          wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_QBASE);
@@ -1126,19 +1126,29 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          wxTextCtrl* t4 = s4->GetText();
          wxTextCtrl* t5 = s5->GetText();
          wxWindow* focus = FindFocus();
-         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(-1,-1); }
-         if ( focus == t2 ) { s3->SetFocus(); s3->SetSelection(-1,-1); }
-         if ( focus == t3 ) { s4->SetFocus(); s4->SetSelection(-1,-1); }
-         if ( focus == t4 ) { s5->SetFocus(); s5->SetSelection(-1,-1); }
-         if ( focus == t5 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+         if ( focus == t2 ) { s3->SetFocus(); s3->SetSelection(ALL_TEXT); }
+         if ( focus == t3 ) { s4->SetFocus(); s4->SetSelection(ALL_TEXT); }
+         if ( focus == t4 ) { s5->SetFocus(); s5->SetSelection(ALL_TEXT); }
+         if ( focus == t5 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == VIEW_PAGE ) {
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_BOLD_SPACING);
          wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_THUMB_RANGE);
          wxTextCtrl* t1 = s1->GetText();
          wxTextCtrl* t2 = s2->GetText();
          wxWindow* focus = FindFocus();
-         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(-1,-1); }
-         if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(-1,-1); }
+         // why does FindWindow(PREF_SHOW_BOLD) fail here???
+         wxCheckBox* checkbox = (wxCheckBox*) FindWindowById(PREF_SHOW_BOLD);
+         if (checkbox) {
+            if (checkbox->GetValue()) {
+               if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+               if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+            } else {
+               if ( s2 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+            }
+         } else {
+            wxBell();
+         }
       }
 
    } else if ( key >= ' ' && key <= '~' ) {
@@ -1195,8 +1205,8 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    ignore_page_event = false;
    color_changed = false;
 
-   #ifdef __WXMAC__
-      // wxMac bug??? avoid ALL spin control values being selected
+   #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
+      // wxMac bug: avoid ALL spin control values being selected
       wxSpinCtrl* sp;
       // deselect other spin control on FILE_PAGE
       sp = (wxSpinCtrl*) FindWindow(PREF_MAX_SCRIPTS); sp->SetSelection(0,0);
@@ -1397,6 +1407,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    choice4->SetSelection(opencursindex);
    spin1->SetRange(1, MAX_RECENT); spin1->SetValue(maxpatterns);
    spin2->SetRange(1, MAX_RECENT); spin2->SetValue(maxscripts);
+   spin1->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1424,7 +1435,9 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // init control value
-   spin1->SetRange(1, 100); spin1->SetValue(randomfill);
+   spin1->SetRange(1, 100);
+   spin1->SetValue(randomfill);
+   spin1->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1531,6 +1544,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin5->SetRange(MIN_HASHMB, MAX_HASHMB); spin5->SetValue(maxhashmem);
+   spin5->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1661,6 +1675,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    spin5->SetRange(2, MAX_THUMBRANGE); spin5->SetValue(thumbrange);
    spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
    spin2->Enable(showboldlines);
+   if (showboldlines) {
+      spin2->SetSelection(ALL_TEXT);
+   } else {
+      spin5->SetSelection(ALL_TEXT);
+   }
    mingridindex = mingridmag - 2;
    choice3->SetSelection(mingridindex);
    choice4->SetSelection(mousewheelmode);
@@ -1714,8 +1733,8 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    AddColorButton(panel, vbox, PREF_QLIFE_RGB, qlifergb, _("Status bar background if not hashing"));
    AddColorButton(panel, vbox, PREF_HLIFE_RGB, hlifergb, _("Status bar background if hashing"));
 
-   #ifdef __WXMAC__
-      // wxMac bug: need this hidden control so escape/return keys select Cancel/OK buttons
+   #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
+      // wxMac bug: need hidden control so escape/return keys select Cancel/OK buttons
       wxSpinCtrl* dummy = new MySpinCtrl(panel, wxID_ANY, wxEmptyString,
                                          wxPoint(-666,-666), wxDefaultSize);
       if (!dummy) Warning(_("Bug in CreateColorPrefs!"));
@@ -1880,7 +1899,7 @@ bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const wxString &pre
       msg.Printf(_("%s must be from %d to %d."), prefix.c_str(), minval, maxval);
       Warning(msg);
       spinctrl->SetFocus();
-      spinctrl->SetSelection(-1,-1);
+      spinctrl->SetSelection(ALL_TEXT);
       return true;
    } else {
       return false;
