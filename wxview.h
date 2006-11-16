@@ -105,6 +105,7 @@ public:
    void ProcessClick(int x, int y, bool shiftdown);
 
    // data
+   viewport *currview;           // viewport for displaying patterns
    bool waitingforclick;         // waiting for paste click?
    bool drawingcells;            // drawing cells due to dragging mouse?
    bool selectingcells;          // selecting cells due to dragging mouse?
@@ -171,7 +172,6 @@ private:
    int BigScroll(int xysize);
 
    // data
-   viewport *currview;           // viewport for displaying patterns
    wxTimer *dragtimer;           // timer used while dragging mouse
    int cellx, celly;             // current cell's 32-bit position
    bigint bigcellx, bigcelly;    // current cell's position

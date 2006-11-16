@@ -65,6 +65,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for hashing, pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
+#include "wxlayer.h"       // for AddLayer, etc
 #include "wxscript.h"
 
 // =============================================================================
@@ -771,6 +772,96 @@ static PyObject *golly_getmag(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_addlayer(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (numlayers >= maxlayers) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad addlayer call: no more layers can be added.");
+      return NULL;
+   } else {
+      AddLayer();
+      DoAutoUpdate();
+   }
+
+   // return index of new layer
+   return Py_BuildValue("i", currlayer);
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_dellayer(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (numlayers <= 1) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad dellayer call: there is only one layer.");
+      return NULL;
+   } else {
+      DeleteLayer();
+      DoAutoUpdate();
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_setlayer(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int index;
+
+   if (!PyArg_ParseTuple(args, "i", &index)) return NULL;
+
+   if (index < 0 || index >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad setlayer index: %d", index);
+      PyErr_SetString(PyExc_RuntimeError, msg);
+      return NULL;
+   } else {
+      SetLayer(index);
+      DoAutoUpdate();
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getlayer(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   return Py_BuildValue("i", currlayer);
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_numlayers(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   return Py_BuildValue("i", numlayers);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_setoption(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -782,33 +873,46 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
 
    if (strcmp(optname, "autofit") == 0) {
       oldval = autofit ? 1 : 0;
-      if (autofit != (newval != 0))
+      if (oldval != newval)
          mainptr->ToggleAutoFit();
+
+   } else if (strcmp(optname, "drawlayers") == 0) {
+      oldval = drawlayers ? 1 : 0;
+      if (oldval != newval) {
+         ToggleDrawLayers();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "genlayers") == 0) {
+      oldval = genlayers ? 1 : 0;
+      if (oldval != newval) {
+         ToggleGenLayers();
+      }
+
+   } else if (strcmp(optname, "fullscreen") == 0) {
+      oldval = mainptr->fullscreen ? 1 : 0;
+      if (oldval != newval) {
+         mainptr->ToggleFullScreen();
+         DoAutoUpdate();
+      }
 
    } else if (strcmp(optname, "hashing") == 0) {
       oldval = hashing ? 1 : 0;
-      if (hashing != (newval != 0)) {
+      if (oldval != newval) {
          mainptr->ToggleHashing();
          DoAutoUpdate();               // status bar color might change
       }
 
    } else if (strcmp(optname, "hyperspeed") == 0) {
       oldval = hyperspeed ? 1 : 0;
-      if (hyperspeed != (newval != 0))
+      if (oldval != newval)
          mainptr->ToggleHyperspeed();
-
-   } else if (strcmp(optname, "fullscreen") == 0) {
-      oldval = mainptr->fullscreen ? 1 : 0;
-      if (mainptr->fullscreen != (newval != 0)) {
-         mainptr->ToggleFullScreen();
-         DoAutoUpdate();
-      }
 
    } else if (strcmp(optname, "mindelay") == 0) {
       oldval = mindelay;
       if (newval < 0) newval = 0;
       if (newval > MAX_DELAY) newval = MAX_DELAY;
-      if (mindelay != newval) {
+      if (oldval != newval) {
          mindelay = newval;
          mainptr->UpdateWarp();
          DoAutoUpdate();
@@ -818,7 +922,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       oldval = maxdelay;
       if (newval < 0) newval = 0;
       if (newval > MAX_DELAY) newval = MAX_DELAY;
-      if (maxdelay != newval) {
+      if (oldval != newval) {
          maxdelay = newval;
          mainptr->UpdateWarp();
          DoAutoUpdate();
@@ -826,56 +930,56 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
 
    } else if (strcmp(optname, "showpatterns") == 0) {
       oldval = showpatterns ? 1 : 0;
-      if (showpatterns != (newval != 0)) {
+      if (oldval != newval) {
          mainptr->ToggleShowPatterns();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showscripts") == 0) {
       oldval = showscripts ? 1 : 0;
-      if (showscripts != (newval != 0)) {
+      if (oldval != newval) {
          mainptr->ToggleShowScripts();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showtoolbar") == 0) {
       oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
-      if (mainptr->GetToolBar()->IsShown() != (newval != 0)) {
+      if (oldval != newval) {
          mainptr->ToggleToolBar();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showstatusbar") == 0) {
       oldval = mainptr->StatusVisible() ? 1 : 0;
-      if (mainptr->StatusVisible() != (newval != 0)) {
+      if (oldval != newval) {
          mainptr->ToggleStatusBar();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showexact") == 0) {
       oldval = showexact ? 1 : 0;
-      if (showexact != (newval != 0)) {
+      if (oldval != newval) {
          mainptr->ToggleExactNumbers();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "swapcolors") == 0) {
       oldval = swapcolors ? 1 : 0;
-      if (swapcolors != (newval != 0)) {
+      if (oldval != newval) {
          viewptr->ToggleCellColors();
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showgrid") == 0) {
       oldval = showgridlines ? 1 : 0;
-      if (showgridlines != (newval != 0)) {
+      if (oldval != newval) {
          showgridlines = (newval != 0);
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showboldlines") == 0) {
       oldval = showboldlines ? 1 : 0;
-      if (showboldlines != (newval != 0)) {
+      if (oldval != newval) {
          showboldlines = (newval != 0);
          DoAutoUpdate();
       }
@@ -884,14 +988,14 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       oldval = boldspacing;
       if (newval < 2) newval = 2;
       if (newval > MAX_SPACING) newval = MAX_SPACING;
-      if (boldspacing != newval) {
+      if (oldval != newval) {
          boldspacing = newval;
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "savexrle") == 0) {
       oldval = savexrle ? 1 : 0;
-      if (savexrle != (newval != 0)) {
+      if (oldval != newval) {
          savexrle = (newval != 0);
          // no need: DoAutoUpdate();
       }
@@ -899,6 +1003,10 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad setoption call: unknown option.");
       return NULL;
+   }
+   
+   if (oldval != newval) {
+      mainptr->UpdateMenuItems(mainptr->IsActive());
    }
 
    // return old value (simplifies saving and restoring settings)
@@ -917,9 +1025,11 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "s", &optname)) return NULL;
 
    if      (strcmp(optname, "autofit") == 0)       optval = autofit ? 1 : 0;
+   else if (strcmp(optname, "drawlayers") == 0)    optval = drawlayers ? 1 : 0;
+   else if (strcmp(optname, "genlayers") == 0)     optval = genlayers ? 1 : 0;
+   else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
    else if (strcmp(optname, "hashing") == 0)       optval = hashing ? 1 : 0;
    else if (strcmp(optname, "hyperspeed") == 0)    optval = hyperspeed ? 1 : 0;
-   else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
@@ -2264,6 +2374,12 @@ static PyMethodDef golly_methods[] = {
    { "visrect",      golly_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
    { "update",       golly_update,     METH_VARARGS, "update display (viewport and status bar)" },
    { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
+   // layers
+   { "addlayer",     golly_addlayer,   METH_VARARGS, "add a new layer" },
+   { "dellayer",     golly_dellayer,   METH_VARARGS, "delete current layer" },
+   { "setlayer",     golly_setlayer,   METH_VARARGS, "switch to given layer" },
+   { "getlayer",     golly_getlayer,   METH_VARARGS, "return current layer" },
+   { "numlayers",    golly_numlayers,  METH_VARARGS, "return number of layers" },
    // miscellaneous
    { "setoption",    golly_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
    { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },

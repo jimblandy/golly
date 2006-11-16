@@ -128,6 +128,8 @@ int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
 bool showboldlines = true;       // show bold grid lines?
 bool mathcoords = false;         // show Y values increasing upwards?
+bool drawlayers = false;         // draw all layers?
+bool genlayers = false;          // generate all layers?
 int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
@@ -538,6 +540,8 @@ void SavePrefs()
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
    fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
+   fprintf(f, "draw_layers=%d\n", drawlayers ? 1 : 0);
+   fprintf(f, "gen_layers=%d\n", genlayers ? 1 : 0);
    
    fputs("\n", f);
 
@@ -827,6 +831,12 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "math_coords") == 0) {
          mathcoords = value[0] == '1';
+
+      } else if (strcmp(keyword, "draw_layers") == 0) {
+         drawlayers = value[0] == '1';
+
+      } else if (strcmp(keyword, "gen_layers") == 0) {
+         genlayers = value[0] == '1';
 
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';

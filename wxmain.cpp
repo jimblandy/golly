@@ -66,6 +66,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
+#include "wxlayer.h"       // for AddLayer, etc
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -193,7 +194,16 @@ enum {
    ID_HELP_REFS,
    ID_HELP_PROBLEMS,
    ID_HELP_CHANGES,
-   ID_HELP_CREDITS
+   ID_HELP_CREDITS,
+
+   // Layer menu
+   ID_ADD_LAYER,
+   ID_DEL_LAYER,
+   ID_MOVE_LAYER,
+   ID_DEL_OTHERS,
+   ID_DRAW_ALL,
+   ID_GEN_ALL,
+   ID_LAYER0         // keep this last
 };
 
 // static routines used by GetPrefs() to get IDs for items in Open/Run Recent submenus;
@@ -359,10 +369,12 @@ void MainFrame::UpdateMenuItems(bool active)
    wxMenuBar *mbar = GetMenuBar();
    wxToolBar *tbar = GetToolBar();
    if (mbar) {
-      if (viewptr->waitingforclick) active = false;
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
       bool busy = generating || inscript;
+      int id;
+
+      if (viewptr->waitingforclick) active = false;
       
       mbar->Enable(wxID_NEW,           active && !busy);
       mbar->Enable(wxID_OPEN,          active && !busy);
@@ -434,6 +446,15 @@ void MainFrame::UpdateMenuItems(bool active)
       #endif
       mbar->Enable(ID_INFO,      !currfile.IsEmpty());
 
+      mbar->Enable(ID_ADD_LAYER,    active && numlayers < maxlayers);
+      mbar->Enable(ID_DEL_LAYER,    active && numlayers > 1);
+      mbar->Enable(ID_MOVE_LAYER,   active && numlayers > 1);
+      mbar->Enable(ID_DEL_OTHERS,   active && numlayers > 1);
+      mbar->Enable(ID_DRAW_ALL,     active);
+      mbar->Enable(ID_GEN_ALL,      active);
+      for (id = ID_LAYER0; id < ID_LAYER0+numlayers; id++)
+         mbar->Enable(id, active);
+
       // tick/untick menu items created using AppendCheckItem
       mbar->Check(ID_SAVE_XRLE,     savexrle);
       mbar->Check(ID_SHOW_PATTERNS, showpatterns);
@@ -465,6 +486,10 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SCALE_4,    viewptr->GetMag() == 2);
       mbar->Check(ID_SCALE_8,    viewptr->GetMag() == 3);
       mbar->Check(ID_SCALE_16,   viewptr->GetMag() == 4);
+      mbar->Check(ID_DRAW_ALL,   drawlayers);
+      mbar->Check(ID_GEN_ALL,    genlayers);
+      for (id = ID_LAYER0; id < ID_LAYER0+numlayers; id++)
+         mbar->Check(id, currlayer == (id - ID_LAYER0));
    }
 }
 
@@ -889,6 +914,13 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_COLORS:         viewptr->ToggleCellColors(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
+      // Layer menu
+      case ID_ADD_LAYER:      AddLayer(); break;
+      case ID_DEL_LAYER:      DeleteLayer(); break;
+      case ID_MOVE_LAYER:     MoveLayerDialog(); break;
+      case ID_DEL_OTHERS:     DeleteOtherLayers(); break;
+      case ID_DRAW_ALL:       ToggleDrawLayers(); break;
+      case ID_GEN_ALL:        ToggleGenLayers(); break;
       // Help menu
       case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
@@ -909,9 +941,12 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       default:
          if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
             OpenRecentPattern(id);
-         }
+         } else
          if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
             OpenRecentScript(id);
+         } else
+         if ( id >= ID_LAYER0 ) {
+            SetLayer(id - ID_LAYER0);
          }
    }
    UpdateUserInterface(IsActive());
@@ -1282,12 +1317,45 @@ void MainFrame::SetRandomFillPercentage()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::AppendLayerItem()
+{
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) {
+      wxMenu* layermenu = mbar->GetMenu( mbar->FindMenu(_("Layer")) );
+      if (layermenu) {
+         wxString name;
+         name.Printf(_("Layer %d"), numlayers - 1);
+         layermenu->AppendCheckItem(ID_LAYER0 + numlayers - 1, name);
+      } else {
+         Warning(_("Could not find Layer menu!"));
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::RemoveLayerItem()
+{
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) {
+      wxMenu* layermenu = mbar->GetMenu( mbar->FindMenu(_("Layer")) );
+      if (layermenu) {
+         layermenu->Delete(ID_LAYER0 + numlayers);
+      } else {
+         Warning(_("Could not find Layer menu!"));
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::CreateMenus()
 {
    wxMenu *fileMenu = new wxMenu();
    wxMenu *editMenu = new wxMenu();
    wxMenu *controlMenu = new wxMenu();
    wxMenu *viewMenu = new wxMenu();
+   wxMenu *layerMenu = new wxMenu();
    wxMenu *helpMenu = new wxMenu();
 
    // create submenus
@@ -1451,6 +1519,17 @@ void MainFrame::CreateMenus()
    viewMenu->AppendSeparator();
    viewMenu->Append(ID_INFO, _("Pattern Info\tCtrl+I"));
 
+   layerMenu->Append(ID_ADD_LAYER, _("Add Layer\tCtrl+D"));
+   layerMenu->Append(ID_DEL_LAYER, _("Delete Layer\tShift+Ctrl+D"));
+   layerMenu->Append(ID_MOVE_LAYER, _("Move Layer..."));
+   layerMenu->AppendSeparator();
+   layerMenu->Append(ID_DEL_OTHERS, _("Delete Other Layers"));
+   layerMenu->AppendSeparator();
+   layerMenu->AppendCheckItem(ID_DRAW_ALL, _("Draw All Layers"));
+   layerMenu->AppendCheckItem(ID_GEN_ALL, _("Generate All Layers"));
+   layerMenu->AppendSeparator();
+   layerMenu->AppendCheckItem(ID_LAYER0, _("Layer 0"));
+
    helpMenu->Append(ID_HELP_INDEX, _("Contents"));
    helpMenu->Append(ID_HELP_INTRO, _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS, _("Hints and Tips"));
@@ -1471,7 +1550,7 @@ void MainFrame::CreateMenus()
    #ifndef __WXMAC__
       helpMenu->AppendSeparator();
    #endif
-   // on the Mac the About item gets moved to the app menu
+   // on the Mac the wxID_ABOUT item gets moved to the app menu
    helpMenu->Append(wxID_ABOUT, _("About Golly"));
 
    // create the menu bar and append menus
@@ -1481,6 +1560,7 @@ void MainFrame::CreateMenus()
    menuBar->Append(editMenu, _("&Edit"));
    menuBar->Append(controlMenu, _("&Control"));
    menuBar->Append(viewMenu, _("&View"));
+   menuBar->Append(layerMenu, _("&Layer"));
    menuBar->Append(helpMenu, _("&Help"));
    
    #ifdef __WXMAC__
@@ -1711,6 +1791,8 @@ MainFrame::MainFrame()
    if (showscripts) splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
 
    InitDrawingData();      // do this after viewport size has been set
+   
+   AddLayer();             // create the initial layer
 
    generating = false;     // not generating pattern
    fullscreen = false;     // not in full screen mode

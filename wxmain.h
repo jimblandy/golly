@@ -100,6 +100,10 @@ public:
    void ShowPatternInfo();
    void ResizeSplitWindow();
 
+   // layer functions
+   void AppendLayerItem();
+   void RemoveLayerItem();
+
    // flags
    bool generating;              // currently generating pattern?
    bool fullscreen;              // in full screen mode?
