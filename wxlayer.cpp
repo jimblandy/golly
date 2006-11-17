@@ -156,10 +156,9 @@ void DeleteOtherLayers()
    int i;
    for (i = 0; i < numlayers; i++)
       if (i != currlayer) delete layer[i];
+
    layer[0] = layer[currlayer];
    currlayer = 0;
-   
-   WriteLayerGlobals();
 
    // remove all items except layer 0 from end of Layer menu
    while (numlayers > 1) {

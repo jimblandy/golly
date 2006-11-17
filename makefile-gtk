@@ -36,7 +36,7 @@ BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o \
-   $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
+   $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 all: $(OBJDIR) golly bgolly
 
@@ -146,7 +146,8 @@ wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
 $(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
-wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h wxinfo.h wxhelp.h
+wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp \
@@ -168,6 +169,11 @@ qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
 
+$(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \
+lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
+
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
 bitmaps/open.xpm bitmaps/save.xpm bitmaps/play.xpm bitmaps/stop.xpm \
 bitmaps/hash.xpm bitmaps/draw.xpm bitmaps/select.xpm bitmaps/move.xpm \
@@ -175,7 +181,7 @@ bitmaps/info.xpm bitmaps/new.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxutils.h wxprefs.h wxinfo.h wxhelp.h wxstatus.h \
-wxview.h wxrender.h wxscript.h
+wxview.h wxrender.h wxscript.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp wxgolly.h \

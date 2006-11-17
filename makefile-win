@@ -53,7 +53,7 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxrule.obj \
    $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj \
    $(OBJDIR)/wxrender.obj $(OBJDIR)/wxscript.obj $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj \
-   $(OBJDIR)/wxcontrol.obj $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
+   $(OBJDIR)/wxcontrol.obj $(OBJDIR)/wxlayer.obj $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -383,7 +383,8 @@ wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
 $(OBJDIR)/wxscript.obj: wxscript.cpp wxscript.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
-wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h wxinfo.h wxhelp.h
+wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) /I$(PYTHON_DIR)\include wxscript.cpp
 
 $(OBJDIR)/wxfile.obj: wxfile.cpp \
@@ -405,11 +406,16 @@ qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxcontrol.cpp
 
+$(OBJDIR)/wxlayer.obj: wxlayer.cpp wxlayer.h \
+lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxlayer.cpp
+
 $(OBJDIR)/wxmain.obj: wxmain.cpp wxmain.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxutils.h wxprefs.h wxinfo.h wxhelp.h wxstatus.h \
-wxview.h wxrender.h wxscript.h
+wxview.h wxrender.h wxscript.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxmain.cpp
 
 $(OBJDIR)/wxgolly.obj: wxgolly.cpp wxgolly.h \
