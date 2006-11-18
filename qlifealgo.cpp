@@ -57,7 +57,7 @@ static unsigned char ai[129] ;
  *   returned.
  */
 /*
- *   This preprocessor directive is used to workaround a bug in
+ *   This preprocessor directive is used to work around a bug in
  *   register allocation when using function inlining (-O3 or
  *   better) and gcc 3.4.2, which is very common having shipped with
  *   Fedora Core 3.
@@ -657,7 +657,7 @@ void qlifealgo::markglobalchange(supertile *p, int lev) {
       }
    } else {
       if (p != nullroots[lev]) {
-         p->flags |= 0xfffffff ;
+	 p->flags |= 0xfffffff ;
          for (i=0; i<8; i++)
             markglobalchange(p->d[i], lev-1) ;
       }
@@ -1124,7 +1124,8 @@ const char *qlifealgo::setrule(const char *s) {
    if (!global_liferules.hasB0notS8) {
       // current rule doesn't have B0, or it has both B0 and S8
       ruletable = global_liferules.rule0 ;
-      if (!global_liferules.vertically_symmetrical()) {
+      if (!global_liferules.vertically_symmetrical() &&
+	  !global_liferules.already_flipped()) {
 	// qlifealgo has an opposite interpretation of the orientation
 	// of ruletable than hlifealgo.  For vertically symmetrical
 	// rules, this doesn't matter.  This is a tad tricky because
@@ -1142,6 +1143,7 @@ const char *qlifealgo::setrule(const char *s) {
 	    ruletable[j] = fi ;
 	  }
 	}
+	global_liferules.set_flipped() ;
       }
    } else {
       // ruletable will be set in step() depending on gen parity

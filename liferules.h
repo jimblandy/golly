@@ -45,6 +45,8 @@ public:
    const char *setrule(const char *s) ;
    const char *getrule() const { return rule ; }
    bool vertically_symmetrical() const { return !wolfram ; }
+   bool already_flipped() const { return !!flipped ; }
+   void set_flipped() { flipped = 1 ; }
    // AKT: we need 2 tables to support B0-not-S8 rule emulation
    char rule0[65536];      // rule table for even gens if rule has B0 but not S8,
                            // or for all gens if rule has no B0, or it has B0 *and* S8
@@ -52,10 +54,12 @@ public:
    bool hasB0notS8;        // set by setrule; true if rule has B0 but not S8
    bool isRegularLife() ;  // is this s23b3?
 private:
+   void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) ;
    const char *rule ;      // copy of string passed into setrule
    int hexmask ;           // really neighbormask
    int rulebits ;
    int wolfram ;
+   int flipped ;           // has it been flipped already?
 } ;
 extern liferules global_liferules ;
 #endif

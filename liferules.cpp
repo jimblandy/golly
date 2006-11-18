@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 liferules::liferules() {
    rule = 0 ;
+   flipped = 0 ;
    setrule("B3/S23") ;
 }
 
@@ -47,8 +48,10 @@ static int bc(int v) {
 }
 
 // initialize current rule table (rptr points to rule0 or rule1)
-void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) {
+void liferules::initruletable(char *rptr, int rulebits,
+                              int hexmask, int wolfram) {
    int i;
+   flipped = 0 ;
    if (wolfram >= 0) {
       for (i=0; i<0x1000; i = ((i | 0x888) + 1) & 0x1777)
          rptr[i] = (char)(1 & ((i >> 5) | (wolfram >> (i >> 8)))) ;
