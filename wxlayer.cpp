@@ -49,39 +49,41 @@ Layer* layer[maxlayers];   // array of layers
 
 // -----------------------------------------------------------------------------
 
-void ReadLayerGlobals()
+void SaveLayerGlobals()
 {
-   // save curralgo, rule, currview, etc in layer[currlayer]
+   // save curralgo, currview, etc in layer[currlayer]
 
    layer[currlayer]->lalgo = curralgo;
+   layer[currlayer]->lhash = hashing;
    layer[currlayer]->lrule = wxString(curralgo->getrule(),wxConvLocal);
 
-/*!!!
    layer[currlayer]->lview = viewptr->currview;
-*/
 
-   //!!!
+   //!!! save title, selection, warp, etc???
 }
 
 // -----------------------------------------------------------------------------
 
-void WriteLayerGlobals()
+void ChangeLayerGlobals()
 {
-   // set curralgo, rule, currview, etc using layer[currlayer]
+   // set curralgo, currview, etc using layer[currlayer]
 
+   // curralgo does not exist if called from DeleteLayer so use global_liferules
+   wxString oldrule = wxString(global_liferules.getrule(),wxConvLocal);
+   
    curralgo = layer[currlayer]->lalgo;
 
-   // no need to set poller here???
-   //!!! curralgo->setpoll(wxGetApp().Poller());
+   // need to update global rule table if the universe type has changed or
+   // the current rule has changed
+   if ( hashing != layer[currlayer]->lhash ||
+        !oldrule.IsSameAs(layer[currlayer]->lrule, false) ) {
+      curralgo->setrule(layer[currlayer]->lrule.mb_str(wxConvLocal));
+   }
+   hashing = layer[currlayer]->lhash;
 
-   // need to update global rule table
-   curralgo->setrule(layer[currlayer]->lrule.mb_str(wxConvLocal));
-
-/*!!!
    viewptr->currview = layer[currlayer]->lview;
-*/
 
-   //!!!
+   //!!! set title, selection, warp, etc???
 }
 
 // -----------------------------------------------------------------------------
@@ -95,7 +97,7 @@ void AddLayer()
       currlayer = 0;
    } else {
       // save curralgo, currview, etc
-      ReadLayerGlobals();
+      SaveLayerGlobals();
       
       // insert new layer after currlayer
       currlayer++;
@@ -115,10 +117,11 @@ void AddLayer()
    if (numlayers > 1) {
       // add new item at end of Layer menu
       mainptr->AppendLayerItem();
-   
-      // prevent CreateUniverse() deleting curralgo (saved above)
-      curralgo = NULL;
-      mainptr->NewPattern(layer[currlayer]->ltitle);
+      
+      ChangeLayerGlobals();
+      
+      mainptr->UpdateMenuItems(mainptr->IsActive());
+      mainptr->UpdatePatternAndStatus();
    }
 }
 
@@ -127,6 +130,8 @@ void AddLayer()
 void DeleteLayer()
 {
    if (numlayers <= 1) return;
+   
+   SaveLayerGlobals();
    
    delete layer[currlayer];
    numlayers--;
@@ -138,7 +143,7 @@ void DeleteLayer()
    }
    if (currlayer > 0) currlayer--;
    
-   WriteLayerGlobals();
+   ChangeLayerGlobals();
 
    // remove item from end of Layer menu
    mainptr->RemoveLayerItem();
@@ -183,9 +188,9 @@ void SetLayer(int index)
    if (index < 0 || index >= numlayers) return;
    if (currlayer == index) return;
    
-   ReadLayerGlobals();
+   SaveLayerGlobals();
    currlayer = index;
-   WriteLayerGlobals();
+   ChangeLayerGlobals();
 
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -216,27 +221,57 @@ void ToggleGenLayers()
 
 // -----------------------------------------------------------------------------
 
+Layer* GetLayer(int index)
+{
+   if (index < 0 || index >= numlayers) {
+      Warning(_("Bad index in GetLayer!"));
+      return NULL;
+   } else {
+      return layer[index];
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 Layer::Layer()
 {
-   lalgo = NULL;
-   
    if (numlayers == 0) {
-      lview = viewptr->currview;
+      // creating very first layer (probably don't need to do anything here???)
+      lalgo = NULL;
+      lhash = hashing;
+      lview = NULL;
+      lrule = wxEmptyString;
+      ltitle = wxEmptyString;
+      ltop = lbottom = lleft = lright = 0;
    } else {
+      lhash = hashing;
+      if (hashing) {
+         lalgo = new hlifealgo();
+         lalgo->setMaxMemory(maxhashmem);
+      } else {
+         lalgo = new qlifealgo();
+      }
+      lalgo->setpoll(wxGetApp().Poller());
+      
+      // inherit current rule
+      lrule = wxString(curralgo->getrule(),wxConvLocal);
+      
+      // inherit current viewport's size, scale and location
       lview = new viewport(100,100);
-      // inherit currview's size, scale and location
-      //!!!
+      lview->resize( viewptr->currview->getwidth(),
+                     viewptr->currview->getheight() );
+      lview->setpositionmag( viewptr->currview->x,
+                             viewptr->currview->y,
+                             viewptr->currview->getmag() );
+      
+      ltitle = _("untitled");
+      
+      // no selection
+      ltop = 1;
+      lbottom = 0;
+      lleft = 0;
+      lright = 0;
    }
-   
-   lrule = wxT("B3/S23");
-   
-   ltitle = _("untitled");
-   
-   // no selection
-   ltop = 1;
-   lbottom = 0;
-   lleft = 0;
-   lright = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -244,5 +279,5 @@ Layer::Layer()
 Layer::~Layer()
 {
    if (lalgo) delete lalgo;
-   if (lview != viewptr->currview) delete lview;  //!!!???
+   if (lview) delete lview;
 }

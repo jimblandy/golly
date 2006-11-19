@@ -36,7 +36,8 @@ public:
    Layer();
    ~Layer();
 
-   lifealgo* lalgo;     // this layer's algorithm (hlife or qlife)
+   lifealgo* lalgo;     // this layer's universe
+   bool lhash;          // this layer uses hlifealgo?
    viewport* lview;     // this layer's viewport
    wxString lrule;      // this layer's rule
    wxString ltitle;     // this layer's window title
@@ -59,5 +60,6 @@ void MoveLayerDialog();
 void SetLayer(int index);
 void ToggleDrawLayers();
 void ToggleGenLayers();
+Layer* GetLayer(int index);
 
 #endif

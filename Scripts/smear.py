@@ -1,9 +1,15 @@
-# test multiple layers (NOT YET IMPLEMENTED!!!)
+# test multiple layers
 
 from glife import pattern
 import golly as g
 
-if g.empty(): g.exit("There is no pattern.")
+if g.empty():
+   g.exit("There is no pattern.")
+
+'''
+if g.numlayers() + 2 > g.maxlayers():
+   g.exit("You need to delete a couple of layers.")
+'''
 
 # get starting pattern from current layer
 startpatt = pattern( g.getcells(g.getrect()) )
@@ -28,9 +34,15 @@ while True:
    currpatt.put(0,0)
    g.setlayer(curr)
    
-   # display all 3 layers (start, smear, curr) using currently
-   # assigned layer colors (for live cells) with alpha blending???
-   g.update()
+   exp = g.getstep()
+   if exp > 0:
+      step = g.getbase()**exp
+   else:
+      step = 1
+   if int(g.getgen()) % step == 0:
+      # display all 3 layers (start, smear, curr) using currently
+      # assigned layer colors (for live cells) with alpha blending???
+      g.update()
 
 '''
 Ideas and questions:
@@ -49,17 +61,21 @@ Ideas and questions:
 
 Need a new Layer menu with these items:
 
-Add Layer
+Add Layer            (creates new empty layer)
+Duplicate Layer      (like Add Layer but copies pattern, etc???)
 Delete Layer
 Move Layer...
 -----
-Delete Other Layers   (delete all layers except current one)
+Delete Other Layers  (delete all layers except current one)
 -----
-Draw All Layers       (check item -- use current pos and mag)
-Generate All Layers   (ditto -- use current step base and exp)
+Draw All Layers      (check item -- use current pos and mag)
+Generate All Layers  (ditto -- use current step base and exp)
+-----
+Next Layer           (select next layer???)
+Previous Layer       (select previous layer???)
 -----
 Layer 0
-Layer 1               (current layer is ticked)
+Layer 1              (current layer is ticked)
 Layer 2
 
 Whenever there is more than 1 layer, display small buttons

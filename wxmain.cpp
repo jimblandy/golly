@@ -446,14 +446,14 @@ void MainFrame::UpdateMenuItems(bool active)
       #endif
       mbar->Enable(ID_INFO,      !currfile.IsEmpty());
 
-      mbar->Enable(ID_ADD_LAYER,    active && numlayers < maxlayers);
-      mbar->Enable(ID_DEL_LAYER,    active && numlayers > 1);
-      mbar->Enable(ID_MOVE_LAYER,   active && numlayers > 1);
-      mbar->Enable(ID_DEL_OTHERS,   active && numlayers > 1);
-      mbar->Enable(ID_DRAW_ALL,     active);
-      mbar->Enable(ID_GEN_ALL,      active);
+      mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < maxlayers);
+      mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
+      mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
+      mbar->Enable(ID_DEL_OTHERS,   active && !busy && numlayers > 1);
+      mbar->Enable(ID_DRAW_ALL,     active && !busy);
+      mbar->Enable(ID_GEN_ALL,      active && !busy);
       for (id = ID_LAYER0; id < ID_LAYER0+numlayers; id++)
-         mbar->Enable(id, active);
+         mbar->Enable(id, active && !busy);
 
       // tick/untick menu items created using AppendCheckItem
       mbar->Check(ID_SAVE_XRLE,     savexrle);
