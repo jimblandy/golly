@@ -141,7 +141,7 @@ wxscript.h wxlayer.h
 $(OBJDIR)/wxrender.o: wxrender.cpp wxrender.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \

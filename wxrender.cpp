@@ -116,6 +116,7 @@ Other points of interest:
 #include "wxprefs.h"       // for swapcolors, showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for currview, viewptr->...
+#include "wxlayer.h"       // numlayers, GetLayer, etc
 #include "wxrender.h"
 
 // -----------------------------------------------------------------------------
@@ -153,7 +154,6 @@ int prectwd;               // must match viewptr->pasterect.width
 int prectht;               // must match viewptr->pasterect.height
 int pastemag;              // must match current viewport's scale
 int cvwd, cvht;            // must match current viewport's width and height
-bool pcolor;               // must match swapcolors flag
 paste_location pasteloc;   // must match plocation
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
@@ -488,7 +488,6 @@ void CheckPasteImage()
         prectht != viewptr->pasterect.height ||
         cvwd != currview->getwidth() ||
         cvht != currview->getheight() ||
-        pcolor != swapcolors ||
         pasteloc != plocation
       ) {
       prectwd = viewptr->pasterect.width;
@@ -496,7 +495,6 @@ void CheckPasteImage()
       pastemag = currview->getmag();
       cvwd = currview->getwidth();
       cvht = currview->getheight();
-      pcolor = swapcolors;
       pasteloc = plocation;
 
       // calculate size of paste image; we could just set it to pasterect size
@@ -617,25 +615,15 @@ void CheckPasteImage()
          // set foreground and background colors for DrawBitmap calls
          #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
             // use opposite meaning on Mac/Windows -- sheesh
-            if (swapcolors) {
-               pattdc.SetTextForeground(*livergb);
-               pattdc.SetTextBackground(*pastergb);
-            } else {
-               pattdc.SetTextForeground(*deadrgb);
-               pattdc.SetTextBackground(*pastergb);
-            }
+            pattdc.SetTextForeground(*deadrgb);
+            pattdc.SetTextBackground(*pastergb);
          #else
-            if (swapcolors) {
-               pattdc.SetTextForeground(*pastergb);
-               pattdc.SetTextBackground(*livergb);
-            } else {
-               pattdc.SetTextForeground(*pastergb);
-               pattdc.SetTextBackground(*deadrgb);
-            }
+            pattdc.SetTextForeground(*pastergb);
+            pattdc.SetTextBackground(*deadrgb);
          #endif
 
          // set brush color used in killrect
-         killbrush = swapcolors ? livebrush : deadbrush;
+         killbrush = deadbrush;
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -654,11 +642,7 @@ void CheckPasteImage()
             int d = pastebitmap->GetDepth();
             pastebitmap->SetDepth(1);
          #endif
-         if (swapcolors) {
-            pastebitmap->SetMask( new wxMask(*pastebitmap,*livergb) );
-         } else {
-            pastebitmap->SetMask( new wxMask(*pastebitmap,*deadrgb) );
-         }
+         pastebitmap->SetMask( new wxMask(*pastebitmap,*deadrgb) );
          #ifdef __WXMSW__
             // restore depth
             pastebitmap->SetDepth(d);
@@ -815,14 +799,90 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
 // -----------------------------------------------------------------------------
 
+void DrawOtherLayers(wxDC &dc)
+{
+   // temporarily turn off grid lines for DrawStretchedBitmap
+   bool saveshow = showgridlines;
+   showgridlines = false;
+
+   // set brush color used in killrect
+   killbrush = deadbrush;
+   
+   int i;
+   for (i = 1; i < numlayers; i++) {
+      curralgo = GetLayer(i)->lalgo;
+      if (!curralgo->isEmpty()) {
+         // create bitmap for drawing layer (-1 means screen depth)
+         wxBitmap* layerbitmap = new wxBitmap(currwd, currht, -1);
+         if (layerbitmap) {
+            wxMemoryDC layerdc;
+            layerdc.SelectObject(*layerbitmap);
+            
+            // set foreground and background colors for DrawBitmap calls
+            #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
+               // use opposite meaning on Mac/Windows -- sheesh
+               layerdc.SetTextForeground(*deadrgb);
+               layerdc.SetTextBackground(*livergb[i]);
+            #else
+               layerdc.SetTextForeground(*livergb[i]);
+               layerdc.SetTextBackground(*deadrgb);
+            #endif
+            
+            currdc = &layerdc;
+            curralgo->draw(*currview, renderer);
+      
+            // add new mask to layerbitmap
+            #ifdef __WXMSW__
+               // temporarily change depth to avoid bug in wxMSW 2.6.0 (fixed in 2.6.3???)
+               int d = layerbitmap->GetDepth();
+               layerbitmap->SetDepth(1);
+            #endif
+            layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
+            #ifdef __WXMSW__
+               // restore depth
+               layerbitmap->SetDepth(d);
+            #endif
+         
+            // draw layer image
+            layerdc.SelectObject(*layerbitmap);
+            dc.Blit(0, 0, currwd, currht, &layerdc, 0, 0, wxCOPY, true);
+            
+            delete layerbitmap;
+         } else {
+            // give some indication that layerbitmap could not be created
+            wxBell();
+         }
+      }
+   }
+   
+   showgridlines = saveshow;
+}
+
+// -----------------------------------------------------------------------------
+
 void DrawView(wxDC &dc)
 {
    wxRect r;
+   viewport *saveview = NULL;
+   lifealgo *savealgo = NULL;
+   int colorindex;
+   
+   if ( drawlayers && numlayers > 1 ) {
+      // draw all layers using current layer's viewport, starting with layer 0
+      saveview = currview;
+      savealgo = curralgo;
+      currview = GetLayer(currlayer)->lview;
+      curralgo = GetLayer(0)->lalgo;
+      colorindex = 0;
+   } else {
+      // just draw the current layer
+      colorindex = currlayer;
+   }
 
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
       r = wxRect(0, 0, currview->getwidth(), currview->getheight());
-      FillRect(dc, r, swapcolors ? *livebrush : *deadbrush);
+      FillRect(dc, r, swapcolors ? *livebrush[colorindex] : *deadbrush);
    } else {
       // set foreground and background colors for DrawBitmap calls
       #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
@@ -831,14 +891,14 @@ void DrawView(wxDC &dc)
       #else
       if ( !swapcolors ) {
       #endif
-         dc.SetTextForeground(*livergb);
+         dc.SetTextForeground(*livergb[colorindex]);
          dc.SetTextBackground(*deadrgb);
       } else {
          dc.SetTextForeground(*deadrgb);
-         dc.SetTextBackground(*livergb);
+         dc.SetTextBackground(*livergb[colorindex]);
       }
       // set brush color used in killrect
-      killbrush = swapcolors ? livebrush : deadbrush;
+      killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
       // draw pattern using a sequence of blit and killrect calls
       currdc = &dc;
       currwd = currview->getwidth();
@@ -854,6 +914,16 @@ void DrawView(wxDC &dc)
    if ( viewptr->SelectionVisible(&r) ) {
       CheckSelectionImage(currview->getwidth(), currview->getheight());
       DrawSelection(dc, r);
+   }
+   
+   if ( saveview ) {
+      if ( !viewptr->nopattupdate ) {
+         // draw layers 1, 2, ... numlayers-1
+         DrawOtherLayers(dc);
+      }
+      // restore currview and curralgo
+      currview = saveview;
+      curralgo = savealgo;
    }
    
    if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {

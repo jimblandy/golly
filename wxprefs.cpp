@@ -158,14 +158,14 @@ int maxpatterns = 20;            // maximum number of recent pattern files (1..M
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
-wxColor *livergb;                // color for live cells
+wxColor *livergb[10];            // color for live cells in each layer
 wxColor *deadrgb;                // color for dead cells
 wxColor *pastergb;               // color for pasted pattern
 wxColor *selectrgb;              // color for selected cells
 wxColor *qlifergb;               // status bar background when using qlifealgo
 wxColor *hlifergb;               // status bar background when using hlifealgo
 
-wxBrush *livebrush;              // for drawing live cells
+wxBrush *livebrush[10];          // for drawing live cells in each layer
 wxBrush *deadbrush;              // for drawing dead cells
 wxBrush *qlifebrush;             // for status bar background when using qlifealgo
 wxBrush *hlifebrush;             // for status bar background when using hlifealgo
@@ -375,18 +375,28 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 
 void SetBrushesAndPens()
 {
-   livebrush->SetColour(*livergb);
+   int i;
+   for (i=0; i<10; i++) livebrush[i]->SetColour(*livergb[i]);
    deadbrush->SetColour(*deadrgb);
    qlifebrush->SetColour(*qlifergb);
    hlifebrush->SetColour(*hlifergb);
    pastepen->SetColour(*pastergb);
    SetGridPens(deadrgb, gridpen, boldpen);
-   SetGridPens(livergb, sgridpen, sboldpen);
+   SetGridPens(livergb[0], sgridpen, sboldpen); //!!!???
 }
 
 void CreateDefaultColors()
 {
-   livergb = new wxColor(255, 255, 255);     // white
+   livergb[0] = new wxColor(255, 255, 255);  // white
+   livergb[1] = new wxColor(  0,   0, 255);  //!!! blue
+   livergb[2] = new wxColor(255, 255,   0);  //!!! yellow
+   livergb[3] = new wxColor(255, 255, 255);  //!!!
+   livergb[4] = new wxColor(255, 255, 255);  //!!!
+   livergb[5] = new wxColor(255, 255, 255);  //!!!
+   livergb[6] = new wxColor(255, 255, 255);  //!!!
+   livergb[7] = new wxColor(255, 255, 255);  //!!!
+   livergb[8] = new wxColor(255, 255, 255);  //!!!
+   livergb[9] = new wxColor(255, 255, 255);  //!!!
    deadrgb = new wxColor(48, 48, 48);        // dark gray (nicer if no alpha channel support)
    pastergb = new wxColor(255, 0, 0);        // red
    selectrgb = new wxColor(75, 175, 0);      // darkish green (becomes 50% transparent)
@@ -394,7 +404,8 @@ void CreateDefaultColors()
    hlifergb = new wxColor(226, 250, 248);    // pale blue
 
    // create brushes and pens
-   livebrush = new wxBrush(*wxBLACK);
+   int i;
+   for (i=0; i<10; i++) livebrush[i] = new wxBrush(*wxBLACK);
    deadbrush = new wxBrush(*wxBLACK);
    qlifebrush = new wxBrush(*wxBLACK);
    hlifebrush = new wxBrush(*wxBLACK);
@@ -546,7 +557,16 @@ void SavePrefs()
    fputs("\n", f);
 
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
-   SaveColor(f, "live_rgb", livergb);
+   SaveColor(f, "live0_rgb", livergb[0]);
+   SaveColor(f, "live1_rgb", livergb[1]);
+   SaveColor(f, "live2_rgb", livergb[2]);
+   SaveColor(f, "live3_rgb", livergb[3]);
+   SaveColor(f, "live4_rgb", livergb[4]);
+   SaveColor(f, "live5_rgb", livergb[5]);
+   SaveColor(f, "live6_rgb", livergb[6]);
+   SaveColor(f, "live7_rgb", livergb[7]);
+   SaveColor(f, "live8_rgb", livergb[8]);
+   SaveColor(f, "live9_rgb", livergb[9]);
    SaveColor(f, "dead_rgb", deadrgb);
    SaveColor(f, "paste_rgb", pastergb);
    SaveColor(f, "select_rgb", selectrgb);
@@ -841,8 +861,17 @@ void GetPrefs()
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
 
-      } else if (strcmp(keyword, "live_rgb") == 0) {
-         GetColor(value, livergb);
+      } else if (strcmp(keyword, "live_rgb") == 0) { GetColor(value, livergb[0]);
+      } else if (strcmp(keyword, "live0_rgb") == 0) { GetColor(value, livergb[0]);
+      } else if (strcmp(keyword, "live1_rgb") == 0) { GetColor(value, livergb[1]);
+      } else if (strcmp(keyword, "live2_rgb") == 0) { GetColor(value, livergb[2]);
+      } else if (strcmp(keyword, "live3_rgb") == 0) { GetColor(value, livergb[3]);
+      } else if (strcmp(keyword, "live4_rgb") == 0) { GetColor(value, livergb[4]);
+      } else if (strcmp(keyword, "live5_rgb") == 0) { GetColor(value, livergb[5]);
+      } else if (strcmp(keyword, "live6_rgb") == 0) { GetColor(value, livergb[6]);
+      } else if (strcmp(keyword, "live7_rgb") == 0) { GetColor(value, livergb[7]);
+      } else if (strcmp(keyword, "live8_rgb") == 0) { GetColor(value, livergb[8]);
+      } else if (strcmp(keyword, "live9_rgb") == 0) { GetColor(value, livergb[9]);
 
       } else if (strcmp(keyword, "dead_rgb") == 0) {
          GetColor(value, deadrgb);
@@ -1059,7 +1088,7 @@ private:
    bool ignore_page_event;       // used to prevent currpage being changed
    bool color_changed;           // have one or more colors changed?
 
-   wxColor *new_livergb;         // new color for live cells
+   wxColor *new_livergb[10];     // new color for live cells in each layer
    wxColor *new_deadrgb;         // new color for dead cells
    wxColor *new_pastergb;        // new color for pasted pattern
    wxColor *new_selectrgb;       // new color for selected cells
@@ -1734,7 +1763,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
    wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
-   AddColorButton(panel, vbox, PREF_LIVE_RGB, livergb, _("Live cells"));
+   AddColorButton(panel, vbox, PREF_LIVE_RGB, livergb[0], _("Live cells"));
    AddColorButton(panel, vbox, PREF_DEAD_RGB, deadrgb, _("Dead cells"));
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_PASTE_RGB, pastergb, _("Pasted pattern"));
@@ -1750,7 +1779,8 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
       if (!dummy) Warning(_("Bug in CreateColorPrefs!"));
    #endif
 
-   new_livergb = new wxColor(*livergb);
+   int i;
+   for (i=0; i<10; i++) new_livergb[i] = new wxColor(*livergb[i]);
    new_deadrgb = new wxColor(*deadrgb);
    new_pastergb = new wxColor(*pastergb);
    new_selectrgb = new wxColor(*selectrgb);
@@ -1827,7 +1857,7 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
 void PrefsDialog::OnColorButton(wxCommandEvent& event)
 {
    if ( event.GetId() == PREF_LIVE_RGB ) {
-      ChangeColor(PREF_LIVE_RGB, new_livergb);
+      ChangeColor(PREF_LIVE_RGB, new_livergb[0]);  //!!!
 
    } else if ( event.GetId() == PREF_DEAD_RGB ) {
       ChangeColor(PREF_DEAD_RGB, new_deadrgb);
@@ -2020,7 +2050,8 @@ bool PrefsDialog::TransferDataFromWindow()
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11
-      *livergb     = *new_livergb;
+      int i;
+      for (i=0; i<10; i++) *livergb[i] = *new_livergb[i];
       *deadrgb     = *new_deadrgb;
       *pastergb    = *new_pastergb;
       *selectrgb   = *new_selectrgb;
@@ -2043,7 +2074,8 @@ bool PrefsDialog::TransferDataFromWindow()
 
 PrefsDialog::~PrefsDialog()
 {
-   delete new_livergb;
+   int i;
+   for (i=0; i<10; i++) delete new_livergb[i];
    delete new_deadrgb;
    delete new_pastergb;
    delete new_selectrgb;

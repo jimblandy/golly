@@ -108,7 +108,7 @@ extern wxArrayString namedrules;
 
 // Colors:
 
-extern wxColor *livergb;         // color for live cells
+extern wxColor *livergb[10];     // color for live cells in each layer
 extern wxColor *deadrgb;         // color for dead cells
 extern wxColor *pastergb;        // color for pasted pattern
 extern wxColor *selectrgb;       // color for selected cells
@@ -116,7 +116,7 @@ extern wxColor *qlifergb;        // status bar background if not hashing
 extern wxColor *hlifergb;        // status bar background if hashing
 
 // colored brushes and pens
-extern wxBrush *livebrush;       // for drawing live cells
+extern wxBrush *livebrush[10];   // for drawing live cells in each layer
 extern wxBrush *deadbrush;       // for drawing dead cells
 extern wxBrush *qlifebrush;      // for status bar background if not hashing
 extern wxBrush *hlifebrush;      // for status bar background if hashing

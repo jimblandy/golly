@@ -1076,10 +1076,11 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
 
    wxColor newcol(r, g, b);
    
+   //!!!
    if (strcmp(colname, "livecells") == 0) {
-      oldcol = *livergb;
+      oldcol = *livergb[0];
       if (oldcol != newcol) {
-         *livergb = newcol;
+         *livergb[0] = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
@@ -1149,7 +1150,7 @@ static PyObject *golly_getcolor(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &colname)) return NULL;
 
-   if      (strcmp(colname, "livecells") == 0)     cptr = livergb;
+   if      (strcmp(colname, "livecells") == 0)     cptr = livergb[0];   //!!!
    else if (strcmp(colname, "deadcells") == 0)     cptr = deadrgb;
    else if (strcmp(colname, "paste") == 0)         cptr = pastergb;
    else if (strcmp(colname, "select") == 0)        cptr = selectrgb;

@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
-#include "wxlayer.h"       // for ResizeLayers
+#include "wxlayer.h"       // for ResizeLayers, numlayers, etc
 #include "wxview.h"
 
 // This module contains most View menu functions (a few like ToggleFullScreen
@@ -618,7 +618,7 @@ void PatternView::StartDrawingCells(int x, int y)
 
    wxClientDC dc(this);
    dc.SetPen(*wxTRANSPARENT_PEN);
-   dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush);
+   dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currlayer]);
    DrawOneCell(cellx, celly, dc);
    dc.SetBrush(wxNullBrush);        // restore brush
    dc.SetPen(wxNullPen);            // restore pen
@@ -645,7 +645,7 @@ void PatternView::DrawCells(int x, int y)
    if ( newx != cellx || newy != celly ) {
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
-      dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush);
+      dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currlayer]);
 
       int numchanged = 0;
       
@@ -1119,7 +1119,8 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
       wxPaintDC dc(this);
       DrawView(dc);
    #else
-      if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ) {
+      if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ||
+           (drawlayers && numlayers > 1) ) {
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
             // need to create a new bitmap for viewport
