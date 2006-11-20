@@ -144,7 +144,8 @@ wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h
 $(OBJDIR)/wxview.o: wxview.cpp wxview.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h wxscript.h
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h \
+wxscript.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxview.cpp
 
 $(OBJDIR)/wxrender.o: wxrender.cpp wxrender.h \
@@ -164,7 +165,7 @@ $(OBJDIR)/wxfile.o: wxfile.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxstatus.h \
-wxview.h wxrender.h wxscript.h wxmain.h
+wxview.h wxrender.h wxscript.h wxlayer.h wxmain.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxfile.cpp
 
 $(OBJDIR)/wxedit.o: wxedit.cpp \

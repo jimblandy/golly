@@ -115,7 +115,7 @@ Other points of interest:
 #include "wxutils.h"       // for Warning, Fatal, FillRect
 #include "wxprefs.h"       // for swapcolors, showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
-#include "wxview.h"        // for viewptr->...
+#include "wxview.h"        // for currview, viewptr->...
 #include "wxrender.h"
 
 // -----------------------------------------------------------------------------
@@ -480,22 +480,22 @@ int PixelsToCells(int pixels) {
 
 // -----------------------------------------------------------------------------
 
-void CheckPasteImage(viewport &currview)
+void CheckPasteImage()
 {
    // paste image needs to be updated if pasterect size changed
    // or viewport size changed or cell colors changed or plocation changed
    if ( prectwd != viewptr->pasterect.width ||
         prectht != viewptr->pasterect.height ||
-        cvwd != currview.getwidth() ||
-        cvht != currview.getheight() ||
+        cvwd != currview->getwidth() ||
+        cvht != currview->getheight() ||
         pcolor != swapcolors ||
         pasteloc != plocation
       ) {
       prectwd = viewptr->pasterect.width;
       prectht = viewptr->pasterect.height;
-      pastemag = currview.getmag();
-      cvwd = currview.getwidth();
-      cvht = currview.getheight();
+      pastemag = currview->getmag();
+      cvwd = currview->getwidth();
+      cvht = currview->getheight();
       pcolor = swapcolors;
       pasteloc = plocation;
 
@@ -517,11 +517,11 @@ void CheckPasteImage(viewport &currview)
       }
       
       wxRect cellbox = pastebbox;
-      if (pastewd > currview.getwidth() || pasteht > currview.getheight()) {
+      if (pastewd > currview->getwidth() || pasteht > currview->getheight()) {
          if (plocation == Middle) {
             // temporary viewport may need to be TWICE size of current viewport
-            if (pastewd > 2 * currview.getwidth()) pastewd = 2 * currview.getwidth();
-            if (pasteht > 2 * currview.getheight()) pasteht = 2 * currview.getheight();
+            if (pastewd > 2 * currview->getwidth()) pastewd = 2 * currview->getwidth();
+            if (pasteht > 2 * currview->getheight()) pasteht = 2 * currview->getheight();
             if (pastemag > 0) {
                // make sure pastewd/ht don't have partial cells
                int cellsize = 1 << pastemag;
@@ -555,8 +555,8 @@ void CheckPasteImage(viewport &currview)
          } else {
             // plocation is at a corner of pasterect so temporary viewport
             // may need to be size of current viewport
-            if (pastewd > currview.getwidth()) pastewd = currview.getwidth();
-            if (pasteht > currview.getheight()) pasteht = currview.getheight();
+            if (pastewd > currview->getwidth()) pastewd = currview->getwidth();
+            if (pasteht > currview->getheight()) pasteht = currview->getheight();
             if (pastemag > 0) {
                // make sure pastewd/ht don't have partial cells
                int cellsize = 1 << pastemag;
@@ -673,7 +673,7 @@ void CheckPasteImage(viewport &currview)
 
 // -----------------------------------------------------------------------------
 
-void DrawPasteImage(wxDC &dc, viewport &currview)
+void DrawPasteImage(wxDC &dc)
 {
    if (pastebitmap) {
       // draw paste image
@@ -721,8 +721,8 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
    wxRect r = viewptr->pasterect;
    if (r.x < 0) { int diff = -1 - r.x;  r.x = -1;  r.width -= diff; }
    if (r.y < 0) { int diff = -1 - r.y;  r.y = -1;  r.height -= diff; }
-   if (r.width > currview.getwidth()) r.width = currview.getwidth() + 2;
-   if (r.height > currview.getheight()) r.height = currview.getheight() + 2;
+   if (r.width > currview->getwidth()) r.width = currview->getwidth() + 2;
+   if (r.height > currview->getheight()) r.height = currview->getheight() + 2;
    dc.DrawRectangle(r);
    
    if (r.y > 0) {
@@ -743,15 +743,15 @@ void DrawPasteImage(wxDC &dc, viewport &currview)
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
+void DrawGridLines(wxDC &dc, wxRect &r)
 {
-   int cellsize = 1 << currview.getmag();
+   int cellsize = 1 << currview->getmag();
    int h, v, i, topbold, leftbold;
 
    if (showboldlines) {
       // ensure that origin cell stays next to bold lines;
       // ie. bold lines scroll when pattern is scrolled
-      pair<bigint, bigint> lefttop = currview.at(0, 0);
+      pair<bigint, bigint> lefttop = currview->at(0, 0);
       leftbold = lefttop.first.mod_smallint(boldspacing);
       topbold = lefttop.second.mod_smallint(boldspacing);
       if (viewptr->originx != bigint::zero) {
@@ -815,13 +815,13 @@ void DrawGridLines(wxDC &dc, wxRect &r, viewport &currview)
 
 // -----------------------------------------------------------------------------
 
-void DrawView(wxDC &dc, viewport &currview)
+void DrawView(wxDC &dc)
 {
    wxRect r;
 
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
-      r = wxRect(0, 0, currview.getwidth(), currview.getheight());
+      r = wxRect(0, 0, currview->getwidth(), currview->getheight());
       FillRect(dc, r, swapcolors ? *livebrush : *deadbrush);
    } else {
       // set foreground and background colors for DrawBitmap calls
@@ -841,18 +841,18 @@ void DrawView(wxDC &dc, viewport &currview)
       killbrush = swapcolors ? livebrush : deadbrush;
       // draw pattern using a sequence of blit and killrect calls
       currdc = &dc;
-      currwd = currview.getwidth();
-      currht = currview.getheight();
-      curralgo->draw(currview, renderer);
+      currwd = currview->getwidth();
+      currht = currview->getheight();
+      curralgo->draw(*currview, renderer);
    }
 
    if ( viewptr->GridVisible() ) {
-      r = wxRect(0, 0, currview.getwidth(), currview.getheight());
-      DrawGridLines(dc, r, currview);
+      r = wxRect(0, 0, currview->getwidth(), currview->getheight());
+      DrawGridLines(dc, r);
    }
    
    if ( viewptr->SelectionVisible(&r) ) {
-      CheckSelectionImage(currview.getwidth(), currview.getheight());
+      CheckSelectionImage(currview->getwidth(), currview->getheight());
       DrawSelection(dc, r);
    }
    
@@ -864,8 +864,8 @@ void DrawView(wxDC &dc, viewport &currview)
            prectht == viewptr->pasterect.height && prectht > 1 ) {
          // don't draw old paste image, a new one is coming very soon
       } else {
-         CheckPasteImage(currview);
-         DrawPasteImage(dc, currview);
+         CheckPasteImage();
+         DrawPasteImage(dc);
       }
    }
 }

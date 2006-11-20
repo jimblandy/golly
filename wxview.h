@@ -105,7 +105,6 @@ public:
    void ProcessClick(int x, int y, bool shiftdown);
 
    // data
-   viewport *currview;           // viewport for displaying patterns
    bool waitingforclick;         // waiting for paste click?
    bool drawingcells;            // drawing cells due to dragging mouse?
    bool selectingcells;          // selecting cells due to dragging mouse?
@@ -192,6 +191,8 @@ private:
    wxCursor *oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions
 };
+
+extern viewport *currview;       // current viewport for displaying patterns
 
 const wxString empty_pattern       = _("All cells are dead.");
 const wxString empty_selection     = _("There are no live cells in the selection.");

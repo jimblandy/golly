@@ -33,7 +33,7 @@ class lifealgo;
 void InitDrawingData();
 
 // Draw the current pattern, grid lines, selection, etc.
-void DrawView(wxDC &dc, viewport &currview);
+void DrawView(wxDC &dc);
 
 // Draw the translucent selection image in the given rectangle.
 // We need to export this for drawing individual cells.

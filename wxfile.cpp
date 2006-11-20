@@ -50,6 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxscript.h"      // for IsScript, RunScript, inscript
+#include "wxlayer.h"       // for currlayer
 #include "wxmain.h"        // for MainFrame, etc
 
 #ifdef __WXMAC__
@@ -80,6 +81,8 @@ void MainFrame::SetWindowTitle(const wxString& filename)
    if ( !filename.IsEmpty() ) {
       // remember current file name
       currname = filename;
+      // show currname in current layer's menu item
+      UpdateLayerItem(currlayer, currname);
    }
    wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLocal) );
    #ifdef __WXMAC__

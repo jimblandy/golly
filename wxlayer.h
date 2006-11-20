@@ -41,11 +41,14 @@ public:
    viewport* lview;     // this layer's viewport
    wxString lrule;      // this layer's rule
    wxString ltitle;     // this layer's window title
+   wxCursor* lcurs;     // this layer's cursor
+   int lwarp;           // this layer's speed setting
    
    // this layer's selection
    bigint ltop, lleft, lbottom, lright;
    
-   //!!! startgen, startfile, warp, etc???
+   // for resetting this layer
+   //!!! startgen, startfile, etc???
 };
 
 const int maxlayers = 10;     // maximum number of layers
@@ -60,6 +63,7 @@ void MoveLayerDialog();
 void SetLayer(int index);
 void ToggleDrawLayers();
 void ToggleGenLayers();
+void ResizeLayers(int wd, int ht);
 Layer* GetLayer(int index);
 
 #endif

@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxview.h"        // for viewptr->...
+#include "wxview.h"        // for currview, viewptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for drawlayers, etc
 #include "wxlayer.h"
@@ -57,9 +57,17 @@ void SaveLayerGlobals()
    layer[currlayer]->lhash = hashing;
    layer[currlayer]->lrule = wxString(curralgo->getrule(),wxConvLocal);
 
-   layer[currlayer]->lview = viewptr->currview;
+   layer[currlayer]->lview = currview;
 
-   //!!! save title, selection, warp, etc???
+   layer[currlayer]->ltop = viewptr->seltop;
+   layer[currlayer]->lbottom = viewptr->selbottom;
+   layer[currlayer]->lleft = viewptr->selleft;
+   layer[currlayer]->lright = viewptr->selright;
+   
+   layer[currlayer]->lcurs = currcurs;
+
+   layer[currlayer]->lwarp = mainptr->GetWarp();
+   layer[currlayer]->ltitle = mainptr->GetWindowTitle();
 }
 
 // -----------------------------------------------------------------------------
@@ -73,17 +81,28 @@ void ChangeLayerGlobals()
    
    curralgo = layer[currlayer]->lalgo;
 
-   // need to update global rule table if the universe type has changed or
-   // the current rule has changed
+   // need to update global rule table if the universe type has changed
+   // or the current rule has changed
    if ( hashing != layer[currlayer]->lhash ||
         !oldrule.IsSameAs(layer[currlayer]->lrule, false) ) {
       curralgo->setrule(layer[currlayer]->lrule.mb_str(wxConvLocal));
    }
    hashing = layer[currlayer]->lhash;
 
-   viewptr->currview = layer[currlayer]->lview;
+   currview = layer[currlayer]->lview;
 
-   //!!! set title, selection, warp, etc???
+   viewptr->seltop = layer[currlayer]->ltop;
+   viewptr->selbottom = layer[currlayer]->lbottom;
+   viewptr->selleft = layer[currlayer]->lleft;
+   viewptr->selright = layer[currlayer]->lright;
+   
+   currcurs = layer[currlayer]->lcurs;
+
+   mainptr->SetWarp(layer[currlayer]->lwarp);
+   mainptr->SetWindowTitle(layer[currlayer]->ltitle);
+      
+   mainptr->UpdateUserInterface(mainptr->IsActive());
+   mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -117,11 +136,13 @@ void AddLayer()
    if (numlayers > 1) {
       // add new item at end of Layer menu
       mainptr->AppendLayerItem();
+
+      // adjust titles in any items after currlayer
+      int i;
+      for (i = currlayer + 1; i < numlayers; i++)
+         mainptr->UpdateLayerItem(i, layer[i]->ltitle);
       
       ChangeLayerGlobals();
-      
-      mainptr->UpdateMenuItems(mainptr->IsActive());
-      mainptr->UpdatePatternAndStatus();
    }
 }
 
@@ -142,13 +163,16 @@ void DeleteLayer()
          layer[i] = layer[i+1];
    }
    if (currlayer > 0) currlayer--;
-   
-   ChangeLayerGlobals();
 
    // remove item from end of Layer menu
    mainptr->RemoveLayerItem();
-   mainptr->UpdateMenuItems(mainptr->IsActive());
-   mainptr->UpdatePatternAndStatus();
+
+   // adjust titles in any items after currlayer
+   int i;
+   for (i = currlayer + 1; i < numlayers; i++)
+      mainptr->UpdateLayerItem(i, layer[i]->ltitle);
+   
+   ChangeLayerGlobals();
 }
 
 // -----------------------------------------------------------------------------
@@ -170,6 +194,10 @@ void DeleteOtherLayers()
       numlayers--;
       mainptr->RemoveLayerItem();
    }
+
+   // update title in currlayer item
+   mainptr->UpdateLayerItem(currlayer, mainptr->GetWindowTitle());
+
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
 }
@@ -191,9 +219,6 @@ void SetLayer(int index)
    SaveLayerGlobals();
    currlayer = index;
    ChangeLayerGlobals();
-
-   mainptr->UpdateMenuItems(mainptr->IsActive());
-   mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -221,6 +246,20 @@ void ToggleGenLayers()
 
 // -----------------------------------------------------------------------------
 
+void ResizeLayers(int wd, int ht)
+{
+   // resize viewport in each layer
+   int i;
+   for (i = 0; i < numlayers; i++) {
+      if (i == currlayer)
+         currview->resize(wd, ht);
+      else
+         layer[i]->lview->resize(wd, ht);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 Layer* GetLayer(int index)
 {
    if (index < 0 || index >= numlayers) {
@@ -236,13 +275,11 @@ Layer* GetLayer(int index)
 Layer::Layer()
 {
    if (numlayers == 0) {
-      // creating very first layer (probably don't need to do anything here???)
+      // creating very first layer; note that lalgo, lview, etc will be
+      // set by SaveLayerGlobals in next AddLayer call, but play safe
+      // with the variables deleted in ~Layer
       lalgo = NULL;
-      lhash = hashing;
       lview = NULL;
-      lrule = wxEmptyString;
-      ltitle = wxEmptyString;
-      ltop = lbottom = lleft = lright = 0;
    } else {
       lhash = hashing;
       if (hashing) {
@@ -258,13 +295,14 @@ Layer::Layer()
       
       // inherit current viewport's size, scale and location
       lview = new viewport(100,100);
-      lview->resize( viewptr->currview->getwidth(),
-                     viewptr->currview->getheight() );
-      lview->setpositionmag( viewptr->currview->x,
-                             viewptr->currview->y,
-                             viewptr->currview->getmag() );
+      lview->resize( currview->getwidth(), currview->getheight() );
+      lview->setpositionmag( currview->x, currview->y, currview->getmag() );
       
       ltitle = _("untitled");
+      lcurs = currcurs;
+      
+      // reset speed
+      lwarp = 0;
       
       // no selection
       ltop = 1;

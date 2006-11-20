@@ -5,11 +5,10 @@ import golly as g
 
 if g.empty():
    g.exit("There is no pattern.")
-
-'''
-if g.numlayers() + 2 > g.maxlayers():
+if g.numlayers() + 1 > g.maxlayers():
    g.exit("You need to delete a couple of layers.")
-'''
+if g.numlayers() + 2 > g.maxlayers():
+   g.exit("You need to delete a layer.")
 
 # get starting pattern from current layer
 startpatt = pattern( g.getcells(g.getrect()) )
@@ -23,26 +22,32 @@ startpatt.put(0,0)      # copy starting pattern into this layer
 g.setoption("drawlayers",1)   # draw all layers (sync location & scale)
 g.setoption("genlayers",0)    # but only generate current layer
 
-while True:
-   g.dokey( g.getkey() )
-   g.run(1)
-   if g.empty(): break
-   
-   # copy current pattern to smear layer
-   currpatt = pattern( g.getcells(g.getrect()) )
-   g.setlayer(smear)
-   currpatt.put(0,0)
+def main():
+   while True:
+      g.dokey( g.getkey() )
+      g.run(1)
+      if g.empty(): break
+      
+      # copy current pattern to smear layer
+      currpatt = pattern( g.getcells(g.getrect()) )
+      g.setlayer(smear)
+      currpatt.put(0,0)
+      g.setlayer(curr)
+      
+      exp = g.getstep()
+      if exp > 0:
+         step = g.getbase()**exp
+      else:
+         step = 1
+      if int(g.getgen()) % step == 0:
+         # display all 3 layers (start, smear, curr) using currently
+         # assigned layer colors (for live cells) with alpha blending???
+         g.update()
+
+try:
+   main()
+finally:
    g.setlayer(curr)
-   
-   exp = g.getstep()
-   if exp > 0:
-      step = g.getbase()**exp
-   else:
-      step = 1
-   if int(g.getgen()) % step == 0:
-      # display all 3 layers (start, smear, curr) using currently
-      # assigned layer colors (for live cells) with alpha blending???
-      g.update()
 
 '''
 Ideas and questions:
@@ -73,6 +78,7 @@ Generate All Layers  (ditto -- use current step base and exp)
 -----
 Next Layer           (select next layer???)
 Previous Layer       (select previous layer???)
+Wrap                 (wrap around if ticked???)
 -----
 Layer 0
 Layer 1              (current layer is ticked)

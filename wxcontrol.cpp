@@ -717,13 +717,6 @@ void MainFrame::ToggleHashInfo()
 
 // -----------------------------------------------------------------------------
 
-int MainFrame::GetWarp()
-{
-   return warp;
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::SetWarp(int newwarp)
 {
    warp = newwarp;

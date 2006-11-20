@@ -60,6 +60,7 @@ public:
    void NewPattern(const wxString& title = _("untitled"));
    void CreateUniverse();
    void SetWindowTitle(const wxString& filename);
+   wxString GetWindowTitle() { return currname; };
    void OpenPattern();
    void OpenScript();
    void ToggleShowPatterns();
@@ -86,8 +87,8 @@ public:
    void ToggleHashing();
    void ToggleHyperspeed();
    void ToggleHashInfo();
-   int GetWarp();
    void SetWarp(int newwarp);
+   int GetWarp() { return warp; };
    void SetGenIncrement();
    void ResetPattern();
 
@@ -101,6 +102,7 @@ public:
    void ResizeSplitWindow();
 
    // layer functions
+   void UpdateLayerItem(int index, const wxString& title);
    void AppendLayerItem();
    void RemoveLayerItem();
 

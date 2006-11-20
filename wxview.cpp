@@ -44,6 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
+#include "wxlayer.h"       // for ResizeLayers
 #include "wxview.h"
 
 // This module contains most View menu functions (a few like ToggleFullScreen
@@ -52,6 +53,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // OnPaint, OnKeyDown, OnChar, OnMouseDown, etc.
 
 // -----------------------------------------------------------------------------
+
+// current viewport for displaying patterns
+viewport *currview = NULL;
 
 // bitmap for wxBufferedPaintDC is not needed on Mac OS X because
 // windows are automatically buffered
@@ -211,7 +215,7 @@ void PatternView::SetViewSize()
    // wd or ht might be < 1 on Win/X11 platforms
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
-   currview->resize(wd, ht);
+   ResizeLayers(wd, ht);
    // only autofit when generating
    if (autofit && mainptr->generating)
       curralgo->fit(*currview, 0);
@@ -1113,7 +1117,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    #ifdef __WXMAC__
       // windows on Mac OS X are automatically buffered
       wxPaintDC dc(this);
-      DrawView(dc, *currview);
+      DrawView(dc);
    #else
       if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ) {
          // use wxWidgets buffering to avoid flicker
@@ -1126,10 +1130,10 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
             viewbitmapht = ht;
          }
          wxBufferedPaintDC dc(this, *viewbitmap);
-         DrawView(dc, *currview);
+         DrawView(dc);
       } else {
          wxPaintDC dc(this);
-         DrawView(dc, *currview);
+         DrawView(dc);
       }
    #endif
 }

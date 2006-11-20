@@ -862,6 +862,18 @@ static PyObject *golly_numlayers(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_maxlayers(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   return Py_BuildValue("i", maxlayers);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_setoption(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -2378,8 +2390,9 @@ static PyMethodDef golly_methods[] = {
    { "addlayer",     golly_addlayer,   METH_VARARGS, "add a new layer" },
    { "dellayer",     golly_dellayer,   METH_VARARGS, "delete current layer" },
    { "setlayer",     golly_setlayer,   METH_VARARGS, "switch to given layer" },
-   { "getlayer",     golly_getlayer,   METH_VARARGS, "return current layer" },
-   { "numlayers",    golly_numlayers,  METH_VARARGS, "return number of layers" },
+   { "getlayer",     golly_getlayer,   METH_VARARGS, "return index of current layer" },
+   { "numlayers",    golly_numlayers,  METH_VARARGS, "return current number of layers" },
+   { "maxlayers",    golly_maxlayers,  METH_VARARGS, "return maximum number of layers" },
    // miscellaneous
    { "setoption",    golly_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
    { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },

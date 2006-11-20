@@ -1317,6 +1317,20 @@ void MainFrame::SetRandomFillPercentage()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::UpdateLayerItem(int index, const wxString& title)
+{
+   // show given title in given layer's menu item
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) {
+      wxString label;
+      label.Printf(_("Layer %d: "), index);
+      label += title;
+      mbar->SetLabel(ID_LAYER0 + index, label);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::AppendLayerItem()
 {
    wxMenuBar *mbar = GetMenuBar();
