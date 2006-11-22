@@ -106,6 +106,7 @@ Other points of interest:
 #endif
 
 #include "wx/image.h"      // for wxImage
+#include "wx/rawbmp.h"     // for wxAlphaPixelData
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -136,7 +137,7 @@ unsigned char* magbuf = (unsigned char *)magarray;
 // because that's what wxWidgets requires when creating a monochrome bitmap
 wxUint16 Magnify2[256];
 
-// selection image (initialized in InitDrawingData)
+// for drawing selection image (initialized in InitDrawingData)
 #ifdef __WXX11__
    // wxX11's Blit doesn't support alpha channel
 #else
@@ -146,7 +147,7 @@ wxUint16 Magnify2[256];
 #endif
 wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is used)
 
-// paste image (initialized in CreatePasteImage)
+// for drawing paste image (initialized in CreatePasteImage)
 wxBitmap* pastebitmap;     // paste bitmap
 int pimagewd;              // width of paste image
 int pimageht;              // height of paste image
@@ -157,6 +158,11 @@ int cvwd, cvht;            // must match current viewport's width and height
 paste_location pasteloc;   // must match plocation
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
+
+// for drawing multiple layers
+wxBitmap* layerbitmap = NULL;    // layer bitmap
+int layerwd = -1;                // width of layer bitmap
+int layerht = -1;                // height of layer bitmap
 
 // -----------------------------------------------------------------------------
 
@@ -233,6 +239,8 @@ void DestroyDrawingData()
       selimage.Destroy();
       if (selbitmap) delete selbitmap;
    #endif
+   
+   if (layerbitmap) delete layerbitmap;
 }
 
 // -----------------------------------------------------------------------------
@@ -636,16 +644,15 @@ void CheckPasteImage()
          
          showgridlines = saveshow;
 
-         // add new mask to pastebitmap
+         // add mask to pastebitmap
          #ifdef __WXMSW__
-            // temporarily change depth to avoid bug in wxMSW 2.6.0 (fixed in 2.6.3???)
+            // temporarily change depth to avoid bug in wxMSW
             int d = pastebitmap->GetDepth();
             pastebitmap->SetDepth(1);
-         #endif
-         pastebitmap->SetMask( new wxMask(*pastebitmap,*deadrgb) );
-         #ifdef __WXMSW__
-            // restore depth
+            pastebitmap->SetMask( new wxMask(*pastebitmap,*deadrgb) );
             pastebitmap->SetDepth(d);
+         #else
+            pastebitmap->SetMask( new wxMask(*pastebitmap,*deadrgb) );
          #endif
 
       } else {
@@ -801,6 +808,37 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
 void DrawOtherLayers(wxDC &dc)
 {
+   // check if layerbitmap needs to be created or resized
+   if ( layerwd != currwd || layerht != currht ) {
+      layerwd = currwd;
+      layerht = currht;
+      if (layerbitmap) delete layerbitmap;
+      // create a bitmap of depth 32 so it has room for alpha channel
+      layerbitmap = new wxBitmap(currwd, currht, 32);
+      if (layerbitmap) {
+         // initialize alpha channel
+         wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(currwd,currht));
+         if (!data) {
+            Warning(_("Failed to gain raw access to bitmap data!"));
+            return;
+         }
+         data.UseAlpha();
+         wxAlphaPixelData::Iterator p(data);
+         for ( int y = 0; y < currht; y++ ) {
+            wxAlphaPixelData::Iterator rowStart = p;
+            for ( int x = 0; x < currwd; x++ ) {
+               p.Alpha() = 0;  // 100% transparent
+               p++;
+            }
+            p = rowStart;
+            p.OffsetY(data, 1);
+         }
+      } else {
+         Warning(_("Not enough memory for layer bitmap!"));
+         return;
+      }
+   }
+
    // temporarily turn off grid lines for DrawStretchedBitmap
    bool saveshow = showgridlines;
    showgridlines = false;
@@ -808,49 +846,86 @@ void DrawOtherLayers(wxDC &dc)
    // set brush color used in killrect
    killbrush = deadbrush;
    
+   int deadr = deadrgb->Red();
+   int deadg = deadrgb->Green();
+   int deadb = deadrgb->Blue();
+   
    int i;
    for (i = 1; i < numlayers; i++) {
       curralgo = GetLayer(i)->lalgo;
       if (!curralgo->isEmpty()) {
-         // create bitmap for drawing layer (-1 means screen depth)
-         wxBitmap* layerbitmap = new wxBitmap(currwd, currht, -1);
-         if (layerbitmap) {
-            wxMemoryDC layerdc;
-            layerdc.SelectObject(*layerbitmap);
+         wxMemoryDC layerdc;
+         layerdc.SelectObject(*layerbitmap);
+         
+         // set foreground and background colors for DrawBitmap calls
+         #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
+            // use opposite meaning on Mac/Windows -- sheesh
+            layerdc.SetTextForeground(*deadrgb);
+            layerdc.SetTextBackground(*livergb[i]);
+         #else
+            layerdc.SetTextForeground(*livergb[i]);
+            layerdc.SetTextBackground(*deadrgb);
+         #endif
+         
+         currdc = &layerdc;
+         // faster to use special renderer that ignores killrect???
+         curralgo->draw(*currview, renderer);
+         
+         // access pixel data and make all dead pixels 100% transparent
+         // and all live pixels slightly transparent
+         wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(currwd,currht));
+         if (data) {
+            int livealpha = 192;  // make live pixels 75% opaque
+            data.UseAlpha();
+            wxAlphaPixelData::Iterator p(data);
+            for ( int y = 0; y < currht; y++ ) {
+               wxAlphaPixelData::Iterator rowStart = p;
+               for ( int x = 0; x < currwd; x++ ) {
+                  // get pixel color
+                  int r = p.Red();
+                  int g = p.Green();
+                  int b = p.Blue();
+                  // set alpha value depending on whether pixel is live or dead
+                  if (r == deadr && g == deadg && b == deadb) {
+                     // make dead pixel 100% transparent
+                     p.Red()   = 0;
+                     p.Green() = 0;
+                     p.Blue()  = 0;
+                     p.Alpha() = 0;
+                  } else {
+                     // live pixel; note that RGB must be premultiplied by alpha
+                     p.Red()   = r * livealpha / 256;
+                     p.Green() = g * livealpha / 256;
+                     p.Blue()  = b * livealpha / 256;
+                     p.Alpha() = livealpha;
+                  }
+                  p++;
+               }
+               p = rowStart;
+               p.OffsetY(data, 1);
+            }
             
-            // set foreground and background colors for DrawBitmap calls
-            #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
-               // use opposite meaning on Mac/Windows -- sheesh
-               layerdc.SetTextForeground(*deadrgb);
-               layerdc.SetTextBackground(*livergb[i]);
-            #else
-               layerdc.SetTextForeground(*livergb[i]);
-               layerdc.SetTextBackground(*deadrgb);
-            #endif
-            
-            currdc = &layerdc;
-            curralgo->draw(*currview, renderer);
-      
-            // add new mask to layerbitmap
+            // draw result
+            dc.DrawBitmap(*layerbitmap, 0, 0, true);
+
+         } else {
+            // could not access pixel data so use slower masking code
+            // with no alpha transparency
+
+            // add mask to layerbitmap
             #ifdef __WXMSW__
-               // temporarily change depth to avoid bug in wxMSW 2.6.0 (fixed in 2.6.3???)
+               // temporarily change depth to avoid bug in wxMSW
                int d = layerbitmap->GetDepth();
                layerbitmap->SetDepth(1);
-            #endif
-            layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
-            #ifdef __WXMSW__
-               // restore depth
+               layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
                layerbitmap->SetDepth(d);
+            #else
+               layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
             #endif
          
-            // draw layer image
+            // draw masked image
             layerdc.SelectObject(*layerbitmap);
             dc.Blit(0, 0, currwd, currht, &layerdc, 0, 0, wxCOPY, true);
-            
-            delete layerbitmap;
-         } else {
-            // give some indication that layerbitmap could not be created
-            wxBell();
          }
       }
    }

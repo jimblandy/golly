@@ -226,10 +226,8 @@ void SetLayer(int index)
 void ToggleDrawLayers()
 {
    drawlayers = !drawlayers;
-   if (drawlayers) {
-      // synchronize all layers to use same scale and position as currlayer
-      //!!! or do temporarily in DrawView???
-   }
+   // if drawlayers is true then rendering routine will temporarily synchronize
+   // all layers to use same scale and position as current layer
    mainptr->UpdatePatternAndStatus();
 }
 
@@ -238,10 +236,8 @@ void ToggleDrawLayers()
 void ToggleGenLayers()
 {
    genlayers = !genlayers;
-   if (genlayers) {
-      // synchronize all layers to use same step increment as currlayer
-      //!!! or do temporarily in GenPattern & NextGen???
-   }
+   // if genlayers is true then generating routines will temporarily synchronize
+   // all layers to use same step increment as current layer
 }
 
 // -----------------------------------------------------------------------------

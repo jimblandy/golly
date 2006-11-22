@@ -375,8 +375,7 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 
 void SetBrushesAndPens()
 {
-   int i;
-   for (i=0; i<10; i++) livebrush[i]->SetColour(*livergb[i]);
+   for (int i=0; i<10; i++) livebrush[i]->SetColour(*livergb[i]);
    deadbrush->SetColour(*deadrgb);
    qlifebrush->SetColour(*qlifergb);
    hlifebrush->SetColour(*hlifergb);
@@ -404,8 +403,7 @@ void CreateDefaultColors()
    hlifergb = new wxColor(226, 250, 248);    // pale blue
 
    // create brushes and pens
-   int i;
-   for (i=0; i<10; i++) livebrush[i] = new wxBrush(*wxBLACK);
+   for (int i=0; i<10; i++) livebrush[i] = new wxBrush(*wxBLACK);
    deadbrush = new wxBrush(*wxBLACK);
    qlifebrush = new wxBrush(*wxBLACK);
    hlifebrush = new wxBrush(*wxBLACK);
@@ -1779,8 +1777,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
       if (!dummy) Warning(_("Bug in CreateColorPrefs!"));
    #endif
 
-   int i;
-   for (i=0; i<10; i++) new_livergb[i] = new wxColor(*livergb[i]);
+   for (int i=0; i<10; i++) new_livergb[i] = new wxColor(*livergb[i]);
    new_deadrgb = new wxColor(*deadrgb);
    new_pastergb = new wxColor(*pastergb);
    new_selectrgb = new wxColor(*selectrgb);
@@ -2050,8 +2047,7 @@ bool PrefsDialog::TransferDataFromWindow()
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11
-      int i;
-      for (i=0; i<10; i++) *livergb[i] = *new_livergb[i];
+      for (int i=0; i<10; i++) *livergb[i] = *new_livergb[i];
       *deadrgb     = *new_deadrgb;
       *pastergb    = *new_pastergb;
       *selectrgb   = *new_selectrgb;
@@ -2074,8 +2070,7 @@ bool PrefsDialog::TransferDataFromWindow()
 
 PrefsDialog::~PrefsDialog()
 {
-   int i;
-   for (i=0; i<10; i++) delete new_livergb[i];
+   for (int i=0; i<10; i++) delete new_livergb[i];
    delete new_deadrgb;
    delete new_pastergb;
    delete new_selectrgb;
