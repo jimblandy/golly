@@ -262,6 +262,10 @@ Layer* GetLayer(int index)
       Warning(_("Bad index in GetLayer!"));
       return NULL;
    } else {
+      if (index == currlayer) {
+         // update layer[currlayer] info with current settings
+         SaveLayerGlobals();
+      }
       return layer[index];
    }
 }

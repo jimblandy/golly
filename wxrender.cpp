@@ -122,7 +122,7 @@ Other points of interest:
 
 // -----------------------------------------------------------------------------
 
-// static data used in wx_render routines
+// global data used in wx_render routines
 wxDC* currdc;              // current device context for viewport
 int currwd, currht;        // current width and height of viewport
 wxBrush* killbrush;        // brush used in killrect
@@ -806,34 +806,101 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
 // -----------------------------------------------------------------------------
 
+void DrawOneLayer(wxDC &dc, int index, lifealgo *layeralgo)
+{
+   wxMemoryDC layerdc;
+   layerdc.SelectObject(*layerbitmap);
+   
+   // set foreground and background colors for DrawBitmap calls
+   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
+      // use opposite meaning on Mac/Windows -- sheesh
+      layerdc.SetTextForeground(*deadrgb);
+      layerdc.SetTextBackground(*livergb[index]);
+   #else
+      layerdc.SetTextForeground(*livergb[index]);
+      layerdc.SetTextBackground(*deadrgb);
+   #endif
+   
+   currdc = &layerdc;
+   layeralgo->draw(*currview, renderer);
+   
+   // access pixel data and make all dead pixels 100% transparent
+   // and all live pixels slightly transparent
+   wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(layerwd,layerht));
+   if (data) {
+      const int livealpha = 192;    // make live pixels 75% opaque
+   
+      int deadr = deadrgb->Red();
+      int deadg = deadrgb->Green();
+      int deadb = deadrgb->Blue();
+
+      data.UseAlpha();
+      wxAlphaPixelData::Iterator p(data);
+      for ( int y = 0; y < layerht; y++ ) {
+         wxAlphaPixelData::Iterator rowStart = p;
+         for ( int x = 0; x < layerwd; x++ ) {
+            // get pixel color
+            int r = p.Red();
+            int g = p.Green();
+            int b = p.Blue();
+
+            // set alpha value depending on whether pixel is live or dead
+            if (r == deadr && g == deadg && b == deadb) {
+               // make dead pixel 100% transparent
+               p.Red()   = 0;
+               p.Green() = 0;
+               p.Blue()  = 0;
+               p.Alpha() = 0;
+            } else {
+               // live pixel; note that RGB must be premultiplied by alpha
+               p.Red()   = r * livealpha / 256;
+               p.Green() = g * livealpha / 256;
+               p.Blue()  = b * livealpha / 256;
+               p.Alpha() = livealpha;
+            }
+
+            p++;
+         }
+         p = rowStart;
+         p.OffsetY(data, 1);
+      }
+      
+      // draw result
+      dc.DrawBitmap(*layerbitmap, 0, 0, true);
+
+   } else {
+      // could not access pixel data so use slower masking code
+      // with no alpha transparency
+
+      // add mask to layerbitmap
+      #ifdef __WXMSW__
+         // temporarily change depth to avoid bug in wxMSW
+         int d = layerbitmap->GetDepth();
+         layerbitmap->SetDepth(1);
+         layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
+         layerbitmap->SetDepth(d);
+      #else
+         layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
+      #endif
+   
+      // draw masked image
+      layerdc.SelectObject(*layerbitmap);
+      dc.Blit(0, 0, layerwd, layerht, &layerdc, 0, 0, wxCOPY, true);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void DrawOtherLayers(wxDC &dc)
 {
    // check if layerbitmap needs to be created or resized
-   if ( layerwd != currwd || layerht != currht ) {
-      layerwd = currwd;
-      layerht = currht;
+   if ( layerwd != currview->getwidth() || layerht != currview->getheight() ) {
+      layerwd = currview->getwidth();
+      layerht = currview->getheight();
       if (layerbitmap) delete layerbitmap;
       // create a bitmap of depth 32 so it has room for alpha channel
-      layerbitmap = new wxBitmap(currwd, currht, 32);
-      if (layerbitmap) {
-         // initialize alpha channel
-         wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(currwd,currht));
-         if (!data) {
-            Warning(_("Failed to gain raw access to bitmap data!"));
-            return;
-         }
-         data.UseAlpha();
-         wxAlphaPixelData::Iterator p(data);
-         for ( int y = 0; y < currht; y++ ) {
-            wxAlphaPixelData::Iterator rowStart = p;
-            for ( int x = 0; x < currwd; x++ ) {
-               p.Alpha() = 0;  // 100% transparent
-               p++;
-            }
-            p = rowStart;
-            p.OffsetY(data, 1);
-         }
-      } else {
+      layerbitmap = new wxBitmap(layerwd, layerht, 32);
+      if (!layerbitmap) {
          Warning(_("Not enough memory for layer bitmap!"));
          return;
       }
@@ -846,88 +913,13 @@ void DrawOtherLayers(wxDC &dc)
    // set brush color used in killrect
    killbrush = deadbrush;
    
-   int deadr = deadrgb->Red();
-   int deadg = deadrgb->Green();
-   int deadb = deadrgb->Blue();
-   
-   int i;
-   for (i = 1; i < numlayers; i++) {
-      curralgo = GetLayer(i)->lalgo;
-      if (!curralgo->isEmpty()) {
-         wxMemoryDC layerdc;
-         layerdc.SelectObject(*layerbitmap);
-         
-         // set foreground and background colors for DrawBitmap calls
-         #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
-            // use opposite meaning on Mac/Windows -- sheesh
-            layerdc.SetTextForeground(*deadrgb);
-            layerdc.SetTextBackground(*livergb[i]);
-         #else
-            layerdc.SetTextForeground(*livergb[i]);
-            layerdc.SetTextBackground(*deadrgb);
-         #endif
-         
-         currdc = &layerdc;
-         // faster to use special renderer that ignores killrect???
-         curralgo->draw(*currview, renderer);
-         
-         // access pixel data and make all dead pixels 100% transparent
-         // and all live pixels slightly transparent
-         wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(currwd,currht));
-         if (data) {
-            int livealpha = 192;  // make live pixels 75% opaque
-            data.UseAlpha();
-            wxAlphaPixelData::Iterator p(data);
-            for ( int y = 0; y < currht; y++ ) {
-               wxAlphaPixelData::Iterator rowStart = p;
-               for ( int x = 0; x < currwd; x++ ) {
-                  // get pixel color
-                  int r = p.Red();
-                  int g = p.Green();
-                  int b = p.Blue();
-                  // set alpha value depending on whether pixel is live or dead
-                  if (r == deadr && g == deadg && b == deadb) {
-                     // make dead pixel 100% transparent
-                     p.Red()   = 0;
-                     p.Green() = 0;
-                     p.Blue()  = 0;
-                     p.Alpha() = 0;
-                  } else {
-                     // live pixel; note that RGB must be premultiplied by alpha
-                     p.Red()   = r * livealpha / 256;
-                     p.Green() = g * livealpha / 256;
-                     p.Blue()  = b * livealpha / 256;
-                     p.Alpha() = livealpha;
-                  }
-                  p++;
-               }
-               p = rowStart;
-               p.OffsetY(data, 1);
-            }
-            
-            // draw result
-            dc.DrawBitmap(*layerbitmap, 0, 0, true);
-
-         } else {
-            // could not access pixel data so use slower masking code
-            // with no alpha transparency
-
-            // add mask to layerbitmap
-            #ifdef __WXMSW__
-               // temporarily change depth to avoid bug in wxMSW
-               int d = layerbitmap->GetDepth();
-               layerbitmap->SetDepth(1);
-               layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
-               layerbitmap->SetDepth(d);
-            #else
-               layerbitmap->SetMask( new wxMask(*layerbitmap,*deadrgb) );
-            #endif
-         
-            // draw masked image
-            layerdc.SelectObject(*layerbitmap);
-            dc.Blit(0, 0, currwd, currht, &layerdc, 0, 0, wxCOPY, true);
-         }
+   // draw patterns in layers 1..numlayers-1
+   for ( int i = 1; i < numlayers; i++ ) {
+      lifealgo *layeralgo = GetLayer(i)->lalgo;
+      if (!layeralgo->isEmpty()) {
+         DrawOneLayer(dc, i, layeralgo);
       }
+      //!!! temporarily switch to this layer's selection and call DrawSelection
    }
    
    showgridlines = saveshow;
@@ -938,15 +930,12 @@ void DrawOtherLayers(wxDC &dc)
 void DrawView(wxDC &dc)
 {
    wxRect r;
-   viewport *saveview = NULL;
    lifealgo *savealgo = NULL;
    int colorindex;
    
    if ( drawlayers && numlayers > 1 ) {
       // draw all layers using current layer's viewport, starting with layer 0
-      saveview = currview;
       savealgo = curralgo;
-      currview = GetLayer(currlayer)->lview;
       curralgo = GetLayer(0)->lalgo;
       colorindex = 0;
    } else {
@@ -991,14 +980,13 @@ void DrawView(wxDC &dc)
       DrawSelection(dc, r);
    }
    
-   if ( saveview ) {
+   if ( savealgo ) {
+      // must restore curralgo before we call DrawOtherLayers
+      curralgo = savealgo;
       if ( !viewptr->nopattupdate ) {
          // draw layers 1, 2, ... numlayers-1
          DrawOtherLayers(dc);
       }
-      // restore currview and curralgo
-      currview = saveview;
-      curralgo = savealgo;
    }
    
    if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
