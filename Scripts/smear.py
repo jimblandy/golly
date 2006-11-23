@@ -41,7 +41,7 @@ def main():
          step = 1
       if int(g.getgen()) % step == 0:
          # display all 3 layers (start, smear, curr) using currently
-         # assigned layer colors (for live cells) with alpha blending???
+         # assigned layer colors
          g.update()
 
 try:
@@ -53,7 +53,7 @@ finally:
 Ideas and questions:
 - each layer is a separate universe with its own rule, viewport,
   selection, window title, etc
-- allow up to 10 layers (0..9)?
+- allow up to 10 layers (0..9)???
   if we allow more (unlimited?) then still only allow up to 10
   different colors (use mod 10).
 - int = getlayer() returns index of current layer
@@ -62,7 +62,8 @@ Ideas and questions:
 - dellayer() deletes current layer and sets curr layer to prev index,
   or 0 if only 1 layer remains
 - int = numlayers() returns number of existing layers
-- need movelayer(oldindex,newindex)?
+- need movelayer(oldindex,newindex)???
+- need setname(str) and str = getname()???
 
 Need a new Layer menu with these items:
 
@@ -70,30 +71,33 @@ Add Layer            (creates new empty layer)
 Duplicate Layer      (like Add Layer but copies pattern, etc???)
 Delete Layer
 Move Layer...
+Name Layer...        (change name seen in window's title bar???)
 -----
 Delete Other Layers  (delete all layers except current one)
 -----
-Draw All Layers      (check item -- use current pos and mag)
-Generate All Layers  (ditto -- use current step base and exp)
+Synchronize Views    (check item -- keep all viewports in sync???)
+Tile All Layers      (check item -- tile all viewports???)
+Display All Layers   (check item -- use current pos and mag)
+Generate All Layers  (check item -- use current step base and exp)
 -----
 Next Layer           (select next layer???)
 Previous Layer       (select previous layer???)
 Wrap                 (wrap around if ticked???)
 -----
-Layer 0
-Layer 1              (current layer is ticked)
-Layer 2
+Layer 0: name
+Layer 1: name        (current layer is ticked)
+Layer 2: name
 
-Whenever there is more than 1 layer, display small buttons
-at the top of the status bar:
+If "Show Layer Bar" is ticked, display bitmap buttons in a bar
+at the top of the viewport:
 
-         _____   _____   _____
-Layers: |  0  | |**1**| |  2  |
-         -----   -----   -----
+ _____  _____    _____  _____  _____
+|  +  ||  -  |  |  0  ||**1**||  2  |
+ -----  -----    -----  -----  -----
+
+First 2 buttons are for Add Layer and Delete Layer.
 
 User can:
 - click on a button to change current layer
 - click and drag button to move layer to new location
-- alt/option-click on a button to add a new layer
-- control-click on a button to delete layer
 '''

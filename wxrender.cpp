@@ -806,7 +806,7 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
 // -----------------------------------------------------------------------------
 
-void DrawOneLayer(wxDC &dc, int index, lifealgo *layeralgo)
+void DrawOneLayer(wxDC &dc, int index)
 {
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
@@ -822,13 +822,14 @@ void DrawOneLayer(wxDC &dc, int index, lifealgo *layeralgo)
    #endif
    
    currdc = &layerdc;
-   layeralgo->draw(*currview, renderer);
+   curralgo->draw(*currview, renderer);
    
    // access pixel data and make all dead pixels 100% transparent
    // and all live pixels slightly transparent
    wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(layerwd,layerht));
    if (data) {
       const int livealpha = 192;    // make live pixels 75% opaque
+      //!!! let user adjust opacity???
    
       int deadr = deadrgb->Red();
       int deadg = deadrgb->Green();
@@ -915,11 +916,34 @@ void DrawOtherLayers(wxDC &dc)
    
    // draw patterns in layers 1..numlayers-1
    for ( int i = 1; i < numlayers; i++ ) {
-      lifealgo *layeralgo = GetLayer(i)->lalgo;
-      if (!layeralgo->isEmpty()) {
-         DrawOneLayer(dc, i, layeralgo);
+      lifealgo *savealgo = curralgo;
+      Layer *layer = GetLayer(i);
+
+      curralgo = layer->lalgo;
+      if ( !curralgo->isEmpty() ) DrawOneLayer(dc, i);
+      
+      // temporarily switch to this layer's selection and draw selection
+      bigint savet, savel, saveb, saver;
+      savet = viewptr->seltop;
+      savel = viewptr->selleft;
+      saveb = viewptr->selbottom;
+      saver = viewptr->selright;
+      viewptr->seltop = layer->ltop;
+      viewptr->selleft = layer->lleft;
+      viewptr->selbottom = layer->lbottom;
+      viewptr->selright = layer->lright;
+      wxRect r;
+      if ( viewptr->SelectionVisible(&r) ) {
+         CheckSelectionImage(layerwd, layerht);
+         DrawSelection(dc, r);
       }
-      //!!! temporarily switch to this layer's selection and call DrawSelection
+      
+      // restore curralgo and selection
+      curralgo = savealgo;
+      viewptr->seltop = savet;
+      viewptr->selleft = savel;
+      viewptr->selbottom = saveb;
+      viewptr->selright = saver;
    }
    
    showgridlines = saveshow;
@@ -931,12 +955,25 @@ void DrawView(wxDC &dc)
 {
    wxRect r;
    lifealgo *savealgo = NULL;
+   bigint savet, savel, saveb, saver;
    int colorindex;
    
    if ( drawlayers && numlayers > 1 ) {
       // draw all layers using current layer's viewport, starting with layer 0
       savealgo = curralgo;
-      curralgo = GetLayer(0)->lalgo;
+      savet = viewptr->seltop;
+      savel = viewptr->selleft;
+      saveb = viewptr->selbottom;
+      saver = viewptr->selright;
+      if ( currlayer != 0 ) {
+         // change curralgo and selection to layer 0
+         Layer *layer = GetLayer(0);
+         curralgo = layer->lalgo;
+         viewptr->seltop = layer->ltop;
+         viewptr->selleft = layer->lleft;
+         viewptr->selbottom = layer->lbottom;
+         viewptr->selright = layer->lright;
+      }
       colorindex = 0;
    } else {
       // just draw the current layer
@@ -981,8 +1018,12 @@ void DrawView(wxDC &dc)
    }
    
    if ( savealgo ) {
-      // must restore curralgo before we call DrawOtherLayers
+      // must restore curralgo and selection before we call DrawOtherLayers
       curralgo = savealgo;
+      viewptr->seltop = savet;
+      viewptr->selleft = savel;
+      viewptr->selbottom = saveb;
+      viewptr->selright = saver;
       if ( !viewptr->nopattupdate ) {
          // draw layers 1, 2, ... numlayers-1
          DrawOtherLayers(dc);

@@ -381,21 +381,21 @@ void SetBrushesAndPens()
    hlifebrush->SetColour(*hlifergb);
    pastepen->SetColour(*pastergb);
    SetGridPens(deadrgb, gridpen, boldpen);
-   SetGridPens(livergb[0], sgridpen, sboldpen); //!!!???
+   SetGridPens(livergb[0], sgridpen, sboldpen);
 }
 
 void CreateDefaultColors()
 {
    livergb[0] = new wxColor(255, 255, 255);  // white
-   livergb[1] = new wxColor(  0,   0, 255);  //!!! blue
-   livergb[2] = new wxColor(255, 255,   0);  //!!! yellow
-   livergb[3] = new wxColor(255, 255, 255);  //!!!
-   livergb[4] = new wxColor(255, 255, 255);  //!!!
-   livergb[5] = new wxColor(255, 255, 255);  //!!!
-   livergb[6] = new wxColor(255, 255, 255);  //!!!
-   livergb[7] = new wxColor(255, 255, 255);  //!!!
-   livergb[8] = new wxColor(255, 255, 255);  //!!!
-   livergb[9] = new wxColor(255, 255, 255);  //!!!
+   livergb[1] = new wxColor(142,   0, 142);  // purple
+   livergb[2] = new wxColor(  0,   0, 255);  // blue
+   livergb[3] = new wxColor(  0, 142,   0);  // green
+   livergb[4] = new wxColor(255, 255,   0);  // yellow
+   livergb[5] = new wxColor(255, 142,   0);  // orange
+   livergb[6] = new wxColor(255,   0,   0);  // red
+   livergb[7] = new wxColor(102,   0, 255);  // indigo
+   livergb[8] = new wxColor(255,   0, 255);  // fuschia
+   livergb[9] = new wxColor(  0, 255, 255);  // aqua
    deadrgb = new wxColor(48, 48, 48);        // dark gray (nicer if no alpha channel support)
    pastergb = new wxColor(255, 0, 0);        // red
    selectrgb = new wxColor(75, 175, 0);      // darkish green (becomes 50% transparent)
@@ -1062,7 +1062,7 @@ private:
       PREF_THUMB_RANGE,
       // Color prefs
       PREF_LIVE_RGB,
-      PREF_DEAD_RGB,
+      PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
       PREF_PASTE_RGB,
       PREF_SELECT_RGB,
       PREF_QLIFE_RGB,
@@ -1075,6 +1075,7 @@ private:
    bool BadSpinVal(int id, int minval, int maxval, const wxString& prefix);
    bool ValidatePage();
    void ChangeColor(int id, wxColor* rgb);
+   void AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
                        int id, wxColor* rgb, const wxString& text);
    
@@ -1729,6 +1730,51 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
+void PrefsDialog::AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox)
+{
+   wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
+
+   for (int i=0; i<10; i++) {
+      // layer buttons are square; ie. smaller width
+      wxBitmap bitmap(BITMAP_HT, BITMAP_HT);
+      wxMemoryDC dc;
+      dc.SelectObject(bitmap);
+      wxRect rect(0, 0, BITMAP_HT, BITMAP_HT);
+      wxBrush brush(*livergb[i]);
+      FillRect(dc, rect, brush);
+      dc.SelectObject(wxNullBitmap);
+      
+      wxBitmapButton* bb = new wxBitmapButton(parent, PREF_LIVE_RGB + i,
+                                              bitmap, wxPoint(0, 0));
+      if (bb == NULL) {
+         Warning(_("Failed to create layer button!"));
+      } else {
+         wxBoxSizer* numbox = new wxBoxSizer(wxVERTICAL);
+
+         // show layer numbers above buttons
+         wxString num;
+         num.Printf(_("%d"), i);
+         numbox->Add(new wxStaticText(parent, wxID_STATIC, num),
+                     0, wxALIGN_CENTER, 0);
+         numbox->Add(bb, 0, wxALIGN_CENTER, 0);
+         
+         hbox->Add(numbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+      }
+   }
+   
+   wxBoxSizer* textbox = new wxBoxSizer(wxVERTICAL);
+   textbox->Add(new wxStaticText(parent, wxID_STATIC, _(" ")), 0, wxALIGN_CENTER, 0);
+   textbox->Add(new wxStaticText(parent, wxID_STATIC, _("Live cells in layers")),
+                0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+
+   hbox->Add(textbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+
+   vbox->AddSpacer(5);
+   vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
+}
+
+// -----------------------------------------------------------------------------
+
 void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
                                  int id, wxColor* rgb, const wxString& text)
 {
@@ -1747,7 +1793,7 @@ void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
       wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
       hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
       hbox->Add(new wxStaticText(parent, wxID_STATIC, text),
-                 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+                0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
       vbox->AddSpacer(5);
       vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
    }
@@ -1761,7 +1807,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
    wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
-   AddColorButton(panel, vbox, PREF_LIVE_RGB, livergb[0], _("Live cells"));
+   AddLayerButtons(panel, vbox);
    AddColorButton(panel, vbox, PREF_DEAD_RGB, deadrgb, _("Dead cells"));
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_PASTE_RGB, pastergb, _("Pasted pattern"));
@@ -1832,10 +1878,13 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
          // also change color of bitmap in corresponding button
          wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
          if (bb) {
-            wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+            // layer buttons are square
+            int bitmapwd = id < PREF_DEAD_RGB ? BITMAP_HT : BITMAP_WD;
+         
+            wxBitmap bitmap(bitmapwd, BITMAP_HT);
             wxMemoryDC dc;
             dc.SelectObject(bitmap);
-            wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+            wxRect rect(0, 0, bitmapwd, BITMAP_HT);
             wxBrush brush(*rgb);
             FillRect(dc, rect, brush);
             dc.SelectObject(wxNullBitmap);
@@ -1853,23 +1902,25 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
 
 void PrefsDialog::OnColorButton(wxCommandEvent& event)
 {
-   if ( event.GetId() == PREF_LIVE_RGB ) {
-      ChangeColor(PREF_LIVE_RGB, new_livergb[0]);  //!!!
+   int id = event.GetId();
+   
+   if ( id >= PREF_LIVE_RGB && id < PREF_DEAD_RGB ) {
+      ChangeColor(id, new_livergb[id - PREF_LIVE_RGB]);
 
-   } else if ( event.GetId() == PREF_DEAD_RGB ) {
-      ChangeColor(PREF_DEAD_RGB, new_deadrgb);
+   } else if ( id == PREF_DEAD_RGB ) {
+      ChangeColor(id, new_deadrgb);
 
-   } else if ( event.GetId() == PREF_PASTE_RGB ) {
-      ChangeColor(PREF_PASTE_RGB, new_pastergb);
+   } else if ( id == PREF_PASTE_RGB ) {
+      ChangeColor(id, new_pastergb);
 
-   } else if ( event.GetId() == PREF_SELECT_RGB ) {
-      ChangeColor(PREF_SELECT_RGB, new_selectrgb);
+   } else if ( id == PREF_SELECT_RGB ) {
+      ChangeColor(id, new_selectrgb);
 
-   } else if ( event.GetId() == PREF_QLIFE_RGB ) {
-      ChangeColor(PREF_QLIFE_RGB, new_qlifergb);
+   } else if ( id == PREF_QLIFE_RGB ) {
+      ChangeColor(id, new_qlifergb);
 
-   } else if ( event.GetId() == PREF_HLIFE_RGB ) {
-      ChangeColor(PREF_HLIFE_RGB, new_hlifergb);
+   } else if ( id == PREF_HLIFE_RGB ) {
+      ChangeColor(id, new_hlifergb);
    
    } else {
       // process other buttons like Cancel and OK
