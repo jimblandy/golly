@@ -64,6 +64,9 @@ DrawView() does the following tasks:
 - Calls DrawSelection() to overlay a translucent selection rectangle
   if a selection exists and any part of it is visible.
 
+- Calls DrawOtherLayers() to overlay multiple layers using the current
+  layer's scale and location.
+
 - If the user is doing a paste, CheckPasteImage() creates a temporary
   viewport (tempview) and draws the paste pattern (stored in pastealgo)
   into a masked bitmap which is then used by DrawPasteImage().
@@ -87,8 +90,11 @@ Potential optimizations:
 Other points of interest:
 
 - The decision to use buffered drawing is made in PatternView::OnPaint().
-  To avoid flicker, buffering is always used when the user is doing a
-  paste or the grid lines are visible or the selection is visible.
+  To avoid flicker, buffering is always used if:
+  - the user is doing a paste;
+  - the grid lines are visible;
+  - the selection is visible;
+  - multiple layers are being displayed.
 
 - Change the "#if 0" to "#if 1" in wx_render::killrect() to see randomly
   colored rects.  Gives an insight into how curralgo->draw() works.
@@ -828,7 +834,7 @@ void DrawOneLayer(wxDC &dc, int index)
    // and all live pixels slightly transparent
    wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(layerwd,layerht));
    if (data) {
-      const int livealpha = 192;    // make live pixels 75% opaque
+      const int livealpha = 192;    // make live pixels 75% opaque???
       //!!! let user adjust opacity???
    
       int deadr = deadrgb->Red();
@@ -958,7 +964,7 @@ void DrawView(wxDC &dc)
    bigint savet, savel, saveb, saver;
    int colorindex;
    
-   if ( drawlayers && numlayers > 1 ) {
+   if ( numlayers > 1 && drawlayers ) {
       // draw all layers using current layer's viewport, starting with layer 0
       savealgo = curralgo;
       savet = viewptr->seltop;

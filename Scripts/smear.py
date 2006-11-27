@@ -70,7 +70,7 @@ Need a new Layer menu with these items:
 Add Layer            (creates new empty layer)
 Duplicate Layer      (like Add Layer but copies pattern, etc???)
 Delete Layer
-Move Layer...
+Move Layer...        (maybe no need???)
 Name Layer...        (change name seen in window's title bar???)
 -----
 Delete Other Layers  (delete all layers except current one)
@@ -99,5 +99,5 @@ First 2 buttons are for Add Layer and Delete Layer.
 
 User can:
 - click on a button to change current layer
-- click and drag button to move layer to new location
+- click and drag button to move layer to new location???
 '''

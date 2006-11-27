@@ -387,15 +387,15 @@ void SetBrushesAndPens()
 void CreateDefaultColors()
 {
    livergb[0] = new wxColor(255, 255, 255);  // white
-   livergb[1] = new wxColor(142,   0, 142);  // purple
-   livergb[2] = new wxColor(  0,   0, 255);  // blue
-   livergb[3] = new wxColor(  0, 142,   0);  // green
-   livergb[4] = new wxColor(255, 255,   0);  // yellow
-   livergb[5] = new wxColor(255, 142,   0);  // orange
-   livergb[6] = new wxColor(255,   0,   0);  // red
-   livergb[7] = new wxColor(102,   0, 255);  // indigo
-   livergb[8] = new wxColor(255,   0, 255);  // fuschia
-   livergb[9] = new wxColor(  0, 255, 255);  // aqua
+   livergb[1] = new wxColor(  0, 128, 255);  // sky blue
+   livergb[2] = new wxColor(255, 255, 128);  // palish yellow
+   livergb[3] = new wxColor(128,   0, 255);  // purple
+   livergb[4] = new wxColor(128, 230, 128);  // pale green
+   livergb[5] = new wxColor(255,  64,  64);  // pale red
+   livergb[6] = new wxColor(255, 150,   0);  // orange
+   livergb[7] = new wxColor(255,  64, 255);  // pale fuschia
+   livergb[8] = new wxColor(255, 128, 150);  // pink
+   livergb[9] = new wxColor(128, 255, 255);  // pale aqua
    deadrgb = new wxColor(48, 48, 48);        // dark gray (nicer if no alpha channel support)
    pastergb = new wxColor(255, 0, 0);        // red
    selectrgb = new wxColor(75, 175, 0);      // darkish green (becomes 50% transparent)

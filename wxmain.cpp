@@ -1323,7 +1323,7 @@ void MainFrame::UpdateLayerItem(int index, const wxString& title)
    wxMenuBar *mbar = GetMenuBar();
    if (mbar) {
       wxString label;
-      label.Printf(_("Layer %d: "), index);
+      label.Printf(_("%d: "), index);
       label += title;
       mbar->SetLabel(ID_LAYER0 + index, label);
    }
@@ -1337,9 +1337,9 @@ void MainFrame::AppendLayerItem()
    if (mbar) {
       wxMenu* layermenu = mbar->GetMenu( mbar->FindMenu(_("Layer")) );
       if (layermenu) {
-         wxString name;
-         name.Printf(_("Layer %d"), numlayers - 1);
-         layermenu->AppendCheckItem(ID_LAYER0 + numlayers - 1, name);
+         // no point setting the item name here because UpdateLayerItem
+         // will be called very soon
+         layermenu->AppendCheckItem(ID_LAYER0 + numlayers - 1, _("foo"));
       } else {
          Warning(_("Could not find Layer menu!"));
       }
@@ -1542,7 +1542,8 @@ void MainFrame::CreateMenus()
    layerMenu->AppendCheckItem(ID_DRAW_ALL, _("Draw All Layers"));
    layerMenu->AppendCheckItem(ID_GEN_ALL, _("Generate All Layers"));
    layerMenu->AppendSeparator();
-   layerMenu->AppendCheckItem(ID_LAYER0, _("Layer 0"));
+   layerMenu->AppendCheckItem(ID_LAYER0, _("0"));
+   // UpdateLayerItem will soon change the above item name
 
    helpMenu->Append(ID_HELP_INDEX, _("Contents"));
    helpMenu->Append(ID_HELP_INTRO, _("Introduction"));

@@ -569,9 +569,17 @@ void PatternView::ShowDrawing()
 {
    curralgo->endofpattern();
    mainptr->savestart = true;
+
    // update status bar
    if (mainptr->StatusVisible()) {
       statusptr->Refresh(false, NULL);
+   }
+
+   if (numlayers > 1 && drawlayers) {
+      // update all layers; this is rather slow but most people won't be
+      // drawing cells when all layers are displayed (too confusing)
+      Refresh(false, NULL);
+      Update();
    }
 }
 
@@ -579,6 +587,11 @@ void PatternView::ShowDrawing()
 
 void PatternView::DrawOneCell(int cx, int cy, wxDC &dc)
 {
+   if (numlayers > 1 && drawlayers) {
+      // drawing must be done via Update in ShowDrawing
+      return;
+   }
+
    int cellsize = 1 << currview->getmag();
 
    // convert given cell coords to view coords
@@ -1120,7 +1133,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
       DrawView(dc);
    #else
       if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ||
-           (drawlayers && numlayers > 1) ) {
+           (numlayers > 1 && drawlayers) ) {
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
             // need to create a new bitmap for viewport

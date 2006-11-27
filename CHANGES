@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
+AKT: Fixed delay bug (whentosee needed to be initialized).
 AKT: Modified some scripts to use exit() command.
 AKT: Added exit() and note() commands.
 AKT: Modified slide-show.py to use try ... finally ... code.

@@ -150,7 +150,12 @@ void MainFrame::GoSlower()
       // only need to refresh status bar
       UpdateStatus();
       if (generating && warp < 0) {
-         whentosee += statusptr->GetCurrentDelay();
+         if (warp == -1) {
+            // need to initialize whentosee rather than increment it
+            whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
+         } else {
+            whentosee += statusptr->GetCurrentDelay();
+         }
       }
    } else {
       wxBell();
@@ -200,7 +205,6 @@ void MainFrame::GeneratePattern()
             UpdatePatternAndStatus();
             if (wxGetApp().Poller()->checkevents()) break;
             // add delay to current time rather than currmsec
-            // otherwise pauses can occur in Win app???
             whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
             // process events while we wait
