@@ -36,24 +36,37 @@ public:
    Layer();
    ~Layer();
 
-   lifealgo* lalgo;     // this layer's universe
-   bool lhash;          // this layer uses hlifealgo?
-   viewport* lview;     // this layer's viewport
-   wxString lrule;      // this layer's rule
-   wxString ltitle;     // this layer's window title
-   wxCursor* lcurs;     // this layer's cursor
-   int lwarp;           // this layer's speed setting
+   lifealgo* lalgo;           // this layer's universe
+   bool lhash;                // does it use hlifealgo?
+   viewport* lview;           // this layer's viewport
+   wxString lrule;            // this layer's rule
+   wxCursor* lcurs;           // this layer's cursor
+   int lwarp;                 // this layer's speed setting
    
    // this layer's selection
    bigint ltop, lleft, lbottom, lright;
    
-   // for resetting this layer
-   //!!! startgen, startfile, etc???
+   wxString currfile;         // full path of current pattern file
+   wxString currname;         // name seen in window title and Layer menu
+
+   // for saving and restoring starting pattern
+   bool savestart;            // need to save starting pattern?
+   bool starthash;            // hashing was on at start?
+   wxString startfile;        // file for saving starting pattern
+   wxString startrule;        // starting rule
+   bigint startgen;           // starting generation (>= 0)
+   bigint startx, starty;     // starting location
+   int startwarp;             // starting speed
+   int startmag;              // starting scale
+   
+   // temporary file used to restore starting pattern or to show comments
+   wxString tempstart;
 };
 
 const int maxlayers = 10;     // maximum number of layers
-extern int currlayer;         // index of current layer
 extern int numlayers;         // number of existing layers
+extern int currindex;         // index of current layer (0..numlayers-1)
+extern Layer* currlayer;      // pointer to current layer
 
 //!!! document these:
 void AddLayer();

@@ -44,6 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for CreatePasteImage
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for PatternView
+#include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
    #include <Carbon/Carbon.h>    // for Button
@@ -292,7 +293,7 @@ void PatternView::ClearSelection()
       if (abort) break;
    }
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    EndProgress();
    
    mainptr->UpdatePatternAndStatus();
@@ -351,7 +352,7 @@ void PatternView::ClearOutsideSelection()
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                  curralgo, newalgo, false, _("Saving selection")) ) {
       // delete old universe and point curralgo at new universe
-      mainptr->savestart = true;
+      currlayer->savestart = true;
       delete curralgo;
       curralgo = newalgo;
       mainptr->SetGenIncrement();
@@ -559,7 +560,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
       AddRun('!', &dollrun, &linelen, &chptr);
       if (cut) {
          curralgo->endofpattern();
-         mainptr->savestart = true;
+         currlayer->savestart = true;
       }
    }
    AddEOL(&chptr);
@@ -894,7 +895,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    }
 
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    EndProgress();
    
    // tidy up and display result
@@ -908,14 +909,14 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
                                       bigint *t, bigint *l, bigint *b, bigint *r)
 {
    #ifdef __WXX11__
-      if ( !wxFileExists(clipfile) ) return false;
+      if ( !wxFileExists(mainptr->clipfile) ) return false;
    #else
       wxTextDataObject data;
       if ( !mainptr->GetTextFromClipboard(&data) ) return false;
    
       // copy clipboard data to temporary file so we can handle all formats
       // supported by readclipboard
-      wxFile tmpfile(clipfile, wxFile::write);
+      wxFile tmpfile(mainptr->clipfile, wxFile::write);
       if ( !tmpfile.IsOpened() ) {
          Warning(_("Could not create temporary file for clipboard data!"));
          return false;
@@ -928,20 +929,20 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
       tmpfile.Close();
    #endif         
 
-   const char *err = readclipboard(clipfile.mb_str(wxConvLocal),
+   const char *err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                                    *tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so we have to use hlife
       delete tempalgo;
       tempalgo = new hlifealgo();
       tempalgo->setpoll(wxGetApp().Poller());
-      err = readclipboard(clipfile.mb_str(wxConvLocal),
+      err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                           *tempalgo, t, l, b, r);
    }
    #ifdef __WXX11__
       // don't delete clipboard file
    #else
-      wxRemoveFile(clipfile);
+      wxRemoveFile(mainptr->clipfile);
    #endif
 
    if (err) {
@@ -1196,7 +1197,7 @@ void PatternView::RandomFill()
       if (abort) break;
    }
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1251,7 +1252,7 @@ void PatternView::FlipLeftRight()
       mirrorx--;
    }
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1306,7 +1307,7 @@ void PatternView::FlipUpDown()
       mirrory--;
    }
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1397,7 +1398,7 @@ void PatternView::RotatePattern(bool clockwise,
       selleft   = newleft;
       selright  = newright;
       // switch to new universe and display results
-      mainptr->savestart = true;
+      currlayer->savestart = true;
       delete curralgo;
       curralgo = newalgo;
       mainptr->SetGenIncrement();
@@ -1558,7 +1559,7 @@ void PatternView::RotateSelection(bool clockwise)
    }
    
    // delete temporary universe and display results
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    delete tempalgo;
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();

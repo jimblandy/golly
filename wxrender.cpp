@@ -971,7 +971,7 @@ void DrawView(wxDC &dc)
       savel = viewptr->selleft;
       saveb = viewptr->selbottom;
       saver = viewptr->selright;
-      if ( currlayer != 0 ) {
+      if ( currindex != 0 ) {
          // change curralgo and selection to layer 0
          Layer *layer = GetLayer(0);
          curralgo = layer->lalgo;
@@ -983,7 +983,7 @@ void DrawView(wxDC &dc)
       colorindex = 0;
    } else {
       // just draw the current layer
-      colorindex = currlayer;
+      colorindex = currindex;
    }
 
    if ( viewptr->nopattupdate ) {

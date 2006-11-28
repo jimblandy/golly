@@ -66,7 +66,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
-#include "wxlayer.h"       // for AddLayer, etc
+#include "wxlayer.h"       // for AddLayer, currlayer, etc
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -225,16 +225,6 @@ wxTimer *onetimer;
 bool callUnselect = false;    // OnIdle needs to call Unselect?
 #endif
 
-// name of temporary file created by SaveStartingPattern and OpenClipboard;
-// it can be used to reset pattern or to show comments
-wxString tempstart;
-
-// name of temporary file created by RunClipboard
-wxString scriptfile;
-
-// name of temporary file for storing clipboard data
-wxString clipfile;
-
 // -----------------------------------------------------------------------------
 
 // bitmaps for tool bar buttons
@@ -298,7 +288,7 @@ void MainFrame::UpdateToolBar(bool active)
       tbar->EnableTool(ID_MOVE,           active);
       tbar->EnableTool(ID_ZOOMIN,         active);
       tbar->EnableTool(ID_ZOOMOUT,        active);
-      tbar->EnableTool(ID_INFO,           active && !currfile.IsEmpty());
+      tbar->EnableTool(ID_INFO,           active && !currlayer->currfile.IsEmpty());
 
       // call ToggleTool for tools added via AddCheckTool or AddRadioTool
       tbar->ToggleTool(ID_HASH,           hashing);
@@ -372,7 +362,6 @@ void MainFrame::UpdateMenuItems(bool active)
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
       bool busy = generating || inscript;
-      int id;
 
       if (viewptr->waitingforclick) active = false;
       
@@ -413,7 +402,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_STOP,      active && busy);
       mbar->Enable(ID_NEXT,      active && !busy);
       mbar->Enable(ID_STEP,      active && !busy);
-      mbar->Enable(ID_RESET,     active && !busy && curralgo->getGeneration() > startgen);
+      mbar->Enable(ID_RESET,     active && !busy &&
+                                 curralgo->getGeneration() > currlayer->startgen);
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
@@ -444,7 +434,7 @@ void MainFrame::UpdateMenuItems(bool active)
          mbar->Enable(ID_BUFF,   active);
          mbar->Check(ID_BUFF,    buffered);
       #endif
-      mbar->Enable(ID_INFO,      !currfile.IsEmpty());
+      mbar->Enable(ID_INFO,      !currlayer->currfile.IsEmpty());
 
       mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < maxlayers);
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
@@ -452,7 +442,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_DEL_OTHERS,   active && !busy && numlayers > 1);
       mbar->Enable(ID_DRAW_ALL,     active && !busy);
       mbar->Enable(ID_GEN_ALL,      active && !busy);
-      for (id = ID_LAYER0; id < ID_LAYER0+numlayers; id++)
+      for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++)
          mbar->Enable(id, active && !busy);
 
       // tick/untick menu items created using AppendCheckItem
@@ -488,8 +478,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SCALE_16,   viewptr->GetMag() == 4);
       mbar->Check(ID_DRAW_ALL,   drawlayers);
       mbar->Check(ID_GEN_ALL,    genlayers);
-      for (id = ID_LAYER0; id < ID_LAYER0+numlayers; id++)
-         mbar->Check(id, currlayer == (id - ID_LAYER0));
+      for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++)
+         mbar->Check(id, currindex == (id - ID_LAYER0));
    }
 }
 
@@ -802,8 +792,8 @@ void MainFrame::ToggleFullScreen()
 
 void MainFrame::ShowPatternInfo()
 {
-   if (viewptr->waitingforclick || currfile.IsEmpty()) return;
-   ShowInfo(currfile);
+   if (viewptr->waitingforclick || currlayer->currfile.IsEmpty()) return;
+   ShowInfo(currlayer->currfile);
 }
 
 // -----------------------------------------------------------------------------
@@ -1239,9 +1229,12 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    SavePrefs();
    
    // delete any temporary files
-   if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
    if (wxFileExists(scriptfile)) wxRemoveFile(scriptfile);
-
+   for (int i = 0; i < numlayers; i++) {
+      Layer* layer = GetLayer(i);
+      if (wxFileExists(layer->tempstart)) wxRemoveFile(layer->tempstart);
+   }
+   
    #ifndef __WXMAC__
       // avoid error message on Windows or seg fault on Linux
       if (wasinscript) exit(0);
@@ -1317,14 +1310,14 @@ void MainFrame::SetRandomFillPercentage()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::UpdateLayerItem(int index, const wxString& title)
+void MainFrame::UpdateLayerItem(int index)
 {
-   // show given title in given layer's menu item
+   // update name in given layer's menu item
    wxMenuBar *mbar = GetMenuBar();
    if (mbar) {
       wxString label;
       label.Printf(_("%d: "), index);
-      label += title;
+      label += GetLayer(index)->currname;
       mbar->SetLabel(ID_LAYER0 + index, label);
    }
 }
@@ -1744,7 +1737,6 @@ MainFrame::MainFrame()
    // initialize hidden files to be in same folder as Golly app;
    // they must be absolute paths in case they are used from a script command when
    // the current directory has been changed to the location of the script file
-   tempstart = gollydir + wxT(".golly_start");
    scriptfile = gollydir + wxT(".golly_clip.py");
    clipfile = gollydir + wxT(".golly_clipboard");
 
@@ -1812,9 +1804,6 @@ MainFrame::MainFrame()
    generating = false;     // not generating pattern
    fullscreen = false;     // not in full screen mode
    showbanner = true;      // avoid first file clearing banner message
-   savestart = false;      // no need to save starting pattern just yet
-   startfile.Clear();      // no starting pattern
-   startgen = 0;           // initial starting generation
    warp = 0;               // initial speed setting
 }
 

@@ -50,8 +50,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxscript.h"      // for IsScript, RunScript, inscript
-#include "wxlayer.h"       // for currlayer
 #include "wxmain.h"        // for MainFrame, etc
+#include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
    #include <Carbon/Carbon.h>                      // for OpaqueWindowPtr, etc
@@ -77,18 +77,19 @@ void MainFrame::MySetTitle(const wxString& title)
 
 void MainFrame::SetWindowTitle(const wxString& filename)
 {
-   wxString wtitle;
    if ( !filename.IsEmpty() ) {
       // remember current file name
-      currname = filename;
+      currlayer->currname = filename;
       // show currname in current layer's menu item
-      UpdateLayerItem(currlayer, currname);
+      UpdateLayerItem(currindex);
    }
+
+   wxString wtitle;
    wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLocal) );
    #ifdef __WXMAC__
-      wtitle.Printf(_("%s [%s]"), currname.c_str(), rule.c_str());
+      wtitle.Printf(_("%s [%s]"), currlayer->currname.c_str(), rule.c_str());
    #else
-      wtitle.Printf(_("%s [%s] - Golly"), currname.c_str(), rule.c_str());
+      wtitle.Printf(_("%s [%s] - Golly"), currlayer->currname.c_str(), rule.c_str());
    #endif
    // better to truncate a really long title???!!!
    MySetTitle(wtitle);
@@ -145,9 +146,10 @@ const wxString B0message = _("Hashing has been turned off due to B0-not-S8 rule.
 void MainFrame::NewPattern(const wxString& title)
 {
    if (generating) return;
-   savestart = false;
-   currfile.Clear();
-   startgen = 0;
+   
+   currlayer->savestart = false;
+   currlayer->currfile.Clear();
+   currlayer->startgen = 0;
    warp = 0;
    CreateUniverse();
 
@@ -184,7 +186,7 @@ void MainFrame::NewPattern(const wxString& title)
 
 bool MainFrame::LoadImage()
 {
-   wxString ext = currfile.AfterLast(wxT('.'));
+   wxString ext = currlayer->currfile.AfterLast(wxT('.'));
    
    // supported extensions match image handlers added in GollyApp::OnInit()
    if ( ext.IsSameAs(wxT("bmp"),false) ||
@@ -193,7 +195,7 @@ bool MainFrame::LoadImage()
         ext.IsSameAs(wxT("tif"),false) ||
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
-      if ( image.LoadFile(currfile) ) {
+      if ( image.LoadFile(currlayer->currfile) ) {
          curralgo->setrule("B3/S23");
          
          unsigned char maskr, maskg, maskb;
@@ -233,7 +235,7 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    // don't use initrule in future NewPattern calls
    initrule[0] = 0;
    if (!newtitle.IsEmpty()) {
-      savestart = false;
+      currlayer->savestart = false;
       warp = 0;
       if (GetInfoFrame()) {
          // comments will no longer be relevant so close info window
@@ -261,21 +263,21 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    if (LoadImage()) {
       viewptr->nopattupdate = false;
    } else {
-      const char *err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
+      const char *err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *curralgo);
       if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
          hashing = true;
          statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
+         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *curralgo);
       } else if (global_liferules.hasB0notS8 && hashing && !newtitle.IsEmpty()) {
          hashing = false;
          statusptr->SetMessage(B0message);
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currfile.mb_str(wxConvLocal), *curralgo);
+         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *curralgo);
       }
       viewptr->nopattupdate = false;
       if (err) Warning(wxString(err,wxConvLocal));
@@ -287,60 +289,12 @@ void MainFrame::LoadPattern(const wxString& newtitle)
       if (openremovesel) viewptr->NoSelection();
       if (opencurs) currcurs = opencurs;
       viewptr->FitInView(1);
-      startgen = curralgo->getGeneration();     // might be > 0
+      currlayer->startgen = curralgo->getGeneration();     // might be > 0
       UpdateEverything();
       showbanner = false;
    } else {
       // ResetPattern sets rule, window title, scale and location
    }
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::ResetPattern()
-{
-   if (generating || curralgo->getGeneration() == startgen) return;
-   
-   if (curralgo->getGeneration() < startgen) {
-      // if this happens then startgen logic is wrong
-      Warning(_("Current gen < starting gen!"));
-      return;
-   }
-   
-   if (startfile.IsEmpty() && currfile.IsEmpty()) {
-      // if this happens then savestart logic is wrong
-      Warning(_("Starting pattern cannot be restored!"));
-      return;
-   }
-   
-   // restore pattern and settings saved by SaveStartingPattern;
-   // first restore step size, hashing option and starting pattern
-   warp = startwarp;
-   hashing = starthash;
-
-   wxString oldfile;
-   if ( !startfile.IsEmpty() ) {
-      // temporarily change currfile to startfile
-      oldfile = currfile;
-      currfile = startfile;
-   }
-   
-   // restore starting pattern from currfile;
-   // pass in empty string so savestart, warp and currcurs won't change
-   LoadPattern(wxEmptyString);
-   // gen count has been reset to startgen
-   
-   if ( !startfile.IsEmpty() ) {
-      // restore currfile
-      currfile = oldfile;
-      savestart = true;       // should not be necessary, but play safe
-   }
-   
-   // now restore rule, window title, scale and location
-   curralgo->setrule(startrule.mb_str(wxConvLocal));
-   SetWindowTitle(wxEmptyString);
-   viewptr->SetPosMag(startx, starty, startmag);
-   UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -358,13 +312,13 @@ void MainFrame::SetCurrentFile(const wxString& path)
    #ifdef __WXMAC__
       // copy given path to currfile but as decomposed UTF8 so fopen will work
       #if wxCHECK_VERSION(2, 7, 0)
-         currfile = wxString(path.fn_str(), wxConvLocal);
+         currlayer->currfile = wxString(path.fn_str(), wxConvLocal);
       #else
          // wxMac 2.6.x or older (but conversion doesn't always work on OS 10.4)
-         currfile = wxString(path.wc_str(wxConvLocal), wxConvUTF8);
+         currlayer->currfile = wxString(path.wc_str(wxConvLocal), wxConvUTF8);
       #endif
    #else
-      currfile = path;
+      currlayer->currfile = path;
    #endif
 }
 
@@ -612,12 +566,13 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
 void MainFrame::OpenClipboard()
 {
    if (generating) return;
+   
    // load and view pattern data stored in clipboard
    #ifdef __WXX11__
       // on X11 the clipboard data is in non-temporary clipfile, so copy
       // clipfile to tempstart (for use by ResetPattern and ShowPatternInfo)
-      if ( wxCopyFile(clipfile, tempstart, true) ) {
-         currfile = tempstart;
+      if ( wxCopyFile(clipfile, currlayer->tempstart, true) ) {
+         currlayer->currfile = currlayer->tempstart;
          LoadPattern(_("clipboard"));
       } else {
          statusptr->ErrorMessage(_("Could not copy clipfile!"));
@@ -627,11 +582,11 @@ void MainFrame::OpenClipboard()
       if (GetTextFromClipboard(&data)) {
          // copy clipboard data to tempstart so we can handle all formats
          // supported by readpattern
-         wxFile outfile(tempstart, wxFile::write);
+         wxFile outfile(currlayer->tempstart, wxFile::write);
          if ( outfile.IsOpened() ) {
             outfile.Write( data.GetText() );
             outfile.Close();
-            currfile = tempstart;
+            currlayer->currfile = currlayer->tempstart;
             LoadPattern(_("clipboard"));
             // do NOT delete tempstart -- it can be reloaded by ResetPattern
             // or used by ShowPatternInfo
@@ -823,9 +778,9 @@ void MainFrame::SavePattern()
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
          statusptr->DisplayMessage(_("Pattern saved in file."));
-         if ( curralgo->getGeneration() == startgen ) {
+         if ( curralgo->getGeneration() == currlayer->startgen ) {
             // no need to save starting pattern (ResetPattern can load currfile)
-            savestart = false;
+            currlayer->savestart = false;
          }
       }
    }
@@ -867,9 +822,9 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    SetWindowTitle( GetBaseName(path) );
    const char *err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
-      if ( curralgo->getGeneration() == startgen ) {
+      if ( curralgo->getGeneration() == currlayer->startgen ) {
          // no need to save starting pattern (ResetPattern can load currfile)
-         savestart = false;
+         currlayer->savestart = false;
       }
    }
    return wxString(err, wxConvLocal);

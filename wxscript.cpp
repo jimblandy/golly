@@ -65,7 +65,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for hashing, pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
-#include "wxlayer.h"       // for AddLayer, etc
+#include "wxlayer.h"       // for AddLayer, currlayer, etc
 #include "wxscript.h"
 
 // =============================================================================
@@ -788,7 +788,7 @@ static PyObject *golly_addlayer(PyObject *self, PyObject *args)
    }
 
    // return index of new layer
-   return Py_BuildValue("i", currlayer);
+   return Py_BuildValue("i", currindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -845,7 +845,7 @@ static PyObject *golly_getlayer(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", currlayer);
+   return Py_BuildValue("i", currindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -1736,12 +1736,12 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
       
       if ((n % 4096) == 0 && ScriptAborted()) {
          curralgo->endofpattern();
-         mainptr->savestart = true;
+         currlayer->savestart = true;
          return NULL;
       }
    }
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    DoAutoUpdate();
 
    Py_INCREF(Py_None);
@@ -2044,7 +2044,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
 
    curralgo->setcell(x, y, state);
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
    DoAutoUpdate();
    
    Py_INCREF(Py_None);

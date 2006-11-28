@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxmain.h"        // for MainFrame
+#include "wxlayer.h"       // for currlayer, etc
 
 // Control menu functions:
 
@@ -71,29 +72,29 @@ void MainFrame::ChangeStopToGo()
 
 bool MainFrame::SaveStartingPattern()
 {
-   if ( curralgo->getGeneration() > startgen ) {
+   if ( curralgo->getGeneration() > currlayer->startgen ) {
       // don't do anything if current gen count > starting gen
       return true;
    }
    
    // save current rule, scale, location, step size and hashing option
-   startrule = wxString(curralgo->getrule(), wxConvLocal);
-   startmag = viewptr->GetMag();
-   viewptr->GetPos(startx, starty);
-   startwarp = warp;
-   starthash = hashing;
+   currlayer->startrule = wxString(curralgo->getrule(), wxConvLocal);
+   currlayer->startmag = viewptr->GetMag();
+   viewptr->GetPos(currlayer->startx, currlayer->starty);
+   currlayer->startwarp = warp;
+   currlayer->starthash = hashing;
    
-   if ( !savestart ) {
+   if ( !currlayer->savestart ) {
       // no need to save pattern; ResetPattern will load currfile
       // (note that currfile == tempstart if pattern created via OpenClipboard)
-      startfile.Clear();
+      currlayer->startfile.Clear();
       return true;
    }
 
    // save starting pattern in tempstart file
    if ( hashing ) {
       // much faster to save hlife pattern in a macrocell file
-      const char *err = WritePattern(tempstart, MC_format, 0, 0, 0, 0);
+      const char *err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
          // don't allow user to continue generating
@@ -114,7 +115,7 @@ bool MainFrame::SaveStartingPattern()
       int iright = right.toint();      
       // use XRLE format so the pattern's top left location and the current
       // generation count are stored in the file
-      const char *err = WritePattern(tempstart, XRLE_format,
+      const char *err = WritePattern(currlayer->tempstart, XRLE_format,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
@@ -123,8 +124,56 @@ bool MainFrame::SaveStartingPattern()
       }
    }
    
-   startfile = tempstart;   // ResetPattern will load tempstart
+   currlayer->startfile = currlayer->tempstart;   // ResetPattern will load tempstart
    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ResetPattern()
+{
+   if (generating || curralgo->getGeneration() == currlayer->startgen) return;
+   
+   if (curralgo->getGeneration() < currlayer->startgen) {
+      // if this happens then startgen logic is wrong
+      Warning(_("Current gen < starting gen!"));
+      return;
+   }
+   
+   if (currlayer->startfile.IsEmpty() && currlayer->currfile.IsEmpty()) {
+      // if this happens then savestart logic is wrong
+      Warning(_("Starting pattern cannot be restored!"));
+      return;
+   }
+   
+   // restore pattern and settings saved by SaveStartingPattern;
+   // first restore step size, hashing option and starting pattern
+   warp = currlayer->startwarp;
+   hashing = currlayer->starthash;
+
+   wxString oldfile;
+   if ( !currlayer->startfile.IsEmpty() ) {
+      // temporarily change currfile to startfile
+      oldfile = currlayer->currfile;
+      currlayer->currfile = currlayer->startfile;
+   }
+   
+   // restore starting pattern from currfile;
+   // pass in empty string so savestart, warp and currcurs won't change
+   LoadPattern(wxEmptyString);
+   // gen count has been reset to startgen
+   
+   if ( !currlayer->startfile.IsEmpty() ) {
+      // restore currfile
+      currlayer->currfile = oldfile;
+      currlayer->savestart = true;       // should not be necessary, but play safe
+   }
+   
+   // now restore rule, window title (in case rule changed), scale and location
+   curralgo->setrule(currlayer->startrule.mb_str(wxConvLocal));
+   SetWindowTitle(wxEmptyString);
+   viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
+   UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -422,7 +471,7 @@ void MainFrame::AdvanceOutsideSelection()
    }
    
    // switch to new universe (best to do this even if aborted)
-   savestart = true;
+   currlayer->savestart = true;
    delete curralgo;
    curralgo = newalgo;
    SetGenIncrement();
@@ -530,7 +579,8 @@ void MainFrame::AdvanceSelection()
          // copy all cells in new selection from tempalgo to curralgo
          viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                               tempalgo, curralgo, _("Copying advanced selection"));
-         savestart = true;
+
+         currlayer->savestart = true;
 
          UpdateEverything();
       }

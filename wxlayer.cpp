@@ -37,69 +37,69 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for currview, viewptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for drawlayers, etc
+#include "wxprefs.h"       // for gollydir, drawlayers, etc
 #include "wxlayer.h"
 
 // -----------------------------------------------------------------------------
 
-int currlayer = -1;        // index of current layer
-int numlayers = 0;         // number of existing layers
+int numlayers = 0;            // number of existing layers
+int currindex = -1;           // index of current layer
 
-Layer* layer[maxlayers];   // array of layers
+Layer* currlayer;             // pointer to current layer
+Layer* layer[maxlayers];      // array of layers
+
+bool available[maxlayers];    // for setting tempstart suffix
 
 // -----------------------------------------------------------------------------
 
 void SaveLayerGlobals()
 {
-   // save curralgo, currview, etc in layer[currlayer]
+   // save curralgo, currview, etc in current layer
 
-   layer[currlayer]->lalgo = curralgo;
-   layer[currlayer]->lhash = hashing;
-   layer[currlayer]->lrule = wxString(curralgo->getrule(),wxConvLocal);
+   currlayer->lalgo = curralgo;
+   currlayer->lhash = hashing;
+   currlayer->lrule = wxString(curralgo->getrule(),wxConvLocal);
 
-   layer[currlayer]->lview = currview;
+   currlayer->lview = currview;
 
-   layer[currlayer]->ltop = viewptr->seltop;
-   layer[currlayer]->lbottom = viewptr->selbottom;
-   layer[currlayer]->lleft = viewptr->selleft;
-   layer[currlayer]->lright = viewptr->selright;
+   currlayer->ltop = viewptr->seltop;
+   currlayer->lbottom = viewptr->selbottom;
+   currlayer->lleft = viewptr->selleft;
+   currlayer->lright = viewptr->selright;
    
-   layer[currlayer]->lcurs = currcurs;
-
-   layer[currlayer]->lwarp = mainptr->GetWarp();
-   layer[currlayer]->ltitle = mainptr->GetWindowTitle();
+   currlayer->lcurs = currcurs;
+   currlayer->lwarp = mainptr->GetWarp();
 }
 
 // -----------------------------------------------------------------------------
 
 void ChangeLayerGlobals()
 {
-   // set curralgo, currview, etc using layer[currlayer]
+   // set curralgo, currview, etc using currlayer info
 
    // curralgo does not exist if called from DeleteLayer so use global_liferules
    wxString oldrule = wxString(global_liferules.getrule(),wxConvLocal);
    
-   curralgo = layer[currlayer]->lalgo;
+   curralgo = currlayer->lalgo;
 
    // need to update global rule table if the universe type has changed
    // or the current rule has changed
-   if ( hashing != layer[currlayer]->lhash ||
-        !oldrule.IsSameAs(layer[currlayer]->lrule, false) ) {
-      curralgo->setrule(layer[currlayer]->lrule.mb_str(wxConvLocal));
+   if ( hashing != currlayer->lhash || !oldrule.IsSameAs(currlayer->lrule,false) ) {
+      curralgo->setrule(currlayer->lrule.mb_str(wxConvLocal));
    }
-   hashing = layer[currlayer]->lhash;
+   hashing = currlayer->lhash;
 
-   currview = layer[currlayer]->lview;
+   currview = currlayer->lview;
 
-   viewptr->seltop = layer[currlayer]->ltop;
-   viewptr->selbottom = layer[currlayer]->lbottom;
-   viewptr->selleft = layer[currlayer]->lleft;
-   viewptr->selright = layer[currlayer]->lright;
+   viewptr->seltop = currlayer->ltop;
+   viewptr->selbottom = currlayer->lbottom;
+   viewptr->selleft = currlayer->lleft;
+   viewptr->selright = currlayer->lright;
    
-   currcurs = layer[currlayer]->lcurs;
+   currcurs = currlayer->lcurs;
 
-   mainptr->SetWarp(layer[currlayer]->lwarp);
-   mainptr->SetWindowTitle(layer[currlayer]->ltitle);
+   mainptr->SetWarp(currlayer->lwarp);
+   mainptr->SetWindowTitle(currlayer->currname);
       
    mainptr->UpdateUserInterface(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -113,23 +113,22 @@ void AddLayer()
    
    if (numlayers == 0) {
       // create the very first layer
-      currlayer = 0;
+      currindex = 0;
    } else {
       // save curralgo, currview, etc
       SaveLayerGlobals();
       
-      // insert new layer after currlayer
-      currlayer++;
-      if (currlayer < numlayers) {
+      // insert new layer after currindex
+      currindex++;
+      if (currindex < numlayers) {
          // shift right one or more layers
-         int i;
-         for (i = numlayers; i > currlayer; i--)
+         for (int i = numlayers; i > currindex; i--)
             layer[i] = layer[i-1];
       }
    }
 
-   Layer* templayer = new Layer();
-   layer[currlayer] = templayer;
+   currlayer = new Layer();
+   layer[currindex] = currlayer;
    
    numlayers++;
 
@@ -137,10 +136,9 @@ void AddLayer()
       // add new item at end of Layer menu
       mainptr->AppendLayerItem();
 
-      // adjust titles in any items after currlayer
-      int i;
-      for (i = currlayer + 1; i < numlayers; i++)
-         mainptr->UpdateLayerItem(i, layer[i]->ltitle);
+      // update names in any items after currindex
+      for (int i = currindex + 1; i < numlayers; i++)
+         mainptr->UpdateLayerItem(i);
       
       ChangeLayerGlobals();
    }
@@ -154,23 +152,22 @@ void DeleteLayer()
    
    SaveLayerGlobals();
    
-   delete layer[currlayer];
+   delete currlayer;
    numlayers--;
-   if (currlayer < numlayers) {
+   if (currindex < numlayers) {
       // shift left one or more layers
-      int i;
-      for (i = currlayer; i < numlayers; i++)
+      for (int i = currindex; i < numlayers; i++)
          layer[i] = layer[i+1];
    }
-   if (currlayer > 0) currlayer--;
+   if (currindex > 0) currindex--;
+   currlayer = layer[currindex];
 
    // remove item from end of Layer menu
    mainptr->RemoveLayerItem();
 
-   // adjust titles in any items after currlayer
-   int i;
-   for (i = currlayer + 1; i < numlayers; i++)
-      mainptr->UpdateLayerItem(i, layer[i]->ltitle);
+   // update names in any items after currindex
+   for (int i = currindex + 1; i < numlayers; i++)
+      mainptr->UpdateLayerItem(i);
    
    ChangeLayerGlobals();
 }
@@ -181,13 +178,13 @@ void DeleteOtherLayers()
 {
    if (numlayers <= 1) return;
    
-   // delete all layers except currlayer
-   int i;
-   for (i = 0; i < numlayers; i++)
-      if (i != currlayer) delete layer[i];
+   // delete all layers except current layer
+   for (int i = 0; i < numlayers; i++)
+      if (i != currindex) delete layer[i];
 
-   layer[0] = layer[currlayer];
-   currlayer = 0;
+   layer[0] = layer[currindex];
+   currindex = 0;
+   // currlayer doesn't change
 
    // remove all items except layer 0 from end of Layer menu
    while (numlayers > 1) {
@@ -195,8 +192,8 @@ void DeleteOtherLayers()
       mainptr->RemoveLayerItem();
    }
 
-   // update title in currlayer item
-   mainptr->UpdateLayerItem(currlayer, mainptr->GetWindowTitle());
+   // update name in currindex item
+   mainptr->UpdateLayerItem(currindex);
 
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -214,10 +211,11 @@ void MoveLayerDialog()
 void SetLayer(int index)
 {
    if (index < 0 || index >= numlayers) return;
-   if (currlayer == index) return;
+   if (currindex == index) return;
    
    SaveLayerGlobals();
-   currlayer = index;
+   currindex = index;
+   currlayer = layer[currindex];
    ChangeLayerGlobals();
 }
 
@@ -245,9 +243,8 @@ void ToggleGenLayers()
 void ResizeLayers(int wd, int ht)
 {
    // resize viewport in each layer
-   int i;
-   for (i = 0; i < numlayers; i++) {
-      if (i == currlayer)
+   for (int i = 0; i < numlayers; i++) {
+      if (i == currindex)
          currview->resize(wd, ht);
       else
          layer[i]->lview->resize(wd, ht);
@@ -262,8 +259,8 @@ Layer* GetLayer(int index)
       Warning(_("Bad index in GetLayer!"));
       return NULL;
    } else {
-      if (index == currlayer) {
-         // update layer[currlayer] info with current settings
+      if (index == currindex) {
+         // update currlayer info with current settings
          SaveLayerGlobals();
       }
       return layer[index];
@@ -272,15 +269,49 @@ Layer* GetLayer(int index)
 
 // -----------------------------------------------------------------------------
 
+int FindAvailableSuffix()
+{
+   // find first available index to use as tempstart suffix
+   for (int i = 0; i < maxlayers; i++) {
+      if (available[i]) {
+         available[i] = false;
+         return i;
+      }
+   }
+   // bug if we get here
+   Warning(_("Bug in FindAvailableSuffix!"));
+   return 0;
+}
+
+// -----------------------------------------------------------------------------
+
 Layer::Layer()
 {
+   // set tempstart prefix; ~Layer() assumes it ends with '_'
+   tempstart = gollydir + wxT(".golly_start_");
+
+   savestart = false;         // no need to save starting pattern just yet
+   startfile.Clear();         // no starting pattern
+   startgen = 0;              // initial starting generation
+   currname = _("untitled");
+   currfile = wxEmptyString;
+
    if (numlayers == 0) {
       // creating very first layer; note that lalgo, lview, etc will be
       // set by SaveLayerGlobals in next AddLayer call, but play safe
       // with the variables deleted in ~Layer
       lalgo = NULL;
       lview = NULL;
+      
+      // complete tempstart and initialize available array
+      tempstart += wxT("0");
+      available[0] = false;
+      for (int i = 1; i < maxlayers; i++) available[i] = true;
+
    } else {
+      // add unique suffix to tempstart
+      tempstart += wxString::Format("%d", FindAvailableSuffix());
+
       lhash = hashing;
       if (hashing) {
          lalgo = new hlifealgo();
@@ -298,7 +329,7 @@ Layer::Layer()
       lview->resize( currview->getwidth(), currview->getheight() );
       lview->setpositionmag( currview->x, currview->y, currview->getmag() );
       
-      ltitle = _("untitled");
+      // inherit current cursor
       lcurs = currcurs;
       
       // reset speed
@@ -318,4 +349,16 @@ Layer::~Layer()
 {
    if (lalgo) delete lalgo;
    if (lview) delete lview;
+   
+   // delete tempstart file if it exists
+   if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
+   
+   // make tempstart suffix available for new layers
+   wxString suffix = tempstart.AfterLast('_');
+   long val;
+   if (suffix.ToLong(&val) && val >= 0 && val < maxlayers) {
+      available[val] = true;
+   } else {
+      Warning(_("Problem in tempstart: ") + tempstart);
+   }
 }

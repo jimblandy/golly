@@ -281,7 +281,7 @@ bool GollyApp::OnInit()
    // get main window location and other user preferences
    GetPrefs();
    
-   // create main window (also inits viewptr and statusptr)
+   // create main window (also initializes viewptr and statusptr)
    mainptr = new MainFrame();
    if (mainptr == NULL) Fatal(_("Failed to create main window!"));
    

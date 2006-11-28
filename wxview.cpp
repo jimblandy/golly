@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
-#include "wxlayer.h"       // for ResizeLayers, numlayers, etc
+#include "wxlayer.h"       // for ResizeLayers, currlayer, etc
 #include "wxview.h"
 
 // This module contains most View menu functions (a few like ToggleFullScreen
@@ -568,7 +568,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
 void PatternView::ShowDrawing()
 {
    curralgo->endofpattern();
-   mainptr->savestart = true;
+   currlayer->savestart = true;
 
    // update status bar
    if (mainptr->StatusVisible()) {
@@ -631,7 +631,7 @@ void PatternView::StartDrawingCells(int x, int y)
 
    wxClientDC dc(this);
    dc.SetPen(*wxTRANSPARENT_PEN);
-   dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currlayer]);
+   dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
    DrawOneCell(cellx, celly, dc);
    dc.SetBrush(wxNullBrush);        // restore brush
    dc.SetPen(wxNullPen);            // restore pen
@@ -658,7 +658,7 @@ void PatternView::DrawCells(int x, int y)
    if ( newx != cellx || newy != celly ) {
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
-      dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currlayer]);
+      dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
 
       int numchanged = 0;
       

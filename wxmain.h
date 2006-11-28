@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dirctrl.h"    // for wxGenericDirCtrl
 #include "wx/treectrl.h"   // for wxTreeCtrl, wxTreeEvent
 #include "wx/dataobj.h"    // for wxTextDataObject
-#include "bigint.h"        // for bigint
 #include "writepattern.h"  // for pattern_format
 
 // Define the main window:
@@ -60,7 +59,6 @@ public:
    void NewPattern(const wxString& title = _("untitled"));
    void CreateUniverse();
    void SetWindowTitle(const wxString& filename);
-   wxString GetWindowTitle() { return currname; };
    void OpenPattern();
    void OpenScript();
    void ToggleShowPatterns();
@@ -102,15 +100,18 @@ public:
    void ResizeSplitWindow();
 
    // layer functions
-   void UpdateLayerItem(int index, const wxString& title);
+   void UpdateLayerItem(int index);
    void AppendLayerItem();
    void RemoveLayerItem();
 
    // flags
-   bool generating;              // currently generating pattern?
-   bool fullscreen;              // in full screen mode?
-   bool showbanner;              // showing banner message?
-   bool savestart;               // need to save starting pattern?
+   bool generating;           // currently generating pattern?
+   bool fullscreen;           // in full screen mode?
+   bool showbanner;           // showing banner message?
+
+   // temporary files
+   wxString scriptfile;       // name of file created by RunClipboard
+   wxString clipfile;         // name of file for storing clipboard data
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -165,34 +166,13 @@ private:
    wxSplitterWindow* splitwin;
    wxGenericDirCtrl* patternctrl;
    wxGenericDirCtrl* scriptctrl;
-
-   wxString currfile;            // full path of current pattern file
-   wxString currname;            // file name displayed in main window title
    
    int warp;                     // current speed setting
    int minwarp;                  // warp value at maximum delay (must be <= 0)
    long whentosee;               // when to do next gen (if warp < 0)
    long begintime, endtime;      // for timing info
    double begingen, endgen;      // ditto
-
-   wxString startfile;           // file for saving starting pattern
-   wxString startrule;           // starting rule
-   bigint startgen;              // starting generation (>= 0)
-   bigint startx, starty;        // starting location
-   int startwarp;                // starting speed
-   int startmag;                 // starting scale
-   bool starthash;               // hashing was on at start?
 };
-
-// name of temporary file created by SaveStartingPattern and OpenClipboard;
-// it can be used to reset pattern or to show comments
-extern wxString tempstart;
-
-// name of temporary file created by RunClipboard
-extern wxString scriptfile;
-
-// name of temporary file for storing clipboard data
-extern wxString clipfile;
 
 // static routines needed by GetPrefs() to get IDs for items in Open Recent and
 // Run Recent submenus; they can't be MainFrame methods because GetPrefs() is
