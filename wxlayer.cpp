@@ -70,8 +70,9 @@ void CurrentLayerChanged()
 {
    // need to update global rule table if the hash setting has changed
    // or if the current rule has changed
-   if ( oldhash != currlayer->hash || !oldrule.IsSameAs(currlayer->rule,false) ) {
-      currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
+   wxString currentrule = wxString(global_liferules.getrule(), wxConvLocal);
+   if ( oldhash != currlayer->hash || !oldrule.IsSameAs(currentrule,false) ) {
+      currlayer->algo->setrule( currentrule.mb_str(wxConvLocal) );
    }
 
    mainptr->SetWarp(currlayer->warp);
@@ -254,7 +255,8 @@ int FindAvailableSuffix()
 
 Layer::Layer()
 {
-   // set tempstart prefix; note that ~Layer() assumes it ends with '_'
+   // set tempstart prefix (unique suffix will be added below);
+   // WARNING: ~Layer() assumes prefix ends with '_'
    tempstart = gollydir + wxT(".golly_start_");
 
    savestart = false;            // no need to save starting pattern just yet
@@ -262,9 +264,7 @@ Layer::Layer()
    startgen = 0;                 // initial starting generation
    currname = _("untitled");
    currfile = wxEmptyString;
-      
    warp = 0;                     // initial speed setting
-
    originx = 0;                  // no X origin offset
    originy = 0;                  // no Y origin offset
    
@@ -273,6 +273,10 @@ Layer::Layer()
    selbottom = 0;
    selleft = 0;
    selright = 0;
+
+   // rule is only set later in SaveHashAndRule, so here we just assign
+   // a string to help catch caller accessing rule when it shouldn't
+   rule = _("bug!");
 
    if (numlayers == 0) {
       // creating very first layer
@@ -296,13 +300,13 @@ Layer::Layer()
          Warning(wxString(err,wxConvLocal));
          // user will see offending rule string in window title
       } else if (global_liferules.hasB0notS8 && hash) {
-         // rather than set hash false it's easier to change the rule
-         algo->setrule("B3/S23");
-         Warning(_("B0-not-S8 rule is not allowed when hashing."));
+         // silently turn off hashing
+         hash = false;
+         delete algo;
+         algo = new qlifealgo();
+         algo->setpoll(wxGetApp().Poller());
+         algo->setrule(initrule);
       }
-      
-      // rule is set later in SaveHashAndRule, so no need for this
-      // rule = wxString(global_liferules.getrule(), wxConvLocal);
       
       // create viewport; the initial size is not important because
       // ResizeLayers will soon be called
@@ -311,7 +315,7 @@ Layer::Layer()
       // set cursor in case newcurs/opencurs are set to "No Change"
       curs = curs_pencil;
       
-      // complete tempstart and initialize available array
+      // add suffix to tempstart and initialize available array
       tempstart += wxT("0");
       available[0] = false;
       for (int i = 1; i < maxlayers; i++) available[i] = true;
@@ -329,8 +333,7 @@ Layer::Layer()
       }
       algo->setpoll(wxGetApp().Poller());
       
-      // inherit current rule (need to set rule for CurrentLayerChanged)
-      rule = wxString(global_liferules.getrule(), wxConvLocal);
+      // inherit current rule (the one in global_liferules)
       
       // inherit current viewport's size, scale and location
       view = new viewport(100,100);

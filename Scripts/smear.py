@@ -66,21 +66,23 @@ Ideas and questions:
   or 0 if only 1 layer remains
 - int = numlayers() returns number of existing layers
 - need movelayer(oldindex,newindex)???
-- need setname(str) and str = getname()???
+- need setname(index,str) and str = getname(index)???
 
 Need a new Layer menu with these items:
 
 Add Layer            (creates new empty layer)
+Clone Layer          (creates new layer which shares algo???)
 Duplicate Layer      (like Add Layer but copies pattern, etc???)
 Delete Layer
-Move Layer...        (maybe no need???)
+Move Layer...        (maybe no need if we can drag layer buttons???)
 Name Layer...        (change name seen in window's title bar???)
 -----
 Delete Other Layers  (delete all layers except current one)
 -----
 Synchronize Views    (check item -- keep all viewports in sync???)
+Synchronize Cursors  (check item -- keep all cursors in sync???)
 Tile All Layers      (check item -- tile all viewports???)
-Display All Layers   (check item -- use current pos and mag)
+Overlay All Layers   (check item -- use current pos and mag)
 Generate All Layers  (check item -- use current step base and exp)
 -----
 Next Layer           (select next layer???)

@@ -1584,14 +1584,16 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &ngens)) return NULL;
 
-   // create temporary qlife universe
+   // create a temporary universe of same type as current universe so we
+   // don't have to update the global rule table (in case it's a Wolfram rule)
    lifealgo *tempalgo;
-   tempalgo = new qlifealgo();
+   if (currlayer->hash) {
+      tempalgo = new hlifealgo();
+      tempalgo->setMaxMemory(maxhashmem);
+   } else {
+      tempalgo = new qlifealgo();
+   }
    tempalgo->setpoll(wxGetApp().Poller());
-   
-   // no need for this -- all universes share global rule table
-   //!!! but what if currlayer uses hlife??? check elsewhere!!!
-   // tempalgo->setrule( currlayer->algo->getrule() );
    
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -1658,6 +1660,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
       // macrocell file, so switch to hlife universe
       delete tempalgo;
       tempalgo = new hlifealgo();
+      tempalgo->setMaxMemory(maxhashmem);
       tempalgo->setpoll(wxGetApp().Poller());
       err = readpattern(FILENAME, *tempalgo);
    }

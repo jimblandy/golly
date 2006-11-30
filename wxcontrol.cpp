@@ -544,9 +544,15 @@ void MainFrame::AdvanceSelection()
       return;
    }
    
-   // create a new temporary universe
+   // create a temporary universe of same type as current universe so we
+   // don't have to update the global rule table (in case it's a Wolfram rule)
    lifealgo *tempalgo;
-   tempalgo = new qlifealgo();         // qlife's setcell/getcell are faster
+   if (currlayer->hash) {
+      tempalgo = new hlifealgo();
+      tempalgo->setMaxMemory(maxhashmem);
+   } else {
+      tempalgo = new qlifealgo();
+   }
    tempalgo->setpoll(wxGetApp().Poller());
    
    // copy live cells in selection to temporary universe
