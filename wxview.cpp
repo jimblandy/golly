@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for mainptr, statusptr, curralgo
+#include "wxgolly.h"       // for mainptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxprefs.h"       // for showgridlines, etc
 #include "wxhelp.h"        // for ShowHelp
@@ -53,9 +53,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // OnPaint, OnKeyDown, OnChar, OnMouseDown, etc.
 
 // -----------------------------------------------------------------------------
-
-// current viewport for displaying patterns
-viewport *currview = NULL;
 
 // bitmap for wxBufferedPaintDC is not needed on Mac OS X because
 // windows are automatically buffered
@@ -80,7 +77,7 @@ const int ID_DRAG_TIMER = 1000;
 void PatternView::ZoomOut()
 {
    TestAutoFit();
-   currview->unzoom();
+   currlayer->view->unzoom();
    mainptr->UpdateEverything();
 }
 
@@ -90,8 +87,8 @@ void PatternView::ZoomOut()
 void PatternView::ZoomIn()
 {
    TestAutoFit();
-   if (currview->getmag() < MAX_MAG) {
-      currview->zoom();
+   if (currlayer->view->getmag() < MAX_MAG) {
+      currlayer->view->zoom();
       mainptr->UpdateEverything();
    } else {
       wxBell();
@@ -107,9 +104,9 @@ void PatternView::SetPixelsPerCell(int pxlspercell)
       mag++;
       pxlspercell >>= 1;
    }
-   if (mag == currview->getmag()) return;
+   if (mag == currlayer->view->getmag()) return;
    TestAutoFit();
-   currview->setmag(mag);
+   currlayer->view->setmag(mag);
    mainptr->UpdateEverything();
 }
 
@@ -117,7 +114,7 @@ void PatternView::SetPixelsPerCell(int pxlspercell)
 
 void PatternView::FitPattern()
 {
-   curralgo->fit(*currview, 1);
+   currlayer->algo->fit(*currlayer->view, 1);
    // best not to call TestAutoFit
    mainptr->UpdateEverything();
 }
@@ -128,23 +125,23 @@ void PatternView::FitSelection()
 {
    if (!SelectionExists()) return;
 
-   bigint newx = selright;
-   newx -= selleft;
+   bigint newx = currlayer->selright;
+   newx -= currlayer->selleft;
    newx += bigint::one;
    newx.div2();
-   newx += selleft;
+   newx += currlayer->selleft;
 
-   bigint newy = selbottom;
-   newy -= seltop;
+   bigint newy = currlayer->selbottom;
+   newy -= currlayer->seltop;
    newy += bigint::one;
    newy.div2();
-   newy += seltop;
+   newy += currlayer->seltop;
 
    int mag = MAX_MAG;
    while (true) {
-      currview->setpositionmag(newx, newy, mag);
-      if ( currview->contains(selleft, seltop) &&
-           currview->contains(selright, selbottom) )
+      currlayer->view->setpositionmag(newx, newy, mag);
+      if ( currlayer->view->contains(currlayer->selleft, currlayer->seltop) &&
+           currlayer->view->contains(currlayer->selright, currlayer->selbottom) )
          break;
       mag--;
    }
@@ -158,11 +155,12 @@ void PatternView::FitSelection()
 void PatternView::ViewOrigin()
 {
    // put 0,0 cell in middle of view
-   if ( originx == bigint::zero && originy == bigint::zero ) {
-      currview->center();
+   if ( currlayer->originx == bigint::zero && currlayer->originy == bigint::zero ) {
+      currlayer->view->center();
    } else {
       // put cell saved by ChangeOrigin in middle
-      currview->setpositionmag(originx, originy, currview->getmag());
+      currlayer->view->setpositionmag(currlayer->originx, currlayer->originy,
+                                      currlayer->view->getmag());
    }
    TestAutoFit();
    mainptr->UpdateEverything();
@@ -175,13 +173,13 @@ void PatternView::ChangeOrigin()
    if (waitingforclick) return;
    // change cell under cursor to 0,0
    wxPoint pt = ScreenToClient( wxGetMousePosition() );
-   if ( pt.x < 0 || pt.x > currview->getxmax() ||
-        pt.y < 0 || pt.y > currview->getymax() ) {
+   if ( pt.x < 0 || pt.x > currlayer->view->getxmax() ||
+        pt.y < 0 || pt.y > currlayer->view->getymax() ) {
       statusptr->ErrorMessage(_("Origin not changed."));
    } else {
-      pair<bigint, bigint> cellpos = currview->at(pt.x, pt.y);
-      originy = cellpos.second;
-      originx = cellpos.first;
+      pair<bigint, bigint> cellpos = currlayer->view->at(pt.x, pt.y);
+      currlayer->originx = cellpos.first;
+      currlayer->originy = cellpos.second;
       statusptr->DisplayMessage(_("Origin changed."));
       if ( GridVisible() )
          mainptr->UpdatePatternAndStatus();
@@ -195,9 +193,9 @@ void PatternView::ChangeOrigin()
 void PatternView::RestoreOrigin()
 {
    if (waitingforclick) return;
-   if (originx != bigint::zero || originy != bigint::zero) {
-      originy = 0;
-      originx = 0;
+   if (currlayer->originx != bigint::zero || currlayer->originy != bigint::zero) {
+      currlayer->originx = 0;
+      currlayer->originy = 0;
       statusptr->DisplayMessage(origin_restored);
       if ( GridVisible() )
          mainptr->UpdatePatternAndStatus();
@@ -218,7 +216,7 @@ void PatternView::SetViewSize()
    ResizeLayers(wd, ht);
    // only autofit when generating
    if (autofit && mainptr->generating)
-      curralgo->fit(*currview, 0);
+      currlayer->algo->fit(*currlayer->view, 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -226,7 +224,7 @@ void PatternView::SetViewSize()
 void PatternView::ToggleGridLines()
 {
    showgridlines = !showgridlines;
-   if (currview->getmag() >= mingridmag)
+   if (currlayer->view->getmag() >= mingridmag)
       mainptr->UpdateEverything();
 }
 
@@ -253,7 +251,7 @@ bool PatternView::GetCellPos(bigint &xpos, bigint &ypos)
    wxPoint pt = ScreenToClient( wxGetMousePosition() );
    if (PointInView(pt.x, pt.y)) {
       // get mouse location in cell coords
-      pair<bigint, bigint> cellpos = currview->at(pt.x, pt.y);
+      pair<bigint, bigint> cellpos = currlayer->view->at(pt.x, pt.y);
       xpos = cellpos.first;
       ypos = cellpos.second;
       return true;
@@ -267,8 +265,8 @@ bool PatternView::GetCellPos(bigint &xpos, bigint &ypos)
 
 bool PatternView::PointInView(int x, int y)
 {
-   return (x >= 0) && (x <= currview->getxmax()) &&
-          (y >= 0) && (y <= currview->getymax());
+   return (x >= 0) && (x <= currlayer->view->getxmax()) &&
+          (y >= 0) && (y <= currlayer->view->getymax());
 }
 
 // -----------------------------------------------------------------------------
@@ -281,9 +279,9 @@ void PatternView::CheckCursor(bool active)
       if (PointInView(pt.x, pt.y)) {
          #ifdef __WXMAC__
             // wxMac bug??? need this to fix probs after toggling status/tool bar
-            wxSetCursor(*currcurs);
+            wxSetCursor(*currlayer->curs);
          #endif
-         SetCursor(*currcurs);
+         SetCursor(*currlayer->curs);
       } else {
          #ifdef __WXMAC__
             wxSetCursor(*wxSTANDARD_CURSOR);
@@ -298,7 +296,7 @@ void PatternView::CheckCursor(bool active)
 
 int PatternView::GetMag()
 {
-   return currview->getmag();
+   return currlayer->view->getmag();
 }
 
 // -----------------------------------------------------------------------------
@@ -307,7 +305,7 @@ void PatternView::SetMag(int mag)
 {
    TestAutoFit();
    if (mag > MAX_MAG) mag = MAX_MAG;
-   currview->setmag(mag);
+   currlayer->view->setmag(mag);
    mainptr->UpdateEverything();
 }
 
@@ -315,29 +313,29 @@ void PatternView::SetMag(int mag)
 
 void PatternView::SetPosMag(const bigint &x, const bigint &y, int mag)
 {
-   currview->setpositionmag(x, y, mag);
+   currlayer->view->setpositionmag(x, y, mag);
 }
 
 // -----------------------------------------------------------------------------
 
 void PatternView::GetPos(bigint &x, bigint &y)
 {
-   x = currview->x;
-   y = currview->y;
+   x = currlayer->view->x;
+   y = currlayer->view->y;
 }
 
 // -----------------------------------------------------------------------------
 
 void PatternView::FitInView(int force)
 {
-   curralgo->fit(*currview, force);
+   currlayer->algo->fit(*currlayer->view, force);
 }
 
 // -----------------------------------------------------------------------------
 
 int PatternView::CellVisible(const bigint &x, const bigint &y)
 {
-   return currview->contains(x, y);
+   return currlayer->view->contains(x, y);
 }
 
 // -----------------------------------------------------------------------------
@@ -347,7 +345,7 @@ int PatternView::CellVisible(const bigint &x, const bigint &y)
 void PatternView::PanUp(int amount)
 {
    TestAutoFit();
-   currview->move(0, -amount);
+   currlayer->view->move(0, -amount);
    mainptr->UpdateEverything();
 }
 
@@ -356,7 +354,7 @@ void PatternView::PanUp(int amount)
 void PatternView::PanDown(int amount)
 {
    TestAutoFit();
-   currview->move(0, amount);
+   currlayer->view->move(0, amount);
    mainptr->UpdateEverything();
 }
 
@@ -365,7 +363,7 @@ void PatternView::PanDown(int amount)
 void PatternView::PanLeft(int amount)
 {
    TestAutoFit();
-   currview->move(-amount, 0);
+   currlayer->view->move(-amount, 0);
    mainptr->UpdateEverything();
 }
 
@@ -374,7 +372,7 @@ void PatternView::PanLeft(int amount)
 void PatternView::PanRight(int amount)
 {
    TestAutoFit();
-   currview->move(amount, 0);
+   currlayer->view->move(amount, 0);
    mainptr->UpdateEverything();
 }
 
@@ -383,7 +381,7 @@ void PatternView::PanRight(int amount)
 int PatternView::SmallScroll(int xysize)
 {
    int amount;
-   int mag = currview->getmag();
+   int mag = currlayer->view->getmag();
    if (mag > 0) {
       // scroll an integral number of cells (1 cell = 2^mag pixels)
       if (mag < 3) {
@@ -407,7 +405,7 @@ int PatternView::SmallScroll(int xysize)
 int PatternView::BigScroll(int xysize)
 {
    int amount;
-   int mag = currview->getmag();
+   int mag = currlayer->view->getmag();
    if (mag > 0) {
       // scroll an integral number of cells (1 cell = 2^mag pixels)
       amount = ((xysize >> mag) * 9 / 10) << mag;
@@ -428,13 +426,14 @@ void PatternView::UpdateScrollBars()
    if (mainptr->fullscreen) return;
 
    int viewwd, viewht;
-   if (currview->getmag() > 0) {
+   int mag = currlayer->view->getmag();
+   if (mag > 0) {
       // scroll by integral number of cells to avoid rounding probs
-      viewwd = currview->getwidth() >> currview->getmag();
-      viewht = currview->getheight() >> currview->getmag();
+      viewwd = currlayer->view->getwidth() >> mag;
+      viewht = currlayer->view->getheight() >> mag;
    } else {
-      viewwd = currview->getwidth();
-      viewht = currview->getheight();
+      viewwd = currlayer->view->getwidth();
+      viewht = currlayer->view->getheight();
    }
    // keep thumb boxes in middle of scroll bars
    hthumb = (thumbrange - 1) * viewwd / 2;
@@ -449,10 +448,10 @@ void PatternView::ProcessKey(int key, bool shiftdown)
 {
    mainptr->showbanner = false;
    switch (key) {
-      case WXK_LEFT:    PanLeft( SmallScroll(currview->getwidth()) ); break;
-      case WXK_RIGHT:   PanRight( SmallScroll(currview->getwidth()) ); break;
-      case WXK_UP:      PanUp( SmallScroll(currview->getheight()) ); break;
-      case WXK_DOWN:    PanDown( SmallScroll(currview->getheight()) ); break;
+      case WXK_LEFT:    PanLeft( SmallScroll(currlayer->view->getwidth()) ); break;
+      case WXK_RIGHT:   PanRight( SmallScroll(currlayer->view->getwidth()) ); break;
+      case WXK_UP:      PanUp( SmallScroll(currlayer->view->getheight()) ); break;
+      case WXK_DOWN:    PanDown( SmallScroll(currlayer->view->getheight()) ); break;
 
       // note that ProcessKey can be called from the golly_dokey command
       // so best to avoid changing pattern while running a script
@@ -567,7 +566,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
 
 void PatternView::ShowDrawing()
 {
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
 
    // update status bar
@@ -592,10 +591,10 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC &dc)
       return;
    }
 
-   int cellsize = 1 << currview->getmag();
+   int cellsize = 1 << currlayer->view->getmag();
 
    // convert given cell coords to view coords
-   pair<bigint, bigint> lefttop = currview->at(0, 0);
+   pair<bigint, bigint> lefttop = currlayer->view->at(0, 0);
    wxCoord x = (cx - lefttop.first.toint()) * cellsize;
    wxCoord y = (cy - lefttop.second.toint()) * cellsize;
    
@@ -606,8 +605,8 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC &dc)
    
    // overlay selection image if cell is within selection
    if ( SelectionExists() &&
-        cx >= selleft.toint() && cx <= selright.toint() &&
-        cy >= seltop.toint() && cy <= selbottom.toint() ) {
+        cx >= currlayer->selleft.toint() && cx <= currlayer->selright.toint() &&
+        cy >= currlayer->seltop.toint() && cy <= currlayer->selbottom.toint() ) {
       wxRect r = wxRect(x, y, cellsize, cellsize);
       DrawSelection(dc, r);
    }
@@ -617,7 +616,7 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC &dc)
 
 void PatternView::StartDrawingCells(int x, int y)
 {
-   pair<bigint, bigint> cellpos = currview->at(x, y);
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
    // check that cellpos is within getcell/setcell limits
    if ( OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
       statusptr->ErrorMessage(_("Drawing is not allowed outside +/- 10^9 boundary."));
@@ -626,8 +625,8 @@ void PatternView::StartDrawingCells(int x, int y)
 
    cellx = cellpos.first.toint();
    celly = cellpos.second.toint();
-   drawstate = 1 - curralgo->getcell(cellx, celly);
-   curralgo->setcell(cellx, celly, drawstate);
+   drawstate = 1 - currlayer->algo->getcell(cellx, celly);
+   currlayer->algo->setcell(cellx, celly, drawstate);
 
    wxClientDC dc(this);
    dc.SetPen(*wxTRANSPARENT_PEN);
@@ -647,8 +646,8 @@ void PatternView::StartDrawingCells(int x, int y)
 
 void PatternView::DrawCells(int x, int y)
 {
-   pair<bigint, bigint> cellpos = currview->at(x, y);
-   if ( currview->getmag() < 0 ||
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+   if ( currlayer->view->getmag() < 0 ||
         OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
       return;
    }
@@ -678,8 +677,8 @@ void PatternView::DrawCells(int x, int y)
       if (ai > aj) {
          d = aj - (ai >> 1);
          while (ii != newx) {
-            if ( curralgo->getcell(ii, jj) != drawstate) {
-               curralgo->setcell(ii, jj, drawstate);
+            if ( currlayer->algo->getcell(ii, jj) != drawstate) {
+               currlayer->algo->setcell(ii, jj, drawstate);
                numchanged++;
                DrawOneCell(ii, jj, dc);
             }
@@ -693,8 +692,8 @@ void PatternView::DrawCells(int x, int y)
       } else {
          d = ai - (aj >> 1);
          while (jj != newy) {
-            if ( curralgo->getcell(ii, jj) != drawstate) {
-               curralgo->setcell(ii, jj, drawstate);
+            if ( currlayer->algo->getcell(ii, jj) != drawstate) {
+               currlayer->algo->setcell(ii, jj, drawstate);
                numchanged++;
                DrawOneCell(ii, jj, dc);
             }
@@ -710,8 +709,8 @@ void PatternView::DrawCells(int x, int y)
       cellx = newx;
       celly = newy;
       
-      if ( curralgo->getcell(cellx, celly) != drawstate) {
-         curralgo->setcell(cellx, celly, drawstate);
+      if ( currlayer->algo->getcell(cellx, celly) != drawstate) {
+         currlayer->algo->setcell(cellx, celly, drawstate);
          numchanged++;
          DrawOneCell(cellx, celly, dc);
       }
@@ -729,121 +728,121 @@ void PatternView::ModifySelection(bigint &xclick, bigint &yclick)
 {
    // note that we include "=" in following tests to get sensible
    // results when modifying small selections (ht or wd <= 3)
-   if ( yclick <= seltop && xclick <= selleft ) {
+   if ( yclick <= currlayer->seltop && xclick <= currlayer->selleft ) {
       // click is in or outside top left corner
-      seltop = yclick;
-      selleft = xclick;
-      anchory = selbottom;
-      anchorx = selright;
+      currlayer->seltop = yclick;
+      currlayer->selleft = xclick;
+      anchory = currlayer->selbottom;
+      anchorx = currlayer->selright;
 
-   } else if ( yclick <= seltop && xclick >= selright ) {
+   } else if ( yclick <= currlayer->seltop && xclick >= currlayer->selright ) {
       // click is in or outside top right corner
-      seltop = yclick;
-      selright = xclick;
-      anchory = selbottom;
-      anchorx = selleft;
+      currlayer->seltop = yclick;
+      currlayer->selright = xclick;
+      anchory = currlayer->selbottom;
+      anchorx = currlayer->selleft;
 
-   } else if ( yclick >= selbottom && xclick >= selright ) {
+   } else if ( yclick >= currlayer->selbottom && xclick >= currlayer->selright ) {
       // click is in or outside bottom right corner
-      selbottom = yclick;
-      selright = xclick;
-      anchory = seltop;
-      anchorx = selleft;
+      currlayer->selbottom = yclick;
+      currlayer->selright = xclick;
+      anchory = currlayer->seltop;
+      anchorx = currlayer->selleft;
 
-   } else if ( yclick >= selbottom && xclick <= selleft ) {
+   } else if ( yclick >= currlayer->selbottom && xclick <= currlayer->selleft ) {
       // click is in or outside bottom left corner
-      selbottom = yclick;
-      selleft = xclick;
-      anchory = seltop;
-      anchorx = selright;
+      currlayer->selbottom = yclick;
+      currlayer->selleft = xclick;
+      anchory = currlayer->seltop;
+      anchorx = currlayer->selright;
    
-   } else if (yclick <= seltop) {
+   } else if (yclick <= currlayer->seltop) {
       // click is in or above top edge
       forcev = true;
-      seltop = yclick;
-      anchory = selbottom;
+      currlayer->seltop = yclick;
+      anchory = currlayer->selbottom;
    
-   } else if (yclick >= selbottom) {
+   } else if (yclick >= currlayer->selbottom) {
       // click is in or below bottom edge
       forcev = true;
-      selbottom = yclick;
-      anchory = seltop;
+      currlayer->selbottom = yclick;
+      anchory = currlayer->seltop;
    
-   } else if (xclick <= selleft) {
+   } else if (xclick <= currlayer->selleft) {
       // click is in or left of left edge
       forceh = true;
-      selleft = xclick;
-      anchorx = selright;
+      currlayer->selleft = xclick;
+      anchorx = currlayer->selright;
    
-   } else if (xclick >= selright) {
+   } else if (xclick >= currlayer->selright) {
       // click is in or right of right edge
       forceh = true;
-      selright = xclick;
-      anchorx = selleft;
+      currlayer->selright = xclick;
+      anchorx = currlayer->selleft;
    
    } else {
       // click is somewhere inside selection
-      double wd = selright.todouble() - selleft.todouble() + 1.0;
-      double ht = selbottom.todouble() - seltop.todouble() + 1.0;
-      double onethirdx = selleft.todouble() + wd / 3.0;
-      double twothirdx = selleft.todouble() + wd * 2.0 / 3.0;
-      double onethirdy = seltop.todouble() + ht / 3.0;
-      double twothirdy = seltop.todouble() + ht * 2.0 / 3.0;
-      double midy = seltop.todouble() + ht / 2.0;
+      double wd = currlayer->selright.todouble() - currlayer->selleft.todouble() + 1.0;
+      double ht = currlayer->selbottom.todouble() - currlayer->seltop.todouble() + 1.0;
+      double onethirdx = currlayer->selleft.todouble() + wd / 3.0;
+      double twothirdx = currlayer->selleft.todouble() + wd * 2.0 / 3.0;
+      double onethirdy = currlayer->seltop.todouble() + ht / 3.0;
+      double twothirdy = currlayer->seltop.todouble() + ht * 2.0 / 3.0;
+      double midy = currlayer->seltop.todouble() + ht / 2.0;
       double x = xclick.todouble();
       double y = yclick.todouble();
       
       if ( y < onethirdy && x < onethirdx ) {
          // click is near top left corner
-         seltop = yclick;
-         selleft = xclick;
-         anchory = selbottom;
-         anchorx = selright;
+         currlayer->seltop = yclick;
+         currlayer->selleft = xclick;
+         anchory = currlayer->selbottom;
+         anchorx = currlayer->selright;
       
       } else if ( y < onethirdy && x > twothirdx ) {
          // click is near top right corner
-         seltop = yclick;
-         selright = xclick;
-         anchory = selbottom;
-         anchorx = selleft;
+         currlayer->seltop = yclick;
+         currlayer->selright = xclick;
+         anchory = currlayer->selbottom;
+         anchorx = currlayer->selleft;
    
       } else if ( y > twothirdy && x > twothirdx ) {
          // click is near bottom right corner
-         selbottom = yclick;
-         selright = xclick;
-         anchory = seltop;
-         anchorx = selleft;
+         currlayer->selbottom = yclick;
+         currlayer->selright = xclick;
+         anchory = currlayer->seltop;
+         anchorx = currlayer->selleft;
    
       } else if ( y > twothirdy && x < onethirdx ) {
          // click is near bottom left corner
-         selbottom = yclick;
-         selleft = xclick;
-         anchory = seltop;
-         anchorx = selright;
+         currlayer->selbottom = yclick;
+         currlayer->selleft = xclick;
+         anchory = currlayer->seltop;
+         anchorx = currlayer->selright;
 
       } else if ( x < onethirdx ) {
          // click is near middle of left edge
          forceh = true;
-         selleft = xclick;
-         anchorx = selright;
+         currlayer->selleft = xclick;
+         anchorx = currlayer->selright;
 
       } else if ( x > twothirdx ) {
          // click is near middle of right edge
          forceh = true;
-         selright = xclick;
-         anchorx = selleft;
+         currlayer->selright = xclick;
+         anchorx = currlayer->selleft;
 
       } else if ( y < midy ) {
          // click is below middle section of top edge
          forcev = true;
-         seltop = yclick;
-         anchory = selbottom;
+         currlayer->seltop = yclick;
+         anchory = currlayer->selbottom;
       
       } else {
          // click is above middle section of bottom edge
          forcev = true;
-         selbottom = yclick;
-         anchory = seltop;
+         currlayer->selbottom = yclick;
+         anchory = currlayer->seltop;
       }
    }
 }
@@ -852,15 +851,15 @@ void PatternView::ModifySelection(bigint &xclick, bigint &yclick)
 
 void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 {
-   pair<bigint, bigint> cellpos = currview->at(x, y);
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
    anchorx = cellpos.first;
    anchory = cellpos.second;
 
    // save original selection so it can be restored if user hits escape
-   origtop = seltop;
-   origbottom = selbottom;
-   origleft = selleft;
-   origright = selright;
+   origtop = currlayer->seltop;
+   origbottom = currlayer->selbottom;
+   origleft = currlayer->selleft;
+   origright = currlayer->selright;
 
    // set previous selection to anything impossible
    prevtop = 1;
@@ -906,28 +905,28 @@ void PatternView::SelectCells(int x, int y)
       return;
    }
 
-   pair<bigint, bigint> cellpos = currview->at(x, y);
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
    if (!forcev) {
       if (cellpos.first <= anchorx) {
-         selleft = cellpos.first;
-         selright = anchorx;
+         currlayer->selleft = cellpos.first;
+         currlayer->selright = anchorx;
       } else {
-         selleft = anchorx;
-         selright = cellpos.first;
+         currlayer->selleft = anchorx;
+         currlayer->selright = cellpos.first;
       }
    }
    if (!forceh) {
       if (cellpos.second <= anchory) {
-         seltop = cellpos.second;
-         selbottom = anchory;
+         currlayer->seltop = cellpos.second;
+         currlayer->selbottom = anchory;
       } else {
-         seltop = anchory;
-         selbottom = cellpos.second;
+         currlayer->seltop = anchory;
+         currlayer->selbottom = cellpos.second;
       }
    }
 
-   if ( seltop != prevtop || selbottom != prevbottom ||
-        selleft != prevleft || selright != prevright ) {
+   if ( currlayer->seltop != prevtop || currlayer->selbottom != prevbottom ||
+        currlayer->selleft != prevleft || currlayer->selright != prevright ) {
       // selection has changed
       DisplaySelectionSize();
       
@@ -937,10 +936,10 @@ void PatternView::SelectCells(int x, int y)
       mainptr->UpdatePatternAndStatus();
       inscript = saveinscript;
       
-      prevtop = seltop;
-      prevbottom = selbottom;
-      prevleft = selleft;
-      prevright = selright;
+      prevtop = currlayer->seltop;
+      prevbottom = currlayer->selbottom;
+      prevleft = currlayer->selleft;
+      prevright = currlayer->selright;
    }
 }
 
@@ -948,7 +947,7 @@ void PatternView::SelectCells(int x, int y)
 
 void PatternView::StartMovingView(int x, int y)
 {
-   pair<bigint, bigint> cellpos = currview->at(x, y);
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
    bigcellx = cellpos.first;
    bigcelly = cellpos.second;
    movingview = true;
@@ -960,7 +959,7 @@ void PatternView::StartMovingView(int x, int y)
 
 void PatternView::MoveView(int x, int y)
 {
-   pair<bigint, bigint> cellpos = currview->at(x, y);
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
    bigint newx = cellpos.first;
    bigint newy = cellpos.second;
    bigint xdelta = bigcellx;
@@ -969,7 +968,7 @@ void PatternView::MoveView(int x, int y)
    ydelta -= newy;
 
    int xamount, yamount;
-   int mag = currview->getmag();
+   int mag = currlayer->view->getmag();
    if (mag >= 0) {
       // move an integral number of cells
       xamount = xdelta.toint() << mag;
@@ -983,7 +982,7 @@ void PatternView::MoveView(int x, int y)
    }
 
    if ( xamount != 0 || yamount != 0 ) {
-      currview->move(xamount, yamount);
+      currlayer->view->move(xamount, yamount);
       
       // allow mouse interaction if script is running
       bool saveinscript = inscript;
@@ -991,7 +990,7 @@ void PatternView::MoveView(int x, int y)
       mainptr->UpdatePatternAndStatus();
       inscript = saveinscript;
       
-      cellpos = currview->at(x, y);
+      cellpos = currlayer->view->at(x, y);
       bigcellx = cellpos.first;
       bigcelly = cellpos.second;
    }
@@ -1026,8 +1025,8 @@ void PatternView::ZoomInPos(int x, int y)
 {
    // zoom in so that clicked cell stays under cursor
    TestAutoFit();
-   if (currview->getmag() < MAX_MAG) {
-      currview->zoom(x, y);
+   if (currlayer->view->getmag() < MAX_MAG) {
+      currlayer->view->zoom(x, y);
       // allow mouse interaction if script is running
       bool saveinscript = inscript;
       inscript = false;
@@ -1044,7 +1043,7 @@ void PatternView::ZoomOutPos(int x, int y)
 {
    // zoom out so that clicked cell stays under cursor
    TestAutoFit();
-   currview->unzoom(x, y);
+   currlayer->view->unzoom(x, y);
    // allow mouse interaction if script is running
    bool saveinscript = inscript;
    inscript = false;
@@ -1057,7 +1056,7 @@ void PatternView::ZoomOutPos(int x, int y)
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked somewhere in viewport   
-   if (currcurs == curs_pencil) {
+   if (currlayer->curs == curs_pencil) {
       if (inscript) {
          // statusptr->ErrorMessage does nothing if inscript is true
          Warning(_("Drawing is not allowed while a script is running."));
@@ -1067,24 +1066,24 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
          return;
       }
-      if (currview->getmag() < 0) {
+      if (currlayer->view->getmag() < 0) {
          statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
          return;
       }
       StartDrawingCells(x, y);
 
-   } else if (currcurs == curs_cross) {
+   } else if (currlayer->curs == curs_cross) {
       TestAutoFit();
       StartSelectingCells(x, y, shiftdown);
 
-   } else if (currcurs == curs_hand) {
+   } else if (currlayer->curs == curs_hand) {
       TestAutoFit();
       StartMovingView(x, y);
 
-   } else if (currcurs == curs_zoomin) {
+   } else if (currlayer->curs == curs_zoomin) {
       ZoomInPos(x, y);
 
-   } else if (currcurs == curs_zoomout) {
+   } else if (currlayer->curs == curs_zoomout) {
       ZoomOutPos(x, y);
    }
 }
@@ -1121,7 +1120,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    // wd or ht might be < 1 on Win/X11 platforms
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
-   if ( wd != currview->getwidth() || ht != currview->getheight() ) {
+   if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
       // need to change viewport size;
       // can happen on Windows when resizing/maximizing
       SetViewSize();
@@ -1162,11 +1161,11 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
       // pressing shift key temporarily toggles zoom in/out cursor;
       // some platforms (eg. WinXP) send multiple key-down events while
       // a key is pressed so we must be careful to toggle only once
-      if (currcurs == curs_zoomin && oldzoom == NULL) {
+      if (currlayer->curs == curs_zoomin && oldzoom == NULL) {
          oldzoom = curs_zoomin;
          SetCursorMode(curs_zoomout);
          mainptr->UpdateUserInterface(mainptr->IsActive());
-      } else if (currcurs == curs_zoomout && oldzoom == NULL) {
+      } else if (currlayer->curs == curs_zoomout && oldzoom == NULL) {
          oldzoom = curs_zoomout;
          SetCursorMode(curs_zoomin);
          mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -1195,10 +1194,10 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
 
 void PatternView::RestoreSelection()
 {
-   seltop = origtop;
-   selbottom = origbottom;
-   selleft = origleft;
-   selright = origright;
+   currlayer->seltop = origtop;
+   currlayer->selbottom = origbottom;
+   currlayer->selleft = origleft;
+   currlayer->selright = origright;
    StopDraggingMouse();
    
    // allow mouse interaction if script is running
@@ -1280,15 +1279,15 @@ void PatternView::OnChar(wxKeyEvent& event)
 
 void PatternView::ProcessControlClick(int x, int y)
 {
-   if (currcurs == curs_zoomin) {
+   if (currlayer->curs == curs_zoomin) {
       ZoomOutPos(x, y);
-   } else if (currcurs == curs_zoomout) {
+   } else if (currlayer->curs == curs_zoomout) {
       ZoomInPos(x, y);
    } else {
       /* let all other cursor modes advance clicked region -- probably unwise
-      pair<bigint, bigint> cellpos = currview->at(x, y);
-      if ( cellpos.first < selleft || cellpos.first > selright ||
-           cellpos.second < seltop || cellpos.second > selbottom ) {
+      pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+      if ( cellpos.first < currlayer->selleft || cellpos.first > currlayer->selright ||
+           cellpos.second < currlayer->seltop || cellpos.second > currlayer->selbottom ) {
          mainptr->AdvanceOutsideSelection();
       } else {
          mainptr->AdvanceSelection();
@@ -1368,14 +1367,14 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
    while (wheelpos >= delta) {
       wheelpos -= delta;
       TestAutoFit();
-      currview->unzoom();
+      currlayer->view->unzoom();
    }
 
    while (wheelpos <= -delta) {
       wheelpos += delta;
       TestAutoFit();
-      if (currview->getmag() < MAX_MAG) {
-         currview->zoom();
+      if (currlayer->view->getmag() < MAX_MAG) {
+         currlayer->view->zoom();
       } else {
          wxBell();
          break;      // best not to beep lots of times
@@ -1428,22 +1427,24 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
    int y = pt.y;
    // don't test "!PointInView(x, y)" here -- we want to allow scrolling
    // in full screen mode when mouse is at outer edge of view
-   if ( x <= 0 || x >= currview->getxmax() ||
-        y <= 0 || y >= currview->getymax() ) {
+   if ( x <= 0 || x >= currlayer->view->getxmax() ||
+        y <= 0 || y >= currlayer->view->getymax() ) {
       // scroll view
       int xamount = 0;
       int yamount = 0;
-      if (x <= 0) xamount = -SmallScroll(currview->getwidth());
-      if (y <= 0) yamount = -SmallScroll(currview->getheight());
-      if (x >= currview->getxmax()) xamount = SmallScroll(currview->getwidth());
-      if (y >= currview->getymax()) yamount = SmallScroll(currview->getheight());
+      if (x <= 0) xamount = -SmallScroll( currlayer->view->getwidth() );
+      if (y <= 0) yamount = -SmallScroll( currlayer->view->getheight() );
+      if (x >= currlayer->view->getxmax())
+         xamount = SmallScroll( currlayer->view->getwidth() );
+      if (y >= currlayer->view->getymax())
+         yamount = SmallScroll( currlayer->view->getheight() );
 
       if ( drawingcells ) {
-         currview->move(xamount, yamount);
+         currlayer->view->move(xamount, yamount);
          mainptr->UpdatePatternAndStatus();
 
       } else if ( selectingcells ) {
-         currview->move(xamount, yamount);
+         currlayer->view->move(xamount, yamount);
          // no need to call UpdatePatternAndStatus() here because
          // it will be called soon in SelectCells, except in this case:
          if (forceh || forcev) {
@@ -1467,7 +1468,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
                xamount = xamount < 0 ? -abs(yamount) : abs(yamount);
             }
          }
-         currview->move(-xamount, -yamount);
+         currlayer->view->move(-xamount, -yamount);
          
          // allow mouse interaction if script is running
          bool saveinscript = inscript;
@@ -1478,7 +1479,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          // adjust x,y and bigcellx,bigcelly for MoveView call below
          x += xamount;
          y += yamount;
-         pair<bigint, bigint> cellpos = currview->at(x, y);
+         pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
          bigcellx = cellpos.first;
          bigcelly = cellpos.second;
       }
@@ -1488,16 +1489,16 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
       // only draw cells within view
       if (x < 0) x = 0;
       if (y < 0) y = 0;
-      if (x > currview->getxmax()) x = currview->getxmax();
-      if (y > currview->getymax()) y = currview->getymax();
+      if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+      if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
       DrawCells(x, y);
 
    } else if ( selectingcells ) {
       // only select cells within view
       if (x < 0) x = 0;
       if (y < 0) y = 0;
-      if (x > currview->getxmax()) x = currview->getxmax();
-      if (y > currview->getymax()) y = currview->getymax();
+      if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+      if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
       SelectCells(x, y);
 
    } else if ( movingview ) {
@@ -1523,46 +1524,46 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
 
    if (type == wxEVT_SCROLLWIN_LINEUP) {
       if (orient == wxHORIZONTAL)
-         PanLeft( SmallScroll(currview->getwidth()) );
+         PanLeft( SmallScroll(currlayer->view->getwidth()) );
       else
-         PanUp( SmallScroll(currview->getheight()) );
+         PanUp( SmallScroll(currlayer->view->getheight()) );
 
    } else if (type == wxEVT_SCROLLWIN_LINEDOWN) {
       if (orient == wxHORIZONTAL)
-         PanRight( SmallScroll(currview->getwidth()) );
+         PanRight( SmallScroll(currlayer->view->getwidth()) );
       else
-         PanDown( SmallScroll(currview->getheight()) );
+         PanDown( SmallScroll(currlayer->view->getheight()) );
 
    } else if (type == wxEVT_SCROLLWIN_PAGEUP) {
       if (orient == wxHORIZONTAL)
-         PanLeft( BigScroll(currview->getwidth()) );
+         PanLeft( BigScroll(currlayer->view->getwidth()) );
       else
-         PanUp( BigScroll(currview->getheight()) );
+         PanUp( BigScroll(currlayer->view->getheight()) );
 
    } else if (type == wxEVT_SCROLLWIN_PAGEDOWN) {
       if (orient == wxHORIZONTAL)
-         PanRight( BigScroll(currview->getwidth()) );
+         PanRight( BigScroll(currlayer->view->getwidth()) );
       else
-         PanDown( BigScroll(currview->getheight()) );
+         PanDown( BigScroll(currlayer->view->getheight()) );
 
    } else if (type == wxEVT_SCROLLWIN_THUMBTRACK) {
       int newpos = event.GetPosition();
       int amount = newpos - (orient == wxHORIZONTAL ? hthumb : vthumb);
       if (amount != 0) {
          TestAutoFit();
-         if (currview->getmag() > 0) {
+         if (currlayer->view->getmag() > 0) {
             // amount is in cells so convert to pixels
-            amount = amount << currview->getmag();
+            amount = amount << currlayer->view->getmag();
          }
          if (orient == wxHORIZONTAL) {
             hthumb = newpos;
-            currview->move(amount, 0);
+            currlayer->view->move(amount, 0);
             // don't call UpdateEverything here because it calls UpdateScrollBars
             Refresh(false, NULL);
             // don't Update() immediately -- more responsive, especially on X11
          } else {
             vthumb = newpos;
-            currview->move(0, amount);
+            currlayer->view->move(0, amount);
             // don't call UpdateEverything here because it calls UpdateScrollBars
             Refresh(false, NULL);
             // don't Update() immediately -- more responsive, especially on X11
@@ -1608,11 +1609,6 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
                   wxVSCROLL | wxHSCROLL
              )
 {
-   // create viewport for displaying patterns;
-   // the initial size is not important because SetViewSize will change it
-   currview = new viewport(10, 10);
-   if (currview == NULL) Fatal(_("Failed to create viewport!"));
-
    dragtimer = new wxTimer(this, ID_DRAG_TIMER);
    if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
    
@@ -1625,9 +1621,6 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    waitingforclick = false;   // not waiting for user to click
    nopattupdate = false;      // enable pattern updates
    oldzoom = NULL;            // not shift zooming
-   originy = 0;               // no origin offset
-   originx = 0;
-   NoSelection();             // initially no selection
 }
 
 // -----------------------------------------------------------------------------
@@ -1635,7 +1628,6 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 // destroy the viewport window
 PatternView::~PatternView()
 {
-   if (currview) delete currview;
    if (dragtimer) delete dragtimer;
 
    #ifndef __WXMAC__

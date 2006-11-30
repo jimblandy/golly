@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
 #include "wxutils.h"       // for BeginProgress, etc
-#include "wxprefs.h"       // for hashing, etc
+#include "wxprefs.h"       // for autofit, etc
 #include "wxrule.h"        // for ChangeRule
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
@@ -72,17 +72,17 @@ void MainFrame::ChangeStopToGo()
 
 bool MainFrame::SaveStartingPattern()
 {
-   if ( curralgo->getGeneration() > currlayer->startgen ) {
+   if ( currlayer->algo->getGeneration() > currlayer->startgen ) {
       // don't do anything if current gen count > starting gen
       return true;
    }
    
    // save current rule, scale, location, step size and hashing option
-   currlayer->startrule = wxString(curralgo->getrule(), wxConvLocal);
+   currlayer->startrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    currlayer->startmag = viewptr->GetMag();
    viewptr->GetPos(currlayer->startx, currlayer->starty);
-   currlayer->startwarp = warp;
-   currlayer->starthash = hashing;
+   currlayer->startwarp = currlayer->warp;
+   currlayer->starthash = currlayer->hash;
    
    if ( !currlayer->savestart ) {
       // no need to save pattern; ResetPattern will load currfile
@@ -92,7 +92,7 @@ bool MainFrame::SaveStartingPattern()
    }
 
    // save starting pattern in tempstart file
-   if ( hashing ) {
+   if ( currlayer->hash ) {
       // much faster to save hlife pattern in a macrocell file
       const char *err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
       if (err) {
@@ -103,7 +103,7 @@ bool MainFrame::SaveStartingPattern()
    } else {
       // can only save qlife pattern if edges are within getcell/setcell limits
       bigint top, left, bottom, right;
-      curralgo->findedges(&top, &left, &bottom, &right);      
+      currlayer->algo->findedges(&top, &left, &bottom, &right);      
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Starting pattern is outside +/- 10^9 boundary."));
          // don't allow user to continue generating
@@ -132,9 +132,9 @@ bool MainFrame::SaveStartingPattern()
 
 void MainFrame::ResetPattern()
 {
-   if (generating || curralgo->getGeneration() == currlayer->startgen) return;
+   if (generating || currlayer->algo->getGeneration() == currlayer->startgen) return;
    
-   if (curralgo->getGeneration() < currlayer->startgen) {
+   if (currlayer->algo->getGeneration() < currlayer->startgen) {
       // if this happens then startgen logic is wrong
       Warning(_("Current gen < starting gen!"));
       return;
@@ -148,8 +148,8 @@ void MainFrame::ResetPattern()
    
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, hashing option and starting pattern
-   warp = currlayer->startwarp;
-   hashing = currlayer->starthash;
+   currlayer->warp = currlayer->startwarp;
+   currlayer->hash = currlayer->starthash;
 
    wxString oldfile;
    if ( !currlayer->startfile.IsEmpty() ) {
@@ -159,7 +159,7 @@ void MainFrame::ResetPattern()
    }
    
    // restore starting pattern from currfile;
-   // pass in empty string so savestart, warp and currcurs won't change
+   // pass in empty string so savestart, warp and curs won't change
    LoadPattern(wxEmptyString);
    // gen count has been reset to startgen
    
@@ -170,7 +170,7 @@ void MainFrame::ResetPattern()
    }
    
    // now restore rule, window title (in case rule changed), scale and location
-   curralgo->setrule(currlayer->startrule.mb_str(wxConvLocal));
+   currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
    SetWindowTitle(wxEmptyString);
    viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
    UpdateEverything();
@@ -180,11 +180,11 @@ void MainFrame::ResetPattern()
 
 void MainFrame::GoFaster()
 {
-   warp++;
+   currlayer->warp++;
    SetGenIncrement();
    // only need to refresh status bar
    UpdateStatus();
-   if (generating && warp < 0) {
+   if (generating && currlayer->warp < 0) {
       whentosee -= statusptr->GetCurrentDelay();
    }
 }
@@ -193,13 +193,13 @@ void MainFrame::GoFaster()
 
 void MainFrame::GoSlower()
 {
-   if (warp > minwarp) {
-      warp--;
+   if (currlayer->warp > minwarp) {
+      currlayer->warp--;
       SetGenIncrement();
       // only need to refresh status bar
       UpdateStatus();
-      if (generating && warp < 0) {
-         if (warp == -1) {
+      if (generating && currlayer->warp < 0) {
+         if (currlayer->warp == -1) {
             // need to initialize whentosee rather than increment it
             whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
@@ -220,7 +220,7 @@ void MainFrame::GeneratePattern()
       return;
    }
    
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
    }
@@ -231,24 +231,24 @@ void MainFrame::GeneratePattern()
 
    // for DisplayTimingInfo
    begintime = stopwatch->Time();
-   begingen = curralgo->getGeneration().todouble();
+   begingen = currlayer->algo->getGeneration().todouble();
    
    generating = true;               // avoid recursion
    ChangeGoToStop();
    wxGetApp().PollerReset();
    UpdateUserInterface(IsActive());
    
-   if (warp < 0) {
+   if (currlayer->warp < 0) {
       whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
    }
    int hypdown = 64;
 
    while (true) {
-      if (warp < 0) {
+      if (currlayer->warp < 0) {
          // slow down by only doing one gen every GetCurrentDelay() millisecs
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
-            curralgo->step();
+            currlayer->algo->step();
             if (autofit) viewptr->FitInView(0);
             // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
             UpdatePatternAndStatus();
@@ -262,13 +262,13 @@ void MainFrame::GeneratePattern()
             wxMilliSleep(1);     // keep small (ie. <= mindelay)
          }
       } else {
-         // warp >= 0 so only show results every curralgo->getIncrement() gens
-         curralgo->step();
+         // warp >= 0 so only show results every currlayer->algo->getIncrement() gens
+         currlayer->algo->step();
          if (autofit) viewptr->FitInView(0);
          // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
          UpdatePatternAndStatus();
          if (wxGetApp().Poller()->checkevents()) break;
-         if (hyperspeed && curralgo->hyperCapable()) {
+         if (hyperspeed && currlayer->algo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
@@ -282,7 +282,7 @@ void MainFrame::GeneratePattern()
 
    // for DisplayTimingInfo
    endtime = stopwatch->Time();
-   endgen = curralgo->getGeneration().todouble();
+   endgen = currlayer->algo->getGeneration().todouble();
    
    ChangeStopToGo();
    
@@ -309,7 +309,7 @@ void MainFrame::DisplayTimingInfo()
    if (viewptr->waitingforclick) return;
    if (generating) {
       endtime = stopwatch->Time();
-      endgen = curralgo->getGeneration().todouble();
+      endgen = currlayer->algo->getGeneration().todouble();
    }
    if (endtime > begintime) {
       double secs = (double)(endtime - begintime) / 1000.0;
@@ -331,37 +331,37 @@ void MainFrame::AdvanceOutsideSelection()
       return;
    }
 
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_outside);
       return;
    }
    
    bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
 
    // check if selection encloses entire pattern
-   if ( viewptr->seltop <= top && viewptr->selbottom >= bottom &&
-        viewptr->selleft <= left && viewptr->selright >= right ) {
+   if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+        currlayer->selleft <= left && currlayer->selright >= right ) {
       statusptr->ErrorMessage(empty_outside);
       return;
    }
 
    // check if selection is completely outside pattern edges;
    // can't do this if qlife because it uses gen parity to decide which bits to draw
-   if ( hashing &&
-         ( viewptr->seltop > bottom || viewptr->selbottom < top ||
-           viewptr->selleft > right || viewptr->selright < left ) ) {
+   if ( currlayer->hash &&
+         ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+           currlayer->selleft > right || currlayer->selright < left ) ) {
       generating = true;
       ChangeGoToStop();
       wxGetApp().PollerReset();
 
       // step by one gen without changing gen count
-      bigint savegen = curralgo->getGeneration();
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
-      curralgo->setGeneration(savegen);
+      bigint savegen = currlayer->algo->getGeneration();
+      bigint saveinc = currlayer->algo->getIncrement();
+      currlayer->algo->setIncrement(1);
+      currlayer->algo->step();
+      currlayer->algo->setIncrement(saveinc);
+      currlayer->algo->setGeneration(savegen);
    
       generating = false;
       ChangeStopToGo();
@@ -380,27 +380,29 @@ void MainFrame::AdvanceOutsideSelection()
    
    // create a new universe of same type
    lifealgo *newalgo;
-   if ( hashing ) {
+   if ( currlayer->hash ) {
       newalgo = new hlifealgo();
       newalgo->setMaxMemory(maxhashmem);
    } else {
       newalgo = new qlifealgo();
    }
    newalgo->setpoll(wxGetApp().Poller());
-   newalgo->setGeneration( curralgo->getGeneration() );
+   newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy (and kill) live cells in selection to new universe
-   int iseltop = viewptr->seltop.toint();
-   int iselleft = viewptr->selleft.toint();
-   int iselbottom = viewptr->selbottom.toint();
-   int iselright = viewptr->selright.toint();
+   int iseltop    = currlayer->seltop.toint();
+   int iselleft   = currlayer->selleft.toint();
+   int iselbottom = currlayer->selbottom.toint();
+   int iselright  = currlayer->selright.toint();
    if ( !viewptr->CopyRect(iseltop, iselleft, iselbottom, iselright,
-                           curralgo, newalgo, true, _("Saving and erasing selection")) ) {
+                           currlayer->algo, newalgo, true,
+                           _("Saving and erasing selection")) ) {
       // aborted, so best to restore selection
       if ( !newalgo->isEmpty() ) {
          newalgo->findedges(&top, &left, &bottom, &right);
          viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                           newalgo, curralgo, false, _("Restoring selection"));
+                           newalgo, currlayer->algo, false,
+                           _("Restoring selection"));
       }
       delete newalgo;
       UpdateEverything();
@@ -411,18 +413,18 @@ void MainFrame::AdvanceOutsideSelection()
    generating = true;
    ChangeGoToStop();
    wxGetApp().PollerReset();
-   curralgo->setIncrement(1);
-   curralgo->step();
+   currlayer->algo->setIncrement(1);
+   currlayer->algo->step();
    generating = false;
    ChangeStopToGo();
    
    // note that we have to copy advanced pattern to new universe because
    // qlife uses gen parity to decide which bits to draw
    
-   if ( !curralgo->isEmpty() ) {
+   if ( !currlayer->algo->isEmpty() ) {
       // find new edges and copy current pattern to new universe,
       // except for any cells that were created in selection
-      curralgo->findedges(&top, &left, &bottom, &right);
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
       int itop = top.toint();
       int ileft = left.toint();
       int ibottom = bottom.toint();
@@ -432,7 +434,7 @@ void MainFrame::AdvanceOutsideSelection()
    
       // for showing accurate progress we need to add pattern height to pop count
       // in case this is a huge pattern with many blank rows
-      double maxcount = curralgo->getPopulation().todouble() + ht;
+      double maxcount = currlayer->algo->getPopulation().todouble() + ht;
       double accumcount = 0;
       int currcount = 0;
       bool abort = false;
@@ -441,7 +443,7 @@ void MainFrame::AdvanceOutsideSelection()
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
+            int skip = currlayer->algo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -472,8 +474,8 @@ void MainFrame::AdvanceOutsideSelection()
    
    // switch to new universe (best to do this even if aborted)
    currlayer->savestart = true;
-   delete curralgo;
-   curralgo = newalgo;
+   delete currlayer->algo;
+   currlayer->algo = newalgo;
    SetGenIncrement();
    UpdateEverything();
 }
@@ -489,37 +491,37 @@ void MainFrame::AdvanceSelection()
       return;
    }
 
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_selection);
       return;
    }
    
    bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
 
    // check if selection is completely outside pattern edges
-   if ( viewptr->seltop > bottom || viewptr->selbottom < top ||
-        viewptr->selleft > right || viewptr->selright < left ) {
+   if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+        currlayer->selleft > right || currlayer->selright < left ) {
       statusptr->ErrorMessage(empty_selection);
       return;
    }
 
    // check if selection encloses entire pattern;
    // can't do this if qlife because it uses gen parity to decide which bits to draw
-   if ( hashing &&
-        viewptr->seltop <= top && viewptr->selbottom >= bottom &&
-        viewptr->selleft <= left && viewptr->selright >= right ) {
+   if ( currlayer->hash &&
+        currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+        currlayer->selleft <= left && currlayer->selright >= right ) {
       generating = true;
       ChangeGoToStop();
       wxGetApp().PollerReset();
 
       // step by one gen without changing gen count
-      bigint savegen = curralgo->getGeneration();
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
-      curralgo->setGeneration(savegen);
+      bigint savegen = currlayer->algo->getGeneration();
+      bigint saveinc = currlayer->algo->getIncrement();
+      currlayer->algo->setIncrement(1);
+      currlayer->algo->step();
+      currlayer->algo->setIncrement(saveinc);
+      currlayer->algo->setGeneration(savegen);
    
       generating = false;
       ChangeStopToGo();
@@ -531,10 +533,10 @@ void MainFrame::AdvanceSelection()
    }
    
    // find intersection of selection and pattern to minimize work
-   if (viewptr->seltop > top) top = viewptr->seltop;
-   if (viewptr->selleft > left) left = viewptr->selleft;
-   if (viewptr->selbottom < bottom) bottom = viewptr->selbottom;
-   if (viewptr->selright < right) right = viewptr->selright;
+   if (currlayer->seltop > top) top = currlayer->seltop;
+   if (currlayer->selleft > left) left = currlayer->selleft;
+   if (currlayer->selbottom < bottom) bottom = currlayer->selbottom;
+   if (currlayer->selright < right) right = currlayer->selright;
 
    // check that intersection is within setcell/getcell limits
    if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
@@ -549,7 +551,7 @@ void MainFrame::AdvanceSelection()
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                          curralgo, tempalgo, false, _("Saving selection")) ) {
+                          currlayer->algo, tempalgo, false, _("Saving selection")) ) {
       if ( tempalgo->isEmpty() ) {
          statusptr->ErrorMessage(empty_selection);
       } else {
@@ -571,14 +573,14 @@ void MainFrame::AdvanceSelection()
          if (tempright > right) right = tempright;
 
          // but ignore live cells created outside selection edges
-         if (top < viewptr->seltop) top = viewptr->seltop;
-         if (left < viewptr->selleft) left = viewptr->selleft;
-         if (bottom > viewptr->selbottom) bottom = viewptr->selbottom;
-         if (right > viewptr->selright) right = viewptr->selright;
+         if (top < currlayer->seltop) top = currlayer->seltop;
+         if (left < currlayer->selleft) left = currlayer->selleft;
+         if (bottom > currlayer->selbottom) bottom = currlayer->selbottom;
+         if (right > currlayer->selright) right = currlayer->selright;
          
-         // copy all cells in new selection from tempalgo to curralgo
+         // copy all cells in new selection from tempalgo to currlayer->algo
          viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                              tempalgo, curralgo, _("Copying advanced selection"));
+                              tempalgo, currlayer->algo, _("Copying advanced selection"));
 
          currlayer->savestart = true;
 
@@ -599,7 +601,7 @@ void MainFrame::NextGeneration(bool useinc)
       return;
    }
 
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
    }
@@ -608,7 +610,7 @@ void MainFrame::NextGeneration(bool useinc)
       return;
    }
       
-   // curralgo->step() calls checkevents so set generating flag to avoid recursion
+   // currlayer->algo->step() calls checkevents so set generating flag to avoid recursion
    generating = true;
    
    // avoid doing some things if NextGeneration is called from a script
@@ -620,17 +622,17 @@ void MainFrame::NextGeneration(bool useinc)
 
    if (useinc) {
       // step by current increment
-      if (curralgo->getIncrement() > bigint::one && !inscript) {
+      if (currlayer->algo->getIncrement() > bigint::one && !inscript) {
          UpdateToolBar(IsActive());
          UpdateMenuItems(IsActive());
       }
-      curralgo->step();
+      currlayer->algo->step();
    } else {
       // make sure we only step by one gen
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
+      bigint saveinc = currlayer->algo->getIncrement();
+      currlayer->algo->setIncrement(1);
+      currlayer->algo->step();
+      currlayer->algo->setIncrement(saveinc);
    }
 
    generating = false;
@@ -638,7 +640,7 @@ void MainFrame::NextGeneration(bool useinc)
    if (!inscript) {
       ChangeStopToGo();
       // autofit is only used when doing many gens
-      if (autofit && useinc && curralgo->getIncrement() > bigint::one)
+      if (autofit && useinc && currlayer->algo->getIncrement() > bigint::one)
          viewptr->FitInView(0);
       UpdateEverything();
    }
@@ -663,15 +665,15 @@ void MainFrame::ToggleHashing()
 {
    if (generating) return;
 
-   if ( global_liferules.hasB0notS8 && !hashing ) {
+   if ( global_liferules.hasB0notS8 && !currlayer->hash ) {
       statusptr->ErrorMessage(_("Hashing cannot be used with a B0-not-S8 rule."));
       return;
    }
 
    // check if current pattern is too big to use getcell/setcell
    bigint top, left, bottom, right;
-   if ( !curralgo->isEmpty() ) {
-      curralgo->findedges(&top, &left, &bottom, &right);
+   if ( !currlayer->algo->isEmpty() ) {
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Pattern cannot be converted (outside +/- 10^9 boundary)."));
          // ask user if they want to continue anyway???
@@ -680,13 +682,13 @@ void MainFrame::ToggleHashing()
    }
 
    // toggle hashing option and update status bar immediately
-   hashing = !hashing;
-   warp = 0;
+   currlayer->hash = !currlayer->hash;
+   currlayer->warp = 0;
    UpdateStatus();
 
    // create a new universe of the right flavor
    lifealgo *newalgo;
-   if ( hashing ) {
+   if ( currlayer->hash ) {
       newalgo = new hlifealgo();
       newalgo->setMaxMemory(maxhashmem);
    } else {
@@ -696,12 +698,12 @@ void MainFrame::ToggleHashing()
    
    // even though universes share a global rule table we still need to call setrule
    // due to internal differences in the handling of Wolfram rules
-   newalgo->setrule( (char*)curralgo->getrule() );
+   newalgo->setrule( (char*)currlayer->algo->getrule() );
    
    // set same gen count
-   newalgo->setGeneration( curralgo->getGeneration() );
+   newalgo->setGeneration( currlayer->algo->getGeneration() );
 
-   if ( !curralgo->isEmpty() ) {
+   if ( !currlayer->algo->isEmpty() ) {
       // copy pattern in current universe to new universe
       int itop = top.toint();
       int ileft = left.toint();
@@ -712,7 +714,7 @@ void MainFrame::ToggleHashing()
    
       // for showing accurate progress we need to add pattern height to pop count
       // in case this is a huge pattern with many blank rows
-      double maxcount = curralgo->getPopulation().todouble() + ht;
+      double maxcount = currlayer->algo->getPopulation().todouble() + ht;
       double accumcount = 0;
       int currcount = 0;
       bool abort = false;
@@ -721,7 +723,7 @@ void MainFrame::ToggleHashing()
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
+            int skip = currlayer->algo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -745,8 +747,8 @@ void MainFrame::ToggleHashing()
    }
    
    // delete old universe and point current universe to new universe
-   delete curralgo;
-   curralgo = newalgo;   
+   delete currlayer->algo;
+   currlayer->algo = newalgo;   
    SetGenIncrement();
    UpdateEverything();
 }
@@ -755,7 +757,7 @@ void MainFrame::ToggleHashing()
 
 void MainFrame::ToggleHyperspeed()
 {
-   if ( curralgo->hyperCapable() ) {
+   if ( currlayer->algo->hyperCapable() ) {
       hyperspeed = !hyperspeed;
    }
 }
@@ -764,7 +766,7 @@ void MainFrame::ToggleHyperspeed()
 
 void MainFrame::ToggleHashInfo()
 {
-   if ( curralgo->hyperCapable() ) {
+   if ( currlayer->algo->hyperCapable() ) {
       hlifealgo::setVerbose(!hlifealgo::getVerbose()) ;
    }
 }
@@ -773,8 +775,8 @@ void MainFrame::ToggleHashInfo()
 
 void MainFrame::SetWarp(int newwarp)
 {
-   warp = newwarp;
-   if (warp < minwarp) warp = minwarp;
+   currlayer->warp = newwarp;
+   if (currlayer->warp < minwarp) currlayer->warp = minwarp;
    SetGenIncrement();
 }
 

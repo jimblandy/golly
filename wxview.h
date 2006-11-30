@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXVIEW_H_
 
 #include "bigint.h"     // for bigint
-#include "viewport.h"   // for viewport
+#include "lifealgo.h"   // for lifealgo
 
 // Define a child window for viewing and editing patterns:
 
@@ -110,12 +110,6 @@ public:
    bool selectingcells;          // selecting cells due to dragging mouse?
    bool movingview;              // moving view due to dragging mouse?
    bool nopattupdate;            // disable pattern updates?
-   bigint seltop;                // edges of current selection
-   bigint selbottom;
-   bigint selleft;
-   bigint selright;
-   bigint originy;               // new X coord set by ChangeOrigin
-   bigint originx;               // new Y coord set by ChangeOrigin
    wxRect pasterect;             // area to be pasted
 
 private:
@@ -191,8 +185,6 @@ private:
    wxCursor *oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions
 };
-
-extern viewport *currview;       // current viewport for displaying patterns
 
 const wxString empty_pattern       = _("All cells are dead.");
 const wxString empty_selection     = _("There are no live cells in the selection.");

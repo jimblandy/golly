@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/sysopt.h"     // for wxSystemOptions
 #include "wx/filename.h"   // for wxFileName
 
-#include "lifealgo.h"
 #include "lifepoll.h"
 #include "util.h"          // for lifeerrors
 
@@ -72,7 +71,6 @@ IMPLEMENT_APP(GollyApp)
 MainFrame *mainptr = NULL;       // main window
 PatternView *viewptr = NULL;     // viewport child window (in main window)
 StatusBar *statusptr = NULL;     // status bar child window (in main window)
-lifealgo *curralgo = NULL;       // current life algorithm (qlife or hlife)
 wxStopWatch *stopwatch;          // global stopwatch
 
 // -----------------------------------------------------------------------------

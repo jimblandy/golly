@@ -1,4 +1,3 @@
-
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
@@ -36,9 +35,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr, statusptr, curralgo
+#include "wxgolly.h"       // for wxGetApp, mainptr, statusptr
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for hashing, etc
+#include "wxprefs.h"       // for randomfill, etc
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for CreatePasteImage
@@ -70,15 +69,15 @@ bool PatternView::OutsideLimits(bigint &t, bigint &l, bigint &b, bigint &r)
 void PatternView::NoSelection()
 {
    // set seltop > selbottom
-   seltop = 1;
-   selbottom = 0;
+   currlayer->seltop = 1;
+   currlayer->selbottom = 0;
 }
 
 // -----------------------------------------------------------------------------
 
 bool PatternView::SelectionExists()
 {
-   return (seltop <= selbottom) == 1;     // avoid VC++ warning
+   return (currlayer->seltop <= currlayer->selbottom) == 1;     // avoid VC++ warning
 }
 
 // -----------------------------------------------------------------------------
@@ -87,11 +86,13 @@ bool PatternView::SelectionVisible(wxRect *visrect)
 {
    if (!SelectionExists()) return false;
 
-   pair<int,int> lt = currview->screenPosOf(selleft, seltop, curralgo);
-   pair<int,int> rb = currview->screenPosOf(selright, selbottom, curralgo);
+   pair<int,int> lt = currlayer->view->screenPosOf(
+                        currlayer->selleft, currlayer->seltop, currlayer->algo);
+   pair<int,int> rb = currlayer->view->screenPosOf(
+                        currlayer->selright, currlayer->selbottom, currlayer->algo);
 
-   if (lt.first > currview->getxmax() || rb.first < 0 ||
-       lt.second > currview->getymax() || rb.second < 0) {
+   if (lt.first > currlayer->view->getxmax() || rb.first < 0 ||
+       lt.second > currlayer->view->getymax() || rb.second < 0) {
       // no part of selection is visible
       return false;
    }
@@ -101,18 +102,18 @@ bool PatternView::SelectionVisible(wxRect *visrect)
    if (visrect) {
       if (lt.first < 0) lt.first = 0;
       if (lt.second < 0) lt.second = 0;
-      if (currview->getmag() > 0) {
+      if (currlayer->view->getmag() > 0) {
          // move rb to pixel at bottom right corner of cell
-         rb.first += (1 << currview->getmag()) - 1;
-         rb.second += (1 << currview->getmag()) - 1;
-         if (currview->getmag() > 1) {
+         rb.first += (1 << currlayer->view->getmag()) - 1;
+         rb.second += (1 << currlayer->view->getmag()) - 1;
+         if (currlayer->view->getmag() > 1) {
             // avoid covering gaps at scale 1:4 and above
             rb.first--;
             rb.second--;
          }
       }
-      if (rb.first > currview->getxmax()) rb.first = currview->getxmax();
-      if (rb.second > currview->getymax()) rb.second = currview->getymax();
+      if (rb.first > currlayer->view->getxmax()) rb.first = currlayer->view->getxmax();
+      if (rb.second > currlayer->view->getymax()) rb.second = currlayer->view->getymax();
       visrect->SetX(lt.first);
       visrect->SetY(lt.second);
       visrect->SetWidth(rb.first - lt.first + 1);
@@ -125,7 +126,7 @@ bool PatternView::SelectionVisible(wxRect *visrect)
 
 bool PatternView::GridVisible()
 {
-   return ( showgridlines && currview->getmag() >= mingridmag );
+   return ( showgridlines && currlayer->view->getmag() >= mingridmag );
 }
 
 // -----------------------------------------------------------------------------
@@ -133,17 +134,17 @@ bool PatternView::GridVisible()
 void PatternView::EmptyUniverse()
 {
    // kill all live cells in current universe
-   int savewarp = mainptr->GetWarp();
-   int savemag = currview->getmag();
-   bigint savex = currview->x;
-   bigint savey = currview->y;
-   bigint savegen = curralgo->getGeneration();
+   int savewarp = currlayer->warp;
+   int savemag = currlayer->view->getmag();
+   bigint savex = currlayer->view->x;
+   bigint savey = currlayer->view->y;
+   bigint savegen = currlayer->algo->getGeneration();
    mainptr->CreateUniverse();
    // restore various settings
    mainptr->SetWarp(savewarp);
    mainptr->SetGenIncrement();
-   currview->setpositionmag(savex, savey, savemag);
-   curralgo->setGeneration(savegen);
+   currlayer->view->setpositionmag(savex, savey, savemag);
+   currlayer->algo->setGeneration(savegen);
    mainptr->UpdatePatternAndStatus();
 }
 
@@ -229,28 +230,28 @@ void PatternView::ClearSelection()
    if (mainptr->generating || !SelectionExists()) return;
    
    // no need to do anything if there is no pattern
-   if (curralgo->isEmpty()) return;
+   if (currlayer->algo->isEmpty()) return;
    
    bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   if ( seltop <= top && selbottom >= bottom &&
-        selleft <= left && selright >= right ) {
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+        currlayer->selleft <= left && currlayer->selright >= right ) {
       // selection encloses entire pattern so just create empty universe
       EmptyUniverse();
       return;
    }
 
    // no need to do anything if selection is completely outside pattern edges
-   if ( seltop > bottom || selbottom < top ||
-        selleft > right || selright < left ) {
+   if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+        currlayer->selleft > right || currlayer->selright < left ) {
       return;
    }
    
    // find intersection of selection and pattern to minimize work
-   if (seltop > top) top = seltop;
-   if (selleft > left) left = selleft;
-   if (selbottom < bottom) bottom = selbottom;
-   if (selright < right) right = selright;
+   if (currlayer->seltop > top) top = currlayer->seltop;
+   if (currlayer->selleft > left) left = currlayer->selleft;
+   if (currlayer->selbottom < bottom) bottom = currlayer->selbottom;
+   if (currlayer->selright < right) right = currlayer->selright;
 
    // can only use setcell in limited domain
    if ( OutsideLimits(top, left, bottom, right) ) {
@@ -272,13 +273,13 @@ void PatternView::ClearSelection()
    BeginProgress(_("Clearing selection"));
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
+         int skip = currlayer->algo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
             // found next live cell
             cx += skip;
-            curralgo->setcell(cx, cy, 0);
+            currlayer->algo->setcell(cx, cy, 0);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -292,7 +293,7 @@ void PatternView::ClearSelection()
       }
       if (abort) break;
    }
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    EndProgress();
    
@@ -306,28 +307,28 @@ void PatternView::ClearOutsideSelection()
    if (mainptr->generating || !SelectionExists()) return;
    
    // no need to do anything if there is no pattern
-   if (curralgo->isEmpty()) return;
+   if (currlayer->algo->isEmpty()) return;
    
    // no need to do anything if selection encloses entire pattern
    bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   if ( seltop <= top && selbottom >= bottom &&
-        selleft <= left && selright >= right ) {
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+        currlayer->selleft <= left && currlayer->selright >= right ) {
       return;
    }
 
    // create empty universe if selection is completely outside pattern edges
-   if ( seltop > bottom || selbottom < top ||
-        selleft > right || selright < left ) {
+   if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+        currlayer->selleft > right || currlayer->selright < left ) {
       EmptyUniverse();
       return;
    }
    
    // find intersection of selection and pattern to minimize work
-   if (seltop > top) top = seltop;
-   if (selleft > left) left = selleft;
-   if (selbottom < bottom) bottom = selbottom;
-   if (selright < right) right = selright;
+   if (currlayer->seltop > top) top = currlayer->seltop;
+   if (currlayer->selleft > left) left = currlayer->selleft;
+   if (currlayer->selbottom < bottom) bottom = currlayer->selbottom;
+   if (currlayer->selright < right) right = currlayer->selright;
 
    // check that selection is small enough to save
    if ( OutsideLimits(top, left, bottom, right) ) {
@@ -337,7 +338,7 @@ void PatternView::ClearOutsideSelection()
    
    // create a new universe
    lifealgo *newalgo;
-   if ( hashing ) {
+   if ( currlayer->hash ) {
       newalgo = new hlifealgo();
       newalgo->setMaxMemory(maxhashmem);
    } else {
@@ -346,15 +347,15 @@ void PatternView::ClearOutsideSelection()
    newalgo->setpoll(wxGetApp().Poller());
 
    // set same gen count
-   newalgo->setGeneration( curralgo->getGeneration() );
+   newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy live cells in selection to new universe
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                 curralgo, newalgo, false, _("Saving selection")) ) {
-      // delete old universe and point curralgo at new universe
+                 currlayer->algo, newalgo, false, _("Saving selection")) ) {
+      // delete old universe and point currlayer->algo at new universe
       currlayer->savestart = true;
-      delete curralgo;
-      curralgo = newalgo;
+      delete currlayer->algo;
+      currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
       mainptr->UpdatePatternAndStatus();
    } else {
@@ -423,15 +424,16 @@ void PatternView::AddRun(char ch,
 void PatternView::CopySelectionToClipboard(bool cut)
 {
    // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
+                      currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return;
    }
    
-   int itop = seltop.toint();
-   int ileft = selleft.toint();
-   int ibottom = selbottom.toint();
-   int iright = selright.toint();
+   int itop = currlayer->seltop.toint();
+   int ileft = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright = currlayer->selright.toint();
    unsigned int wd = iright - ileft + 1;
    unsigned int ht = ibottom - itop + 1;
 
@@ -448,7 +450,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
    etextptr = textptr + cursize;
 
    // add RLE header line
-   sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, curralgo->getrule());
+   sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, currlayer->algo->getrule());
    char *chptr = textptr;
    chptr += strlen(textptr);
    AddEOL(&chptr);
@@ -476,7 +478,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
       // set lastchar to anything except 'o' or 'b'
       lastchar = 0;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
+         int skip = currlayer->algo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip > 0) {
@@ -496,7 +498,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
             // found next live cell
             cx += skip;
             livecount++;
-            if (cut) curralgo->setcell(cx, cy, 0);
+            if (cut) currlayer->algo->setcell(cx, cy, 0);
             if (lastchar == 'o') {
                orun++;
             } else {
@@ -559,7 +561,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
       dollrun = 1;
       AddRun('!', &dollrun, &linelen, &chptr);
       if (cut) {
-         curralgo->endofpattern();
+         currlayer->algo->endofpattern();
          currlayer->savestart = true;
       }
    }
@@ -597,18 +599,20 @@ void PatternView::CopySelection()
 void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
 {
    int x, y, pastewd, pasteht;
-   int mag = currview->getmag();
+   int mag = currlayer->view->getmag();
    
    // find cell coord of current paste cursor position
-   pair<bigint, bigint> pcell = currview->at(pastex, pastey);
+   pair<bigint, bigint> pcell = currlayer->view->at(pastex, pastey);
 
    // determine bottom right cell
    bigint right = pcell.first;     right += wd;    right -= 1;
    bigint bottom = pcell.second;   bottom += ht;   bottom -= 1;
    
    // best to use same method as in SelectionVisible
-   pair<int,int> lt = currview->screenPosOf(pcell.first, pcell.second, curralgo);
-   pair<int,int> rb = currview->screenPosOf(right, bottom, curralgo);
+   pair<int,int> lt =
+      currlayer->view->screenPosOf(pcell.first, pcell.second, currlayer->algo);
+   pair<int,int> rb =
+      currlayer->view->screenPosOf(right, bottom, currlayer->algo);
 
    if (mag > 0) {
       // move rb to pixel at bottom right corner of cell
@@ -677,16 +681,16 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    bigint wd = iright - ileft + 1;
    
    if ( toselection ) {
-      bigint selht = selbottom;  selht -= seltop;   selht += 1;
-      bigint selwd = selright;   selwd -= selleft;  selwd += 1;
+      bigint selht = currlayer->selbottom;  selht -= currlayer->seltop;   selht += 1;
+      bigint selwd = currlayer->selright;   selwd -= currlayer->selleft;  selwd += 1;
       if ( ht > selht || wd > selwd ) {
          statusptr->ErrorMessage(_("Clipboard pattern is bigger than selection."));
          return;
       }
 
       // set paste rectangle's top left cell coord
-      top = seltop;
-      left = selleft;
+      top = currlayer->seltop;
+      left = currlayer->selleft;
 
    } else {
 
@@ -694,13 +698,13 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       statusptr->DisplayMessage(_("Click where you want to paste..."));
 
       // temporarily change cursor to cross
-      wxCursor *savecurs = currcurs;
-      currcurs = curs_cross;
+      wxCursor *savecurs = currlayer->curs;
+      currlayer->curs = curs_cross;
       // CheckCursor(true);            // probs on Mac if Paste menu item selected
       #ifdef __WXMAC__
-         wxSetCursor(*currcurs);
+         wxSetCursor(*currlayer->curs);
       #endif
-      SetCursor(*currcurs);
+      SetCursor(*currlayer->curs);
 
       // create image for drawing pattern to be pasted; note that given box
       // is not necessarily the minimal bounding box because clipboard pattern
@@ -760,7 +764,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       DestroyPasteImage();
    
       // restore cursor
-      currcurs = savecurs;
+      currlayer->curs = savecurs;
       CheckCursor(mainptr->IsActive());
       
       if ( pasterect.width > 0 ) {
@@ -770,21 +774,21 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          // Update();
       }
       
-      if ( pastex < 0 || pastex > currview->getxmax() ||
-           pastey < 0 || pastey > currview->getymax() ) {
+      if ( pastex < 0 || pastex > currlayer->view->getxmax() ||
+           pastey < 0 || pastey > currlayer->view->getymax() ) {
          statusptr->DisplayMessage(_("Paste aborted."));
          return;
       }
       
       // set paste rectangle's top left cell coord
-      pair<bigint, bigint> clickpos = currview->at(pastex, pastey);
+      pair<bigint, bigint> clickpos = currlayer->view->at(pastex, pastey);
       top = clickpos.second;
       left = clickpos.first;
       bigint halfht = ht;
       bigint halfwd = wd;
       halfht.div2();
       halfwd.div2();
-      if (currview->getmag() > 1) {
+      if (currlayer->view->getmag() > 1) {
          if (ht.even()) halfht -= 1;
          if (wd.even()) halfwd -= 1;
       }
@@ -821,11 +825,11 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    // - if current universe is empty
    // - if paste rect is outside current pattern edges
    bool usenextcell;
-   if ( pmode == Or || curralgo->isEmpty() ) {
+   if ( pmode == Or || currlayer->algo->isEmpty() ) {
       usenextcell = true;
    } else {
       bigint ctop, cleft, cbottom, cright;
-      curralgo->findedges(&ctop, &cleft, &cbottom, &cright);
+      currlayer->algo->findedges(&ctop, &cleft, &cbottom, &cright);
       usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
    }
    
@@ -841,7 +845,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               curralgo->setcell(cx, cy, 1);
+               currlayer->algo->setcell(cx, cy, 1);
                cx++;
             } else {
                tx = iright + 1;     // done this row
@@ -867,18 +871,18 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
             tempstate = tempalgo->getcell(tx, ty);
             switch (pmode) {
                case Copy:
-                  curralgo->setcell(cx, cy, tempstate);
+                  currlayer->algo->setcell(cx, cy, tempstate);
                   break;
                case Or:
                   // Or mode is done using above nextcell loop;
                   // we only include this case to avoid compiler warning
                   break;
                case Xor:
-                  currstate = curralgo->getcell(cx, cy);
+                  currstate = currlayer->algo->getcell(cx, cy);
                   if (tempstate == currstate) {
-                     if (currstate != 0) curralgo->setcell(cx, cy, 0);
+                     if (currstate != 0) currlayer->algo->setcell(cx, cy, 0);
                   } else {
-                     if (currstate != 1) curralgo->setcell(cx, cy, 1);
+                     if (currstate != 1) currlayer->algo->setcell(cx, cy, 1);
                   }
                   break;
             }
@@ -894,7 +898,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       }
    }
 
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    EndProgress();
    
@@ -1025,8 +1029,8 @@ void PatternView::CyclePasteMode()
 void PatternView::DisplaySelectionSize()
 {
    if (waitingforclick) return;
-   bigint wd = selright;    wd -= selleft;   wd += bigint::one;
-   bigint ht = selbottom;   ht -= seltop;    ht += bigint::one;
+   bigint wd = currlayer->selright;    wd -= currlayer->selleft;   wd += bigint::one;
+   bigint ht = currlayer->selbottom;   ht -= currlayer->seltop;    ht += bigint::one;
    wxString msg = _("Selection wd x ht = ");
    msg += statusptr->Stringify(wd);
    msg += _(" x ");
@@ -1043,12 +1047,13 @@ void PatternView::SelectAll()
       mainptr->UpdatePatternAndStatus();
    }
 
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
    }
    
-   curralgo->findedges(&seltop, &selleft, &selbottom, &selright);
+   currlayer->algo->findedges(&currlayer->seltop, &currlayer->selleft,
+                              &currlayer->selbottom, &currlayer->selright);
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1070,7 +1075,7 @@ void PatternView::ShrinkSelection(bool fit)
    if (!SelectionExists()) return;
    
    // check if there is no pattern
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_selection);
       if (fit) FitSelection();
       return;
@@ -1078,14 +1083,14 @@ void PatternView::ShrinkSelection(bool fit)
    
    // check if selection encloses entire pattern
    bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   if ( seltop <= top && selbottom >= bottom &&
-        selleft <= left && selright >= right ) {
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+        currlayer->selleft <= left && currlayer->selright >= right ) {
       // shrink edges
-      seltop = top;
-      selbottom = bottom;
-      selleft = left;
-      selright = right;
+      currlayer->seltop = top;
+      currlayer->selbottom = bottom;
+      currlayer->selleft = left;
+      currlayer->selright = right;
       DisplaySelectionSize();
       if (fit)
          FitSelection();   // calls UpdateEverything
@@ -1095,18 +1100,18 @@ void PatternView::ShrinkSelection(bool fit)
    }
 
    // check if selection is completely outside pattern edges
-   if ( seltop > bottom || selbottom < top ||
-        selleft > right || selright < left ) {
+   if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+        currlayer->selleft > right || currlayer->selright < left ) {
       statusptr->ErrorMessage(empty_selection);
       if (fit) FitSelection();
       return;
    }
    
    // find intersection of selection and pattern to minimize work
-   if (seltop > top) top = seltop;
-   if (selleft > left) left = selleft;
-   if (selbottom < bottom) bottom = selbottom;
-   if (selright < right) right = selright;
+   if (currlayer->seltop > top) top = currlayer->seltop;
+   if (currlayer->selleft > left) left = currlayer->selleft;
+   if (currlayer->selbottom < bottom) bottom = currlayer->selbottom;
+   if (currlayer->selright < right) right = currlayer->selright;
 
    // check that selection is small enough to save
    if ( OutsideLimits(top, left, bottom, right) ) {
@@ -1125,11 +1130,12 @@ void PatternView::ShrinkSelection(bool fit)
    
    // copy live cells in selection to temporary universe
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                 curralgo, tempalgo, false, _("Saving selection")) ) {
+                 currlayer->algo, tempalgo, false, _("Saving selection")) ) {
       if ( tempalgo->isEmpty() ) {
          statusptr->ErrorMessage(empty_selection);
       } else {
-         tempalgo->findedges(&seltop, &selleft, &selbottom, &selright);
+         tempalgo->findedges(&currlayer->seltop, &currlayer->selleft,
+                             &currlayer->selbottom, &currlayer->selright);
          DisplaySelectionSize();
          if (!fit) mainptr->UpdatePatternAndStatus();
       }
@@ -1146,33 +1152,34 @@ void PatternView::RandomFill()
    if (mainptr->generating || !SelectionExists()) return;
 
    // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
+                      currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return;
    }
 
    // no need to kill cells if selection is empty
-   bool killcells = !curralgo->isEmpty();
+   bool killcells = !currlayer->algo->isEmpty();
    if ( killcells ) {
       // find pattern edges and compare with selection edges
       bigint top, left, bottom, right;
-      curralgo->findedges(&top, &left, &bottom, &right);
-      if ( seltop <= top && selbottom >= bottom &&
-           selleft <= left && selright >= right ) {
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
+      if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+           currlayer->selleft <= left && currlayer->selright >= right ) {
          // selection encloses entire pattern so create empty universe
          EmptyUniverse();
          killcells = false;
-      } else if ( seltop > bottom || selbottom < top ||
-                  selleft > right || selright < left ) {
+      } else if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+                  currlayer->selleft > right || currlayer->selright < left ) {
          // selection is completely outside pattern edges
          killcells = false;
       }
    }
    
-   int itop = seltop.toint();
-   int ileft = selleft.toint();
-   int ibottom = selbottom.toint();
-   int iright = selright.toint();
+   int itop = currlayer->seltop.toint();
+   int ileft = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright = currlayer->selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    double maxcount = (double)wd * (double)ht;
@@ -1184,9 +1191,9 @@ void PatternView::RandomFill()
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
          if ((rand() % 100) < randomfill) {
-            curralgo->setcell(cx, cy, 1);
+            currlayer->algo->setcell(cx, cy, 1);
          } else if (killcells) {
-            curralgo->setcell(cx, cy, 0);
+            currlayer->algo->setcell(cx, cy, 0);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1196,7 +1203,7 @@ void PatternView::RandomFill()
       }
       if (abort) break;
    }
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
@@ -1209,15 +1216,16 @@ void PatternView::FlipLeftRight()
    if (mainptr->generating || !SelectionExists()) return;
 
    // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
+                      currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return;
    }
    
-   int itop = seltop.toint();
-   int ileft = selleft.toint();
-   int ibottom = selbottom.toint();
-   int iright = selright.toint();
+   int itop = currlayer->seltop.toint();
+   int ileft = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright = currlayer->selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    
@@ -1236,11 +1244,11 @@ void PatternView::FlipLeftRight()
    iright = (ileft - 1) + wd / 2;
    for ( cx=ileft; cx<=iright; cx++ ) {
       for ( cy=itop; cy<=ibottom; cy++ ) {
-         int currstate = curralgo->getcell(cx, cy);
-         int mirrstate = curralgo->getcell(mirrorx, cy);
+         int currstate = currlayer->algo->getcell(cx, cy);
+         int mirrstate = currlayer->algo->getcell(mirrorx, cy);
          if ( currstate != mirrstate ) {
-            curralgo->setcell(cx, cy, mirrstate);
-            curralgo->setcell(mirrorx, cy, currstate);
+            currlayer->algo->setcell(cx, cy, mirrstate);
+            currlayer->algo->setcell(mirrorx, cy, currstate);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1251,7 +1259,7 @@ void PatternView::FlipLeftRight()
       if (abort) break;
       mirrorx--;
    }
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
@@ -1264,15 +1272,16 @@ void PatternView::FlipUpDown()
    if (mainptr->generating || !SelectionExists()) return;
 
    // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
+                      currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return;
    }
    
-   int itop = seltop.toint();
-   int ileft = selleft.toint();
-   int ibottom = selbottom.toint();
-   int iright = selright.toint();
+   int itop = currlayer->seltop.toint();
+   int ileft = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright = currlayer->selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    
@@ -1291,11 +1300,11 @@ void PatternView::FlipUpDown()
    ibottom = (itop - 1) + ht / 2;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int currstate = curralgo->getcell(cx, cy);
-         int mirrstate = curralgo->getcell(cx, mirrory);
+         int currstate = currlayer->algo->getcell(cx, cy);
+         int mirrstate = currlayer->algo->getcell(cx, mirrory);
          if ( currstate != mirrstate ) {
-            curralgo->setcell(cx, cy, mirrstate);
-            curralgo->setcell(cx, mirrory, currstate);
+            currlayer->algo->setcell(cx, cy, mirrstate);
+            currlayer->algo->setcell(cx, mirrory, currstate);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1306,7 +1315,7 @@ void PatternView::FlipUpDown()
       if (abort) break;
       mirrory--;
    }
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    EndProgress();
    mainptr->UpdatePatternAndStatus();
@@ -1323,7 +1332,7 @@ void PatternView::RotatePattern(bool clockwise,
 {
    // create new universe of same type as current universe
    lifealgo *newalgo;
-   if ( hashing ) {
+   if ( currlayer->hash ) {
       newalgo = new hlifealgo();
       newalgo->setMaxMemory(maxhashmem);
    } else {
@@ -1332,13 +1341,13 @@ void PatternView::RotatePattern(bool clockwise,
    newalgo->setpoll(wxGetApp().Poller());
 
    // set same gen count
-   newalgo->setGeneration( curralgo->getGeneration() );
+   newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy all live cells to new universe, rotating the coords by +/- 90 degrees
-   int itop    = seltop.toint();
-   int ileft   = selleft.toint();
-   int ibottom = selbottom.toint();
-   int iright  = selright.toint();
+   int itop    = currlayer->seltop.toint();
+   int ileft   = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright  = currlayer->selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    double maxcount = (double)wd * (double)ht;
@@ -1362,7 +1371,7 @@ void PatternView::RotatePattern(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
+         int skip = currlayer->algo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
@@ -1393,14 +1402,14 @@ void PatternView::RotatePattern(bool clockwise,
       delete newalgo;
    } else {
       // rotate the selection edges
-      seltop    = newtop;
-      selbottom = newbottom;
-      selleft   = newleft;
-      selright  = newright;
+      currlayer->seltop    = newtop;
+      currlayer->selbottom = newbottom;
+      currlayer->selleft   = newleft;
+      currlayer->selright  = newright;
       // switch to new universe and display results
       currlayer->savestart = true;
-      delete curralgo;
-      curralgo = newalgo;
+      delete currlayer->algo;
+      currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
       DisplaySelectionSize();
       mainptr->UpdatePatternAndStatus();
@@ -1414,21 +1423,21 @@ void PatternView::RotateSelection(bool clockwise)
    if (mainptr->generating || !SelectionExists()) return;
    
    // determine rotated selection edges
-   bigint halfht = selbottom;   halfht -= seltop;    halfht.div2();
-   bigint halfwd = selright;    halfwd -= selleft;   halfwd.div2();
-   bigint midy = seltop;    midy += halfht;
-   bigint midx = selleft;   midx += halfwd;
-   bigint newtop    = midy;   newtop    += selleft;     newtop    -= midx;
-   bigint newbottom = midy;   newbottom += selright;    newbottom -= midx;
-   bigint newleft   = midx;   newleft   += seltop;      newleft   -= midy;
-   bigint newright  = midx;   newright  += selbottom;   newright  -= midy;
+   bigint halfht = currlayer->selbottom;   halfht -= currlayer->seltop;    halfht.div2();
+   bigint halfwd = currlayer->selright;    halfwd -= currlayer->selleft;   halfwd.div2();
+   bigint midy = currlayer->seltop;    midy += halfht;
+   bigint midx = currlayer->selleft;   midx += halfwd;
+   bigint newtop    = midy;   newtop    += currlayer->selleft;     newtop    -= midx;
+   bigint newbottom = midy;   newbottom += currlayer->selright;    newbottom -= midx;
+   bigint newleft   = midx;   newleft   += currlayer->seltop;      newleft   -= midy;
+   bigint newright  = midx;   newright  += currlayer->selbottom;   newright  -= midy;
    
    // things are simple if there is no pattern
-   if (curralgo->isEmpty()) {
-      seltop    = newtop;
-      selbottom = newbottom;
-      selleft   = newleft;
-      selright  = newright;
+   if (currlayer->algo->isEmpty()) {
+      currlayer->seltop    = newtop;
+      currlayer->selbottom = newbottom;
+      currlayer->selleft   = newleft;
+      currlayer->selright  = newright;
       DisplaySelectionSize();
       mainptr->UpdatePatternAndStatus();
       return;
@@ -1437,20 +1446,22 @@ void PatternView::RotateSelection(bool clockwise)
    // things are also simple if the selection and rotated selection are both
    // outside the pattern edges (ie. both are empty)
    bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   if ( (seltop > bottom || selbottom < top || selleft > right || selright < left) &&
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( (currlayer->seltop > bottom || currlayer->selbottom < top ||
+         currlayer->selleft > right || currlayer->selright < left) &&
         (newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
-      seltop    = newtop;
-      selbottom = newbottom;
-      selleft   = newleft;
-      selright  = newright;
+      currlayer->seltop    = newtop;
+      currlayer->selbottom = newbottom;
+      currlayer->selleft   = newleft;
+      currlayer->selright  = newright;
       DisplaySelectionSize();
       mainptr->UpdatePatternAndStatus();
       return;
    }
 
    // can only use nextcell/getcell/setcell in limited domain
-   if ( OutsideLimits(seltop, selbottom, selleft, selright) ) {
+   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
+                      currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return;
    }
@@ -1462,8 +1473,8 @@ void PatternView::RotateSelection(bool clockwise)
    }
    
    // use faster method if selection encloses entire pattern
-   if ( seltop <= top && selbottom >= bottom &&
-        selleft <= left && selright >= right ) {
+   if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+        currlayer->selleft <= left && currlayer->selright >= right ) {
       RotatePattern(clockwise, newtop, newbottom, newleft, newright);
       return;
    }
@@ -1476,10 +1487,10 @@ void PatternView::RotateSelection(bool clockwise)
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees
-   int itop    = seltop.toint();
-   int ileft   = selleft.toint();
-   int ibottom = selbottom.toint();
-   int iright  = selright.toint();
+   int itop    = currlayer->seltop.toint();
+   int ileft   = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright  = currlayer->selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    double maxcount = (double)wd * (double)ht;
@@ -1503,13 +1514,13 @@ void PatternView::RotateSelection(bool clockwise)
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
+         int skip = currlayer->algo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
             // found next live cell
             cx += skip;
-            curralgo->setcell(cx, cy, 0);
+            currlayer->algo->setcell(cx, cy, 0);
             newy += newyinc * skip;
             tempalgo->setcell(newx, newy, 1);
          } else {
@@ -1529,7 +1540,7 @@ void PatternView::RotateSelection(bool clockwise)
    }
    
    tempalgo->endofpattern();
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    EndProgress();
    
    if (abort) {
@@ -1541,21 +1552,21 @@ void PatternView::RotateSelection(bool clockwise)
       ibottom = newbottom.toint();
       iright  = newright.toint();
       // check if new selection rect is outside modified pattern edges
-      curralgo->findedges(&top, &left, &bottom, &right);
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( newtop > bottom || newbottom < top || newleft > right || newright < left ) {
          // safe to use fast nextcell calls
          CopyRect(itop, ileft, ibottom, iright,
-                  tempalgo, curralgo, false, _("Merging rotated selection"));
+                  tempalgo, currlayer->algo, false, _("Merging rotated selection"));
       } else {
          // have to use slow getcell calls
          CopyAllRect(itop, ileft, ibottom, iright,
-                     tempalgo, curralgo, _("Pasting rotated selection"));
+                     tempalgo, currlayer->algo, _("Pasting rotated selection"));
       }      
       // rotate the selection edges
-      seltop    = newtop;
-      selbottom = newbottom;
-      selleft   = newleft;
-      selright  = newright;
+      currlayer->seltop    = newtop;
+      currlayer->selbottom = newbottom;
+      currlayer->selleft   = newleft;
+      currlayer->selright  = newright;
    }
    
    // delete temporary universe and display results
@@ -1567,9 +1578,9 @@ void PatternView::RotateSelection(bool clockwise)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::SetCursorMode(wxCursor *curs)
+void PatternView::SetCursorMode(wxCursor *cursor)
 {
-   currcurs = curs;
+   currlayer->curs = cursor;
 }
 
 // -----------------------------------------------------------------------------
@@ -1579,14 +1590,14 @@ void PatternView::CycleCursorMode()
    if (drawingcells || selectingcells || movingview || waitingforclick)
       return;
 
-   if (currcurs == curs_pencil)
-      currcurs = curs_cross;
-   else if (currcurs == curs_cross)
-      currcurs = curs_hand;
-   else if (currcurs == curs_hand)
-      currcurs = curs_zoomin;
-   else if (currcurs == curs_zoomin)
-      currcurs = curs_zoomout;
+   if (currlayer->curs == curs_pencil)
+      currlayer->curs = curs_cross;
+   else if (currlayer->curs == curs_cross)
+      currlayer->curs = curs_hand;
+   else if (currlayer->curs == curs_hand)
+      currlayer->curs = curs_zoomin;
+   else if (currlayer->curs == curs_zoomin)
+      currlayer->curs = curs_zoomout;
    else
-      currcurs = curs_pencil;
+      currlayer->curs = curs_pencil;
 }

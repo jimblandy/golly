@@ -34,10 +34,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, etc
 #include "wxutils.h"       // for Fatal, FillRect
-#include "wxprefs.h"       // for hashing, mindelay, maxdelay, etc
+#include "wxprefs.h"       // for mindelay, maxdelay, etc
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
 #include "wxscript.h"      // for inscript
+#include "wxlayer.h"       // for currlayer
 #include "wxstatus.h"
 
 // -----------------------------------------------------------------------------
@@ -231,7 +232,7 @@ wxString StatusBar::Stringify(const bigint &b)
 
 int StatusBar::GetCurrentDelay()
 {
-   int gendelay = mindelay * (1 << (-mainptr->GetWarp() - 1));
+   int gendelay = mindelay * (1 << (-currlayer->warp - 1));
    if (gendelay > maxdelay) gendelay = maxdelay;
    return gendelay;
 }
@@ -245,7 +246,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
    if (wd < 1 || ht < 1) return;
 
    wxRect r = wxRect(0, 0, wd, ht);
-   FillRect(dc, r, hashing ? *hlifebrush : *qlifebrush);
+   FillRect(dc, r, currlayer->hash ? *hlifebrush : *qlifebrush);
 
    #ifdef __WXMSW__
       // draw gray lines at top, left and right edges
@@ -276,7 +277,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += wxString(curralgo->getGeneration().tostring(), wxConvLocal);
+            strbuf += wxString(currlayer->algo->getGeneration().tostring(), wxConvLocal);
          }
          DisplayText(dc, strbuf, h_gen, GENLINE);
    
@@ -284,7 +285,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += wxString(curralgo->getPopulation().tostring(), wxConvLocal);
+            strbuf += wxString(currlayer->algo->getPopulation().tostring(), wxConvLocal);
          }
          DisplayText(dc, strbuf, h_gen, POPLINE);
          
@@ -296,15 +297,15 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          }
          DisplayText(dc, strbuf, h_gen, SCALELINE);
          
-         if (mainptr->GetWarp() < 0) {
+         if (currlayer->warp < 0) {
             // show delay in secs
             strbuf.Printf(_("Delay = %gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
             // no real need to show step as an exact number???
-            if (hashing) {
-               strbuf.Printf(_("Step = %d^%d"), hbasestep, mainptr->GetWarp());
+            if (currlayer->hash) {
+               strbuf.Printf(_("Step = %d^%d"), hbasestep, currlayer->warp);
             } else {
-               strbuf.Printf(_("Step = %d^%d"), qbasestep, mainptr->GetWarp());
+               strbuf.Printf(_("Step = %d^%d"), qbasestep, currlayer->warp);
             }
          }
          DisplayText(dc, strbuf, h_gen, STEPLINE);
@@ -314,8 +315,8 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
       DisplayText(dc, _("Y ="), h_gen, YLINE);
       if (showxy) {
          bigint xo, yo;
-         bigint xpos = currx;   xpos -= viewptr->originx;
-         bigint ypos = curry;   ypos -= viewptr->originy;
+         bigint xpos = currx;   xpos -= currlayer->originx;
+         bigint ypos = curry;   ypos -= currlayer->originy;
          if (mathcoords) {
             // Y values increase upwards
             bigint temp = 0;
@@ -336,7 +337,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += Stringify(curralgo->getGeneration());
+            strbuf += Stringify(currlayer->algo->getGeneration());
          }
          DisplayText(dc, strbuf, h_gen, BASELINE1);
       
@@ -344,7 +345,7 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += Stringify(curralgo->getPopulation());
+            strbuf += Stringify(currlayer->algo->getPopulation());
          }
          DisplayText(dc, strbuf, h_pop, BASELINE1);
       
@@ -355,14 +356,14 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
          }
          DisplayText(dc, strbuf, h_scale, BASELINE1);
          
-         if (mainptr->GetWarp() < 0) {
+         if (currlayer->warp < 0) {
             // show delay in secs
             strbuf.Printf(_("Delay=%gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
-            if (hashing) {
-               strbuf.Printf(_("Step=%d^%d"), hbasestep, mainptr->GetWarp());
+            if (currlayer->hash) {
+               strbuf.Printf(_("Step=%d^%d"), hbasestep, currlayer->warp);
             } else {
-               strbuf.Printf(_("Step=%d^%d"), qbasestep, mainptr->GetWarp());
+               strbuf.Printf(_("Step=%d^%d"), qbasestep, currlayer->warp);
             }
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
@@ -371,8 +372,8 @@ void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
       strbuf = _("XY=");
       if (showxy) {
          bigint xo, yo;
-         bigint xpos = currx;   xpos -= viewptr->originx;
-         bigint ypos = curry;   ypos -= viewptr->originy;
+         bigint xpos = currx;   xpos -= currlayer->originx;
+         bigint ypos = curry;   ypos -= currlayer->originy;
          if (mathcoords) {
             // Y values increase upwards
             bigint temp = 0;
@@ -464,7 +465,7 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
          viewptr->SetMag(0);
       }
    } else if ( ClickInStepBox(event.GetX(), event.GetY()) ) {
-      if (mainptr->GetWarp() != 0) {
+      if (currlayer->warp != 0) {
          // reset step to 1 gen
          mainptr->SetWarp(0);
          // update status bar

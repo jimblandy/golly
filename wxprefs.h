@@ -57,9 +57,10 @@ extern int infoy;
 extern int infowd;               // info window's size
 extern int infoht;
 
+extern char initrule[];          // initial rule
+extern bool inithash;            // use hlife algorithm?
 extern bool savexrle;            // save RLE file using XRLE format?
 extern bool autofit;             // auto fit pattern while generating?
-extern bool hashing;             // use hlife algorithm?
 extern bool hyperspeed;          // use hyperspeed if supported by current algo?
 extern bool showtool;            // show tool bar?
 extern bool showstatus;          // show status bar?
@@ -80,7 +81,6 @@ extern bool newremovesel;        // new pattern removes selection?
 extern bool openremovesel;       // opening pattern removes selection?
 extern wxCursor *newcurs;        // cursor after creating new pattern
 extern wxCursor *opencurs;       // cursor after opening pattern
-extern char initrule[];          // for first NewPattern before prefs saved
 extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
 extern int qbasestep;            // qlife's base step
@@ -112,14 +112,14 @@ extern wxColor *livergb[10];     // color for live cells in each layer
 extern wxColor *deadrgb;         // color for dead cells
 extern wxColor *pastergb;        // color for pasted pattern
 extern wxColor *selectrgb;       // color for selected cells
-extern wxColor *qlifergb;        // status bar background if not hashing
-extern wxColor *hlifergb;        // status bar background if hashing
+extern wxColor *qlifergb;        // status bar background if using qlife
+extern wxColor *hlifergb;        // status bar background if using hlife
 
 // colored brushes and pens
 extern wxBrush *livebrush[10];   // for drawing live cells in each layer
 extern wxBrush *deadbrush;       // for drawing dead cells
-extern wxBrush *qlifebrush;      // for status bar background if not hashing
-extern wxBrush *hlifebrush;      // for status bar background if hashing
+extern wxBrush *qlifebrush;      // for status bar background if using qlife
+extern wxBrush *hlifebrush;      // for status bar background if using hlife
 extern wxPen *pastepen;          // for drawing paste rect
 extern wxPen *gridpen;           // for drawing plain grid
 extern wxPen *boldpen;           // for drawing bold grid
@@ -180,7 +180,6 @@ extern wxCursor *curs_cross;     // for selecting cells
 extern wxCursor *curs_hand;      // for moving view by dragging
 extern wxCursor *curs_zoomin;    // for zooming in to a clicked cell
 extern wxCursor *curs_zoomout;   // for zooming out from a clicked cell
-extern wxCursor *currcurs;       // set to one of the above cursors
 
 // convert given cursor to an index: 0 for curs_pencil, 1 for curs_cross, etc
 int CursorToIndex(wxCursor *curs);

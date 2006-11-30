@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/tooltip.h" // for wxToolTip
 #endif
 
-#include "lifealgo.h"      // for curralgo->...
+#include "lifealgo.h"
 #include "hlifealgo.h"     // for setVerbose, getVerbose
 #include "viewport.h"      // for MAX_MAG
 
@@ -55,6 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
+#include "wxlayer.h"       // for currlayer
 #include "wxprefs.h"
 
 #ifdef __WXMSW__
@@ -112,9 +113,10 @@ int infoy = 90;
 int infowd = 700;                // info window's initial size
 int infoht = 500;
 
+char initrule[128] = "B3/S23";   // initial rule
+bool inithash = false;           // use hlife algorithm?
 bool savexrle = true;            // save RLE file using XRLE format?
 bool autofit = false;            // auto fit pattern while generating?
-bool hashing = false;            // use hlife algorithm?
 bool hyperspeed = false;         // use hyperspeed if supported by current algo?
 bool showtool = true;            // show tool bar?
 bool showstatus = true;          // show status bar?
@@ -135,7 +137,6 @@ bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
 wxCursor *newcurs = NULL;        // cursor after creating new pattern (if not NULL)
 wxCursor *opencurs = NULL;       // cursor after opening pattern (if not NULL)
-char initrule[128] = "B3/S23";   // for first NewPattern before prefs saved
 int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
 int qbasestep = 10;              // qlife's base step
@@ -186,7 +187,6 @@ wxCursor *curs_cross;            // for selecting cells
 wxCursor *curs_hand;             // for moving view by dragging
 wxCursor *curs_zoomin;           // for zooming in to a clicked cell
 wxCursor *curs_zoomout;          // for zooming out from a clicked cell
-wxCursor *currcurs;              // set to one of the above cursors
 
 // local (ie. non-exported) globals:
 
@@ -242,9 +242,6 @@ void CreateCursors()
       curs_zoomout = new wxCursor(image_zoomout);
    #endif
    if (curs_zoomout == NULL) Fatal(_("Failed to create zoomout cursor!"));
-   
-   // set currcurs in case newcurs/opencurs are set to "No Change"
-   currcurs = curs_pencil;
    
    // default cursors for new pattern or after opening pattern
    newcurs = curs_pencil;
@@ -437,7 +434,7 @@ const char *GOLLY_VERSION = STRINGIFY(VERSION);
 
 void SavePrefs()
 {
-   if (mainptr == NULL || curralgo == NULL) {
+   if (mainptr == NULL || currlayer == NULL) {
       // should never happen but play safe
       return;
    }
@@ -524,14 +521,14 @@ void SavePrefs()
    fprintf(f, "min_delay=%d (0..%d millisecs)\n", mindelay, MAX_DELAY);
    fprintf(f, "max_delay=%d (0..%d millisecs)\n", maxdelay, MAX_DELAY);
    fprintf(f, "auto_fit=%d\n", autofit ? 1 : 0);
-   fprintf(f, "hashing=%d\n", hashing ? 1 : 0);
+   fprintf(f, "hashing=%d\n", currlayer->hash ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
    fprintf(f, "hash_info=%d\n", hlifealgo::getVerbose() ? 1 : 0);
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    
    fputs("\n", f);
 
-   fprintf(f, "rule=%s\n", curralgo->getrule());
+   fprintf(f, "rule=%s\n", currlayer->algo->getrule());
    if (namedrules.GetCount() > 1) {
       size_t i;
       for (i=1; i<namedrules.GetCount(); i++)
@@ -694,7 +691,7 @@ void GetPrefs()
       pythonlib = wxT("libpython2.4.so");
    #endif
 
-   // create curs_* and initialize newcurs, opencurs and currcurs
+   // create curs_* and initialize newcurs and opencurs
    CreateCursors();
    
    CreateDefaultColors();
@@ -800,7 +797,7 @@ void GetPrefs()
          autofit = value[0] == '1';
 
       } else if (strcmp(keyword, "hashing") == 0) {
-         hashing = value[0] == '1';
+         inithash = value[0] == '1';
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
          hyperspeed = value[0] == '1';

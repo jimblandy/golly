@@ -189,12 +189,12 @@ $(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
 Help/about.html \
 bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h
+wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
 
 $(OBJDIR)/wxrule.o: wxrule.cpp wxrule.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
-wxgolly.h wxutils.h wxprefs.h
+wxgolly.h wxutils.h wxprefs.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrule.cpp
 
 $(OBJDIR)/wxinfo.o: wxinfo.cpp wxinfo.h \
@@ -208,7 +208,7 @@ wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h
 
 $(OBJDIR)/wxstatus.o: wxstatus.cpp wxstatus.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
 
 $(OBJDIR)/wxview.o: wxview.cpp wxview.h \
@@ -252,7 +252,7 @@ wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h w
 
 $(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \
 lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+wxgolly.h wxutils.h wxprefs.h wxmain.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \

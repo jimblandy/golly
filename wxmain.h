@@ -86,7 +86,6 @@ public:
    void ToggleHyperspeed();
    void ToggleHashInfo();
    void SetWarp(int newwarp);
-   int GetWarp() { return warp; };
    void SetGenIncrement();
    void ResetPattern();
 
@@ -167,7 +166,6 @@ private:
    wxGenericDirCtrl* patternctrl;
    wxGenericDirCtrl* scriptctrl;
    
-   int warp;                     // current speed setting
    int minwarp;                  // warp value at maximum delay (must be <= 0)
    long whentosee;               // when to do next gen (if warp < 0)
    long begintime, endtime;      // for timing info

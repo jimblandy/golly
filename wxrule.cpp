@@ -30,9 +30,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "liferules.h"     // for global_liferules
 
-#include "wxgolly.h"       // for wxGetApp, curralgo
-#include "wxprefs.h"       // for namedrules, hashing
+#include "wxgolly.h"       // for wxGetApp
+#include "wxprefs.h"       // for namedrules
 #include "wxutils.h"       // for Warning
+#include "wxlayer.h"       // for currlayer
 #include "wxrule.h"
 
 // -----------------------------------------------------------------------------
@@ -129,7 +130,7 @@ void RuleDialog::CreateControls()
    // create the controls:
    
    ruletext = new wxTextCtrl(this, RULE_TEXT,
-                             wxString(curralgo->getrule(),wxConvLocal));
+                             wxString(currlayer->algo->getrule(),wxConvLocal));
    wxString title = _("Enter a 2D rule using B0..8/S0..8 notation\n");
    title +=         _("or a 1D rule as Wn (n = 0 to 254 and even):");
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
@@ -336,7 +337,7 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
    
    // validate new rule
    wxString newrule = ruletext->GetValue();
-   const char *err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
+   const char *err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
       Warning(_("Rule is not valid."));
       ruletext->SetFocus();
@@ -423,14 +424,14 @@ bool RuleDialog::TransferDataFromWindow()
    // get and validate new rule
    wxString newrule = ruletext->GetValue();
    if ( newrule.IsEmpty() ) {
-      curralgo->setrule("B3/S23");
+      currlayer->algo->setrule("B3/S23");
       return true;
    }
-   const char *err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
+   const char *err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
       Warning(wxString(err,wxConvLocal));
       return false;
-   } else if ( global_liferules.hasB0notS8 && hashing ) {
+   } else if ( global_liferules.hasB0notS8 && currlayer->hash ) {
       Warning(_("B0-not-S8 rules are not allowed when hashing."));
       return false;
    }
@@ -442,7 +443,7 @@ bool RuleDialog::TransferDataFromWindow()
 bool ChangeRule()
 {
    wxArrayString oldnames = namedrules;
-   wxString oldrule = wxString(curralgo->getrule(),wxConvLocal);
+   wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
 
    RuleDialog dialog( wxGetApp().GetTopWindow() );
    if ( dialog.ShowModal() == wxID_OK ) {
@@ -450,7 +451,7 @@ bool ChangeRule()
       return true;
    } else {
       // user hit Cancel so restore rule and name array
-      curralgo->setrule( oldrule.mb_str(wxConvLocal) );
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
       namedrules.Clear();
       namedrules = oldnames;
       return false;

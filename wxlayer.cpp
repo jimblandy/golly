@@ -33,11 +33,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
+#include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxview.h"        // for currview, viewptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for gollydir, drawlayers, etc
+#include "wxprefs.h"       // for gollydir, inithash, initrule, etc
 #include "wxlayer.h"
 
 // -----------------------------------------------------------------------------
@@ -50,55 +49,32 @@ Layer* layer[maxlayers];      // array of layers
 
 bool available[maxlayers];    // for setting tempstart suffix
 
+bool oldhash;                 // hash setting in old layer
+wxString oldrule;             // rule string in old layer
+
 // -----------------------------------------------------------------------------
 
-void SaveLayerGlobals()
+void SaveHashAndRule()
 {
-   // save curralgo, currview, etc in current layer
-
-   currlayer->lalgo = curralgo;
-   currlayer->lhash = hashing;
-   currlayer->lrule = wxString(curralgo->getrule(),wxConvLocal);
-
-   currlayer->lview = currview;
-
-   currlayer->ltop = viewptr->seltop;
-   currlayer->lbottom = viewptr->selbottom;
-   currlayer->lleft = viewptr->selleft;
-   currlayer->lright = viewptr->selright;
+   // set oldhash and oldrule for use in LayerHasChanged
+   oldhash = currlayer->hash;
+   oldrule = wxString(global_liferules.getrule(), wxConvLocal);
    
-   currlayer->lcurs = currcurs;
-   currlayer->lwarp = mainptr->GetWarp();
+   // we're about to change layer so remember current rule
+   currlayer->rule = oldrule;
 }
 
 // -----------------------------------------------------------------------------
 
-void ChangeLayerGlobals()
+void LayerHasChanged()
 {
-   // set curralgo, currview, etc using currlayer info
-
-   // curralgo does not exist if called from DeleteLayer so use global_liferules
-   wxString oldrule = wxString(global_liferules.getrule(),wxConvLocal);
-   
-   curralgo = currlayer->lalgo;
-
-   // need to update global rule table if the universe type has changed
-   // or the current rule has changed
-   if ( hashing != currlayer->lhash || !oldrule.IsSameAs(currlayer->lrule,false) ) {
-      curralgo->setrule(currlayer->lrule.mb_str(wxConvLocal));
+   // need to update global rule table if the hash setting has changed
+   // or if the current rule has changed
+   if ( oldhash != currlayer->hash || !oldrule.IsSameAs(currlayer->rule,false) ) {
+      currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
    }
-   hashing = currlayer->lhash;
 
-   currview = currlayer->lview;
-
-   viewptr->seltop = currlayer->ltop;
-   viewptr->selbottom = currlayer->lbottom;
-   viewptr->selleft = currlayer->lleft;
-   viewptr->selright = currlayer->lright;
-   
-   currcurs = currlayer->lcurs;
-
-   mainptr->SetWarp(currlayer->lwarp);
+   mainptr->SetWarp(currlayer->warp);
    mainptr->SetWindowTitle(currlayer->currname);
       
    mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -112,11 +88,10 @@ void AddLayer()
    if (numlayers >= maxlayers) return;
    
    if (numlayers == 0) {
-      // create the very first layer
+      // creating the very first layer
       currindex = 0;
    } else {
-      // save curralgo, currview, etc
-      SaveLayerGlobals();
+      SaveHashAndRule();
       
       // insert new layer after currindex
       currindex++;
@@ -133,14 +108,14 @@ void AddLayer()
    numlayers++;
 
    if (numlayers > 1) {
-      // add new item at end of Layer menu
+      // add another item at end of Layer menu
       mainptr->AppendLayerItem();
 
       // update names in any items after currindex
       for (int i = currindex + 1; i < numlayers; i++)
          mainptr->UpdateLayerItem(i);
       
-      ChangeLayerGlobals();
+      LayerHasChanged();
    }
 }
 
@@ -150,7 +125,7 @@ void DeleteLayer()
 {
    if (numlayers <= 1) return;
    
-   SaveLayerGlobals();
+   SaveHashAndRule();
    
    delete currlayer;
    numlayers--;
@@ -169,7 +144,7 @@ void DeleteLayer()
    for (int i = currindex + 1; i < numlayers; i++)
       mainptr->UpdateLayerItem(i);
    
-   ChangeLayerGlobals();
+   LayerHasChanged();
 }
 
 // -----------------------------------------------------------------------------
@@ -213,10 +188,10 @@ void SetLayer(int index)
    if (index < 0 || index >= numlayers) return;
    if (currindex == index) return;
    
-   SaveLayerGlobals();
+   SaveHashAndRule();
    currindex = index;
    currlayer = layer[currindex];
-   ChangeLayerGlobals();
+   LayerHasChanged();
 }
 
 // -----------------------------------------------------------------------------
@@ -243,12 +218,8 @@ void ToggleGenLayers()
 void ResizeLayers(int wd, int ht)
 {
    // resize viewport in each layer
-   for (int i = 0; i < numlayers; i++) {
-      if (i == currindex)
-         currview->resize(wd, ht);
-      else
-         layer[i]->lview->resize(wd, ht);
-   }
+   for (int i = 0; i < numlayers; i++)
+      layer[i]->view->resize(wd, ht);
 }
 
 // -----------------------------------------------------------------------------
@@ -259,10 +230,6 @@ Layer* GetLayer(int index)
       Warning(_("Bad index in GetLayer!"));
       return NULL;
    } else {
-      if (index == currindex) {
-         // update currlayer info with current settings
-         SaveLayerGlobals();
-      }
       return layer[index];
    }
 }
@@ -287,21 +254,62 @@ int FindAvailableSuffix()
 
 Layer::Layer()
 {
-   // set tempstart prefix; ~Layer() assumes it ends with '_'
+   // set tempstart prefix; note that ~Layer() assumes it ends with '_'
    tempstart = gollydir + wxT(".golly_start_");
 
-   savestart = false;         // no need to save starting pattern just yet
-   startfile.Clear();         // no starting pattern
-   startgen = 0;              // initial starting generation
+   savestart = false;            // no need to save starting pattern just yet
+   startfile.Clear();            // no starting pattern
+   startgen = 0;                 // initial starting generation
    currname = _("untitled");
    currfile = wxEmptyString;
+      
+   warp = 0;                     // initial speed setting
+
+   originx = 0;                  // no X origin offset
+   originy = 0;                  // no Y origin offset
+   
+   // no selection
+   seltop = 1;
+   selbottom = 0;
+   selleft = 0;
+   selright = 0;
 
    if (numlayers == 0) {
-      // creating very first layer; note that lalgo, lview, etc will be
-      // set by SaveLayerGlobals in next AddLayer call, but play safe
-      // with the variables deleted in ~Layer
-      lalgo = NULL;
-      lview = NULL;
+      // creating very first layer
+      
+      // set hash using inithash stored in prefs file
+      hash = inithash;
+      
+      // create empty universe
+      if (hash) {
+         algo = new hlifealgo();
+         algo->setMaxMemory(maxhashmem);
+      } else {
+         algo = new qlifealgo();
+      }
+      algo->setpoll(wxGetApp().Poller());
+
+      // set rule using initrule stored in prefs file;
+      // errors can only occur if someone has edited the prefs file
+      const char *err = algo->setrule(initrule);
+      if (err) {
+         Warning(wxString(err,wxConvLocal));
+         // user will see offending rule string in window title
+      } else if (global_liferules.hasB0notS8 && hash) {
+         // rather than set hash false it's easier to change the rule
+         algo->setrule("B3/S23");
+         Warning(_("B0-not-S8 rule is not allowed when hashing."));
+      }
+      
+      // rule is set later in SaveHashAndRule, so no need for this
+      // rule = wxString(global_liferules.getrule(), wxConvLocal);
+      
+      // create viewport; the initial size is not important because
+      // ResizeLayers will soon be called
+      view = new viewport(100,100);
+      
+      // set cursor in case newcurs/opencurs are set to "No Change"
+      curs = curs_pencil;
       
       // complete tempstart and initialize available array
       tempstart += wxT("0");
@@ -309,37 +317,33 @@ Layer::Layer()
       for (int i = 1; i < maxlayers; i++) available[i] = true;
 
    } else {
-      // add unique suffix to tempstart
-      tempstart += wxString::Format("%d", FindAvailableSuffix());
+      // adding a new layer after currlayer (see AddLayer)
 
-      lhash = hashing;
-      if (hashing) {
-         lalgo = new hlifealgo();
-         lalgo->setMaxMemory(maxhashmem);
+      // inherit current universe type
+      hash = currlayer->hash;
+      if (hash) {
+         algo = new hlifealgo();
+         algo->setMaxMemory(maxhashmem);
       } else {
-         lalgo = new qlifealgo();
+         algo = new qlifealgo();
       }
-      lalgo->setpoll(wxGetApp().Poller());
+      algo->setpoll(wxGetApp().Poller());
       
-      // inherit current rule
-      lrule = wxString(curralgo->getrule(),wxConvLocal);
+      // inherit current rule (need to set rule for LayerHasChanged)
+      rule = wxString(global_liferules.getrule(), wxConvLocal);
       
       // inherit current viewport's size, scale and location
-      lview = new viewport(100,100);
-      lview->resize( currview->getwidth(), currview->getheight() );
-      lview->setpositionmag( currview->x, currview->y, currview->getmag() );
+      view = new viewport(100,100);
+      view->resize( currlayer->view->getwidth(),
+                    currlayer->view->getheight() );
+      view->setpositionmag( currlayer->view->x, currlayer->view->y,
+                            currlayer->view->getmag() );
       
       // inherit current cursor
-      lcurs = currcurs;
-      
-      // reset speed
-      lwarp = 0;
-      
-      // no selection
-      ltop = 1;
-      lbottom = 0;
-      lleft = 0;
-      lright = 0;
+      curs = currlayer->curs;
+
+      // add unique suffix to tempstart
+      tempstart += wxString::Format("%d", FindAvailableSuffix());
    }
 }
 
@@ -347,8 +351,8 @@ Layer::Layer()
 
 Layer::~Layer()
 {
-   if (lalgo) delete lalgo;
-   if (lview) delete lview;
+   if (algo) delete algo;
+   if (view) delete view;
    
    // delete tempstart file if it exists
    if (wxFileExists(tempstart)) wxRemoveFile(tempstart);

@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXSTATUS_H_
 #define _WXSTATUS_H_
 
+#include "bigint.h"     // for bigint
+
 // Define a child window for status bar at top of main frame:
 
 class StatusBar : public wxWindow

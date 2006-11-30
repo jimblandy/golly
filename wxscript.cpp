@@ -62,7 +62,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Note
-#include "wxprefs.h"       // for hashing, pythonlib, gollydir, etc
+#include "wxprefs.h"       // for pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxlayer.h"       // for AddLayer, currlayer, etc
@@ -552,10 +552,10 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
    }
 
    // temporarily change selection rect and paste mode
-   bigint oldleft = viewptr->selleft;
-   bigint oldtop = viewptr->seltop;
-   bigint oldright = viewptr->selright;
-   bigint oldbottom = viewptr->selbottom;
+   bigint oldleft = currlayer->selleft;
+   bigint oldtop = currlayer->seltop;
+   bigint oldright = currlayer->selright;
+   bigint oldbottom = currlayer->selbottom;
    
    const char *oldmode = GetPasteMode();
    wxString modestr = wxString(mode, wxConvLocal);
@@ -568,18 +568,18 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
    }
    
    // create huge selection rect so no possibility of error message
-   viewptr->selleft = x;
-   viewptr->seltop = y;
-   viewptr->selright = viewptr->selleft;   viewptr->selright += INT_MAX;
-   viewptr->selbottom = viewptr->seltop;   viewptr->selbottom += INT_MAX;
+   currlayer->selleft = x;
+   currlayer->seltop = y;
+   currlayer->selright = currlayer->selleft;   currlayer->selright += INT_MAX;
+   currlayer->selbottom = currlayer->seltop;   currlayer->selbottom += INT_MAX;
 
    viewptr->PasteClipboard(true);      // true = paste to selection
 
    // restore selection rect and paste mode
-   viewptr->selleft = oldleft;
-   viewptr->seltop = oldtop;
-   viewptr->selright = oldright;
-   viewptr->selbottom = oldbottom;
+   currlayer->selleft = oldleft;
+   currlayer->seltop = oldtop;
+   currlayer->selright = oldright;
+   currlayer->selbottom = oldbottom;
    SetPasteMode(oldmode);
 
    DoAutoUpdate();
@@ -909,7 +909,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       }
 
    } else if (strcmp(optname, "hashing") == 0) {
-      oldval = hashing ? 1 : 0;
+      oldval = currlayer->hash ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleHashing();
          DoAutoUpdate();               // status bar color might change
@@ -1040,7 +1040,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "drawlayers") == 0)    optval = drawlayers ? 1 : 0;
    else if (strcmp(optname, "genlayers") == 0)     optval = genlayers ? 1 : 0;
    else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
-   else if (strcmp(optname, "hashing") == 0)       optval = hashing ? 1 : 0;
+   else if (strcmp(optname, "hashing") == 0)       optval = currlayer->hash ? 1 : 0;
    else if (strcmp(optname, "hyperspeed") == 0)    optval = hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
@@ -1076,11 +1076,14 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
 
    wxColor newcol(r, g, b);
    
-   //!!!
-   if (strcmp(colname, "livecells") == 0) {
-      oldcol = *livergb[0];
+   if (strncmp(colname, "livecells", 9) == 0) {
+      int layer = 0;
+      if (colname[9] >= '0' && colname[9] <= '9') {
+         layer = colname[9] - '0';
+      }
+      oldcol = *livergb[layer];
       if (oldcol != newcol) {
-         *livergb[0] = newcol;
+         *livergb[layer] = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
@@ -1150,7 +1153,13 @@ static PyObject *golly_getcolor(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &colname)) return NULL;
 
-   if      (strcmp(colname, "livecells") == 0)     cptr = livergb[0];   //!!!
+   if (strncmp(colname, "livecells", 9) == 0) {
+      int layer = 0;
+      if (colname[9] >= '0' && colname[9] <= '9') {
+         layer = colname[9] - '0';
+      }
+      cptr = livergb[layer];
+   }
    else if (strcmp(colname, "deadcells") == 0)     cptr = deadrgb;
    else if (strcmp(colname, "paste") == 0)         cptr = pastergb;
    else if (strcmp(colname, "select") == 0)        cptr = selectrgb;
@@ -1178,7 +1187,7 @@ static PyObject *golly_empty(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
    
-   return Py_BuildValue("i", curralgo->isEmpty() ? 1 : 0);
+   return Py_BuildValue("i", currlayer->algo->isEmpty() ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -1191,14 +1200,14 @@ static PyObject *golly_run(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "i", &ngens)) return NULL;
 
-   if (ngens > 0 && !curralgo->isEmpty()) {
+   if (ngens > 0 && !currlayer->algo->isEmpty()) {
       if (ngens > 1) {
-         bigint saveinc = curralgo->getIncrement();
-         curralgo->setIncrement(ngens);
-         mainptr->NextGeneration(true);      // step by ngens
-         curralgo->setIncrement(saveinc);
+         bigint saveinc = currlayer->algo->getIncrement();
+         currlayer->algo->setIncrement(ngens);
+         mainptr->NextGeneration(true);            // step by ngens
+         currlayer->algo->setIncrement(saveinc);
       } else {
-         mainptr->NextGeneration(false);     // step 1 gen
+         mainptr->NextGeneration(false);           // step 1 gen
       }
       DoAutoUpdate();
    }
@@ -1216,7 +1225,7 @@ static PyObject *golly_step(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   if (!curralgo->isEmpty()) {
+   if (!currlayer->algo->isEmpty()) {
       mainptr->NextGeneration(true);      // step by current increment
       DoAutoUpdate();
    }
@@ -1251,7 +1260,7 @@ static PyObject *golly_getstep(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", mainptr->GetWarp());
+   return Py_BuildValue("i", currlayer->warp);
 }
 
 // -----------------------------------------------------------------------------
@@ -1267,7 +1276,7 @@ static PyObject *golly_setbase(PyObject *self, PyObject *args)
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
 
-   if (hashing) {
+   if (currlayer->hash) {
       hbasestep = base;
    } else {
       qbasestep = base;
@@ -1288,7 +1297,7 @@ static PyObject *golly_getbase(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", hashing ? hbasestep : qbasestep);
+   return Py_BuildValue("i", currlayer->hash ? hbasestep : qbasestep);
 }
 
 // -----------------------------------------------------------------------------
@@ -1330,7 +1339,7 @@ static PyObject *golly_reset(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   if (curralgo->getGeneration() != bigint::zero) {
+   if (currlayer->algo->getGeneration() != bigint::zero) {
       mainptr->ResetPattern();
       DoAutoUpdate();
    }
@@ -1349,7 +1358,7 @@ static PyObject *golly_getgen(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   return Py_BuildValue("s", curralgo->getGeneration().tostring(sepchar));
+   return Py_BuildValue("s", currlayer->algo->getGeneration().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -1362,7 +1371,7 @@ static PyObject *golly_getpop(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "|c", &sepchar)) return NULL;
 
-   return Py_BuildValue("s", curralgo->getPopulation().tostring(sepchar));
+   return Py_BuildValue("s", currlayer->algo->getPopulation().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -1375,19 +1384,19 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &rule_string)) return NULL;
 
-   wxString oldrule = wxString(curralgo->getrule(), wxConvLocal);
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    const char *err;
    if (rule_string == NULL || rule_string[0] == 0) {
-      err = curralgo->setrule("B3/S23");
+      err = currlayer->algo->setrule("B3/S23");
    } else {
-      err = curralgo->setrule(rule_string);
+      err = currlayer->algo->setrule(rule_string);
    }
    if (err) {
-      curralgo->setrule( oldrule.mb_str(wxConvLocal) );
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
       PyErr_SetString(PyExc_RuntimeError, err);
       return NULL;
-   } else if ( global_liferules.hasB0notS8 && hashing ) {
-      curralgo->setrule( oldrule.mb_str(wxConvLocal) );
+   } else if ( global_liferules.hasB0notS8 && currlayer->hash ) {
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
       PyErr_SetString(PyExc_RuntimeError, "B0-not-S8 rules are not allowed when hashing.");
       return NULL;
    } else {
@@ -1408,7 +1417,7 @@ static PyObject *golly_getrule(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("s", curralgo->getrule());
+   return Py_BuildValue("s", currlayer->algo->getrule());
 }
 
 // -----------------------------------------------------------------------------
@@ -1571,7 +1580,8 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    tempalgo->setpoll(wxGetApp().Poller());
    
    // no need for this -- all universes share global rule table
-   // tempalgo->setrule( curralgo->getrule() );
+   //!!! but what if currlayer uses hlife??? check elsewhere!!!
+   // tempalgo->setrule( currlayer->algo->getrule() );
    
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -1630,7 +1640,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    tempalgo->setpoll(wxGetApp().Poller());
    
    // readpattern might change global rule table
-   wxString oldrule = wxString(curralgo->getrule(), wxConvLocal);
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    
    // read pattern into temporary universe
    const char *err = readpattern(FILENAME, *tempalgo);
@@ -1643,7 +1653,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    }
    
    // restore rule
-   curralgo->setrule( oldrule.mb_str(wxConvLocal) );
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
    if (err) {
       delete tempalgo;
@@ -1732,15 +1742,15 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
       long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
 
       // paste (possibly transformed) cell into current universe
-      curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
+      currlayer->algo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
       
       if ((n % 4096) == 0 && ScriptAborted()) {
-         curralgo->endofpattern();
+         currlayer->algo->endofpattern();
          currlayer->savestart = true;
          return NULL;
       }
    }
-   curralgo->endofpattern();
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    DoAutoUpdate();
 
@@ -1786,7 +1796,7 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
+            int skip = currlayer->algo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -1956,10 +1966,10 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
          return NULL;
       }
       // set selection edges
-      viewptr->selleft = x;
-      viewptr->seltop = y;
-      viewptr->selright = x + wd - 1;
-      viewptr->selbottom = y + ht - 1;
+      currlayer->selleft = x;
+      currlayer->seltop = y;
+      currlayer->selright = x + wd - 1;
+      currlayer->selbottom = y + ht - 1;
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad select call: arg must be [] or [x,y,wd,ht].");
       return NULL;
@@ -1982,9 +1992,9 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
 
    PyObject *outlist = PyList_New(0);
 
-   if (!curralgo->isEmpty()) {
+   if (!currlayer->algo->isEmpty()) {
       bigint top, left, bottom, right;
-      curralgo->findedges(&top, &left, &bottom, &right);
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getrect call: pattern is too big.");
          Py_DECREF(outlist);
@@ -2014,16 +2024,16 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
    PyObject *outlist = PyList_New(0);
 
    if (viewptr->SelectionExists()) {
-      if ( viewptr->OutsideLimits(viewptr->seltop, viewptr->selleft,
-                                  viewptr->selbottom, viewptr->selright) ) {
+      if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
+                                  currlayer->selbottom, currlayer->selright) ) {
          PyErr_SetString(PyExc_RuntimeError, "Bad getselrect call: selection is too big.");
          Py_DECREF(outlist);
          return NULL;
       }
-      long x = viewptr->selleft.toint();
-      long y = viewptr->seltop.toint();
-      long wd = viewptr->selright.toint() - x + 1;
-      long ht = viewptr->selbottom.toint() - y + 1;
+      long x = currlayer->selleft.toint();
+      long y = currlayer->seltop.toint();
+      long wd = currlayer->selright.toint() - x + 1;
+      long ht = currlayer->selbottom.toint() - y + 1;
         
       AddCell(outlist, x, y);
       AddCell(outlist, wd, ht);
@@ -2042,8 +2052,8 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
 
-   curralgo->setcell(x, y, state);
-   curralgo->endofpattern();
+   currlayer->algo->setcell(x, y, state);
+   currlayer->algo->endofpattern();
    currlayer->savestart = true;
    DoAutoUpdate();
    
@@ -2061,7 +2071,7 @@ static PyObject *golly_getcell(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "ii", &x, &y)) return NULL;
 
-   return Py_BuildValue("i", curralgo->getcell(x, y));
+   return Py_BuildValue("i", currlayer->algo->getcell(x, y));
 }
 
 // -----------------------------------------------------------------------------
@@ -2074,7 +2084,7 @@ static PyObject *golly_setcursor(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "i", &newindex)) return NULL;
 
-   int oldindex = CursorToIndex(currcurs);
+   int oldindex = CursorToIndex(currlayer->curs);
    wxCursor* curs = IndexToCursor(newindex);
    if (curs) {
       viewptr->SetCursorMode(curs);
@@ -2098,7 +2108,7 @@ static PyObject *golly_getcursor(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", CursorToIndex(currcurs));
+   return Py_BuildValue("i", CursorToIndex(currlayer->curs));
 }
 
 // -----------------------------------------------------------------------------
@@ -2622,11 +2632,6 @@ bool IsScript(const wxString& filename)
 
 void PassKeyToScript(int key)
 {
-   // allow golly_getkey to see escape by having a global abortkey which is
-   // set to chr(27) at the start of each script but could be changed by
-   // setabort(ch); setabort("") would disable any escape key???
-   // too dangerous???
-   
    if (key == WXK_ESCAPE) {
       AbortScript();
    } else {

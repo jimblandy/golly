@@ -346,12 +346,12 @@ wxgolly.h wxview.h wxmain.h
 $(OBJDIR)/wxprefs.obj: wxprefs.cpp wxprefs.h \
 Help/about.html \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h
+wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp
 
 $(OBJDIR)/wxrule.obj: wxrule.cpp wxrule.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
-wxgolly.h wxutils.h wxprefs.h
+wxgolly.h wxutils.h wxprefs.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrule.cpp
 
 $(OBJDIR)/wxinfo.obj: wxinfo.cpp wxinfo.h \
@@ -365,7 +365,7 @@ wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h
 
 $(OBJDIR)/wxstatus.obj: wxstatus.cpp wxstatus.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxstatus.cpp
 
 $(OBJDIR)/wxview.obj: wxview.cpp wxview.h \
@@ -409,7 +409,7 @@ wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h w
 
 $(OBJDIR)/wxlayer.obj: wxlayer.cpp wxlayer.h \
 lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h
+wxgolly.h wxutils.h wxprefs.h wxmain.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxlayer.cpp
 
 $(OBJDIR)/wxmain.obj: wxmain.cpp wxmain.h \

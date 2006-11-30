@@ -291,14 +291,14 @@ void MainFrame::UpdateToolBar(bool active)
       tbar->EnableTool(ID_INFO,           active && !currlayer->currfile.IsEmpty());
 
       // call ToggleTool for tools added via AddCheckTool or AddRadioTool
-      tbar->ToggleTool(ID_HASH,           hashing);
+      tbar->ToggleTool(ID_HASH,           currlayer->hash);
       tbar->ToggleTool(ID_SHOW_PATTERNS,  showpatterns);
       tbar->ToggleTool(ID_SHOW_SCRIPTS,   showscripts);
-      tbar->ToggleTool(ID_DRAW,           currcurs == curs_pencil);
-      tbar->ToggleTool(ID_SELECT,         currcurs == curs_cross);
-      tbar->ToggleTool(ID_MOVE,           currcurs == curs_hand);
-      tbar->ToggleTool(ID_ZOOMIN,         currcurs == curs_zoomin);
-      tbar->ToggleTool(ID_ZOOMOUT,        currcurs == curs_zoomout);
+      tbar->ToggleTool(ID_DRAW,           currlayer->curs == curs_pencil);
+      tbar->ToggleTool(ID_SELECT,         currlayer->curs == curs_cross);
+      tbar->ToggleTool(ID_MOVE,           currlayer->curs == curs_hand);
+      tbar->ToggleTool(ID_ZOOMIN,         currlayer->curs == curs_zoomin);
+      tbar->ToggleTool(ID_ZOOMOUT,        currlayer->curs == curs_zoomout);
    }
 }
 
@@ -403,21 +403,21 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_NEXT,      active && !busy);
       mbar->Enable(ID_STEP,      active && !busy);
       mbar->Enable(ID_RESET,     active && !busy &&
-                                 curralgo->getGeneration() > currlayer->startgen);
+                                 currlayer->algo->getGeneration() > currlayer->startgen);
       mbar->Enable(ID_FASTER,    active);
-      mbar->Enable(ID_SLOWER,    active && warp > minwarp);
+      mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
       mbar->Enable(ID_HASH,      active && !busy);
-      mbar->Enable(ID_HYPER,     active && curralgo->hyperCapable());
-      mbar->Enable(ID_HINFO,     active && curralgo->hyperCapable());
+      mbar->Enable(ID_HYPER,     active && currlayer->algo->hyperCapable());
+      mbar->Enable(ID_HINFO,     active && currlayer->algo->hyperCapable());
       mbar->Enable(ID_RULE,      active && !busy);
 
       mbar->Enable(ID_FULL,      active);
       mbar->Enable(ID_FIT,       active);
       mbar->Enable(ID_FIT_SEL,   active && selexists);
       mbar->Enable(ID_MIDDLE,    active);
-      mbar->Enable(ID_RESTORE00, active && (viewptr->originx != bigint::zero ||
-                                            viewptr->originy != bigint::zero));
+      mbar->Enable(ID_RESTORE00, active && (currlayer->originx != bigint::zero ||
+                                            currlayer->originy != bigint::zero));
       mbar->Enable(wxID_ZOOM_IN, active && viewptr->GetMag() < MAX_MAG);
       mbar->Enable(wxID_ZOOM_OUT, active);
       mbar->Enable(ID_SET_SCALE, active);
@@ -450,7 +450,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SHOW_PATTERNS, showpatterns);
       mbar->Check(ID_SHOW_SCRIPTS,  showscripts);
       mbar->Check(ID_AUTO,       autofit);
-      mbar->Check(ID_HASH,       hashing);
+      mbar->Check(ID_HASH,       currlayer->hash);
       mbar->Check(ID_HYPER,      hyperspeed);
       mbar->Check(ID_HINFO,      hlifealgo::getVerbose() != 0);
       mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
@@ -466,11 +466,11 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_PM_COPY,    pmode == Copy);
       mbar->Check(ID_PM_OR,      pmode == Or);
       mbar->Check(ID_PM_XOR,     pmode == Xor);
-      mbar->Check(ID_DRAW,       currcurs == curs_pencil);
-      mbar->Check(ID_SELECT,     currcurs == curs_cross);
-      mbar->Check(ID_MOVE,       currcurs == curs_hand);
-      mbar->Check(ID_ZOOMIN,     currcurs == curs_zoomin);
-      mbar->Check(ID_ZOOMOUT,    currcurs == curs_zoomout);
+      mbar->Check(ID_DRAW,       currlayer->curs == curs_pencil);
+      mbar->Check(ID_SELECT,     currlayer->curs == curs_cross);
+      mbar->Check(ID_MOVE,       currlayer->curs == curs_hand);
+      mbar->Check(ID_ZOOMIN,     currlayer->curs == curs_zoomin);
+      mbar->Check(ID_ZOOMOUT,    currlayer->curs == curs_zoomout);
       mbar->Check(ID_SCALE_1,    viewptr->GetMag() == 0);
       mbar->Check(ID_SCALE_2,    viewptr->GetMag() == 1);
       mbar->Check(ID_SCALE_4,    viewptr->GetMag() == 2);
@@ -614,7 +614,7 @@ void MainFrame::ResizeSplitWindow()
                      ht > statusptr->statusht ? ht - statusptr->statusht : 0);
 
    // wxSplitterWindow automatically resizes left and right panes
-   // but we still need to resize viewport (ie. currview)
+   // but we still need to resize viewport
    viewptr->SetViewSize();
 
    #ifdef __WXGTK__
@@ -1781,6 +1781,9 @@ MainFrame::MainFrame()
       viewptr->SetDropTarget(new DnDFile());
    #endif
    
+   // create the initial layer
+   AddLayer();
+   
    // these seemingly redundant steps are needed to avoid problems on Windows
    splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
    splitwin->SetSashPosition(dirwinwd);
@@ -1798,13 +1801,10 @@ MainFrame::MainFrame()
    if (showscripts) splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
 
    InitDrawingData();      // do this after viewport size has been set
-   
-   AddLayer();             // create the initial layer
 
    generating = false;     // not generating pattern
    fullscreen = false;     // not in full screen mode
    showbanner = true;      // avoid first file clearing banner message
-   warp = 0;               // initial speed setting
 }
 
 // -----------------------------------------------------------------------------

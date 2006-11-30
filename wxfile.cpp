@@ -85,7 +85,7 @@ void MainFrame::SetWindowTitle(const wxString& filename)
    }
 
    wxString wtitle;
-   wxString rule = GetRuleName( wxString(curralgo->getrule(),wxConvLocal) );
+   wxString rule = GetRuleName( wxString(currlayer->algo->getrule(),wxConvLocal) );
    #ifdef __WXMAC__
       wtitle.Printf(_("%s [%s]"), currlayer->currname.c_str(), rule.c_str());
    #else
@@ -99,21 +99,21 @@ void MainFrame::SetWindowTitle(const wxString& filename)
 
 void MainFrame::SetGenIncrement()
 {
-   if (warp > 0) {
+   if (currlayer->warp > 0) {
       bigint inc = 1;
       // WARNING: if this code changes then also change StatusBar::DrawStatusBar
-      if (hashing) {
+      if (currlayer->hash) {
          // set inc to hbasestep^warp
-         int i = warp;
+         int i = currlayer->warp;
          while (i > 0) { inc.mul_smallint(hbasestep); i--; }
       } else {
          // set inc to qbasestep^warp
-         int i = warp;
+         int i = currlayer->warp;
          while (i > 0) { inc.mul_smallint(qbasestep); i--; }
       }
-      curralgo->setIncrement(inc);
+      currlayer->algo->setIncrement(inc);
    } else {
-      curralgo->setIncrement(1);
+      currlayer->algo->setIncrement(1);
    }
 }
 
@@ -122,17 +122,17 @@ void MainFrame::SetGenIncrement()
 void MainFrame::CreateUniverse()
 {
    // first delete old universe if it exists
-   if (curralgo) delete curralgo;
+   if (currlayer->algo) delete currlayer->algo;
 
-   if (hashing) {
-      curralgo = new hlifealgo();
-      curralgo->setMaxMemory(maxhashmem);
+   if (currlayer->hash) {
+      currlayer->algo = new hlifealgo();
+      currlayer->algo->setMaxMemory(maxhashmem);
    } else {
-      curralgo = new qlifealgo();
+      currlayer->algo = new qlifealgo();
    }
 
-   // curralgo->step() will call wx_poll::checkevents()
-   curralgo->setpoll(wxGetApp().Poller());
+   // currlayer->algo->step() will call wx_poll::checkevents()
+   currlayer->algo->setpoll(wxGetApp().Poller());
 
    // increment has been reset to 1 but that's probably not always desirable
    // so set increment using current warp value
@@ -141,8 +141,6 @@ void MainFrame::CreateUniverse()
 
 // -----------------------------------------------------------------------------
 
-const wxString B0message = _("Hashing has been turned off due to B0-not-S8 rule.");
-
 void MainFrame::NewPattern(const wxString& title)
 {
    if (generating) return;
@@ -150,33 +148,23 @@ void MainFrame::NewPattern(const wxString& title)
    currlayer->savestart = false;
    currlayer->currfile.Clear();
    currlayer->startgen = 0;
-   warp = 0;
+   currlayer->warp = 0;
    CreateUniverse();
 
-   if (initrule[0]) {
-      // this is the first call of NewPattern when app starts
-      const char *err = curralgo->setrule(initrule);
-      if (err) Warning(wxString(err,wxConvLocal));
-      if (global_liferules.hasB0notS8 && hashing) {
-         hashing = false;
-         statusptr->SetMessage(B0message);
-         CreateUniverse();
-      }
-      initrule[0] = 0;        // don't use it again
-   }
+   // rule doesn't change so no need to call setrule
 
    if (newremovesel) viewptr->NoSelection();
-   if (newcurs) currcurs = newcurs;
+   if (newcurs) currlayer->curs = newcurs;
    viewptr->SetPosMag(bigint::zero, bigint::zero, newmag);
 
    // best to restore true origin
-   if (viewptr->originx != bigint::zero || viewptr->originy != bigint::zero) {
-      viewptr->originy = 0;
-      viewptr->originx = 0;
+   if (currlayer->originx != bigint::zero || currlayer->originy != bigint::zero) {
+      currlayer->originx = 0;
+      currlayer->originy = 0;
       statusptr->SetMessage(origin_restored);
    }
 
-   // window title will also show curralgo->getrule()
+   // window title will also show current rule
    SetWindowTitle(title);
 
    UpdateEverything();
@@ -196,7 +184,7 @@ bool MainFrame::LoadImage()
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
       if ( image.LoadFile(currlayer->currfile) ) {
-         curralgo->setrule("B3/S23");
+         currlayer->algo->setrule("B3/S23");
          
          unsigned char maskr, maskg, maskb;
          bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
@@ -214,11 +202,11 @@ bool MainFrame::LoadImage()
                   // treat transparent pixel as a dead cell
                } else if ( r < 255 || g < 255 || b < 255 ) {
                   // treat non-white pixel as a live cell
-                  curralgo->setcell(x, y, 1);
+                  currlayer->algo->setcell(x, y, 1);
                }
             }
          
-         curralgo->endofpattern();
+         currlayer->algo->endofpattern();
       } else {
          Warning(_("Could not load image from file!"));
       }
@@ -232,11 +220,9 @@ bool MainFrame::LoadImage()
 
 void MainFrame::LoadPattern(const wxString& newtitle)
 {
-   // don't use initrule in future NewPattern calls
-   initrule[0] = 0;
    if (!newtitle.IsEmpty()) {
       currlayer->savestart = false;
-      warp = 0;
+      currlayer->warp = 0;
       if (GetInfoFrame()) {
          // comments will no longer be relevant so close info window
          GetInfoFrame()->Close(true);
@@ -263,21 +249,21 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    if (LoadImage()) {
       viewptr->nopattupdate = false;
    } else {
-      const char *err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *curralgo);
-      if (err && strcmp(err,cannotreadhash) == 0 && !hashing) {
-         hashing = true;
+      const char *err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
+      if (err && strcmp(err,cannotreadhash) == 0 && !currlayer->hash) {
+         currlayer->hash = true;
          statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *curralgo);
-      } else if (global_liferules.hasB0notS8 && hashing && !newtitle.IsEmpty()) {
-         hashing = false;
-         statusptr->SetMessage(B0message);
+         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
+      } else if (global_liferules.hasB0notS8 && currlayer->hash && !newtitle.IsEmpty()) {
+         currlayer->hash = false;
+         statusptr->SetMessage(_("Hashing has been turned off due to B0-not-S8 rule."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *curralgo);
+         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
       }
       viewptr->nopattupdate = false;
       if (err) Warning(wxString(err,wxConvLocal));
@@ -287,9 +273,9 @@ void MainFrame::LoadPattern(const wxString& newtitle)
       // show full window title after readpattern has set rule
       SetWindowTitle(newtitle);
       if (openremovesel) viewptr->NoSelection();
-      if (opencurs) currcurs = opencurs;
+      if (opencurs) currlayer->curs = opencurs;
       viewptr->FitInView(1);
-      currlayer->startgen = curralgo->getGeneration();     // might be > 0
+      currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
       UpdateEverything();
       showbanner = false;
    } else {
@@ -675,10 +661,10 @@ const char *MainFrame::WritePattern(const wxString& path,
    #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
       // use decomposed UTF8 so fopen will work
       const char *err = writepattern(path.fn_str(),
-                        *curralgo, format, top, left, bottom, right);
+                        *currlayer->algo, format, top, left, bottom, right);
    #else
       const char *err = writepattern(path.mb_str(wxConvLocal),
-                        *curralgo, format, top, left, bottom, right);
+                        *currlayer->algo, format, top, left, bottom, right);
    #endif
    return err;
 }
@@ -697,7 +683,7 @@ void MainFrame::SavePattern()
    
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
-   curralgo->findedges(&top, &left, &bottom, &right);
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
    
    wxString RLEstring;
    if (savexrle)
@@ -705,7 +691,7 @@ void MainFrame::SavePattern()
    else
       RLEstring = _("RLE (*.rle)|*.rle");
    
-   if (hashing) {
+   if (currlayer->hash) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          // too big so only allow saving as MC file
          itop = ileft = ibottom = iright = 0;
@@ -778,7 +764,7 @@ void MainFrame::SavePattern()
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
          statusptr->DisplayMessage(_("Pattern saved in file."));
-         if ( curralgo->getGeneration() == currlayer->startgen ) {
+         if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
             // no need to save starting pattern (ResetPattern can load currfile)
             currlayer->savestart = false;
          }
@@ -794,7 +780,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    // check that given format is valid and allowed
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
-   curralgo->findedges(&top, &left, &bottom, &right);
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
    
    pattern_format pattfmt;
    if ( format.IsSameAs(wxT("rle"),false) ) {
@@ -807,7 +793,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
       ibottom = bottom.toint();
       iright = right.toint();
    } else if ( format.IsSameAs(wxT("mc"),false) ) {
-      if (!hashing) {
+      if (!currlayer->hash) {
          return _("Macrocell format is only allowed if hashing.");
       }
       pattfmt = MC_format;
@@ -822,7 +808,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    SetWindowTitle( GetBaseName(path) );
    const char *err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
-      if ( curralgo->getGeneration() == currlayer->startgen ) {
+      if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
          // no need to save starting pattern (ResetPattern can load currfile)
          currlayer->savestart = false;
       }
@@ -935,11 +921,11 @@ void MainFrame::SetMinimumWarp()
 void MainFrame::UpdateWarp()
 {
    SetMinimumWarp();
-   if (warp < minwarp) {
-      warp = minwarp;
-      curralgo->setIncrement(1);    // warp is <= 0
-   } else if (warp > 0) {
-      SetGenIncrement();            // in case qbasestep/hbasestep changed
+   if (currlayer->warp < minwarp) {
+      currlayer->warp = minwarp;
+      currlayer->algo->setIncrement(1);   // warp is <= 0
+   } else if (currlayer->warp > 0) {
+      SetGenIncrement();                  // in case qbasestep/hbasestep changed
    }
 }
 
@@ -975,12 +961,13 @@ void MainFrame::ShowPrefsDialog()
       
       // we currently don't allow user to edit prefs while generating,
       // but in case that changes:
-      if (generating && warp < 0) {
-         whentosee = 0;                // best to see immediately
+      if (generating && currlayer->warp < 0) {
+         whentosee = 0;    // best to see immediately
       }
       
       // maxhashmem might have changed
-      if (hashing) curralgo->setMaxMemory(maxhashmem);
+      //!!! change all layers???
+      if (currlayer->hash) currlayer->algo->setMaxMemory(maxhashmem);
       
       SavePrefs();
       UpdateEverything();

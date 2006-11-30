@@ -24,27 +24,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXLAYER_H_
 #define _WXLAYER_H_
 
-// Golly supports multiple layers.  Each layer is a separate universe
-// with its own algorithm, viewport, rule, window title, etc.
-
 class bigint;
 class lifealgo;
 class viewport;
+
+// Golly supports multiple layers.  Each layer is a separate universe
+// with its own algorithm, rule, viewport, window title, selection, etc.
 
 class Layer {
 public:
    Layer();
    ~Layer();
 
-   lifealgo* lalgo;           // this layer's universe
-   bool lhash;                // does it use hlifealgo?
-   viewport* lview;           // this layer's viewport
-   wxString lrule;            // this layer's rule
-   wxCursor* lcurs;           // this layer's cursor
-   int lwarp;                 // this layer's speed setting
+   lifealgo* algo;            // this layer's universe
+   bool hash;                 // does it use hlife?
+   viewport* view;            // viewport for displaying patterns
+   wxCursor* curs;            // cursor mode
+   int warp;                  // speed setting
+
+   // WARNING: this layer's rule is only guaranteed to be correct AFTER
+   // switching to another layer, so use global_liferules.getrule() or
+   // currlayer->algo->getrule() rather than currlayer->rule
+   wxString rule;
    
-   // this layer's selection
-   bigint ltop, lleft, lbottom, lright;
+   // selection edges
+   bigint seltop, selbottom, selleft, selright;
+
+   bigint originx;            // X origin offset
+   bigint originy;            // Y origin offset
    
    wxString currfile;         // full path of current pattern file
    wxString currname;         // name seen in window title and Layer menu

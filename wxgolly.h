@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXGOLLY_H_
 
 // need some forward declarations
-class lifealgo;
 class lifepoll;
 class MainFrame;
 class PatternView;
@@ -62,7 +61,6 @@ DECLARE_APP(GollyApp)            // so other files can use wxGetApp
 extern MainFrame *mainptr;       // main window
 extern PatternView *viewptr;     // viewport child window
 extern StatusBar *statusptr;     // status bar child window
-extern lifealgo *curralgo;       // current universe (qlife or hlife)
 extern wxStopWatch *stopwatch;   // global stopwatch (started in OnInit)
 
 #endif

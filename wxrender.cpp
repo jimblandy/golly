@@ -44,13 +44,13 @@ MainFrame::UpdateEverything() or MainFrame::UpdatePatternAndStatus().
 
 DrawView() does the following tasks:
 
-- Calls curralgo->draw() to draw the current pattern.  It passes in
-  renderer, an instance of wx_render (derived from liferender) which
+- Calls currlayer->algo->draw() to draw the current pattern.  It passes
+  in renderer, an instance of wx_render (derived from liferender) which
   has 2 methods: killrect() draws a rectangular area of dead cells,
   and blit() draws a monochrome bitmap with at least one live cell.
   
-  Note that curralgo->draw() does all the hard work of figuring out
-  which parts of the viewport are dead and building all the bitmaps
+  Note that currlayer->algo->draw() does all the hard work of figuring
+  out which parts of the viewport are dead and building all the bitmaps
   for the live parts.  The bitmaps contain suitably shrunken images
   when the scale is < 1:1 (ie. mag < 0).  At scales 1:2 and above,
   DrawStretchedBitmap() is called from wx_render::blit().
@@ -97,7 +97,7 @@ Other points of interest:
   - multiple layers are being displayed.
 
 - Change the "#if 0" to "#if 1" in wx_render::killrect() to see randomly
-  colored rects.  Gives an insight into how curralgo->draw() works.
+  colored rects.  Gives an insight into how lifealgo::draw() works.
 
 - The viewport window is actually the right-hand pane of a wxSplitWindow.
   The left-hand pane is a directory control (wxGenericDirCtrl) that
@@ -122,8 +122,8 @@ Other points of interest:
 #include "wxutils.h"       // for Warning, Fatal, FillRect
 #include "wxprefs.h"       // for swapcolors, showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
-#include "wxview.h"        // for currview, viewptr->...
-#include "wxlayer.h"       // numlayers, GetLayer, etc
+#include "wxview.h"        // for viewptr->...
+#include "wxlayer.h"       // currlayer, GetLayer, etc
 #include "wxrender.h"
 
 // -----------------------------------------------------------------------------
@@ -500,15 +500,15 @@ void CheckPasteImage()
    // or viewport size changed or cell colors changed or plocation changed
    if ( prectwd != viewptr->pasterect.width ||
         prectht != viewptr->pasterect.height ||
-        cvwd != currview->getwidth() ||
-        cvht != currview->getheight() ||
+        cvwd != currlayer->view->getwidth() ||
+        cvht != currlayer->view->getheight() ||
         pasteloc != plocation
       ) {
       prectwd = viewptr->pasterect.width;
       prectht = viewptr->pasterect.height;
-      pastemag = currview->getmag();
-      cvwd = currview->getwidth();
-      cvht = currview->getheight();
+      pastemag = currlayer->view->getmag();
+      cvwd = currlayer->view->getwidth();
+      cvht = currlayer->view->getheight();
       pasteloc = plocation;
 
       // calculate size of paste image; we could just set it to pasterect size
@@ -529,11 +529,13 @@ void CheckPasteImage()
       }
       
       wxRect cellbox = pastebbox;
-      if (pastewd > currview->getwidth() || pasteht > currview->getheight()) {
+      if (pastewd > currlayer->view->getwidth() || pasteht > currlayer->view->getheight()) {
          if (plocation == Middle) {
             // temporary viewport may need to be TWICE size of current viewport
-            if (pastewd > 2 * currview->getwidth()) pastewd = 2 * currview->getwidth();
-            if (pasteht > 2 * currview->getheight()) pasteht = 2 * currview->getheight();
+            if (pastewd > 2 * currlayer->view->getwidth())
+               pastewd = 2 * currlayer->view->getwidth();
+            if (pasteht > 2 * currlayer->view->getheight())
+               pasteht = 2 * currlayer->view->getheight();
             if (pastemag > 0) {
                // make sure pastewd/ht don't have partial cells
                int cellsize = 1 << pastemag;
@@ -567,8 +569,10 @@ void CheckPasteImage()
          } else {
             // plocation is at a corner of pasterect so temporary viewport
             // may need to be size of current viewport
-            if (pastewd > currview->getwidth()) pastewd = currview->getwidth();
-            if (pasteht > currview->getheight()) pasteht = currview->getheight();
+            if (pastewd > currlayer->view->getwidth())
+               pastewd = currlayer->view->getwidth();
+            if (pasteht > currlayer->view->getheight())
+               pasteht = currlayer->view->getheight();
             if (pastemag > 0) {
                // make sure pastewd/ht don't have partial cells
                int cellsize = 1 << pastemag;
@@ -678,7 +682,7 @@ void DrawPasteImage(wxDC &dc)
       memdc.SelectObject(*pastebitmap);
       wxRect r = viewptr->pasterect;
       if (r.width > pimagewd || r.height > pimageht) {
-         // paste image is smaller than pasterect (which can't fit in currview)
+         // paste image is smaller than pasterect (which can't fit in viewport)
          // so shift image depending on plocation
          switch (plocation) {
             case TopLeft:
@@ -718,8 +722,10 @@ void DrawPasteImage(wxDC &dc)
    wxRect r = viewptr->pasterect;
    if (r.x < 0) { int diff = -1 - r.x;  r.x = -1;  r.width -= diff; }
    if (r.y < 0) { int diff = -1 - r.y;  r.y = -1;  r.height -= diff; }
-   if (r.width > currview->getwidth()) r.width = currview->getwidth() + 2;
-   if (r.height > currview->getheight()) r.height = currview->getheight() + 2;
+   if (r.width > currlayer->view->getwidth())
+      r.width = currlayer->view->getwidth() + 2;
+   if (r.height > currlayer->view->getheight())
+      r.height = currlayer->view->getheight() + 2;
    dc.DrawRectangle(r);
    
    if (r.y > 0) {
@@ -742,20 +748,20 @@ void DrawPasteImage(wxDC &dc)
 
 void DrawGridLines(wxDC &dc, wxRect &r)
 {
-   int cellsize = 1 << currview->getmag();
+   int cellsize = 1 << currlayer->view->getmag();
    int h, v, i, topbold, leftbold;
 
    if (showboldlines) {
       // ensure that origin cell stays next to bold lines;
       // ie. bold lines scroll when pattern is scrolled
-      pair<bigint, bigint> lefttop = currview->at(0, 0);
+      pair<bigint, bigint> lefttop = currlayer->view->at(0, 0);
       leftbold = lefttop.first.mod_smallint(boldspacing);
       topbold = lefttop.second.mod_smallint(boldspacing);
-      if (viewptr->originx != bigint::zero) {
-         leftbold -= viewptr->originx.mod_smallint(boldspacing);
+      if (currlayer->originx != bigint::zero) {
+         leftbold -= currlayer->originx.mod_smallint(boldspacing);
       }
-      if (viewptr->originy != bigint::zero) {
-         topbold -= viewptr->originy.mod_smallint(boldspacing);
+      if (currlayer->originy != bigint::zero) {
+         topbold -= currlayer->originy.mod_smallint(boldspacing);
       }
       if (mathcoords) topbold--;   // show origin cell above bold line
    } else {
@@ -812,7 +818,7 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
 // -----------------------------------------------------------------------------
 
-void DrawOneLayer(wxDC &dc, int index)
+void DrawOneLayer(wxDC &dc, int index, viewport *thisview)
 {
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
@@ -828,7 +834,7 @@ void DrawOneLayer(wxDC &dc, int index)
    #endif
    
    currdc = &layerdc;
-   curralgo->draw(*currview, renderer);
+   currlayer->algo->draw(*thisview, renderer);
    
    // access pixel data and make all dead pixels 100% transparent
    // and all live pixels slightly transparent
@@ -901,9 +907,10 @@ void DrawOneLayer(wxDC &dc, int index)
 void DrawOtherLayers(wxDC &dc)
 {
    // check if layerbitmap needs to be created or resized
-   if ( layerwd != currview->getwidth() || layerht != currview->getheight() ) {
-      layerwd = currview->getwidth();
-      layerht = currview->getheight();
+   if ( layerwd != currlayer->view->getwidth() ||
+        layerht != currlayer->view->getheight() ) {
+      layerwd = currlayer->view->getwidth();
+      layerht = currlayer->view->getheight();
       if (layerbitmap) delete layerbitmap;
       // create a bitmap of depth 32 so it has room for alpha channel
       layerbitmap = new wxBitmap(layerwd, layerht, 32);
@@ -922,34 +929,23 @@ void DrawOtherLayers(wxDC &dc)
    
    // draw patterns in layers 1..numlayers-1
    for ( int i = 1; i < numlayers; i++ ) {
-      lifealgo *savealgo = curralgo;
-      Layer *layer = GetLayer(i);
+      Layer *savelayer = currlayer;
+      currlayer = GetLayer(i);
 
-      curralgo = layer->lalgo;
-      if ( !curralgo->isEmpty() ) DrawOneLayer(dc, i);
+      if ( !currlayer->algo->isEmpty() ) {
+         // draw layer using the real current layer's viewport
+         DrawOneLayer(dc, i, savelayer->view);
+      }
       
-      // temporarily switch to this layer's selection and draw selection
-      bigint savet, savel, saveb, saver;
-      savet = viewptr->seltop;
-      savel = viewptr->selleft;
-      saveb = viewptr->selbottom;
-      saver = viewptr->selright;
-      viewptr->seltop = layer->ltop;
-      viewptr->selleft = layer->lleft;
-      viewptr->selbottom = layer->lbottom;
-      viewptr->selright = layer->lright;
+      // draw this layer's selection if necessary
       wxRect r;
       if ( viewptr->SelectionVisible(&r) ) {
          CheckSelectionImage(layerwd, layerht);
          DrawSelection(dc, r);
       }
       
-      // restore curralgo and selection
-      curralgo = savealgo;
-      viewptr->seltop = savet;
-      viewptr->selleft = savel;
-      viewptr->selbottom = saveb;
-      viewptr->selright = saver;
+      // restore currlayer
+      currlayer = savelayer;
    }
    
    showgridlines = saveshow;
@@ -960,25 +956,19 @@ void DrawOtherLayers(wxDC &dc)
 void DrawView(wxDC &dc)
 {
    wxRect r;
-   lifealgo *savealgo = NULL;
-   bigint savet, savel, saveb, saver;
+   Layer *savelayer = NULL;
+   viewport *saveview0 = NULL;
    int colorindex;
    
    if ( numlayers > 1 && drawlayers ) {
-      // draw all layers using current layer's viewport, starting with layer 0
-      savealgo = curralgo;
-      savet = viewptr->seltop;
-      savel = viewptr->selleft;
-      saveb = viewptr->selbottom;
-      saver = viewptr->selright;
+      // draw all layers starting with layer 0 but using current layer's viewport
+      savelayer = currlayer;
       if ( currindex != 0 ) {
-         // change curralgo and selection to layer 0
-         Layer *layer = GetLayer(0);
-         curralgo = layer->lalgo;
-         viewptr->seltop = layer->ltop;
-         viewptr->selleft = layer->lleft;
-         viewptr->selbottom = layer->lbottom;
-         viewptr->selright = layer->lright;
+         viewport *currentview = currlayer->view;
+         // change currlayer to layer 0
+         currlayer = GetLayer(0);
+         saveview0 = currlayer->view;
+         currlayer->view = currentview;
       }
       colorindex = 0;
    } else {
@@ -988,7 +978,7 @@ void DrawView(wxDC &dc)
 
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
-      r = wxRect(0, 0, currview->getwidth(), currview->getheight());
+      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
       FillRect(dc, r, swapcolors ? *livebrush[colorindex] : *deadbrush);
    } else {
       // set foreground and background colors for DrawBitmap calls
@@ -1008,28 +998,28 @@ void DrawView(wxDC &dc)
       killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
       // draw pattern using a sequence of blit and killrect calls
       currdc = &dc;
-      currwd = currview->getwidth();
-      currht = currview->getheight();
-      curralgo->draw(*currview, renderer);
+      currwd = currlayer->view->getwidth();
+      currht = currlayer->view->getheight();
+      currlayer->algo->draw(*currlayer->view, renderer);
    }
 
    if ( viewptr->GridVisible() ) {
-      r = wxRect(0, 0, currview->getwidth(), currview->getheight());
+      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
       DrawGridLines(dc, r);
    }
    
    if ( viewptr->SelectionVisible(&r) ) {
-      CheckSelectionImage(currview->getwidth(), currview->getheight());
+      CheckSelectionImage(currlayer->view->getwidth(), currlayer->view->getheight());
       DrawSelection(dc, r);
    }
    
-   if ( savealgo ) {
-      // must restore curralgo and selection before we call DrawOtherLayers
-      curralgo = savealgo;
-      viewptr->seltop = savet;
-      viewptr->selleft = savel;
-      viewptr->selbottom = saveb;
-      viewptr->selright = saver;
+   if ( savelayer ) {
+      // must restore currlayer before we call DrawOtherLayers
+      currlayer = savelayer;
+      if ( saveview0 ) {
+         // restore layer 0's viewport
+         GetLayer(0)->view = saveview0;
+      }
       if ( !viewptr->nopattupdate ) {
          // draw layers 1, 2, ... numlayers-1
          DrawOtherLayers(dc);
