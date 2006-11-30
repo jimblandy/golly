@@ -68,7 +68,8 @@ extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
 extern bool swapcolors;          // swap colors used for cell states?
 extern bool buffered;            // use wxWdgets buffering to avoid flicker?
-extern int randomfill;           // random fill percentage (1..100)
+extern int randomfill;           // random fill percentage
+extern int opacity;              // percentage opacity of live cells in overlays
 extern int maxhashmem;           // maximum hash memory (in megabytes)
 extern int mingridmag;           // minimum mag to draw grid lines
 extern int boldspacing;          // spacing of bold grid lines

@@ -56,7 +56,7 @@ wxString oldrule;             // rule string in old layer
 
 void SaveHashAndRule()
 {
-   // set oldhash and oldrule for use in LayerHasChanged
+   // set oldhash and oldrule for use in CurrentLayerChanged
    oldhash = currlayer->hash;
    oldrule = wxString(global_liferules.getrule(), wxConvLocal);
    
@@ -66,7 +66,7 @@ void SaveHashAndRule()
 
 // -----------------------------------------------------------------------------
 
-void LayerHasChanged()
+void CurrentLayerChanged()
 {
    // need to update global rule table if the hash setting has changed
    // or if the current rule has changed
@@ -115,7 +115,7 @@ void AddLayer()
       for (int i = currindex + 1; i < numlayers; i++)
          mainptr->UpdateLayerItem(i);
       
-      LayerHasChanged();
+      CurrentLayerChanged();
    }
 }
 
@@ -144,7 +144,7 @@ void DeleteLayer()
    for (int i = currindex + 1; i < numlayers; i++)
       mainptr->UpdateLayerItem(i);
    
-   LayerHasChanged();
+   CurrentLayerChanged();
 }
 
 // -----------------------------------------------------------------------------
@@ -191,7 +191,7 @@ void SetLayer(int index)
    SaveHashAndRule();
    currindex = index;
    currlayer = layer[currindex];
-   LayerHasChanged();
+   CurrentLayerChanged();
 }
 
 // -----------------------------------------------------------------------------
@@ -319,7 +319,7 @@ Layer::Layer()
    } else {
       // adding a new layer after currlayer (see AddLayer)
 
-      // inherit current universe type
+      // inherit current universe type and create empty universe
       hash = currlayer->hash;
       if (hash) {
          algo = new hlifealgo();
@@ -329,7 +329,7 @@ Layer::Layer()
       }
       algo->setpoll(wxGetApp().Poller());
       
-      // inherit current rule (need to set rule for LayerHasChanged)
+      // inherit current rule (need to set rule for CurrentLayerChanged)
       rule = wxString(global_liferules.getrule(), wxConvLocal);
       
       // inherit current viewport's size, scale and location

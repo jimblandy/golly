@@ -940,6 +940,15 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
          DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "opacity") == 0) {
+      oldval = opacity;
+      if (newval < 1) newval = 1;
+      if (newval > 100) newval = 100;
+      if (oldval != newval) {
+         opacity = newval;
+         DoAutoUpdate();
+      }
+
    } else if (strcmp(optname, "showpatterns") == 0) {
       oldval = showpatterns ? 1 : 0;
       if (oldval != newval) {
@@ -1044,6 +1053,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "hyperspeed") == 0)    optval = hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
+   else if (strcmp(optname, "opacity") == 0)       optval = opacity;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
    else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;

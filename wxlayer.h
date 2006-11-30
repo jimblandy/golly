@@ -66,7 +66,8 @@ public:
    int startwarp;             // starting speed
    int startmag;              // starting scale
    
-   // temporary file used to restore starting pattern or to show comments
+   // temporary file used to restore starting pattern or to show comments;
+   // each layer uses a different file name
    wxString tempstart;
 };
 
@@ -75,15 +76,44 @@ extern int numlayers;         // number of existing layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer
 
-//!!! document these:
 void AddLayer();
+// Add a new layer (with an empty universe) and make it the current layer.
+// The first call creates the initial layer.  Later calls insert the
+// new layer immediately after the old current layer.  The new layer
+// inherits the same type of universe, the same rule, the same scale
+// and location, and the same cursor.
+
 void DeleteLayer();
+// Delete the current layer.  The current layer changes to the previous
+// index, unless layer 0 was deleted, in which case the current layer
+// is the new layer at index 0.
+
 void DeleteOtherLayers();
+// Delete all layers except the current layer.
+
 void MoveLayerDialog();
+// Bring up a dialog that allows the user to move a specified layer
+// to another index which then becomes the current layer.
+
 void SetLayer(int index);
+// Set the current layer using the given index.
+
 void ToggleDrawLayers();
+// Toggle the drawlayers flag.  When true, the rendering code displays
+// all layers using the same scale and location as the current layer.
+// Layer 0 is drawn first (100% opaque), then all the other layers
+// are drawn as overlays using an opacity set by the user.  The colors
+// for the live cells in each layer can be set via the Prefs dialog.
+
 void ToggleGenLayers();
+// Toggle the genlayers flag.  When true, the generating code will
+// temporarily synchronize all layers to use same step increment as
+// the current layer.
+
 void ResizeLayers(int wd, int ht);
+// Resize the viewport in all layers.
+
 Layer* GetLayer(int index);
+// Return a pointer to the layer specified by the given index.
 
 #endif

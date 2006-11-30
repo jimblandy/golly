@@ -837,11 +837,10 @@ void DrawOneLayer(wxDC &dc, int index, viewport *thisview)
    currlayer->algo->draw(*thisview, renderer);
    
    // access pixel data and make all dead pixels 100% transparent
-   // and all live pixels slightly transparent
+   // and all live pixels depend on opacity setting
    wxAlphaPixelData data(*layerbitmap, wxPoint(0,0), wxSize(layerwd,layerht));
    if (data) {
-      const int livealpha = 192;    // make live pixels 75% opaque???
-      //!!! let user adjust opacity???
+      int livealpha = int(2.55 * opacity);   // opacity is 1..100
    
       int deadr = deadrgb->Red();
       int deadg = deadrgb->Green();
@@ -959,6 +958,17 @@ void DrawView(wxDC &dc)
    Layer *savelayer = NULL;
    viewport *saveview0 = NULL;
    int colorindex;
+
+   if ( viewptr->nopattupdate ) {
+      // don't draw incomplete pattern, just fill background
+      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
+      FillRect(dc, r, swapcolors ? *livebrush[0] : *deadbrush);
+
+      // might as well draw grid lines
+      if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
+      
+      return;
+   }
    
    if ( numlayers > 1 && drawlayers ) {
       // draw all layers starting with layer 0 but using current layer's viewport
@@ -976,32 +986,28 @@ void DrawView(wxDC &dc)
       colorindex = currindex;
    }
 
-   if ( viewptr->nopattupdate ) {
-      // don't draw incomplete pattern, just fill background
-      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-      FillRect(dc, r, swapcolors ? *livebrush[colorindex] : *deadbrush);
+   // set foreground and background colors for DrawBitmap calls
+   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
+   // use opposite meaning on Mac/Windows -- sheesh
+   if ( swapcolors ) {
+   #else
+   if ( !swapcolors ) {
+   #endif
+      dc.SetTextForeground(*livergb[colorindex]);
+      dc.SetTextBackground(*deadrgb);
    } else {
-      // set foreground and background colors for DrawBitmap calls
-      #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
-      // use opposite meaning on Mac/Windows -- sheesh
-      if ( swapcolors ) {
-      #else
-      if ( !swapcolors ) {
-      #endif
-         dc.SetTextForeground(*livergb[colorindex]);
-         dc.SetTextBackground(*deadrgb);
-      } else {
-         dc.SetTextForeground(*deadrgb);
-         dc.SetTextBackground(*livergb[colorindex]);
-      }
-      // set brush color used in killrect
-      killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
-      // draw pattern using a sequence of blit and killrect calls
-      currdc = &dc;
-      currwd = currlayer->view->getwidth();
-      currht = currlayer->view->getheight();
-      currlayer->algo->draw(*currlayer->view, renderer);
+      dc.SetTextForeground(*deadrgb);
+      dc.SetTextBackground(*livergb[colorindex]);
    }
+
+   // set brush color used in killrect
+   killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
+
+   // draw pattern using a sequence of blit and killrect calls
+   currdc = &dc;
+   currwd = currlayer->view->getwidth();
+   currht = currlayer->view->getheight();
+   currlayer->algo->draw(*currlayer->view, renderer);
 
    if ( viewptr->GridVisible() ) {
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
@@ -1020,10 +1026,8 @@ void DrawView(wxDC &dc)
          // restore layer 0's viewport
          GetLayer(0)->view = saveview0;
       }
-      if ( !viewptr->nopattupdate ) {
-         // draw layers 1, 2, ... numlayers-1
-         DrawOtherLayers(dc);
-      }
+      // draw layers 1, 2, ... numlayers-1
+      DrawOtherLayers(dc);
    }
    
    if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {

@@ -125,6 +125,7 @@ bool showgridlines = true;       // display grid lines?
 bool swapcolors = false;         // swap colors used for cell states?
 bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 int randomfill = 50;             // random fill percentage (1..100)
+int opacity = 75;                // percentage opacity of live cells in overlays (1..100)
 int maxhashmem = 300;            // maximum hash memory (in megabytes)
 int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
@@ -552,6 +553,7 @@ void SavePrefs()
    fputs("\n", f);
 
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
+   fprintf(f, "opacity=%d (1..100)\n", opacity);
    SaveColor(f, "live0_rgb", livergb[0]);
    SaveColor(f, "live1_rgb", livergb[1]);
    SaveColor(f, "live2_rgb", livergb[2]);
@@ -856,6 +858,11 @@ void GetPrefs()
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
 
+      } else if (strcmp(keyword, "opacity") == 0) {
+         sscanf(value, "%d", &opacity);
+         if (opacity < 1) opacity = 1;
+         if (opacity > 100) opacity = 100;
+
       } else if (strcmp(keyword, "live_rgb") == 0) { GetColor(value, livergb[0]);
       } else if (strcmp(keyword, "live0_rgb") == 0) { GetColor(value, livergb[0]);
       } else if (strcmp(keyword, "live1_rgb") == 0) { GetColor(value, livergb[1]);
@@ -1017,6 +1024,7 @@ public:
    wxPanel* CreateEditPrefs(wxWindow* parent);
    wxPanel* CreateControlPrefs(wxWindow* parent);
    wxPanel* CreateViewPrefs(wxWindow* parent);
+   wxPanel* CreateLayerPrefs(wxWindow* parent);
    wxPanel* CreateColorPrefs(wxWindow* parent);
 
    virtual bool TransferDataFromWindow();    // called when user hits OK
@@ -1032,6 +1040,7 @@ private:
       EDIT_PAGE,
       CONTROL_PAGE,
       VIEW_PAGE,
+      LAYER_PAGE,
       COLOR_PAGE,
       // File prefs
       PREF_NEW_REM_SEL,
@@ -1057,6 +1066,8 @@ private:
       PREF_MIN_GRID_SCALE,
       PREF_MOUSE_WHEEL,
       PREF_THUMB_RANGE,
+      // Layer prefs
+      PREF_OPACITY,
       // Color prefs
       PREF_LIVE_RGB,
       PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
@@ -1184,6 +1195,10 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          } else {
             wxBell();
          }
+      } else if ( currpage == LAYER_PAGE ) {
+         // only 1 spin ctrl on this page
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_OPACITY);
+         if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       }
 
    } else if ( key >= ' ' && key <= '~' ) {
@@ -1222,6 +1237,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxPanel* editPrefs = CreateEditPrefs(notebook);
    wxPanel* ctrlPrefs = CreateControlPrefs(notebook);
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
+   wxPanel* layerPrefs = CreateLayerPrefs(notebook);
    wxPanel* colorPrefs = CreateColorPrefs(notebook);
    
    // AddPage and SetSelection cause OnPageChanging and OnPageChanged to be called
@@ -1232,6 +1248,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    notebook->AddPage(editPrefs, _("Edit"));
    notebook->AddPage(ctrlPrefs, _("Control"));
    notebook->AddPage(viewPrefs, _("View"));
+   notebook->AddPage(layerPrefs, _("Layer"));
    notebook->AddPage(colorPrefs, _("Color"));
 
    // show last selected page
@@ -1727,6 +1744,37 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
+wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   
+   // opacity
+
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   hbox1->Add(new wxStaticText(panel, wxID_STATIC,
+                               _("Percentage opacity when drawing all layers:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+   hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   
+   // init control value
+   spin1->SetRange(1, 100);
+   spin1->SetValue(opacity);
+   spin1->SetSelection(ALL_TEXT);
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
+// -----------------------------------------------------------------------------
+
 void PrefsDialog::AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox)
 {
    wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
@@ -2024,6 +2072,10 @@ bool PrefsDialog::ValidatePage()
       if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, _("Thumb scrolling range")) )
          return false;
 
+   } else if (currpage == LAYER_PAGE) {
+      if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
+         return false;
+
    } else if (currpage == COLOR_PAGE) {
       // no spin controls on this page
    
@@ -2090,6 +2142,9 @@ bool PrefsDialog::TransferDataFromWindow()
    mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);
    mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
+
+   // LAYER_PAGE
+   opacity = GetSpinVal(PREF_OPACITY);
 
    // COLOR_PAGE
    if (color_changed) {
