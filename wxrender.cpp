@@ -112,7 +112,9 @@ Other points of interest:
 #endif
 
 #include "wx/image.h"      // for wxImage
-#include "wx/rawbmp.h"     // for wxAlphaPixelData
+#ifndef __WXX11__
+   #include "wx/rawbmp.h"  // for wxAlphaPixelData
+#endif
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -483,58 +485,53 @@ void DestroyPasteImage()
 
 void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
 {
-   /* //!!! use this code if __WXX11__???
-   // add mask to bitmap
-   #ifdef __WXMSW__
-      // temporarily change depth to avoid bug in wxMSW
-      int d = bitmap->GetDepth();
-      bitmap->SetDepth(1);
+   #ifdef __WXX11__
+      // wxX11 doesn't support alpha channel
+      wxUnusedVar(wd);
+      wxUnusedVar(ht);
+      wxUnusedVar(livealpha);
       bitmap->SetMask( new wxMask(*bitmap,*deadrgb) );
-      bitmap->SetDepth(d);
    #else
-      bitmap->SetMask( new wxMask(*bitmap,*deadrgb) );
-   #endif
-   */
-
-   // access pixels in given bitmap and make all dead pixels 100% transparent
-   // and use given alpha value for all live pixels
-   wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(wd,ht));
-   if (data) {
-      int deadr = deadrgb->Red();
-      int deadg = deadrgb->Green();
-      int deadb = deadrgb->Blue();
-
-      data.UseAlpha();
-      wxAlphaPixelData::Iterator p(data);
-      for ( int y = 0; y < ht; y++ ) {
-         wxAlphaPixelData::Iterator rowStart = p;
-         for ( int x = 0; x < wd; x++ ) {
-            // get pixel color
-            int r = p.Red();
-            int g = p.Green();
-            int b = p.Blue();
-
-            // set alpha value depending on whether pixel is live or dead
-            if (r == deadr && g == deadg && b == deadb) {
-               // make dead pixel 100% transparent
-               p.Red()   = 0;
-               p.Green() = 0;
-               p.Blue()  = 0;
-               p.Alpha() = 0;
-            } else {
-               // live pixel; note that RGB must be premultiplied by alpha
-               p.Red()   = r * livealpha / 256;
-               p.Green() = g * livealpha / 256;
-               p.Blue()  = b * livealpha / 256;
-               p.Alpha() = livealpha;
+      // access pixels in given bitmap and make all dead pixels 100% transparent
+      // and use given alpha value for all live pixels
+      wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(wd,ht));
+      if (data) {
+         int deadr = deadrgb->Red();
+         int deadg = deadrgb->Green();
+         int deadb = deadrgb->Blue();
+   
+         data.UseAlpha();
+         wxAlphaPixelData::Iterator p(data);
+         for ( int y = 0; y < ht; y++ ) {
+            wxAlphaPixelData::Iterator rowStart = p;
+            for ( int x = 0; x < wd; x++ ) {
+               // get pixel color
+               int r = p.Red();
+               int g = p.Green();
+               int b = p.Blue();
+   
+               // set alpha value depending on whether pixel is live or dead
+               if (r == deadr && g == deadg && b == deadb) {
+                  // make dead pixel 100% transparent
+                  p.Red()   = 0;
+                  p.Green() = 0;
+                  p.Blue()  = 0;
+                  p.Alpha() = 0;
+               } else {
+                  // live pixel; note that RGB must be premultiplied by alpha
+                  p.Red()   = r * livealpha / 256;
+                  p.Green() = g * livealpha / 256;
+                  p.Blue()  = b * livealpha / 256;
+                  p.Alpha() = livealpha;
+               }
+   
+               p++;
             }
-
-            p++;
+            p = rowStart;
+            p.OffsetY(data, 1);
          }
-         p = rowStart;
-         p.OffsetY(data, 1);
       }
-   }
+   #endif
 }
 
 // -----------------------------------------------------------------------------
