@@ -664,8 +664,13 @@ void CheckPasteImage()
       if (pastebitmap) delete pastebitmap;
       pimagewd = pastewd;
       pimageht = pasteht;
-      // create a bitmap of depth 32 so it has an alpha channel
-      pastebitmap = new wxBitmap(pimagewd, pimageht, 32);
+      #ifdef __WXX11__
+         // create a bitmap with screen depth
+         pastebitmap = new wxBitmap(pimagewd, pimageht, -1);
+      #else
+         // create a bitmap with depth 32 so it has an alpha channel
+         pastebitmap = new wxBitmap(pimagewd, pimageht, 32);
+      #endif
       
       if (pastebitmap) {
          // create temporary viewport and draw pattern into pastebitmap
@@ -724,8 +729,6 @@ void DrawPasteImage(wxDC &dc)
 {
    if (pastebitmap) {
       // draw paste image
-      wxMemoryDC memdc;
-      memdc.SelectObject(*pastebitmap);
       wxRect r = viewptr->pasterect;
       if (r.width > pimagewd || r.height > pimageht) {
          // paste image is smaller than pasterect (which can't fit in viewport)
@@ -756,7 +759,14 @@ void DrawPasteImage(wxDC &dc)
                break;
          }
       }
-      dc.Blit(r.x, r.y, pimagewd, pimageht, &memdc, 0, 0, wxCOPY, true);
+      #ifdef __WXGTK__
+         // wxGTK Blit doesn't support alpha channel
+         dc.DrawBitmap(*pastebitmap, r.x, r.y, true);
+      #else
+         wxMemoryDC memdc;
+         memdc.SelectObject(*pastebitmap);
+         dc.Blit(r.x, r.y, pimagewd, pimageht, &memdc, 0, 0, wxCOPY, true);
+      #endif
    }
 
    // now overlay border rectangle
@@ -886,7 +896,15 @@ void DrawOneLayer(wxDC &dc, int index, viewport *thisview)
    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
    
    // draw result
-   dc.DrawBitmap(*layerbitmap, 0, 0, true);
+   #ifdef __WXX11__
+      wxMemoryDC memdc;
+      memdc.SelectObject(*layerbitmap);
+      dc.Blit(0, 0, layerwd, layerht, &memdc, 0, 0, wxCOPY, true);
+      // need to delete mask
+      layerbitmap->SetMask(NULL);
+   #else
+      dc.DrawBitmap(*layerbitmap, 0, 0, true);
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -899,8 +917,13 @@ void DrawOtherLayers(wxDC &dc)
       layerwd = currlayer->view->getwidth();
       layerht = currlayer->view->getheight();
       if (layerbitmap) delete layerbitmap;
-      // create a bitmap of depth 32 so it has an alpha channel
-      layerbitmap = new wxBitmap(layerwd, layerht, 32);
+      #ifdef __WXX11__
+         // create a bitmap with screen depth
+         layerbitmap = new wxBitmap(layerwd, layerht, -1);
+      #else
+         // create a bitmap with depth 32 so it has an alpha channel
+         layerbitmap = new wxBitmap(layerwd, layerht, 32);
+      #endif
       if (!layerbitmap) {
          Warning(_("Not enough memory for layer bitmap!"));
          return;
