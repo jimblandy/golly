@@ -14,8 +14,8 @@ do that, building Golly is easy.  Just use the appropriate makefile:
 
    nmake -f makefile-win   (on Windows 98 or later)
    make -f makefile-mac    (on Mac OS X)
-   make -f makefile-gtk    (on Linux or other Unix platforms)
-   make -f makefile-x11    (ditto)
+   make -f makefile-gtk    (on Linux/Unix platforms with GTK+)
+   make -f makefile-x11    (on Linux/Unix platforms with X11)
 
 NOTES:
 
@@ -26,7 +26,9 @@ NOTES:
 
 - Your compiler must use 32-bit integers and 32-bit pointers.
 
-- Golly requires wxWidgets 2.6.1 or later.
+- Golly should compile with wxWidgets 2.6.1 or later.  wxWidgets is
+  a rapidly evolving library so in general it's best to use the
+  latest version to avoid bugs.
 
 
 How to build bgolly (the batch mode version)
@@ -66,14 +68,18 @@ wxcontrol.cpp  - Control menu functions.
                  GeneratePattern() runs the current pattern.
                  ToggleHashing() toggles the hashing algorithm.
 
-wxview.*       - Viewport for displaying and editing patterns.
+wxview.*       - Implements the viewport window.
                  ProcessKey() processes keyboard shortcuts.
                  ProcessClick() processes mouse clicks.
 
-wxrender.*     - Rendering routines for viewport.
+wxrender.*     - Rendering routines for updating the viewport.
                  DrawView() draws the pattern, grid lines, etc.
 
-wxstatus.*     - Status bar at top of main window.
+wxlayer.*      - Layer menu functions.
+                 AddLayer() adds a new, empty layer.
+                 DeleteLayer() deletes the current layer.
+
+wxstatus.*     - Implements status bar at top of main window.
                  DrawStatusBar() shows gen count, pop count, etc.
                  DisplayMessage() shows message in bottom line.
 

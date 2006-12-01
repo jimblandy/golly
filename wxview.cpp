@@ -674,11 +674,12 @@ void PatternView::DrawCells(int x, int y)
       ii = cellx;
       jj = celly;
       
+      lifealgo *curralgo = currlayer->algo;
       if (ai > aj) {
          d = aj - (ai >> 1);
          while (ii != newx) {
-            if ( currlayer->algo->getcell(ii, jj) != drawstate) {
-               currlayer->algo->setcell(ii, jj, drawstate);
+            if ( curralgo->getcell(ii, jj) != drawstate) {
+               curralgo->setcell(ii, jj, drawstate);
                numchanged++;
                DrawOneCell(ii, jj, dc);
             }
@@ -692,8 +693,8 @@ void PatternView::DrawCells(int x, int y)
       } else {
          d = ai - (aj >> 1);
          while (jj != newy) {
-            if ( currlayer->algo->getcell(ii, jj) != drawstate) {
-               currlayer->algo->setcell(ii, jj, drawstate);
+            if ( curralgo->getcell(ii, jj) != drawstate) {
+               curralgo->setcell(ii, jj, drawstate);
                numchanged++;
                DrawOneCell(ii, jj, dc);
             }
@@ -709,8 +710,8 @@ void PatternView::DrawCells(int x, int y)
       cellx = newx;
       celly = newy;
       
-      if ( currlayer->algo->getcell(cellx, celly) != drawstate) {
-         currlayer->algo->setcell(cellx, celly, drawstate);
+      if ( curralgo->getcell(cellx, celly) != drawstate) {
+         curralgo->setcell(cellx, celly, drawstate);
          numchanged++;
          DrawOneCell(cellx, celly, dc);
       }

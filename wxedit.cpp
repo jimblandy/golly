@@ -271,15 +271,16 @@ void PatternView::ClearSelection()
    int cntr = 0;
    bool abort = false;
    BeginProgress(_("Clearing selection"));
+   lifealgo *curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = currlayer->algo->nextcell(cx, cy);
+         int skip = curralgo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
             // found next live cell
             cx += skip;
-            currlayer->algo->setcell(cx, cy, 0);
+            curralgo->setcell(cx, cy, 0);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -293,7 +294,7 @@ void PatternView::ClearSelection()
       }
       if (abort) break;
    }
-   currlayer->algo->endofpattern();
+   curralgo->endofpattern();
    currlayer->savestart = true;
    EndProgress();
    
@@ -474,11 +475,12 @@ void PatternView::CopySelectionToClipboard(bool cut)
    else
       BeginProgress(_("Copying selection"));
 
+   lifealgo *curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       // set lastchar to anything except 'o' or 'b'
       lastchar = 0;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = currlayer->algo->nextcell(cx, cy);
+         int skip = curralgo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip > 0) {
@@ -498,7 +500,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
             // found next live cell
             cx += skip;
             livecount++;
-            if (cut) currlayer->algo->setcell(cx, cy, 0);
+            if (cut) curralgo->setcell(cx, cy, 0);
             if (lastchar == 'o') {
                orun++;
             } else {
@@ -833,6 +835,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
    }
    
+   lifealgo *curralgo = currlayer->algo;
    if ( usenextcell ) {
       cy = pastey;
       for ( ty=itop; ty<=ibottom; ty++ ) {
@@ -845,7 +848,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               currlayer->algo->setcell(cx, cy, 1);
+               curralgo->setcell(cx, cy, 1);
                cx++;
             } else {
                tx = iright + 1;     // done this row
@@ -871,18 +874,18 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
             tempstate = tempalgo->getcell(tx, ty);
             switch (pmode) {
                case Copy:
-                  currlayer->algo->setcell(cx, cy, tempstate);
+                  curralgo->setcell(cx, cy, tempstate);
                   break;
                case Or:
                   // Or mode is done using above nextcell loop;
                   // we only include this case to avoid compiler warning
                   break;
                case Xor:
-                  currstate = currlayer->algo->getcell(cx, cy);
+                  currstate = curralgo->getcell(cx, cy);
                   if (tempstate == currstate) {
-                     if (currstate != 0) currlayer->algo->setcell(cx, cy, 0);
+                     if (currstate != 0) curralgo->setcell(cx, cy, 0);
                   } else {
-                     if (currstate != 1) currlayer->algo->setcell(cx, cy, 1);
+                     if (currstate != 1) curralgo->setcell(cx, cy, 1);
                   }
                   break;
             }
@@ -1187,13 +1190,14 @@ void PatternView::RandomFill()
    bool abort = false;
    BeginProgress(_("Randomly filling selection"));
    int cx, cy;
+   lifealgo *curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
          if ((rand() % 100) < randomfill) {
-            currlayer->algo->setcell(cx, cy, 1);
+            curralgo->setcell(cx, cy, 1);
          } else if (killcells) {
-            currlayer->algo->setcell(cx, cy, 0);
+            curralgo->setcell(cx, cy, 0);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1242,13 +1246,14 @@ void PatternView::FlipLeftRight()
    int cx, cy;
    int mirrorx = iright;
    iright = (ileft - 1) + wd / 2;
+   lifealgo *curralgo = currlayer->algo;
    for ( cx=ileft; cx<=iright; cx++ ) {
       for ( cy=itop; cy<=ibottom; cy++ ) {
-         int currstate = currlayer->algo->getcell(cx, cy);
-         int mirrstate = currlayer->algo->getcell(mirrorx, cy);
+         int currstate = curralgo->getcell(cx, cy);
+         int mirrstate = curralgo->getcell(mirrorx, cy);
          if ( currstate != mirrstate ) {
-            currlayer->algo->setcell(cx, cy, mirrstate);
-            currlayer->algo->setcell(mirrorx, cy, currstate);
+            curralgo->setcell(cx, cy, mirrstate);
+            curralgo->setcell(mirrorx, cy, currstate);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1298,13 +1303,14 @@ void PatternView::FlipUpDown()
    int cx, cy;
    int mirrory = ibottom;
    ibottom = (itop - 1) + ht / 2;
+   lifealgo *curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int currstate = currlayer->algo->getcell(cx, cy);
-         int mirrstate = currlayer->algo->getcell(cx, mirrory);
+         int currstate = curralgo->getcell(cx, cy);
+         int mirrstate = curralgo->getcell(cx, mirrory);
          if ( currstate != mirrstate ) {
-            currlayer->algo->setcell(cx, cy, mirrstate);
-            currlayer->algo->setcell(cx, mirrory, currstate);
+            curralgo->setcell(cx, cy, mirrstate);
+            curralgo->setcell(cx, mirrory, currstate);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1368,10 +1374,11 @@ void PatternView::RotatePattern(bool clockwise,
       newxinc = 1;
    }
 
+   lifealgo *curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = currlayer->algo->nextcell(cx, cy);
+         int skip = curralgo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
@@ -1511,16 +1518,17 @@ void PatternView::RotateSelection(bool clockwise)
       newxinc = 1;
    }
 
+   lifealgo *curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = currlayer->algo->nextcell(cx, cy);
+         int skip = curralgo->nextcell(cx, cy);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
             // found next live cell
             cx += skip;
-            currlayer->algo->setcell(cx, cy, 0);
+            curralgo->setcell(cx, cy, 0);
             newy += newyinc * skip;
             tempalgo->setcell(newx, newy, 1);
          } else {

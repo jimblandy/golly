@@ -1750,20 +1750,21 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
       return NULL;
 
    int num_cells = PyList_Size(list) / 2;
+   lifealgo *curralgo = currlayer->algo;
    for (int n = 0; n < num_cells; n++) {
       long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
       long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
 
       // paste (possibly transformed) cell into current universe
-      currlayer->algo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
+      curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
       
       if ((n % 4096) == 0 && ScriptAborted()) {
-         currlayer->algo->endofpattern();
+         curralgo->endofpattern();
          currlayer->savestart = true;
          return NULL;
       }
    }
-   currlayer->algo->endofpattern();
+   curralgo->endofpattern();
    currlayer->savestart = true;
    DoAutoUpdate();
 
@@ -1807,9 +1808,10 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
       int ibottom = itop + ht - 1;
       int cx, cy;
       int cntr = 0;
+      lifealgo *curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = currlayer->algo->nextcell(cx, cy);
+            int skip = curralgo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;

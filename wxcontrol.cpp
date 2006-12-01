@@ -219,8 +219,10 @@ void MainFrame::GeneratePattern()
       wxBell();
       return;
    }
+
+   lifealgo *curralgo = currlayer->algo;
    
-   if (currlayer->algo->isEmpty()) {
+   if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
    }
@@ -231,7 +233,7 @@ void MainFrame::GeneratePattern()
 
    // for DisplayTimingInfo
    begintime = stopwatch->Time();
-   begingen = currlayer->algo->getGeneration().todouble();
+   begingen = curralgo->getGeneration().todouble();
    
    generating = true;               // avoid recursion
    ChangeGoToStop();
@@ -248,7 +250,7 @@ void MainFrame::GeneratePattern()
          // slow down by only doing one gen every GetCurrentDelay() millisecs
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
-            currlayer->algo->step();
+            curralgo->step();
             if (autofit) viewptr->FitInView(0);
             // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
             UpdatePatternAndStatus();
@@ -262,13 +264,13 @@ void MainFrame::GeneratePattern()
             wxMilliSleep(1);     // keep small (ie. <= mindelay)
          }
       } else {
-         // warp >= 0 so only show results every currlayer->algo->getIncrement() gens
-         currlayer->algo->step();
+         // warp >= 0 so only show results every curralgo->getIncrement() gens
+         curralgo->step();
          if (autofit) viewptr->FitInView(0);
          // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
          UpdatePatternAndStatus();
          if (wxGetApp().Poller()->checkevents()) break;
-         if (hyperspeed && currlayer->algo->hyperCapable()) {
+         if (hyperspeed && curralgo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
@@ -282,7 +284,7 @@ void MainFrame::GeneratePattern()
 
    // for DisplayTimingInfo
    endtime = stopwatch->Time();
-   endgen = currlayer->algo->getGeneration().todouble();
+   endgen = curralgo->getGeneration().todouble();
    
    ChangeStopToGo();
    
@@ -440,10 +442,11 @@ void MainFrame::AdvanceOutsideSelection()
       bool abort = false;
       BeginProgress(_("Copying advanced pattern"));
    
+      lifealgo *curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = currlayer->algo->nextcell(cx, cy);
+            int skip = curralgo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -607,7 +610,9 @@ void MainFrame::NextGeneration(bool useinc)
       return;
    }
 
-   if (currlayer->algo->isEmpty()) {
+   lifealgo *curralgo = currlayer->algo;
+   
+   if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
    }
@@ -616,7 +621,7 @@ void MainFrame::NextGeneration(bool useinc)
       return;
    }
       
-   // currlayer->algo->step() calls checkevents so set generating flag to avoid recursion
+   // curralgo->step() calls checkevents so set generating flag to avoid recursion
    generating = true;
    
    // avoid doing some things if NextGeneration is called from a script
@@ -628,17 +633,17 @@ void MainFrame::NextGeneration(bool useinc)
 
    if (useinc) {
       // step by current increment
-      if (currlayer->algo->getIncrement() > bigint::one && !inscript) {
+      if (curralgo->getIncrement() > bigint::one && !inscript) {
          UpdateToolBar(IsActive());
          UpdateMenuItems(IsActive());
       }
-      currlayer->algo->step();
+      curralgo->step();
    } else {
       // make sure we only step by one gen
-      bigint saveinc = currlayer->algo->getIncrement();
-      currlayer->algo->setIncrement(1);
-      currlayer->algo->step();
-      currlayer->algo->setIncrement(saveinc);
+      bigint saveinc = curralgo->getIncrement();
+      curralgo->setIncrement(1);
+      curralgo->step();
+      curralgo->setIncrement(saveinc);
    }
 
    generating = false;
@@ -646,7 +651,7 @@ void MainFrame::NextGeneration(bool useinc)
    if (!inscript) {
       ChangeStopToGo();
       // autofit is only used when doing many gens
-      if (autofit && useinc && currlayer->algo->getIncrement() > bigint::one)
+      if (autofit && useinc && curralgo->getIncrement() > bigint::one)
          viewptr->FitInView(0);
       UpdateEverything();
    }
@@ -726,10 +731,11 @@ void MainFrame::ToggleHashing()
       bool abort = false;
       BeginProgress(_("Converting pattern"));
    
+      lifealgo *curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = currlayer->algo->nextcell(cx, cy);
+            int skip = curralgo->nextcell(cx, cy);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;

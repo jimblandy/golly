@@ -192,6 +192,7 @@ bool MainFrame::LoadImage()
          int ht = image.GetHeight();
          unsigned char *idata = image.GetData();
          int x, y;
+         lifealgo *curralgo = currlayer->algo;
          for (y = 0; y < ht; y++)
             for (x = 0; x < wd; x++) {
                long pos = (y * wd + x) * 3;
@@ -202,11 +203,11 @@ bool MainFrame::LoadImage()
                   // treat transparent pixel as a dead cell
                } else if ( r < 255 || g < 255 || b < 255 ) {
                   // treat non-white pixel as a live cell
-                  currlayer->algo->setcell(x, y, 1);
+                  curralgo->setcell(x, y, 1);
                }
             }
          
-         currlayer->algo->endofpattern();
+         curralgo->endofpattern();
       } else {
          Warning(_("Could not load image from file!"));
       }
