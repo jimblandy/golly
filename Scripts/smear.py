@@ -29,13 +29,15 @@ def main():
       if g.empty(): break
       
       # copy current pattern to smear layer
-      # need a command to temporarily disable event checking so
-      # scrolling/etc won't cause unexpected view changes???
-      # OR use g.setoption("syncviews",1) above to avoid prob!!!???
       currpatt = pattern( g.getcells(g.getrect()) )
+      # temporarily disable event checking so thumb scrolling
+      # and other mouse events won't cause unexpected changes???!!!
+      # OR would g.setoption("syncviews",1) be good enough???!!!
+      #!!! g.check(0)
       g.setlayer(smear)
       currpatt.put(0,0)
       g.setlayer(curr)
+      #!!! g.check(1)
       
       exp = g.getstep()
       if exp > 0:
@@ -43,8 +45,7 @@ def main():
       else:
          step = 1
       if int(g.getgen()) % step == 0:
-         # display all 3 layers (start, smear, curr) using currently
-         # assigned layer colors
+         # display all 3 layers (start, smear, curr)
          g.update()
 
 try:

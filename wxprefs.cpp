@@ -394,11 +394,11 @@ void CreateDefaultColors()
    livergb[7] = new wxColor(255,  64, 255);  // pale fuschia
    livergb[8] = new wxColor(255, 128, 150);  // pink
    livergb[9] = new wxColor(128, 255, 255);  // pale aqua
-   deadrgb = new wxColor(48, 48, 48);        // dark gray (nicer if no alpha channel support)
-   pastergb = new wxColor(255, 0, 0);        // red
-   selectrgb = new wxColor(75, 175, 0);      // darkish green (becomes 50% transparent)
-   qlifergb = new wxColor(255, 255, 206);    // pale yellow
-   hlifergb = new wxColor(226, 250, 248);    // pale blue
+   deadrgb    = new wxColor( 48,  48,  48);  // dark gray (nicer if no alpha channel support)
+   pastergb   = new wxColor(255,   0,   0);  // red
+   selectrgb  = new wxColor(  0, 255,   0);  // green (will be 50% transparent)
+   qlifergb   = new wxColor(255, 255, 206);  // pale yellow
+   hlifergb   = new wxColor(226, 250, 248);  // pale blue
 
    // create brushes and pens
    for (int i=0; i<10; i++) livebrush[i] = new wxBrush(*wxBLACK);

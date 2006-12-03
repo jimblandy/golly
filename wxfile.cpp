@@ -967,8 +967,10 @@ void MainFrame::ShowPrefsDialog()
       }
       
       // maxhashmem might have changed
-      //!!! change all layers???
-      if (currlayer->hash) currlayer->algo->setMaxMemory(maxhashmem);
+      for (int i = 0; i < numlayers; i++) {
+         Layer *layer = GetLayer(i);
+         if (layer->hash) layer->algo->setMaxMemory(maxhashmem);
+      }
       
       SavePrefs();
       UpdateEverything();

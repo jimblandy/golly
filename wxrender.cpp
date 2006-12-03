@@ -111,7 +111,6 @@ Other points of interest:
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/image.h"      // for wxImage
 #ifndef __WXX11__
    #include "wx/rawbmp.h"  // for wxAlphaPixelData
 #endif
@@ -138,24 +137,29 @@ wxBrush* killbrush;        // brush used in killrect
 // bitmap memory for drawing magnified cells (see DrawStretchedBitmap)
 const int MAGSIZE = 256;
 wxUint16 magarray[MAGSIZE * MAGSIZE / 16];
-unsigned char* magbuf = (unsigned char *)magarray;
+unsigned char* magbuf = (unsigned char*)magarray;
 
 // this lookup table magnifies bits in a given byte by a factor of 2;
 // it assumes input and output are in XBM format (bits in each byte are reversed)
 // because that's what wxWidgets requires when creating a monochrome bitmap
 wxUint16 Magnify2[256];
 
-// for drawing selection image (initialized in InitDrawingData)
+// for drawing multiple layers
+wxBitmap* layerbitmap = NULL;    // layer bitmap
+int layerwd = -1;                // width of layer bitmap
+int layerht = -1;                // height of layer bitmap
+
+// for drawing translucent selection (initialized in InitDrawingData)
 #ifdef __WXX11__
-   // wxX11's Blit doesn't support alpha channel
+   // wxX11 doesn't support alpha channel
 #else
-   wxImage selimage;       // translucent overlay for drawing selections
-   int selimagewd;         // width of selection image
-   int selimageht;         // height of selection image
+   int selwd;              // width of selection bitmap
+   int selht;              // height of selection bitmap
 #endif
 wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is used)
+wxBitmap* graybitmap = NULL;  // for inactive selections when drawing multiple layers
 
-// for drawing paste image (initialized in CreatePasteImage)
+// for drawing paste pattern (initialized in CreatePasteImage)
 wxBitmap* pastebitmap;     // paste bitmap
 int pimagewd;              // width of paste image
 int pimageht;              // height of paste image
@@ -166,11 +170,6 @@ int cvwd, cvht;            // must match current viewport's width and height
 paste_location pasteloc;   // must match plocation
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
-
-// for drawing multiple layers
-wxBitmap* layerbitmap = NULL;    // layer bitmap
-int layerwd = -1;                // width of layer bitmap
-int layerht = -1;                // height of layer bitmap
 
 // -----------------------------------------------------------------------------
 
@@ -193,46 +192,69 @@ void InitMagnifyTable()
 
 // -----------------------------------------------------------------------------
 
+#ifndef __WXX11__
+
+void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
+{
+   // set color and alpha of pixels in given bitmap
+   wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(selwd,selht));
+   if (data) {
+      int alpha = 128;     // 50% opaque
+      
+      // note that RGB must be premultiplied by alpha
+      //!!! if alpha is 255 why is on-screen color not same as given color???
+      int r = color->Red() * alpha / 256;
+      int g = color->Green() * alpha / 256;
+      int b = color->Blue() * alpha / 256;
+      
+      data.UseAlpha();
+      wxAlphaPixelData::Iterator p(data);
+      for ( int y = 0; y < selht; y++ ) {
+         wxAlphaPixelData::Iterator rowStart = p;
+         for ( int x = 0; x < selwd; x++ ) {
+            p.Red()   = r;
+            p.Green() = g;
+            p.Blue()  = b;
+            p.Alpha() = alpha;
+            p++;
+         }
+         p = rowStart;
+         p.OffsetY(data, 1);
+      }
+   }
+}
+
+#endif
+
+// -----------------------------------------------------------------------------
+
 void InitDrawingData()
 {
    InitMagnifyTable();
    
    #ifdef __WXX11__
-      // wxX11's Blit doesn't support alpha channel
+      // wxX11 doesn't support alpha channel
    #else
-      // create translucent selection image
-      if ( !selimage.Create(1,1) ) {
-         Fatal(_("Failed to create selection image!"));
-      }
-      selimage.SetRGB(0, 0, selectrgb->Red(), selectrgb->Green(), selectrgb->Blue());
-      selimage.SetAlpha();                   // add alpha channel
-      if ( selimage.HasAlpha() ) {
-         selimage.SetAlpha(0, 0, 128);       // 50% opaque
-      } else {
-         Warning(_("Selection image has no alpha channel!"));
-      }
-      // scale selection image to viewport size and create selbitmap
-      int wd, ht;
-      viewptr->GetClientSize(&wd, &ht);
-      // wd or ht might be < 1 on Win/X11 platforms
-      if (wd < 1) wd = 1;
-      if (ht < 1) ht = 1;
-      selimage.Rescale(wd, ht);
-      selimagewd = wd;
-      selimageht = ht;
-      selbitmap = new wxBitmap(selimage);
+      // create translucent selection bitmap
+      viewptr->GetClientSize(&selwd, &selht);
+      // selwd or selht might be < 1 on Win/X11 platforms
+      if (selwd < 1) selwd = 1;
+      if (selht < 1) selht = 1;
+
+      // use depth 32 so bitmap has an alpha channel
+      selbitmap = new wxBitmap(selwd, selht, 32);
       if (selbitmap == NULL) {
-         Warning(_("Not enough memory for selection image!"));
+         Warning(_("Not enough memory for selection bitmap!"));
       } else {
-         #ifdef __WXMAC__
-            // bug??? GetDepth returns -1 even if screen depth is really 32
-         #else
-            // use inversion if depth is < 24
-            if (selbitmap->GetDepth() < 24) {
-               delete selbitmap;
-               selbitmap = NULL;
-            }
-         #endif
+         SetSelectionPixels(selbitmap, selectrgb);
+      }
+      
+      // create translucent gray bitmap for inactive selections
+      graybitmap = new wxBitmap(selwd, selht, 32);
+      if (graybitmap == NULL) {
+         Warning(_("Not enough memory for gray bitmap!"));
+      } else {
+         SetSelectionPixels(graybitmap, wxLIGHT_GREY);
       }
    #endif
 }
@@ -241,14 +263,9 @@ void InitDrawingData()
 
 void DestroyDrawingData()
 {
-   #ifdef __WXX11__
-      // wxX11 doesn't support alpha channel
-   #else
-      selimage.Destroy();
-      if (selbitmap) delete selbitmap;
-   #endif
-   
    if (layerbitmap) delete layerbitmap;
+   if (selbitmap) delete selbitmap;
+   if (graybitmap) delete graybitmap;
 }
 
 // -----------------------------------------------------------------------------
@@ -397,21 +414,22 @@ wx_render renderer;     // create instance
 
 // -----------------------------------------------------------------------------
 
-void CheckSelectionImage(int viewwd, int viewht)
+void CheckSelectionSize(int viewwd, int viewht)
 {
    #ifdef __WXX11__
       // wxX11 doesn't support alpha channel
    #else
-      if (selbitmap) {
-         if ( viewwd != selimagewd || viewht != selimageht ) {
-            // rescale selection image and create new bitmap
-            selimage.Rescale(viewwd, viewht);
-            delete selbitmap;
-            selbitmap = new wxBitmap(selimage);
-            // don't check if selbitmap is NULL here (done in DrawSelection)
-            selimagewd = viewwd;
-            selimageht = viewht;
-         }
+      if (viewwd != selwd || viewht != selht) {
+         // resize selbitmap and graybitmap
+         selwd = viewwd;
+         selht = viewht;
+         if (selbitmap) delete selbitmap;
+         if (graybitmap) delete graybitmap;
+         // use depth 32 so bitmaps have an alpha channel
+         selbitmap = new wxBitmap(selwd, selht, 32);
+         graybitmap = new wxBitmap(selwd, selht, 32);
+         if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
+         if (graybitmap) SetSelectionPixels(graybitmap, wxLIGHT_GREY);
       }
    #endif
 }
@@ -423,16 +441,8 @@ void SetSelectionColor()
    #ifdef __WXX11__
       // wxX11 doesn't support alpha channel
    #else
-      if (selbitmap) {
-         // shrink selection image so we can update color
-         selimage.Rescale(1, 1);
-         selimage.SetRGB(0, 0, selectrgb->Red(), selectrgb->Green(), selectrgb->Blue());
-         // restore image size and create new bitmap
-         selimage.Rescale(selimagewd, selimageht);
-         delete selbitmap;
-         selbitmap = new wxBitmap(selimage);
-         // don't check if selbitmap is NULL here (done in DrawSelection)
-      }
+      // selectrgb has changed
+      if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
    #endif
 }
 
@@ -441,7 +451,6 @@ void SetSelectionColor()
 void DrawSelection(wxDC &dc, wxRect &rect)
 {
    if (selbitmap) {
-      // draw translucent rect
       #ifdef __WXGTK__
          // wxGTK Blit doesn't support alpha channel
          dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
@@ -449,6 +458,26 @@ void DrawSelection(wxDC &dc, wxRect &rect)
          // Blit seems to be about 10% faster (on Mac at least)
          wxMemoryDC memdc;
          memdc.SelectObject(*selbitmap);
+         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      #endif
+   } else {
+      // no alpha channel so just invert rect
+      dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawInactiveSelection(wxDC &dc, wxRect &rect)
+{
+   if (graybitmap) {
+      #ifdef __WXGTK__
+         // wxGTK Blit doesn't support alpha channel
+         dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+      #else
+         // Blit seems to be about 10% faster (on Mac at least)
+         wxMemoryDC memdc;
+         memdc.SelectObject(*graybitmap);
          dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
       #endif
    } else {
@@ -874,7 +903,7 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
 // -----------------------------------------------------------------------------
 
-void DrawOneLayer(wxDC &dc, int index, viewport *thisview)
+void DrawOneLayer(wxDC &dc, int index)
 {
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
@@ -890,7 +919,7 @@ void DrawOneLayer(wxDC &dc, int index, viewport *thisview)
    #endif
    
    currdc = &layerdc;
-   currlayer->algo->draw(*thisview, renderer);
+   currlayer->algo->draw(*currlayer->view, renderer);
    
    // make dead pixels 100% transparent; live pixels use current opacity setting
    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
@@ -941,20 +970,27 @@ void DrawOtherLayers(wxDC &dc)
    for ( int i = 1; i < numlayers; i++ ) {
       Layer *savelayer = currlayer;
       currlayer = GetLayer(i);
+      
+      // use real current layer's viewport
+      viewport *saveview = currlayer->view;
+      currlayer->view = savelayer->view;
 
       if ( !currlayer->algo->isEmpty() ) {
-         // draw layer using the real current layer's viewport
-         DrawOneLayer(dc, i, savelayer->view);
+         DrawOneLayer(dc, i);
       }
       
       // draw this layer's selection if necessary
       wxRect r;
       if ( viewptr->SelectionVisible(&r) ) {
-         CheckSelectionImage(layerwd, layerht);
-         DrawSelection(dc, r);
+         CheckSelectionSize(layerwd, layerht);
+         if (i == currindex)
+            DrawSelection(dc, r);
+         else
+            DrawInactiveSelection(dc, r);
       }
       
-      // restore currlayer
+      // restore viewport and currlayer
+      currlayer->view = saveview;
       currlayer = savelayer;
    }
    
@@ -985,11 +1021,10 @@ void DrawView(wxDC &dc)
       // draw all layers starting with layer 0 but using current layer's viewport
       savelayer = currlayer;
       if ( currindex != 0 ) {
-         viewport *currentview = currlayer->view;
          // change currlayer to layer 0
          currlayer = GetLayer(0);
          saveview0 = currlayer->view;
-         currlayer->view = currentview;
+         currlayer->view = savelayer->view;
       }
       colorindex = 0;
    } else {
@@ -1026,8 +1061,11 @@ void DrawView(wxDC &dc)
    }
    
    if ( viewptr->SelectionVisible(&r) ) {
-      CheckSelectionImage(currlayer->view->getwidth(), currlayer->view->getheight());
-      DrawSelection(dc, r);
+      CheckSelectionSize(currlayer->view->getwidth(), currlayer->view->getheight());
+      if (colorindex == currindex)
+         DrawSelection(dc, r);
+      else
+         DrawInactiveSelection(dc, r);
    }
    
    if ( savelayer ) {
