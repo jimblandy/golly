@@ -75,8 +75,11 @@ extern int mingridmag;           // minimum mag to draw grid lines
 extern int boldspacing;          // spacing of bold grid lines
 extern bool showboldlines;       // show bold grid lines?
 extern bool mathcoords;          // show Y values increasing upwards?
-extern bool drawlayers;          // draw all layers?
-extern bool genlayers;           // generate all layers?
+extern bool showlayer;           // show layer bar?
+extern bool syncviews;           // synchronize viewports?
+extern bool synccursors;         // synchronize cursors?
+extern bool stacklayers;         // stack all layers?
+extern bool tilelayers;          // tile all layers?
 extern int newmag;               // mag setting for new pattern
 extern bool newremovesel;        // new pattern removes selection?
 extern bool openremovesel;       // opening pattern removes selection?

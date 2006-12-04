@@ -98,17 +98,27 @@ void MoveLayerDialog();
 void SetLayer(int index);
 // Set the current layer using the given index.
 
-void ToggleDrawLayers();
-// Toggle the drawlayers flag.  When true, the rendering code displays
+void ToggleLayerBar();
+// Show/hide the layer bar.
+
+void ToggleSyncViews();
+// Toggle the syncviews flag.  When true, every layer uses the same
+// scale and location as the current layer.
+
+void ToggleSyncCursors();
+// Toggle the synccursors flag.  When true, every layer uses the same
+// cursor as the current layer.
+
+void ToggleStackLayers();
+// Toggle the stacklayers flag.  When true, the rendering code displays
 // all layers using the same scale and location as the current layer.
 // Layer 0 is drawn first (100% opaque), then all the other layers
 // are drawn as overlays using an opacity set by the user.  The colors
 // for the live cells in each layer can be set via the Prefs dialog.
 
-void ToggleGenLayers();
-// Toggle the genlayers flag.  When true, the generating code will
-// temporarily synchronize all layers to use same step increment as
-// the current layer.
+void ToggleTileLayers();
+// Toggle the tilelayers flag.  When true, the rendering code displays
+// all layers in tiled sub-windows.
 
 void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.

@@ -74,8 +74,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 bool pyinited = false;     // Py_Initialize has been successfully called?
 bool inscript = false;     // a script is running?
-bool exitcalled = false;   // golly_exit was called?
 bool autoupdate;           // update display after each change to current universe?
+bool exitcalled;           // golly_exit was called?
+bool allowcheck;           // allow event checking?
 wxString pyerror;          // Python error message
 wxString scriptloc;        // location of script file
 wxString scriptchars;      // non-escape chars saved by PassKeyToScript
@@ -332,7 +333,7 @@ void AbortScript()
 
 bool ScriptAborted()
 {
-   wxGetApp().Poller()->checkevents();
+   if (allowcheck) wxGetApp().Poller()->checkevents();
    
    // if user hit escape key then AbortScript has raised an exception
    // and PyErr_Occurred will be true; if so, caller must return NULL
@@ -827,10 +828,10 @@ static PyObject *golly_setlayer(PyObject *self, PyObject *args)
       sprintf(msg, "Bad setlayer index: %d", index);
       PyErr_SetString(PyExc_RuntimeError, msg);
       return NULL;
-   } else {
-      SetLayer(index);
-      DoAutoUpdate();
    }
+   
+   SetLayer(index);
+   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -874,6 +875,61 @@ static PyObject *golly_maxlayers(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_setname(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char *name;
+   int index = currindex;
+
+   if (!PyArg_ParseTuple(args, "s|i", &name, &index)) return NULL;
+
+   if (index < 0 || index >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad setname index: %d", index);
+      PyErr_SetString(PyExc_RuntimeError, msg);
+      return NULL;
+   }
+   
+   if (name[0]) {
+      if (index == currindex) {
+         // show new name in main window's title
+         mainptr->SetWindowTitle(wxString(name, wxConvLocal));
+         // also sets currlayer->currname and updates menu item
+      } else {
+         GetLayer(index)->currname = wxString(name, wxConvLocal);
+         // show name in given layer's menu item
+         mainptr->UpdateLayerItem(index);
+      }
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_getname(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int index = currindex;
+
+   if (!PyArg_ParseTuple(args, "|i", &index)) return NULL;
+
+   if (index < 0 || index >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad getname index: %d", index);
+      PyErr_SetString(PyExc_RuntimeError, msg);
+      return NULL;
+   }
+
+   const char* name = GetLayer(index)->currname.mb_str(wxConvLocal);
+   return Py_BuildValue("s", name);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_setoption(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -887,19 +943,6 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       oldval = autofit ? 1 : 0;
       if (oldval != newval)
          mainptr->ToggleAutoFit();
-
-   } else if (strcmp(optname, "drawlayers") == 0) {
-      oldval = drawlayers ? 1 : 0;
-      if (oldval != newval) {
-         ToggleDrawLayers();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "genlayers") == 0) {
-      oldval = genlayers ? 1 : 0;
-      if (oldval != newval) {
-         ToggleGenLayers();
-      }
 
    } else if (strcmp(optname, "fullscreen") == 0) {
       oldval = mainptr->fullscreen ? 1 : 0;
@@ -946,6 +989,13 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       if (newval > 100) newval = 100;
       if (oldval != newval) {
          opacity = newval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showlayerbar") == 0) {
+      oldval = showlayer ? 1 : 0;
+      if (oldval != newval) {
+         ToggleLayerBar();
          DoAutoUpdate();
       }
 
@@ -1005,6 +1055,33 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
          DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "syncviews") == 0) {
+      oldval = syncviews ? 1 : 0;
+      if (oldval != newval) {
+         ToggleSyncViews();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "synccursors") == 0) {
+      oldval = synccursors ? 1 : 0;
+      if (oldval != newval) {
+         ToggleSyncCursors();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "stacklayers") == 0) {
+      oldval = stacklayers ? 1 : 0;
+      if (oldval != newval) {
+         ToggleStackLayers();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "tilelayers") == 0) {
+      oldval = tilelayers ? 1 : 0;
+      if (oldval != newval) {
+         ToggleTileLayers();
+      }
+
    } else if (strcmp(optname, "boldspacing") == 0) {
       oldval = boldspacing;
       if (newval < 2) newval = 2;
@@ -1046,24 +1123,27 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "s", &optname)) return NULL;
 
    if      (strcmp(optname, "autofit") == 0)       optval = autofit ? 1 : 0;
-   else if (strcmp(optname, "drawlayers") == 0)    optval = drawlayers ? 1 : 0;
-   else if (strcmp(optname, "genlayers") == 0)     optval = genlayers ? 1 : 0;
+   else if (strcmp(optname, "boldspacing") == 0)   optval = boldspacing;
    else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
    else if (strcmp(optname, "hashing") == 0)       optval = currlayer->hash ? 1 : 0;
    else if (strcmp(optname, "hyperspeed") == 0)    optval = hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
    else if (strcmp(optname, "opacity") == 0)       optval = opacity;
+   else if (strcmp(optname, "savexrle") == 0)      optval = savexrle ? 1 : 0;
+   else if (strcmp(optname, "showlayerbar") == 0)  optval = showlayer ? 1 : 0;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
    else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
    else if (strcmp(optname, "showstatusbar") == 0) optval = mainptr->StatusVisible() ? 1 : 0;
    else if (strcmp(optname, "showexact") == 0)     optval = showexact ? 1 : 0;
-   else if (strcmp(optname, "swapcolors") == 0)    optval = swapcolors ? 1 : 0;
    else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
    else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
-   else if (strcmp(optname, "boldspacing") == 0)   optval = boldspacing;
-   else if (strcmp(optname, "savexrle") == 0)      optval = savexrle ? 1 : 0;
+   else if (strcmp(optname, "stacklayers") == 0)   optval = stacklayers ? 1 : 0;
+   else if (strcmp(optname, "swapcolors") == 0)    optval = swapcolors ? 1 : 0;
+   else if (strcmp(optname, "synccursors") == 0)   optval = synccursors ? 1 : 0;
+   else if (strcmp(optname, "syncviews") == 0)     optval = syncviews ? 1 : 0;
+   else if (strcmp(optname, "tilelayers") == 0)    optval = tilelayers ? 1 : 0;
    else {
       PyErr_SetString(PyExc_RuntimeError, "Bad getoption call: unknown option.");
       return NULL;
@@ -1593,7 +1673,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    } else {
       tempalgo = new qlifealgo();
    }
-   tempalgo->setpoll(wxGetApp().Poller());
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
    
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -1649,7 +1729,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    // create temporary qlife universe
    lifealgo *tempalgo;
    tempalgo = new qlifealgo();
-   tempalgo->setpoll(wxGetApp().Poller());
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
    
    // readpattern might change global rule table
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -1661,7 +1741,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
       delete tempalgo;
       tempalgo = new hlifealgo();
       tempalgo->setMaxMemory(maxhashmem);
-      tempalgo->setpoll(wxGetApp().Poller());
+      if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
       err = readpattern(FILENAME, *tempalgo);
    }
    
@@ -1703,7 +1783,7 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    // create temporary qlife universe
    lifealgo *tempalgo;
    tempalgo = new qlifealgo();
-   tempalgo->setpoll(wxGetApp().Poller());
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
    
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -1856,8 +1936,8 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
 
    // create a temporary universe for storing clipboard pattern
    lifealgo *tempalgo;
-   tempalgo = new qlifealgo();               // qlife's setcell/getcell are faster
-   tempalgo->setpoll(wxGetApp().Poller());
+   tempalgo = new qlifealgo();   // qlife's setcell/getcell are faster
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)
@@ -2314,6 +2394,22 @@ static PyObject *golly_note(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_check(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int flag;
+
+   if (!PyArg_ParseTuple(args, "i", &flag)) return NULL;
+
+   allowcheck = (flag != 0);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_exit(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -2419,6 +2515,8 @@ static PyMethodDef golly_methods[] = {
    { "getlayer",     golly_getlayer,   METH_VARARGS, "return index of current layer" },
    { "numlayers",    golly_numlayers,  METH_VARARGS, "return current number of layers" },
    { "maxlayers",    golly_maxlayers,  METH_VARARGS, "return maximum number of layers" },
+   { "setname",      golly_setname,    METH_VARARGS, "set name of given layer" },
+   { "getname",      golly_getname,    METH_VARARGS, "get name of given layer" },
    // miscellaneous
    { "setoption",    golly_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
    { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
@@ -2430,6 +2528,7 @@ static PyMethodDef golly_methods[] = {
    { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
    { "note",         golly_note,       METH_VARARGS, "show given string in note dialog" },
+   { "check",        golly_check,      METH_VARARGS, "allow event checking?" },
    { "exit",         golly_exit,       METH_VARARGS, "exit script with optional error message" },
    // for internal use (don't document)
    { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
@@ -2609,6 +2708,7 @@ void RunScript(const wxString& filename)
    scriptchars.Clear();
    autoupdate = false;
    exitcalled = false;
+   allowcheck = true;
    wxGetApp().PollerReset();
 
    // temporarily change current directory to location of script

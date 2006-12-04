@@ -131,8 +131,11 @@ int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
 bool showboldlines = true;       // show bold grid lines?
 bool mathcoords = false;         // show Y values increasing upwards?
-bool drawlayers = false;         // draw all layers?
-bool genlayers = false;          // generate all layers?
+bool showlayer = true;           // show layer bar?
+bool syncviews = true;           // synchronize viewports?
+bool synccursors = true;         // synchronize cursors?
+bool stacklayers = false;        // stack all layers?
+bool tilelayers = false;         // tile all layers?
 int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
@@ -547,8 +550,14 @@ void SavePrefs()
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
    fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
    fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
-   fprintf(f, "draw_layers=%d\n", drawlayers ? 1 : 0);
-   fprintf(f, "gen_layers=%d\n", genlayers ? 1 : 0);
+   
+   fputs("\n", f);
+
+   fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
+   fprintf(f, "sync_views=%d\n", syncviews ? 1 : 0);
+   fprintf(f, "sync_cursors=%d\n", synccursors ? 1 : 0);
+   fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
+   fprintf(f, "tile_layers=%d\n", tilelayers ? 1 : 0);
    
    fputs("\n", f);
 
@@ -849,11 +858,20 @@ void GetPrefs()
       } else if (strcmp(keyword, "math_coords") == 0) {
          mathcoords = value[0] == '1';
 
-      } else if (strcmp(keyword, "draw_layers") == 0) {
-         drawlayers = value[0] == '1';
+      } else if (strcmp(keyword, "show_layer") == 0) {
+         showlayer = value[0] == '1';
 
-      } else if (strcmp(keyword, "gen_layers") == 0) {
-         genlayers = value[0] == '1';
+      } else if (strcmp(keyword, "sync_views") == 0) {
+         syncviews = value[0] == '1';
+
+      } else if (strcmp(keyword, "sync_cursors") == 0) {
+         synccursors = value[0] == '1';
+
+      } else if (strcmp(keyword, "stack_layers") == 0) {
+         stacklayers = value[0] == '1';
+
+      } else if (strcmp(keyword, "tile_layers") == 0) {
+         tilelayers = value[0] == '1';
 
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
@@ -998,6 +1016,9 @@ void GetPrefs()
    
    // showpatterns and showscripts must not both be true
    if (showpatterns && showscripts) showscripts = false;
+   
+   // stacklayers and tilelayers must not both be true
+   if (stacklayers && tilelayers) tilelayers = false;
    
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();

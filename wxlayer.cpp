@@ -51,14 +51,30 @@ bool available[maxlayers];    // for setting tempstart suffix
 
 bool oldhash;                 // hash setting in old layer
 wxString oldrule;             // rule string in old layer
+int oldmag;                   // scale in old layer
+bigint oldx;                  // X position in old layer
+bigint oldy;                  // Y position in old layer
+wxCursor* oldcurs;            // cursor mode in old layer
 
 // -----------------------------------------------------------------------------
 
-void SaveHashAndRule()
+void SaveLayerSettings()
 {
    // set oldhash and oldrule for use in CurrentLayerChanged
    oldhash = currlayer->hash;
    oldrule = wxString(global_liferules.getrule(), wxConvLocal);
+   
+   if (syncviews) {
+      // save scale and location for use in CurrentLayerChanged
+      oldmag = currlayer->view->getmag();
+      oldx = currlayer->view->x;
+      oldy = currlayer->view->y;
+   }
+   
+   if (synccursors) {
+      // save cursor mode for use in CurrentLayerChanged
+      oldcurs = currlayer->curs;
+   }
    
    // we're about to change layer so remember current rule
    currlayer->rule = oldrule;
@@ -74,6 +90,9 @@ void CurrentLayerChanged()
    if ( oldhash != currlayer->hash || !oldrule.IsSameAs(currentrule,false) ) {
       currlayer->algo->setrule( currentrule.mb_str(wxConvLocal) );
    }
+   
+   if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
+   if (synccursors) currlayer->curs = oldcurs;
 
    mainptr->SetWarp(currlayer->warp);
    mainptr->SetWindowTitle(currlayer->currname);
@@ -92,7 +111,7 @@ void AddLayer()
       // creating the very first layer
       currindex = 0;
    } else {
-      SaveHashAndRule();
+      SaveLayerSettings();
       
       // insert new layer after currindex
       currindex++;
@@ -126,7 +145,7 @@ void DeleteLayer()
 {
    if (numlayers <= 1) return;
    
-   SaveHashAndRule();
+   SaveLayerSettings();
    
    delete currlayer;
    numlayers--;
@@ -189,7 +208,7 @@ void SetLayer(int index)
    if (index < 0 || index >= numlayers) return;
    if (currindex == index) return;
    
-   SaveHashAndRule();
+   SaveLayerSettings();
    currindex = index;
    currlayer = layer[currindex];
    CurrentLayerChanged();
@@ -197,21 +216,42 @@ void SetLayer(int index)
 
 // -----------------------------------------------------------------------------
 
-void ToggleDrawLayers()
+void ToggleLayerBar()
 {
-   drawlayers = !drawlayers;
-   // if drawlayers is true then rendering routine will temporarily synchronize
-   // all layers to use same scale and position as current layer
+   showlayer = !showlayer;
+   //!!!???
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleSyncViews()
+{
+   syncviews = !syncviews;
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleSyncCursors()
+{
+   synccursors = !synccursors;
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleStackLayers()
+{
+   stacklayers = !stacklayers;
+   if (stacklayers && tilelayers) tilelayers = false;
    mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
 
-void ToggleGenLayers()
+void ToggleTileLayers()
 {
-   genlayers = !genlayers;
-   // if genlayers is true then generating routines will temporarily synchronize
-   // all layers to use same step increment as current layer
+   tilelayers = !tilelayers;
+   if (tilelayers && stacklayers) stacklayers = false;
+   mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -274,7 +314,7 @@ Layer::Layer()
    selleft = 0;
    selright = 0;
 
-   // rule is only set later in SaveHashAndRule, so here we just assign
+   // rule is only set later in SaveLayerSettings, so here we just assign
    // a string to help catch caller accessing rule when it shouldn't
    rule = _("bug!");
 
@@ -333,7 +373,7 @@ Layer::Layer()
       }
       algo->setpoll(wxGetApp().Poller());
       
-      // inherit current rule (the one in global_liferules)
+      // inherit current rule (already in global_liferules)
       
       // inherit current viewport's size, scale and location
       view = new viewport(100,100);

@@ -1017,7 +1017,7 @@ void DrawView(wxDC &dc)
       return;
    }
    
-   if ( numlayers > 1 && drawlayers ) {
+   if ( numlayers > 1 && stacklayers ) {
       // draw all layers starting with layer 0 but using current layer's viewport
       savelayer = currlayer;
       if ( currindex != 0 ) {

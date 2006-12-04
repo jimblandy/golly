@@ -3,24 +3,41 @@
 from glife import pattern
 import golly as g
 
-if g.empty():
-   g.exit("There is no pattern.")
-if g.numlayers() + 1 > g.maxlayers():
-   g.exit("You need to delete a couple of layers.")
-if g.numlayers() + 2 > g.maxlayers():
-   g.exit("You need to delete a layer.")
+if g.empty(): g.exit("There is no pattern.")
 
-# get starting pattern from current layer
-startpatt = pattern( g.getcells(g.getrect()) )
+currname = "current"
+smearname = "smear"
+currindex = g.getlayer()
 
-smear = g.addlayer()    # create layer for remembering all live cells
-startpatt.put(0,0)      # copy starting pattern into this layer
+if currindex > 1 and g.getname(currindex) == currname \
+                 and g.getname(currindex-1) == smearname:
+   # continue from where we left off
+   pass
 
-curr = g.addlayer()     # create layer for generating pattern
-startpatt.put(0,0)      # copy starting pattern into this layer
+elif currindex > 0 and g.getname(currindex) == smearname \
+                   and currindex+1 < g.numlayers() \
+                   and g.getname(currindex+1) == currname:
+   # switch to currname layer and continue
+   g.setlayer(currindex+1)
 
-g.setoption("drawlayers",1)   # draw all layers (sync location & scale)
-g.setoption("genlayers",0)    # but only generate current layer
+else:
+   # start a new smear using pattern in current layer
+   if g.numlayers() + 1 > g.maxlayers():
+      g.exit("You need to delete a couple of layers.")
+   if g.numlayers() + 2 > g.maxlayers():
+      g.exit("You need to delete a layer.")
+   
+   # get starting pattern from current layer
+   startpatt = pattern( g.getcells(g.getrect()) )
+   
+   smear = g.addlayer()    # create layer for remembering all live cells
+   startpatt.put(0,0)      # copy starting pattern into this layer
+   
+   curr = g.addlayer()     # create layer for generating pattern
+   startpatt.put(0,0)      # copy starting pattern into this layer
+
+# draw all layers using same location & scale
+g.setoption("stacklayers", 1)
 
 def main():
    while True:
@@ -28,16 +45,15 @@ def main():
       g.run(1)
       if g.empty(): break
       
-      # copy current pattern to smear layer
+      # copy current pattern to smear layer;
+      # we temporarily disable event checking so thumb scrolling
+      # and other mouse events won't cause confusing changes
       currpatt = pattern( g.getcells(g.getrect()) )
-      # temporarily disable event checking so thumb scrolling
-      # and other mouse events won't cause unexpected changes???!!!
-      # OR would g.setoption("syncviews",1) be good enough???!!!
-      #!!! g.check(0)
+      g.check(0)
       g.setlayer(smear)
       currpatt.put(0,0)
       g.setlayer(curr)
-      #!!! g.check(1)
+      g.check(1)
       
       exp = g.getstep()
       if exp > 0:
@@ -51,7 +67,11 @@ def main():
 try:
    main()
 finally:
+   # name the current and smear layers so user can run script
+   # again and continue from where it was stopped
    g.setlayer(curr)
+   g.setname(currname)
+   g.setname(smearname, g.getlayer() - 1)
 
 '''
 Ideas and questions:
@@ -67,12 +87,12 @@ Ideas and questions:
   or 0 if only 1 layer remains
 - int = numlayers() returns number of existing layers
 - need movelayer(oldindex,newindex)???
-- need setname(index,str) and str = getname(index)???
+- need setname(str,index) and str = getname(index)???
 
 Need a new Layer menu with these items:
 
 Add Layer            (creates new empty layer)
-Clone Layer          (creates new layer which shares algo???)
+Clone Layer          (creates new layer with shared algo???)
 Duplicate Layer      (like Add Layer but copies pattern, etc???)
 Delete Layer
 Move Layer...        (maybe no need if we can drag layer buttons???)
@@ -80,15 +100,12 @@ Name Layer...        (change name seen in window's title bar???)
 -----
 Delete Other Layers  (delete all layers except current one)
 -----
-Synchronize Views    (check item -- keep all viewports in sync???)
-Synchronize Cursors  (check item -- keep all cursors in sync???)
-Tile All Layers      (check item -- tile all viewports???)
-Overlay All Layers   (check item -- use current pos and mag)
-Generate All Layers  (check item -- use current step base and exp)
+Show Layer Bar       (check item -- show/hide layer bar)
+Synchronize Views    (check item -- keep all viewports in sync)
+Synchronize Cursors  (check item -- keep all cursors in sync)
 -----
-Next Layer           (select next layer???)
-Previous Layer       (select previous layer???)
-Wrap                 (wrap around if ticked???)
+Stack Layers         (radio item -- use current pos and mag)
+Tile Layers          (radio item -- tile all viewports)
 -----
 Layer 0: name
 Layer 1: name        (current layer is ticked)

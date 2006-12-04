@@ -1,4 +1,3 @@
-
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
@@ -574,7 +573,7 @@ void PatternView::ShowDrawing()
       statusptr->Refresh(false, NULL);
    }
 
-   if (numlayers > 1 && drawlayers) {
+   if (numlayers > 1 && stacklayers) {
       // update all layers; this is rather slow but most people won't be
       // drawing cells when all layers are displayed (too confusing)
       Refresh(false, NULL);
@@ -586,7 +585,7 @@ void PatternView::ShowDrawing()
 
 void PatternView::DrawOneCell(int cx, int cy, wxDC &dc)
 {
-   if (numlayers > 1 && drawlayers) {
+   if (numlayers > 1 && stacklayers) {
       // drawing must be done via Update in ShowDrawing
       return;
    }
@@ -1133,7 +1132,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
       DrawView(dc);
    #else
       if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ||
-           (numlayers > 1 && drawlayers) ) {
+           (numlayers > 1 && stacklayers) ) {
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
             // need to create a new bitmap for viewport

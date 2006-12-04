@@ -201,8 +201,11 @@ enum {
    ID_DEL_LAYER,
    ID_MOVE_LAYER,
    ID_DEL_OTHERS,
-   ID_DRAW_ALL,
-   ID_GEN_ALL,
+   ID_LAYER_BAR,
+   ID_SYNC_VIEW,
+   ID_SYNC_CURS,
+   ID_STACK,
+   ID_TILE,
    ID_LAYER0         // keep this last
 };
 
@@ -439,9 +442,12 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < maxlayers);
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
       mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
-      mbar->Enable(ID_DEL_OTHERS,   active && !busy && numlayers > 1);
-      mbar->Enable(ID_DRAW_ALL,     active && !busy);
-      mbar->Enable(ID_GEN_ALL,      active && !busy);
+      mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
+      mbar->Enable(ID_LAYER_BAR,    active);
+      mbar->Enable(ID_SYNC_VIEW,    active);
+      mbar->Enable(ID_SYNC_CURS,    active);
+      mbar->Enable(ID_STACK,        active);
+      mbar->Enable(ID_TILE,         active);
       for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++)
          mbar->Enable(id, active && !busy);
 
@@ -476,8 +482,11 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SCALE_4,    viewptr->GetMag() == 2);
       mbar->Check(ID_SCALE_8,    viewptr->GetMag() == 3);
       mbar->Check(ID_SCALE_16,   viewptr->GetMag() == 4);
-      mbar->Check(ID_DRAW_ALL,   drawlayers);
-      mbar->Check(ID_GEN_ALL,    genlayers);
+      mbar->Check(ID_LAYER_BAR,  showlayer);
+      mbar->Check(ID_SYNC_VIEW,  syncviews);
+      mbar->Check(ID_SYNC_CURS,  synccursors);
+      mbar->Check(ID_STACK,      stacklayers);
+      mbar->Check(ID_TILE,       tilelayers);
       for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++)
          mbar->Check(id, currindex == (id - ID_LAYER0));
    }
@@ -909,8 +918,11 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_DEL_LAYER:      DeleteLayer(); break;
       case ID_MOVE_LAYER:     MoveLayerDialog(); break;
       case ID_DEL_OTHERS:     DeleteOtherLayers(); break;
-      case ID_DRAW_ALL:       ToggleDrawLayers(); break;
-      case ID_GEN_ALL:        ToggleGenLayers(); break;
+      case ID_LAYER_BAR:      ToggleLayerBar(); break;
+      case ID_SYNC_VIEW:      ToggleSyncViews(); break;
+      case ID_SYNC_CURS:      ToggleSyncCursors(); break;
+      case ID_STACK:          ToggleStackLayers(); break;
+      case ID_TILE:           ToggleTileLayers(); break;
       // Help menu
       case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
@@ -1532,8 +1544,12 @@ void MainFrame::CreateMenus()
    layerMenu->AppendSeparator();
    layerMenu->Append(ID_DEL_OTHERS, _("Delete Other Layers"));
    layerMenu->AppendSeparator();
-   layerMenu->AppendCheckItem(ID_DRAW_ALL, _("Draw All Layers"));
-   layerMenu->AppendCheckItem(ID_GEN_ALL, _("Generate All Layers"));
+   layerMenu->AppendCheckItem(ID_LAYER_BAR, _("Show Layer Bar"));
+   layerMenu->AppendCheckItem(ID_SYNC_VIEW, _("Synchronize Views"));
+   layerMenu->AppendCheckItem(ID_SYNC_CURS, _("Synchronize Cursors"));
+   layerMenu->AppendSeparator();
+   layerMenu->AppendCheckItem(ID_STACK, _("Stack Layers"));
+   layerMenu->AppendCheckItem(ID_TILE, _("Tile Layers"));
    layerMenu->AppendSeparator();
    layerMenu->AppendCheckItem(ID_LAYER0, _("0"));
    // UpdateLayerItem will soon change the above item name
