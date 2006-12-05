@@ -1110,9 +1110,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
       // need to change viewport size;
       // can happen on Windows when resizing/maximizing
-      //!!! no need here if we call it in OnSize???
-      wxBell();//!!!
-      //!!! SetViewSize();
+      SetViewSize();
    }
 
    #ifdef __WXMAC__
@@ -1163,20 +1161,21 @@ void PatternView::OnSize(wxSizeEvent& event)
 {
    wxRect r = GetRect();
    
-   // resizing splitter window resets viewptr size
-   if (showlayer && r.y == 0) {
-      r.y = layerbarht;
+   // resizing splitter window resets viewptr size;
+   // on Windows r.y will be 2 due to border
+   if (showlayer && r.y < layerbarht) {
+      r.y += layerbarht;
       r.height -= layerbarht;
       SetSize(r);             // OnSize will be called again
       event.Skip();
       return;
    }
    
-   /* //!!! debug
-   wxString msg;
-   msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
-   statusptr->DisplayMessage(msg);
-   */
+   //!!! debug
+   //!!! wxString msg;
+   //!!! msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
+   //!!! statusptr->DisplayMessage(msg);
+   
    
    SetViewSize();
    

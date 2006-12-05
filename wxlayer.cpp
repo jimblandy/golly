@@ -223,11 +223,11 @@ void ToggleLayerBar()
    wxRect r = viewptr->GetRect();
    if (showlayer) {
       // show layer bar at top of viewport window
-      r.y = layerbarht;
+      r.y += layerbarht;
       r.height -= layerbarht;
    } else {
       // hide layer bar
-      r.y = 0;
+      r.y -= layerbarht;
       r.height += layerbarht;
    }
    viewptr->SetSize(r);
