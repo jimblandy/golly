@@ -33,8 +33,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for gollydir, inithash, initrule, etc
 #include "wxlayer.h"
@@ -219,7 +220,17 @@ void SetLayer(int index)
 void ToggleLayerBar()
 {
    showlayer = !showlayer;
-   //!!!???
+   wxRect r = viewptr->GetRect();
+   if (showlayer) {
+      // show layer bar at top of viewport window
+      r.y = layerbarht;
+      r.height -= layerbarht;
+   } else {
+      // hide layer bar
+      r.y = 0;
+      r.height += layerbarht;
+   }
+   viewptr->SetSize(r);
 }
 
 // -----------------------------------------------------------------------------

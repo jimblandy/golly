@@ -161,7 +161,8 @@ private:
    void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root);
    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
    
-   // splittable window contains pattern/script directory and viewport
+   // splittable window contains pattern/script directory in left pane
+   // and layer bar plus viewport window in right pane
    wxSplitterWindow* splitwin;
    wxGenericDirCtrl* patternctrl;
    wxGenericDirCtrl* scriptctrl;

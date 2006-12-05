@@ -1,4 +1,6 @@
-# test multiple layers
+# Use multiple layers to create a "smear" history of the current pattern
+# where one layer remembers all cells that become alive.
+# Author: Andrew Trevorrow (andrew@trevorrow.com), December 2006.
 
 from glife import pattern
 import golly as g
@@ -14,11 +16,17 @@ if currindex > 1 and g.getname(currindex) == currname \
    # continue from where we left off
    pass
 
-elif currindex > 0 and g.getname(currindex) == smearname \
-                   and currindex+1 < g.numlayers() \
-                   and g.getname(currindex+1) == currname:
-   # switch to currname layer and continue
+elif currindex+1 < g.numlayers() \
+                 and g.getname(currindex) == smearname \
+                 and g.getname(currindex+1) == currname:
+   # switch from smearname layer to currname layer and continue
    g.setlayer(currindex+1)
+
+elif currindex+2 < g.numlayers() \
+                 and g.getname(currindex+1) == smearname \
+                 and g.getname(currindex+2) == currname:
+   # switch from starting layer to currname layer and continue
+   g.setlayer(currindex+2)
 
 else:
    # start a new smear using pattern in current layer
@@ -107,9 +115,9 @@ Synchronize Cursors  (check item -- keep all cursors in sync)
 Stack Layers         (radio item -- use current pos and mag)
 Tile Layers          (radio item -- tile all viewports)
 -----
-Layer 0: name
-Layer 1: name        (current layer is ticked)
-Layer 2: name
+0: name
+1: name              (current layer is ticked)
+2: name
 
 If "Show Layer Bar" is ticked, display bitmap buttons in a bar
 at the top of the viewport:

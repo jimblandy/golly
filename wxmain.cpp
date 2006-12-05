@@ -249,8 +249,6 @@ wxBitmap tbBitmaps[14];
 
 // -----------------------------------------------------------------------------
 
-// update functions:
-
 // update tool bar buttons according to the current state
 void MainFrame::UpdateToolBar(bool active)
 {
@@ -612,8 +610,6 @@ void MainFrame::DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
 
 // -----------------------------------------------------------------------------
 
-// view functions:
-
 void MainFrame::ResizeSplitWindow()
 {
    int wd, ht;
@@ -622,14 +618,16 @@ void MainFrame::ResizeSplitWindow()
    splitwin->SetSize(0, statusptr->statusht, wd,
                      ht > statusptr->statusht ? ht - statusptr->statusht : 0);
 
+   /* //!!!??? do in PatternView::OnSize
    // wxSplitterWindow automatically resizes left and right panes
-   // but we still need to resize viewport
+   // but we still need to resize viewport in each layer
    viewptr->SetViewSize();
 
    #ifdef __WXGTK__
       // need to reset scroll bars
       viewptr->UpdateScrollBars();
    #endif
+   */
 }
 
 // -----------------------------------------------------------------------------
@@ -819,7 +817,7 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 #ifdef __WXMAC__
    EVT_TREE_ITEM_EXPANDED  (wxID_TREECTRL,   MainFrame::OnDirTreeExpand)
    // wxMac bug??? EVT_TREE_ITEM_COLLAPSED doesn't get called
-   EVT_TREE_ITEM_COLLAPSING(wxID_TREECTRL,   MainFrame::OnDirTreeCollapse)
+   EVT_TREE_ITEM_COLLAPSING (wxID_TREECTRL,  MainFrame::OnDirTreeCollapse)
 #endif
    EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
    EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
@@ -1775,7 +1773,7 @@ MainFrame::MainFrame()
    if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
    
    // create a split window with pattern/script directory in left pane
-   // and pattern viewport in right pane
+   // and layer bar plus pattern viewport in right pane
    splitwin = new wxSplitterWindow(this, wxID_ANY,
                                    wxPoint(0, statht),
                                    wxSize(wd, ht - statht),
@@ -1785,8 +1783,12 @@ MainFrame::MainFrame()
                                    wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
    if (splitwin == NULL) Fatal(_("Failed to create split window!"));
 
-   // create patternctrl and scriptctrl
+   // create patternctrl and scriptctrl in left pane
    CreateDirControls();
+   
+   //!!!??? create a window for right pane which contains pattern viewport and layer bar
+   //!!! rightpane = new wxWindow(splitwin, wxID_ANY, wxPoint(0,0), wxSize(100,100));
+   //!!! if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
    viewptr = new PatternView(splitwin, 0, 0, 40, 40);

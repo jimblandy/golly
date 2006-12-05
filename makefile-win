@@ -409,7 +409,7 @@ wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h w
 
 $(OBJDIR)/wxlayer.obj: wxlayer.cpp wxlayer.h \
 lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
-wxgolly.h wxutils.h wxprefs.h wxmain.h
+wxgolly.h wxmain.h wxview.h wxutils.h wxprefs.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxlayer.cpp
 
 $(OBJDIR)/wxmain.obj: wxmain.cpp wxmain.h \

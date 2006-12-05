@@ -205,21 +205,6 @@ void PatternView::RestoreOrigin()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::SetViewSize()
-{
-   int wd, ht;
-   GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
-   if (wd < 1) wd = 1;
-   if (ht < 1) ht = 1;
-   ResizeLayers(wd, ht);
-   // only autofit when generating
-   if (autofit && mainptr->generating)
-      currlayer->algo->fit(*currlayer->view, 0);
-}
-
-// -----------------------------------------------------------------------------
-
 void PatternView::ToggleGridLines()
 {
    showgridlines = !showgridlines;
@@ -536,6 +521,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case '8':   SetPixelsPerCell(8); break;
       case '6':   SetPixelsPerCell(16); break;
 
+      case '\\':  ToggleLayerBar(); break;
       case '\'':  mainptr->ToggleToolBar(); break;
       case ';':   mainptr->ToggleStatusBar(); break;
       case 'e':   mainptr->ToggleExactNumbers(); break;
@@ -1094,6 +1080,7 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 
 BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_PAINT            (                 PatternView::OnPaint)
+   EVT_SIZE             (                 PatternView::OnSize)
    EVT_KEY_DOWN         (                 PatternView::OnKeyDown)
    EVT_KEY_UP           (                 PatternView::OnKeyUp)
    EVT_CHAR             (                 PatternView::OnChar)
@@ -1123,7 +1110,9 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
       // need to change viewport size;
       // can happen on Windows when resizing/maximizing
-      SetViewSize();
+      //!!! no need here if we call it in OnSize???
+      wxBell();//!!!
+      //!!! SetViewSize();
    }
 
    #ifdef __WXMAC__
@@ -1149,6 +1138,54 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
          DrawView(dc);
       }
    #endif
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::SetViewSize()
+{
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   // wd or ht might be < 1 on Win/X11 platforms
+   if (wd < 1) wd = 1;
+   if (ht < 1) ht = 1;
+   
+   ResizeLayers(wd, ht);
+   
+   // only autofit when generating
+   if (autofit && mainptr && mainptr->generating)
+      currlayer->algo->fit(*currlayer->view, 0);
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::OnSize(wxSizeEvent& event)
+{
+   wxRect r = GetRect();
+   
+   // resizing splitter window resets viewptr size
+   if (showlayer && r.y == 0) {
+      r.y = layerbarht;
+      r.height -= layerbarht;
+      SetSize(r);             // OnSize will be called again
+      event.Skip();
+      return;
+   }
+   
+   /* //!!! debug
+   wxString msg;
+   msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
+   statusptr->DisplayMessage(msg);
+   */
+   
+   SetViewSize();
+   
+   #ifdef __WXGTK__
+      // need to reset scroll bars
+      UpdateScrollBars();
+   #endif
+
+   //!!!??? event.Skip();
 }
 
 // -----------------------------------------------------------------------------

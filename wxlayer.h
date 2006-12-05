@@ -76,6 +76,8 @@ extern int numlayers;         // number of existing layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer
 
+const int layerbarht = 32;    // height of layer bar
+
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.
 // The first call creates the initial layer.  Later calls insert the

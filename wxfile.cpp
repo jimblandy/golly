@@ -835,7 +835,7 @@ void MainFrame::ToggleShowPatterns()
          splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
       }
       // resize viewport
-      viewptr->SetViewSize();
+      //!!!??? viewptr->SetViewSize();
       viewptr->SetFocus();
    }
 }
@@ -858,7 +858,7 @@ void MainFrame::ToggleShowScripts()
          splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
       }
       // resize viewport
-      viewptr->SetViewSize();
+      //!!!??? viewptr->SetViewSize();
       viewptr->SetFocus();
    }
 }
