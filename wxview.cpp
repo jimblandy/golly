@@ -1166,7 +1166,7 @@ void PatternView::OnSize(wxSizeEvent& event)
    if (showlayer && r.y < layerbarht) {
       r.y += layerbarht;
       r.height -= layerbarht;
-      SetSize(r);             // OnSize will be called again
+      SetSize(r);             // OnSize will be called again (not in wxGTK!!!)
       event.Skip();
       return;
    }
@@ -1176,15 +1176,12 @@ void PatternView::OnSize(wxSizeEvent& event)
    //!!! msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
    //!!! statusptr->DisplayMessage(msg);
    
-   
    SetViewSize();
    
    #ifdef __WXGTK__
       // need to reset scroll bars
-      UpdateScrollBars();
+      if (mainptr) UpdateScrollBars();
    #endif
-
-   //!!!??? event.Skip();
 }
 
 // -----------------------------------------------------------------------------
