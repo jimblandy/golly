@@ -172,7 +172,7 @@ wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h w
 
 $(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \
 lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
-wxgolly.h wxmain.h wxview.h wxutils.h wxprefs.h
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \

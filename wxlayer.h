@@ -134,6 +134,9 @@ void CreateLayerBar(wxWindow* parent);
 void ResizeLayerBar(int wd);
 // Change width of layer bar.
 
+void UpdateLayerBar(bool active);
+// Update state of buttons in layer bar.
+
 void ToggleLayerBar();
 // Show/hide layer bar.
 

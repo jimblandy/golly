@@ -495,6 +495,7 @@ void MainFrame::UpdateMenuItems(bool active)
 void MainFrame::UpdateUserInterface(bool active)
 {
    UpdateToolBar(active);
+   UpdateLayerBar(active);
    UpdateMenuItems(active);
    viewptr->CheckCursor(active);
    statusptr->CheckMouseLocation(active);
@@ -511,7 +512,7 @@ void MainFrame::UpdateEverything()
       return;
    }
 
-   // update tool bar, menu bar and cursor
+   // update tool bar, layer bar, menu bar and cursor
    UpdateUserInterface(IsActive());
 
    if (inscript) {
@@ -648,7 +649,7 @@ void RightWindow::OnSize(wxSizeEvent& event)
       viewptr->SetSize(0, showlayer ? layerbarht : 0,
                        wd, showlayer ? ht - layerbarht : ht);
    }
-   event.Skip(); //!!!???
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------

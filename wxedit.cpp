@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for CreatePasteImage
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for PatternView
-#include "wxlayer.h"       // for currlayer, etc
+#include "wxlayer.h"       // for currlayer, UpdateLayerBar, etc
 
 #ifdef __WXMAC__
    #include <Carbon/Carbon.h>    // for Button
@@ -717,6 +717,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       waitingforclick = true;
       mainptr->EnableAllMenus(false);  // disable all menu items
       mainptr->UpdateToolBar(false);   // disable all tool bar buttons
+      UpdateLayerBar(false);           // disable all layer bar buttons
       CaptureMouse();                  // get mouse down event even if outside view
       pasterect = wxRect(-1,-1,0,0);
 

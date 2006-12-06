@@ -1159,22 +1159,15 @@ void PatternView::SetViewSize()
 
 void PatternView::OnSize(wxSizeEvent& event)
 {
-   /* //!!! debug
-   wxRect r = GetRect();
-   wxString msg;
-   msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
-   statusptr->DisplayMessage(msg);
-   */
-   
    // resize viewports in all layers
    SetViewSize();
    
    #ifdef __WXGTK__
       // need to reset scroll bars
-      if (mainptr) UpdateScrollBars();
+      //!!!??? if (mainptr) UpdateScrollBars();
    #endif
    
-   event.Skip(); //!!!???
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
