@@ -517,16 +517,10 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0 && showlayer) {
       wxPaintDC dc(this);
-
-      /* //!!! use default bg???
-      wxRect r = wxRect(0, 0, wd, ht);
-      wxBrush brush(*wxLIGHT_GREY);
-      FillRect(dc, r, brush);
-      */
       
-      dc.Clear();   //!!! needed for wxMSW
+      dc.Clear();   // needed for wxMSW
       
-      //!!! only need to draw some border lines???
+      //!!! need to draw some border lines???
    }
 }
 
@@ -534,7 +528,6 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 void LayerBar::OnButton(wxCommandEvent& event)
 {
-   wxBell();//!!!
    mainptr->showbanner = false;
    statusptr->ClearMessage();
    int id = event.GetId();

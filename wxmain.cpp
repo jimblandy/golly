@@ -1027,6 +1027,8 @@ void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
       }
    }
    */
+   
+   event.Skip();     //!!!??? need on Windows for layer bar buttons to work
 }
 
 // -----------------------------------------------------------------------------
