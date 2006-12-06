@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -497,6 +499,7 @@ public:
 
    // event handlers
    void OnPaint(wxPaintEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
 
    DECLARE_EVENT_TABLE()
@@ -504,6 +507,7 @@ public:
 
 BEGIN_EVENT_TABLE(LayerBar, wxWindow)
    EVT_PAINT       (           LayerBar::OnPaint)
+   EVT_LEFT_DOWN   (           LayerBar::OnMouseDown)
    EVT_BUTTON      (wxID_ANY,  LayerBar::OnButton)
 END_EVENT_TABLE()
 
@@ -516,12 +520,26 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0 && showlayer) {
-      wxPaintDC dc(this);
+      // use buffering to avoid flashing when resizing on Windows
+      wxBufferedPaintDC dc(this);
       
-      dc.Clear();   // needed for wxMSW
+      #ifdef __WXMSW__
+         dc.Clear();       // needed on Windows
+      #endif
       
       //!!! need to draw some border lines???
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
+{
+   //!!!??? may need this handler to allow dragging layer buttons
+   // but it is NOT called on Mac if user clicks a button
+   wxBell();//!!!
+   
+   layerbarptr->SetFocus(); //!!!??? need on Windows
 }
 
 // -----------------------------------------------------------------------------
@@ -556,7 +574,9 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SetFont(*font);
    dc.SetTextForeground(*wxBLACK);
    dc.SetBrush(*wxBLACK_BRUSH);
-   dc.Clear();   // needed on Windows and Linux
+   #ifndef __WXMAC__
+      dc.Clear();   // needed on Windows and Linux
+   #endif
    dc.SetBackgroundMode(wxTRANSPARENT);
    dc.DrawText(str, 3, 2);
    dc.SelectObject(wxNullBitmap);
