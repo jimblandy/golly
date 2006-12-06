@@ -286,7 +286,6 @@ bool GollyApp::OnInit()
    // initialize some stuff before showing main window
    mainptr->SetRandomFillPercentage();
    mainptr->SetMinimumWarp();
-   //!!! viewptr->SetViewSize();       no need???
 
    wxString banner = _("This is Golly version ");
    banner +=         _(STRINGIFY(VERSION));

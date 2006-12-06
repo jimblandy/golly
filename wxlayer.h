@@ -76,8 +76,6 @@ extern int numlayers;         // number of existing layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer
 
-const int layerbarht = 32;    // height of layer bar
-
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.
 // The first call creates the initial layer.  Later calls insert the
@@ -99,9 +97,6 @@ void MoveLayerDialog();
 
 void SetLayer(int index);
 // Set the current layer using the given index.
-
-void ToggleLayerBar();
-// Show/hide the layer bar.
 
 void ToggleSyncViews();
 // Toggle the syncviews flag.  When true, every layer uses the same
@@ -127,5 +122,19 @@ void ResizeLayers(int wd, int ht);
 
 Layer* GetLayer(int index);
 // Return a pointer to the layer specified by the given index.
+
+
+// Layer bar data and routines:
+
+const int layerbarht = 32;       // height of layer bar
+
+void CreateLayerBar(wxWindow* parent);
+// Create layer bar window at top of given parent window.
+
+void ResizeLayerBar(int wd);
+// Change width of layer bar.
+
+void ToggleLayerBar();
+// Show/hide layer bar.
 
 #endif

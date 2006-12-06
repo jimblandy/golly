@@ -1159,29 +1159,22 @@ void PatternView::SetViewSize()
 
 void PatternView::OnSize(wxSizeEvent& event)
 {
+   /* //!!! debug
    wxRect r = GetRect();
+   wxString msg;
+   msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
+   statusptr->DisplayMessage(msg);
+   */
    
-   // resizing splitter window resets viewptr size;
-   // on Windows r.y will be 2 due to border
-   if (showlayer && r.y < layerbarht) {
-      r.y += layerbarht;
-      r.height -= layerbarht;
-      SetSize(r);             // OnSize will be called again (not in wxGTK!!!)
-      event.Skip();
-      return;
-   }
-   
-   //!!! debug
-   //!!! wxString msg;
-   //!!! msg.Printf("x,y=%d,%d wd,ht=%d,%d", r.x, r.y, r.width, r.height);
-   //!!! statusptr->DisplayMessage(msg);
-   
+   // resize viewports in all layers
    SetViewSize();
    
    #ifdef __WXGTK__
       // need to reset scroll bars
       if (mainptr) UpdateScrollBars();
    #endif
+   
+   event.Skip(); //!!!???
 }
 
 // -----------------------------------------------------------------------------

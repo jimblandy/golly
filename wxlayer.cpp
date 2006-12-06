@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxutils.h"       // for Warning
+#include "wxutils.h"       // for Warning, FillRect
 #include "wxprefs.h"       // for gollydir, inithash, initrule, etc
 #include "wxlayer.h"
 
@@ -217,24 +217,6 @@ void SetLayer(int index)
 
 // -----------------------------------------------------------------------------
 
-void ToggleLayerBar()
-{
-   showlayer = !showlayer;
-   wxRect r = viewptr->GetRect();
-   if (showlayer) {
-      // show layer bar at top of viewport window
-      r.y += layerbarht;
-      r.height -= layerbarht;
-   } else {
-      // hide layer bar
-      r.y -= layerbarht;
-      r.height += layerbarht;
-   }
-   viewptr->SetSize(r);
-}
-
-// -----------------------------------------------------------------------------
-
 void ToggleSyncViews()
 {
    syncviews = !syncviews;
@@ -263,6 +245,7 @@ void ToggleTileLayers()
    tilelayers = !tilelayers;
    if (tilelayers && stacklayers) stacklayers = false;
    mainptr->UpdatePatternAndStatus();
+   if (tilelayers) Warning(_("Not yet implemented."));    //!!!
 }
 
 // -----------------------------------------------------------------------------
@@ -419,4 +402,98 @@ Layer::~Layer()
    } else {
       Warning(_("Problem in tempstart: ") + tempstart);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+// Define layer bar window:
+
+class LayerBar : public wxWindow
+{
+public:
+   LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
+      : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
+                 wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+   {
+      // avoid erasing background on GTK+
+      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+   }
+   ~LayerBar() {}
+
+   // event handlers
+   void OnPaint(wxPaintEvent& event);
+   void OnEraseBackground(wxEraseEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(LayerBar, wxWindow)
+   EVT_PAINT            (LayerBar::OnPaint)
+   EVT_ERASE_BACKGROUND (LayerBar::OnEraseBackground)
+END_EVENT_TABLE()
+
+LayerBar* layerbarptr = NULL;
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   if (wd > 0 && ht > 0 && showlayer) {
+      wxPaintDC dc(this);
+
+      wxRect r = wxRect(0, 0, wd, ht);
+      wxBrush brush(*wxLIGHT_GREY);
+      FillRect(dc, r, brush);
+
+      //!!! draw bitmap buttons???
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing because we paint all of layer bar window
+}
+
+// -----------------------------------------------------------------------------
+
+void CreateLayerBar(wxWindow* parent)
+{
+   int wd, ht;
+   parent->GetClientSize(&wd, &ht);
+
+   layerbarptr = new LayerBar(parent, 0, 0, wd, layerbarht);
+   if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
+   
+   //!!! create bitmap buttons
+}
+
+// -----------------------------------------------------------------------------
+
+void ResizeLayerBar(int wd)
+{
+   if (layerbarptr) {
+      layerbarptr->SetSize(wd, layerbarht);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleLayerBar()
+{
+   showlayer = !showlayer;
+   wxRect r = viewptr->GetRect();
+   if (showlayer) {
+      // show layer bar at top of viewport window
+      r.y += layerbarht;
+      r.height -= layerbarht;
+   } else {
+      // hide layer bar
+      r.y -= layerbarht;
+      r.height += layerbarht;
+   }
+   viewptr->SetSize(r);
 }

@@ -610,6 +610,65 @@ void MainFrame::DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
 
 // -----------------------------------------------------------------------------
 
+// Define a window for right pane of split window:
+
+class RightWindow : public wxWindow
+{
+public:
+   RightWindow(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
+      : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
+                 wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+   {
+      // avoid erasing background on GTK+
+      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+   }
+   ~RightWindow() {}
+
+   // event handlers
+   void OnSize(wxSizeEvent& event);
+   void OnEraseBackground(wxEraseEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(RightWindow, wxWindow)
+   EVT_SIZE             (RightWindow::OnSize)
+   EVT_ERASE_BACKGROUND (RightWindow::OnEraseBackground)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void RightWindow::OnSize(wxSizeEvent& event)
+{
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   if (wd > 0 && ht > 0 && viewptr) {
+      // resize layer bar and viewport window
+      ResizeLayerBar(wd);
+      viewptr->SetSize(0, showlayer ? layerbarht : 0,
+                       wd, showlayer ? ht - layerbarht : ht);
+   }
+   event.Skip(); //!!!???
+}
+
+// -----------------------------------------------------------------------------
+
+void RightWindow::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing because layer bar and viewport cover all of right pane
+}
+
+// -----------------------------------------------------------------------------
+
+RightWindow* rightpane;
+
+wxWindow* MainFrame::RightPane()
+{
+   return rightpane;
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ResizeSplitWindow()
 {
    int wd, ht;
@@ -618,16 +677,8 @@ void MainFrame::ResizeSplitWindow()
    splitwin->SetSize(0, statusptr->statusht, wd,
                      ht > statusptr->statusht ? ht - statusptr->statusht : 0);
 
-   /* //!!!??? do in PatternView::OnSize
-   // wxSplitterWindow automatically resizes left and right panes
-   // but we still need to resize viewport in each layer
-   viewptr->SetViewSize();
-
-   #ifdef __WXGTK__
-      // need to reset scroll bars
-      viewptr->UpdateScrollBars();
-   #endif
-   */
+   // wxSplitterWindow automatically resizes left and right panes;
+   // note that RightWindow::OnSize has been called
 }
 
 // -----------------------------------------------------------------------------
@@ -777,10 +828,10 @@ void MainFrame::ToggleFullScreen()
          }
          // now restore pattern/script directory if necessary
          if ( restorepattdir && !splitwin->IsSplit() ) {
-            splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+            splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
             showpatterns = true;
          } else if ( restorescrdir && !splitwin->IsSplit() ) {
-            splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+            splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
             showscripts = true;
          }
       }
@@ -1030,11 +1081,7 @@ void MainFrame::OnActivate(wxActivateEvent& event)
 
 // -----------------------------------------------------------------------------
 
-#if defined(__WXX11__) || defined(__WXGTK__)
 void MainFrame::OnSize(wxSizeEvent& event)
-#else
-void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
-#endif
 {
    #ifdef __WXMSW__
       // save current location and size for use in SavePrefs if app
@@ -1060,9 +1107,12 @@ void MainFrame::OnSize(wxSizeEvent& WXUNUSED(event))
          ResizeSplitWindow();
       }
    }
+   
    #if defined(__WXX11__) || defined(__WXGTK__)
       // need to do default processing for menu bar and tool bar
       event.Skip();
+   #else
+      wxUnusedVar(event);
    #endif
 }
 
@@ -1786,12 +1836,16 @@ MainFrame::MainFrame()
    // create patternctrl and scriptctrl in left pane
    CreateDirControls();
    
-   //!!!??? create a window for right pane which contains pattern viewport and layer bar
-   //!!! rightpane = new wxWindow(splitwin, wxID_ANY, wxPoint(0,0), wxSize(100,100));
-   //!!! if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
+   // create a window for right pane which contains layer bar and pattern viewport
+   rightpane = new RightWindow(splitwin, 0, 0, wd, ht - statht);
+   if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
+   
+   // create layer bar and initial layer
+   CreateLayerBar(rightpane);
+   AddLayer();
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
-   viewptr = new PatternView(splitwin, 0, 0, 40, 40);
+   viewptr = new PatternView(rightpane, 0, showlayer ? layerbarht : 0, 40, 40);
    if (viewptr == NULL) Fatal(_("Failed to create viewport window!"));
    
    #if wxUSE_DRAG_AND_DROP
@@ -1799,24 +1853,21 @@ MainFrame::MainFrame()
       viewptr->SetDropTarget(new DnDFile());
    #endif
    
-   // create the initial layer
-   AddLayer();
-   
    // these seemingly redundant steps are needed to avoid problems on Windows
-   splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+   splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
    splitwin->SetSashPosition(dirwinwd);
    splitwin->SetMinimumPaneSize(50);
    splitwin->Unsplit(patternctrl);
    splitwin->UpdateSize();
 
-   splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+   splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
    splitwin->SetSashPosition(dirwinwd);
    splitwin->SetMinimumPaneSize(50);
    splitwin->Unsplit(scriptctrl);
    splitwin->UpdateSize();
 
-   if (showpatterns) splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
-   if (showscripts) splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+   if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
+   if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
 
    InitDrawingData();      // do this after viewport size has been set
 

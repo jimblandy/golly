@@ -97,6 +97,7 @@ public:
    void ToggleFullScreen();
    void ShowPatternInfo();
    void ResizeSplitWindow();
+   wxWindow* RightPane();
 
    // layer functions
    void UpdateLayerItem(int index);

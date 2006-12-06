@@ -32,8 +32,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class PatternView : public wxWindow
 {
 public:
-    PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
-    ~PatternView();
+   PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
+   ~PatternView();
 
    // edit functions
    void CutSelection();

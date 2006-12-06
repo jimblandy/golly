@@ -825,17 +825,15 @@ void MainFrame::ToggleShowPatterns()
    if (showpatterns && showscripts) {
       showscripts = false;
       splitwin->Unsplit(scriptctrl);
-      splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+      splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
    } else {
       if (splitwin->IsSplit()) {
          // hide left pane
          dirwinwd = splitwin->GetSashPosition();
          splitwin->Unsplit(patternctrl);
       } else {
-         splitwin->SplitVertically(patternctrl, viewptr, dirwinwd);
+         splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
       }
-      // resize viewport
-      //!!!??? viewptr->SetViewSize();
       viewptr->SetFocus();
    }
 }
@@ -848,17 +846,15 @@ void MainFrame::ToggleShowScripts()
    if (showscripts && showpatterns) {
       showpatterns = false;
       splitwin->Unsplit(patternctrl);
-      splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+      splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
    } else {
       if (splitwin->IsSplit()) {
          // hide left pane
          dirwinwd = splitwin->GetSashPosition();
          splitwin->Unsplit(scriptctrl);
       } else {
-         splitwin->SplitVertically(scriptctrl, viewptr, dirwinwd);
+         splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
       }
-      // resize viewport
-      //!!!??? viewptr->SetViewSize();
       viewptr->SetFocus();
    }
 }
