@@ -498,15 +498,13 @@ public:
    // event handlers
    void OnPaint(wxPaintEvent& event);
    void OnButton(wxCommandEvent& event);
-   void OnEraseBackground(wxEraseEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(LayerBar, wxWindow)
-   EVT_PAINT            (           LayerBar::OnPaint)
-   EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
-   //!!!??? EVT_ERASE_BACKGROUND (LayerBar::OnEraseBackground)
+   EVT_PAINT       (           LayerBar::OnPaint)
+   EVT_BUTTON      (wxID_ANY,  LayerBar::OnButton)
 END_EVENT_TABLE()
 
 LayerBar* layerbarptr = NULL;
@@ -526,6 +524,8 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       FillRect(dc, r, brush);
       */
       
+      dc.Clear();   //!!! needed for wxMSW
+      
       //!!! only need to draw some border lines???
    }
 }
@@ -534,6 +534,7 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 void LayerBar::OnButton(wxCommandEvent& event)
 {
+   wxBell();//!!!
    mainptr->showbanner = false;
    statusptr->ClearMessage();
    int id = event.GetId();
@@ -545,13 +546,6 @@ void LayerBar::OnButton(wxCommandEvent& event)
       case TILE_LAYERS:    ToggleTileLayers(); break;
       default:             SetLayer(id - LAYER_0);
    }
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
-{
-   // do nothing because we paint all of layer bar window
 }
 
 // -----------------------------------------------------------------------------
@@ -569,9 +563,7 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SetFont(*font);
    dc.SetTextForeground(*wxBLACK);
    dc.SetBrush(*wxBLACK_BRUSH);
-   
-   dc.Clear();   //!!! for wxGTK???
-   
+   dc.Clear();   // needed on Windows and Linux
    dc.SetBackgroundMode(wxTRANSPARENT);
    dc.DrawText(str, 3, 2);
    dc.SelectObject(wxNullBitmap);
@@ -640,7 +632,7 @@ void CreateLayerBar(wxWindow* parent)
    
    // disable DELETE_LAYER button
    bitbutt[DELETE_LAYER]->Enable(false);
-   
+      
    layerbarptr->Show(showlayer);    // needed on Windows
 }
 
