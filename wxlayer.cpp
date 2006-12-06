@@ -489,7 +489,7 @@ public:
                  wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
    {
       // avoid erasing background on GTK+
-      //!!!??? SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
    }
    ~LayerBar() {}
 
@@ -569,6 +569,9 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SetFont(*font);
    dc.SetTextForeground(*wxBLACK);
    dc.SetBrush(*wxBLACK_BRUSH);
+   
+   dc.Clear();   //!!! for wxGTK???
+   
    dc.SetBackgroundMode(wxTRANSPARENT);
    dc.DrawText(str, 3, 2);
    dc.SelectObject(wxNullBitmap);
@@ -584,7 +587,7 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SetTextForeground(*wxWHITE);
    dc.SetBrush(*wxWHITE_BRUSH);
    dc.SetBackgroundMode(wxTRANSPARENT);
-   dc.DrawText(str, 5, 1);                //!!! why diff to above???
+   dc.DrawText(str, 5, 1);                //!!! why diff to above on Mac???
    dc.SelectObject(wxNullBitmap);
    
    bitbutt[id] = new wxBitmapButton(this, id, *normbitmap[id], wxPoint(x,y));
