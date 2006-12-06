@@ -468,6 +468,8 @@ void CreateLayerBar(wxWindow* parent)
    layerbarptr = new LayerBar(parent, 0, 0, wd, layerbarht);
    if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
    
+   layerbarptr->Show(showlayer);    // needed on Windows
+
    //!!! create bitmap buttons
 }
 
@@ -495,5 +497,6 @@ void ToggleLayerBar()
       r.y -= layerbarht;
       r.height += layerbarht;
    }
+   layerbarptr->Show(showlayer);    // needed on Windows
    viewptr->SetSize(r);
 }
