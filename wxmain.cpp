@@ -1040,17 +1040,10 @@ void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
 void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 {
    // this is never called in Mac app, presumably because it doesn't
-   // make any sense for a wxFrame to get the keyboard focus,
-   // so we'll need a different solution!!!
-   /*
-   #ifdef __WXMAC__
-      // avoid pattern/script directory getting keyboard focus
-      if (viewptr) viewptr->SetFocus();
-   #endif
-   */
+   // make any sense for a wxFrame to get the keyboard focus
 
    #ifdef __WXMSW__
-      // fix wxMSW bug: don't let main window get focus after being minimized
+      // fix wxMSW problem: don't let main window get focus after being minimized
       if (viewptr) viewptr->SetFocus();
    #endif
 

@@ -496,6 +496,7 @@ public:
 
    // event handlers
    void OnPaint(wxPaintEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
 
    DECLARE_EVENT_TABLE()
@@ -503,6 +504,7 @@ public:
 
 BEGIN_EVENT_TABLE(LayerBar, wxWindow)
    EVT_PAINT       (           LayerBar::OnPaint)
+   EVT_LEFT_DOWN   (           LayerBar::OnMouseDown)
    EVT_BUTTON      (wxID_ANY,  LayerBar::OnButton)
 END_EVENT_TABLE()
 
@@ -523,6 +525,15 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       
       //!!! need to draw some border lines???
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
+{
+   // this is NOT called if user clicks a layer bar button;
+   // on Windows we need to reset keyboard focus to viewport window
+   viewptr->SetFocus();
 }
 
 // -----------------------------------------------------------------------------
