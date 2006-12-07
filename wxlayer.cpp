@@ -696,6 +696,6 @@ void ToggleLayerBar()
       r.y -= layerbarht;
       r.height += layerbarht;
    }
-   layerbarptr->Show(showlayer);    // needed on Windows
    viewptr->SetSize(r);
+   layerbarptr->Show(showlayer);    // needed on Windows
 }

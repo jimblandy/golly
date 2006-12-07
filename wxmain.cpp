@@ -164,8 +164,9 @@ enum {
    // wxID_ZOOM_IN,
    // wxID_ZOOM_OUT,
    ID_SET_SCALE,
-   ID_TOOL,
-   ID_STATUS,
+   ID_TOOL_BAR,
+   ID_LAYER_BAR,
+   ID_STATUS_BAR,
    ID_EXACT,
    ID_GRID,
    ID_COLORS,
@@ -201,7 +202,6 @@ enum {
    ID_DEL_LAYER,
    ID_MOVE_LAYER,
    ID_DEL_OTHERS,
-   ID_LAYER_BAR,
    ID_SYNC_VIEW,
    ID_SYNC_CURS,
    ID_STACK,
@@ -422,8 +422,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(wxID_ZOOM_IN, active && viewptr->GetMag() < MAX_MAG);
       mbar->Enable(wxID_ZOOM_OUT, active);
       mbar->Enable(ID_SET_SCALE, active);
-      mbar->Enable(ID_TOOL,      active);
-      mbar->Enable(ID_STATUS,    active);
+      mbar->Enable(ID_TOOL_BAR,  active);
+      mbar->Enable(ID_LAYER_BAR, active);
+      mbar->Enable(ID_STATUS_BAR,active);
       mbar->Enable(ID_EXACT,     active);
       mbar->Enable(ID_GRID,      active);
       mbar->Enable(ID_COLORS,    active);
@@ -441,7 +442,6 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
       mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
-      mbar->Enable(ID_LAYER_BAR,    active);
       mbar->Enable(ID_SYNC_VIEW,    active);
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
@@ -457,8 +457,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_HASH,       currlayer->hash);
       mbar->Check(ID_HYPER,      hyperspeed);
       mbar->Check(ID_HINFO,      hlifealgo::getVerbose() != 0);
-      mbar->Check(ID_TOOL,       tbar && tbar->IsShown());
-      mbar->Check(ID_STATUS,     StatusVisible());
+      mbar->Check(ID_TOOL_BAR,   tbar && tbar->IsShown());
+      mbar->Check(ID_LAYER_BAR,  showlayer);
+      mbar->Check(ID_STATUS_BAR, StatusVisible());
       mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_COLORS,     swapcolors);
@@ -480,7 +481,6 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SCALE_4,    viewptr->GetMag() == 2);
       mbar->Check(ID_SCALE_8,    viewptr->GetMag() == 3);
       mbar->Check(ID_SCALE_16,   viewptr->GetMag() == 4);
-      mbar->Check(ID_LAYER_BAR,  showlayer);
       mbar->Check(ID_SYNC_VIEW,  syncviews);
       mbar->Check(ID_SYNC_CURS,  synccursors);
       mbar->Check(ID_STACK,      stacklayers);
@@ -768,7 +768,8 @@ void MainFrame::ToggleFullScreen()
       // ShowFullScreen(true) does nothing!!!
       statusptr->ErrorMessage(_("Sorry, full screen mode is not implemented for X11."));
    #else
-      static bool restorestatus;    // restore status bar at end of full screen mode?
+      static bool restorestatusbar; // restore status bar at end of full screen mode?
+      static bool restorelayerbar;  // restore layer bar?
       static bool restoretoolbar;   // restore tool bar?
       static bool restorepattdir;   // restore pattern directory?
       static bool restorescrdir;    // restore script directory?
@@ -793,17 +794,26 @@ void MainFrame::ToggleFullScreen()
          // hide scroll bars
          viewptr->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
          viewptr->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+         
          // hide status bar if necessary
-         restorestatus = StatusVisible();
-         if (restorestatus) {
+         restorestatusbar = StatusVisible();
+         if (restorestatusbar) {
             statusptr->statusht = 0;
             statusptr->SetSize(0, 0, 0, 0);
          }
+         
+         // hide layer bar if necessary
+         restorelayerbar = showlayer;
+         if (restorelayerbar) {
+            ToggleLayerBar();
+         }
+         
          // hide tool bar if necessary
          restoretoolbar = tbar && tbar->IsShown();
          if (restoretoolbar) {
             tbar->Show(false);
          }
+         
          // hide pattern/script directory if necessary
          restorepattdir = showpatterns;
          restorescrdir = showscripts;
@@ -816,24 +826,32 @@ void MainFrame::ToggleFullScreen()
             splitwin->Unsplit(scriptctrl);
             showscripts = false;
          }
+
       } else {
          // first show tool bar if necessary
          if (restoretoolbar && tbar && !tbar->IsShown()) {
             tbar->Show(true);
             if (StatusVisible()) {
                // reduce width of status bar below
-               restorestatus = true;
+               restorestatusbar = true;
             }
          }
-         // now show status bar if necessary;
+         
+         // show status bar if necessary;
          // note that even if it's visible we may have to resize width
-         if (restorestatus) {
+         if (restorestatusbar) {
             statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
             int wd, ht;
             GetClientSize(&wd, &ht);
             statusptr->SetSize(0, 0, wd, statusptr->statusht);
          }
-         // now restore pattern/script directory if necessary
+
+         // show layer bar if necessary
+         if (restorelayerbar && !showlayer) {
+            ToggleLayerBar();
+         }
+
+         // restore pattern/script directory if necessary
          if ( restorepattdir && !splitwin->IsSplit() ) {
             splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
             showpatterns = true;
@@ -951,8 +969,9 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_RULE:           ShowRuleDialog(); break;
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
-      case ID_TOOL:           ToggleToolBar(); break;
-      case ID_STATUS:         ToggleStatusBar(); break;
+      case ID_TOOL_BAR:       ToggleToolBar(); break;
+      case ID_LAYER_BAR:      ToggleLayerBar(); break;
+      case ID_STATUS_BAR:     ToggleStatusBar(); break;
       case ID_EXACT:          ToggleExactNumbers(); break;
       case ID_INFO:           ShowPatternInfo(); break;
       case ID_FIT:            viewptr->FitPattern(); break;
@@ -974,7 +993,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_DEL_LAYER:      DeleteLayer(); break;
       case ID_MOVE_LAYER:     MoveLayerDialog(); break;
       case ID_DEL_OTHERS:     DeleteOtherLayers(); break;
-      case ID_LAYER_BAR:      ToggleLayerBar(); break;
       case ID_SYNC_VIEW:      ToggleSyncViews(); break;
       case ID_SYNC_CURS:      ToggleSyncCursors(); break;
       case ID_STACK:          ToggleStackLayers(); break;
@@ -1575,11 +1593,13 @@ void MainFrame::CreateMenus()
    #ifdef __WXMSW__
       // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
       // use non-Ctrl shortcut because it can't be used when menu is disabled
-      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar"));
-      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar"));
+      viewMenu->AppendCheckItem(ID_TOOL_BAR, _("Show Tool Bar"));
+      viewMenu->AppendCheckItem(ID_LAYER_BAR, _("Show Layer Bar"));
+      viewMenu->AppendCheckItem(ID_STATUS_BAR, _("Show Status Bar"));
    #else
-      viewMenu->AppendCheckItem(ID_TOOL, _("Show Tool Bar\tCtrl+'"));
-      viewMenu->AppendCheckItem(ID_STATUS, _("Show Status Bar\tCtrl+;"));
+      viewMenu->AppendCheckItem(ID_TOOL_BAR, _("Show Tool Bar\tCtrl+'"));
+      viewMenu->AppendCheckItem(ID_LAYER_BAR, _("Show Layer Bar\tCtrl+\\"));
+      viewMenu->AppendCheckItem(ID_STATUS_BAR, _("Show Status Bar\tCtrl+;"));
    #endif
    viewMenu->AppendCheckItem(ID_EXACT, _("Show Exact Numbers\tCtrl+E"));
    viewMenu->AppendCheckItem(ID_GRID, _("Show Grid Lines\tCtrl+L"));
@@ -1594,7 +1614,6 @@ void MainFrame::CreateMenus()
    layerMenu->AppendSeparator();
    layerMenu->Append(ID_DEL_OTHERS, _("Delete Other Layers"));
    layerMenu->AppendSeparator();
-   layerMenu->AppendCheckItem(ID_LAYER_BAR, _("Show Layer Bar"));
    layerMenu->AppendCheckItem(ID_SYNC_VIEW, _("Synchronize Views"));
    layerMenu->AppendCheckItem(ID_SYNC_CURS, _("Synchronize Cursors"));
    layerMenu->AppendSeparator();
