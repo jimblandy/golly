@@ -27,8 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
-
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -487,8 +485,7 @@ class LayerBar : public wxWindow
 {
 public:
    LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
-      : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-                 wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+      : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht))
    {
       // avoid erasing background on GTK+
       SetBackgroundStyle(wxBG_STYLE_CUSTOM);
@@ -499,7 +496,6 @@ public:
 
    // event handlers
    void OnPaint(wxPaintEvent& event);
-   void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
 
    DECLARE_EVENT_TABLE()
@@ -507,7 +503,6 @@ public:
 
 BEGIN_EVENT_TABLE(LayerBar, wxWindow)
    EVT_PAINT       (           LayerBar::OnPaint)
-   EVT_LEFT_DOWN   (           LayerBar::OnMouseDown)
    EVT_BUTTON      (wxID_ANY,  LayerBar::OnButton)
 END_EVENT_TABLE()
 
@@ -520,8 +515,7 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0 && showlayer) {
-      // use buffering to avoid flashing when resizing on Windows
-      wxBufferedPaintDC dc(this);
+      wxPaintDC dc(this);
       
       #ifdef __WXMSW__
          dc.Clear();       // needed on Windows
@@ -533,21 +527,11 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
-{
-   //!!!??? may need this handler to allow dragging layer buttons
-   // but it is NOT called on Mac if user clicks a button
-   wxBell();//!!!
-   
-   layerbarptr->SetFocus(); //!!!??? need on Windows
-}
-
-// -----------------------------------------------------------------------------
-
 void LayerBar::OnButton(wxCommandEvent& event)
 {
    mainptr->showbanner = false;
    statusptr->ClearMessage();
+
    int id = event.GetId();
    switch (id)
    {
@@ -557,6 +541,9 @@ void LayerBar::OnButton(wxCommandEvent& event)
       case TILE_LAYERS:    ToggleTileLayers(); break;
       default:             SetLayer(id - LAYER_0);
    }
+   
+   // needed on Windows to clear button focus
+   viewptr->SetFocus();
 }
 
 // -----------------------------------------------------------------------------
@@ -578,7 +565,11 @@ void LayerBar::AddButton(int id, char label, int x, int y)
       dc.Clear();   // needed on Windows and Linux
    #endif
    dc.SetBackgroundMode(wxTRANSPARENT);
-   dc.DrawText(str, 3, 2);
+   #ifdef __WXMAC__
+      dc.DrawText(str, 3, 2);
+   #else
+      dc.DrawText(str, 4, 0);
+   #endif
    dc.SelectObject(wxNullBitmap);
    
    // create bitmap for toggled state
@@ -592,7 +583,11 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SetTextForeground(*wxWHITE);
    dc.SetBrush(*wxWHITE_BRUSH);
    dc.SetBackgroundMode(wxTRANSPARENT);
-   dc.DrawText(str, 5, 1);                //!!! why diff to above on Mac???
+   #ifdef __WXMAC__
+      dc.DrawText(str, 5, 1);             //!!! why diff to above???
+   #else
+      dc.DrawText(str, 4, 0);
+   #endif
    dc.SelectObject(wxNullBitmap);
    
    bitbutt[id] = new wxBitmapButton(this, id, *normbitmap[id], wxPoint(x,y));
@@ -672,14 +667,6 @@ void UpdateLayerBar(bool active)
       bitbutt[TILE_LAYERS]->Enable(active);
       for (int i = LAYER_0; i < LAYER_0 + numlayers; i++)
          bitbutt[i]->Enable(active && !busy);
-      
-      //!!! select toggle buttons here??? not if we use toggbitmap array???
-      /*
-      SelectButton(STACK_LAYERS, stacklayers);
-      SelectButton(TILE_LAYERS, tilelayers);
-      for (int i = LAYER_0; i < LAYER_0 + numlayers; i++)
-         SelectButton(i, currindex == (i - LAYER_0));
-      */
    }
 }
 

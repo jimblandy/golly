@@ -499,6 +499,12 @@ void MainFrame::UpdateUserInterface(bool active)
    UpdateMenuItems(active);
    viewptr->CheckCursor(active);
    statusptr->CheckMouseLocation(active);
+
+   #ifdef __WXMSW__
+      // ensure viewport window has keyboard focus if main window is active
+      if (active) viewptr->SetFocus();
+      //!!! do here in all platforms rather than in OnIdle???
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1126,9 +1132,6 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
       return;
    #endif
    
-   // ensure viewport window has keyboard focus if main window is active
-   if ( IsActive() && viewptr ) viewptr->SetFocus();
-
    #ifdef __WXMSW__
       if ( callUnselect ) {
          // deselect file/folder so user can click the same item
@@ -1136,6 +1139,11 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
          if (showscripts) scriptctrl->GetTreeCtrl()->Unselect();
          callUnselect = false;
       }
+   #else
+      // ensure viewport window has keyboard focus if main window is active;
+      // note that we can't do this on Windows because it stuffs up clicks
+      // in layer bar buttons
+      if ( IsActive() && viewptr ) viewptr->SetFocus();
    #endif
 }
 
