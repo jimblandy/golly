@@ -50,7 +50,7 @@ void MainFrame::ChangeGoToStop()
 {
    /* single go/stop button is not yet implemented!!!
    gostopbutt->SetBitmapLabel(tbBitmaps[stop_index]);
-   gostopbutt->Refresh(false, NULL);
+   gostopbutt->Refresh(false);
    gostopbutt->Update();
    gostopbutt->SetToolTip(_("Stop generating"));
    */
@@ -62,7 +62,7 @@ void MainFrame::ChangeStopToGo()
 {
    /* single go/stop button is not yet implemented!!!
    gostopbutt->SetBitmapLabel(tbBitmaps[go_index]);
-   gostopbutt->Refresh(false, NULL);
+   gostopbutt->Refresh(false);
    gostopbutt->Update();
    gostopbutt->SetToolTip(_("Start generating"));
    */
@@ -769,18 +769,14 @@ void MainFrame::ToggleHashing()
 
 void MainFrame::ToggleHyperspeed()
 {
-   if ( currlayer->algo->hyperCapable() ) {
-      hyperspeed = !hyperspeed;
-   }
+   hyperspeed = !hyperspeed;
 }
 
 // -----------------------------------------------------------------------------
 
 void MainFrame::ToggleHashInfo()
 {
-   if ( currlayer->algo->hyperCapable() ) {
-      hlifealgo::setVerbose(!hlifealgo::getVerbose()) ;
-   }
+   hlifealgo::setVerbose( !hlifealgo::getVerbose() ) ;
 }
 
 // -----------------------------------------------------------------------------

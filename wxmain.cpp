@@ -409,8 +409,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
       mbar->Enable(ID_HASH,      active && !busy);
-      mbar->Enable(ID_HYPER,     active && currlayer->algo->hyperCapable());
-      mbar->Enable(ID_HINFO,     active && currlayer->algo->hyperCapable());
+      mbar->Enable(ID_HYPER,     active);
+      mbar->Enable(ID_HINFO,     active);
       mbar->Enable(ID_RULE,      active && !busy);
 
       mbar->Enable(ID_FULL,      active);
@@ -531,13 +531,13 @@ void MainFrame::UpdateEverything()
    GetClientSize(&wd, &ht);      // includes status bar and viewport
 
    if (wd > 0 && ht > statusptr->statusht) {
-      viewptr->Refresh(false, NULL);
+      viewptr->Refresh(false);
       viewptr->Update();
       viewptr->UpdateScrollBars();
    }
    
    if (wd > 0 && ht > 0 && StatusVisible()) {
-      statusptr->Refresh(false, NULL);
+      statusptr->Refresh(false);
       statusptr->Update();
    }
 }
@@ -550,11 +550,11 @@ void MainFrame::UpdatePatternAndStatus()
    if (inscript) return;
 
    if (!IsIconized()) {
-      viewptr->Refresh(false, NULL);
+      viewptr->Refresh(false);
       viewptr->Update();
       if (StatusVisible()) {
          statusptr->CheckMouseLocation(IsActive());
-         statusptr->Refresh(false, NULL);
+         statusptr->Refresh(false);
          statusptr->Update();
       }
    }
@@ -568,7 +568,7 @@ void MainFrame::UpdateStatus()
    if (!IsIconized()) {
       if (StatusVisible()) {
          statusptr->CheckMouseLocation(IsActive());
-         statusptr->Refresh(false, NULL);
+         statusptr->Refresh(false);
          statusptr->Update();
       }
    }
@@ -1278,7 +1278,7 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
    // fix drag and drop problem on Mac -- see DnDFile::OnDropFiles
    #ifdef __WXMAC__
       // remove colored frame
-      if (viewptr) viewptr->Refresh(false, NULL);
+      if (viewptr) viewptr->Refresh(false);
    #endif
    
    // fix menu item problem on Linux after modal dialog has closed

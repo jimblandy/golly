@@ -148,7 +148,7 @@ int wx_poll::checkevents()
 void wx_poll::updatePop()
 {
    if (mainptr->StatusVisible()) {
-      statusptr->Refresh(false, NULL);
+      statusptr->Refresh(false);
       statusptr->Update();
    }
 }

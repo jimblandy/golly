@@ -77,7 +77,7 @@ wxBitmapButton* bitbutt[LAYER_LAST + 1];
 wxBitmap* normbitmap[LAYER_LAST + 1];
 wxBitmap* toggbitmap[LAYER_LAST + 1];
 
-int toggid;                   // which layer button is toggled
+int toggid = -1;              // id of currently toggled layer button
 
 const int BUTTON_WD = 24;     // nominal width of bitmap buttons
 const int BITMAP_WD = 16;     // width of bitmaps
@@ -87,12 +87,21 @@ const int BITMAP_HT = 16;     // height of bitmaps
 
 void SelectButton(int id, bool select)
 {
+   if (select && id >= LAYER_0 && id <= LAYER_LAST) {
+      if (toggid >= LAYER_0) {
+         // deselect old layer button
+         bitbutt[toggid]->SetBitmapLabel(*normbitmap[toggid]);
+         if (showlayer) bitbutt[toggid]->Refresh(false);
+      }
+      toggid = id;
+   }
+   
    if (select) {
       bitbutt[id]->SetBitmapLabel(*toggbitmap[id]);
    } else {
       bitbutt[id]->SetBitmapLabel(*normbitmap[id]);
    }
-   if (showlayer) bitbutt[id]->Refresh(false, NULL);
+   if (showlayer) bitbutt[id]->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -136,11 +145,8 @@ void CurrentLayerChanged()
    mainptr->SetWarp(currlayer->warp);
    mainptr->SetWindowTitle(currlayer->currname);
 
-   // deselect old layer button
-   SelectButton(toggid, false);
-   // select current layer button
-   toggid = LAYER_0 + currindex;
-   SelectButton(toggid, true);
+   // select current layer button (also deselects old button)
+   SelectButton(LAYER_0 + currindex, true);
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -246,6 +252,9 @@ void DeleteOtherLayers()
 
    // update name in currindex item
    mainptr->UpdateLayerItem(currindex);
+
+   // select LAYER_0 button (also deselects old button)
+   SelectButton(LAYER_0, true);
 
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -602,9 +611,7 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SelectObject(wxNullBitmap);
    
    bitbutt[id] = new wxBitmapButton(this, id, *normbitmap[id], wxPoint(x,y));
-   if (bitbutt[id] == NULL) Warning(_("Failed to create layer button!"));
-
-   //!!! add tool tip to button???
+   if (bitbutt[id] == NULL) Fatal(_("Failed to create layer button!"));
 }
 
 // -----------------------------------------------------------------------------
@@ -625,8 +632,8 @@ void CreateLayerBar(wxWindow* parent)
    // create bitmap buttons
    int x = 4;
    int y = 4;
-   int sgap = 5;
-   int bgap = 12;
+   int sgap = 4;
+   int bgap = 16;
    layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(DELETE_LAYER, '-', x, y);   x += BUTTON_WD + bgap;
    layerbarptr->AddButton(STACK_LAYERS, 'S', x, y);   x += BUTTON_WD + sgap;
@@ -634,6 +641,17 @@ void CreateLayerBar(wxWindow* parent)
    for (int i = 0; i < maxlayers; i++) {
       layerbarptr->AddButton(LAYER_0 + i, '0' + i, x, y);
       x += BUTTON_WD + sgap;
+   }
+
+   // add tool tips to buttons
+   bitbutt[ADD_LAYER]->SetToolTip(_("Add new layer"));
+   bitbutt[DELETE_LAYER]->SetToolTip(_("Delete current layer"));
+   bitbutt[STACK_LAYERS]->SetToolTip(_("Toggle stacked layers"));
+   bitbutt[TILE_LAYERS]->SetToolTip(_("Toggle tiled layers"));
+   for (int i = 0; i < maxlayers; i++) {
+      wxString tip;
+      tip.Printf(_("Switch to layer %d"), i);
+      bitbutt[LAYER_0 + i]->SetToolTip(tip);
    }
    
    // hide all layer buttons except layer 0
@@ -646,8 +664,7 @@ void CreateLayerBar(wxWindow* parent)
    if (tilelayers) SelectButton(TILE_LAYERS, true);
    
    // select LAYER_0 button
-   toggid = LAYER_0;
-   SelectButton(toggid, true);
+   SelectButton(LAYER_0, true);
    
    // disable DELETE_LAYER button
    bitbutt[DELETE_LAYER]->Enable(false);

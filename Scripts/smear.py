@@ -1,5 +1,5 @@
-# Use multiple layers to create a "smear" history of the current pattern
-# where one layer remembers all cells that become alive.
+# Use multiple layers to create a history of the current pattern.
+# The "smear" layer remembers all cells that become alive.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), December 2006.
 
 from glife import pattern
@@ -7,25 +7,25 @@ import golly as g
 
 if g.empty(): g.exit("There is no pattern.")
 
-currname = "current"
+genprefix = "gen "
 smearname = "smear"
 currindex = g.getlayer()
 
-if currindex > 1 and g.getname(currindex) == currname \
+if currindex > 1 and g.getname(currindex).startswith(genprefix) \
                  and g.getname(currindex-1) == smearname:
    # continue from where we left off
    pass
 
 elif currindex+1 < g.numlayers() \
                  and g.getname(currindex) == smearname \
-                 and g.getname(currindex+1) == currname:
-   # switch from smearname layer to currname layer and continue
+                 and g.getname(currindex+1).startswith(genprefix):
+   # switch from smearname layer to genprefix layer and continue
    g.setlayer(currindex+1)
 
 elif currindex+2 < g.numlayers() \
                  and g.getname(currindex+1) == smearname \
-                 and g.getname(currindex+2) == currname:
-   # switch from starting layer to currname layer and continue
+                 and g.getname(currindex+2).startswith(genprefix):
+   # switch from starting layer to genprefix layer and continue
    g.setlayer(currindex+2)
 
 else:
@@ -78,7 +78,7 @@ finally:
    # name the current and smear layers so user can run script
    # again and continue from where it was stopped
    g.setlayer(curr)
-   g.setname(currname)
+   g.setname(genprefix + g.getgen(','))
    g.setname(smearname, g.getlayer() - 1)
 
 '''
@@ -97,22 +97,21 @@ Ideas and questions:
 - need movelayer(oldindex,newindex)???
 - need setname(str,index) and str = getname(index)???
 
-Need a new Layer menu with these items:
+Layer menu:
 
-Add Layer            (creates new empty layer)
-Clone Layer          (creates new layer with shared algo???)
-Duplicate Layer      (like Add Layer but copies pattern, etc???)
+Add Layer            (create new empty layer)
+Clone Layer          (create new layer with shared algo???)
+Duplicate Layer      (like Add Layer but copy pattern, etc???)
 Delete Layer
 Move Layer...        (maybe no need if we can drag layer buttons???)
 Name Layer...        (change name seen in window's title bar???)
 -----
 Delete Other Layers  (delete all layers except current one)
 -----
-Show Layer Bar       (check item -- show/hide layer bar)
 Synchronize Views    (check item -- keep all viewports in sync)
 Synchronize Cursors  (check item -- keep all cursors in sync)
 -----
-Stack Layers         (radio item -- use current pos and mag)
+Stack Layers         (radio item -- use current layer's pos and mag)
 Tile Layers          (radio item -- tile all viewports)
 -----
 0: name

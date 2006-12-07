@@ -469,7 +469,7 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
          // reset step to 1 gen
          mainptr->SetWarp(0);
          // update status bar
-         Refresh(false, NULL);
+         Refresh(false);
          Update();
       }
    }

@@ -556,13 +556,13 @@ void PatternView::ShowDrawing()
 
    // update status bar
    if (mainptr->StatusVisible()) {
-      statusptr->Refresh(false, NULL);
+      statusptr->Refresh(false);
    }
 
    if (numlayers > 1 && stacklayers) {
       // update all layers; this is rather slow but most people won't be
       // drawing cells when all layers are displayed (too confusing)
-      Refresh(false, NULL);
+      Refresh(false);
       Update();
    }
 }
@@ -1462,7 +1462,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          // it will be called soon in SelectCells, except in this case:
          if (forceh || forcev) {
             // selection might not change so must update pattern
-            Refresh(false, NULL);
+            Refresh(false);
             // need to update now if script is running
             if (inscript) {
                inscript = false;
@@ -1572,13 +1572,13 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
             hthumb = newpos;
             currlayer->view->move(amount, 0);
             // don't call UpdateEverything here because it calls UpdateScrollBars
-            Refresh(false, NULL);
+            Refresh(false);
             // don't Update() immediately -- more responsive, especially on X11
          } else {
             vthumb = newpos;
             currlayer->view->move(0, amount);
             // don't call UpdateEverything here because it calls UpdateScrollBars
-            Refresh(false, NULL);
+            Refresh(false);
             // don't Update() immediately -- more responsive, especially on X11
          }
       }

@@ -732,14 +732,14 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
             if (newrect != pasterect) {
                // draw new pasterect
                pasterect = newrect;
-               Refresh(false, NULL);
+               Refresh(false);
                // don't update immediately
             }
          } else {
             // mouse outside viewport so erase old pasterect if necessary
             if ( pasterect.width > 0 ) {
                pasterect = wxRect(-1,-1,0,0);
-               Refresh(false, NULL);
+               Refresh(false);
                // don't update immediately
             }
          }
@@ -772,7 +772,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       
       if ( pasterect.width > 0 ) {
          // erase old pasterect
-         Refresh(false, NULL);
+         Refresh(false);
          // no need to update immediately
          // Update();
       }

@@ -963,6 +963,11 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       if (oldval != newval)
          mainptr->ToggleHyperspeed();
 
+   } else if (strcmp(optname, "showhashinfo") == 0) {
+      oldval = hlifealgo::getVerbose() ? 1 : 0;
+      if (oldval != newval)
+         mainptr->ToggleHashInfo();
+
    } else if (strcmp(optname, "mindelay") == 0) {
       oldval = mindelay;
       if (newval < 0) newval = 0;
@@ -1131,14 +1136,15 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
    else if (strcmp(optname, "opacity") == 0)       optval = opacity;
    else if (strcmp(optname, "savexrle") == 0)      optval = savexrle ? 1 : 0;
+   else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
+   else if (strcmp(optname, "showexact") == 0)     optval = showexact ? 1 : 0;
+   else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
+   else if (strcmp(optname, "showhashinfo") == 0)  optval = hlifealgo::getVerbose() ? 1 : 0;
    else if (strcmp(optname, "showlayerbar") == 0)  optval = showlayer ? 1 : 0;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
-   else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
    else if (strcmp(optname, "showstatusbar") == 0) optval = mainptr->StatusVisible() ? 1 : 0;
-   else if (strcmp(optname, "showexact") == 0)     optval = showexact ? 1 : 0;
-   else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
-   else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
+   else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
    else if (strcmp(optname, "stacklayers") == 0)   optval = stacklayers ? 1 : 0;
    else if (strcmp(optname, "swapcolors") == 0)    optval = swapcolors ? 1 : 0;
    else if (strcmp(optname, "synccursors") == 0)   optval = synccursors ? 1 : 0;
