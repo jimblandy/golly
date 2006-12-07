@@ -87,7 +87,7 @@ void StatusBar::ClearMessage()
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::DisplayMessage(const wxString &s)
+void StatusBar::DisplayMessage(const wxString& s)
 {
    if (inscript) return;                     // let script control messages
    statusmsg = s;
@@ -107,7 +107,7 @@ void StatusBar::DisplayMessage(const wxString &s)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::ErrorMessage(const wxString &s)
+void StatusBar::ErrorMessage(const wxString& s)
 {
    if (inscript) return;                     // let script control messages
    wxBell();
@@ -116,7 +116,7 @@ void StatusBar::ErrorMessage(const wxString &s)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::SetMessage(const wxString &s)
+void StatusBar::SetMessage(const wxString& s)
 {
    if (inscript) return;                     // let script control messages
 
@@ -177,7 +177,7 @@ void StatusBar::CheckMouseLocation(bool active)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::SetStatusFont(wxDC &dc)
+void StatusBar::SetStatusFont(wxDC& dc)
 {
    dc.SetFont(*statusfont);
    dc.SetTextForeground(*wxBLACK);
@@ -187,7 +187,7 @@ void StatusBar::SetStatusFont(wxDC &dc)
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::DisplayText(wxDC &dc, const wxString &s, wxCoord x, wxCoord y)
+void StatusBar::DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y)
 {
    // DrawText's y parameter is top of text box but we pass in baseline
    // so adjust by textascent which depends on platform and OS version -- yuk!
@@ -196,10 +196,10 @@ void StatusBar::DisplayText(wxDC &dc, const wxString &s, wxCoord x, wxCoord y)
 
 // -----------------------------------------------------------------------------
 
-wxString StatusBar::Stringify(const bigint &b)
+wxString StatusBar::Stringify(const bigint& b)
 {
    static char buf[32];
-   char *p = buf;
+   char* p = buf;
    double d = b.todouble();
    if ( fabs(d) > 1000000000.0 ) {
       // use e notation for abs value > 10^9 (agrees with min & max_coord)
@@ -239,7 +239,7 @@ int StatusBar::GetCurrentDelay()
 
 // -----------------------------------------------------------------------------
 
-void StatusBar::DrawStatusBar(wxDC &dc, wxRect &updaterect)
+void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
 {
    int wd, ht;
    GetClientSize(&wd, &ht);

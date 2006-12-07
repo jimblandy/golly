@@ -38,13 +38,13 @@ public:
    void ClearMessage();
 
    // display message on bottom line of status bar
-   void DisplayMessage(const wxString &s);
+   void DisplayMessage(const wxString& s);
 
    // beep and display message on bottom line of status bar
-   void ErrorMessage(const wxString &s);
+   void ErrorMessage(const wxString& s);
 
    // set message string without displaying it (until next update)
-   void SetMessage(const wxString &s);
+   void SetMessage(const wxString& s);
 
    // XY location needs to be updated
    void UpdateXYLocation();
@@ -53,7 +53,7 @@ public:
    void CheckMouseLocation(bool active);
 
    // convert given number to string suitable for display
-   wxString Stringify(const bigint &b);
+   wxString Stringify(const bigint& b);
    
    // return current delay (in millisecs)
    int GetCurrentDelay();
@@ -75,12 +75,12 @@ private:
 
    bool ClickInScaleBox(int x, int y);
    bool ClickInStepBox(int x, int y);
-   void SetStatusFont(wxDC &dc);
-   void DisplayText(wxDC &dc, const wxString &s, wxCoord x, wxCoord y);
-   void DrawStatusBar(wxDC &dc, wxRect &updaterect);
+   void SetStatusFont(wxDC& dc);
+   void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
+   void DrawStatusBar(wxDC& dc, wxRect& updaterect);
 
    #ifndef __WXMAC__
-      wxBitmap *statbitmap;      // status bar bitmap
+      wxBitmap* statbitmap;      // status bar bitmap
       int statbitmapwd;          // width of status bar bitmap
       int statbitmapht;          // height of status bar bitmap
    #endif
@@ -94,7 +94,7 @@ private:
    wxString statusmsg;           // for messages on bottom line
    bigint currx, curry;          // cursor location in cell coords
    bool showxy;                  // show cursor's XY location?
-   wxFont *statusfont;           // status bar font
+   wxFont* statusfont;           // status bar font
 };
 
 extern const int STATUS_HT;      // normal status bar height

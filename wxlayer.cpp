@@ -493,47 +493,132 @@ Layer::~Layer()
 class LayerBar : public wxWindow
 {
 public:
-   LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
-      : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht))
-   {
-      // avoid erasing background on GTK+
-      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-   }
-   ~LayerBar() {}
+   LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
+   ~LayerBar();
 
+   // add a bitmap button to layer bar
    void AddButton(int id, char label, int x, int y);
+
+private:
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
 
    // event handlers
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
+   void OnEraseBackground(wxEraseEvent& event);
 
-   DECLARE_EVENT_TABLE()
+   void DrawLayerBar(wxDC& dc, wxRect& updaterect);
+
+   #ifndef __WXMAC__
+      wxBitmap* lbarbitmap;      // layer bar bitmap
+      int lbarbitmapwd;          // width of layer bar bitmap
+      int lbarbitmapht;          // height of layer bar bitmap
+   #endif
 };
 
 BEGIN_EVENT_TABLE(LayerBar, wxWindow)
-   EVT_PAINT       (           LayerBar::OnPaint)
-   EVT_LEFT_DOWN   (           LayerBar::OnMouseDown)
-   EVT_BUTTON      (wxID_ANY,  LayerBar::OnButton)
+   EVT_PAINT            (           LayerBar::OnPaint)
+   EVT_LEFT_DOWN        (           LayerBar::OnMouseDown)
+   EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
+   EVT_ERASE_BACKGROUND (           LayerBar::OnEraseBackground)
 END_EVENT_TABLE()
 
 LayerBar* layerbarptr = NULL;
 
 // -----------------------------------------------------------------------------
 
+LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
+   : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
+              wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+{
+   // avoid erasing background on GTK+
+   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+
+   #ifndef __WXMAC__
+      lbarbitmap = NULL;
+      lbarbitmapwd = -1;
+      lbarbitmapht = -1;
+   #endif
+}
+
+// -----------------------------------------------------------------------------
+
+LayerBar::~LayerBar()
+{
+   #ifndef __WXMAC__
+      if (lbarbitmap) delete lbarbitmap;
+   #endif
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing because we'll be painting the entire viewport
+   //!!!??? needed on Windows to avoid buttons flashing when resizing
+}
+
+// -----------------------------------------------------------------------------
+
 void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   #ifdef __WXMAC__
+      // windows on Mac OS X are automatically buffered
+      wxPaintDC dc(this);
+   #else
+      // use wxWidgets buffering to avoid flicker
+      int wd, ht;
+      GetClientSize(&wd, &ht);
+      // wd or ht might be < 1 on Win/X11 platforms
+      if (wd < 1) wd = 1;
+      if (ht < 1) ht = 1;
+      if (wd != lbarbitmapwd || ht != lbarbitmapht) {
+         // need to create a new bitmap for layer bar
+         if (lbarbitmap) delete lbarbitmap;
+         lbarbitmap = new wxBitmap(wd, ht);
+         lbarbitmapwd = wd;
+         lbarbitmapht = ht;
+      }
+      if (lbarbitmap == NULL) Fatal(_("Not enough memory to render layer bar!"));
+      wxBufferedPaintDC dc(this, *lbarbitmap);
+   #endif
+
+   wxRect updaterect = GetUpdateRegion().GetBox();
+   DrawLayerBar(dc, updaterect);
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::DrawLayerBar(wxDC& dc, wxRect& updaterect)
 {
    int wd, ht;
    GetClientSize(&wd, &ht);
-   if (wd > 0 && ht > 0 && showlayer) {
-      wxPaintDC dc(this);
+   if (wd < 1 || ht < 1 || !showlayer) return;
       
-      #ifdef __WXMSW__
-         dc.Clear();       // needed on Windows
-      #endif
-      
-      //!!! need to draw some border lines???
-   }
+   #ifdef __WXMSW__
+      // needed on Windows
+      //!!!??? dc.Clear();
+      wxBrush brush = dc.GetBackground();
+      FillRect(dc, updaterect, brush);
+   #else
+      wxUnusedVar(updaterect);
+   #endif
+   
+   // draw some border lines
+   wxRect r = wxRect(0, 0, wd, ht);
+   #ifdef __WXMSW__
+      // draw gray line at bottom edge
+      dc.SetPen(*wxGREY_PEN);
+      dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
+   #else
+      // draw light gray line at bottom edge
+      dc.SetPen(*wxLIGHT_GREY_PEN);
+      // left edge??? dc.DrawLine(0, 0, 0, r.height);
+      dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
+   #endif
+   dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------
@@ -631,7 +716,7 @@ void CreateLayerBar(wxWindow* parent)
 
    // create bitmap buttons
    int x = 4;
-   int y = 4;
+   int y = 3;
    int sgap = 4;
    int bgap = 16;
    layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;
