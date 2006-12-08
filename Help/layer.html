@@ -1,0 +1,110 @@
+<html>
+<title>Golly Help: Layer Menu</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+Golly supports up to 10 layers.  Each layer is a separate universe
+with its own algorithm (hashing or non-hashing), its own rule, viewport,
+cursor mode, selection, step exponent, origin offset, and name.
+The current layer's name is displayed in the main window's title bar.
+Most edit/control/view operations only apply to the current layer.
+
+<p>
+Note that most of Golly's options apply globally to all layers.
+This is true for all of the options set in the Preferences dialog.
+It's also true for most of the options set via menu items like
+Save Extended RLE, Paste Mode, Paste Location, Auto Fit,
+Hyperspeed, Show Hash Info, Show Grid Lines, etc.
+
+<p>
+Common layer functions are also available via buttons in the "layer bar"
+located above the viewport window.
+Use Show Layer Bar in the View menu to show/hide the
+layer bar, or just hit the "\" key.
+
+<p>
+<font size=+1><b>Add Layer</b></font>
+
+<p>
+Adds a new layer (with an empty universe) immediately after the
+current layer.  The new layer becomes the current layer and
+inherits the previous layer's algorithm, rule, scale, location,
+and cursor mode.  The step exponent is set to 0, there is no selection,
+no origin offset, and the layer's initial name is "untitled".
+
+<p>
+<font size=+1><b>Delete Layer</b></font>
+
+<p>
+Deletes the current layer.  The current layer changes to the previous
+layer (unless layer 0 was deleted).
+
+<p>
+<font size=+1><b>Delete Other Layers</b></font>
+
+<p>
+Deletes all layers except the current layer.
+
+<p>
+<font size=+1><b>Move Layer...</b></font>
+
+<p>
+Brings up a dialog that lets you move any layer to a new position
+in the layer sequence.  The chosen layer becomes the current layer.
+
+<p>
+<font size=+1><b>Name Layer...</b></font>
+
+<p>
+Brings up a dialog that lets you change the name of the current layer.
+Note that loading a pattern file also changes the layer's name.
+Selecting New Pattern from the File menu resets the name to "untitled".
+
+<p>
+<font size=+1><b>Synchronize Views</b></font>
+
+<p>
+If ticked, then when you switch to another layer Golly will automatically
+switch to the same scale and location as the old current layer.
+Most of the time you'll probably prefer to keep this option turned off
+so that each layer has a different scale and location.
+
+<p>
+<font size=+1><b>Synchronize Cursors</b></font>
+
+<p>
+If ticked, then when you switch to another layer Golly will automatically
+switch to the same cursor mode as the old current layer.
+You'll probably find it less confusing if this option is kept turned on,
+but it can be useful in some situations for different layers to use
+different cursors.  For example, you might want to make selections in
+one layer but draw cells in another layer.
+
+<p>
+<font size=+1><b>Stack Layers</b></font>
+
+<p>
+If ticked then all layers are displayed on top of one another,
+temporarily using the same scale and location as the current layer.
+The pattern in layer 0 is drawn first (100% opaque), then the
+patterns in other layers are drawn on top as translucent overlays.
+The opacity of live cells in the overlays can be set in Preferences > Layer.
+The colors for the live cells in each layer can be set in Preferences > Color.
+For an example of how stacked layers can be useful, load in a pattern
+and run the <b>smear.py</b> script.
+
+<p>
+<font size=+1><b>Tile Layers</b></font>
+
+<p>
+If ticked then the viewport window is tiled into sub-windows and
+each layer is displayed in a separate tile.  Clicking in the window
+of a non-current layer will change the current layer.
+
+<p>
+The items at the bottom of the Layer menu show all existing layers,
+along with their current names.  The current layer is ticked.
+To switch to another layer just select the corresponding item.
+
+</body>
+</html>

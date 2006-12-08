@@ -191,6 +191,7 @@ enum {
    ID_HELP_EDIT,
    ID_HELP_CONTROL,
    ID_HELP_VIEW,
+   ID_HELP_LAYER,
    ID_HELP_HELP,
    ID_HELP_REFS,
    ID_HELP_PROBLEMS,
@@ -200,8 +201,9 @@ enum {
    // Layer menu
    ID_ADD_LAYER,
    ID_DEL_LAYER,
-   ID_MOVE_LAYER,
    ID_DEL_OTHERS,
+   ID_MOVE_LAYER,
+   ID_NAME_LAYER,
    ID_SYNC_VIEW,
    ID_SYNC_CURS,
    ID_STACK,
@@ -440,8 +442,9 @@ void MainFrame::UpdateMenuItems(bool active)
 
       mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < maxlayers);
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
-      mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
+      mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
+      mbar->Enable(ID_NAME_LAYER,   active && !inscript);
       mbar->Enable(ID_SYNC_VIEW,    active);
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
@@ -991,8 +994,9 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       // Layer menu
       case ID_ADD_LAYER:      AddLayer(); break;
       case ID_DEL_LAYER:      DeleteLayer(); break;
-      case ID_MOVE_LAYER:     MoveLayerDialog(); break;
       case ID_DEL_OTHERS:     DeleteOtherLayers(); break;
+      case ID_MOVE_LAYER:     MoveLayerDialog(); break;
+      case ID_NAME_LAYER:     NameLayerDialog(); break;
       case ID_SYNC_VIEW:      ToggleSyncViews(); break;
       case ID_SYNC_CURS:      ToggleSyncCursors(); break;
       case ID_STACK:          ToggleStackLayers(); break;
@@ -1008,6 +1012,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_EDIT:      ShowHelp(_("Help/edit.html")); break;
       case ID_HELP_CONTROL:   ShowHelp(_("Help/control.html")); break;
       case ID_HELP_VIEW:      ShowHelp(_("Help/view.html")); break;
+      case ID_HELP_LAYER:     ShowHelp(_("Help/layer.html")); break;
       case ID_HELP_HELP:      ShowHelp(_("Help/help.html")); break;
       case ID_HELP_REFS:      ShowHelp(_("Help/refs.html")); break;
       case ID_HELP_PROBLEMS:  ShowHelp(_("Help/problems.html")); break;
@@ -1613,9 +1618,11 @@ void MainFrame::CreateMenus()
 
    layerMenu->Append(ID_ADD_LAYER, _("Add Layer\tCtrl+D"));
    layerMenu->Append(ID_DEL_LAYER, _("Delete Layer\tShift+Ctrl+D"));
-   layerMenu->Append(ID_MOVE_LAYER, _("Move Layer..."));
    layerMenu->AppendSeparator();
    layerMenu->Append(ID_DEL_OTHERS, _("Delete Other Layers"));
+   layerMenu->AppendSeparator();
+   layerMenu->Append(ID_MOVE_LAYER, _("Move Layer..."));
+   layerMenu->Append(ID_NAME_LAYER, _("Name Layer..."));
    layerMenu->AppendSeparator();
    layerMenu->AppendCheckItem(ID_SYNC_VIEW, _("Synchronize Views"));
    layerMenu->AppendCheckItem(ID_SYNC_CURS, _("Synchronize Cursors"));
@@ -1637,6 +1644,7 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_EDIT, _("Edit Menu"));
    helpMenu->Append(ID_HELP_CONTROL, _("Control Menu"));
    helpMenu->Append(ID_HELP_VIEW, _("View Menu"));
+   helpMenu->Append(ID_HELP_LAYER, _("Layer Menu"));
    helpMenu->Append(ID_HELP_HELP, _("Help Menu"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_REFS, _("References"));

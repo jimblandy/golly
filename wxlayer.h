@@ -40,7 +40,7 @@ public:
    bool hash;                 // does it use hlife?
    viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode
-   int warp;                  // speed setting
+   int warp;                  // speed setting (ie. step exponent)
 
    // WARNING: this layer's rule is only guaranteed to be correct AFTER
    // switching to another layer, so use global_liferules.getrule() or
@@ -81,7 +81,7 @@ void AddLayer();
 // The first call creates the initial layer.  Later calls insert the
 // new layer immediately after the old current layer.  The new layer
 // inherits the same type of universe, the same rule, the same scale
-// and location, and the same cursor.
+// and location, and the same cursor mode.
 
 void DeleteLayer();
 // Delete the current layer.  The current layer changes to the previous
@@ -95,16 +95,22 @@ void MoveLayerDialog();
 // Bring up a dialog that allows the user to move a specified layer
 // to another index which then becomes the current layer.
 
+void NameLayerDialog();
+// Bring up a dialog that allows the user to change the name of the
+// current layer.
+
 void SetLayer(int index);
-// Set the current layer using the given index.
+// Set the current layer using the given index (0..numlayers-1).
 
 void ToggleSyncViews();
 // Toggle the syncviews flag.  When true, every layer uses the same
-// scale and location as the current layer.
+// scale and location as the current layer.  The synchronization only
+// occurs when the user switches to another layer.
 
 void ToggleSyncCursors();
 // Toggle the synccursors flag.  When true, every layer uses the same
-// cursor as the current layer.
+// cursor mode as the current layer.  The synchronization only occurs
+// when the user switches to another layer.
 
 void ToggleStackLayers();
 // Toggle the stacklayers flag.  When true, the rendering code displays

@@ -203,6 +203,7 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
       
       // note that RGB must be premultiplied by alpha
       //!!! if alpha is 255 why is on-screen color not same as given color???
+      //!!! maybe wxMac/wxGTK bug because don't see same prob with wxMSW???
       int r = color->Red() * alpha / 256;
       int g = color->Green() * alpha / 256;
       int b = color->Blue() * alpha / 256;
@@ -921,7 +922,7 @@ void DrawOneLayer(wxDC &dc, int index)
    currdc = &layerdc;
    currlayer->algo->draw(*currlayer->view, renderer);
    
-   // make dead pixels 100% transparent; live pixels use current opacity setting
+   // make dead pixels 100% transparent; live pixels use opacity setting
    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
    
    // draw result

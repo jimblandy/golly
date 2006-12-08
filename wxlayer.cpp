@@ -235,7 +235,7 @@ void DeleteLayer()
 
 void DeleteOtherLayers()
 {
-   if (numlayers <= 1) return;
+   if (inscript || numlayers <= 1) return;
    
    // delete all layers except current layer
    for (int i = 0; i < numlayers; i++)
@@ -270,7 +270,20 @@ void DeleteOtherLayers()
 
 void MoveLayerDialog()
 {
-   Warning(_("Not yet implemented."));    //!!!
+   if (mainptr->generating || inscript || numlayers <= 1) return;
+   
+   Warning(_("Not yet implemented."));//!!!
+   
+   //!!! call MoveLayer(from, to); -- also called by movelayer script command
+}
+
+// -----------------------------------------------------------------------------
+
+void NameLayerDialog()
+{
+   if (inscript) return;
+   
+   //!!!
 }
 
 // -----------------------------------------------------------------------------

@@ -1172,6 +1172,7 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
 
    wxColor newcol(r, g, b);
    
+   // note that "livecells" = "livecells0"
    if (strncmp(colname, "livecells", 9) == 0) {
       int layer = 0;
       if (colname[9] >= '0' && colname[9] <= '9') {
@@ -1249,6 +1250,7 @@ static PyObject *golly_getcolor(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &colname)) return NULL;
 
+   // note that "livecells" = "livecells0"
    if (strncmp(colname, "livecells", 9) == 0) {
       int layer = 0;
       if (colname[9] >= '0' && colname[9] <= '9') {
