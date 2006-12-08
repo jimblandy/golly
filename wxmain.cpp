@@ -1149,6 +1149,9 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
          if (showpatterns) patternctrl->GetTreeCtrl()->Unselect();
          if (showscripts) scriptctrl->GetTreeCtrl()->Unselect();
          callUnselect = false;
+         
+         // calling SetFocus once doesn't stuff up layer bar buttons
+         if ( IsActive() && viewptr ) viewptr->SetFocus();
       }
    #else
       // ensure viewport window has keyboard focus if main window is active;
@@ -1254,8 +1257,8 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
          callUnselect = true;
       #endif
 
-      // changing focus here works on X11 but not on Mac (presumably because
-      // wxMac sets focus to treectrl after this call)
+      // changing focus here works on X11 but not on Mac or Windows
+      // (presumably because they set focus to treectrl after this call)
       viewptr->SetFocus();
    }
 }

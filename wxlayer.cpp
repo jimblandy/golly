@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -522,7 +524,7 @@ BEGIN_EVENT_TABLE(LayerBar, wxWindow)
    EVT_PAINT            (           LayerBar::OnPaint)
    EVT_LEFT_DOWN        (           LayerBar::OnMouseDown)
    EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
-   EVT_ERASE_BACKGROUND (           LayerBar::OnEraseBackground)
+//!!!??? EVT_ERASE_BACKGROUND (           LayerBar::OnEraseBackground)
 END_EVENT_TABLE()
 
 LayerBar* layerbarptr = NULL;
@@ -530,11 +532,18 @@ LayerBar* layerbarptr = NULL;
 // -----------------------------------------------------------------------------
 
 LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
-   : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-              wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+   : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht))
+              //!!!??? wxNO_FULL_REPAINT_ON_RESIZE)
 {
-   // avoid erasing background on GTK+
-   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+   #ifdef __WXGTK__
+      // avoid erasing background on GTK+
+      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+   #endif
+
+   #ifdef __WXMSW__
+      // use current theme's background colour
+      SetBackgroundColour(wxNullColour);
+   #endif
 
    #ifndef __WXMAC__
       lbarbitmap = NULL;
@@ -557,36 +566,6 @@ LayerBar::~LayerBar()
 void LayerBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 {
    // do nothing because we'll be painting the entire viewport
-   //!!!??? needed on Windows to avoid buttons flashing when resizing
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
-{
-   #ifdef __WXMAC__
-      // windows on Mac OS X are automatically buffered
-      wxPaintDC dc(this);
-   #else
-      // use wxWidgets buffering to avoid flicker
-      int wd, ht;
-      GetClientSize(&wd, &ht);
-      // wd or ht might be < 1 on Win/X11 platforms
-      if (wd < 1) wd = 1;
-      if (ht < 1) ht = 1;
-      if (wd != lbarbitmapwd || ht != lbarbitmapht) {
-         // need to create a new bitmap for layer bar
-         if (lbarbitmap) delete lbarbitmap;
-         lbarbitmap = new wxBitmap(wd, ht);
-         lbarbitmapwd = wd;
-         lbarbitmapht = ht;
-      }
-      if (lbarbitmap == NULL) Fatal(_("Not enough memory to render layer bar!"));
-      wxBufferedPaintDC dc(this, *lbarbitmap);
-   #endif
-
-   wxRect updaterect = GetUpdateRegion().GetBox();
-   DrawLayerBar(dc, updaterect);
 }
 
 // -----------------------------------------------------------------------------
@@ -619,6 +598,39 @@ void LayerBar::DrawLayerBar(wxDC& dc, wxRect& updaterect)
       dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
    #endif
    dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   #ifdef __WXMAC__
+      // windows on Mac OS X are automatically buffered
+      wxPaintDC dc(this);
+   #else
+      wxPaintDC dc(this);//!!!
+
+      /* doesn't solve prob on Windows
+      //!!!??? use wxWidgets buffering to avoid buttons flashing
+      int wd, ht;
+      GetClientSize(&wd, &ht);
+      // wd or ht might be < 1 on Win/X11 platforms
+      if (wd < 1) wd = 1;
+      if (ht < 1) ht = 1;
+      if (wd != lbarbitmapwd || ht != lbarbitmapht) {
+         // need to create a new bitmap for layer bar
+         if (lbarbitmap) delete lbarbitmap;
+         lbarbitmap = new wxBitmap(wd, ht);
+         lbarbitmapwd = wd;
+         lbarbitmapht = ht;
+      }
+      if (lbarbitmap == NULL) Fatal(_("Not enough memory to render layer bar!"));
+      wxBufferedPaintDC dc(this, *lbarbitmap);
+      */
+   #endif
+
+   wxRect updaterect = GetUpdateRegion().GetBox();
+   DrawLayerBar(dc, updaterect);
 }
 
 // -----------------------------------------------------------------------------
@@ -709,14 +721,9 @@ void CreateLayerBar(wxWindow* parent)
    layerbarptr = new LayerBar(parent, 0, 0, wd, layerbarht);
    if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
 
-   #ifdef __WXMSW__
-      // use current theme's background colour
-      layerbarptr->SetBackgroundColour(wxNullColour);
-   #endif
-
    // create bitmap buttons
    int x = 4;
-   int y = 3;
+   int y = 4;
    int sgap = 4;
    int bgap = 16;
    layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;

@@ -35,10 +35,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/spinctrl.h"   // for wxSpinCtrl
 #include "wx/image.h"      // for wxImage
 
-#if defined(__WXMSW__) || defined(__WXGTK__)
-   // can't seem to disable tool tips on Windows or Linux/GTK!!!
-   // ie. wxToolTip::Enable and wxToolTip::SetDelay are both ignored;
-   // yet another reason to eventually implement our own custom tool bar
+#if 0 //!!! defined(__WXMSW__) || defined(__WXGTK__)
+   //!!! can't seem to disable wxToolBar tips on Windows or Linux/GTK
+   // but CAN disable layer bar tips added via wxToolTip::SetTip
    #undef wxUSE_TOOLTIPS
    #define wxUSE_TOOLTIPS 0
 #endif
@@ -399,7 +398,7 @@ void CreateDefaultColors()
    livergb[9] = new wxColor(128, 255, 255);  // pale aqua
    deadrgb    = new wxColor( 48,  48,  48);  // dark gray (nicer if no alpha channel support)
    pastergb   = new wxColor(255,   0,   0);  // red
-   selectrgb  = new wxColor(  0, 255,   0);  // green (will be 50% transparent)
+   selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
    qlifergb   = new wxColor(255, 255, 206);  // pale yellow
    hlifergb   = new wxColor(226, 250, 248);  // pale blue
 

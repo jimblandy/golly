@@ -249,11 +249,12 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
    FillRect(dc, r, currlayer->hash ? *hlifebrush : *qlifebrush);
 
    #ifdef __WXMSW__
-      // draw gray lines at top, left and right edges
+      // draw gray lines at top and left edges
       dc.SetPen(*wxGREY_PEN);
       dc.DrawLine(0, 0, r.width, 0);
       dc.DrawLine(0, 0, 0, r.height);
-      dc.DrawLine(r.GetRight(), 0, r.GetRight(), r.height);
+      // don't draw right edge on XP
+      // dc.DrawLine(r.GetRight(), 0, r.GetRight(), r.height);
    #else
       // draw gray line at bottom edge
       dc.SetPen(*wxLIGHT_GREY_PEN);
