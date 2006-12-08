@@ -117,6 +117,7 @@ bool inithash = false;           // use hlife algorithm?
 bool savexrle = true;            // save RLE file using XRLE format?
 bool autofit = false;            // auto fit pattern while generating?
 bool hyperspeed = false;         // use hyperspeed if supported by current algo?
+bool showtips = true;            // show tool tips?
 bool showtool = true;            // show tool bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
@@ -193,7 +194,6 @@ wxCursor *curs_zoomout;          // for zooming out from a clicked cell
 
 // local (ie. non-exported) globals:
 
-bool showtips = true;            // show tool tips?
 int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;

@@ -27,6 +27,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#if wxUSE_TOOLTIPS
+   #include "wx/tooltip.h" // for wxToolTip
+#endif
+
 #include "wx/dcbuffer.h"   // for wxBufferedPaintDC
 
 #include "bigint.h"
@@ -723,8 +727,13 @@ void CreateLayerBar(wxWindow* parent)
 
    // create bitmap buttons
    int x = 4;
-   int y = 4;
-   int sgap = 4;
+   #ifdef __WXGTK__
+      int y = 3;
+      int sgap = 6;
+   #else
+      int y = 4;
+      int sgap = 4;
+   #endif
    int bgap = 16;
    layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(DELETE_LAYER, '-', x, y);   x += BUTTON_WD + bgap;
@@ -745,7 +754,10 @@ void CreateLayerBar(wxWindow* parent)
       tip.Printf(_("Switch to layer %d"), i);
       bitbutt[LAYER_0 + i]->SetToolTip(tip);
    }
-   
+   #if wxUSE_TOOLTIPS
+      wxToolTip::Enable(showtips);  // fix wxGTK bug
+   #endif
+  
    // hide all layer buttons except layer 0
    for (int i = 1; i < maxlayers; i++) {
       bitbutt[LAYER_0 + i]->Show(false);

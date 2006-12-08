@@ -62,6 +62,7 @@ extern bool inithash;            // use hlife algorithm?
 extern bool savexrle;            // save RLE file using XRLE format?
 extern bool autofit;             // auto fit pattern while generating?
 extern bool hyperspeed;          // use hyperspeed if supported by current algo?
+extern bool showtips;            // show tool tips?
 extern bool showtool;            // show tool bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
