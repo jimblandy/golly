@@ -41,7 +41,7 @@ public:
    void ClearSelection();
    void ClearOutsideSelection();
    void CopySelectionToClipboard(bool cut);
-   bool GetClipboardPattern(lifealgo *tempalgo, bigint *t, bigint *l, bigint *b, bigint *r);
+   bool GetClipboardPattern(lifealgo* tempalgo, bigint* t, bigint* l, bigint* b, bigint* r);
    void PasteClipboard(bool toselection);
    void CyclePasteLocation();
    void CyclePasteMode();
@@ -55,27 +55,27 @@ public:
    void FlipLeftRight();
    void FlipUpDown();
    void RotateSelection(bool clockwise);
-   void SetCursorMode(wxCursor *curs);
+   void SetCursorMode(wxCursor* curs);
    void CycleCursorMode();
    bool CopyRect(int itop, int ileft, int ibottom, int iright,
-                 lifealgo *srcalgo, lifealgo *destalgo,
-                 bool erasesrc, const wxString &progmsg);
+                 lifealgo* srcalgo, lifealgo* destalgo,
+                 bool erasesrc, const wxString& progmsg);
    void CopyAllRect(int itop, int ileft, int ibottom, int iright,
-                    lifealgo *srcalgo, lifealgo *destalgo,
-                    const wxString &progmsg);
+                    lifealgo* srcalgo, lifealgo* destalgo,
+                    const wxString& progmsg);
 
    // return true if given rect is outside getcell/setcell limits
-   bool OutsideLimits(bigint &t, bigint &l, bigint &b, bigint &r);
+   bool OutsideLimits(bigint& t, bigint& l, bigint& b, bigint& r);
 
    // return true and get mouse location's cell coords if over viewport
-   bool GetCellPos(bigint &xpos, bigint &ypos);
+   bool GetCellPos(bigint& xpos, bigint& ypos);
 
    // return true if given screen position is in viewport
    bool PointInView(int x, int y);
 
    // display functions
    bool GridVisible();
-   bool SelectionVisible(wxRect *visrect);
+   bool SelectionVisible(wxRect* visrect);
 
    // view functions
    void ZoomOut();
@@ -94,10 +94,10 @@ public:
    void CheckCursor(bool active);   // make sure cursor is up to date
    int GetMag();                    // get magnification (..., -1=2:1, 0=1:1, 1=1:2, ...)
    void SetMag(int newmag);
-   void SetPosMag(const bigint &x, const bigint &y, int mag);
-   void GetPos(bigint &x, bigint &y);
+   void SetPosMag(const bigint& x, const bigint& y, int mag);
+   void GetPos(bigint& x, bigint& y);
    void FitInView(int force);
-   int CellVisible(const bigint &x, const bigint &y);
+   int CellVisible(const bigint& x, const bigint& y);
 
    // process keyboard and mouse events
    void ProcessKey(int key, bool shiftdown);
@@ -135,10 +135,10 @@ private:
    
    // edit functions
    void ShowDrawing();
-   void DrawOneCell(int cx, int cy, wxDC &dc);
+   void DrawOneCell(int cx, int cy, wxDC& dc);
    void StartDrawingCells(int x, int y);
    void DrawCells(int x, int y);
-   void ModifySelection(bigint &xclick, bigint &yclick);
+   void ModifySelection(bigint& xclick, bigint& yclick);
    void StartSelectingCells(int x, int y, bool shiftdown);
    void SelectCells(int x, int y);
    void StartMovingView(int x, int y);
@@ -149,13 +149,13 @@ private:
    void ZoomInPos(int x, int y);
    void ZoomOutPos(int x, int y);
    void EmptyUniverse();
-   void SetPasteRect(wxRect &rect, bigint &wd, bigint &ht);
-   void PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
+   void SetPasteRect(wxRect& rect, bigint& wd, bigint& ht);
+   void PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);
-   void RotatePattern(bool clockwise, bigint &newtop, bigint &newbottom,
-                                      bigint &newleft, bigint &newright);
-   void AddEOL(char **chptr);
-   void AddRun(char ch, unsigned int *run, unsigned int *linelen, char **chptr);
+   void RotatePattern(bool clockwise, bigint& newtop, bigint& newbottom,
+                                      bigint& newleft, bigint& newright);
+   void AddEOL(char** chptr);
+   void AddRun(char ch, unsigned int* run, unsigned int* linelen, char** chptr);
 
    // scroll functions
    void PanUp(int amount);
@@ -166,7 +166,10 @@ private:
    int BigScroll(int xysize);
 
    // data
-   wxTimer *dragtimer;           // timer used while dragging mouse
+   wxBitmap* viewbitmap;         // viewport bitmap used in OnPaint
+   int viewbitmapwd;             // width of viewport bitmap
+   int viewbitmapht;             // height of viewport bitmap
+   wxTimer* dragtimer;           // timer used while dragging mouse
    int cellx, celly;             // current cell's 32-bit position
    bigint bigcellx, bigcelly;    // current cell's position
    int initselx, initsely;       // location of initial selection click
@@ -183,7 +186,7 @@ private:
    bigint prevright;
    int drawstate;                // new cell state (0 or 1)
    int pastex, pastey;           // where user wants to paste clipboard pattern
-   wxCursor *oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
+   wxCursor* oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions
 };
 

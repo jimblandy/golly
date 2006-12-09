@@ -9,7 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
-AKT: Added check(), setname() and getname() commands.
+AKT: Added check(), setname(), getname() and other layer-related commands.
 AKT: Added support for multiple layers.
 AKT: Added smear.py to Scripts folder.
 AKT: Fixed bug in advance() and evolve() if using hashing and Wolfram rule.

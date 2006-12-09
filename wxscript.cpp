@@ -815,6 +815,36 @@ static PyObject *golly_dellayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_movelayer(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int fromindex, toindex;
+
+   if (!PyArg_ParseTuple(args, "ii", &fromindex, &toindex)) return NULL;
+
+   if (fromindex < 0 || fromindex >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad movelayer fromindex: %d", fromindex);
+      PyErr_SetString(PyExc_RuntimeError, msg);
+      return NULL;
+   }
+   if (toindex < 0 || toindex >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad movelayer toindex: %d", toindex);
+      PyErr_SetString(PyExc_RuntimeError, msg);
+      return NULL;
+   }
+   
+   MoveLayer(fromindex, toindex);
+   DoAutoUpdate();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_setlayer(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -2519,6 +2549,7 @@ static PyMethodDef golly_methods[] = {
    // layers
    { "addlayer",     golly_addlayer,   METH_VARARGS, "add a new layer" },
    { "dellayer",     golly_dellayer,   METH_VARARGS, "delete current layer" },
+   { "movelayer",    golly_movelayer,  METH_VARARGS, "move given layer to new index" },
    { "setlayer",     golly_setlayer,   METH_VARARGS, "switch to given layer" },
    { "getlayer",     golly_getlayer,   METH_VARARGS, "return index of current layer" },
    { "numlayers",    golly_numlayers,  METH_VARARGS, "return current number of layers" },

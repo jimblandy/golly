@@ -91,16 +91,20 @@ void DeleteLayer();
 void DeleteOtherLayers();
 // Delete all layers except the current layer.
 
+void SetLayer(int index);
+// Set the current layer using the given index (0..numlayers-1).
+
+void MoveLayer(int fromindex, int toindex);
+// Move the layer at fromindex to toindex and make it the current layer.
+// This is called by MoveLayerDialog and the movelayer script command.
+
 void MoveLayerDialog();
-// Bring up a dialog that allows the user to move a specified layer
-// to another index which then becomes the current layer.
+// Bring up a dialog that allows the user to move the current layer
+// to a new index (which becomes the current layer).
 
 void NameLayerDialog();
 // Bring up a dialog that allows the user to change the name of the
 // current layer.
-
-void SetLayer(int index);
-// Set the current layer using the given index (0..numlayers-1).
 
 void ToggleSyncViews();
 // Toggle the syncviews flag.  When true, every layer uses the same

@@ -53,26 +53,40 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-// bitmap for wxBufferedPaintDC is not needed on Mac OS X because
-// windows are automatically buffered
-#ifndef __WXMAC__
-   wxBitmap *viewbitmap = NULL;     // viewport bitmap for OnPaint
-   int viewbitmapwd = -1;           // width of viewport bitmap
-   int viewbitmapht = -1;           // height of viewport bitmap
-#endif
-
-// call OnDragTimer 50 times per sec
-const int DRAG_RATE = 20;
+const int DRAG_RATE = 20;        // call OnDragTimer 50 times per sec
 const int ID_DRAG_TIMER = 1000;
 
 #ifdef __WXGTK__
    // avoid wxGTK scroll bug
-   bool ignorescroll = false;       // ignore next wxEVT_SCROLLWIN_* event?
+   bool ignorescroll = false;    // ignore next wxEVT_SCROLLWIN_* event?
 #endif
 
 // -----------------------------------------------------------------------------
 
-// zoom out so that central cell stays central
+// event table and handlers:
+
+BEGIN_EVENT_TABLE(PatternView, wxWindow)
+   EVT_PAINT            (                 PatternView::OnPaint)
+   EVT_SIZE             (                 PatternView::OnSize)
+   EVT_KEY_DOWN         (                 PatternView::OnKeyDown)
+   EVT_KEY_UP           (                 PatternView::OnKeyUp)
+   EVT_CHAR             (                 PatternView::OnChar)
+   EVT_LEFT_DOWN        (                 PatternView::OnMouseDown)
+   EVT_LEFT_DCLICK      (                 PatternView::OnMouseDown)
+   EVT_LEFT_UP          (                 PatternView::OnMouseUp)
+   EVT_RIGHT_DOWN       (                 PatternView::OnRMouseDown)
+   EVT_RIGHT_DCLICK     (                 PatternView::OnRMouseDown)
+   EVT_MOTION           (                 PatternView::OnMouseMotion)
+   EVT_ENTER_WINDOW     (                 PatternView::OnMouseEnter)
+   EVT_LEAVE_WINDOW     (                 PatternView::OnMouseExit)
+   EVT_MOUSEWHEEL       (                 PatternView::OnMouseWheel)
+   EVT_TIMER            (ID_DRAG_TIMER,   PatternView::OnDragTimer)
+   EVT_SCROLLWIN        (                 PatternView::OnScroll)
+   EVT_ERASE_BACKGROUND (                 PatternView::OnEraseBackground)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
 void PatternView::ZoomOut()
 {
    TestAutoFit();
@@ -82,7 +96,6 @@ void PatternView::ZoomOut()
 
 // -----------------------------------------------------------------------------
 
-// zoom in so that central cell stays central
 void PatternView::ZoomIn()
 {
    TestAutoFit();
@@ -230,7 +243,7 @@ void PatternView::ToggleBuffering()
 
 // -----------------------------------------------------------------------------
 
-bool PatternView::GetCellPos(bigint &xpos, bigint &ypos)
+bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
 {
    wxPoint pt = ScreenToClient( wxGetMousePosition() );
    if (PointInView(pt.x, pt.y)) {
@@ -295,14 +308,14 @@ void PatternView::SetMag(int mag)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::SetPosMag(const bigint &x, const bigint &y, int mag)
+void PatternView::SetPosMag(const bigint& x, const bigint& y, int mag)
 {
    currlayer->view->setpositionmag(x, y, mag);
 }
 
 // -----------------------------------------------------------------------------
 
-void PatternView::GetPos(bigint &x, bigint &y)
+void PatternView::GetPos(bigint& x, bigint& y)
 {
    x = currlayer->view->x;
    y = currlayer->view->y;
@@ -317,7 +330,7 @@ void PatternView::FitInView(int force)
 
 // -----------------------------------------------------------------------------
 
-int PatternView::CellVisible(const bigint &x, const bigint &y)
+int PatternView::CellVisible(const bigint& x, const bigint& y)
 {
    return currlayer->view->contains(x, y);
 }
@@ -569,7 +582,7 @@ void PatternView::ShowDrawing()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::DrawOneCell(int cx, int cy, wxDC &dc)
+void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
 {
    if (numlayers > 1 && stacklayers) {
       // drawing must be done via Update in ShowDrawing
@@ -659,7 +672,7 @@ void PatternView::DrawCells(int x, int y)
       ii = cellx;
       jj = celly;
       
-      lifealgo *curralgo = currlayer->algo;
+      lifealgo* curralgo = currlayer->algo;
       if (ai > aj) {
          d = aj - (ai >> 1);
          while (ii != newx) {
@@ -710,7 +723,7 @@ void PatternView::DrawCells(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ModifySelection(bigint &xclick, bigint &yclick)
+void PatternView::ModifySelection(bigint& xclick, bigint& yclick)
 {
    // note that we include "=" in following tests to get sensible
    // results when modifying small selections (ht or wd <= 3)
@@ -1073,30 +1086,6 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
       ZoomOutPos(x, y);
    }
 }
-
-// -----------------------------------------------------------------------------
-
-// event table and handlers:
-
-BEGIN_EVENT_TABLE(PatternView, wxWindow)
-   EVT_PAINT            (                 PatternView::OnPaint)
-   EVT_SIZE             (                 PatternView::OnSize)
-   EVT_KEY_DOWN         (                 PatternView::OnKeyDown)
-   EVT_KEY_UP           (                 PatternView::OnKeyUp)
-   EVT_CHAR             (                 PatternView::OnChar)
-   EVT_LEFT_DOWN        (                 PatternView::OnMouseDown)
-   EVT_LEFT_DCLICK      (                 PatternView::OnMouseDown)
-   EVT_LEFT_UP          (                 PatternView::OnMouseUp)
-   EVT_RIGHT_DOWN       (                 PatternView::OnRMouseDown)
-   EVT_RIGHT_DCLICK     (                 PatternView::OnRMouseDown)
-   EVT_MOTION           (                 PatternView::OnMouseMotion)
-   EVT_ENTER_WINDOW     (                 PatternView::OnMouseEnter)
-   EVT_LEAVE_WINDOW     (                 PatternView::OnMouseExit)
-   EVT_MOUSEWHEEL       (                 PatternView::OnMouseWheel)
-   EVT_TIMER            (ID_DRAG_TIMER,   PatternView::OnDragTimer)
-   EVT_SCROLLWIN        (                 PatternView::OnScroll)
-   EVT_ERASE_BACKGROUND (                 PatternView::OnEraseBackground)
-END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
@@ -1628,6 +1617,11 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    // avoid erasing background on GTK+
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
+   // force viewbitmap to be created in first OnPaint call
+   viewbitmap = NULL;
+   viewbitmapwd = -1;
+   viewbitmapht = -1;
+
    drawingcells = false;      // not drawing cells
    selectingcells = false;    // not selecting cells
    movingview = false;        // not moving view
@@ -1642,8 +1636,5 @@ PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 PatternView::~PatternView()
 {
    if (dragtimer) delete dragtimer;
-
-   #ifndef __WXMAC__
-      if (viewbitmap) delete viewbitmap;
-   #endif
+   if (viewbitmap) delete viewbitmap;
 }

@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/tooltip.h" // for wxToolTip
 #endif
 
+#include "wx/numdlg.h"     // for wxGetNumberFromUser
 #include "wx/dcbuffer.h"   // for wxBufferedPaintDC
 
 #include "bigint.h"
@@ -268,13 +269,71 @@ void DeleteOtherLayers()
 
 // -----------------------------------------------------------------------------
 
+void SetLayer(int index)
+{
+   if (mainptr->generating || currindex == index) return;
+   if (index < 0 || index >= numlayers) return;
+   
+   SaveLayerSettings();
+   currindex = index;
+   currlayer = layer[currindex];
+   CurrentLayerChanged();
+}
+
+// -----------------------------------------------------------------------------
+
+void MoveLayer(int fromindex, int toindex)
+{
+   if (mainptr->generating || fromindex == toindex) return;
+   if (fromindex < 0 || fromindex >= numlayers) return;
+   if (toindex < 0 || toindex >= numlayers) return;
+
+   SaveLayerSettings();
+   
+   if (fromindex > toindex) {
+      Layer* savelayer = layer[fromindex];
+      for (int i = fromindex; i > toindex; i--)
+         layer[i] = layer[i - 1];
+      layer[toindex] = savelayer;
+      
+      // update item names for layers that moved
+      for (int i = toindex; i <= fromindex; i++)
+         mainptr->UpdateLayerItem(i);
+
+   } else {
+      // fromindex < toindex
+      Layer* savelayer = layer[fromindex];
+      for (int i = fromindex; i < toindex; i++)
+         layer[i] = layer[i + 1];
+      layer[toindex] = savelayer;
+      
+      // update item names for layers that moved
+      for (int i = fromindex; i <= toindex; i++)
+         mainptr->UpdateLayerItem(i);
+   }
+
+   currindex = toindex;
+   currlayer = layer[currindex];
+
+   CurrentLayerChanged();
+}
+
+// -----------------------------------------------------------------------------
+
+//!!! remove this eventually if user can drag layer buttons???
 void MoveLayerDialog()
 {
    if (mainptr->generating || inscript || numlayers <= 1) return;
    
-   Warning(_("Not yet implemented."));//!!!
+   long n = wxGetNumberFromUser(_("Move current layer to new position."),
+                                _("Enter new index:"),
+                                _("Move Layer"),
+                                currindex, 0, numlayers - 1,     // default, min, max
+                                wxGetActiveWindow(),
+                                //!!!??? calc offset from main win top left
+                                wxPoint(100,100));       //!!! ignored on Mac -- try CVS HEAD???
    
-   //!!! call MoveLayer(from, to); -- also called by movelayer script command
+   if (n >= 0 && n < numlayers) MoveLayer(currindex, n);
 }
 
 // -----------------------------------------------------------------------------
@@ -282,21 +341,23 @@ void MoveLayerDialog()
 void NameLayerDialog()
 {
    if (inscript) return;
-   
-   //!!!
-}
 
-// -----------------------------------------------------------------------------
+   //!!! wxMac bug???
+   // without wxCENTRE, dlg appears in top left corner (also in dialogs sample)
+   wxTextEntryDialog dialog(wxGetActiveWindow(),
+                            _("Enter a name for the current layer:"),
+                            _("Name Layer"),
+                            currlayer->currname,
+                            wxOK | wxCANCEL | wxCENTRE);
 
-void SetLayer(int index)
-{
-   if (mainptr->generating || index < 0 || index >= numlayers) return;
-   if (currindex == index) return;
-   
-   SaveLayerSettings();
-   currindex = index;
-   currlayer = layer[currindex];
-   CurrentLayerChanged();
+   if (dialog.ShowModal() == wxID_OK) {
+      wxString newname = dialog.GetValue();
+      if ( !newname.IsEmpty() ) {
+         // show new name in main window's title;
+         // also sets currlayer->currname and updates menu item
+         mainptr->SetWindowTitle(newname);
+      }
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -328,7 +389,6 @@ void ToggleStackLayers()
    }
    SelectButton(STACK_LAYERS, stacklayers);
 
-   //!!! need??? UpdateLayerBar(mainptr->IsActive());
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
 }
@@ -344,7 +404,6 @@ void ToggleTileLayers()
    }
    SelectButton(TILE_LAYERS, tilelayers);
 
-   //!!! need??? UpdateLayerBar(mainptr->IsActive());
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
 }

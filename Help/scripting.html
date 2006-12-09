@@ -162,7 +162,7 @@ or you can search for individual commands alphabetically:
 <a href="#exit"><b>exit</b></a><br>
 <a href="#fit"><b>fit</b></a>
 </td>
-<td valign=top width=20> </td>
+<td valign=top width=30> </td>
 <td valign=top>
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
@@ -180,7 +180,7 @@ or you can search for individual commands alphabetically:
 <a href="#getoption"><b>getoption</b></a><br>
 <a href="#getpop"><b>getpop</b></a>
 </td>
-<td valign=top width=20> </td>
+<td valign=top width=30> </td>
 <td valign=top>
 <a href="#getpos"><b>getpos</b></a><br>
 <a href="#getrect"><b>getrect</b></a><br>
@@ -189,17 +189,18 @@ or you can search for individual commands alphabetically:
 <a href="#getstep"><b>getstep</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
+<a href="#movelayer"><b>movelayer</b></a><br>
 <a href="#new"><b>new</b></a><br>
 <a href="#note"><b>note</b></a><br>
 <a href="#numlayers"><b>numlayers</b></a><br>
 <a href="#open"><b>open</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
-<a href="#putcells"><b>putcells</b></a><br>
-<a href="#randfill"><b>randfill</b></a>
+<a href="#putcells"><b>putcells</b></a>
 </td>
-<td valign=top width=20> </td>
+<td valign=top width=30> </td>
 <td valign=top>
+<a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
 <a href="#run"><b>run</b></a><br>
@@ -213,11 +214,11 @@ or you can search for individual commands alphabetically:
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setname"><b>setname</b></a><br>
 <a href="#setoption"><b>setoption</b></a><br>
-<a href="#setpos"><b>setpos</b></a><br>
-<a href="#setrule"><b>setrule</b></a>
+<a href="#setpos"><b>setpos</b></a>
 </td>
-<td valign=top width=20> </td>
+<td valign=top width=30> </td>
 <td valign=top>
+<a href="#setrule"><b>setrule</b></a><br>
 <a href="#setstep"><b>setstep</b></a><br>
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
@@ -680,6 +681,14 @@ no origin offset, and the layer's initial name is "untitled".
 Delete the current layer.  The current layer changes to the previous
 layer (unless layer 0 was deleted).
 </dd>
+</p>
+
+<a name="movelayer"></a><p><dt><b>movelayer(<i>fromindex, toindex</i>)</b></dt>
+<dd>
+Move a specified layer to a new position in the layer sequence.
+The chosen layer becomes the current layer.
+</dd>
+<dd> Example: <b>golly.movelayer(1, 0)</b></dd>
 </p>
 
 <a name="setlayer"></a><p><dt><b>setlayer(<i>index</i>)</b></dt>
