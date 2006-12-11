@@ -28,29 +28,30 @@ class lifealgo;
 
 // Routines for rendering the viewport window:
 
+void InitDrawingData();
 // Initialize drawing data (such as the image used to draw selections).
 // Must be done after the viewport window has been created.
-void InitDrawingData();
 
+void DrawView(wxDC &dc, int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
-void DrawView(wxDC &dc);
+// The given tile index is only used when drawing tiled layers.
 
+void DrawSelection(wxDC &dc, wxRect &rect);
 // Draw the translucent selection image in the given rectangle.
 // We need to export this for drawing individual cells.
-void DrawSelection(wxDC &dc, wxRect &rect);
 
-// Update the selection image's color.
 void SetSelectionColor();
+// Update the selection image's color.
 
+void CreatePasteImage(lifealgo *pastealgo, wxRect &bbox);
 // Create an image used to draw the given paste pattern.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).
-void CreatePasteImage(lifealgo *pastealgo, wxRect &bbox);
 
-// Destroy the image created above (call when user clicks to end paste).
 void DestroyPasteImage();
+// Destroy the image created above (call when user clicks to end paste).
 
-// Call this when the main window is destroyed.
 void DestroyDrawingData();
+// Call this when the main window is destroyed.
 
 #endif

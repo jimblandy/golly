@@ -274,11 +274,20 @@ void PatternView::CheckCursor(bool active)
       // make sure cursor is up to date
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
       if (PointInView(pt.x, pt.y)) {
-         #ifdef __WXMAC__
-            // wxMac bug??? need this to fix probs after toggling status/tool bar
-            wxSetCursor(*currlayer->curs);
-         #endif
-         SetCursor(*currlayer->curs);
+         if (numlayers > 1 && tilelayers && tileindex != currindex) {
+            // show arrow cursor if over non-current tile
+            #ifdef __WXMAC__
+               // wxMac bug??? need this to fix probs after toggling status/tool bar
+               wxSetCursor(*wxSTANDARD_CURSOR);
+            #endif
+            SetCursor(*wxSTANDARD_CURSOR);
+         } else {
+            #ifdef __WXMAC__
+               // wxMac bug??? need this to fix probs after toggling status/tool bar
+               wxSetCursor(*currlayer->curs);
+            #endif
+            SetCursor(*currlayer->curs);
+         }
       } else {
          #ifdef __WXMAC__
             wxSetCursor(*wxSTANDARD_CURSOR);
@@ -1052,39 +1061,16 @@ void PatternView::ZoomOutPos(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ProcessClick(int x, int y, bool shiftdown)
+void PatternView::SetViewSize(int wd, int ht)
 {
-   // user has clicked somewhere in viewport   
-   if (currlayer->curs == curs_pencil) {
-      if (inscript) {
-         // statusptr->ErrorMessage does nothing if inscript is true
-         Warning(_("Drawing is not allowed while a script is running."));
-         return;
-      }
-      if (mainptr->generating) {
-         statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
-         return;
-      }
-      if (currlayer->view->getmag() < 0) {
-         statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
-         return;
-      }
-      StartDrawingCells(x, y);
-
-   } else if (currlayer->curs == curs_cross) {
-      TestAutoFit();
-      StartSelectingCells(x, y, shiftdown);
-
-   } else if (currlayer->curs == curs_hand) {
-      TestAutoFit();
-      StartMovingView(x, y);
-
-   } else if (currlayer->curs == curs_zoomin) {
-      ZoomInPos(x, y);
-
-   } else if (currlayer->curs == curs_zoomout) {
-      ZoomOutPos(x, y);
+   if (tileindex < 0) {
+      // use main viewport window's size to reset viewport in each layer
+      ResizeLayers(wd, ht);
    }
+   
+   // only autofit when generating
+   if (autofit && mainptr && mainptr->generating)
+      currlayer->algo->fit(*currlayer->view, 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -1096,22 +1082,31 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    // wd or ht might be < 1 on Win/X11 platforms
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
+   
+   int saveindex = currindex;
+   if (numlayers > 1 && tilelayers && tileindex >= 0) {
+      // temporarily change some globals to draw this tile
+      currindex = tileindex;
+      currlayer = GetLayer(tileindex);
+      viewptr = currlayer->tilewin;
+   }
+   
    if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
       // need to change viewport size;
-      // can happen on Windows when resizing/maximizing
-      SetViewSize();
+      // can happen on Windows when resizing/maximizing main window
+      SetViewSize(wd, ht);
    }
 
    #ifdef __WXMAC__
       // windows on Mac OS X are automatically buffered
       wxPaintDC dc(this);
-      DrawView(dc);
+      DrawView(dc, tileindex);
    #else
       if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ||
-           (numlayers > 1 && stacklayers) ) {
+           (numlayers > 1 && (stacklayers || tilelayers)) ) {
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
-            // need to create a new bitmap for viewport
+            // need to create a new bitmap for current viewport
             if (viewbitmap) delete viewbitmap;
             viewbitmap = new wxBitmap(wd, ht);
             if (viewbitmap == NULL) Fatal(_("Not enough memory to do buffering!"));
@@ -1119,17 +1114,24 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
             viewbitmapht = ht;
          }
          wxBufferedPaintDC dc(this, *viewbitmap);
-         DrawView(dc);
+         DrawView(dc, tileindex);
       } else {
          wxPaintDC dc(this);
-         DrawView(dc);
+         DrawView(dc, tileindex);
       }
    #endif
+   
+   if (numlayers > 1 && tilelayers && tileindex >= 0) {
+      // restore globals
+      currindex = saveindex;
+      currlayer = GetLayer(currindex);
+      viewptr = currlayer->tilewin;
+   }
 }
 
 // -----------------------------------------------------------------------------
 
-void PatternView::SetViewSize()
+void PatternView::OnSize(wxSizeEvent& event)
 {
    int wd, ht;
    GetClientSize(&wd, &ht);
@@ -1137,19 +1139,9 @@ void PatternView::SetViewSize()
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
    
-   ResizeLayers(wd, ht);
-   
-   // only autofit when generating
-   if (autofit && mainptr && mainptr->generating)
-      currlayer->algo->fit(*currlayer->view, 0);
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::OnSize(wxSizeEvent& event)
-{
    // resize viewports in all layers
-   SetViewSize();   
+   SetViewSize(wd, ht);
+   
    event.Skip();
 }
 
@@ -1300,6 +1292,43 @@ void PatternView::ProcessControlClick(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+void PatternView::ProcessClick(int x, int y, bool shiftdown)
+{
+   // user has clicked somewhere in viewport   
+   if (currlayer->curs == curs_pencil) {
+      if (inscript) {
+         // statusptr->ErrorMessage does nothing if inscript is true
+         Warning(_("Drawing is not allowed while a script is running."));
+         return;
+      }
+      if (mainptr->generating) {
+         statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
+         return;
+      }
+      if (currlayer->view->getmag() < 0) {
+         statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
+         return;
+      }
+      StartDrawingCells(x, y);
+
+   } else if (currlayer->curs == curs_cross) {
+      TestAutoFit();
+      StartSelectingCells(x, y, shiftdown);
+
+   } else if (currlayer->curs == curs_hand) {
+      TestAutoFit();
+      StartMovingView(x, y);
+
+   } else if (currlayer->curs == curs_zoomin) {
+      ZoomInPos(x, y);
+
+   } else if (currlayer->curs == curs_zoomout) {
+      ZoomOutPos(x, y);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::OnMouseDown(wxMouseEvent& event)
 {
    if (waitingforclick) {
@@ -1318,6 +1347,12 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
             return;
          }
       #endif
+   
+      if (numlayers > 1 && tilelayers && tileindex != currindex) {
+         // switch current layer to clicked tile
+         SetLayer(tileindex);
+         return;
+      }
       
       ProcessClick(event.GetX(), event.GetY(), event.ShiftDown());
       mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -1340,6 +1375,13 @@ void PatternView::OnRMouseDown(wxMouseEvent& event)
    // this is equivalent to control-click in wxMac/wxMSW but not in wxX11 -- sigh
    statusptr->ClearMessage();
    mainptr->showbanner = false;
+   
+   if (numlayers > 1 && tilelayers && tileindex != currindex) {
+      // switch current layer to clicked tile
+      SetLayer(tileindex);
+      return;
+   }
+   
    ProcessControlClick(event.GetX(), event.GetY());
 }
 
@@ -1451,7 +1493,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          // it will be called soon in SelectCells, except in this case:
          if (forceh || forcev) {
             // selection might not change so must update pattern
-            Refresh(false);
+            RefreshView();
             // need to update now if script is running
             if (inscript) {
                inscript = false;
@@ -1516,7 +1558,7 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       // avoid unwanted scroll event
       if (ignorescroll) {
          ignorescroll = false;
-         UpdateScrollBars();
+         bigview->UpdateScrollBars();
          return;
       }
    #endif
@@ -1561,13 +1603,13 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
             hthumb = newpos;
             currlayer->view->move(amount, 0);
             // don't call UpdateEverything here because it calls UpdateScrollBars
-            Refresh(false);
+            RefreshView();
             // don't Update() immediately -- more responsive, especially on X11
          } else {
             vthumb = newpos;
             currlayer->view->move(0, amount);
             // don't call UpdateEverything here because it calls UpdateScrollBars
-            Refresh(false);
+            RefreshView();
             // don't Update() immediately -- more responsive, especially on X11
          }
       }
@@ -1581,7 +1623,7 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
    if (inscript && type != wxEVT_SCROLLWIN_THUMBTRACK) {
       inscript = false;
       mainptr->UpdatePatternAndStatus();
-      UpdateScrollBars();
+      bigview->UpdateScrollBars();
       inscript = true;
    }
 
@@ -1603,13 +1645,8 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 // -----------------------------------------------------------------------------
 
 // create the viewport window
-PatternView::PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
-   : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-                  wxNO_BORDER |
-                  wxWANTS_CHARS |              // receive all keyboard events
-                  wxFULL_REPAINT_ON_RESIZE |
-                  wxVSCROLL | wxHSCROLL
-             )
+PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style)
+   : wxWindow(parent, wxID_ANY, wxPoint(x,y), wxSize(wd,ht), style)
 {
    dragtimer = new wxTimer(this, ID_DRAG_TIMER);
    if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));

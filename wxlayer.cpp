@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
@@ -92,6 +92,223 @@ const int BITMAP_HT = 16;     // height of bitmaps
 
 // -----------------------------------------------------------------------------
 
+void CalculateTileRects(int viewwd, int viewht)
+{
+   // set tilerect in each layer
+   wxRect r;
+   bool portrait = (viewwd <= viewht);
+   int rows, cols;
+   
+   // try to avoid the aspect ratio of each tile becoming too large
+   switch (numlayers) {
+      case 4: rows = 2; cols = 2; break;
+      case 9: rows = 3; cols = 3; break;
+      
+      case 3: case 5: case 7:
+         rows = portrait ? numlayers / 2 + 1 : 2;
+         cols = portrait ? 2 : numlayers / 2 + 1;
+         break;
+      
+      case 6: case 8: case 10:
+         rows = portrait ? numlayers / 2 : 2;
+         cols = portrait ? 2 : numlayers / 2;
+         break;
+         
+      default:
+         // numlayers == 2 or > 10
+         rows = portrait ? numlayers : 1;
+         cols = portrait ? 1 : numlayers;
+   }
+
+   int tilewd = viewwd / cols;
+   int tileht = viewht / rows;
+   if ( float(tilewd) > float(tileht) * 2.5 ) {
+      rows = 1;
+      cols = numlayers;
+      tileht = viewht;
+      tilewd = viewwd / numlayers;
+   } else if ( float(tileht) > float(tilewd) * 2.5 ) {
+      cols = 1;
+      rows = numlayers;
+      tilewd = viewwd;
+      tileht = viewht / numlayers;
+   }
+   
+   for ( int i = 0; i < rows; i++ ) {
+      for ( int j = 0; j < cols; j++ ) {
+         r.x = j * tilewd;
+         r.y = i * tileht;
+         r.width = tilewd;
+         r.height = tileht;
+         if (i == rows - 1) {
+            // may need to increase height of bottom-edge tile
+            r.height += viewht - (rows * tileht);
+         }
+         if (j == cols - 1) {
+            // may need to increase width of right-edge tile
+            r.width += viewwd - (cols * tilewd);
+         }
+         int index = i * cols + j;
+         if (index == numlayers) {
+            // numlayers == 3,5,7
+            layer[index - 1]->tilerect.width += r.width;
+         } else {
+            layer[index]->tilerect = r;
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ResizeTiles(int bigwd, int bight)
+{
+   // set tilerect for each layer so they tile bigview's client area
+   CalculateTileRects(bigwd, bight);
+   
+   // inset tilerects so each tile has a border (drawn in OnPaint handler)
+   for ( int i = 0; i < numlayers; i++ ) {
+      layer[i]->tilerect.x += 2;
+      layer[i]->tilerect.y += 2;
+      layer[i]->tilerect.width -= 4;
+      layer[i]->tilerect.height -= 4;
+   }
+   
+   // set size of each tile window
+   for ( int i = 0; i < numlayers; i++ ) {
+      layer[i]->tilewin->SetSize( layer[i]->tilerect );
+   }
+   
+   // set viewport size for each tile; this will be smaller than
+   // the tilerect size if tile windows have a border
+   for ( int i = 0; i < numlayers; i++ ) {
+      int wd, ht;
+      layer[i]->tilewin->GetClientSize(&wd, &ht);
+      // wd or ht might be < 1 on Win/X11 platforms
+      if (wd < 1) wd = 1;
+      if (ht < 1) ht = 1;
+      layer[i]->view->resize(wd, ht);
+      
+      //!!! need on Windows??? layer[i]->tilewin->Show(true);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ResizeLayers(int wd, int ht)
+{
+   // this is called whenever the size of the bigview window changes;
+   // wd and ht are the dimens of bigview's client area
+   if (tilelayers && numlayers > 1) {
+      ResizeTiles(wd, ht);
+   } else {
+      // resize viewport in each layer to bigview's client area
+      for (int i = 0; i < numlayers; i++)
+         layer[i]->view->resize(wd, ht);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CreateTiles()
+{
+   //!!! debug
+   if (viewptr != bigview) Fatal(_("Bug in CreateTiles!"));
+   
+   // create tile windows
+   for ( int i = 0; i < numlayers; i++ ) {
+      layer[i]->tilewin = new PatternView(bigview,
+                                 // correct size will be set below by ResizeTiles
+                                 0, 0, 0, 0,
+                                 //!!! wxBORDER causes bug on wxMac???
+                                 wxNO_BORDER |
+                                 //!!! no need??? wxFULL_REPAINT_ON_RESIZE |
+                                 wxWANTS_CHARS);
+      if (layer[i]->tilewin == NULL) Fatal(_("Failed to create tile window!"));
+      
+      // set tileindex >= 0; this must always match the layer index, so we'll need to
+      // destroy and recreate all tiles whenever a tile is added, deleted or moved
+      layer[i]->tilewin->tileindex = i;
+   }
+   
+   // init tilerects, tile window sizes and their viewport sizes
+   int wd, ht;
+   bigview->GetClientSize(&wd, &ht);
+   // wd or ht might be < 1 on Win/X11 platforms
+   if (wd < 1) wd = 1;
+   if (ht < 1) ht = 1;
+   ResizeTiles(wd, ht);
+
+   // change viewptr to tile window for current layer
+   viewptr = currlayer->tilewin;
+   if (mainptr->IsActive()) viewptr->SetFocus();
+}
+
+// -----------------------------------------------------------------------------
+
+void DestroyTiles()
+{
+   //!!! debug
+   if (viewptr == bigview) Fatal(_("Bug in DestroyTiles!"));
+
+   // reset viewptr to main viewport window
+   viewptr = bigview;
+   if (mainptr->IsActive()) viewptr->SetFocus();
+
+   // destroy all tile windows
+   for ( int i = 0; i < numlayers; i++ )
+      delete layer[i]->tilewin;
+
+   // resize viewport in each layer to bigview's client area
+   int wd, ht;
+   bigview->GetClientSize(&wd, &ht);
+   // wd or ht might be < 1 on Win/X11 platforms
+   if (wd < 1) wd = 1;
+   if (ht < 1) ht = 1;
+   for ( int i = 0; i < numlayers; i++ )
+      layer[i]->view->resize(wd, ht);
+}
+
+// -----------------------------------------------------------------------------
+
+void UpdateView()
+{
+   if (tilelayers && numlayers > 1) {
+      //!!! make this more efficient???
+      // first update tile borders
+      bigview->Refresh(false);
+      // update all tile windows
+      for ( int i = 0; i < numlayers; i++ ) {
+         layer[i]->tilewin->Refresh(false);
+         //!!! layer[i]->tilewin->Update();          don't need???
+      }
+      bigview->Update();
+   } else {
+      // update main viewport window
+      viewptr->Refresh(false);
+      viewptr->Update();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void RefreshView()
+{
+   if (tilelayers && numlayers > 1) {
+      // first refresh tile borders
+      bigview->Refresh(false);
+      // now refresh all tile windows
+      for ( int i = 0; i < numlayers; i++ ) {
+         layer[i]->tilewin->Refresh(false);
+      }
+   } else {
+      // refresh main viewport window
+      viewptr->Refresh(false);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void SelectButton(int id, bool select)
 {
    if (select && id >= LAYER_0 && id <= LAYER_LAST) {
@@ -119,6 +336,10 @@ void SaveLayerSettings()
    oldhash = currlayer->hash;
    oldrule = wxString(global_liferules.getrule(), wxConvLocal);
    
+   // we're about to change layer so remember current rule
+   // in case we switch back to this layer
+   currlayer->rule = oldrule;
+   
    if (syncviews) {
       // save scale and location for use in CurrentLayerChanged
       oldmag = currlayer->view->getmag();
@@ -130,30 +351,33 @@ void SaveLayerSettings()
       // save cursor mode for use in CurrentLayerChanged
       oldcurs = currlayer->curs;
    }
-   
-   // we're about to change layer so remember current rule
-   currlayer->rule = oldrule;
 }
 
 // -----------------------------------------------------------------------------
 
 void CurrentLayerChanged()
 {
-   // need to update global rule table if the hash setting has changed
-   // or if the current rule has changed
-   wxString currentrule = wxString(global_liferules.getrule(), wxConvLocal);
-   if ( oldhash != currlayer->hash || !oldrule.IsSameAs(currentrule,false) ) {
-      currlayer->algo->setrule( currentrule.mb_str(wxConvLocal) );
+   // currlayer has changed since SaveLayerSettings was called;
+   // need to update global rule table if the new currlayer has a
+   // different hash setting or different rule
+   if ( currlayer->hash != oldhash || !currlayer->rule.IsSameAs(oldrule,false) ) {
+      currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
    }
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
    if (synccursors) currlayer->curs = oldcurs;
 
-   mainptr->SetWarp(currlayer->warp);
-   mainptr->SetWindowTitle(currlayer->currname);
-
    // select current layer button (also deselects old button)
    SelectButton(LAYER_0 + currindex, true);
+   
+   if (tilelayers && numlayers > 1) {
+      // switch to new tile
+      viewptr = currlayer->tilewin;
+      if (mainptr->IsActive()) viewptr->SetFocus();
+   }
+
+   mainptr->SetWarp(currlayer->warp);
+   mainptr->SetWindowTitle(currlayer->currname);
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -170,6 +394,8 @@ void AddLayer()
       // creating the very first layer
       currindex = 0;
    } else {
+      if (tilelayers && numlayers > 1) DestroyTiles();
+
       SaveLayerSettings();
       
       // insert new layer after currindex
@@ -197,6 +423,8 @@ void AddLayer()
       for (int i = currindex + 1; i < numlayers; i++)
          mainptr->UpdateLayerItem(i);
       
+      if (tilelayers && numlayers > 1) CreateTiles();
+      
       CurrentLayerChanged();
    }
 }
@@ -206,6 +434,9 @@ void AddLayer()
 void DeleteLayer()
 {
    if (mainptr->generating || numlayers <= 1) return;
+
+   // numlayers > 1
+   if (tilelayers) DestroyTiles();
    
    SaveLayerSettings();
    
@@ -228,6 +459,8 @@ void DeleteLayer()
    // update names in any items after currindex
    for (int i = currindex + 1; i < numlayers; i++)
       mainptr->UpdateLayerItem(i);
+      
+   if (tilelayers && numlayers > 1) CreateTiles();
    
    CurrentLayerChanged();
 }
@@ -237,6 +470,9 @@ void DeleteLayer()
 void DeleteOtherLayers()
 {
    if (inscript || numlayers <= 1) return;
+
+   // numlayers > 1
+   if (tilelayers) DestroyTiles();
    
    // delete all layers except current layer
    for (int i = 0; i < numlayers; i++)
@@ -315,6 +551,11 @@ void MoveLayer(int fromindex, int toindex)
    currindex = toindex;
    currlayer = layer[currindex];
 
+   if (tilelayers && numlayers > 1) {
+      DestroyTiles();
+      CreateTiles();
+   }
+   
    CurrentLayerChanged();
 }
 
@@ -386,10 +627,11 @@ void ToggleStackLayers()
    if (stacklayers && tilelayers) {
       tilelayers = false;
       SelectButton(TILE_LAYERS, false);
+      if (numlayers > 1) DestroyTiles();
    }
    SelectButton(STACK_LAYERS, stacklayers);
 
-   mainptr->UpdateMenuItems(mainptr->IsActive());
+   mainptr->UpdateUserInterface(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
 }
 
@@ -403,18 +645,15 @@ void ToggleTileLayers()
       SelectButton(STACK_LAYERS, false);
    }
    SelectButton(TILE_LAYERS, tilelayers);
+   
+   if (tilelayers) {
+      if (numlayers > 1) CreateTiles();
+   } else {
+      if (numlayers > 1) DestroyTiles();
+   }
 
-   mainptr->UpdateMenuItems(mainptr->IsActive());
+   mainptr->UpdateUserInterface(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
-}
-
-// -----------------------------------------------------------------------------
-
-void ResizeLayers(int wd, int ht)
-{
-   // resize viewport in each layer
-   for (int i = 0; i < numlayers; i++)
-      layer[i]->view->resize(wd, ht);
 }
 
 // -----------------------------------------------------------------------------
@@ -468,10 +707,6 @@ Layer::Layer()
    selleft = 0;
    selright = 0;
 
-   // rule is only set later in SaveLayerSettings, so here we just assign
-   // a string to help catch caller accessing rule when it shouldn't
-   rule = _("bug!");
-
    if (numlayers == 0) {
       // creating very first layer
       
@@ -501,6 +736,9 @@ Layer::Layer()
          algo->setpoll(wxGetApp().Poller());
          algo->setrule(initrule);
       }
+   
+      // don't need to remember rule here (SaveLayerSettings will do it)
+      rule = wxEmptyString;
       
       // create viewport; the initial size is not important because
       // ResizeLayers will soon be called
@@ -527,7 +765,8 @@ Layer::Layer()
       }
       algo->setpoll(wxGetApp().Poller());
       
-      // inherit current rule (already in global_liferules)
+      // inherit current rule in global_liferules (NOT in currlayer->rule)
+      rule = wxString(global_liferules.getrule(), wxConvLocal);
       
       // inherit current viewport's size, scale and location
       view = new viewport(100,100);
@@ -879,7 +1118,8 @@ void UpdateLayerBar(bool active)
 void ToggleLayerBar()
 {
    showlayer = !showlayer;
-   wxRect r = viewptr->GetRect();
+   wxRect r = bigview->GetRect();
+   
    if (showlayer) {
       // show layer bar at top of viewport window
       r.y += layerbarht;
@@ -889,6 +1129,7 @@ void ToggleLayerBar()
       r.y -= layerbarht;
       r.height += layerbarht;
    }
-   viewptr->SetSize(r);
+   
+   bigview->SetSize(r);
    layerbarptr->Show(showlayer);    // needed on Windows
 }

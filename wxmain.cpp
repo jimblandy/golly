@@ -57,7 +57,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 
-#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
+#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
 #include "wxprefs.h"       // for gollydir, SavePrefs, SetPasteMode, etc
 #include "wxinfo.h"        // for ShowInfo, GetInfoFrame
@@ -507,6 +507,8 @@ void MainFrame::UpdateUserInterface(bool active)
       // ensure viewport window has keyboard focus if main window is active
       if (active) viewptr->SetFocus();
       //!!! do here in all platforms rather than in OnIdle???
+      // still need to solve Mac prob after selecting file in pattern/script dir;
+      // perhaps via OnOneTimer???
    #endif
 }
 
@@ -526,7 +528,7 @@ void MainFrame::UpdateEverything()
 
    if (inscript) {
       // make sure scroll bars are accurate while running script
-      viewptr->UpdateScrollBars();
+      bigview->UpdateScrollBars();
       return;
    }
 
@@ -534,9 +536,8 @@ void MainFrame::UpdateEverything()
    GetClientSize(&wd, &ht);      // includes status bar and viewport
 
    if (wd > 0 && ht > statusptr->statusht) {
-      viewptr->Refresh(false);
-      viewptr->Update();
-      viewptr->UpdateScrollBars();
+      UpdateView();
+      bigview->UpdateScrollBars();
    }
    
    if (wd > 0 && ht > 0 && StatusVisible()) {
@@ -553,8 +554,7 @@ void MainFrame::UpdatePatternAndStatus()
    if (inscript) return;
 
    if (!IsIconized()) {
-      viewptr->Refresh(false);
-      viewptr->Update();
+      UpdateView();
       if (StatusVisible()) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
@@ -652,10 +652,10 @@ void RightWindow::OnSize(wxSizeEvent& event)
 {
    int wd, ht;
    GetClientSize(&wd, &ht);
-   if (wd > 0 && ht > 0 && viewptr) {
-      // resize layer bar and viewport window
+   if (wd > 0 && ht > 0 && bigview) {
+      // resize layer bar and main viewport window
       ResizeLayerBar(wd);
-      viewptr->SetSize(0, showlayer ? layerbarht : 0,
+      bigview->SetSize(0, showlayer ? layerbarht : 0,
                        wd, showlayer ? ht - layerbarht : ht);
    }
    event.Skip();
@@ -795,8 +795,8 @@ void MainFrame::ToggleFullScreen()
       wxToolBar *tbar = GetToolBar();
       if (fullscreen) {
          // hide scroll bars
-         viewptr->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-         viewptr->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+         bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+         bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
          
          // hide status bar if necessary
          restorestatusbar = StatusVisible();
@@ -866,7 +866,7 @@ void MainFrame::ToggleFullScreen()
 
       if (!fullscreen) {
          // restore scroll bars BEFORE setting viewport size
-         viewptr->UpdateScrollBars();
+         bigview->UpdateScrollBars();
       }
       // adjust size of viewport (and pattern/script directory if visible)
       ResizeSplitWindow();
@@ -1286,7 +1286,7 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
    // fix drag and drop problem on Mac -- see DnDFile::OnDropFiles
    #ifdef __WXMAC__
       // remove colored frame
-      if (viewptr) viewptr->Refresh(false);
+      if (viewptr) RefreshView();
    #endif
    
    // fix menu item problem on Linux after modal dialog has closed
@@ -1877,12 +1877,21 @@ MainFrame::MainFrame()
    AddLayer();
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
-   viewptr = new PatternView(rightpane, 0, showlayer ? layerbarht : 0, 40, 40);
+   viewptr = new PatternView(rightpane, 0, showlayer ? layerbarht : 0, 40, 40,
+                             wxNO_BORDER |
+                             wxWANTS_CHARS |              // receive all keyboard events
+                             wxFULL_REPAINT_ON_RESIZE |
+                             wxVSCROLL | wxHSCROLL);
    if (viewptr == NULL) Fatal(_("Failed to create viewport window!"));
+   
+   // this is the main viewport window (tile windows have a tileindex >= 0)
+   viewptr->tileindex = -1;
+   bigview = viewptr;
    
    #if wxUSE_DRAG_AND_DROP
       // let users drop files onto viewport
       viewptr->SetDropTarget(new DnDFile());
+      //!!! what about tile windows???
    #endif
    
    // these seemingly redundant steps are needed to avoid problems on Windows

@@ -125,7 +125,7 @@ bool showgridlines = true;       // display grid lines?
 bool swapcolors = false;         // swap colors used for cell states?
 bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 int randomfill = 50;             // random fill percentage (1..100)
-int opacity = 75;                // percentage opacity of live cells in overlays (1..100)
+int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
 int maxhashmem = 300;            // maximum hash memory (in megabytes)
 int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
@@ -177,8 +177,8 @@ wxBrush *hlifebrush;             // for status bar background when using hlifeal
 wxPen *pastepen;                 // for drawing paste rect
 wxPen *gridpen;                  // for drawing plain grid
 wxPen *boldpen;                  // for drawing bold grid
-wxPen *sgridpen;                 // for drawing plain grid if swapcolors is true
-wxPen *sboldpen;                 // for drawing bold grid if swapcolors is true
+wxPen *sgridpen[10];             // for drawing plain grid if swapcolors is true
+wxPen *sboldpen[10];             // for drawing bold grid if swapcolors is true
 
 // these settings must be static -- they are changed by GetPrefs *before* the
 // view window is created
@@ -381,21 +381,22 @@ void SetBrushesAndPens()
    hlifebrush->SetColour(*hlifergb);
    pastepen->SetColour(*pastergb);
    SetGridPens(deadrgb, gridpen, boldpen);
-   SetGridPens(livergb[0], sgridpen, sboldpen);
+   for (int i=0; i<10; i++) SetGridPens(livergb[i], sgridpen[i], sboldpen[i]);
 }
 
 void CreateDefaultColors()
 {
    livergb[0] = new wxColor(255, 255, 255);  // white
-   livergb[1] = new wxColor(  0, 128, 255);  // sky blue
-   livergb[2] = new wxColor(255, 255, 128);  // palish yellow
-   livergb[3] = new wxColor(128,   0, 255);  // purple
-   livergb[4] = new wxColor(128, 230, 128);  // pale green
-   livergb[5] = new wxColor(255,  64,  64);  // pale red
-   livergb[6] = new wxColor(255, 150,   0);  // orange
-   livergb[7] = new wxColor(255,  64, 255);  // pale fuschia
-   livergb[8] = new wxColor(255, 128, 150);  // pink
-   livergb[9] = new wxColor(128, 255, 255);  // pale aqua
+   livergb[1] = new wxColor(200, 255, 200);  // pale green
+   livergb[2] = new wxColor(255, 255, 200);  // pale yellow
+   livergb[3] = new wxColor(200, 200, 255);  // pale blue
+   livergb[4] = new wxColor(255, 200, 200);  // pale red
+   livergb[5] = new wxColor(200, 255, 255);  // pale aqua
+   livergb[6] = new wxColor(255, 200, 255);  // pale purple
+   livergb[7] = new wxColor(255, 220, 180);  // pale orange
+   livergb[8] = new wxColor(200, 220, 255);  // very pale blue
+   livergb[9] = new wxColor(200, 200, 200);  // pale gray
+   
    deadrgb    = new wxColor( 48,  48,  48);  // dark gray (nicer if no alpha channel support)
    pastergb   = new wxColor(255,   0,   0);  // red
    selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
@@ -410,8 +411,10 @@ void CreateDefaultColors()
    pastepen = new wxPen(*wxBLACK);
    gridpen = new wxPen(*wxBLACK);
    boldpen = new wxPen(*wxBLACK);
-   sgridpen = new wxPen(*wxBLACK);
-   sboldpen = new wxPen(*wxBLACK);
+   for (int i=0; i<10; i++) {
+      sgridpen[i] = new wxPen(*wxBLACK);
+      sboldpen[i] = new wxPen(*wxBLACK);
+   }
    
    // set their default colors (in case prefs file doesn't exist)
    SetBrushesAndPens();
@@ -1774,7 +1777,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(new wxStaticText(panel, wxID_STATIC,
-                               _("Percentage opacity when drawing all layers:")),
+                               _("Opacity percentage when drawing stacked layers:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));

@@ -68,10 +68,12 @@ IMPLEMENT_APP(GollyApp)
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 
-MainFrame *mainptr = NULL;       // main window
-PatternView *viewptr = NULL;     // viewport child window (in main window)
-StatusBar *statusptr = NULL;     // status bar child window (in main window)
-wxStopWatch *stopwatch;          // global stopwatch
+MainFrame* mainptr = NULL;       // main window
+PatternView* viewptr = NULL;     // current viewport window (possibly a tile)
+PatternView* bigview = NULL;     // main viewport window
+
+StatusBar* statusptr = NULL;     // status bar window
+wxStopWatch* stopwatch;          // global stopwatch
 
 // -----------------------------------------------------------------------------
 
@@ -80,21 +82,21 @@ wxStopWatch *stopwatch;          // global stopwatch
 class wx_errors : public lifeerrors
 {
 public:
-   virtual void fatal(const char *s) {
+   virtual void fatal(const char* s) {
       Fatal(wxString(s,wxConvLocal));
    }
-   virtual void warning(const char *s) {
+   virtual void warning(const char* s) {
       Warning(wxString(s,wxConvLocal));
    }
-   virtual void status(const char *s) {
+   virtual void status(const char* s) {
       statusptr->DisplayMessage(wxString(s,wxConvLocal));
    }
-   virtual void beginprogress(const char *s) {
+   virtual void beginprogress(const char* s) {
       BeginProgress(wxString(s,wxConvLocal));
       // init flag for isaborted() calls in non-wx modules
       aborted = false;
    }
-   virtual bool abortprogress(double f, const char *s) {
+   virtual bool abortprogress(double f, const char* s) {
       return AbortProgress(f, wxString(s,wxConvLocal));
    }
    virtual void endprogress() {
@@ -119,7 +121,7 @@ public:
 void CallYield()
 {
    if (mainptr->IsActive()) {
-      // make sure viewport keeps keyboard focus
+      // make sure viewport window keeps keyboard focus
       viewptr->SetFocus();
    }
    wxGetApp().Yield(true);
@@ -174,7 +176,7 @@ void GollyApp::PollerInterrupt()
 
 // -----------------------------------------------------------------------------
 
-void SetAppDirectory(const char *argv0)
+void SetAppDirectory(const char* argv0)
 {
    #ifdef __WXMSW__
       // on Windows we need to reset current directory to app directory if user
@@ -211,7 +213,7 @@ void SetAppDirectory(const char *argv0)
 
 // -----------------------------------------------------------------------------
 
-void GollyApp::SetFrameIcon(wxFrame *frame)
+void GollyApp::SetFrameIcon(wxFrame* frame)
 {
    // set frame icon
    #ifdef __WXMSW__
@@ -229,7 +231,7 @@ void GollyApp::SetFrameIcon(wxFrame *frame)
 
 #ifdef __WXMAC__
 // handle odoc event
-void GollyApp::MacOpenFile(const wxString &fullPath)
+void GollyApp::MacOpenFile(const wxString& fullPath)
 {
    if (mainptr->generating) return;
    mainptr->Raise();
@@ -279,7 +281,7 @@ bool GollyApp::OnInit()
    // get main window location and other user preferences
    GetPrefs();
    
-   // create main window (also initializes viewptr and statusptr)
+   // create main window (also initializes viewptr, bigview, statusptr)
    mainptr = new MainFrame();
    if (mainptr == NULL) Fatal(_("Failed to create main window!"));
    

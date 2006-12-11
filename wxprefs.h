@@ -128,8 +128,8 @@ extern wxBrush *hlifebrush;      // for status bar background if using hlife
 extern wxPen *pastepen;          // for drawing paste rect
 extern wxPen *gridpen;           // for drawing plain grid
 extern wxPen *boldpen;           // for drawing bold grid
-extern wxPen *sgridpen;          // for drawing plain grid if swapcolors is true
-extern wxPen *sboldpen;          // for drawing bold grid if swapcolors is true
+extern wxPen *sgridpen[10];      // for drawing plain grid if swapcolors is true
+extern wxPen *sboldpen[10];      // for drawing bold grid if swapcolors is true
 
 // update colors for brushes and pens
 void SetBrushesAndPens();

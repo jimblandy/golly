@@ -354,7 +354,6 @@ void MainFrame::AdvanceOutsideSelection()
          ( currlayer->seltop > bottom || currlayer->selbottom < top ||
            currlayer->selleft > right || currlayer->selright < left ) ) {
       generating = true;
-      ChangeGoToStop();
       wxGetApp().PollerReset();
 
       // step by one gen without changing gen count
@@ -366,7 +365,6 @@ void MainFrame::AdvanceOutsideSelection()
       currlayer->algo->setGeneration(savegen);
    
       generating = false;
-      ChangeStopToGo();
       
       // if pattern expanded then may need to clear ONE edge of selection!!!
       viewptr->ClearSelection();
@@ -413,12 +411,10 @@ void MainFrame::AdvanceOutsideSelection()
    
    // advance current universe by 1 generation
    generating = true;
-   ChangeGoToStop();
    wxGetApp().PollerReset();
    currlayer->algo->setIncrement(1);
    currlayer->algo->step();
    generating = false;
-   ChangeStopToGo();
    
    // note that we have to copy advanced pattern to new universe because
    // qlife uses gen parity to decide which bits to draw
@@ -515,7 +511,6 @@ void MainFrame::AdvanceSelection()
         currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
       generating = true;
-      ChangeGoToStop();
       wxGetApp().PollerReset();
 
       // step by one gen without changing gen count
@@ -527,7 +522,6 @@ void MainFrame::AdvanceSelection()
       currlayer->algo->setGeneration(savegen);
    
       generating = false;
-      ChangeStopToGo();
       
       // only need to clear 1-cell thick strips just outside selection!!!
       viewptr->ClearOutsideSelection();
@@ -566,12 +560,10 @@ void MainFrame::AdvanceSelection()
       } else {
          // advance temporary universe by one gen
          generating = true;
-         ChangeGoToStop();
          wxGetApp().PollerReset();
          tempalgo->setIncrement(1);
          tempalgo->step();
          generating = false;
-         ChangeStopToGo();
          
          // temporary pattern might have expanded
          bigint temptop, templeft, tempbottom, tempright;

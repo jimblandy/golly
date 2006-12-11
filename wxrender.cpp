@@ -119,7 +119,7 @@ Other points of interest:
 #include "lifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for viewptr, statusptr
+#include "wxgolly.h"       // for viewptr, bigview, statusptr
 #include "wxutils.h"       // for Warning, Fatal, FillRect
 #include "wxprefs.h"       // for swapcolors, showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
@@ -832,7 +832,7 @@ void DrawPasteImage(wxDC &dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC &dc, wxRect &r)
+void DrawGridLines(wxDC &dc, wxRect &r, int layerindex)
 {
    int cellsize = 1 << currlayer->view->getmag();
    int h, v, i, topbold, leftbold;
@@ -856,7 +856,8 @@ void DrawGridLines(wxDC &dc, wxRect &r)
    }
 
    // draw all plain lines first
-   dc.SetPen(swapcolors ? *sgridpen : *gridpen);
+   dc.SetPen(swapcolors ? *sgridpen[layerindex] : *gridpen);
+   
    i = showboldlines ? topbold : 1;
    v = -1;
    while (true) {
@@ -878,7 +879,7 @@ void DrawGridLines(wxDC &dc, wxRect &r)
 
    if (showboldlines) {
       // overlay bold lines
-      dc.SetPen(swapcolors ? *sboldpen : *boldpen);
+      dc.SetPen(swapcolors ? *sboldpen[layerindex] : *boldpen);
       i = topbold;
       v = -1;
       while (true) {
@@ -955,7 +956,7 @@ void DrawOtherLayers(wxDC &dc)
          layerbitmap = new wxBitmap(layerwd, layerht, 32);
       #endif
       if (!layerbitmap) {
-         Warning(_("Not enough memory for layer bitmap!"));
+         Fatal(_("Not enough memory for layer bitmap!"));
          return;
       }
    }
@@ -1000,21 +1001,57 @@ void DrawOtherLayers(wxDC &dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawView(wxDC &dc)
+void DrawTileBorders(wxDC &dc)
+{
+   // bigview window is used to draw tile borders
+   int wd, ht;
+   bigview->GetClientSize(&wd, &ht);
+   if (wd < 1 || ht < 1) return;
+
+   wxRect r = wxRect(0, 0, wd, ht);
+   int gray = (int) ((deadrgb->Red() + deadrgb->Green() + deadrgb->Blue()) / 3.0);
+   if (gray > 127) {
+      // deadrgb is light
+      wxBrush brush(swapcolors ? *wxWHITE : *wxBLACK);
+      FillRect(dc, r, brush);
+   } else {
+      // deadrgb is dark
+      wxBrush brush(swapcolors ? *wxBLACK : *wxWHITE);
+      FillRect(dc, r, brush);
+   }
+   
+   //!!! better to use dc.DrawRectangle with transparent brush???
+   /*
+   dc.SetPen(swapcolors ? *wxWHITE : *wxBLACK);
+   dc.SetBrush(wxTRANSPARENT);
+   dc.DrawRectangle(currlayer->tilerect);
+   dc.SetBrush(wxNullBrush);
+   dc.SetPen(wxNullPen);
+   }
+   */
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawView(wxDC &dc, int tileindex)
 {
    wxRect r;
    Layer *savelayer = NULL;
    viewport *saveview0 = NULL;
    int colorindex;
-
+   
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
       FillRect(dc, r, swapcolors ? *livebrush[0] : *deadbrush);
 
       // might as well draw grid lines
-      if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
-      
+      if ( viewptr->GridVisible() ) DrawGridLines(dc, r, 0);
+      return;
+   }
+
+   if ( numlayers > 1 && tilelayers && tileindex < 0 ) {
+      DrawTileBorders(dc);
       return;
    }
    
@@ -1058,7 +1095,7 @@ void DrawView(wxDC &dc)
 
    if ( viewptr->GridVisible() ) {
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-      DrawGridLines(dc, r);
+      DrawGridLines(dc, r, colorindex);
    }
    
    if ( viewptr->SelectionVisible(&r) ) {

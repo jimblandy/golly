@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class bigint;
 class lifealgo;
 class viewport;
+class PatternView;
 
 // Golly supports multiple layers.  Each layer is a separate universe
 // with its own algorithm, rule, viewport, window title, selection, etc.
@@ -42,9 +43,9 @@ public:
    wxCursor* curs;            // cursor mode
    int warp;                  // speed setting (ie. step exponent)
 
-   // WARNING: this layer's rule is only guaranteed to be correct AFTER
-   // switching to another layer, so use global_liferules.getrule() or
-   // currlayer->algo->getrule() rather than currlayer->rule
+   // WARNING: this rule is used to remember the current rule when
+   // switching to another layer; to determine the current rule at any
+   // time, use global_liferules.getrule() or currlayer->algo->getrule()
    wxString rule;
    
    // selection edges
@@ -69,6 +70,10 @@ public:
    // temporary file used to restore starting pattern or to show comments;
    // each layer uses a different file name
    wxString tempstart;
+   
+   // used when tilelayers is true
+   PatternView* tilewin;      // tile window
+   wxRect tilerect;           // tile window's size and position
 };
 
 const int maxlayers = 10;     // maximum number of layers
@@ -126,6 +131,12 @@ void ToggleStackLayers();
 void ToggleTileLayers();
 // Toggle the tilelayers flag.  When true, the rendering code displays
 // all layers in tiled sub-windows.
+
+void UpdateView();
+// Update main viewport window or all tile windows.
+
+void RefreshView();
+// Refresh main viewport window or all tile windows.
 
 void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.

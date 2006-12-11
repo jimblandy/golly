@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class PatternView : public wxWindow
 {
 public:
-   PatternView(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
+   PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style);
    ~PatternView();
 
    // edit functions
@@ -86,7 +86,7 @@ public:
    void ViewOrigin();
    void ChangeOrigin();
    void RestoreOrigin();
-   void SetViewSize();
+   void SetViewSize(int wd, int ht);
    void ToggleGridLines();
    void ToggleCellColors();
    void ToggleBuffering();
@@ -112,6 +112,11 @@ public:
    bool nopattupdate;            // disable pattern updates?
    wxRect pasterect;             // area to be pasted
 
+   // if the tileindex is >= 0 then this is a tiled window (such windows
+   // lie on top of the main viewport window when tilelayers is true);
+   // the tileindex matches the layer position
+   int tileindex;
+   
 private:
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
