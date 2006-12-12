@@ -237,7 +237,10 @@ void CreateTiles()
                                  // correct size will be set below by ResizeTiles
                                  0, 0, 0, 0,
                                  // we draw our own tile borders
-                                 wxNO_BORDER | wxWANTS_CHARS);
+                                 wxNO_BORDER |
+                                 // needed for wxGTK
+                                 wxFULL_REPAINT_ON_RESIZE |
+                                 wxWANTS_CHARS);
       if (layer[i]->tilewin == NULL) Fatal(_("Failed to create tile window!"));
       
       // set tileindex >= 0; this must always match the layer index, so we'll need to
