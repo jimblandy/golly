@@ -74,12 +74,17 @@ public:
    // used when tilelayers is true
    PatternView* tilewin;      // tile window
    wxRect tilerect;           // tile window's size and position
+
+   // if this is a cloned layer then cloneid is > 0 and all the
+   // other clones have the same cloneid
+   int cloneid;
 };
 
 const int maxlayers = 10;     // maximum number of layers
-const int tileframewd = 4;    // width of tile window borders
+const int tileframewd = 3;    // width of tile window borders
 
 extern int numlayers;         // number of existing layers
+extern int numclones;         // number of cloned layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer
 
@@ -89,6 +94,17 @@ void AddLayer();
 // new layer immediately after the old current layer.  The new layer
 // inherits the same type of universe, the same rule, the same scale
 // and location, and the same cursor mode.
+
+void CloneLayer();
+// Like AddLayer but shares the same universe as the current layer.
+// Duplicates all the current settings (eg. same warp).
+// The cloned layer has a separate viewport, so the same pattern
+// can be viewed at different scales/locations (at the same time
+// if layers are tiled).
+
+void DuplicateLayer();
+// Like AddLayer but makes a copy of the current layer's pattern.
+// Also duplicates all the current settings (eg. same warp).
 
 void DeleteLayer();
 // Delete the current layer.  The current layer changes to the previous

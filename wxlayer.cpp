@@ -52,12 +52,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 int numlayers = 0;            // number of existing layers
+int numclones = 0;            // number of cloned layers
 int currindex = -1;           // index of current layer
 
 Layer* currlayer;             // pointer to current layer
 Layer* layer[maxlayers];      // array of layers
 
 bool available[maxlayers];    // for setting tempstart suffix
+
+bool cloning = false;         // adding a cloned layer?
+bool duplicating = false;     // adding a duplicated layer?
 
 bool oldhash;                 // hash setting in old layer
 wxString oldrule;             // rule string in old layer
@@ -232,10 +236,8 @@ void CreateTiles()
       layer[i]->tilewin = new PatternView(bigview,
                                  // correct size will be set below by ResizeTiles
                                  0, 0, 0, 0,
-                                 // we'll draw our own tile borders
-                                 wxNO_BORDER |
-                                 //!!! no need??? wxFULL_REPAINT_ON_RESIZE |
-                                 wxWANTS_CHARS);
+                                 // we draw our own tile borders
+                                 wxNO_BORDER | wxWANTS_CHARS);
       if (layer[i]->tilewin == NULL) Fatal(_("Failed to create tile window!"));
       
       // set tileindex >= 0; this must always match the layer index, so we'll need to
@@ -450,6 +452,24 @@ void AddLayer()
 
 // -----------------------------------------------------------------------------
 
+void CloneLayer()
+{
+   cloning = true;
+   AddLayer();
+   cloning = false;
+}
+
+// -----------------------------------------------------------------------------
+
+void DuplicateLayer()
+{
+   duplicating = true;
+   AddLayer();
+   duplicating = false;
+}
+
+// -----------------------------------------------------------------------------
+
 void DeleteLayer()
 {
    if (mainptr->generating || numlayers <= 1) return;
@@ -588,10 +608,10 @@ void MoveLayerDialog()
    long n = wxGetNumberFromUser(_("Move current layer to new position."),
                                 _("Enter new index:"),
                                 _("Move Layer"),
-                                currindex, 0, numlayers - 1,     // default, min, max
-                                wxGetActiveWindow(),
+                                currindex, 0, numlayers - 1,   // default, min, max
+                                wxGetActiveWindow());
                                 //!!!??? calc offset from main win top left
-                                wxPoint(100,100));       //!!! ignored on Mac -- try CVS HEAD???
+                                //!!! wxPoint(100,100));    ignored on Mac -- try 2.8???
    
    if (n >= 0 && n < numlayers) MoveLayer(currindex, n);
 }
@@ -602,13 +622,16 @@ void NameLayerDialog()
 {
    if (inscript) return;
 
-   //!!! wxMac bug???
-   // without wxCENTRE, dlg appears in top left corner (also in dialogs sample)
    wxTextEntryDialog dialog(wxGetActiveWindow(),
                             _("Enter a name for the current layer:"),
                             _("Name Layer"),
                             currlayer->currname,
-                            wxOK | wxCANCEL | wxCENTRE);
+                            #ifdef __WXMAC__
+                               //!!! without this dlg appears in top left corner;
+                               // ditto in dialogs sample
+                               wxCENTRE |
+                            #endif
+                            wxOK | wxCANCEL);
 
    if (dialog.ShowModal() == wxID_OK) {
       wxString newname = dialog.GetValue();
@@ -801,6 +824,63 @@ Layer::Layer()
 
       // add unique suffix to tempstart
       tempstart += wxString::Format("%d", FindAvailableSuffix());
+      
+      if (cloning) {
+         //!!!
+      }
+      
+      if (duplicating) {
+         // first set same gen count
+         algo->setGeneration( currlayer->algo->getGeneration() );
+         
+         // duplicate pattern
+         if ( !currlayer->algo->isEmpty() ) {
+            bigint top, left, bottom, right;
+            currlayer->algo->findedges(&top, &left, &bottom, &right);
+            if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+               Warning(_("Pattern is too big to duplicate."));
+            } else {
+               viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                                 currlayer->algo, algo, false, _("Duplicating layer"));
+            }
+         }
+         
+         // duplicate all current layer settings
+         currname = currlayer->currname;
+         warp = currlayer->warp;
+         originx = currlayer->originx;
+         originy = currlayer->originy;
+         
+         // duplicate selection
+         seltop = currlayer->seltop;
+         selbottom = currlayer->selbottom;
+         selleft = currlayer->selleft;
+         selright = currlayer->selright;
+
+         // we'll even duplicate the stuff needed to reset pattern
+         starthash = currlayer->starthash;
+         startrule = currlayer->startrule;
+         startx = currlayer->startx;
+         starty = currlayer->starty;
+         startwarp = currlayer->startwarp;
+         startmag = currlayer->startmag;
+         savestart = currlayer->savestart;
+         startfile = currlayer->startfile;
+         if (currlayer->startfile == currlayer->tempstart)
+            startfile = tempstart;
+         startgen = currlayer->startgen;
+         currfile = currlayer->currfile;
+         
+         // if currlayer->tempstart exists then copy it to this layer's unique tempstart
+         if ( wxFileExists(currlayer->tempstart) ) {
+            if ( wxCopyFile(currlayer->tempstart, tempstart, true) ) {
+               if (currlayer->currfile == currlayer->tempstart)
+                  currfile = tempstart;   // starting pattern came from clipboard
+            } else {
+               Warning(_("Could not copy tempstart file!"));
+            }
+         }
+      }
    }
 }
 

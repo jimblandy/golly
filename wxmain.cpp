@@ -200,6 +200,8 @@ enum {
 
    // Layer menu
    ID_ADD_LAYER,
+   ID_CLONE,
+   ID_DUPLICATE,
    ID_DEL_LAYER,
    ID_DEL_OTHERS,
    ID_MOVE_LAYER,
@@ -441,6 +443,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_INFO,      !currlayer->currfile.IsEmpty());
 
       mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < maxlayers);
+      mbar->Enable(ID_CLONE,        active && !busy && numlayers < maxlayers);
+      mbar->Enable(ID_DUPLICATE,    active && !busy && numlayers < maxlayers);
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
       mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
@@ -993,6 +997,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
       // Layer menu
       case ID_ADD_LAYER:      AddLayer(); break;
+      case ID_CLONE:          CloneLayer(); break;
+      case ID_DUPLICATE:      DuplicateLayer(); break;
       case ID_DEL_LAYER:      DeleteLayer(); break;
       case ID_DEL_OTHERS:     DeleteOtherLayers(); break;
       case ID_MOVE_LAYER:     MoveLayerDialog(); break;
@@ -1616,9 +1622,11 @@ void MainFrame::CreateMenus()
    viewMenu->AppendSeparator();
    viewMenu->Append(ID_INFO, _("Pattern Info\tCtrl+I"));
 
-   layerMenu->Append(ID_ADD_LAYER, _("Add Layer\tCtrl+D"));
-   layerMenu->Append(ID_DEL_LAYER, _("Delete Layer\tShift+Ctrl+D"));
+   layerMenu->Append(ID_ADD_LAYER, _("Add Layer"));
+   layerMenu->Append(ID_CLONE, _("Clone Layer"));
+   layerMenu->Append(ID_DUPLICATE, _("Duplicate Layer"));
    layerMenu->AppendSeparator();
+   layerMenu->Append(ID_DEL_LAYER, _("Delete Layer"));
    layerMenu->Append(ID_DEL_OTHERS, _("Delete Other Layers"));
    layerMenu->AppendSeparator();
    layerMenu->Append(ID_MOVE_LAYER, _("Move Layer..."));
