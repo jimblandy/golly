@@ -291,7 +291,7 @@ void UpdateView()
       
       // update tile borders
       bigview->Refresh(false);
-      /* child windows get refreshed automatically??? (yes on Mac)
+      /* child windows get refreshed automatically??? (yes on Mac & Win)
       // update all tile windows
       for ( int i = 0; i < numlayers; i++ ) {
          layer[i]->tilewin->Refresh(false);
@@ -314,7 +314,7 @@ void RefreshView()
    if (tilelayers && numlayers > 1) {
       // refresh tile borders
       bigview->Refresh(false);
-      /* child windows get refreshed automatically??? (yes on Mac)
+      /* child windows get refreshed automatically??? (yes on Mac & Win)
       // refresh all tile windows
       for ( int i = 0; i < numlayers; i++ ) {
          layer[i]->tilewin->Refresh(false);
@@ -626,7 +626,8 @@ void ToggleSyncViews()
 {
    syncviews = !syncviews;
 
-   mainptr->UpdateMenuItems(mainptr->IsActive());
+   mainptr->UpdateUserInterface(mainptr->IsActive());
+   mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -635,7 +636,8 @@ void ToggleSyncCursors()
 {
    synccursors = !synccursors;
 
-   mainptr->UpdateMenuItems(mainptr->IsActive());
+   mainptr->UpdateUserInterface(mainptr->IsActive());
+   mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------

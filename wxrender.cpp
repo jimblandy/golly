@@ -1107,6 +1107,12 @@ void DrawView(wxDC &dc, int tileindex)
          return;
       }
       // tileindex >= 0 so temporarily change some globals to draw this tile
+      if ( syncviews && tileindex != currindex ) {
+         // make sure this layer uses same location and scale as current layer
+         GetLayer(tileindex)->view->setpositionmag(currlayer->view->x,
+                                                   currlayer->view->y,
+                                                   currlayer->view->getmag());
+      }
       savelayer = currlayer;
       currlayer = GetLayer(tileindex);
       viewptr = currlayer->tilewin;

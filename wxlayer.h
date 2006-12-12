@@ -115,13 +115,11 @@ void NameLayerDialog();
 
 void ToggleSyncViews();
 // Toggle the syncviews flag.  When true, every layer uses the same
-// scale and location as the current layer.  The synchronization only
-// occurs when the user switches to another layer.
+// scale and location as the current layer.
 
 void ToggleSyncCursors();
 // Toggle the synccursors flag.  When true, every layer uses the same
-// cursor mode as the current layer.  The synchronization only occurs
-// when the user switches to another layer.
+// cursor mode as the current layer.
 
 void ToggleStackLayers();
 // Toggle the stacklayers flag.  When true, the rendering code displays
