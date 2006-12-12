@@ -275,7 +275,7 @@ void PatternView::CheckCursor(bool active)
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
       if (PointInView(pt.x, pt.y)) {
          if (numlayers > 1 && tilelayers && tileindex != currindex) {
-            // show arrow cursor if over non-current tile
+            // show arrow cursor if over tile border (ie. bigview) or non-current tile
             #ifdef __WXMAC__
                // wxMac bug??? need this to fix probs after toggling status/tool bar
                wxSetCursor(*wxSTANDARD_CURSOR);
@@ -1083,15 +1083,14 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
    
-   int saveindex = currindex;
-   if (numlayers > 1 && tilelayers && tileindex >= 0) {
-      // temporarily change some globals to draw this tile
-      currindex = tileindex;
-      currlayer = GetLayer(tileindex);
-      viewptr = currlayer->tilewin;
-   }
-   
-   if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
+   if ( numlayers > 1 && tilelayers ) {
+      if ( tileindex >= 0 && ( wd != GetLayer(tileindex)->view->getwidth() ||
+                               ht != GetLayer(tileindex)->view->getheight() ) ) {
+         // can happen on Win/GTK???
+         wxBell();//!!!
+         GetLayer(tileindex)->view->resize(wd, ht);
+      }
+   } else if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
       // need to change viewport size;
       // can happen on Windows when resizing/maximizing main window
       SetViewSize(wd, ht);
@@ -1120,13 +1119,6 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
          DrawView(dc, tileindex);
       }
    #endif
-   
-   if (numlayers > 1 && tilelayers && tileindex >= 0) {
-      // restore globals
-      currindex = saveindex;
-      currlayer = GetLayer(currindex);
-      viewptr = currlayer->tilewin;
-   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1339,6 +1331,12 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
    } else {
       statusptr->ClearMessage();
       mainptr->showbanner = false;
+   
+      if (tileindex >= 0 && tileindex != currindex) {
+         // switch current layer to clicked tile
+         SetLayer(tileindex);
+         return;
+      }
       
       #ifdef __WXX11__
          // control-click is detected here rather than in OnRMouseDown
@@ -1347,12 +1345,6 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
             return;
          }
       #endif
-   
-      if (numlayers > 1 && tilelayers && tileindex != currindex) {
-         // switch current layer to clicked tile
-         SetLayer(tileindex);
-         return;
-      }
       
       ProcessClick(event.GetX(), event.GetY(), event.ShiftDown());
       mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -1376,7 +1368,7 @@ void PatternView::OnRMouseDown(wxMouseEvent& event)
    statusptr->ClearMessage();
    mainptr->showbanner = false;
    
-   if (numlayers > 1 && tilelayers && tileindex != currindex) {
+   if (tileindex >= 0 && tileindex != currindex) {
       // switch current layer to clicked tile
       SetLayer(tileindex);
       return;

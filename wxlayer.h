@@ -77,6 +77,8 @@ public:
 };
 
 const int maxlayers = 10;     // maximum number of layers
+const int tileframewd = 4;    // width of tile window borders
+
 extern int numlayers;         // number of existing layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer

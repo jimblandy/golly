@@ -92,11 +92,11 @@ const int BITMAP_HT = 16;     // height of bitmaps
 
 // -----------------------------------------------------------------------------
 
-void CalculateTileRects(int viewwd, int viewht)
+void CalculateTileRects(int bigwd, int bight)
 {
    // set tilerect in each layer
    wxRect r;
-   bool portrait = (viewwd <= viewht);
+   bool portrait = (bigwd <= bight);
    int rows, cols;
    
    // try to avoid the aspect ratio of each tile becoming too large
@@ -120,18 +120,18 @@ void CalculateTileRects(int viewwd, int viewht)
          cols = portrait ? 1 : numlayers;
    }
 
-   int tilewd = viewwd / cols;
-   int tileht = viewht / rows;
+   int tilewd = bigwd / cols;
+   int tileht = bight / rows;
    if ( float(tilewd) > float(tileht) * 2.5 ) {
       rows = 1;
       cols = numlayers;
-      tileht = viewht;
-      tilewd = viewwd / numlayers;
+      tileht = bight;
+      tilewd = bigwd / numlayers;
    } else if ( float(tileht) > float(tilewd) * 2.5 ) {
       cols = 1;
       rows = numlayers;
-      tilewd = viewwd;
-      tileht = viewht / numlayers;
+      tilewd = bigwd;
+      tileht = bight / numlayers;
    }
    
    for ( int i = 0; i < rows; i++ ) {
@@ -142,11 +142,11 @@ void CalculateTileRects(int viewwd, int viewht)
          r.height = tileht;
          if (i == rows - 1) {
             // may need to increase height of bottom-edge tile
-            r.height += viewht - (rows * tileht);
+            r.height += bight - (rows * tileht);
          }
          if (j == cols - 1) {
             // may need to increase width of right-edge tile
-            r.width += viewwd - (cols * tilewd);
+            r.width += bigwd - (cols * tilewd);
          }
          int index = i * cols + j;
          if (index == numlayers) {
@@ -154,6 +154,26 @@ void CalculateTileRects(int viewwd, int viewht)
             layer[index - 1]->tilerect.width += r.width;
          } else {
             layer[index]->tilerect = r;
+         }
+      }
+   }
+   
+   if (tileframewd > 0) {
+      // make tilerects smaller to allow for equal-width tile borders
+      for ( int i = 0; i < rows; i++ ) {
+         for ( int j = 0; j < cols; j++ ) {
+            int index = i * cols + j;
+            if (index == numlayers) {
+               // numlayers == 3,5,7
+               layer[index - 1]->tilerect.width -= tileframewd;
+            } else {
+               layer[index]->tilerect.x += tileframewd;
+               layer[index]->tilerect.y += tileframewd;
+               layer[index]->tilerect.width -= tileframewd;
+               layer[index]->tilerect.height -= tileframewd;
+               if (j == cols - 1) layer[index]->tilerect.width -= tileframewd;
+               if (i == rows - 1) layer[index]->tilerect.height -= tileframewd;
+            }
          }
       }
    }
@@ -166,21 +186,13 @@ void ResizeTiles(int bigwd, int bight)
    // set tilerect for each layer so they tile bigview's client area
    CalculateTileRects(bigwd, bight);
    
-   // inset tilerects so each tile has a border (drawn in OnPaint handler)
-   for ( int i = 0; i < numlayers; i++ ) {
-      layer[i]->tilerect.x += 2;
-      layer[i]->tilerect.y += 2;
-      layer[i]->tilerect.width -= 4;
-      layer[i]->tilerect.height -= 4;
-   }
-   
    // set size of each tile window
    for ( int i = 0; i < numlayers; i++ ) {
       layer[i]->tilewin->SetSize( layer[i]->tilerect );
    }
    
-   // set viewport size for each tile; this will be smaller than
-   // the tilerect size if tile windows have a border
+   // set viewport size for each tile; this is currently the same as the
+   // tilerect size because tile windows are created with wxNO_BORDER
    for ( int i = 0; i < numlayers; i++ ) {
       int wd, ht;
       layer[i]->tilewin->GetClientSize(&wd, &ht);
@@ -220,7 +232,7 @@ void CreateTiles()
       layer[i]->tilewin = new PatternView(bigview,
                                  // correct size will be set below by ResizeTiles
                                  0, 0, 0, 0,
-                                 //!!! wxBORDER causes bug on wxMac???
+                                 // we'll draw our own tile borders
                                  wxNO_BORDER |
                                  //!!! no need??? wxFULL_REPAINT_ON_RESIZE |
                                  wxWANTS_CHARS);
@@ -274,15 +286,20 @@ void DestroyTiles()
 void UpdateView()
 {
    if (tilelayers && numlayers > 1) {
-      //!!! make this more efficient???
-      // first update tile borders
+      //!!! make this more efficient??? ie. in many cases we only need to
+      // update the currently selected tile
+      
+      // update tile borders
       bigview->Refresh(false);
+      /* child windows get refreshed automatically??? (yes on Mac)
       // update all tile windows
       for ( int i = 0; i < numlayers; i++ ) {
          layer[i]->tilewin->Refresh(false);
          //!!! layer[i]->tilewin->Update();          don't need???
       }
+      */
       bigview->Update();
+      
    } else {
       // update main viewport window
       viewptr->Refresh(false);
@@ -295,12 +312,14 @@ void UpdateView()
 void RefreshView()
 {
    if (tilelayers && numlayers > 1) {
-      // first refresh tile borders
+      // refresh tile borders
       bigview->Refresh(false);
-      // now refresh all tile windows
+      /* child windows get refreshed automatically??? (yes on Mac)
+      // refresh all tile windows
       for ( int i = 0; i < numlayers; i++ ) {
          layer[i]->tilewin->Refresh(false);
       }
+      */
    } else {
       // refresh main viewport window
       viewptr->Refresh(false);

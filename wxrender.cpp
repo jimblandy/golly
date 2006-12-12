@@ -1001,33 +1001,84 @@ void DrawOtherLayers(wxDC &dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawTileBorders(wxDC &dc)
+void DrawTileFrame(wxDC& dc, wxRect& trect, wxBrush& brush, int wd)
 {
-   // bigview window is used to draw tile borders
+   trect.Inflate(wd);
+   wxRect r = trect;
+
+   r.height = wd;
+   FillRect(dc, r, brush);       // top edge
+   
+   r.y += trect.height - wd;
+   FillRect(dc, r, brush);       // bottom edge
+   
+   r = trect;
+   r.width = wd;
+   FillRect(dc, r, brush);       // left edge
+   
+   r.x += trect.width - wd;
+   FillRect(dc, r, brush);       // right edge
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawTileBorders(wxDC& dc)
+{
+   if (tileframewd <= 0) return;    // no borders
+   
+   // draw tile borders in bigview window
    int wd, ht;
    bigview->GetClientSize(&wd, &ht);
    if (wd < 1 || ht < 1) return;
-
-   wxRect r = wxRect(0, 0, wd, ht);
+   
+   const wxColor dkgray(96, 96, 96);
+   const wxColor ltgray(224, 224, 224);
+   const wxColor ltgreen(0, 255, 0);
+   
+   wxBrush brush;
    int gray = (int) ((deadrgb->Red() + deadrgb->Green() + deadrgb->Blue()) / 3.0);
    if (gray > 127) {
       // deadrgb is light
-      wxBrush brush(swapcolors ? *wxWHITE : *wxBLACK);
-      FillRect(dc, r, brush);
+      brush.SetColour(swapcolors ? ltgray : dkgray);
    } else {
       // deadrgb is dark
-      wxBrush brush(swapcolors ? *wxBLACK : *wxWHITE);
-      FillRect(dc, r, brush);
+      brush.SetColour(swapcolors ? dkgray : ltgray);
+   }
+   wxRect trect;
+   for ( int i = 0; i < numlayers; i++ ) {
+      trect = GetLayer(i)->tilerect;
+      DrawTileFrame(dc, trect, brush, tileframewd);
+   }
+
+   // draw thinner green border to indicate tile for current layer
+   trect = GetLayer(currindex)->tilerect;
+   brush.SetColour(ltgreen);
+   DrawTileFrame(dc, trect, brush, (tileframewd + 1) / 2);
+
+   /* //!!! crap results on Mac due to anti-aliasing???
+   // wxPen pen(swapcolors ? *wxBLACK : *wxWHITE);
+   wxPen pen(*wxLIGHT_GREY);
+   pen.SetWidth(tileframewd);
+   dc.SetPen(pen);
+   dc.SetBrush(*wxTRANSPARENT_BRUSH);
+
+   wxRect r;
+   for ( int i = 0; i < numlayers; i++ ) {
+      r = GetLayer(i)->tilerect;
+      r.Inflate(tileframewd);
+      if (r.width > 0 && r.height > 0) dc.DrawRectangle(r);
    }
    
-   //!!! better to use dc.DrawRectangle with transparent brush???
-   /*
-   dc.SetPen(swapcolors ? *wxWHITE : *wxBLACK);
-   dc.SetBrush(wxTRANSPARENT);
-   dc.DrawRectangle(currlayer->tilerect);
+   // draw green border to indicate tile for current layer
+   pen.SetColour(*wxGREEN);
+   pen.SetWidth(tileframewd);
+   dc.SetPen(pen);
+   r = GetLayer(currindex)->tilerect;
+   r.Inflate(tileframewd);
+   if (r.width > 0 && r.height > 0) dc.DrawRectangle(r);
+   
    dc.SetBrush(wxNullBrush);
    dc.SetPen(wxNullPen);
-   }
    */
 }
 
@@ -1050,12 +1101,17 @@ void DrawView(wxDC &dc, int tileindex)
       return;
    }
 
-   if ( numlayers > 1 && tilelayers && tileindex < 0 ) {
-      DrawTileBorders(dc);
-      return;
-   }
-   
-   if ( numlayers > 1 && stacklayers ) {
+   if ( numlayers > 1 && tilelayers ) {
+      if ( tileindex < 0 ) {
+         DrawTileBorders(dc);
+         return;
+      }
+      // tileindex >= 0 so temporarily change some globals to draw this tile
+      savelayer = currlayer;
+      currlayer = GetLayer(tileindex);
+      viewptr = currlayer->tilewin;
+      colorindex = tileindex;
+   } else if ( numlayers > 1 && stacklayers ) {
       // draw all layers starting with layer 0 but using current layer's viewport
       savelayer = currlayer;
       if ( currindex != 0 ) {
@@ -1106,7 +1162,7 @@ void DrawView(wxDC &dc, int tileindex)
          DrawInactiveSelection(dc, r);
    }
    
-   if ( savelayer ) {
+   if ( numlayers > 1 && stacklayers ) {
       // must restore currlayer before we call DrawOtherLayers
       currlayer = savelayer;
       if ( saveview0 ) {
@@ -1128,5 +1184,11 @@ void DrawView(wxDC &dc, int tileindex)
          CheckPasteImage();
          DrawPasteImage(dc);
       }
+   }
+
+   if ( numlayers > 1 && tilelayers ) {
+      // restore globals changed above
+      currlayer = savelayer;
+      viewptr = currlayer->tilewin;
    }
 }
