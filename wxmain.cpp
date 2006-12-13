@@ -1411,6 +1411,14 @@ void MainFrame::UpdateLayerItem(int index)
    if (mbar) {
       wxString label;
       label.Printf(_("%d: "), index);
+      
+      int cid = GetLayer(index)->cloneid;
+      while (cid > 0) {
+         // display one or more "=" chars to indicate this is a cloned layer
+         label += wxT('=');
+         cid--;
+      }
+      
       label += GetLayer(index)->currname;
       mbar->SetLabel(ID_LAYER0 + index, label);
    }

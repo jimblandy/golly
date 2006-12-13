@@ -84,13 +84,24 @@ void MainFrame::SetWindowTitle(const wxString& filename)
       UpdateLayerItem(currindex);
    }
 
-   wxString wtitle;
+   wxString prefix = wxEmptyString;
+   int cid = currlayer->cloneid;
+   while (cid > 0) {
+      // display one or more "=" chars to indicate this is a cloned layer
+      prefix += wxT('=');
+      cid--;
+   }
+
    wxString rule = GetRuleName( wxString(currlayer->algo->getrule(),wxConvLocal) );
+   wxString wtitle;
    #ifdef __WXMAC__
-      wtitle.Printf(_("%s [%s]"), currlayer->currname.c_str(), rule.c_str());
+      wtitle.Printf(_("%s%s [%s]"),
+                     prefix.c_str(), currlayer->currname.c_str(), rule.c_str());
    #else
-      wtitle.Printf(_("%s [%s] - Golly"), currlayer->currname.c_str(), rule.c_str());
+      wtitle.Printf(_("%s%s [%s] - Golly"),
+                     prefix.c_str(), currlayer->currname.c_str(), rule.c_str());
    #endif
+
    // better to truncate a really long title???!!!
    MySetTitle(wtitle);
 }

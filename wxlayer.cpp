@@ -59,7 +59,7 @@ Layer* currlayer;                // pointer to current layer
 Layer* layer[maxlayers];         // array of layers
 
 bool suffavail[maxlayers];       // for setting unique tempstart suffix
-bool cloneavail[maxlayers/2];    // for setting unique cloneid
+bool cloneavail[maxlayers];      // for setting unique cloneid
 
 bool cloning = false;            // adding a cloned layer?
 bool duplicating = false;        // adding a duplicated layer?
@@ -75,6 +75,7 @@ wxCursor* oldcurs;               // cursor mode in old layer
 // also used as indices for bitbutt/normbitmap/toggbitmap arrays
 enum {
    ADD_LAYER = 0,
+   CLONE_LAYER,
    DELETE_LAYER,
    STACK_LAYERS,
    TILE_LAYERS,
@@ -456,6 +457,15 @@ void CurrentLayerChanged()
 
 // -----------------------------------------------------------------------------
 
+void UpdateLayerNames()
+{
+   // update names in all layer items at end of Layer menu
+   for (int i = 0; i < numlayers; i++)
+      mainptr->UpdateLayerItem(i);
+}
+
+// -----------------------------------------------------------------------------
+
 void AddLayer()
 {
    if (mainptr && mainptr->generating) return;
@@ -490,9 +500,7 @@ void AddLayer()
       // add another item at end of Layer menu
       mainptr->AppendLayerItem();
 
-      // update names in any items after currindex
-      for (int i = currindex + 1; i < numlayers; i++)
-         mainptr->UpdateLayerItem(i);
+      UpdateLayerNames();
       
       if (tilelayers && numlayers > 1) CreateTiles();
       
@@ -531,6 +539,7 @@ void DeleteLayer()
    
    delete currlayer;
    numlayers--;
+   
    if (currindex < numlayers) {
       // shift left one or more layers
       for (int i = currindex; i < numlayers; i++)
@@ -545,9 +554,7 @@ void DeleteLayer()
    // remove item from end of Layer menu
    mainptr->RemoveLayerItem();
 
-   // update names in any items after currindex
-   for (int i = currindex + 1; i < numlayers; i++)
-      mainptr->UpdateLayerItem(i);
+   UpdateLayerNames();
       
    if (tilelayers && numlayers > 1) CreateTiles();
    
@@ -565,27 +572,32 @@ void DeleteOtherLayers()
 
    SyncClones();
    
-   // delete all layers except current layer
-   for (int i = 0; i < numlayers; i++)
-      if (i != currindex) delete layer[i];
+   // delete all layers except current layer;
+   // we need to do this carefully because ~Layer() requires numlayers
+   // and the layer array to be correct when deleting a cloned layer
+   int i = numlayers;
+   while (numlayers > 1) {
+      i--;
+      if (i != currindex) {
+         delete layer[i];     // ~Layer() is called
+         numlayers--;
 
-   layer[0] = layer[currindex];
+         // may need to shift the current layer left one place
+         if (i < numlayers) layer[i] = layer[i+1];
+   
+         // remove bitmap button at end of layer bar
+         bitbutt[LAYER_0 + numlayers]->Show(false);
+         
+         // remove item from end of Layer menu
+         mainptr->RemoveLayerItem();
+      }
+   }
+
    currindex = 0;
    // currlayer doesn't change
 
-   // remove all items except layer 0
-   while (numlayers > 1) {
-      numlayers--;
-
-      // remove bitmap button at end of layer bar
-      bitbutt[LAYER_0 + numlayers]->Show(false);
-      
-      // remove item from end of Layer menu
-      mainptr->RemoveLayerItem();
-   }
-
-   // update name in currindex item
-   mainptr->UpdateLayerItem(currindex);
+   // update the only layer item
+   mainptr->UpdateLayerItem(0);
 
    // select LAYER_0 button (also deselects old button)
    SelectButton(LAYER_0, true);
@@ -622,25 +634,18 @@ void MoveLayer(int fromindex, int toindex)
       for (int i = fromindex; i > toindex; i--)
          layer[i] = layer[i - 1];
       layer[toindex] = savelayer;
-      
-      // update item names for layers that moved
-      for (int i = toindex; i <= fromindex; i++)
-         mainptr->UpdateLayerItem(i);
-
    } else {
       // fromindex < toindex
       Layer* savelayer = layer[fromindex];
       for (int i = fromindex; i < toindex; i++)
          layer[i] = layer[i + 1];
       layer[toindex] = savelayer;
-      
-      // update item names for layers that moved
-      for (int i = fromindex; i <= toindex; i++)
-         mainptr->UpdateLayerItem(i);
    }
 
    currindex = toindex;
    currlayer = layer[currindex];
+
+   UpdateLayerNames();
 
    if (tilelayers && numlayers > 1) {
       DestroyTiles();
@@ -769,7 +774,7 @@ Layer* GetLayer(int index)
 int GetUniqueCloneID()
 {
    // find first available index (> 0) to use as cloneid
-   for (int i = 1; i < maxlayers/2; i++) {
+   for (int i = 1; i < maxlayers; i++) {
       if (cloneavail[i]) {
          cloneavail[i] = false;
          return i;
@@ -869,7 +874,7 @@ Layer::Layer()
       
       // initialize cloneavail array (cloneavail[0] is never used)
       cloneavail[0] = false;
-      for (int i = 1; i < maxlayers/2; i++) cloneavail[i] = true;
+      for (int i = 1; i < maxlayers; i++) cloneavail[i] = true;
 
    } else {
       // adding a new layer after currlayer (see AddLayer)
@@ -996,26 +1001,42 @@ Layer::~Layer()
       for (int i = 0; i < numlayers; i++) {
          if (layer[i]->cloneid == cloneid) clonecount++;
       }
+      
+      /* //!!!
+      wxString msg;
+      msg.Printf("cloneid=%d clonecount=%d numlayers=%d numclones=%d",
+                  cloneid, clonecount, numlayers, numclones);
+      statusptr->ErrorMessage(msg);
+      */
+      
       if (clonecount > 2) {
          // only delete this clone
          numclones--;
       } else {
-         // reset all (two) cloneids to 0
+         // first make this cloneid available for the next clone
+         cloneavail[cloneid] = true;
+         // reset other cloneid to 0 (should only be one such clone)
          for (int i = 0; i < numlayers; i++) {
-            if (layer[i]->cloneid == cloneid) {
+            // careful -- layer[i] might be this layer
+            if (this != layer[i] && layer[i]->cloneid == cloneid)
                layer[i]->cloneid = 0;
-               numclones--;
-            }
          }
+         numclones -= 2;
+         //!!! debug
          if (clonecount < 2 || numclones < 0) {
             Warning(_("Bug detected deleting clone!"));
          }
-         // make this cloneid available for the next clone
-         cloneavail[cloneid] = true;
       }
+
+      /* //!!!
+      wxString msg2;
+      msg2.Printf(" AFTER: cloneid=%d clonecount=%d numlayers=%d numclones=%d",
+                  cloneid, clonecount, numlayers, numclones);
+      statusptr->ErrorMessage(msg + msg2);
+      */
       
    } else {
-      // not a clone so safe to delete algo and tempstart file
+      // not a clone so delete algo and tempstart file
       if (algo) delete algo;
       
       // delete tempstart file if it exists
@@ -1196,6 +1217,7 @@ void LayerBar::OnButton(wxCommandEvent& event)
    switch (id)
    {
       case ADD_LAYER:      AddLayer(); break;
+      case CLONE_LAYER:    CloneLayer(); break;
       case DELETE_LAYER:   DeleteLayer(); break;
       case STACK_LAYERS:   ToggleStackLayers(); break;
       case TILE_LAYERS:    ToggleTileLayers(); break;
@@ -1275,6 +1297,7 @@ void CreateLayerBar(wxWindow* parent)
    #endif
    int bgap = 16;
    layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;
+   layerbarptr->AddButton(CLONE_LAYER,  '=', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(DELETE_LAYER, '-', x, y);   x += BUTTON_WD + bgap;
    layerbarptr->AddButton(STACK_LAYERS, 'S', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(TILE_LAYERS,  'T', x, y);   x += BUTTON_WD + bgap;
@@ -1285,6 +1308,7 @@ void CreateLayerBar(wxWindow* parent)
 
    // add tool tips to buttons
    bitbutt[ADD_LAYER]->SetToolTip(_("Add new layer"));
+   bitbutt[CLONE_LAYER]->SetToolTip(_("Clone current layer"));
    bitbutt[DELETE_LAYER]->SetToolTip(_("Delete current layer"));
    bitbutt[STACK_LAYERS]->SetToolTip(_("Toggle stacked layers"));
    bitbutt[TILE_LAYERS]->SetToolTip(_("Toggle tiled layers"));
@@ -1333,6 +1357,7 @@ void UpdateLayerBar(bool active)
       bool busy = mainptr->generating || inscript;
       
       bitbutt[ADD_LAYER]->Enable(active && !busy && numlayers < maxlayers);
+      bitbutt[CLONE_LAYER]->Enable(active && !busy && numlayers < maxlayers);
       bitbutt[DELETE_LAYER]->Enable(active && !busy && numlayers > 1);
       bitbutt[STACK_LAYERS]->Enable(active);
       bitbutt[TILE_LAYERS]->Enable(active);

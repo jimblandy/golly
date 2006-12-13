@@ -64,7 +64,7 @@ DrawView() does the following tasks:
 - Calls DrawSelection() to overlay a translucent selection rectangle
   if a selection exists and any part of it is visible.
 
-- Calls DrawOtherLayers() to overlay multiple layers using the current
+- Calls DrawStackedLayers() to overlay multiple layers using the current
   layer's scale and location.
 
 - If the user is doing a paste, CheckPasteImage() creates a temporary
@@ -945,7 +945,7 @@ void DrawOneLayer(wxDC &dc, int index)
 
 // -----------------------------------------------------------------------------
 
-void DrawOtherLayers(wxDC &dc)
+void DrawStackedLayers(wxDC &dc)
 {
    // check if layerbitmap needs to be created or resized
    if ( layerwd != currlayer->view->getwidth() ||
@@ -981,6 +981,8 @@ void DrawOtherLayers(wxDC &dc)
       // use real current layer's viewport
       viewport *saveview = currlayer->view;
       currlayer->view = savelayer->view;
+      
+      //!!! avoid drawing a cloned layer more than once??? draw first or last clone???
 
       if ( !currlayer->algo->isEmpty() ) {
          DrawOneLayer(dc, i);
@@ -1144,14 +1146,14 @@ void DrawView(wxDC &dc, int tileindex)
    }
    
    if ( numlayers > 1 && stacklayers ) {
-      // must restore currlayer before we call DrawOtherLayers
+      // must restore currlayer before we call DrawStackedLayers
       currlayer = savelayer;
       if ( saveview0 ) {
          // restore layer 0's viewport
          GetLayer(0)->view = saveview0;
       }
       // draw layers 1, 2, ... numlayers-1
-      DrawOtherLayers(dc);
+      DrawStackedLayers(dc);
    }
    
    if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
