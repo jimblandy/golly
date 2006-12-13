@@ -1,6 +1,16 @@
 For future versions:
 --------------------
 
+A - Maintain "dirty" flag in each layer (similar to savestart)
+    and use to show "*" prefix in window title and Layer menu items.
+    Also use to ask if changes should be saved before quitting or
+    deleting layer or NewPattern or LoadPattern.
+
+A - Use nicer bitmaps in layer bar buttons.
+
+A - Put clicked lexicon pattern in new/existing "lexicon" layer.
+    And don't clobber clipboard.
+
 A - Show relative paths in Recent menus for files inside Golly folder.
     Automatically remove missing files at startup (too dangerous?)
     or else add a Clear Missing Files item above Clear All Files.
@@ -57,7 +67,7 @@ User suggestions:
 
 [Nick Gotts]
 - Need a way to copy exact gen/pop counts to clipboard.
-  No longer necessary now that Python commands can get such info?
+  No longer necessary now that Python script could get this info?
 
 [Paul Chapman]
 - Combine the start and stop toolbar buttons into a single toggle.

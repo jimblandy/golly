@@ -97,14 +97,20 @@ void AddLayer();
 
 void CloneLayer();
 // Like AddLayer but shares the same universe as the current layer.
-// Duplicates all the current settings (eg. same warp).
-// The cloned layer has a separate viewport, so the same pattern
-// can be viewed at different scales/locations (at the same time
-// if layers are tiled).
+// All the current layer's settings are duplicated and most will be
+// kept synchronized; ie. changing one clone changes all the others.
+// Each cloned layer has a separate viewport, so the same pattern
+// can be viewed at different scales and locations (at the same time
+// if the layers are tiled).
+
+void SyncClones();
+// If the current layer is a clone then this call ensures the universe
+// and settings in its other clones are correctly synchronized.
 
 void DuplicateLayer();
 // Like AddLayer but makes a copy of the current layer's pattern.
-// Also duplicates all the current settings (eg. same warp).
+// Also duplicates all the current settings but, unlike a cloned layer,
+// the settings are not kept synchronized.
 
 void DeleteLayer();
 // Delete the current layer.  The current layer changes to the previous

@@ -794,6 +794,48 @@ static PyObject *golly_addlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject *golly_clone(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (numlayers >= maxlayers) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad clone call: no more layers can be added.");
+      return NULL;
+   } else {
+      CloneLayer();
+      DoAutoUpdate();
+   }
+
+   // return index of new layer
+   return Py_BuildValue("i", currindex);
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject *golly_duplicate(PyObject *self, PyObject *args)
+{
+   if (ScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   if (numlayers >= maxlayers) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad duplicate call: no more layers can be added.");
+      return NULL;
+   } else {
+      DuplicateLayer();
+      DoAutoUpdate();
+   }
+
+   // return index of new layer
+   return Py_BuildValue("i", currindex);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject *golly_dellayer(PyObject *self, PyObject *args)
 {
    if (ScriptAborted()) return NULL;
@@ -2548,6 +2590,8 @@ static PyMethodDef golly_methods[] = {
    { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
    // layers
    { "addlayer",     golly_addlayer,   METH_VARARGS, "add a new layer" },
+   { "clone",        golly_clone,      METH_VARARGS, "add a cloned layer (shares universe)" },
+   { "duplicate",    golly_duplicate,  METH_VARARGS, "add a duplicate layer (copies universe)" },
    { "dellayer",     golly_dellayer,   METH_VARARGS, "delete current layer" },
    { "movelayer",    golly_movelayer,  METH_VARARGS, "move given layer to new index" },
    { "setlayer",     golly_setlayer,   METH_VARARGS, "switch to given layer" },

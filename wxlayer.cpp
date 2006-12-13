@@ -51,24 +51,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-int numlayers = 0;            // number of existing layers
-int numclones = 0;            // number of cloned layers
-int currindex = -1;           // index of current layer
+int numlayers = 0;               // number of existing layers
+int numclones = 0;               // number of cloned layers
+int currindex = -1;              // index of current layer
 
-Layer* currlayer;             // pointer to current layer
-Layer* layer[maxlayers];      // array of layers
+Layer* currlayer;                // pointer to current layer
+Layer* layer[maxlayers];         // array of layers
 
-bool available[maxlayers];    // for setting tempstart suffix
+bool suffavail[maxlayers];       // for setting unique tempstart suffix
+bool cloneavail[maxlayers/2];    // for setting unique cloneid
 
-bool cloning = false;         // adding a cloned layer?
-bool duplicating = false;     // adding a duplicated layer?
+bool cloning = false;            // adding a cloned layer?
+bool duplicating = false;        // adding a duplicated layer?
 
-bool oldhash;                 // hash setting in old layer
-wxString oldrule;             // rule string in old layer
-int oldmag;                   // scale in old layer
-bigint oldx;                  // X position in old layer
-bigint oldy;                  // Y position in old layer
-wxCursor* oldcurs;            // cursor mode in old layer
+bool oldhash;                    // hash setting in old layer
+wxString oldrule;                // rule string in old layer
+int oldmag;                      // scale in old layer
+bigint oldx;                     // X position in old layer
+bigint oldy;                     // Y position in old layer
+wxCursor* oldcurs;               // cursor mode in old layer
 
 // ids for bitmap buttons in layer bar;
 // also used as indices for bitbutt/normbitmap/toggbitmap arrays
@@ -88,11 +89,11 @@ wxBitmapButton* bitbutt[LAYER_LAST + 1];
 wxBitmap* normbitmap[LAYER_LAST + 1];
 wxBitmap* toggbitmap[LAYER_LAST + 1];
 
-int toggid = -1;              // id of currently toggled layer button
+int toggid = -1;                 // id of currently toggled layer button
 
-const int BUTTON_WD = 24;     // nominal width of bitmap buttons
-const int BITMAP_WD = 16;     // width of bitmaps
-const int BITMAP_HT = 16;     // height of bitmaps
+const int BUTTON_WD = 24;        // nominal width of bitmap buttons
+const int BITMAP_WD = 16;        // width of bitmaps
+const int BITMAP_HT = 16;        // height of bitmaps
 
 // -----------------------------------------------------------------------------
 
@@ -204,8 +205,6 @@ void ResizeTiles(int bigwd, int bight)
       if (wd < 1) wd = 1;
       if (ht < 1) ht = 1;
       layer[i]->view->resize(wd, ht);
-      
-      //!!! need on Windows??? layer[i]->tilewin->Show(true);
    }
 }
 
@@ -294,13 +293,14 @@ void UpdateView()
       //!!! make this more efficient??? ie. in many cases we only need to
       // update the currently selected tile
       
-      // update tile borders
+      // update tile borders and all tiles (child windows of bigview)
       bigview->Refresh(false);
-      /* child windows get refreshed automatically??? (yes on Mac & Win)
+      //!!! only need to refresh bigview upon creating/resizing???
+      /*
       // update all tile windows
       for ( int i = 0; i < numlayers; i++ ) {
          layer[i]->tilewin->Refresh(false);
-         //!!! layer[i]->tilewin->Update();          don't need???
+         layer[i]->tilewin->Update();
       }
       */
       bigview->Update();
@@ -317,14 +317,8 @@ void UpdateView()
 void RefreshView()
 {
    if (tilelayers && numlayers > 1) {
-      // refresh tile borders
+      // refresh tile borders and all tiles (child windows of bigview)
       bigview->Refresh(false);
-      /* child windows get refreshed automatically??? (yes on Mac & Win)
-      // refresh all tile windows
-      for ( int i = 0; i < numlayers; i++ ) {
-         layer[i]->tilewin->Refresh(false);
-      }
-      */
    } else {
       // refresh main viewport window
       viewptr->Refresh(false);
@@ -354,8 +348,61 @@ void SelectButton(int id, bool select)
 
 // -----------------------------------------------------------------------------
 
+void SyncClones()
+{
+   //!!! debug
+   if (numclones < 0) Fatal(_("Bug in SyncClones!"));
+   
+   if (numclones == 0) return;
+   
+   if (currlayer->cloneid > 0) {
+      // make sure clone algo and most other settings are synchronized
+      for ( int i = 0; i < numlayers; i++ ) {
+         Layer* cloneptr = layer[i];
+         if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+            // universe might have been re-created, or hashing changed
+            cloneptr->algo = currlayer->algo;
+            cloneptr->hash = currlayer->hash;
+            cloneptr->rule = currlayer->rule;
+
+            // don't sync curs or currname
+            // cloneptr->curs = currlayer->curs;
+            // cloneptr->currname = currlayer->currname;
+            
+            // sync speed and origin offset
+            cloneptr->warp = currlayer->warp;
+            cloneptr->originx = currlayer->originx;
+            cloneptr->originy = currlayer->originy;
+            
+            // sync selection
+            cloneptr->seltop = currlayer->seltop;
+            cloneptr->selbottom = currlayer->selbottom;
+            cloneptr->selleft = currlayer->selleft;
+            cloneptr->selright = currlayer->selright;
+   
+            // sync the stuff needed to reset pattern
+            cloneptr->starthash = currlayer->starthash;
+            cloneptr->startrule = currlayer->startrule;
+            cloneptr->startx = currlayer->startx;
+            cloneptr->starty = currlayer->starty;
+            cloneptr->startwarp = currlayer->startwarp;
+            cloneptr->startmag = currlayer->startmag;
+            cloneptr->savestart = currlayer->savestart;
+            cloneptr->startfile = currlayer->startfile;
+            cloneptr->startgen = currlayer->startgen;
+            cloneptr->currfile = currlayer->currfile;
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void SaveLayerSettings()
 {
+   // a good place to synchronize clone info
+   SyncClones();
+
    // set oldhash and oldrule for use in CurrentLayerChanged
    oldhash = currlayer->hash;
    oldrule = wxString(global_liferules.getrule(), wxConvLocal);
@@ -515,6 +562,8 @@ void DeleteOtherLayers()
 
    // numlayers > 1
    if (tilelayers) DestroyTiles();
+
+   SyncClones();
    
    // delete all layers except current layer
    for (int i = 0; i < numlayers; i++)
@@ -717,17 +766,33 @@ Layer* GetLayer(int index)
 
 // -----------------------------------------------------------------------------
 
-int FindAvailableSuffix()
+int GetUniqueCloneID()
 {
-   // find first available index to use as tempstart suffix
-   for (int i = 0; i < maxlayers; i++) {
-      if (available[i]) {
-         available[i] = false;
+   // find first available index (> 0) to use as cloneid
+   for (int i = 1; i < maxlayers/2; i++) {
+      if (cloneavail[i]) {
+         cloneavail[i] = false;
          return i;
       }
    }
    // bug if we get here
-   Warning(_("Bug in FindAvailableSuffix!"));
+   Warning(_("Bug in GetUniqueCloneID!"));
+   return 1;
+}
+
+// -----------------------------------------------------------------------------
+
+int GetUniqueSuffix()
+{
+   // find first available index to use as tempstart suffix
+   for (int i = 0; i < maxlayers; i++) {
+      if (suffavail[i]) {
+         suffavail[i] = false;
+         return i;
+      }
+   }
+   // bug if we get here
+   Warning(_("Bug in GetUniqueSuffix!"));
    return 0;
 }
 
@@ -794,23 +859,58 @@ Layer::Layer()
       // set cursor in case newcurs/opencurs are set to "No Change"
       curs = curs_pencil;
       
-      // add suffix to tempstart and initialize available array
+      // add suffix to tempstart and initialize suffavail array
       tempstart += wxT("0");
-      available[0] = false;
-      for (int i = 1; i < maxlayers; i++) available[i] = true;
+      suffavail[0] = false;
+      for (int i = 1; i < maxlayers; i++) suffavail[i] = true;
+      
+      // first layer can't be a clone
+      cloneid = 0;
+      
+      // initialize cloneavail array (cloneavail[0] is never used)
+      cloneavail[0] = false;
+      for (int i = 1; i < maxlayers/2; i++) cloneavail[i] = true;
 
    } else {
       // adding a new layer after currlayer (see AddLayer)
 
-      // inherit current universe type and create empty universe
+      // inherit current universe type
       hash = currlayer->hash;
-      if (hash) {
-         algo = new hlifealgo();
-         algo->setMaxMemory(maxhashmem);
+      
+      if (cloning) {
+         if (currlayer->cloneid == 0) {
+            // first time this universe is being cloned so need a unique cloneid
+            cloneid = GetUniqueCloneID();
+            currlayer->cloneid = cloneid;    // current layer also becomes a clone
+            numclones += 2;
+         } else {
+            // we're cloning an existing clone
+            cloneid = currlayer->cloneid;
+            numclones++;
+         }
+
+         // clones share the same universe
+         algo = currlayer->algo;
+
+         // clones use same name for starting file
+         tempstart = currlayer->tempstart;
+
       } else {
-         algo = new qlifealgo();
+         // this layer isn't a clone
+         cloneid = 0;
+         
+         // create empty universe
+         if (hash) {
+            algo = new hlifealgo();
+            algo->setMaxMemory(maxhashmem);
+         } else {
+            algo = new qlifealgo();
+         }
+         algo->setpoll(wxGetApp().Poller());
+
+         // add unique suffix to tempstart
+         tempstart += wxString::Format("%d", GetUniqueSuffix());
       }
-      algo->setpoll(wxGetApp().Poller());
       
       // inherit current rule in global_liferules (NOT in currlayer->rule)
       rule = wxString(global_liferules.getrule(), wxConvLocal);
@@ -825,30 +925,8 @@ Layer::Layer()
       // inherit current cursor
       curs = currlayer->curs;
 
-      // add unique suffix to tempstart
-      tempstart += wxString::Format("%d", FindAvailableSuffix());
-      
-      if (cloning) {
-         //!!!
-      }
-      
-      if (duplicating) {
-         // first set same gen count
-         algo->setGeneration( currlayer->algo->getGeneration() );
-         
-         // duplicate pattern
-         if ( !currlayer->algo->isEmpty() ) {
-            bigint top, left, bottom, right;
-            currlayer->algo->findedges(&top, &left, &bottom, &right);
-            if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-               Warning(_("Pattern is too big to duplicate."));
-            } else {
-               viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                                 currlayer->algo, algo, false, _("Duplicating layer"));
-            }
-         }
-         
-         // duplicate all current layer settings
+      if (cloning || duplicating) {
+         // duplicate all the other current settings
          currname = currlayer->currname;
          warp = currlayer->warp;
          originx = currlayer->originx;
@@ -869,10 +947,29 @@ Layer::Layer()
          startmag = currlayer->startmag;
          savestart = currlayer->savestart;
          startfile = currlayer->startfile;
-         if (currlayer->startfile == currlayer->tempstart)
-            startfile = tempstart;
          startgen = currlayer->startgen;
          currfile = currlayer->currfile;
+      }
+      
+      if (duplicating) {
+         // first set same gen count
+         algo->setGeneration( currlayer->algo->getGeneration() );
+         
+         // duplicate pattern
+         if ( !currlayer->algo->isEmpty() ) {
+            bigint top, left, bottom, right;
+            currlayer->algo->findedges(&top, &left, &bottom, &right);
+            if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+               Warning(_("Pattern is too big to duplicate."));
+            } else {
+               viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                                 currlayer->algo, algo, false, _("Duplicating layer"));
+            }
+         }
+         
+         // tempstart must remain unique
+         if (currlayer->startfile == currlayer->tempstart)
+            startfile = tempstart;
          
          // if currlayer->tempstart exists then copy it to this layer's unique tempstart
          if ( wxFileExists(currlayer->tempstart) ) {
@@ -891,19 +988,47 @@ Layer::Layer()
 
 Layer::~Layer()
 {
-   if (algo) delete algo;
    if (view) delete view;
-   
-   // delete tempstart file if it exists
-   if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
-   
-   // make tempstart suffix available for new layers
-   wxString suffix = tempstart.AfterLast('_');
-   long val;
-   if (suffix.ToLong(&val) && val >= 0 && val < maxlayers) {
-      available[val] = true;
+
+   if (cloneid > 0) {
+      // count how many layers have the same cloneid
+      int clonecount = 0;
+      for (int i = 0; i < numlayers; i++) {
+         if (layer[i]->cloneid == cloneid) clonecount++;
+      }
+      if (clonecount > 2) {
+         // only delete this clone
+         numclones--;
+      } else {
+         // reset all (two) cloneids to 0
+         for (int i = 0; i < numlayers; i++) {
+            if (layer[i]->cloneid == cloneid) {
+               layer[i]->cloneid = 0;
+               numclones--;
+            }
+         }
+         if (clonecount < 2 || numclones < 0) {
+            Warning(_("Bug detected deleting clone!"));
+         }
+         // make this cloneid available for the next clone
+         cloneavail[cloneid] = true;
+      }
+      
    } else {
-      Warning(_("Problem in tempstart: ") + tempstart);
+      // not a clone so safe to delete algo and tempstart file
+      if (algo) delete algo;
+      
+      // delete tempstart file if it exists
+      if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
+      
+      // make tempstart suffix available for new layers
+      wxString suffix = tempstart.AfterLast('_');
+      long val;
+      if (suffix.ToLong(&val) && val >= 0 && val < maxlayers) {
+         suffavail[val] = true;
+      } else {
+         Warning(_("Problem with tempstart suffix: ") + tempstart);
+      }
    }
 }
 
@@ -952,7 +1077,6 @@ LayerBar* layerbarptr = NULL;
 
 LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht))
-              //!!!??? wxNO_FULL_REPAINT_ON_RESIZE)
 {
    #ifdef __WXGTK__
       // avoid erasing background on GTK+

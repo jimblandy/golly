@@ -221,7 +221,10 @@ void PatternView::RestoreOrigin()
 void PatternView::ToggleGridLines()
 {
    showgridlines = !showgridlines;
-   if (currlayer->view->getmag() >= mingridmag)
+   if ( (currlayer->view->getmag() >= mingridmag) ||
+        // also update everything if drawing all layers
+        (numlayers > 1 && (stacklayers || tilelayers))
+      )
       mainptr->UpdateEverything();
 }
 
@@ -581,11 +584,10 @@ void PatternView::ShowDrawing()
       statusptr->Refresh(false);
    }
 
-   if (numlayers > 1 && stacklayers) {
+   if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // update all layers; this is rather slow but most people won't be
       // drawing cells when all layers are displayed (too confusing)
-      Refresh(false);
-      Update();
+      UpdateView();
    }
 }
 
@@ -593,8 +595,8 @@ void PatternView::ShowDrawing()
 
 void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
 {
-   if (numlayers > 1 && stacklayers) {
-      // drawing must be done via Update in ShowDrawing
+   if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
+      // drawing must be done via UpdateView in ShowDrawing
       return;
    }
 
@@ -1082,7 +1084,10 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    // wd or ht might be < 1 on Win/X11 platforms
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
-   
+
+   if ( numclones > 0 && numlayers > 1 && (stacklayers || tilelayers) )
+      SyncClones();
+
    if ( numlayers > 1 && tilelayers ) {
       if ( tileindex >= 0 && ( wd != GetLayer(tileindex)->view->getwidth() ||
                                ht != GetLayer(tileindex)->view->getheight() ) ) {

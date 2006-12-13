@@ -152,18 +152,20 @@ or you can search for individual commands alphabetically:
 <a href="#autoupdate"><b>autoupdate</b></a><br>
 <a href="#check"><b>check</b></a><br>
 <a href="#clear"><b>clear</b></a><br>
+<a href="#clone"><b>clone</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
 <a href="#dellayer"><b>dellayer</b></a><br>
 <a href="#dokey"><b>dokey</b></a><br>
+<a href="#duplicate"><b>duplicate</b></a><br>
 <a href="#empty"><b>empty</b></a><br>
 <a href="#error"><b>error</b></a><br>
-<a href="#evolve"><b>evolve</b></a><br>
-<a href="#exit"><b>exit</b></a><br>
-<a href="#fit"><b>fit</b></a>
+<a href="#evolve"><b>evolve</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#exit"><b>exit</b></a><br>
+<a href="#fit"><b>fit</b></a><br>
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
 <a href="#getbase"><b>getbase</b></a><br>
@@ -176,12 +178,12 @@ or you can search for individual commands alphabetically:
 <a href="#getkey"><b>getkey</b></a><br>
 <a href="#getlayer"><b>getlayer</b></a><br>
 <a href="#getmag"><b>getmag</b></a><br>
-<a href="#getname"><b>getname</b></a><br>
-<a href="#getoption"><b>getoption</b></a><br>
-<a href="#getpop"><b>getpop</b></a>
+<a href="#getname"><b>getname</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#getoption"><b>getoption</b></a><br>
+<a href="#getpop"><b>getpop</b></a><br>
 <a href="#getpos"><b>getpos</b></a><br>
 <a href="#getrect"><b>getrect</b></a><br>
 <a href="#getrule"><b>getrule</b></a><br>
@@ -194,12 +196,12 @@ or you can search for individual commands alphabetically:
 <a href="#note"><b>note</b></a><br>
 <a href="#numlayers"><b>numlayers</b></a><br>
 <a href="#open"><b>open</b></a><br>
-<a href="#parse"><b>parse</b></a><br>
-<a href="#paste"><b>paste</b></a><br>
-<a href="#putcells"><b>putcells</b></a>
+<a href="#parse"><b>parse</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#paste"><b>paste</b></a><br>
+<a href="#putcells"><b>putcells</b></a><br>
 <a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
@@ -212,12 +214,12 @@ or you can search for individual commands alphabetically:
 <a href="#setcursor"><b>setcursor</b></a><br>
 <a href="#setlayer"><b>setlayer</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
-<a href="#setname"><b>setname</b></a><br>
-<a href="#setoption"><b>setoption</b></a><br>
-<a href="#setpos"><b>setpos</b></a>
+<a href="#setname"><b>setname</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#setoption"><b>setoption</b></a><br>
+<a href="#setpos"><b>setpos</b></a><br>
 <a href="#setrule"><b>setrule</b></a><br>
 <a href="#setstep"><b>setstep</b></a><br>
 <a href="#show"><b>show</b></a><br>
@@ -673,7 +675,31 @@ inherits the previous layer's algorithm, rule, scale, location,
 and cursor mode.  The step exponent is set to 0, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
 </dd>
-<dd> Example: <b>currindex = golly.addlayer()</b></dd>
+<dd> Example: <b>newindex = golly.addlayer()</b></dd>
+</p>
+
+<a name="clone"></a><p><dt><b>clone()</b></dt>
+<dd>
+Like <b>addlayer</b> (see above) but the new layer shares the
+same universe as the current layer.
+The current layer's settings are duplicated and most will be
+kept synchronized so that a change to one clone automatically changes
+all the others.
+Each cloned layer does however have a separate viewport, so the same
+pattern can be viewed at different scales and locations
+(at the same time if layers are tiled).
+</dd>
+<dd> Example: <b>cloneindex = golly.clone()</b></dd>
+</p>
+
+<a name="duplicate"></a><p><dt><b>duplicate()</b></dt>
+<dd>
+Like <b>addlayer</b> (see above) but the new layer has a copy of the
+current layer's pattern.
+Also duplicates all the current settings but, unlike a cloned layer,
+the settings are not kept synchronized.
+</dd>
+<dd> Example: <b>dupeindex = golly.duplicate()</b></dd>
 </p>
 
 <a name="dellayer"></a><p><dt><b>dellayer()</b></dt>

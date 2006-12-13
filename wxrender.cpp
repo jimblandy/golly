@@ -171,6 +171,11 @@ paste_location pasteloc;   // must match plocation
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
 
+// for drawing tile borders
+const wxColor dkgray(96, 96, 96);
+const wxColor ltgray(224, 224, 224);
+const wxColor brightgreen(0, 255, 0);
+
 // -----------------------------------------------------------------------------
 
 // initialize Magnify2 table; note that it swaps byte order if running on
@@ -1031,10 +1036,6 @@ void DrawTileBorders(wxDC& dc)
    bigview->GetClientSize(&wd, &ht);
    if (wd < 1 || ht < 1) return;
    
-   const wxColor dkgray(96, 96, 96);
-   const wxColor ltgray(224, 224, 224);
-   const wxColor ltgreen(0, 255, 0);
-   
    wxBrush brush;
    int gray = (int) ((deadrgb->Red() + deadrgb->Green() + deadrgb->Blue()) / 3.0);
    if (gray > 127) {
@@ -1052,34 +1053,8 @@ void DrawTileBorders(wxDC& dc)
 
    // draw thinner green border to indicate tile for current layer
    trect = GetLayer(currindex)->tilerect;
-   brush.SetColour(ltgreen);
+   brush.SetColour(brightgreen);
    DrawTileFrame(dc, trect, brush, (tileframewd + 1) / 2);
-
-   /* //!!! crap results on Mac due to anti-aliasing???
-   // wxPen pen(swapcolors ? *wxBLACK : *wxWHITE);
-   wxPen pen(*wxLIGHT_GREY);
-   pen.SetWidth(tileframewd);
-   dc.SetPen(pen);
-   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-
-   wxRect r;
-   for ( int i = 0; i < numlayers; i++ ) {
-      r = GetLayer(i)->tilerect;
-      r.Inflate(tileframewd);
-      if (r.width > 0 && r.height > 0) dc.DrawRectangle(r);
-   }
-   
-   // draw green border to indicate tile for current layer
-   pen.SetColour(*wxGREEN);
-   pen.SetWidth(tileframewd);
-   dc.SetPen(pen);
-   r = GetLayer(currindex)->tilerect;
-   r.Inflate(tileframewd);
-   if (r.width > 0 && r.height > 0) dc.DrawRectangle(r);
-   
-   dc.SetBrush(wxNullBrush);
-   dc.SetPen(wxNullPen);
-   */
 }
 
 // -----------------------------------------------------------------------------
