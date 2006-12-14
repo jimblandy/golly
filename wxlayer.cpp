@@ -1254,6 +1254,9 @@ void LayerBar::OnButton(wxCommandEvent& event)
    
    // needed on Windows to clear button focus
    viewptr->SetFocus();
+   
+   // force viewport window update if script is running
+   if (inscript) bigview->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------

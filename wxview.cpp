@@ -433,6 +433,9 @@ int PatternView::BigScroll(int xysize)
 void PatternView::UpdateScrollBars()
 {
    if (mainptr->fullscreen) return;
+   
+   // tile window doesn't have scroll bars
+   if (tileindex >= 0) return;
 
    int viewwd, viewht;
    int mag = currlayer->view->getmag();
@@ -1091,8 +1094,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
    if ( numlayers > 1 && tilelayers ) {
       if ( tileindex >= 0 && ( wd != GetLayer(tileindex)->view->getwidth() ||
                                ht != GetLayer(tileindex)->view->getheight() ) ) {
-         // can happen on Win/GTK???
-         wxBell();//!!!
+         // might happen on Win/GTK???
          GetLayer(tileindex)->view->resize(wd, ht);
       }
    } else if ( wd != currlayer->view->getwidth() || ht != currlayer->view->getheight() ) {
