@@ -154,6 +154,9 @@ void ToggleTileLayers();
 // Toggle the tilelayers flag.  When true, the rendering code displays
 // all layers in tiled sub-windows.
 
+void SwitchToClickedTile(int index);
+// If allowed, change current layer to clicked tile.
+
 void UpdateView();
 // Update main viewport window or all tile windows.
 

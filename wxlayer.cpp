@@ -74,21 +74,23 @@ wxCursor* oldcurs;               // cursor mode in old layer
 // ids for bitmap buttons in layer bar;
 // also used as indices for bitbutt/normbitmap/toggbitmap arrays
 enum {
-   ADD_LAYER = 0,
+   LAYER_0 = 0,                  // LAYER_0 must be first id
+   LAYER_LAST = LAYER_0 + maxlayers - 1,
+   ADD_LAYER,
    CLONE_LAYER,
    DELETE_LAYER,
    STACK_LAYERS,
-   TILE_LAYERS,
-   LAYER_0,
-   LAYER_LAST = LAYER_0 + maxlayers - 1
+   TILE_LAYERS                   // if moved then change NUM_BUTTONS
 };
 
-// array of bitmap buttons (set in LayerBar::AddButton)
-wxBitmapButton* bitbutt[LAYER_LAST + 1];
+const int NUM_BUTTONS = TILE_LAYERS + 1;
 
-// array of bitmaps for normal or toggled state (set in LayerBar::AddButton)
-wxBitmap* normbitmap[LAYER_LAST + 1];
-wxBitmap* toggbitmap[LAYER_LAST + 1];
+// bitmap buttons (set in LayerBar::AddButton)
+wxBitmapButton* bitbutt[NUM_BUTTONS];
+
+// bitmaps for normal or toggled state (set in LayerBar::AddButton)
+wxBitmap* normbitmap[NUM_BUTTONS];
+wxBitmap* toggbitmap[NUM_BUTTONS];
 
 int toggid = -1;                 // id of currently toggled layer button
 
@@ -440,7 +442,7 @@ void CurrentLayerChanged()
    if (synccursors) currlayer->curs = oldcurs;
 
    // select current layer button (also deselects old button)
-   SelectButton(LAYER_0 + currindex, true);
+   SelectButton(currindex, true);
    
    if (tilelayers && numlayers > 1) {
       // switch to new tile
@@ -495,7 +497,7 @@ void AddLayer()
 
    if (numlayers > 1) {
       // add bitmap button at end of layer bar
-      bitbutt[LAYER_0 + numlayers - 1]->Show(true);
+      bitbutt[numlayers - 1]->Show(true);
       
       // add another item at end of Layer menu
       mainptr->AppendLayerItem();
@@ -549,7 +551,7 @@ void DeleteLayer()
    currlayer = layer[currindex];
 
    // remove bitmap button at end of layer bar
-   bitbutt[LAYER_0 + numlayers]->Show(false);
+   bitbutt[numlayers]->Show(false);
       
    // remove item from end of Layer menu
    mainptr->RemoveLayerItem();
@@ -586,7 +588,7 @@ void DeleteOtherLayers()
          if (i < numlayers) layer[i] = layer[i+1];
    
          // remove bitmap button at end of layer bar
-         bitbutt[LAYER_0 + numlayers]->Show(false);
+         bitbutt[numlayers]->Show(false);
          
          // remove item from end of Layer menu
          mainptr->RemoveLayerItem();
@@ -610,13 +612,39 @@ void DeleteOtherLayers()
 
 void SetLayer(int index)
 {
-   if (mainptr->generating || currindex == index) return;
+   if (currindex == index) return;
    if (index < 0 || index >= numlayers) return;
+
+   if (inscript) {
+      // always allow a script to switch layers
+   } else if (mainptr->generating) {
+      // only allow switching to clone of current universe
+      if (currlayer->cloneid == 0 || currlayer->cloneid != layer[index]->cloneid) {
+         // status bar error is nicer than Warning dialog
+         statusptr->ErrorMessage(
+            _("You cannot switch to another universe while a pattern is generating."));
+         return;
+      }
+   }
    
    SaveLayerSettings();
    currindex = index;
    currlayer = layer[currindex];
    CurrentLayerChanged();
+}
+
+// -----------------------------------------------------------------------------
+
+void SwitchToClickedTile(int index)
+{
+   if (inscript) {
+      // statusptr->ErrorMessage does nothing if inscript is true
+      Warning(_("You cannot switch to another layer while a script is running."));
+      return;
+   }
+
+   // switch current layer to clicked tile
+   SetLayer(index);
 }
 
 // -----------------------------------------------------------------------------
@@ -1221,7 +1249,7 @@ void LayerBar::OnButton(wxCommandEvent& event)
       case DELETE_LAYER:   DeleteLayer(); break;
       case STACK_LAYERS:   ToggleStackLayers(); break;
       case TILE_LAYERS:    ToggleTileLayers(); break;
-      default:             SetLayer(id - LAYER_0);
+      default:             SetLayer(id);
    }
    
    // needed on Windows to clear button focus
@@ -1302,7 +1330,7 @@ void CreateLayerBar(wxWindow* parent)
    layerbarptr->AddButton(STACK_LAYERS, 'S', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(TILE_LAYERS,  'T', x, y);   x += BUTTON_WD + bgap;
    for (int i = 0; i < maxlayers; i++) {
-      layerbarptr->AddButton(LAYER_0 + i, '0' + i, x, y);
+      layerbarptr->AddButton(i, '0' + i, x, y);
       x += BUTTON_WD + sgap;
    }
 
@@ -1315,16 +1343,14 @@ void CreateLayerBar(wxWindow* parent)
    for (int i = 0; i < maxlayers; i++) {
       wxString tip;
       tip.Printf(_("Switch to layer %d"), i);
-      bitbutt[LAYER_0 + i]->SetToolTip(tip);
+      bitbutt[i]->SetToolTip(tip);
    }
    #if wxUSE_TOOLTIPS
       wxToolTip::Enable(showtips);  // fix wxGTK bug
    #endif
   
    // hide all layer buttons except layer 0
-   for (int i = 1; i < maxlayers; i++) {
-      bitbutt[LAYER_0 + i]->Show(false);
-   }
+   for (int i = 1; i < maxlayers; i++) bitbutt[i]->Show(false);
    
    // select STACK_LAYERS or TILE_LAYERS if necessary
    if (stacklayers) SelectButton(STACK_LAYERS, true);
@@ -1361,8 +1387,16 @@ void UpdateLayerBar(bool active)
       bitbutt[DELETE_LAYER]->Enable(active && !busy && numlayers > 1);
       bitbutt[STACK_LAYERS]->Enable(active);
       bitbutt[TILE_LAYERS]->Enable(active);
-      for (int i = LAYER_0; i < LAYER_0 + numlayers; i++)
-         bitbutt[i]->Enable(active && !busy);
+      for (int i = 0; i < numlayers; i++) {
+         if (mainptr->generating) {
+            // allow switching to clone of current universe
+            bitbutt[i]->Enable(active && !inscript &&
+                               currlayer->cloneid > 0 &&
+                               currlayer->cloneid == layer[i]->cloneid);
+         } else {
+            bitbutt[i]->Enable(active && !inscript);
+         }
+      }
    }
 }
 

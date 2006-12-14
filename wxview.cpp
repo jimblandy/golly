@@ -1339,7 +1339,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
    
       if (tileindex >= 0 && tileindex != currindex) {
          // switch current layer to clicked tile
-         SetLayer(tileindex);
+         SwitchToClickedTile(tileindex);
          return;
       }
       
@@ -1375,7 +1375,7 @@ void PatternView::OnRMouseDown(wxMouseEvent& event)
    
    if (tileindex >= 0 && tileindex != currindex) {
       // switch current layer to clicked tile
-      SetLayer(tileindex);
+      SwitchToClickedTile(tileindex);
       return;
    }
    

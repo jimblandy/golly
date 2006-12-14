@@ -210,7 +210,7 @@ enum {
    ID_SYNC_CURS,
    ID_STACK,
    ID_TILE,
-   ID_LAYER0         // keep this last
+   ID_LAYER0         // keep this last (for OnMenu)
 };
 
 // static routines used by GetPrefs() to get IDs for items in Open/Run Recent submenus;
@@ -453,8 +453,16 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
       mbar->Enable(ID_TILE,         active);
-      for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++)
-         mbar->Enable(id, active && !busy);
+      for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++) {
+         if (generating) {
+            // allow switching to clone of current universe
+            mbar->Enable(id, active && !inscript &&
+                             currlayer->cloneid > 0 &&
+                             currlayer->cloneid == GetLayer(id - ID_LAYER0)->cloneid);
+         } else {
+            mbar->Enable(id, active && !inscript);
+         }
+      }
 
       // tick/untick menu items created using AppendCheckItem
       mbar->Check(ID_SAVE_XRLE,     savexrle);
