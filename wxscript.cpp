@@ -77,6 +77,7 @@ bool inscript = false;     // a script is running?
 bool autoupdate;           // update display after each change to current universe?
 bool exitcalled;           // golly_exit was called?
 bool allowcheck;           // allow event checking?
+bool showtitle;            // need to update window title?
 wxString pyerror;          // Python error message
 wxString scriptloc;        // location of script file
 wxString scriptchars;      // non-escape chars saved by PassKeyToScript
@@ -350,7 +351,37 @@ void DoAutoUpdate()
    if (autoupdate) {
       inscript = false;
       mainptr->UpdatePatternAndStatus();
+      if (showtitle) {
+         mainptr->SetWindowTitle(wxEmptyString);
+         showtitle = false;
+      }
       inscript = true;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ShowTitleLater()
+{
+   // called from SetWindowTitle when inscript is true;
+   // show title at next update (eg. golly_update or end of script)
+   showtitle = true;
+}
+
+// -----------------------------------------------------------------------------
+
+void ChangeWindowTitle(const wxString& name)
+{
+   if (autoupdate) {
+      // update title bar right now
+      inscript = false;
+      mainptr->SetWindowTitle(name);
+      inscript = true;
+      showtitle = false;       // update has been done
+   } else {
+      // show it later but must still update currlayer->currname and menu item
+      mainptr->SetWindowTitle(name);
+      // showtitle is now true
    }
 }
 
@@ -965,9 +996,9 @@ static PyObject *golly_setname(PyObject *self, PyObject *args)
    
    if (name[0]) {
       if (index == currindex) {
-         // show new name in main window's title
-         mainptr->SetWindowTitle(wxString(name, wxConvLocal));
+         // show new name in main window's title;
          // also sets currlayer->currname and updates menu item
+         ChangeWindowTitle(wxString(name, wxConvLocal));
       } else {
          GetLayer(index)->currname = wxString(name, wxConvLocal);
          // show name in given layer's menu item
@@ -1570,8 +1601,8 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, "B0-not-S8 rules are not allowed when hashing.");
       return NULL;
    } else {
-      // show new rule in main window's title (but don't change name)
-      mainptr->SetWindowTitle(wxEmptyString);
+      // show new rule in main window's title but don't change name
+      ChangeWindowTitle(wxEmptyString);
    }
 
    Py_INCREF(Py_None);
@@ -2295,9 +2326,13 @@ static PyObject *golly_update(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   // update viewport and status bar
+   // update viewport, status bar and possibly title bar
    inscript = false;
    mainptr->UpdatePatternAndStatus();
+   if (showtitle) {
+      mainptr->SetWindowTitle(wxEmptyString);
+      showtitle = false;
+   }
    inscript = true;
 
    Py_INCREF(Py_None);
@@ -2377,10 +2412,14 @@ static PyObject *golly_dokey(PyObject *self, PyObject *args)
       // see any cursor change, including in tool bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
 
-      // update viewport, status bar and scroll bars
+      // update viewport, status bar, scroll bars, etc
       inscript = false;
       mainptr->UpdatePatternAndStatus();
       viewptr->UpdateScrollBars();
+      if (showtitle) {
+         mainptr->SetWindowTitle(wxEmptyString);
+         showtitle = false;
+      }
       inscript = true;
    }
 
@@ -2792,6 +2831,7 @@ void RunScript(const wxString& filename)
    autoupdate = false;
    exitcalled = false;
    allowcheck = true;
+   showtitle = false;
    wxGetApp().PollerReset();
 
    // temporarily change current directory to location of script
@@ -2812,7 +2852,8 @@ void RunScript(const wxString& filename)
    // display any Python error message
    CheckPythonError();
    
-   // update menu bar, cursor, viewport, status bar, tool bar, etc
+   // update title, menu bar, cursor, viewport, status bar, tool bar, etc
+   if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
    mainptr->UpdateEverything();
 }
 

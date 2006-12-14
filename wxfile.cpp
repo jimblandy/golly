@@ -83,6 +83,12 @@ void MainFrame::SetWindowTitle(const wxString& filename)
       // show currname in current layer's menu item
       UpdateLayerItem(currindex);
    }
+   
+   if (inscript) {
+      // avoid window title flashing; eg. script might be switching layers
+      ShowTitleLater();
+      return;
+   }
 
    wxString prefix = wxEmptyString;
    int cid = currlayer->cloneid;
@@ -102,7 +108,7 @@ void MainFrame::SetWindowTitle(const wxString& filename)
                      prefix.c_str(), currlayer->currname.c_str(), rule.c_str());
    #endif
 
-   // better to truncate a really long title???!!!
+   // nicer to truncate a really long title???
    MySetTitle(wtitle);
 }
 
@@ -254,7 +260,8 @@ void MainFrame::LoadPattern(const wxString& newtitle)
 
    if (!newtitle.IsEmpty()) {
       // show new file name in window title but no rule (which readpattern can change);
-      // nicer if user can see file name while loading a very large pattern
+      // nicer if user can see file name while loading a very large pattern,
+      // even if a script is running???
       MySetTitle(_("Loading ") + newtitle);
    }
 

@@ -24,22 +24,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXSCRIPT_H_
 #define _WXSCRIPT_H_
 
-// Return true if the given file is a Python script.
-// It simply checks if the file's extension is ".py" (ignoring case).
-bool IsScript(const wxString& filename);
-
-// Run the given script file by passing it to the Python interpreter.
-void RunScript(const wxString& filename);
-
+extern bool inscript;
 // Is a script currently running?  We allow access to global flag
 // so clients can temporarily save and restore its setting.
-extern bool inscript;
 
-// Called if a script is running and user hits a key.
+bool IsScript(const wxString& filename);
+// Return true if the given file is a Python script.
+// It simply checks if the file's extension is ".py" (ignoring case).
+
+void RunScript(const wxString& filename);
+// Run the given script file by passing it to the Python interpreter.
+
 void PassKeyToScript(int key);
+// Called if a script is running and user hits a key.
 
+void ShowTitleLater();
+// Called if a script is running and window title has changed.
+
+void FinishScripting();
 // Called when app quits to abort a running script and tidy up
 // the Python interpreter.
-void FinishScripting();
 
 #endif
