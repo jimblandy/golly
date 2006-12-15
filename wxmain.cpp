@@ -639,7 +639,9 @@ class RightWindow : public wxWindow
 public:
    RightWindow(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-                 wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+                 wxNO_BORDER |
+                 // need this to avoid layer bar buttons flashing on Windows
+                 wxNO_FULL_REPAINT_ON_RESIZE)
    {
       // avoid erasing background on GTK+
       SetBackgroundStyle(wxBG_STYLE_CUSTOM);
