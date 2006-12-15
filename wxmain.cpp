@@ -518,9 +518,7 @@ void MainFrame::UpdateUserInterface(bool active)
    #ifdef __WXMSW__
       // ensure viewport window has keyboard focus if main window is active
       if (active) viewptr->SetFocus();
-      //!!! do here in all platforms rather than in OnIdle???
-      // still need to solve Mac prob after selecting file in pattern/script dir;
-      // perhaps via OnOneTimer???
+      //!!! unfortunately it can prevent layer bar butons being clicked if inscript
    #endif
 }
 

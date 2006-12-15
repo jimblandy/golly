@@ -1080,6 +1080,10 @@ public:
    // add a bitmap button to layer bar
    void AddButton(int id, char label, int x, int y);
 
+   // detect press and release of a bitmap button
+   void OnButtonDown(wxMouseEvent& event);
+   void OnButtonUp(wxMouseEvent& event);
+
 private:
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -1088,14 +1092,12 @@ private:
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
-   void OnEraseBackground(wxEraseEvent& event);
 };
 
 BEGIN_EVENT_TABLE(LayerBar, wxPanel)
    EVT_PAINT            (           LayerBar::OnPaint)
    EVT_LEFT_DOWN        (           LayerBar::OnMouseDown)
    EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
-//!!!??? EVT_ERASE_BACKGROUND (           LayerBar::OnEraseBackground)
 END_EVENT_TABLE()
 
 LayerBar* layerbarptr = NULL;
@@ -1110,13 +1112,6 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       // avoid erasing background on GTK+
       SetBackgroundStyle(wxBG_STYLE_CUSTOM);
    #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
-{
-   // do nothing because we'll be painting the entire viewport
 }
 
 // -----------------------------------------------------------------------------
@@ -1183,6 +1178,25 @@ void LayerBar::OnButton(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
+void LayerBar::OnButtonDown(wxMouseEvent& event)
+{
+   // a layer bar button has been pressed
+   wxBell();//!!!
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnButtonUp(wxMouseEvent& event)
+{
+   // a layer bar button has been released
+   //!!! not seeing this on Mac
+   wxBell();//!!!
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
 void LayerBar::AddButton(int id, char label, int x, int y)
 {
    wxMemoryDC dc;
@@ -1226,7 +1240,15 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    dc.SelectObject(wxNullBitmap);
    
    bitbutt[id] = new wxBitmapButton(this, id, *normbitmap[id], wxPoint(x,y));
-   if (bitbutt[id] == NULL) Fatal(_("Failed to create layer button!"));
+   if (bitbutt[id] == NULL) {
+      Fatal(_("Failed to create layer bar button!"));
+   } else {
+      //!!!???
+      bitbutt[id]->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
+                           wxMouseEventHandler(LayerBar::OnButtonDown));
+      bitbutt[id]->Connect(wxID_ANY, wxEVT_LEFT_UP,
+                           wxMouseEventHandler(LayerBar::OnButtonUp));
+   }
 }
 
 // -----------------------------------------------------------------------------
