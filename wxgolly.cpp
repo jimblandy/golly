@@ -120,10 +120,9 @@ public:
 
 void CallYield()
 {
-   //!!! if we set focus on Windows then can't click layer buttons while generating/scripting
-   //!!! but if we don't do it then focus problems occur after clicking in pattern/script dir
    if (mainptr->IsActive()) {
-      viewptr->SetFocus();      // make sure viewport window keeps keyboard focus
+      // make sure viewport window keeps keyboard focus
+      viewptr->SetFocus();
    }
    wxGetApp().Yield(true);
 }

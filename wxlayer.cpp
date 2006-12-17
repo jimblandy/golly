@@ -1083,6 +1083,7 @@ public:
    // detect press and release of a bitmap button
    void OnButtonDown(wxMouseEvent& event);
    void OnButtonUp(wxMouseEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -1178,11 +1179,35 @@ void LayerBar::OnButton(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
+//!!! none of this stuff works!!!
+bool layerbuttdown = false;
+
 void LayerBar::OnButtonDown(wxMouseEvent& event)
 {
    // a layer bar button has been pressed
+   layerbuttdown = true;
+   
    wxBell();//!!!
-   event.Skip();
+   int id = event.GetId();
+   //!!!bitbutt[id]->CaptureMouse();
+   
+   while (layerbuttdown) {
+      bitbutt[id]->SetFocus();
+      wxGetApp().Yield(true);
+      wxMilliSleep(1);
+   }
+
+   //!!!bitbutt[id]->ReleaseMouse();
+   
+   //!!! call OnButton via ProcessEvent
+   wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
+   buttevt.SetEventObject(bitbutt[id]);
+   bitbutt[id]->ProcessEvent(buttevt);
+   
+   //!!!viewptr->SetFocus();
+   //!!!wxBell();
+   
+   //!!!event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -1190,8 +1215,19 @@ void LayerBar::OnButtonDown(wxMouseEvent& event)
 void LayerBar::OnButtonUp(wxMouseEvent& event)
 {
    // a layer bar button has been released
-   //!!! not seeing this on Mac
-   wxBell();//!!!
+   layerbuttdown = false;
+
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnMouseMotion(wxMouseEvent& event)
+{   
+   if (layerbuttdown && !event.LeftIsDown()) {
+      layerbuttdown = false;
+   }
+   
    event.Skip();
 }
 
@@ -1243,11 +1279,17 @@ void LayerBar::AddButton(int id, char label, int x, int y)
    if (bitbutt[id] == NULL) {
       Fatal(_("Failed to create layer bar button!"));
    } else {
-      //!!!???
-      bitbutt[id]->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
-                           wxMouseEventHandler(LayerBar::OnButtonDown));
-      bitbutt[id]->Connect(wxID_ANY, wxEVT_LEFT_UP,
-                           wxMouseEventHandler(LayerBar::OnButtonUp));
+      #ifdef __WXMSW__
+         //!!! fix problem with layer bar buttons when generating/inscript???
+         /* doesn't solve problem
+         bitbutt[id]->Connect(id, wxEVT_LEFT_DOWN,
+                              wxMouseEventHandler(LayerBar::OnButtonDown));
+         bitbutt[id]->Connect(id, wxEVT_LEFT_UP,
+                              wxMouseEventHandler(LayerBar::OnButtonUp));
+         bitbutt[id]->Connect(id, wxEVT_MOTION,
+                              wxMouseEventHandler(LayerBar::OnMouseMotion));
+         */
+      #endif
    }
 }
 
