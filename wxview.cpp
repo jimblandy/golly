@@ -1026,9 +1026,9 @@ void PatternView::StopDraggingMouse()
 
 void PatternView::TestAutoFit()
 {
-   if (autofit && mainptr->generating) {
+   if (currlayer->autofit && mainptr->generating) {
       // assume user no longer wants us to do autofitting
-      autofit = false;
+      currlayer->autofit = false;
    }
 }
 
@@ -1074,7 +1074,7 @@ void PatternView::SetViewSize(int wd, int ht)
    }
    
    // only autofit when generating
-   if (autofit && mainptr && mainptr->generating)
+   if (currlayer->autofit && mainptr && mainptr->generating)
       currlayer->algo->fit(*currlayer->view, 0);
 }
 

@@ -670,9 +670,10 @@ LAYER COMMANDS
 <dd>
 Add a new, empty layer immediately after the current layer and
 return the new layer's index, an integer from 0 to <b>numlayers()</b> - 1.
-The new layer becomes the current layer and
-inherits the previous layer's algorithm, rule, scale, location,
-and cursor mode.  The step exponent is set to 0, there is no selection,
+The new layer becomes the current layer and inherits most of
+the previous layer's settings, including its algorithm, rule, scale,
+location, cursor mode, etc.
+The step exponent is set to 0, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
 </dd>
 <dd> Example: <b>newindex = golly.addlayer()</b></dd>

@@ -368,14 +368,17 @@ void SyncClones()
             cloneptr->hash = currlayer->hash;
             cloneptr->rule = currlayer->rule;
 
-            // don't sync curs or currname
+            // along with view, don't sync these settings
+            // cloneptr->autofit = currlayer->autofit;
+            // cloneptr->hyperspeed = currlayer->hyperspeed;
+            // cloneptr->showhashinfo = currlayer->showhashinfo;
             // cloneptr->curs = currlayer->curs;
             // cloneptr->currname = currlayer->currname;
+            // cloneptr->originx = currlayer->originx;
+            // cloneptr->originy = currlayer->originy;
             
-            // sync speed and origin offset
+            // sync speed
             cloneptr->warp = currlayer->warp;
-            cloneptr->originx = currlayer->originx;
-            cloneptr->originy = currlayer->originy;
             
             // sync selection
             cloneptr->seltop = currlayer->seltop;
@@ -437,6 +440,8 @@ void CurrentLayerChanged()
    if ( currlayer->hash != oldhash || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
    }
+   
+   hlifealgo::setVerbose(currlayer->showhashinfo);
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
    if (synccursors) currlayer->curs = oldcurs;
@@ -855,8 +860,13 @@ Layer::Layer()
    if (numlayers == 0) {
       // creating very first layer
       
-      // set hash using inithash stored in prefs file
+      // set hash etc using initial values stored in prefs file
       hash = inithash;
+      hyperspeed = inithyperspeed;
+      showhashinfo = initshowhashinfo;
+      autofit = initautofit;
+      
+      hlifealgo::setVerbose(initshowhashinfo);
       
       // create empty universe
       if (hash) {
@@ -907,8 +917,11 @@ Layer::Layer()
    } else {
       // adding a new layer after currlayer (see AddLayer)
 
-      // inherit current universe type
+      // inherit current universe type and other settings
       hash = currlayer->hash;
+      hyperspeed = currlayer->hyperspeed;
+      showhashinfo = currlayer->showhashinfo;
+      autofit = currlayer->autofit;
       
       if (cloning) {
          if (currlayer->cloneid == 0) {
@@ -962,6 +975,9 @@ Layer::Layer()
          // duplicate all the other current settings
          currname = currlayer->currname;
          warp = currlayer->warp;
+         autofit = currlayer->autofit;
+         hyperspeed = currlayer->hyperspeed;
+         showhashinfo = currlayer->showhashinfo;
          originx = currlayer->originx;
          originy = currlayer->originy;
          
@@ -971,7 +987,7 @@ Layer::Layer()
          selleft = currlayer->selleft;
          selright = currlayer->selright;
 
-         // we'll even duplicate the stuff needed to reset pattern
+         // duplicate the stuff needed to reset pattern
          starthash = currlayer->starthash;
          startrule = currlayer->startrule;
          startx = currlayer->startx;
@@ -1225,7 +1241,12 @@ void LayerBar::OnButtonUp(wxMouseEvent& event)
    bitbutt[id]->GetClientSize(&wd, &ht);
    wxRect r(0, 0, wd, ht);
 
-   if ( r.Inside(pt) ) {
+#if wxCHECK_VERSION(2, 7, 0)
+// Inside is deprecated
+if ( r.Contains(pt) ) {
+#else
+if ( r.Inside(pt) ) {
+#endif
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(bitbutt[id]);

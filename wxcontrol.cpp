@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
 #include "wxutils.h"       // for BeginProgress, etc
-#include "wxprefs.h"       // for autofit, etc
+#include "wxprefs.h"       // for maxhashmem, etc
 #include "wxrule.h"        // for ChangeRule
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
@@ -251,7 +251,7 @@ void MainFrame::GeneratePattern()
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
             curralgo->step();
-            if (autofit) viewptr->FitInView(0);
+            if (currlayer->autofit) viewptr->FitInView(0);
             // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
             UpdatePatternAndStatus();
             if (wxGetApp().Poller()->checkevents()) break;
@@ -266,11 +266,11 @@ void MainFrame::GeneratePattern()
       } else {
          // warp >= 0 so only show results every curralgo->getIncrement() gens
          curralgo->step();
-         if (autofit) viewptr->FitInView(0);
+         if (currlayer->autofit) viewptr->FitInView(0);
          // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
          UpdatePatternAndStatus();
          if (wxGetApp().Poller()->checkevents()) break;
-         if (hyperspeed && curralgo->hyperCapable()) {
+         if (currlayer->hyperspeed && curralgo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
@@ -289,7 +289,7 @@ void MainFrame::GeneratePattern()
    ChangeStopToGo();
    
    // display the final pattern
-   if (autofit) viewptr->FitInView(0);
+   if (currlayer->autofit) viewptr->FitInView(0);
    UpdateEverything();
 }
 
@@ -643,7 +643,7 @@ void MainFrame::NextGeneration(bool useinc)
    if (!inscript) {
       ChangeStopToGo();
       // autofit is only used when doing many gens
-      if (autofit && useinc && curralgo->getIncrement() > bigint::one)
+      if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
          viewptr->FitInView(0);
       UpdateEverything();
    }
@@ -653,10 +653,10 @@ void MainFrame::NextGeneration(bool useinc)
 
 void MainFrame::ToggleAutoFit()
 {
-   autofit = !autofit;
+   currlayer->autofit = !currlayer->autofit;
    // we only use autofit when generating; that's why the Auto Fit item
    // is in the Control menu and not in the View menu
-   if (autofit && generating) {
+   if (currlayer->autofit && generating) {
       viewptr->FitInView(0);
       UpdateEverything();
    }
@@ -761,14 +761,15 @@ void MainFrame::ToggleHashing()
 
 void MainFrame::ToggleHyperspeed()
 {
-   hyperspeed = !hyperspeed;
+   currlayer->hyperspeed = !currlayer->hyperspeed;
 }
 
 // -----------------------------------------------------------------------------
 
 void MainFrame::ToggleHashInfo()
 {
-   hlifealgo::setVerbose( !hlifealgo::getVerbose() ) ;
+   currlayer->showhashinfo = !currlayer->showhashinfo;
+   hlifealgo::setVerbose( currlayer->showhashinfo ) ;
 }
 
 // -----------------------------------------------------------------------------

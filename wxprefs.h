@@ -58,10 +58,11 @@ extern int infowd;               // info window's size
 extern int infoht;
 
 extern char initrule[];          // initial rule
-extern bool inithash;            // use hlife algorithm?
+extern bool inithash;            // initial layer uses hlife algorithm?
+extern bool initautofit;         // initial autofit setting
+extern bool inithyperspeed;      // initial hyperspeed setting
+extern bool initshowhashinfo;    // initial showhashinfo setting
 extern bool savexrle;            // save RLE file using XRLE format?
-extern bool autofit;             // auto fit pattern while generating?
-extern bool hyperspeed;          // use hyperspeed if supported by current algo?
 extern bool showtips;            // show tool tips?
 extern bool showtool;            // show tool bar?
 extern bool showstatus;          // show status bar?

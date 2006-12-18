@@ -46,7 +46,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "lifealgo.h"
-#include "hlifealgo.h"     // for setVerbose, getVerbose
 #include "viewport.h"      // for MAX_MAG
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
@@ -113,10 +112,11 @@ int infowd = 700;                // info window's initial size
 int infoht = 500;
 
 char initrule[128] = "B3/S23";   // initial rule
-bool inithash = false;           // use hlife algorithm?
+bool inithash = false;           // initial layer uses hlife algorithm?
+bool initautofit = false;        // initial autofit setting
+bool inithyperspeed = false;     // initial hyperspeed setting
+bool initshowhashinfo = false;   // initial showhashinfo setting
 bool savexrle = true;            // save RLE file using XRLE format?
-bool autofit = false;            // auto fit pattern while generating?
-bool hyperspeed = false;         // use hyperspeed if supported by current algo?
 bool showtips = true;            // show tool tips?
 bool showtool = true;            // show tool bar?
 bool showstatus = true;          // show status bar?
@@ -526,10 +526,10 @@ void SavePrefs()
    fprintf(f, "h_base_step=%d (2..%d, best if power of 2)\n", hbasestep, MAX_BASESTEP);
    fprintf(f, "min_delay=%d (0..%d millisecs)\n", mindelay, MAX_DELAY);
    fprintf(f, "max_delay=%d (0..%d millisecs)\n", maxdelay, MAX_DELAY);
-   fprintf(f, "auto_fit=%d\n", autofit ? 1 : 0);
+   fprintf(f, "auto_fit=%d\n", currlayer->autofit ? 1 : 0);
    fprintf(f, "hashing=%d\n", currlayer->hash ? 1 : 0);
-   fprintf(f, "hyperspeed=%d\n", hyperspeed ? 1 : 0);
-   fprintf(f, "hash_info=%d\n", hlifealgo::getVerbose() ? 1 : 0);
+   fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
+   fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    
    fputs("\n", f);
@@ -807,16 +807,16 @@ void GetPrefs()
          if (maxdelay > MAX_DELAY) maxdelay = MAX_DELAY;
 
       } else if (strcmp(keyword, "auto_fit") == 0) {
-         autofit = value[0] == '1';
+         initautofit = value[0] == '1';
 
       } else if (strcmp(keyword, "hashing") == 0) {
          inithash = value[0] == '1';
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
-         hyperspeed = value[0] == '1';
+         inithyperspeed = value[0] == '1';
 
       } else if (strcmp(keyword, "hash_info") == 0) {
-         hlifealgo::setVerbose(value[0] == '1');
+         initshowhashinfo = value[0] == '1';
 
       } else if (strcmp(keyword, "max_hash_mem") == 0) {
          sscanf(value, "%d", &maxhashmem);

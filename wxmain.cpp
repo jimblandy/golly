@@ -468,10 +468,10 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SAVE_XRLE,     savexrle);
       mbar->Check(ID_SHOW_PATTERNS, showpatterns);
       mbar->Check(ID_SHOW_SCRIPTS,  showscripts);
-      mbar->Check(ID_AUTO,       autofit);
+      mbar->Check(ID_AUTO,       currlayer->autofit);
       mbar->Check(ID_HASH,       currlayer->hash);
-      mbar->Check(ID_HYPER,      hyperspeed);
-      mbar->Check(ID_HINFO,      hlifealgo::getVerbose() != 0);
+      mbar->Check(ID_HYPER,      currlayer->hyperspeed);
+      mbar->Check(ID_HINFO,      currlayer->showhashinfo);
       mbar->Check(ID_TOOL_BAR,   tbar && tbar->IsShown());
       mbar->Check(ID_LAYER_BAR,  showlayer);
       mbar->Check(ID_STATUS_BAR, StatusVisible());

@@ -30,7 +30,8 @@ class viewport;
 class PatternView;
 
 // Golly supports multiple layers.  Each layer is a separate universe
-// with its own algorithm, rule, viewport, window title, selection, etc.
+// (unless cloned) with its own algorithm, rule, viewport, window title,
+// selection, etc.
 
 class Layer {
 public:
@@ -39,9 +40,12 @@ public:
 
    lifealgo* algo;            // this layer's universe
    bool hash;                 // does it use hlife?
+   bool hyperspeed;           // use hyperspeed if hash is true?
+   bool showhashinfo;         // show hash info if hash is true?
+   bool autofit;              // auto fit pattern while generating?
+   int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode
-   int warp;                  // speed setting (ie. step exponent)
 
    // WARNING: this rule is used to remember the current rule when
    // switching to another layer; to determine the current rule at any
@@ -98,8 +102,8 @@ void AddLayer();
 void CloneLayer();
 // Like AddLayer but shares the same universe as the current layer.
 // All the current layer's settings are duplicated and most will be
-// kept synchronized; ie. changing one clone changes all the others.
-// Each cloned layer has a separate viewport, so the same pattern
+// kept synchronized; ie. changing one clone changes all the others,
+// but each cloned layer has a separate viewport so the same pattern
 // can be viewed at different scales and locations (at the same time
 // if the layers are tiled).
 

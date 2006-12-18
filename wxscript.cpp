@@ -1043,7 +1043,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "si", &optname, &newval)) return NULL;
 
    if (strcmp(optname, "autofit") == 0) {
-      oldval = autofit ? 1 : 0;
+      oldval = currlayer->autofit ? 1 : 0;
       if (oldval != newval)
          mainptr->ToggleAutoFit();
 
@@ -1062,12 +1062,12 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       }
 
    } else if (strcmp(optname, "hyperspeed") == 0) {
-      oldval = hyperspeed ? 1 : 0;
+      oldval = currlayer->hyperspeed ? 1 : 0;
       if (oldval != newval)
          mainptr->ToggleHyperspeed();
 
    } else if (strcmp(optname, "showhashinfo") == 0) {
-      oldval = hlifealgo::getVerbose() ? 1 : 0;
+      oldval = currlayer->showhashinfo ? 1 : 0;
       if (oldval != newval)
          mainptr->ToggleHashInfo();
 
@@ -1230,11 +1230,11 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &optname)) return NULL;
 
-   if      (strcmp(optname, "autofit") == 0)       optval = autofit ? 1 : 0;
+   if      (strcmp(optname, "autofit") == 0)       optval = currlayer->autofit ? 1 : 0;
    else if (strcmp(optname, "boldspacing") == 0)   optval = boldspacing;
    else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
    else if (strcmp(optname, "hashing") == 0)       optval = currlayer->hash ? 1 : 0;
-   else if (strcmp(optname, "hyperspeed") == 0)    optval = hyperspeed ? 1 : 0;
+   else if (strcmp(optname, "hyperspeed") == 0)    optval = currlayer->hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
    else if (strcmp(optname, "opacity") == 0)       optval = opacity;
@@ -1242,7 +1242,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
    else if (strcmp(optname, "showexact") == 0)     optval = showexact ? 1 : 0;
    else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
-   else if (strcmp(optname, "showhashinfo") == 0)  optval = hlifealgo::getVerbose() ? 1 : 0;
+   else if (strcmp(optname, "showhashinfo") == 0)  optval = currlayer->showhashinfo ? 1 : 0;
    else if (strcmp(optname, "showlayerbar") == 0)  optval = showlayer ? 1 : 0;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;

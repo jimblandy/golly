@@ -3,7 +3,7 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-Golly supports up to 10 layers.  Each layer has a separate universe
+Golly supports up to 10 layers.  Each layer is a separate universe
 (unless cloned; see the Clone Layer item below)
 with its own algorithm (hashing or non-hashing), its own rule, viewport,
 cursor mode, selection, step exponent, origin offset, and name.
@@ -13,10 +13,10 @@ Most edit/control/view operations only apply to the current layer.
 <p>
 Note that most of Golly's options apply globally to all layers.
 This is true for all of the options set in the Preferences dialog.
-It's also true for most of the options set via menu items, like
+It's also true for many of the options set via menu items, like
 Save Extended RLE, Paste Mode, Paste Location,
-Auto Fit, Hyperspeed, Show Hash Info,
-Show Grid Lines, etc.
+Show Tool Bar, Show Grid Lines, etc., but not for any of the
+Control menu options (Auto Fit, Hyperspeed, and Show Hash Info).
 
 <p>
 The items at the bottom of the Layer menu show all existing layers,
@@ -52,7 +52,8 @@ kept synchronized so that a change to one clone automatically changes
 all the others.  Each cloned layer does however have a separate viewport,
 so the same pattern can be viewed at different scales and locations
 (at the same time if layers are tiled).
-Cloned layers can also have different names and cursor modes.
+Cloned layers can also have different names, cursor modes, or
+control options (Auto Fit, Hyperspeed, and Show Hash Info).
 
 <p>
 <font size=+1><b>Duplicate Layer</b></font>
