@@ -1161,6 +1161,15 @@ void LayerBar::OnButton(wxCommandEvent& event)
    statusptr->ClearMessage();
 
    int id = event.GetId();
+   
+   #ifdef __WXMSW__
+      // disconnect focus handler and reset focus to viewptr;
+      // we must do latter before button becomes disabled
+      bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                              wxFocusEventHandler(LayerBar::OnKillFocus));
+      viewptr->SetFocus();
+   #endif
+
    switch (id)
    {
       case ADD_LAYER:      AddLayer(); break;
@@ -1171,13 +1180,6 @@ void LayerBar::OnButton(wxCommandEvent& event)
       default:             SetLayer(id);
    }
 
-   //!!!???
-   bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                           wxFocusEventHandler(LayerBar::OnKillFocus));
-   
-   // needed on Windows to clear button focus
-   viewptr->SetFocus();
-   
    // force viewport window update if script is running
    if (inscript) bigview->Refresh(false);
 }
@@ -1187,11 +1189,12 @@ void LayerBar::OnButton(wxCommandEvent& event)
 void LayerBar::OnKillFocus(wxFocusEvent& event)
 {
    int id = event.GetId();
-   bitbutt[id]->SetFocus();
+   bitbutt[id]->SetFocus();   // don't let button lose focus
 }
 
 // -----------------------------------------------------------------------------
 
+//!!! flag is not used at the moment (probably need later for dragging button)
 bool layerbuttdown = false;
 
 void LayerBar::OnButtonDown(wxMouseEvent& event)
@@ -1199,32 +1202,12 @@ void LayerBar::OnButtonDown(wxMouseEvent& event)
    // a layer bar button has been pressed
    layerbuttdown = true;
    
-   wxBell();//!!!
    int id = event.GetId();
    
-   //!!!???
+   // connect a handler that keeps focus with the pressed button
    bitbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
                         wxFocusEventHandler(LayerBar::OnKillFocus));
-   /* //!!!???
-   viewptr->Connect(id, wxEVT_SET_FOCUS,
-                    wxFocusEventHandler(LayerBar::OnSetFocus));
-   */
-   
-   /* //!!! this soln failed miserably
-   bitbutt[id]->CaptureMouse();
-   while (layerbuttdown) {
-      bitbutt[id]->SetFocus();
-      wxGetApp().Yield(true);
-      wxMilliSleep(1);
-   }
-   bitbutt[id]->ReleaseMouse();
-   
-   // call OnButton via ProcessEvent
-   wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
-   buttevt.SetEventObject(bitbutt[id]);
-   bitbutt[id]->ProcessEvent(buttevt);
-   */
-      
+        
    event.Skip();
 }
 
@@ -1233,33 +1216,36 @@ void LayerBar::OnButtonDown(wxMouseEvent& event)
 void LayerBar::OnButtonUp(wxMouseEvent& event)
 {
    // a layer bar button has been released
-   //!!! not seeing this on Mac at all;
-   //!!! do see it on Windows but not if generating/inscript
-   wxBell();//!!!
    layerbuttdown = false;
 
-   //!!!???
    int id = event.GetId();
-   bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                           wxFocusEventHandler(LayerBar::OnKillFocus));
+   wxPoint pt = bitbutt[id]->ScreenToClient( wxGetMousePosition() );
 
-   event.Skip();
+   int wd, ht;
+   bitbutt[id]->GetClientSize(&wd, &ht);
+   wxRect r(0, 0, wd, ht);
+
+   if ( r.Inside(pt) ) {
+      // call OnButton
+      wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
+      buttevt.SetEventObject(bitbutt[id]);
+      bitbutt[id]->ProcessEvent(buttevt);
+   } else {
+      // mouse has moved outside button
+      bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                              wxFocusEventHandler(LayerBar::OnKillFocus));
+      viewptr->SetFocus();
+   }
 }
 
 // -----------------------------------------------------------------------------
 
+//!!! not used at the moment (probably need later for button dragging)
 void LayerBar::OnMouseMotion(wxMouseEvent& event)
 {   
-   if (layerbuttdown && !event.LeftIsDown()) {
-      wxBell();//!!!
-      layerbuttdown = false;
-
-      //!!!???
-      int id = event.GetId();
-      bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                              wxFocusEventHandler(LayerBar::OnKillFocus));
+   if (layerbuttdown) {
+      //!!!
    }
-   
    event.Skip();
 }
 
@@ -1312,13 +1298,16 @@ void LayerBar::AddButton(int id, char label, int x, int y)
       Fatal(_("Failed to create layer bar button!"));
    } else {
       #ifdef __WXMSW__
-         //!!! fix problem with layer bar buttons when generating/inscript???
+         // fix problem with layer bar buttons when generating/inscript
+         // due to focus being changed to viewptr
          bitbutt[id]->Connect(id, wxEVT_LEFT_DOWN,
                               wxMouseEventHandler(LayerBar::OnButtonDown));
          bitbutt[id]->Connect(id, wxEVT_LEFT_UP,
                               wxMouseEventHandler(LayerBar::OnButtonUp));
+         /* don't need this handler at the moment
          bitbutt[id]->Connect(id, wxEVT_MOTION,
                               wxMouseEventHandler(LayerBar::OnMouseMotion));
+         */
       #endif
    }
 }
