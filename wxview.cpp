@@ -1338,6 +1338,11 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
    } else {
       statusptr->ClearMessage();
       mainptr->showbanner = false;
+
+      if (numlayers > 1 && tilelayers && tileindex < 0) {
+         // ignore click in tile border
+         return;
+      }
    
       if (tileindex >= 0 && tileindex != currindex) {
          // switch current layer to clicked tile
@@ -1374,6 +1379,11 @@ void PatternView::OnRMouseDown(wxMouseEvent& event)
    // this is equivalent to control-click in wxMac/wxMSW but not in wxX11 -- sigh
    statusptr->ClearMessage();
    mainptr->showbanner = false;
+
+   if (numlayers > 1 && tilelayers && tileindex < 0) {
+      // ignore click in tile border
+      return;
+   }
    
    if (tileindex >= 0 && tileindex != currindex) {
       // switch current layer to clicked tile
