@@ -947,10 +947,16 @@ void PatternView::SelectCells(int x, int y)
       DisplaySelectionSize();
       
       // allow mouse interaction if script is running
-      bool saveinscript = inscript;
-      inscript = false;
-      mainptr->UpdatePatternAndStatus();
-      inscript = saveinscript;
+      #ifdef __WXGTK__
+         //!!! avoid slow selection drawing on some GTK+ systems???
+         RefreshView();
+         wxMilliSleep(1);
+      #else
+         bool saveinscript = inscript;
+         inscript = false;
+         mainptr->UpdatePatternAndStatus();
+         inscript = saveinscript;
+      #endif
       
       prevtop = currlayer->seltop;
       prevbottom = currlayer->selbottom;
