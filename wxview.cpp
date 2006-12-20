@@ -74,7 +74,9 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_LEFT_DOWN        (                 PatternView::OnMouseDown)
    EVT_LEFT_DCLICK      (                 PatternView::OnMouseDown)
    EVT_LEFT_UP          (                 PatternView::OnMouseUp)
+#if wxCHECK_VERSION(2, 8, 0)
    EVT_MOUSE_CAPTURE_LOST (               PatternView::OnMouseCaptureLost)
+#endif
    EVT_RIGHT_DOWN       (                 PatternView::OnRMouseDown)
    EVT_RIGHT_DCLICK     (                 PatternView::OnRMouseDown)
    EVT_MOTION           (                 PatternView::OnMouseMotion)
@@ -1375,6 +1377,8 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+#if wxCHECK_VERSION(2, 8, 0)
+
 // mouse capture can be lost on Windows before mouse-up event
 void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 {
@@ -1382,6 +1386,8 @@ void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
       StopDraggingMouse();
    }
 }
+
+#endif
 
 // -----------------------------------------------------------------------------
 

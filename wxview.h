@@ -129,7 +129,9 @@ private:
    void OnChar(wxKeyEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnMouseUp(wxMouseEvent& event);
-   void OnMouseCaptureLost(wxMouseCaptureLostEvent& event);
+   #if wxCHECK_VERSION(2, 8, 0)
+      void OnMouseCaptureLost(wxMouseCaptureLostEvent& event);
+   #endif
    void OnRMouseDown(wxMouseEvent& event);
    void OnMouseWheel(wxMouseEvent& event);
    void OnMouseMotion(wxMouseEvent& event);
