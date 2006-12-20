@@ -129,6 +129,7 @@ private:
    void OnChar(wxKeyEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnMouseUp(wxMouseEvent& event);
+   void OnMouseCaptureLost(wxMouseCaptureLostEvent& event);
    void OnRMouseDown(wxMouseEvent& event);
    void OnMouseWheel(wxMouseEvent& event);
    void OnMouseMotion(wxMouseEvent& event);

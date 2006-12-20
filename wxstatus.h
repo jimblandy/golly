@@ -79,11 +79,9 @@ private:
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
    void DrawStatusBar(wxDC& dc, wxRect& updaterect);
 
-   #ifndef __WXMAC__
-      wxBitmap* statbitmap;      // status bar bitmap
-      int statbitmapwd;          // width of status bar bitmap
-      int statbitmapht;          // height of status bar bitmap
-   #endif
+   wxBitmap* statbitmap;         // status bar bitmap
+   int statbitmapwd;             // width of status bar bitmap
+   int statbitmapht;             // height of status bar bitmap
    
    int h_gen;                    // horizontal position of "Generation"
    int h_pop;                    // horizontal position of "Population"

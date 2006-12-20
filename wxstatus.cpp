@@ -409,8 +409,8 @@ END_EVENT_TABLE()
 
 void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
-   #ifdef __WXMAC__
-      // windows on Mac OS X are automatically buffered
+   #if defined(__WXMAC__) || defined(__WXGTK__)
+      // windows on Mac OS X and GTK+ 2.0 are automatically buffered
       wxPaintDC dc(this);
    #else
       // use wxWidgets buffering to avoid flicker
@@ -545,11 +545,10 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    // status bar is initially visible
    statusht = showexact ? STATUS_EXHT : STATUS_HT;
    showxy = false;
-   #ifndef __WXMAC__
-      statbitmap = NULL;
-      statbitmapwd = -1;
-      statbitmapht = -1;
-   #endif
+
+   statbitmap = NULL;
+   statbitmapwd = -1;
+   statbitmapht = -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -557,7 +556,5 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
 StatusBar::~StatusBar()
 {
    if (statusfont) delete statusfont;
-   #ifndef __WXMAC__
-      if (statbitmap) delete statbitmap;
-   #endif
+   if (statbitmap) delete statbitmap;
 }

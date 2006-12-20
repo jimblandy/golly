@@ -432,8 +432,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_EXACT,     active);
       mbar->Enable(ID_GRID,      active);
       mbar->Enable(ID_COLORS,    active);
-      #ifdef __WXMAC__
-         // windows on Mac OS X are automatically buffered
+      #if defined(__WXMAC__) || defined(__WXGTK__)
+         // windows on Mac OS X and GTK+ 2.0 are automatically buffered
          mbar->Enable(ID_BUFF,   false);
          mbar->Check(ID_BUFF,    true);
       #else

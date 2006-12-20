@@ -74,6 +74,7 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_LEFT_DOWN        (                 PatternView::OnMouseDown)
    EVT_LEFT_DCLICK      (                 PatternView::OnMouseDown)
    EVT_LEFT_UP          (                 PatternView::OnMouseUp)
+   EVT_MOUSE_CAPTURE_LOST (               PatternView::OnMouseCaptureLost)
    EVT_RIGHT_DOWN       (                 PatternView::OnRMouseDown)
    EVT_RIGHT_DCLICK     (                 PatternView::OnRMouseDown)
    EVT_MOTION           (                 PatternView::OnMouseMotion)
@@ -1103,8 +1104,8 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
       SetViewSize(wd, ht);
    }
 
-   #ifdef __WXMAC__
-      // windows on Mac OS X are automatically buffered
+   #if defined(__WXMAC__) || defined(__WXGTK__)
+      // windows on Mac OS X and GTK+ 2.0 are automatically buffered
       wxPaintDC dc(this);
       DrawView(dc, tileindex);
    #else
@@ -1366,6 +1367,16 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
 // -----------------------------------------------------------------------------
 
 void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
+{
+   if (drawingcells || selectingcells || movingview) {
+      StopDraggingMouse();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+// mouse capture can be lost on Windows before mouse-up event
+void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 {
    if (drawingcells || selectingcells || movingview) {
       StopDraggingMouse();

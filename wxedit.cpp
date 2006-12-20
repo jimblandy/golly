@@ -762,7 +762,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
          #endif
       }
 
-      ReleaseMouse();
+      if ( HasCapture() ) ReleaseMouse();
       mainptr->EnableAllMenus(true);
       DestroyPasteImage();
    

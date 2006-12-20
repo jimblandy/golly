@@ -90,7 +90,9 @@ Potential optimizations:
 Other points of interest:
 
 - The decision to use buffered drawing is made in PatternView::OnPaint().
-  To avoid flicker, buffering is always used if:
+  It's never used on Mac OS X or GTK+ 2.0 because windows on those systems
+  are automatically buffered.  To avoid flicker on Windows, buffering is
+  always used if:
   - the user is doing a paste;
   - the grid lines are visible;
   - the selection is visible;

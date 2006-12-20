@@ -9,8 +9,10 @@
 # Change WX_DIR to where you installed wxWidgets and
 # change BUILD_DIR to where you built the wx libraries.
 
-WX_RELEASE = 2.7
-WX_DIR = /HD/wxWidgets/wxMac-2.7.2
+WX_RELEASE = 2.8
+WX_DIR = /HD/wxWidgets/wxMac-2.8.0
+### WX_RELEASE = 2.7
+### WX_DIR = /HD/wxWidgets/wxMac-2.7.2
 ### WX_DIR = /HD/wxWidgets/CVS-HEAD/wxWidgets
 
 # To build a Unicode version of wxWidgets add "--enable-unicode" to the
