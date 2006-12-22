@@ -461,7 +461,20 @@ void DrawSelection(wxDC &dc, wxRect &rect)
    if (selbitmap) {
       #ifdef __WXGTK__
          // wxGTK Blit doesn't support alpha channel
-         dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+         if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
+            //!!! use inversion to avoid slowness
+            dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+         } else {
+            //!!! fix Brice's slowness problem by avoiding GetSubBitmap???
+            dc.SetClippingRegion(rect);
+            dc.DrawBitmap(*selbitmap, 0, 0, true);
+            dc.DestroyClippingRegion();
+         }
+         /*
+         wxBitmap submap = selbitmap->GetSubBitmap(rect);
+         dc.DrawBitmap(submap, rect.x, rect.y, true);
+         submap.~wxBitmap();
+         */
       #else
          // Blit seems to be about 10% faster (on Mac at least)
          wxMemoryDC memdc;
@@ -481,7 +494,18 @@ void DrawInactiveSelection(wxDC &dc, wxRect &rect)
    if (graybitmap) {
       #ifdef __WXGTK__
          // wxGTK Blit doesn't support alpha channel
+         if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
+            //!!! use inversion to avoid slowness
+            dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+         } else {
+            //!!! fix Brice's slowness problem by avoiding GetSubBitmap???
+            dc.SetClippingRegion(rect);
+            dc.DrawBitmap(*graybitmap, 0, 0, true);
+            dc.DestroyClippingRegion();
+         }
+         /*
          dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+         */
       #else
          // Blit seems to be about 10% faster (on Mac at least)
          wxMemoryDC memdc;

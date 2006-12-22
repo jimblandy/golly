@@ -56,11 +56,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 const int DRAG_RATE = 20;        // call OnDragTimer 50 times per sec
 const int ID_DRAG_TIMER = 1000;
 
-#ifdef __WXGTK__
-   // avoid wxGTK scroll bug
-   bool ignorescroll = false;    // ignore next wxEVT_SCROLLWIN_* event?
-#endif
-
 // -----------------------------------------------------------------------------
 
 // event table and handlers:
@@ -947,16 +942,10 @@ void PatternView::SelectCells(int x, int y)
       DisplaySelectionSize();
       
       // allow mouse interaction if script is running
-      #ifdef __WXGTK__
-         //!!! avoid slow selection drawing on some GTK+ systems???
-         RefreshView();
-         wxMilliSleep(1);
-      #else
-         bool saveinscript = inscript;
-         inscript = false;
-         mainptr->UpdatePatternAndStatus();
-         inscript = saveinscript;
-      #endif
+      bool saveinscript = inscript;
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      inscript = saveinscript;
       
       prevtop = currlayer->seltop;
       prevbottom = currlayer->selbottom;
@@ -1585,16 +1574,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
 // -----------------------------------------------------------------------------
 
 void PatternView::OnScroll(wxScrollWinEvent& event)
-{
-   #ifdef __WXGTK__
-      // avoid unwanted scroll event
-      if (ignorescroll) {
-         ignorescroll = false;
-         bigview->UpdateScrollBars();
-         return;
-      }
-   #endif
-   
+{   
    WXTYPE type = event.GetEventType();
    int orient = event.GetOrientation();
 
@@ -1658,13 +1638,6 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
       bigview->UpdateScrollBars();
       inscript = true;
    }
-
-   #ifdef __WXGTK__
-      if (type != wxEVT_SCROLLWIN_THUMBTRACK) {
-         // avoid next scroll event
-         ignorescroll = true;
-      }
-   #endif
 }
 
 // -----------------------------------------------------------------------------
