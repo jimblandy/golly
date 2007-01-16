@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,10 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXLAYER_H_
 #define _WXLAYER_H_
 
-class bigint;
-class lifealgo;
-class viewport;
-class PatternView;
+#include "bigint.h"           // for bigint class
+#include "viewport.h"         // for viewport class
 
 // Golly supports multiple layers.  Each layer is a separate universe
 // (unless cloned) with its own algorithm, rule, viewport, window title,
@@ -43,6 +41,7 @@ public:
    bool hyperspeed;           // use hyperspeed if hash is true?
    bool showhashinfo;         // show hash info if hash is true?
    bool autofit;              // auto fit pattern while generating?
+   bool dirty;                // user has modified pattern?
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode
@@ -85,7 +84,6 @@ public:
 };
 
 const int maxlayers = 10;     // maximum number of layers
-const int tileframewd = 3;    // width of tile window borders
 
 extern int numlayers;         // number of existing layers
 extern int numclones;         // number of cloned layers
@@ -138,6 +136,14 @@ void MoveLayerDialog();
 void NameLayerDialog();
 // Bring up a dialog that allows the user to change the name of the
 // current layer.
+
+void MarkLayerDirty();
+// Set dirty flag in current layer and any of its clones.
+// Also prefix window title and layer item name(s) with an asterisk.
+
+void MarkLayerClean(const wxString& title);
+// Reset dirty flag in current layer and any of its clones.
+// Also set window title, removing asterisk from it and layer item name(s).
 
 void ToggleSyncViews();
 // Toggle the syncviews flag.  When true, every layer uses the same

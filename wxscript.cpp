@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1952,11 +1952,13 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
       if ((n % 4096) == 0 && ScriptAborted()) {
          curralgo->endofpattern();
          currlayer->savestart = true;
+         MarkLayerDirty();
          return NULL;
       }
    }
    curralgo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    DoAutoUpdate();
 
    Py_INCREF(Py_None);
@@ -2261,6 +2263,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
    currlayer->algo->setcell(x, y, state);
    currlayer->algo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    DoAutoUpdate();
    
    Py_INCREF(Py_None);
@@ -2415,7 +2418,7 @@ static PyObject *golly_dokey(PyObject *self, PyObject *args)
       // update viewport, status bar, scroll bars, etc
       inscript = false;
       mainptr->UpdatePatternAndStatus();
-      viewptr->UpdateScrollBars();
+      bigview->UpdateScrollBars();
       if (showtitle) {
          mainptr->SetWindowTitle(wxEmptyString);
          showtitle = false;

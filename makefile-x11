@@ -117,7 +117,7 @@ wxgolly.h wxview.h wxmain.h
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
 Help/about.html \
-bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
+bitmaps/hand_curs.xpm bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
@@ -133,7 +133,7 @@ readpattern.h bigint.h wxgolly.h wxmain.h wxutils.h wxprefs.h
 
 $(OBJDIR)/wxhelp.o: wxhelp.cpp wxhelp.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h
+wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxhelp.cpp
 
 $(OBJDIR)/wxstatus.o: wxstatus.cpp wxstatus.h \
@@ -181,6 +181,8 @@ wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h w
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
 
 $(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \
+bitmaps/add.xpm bitmaps/clone.xpm bitmaps/delete.xpm \
+bitmaps/stack.xpm bitmaps/stack_down.xpm bitmaps/tile.xpm bitmaps/tile_down.xpm \
 lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
 wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp

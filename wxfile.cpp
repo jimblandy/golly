@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "readpattern.h"
 #include "writepattern.h"  // for writepattern, pattern_format
 
-#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
+#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for SavePrefs, etc
 #include "wxrule.h"        // for GetRuleName
@@ -91,6 +91,10 @@ void MainFrame::SetWindowTitle(const wxString& filename)
    }
 
    wxString prefix = wxEmptyString;
+   
+   // display asterisk if pattern has been modified
+   if (currlayer->dirty) prefix += wxT('*');
+   
    int cid = currlayer->cloneid;
    while (cid > 0) {
       // display one or more "=" chars to indicate this is a cloned layer
@@ -181,9 +185,7 @@ void MainFrame::NewPattern(const wxString& title)
       statusptr->SetMessage(origin_restored);
    }
 
-   // window title will also show current rule
-   SetWindowTitle(title);
-
+   MarkLayerClean(title);     // calls SetWindowTitle
    UpdateEverything();
 }
 
@@ -289,10 +291,11 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    }
 
    if (!newtitle.IsEmpty()) {
-      // show full window title after readpattern has set rule
-      SetWindowTitle(newtitle);
+      MarkLayerClean(newtitle);     // calls SetWindowTitle
+
       if (openremovesel) viewptr->NoSelection();
       if (opencurs) currlayer->curs = opencurs;
+      
       viewptr->FitInView(1);
       currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
       UpdateEverything();
@@ -746,7 +749,7 @@ void MainFrame::SavePattern()
    }
 
    wxFileDialog savedlg( this, _("Save pattern"),
-                         opensavedir, wxEmptyString, filetypes,
+                         opensavedir, currlayer->currname, filetypes,
                          wxSAVE | wxOVERWRITE_PROMPT );
 
    if ( savedlg.ShowModal() == wxID_OK ) {
@@ -774,9 +777,11 @@ void MainFrame::SavePattern()
          statusptr->ErrorMessage(_("Bug in SavePattern!"));
          return;
       }
+      
       SetCurrentFile( savedlg.GetPath() );
       AddRecentPattern( savedlg.GetPath() );
-      SetWindowTitle( savedlg.GetFilename() );
+      MarkLayerClean( savedlg.GetFilename() );
+      
       const char *err = WritePattern(savedlg.GetPath(), format,
                                      itop, ileft, ibottom, iright);
       if (err) {
@@ -824,7 +829,8 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
-   SetWindowTitle( GetBaseName(path) );
+   MarkLayerClean( GetBaseName(path) );
+
    const char *err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
       if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
@@ -832,6 +838,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
          currlayer->savestart = false;
       }
    }
+   
    return wxString(err, wxConvLocal);
 }
 
@@ -984,6 +991,16 @@ void MainFrame::ShowPrefsDialog()
       for (int i = 0; i < numlayers; i++) {
          Layer *layer = GetLayer(i);
          if (layer->hash) layer->algo->setMaxMemory(maxhashmem);
+      }
+      
+      // tileborder might have changed
+      if (tilelayers && numlayers > 1) {
+         int wd, ht;
+         bigview->GetClientSize(&wd, &ht);
+         // wd or ht might be < 1 on Win/X11 platforms
+         if (wd < 1) wd = 1;
+         if (ht < 1) ht = 1;
+         ResizeLayers(wd, ht);
       }
       
       SavePrefs();

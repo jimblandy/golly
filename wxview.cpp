@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -431,9 +431,6 @@ int PatternView::BigScroll(int xysize)
 void PatternView::UpdateScrollBars()
 {
    if (mainptr->fullscreen) return;
-   
-   // tile window doesn't have scroll bars
-   if (tileindex >= 0) return;
 
    int viewwd, viewht;
    int mag = currlayer->view->getmag();
@@ -445,11 +442,14 @@ void PatternView::UpdateScrollBars()
       viewwd = currlayer->view->getwidth();
       viewht = currlayer->view->getheight();
    }
+   
    // keep thumb boxes in middle of scroll bars
    hthumb = (thumbrange - 1) * viewwd / 2;
    vthumb = (thumbrange - 1) * viewht / 2;
-   SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
-   SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
+   
+   // only big viewport window has scroll bars
+   bigview->SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
+   bigview->SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
 }
 
 // -----------------------------------------------------------------------------
@@ -590,6 +590,8 @@ void PatternView::ShowDrawing()
       // drawing cells when all layers are displayed (too confusing)
       UpdateView();
    }
+   
+   MarkLayerDirty();
 }
 
 // -----------------------------------------------------------------------------
@@ -1494,6 +1496,33 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
    // in full screen mode when mouse is at outer edge of view
    if ( x <= 0 || x >= currlayer->view->getxmax() ||
         y <= 0 || y >= currlayer->view->getymax() ) {
+      
+      // user can disable scrolling
+      if ( drawingcells && !scrollpencil ) {
+         if (x < 0) x = 0;
+         if (y < 0) y = 0;
+         if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+         if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
+         DrawCells(x, y);
+         return;
+      }
+      if ( selectingcells && !scrollcross ) {
+         if (x < 0) x = 0;
+         if (y < 0) y = 0;
+         if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+         if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
+         SelectCells(x, y);
+         return;
+      }
+      if ( movingview && !scrollhand ) {
+         if (x < 0) x = 0;
+         if (y < 0) y = 0;
+         if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+         if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
+         MoveView(x, y);
+         return;
+      }
+      
       // scroll view
       int xamount = 0;
       int yamount = 0;

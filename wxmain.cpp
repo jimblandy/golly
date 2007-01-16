@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,9 +33,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/clipbrd.h"    // for wxTheClipboard
 
 #ifdef __WXMSW__
-   // tool bar bitmaps are loaded via .rc file
+   // bitmaps are loaded via .rc file
 #else
-   // bitmap buttons for the tool bar
+   // bitmaps for tool bar buttons
    #include "bitmaps/new.xpm"
    #include "bitmaps/open.xpm"
    #include "bitmaps/save.xpm"
@@ -256,7 +256,7 @@ wxBitmap tbBitmaps[14];
 // update tool bar buttons according to the current state
 void MainFrame::UpdateToolBar(bool active)
 {
-   wxToolBar *tbar = GetToolBar();
+   wxToolBar* tbar = GetToolBar();
    if (tbar && tbar->IsShown()) {
       if (viewptr->waitingforclick) active = false;
             
@@ -345,7 +345,7 @@ void MainFrame::EnableAllMenus(bool enable)
       else
          BeginAppModalStateForWindow( (OpaqueWindowPtr*)this->MacGetWindowRef() );
    #else
-      wxMenuBar *mbar = GetMenuBar();
+      wxMenuBar* mbar = GetMenuBar();
       if (mbar) {
          int count = mbar->GetMenuCount();
          int i;
@@ -361,8 +361,8 @@ void MainFrame::EnableAllMenus(bool enable)
 // update menu bar items according to the given state
 void MainFrame::UpdateMenuItems(bool active)
 {
-   wxMenuBar *mbar = GetMenuBar();
-   wxToolBar *tbar = GetToolBar();
+   wxMenuBar* mbar = GetMenuBar();
+   wxToolBar* tbar = GetToolBar();
    if (mbar) {
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
@@ -749,7 +749,7 @@ void MainFrame::ToggleToolBar()
       // Show(false) does not hide tool bar!!!
       statusptr->ErrorMessage(_("Sorry, tool bar hiding is not implemented for X11."));
    #else
-      wxToolBar *tbar = GetToolBar();
+      wxToolBar* tbar = GetToolBar();
       if (tbar) {
          if (tbar->IsShown()) {
             tbar->Show(false);
@@ -803,7 +803,7 @@ void MainFrame::ToggleFullScreen()
          // toggled in full screen mode on Windows
          wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
 
-      wxToolBar *tbar = GetToolBar();
+      wxToolBar* tbar = GetToolBar();
       if (fullscreen) {
          // hide scroll bars
          bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
@@ -1401,7 +1401,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
 void MainFrame::SetRandomFillPercentage()
 {
    // update Random Fill menu item to show randomfill value
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
       wxString randlabel;
       randlabel.Printf(_("Random Fill (%d%c)\tCtrl+5"), randomfill, '%');
@@ -1414,19 +1414,23 @@ void MainFrame::SetRandomFillPercentage()
 void MainFrame::UpdateLayerItem(int index)
 {
    // update name in given layer's menu item
-   wxMenuBar *mbar = GetMenuBar();
+   Layer* layer = GetLayer(index);
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
       wxString label;
       label.Printf(_("%d: "), index);
+
+      // display asterisk if pattern has been modified
+      if (layer->dirty) label += wxT('*');
       
-      int cid = GetLayer(index)->cloneid;
+      int cid = layer->cloneid;
       while (cid > 0) {
          // display one or more "=" chars to indicate this is a cloned layer
          label += wxT('=');
          cid--;
       }
       
-      label += GetLayer(index)->currname;
+      label += layer->currname;
       mbar->SetLabel(ID_LAYER0 + index, label);
    }
 }
@@ -1435,7 +1439,7 @@ void MainFrame::UpdateLayerItem(int index)
 
 void MainFrame::AppendLayerItem()
 {
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
       wxMenu* layermenu = mbar->GetMenu( mbar->FindMenu(_("Layer")) );
       if (layermenu) {
@@ -1452,7 +1456,7 @@ void MainFrame::AppendLayerItem()
 
 void MainFrame::RemoveLayerItem()
 {
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
       wxMenu* layermenu = mbar->GetMenu( mbar->FindMenu(_("Layer")) );
       if (layermenu) {
@@ -1681,7 +1685,7 @@ void MainFrame::CreateMenus()
    helpMenu->Append(wxID_ABOUT, _("About Golly"));
 
    // create the menu bar and append menus
-   wxMenuBar *menuBar = new wxMenuBar();
+   wxMenuBar* menuBar = new wxMenuBar();
    if (menuBar == NULL) Fatal(_("Failed to create menu bar!"));
    menuBar->Append(fileMenu, _("&File"));
    menuBar->Append(editMenu, _("&Edit"));
@@ -1705,13 +1709,13 @@ void MainFrame::CreateToolbar()
 {
    #ifdef __WXX11__
       // creating vertical tool bar stuffs up X11 menu bar!!!
-      wxToolBar *toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_HORIZONTAL);
+      wxToolBar* toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_HORIZONTAL);
    #elif defined(__WXGTK__)
       // create vertical tool bar at left edge of frame
-      wxToolBar *toolBar = CreateToolBar(wxTB_VERTICAL);
+      wxToolBar* toolBar = CreateToolBar(wxTB_VERTICAL);
    #else
       // create vertical tool bar at left edge of frame
-      wxToolBar *toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_VERTICAL);
+      wxToolBar* toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_VERTICAL);
    #endif
    
    #ifdef __WXMAC__

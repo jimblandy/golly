@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -56,6 +56,7 @@ public:
 
    // file functions
    void OpenFile(const wxString& path, bool remember = true);
+   void LoadPattern(const wxString& newtitle);
    void NewPattern(const wxString& title = _("untitled"));
    void CreateUniverse();
    void SetWindowTitle(const wxString& filename);
@@ -133,7 +134,6 @@ private:
 
    // file functions
    bool LoadImage();
-   void LoadPattern(const wxString& newtitle);
    void MySetTitle(const wxString& title);
    void SetCurrentFile(const wxString& path);
    wxString GetBaseName(const wxString& fullpath);

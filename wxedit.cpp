@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for CreatePasteImage
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for PatternView
-#include "wxlayer.h"       // for currlayer, UpdateLayerBar, etc
+#include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
 
 #ifdef __WXMAC__
    #include <Carbon/Carbon.h>    // for Button
@@ -296,6 +296,7 @@ void PatternView::ClearSelection()
    }
    curralgo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    EndProgress();
    
    mainptr->UpdatePatternAndStatus();
@@ -355,6 +356,7 @@ void PatternView::ClearOutsideSelection()
                  currlayer->algo, newalgo, false, _("Saving selection")) ) {
       // delete old universe and point currlayer->algo at new universe
       currlayer->savestart = true;
+      MarkLayerDirty();
       delete currlayer->algo;
       currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
@@ -565,6 +567,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
       if (cut) {
          currlayer->algo->endofpattern();
          currlayer->savestart = true;
+         MarkLayerDirty();
       }
    }
    AddEOL(&chptr);
@@ -904,6 +907,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
 
    currlayer->algo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    EndProgress();
    
    // tidy up and display result
@@ -1210,6 +1214,7 @@ void PatternView::RandomFill()
    }
    currlayer->algo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    EndProgress();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1267,6 +1272,7 @@ void PatternView::FlipLeftRight()
    }
    currlayer->algo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    EndProgress();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1324,6 +1330,7 @@ void PatternView::FlipUpDown()
    }
    currlayer->algo->endofpattern();
    currlayer->savestart = true;
+   MarkLayerDirty();
    EndProgress();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1416,6 +1423,7 @@ void PatternView::RotatePattern(bool clockwise,
       currlayer->selright  = newright;
       // switch to new universe and display results
       currlayer->savestart = true;
+      MarkLayerDirty();
       delete currlayer->algo;
       currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
@@ -1580,6 +1588,7 @@ void PatternView::RotateSelection(bool clockwise)
    
    // delete temporary universe and display results
    currlayer->savestart = true;
+   MarkLayerDirty();
    delete tempalgo;
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();

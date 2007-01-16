@@ -6,10 +6,13 @@ A - Maintain "dirty" flag in each layer (similar to savestart)
     Also use to ask if changes should be saved before quitting or
     deleting layer or NewPattern or LoadPattern.
 
-A - Use nicer bitmaps in layer bar buttons.
+A - Use cleanlayer int (-1..maxlayers-1) to wxscript.cpp to call
+    MarkLayerClean at end of script that calls New/LoadPattern.
 
-A - Put clicked lexicon pattern in new/existing "lexicon" layer.
-    And don't clobber clipboard.
+A - Export new dialogs from wxutils: SaveChanges, GetString, GetNumber.
+
+A - Give Mac app a creator sig (GoLy) and save files with creator
+    and type (GoLf) info.
 
 A - Show relative paths in Recent menus for files inside Golly folder.
     Automatically remove missing files at startup (too dangerous?)
@@ -67,20 +70,18 @@ User suggestions:
 
 [Nick Gotts]
 - Need a way to copy exact gen/pop counts to clipboard.
-  No longer necessary now that Python script could get this info?
+  [No longer necessary now that Python script can get this info?]
 
 [Paul Chapman]
 - Combine the start and stop toolbar buttons into a single toggle.
   If we provide an animating stop button then make it optional (via Prefs).
 
 [Jason Summers]
-- The "move" cursor should be an open hand.
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
 - Allow diagonal selection rectangles.
 
 [Dave Greene]
-- Support a split-screen view of the universe.
 - Provide some way to open current pattern file in user's text editor.
   Maybe just an "Edit Pattern" item in File menu?  And/or option-click
   on pattern/script in navigation panel?
@@ -95,10 +96,10 @@ User suggestions:
 
 [H Koenig]
 - Mulitiple undo/redo.
-- Multiple windows.
+- Multiple windows.  [No real need now that we allow multiple layers.]
 
 [Gabriel Nivasch]
-- Make paste pattern semi-transparent.
+- Make paste pattern semi-transparent.  [Tried it -- somewhat confusing.]
 - Add a Default button to each Preferences pane (at bottom left?).
 
 [Bill Gosper]

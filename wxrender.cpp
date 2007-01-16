@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -131,11 +131,6 @@ Other points of interest:
 
 // -----------------------------------------------------------------------------
 
-// global data used in wx_render routines
-wxDC* currdc;              // current device context for viewport
-int currwd, currht;        // current width and height of viewport
-wxBrush* killbrush;        // brush used in killrect
-
 // bitmap memory for drawing magnified cells (see DrawStretchedBitmap)
 const int MAGSIZE = 256;
 wxUint16 magarray[MAGSIZE * MAGSIZE / 16];
@@ -146,6 +141,11 @@ unsigned char* magbuf = (unsigned char*)magarray;
 // because that's what wxWidgets requires when creating a monochrome bitmap
 wxUint16 Magnify2[256];
 
+// globals used in wx_render routines
+wxDC* currdc;              // current device context for viewport
+int currwd, currht;        // current width and height of viewport
+wxBrush* killbrush;        // brush used in killrect
+
 // for drawing multiple layers
 wxBitmap* layerbitmap = NULL;    // layer bitmap
 int layerwd = -1;                // width of layer bitmap
@@ -155,8 +155,8 @@ int layerht = -1;                // height of layer bitmap
 #ifdef __WXX11__
    // wxX11 doesn't support alpha channel
 #else
-   int selwd;              // width of selection bitmap
-   int selht;              // height of selection bitmap
+   int selwd;                 // width of selection bitmap
+   int selht;                 // height of selection bitmap
 #endif
 wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is used)
 wxBitmap* graybitmap = NULL;  // for inactive selections when drawing multiple layers
@@ -462,19 +462,15 @@ void DrawSelection(wxDC &dc, wxRect &rect)
       #ifdef __WXGTK__
          // wxGTK Blit doesn't support alpha channel
          if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
-            //!!! use inversion to avoid slowness
+            // use inversion for speed
             dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
          } else {
-            //!!! fix Brice's slowness problem by avoiding GetSubBitmap???
+            // clipping is probably faster than GetSubBitmap
+            // dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
             dc.SetClippingRegion(rect);
             dc.DrawBitmap(*selbitmap, 0, 0, true);
             dc.DestroyClippingRegion();
          }
-         /*
-         wxBitmap submap = selbitmap->GetSubBitmap(rect);
-         dc.DrawBitmap(submap, rect.x, rect.y, true);
-         submap.~wxBitmap();
-         */
       #else
          // Blit seems to be about 10% faster (on Mac at least)
          wxMemoryDC memdc;
@@ -495,17 +491,15 @@ void DrawInactiveSelection(wxDC &dc, wxRect &rect)
       #ifdef __WXGTK__
          // wxGTK Blit doesn't support alpha channel
          if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
-            //!!! use inversion to avoid slowness
+            // use inversion for speed
             dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
          } else {
-            //!!! fix Brice's slowness problem by avoiding GetSubBitmap???
+            // clipping is probably faster than GetSubBitmap
+            // dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
             dc.SetClippingRegion(rect);
             dc.DrawBitmap(*graybitmap, 0, 0, true);
             dc.DestroyClippingRegion();
          }
-         /*
-         dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-         */
       #else
          // Blit seems to be about 10% faster (on Mac at least)
          wxMemoryDC memdc;
@@ -1057,7 +1051,7 @@ void DrawTileFrame(wxDC& dc, wxRect& trect, wxBrush& brush, int wd)
 
 void DrawTileBorders(wxDC& dc)
 {
-   if (tileframewd <= 0) return;    // no borders
+   if (tileborder <= 0) return;    // no borders
    
    // draw tile borders in bigview window
    int wd, ht;
@@ -1076,13 +1070,13 @@ void DrawTileBorders(wxDC& dc)
    wxRect trect;
    for ( int i = 0; i < numlayers; i++ ) {
       trect = GetLayer(i)->tilerect;
-      DrawTileFrame(dc, trect, brush, tileframewd);
+      DrawTileFrame(dc, trect, brush, tileborder);
    }
 
-   // draw thinner green border to indicate tile for current layer
+   // draw different colored border to indicate tile for current layer
    trect = GetLayer(currindex)->tilerect;
-   brush.SetColour(brightgreen);
-   DrawTileFrame(dc, trect, brush, (tileframewd + 1) / 2);
+   brush.SetColour(brightgreen);                   //??? or *selectrgb
+   DrawTileFrame(dc, trect, brush, tileborder);    //??? or thinner: (tileborder + 1) / 2);
 }
 
 // -----------------------------------------------------------------------------

@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,12 +28,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/wxhtml.h"     // for wxHtmlWindow
+#include "wx/file.h"       // for wxFile
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for helpx/y/wd/ht, helpfontsize, gollydir, etc
 #include "wxscript.h"      // for inscript
+#include "wxlayer.h"       // for numlayers, GetLayer, etc
 #include "wxhelp.h"
 
 // -----------------------------------------------------------------------------
@@ -429,17 +431,44 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell)
                }
                container = container->GetNext();
             }
-            if (!textpict.IsEmpty() && mainptr->CopyTextToClipboard(textpict)) {
+            if (!textpict.IsEmpty()) {
                mainptr->Raise();
                #ifdef __WXX11__
                   mainptr->SetFocus();    // activate window
                #endif
-               // need to process pending events to update window
-               // and to update clipboard on Windows
-               while (wxGetApp().Pending()) wxGetApp().Dispatch();
-               // may need to call wxMilliSleep or Yield here
-               // to avoid occasional clipboard error on Windows???
-               mainptr->OpenClipboard();
+               
+               // look for existing "lexicon" layer
+               int lexlayer = -1;
+               for (int i = 0; i < numlayers; i++) {
+                  if (GetLayer(i)->currname == _("lexicon")) {
+                     lexlayer = i;
+                     break;
+                  }
+               }
+               
+               if (lexlayer >= 0) {
+                  SetLayer(lexlayer);
+               } else {
+                  if (numlayers == maxlayers) {
+                     Warning(_("Cannot create new layer for lexicon pattern."));
+                     return;
+                  }
+                  AddLayer();
+                  mainptr->SetWindowTitle(_("lexicon"));
+               }
+               
+               // copy textpict data to tempstart file so we can handle
+               // all formats supported by readpattern
+               wxFile outfile(currlayer->tempstart, wxFile::write);
+               if ( outfile.IsOpened() ) {
+                  outfile.Write(textpict);
+                  outfile.Close();
+                  currlayer->currfile = currlayer->tempstart;
+                  // load lexicon pattern into current layer
+                  mainptr->LoadPattern(_("lexicon"));
+               } else {
+                  Warning(_("Could not create tempstart file!"));
+               }
             }
          }
       }

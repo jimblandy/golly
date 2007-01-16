@@ -360,7 +360,7 @@ readpattern.h bigint.h wxgolly.h wxmain.h wxutils.h wxprefs.h
 
 $(OBJDIR)/wxhelp.obj: wxhelp.cpp wxhelp.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h
+wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxhelp.cpp
 
 $(OBJDIR)/wxstatus.obj: wxstatus.cpp wxstatus.h \

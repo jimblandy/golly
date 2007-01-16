@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -473,6 +473,7 @@ void MainFrame::AdvanceOutsideSelection()
    
    // switch to new universe (best to do this even if aborted)
    currlayer->savestart = true;
+   MarkLayerDirty();
    delete currlayer->algo;
    currlayer->algo = newalgo;
    SetGenIncrement();
@@ -584,7 +585,7 @@ void MainFrame::AdvanceSelection()
                               tempalgo, currlayer->algo, _("Copying advanced selection"));
 
          currlayer->savestart = true;
-
+         MarkLayerDirty();
          UpdateEverything();
       }
    }

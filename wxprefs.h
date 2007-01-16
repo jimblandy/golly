@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -63,15 +63,19 @@ extern bool initautofit;         // initial autofit setting
 extern bool inithyperspeed;      // initial hyperspeed setting
 extern bool initshowhashinfo;    // initial showhashinfo setting
 extern bool savexrle;            // save RLE file using XRLE format?
-extern bool showtips;            // show tool tips?
+extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
 extern bool swapcolors;          // swap colors used for cell states?
 extern bool buffered;            // use wxWdgets buffering to avoid flicker?
+extern bool scrollpencil;        // scroll if pencil cursor is dragged outside view?
+extern bool scrollcross;         // scroll if cross cursor is dragged outside view?
+extern bool scrollhand;          // scroll if hand cursor is dragged outside view?
 extern int randomfill;           // random fill percentage
 extern int opacity;              // percentage opacity of live cells in overlays
+extern int tileborder;           // width of tiled window borders
 extern int maxhashmem;           // maximum hash memory (in megabytes)
 extern int mingridmag;           // minimum mag to draw grid lines
 extern int boldspacing;          // spacing of bold grid lines

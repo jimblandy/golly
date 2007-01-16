@@ -9,6 +9,10 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
+AKT: The move cursor has been changed to an open hand.
+AKT: Scrolling is optional when pencil/cross/hand is dragged outside view.
+AKT: Clicked lexicon patterns are loaded into new/existing "lexicon" layer.
+AKT: GTK app no longer does buffered drawing (unnecessary in GTK+ 2.x).
 AKT: Added check(), setname(), getname() and other layer-related commands.
 AKT: Added support for multiple layers.
 AKT: Added smear.py to Scripts folder.

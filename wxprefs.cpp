@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -60,8 +60,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    // cursor bitmaps are loaded via .rc file
 #else
    #ifdef __WXX11__
-      // wxX11 doesn't support creating cursors from a bitmap file -- darn it!
+      // wxX11 doesn't support creating cursors from a bitmap file!!!
    #else
+      #include "bitmaps/hand_curs.xpm"
       #include "bitmaps/zoomin_curs.xpm"
       #include "bitmaps/zoomout_curs.xpm"
    #endif
@@ -117,15 +118,19 @@ bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
 bool initshowhashinfo = false;   // initial showhashinfo setting
 bool savexrle = true;            // save RLE file using XRLE format?
-bool showtips = true;            // show tool tips?
+bool showtips = true;            // show button tips?
 bool showtool = true;            // show tool bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showgridlines = true;       // display grid lines?
 bool swapcolors = false;         // swap colors used for cell states?
 bool buffered = true;            // use wxWdgets buffering to avoid flicker?
+bool scrollpencil = true;        // scroll if pencil cursor is dragged outside view?
+bool scrollcross = true;         // scroll if cross cursor is dragged outside view?
+bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
 int randomfill = 50;             // random fill percentage (1..100)
 int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
+int tileborder = 3;              // thickness of tiled window borders
 int maxhashmem = 300;            // maximum hash memory (in megabytes)
 int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
@@ -217,7 +222,16 @@ void CreateCursors()
    #endif
    if (curs_cross == NULL) Fatal(_("Failed to create cross cursor!"));
 
-   curs_hand = new wxCursor(wxCURSOR_HAND);
+   #ifdef __WXX11__
+      // wxX11 doesn't support creating cursor from wxImage or bits!!!
+      curs_hand = new wxCursor(wxCURSOR_HAND);
+   #else
+      wxBitmap bitmap_hand = wxBITMAP(hand_curs);
+      wxImage image_hand = bitmap_hand.ConvertToImage();
+      image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
+      image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
+      curs_hand = new wxCursor(image_hand);
+   #endif
    if (curs_hand == NULL) Fatal(_("Failed to create hand cursor!"));
 
    #ifdef __WXX11__
@@ -521,6 +535,9 @@ void SavePrefs()
 
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
+   fprintf(f, "scroll_pencil=%d\n", scrollpencil ? 1 : 0);
+   fprintf(f, "scroll_cross=%d\n", scrollcross ? 1 : 0);
+   fprintf(f, "scroll_hand=%d\n", scrollhand ? 1 : 0);
    fprintf(f, "random_fill=%d (1..100)\n", randomfill);
    fprintf(f, "q_base_step=%d (2..%d)\n", qbasestep, MAX_BASESTEP);
    fprintf(f, "h_base_step=%d (2..%d, best if power of 2)\n", hbasestep, MAX_BASESTEP);
@@ -560,6 +577,7 @@ void SavePrefs()
    fprintf(f, "sync_cursors=%d\n", synccursors ? 1 : 0);
    fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
    fprintf(f, "tile_layers=%d\n", tilelayers ? 1 : 0);
+   fprintf(f, "tile_border=%d (1..10)\n", tileborder);
    
    fputs("\n", f);
 
@@ -781,6 +799,15 @@ void GetPrefs()
       } else if (strcmp(keyword, "paste_mode") == 0) {
          SetPasteMode(value);
 
+      } else if (strcmp(keyword, "scroll_pencil") == 0) {
+         scrollpencil = value[0] == '1';
+
+      } else if (strcmp(keyword, "scroll_cross") == 0) {
+         scrollcross = value[0] == '1';
+
+      } else if (strcmp(keyword, "scroll_hand") == 0) {
+         scrollhand = value[0] == '1';
+
       } else if (strcmp(keyword, "random_fill") == 0) {
          sscanf(value, "%d", &randomfill);
          if (randomfill < 1) randomfill = 1;
@@ -874,6 +901,11 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "tile_layers") == 0) {
          tilelayers = value[0] == '1';
+
+      } else if (strcmp(keyword, "tile_border") == 0) {
+         sscanf(value, "%d", &tileborder);
+         if (tileborder < 1) tileborder = 1;
+         if (tileborder > 10) tileborder = 10;
 
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
@@ -1075,6 +1107,9 @@ private:
       PREF_MAX_SCRIPTS,
       // Edit prefs
       PREF_RANDOM_FILL,
+      PREF_SCROLL_PENCIL,
+      PREF_SCROLL_CROSS,
+      PREF_SCROLL_HAND,
       // Control prefs
       PREF_MAX_HASH_MEM,
       PREF_QBASE,
@@ -1090,8 +1125,9 @@ private:
       PREF_MOUSE_WHEEL,
       PREF_THUMB_RANGE,
       // Layer prefs
-      PREF_OPACITY,
+      PREF_TILE_BORDER,
       // Color prefs
+      PREF_OPACITY,
       PREF_LIVE_RGB,
       PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
       PREF_PASTE_RGB,
@@ -1180,7 +1216,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
          if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == EDIT_PAGE ) {
-         // only 1 spin ctrl on this page
+         // only one spin ctrl on this page
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
          if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == CONTROL_PAGE ) {
@@ -1219,7 +1255,11 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
             wxBell();
          }
       } else if ( currpage == LAYER_PAGE ) {
-         // only 1 spin ctrl on this page
+         // only one spin ctrl on this page
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_TILE_BORDER);
+         if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+      } else if ( currpage == COLOR_PAGE ) {
+         // only one spin ctrl on this page
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_OPACITY);
          if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       }
@@ -1506,13 +1546,41 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   
+   // scroll_pencil
+   
+   wxCheckBox* check1 = new wxCheckBox(panel, PREF_SCROLL_PENCIL,
+                                       _("Scroll if pencil cursor is dragged outside view"),
+                                       wxDefaultPosition, wxDefaultSize);
+   
+   // scroll_cross
+   
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_SCROLL_CROSS,
+                                       _("Scroll if cross cursor is dragged outside view"),
+                                       wxDefaultPosition, wxDefaultSize);
+   
+   // scroll_hand
+   
+   wxCheckBox* check3 = new wxCheckBox(panel, PREF_SCROLL_HAND,
+                                       _("Scroll if hand cursor is dragged outside view"),
+                                       wxDefaultPosition, wxDefaultSize);
+
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(CH2VGAP);
+   vbox->Add(check2, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(CH2VGAP);
+   vbox->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
    
-   // init control value
+   // init control values
    spin1->SetRange(1, 100);
    spin1->SetValue(randomfill);
    spin1->SetSelection(ALL_TEXT);
+   check1->SetValue(scrollpencil);
+   check2->SetValue(scrollcross);
+   check3->SetValue(scrollhand);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1639,7 +1707,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    
 #if wxUSE_TOOLTIPS
    wxCheckBox* check3 = new wxCheckBox(panel, PREF_SHOW_TIPS,
-                                       _("Show tool tips"),
+                                       _("Show button tips"),
                                        wxDefaultPosition, wxDefaultSize);
 #endif
    
@@ -1773,21 +1841,21 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
    wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
    wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
-   // opacity
+   // tile_border
 
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(new wxStaticText(panel, wxID_STATIC,
-                               _("Opacity percentage when drawing stacked layers:")),
+                               _("Thickness of border around tiled layers:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_TILE_BORDER, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // init control value
-   spin1->SetRange(1, 100);
-   spin1->SetValue(opacity);
+   spin1->SetRange(1, 10);
+   spin1->SetValue(tileborder);
    spin1->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -1875,6 +1943,23 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
    wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
    
+   // opacity
+
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   hbox1->Add(new wxStaticText(panel, wxID_STATIC,
+                               _("Opacity percentage when drawing stacked layers:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+   hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   
+   // init control value
+   spin1->SetRange(1, 100);
+   spin1->SetValue(opacity);
+   spin1->SetSelection(ALL_TEXT);
+   
    AddLayerButtons(panel, vbox);
    AddColorButton(panel, vbox, PREF_DEAD_RGB, deadrgb, _("Dead cells"));
    vbox->AddSpacer(GROUPGAP);
@@ -1883,13 +1968,6 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_QLIFE_RGB, qlifergb, _("Status bar background if not hashing"));
    AddColorButton(panel, vbox, PREF_HLIFE_RGB, hlifergb, _("Status bar background if hashing"));
-
-   #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
-      // wxMac bug: need hidden control so escape/return keys select Cancel/OK buttons
-      wxSpinCtrl* dummy = new MySpinCtrl(panel, wxID_ANY, wxEmptyString,
-                                         wxPoint(-666,-666), wxDefaultSize);
-      if (!dummy) Warning(_("Bug in CreateColorPrefs!"));
-   #endif
 
    for (int i=0; i<10; i++) new_livergb[i] = new wxColor(*livergb[i]);
    new_deadrgb = new wxColor(*deadrgb);
@@ -2096,11 +2174,12 @@ bool PrefsDialog::ValidatePage()
          return false;
 
    } else if (currpage == LAYER_PAGE) {
-      if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
+      if ( BadSpinVal(PREF_TILE_BORDER, 1, 10, _("Tile border thickness")) )
          return false;
 
    } else if (currpage == COLOR_PAGE) {
-      // no spin controls on this page
+      if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
+         return false;
    
    } else {
       Warning(_("Bug in ValidatePage!"));
@@ -2145,7 +2224,10 @@ bool PrefsDialog::TransferDataFromWindow()
    maxscripts    = GetSpinVal(PREF_MAX_SCRIPTS);
 
    // EDIT_PAGE
-   randomfill = GetSpinVal(PREF_RANDOM_FILL);
+   randomfill   = GetSpinVal(PREF_RANDOM_FILL);
+   scrollpencil = GetCheckVal(PREF_SCROLL_PENCIL);
+   scrollcross  = GetCheckVal(PREF_SCROLL_CROSS);
+   scrollhand   = GetCheckVal(PREF_SCROLL_HAND);
 
    // CONTROL_PAGE
    maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);
@@ -2167,9 +2249,10 @@ bool PrefsDialog::TransferDataFromWindow()
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
 
    // LAYER_PAGE
-   opacity = GetSpinVal(PREF_OPACITY);
+   tileborder = GetSpinVal(PREF_TILE_BORDER);
 
    // COLOR_PAGE
+   opacity = GetSpinVal(PREF_OPACITY);
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11

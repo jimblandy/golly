@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2006 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -72,7 +72,7 @@ bigint oldy;                     // Y position in old layer
 wxCursor* oldcurs;               // cursor mode in old layer
 
 // ids for bitmap buttons in layer bar;
-// also used as indices for bitbutt/normbitmap/toggbitmap arrays
+// also used as indices for bitbutt/normbitmap/downbitmap arrays
 enum {
    LAYER_0 = 0,                  // LAYER_0 must be first id
    LAYER_LAST = LAYER_0 + maxlayers - 1,
@@ -88,11 +88,25 @@ const int NUM_BUTTONS = TILE_LAYERS + 1;
 // bitmap buttons (set in LayerBar::AddButton)
 wxBitmapButton* bitbutt[NUM_BUTTONS];
 
-// bitmaps for normal or toggled state (set in LayerBar::AddButton)
-wxBitmap* normbitmap[NUM_BUTTONS];
-wxBitmap* toggbitmap[NUM_BUTTONS];
+#ifdef __WXMSW__
+   // bitmaps are loaded via .rc file
+#else
+   // bitmaps for some layer bar buttons; note that bitmaps for
+   // LAYER_0..LAYER_LAST buttons are created in LayerBar::AddButton
+   #include "bitmaps/add.xpm"
+   #include "bitmaps/clone.xpm"
+   #include "bitmaps/delete.xpm"
+   #include "bitmaps/stack.xpm"
+   #include "bitmaps/stack_down.xpm"
+   #include "bitmaps/tile.xpm"
+   #include "bitmaps/tile_down.xpm"
+#endif
 
-int toggid = -1;                 // id of currently toggled layer button
+// bitmaps for normal or down state (set in LayerBar::AddButton)
+wxBitmap normbitmap[NUM_BUTTONS];
+wxBitmap downbitmap[NUM_BUTTONS];
+
+int downid = -1;                 // id of currently pressed layer button
 
 const int BUTTON_WD = 24;        // nominal width of bitmap buttons
 const int BITMAP_WD = 16;        // width of bitmaps
@@ -166,21 +180,21 @@ void CalculateTileRects(int bigwd, int bight)
       }
    }
    
-   if (tileframewd > 0) {
+   if (tileborder > 0) {
       // make tilerects smaller to allow for equal-width tile borders
       for ( int i = 0; i < rows; i++ ) {
          for ( int j = 0; j < cols; j++ ) {
             int index = i * cols + j;
             if (index == numlayers) {
                // numlayers == 3,5,7
-               layer[index - 1]->tilerect.width -= tileframewd;
+               layer[index - 1]->tilerect.width -= tileborder;
             } else {
-               layer[index]->tilerect.x += tileframewd;
-               layer[index]->tilerect.y += tileframewd;
-               layer[index]->tilerect.width -= tileframewd;
-               layer[index]->tilerect.height -= tileframewd;
-               if (j == cols - 1) layer[index]->tilerect.width -= tileframewd;
-               if (i == rows - 1) layer[index]->tilerect.height -= tileframewd;
+               layer[index]->tilerect.x += tileborder;
+               layer[index]->tilerect.y += tileborder;
+               layer[index]->tilerect.width -= tileborder;
+               layer[index]->tilerect.height -= tileborder;
+               if (j == cols - 1) layer[index]->tilerect.width -= tileborder;
+               if (i == rows - 1) layer[index]->tilerect.height -= tileborder;
             }
          }
       }
@@ -333,18 +347,18 @@ void RefreshView()
 void SelectButton(int id, bool select)
 {
    if (select && id >= LAYER_0 && id <= LAYER_LAST) {
-      if (toggid >= LAYER_0) {
+      if (downid >= LAYER_0) {
          // deselect old layer button
-         bitbutt[toggid]->SetBitmapLabel(*normbitmap[toggid]);
-         if (showlayer) bitbutt[toggid]->Refresh(false);
+         bitbutt[downid]->SetBitmapLabel(normbitmap[downid]);
+         if (showlayer) bitbutt[downid]->Refresh(false);
       }
-      toggid = id;
+      downid = id;
    }
    
    if (select) {
-      bitbutt[id]->SetBitmapLabel(*toggbitmap[id]);
+      bitbutt[id]->SetBitmapLabel(downbitmap[id]);
    } else {
-      bitbutt[id]->SetBitmapLabel(*normbitmap[id]);
+      bitbutt[id]->SetBitmapLabel(normbitmap[id]);
    }
    if (showlayer) bitbutt[id]->Refresh(false);
 }
@@ -377,6 +391,9 @@ void SyncClones()
             // cloneptr->originx = currlayer->originx;
             // cloneptr->originy = currlayer->originy;
             
+            // sync dirty flag
+            cloneptr->dirty = currlayer->dirty;
+            
             // sync speed
             cloneptr->warp = currlayer->warp;
             
@@ -385,15 +402,15 @@ void SyncClones()
             cloneptr->selbottom = currlayer->selbottom;
             cloneptr->selleft = currlayer->selleft;
             cloneptr->selright = currlayer->selright;
-   
+            
             // sync the stuff needed to reset pattern
+            cloneptr->savestart = currlayer->savestart;
             cloneptr->starthash = currlayer->starthash;
             cloneptr->startrule = currlayer->startrule;
             cloneptr->startx = currlayer->startx;
             cloneptr->starty = currlayer->starty;
             cloneptr->startwarp = currlayer->startwarp;
             cloneptr->startmag = currlayer->startmag;
-            cloneptr->savestart = currlayer->savestart;
             cloneptr->startfile = currlayer->startfile;
             cloneptr->startgen = currlayer->startgen;
             cloneptr->currfile = currlayer->currfile;
@@ -460,6 +477,7 @@ void CurrentLayerChanged()
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
+   bigview->UpdateScrollBars();
 }
 
 // -----------------------------------------------------------------------------
@@ -735,6 +753,54 @@ void NameLayerDialog()
 
 // -----------------------------------------------------------------------------
 
+void MarkLayerDirty()
+{
+   if (!currlayer->dirty) {
+      currlayer->dirty = true;
+      
+      // pass in currname so UpdateLayerItem(currindex) gets called
+      mainptr->SetWindowTitle(currlayer->currname);
+      
+      if (currlayer->cloneid > 0) {
+         // synchronize other clones
+         for ( int i = 0; i < numlayers; i++ ) {
+            Layer* cloneptr = layer[i];
+            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+               // set dirty flag and display asterisk in layer item
+               cloneptr->dirty = true;
+               mainptr->UpdateLayerItem(i);
+            }
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void MarkLayerClean(const wxString& title)
+{
+   currlayer->dirty = false;
+   
+   // set currlayer->currname and call UpdateLayerItem(currindex)
+   mainptr->SetWindowTitle(title);
+   
+   if (currlayer->cloneid > 0) {
+      // synchronize other clones
+      for ( int i = 0; i < numlayers; i++ ) {
+         Layer* cloneptr = layer[i];
+         if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+            // reset dirty flag and remove asterisk from layer item
+            cloneptr->dirty = false;
+            // also best if clone uses same name at this stage
+            cloneptr->currname = currlayer->currname;
+            mainptr->UpdateLayerItem(i);
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void ToggleSyncViews()
 {
    syncviews = !syncviews;
@@ -842,6 +908,7 @@ Layer::Layer()
    // WARNING: ~Layer() assumes prefix ends with '_'
    tempstart = gollydir + wxT(".golly_start_");
 
+   dirty = false;                // user has not modified pattern
    savestart = false;            // no need to save starting pattern just yet
    startfile.Clear();            // no starting pattern
    startgen = 0;                 // initial starting generation
@@ -974,6 +1041,7 @@ Layer::Layer()
       if (cloning || duplicating) {
          // duplicate all the other current settings
          currname = currlayer->currname;
+         dirty = currlayer->dirty;
          warp = currlayer->warp;
          autofit = currlayer->autofit;
          hyperspeed = currlayer->hyperspeed;
@@ -988,13 +1056,13 @@ Layer::Layer()
          selright = currlayer->selright;
 
          // duplicate the stuff needed to reset pattern
+         savestart = currlayer->savestart;
          starthash = currlayer->starthash;
          startrule = currlayer->startrule;
          startx = currlayer->startx;
          starty = currlayer->starty;
          startwarp = currlayer->startwarp;
          startmag = currlayer->startmag;
-         savestart = currlayer->savestart;
          startfile = currlayer->startfile;
          startgen = currlayer->startgen;
          currfile = currlayer->currfile;
@@ -1274,47 +1342,76 @@ void LayerBar::OnMouseMotion(wxMouseEvent& event)
 
 void LayerBar::AddButton(int id, char label, int x, int y)
 {
-   wxMemoryDC dc;
-   wxFont* font = wxFont::New(10, wxMODERN, wxFONTSTYLE_NORMAL, wxBOLD);
-   wxString str;
-   str.Printf(_("%c"), label);
+   if (id == ADD_LAYER) {
+      normbitmap[id] = wxBITMAP(add);
 
-   // create bitmap for normal button state
-   normbitmap[id] = new wxBitmap(BITMAP_WD, BITMAP_HT);
-   dc.SelectObject(*normbitmap[id]);
-   dc.SetFont(*font);
-   dc.SetTextForeground(*wxBLACK);
-   dc.SetBrush(*wxBLACK_BRUSH);
-   #ifndef __WXMAC__
-      dc.Clear();   // needed on Windows and Linux
-   #endif
-   dc.SetBackgroundMode(wxTRANSPARENT);
-   #ifdef __WXMAC__
-      dc.DrawText(str, 3, 2);
-   #else
-      dc.DrawText(str, 4, 0);
-   #endif
-   dc.SelectObject(wxNullBitmap);
+   } else if (id == CLONE_LAYER) {
+      normbitmap[id] = wxBITMAP(clone);
+
+   } else if (id == DELETE_LAYER) {
+      normbitmap[id] = wxBITMAP(delete);
+
+   } else if (id == STACK_LAYERS) {
+      normbitmap[id] = wxBITMAP(stack);
+      downbitmap[id] = wxBITMAP(stack_down);
+
+   } else if (id == TILE_LAYERS) {
+      normbitmap[id] = wxBITMAP(tile);
+      downbitmap[id] = wxBITMAP(tile_down);
+
+   } else {
+      // id == LAYER_0..LAYER_LAST
+      wxMemoryDC dc;
+      #ifdef __WXMAC__
+         wxFont* font = wxFont::New(11, wxMODERN, wxNORMAL, wxBOLD);
+      #else
+         wxFont* font = wxFont::New(10, wxMODERN, wxNORMAL, wxBOLD);
+      #endif
+      wxString str;
+      str.Printf(_("%c"), label);
+      
+      wxColor darkblue(0,0,128);       // matches blue in above buttons
+
+      // create bitmap for normal state
+      normbitmap[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
+      dc.SelectObject(normbitmap[id]);
+      dc.SetFont(*font);
+      dc.SetTextForeground(darkblue);
+      dc.SetBrush(*wxBLACK_BRUSH);
+      #ifndef __WXMAC__
+         dc.Clear();   // needed on Windows and Linux
+      #endif
+      dc.SetBackgroundMode(wxTRANSPARENT);
+      #ifdef __WXMAC__
+         dc.DrawText(str, 3, 2);
+      #else
+         dc.DrawText(str, 4, 0);
+      #endif
+      dc.SelectObject(wxNullBitmap);
+      #ifdef __WXGTK__
+         // prevent white background (wxGTK bug???)
+         normbitmap[id].SetMask( new wxMask(normbitmap[id],*wxWHITE) );
+      #endif
+
+      // create bitmap for down state
+      downbitmap[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
+      dc.SelectObject(downbitmap[id]);
+      wxRect r = wxRect(0, 0, BITMAP_WD, BITMAP_HT);
+      wxBrush brush(darkblue);
+      FillRect(dc, r, brush);
+      dc.SetFont(*font);
+      dc.SetTextForeground(*wxWHITE);
+      dc.SetBrush(*wxWHITE_BRUSH);
+      dc.SetBackgroundMode(wxTRANSPARENT);
+      #ifdef __WXMAC__
+         dc.DrawText(str, 5, 1);             // why diff to above???
+      #else
+         dc.DrawText(str, 4, 0);
+      #endif
+      dc.SelectObject(wxNullBitmap);
+   }
    
-   // create bitmap for toggled state
-   toggbitmap[id] = new wxBitmap(BITMAP_WD, BITMAP_HT);
-   dc.SelectObject(*toggbitmap[id]);
-   wxRect r = wxRect(0, 0, BITMAP_WD, BITMAP_HT);
-   wxColor gray(64,64,64);
-   wxBrush brush(gray);
-   FillRect(dc, r, brush);
-   dc.SetFont(*font);
-   dc.SetTextForeground(*wxWHITE);
-   dc.SetBrush(*wxWHITE_BRUSH);
-   dc.SetBackgroundMode(wxTRANSPARENT);
-   #ifdef __WXMAC__
-      dc.DrawText(str, 5, 1);             //!!! why diff to above???
-   #else
-      dc.DrawText(str, 4, 0);
-   #endif
-   dc.SelectObject(wxNullBitmap);
-   
-   bitbutt[id] = new wxBitmapButton(this, id, *normbitmap[id], wxPoint(x,y));
+   bitbutt[id] = new wxBitmapButton(this, id, normbitmap[id], wxPoint(x,y));
    if (bitbutt[id] == NULL) {
       Fatal(_("Failed to create layer bar button!"));
    } else {
