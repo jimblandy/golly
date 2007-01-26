@@ -1388,8 +1388,8 @@ void LayerBar::AddButton(int id, char label, int x, int y)
          dc.DrawText(str, 4, 0);
       #endif
       dc.SelectObject(wxNullBitmap);
-      #ifdef __WXGTK__
-         // prevent white background (wxGTK bug???)
+      #if defined(__WXGTK__) || defined(__WXMSW__)
+         // prevent white background
          normbitmap[id].SetMask( new wxMask(normbitmap[id],*wxWHITE) );
       #endif
 
