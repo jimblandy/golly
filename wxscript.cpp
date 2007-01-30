@@ -685,7 +685,7 @@ static PyObject *golly_flip(PyObject *self, PyObject *args)
       if (direction == 0)
          viewptr->FlipLeftRight();
       else
-         viewptr->FlipUpDown();
+         viewptr->FlipTopBottom();
       DoAutoUpdate();
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad flip call: no selection.");

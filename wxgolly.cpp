@@ -129,6 +129,9 @@ void CallYield()
 
 int wx_poll::checkevents()
 {
+   // avoid processing further events if user has interrupted a task???
+   //??? if (isInterrupted()) return 1;
+   
    #ifdef __WXMSW__
       // on Windows it seems that Time has a higher overhead than Yield
       CallYield();

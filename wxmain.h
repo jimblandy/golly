@@ -182,4 +182,10 @@ int GetID_OPEN_RECENT();
 int GetID_CLEAR_SCRIPTS();
 int GetID_RUN_RECENT();
 
+// static routines used to post commands to the event queue
+int GetID_GO();
+int GetID_STOP();
+int GetID_RESET();
+int GetID_HASH();
+
 #endif

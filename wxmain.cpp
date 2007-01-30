@@ -116,7 +116,7 @@ enum {
    ID_REMOVE,
    ID_SHRINK,
    ID_RANDOM,
-   ID_FLIPUD,
+   ID_FLIPTB,
    ID_FLIPLR,
    ID_ROTATEC,
    ID_ROTATEA,
@@ -213,6 +213,8 @@ enum {
    ID_LAYER0         // keep this last (for OnMenu)
 };
 
+// -----------------------------------------------------------------------------
+
 // static routines used by GetPrefs() to get IDs for items in Open/Run Recent submenus;
 // can't be MainFrame methods because GetPrefs() is called before creating main window
 // and I'd rather not expose the IDs in a header file
@@ -221,6 +223,13 @@ int GetID_CLEAR_PATTERNS() { return ID_CLEAR_PATTERNS; }
 int GetID_OPEN_RECENT()    { return ID_OPEN_RECENT; }
 int GetID_CLEAR_SCRIPTS()  { return ID_CLEAR_SCRIPTS; }
 int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
+
+// static routines used to post commands to the event queue
+
+int GetID_GO()    { return ID_GO; }
+int GetID_STOP()  { return ID_STOP; }
+int GetID_RESET() { return ID_RESET; }
+int GetID_HASH()  { return ID_HASH; }
 
 // -----------------------------------------------------------------------------
 
@@ -282,7 +291,7 @@ void MainFrame::UpdateToolBar(bool active)
       
       tbar->EnableTool(ID_GO,             active && !busy);
       tbar->EnableTool(ID_STOP,           active && busy);
-      tbar->EnableTool(ID_HASH,           active && !busy);
+      tbar->EnableTool(ID_HASH,           active && !inscript);   // allow toggling while generating
       tbar->EnableTool(wxID_NEW,          active && !busy);
       tbar->EnableTool(wxID_OPEN,         active && !busy);
       tbar->EnableTool(wxID_SAVE,         active && !busy);
@@ -397,7 +406,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_REMOVE,    active && selexists);
       mbar->Enable(ID_SHRINK,    active && selexists);
       mbar->Enable(ID_RANDOM,    active && !busy && selexists);
-      mbar->Enable(ID_FLIPUD,    active && !busy && selexists);
+      mbar->Enable(ID_FLIPTB,    active && !busy && selexists);
       mbar->Enable(ID_FLIPLR,    active && !busy && selexists);
       mbar->Enable(ID_ROTATEC,   active && !busy && selexists);
       mbar->Enable(ID_ROTATEA,   active && !busy && selexists);
@@ -407,12 +416,13 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_STOP,      active && busy);
       mbar->Enable(ID_NEXT,      active && !busy);
       mbar->Enable(ID_STEP,      active && !busy);
-      mbar->Enable(ID_RESET,     active && !busy &&
-                                 currlayer->algo->getGeneration() > currlayer->startgen);
+      mbar->Enable(ID_RESET,     active && !inscript &&
+                                 // allow reset while a pattern is generating
+                                 (generating || currlayer->algo->getGeneration() > currlayer->startgen));
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
-      mbar->Enable(ID_HASH,      active && !busy);
+      mbar->Enable(ID_HASH,      active && !inscript);   // allow toggling while generating
       mbar->Enable(ID_HYPER,     active);
       mbar->Enable(ID_HINFO,     active);
       mbar->Enable(ID_RULE,      active && !busy);
@@ -959,7 +969,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_REMOVE:         viewptr->RemoveSelection(); break;
       case ID_SHRINK:         viewptr->ShrinkSelection(false); break;
       case ID_RANDOM:         viewptr->RandomFill(); break;
-      case ID_FLIPUD:         viewptr->FlipUpDown(); break;
+      case ID_FLIPTB:         viewptr->FlipTopBottom(); break;
       case ID_FLIPLR:         viewptr->FlipLeftRight(); break;
       case ID_ROTATEC:        viewptr->RotateSelection(true); break;
       case ID_ROTATEA:        viewptr->RotateSelection(false); break;
@@ -1562,7 +1572,7 @@ void MainFrame::CreateMenus()
    editMenu->Append(ID_SHRINK, _("Shrink Selection"));
    // full label will be set later by SetRandomFillPercentage
    editMenu->Append(ID_RANDOM, _("Random Fill\tCtrl+5"));
-   editMenu->Append(ID_FLIPUD, _("Flip Up-Down"));
+   editMenu->Append(ID_FLIPTB, _("Flip Top-Bottom"));
    editMenu->Append(ID_FLIPLR, _("Flip Left-Right"));
    editMenu->Append(ID_ROTATEC, _("Rotate Clockwise"));
    editMenu->Append(ID_ROTATEA, _("Rotate Anticlockwise"));

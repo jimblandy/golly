@@ -52,8 +52,8 @@ public:
    void RemoveSelection();
    void ShrinkSelection(bool fit);
    void RandomFill();
+   void FlipTopBottom();
    void FlipLeftRight();
-   void FlipUpDown();
    void RotateSelection(bool clockwise);
    void SetCursorMode(wxCursor* curs);
    void CycleCursorMode();

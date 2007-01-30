@@ -1279,7 +1279,7 @@ void PatternView::FlipLeftRight()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::FlipUpDown()
+void PatternView::FlipTopBottom()
 {
    if (mainptr->generating || !SelectionExists()) return;
 

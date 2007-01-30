@@ -46,6 +46,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
+bool reset_pending = false;      // user selected Reset while generating?
+bool hash_pending = false;       // user selected Use Hashing while generating?
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ChangeGoToStop()
 {
    /* single go/stop button is not yet implemented!!!
@@ -132,7 +137,19 @@ bool MainFrame::SaveStartingPattern()
 
 void MainFrame::ResetPattern()
 {
-   if (generating || currlayer->algo->getGeneration() == currlayer->startgen) return;
+   if (currlayer->algo->getGeneration() == currlayer->startgen) return;
+   
+   if (generating) {
+      // terminate GeneratePattern loop and set reset_pending flag
+      StopGenerating();
+      reset_pending = true;
+      /* can't use wxPostEvent here because Yield processes all pending events
+      // send Reset command to event queue
+      wxCommandEvent resetevt(wxEVT_COMMAND_MENU_SELECTED, GetID_RESET());
+      wxPostEvent(this->GetEventHandler(), resetevt);
+      */
+      return;
+   }
    
    if (currlayer->algo->getGeneration() < currlayer->startgen) {
       // if this happens then startgen logic is wrong
@@ -221,7 +238,6 @@ void MainFrame::GeneratePattern()
    }
 
    lifealgo *curralgo = currlayer->algo;
-   
    if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
@@ -251,10 +267,10 @@ void MainFrame::GeneratePattern()
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
             curralgo->step();
+            if (wxGetApp().Poller()->checkevents()) break;
             if (currlayer->autofit) viewptr->FitInView(0);
             // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
             UpdatePatternAndStatus();
-            if (wxGetApp().Poller()->checkevents()) break;
             // add delay to current time rather than currmsec
             whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
@@ -266,10 +282,10 @@ void MainFrame::GeneratePattern()
       } else {
          // warp >= 0 so only show results every curralgo->getIncrement() gens
          curralgo->step();
+         if (wxGetApp().Poller()->checkevents()) break;
          if (currlayer->autofit) viewptr->FitInView(0);
          // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
          UpdatePatternAndStatus();
-         if (wxGetApp().Poller()->checkevents()) break;
          if (currlayer->hyperspeed && curralgo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
@@ -291,6 +307,18 @@ void MainFrame::GeneratePattern()
    // display the final pattern
    if (currlayer->autofit) viewptr->FitInView(0);
    UpdateEverything();
+
+   if (reset_pending) {
+      reset_pending = false;
+      ResetPattern();
+   }
+   if (hash_pending) {
+      hash_pending = false;
+      ToggleHashing();
+      // send Go command to event queue to call GeneratePattern again
+      wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_GO());
+      wxPostEvent(this->GetEventHandler(), goevt);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -604,7 +632,6 @@ void MainFrame::NextGeneration(bool useinc)
    }
 
    lifealgo *curralgo = currlayer->algo;
-   
    if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
@@ -667,8 +694,6 @@ void MainFrame::ToggleAutoFit()
 
 void MainFrame::ToggleHashing()
 {
-   if (generating) return;
-
    if ( global_liferules.hasB0notS8 && !currlayer->hash ) {
       statusptr->ErrorMessage(_("Hashing cannot be used with a B0-not-S8 rule."));
       return;
@@ -683,6 +708,13 @@ void MainFrame::ToggleHashing()
          // ask user if they want to continue anyway???
          return;
       }
+   }
+
+   if (generating) {
+      // terminate GeneratePattern loop and set hash_pending flag
+      StopGenerating();
+      hash_pending = true;
+      return;
    }
 
    // toggle hashing option and update status bar immediately

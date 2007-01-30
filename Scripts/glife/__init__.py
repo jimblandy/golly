@@ -43,6 +43,7 @@ outside = 1
 
 # for golly.flip
 left_right = 0
+top_bottom = 1
 up_down = 1
 
 # for golly.rotate
