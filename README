@@ -18,6 +18,7 @@ Main features:
 - Unbounded zooming out for astronomical patterns.
 - Auto fit option keeps your pattern sized to the window.
 - Full screen option (no menu/status/tool/scroll bars).
+- Supports multiple layers, including cloned layers.
 - HTML-based help with integrated Life Lexicon.
 - Scriptable via Python.
 - Free, open source and cross-platform (Windows, Mac, Linux).

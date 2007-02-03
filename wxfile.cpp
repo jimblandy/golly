@@ -440,9 +440,15 @@ void MainFrame::OpenPattern()
    if ( opendlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
-      SetCurrentFile( opendlg.GetPath() );
-      AddRecentPattern( opendlg.GetPath() );
-      LoadPattern( opendlg.GetFilename() );
+      if ( IsScript( opendlg.GetPath() ) ) {
+         // assume user meant to run script
+         AddRecentScript( opendlg.GetPath() );
+         RunScript( opendlg.GetPath() );
+      } else {
+         SetCurrentFile( opendlg.GetPath() );
+         AddRecentPattern( opendlg.GetPath() );
+         LoadPattern( opendlg.GetFilename() );
+      }
    }
 }
 
@@ -989,7 +995,7 @@ void MainFrame::ShowPrefsDialog()
       
       // maxhashmem might have changed
       for (int i = 0; i < numlayers; i++) {
-         Layer *layer = GetLayer(i);
+         Layer* layer = GetLayer(i);
          if (layer->hash) layer->algo->setMaxMemory(maxhashmem);
       }
       

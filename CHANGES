@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
+AKT: A .py file selected via Open Pattern is run as a script.
 AKT: Reset and Use Hashing can be selected while a pattern is generating.
 AKT: Renamed Flip Up-Down to Flip Top-Bottom.
 AKT: The move cursor has been changed to an open hand.

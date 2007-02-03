@@ -6,9 +6,6 @@ A - Maintain "dirty" flag in each layer (similar to savestart)
     Also use to ask if changes should be saved before quitting or
     deleting layer or NewPattern or LoadPattern.
 
-A - Use cleanlayer int (-1..maxlayers-1) to wxscript.cpp to call
-    MarkLayerClean at end of script that calls New/LoadPattern.
-
 A - Export new dialogs from wxutils: SaveChanges, GetString, GetNumber.
 
 A - Give Mac app a creator sig (GoLy) and save files with creator

@@ -42,6 +42,7 @@ public:
    bool showhashinfo;         // show hash info if hash is true?
    bool autofit;              // auto fit pattern while generating?
    bool dirty;                // user has modified pattern?
+   bool stayclean;            // script has reset dirty flag?
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode

@@ -262,6 +262,11 @@ void CreateTiles()
       // set tileindex >= 0; this must always match the layer index, so we'll need to
       // destroy and recreate all tiles whenever a tile is added, deleted or moved
       layer[i]->tilewin->tileindex = i;
+
+      #if wxUSE_DRAG_AND_DROP
+         // let user drop file onto any tile (but it will be loaded into current tile)
+         layer[i]->tilewin->SetDropTarget(mainptr->NewDropTarget());
+      #endif
    }
    
    // init tilerects, tile window sizes and their viewport sizes
@@ -393,6 +398,7 @@ void SyncClones()
             
             // sync dirty flag
             cloneptr->dirty = currlayer->dirty;
+            cloneptr->stayclean = currlayer->stayclean;
             
             // sync speed
             cloneptr->warp = currlayer->warp;
@@ -623,6 +629,9 @@ void DeleteOtherLayers()
 
    // update the only layer item
    mainptr->UpdateLayerItem(0);
+   
+   // update window title (may need to remove "=" prefix)
+   mainptr->SetWindowTitle(wxEmptyString);
 
    // select LAYER_0 button (also deselects old button)
    SelectButton(LAYER_0, true);
@@ -755,6 +764,10 @@ void NameLayerDialog()
 
 void MarkLayerDirty()
 {
+   // if script has reset dirty flag then don't change it; this makes sense
+   // for scripts that call new() and then construct a pattern
+   if (currlayer->stayclean) return;
+
    if (!currlayer->dirty) {
       currlayer->dirty = true;
       
@@ -781,6 +794,9 @@ void MarkLayerClean(const wxString& title)
 {
    currlayer->dirty = false;
    
+   // if script is resetting dirty flag -- eg. via new() -- then keep it that way
+   if (inscript) currlayer->stayclean = true;
+   
    // set currlayer->currname and call UpdateLayerItem(currindex)
    mainptr->SetWindowTitle(title);
    
@@ -789,10 +805,14 @@ void MarkLayerClean(const wxString& title)
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* cloneptr = layer[i];
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-            // reset dirty flag and remove asterisk from layer item
+            // reset dirty flag
             cloneptr->dirty = false;
+            if (inscript) cloneptr->stayclean = true;
+            
             // also best if clone uses same name at this stage
             cloneptr->currname = currlayer->currname;
+            
+            // remove asterisk from layer item
             mainptr->UpdateLayerItem(i);
          }
       }
@@ -909,6 +929,14 @@ Layer::Layer()
    tempstart = gollydir + wxT(".golly_start_");
 
    dirty = false;                // user has not modified pattern
+   if (inscript) {
+      // script created this layer so best to keep dirty flag false
+      // (but only for duration of this script)
+      stayclean = true;
+   } else {
+      stayclean = false;         // script has not reset dirty flag
+   }
+   
    savestart = false;            // no need to save starting pattern just yet
    startfile.Clear();            // no starting pattern
    startgen = 0;                 // initial starting generation
@@ -1042,6 +1070,7 @@ Layer::Layer()
          // duplicate all the other current settings
          currname = currlayer->currname;
          dirty = currlayer->dirty;
+         stayclean = currlayer->stayclean;
          warp = currlayer->warp;
          autofit = currlayer->autofit;
          hyperspeed = currlayer->hyperspeed;

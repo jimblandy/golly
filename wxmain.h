@@ -66,6 +66,9 @@ public:
    void ToggleShowScripts();
    void SavePattern();
    wxString SaveFile(const wxString& path, const wxString& format, bool remember);
+   #if wxUSE_DRAG_AND_DROP
+      wxDropTarget* NewDropTarget();
+   #endif
 
    // prefs functions
    void SetRandomFillPercentage();
@@ -155,13 +158,15 @@ private:
    bool SaveStartingPattern();
    void ShowRuleDialog();
 
-   // miscellaneous
+   // miscellaneous functions
    void CreateMenus();
    void CreateToolbar();
    void CreateDirControls();
    void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root);
    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
-   
+   bool SaveCurrentLayer();
+   void QuitApp();
+
    // splittable window contains pattern/script directory in left pane
    // and layer bar plus viewport window in right pane
    wxSplitterWindow* splitwin;

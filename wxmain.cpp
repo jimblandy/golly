@@ -949,7 +949,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SHOW_SCRIPTS:   ToggleShowScripts(); break;
       case ID_SCRIPT_DIR:     ChangeScriptDir(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
-      case wxID_EXIT:         Close(true); break;        // true forces frame to close
+      case wxID_EXIT:         QuitApp(); break;
       // Edit menu
       case ID_CUT:            viewptr->CutSelection(); break;
       case ID_COPY:           viewptr->CopySelection(); break;
@@ -1320,8 +1320,84 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
+bool MainFrame::SaveCurrentLayer()
 {
+   #ifdef __WXMAC__
+      wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
+   
+   wxString title = _("Save the changes to layer \"");
+   title +=         currlayer->currname;
+   title +=         _("\"?");
+   
+   //!!! need a more standard dlg on Mac
+   int answer = wxMessageBox(_("If you don't save, your changes will be lost."),
+                             title,
+                             #ifdef __WXMAC__
+                                // just show app icon
+                                wxICON_EXCLAMATION |
+                             #else
+                                wxICON_QUESTION |
+                             #endif
+                             wxYES_NO | wxCANCEL,
+                             wxGetActiveWindow());
+   if (answer == wxYES) {
+      SavePattern();
+      return true;
+   } else if (answer == wxNO) {
+      // don't save changes
+      return true;
+   } else {
+      // assume answer == wxCANCEL
+      return false;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+//!!! make this a global pref
+bool askonquit = true;
+
+void MainFrame::OnClose(wxCloseEvent& event)
+{
+   if (event.CanVeto() && askonquit) {
+      // keep track of which unique clones have been seen;
+      // we add 1 below to allow for cloneseen[0] (always false for non-clones)
+      const int maxseen = maxlayers/2 + 1;
+      bool cloneseen[maxseen];
+      for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
+   
+      // for each dirty layer, ask user if they want to save changes
+      int oldindex = currindex;
+      for (int i = 0; i < numlayers; i++) {
+         // temporarily turn off inscript and generating flags
+         bool oldscr = inscript;
+         bool oldgen = generating;
+         inscript = false;
+         generating = false;
+         
+         // only ask once for each unique clone (cloneid == 0 for non-clone)
+         int cid = GetLayer(i)->cloneid;
+         if (!cloneseen[cid]) {
+            if (cid > 0) cloneseen[cid] = true;
+            if (i != currindex) SetLayer(i);
+            if (currlayer->dirty && !SaveCurrentLayer()) {
+               // user cancelled "save changes" dialog;
+               // restore current layer and inscript and generating flags
+               SetLayer(oldindex);
+               inscript = oldscr;
+               generating = oldgen;
+               UpdateUserInterface(IsActive());
+               event.Veto();
+               return;
+            }
+         }
+         
+         inscript = oldscr;
+         generating = oldgen;
+      }
+   }
+
    if (GetHelpFrame()) GetHelpFrame()->Close(true);
    if (GetInfoFrame()) GetInfoFrame()->Close(true);
    
@@ -1359,6 +1435,13 @@ void MainFrame::OnClose(wxCloseEvent& WXUNUSED(event))
    #endif
    
    Destroy();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::QuitApp()
+{
+   Close(false);   // false allows OnClose handler to veto close
 }
 
 // -----------------------------------------------------------------------------
@@ -1402,6 +1485,11 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
    #endif
    
    return true;
+}
+
+wxDropTarget* MainFrame::NewDropTarget()
+{
+   return new DnDFile();
 }
 
 #endif // wxUSE_DRAG_AND_DROP
@@ -1928,7 +2016,6 @@ MainFrame::MainFrame()
    #if wxUSE_DRAG_AND_DROP
       // let users drop files onto viewport
       viewptr->SetDropTarget(new DnDFile());
-      //!!! what about tile windows???
    #endif
    
    // these seemingly redundant steps are needed to avoid problems on Windows

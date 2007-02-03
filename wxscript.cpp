@@ -2848,6 +2848,10 @@ void RunScript(const wxString& filename)
    mainptr->UpdateUserInterface(mainptr->IsActive());
    ExecuteScript( fullname.GetFullPath() );
    inscript = false;
+   
+   // reset all stayclean flags (set by MarkLayerClean)
+   for ( int i = 0; i < numlayers; i++ )
+      GetLayer(i)->stayclean = false;
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollydir);
