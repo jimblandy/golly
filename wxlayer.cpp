@@ -209,9 +209,8 @@ void ResizeTiles(int bigwd, int bight)
    CalculateTileRects(bigwd, bight);
    
    // set size of each tile window
-   for ( int i = 0; i < numlayers; i++ ) {
+   for ( int i = 0; i < numlayers; i++ )
       layer[i]->tilewin->SetSize( layer[i]->tilerect );
-   }
    
    // set viewport size for each tile; this is currently the same as the
    // tilerect size because tile windows are created with wxNO_BORDER
@@ -230,7 +229,7 @@ void ResizeTiles(int bigwd, int bight)
 void ResizeLayers(int wd, int ht)
 {
    // this is called whenever the size of the bigview window changes;
-   // wd and ht are the dimens of bigview's client area
+   // wd and ht are the dimensions of bigview's client area
    if (tilelayers && numlayers > 1) {
       ResizeTiles(wd, ht);
    } else {
@@ -264,7 +263,7 @@ void CreateTiles()
       layer[i]->tilewin->tileindex = i;
 
       #if wxUSE_DRAG_AND_DROP
-         // let user drop file onto any tile (but it will be loaded into current tile)
+         // let user drop file onto any tile (but file will be loaded into current tile)
          layer[i]->tilewin->SetDropTarget(mainptr->NewDropTarget());
       #endif
    }
@@ -563,6 +562,8 @@ void DeleteLayer()
 {
    if (mainptr->generating || numlayers <= 1) return;
 
+   if (!inscript && currlayer->dirty && askondelete && !mainptr->SaveCurrentLayer()) return;
+
    // numlayers > 1
    if (tilelayers) DestroyTiles();
    
@@ -597,6 +598,42 @@ void DeleteLayer()
 void DeleteOtherLayers()
 {
    if (inscript || numlayers <= 1) return;
+
+   if (askondelete) {
+      // keep track of which unique clones have been seen;
+      // we add 1 below to allow for cloneseen[0] (always false)
+      const int maxseen = maxlayers/2 + 1;
+      bool cloneseen[maxseen];
+      for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
+   
+      // for each dirty layer, except current layer and all of its clones,
+      // ask user if they want to save changes
+      int cid = layer[currindex]->cloneid;
+      if (cid > 0) cloneseen[cid] = true;
+      int oldindex = currindex;
+      for (int i = 0; i < numlayers; i++) {
+         // only ask once for each unique clone (cloneid == 0 for non-clone)
+         cid = layer[i]->cloneid;
+         if (i != oldindex && !cloneseen[cid]) {
+            if (cid > 0) cloneseen[cid] = true;
+            if (layer[i]->dirty) {
+               // temporarily turn off generating flag for SetLayer
+               bool oldgen = mainptr->generating;
+               mainptr->generating = false;
+               SetLayer(i);
+               if (!mainptr->SaveCurrentLayer()) {
+                  // user hit Cancel so restore current layer and generating flag
+                  SetLayer(oldindex);
+                  mainptr->generating = oldgen;
+                  mainptr->UpdateUserInterface(mainptr->IsActive());
+                  return;
+               }
+               SetLayer(oldindex);
+               mainptr->generating = oldgen;
+            }
+         }
+      }
+   }
 
    // numlayers > 1
    if (tilelayers) DestroyTiles();
@@ -1283,8 +1320,7 @@ void LayerBar::OnButton(wxCommandEvent& event)
       viewptr->SetFocus();
    #endif
 
-   switch (id)
-   {
+   switch (id) {
       case ADD_LAYER:      AddLayer(); break;
       case CLONE_LAYER:    CloneLayer(); break;
       case DELETE_LAYER:   DeleteLayer(); break;

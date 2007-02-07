@@ -40,7 +40,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-void Note(const wxString &msg) {
+void Note(const wxString& msg)
+{
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
    #endif
@@ -50,7 +51,8 @@ void Note(const wxString &msg) {
 
 // -----------------------------------------------------------------------------
 
-void Warning(const wxString &msg) {
+void Warning(const wxString& msg)
+{
    wxBell();
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
@@ -61,7 +63,8 @@ void Warning(const wxString &msg) {
 
 // -----------------------------------------------------------------------------
 
-void Fatal(const wxString &msg) {
+void Fatal(const wxString& msg)
+{
    wxBell();
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
@@ -70,6 +73,30 @@ void Fatal(const wxString &msg) {
    wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
    exit(1);
+}
+
+// -----------------------------------------------------------------------------
+
+int SaveChanges(const wxString& query, const wxString& msg)
+{
+   #ifdef __WXMAC__
+      wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
+   //!!! need a more standard dlg on Mac/Linux
+   int answer = wxMessageBox(msg, query,
+                             #ifdef __WXMAC__
+                                // just show app icon
+                                wxICON_EXCLAMATION |
+                             #else
+                                wxICON_QUESTION |
+                             #endif
+                             wxYES_NO | wxCANCEL,
+                             wxGetActiveWindow());
+   switch (answer) {
+      case wxYES: return 2;
+      case wxNO:  return 1;
+      default:    return 0;   // answer == wxCANCEL
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -121,7 +148,8 @@ void ProgressHandler::OnKeyDown(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void BeginProgress(const wxString &dlgtitle) {
+void BeginProgress(const wxString& dlgtitle)
+{
    if (progdlg) {
       // better do this in case of nested call
       delete progdlg;
@@ -141,7 +169,8 @@ void BeginProgress(const wxString &dlgtitle) {
 
 // -----------------------------------------------------------------------------
 
-bool AbortProgress(double fraction_done, const wxString &newmsg) {
+bool AbortProgress(double fraction_done, const wxString& newmsg)
+{
    long msecs = progwatch->Time();
    if (progdlg) {
       if (msecs < prognext) return false;
@@ -178,7 +207,8 @@ bool AbortProgress(double fraction_done, const wxString &newmsg) {
 
 // -----------------------------------------------------------------------------
 
-void EndProgress() {
+void EndProgress()
+{
    if (progdlg) {
       #ifdef __WXMAC__
          EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
@@ -202,7 +232,8 @@ void EndProgress() {
 
 // -----------------------------------------------------------------------------
 
-void FillRect(wxDC &dc, wxRect &rect, wxBrush &brush) {
+void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush)
+{
    // set pen transparent so brush fills rect
    dc.SetPen(*wxTRANSPARENT_PEN);
    dc.SetBrush(brush);

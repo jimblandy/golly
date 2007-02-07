@@ -1138,7 +1138,7 @@ void PatternView::OnSize(wxSizeEvent& event)
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
    
-   // resize viewports in all layers
+   // resize this viewport
    SetViewSize(wd, ht);
    
    event.Skip();

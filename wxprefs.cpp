@@ -34,13 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/notebook.h"   // for wxNotebookEvent
 #include "wx/spinctrl.h"   // for wxSpinCtrl
 #include "wx/image.h"      // for wxImage
-
-#if 0 //!!! defined(__WXMSW__) || defined(__WXGTK__)
-   //!!! can't seem to disable wxToolBar tips on Windows or Linux/GTK
-   // but CAN disable layer bar tips added via wxToolTip::SetTip
-   #undef wxUSE_TOOLTIPS
-   #define wxUSE_TOOLTIPS 0
-#endif
 #if wxUSE_TOOLTIPS
    #include "wx/tooltip.h" // for wxToolTip
 #endif
@@ -141,6 +134,10 @@ bool syncviews = false;          // synchronize viewports?
 bool synccursors = true;         // synchronize cursors?
 bool stacklayers = false;        // stack all layers?
 bool tilelayers = false;         // tile all layers?
+bool askonnew = true;            // ask to save changes before creating new pattern?
+bool askonload = true;           // ask to save changes before loading pattern file?
+bool askondelete = true;         // ask to save changes before deleting layer?
+bool askonquit = true;           // ask to save changes before quitting app?
 int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
@@ -578,6 +575,10 @@ void SavePrefs()
    fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
    fprintf(f, "tile_layers=%d\n", tilelayers ? 1 : 0);
    fprintf(f, "tile_border=%d (1..10)\n", tileborder);
+   fprintf(f, "ask_on_new=%d\n", askonnew ? 1 : 0);
+   fprintf(f, "ask_on_load=%d\n", askonload ? 1 : 0);
+   fprintf(f, "ask_on_delete=%d\n", askondelete ? 1 : 0);
+   fprintf(f, "ask_on_quit=%d\n", askonquit ? 1 : 0);
    
    fputs("\n", f);
 
@@ -907,6 +908,11 @@ void GetPrefs()
          if (tileborder < 1) tileborder = 1;
          if (tileborder > 10) tileborder = 10;
 
+      } else if (strcmp(keyword, "ask_on_new") == 0)    { askonnew = value[0] == '1';
+      } else if (strcmp(keyword, "ask_on_load") == 0)   { askonload = value[0] == '1';
+      } else if (strcmp(keyword, "ask_on_delete") == 0) { askondelete = value[0] == '1';
+      } else if (strcmp(keyword, "ask_on_quit") == 0)   { askonquit = value[0] == '1';
+
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
 
@@ -915,7 +921,7 @@ void GetPrefs()
          if (opacity < 1) opacity = 1;
          if (opacity > 100) opacity = 100;
 
-      } else if (strcmp(keyword, "live_rgb") == 0) { GetColor(value, livergb[0]);
+      } else if (strcmp(keyword, "live_rgb") == 0)  { GetColor(value, livergb[0]);
       } else if (strcmp(keyword, "live0_rgb") == 0) { GetColor(value, livergb[0]);
       } else if (strcmp(keyword, "live1_rgb") == 0) { GetColor(value, livergb[1]);
       } else if (strcmp(keyword, "live2_rgb") == 0) { GetColor(value, livergb[2]);
@@ -1057,6 +1063,8 @@ void GetPrefs()
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();
    
+   //!!! can't seem to disable wxToolBar tips on Windows or Linux/GTK
+   // but CAN disable layer bar tips added via wxToolTip::SetTip
    #if wxUSE_TOOLTIPS
       wxToolTip::Enable(showtips);
       wxToolTip::SetDelay(1000);    // 1 sec
@@ -1098,7 +1106,7 @@ private:
       LAYER_PAGE,
       COLOR_PAGE,
       // File prefs
-      PREF_NEW_REM_SEL,
+      PREF_NEW_REM_SEL = wxID_HIGHEST,  // avoid problems with FindWindowById
       PREF_NEW_CURSOR,
       PREF_NEW_SCALE,
       PREF_OPEN_REM_SEL,
@@ -1126,6 +1134,10 @@ private:
       PREF_THUMB_RANGE,
       // Layer prefs
       PREF_TILE_BORDER,
+      PREF_ASK_NEW,
+      PREF_ASK_LOAD,
+      PREF_ASK_DELETE,
+      PREF_ASK_QUIT,
       // Color prefs
       PREF_OPACITY,
       PREF_LIVE_RGB,
@@ -1175,7 +1187,7 @@ END_EVENT_TABLE()
 
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
    // fix wxMac 2.7.2 bug in wxTextCtrl::SetSelection
-   #define ALL_TEXT 0,999999
+   #define ALL_TEXT 0,999
 #else
    #define ALL_TEXT -1,-1
 #endif
@@ -1291,7 +1303,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    // not using validators so no need for this:
    // SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
    
-   Create(parent, wxID_ANY, _("Preferences"), wxDefaultPosition, wxDefaultSize);
+   Create(parent, wxID_ANY, _("Preferences"));
    CreateButtons(wxOK | wxCANCEL);
    
    wxBookCtrlBase* notebook = GetBookCtrl();
@@ -1385,8 +1397,8 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
 wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
 
    wxArrayString newcursorChoices;
    newcursorChoices.Add(wxT("Draw"));
@@ -1408,19 +1420,14 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    // on new pattern
    
    wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("On creating a new pattern:"));
-   wxBoxSizer* ssizer1 = new wxStaticBoxSizer( sbox1, wxVERTICAL );
-   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
 
-   ssizer1->AddSpacer(SBTOPGAP);
-   wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL,
-                                       _("Remove selection"),
-                                       wxDefaultPosition, wxDefaultSize);
-   ssizer1->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
+   wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL, _("Remove selection"));
 
-   wxBoxSizer* setcursbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* setcursbox = new wxBoxSizer(wxHORIZONTAL);
    setcursbox->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
 
-   wxBoxSizer* setscalebox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* setscalebox = new wxBoxSizer(wxHORIZONTAL);
    setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
 
    wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
@@ -1435,7 +1442,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
                                     #endif
                                     newscaleChoices);
    
-   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
    hbox3->Add(setcursbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
    hbox3->AddSpacer(20);
@@ -1445,25 +1452,20 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
       hbox3->AddSpacer(10);
    #endif
 
+   ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(CVGAP);
    ssizer1->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
    
    // on opening pattern
    
-   vbox->AddSpacer(10);
-   
    wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening a pattern file:"));
-   wxBoxSizer* ssizer2 = new wxStaticBoxSizer( sbox2, wxVERTICAL );
-   vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
+   wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
    
-   ssizer2->AddSpacer(SBTOPGAP);
-   wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL,
-                                       _("Remove selection"),
-                                       wxDefaultPosition, wxDefaultSize);
-   ssizer2->Add(check2, 0, wxLEFT | wxRIGHT, LRGAP);
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL, _("Remove selection"));
    
-   wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
    wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
                                     wxDefaultPosition, wxDefaultSize,
                                     opencursorChoices);
@@ -1471,19 +1473,19 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
               0, wxALIGN_CENTER_VERTICAL, 0);
    hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
 
+   ssizer2->AddSpacer(SBTOPGAP);
+   ssizer2->Add(check2, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer2->AddSpacer(CVGAP);
    ssizer2->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer2->AddSpacer(SBBOTGAP);
    
    // max_patterns and max_scripts
-   
-   vbox->AddSpacer(10);
 
-   wxBoxSizer* maxbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* maxbox = new wxBoxSizer(wxHORIZONTAL);
    maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent patterns:")),
                                 0, wxALL, 0);
 
-   wxBoxSizer* minbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* minbox = new wxBoxSizer(wxHORIZONTAL);
    minbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent scripts:")),
                                 0, wxALL, 0);
 
@@ -1496,14 +1498,18 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_MAX_SCRIPTS, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
 
-   wxBoxSizer* hpbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hpbox = new wxBoxSizer(wxHORIZONTAL);
    hpbox->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hpbox->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 
-   wxBoxSizer* hsbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hsbox = new wxBoxSizer(wxHORIZONTAL);
    hsbox->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hsbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 
+   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+   vbox->AddSpacer(10);
+   vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
+   vbox->AddSpacer(10);
    vbox->Add(hpbox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hsbox, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -1535,35 +1541,26 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
    // random_fill
 
-   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("Random fill percentage:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    
-   // scroll_pencil
+   // scroll_pencil, scroll_cross, scroll_hand
    
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_SCROLL_PENCIL,
-                                       _("Scroll if pencil cursor is dragged outside view"),
-                                       wxDefaultPosition, wxDefaultSize);
-   
-   // scroll_cross
-   
+                                       _("Scroll if pencil cursor is dragged outside view"));
    wxCheckBox* check2 = new wxCheckBox(panel, PREF_SCROLL_CROSS,
-                                       _("Scroll if cross cursor is dragged outside view"),
-                                       wxDefaultPosition, wxDefaultSize);
-   
-   // scroll_hand
-   
+                                       _("Scroll if cross cursor is dragged outside view"));
    wxCheckBox* check3 = new wxCheckBox(panel, PREF_SCROLL_HAND,
-                                       _("Scroll if hand cursor is dragged outside view"),
-                                       wxDefaultPosition, wxDefaultSize);
+                                       _("Scroll if hand cursor is dragged outside view"));
 
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -1593,12 +1590,12 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
    // max_hash_mem
 
-   wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox5 = new wxBoxSizer(wxHORIZONTAL);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
@@ -1606,33 +1603,27 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // q_base_step and h_base_step
 
-   vbox->AddSpacer(GROUPGAP);
-
-   wxBoxSizer* longbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
    longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if not hashing:")),
                 0, wxALL, 0);
 
-   wxBoxSizer* shortbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* shortbox = new wxBoxSizer(wxHORIZONTAL);
    shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if hashing:")),
                  0, wxALL, 0);
 
    // align spin controls by setting shortbox same width as longbox
    shortbox->SetMinSize( longbox->GetMinSize() );
 
-   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_QBASE, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
 
-   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
    hbox2->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_HBASE, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
@@ -1643,39 +1634,44 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)")),
 #endif
               0, wxALIGN_CENTER_VERTICAL, 0);
-   vbox->AddSpacer(S2VGAP);
-   vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // min_delay and max_delay
 
-   vbox->AddSpacer(GROUPGAP);
-
-   wxBoxSizer* minbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* minbox = new wxBoxSizer(wxHORIZONTAL);
    minbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum delay:")), 0, wxALL, 0);
 
-   wxBoxSizer* maxbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* maxbox = new wxBoxSizer(wxHORIZONTAL);
    maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum delay:")), 0, wxALL, 0);
 
    // align spin controls by setting minbox same width as maxbox
    minbox->SetMinSize( maxbox->GetMinSize() );
 
-   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
    hbox3->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin3 = new MySpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox3->Add(spin3, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    
-   wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
    hbox4->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin4 = new MySpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox4->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
+
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(S2VGAP);
+   vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    
@@ -1700,29 +1696,23 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
    // show_tips
    
 #if wxUSE_TOOLTIPS
-   wxCheckBox* check3 = new wxCheckBox(panel, PREF_SHOW_TIPS,
-                                       _("Show button tips"),
-                                       wxDefaultPosition, wxDefaultSize);
+   wxCheckBox* check3 = new wxCheckBox(panel, PREF_SHOW_TIPS, _("Show button tips"));
 #endif
    
    // math_coords
    
-   wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP,
-                                       _("Y coordinates increase upwards"),
-                                       wxDefaultPosition, wxDefaultSize);
+   wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP, _("Y coordinates increase upwards"));
    
    // show_bold_lines and bold_spacing
    
-   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
-   wxCheckBox* check2 = new wxCheckBox(panel, PREF_SHOW_BOLD,
-                                       _("Show bold grid lines every"),
-                                       wxDefaultPosition, wxDefaultSize);
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_SHOW_BOLD, _("Show bold grid lines every"));
    
    wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_BOLD_SPACING, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
@@ -1734,7 +1724,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    
    // min_grid_mag (2..MAX_MAG)
 
-   wxBoxSizer* hbox3 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
    
    wxArrayString mingridChoices;
    mingridChoices.Add(wxT("1:4"));
@@ -1748,11 +1738,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
                                     #endif
                                     mingridChoices);
 
-   wxBoxSizer* longbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
    longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum scale for grid:")),
                 0, wxALL, 0);
 
-   wxBoxSizer* shortbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* shortbox = new wxBoxSizer(wxHORIZONTAL);
    shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")),
                  0, wxALL, 0);
 
@@ -1764,7 +1754,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
    // mouse_wheel_mode
 
-   wxBoxSizer* hbox4 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
    
    wxArrayString mousewheelChoices;
    mousewheelChoices.Add(wxT("Disabled"));
@@ -1779,14 +1769,14 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
    // thumb_range
 
-   wxBoxSizer* thumblabel = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* thumblabel = new wxBoxSizer(wxHORIZONTAL);
    thumblabel->Add(new wxStaticText(panel, wxID_STATIC, _("Thumb scroll range:")),
                    0, wxALL, 0);
 
    // align controls
    thumblabel->SetMinSize( longbox->GetMinSize() );
 
-   wxBoxSizer* hbox5 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox5 = new wxBoxSizer(wxHORIZONTAL);
    hbox5->Add(thumblabel, 0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_THUMB_RANGE, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
@@ -1838,25 +1828,68 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
+   
+   // ask_on_new, ask_on_load, ask_on_delete, ask_on_quit
+
+   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Ask to save changes to layer before:"));
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+
+   wxCheckBox* check1 = new wxCheckBox(panel, PREF_ASK_NEW, _("Creating a new pattern"));
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_ASK_LOAD, _("Loading a pattern file"));
+   wxCheckBox* check3 = new wxCheckBox(panel, PREF_ASK_DELETE, _("Deleting layer"));
+   wxCheckBox* check4 = new wxCheckBox(panel, PREF_ASK_QUIT, _("Quitting application"));
+
+   wxBoxSizer* b1 = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* b2 = new wxBoxSizer(wxHORIZONTAL);
+   b1->Add(check1, 0, wxALL, 0);
+   b2->Add(check2, 0, wxALL, 0);
+   wxSize wd1 = b1->GetMinSize();
+   wxSize wd2 = b2->GetMinSize();
+   if (wd1.GetWidth() > wd2.GetWidth())
+      b2->SetMinSize(wd1);
+   else
+      b1->SetMinSize(wd2);
+
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
+   hbox1->Add(b1, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox1->AddSpacer(20);
+   hbox1->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
+
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
+   hbox2->Add(b2, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox2->AddSpacer(20);
+   hbox2->Add(check4, 0, wxLEFT | wxRIGHT, LRGAP);
+
+   ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(CH2VGAP - 3);
+   ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(SBBOTGAP);
    
    // tile_border
 
-   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
-   hbox1->Add(new wxStaticText(panel, wxID_STATIC,
+   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
+   hbox3->Add(new wxStaticText(panel, wxID_STATIC,
                                _("Thickness of border around tiled layers:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_TILE_BORDER, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
-   hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox3->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+
+   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+   vbox->AddSpacer(10);
+   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // init control value
    spin1->SetRange(1, 10);
    spin1->SetValue(tileborder);
    spin1->SetSelection(ALL_TEXT);
+   check1->SetValue(askonnew);
+   check2->SetValue(askonload);
+   check3->SetValue(askondelete);
+   check4->SetValue(askonquit);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -1940,12 +1973,12 @@ void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
 wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
 {
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   wxBoxSizer* vbox = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
    // opacity
 
-   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(new wxStaticText(panel, wxID_STATIC,
                                _("Opacity percentage when drawing stacked layers:")),
               0, wxALIGN_CENTER_VERTICAL, 0);
@@ -2249,7 +2282,11 @@ bool PrefsDialog::TransferDataFromWindow()
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
 
    // LAYER_PAGE
-   tileborder = GetSpinVal(PREF_TILE_BORDER);
+   tileborder  = GetSpinVal(PREF_TILE_BORDER);
+   askonnew    = GetCheckVal(PREF_ASK_NEW);
+   askonload   = GetCheckVal(PREF_ASK_LOAD);
+   askondelete = GetCheckVal(PREF_ASK_DELETE);
+   askonquit   = GetCheckVal(PREF_ASK_QUIT);
 
    // COLOR_PAGE
    opacity = GetSpinVal(PREF_OPACITY);

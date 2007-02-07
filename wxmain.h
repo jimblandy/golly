@@ -65,6 +65,7 @@ public:
    void ToggleShowPatterns();
    void ToggleShowScripts();
    void SavePattern();
+   bool SaveCurrentLayer();
    wxString SaveFile(const wxString& path, const wxString& format, bool remember);
    #if wxUSE_DRAG_AND_DROP
       wxDropTarget* NewDropTarget();
@@ -164,7 +165,6 @@ private:
    void CreateDirControls();
    void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root);
    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
-   bool SaveCurrentLayer();
    void QuitApp();
 
    // splittable window contains pattern/script directory in left pane

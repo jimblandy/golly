@@ -1180,14 +1180,17 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    } else if (strcmp(optname, "stacklayers") == 0) {
       oldval = stacklayers ? 1 : 0;
       if (oldval != newval) {
+         inscript = false;       // do an update
          ToggleStackLayers();
-         DoAutoUpdate();
+         inscript = true;
       }
 
    } else if (strcmp(optname, "tilelayers") == 0) {
       oldval = tilelayers ? 1 : 0;
       if (oldval != newval) {
+         inscript = false;       // do an update
          ToggleTileLayers();
+         inscript = true;
       }
 
    } else if (strcmp(optname, "boldspacing") == 0) {
@@ -1203,7 +1206,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       oldval = savexrle ? 1 : 0;
       if (oldval != newval) {
          savexrle = (newval != 0);
-         // no need: DoAutoUpdate();
+         // no need for DoAutoUpdate();
       }
    
    } else {

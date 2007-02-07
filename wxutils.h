@@ -26,30 +26,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Various utility routines:
 
+void Note(const wxString& msg);
 // Display given message in a modal dialog.
-void Note(const wxString &msg);
 
+void Warning(const wxString& msg);
 // Beep and display message in a modal dialog.
-void Warning(const wxString &msg);
 
+void Fatal(const wxString& msg);
 // Beep, display message in a modal dialog, then exit app.
-void Fatal(const wxString &msg);
 
+int SaveChanges(const wxString& query, const wxString& msg);
+// Ask user if changes should be saved and return following result:
+// 2 if user selects Yes/Save button,
+// 1 if user selects No/Don't Save button,
+// 0 if user selects Cancel button.
+
+void BeginProgress(const wxString& dlgtitle);
 // Call at the start of a lengthy task.  The cursor changes to indicate
 // the app is busy but the progress dialog won't appear immediately.
-void BeginProgress(const wxString &dlgtitle);
 
+bool AbortProgress(double fraction_done, const wxString& newmsg);
 // Call frequently while the task is being carried out.  The progress
 // dialog only appears if the task is likely to take more than a few secs.
 // Pass in a fraction from 0.0 to 1.0 indicating how much has been done.
 // The given string can be used to display extra information.
 // The call returns true if the user cancels the progress dialog.
-bool AbortProgress(double fraction_done, const wxString &newmsg);
 
-// Call when the task has finished (even if it was aborted).
 void EndProgress();
+// Call when the task has finished (even if it was aborted).
 
+void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush);
 // Fill given rectangle using given brush.
-void FillRect(wxDC &dc, wxRect &rect, wxBrush &brush);
 
 #endif

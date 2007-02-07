@@ -1,15 +1,10 @@
 For future versions:
 --------------------
 
-A - Maintain "dirty" flag in each layer (similar to savestart)
-    and use to show "*" prefix in window title and Layer menu items.
-    Also use to ask if changes should be saved before quitting or
-    deleting layer or NewPattern or LoadPattern.
-
-A - Export new dialogs from wxutils: SaveChanges, GetString, GetNumber.
+A - Export new dialogs from wxutils: GetString, GetNumber.
 
 A - Give Mac app a creator sig (GoLy) and save files with creator
-    and type (GoLf) info.
+    and type (GoLf) info.  Modify info.plist accordingly.
 
 A - Show relative paths in Recent menus for files inside Golly folder.
     Automatically remove missing files at startup (too dangerous?)
