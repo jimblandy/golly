@@ -691,7 +691,7 @@ void SetLayer(int index)
       if (currlayer->cloneid == 0 || currlayer->cloneid != layer[index]->cloneid) {
          // status bar error is nicer than Warning dialog
          statusptr->ErrorMessage(
-            _("You cannot switch to another universe while a pattern is generating."));
+            _("Cannot switch to another universe while generating pattern."));
          return;
       }
    }
@@ -708,7 +708,7 @@ void SwitchToClickedTile(int index)
 {
    if (inscript) {
       // statusptr->ErrorMessage does nothing if inscript is true
-      Warning(_("You cannot switch to another layer while a script is running."));
+      Warning(_("Cannot switch to another layer while running script."));
       return;
    }
 

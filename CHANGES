@@ -9,6 +9,8 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
+AKT: Implemented an optional "save changes" dialog.
+AKT: Keep track of dirty layers and prefix their names with "*".
 AKT: A .py file selected via Open Pattern is run as a script.
 AKT: Reset and Use Hashing can be selected while a pattern is generating.
 AKT: Renamed Flip Up-Down to Flip Top-Bottom.

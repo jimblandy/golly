@@ -7,8 +7,8 @@
 
 <p>
 <ul>
-<li> Added support for multiple layers.
-     See the <a href="layer.html">Layer menu</a> help for details.
+<li> Golly supports multiple layers;
+     see the new <a href="layer.html">Layer menu</a> help for details.
 <li> Added <a href="scripting.html#layers">layer-related scripting commands</a>.
 <li> Added smear.py to the Scripts folder to show how layers can be used.
 <li> Added other useful scripting commands:
@@ -17,10 +17,14 @@
      <a href="scripting.html#note">note</a>.
 <li> Clicked lexicon patterns are loaded into a separate "lexicon" layer
      (and the clipboard is no longer changed).
+<li> If a pattern has been modified then its layer name is prefixed with an asterisk
+     and a "save changes" dialog will appear before certain actions, such as
+     loading a pattern file or quitting Golly.  The dialog can be disabled
+     via check boxes in Preferences > Layer.
 <li> Scrolling is optional if the pencil/cross/hand cursor is dragged outside
-     the view window (see Preferences > Edit).
+     the view window; see Preferences > Edit.
 <li> The hand cursor no longer has a pointing finger.
-<li> Linux/GTK app no longer does unnecessary buffered drawing.
+<li> The Linux/GTK app no longer does unnecessary buffered drawing.
 <li> A .py file selected via Open Pattern is run as a script.
 <li> Reset and Use Hashing can be selected while a pattern is generating.
 <li> Renamed Flip Up-Down to Flip Top-Bottom.

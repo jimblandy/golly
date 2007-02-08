@@ -1321,10 +1321,14 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 
 bool MainFrame::SaveCurrentLayer()
 {
-   wxString query = _("Save the changes to layer \"");
-   query +=         currlayer->currname;
-   query +=         _("\"?");
-
+   wxString query;
+   if (numlayers > 1) {
+      // make it clear which layer we're asking about
+      query.Printf(_("Save the changes to layer %d: \"%s\"?"),
+                   currindex, currlayer->currname.c_str());
+   } else {
+      query.Printf(_("Save the changes to \"%s\"?"), currlayer->currname.c_str());
+   }
    int answer = SaveChanges(query, _("If you don't save, your changes will be lost."));
    switch (answer) {
       case 2:  SavePattern(); return true;

@@ -165,7 +165,7 @@ void MainFrame::CreateUniverse()
 void MainFrame::NewPattern(const wxString& title)
 {
    if (generating) return;
-   if (!inscript && currlayer->dirty && askonnew && !SaveCurrentLayer()) return;
+   if (askonnew && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
 
    currlayer->savestart = false;
    currlayer->currfile.Clear();
@@ -241,9 +241,8 @@ bool MainFrame::LoadImage()
 
 void MainFrame::LoadPattern(const wxString& newtitle)
 {
-   if (!inscript && currlayer->dirty && askonload && !SaveCurrentLayer()) return;
-
    if (!newtitle.IsEmpty()) {
+      if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
       currlayer->savestart = false;
       currlayer->warp = 0;
       if (GetInfoFrame()) {

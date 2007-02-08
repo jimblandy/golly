@@ -27,6 +27,14 @@ The current layer is indicated by a tick.
 To switch to another layer just select the corresponding item.
 
 <p>
+A layer containing a modified pattern is indicated by a "*"
+at the start of the layer's name.  To avoid losing your changes,
+a "save changes" dialog will appear before creating a new pattern,
+loading a pattern file, deleting the layer, or quitting Golly.
+If you'd rather not see this dialog then untick the appropriate
+check boxes in Preferences > Layer.
+
+<p>
 Common layer functions are also available via buttons in the "layer bar"
 located above the viewport window.
 Use the Show Layer Bar item in the View menu to show/hide the
@@ -38,7 +46,7 @@ layer bar, or just hit the "\" key.
 <p>
 Adds a new layer (with an empty universe) immediately after the
 current layer.  The new layer becomes the current layer and
-inherits the previous layer's algorithm, rule, scale, location,
+inherits the preceding layer's algorithm, rule, scale, location,
 and cursor mode.  The step exponent is set to 0, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
 
@@ -67,8 +75,8 @@ the settings are not kept synchronized.
 <font size=+1><b>Delete Layer</b></font>
 
 <p>
-Deletes the current layer.  The current layer changes to the previous
-layer (unless layer 0 was deleted).
+Deletes the current layer.  The current layer changes to the preceding
+layer in the layer sequence (unless layer 0 was deleted).
 
 <p>
 <font size=+1><b>Delete Other Layers</b></font>
@@ -89,7 +97,7 @@ in the layer sequence.
 <p>
 Brings up a dialog that lets you change the name of the current layer.
 Note that loading a pattern file also changes the layer's name.
-Selecting New Pattern from the File menu resets the name to "untitled".
+Creating a new pattern resets the name to "untitled".
 
 <p>
 <font size=+1><b>Synchronize Views</b></font>
@@ -119,8 +127,8 @@ If ticked then all layers are displayed on top of one another,
 temporarily using the same scale and location as the current layer.
 The pattern in layer 0 is drawn first (100% opaque), then the
 patterns in other layers are drawn on top as translucent overlays.
-The opacity of live cells in the overlays can be set in Preferences > Layer.
-The colors for the live cells in each layer can be set in Preferences > Color.
+The colors for the live cells in each layer, and their opacity when stacked,
+can be set in Preferences > Color.
 For an example of how stacked layers can be useful, load in a pattern
 and run the <b>smear.py</b> script.
 

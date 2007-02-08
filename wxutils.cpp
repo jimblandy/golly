@@ -35,16 +35,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"
 
 #ifdef __WXMAC__
-#include <Carbon/Carbon.h>
+   #include <Carbon/Carbon.h>
+   #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
 #endif
 
 // -----------------------------------------------------------------------------
 
 void Note(const wxString& msg)
 {
-   #ifdef __WXMAC__
-      wxSetCursor(*wxSTANDARD_CURSOR);
-   #endif
    wxString title = wxGetApp().GetAppName() + _(" note:");
    wxMessageBox(msg, title, wxOK | wxICON_INFORMATION, wxGetActiveWindow());
 }
@@ -54,9 +52,6 @@ void Note(const wxString& msg)
 void Warning(const wxString& msg)
 {
    wxBell();
-   #ifdef __WXMAC__
-      wxSetCursor(*wxSTANDARD_CURSOR);
-   #endif
    wxString title = wxGetApp().GetAppName() + _(" warning:");
    wxMessageBox(msg, title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
 }
@@ -66,9 +61,6 @@ void Warning(const wxString& msg)
 void Fatal(const wxString& msg)
 {
    wxBell();
-   #ifdef __WXMAC__
-      wxSetCursor(*wxSTANDARD_CURSOR);
-   #endif
    wxString title = wxGetApp().GetAppName() + _(" error:");
    wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
@@ -77,26 +69,85 @@ void Fatal(const wxString& msg)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+
+// this filter is used to detect cmd-D in SaveChanges dialog
+Boolean AlertFilterProc(DialogRef dlg, EventRecord* event, DialogItemIndex* item)
+{
+   if (event->what == keyDown && (event->modifiers & cmdKey) && 
+         toupper(event->message & charCodeMask) == 'D') {
+
+      // temporarily highlight the Don't Save button
+      ControlRef ctrl;
+      Rect box;
+      GetDialogItemAsControl(dlg, kAlertStdAlertOtherButton, &ctrl);
+      HiliteControl(ctrl, kControlButtonPart);
+      GetControlBounds(ctrl, &box);
+      InvalWindowRect(GetDialogWindow(dlg), &box);
+      HIWindowFlush(GetDialogWindow(dlg));
+      Delay(6, NULL);
+      HiliteControl(ctrl, 0);
+
+      *item = kAlertStdAlertOtherButton;
+      return true;
+   }
+   return StdFilterProc(dlg, event, item);
+}
+
+#endif
+
+// -----------------------------------------------------------------------------
+
 int SaveChanges(const wxString& query, const wxString& msg)
 {
-   #ifdef __WXMAC__
-      wxSetCursor(*wxSTANDARD_CURSOR);
-   #endif
-   //!!! need a more standard dlg on Mac/Linux
+#ifdef __WXMAC__
+   // need a more standard dialog on Mac; ie. Save/Don't Save buttons
+   // instead of Yes/No, and cmd-D is a shortcut for Don't Save
+
+   short result;
+   AlertStdCFStringAlertParamRec param;
+
+   wxMacCFStringHolder cfSave(_("Save"), wxFONTENCODING_DEFAULT);
+   wxMacCFStringHolder cfDontSave(_("Don't Save"), wxFONTENCODING_DEFAULT);
+   
+   wxMacCFStringHolder cfTitle(query, wxFONTENCODING_DEFAULT);
+   wxMacCFStringHolder cfText(msg, wxFONTENCODING_DEFAULT);
+
+   param.version =         kStdCFStringAlertVersionOne;
+   param.position =        kWindowAlertPositionParentWindow;
+   param.movable =         true;
+   param.flags =           0;
+   param.defaultText =     cfSave;
+   param.cancelText =      (CFStringRef) kAlertDefaultCancelText;
+   param.otherText =       cfDontSave;
+   param.helpButton =      false;
+   param.defaultButton =   kAlertStdAlertOKButton;
+   param.cancelButton =    kAlertStdAlertCancelButton;
+
+   ModalFilterUPP filterProc = NewModalFilterUPP(AlertFilterProc);
+   
+   DialogRef alertRef;
+   CreateStandardAlert(kAlertNoteAlert, cfTitle, cfText, &param, &alertRef);
+   RunStandardAlert(alertRef, filterProc, &result);
+   
+   DisposeModalFilterUPP(filterProc);
+
+   switch (result) {
+      case 1:  return 2;    // Save
+      case 2:  return 0;    // Cancel
+      case 3:  return 1;    // Don't Save
+      default: return 0;
+   }
+#else
    int answer = wxMessageBox(msg, query,
-                             #ifdef __WXMAC__
-                                // just show app icon
-                                wxICON_EXCLAMATION |
-                             #else
-                                wxICON_QUESTION |
-                             #endif
-                             wxYES_NO | wxCANCEL,
+                             wxICON_QUESTION | wxYES_NO | wxCANCEL,
                              wxGetActiveWindow());
    switch (answer) {
       case wxYES: return 2;
       case wxNO:  return 1;
       default:    return 0;   // answer == wxCANCEL
    }
+#endif
 }
 
 // -----------------------------------------------------------------------------
