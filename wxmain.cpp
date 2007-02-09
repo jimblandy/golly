@@ -66,7 +66,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
-#include "wxlayer.h"       // for AddLayer, currlayer, etc
+#include "wxlayer.h"       // for AddLayer, maxlayers, currlayer, etc
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -210,7 +210,8 @@ enum {
    ID_SYNC_CURS,
    ID_STACK,
    ID_TILE,
-   ID_LAYER0         // keep this last (for OnMenu)
+   ID_LAYER0,
+   ID_LAYERMAX = ID_LAYER0 + maxlayers - 1
 };
 
 // -----------------------------------------------------------------------------
@@ -463,14 +464,14 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
       mbar->Enable(ID_TILE,         active);
-      for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++) {
-         if (generating) {
-            // allow switching to clone of current universe
-            mbar->Enable(id, active && !inscript &&
-                             currlayer->cloneid > 0 &&
-                             currlayer->cloneid == GetLayer(id - ID_LAYER0)->cloneid);
+      for (int i = 0; i < numlayers; i++) {
+         int id = ID_LAYER0 + i;
+         if (busy) {
+            // only allow switching to clone of current universe
+            mbar->Enable(id, active && currlayer->cloneid > 0 &&
+                                       currlayer->cloneid == GetLayer(i)->cloneid);
          } else {
-            mbar->Enable(id, active && !inscript);
+            mbar->Enable(id, active);
          }
       }
 
@@ -510,8 +511,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SYNC_CURS,  synccursors);
       mbar->Check(ID_STACK,      stacklayers);
       mbar->Check(ID_TILE,       tilelayers);
-      for (int id = ID_LAYER0; id < ID_LAYER0 + numlayers; id++)
-         mbar->Check(id, currindex == (id - ID_LAYER0));
+      for (int i = 0; i < numlayers; i++)
+         mbar->Check(ID_LAYER0 + i, currindex == i);
    }
 }
 
@@ -1044,11 +1045,9 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       default:
          if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
             OpenRecentPattern(id);
-         } else
-         if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
+         } else if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
             OpenRecentScript(id);
-         } else
-         if ( id >= ID_LAYER0 ) {
+         } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
             SetLayer(id - ID_LAYER0);
          }
    }
@@ -1057,6 +1056,10 @@ void MainFrame::OnMenu(wxCommandEvent& event)
    // allow user interaction while running script
    if (inscript) {
       inscript = false;
+      if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
+         // SetLayer was called, so update window title
+         SetWindowTitle(wxEmptyString);
+      }
       UpdatePatternAndStatus();
       inscript = true;
    }

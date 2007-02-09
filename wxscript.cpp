@@ -1044,14 +1044,18 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
 
    if (strcmp(optname, "autofit") == 0) {
       oldval = currlayer->autofit ? 1 : 0;
-      if (oldval != newval)
+      if (oldval != newval) {
          mainptr->ToggleAutoFit();
+         // autofit option only applies to a generating pattern
+         // DoAutoUpdate();
+      }
 
    } else if (strcmp(optname, "fullscreen") == 0) {
       oldval = mainptr->fullscreen ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleFullScreen();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "hashing") == 0) {
@@ -1104,42 +1108,48 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       oldval = showlayer ? 1 : 0;
       if (oldval != newval) {
          ToggleLayerBar();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showpatterns") == 0) {
       oldval = showpatterns ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleShowPatterns();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showscripts") == 0) {
       oldval = showscripts ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleShowScripts();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showtoolbar") == 0) {
       oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleToolBar();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showstatusbar") == 0) {
       oldval = mainptr->StatusVisible() ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleStatusBar();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showexact") == 0) {
       oldval = showexact ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleExactNumbers();
-         DoAutoUpdate();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "swapcolors") == 0) {
@@ -1180,17 +1190,17 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    } else if (strcmp(optname, "stacklayers") == 0) {
       oldval = stacklayers ? 1 : 0;
       if (oldval != newval) {
-         inscript = false;       // do an update
          ToggleStackLayers();
-         inscript = true;
+         // above always does an update
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "tilelayers") == 0) {
       oldval = tilelayers ? 1 : 0;
       if (oldval != newval) {
-         inscript = false;       // do an update
          ToggleTileLayers();
-         inscript = true;
+         // above always does an update
+         // DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "boldspacing") == 0) {
@@ -2521,7 +2531,12 @@ static PyObject *golly_note(PyObject *self, PyObject *args)
 
 static PyObject *golly_check(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   // don't call checkevents() here otherwise we can't safely write code like
+   //    if g.getlayer() == target:
+   //       g.check(0)
+   //       ... do stuff to target layer ...
+   //       g.check(1)
+   // if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    int flag;
 

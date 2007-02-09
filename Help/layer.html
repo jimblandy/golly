@@ -3,7 +3,7 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-Golly supports up to 10 layers.  Each layer is a separate universe
+Golly supports up to ten layers.  Each layer is a separate universe
 (unless cloned; see the Clone Layer item below)
 with its own algorithm (hashing or non-hashing), its own rule, viewport,
 cursor mode, selection, step exponent, origin offset, and name.
@@ -25,6 +25,10 @@ The names of cloned layers are prefixed by one or more "=" signs;
 all layers with the same number of "=" signs share the same universe.
 The current layer is indicated by a tick.
 To switch to another layer just select the corresponding item.
+If generating a pattern or running a script then you can only switch to
+another layer if it is a clone of the current layer (you can't switch
+to a different universe because there is a global rule table shared
+by all universes).
 
 <p>
 A layer containing a modified pattern is indicated by a "*"
@@ -139,10 +143,6 @@ and run the <b>smear.py</b> script.
 If ticked then the viewport window is tiled into sub-windows and
 each layer is displayed in a separate tile.  Clicking in the window
 of a non-current layer will change the current layer.
-Note that you cannot switch to another layer while a script is running.
-If a pattern is generating you can only switch to another layer
-if it is a clone of that pattern (you can't switch to a different
-universe because there is a global rule table shared by all universes).
 Tiling is very handy with cloned layers as it allows you to view
 the same pattern at different scales and/or locations.
 

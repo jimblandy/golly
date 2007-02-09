@@ -72,7 +72,8 @@ void Fatal(const wxString& msg)
 #ifdef __WXMAC__
 
 // this filter is used to detect cmd-D in SaveChanges dialog
-Boolean AlertFilterProc(DialogRef dlg, EventRecord* event, DialogItemIndex* item)
+
+Boolean SaveChangesFilter(DialogRef dlg, EventRecord* event, DialogItemIndex* item)
 {
    if (event->what == keyDown && (event->modifiers & cmdKey) && 
          toupper(event->message & charCodeMask) == 'D') {
@@ -124,7 +125,7 @@ int SaveChanges(const wxString& query, const wxString& msg)
    param.defaultButton =   kAlertStdAlertOKButton;
    param.cancelButton =    kAlertStdAlertCancelButton;
 
-   ModalFilterUPP filterProc = NewModalFilterUPP(AlertFilterProc);
+   ModalFilterUPP filterProc = NewModalFilterUPP(SaveChangesFilter);
    
    DialogRef alertRef;
    CreateStandardAlert(kAlertNoteAlert, cfTitle, cfText, &param, &alertRef);

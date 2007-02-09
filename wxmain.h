@@ -158,6 +158,7 @@ private:
    void ChangeStopToGo();
    bool SaveStartingPattern();
    void ShowRuleDialog();
+   void DisplayPattern();
 
    // miscellaneous functions
    void CreateMenus();

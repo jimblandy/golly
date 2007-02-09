@@ -310,40 +310,19 @@ void DestroyTiles()
 
 void UpdateView()
 {
-   if (tilelayers && numlayers > 1) {
-      //!!! make this more efficient??? ie. in many cases we only need to
-      // update the currently selected tile
-      
-      // update tile borders and all tiles (child windows of bigview)
-      bigview->Refresh(false);
-      //!!! only need to refresh bigview upon creating/resizing???
-      /*
-      // update all tile windows
-      for ( int i = 0; i < numlayers; i++ ) {
-         layer[i]->tilewin->Refresh(false);
-         layer[i]->tilewin->Update();
-      }
-      */
-      bigview->Update();
-      
-   } else {
-      // update main viewport window
-      viewptr->Refresh(false);
-      viewptr->Update();
-   }
+   // update main viewport window, including all tile windows if they exist
+   // (tile windows are children of bigview)
+   bigview->Refresh(false);
+   bigview->Update();
 }
 
 // -----------------------------------------------------------------------------
 
 void RefreshView()
 {
-   if (tilelayers && numlayers > 1) {
-      // refresh tile borders and all tiles (child windows of bigview)
-      bigview->Refresh(false);
-   } else {
-      // refresh main viewport window
-      viewptr->Refresh(false);
-   }
+   // refresh main viewport window, including all tile windows if they exist
+   // (tile windows are children of bigview)
+   bigview->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -691,7 +670,7 @@ void SetLayer(int index)
       if (currlayer->cloneid == 0 || currlayer->cloneid != layer[index]->cloneid) {
          // status bar error is nicer than Warning dialog
          statusptr->ErrorMessage(
-            _("Cannot switch to another universe while generating pattern."));
+            _("Cannot switch to another universe while a pattern is generating."));
          return;
       }
    }
@@ -707,13 +686,24 @@ void SetLayer(int index)
 void SwitchToClickedTile(int index)
 {
    if (inscript) {
-      // statusptr->ErrorMessage does nothing if inscript is true
-      Warning(_("Cannot switch to another layer while running script."));
-      return;
+      // only allow switching to clone of current universe
+      if (currlayer->cloneid == 0 || currlayer->cloneid != layer[index]->cloneid) {
+         // statusptr->ErrorMessage does nothing if inscript is true
+         Warning(_("Cannot switch to another universe while a script is running."));
+         return;
+      }
    }
 
    // switch current layer to clicked tile
    SetLayer(index);
+
+   if (inscript) {
+      // update window title, viewport and status bar
+      inscript = false;
+      mainptr->SetWindowTitle(wxEmptyString);
+      mainptr->UpdatePatternAndStatus();
+      inscript = true;
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -889,7 +879,14 @@ void ToggleStackLayers()
    SelectButton(STACK_LAYERS, stacklayers);
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
-   mainptr->UpdatePatternAndStatus();
+   if (inscript) {
+      // always update viewport and status bar
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      inscript = true;
+   } else {
+      mainptr->UpdatePatternAndStatus();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -910,7 +907,14 @@ void ToggleTileLayers()
    }
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
-   mainptr->UpdatePatternAndStatus();
+   if (inscript) {
+      // always update viewport and status bar
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      inscript = true;
+   } else {
+      mainptr->UpdatePatternAndStatus();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1326,11 +1330,16 @@ void LayerBar::OnButton(wxCommandEvent& event)
       case DELETE_LAYER:   DeleteLayer(); break;
       case STACK_LAYERS:   ToggleStackLayers(); break;
       case TILE_LAYERS:    ToggleTileLayers(); break;
-      default:             SetLayer(id);
+      default:
+         SetLayer(id);
+         if (inscript) {
+            // update window title, viewport and status bar
+            inscript = false;
+            mainptr->SetWindowTitle(wxEmptyString);
+            mainptr->UpdatePatternAndStatus();
+            inscript = true;
+         }
    }
-
-   // force viewport window update if script is running
-   if (inscript) bigview->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -1579,13 +1588,12 @@ void UpdateLayerBar(bool active)
       bitbutt[STACK_LAYERS]->Enable(active);
       bitbutt[TILE_LAYERS]->Enable(active);
       for (int i = 0; i < numlayers; i++) {
-         if (mainptr->generating) {
-            // allow switching to clone of current universe
-            bitbutt[i]->Enable(active && !inscript &&
-                               currlayer->cloneid > 0 &&
-                               currlayer->cloneid == layer[i]->cloneid);
+         if (busy) {
+            // only allow switching to clone of current universe
+            bitbutt[i]->Enable(active && currlayer->cloneid > 0 &&
+                                         currlayer->cloneid == layer[i]->cloneid);
          } else {
-            bitbutt[i]->Enable(active && !inscript);
+            bitbutt[i]->Enable(active);
          }
       }
    }

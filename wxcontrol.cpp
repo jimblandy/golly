@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 
-#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr
+#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for BeginProgress, etc
 #include "wxprefs.h"       // for maxhashmem, etc
 #include "wxrule.h"        // for ChangeRule
@@ -230,6 +230,34 @@ void MainFrame::GoSlower()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::DisplayPattern()
+{
+   // this routine is only used by GeneratePattern();
+   // it's similar to UpdatePatternAndStatus() but if tiled windows exist
+   // it only updates the current tile if possible; ie. it's not a clone
+   // and tile views aren't synchronized
+   
+   if (!IsIconized()) {
+      if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
+         // only update the current tile
+         viewptr->Refresh(false);
+         viewptr->Update();
+      } else {
+         // update main viewport window, possibly including all tile windows
+         // (tile windows are children of bigview)
+         bigview->Refresh(false);
+         bigview->Update();
+      }
+      if (StatusVisible()) {
+         statusptr->CheckMouseLocation(IsActive());
+         statusptr->Refresh(false);
+         statusptr->Update();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::GeneratePattern()
 {
    if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
@@ -269,8 +297,7 @@ void MainFrame::GeneratePattern()
             curralgo->step();
             if (wxGetApp().Poller()->checkevents()) break;
             if (currlayer->autofit) viewptr->FitInView(0);
-            // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
-            UpdatePatternAndStatus();
+            DisplayPattern();
             // add delay to current time rather than currmsec
             whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
@@ -284,8 +311,7 @@ void MainFrame::GeneratePattern()
          curralgo->step();
          if (wxGetApp().Poller()->checkevents()) break;
          if (currlayer->autofit) viewptr->FitInView(0);
-         // don't call UpdateEverything() -- no need to update menu/tool/scroll bars
-         UpdatePatternAndStatus();
+         DisplayPattern();
          if (currlayer->hyperspeed && curralgo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
