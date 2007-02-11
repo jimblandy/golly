@@ -12,7 +12,7 @@ Main features:
 - Reads RLE, Life 1.05/1.06, dblife, and macrocell formats.
 - Can also read common graphic formats: BMP, PNG, GIF, TIFF.
 - Includes a state-of-the-art pattern collection.
-- Supports Wolfram's 1D rules.
+- Supports other Life-like rules and Wolfram's 1D rules.
 - Fast loading of large patterns.
 - Paste in patterns from the clipboard.
 - Unbounded zooming out for astronomical patterns.

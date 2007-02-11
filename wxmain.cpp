@@ -464,16 +464,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
       mbar->Enable(ID_TILE,         active);
-      for (int i = 0; i < numlayers; i++) {
-         int id = ID_LAYER0 + i;
-         if (busy) {
-            // only allow switching to clone of current universe
-            mbar->Enable(id, active && currlayer->cloneid > 0 &&
-                                       currlayer->cloneid == GetLayer(i)->cloneid);
-         } else {
-            mbar->Enable(id, active);
-         }
-      }
+      for (int i = 0; i < numlayers; i++)
+         mbar->Enable(ID_LAYER0 + i, active && CanSwitchLayer(i));
 
       // tick/untick menu items created using AppendCheckItem
       mbar->Check(ID_SAVE_XRLE,     savexrle);
@@ -1049,20 +1041,16 @@ void MainFrame::OnMenu(wxCommandEvent& event)
             OpenRecentScript(id);
          } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
             SetLayer(id - ID_LAYER0);
+            if (inscript) {
+               // update window title, viewport and status bar
+               inscript = false;
+               SetWindowTitle(wxEmptyString);
+               UpdatePatternAndStatus();
+               inscript = true;
+            }
          }
    }
    UpdateUserInterface(IsActive());
-   
-   // allow user interaction while running script
-   if (inscript) {
-      inscript = false;
-      if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
-         // SetLayer was called, so update window title
-         SetWindowTitle(wxEmptyString);
-      }
-      UpdatePatternAndStatus();
-      inscript = true;
-   }
 }
 
 // -----------------------------------------------------------------------------

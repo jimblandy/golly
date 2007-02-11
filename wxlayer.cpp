@@ -665,14 +665,11 @@ void SetLayer(int index)
 
    if (inscript) {
       // always allow a script to switch layers
-   } else if (mainptr->generating) {
-      // only allow switching to clone of current universe
-      if (currlayer->cloneid == 0 || currlayer->cloneid != layer[index]->cloneid) {
-         // status bar error is nicer than Warning dialog
-         statusptr->ErrorMessage(
-            _("Cannot switch to another universe while a pattern is generating."));
-         return;
-      }
+   } else if (mainptr->generating && !CanSwitchLayer(index)) {
+      // status bar error is nicer than Warning dialog
+      statusptr->ErrorMessage(
+         _("You cannot switch to another universe while a pattern is generating."));
+      return;
    }
    
    SaveLayerSettings();
@@ -683,15 +680,31 @@ void SetLayer(int index)
 
 // -----------------------------------------------------------------------------
 
-void SwitchToClickedTile(int index)
+bool CanSwitchLayer(int index)
 {
    if (inscript) {
-      // only allow switching to clone of current universe
-      if (currlayer->cloneid == 0 || currlayer->cloneid != layer[index]->cloneid) {
-         // statusptr->ErrorMessage does nothing if inscript is true
-         Warning(_("Cannot switch to another universe while a script is running."));
-         return;
-      }
+      // user can only switch layers if script has set the appropriate option
+      return canswitch;
+
+   } else if (mainptr->generating) {
+      // user can only switch to a clone of the current universe
+      // (mainly because all universes share a global rule table)
+      return currlayer->cloneid > 0 && currlayer->cloneid == layer[index]->cloneid;
+
+   } else {
+      // user can switch to any layer
+      return true;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void SwitchToClickedTile(int index)
+{
+   if (inscript && !CanSwitchLayer(index)) {
+      // statusptr->ErrorMessage does nothing if inscript is true
+      Warning(_("You cannot switch to another layer while this script is running."));
+      return;
    }
 
    // switch current layer to clicked tile
@@ -1587,15 +1600,8 @@ void UpdateLayerBar(bool active)
       bitbutt[DELETE_LAYER]->Enable(active && !busy && numlayers > 1);
       bitbutt[STACK_LAYERS]->Enable(active);
       bitbutt[TILE_LAYERS]->Enable(active);
-      for (int i = 0; i < numlayers; i++) {
-         if (busy) {
-            // only allow switching to clone of current universe
-            bitbutt[i]->Enable(active && currlayer->cloneid > 0 &&
-                                         currlayer->cloneid == layer[i]->cloneid);
-         } else {
-            bitbutt[i]->Enable(active);
-         }
-      }
+      for (int i = 0; i < numlayers; i++)
+         bitbutt[i]->Enable(active && CanSwitchLayer(i));
    }
 }
 

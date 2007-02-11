@@ -28,6 +28,9 @@ extern bool inscript;
 // Is a script currently running?  We allow access to global flag
 // so clients can temporarily save and restore its setting.
 
+extern bool canswitch;
+// Can user switch layers while a script is running?
+
 bool IsScript(const wxString& filename);
 // Return true if the given file is a Python script.
 // It simply checks if the file's extension is ".py" (ignoring case).

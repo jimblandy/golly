@@ -74,6 +74,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 bool pyinited = false;     // Py_Initialize has been successfully called?
 bool inscript = false;     // a script is running?
+bool canswitch;            // can user switch layers while script is running?
 bool autoupdate;           // update display after each change to current universe?
 bool exitcalled;           // golly_exit was called?
 bool allowcheck;           // allow event checking?
@@ -1162,14 +1163,14 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    } else if (strcmp(optname, "showgrid") == 0) {
       oldval = showgridlines ? 1 : 0;
       if (oldval != newval) {
-         showgridlines = (newval != 0);
+         showgridlines = !showgridlines;
          DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showboldlines") == 0) {
       oldval = showboldlines ? 1 : 0;
       if (oldval != newval) {
-         showboldlines = (newval != 0);
+         showboldlines = !showboldlines;
          DoAutoUpdate();
       }
 
@@ -1185,6 +1186,13 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       if (oldval != newval) {
          ToggleSyncCursors();
          DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "switchlayers") == 0) {
+      oldval = canswitch ? 1 : 0;
+      if (oldval != newval) {
+         canswitch = !canswitch;
+         // no need for DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "stacklayers") == 0) {
@@ -1215,7 +1223,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
    } else if (strcmp(optname, "savexrle") == 0) {
       oldval = savexrle ? 1 : 0;
       if (oldval != newval) {
-         savexrle = (newval != 0);
+         savexrle = !savexrle;
          // no need for DoAutoUpdate();
       }
    
@@ -1263,6 +1271,7 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
    else if (strcmp(optname, "stacklayers") == 0)   optval = stacklayers ? 1 : 0;
    else if (strcmp(optname, "swapcolors") == 0)    optval = swapcolors ? 1 : 0;
+   else if (strcmp(optname, "switchlayers") == 0)  optval = canswitch ? 1 : 0;
    else if (strcmp(optname, "synccursors") == 0)   optval = synccursors ? 1 : 0;
    else if (strcmp(optname, "syncviews") == 0)     optval = syncviews ? 1 : 0;
    else if (strcmp(optname, "tilelayers") == 0)    optval = tilelayers ? 1 : 0;
@@ -2849,6 +2858,7 @@ void RunScript(const wxString& filename)
    statusptr->ClearMessage();
    pyerror.Clear();
    scriptchars.Clear();
+   canswitch = false;
    autoupdate = false;
    exitcalled = false;
    allowcheck = true;
