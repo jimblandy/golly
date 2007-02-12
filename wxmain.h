@@ -118,6 +118,9 @@ public:
    wxString scriptfile;       // name of file created by RunClipboard
    wxString clipfile;         // name of file for storing clipboard data
 
+   // store files passed via command line (processed in first OnIdle)
+   wxArrayString pendingfiles;
+
 private:
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()

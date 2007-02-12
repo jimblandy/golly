@@ -46,7 +46,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // defines PatternView class
 #include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
 #include "wxprefs.h"       // for GetPrefs, gollydir
-#include "wxscript.h"      // for IsScript
 
 #ifdef __WXMSW__
    // app icons are loaded via .rc file
@@ -297,21 +296,24 @@ bool GollyApp::OnInit()
    banner +=         _(".  Copyright 2007 The Golly Gang.");
    statusptr->SetMessage(banner);
    
-   wxFileName filename;
-   if (argc > 1) {
-      // convert argv[1] to a full path if not one already; this allows users
-      // to do things like "../golly bricklayer.py" from within Scripts folder
-      filename = argv[1];
-      if (!filename.IsAbsolute()) filename = initdir + argv[1];
+   mainptr->NewPattern();
+
+   // script/pattern files are stored in the pendingfiles array for later processing
+   // in OnIdle; this avoids a crash in Win/X11 app if a script is run before
+   // showing the main window, and also avoids event problems in Win app with
+   // a long-running script (eg. user can't hit escape to abort script)
+   wxString startscript = gollydir + wxT("golly-start.py");
+   if (wxFileExists(startscript)) {
+      mainptr->pendingfiles.Add(startscript);
    }
-   
-   // load pattern file if supplied on Win/Unix command line;
-   // do before showing window to avoid an irritating flash
-   if (argc > 1 && !IsScript(filename.GetFullPath())) {
-      mainptr->OpenFile(filename.GetFullPath());
-   } else {
-      mainptr->NewPattern();
-   }   
+   // argc is > 1 if command line has one or more script/pattern files
+   for (int n = 1; n < argc; n++) {
+      wxFileName filename(argv[n]);
+      // convert given path to a full path if not one already; this allows users
+      // to do things like "../golly bricklayer.py" from within Scripts folder
+      if (!filename.IsAbsolute()) filename = initdir + argv[n];
+      mainptr->pendingfiles.Add(filename.GetFullPath());
+   }
 
    if (maximize) mainptr->Maximize(true);
    if (!showstatus) mainptr->ToggleStatusBar();
@@ -320,11 +322,6 @@ bool GollyApp::OnInit()
    // now show main window
    mainptr->Show(true);
    SetTopWindow(mainptr);
-
-   // load script file AFTER showing main window to avoid crash in Win/X11 app
-   if (argc > 1 && IsScript(filename.GetFullPath())) {
-      mainptr->OpenFile(filename.GetFullPath());
-   }
 
    #ifdef __WXX11__
       // prevent main window being resized very small to avoid nasty errors

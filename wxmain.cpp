@@ -1156,6 +1156,14 @@ void MainFrame::OnSize(wxSizeEvent& event)
 
 void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 {
+   // process any pending script/pattern files passed via command line
+   if ( pendingfiles.GetCount() > 0 ) {
+      for ( size_t n = 0; n < pendingfiles.GetCount(); n++ ) {
+         OpenFile(pendingfiles[n]);
+      }
+      pendingfiles.Clear();
+   }
+
    #ifdef __WXX11__
       // don't change focus here because it prevents menus staying open
       return;
@@ -2010,6 +2018,7 @@ MainFrame::MainFrame()
 
    InitDrawingData();      // do this after viewport size has been set
 
+   pendingfiles.Clear();   // no pending script/pattern files
    generating = false;     // not generating pattern
    fullscreen = false;     // not in full screen mode
    showbanner = true;      // avoid first file clearing banner message
