@@ -1154,13 +1154,26 @@ void MainFrame::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXX11__) || defined(__WXGTK__)
+   // handle recursive OnIdle call (probably via Yield call in checkevents)
+   bool inidle = false;
+#endif
+
 void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 {
+   if (inidle) return;
+
    // process any pending script/pattern files passed via command line
    if ( pendingfiles.GetCount() > 0 ) {
+      #if defined(__WXX11__) || defined(__WXGTK__)
+         inidle = true;
+      #endif
       for ( size_t n = 0; n < pendingfiles.GetCount(); n++ ) {
          OpenFile(pendingfiles[n]);
       }
+      #if defined(__WXX11__) || defined(__WXGTK__)
+         inidle = false;
+      #endif
       pendingfiles.Clear();
    }
 
