@@ -9,7 +9,9 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
-AKT: Implemented an optional "save changes" dialog.
+AKT: If golly-start.py exists in same dir as app it is executed at startup.
+AKT: Fixed bug if Win app given a long-running script on command line.
+AKT: Implemented "save changes" dialog (optional via Prefs > Layer).
 AKT: Keep track of dirty layers and prefix their names with "*".
 AKT: A .py file selected via Open Pattern is run as a script.
 AKT: Reset and Use Hashing can be selected while a pattern is generating.

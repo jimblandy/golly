@@ -1161,7 +1161,9 @@ void MainFrame::OnSize(wxSizeEvent& event)
 
 void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 {
-   if (inidle) return;
+   #if defined(__WXX11__) || defined(__WXGTK__)
+      if (inidle) return;
+   #endif
 
    // process any pending script/pattern files passed via command line
    if ( pendingfiles.GetCount() > 0 ) {
