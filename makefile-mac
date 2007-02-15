@@ -28,9 +28,6 @@ endif
 
 APP_NAME = Golly
 APP_VERSION = 1.2
-COPYRIGHT = 2007 The Golly Gang
-BUNDLE_ID = net.sourceforge.golly
-ICON_FILE = app.icns
 
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
@@ -48,7 +45,7 @@ PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServic
 RELEASENAME = golly-$(APP_VERSION)
 SHAREDFILES = Help Patterns Scripts README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
-   bitmaps golly.rc *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
+   bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 
 # Variables:
 
@@ -101,7 +98,7 @@ __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
-all: $(OBJDIR) golly.bin golly_bundle
+all: $(OBJDIR) app.bin app_bundle
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
@@ -110,30 +107,27 @@ clean:
 	rm -f $(OBJDIR)/*.o
 	rm -rf $(APP_NAME).app
 
-golly.bin: $(OBJFILES)
+app.bin: $(OBJFILES)
 	$(CXXC) -o $@ $(OBJFILES) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
    $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LINK)
 
-$(APP_NAME).app/Contents/PkgInfo: golly.bin Info.plist.in $(ICON_FILE)
+$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
+app.icns file-mc.icns file-rle.icns
 	mkdir -p $(APP_NAME).app/Contents
 	mkdir -p $(APP_NAME).app/Contents/MacOS
 	mkdir -p $(APP_NAME).app/Contents/Resources
 	
-	sed -e "s/IDENTIFIER/$(BUNDLE_ID)/" \
-	-e "s/ICONFILE/$(ICON_FILE)/" \
-	-e "s/EXECUTABLE/$(APP_NAME)/" \
-	-e "s/VERSION/$(APP_VERSION)/" \
-	-e "s/COPYRIGHT/$(COPYRIGHT)/" \
+	sed -e "s/VERSION/$(APP_VERSION)/" \
 	Info.plist.in >$(APP_NAME).app/Contents/Info.plist
 	
-	echo -n "APPL????" >$(APP_NAME).app/Contents/PkgInfo
+	echo -n "APPLGoLy" >$(APP_NAME).app/Contents/PkgInfo
 	
-	mv -f golly.bin $(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+	mv -f app.bin $(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	
-	cp -f $(ICON_FILE) $(APP_NAME).app/Contents/Resources/$(ICON_FILE)
+	cp -f *.icns $(APP_NAME).app/Contents/Resources
 
-golly_bundle: $(APP_NAME).app/Contents/PkgInfo
+app_bundle: $(APP_NAME).app/Contents/PkgInfo
 
 $(OBJDIR)/bigint.o: bigint.cpp bigint.h util.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ bigint.cpp

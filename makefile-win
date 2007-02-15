@@ -28,7 +28,7 @@ SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife \
    Patterns\Rakes Patterns\Signal-Circuitry Patterns\Still-Lifes Patterns\Spaceships \
    Patterns\Syntheses
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
-   golly.rc *.ico appicon.xpm Info.plist.in app.icns *.h *.cpp
+   golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe
 

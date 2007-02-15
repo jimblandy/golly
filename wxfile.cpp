@@ -696,6 +696,22 @@ const char *MainFrame::WritePattern(const wxString& path,
       const char *err = writepattern(path.mb_str(wxConvLocal),
                         *currlayer->algo, format, top, left, bottom, right);
    #endif
+   
+   #ifdef __WXMAC__
+      if (!err) {
+         // set the file's creator and type
+         wxFileName filename(path);
+         wxUint32 creator = 'GoLy';
+         wxUint32 type = 'GoLR';       // RLE or XRLE
+         if (format == MC_format) {
+            type = 'GoLM';
+         } else if (format == L105_format) {
+            type = 'GoLL';
+         }
+         filename.MacSetTypeAndCreator(type, creator);
+      }
+   #endif
+   
    return err;
 }
 
