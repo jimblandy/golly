@@ -29,12 +29,48 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Golly Run Length Encoded File</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>file-rle.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>rle</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>GoLR</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Golly Macrocell File</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>file-mc.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>mc</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>GoLM</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Pattern File</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>****</string>
 			</array>
-			<key>CFBundleTypeName</key>
-			<string>Pattern file</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 		</dict>
