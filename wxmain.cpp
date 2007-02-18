@@ -303,7 +303,7 @@ public:
    void OnButtonDown(wxMouseEvent& event);
    void OnButtonUp(wxMouseEvent& event);
    void OnKillFocus(wxFocusEvent& event);
-
+   
 private:
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -312,9 +312,6 @@ private:
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
-   
-   // tool bar buttons
-   wxBitmapButton* tbbutt[NUM_BUTTONS];
    
    // bitmaps for normal or down state
    wxBitmap normtool[NUM_BUTTONS];
@@ -332,6 +329,9 @@ END_EVENT_TABLE()
 
 ToolBar* toolbarptr = NULL;      // global pointer to tool bar
 const int toolbarwd = 32;        // width of (vertical) tool bar
+
+// tool bar buttons (must be global to use Connect/Disconect)
+wxBitmapButton* tbbutt[NUM_BUTTONS];
 
 // -----------------------------------------------------------------------------
 
@@ -396,26 +396,20 @@ void ToolBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    #ifdef __WXMSW__
       // needed on Windows
       dc.Clear();
-   #endif
-   
-   wxRect r = wxRect(0, 0, wd, ht);
-   
-   #ifdef __WXMAC__
-      wxBrush brush(wxColor(202,202,202));
-      FillRect(dc, r, brush);
-   #endif
-   
-   // draw gray border line at right edge
-   #if defined(__WXMSW__)
-      dc.SetPen(*wxGREY_PEN);
-   #elif defined(__WXMAC__)
-      wxPen linepen(wxColor(140,140,140));
-      dc.SetPen(linepen);
    #else
-      dc.SetPen(*wxLIGHT_GREY_PEN);
+      wxRect r = wxRect(0, 0, wd, ht);   
+      // draw gray border line at right edge
+      #ifdef __WXMAC__
+         wxBrush brush(wxColor(202,202,202));
+         FillRect(dc, r, brush);
+         wxPen linepen(wxColor(140,140,140));
+         dc.SetPen(linepen);
+      #else
+         dc.SetPen(*wxLIGHT_GREY_PEN);
+      #endif
+      dc.DrawLine(r.GetRight(), 0, r.GetRight(), r.height);
+      dc.SetPen(wxNullPen);
    #endif
-   dc.DrawLine(r.GetRight(), 0, r.GetRight(), r.GetBottom());
-   dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------
@@ -1041,6 +1035,7 @@ void MainFrame::ResizeSplitWindow(int wd, int ht)
 
 void MainFrame::ResizeStatusBar(int wd, int ht)
 {
+   wxUnusedVar(ht);
    // assume showstatus is true
    statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
    statusptr->SetSize(showtool ? toolbarwd : 0, 0,
