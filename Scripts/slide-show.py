@@ -53,6 +53,7 @@ def slideshow ():
 # show status bar but hide other info to maximize viewport
 oldstatus = g.setoption("showstatusbar", True)
 oldtoolbar = g.setoption("showtoolbar", False)
+oldlayerbar = g.setoption("showlayerbar", False)
 oldscripts = g.setoption("showscripts", False)
 oldpatterns = g.setoption("showpatterns", False)
 
@@ -65,5 +66,6 @@ finally:
    # restore original state
    g.setoption("showstatusbar", oldstatus)
    g.setoption("showtoolbar", oldtoolbar)
+   g.setoption("showlayerbar", oldlayerbar)
    g.setoption("showscripts", oldscripts)
    g.setoption("showpatterns", oldpatterns)

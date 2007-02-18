@@ -64,6 +64,11 @@ const int YLINE = 6*LINEHT-2;
 // these horizontal offets are used when showexact is true
 int h_x_ex, h_y_ex;
 
+#ifdef __WXMAC__
+   // gray line at bottom of status bar (matches line at bottom of OS X title bar)
+   wxPen linepen(wxColor(140,140,140));
+#endif
+
 // -----------------------------------------------------------------------------
 
 void StatusBar::ClearMessage()
@@ -248,13 +253,17 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
    wxRect r = wxRect(0, 0, wd, ht);
    FillRect(dc, r, currlayer->hash ? *hlifebrush : *qlifebrush);
 
-   #ifdef __WXMSW__
+   #if defined(__WXMSW__)
       // draw gray lines at top and left edges
       dc.SetPen(*wxGREY_PEN);
       dc.DrawLine(0, 0, r.width, 0);
       dc.DrawLine(0, 0, 0, r.height);
       // don't draw right edge on XP
       // dc.DrawLine(r.GetRight(), 0, r.GetRight(), r.height);
+   #elif defined(__WXMAC__)
+      // draw gray line at bottom edge
+      dc.SetPen(linepen);
+      dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
    #else
       // draw gray line at bottom edge
       dc.SetPen(*wxLIGHT_GREY_PEN);
@@ -542,8 +551,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    dc.GetTextExtent(_("Y = "), &textwd, &textht);
    h_y_ex = h_gen + textwd;
 
-   // status bar is initially visible
-   statusht = showexact ? STATUS_EXHT : STATUS_HT;
+   statusht = ht;
    showxy = false;
 
    statbitmap = NULL;

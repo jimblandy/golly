@@ -65,6 +65,7 @@ extern bool initshowhashinfo;    // initial showhashinfo setting
 extern bool savexrle;            // save RLE file using XRLE format?
 extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
+extern bool showlayer;           // show layer bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
@@ -81,7 +82,6 @@ extern int mingridmag;           // minimum mag to draw grid lines
 extern int boldspacing;          // spacing of bold grid lines
 extern bool showboldlines;       // show bold grid lines?
 extern bool mathcoords;          // show Y values increasing upwards?
-extern bool showlayer;           // show layer bar?
 extern bool syncviews;           // synchronize viewports?
 extern bool synccursors;         // synchronize cursors?
 extern bool stacklayers;         // stack all layers?

@@ -1130,7 +1130,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       }
 
    } else if (strcmp(optname, "showtoolbar") == 0) {
-      oldval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
+      oldval = showtool ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleToolBar();
          // above always does an update (due to resizing viewport window)
@@ -1138,7 +1138,7 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
       }
 
    } else if (strcmp(optname, "showstatusbar") == 0) {
-      oldval = mainptr->StatusVisible() ? 1 : 0;
+      oldval = showstatus ? 1 : 0;
       if (oldval != newval) {
          mainptr->ToggleStatusBar();
          // above always does an update (due to resizing viewport window)
@@ -1267,8 +1267,8 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
    else if (strcmp(optname, "showlayerbar") == 0)  optval = showlayer ? 1 : 0;
    else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
-   else if (strcmp(optname, "showstatusbar") == 0) optval = mainptr->StatusVisible() ? 1 : 0;
-   else if (strcmp(optname, "showtoolbar") == 0)   optval = mainptr->GetToolBar()->IsShown() ? 1 : 0;
+   else if (strcmp(optname, "showstatusbar") == 0) optval = showstatus ? 1 : 0;
+   else if (strcmp(optname, "showtoolbar") == 0)   optval = showtool ? 1 : 0;
    else if (strcmp(optname, "stacklayers") == 0)   optval = stacklayers ? 1 : 0;
    else if (strcmp(optname, "swapcolors") == 0)    optval = swapcolors ? 1 : 0;
    else if (strcmp(optname, "switchlayers") == 0)  optval = canswitch ? 1 : 0;
@@ -2478,7 +2478,7 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
    statusptr->DisplayMessage(wxString(s,wxConvLocal));
    inscript = true;
    // make sure status bar is visible
-   if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
+   if (!showstatus) mainptr->ToggleStatusBar();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2498,7 +2498,7 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
    statusptr->ErrorMessage(wxString(s,wxConvLocal));
    inscript = true;
    // make sure status bar is visible
-   if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
+   if (!showstatus) mainptr->ToggleStatusBar();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2573,7 +2573,7 @@ static PyObject *golly_exit(PyObject *self, PyObject *args)
       statusptr->ErrorMessage(wxString(errmsg,wxConvLocal));
       inscript = true;
       // make sure status bar is visible
-      if (!mainptr->StatusVisible()) mainptr->ToggleStatusBar();
+      if (!showstatus) mainptr->ToggleStatusBar();
    }
    
    exitcalled = true;   // prevent CheckPythonError changing message

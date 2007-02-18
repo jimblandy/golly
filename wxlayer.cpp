@@ -27,12 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#if wxUSE_TOOLTIPS
-   #include "wx/tooltip.h" // for wxToolTip
-#endif
-
 #include "wx/numdlg.h"     // for wxGetNumberFromUser
-#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -107,10 +102,6 @@ wxBitmap normbitmap[NUM_BUTTONS];
 wxBitmap downbitmap[NUM_BUTTONS];
 
 int downid = -1;                 // id of currently pressed layer button
-
-const int BUTTON_WD = 24;        // nominal width of bitmap buttons
-const int BITMAP_WD = 16;        // width of bitmaps
-const int BITMAP_HT = 16;        // height of bitmaps
 
 // -----------------------------------------------------------------------------
 
@@ -1298,15 +1289,22 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       dc.Clear();
    #endif
    
-   // draw some border lines
-   #ifdef __WXMSW__
-      // draw gray line at bottom edge
+   wxRect r = wxRect(0, 0, wd, ht);
+   
+   #ifdef __WXMAC__
+      wxBrush brush(wxColor(202,202,202));
+      FillRect(dc, r, brush);
+   #endif
+   
+   // draw gray border line at bottom edge
+   #if defined(__WXMSW__)
       dc.SetPen(*wxGREY_PEN);
+   #elif defined(__WXMAC__)
+      wxPen linepen(wxColor(140,140,140));
+      dc.SetPen(linepen);
    #else
-      // draw light gray line at bottom edge
       dc.SetPen(*wxLIGHT_GREY_PEN);
    #endif
-   wxRect r = wxRect(0, 0, wd, ht);
    dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
    dc.SetPen(wxNullPen);
 }
@@ -1448,6 +1446,9 @@ void LayerBar::AddButton(int id, char label, int x, int y)
 
    } else {
       // id == LAYER_0..LAYER_LAST
+      const int BITMAP_WD = 16;        // width of bitmaps
+      const int BITMAP_HT = 16;        // height of bitmaps
+
       wxMemoryDC dc;
       #ifdef __WXMAC__
          wxFont* font = wxFont::New(11, wxMODERN, wxNORMAL, wxBOLD);
@@ -1527,8 +1528,10 @@ void CreateLayerBar(wxWindow* parent)
    layerbarptr = new LayerBar(parent, 0, 0, wd, layerbarht);
    if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
 
-   // create bitmap buttons
-   int x = 4;
+   const int BUTTON_WD = 24;     // nominal width of bitmap buttons
+
+   int bgap = 16;
+   int x = bgap;                 // nicer than 4 when no pattern/script window
    #ifdef __WXGTK__
       int y = 3;
       int sgap = 6;
@@ -1536,7 +1539,8 @@ void CreateLayerBar(wxWindow* parent)
       int y = 4;
       int sgap = 4;
    #endif
-   int bgap = 16;
+
+   // create bitmap buttons
    layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(CLONE_LAYER,  '=', x, y);   x += BUTTON_WD + sgap;
    layerbarptr->AddButton(DELETE_LAYER, '-', x, y);   x += BUTTON_WD + bgap;
@@ -1558,9 +1562,6 @@ void CreateLayerBar(wxWindow* parent)
       tip.Printf(_("Switch to layer %d"), i);
       bitbutt[i]->SetToolTip(tip);
    }
-   #if wxUSE_TOOLTIPS
-      wxToolTip::Enable(showtips);  // fix wxGTK bug
-   #endif
   
    // hide all layer buttons except layer 0
    for (int i = 1; i < maxlayers; i++) bitbutt[i]->Show(false);
@@ -1575,7 +1576,7 @@ void CreateLayerBar(wxWindow* parent)
    // disable DELETE_LAYER button
    bitbutt[DELETE_LAYER]->Enable(false);
       
-   layerbarptr->Show(showlayer);    // needed on Windows
+   layerbarptr->Show(showlayer);
 }
 
 // -----------------------------------------------------------------------------

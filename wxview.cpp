@@ -581,9 +581,7 @@ void PatternView::ShowDrawing()
    currlayer->savestart = true;
 
    // update status bar
-   if (mainptr->StatusVisible()) {
-      statusptr->Refresh(false);
-   }
+   if (showstatus) statusptr->Refresh(false);
 
    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // update all layers; this is rather slow but most people won't be
@@ -1242,7 +1240,7 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
    
    if ( mainptr->generating && (key == WXK_ESCAPE || key == WXK_RETURN || key == ' ' || key == '.') ) {
-      mainptr->StopGenerating();
+      mainptr->Stop();
       return;
    }
 

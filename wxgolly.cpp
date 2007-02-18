@@ -58,7 +58,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Create a new application object: this macro will allow wxWidgets to create
 // the application object during program execution and also implements the
 // accessor function wxGetApp() which will return the reference of the correct
-// type (i.e. GollyApp and not wxApp).
+// type (ie. GollyApp and not wxApp).
 
 IMPLEMENT_APP(GollyApp)
 
@@ -151,7 +151,7 @@ int wx_poll::checkevents()
 
 void wx_poll::updatePop()
 {
-   if (mainptr->StatusVisible()) {
+   if (showstatus) {
       statusptr->Refresh(false);
       statusptr->Update();
    }
@@ -232,7 +232,9 @@ void GollyApp::SetFrameIcon(wxFrame* frame)
 // -----------------------------------------------------------------------------
 
 #ifdef __WXMAC__
+
 // handle odoc event
+
 void GollyApp::MacOpenFile(const wxString& fullPath)
 {
    if (mainptr->generating) return;
@@ -244,6 +246,7 @@ void GollyApp::MacOpenFile(const wxString& fullPath)
 // -----------------------------------------------------------------------------
 
 // app execution starts here
+
 bool GollyApp::OnInit()
 {
    SetAppName(_("Golly"));    // for use in Warning/Fatal dialogs
@@ -315,11 +318,8 @@ bool GollyApp::OnInit()
       mainptr->pendingfiles.Add(filename.GetFullPath());
    }
 
+   // show main window
    if (maximize) mainptr->Maximize(true);
-   if (!showstatus) mainptr->ToggleStatusBar();
-   if (!showtool) mainptr->ToggleToolBar();
-
-   // now show main window
    mainptr->Show(true);
    SetTopWindow(mainptr);
 

@@ -81,7 +81,7 @@ public:
    void GeneratePattern();
    void GoFaster();
    void GoSlower();
-   void StopGenerating();
+   void Stop();
    void DisplayTimingInfo();
    void NextGeneration(bool useinc);
    void AdvanceOutsideSelection();
@@ -95,13 +95,13 @@ public:
    void ResetPattern();
 
    // view functions
-   bool StatusVisible();
    void ToggleStatusBar();
    void ToggleExactNumbers();
    void ToggleToolBar();
    void ToggleFullScreen();
    void ShowPatternInfo();
-   void ResizeSplitWindow();
+   void ResizeSplitWindow(int wd, int ht);
+   void ResizeStatusBar(int wd, int ht);
    wxWindow* RightPane();
 
    // layer functions
@@ -127,7 +127,6 @@ private:
 
    // event handlers
    void OnMenu(wxCommandEvent& event);
-   void OnButton(wxCommandEvent& event);
    void OnSetFocus(wxFocusEvent& event);
    void OnActivate(wxActivateEvent& event);
    void OnSize(wxSizeEvent& event);
@@ -157,8 +156,6 @@ private:
                             int top, int left, int bottom, int right);
 
    // control functions
-   void ChangeGoToStop();
-   void ChangeStopToGo();
    bool SaveStartingPattern();
    void ShowRuleDialog();
    void DisplayPattern();

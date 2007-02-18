@@ -31,25 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dnd.h"        // for wxFileDropTarget
 #include "wx/filename.h"   // for wxFileName
 #include "wx/clipbrd.h"    // for wxTheClipboard
-
-#ifdef __WXMSW__
-   // bitmaps are loaded via .rc file
-#else
-   // bitmaps for tool bar buttons
-   #include "bitmaps/new.xpm"
-   #include "bitmaps/open.xpm"
-   #include "bitmaps/save.xpm"
-   #include "bitmaps/patterns.xpm"
-   #include "bitmaps/scripts.xpm"
-   #include "bitmaps/play.xpm"
-   #include "bitmaps/stop.xpm"
-   #include "bitmaps/hash.xpm"
-   #include "bitmaps/draw.xpm"
-   #include "bitmaps/select.xpm"
-   #include "bitmaps/move.xpm"
-   #include "bitmaps/zoomin.xpm"
-   #include "bitmaps/zoomout.xpm"
-   #include "bitmaps/info.xpm"
+#if wxUSE_TOOLTIPS
+   #include "wx/tooltip.h" // for wxToolTip
 #endif
 
 #include "bigint.h"
@@ -79,9 +62,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 enum {
    // one-shot timer
    ID_ONE_TIMER = wxID_HIGHEST,
-
-   // go/stop button (not yet implemented!!!)
-   ID_GO_STOP,
 
    // File menu
    // wxID_NEW,
@@ -242,78 +222,438 @@ wxTimer *onetimer;
 bool callUnselect = false;    // OnIdle needs to call Unselect?
 #endif
 
+// ids for bitmap buttons in tool bar
+enum {
+   GO_TOOL = 0,
+   STOP_TOOL,
+   HASH_TOOL,
+   NEW_TOOL,
+   OPEN_TOOL,
+   SAVE_TOOL,
+   PATTERNS_TOOL,
+   SCRIPTS_TOOL,
+   DRAW_TOOL,
+   SELECT_TOOL,
+   MOVE_TOOL,
+   ZOOMIN_TOOL,
+   ZOOMOUT_TOOL,
+   INFO_TOOL,
+   HELP_TOOL      // if moved then change NUM_BUTTONS
+};
+
+const int NUM_BUTTONS = HELP_TOOL + 1;
+
+#ifdef __WXMSW__
+   // bitmaps are loaded via .rc file
+#else
+   // bitmaps for tool bar buttons
+   #include "bitmaps/play.xpm"
+   #include "bitmaps/stop.xpm"
+   #include "bitmaps/hash.xpm"
+   #include "bitmaps/new.xpm"
+   #include "bitmaps/open.xpm"
+   #include "bitmaps/save.xpm"
+   #include "bitmaps/patterns.xpm"
+   #include "bitmaps/scripts.xpm"
+   #include "bitmaps/draw.xpm"
+   #include "bitmaps/select.xpm"
+   #include "bitmaps/move.xpm"
+   #include "bitmaps/zoomin.xpm"
+   #include "bitmaps/zoomout.xpm"
+   #include "bitmaps/info.xpm"
+   #include "bitmaps/help.xpm"
+   // bitmaps for down state of toggle buttons
+   #include "bitmaps/hash_down.xpm"
+   /* //!!!
+   #include "bitmaps/patterns_down.xpm"
+   #include "bitmaps/scripts_down.xpm"
+   #include "bitmaps/draw_down.xpm"
+   #include "bitmaps/select_down.xpm"
+   #include "bitmaps/move_down.xpm"
+   #include "bitmaps/zoomin_down.xpm"
+   #include "bitmaps/zoomout_down.xpm"
+   */
+#endif
+
 // -----------------------------------------------------------------------------
 
-// bitmaps for tool bar buttons
-const int go_index = 0;
-const int stop_index = 1;
-const int new_index = 2;
-const int open_index = 3;
-const int save_index = 4;
-const int patterns_index = 5;
-const int scripts_index = 6;
-const int draw_index = 7;
-const int sel_index = 8;
-const int move_index = 9;
-const int zoomin_index = 10;
-const int zoomout_index = 11;
-const int info_index = 12;
-const int hash_index = 13;
-wxBitmap tbBitmaps[14];
+// Define our own tool bar window to avoid bugs and limitations in wxToolBar:
+
+// derive from wxPanel so we get current theme's background color on Windows
+class ToolBar : public wxPanel
+{
+public:
+   ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
+   ~ToolBar() {}
+
+   // add a bitmap button to tool bar
+   void AddButton(int id, const wxString& tip);
+
+   // add a vertical gap between buttons
+   void AddSeparator();
+   
+   // enable/disable button
+   void EnableButton(int id, bool enable);
+
+   // set state of go/stop button
+   void SetGoStopButton();
+   
+   // set state of a toggle button
+   void SelectButton(int id, bool select);
+
+   // detect press and release of a bitmap button
+   void OnButtonDown(wxMouseEvent& event);
+   void OnButtonUp(wxMouseEvent& event);
+   void OnKillFocus(wxFocusEvent& event);
+
+private:
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
+
+   // event handlers
+   void OnPaint(wxPaintEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
+   void OnButton(wxCommandEvent& event);
+   
+   // tool bar buttons
+   wxBitmapButton* tbbutt[NUM_BUTTONS];
+   
+   // bitmaps for normal or down state
+   wxBitmap normtool[NUM_BUTTONS];
+   wxBitmap downtool[NUM_BUTTONS];
+   
+   // positioning data used by AddButton and AddSeparator
+   int ypos, xpos, smallgap, biggap;
+};
+
+BEGIN_EVENT_TABLE(ToolBar, wxPanel)
+   EVT_PAINT            (           ToolBar::OnPaint)
+   EVT_LEFT_DOWN        (           ToolBar::OnMouseDown)
+   EVT_BUTTON           (wxID_ANY,  ToolBar::OnButton)
+END_EVENT_TABLE()
+
+ToolBar* toolbarptr = NULL;      // global pointer to tool bar
+const int toolbarwd = 32;        // width of (vertical) tool bar
 
 // -----------------------------------------------------------------------------
 
-// update tool bar buttons according to the current state
+ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
+   : wxPanel(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
+             wxNO_FULL_REPAINT_ON_RESIZE)
+{
+   #ifdef __WXGTK__
+      // avoid erasing background on GTK+
+      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+   #endif
+
+   // init bitmaps for normal state
+   normtool[GO_TOOL] =        wxBITMAP(play);
+   normtool[STOP_TOOL] =      wxBITMAP(stop);
+   normtool[HASH_TOOL] =      wxBITMAP(hash);
+   normtool[NEW_TOOL] =       wxBITMAP(new);
+   normtool[OPEN_TOOL] =      wxBITMAP(open);
+   normtool[SAVE_TOOL] =      wxBITMAP(save);
+   normtool[PATTERNS_TOOL] =  wxBITMAP(patterns);
+   normtool[SCRIPTS_TOOL] =   wxBITMAP(scripts);
+   normtool[DRAW_TOOL] =      wxBITMAP(draw);
+   normtool[SELECT_TOOL] =    wxBITMAP(select);
+   normtool[MOVE_TOOL] =      wxBITMAP(move);
+   normtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin);
+   normtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout);
+   normtool[INFO_TOOL] =      wxBITMAP(info);
+   normtool[HELP_TOOL] =      wxBITMAP(help);
+   
+   // toggle buttons also have a down state
+   downtool[HASH_TOOL] =      wxBITMAP(hash_down);
+   downtool[PATTERNS_TOOL] =  wxBITMAP(patterns); //!!!_down);
+   downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts); //!!!_down);
+   downtool[DRAW_TOOL] =      wxBITMAP(draw); //!!!_down);
+   downtool[SELECT_TOOL] =    wxBITMAP(select); //!!!_down);
+   downtool[MOVE_TOOL] =      wxBITMAP(move); //!!!_down);
+   downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin); //!!!_down);
+   downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout); //!!!_down);
+
+   // init position variables used by AddButton and AddSeparator
+   ypos = 4;
+   #ifdef __WXGTK__
+      xpos = 3;
+      smallgap = 6;
+   #else
+      xpos = 4;
+      smallgap = 4;
+   #endif
+   biggap = 16;
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   wxPaintDC dc(this);
+
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   if (wd < 1 || ht < 1 || !showtool) return;
+      
+   #ifdef __WXMSW__
+      // needed on Windows
+      dc.Clear();
+   #endif
+   
+   wxRect r = wxRect(0, 0, wd, ht);
+   
+   #ifdef __WXMAC__
+      wxBrush brush(wxColor(202,202,202));
+      FillRect(dc, r, brush);
+   #endif
+   
+   // draw gray border line at right edge
+   #if defined(__WXMSW__)
+      dc.SetPen(*wxGREY_PEN);
+   #elif defined(__WXMAC__)
+      wxPen linepen(wxColor(140,140,140));
+      dc.SetPen(linepen);
+   #else
+      dc.SetPen(*wxLIGHT_GREY_PEN);
+   #endif
+   dc.DrawLine(r.GetRight(), 0, r.GetRight(), r.GetBottom());
+   dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
+{
+   // this is NOT called if user clicks a tool bar button;
+   // on Windows we need to reset keyboard focus to viewport window
+   viewptr->SetFocus();
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::OnButton(wxCommandEvent& event)
+{
+   mainptr->showbanner = false;
+   statusptr->ClearMessage();
+   int id = event.GetId();
+   
+   #ifdef __WXMSW__
+      // disconnect focus handler and reset focus to viewptr;
+      // we must do latter before button becomes disabled
+      tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                             wxFocusEventHandler(ToolBar::OnKillFocus));
+      viewptr->SetFocus();
+   #endif
+
+   switch (id) {
+      case GO_TOOL:        if (inscript || mainptr->generating) {
+                              mainptr->Stop();
+                           } else {
+                              mainptr->GeneratePattern();
+                           }
+                           break;
+      case HASH_TOOL:      mainptr->ToggleHashing(); break;
+      case NEW_TOOL:       mainptr->NewPattern(); break;
+      case OPEN_TOOL:      mainptr->OpenPattern(); break;
+      case SAVE_TOOL:      mainptr->SavePattern(); break;
+      case PATTERNS_TOOL:  mainptr->ToggleShowPatterns(); break;
+      case SCRIPTS_TOOL:   mainptr->ToggleShowScripts(); break;
+      case DRAW_TOOL:      viewptr->SetCursorMode(curs_pencil); break;
+      case SELECT_TOOL:    viewptr->SetCursorMode(curs_cross); break;
+      case MOVE_TOOL:      viewptr->SetCursorMode(curs_hand); break;
+      case ZOOMIN_TOOL:    viewptr->SetCursorMode(curs_zoomin); break;
+      case ZOOMOUT_TOOL:   viewptr->SetCursorMode(curs_zoomout); break;
+      case INFO_TOOL:      mainptr->ShowPatternInfo(); break;
+      case HELP_TOOL:      ShowHelp(wxEmptyString); break;
+      default:             Warning(_("Unexpected button id!"));
+   }
+   mainptr->UpdateUserInterface( mainptr->IsActive() );
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::OnKillFocus(wxFocusEvent& event)
+{
+   int id = event.GetId();
+   tbbutt[id]->SetFocus();   // don't let button lose focus
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::OnButtonDown(wxMouseEvent& event)
+{
+   // a tool bar button has been pressed
+   int id = event.GetId();
+   
+   // connect a handler that keeps focus with the pressed button
+   tbbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
+                       wxFocusEventHandler(ToolBar::OnKillFocus));
+        
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::OnButtonUp(wxMouseEvent& event)
+{
+   // a tool bar button has been released
+   int id = event.GetId();
+
+   wxPoint pt = tbbutt[id]->ScreenToClient( wxGetMousePosition() );
+
+   int wd, ht;
+   tbbutt[id]->GetClientSize(&wd, &ht);
+   wxRect r(0, 0, wd, ht);
+
+#if wxCHECK_VERSION(2, 7, 0)
+// Inside is deprecated
+if ( r.Contains(pt) ) {
+#else
+if ( r.Inside(pt) ) {
+#endif
+      // call OnButton
+      wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
+      buttevt.SetEventObject(tbbutt[id]);
+      tbbutt[id]->ProcessEvent(buttevt);
+   } else {
+      // mouse has moved outside button
+      tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                             wxFocusEventHandler(ToolBar::OnKillFocus));
+      viewptr->SetFocus();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::AddButton(int id, const wxString& tip)
+{
+   tbbutt[id] = new wxBitmapButton(this, id, normtool[id], wxPoint(xpos,ypos));
+   if (tbbutt[id] == NULL) {
+      Fatal(_("Failed to create tool bar button!"));
+   } else {
+      const int BUTTON_WD = 24;        // nominal width of bitmap buttons
+      ypos += BUTTON_WD + smallgap;
+      tbbutt[id]->SetToolTip(tip);
+      #ifdef __WXMSW__
+         // fix problem with tool bar buttons when generating/inscript
+         // due to focus being changed to viewptr
+         tbbutt[id]->Connect(id, wxEVT_LEFT_DOWN, wxMouseEventHandler(ToolBar::OnButtonDown));
+         tbbutt[id]->Connect(id, wxEVT_LEFT_UP, wxMouseEventHandler(ToolBar::OnButtonUp));
+      #endif
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::AddSeparator()
+{
+   ypos += biggap - smallgap;
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::EnableButton(int id, bool enable)
+{
+   tbbutt[id]->Enable(enable);
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::SetGoStopButton()
+{
+   if (inscript || mainptr->generating) {
+      // show stop bitmap
+      tbbutt[GO_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
+      if (inscript) tbbutt[GO_TOOL]->SetToolTip(_("Stop script"));
+   } else {
+      // show go bitmap
+      tbbutt[GO_TOOL]->SetBitmapLabel(normtool[GO_TOOL]);
+      tbbutt[GO_TOOL]->SetToolTip(_("Start/stop generating"));
+   }
+   tbbutt[GO_TOOL]->Refresh(false);
+}
+
+// -----------------------------------------------------------------------------
+
+void ToolBar::SelectButton(int id, bool select)
+{
+   if (select) {
+      tbbutt[id]->SetBitmapLabel(downtool[id]);
+   } else {
+      tbbutt[id]->SetBitmapLabel(normtool[id]);
+   }
+   tbbutt[id]->Refresh(false);
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::CreateToolbar()
+{
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+
+   toolbarptr = new ToolBar(this, 0, 0, toolbarwd, ht);
+   if (toolbarptr == NULL) Fatal(_("Failed to create tool bar!"));
+
+   // add buttons to tool bar
+   toolbarptr->AddButton(GO_TOOL,         _("Start/stop generating"));
+   toolbarptr->AddButton(HASH_TOOL,       _("Toggle hashing"));
+   toolbarptr->AddSeparator();
+   toolbarptr->AddButton(NEW_TOOL,        _("New pattern"));
+   toolbarptr->AddButton(OPEN_TOOL,       _("Open pattern"));
+   toolbarptr->AddButton(SAVE_TOOL,       _("Save pattern"));
+   toolbarptr->AddSeparator();
+   toolbarptr->AddButton(PATTERNS_TOOL,   _("Show/hide patterns"));
+   toolbarptr->AddButton(SCRIPTS_TOOL,    _("Show/hide scripts"));
+   toolbarptr->AddSeparator();
+   toolbarptr->AddButton(DRAW_TOOL,       _("Draw"));
+   toolbarptr->AddButton(SELECT_TOOL,     _("Select"));
+   toolbarptr->AddButton(MOVE_TOOL,       _("Move"));
+   toolbarptr->AddButton(ZOOMIN_TOOL,     _("Zoom in"));
+   toolbarptr->AddButton(ZOOMOUT_TOOL,    _("Zoom out"));
+   toolbarptr->AddSeparator();
+   toolbarptr->AddButton(INFO_TOOL,       _("Show pattern information"));
+   toolbarptr->AddButton(HELP_TOOL,       _("Show help window"));
+      
+   toolbarptr->Show(showtool);
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::UpdateToolBar(bool active)
 {
-   wxToolBar* tbar = GetToolBar();
-   if (tbar && tbar->IsShown()) {
+   // update tool bar buttons according to the current state
+   if (toolbarptr && showtool) {
       if (viewptr->waitingforclick) active = false;
-            
-      #ifdef __WXX11__
-         // avoid problems by first toggling off all buttons
-         tbar->ToggleTool(ID_GO, false);
-         tbar->ToggleTool(ID_STOP, false);
-         tbar->ToggleTool(ID_HASH, false);
-         tbar->ToggleTool(wxID_NEW, false);
-         tbar->ToggleTool(wxID_OPEN, false);
-         tbar->ToggleTool(wxID_SAVE, false);
-         tbar->ToggleTool(ID_SHOW_PATTERNS, false);
-         tbar->ToggleTool(ID_SHOW_SCRIPTS, false);
-         tbar->ToggleTool(ID_DRAW, false);
-         tbar->ToggleTool(ID_SELECT, false);
-         tbar->ToggleTool(ID_MOVE, false);
-         tbar->ToggleTool(ID_ZOOMIN, false);
-         tbar->ToggleTool(ID_ZOOMOUT, false);
-         tbar->ToggleTool(ID_INFO, false);
-      #endif
-      
       bool busy = generating || inscript;
       
-      tbar->EnableTool(ID_GO,             active && !busy);
-      tbar->EnableTool(ID_STOP,           active && busy);
-      tbar->EnableTool(ID_HASH,           active && !inscript);   // allow toggling while generating
-      tbar->EnableTool(wxID_NEW,          active && !busy);
-      tbar->EnableTool(wxID_OPEN,         active && !busy);
-      tbar->EnableTool(wxID_SAVE,         active && !busy);
-      tbar->EnableTool(ID_SHOW_PATTERNS,  active);
-      tbar->EnableTool(ID_SHOW_SCRIPTS,   active);
-      tbar->EnableTool(ID_DRAW,           active);
-      tbar->EnableTool(ID_SELECT,         active);
-      tbar->EnableTool(ID_MOVE,           active);
-      tbar->EnableTool(ID_ZOOMIN,         active);
-      tbar->EnableTool(ID_ZOOMOUT,        active);
-      tbar->EnableTool(ID_INFO,           active && !currlayer->currfile.IsEmpty());
+      toolbarptr->EnableButton(GO_TOOL,         active);
+      toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);   // allow while generating
+      toolbarptr->EnableButton(NEW_TOOL,        active && !busy);
+      toolbarptr->EnableButton(OPEN_TOOL,       active && !busy);
+      toolbarptr->EnableButton(SAVE_TOOL,       active && !busy);
+      toolbarptr->EnableButton(PATTERNS_TOOL,   active);
+      toolbarptr->EnableButton(SCRIPTS_TOOL,    active);
+      toolbarptr->EnableButton(DRAW_TOOL,       active);
+      toolbarptr->EnableButton(SELECT_TOOL,     active);
+      toolbarptr->EnableButton(MOVE_TOOL,       active);
+      toolbarptr->EnableButton(ZOOMIN_TOOL,     active);
+      toolbarptr->EnableButton(ZOOMOUT_TOOL,    active);
+      toolbarptr->EnableButton(INFO_TOOL,       active && !currlayer->currfile.IsEmpty());
+      toolbarptr->EnableButton(HELP_TOOL,       active);
 
-      // call ToggleTool for tools added via AddCheckTool or AddRadioTool
-      tbar->ToggleTool(ID_HASH,           currlayer->hash);
-      tbar->ToggleTool(ID_SHOW_PATTERNS,  showpatterns);
-      tbar->ToggleTool(ID_SHOW_SCRIPTS,   showscripts);
-      tbar->ToggleTool(ID_DRAW,           currlayer->curs == curs_pencil);
-      tbar->ToggleTool(ID_SELECT,         currlayer->curs == curs_cross);
-      tbar->ToggleTool(ID_MOVE,           currlayer->curs == curs_hand);
-      tbar->ToggleTool(ID_ZOOMIN,         currlayer->curs == curs_zoomin);
-      tbar->ToggleTool(ID_ZOOMOUT,        currlayer->curs == curs_zoomout);
+      // set state of go/stop button
+      toolbarptr->SetGoStopButton();
+
+      // set state of toggle buttons
+      toolbarptr->SelectButton(HASH_TOOL,       currlayer->hash);
+      toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
+      toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
+      toolbarptr->SelectButton(DRAW_TOOL,       currlayer->curs == curs_pencil);
+      toolbarptr->SelectButton(SELECT_TOOL,     currlayer->curs == curs_cross);
+      toolbarptr->SelectButton(MOVE_TOOL,       currlayer->curs == curs_hand);
+      toolbarptr->SelectButton(ZOOMIN_TOOL,     currlayer->curs == curs_zoomin);
+      toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
    }
 }
 
@@ -335,13 +675,6 @@ bool MainFrame::ClipboardHasText()
       }
       return hastext;
    #endif
-}
-
-// -----------------------------------------------------------------------------
-
-bool MainFrame::StatusVisible()
-{
-   return (statusptr && statusptr->statusht > 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -372,7 +705,6 @@ void MainFrame::EnableAllMenus(bool enable)
 void MainFrame::UpdateMenuItems(bool active)
 {
    wxMenuBar* mbar = GetMenuBar();
-   wxToolBar* tbar = GetToolBar();
    if (mbar) {
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
@@ -475,9 +807,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_HASH,       currlayer->hash);
       mbar->Check(ID_HYPER,      currlayer->hyperspeed);
       mbar->Check(ID_HINFO,      currlayer->showhashinfo);
-      mbar->Check(ID_TOOL_BAR,   tbar && tbar->IsShown());
+      mbar->Check(ID_TOOL_BAR,   showtool);
       mbar->Check(ID_LAYER_BAR,  showlayer);
-      mbar->Check(ID_STATUS_BAR, StatusVisible());
+      mbar->Check(ID_STATUS_BAR, showstatus);
       mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_COLORS,     swapcolors);
@@ -552,7 +884,7 @@ void MainFrame::UpdateEverything()
       bigview->UpdateScrollBars();
    }
    
-   if (wd > 0 && ht > 0 && StatusVisible()) {
+   if (wd > 0 && ht > 0 && showstatus) {
       statusptr->Refresh(false);
       statusptr->Update();
    }
@@ -567,7 +899,7 @@ void MainFrame::UpdatePatternAndStatus()
 
    if (!IsIconized()) {
       UpdateView();
-      if (StatusVisible()) {
+      if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
          statusptr->Update();
@@ -581,7 +913,7 @@ void MainFrame::UpdatePatternAndStatus()
 void MainFrame::UpdateStatus()
 {
    if (!IsIconized()) {
-      if (StatusVisible()) {
+      if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
          statusptr->Update();
@@ -591,7 +923,7 @@ void MainFrame::UpdateStatus()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root)
+void MainFrame::SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root)
 {
    // delete old tree (except root)
    treectrl->DeleteChildren(root);
@@ -693,16 +1025,25 @@ wxWindow* MainFrame::RightPane()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ResizeSplitWindow()
+void MainFrame::ResizeSplitWindow(int wd, int ht)
 {
-   int wd, ht;
-   GetClientSize(&wd, &ht);
-
-   splitwin->SetSize(0, statusptr->statusht, wd,
+   splitwin->SetSize(showtool ? toolbarwd : 0,
+                     statusptr->statusht,
+                     showtool ? wd - toolbarwd : wd,
                      ht > statusptr->statusht ? ht - statusptr->statusht : 0);
 
    // wxSplitterWindow automatically resizes left and right panes;
-   // note that RightWindow::OnSize has been called
+   // note that RightWindow::OnSize has now been called
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ResizeStatusBar(int wd, int ht)
+{
+   // assume showstatus is true
+   statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
+   statusptr->SetSize(showtool ? toolbarwd : 0, 0,
+                      showtool ? wd - toolbarwd : wd, statusptr->statusht);
 }
 
 // -----------------------------------------------------------------------------
@@ -711,18 +1052,18 @@ void MainFrame::ToggleStatusBar()
 {
    int wd, ht;
    GetClientSize(&wd, &ht);
-   if (StatusVisible()) {
+   showstatus = !showstatus;
+   if (showstatus) {
+      ResizeStatusBar(wd, ht);
+   } else {
       statusptr->statusht = 0;
       statusptr->SetSize(0, 0, 0, 0);
       #ifdef __WXX11__
          // move so we don't see small portion
          statusptr->Move(-100, -100);
       #endif
-   } else {
-      statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
-      statusptr->SetSize(0, 0, wd, statusptr->statusht);
    }
-   ResizeSplitWindow();
+   ResizeSplitWindow(wd, ht);
    UpdateEverything();
 }
 
@@ -733,10 +1074,9 @@ void MainFrame::ToggleExactNumbers()
    int wd, ht;
    GetClientSize(&wd, &ht);
    showexact = !showexact;
-   if (StatusVisible()) {
-      statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
-      statusptr->SetSize(0, 0, wd, statusptr->statusht);
-      ResizeSplitWindow();
+   if (showstatus) {
+      ResizeStatusBar(wd, ht);
+      ResizeSplitWindow(wd, ht);
       UpdateEverything();
    } else {
       // show the status bar using new size
@@ -748,33 +1088,22 @@ void MainFrame::ToggleExactNumbers()
 
 void MainFrame::ToggleToolBar()
 {
+   /* //!!!
    #ifdef __WXX11__
       // Show(false) does not hide tool bar!!!
       statusptr->ErrorMessage(_("Sorry, tool bar hiding is not implemented for X11."));
-   #else
-      wxToolBar* tbar = GetToolBar();
-      if (tbar) {
-         if (tbar->IsShown()) {
-            tbar->Show(false);
-         } else {
-            tbar->Show(true);
-         }
-         int wd, ht;
-         #ifdef __WXGTK__
-            // wxGTK bug??? do a temporary size change to force origin to change -- sheesh
-            GetSize(&wd, &ht);
-            SetSize(wd-1, ht-1);
-            SetSize(wd, ht);
-         #endif
-         GetClientSize(&wd, &ht);
-         if (StatusVisible()) {
-            // adjust size of status bar
-            statusptr->SetSize(0, 0, wd, statusptr->statusht);
-         }
-         ResizeSplitWindow();
-         UpdateEverything();
-      }
+      return;
    #endif
+   */
+
+   showtool = !showtool;
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   if (showstatus) {
+      ResizeStatusBar(wd, ht);
+   }
+   ResizeSplitWindow(wd, ht);
+   toolbarptr->Show(showtool);
 }
 
 // -----------------------------------------------------------------------------
@@ -802,19 +1131,17 @@ void MainFrame::ToggleFullScreen()
 
       fullscreen = !fullscreen;
       ShowFullScreen(fullscreen,
-         // don't use wxFULLSCREEN_ALL because that prevents tool bar being
-         // toggled in full screen mode on Windows
          wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
 
-      wxToolBar* tbar = GetToolBar();
       if (fullscreen) {
          // hide scroll bars
          bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
          bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
          
          // hide status bar if necessary
-         restorestatusbar = StatusVisible();
+         restorestatusbar = showstatus;
          if (restorestatusbar) {
+            showstatus = false;
             statusptr->statusht = 0;
             statusptr->SetSize(0, 0, 0, 0);
          }
@@ -826,9 +1153,9 @@ void MainFrame::ToggleFullScreen()
          }
          
          // hide tool bar if necessary
-         restoretoolbar = tbar && tbar->IsShown();
+         restoretoolbar = showtool;
          if (restoretoolbar) {
-            tbar->Show(false);
+            ToggleToolBar();
          }
          
          // hide pattern/script directory if necessary
@@ -846,9 +1173,9 @@ void MainFrame::ToggleFullScreen()
 
       } else {
          // first show tool bar if necessary
-         if (restoretoolbar && tbar && !tbar->IsShown()) {
-            tbar->Show(true);
-            if (StatusVisible()) {
+         if (restoretoolbar && !showtool) {
+            ToggleToolBar();
+            if (showstatus) {
                // reduce width of status bar below
                restorestatusbar = true;
             }
@@ -857,10 +1184,10 @@ void MainFrame::ToggleFullScreen()
          // show status bar if necessary;
          // note that even if it's visible we may have to resize width
          if (restorestatusbar) {
-            statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
+            showstatus = true;
             int wd, ht;
             GetClientSize(&wd, &ht);
-            statusptr->SetSize(0, 0, wd, statusptr->statusht);
+            ResizeStatusBar(wd, ht);
          }
 
          // show layer bar if necessary
@@ -882,8 +1209,11 @@ void MainFrame::ToggleFullScreen()
          // restore scroll bars BEFORE setting viewport size
          bigview->UpdateScrollBars();
       }
+      
       // adjust size of viewport (and pattern/script directory if visible)
-      ResizeSplitWindow();
+      int wd, ht;
+      GetClientSize(&wd, &ht);
+      ResizeSplitWindow(wd, ht);
       UpdateEverything();
    #endif
 }
@@ -902,7 +1232,6 @@ void MainFrame::ShowPatternInfo()
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_MENU                (wxID_ANY,        MainFrame::OnMenu)
-   EVT_BUTTON              (wxID_ANY,        MainFrame::OnButton)
    EVT_SET_FOCUS           (                 MainFrame::OnSetFocus)
    EVT_ACTIVATE            (                 MainFrame::OnActivate)
    EVT_SIZE                (                 MainFrame::OnSize)
@@ -972,7 +1301,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_ZOOMOUT:        viewptr->SetCursorMode(curs_zoomout); break;
       // Control menu
       case ID_GO:             GeneratePattern(); break;
-      case ID_STOP:           StopGenerating(); break;
+      case ID_STOP:           Stop(); break;
       case ID_NEXT:           NextGeneration(false); break;
       case ID_STEP:           NextGeneration(true); break;
       case ID_RESET:          ResetPattern(); break;
@@ -1055,24 +1384,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::OnButton(wxCommandEvent& WXUNUSED(event))
-{
-   /* when we have a working go/stop button we may need code like this!!!
-   showbanner = false;
-   statusptr->ClearMessage();
-   viewptr->SetFocus();
-   if ( event.GetId() == ID_GO_STOP ) {
-      if (generating) {
-         StopGenerating();
-      } else {
-         GeneratePattern();
-      }
-   }
-   */
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 {
    // this is never called in Mac app, presumably because it doesn't
@@ -1132,15 +1443,19 @@ void MainFrame::OnSize(wxSizeEvent& event)
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0) {
-      // note that statusptr and viewptr might be NULL if OnSize gets called
-      // from MainFrame::MainFrame (true if X11)
-      if (StatusVisible()) {
+      // note that toolbarptr/statusptr/viewptr might be NULL if OnSize is
+      // called from MainFrame::MainFrame (true if X11)
+      if (toolbarptr && showtool) {
+         // adjust size of tool bar
+         toolbarptr->SetSize(0, 0, toolbarwd, ht);
+      }
+      if (statusptr && showstatus) {
          // adjust size of status bar
-         statusptr->SetSize(0, 0, wd, statusptr->statusht);
+         ResizeStatusBar(wd, ht);
       }
       if (viewptr && statusptr && ht > statusptr->statusht) {
          // adjust size of viewport (and pattern/script directory if visible)
-         ResizeSplitWindow();
+         ResizeSplitWindow(wd, ht);
       }
    }
    
@@ -1428,7 +1743,7 @@ void MainFrame::OnClose(wxCloseEvent& event)
       // avoid seg fault on Linux
       if (generating) exit(0);
    #else
-      if (generating) StopGenerating();
+      if (generating) Stop();
    #endif
    
    Destroy();
@@ -1800,86 +2115,6 @@ void MainFrame::CreateMenus()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::CreateToolbar()
-{
-   #ifdef __WXX11__
-      // creating vertical tool bar stuffs up X11 menu bar!!!
-      wxToolBar* toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_HORIZONTAL);
-   #elif defined(__WXGTK__)
-      // create vertical tool bar at left edge of frame
-      wxToolBar* toolBar = CreateToolBar(wxTB_VERTICAL);
-   #else
-      // create vertical tool bar at left edge of frame
-      wxToolBar* toolBar = CreateToolBar(wxTB_FLAT | wxNO_BORDER | wxTB_VERTICAL);
-   #endif
-   
-   #ifdef __WXMAC__
-      // this results in a tool bar that is 32 pixels wide (matches STATUS_HT)
-      toolBar->SetMargins(4, 8);
-   #elif defined(__WXMSW__)
-      // Windows seems to ignore *any* margins
-      toolBar->SetMargins(0, 0);
-   #else
-      // X11/GTK tool bar looks better with these margins
-      toolBar->SetMargins(2, 2);
-   #endif
-
-   toolBar->SetToolBitmapSize(wxSize(16, 16));
-
-   tbBitmaps[go_index] = wxBITMAP(play);
-   tbBitmaps[stop_index] = wxBITMAP(stop);
-   tbBitmaps[new_index] = wxBITMAP(new);
-   tbBitmaps[open_index] = wxBITMAP(open);
-   tbBitmaps[save_index] = wxBITMAP(save);
-   tbBitmaps[patterns_index] = wxBITMAP(patterns);
-   tbBitmaps[scripts_index] = wxBITMAP(scripts);
-   tbBitmaps[draw_index] = wxBITMAP(draw);
-   tbBitmaps[sel_index] = wxBITMAP(select);
-   tbBitmaps[move_index] = wxBITMAP(move);
-   tbBitmaps[zoomin_index] = wxBITMAP(zoomin);
-   tbBitmaps[zoomout_index] = wxBITMAP(zoomout);
-   tbBitmaps[info_index] = wxBITMAP(info);
-   tbBitmaps[hash_index] = wxBITMAP(hash);
-
-   #ifdef __WXX11__
-      // reduce update probs by using toggle buttons
-      #define ADD_TOOL(id, bmp, tooltip) \
-         toolBar->AddCheckTool(id, wxEmptyString, bmp, wxNullBitmap, tooltip)
-   #else
-      #define ADD_TOOL(id, bmp, tooltip) \
-         toolBar->AddTool(id, wxEmptyString, bmp, tooltip)
-   #endif
-
-   #define ADD_RADIO(id, bmp, tooltip) \
-      toolBar->AddRadioTool(id, wxEmptyString, bmp, wxNullBitmap, tooltip)
-   
-   #define ADD_CHECK(id, bmp, tooltip) \
-      toolBar->AddCheckTool(id, wxEmptyString, bmp, wxNullBitmap, tooltip)
-
-   ADD_TOOL(ID_GO, tbBitmaps[go_index], _("Start generating"));
-   ADD_TOOL(ID_STOP, tbBitmaps[stop_index], _("Stop generating"));
-   ADD_CHECK(ID_HASH, tbBitmaps[hash_index], _("Toggle hashing"));
-   toolBar->AddSeparator();
-   ADD_TOOL(wxID_NEW, tbBitmaps[new_index], _("New pattern"));
-   ADD_TOOL(wxID_OPEN, tbBitmaps[open_index], _("Open pattern"));
-   ADD_TOOL(wxID_SAVE, tbBitmaps[save_index], _("Save pattern"));
-   toolBar->AddSeparator();
-   ADD_CHECK(ID_SHOW_PATTERNS, tbBitmaps[patterns_index], _("Show/hide patterns"));
-   ADD_CHECK(ID_SHOW_SCRIPTS, tbBitmaps[scripts_index], _("Show/hide scripts"));
-   toolBar->AddSeparator();
-   ADD_RADIO(ID_DRAW, tbBitmaps[draw_index], _("Draw"));
-   ADD_RADIO(ID_SELECT, tbBitmaps[sel_index], _("Select"));
-   ADD_RADIO(ID_MOVE, tbBitmaps[move_index], _("Move"));
-   ADD_RADIO(ID_ZOOMIN, tbBitmaps[zoomin_index], _("Zoom in"));
-   ADD_RADIO(ID_ZOOMOUT, tbBitmaps[zoomout_index], _("Zoom out"));
-   toolBar->AddSeparator();
-   ADD_TOOL(ID_INFO, tbBitmaps[info_index], _("Pattern information"));
-   
-   toolBar->Realize();
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::CreateDirControls()
 {
    patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
@@ -1973,6 +2208,7 @@ MainFrame::MainFrame()
    // wxStatusBar can only appear at bottom of frame so we use our own
    // status bar class which creates a child window at top of frame
    int statht = showexact ? STATUS_EXHT : STATUS_HT;
+   if (!showstatus) statht = 0;
    statusptr = new StatusBar(this, 0, 0, wd, statht);
    if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
    
@@ -1997,6 +2233,12 @@ MainFrame::MainFrame()
    // create layer bar and initial layer
    CreateLayerBar(rightpane);
    AddLayer();
+
+   // enable/disable tool tips after creating tool bar and layer bar
+   #if wxUSE_TOOLTIPS
+      wxToolTip::Enable(showtips);
+      wxToolTip::SetDelay(1000);    // 1 sec
+   #endif
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
    viewptr = new PatternView(rightpane, 0, showlayer ? layerbarht : 0, 40, 40,

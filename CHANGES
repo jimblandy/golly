@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
+AKT: New tool bar buttons, including a single go/stop button.
 AKT: Mac app saves mc/rle files with appropriate type and creator.
 AKT: Mac app has a creator code (GoLy).
 AKT: If golly-start.py exists in same dir as app it is executed at startup.

@@ -113,6 +113,7 @@ bool initshowhashinfo = false;   // initial showhashinfo setting
 bool savexrle = true;            // save RLE file using XRLE format?
 bool showtips = true;            // show button tips?
 bool showtool = true;            // show tool bar?
+bool showlayer = true;           // show layer bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showgridlines = true;       // display grid lines?
@@ -129,7 +130,6 @@ int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
 bool showboldlines = true;       // show bold grid lines?
 bool mathcoords = false;         // show Y values increasing upwards?
-bool showlayer = true;           // show layer bar?
 bool syncviews = false;          // synchronize viewports?
 bool synccursors = true;         // synchronize cursors?
 bool stacklayers = false;        // stack all layers?
@@ -557,9 +557,10 @@ void SavePrefs()
    
    fputs("\n", f);
 
-   fprintf(f, "show_tool=%d\n", mainptr->GetToolBar()->IsShown() ? 1 : 0);
    fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
-   fprintf(f, "show_status=%d\n", mainptr->StatusVisible() ? 1 : 0);
+   fprintf(f, "show_tool=%d\n", showtool ? 1 : 0);
+   fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
+   fprintf(f, "show_status=%d\n", showstatus ? 1 : 0);
    fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
    fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
@@ -569,7 +570,6 @@ void SavePrefs()
    
    fputs("\n", f);
 
-   fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
    fprintf(f, "sync_views=%d\n", syncviews ? 1 : 0);
    fprintf(f, "sync_cursors=%d\n", synccursors ? 1 : 0);
    fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
@@ -857,11 +857,14 @@ void GetPrefs()
       } else if (strcmp(keyword, "named_rule") == 0) {
          namedrules.Add(wxString(value,wxConvLocal));
 
+      } else if (strcmp(keyword, "show_tips") == 0) {
+         showtips = value[0] == '1';
+
       } else if (strcmp(keyword, "show_tool") == 0) {
          showtool = value[0] == '1';
 
-      } else if (strcmp(keyword, "show_tips") == 0) {
-         showtips = value[0] == '1';
+      } else if (strcmp(keyword, "show_layer") == 0) {
+         showlayer = value[0] == '1';
 
       } else if (strcmp(keyword, "show_status") == 0) {
          showstatus = value[0] == '1';
@@ -887,9 +890,6 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "math_coords") == 0) {
          mathcoords = value[0] == '1';
-
-      } else if (strcmp(keyword, "show_layer") == 0) {
-         showlayer = value[0] == '1';
 
       } else if (strcmp(keyword, "sync_views") == 0) {
          syncviews = value[0] == '1';
@@ -1062,13 +1062,6 @@ void GetPrefs()
    
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();
-   
-   //!!! can't seem to disable wxToolBar tips on Windows or Linux/GTK
-   // but CAN disable layer bar tips added via wxToolTip::SetTip
-   #if wxUSE_TOOLTIPS
-      wxToolTip::Enable(showtips);
-      wxToolTip::SetDelay(1000);    // 1 sec
-   #endif
 }
 
 // -----------------------------------------------------------------------------

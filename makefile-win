@@ -422,7 +422,7 @@ wxview.h wxrender.h wxscript.h wxlayer.h
 $(OBJDIR)/wxgolly.obj: wxgolly.cpp wxgolly.h \
 Help/about.html \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
-wxmain.h wxstatus.h wxview.h wxutils.h wxprefs.h wxscript.h
+wxmain.h wxstatus.h wxview.h wxutils.h wxprefs.h
 	$(CXX) /c /TP /nologo /Fo$@ $(CXXFLAGS) wxgolly.cpp
 
 $(OBJDIR)/bgolly.obj: bgolly.cpp \

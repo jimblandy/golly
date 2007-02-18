@@ -51,30 +51,6 @@ bool hash_pending = false;       // user selected Use Hashing while generating?
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ChangeGoToStop()
-{
-   /* single go/stop button is not yet implemented!!!
-   gostopbutt->SetBitmapLabel(tbBitmaps[stop_index]);
-   gostopbutt->Refresh(false);
-   gostopbutt->Update();
-   gostopbutt->SetToolTip(_("Stop generating"));
-   */
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::ChangeStopToGo()
-{
-   /* single go/stop button is not yet implemented!!!
-   gostopbutt->SetBitmapLabel(tbBitmaps[go_index]);
-   gostopbutt->Refresh(false);
-   gostopbutt->Update();
-   gostopbutt->SetToolTip(_("Start generating"));
-   */
-}
-
-// -----------------------------------------------------------------------------
-
 bool MainFrame::SaveStartingPattern()
 {
    if ( currlayer->algo->getGeneration() > currlayer->startgen ) {
@@ -141,7 +117,7 @@ void MainFrame::ResetPattern()
    
    if (generating) {
       // terminate GeneratePattern loop and set reset_pending flag
-      StopGenerating();
+      Stop();
       reset_pending = true;
       /* can't use wxPostEvent here because Yield processes all pending events
       // send Reset command to event queue
@@ -248,7 +224,7 @@ void MainFrame::DisplayPattern()
          bigview->Refresh(false);
          bigview->Update();
       }
-      if (StatusVisible()) {
+      if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
          statusptr->Update();
@@ -280,7 +256,6 @@ void MainFrame::GeneratePattern()
    begingen = curralgo->getGeneration().todouble();
    
    generating = true;               // avoid recursion
-   ChangeGoToStop();
    wxGetApp().PollerReset();
    UpdateUserInterface(IsActive());
    
@@ -328,8 +303,6 @@ void MainFrame::GeneratePattern()
    endtime = stopwatch->Time();
    endgen = curralgo->getGeneration().todouble();
    
-   ChangeStopToGo();
-   
    // display the final pattern
    if (currlayer->autofit) viewptr->FitInView(0);
    UpdateEverything();
@@ -349,7 +322,7 @@ void MainFrame::GeneratePattern()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::StopGenerating()
+void MainFrame::Stop()
 {
    if (inscript) {
       PassKeyToScript(WXK_ESCAPE);
@@ -672,7 +645,6 @@ void MainFrame::NextGeneration(bool useinc)
    
    // avoid doing some things if NextGeneration is called from a script
    if (!inscript) {
-      ChangeGoToStop();
       wxGetApp().PollerReset();
       viewptr->CheckCursor(IsActive());
    }
@@ -695,7 +667,6 @@ void MainFrame::NextGeneration(bool useinc)
    generating = false;
 
    if (!inscript) {
-      ChangeStopToGo();
       // autofit is only used when doing many gens
       if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
          viewptr->FitInView(0);
@@ -738,7 +709,7 @@ void MainFrame::ToggleHashing()
 
    if (generating) {
       // terminate GeneratePattern loop and set hash_pending flag
-      StopGenerating();
+      Stop();
       hash_pending = true;
       return;
    }
