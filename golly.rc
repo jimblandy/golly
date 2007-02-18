@@ -7,6 +7,7 @@ appicon1 ICON "appicon16.ico"
 
 #include "wx/msw/wx.rc"
 
+// tool bar buttons
 play          BITMAP "bitmaps/play.bmp"
 stop          BITMAP "bitmaps/stop.bmp"
 hash          BITMAP "bitmaps/hash.bmp"
@@ -21,6 +22,7 @@ move          BITMAP "bitmaps/move.bmp"
 zoomin        BITMAP "bitmaps/zoomin.bmp"
 zoomout       BITMAP "bitmaps/zoomout.bmp"
 info          BITMAP "bitmaps/info.bmp"
+help          BITMAP "bitmaps/help.bmp"
 
 hash_down     BITMAP "bitmaps/hash_down.bmp"
 patterns_down BITMAP "bitmaps/patterns_down.bmp"
@@ -31,11 +33,7 @@ move_down     BITMAP "bitmaps/move_down.bmp"
 zoomin_down   BITMAP "bitmaps/zoomin_down.bmp"
 zoomout_down  BITMAP "bitmaps/zoomout_down.bmp"
 
-hand_curs     BITMAP "bitmaps/hand_curs.bmp"
-cross_curs    BITMAP "bitmaps/cross_curs.bmp"
-zoomin_curs   BITMAP "bitmaps/zoomin_curs.bmp"
-zoomout_curs  BITMAP "bitmaps/zoomout_curs.bmp"
-
+// layer bar buttons
 add           BITMAP "bitmaps/add.bmp"
 clone         BITMAP "bitmaps/clone.bmp"
 delete        BITMAP "bitmaps/delete.bmp"
@@ -44,3 +42,9 @@ tile          BITMAP "bitmaps/tile.bmp"
 
 stack_down    BITMAP "bitmaps/stack_down.bmp"
 tile_down     BITMAP "bitmaps/tile_down.bmp"
+
+// cursors
+hand_curs     BITMAP "bitmaps/hand_curs.bmp"
+cross_curs    BITMAP "bitmaps/cross_curs.bmp"
+zoomin_curs   BITMAP "bitmaps/zoomin_curs.bmp"
+zoomout_curs  BITMAP "bitmaps/zoomout_curs.bmp"

@@ -264,7 +264,6 @@ const int NUM_BUTTONS = HELP_TOOL + 1;
    #include "bitmaps/help.xpm"
    // bitmaps for down state of toggle buttons
    #include "bitmaps/hash_down.xpm"
-   /* //!!!
    #include "bitmaps/patterns_down.xpm"
    #include "bitmaps/scripts_down.xpm"
    #include "bitmaps/draw_down.xpm"
@@ -272,7 +271,6 @@ const int NUM_BUTTONS = HELP_TOOL + 1;
    #include "bitmaps/move_down.xpm"
    #include "bitmaps/zoomin_down.xpm"
    #include "bitmaps/zoomout_down.xpm"
-   */
 #endif
 
 // -----------------------------------------------------------------------------
@@ -365,13 +363,13 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    
    // toggle buttons also have a down state
    downtool[HASH_TOOL] =      wxBITMAP(hash_down);
-   downtool[PATTERNS_TOOL] =  wxBITMAP(patterns); //!!!_down);
-   downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts); //!!!_down);
-   downtool[DRAW_TOOL] =      wxBITMAP(draw); //!!!_down);
-   downtool[SELECT_TOOL] =    wxBITMAP(select); //!!!_down);
-   downtool[MOVE_TOOL] =      wxBITMAP(move); //!!!_down);
-   downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin); //!!!_down);
-   downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout); //!!!_down);
+   downtool[PATTERNS_TOOL] =  wxBITMAP(patterns_down);
+   downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts_down);
+   downtool[DRAW_TOOL] =      wxBITMAP(draw_down);
+   downtool[SELECT_TOOL] =    wxBITMAP(select_down);
+   downtool[MOVE_TOOL] =      wxBITMAP(move_down);
+   downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin_down);
+   downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout_down);
 
    // init position variables used by AddButton and AddSeparator
    ypos = 4;
