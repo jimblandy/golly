@@ -444,6 +444,9 @@ void ToolBar::OnButton(wxCommandEvent& event)
                              wxFocusEventHandler(ToolBar::OnKillFocus));
       viewptr->SetFocus();
    #endif
+   #if defined(__WXGTK__) && defined(__WXX11__)
+      viewptr->SetFocus();
+   #endif
 
    switch (id) {
       case GO_TOOL:        if (inscript || mainptr->generating) {
@@ -1088,14 +1091,6 @@ void MainFrame::ToggleExactNumbers()
 
 void MainFrame::ToggleToolBar()
 {
-   /* //!!!
-   #ifdef __WXX11__
-      // Show(false) does not hide tool bar!!!
-      statusptr->ErrorMessage(_("Sorry, tool bar hiding is not implemented for X11."));
-      return;
-   #endif
-   */
-
    showtool = !showtool;
    int wd, ht;
    GetClientSize(&wd, &ht);

@@ -1334,6 +1334,9 @@ void LayerBar::OnButton(wxCommandEvent& event)
                               wxFocusEventHandler(LayerBar::OnKillFocus));
       viewptr->SetFocus();
    #endif
+   #if defined(__WXGTK__) && defined(__WXX11__)
+      viewptr->SetFocus();
+   #endif
 
    switch (id) {
       case ADD_LAYER:      AddLayer(); break;
@@ -1470,13 +1473,15 @@ void LayerBar::AddButton(int id, char label, int x, int y)
          dc.Clear();   // needed on Windows and Linux
       #endif
       dc.SetBackgroundMode(wxTRANSPARENT);
-      #ifdef __WXMAC__
+      #if defined(__WXMAC__)
          dc.DrawText(str, 3, 2);
+      #elif defined(__WXX11__)
+         dc.DrawText(str, 4, 2);
       #else
          dc.DrawText(str, 4, 0);
       #endif
       dc.SelectObject(wxNullBitmap);
-      #if defined(__WXGTK__) || defined(__WXMSW__)
+      #if defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXX11__)
          // prevent white background
          normbitmap[id].SetMask( new wxMask(normbitmap[id],*wxWHITE) );
       #endif
@@ -1491,8 +1496,10 @@ void LayerBar::AddButton(int id, char label, int x, int y)
       dc.SetTextForeground(*wxWHITE);
       dc.SetBrush(*wxWHITE_BRUSH);
       dc.SetBackgroundMode(wxTRANSPARENT);
-      #ifdef __WXMAC__
+      #if defined(__WXMAC__)
          dc.DrawText(str, 5, 1);             // why diff to above???
+      #elif defined(__WXX11__)
+         dc.DrawText(str, 4, 2);
       #else
          dc.DrawText(str, 4, 0);
       #endif
