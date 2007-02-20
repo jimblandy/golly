@@ -177,6 +177,7 @@ enum {
    ID_HELP_PROBLEMS,
    ID_HELP_CHANGES,
    ID_HELP_CREDITS,
+   ID_SHOW_HELP,        // for help button in tool bar
 
    // Layer menu
    ID_ADD_LAYER,
@@ -428,10 +429,9 @@ void ToolBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
 
 void ToolBar::OnButton(wxCommandEvent& event)
 {
-   mainptr->showbanner = false;
-   statusptr->ClearMessage();
    int id = event.GetId();
    
+   /* //!!! do this in OnButtonUp???
    #ifdef __WXMSW__
       // disconnect focus handler and reset focus to viewptr;
       // we must do latter before button becomes disabled
@@ -439,33 +439,36 @@ void ToolBar::OnButton(wxCommandEvent& event)
                              wxFocusEventHandler(ToolBar::OnKillFocus));
       viewptr->SetFocus();
    #endif
+   */
+   /* //!!! useless???
    #if defined(__WXGTK__) && defined(__WXX11__)
       viewptr->SetFocus();
    #endif
+   */
 
+   int cmdid;
    switch (id) {
-      case GO_TOOL:        if (inscript || mainptr->generating) {
-                              mainptr->Stop();
-                           } else {
-                              mainptr->GeneratePattern();
-                           }
-                           break;
-      case HASH_TOOL:      mainptr->ToggleHashing(); break;
-      case NEW_TOOL:       mainptr->NewPattern(); break;
-      case OPEN_TOOL:      mainptr->OpenPattern(); break;
-      case SAVE_TOOL:      mainptr->SavePattern(); break;
-      case PATTERNS_TOOL:  mainptr->ToggleShowPatterns(); break;
-      case SCRIPTS_TOOL:   mainptr->ToggleShowScripts(); break;
-      case DRAW_TOOL:      viewptr->SetCursorMode(curs_pencil); break;
-      case SELECT_TOOL:    viewptr->SetCursorMode(curs_cross); break;
-      case MOVE_TOOL:      viewptr->SetCursorMode(curs_hand); break;
-      case ZOOMIN_TOOL:    viewptr->SetCursorMode(curs_zoomin); break;
-      case ZOOMOUT_TOOL:   viewptr->SetCursorMode(curs_zoomout); break;
-      case INFO_TOOL:      mainptr->ShowPatternInfo(); break;
-      case HELP_TOOL:      ShowHelp(wxEmptyString); break;
-      default:             Warning(_("Unexpected button id!"));
+      case GO_TOOL:        cmdid = (inscript || mainptr->generating) ? ID_STOP : ID_GO; break;
+      case HASH_TOOL:      cmdid = ID_HASH; break;
+      case NEW_TOOL:       cmdid = wxID_NEW; break;
+      case OPEN_TOOL:      cmdid = wxID_OPEN; break;
+      case SAVE_TOOL:      cmdid = wxID_SAVE; break;
+      case PATTERNS_TOOL:  cmdid = ID_SHOW_PATTERNS; break;
+      case SCRIPTS_TOOL:   cmdid = ID_SHOW_SCRIPTS; break;
+      case DRAW_TOOL:      cmdid = ID_DRAW; break;
+      case SELECT_TOOL:    cmdid = ID_SELECT; break;
+      case MOVE_TOOL:      cmdid = ID_MOVE; break;
+      case ZOOMIN_TOOL:    cmdid = ID_ZOOMIN; break;
+      case ZOOMOUT_TOOL:   cmdid = ID_ZOOMOUT; break;
+      case INFO_TOOL:      cmdid = ID_INFO; break;
+      case HELP_TOOL:      cmdid = ID_SHOW_HELP; break;
+      default:             Warning(_("Unexpected button id!")); return;
    }
-   mainptr->UpdateUserInterface( mainptr->IsActive() );
+   
+   // call MainFrame::OnMenu after OnButton finishes;
+   // this avoids button focus problems in GTK/X11 apps???!!!
+   wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
+   wxPostEvent(mainptr->GetEventHandler(), cmdevt);
 }
 
 // -----------------------------------------------------------------------------
@@ -503,6 +506,11 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
    tbbutt[id]->GetClientSize(&wd, &ht);
    wxRect r(0, 0, wd, ht);
 
+   // diconnect kill-focus handler
+   tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                          wxFocusEventHandler(ToolBar::OnKillFocus));
+   viewptr->SetFocus();
+
 #if wxCHECK_VERSION(2, 7, 0)
 // Inside is deprecated
 if ( r.Contains(pt) ) {
@@ -513,11 +521,6 @@ if ( r.Inside(pt) ) {
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(tbbutt[id]);
       tbbutt[id]->ProcessEvent(buttevt);
-   } else {
-      // mouse has moved outside button
-      tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                             wxFocusEventHandler(ToolBar::OnKillFocus));
-      viewptr->SetFocus();
    }
 }
 
@@ -1353,6 +1356,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_PROBLEMS:  ShowHelp(_("Help/problems.html")); break;
       case ID_HELP_CHANGES:   ShowHelp(_("Help/changes.html")); break;
       case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
+      case ID_SHOW_HELP:      ShowHelp(wxEmptyString); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
       default:
          if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
