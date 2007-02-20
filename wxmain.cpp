@@ -393,12 +393,15 @@ void ToolBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    GetClientSize(&wd, &ht);
    if (wd < 1 || ht < 1 || !showtool) return;
       
+   wxRect r = wxRect(0, 0, wd, ht);   
    #ifdef __WXMSW__
-      // needed on Windows
       dc.Clear();
+      // draw gray line at top edge
+      dc.SetPen(*wxGREY_PEN);
+      dc.DrawLine(0, 0, r.width, 0);
+      dc.SetPen(wxNullPen);
    #else
-      wxRect r = wxRect(0, 0, wd, ht);   
-      // draw gray border line at right edge
+      // draw gray line at right edge
       #ifdef __WXMAC__
          wxBrush brush(wxColor(202,202,202));
          FillRect(dc, r, brush);

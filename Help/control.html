@@ -50,8 +50,9 @@ loading an RLE/macrocell file that stores a non-zero generation count.
 Increases the speed by displaying fewer generations.
 The step size increases by a user-settable factor, initially 8 if the
 Use Hashing option is ticked or 10 if it isn't.
-Both factors can be changed in the Preferences dialog.
-Note that the hashing algorithm is most efficient when step sizes are powers of 2.
+Both factors can be changed in Preferences > Control.
+Note that the hashing algorithm is most efficient when step sizes
+are powers of 2.
 
 <p>
 <font size=+1><b>Slower</b></font>&nbsp;&nbsp;[- or _]
@@ -61,8 +62,8 @@ Decreases the speed by displaying more generations.
 The step size decreases by a user-settable factor (see above).
 If the step size is 1 (n^0) when you select this item then a small delay
 will occur between each generation.  Further slowing will double the delay
-until a maximum value is reached.  The Preferences dialog can be used to
-set the minimum and maximum delay times.
+until a maximum value is reached.  Use Preferences > Control to set the
+minimum and maximum delay times.
 
 <p>
 <font size=+1><b>Auto Fit</b></font>&nbsp;&nbsp;[t]
@@ -96,10 +97,10 @@ up with knowledge about the pattern, it will run faster and faster,
 so be patient.
 
 <p>
-Use the Preferences dialog to set the maximum amount of memory when
+Use Preferences > Control to set the maximum amount of memory when
 hashing patterns.  The initial setting is 300MB.
-The higher you set the memory limit, the larger
-patterns you can run and the farther and faster you can run them.
+The higher you set the memory limit, the larger patterns you can run
+and the farther and faster you can run them.
 However, setting this limit high also increases the amount of time
 required to change the step size (both manually and in hyperspeed mode)
 and increases the length of the garbage collection pauses.  Nonetheless,
@@ -110,15 +111,15 @@ in performance.  How high is high enough depends greatly on the
 pattern and the step size, however, in unpredictable ways.
 
 <p>
-Note that the hashing option cannot be changed while generating a pattern,
-and changing it will reset the step size to 1 generation.
+Note that toggling the hashing option resets the step size to 1 generation.
 Hashing is automatically turned on after loading a macrocell pattern,
 and automatically turned off if a loaded rule contains B0 but not S8.
+You can also use the tool bar's "#" button to toggle hashing.
 
 <p>
 The status bar background is pale blue when hashing is turned on
-and pale yellow when it's off.
-You can also use the tool bar's "H" button to toggle hashing.
+and pale yellow when it's off.  Use Preferences > Color to change
+these colors.
 
 <p>
 <font size=+1><b>Hyperspeed</b></font>

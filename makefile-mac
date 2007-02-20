@@ -254,9 +254,12 @@ wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
-bitmaps/open.xpm bitmaps/save.xpm bitmaps/play.xpm bitmaps/stop.xpm \
-bitmaps/hash.xpm bitmaps/draw.xpm bitmaps/select.xpm bitmaps/move.xpm \
-bitmaps/info.xpm bitmaps/new.xpm \
+bitmaps/play.xpm bitmaps/stop.xpm bitmaps/hash.xpm bitmaps/hash_down.xpm \
+bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm \
+bitmaps/patterns.xpm bitmaps/patterns_down.xpm bitmaps/scripts.xpm bitmaps/scripts_down.xpm \
+bitmaps/draw.xpm bitmaps/draw_down.xpm bitmaps/select.xpm bitmaps/select_down.xpm \
+bitmaps/move.xpm bitmaps/move_down.xpm bitmaps/zoomin.xpm bitmaps/zoomin_down.xpm \
+bitmaps/zoomout.xpm bitmaps/zoomout_down.xpm bitmaps/info.xpm bitmaps/help.xpm \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxutils.h wxprefs.h wxinfo.h wxhelp.h wxstatus.h \

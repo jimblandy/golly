@@ -1490,11 +1490,11 @@ void LayerBar::AddButton(int id, char label, int x, int y)
       downbitmap[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
       dc.SelectObject(downbitmap[id]);
       wxRect r = wxRect(0, 0, BITMAP_WD, BITMAP_HT);
-      wxBrush brush(darkblue);
+      wxBrush brush(wxColor(140,150,166));
       FillRect(dc, r, brush);
       dc.SetFont(*font);
-      dc.SetTextForeground(*wxWHITE);
-      dc.SetBrush(*wxWHITE_BRUSH);
+      dc.SetTextForeground(wxColor(0,0,48));
+      dc.SetBrush(*wxBLACK_BRUSH);
       dc.SetBackgroundMode(wxTRANSPARENT);
       #if defined(__WXMAC__)
          dc.DrawText(str, 5, 1);             // why diff to above???
