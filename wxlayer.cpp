@@ -324,7 +324,12 @@ void SelectButton(int id, bool select)
       if (downid >= LAYER_0) {
          // deselect old layer button
          bitbutt[downid]->SetBitmapLabel(normbitmap[downid]);
-         if (showlayer) bitbutt[downid]->Refresh(false);
+         if (showlayer) {
+            #ifdef __WXX11__
+               bitbutt[downid]->ClearBackground();    // fix wxX11 problem
+            #endif
+            bitbutt[downid]->Refresh(false);
+         }
       }
       downid = id;
    }
@@ -334,7 +339,12 @@ void SelectButton(int id, bool select)
    } else {
       bitbutt[id]->SetBitmapLabel(normbitmap[id]);
    }
-   if (showlayer) bitbutt[id]->Refresh(false);
+   if (showlayer) {
+      #ifdef __WXX11__
+         bitbutt[id]->ClearBackground();    // fix wxX11 problem
+      #endif
+      bitbutt[id]->Refresh(false);
+   }
 }
 
 // -----------------------------------------------------------------------------

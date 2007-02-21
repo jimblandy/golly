@@ -430,21 +430,6 @@ void ToolBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
 void ToolBar::OnButton(wxCommandEvent& event)
 {
    int id = event.GetId();
-   
-   /* //!!! do this in OnButtonUp???
-   #ifdef __WXMSW__
-      // disconnect focus handler and reset focus to viewptr;
-      // we must do latter before button becomes disabled
-      tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                             wxFocusEventHandler(ToolBar::OnKillFocus));
-      viewptr->SetFocus();
-   #endif
-   */
-   /* //!!! useless???
-   #if defined(__WXGTK__) && defined(__WXX11__)
-      viewptr->SetFocus();
-   #endif
-   */
 
    int cmdid;
    switch (id) {
@@ -466,7 +451,7 @@ void ToolBar::OnButton(wxCommandEvent& event)
    }
    
    // call MainFrame::OnMenu after OnButton finishes;
-   // this avoids button focus problems in GTK/X11 apps???!!!
+   // this avoids go/stop button problem in GTK app
    wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
    wxPostEvent(mainptr->GetEventHandler(), cmdevt);
 }
@@ -571,6 +556,9 @@ void ToolBar::SetGoStopButton()
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[GO_TOOL]);
       tbbutt[GO_TOOL]->SetToolTip(_("Start/stop generating"));
    }
+   #ifdef __WXX11__
+      tbbutt[GO_TOOL]->ClearBackground();    // fix wxX11 problem
+   #endif
    tbbutt[GO_TOOL]->Refresh(false);
 }
 
@@ -583,6 +571,9 @@ void ToolBar::SelectButton(int id, bool select)
    } else {
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
+   #ifdef __WXX11__
+      tbbutt[id]->ClearBackground();    // fix wxX11 problem
+   #endif
    tbbutt[id]->Refresh(false);
 }
 
