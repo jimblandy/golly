@@ -462,7 +462,18 @@ void LayerBar::EnableButton(int id, bool enable)
    if (enable == lbbutt[id]->IsEnabled()) return;
 
    #if defined(__WXMSW__) || defined(__WXGTK__)
-      lbbutt[id]->SetBitmapDisabled(disnormbutt[id]);
+      if (id >= LAYER_0 && id <= LAYER_LAST && id == downid) {
+         lbbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else if (id == STACK_LAYERS && stacklayers) {
+         lbbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else if (id == TILE_LAYERS && tilelayers) {
+         lbbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else {
+         lbbutt[id]->SetBitmapDisabled(disnormbutt[id]);
+      }
    #endif
 
    lbbutt[id]->Enable(enable);
@@ -475,12 +486,7 @@ void LayerBar::SelectButton(int id, bool select)
    if (select && id >= LAYER_0 && id <= LAYER_LAST) {
       if (downid >= LAYER_0) {
          // deselect old layer button
-         lbbutt[downid]->SetBitmapLabel(normbutt[downid]);
-         
-         #if defined(__WXMSW__) || defined(__WXGTK__)
-            lbbutt[downid]->SetBitmapDisabled(disnormbutt[downid]);
-         #endif
-         
+         lbbutt[downid]->SetBitmapLabel(normbutt[downid]);         
          if (showlayer) {
             #ifdef __WXX11__
                lbbutt[downid]->ClearBackground();    // fix wxX11 problem
@@ -496,14 +502,6 @@ void LayerBar::SelectButton(int id, bool select)
    } else {
       lbbutt[id]->SetBitmapLabel(normbutt[id]);
    }
-
-   #if defined(__WXMSW__) || defined(__WXGTK__)
-      if (select) {
-         lbbutt[id]->SetBitmapDisabled(disdownbutt[id]);
-      } else {
-         lbbutt[id]->SetBitmapDisabled(disnormbutt[id]);
-      }
-   #endif
 
    if (showlayer) {
       #ifdef __WXX11__

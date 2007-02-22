@@ -563,7 +563,36 @@ void ToolBar::EnableButton(int id, bool enable)
    if (enable == tbbutt[id]->IsEnabled()) return;
 
    #if defined(__WXMSW__) || defined(__WXGTK__)
-      tbbutt[id]->SetBitmapDisabled(disnormtool[id]);
+      if (id == GO_TOOL && (inscript || mainptr->generating)) {
+         tbbutt[id]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
+         
+      } else if (id == HASH_TOOL && currlayer->hash) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == PATTERNS_TOOL && showpatterns) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == SCRIPTS_TOOL && showscripts) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == DRAW_TOOL && currlayer->curs == curs_pencil) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == SELECT_TOOL && currlayer->curs == curs_cross) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == MOVE_TOOL && currlayer->curs == curs_hand) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == ZOOMIN_TOOL && currlayer->curs == curs_zoomin) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == ZOOMOUT_TOOL && currlayer->curs == curs_zoomout) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else {
+         tbbutt[id]->SetBitmapDisabled(disnormtool[id]);
+      }
    #endif
 
    tbbutt[id]->Enable(enable);
@@ -576,16 +605,10 @@ void ToolBar::SetGoStopButton()
    if (inscript || mainptr->generating) {
       // show stop bitmap
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
-      #if defined(__WXMSW__) || defined(__WXGTK__)
-         tbbutt[GO_TOOL]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
-      #endif
       if (inscript) tbbutt[GO_TOOL]->SetToolTip(_("Stop script"));
    } else {
       // show go bitmap
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[GO_TOOL]);
-      #if defined(__WXMSW__) || defined(__WXGTK__)
-         tbbutt[GO_TOOL]->SetBitmapDisabled(disnormtool[GO_TOOL]);
-      #endif
       tbbutt[GO_TOOL]->SetToolTip(_("Start/stop generating"));
    }
 
@@ -605,14 +628,6 @@ void ToolBar::SelectButton(int id, bool select)
    } else {
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
-
-   #if defined(__WXMSW__) || defined(__WXGTK__)
-      if (select) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-      } else {
-         tbbutt[id]->SetBitmapDisabled(disnormtool[id]);
-      }
-   #endif
 
    #ifdef __WXX11__
       tbbutt[id]->ClearBackground();    // fix wxX11 problem
@@ -662,6 +677,19 @@ void MainFrame::UpdateToolBar(bool active)
    if (toolbarptr && showtool) {
       if (viewptr->waitingforclick) active = false;
       bool busy = generating || inscript;
+
+      // set state of go/stop button
+      toolbarptr->SetGoStopButton();
+
+      // set state of toggle buttons
+      toolbarptr->SelectButton(HASH_TOOL,       currlayer->hash);
+      toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
+      toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
+      toolbarptr->SelectButton(DRAW_TOOL,       currlayer->curs == curs_pencil);
+      toolbarptr->SelectButton(SELECT_TOOL,     currlayer->curs == curs_cross);
+      toolbarptr->SelectButton(MOVE_TOOL,       currlayer->curs == curs_hand);
+      toolbarptr->SelectButton(ZOOMIN_TOOL,     currlayer->curs == curs_zoomin);
+      toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
       
       toolbarptr->EnableButton(GO_TOOL,         active);
       toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);   // allow while generating
@@ -677,19 +705,6 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->EnableButton(ZOOMOUT_TOOL,    active);
       toolbarptr->EnableButton(INFO_TOOL,       active && !currlayer->currfile.IsEmpty());
       toolbarptr->EnableButton(HELP_TOOL,       active);
-
-      // set state of go/stop button
-      toolbarptr->SetGoStopButton();
-
-      // set state of toggle buttons
-      toolbarptr->SelectButton(HASH_TOOL,       currlayer->hash);
-      toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
-      toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
-      toolbarptr->SelectButton(DRAW_TOOL,       currlayer->curs == curs_pencil);
-      toolbarptr->SelectButton(SELECT_TOOL,     currlayer->curs == curs_cross);
-      toolbarptr->SelectButton(MOVE_TOOL,       currlayer->curs == curs_hand);
-      toolbarptr->SelectButton(ZOOMIN_TOOL,     currlayer->curs == curs_zoomin);
-      toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
    }
 }
 
