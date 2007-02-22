@@ -318,8 +318,8 @@ private:
    wxBitmap normtool[NUM_BUTTONS];
    wxBitmap downtool[NUM_BUTTONS];
 
-   #if defined(__WXMSW__) || defined(__WXGTK__)
-      // on Windows/GTK we need bitmaps for disabled buttons
+   #ifdef __WXMSW__
+      // on Windows we need bitmaps for disabled buttons
       wxBitmap disnormtool[NUM_BUTTONS];
       wxBitmap disdowntool[NUM_BUTTONS];
    #endif
@@ -378,7 +378,7 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin_down);
    downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout_down);
 
-   #if defined(__WXMSW__) || defined(__WXGTK__)
+   #ifdef __WXMSW__
       for (int i = 0; i < NUM_BUTTONS; i++) {
          CreatePaleBitmap(normtool[i], disnormtool[i]);
       }
@@ -562,7 +562,7 @@ void ToolBar::EnableButton(int id, bool enable)
 {
    if (enable == tbbutt[id]->IsEnabled()) return;
 
-   #if defined(__WXMSW__) || defined(__WXGTK__)
+   #ifdef __WXMSW__
       if (id == GO_TOOL && (inscript || mainptr->generating)) {
          tbbutt[id]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
          

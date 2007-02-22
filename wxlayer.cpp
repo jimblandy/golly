@@ -135,8 +135,8 @@ private:
    wxBitmap normbutt[NUM_BUTTONS];
    wxBitmap downbutt[NUM_BUTTONS];
 
-   #if defined(__WXMSW__) || defined(__WXGTK__)
-      // on Windows/GTK we need bitmaps for disabled buttons
+   #ifdef __WXMSW__
+      // on Windows we need bitmaps for disabled buttons
       wxBitmap disnormbutt[NUM_BUTTONS];
       wxBitmap disdownbutt[NUM_BUTTONS];
    #endif
@@ -182,7 +182,7 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    downbutt[STACK_LAYERS] = wxBITMAP(stack_down);
    downbutt[TILE_LAYERS] =  wxBITMAP(tile_down);
 
-   #if defined(__WXMSW__) || defined(__WXGTK__)
+   #ifdef __WXMSW__
       // create bitmaps for disabled buttons
       CreatePaleBitmap(normbutt[ADD_LAYER],     disnormbutt[ADD_LAYER]);
       CreatePaleBitmap(normbutt[CLONE_LAYER],   disnormbutt[CLONE_LAYER]);
@@ -420,7 +420,7 @@ void LayerBar::AddButton(int id, char label, const wxString& tip)
       #endif
       dc.SelectObject(wxNullBitmap);
 
-      #if defined(__WXMSW__) || defined(__WXGTK__)
+      #ifdef __WXMSW__
          CreatePaleBitmap(normbutt[id], disnormbutt[id]);
          CreatePaleBitmap(downbutt[id], disdownbutt[id]);
       #endif
@@ -461,7 +461,7 @@ void LayerBar::EnableButton(int id, bool enable)
 {
    if (enable == lbbutt[id]->IsEnabled()) return;
 
-   #if defined(__WXMSW__) || defined(__WXGTK__)
+   #ifdef __WXMSW__
       if (id >= LAYER_0 && id <= LAYER_LAST && id == downid) {
          lbbutt[id]->SetBitmapDisabled(disdownbutt[id]);
          
