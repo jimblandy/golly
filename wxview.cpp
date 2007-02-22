@@ -495,6 +495,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       #endif
 
       case 'g':
+      case WXK_NUMPAD_ENTER:
       case WXK_RETURN:
          // not generating -- see PatternView::OnChar
          if (!inscript) mainptr->GeneratePattern();
@@ -1239,7 +1240,9 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
    
-   if ( mainptr->generating && (key == WXK_ESCAPE || key == WXK_RETURN || key == ' ' || key == '.') ) {
+   if ( mainptr->generating &&
+        (key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ||
+         key == ' ' || key == '.') ) {
       mainptr->Stop();
       return;
    }

@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dnd.h"        // for wxFileDropTarget
 #include "wx/filename.h"   // for wxFileName
 #include "wx/clipbrd.h"    // for wxTheClipboard
-#include "wx/image.h"      // for wxImage
 #if wxUSE_TOOLTIPS
    #include "wx/tooltip.h" // for wxToolTip
 #endif
@@ -42,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
-#include "wxutils.h"       // for Warning, Fatal, SaveChanges
+#include "wxutils.h"       // for Warning, Fatal, etc
 #include "wxprefs.h"       // for gollydir, SavePrefs, SetPasteMode, etc
 #include "wxinfo.h"        // for ShowInfo, GetInfoFrame
 #include "wxhelp.h"        // for ShowHelp, GetHelpFrame
@@ -277,7 +276,7 @@ const int NUM_BUTTONS = HELP_TOOL + 1;
 
 // -----------------------------------------------------------------------------
 
-// Define our own tool bar window to avoid bugs and limitations in wxToolBar:
+// Define our own vertical tool bar to avoid bugs and limitations in wxToolBar:
 
 // derive from wxPanel so we get current theme's background color on Windows
 class ToolBar : public wxPanel
@@ -319,11 +318,10 @@ private:
    wxBitmap normtool[NUM_BUTTONS];
    wxBitmap downtool[NUM_BUTTONS];
 
-   #ifdef __WXMSW__
-      // on Windows we need bitmaps for disabled buttons
-      wxBitmap disabledtool[NUM_BUTTONS];
-      wxBitmap disabledtooldown[NUM_BUTTONS];
-      void CreateDisabledBitmap(const wxBitmap& inmap, wxBitmap& outmap);
+   #if defined(__WXMSW__) || defined(__WXGTK__)
+      // on Windows/GTK we need bitmaps for disabled buttons
+      wxBitmap disnormtool[NUM_BUTTONS];
+      wxBitmap disdowntool[NUM_BUTTONS];
    #endif
    
    // positioning data used by AddButton and AddSeparator
@@ -339,7 +337,7 @@ END_EVENT_TABLE()
 ToolBar* toolbarptr = NULL;      // global pointer to tool bar
 const int toolbarwd = 32;        // width of (vertical) tool bar
 
-// tool bar buttons (must be global to use Connect/Disconect)
+// tool bar buttons (must be global to use Connect/Disconect on Windows)
 wxBitmapButton* tbbutt[NUM_BUTTONS];
 
 // -----------------------------------------------------------------------------
@@ -380,18 +378,18 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin_down);
    downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout_down);
 
-   #ifdef __WXMSW__
+   #if defined(__WXMSW__) || defined(__WXGTK__)
       for (int i = 0; i < NUM_BUTTONS; i++) {
-         CreateDisabledBitmap(normtool[i], disabledtool[i]);
+         CreatePaleBitmap(normtool[i], disnormtool[i]);
       }
-      CreateDisabledBitmap(downtool[HASH_TOOL],       disabledtooldown[HASH_TOOL]);
-      CreateDisabledBitmap(downtool[PATTERNS_TOOL],   disabledtooldown[PATTERNS_TOOL]);
-      CreateDisabledBitmap(downtool[SCRIPTS_TOOL],    disabledtooldown[SCRIPTS_TOOL]);
-      CreateDisabledBitmap(downtool[DRAW_TOOL],       disabledtooldown[DRAW_TOOL]);
-      CreateDisabledBitmap(downtool[SELECT_TOOL],     disabledtooldown[SELECT_TOOL]);
-      CreateDisabledBitmap(downtool[MOVE_TOOL],       disabledtooldown[MOVE_TOOL]);
-      CreateDisabledBitmap(downtool[ZOOMIN_TOOL],     disabledtooldown[ZOOMIN_TOOL]);
-      CreateDisabledBitmap(downtool[ZOOMOUT_TOOL],    disabledtooldown[ZOOMOUT_TOOL]);
+      CreatePaleBitmap(downtool[HASH_TOOL],       disdowntool[HASH_TOOL]);
+      CreatePaleBitmap(downtool[PATTERNS_TOOL],   disdowntool[PATTERNS_TOOL]);
+      CreatePaleBitmap(downtool[SCRIPTS_TOOL],    disdowntool[SCRIPTS_TOOL]);
+      CreatePaleBitmap(downtool[DRAW_TOOL],       disdowntool[DRAW_TOOL]);
+      CreatePaleBitmap(downtool[SELECT_TOOL],     disdowntool[SELECT_TOOL]);
+      CreatePaleBitmap(downtool[MOVE_TOOL],       disdowntool[MOVE_TOOL]);
+      CreatePaleBitmap(downtool[ZOOMIN_TOOL],     disdowntool[ZOOMIN_TOOL]);
+      CreatePaleBitmap(downtool[ZOOMOUT_TOOL],    disdowntool[ZOOMOUT_TOOL]);
    #endif
 
    // init position variables used by AddButton and AddSeparator
@@ -539,8 +537,8 @@ void ToolBar::AddButton(int id, const wxString& tip)
    if (tbbutt[id] == NULL) {
       Fatal(_("Failed to create tool bar button!"));
    } else {
-      const int BUTTON_WD = 24;        // nominal width of bitmap buttons
-      ypos += BUTTON_WD + smallgap;
+      const int BUTTON_HT = 24;        // nominal height of bitmap buttons
+      ypos += BUTTON_HT + smallgap;
       tbbutt[id]->SetToolTip(tip);
       #ifdef __WXMSW__
          // fix problem with tool bar buttons when generating/inscript
@@ -560,50 +558,12 @@ void ToolBar::AddSeparator()
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXMSW__
-
-void ToolBar::CreateDisabledBitmap(const wxBitmap& inmap, wxBitmap& outmap)
-{
-   wxImage oldimg = inmap.ConvertToImage();
-
-   wxImage newimg;
-   newimg.Create(oldimg.GetWidth(), oldimg.GetHeight(), false);
-   unsigned char *dest = newimg.GetData();
-
-   unsigned char *src = oldimg.GetData();
-   bool hasMask = oldimg.HasMask();
-   unsigned char maskRed = oldimg.GetMaskRed();
-   unsigned char maskGreen = oldimg.GetMaskGreen();
-   unsigned char maskBlue = oldimg.GetMaskBlue();
-
-   if (hasMask)
-      newimg.SetMaskColour(maskRed, maskGreen, maskBlue);
-   
-   const long size = oldimg.GetWidth() * oldimg.GetHeight();
-   for ( long i = 0; i < size; i++, src += 3, dest += 3 ) {
-      // don't modify the mask
-      if ( hasMask && src[0] == maskRed && src[1] == maskGreen && src[2] == maskBlue ) {
-         memcpy(dest, src, 3);
-      } else {
-         // make pixel a pale shade of gray
-         int gray = (int) ((src[0] + src[1] + src[2]) / 3.0);
-         gray = (int) (170.0 + (gray / 4.0));
-         dest[0] = dest[1] = dest[2] = gray;
-      }
-   }
-   outmap = wxBitmap(newimg);
-}
-
-#endif
-
-// -----------------------------------------------------------------------------
-
 void ToolBar::EnableButton(int id, bool enable)
 {
    if (enable == tbbutt[id]->IsEnabled()) return;
 
-   #ifdef __WXMSW__
-      tbbutt[id]->SetBitmapDisabled(disabledtool[id]);
+   #if defined(__WXMSW__) || defined(__WXGTK__)
+      tbbutt[id]->SetBitmapDisabled(disnormtool[id]);
    #endif
 
    tbbutt[id]->Enable(enable);
@@ -616,15 +576,15 @@ void ToolBar::SetGoStopButton()
    if (inscript || mainptr->generating) {
       // show stop bitmap
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
-      #ifdef __WXMSW__
-         tbbutt[GO_TOOL]->SetBitmapDisabled(disabledtool[STOP_TOOL]);
+      #if defined(__WXMSW__) || defined(__WXGTK__)
+         tbbutt[GO_TOOL]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
       #endif
       if (inscript) tbbutt[GO_TOOL]->SetToolTip(_("Stop script"));
    } else {
       // show go bitmap
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[GO_TOOL]);
-      #ifdef __WXMSW__
-         tbbutt[GO_TOOL]->SetBitmapDisabled(disabledtool[GO_TOOL]);
+      #if defined(__WXMSW__) || defined(__WXGTK__)
+         tbbutt[GO_TOOL]->SetBitmapDisabled(disnormtool[GO_TOOL]);
       #endif
       tbbutt[GO_TOOL]->SetToolTip(_("Start/stop generating"));
    }
@@ -646,11 +606,11 @@ void ToolBar::SelectButton(int id, bool select)
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
 
-   #ifdef __WXMSW__
+   #if defined(__WXMSW__) || defined(__WXGTK__)
       if (select) {
-         tbbutt[id]->SetBitmapDisabled(disabledtooldown[id]);
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
       } else {
-         tbbutt[id]->SetBitmapDisabled(disabledtool[id]);
+         tbbutt[id]->SetBitmapDisabled(disnormtool[id]);
       }
    #endif
 

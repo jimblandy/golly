@@ -2922,8 +2922,7 @@ void PassKeyToScript(int key)
          case WXK_DELETE:
          case WXK_BACK:       ascii = 8;     break;
          case WXK_TAB:        ascii = 9;     break;
-         // treat enter key like return key on Mac???
-         // case WXK_NUMPAD_ENTER:
+         case WXK_NUMPAD_ENTER: // treat enter key like return key
          case WXK_RETURN:     ascii = 13;    break;
          case WXK_LEFT:       ascii = 28;    break;
          case WXK_RIGHT:      ascii = 29;    break;

@@ -58,4 +58,7 @@ void EndProgress();
 void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush);
 // Fill given rectangle using given brush.
 
+void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap);
+// Create a pale gray version of given bitmap.
+
 #endif

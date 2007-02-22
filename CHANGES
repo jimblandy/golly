@@ -9,6 +9,7 @@ JES = Jason Summers <jason1@pobox.com>
 
 Changes in version 1.2 (released !!!)
 
+AKT: Enter key is equivalent to return key.
 AKT: New tool bar buttons, including a single go/stop button.
 AKT: Mac app saves mc/rle files with appropriate type and creator.
 AKT: Mac app has a creator code (GoLy).

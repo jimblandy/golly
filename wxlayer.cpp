@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning, FillRect
+#include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap
 #include "wxprefs.h"       // for gollydir, inithash, initrule, etc
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"
@@ -66,8 +66,7 @@ bigint oldx;                     // X position in old layer
 bigint oldy;                     // Y position in old layer
 wxCursor* oldcurs;               // cursor mode in old layer
 
-// ids for bitmap buttons in layer bar;
-// also used as indices for bitbutt/normbitmap/downbitmap arrays
+// ids for bitmap buttons in layer bar
 enum {
    LAYER_0 = 0,                  // LAYER_0 must be first id
    LAYER_LAST = LAYER_0 + maxlayers - 1,
@@ -79,9 +78,6 @@ enum {
 };
 
 const int NUM_BUTTONS = TILE_LAYERS + 1;
-
-// bitmap buttons (set in LayerBar::AddButton)
-wxBitmapButton* bitbutt[NUM_BUTTONS];
 
 #ifdef __WXMSW__
    // bitmaps are loaded via .rc file
@@ -97,11 +93,510 @@ wxBitmapButton* bitbutt[NUM_BUTTONS];
    #include "bitmaps/tile_down.xpm"
 #endif
 
-// bitmaps for normal or down state (set in LayerBar::AddButton)
-wxBitmap normbitmap[NUM_BUTTONS];
-wxBitmap downbitmap[NUM_BUTTONS];
+// -----------------------------------------------------------------------------
 
-int downid = -1;                 // id of currently pressed layer button
+// Define layer bar window:
+
+// derive from wxPanel so we get current theme's background color on Windows
+class LayerBar : public wxPanel
+{
+public:
+   LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
+   ~LayerBar() {}
+
+   // add a bitmap button to layer bar
+   void AddButton(int id, char label, const wxString& tip);
+
+   // add a horizontal gap between buttons
+   void AddSeparator();
+   
+   // enable/disable button
+   void EnableButton(int id, bool enable);
+   
+   // set state of a toggle button
+   void SelectButton(int id, bool select);
+
+   // detect press and release of a bitmap button
+   void OnButtonDown(wxMouseEvent& event);
+   void OnButtonUp(wxMouseEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnKillFocus(wxFocusEvent& event);
+
+private:
+   // any class wishing to process wxWidgets events must use this macro
+   DECLARE_EVENT_TABLE()
+
+   // event handlers
+   void OnPaint(wxPaintEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
+   void OnButton(wxCommandEvent& event);
+   
+   // bitmaps for normal or down state
+   wxBitmap normbutt[NUM_BUTTONS];
+   wxBitmap downbutt[NUM_BUTTONS];
+
+   #if defined(__WXMSW__) || defined(__WXGTK__)
+      // on Windows/GTK we need bitmaps for disabled buttons
+      wxBitmap disnormbutt[NUM_BUTTONS];
+      wxBitmap disdownbutt[NUM_BUTTONS];
+   #endif
+   
+   // positioning data used by AddButton and AddSeparator
+   int ypos, xpos, smallgap, biggap;
+
+   // id of currently pressed layer button
+   int downid;
+};
+
+BEGIN_EVENT_TABLE(LayerBar, wxPanel)
+   EVT_PAINT            (           LayerBar::OnPaint)
+   EVT_LEFT_DOWN        (           LayerBar::OnMouseDown)
+   EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
+END_EVENT_TABLE()
+
+LayerBar* layerbarptr = NULL;      // global pointer to layer bar
+
+// layer bar buttons (must be global to use Connect/Disconect on Windows)
+wxBitmapButton* lbbutt[NUM_BUTTONS];
+
+// -----------------------------------------------------------------------------
+
+LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
+   : wxPanel(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
+             wxNO_FULL_REPAINT_ON_RESIZE)
+{
+   #ifdef __WXGTK__
+      // avoid erasing background on GTK+
+      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+   #endif
+
+   // init bitmaps for normal state;
+   // note that bitmaps for layer buttons are created in AddButton
+   normbutt[ADD_LAYER] =    wxBITMAP(add);
+   normbutt[CLONE_LAYER] =  wxBITMAP(clone);
+   normbutt[DELETE_LAYER] = wxBITMAP(delete);
+   normbutt[STACK_LAYERS] = wxBITMAP(stack);
+   normbutt[TILE_LAYERS] =  wxBITMAP(tile);
+   
+   // toggle buttons also have a down state
+   downbutt[STACK_LAYERS] = wxBITMAP(stack_down);
+   downbutt[TILE_LAYERS] =  wxBITMAP(tile_down);
+
+   #if defined(__WXMSW__) || defined(__WXGTK__)
+      // create bitmaps for disabled buttons
+      CreatePaleBitmap(normbutt[ADD_LAYER],     disnormbutt[ADD_LAYER]);
+      CreatePaleBitmap(normbutt[CLONE_LAYER],   disnormbutt[CLONE_LAYER]);
+      CreatePaleBitmap(normbutt[DELETE_LAYER],  disnormbutt[DELETE_LAYER]);
+      CreatePaleBitmap(normbutt[STACK_LAYERS],  disnormbutt[STACK_LAYERS]);
+      CreatePaleBitmap(normbutt[TILE_LAYERS],   disnormbutt[TILE_LAYERS]);
+      
+      // create bitmaps for disabled buttons in down state
+      CreatePaleBitmap(downbutt[STACK_LAYERS],  disdownbutt[STACK_LAYERS]);
+      CreatePaleBitmap(downbutt[TILE_LAYERS],   disdownbutt[TILE_LAYERS]);
+   #endif
+
+   // init position variables used by AddButton and AddSeparator
+   biggap = 16;
+   xpos = biggap;       // nicer than 4 when no pattern/script window
+   #ifdef __WXGTK__
+      ypos = 3;
+      smallgap = 6;
+   #else
+      ypos = 4;
+      smallgap = 4;
+   #endif
+   
+   downid = -1;         // no layer button down as yet
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   wxPaintDC dc(this);
+
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   if (wd < 1 || ht < 1 || !showlayer) return;
+      
+   #ifdef __WXMSW__
+      // needed on Windows
+      dc.Clear();
+   #endif
+   
+   wxRect r = wxRect(0, 0, wd, ht);
+   
+   #ifdef __WXMAC__
+      wxBrush brush(wxColor(202,202,202));
+      FillRect(dc, r, brush);
+   #endif
+   
+   // draw gray border line at bottom edge
+   #if defined(__WXMSW__)
+      dc.SetPen(*wxGREY_PEN);
+   #elif defined(__WXMAC__)
+      wxPen linepen(wxColor(140,140,140));
+      dc.SetPen(linepen);
+   #else
+      dc.SetPen(*wxLIGHT_GREY_PEN);
+   #endif
+   dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
+   dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
+{
+   // this is NOT called if user clicks a layer bar button;
+   // on Windows we need to reset keyboard focus to viewport window
+   viewptr->SetFocus();
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnButton(wxCommandEvent& event)
+{
+   mainptr->showbanner = false;
+   statusptr->ClearMessage();
+
+   int id = event.GetId();
+   
+   #ifdef __WXMSW__
+      // disconnect focus handler and reset focus to viewptr;
+      // we must do latter before button becomes disabled
+      lbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                              wxFocusEventHandler(LayerBar::OnKillFocus));
+      viewptr->SetFocus();
+   #endif
+
+   switch (id) {
+      case ADD_LAYER:      AddLayer(); break;
+      case CLONE_LAYER:    CloneLayer(); break;
+      case DELETE_LAYER:   DeleteLayer(); break;
+      case STACK_LAYERS:   ToggleStackLayers(); break;
+      case TILE_LAYERS:    ToggleTileLayers(); break;
+      default:
+         SetLayer(id);
+         if (inscript) {
+            // update window title, viewport and status bar
+            inscript = false;
+            mainptr->SetWindowTitle(wxEmptyString);
+            mainptr->UpdatePatternAndStatus();
+            inscript = true;
+         }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnKillFocus(wxFocusEvent& event)
+{
+   int id = event.GetId();
+   lbbutt[id]->SetFocus();   // don't let button lose focus
+}
+
+// -----------------------------------------------------------------------------
+
+//!!! flag is not used at the moment (probably need later for dragging button)
+bool layerbuttdown = false;
+
+void LayerBar::OnButtonDown(wxMouseEvent& event)
+{
+   // a layer bar button has been pressed
+   layerbuttdown = true;
+   
+   int id = event.GetId();
+   
+   // connect a handler that keeps focus with the pressed button
+   lbbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
+                       wxFocusEventHandler(LayerBar::OnKillFocus));
+        
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::OnButtonUp(wxMouseEvent& event)
+{
+   // a layer bar button has been released
+   layerbuttdown = false;
+
+   int id = event.GetId();
+   wxPoint pt = lbbutt[id]->ScreenToClient( wxGetMousePosition() );
+
+   int wd, ht;
+   lbbutt[id]->GetClientSize(&wd, &ht);
+   wxRect r(0, 0, wd, ht);
+
+   // diconnect kill-focus handler
+   lbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                          wxFocusEventHandler(LayerBar::OnKillFocus));
+   viewptr->SetFocus();
+
+#if wxCHECK_VERSION(2, 7, 0)
+// Inside is deprecated
+if ( r.Contains(pt) ) {
+#else
+if ( r.Inside(pt) ) {
+#endif
+      // call OnButton
+      wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
+      buttevt.SetEventObject(lbbutt[id]);
+      lbbutt[id]->ProcessEvent(buttevt);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+//!!! not used at the moment (probably need later for button dragging)
+void LayerBar::OnMouseMotion(wxMouseEvent& event)
+{   
+   if (layerbuttdown) {
+      //!!!
+   }
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::AddButton(int id, char label, const wxString& tip)
+{
+   if (id >= LAYER_0 && id <= LAYER_LAST) {
+      // create bitmaps for given layer button
+      const int BITMAP_WD = 16;
+      const int BITMAP_HT = 16;
+
+      wxMemoryDC dc;
+      #ifdef __WXMAC__
+         wxFont* font = wxFont::New(11, wxMODERN, wxNORMAL, wxBOLD);
+      #else
+         wxFont* font = wxFont::New(10, wxMODERN, wxNORMAL, wxBOLD);
+      #endif
+      wxString str;
+      str.Printf(_("%c"), label);
+      
+      wxColor darkblue(0,0,128);       // matches blue in above buttons
+
+      // create bitmap for normal state
+      normbutt[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
+      dc.SelectObject(normbutt[id]);
+      dc.SetFont(*font);
+      dc.SetTextForeground(darkblue);
+      dc.SetBrush(*wxBLACK_BRUSH);
+      #ifndef __WXMAC__
+         dc.Clear();   // needed on Windows and Linux
+      #endif
+      dc.SetBackgroundMode(wxTRANSPARENT);
+      #if defined(__WXMAC__)
+         dc.DrawText(str, 3, 2);
+      #elif defined(__WXX11__)
+         dc.DrawText(str, 4, 2);
+      #else
+         dc.DrawText(str, 4, 0);
+      #endif
+      dc.SelectObject(wxNullBitmap);
+      #if defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXX11__)
+         // prevent white background
+         normbutt[id].SetMask( new wxMask(normbutt[id],*wxWHITE) );
+      #endif
+
+      // create bitmap for down state
+      downbutt[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
+      dc.SelectObject(downbutt[id]);
+      wxRect r = wxRect(0, 0, BITMAP_WD, BITMAP_HT);
+      wxBrush brush(wxColor(140,150,166));
+      FillRect(dc, r, brush);
+      dc.SetFont(*font);
+      dc.SetTextForeground(wxColor(0,0,48));
+      dc.SetBrush(*wxBLACK_BRUSH);
+      dc.SetBackgroundMode(wxTRANSPARENT);
+      #if defined(__WXMAC__)
+         dc.DrawText(str, 5, 1);             // why diff to above???
+      #elif defined(__WXX11__)
+         dc.DrawText(str, 4, 2);
+      #else
+         dc.DrawText(str, 4, 0);
+      #endif
+      dc.SelectObject(wxNullBitmap);
+
+      #if defined(__WXMSW__) || defined(__WXGTK__)
+         CreatePaleBitmap(normbutt[id], disnormbutt[id]);
+         CreatePaleBitmap(downbutt[id], disdownbutt[id]);
+      #endif
+   }
+   
+   lbbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos));
+   if (lbbutt[id] == NULL) {
+      Fatal(_("Failed to create layer bar button!"));
+   } else {
+      const int BUTTON_WD = 24;        // nominal width of bitmap buttons
+      xpos += BUTTON_WD + smallgap;
+      lbbutt[id]->SetToolTip(tip);
+      #ifdef __WXMSW__
+         // fix problem with layer bar buttons when generating/inscript
+         // due to focus being changed to viewptr
+         lbbutt[id]->Connect(id, wxEVT_LEFT_DOWN,
+                             wxMouseEventHandler(LayerBar::OnButtonDown));
+         lbbutt[id]->Connect(id, wxEVT_LEFT_UP,
+                             wxMouseEventHandler(LayerBar::OnButtonUp));
+         /* don't need this handler at the moment
+         lbbutt[id]->Connect(id, wxEVT_MOTION,
+                             wxMouseEventHandler(LayerBar::OnMouseMotion));
+         */
+      #endif
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::AddSeparator()
+{
+   xpos += biggap - smallgap;
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::EnableButton(int id, bool enable)
+{
+   if (enable == lbbutt[id]->IsEnabled()) return;
+
+   #if defined(__WXMSW__) || defined(__WXGTK__)
+      lbbutt[id]->SetBitmapDisabled(disnormbutt[id]);
+   #endif
+
+   lbbutt[id]->Enable(enable);
+}
+
+// -----------------------------------------------------------------------------
+
+void LayerBar::SelectButton(int id, bool select)
+{
+   if (select && id >= LAYER_0 && id <= LAYER_LAST) {
+      if (downid >= LAYER_0) {
+         // deselect old layer button
+         lbbutt[downid]->SetBitmapLabel(normbutt[downid]);
+         
+         #if defined(__WXMSW__) || defined(__WXGTK__)
+            lbbutt[downid]->SetBitmapDisabled(disnormbutt[downid]);
+         #endif
+         
+         if (showlayer) {
+            #ifdef __WXX11__
+               lbbutt[downid]->ClearBackground();    // fix wxX11 problem
+            #endif
+            lbbutt[downid]->Refresh(false);
+         }
+      }
+      downid = id;
+   }
+   
+   if (select) {
+      lbbutt[id]->SetBitmapLabel(downbutt[id]);
+   } else {
+      lbbutt[id]->SetBitmapLabel(normbutt[id]);
+   }
+
+   #if defined(__WXMSW__) || defined(__WXGTK__)
+      if (select) {
+         lbbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+      } else {
+         lbbutt[id]->SetBitmapDisabled(disnormbutt[id]);
+      }
+   #endif
+
+   if (showlayer) {
+      #ifdef __WXX11__
+         lbbutt[id]->ClearBackground();    // fix wxX11 problem
+      #endif
+      lbbutt[id]->Refresh(false);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CreateLayerBar(wxWindow* parent)
+{
+   int wd, ht;
+   parent->GetClientSize(&wd, &ht);
+
+   layerbarptr = new LayerBar(parent, 0, 0, wd, layerbarht);
+   if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
+
+   // add buttons to layer bar
+   layerbarptr->AddButton(ADD_LAYER,    0, _("Add new layer"));
+   layerbarptr->AddButton(CLONE_LAYER,  0, _("Clone current layer"));
+   layerbarptr->AddButton(DELETE_LAYER, 0, _("Delete current layer"));
+   layerbarptr->AddSeparator();
+   layerbarptr->AddButton(STACK_LAYERS, 0, _("Toggle stacked layers"));
+   layerbarptr->AddButton(TILE_LAYERS,  0, _("Toggle tiled layers"));
+   layerbarptr->AddSeparator();
+   for (int i = 0; i < maxlayers; i++) {
+      wxString tip;
+      tip.Printf(_("Switch to layer %d"), i);
+      layerbarptr->AddButton(i, '0' + i, tip);
+   }
+  
+   // hide all layer buttons except layer 0
+   for (int i = 1; i < maxlayers; i++) lbbutt[i]->Show(false);
+   
+   // select STACK_LAYERS or TILE_LAYERS if necessary
+   if (stacklayers) layerbarptr->SelectButton(STACK_LAYERS, true);
+   if (tilelayers) layerbarptr->SelectButton(TILE_LAYERS, true);
+   
+   // select LAYER_0 button
+   layerbarptr->SelectButton(LAYER_0, true);
+      
+   layerbarptr->Show(showlayer);
+}
+
+// -----------------------------------------------------------------------------
+
+void ResizeLayerBar(int wd)
+{
+   if (layerbarptr) {
+      layerbarptr->SetSize(wd, layerbarht);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void UpdateLayerBar(bool active)
+{
+   if (layerbarptr && showlayer) {
+      if (viewptr->waitingforclick) active = false;
+      bool busy = mainptr->generating || inscript;
+
+      layerbarptr->EnableButton(ADD_LAYER,      active && !busy && numlayers < maxlayers);
+      layerbarptr->EnableButton(CLONE_LAYER,    active && !busy && numlayers < maxlayers);
+      layerbarptr->EnableButton(DELETE_LAYER,   active && !busy && numlayers > 1);
+      layerbarptr->EnableButton(STACK_LAYERS,   active);
+      layerbarptr->EnableButton(TILE_LAYERS,    active);
+      for (int i = 0; i < numlayers; i++)
+         layerbarptr->EnableButton(i, active && CanSwitchLayer(i));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleLayerBar()
+{
+   showlayer = !showlayer;
+   wxRect r = bigview->GetRect();
+   
+   if (showlayer) {
+      // show layer bar at top of viewport window
+      r.y += layerbarht;
+      r.height -= layerbarht;
+   } else {
+      // hide layer bar
+      r.y -= layerbarht;
+      r.height += layerbarht;
+   }
+   
+   bigview->SetSize(r);
+   layerbarptr->Show(showlayer);    // needed on Windows
+}
 
 // -----------------------------------------------------------------------------
 
@@ -318,37 +813,6 @@ void RefreshView()
 
 // -----------------------------------------------------------------------------
 
-void SelectButton(int id, bool select)
-{
-   if (select && id >= LAYER_0 && id <= LAYER_LAST) {
-      if (downid >= LAYER_0) {
-         // deselect old layer button
-         bitbutt[downid]->SetBitmapLabel(normbitmap[downid]);
-         if (showlayer) {
-            #ifdef __WXX11__
-               bitbutt[downid]->ClearBackground();    // fix wxX11 problem
-            #endif
-            bitbutt[downid]->Refresh(false);
-         }
-      }
-      downid = id;
-   }
-   
-   if (select) {
-      bitbutt[id]->SetBitmapLabel(downbitmap[id]);
-   } else {
-      bitbutt[id]->SetBitmapLabel(normbitmap[id]);
-   }
-   if (showlayer) {
-      #ifdef __WXX11__
-         bitbutt[id]->ClearBackground();    // fix wxX11 problem
-      #endif
-      bitbutt[id]->Refresh(false);
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 void SyncClones()
 {
    //!!! debug
@@ -449,7 +913,7 @@ void CurrentLayerChanged()
    if (synccursors) currlayer->curs = oldcurs;
 
    // select current layer button (also deselects old button)
-   SelectButton(currindex, true);
+   layerbarptr->SelectButton(currindex, true);
    
    if (tilelayers && numlayers > 1) {
       // switch to new tile
@@ -505,7 +969,7 @@ void AddLayer()
 
    if (numlayers > 1) {
       // add bitmap button at end of layer bar
-      bitbutt[numlayers - 1]->Show(true);
+      lbbutt[numlayers - 1]->Show(true);
       
       // add another item at end of Layer menu
       mainptr->AppendLayerItem();
@@ -561,7 +1025,7 @@ void DeleteLayer()
    currlayer = layer[currindex];
 
    // remove bitmap button at end of layer bar
-   bitbutt[numlayers]->Show(false);
+   lbbutt[numlayers]->Show(false);
       
    // remove item from end of Layer menu
    mainptr->RemoveLayerItem();
@@ -634,7 +1098,7 @@ void DeleteOtherLayers()
          if (i < numlayers) layer[i] = layer[i+1];
    
          // remove bitmap button at end of layer bar
-         bitbutt[numlayers]->Show(false);
+         lbbutt[numlayers]->Show(false);
          
          // remove item from end of Layer menu
          mainptr->RemoveLayerItem();
@@ -651,7 +1115,7 @@ void DeleteOtherLayers()
    mainptr->SetWindowTitle(wxEmptyString);
 
    // select LAYER_0 button (also deselects old button)
-   SelectButton(LAYER_0, true);
+   layerbarptr->SelectButton(LAYER_0, true);
 
    mainptr->UpdateMenuItems(mainptr->IsActive());
    mainptr->UpdatePatternAndStatus();
@@ -887,10 +1351,10 @@ void ToggleStackLayers()
    stacklayers = !stacklayers;
    if (stacklayers && tilelayers) {
       tilelayers = false;
-      SelectButton(TILE_LAYERS, false);
+      layerbarptr->SelectButton(TILE_LAYERS, false);
       if (numlayers > 1) DestroyTiles();
    }
-   SelectButton(STACK_LAYERS, stacklayers);
+   layerbarptr->SelectButton(STACK_LAYERS, stacklayers);
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
    if (inscript) {
@@ -910,9 +1374,9 @@ void ToggleTileLayers()
    tilelayers = !tilelayers;
    if (tilelayers && stacklayers) {
       stacklayers = false;
-      SelectButton(STACK_LAYERS, false);
+      layerbarptr->SelectButton(STACK_LAYERS, false);
    }
-   SelectButton(TILE_LAYERS, tilelayers);
+   layerbarptr->SelectButton(TILE_LAYERS, tilelayers);
    
    if (tilelayers) {
       if (numlayers > 1) CreateTiles();
@@ -1232,414 +1696,4 @@ Layer::~Layer()
          Warning(_("Problem with tempstart suffix: ") + tempstart);
       }
    }
-}
-
-// -----------------------------------------------------------------------------
-
-// Define layer bar window:
-
-// derive from wxPanel so we get current theme's background color on Windows
-class LayerBar : public wxPanel
-{
-public:
-   LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
-   ~LayerBar() {}
-
-   // add a bitmap button to layer bar
-   void AddButton(int id, char label, int x, int y);
-
-   // detect press and release of a bitmap button
-   void OnButtonDown(wxMouseEvent& event);
-   void OnButtonUp(wxMouseEvent& event);
-   void OnMouseMotion(wxMouseEvent& event);
-   void OnKillFocus(wxFocusEvent& event);
-
-private:
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
-
-   // event handlers
-   void OnPaint(wxPaintEvent& event);
-   void OnMouseDown(wxMouseEvent& event);
-   void OnButton(wxCommandEvent& event);
-};
-
-BEGIN_EVENT_TABLE(LayerBar, wxPanel)
-   EVT_PAINT            (           LayerBar::OnPaint)
-   EVT_LEFT_DOWN        (           LayerBar::OnMouseDown)
-   EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
-END_EVENT_TABLE()
-
-LayerBar* layerbarptr = NULL;
-
-// -----------------------------------------------------------------------------
-
-LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
-   : wxPanel(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-             wxNO_FULL_REPAINT_ON_RESIZE)
-{
-   #ifdef __WXGTK__
-      // avoid erasing background on GTK+
-      SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
-{
-   wxPaintDC dc(this);
-
-   int wd, ht;
-   GetClientSize(&wd, &ht);
-   if (wd < 1 || ht < 1 || !showlayer) return;
-      
-   #ifdef __WXMSW__
-      // needed on Windows
-      dc.Clear();
-   #endif
-   
-   wxRect r = wxRect(0, 0, wd, ht);
-   
-   #ifdef __WXMAC__
-      wxBrush brush(wxColor(202,202,202));
-      FillRect(dc, r, brush);
-   #endif
-   
-   // draw gray border line at bottom edge
-   #if defined(__WXMSW__)
-      dc.SetPen(*wxGREY_PEN);
-   #elif defined(__WXMAC__)
-      wxPen linepen(wxColor(140,140,140));
-      dc.SetPen(linepen);
-   #else
-      dc.SetPen(*wxLIGHT_GREY_PEN);
-   #endif
-   dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
-   dc.SetPen(wxNullPen);
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
-{
-   // this is NOT called if user clicks a layer bar button;
-   // on Windows we need to reset keyboard focus to viewport window
-   viewptr->SetFocus();
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnButton(wxCommandEvent& event)
-{
-   mainptr->showbanner = false;
-   statusptr->ClearMessage();
-
-   int id = event.GetId();
-   
-   #ifdef __WXMSW__
-      // disconnect focus handler and reset focus to viewptr;
-      // we must do latter before button becomes disabled
-      bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                              wxFocusEventHandler(LayerBar::OnKillFocus));
-      viewptr->SetFocus();
-   #endif
-   #if defined(__WXGTK__) && defined(__WXX11__)
-      viewptr->SetFocus();
-   #endif
-
-   switch (id) {
-      case ADD_LAYER:      AddLayer(); break;
-      case CLONE_LAYER:    CloneLayer(); break;
-      case DELETE_LAYER:   DeleteLayer(); break;
-      case STACK_LAYERS:   ToggleStackLayers(); break;
-      case TILE_LAYERS:    ToggleTileLayers(); break;
-      default:
-         SetLayer(id);
-         if (inscript) {
-            // update window title, viewport and status bar
-            inscript = false;
-            mainptr->SetWindowTitle(wxEmptyString);
-            mainptr->UpdatePatternAndStatus();
-            inscript = true;
-         }
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnKillFocus(wxFocusEvent& event)
-{
-   int id = event.GetId();
-   bitbutt[id]->SetFocus();   // don't let button lose focus
-}
-
-// -----------------------------------------------------------------------------
-
-//!!! flag is not used at the moment (probably need later for dragging button)
-bool layerbuttdown = false;
-
-void LayerBar::OnButtonDown(wxMouseEvent& event)
-{
-   // a layer bar button has been pressed
-   layerbuttdown = true;
-   
-   int id = event.GetId();
-   
-   // connect a handler that keeps focus with the pressed button
-   bitbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
-                        wxFocusEventHandler(LayerBar::OnKillFocus));
-        
-   event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::OnButtonUp(wxMouseEvent& event)
-{
-   // a layer bar button has been released
-   layerbuttdown = false;
-
-   int id = event.GetId();
-   wxPoint pt = bitbutt[id]->ScreenToClient( wxGetMousePosition() );
-
-   int wd, ht;
-   bitbutt[id]->GetClientSize(&wd, &ht);
-   wxRect r(0, 0, wd, ht);
-
-#if wxCHECK_VERSION(2, 7, 0)
-// Inside is deprecated
-if ( r.Contains(pt) ) {
-#else
-if ( r.Inside(pt) ) {
-#endif
-      // call OnButton
-      wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
-      buttevt.SetEventObject(bitbutt[id]);
-      bitbutt[id]->ProcessEvent(buttevt);
-   } else {
-      // mouse has moved outside button
-      bitbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                              wxFocusEventHandler(LayerBar::OnKillFocus));
-      viewptr->SetFocus();
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-//!!! not used at the moment (probably need later for button dragging)
-void LayerBar::OnMouseMotion(wxMouseEvent& event)
-{   
-   if (layerbuttdown) {
-      //!!!
-   }
-   event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
-void LayerBar::AddButton(int id, char label, int x, int y)
-{
-   if (id == ADD_LAYER) {
-      normbitmap[id] = wxBITMAP(add);
-
-   } else if (id == CLONE_LAYER) {
-      normbitmap[id] = wxBITMAP(clone);
-
-   } else if (id == DELETE_LAYER) {
-      normbitmap[id] = wxBITMAP(delete);
-
-   } else if (id == STACK_LAYERS) {
-      normbitmap[id] = wxBITMAP(stack);
-      downbitmap[id] = wxBITMAP(stack_down);
-
-   } else if (id == TILE_LAYERS) {
-      normbitmap[id] = wxBITMAP(tile);
-      downbitmap[id] = wxBITMAP(tile_down);
-
-   } else {
-      // id == LAYER_0..LAYER_LAST
-      const int BITMAP_WD = 16;        // width of bitmaps
-      const int BITMAP_HT = 16;        // height of bitmaps
-
-      wxMemoryDC dc;
-      #ifdef __WXMAC__
-         wxFont* font = wxFont::New(11, wxMODERN, wxNORMAL, wxBOLD);
-      #else
-         wxFont* font = wxFont::New(10, wxMODERN, wxNORMAL, wxBOLD);
-      #endif
-      wxString str;
-      str.Printf(_("%c"), label);
-      
-      wxColor darkblue(0,0,128);       // matches blue in above buttons
-
-      // create bitmap for normal state
-      normbitmap[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
-      dc.SelectObject(normbitmap[id]);
-      dc.SetFont(*font);
-      dc.SetTextForeground(darkblue);
-      dc.SetBrush(*wxBLACK_BRUSH);
-      #ifndef __WXMAC__
-         dc.Clear();   // needed on Windows and Linux
-      #endif
-      dc.SetBackgroundMode(wxTRANSPARENT);
-      #if defined(__WXMAC__)
-         dc.DrawText(str, 3, 2);
-      #elif defined(__WXX11__)
-         dc.DrawText(str, 4, 2);
-      #else
-         dc.DrawText(str, 4, 0);
-      #endif
-      dc.SelectObject(wxNullBitmap);
-      #if defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXX11__)
-         // prevent white background
-         normbitmap[id].SetMask( new wxMask(normbitmap[id],*wxWHITE) );
-      #endif
-
-      // create bitmap for down state
-      downbitmap[id] = wxBitmap(BITMAP_WD, BITMAP_HT);
-      dc.SelectObject(downbitmap[id]);
-      wxRect r = wxRect(0, 0, BITMAP_WD, BITMAP_HT);
-      wxBrush brush(wxColor(140,150,166));
-      FillRect(dc, r, brush);
-      dc.SetFont(*font);
-      dc.SetTextForeground(wxColor(0,0,48));
-      dc.SetBrush(*wxBLACK_BRUSH);
-      dc.SetBackgroundMode(wxTRANSPARENT);
-      #if defined(__WXMAC__)
-         dc.DrawText(str, 5, 1);             // why diff to above???
-      #elif defined(__WXX11__)
-         dc.DrawText(str, 4, 2);
-      #else
-         dc.DrawText(str, 4, 0);
-      #endif
-      dc.SelectObject(wxNullBitmap);
-   }
-   
-   bitbutt[id] = new wxBitmapButton(this, id, normbitmap[id], wxPoint(x,y));
-   if (bitbutt[id] == NULL) {
-      Fatal(_("Failed to create layer bar button!"));
-   } else {
-      #ifdef __WXMSW__
-         // fix problem with layer bar buttons when generating/inscript
-         // due to focus being changed to viewptr
-         bitbutt[id]->Connect(id, wxEVT_LEFT_DOWN,
-                              wxMouseEventHandler(LayerBar::OnButtonDown));
-         bitbutt[id]->Connect(id, wxEVT_LEFT_UP,
-                              wxMouseEventHandler(LayerBar::OnButtonUp));
-         /* don't need this handler at the moment
-         bitbutt[id]->Connect(id, wxEVT_MOTION,
-                              wxMouseEventHandler(LayerBar::OnMouseMotion));
-         */
-      #endif
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void CreateLayerBar(wxWindow* parent)
-{
-   int wd, ht;
-   parent->GetClientSize(&wd, &ht);
-
-   layerbarptr = new LayerBar(parent, 0, 0, wd, layerbarht);
-   if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
-
-   const int BUTTON_WD = 24;     // nominal width of bitmap buttons
-
-   int bgap = 16;
-   int x = bgap;                 // nicer than 4 when no pattern/script window
-   #ifdef __WXGTK__
-      int y = 3;
-      int sgap = 6;
-   #else
-      int y = 4;
-      int sgap = 4;
-   #endif
-
-   // create bitmap buttons
-   layerbarptr->AddButton(ADD_LAYER,    '+', x, y);   x += BUTTON_WD + sgap;
-   layerbarptr->AddButton(CLONE_LAYER,  '=', x, y);   x += BUTTON_WD + sgap;
-   layerbarptr->AddButton(DELETE_LAYER, '-', x, y);   x += BUTTON_WD + bgap;
-   layerbarptr->AddButton(STACK_LAYERS, 'S', x, y);   x += BUTTON_WD + sgap;
-   layerbarptr->AddButton(TILE_LAYERS,  'T', x, y);   x += BUTTON_WD + bgap;
-   for (int i = 0; i < maxlayers; i++) {
-      layerbarptr->AddButton(i, '0' + i, x, y);
-      x += BUTTON_WD + sgap;
-   }
-
-   // add tool tips to buttons
-   bitbutt[ADD_LAYER]->SetToolTip(_("Add new layer"));
-   bitbutt[CLONE_LAYER]->SetToolTip(_("Clone current layer"));
-   bitbutt[DELETE_LAYER]->SetToolTip(_("Delete current layer"));
-   bitbutt[STACK_LAYERS]->SetToolTip(_("Toggle stacked layers"));
-   bitbutt[TILE_LAYERS]->SetToolTip(_("Toggle tiled layers"));
-   for (int i = 0; i < maxlayers; i++) {
-      wxString tip;
-      tip.Printf(_("Switch to layer %d"), i);
-      bitbutt[i]->SetToolTip(tip);
-   }
-  
-   // hide all layer buttons except layer 0
-   for (int i = 1; i < maxlayers; i++) bitbutt[i]->Show(false);
-   
-   // select STACK_LAYERS or TILE_LAYERS if necessary
-   if (stacklayers) SelectButton(STACK_LAYERS, true);
-   if (tilelayers) SelectButton(TILE_LAYERS, true);
-   
-   // select LAYER_0 button
-   SelectButton(LAYER_0, true);
-   
-   // disable DELETE_LAYER button
-   bitbutt[DELETE_LAYER]->Enable(false);
-      
-   layerbarptr->Show(showlayer);
-}
-
-// -----------------------------------------------------------------------------
-
-void ResizeLayerBar(int wd)
-{
-   if (layerbarptr) {
-      layerbarptr->SetSize(wd, layerbarht);
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void UpdateLayerBar(bool active)
-{
-   if (layerbarptr && showlayer) {
-      if (viewptr->waitingforclick) active = false;
-      bool busy = mainptr->generating || inscript;
-      
-      bitbutt[ADD_LAYER]->Enable(active && !busy && numlayers < maxlayers);
-      bitbutt[CLONE_LAYER]->Enable(active && !busy && numlayers < maxlayers);
-      bitbutt[DELETE_LAYER]->Enable(active && !busy && numlayers > 1);
-      bitbutt[STACK_LAYERS]->Enable(active);
-      bitbutt[TILE_LAYERS]->Enable(active);
-      for (int i = 0; i < numlayers; i++)
-         bitbutt[i]->Enable(active && CanSwitchLayer(i));
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void ToggleLayerBar()
-{
-   showlayer = !showlayer;
-   wxRect r = bigview->GetRect();
-   
-   if (showlayer) {
-      // show layer bar at top of viewport window
-      r.y += layerbarht;
-      r.height -= layerbarht;
-   } else {
-      // hide layer bar
-      r.y -= layerbarht;
-      r.height += layerbarht;
-   }
-   
-   bigview->SetSize(r);
-   layerbarptr->Show(showlayer);    // needed on Windows
 }

@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/progdlg.h"    // for wxProgressDialog
+#include "wx/image.h"      // for wxImage
 
 #include "wxgolly.h"       // for wxGetApp, etc
 #include "wxview.h"        // for viewptr->...
@@ -294,4 +295,48 @@ void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush)
    
    dc.SetBrush(wxNullBrush);     // restore brush
    dc.SetPen(wxNullPen);         // restore pen
+}
+
+// -----------------------------------------------------------------------------
+
+void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap)
+{
+   wxImage oldimg = inmap.ConvertToImage();
+
+   wxImage newimg;
+   newimg.Create(oldimg.GetWidth(), oldimg.GetHeight(), false);
+   unsigned char *dest = newimg.GetData();
+
+   unsigned char *src = oldimg.GetData();
+   bool hasMask = oldimg.HasMask();
+   unsigned char maskRed = oldimg.GetMaskRed();
+   unsigned char maskGreen = oldimg.GetMaskGreen();
+   unsigned char maskBlue = oldimg.GetMaskBlue();
+
+   if (hasMask)
+      newimg.SetMaskColour(maskRed, maskGreen, maskBlue);
+   
+   const long size = oldimg.GetWidth() * oldimg.GetHeight();
+   for ( long i = 0; i < size; i++, src += 3, dest += 3 ) {
+      if ( hasMask && src[0] == maskRed && src[1] == maskGreen && src[2] == maskBlue ) {
+         // don't modify the mask
+         memcpy(dest, src, 3);
+      } else {
+         // make pixel a pale shade of gray
+         int gray = (int) ((src[0] + src[1] + src[2]) / 3.0);
+         gray = (int) (170.0 + (gray / 4.0));
+         dest[0] = dest[1] = dest[2] = gray;
+      }
+   }
+
+   // copy the alpha channel, if any
+   if (oldimg.HasAlpha()) {
+      const size_t alphaSize = oldimg.GetWidth() * oldimg.GetHeight();
+      unsigned char *alpha = (unsigned char*) malloc(alphaSize);
+      memcpy(alpha, oldimg.GetAlpha(), alphaSize);
+      newimg.InitAlpha();
+      newimg.SetAlpha(alpha);
+   }
+
+   outmap = wxBitmap(newimg);
 }
