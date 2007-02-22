@@ -317,6 +317,13 @@ private:
    // bitmaps for normal or down state
    wxBitmap normtool[NUM_BUTTONS];
    wxBitmap downtool[NUM_BUTTONS];
+
+   #ifdef __WXMSW__
+      // on Windows we need bitmaps for disabled buttons
+      wxBitmap disabledtool[NUM_BUTTONS];
+      wxBitmap disabledtooldown[NUM_BUTTONS];
+      void CreateDisabledBitmap(const wxBitmap& inmap, wxBitmap& outmap);
+   #endif
    
    // positioning data used by AddButton and AddSeparator
    int ypos, xpos, smallgap, biggap;
@@ -371,6 +378,20 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    downtool[MOVE_TOOL] =      wxBITMAP(move_down);
    downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin_down);
    downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout_down);
+
+   #ifdef __WXMSW__
+      for (int i = 0; i < NUM_BUTTONS; i++) {
+         CreateDisabledBitmap(normtool[i], disabledtool[i]);
+      }
+      CreateDisabledBitmap(downtool[HASH_TOOL],       disabledtooldown[HASH_TOOL]);
+      CreateDisabledBitmap(downtool[PATTERNS_TOOL],   disabledtooldown[PATTERNS_TOOL]);
+      CreateDisabledBitmap(downtool[SCRIPTS_TOOL],    disabledtooldown[SCRIPTS_TOOL]);
+      CreateDisabledBitmap(downtool[DRAW_TOOL],       disabledtooldown[DRAW_TOOL]);
+      CreateDisabledBitmap(downtool[SELECT_TOOL],     disabledtooldown[SELECT_TOOL]);
+      CreateDisabledBitmap(downtool[MOVE_TOOL],       disabledtooldown[MOVE_TOOL]);
+      CreateDisabledBitmap(downtool[ZOOMIN_TOOL],     disabledtooldown[ZOOMIN_TOOL]);
+      CreateDisabledBitmap(downtool[ZOOMOUT_TOOL],    disabledtooldown[ZOOMOUT_TOOL]);
+   #endif
 
    // init position variables used by AddButton and AddSeparator
    ypos = 4;
@@ -538,8 +559,25 @@ void ToolBar::AddSeparator()
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMSW__
+
+void ToolBar::CreateDisabledBitmap(const wxBitmap& inmap, wxBitmap& outmap)
+{
+   wxImage img = inmap.ConvertToImage();
+   //!!!
+   outmap = wxBitmap(img.Mirror());
+}
+
+#endif
+
+// -----------------------------------------------------------------------------
+
 void ToolBar::EnableButton(int id, bool enable)
 {
+   #ifdef __WXMSW__
+      tbbutt[id]->SetBitmapDisabled(disabledtool[id]);
+   #endif
+
    tbbutt[id]->Enable(enable);
 }
 
@@ -571,9 +609,19 @@ void ToolBar::SelectButton(int id, bool select)
    } else {
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
+
    #ifdef __WXX11__
       tbbutt[id]->ClearBackground();    // fix wxX11 problem
    #endif
+
+   #ifdef __WXMSW__
+      if (select) {
+         tbbutt[id]->SetBitmapDisabled(disabledtooldown[id]);
+      } else {
+         tbbutt[id]->SetBitmapDisabled(disabledtool[id]);
+      }
+   #endif
+
    tbbutt[id]->Refresh(false);
 }
 
@@ -684,7 +732,7 @@ void MainFrame::EnableAllMenus(bool enable)
       if (mbar) {
          int count = mbar->GetMenuCount();
          int i;
-         for (i = 0; i<count; i++) {
+         for (i = 0; i < count; i++) {
             mbar->EnableTop(i, enable);
          }
       }
@@ -928,7 +976,7 @@ void MainFrame::SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId r
       treectrl->SetItemHasChildren(id);
       treectrl->Expand(id);
       #ifndef __WXMSW__
-         // causes crash on Windows!!!
+         // causes crash on Windows
          treectrl->ScrollTo(root);
       #endif
    }
@@ -1096,7 +1144,7 @@ void MainFrame::ToggleToolBar()
 void MainFrame::ToggleFullScreen()
 {
    #ifdef __WXX11__
-      // ShowFullScreen(true) does nothing!!!
+      // ShowFullScreen(true) does nothing
       statusptr->ErrorMessage(_("Sorry, full screen mode is not implemented for X11."));
    #else
       static bool restorestatusbar; // restore status bar at end of full screen mode?
@@ -1392,7 +1440,7 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 
 void MainFrame::OnActivate(wxActivateEvent& event)
 {
-   // this is never called in X11 app!!!
+   // this is never called in X11 app;
    // note that IsActive() doesn't always match event.GetActive()
 
    #ifdef __WXMAC__
