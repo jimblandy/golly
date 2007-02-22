@@ -280,6 +280,7 @@ srcdist:
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
 bindist: all
+	/Developer/Tools/SetFile -c ttxt -t TEXT README LICENSE
 	-rm -rf $(RELEASENAME)-mac
 	mkdir $(RELEASENAME)-mac
 	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
