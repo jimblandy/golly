@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dnd.h"        // for wxFileDropTarget
 #include "wx/filename.h"   // for wxFileName
 #include "wx/clipbrd.h"    // for wxTheClipboard
+#include "wx/image.h"      // for wxImage
 #if wxUSE_TOOLTIPS
    #include "wx/tooltip.h" // for wxToolTip
 #endif
@@ -563,9 +564,34 @@ void ToolBar::AddSeparator()
 
 void ToolBar::CreateDisabledBitmap(const wxBitmap& inmap, wxBitmap& outmap)
 {
-   wxImage img = inmap.ConvertToImage();
-   //!!!
-   outmap = wxBitmap(img.Mirror());
+   wxImage oldimg = inmap.ConvertToImage();
+
+   wxImage newimg;
+   newimg.Create(oldimg.GetWidth(), oldimg.GetHeight(), false);
+   unsigned char *dest = newimg.GetData();
+
+   unsigned char *src = oldimg.GetData();
+   bool hasMask = oldimg.HasMask();
+   unsigned char maskRed = oldimg.GetMaskRed();
+   unsigned char maskGreen = oldimg.GetMaskGreen();
+   unsigned char maskBlue = oldimg.GetMaskBlue();
+
+   if (hasMask)
+      newimg.SetMaskColour(maskRed, maskGreen, maskBlue);
+   
+   const long size = oldimg.GetWidth() * oldimg.GetHeight();
+   for ( long i = 0; i < size; i++, src += 3, dest += 3 ) {
+      // don't modify the mask
+      if ( hasMask && src[0] == maskRed && src[1] == maskGreen && src[2] == maskBlue ) {
+         memcpy(dest, src, 3);
+      } else {
+         // make pixel a pale shade of gray
+         int gray = (int) ((src[0] + src[1] + src[2]) / 3.0);
+         gray = (int) (170.0 + (gray / 4.0));
+         dest[0] = dest[1] = dest[2] = gray;
+      }
+   }
+   outmap = wxBitmap(newimg);
 }
 
 #endif
@@ -574,6 +600,8 @@ void ToolBar::CreateDisabledBitmap(const wxBitmap& inmap, wxBitmap& outmap)
 
 void ToolBar::EnableButton(int id, bool enable)
 {
+   if (enable == tbbutt[id]->IsEnabled()) return;
+
    #ifdef __WXMSW__
       tbbutt[id]->SetBitmapDisabled(disabledtool[id]);
    #endif
@@ -588,15 +616,23 @@ void ToolBar::SetGoStopButton()
    if (inscript || mainptr->generating) {
       // show stop bitmap
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
+      #ifdef __WXMSW__
+         tbbutt[GO_TOOL]->SetBitmapDisabled(disabledtool[STOP_TOOL]);
+      #endif
       if (inscript) tbbutt[GO_TOOL]->SetToolTip(_("Stop script"));
    } else {
       // show go bitmap
       tbbutt[GO_TOOL]->SetBitmapLabel(normtool[GO_TOOL]);
+      #ifdef __WXMSW__
+         tbbutt[GO_TOOL]->SetBitmapDisabled(disabledtool[GO_TOOL]);
+      #endif
       tbbutt[GO_TOOL]->SetToolTip(_("Start/stop generating"));
    }
+
    #ifdef __WXX11__
       tbbutt[GO_TOOL]->ClearBackground();    // fix wxX11 problem
    #endif
+
    tbbutt[GO_TOOL]->Refresh(false);
 }
 
@@ -610,16 +646,16 @@ void ToolBar::SelectButton(int id, bool select)
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
 
-   #ifdef __WXX11__
-      tbbutt[id]->ClearBackground();    // fix wxX11 problem
-   #endif
-
    #ifdef __WXMSW__
       if (select) {
          tbbutt[id]->SetBitmapDisabled(disabledtooldown[id]);
       } else {
          tbbutt[id]->SetBitmapDisabled(disabledtool[id]);
       }
+   #endif
+
+   #ifdef __WXX11__
+      tbbutt[id]->ClearBackground();    // fix wxX11 problem
    #endif
 
    tbbutt[id]->Refresh(false);
