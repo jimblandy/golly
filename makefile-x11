@@ -6,7 +6,7 @@
 # make
 
 # change next line to specify where you installed wxX11
-WXDIR = ~/wxX11-2.6.3
+WXDIR = ~/wxX11-2.8.0
 
 VERSION = 1.2
 RELEASENAME = golly-$(VERSION)
