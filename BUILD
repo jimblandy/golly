@@ -13,7 +13,7 @@ install wxWidgets first (visit http://www.wxwidgets.org/).  After you
 do that, building Golly is easy.  Just use the appropriate makefile:
 
    nmake -f makefile-win   (on Windows 98 or later)
-   make -f makefile-mac    (on Mac OS X)
+   make -f makefile-mac    (on Mac OS X 10.3.9 or later)
    make -f makefile-gtk    (on Linux/Unix platforms with GTK+)
    make -f makefile-x11    (on Linux/Unix platforms with X11)
 
@@ -100,7 +100,7 @@ wxrule.*       - Lets user change the current rule.
 wxscript.*     - Implements Python script support.
                  RunScript() executes a given .py file.
 
-wxutils.*      - Utility dialogs for showing errors and progress.
+wxutils.*      - Various utility routines.
                  Warning() displays message in modal dialog.
                  Fatal() displays message and exits app.
 

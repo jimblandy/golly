@@ -560,6 +560,7 @@ void PatternView::ProcessKey(int key, bool shiftdown)
       case 'P':   mainptr->ToggleShowScripts(); break;
    
       case 'h':
+      case '?':
       case WXK_HELP:
          if (!waitingforclick) {
             // if help window is open then bring it to the front,

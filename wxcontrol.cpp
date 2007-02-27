@@ -269,8 +269,8 @@ void MainFrame::GeneratePattern()
          // slow down by only doing one gen every GetCurrentDelay() millisecs
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
-            curralgo->step();
             if (wxGetApp().Poller()->checkevents()) break;
+            curralgo->step();
             if (currlayer->autofit) viewptr->FitInView(0);
             DisplayPattern();
             // add delay to current time rather than currmsec
@@ -283,8 +283,8 @@ void MainFrame::GeneratePattern()
          }
       } else {
          // warp >= 0 so only show results every curralgo->getIncrement() gens
-         curralgo->step();
          if (wxGetApp().Poller()->checkevents()) break;
+         curralgo->step();
          if (currlayer->autofit) viewptr->FitInView(0);
          DisplayPattern();
          if (currlayer->hyperspeed && curralgo->hyperCapable()) {
@@ -305,7 +305,11 @@ void MainFrame::GeneratePattern()
    
    // display the final pattern
    if (currlayer->autofit) viewptr->FitInView(0);
-   UpdateEverything();
+   if (reset_pending || hash_pending) {
+      // UpdateEverything will be called at end of ResetPattern/ToggleHashing
+   } else {
+      UpdateEverything();
+   }
 
    if (reset_pending) {
       reset_pending = false;
@@ -313,7 +317,18 @@ void MainFrame::GeneratePattern()
    }
    if (hash_pending) {
       hash_pending = false;
+      
+      // temporarily pretend the tool/layer bars are not showing
+      // to avoid UpdateToolBar/UpdateLayerBar flashing their buttons
+      bool saveshowtool = showtool;    showtool = false;
+      bool saveshowlayer = showlayer;  showlayer = false;
+      
       ToggleHashing();
+      
+      // restore tool/layer bar flags
+      showtool = saveshowtool;
+      showlayer = saveshowlayer;
+      
       // send Go command to event queue to call GeneratePattern again
       wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_GO());
       wxPostEvent(this->GetEventHandler(), goevt);

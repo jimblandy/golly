@@ -20,22 +20,20 @@ T - Improve batchmode.
 
 - Implement Undo (even just undoing the last draw would be very useful).
 
-- Support toroidal universes (see LifeLab).
+- Support toroidal universes (see LifeLab).  Or provide this as part
+  of an MCell-compatible lifealgo.
 
 - Add info() command to display current pattern info.
   Add help(html-file) to open the help window and display contents of
   given html file (not necessarily in Help folder).
 
-- Try to fix/avoid X11 problem with vertical tool bar.  Maybe just
-  avoid wxToolBar and implement our own simple tool bar stuff.
-
-- Check if wx can support vbr synchronization when buffering.
+- Allow Perl scripting.  Run "perldoc perlembed" to get info on how
+  to embed Perl in a C/C++ program.
 
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).
-  Or turn on wx_USE_CORE_GRAPHICS and see if that improves speed?
 
-- Allow non-rectangular (and disjoint?) selections.
+- Allow non-rectangular (and disjoint) selections.
 
 - Implement a history bar for hlife.
 
@@ -52,7 +50,7 @@ User suggestions:
 
 [Nick Gotts]
 - Need a way to copy exact gen/pop counts to clipboard.
-  [No longer necessary now that Python script can get this info?]
+  [No longer necessary now that a Python script can get this info?]
 
 [Jason Summers]
 - For better viewing of patterns that move, have a way to automatically
@@ -90,3 +88,5 @@ User suggestions:
   ie. the current layer would be displayed in a large "focal" viewport.
   All layers would be displayed as small, active thumbnails (at left
   or top edge of focal viewport, depending on aspect ratio?).
+- Allow mc files to set step base and/or exponent via comment line like
+  #X stepbase=8 stepexp=3

@@ -1567,7 +1567,7 @@ Layer::Layer()
          algo->setpoll(wxGetApp().Poller());
 
          // add unique suffix to tempstart
-         tempstart += wxString::Format("%d", GetUniqueSuffix());
+         tempstart += wxString::Format(_("%d"), GetUniqueSuffix());
       }
       
       // inherit current rule in global_liferules (NOT in currlayer->rule)
