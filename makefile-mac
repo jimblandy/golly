@@ -1,13 +1,15 @@
 # Makefile for building Mac OS X version of Golly using wxWidgets.
 # It assumes you've installed wxWidgets with commands like these:
 #
-# cd <BUILD_DIR>
+# cd WX_DIR
+# mkdir BUILD_DIR
+# cd BUILD_DIR
 # ../configure --with-mac --enable-universal_binary --disable-shared
 # make
-#
-# If necessary, change WX_RELEASE to your wxWidgets version.
-# Change WX_DIR to where you installed wxWidgets and
-# change BUILD_DIR to where you built the wx libraries.
+
+# In the lines below, change WX_DIR to where you installed wxWidgets,
+# change BUILD_DIR to where you built the wx libraries, and change
+# WX_RELEASE to match your wxWidgets version (first two digits).
 
 WX_RELEASE = 2.8
 WX_DIR = /HD/wxWidgets/wxMac-2.8.0

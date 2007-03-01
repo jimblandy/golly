@@ -13,7 +13,7 @@
 
 ### Change the next 2 lines to specify where you installed wxWidgets:
 !include </wxWidgets/build/msw/config.vc>
-WXDIR = c:\wxWidgets
+WX_DIR = c:\wxWidgets
 
 ### Change the next line depending on where you installed Python:
 PYTHON_DIR = c:\Python25
@@ -33,17 +33,17 @@ SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe
 
 WX_RELEASE_NODOT = 26
-LIBDIRNAME = $(WXDIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
+LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
 SETUPHDIR = $(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
 
 CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 	$(__DEBUGINFO_0) /Fdgolly.pdb $(____DEBUGRUNTIME_2_p) \
 	$(__OPTIMIZEFLAG_4) $(__NO_VC_CRTDBG_p) /D__WXMSW__ $(__WXUNIV_DEFINE_p) \
 	$(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
-	$(__THREAD_DEFINE_p) $(__UNICODE_DEFINE_p) /I$(WXDIR)\include /I$(SETUPHDIR) \
-	/W4 /I. $(__DLLFLAG_p) /D_WINDOWS /I$(WXDIR)\samples /DNOPCH $(__RTTIFLAG_9) \
+	$(__THREAD_DEFINE_p) $(__UNICODE_DEFINE_p) /I$(WX_DIR)\include /I$(SETUPHDIR) \
+	/W4 /I. $(__DLLFLAG_p) /D_WINDOWS /I$(WX_DIR)\samples /DNOPCH $(__RTTIFLAG_9) \
 	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) \
-	/EHsc /DVERSION=$(VERSION) /DZLIB /I$(WXDIR)\src\zlib
+	/EHsc /DVERSION=$(VERSION) /DZLIB /I$(WX_DIR)\src\zlib
 
 OBJDIR = ObjWin
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(OBJDIR)/hlifedraw.obj \
@@ -285,8 +285,8 @@ Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 golly.res: golly.rc
 	rc /fo$@  /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
 	$(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) \
-	$(__UNICODE_DEFINE_p_1) /i $(WXDIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS \
-	/i $(WXDIR)\samples /d NOPCH golly.rc
+	$(__UNICODE_DEFINE_p_1) /i $(WX_DIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS \
+	/i $(WX_DIR)\samples /d NOPCH golly.rc
 
 bgolly.exe: $(BASEOBJ) $(OBJDIR)/bgolly.obj
 	link /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) $(OBJDIR)/bgolly.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
