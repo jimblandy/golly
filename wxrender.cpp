@@ -745,8 +745,9 @@ void CheckPasteImage()
          pattdc.SelectObject(*pastebitmap);
          
          // set foreground and background colors for DrawBitmap calls
-         #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
-            // use opposite meaning on Mac/Windows -- sheesh
+         #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
+             (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
+            // use opposite meaning
             pattdc.SetTextForeground(*deadrgb);
             pattdc.SetTextBackground(*pastergb);
          #else
@@ -936,8 +937,9 @@ void DrawOneLayer(wxDC &dc, int index)
    layerdc.SelectObject(*layerbitmap);
    
    // set foreground and background colors for DrawBitmap calls
-   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
-      // use opposite meaning on Mac/Windows -- sheesh
+   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
+       (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
+      // use opposite meaning
       layerdc.SetTextForeground(*deadrgb);
       layerdc.SetTextBackground(*livergb[index]);
    #else
@@ -1129,13 +1131,14 @@ void DrawView(wxDC &dc, int tileindex)
       colorindex = currindex;
    }
 
-   // set foreground and background colors for DrawBitmap calls
-   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || defined(__WXMSW__)
-   // use opposite meaning on Mac/Windows -- sheesh
+// set foreground and background colors for DrawBitmap calls
+#if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
+    (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
+   // use opposite meaning
    if ( swapcolors ) {
-   #else
+#else
    if ( !swapcolors ) {
-   #endif
+#endif
       dc.SetTextForeground(*livergb[colorindex]);
       dc.SetTextBackground(*deadrgb);
    } else {
