@@ -1004,7 +1004,9 @@ void DeleteLayer()
 {
    if (mainptr->generating || numlayers <= 1) return;
 
-   if (!inscript && currlayer->dirty && askondelete && !mainptr->SaveCurrentLayer()) return;
+   // note that we don't need to ask to delete a clone
+   if (!inscript && currlayer->dirty && currlayer->cloneid == 0 &&
+       askondelete && !mainptr->SaveCurrentLayer()) return;
 
    // numlayers > 1
    if (tilelayers) DestroyTiles();

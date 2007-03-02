@@ -208,12 +208,16 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
    if (data) {
       int alpha = 128;     // 50% opaque
       
-      // note that RGB must be premultiplied by alpha
-      //!!! if alpha is 255 why is on-screen color not same as given color???
-      //!!! maybe wxMac/wxGTK bug because don't see same prob with wxMSW???
-      int r = color->Red() * alpha / 256;
-      int g = color->Green() * alpha / 256;
-      int b = color->Blue() * alpha / 256;
+      #ifdef __WXMSW__
+         // premultiply the RGB values on Windows
+         int r = color->Red() * alpha / 255;
+         int g = color->Green() * alpha / 255;
+         int b = color->Blue() * alpha / 255;
+      #else
+         int r = color->Red();
+         int g = color->Green();
+         int b = color->Blue();
+      #endif
       
       data.UseAlpha();
       wxAlphaPixelData::Iterator p(data);
@@ -573,10 +577,18 @@ void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
                   p.Blue()  = 0;
                   p.Alpha() = 0;
                } else {
-                  // live pixel; note that RGB must be premultiplied by alpha
-                  p.Red()   = r * livealpha / 256;
-                  p.Green() = g * livealpha / 256;
-                  p.Blue()  = b * livealpha / 256;
+                  // live pixel
+                  #ifdef __WXMSW__
+                     // premultiply the RGB values on Windows
+                     p.Red()   = r * livealpha / 255;
+                     p.Green() = g * livealpha / 255;
+                     p.Blue()  = b * livealpha / 255;
+                  #else
+                     // no change needed
+                     // p.Red()   = r;
+                     // p.Green() = g;
+                     // p.Blue()  = b;
+                  #endif
                   p.Alpha() = livealpha;
                }
    
@@ -1004,7 +1016,7 @@ void DrawStackedLayers(wxDC &dc)
       viewport *saveview = currlayer->view;
       currlayer->view = savelayer->view;
       
-      //!!! avoid drawing a cloned layer more than once??? draw first or last clone???
+      // avoid drawing a cloned layer more than once??? draw first or last clone???
 
       if ( !currlayer->algo->isEmpty() ) {
          DrawOneLayer(dc, i);
