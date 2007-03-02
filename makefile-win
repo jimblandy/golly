@@ -11,14 +11,17 @@
 # 
 # So now I don't have to specify those settings to nmake.
 
-### Change the next 2 lines to specify where you installed wxWidgets:
+# Change the next 2 lines to specify where you installed wxWidgets:
 !include </wxWidgets/build/msw/config.vc>
 WX_DIR = c:\wxWidgets
 
-### Change the next line depending on where you installed Python:
+# Change the next line to match your wxWidgets version (first two digits):
+WX_RELEASE = 28
+
+# Change the next line depending on where you installed Python:
 PYTHON_DIR = c:\Python25
 
-### Variables: ###
+### Golly-related variables: ###
 VERSION = 1.2
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
@@ -32,7 +35,6 @@ SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-wi
 SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe
 
-WX_RELEASE_NODOT = 26
 LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
 SETUPHDIR = $(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
 
@@ -237,23 +239,23 @@ __DLLFLAG_p_1 = /d WXUSINGDLL
 !endif
 !if "$(MONOLITHIC)" == "0"
 __WXLIB_HTML_p = \
-	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE_NODOT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_html.lib
+	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_html.lib
 !endif
 !if "$(MONOLITHIC)" == "0"
 __WXLIB_ADV_p = \
-	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE_NODOT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_adv.lib
+	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_adv.lib
 !endif
 !if "$(MONOLITHIC)" == "0"
 __WXLIB_CORE_p = \
-	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE_NODOT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_core.lib
+	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_core.lib
 !endif
 !if "$(MONOLITHIC)" == "0"
 __WXLIB_BASE_p = \
-	wxbase$(WX_RELEASE_NODOT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
+	wxbase$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
 !endif
 !if "$(MONOLITHIC)" == "1"
 __WXLIB_MONO_p = \
-	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE_NODOT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
+	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
 !endif
 !if "$(MSLU)" == "1"
 __UNICOWS_LIB_p = unicows.lib

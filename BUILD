@@ -113,7 +113,8 @@ NOTES:
 
 - You need to edit makefile-win, makefile-mac and makefile-x11 to
   specify where wxWidgets is installed.  Change the WX_DIR path
-  near the start of the file.
+  near the start of the file.  Also make sure WX_RELEASE specifies
+  the first two digits of your wxWidgets version.
 
 - In makefile-win you also need to specify where Python is installed,
   so change the PYTHON_DIR path if necessary.
