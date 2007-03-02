@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/stockitem.h"  // for wxGetStockLabel
 #include "wx/dnd.h"        // for wxFileDropTarget
 #include "wx/filename.h"   // for wxFileName
 #include "wx/clipbrd.h"    // for wxTheClipboard
@@ -1989,13 +1988,9 @@ void MainFrame::CreateMenus()
       fileMenu->Append(wxID_PREFERENCES, _("Preferences...\tCtrl+,"));
    #endif
    fileMenu->AppendSeparator();
-   // on the Mac the Ctrl+Q is changed to Cmd-Q and the item is moved to the app menu
-   #if wxCHECK_VERSION(2,7,1)
-      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,
-                                     wxSTOCK_WITH_MNEMONIC | wxSTOCK_WITH_ACCELERATOR));
-   #else
-      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT, true, _("Ctrl+Q")));
-   #endif
+   // on the Mac the Ctrl+Q is changed to Cmd-Q, the item is moved to the app menu,
+   // and the app name is appended to "Quit "
+   fileMenu->Append(wxID_EXIT, _("Quit\tCtrl+Q"));
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
    editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
