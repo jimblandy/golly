@@ -516,7 +516,7 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
                           wxFocusEventHandler(ToolBar::OnKillFocus));
    viewptr->SetFocus();
 
-#if wxCHECK_VERSION(2, 7, 0)
+#if wxCHECK_VERSION(2,7,0)
 // Inside is deprecated
 if ( r.Contains(pt) ) {
 #else
@@ -1990,10 +1990,11 @@ void MainFrame::CreateMenus()
    #endif
    fileMenu->AppendSeparator();
    // on the Mac the Ctrl+Q is changed to Cmd-Q and the item is moved to the app menu
-   #if wxCHECK_VERSION(2, 7, 1)
-      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT));
+   #if wxCHECK_VERSION(2,7,1)
+      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,
+                                     wxSTOCK_WITH_MNEMONIC | wxSTOCK_WITH_ACCELERATOR));
    #else
-      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT,true,_("Ctrl+Q")));
+      fileMenu->Append(wxID_EXIT, wxGetStockLabel(wxID_EXIT, true, _("Ctrl+Q")));
    #endif
 
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
