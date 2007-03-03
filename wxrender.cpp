@@ -469,11 +469,11 @@ void DrawSelection(wxDC &dc, wxRect &rect)
             // use inversion for speed
             dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
          } else {
-            // clipping is probably faster than GetSubBitmap
-            // dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-            dc.SetClippingRegion(rect);
-            dc.DrawBitmap(*selbitmap, 0, 0, true);
-            dc.DestroyClippingRegion();
+            dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+            // using GetSubBitmap is much faster than clipping:
+            // dc.SetClippingRegion(rect);
+            // dc.DrawBitmap(*selbitmap, 0, 0, true);
+            // dc.DestroyClippingRegion();
          }
       #else
          // Blit seems to be about 10% faster (on Mac at least)
@@ -498,11 +498,7 @@ void DrawInactiveSelection(wxDC &dc, wxRect &rect)
             // use inversion for speed
             dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
          } else {
-            // clipping is probably faster than GetSubBitmap
-            // dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-            dc.SetClippingRegion(rect);
-            dc.DrawBitmap(*graybitmap, 0, 0, true);
-            dc.DestroyClippingRegion();
+            dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
          }
       #else
          // Blit seems to be about 10% faster (on Mac at least)
