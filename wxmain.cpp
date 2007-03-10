@@ -2278,7 +2278,7 @@ MainFrame::MainFrame()
    // enable/disable tool tips after creating tool bar and layer bar
    #if wxUSE_TOOLTIPS
       wxToolTip::Enable(showtips);
-      wxToolTip::SetDelay(1000);    // 1 sec
+      wxToolTip::SetDelay(1500);    // 1.5 secs
    #endif
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac

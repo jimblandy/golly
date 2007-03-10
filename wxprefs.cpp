@@ -1385,6 +1385,14 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    #define CHOICEGAP (6)
 #endif
 
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0;
+   // only happens when a wxStaticText box is next to a wxChoice box
+   #define FIX_ALIGN_BUG wxBOTTOM,4
+#else
+   #define FIX_ALIGN_BUG wxALL,0
+#endif
+
 // -----------------------------------------------------------------------------
 
 wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
@@ -1417,12 +1425,12 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL, _("Remove selection"));
 
-   wxBoxSizer* setcursbox = new wxBoxSizer(wxHORIZONTAL);
-   setcursbox->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
+   wxBoxSizer* setcurs1 = new wxBoxSizer(wxHORIZONTAL);
+   setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
 
    wxBoxSizer* setscalebox = new wxBoxSizer(wxHORIZONTAL);
-   setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
-
+   setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, FIX_ALIGN_BUG);
+   
    wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
                                     wxDefaultPosition, wxDefaultSize,
                                     newcursorChoices);
@@ -1436,7 +1444,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
                                     newscaleChoices);
    
    wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
-   hbox3->Add(setcursbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hbox3->Add(setcurs1, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
    hbox3->AddSpacer(20);
    hbox3->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -1462,8 +1470,10 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
                                     wxDefaultPosition, wxDefaultSize,
                                     opencursorChoices);
-   hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
+
+   wxBoxSizer* setcurs2 = new wxBoxSizer(wxHORIZONTAL);
+   setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
+   hbox4->Add(setcurs2, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
 
    ssizer2->AddSpacer(SBTOPGAP);
@@ -1733,11 +1743,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
    wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
    longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum scale for grid:")),
-                0, wxALL, 0);
+                0, FIX_ALIGN_BUG);
 
    wxBoxSizer* shortbox = new wxBoxSizer(wxHORIZONTAL);
    shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")),
-                 0, wxALL, 0);
+                 0, FIX_ALIGN_BUG);
 
    // align controls by setting shortbox same width as longbox
    shortbox->SetMinSize( longbox->GetMinSize() );
@@ -1764,7 +1774,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 
    wxBoxSizer* thumblabel = new wxBoxSizer(wxHORIZONTAL);
    thumblabel->Add(new wxStaticText(panel, wxID_STATIC, _("Thumb scroll range:")),
-                   0, wxALL, 0);
+                   0, wxALIGN_CENTER_VERTICAL, 0);
 
    // align controls
    thumblabel->SetMinSize( longbox->GetMinSize() );
@@ -1786,6 +1796,9 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
+#ifdef __WXMAC__
+   vbox->AddSpacer(10);
+#endif
    vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(CVGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
