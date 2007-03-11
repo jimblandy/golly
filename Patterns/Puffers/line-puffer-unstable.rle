@@ -1,0 +1,47 @@
+#C The asymmetric debris destroys the engine of this
+#C line puffer after appoximately 9.5 million generations.
+#C See also line-puffer-superstable.rle.
+#C Tim Coe, 9 October 1995
+x = 17, y = 99, rule = B3/S23
+obo$o2bo5bo$3b2o4b4o$5bo5b2o$3b4o7bo$2bo4bo3b4o$4bo2bo7bo$4bo2bo3bo2b
+3o$6bo6b3o$ob4o8bo$o3bo4bob3o$3bo5b2o2bo$bobo6b3o$10bo$2b3o7bo$3b2o5bo
+bo$2b3o8bo$10bobo$bobo8bo$bo2bo5bo$4bo5b3o$2bo2bo5b3o$4b2o5b2o$5bobo2b
+2o$5bobob2o$5bo$5bobob2o$2bo2bobo2b2o$4b2o5b2o$2bo2bobo2bob2o$5bobob3o
+2bo$2bo2bo8bo$2bo2bobob3o2bo$4b2obo2bob2o$5bo5b2o$5bobo2b2o$5bobob2o$
+5bo$5bobob2o$5bobo2b2o$5bo5b2o$5bobo2bob2o$5bobob3o2bo$5bo8bo$5bobob3o
+2bo$5bobo2bob2o$5bo5b2o$5bobo2b2o$5bobob2o$2bo2bo$2bo2bobob2o$2bo2bobo
+2b2o$2bo2bo5b2o$2bo2bobo2bob2o$2bo2bobob3o2bo$2bo2bo8bo$2bo2bobob3o2bo
+$2bo2bobo2bob2o$2bo2bo5b2o$2bo2bobo2b2o$2bo2bobob2o$2bo2bo$2bo2bobob2o
+$2bo2bobo2b2o$2bo2bo5b2o$2bo2bobo2bob2o$2bo2bobob3o2bo$2bo2bo8bo$2bo2b
+obob3o2bo$2bo2bobo2bob2o$2bo2bo5b2o$2bo2bobo2b2o$2bo2bobob2o$2bo2bo$5b
+obob2o$5bobo2b2o$4b2o5b2o$2bo2bo5b3o$4bo5b3o$bo2bo5bo$bobo8bo$10bobo$
+2b3o8bo$3b2o5bobo$2b3o7bo$10bo$bobo6b3o$3bo5b2o2bo$o3bo4bob3o$ob4o8bo$
+6bo6b3o$4bo2bo3bo2b3o$4bo2bo7bo$2bo4bo3b4o$3b4o7bo$5bo5b2o$3b2o4b4o$o
+2bo5bo$obo!
+
+#C The eventual failure occurs when a particular defect appears
+#C behind the line puffer.  The following snapshot is taken
+#C approximately 3440 generations before the puffer engine implodes:
+x = 48, y = 99, rule = B3/S23
+32bo$32b4o4bobo$34b2o4bo2bo$37bo5b2o$34b4o7bo$38bo4b4o$34bo2b3o2bo4bo$
+36b3o5bo2bo$37bo6bo2bo$32bob3o9bo$32b2o2bo3bob4o$33b3o4bo3bo$33bo9bo$
+35bo5bobo$33bobo$36bo5b3o$33bobo7b2o$35bo6b3o$33bo$33b3o5bobo$34b3o4bo
+2bo$34bobo7bo$35b2o7bo$36bo2b2o2bo$35b2o2b4o$35b2o$35b2o2b4o$36bo2b2o
+2bo$34b3o7bo$36bo2b2o3bo$35b2o2b5obo$35b2o7b3o$34bobo2b5obo$35b2o2b2o
+3bo$6b2o28bo7bo$6b2o4b2o21b2o2b2o2bo$12b2o7b4o2bobo5b2o2b4o$21b5o3b2o
+2b4o$19b2ob2ob2obo2bob4o2b4o$7b2o10b2o9b2ob4o2b2o2bo$7bobo9b2ob2o6b2ob
+4o7bo$8bo10bo2bo7b2ob4o2b2o3bo$19bo10b2ob4o2b5obo$18b2obo4b2o2b2ob4o7b
+3o$9b3o7b2o6bo2b2ob4o2b5obo$3b2o3bo3bo13bo3b2ob4o2b2o3bo$3bobobo13b2o
+3bo3b2ob4o7bo$4b5o2b2o8b3o2b3ob2ob4o2b2o2bo$4bobobobo12bo2b3ob2ob4o2b
+4o$3b2ob2ob3o5b2o7b3ob2ob4o$2b3obob2o6b3obo3bob3ob2ob4o2b4o$bobobo14bo
+5b3ob2ob4o2b2o2bo$2b5o5b2o4b2o3b2ob3ob2ob4o7bo$o4bo5bo3bo10b3ob2ob4o2b
+2o3bo$obo3bo4bo3bo10b3ob2ob4o2b5obo$b2o8bobobo5b2o3b3ob2ob4o7b3o$20bob
+2o6b2ob4o2b5obo$19b2obo3bo3b2ob4o2b2o3bo$25b2o3b2ob4o7bo$19bo5b2o3b2ob
+4o2b2o2bo$15bo5bo4bo3b2ob4o2b4o$14bo2b6o7b2ob4o$15bo6bo4b2ob2ob4o2b4o$
+2b2o11b4ob3o5b3o2b4o2b2o2bo$2b2o12bo12bo2b5o7bo$17bo2b3o2bo6b5o2b2o3bo
+$17bo2bobo2b3o4b5o2b5obo$26b3o3b5o7b3o$27bobo2b5o2b5obo$28b2o2b5o2b2o
+3bo$29bo2b5o7bo$26b2o4b5o2b2o2bo$26b3obob5o2b4o$6b2o19b3o5b2o$5bo2bo
+26b2o2b4o$6b2o28bo2b2o2bo$35b2o7bo$34bobo7bo$34b3o4bo2bo$33b3o5bobo$
+33bo$35bo6b3o$33bobo7b2o$36bo5b3o$33bobo$35bo5bobo$33bo9bo$33b3o4bo3bo
+$32b2o2bo3bob4o$32bob3o9bo$37bo6bo2bo$36b3o5bo2bo$34bo2b3o2bo4bo$38bo
+4b4o$34b4o7bo$37bo5b2o$34b2o4bo2bo$32b4o4bobo$32bo!
