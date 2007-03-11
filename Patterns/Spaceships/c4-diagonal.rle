@@ -1,0 +1,92 @@
+#C Smallest known diagonal spaceships. All are p4 and c/4.
+#C Minimum populations:  5, 25, 27, 32, 36, 39, 43, 48, 49, 49,
+#C  50, 50, 51, 51, 53, 55, 55, 56, 57, 57, 58, 59, 60, 60, 60, 60,
+#C  61, 62, 63, 64, 66, 66, 67, 67, 68, 69, 69, 69.
+#C Spaceships found by: Jason Summers, Hartmut Holzwart, Richard Guy,
+#C  Tim Coe, Dean Hickerson, Stephen Silver (and 7-bit tagalong
+#C  by Robert Wainwright).
+#C diag.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
+x = 476, y = 400, rule = B3/S23
+3o$o$bo8bo$9boo$9bobo$$12boo$12boo$$3bo6boo$bboo5bobbo$bbobo3boobo7b3o
+$6bo12bo$5bo14bo$5bobbo13boo$21boo$$20bo$12b3o5bobbo$12bo7bo$13bobb5ob
+o$15bo$16boo$26boo$25boo$27bo$29bo4b3o$29b3o4boo$30b3obobo$37bo$30bobo
+$29boobo$30bo$28boobo7b3o$31bo7bo9boo$29boo9bo6b3obo$42boobboo$43bo$
+47bo$43boo3bo$42boboboo$42bobobboboo7boo$41bo4boo10bobo$41boo15bo$41bo
+o12boobo$55bo4bo$55boboo6b3o$60b3o4boo$61b3obobo$68bo$61bobo$60boobo$
+61bo$59boobo8b3o$62bo8bo9boo$60boo10bo6b3obo$74boobboo$75bo$79bo5bo$
+75boo3bo3boo$74boboboo4bobo8boo$74bobobboboobo10bobo$73bo4boo5bo9bo$
+73boo23bo$73boo22bobo$97bobo$97bo$84b3o10bo$84bo9b4o$85bo6bo$87boobboo
+4bo$88bo$92bo$88boo3bo$87boboboo$87bobobboboo$86bo4boo16bo10boo$86boo
+20b5o6boo$86boo20bobboo8bo7boo$110boobo5boo6b3obo7boo$119boo3boboo10bo
+o$113bobo6boo15bobbo$118b3obo4bo11boobo$98b3o14b3o3bo4bo12boo3bo$98bo
+17bo7bo$99bo16bo6bo18boboboo$101boo37bobo3bo$102bo16bo11bo8b3obbo$93b
+3o34b5o6boo$93bo10boo24bobboobboo$94bo5booboobbo30boo$96b3oboo30boobb
+4o$97b3o3boo3bo$99bo3b3obo26bobo$99bo3boobboo29bo$100b5o31boo$136bo$
+106bo$104boo$$114b3o$114bo9boo$115bo6b3obo$117boobboo$118bo$122bo5bo$
+118boo3bo3boo$117boboboo4bobo$117bobobboboobo18b3o$116bo4boo5bo17bo$
+116boo29bo$116boo17bo13boo$121bobo10boo14bo6boo$120b4o10bobo15boo3bobb
+o$120bo15bo15b5o$137bo15boo5b3o$134boboo15bo3bo4boboo$135bo17bo9bo$
+151boobbo5boo$136boo13bo10bo10b3o28boo$136boo24bo10bo30bobo$136bo15bob
+o21bo27bo$137boo15bobbo16bobbo29bo$154boob3o15bobo28bobo$137b3o16bo15b
+oobobobo26bobo$137bobbo14bo11b3obbooboo29bo$138bo16bo11bobboo3b4obo12b
+3o10bo$140boo26bo3bo3b3o14bo9b4o$142bo27bo6boo3bo11bo6bo$143boo27b3o3b
+oo16boobboo4bo$148bo24bobo3boboo14bo$144bob4o24boo25bo$146bobbobbo24bo
+19boo3bo$151bobo23boo17boboboo$196bobobboboo$152booboo38bo4boo$152boo
+3bo37boo$154boo39boo$157boo41bobo$199b4o$199bo$$181boo$181bobo$181bo
+54boo$184bo50boobo$183bobo14bo10boo23bo$183bobo13b5o6boo24bobbo$183bo
+15bobboo8bo7boo14bo3bo$170b3o10bo17boobo5boo6b3obo13bobbo$170bo9b4o26b
+oo3boboo$171bo6bo25bobo6boo$173boobboo4bo25b3obo4bo12boobobb3o$174bo
+31b3o3bo4bo13boboobbobb3o$178bo5bo22bo7bo15boboo6boo$174boo3bo3boo22bo
+6bo17bo$173boboboo4bobo46boo$173bobobboboobo26bo12boobbo4boo$172bo4boo
+5bo37boo4bobboo$172boo34b3o13boobobb3o$172boo33boobbo14boobbo$209bo23b
+o$230bobbo$231bo$219b3o10bo$219bo$213b3o6bo$213bo6bobbo$214bo6boboo$
+216boo3boboo$217bo3bobo$221boboo12boo$211b3o3boo6bo10boo$211bobboobbob
+3obo12bobo$212bobbobboobo15boobo$214boobooboobo14boboo$220bobbo8boo4bo
+bbo$219boobbo7boo3boo4b3o$233bob3o7bo$239bo$234bo3bo5bobo$235bobbobboo
+bo$239bobooboo62boo$237bobboobbobbo59boobo$237bo9bo60bo$239b3o66bo3bo$
+243b3obo60bo3bo$247bo60bo3boo$312b3o$255boo52boboo$255bobo47boo4boo$
+255bo48boo$258bo47bobboo$258bobo36boobbo6bobbo$258bobbo3b3o28boo4bo4bo
+bbo$260boobbobboo29boobo3bobobobo$264bo5boo28bobobo6boo$264boo4b3o28bo
+o5bo$261b3o9bo9b3o15boobboo5bo$260bobbo6bobbo9bo18bo8bo$260bo8bo14bo$
+260boo7bo13b3o$261bo6bobbo11b3oboo$266boo4bo$262boobo6boo$262boo4bo16b
+oo$263bo5boo14boo6boo$264boo4bo17boo3bobbo$288b5o$289boo5b3o$289bo3bo
+4boboo$289bo9bo$287boobbo5boo$287bo10bo$298bo$273boo13bobo$273bobo14bo
+bbo$273bo16boob3o$276bo15bo$275bobo13bo$275bobo13bo$275bo$262b3o10bo$
+262bo9b4o$263bo6bo$265boobboo4bo$266bo$270bo36boo$266boo3bo35bobo$265b
+oboboo36bo$264bobbobboboo36bo$265bo3boo38bobo$256boo7bo43bobo$256bobo
+3b4o20bo10boo10bo$256bo3bo24b5o6boo11bo$259boo4bo19bobboo8bo7b4o$259bo
+3bo23boobo5boo6bo$296boo3boboo4bo$290bobo6boo$295b3obo4bo$247bo44b3o3b
+o4bo$246boo45bo7bo$246bobo44bo6bo18boo$319bobo$248boboo44bo22bo$247boo
+73bo$247boo5bo66bobo$249boboboo66bobo$251bobobo65bo$249bo58b3o10bo$
+249bo58bo9b4o$236boo10bo60bo6bo$235boo3boo6b3obo58boobboo4bo$237bob3o
+4boo3b3o58bo$242boboobo68bo5bo$239bo7bo64boo3bo3boo$239bobboo4bo62bobo
+boo4bobo$247boo62bobobboboobo$242boo4bo61bo4boo5bo$241boo67boo$243bo
+66boo$315bobo$314b4o$314bo3$330b3o$330bobb3o$331bobo$336bo$334bo$336bo
+bo$339bo$336bobbo$336bobbo$336bobbo$340boo$337bobboo$341bobo$338boo$
+338bo4bobo$339bo5bo$346bo$339boo6bo$339bobo5bobo$$349boo$349bo$348boo$
+349boo$$351bo$350bobboo$351boboo$355bo$353bobo$353bo$354bobo$356bo10bo
+o$367bobo$367bo$370bo$369bobo$369bo3boo$369bo3b3o$360b3o6bo$360bo12bob
+o16boo$361bobb4obbooboo16boo$363bo5bo5bo3bo12bobo$364bo4bo5b3obo12boob
+o$380bo12boboo$365booboo5boo10boo4bobbo$365boobbo7bo8boo3boo5boo$366bo
+boboobo14bob3o7boo$371bobo20bo3boboo$371bobbo14bo3bo3bobboob3o$390bobb
+o6bo$370boo20boo11bo$372bo20bo7boobo$393boo6bo$393boobbobbo19boo$396bo
+o22bobo$397bobboo18bo$395boo26bo$396bo25bobo$373boobo19bo25bobo$373bo
+3bo44bo$373bo4bo30b3o10bo$375boo32bo9b4o$369b3o5bobo30bo6bo$369bo10bo
+31boobboo4bo$372bo5bo34bo$369bobbo6boboo34bo5bo$370bobbo6b4o29boo3bo3b
+oo$371bo3bo8bo27boboboo4bobo$373bobbo7boo25bobbobboboobo$374bobbo4boo
+3bo24bo3boo5bo$376boo4boobobo15boo7bo$376boobboobboobo15bobo3b4o$377bo
+bboo21bo3bo55bo$378boobbo23boo4bo48boobo$379boboo23bo3bo48boo3bo$458bo
+3boo$380b3o74bo4boobo$392boo62bobboob3obo$391boobo61bo$392bo65bobo3boo
+$392bo3bo37boo19boo3bobo$392bo3bo37bobo18bo3bo3boo$392bo3boo36bo21bobb
+oobbobbo$396b3o38bo21boo3bo8bo$393boboo39bobo26bobo3bobobo$389boo4boo
+39bobo28boob3obbo$388boo23bo10boo10bo30boo4boo$390bobboo17b5o6boo11bo
+31boboo$381boobbo6bobbo16bobboo8bo7b4o$380boo4bo4bobbo5boo12boobo5boo
+6bo34bobo$382boobo3bobobobo3boo22boo3boboo4bo29bo$384bobobo6boo3bo16bo
+bo6boo38b3o$385boo5bo6boo21b3obo4bo35bobo$385boobboo5bo22b3o3bo4bo$
+386bo8bo24bo7bo19b3o$420bo6bo20bo9boo$449bo6b3obo$423bo27boobboo$452bo
+$421b3o32bo$420boobbo27boo3bo$422bo28boboboo$450bobbobboboo$451bo3boo$
+438b3o10bo$438bo9b4o$439bo6bo$441boobboo4bo$442bo$446bo$442boo3bo$441b
+oboboo$441bobobboboo$440bo4boo$425boobo11boo$425bo3bo10boo$425bo4bo$
+427boo$421boo6bobo$421bobo8bo$421bo8bo$422boo7bobboo$422bobbo3b4oboobo
+o$422bo6bo3boobboo$424bobo$425b3o4b5o$432bo4bo$427boo5bobbo$427boobobo
+$427booboboo$428bo4bo$428bo$429bobo!

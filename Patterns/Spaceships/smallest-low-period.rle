@@ -1,0 +1,197 @@
+#C Shows spaceships of all periods < 32 for which examples are known.
+#C  Minimum populations are listed below, each spaceship having been
+#C  chosen to minimize this minimum population.  (Often there are
+#C  small variations of the given spaceship that have the same
+#C  minimum population.)
+#C
+#C Period  Min population
+#C ------  --------------
+#C  p2      64
+#C  p3      25
+#C  p4       5
+#C  p5      30
+#C  p6      72
+#C  p7      36
+#C  p8      31
+#C  p9      55
+#C p10     102
+#C p12      39
+#C p14     174
+#C p15     132
+#C p16      28
+#C p18     138
+#C p20      42
+#C p21     279
+#C p22     584
+#C p24      50
+#C p25     165
+#C p26     187
+#C p27     381
+#C p28     185
+#C p30     128
+#C
+#C p2: Dean Hickerson, 28 Jul 1989.  One of the first p2 spaceships.
+#C p3: Dean Hickerson, Aug 1989. One of the first known p3 spaceships.
+#C     A p3 spaceship found later by David Bell has the same minimum
+#C     pixel count, but a larger maximum one (see c3-orthogonal.rle).
+#C p4: Richard Guy, 1970.  The first known spaceship.
+#C p5: Paul Tooke, 2000 Dec 7.
+#C p6: The first p6 spaceship was found by David Bell on 12 Jul 1992,
+#C     and travelled at c/2.  This smaller c/3 one was found by
+#C     Jason Summers on 22 Oct 2000.
+#C p7: David Eppstein's weekender, 2000 Jan 12.  This is the only
+#C     known basic p7 spaceship.  Travels at 2c/7.
+#C p8: Jason Summers, 2000 Oct 29.
+#C p9: David Bell found the first p9 spaceship in May 1992, by
+#C     deleting the back part of one of his p3 spaceships.
+#C     The smaller one shown here was found by Paul Tooke, 2001 Jun 7.
+#C p10: The first known p10 spaceship was found by David Bell
+#C      on 5 May 2000, based on a p5 2c/5 ship found by Paul Tooke
+#C      earlier that year. The p10 ship shown here is a smaller one
+#C      found by Paul Tooke on 31 Jan 2002, except that I have
+#C      replaced the front part with something slightly smaller.
+#C p12: There is a tie here between two very different c/2 spaceships.
+#C      Not shown is the Schick engine (Paul Schick, 1972) which,
+#C      however, can be seen in the p24 example below.  The one
+#C      actually shown is by Mark Niemiec, March 1997.  It's a
+#C      Coe ship (see p16 below) perturbed by a MWSS.
+#C p14: Paul Tooke found the first p14 spaceship, 19 Dec 2001.
+#C      The one shown here is a much smaller one (with the same
+#C      p14 part) that he found on 2002 Jan 28, except that I've
+#C      changed the p2 spaceship at the front to save a few more cells.
+#C p15: The first p15 spaceship was found by David Bell in Dec 1993,
+#C      and travelled at c/3. The 2c/5 one here was built by Stephen
+#C      Silver on 18 Feb 2002, using components found by Paul Tooke.
+#C p16: Coe ship (Tim Coe, 1995 Oct 26).  Coe found this by
+#C      dismembering a p4 spaceship he had just found.
+#C p18: This p18 spaceship by Jason Summers, 2 Dec 2000, is the result
+#C      of welding his p6 spaceship to a p9 spaceship by David Bell.
+#C      Like all known p18 spaceships, it is trivial in the sense that
+#C      it has no p18 part, merely disjoint p6 and p9 parts.
+#C p20: Mark Niemiec, 1997 Oct 21.
+#C p21: Paul Tooke found the first p21 spaceship on 14 Jan 2002.
+#C      In the version shown here I have replaced the front part with
+#C      two small p3 spaceships to get a smaller population.
+#C p22: The first p22 spaceship was built by David Bell on 9 May 2001,
+#C      based on a p66 puffer by Paul Tooke and a reaction found by
+#C      Jason Summers. The version shown here is from 25 Jan 2002.
+#C p24: A simple derivative of the Schick engine.
+#C p25: The first p25 spaceship was found by Paul Tooke on 8 Feb 2002.
+#C      The one shown here is a much smaller one he found later the
+#C      same month.
+#C p26: David Bell's 30 Apr 2001 version of Paul Tooke's p78 puffer.
+#C p27: First known p27 spaceship.  Found by Paul Tooke in Oct 2002.
+#C p28: Stephen Silver, 28 Jan 2002, based on Paul Tooke's p14 ship.
+#C p30: This is a prepulsar pulled by two spiders, found by David Bell
+#C      on 30 May 1998. The variant obtained by moving one side
+#C      forward two spaces has the same minimum population. (This
+#C      variant was noticed by Alan Hensel.)
+#C small_p.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
+x = 270, y = 203, rule = B3/S23
+6b3o15b3o150b3o7b3o$5bo3bo13bo3bo56bob2o36bo48bob2o3bo5bo3b2obo$4b2o4b
+o11bo4b2o51b3ob2obob2o32b3o46b3o3bobo5bobo3b3o$3bobob2ob2o3b3o3b2ob2ob
+obo49bo6b2o2b4o28bo3bo44bo3bo4b2o3b2o4bo3bo$2b2obo4bob2ob3ob2obo4bob2o
+49b2o3bo3bo4bo27b2ob2o45bo6bob2ob2obo6bo$bo4bo3bo4bobo4bo3bo4bo60b2o8b
+o27bo47bo3bobo3bo$13bo5bo81b2o18b4obo2bobo46bo2bo3bo2bo$b2o7b2o9b2o7b
+2o69bobo18bo2bo2bo3bo$128b2obo48b2o3b2o$129b2o49bobobobo$129b2o50b2ob
+2o$130bo51bobo$179b2obobob2o$179bobo3bobo5$210b3o15b3o$209bo3bo13bo3bo
+$208b2o4bo11bo4b2o$207bobob2ob2o3b3o3b2ob2obobo$206b2obo4bob2ob3ob2obo
+4bob2o$205bo4bo3bo4bobo4bo3bo4bo$118bo7bo90bo5bo$117b3o5b3o77b2o7b2o9b
+2o7b2o$85b3o3b3o23bo2bo3bo2bo108bo16b3o$20bo12bo47bob2o3bobo3b2obo20b
+2obobob2o107bobo15bo3bo$20bo12bo19b3o24b3o3bobobobo3b3o15bo3b2obobob2o
+3bo101b2o17bo4b2o$19bobo10bobo18bo2bo4b3o15bo3bo4bobo4bo3bo13bobo5bobo
+5bobo101bobobo2bo3b3o3b2ob2obobo$20bo12bo19bo6bo2bo16bo7bobo7bo13b2ob
+2o3b2ob2o3b2ob2o97b2obo3b3ob2ob3ob2obo4bob2o$20bo12bo19bo3bo5bo23bobob
+o21bo7bobo7bo19bo78b2o2bobobo5bobo4bo3bo4bo$21bo3b4o3bo21bo4bo3bo23bob
+obo21bo7bobo7bo18b3o3b3o71b2o7bo2bo5bo$25b4o25bo3bo4bo49bo2bo3b2ob2o3b
+o2bo18bob2o2bo2bo68b2o2bob2o5bo8b2o7b2o$21b4o4b4o20bobob2o3bo26bo24bo
+15bo13b3o4b3o2bo72bo2bob2o$53bo6bo27bobo27b3o3b3o16bo2bo4b3o2bo71bobob
+obo3b3o$23bo6bo55b2o3b2o23b2obo5bob2o17bo4b2o4bobo72bo3b3o$24b2o2b2o
+25b2obo27bobobobo26bo5bo16bo3bo4bo79b2o3b2obo$57bo28b2o3b2o26b2o3b2o
+20bo84bobobobo$120b2ob2o18bobo5b3o79bobo$232bo2bobo$117bo3bobo3bo106b
+3o2$119bobobobo$119bobobobo$120b2ob2o$120bo3bo$234b2o$235b2o5$234b2o$
+235b2o$235b2o$261b3o$260bo3bo$211b3o45bo4b2o$210bo3bo32b3o2b3o3b2ob2ob
+obo$209b2o4bo30bo3bob3ob2obo4bob2o$208bobob2ob2o3b3o2b3o17bo6bobo4bo3b
+o4bo$207b2obo4bob2ob3obo3bo16bo3b2o5bo$173b3o11b3o16bo4bo3bo4bobo6bo
+17bo10b2o7b2o$172bo3b2obo6bo3b2obo24bo5b2o3bo14bobo$172bobo3b3o5bobo3b
+3o11b2o7b2o10bo15b2obob3o$171b2o4bo3bo3b2o4bo3bo32bobo11bobobo3bo$170b
+3o7bo3b3o7bo29b3obob2o9b2obo$172bobo11bobo35bo3bobobo7bo3bo5b2o$174b2o
+12b2o40bob2o$92bo7bo71bo3bo9bo3bo32b2o5bo3bo5b2ob2o$88b2obobo5bobob2o
+67bo13bo$3bo4b3o77b2o4bo3bo4b2o67b2obo10b2obo40b2ob2o6bo3b3o$2b3o2bo2b
+o77b2o4bo3bo4b2o70bo13bo51bo5bo$2bob2o4bo79b2o9b2o70b3o11b3o37b3o3bo$
+3b4o3bo68b2ob3ob2o3bob3ob3obo3b2ob3o7b3o19b3o4bo4b3o72bo5bo8b2o3b2o$3b
+2o5bo68b2o4bo4bo11bo4bo3bo5bo3b2obo14bo2bo3b3o2bo2bo19bo13bo53b2o12bo$
+7bo2bo67bo2bob2o24bobo5bobo3b3o16bo3bob2o4bo26bo44b2o3b2o10bo8b2ob3o$
+8b2o83b3ob3o11b2o3b2o4bo3bo11bo3bo4b4o3bo19b2o4bobo4b2o42b2o10b2o5b2ob
+o3b2o$9bo83b7o10bob2ob2obo6bo12bo3bo4b4o3bo24bo3bo47bo7b4o7bo4bo2b2o$
+8bo82b2o7b2o7bo3bobo3bo22bo4b2o5bo18bo6b3o6bo15bo17bo6b2o6b2obob2o4b2o
+bo5bo$8bo100bo2bo3bo2bo19bobo5bo3bobo20b2o11b2o15b3o15b3o7b4o2bobo6b2o
+bo7b2o$91bo2bobobo2bo71bobo2b2o3b2o2bobo12b2ob3o13b3ob2o3b2obob2obo9bo
+7bobob2o$111b2o3b2o60b2o3b2o18bo2bob2o4bo4b2obo2bobo6bobo2bo5b2obob2o
+3b2obobo$111bobobobo21bo33bobo3b5o3bobo10b2obo4bobob2ob2obobo4bob2o7bo
+8b2obo5bo3bobob2o$112b2ob2o21b2o33bo2bo2bobobo2bo2bo10b2obobo2bobo7bob
+o2bobobobo15bo2bobo7bo3b2o$113bobo21bo35bo2b3o5b3o2bo10bo8b3obobob3o7b
+ob2o13b2obo6b2o3bob3o$110b2obobob2o17bobob2o39bo17b2o7b2o9b2o6bo3bo2bo
+3b3o5b2obo13b2o$110bobo3bobo16b2ob5o38bo53b6o3b2o4bo$134bo8bo31bo3bo3b
+o3bo39b2ob2o13b2o2bo$134bo6bob2o29b2ob2o5b2ob2o57bo$134bo5b2obo34b2obo
+b2o39b3o3bo14bo3b2o$135b3o5bo30bo3b7o3bo35bo5bo20bo8b3o$135bo2bo4b4obo
+25bobo9bobo61bo5b5o2bo$138bo5bo2bo26b2o3b5o3b2o34b2o6b2o22b2obobo3bo$
+108b2o29bo4b2obo29bo3bo3bo45b2o24bo6bo$107b3ob3o31bob2o26bob3obob3obo
+44bo20bobo6bo$109bo3b2o31b2o27b2obo5bob2o26bo17b2o7b2o9b2ob2o6bobo$
+106b2ob2o2bo2bobo25bo2bo26bobo2bo3bo2bobo24b3ob2o9b4o9b2ob2o5bobob2o2b
+3obob2o$106bo6bob4o25b3obo3bo21bo6bo6bo23b2o3bob2o6b2obob2o6bo3b2o4b2o
+bo5bo3bobobo$112b2obo2bo31b2obo19bo2bo3b3o3bo2bo21b2o2bo4b5o2bobo11b2o
+3bo2bo3bob2o8bob2o$106bo4b2o3bob2o25bo4bo2bo19bob3o3bo3b3obo22bo5bobob
+ob2obo13b2ob2o7b2o3b2o5bo3bo$106b2o8bobo2bo23b2o3bo24bo2bo5bo2bo23b2o
+6bo3bobobo16b2o3b2obobo$106bo2b5ob3o4bo51b3ob2obob2ob3o20b2obobo10bob
+2o23b2o11b2ob2o$107bo9bo4bo24bo25b2obobob3obobob2o20bobob2o8bo2b2o20bo
+2b4o$107b2obo2bo3bo3bo26b2o22bo3bo4bo4bo3bo16b2obobo3bo32bobo$108bo9b
+2o52bobobo3bobo3bobobo16b2o3bo26bo11bo2b2o$115b2o2b2o4bo50bo3bobo3bo
+20b3obo3b2o11b2o8bobo13bo$108bo3b2obo4b3o2bo47b2o5bobo5b2o16b2o30b2o
+13bobo$109b2obob5o5bob2o46b5obobob5o35b2o$113b2ob2ob2ob2o2b3o49bobobob
+o41bo$123bobo4bo47bobobobo42bo3bob2o$114b2o4bobo3b6o47bo3bo40bo3bo2b2o
+b2o$119bo7b2o96bo3b2o4bo$119bo3bo102bo4b2o$119bo4bo3b3o6bo97bo$120b5o
+3b2ob2o2b2ob2o89bo4b2o$123b2obo2bob2o2bo90b3o2bobo$122b2o5bo4bo2b3o85b
+o5b2o$121b3obobobobo98b2o$47bo19bo60bo2bo$46b3o17b3o55bobo$45bo3bo15bo
+3bo55bo52b3o11b3o$45b2ob2o15b2ob2o107bo17bo$41bo31bo53b3o48bo2b3ob3ob
+3o2bo$40bobo2bob4o13b4obo2bobo52b3o50bo2bobobobo2bo$39bo3bo2bo2bo15bo
+2bo2bo3bo106b2obobob2o$40bob2o27b2obo51b2o14bo17bo21bo2bobo2bo$41b2o8b
+o11bo8b2o52b2o13b3o15b3o23bobo52b3o15b3o$3o3b3o32b2o9b2o7b2o9b2o53bo
+12b2o4b3o5b3o4b2o19bo2bobo2bo48bo3bo13bo3bo$o2bobo2bo32bo12bo5bo12bo
+64b2obo2b3o2bo3bo2b3o2bob2o18bobobobo48b2o4bo11bo4b2o$o7bo42bo2b2o3b2o
+2bo75bobo2bobo3bobo3bobo2bobo19bobobobo47bobob2ob2o3b3o3b2ob2obobo$o7b
+o43b2o2bobo2b2o73b2obobobobo4bobo4bobobobob2o13b2obobobobob2o43b2obo4b
+ob2ob3ob2obo4bob2o$bobobobo128b2o3bobo4bo5bo4bobo3b2o13b2obobobobob2o
+42bo4bo3bo4bobo4bo3bo4bo$52b2o2bobo2b2o73b3obo3bo4bobobo4bo3bob3o10b3o
+3bobobobo3b3o51bo5bo$4bo46bo3bo3bo3bo71b2o9b2obobobob2o9b2o8bo5b2obobo
+b2o5bo38b2o7b2o9b2o7b2o$3b3o45bo11bo83bo7bo21bob2o2bobobobo2b2obo19b3o
+16bo$3b3o45bobo7bobo80b2obo7bob2o21b2obobobobob2o21bo3bo15bobo$52bo9bo
+82bo11bo22b2obobobobob2o20b2o4bo17b2o$53bo7bo80b2obo11bob2o20bobobobob
+obo20bobob2ob2o3b3o3bo2bobobo$52bobo5bobo79b2o15b2o22bobobobo21b2obo4b
+ob2ob3ob2ob3o3bob2o$11b3o38bo2bo3bo2bo79bobobob3ob3obobobo18bobobobobo
+bobobo16bo4bo3bo4bobo5bobobo2b2o$10bo2bo38bobo5bobo78b2o3bo3bobo3bo3b
+2o16b3ob2obobob2ob3o27bo5bo2bo7b2o$13bo37b2ob2o3b2ob2o77bo2bo3bobobobo
+3bo2bo16b5o2bobo2b5o15b2o7b2o8bo5b2obo2b2o$9bo3bo37bobobo3bobobo80b2o
+4bobo4b2o23b2obobob2o44b2obo2bo$9bo3bo42bobo81b2o4bo3bobo3bo4b2o15b2o
+5bobo5b2o35b3o3bobobobo$13bo41b2ob2o84bob2obo3bob2obo18bo2bo4bobo4bo2b
+o36b3o3bo$10bobo43bobo86bobobobobobobo20bobo2bobobobo2bobo36bob2o3b2o$
+57bo89bobo3bobo21b2ob2o9b2ob2o37bobobobo$7b3o137bobo3bobo21b2obobo2b3o
+2bobob2o39bobo$4b3o2bo139b2ob2o81bobo$5b5o135bo11bo19b2o3b3o3b3o3b2o
+38b2o7b3o$144bo13bo17bo19bo39bo6bo2bo$145bobo7bobo17b2o3b2o4bo4b2o3b2o
+45bo$178b3o11b3o42b2o4bo3bo$50bo127bo15bo39bo2b2o4bo3bo$49b3o123b2obob
+o11bobob2o36bob3o4bo$48b2ob2o122b2obobob2o5b2obobob2o46bobo$178bobob2o
+5b2obobo$44bo2bobobobo123bobob3o5b3obobo$43b3o3bo3b2o$42bo6bo3b2o124b
+3o9b3o$42bobo134b3obobobobob3o$44bobo133b5obob5o$42bo2bo139bobo$42bo
+142b3o$182bobo3bobo$248b3o$180b2ob3ob3ob2o54bo2bo$180bo11bo49bo11b3o$
+179bo2bo7bo2bo47b2o5b2o4bo2bo$179bo4bo3bo4bo45b2obo3bob2o12bo$184bo3bo
+52bo2b2o2b2o5b2o5b2o$178b6o5b6o49b2o2b2o5b2obo3bob2o$177b2o7bo7b2o46bo
+12b2o2b2o2bo$185bobo51b2obo12b2o2b2o$185b3o74bo$252b2o8bob2o$198bo52b
+2o$197b4o49bo2bo$192bo3bo3b2ob2o37bo7b4o7bo$191b4o5bo2b2o36b3o16b3o$
+190bo3bo7bo2bo34b2ob2o14b2ob2o$191bobo2bo53bo2bo$185b3o7bo40bo2bobobob
+o5b2o5bobobobo2bo$183b2o50b3o3bo3b2o10b2o3bo3b3o$183bo4bo45bo6bo3b2o
+10b2o3bo6bo$183bo4bo45bobo30bobo$184bo3bo47bobo26bobo$186bo47bo2bo28bo
+2bo$118bo5bo109bo34bo$117b3o3b3o4$89b2o5b2o5b2o5b2o19b2o5b2o5b2o5b2o$
+87bo3bo3bo2bo3bo2bo3bo3bo15bo3bo3bo2bo3bo2bo3bo3bo$87bo3bobob3o5b3obob
+o3bo15bo3bobob3o5b3obobo3bo$87bo5b2o2b3ob3o2b2o5bo15bo5b2o2b3ob3o2b2o
+5bo$87b2ob3o15b3ob2o15b2ob3o15b3ob2o$87bo25bo15bo25bo$88bo3bo15bo3bo
+17bo3bo15bo3bo$89bo2bo15bo2bo19bo2bo15bo2bo!
