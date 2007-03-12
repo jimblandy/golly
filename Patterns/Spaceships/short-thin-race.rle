@@ -40,7 +40,7 @@
 #C From race.rle (right side of pattern):
 #C This shows the smallest known spaceships moving at the seven
 #C  orthogonal speeds so far achieved -- not counting the 17c/45
-#C  Caterpillar, which is far and away too big to include in the lineup.
+#C  Caterpillar, which is far too big to include in the lineup.
 #C
 #C Minimum populations:
 #C   c/2          9   (LWSS - John Conway, 1970)
