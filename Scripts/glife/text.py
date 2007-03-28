@@ -3,11 +3,7 @@ from string import *
 
 # each symbol is a pattern with an additional field .width
 
-__binaryfont = dict ()
-__binaryfont['0'] = pattern ("3o$obo$obo$obo$3o!", 0, -5)
-__binaryfont['0'].width = 4
-__binaryfont['0'] = pattern ("bo$2o$bo$bo$3o!", 0, -5)
-__binaryfont['0'].width = 4
+# Eric Angelini integer font
 
 __eafont = dict ()
 __eafont['0'] = pattern ("3o$obo$obo$obo$3o!", 0, -5)
@@ -58,11 +54,7 @@ __sfont['8'] = pattern ("2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o$2o
 __sfont['8'].width = 10
 __sfont['9'] = pattern ("2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o$6b2o$6bo$7bo$6b2o$2b2obo$2bob2o!", 0, -14)
 __sfont['9'].width = 10
-
-__sfont['-'] = pattern ("""
-**.*
-*.**
-""", 0, -8)
+__sfont['-'] = pattern ("2obo$ob2o!", 0, -8)
 __sfont['-'].width = 6
 
 def make_text (string, font='Snakial'):
