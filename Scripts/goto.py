@@ -89,6 +89,7 @@ elif gen=="+" or gen=="-":
    previousgen="" # provides a way to clear the default
 elif not validint(gen):
    golly.error('Sorry, but "' + gen + '" is not a valid integer.')
+   golly.exit()
 else:
    previousgen=gen
    goto(gen.replace(",",""))
