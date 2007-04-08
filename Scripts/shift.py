@@ -21,7 +21,10 @@ y = int(xym[1])
 
 # extract optional mode
 if len(xym) > 2:
-   mode = xym[2]
+   mode = lower(xym[2])
+   if mode=="c": mode="copy"
+   if mode=="o": mode="or"
+   if mode=="x": mode="xor"
    if not (mode == "copy" or mode == "or" or mode == "xor"):
       g.exit("Unknown mode: " + xym[2] + " (must be copy/or/xor)")
 else:
@@ -34,17 +37,8 @@ g.clear(inside)
 selrect[0] += x
 selrect[1] += y
 g.select(selrect)
-if mode == "or":
-   g.putcells(selcells, x, y, 1, 0, 0, 1)
-elif mode == "copy":
+if mode == "copy":
    g.clear(inside)
-   g.putcells(selcells, x, y, 1, 0, 0, 1)
-else:
-   # xor is a bit trickier
-   listlen = len(selcells)
-   for i in xrange(0, listlen, 2):
-      newx = selcells[i]   + x
-      newy = selcells[i+1] + y
-      g.setcell(newx, newy, 1 - g.getcell(newx, newy))
+g.putcells(selcells, x, y, 1, 0, 0, 1, mode)
 
 if not g.visrect(selrect): g.fitsel()
