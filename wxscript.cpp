@@ -25,16 +25,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 /*
    Golly uses an embedded Python interpreter to execute scripts.
    Here is the official Python copyright notice:
-   
+
    Copyright (c) 2001-2005 Python Software Foundation.
    All Rights Reserved.
-   
+
    Copyright (c) 2000 BeOpen.com.
    All Rights Reserved.
-   
+
    Copyright (c) 1995-2001 Corporation for National Research Initiatives.
    All Rights Reserved.
-   
+
    Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.
    All Rights Reserved.
 */
@@ -95,7 +95,7 @@ const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 #ifndef __WXMAC__
    // load Python lib at runtime
    #define USE_PYTHON_DYNAMIC
-   
+
    #ifdef __UNIX__
       // avoid warning on Linux
       #undef _POSIX_C_SOURCE
@@ -309,7 +309,7 @@ static bool LoadPythonLib()
          pythondll = dynlib.Detach();
       }
    }
-   
+
    if ( pythondll == NULL ) {
       // should never happen
       Warning(_("Oh dear, the Python library is not loaded!"));
@@ -336,7 +336,7 @@ void AbortScript()
 bool ScriptAborted()
 {
    if (allowcheck) wxGetApp().Poller()->checkevents();
-   
+
    // if user hit escape key then AbortScript has raised an exception
    // and PyErr_Occurred will be true; if so, caller must return NULL
    // otherwise Python can abort app with this message:
@@ -589,7 +589,7 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
    bigint oldtop = currlayer->seltop;
    bigint oldright = currlayer->selright;
    bigint oldbottom = currlayer->selbottom;
-   
+
    const char *oldmode = GetPasteMode();
    wxString modestr = wxString(mode, wxConvLocal);
    if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
@@ -599,7 +599,7 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, "Bad paste call: unknown mode.");
       return NULL;
    }
-   
+
    // create huge selection rect so no possibility of error message
    currlayer->selleft = x;
    currlayer->seltop = y;
@@ -729,7 +729,7 @@ static PyObject *golly_setpos(PyObject *self, PyObject *args)
    char *y;
 
    if (!PyArg_ParseTuple(args, "ss", &x, &y)) return NULL;
-   
+
    // disallow alphabetic chars in x,y
    int i;
    int xlen = strlen(x);
@@ -909,7 +909,7 @@ static PyObject *golly_movelayer(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, msg);
       return NULL;
    }
-   
+
    MoveLayer(fromindex, toindex);
    DoAutoUpdate();
 
@@ -933,7 +933,7 @@ static PyObject *golly_setlayer(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, msg);
       return NULL;
    }
-   
+
    SetLayer(index);
    DoAutoUpdate();
 
@@ -994,7 +994,7 @@ static PyObject *golly_setname(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, msg);
       return NULL;
    }
-   
+
    if (name[0]) {
       if (index == currindex) {
          // show new name in main window's title;
@@ -1226,12 +1226,12 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
          savexrle = !savexrle;
          // no need for DoAutoUpdate();
       }
-   
+
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad setoption call: unknown option.");
       return NULL;
    }
-   
+
    if (oldval != newval) {
       mainptr->UpdateMenuItems(mainptr->IsActive());
    }
@@ -1296,7 +1296,7 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "siii", &colname, &r, &g, &b)) return NULL;
 
    wxColor newcol(r, g, b);
-   
+
    // note that "livecells" = "livecells0"
    if (strncmp(colname, "livecells", 9) == 0) {
       int layer = 0;
@@ -1350,7 +1350,7 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
          SetBrushesAndPens();
          DoAutoUpdate();
       }
-   
+
    } else {
       PyErr_SetString(PyExc_RuntimeError, "Bad setcolor call: unknown color.");
       return NULL;
@@ -1409,7 +1409,7 @@ static PyObject *golly_empty(PyObject *self, PyObject *args)
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
-   
+
    return Py_BuildValue("i", currlayer->algo->isEmpty() ? 1 : 0);
 }
 
@@ -1655,7 +1655,7 @@ static void AddCell(PyObject *list, long x, long y)
    // must decrement references to avoid Python memory leak
    Py_DECREF(xo);
    Py_DECREF(yo);
-}   
+}
 
 // -----------------------------------------------------------------------------
 
@@ -1807,7 +1807,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
       tempalgo = new qlifealgo();
    }
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
-   
+
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
    for (int n = 0; n < num_cells; n++) {
@@ -1863,10 +1863,10 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
    lifealgo *tempalgo;
    tempalgo = new qlifealgo();
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
-   
+
    // readpattern might change global rule table
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   
+
    // read pattern into temporary universe
    const char *err = readpattern(FILENAME, *tempalgo);
    if (err && strcmp(err,cannotreadhash) == 0) {
@@ -1877,7 +1877,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
       if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
       err = readpattern(FILENAME, *tempalgo);
    }
-   
+
    // restore rule
    currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
@@ -1886,7 +1886,7 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, err);
       return NULL;
    }
-   
+
    // convert pattern into a cell list, shifting cell coords so that the
    // bounding box's top left cell is at 0,0
    PyObject *outlist = PyList_New(0);
@@ -1917,7 +1917,7 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
    lifealgo *tempalgo;
    tempalgo = new qlifealgo();
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
-   
+
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
    for (int n = 0; n < num_cells; n++) {
@@ -1957,26 +1957,55 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
+   // default for mode is 'or'; 'xor' mode is also supported
+   // 'copy' mode is not meaningful for a list of ON cells
+   // (or at least it has the same effect as 'or' mode)
+   // because there is no bounding box to retrieve OFF cells from.
+   char *mode="or";
    PyObject *list;
 
-   if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy))
+   if (!PyArg_ParseTuple(args, "O!llllll|s", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
       return NULL;
 
    int num_cells = PyList_Size(list) / 2;
    lifealgo *curralgo = currlayer->algo;
-   for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
 
-      // paste (possibly transformed) cell into current universe
-      curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
-      
-      if ((n % 4096) == 0 && ScriptAborted()) {
-         curralgo->endofpattern();
-         currlayer->savestart = true;
-         MarkLayerDirty();
-         return NULL;
+   wxString modestr = wxString(mode, wxConvLocal);
+   if (modestr.IsSameAs(wxT("xor"), false)) {
+      for (int n = 0; n < num_cells; n++) {
+         long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
+         long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+         int s = curralgo->getcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+
+         // paste (possibly transformed) cell into current universe
+         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1-s);
+
+         if ((n % 4096) == 0 && ScriptAborted()) {
+            curralgo->endofpattern();
+            currlayer->savestart = true;
+            MarkLayerDirty();
+            return NULL;
+         }
       }
+   } else if (modestr.IsSameAs(wxT("or"), false) || modestr.IsSameAs(wxT("copy"), false)) {
+      // code duplicated for faster execution in normal 'or' case
+      for (int n = 0; n < num_cells; n++) {
+         long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
+         long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+
+         // paste (possibly transformed) cell into current universe
+         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
+
+         if ((n % 4096) == 0 && ScriptAborted()) {
+            curralgo->endofpattern();
+            currlayer->savestart = true;
+            MarkLayerDirty();
+            return NULL;
+         }
+      }
+   } else {
+      PyErr_SetString(PyExc_RuntimeError, "Bad putcells call: unknown mode.");
+      return NULL;
    }
    curralgo->endofpattern();
    currlayer->savestart = true;
@@ -1996,7 +2025,7 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
    PyObject *rect_list;
 
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
-   
+
    // convert pattern in given rect into a cell list
    PyObject *outlist = PyList_New(0);
 
@@ -2063,7 +2092,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: no pattern in clipboard.");
       return NULL;
    }
-   
+
    // convert pattern in clipboard into a cell list, but where the first 2 items
    // are the pattern's width and height (not necessarily the minimal bounding box
    // because the pattern might have empty borders, or it might even be empty)
@@ -2155,14 +2184,14 @@ static PyObject *golly_visrect(PyObject *self, PyObject *args)
       PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: height must be > 0.");
       return NULL;
    }
-   
+
    bigint left = x;
    bigint top = y;
    bigint right = x + wd - 1;
    bigint bottom = y + ht - 1;
    int visible = viewptr->CellVisible(left, top) &&
                  viewptr->CellVisible(right, bottom);
-   
+
    return Py_BuildValue("i", visible);
 }
 
@@ -2174,7 +2203,7 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    PyObject *rect_list;
    int x, y, wd, ht;
-   
+
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
    int numitems = PyList_Size(rect_list);
@@ -2234,11 +2263,11 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
       long y = top.toint();
       long wd = right.toint() - x + 1;
       long ht = bottom.toint() - y + 1;
-      
+
       AddCell(outlist, x, y);
       AddCell(outlist, wd, ht);
    }
-   
+
    return outlist;
 }
 
@@ -2264,11 +2293,11 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
       long y = currlayer->seltop.toint();
       long wd = currlayer->selright.toint() - x + 1;
       long ht = currlayer->selbottom.toint() - y + 1;
-        
+
       AddCell(outlist, x, y);
       AddCell(outlist, wd, ht);
    }
-   
+
    return outlist;
 }
 
@@ -2287,7 +2316,7 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
    currlayer->savestart = true;
    MarkLayerDirty();
    DoAutoUpdate();
-   
+
    Py_INCREF(Py_None);
    return Py_None;
 }
@@ -2388,7 +2417,7 @@ static PyObject *golly_getkey(PyObject *self, PyObject *args)
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
-   
+
    char s[2];
    if (scriptchars.Length() == 0) {
       // return empty string
@@ -2399,14 +2428,14 @@ static PyObject *golly_getkey(PyObject *self, PyObject *args)
       s[1] = '\0';
       scriptchars = scriptchars.AfterFirst(s[0]);
    }
-   
+
    return Py_BuildValue("s", s);
 }
 
 // -----------------------------------------------------------------------------
 
 // also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
-// getclick returns [] or [x,y,button,shift,ctrl,alt]  
+// getclick returns [] or [x,y,button,shift,ctrl,alt]
 
 static PyObject *golly_dokey(PyObject *self, PyObject *args)
 {
@@ -2415,7 +2444,7 @@ static PyObject *golly_dokey(PyObject *self, PyObject *args)
    char* ascii = 0;
 
    if (!PyArg_ParseTuple(args, "s", &ascii)) return NULL;
-   
+
    if (*ascii) {
       // convert ascii char to corresponding wx key code;
       // note that PassKeyToScript does the reverse conversion
@@ -2575,7 +2604,7 @@ static PyObject *golly_exit(PyObject *self, PyObject *args)
       // make sure status bar is visible
       if (!showstatus) mainptr->ToggleStatusBar();
    }
-   
+
    exitcalled = true;   // prevent CheckPythonError changing message
    AbortScript();
 
@@ -2707,7 +2736,7 @@ bool InitPython()
 
       // allow Python to call the above golly_* routines
       Py_InitModule("golly", golly_methods);
-   
+
       // catch Python messages sent to stderr and pass them to golly_stderr
       if ( PyRun_SimpleString(
             "import golly\n"
@@ -2719,7 +2748,7 @@ bool InitPython()
             "      self.data += stuff\n"
             "      golly.stderr(self.data)\n"
             "sys.stderr = StderrCatcher()\n"
-            
+
             // also create dummy sys.argv so scripts can import Tkinter
             "sys.argv = ['golly-app']\n"
             // works, but Golly's menus get permanently changed!!!
@@ -2758,7 +2787,7 @@ bool InitPython()
             ) < 0
          ) Warning(_("RollbackImporter code failed!"));
       */
-      
+
       pyinited = true;
    } else {
       // Py_Initialize has already been successfully called
@@ -2871,22 +2900,22 @@ void RunScript(const wxString& filename)
    scriptloc = fullname.GetPath();
    if ( scriptloc.Last() != wxFILE_SEP_PATH ) scriptloc += wxFILE_SEP_PATH;
    wxSetWorkingDirectory(scriptloc);
-   
+
    inscript = true;
    mainptr->UpdateUserInterface(mainptr->IsActive());
    ExecuteScript( fullname.GetFullPath() );
    inscript = false;
-   
+
    // reset all stayclean flags (set by MarkLayerClean)
    for ( int i = 0; i < numlayers; i++ )
       GetLayer(i)->stayclean = false;
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollydir);
-   
+
    // display any Python error message
    CheckPythonError();
-   
+
    // update title, menu bar, cursor, viewport, status bar, tool bar, etc
    if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
    mainptr->UpdateEverything();
@@ -2957,7 +2986,7 @@ void FinishScripting()
       wxSetWorkingDirectory(gollydir);
       inscript = false;
    }
-   
+
    // Py_Finalize can cause an obvious delay, so best not to call it
    // if (pyinited) Py_Finalize();
 
