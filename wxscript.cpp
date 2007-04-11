@@ -1957,21 +1957,39 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
    if (ScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
+   // defaults for affine transform params
+   x0=0;
+   y0=0;
+   axx=1;
+   axy=0;
+   ayx=0;
+   ayy=1;
    // default for mode is 'or'; 'xor' mode is also supported
-   // 'copy' mode is not meaningful for a list of ON cells
-   // (or at least it has the same effect as 'or' mode)
+   // 'copy' mode currently has the same effect as 'or' mode,
    // because there is no bounding box to retrieve OFF cells from.
    char *mode="or";
    PyObject *list;
 
-   if (!PyArg_ParseTuple(args, "O!llllll|s", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
+   if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
       return NULL;
 
    int num_cells = PyList_Size(list) / 2;
    lifealgo *curralgo = currlayer->algo;
 
    wxString modestr = wxString(mode, wxConvLocal);
+   if ( !(modestr.IsSameAs(wxT("or"), false)
+          || modestr.IsSameAs(wxT("xor"), false)
+          || modestr.IsSameAs(wxT("copy"), false)
+          || modestr.IsSameAs(wxT("not"), false)) ) {
+      PyErr_SetString(PyExc_RuntimeError, "Bad putcells call: unknown mode.");
+      return NULL;
+   }
+   if (modestr.IsSameAs(wxT("copy"), false)) {
+   // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
+   }
+
    if (modestr.IsSameAs(wxT("xor"), false)) {
+      // loop code is duplicated here to allow 'or' case to execute faster (?)
       for (int n = 0; n < num_cells; n++) {
          long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
          long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
@@ -1987,14 +2005,14 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
             return NULL;
          }
       }
-   } else if (modestr.IsSameAs(wxT("or"), false) || modestr.IsSameAs(wxT("copy"), false)) {
-      // code duplicated for faster execution in normal 'or' case
+   } else {
+      int cellstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
       for (int n = 0; n < num_cells; n++) {
          long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
          long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
 
          // paste (possibly transformed) cell into current universe
-         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1);
+         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, cellstate);
 
          if ((n % 4096) == 0 && ScriptAborted()) {
             curralgo->endofpattern();
@@ -2003,10 +2021,8 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
             return NULL;
          }
       }
-   } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad putcells call: unknown mode.");
-      return NULL;
    }
+
    curralgo->endofpattern();
    currlayer->savestart = true;
    MarkLayerDirty();
