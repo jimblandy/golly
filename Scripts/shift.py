@@ -3,6 +3,7 @@
 # Updated to use exit command, Nov 2006.
 
 from glife import getstring, validint, inside
+from string import lower
 import golly as g
 
 selrect = g.getselrect()
