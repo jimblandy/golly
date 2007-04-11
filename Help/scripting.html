@@ -383,11 +383,12 @@ Parse an RLE or Life 1.05 string and return a (possibly transformed) cell list.
 <dd> Example: <b>blinker = golly.parse("3o!", 0, 0, 1, 0, 0, 1)</b></dd>
 </p>
 
-<a name="putcells"></a><p><dt><b>putcells(<i>cell-list, x0, y0, axx, axy, ayx, ayy</i>)</b></dt>
+<a name="putcells"></a><p><dt><b>putcells(<i>cell-list, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1, mode="or"</i>)</b></dt>
 <dd>
-Paste the given cell list into the current universe using the given transformation.
+Paste the given cell list into the current universe using an optional affine transformation
+and optional mode ("copy", "or", "xor", or "not").
 </dd>
-<dd> Example: <b>golly.putcells(blinker, 9, 9, 1, 0, 0, 1)</b></dd>
+<dd> Example: <b>golly.putcells(hcf117, 6, -40, 1, 0, 0, 1, "xor")</b></dd>
 </p>
 
 <a name="getcells"></a><p><dt><b>getcells(<i>rect-list</i>)</b></dt>
