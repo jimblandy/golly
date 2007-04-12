@@ -71,12 +71,8 @@ if os.access(GotoINIFileName, os.R_OK):
    f=open(GotoINIFileName, 'r')
    previousgen=f.readline()
    f.close()
-   # should maybe change validint in __init__.py
-   # (add "if len(s)==0: return False")
-   # to avoid this initial conditional...
-   if len(previousgen):
-      if not validint(previousgen):
-         previousgen=""
+   if not validint(previousgen):
+      previousgen=""
 if previousgen!="":
    prevdefault=" (default is " + previousgen + ")"
 
