@@ -260,6 +260,7 @@ def getstring(prompt):
 
 def validint(s):
    # return True if given string represents a valid integer
+   if len(s)==0: return False
    s = s.replace(",","")
    if s[0] == '+' or s[0] == '-': s = s[1:]
    return s.isdigit()
