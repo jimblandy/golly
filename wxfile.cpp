@@ -437,7 +437,7 @@ void MainFrame::OpenPattern()
    
    wxFileDialog opendlg(this, _("Choose a pattern file"),
                         opensavedir, wxEmptyString, filetypes,
-                        wxOPEN | wxFILE_MUST_EXIST);
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( opendlg.GetPath() );
@@ -463,7 +463,7 @@ void MainFrame::OpenScript()
    wxFileDialog opendlg(this, _("Choose a Python script"),
                         rundir, wxEmptyString,
                         _("Python script (*.py)|*.py"),
-                        wxOPEN | wxFILE_MUST_EXIST);
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
    if ( opendlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( opendlg.GetPath() );
@@ -774,7 +774,7 @@ void MainFrame::SavePattern()
 
    wxFileDialog savedlg( this, _("Save pattern"),
                          opensavedir, currlayer->currname, filetypes,
-                         wxSAVE | wxOVERWRITE_PROMPT );
+                         wxFD_SAVE | wxFD_OVERWRITE_PROMPT );
 
    if ( savedlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( savedlg.GetPath() );
