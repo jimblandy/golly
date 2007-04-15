@@ -439,6 +439,11 @@ void MainFrame::OpenPattern()
                         opensavedir, wxEmptyString, filetypes,
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
+   #ifdef __WXGTK__
+      // opensavedir is ignored above (bug in wxGTK 2.8.0???)
+      opendlg.SetDirectory(opensavedir);
+   #endif
+
    if ( opendlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
@@ -464,6 +469,11 @@ void MainFrame::OpenScript()
                         rundir, wxEmptyString,
                         _("Python script (*.py)|*.py"),
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+   #ifdef __WXGTK__
+      // rundir is ignored above (bug in wxGTK 2.8.0???)
+      opendlg.SetDirectory(rundir);
+   #endif
 
    if ( opendlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( opendlg.GetPath() );
@@ -775,6 +785,11 @@ void MainFrame::SavePattern()
    wxFileDialog savedlg( this, _("Save pattern"),
                          opensavedir, currlayer->currname, filetypes,
                          wxFD_SAVE | wxFD_OVERWRITE_PROMPT );
+
+   #ifdef __WXGTK__
+      // opensavedir is ignored above (bug in wxGTK 2.8.0???)
+      savedlg.SetDirectory(opensavedir);
+   #endif
 
    if ( savedlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( savedlg.GetPath() );
