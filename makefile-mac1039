@@ -1,0 +1,263 @@
+# Makefile for building Mac OS 10.3.9 PPC version of Golly using wxWidgets.
+# It assumes you've built wxWidgets using the Xcode project.
+
+######## RUN THESE COMMAND FIRST ########################
+#    setenv MACOSX_DEPLOYMENT_TARGET 10.3
+#    setenv NEXT_ROOT /Developer/SDKs/MacOSX10.4u.sdk
+#########################################################
+
+# In the lines below, change WX_DIR to where you installed wxWidgets,
+# and change WX_RELEASE to match your wxWidgets version.
+
+WX_RELEASE = 2.8
+WX_DIR = /HD/wxWidgets/wxMac-2.8.0
+WXINC_DIR = $(WX_DIR)/src/build/include
+
+APP_NAME = Golly
+APP_VERSION = 1.2
+
+# for Python script support
+PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
+# following python command doesn't generate correct info on OS 10.4
+# PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
+   -framework Foundation -framework Python
+
+# use -F/Library/Frameworks to force linking against newer Python, but it would
+# probably cause app to fail on systems that don't have that Python installed
+# PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
+#   -framework Foundation -F/Library/Frameworks -framework Python
+
+# for building source and binary distributions:
+RELEASENAME = golly-$(APP_VERSION)
+SHAREDFILES = Help Patterns Scripts README LICENSE
+SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
+   bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
+
+# Variables:
+
+###CXXC = g++
+CXXC = /usr/bin/gcc-3.3
+
+CXXFLAGS = -x c++ -arch ppc -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks \
+   -DNO_GCC_PRAGMA -D__WXMAC__ -DwxUSE_BASE=1 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
+   -D__WXMAC_XCODE__=1 -DWX_PRECOMP=1 -DMACOS_CLASSIC -fmessage-length=0 -mtune=G4 \
+   -Wno-invalid-offsetof -Wmost -Wno-four-char-constants -Wno-unknown-pragmas -mdynamic-no-pic \
+   -I${WX_DIR}/include -I${WXINC_DIR} \
+   -DMAC_OS_X_VERSION_MIN_REQUIRED=1030 -fconstant-cfstrings -D__CONSTANT_CFSTRINGS__ \
+   -isystem /Developer/SDKs/MacOSX10.4u.sdk/usr/include/gcc/darwin/3.3 \
+   -I/Developer/SDKs/MacOSX10.4u.sdk/usr/include/gcc/darwin/3.3/c++ \
+   -I/Developer/SDKs/MacOSX10.4u.sdk/usr/include/gcc/darwin/3.3/c++/ppc-darwin \
+   -isystem /Developer/SDKs/MacOSX10.4u.sdk/usr/include \
+   -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon \
+   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -fno-strict-aliasing -fno-common
+
+OBJDIR = ObjMacPPC
+OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
+   $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
+   $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
+   $(OBJDIR)/lifepoll.o $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
+   $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
+   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o \
+   $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
+
+LIBDIRNAME = $(WX_DIR)/src/build/Deployment
+
+# Targets:
+
+all: $(OBJDIR) app.bin app_bundle
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+clean: 
+	rm -f $(OBJDIR)/*.o
+	rm -rf $(APP_NAME).app
+
+app.bin: $(OBJFILES)
+	/usr/bin/g++-3.3 -o $@ $(OBJFILES) \
+   -arch ppc -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3 \
+   -L$(LIBDIRNAME) -lwx_mac_static \
+   -framework Carbon -framework System -framework AGL -framework IOKit \
+   -framework WebKit -framework AppKit -framework QuickTime -framework Cocoa \
+   $(PYTHON_LINK) \
+   -prebind -mmacosx-version-min=10.3 -lz -lpthread -liconv \
+   -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk
+
+$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
+app.icns file-mc.icns file-rle.icns
+	mkdir -p $(APP_NAME).app/Contents
+	mkdir -p $(APP_NAME).app/Contents/MacOS
+	mkdir -p $(APP_NAME).app/Contents/Resources
+	
+	sed -e "s/VERSION/$(APP_VERSION)/" \
+	Info.plist.in >$(APP_NAME).app/Contents/Info.plist
+	
+	echo -n "APPLGoLy" >$(APP_NAME).app/Contents/PkgInfo
+	
+	mv -f app.bin $(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+	
+	cp -f *.icns $(APP_NAME).app/Contents/Resources
+
+app_bundle: $(APP_NAME).app/Contents/PkgInfo
+
+$(OBJDIR)/bigint.o: bigint.cpp bigint.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ bigint.cpp
+
+$(OBJDIR)/lifealgo.o: lifealgo.cpp lifealgo.h bigint.h viewport.h \
+liferender.h lifepoll.h readpattern.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ lifealgo.cpp
+
+$(OBJDIR)/hlifealgo.o: hlifealgo.cpp hlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ hlifealgo.cpp
+
+$(OBJDIR)/hlifedraw.o: hlifedraw.cpp hlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ hlifedraw.cpp
+
+$(OBJDIR)/qlifealgo.o: qlifealgo.cpp qlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ qlifealgo.cpp
+
+$(OBJDIR)/qlifedraw.o: qlifedraw.cpp qlifealgo.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ qlifedraw.cpp
+
+$(OBJDIR)/liferules.o: liferules.cpp liferules.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ liferules.cpp
+
+$(OBJDIR)/liferender.o: liferender.cpp liferender.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ liferender.cpp
+
+$(OBJDIR)/readpattern.o: readpattern.cpp readpattern.h bigint.h lifealgo.h \
+viewport.h liferender.h lifepoll.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ readpattern.cpp
+
+$(OBJDIR)/writepattern.o: writepattern.cpp writepattern.h lifealgo.h \
+bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ writepattern.cpp
+
+$(OBJDIR)/util.o: util.cpp util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ util.cpp
+
+$(OBJDIR)/viewport.o: viewport.cpp viewport.h bigint.h lifealgo.h \
+liferender.h lifepoll.h readpattern.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ viewport.cpp
+
+$(OBJDIR)/lifepoll.o: lifepoll.cpp lifepoll.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ lifepoll.cpp
+
+$(OBJDIR)/wxutils.o: wxutils.cpp wxutils.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxview.h wxmain.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
+
+$(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
+Help/about.html \
+bitmaps/hand_curs.xpm bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
+
+$(OBJDIR)/wxrule.o: wxrule.cpp wxrule.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
+wxgolly.h wxutils.h wxprefs.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxrule.cpp
+
+$(OBJDIR)/wxinfo.o: wxinfo.cpp wxinfo.h \
+readpattern.h bigint.h wxgolly.h wxmain.h wxutils.h wxprefs.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxinfo.cpp
+
+$(OBJDIR)/wxhelp.o: wxhelp.cpp wxhelp.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxhelp.cpp
+
+$(OBJDIR)/wxstatus.o: wxstatus.cpp wxstatus.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
+
+$(OBJDIR)/wxview.o: wxview.cpp wxview.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h \
+wxscript.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxview.cpp
+
+$(OBJDIR)/wxrender.o: wxrender.cpp wxrender.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
+
+$(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h writepattern.h \
+wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
+
+$(OBJDIR)/wxfile.o: wxfile.cpp \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h writepattern.h \
+wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxstatus.h \
+wxview.h wxrender.h wxscript.h wxmain.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxfile.cpp
+
+$(OBJDIR)/wxedit.o: wxedit.cpp \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxutils.h wxprefs.h wxmain.h wxstatus.h wxrender.h wxscript.h wxview.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxedit.cpp
+
+$(OBJDIR)/wxcontrol.o: wxcontrol.cpp \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h \
+wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
+
+$(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \
+bitmaps/add.xpm bitmaps/clone.xpm bitmaps/delete.xpm \
+bitmaps/stack.xpm bitmaps/stack_down.xpm bitmaps/tile.xpm bitmaps/tile_down.xpm \
+lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h wxscript.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
+
+$(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
+bitmaps/play.xpm bitmaps/stop.xpm bitmaps/hash.xpm bitmaps/hash_down.xpm \
+bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm \
+bitmaps/patterns.xpm bitmaps/patterns_down.xpm bitmaps/scripts.xpm bitmaps/scripts_down.xpm \
+bitmaps/draw.xpm bitmaps/draw_down.xpm bitmaps/select.xpm bitmaps/select_down.xpm \
+bitmaps/move.xpm bitmaps/move_down.xpm bitmaps/zoomin.xpm bitmaps/zoomin_down.xpm \
+bitmaps/zoomout.xpm bitmaps/zoomout_down.xpm bitmaps/info.xpm bitmaps/help.xpm \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+qlifealgo.h liferules.h hlifealgo.h writepattern.h \
+wxgolly.h wxutils.h wxprefs.h wxinfo.h wxhelp.h wxstatus.h \
+wxview.h wxrender.h wxscript.h wxlayer.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
+
+$(OBJDIR)/wxgolly.o: wxgolly.cpp wxgolly.h \
+Help/about.html appicon.xpm \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
+wxmain.h wxstatus.h wxview.h wxutils.h wxprefs.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp
+
+srcdist:
+	-rm -rf $(RELEASENAME)-src
+	mkdir $(RELEASENAME)-src
+	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
+	find $(RELEASENAME)-src -name CVS | xargs rm -rf
+	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
+
+bindist: all
+	-rm -rf $(RELEASENAME)-mac
+	mkdir $(RELEASENAME)-mac
+	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
+	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
+	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/README
+	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/LICENSE
+	echo Now create zip archive of $(RELEASENAME)-mac
+###tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz
