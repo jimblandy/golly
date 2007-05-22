@@ -22,7 +22,7 @@ WX_RELEASE = 28
 PYTHON_DIR = c:\Python25
 
 ### Golly-related variables: ###
-VERSION = 1.2
+VERSION = 1.3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife \

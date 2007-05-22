@@ -14,7 +14,7 @@ WX_DIR = /HD/wxWidgets/wxMac-2.8.0
 WXINC_DIR = $(WX_DIR)/src/build/include
 
 APP_NAME = Golly
-APP_VERSION = 1.2
+APP_VERSION = 1.3
 
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`

@@ -8,6 +8,12 @@ TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 
+Changes in version 1.3 (released !!!)
+
+AKT: Added pop-plot.py to Scripts folder.
+AKT: Added mono-spaced font to Scripts/glife/text.py.
+AKT: About box now uses Brice Due's Golly ticker.
+
 Changes in version 1.2 (released April 2007)
 
 DMG: Added mode parameter to putcells(); updated shift.py to use new option.
@@ -29,7 +35,7 @@ AKT: Clicked lexicon patterns are loaded into new/existing "lexicon" layer.
 AKT: GTK app no longer does buffered drawing (unnecessary in GTK+ 2.x).
 AKT: Added check(), setname(), getname() and other layer-related commands.
 AKT: Added support for multiple layers.
-AKT: Added smear.py to Scripts folder.
+AKT: Added envelope.py to Scripts folder.
 AKT: Fixed bug in advance() and evolve() if using hashing and Wolfram rule.
 AKT: Fixed delay bug (whentosee needed to be initialized).
 AKT: Modified some scripts to use exit() command.
