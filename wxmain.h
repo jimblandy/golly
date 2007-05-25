@@ -145,11 +145,13 @@ private:
    wxString GetBaseName(const wxString& fullpath);
    void AddRecentPattern(const wxString& path);
    void OpenRecentPattern(int id);
-   void ClearRecentPatterns();
+   void ClearMissingPatterns();
+   void ClearAllPatterns();
    void ChangePatternDir();
    void AddRecentScript(const wxString& path);
    void OpenRecentScript(int id);
-   void ClearRecentScripts();
+   void ClearMissingScripts();
+   void ClearAllScripts();
    void ChangeScriptDir();
    const char *WritePattern(const wxString& path,
                             pattern_format format,
@@ -183,9 +185,11 @@ private:
 // static routines needed by GetPrefs() to get IDs for items in Open Recent and
 // Run Recent submenus; they can't be MainFrame methods because GetPrefs() is
 // called before the main window is created
-int GetID_CLEAR_PATTERNS();
+int GetID_CLEAR_MISSING_PATTERNS();
+int GetID_CLEAR_ALL_PATTERNS();
 int GetID_OPEN_RECENT();
-int GetID_CLEAR_SCRIPTS();
+int GetID_CLEAR_MISSING_SCRIPTS();
+int GetID_CLEAR_ALL_SCRIPTS();
 int GetID_RUN_RECENT();
 
 // static routines used to post commands to the event queue

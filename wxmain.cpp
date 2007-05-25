@@ -67,8 +67,9 @@ enum {
    // wxID_OPEN,
    ID_OPEN_CLIP,
    ID_OPEN_RECENT,
-   // last item in Open Recent submenu
-   ID_CLEAR_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
+   // last 2 items in Open Recent submenu
+   ID_CLEAR_MISSING_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
+   ID_CLEAR_ALL_PATTERNS,
    ID_SHOW_PATTERNS,
    ID_PATTERN_DIR,
    // wxID_SAVE,
@@ -76,8 +77,9 @@ enum {
    ID_RUN_SCRIPT,
    ID_RUN_CLIP,
    ID_RUN_RECENT,
-   // last item in Run Recent submenu
-   ID_CLEAR_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
+   // last 2 items in Run Recent submenu
+   ID_CLEAR_MISSING_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
+   ID_CLEAR_ALL_SCRIPTS,
    ID_SHOW_SCRIPTS,
    ID_SCRIPT_DIR,
    // wxID_PREFERENCES,
@@ -200,10 +202,12 @@ enum {
 // can't be MainFrame methods because GetPrefs() is called before creating main window
 // and I'd rather not expose the IDs in a header file
 
-int GetID_CLEAR_PATTERNS() { return ID_CLEAR_PATTERNS; }
-int GetID_OPEN_RECENT()    { return ID_OPEN_RECENT; }
-int GetID_CLEAR_SCRIPTS()  { return ID_CLEAR_SCRIPTS; }
-int GetID_RUN_RECENT()     { return ID_RUN_RECENT; }
+int GetID_CLEAR_MISSING_PATTERNS()  { return ID_CLEAR_MISSING_PATTERNS; }
+int GetID_CLEAR_ALL_PATTERNS()      { return ID_CLEAR_ALL_PATTERNS; }
+int GetID_OPEN_RECENT()             { return ID_OPEN_RECENT; }
+int GetID_CLEAR_MISSING_SCRIPTS()   { return ID_CLEAR_MISSING_SCRIPTS; }
+int GetID_CLEAR_ALL_SCRIPTS()       { return ID_CLEAR_ALL_SCRIPTS; }
+int GetID_RUN_RECENT()              { return ID_RUN_RECENT; }
 
 // static routines used to post commands to the event queue
 
@@ -1302,14 +1306,16 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_NEW:          NewPattern(); break;
       case wxID_OPEN:         OpenPattern(); break;
       case ID_OPEN_CLIP:      OpenClipboard(); break;
-      case ID_CLEAR_PATTERNS: ClearRecentPatterns(); break;
+      case ID_CLEAR_MISSING_PATTERNS:  ClearMissingPatterns(); break;
+      case ID_CLEAR_ALL_PATTERNS:      ClearAllPatterns(); break;
       case ID_SHOW_PATTERNS:  ToggleShowPatterns(); break;
       case ID_PATTERN_DIR:    ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
       case ID_SAVE_XRLE:      savexrle = !savexrle; break;
       case ID_RUN_SCRIPT:     OpenScript(); break;
       case ID_RUN_CLIP:       RunClipboard(); break;
-      case ID_CLEAR_SCRIPTS:  ClearRecentScripts(); break;
+      case ID_CLEAR_MISSING_SCRIPTS:   ClearMissingScripts(); break;
+      case ID_CLEAR_ALL_SCRIPTS:       ClearAllScripts(); break;
       case ID_SHOW_SCRIPTS:   ToggleShowScripts(); break;
       case ID_SCRIPT_DIR:     ChangeScriptDir(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;

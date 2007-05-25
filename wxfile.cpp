@@ -350,8 +350,14 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::AddRecentPattern(const wxString& path)
+void MainFrame::AddRecentPattern(const wxString& inpath)
 {
+   wxString path = inpath;
+   if (path.StartsWith(gollydir)) {
+      // remove gollydir from start of path
+      path = path.erase(0, gollydir.length());
+   }
+
    // put given path at start of patternSubMenu
    int id = patternSubMenu->FindItem(path);
    if ( id == wxNOT_FOUND ) {
@@ -369,7 +375,7 @@ void MainFrame::AddRecentPattern(const wxString& path)
    }
    // path exists in patternSubMenu 
    if ( id > GetID_OPEN_RECENT() + 1 ) {
-      // move path to start of menu (item IDs don't change)
+      // move path to start of menu
       wxMenuItem *item;
       while ( id > GetID_OPEN_RECENT() + 1 ) {
          wxMenuItem *previtem = patternSubMenu->FindItem(id - 1);
@@ -385,8 +391,14 @@ void MainFrame::AddRecentPattern(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::AddRecentScript(const wxString& path)
+void MainFrame::AddRecentScript(const wxString& inpath)
 {
+   wxString path = inpath;
+   if (path.StartsWith(gollydir)) {
+      // remove gollydir from start of path
+      path = path.erase(0, gollydir.length());
+   }
+
    // put given path at start of scriptSubMenu
    int id = scriptSubMenu->FindItem(path);
    if ( id == wxNOT_FOUND ) {
@@ -404,7 +416,7 @@ void MainFrame::AddRecentScript(const wxString& path)
    }
    // path exists in scriptSubMenu 
    if ( id > GetID_RUN_RECENT() + 1 ) {
-      // move path to start of menu (item IDs don't change)
+      // move path to start of menu
       wxMenuItem *item;
       while ( id > GetID_RUN_RECENT() + 1 ) {
          wxMenuItem *previtem = scriptSubMenu->FindItem(id - 1);
@@ -650,6 +662,11 @@ void MainFrame::OpenRecentPattern(int id)
    wxMenuItem *item = patternSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
+
+      // if path isn't absolute then prepend Golly directory
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) path = gollydir + path;
+
       SetCurrentFile(path);
       AddRecentPattern(path);
       LoadPattern(GetBaseName(path));
@@ -663,6 +680,11 @@ void MainFrame::OpenRecentScript(int id)
    wxMenuItem *item = scriptSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
+
+      // if path isn't absolute then prepend Golly directory
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) path = gollydir + path;
+
       AddRecentScript(path);
       RunScript(path);
    }
@@ -670,7 +692,75 @@ void MainFrame::OpenRecentScript(int id)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ClearRecentPatterns()
+void MainFrame::ClearMissingPatterns()
+{
+   int pos = 0;
+   while (pos < numpatterns) {
+      wxMenuItem *item = patternSubMenu->FindItemByPosition(pos);
+      wxString path = item->GetText();
+      
+      // if path isn't absolute then prepend Golly directory
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) path = gollydir + path;
+      
+      if (wxFileExists(path)) {
+         // keep this item
+         pos++;
+      } else {
+         // remove this item by shifting up later items
+         int nextpos = pos + 1;
+         while (nextpos < numpatterns) {
+            wxMenuItem *nextitem = patternSubMenu->FindItemByPosition(nextpos);
+            item->SetText( nextitem->GetText() );
+            item = nextitem;
+            nextpos++;
+         }
+         // delete last item
+         patternSubMenu->Delete(item);
+         numpatterns--;
+      }
+   }
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) mbar->Enable(GetID_OPEN_RECENT(), numpatterns > 0);
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ClearMissingScripts()
+{
+   int pos = 0;
+   while (pos < numscripts) {
+      wxMenuItem *item = scriptSubMenu->FindItemByPosition(pos);
+      wxString path = item->GetText();
+      
+      // if path isn't absolute then prepend Golly directory
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) path = gollydir + path;
+      
+      if (wxFileExists(path)) {
+         // keep this item
+         pos++;
+      } else {
+         // remove this item by shifting up later items
+         int nextpos = pos + 1;
+         while (nextpos < numscripts) {
+            wxMenuItem *nextitem = scriptSubMenu->FindItemByPosition(nextpos);
+            item->SetText( nextitem->GetText() );
+            item = nextitem;
+            nextpos++;
+         }
+         // delete last item
+         scriptSubMenu->Delete(item);
+         numscripts--;
+      }
+   }
+   wxMenuBar *mbar = GetMenuBar();
+   if (mbar) mbar->Enable(GetID_RUN_RECENT(), numscripts > 0);
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ClearAllPatterns()
 {
    while (numpatterns > 0) {
       patternSubMenu->Delete( patternSubMenu->FindItemByPosition(0) );
@@ -682,7 +772,7 @@ void MainFrame::ClearRecentPatterns()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ClearRecentScripts()
+void MainFrame::ClearAllScripts()
 {
    while (numscripts > 0) {
       scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(0) );

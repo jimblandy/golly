@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"      // for MAX_MAG
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
-#include "wxmain.h"        // for GetID_CLEAR_PATTERNS, GetID_OPEN_RECENT, mainptr->...
+#include "wxmain.h"        // for GetID_*, mainptr->...
 #include "wxutils.h"       // for Warning, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
@@ -74,7 +74,7 @@ const wxString PATT_DIR = wxT("Patterns");
 // location of supplied scripts (relative to app)
 const wxString SCRIPT_DIR = wxT("Scripts");
 
-const int PREFS_VERSION = 1;     // may change if file syntax changes
+const int PREFS_VERSION = 2;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
 const int BITMAP_WD = 60;        // width of bitmap in color buttons
@@ -710,6 +710,8 @@ void CheckVisibility(int *x, int *y, int *wd, int *ht)
 
 void GetPrefs()
 {
+   int currversion = PREFS_VERSION;
+
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
    patterndir = gollydir + PATT_DIR;
@@ -731,12 +733,14 @@ void GetPrefs()
    // initialize Open Recent submenu
    patternSubMenu = new wxMenu();
    patternSubMenu->AppendSeparator();
-   patternSubMenu->Append(GetID_CLEAR_PATTERNS(), _("Clear Menu"));
+   patternSubMenu->Append(GetID_CLEAR_MISSING_PATTERNS(), _("Clear Missing Files"));
+   patternSubMenu->Append(GetID_CLEAR_ALL_PATTERNS(), _("Clear All Files"));
    
    // initialize Run Recent submenu
    scriptSubMenu = new wxMenu();
    scriptSubMenu->AppendSeparator();
-   scriptSubMenu->Append(GetID_CLEAR_SCRIPTS(), _("Clear Menu"));
+   scriptSubMenu->Append(GetID_CLEAR_MISSING_SCRIPTS(), _("Clear Missing Files"));
+   scriptSubMenu->Append(GetID_CLEAR_ALL_SCRIPTS(), _("Clear All Files"));
 
    namedrules.Add(wxT("Life|B3/S23"));      // must be 1st entry
 
@@ -762,8 +766,8 @@ void GetPrefs()
       }
 
       if (strcmp(keyword, "prefs_version") == 0) {
-         int currversion;
-         if (sscanf(value, "%d", &currversion) == 1 && currversion < PREFS_VERSION) {
+         sscanf(value, "%d", &currversion);
+         if (currversion < PREFS_VERSION) {
             // may need to do something in the future if syntax changes
          }
 
@@ -1036,16 +1040,24 @@ void GetPrefs()
          // append path to Open Recent submenu
          if (numpatterns < maxpatterns) {
             numpatterns++;
-            patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns,
-                                   wxString(value,wxConvLocal));
+            wxString path(value, wxConvLocal);
+            if (currversion < 2 && path.StartsWith(gollydir)) {
+               // remove gollydir from start of path
+               path = path.erase(0, gollydir.length());
+            }
+            patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns, path);
          }
 
       } else if (strcmp(keyword, "recent_script") == 0) {
          // append path to Run Recent submenu
          if (numscripts < maxscripts) {
             numscripts++;
-            scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts,
-                                  wxString(value,wxConvLocal));
+            wxString path(value, wxConvLocal);
+            if (currversion < 2 && path.StartsWith(gollydir)) {
+               // remove gollydir from start of path
+               path = path.erase(0, gollydir.length());
+            }
+            scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts, path);
          }
       }
    }

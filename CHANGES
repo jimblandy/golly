@@ -10,9 +10,11 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.3 (released !!!)
 
+AKT: Open/Run Recent menus show relative paths for files inside Golly folder.
+AKT: Added Clear Missing Files item to Open/Run Recent menus.
 AKT: Added pop-plot.py to Scripts folder.
 AKT: Added mono-spaced font to Scripts/glife/text.py.
-AKT: About box now uses Brice Due's Golly ticker.
+AKT: About box uses Brice Due's Golly ticker.
 
 Changes in version 1.2 (released April 2007)
 
