@@ -17,6 +17,12 @@ BINFILES = golly bgolly
 
 CXXC = g++
 
+# for Perl script support
+PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
+#!!! eventually set PERL_LINK if/when we dynamically load Perl lib
+PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
+
+# for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 
 ifeq ($(OSTYPE),darwin)
@@ -58,7 +64,7 @@ clean:
 	rm -f golly bgolly
 
 golly: $(BASEOBJ) $(WXOBJ)
-	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(PYTHON_LINK)
+	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
 
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS)
@@ -159,7 +165,7 @@ lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
 wxinfo.h wxhelp.h wxlayer.h
-	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
+	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) $(PERL_INCLUDE) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
