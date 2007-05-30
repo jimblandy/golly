@@ -1649,7 +1649,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
             treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
             
             #ifdef __WXX11__
-               // needed for scripts like goto.py which prompt user to enter string
+               // needed for scripts which prompt user to enter a string
                viewptr->SetFocus();
             #endif
             
@@ -2184,9 +2184,7 @@ void MainFrame::CreateDirControls()
                                      #else
                                         wxNO_BORDER,
                                      #endif
-                                     // using *.py prevents seeing a folder alias or
-                                     // sym link so best to show all files???
-                                     _T("Python scripts|*.py")
+                                     _T("Perl/Python scripts|*.pl;*.py")
                                     );
    if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
    
@@ -2237,8 +2235,11 @@ MainFrame::MainFrame()
    // initialize hidden files to be in same folder as Golly app;
    // they must be absolute paths in case they are used from a script command when
    // the current directory has been changed to the location of the script file
-   scriptfile = gollydir + wxT(".golly_clip.py");
    clipfile = gollydir + wxT(".golly_clipboard");
+   scriptfile = gollydir + wxT(".golly_clip.py");
+   //!!!
+   // need a separate var for ".golly_clip.pl" and will need to examine contents
+   // of clipboard to determine if it is Perl or Python code
 
    // create one-shot timer (see OnOneTimer)
    onetimer = new wxTimer(this, ID_ONE_TIMER);

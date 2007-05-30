@@ -32,11 +32,12 @@ extern bool canswitch;
 // Can user switch layers while a script is running?
 
 bool IsScript(const wxString& filename);
-// Return true if the given file is a Python script.
-// It simply checks if the file's extension is ".py" (ignoring case).
+// Return true if the given file is a Perl or Python script.
+// It simply checks if the file's extension is ".pl" or ".py"
+// (ignoring case).
 
 void RunScript(const wxString& filename);
-// Run the given script file by passing it to the Python interpreter.
+// Run the given script.
 
 void PassKeyToScript(int key);
 // Called if a script is running and user hits a key.
@@ -45,7 +46,6 @@ void ShowTitleLater();
 // Called if a script is running and window title has changed.
 
 void FinishScripting();
-// Called when app quits to abort a running script and tidy up
-// the Python interpreter.
+// Called when app quits to abort a running script.
 
 #endif

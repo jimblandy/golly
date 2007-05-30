@@ -7,13 +7,12 @@ from time import time
 import golly as g
 
 r = rect( g.getselrect() )
-
 if r.empty: g.exit("There is no selection.")
 
 oldsecs = time()
+
 for row in xrange(r.top, r.top + r.height):
-   # when inverting large selections it's nicer to
-   # give some indication of progress
+   # if large selection then give some indication of progress
    newsecs = time()
    if newsecs - oldsecs >= 1.0:
       oldsecs = newsecs

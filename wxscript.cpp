@@ -74,16 +74,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 bool pyinited = false;     // Py_Initialize has been successfully called?
 bool inscript = false;     // a script is running?
+bool plscript = false;     // a Perl script is running?
+bool pyscript = false;     // a Python script is running?
 bool canswitch;            // can user switch layers while script is running?
 bool autoupdate;           // update display after each change to current universe?
-bool exitcalled;           // golly_exit was called?
+bool exitcalled;           // *g_exit was called?
 bool allowcheck;           // allow event checking?
 bool showtitle;            // need to update window title?
-wxString pyerror;          // Python error message
+wxString scripterr;        // Perl/Python error message
 wxString scriptloc;        // location of script file
 wxString scriptchars;      // non-escape chars saved by PassKeyToScript
 
-// exception message set by AbortScript
+// special message set by AbortPerlScript/AbortPythonScript
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 
 // =============================================================================
@@ -322,10 +324,10 @@ static bool LoadPythonLib()
 
 // =============================================================================
 
-// The following golly_* routines can be called from Python scripts; some are
+// The following pyg_* routines can be called from Python scripts; some are
 // based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
 
-void AbortScript()
+void AbortPythonScript()
 {
    // raise an exception with a special message
    PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
@@ -333,11 +335,11 @@ void AbortScript()
 
 // -----------------------------------------------------------------------------
 
-bool ScriptAborted()
+bool PythonScriptAborted()
 {
    if (allowcheck) wxGetApp().Poller()->checkevents();
 
-   // if user hit escape key then AbortScript has raised an exception
+   // if user hit escape key then AbortPythonScript has raised an exception
    // and PyErr_Occurred will be true; if so, caller must return NULL
    // otherwise Python can abort app with this message:
    // Fatal Python error: unexpected exception during garbage collection
@@ -365,7 +367,7 @@ void DoAutoUpdate()
 void ShowTitleLater()
 {
    // called from SetWindowTitle when inscript is true;
-   // show title at next update (eg. golly_update or end of script)
+   // show title at next update (eg. pyg_update or end of script)
    showtitle = true;
 }
 
@@ -388,9 +390,9 @@ void ChangeWindowTitle(const wxString& name)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_new(PyObject *self, PyObject *args)
+static PyObject *pyg_new(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *title;
 
@@ -405,9 +407,9 @@ static PyObject *golly_new(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_open(PyObject *self, PyObject *args)
+static PyObject *pyg_open(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *filename;
    int remember = 0;
@@ -436,9 +438,9 @@ static PyObject *golly_open(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_save(PyObject *self, PyObject *args)
+static PyObject *pyg_save(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *filename;
    char *format;
@@ -466,9 +468,9 @@ static PyObject *golly_save(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_fit(PyObject *self, PyObject *args)
+static PyObject *pyg_fit(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -482,9 +484,9 @@ static PyObject *golly_fit(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_fitsel(PyObject *self, PyObject *args)
+static PyObject *pyg_fitsel(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -503,9 +505,9 @@ static PyObject *golly_fitsel(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_cut(PyObject *self, PyObject *args)
+static PyObject *pyg_cut(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -524,9 +526,9 @@ static PyObject *golly_cut(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_copy(PyObject *self, PyObject *args)
+static PyObject *pyg_copy(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -545,9 +547,9 @@ static PyObject *golly_copy(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_clear(PyObject *self, PyObject *args)
+static PyObject *pyg_clear(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int where;
 
@@ -570,9 +572,9 @@ static PyObject *golly_clear(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_paste(PyObject *self, PyObject *args)
+static PyObject *pyg_paste(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y;
    char *mode;
@@ -623,9 +625,9 @@ static PyObject *golly_paste(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_shrink(PyObject *self, PyObject *args)
+static PyObject *pyg_shrink(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -644,9 +646,9 @@ static PyObject *golly_shrink(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_randfill(PyObject *self, PyObject *args)
+static PyObject *pyg_randfill(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int perc;
 
@@ -674,9 +676,9 @@ static PyObject *golly_randfill(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_flip(PyObject *self, PyObject *args)
+static PyObject *pyg_flip(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int direction;
 
@@ -699,9 +701,9 @@ static PyObject *golly_flip(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_rotate(PyObject *self, PyObject *args)
+static PyObject *pyg_rotate(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int direction;
 
@@ -721,9 +723,9 @@ static PyObject *golly_rotate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setpos(PyObject *self, PyObject *args)
+static PyObject *pyg_setpos(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *x;
    char *y;
@@ -756,9 +758,9 @@ static PyObject *golly_setpos(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getpos(PyObject *self, PyObject *args)
+static PyObject *pyg_getpos(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char sepchar = '\0';
 
@@ -776,9 +778,9 @@ static PyObject *golly_getpos(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setmag(PyObject *self, PyObject *args)
+static PyObject *pyg_setmag(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int mag;
 
@@ -793,9 +795,9 @@ static PyObject *golly_setmag(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getmag(PyObject *self, PyObject *args)
+static PyObject *pyg_getmag(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -805,9 +807,9 @@ static PyObject *golly_getmag(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_addlayer(PyObject *self, PyObject *args)
+static PyObject *pyg_addlayer(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -826,9 +828,9 @@ static PyObject *golly_addlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_clone(PyObject *self, PyObject *args)
+static PyObject *pyg_clone(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -847,9 +849,9 @@ static PyObject *golly_clone(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_duplicate(PyObject *self, PyObject *args)
+static PyObject *pyg_duplicate(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -868,9 +870,9 @@ static PyObject *golly_duplicate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_dellayer(PyObject *self, PyObject *args)
+static PyObject *pyg_dellayer(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -889,9 +891,9 @@ static PyObject *golly_dellayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_movelayer(PyObject *self, PyObject *args)
+static PyObject *pyg_movelayer(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int fromindex, toindex;
 
@@ -919,9 +921,9 @@ static PyObject *golly_movelayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setlayer(PyObject *self, PyObject *args)
+static PyObject *pyg_setlayer(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int index;
 
@@ -943,9 +945,9 @@ static PyObject *golly_setlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getlayer(PyObject *self, PyObject *args)
+static PyObject *pyg_getlayer(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -955,9 +957,9 @@ static PyObject *golly_getlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_numlayers(PyObject *self, PyObject *args)
+static PyObject *pyg_numlayers(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -967,9 +969,9 @@ static PyObject *golly_numlayers(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_maxlayers(PyObject *self, PyObject *args)
+static PyObject *pyg_maxlayers(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -979,9 +981,9 @@ static PyObject *golly_maxlayers(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setname(PyObject *self, PyObject *args)
+static PyObject *pyg_setname(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *name;
    int index = currindex;
@@ -1013,9 +1015,9 @@ static PyObject *golly_setname(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getname(PyObject *self, PyObject *args)
+static PyObject *pyg_getname(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int index = currindex;
 
@@ -1034,9 +1036,9 @@ static PyObject *golly_getname(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setoption(PyObject *self, PyObject *args)
+static PyObject *pyg_setoption(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *optname;
    int oldval, newval;
@@ -1242,9 +1244,9 @@ static PyObject *golly_setoption(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getoption(PyObject *self, PyObject *args)
+static PyObject *pyg_getoption(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *optname;
    int optval;
@@ -1285,9 +1287,9 @@ static PyObject *golly_getoption(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setcolor(PyObject *self, PyObject *args)
+static PyObject *pyg_setcolor(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char* colname;
    int r, g, b;
@@ -1366,9 +1368,9 @@ static PyObject *golly_setcolor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getcolor(PyObject *self, PyObject *args)
+static PyObject *pyg_getcolor(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char* colname;
    wxColor* cptr;
@@ -1403,9 +1405,9 @@ static PyObject *golly_getcolor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_empty(PyObject *self, PyObject *args)
+static PyObject *pyg_empty(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -1415,9 +1417,9 @@ static PyObject *golly_empty(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_run(PyObject *self, PyObject *args)
+static PyObject *pyg_run(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int ngens;
 
@@ -1441,9 +1443,9 @@ static PyObject *golly_run(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_step(PyObject *self, PyObject *args)
+static PyObject *pyg_step(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -1459,9 +1461,9 @@ static PyObject *golly_step(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setstep(PyObject *self, PyObject *args)
+static PyObject *pyg_setstep(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int exp;
 
@@ -1476,9 +1478,9 @@ static PyObject *golly_setstep(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getstep(PyObject *self, PyObject *args)
+static PyObject *pyg_getstep(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -1488,9 +1490,9 @@ static PyObject *golly_getstep(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setbase(PyObject *self, PyObject *args)
+static PyObject *pyg_setbase(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int base;
 
@@ -1513,9 +1515,9 @@ static PyObject *golly_setbase(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getbase(PyObject *self, PyObject *args)
+static PyObject *pyg_getbase(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -1525,9 +1527,9 @@ static PyObject *golly_getbase(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_advance(PyObject *self, PyObject *args)
+static PyObject *pyg_advance(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int where, ngens;
 
@@ -1555,9 +1557,9 @@ static PyObject *golly_advance(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_reset(PyObject *self, PyObject *args)
+static PyObject *pyg_reset(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -1573,9 +1575,9 @@ static PyObject *golly_reset(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getgen(PyObject *self, PyObject *args)
+static PyObject *pyg_getgen(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char sepchar = '\0';
 
@@ -1586,9 +1588,9 @@ static PyObject *golly_getgen(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getpop(PyObject *self, PyObject *args)
+static PyObject *pyg_getpop(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char sepchar = '\0';
 
@@ -1599,9 +1601,9 @@ static PyObject *golly_getpop(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setrule(PyObject *self, PyObject *args)
+static PyObject *pyg_setrule(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *rule_string = NULL;
 
@@ -1633,9 +1635,9 @@ static PyObject *golly_setrule(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getrule(PyObject *self, PyObject *args)
+static PyObject *pyg_getrule(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -1691,7 +1693,7 @@ static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
                cx = iright;  // done this row
             }
             cntr++;
-            if ((cntr % 4096) == 0 && ScriptAborted()) return false;
+            if ((cntr % 4096) == 0 && PythonScriptAborted()) return false;
          }
       }
    }
@@ -1700,9 +1702,9 @@ static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_parse(PyObject *self, PyObject *args)
+static PyObject *pyg_parse(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s;
    long x0, y0, axx, axy, ayx, ayy;
@@ -1758,9 +1760,9 @@ static PyObject *golly_parse(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_transform(PyObject *self, PyObject *args)
+static PyObject *pyg_transform(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
    PyObject *inlist;
@@ -1777,7 +1779,7 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
 
       AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
 
-      if ((n % 4096) == 0 && ScriptAborted()) {
+      if ((n % 4096) == 0 && PythonScriptAborted()) {
          Py_DECREF(outlist);
          return NULL;
       }
@@ -1788,9 +1790,9 @@ static PyObject *golly_transform(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_evolve(PyObject *self, PyObject *args)
+static PyObject *pyg_evolve(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int ngens = 0;
    PyObject *given_list;
@@ -1816,7 +1818,7 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
 
       tempalgo->setcell(x, y, 1);
 
-      if ((n % 4096) == 0 && ScriptAborted()) {
+      if ((n % 4096) == 0 && PythonScriptAborted()) {
          tempalgo->endofpattern();
          delete tempalgo;
          return NULL;
@@ -1851,9 +1853,9 @@ static PyObject *golly_evolve(PyObject *self, PyObject *args)
    #define FILENAME filename
 #endif
 
-static PyObject *golly_load(PyObject *self, PyObject *args)
+static PyObject *pyg_load(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *filename;
 
@@ -1902,9 +1904,9 @@ static PyObject *golly_load(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_store(PyObject *self, PyObject *args)
+static PyObject *pyg_store(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *given_list;
    char *filename;
@@ -1926,7 +1928,7 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
 
       tempalgo->setcell(x, y, 1);
 
-      if ((n % 4096) == 0 && ScriptAborted()) {
+      if ((n % 4096) == 0 && PythonScriptAborted()) {
          tempalgo->endofpattern();
          delete tempalgo;
          return NULL;
@@ -1952,9 +1954,9 @@ static PyObject *golly_store(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_putcells(PyObject *self, PyObject *args)
+static PyObject *pyg_putcells(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
    // defaults for affine transform params
@@ -1998,7 +2000,7 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1-s);
 
-         if ((n % 4096) == 0 && ScriptAborted()) {
+         if ((n % 4096) == 0 && PythonScriptAborted()) {
             curralgo->endofpattern();
             currlayer->savestart = true;
             MarkLayerDirty();
@@ -2014,7 +2016,7 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, cellstate);
 
-         if ((n % 4096) == 0 && ScriptAborted()) {
+         if ((n % 4096) == 0 && PythonScriptAborted()) {
             curralgo->endofpattern();
             currlayer->savestart = true;
             MarkLayerDirty();
@@ -2034,9 +2036,9 @@ static PyObject *golly_putcells(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getcells(PyObject *self, PyObject *args)
+static PyObject *pyg_getcells(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *rect_list;
 
@@ -2080,7 +2082,7 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
                cx = iright;  // done this row
             }
             cntr++;
-            if ((cntr % 4096) == 0 && ScriptAborted()) {
+            if ((cntr % 4096) == 0 && PythonScriptAborted()) {
                Py_DECREF(outlist);
                return NULL;
             }
@@ -2097,9 +2099,9 @@ static PyObject *golly_getcells(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getclip(PyObject *self, PyObject *args)
+static PyObject *pyg_getclip(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2152,7 +2154,7 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
                cx = iright;  // done this row
             }
             cntr++;
-            if ((cntr % 4096) == 0 && ScriptAborted()) {
+            if ((cntr % 4096) == 0 && PythonScriptAborted()) {
                delete tempalgo;
                Py_DECREF(outlist);
                return NULL;
@@ -2173,9 +2175,9 @@ static PyObject *golly_getclip(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_visrect(PyObject *self, PyObject *args)
+static PyObject *pyg_visrect(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *rect_list;
 
@@ -2213,9 +2215,9 @@ static PyObject *golly_visrect(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_select(PyObject *self, PyObject *args)
+static PyObject *pyg_select(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *rect_list;
    int x, y, wd, ht;
@@ -2258,9 +2260,9 @@ static PyObject *golly_select(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getrect(PyObject *self, PyObject *args)
+static PyObject *pyg_getrect(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2289,9 +2291,9 @@ static PyObject *golly_getrect(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getselrect(PyObject *self, PyObject *args)
+static PyObject *pyg_getselrect(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2319,9 +2321,9 @@ static PyObject *golly_getselrect(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setcell(PyObject *self, PyObject *args)
+static PyObject *pyg_setcell(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y, state;
 
@@ -2339,9 +2341,9 @@ static PyObject *golly_setcell(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getcell(PyObject *self, PyObject *args)
+static PyObject *pyg_getcell(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y;
 
@@ -2352,9 +2354,9 @@ static PyObject *golly_getcell(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_setcursor(PyObject *self, PyObject *args)
+static PyObject *pyg_setcursor(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int newindex;
 
@@ -2377,9 +2379,9 @@ static PyObject *golly_setcursor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getcursor(PyObject *self, PyObject *args)
+static PyObject *pyg_getcursor(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2389,9 +2391,9 @@ static PyObject *golly_getcursor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_update(PyObject *self, PyObject *args)
+static PyObject *pyg_update(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2411,9 +2413,9 @@ static PyObject *golly_update(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
+static PyObject *pyg_autoupdate(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int flag;
 
@@ -2427,9 +2429,9 @@ static PyObject *golly_autoupdate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_getkey(PyObject *self, PyObject *args)
+static PyObject *pyg_getkey(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2453,9 +2455,9 @@ static PyObject *golly_getkey(PyObject *self, PyObject *args)
 // also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
 // getclick returns [] or [x,y,button,shift,ctrl,alt]
 
-static PyObject *golly_dokey(PyObject *self, PyObject *args)
+static PyObject *pyg_dokey(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char* ascii = 0;
 
@@ -2499,9 +2501,9 @@ static PyObject *golly_dokey(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_appdir(PyObject *self, PyObject *args)
+static PyObject *pyg_appdir(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
@@ -2511,9 +2513,9 @@ static PyObject *golly_appdir(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_show(PyObject *self, PyObject *args)
+static PyObject *pyg_show(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -2531,9 +2533,9 @@ static PyObject *golly_show(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_error(PyObject *self, PyObject *args)
+static PyObject *pyg_error(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -2551,9 +2553,9 @@ static PyObject *golly_error(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_warn(PyObject *self, PyObject *args)
+static PyObject *pyg_warn(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -2567,9 +2569,9 @@ static PyObject *golly_warn(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_note(PyObject *self, PyObject *args)
+static PyObject *pyg_note(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
@@ -2583,14 +2585,14 @@ static PyObject *golly_note(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_check(PyObject *self, PyObject *args)
+static PyObject *pyg_check(PyObject *self, PyObject *args)
 {
    // don't call checkevents() here otherwise we can't safely write code like
    //    if g.getlayer() == target:
    //       g.check(0)
    //       ... do stuff to target layer ...
    //       g.check(1)
-   // if (ScriptAborted()) return NULL;
+   // if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int flag;
 
@@ -2604,9 +2606,9 @@ static PyObject *golly_check(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_exit(PyObject *self, PyObject *args)
+static PyObject *pyg_exit(PyObject *self, PyObject *args)
 {
-   if (ScriptAborted()) return NULL;
+   if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *errmsg = NULL;
 
@@ -2621,8 +2623,8 @@ static PyObject *golly_exit(PyObject *self, PyObject *args)
       if (!showstatus) mainptr->ToggleStatusBar();
    }
 
-   exitcalled = true;   // prevent CheckPythonError changing message
-   AbortScript();
+   exitcalled = true;   // prevent CheckScriptError changing message
+   AbortPythonScript();
 
    // exception raised so must return NULL
    return NULL;
@@ -2630,17 +2632,17 @@ static PyObject *golly_exit(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *golly_stderr(PyObject *self, PyObject *args)
+static PyObject *pyg_stderr(PyObject *self, PyObject *args)
 {
    // probably safer not to call checkevents here
-   // if (ScriptAborted()) return NULL;
+   // if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char *s = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
-   // accumulate stderr messages in global string for display after script finishes
-   pyerror = wxString(s,wxConvLocal);
+   // accumulate stderr messages in global string (shown after script finishes)
+   scripterr = wxString(s,wxConvLocal);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2648,87 +2650,87 @@ static PyObject *golly_stderr(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyMethodDef golly_methods[] = {
+static PyMethodDef pyg_methods[] = {
    // filing
-   { "open",         golly_open,       METH_VARARGS, "open given pattern file" },
-   { "save",         golly_save,       METH_VARARGS, "save pattern in given file using given format" },
-   { "load",         golly_load,       METH_VARARGS, "read pattern file and return cell list" },
-   { "store",        golly_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
-   { "appdir",       golly_appdir,     METH_VARARGS, "return location of Golly app" },
+   { "open",         pyg_open,       METH_VARARGS, "open given pattern file" },
+   { "save",         pyg_save,       METH_VARARGS, "save pattern in given file using given format" },
+   { "load",         pyg_load,       METH_VARARGS, "read pattern file and return cell list" },
+   { "store",        pyg_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
+   { "appdir",       pyg_appdir,     METH_VARARGS, "return location of Golly app" },
    // editing
-   { "new",          golly_new,        METH_VARARGS, "create new universe and set window title" },
-   { "cut",          golly_cut,        METH_VARARGS, "cut selection to clipboard" },
-   { "copy",         golly_copy,       METH_VARARGS, "copy selection to clipboard" },
-   { "clear",        golly_clear,      METH_VARARGS, "clear inside/outside selection" },
-   { "paste",        golly_paste,      METH_VARARGS, "paste clipboard pattern at x,y using given mode" },
-   { "shrink",       golly_shrink,     METH_VARARGS, "shrink selection" },
-   { "randfill",     golly_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
-   { "flip",         golly_flip,       METH_VARARGS, "flip selection left-right or up-down" },
-   { "rotate",       golly_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
-   { "parse",        golly_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
-   { "transform",    golly_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
-   { "evolve",       golly_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
-   { "putcells",     golly_putcells,   METH_VARARGS, "paste given cell list into current universe" },
-   { "getcells",     golly_getcells,   METH_VARARGS, "return cell list in given rectangle" },
-   { "getclip",      golly_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
-   { "select",       golly_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
-   { "getrect",      golly_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
-   { "getselrect",   golly_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
-   { "setcell",      golly_setcell,    METH_VARARGS, "set given cell to given state" },
-   { "getcell",      golly_getcell,    METH_VARARGS, "get state of given cell" },
-   { "setcursor",    golly_setcursor,  METH_VARARGS, "set cursor (returns old cursor)" },
-   { "getcursor",    golly_getcursor,  METH_VARARGS, "return current cursor" },
+   { "new",          pyg_new,        METH_VARARGS, "create new universe and set window title" },
+   { "cut",          pyg_cut,        METH_VARARGS, "cut selection to clipboard" },
+   { "copy",         pyg_copy,       METH_VARARGS, "copy selection to clipboard" },
+   { "clear",        pyg_clear,      METH_VARARGS, "clear inside/outside selection" },
+   { "paste",        pyg_paste,      METH_VARARGS, "paste clipboard pattern at x,y using given mode" },
+   { "shrink",       pyg_shrink,     METH_VARARGS, "shrink selection" },
+   { "randfill",     pyg_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
+   { "flip",         pyg_flip,       METH_VARARGS, "flip selection left-right or up-down" },
+   { "rotate",       pyg_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
+   { "parse",        pyg_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
+   { "transform",    pyg_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
+   { "evolve",       pyg_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
+   { "putcells",     pyg_putcells,   METH_VARARGS, "paste given cell list into current universe" },
+   { "getcells",     pyg_getcells,   METH_VARARGS, "return cell list in given rectangle" },
+   { "getclip",      pyg_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
+   { "select",       pyg_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
+   { "getrect",      pyg_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
+   { "getselrect",   pyg_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
+   { "setcell",      pyg_setcell,    METH_VARARGS, "set given cell to given state" },
+   { "getcell",      pyg_getcell,    METH_VARARGS, "get state of given cell" },
+   { "setcursor",    pyg_setcursor,  METH_VARARGS, "set cursor (returns old cursor)" },
+   { "getcursor",    pyg_getcursor,  METH_VARARGS, "return current cursor" },
    // control
-   { "empty",        golly_empty,      METH_VARARGS, "return true if universe is empty" },
-   { "run",          golly_run,        METH_VARARGS, "run current pattern for given number of gens" },
-   { "step",         golly_step,       METH_VARARGS, "run current pattern for current step" },
-   { "setstep",      golly_setstep,    METH_VARARGS, "set step exponent" },
-   { "getstep",      golly_getstep,    METH_VARARGS, "return current step exponent" },
-   { "setbase",      golly_setbase,    METH_VARARGS, "set base step" },
-   { "getbase",      golly_getbase,    METH_VARARGS, "return current base step" },
-   { "advance",      golly_advance,    METH_VARARGS, "advance inside/outside selection by given gens" },
-   { "reset",        golly_reset,      METH_VARARGS, "restore starting pattern" },
-   { "getgen",       golly_getgen,     METH_VARARGS, "return current generation as string" },
-   { "getpop",       golly_getpop,     METH_VARARGS, "return current population as string" },
-   { "setrule",      golly_setrule,    METH_VARARGS, "set current rule according to string" },
-   { "getrule",      golly_getrule,    METH_VARARGS, "return current rule string" },
+   { "empty",        pyg_empty,      METH_VARARGS, "return true if universe is empty" },
+   { "run",          pyg_run,        METH_VARARGS, "run current pattern for given number of gens" },
+   { "step",         pyg_step,       METH_VARARGS, "run current pattern for current step" },
+   { "setstep",      pyg_setstep,    METH_VARARGS, "set step exponent" },
+   { "getstep",      pyg_getstep,    METH_VARARGS, "return current step exponent" },
+   { "setbase",      pyg_setbase,    METH_VARARGS, "set base step" },
+   { "getbase",      pyg_getbase,    METH_VARARGS, "return current base step" },
+   { "advance",      pyg_advance,    METH_VARARGS, "advance inside/outside selection by given gens" },
+   { "reset",        pyg_reset,      METH_VARARGS, "restore starting pattern" },
+   { "getgen",       pyg_getgen,     METH_VARARGS, "return current generation as string" },
+   { "getpop",       pyg_getpop,     METH_VARARGS, "return current population as string" },
+   { "setrule",      pyg_setrule,    METH_VARARGS, "set current rule according to string" },
+   { "getrule",      pyg_getrule,    METH_VARARGS, "return current rule string" },
    // viewing
-   { "setpos",       golly_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
-   { "getpos",       golly_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
-   { "setmag",       golly_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },
-   { "getmag",       golly_getmag,     METH_VARARGS, "return current magnification" },
-   { "fit",          golly_fit,        METH_VARARGS, "fit entire pattern in viewport" },
-   { "fitsel",       golly_fitsel,     METH_VARARGS, "fit selection in viewport" },
-   { "visrect",      golly_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
-   { "update",       golly_update,     METH_VARARGS, "update display (viewport and status bar)" },
-   { "autoupdate",   golly_autoupdate, METH_VARARGS, "update display after each change to universe?" },
+   { "setpos",       pyg_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
+   { "getpos",       pyg_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
+   { "setmag",       pyg_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },
+   { "getmag",       pyg_getmag,     METH_VARARGS, "return current magnification" },
+   { "fit",          pyg_fit,        METH_VARARGS, "fit entire pattern in viewport" },
+   { "fitsel",       pyg_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "visrect",      pyg_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
+   { "update",       pyg_update,     METH_VARARGS, "update display (viewport and status bar)" },
+   { "autoupdate",   pyg_autoupdate, METH_VARARGS, "update display after each change to universe?" },
    // layers
-   { "addlayer",     golly_addlayer,   METH_VARARGS, "add a new layer" },
-   { "clone",        golly_clone,      METH_VARARGS, "add a cloned layer (shares universe)" },
-   { "duplicate",    golly_duplicate,  METH_VARARGS, "add a duplicate layer (copies universe)" },
-   { "dellayer",     golly_dellayer,   METH_VARARGS, "delete current layer" },
-   { "movelayer",    golly_movelayer,  METH_VARARGS, "move given layer to new index" },
-   { "setlayer",     golly_setlayer,   METH_VARARGS, "switch to given layer" },
-   { "getlayer",     golly_getlayer,   METH_VARARGS, "return index of current layer" },
-   { "numlayers",    golly_numlayers,  METH_VARARGS, "return current number of layers" },
-   { "maxlayers",    golly_maxlayers,  METH_VARARGS, "return maximum number of layers" },
-   { "setname",      golly_setname,    METH_VARARGS, "set name of given layer" },
-   { "getname",      golly_getname,    METH_VARARGS, "get name of given layer" },
+   { "addlayer",     pyg_addlayer,   METH_VARARGS, "add a new layer" },
+   { "clone",        pyg_clone,      METH_VARARGS, "add a cloned layer (shares universe)" },
+   { "duplicate",    pyg_duplicate,  METH_VARARGS, "add a duplicate layer (copies universe)" },
+   { "dellayer",     pyg_dellayer,   METH_VARARGS, "delete current layer" },
+   { "movelayer",    pyg_movelayer,  METH_VARARGS, "move given layer to new index" },
+   { "setlayer",     pyg_setlayer,   METH_VARARGS, "switch to given layer" },
+   { "getlayer",     pyg_getlayer,   METH_VARARGS, "return index of current layer" },
+   { "numlayers",    pyg_numlayers,  METH_VARARGS, "return current number of layers" },
+   { "maxlayers",    pyg_maxlayers,  METH_VARARGS, "return maximum number of layers" },
+   { "setname",      pyg_setname,    METH_VARARGS, "set name of given layer" },
+   { "getname",      pyg_getname,    METH_VARARGS, "get name of given layer" },
    // miscellaneous
-   { "setoption",    golly_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
-   { "getoption",    golly_getoption,  METH_VARARGS, "return current value of given option" },
-   { "setcolor",     golly_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
-   { "getcolor",     golly_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
-   { "getkey",       golly_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
-   { "dokey",        golly_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
-   { "show",         golly_show,       METH_VARARGS, "show given string in status bar" },
-   { "error",        golly_error,      METH_VARARGS, "beep and show given string in status bar" },
-   { "warn",         golly_warn,       METH_VARARGS, "show given string in warning dialog" },
-   { "note",         golly_note,       METH_VARARGS, "show given string in note dialog" },
-   { "check",        golly_check,      METH_VARARGS, "allow event checking?" },
-   { "exit",         golly_exit,       METH_VARARGS, "exit script with optional error message" },
+   { "setoption",    pyg_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
+   { "getoption",    pyg_getoption,  METH_VARARGS, "return current value of given option" },
+   { "setcolor",     pyg_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
+   { "getcolor",     pyg_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
+   { "getkey",       pyg_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
+   { "dokey",        pyg_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
+   { "show",         pyg_show,       METH_VARARGS, "show given string in status bar" },
+   { "error",        pyg_error,      METH_VARARGS, "beep and show given string in status bar" },
+   { "warn",         pyg_warn,       METH_VARARGS, "show given string in warning dialog" },
+   { "note",         pyg_note,       METH_VARARGS, "show given string in note dialog" },
+   { "check",        pyg_check,      METH_VARARGS, "allow event checking?" },
+   { "exit",         pyg_exit,       METH_VARARGS, "exit script with optional error message" },
    // for internal use (don't document)
-   { "stderr",       golly_stderr,     METH_VARARGS, "save Python error message" },
+   { "stderr",       pyg_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
 };
 
@@ -2750,10 +2752,10 @@ bool InitPython()
          GetPythonExceptions();
       #endif
 
-      // allow Python to call the above golly_* routines
-      Py_InitModule("golly", golly_methods);
+      // allow Python to call the above pyg_* routines
+      Py_InitModule("golly", pyg_methods);
 
-      // catch Python messages sent to stderr and pass them to golly_stderr
+      // catch Python messages sent to stderr and pass them to pyg_stderr
       if ( PyRun_SimpleString(
             "import golly\n"
             "import sys\n"
@@ -2767,7 +2769,7 @@ bool InitPython()
 
             // also create dummy sys.argv so scripts can import Tkinter
             "sys.argv = ['golly-app']\n"
-            // works, but Golly's menus get permanently changed!!!
+            // works, but Golly's menus get permanently changed on Mac!!!
             ) < 0
          ) Warning(_("StderrCatcher code failed!"));
 
@@ -2835,32 +2837,13 @@ bool InitPython()
 
 // -----------------------------------------------------------------------------
 
-void ExecuteScript(const wxString &filepath)
+void RunPythonScript(const wxString &filepath)
 {
    if (!InitPython()) return;
 
-   if ( !wxFileName::FileExists(filepath) ) {
-      wxString err = _("The script file does not exist:\n") + filepath;
-      Warning(err);
-      return;
-   }
-
-   wxString fpath;
-
-   #ifdef __WXMAC__
-      // convert fpath to decomposed UTF8 so execfile can open names with non-ASCII chars
-      #if wxCHECK_VERSION(2, 7, 0)
-         fpath = wxString(filepath.fn_str(), wxConvLocal);
-      #else
-         // wxMac 2.6.x or older
-         fpath = wxString(filepath.wc_str(wxConvLocal), wxConvUTF8);
-      #endif
-   #else
-      fpath = filepath;
-   #endif
-
    // if file name contains backslashes then we must convert them to "\\"
    // to avoid "\a" being treated as escape char
+   wxString fpath = filepath;
    fpath.Replace(wxT("\\"), wxT("\\\\"));
 
    // execute the given script
@@ -2868,27 +2851,495 @@ void ExecuteScript(const wxString &filepath)
    PyRun_SimpleString(command.mb_str(wxConvLocal));
 
    // note that PyRun_SimpleString returns -1 if an exception occurred;
-   // the error message (in pyerror) is checked at the end of RunScript
+   // the error message (in scripterr) is checked at the end of RunScript
 }
 
 // -----------------------------------------------------------------------------
 
-void CheckPythonError()
+void CheckScriptError()
 {
-   if (pyerror.IsEmpty()) {
+   if (scripterr.IsEmpty()) {
       return;
-   } else if (pyerror.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
-      // error was caused by AbortScript so don't display pyerror
+   } else if (scripterr.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
+      // error was caused by AbortPerlScript/AbortPythonScript
+      // so don't display scripterr
    } else {
-      pyerror.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
+      scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
       wxBell();
       #ifdef __WXMAC__
          wxSetCursor(*wxSTANDARD_CURSOR);
       #endif
-      wxMessageBox(pyerror, _("Script error:"), wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+      wxMessageBox(scripterr, _("Script error:"),
+                     wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
    }
-   // don't change message if golly_exit was used to stop script
+   // don't change message if *g_exit was used to stop script
    if (!exitcalled) statusptr->DisplayMessage(_("Script aborted."));
+}
+
+// =============================================================================
+
+// embed a Perl interpreter (see "perldoc perlembed" for details)
+
+// avoid warning about _ being redefined
+#undef _
+
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
+
+// restore wxWidgets definition for _ (from include/wx/intl.h)
+#undef _
+#define _(s) wxGetTranslation(_T(s))
+
+static PerlInterpreter* my_perl;
+
+// -----------------------------------------------------------------------------
+
+void AbortPerlScript()
+{
+   scripterr = wxString(abortmsg,wxConvLocal);
+   // can't call Perl_croak here (done via RETURN_IF_ABORTED)
+}
+
+// -----------------------------------------------------------------------------
+
+bool PerlScriptAborted()
+{
+   if (allowcheck) wxGetApp().Poller()->checkevents();
+
+   // if user hit escape key then PassKeyToScript has called AbortPerlScript
+
+   return !scripterr.IsEmpty();
+}
+
+// -----------------------------------------------------------------------------
+
+#define RETURN_IF_ABORTED if (PerlScriptAborted()) Perl_croak(aTHX_ NULL)
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getselrect)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) {
+      Perl_croak(aTHX_ "Usage: @rect = g_getselrect()");
+   }
+   
+   // items == 0 so no need to reset stack pointer
+   // SP -= items;
+   
+   if (viewptr->SelectionExists()) {
+      if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
+                                  currlayer->selbottom, currlayer->selright) ) {
+         Perl_croak(aTHX_ "g_getselrect error: selection is too big.");
+      }
+      int x = currlayer->selleft.toint();
+      int y = currlayer->seltop.toint();
+      int wd = currlayer->selright.toint() - x + 1;
+      int ht = currlayer->selbottom.toint() - y + 1;
+
+      XPUSHs(sv_2mortal(newSViv(x)));
+      XPUSHs(sv_2mortal(newSViv(y)));
+      XPUSHs(sv_2mortal(newSViv(wd)));
+      XPUSHs(sv_2mortal(newSViv(ht)));
+      XSRETURN(4);
+   } else {
+      XSRETURN(0);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setcell)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 3) {
+      Perl_croak(aTHX_ "Usage: g_setcell($x,$y,$state)");
+   }
+
+   currlayer->algo->setcell(SvIV(ST(0)), SvIV(ST(1)), SvIV(ST(2)));
+   currlayer->algo->endofpattern();
+   currlayer->savestart = true;
+   MarkLayerDirty();
+   DoAutoUpdate();
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getcell)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 2) {
+      Perl_croak(aTHX_ "Usage: $state = g_getcell($x,$y)");
+   }
+
+   int state = currlayer->algo->getcell(SvIV(ST(0)), SvIV(ST(1)));
+   
+   XSRETURN_IV(state);
+   /* above is equivalent to:
+   SP -= items;
+   XPUSHs(sv_2mortal(newSViv(state)));
+   PUTBACK;
+   */
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_fitsel)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) {
+      Perl_croak(aTHX_ "Usage: g_fitsel()");
+   }
+
+   if (viewptr->SelectionExists()) {
+      viewptr->FitSelection();
+      DoAutoUpdate();
+   } else {
+      Perl_croak(aTHX_ "g_fitsel error: no selection.");
+   }
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_visrect)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 4) {
+      Perl_croak(aTHX_ "Usage: $bool = g_visrect(@rect)");
+   }
+
+   int x = SvIV(ST(0));
+   int y = SvIV(ST(1));
+   int wd = SvIV(ST(2));
+   int ht = SvIV(ST(3));
+   // check that wd & ht are > 0
+   if (wd <= 0) {
+      Perl_croak(aTHX_ "g_visrect error: width must be > 0.");
+   }
+   if (ht <= 0) {
+      Perl_croak(aTHX_ "g_visrect error: height must be > 0.");
+   }
+
+   bigint left = x;
+   bigint top = y;
+   bigint right = x + wd - 1;
+   bigint bottom = y + ht - 1;
+   int visible = viewptr->CellVisible(left, top) &&
+                 viewptr->CellVisible(right, bottom);
+
+   XSRETURN_IV(visible);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_update)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) {
+      Perl_croak(aTHX_ "Usage: g_update()");
+   }
+
+   // update viewport, status bar and possibly title bar
+   inscript = false;
+   mainptr->UpdatePatternAndStatus();
+   if (showtitle) {
+      mainptr->SetWindowTitle(wxEmptyString);
+      showtitle = false;
+   }
+   inscript = true;
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getkey)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) {
+      Perl_croak(aTHX_ "Usage: $char = g_getkey()");
+   }
+
+   char s[2];
+   if (scriptchars.Length() == 0) {
+      // return empty string
+      s[0] = '\0';
+   } else {
+      // return first char in scriptchars and then remove it
+      s[0] = scriptchars.GetChar(0);
+      s[1] = '\0';
+      scriptchars = scriptchars.AfterFirst(s[0]);
+   }
+
+   XSRETURN_PV(s);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_dokey)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) {
+      Perl_croak(aTHX_ "Usage: g_dokey($char)");
+   }
+   STRLEN n_a;
+   char* ascii = SvPV(ST(0), n_a);
+
+   if (*ascii) {
+      // convert ascii char to corresponding wx key code;
+      // note that PassKeyToScript does the reverse conversion
+      int key;
+      switch (*ascii) {
+         case 8:  key = WXK_BACK;   break;
+         case 9:  key = WXK_TAB;    break;
+         case 10: // play safe
+         case 13: key = WXK_RETURN; break;
+         case 28: key = WXK_LEFT;   break;
+         case 29: key = WXK_RIGHT;  break;
+         case 30: key = WXK_UP;     break;
+         case 31: key = WXK_DOWN;   break;
+         default: key = *ascii;
+      }
+
+      viewptr->ProcessKey(key, false);
+
+      // see any cursor change, including in tool bar
+      mainptr->UpdateUserInterface(mainptr->IsActive());
+
+      // update viewport, status bar, scroll bars, etc
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      bigview->UpdateScrollBars();
+      if (showtitle) {
+         mainptr->SetWindowTitle(wxEmptyString);
+         showtitle = false;
+      }
+      inscript = true;
+   }
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_show)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) {
+      Perl_croak(aTHX_ "Usage: g_show($string)");
+   }
+   STRLEN n_a;
+   char* s = SvPV(ST(0), n_a);
+
+   inscript = false;
+   statusptr->DisplayMessage(wxString(s,wxConvLocal));
+   inscript = true;
+   // make sure status bar is visible
+   if (!showstatus) mainptr->ToggleStatusBar();
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_note)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) {
+      Perl_croak(aTHX_ "Usage: g_note($string)");
+   }
+   STRLEN n_a;
+   char* s = SvPV(ST(0), n_a);
+
+   Note(wxString(s,wxConvLocal));
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_exit)
+{
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items > 1) {
+      Perl_croak(aTHX_ "Usage: g_exit($string='')");
+   }
+
+   if (items == 1) {
+      // display given error message
+      STRLEN n_a;
+      char* errmsg = SvPV(ST(0), n_a);
+      inscript = false;
+      statusptr->ErrorMessage(wxString(errmsg,wxConvLocal));
+      inscript = true;
+      // make sure status bar is visible
+      if (!showstatus) mainptr->ToggleStatusBar();
+   }
+
+   exitcalled = true;   // prevent CheckScriptError changing message
+   AbortPerlScript();
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+/* can't get this approach to work!!!
+XS(boot_golly)
+{
+   dXSARGS;
+   if (items != 1) {
+      Warning(_("Possible problem in boot_golly!"));
+   }
+   
+	// declare routines in golly module
+	newXS("golly::g_setcell",      plg_setcell,      "");
+	newXS("golly::g_getcell",      plg_getcell,      "");
+	// etc...
+	
+	XSRETURN_YES;
+}
+*/
+
+// -----------------------------------------------------------------------------
+
+EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
+
+// xs_init is passed into perl_parse and initializes the
+// statically linked extension modules
+
+EXTERN_C void xs_init(pTHX)
+{
+	char* file = __FILE__;
+	dXSUB_SYS;
+
+	// DynaLoader allows dynamic loading of other Perl extensions
+	newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+	
+	/* can't get this approach to work!!!
+	   "use golly" causes error: Can't locate golly.pm in @INC
+	newXS("golly::boot_golly", boot_golly, file);
+	*/
+
+   // filing
+   //!!!newXS("g_open",         plg_open,       file);
+   //!!!newXS("g_save",         plg_save,       file);
+   //!!!newXS("g_load",         plg_load,       file);
+   //!!!newXS("g_store",        plg_store,      file);
+   //!!!newXS("g_appdir",       plg_appdir,     file);
+   // editing
+   //!!!newXS("g_new",          plg_new,        file);
+   //!!!newXS("g_cut",          plg_cut,        file);
+   //!!!newXS("g_copy",         plg_copy,       file);
+   //!!!newXS("g_clear",        plg_clear,      file);
+   //!!!newXS("g_paste",        plg_paste,      file);
+   //!!!newXS("g_shrink",       plg_shrink,     file);
+   //!!!newXS("g_randfill",     plg_randfill,   file);
+   //!!!newXS("g_flip",         plg_flip,       file);
+   //!!!newXS("g_rotate",       plg_rotate,     file);
+   //!!!newXS("g_parse",        plg_parse,      file);
+   //!!!newXS("g_transform",    plg_transform,  file);
+   //!!!newXS("g_evolve",       plg_evolve,     file);
+   //!!!newXS("g_putcells",     plg_putcells,   file);
+   //!!!newXS("g_getcells",     plg_getcells,   file);
+   //!!!newXS("g_getclip",      plg_getclip,    file);
+   //!!!newXS("g_select",       plg_select,     file);
+   //!!!newXS("g_getrect",      plg_getrect,    file);
+   newXS("g_getselrect",   plg_getselrect, file);
+   newXS("g_setcell",      plg_setcell,    file);
+   newXS("g_getcell",      plg_getcell,    file);
+   //!!!newXS("g_setcursor",    plg_setcursor,  file);
+   //!!!newXS("g_getcursor",    plg_getcursor,  file);
+   // control
+   //!!!newXS("g_empty",        plg_empty,      file);
+   //!!!newXS("g_run",          plg_run,        file);
+   //!!!newXS("g_step",         plg_step,       file);
+   //!!!newXS("g_setstep",      plg_setstep,    file);
+   //!!!newXS("g_getstep",      plg_getstep,    file);
+   //!!!newXS("g_setbase",      plg_setbase,    file);
+   //!!!newXS("g_getbase",      plg_getbase,    file);
+   //!!!newXS("g_advance",      plg_advance,    file);
+   //!!!newXS("g_reset",        plg_reset,      file);
+   //!!!newXS("g_getgen",       plg_getgen,     file);
+   //!!!newXS("g_getpop",       plg_getpop,     file);
+   //!!!newXS("g_setrule",      plg_setrule,    file);
+   //!!!newXS("g_getrule",      plg_getrule,    file);
+   // viewing
+   //!!!newXS("g_setpos",       plg_setpos,     file);
+   //!!!newXS("g_getpos",       plg_getpos,     file);
+   //!!!newXS("g_setmag",       plg_setmag,     file);
+   //!!!newXS("g_getmag",       plg_getmag,     file);
+   //!!!newXS("g_fit",          plg_fit,        file);
+   newXS("g_fitsel",       plg_fitsel,     file);
+   newXS("g_visrect",      plg_visrect,    file);
+   newXS("g_update",       plg_update,     file);
+   //!!!newXS("g_autoupdate",   plg_autoupdate, file);
+   // layers
+   //!!!newXS("g_addlayer",     plg_addlayer,   file);
+   //!!!newXS("g_clone",        plg_clone,      file);
+   //!!!newXS("g_duplicate",    plg_duplicate,  file);
+   //!!!newXS("g_dellayer",     plg_dellayer,   file);
+   //!!!newXS("g_movelayer",    plg_movelayer,  file);
+   //!!!newXS("g_setlayer",     plg_setlayer,   file);
+   //!!!newXS("g_getlayer",     plg_getlayer,   file);
+   //!!!newXS("g_numlayers",    plg_numlayers,  file);
+   //!!!newXS("g_maxlayers",    plg_maxlayers,  file);
+   //!!!newXS("g_setname",      plg_setname,    file);
+   //!!!newXS("g_getname",      plg_getname,    file);
+   // miscellaneous
+   //!!!newXS("g_setoption",    plg_setoption,  file);
+   //!!!newXS("g_getoption",    plg_getoption,  file);
+   //!!!newXS("g_setcolor",     plg_setcolor,   file);
+   //!!!newXS("g_getcolor",     plg_getcolor,   file);
+   newXS("g_getkey",       plg_getkey,     file);
+   newXS("g_dokey",        plg_dokey,      file);
+   newXS("g_show",         plg_show,       file);
+   //!!!newXS("g_error",        plg_error,      file);
+   //!!!newXS("g_warn",         plg_warn,       file);
+   newXS("g_note",         plg_note,       file);
+   //!!!newXS("g_check",        plg_check,      file);
+   newXS("g_exit",         plg_exit,       file);
+}
+
+// -----------------------------------------------------------------------------
+
+void RunPerlScript(const wxString &filepath)
+{
+   char* my_argv[2];
+   my_argv[0] = "";
+   my_argv[1] = (char*) filepath.mb_str(wxConvLocal);
+
+   //!!!??? PERL_SYS_INIT3(NULL, NULL, NULL);
+   
+   my_perl = perl_alloc();
+   if (!my_perl) {
+      Warning(_("Could not create Perl interpreter!"));
+      return;
+   }
+   perl_construct(my_perl);
+   PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+   perl_parse(my_perl, xs_init, 2, my_argv, NULL);
+   perl_run(my_perl);
+   perl_destruct(my_perl);
+   perl_free(my_perl);
+   
+   //!!!??? PERL_SYS_TERM();
 }
 
 // =============================================================================
@@ -2899,9 +3350,15 @@ void RunScript(const wxString& filename)
 {
    if ( inscript ) return;    // play safe and avoid re-entrancy
 
+   if ( !wxFileName::FileExists(filename) ) {
+      wxString err = _("The script file does not exist:\n") + filename;
+      Warning(err);
+      return;
+   }
+
    mainptr->showbanner = false;
    statusptr->ClearMessage();
-   pyerror.Clear();
+   scripterr.Clear();
    scriptchars.Clear();
    canswitch = false;
    autoupdate = false;
@@ -2917,10 +3374,36 @@ void RunScript(const wxString& filename)
    if ( scriptloc.Last() != wxFILE_SEP_PATH ) scriptloc += wxFILE_SEP_PATH;
    wxSetWorkingDirectory(scriptloc);
 
+   wxString fpath = fullname.GetFullPath();
+   #ifdef __WXMAC__
+      // use decomposed UTF8 so interpreter can open names with non-ASCII chars
+      #if wxCHECK_VERSION(2, 7, 0)
+         fpath = wxString(fpath.fn_str(), wxConvLocal);
+      #else
+         // wxMac 2.6.x or older
+         fpath = wxString(fpath.wc_str(wxConvLocal), wxConvUTF8);
+      #endif
+   #endif
+
    inscript = true;
    mainptr->UpdateUserInterface(mainptr->IsActive());
-   ExecuteScript( fullname.GetFullPath() );
+
+   wxString ext = filename.AfterLast(wxT('.'));
+   if (ext.IsSameAs(wxT("pl"), false)) {
+      plscript = true;
+      RunPerlScript(fpath);
+   } else if (ext.IsSameAs(wxT("py"), false)) {
+      pyscript = true;
+      RunPythonScript(fpath);
+   } else {
+      // should never happen
+      wxString err = _("Unexpected extension in script file:\n") + filename;
+      Warning(err);
+   }
+   
    inscript = false;
+   plscript = false;
+   pyscript = false;
 
    // reset all stayclean flags (set by MarkLayerClean)
    for ( int i = 0; i < numlayers; i++ )
@@ -2929,8 +3412,8 @@ void RunScript(const wxString& filename)
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollydir);
 
-   // display any Python error message
-   CheckPythonError();
+   // display any Perl/Python error message
+   CheckScriptError();
 
    // update title, menu bar, cursor, viewport, status bar, tool bar, etc
    if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
@@ -2941,10 +3424,10 @@ void RunScript(const wxString& filename)
 
 bool IsScript(const wxString& filename)
 {
-   // currently we only support Python scripts, so return true if filename
-   // ends with ".py" (ignoring case)
+   // currently we support Perl or Python scripts, so return true if
+   // filename ends with ".pl" or ".py" (ignoring case)
    wxString ext = filename.AfterLast(wxT('.'));
-   return ext.IsSameAs(wxT("py"), false);          // false == match any case
+   return ext.IsSameAs(wxT("pl"), false) || ext.IsSameAs(wxT("py"), false);
 }
 
 // -----------------------------------------------------------------------------
@@ -2952,11 +3435,12 @@ bool IsScript(const wxString& filename)
 void PassKeyToScript(int key)
 {
    if (key == WXK_ESCAPE) {
-      AbortScript();
+      if (plscript) AbortPerlScript();
+      if (pyscript) AbortPythonScript();
    } else {
       // convert wx key code to corresponding ascii char (if possible)
       // so that scripts can be platform-independent;
-      // note that golly_dokey does the reverse conversion
+      // note that *g_dokey does the reverse conversion
       /*
       char msg[64];
       sprintf(msg, "key=%d ch=%c", key, (char)key);
@@ -2987,7 +3471,7 @@ void PassKeyToScript(int key)
                return;
             }
       }
-      // save ascii char for possible consumption by golly_getkey
+      // save ascii char for possible consumption by *g_getkey
       scriptchars += ascii;
    }
 }
@@ -2998,7 +3482,8 @@ void FinishScripting()
 {
    // called when main window is closing (ie. app is quitting)
    if (inscript) {
-      AbortScript();
+      if (plscript) AbortPerlScript();
+      if (pyscript) AbortPythonScript();
       wxSetWorkingDirectory(gollydir);
       inscript = false;
    }

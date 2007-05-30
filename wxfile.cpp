@@ -447,7 +447,7 @@ void MainFrame::OpenPattern()
    filetypes +=         _("|PNG (*.png)|*.png");
    filetypes +=         _("|TIFF (*.tiff;*.tif)|*.tiff;*.tif");
    
-   wxFileDialog opendlg(this, _("Choose a pattern file"),
+   wxFileDialog opendlg(this, _("Choose a pattern"),
                         opensavedir, wxEmptyString, filetypes,
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
@@ -477,9 +477,12 @@ void MainFrame::OpenScript()
 {
    if (generating) return;
 
-   wxFileDialog opendlg(this, _("Choose a Python script"),
-                        rundir, wxEmptyString,
-                        _("Python script (*.py)|*.py"),
+   wxString filetypes = _("Perl or Python (*.pl;*.py)|*.pl;*.py");
+   filetypes +=         _("|Perl (*.pl)|*.pl");
+   filetypes +=         _("|Python (*.py)|*.py");
+
+   wxFileDialog opendlg(this, _("Choose a script"),
+                        rundir, wxEmptyString, filetypes,
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
    #ifdef __WXGTK__
@@ -1017,7 +1020,6 @@ void MainFrame::ToggleShowScripts()
 
 void MainFrame::ChangePatternDir()
 {
-   // wxMac bug: 3rd parameter seems to be ignored!!!
    wxDirDialog dirdlg(this, _("Choose a new pattern folder"),
                       patterndir, wxDD_NEW_DIR_BUTTON);
    if ( dirdlg.ShowModal() == wxID_OK ) {
@@ -1036,7 +1038,6 @@ void MainFrame::ChangePatternDir()
 
 void MainFrame::ChangeScriptDir()
 {
-   // wxMac bug: 3rd parameter seems to be ignored!!!
    wxDirDialog dirdlg(this, _("Choose a new script folder"),
                       scriptdir, wxDD_NEW_DIR_BUTTON);
    if ( dirdlg.ShowModal() == wxID_OK ) {

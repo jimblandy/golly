@@ -16,6 +16,10 @@ WXINC_DIR = $(WX_DIR)/src/build/include
 APP_NAME = Golly
 APP_VERSION = 1.3
 
+# for Perl script support
+PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
+PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
+
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 # following python command doesn't generate correct info on OS 10.4
@@ -81,7 +85,7 @@ app.bin: $(OBJFILES)
    -L$(LIBDIRNAME) -lwx_mac_static \
    -framework Carbon -framework System -framework AGL -framework IOKit \
    -framework WebKit -framework AppKit -framework QuickTime -framework Cocoa \
-   $(PYTHON_LINK) \
+   $(PYTHON_LINK) $(PERL_LINK) \
    -prebind -mmacosx-version-min=10.3 -lz -lpthread -liconv \
    -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk
 
@@ -198,7 +202,7 @@ lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
 wxinfo.h wxhelp.h wxlayer.h
-	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxscript.cpp
+	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) $(PERL_INCLUDE) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
