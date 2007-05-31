@@ -19,7 +19,19 @@ WX_DIR = c:\wxWidgets
 WX_RELEASE = 28
 
 # Change the next line depending on where you installed Python:
-PYTHON_DIR = c:\Python25
+PYTHON_INCLUDE = -I"C:\Python25\include"
+
+
+# Simplified output from "perl -MExtUtils::Embed -e ccopts":
+PERL_INCLUDE = \
+-DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
+-DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl\lib\CORE"
+
+#!!! set PERL_LINK empty if/when we dynamiclly load Perl library
+# Simplified output from "perl -MExtUtils::Embed -e ldopts":
+PERL_LINK = \
+-libpath:"C:\Perl\lib\CORE" C:\Perl\lib\CORE\perl58.lib C:\MVCT\lib\oldnames.lib
+
 
 ### Golly-related variables: ###
 VERSION = 1.3
@@ -80,12 +92,6 @@ LIBTYPE_SUFFIX = lib
 !endif
 !if "$(SHARED)" == "1"
 LIBTYPE_SUFFIX = dll
-!endif
-!if "$(MONOLITHIC)" == "0"
-EXTRALIBS_FOR_BASE = 
-!endif
-!if "$(MONOLITHIC)" == "1"
-EXTRALIBS_FOR_BASE =  
 !endif
 !if "$(BUILD)" == "debug" && "$(DEBUG_INFO)" == "default"
 __DEBUGINFO_0 = /Zi
@@ -280,9 +286,15 @@ clean:
 
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	link /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) \
-	/LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" /SUBSYSTEM:WINDOWS @<<
-	$(BASEOBJ) $(WXOBJ) golly.res $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib  wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib $(EXTRALIBS_FOR_BASE) $(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
-<<
+	/LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" \
+	$(PERL_LINK) /SUBSYSTEM:WINDOWS \
+	$(BASEOBJ) $(WXOBJ) golly.res \
+	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) \
+	$(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib \
+	wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib \
+	$(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib \
+	winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib \
+	rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib odbc32.lib
 
 golly.res: golly.rc
 	rc /fo$@  /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
@@ -388,7 +400,7 @@ lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h writepattern.h \
 wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
 wxinfo.h wxhelp.h wxlayer.h
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) /I$(PYTHON_DIR)\include wxscript.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PYTHON_INCLUDE) $(PERL_INCLUDE) wxscript.cpp
 
 $(OBJDIR)/wxfile.obj: wxfile.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \

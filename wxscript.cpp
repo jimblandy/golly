@@ -88,6 +88,17 @@ wxString scriptchars;      // non-escape chars saved by PassKeyToScript
 // special message set by AbortPerlScript/AbortPythonScript
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 
+// -----------------------------------------------------------------------------
+
+//!!!??? on Windows this must come before including perl.h on
+bool IsScript(const wxString& filename)
+{
+   // currently we support Perl or Python scripts, so return true if
+   // filename ends with ".pl" or ".py" (ignoring case)
+   wxString ext = filename.AfterLast(wxT('.'));
+   return ext.IsSameAs(wxT("pl"), false) || ext.IsSameAs(wxT("py"), false);
+}
+
 // =============================================================================
 
 // On Windows and Linux we need to load the Python library at runtime
@@ -2916,10 +2927,17 @@ bool PerlScriptAborted()
 
 #define RETURN_IF_ABORTED if (PerlScriptAborted()) Perl_croak(aTHX_ NULL)
 
+#ifdef __WXMSW__
+   #define IGNORE_UNUSED_PARAMS wxUnusedVar(cv); wxUnusedVar(my_perl);
+#else
+   #define IGNORE_UNUSED_PARAMS
+#endif
+
 // -----------------------------------------------------------------------------
 
 XS(plg_getselrect)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 0) {
@@ -2953,6 +2971,7 @@ XS(plg_getselrect)
 
 XS(plg_setcell)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 3) {
@@ -2972,6 +2991,7 @@ XS(plg_setcell)
 
 XS(plg_getcell)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 2) {
@@ -2992,6 +3012,7 @@ XS(plg_getcell)
 
 XS(plg_fitsel)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 0) {
@@ -3012,6 +3033,7 @@ XS(plg_fitsel)
 
 XS(plg_visrect)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 4) {
@@ -3044,6 +3066,7 @@ XS(plg_visrect)
 
 XS(plg_update)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 0) {
@@ -3066,6 +3089,7 @@ XS(plg_update)
 
 XS(plg_getkey)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 0) {
@@ -3090,6 +3114,7 @@ XS(plg_getkey)
 
 XS(plg_dokey)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 1) {
@@ -3137,6 +3162,7 @@ XS(plg_dokey)
 
 XS(plg_show)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 1) {
@@ -3158,6 +3184,7 @@ XS(plg_show)
 
 XS(plg_note)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 1) {
@@ -3175,6 +3202,7 @@ XS(plg_note)
 
 XS(plg_exit)
 {
+   IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items > 1) {
@@ -3203,17 +3231,18 @@ XS(plg_exit)
 /* can't get this approach to work!!!
 XS(boot_golly)
 {
+   IGNORE_UNUSED_PARAMS;
    dXSARGS;
    if (items != 1) {
       Warning(_("Possible problem in boot_golly!"));
    }
    
-	// declare routines in golly module
-	newXS("golly::g_setcell",      plg_setcell,      "");
-	newXS("golly::g_getcell",      plg_getcell,      "");
-	// etc...
-	
-	XSRETURN_YES;
+   // declare routines in golly module
+   newXS("golly::g_setcell",      plg_setcell,      "");
+   newXS("golly::g_getcell",      plg_getcell,      "");
+   // etc...
+   
+   XSRETURN_YES;
 }
 */
 
@@ -3226,16 +3255,19 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
 EXTERN_C void xs_init(pTHX)
 {
-	char* file = __FILE__;
-	dXSUB_SYS;
+   #ifdef __WXMSW__
+      wxUnusedVar(my_perl);
+   #endif
+   char* file = __FILE__;
+   dXSUB_SYS;
 
-	// DynaLoader allows dynamic loading of other Perl extensions
-	newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
-	
-	/* can't get this approach to work!!!
-	   "use golly" causes error: Can't locate golly.pm in @INC
-	newXS("golly::boot_golly", boot_golly, file);
-	*/
+   // DynaLoader allows dynamic loading of other Perl extensions
+   newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+
+   /* can't get this approach to work!!!
+      "use golly" causes error: Can't locate golly.pm in @INC
+      newXS("golly::boot_golly", boot_golly, file);
+   */
 
    // filing
    //!!!newXS("g_open",         plg_open,       file);
@@ -3418,16 +3450,6 @@ void RunScript(const wxString& filename)
    // update title, menu bar, cursor, viewport, status bar, tool bar, etc
    if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
    mainptr->UpdateEverything();
-}
-
-// -----------------------------------------------------------------------------
-
-bool IsScript(const wxString& filename)
-{
-   // currently we support Perl or Python scripts, so return true if
-   // filename ends with ".pl" or ".py" (ignoring case)
-   wxString ext = filename.AfterLast(wxT('.'));
-   return ext.IsSameAs(wxT("pl"), false) || ext.IsSameAs(wxT("py"), false);
 }
 
 // -----------------------------------------------------------------------------

@@ -432,7 +432,9 @@ void LayerBar::AddButton(int id, char label, const wxString& tip)
    } else {
       const int BUTTON_WD = 24;        // nominal width of bitmap buttons
       xpos += BUTTON_WD + smallgap;
+      
       lbbutt[id]->SetToolTip(tip);
+      
       #ifdef __WXMSW__
          // fix problem with layer bar buttons when generating/inscript
          // due to focus being changed to viewptr
