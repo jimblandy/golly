@@ -117,7 +117,7 @@ NOTES:
   the first two digits of your wxWidgets version.
 
 - In makefile-win you also need to specify where Python is installed,
-  so change the PYTHON_DIR path if necessary.
+  so change the PYTHON_INCLUDE path if necessary.
 
 - Your compiler must use 32-bit integers and 32-bit pointers.
 

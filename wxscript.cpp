@@ -90,13 +90,138 @@ const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 
 // -----------------------------------------------------------------------------
 
-//!!!??? on Windows this must come before including perl.h on
+//!!!??? on Windows this must come before including perl.h
+//!!! move back down when we create wxperl.cpp
 bool IsScript(const wxString& filename)
 {
    // currently we support Perl or Python scripts, so return true if
    // filename ends with ".pl" or ".py" (ignoring case)
    wxString ext = filename.AfterLast(wxT('.'));
    return ext.IsSameAs(wxT("pl"), false) || ext.IsSameAs(wxT("py"), false);
+}
+
+// -----------------------------------------------------------------------------
+
+void DoAutoUpdate()
+{
+   if (autoupdate) {
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      if (showtitle) {
+         mainptr->SetWindowTitle(wxEmptyString);
+         showtitle = false;
+      }
+      inscript = true;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ShowTitleLater()
+{
+   // called from SetWindowTitle when inscript is true;
+   // show title at next update (or at end of script)
+   showtitle = true;
+}
+
+// -----------------------------------------------------------------------------
+
+void ChangeWindowTitle(const wxString& name)
+{
+   if (autoupdate) {
+      // update title bar right now
+      inscript = false;
+      mainptr->SetWindowTitle(name);
+      inscript = true;
+      showtitle = false;       // update has been done
+   } else {
+      // show it later but must still update currlayer->currname and menu item
+      mainptr->SetWindowTitle(name);
+      // showtitle is now true
+   }
+}
+
+// =============================================================================
+
+// The following Golly Script Functions are used to minimize code duplication.
+// They are called by corresponding plg_* and pyg_* functions in wxperl.cpp
+// and wxpython.cpp.
+
+// -----------------------------------------------------------------------------
+
+char* GSF_open(char *filename, int remember)
+{
+   if (IsScript(wxString(filename,wxConvLocal))) {
+      // avoid re-entrancy
+      return "Bad open call: cannot open a script file.";
+   }
+
+   // convert non-absolute filename to absolute path relative to scriptloc
+   // so it can be selected later from Open Recent submenu
+   wxString fname = wxString(filename,wxConvLocal);
+   wxFileName fullname(fname);
+   if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
+
+   // only add file to Open Recent submenu if remember flag is non-zero
+   mainptr->OpenFile(fullname.GetFullPath(), remember != 0);
+   DoAutoUpdate();
+   
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void GSF_getkey(char* s)
+{
+   if (scriptchars.Length() == 0) {
+      // return empty string
+      s[0] = '\0';
+   } else {
+      // return first char in scriptchars and then remove it
+      s[0] = scriptchars.GetChar(0);
+      s[1] = '\0';
+      scriptchars = scriptchars.AfterFirst(s[0]);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+// also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
+// getclick returns [] or [x,y,button,shift,ctrl,alt]
+
+void GSF_dokey(char* ascii)
+{
+   if (*ascii) {
+      // convert ascii char to corresponding wx key code;
+      // note that PassKeyToScript does the reverse conversion
+      int key;
+      switch (*ascii) {
+         case 8:  key = WXK_BACK;   break;
+         case 9:  key = WXK_TAB;    break;
+         case 10: // play safe
+         case 13: key = WXK_RETURN; break;
+         case 28: key = WXK_LEFT;   break;
+         case 29: key = WXK_RIGHT;  break;
+         case 30: key = WXK_UP;     break;
+         case 31: key = WXK_DOWN;   break;
+         default: key = *ascii;
+      }
+
+      viewptr->ProcessKey(key, false);
+
+      // see any cursor change, including in tool bar
+      mainptr->UpdateUserInterface(mainptr->IsActive());
+
+      // update viewport, status bar, scroll bars, etc
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      bigview->UpdateScrollBars();
+      if (showtitle) {
+         mainptr->SetWindowTitle(wxEmptyString);
+         showtitle = false;
+      }
+      inscript = true;
+   }
 }
 
 // =============================================================================
@@ -360,47 +485,6 @@ bool PythonScriptAborted()
 
 // -----------------------------------------------------------------------------
 
-void DoAutoUpdate()
-{
-   if (autoupdate) {
-      inscript = false;
-      mainptr->UpdatePatternAndStatus();
-      if (showtitle) {
-         mainptr->SetWindowTitle(wxEmptyString);
-         showtitle = false;
-      }
-      inscript = true;
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void ShowTitleLater()
-{
-   // called from SetWindowTitle when inscript is true;
-   // show title at next update (eg. pyg_update or end of script)
-   showtitle = true;
-}
-
-// -----------------------------------------------------------------------------
-
-void ChangeWindowTitle(const wxString& name)
-{
-   if (autoupdate) {
-      // update title bar right now
-      inscript = false;
-      mainptr->SetWindowTitle(name);
-      inscript = true;
-      showtitle = false;       // update has been done
-   } else {
-      // show it later but must still update currlayer->currname and menu item
-      mainptr->SetWindowTitle(name);
-      // showtitle is now true
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 static PyObject *pyg_new(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -426,22 +510,12 @@ static PyObject *pyg_open(PyObject *self, PyObject *args)
    int remember = 0;
 
    if (!PyArg_ParseTuple(args, "s|i", &filename, &remember)) return NULL;
-
-   if (IsScript(wxString(filename,wxConvLocal))) {
-      // avoid re-entrancy
-      PyErr_SetString(PyExc_RuntimeError, "Bad open call: cannot open a script file.");
+   
+   char* errmsg = GSF_open(filename, remember);
+   if (errmsg) {
+      PyErr_SetString(PyExc_RuntimeError, errmsg);
       return NULL;
    }
-
-   // convert non-absolute filename to absolute path relative to scriptloc
-   // so it can be selected later from Open Recent submenu
-   wxString fname = wxString(filename,wxConvLocal);
-   wxFileName fullname(fname);
-   if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
-
-   // only add file to Open Recent submenu if remember flag is non-zero
-   mainptr->OpenFile(fullname.GetFullPath(), remember != 0);
-   DoAutoUpdate();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2447,24 +2521,13 @@ static PyObject *pyg_getkey(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   char s[2];
-   if (scriptchars.Length() == 0) {
-      // return empty string
-      s[0] = '\0';
-   } else {
-      // return first char in scriptchars and then remove it
-      s[0] = scriptchars.GetChar(0);
-      s[1] = '\0';
-      scriptchars = scriptchars.AfterFirst(s[0]);
-   }
+   char s[2];        // room for char + NULL
+   GSF_getkey(s);
 
    return Py_BuildValue("s", s);
 }
 
 // -----------------------------------------------------------------------------
-
-// also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
-// getclick returns [] or [x,y,button,shift,ctrl,alt]
 
 static PyObject *pyg_dokey(PyObject *self, PyObject *args)
 {
@@ -2474,37 +2537,7 @@ static PyObject *pyg_dokey(PyObject *self, PyObject *args)
 
    if (!PyArg_ParseTuple(args, "s", &ascii)) return NULL;
 
-   if (*ascii) {
-      // convert ascii char to corresponding wx key code;
-      // note that PassKeyToScript does the reverse conversion
-      int key;
-      switch (*ascii) {
-         case 8:  key = WXK_BACK;   break;
-         case 9:  key = WXK_TAB;    break;
-         case 10: // play safe
-         case 13: key = WXK_RETURN; break;
-         case 28: key = WXK_LEFT;   break;
-         case 29: key = WXK_RIGHT;  break;
-         case 30: key = WXK_UP;     break;
-         case 31: key = WXK_DOWN;   break;
-         default: key = *ascii;
-      }
-
-      viewptr->ProcessKey(key, false);
-
-      // see any cursor change, including in tool bar
-      mainptr->UpdateUserInterface(mainptr->IsActive());
-
-      // update viewport, status bar, scroll bars, etc
-      inscript = false;
-      mainptr->UpdatePatternAndStatus();
-      bigview->UpdateScrollBars();
-      if (showtitle) {
-         mainptr->SetWindowTitle(wxEmptyString);
-         showtitle = false;
-      }
-      inscript = true;
-   }
+   GSF_dokey(ascii);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2889,7 +2922,8 @@ void CheckScriptError()
 
 // =============================================================================
 
-// embed a Perl interpreter (see "perldoc perlembed" for details)
+// Perl scripting support is implemented by embedding a Perl interpreter.
+// See "perldoc perlembed" for details.
 
 // avoid warning about _ being redefined
 #undef _
@@ -2925,7 +2959,11 @@ bool PerlScriptAborted()
 
 // -----------------------------------------------------------------------------
 
+// some useful macros
+
 #define RETURN_IF_ABORTED if (PerlScriptAborted()) Perl_croak(aTHX_ NULL)
+
+#define PERL_ERROR(msg) { Perl_croak(aTHX_ msg); }
 
 #ifdef __WXMSW__
    #define IGNORE_UNUSED_PARAMS wxUnusedVar(cv); wxUnusedVar(my_perl);
@@ -2935,14 +2973,32 @@ bool PerlScriptAborted()
 
 // -----------------------------------------------------------------------------
 
+XS(plg_open)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items < 1 || items > 2) PERL_ERROR("Usage: g_open($filename,$remember=0)");
+
+   STRLEN n_a;
+   char* filename = SvPV(ST(0), n_a);
+   int remember = 0;
+   if (items == 2) remember = SvIV(ST(1));
+   
+   char* errmsg = GSF_open(filename, remember);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(plg_getselrect)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) {
-      Perl_croak(aTHX_ "Usage: @rect = g_getselrect()");
-   }
+   if (items != 0) PERL_ERROR("Usage: @rect = g_getselrect()");
    
    // items == 0 so no need to reset stack pointer
    // SP -= items;
@@ -2950,7 +3006,7 @@ XS(plg_getselrect)
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
                                   currlayer->selbottom, currlayer->selright) ) {
-         Perl_croak(aTHX_ "g_getselrect error: selection is too big.");
+         PERL_ERROR("g_getselrect error: selection is too big.");
       }
       int x = currlayer->selleft.toint();
       int y = currlayer->seltop.toint();
@@ -2974,9 +3030,7 @@ XS(plg_setcell)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 3) {
-      Perl_croak(aTHX_ "Usage: g_setcell($x,$y,$state)");
-   }
+   if (items != 3) PERL_ERROR("Usage: g_setcell($x,$y,$state)");
 
    currlayer->algo->setcell(SvIV(ST(0)), SvIV(ST(1)), SvIV(ST(2)));
    currlayer->algo->endofpattern();
@@ -2994,9 +3048,7 @@ XS(plg_getcell)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 2) {
-      Perl_croak(aTHX_ "Usage: $state = g_getcell($x,$y)");
-   }
+   if (items != 2) PERL_ERROR("Usage: $state = g_getcell($x,$y)");
 
    int state = currlayer->algo->getcell(SvIV(ST(0)), SvIV(ST(1)));
    
@@ -3015,15 +3067,13 @@ XS(plg_fitsel)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) {
-      Perl_croak(aTHX_ "Usage: g_fitsel()");
-   }
+   if (items != 0) PERL_ERROR("Usage: g_fitsel()");
 
    if (viewptr->SelectionExists()) {
       viewptr->FitSelection();
       DoAutoUpdate();
    } else {
-      Perl_croak(aTHX_ "g_fitsel error: no selection.");
+      PERL_ERROR("g_fitsel error: no selection.");
    }
 
    XSRETURN(0);
@@ -3036,9 +3086,7 @@ XS(plg_visrect)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 4) {
-      Perl_croak(aTHX_ "Usage: $bool = g_visrect(@rect)");
-   }
+   if (items != 4) PERL_ERROR("Usage: $bool = g_visrect(@rect)");
 
    int x = SvIV(ST(0));
    int y = SvIV(ST(1));
@@ -3046,10 +3094,10 @@ XS(plg_visrect)
    int ht = SvIV(ST(3));
    // check that wd & ht are > 0
    if (wd <= 0) {
-      Perl_croak(aTHX_ "g_visrect error: width must be > 0.");
+      PERL_ERROR("g_visrect error: width must be > 0.");
    }
    if (ht <= 0) {
-      Perl_croak(aTHX_ "g_visrect error: height must be > 0.");
+      PERL_ERROR("g_visrect error: height must be > 0.");
    }
 
    bigint left = x;
@@ -3069,9 +3117,7 @@ XS(plg_update)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) {
-      Perl_croak(aTHX_ "Usage: g_update()");
-   }
+   if (items != 0) PERL_ERROR("Usage: g_update()");
 
    // update viewport, status bar and possibly title bar
    inscript = false;
@@ -3087,25 +3133,29 @@ XS(plg_update)
 
 // -----------------------------------------------------------------------------
 
+XS(plg_autoupdate)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_autoupdate($bool)");
+
+   autoupdate = (SvIV(ST(0)) != 0);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(plg_getkey)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) {
-      Perl_croak(aTHX_ "Usage: $char = g_getkey()");
-   }
+   if (items != 0) PERL_ERROR("Usage: $char = g_getkey()");
 
-   char s[2];
-   if (scriptchars.Length() == 0) {
-      // return empty string
-      s[0] = '\0';
-   } else {
-      // return first char in scriptchars and then remove it
-      s[0] = scriptchars.GetChar(0);
-      s[1] = '\0';
-      scriptchars = scriptchars.AfterFirst(s[0]);
-   }
+   char s[2];        // room for char + NULL
+   GSF_getkey(s);
 
    XSRETURN_PV(s);
 }
@@ -3117,43 +3167,12 @@ XS(plg_dokey)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 1) {
-      Perl_croak(aTHX_ "Usage: g_dokey($char)");
-   }
+   if (items != 1) PERL_ERROR("Usage: g_dokey($char)");
+
    STRLEN n_a;
    char* ascii = SvPV(ST(0), n_a);
 
-   if (*ascii) {
-      // convert ascii char to corresponding wx key code;
-      // note that PassKeyToScript does the reverse conversion
-      int key;
-      switch (*ascii) {
-         case 8:  key = WXK_BACK;   break;
-         case 9:  key = WXK_TAB;    break;
-         case 10: // play safe
-         case 13: key = WXK_RETURN; break;
-         case 28: key = WXK_LEFT;   break;
-         case 29: key = WXK_RIGHT;  break;
-         case 30: key = WXK_UP;     break;
-         case 31: key = WXK_DOWN;   break;
-         default: key = *ascii;
-      }
-
-      viewptr->ProcessKey(key, false);
-
-      // see any cursor change, including in tool bar
-      mainptr->UpdateUserInterface(mainptr->IsActive());
-
-      // update viewport, status bar, scroll bars, etc
-      inscript = false;
-      mainptr->UpdatePatternAndStatus();
-      bigview->UpdateScrollBars();
-      if (showtitle) {
-         mainptr->SetWindowTitle(wxEmptyString);
-         showtitle = false;
-      }
-      inscript = true;
-   }
+   GSF_dokey(ascii);
 
    XSRETURN(0);
 }
@@ -3165,9 +3184,8 @@ XS(plg_show)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 1) {
-      Perl_croak(aTHX_ "Usage: g_show($string)");
-   }
+   if (items != 1) PERL_ERROR("Usage: g_show($string)");
+
    STRLEN n_a;
    char* s = SvPV(ST(0), n_a);
 
@@ -3182,14 +3200,51 @@ XS(plg_show)
 
 // -----------------------------------------------------------------------------
 
+XS(plg_error)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_error($string)");
+
+   STRLEN n_a;
+   char* s = SvPV(ST(0), n_a);
+
+   inscript = false;
+   statusptr->ErrorMessage(wxString(s,wxConvLocal));
+   inscript = true;
+   // make sure status bar is visible
+   if (!showstatus) mainptr->ToggleStatusBar();
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_warn)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_warn($string)");
+
+   STRLEN n_a;
+   char* s = SvPV(ST(0), n_a);
+
+   Warning(wxString(s,wxConvLocal));
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(plg_note)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 1) {
-      Perl_croak(aTHX_ "Usage: g_note($string)");
-   }
+   if (items != 1) PERL_ERROR("Usage: g_note($string)");
+
    STRLEN n_a;
    char* s = SvPV(ST(0), n_a);
 
@@ -3200,14 +3255,32 @@ XS(plg_note)
 
 // -----------------------------------------------------------------------------
 
+XS(plg_check)
+{
+   IGNORE_UNUSED_PARAMS;
+   // don't call checkevents() here otherwise we can't safely write code like
+   //    if (g_getlayer() == target) {
+   //       g_check(0);
+   //       ... do stuff to target layer ...
+   //       g_check(1);
+   //    }
+   // RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_check($bool)");
+
+   allowcheck = (SvIV(ST(0)) != 0);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(plg_exit)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items > 1) {
-      Perl_croak(aTHX_ "Usage: g_exit($string='')");
-   }
+   if (items > 1) PERL_ERROR("Usage: g_exit($string='')");
 
    if (items == 1) {
       // display given error message
@@ -3255,9 +3328,9 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
 EXTERN_C void xs_init(pTHX)
 {
-   #ifdef __WXMSW__
-      wxUnusedVar(my_perl);
-   #endif
+#ifdef __WXMSW__
+   wxUnusedVar(my_perl);
+#endif
    char* file = __FILE__;
    dXSUB_SYS;
 
@@ -3270,7 +3343,7 @@ EXTERN_C void xs_init(pTHX)
    */
 
    // filing
-   //!!!newXS("g_open",         plg_open,       file);
+   newXS("g_open",         plg_open,       file);
    //!!!newXS("g_save",         plg_save,       file);
    //!!!newXS("g_load",         plg_load,       file);
    //!!!newXS("g_store",        plg_store,      file);
@@ -3321,7 +3394,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_fitsel",       plg_fitsel,     file);
    newXS("g_visrect",      plg_visrect,    file);
    newXS("g_update",       plg_update,     file);
-   //!!!newXS("g_autoupdate",   plg_autoupdate, file);
+   newXS("g_autoupdate",   plg_autoupdate, file);
    // layers
    //!!!newXS("g_addlayer",     plg_addlayer,   file);
    //!!!newXS("g_clone",        plg_clone,      file);
@@ -3342,10 +3415,10 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_getkey",       plg_getkey,     file);
    newXS("g_dokey",        plg_dokey,      file);
    newXS("g_show",         plg_show,       file);
-   //!!!newXS("g_error",        plg_error,      file);
-   //!!!newXS("g_warn",         plg_warn,       file);
+   newXS("g_error",        plg_error,      file);
+   newXS("g_warn",         plg_warn,       file);
    newXS("g_note",         plg_note,       file);
-   //!!!newXS("g_check",        plg_check,      file);
+   newXS("g_check",        plg_check,      file);
    newXS("g_exit",         plg_exit,       file);
 }
 
@@ -3353,25 +3426,36 @@ EXTERN_C void xs_init(pTHX)
 
 void RunPerlScript(const wxString &filepath)
 {
-   char* my_argv[2];
-   my_argv[0] = "";
-   my_argv[1] = (char*) filepath.mb_str(wxConvLocal);
-
-   //!!!??? PERL_SYS_INIT3(NULL, NULL, NULL);
+#ifdef __WXMSW__
+   // do we really need this???
+   int argc = 0;
+   char* argv[] = { "" };
+   char* env[] = { "" };
+   PERL_SYS_INIT3(&argc, &argv, &env);
+#endif
    
    my_perl = perl_alloc();
    if (!my_perl) {
       Warning(_("Could not create Perl interpreter!"));
       return;
    }
+   
    perl_construct(my_perl);
    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+
+   char* my_argv[2];
+   my_argv[0] = "";
+   my_argv[1] = (char*) filepath.mb_str(wxConvLocal);
+
    perl_parse(my_perl, xs_init, 2, my_argv, NULL);
    perl_run(my_perl);
+   
    perl_destruct(my_perl);
    perl_free(my_perl);
    
-   //!!!??? PERL_SYS_TERM();
+#ifdef __WXMSW__
+   PERL_SYS_TERM();
+#endif
 }
 
 // =============================================================================
@@ -3462,7 +3546,7 @@ void PassKeyToScript(int key)
    } else {
       // convert wx key code to corresponding ascii char (if possible)
       // so that scripts can be platform-independent;
-      // note that *g_dokey does the reverse conversion
+      // note that GSF_dokey does the reverse conversion
       /*
       char msg[64];
       sprintf(msg, "key=%d ch=%c", key, (char)key);
@@ -3493,7 +3577,7 @@ void PassKeyToScript(int key)
                return;
             }
       }
-      // save ascii char for possible consumption by *g_getkey
+      // save ascii char for possible consumption by GSF_getkey
       scriptchars += ascii;
    }
 }
