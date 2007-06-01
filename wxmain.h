@@ -66,7 +66,7 @@ public:
    void ToggleShowScripts();
    void SavePattern();
    bool SaveCurrentLayer();
-   wxString SaveFile(const wxString& path, const wxString& format, bool remember);
+   const char* SaveFile(const wxString& path, const wxString& format, bool remember);
    #if wxUSE_DRAG_AND_DROP
       wxDropTarget* NewDropTarget();
    #endif

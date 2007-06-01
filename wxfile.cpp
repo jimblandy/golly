@@ -272,7 +272,7 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    if (LoadImage()) {
       viewptr->nopattupdate = false;
    } else {
-      const char *err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
+      const char* err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
       if (err && strcmp(err,cannotreadhash) == 0 && !currlayer->hash) {
          currlayer->hash = true;
          statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
@@ -787,16 +787,16 @@ void MainFrame::ClearAllScripts()
 
 // -----------------------------------------------------------------------------
 
-const char *MainFrame::WritePattern(const wxString& path,
+const char* MainFrame::WritePattern(const wxString& path,
                                     pattern_format format,
                                     int top, int left, int bottom, int right)
 {
    #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
       // use decomposed UTF8 so fopen will work
-      const char *err = writepattern(path.fn_str(),
+      const char* err = writepattern(path.fn_str(),
                         *currlayer->algo, format, top, left, bottom, right);
    #else
-      const char *err = writepattern(path.mb_str(wxConvLocal),
+      const char* err = writepattern(path.mb_str(wxConvLocal),
                         *currlayer->algo, format, top, left, bottom, right);
    #endif
    
@@ -914,7 +914,7 @@ void MainFrame::SavePattern()
       AddRecentPattern( savedlg.GetPath() );
       MarkLayerClean( savedlg.GetFilename() );
       
-      const char *err = WritePattern(savedlg.GetPath(), format,
+      const char* err = WritePattern(savedlg.GetPath(), format,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
@@ -931,7 +931,7 @@ void MainFrame::SavePattern()
 // -----------------------------------------------------------------------------
 
 // called by script command to save current pattern to given file
-wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool remember)
+const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bool remember)
 {
    // check that given format is valid and allowed
    bigint top, left, bottom, right;
@@ -941,7 +941,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
    pattern_format pattfmt;
    if ( format.IsSameAs(wxT("rle"),false) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         return _("Pattern is too big to save as RLE.");
+         return "Pattern is too big to save as RLE.";
       }   
       pattfmt = savexrle ? XRLE_format : RLE_format;
       itop = top.toint();
@@ -950,20 +950,20 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
       iright = right.toint();
    } else if ( format.IsSameAs(wxT("mc"),false) ) {
       if (!currlayer->hash) {
-         return _("Macrocell format is only allowed if hashing.");
+         return "Macrocell format is only allowed if hashing.";
       }
       pattfmt = MC_format;
       // writepattern will ignore itop, ileft, ibottom, iright
       itop = ileft = ibottom = iright = 0;
    } else {
-      return _("Unknown pattern format.");
+      return "Unknown pattern format.";
    }   
    
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
    MarkLayerClean( GetBaseName(path) );
 
-   const char *err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
+   const char* err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
       if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
          // no need to save starting pattern (ResetPattern can load currfile)
@@ -971,7 +971,7 @@ wxString MainFrame::SaveFile(const wxString& path, const wxString& format, bool 
       }
    }
    
-   return wxString(err, wxConvLocal);
+   return err;
 }
 
 // -----------------------------------------------------------------------------

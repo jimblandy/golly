@@ -65,7 +65,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
-#include "wxlayer.h"       // for AddLayer, currlayer, etc
+#include "wxlayer.h"       // for AddLayer, currlayer, currindex, etc
 #include "wxscript.h"
 
 // =============================================================================
@@ -149,11 +149,11 @@ void ChangeWindowTitle(const wxString& name)
 
 // -----------------------------------------------------------------------------
 
-char* GSF_open(char *filename, int remember)
+const char* GSF_open(char* filename, int remember)
 {
    if (IsScript(wxString(filename,wxConvLocal))) {
       // avoid re-entrancy
-      return "Bad open call: cannot open a script file.";
+      return "Cannot open a script file while a script is running.";
    }
 
    // convert non-absolute filename to absolute path relative to scriptloc
@@ -167,6 +167,345 @@ char* GSF_open(char *filename, int remember)
    DoAutoUpdate();
    
    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_save(char* filename, char* format, int remember)
+{
+   // convert non-absolute filename to absolute path relative to scriptloc
+   // so it can be selected later from Open Recent submenu
+   wxString fname = wxString(filename,wxConvLocal);
+   wxFileName fullname(fname);
+   if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
+
+   // only add file to Open Recent submenu if remember flag is non-zero
+   return mainptr->SaveFile(fullname.GetFullPath(),
+                            wxString(format,wxConvLocal), remember != 0);
+}
+
+// -----------------------------------------------------------------------------
+
+bool GSF_setoption(char* optname, int newval, int* oldval)
+{
+   if (strcmp(optname, "autofit") == 0) {
+      *oldval = currlayer->autofit ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleAutoFit();
+         // autofit option only applies to a generating pattern
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "fullscreen") == 0) {
+      *oldval = mainptr->fullscreen ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleFullScreen();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "hashing") == 0) {
+      *oldval = currlayer->hash ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleHashing();
+         DoAutoUpdate();               // status bar color might change
+      }
+
+   } else if (strcmp(optname, "hyperspeed") == 0) {
+      *oldval = currlayer->hyperspeed ? 1 : 0;
+      if (*oldval != newval)
+         mainptr->ToggleHyperspeed();
+
+   } else if (strcmp(optname, "showhashinfo") == 0) {
+      *oldval = currlayer->showhashinfo ? 1 : 0;
+      if (*oldval != newval)
+         mainptr->ToggleHashInfo();
+
+   } else if (strcmp(optname, "mindelay") == 0) {
+      *oldval = mindelay;
+      if (newval < 0) newval = 0;
+      if (newval > MAX_DELAY) newval = MAX_DELAY;
+      if (*oldval != newval) {
+         mindelay = newval;
+         mainptr->UpdateWarp();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "maxdelay") == 0) {
+      *oldval = maxdelay;
+      if (newval < 0) newval = 0;
+      if (newval > MAX_DELAY) newval = MAX_DELAY;
+      if (*oldval != newval) {
+         maxdelay = newval;
+         mainptr->UpdateWarp();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "opacity") == 0) {
+      *oldval = opacity;
+      if (newval < 1) newval = 1;
+      if (newval > 100) newval = 100;
+      if (*oldval != newval) {
+         opacity = newval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showlayerbar") == 0) {
+      *oldval = showlayer ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleLayerBar();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showpatterns") == 0) {
+      *oldval = showpatterns ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleShowPatterns();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showscripts") == 0) {
+      *oldval = showscripts ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleShowScripts();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showtoolbar") == 0) {
+      *oldval = showtool ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleToolBar();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showstatusbar") == 0) {
+      *oldval = showstatus ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleStatusBar();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showexact") == 0) {
+      *oldval = showexact ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ToggleExactNumbers();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "swapcolors") == 0) {
+      *oldval = swapcolors ? 1 : 0;
+      if (*oldval != newval) {
+         viewptr->ToggleCellColors();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showgrid") == 0) {
+      *oldval = showgridlines ? 1 : 0;
+      if (*oldval != newval) {
+         showgridlines = !showgridlines;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showboldlines") == 0) {
+      *oldval = showboldlines ? 1 : 0;
+      if (*oldval != newval) {
+         showboldlines = !showboldlines;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "syncviews") == 0) {
+      *oldval = syncviews ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleSyncViews();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "synccursors") == 0) {
+      *oldval = synccursors ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleSyncCursors();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "switchlayers") == 0) {
+      *oldval = canswitch ? 1 : 0;
+      if (*oldval != newval) {
+         canswitch = !canswitch;
+         // no need for DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "stacklayers") == 0) {
+      *oldval = stacklayers ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleStackLayers();
+         // above always does an update
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "tilelayers") == 0) {
+      *oldval = tilelayers ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleTileLayers();
+         // above always does an update
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "boldspacing") == 0) {
+      *oldval = boldspacing;
+      if (newval < 2) newval = 2;
+      if (newval > MAX_SPACING) newval = MAX_SPACING;
+      if (*oldval != newval) {
+         boldspacing = newval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "savexrle") == 0) {
+      *oldval = savexrle ? 1 : 0;
+      if (*oldval != newval) {
+         savexrle = !savexrle;
+         // no need for DoAutoUpdate();
+      }
+
+   } else {
+      // unknown option
+      return false;
+   }
+
+   if (*oldval != newval) {
+      mainptr->UpdateMenuItems(mainptr->IsActive());
+   }
+
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+bool GSF_getoption(char* optname, int* optval)
+{
+   if      (strcmp(optname, "autofit") == 0)       *optval = currlayer->autofit ? 1 : 0;
+   else if (strcmp(optname, "boldspacing") == 0)   *optval = boldspacing;
+   else if (strcmp(optname, "fullscreen") == 0)    *optval = mainptr->fullscreen ? 1 : 0;
+   else if (strcmp(optname, "hashing") == 0)       *optval = currlayer->hash ? 1 : 0;
+   else if (strcmp(optname, "hyperspeed") == 0)    *optval = currlayer->hyperspeed ? 1 : 0;
+   else if (strcmp(optname, "mindelay") == 0)      *optval = mindelay;
+   else if (strcmp(optname, "maxdelay") == 0)      *optval = maxdelay;
+   else if (strcmp(optname, "opacity") == 0)       *optval = opacity;
+   else if (strcmp(optname, "savexrle") == 0)      *optval = savexrle ? 1 : 0;
+   else if (strcmp(optname, "showboldlines") == 0) *optval = showboldlines ? 1 : 0;
+   else if (strcmp(optname, "showexact") == 0)     *optval = showexact ? 1 : 0;
+   else if (strcmp(optname, "showgrid") == 0)      *optval = showgridlines ? 1 : 0;
+   else if (strcmp(optname, "showhashinfo") == 0)  *optval = currlayer->showhashinfo ? 1 : 0;
+   else if (strcmp(optname, "showlayerbar") == 0)  *optval = showlayer ? 1 : 0;
+   else if (strcmp(optname, "showpatterns") == 0)  *optval = showpatterns ? 1 : 0;
+   else if (strcmp(optname, "showscripts") == 0)   *optval = showscripts ? 1 : 0;
+   else if (strcmp(optname, "showstatusbar") == 0) *optval = showstatus ? 1 : 0;
+   else if (strcmp(optname, "showtoolbar") == 0)   *optval = showtool ? 1 : 0;
+   else if (strcmp(optname, "stacklayers") == 0)   *optval = stacklayers ? 1 : 0;
+   else if (strcmp(optname, "swapcolors") == 0)    *optval = swapcolors ? 1 : 0;
+   else if (strcmp(optname, "switchlayers") == 0)  *optval = canswitch ? 1 : 0;
+   else if (strcmp(optname, "synccursors") == 0)   *optval = synccursors ? 1 : 0;
+   else if (strcmp(optname, "syncviews") == 0)     *optval = syncviews ? 1 : 0;
+   else if (strcmp(optname, "tilelayers") == 0)    *optval = tilelayers ? 1 : 0;
+   else {
+      // unknown option
+      return false;
+   }
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
+{
+   // note that "livecells" = "livecells0"
+   if (strncmp(colname, "livecells", 9) == 0) {
+      int layer = 0;
+      if (colname[9] >= '0' && colname[9] <= '9') {
+         layer = colname[9] - '0';
+      }
+      oldcol = *livergb[layer];
+      if (oldcol != newcol) {
+         *livergb[layer] = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "deadcells") == 0) {
+      oldcol = *deadrgb;
+      if (oldcol != newcol) {
+         *deadrgb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "paste") == 0) {
+      oldcol = *pastergb;
+      if (oldcol != newcol) {
+         *pastergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "select") == 0) {
+      oldcol = *selectrgb;
+      if (oldcol != newcol) {
+         *selectrgb = newcol;
+         SetBrushesAndPens();
+         SetSelectionColor();    // see wxrender.cpp
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "hashing") == 0) {
+      oldcol = *hlifergb;
+      if (oldcol != newcol) {
+         *hlifergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(colname, "nothashing") == 0) {
+      oldcol = *qlifergb;
+      if (oldcol != newcol) {
+         *qlifergb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
+   } else {
+      // unknown color name
+      return false;
+   }
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+bool GSF_getcolor(char* colname, wxColor& color)
+{
+   // note that "livecells" = "livecells0"
+   if (strncmp(colname, "livecells", 9) == 0) {
+      int layer = 0;
+      if (colname[9] >= '0' && colname[9] <= '9') {
+         layer = colname[9] - '0';
+      }
+      color = *livergb[layer];
+   }
+   else if (strcmp(colname, "deadcells") == 0)  color = *deadrgb;
+   else if (strcmp(colname, "paste") == 0)      color = *pastergb;
+   else if (strcmp(colname, "select") == 0)     color = *selectrgb;
+   else if (strcmp(colname, "hashing") == 0)    color = *hlifergb;
+   else if (strcmp(colname, "nothashing") == 0) color = *qlifergb;
+   else {
+      // unknown color name
+      return false;
+   }
+   return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -489,7 +828,7 @@ static PyObject *pyg_new(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *title;
+   char* title;
 
    if (!PyArg_ParseTuple(args, "s", &title)) return NULL;
 
@@ -506,12 +845,12 @@ static PyObject *pyg_open(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *filename;
+   char* filename;
    int remember = 0;
 
    if (!PyArg_ParseTuple(args, "s|i", &filename, &remember)) return NULL;
    
-   char* errmsg = GSF_open(filename, remember);
+   const char* errmsg = GSF_open(filename, remember);
    if (errmsg) {
       PyErr_SetString(PyExc_RuntimeError, errmsg);
       return NULL;
@@ -527,23 +866,15 @@ static PyObject *pyg_save(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *filename;
-   char *format;
+   char* filename;
+   char* format;
    int remember = 0;
 
    if (!PyArg_ParseTuple(args, "ss|i", &filename, &format, &remember)) return NULL;
-
-   // convert non-absolute filename to absolute path relative to scriptloc
-   // so it can be selected later from Open Recent submenu
-   wxString fname = wxString(filename,wxConvLocal);
-   wxFileName fullname(fname);
-   if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
-
-   // only add file to Open Recent submenu if remember flag is non-zero
-   wxString err = mainptr->SaveFile(fullname.GetFullPath(),
-                                    wxString(format,wxConvLocal), remember != 0);
-   if (!err.IsEmpty()) {
-      PyErr_SetString(PyExc_RuntimeError, err.mb_str(wxConvLocal));
+   
+   const char* errmsg = GSF_save(filename, format, remember);
+   if (errmsg) {
+      PyErr_SetString(PyExc_RuntimeError, errmsg);
       return NULL;
    }
 
@@ -580,7 +911,7 @@ static PyObject *pyg_fitsel(PyObject *self, PyObject *args)
       viewptr->FitSelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad fitsel call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "fitsel error: no selection.");
       return NULL;
    }
 
@@ -601,7 +932,7 @@ static PyObject *pyg_cut(PyObject *self, PyObject *args)
       viewptr->CutSelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad cut call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "cut error: no selection.");
       return NULL;
    }
 
@@ -622,7 +953,7 @@ static PyObject *pyg_copy(PyObject *self, PyObject *args)
       viewptr->CopySelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad copy call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "copy error: no selection.");
       return NULL;
    }
 
@@ -647,7 +978,7 @@ static PyObject *pyg_clear(PyObject *self, PyObject *args)
          viewptr->ClearOutsideSelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad clear call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "clear error: no selection.");
       return NULL;
    }
 
@@ -662,12 +993,12 @@ static PyObject *pyg_paste(PyObject *self, PyObject *args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int x, y;
-   char *mode;
+   char* mode;
 
    if (!PyArg_ParseTuple(args, "iis", &x, &y, &mode)) return NULL;
 
    if (!mainptr->ClipboardHasText()) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad paste call: no pattern in clipboard.");
+      PyErr_SetString(PyExc_RuntimeError, "paste error: no pattern in clipboard.");
       return NULL;
    }
 
@@ -677,13 +1008,13 @@ static PyObject *pyg_paste(PyObject *self, PyObject *args)
    bigint oldright = currlayer->selright;
    bigint oldbottom = currlayer->selbottom;
 
-   const char *oldmode = GetPasteMode();
+   const char* oldmode = GetPasteMode();
    wxString modestr = wxString(mode, wxConvLocal);
    if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
    else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
    else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad paste call: unknown mode.");
+      PyErr_SetString(PyExc_RuntimeError, "paste error: unknown mode.");
       return NULL;
    }
 
@@ -721,7 +1052,7 @@ static PyObject *pyg_shrink(PyObject *self, PyObject *args)
       viewptr->ShrinkSelection(false);    // false == don't fit in viewport
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad shrink call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "shrink error: no selection.");
       return NULL;
    }
 
@@ -740,7 +1071,7 @@ static PyObject *pyg_randfill(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "i", &perc)) return NULL;
 
    if (perc < 1 || perc > 100) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad randfill call: percentage must be from 1 to 100.");
+      PyErr_SetString(PyExc_RuntimeError, "randfill error: percentage must be from 1 to 100.");
       return NULL;
    }
 
@@ -751,7 +1082,7 @@ static PyObject *pyg_randfill(PyObject *self, PyObject *args)
       randomfill = oldperc;
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad randfill call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "randfill error: no selection.");
       return NULL;
    }
 
@@ -776,7 +1107,7 @@ static PyObject *pyg_flip(PyObject *self, PyObject *args)
          viewptr->FlipTopBottom();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad flip call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "flip error: no selection.");
       return NULL;
    }
 
@@ -798,7 +1129,7 @@ static PyObject *pyg_rotate(PyObject *self, PyObject *args)
       viewptr->RotateSelection(direction == 0);    // 0 = clockwise
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad rotate call: no selection.");
+      PyErr_SetString(PyExc_RuntimeError, "rotate error: no selection.");
       return NULL;
    }
 
@@ -812,8 +1143,8 @@ static PyObject *pyg_setpos(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *x;
-   char *y;
+   char* x;
+   char* y;
 
    if (!PyArg_ParseTuple(args, "ss", &x, &y)) return NULL;
 
@@ -822,13 +1153,13 @@ static PyObject *pyg_setpos(PyObject *self, PyObject *args)
    int xlen = strlen(x);
    for (i=0; i<xlen; i++)
       if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') ) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad setpos call: illegal character in x value.");
+         PyErr_SetString(PyExc_RuntimeError, "setpos error: illegal character in x value.");
          return NULL;
       }
    int ylen = strlen(y);
    for (i=0; i<ylen; i++)
       if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') ) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad setpos call: illegal character in y value.");
+         PyErr_SetString(PyExc_RuntimeError, "setpos error: illegal character in y value.");
          return NULL;
       }
 
@@ -900,7 +1231,7 @@ static PyObject *pyg_addlayer(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers >= maxlayers) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad addlayer call: no more layers can be added.");
+      PyErr_SetString(PyExc_RuntimeError, "addlayer error: no more layers can be added.");
       return NULL;
    } else {
       AddLayer();
@@ -921,7 +1252,7 @@ static PyObject *pyg_clone(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers >= maxlayers) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad clone call: no more layers can be added.");
+      PyErr_SetString(PyExc_RuntimeError, "clone error: no more layers can be added.");
       return NULL;
    } else {
       CloneLayer();
@@ -942,7 +1273,7 @@ static PyObject *pyg_duplicate(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers >= maxlayers) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad duplicate call: no more layers can be added.");
+      PyErr_SetString(PyExc_RuntimeError, "duplicate error: no more layers can be added.");
       return NULL;
    } else {
       DuplicateLayer();
@@ -963,7 +1294,7 @@ static PyObject *pyg_dellayer(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers <= 1) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad dellayer call: there is only one layer.");
+      PyErr_SetString(PyExc_RuntimeError, "dellayer error: there is only one layer.");
       return NULL;
    } else {
       DeleteLayer();
@@ -1070,7 +1401,7 @@ static PyObject *pyg_setname(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *name;
+   char* name;
    int index = currindex;
 
    if (!PyArg_ParseTuple(args, "s|i", &name, &index)) return NULL;
@@ -1125,202 +1456,14 @@ static PyObject *pyg_setoption(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *optname;
+   char* optname;
    int oldval, newval;
 
    if (!PyArg_ParseTuple(args, "si", &optname, &newval)) return NULL;
 
-   if (strcmp(optname, "autofit") == 0) {
-      oldval = currlayer->autofit ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleAutoFit();
-         // autofit option only applies to a generating pattern
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "fullscreen") == 0) {
-      oldval = mainptr->fullscreen ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleFullScreen();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "hashing") == 0) {
-      oldval = currlayer->hash ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleHashing();
-         DoAutoUpdate();               // status bar color might change
-      }
-
-   } else if (strcmp(optname, "hyperspeed") == 0) {
-      oldval = currlayer->hyperspeed ? 1 : 0;
-      if (oldval != newval)
-         mainptr->ToggleHyperspeed();
-
-   } else if (strcmp(optname, "showhashinfo") == 0) {
-      oldval = currlayer->showhashinfo ? 1 : 0;
-      if (oldval != newval)
-         mainptr->ToggleHashInfo();
-
-   } else if (strcmp(optname, "mindelay") == 0) {
-      oldval = mindelay;
-      if (newval < 0) newval = 0;
-      if (newval > MAX_DELAY) newval = MAX_DELAY;
-      if (oldval != newval) {
-         mindelay = newval;
-         mainptr->UpdateWarp();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "maxdelay") == 0) {
-      oldval = maxdelay;
-      if (newval < 0) newval = 0;
-      if (newval > MAX_DELAY) newval = MAX_DELAY;
-      if (oldval != newval) {
-         maxdelay = newval;
-         mainptr->UpdateWarp();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "opacity") == 0) {
-      oldval = opacity;
-      if (newval < 1) newval = 1;
-      if (newval > 100) newval = 100;
-      if (oldval != newval) {
-         opacity = newval;
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showlayerbar") == 0) {
-      oldval = showlayer ? 1 : 0;
-      if (oldval != newval) {
-         ToggleLayerBar();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showpatterns") == 0) {
-      oldval = showpatterns ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleShowPatterns();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showscripts") == 0) {
-      oldval = showscripts ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleShowScripts();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showtoolbar") == 0) {
-      oldval = showtool ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleToolBar();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showstatusbar") == 0) {
-      oldval = showstatus ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleStatusBar();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showexact") == 0) {
-      oldval = showexact ? 1 : 0;
-      if (oldval != newval) {
-         mainptr->ToggleExactNumbers();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "swapcolors") == 0) {
-      oldval = swapcolors ? 1 : 0;
-      if (oldval != newval) {
-         viewptr->ToggleCellColors();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showgrid") == 0) {
-      oldval = showgridlines ? 1 : 0;
-      if (oldval != newval) {
-         showgridlines = !showgridlines;
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showboldlines") == 0) {
-      oldval = showboldlines ? 1 : 0;
-      if (oldval != newval) {
-         showboldlines = !showboldlines;
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "syncviews") == 0) {
-      oldval = syncviews ? 1 : 0;
-      if (oldval != newval) {
-         ToggleSyncViews();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "synccursors") == 0) {
-      oldval = synccursors ? 1 : 0;
-      if (oldval != newval) {
-         ToggleSyncCursors();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "switchlayers") == 0) {
-      oldval = canswitch ? 1 : 0;
-      if (oldval != newval) {
-         canswitch = !canswitch;
-         // no need for DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "stacklayers") == 0) {
-      oldval = stacklayers ? 1 : 0;
-      if (oldval != newval) {
-         ToggleStackLayers();
-         // above always does an update
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "tilelayers") == 0) {
-      oldval = tilelayers ? 1 : 0;
-      if (oldval != newval) {
-         ToggleTileLayers();
-         // above always does an update
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "boldspacing") == 0) {
-      oldval = boldspacing;
-      if (newval < 2) newval = 2;
-      if (newval > MAX_SPACING) newval = MAX_SPACING;
-      if (oldval != newval) {
-         boldspacing = newval;
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "savexrle") == 0) {
-      oldval = savexrle ? 1 : 0;
-      if (oldval != newval) {
-         savexrle = !savexrle;
-         // no need for DoAutoUpdate();
-      }
-
-   } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad setoption call: unknown option.");
+   if (!GSF_setoption(optname, newval, &oldval)) {
+      PyErr_SetString(PyExc_RuntimeError, "setoption error: unknown option.");
       return NULL;
-   }
-
-   if (oldval != newval) {
-      mainptr->UpdateMenuItems(mainptr->IsActive());
    }
 
    // return old value (simplifies saving and restoring settings)
@@ -1333,37 +1476,13 @@ static PyObject *pyg_getoption(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *optname;
+   char* optname;
    int optval;
 
    if (!PyArg_ParseTuple(args, "s", &optname)) return NULL;
 
-   if      (strcmp(optname, "autofit") == 0)       optval = currlayer->autofit ? 1 : 0;
-   else if (strcmp(optname, "boldspacing") == 0)   optval = boldspacing;
-   else if (strcmp(optname, "fullscreen") == 0)    optval = mainptr->fullscreen ? 1 : 0;
-   else if (strcmp(optname, "hashing") == 0)       optval = currlayer->hash ? 1 : 0;
-   else if (strcmp(optname, "hyperspeed") == 0)    optval = currlayer->hyperspeed ? 1 : 0;
-   else if (strcmp(optname, "mindelay") == 0)      optval = mindelay;
-   else if (strcmp(optname, "maxdelay") == 0)      optval = maxdelay;
-   else if (strcmp(optname, "opacity") == 0)       optval = opacity;
-   else if (strcmp(optname, "savexrle") == 0)      optval = savexrle ? 1 : 0;
-   else if (strcmp(optname, "showboldlines") == 0) optval = showboldlines ? 1 : 0;
-   else if (strcmp(optname, "showexact") == 0)     optval = showexact ? 1 : 0;
-   else if (strcmp(optname, "showgrid") == 0)      optval = showgridlines ? 1 : 0;
-   else if (strcmp(optname, "showhashinfo") == 0)  optval = currlayer->showhashinfo ? 1 : 0;
-   else if (strcmp(optname, "showlayerbar") == 0)  optval = showlayer ? 1 : 0;
-   else if (strcmp(optname, "showpatterns") == 0)  optval = showpatterns ? 1 : 0;
-   else if (strcmp(optname, "showscripts") == 0)   optval = showscripts ? 1 : 0;
-   else if (strcmp(optname, "showstatusbar") == 0) optval = showstatus ? 1 : 0;
-   else if (strcmp(optname, "showtoolbar") == 0)   optval = showtool ? 1 : 0;
-   else if (strcmp(optname, "stacklayers") == 0)   optval = stacklayers ? 1 : 0;
-   else if (strcmp(optname, "swapcolors") == 0)    optval = swapcolors ? 1 : 0;
-   else if (strcmp(optname, "switchlayers") == 0)  optval = canswitch ? 1 : 0;
-   else if (strcmp(optname, "synccursors") == 0)   optval = synccursors ? 1 : 0;
-   else if (strcmp(optname, "syncviews") == 0)     optval = syncviews ? 1 : 0;
-   else if (strcmp(optname, "tilelayers") == 0)    optval = tilelayers ? 1 : 0;
-   else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad getoption call: unknown option.");
+   if (!GSF_getoption(optname, &optval)) {
+      PyErr_SetString(PyExc_RuntimeError, "getoption error: unknown option.");
       return NULL;
    }
 
@@ -1378,68 +1497,14 @@ static PyObject *pyg_setcolor(PyObject *self, PyObject *args)
    wxUnusedVar(self);
    char* colname;
    int r, g, b;
-   wxColor oldcol;
 
    if (!PyArg_ParseTuple(args, "siii", &colname, &r, &g, &b)) return NULL;
 
    wxColor newcol(r, g, b);
+   wxColor oldcol;
 
-   // note that "livecells" = "livecells0"
-   if (strncmp(colname, "livecells", 9) == 0) {
-      int layer = 0;
-      if (colname[9] >= '0' && colname[9] <= '9') {
-         layer = colname[9] - '0';
-      }
-      oldcol = *livergb[layer];
-      if (oldcol != newcol) {
-         *livergb[layer] = newcol;
-         SetBrushesAndPens();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(colname, "deadcells") == 0) {
-      oldcol = *deadrgb;
-      if (oldcol != newcol) {
-         *deadrgb = newcol;
-         SetBrushesAndPens();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(colname, "paste") == 0) {
-      oldcol = *pastergb;
-      if (oldcol != newcol) {
-         *pastergb = newcol;
-         SetBrushesAndPens();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(colname, "select") == 0) {
-      oldcol = *selectrgb;
-      if (oldcol != newcol) {
-         *selectrgb = newcol;
-         SetBrushesAndPens();
-         SetSelectionColor();    // see wxrender.cpp
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(colname, "hashing") == 0) {
-      oldcol = *hlifergb;
-      if (oldcol != newcol) {
-         *hlifergb = newcol;
-         SetBrushesAndPens();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(colname, "nothashing") == 0) {
-      oldcol = *qlifergb;
-      if (oldcol != newcol) {
-         *qlifergb = newcol;
-         SetBrushesAndPens();
-         DoAutoUpdate();
-      }
-
-   } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad setcolor call: unknown color.");
+   if (!GSF_setcolor(colname, newcol, oldcol)) {
+      PyErr_SetString(PyExc_RuntimeError, "setcolor error: unknown color.");
       return NULL;
    }
 
@@ -1458,33 +1523,20 @@ static PyObject *pyg_getcolor(PyObject *self, PyObject *args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char* colname;
-   wxColor* cptr;
+   wxColor color;
 
    if (!PyArg_ParseTuple(args, "s", &colname)) return NULL;
 
-   // note that "livecells" = "livecells0"
-   if (strncmp(colname, "livecells", 9) == 0) {
-      int layer = 0;
-      if (colname[9] >= '0' && colname[9] <= '9') {
-         layer = colname[9] - '0';
-      }
-      cptr = livergb[layer];
-   }
-   else if (strcmp(colname, "deadcells") == 0)     cptr = deadrgb;
-   else if (strcmp(colname, "paste") == 0)         cptr = pastergb;
-   else if (strcmp(colname, "select") == 0)        cptr = selectrgb;
-   else if (strcmp(colname, "hashing") == 0)       cptr = hlifergb;
-   else if (strcmp(colname, "nothashing") == 0)    cptr = qlifergb;
-   else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad getcolor call: unknown color.");
+   if (!GSF_getcolor(colname, color)) {
+      PyErr_SetString(PyExc_RuntimeError, "getcolor error: unknown color.");
       return NULL;
    }
 
    // return r,g,b tuple
    PyObject* rgbtuple = PyTuple_New(3);
-   PyTuple_SetItem(rgbtuple, 0, Py_BuildValue("i",cptr->Red()));
-   PyTuple_SetItem(rgbtuple, 1, Py_BuildValue("i",cptr->Green()));
-   PyTuple_SetItem(rgbtuple, 2, Py_BuildValue("i",cptr->Blue()));
+   PyTuple_SetItem(rgbtuple, 0, Py_BuildValue("i",color.Red()));
+   PyTuple_SetItem(rgbtuple, 1, Py_BuildValue("i",color.Green()));
+   PyTuple_SetItem(rgbtuple, 2, Py_BuildValue("i",color.Blue()));
    return rgbtuple;
 }
 
@@ -1631,7 +1683,7 @@ static PyObject *pyg_advance(PyObject *self, PyObject *args)
          }
          DoAutoUpdate();
       } else {
-         PyErr_SetString(PyExc_RuntimeError, "Bad advance call: no selection.");
+         PyErr_SetString(PyExc_RuntimeError, "advance error: no selection.");
          return NULL;
       }
    }
@@ -1690,12 +1742,12 @@ static PyObject *pyg_setrule(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *rule_string = NULL;
+   char* rule_string = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &rule_string)) return NULL;
 
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   const char *err;
+   const char* err;
    if (rule_string == NULL || rule_string[0] == 0) {
       err = currlayer->algo->setrule("B3/S23");
    } else {
@@ -1791,7 +1843,7 @@ static PyObject *pyg_parse(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *s;
+   char* s;
    long x0, y0, axx, axy, ayx, ayy;
 
    if (!PyArg_ParseTuple(args, "sllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
@@ -1942,7 +1994,7 @@ static PyObject *pyg_load(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *filename;
+   char* filename;
 
    if (!PyArg_ParseTuple(args, "s", &filename)) return NULL;
 
@@ -1955,7 +2007,7 @@ static PyObject *pyg_load(PyObject *self, PyObject *args)
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
    // read pattern into temporary universe
-   const char *err = readpattern(FILENAME, *tempalgo);
+   const char* err = readpattern(FILENAME, *tempalgo);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // macrocell file, so switch to hlife universe
       delete tempalgo;
@@ -1994,8 +2046,8 @@ static PyObject *pyg_store(PyObject *self, PyObject *args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *given_list;
-   char *filename;
-   char *desc = NULL;      // the description string is currently ignored!!!
+   char* filename;
+   char* desc = NULL;      // the description string is currently ignored!!!
 
    if (!PyArg_ParseTuple(args, "O!s|s", &PyList_Type, &given_list, &filename, &desc))
       return NULL;
@@ -2024,7 +2076,7 @@ static PyObject *pyg_store(PyObject *self, PyObject *args)
    // write pattern to given file in RLE/XRLE format
    bigint top, left, bottom, right;
    tempalgo->findedges(&top, &left, &bottom, &right);
-   const char *err = writepattern(FILENAME, *tempalgo,
+   const char* err = writepattern(FILENAME, *tempalgo,
                         savexrle ? XRLE_format : RLE_format,
                         top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
@@ -2054,7 +2106,7 @@ static PyObject *pyg_putcells(PyObject *self, PyObject *args)
    // default for mode is 'or'; 'xor' mode is also supported
    // 'copy' mode currently has the same effect as 'or' mode,
    // because there is no bounding box to retrieve OFF cells from.
-   char *mode="or";
+   char* mode="or";
    PyObject *list;
 
    if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
@@ -2068,7 +2120,7 @@ static PyObject *pyg_putcells(PyObject *self, PyObject *args)
           || modestr.IsSameAs(wxT("xor"), false)
           || modestr.IsSameAs(wxT("copy"), false)
           || modestr.IsSameAs(wxT("not"), false)) ) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad putcells call: unknown mode.");
+      PyErr_SetString(PyExc_RuntimeError, "putcells error: unknown mode.");
       return NULL;
    }
    if (modestr.IsSameAs(wxT("copy"), false)) {
@@ -2142,12 +2194,12 @@ static PyObject *pyg_getcells(PyObject *self, PyObject *args)
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: width must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "getcells error: width must be > 0.");
          Py_DECREF(outlist);
          return NULL;
       }
       if (ht <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: height must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "getcells error: height must be > 0.");
          Py_DECREF(outlist);
          return NULL;
       }
@@ -2174,7 +2226,7 @@ static PyObject *pyg_getcells(PyObject *self, PyObject *args)
          }
       }
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad getcells call: arg must be [] or [x,y,wd,ht].");
+      PyErr_SetString(PyExc_RuntimeError, "getcells error: arg must be [] or [x,y,wd,ht].");
       Py_DECREF(outlist);
       return NULL;
    }
@@ -2192,7 +2244,7 @@ static PyObject *pyg_getclip(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (!mainptr->ClipboardHasText()) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: no pattern in clipboard.");
+      PyErr_SetString(PyExc_RuntimeError, "getclip error: no pattern in clipboard.");
       return NULL;
    }
 
@@ -2211,7 +2263,7 @@ static PyObject *pyg_getclip(PyObject *self, PyObject *args)
    bigint top, left, bottom, right;
    if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad getclip call: pattern is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "getclip error: pattern is too big.");
          Py_DECREF(outlist);
          return NULL;
       }
@@ -2270,7 +2322,7 @@ static PyObject *pyg_visrect(PyObject *self, PyObject *args)
 
    int numitems = PyList_Size(rect_list);
    if (numitems != 4) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: arg must be [x,y,wd,ht].");
+      PyErr_SetString(PyExc_RuntimeError, "visrect error: arg must be [x,y,wd,ht].");
       return NULL;
    }
 
@@ -2280,11 +2332,11 @@ static PyObject *pyg_visrect(PyObject *self, PyObject *args)
    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
    // check that wd & ht are > 0
    if (wd <= 0) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: width must be > 0.");
+      PyErr_SetString(PyExc_RuntimeError, "visrect error: width must be > 0.");
       return NULL;
    }
    if (ht <= 0) {
-      PyErr_SetString(PyExc_RuntimeError, "Bad visrect call: height must be > 0.");
+      PyErr_SetString(PyExc_RuntimeError, "visrect error: height must be > 0.");
       return NULL;
    }
 
@@ -2320,11 +2372,11 @@ static PyObject *pyg_select(PyObject *self, PyObject *args)
       ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad select call: width must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "select error: width must be > 0.");
          return NULL;
       }
       if (ht <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad select call: height must be > 0.");
+         PyErr_SetString(PyExc_RuntimeError, "select error: height must be > 0.");
          return NULL;
       }
       // set selection edges
@@ -2333,7 +2385,7 @@ static PyObject *pyg_select(PyObject *self, PyObject *args)
       currlayer->selright = x + wd - 1;
       currlayer->selbottom = y + ht - 1;
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad select call: arg must be [] or [x,y,wd,ht].");
+      PyErr_SetString(PyExc_RuntimeError, "select error: arg must be [] or [x,y,wd,ht].");
       return NULL;
    }
 
@@ -2358,7 +2410,7 @@ static PyObject *pyg_getrect(PyObject *self, PyObject *args)
       bigint top, left, bottom, right;
       currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad getrect call: pattern is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "getrect error: pattern is too big.");
          Py_DECREF(outlist);
          return NULL;
       }
@@ -2388,7 +2440,7 @@ static PyObject *pyg_getselrect(PyObject *self, PyObject *args)
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
                                   currlayer->selbottom, currlayer->selright) ) {
-         PyErr_SetString(PyExc_RuntimeError, "Bad getselrect call: selection is too big.");
+         PyErr_SetString(PyExc_RuntimeError, "getselrect error: selection is too big.");
          Py_DECREF(outlist);
          return NULL;
       }
@@ -2454,7 +2506,7 @@ static PyObject *pyg_setcursor(PyObject *self, PyObject *args)
       // see the cursor change, including in tool bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "Bad setcursor call: unexpected cursor index.");
+      PyErr_SetString(PyExc_RuntimeError, "setcursor error: bad cursor index.");
       return NULL;
    }
 
@@ -2561,7 +2613,7 @@ static PyObject *pyg_show(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *s = NULL;
+   char* s = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
@@ -2581,7 +2633,7 @@ static PyObject *pyg_error(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *s = NULL;
+   char* s = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
@@ -2601,7 +2653,7 @@ static PyObject *pyg_warn(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *s = NULL;
+   char* s = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
@@ -2617,7 +2669,7 @@ static PyObject *pyg_note(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *s = NULL;
+   char* s = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
@@ -2654,7 +2706,7 @@ static PyObject *pyg_exit(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *errmsg = NULL;
+   char* errmsg = NULL;
 
    if (!PyArg_ParseTuple(args, "|s", &errmsg)) return NULL;
 
@@ -2681,7 +2733,7 @@ static PyObject *pyg_stderr(PyObject *self, PyObject *args)
    // probably safer not to call checkevents here
    // if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char *s = NULL;
+   char* s = NULL;
 
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
@@ -2983,9 +3035,430 @@ XS(plg_open)
    STRLEN n_a;
    char* filename = SvPV(ST(0), n_a);
    int remember = 0;
-   if (items == 2) remember = SvIV(ST(1));
+   if (items > 1) remember = SvIV(ST(1));
    
-   char* errmsg = GSF_open(filename, remember);
+   const char* errmsg = GSF_open(filename, remember);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_save)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items < 2 || items > 3) PERL_ERROR("Usage: g_save($filename,$format,$remember=0)");
+
+   STRLEN n_a;
+   char* filename = SvPV(ST(0), n_a);
+   char* format = SvPV(ST(1), n_a);
+   int remember = 0;
+   if (items > 2) remember = SvIV(ST(2));
+   
+   const char* errmsg = GSF_save(filename, format, remember);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_load)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_load(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_load(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_store)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_store(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_store(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_appdir)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_appdir(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/   
+   const char* errmsg = NULL;//!!!GSF_appdir(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_new)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_new(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_new(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_cut)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_cut(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_cut(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_copy)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_copy(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_copy(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_clear)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_clear(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_clear(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_paste)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_paste(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_paste(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_shrink)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_shrink(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_shrink(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_randfill)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_randfill(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_randfill(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_flip)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_flip(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_flip(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_rotate)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_rotate(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_rotate(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_parse)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_parse(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_parse(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_transform)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_transform(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_transform(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_evolve)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_evolve(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_evolve(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_putcells)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_putcells(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_putcells(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getcells)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getcells(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getcells(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getclip)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getclip(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getclip(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_select)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_select(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_select(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getrect)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getrect(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getrect(sss, iii);
    if (errmsg) PERL_ERROR(errmsg);
 
    XSRETURN(0);
@@ -3000,9 +3473,6 @@ XS(plg_getselrect)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: @rect = g_getselrect()");
    
-   // items == 0 so no need to reset stack pointer
-   // SP -= items;
-   
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
                                   currlayer->selbottom, currlayer->selright) ) {
@@ -3012,7 +3482,9 @@ XS(plg_getselrect)
       int y = currlayer->seltop.toint();
       int wd = currlayer->selright.toint() - x + 1;
       int ht = currlayer->selbottom.toint() - y + 1;
-
+      
+      // items == 0 so no need to reset stack pointer
+      // SP -= items;
       XPUSHs(sv_2mortal(newSViv(x)));
       XPUSHs(sv_2mortal(newSViv(y)));
       XPUSHs(sv_2mortal(newSViv(wd)));
@@ -3058,6 +3530,430 @@ XS(plg_getcell)
    XPUSHs(sv_2mortal(newSViv(state)));
    PUTBACK;
    */
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setcursor)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_setcursor(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_setcursor(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getcursor)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getcursor(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getcursor(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_empty)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_empty(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_empty(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_run)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_run(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_run(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_step)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_step(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_step(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setstep)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_setstep(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_setstep(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getstep)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getstep(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getstep(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setbase)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_setbase(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_setbase(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getbase)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getbase(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getbase(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_advance)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_advance(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_advance(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_reset)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_reset(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_reset(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getgen)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getgen(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getgen(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getpop)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getpop(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getpop(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setrule)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_setrule(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_setrule(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getrule)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getrule(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getrule(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setpos)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 2) PERL_ERROR("Usage: g_setpos($xstring,$ystring)");
+
+   STRLEN n_a;
+   char* x = SvPV(ST(0), n_a);
+   char* y = SvPV(ST(1), n_a);
+
+   // disallow alphabetic chars in x,y
+   int i;
+   int xlen = strlen(x);
+   for (i=0; i<xlen; i++)
+      if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') ) {
+         char msg[256];
+         sprintf(msg, "g_setpos error: illegal x value (%s).", x);
+         PERL_ERROR(msg);
+      }
+   int ylen = strlen(y);
+   for (i=0; i<ylen; i++)
+      if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') ) {
+         char msg[256];
+         sprintf(msg, "g_setpos error: illegal y value (%s).", y);
+         PERL_ERROR(msg);
+      }
+
+   bigint bigx(x);
+   bigint bigy(y);
+   viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
+   DoAutoUpdate();
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getpos)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items < 0 || items > 1) PERL_ERROR("Usage: @xy = g_getpos($sepchar='')");
+
+   char sepchar = '\0';
+   if (items > 0) {
+      STRLEN n_a;
+      char* s = SvPV(ST(0), n_a);
+      sepchar = s[0];
+   }
+
+   bigint bigx, bigy;
+   viewptr->GetPos(bigx, bigy);
+
+   // return position as x,y strings
+   SP -= items;
+   XPUSHs(sv_2mortal(newSVpv( bigx.tostring(sepchar), 0 )));
+   XPUSHs(sv_2mortal(newSVpv( bigy.tostring(sepchar), 0 )));
+   XSRETURN(2);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setmag)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_setmag(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_setmag(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getmag)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_getmag(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_getmag(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_fit)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 666) PERL_ERROR("Usage: g_fit(!!!)");
+
+/* not yet implemented!!!
+   STRLEN n_a;
+   char* sss = SvPV(ST(0), n_a);
+   int iii = SvIV(ST(1));
+*/
+   const char* errmsg = NULL;//!!!GSF_fit(sss, iii);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
 }
 
 // -----------------------------------------------------------------------------
@@ -3143,6 +4039,323 @@ XS(plg_autoupdate)
    autoupdate = (SvIV(ST(0)) != 0);
 
    XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_addlayer)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $newindex = g_addlayer()");
+
+   if (numlayers >= maxlayers) {
+      PERL_ERROR("g_addlayer error: no more layers can be added.");
+   } else {
+      AddLayer();
+      DoAutoUpdate();
+   }
+
+   // return index of new layer
+   XSRETURN_IV(currindex);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_clone)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $newindex = g_clone()");
+
+   if (numlayers >= maxlayers) {
+      PERL_ERROR("g_clone error: no more layers can be added.");
+   } else {
+      CloneLayer();
+      DoAutoUpdate();
+   }
+
+   // return index of new layer
+   XSRETURN_IV(currindex);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_duplicate)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $newindex = g_duplicate()");
+
+   if (numlayers >= maxlayers) {
+      PERL_ERROR("g_duplicate error: no more layers can be added.");
+   } else {
+      DuplicateLayer();
+      DoAutoUpdate();
+   }
+
+   // return index of new layer
+   XSRETURN_IV(currindex);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_dellayer)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: g_dellayer()");
+
+   if (numlayers <= 1) {
+      PERL_ERROR("g_dellayer error: there is only one layer.");
+   } else {
+      DeleteLayer();
+      DoAutoUpdate();
+   }
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_movelayer)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 2) PERL_ERROR("Usage: g_movelayer($from,$to)");
+
+   int fromindex = SvIV(ST(0));
+   int toindex = SvIV(ST(1));
+
+   if (fromindex < 0 || fromindex >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad g_movelayer fromindex: %d", fromindex);
+      PERL_ERROR(msg);
+   }
+   if (toindex < 0 || toindex >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad g_movelayer toindex: %d", toindex);
+      PERL_ERROR(msg);
+   }
+
+   MoveLayer(fromindex, toindex);
+   DoAutoUpdate();
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setlayer)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_setlayer($index)");
+
+   int index = SvIV(ST(0));
+
+   if (index < 0 || index >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad g_setlayer index: %d", index);
+      PERL_ERROR(msg);
+   }
+
+   SetLayer(index);
+   DoAutoUpdate();
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getlayer)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: g_getlayer()");
+
+   XSRETURN_IV(currindex);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_numlayers)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: g_numlayers()");
+
+   XSRETURN_IV(numlayers);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_maxlayers)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: g_maxlayers()");
+
+   XSRETURN_IV(maxlayers);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setname)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items < 1 || items > 2) PERL_ERROR("Usage: g_setname($name,$index=current)");
+
+   STRLEN n_a;
+   char* name = SvPV(ST(0), n_a);
+   int index = currindex;
+   if (items > 1) index = SvIV(ST(1));
+
+   if (index < 0 || index >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad g_setname index: %d", index);
+      PERL_ERROR(msg);
+   }
+
+   if (name[0]) {
+      if (index == currindex) {
+         // show new name in main window's title;
+         // also sets currlayer->currname and updates menu item
+         ChangeWindowTitle(wxString(name, wxConvLocal));
+      } else {
+         GetLayer(index)->currname = wxString(name, wxConvLocal);
+         // show name in given layer's menu item
+         mainptr->UpdateLayerItem(index);
+      }
+   }
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getname)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items < 0 || items > 1) PERL_ERROR("Usage: $name = g_getname($index=current)");
+
+   int index = currindex;
+   if (items > 0) index = SvIV(ST(0));
+
+   if (index < 0 || index >= numlayers) {
+      char msg[64];
+      sprintf(msg, "Bad g_getname index: %d", index);
+      PERL_ERROR(msg);
+   }
+
+   const char* name = GetLayer(index)->currname.mb_str(wxConvLocal);
+   XSRETURN_PV(name);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setoption)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 2) PERL_ERROR("Usage: $oldval = g_setoption($name,$newval)");
+
+   STRLEN n_a;
+   char* optname = SvPV(ST(0), n_a);
+   int newval = SvIV(ST(1));
+   int oldval;
+
+   if (!GSF_setoption(optname, newval, &oldval)) {
+      PERL_ERROR("g_setoption error: unknown option.");
+   }
+
+   // return old value (simplifies saving and restoring settings)
+   XSRETURN_IV(oldval);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getoption)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: $int = g_getoption($name)");
+
+   STRLEN n_a;
+   char* optname = SvPV(ST(0), n_a);
+   int optval;
+
+   if (!GSF_getoption(optname, &optval)) {
+      PERL_ERROR("g_getoption error: unknown option.");
+   }
+
+   XSRETURN_IV(optval);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_setcolor)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 4) PERL_ERROR("Usage: @oldrgb = g_setcolor($name,$r,$g,$b)");
+
+   STRLEN n_a;
+   char* colname = SvPV(ST(0), n_a);
+   wxColor newcol(SvIV(ST(1)), SvIV(ST(2)), SvIV(ST(3)));
+   wxColor oldcol;
+
+   if (!GSF_setcolor(colname, newcol, oldcol)) {
+      PERL_ERROR("g_setcolor error: unknown color.");
+   }
+
+   // return old r,g,b values (simplifies saving and restoring colors)
+   SP -= items;
+   XPUSHs(sv_2mortal(newSViv(oldcol.Red())));
+   XPUSHs(sv_2mortal(newSViv(oldcol.Green())));
+   XPUSHs(sv_2mortal(newSViv(oldcol.Blue())));
+   XSRETURN(3);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(plg_getcolor)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: @rgb = g_getcolor($name)");
+
+   STRLEN n_a;
+   char* colname = SvPV(ST(0), n_a);
+   wxColor color;
+
+   if (!GSF_getcolor(colname, color)) {
+      PERL_ERROR("g_getcolor error: unknown color.");
+   }
+
+   // return r,g,b values
+   SP -= items;
+   XPUSHs(sv_2mortal(newSViv(color.Red())));
+   XPUSHs(sv_2mortal(newSViv(color.Green())));
+   XPUSHs(sv_2mortal(newSViv(color.Blue())));
+   XSRETURN(3);
 }
 
 // -----------------------------------------------------------------------------
@@ -3323,10 +4536,9 @@ XS(boot_golly)
 
 EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
-// xs_init is passed into perl_parse and initializes the
-// statically linked extension modules
+// xs_init is passed into perl_parse and initializes statically linked extensions
 
-EXTERN_C void xs_init(pTHX)
+static void xs_init(pTHX)
 {
 #ifdef __WXMSW__
    wxUnusedVar(my_perl);
@@ -3344,74 +4556,74 @@ EXTERN_C void xs_init(pTHX)
 
    // filing
    newXS("g_open",         plg_open,       file);
-   //!!!newXS("g_save",         plg_save,       file);
-   //!!!newXS("g_load",         plg_load,       file);
-   //!!!newXS("g_store",        plg_store,      file);
-   //!!!newXS("g_appdir",       plg_appdir,     file);
+   newXS("g_save",         plg_save,       file);
+   newXS("g_load",         plg_load,       file);
+   newXS("g_store",        plg_store,      file);
+   newXS("g_appdir",       plg_appdir,     file);
    // editing
-   //!!!newXS("g_new",          plg_new,        file);
-   //!!!newXS("g_cut",          plg_cut,        file);
-   //!!!newXS("g_copy",         plg_copy,       file);
-   //!!!newXS("g_clear",        plg_clear,      file);
-   //!!!newXS("g_paste",        plg_paste,      file);
-   //!!!newXS("g_shrink",       plg_shrink,     file);
-   //!!!newXS("g_randfill",     plg_randfill,   file);
-   //!!!newXS("g_flip",         plg_flip,       file);
-   //!!!newXS("g_rotate",       plg_rotate,     file);
-   //!!!newXS("g_parse",        plg_parse,      file);
-   //!!!newXS("g_transform",    plg_transform,  file);
-   //!!!newXS("g_evolve",       plg_evolve,     file);
-   //!!!newXS("g_putcells",     plg_putcells,   file);
-   //!!!newXS("g_getcells",     plg_getcells,   file);
-   //!!!newXS("g_getclip",      plg_getclip,    file);
-   //!!!newXS("g_select",       plg_select,     file);
-   //!!!newXS("g_getrect",      plg_getrect,    file);
+   newXS("g_new",          plg_new,        file);
+   newXS("g_cut",          plg_cut,        file);
+   newXS("g_copy",         plg_copy,       file);
+   newXS("g_clear",        plg_clear,      file);
+   newXS("g_paste",        plg_paste,      file);
+   newXS("g_shrink",       plg_shrink,     file);
+   newXS("g_randfill",     plg_randfill,   file);
+   newXS("g_flip",         plg_flip,       file);
+   newXS("g_rotate",       plg_rotate,     file);
+   newXS("g_parse",        plg_parse,      file);
+   newXS("g_transform",    plg_transform,  file);
+   newXS("g_evolve",       plg_evolve,     file);
+   newXS("g_putcells",     plg_putcells,   file);
+   newXS("g_getcells",     plg_getcells,   file);
+   newXS("g_getclip",      plg_getclip,    file);
+   newXS("g_select",       plg_select,     file);
+   newXS("g_getrect",      plg_getrect,    file);
    newXS("g_getselrect",   plg_getselrect, file);
    newXS("g_setcell",      plg_setcell,    file);
    newXS("g_getcell",      plg_getcell,    file);
-   //!!!newXS("g_setcursor",    plg_setcursor,  file);
-   //!!!newXS("g_getcursor",    plg_getcursor,  file);
+   newXS("g_setcursor",    plg_setcursor,  file);
+   newXS("g_getcursor",    plg_getcursor,  file);
    // control
-   //!!!newXS("g_empty",        plg_empty,      file);
-   //!!!newXS("g_run",          plg_run,        file);
-   //!!!newXS("g_step",         plg_step,       file);
-   //!!!newXS("g_setstep",      plg_setstep,    file);
-   //!!!newXS("g_getstep",      plg_getstep,    file);
-   //!!!newXS("g_setbase",      plg_setbase,    file);
-   //!!!newXS("g_getbase",      plg_getbase,    file);
-   //!!!newXS("g_advance",      plg_advance,    file);
-   //!!!newXS("g_reset",        plg_reset,      file);
-   //!!!newXS("g_getgen",       plg_getgen,     file);
-   //!!!newXS("g_getpop",       plg_getpop,     file);
-   //!!!newXS("g_setrule",      plg_setrule,    file);
-   //!!!newXS("g_getrule",      plg_getrule,    file);
+   newXS("g_empty",        plg_empty,      file);
+   newXS("g_run",          plg_run,        file);
+   newXS("g_step",         plg_step,       file);
+   newXS("g_setstep",      plg_setstep,    file);
+   newXS("g_getstep",      plg_getstep,    file);
+   newXS("g_setbase",      plg_setbase,    file);
+   newXS("g_getbase",      plg_getbase,    file);
+   newXS("g_advance",      plg_advance,    file);
+   newXS("g_reset",        plg_reset,      file);
+   newXS("g_getgen",       plg_getgen,     file);
+   newXS("g_getpop",       plg_getpop,     file);
+   newXS("g_setrule",      plg_setrule,    file);
+   newXS("g_getrule",      plg_getrule,    file);
    // viewing
-   //!!!newXS("g_setpos",       plg_setpos,     file);
-   //!!!newXS("g_getpos",       plg_getpos,     file);
-   //!!!newXS("g_setmag",       plg_setmag,     file);
-   //!!!newXS("g_getmag",       plg_getmag,     file);
-   //!!!newXS("g_fit",          plg_fit,        file);
+   newXS("g_setpos",       plg_setpos,     file);
+   newXS("g_getpos",       plg_getpos,     file);
+   newXS("g_setmag",       plg_setmag,     file);
+   newXS("g_getmag",       plg_getmag,     file);
+   newXS("g_fit",          plg_fit,        file);
    newXS("g_fitsel",       plg_fitsel,     file);
    newXS("g_visrect",      plg_visrect,    file);
    newXS("g_update",       plg_update,     file);
    newXS("g_autoupdate",   plg_autoupdate, file);
    // layers
-   //!!!newXS("g_addlayer",     plg_addlayer,   file);
-   //!!!newXS("g_clone",        plg_clone,      file);
-   //!!!newXS("g_duplicate",    plg_duplicate,  file);
-   //!!!newXS("g_dellayer",     plg_dellayer,   file);
-   //!!!newXS("g_movelayer",    plg_movelayer,  file);
-   //!!!newXS("g_setlayer",     plg_setlayer,   file);
-   //!!!newXS("g_getlayer",     plg_getlayer,   file);
-   //!!!newXS("g_numlayers",    plg_numlayers,  file);
-   //!!!newXS("g_maxlayers",    plg_maxlayers,  file);
-   //!!!newXS("g_setname",      plg_setname,    file);
-   //!!!newXS("g_getname",      plg_getname,    file);
+   newXS("g_addlayer",     plg_addlayer,   file);
+   newXS("g_clone",        plg_clone,      file);
+   newXS("g_duplicate",    plg_duplicate,  file);
+   newXS("g_dellayer",     plg_dellayer,   file);
+   newXS("g_movelayer",    plg_movelayer,  file);
+   newXS("g_setlayer",     plg_setlayer,   file);
+   newXS("g_getlayer",     plg_getlayer,   file);
+   newXS("g_numlayers",    plg_numlayers,  file);
+   newXS("g_maxlayers",    plg_maxlayers,  file);
+   newXS("g_setname",      plg_setname,    file);
+   newXS("g_getname",      plg_getname,    file);
    // miscellaneous
-   //!!!newXS("g_setoption",    plg_setoption,  file);
-   //!!!newXS("g_getoption",    plg_getoption,  file);
-   //!!!newXS("g_setcolor",     plg_setcolor,   file);
-   //!!!newXS("g_getcolor",     plg_getcolor,   file);
+   newXS("g_setoption",    plg_setoption,  file);
+   newXS("g_getoption",    plg_getoption,  file);
+   newXS("g_setcolor",     plg_setcolor,   file);
+   newXS("g_getcolor",     plg_getcolor,   file);
    newXS("g_getkey",       plg_getkey,     file);
    newXS("g_dokey",        plg_dokey,      file);
    newXS("g_show",         plg_show,       file);
