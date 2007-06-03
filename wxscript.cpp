@@ -2095,18 +2095,18 @@ static PyObject *pyg_putcells(PyObject *self, PyObject *args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   long x0, y0, axx, axy, ayx, ayy;
+
    // defaults for affine transform params
-   x0=0;
-   y0=0;
-   axx=1;
-   axy=0;
-   ayx=0;
-   ayy=1;
-   // default for mode is 'or'; 'xor' mode is also supported
-   // 'copy' mode currently has the same effect as 'or' mode,
-   // because there is no bounding box to retrieve OFF cells from.
-   char* mode="or";
+   long x0  = 0;
+   long y0  = 0;
+   long axx = 1;
+   long axy = 0;
+   long ayx = 0;
+   long ayy = 1;
+   // default for mode is 'or'; 'xor' mode is also supported;
+   // 'copy' mode currently has the same effect as 'or' mode
+   // because there is no bounding box to set OFF cells
+   char* mode = "or";
    PyObject *list;
 
    if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
@@ -2124,18 +2124,20 @@ static PyObject *pyg_putcells(PyObject *self, PyObject *args)
       return NULL;
    }
    if (modestr.IsSameAs(wxT("copy"), false)) {
-   // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
+      // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
    }
 
    if (modestr.IsSameAs(wxT("xor"), false)) {
-      // loop code is duplicated here to allow 'or' case to execute faster (?)
+      // loop code is duplicated here to allow 'or' case to execute faster
       for (int n = 0; n < num_cells; n++) {
          long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
          long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
-         int s = curralgo->getcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+         int newx = x0 + x * axx + y * axy;
+         int newy = y0 + x * ayx + y * ayy;
+         int s = curralgo->getcell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
-         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, 1-s);
+         curralgo->setcell(newx, newy, 1-s);
 
          if ((n % 4096) == 0 && PythonScriptAborted()) {
             curralgo->endofpattern();
@@ -2357,7 +2359,6 @@ static PyObject *pyg_select(PyObject *self, PyObject *args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    PyObject *rect_list;
-   int x, y, wd, ht;
 
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
@@ -2366,10 +2367,10 @@ static PyObject *pyg_select(PyObject *self, PyObject *args)
       // remove any existing selection
       viewptr->NoSelection();
    } else if (numitems == 4) {
-      x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-      y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-      wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-      ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+      int x  = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+      int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+      int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+      int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
          PyErr_SetString(PyExc_RuntimeError, "select error: width must be > 0.");
@@ -3111,17 +3112,9 @@ XS(plg_appdir)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_appdir(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $dir = g_appdir()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/   
-   const char* errmsg = NULL;//!!!GSF_appdir(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_PV((const char*) gollydir.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -3131,15 +3124,13 @@ XS(plg_new)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_new(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_new($title)");
 
-/* not yet implemented!!!
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_new(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char* title = SvPV(ST(0), n_a);
+
+   mainptr->NewPattern(wxString(title,wxConvLocal));
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3151,15 +3142,14 @@ XS(plg_cut)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_cut(!!!)");
+   if (items != 0) PERL_ERROR("Usage: g_cut()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_cut(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (viewptr->SelectionExists()) {
+      viewptr->CutSelection();
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_cut error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3171,15 +3161,14 @@ XS(plg_copy)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_copy(!!!)");
+   if (items != 0) PERL_ERROR("Usage: g_copy()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_copy(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (viewptr->SelectionExists()) {
+      viewptr->CopySelection();
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_copy error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3191,15 +3180,19 @@ XS(plg_clear)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_clear(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_clear($where)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_clear(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int where = SvIV(ST(0));
+
+   if (viewptr->SelectionExists()) {
+      if (where == 0)
+         viewptr->ClearSelection();
+      else
+         viewptr->ClearOutsideSelection();
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_clear error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3231,15 +3224,14 @@ XS(plg_shrink)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_shrink(!!!)");
+   if (items != 0) PERL_ERROR("Usage: g_shrink()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_shrink(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (viewptr->SelectionExists()) {
+      viewptr->ShrinkSelection(false);    // false == don't fit in viewport
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_shrink error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3251,15 +3243,23 @@ XS(plg_randfill)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_randfill(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_randfill($percentage)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_randfill(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int perc = SvIV(ST(0));
+
+   if (perc < 1 || perc > 100) {
+      PERL_ERROR("g_randfill error: percentage must be from 1 to 100.");
+   }
+
+   if (viewptr->SelectionExists()) {
+      int oldperc = randomfill;
+      randomfill = perc;
+      viewptr->RandomFill();
+      randomfill = oldperc;
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_randfill error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3271,15 +3271,19 @@ XS(plg_flip)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_flip(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_flip($direction)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_flip(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int direction = SvIV(ST(0));
+
+   if (viewptr->SelectionExists()) {
+      if (direction == 0)
+         viewptr->FlipLeftRight();
+      else
+         viewptr->FlipTopBottom();
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_flip error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3291,15 +3295,16 @@ XS(plg_rotate)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_rotate(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_rotate($direction)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_rotate(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int direction = SvIV(ST(0));
+
+   if (viewptr->SelectionExists()) {
+      viewptr->RotateSelection(direction == 0);    // 0 = clockwise
+      DoAutoUpdate();
+   } else {
+      PERL_ERROR("g_rotate error: no selection.");
+   }
 
    XSRETURN(0);
 }
@@ -3371,15 +3376,82 @@ XS(plg_putcells)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_putcells(!!!)");
+   if (items < 1 || items > 8)
+      PERL_ERROR("Usage: g_putcells($cells,$x=0,$y=0,$axx=1,$axy=0,$ayx=0,$ayy=1,$mode='or')");
 
-/* not yet implemented!!!
+   SV* cells = ST(0);
+   if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) )
+       PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference.");
+
+   AV* arrayref = (AV*)SvRV(cells);
+   int num_cells = (av_len(arrayref) + 1) / 2;
+   // note that av_len returns max index or -1 if array is empty
+
+   // defaults for affine transform params
+   int x0  = 0;
+   int y0  = 0;
+   int axx = 1;
+   int axy = 0;
+   int ayx = 0;
+   int ayy = 1;
+   // default for mode is 'or'; 'xor' mode is also supported;
+   // 'copy' mode currently has the same effect as 'or' mode
+   // because there is no bounding box to set OFF cells
+   char* mode = "or";
+   
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_putcells(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (items > 1) x0  = SvIV(ST(1));
+   if (items > 2) y0  = SvIV(ST(2));
+   if (items > 3) axx = SvIV(ST(3));
+   if (items > 4) axy = SvIV(ST(4));
+   if (items > 5) ayx = SvIV(ST(5));
+   if (items > 6) ayy = SvIV(ST(6));
+   if (items > 7) mode = SvPV(ST(7), n_a);
+
+   lifealgo *curralgo = currlayer->algo;
+
+   wxString modestr = wxString(mode, wxConvLocal);
+   if ( !(modestr.IsSameAs(wxT("or"), false)
+          || modestr.IsSameAs(wxT("xor"), false)
+          || modestr.IsSameAs(wxT("copy"), false)
+          || modestr.IsSameAs(wxT("not"), false)) ) {
+      PERL_ERROR("g_putcells error: unknown mode.");
+   }
+   if (modestr.IsSameAs(wxT("copy"), false)) {
+      // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
+   }
+
+   if (modestr.IsSameAs(wxT("xor"), false)) {
+      // loop code is duplicated here to allow 'or' case to execute faster
+      for (int n = 0; n < num_cells; n++) {
+         int x = SvIV( *av_fetch(arrayref, 2 * n, 0) );
+         int y = SvIV( *av_fetch(arrayref, 2 * n + 1, 0) );
+         int newx = x0 + x * axx + y * axy;
+         int newy = y0 + x * ayx + y * ayy;
+         int s = curralgo->getcell(newx, newy);
+
+         // paste (possibly transformed) cell into current universe
+         curralgo->setcell(newx, newy, 1-s);
+
+         if ((n % 4096) == 0 && PerlScriptAborted()) break;
+      }
+   } else {
+      int cellstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
+      for (int n = 0; n < num_cells; n++) {
+         int x = SvIV( *av_fetch(arrayref, 2 * n, 0) );
+         int y = SvIV( *av_fetch(arrayref, 2 * n + 1, 0) );
+
+         // paste (possibly transformed) cell into current universe
+         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, cellstate);
+
+         if ((n % 4096) == 0 && PerlScriptAborted()) break;
+      }
+   }
+
+   curralgo->endofpattern();
+   currlayer->savestart = true;
+   MarkLayerDirty();
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3391,17 +3463,50 @@ XS(plg_getcells)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getcells(!!!)");
+   if (items != 0 && items != 4) PERL_ERROR("Usage: $cells = g_getcells(@rect)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getcells(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   // convert pattern in given rect into a cell list (ie. array of live cell coords)
+   AV* outlist = (AV*)sv_2mortal( (SV*)newAV() );
 
-   XSRETURN(0);
+   if (items == 0) {
+      // return empty cell list
+   } else {
+      // items == 4
+      int x  = SvIV(ST(0));
+      int y  = SvIV(ST(1));
+      int wd = SvIV(ST(2));
+      int ht = SvIV(ST(3));
+      // first check that wd & ht are > 0
+      if (wd <= 0) PERL_ERROR("g_getcells error: width must be > 0.");
+      if (ht <= 0) PERL_ERROR("g_getcells error: height must be > 0.");
+      int right = x + wd - 1;
+      int bottom = y + ht - 1;
+      int cx, cy;
+      int cntr = 0;
+      lifealgo *curralgo = currlayer->algo;
+      for ( cy=y; cy<=bottom; cy++ ) {
+         for ( cx=x; cx<=right; cx++ ) {
+            int skip = curralgo->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row so add coords to outlist
+               cx += skip;
+               if (cx <= right) {
+                  av_push(outlist, newSViv(cx));
+                  av_push(outlist, newSViv(cy));
+               }
+            } else {
+               cx = right;  // done this row
+            }
+            cntr++;
+            if ((cntr % 4096) == 0) RETURN_IF_ABORTED;
+         }
+      }
+   }
+
+   SP -= items;
+   ST(0) = newRV( (SV*)outlist );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3411,17 +3516,73 @@ XS(plg_getclip)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getclip(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $cells = g_getclip()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getclip(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (!mainptr->ClipboardHasText()) {
+      PERL_ERROR("g_getclip error: no pattern in clipboard.");
+   }
 
-   XSRETURN(0);
+   // convert pattern in clipboard into a cell list, but where the first 2 items
+   // are the pattern's width and height (not necessarily the minimal bounding box
+   // because the pattern might have empty borders, or it might even be empty)
+   AV* outlist = (AV*)sv_2mortal( (SV*)newAV() );
+
+   // create a temporary universe for storing clipboard pattern
+   lifealgo *tempalgo;
+   tempalgo = new qlifealgo();   // qlife's setcell/getcell are faster
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+
+   // read clipboard pattern into temporary universe and set edges
+   // (not a minimal bounding box if pattern is empty or has empty borders)
+   bigint top, left, bottom, right;
+   if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         PERL_ERROR("g_getclip error: pattern is too big.");
+      }
+      int itop = top.toint();
+      int ileft = left.toint();
+      int ibottom = bottom.toint();
+      int iright = right.toint();
+      int wd = iright - ileft + 1;
+      int ht = ibottom - itop + 1;
+
+      av_push(outlist, newSViv(wd));
+      av_push(outlist, newSViv(ht));
+
+      // extract cells from tempalgo
+      int cx, cy;
+      int cntr = 0;
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            int skip = tempalgo->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row
+               cx += skip;
+               // shift cells so that top left cell of bounding box is at 0,0
+               av_push(outlist, newSViv(cx - ileft));
+               av_push(outlist, newSViv(cy - itop));
+            } else {
+               cx = iright;  // done this row
+            }
+            cntr++;
+            if ((cntr % 4096) == 0 && PerlScriptAborted()) {
+               delete tempalgo;
+               Perl_croak(aTHX_ NULL);
+            }
+         }
+      }
+
+      delete tempalgo;
+   } else {
+      // assume error message has been displayed
+      delete tempalgo;
+      Perl_croak(aTHX_ NULL);
+   }
+
+   SP -= items;
+   ST(0) = newRV( (SV*)outlist );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3431,15 +3592,27 @@ XS(plg_select)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_select(!!!)");
+   if (items != 0 && items != 4) PERL_ERROR("Usage: g_select(@rect)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_select(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (items == 0) {
+      // remove any existing selection
+      viewptr->NoSelection();
+   } else {
+      // items == 4
+      int x  = SvIV(ST(0));
+      int y  = SvIV(ST(1));
+      int wd = SvIV(ST(2));
+      int ht = SvIV(ST(3));
+      // first check that wd & ht are > 0
+      if (wd <= 0) PERL_ERROR("g_select error: width must be > 0.");
+      if (ht <= 0) PERL_ERROR("g_select error: height must be > 0.");
+      // set selection edges
+      currlayer->selleft = x;
+      currlayer->seltop = y;
+      currlayer->selright = x + wd - 1;
+      currlayer->selbottom = y + ht - 1;
+   }
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3451,17 +3624,29 @@ XS(plg_getrect)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getrect(!!!)");
+   if (items != 0) PERL_ERROR("Usage: @rect = g_getrect()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getrect(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (!currlayer->algo->isEmpty()) {
+      bigint top, left, bottom, right;
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         PERL_ERROR("g_getrect error: pattern is too big.");
+      }
+      int x = left.toint();
+      int y = top.toint();
+      int wd = right.toint() - x + 1;
+      int ht = bottom.toint() - y + 1;
 
-   XSRETURN(0);
+      // items == 0 so no need to reset stack pointer
+      // SP -= items;
+      XPUSHs(sv_2mortal(newSViv(x)));
+      XPUSHs(sv_2mortal(newSViv(y)));
+      XPUSHs(sv_2mortal(newSViv(wd)));
+      XPUSHs(sv_2mortal(newSViv(ht)));
+      XSRETURN(4);
+   } else {
+      XSRETURN(0);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -3539,17 +3724,20 @@ XS(plg_setcursor)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_setcursor(!!!)");
+   if (items != 1) PERL_ERROR("Usage: $oldcurs = g_setcursor($newcurs)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_setcursor(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int oldindex = CursorToIndex(currlayer->curs);
+   wxCursor* curs = IndexToCursor(SvIV(ST(0)));
+   if (curs) {
+      viewptr->SetCursorMode(curs);
+      // see the cursor change, including in tool bar
+      mainptr->UpdateUserInterface(mainptr->IsActive());
+   } else {
+      PERL_ERROR("g_setcursor error: bad cursor index.");
+   }
 
-   XSRETURN(0);
+   // return old index (simplifies saving and restoring cursor)
+   XSRETURN_IV(oldindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -3559,17 +3747,9 @@ XS(plg_getcursor)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getcursor(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $int = g_getcursor()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getcursor(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_IV(CursorToIndex(currlayer->curs));
 }
 
 // -----------------------------------------------------------------------------
@@ -3579,17 +3759,9 @@ XS(plg_empty)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_empty(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $bool = g_empty()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_empty(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_IV(currlayer->algo->isEmpty() ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -3599,15 +3771,21 @@ XS(plg_run)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_run(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_run($numgens)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_run(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int ngens = SvIV(ST(0));
+
+   if (ngens > 0 && !currlayer->algo->isEmpty()) {
+      if (ngens > 1) {
+         bigint saveinc = currlayer->algo->getIncrement();
+         currlayer->algo->setIncrement(ngens);
+         mainptr->NextGeneration(true);            // step by ngens
+         currlayer->algo->setIncrement(saveinc);
+      } else {
+         mainptr->NextGeneration(false);           // step 1 gen
+      }
+      DoAutoUpdate();
+   }
 
    XSRETURN(0);
 }
@@ -3619,15 +3797,12 @@ XS(plg_step)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_step(!!!)");
+   if (items != 0) PERL_ERROR("Usage: g_step()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_step(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (!currlayer->algo->isEmpty()) {
+      mainptr->NextGeneration(true);      // step by current increment
+      DoAutoUpdate();
+   }
 
    XSRETURN(0);
 }
@@ -3639,15 +3814,10 @@ XS(plg_setstep)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_setstep(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_setstep($int)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_setstep(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   mainptr->SetWarp(SvIV(ST(0)));
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3659,17 +3829,9 @@ XS(plg_getstep)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getstep(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $int = g_getstep()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getstep(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_IV(currlayer->warp);
 }
 
 // -----------------------------------------------------------------------------
@@ -3679,15 +3841,19 @@ XS(plg_setbase)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_setbase(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_setbase($int)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_setbase(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int base = SvIV(ST(0));
+
+   if (base < 2) base = 2;
+   if (base > MAX_BASESTEP) base = MAX_BASESTEP;
+   if (currlayer->hash) {
+      hbasestep = base;
+   } else {
+      qbasestep = base;
+   }
+   mainptr->UpdateWarp();
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3699,17 +3865,9 @@ XS(plg_getbase)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getbase(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $int = g_getbase()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getbase(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_IV(currlayer->hash ? hbasestep : qbasestep);
 }
 
 // -----------------------------------------------------------------------------
@@ -3719,15 +3877,25 @@ XS(plg_advance)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_advance(!!!)");
+   if (items != 2) PERL_ERROR("Usage: g_advance($where,$numgens)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_advance(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int where = SvIV(ST(0));
+   int ngens = SvIV(ST(1));
+
+   if (ngens > 0) {
+      if (viewptr->SelectionExists()) {
+         while (ngens > 0) {
+            ngens--;
+            if (where == 0)
+               mainptr->AdvanceSelection();
+            else
+               mainptr->AdvanceOutsideSelection();
+         }
+         DoAutoUpdate();
+      } else {
+         PERL_ERROR("g_advance error: no selection.");
+      }
+   }
 
    XSRETURN(0);
 }
@@ -3739,15 +3907,12 @@ XS(plg_reset)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_reset(!!!)");
+   if (items != 0) PERL_ERROR("Usage: g_reset()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_reset(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   if (currlayer->algo->getGeneration() != bigint::zero) {
+      mainptr->ResetPattern();
+      DoAutoUpdate();
+   }
 
    XSRETURN(0);
 }
@@ -3759,17 +3924,16 @@ XS(plg_getgen)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getgen(!!!)");
+   if (items > 1) PERL_ERROR("Usage: $string = g_getgen($sepchar='')");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getgen(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char sepchar = '\0';
+   if (items > 0) {
+      STRLEN n_a;
+      char* s = SvPV(ST(0), n_a);
+      sepchar = s[0];
+   }
 
-   XSRETURN(0);
+   XSRETURN_PV(currlayer->algo->getGeneration().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -3779,17 +3943,16 @@ XS(plg_getpop)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getpop(!!!)");
+   if (items > 1) PERL_ERROR("Usage: $string = g_getpop($sepchar='')");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getpop(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char sepchar = '\0';
+   if (items > 0) {
+      STRLEN n_a;
+      char* s = SvPV(ST(0), n_a);
+      sepchar = s[0];
+   }
 
-   XSRETURN(0);
+   XSRETURN_PV(currlayer->algo->getPopulation().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -3799,15 +3962,28 @@ XS(plg_setrule)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_setrule(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_setrule($string)");
 
-/* not yet implemented!!!
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_setrule(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char* rule_string = SvPV(ST(0), n_a);
+
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   const char* err;
+   if (rule_string == NULL || rule_string[0] == 0) {
+      err = currlayer->algo->setrule("B3/S23");
+   } else {
+      err = currlayer->algo->setrule(rule_string);
+   }
+   if (err) {
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      PERL_ERROR(err);
+   } else if ( global_liferules.hasB0notS8 && currlayer->hash ) {
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      PERL_ERROR("B0-not-S8 rules are not allowed when hashing.");
+   } else {
+      // show new rule in main window's title but don't change name
+      ChangeWindowTitle(wxEmptyString);
+   }
 
    XSRETURN(0);
 }
@@ -3819,17 +3995,9 @@ XS(plg_getrule)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getrule(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $string = g_getrule()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getrule(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_PV(currlayer->algo->getrule());
 }
 
 // -----------------------------------------------------------------------------
@@ -3877,7 +4045,7 @@ XS(plg_getpos)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items < 0 || items > 1) PERL_ERROR("Usage: @xy = g_getpos($sepchar='')");
+   if (items > 1) PERL_ERROR("Usage: @xy = g_getpos($sepchar='')");
 
    char sepchar = '\0';
    if (items > 0) {
@@ -3903,15 +4071,12 @@ XS(plg_setmag)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_setmag(!!!)");
+   if (items != 1) PERL_ERROR("Usage: g_setmag($int)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_setmag(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   int mag = SvIV(ST(0));
+
+   viewptr->SetMag(mag);
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3923,17 +4088,9 @@ XS(plg_getmag)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_getmag(!!!)");
+   if (items != 0) PERL_ERROR("Usage: $int = g_getmag()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_getmag(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
-
-   XSRETURN(0);
+   XSRETURN_IV(viewptr->GetMag());
 }
 
 // -----------------------------------------------------------------------------
@@ -3943,15 +4100,10 @@ XS(plg_fit)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_fit(!!!)");
+   if (items != 0) PERL_ERROR("Usage: g_fit()");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_fit(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   viewptr->FitPattern();
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3989,12 +4141,8 @@ XS(plg_visrect)
    int wd = SvIV(ST(2));
    int ht = SvIV(ST(3));
    // check that wd & ht are > 0
-   if (wd <= 0) {
-      PERL_ERROR("g_visrect error: width must be > 0.");
-   }
-   if (ht <= 0) {
-      PERL_ERROR("g_visrect error: height must be > 0.");
-   }
+   if (wd <= 0) PERL_ERROR("g_visrect error: width must be > 0.");
+   if (ht <= 0) PERL_ERROR("g_visrect error: height must be > 0.");
 
    bigint left = x;
    bigint top = y;
@@ -4250,7 +4398,7 @@ XS(plg_getname)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items < 0 || items > 1) PERL_ERROR("Usage: $name = g_getname($index=current)");
+   if (items > 1) PERL_ERROR("Usage: $name = g_getname($index=current)");
 
    int index = currindex;
    if (items > 0) index = SvIV(ST(0));
