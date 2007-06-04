@@ -598,40 +598,40 @@ extern "C"
 {
    // startup/shutdown
    void(*G_Py_Initialize)(void) = NULL;
-   PyObject*(*G_Py_InitModule4)(char *, struct PyMethodDef *, char *, PyObject *, int) = NULL;
+   PyObject*(*G_Py_InitModule4)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
    void(*G_Py_Finalize)(void) = NULL;
 
    // errors
    PyObject*(*G_PyErr_Occurred)(void) = NULL;
-   void(*G_PyErr_SetString)(PyObject *, const char *) = NULL;
+   void(*G_PyErr_SetString)(PyObject*, const char*) = NULL;
 
    // ints
-   long(*G_PyInt_AsLong)(PyObject *) = NULL;
+   long(*G_PyInt_AsLong)(PyObject*) = NULL;
    PyObject*(*G_PyInt_FromLong)(long) = NULL;
    PyTypeObject *G_PyInt_Type = NULL;
 
    // lists
    PyObject*(*G_PyList_New)(int size) = NULL;
-   int(*G_PyList_Append)(PyObject *, PyObject *) = NULL;
-   PyObject*(*G_PyList_GetItem)(PyObject *, int) = NULL;
-   int(*G_PyList_SetItem)(PyObject *, int, PyObject *) = NULL;
-   int(*G_PyList_Size)(PyObject *) = NULL;
+   int(*G_PyList_Append)(PyObject*, PyObject*) = NULL;
+   PyObject*(*G_PyList_GetItem)(PyObject*, int) = NULL;
+   int(*G_PyList_SetItem)(PyObject*, int, PyObject*) = NULL;
+   int(*G_PyList_Size)(PyObject*) = NULL;
    PyTypeObject* G_PyList_Type = NULL;
 
    // tuples
-   PyObject *(*G_PyTuple_New)(int) = NULL;
-   int(*G_PyTuple_SetItem)(PyObject *, int, PyObject *) = NULL;
-   PyObject *(*G_PyTuple_GetItem)(PyObject *, int) = NULL;
+   PyObject*(*G_PyTuple_New)(int) = NULL;
+   int(*G_PyTuple_SetItem)(PyObject*, int, PyObject*) = NULL;
+   PyObject*(*G_PyTuple_GetItem)(PyObject*, int) = NULL;
 
    // misc
-   int(*G_PyArg_Parse)(PyObject *, char *, ...) = NULL;
-   int(*G_PyArg_ParseTuple)(PyObject *, char *, ...) = NULL;
-   PyObject*(*G_PyImport_ImportModule)(const char *) = NULL;
-   PyObject*(*G_PyDict_GetItemString)(PyObject *, const char *) = NULL;
-   PyObject*(*G_PyModule_GetDict)(PyObject *) = NULL;
-   PyObject*(*G_Py_BuildValue)(char *, ...) = NULL;
-   PyObject*(*G_Py_FindMethod)(PyMethodDef[], PyObject *, char *) = NULL;
-   int(*G_PyRun_SimpleString)(const char *) = NULL;
+   int(*G_PyArg_Parse)(PyObject*, char*, ...) = NULL;
+   int(*G_PyArg_ParseTuple)(PyObject*, char*, ...) = NULL;
+   PyObject*(*G_PyImport_ImportModule)(const char*) = NULL;
+   PyObject*(*G_PyDict_GetItemString)(PyObject*, const char*) = NULL;
+   PyObject*(*G_PyModule_GetDict)(PyObject*) = NULL;
+   PyObject*(*G_Py_BuildValue)(char*, ...) = NULL;
+   PyObject*(*G_Py_FindMethod)(PyMethodDef[], PyObject*, char*) = NULL;
+   int(*G_PyRun_SimpleString)(const char*) = NULL;
    PyObject* G__Py_NoneStruct = NULL;                    // used by Py_None
 }
 
@@ -667,13 +667,13 @@ extern "C"
 #else
    #define PYTHON_PROC void *
 #endif
-#define PYTHON_FUNC(func) { _T(#func), (PYTHON_PROC *)&G_ ## func },
+#define PYTHON_FUNC(func) { _T(#func), (PYTHON_PROC*)&G_ ## func },
 
 // store function names and their addresses in Python lib
 static struct PythonFunc
 {
-   const wxChar *name;     // function name
-   PYTHON_PROC *ptr;       // function pointer
+   const wxChar* name;     // function name
+   PYTHON_PROC* ptr;       // function pointer
 } pythonFuncs[] =
 {
    PYTHON_FUNC(Py_Initialize)
@@ -706,16 +706,16 @@ static struct PythonFunc
 
 // imported exception objects -- we can't import the symbols from the
 // lib as this can cause errors (importing data symbols is not reliable)
-static PyObject *imp_PyExc_RuntimeError = NULL;
-static PyObject *imp_PyExc_KeyboardInterrupt = NULL;
+static PyObject* imp_PyExc_RuntimeError = NULL;
+static PyObject* imp_PyExc_KeyboardInterrupt = NULL;
 
 #define PyExc_RuntimeError imp_PyExc_RuntimeError
 #define PyExc_KeyboardInterrupt imp_PyExc_KeyboardInterrupt
 
 static void GetPythonExceptions()
 {
-   PyObject *exmod = PyImport_ImportModule("exceptions");
-   PyObject *exdict = PyModule_GetDict(exmod);
+   PyObject* exmod = PyImport_ImportModule("exceptions");
+   PyObject* exdict = PyModule_GetDict(exmod);
    PyExc_RuntimeError = PyDict_GetItemString(exdict, "RuntimeError");
    PyExc_KeyboardInterrupt = PyDict_GetItemString(exdict, "KeyboardInterrupt");
    Py_XINCREF(PyExc_RuntimeError);
@@ -824,7 +824,7 @@ bool PythonScriptAborted()
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_new(PyObject *self, PyObject *args)
+static PyObject* pyg_new(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -841,7 +841,7 @@ static PyObject *pyg_new(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_open(PyObject *self, PyObject *args)
+static PyObject* pyg_open(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -862,7 +862,7 @@ static PyObject *pyg_open(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_save(PyObject *self, PyObject *args)
+static PyObject* pyg_save(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -884,7 +884,7 @@ static PyObject *pyg_save(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_fit(PyObject *self, PyObject *args)
+static PyObject* pyg_fit(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -900,7 +900,7 @@ static PyObject *pyg_fit(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_fitsel(PyObject *self, PyObject *args)
+static PyObject* pyg_fitsel(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -921,7 +921,7 @@ static PyObject *pyg_fitsel(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_cut(PyObject *self, PyObject *args)
+static PyObject* pyg_cut(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -942,7 +942,7 @@ static PyObject *pyg_cut(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_copy(PyObject *self, PyObject *args)
+static PyObject* pyg_copy(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -963,7 +963,7 @@ static PyObject *pyg_copy(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_clear(PyObject *self, PyObject *args)
+static PyObject* pyg_clear(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -988,7 +988,7 @@ static PyObject *pyg_clear(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_paste(PyObject *self, PyObject *args)
+static PyObject* pyg_paste(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1041,7 +1041,7 @@ static PyObject *pyg_paste(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_shrink(PyObject *self, PyObject *args)
+static PyObject* pyg_shrink(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1062,7 +1062,7 @@ static PyObject *pyg_shrink(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_randfill(PyObject *self, PyObject *args)
+static PyObject* pyg_randfill(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1092,7 +1092,7 @@ static PyObject *pyg_randfill(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_flip(PyObject *self, PyObject *args)
+static PyObject* pyg_flip(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1117,7 +1117,7 @@ static PyObject *pyg_flip(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_rotate(PyObject *self, PyObject *args)
+static PyObject* pyg_rotate(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1139,7 +1139,7 @@ static PyObject *pyg_rotate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setpos(PyObject *self, PyObject *args)
+static PyObject* pyg_setpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1174,7 +1174,7 @@ static PyObject *pyg_setpos(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getpos(PyObject *self, PyObject *args)
+static PyObject* pyg_getpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1186,7 +1186,7 @@ static PyObject *pyg_getpos(PyObject *self, PyObject *args)
    viewptr->GetPos(bigx, bigy);
 
    // return position as x,y tuple
-   PyObject *xytuple = PyTuple_New(2);
+   PyObject* xytuple = PyTuple_New(2);
    PyTuple_SetItem(xytuple, 0, Py_BuildValue("s",bigx.tostring(sepchar)));
    PyTuple_SetItem(xytuple, 1, Py_BuildValue("s",bigy.tostring(sepchar)));
    return xytuple;
@@ -1194,7 +1194,7 @@ static PyObject *pyg_getpos(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setmag(PyObject *self, PyObject *args)
+static PyObject* pyg_setmag(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1211,7 +1211,7 @@ static PyObject *pyg_setmag(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getmag(PyObject *self, PyObject *args)
+static PyObject* pyg_getmag(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1223,7 +1223,7 @@ static PyObject *pyg_getmag(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_addlayer(PyObject *self, PyObject *args)
+static PyObject* pyg_addlayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1244,7 +1244,7 @@ static PyObject *pyg_addlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_clone(PyObject *self, PyObject *args)
+static PyObject* pyg_clone(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1265,7 +1265,7 @@ static PyObject *pyg_clone(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_duplicate(PyObject *self, PyObject *args)
+static PyObject* pyg_duplicate(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1286,7 +1286,7 @@ static PyObject *pyg_duplicate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_dellayer(PyObject *self, PyObject *args)
+static PyObject* pyg_dellayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1307,7 +1307,7 @@ static PyObject *pyg_dellayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_movelayer(PyObject *self, PyObject *args)
+static PyObject* pyg_movelayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1337,7 +1337,7 @@ static PyObject *pyg_movelayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setlayer(PyObject *self, PyObject *args)
+static PyObject* pyg_setlayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1361,7 +1361,7 @@ static PyObject *pyg_setlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getlayer(PyObject *self, PyObject *args)
+static PyObject* pyg_getlayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1373,7 +1373,7 @@ static PyObject *pyg_getlayer(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_numlayers(PyObject *self, PyObject *args)
+static PyObject* pyg_numlayers(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1385,7 +1385,7 @@ static PyObject *pyg_numlayers(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_maxlayers(PyObject *self, PyObject *args)
+static PyObject* pyg_maxlayers(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1397,7 +1397,7 @@ static PyObject *pyg_maxlayers(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setname(PyObject *self, PyObject *args)
+static PyObject* pyg_setname(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1431,7 +1431,7 @@ static PyObject *pyg_setname(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getname(PyObject *self, PyObject *args)
+static PyObject* pyg_getname(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1452,7 +1452,7 @@ static PyObject *pyg_getname(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setoption(PyObject *self, PyObject *args)
+static PyObject* pyg_setoption(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1472,7 +1472,7 @@ static PyObject *pyg_setoption(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getoption(PyObject *self, PyObject *args)
+static PyObject* pyg_getoption(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1491,7 +1491,7 @@ static PyObject *pyg_getoption(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setcolor(PyObject *self, PyObject *args)
+static PyObject* pyg_setcolor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1518,7 +1518,7 @@ static PyObject *pyg_setcolor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getcolor(PyObject *self, PyObject *args)
+static PyObject* pyg_getcolor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1542,7 +1542,7 @@ static PyObject *pyg_getcolor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_empty(PyObject *self, PyObject *args)
+static PyObject* pyg_empty(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1554,7 +1554,7 @@ static PyObject *pyg_empty(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_run(PyObject *self, PyObject *args)
+static PyObject* pyg_run(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1580,7 +1580,7 @@ static PyObject *pyg_run(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_step(PyObject *self, PyObject *args)
+static PyObject* pyg_step(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1598,7 +1598,7 @@ static PyObject *pyg_step(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setstep(PyObject *self, PyObject *args)
+static PyObject* pyg_setstep(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1615,7 +1615,7 @@ static PyObject *pyg_setstep(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getstep(PyObject *self, PyObject *args)
+static PyObject* pyg_getstep(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1627,7 +1627,7 @@ static PyObject *pyg_getstep(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setbase(PyObject *self, PyObject *args)
+static PyObject* pyg_setbase(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1652,7 +1652,7 @@ static PyObject *pyg_setbase(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getbase(PyObject *self, PyObject *args)
+static PyObject* pyg_getbase(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1664,7 +1664,7 @@ static PyObject *pyg_getbase(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_advance(PyObject *self, PyObject *args)
+static PyObject* pyg_advance(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1694,7 +1694,7 @@ static PyObject *pyg_advance(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_reset(PyObject *self, PyObject *args)
+static PyObject* pyg_reset(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1712,7 +1712,7 @@ static PyObject *pyg_reset(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getgen(PyObject *self, PyObject *args)
+static PyObject* pyg_getgen(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1725,7 +1725,7 @@ static PyObject *pyg_getgen(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getpop(PyObject *self, PyObject *args)
+static PyObject* pyg_getpop(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1738,7 +1738,7 @@ static PyObject *pyg_getpop(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setrule(PyObject *self, PyObject *args)
+static PyObject* pyg_setrule(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1772,7 +1772,7 @@ static PyObject *pyg_setrule(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getrule(PyObject *self, PyObject *args)
+static PyObject* pyg_getrule(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1785,10 +1785,10 @@ static PyObject *pyg_getrule(PyObject *self, PyObject *args)
 // -----------------------------------------------------------------------------
 
 // helper routine used in calls that build cell lists
-static void AddCell(PyObject *list, long x, long y)
+void AddCell(PyObject* list, long x, long y)
 {
-   PyObject *xo = PyInt_FromLong(x);
-   PyObject *yo = PyInt_FromLong(y);
+   PyObject* xo = PyInt_FromLong(x);
+   PyObject* yo = PyInt_FromLong(y);
    PyList_Append(list, xo);
    PyList_Append(list, yo);
    // must decrement references to avoid Python memory leak
@@ -1799,7 +1799,7 @@ static void AddCell(PyObject *list, long x, long y)
 // -----------------------------------------------------------------------------
 
 // helper routine to extract cell list from given universe
-static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
+bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
 {
    if ( !universe->isEmpty() ) {
       bigint top, left, bottom, right;
@@ -1839,7 +1839,7 @@ static bool ExtractCells(PyObject *list, lifealgo *universe, bool shift = false)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_parse(PyObject *self, PyObject *args)
+static PyObject* pyg_parse(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1849,7 +1849,7 @@ static PyObject *pyg_parse(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "sllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
-   PyObject *outlist = PyList_New(0);
+   PyObject* outlist = PyList_New(0);
 
    long x = 0, y = 0;
 
@@ -1897,17 +1897,17 @@ static PyObject *pyg_parse(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_transform(PyObject *self, PyObject *args)
+static PyObject* pyg_transform(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    long x0, y0, axx, axy, ayx, ayy;
-   PyObject *inlist;
+   PyObject* inlist;
 
    if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &inlist, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
-   PyObject *outlist = PyList_New(0);
+   PyObject* outlist = PyList_New(0);
 
    int num_cells = PyList_Size(inlist) / 2;
    for (int n = 0; n < num_cells; n++) {
@@ -1927,18 +1927,18 @@ static PyObject *pyg_transform(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_evolve(PyObject *self, PyObject *args)
+static PyObject* pyg_evolve(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int ngens = 0;
-   PyObject *given_list;
+   PyObject* given_list;
 
    if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &ngens)) return NULL;
 
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    if (currlayer->hash) {
       tempalgo = new hlifealgo();
       tempalgo->setMaxMemory(maxhashmem);
@@ -1970,8 +1970,8 @@ static PyObject *pyg_evolve(PyObject *self, PyObject *args)
    mainptr->generating = false;
 
    // convert new pattern into a new cell list
-   PyObject *outlist = PyList_New(0);
-   bool done = ExtractCells(outlist, tempalgo);
+   PyObject* outlist = PyList_New(0);
+   bool done = ExtractCellList(outlist, tempalgo);
    delete tempalgo;
    if (!done) {
       Py_DECREF(outlist);
@@ -1990,7 +1990,7 @@ static PyObject *pyg_evolve(PyObject *self, PyObject *args)
    #define FILENAME filename
 #endif
 
-static PyObject *pyg_load(PyObject *self, PyObject *args)
+static PyObject* pyg_load(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1999,7 +1999,7 @@ static PyObject *pyg_load(PyObject *self, PyObject *args)
    if (!PyArg_ParseTuple(args, "s", &filename)) return NULL;
 
    // create temporary qlife universe
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
 
@@ -2028,8 +2028,8 @@ static PyObject *pyg_load(PyObject *self, PyObject *args)
 
    // convert pattern into a cell list, shifting cell coords so that the
    // bounding box's top left cell is at 0,0
-   PyObject *outlist = PyList_New(0);
-   bool done = ExtractCells(outlist, tempalgo, true);
+   PyObject* outlist = PyList_New(0);
+   bool done = ExtractCellList(outlist, tempalgo, true);
    delete tempalgo;
    if (!done) {
       Py_DECREF(outlist);
@@ -2041,11 +2041,11 @@ static PyObject *pyg_load(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_store(PyObject *self, PyObject *args)
+static PyObject* pyg_store(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   PyObject *given_list;
+   PyObject* given_list;
    char* filename;
    char* desc = NULL;      // the description string is currently ignored!!!
 
@@ -2053,7 +2053,7 @@ static PyObject *pyg_store(PyObject *self, PyObject *args)
       return NULL;
 
    // create temporary qlife universe
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
 
@@ -2091,7 +2091,7 @@ static PyObject *pyg_store(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_putcells(PyObject *self, PyObject *args)
+static PyObject* pyg_putcells(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2107,13 +2107,13 @@ static PyObject *pyg_putcells(PyObject *self, PyObject *args)
    // 'copy' mode currently has the same effect as 'or' mode
    // because there is no bounding box to set OFF cells
    char* mode = "or";
-   PyObject *list;
+   PyObject* list;
 
    if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
       return NULL;
 
    int num_cells = PyList_Size(list) / 2;
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
 
    wxString modestr = wxString(mode, wxConvLocal);
    if ( !(modestr.IsSameAs(wxT("or"), false)
@@ -2175,16 +2175,16 @@ static PyObject *pyg_putcells(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getcells(PyObject *self, PyObject *args)
+static PyObject* pyg_getcells(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   PyObject *rect_list;
+   PyObject* rect_list;
 
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
    // convert pattern in given rect into a cell list
-   PyObject *outlist = PyList_New(0);
+   PyObject* outlist = PyList_New(0);
 
    int numitems = PyList_Size(rect_list);
    if (numitems == 0) {
@@ -2209,7 +2209,7 @@ static PyObject *pyg_getcells(PyObject *self, PyObject *args)
       int ibottom = itop + ht - 1;
       int cx, cy;
       int cntr = 0;
-      lifealgo *curralgo = currlayer->algo;
+      lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
             int skip = curralgo->nextcell(cx, cy);
@@ -2238,7 +2238,7 @@ static PyObject *pyg_getcells(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getclip(PyObject *self, PyObject *args)
+static PyObject* pyg_getclip(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2253,10 +2253,10 @@ static PyObject *pyg_getclip(PyObject *self, PyObject *args)
    // convert pattern in clipboard into a cell list, but where the first 2 items
    // are the pattern's width and height (not necessarily the minimal bounding box
    // because the pattern might have empty borders, or it might even be empty)
-   PyObject *outlist = PyList_New(0);
+   PyObject* outlist = PyList_New(0);
 
    // create a temporary universe for storing clipboard pattern
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();   // qlife's setcell/getcell are faster
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
 
@@ -2314,11 +2314,11 @@ static PyObject *pyg_getclip(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_visrect(PyObject *self, PyObject *args)
+static PyObject* pyg_visrect(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   PyObject *rect_list;
+   PyObject* rect_list;
 
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
@@ -2354,11 +2354,11 @@ static PyObject *pyg_visrect(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_select(PyObject *self, PyObject *args)
+static PyObject* pyg_select(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   PyObject *rect_list;
+   PyObject* rect_list;
 
    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
 
@@ -2398,14 +2398,14 @@ static PyObject *pyg_select(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getrect(PyObject *self, PyObject *args)
+static PyObject* pyg_getrect(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *outlist = PyList_New(0);
+   PyObject* outlist = PyList_New(0);
 
    if (!currlayer->algo->isEmpty()) {
       bigint top, left, bottom, right;
@@ -2429,14 +2429,14 @@ static PyObject *pyg_getrect(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getselrect(PyObject *self, PyObject *args)
+static PyObject* pyg_getselrect(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   PyObject *outlist = PyList_New(0);
+   PyObject* outlist = PyList_New(0);
 
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
@@ -2459,7 +2459,7 @@ static PyObject *pyg_getselrect(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setcell(PyObject *self, PyObject *args)
+static PyObject* pyg_setcell(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2479,7 +2479,7 @@ static PyObject *pyg_setcell(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getcell(PyObject *self, PyObject *args)
+static PyObject* pyg_getcell(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2492,7 +2492,7 @@ static PyObject *pyg_getcell(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_setcursor(PyObject *self, PyObject *args)
+static PyObject* pyg_setcursor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2517,7 +2517,7 @@ static PyObject *pyg_setcursor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getcursor(PyObject *self, PyObject *args)
+static PyObject* pyg_getcursor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2529,7 +2529,7 @@ static PyObject *pyg_getcursor(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_update(PyObject *self, PyObject *args)
+static PyObject* pyg_update(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2551,7 +2551,7 @@ static PyObject *pyg_update(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_autoupdate(PyObject *self, PyObject *args)
+static PyObject* pyg_autoupdate(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2567,7 +2567,7 @@ static PyObject *pyg_autoupdate(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_getkey(PyObject *self, PyObject *args)
+static PyObject* pyg_getkey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2582,7 +2582,7 @@ static PyObject *pyg_getkey(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_dokey(PyObject *self, PyObject *args)
+static PyObject* pyg_dokey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2598,7 +2598,7 @@ static PyObject *pyg_dokey(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_appdir(PyObject *self, PyObject *args)
+static PyObject* pyg_appdir(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2610,7 +2610,7 @@ static PyObject *pyg_appdir(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_show(PyObject *self, PyObject *args)
+static PyObject* pyg_show(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2630,7 +2630,7 @@ static PyObject *pyg_show(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_error(PyObject *self, PyObject *args)
+static PyObject* pyg_error(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2650,7 +2650,7 @@ static PyObject *pyg_error(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_warn(PyObject *self, PyObject *args)
+static PyObject* pyg_warn(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2666,7 +2666,7 @@ static PyObject *pyg_warn(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_note(PyObject *self, PyObject *args)
+static PyObject* pyg_note(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2682,7 +2682,7 @@ static PyObject *pyg_note(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_check(PyObject *self, PyObject *args)
+static PyObject* pyg_check(PyObject* self, PyObject* args)
 {
    // don't call checkevents() here otherwise we can't safely write code like
    //    if g.getlayer() == target:
@@ -2703,7 +2703,7 @@ static PyObject *pyg_check(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_exit(PyObject *self, PyObject *args)
+static PyObject* pyg_exit(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2729,7 +2729,7 @@ static PyObject *pyg_exit(PyObject *self, PyObject *args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject *pyg_stderr(PyObject *self, PyObject *args)
+static PyObject* pyg_stderr(PyObject* self, PyObject* args)
 {
    // probably safer not to call checkevents here
    // if (PythonScriptAborted()) return NULL;
@@ -3012,6 +3012,48 @@ bool PerlScriptAborted()
 
 // -----------------------------------------------------------------------------
 
+// helper routine to extract cell array from given universe
+const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = false)
+{
+   if ( !universe->isEmpty() ) {
+      bigint top, left, bottom, right;
+      universe->findedges(&top, &left, &bottom, &right);
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         return "Universe is too big to extract all cells!";
+      }
+      int itop = top.toint();
+      int ileft = left.toint();
+      int ibottom = bottom.toint();
+      int iright = right.toint();
+      int cx, cy;
+      int cntr = 0;
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         for ( cx=ileft; cx<=iright; cx++ ) {
+            int skip = universe->nextcell(cx, cy);
+            if (skip >= 0) {
+               // found next live cell in this row
+               cx += skip;
+               if (shift) {
+                  // shift cells so that top left cell of bounding box is at 0,0
+                  av_push(outarray, newSViv(cx - ileft));
+                  av_push(outarray, newSViv(cy - itop));
+               } else {
+                  av_push(outarray, newSViv(cx));
+                  av_push(outarray, newSViv(cy));
+               }
+            } else {
+               cx = iright;  // done this row
+            }
+            cntr++;
+            if ((cntr % 4096) == 0 && PerlScriptAborted()) return NULL;
+         }
+      }
+   }
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 // some useful macros
 
 #define RETURN_IF_ABORTED if (PerlScriptAborted()) Perl_croak(aTHX_ NULL)
@@ -3072,17 +3114,55 @@ XS(plg_load)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_load(!!!)");
+   if (items != 1) PERL_ERROR("Usage: $cells = g_load($filename)");
 
-/* not yet implemented!!!
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_load(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char* filename = SvPV(ST(0), n_a);
 
-   XSRETURN(0);
+   // create temporary qlife universe
+   lifealgo* tempalgo;
+   tempalgo = new qlifealgo();
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+
+   // readpattern might change global rule table
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+
+   // read pattern into temporary universe
+   const char* err = readpattern(FILENAME, *tempalgo);
+   if (err && strcmp(err,cannotreadhash) == 0) {
+      // macrocell file, so switch to hlife universe
+      delete tempalgo;
+      tempalgo = new hlifealgo();
+      tempalgo->setMaxMemory(maxhashmem);
+      if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+      err = readpattern(FILENAME, *tempalgo);
+   }
+
+   // restore rule
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+
+   if (err) {
+      delete tempalgo;
+      PERL_ERROR(err);
+   }
+
+   // convert pattern into a cell list, shifting cell coords so that the
+   // bounding box's top left cell is at 0,0
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
+   err = ExtractCellArray(outarray, tempalgo, true);
+   delete tempalgo;
+   if (err) {
+      // assume Perl interpreter will free all memory when it quits???
+      // int key = av_len(inarray);
+      // while (key >= 0) { av_delete(outarray, key, G_DISCARD); key--; }
+      // av_undef(outarray);
+      PERL_ERROR(err);
+   }
+
+   SP -= items;
+   ST(0) = newRV( (SV*)outarray );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3092,15 +3172,49 @@ XS(plg_store)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_store(!!!)");
+   if (items != 2) PERL_ERROR("Usage: g_store($cells,$filename)");
 
-/* not yet implemented!!!
+   SV* cells = ST(0);
+   if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
+       PERL_ERROR("g_store error: 1st parameter is not a valid array reference.");
+   }
+   AV* inarray = (AV*)SvRV(cells);
+   int num_cells = (av_len(inarray) + 1) / 2;
+   // note that av_len returns max index or -1 if array is empty
+   
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_store(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char* filename = SvPV(ST(1), n_a);
+
+   // create temporary qlife universe
+   lifealgo* tempalgo;
+   tempalgo = new qlifealgo();
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+
+   // copy cell list into temporary universe
+   for (int n = 0; n < num_cells; n++) {
+      int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
+      int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
+
+      tempalgo->setcell(x, y, 1);
+
+      if ((n % 4096) == 0 && PerlScriptAborted()) {
+         tempalgo->endofpattern();
+         delete tempalgo;
+         Perl_croak(aTHX_ NULL);
+      }
+   }
+   tempalgo->endofpattern();
+
+   // write pattern to given file in RLE/XRLE format
+   bigint top, left, bottom, right;
+   tempalgo->findedges(&top, &left, &bottom, &right);
+   const char* err = writepattern(FILENAME, *tempalgo,
+                        savexrle ? XRLE_format : RLE_format,
+                        top.toint(), left.toint(), bottom.toint(), right.toint());
+   delete tempalgo;
+   if (err) {
+      PERL_ERROR(err);
+   }
 
    XSRETURN(0);
 }
@@ -3204,15 +3318,49 @@ XS(plg_paste)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_paste(!!!)");
+   if (items != 3) PERL_ERROR("Usage: g_paste($x,$y,$mode)");
 
-/* not yet implemented!!!
+   int x = SvIV(ST(0));
+   int y = SvIV(ST(1));
+
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_paste(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char* mode = SvPV(ST(2), n_a);
+
+   if (!mainptr->ClipboardHasText()) {
+      PERL_ERROR("g_paste error: no pattern in clipboard.");
+   }
+
+   // temporarily change selection rect and paste mode
+   bigint oldleft = currlayer->selleft;
+   bigint oldtop = currlayer->seltop;
+   bigint oldright = currlayer->selright;
+   bigint oldbottom = currlayer->selbottom;
+
+   const char* oldmode = GetPasteMode();
+   wxString modestr = wxString(mode, wxConvLocal);
+   if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
+   else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
+   else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
+   else {
+      PERL_ERROR("g_paste error: unknown mode.");
+   }
+
+   // create huge selection rect so no possibility of error message
+   currlayer->selleft = x;
+   currlayer->seltop = y;
+   currlayer->selright = currlayer->selleft;   currlayer->selright += INT_MAX;
+   currlayer->selbottom = currlayer->seltop;   currlayer->selbottom += INT_MAX;
+
+   viewptr->PasteClipboard(true);      // true = paste to selection
+
+   // restore selection rect and paste mode
+   currlayer->selleft = oldleft;
+   currlayer->seltop = oldtop;
+   currlayer->selright = oldright;
+   currlayer->selbottom = oldbottom;
+   SetPasteMode(oldmode);
+
+   DoAutoUpdate();
 
    XSRETURN(0);
 }
@@ -3316,17 +3464,67 @@ XS(plg_parse)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_parse(!!!)");
+   if (items != 7) PERL_ERROR("Usage: $outcells = g_parse($string,$x,$y,$axx,$axy,$ayx,$ayy)");
 
-/* not yet implemented!!!
    STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_parse(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   char* s = SvPV(ST(0), n_a);
+   int x0  = SvIV(ST(1));
+   int y0  = SvIV(ST(2));
+   int axx = SvIV(ST(3));
+   int axy = SvIV(ST(4));
+   int ayx = SvIV(ST(5));
+   int ayy = SvIV(ST(6));
 
-   XSRETURN(0);
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
+
+   int x = 0, y = 0;
+
+   if (strchr(s, '*')) {
+      // parsing 'visual' format
+      int c = *s++;
+      while (c) {
+         switch (c) {
+         case '\n': if (x) { x = 0; y++; } break;
+         case '.': x++; break;
+         case '*':
+            av_push(outarray, newSViv(x0 + x * axx + y * axy));
+            av_push(outarray, newSViv(y0 + x * ayx + y * ayy));
+            x++;
+            break;
+         }
+         c = *s++;
+      }
+   } else {
+      // parsing 'RLE' format
+      int prefix = 0;
+      bool done = false;
+      int c = *s++;
+      while (c && !done) {
+         if (isdigit(c))
+            prefix = 10 * prefix + (c - '0');
+         else {
+            prefix += (prefix == 0);
+            switch (c) {
+            case '!': done = true; break;
+            case '$': x = 0; y += prefix; break;
+            case 'b': x += prefix; break;
+            case 'o':
+               for (int k = 0; k < prefix; k++, x++) {
+                  av_push(outarray, newSViv(x0 + x * axx + y * axy));
+                  av_push(outarray, newSViv(y0 + x * ayx + y * ayy));
+               }
+               break;
+            }
+            prefix = 0;
+         }
+         c = *s++;
+      }
+   }
+
+   SP -= items;
+   ST(0) = newRV( (SV*)outarray );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3336,17 +3534,39 @@ XS(plg_transform)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_transform(!!!)");
+   if (items != 7) PERL_ERROR("Usage: $outcells = g_transform($cells,$x,$y,$axx,$axy,$ayx,$ayy)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_transform(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   SV* cells = ST(0);
+   if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
+       PERL_ERROR("g_transform error: 1st parameter is not a valid array reference.");
+   }
+   AV* inarray = (AV*)SvRV(cells);
+   int num_cells = (av_len(inarray) + 1) / 2;
+   // note that av_len returns max index or -1 if array is empty
 
-   XSRETURN(0);
+   int x0  = SvIV(ST(1));
+   int y0  = SvIV(ST(2));
+   int axx = SvIV(ST(3));
+   int axy = SvIV(ST(4));
+   int ayx = SvIV(ST(5));
+   int ayy = SvIV(ST(6));
+
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
+
+   for (int n = 0; n < num_cells; n++) {
+      int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
+      int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
+
+      av_push(outarray, newSViv(x0 + x * axx + y * axy));
+      av_push(outarray, newSViv(y0 + x * ayx + y * ayy));
+
+      if ((n % 4096) == 0 && PerlScriptAborted()) break;
+   }
+
+   SP -= items;
+   ST(0) = newRV( (SV*)outarray );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3356,17 +3576,66 @@ XS(plg_evolve)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 666) PERL_ERROR("Usage: g_evolve(!!!)");
+   if (items != 2) PERL_ERROR("Usage: $outcells = g_evolve($cells,$numgens)");
 
-/* not yet implemented!!!
-   STRLEN n_a;
-   char* sss = SvPV(ST(0), n_a);
-   int iii = SvIV(ST(1));
-*/
-   const char* errmsg = NULL;//!!!GSF_evolve(sss, iii);
-   if (errmsg) PERL_ERROR(errmsg);
+   SV* cells = ST(0);
+   if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
+       PERL_ERROR("g_evolve error: 1st parameter is not a valid array reference.");
+   }
+   AV* inarray = (AV*)SvRV(cells);
+   int num_cells = (av_len(inarray) + 1) / 2;
+   // note that av_len returns max index or -1 if array is empty
 
-   XSRETURN(0);
+   int ngens = SvIV(ST(1));
+
+   // create a temporary universe of same type as current universe so we
+   // don't have to update the global rule table (in case it's a Wolfram rule)
+   lifealgo* tempalgo;
+   if (currlayer->hash) {
+      tempalgo = new hlifealgo();
+      tempalgo->setMaxMemory(maxhashmem);
+   } else {
+      tempalgo = new qlifealgo();
+   }
+   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+
+   // copy cell array into temporary universe
+   for (int n = 0; n < num_cells; n++) {
+      int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
+      int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
+
+      tempalgo->setcell(x, y, 1);
+
+      if ((n % 4096) == 0 && PerlScriptAborted()) {
+         tempalgo->endofpattern();
+         delete tempalgo;
+         Perl_croak(aTHX_ NULL);
+      }
+   }
+   tempalgo->endofpattern();
+
+   // advance pattern by ngens
+   mainptr->generating = true;
+   tempalgo->setIncrement(ngens);
+   tempalgo->step();
+   mainptr->generating = false;
+
+   // convert new pattern into a new cell array
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
+   const char* err = ExtractCellArray(outarray, tempalgo);
+   delete tempalgo;
+   if (err) {
+      // assume Perl interpreter will free all memory when it quits???
+      // int key = av_len(inarray);
+      // while (key >= 0) { av_delete(outarray, key, G_DISCARD); key--; }
+      // av_undef(outarray);
+      PERL_ERROR(err);
+   }
+
+   SP -= items;
+   ST(0) = newRV( (SV*)outarray );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3380,11 +3649,11 @@ XS(plg_putcells)
       PERL_ERROR("Usage: g_putcells($cells,$x=0,$y=0,$axx=1,$axy=0,$ayx=0,$ayy=1,$mode='or')");
 
    SV* cells = ST(0);
-   if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) )
+   if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
        PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference.");
-
-   AV* arrayref = (AV*)SvRV(cells);
-   int num_cells = (av_len(arrayref) + 1) / 2;
+   }
+   AV* inarray = (AV*)SvRV(cells);
+   int num_cells = (av_len(inarray) + 1) / 2;
    // note that av_len returns max index or -1 if array is empty
 
    // defaults for affine transform params
@@ -3408,7 +3677,7 @@ XS(plg_putcells)
    if (items > 6) ayy = SvIV(ST(6));
    if (items > 7) mode = SvPV(ST(7), n_a);
 
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
 
    wxString modestr = wxString(mode, wxConvLocal);
    if ( !(modestr.IsSameAs(wxT("or"), false)
@@ -3418,14 +3687,14 @@ XS(plg_putcells)
       PERL_ERROR("g_putcells error: unknown mode.");
    }
    if (modestr.IsSameAs(wxT("copy"), false)) {
-      // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
+      // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
    }
 
    if (modestr.IsSameAs(wxT("xor"), false)) {
       // loop code is duplicated here to allow 'or' case to execute faster
       for (int n = 0; n < num_cells; n++) {
-         int x = SvIV( *av_fetch(arrayref, 2 * n, 0) );
-         int y = SvIV( *av_fetch(arrayref, 2 * n + 1, 0) );
+         int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
+         int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
          int s = curralgo->getcell(newx, newy);
@@ -3438,8 +3707,8 @@ XS(plg_putcells)
    } else {
       int cellstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
       for (int n = 0; n < num_cells; n++) {
-         int x = SvIV( *av_fetch(arrayref, 2 * n, 0) );
-         int y = SvIV( *av_fetch(arrayref, 2 * n + 1, 0) );
+         int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
+         int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
 
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, cellstate);
@@ -3465,11 +3734,11 @@ XS(plg_getcells)
    dXSARGS;
    if (items != 0 && items != 4) PERL_ERROR("Usage: $cells = g_getcells(@rect)");
 
-   // convert pattern in given rect into a cell list (ie. array of live cell coords)
-   AV* outlist = (AV*)sv_2mortal( (SV*)newAV() );
+   // convert pattern in given rect into a cell array (ie. array of live cell coords)
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
    if (items == 0) {
-      // return empty cell list
+      // return empty cell array
    } else {
       // items == 4
       int x  = SvIV(ST(0));
@@ -3483,16 +3752,16 @@ XS(plg_getcells)
       int bottom = y + ht - 1;
       int cx, cy;
       int cntr = 0;
-      lifealgo *curralgo = currlayer->algo;
+      lifealgo* curralgo = currlayer->algo;
       for ( cy=y; cy<=bottom; cy++ ) {
          for ( cx=x; cx<=right; cx++ ) {
             int skip = curralgo->nextcell(cx, cy);
             if (skip >= 0) {
-               // found next live cell in this row so add coords to outlist
+               // found next live cell in this row so add coords to outarray
                cx += skip;
                if (cx <= right) {
-                  av_push(outlist, newSViv(cx));
-                  av_push(outlist, newSViv(cy));
+                  av_push(outarray, newSViv(cx));
+                  av_push(outarray, newSViv(cy));
                }
             } else {
                cx = right;  // done this row
@@ -3504,7 +3773,7 @@ XS(plg_getcells)
    }
 
    SP -= items;
-   ST(0) = newRV( (SV*)outlist );
+   ST(0) = newRV( (SV*)outarray );
    sv_2mortal(ST(0));
    XSRETURN(1);
 }
@@ -3522,13 +3791,13 @@ XS(plg_getclip)
       PERL_ERROR("g_getclip error: no pattern in clipboard.");
    }
 
-   // convert pattern in clipboard into a cell list, but where the first 2 items
+   // convert pattern in clipboard into a cell array, but where the first 2 items
    // are the pattern's width and height (not necessarily the minimal bounding box
    // because the pattern might have empty borders, or it might even be empty)
-   AV* outlist = (AV*)sv_2mortal( (SV*)newAV() );
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
    // create a temporary universe for storing clipboard pattern
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();   // qlife's setcell/getcell are faster
    if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
 
@@ -3546,8 +3815,8 @@ XS(plg_getclip)
       int wd = iright - ileft + 1;
       int ht = ibottom - itop + 1;
 
-      av_push(outlist, newSViv(wd));
-      av_push(outlist, newSViv(ht));
+      av_push(outarray, newSViv(wd));
+      av_push(outarray, newSViv(ht));
 
       // extract cells from tempalgo
       int cx, cy;
@@ -3559,8 +3828,8 @@ XS(plg_getclip)
                // found next live cell in this row
                cx += skip;
                // shift cells so that top left cell of bounding box is at 0,0
-               av_push(outlist, newSViv(cx - ileft));
-               av_push(outlist, newSViv(cy - itop));
+               av_push(outarray, newSViv(cx - ileft));
+               av_push(outarray, newSViv(cy - itop));
             } else {
                cx = iright;  // done this row
             }
@@ -3580,7 +3849,7 @@ XS(plg_getclip)
    }
 
    SP -= items;
-   ST(0) = newRV( (SV*)outlist );
+   ST(0) = newRV( (SV*)outarray );
    sv_2mortal(ST(0));
    XSRETURN(1);
 }
@@ -3710,11 +3979,6 @@ XS(plg_getcell)
    int state = currlayer->algo->getcell(SvIV(ST(0)), SvIV(ST(1)));
    
    XSRETURN_IV(state);
-   /* above is equivalent to:
-   SP -= items;
-   XPUSHs(sv_2mortal(newSViv(state)));
-   PUTBACK;
-   */
 }
 
 // -----------------------------------------------------------------------------
