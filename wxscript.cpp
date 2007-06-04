@@ -5050,14 +5050,6 @@ static void xs_init(pTHX)
 
 void RunPerlScript(const wxString &filepath)
 {
-#ifdef __WXMSW__
-   // do we really need this???
-   int argc = 0;
-   char* argv[] = { "" };
-   char* env[] = { "" };
-   PERL_SYS_INIT3(&argc, &argv, &env);
-#endif
-   
    my_perl = perl_alloc();
    if (!my_perl) {
       Warning(_("Could not create Perl interpreter!"));
@@ -5076,10 +5068,6 @@ void RunPerlScript(const wxString &filepath)
    
    perl_destruct(my_perl);
    perl_free(my_perl);
-   
-#ifdef __WXMSW__
-   PERL_SYS_TERM();
-#endif
 }
 
 // =============================================================================
