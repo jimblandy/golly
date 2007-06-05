@@ -26,17 +26,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Routines for getting, saving and changing user preferences:
 
-// Read preferences from the GollyPrefs file.
 void GetPrefs();
+// Read preferences from the GollyPrefs file.
 
-// Write preferences to the GollyPrefs file.
 void SavePrefs();
+// Write preferences to the GollyPrefs file.
 
+bool ChangePrefs();
 // Open a modal dialog so user can change various preferences.
 // Returns true if the user hits OK (so client can call SavePrefs).
-bool ChangePrefs();
 
-// Global preferences:
+// Global preference data:
 
 extern wxString gollydir;        // path of directory containing app
 

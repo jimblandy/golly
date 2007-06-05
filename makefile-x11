@@ -51,8 +51,9 @@ BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR
    $(OBJDIR)/lifepoll.o
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
-   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o \
-   $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
+   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
+   $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxlayer.o \
+   $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 all: $(OBJDIR) golly bgolly
 
@@ -160,12 +161,25 @@ qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
+$(OBJDIR)/wxperl.o: wxperl.cpp wxperl.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h \
+qlifealgo.h hlifealgo.h readpattern.h writepattern.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h wxscript.h
+	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
+
+$(OBJDIR)/wxpython.o: wxpython.cpp wxpython.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h \
+qlifealgo.h hlifealgo.h readpattern.h writepattern.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h wxscript.h
+	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
+
 $(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
-lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-qlifealgo.h liferules.h hlifealgo.h writepattern.h \
+liferules.h \
 wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
-wxinfo.h wxhelp.h wxlayer.h
-	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) $(PERL_INCLUDE) -c -o $@ wxscript.cpp
+wxlayer.h wxperl.h wxpython.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \

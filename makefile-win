@@ -66,8 +66,9 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(
    $(OBJDIR)/lifepoll.obj
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxrule.obj \
    $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj \
-   $(OBJDIR)/wxrender.obj $(OBJDIR)/wxscript.obj $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj \
-   $(OBJDIR)/wxcontrol.obj $(OBJDIR)/wxlayer.obj $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
+   $(OBJDIR)/wxrender.obj $(OBJDIR)/wxscript.obj $(OBJDIR)/wxperl.obj $(OBJDIR)/wxpython.obj \
+   $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj $(OBJDIR)/wxlayer.obj \
+   $(OBJDIR)/wxmain.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -395,12 +396,25 @@ qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h wxlayer.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrender.cpp
 
+$(OBJDIR)/wxperl.obj: wxperl.cpp wxperl.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h \
+qlifealgo.h hlifealgo.h readpattern.h writepattern.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h wxscript.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PERL_INCLUDE) wxperl.cpp
+
+$(OBJDIR)/wxpython.obj: wxpython.cpp wxpython.h \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h \
+qlifealgo.h hlifealgo.h readpattern.h writepattern.h \
+wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h \
+wxinfo.h wxhelp.h wxlayer.h wxscript.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PYTHON_INCLUDE) wxpython.cpp
+
 $(OBJDIR)/wxscript.obj: wxscript.cpp wxscript.h \
-lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-qlifealgo.h liferules.h hlifealgo.h writepattern.h \
+liferules.h \
 wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
-wxinfo.h wxhelp.h wxlayer.h
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PYTHON_INCLUDE) $(PERL_INCLUDE) wxscript.cpp
+wxlayer.h wxperl.h wxpython.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxscript.cpp
 
 $(OBJDIR)/wxfile.obj: wxfile.cpp \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
