@@ -33,6 +33,10 @@ APP_VERSION = 1.3
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
 PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 
+#!!! try loading Perl lib dynamically (but boot_DynaLoader is still statically linked???)
+#!!! PERL_LINK = /System/Library/Perl/5.8.6/darwin-thread-multi-2level/auto/DynaLoader/DynaLoader.a
+#!!! PERL_LINK = 
+
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 # following python command doesn't generate correct info on OS 10.4
@@ -40,10 +44,8 @@ PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distut
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
    -framework Foundation -framework Python
 
-# use -F/Library/Frameworks to force linking against newer Python, but it would
-# probably cause app to fail on systems that don't have that Python installed
-# PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
-#   -framework Foundation -F/Library/Frameworks -framework Python
+#!!! try loading Python lib dynamically
+#!!! PYTHON_LINK = 
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)

@@ -153,6 +153,7 @@ wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
 wxString patterndir;             // directory used by Show Patterns
 wxString scriptdir;              // directory used by Show Scripts
+wxString perllib;                // name of Perl library (loaded at runtime)
 wxString pythonlib;              // name of Python library (loaded at runtime)
 int dirwinwd = 180;              // width of directory window
 bool showpatterns = true;        // show pattern directory?
@@ -618,6 +619,7 @@ void SavePrefs()
    fprintf(f, "run_dir=%s\n", (const char*)rundir.mb_str(wxConvLocal));
    fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.mb_str(wxConvLocal));
    fprintf(f, "script_dir=%s\n", (const char*)scriptdir.mb_str(wxConvLocal));
+   fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
    fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
    fprintf(f, "dir_width=%d\n", dirwinwd);
    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
@@ -718,10 +720,13 @@ void GetPrefs()
    scriptdir = gollydir + SCRIPT_DIR;
    
    #ifdef __WXMSW__
+      perllib = wxT("perl.dll");          //!!!???
       pythonlib = wxT("python24.dll");
    #elif defined(__WXMAC__)
+      perllib = wxT("libperl.dylib");     //!!!???
       pythonlib = wxT("not used");
    #elif defined(__UNIX__)
+      perllib = wxT("libperl.so");        //!!!???
       pythonlib = wxT("libpython2.4.so");
    #endif
 
@@ -1012,6 +1017,9 @@ void GetPrefs()
             // reset to supplied script directory
             scriptdir = gollydir + SCRIPT_DIR;
          }
+
+      } else if (strcmp(keyword, "perl_lib") == 0) {
+         perllib = wxString(value,wxConvLocal);
 
       } else if (strcmp(keyword, "python_lib") == 0) {
          pythonlib = wxString(value,wxConvLocal);

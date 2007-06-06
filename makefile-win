@@ -27,10 +27,11 @@ PERL_INCLUDE = \
 -DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
 -DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl\lib\CORE"
 
-#!!! set PERL_LINK empty if/when we dynamiclly load Perl library
 # Simplified output from "perl -MExtUtils::Embed -e ldopts":
-PERL_LINK = \
--libpath:"C:\Perl\lib\CORE" C:\Perl\lib\CORE\perl58.lib C:\MVCT\lib\oldnames.lib
+#!!! PERL_LINK = \
+#!!! -libpath:"C:\Perl\lib\CORE" C:\Perl\lib\CORE\perl58.lib C:\MVCT\lib\oldnames.lib
+#!!! dynamically load Perl lib
+PERL_LINK = 
 
 
 ### Golly-related variables: ###

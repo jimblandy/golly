@@ -71,6 +71,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // so Golly will start up even if Python isn't installed.
 // Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
 
+// wxMac bug??? why does dynlib.Load fail if given
+// "/System/Library/Frameworks/Python.framework/Versions/2.3/Python"???
+//!!! #if 1
 #ifndef __WXMAC__
    // load Python lib at runtime
    #define USE_PYTHON_DYNAMIC
@@ -110,7 +113,7 @@ extern "C"
    // ints
    long(*G_PyInt_AsLong)(PyObject*) = NULL;
    PyObject*(*G_PyInt_FromLong)(long) = NULL;
-   PyTypeObject *G_PyInt_Type = NULL;
+   PyTypeObject* G_PyInt_Type = NULL;
 
    // lists
    PyObject*(*G_PyList_New)(int size) = NULL;
@@ -138,31 +141,31 @@ extern "C"
 }
 
 // redefine the Py* functions to their equivalent G_* wrappers
-#define Py_Initialize G_Py_Initialize
-#define Py_InitModule4 G_Py_InitModule4
-#define Py_Finalize G_Py_Finalize
-#define PyErr_Occurred G_PyErr_Occurred
-#define PyErr_SetString G_PyErr_SetString
-#define PyInt_AsLong G_PyInt_AsLong
-#define PyInt_FromLong G_PyInt_FromLong
-#define PyInt_Type (*G_PyInt_Type)
-#define PyList_New G_PyList_New
-#define PyList_Append G_PyList_Append
-#define PyList_GetItem G_PyList_GetItem
-#define PyList_SetItem G_PyList_SetItem
-#define PyList_Size G_PyList_Size
-#define PyList_Type (*G_PyList_Type)
-#define PyTuple_New G_PyTuple_New
-#define PyTuple_SetItem G_PyTuple_SetItem
-#define PyTuple_GetItem G_PyTuple_GetItem
-#define Py_BuildValue G_Py_BuildValue
-#define PyArg_Parse G_PyArg_Parse
-#define PyArg_ParseTuple G_PyArg_ParseTuple
-#define PyDict_GetItemString G_PyDict_GetItemString
+#define Py_Initialize         G_Py_Initialize
+#define Py_InitModule4        G_Py_InitModule4
+#define Py_Finalize           G_Py_Finalize
+#define PyErr_Occurred        G_PyErr_Occurred
+#define PyErr_SetString       G_PyErr_SetString
+#define PyInt_AsLong          G_PyInt_AsLong
+#define PyInt_FromLong        G_PyInt_FromLong
+#define PyInt_Type            (*G_PyInt_Type)
+#define PyList_New            G_PyList_New
+#define PyList_Append         G_PyList_Append
+#define PyList_GetItem        G_PyList_GetItem
+#define PyList_SetItem        G_PyList_SetItem
+#define PyList_Size           G_PyList_Size
+#define PyList_Type           (*G_PyList_Type)
+#define PyTuple_New           G_PyTuple_New
+#define PyTuple_SetItem       G_PyTuple_SetItem
+#define PyTuple_GetItem       G_PyTuple_GetItem
+#define Py_BuildValue         G_Py_BuildValue
+#define PyArg_Parse           G_PyArg_Parse
+#define PyArg_ParseTuple      G_PyArg_ParseTuple
+#define PyDict_GetItemString  G_PyDict_GetItemString
 #define PyImport_ImportModule G_PyImport_ImportModule
-#define PyModule_GetDict G_PyModule_GetDict
-#define PyRun_SimpleString G_PyRun_SimpleString
-#define _Py_NoneStruct (*G__Py_NoneStruct)
+#define PyModule_GetDict      G_PyModule_GetDict
+#define PyRun_SimpleString    G_PyRun_SimpleString
+#define _Py_NoneStruct        (*G__Py_NoneStruct)
 
 #ifdef __WXMSW__
    #define PYTHON_PROC FARPROC

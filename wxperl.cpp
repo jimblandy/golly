@@ -68,14 +68,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 static PerlInterpreter* my_perl;
 
+EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
+
 // =============================================================================
 
 // On Windows and Linux we need to load the Perl library at runtime
 // so Golly will start up even if Perl isn't installed.
 
+//!!! wxMac bug??? wxDynamicLibrary::Load fails if given
+//!!! "/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE/libperl.dylib"
+//!!! #if 1
 #ifndef __WXMAC__
    // load Perl lib at runtime
-   #define USE_PERL_DYNAMIC_XXXXXXXXXXXXXXXXXX   //!!! not yet
+   #define USE_PERL_DYNAMIC
 #endif
 
 #ifdef USE_PERL_DYNAMIC
@@ -90,15 +95,62 @@ static PerlInterpreter* my_perl;
 // declare G_* wrappers for the functions we want to use from Perl lib
 extern "C"
 {
-   void(*G_Perl_Initialize)(void) = NULL;
-   void(*G_Perl_Finalize)(void) = NULL;
-   // etc!!!
+   perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*) = NULL;
+   U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*) = NULL;
+   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*) = NULL;
+   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*) = NULL;
+   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*) = NULL;
+   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*) = NULL;
+   SV**(*G_Perl_av_fetch)(pTHX_ AV*, I32, I32) = NULL;
+   I32(*G_Perl_av_len)(pTHX_ AV*) = NULL;
+   void(*G_Perl_av_push)(pTHX_ AV*, SV*) = NULL;
+   void(*G_Perl_croak)(pTHX_ const char*, ...) = NULL;
+   AV*(*G_Perl_newAV)(pTHX) = NULL;
+   SV*(*G_Perl_newRV)(pTHX_ SV*) = NULL;
+   SV*(*G_Perl_newSViv)(pTHX_ IV) = NULL;
+   SV*(*G_Perl_newSVpv)(pTHX_ const char*, STRLEN) = NULL;
+   CV*(*G_Perl_newXS)(pTHX_ char*, XSUBADDR_t, char*) = NULL;
+   SV**(*G_Perl_stack_grow)(pTHX_ SV**, SV**, int) = NULL;
+   IV(*G_Perl_sv_2iv)(pTHX_ SV*) = NULL;
+   SV*(*G_Perl_sv_2mortal)(pTHX_ SV*) = NULL;
+   char*(*G_Perl_sv_2pv_flags)(pTHX_ SV*, STRLEN*, I32) = NULL;
+   PerlInterpreter*(*G_perl_alloc)(void) = NULL;
+   void(*G_perl_construct)(PerlInterpreter*) = NULL;
+   int(*G_perl_destruct)(PerlInterpreter*) = NULL;
+   void(*G_perl_free)(PerlInterpreter*) = NULL;
+   int(*G_perl_parse)(PerlInterpreter*, XSINIT_t, int, char**, char**) = NULL;
+   int(*G_perl_run)(PerlInterpreter*) = NULL;
+   void(*G_boot_DynaLoader)(pTHX_ CV*) = NULL;
+
 }
 
 // redefine Perl functions to their equivalent G_* wrappers
-#define Perl_Initialize   G_Perl_Initialize
-#define Perl_Finalize     G_Perl_Finalize
-// etc!!!
+#define Perl_Gthr_key_ptr        G_Perl_Gthr_key_ptr
+#define Perl_Iexit_flags_ptr     G_Perl_Iexit_flags_ptr
+#define Perl_Tmarkstack_ptr_ptr  G_Perl_Tmarkstack_ptr_ptr
+#define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
+#define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
+#define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
+#define Perl_av_fetch            G_Perl_av_fetch
+#define Perl_av_len              G_Perl_av_len
+#define Perl_av_push             G_Perl_av_push
+#define Perl_croak               G_Perl_croak
+#define Perl_newAV               G_Perl_newAV
+#define Perl_newRV               G_Perl_newRV
+#define Perl_newSViv             G_Perl_newSViv
+#define Perl_newSVpv             G_Perl_newSVpv
+#define Perl_newXS               G_Perl_newXS
+#define Perl_stack_grow          G_Perl_stack_grow
+#define Perl_sv_2iv              G_Perl_sv_2iv
+#define Perl_sv_2mortal          G_Perl_sv_2mortal
+#define Perl_sv_2pv_flags        G_Perl_sv_2pv_flags
+#define perl_alloc               G_perl_alloc
+#define perl_construct           G_perl_construct
+#define perl_destruct            G_perl_destruct
+#define perl_free                G_perl_free
+#define perl_parse               G_perl_parse
+#define perl_run                 G_perl_run
+#define boot_DynaLoader          G_boot_DynaLoader
 
 #ifdef __WXMSW__
    #define PERL_PROC FARPROC
@@ -114,9 +166,32 @@ static struct PerlFunc
    PERL_PROC* ptr;         // function pointer
 } perlFuncs[] =
 {
-   PERL_FUNC(Perl_Initialize)
-   PERL_FUNC(Perl_Finalize)
-   // etc!!!
+   PERL_FUNC(Perl_Gthr_key_ptr)
+   PERL_FUNC(Perl_Iexit_flags_ptr)
+   PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
+   PERL_FUNC(Perl_Tstack_base_ptr)
+   PERL_FUNC(Perl_Tstack_max_ptr)
+   PERL_FUNC(Perl_Tstack_sp_ptr)
+   PERL_FUNC(Perl_av_fetch)
+   PERL_FUNC(Perl_av_len)
+   PERL_FUNC(Perl_av_push)
+   PERL_FUNC(Perl_croak)
+   PERL_FUNC(Perl_newAV)
+   PERL_FUNC(Perl_newRV)
+   PERL_FUNC(Perl_newSViv)
+   PERL_FUNC(Perl_newSVpv)
+   PERL_FUNC(Perl_newXS)
+   PERL_FUNC(Perl_stack_grow)
+   PERL_FUNC(Perl_sv_2iv)
+   PERL_FUNC(Perl_sv_2mortal)
+   PERL_FUNC(Perl_sv_2pv_flags)
+   PERL_FUNC(perl_alloc)
+   PERL_FUNC(perl_construct)
+   PERL_FUNC(perl_destruct)
+   PERL_FUNC(perl_free)
+   PERL_FUNC(perl_parse)
+   PERL_FUNC(perl_run)
+   PERL_FUNC(boot_DynaLoader)
    { _T(""), NULL }
 };
 
@@ -2119,8 +2194,6 @@ XS(boot_golly)
 */
 
 // -----------------------------------------------------------------------------
-
-EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
 // xs_init is passed into perl_parse and initializes statically linked extensions
 

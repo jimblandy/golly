@@ -23,8 +23,9 @@ LDFLAGS = `wx-config --libs` -lz
 
 # for Perl script support
 PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
-#!!! eventually set PERL_LINK if/when we dynamically load Perl lib
-PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
+#!!! PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
+#!!! dynamically load Perl lib
+PERL_LINK = 
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
