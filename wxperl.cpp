@@ -76,13 +76,18 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
 // =============================================================================
 
-// On Windows and Linux we need to load the Perl library at runtime
+// On Windows and Linux we try to load the Perl library at runtime
 // so Golly will start up even if Perl isn't installed.
 
 //!!! wxMac bug??? wxDynamicLibrary::Load fails if given
 //!!! "/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE/libperl.dylib"
 //!!! #if 1
-#ifndef __WXMAC__
+
+//!!! on Linux we can't load libperl.so dynamically because DynaLoader.a
+//!!! has to be statically linked (for boot_DynaLoader) but it uses calls
+//!!! in libperl.so -- sheesh
+//!!! #ifndef __WXMAC__
+#ifdef __WXMSW__
    // load Perl lib at runtime
    #define USE_PERL_DYNAMIC
 #endif
@@ -118,8 +123,9 @@ extern "C"
    void(*G_perl_free)(PerlInterpreter*) = NULL;
    int(*G_perl_parse)(PerlInterpreter*, XSINIT_t, int, char**, char**) = NULL;
    int(*G_perl_run)(PerlInterpreter*) = NULL;
+#ifdef __WXMSW__
    void(*G_boot_DynaLoader)(pTHX_ CV*) = NULL;
-
+#endif
 }
 
 // redefine Perl functions to their equivalent G_* wrappers
@@ -149,7 +155,9 @@ extern "C"
 #define perl_free                G_perl_free
 #define perl_parse               G_perl_parse
 #define perl_run                 G_perl_run
+#ifdef __WXMSW__
 #define boot_DynaLoader          G_boot_DynaLoader
+#endif
 
 #ifdef __WXMSW__
    #define PERL_PROC FARPROC
@@ -191,7 +199,9 @@ static struct PerlFunc
    PERL_FUNC(perl_free)
    PERL_FUNC(perl_parse)
    PERL_FUNC(perl_run)
+#ifdef __WXMSW__
    PERL_FUNC(boot_DynaLoader)
+#endif
    { _T(""), NULL }
 };
 
