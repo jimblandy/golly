@@ -105,6 +105,7 @@ extern "C"
    I32(*G_Perl_av_len)(pTHX_ AV*) = NULL;
    void(*G_Perl_av_push)(pTHX_ AV*, SV*) = NULL;
    void(*G_Perl_croak)(pTHX_ const char*, ...) = NULL;
+   void*(*G_Perl_get_context)(void) = NULL;
    AV*(*G_Perl_newAV)(pTHX) = NULL;
    SV*(*G_Perl_newRV)(pTHX_ SV*) = NULL;
    SV*(*G_Perl_newSViv)(pTHX_ IV) = NULL;
@@ -135,6 +136,7 @@ extern "C"
 #define Perl_av_len              G_Perl_av_len
 #define Perl_av_push             G_Perl_av_push
 #define Perl_croak               G_Perl_croak
+#define Perl_get_context         G_Perl_get_context
 #define Perl_newAV               G_Perl_newAV
 #define Perl_newRV               G_Perl_newRV
 #define Perl_newSViv             G_Perl_newSViv
@@ -176,6 +178,7 @@ static struct PerlFunc
    PERL_FUNC(Perl_av_len)
    PERL_FUNC(Perl_av_push)
    PERL_FUNC(Perl_croak)
+   PERL_FUNC(Perl_get_context)
    PERL_FUNC(Perl_newAV)
    PERL_FUNC(Perl_newRV)
    PERL_FUNC(Perl_newSViv)
