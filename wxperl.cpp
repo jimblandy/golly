@@ -55,6 +55,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Perl scripting support is implemented by embedding a Perl interpreter.
 // See "perldoc perlembed" for details.
 
+#ifndef __WXMAC__
+   #include "wx/dynlib.h"     // for wxDynamicLibrary
+#endif
+
 // avoid warning about _ being redefined
 #undef _
 
@@ -84,13 +88,6 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 #endif
 
 #ifdef USE_PERL_DYNAMIC
-
-#ifdef __WXMSW__
-   // avoid warning on Windows
-   //!!! #undef ???
-#endif
-
-#include "wx/dynlib.h"     // for wxDynamicLibrary
 
 // declare G_* wrappers for the functions we want to use from Perl lib
 extern "C"
@@ -228,7 +225,7 @@ static bool LoadPerlLib()
       str +=         _("\notherwise change the version numbers and try again.");
       #ifdef __WXMSW__
          str +=      _("\nDepending on where you installed Perl you might have");
-         str +=      _("\nto enter a full path like C:\\Perl\\perl5.dll.");
+         str +=      _("\nto enter a full path like C:\\Perl\\bin\\perl58.dll.");
       #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Perl library"),

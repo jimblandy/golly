@@ -720,11 +720,11 @@ void GetPrefs()
    scriptdir = gollydir + SCRIPT_DIR;
    
    #ifdef __WXMSW__
-      perllib = wxT("perl.dll");          //!!!???
+      perllib = wxT("perl58.dll");
       pythonlib = wxT("python24.dll");
    #elif defined(__WXMAC__)
-      perllib = wxT("libperl.dylib");     //!!!???
-      pythonlib = wxT("not used");
+      perllib = wxEmptyString;
+      pythonlib = wxEmptyString;
    #elif defined(__UNIX__)
       perllib = wxT("libperl.so");        //!!!???
       pythonlib = wxT("libpython2.4.so");
