@@ -2208,7 +2208,7 @@ static PyObject* pyg_stderr(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "s", &s)) return NULL;
 
    // accumulate stderr messages in global string (shown after script finishes)
-   scripterr = wxString(s,wxConvLocal);
+   scripterr = wxString(s, wxConvLocal);
 
    Py_INCREF(Py_None);
    return Py_None;

@@ -22,7 +22,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 
-//!!! put Perl copyright notice here???
+/*
+   Golly uses an embedded Perl interpreter to execute scripts.
+   Perl5 is Copyright (C) 1993-2005, by Larry Wall and others.
+   It is free software; you can redistribute it and/or modify it under the terms of either:
+   a) the GNU General Public License as published by the Free Software Foundation;
+   either version 1, or (at your option) any later version, or
+   b) the "Artistic License" (http://dev.perl.org/licenses/artistic.html).
+*/
 
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
@@ -79,13 +86,9 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 // On Windows and Linux we try to load the Perl library at runtime
 // so Golly will start up even if Perl isn't installed.
 
-//!!! wxMac bug??? wxDynamicLibrary::Load fails if given
-//!!! "/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE/libperl.dylib"
-//!!! #if 1
-
-//!!! on Linux we can't load libperl.so dynamically because DynaLoader.a
+//!!! On Linux we can't load libperl.so dynamically because DynaLoader.a
 //!!! has to be statically linked (for boot_DynaLoader) but it uses calls
-//!!! in libperl.so -- sheesh
+//!!! in libperl.so -- sheesh.
 //!!! #ifndef __WXMAC__
 #ifdef __WXMSW__
    // load Perl lib at runtime
@@ -123,6 +126,7 @@ extern "C"
    void(*G_perl_free)(PerlInterpreter*) = NULL;
    int(*G_perl_parse)(PerlInterpreter*, XSINIT_t, int, char**, char**) = NULL;
    int(*G_perl_run)(PerlInterpreter*) = NULL;
+   SV*(*G_Perl_eval_pv)(pTHX_ const char*, I32) = NULL;
 #ifdef __WXMSW__
    void(*G_boot_DynaLoader)(pTHX_ CV*) = NULL;
 #endif
@@ -155,6 +159,7 @@ extern "C"
 #define perl_free                G_perl_free
 #define perl_parse               G_perl_parse
 #define perl_run                 G_perl_run
+#define Perl_eval_pv             G_Perl_eval_pv
 #ifdef __WXMSW__
 #define boot_DynaLoader          G_boot_DynaLoader
 #endif
@@ -199,6 +204,7 @@ static struct PerlFunc
    PERL_FUNC(perl_free)
    PERL_FUNC(perl_parse)
    PERL_FUNC(perl_run)
+   PERL_FUNC(Perl_eval_pv)
 #ifdef __WXMSW__
    PERL_FUNC(boot_DynaLoader)
 #endif
@@ -2185,6 +2191,25 @@ XS(plg_exit)
 
 // -----------------------------------------------------------------------------
 
+XS(plg_fatal)
+{
+   IGNORE_UNUSED_PARAMS;
+   // don't call RETURN_IF_ABORTED;
+   dXSARGS;
+   // don't call PERL_ERROR in here
+   if (items != 1) Warning("Bug: usage is g_fatal($string)");
+
+   STRLEN n_a;
+   char* errmsg = SvPV(ST(0),n_a);
+   
+   // store message in global string (shown after script finishes)
+   scripterr = wxString(errmsg, wxConvLocal);
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 /* can't get this approach to work!!!
 XS(boot_golly)
 {
@@ -2301,6 +2326,8 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_note",         plg_note,       file);
    newXS("g_check",        plg_check,      file);
    newXS("g_exit",         plg_exit,       file);
+   // internal use only (don't document)
+   newXS("g_fatal",        plg_fatal,      file);
 }
 
 // =============================================================================
@@ -2321,29 +2348,30 @@ void RunPerlScript(const wxString &filepath)
    }
    
    perl_construct(my_perl);
+   
+   // note that this requires Perl 5.7.2+
    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
-   // works but doesn't capture stderr
+   /* this code works but doesn't let us capture error messages
    char* my_argv[2];
    my_argv[0] = "";
    my_argv[1] = (char*) filepath.mb_str(wxConvLocal);
    perl_parse(my_perl, xs_init, 2, my_argv, NULL);
    perl_run(my_perl);
+   */
 
-   /* can't get either method to work completely right!!!
-   //!!! capture stderr output
-   char* embedding[] = { "", "-e", "print STDERR 666;" };   // crashes if 3rd param is "0"
+   static char* embedding[] = { "", "-e", "" };
    perl_parse(my_perl, xs_init, 3, embedding, NULL);
    perl_run(my_perl);
-   
-   static char execstring[512];
-   sprintf(execstring, "open(STDERR,\">golly-perl-stderr.log\"); do '%s';",
-   //!!!sprintf(execstring,
-   //!!!         "my @savestderr = (); BEGIN { $SIG{__DIE__} = sub{ @savestderr = @_; exit 1}; } do '%s';",
-                        (char*)filepath.mb_str(wxConvLocal));
-   perl_eval_pv(execstring, TRUE);
-   //!!!perl_eval_pv("g_note(\"@savestderr\");", TRUE);
-   */
+
+   // convert any \ to \\ and then convert any ' to \'
+   wxString fpath = filepath;
+   fpath.Replace(wxT("\\"), wxT("\\\\"));
+   fpath.Replace(wxT("'"), wxT("\\'"));
+
+   // construct a command to run the given script file and capture errors
+   wxString command = wxT("do '") + fpath + wxT("'; g_fatal($@) if $@;");
+   perl_eval_pv(command.mb_str(wxConvLocal), TRUE);
 
    perl_destruct(my_perl);
    perl_free(my_perl);
