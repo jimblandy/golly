@@ -479,7 +479,7 @@ XS(plg_store)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_store error: 1st parameter is not a valid array reference.");
+       PERL_ERROR("g_store error: 1st parameter is not a valid array reference");
    }
    AV* inarray = (AV*)SvRV(cells);
    int num_cells = (av_len(inarray) + 1) / 2;
@@ -565,7 +565,7 @@ XS(plg_cut)
       viewptr->CutSelection();
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_cut error: no selection.");
+      PERL_ERROR("g_cut error: no selection");
    }
 
    XSRETURN(0);
@@ -584,7 +584,7 @@ XS(plg_copy)
       viewptr->CopySelection();
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_copy error: no selection.");
+      PERL_ERROR("g_copy error: no selection");
    }
 
    XSRETURN(0);
@@ -608,7 +608,7 @@ XS(plg_clear)
          viewptr->ClearOutsideSelection();
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_clear error: no selection.");
+      PERL_ERROR("g_clear error: no selection");
    }
 
    XSRETURN(0);
@@ -630,7 +630,7 @@ XS(plg_paste)
    char* mode = SvPV(ST(2), n_a);
 
    if (!mainptr->ClipboardHasText()) {
-      PERL_ERROR("g_paste error: no pattern in clipboard.");
+      PERL_ERROR("g_paste error: no pattern in clipboard");
    }
 
    // temporarily change selection rect and paste mode
@@ -645,7 +645,7 @@ XS(plg_paste)
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
    else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
    else {
-      PERL_ERROR("g_paste error: unknown mode.");
+      PERL_ERROR("g_paste error: unknown mode");
    }
 
    // create huge selection rect so no possibility of error message
@@ -681,7 +681,7 @@ XS(plg_shrink)
       viewptr->ShrinkSelection(false);    // false == don't fit in viewport
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_shrink error: no selection.");
+      PERL_ERROR("g_shrink error: no selection");
    }
 
    XSRETURN(0);
@@ -699,7 +699,7 @@ XS(plg_randfill)
    int perc = SvIV(ST(0));
 
    if (perc < 1 || perc > 100) {
-      PERL_ERROR("g_randfill error: percentage must be from 1 to 100.");
+      PERL_ERROR("g_randfill error: percentage must be from 1 to 100");
    }
 
    if (viewptr->SelectionExists()) {
@@ -709,7 +709,7 @@ XS(plg_randfill)
       randomfill = oldperc;
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_randfill error: no selection.");
+      PERL_ERROR("g_randfill error: no selection");
    }
 
    XSRETURN(0);
@@ -733,7 +733,7 @@ XS(plg_flip)
          viewptr->FlipTopBottom();
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_flip error: no selection.");
+      PERL_ERROR("g_flip error: no selection");
    }
 
    XSRETURN(0);
@@ -754,7 +754,7 @@ XS(plg_rotate)
       viewptr->RotateSelection(direction == 0);    // 0 = clockwise
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_rotate error: no selection.");
+      PERL_ERROR("g_rotate error: no selection");
    }
 
    XSRETURN(0);
@@ -767,7 +767,8 @@ XS(plg_parse)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 7) PERL_ERROR("Usage: $outcells = g_parse($string,$x,$y,$axx,$axy,$ayx,$ayy)");
+   if (items != 7)
+      PERL_ERROR("Usage: $outcells = g_parse($string,$x,$y,$axx,$axy,$ayx,$ayy)");
 
    STRLEN n_a;
    char* s = SvPV(ST(0), n_a);
@@ -837,11 +838,12 @@ XS(plg_transform)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 7) PERL_ERROR("Usage: $outcells = g_transform($cells,$x,$y,$axx,$axy,$ayx,$ayy)");
+   if (items != 7)
+      PERL_ERROR("Usage: $outcells = g_transform($cells,$x,$y,$axx,$axy,$ayx,$ayy)");
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_transform error: 1st parameter is not a valid array reference.");
+       PERL_ERROR("g_transform error: 1st parameter is not a valid array reference");
    }
    AV* inarray = (AV*)SvRV(cells);
    int num_cells = (av_len(inarray) + 1) / 2;
@@ -883,7 +885,7 @@ XS(plg_evolve)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_evolve error: 1st parameter is not a valid array reference.");
+       PERL_ERROR("g_evolve error: 1st parameter is not a valid array reference");
    }
    AV* inarray = (AV*)SvRV(cells);
    int num_cells = (av_len(inarray) + 1) / 2;
@@ -953,7 +955,7 @@ XS(plg_putcells)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference.");
+       PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference");
    }
    AV* inarray = (AV*)SvRV(cells);
    int num_cells = (av_len(inarray) + 1) / 2;
@@ -987,7 +989,7 @@ XS(plg_putcells)
           || modestr.IsSameAs(wxT("xor"), false)
           || modestr.IsSameAs(wxT("copy"), false)
           || modestr.IsSameAs(wxT("not"), false)) ) {
-      PERL_ERROR("g_putcells error: unknown mode.");
+      PERL_ERROR("g_putcells error: unknown mode");
    }
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
@@ -1049,8 +1051,8 @@ XS(plg_getcells)
       int wd = SvIV(ST(2));
       int ht = SvIV(ST(3));
       // first check that wd & ht are > 0
-      if (wd <= 0) PERL_ERROR("g_getcells error: width must be > 0.");
-      if (ht <= 0) PERL_ERROR("g_getcells error: height must be > 0.");
+      if (wd <= 0) PERL_ERROR("g_getcells error: width must be > 0");
+      if (ht <= 0) PERL_ERROR("g_getcells error: height must be > 0");
       int right = x + wd - 1;
       int bottom = y + ht - 1;
       int cx, cy;
@@ -1091,7 +1093,7 @@ XS(plg_getclip)
    if (items != 0) PERL_ERROR("Usage: $cells = g_getclip()");
 
    if (!mainptr->ClipboardHasText()) {
-      PERL_ERROR("g_getclip error: no pattern in clipboard.");
+      PERL_ERROR("g_getclip error: no pattern in clipboard");
    }
 
    // convert pattern in clipboard into a cell array, but where the first 2 items
@@ -1109,7 +1111,7 @@ XS(plg_getclip)
    bigint top, left, bottom, right;
    if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PERL_ERROR("g_getclip error: pattern is too big.");
+         PERL_ERROR("g_getclip error: pattern is too big");
       }
       int itop = top.toint();
       int ileft = left.toint();
@@ -1176,8 +1178,8 @@ XS(plg_select)
       int wd = SvIV(ST(2));
       int ht = SvIV(ST(3));
       // first check that wd & ht are > 0
-      if (wd <= 0) PERL_ERROR("g_select error: width must be > 0.");
-      if (ht <= 0) PERL_ERROR("g_select error: height must be > 0.");
+      if (wd <= 0) PERL_ERROR("g_select error: width must be > 0");
+      if (ht <= 0) PERL_ERROR("g_select error: height must be > 0");
       // set selection edges
       currlayer->selleft = x;
       currlayer->seltop = y;
@@ -1202,7 +1204,7 @@ XS(plg_getrect)
       bigint top, left, bottom, right;
       currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PERL_ERROR("g_getrect error: pattern is too big.");
+         PERL_ERROR("g_getrect error: pattern is too big");
       }
       int x = left.toint();
       int y = top.toint();
@@ -1233,7 +1235,7 @@ XS(plg_getselrect)
    if (viewptr->SelectionExists()) {
       if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
                                   currlayer->selbottom, currlayer->selright) ) {
-         PERL_ERROR("g_getselrect error: selection is too big.");
+         PERL_ERROR("g_getselrect error: selection is too big");
       }
       int x = currlayer->selleft.toint();
       int y = currlayer->seltop.toint();
@@ -1300,7 +1302,7 @@ XS(plg_setcursor)
       // see the cursor change, including in tool bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
    } else {
-      PERL_ERROR("g_setcursor error: bad cursor index.");
+      PERL_ERROR("g_setcursor error: bad cursor index");
    }
 
    // return old index (simplifies saving and restoring cursor)
@@ -1460,7 +1462,7 @@ XS(plg_advance)
          }
          DoAutoUpdate();
       } else {
-         PERL_ERROR("g_advance error: no selection.");
+         PERL_ERROR("g_advance error: no selection");
       }
    }
 
@@ -1573,14 +1575,14 @@ XS(plg_setpos)
    for (i=0; i<xlen; i++)
       if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') ) {
          char msg[256];
-         sprintf(msg, "g_setpos error: illegal x value (%s).", x);
+         sprintf(msg, "g_setpos error: illegal x value (%s)", x);
          PERL_ERROR(msg);
       }
    int ylen = strlen(y);
    for (i=0; i<ylen; i++)
       if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') ) {
          char msg[256];
-         sprintf(msg, "g_setpos error: illegal y value (%s).", y);
+         sprintf(msg, "g_setpos error: illegal y value (%s)", y);
          PERL_ERROR(msg);
       }
 
@@ -1675,7 +1677,7 @@ XS(plg_fitsel)
       viewptr->FitSelection();
       DoAutoUpdate();
    } else {
-      PERL_ERROR("g_fitsel error: no selection.");
+      PERL_ERROR("g_fitsel error: no selection");
    }
 
    XSRETURN(0);
@@ -1695,8 +1697,8 @@ XS(plg_visrect)
    int wd = SvIV(ST(2));
    int ht = SvIV(ST(3));
    // check that wd & ht are > 0
-   if (wd <= 0) PERL_ERROR("g_visrect error: width must be > 0.");
-   if (ht <= 0) PERL_ERROR("g_visrect error: height must be > 0.");
+   if (wd <= 0) PERL_ERROR("g_visrect error: width must be > 0");
+   if (ht <= 0) PERL_ERROR("g_visrect error: height must be > 0");
 
    bigint left = x;
    bigint top = y;
@@ -1746,7 +1748,7 @@ XS(plg_addlayer)
    if (items != 0) PERL_ERROR("Usage: $newindex = g_addlayer()");
 
    if (numlayers >= maxlayers) {
-      PERL_ERROR("g_addlayer error: no more layers can be added.");
+      PERL_ERROR("g_addlayer error: no more layers can be added");
    } else {
       AddLayer();
       DoAutoUpdate();
@@ -1766,7 +1768,7 @@ XS(plg_clone)
    if (items != 0) PERL_ERROR("Usage: $newindex = g_clone()");
 
    if (numlayers >= maxlayers) {
-      PERL_ERROR("g_clone error: no more layers can be added.");
+      PERL_ERROR("g_clone error: no more layers can be added");
    } else {
       CloneLayer();
       DoAutoUpdate();
@@ -1786,7 +1788,7 @@ XS(plg_duplicate)
    if (items != 0) PERL_ERROR("Usage: $newindex = g_duplicate()");
 
    if (numlayers >= maxlayers) {
-      PERL_ERROR("g_duplicate error: no more layers can be added.");
+      PERL_ERROR("g_duplicate error: no more layers can be added");
    } else {
       DuplicateLayer();
       DoAutoUpdate();
@@ -1806,7 +1808,7 @@ XS(plg_dellayer)
    if (items != 0) PERL_ERROR("Usage: g_dellayer()");
 
    if (numlayers <= 1) {
-      PERL_ERROR("g_dellayer error: there is only one layer.");
+      PERL_ERROR("g_dellayer error: there is only one layer");
    } else {
       DeleteLayer();
       DoAutoUpdate();
@@ -1829,12 +1831,12 @@ XS(plg_movelayer)
 
    if (fromindex < 0 || fromindex >= numlayers) {
       char msg[64];
-      sprintf(msg, "Bad g_movelayer fromindex: %d", fromindex);
+      sprintf(msg, "Bad g_movelayer fromindex (%d)", fromindex);
       PERL_ERROR(msg);
    }
    if (toindex < 0 || toindex >= numlayers) {
       char msg[64];
-      sprintf(msg, "Bad g_movelayer toindex: %d", toindex);
+      sprintf(msg, "Bad g_movelayer toindex (%d)", toindex);
       PERL_ERROR(msg);
    }
 
@@ -1857,7 +1859,7 @@ XS(plg_setlayer)
 
    if (index < 0 || index >= numlayers) {
       char msg[64];
-      sprintf(msg, "Bad g_setlayer index: %d", index);
+      sprintf(msg, "Bad g_setlayer index (%d)", index);
       PERL_ERROR(msg);
    }
 
@@ -1919,7 +1921,7 @@ XS(plg_setname)
 
    if (index < 0 || index >= numlayers) {
       char msg[64];
-      sprintf(msg, "Bad g_setname index: %d", index);
+      sprintf(msg, "Bad g_setname index (%d)", index);
       PERL_ERROR(msg);
    }
    
@@ -1942,7 +1944,7 @@ XS(plg_getname)
 
    if (index < 0 || index >= numlayers) {
       char msg[64];
-      sprintf(msg, "Bad g_getname index: %d", index);
+      sprintf(msg, "Bad g_getname index (%d)", index);
       PERL_ERROR(msg);
    }
 
@@ -1965,7 +1967,7 @@ XS(plg_setoption)
    int oldval;
 
    if (!GSF_setoption(optname, newval, &oldval)) {
-      PERL_ERROR("g_setoption error: unknown option.");
+      PERL_ERROR("g_setoption error: unknown option");
    }
 
    // return old value (simplifies saving and restoring settings)
@@ -1986,7 +1988,7 @@ XS(plg_getoption)
    int optval;
 
    if (!GSF_getoption(optname, &optval)) {
-      PERL_ERROR("g_getoption error: unknown option.");
+      PERL_ERROR("g_getoption error: unknown option");
    }
 
    XSRETURN_IV(optval);
@@ -2007,7 +2009,7 @@ XS(plg_setcolor)
    wxColor oldcol;
 
    if (!GSF_setcolor(colname, newcol, oldcol)) {
-      PERL_ERROR("g_setcolor error: unknown color.");
+      PERL_ERROR("g_setcolor error: unknown color");
    }
 
    // return old r,g,b values (simplifies saving and restoring colors)
@@ -2032,7 +2034,7 @@ XS(plg_getcolor)
    wxColor color;
 
    if (!GSF_getcolor(colname, color)) {
-      PERL_ERROR("g_getcolor error: unknown color.");
+      PERL_ERROR("g_getcolor error: unknown color");
    }
 
    // return r,g,b values
