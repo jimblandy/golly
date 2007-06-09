@@ -6,7 +6,7 @@
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 # Updated Sept-Oct 2006 -- XRLE support and reusable default value.
 
-from glife import getstring, validint
+from glife import validint
 from time import time
 import os
 import golly
@@ -65,33 +65,35 @@ def goto(gen):
    golly.show("")
 
 # --------------------------------------------------------------------
-GotoINIFileName = os.path.join(golly.appdir() + "Scripts","goto.ini")
-previousgen=prevdefault=""
+
+GotoINIFileName = os.path.join(golly.appdir() + "Scripts", "goto.ini")
+previousgen = ""
 if os.access(GotoINIFileName, os.R_OK):
-   f=open(GotoINIFileName, 'r')
-   previousgen=f.readline()
+   f = open(GotoINIFileName, 'r')
+   previousgen = f.readline()
    f.close()
    if not validint(previousgen):
-      previousgen=""
-if previousgen!="":
-   prevdefault=" (default is " + previousgen + ")"
+      previousgen = ""
 
-gen = getstring("Go to what generation" + prevdefault + "?")
+gen = golly.getstring("Enter the desired generation number,\n" +
+                      "or -n/+n to go back/forwards by n:",
+                      str(previousgen), "Go to generation")
 if len(gen) == 0:
    gen = previousgen
 if len(gen) == 0:
    golly.show("")
-elif gen=="+" or gen=="-":
-   previousgen="" # provides a way to clear the default
+elif gen == "+" or gen == "-":
+   previousgen = ""              # provides a way to clear the default
 elif not validint(gen):
    golly.error('Sorry, but "' + gen + '" is not a valid integer.')
    golly.exit()
 else:
-   previousgen=gen
+   previousgen = gen
    goto(gen.replace(",",""))
+
 if os.access(GotoINIFileName, os.W_OK) or not os.access(GotoINIFileName, os.F_OK):
    try:
-      f=open(GotoINIFileName, 'w')
+      f = open(GotoINIFileName, 'w')
       f.write(previousgen)
       f.close()
    except:

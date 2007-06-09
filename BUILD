@@ -88,21 +88,28 @@ but the above arrangement is the one currently required by Golly's
 makefile-gtk and makefile-x11.)
 
 
-How to install Python
----------------------
+How to install Perl and Python
+------------------------------
 
-Golly uses Python as its scripting language, so you'll also need
-to make sure Python is installed.  Mac OS X users don't have to do
-anything because Python comes pre-installed.  Windows and Linux users
-can download an installer from http://www.python.org/download/.
-Installing Python should be a straightforward process.
+Golly uses Perl and Python for scripting, so you'll need to make
+sure both are installed.  Mac OS X users don't have to do anything
+because Perl and Python are already installed.
+
+If you are running Linux, you probably have Perl installed.
+Type "perl -v" at the command line to print out the version.
+Golly's code should compile happily with Perl 5.8.x or later.
+Windows users are advised to download the ActivePerl installer
+from http://www.activestate.com/Products/ActivePerl/.
+
+Windows and Linux users can download a Python installer from
+http://www.python.org/download/.
 
 
 How to build Golly
 ------------------
 
-Once wxWidgets and Python are installed, building Golly should be
-quite simple.  Just use the appropriate makefile for your platform:
+Once wxWidgets, Perl and Python are installed, building Golly should
+be easy.  Just use the appropriate makefile for your platform:
 
    nmake -f makefile-win   - on Windows 98 or later
    make -f makefile-mac    - on Mac OS X 10.3.9 or later
@@ -116,8 +123,8 @@ NOTES:
   near the start of the file.  Also make sure WX_RELEASE specifies
   the first two digits of your wxWidgets version.
 
-- In makefile-win you also need to specify where Python is installed,
-  so change the PYTHON_INCLUDE path if necessary.
+- In makefile-win you need to include the headers for Perl and Python
+  so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
 
 - Your compiler must use 32-bit integers and 32-bit pointers.
 
@@ -127,8 +134,8 @@ How to build bgolly (the batch mode version)
 
 Golly can also be run as a command line program without any GUI.
 To build this "batch mode" version, just specify bgolly as the target
-of the make command.  Note that you don't need to install wxWidgets
-or Python to build bgolly.
+of the make command.  Note that you don't need to install wxWidgets,
+Perl or Python to build bgolly.
 
 
 Source code road map
@@ -188,8 +195,14 @@ wxprefs.*      - For loading, saving and changing user preferences.
 wxrule.*       - Lets user change the current rule.
                  ChangeRule() opens the Rule dialog.
 
-wxscript.*     - Implements Python script support.
-                 RunScript() executes a given .py file.
+wxscript.*     - High-level scripting interface.
+                 RunScript() executes a given script file.
+
+wxperl.*       - Implements Perl script support.
+                 RunPerlScript() executes a given .pl file.
+
+wxpython.*     - Implements Python script support.
+                 RunPythonScript() executes a given .py file.
 
 wxutils.*      - Various utility routines.
                  Warning() displays message in modal dialog.

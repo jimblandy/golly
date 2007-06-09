@@ -2,7 +2,7 @@
 # step size) and create a plot of population vs time in separate layer.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), May 2007.
 
-from glife import getstring, getminbox, rect, rccw
+from glife import getminbox, rect, rccw
 from glife.text import make_text
 import golly as g
 from time import time
@@ -77,7 +77,8 @@ if poplayer == -1 and g.numlayers() == g.maxlayers():
 
 # prompt user for number of steps
 numsteps = xlen
-s = getstring("Number of steps [default = %i]:" % numsteps)
+s = g.getstring("Enter the number of steps:",
+                str(numsteps), "Population plotter")
 if len(s) > 0: numsteps = int(s)
 if numsteps <= 0: g.exit()
 

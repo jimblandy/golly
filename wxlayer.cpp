@@ -27,8 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/numdlg.h"     // for wxGetNumberFromUser
-
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -39,7 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap
+#include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
 #include "wxprefs.h"       // for gollydir, inithash, initrule, etc
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"
@@ -1229,15 +1227,11 @@ void MoveLayerDialog()
 {
    if (mainptr->generating || inscript || numlayers <= 1) return;
    
-   long n = wxGetNumberFromUser(_("Move current layer to new position."),
-                                _("Enter new index:"),
-                                _("Move Layer"),
-                                currindex, 0, numlayers - 1,   // default, min, max
-                                wxGetActiveWindow());
-                                //!!!??? calc offset from main win top left
-                                //!!! wxPoint(100,100));    ignored on Mac -- try 2.8???
-   
-   if (n >= 0 && n < numlayers) MoveLayer(currindex, n);
+   int i;
+   if ( GetInteger(_("Move Layer"), _("Move the current layer to a new index:"),
+                   currindex, 0, numlayers - 1, &i) ) {
+      MoveLayer(currindex, i);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1246,24 +1240,12 @@ void NameLayerDialog()
 {
    if (inscript) return;
 
-   wxTextEntryDialog dialog(wxGetActiveWindow(),
-                            _("Enter a name for the current layer:"),
-                            _("Name Layer"),
-                            currlayer->currname,
-                            #ifdef __WXMAC__
-                               //!!! without this dlg appears in top left corner;
-                               // ditto in dialogs sample
-                               wxCENTRE |
-                            #endif
-                            wxOK | wxCANCEL);
-
-   if (dialog.ShowModal() == wxID_OK) {
-      wxString newname = dialog.GetValue();
-      if ( !newname.IsEmpty() ) {
-         // show new name in main window's title;
-         // also sets currlayer->currname and updates menu item
-         mainptr->SetWindowTitle(newname);
-      }
+   wxString newname;
+   if ( GetString(_("Name Layer"), _("Enter a new name for the current layer:"),
+                  currlayer->currname, newname) && !newname.IsEmpty() ) {
+      // show new name in main window's title bar;
+      // also sets currlayer->currname and updates menu item
+      mainptr->SetWindowTitle(newname);
    }
 }
 

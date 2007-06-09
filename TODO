@@ -1,17 +1,7 @@
 For future versions:
 --------------------
 
-A - Export new dialogs from wxutils: GetString, GetNumber.
-    Or fix up corresponding wxMac dialogs.
-
-A - Allow Perl scripting.  Run "perldoc perlembed" to get info on how
-    to embed Perl in a C/C++ program.
-
-A - Stop generating if pattern becomes empty, constant or p2 (qlife only)
-    and display suitable message in status bar.  Or maybe just add
-    Gabriel's oscillation detection as an option (see oscar.py).
-
-T - Improve batchmode.
+- Improve batchmode.
 
 - Add ability to let users assign their own keyboard shortcuts.
   First step would be to allow users to edit *_key=char settings in
@@ -26,6 +16,10 @@ T - Improve batchmode.
 - Add info() command to display current pattern info.
   Add help(html-file) to open the help window and display contents of
   given html file (not necessarily in Help folder).
+
+- Stop generating if pattern becomes empty, constant or p2 (qlife only)
+  and display suitable message in status bar.  Or maybe just add
+  Gabriel's oscillation detection as an option (see oscar.py).
 
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).

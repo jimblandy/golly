@@ -35,6 +35,16 @@ void Warning(const wxString& msg);
 void Fatal(const wxString& msg);
 // Beep, display message in a modal dialog, then exit app.
 
+bool GetString(const wxString& title, const wxString& prompt,
+               const wxString& instring, wxString& outstring);
+// Display a dialog box to get a string from the user.
+// Returns false if user hits Cancel button.
+
+bool GetInteger(const wxString& title, const wxString& prompt,
+                int inval, int minval, int maxval, int* outval);
+// Display a dialog box to get an integer value from the user.
+// Returns false if user hits Cancel button.
+
 int SaveChanges(const wxString& query, const wxString& msg);
 // Ask user if changes should be saved and return following result:
 // 2 if user selects Yes/Save button,

@@ -57,7 +57,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning, Note, etc
+#include "wxutils.h"       // for Warning, Note, GetString, etc
 #include "wxprefs.h"       // for pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
@@ -2057,6 +2057,30 @@ static PyObject* pyg_getcolor(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* pyg_getstring(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* prompt;
+   char* initial = "";
+   char* title = "";
+
+   if (!PyArg_ParseTuple(args, "s|ss", &prompt, &initial, &title))
+      return NULL;
+
+   wxString result;
+   if ( !GetString(wxString(title,wxConvLocal), wxString(prompt,wxConvLocal),
+                   wxString(initial,wxConvLocal), result) ) {
+      // user hit Cancel button
+      AbortPythonScript();
+      return NULL;
+   }
+
+   return Py_BuildValue("s", result.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* pyg_getkey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2287,6 +2311,7 @@ static PyMethodDef pyg_methods[] = {
    { "getoption",    pyg_getoption,  METH_VARARGS, "return current value of given option" },
    { "setcolor",     pyg_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
    { "getcolor",     pyg_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
+   { "getstring",    pyg_getstring,  METH_VARARGS, "display dialog box to get string from user" },
    { "getkey",       pyg_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
    { "dokey",        pyg_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
    { "show",         pyg_show,       METH_VARARGS, "show given string in status bar" },

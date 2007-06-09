@@ -201,17 +201,18 @@ or you can search for individual commands alphabetically:
 <a href="#getrule"><b>getrule</b></a><br>
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
+<a href="#getstring"><b>getstring</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
 <a href="#new"><b>new</b></a><br>
 <a href="#note"><b>note</b></a><br>
 <a href="#numlayers"><b>numlayers</b></a><br>
-<a href="#open"><b>open</b></a><br>
-<a href="#parse"><b>parse</b></a>
+<a href="#open"><b>open</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#putcells"><b>putcells</b></a><br>
 <a href="#randfill"><b>randfill</b></a><br>
@@ -225,11 +226,11 @@ or you can search for individual commands alphabetically:
 <a href="#setcolor"><b>setcolor</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
 <a href="#setlayer"><b>setlayer</b></a><br>
-<a href="#setmag"><b>setmag</b></a><br>
-<a href="#setname"><b>setname</b></a>
+<a href="#setmag"><b>setmag</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#setname"><b>setname</b></a><br>
 <a href="#setoption"><b>setoption</b></a><br>
 <a href="#setpos"><b>setpos</b></a><br>
 <a href="#setrule"><b>setrule</b></a><br>
@@ -857,6 +858,16 @@ See above for a list of all the valid color names.
 <dd> Example: <b>r, g, b = golly.getcolor("deadcells")</b></dd>
 </p>
 
+<a name="getstring"></a><p><dt><b>getstring(<i>prompt, default="", title=""</i>)</b></dt>
+<dd>
+Display a dialog box and get a string from the user.
+If a default string is supplied it will be shown and selected.
+If a title string is supplied it will be used in the dialog's title bar.
+The script will be aborted if the user hits the dialog's Cancel button.
+</dd>
+<dd> Example: <b>i = int( golly.getstring("Enter a number:") )</b></dd>
+</p>
+
 <a name="getkey"></a><p><dt><b>getkey()</b></dt>
 <dd>
 Return a key hit by the user as a single character,
@@ -875,12 +886,6 @@ The characters returned by this command are a subset of ASCII:
 </dd>
 <p>
 <dd> Example: <b>ch = golly.getkey()</b></dd>
-<p>
-<dd>
-Note that the <a href="#glife"><b>glife</b></a> package defines a helper function
-called <b>getstring</b> which displays a prompt in the status bar and uses
-<b>getkey</b> to read user input.  See also the <b>goto.py</b> script.
-</dd>
 </p>
 
 <a name="dokey"></a><p><dt><b>dokey(char)</b></dt>
@@ -1006,10 +1011,6 @@ Here are some helper functions defined in <b>glife</b>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr>
-   <td><b>getstring(prompt)</b></td><td width=10> </td>
-   <td> -- prompt user and return entered string</td>
-</tr>
 <tr>
    <td><b>validint(s)</b></td><td width=10> </td>
    <td> -- return True if given string is a valid integer</td>

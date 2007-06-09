@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning, Note, etc
+#include "wxutils.h"       // for Warning, Note, GetString, etc
 #include "wxprefs.h"       // for perllib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
@@ -2047,6 +2047,34 @@ XS(plg_getcolor)
 
 // -----------------------------------------------------------------------------
 
+XS(plg_getstring)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items < 1 || items > 3)
+      PERL_ERROR("Usage: $string = g_getstring($prompt,$default='',$title='')");
+
+   STRLEN n_a;
+   char* prompt = SvPV(ST(0), n_a);
+   char* initial = "";
+   char* title = "";
+   if (items > 1) initial = SvPV(ST(1),n_a);
+   if (items > 2) title = SvPV(ST(2),n_a);
+   
+   wxString result;
+   if ( !GetString(wxString(title,wxConvLocal), wxString(prompt,wxConvLocal),
+                   wxString(initial,wxConvLocal), result) ) {
+      // user hit Cancel button
+      AbortPerlScript();
+      Perl_croak(aTHX_ NULL);
+   }
+
+   XSRETURN_PV(result.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 XS(plg_getkey)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2187,8 +2215,7 @@ XS(plg_exit)
    
    GSF_exit(errmsg);
    AbortPerlScript();
-   
-   XSRETURN(0);
+   Perl_croak(aTHX_ NULL);
 }
 
 // -----------------------------------------------------------------------------
@@ -2251,85 +2278,86 @@ EXTERN_C void xs_init(pTHX)
    */
 
    // filing
-   newXS("g_open",         plg_open,       file);
-   newXS("g_save",         plg_save,       file);
-   newXS("g_load",         plg_load,       file);
-   newXS("g_store",        plg_store,      file);
-   newXS("g_appdir",       plg_appdir,     file);
+   newXS("g_open",         plg_open,         file);
+   newXS("g_save",         plg_save,         file);
+   newXS("g_load",         plg_load,         file);
+   newXS("g_store",        plg_store,        file);
+   newXS("g_appdir",       plg_appdir,       file);
    // editing
-   newXS("g_new",          plg_new,        file);
-   newXS("g_cut",          plg_cut,        file);
-   newXS("g_copy",         plg_copy,       file);
-   newXS("g_clear",        plg_clear,      file);
-   newXS("g_paste",        plg_paste,      file);
-   newXS("g_shrink",       plg_shrink,     file);
-   newXS("g_randfill",     plg_randfill,   file);
-   newXS("g_flip",         plg_flip,       file);
-   newXS("g_rotate",       plg_rotate,     file);
-   newXS("g_parse",        plg_parse,      file);
-   newXS("g_transform",    plg_transform,  file);
-   newXS("g_evolve",       plg_evolve,     file);
-   newXS("g_putcells",     plg_putcells,   file);
-   newXS("g_getcells",     plg_getcells,   file);
-   newXS("g_getclip",      plg_getclip,    file);
-   newXS("g_select",       plg_select,     file);
-   newXS("g_getrect",      plg_getrect,    file);
-   newXS("g_getselrect",   plg_getselrect, file);
-   newXS("g_setcell",      plg_setcell,    file);
-   newXS("g_getcell",      plg_getcell,    file);
-   newXS("g_setcursor",    plg_setcursor,  file);
-   newXS("g_getcursor",    plg_getcursor,  file);
+   newXS("g_new",          plg_new,          file);
+   newXS("g_cut",          plg_cut,          file);
+   newXS("g_copy",         plg_copy,         file);
+   newXS("g_clear",        plg_clear,        file);
+   newXS("g_paste",        plg_paste,        file);
+   newXS("g_shrink",       plg_shrink,       file);
+   newXS("g_randfill",     plg_randfill,     file);
+   newXS("g_flip",         plg_flip,         file);
+   newXS("g_rotate",       plg_rotate,       file);
+   newXS("g_parse",        plg_parse,        file);
+   newXS("g_transform",    plg_transform,    file);
+   newXS("g_evolve",       plg_evolve,       file);
+   newXS("g_putcells",     plg_putcells,     file);
+   newXS("g_getcells",     plg_getcells,     file);
+   newXS("g_getclip",      plg_getclip,      file);
+   newXS("g_select",       plg_select,       file);
+   newXS("g_getrect",      plg_getrect,      file);
+   newXS("g_getselrect",   plg_getselrect,   file);
+   newXS("g_setcell",      plg_setcell,      file);
+   newXS("g_getcell",      plg_getcell,      file);
+   newXS("g_setcursor",    plg_setcursor,    file);
+   newXS("g_getcursor",    plg_getcursor,    file);
    // control
-   newXS("g_empty",        plg_empty,      file);
-   newXS("g_run",          plg_run,        file);
-   newXS("g_step",         plg_step,       file);
-   newXS("g_setstep",      plg_setstep,    file);
-   newXS("g_getstep",      plg_getstep,    file);
-   newXS("g_setbase",      plg_setbase,    file);
-   newXS("g_getbase",      plg_getbase,    file);
-   newXS("g_advance",      plg_advance,    file);
-   newXS("g_reset",        plg_reset,      file);
-   newXS("g_getgen",       plg_getgen,     file);
-   newXS("g_getpop",       plg_getpop,     file);
-   newXS("g_setrule",      plg_setrule,    file);
-   newXS("g_getrule",      plg_getrule,    file);
+   newXS("g_empty",        plg_empty,        file);
+   newXS("g_run",          plg_run,          file);
+   newXS("g_step",         plg_step,         file);
+   newXS("g_setstep",      plg_setstep,      file);
+   newXS("g_getstep",      plg_getstep,      file);
+   newXS("g_setbase",      plg_setbase,      file);
+   newXS("g_getbase",      plg_getbase,      file);
+   newXS("g_advance",      plg_advance,      file);
+   newXS("g_reset",        plg_reset,        file);
+   newXS("g_getgen",       plg_getgen,       file);
+   newXS("g_getpop",       plg_getpop,       file);
+   newXS("g_setrule",      plg_setrule,      file);
+   newXS("g_getrule",      plg_getrule,      file);
    // viewing
-   newXS("g_setpos",       plg_setpos,     file);
-   newXS("g_getpos",       plg_getpos,     file);
-   newXS("g_setmag",       plg_setmag,     file);
-   newXS("g_getmag",       plg_getmag,     file);
-   newXS("g_fit",          plg_fit,        file);
-   newXS("g_fitsel",       plg_fitsel,     file);
-   newXS("g_visrect",      plg_visrect,    file);
-   newXS("g_update",       plg_update,     file);
-   newXS("g_autoupdate",   plg_autoupdate, file);
+   newXS("g_setpos",       plg_setpos,       file);
+   newXS("g_getpos",       plg_getpos,       file);
+   newXS("g_setmag",       plg_setmag,       file);
+   newXS("g_getmag",       plg_getmag,       file);
+   newXS("g_fit",          plg_fit,          file);
+   newXS("g_fitsel",       plg_fitsel,       file);
+   newXS("g_visrect",      plg_visrect,      file);
+   newXS("g_update",       plg_update,       file);
+   newXS("g_autoupdate",   plg_autoupdate,   file);
    // layers
-   newXS("g_addlayer",     plg_addlayer,   file);
-   newXS("g_clone",        plg_clone,      file);
-   newXS("g_duplicate",    plg_duplicate,  file);
-   newXS("g_dellayer",     plg_dellayer,   file);
-   newXS("g_movelayer",    plg_movelayer,  file);
-   newXS("g_setlayer",     plg_setlayer,   file);
-   newXS("g_getlayer",     plg_getlayer,   file);
-   newXS("g_numlayers",    plg_numlayers,  file);
-   newXS("g_maxlayers",    plg_maxlayers,  file);
-   newXS("g_setname",      plg_setname,    file);
-   newXS("g_getname",      plg_getname,    file);
+   newXS("g_addlayer",     plg_addlayer,     file);
+   newXS("g_clone",        plg_clone,        file);
+   newXS("g_duplicate",    plg_duplicate,    file);
+   newXS("g_dellayer",     plg_dellayer,     file);
+   newXS("g_movelayer",    plg_movelayer,    file);
+   newXS("g_setlayer",     plg_setlayer,     file);
+   newXS("g_getlayer",     plg_getlayer,     file);
+   newXS("g_numlayers",    plg_numlayers,    file);
+   newXS("g_maxlayers",    plg_maxlayers,    file);
+   newXS("g_setname",      plg_setname,      file);
+   newXS("g_getname",      plg_getname,      file);
    // miscellaneous
-   newXS("g_setoption",    plg_setoption,  file);
-   newXS("g_getoption",    plg_getoption,  file);
-   newXS("g_setcolor",     plg_setcolor,   file);
-   newXS("g_getcolor",     plg_getcolor,   file);
-   newXS("g_getkey",       plg_getkey,     file);
-   newXS("g_dokey",        plg_dokey,      file);
-   newXS("g_show",         plg_show,       file);
-   newXS("g_error",        plg_error,      file);
-   newXS("g_warn",         plg_warn,       file);
-   newXS("g_note",         plg_note,       file);
-   newXS("g_check",        plg_check,      file);
-   newXS("g_exit",         plg_exit,       file);
+   newXS("g_setoption",    plg_setoption,    file);
+   newXS("g_getoption",    plg_getoption,    file);
+   newXS("g_setcolor",     plg_setcolor,     file);
+   newXS("g_getcolor",     plg_getcolor,     file);
+   newXS("g_getstring",    plg_getstring,    file);
+   newXS("g_getkey",       plg_getkey,       file);
+   newXS("g_dokey",        plg_dokey,        file);
+   newXS("g_show",         plg_show,         file);
+   newXS("g_error",        plg_error,        file);
+   newXS("g_warn",         plg_warn,         file);
+   newXS("g_note",         plg_note,         file);
+   newXS("g_check",        plg_check,        file);
+   newXS("g_exit",         plg_exit,         file);
    // internal use only (don't document)
-   newXS("g_fatal",        plg_fatal,      file);
+   newXS("g_fatal",        plg_fatal,        file);
 }
 
 // =============================================================================

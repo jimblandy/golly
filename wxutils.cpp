@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/numdlg.h"     // for wxGetNumberFromUser
 #include "wx/progdlg.h"    // for wxProgressDialog
 #include "wx/image.h"      // for wxImage
 
@@ -66,6 +67,47 @@ void Fatal(const wxString& msg)
    wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
    exit(1);
+}
+
+// -----------------------------------------------------------------------------
+
+bool GetString(const wxString& title, const wxString& prompt,
+               const wxString& instring, wxString& outstring)
+{
+   wxTextEntryDialog dialog(wxGetActiveWindow(), prompt, title, instring,
+                            #ifdef __WXMAC__
+                               //!!! without this dlg appears in top left corner;
+                               // ditto in dialogs sample
+                               wxCENTRE |
+                            #endif
+                            wxOK | wxCANCEL);
+
+   if (dialog.ShowModal() == wxID_OK) {
+      outstring = dialog.GetValue();
+      return true;
+   } else {
+      return false;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool GetInteger(const wxString& title, const wxString& prompt,
+                int inval, int minval, int maxval, int* outval)
+{
+   //!!! this can only get numbers >= 0
+   int n = wxGetNumberFromUser(prompt, wxEmptyString, title,
+                               inval, minval, maxval,
+                               wxGetActiveWindow());
+                               //!!!??? calc offset from main win top left
+                               //!!! wxPoint(100,100));    ignored on Mac -- try 2.8???
+
+   if (n == -1 || n < minval || n > maxval) {
+      return false;
+   } else {
+      *outval = n;
+      return true;
+   }
 }
 
 // -----------------------------------------------------------------------------
