@@ -110,7 +110,6 @@ const wxString UNNAMED = _("UNNAMED");
 
 const int HGAP = 12;
 const int BIGVGAP = 12;
-const int SMALLVGAP = 5;
 
 // following ensures OK/Cancel buttons are aligned with Add and Delete buttons
 #ifdef __WXMAC__
@@ -123,9 +122,8 @@ const int SMALLVGAP = 5;
 
 void RuleDialog::CreateControls()
 {
-   RuleDialog* dlg = this;
    wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
-   dlg->SetSizer(topSizer);
+   SetSizer(topSizer);
    
    // create the controls:
    
@@ -181,11 +179,11 @@ void RuleDialog::CreateControls()
 
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(textlabel, 0, wxLEFT | wxRIGHT, HGAP);
-   topSizer->AddSpacer(SMALLVGAP);
+   topSizer->AddSpacer(10);
    topSizer->Add(ruletext, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(namelabel, 0, wxLEFT | wxRIGHT, HGAP);
-   topSizer->AddSpacer(SMALLVGAP);
+   topSizer->AddSpacer(6);
    topSizer->Add(hbox1, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(hbox2, 0, wxLEFT | wxRIGHT, HGAP);

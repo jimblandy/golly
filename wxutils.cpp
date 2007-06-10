@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/numdlg.h"     // for wxGetNumberFromUser
+#include "wx/spinctrl.h"   // for wxSpinCtrl
 #include "wx/progdlg.h"    // for wxProgressDialog
 #include "wx/image.h"      // for wxImage
 
@@ -69,24 +69,246 @@ void Fatal(const wxString& msg)
    exit(1);
 }
 
+// =============================================================================
+
+// define a modal dialog for getting a string
+
+class StringDialog : public wxDialog
+{
+public:
+   StringDialog(wxWindow* parent, const wxString& title,
+                const wxString& prompt, const wxString& instring);
+
+   virtual bool TransferDataFromWindow();    // called when user hits OK
+
+   wxString GetValue() { return result; }
+
+private:   
+   wxTextCtrl* textbox;       // text box for entering the string
+   wxString result;           // the resulting string
+};
+
+// -----------------------------------------------------------------------------
+
+StringDialog::StringDialog(wxWindow* parent, const wxString& title,
+                           const wxString& prompt, const wxString& instring)
+{
+   Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+
+   // create the controls
+   wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+   SetSizer(topSizer);
+
+   textbox = new wxTextCtrl(this, wxID_ANY, instring);
+   wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
+
+   wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
+   
+   // position the controls
+   wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
+   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL, 0);
+   wxSize minsize = stdhbox->GetMinSize();
+   if (minsize.GetWidth() < 200) {
+      minsize.SetWidth(200);
+      stdhbox->SetMinSize(minsize);
+   }
+
+   topSizer->AddSpacer(12);
+   topSizer->Add(promptlabel, 0, wxLEFT | wxRIGHT, 10);
+   topSizer->AddSpacer(10);
+   topSizer->Add(textbox, 0, wxGROW | wxLEFT | wxRIGHT, 10);
+   topSizer->AddSpacer(12);
+   topSizer->Add(stdhbox, 1, wxGROW | wxTOP | wxBOTTOM, 10);
+
+   GetSizer()->Fit(this);
+   GetSizer()->SetSizeHints(this);
+   Centre();
+
+   // select initial string
+   textbox->SetFocus();
+   textbox->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
+}
+
+// -----------------------------------------------------------------------------
+
+bool StringDialog::TransferDataFromWindow()
+{
+   result = textbox->GetValue();
+   return true;
+}
+
 // -----------------------------------------------------------------------------
 
 bool GetString(const wxString& title, const wxString& prompt,
                const wxString& instring, wxString& outstring)
 {
-   wxTextEntryDialog dialog(wxGetActiveWindow(), prompt, title, instring,
-                            #ifdef __WXMAC__
-                               //!!! without this dlg appears in top left corner;
-                               // ditto in dialogs sample
-                               wxCENTRE |
-                            #endif
-                            wxOK | wxCANCEL);
-
-   if (dialog.ShowModal() == wxID_OK) {
+   StringDialog dialog(wxGetApp().GetTopWindow(), title, prompt, instring);
+   if ( dialog.ShowModal() == wxID_OK ) {
       outstring = dialog.GetValue();
+      #ifdef __WXMAC__
+         CGDisplayShowCursor(kCGDirectMainDisplay);   // doesn't fix bug!!!
+      #endif
       return true;
    } else {
+      // user hit Cancel button
+      #ifdef __WXMAC__
+         CGDisplayShowCursor(kCGDirectMainDisplay);   // doesn't fix bug!!!
+      #endif
       return false;
+   }
+}
+
+// =============================================================================
+
+// define a modal dialog for getting an integer
+
+class IntegerDialog : public wxDialog
+{
+public:
+   IntegerDialog(wxWindow* parent,
+                 const wxString& title,
+                 const wxString& prompt,
+                 int inval, int minval, int maxval);
+
+   virtual bool TransferDataFromWindow();    // called when user hits OK
+
+   #ifdef __WXMAC__
+      void OnSpinCtrlChar(wxKeyEvent& event);
+   #endif
+
+   int GetValue() { return result; }
+
+private:   
+   enum {
+      ID_SPIN_CTRL = wxID_HIGHEST
+   };
+   wxSpinCtrl* spinctrl;   // for entering the integer
+   int minint;             // minimum value
+   int maxint;             // maximum value
+   int result;             // the resulting integer
+};
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXMAC__
+
+// override key event handler for wxSpinCtrl to allow key checking
+class MySpinCtrl : public wxSpinCtrl
+{
+public:
+   MySpinCtrl(wxWindow *parent, wxWindowID id) : wxSpinCtrl(parent, id)
+   {
+      // create a dynamic event handler for the underlying wxTextCtrl
+      wxTextCtrl* textctrl = GetText();
+      if (textctrl) {
+         textctrl->Connect(wxID_ANY, wxEVT_CHAR,
+                           wxKeyEventHandler(IntegerDialog::OnSpinCtrlChar));
+      }
+   }
+};
+
+void IntegerDialog::OnSpinCtrlChar(wxKeyEvent& event)
+{
+   int key = event.GetKeyCode();
+   if ( key == WXK_TAB ) {
+      /* why does this crash???!!!
+      spinctrl->SetFocus();
+      spinctrl->SetSelection(0,999);
+      */
+      wxSpinCtrl* sc = (wxSpinCtrl*) FindWindowById(ID_SPIN_CTRL);
+      if ( sc ) {
+         sc->SetFocus();
+         sc->SetSelection(0,999);
+      }
+   } else if ( key >= ' ' && key <= '~' ) {
+      if ( (key >= '0' && key <= '9') || key == '+' || key == '-' ) {
+         // allow digits and + or -
+         event.Skip();
+      } else {
+         // disallow any other displayable ascii char
+         wxBell();
+      }
+   } else {
+      event.Skip();
+   }
+}
+
+#else
+
+#define MySpinCtrl wxSpinCtrl
+
+#endif // __WXMAC__
+
+// -----------------------------------------------------------------------------
+
+IntegerDialog::IntegerDialog(wxWindow* parent,
+                             const wxString& title,
+                             const wxString& prompt,
+                             int inval, int minval, int maxval)
+{
+   Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+
+   minint = minval;
+   maxint = maxval;
+
+   // create the controls
+   wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+   SetSizer(topSizer);
+
+   spinctrl = new MySpinCtrl(this, ID_SPIN_CTRL);
+   // init control value
+   spinctrl->SetRange(minval, maxval);
+   spinctrl->SetValue(inval);
+   spinctrl->SetFocus();
+   spinctrl->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
+   
+   wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
+
+   wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
+   
+   // position the controls
+   wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
+   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL, 0);
+   wxSize minsize = stdhbox->GetMinSize();
+   if (minsize.GetWidth() < 200) {
+      minsize.SetWidth(200);
+      stdhbox->SetMinSize(minsize);
+   }
+
+   topSizer->AddSpacer(12);
+   topSizer->Add(promptlabel, 0, wxLEFT | wxRIGHT, 10);
+   topSizer->AddSpacer(10);
+   topSizer->Add(spinctrl, 0, wxGROW | wxLEFT | wxRIGHT, 10);
+   topSizer->AddSpacer(12);
+   topSizer->Add(stdhbox, 1, wxGROW | wxTOP | wxBOTTOM, 10);
+
+   GetSizer()->Fit(this);
+   GetSizer()->SetSizeHints(this);
+   Centre();
+}
+
+// -----------------------------------------------------------------------------
+
+bool IntegerDialog::TransferDataFromWindow()
+{
+#if defined(__WXMSW__) || defined(__WXGTK__)
+   // spinctrl->GetValue() always returns a value within range even if
+   // the text ctrl doesn't contain a valid number -- yuk!!!
+   result = spinctrl->GetValue();
+   if (result < minint || result > maxint) {
+#else
+   // GetTextValue returns FALSE if text ctrl doesn't contain a valid number
+   // or the number is out of range, but it's not available in wxMSW or wxGTK
+   if ( !spinctrl->GetTextValue(&result) || result < minint || result > maxint ) {
+#endif
+      wxString msg;
+      msg.Printf(_("Value must be from %d to %d."), minint, maxint);
+      Warning(msg);
+      spinctrl->SetFocus();
+      spinctrl->SetSelection(0,999);   // wxMac bug: -1,-1 doesn't work here
+      return false;
+   } else {
+      return true;
    }
 }
 
@@ -95,22 +317,18 @@ bool GetString(const wxString& title, const wxString& prompt,
 bool GetInteger(const wxString& title, const wxString& prompt,
                 int inval, int minval, int maxval, int* outval)
 {
-   //!!! this can only get numbers >= 0
-   int n = wxGetNumberFromUser(prompt, wxEmptyString, title,
-                               inval, minval, maxval,
-                               wxGetActiveWindow());
-                               //!!!??? calc offset from main win top left
-                               //!!! wxPoint(100,100));    ignored on Mac -- try 2.8???
-
-   if (n == -1 || n < minval || n > maxval) {
-      return false;
-   } else {
-      *outval = n;
+   IntegerDialog dialog(wxGetApp().GetTopWindow(), title, prompt,
+                        inval, minval, maxval);
+   if ( dialog.ShowModal() == wxID_OK ) {
+      *outval = dialog.GetValue();
       return true;
+   } else {
+      // user hit Cancel button
+      return false;
    }
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
 #ifdef __WXMAC__
 
@@ -138,7 +356,7 @@ Boolean SaveChangesFilter(DialogRef dlg, EventRecord* event, DialogItemIndex* it
    return StdFilterProc(dlg, event, item);
 }
 
-#endif
+#endif // __WXMAC__
 
 // -----------------------------------------------------------------------------
 
@@ -191,10 +409,10 @@ int SaveChanges(const wxString& query, const wxString& msg)
       case wxNO:  return 1;
       default:    return 0;   // answer == wxCANCEL
    }
-#endif
+#endif // __WXMAC__
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
 // globals for showing progress
 
@@ -325,7 +543,7 @@ void EndProgress()
    viewptr->CheckCursor(mainptr->IsActive());
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
 void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush)
 {
