@@ -392,10 +392,10 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
 
 // =============================================================================
 
-// The following pyg_* routines can be called from Python scripts; some are
+// The following py_* routines can be called from Python scripts; some are
 // based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
 
-static PyObject* pyg_open(PyObject* self, PyObject* args)
+static PyObject* py_open(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -416,7 +416,7 @@ static PyObject* pyg_open(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_save(PyObject* self, PyObject* args)
+static PyObject* py_save(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -438,7 +438,7 @@ static PyObject* pyg_save(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_load(PyObject* self, PyObject* args)
+static PyObject* py_load(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -489,7 +489,7 @@ static PyObject* pyg_load(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_store(PyObject* self, PyObject* args)
+static PyObject* py_store(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -539,7 +539,7 @@ static PyObject* pyg_store(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_appdir(PyObject* self, PyObject* args)
+static PyObject* py_appdir(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -551,7 +551,7 @@ static PyObject* pyg_appdir(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_new(PyObject* self, PyObject* args)
+static PyObject* py_new(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -568,7 +568,7 @@ static PyObject* pyg_new(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_cut(PyObject* self, PyObject* args)
+static PyObject* py_cut(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -589,7 +589,7 @@ static PyObject* pyg_cut(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_copy(PyObject* self, PyObject* args)
+static PyObject* py_copy(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -610,7 +610,7 @@ static PyObject* pyg_copy(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_clear(PyObject* self, PyObject* args)
+static PyObject* py_clear(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -635,7 +635,7 @@ static PyObject* pyg_clear(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_paste(PyObject* self, PyObject* args)
+static PyObject* py_paste(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -688,7 +688,7 @@ static PyObject* pyg_paste(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_shrink(PyObject* self, PyObject* args)
+static PyObject* py_shrink(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -709,7 +709,7 @@ static PyObject* pyg_shrink(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_randfill(PyObject* self, PyObject* args)
+static PyObject* py_randfill(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -739,7 +739,7 @@ static PyObject* pyg_randfill(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_flip(PyObject* self, PyObject* args)
+static PyObject* py_flip(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -764,7 +764,7 @@ static PyObject* pyg_flip(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_rotate(PyObject* self, PyObject* args)
+static PyObject* py_rotate(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -786,7 +786,7 @@ static PyObject* pyg_rotate(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_parse(PyObject* self, PyObject* args)
+static PyObject* py_parse(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -844,7 +844,7 @@ static PyObject* pyg_parse(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_transform(PyObject* self, PyObject* args)
+static PyObject* py_transform(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -874,7 +874,7 @@ static PyObject* pyg_transform(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_evolve(PyObject* self, PyObject* args)
+static PyObject* py_evolve(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -930,7 +930,7 @@ static PyObject* pyg_evolve(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_putcells(PyObject* self, PyObject* args)
+static PyObject* py_putcells(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1014,7 +1014,7 @@ static PyObject* pyg_putcells(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getcells(PyObject* self, PyObject* args)
+static PyObject* py_getcells(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1077,7 +1077,7 @@ static PyObject* pyg_getcells(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getclip(PyObject* self, PyObject* args)
+static PyObject* py_getclip(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1153,7 +1153,7 @@ static PyObject* pyg_getclip(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_select(PyObject* self, PyObject* args)
+static PyObject* py_select(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1197,7 +1197,7 @@ static PyObject* pyg_select(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getrect(PyObject* self, PyObject* args)
+static PyObject* py_getrect(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1228,7 +1228,7 @@ static PyObject* pyg_getrect(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getselrect(PyObject* self, PyObject* args)
+static PyObject* py_getselrect(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1258,7 +1258,7 @@ static PyObject* pyg_getselrect(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setcell(PyObject* self, PyObject* args)
+static PyObject* py_setcell(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1278,7 +1278,7 @@ static PyObject* pyg_setcell(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getcell(PyObject* self, PyObject* args)
+static PyObject* py_getcell(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1291,7 +1291,7 @@ static PyObject* pyg_getcell(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setcursor(PyObject* self, PyObject* args)
+static PyObject* py_setcursor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1316,7 +1316,7 @@ static PyObject* pyg_setcursor(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getcursor(PyObject* self, PyObject* args)
+static PyObject* py_getcursor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1328,7 +1328,7 @@ static PyObject* pyg_getcursor(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_empty(PyObject* self, PyObject* args)
+static PyObject* py_empty(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1340,7 +1340,7 @@ static PyObject* pyg_empty(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_run(PyObject* self, PyObject* args)
+static PyObject* py_run(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1366,7 +1366,7 @@ static PyObject* pyg_run(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_step(PyObject* self, PyObject* args)
+static PyObject* py_step(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1384,7 +1384,7 @@ static PyObject* pyg_step(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setstep(PyObject* self, PyObject* args)
+static PyObject* py_setstep(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1401,7 +1401,7 @@ static PyObject* pyg_setstep(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getstep(PyObject* self, PyObject* args)
+static PyObject* py_getstep(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1413,7 +1413,7 @@ static PyObject* pyg_getstep(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setbase(PyObject* self, PyObject* args)
+static PyObject* py_setbase(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1438,7 +1438,7 @@ static PyObject* pyg_setbase(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getbase(PyObject* self, PyObject* args)
+static PyObject* py_getbase(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1450,7 +1450,7 @@ static PyObject* pyg_getbase(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_advance(PyObject* self, PyObject* args)
+static PyObject* py_advance(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1480,7 +1480,7 @@ static PyObject* pyg_advance(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_reset(PyObject* self, PyObject* args)
+static PyObject* py_reset(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1498,7 +1498,7 @@ static PyObject* pyg_reset(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getgen(PyObject* self, PyObject* args)
+static PyObject* py_getgen(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1511,7 +1511,7 @@ static PyObject* pyg_getgen(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getpop(PyObject* self, PyObject* args)
+static PyObject* py_getpop(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1524,7 +1524,7 @@ static PyObject* pyg_getpop(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setrule(PyObject* self, PyObject* args)
+static PyObject* py_setrule(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1544,7 +1544,7 @@ static PyObject* pyg_setrule(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getrule(PyObject* self, PyObject* args)
+static PyObject* py_getrule(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1556,7 +1556,7 @@ static PyObject* pyg_getrule(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setpos(PyObject* self, PyObject* args)
+static PyObject* py_setpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1591,7 +1591,7 @@ static PyObject* pyg_setpos(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getpos(PyObject* self, PyObject* args)
+static PyObject* py_getpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1611,7 +1611,7 @@ static PyObject* pyg_getpos(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setmag(PyObject* self, PyObject* args)
+static PyObject* py_setmag(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1628,7 +1628,7 @@ static PyObject* pyg_setmag(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getmag(PyObject* self, PyObject* args)
+static PyObject* py_getmag(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1640,7 +1640,7 @@ static PyObject* pyg_getmag(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_fit(PyObject* self, PyObject* args)
+static PyObject* py_fit(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1656,7 +1656,7 @@ static PyObject* pyg_fit(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_fitsel(PyObject* self, PyObject* args)
+static PyObject* py_fitsel(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1677,7 +1677,7 @@ static PyObject* pyg_fitsel(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_visrect(PyObject* self, PyObject* args)
+static PyObject* py_visrect(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1717,7 +1717,7 @@ static PyObject* pyg_visrect(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_update(PyObject* self, PyObject* args)
+static PyObject* py_update(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1732,7 +1732,7 @@ static PyObject* pyg_update(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_autoupdate(PyObject* self, PyObject* args)
+static PyObject* py_autoupdate(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1748,7 +1748,7 @@ static PyObject* pyg_autoupdate(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_addlayer(PyObject* self, PyObject* args)
+static PyObject* py_addlayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1769,7 +1769,7 @@ static PyObject* pyg_addlayer(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_clone(PyObject* self, PyObject* args)
+static PyObject* py_clone(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1790,7 +1790,7 @@ static PyObject* pyg_clone(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_duplicate(PyObject* self, PyObject* args)
+static PyObject* py_duplicate(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1811,7 +1811,7 @@ static PyObject* pyg_duplicate(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_dellayer(PyObject* self, PyObject* args)
+static PyObject* py_dellayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1832,7 +1832,7 @@ static PyObject* pyg_dellayer(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_movelayer(PyObject* self, PyObject* args)
+static PyObject* py_movelayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1862,7 +1862,7 @@ static PyObject* pyg_movelayer(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setlayer(PyObject* self, PyObject* args)
+static PyObject* py_setlayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1886,7 +1886,7 @@ static PyObject* pyg_setlayer(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getlayer(PyObject* self, PyObject* args)
+static PyObject* py_getlayer(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1898,7 +1898,7 @@ static PyObject* pyg_getlayer(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_numlayers(PyObject* self, PyObject* args)
+static PyObject* py_numlayers(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1910,7 +1910,7 @@ static PyObject* pyg_numlayers(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_maxlayers(PyObject* self, PyObject* args)
+static PyObject* py_maxlayers(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1922,7 +1922,7 @@ static PyObject* pyg_maxlayers(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setname(PyObject* self, PyObject* args)
+static PyObject* py_setname(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1946,7 +1946,7 @@ static PyObject* pyg_setname(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getname(PyObject* self, PyObject* args)
+static PyObject* py_getname(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1967,7 +1967,7 @@ static PyObject* pyg_getname(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setoption(PyObject* self, PyObject* args)
+static PyObject* py_setoption(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -1987,7 +1987,7 @@ static PyObject* pyg_setoption(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getoption(PyObject* self, PyObject* args)
+static PyObject* py_getoption(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2006,7 +2006,7 @@ static PyObject* pyg_getoption(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_setcolor(PyObject* self, PyObject* args)
+static PyObject* py_setcolor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2033,7 +2033,7 @@ static PyObject* pyg_setcolor(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getcolor(PyObject* self, PyObject* args)
+static PyObject* py_getcolor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2057,7 +2057,7 @@ static PyObject* pyg_getcolor(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getstring(PyObject* self, PyObject* args)
+static PyObject* py_getstring(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2081,7 +2081,7 @@ static PyObject* pyg_getstring(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_getkey(PyObject* self, PyObject* args)
+static PyObject* py_getkey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2096,7 +2096,7 @@ static PyObject* pyg_getkey(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_dokey(PyObject* self, PyObject* args)
+static PyObject* py_dokey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2112,7 +2112,7 @@ static PyObject* pyg_dokey(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_show(PyObject* self, PyObject* args)
+static PyObject* py_show(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2132,7 +2132,7 @@ static PyObject* pyg_show(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_error(PyObject* self, PyObject* args)
+static PyObject* py_error(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2152,7 +2152,7 @@ static PyObject* pyg_error(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_warn(PyObject* self, PyObject* args)
+static PyObject* py_warn(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2168,7 +2168,7 @@ static PyObject* pyg_warn(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_note(PyObject* self, PyObject* args)
+static PyObject* py_note(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2184,7 +2184,7 @@ static PyObject* pyg_note(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_check(PyObject* self, PyObject* args)
+static PyObject* py_check(PyObject* self, PyObject* args)
 {
    // don't call checkevents() here otherwise we can't safely write code like
    //    if g.getlayer() == target:
@@ -2205,7 +2205,7 @@ static PyObject* pyg_check(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_exit(PyObject* self, PyObject* args)
+static PyObject* py_exit(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
@@ -2222,7 +2222,7 @@ static PyObject* pyg_exit(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* pyg_stderr(PyObject* self, PyObject* args)
+static PyObject* py_stderr(PyObject* self, PyObject* args)
 {
    // probably safer not to call checkevents here
    // if (PythonScriptAborted()) return NULL;
@@ -2240,88 +2240,88 @@ static PyObject* pyg_stderr(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyMethodDef pyg_methods[] = {
+static PyMethodDef py_methods[] = {
    // filing
-   { "open",         pyg_open,       METH_VARARGS, "open given pattern file" },
-   { "save",         pyg_save,       METH_VARARGS, "save pattern in given file using given format" },
-   { "load",         pyg_load,       METH_VARARGS, "read pattern file and return cell list" },
-   { "store",        pyg_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
-   { "appdir",       pyg_appdir,     METH_VARARGS, "return location of Golly app" },
+   { "open",         py_open,       METH_VARARGS, "open given pattern file" },
+   { "save",         py_save,       METH_VARARGS, "save pattern in given file using given format" },
+   { "load",         py_load,       METH_VARARGS, "read pattern file and return cell list" },
+   { "store",        py_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
+   { "appdir",       py_appdir,     METH_VARARGS, "return location of Golly app" },
    // editing
-   { "new",          pyg_new,        METH_VARARGS, "create new universe and set window title" },
-   { "cut",          pyg_cut,        METH_VARARGS, "cut selection to clipboard" },
-   { "copy",         pyg_copy,       METH_VARARGS, "copy selection to clipboard" },
-   { "clear",        pyg_clear,      METH_VARARGS, "clear inside/outside selection" },
-   { "paste",        pyg_paste,      METH_VARARGS, "paste clipboard pattern at x,y using given mode" },
-   { "shrink",       pyg_shrink,     METH_VARARGS, "shrink selection" },
-   { "randfill",     pyg_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
-   { "flip",         pyg_flip,       METH_VARARGS, "flip selection left-right or up-down" },
-   { "rotate",       pyg_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
-   { "parse",        pyg_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
-   { "transform",    pyg_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
-   { "evolve",       pyg_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
-   { "putcells",     pyg_putcells,   METH_VARARGS, "paste given cell list into current universe" },
-   { "getcells",     pyg_getcells,   METH_VARARGS, "return cell list in given rectangle" },
-   { "getclip",      pyg_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
-   { "select",       pyg_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
-   { "getrect",      pyg_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
-   { "getselrect",   pyg_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
-   { "setcell",      pyg_setcell,    METH_VARARGS, "set given cell to given state" },
-   { "getcell",      pyg_getcell,    METH_VARARGS, "get state of given cell" },
-   { "setcursor",    pyg_setcursor,  METH_VARARGS, "set cursor (returns old cursor)" },
-   { "getcursor",    pyg_getcursor,  METH_VARARGS, "return current cursor" },
+   { "new",          py_new,        METH_VARARGS, "create new universe and set window title" },
+   { "cut",          py_cut,        METH_VARARGS, "cut selection to clipboard" },
+   { "copy",         py_copy,       METH_VARARGS, "copy selection to clipboard" },
+   { "clear",        py_clear,      METH_VARARGS, "clear inside/outside selection" },
+   { "paste",        py_paste,      METH_VARARGS, "paste clipboard pattern at x,y using given mode" },
+   { "shrink",       py_shrink,     METH_VARARGS, "shrink selection" },
+   { "randfill",     py_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
+   { "flip",         py_flip,       METH_VARARGS, "flip selection left-right or up-down" },
+   { "rotate",       py_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
+   { "parse",        py_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
+   { "transform",    py_transform,  METH_VARARGS, "apply an affine transformation to cell list" },
+   { "evolve",       py_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
+   { "putcells",     py_putcells,   METH_VARARGS, "paste given cell list into current universe" },
+   { "getcells",     py_getcells,   METH_VARARGS, "return cell list in given rectangle" },
+   { "getclip",      py_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
+   { "select",       py_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
+   { "getrect",      py_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },
+   { "getselrect",   py_getselrect, METH_VARARGS, "return selection rectangle as [] or [x, y, wd, ht]" },
+   { "setcell",      py_setcell,    METH_VARARGS, "set given cell to given state" },
+   { "getcell",      py_getcell,    METH_VARARGS, "get state of given cell" },
+   { "setcursor",    py_setcursor,  METH_VARARGS, "set cursor (returns old cursor)" },
+   { "getcursor",    py_getcursor,  METH_VARARGS, "return current cursor" },
    // control
-   { "empty",        pyg_empty,      METH_VARARGS, "return true if universe is empty" },
-   { "run",          pyg_run,        METH_VARARGS, "run current pattern for given number of gens" },
-   { "step",         pyg_step,       METH_VARARGS, "run current pattern for current step" },
-   { "setstep",      pyg_setstep,    METH_VARARGS, "set step exponent" },
-   { "getstep",      pyg_getstep,    METH_VARARGS, "return current step exponent" },
-   { "setbase",      pyg_setbase,    METH_VARARGS, "set base step" },
-   { "getbase",      pyg_getbase,    METH_VARARGS, "return current base step" },
-   { "advance",      pyg_advance,    METH_VARARGS, "advance inside/outside selection by given gens" },
-   { "reset",        pyg_reset,      METH_VARARGS, "restore starting pattern" },
-   { "getgen",       pyg_getgen,     METH_VARARGS, "return current generation as string" },
-   { "getpop",       pyg_getpop,     METH_VARARGS, "return current population as string" },
-   { "setrule",      pyg_setrule,    METH_VARARGS, "set current rule according to string" },
-   { "getrule",      pyg_getrule,    METH_VARARGS, "return current rule string" },
+   { "empty",        py_empty,      METH_VARARGS, "return true if universe is empty" },
+   { "run",          py_run,        METH_VARARGS, "run current pattern for given number of gens" },
+   { "step",         py_step,       METH_VARARGS, "run current pattern for current step" },
+   { "setstep",      py_setstep,    METH_VARARGS, "set step exponent" },
+   { "getstep",      py_getstep,    METH_VARARGS, "return current step exponent" },
+   { "setbase",      py_setbase,    METH_VARARGS, "set base step" },
+   { "getbase",      py_getbase,    METH_VARARGS, "return current base step" },
+   { "advance",      py_advance,    METH_VARARGS, "advance inside/outside selection by given gens" },
+   { "reset",        py_reset,      METH_VARARGS, "restore starting pattern" },
+   { "getgen",       py_getgen,     METH_VARARGS, "return current generation as string" },
+   { "getpop",       py_getpop,     METH_VARARGS, "return current population as string" },
+   { "setrule",      py_setrule,    METH_VARARGS, "set current rule according to string" },
+   { "getrule",      py_getrule,    METH_VARARGS, "return current rule string" },
    // viewing
-   { "setpos",       pyg_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
-   { "getpos",       pyg_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
-   { "setmag",       pyg_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },
-   { "getmag",       pyg_getmag,     METH_VARARGS, "return current magnification" },
-   { "fit",          pyg_fit,        METH_VARARGS, "fit entire pattern in viewport" },
-   { "fitsel",       pyg_fitsel,     METH_VARARGS, "fit selection in viewport" },
-   { "visrect",      pyg_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
-   { "update",       pyg_update,     METH_VARARGS, "update display (viewport and status bar)" },
-   { "autoupdate",   pyg_autoupdate, METH_VARARGS, "update display after each change to universe?" },
+   { "setpos",       py_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
+   { "getpos",       py_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
+   { "setmag",       py_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },
+   { "getmag",       py_getmag,     METH_VARARGS, "return current magnification" },
+   { "fit",          py_fit,        METH_VARARGS, "fit entire pattern in viewport" },
+   { "fitsel",       py_fitsel,     METH_VARARGS, "fit selection in viewport" },
+   { "visrect",      py_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
+   { "update",       py_update,     METH_VARARGS, "update display (viewport and status bar)" },
+   { "autoupdate",   py_autoupdate, METH_VARARGS, "update display after each change to universe?" },
    // layers
-   { "addlayer",     pyg_addlayer,   METH_VARARGS, "add a new layer" },
-   { "clone",        pyg_clone,      METH_VARARGS, "add a cloned layer (shares universe)" },
-   { "duplicate",    pyg_duplicate,  METH_VARARGS, "add a duplicate layer (copies universe)" },
-   { "dellayer",     pyg_dellayer,   METH_VARARGS, "delete current layer" },
-   { "movelayer",    pyg_movelayer,  METH_VARARGS, "move given layer to new index" },
-   { "setlayer",     pyg_setlayer,   METH_VARARGS, "switch to given layer" },
-   { "getlayer",     pyg_getlayer,   METH_VARARGS, "return index of current layer" },
-   { "numlayers",    pyg_numlayers,  METH_VARARGS, "return current number of layers" },
-   { "maxlayers",    pyg_maxlayers,  METH_VARARGS, "return maximum number of layers" },
-   { "setname",      pyg_setname,    METH_VARARGS, "set name of given layer" },
-   { "getname",      pyg_getname,    METH_VARARGS, "get name of given layer" },
+   { "addlayer",     py_addlayer,   METH_VARARGS, "add a new layer" },
+   { "clone",        py_clone,      METH_VARARGS, "add a cloned layer (shares universe)" },
+   { "duplicate",    py_duplicate,  METH_VARARGS, "add a duplicate layer (copies universe)" },
+   { "dellayer",     py_dellayer,   METH_VARARGS, "delete current layer" },
+   { "movelayer",    py_movelayer,  METH_VARARGS, "move given layer to new index" },
+   { "setlayer",     py_setlayer,   METH_VARARGS, "switch to given layer" },
+   { "getlayer",     py_getlayer,   METH_VARARGS, "return index of current layer" },
+   { "numlayers",    py_numlayers,  METH_VARARGS, "return current number of layers" },
+   { "maxlayers",    py_maxlayers,  METH_VARARGS, "return maximum number of layers" },
+   { "setname",      py_setname,    METH_VARARGS, "set name of given layer" },
+   { "getname",      py_getname,    METH_VARARGS, "get name of given layer" },
    // miscellaneous
-   { "setoption",    pyg_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
-   { "getoption",    pyg_getoption,  METH_VARARGS, "return current value of given option" },
-   { "setcolor",     pyg_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
-   { "getcolor",     pyg_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
-   { "getstring",    pyg_getstring,  METH_VARARGS, "display dialog box to get string from user" },
-   { "getkey",       pyg_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
-   { "dokey",        pyg_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
-   { "show",         pyg_show,       METH_VARARGS, "show given string in status bar" },
-   { "error",        pyg_error,      METH_VARARGS, "beep and show given string in status bar" },
-   { "warn",         pyg_warn,       METH_VARARGS, "show given string in warning dialog" },
-   { "note",         pyg_note,       METH_VARARGS, "show given string in note dialog" },
-   { "check",        pyg_check,      METH_VARARGS, "allow event checking?" },
-   { "exit",         pyg_exit,       METH_VARARGS, "exit script with optional error message" },
+   { "setoption",    py_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
+   { "getoption",    py_getoption,  METH_VARARGS, "return current value of given option" },
+   { "setcolor",     py_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
+   { "getcolor",     py_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
+   { "getstring",    py_getstring,  METH_VARARGS, "display dialog box to get string from user" },
+   { "getkey",       py_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
+   { "dokey",        py_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
+   { "show",         py_show,       METH_VARARGS, "show given string in status bar" },
+   { "error",        py_error,      METH_VARARGS, "beep and show given string in status bar" },
+   { "warn",         py_warn,       METH_VARARGS, "show given string in warning dialog" },
+   { "note",         py_note,       METH_VARARGS, "show given string in note dialog" },
+   { "check",        py_check,      METH_VARARGS, "allow event checking?" },
+   { "exit",         py_exit,       METH_VARARGS, "exit script with optional error message" },
    // for internal use (don't document)
-   { "stderr",       pyg_stderr,     METH_VARARGS, "save Python error message" },
+   { "stderr",       py_stderr,     METH_VARARGS, "save Python error message" },
    { NULL, NULL, 0, NULL }
 };
 
@@ -2345,10 +2345,10 @@ bool InitPython()
          GetPythonExceptions();
       #endif
 
-      // allow Python to call the above pyg_* routines
-      Py_InitModule("golly", pyg_methods);
+      // allow Python to call the above py_* routines
+      Py_InitModule("golly", py_methods);
 
-      // catch Python messages sent to stderr and pass them to pyg_stderr
+      // catch Python messages sent to stderr and pass them to py_stderr
       if ( PyRun_SimpleString(
             "import golly\n"
             "import sys\n"

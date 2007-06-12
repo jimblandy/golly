@@ -103,7 +103,7 @@ void ChangeWindowTitle(const wxString& name)
 // =============================================================================
 
 // The following Golly Script Functions are used to reduce code duplication.
-// They are called by corresponding plg_* and pyg_* functions in wxperl.cpp
+// They are called by corresponding pl_* and py_* functions in wxperl.cpp
 // and wxpython.cpp respectively.
 
 const char* GSF_open(char* filename, int remember)

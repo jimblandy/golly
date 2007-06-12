@@ -1,0 +1,984 @@
+<html>
+<title>Golly Help: Perl Scripting</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+<dd><a href="#install"><b>Installing Perl</b></a></dd>
+<dd><a href="#examples"><b>Example scripts</b></a></dd>
+<dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
+<dd><a href="#arrays"><b>Cell arrays and rectangle arrays</b></a></dd>
+<dd><a href="#problems"><b>Potential problems</b></a></dd>
+<dd><a href="#copyright"><b>Perl copyright notice</b></a></dd>
+</p>
+
+
+<p><a name="install">
+&nbsp;<br>
+<font size=+1><b>Installing Perl</b></font>
+
+<p>
+Before you can run a .pl script, Perl needs to be installed on your system.
+Mac OS X users don't need to do anything because Perl is already installed.
+If you are running Linux then you probably have Perl installed; if not,
+visit <a href="http://www.perl.org/">www.perl.org</a> and download a
+suitable installer.  Windows users are advised to download the
+<a href="http://www.activestate.com/Products/ActivePerl/">ActivePerl</a> installer.
+
+<p>
+On Windows, the Perl library is loaded at runtime (the first time you
+try to run a .pl script).  Golly initially attempts to load perl58.dll
+where the numbers correspond to Perl version 5.8.x.
+If that library can't be found then you'll be
+prompted to enter a different library name matching the version of Perl
+installed on your system.  A successfully loaded library is remembered
+(in your GollyPrefs file) so you won't get the prompt again unless you
+remove Perl or install a new version.  If Perl isn't installed then
+you'll have to hit Cancel and you won't be able to run any .pl scripts.
+
+
+<p><a name="examples">
+&nbsp;<br>
+<font size=+1><b>Example scripts</b></font>
+
+<p>
+The Scripts folder supplied with Golly contains a number of example Perl scripts:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td><b>density.pl</b></td><td width=10> </td>
+   <td> -- calculates the density of the current pattern</td>
+</tr>
+<tr>
+   <td><b>giffer.pl</b></td><td width=10> </td>
+   <td> -- creates an animated GIF using the current selection</td>
+</tr>
+<tr>
+   <td><b>goto.pl</b></td><td width=10> </td>
+   <td> -- goes to a given generation</td>
+</tr>
+<tr>
+   <td><b>invert.pl</b></td><td width=10> </td>
+   <td> -- inverts all cell states in the current selection</td>
+</tr>
+<tr>
+   <td><b>oscar.pl</b></td><td width=10> </td>
+   <td> -- detects oscillating patterns, including spaceships</td>
+</tr>
+<tr>
+   <td><b>pop-plot.pl</b></td><td width=10> </td>
+   <td> -- displays a plot of population versus time</td>
+</tr>
+<tr>
+   <td><b>shift.pl</b></td><td width=10> </td>
+   <td> -- shifts the current selection by given x y amounts</td>
+</tr>
+<tr>
+   <td><b>tile.pl</b></td><td width=10> </td>
+   <td> -- tiles the current selection with the pattern inside it</td>
+</tr>
+<tr>
+   <td><b>tile-with-clip.pl</b></td><td width=10> </td>
+   <td> -- tiles the current selection with the clipboard pattern</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+The easiest way to run one of these scripts is to tick the <b>Show Scripts</b>
+item in the File menu and then simply click on the script you wish to run.
+You can also select one of the <b>Run</b> items in the File menu.
+
+<p>
+If a script called golly-start.pl exists in the same folder as the Golly
+application then it is automatically executed when Golly starts up.
+
+<p>
+There are a number of ways to abort a running script.  Hit the escape key,
+or click on the stop button in the tool bar, or select the Stop item in the
+Control menu.
+
+
+<p><a name="commands">
+&nbsp;<br>
+<font size=+1><b>Golly's scripting commands</b></font>
+
+<p>
+This section describes all the Golly-specific scripting commands
+that can be used in a Perl script.  Commands are grouped by function
+(<a href="#filing"><b>filing</b></a>,
+<a href="#editing"><b>editing</b></a>,
+<a href="#control"><b>control</b></a>,
+<a href="#viewing"><b>viewing</b></a>,
+<a href="#layers"><b>layers</b></a>
+and <a href="#miscellaneous"><b>miscellaneous</b></a>)
+or you can search for individual commands alphabetically:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<a href="#addlayer"><b>g_addlayer</b></a><br>
+<a href="#advance"><b>g_advance</b></a><br>
+<a href="#appdir"><b>g_appdir</b></a><br>
+<a href="#autoupdate"><b>g_autoupdate</b></a><br>
+<a href="#check"><b>g_check</b></a><br>
+<a href="#clear"><b>g_clear</b></a><br>
+<a href="#clone"><b>g_clone</b></a><br>
+<a href="#copy"><b>g_copy</b></a><br>
+<a href="#cut"><b>g_cut</b></a><br>
+<a href="#dellayer"><b>g_dellayer</b></a><br>
+<a href="#dokey"><b>g_dokey</b></a><br>
+<a href="#duplicate"><b>g_duplicate</b></a><br>
+<a href="#empty"><b>g_empty</b></a><br>
+<a href="#error"><b>g_error</b></a><br>
+<a href="#evolve"><b>g_evolve</b></a>
+</td>
+<td valign=top width=20> </td>
+<td valign=top>
+<a href="#exit"><b>g_exit</b></a><br>
+<a href="#fit"><b>g_fit</b></a><br>
+<a href="#fitsel"><b>g_fitsel</b></a><br>
+<a href="#flip"><b>g_flip</b></a><br>
+<a href="#getbase"><b>g_getbase</b></a><br>
+<a href="#getcell"><b>g_getcell</b></a><br>
+<a href="#getcells"><b>g_getcells</b></a><br>
+<a href="#getclip"><b>g_getclip</b></a><br>
+<a href="#getcolor"><b>g_getcolor</b></a><br>
+<a href="#getcursor"><b>g_getcursor</b></a><br>
+<a href="#getgen"><b>g_getgen</b></a><br>
+<a href="#getkey"><b>g_getkey</b></a><br>
+<a href="#getlayer"><b>g_getlayer</b></a><br>
+<a href="#getmag"><b>g_getmag</b></a><br>
+<a href="#getname"><b>g_getname</b></a>
+</td>
+<td valign=top width=20> </td>
+<td valign=top>
+<a href="#getoption"><b>g_getoption</b></a><br>
+<a href="#getpop"><b>g_getpop</b></a><br>
+<a href="#getpos"><b>g_getpos</b></a><br>
+<a href="#getrect"><b>g_getrect</b></a><br>
+<a href="#getrule"><b>g_getrule</b></a><br>
+<a href="#getselrect"><b>g_getselrect</b></a><br>
+<a href="#getstep"><b>g_getstep</b></a><br>
+<a href="#getstring"><b>g_getstring</b></a><br>
+<a href="#load"><b>g_load</b></a><br>
+<a href="#maxlayers"><b>g_maxlayers</b></a><br>
+<a href="#movelayer"><b>g_movelayer</b></a><br>
+<a href="#new"><b>g_new</b></a><br>
+<a href="#note"><b>g_note</b></a><br>
+<a href="#numlayers"><b>g_numlayers</b></a><br>
+<a href="#open"><b>g_open</b></a>
+</td>
+<td valign=top width=20> </td>
+<td valign=top>
+<a href="#parse"><b>g_parse</b></a><br>
+<a href="#paste"><b>g_paste</b></a><br>
+<a href="#putcells"><b>g_putcells</b></a><br>
+<a href="#randfill"><b>g_randfill</b></a><br>
+<a href="#reset"><b>g_reset</b></a><br>
+<a href="#rotate"><b>g_rotate</b></a><br>
+<a href="#run"><b>g_run</b></a><br>
+<a href="#save"><b>g_save</b></a><br>
+<a href="#select"><b>g_select</b></a><br>
+<a href="#setbase"><b>g_setbase</b></a><br>
+<a href="#setcell"><b>g_setcell</b></a><br>
+<a href="#setcolor"><b>g_setcolor</b></a><br>
+<a href="#setcursor"><b>g_setcursor</b></a><br>
+<a href="#setlayer"><b>g_setlayer</b></a><br>
+<a href="#setmag"><b>g_setmag</b></a>
+</td>
+<td valign=top width=20> </td>
+<td valign=top>
+<a href="#setname"><b>g_setname</b></a><br>
+<a href="#setoption"><b>g_setoption</b></a><br>
+<a href="#setpos"><b>g_setpos</b></a><br>
+<a href="#setrule"><b>g_setrule</b></a><br>
+<a href="#setstep"><b>g_setstep</b></a><br>
+<a href="#show"><b>g_show</b></a><br>
+<a href="#shrink"><b>g_shrink</b></a><br>
+<a href="#step"><b>g_step</b></a><br>
+<a href="#store"><b>g_store</b></a><br>
+<a href="#transform"><b>g_transform</b></a><br>
+<a href="#update"><b>g_update</b></a><br>
+<a href="#visrect"><b>g_visrect</b></a><br>
+<a href="#warn"><b>g_warn</b></a>
+</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p><a name="filing">
+&nbsp;<br>
+FILING COMMANDS
+
+<a name="open"></a><p><dt><b>g_open(<i>$filename, $remember=0</i>)</b></dt>
+<dd>
+Open the given pattern file.
+A non-absolute path is relative to the location of the script.
+The 2nd parameter is optional (default = 0) and specifies if the file
+should be remembered in the Open Recent submenu.
+</dd>
+<dd> Example: <b>g_open("my-patterns/foo.rle");</b></dd>
+</p>
+
+<a name="save"></a><p><dt><b>g_save(<i>$filename, $format, $remember=0</i>)</b></dt>
+<dd>
+Save the current pattern in a given file using the specified format ("rle" or "mc").
+A non-absolute path is relative to the location of the script.
+The 3rd parameter is optional (default = 0) and specifies if the file
+should be remembered in the Open Recent submenu.
+If the <b>savexrle</b> option is 1 then extended RLE format is used
+(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
+</dd>
+<dd> Example: <b>g_save("foo.rle", "rle", 1);</b></dd>
+</p>
+
+<a name="load"></a><p><dt><b>g_load(<i>$filename</i>)</b></dt>
+<dd>
+Read the given pattern file and return a cell array reference.
+</dd>
+<dd> Example: <b>$blinker = g_load("blinker.rle");</b></dd>
+</p>
+
+<a name="store"></a><p><dt><b>g_store(<i>$cellarray, $filename</i>)</b></dt>
+<dd>
+Write the pattern in the given cell array reference to the specified file in RLE format.
+If the <b>savexrle</b> option is 1 then extended RLE format is used
+(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
+</dd>
+<dd> Example: <b>g_store($cellarray, "foo.rle");</b></dd>
+</p>
+
+<a name="appdir"></a><p><dt><b>g_appdir()</b></dt>
+<dd>
+Return the location of the Golly application as a string.
+</dd>
+<dd> Example: <b>g_open(g_appdir()."Patterns/Breeders/breeder.lif");</b></dd>
+</p>
+
+<p><a name="editing">
+&nbsp;<br>
+EDITING COMMANDS
+
+<a name="new"></a><p><dt><b>g_new(<i>$title</i>)</b></dt>
+<dd>
+Create a new, empty universe and set the window title.
+If the given title is empty then the current title won't change.
+</dd>
+<dd> Example: <b>g_new("test-pattern");</b></dd>
+</p>
+
+<a name="cut"></a><p><dt><b>g_cut()</b></dt>
+<dd>
+Cut the current selection to the clipboard.
+</dd>
+</p>
+
+<a name="copy"></a><p><dt><b>g_copy()</b></dt>
+<dd>
+Copy the current selection to the clipboard.
+</dd>
+</p>
+
+<a name="clear"></a><p><dt><b>g_clear(<i>$where</i>)</b></dt>
+<dd>
+Clear inside (where = 0) or outside (where = 1) the current selection.
+</dd>
+<dd> Example: <b>g_clear(1);</b></dd>
+</p>
+
+<a name="paste"></a><p><dt><b>g_paste(<i>$x, $y, $mode</i>)</b></dt>
+<dd>
+Paste the clipboard pattern at x,y using the given mode ("copy", "or" or "xor").
+</dd>
+<dd> Example: <b>g_paste(0, 0, "or");</b></dd>
+</p>
+
+<a name="shrink"></a><p><dt><b>g_shrink()</b></dt>
+<dd>
+Shrink the current selection to the smallest rectangle enclosing all of the
+selection's live cells.
+</dd>
+</p>
+
+<a name="randfill"></a><p><dt><b>g_randfill(<i>$percentage</i>)</b></dt>
+<dd>
+Randomly fill the current selection to a density specified by the given
+percentage (1 to 100).
+</dd>
+<dd> Example: <b>g_randfill(50);</b></dd>
+</p>
+
+<a name="flip"></a><p><dt><b>g_flip(<i>$direction</i>)</b></dt>
+<dd>
+Flip the current selection left-right (direction = 0) or top-bottom (direction = 1).
+</dd>
+</p>
+
+<a name="rotate"></a><p><dt><b>g_rotate(<i>$direction</i>)</b></dt>
+<dd>
+Rotate the current selection 90 degrees clockwise (direction = 0) or
+anticlockwise (direction = 1).
+</dd>
+</p>
+
+<a name="evolve"></a><p><dt><b>g_evolve(<i>$cellarray, $numgens</i>)</b></dt>
+<dd>
+Advance the pattern in the given cell array reference by the specified
+number of generations and return a reference to the new cell array.
+</dd>
+<dd> Example: <b>$newpatt = g_evolve($currpatt, 100);</b></dd>
+</p>
+
+<a name="transform"></a><p><dt><b>g_transform(<i>$cellarray, $x0, $y0, $axx, $axy, $ayx, $ayy</i>)</b></dt>
+<dd>
+Apply an affine transformation to the pattern in the given cell array reference
+and return a reference to the new cell array.
+For each x,y cell in the input array the corresponding xn,yn cell in the output array
+is calculated as xn = x0 + x*axx + y*axy, yn = y0 + x*ayx + y*ayy.
+</dd>
+<dd> Example: <b>$rot_blinker = g_transform($blinker, 0, 0, 0, -1, 1, 0);</b></dd>
+</p>
+
+<a name="parse"></a><p><dt><b>g_parse(<i>$string, $x0, $y0, $axx, $axy, $ayx, $ayy</i>)</b></dt>
+<dd>
+Parse an RLE or Life 1.05 string and return a reference to the new
+(possibly transformed) cell array.
+</dd>
+<dd> Example: <b>$blinker = g_parse("3o!", 0, 0, 1, 0, 0, 1);</b></dd>
+</p>
+
+<a name="putcells"></a><p><dt><b>g_putcells(<i>$cellarray, $x0=0, $y0=0, $axx=1, $axy=0, $ayx=0, $ayy=1, $mode="or"</i>)</b></dt>
+<dd>
+Paste the pattern in the given cell array reference into the current universe
+using an optional affine transformation and optional mode ("copy", "or", "xor", or "not").
+</dd>
+<dd> Example: <b>g_putcells($cells, 6, -40, 1, 0, 0, 1, "xor");</b></dd>
+</p>
+
+<a name="getcells"></a><p><dt><b>g_getcells(<i>@rectarray</i>)</b></dt>
+<dd>
+Return any live cells in the specified rectangle as a cell array reference.
+The given rectangle array can be empty (in which case the cell array is empty)
+or it must represent a valid rectangle of the form (x,y,width,height).
+</dd>
+<dd> Example: <b>$cells = g_getcells( g_getrect() );</b></dd>
+</p>
+
+<a name="getclip"></a><p><dt><b>g_getclip()</b></dt>
+<dd>
+Parse the pattern data in the clipboard and return a cell array reference.
+</dd>
+<dd> Example: <b>$cells = g_getclip();</b></dd>
+</p>
+
+<a name="select"></a><p><dt><b>g_select(<i>@rectarray</i>)</b></dt>
+<dd>
+Create a selection if the given array represents a valid rectangle of the form
+(x,y,width,height) or remove the current selection if the given array is empty.
+</dd>
+<dd> Example: <b>g_select(-10,-10,20,20);</b></dd>
+</p>
+
+<a name="getrect"></a><p><dt><b>g_getrect()</b></dt>
+<dd>
+Return the current pattern's bounding box as an array.
+If there is no pattern then the array is empty, otherwise the
+array is of the form (x,y,width,height).
+</dd>
+<dd> Example: <b>@pattrect = g_getrect();</b></dd>
+</p>
+
+<a name="getselrect"></a><p><dt><b>g_getselrect()</b></dt>
+<dd>
+Return the current selection rectangle as an array.
+If there is no selection then the array is empty, otherwise the
+array is of the form (x,y,width,height).
+</dd>
+<dd> Example: <b>@selrect = g_getselrect();</b></dd>
+</p>
+
+<a name="setcell"></a><p><dt><b>g_setcell(<i>$x, $y, $state</i>)</b></dt>
+<dd>
+Set the given cell to the specified state (0 for a dead cell, 1 for a live cell).
+</dd>
+</p>
+
+<a name="getcell"></a><p><dt><b>g_getcell(<i>$x, $y</i>)</b></dt>
+<dd>
+Return the state of the given cell.
+The following example inverts the state of the cell at 0,0.
+</dd>
+<dd> Example: <b>g_setcell(0, 0, 1 - g_getcell(0, 0));</b></dd>
+</p>
+
+<a name="setcursor"></a><p><dt><b>g_setcursor(<i>$index</i>)</b></dt>
+<dd>
+Set the cursor according to the given index and return the old cursor index.
+The valid index values are 0 for the pencil cursor, 1 for the cross cursor,
+2 for the hand cursor, 3 for the zoom-in cursor and 4 for the zoom-out cursor.
+</dd>
+<dd> Example: <b>$oldcurs = g_setcursor(3);</b></dd>
+</p>
+
+<a name="getcursor"></a><p><dt><b>g_getcursor()</b></dt>
+<dd>
+Return the current cursor index.
+</dd>
+</p>
+
+<p><a name="control">
+&nbsp;<br>
+CONTROL COMMANDS
+
+<a name="run"></a><p><dt><b>g_run(<i>$numgens</i>)</b></dt>
+<dd>
+Run the current pattern for the specified number of generations.
+Intermediate generations are never displayed, and the final generation
+is only displayed if the current <b>g_autoupdate</b> setting is 1.
+</dd>
+<dd> Example: <b>g_run(100);</b></dd>
+</p>
+
+<a name="step"></a><p><dt><b>g_step()</b></dt>
+<dd>
+Run the current pattern for the current step.
+Intermediate generations are never displayed, and the final generation
+is only displayed if the current <b>g_autoupdate</b> setting is 1.
+</dd>
+</p>
+
+<a name="setstep"></a><p><dt><b>g_setstep(<i>$exp</i>)</b></dt>
+<dd>
+Set the step to base^exp (use the <b>g_setbase</b> command to change the base).
+A negative exponent sets the step to 1; it also sets a delay between each
+step, but that delay is ignored by the <b>g_run</b> and <b>g_step</b> commands.
+</dd>
+<dd> Example: <b>g_setstep(0);</b></dd>
+</p>
+
+<a name="getstep"></a><p><dt><b>g_getstep()</b></dt>
+<dd>
+Return the current step exponent.
+</dd>
+<dd> Example: <b>g_setstep( g_getstep() + 1 );</b></dd>
+</p>
+
+<a name="setbase"></a><p><dt><b>g_setbase(<i>$base</i>)</b></dt>
+<dd>
+Set the base step for the current universe type (hashing or non-hashing),
+so you might need to call <b>g_setoption("hashing",1/0)</b> first.
+The given base must be an integer from 2 to 10000.
+The current step is also changed to base^exp where exp is the current step
+exponent returned by <b>g_getstep()</b>.
+</dd>
+<dd> Example: <b>g_setbase(2);</b></dd>
+</p>
+
+<a name="getbase"></a><p><dt><b>g_getbase()</b></dt>
+<dd>
+Return the current base step for the current universe type (hashing or non-hashing).
+</dd>
+</p>
+
+<a name="advance"></a><p><dt><b>g_advance(<i>$where, $numgens</i>)</b></dt>
+<dd>
+Advance inside (where = 0) or outside (where = 1) the current selection by the
+specified number of generations.  The generation count does not change.
+</dd>
+<dd> Example: <b>g_advance(0, 3);</b></dd>
+</p>
+
+<a name="reset"></a><p><dt><b>g_reset()</b></dt>
+<dd>
+Restore the starting pattern and generation count.
+Also reset the rule, scale, location, step exponent and hashing option
+to the values they had at the starting generation.
+The starting generation is usually zero, but it can be larger after
+loading an RLE/macrocell file that stores a non-zero generation count.
+</dd>
+</p>
+
+<a name="getgen"></a><p><dt><b>g_getgen(<i>$sepchar=""</i>)</b></dt>
+<dd>
+Return the current generation count as a string.
+The optional parameter (default = "") specifies a separator
+character that can be used to make the resulting string more readable.
+For example, <b>g_getgen(",")</b> would return a string like "1,234,567"
+but <b>g_getgen()</b> would return "1234567".  Use the latter call if
+you want to do arithmetic on the generation count because then it's
+easy to use <b>int</b> to convert the string to an integer.
+</dd>
+<dd> Example: <b>$gen = int( g_getgen() );</b></dd>
+</p>
+
+<a name="getpop"></a><p><dt><b>g_getpop(<i>$sepchar=""</i>)</b></dt>
+<dd>
+Return the current population as a string.
+The optional parameter (default = "") specifies a separator
+character that can be used to make the resulting string more readable.
+For example, <b>g_getpop(",")</b> would return a string like "1,234,567"
+but <b>g_getpop()</b> would return "1234567".  Use the latter call if
+you want to do arithmetic on the population count.
+</dd>
+<dd> Example: <b>$pop = int( g_getpop() );</b></dd>
+</p>
+
+<a name="empty"></a><p><dt><b>g_empty()</b></dt>
+<dd>
+Return 1 if the universe is empty or 0 if there is at least one live cell.
+This is much more efficient than testing <b>getpop() == "0"</b>.
+</dd>
+<dd> Example: <b>if (g_empty()) { g_exit("All cells are dead.") }</b></dd>
+</p>
+
+<a name="setrule"></a><p><dt><b>g_setrule(<i>$string</i>)</b></dt>
+<dd>
+Set the current rule according to the given string.
+If the string is invalid then you'll get an error message and the script will
+be aborted (and the original rule will be restored).
+</dd>
+<dd> Example: <b>g_setrule("b3/s23");</b></dd>
+</p>
+
+<a name="getrule"></a><p><dt><b>g_getrule()</b></dt>
+<dd>
+Return the current rule as a string.
+</dd>
+<dd> Example: <b>$oldrule = g_getrule();</b></dd>
+</dd>
+</p>
+
+<p><a name="viewing">
+&nbsp;<br>
+VIEWING COMMANDS
+
+<a name="setpos"></a><p><dt><b>g_setpos(<i>$x, $y</i>)</b></dt>
+<dd>
+Change the position of the viewport so the given cell is in the middle.
+The x,y coordinates are given as strings so the viewport can be moved
+to any location in the unbounded universe.
+Commas and other punctuation marks can be used to make large numbers more readable.
+Apart from a leading minus sign, most non-digits are simply ignored;
+only alphabetic characters will cause an error message.
+Note that positive y values increase downwards in Golly's coordinate system.
+</dd>
+<dd> Example: <b>g_setpos("1,000,000,000,000", "-123456");</b></dd>
+</p>
+
+<a name="getpos"></a><p><dt><b>g_getpos(<i>$sepchar=""</i>)</b></dt>
+<dd>
+Return the x,y position of the viewport's middle cell in the form
+of a Perl array containing two strings.
+The optional parameter (default = "") specifies a separator
+character that can be used to make the resulting strings more readable.
+For example, <b>g_getpos(",")</b> might return two strings like "1,234"
+and "-5,678" but <b>g_getpos()</b> would return "1234" and "-5678".
+Use the latter call if you want to do arithmetic on the x,y values.
+</dd>
+<dd> Example: <b>my ($x, $y) = g_getpos();</b></dd>
+</p>
+
+<a name="setmag"></a><p><dt><b>g_setmag(<i>$mag</i>)</b></dt>
+<dd>
+Set the magnification, where 0 corresponds to the scale 1:1, 1 = 1:2, -1 = 2:1, etc.
+The maximum allowed magnification is 4 (= 1:16).
+</dd>
+<dd> Example: <b>g_setmag(0);</b></dd>
+</p>
+
+<a name="getmag"></a><p><dt><b>g_getmag()</b></dt>
+<dd>
+Return the current magnification.
+</dd>
+<dd> Example: <b>g_setmag( g_getmag() - 1 );</b></dd>
+</p>
+
+<a name="fit"></a><p><dt><b>g_fit()</b></dt>
+<dd>
+Fit the entire pattern in the viewport.
+</dd>
+</p>
+
+<a name="fitsel"></a><p><dt><b>g_fitsel()</b></dt>
+<dd>
+Fit the current selection in the viewport.
+The script aborts with an error message if there is no selection.
+</dd>
+</p>
+
+<a name="visrect"></a><p><dt><b>g_visrect(<i>@rectarray</i>)</b></dt>
+<dd>
+Return 1 if the given rectangle is completely visible in the viewport.
+The rectangle must be an array of the form (x,y,width,height).
+</dd>
+<dd> Example: <b>if (!g_visrect(@selrect)) { g_fitsel() }</b></dd>
+</p>
+
+<a name="autoupdate"></a><p><dt><b>g_autoupdate(<i>$bool</i>)</b></dt>
+<dd>
+When Golly runs a script this setting is initially 0.
+If the given parameter is 1 then Golly will automatically update the
+viewport and the status bar after each command that changes the
+universe or viewport in some way.  Useful for debugging Perl scripts.
+</dd>
+<dd> Example: <b>g_autoupdate(1);</b></dd>
+</p>
+
+<a name="update"></a><p><dt><b>g_update()</b></dt>
+<dd>
+Immediately update the viewport and the status bar, regardless of the
+current <b>g_autoupdate</b> setting.  Note that Golly always does an
+update when a script finishes.
+</dd>
+</p>
+
+<p><a name="layers">
+&nbsp;<br>
+LAYER COMMANDS
+
+<a name="addlayer"></a><p><dt><b>g_addlayer()</b></dt>
+<dd>
+Add a new, empty layer immediately after the current layer and
+return the new layer's index, an integer from 0 to <b>g_numlayers()</b> - 1.
+The new layer becomes the current layer and inherits most of
+the previous layer's settings, including its algorithm, rule, scale,
+location, cursor mode, etc.
+The step exponent is set to 0, there is no selection,
+no origin offset, and the layer's initial name is "untitled".
+</dd>
+<dd> Example: <b>$newindex = g_addlayer();</b></dd>
+</p>
+
+<a name="clone"></a><p><dt><b>g_clone()</b></dt>
+<dd>
+Like <b>g_addlayer</b> (see above) but the new layer shares the
+same universe as the current layer.
+The current layer's settings are duplicated and most will be
+kept synchronized so that a change to one clone automatically changes
+all the others.
+Each cloned layer does however have a separate viewport, so the same
+pattern can be viewed at different scales and locations
+(at the same time if layers are tiled).
+</dd>
+<dd> Example: <b>$cloneindex = g_clone();</b></dd>
+</p>
+
+<a name="duplicate"></a><p><dt><b>g_duplicate()</b></dt>
+<dd>
+Like <b>g_addlayer</b> (see above) but the new layer has a copy of the
+current layer's pattern.
+Also duplicates all the current settings but, unlike a cloned layer,
+the settings are not kept synchronized.
+</dd>
+<dd> Example: <b>$dupeindex = g_duplicate();</b></dd>
+</p>
+
+<a name="dellayer"></a><p><dt><b>g_dellayer()</b></dt>
+<dd>
+Delete the current layer.  The current layer changes to the previous
+layer (unless layer 0 was deleted).
+</dd>
+</p>
+
+<a name="movelayer"></a><p><dt><b>g_movelayer(<i>$fromindex, $toindex</i>)</b></dt>
+<dd>
+Move a specified layer to a new position in the layer sequence.
+The chosen layer becomes the current layer.
+</dd>
+<dd> Example: <b>g_movelayer(1, 0);</b></dd>
+</p>
+
+<a name="setlayer"></a><p><dt><b>g_setlayer(<i>$index</i>)</b></dt>
+<dd>
+Set the current layer to the layer with the given index,
+an integer from 0 to <b>g_numlayers()</b> - 1.
+</dd>
+<dd> Example: <b>g_setlayer(0);</b></dd>
+</p>
+
+<a name="getlayer"></a><p><dt><b>g_getlayer()</b></dt>
+<dd>
+Return the index of the current layer, an integer from 0 to <b>g_numlayers()</b> - 1.
+</dd>
+<dd> Example: <b>$currindex = g_getlayer();</b></dd>
+</p>
+
+<a name="numlayers"></a><p><dt><b>g_numlayers()</b></dt>
+<dd>
+Return the number of existing layers, an integer from 1 to <b>g_maxlayers()</b>.
+</dd>
+<dd> Example: <b>if (g_numlayers() > 1) { g_setoption("tilelayers",1) }</b></dd>
+</p>
+
+<a name="maxlayers"></a><p><dt><b>g_maxlayers()</b></dt>
+<dd>
+Return the maximum number of layers (10 in this implementation).
+</dd>
+</p>
+
+<a name="setname"></a><p><dt><b>g_setname(<i>$string, $index=current</i>)</b></dt>
+<dd>
+Set the name of the given layer, or the current layer's name
+if no index is supplied.
+</dd>
+<dd> Example: <b>g_setname("temporary");</b></dd>
+</p>
+
+<a name="getname"></a><p><dt><b>g_getname(<i>$index=current</i>)</b></dt>
+<dd>
+Return the given layer's name, or the current layer's name
+if no index is supplied.
+</dd>
+<dd> Example: <b>if (g_getname() == "temporary") { g_dellayer() }</b></dd>
+</p>
+
+<p><a name="miscellaneous">
+&nbsp;<br>
+MISCELLANEOUS COMMANDS
+
+<a name="setoption"></a><p><dt><b>g_setoption(<i>$name, $value</i>)</b></dt>
+<dd>
+Set the given option to the given value.
+The old value is returned to make it easy to restore a setting.
+Here are all the valid option names and their possible values:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>"autofit"</b></td><td width=20>       </td><td>1 or 0</td></tr>
+<tr><td><b>"boldspacing"</b></td><td width=20>   </td><td>2 to 1000 (cells)</td></tr>
+<tr><td><b>"fullscreen"</b></td><td width=20>    </td><td>1 or 0</td></tr>
+<tr><td><b>"hashing"</b></td><td width=20>       </td><td>1 or 0</td></tr>
+<tr><td><b>"hyperspeed"</b></td><td width=20>    </td><td>1 or 0</td></tr>
+<tr><td><b>"maxdelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
+<tr><td><b>"mindelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
+<tr><td><b>"opacity"</b></td><td width=20>       </td><td>1 to 100 (percent)</td></tr>
+<tr><td><b>"savexrle"</b></td><td width=20>      </td><td>1 or 0</td></tr>
+<tr><td><b>"showboldlines"</b></td><td width=20> </td><td>1 or 0</td></tr>
+<tr><td><b>"showexact"</b></td><td width=20>     </td><td>1 or 0</td></tr>
+<tr><td><b>"showgrid"</b></td><td width=20>      </td><td>1 or 0</td></tr>
+<tr><td><b>"showhashinfo"</b></td><td width=20>  </td><td>1 or 0</td></tr>
+<tr><td><b>"showlayerbar"</b></td><td width=20>  </td><td>1 or 0</td></tr>
+<tr><td><b>"showpatterns"</b></td><td width=20>  </td><td>1 or 0</td></tr>
+<tr><td><b>"showscripts"</b></td><td width=20>   </td><td>1 or 0</td></tr>
+<tr><td><b>"showstatusbar"</b></td><td width=20> </td><td>1 or 0</td></tr>
+<tr><td><b>"showtoolbar"</b></td><td width=20>   </td><td>1 or 0</td></tr>
+<tr><td><b>"stacklayers"</b></td><td width=20>   </td><td>1 or 0</td></tr>
+<tr><td><b>"swapcolors"</b></td><td width=20>    </td><td>1 or 0</td></tr>
+<tr><td><b>"switchlayers"</b></td><td width=20>  </td><td>1 or 0</td></tr>
+<tr><td><b>"synccursors"</b></td><td width=20>   </td><td>1 or 0</td></tr>
+<tr><td><b>"syncviews"</b></td><td width=20>     </td><td>1 or 0</td></tr>
+<tr><td><b>"tilelayers"</b></td><td width=20>    </td><td>1 or 0</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>$oldhash = g_setoption("hashing", 1);</b></dd>
+</p>
+
+<a name="getoption"></a><p><dt><b>g_getoption(<i>$name</i>)</b></dt>
+<dd>
+Return the current value of the given option.
+See above for a list of all the valid option names.
+</dd>
+<dd> Example: <b>if (!g_getoption("hashing")) { g_setrule("b0") }</b></dd>
+</p>
+
+<a name="setcolor"></a><p><dt><b>g_setcolor(<i>$name, $r, $g, $b</i>)</b></dt>
+<dd>
+Set the given color to the given RGB values (integers from 0 to 255).
+The old RGB values are returned as an array of 3 integers to make it easy to restore the color.
+Here is a list of all the valid color names and how they are used:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>"livecells0"</b></td><td width=20>  </td><td>for displaying live cells in layer 0</td></tr>
+<tr><td>...</td><td width=20>                  </td><td>...</td></tr>
+<tr><td><b>"livecells9"</b></td><td width=20>  </td><td>for displaying live cells in layer 9</td></tr>
+<tr><td><b>"deadcells"</b></td><td width=20>   </td><td>for displaying dead cells</td></tr>
+<tr><td><b>"paste"</b></td><td width=20>       </td><td>for pasting patterns</td></tr>
+<tr><td><b>"select"</b></td><td width=20>      </td><td>for selections (will be 50% transparent)</td></tr>
+<tr><td><b>"hashing"</b></td><td width=20>     </td><td>for status bar background if hashing</td></tr>
+<tr><td><b>"nothashing"</b></td><td width=20>  </td><td>for status bar background if not hashing</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>@oldrgb = g_setcolor("livecells0", 0, 0, 255);</b></dd>
+</p>
+
+<a name="getcolor"></a><p><dt><b>g_getcolor(<i>$name</i>)</b></dt>
+<dd>
+Return the current RGB values for the given color as an array of 3 integers.
+See above for a list of all the valid color names.
+</dd>
+<dd> Example: <b>my ($r, $g, $b) = g_getcolor("deadcells");</b></dd>
+</p>
+
+<a name="getstring"></a><p><dt><b>g_getstring(<i>$prompt, $initial="", $title=""</i>)</b></dt>
+<dd>
+Display a dialog box and get a string from the user.
+If the initial string is supplied it will be shown and selected.
+If the title string is supplied it will be used in the dialog's title bar.
+The script will be aborted if the user hits the dialog's Cancel button.
+</dd>
+<dd> Example: <b>$i = int( g_getstring("Enter a number:","100") );</b></dd>
+</p>
+
+<a name="getkey"></a><p><dt><b>g_getkey()</b></dt>
+<dd>
+Return a key hit by the user as a single character,
+or an empty string if no key was hit.
+The characters returned by this command are a subset of ASCII:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>' '</b> to <b>'~'</b></td><td width=20> </td><td>all displayable characters (space to tilde)</td></tr>
+<tr><td><b>chr(8)</b></td><td width=20>            </td><td>backspace or delete</td></tr>
+<tr><td><b>chr(9)</b></td><td width=20>            </td><td>tab</td></tr>
+<tr><td><b>chr(13)</b></td><td width=20>           </td><td>return or enter</td></tr>
+<tr><td><b>chr(28)</b> to <b>chr(31)</b></td><td width=20> </td><td>left, right, up, down arrows</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>$ch = g_getkey();</b></dd>
+</p>
+
+<a name="dokey"></a><p><dt><b>g_dokey($char)</b></dt>
+<dd>
+This command allows limited keyboard interaction while a script is running.
+The given character is passed to Golly's keyboard event handler, but all
+keyboard shortcuts that can change the current pattern will be ignored.
+</dd>
+<dd> Example: <b>g_dokey( g_getkey() );</b></dd>
+</p>
+
+<a name="show"></a><p><dt><b>g_show(<i>$message</i>)</b></dt>
+<dd>
+Show the given string in the bottom line of the status bar.
+The status bar is automatically shown if necessary.
+</dd>
+<dd> Example: <b>g_show("Hit any key to continue...");</b></dd>
+</p>
+
+<a name="error"></a><p><dt><b>g_error(<i>$message</i>)</b></dt>
+<dd>
+Beep and show the given string in the bottom line of the status bar.
+The status bar is automatically shown if necessary.
+</dd>
+<dd> Example: <b>g_error("The pattern is empty.");</b></dd>
+</p>
+
+<a name="warn"></a><p><dt><b>g_warn(<i>$message</i>)</b></dt>
+<dd>
+Beep and show the given string in a modal warning dialog.
+Useful for debugging Perl scripts or displaying error messages.
+</dd>
+<dd> Example: <b>g_warn("xxx = $xxx");</b></dd>
+</p>
+
+<a name="note"></a><p><dt><b>g_note(<i>$message</i>)</b></dt>
+<dd>
+Show the given string in a modal information dialog.
+Useful for displaying multi-line results.
+</dd>
+<dd> Example: <b>g_note("Line 1\nLine 2\nLine 3");</b></dd>
+</p>
+
+<a name="check"></a><p><dt><b>g_check(<i>$bool</i>)</b></dt>
+<dd>
+When Golly runs a script this setting is initially 1,
+which means that event checking is enabled.
+If the given parameter is 0 then event checking is disabled.
+Typically used to prevent mouse clicks being seen at the wrong time.
+This should only be done for short durations because the script
+cannot be aborted while the setting is 0.
+</dd>
+<dd> Example: <b>g_check(0);</b></dd>
+</p>
+
+<a name="exit"></a><p><dt><b>g_exit(<i>$message=""</i>)</b></dt>
+<dd>
+Exit the script with an optional error message.
+If a non-empty string is supplied then it will be displayed in the status bar
+along with a beep, just like the <a href="#error"><b>g_error</b></a> command.
+If no message is supplied, or if the string is empty, then there is no beep
+and the current status bar message will not be changed.
+</dd>
+<dd> Example: <b>if (g_empty()) { g_exit("There is no pattern.") }</b></dd>
+</p>
+
+
+<p><a name="arrays">
+&nbsp;<br>
+<font size=+1><b>Cell arrays and rectangle arrays</b></font>
+
+<p>
+Some of Golly's scripting commands manipulate patterns in the form of cell arrays.
+A cell array is simply a Perl array containing integer cell coordinates:
+<p>
+<dd><b>( x1, y1, x2, y2 . . . xn, yn )</b></dd>
+<p>
+A cell array should always contain an even number of integers.
+The ordering of cells within the array doesn't matter.
+Note that positive y values increase downwards in Golly's coordinate system.
+
+<p>
+Cell arrays can contain millions of coordinates, so all commands that accept
+or return cell arrays actually use references to those arrays.
+
+<p>
+Some commands manipulate rectangles in the form of arrays.
+An empty rectangle is indicated by an array with no items; ie. <b>()</b>.
+A non-empty rectangle is indicated by an array containing four integers:
+<p>
+<dd><b>( left, top, width, height )</b></dd>
+<p>
+The first two items specify the cell at the top left corner of the
+rectangle.  The last two items specify the rectangle's size (in cells).
+The width and height must be greater than zero.
+
+<p>
+Unlike cell arrays, rectangle arrays only contain a few items (0 or 4),
+so all commands that accept or return rectangle arrays don't have to
+bother using array references.
+
+
+<p><a name="problems">
+&nbsp;<br>
+<font size=+1><b>Potential problems</b></font>
+
+<p>
+1.
+Mac users need to ensure their Perl scripts use Unix line endings (LF).
+If a script uses Mac line endings (CR) and the first line is a comment
+then the Perl interpreter will treat the entire file as one long comment
+and nothing will happen when the script is executed.
+
+<p>
+2.
+The escape key check to abort a running script is not done by Perl but
+by each Golly scripting command.  This means that very long Perl computations
+should call an occasional "no-op" command like <b>g_run(0)</b> to allow the
+script to be aborted in a timely manner.
+
+
+<p><a name="copyright">
+&nbsp;<br>
+<font size=+1><b>Perl copyright notice</b></font>
+
+<p>
+Golly uses an embedded Perl interpreter to execute scripts.
+Perl is Copyright (C) 1993-2007, by Larry Wall and others.
+It is free software; you can redistribute it and/or modify it under
+the terms of either:
+a) the GNU General Public License as published by the Free Software Foundation;
+either version 1, or (at your option) any later version, or
+b) the <a href="http://dev.perl.org/licenses/artistic.html">"Artistic License"</a>.
+
+</body>
+</html>

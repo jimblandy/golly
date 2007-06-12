@@ -166,7 +166,8 @@ enum {
    ID_HELP_INTRO,
    ID_HELP_TIPS,
    ID_HELP_SHORTCUTS,
-   ID_HELP_SCRIPTING,
+   ID_HELP_PERL,
+   ID_HELP_PYTHON,
    ID_HELP_LEXICON,
    ID_HELP_FILE,
    ID_HELP_EDIT,
@@ -1399,7 +1400,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
       case ID_HELP_TIPS:      ShowHelp(_("Help/tips.html")); break;
       case ID_HELP_SHORTCUTS: ShowHelp(_("Help/shortcuts.html")); break;
-      case ID_HELP_SCRIPTING: ShowHelp(_("Help/scripting.html")); break;
+      case ID_HELP_PERL:      ShowHelp(_("Help/perl.html")); break;
+      case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
       case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
       case ID_HELP_FILE:      ShowHelp(_("Help/file.html")); break;
       case ID_HELP_EDIT:      ShowHelp(_("Help/edit.html")); break;
@@ -2121,7 +2123,8 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_INTRO, _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS, _("Hints and Tips"));
    helpMenu->Append(ID_HELP_SHORTCUTS, _("Shortcuts"));
-   helpMenu->Append(ID_HELP_SCRIPTING, _("Scripting"));
+   helpMenu->Append(ID_HELP_PERL, _("Perl Scripting"));
+   helpMenu->Append(ID_HELP_PYTHON, _("Python Scripting"));
    helpMenu->Append(ID_HELP_LEXICON, _("Life Lexicon"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_FILE, _("File Menu"));

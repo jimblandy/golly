@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 /*
    Golly uses an embedded Perl interpreter to execute scripts.
-   Perl5 is Copyright (C) 1993-2005, by Larry Wall and others.
+   Perl is Copyright (C) 1993-2007, by Larry Wall and others.
    It is free software; you can redistribute it and/or modify it under the terms of either:
    a) the GNU General Public License as published by the Free Software Foundation;
    either version 1, or (at your option) any later version, or
@@ -369,9 +369,9 @@ const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = fals
 
 // =============================================================================
 
-// The following plg_* routines can be called from Perl scripts.
+// The following pl_* routines can be called from Perl scripts.
 
-XS(plg_open)
+XS(pl_open)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -391,7 +391,7 @@ XS(plg_open)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_save)
+XS(pl_save)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -412,7 +412,7 @@ XS(plg_save)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_load)
+XS(pl_load)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -470,7 +470,7 @@ XS(plg_load)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_store)
+XS(pl_store)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -524,7 +524,7 @@ XS(plg_store)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_appdir)
+XS(pl_appdir)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -536,7 +536,7 @@ XS(plg_appdir)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_new)
+XS(pl_new)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -554,7 +554,7 @@ XS(plg_new)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_cut)
+XS(pl_cut)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -573,7 +573,7 @@ XS(plg_cut)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_copy)
+XS(pl_copy)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -592,7 +592,7 @@ XS(plg_copy)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_clear)
+XS(pl_clear)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -616,7 +616,7 @@ XS(plg_clear)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_paste)
+XS(pl_paste)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -670,7 +670,7 @@ XS(plg_paste)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_shrink)
+XS(pl_shrink)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -689,7 +689,7 @@ XS(plg_shrink)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_randfill)
+XS(pl_randfill)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -717,7 +717,7 @@ XS(plg_randfill)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_flip)
+XS(pl_flip)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -741,7 +741,7 @@ XS(plg_flip)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_rotate)
+XS(pl_rotate)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -762,7 +762,7 @@ XS(plg_rotate)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_parse)
+XS(pl_parse)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -833,7 +833,7 @@ XS(plg_parse)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_transform)
+XS(pl_transform)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -876,7 +876,7 @@ XS(plg_transform)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_evolve)
+XS(pl_evolve)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -945,7 +945,7 @@ XS(plg_evolve)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_putcells)
+XS(pl_putcells)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1032,7 +1032,7 @@ XS(plg_putcells)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getcells)
+XS(pl_getcells)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1085,7 +1085,7 @@ XS(plg_getcells)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getclip)
+XS(pl_getclip)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1161,7 +1161,7 @@ XS(plg_getclip)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_select)
+XS(pl_select)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1193,7 +1193,7 @@ XS(plg_select)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getrect)
+XS(pl_getrect)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1225,7 +1225,7 @@ XS(plg_getrect)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getselrect)
+XS(pl_getselrect)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1256,7 +1256,7 @@ XS(plg_getselrect)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setcell)
+XS(pl_setcell)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1274,7 +1274,7 @@ XS(plg_setcell)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getcell)
+XS(pl_getcell)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1288,7 +1288,7 @@ XS(plg_getcell)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setcursor)
+XS(pl_setcursor)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1311,7 +1311,7 @@ XS(plg_setcursor)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getcursor)
+XS(pl_getcursor)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1323,7 +1323,7 @@ XS(plg_getcursor)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_empty)
+XS(pl_empty)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1335,7 +1335,7 @@ XS(plg_empty)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_run)
+XS(pl_run)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1361,7 +1361,7 @@ XS(plg_run)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_step)
+XS(pl_step)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1378,7 +1378,7 @@ XS(plg_step)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setstep)
+XS(pl_setstep)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1393,7 +1393,7 @@ XS(plg_setstep)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getstep)
+XS(pl_getstep)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1405,7 +1405,7 @@ XS(plg_getstep)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setbase)
+XS(pl_setbase)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1429,7 +1429,7 @@ XS(plg_setbase)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getbase)
+XS(pl_getbase)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1441,7 +1441,7 @@ XS(plg_getbase)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_advance)
+XS(pl_advance)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1471,7 +1471,7 @@ XS(plg_advance)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_reset)
+XS(pl_reset)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1488,7 +1488,7 @@ XS(plg_reset)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getgen)
+XS(pl_getgen)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1507,7 +1507,7 @@ XS(plg_getgen)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getpop)
+XS(pl_getpop)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1526,7 +1526,7 @@ XS(plg_getpop)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setrule)
+XS(pl_setrule)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1546,7 +1546,7 @@ XS(plg_setrule)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getrule)
+XS(pl_getrule)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1558,7 +1558,7 @@ XS(plg_getrule)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setpos)
+XS(pl_setpos)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1596,7 +1596,7 @@ XS(plg_setpos)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getpos)
+XS(pl_getpos)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1622,7 +1622,7 @@ XS(plg_getpos)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setmag)
+XS(pl_setmag)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1639,7 +1639,7 @@ XS(plg_setmag)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getmag)
+XS(pl_getmag)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1651,7 +1651,7 @@ XS(plg_getmag)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_fit)
+XS(pl_fit)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1666,7 +1666,7 @@ XS(plg_fit)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_fitsel)
+XS(pl_fitsel)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1685,7 +1685,7 @@ XS(plg_fitsel)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_visrect)
+XS(pl_visrect)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1712,7 +1712,7 @@ XS(plg_visrect)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_update)
+XS(pl_update)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1726,7 +1726,7 @@ XS(plg_update)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_autoupdate)
+XS(pl_autoupdate)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1740,7 +1740,7 @@ XS(plg_autoupdate)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_addlayer)
+XS(pl_addlayer)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1760,7 +1760,7 @@ XS(plg_addlayer)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_clone)
+XS(pl_clone)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1780,7 +1780,7 @@ XS(plg_clone)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_duplicate)
+XS(pl_duplicate)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1800,7 +1800,7 @@ XS(plg_duplicate)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_dellayer)
+XS(pl_dellayer)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1819,7 +1819,7 @@ XS(plg_dellayer)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_movelayer)
+XS(pl_movelayer)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1848,7 +1848,7 @@ XS(plg_movelayer)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setlayer)
+XS(pl_setlayer)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1871,7 +1871,7 @@ XS(plg_setlayer)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getlayer)
+XS(pl_getlayer)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1883,7 +1883,7 @@ XS(plg_getlayer)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_numlayers)
+XS(pl_numlayers)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1895,7 +1895,7 @@ XS(plg_numlayers)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_maxlayers)
+XS(pl_maxlayers)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1907,7 +1907,7 @@ XS(plg_maxlayers)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setname)
+XS(pl_setname)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1932,7 +1932,7 @@ XS(plg_setname)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getname)
+XS(pl_getname)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1954,7 +1954,7 @@ XS(plg_getname)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setoption)
+XS(pl_setoption)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1976,7 +1976,7 @@ XS(plg_setoption)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getoption)
+XS(pl_getoption)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -1996,7 +1996,7 @@ XS(plg_getoption)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_setcolor)
+XS(pl_setcolor)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2022,7 +2022,7 @@ XS(plg_setcolor)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getcolor)
+XS(pl_getcolor)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2047,7 +2047,7 @@ XS(plg_getcolor)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getstring)
+XS(pl_getstring)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2075,7 +2075,7 @@ XS(plg_getstring)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_getkey)
+XS(pl_getkey)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2090,7 +2090,7 @@ XS(plg_getkey)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_dokey)
+XS(pl_dokey)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2107,7 +2107,7 @@ XS(plg_dokey)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_show)
+XS(pl_show)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2128,7 +2128,7 @@ XS(plg_show)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_error)
+XS(pl_error)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2149,7 +2149,7 @@ XS(plg_error)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_warn)
+XS(pl_warn)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2166,7 +2166,7 @@ XS(plg_warn)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_note)
+XS(pl_note)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2183,7 +2183,7 @@ XS(plg_note)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_check)
+XS(pl_check)
 {
    IGNORE_UNUSED_PARAMS;
    // don't call checkevents() here otherwise we can't safely write code like
@@ -2203,7 +2203,7 @@ XS(plg_check)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_exit)
+XS(pl_exit)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
@@ -2220,7 +2220,7 @@ XS(plg_exit)
 
 // -----------------------------------------------------------------------------
 
-XS(plg_fatal)
+XS(pl_fatal)
 {
    IGNORE_UNUSED_PARAMS;
    // don't call RETURN_IF_ABORTED;
@@ -2249,8 +2249,8 @@ XS(boot_golly)
    }
    
    // declare routines in golly module
-   newXS("golly::g_setcell",      plg_setcell,      "");
-   newXS("golly::g_getcell",      plg_getcell,      "");
+   newXS("golly::g_setcell",      pl_setcell,      "");
+   newXS("golly::g_getcell",      pl_getcell,      "");
    // etc...
    
    XSRETURN_YES;
@@ -2278,86 +2278,86 @@ EXTERN_C void xs_init(pTHX)
    */
 
    // filing
-   newXS("g_open",         plg_open,         file);
-   newXS("g_save",         plg_save,         file);
-   newXS("g_load",         plg_load,         file);
-   newXS("g_store",        plg_store,        file);
-   newXS("g_appdir",       plg_appdir,       file);
+   newXS("g_open",         pl_open,         file);
+   newXS("g_save",         pl_save,         file);
+   newXS("g_load",         pl_load,         file);
+   newXS("g_store",        pl_store,        file);
+   newXS("g_appdir",       pl_appdir,       file);
    // editing
-   newXS("g_new",          plg_new,          file);
-   newXS("g_cut",          plg_cut,          file);
-   newXS("g_copy",         plg_copy,         file);
-   newXS("g_clear",        plg_clear,        file);
-   newXS("g_paste",        plg_paste,        file);
-   newXS("g_shrink",       plg_shrink,       file);
-   newXS("g_randfill",     plg_randfill,     file);
-   newXS("g_flip",         plg_flip,         file);
-   newXS("g_rotate",       plg_rotate,       file);
-   newXS("g_parse",        plg_parse,        file);
-   newXS("g_transform",    plg_transform,    file);
-   newXS("g_evolve",       plg_evolve,       file);
-   newXS("g_putcells",     plg_putcells,     file);
-   newXS("g_getcells",     plg_getcells,     file);
-   newXS("g_getclip",      plg_getclip,      file);
-   newXS("g_select",       plg_select,       file);
-   newXS("g_getrect",      plg_getrect,      file);
-   newXS("g_getselrect",   plg_getselrect,   file);
-   newXS("g_setcell",      plg_setcell,      file);
-   newXS("g_getcell",      plg_getcell,      file);
-   newXS("g_setcursor",    plg_setcursor,    file);
-   newXS("g_getcursor",    plg_getcursor,    file);
+   newXS("g_new",          pl_new,          file);
+   newXS("g_cut",          pl_cut,          file);
+   newXS("g_copy",         pl_copy,         file);
+   newXS("g_clear",        pl_clear,        file);
+   newXS("g_paste",        pl_paste,        file);
+   newXS("g_shrink",       pl_shrink,       file);
+   newXS("g_randfill",     pl_randfill,     file);
+   newXS("g_flip",         pl_flip,         file);
+   newXS("g_rotate",       pl_rotate,       file);
+   newXS("g_parse",        pl_parse,        file);
+   newXS("g_transform",    pl_transform,    file);
+   newXS("g_evolve",       pl_evolve,       file);
+   newXS("g_putcells",     pl_putcells,     file);
+   newXS("g_getcells",     pl_getcells,     file);
+   newXS("g_getclip",      pl_getclip,      file);
+   newXS("g_select",       pl_select,       file);
+   newXS("g_getrect",      pl_getrect,      file);
+   newXS("g_getselrect",   pl_getselrect,   file);
+   newXS("g_setcell",      pl_setcell,      file);
+   newXS("g_getcell",      pl_getcell,      file);
+   newXS("g_setcursor",    pl_setcursor,    file);
+   newXS("g_getcursor",    pl_getcursor,    file);
    // control
-   newXS("g_empty",        plg_empty,        file);
-   newXS("g_run",          plg_run,          file);
-   newXS("g_step",         plg_step,         file);
-   newXS("g_setstep",      plg_setstep,      file);
-   newXS("g_getstep",      plg_getstep,      file);
-   newXS("g_setbase",      plg_setbase,      file);
-   newXS("g_getbase",      plg_getbase,      file);
-   newXS("g_advance",      plg_advance,      file);
-   newXS("g_reset",        plg_reset,        file);
-   newXS("g_getgen",       plg_getgen,       file);
-   newXS("g_getpop",       plg_getpop,       file);
-   newXS("g_setrule",      plg_setrule,      file);
-   newXS("g_getrule",      plg_getrule,      file);
+   newXS("g_empty",        pl_empty,        file);
+   newXS("g_run",          pl_run,          file);
+   newXS("g_step",         pl_step,         file);
+   newXS("g_setstep",      pl_setstep,      file);
+   newXS("g_getstep",      pl_getstep,      file);
+   newXS("g_setbase",      pl_setbase,      file);
+   newXS("g_getbase",      pl_getbase,      file);
+   newXS("g_advance",      pl_advance,      file);
+   newXS("g_reset",        pl_reset,        file);
+   newXS("g_getgen",       pl_getgen,       file);
+   newXS("g_getpop",       pl_getpop,       file);
+   newXS("g_setrule",      pl_setrule,      file);
+   newXS("g_getrule",      pl_getrule,      file);
    // viewing
-   newXS("g_setpos",       plg_setpos,       file);
-   newXS("g_getpos",       plg_getpos,       file);
-   newXS("g_setmag",       plg_setmag,       file);
-   newXS("g_getmag",       plg_getmag,       file);
-   newXS("g_fit",          plg_fit,          file);
-   newXS("g_fitsel",       plg_fitsel,       file);
-   newXS("g_visrect",      plg_visrect,      file);
-   newXS("g_update",       plg_update,       file);
-   newXS("g_autoupdate",   plg_autoupdate,   file);
+   newXS("g_setpos",       pl_setpos,       file);
+   newXS("g_getpos",       pl_getpos,       file);
+   newXS("g_setmag",       pl_setmag,       file);
+   newXS("g_getmag",       pl_getmag,       file);
+   newXS("g_fit",          pl_fit,          file);
+   newXS("g_fitsel",       pl_fitsel,       file);
+   newXS("g_visrect",      pl_visrect,      file);
+   newXS("g_update",       pl_update,       file);
+   newXS("g_autoupdate",   pl_autoupdate,   file);
    // layers
-   newXS("g_addlayer",     plg_addlayer,     file);
-   newXS("g_clone",        plg_clone,        file);
-   newXS("g_duplicate",    plg_duplicate,    file);
-   newXS("g_dellayer",     plg_dellayer,     file);
-   newXS("g_movelayer",    plg_movelayer,    file);
-   newXS("g_setlayer",     plg_setlayer,     file);
-   newXS("g_getlayer",     plg_getlayer,     file);
-   newXS("g_numlayers",    plg_numlayers,    file);
-   newXS("g_maxlayers",    plg_maxlayers,    file);
-   newXS("g_setname",      plg_setname,      file);
-   newXS("g_getname",      plg_getname,      file);
+   newXS("g_addlayer",     pl_addlayer,     file);
+   newXS("g_clone",        pl_clone,        file);
+   newXS("g_duplicate",    pl_duplicate,    file);
+   newXS("g_dellayer",     pl_dellayer,     file);
+   newXS("g_movelayer",    pl_movelayer,    file);
+   newXS("g_setlayer",     pl_setlayer,     file);
+   newXS("g_getlayer",     pl_getlayer,     file);
+   newXS("g_numlayers",    pl_numlayers,    file);
+   newXS("g_maxlayers",    pl_maxlayers,    file);
+   newXS("g_setname",      pl_setname,      file);
+   newXS("g_getname",      pl_getname,      file);
    // miscellaneous
-   newXS("g_setoption",    plg_setoption,    file);
-   newXS("g_getoption",    plg_getoption,    file);
-   newXS("g_setcolor",     plg_setcolor,     file);
-   newXS("g_getcolor",     plg_getcolor,     file);
-   newXS("g_getstring",    plg_getstring,    file);
-   newXS("g_getkey",       plg_getkey,       file);
-   newXS("g_dokey",        plg_dokey,        file);
-   newXS("g_show",         plg_show,         file);
-   newXS("g_error",        plg_error,        file);
-   newXS("g_warn",         plg_warn,         file);
-   newXS("g_note",         plg_note,         file);
-   newXS("g_check",        plg_check,        file);
-   newXS("g_exit",         plg_exit,         file);
+   newXS("g_setoption",    pl_setoption,    file);
+   newXS("g_getoption",    pl_getoption,    file);
+   newXS("g_setcolor",     pl_setcolor,     file);
+   newXS("g_getcolor",     pl_getcolor,     file);
+   newXS("g_getstring",    pl_getstring,    file);
+   newXS("g_getkey",       pl_getkey,       file);
+   newXS("g_dokey",        pl_dokey,        file);
+   newXS("g_show",         pl_show,         file);
+   newXS("g_error",        pl_error,        file);
+   newXS("g_warn",         pl_warn,         file);
+   newXS("g_note",         pl_note,         file);
+   newXS("g_check",        pl_check,        file);
+   newXS("g_exit",         pl_exit,         file);
    // internal use only (don't document)
-   newXS("g_fatal",        plg_fatal,        file);
+   newXS("g_fatal",        pl_fatal,        file);
 }
 
 // =============================================================================

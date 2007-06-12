@@ -20,8 +20,8 @@ def slideshow ():
          if name.startswith("."):
             # ignore hidden files (like .DS_Store on Mac)
             pass
-         elif name.endswith(".py"):
-            # ignore Python scripts (Golly's RunScript is not re-entrant)
+         elif name.endswith(".pl") or name.endswith(".py"):
+            # ignore Perl/Python scripts (Golly's RunScript is not re-entrant)
             pass
          else:
             fullname = join(root, name)

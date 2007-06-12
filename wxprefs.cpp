@@ -723,10 +723,11 @@ void GetPrefs()
       perllib = wxT("perl58.dll");
       pythonlib = wxT("python24.dll");
    #elif defined(__WXMAC__)
+      // not used (Perl & Python are loaded at link time)
       perllib = wxEmptyString;
       pythonlib = wxEmptyString;
    #elif defined(__UNIX__)
-      perllib = wxT("libperl.so");        //!!!???
+      perllib = wxT("libperl.so");
       pythonlib = wxT("libpython2.4.so");
    #endif
 

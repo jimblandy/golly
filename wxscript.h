@@ -55,13 +55,12 @@ extern bool allowcheck;       // allow event checking?
 extern wxString scripterr;    // Perl/Python error message
 
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
-// special message used to indicate that script was aborted
+// special message used to indicate that the script was aborted
 
-void DoAutoUpdate();
-// If autoupdate is true then update display.
+void DoAutoUpdate();          // update display if autoupdate is true
 
 // The following Golly Script Functions are used to reduce code duplication.
-// They are called by corresponding plg_* and pyg_* functions in wxperl.cpp
+// They are called by corresponding pl_* and py_* functions in wxperl.cpp
 // and wxpython.cpp respectively.
 
 const char* GSF_open(char* filename, int remember);
