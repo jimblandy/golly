@@ -115,8 +115,9 @@ public:
    bool showbanner;           // showing banner message?
 
    // temporary files
-   wxString scriptfile;       // name of file created by RunClipboard
-   wxString clipfile;         // name of file for storing clipboard data
+   wxString clipfile;         // name of temporary file for storing clipboard data
+   wxString perlfile;         // name of temporary Perl script
+   wxString pythonfile;       // name of temporary Python script
 
    // store files passed via command line (processed in first OnIdle)
    wxArrayString pendingfiles;
@@ -153,6 +154,7 @@ private:
    void ClearMissingScripts();
    void ClearAllScripts();
    void ChangeScriptDir();
+   wxString GetScriptFileName(const wxString& text);
    const char *WritePattern(const wxString& path,
                             pattern_format format,
                             int top, int left, int bottom, int right);

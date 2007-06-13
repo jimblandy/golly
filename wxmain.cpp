@@ -1780,7 +1780,8 @@ void MainFrame::OnClose(wxCloseEvent& event)
    SavePrefs();
    
    // delete any temporary files
-   if (wxFileExists(scriptfile)) wxRemoveFile(scriptfile);
+   if (wxFileExists(perlfile)) wxRemoveFile(perlfile);
+   if (wxFileExists(pythonfile)) wxRemoveFile(pythonfile);
    for (int i = 0; i < numlayers; i++) {
       Layer* layer = GetLayer(i);
       if (wxFileExists(layer->tempstart)) wxRemoveFile(layer->tempstart);
@@ -2239,10 +2240,8 @@ MainFrame::MainFrame()
    // they must be absolute paths in case they are used from a script command when
    // the current directory has been changed to the location of the script file
    clipfile = gollydir + wxT(".golly_clipboard");
-   scriptfile = gollydir + wxT(".golly_clip.py");
-   //!!!
-   // need a separate var for ".golly_clip.pl" and will need to examine contents
-   // of clipboard to determine if it is Perl or Python code
+   perlfile = gollydir + wxT(".golly_clip.pl");
+   pythonfile = gollydir + wxT(".golly_clip.py");
 
    // create one-shot timer (see OnOneTimer)
    onetimer = new wxTimer(this, ID_ONE_TIMER);

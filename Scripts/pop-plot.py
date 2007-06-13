@@ -130,16 +130,6 @@ genscale = float(maxgen - mingen) / float(xlen)
 draw_line(0, 0, xlen, 0)
 draw_line(0, 0, 0, -ylen)
 
-# plot the data
-x = int(float(genlist[0] - mingen) / genscale)
-y = int(float(poplist[0] - minpop) / popscale)
-for i in xrange(numsteps):
-   newx = int(float(genlist[i+1] - mingen) / genscale)
-   newy = int(float(poplist[i+1] - minpop) / popscale)
-   draw_line(x, -y, newx, -newy)
-   x = newx
-   y = newy
-
 # add annotation using mono-spaced ASCII font
 t = make_text(pattname.upper(), "mono")
 bbox = getminbox(t)
@@ -173,3 +163,19 @@ t.put(xlen - bbox.wd / 2, 10)
 g.fit()
 g.setmag(0)
 g.show("")
+
+# plot the data (do last because it could take a while if numsteps is huge)
+x = int(float(genlist[0] - mingen) / genscale)
+y = int(float(poplist[0] - minpop) / popscale)
+oldsecs = time()
+for i in xrange(numsteps):
+   newx = int(float(genlist[i+1] - mingen) / genscale)
+   newy = int(float(poplist[i+1] - minpop) / popscale)
+   draw_line(x, -y, newx, -newy)
+   x = newx
+   y = newy
+   g.dokey( g.getkey() )
+   newsecs = time()
+   if newsecs - oldsecs >= 1.0:     # update plot every second
+      oldsecs = newsecs
+      g.update()

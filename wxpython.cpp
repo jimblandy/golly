@@ -73,7 +73,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // wxMac bug??? why does dynlib.Load fail if given
 // "/System/Library/Frameworks/Python.framework/Versions/2.3/Python"???
-//!!! #if 1
+// #if 1
 #ifndef __WXMAC__
    // load Python lib at runtime
    #define USE_PYTHON_DYNAMIC

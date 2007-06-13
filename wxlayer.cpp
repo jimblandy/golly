@@ -727,9 +727,6 @@ void ResizeLayers(int wd, int ht)
 
 void CreateTiles()
 {
-   //!!! debug
-   if (viewptr != bigview) Fatal(_("Bug in CreateTiles!"));
-   
    // create tile windows
    for ( int i = 0; i < numlayers; i++ ) {
       layer[i]->tilewin = new PatternView(bigview,
@@ -769,9 +766,6 @@ void CreateTiles()
 
 void DestroyTiles()
 {
-   //!!! debug
-   if (viewptr == bigview) Fatal(_("Bug in DestroyTiles!"));
-
    // reset viewptr to main viewport window
    viewptr = bigview;
    if (mainptr->IsActive()) viewptr->SetFocus();
@@ -813,9 +807,6 @@ void RefreshView()
 
 void SyncClones()
 {
-   //!!! debug
-   if (numclones < 0) Fatal(_("Bug in SyncClones!"));
-   
    if (numclones == 0) return;
    
    if (currlayer->cloneid > 0) {
@@ -1658,10 +1649,6 @@ Layer::~Layer()
                layer[i]->cloneid = 0;
          }
          numclones -= 2;
-         //!!! debug
-         if (clonecount < 2 || numclones < 0) {
-            Warning(_("Bug detected deleting clone!"));
-         }
       }
       
    } else {

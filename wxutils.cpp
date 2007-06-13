@@ -108,8 +108,8 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL, 0);
    wxSize minsize = stdhbox->GetMinSize();
-   if (minsize.GetWidth() < 200) {
-      minsize.SetWidth(200);
+   if (minsize.GetWidth() < 250) {
+      minsize.SetWidth(250);
       stdhbox->SetMinSize(minsize);
    }
 
@@ -270,8 +270,8 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL, 0);
    wxSize minsize = stdhbox->GetMinSize();
-   if (minsize.GetWidth() < 200) {
-      minsize.SetWidth(200);
+   if (minsize.GetWidth() < 250) {
+      minsize.SetWidth(250);
       stdhbox->SetMinSize(minsize);
    }
 
