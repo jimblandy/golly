@@ -44,7 +44,7 @@ def goto(gen):
       currgen = int(golly.getgen())
       if newgen < currgen:
          golly.error("Can't go back any further; pattern was saved "\
-         + "at generation " + str(currgen) + ".")
+                     + "at generation " + str(currgen) + ".")
          return
    
    golly.show("Hit escape to abort...")
@@ -77,16 +77,14 @@ if os.access(GotoINIFileName, os.R_OK):
 
 gen = golly.getstring("Enter the desired generation number,\n" +
                       "or -n/+n to go back/forwards by n:",
-                      str(previousgen), "Go to generation")
+                      previousgen, "Go to generation")
 if len(gen) == 0:
-   gen = previousgen
-if len(gen) == 0:
-   golly.show("")
-elif gen == "+" or gen == "-":
-   previousgen = ""              # provides a way to clear the default
-elif not validint(gen):
-   golly.error('Sorry, but "' + gen + '" is not a valid integer.')
    golly.exit()
+elif gen == "+" or gen == "-":
+   # clear the default
+   previousgen = ""
+elif not validint(gen):
+   golly.exit('Sorry, but "' + gen + '" is not a valid integer.')
 else:
    previousgen = gen
    goto(gen.replace(",",""))
