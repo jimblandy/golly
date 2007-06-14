@@ -12,10 +12,20 @@ my $y = $rect[1];
 my $width = $rect[2];
 my $height = $rect[3];
 
-# use g_getstring to ask for this info???!!!
-my $filename = 'out.gif';  # output file
-my $frames = 100;          # number of frames (= number of steps)
-my $delay = 1;             # pause time for each frame (in centisecs)
+my $s = g_getstring("Enter the number of frames, the pause time between\n".
+                    "each frame (in centisecs) and the output file:",
+                    "100 1 out.gif",
+                    "Create animated GIF");
+my ($frames, $pause, $filename) = split(' ', $s, 3);
+
+$frames = 100 if $frames eq "";
+$pause = 1 if $pause eq "";
+$filename = "out.gif" if $filename eq "";
+
+g_exit("Number of frames is not an integer: $frames") if $frames !~ /^\d+$/;
+g_exit("Pause time is not an integer: $pause") if $pause !~ /^\d+$/;
+
+# ------------------------------------------------------------------------------
 
 {
    my $header = "GIF89a";
@@ -28,7 +38,7 @@ my $delay = 1;             # pause time for each frame (in centisecs)
    print GIF $header, $global, $colortable;
    print GIF '!', chr(0xFF), $applic;
    for (my $f = 0; $f < $frames; $f++) {
-      print GIF '!', chr(0xF9), pack('cB8vc2', 4, '00000000', $delay, 0, 0);
+      print GIF '!', chr(0xF9), pack('cB8vc2', 4, '00000000', $pause, 0, 0);
       # get data for this frame
       print GIF ',', $descriptor, chr(2), &compress( &getdata() );
       my $finc = $f + 1;
@@ -43,22 +53,26 @@ my $delay = 1;             # pause time for each frame (in centisecs)
    g_show "GIF animation saved in $filename";
 }
 
+# ------------------------------------------------------------------------------
+
 sub getdata {
    my @lines = ();
    # each array element is a line of 0 and 1 characters
    for (my $row = $y; $row < $y + $height; $row++) {
       my $line = "";
       for (my $col = $x; $col < $x + $width; $col++) {
-         if (g_getcell($col, $row) > 0) {
+         if (g_getcell($col, $row)) {
             $line .= "1";
          } else {
             $line .= "0";
          }
       }
-      $lines[$row - $y] = $line;
+      push(@lines, $line);
    }
    return \@lines;
 }
+
+# ------------------------------------------------------------------------------
 
 sub compress { # black and white special
    my @lines = @{$_[0]}; # array reference is parameter
