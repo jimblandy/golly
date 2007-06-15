@@ -43,6 +43,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
+// need platform-specific gap after OK/Cancel buttons
+#ifdef __WXMAC__
+   const int STDHGAP = 0;
+#elif defined(__WXMSW__)
+   const int STDHGAP = 6;
+#else
+   const int STDHGAP = 6;
+#endif
+
+// -----------------------------------------------------------------------------
+
 void Note(const wxString& msg)
 {
    wxString title = wxGetApp().GetAppName() + _(" note:");
@@ -106,7 +117,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    
    // position the controls
    wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
-   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL, 0);
+   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
    wxSize minsize = stdhbox->GetMinSize();
    if (minsize.GetWidth() < 250) {
       minsize.SetWidth(250);
@@ -124,7 +135,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    GetSizer()->SetSizeHints(this);
    Centre();
 
-   // select initial string
+   // select initial string (must do this last on Windows)
    textbox->SetFocus();
    textbox->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
 }
@@ -256,11 +267,8 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    SetSizer(topSizer);
 
    spinctrl = new MySpinCtrl(this, ID_SPIN_CTRL);
-   // init control value
    spinctrl->SetRange(minval, maxval);
    spinctrl->SetValue(inval);
-   spinctrl->SetFocus();
-   spinctrl->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
    
    wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
 
@@ -268,7 +276,7 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    
    // position the controls
    wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
-   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL, 0);
+   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
    wxSize minsize = stdhbox->GetMinSize();
    if (minsize.GetWidth() < 250) {
       minsize.SetWidth(250);
@@ -285,6 +293,10 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    GetSizer()->Fit(this);
    GetSizer()->SetSizeHints(this);
    Centre();
+
+   // select initial value (must do this last on Windows)
+   spinctrl->SetFocus();
+   spinctrl->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
 }
 
 // -----------------------------------------------------------------------------
