@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #elif defined(__WXMSW__)
    const int STDHGAP = 6;
 #else
-   const int STDHGAP = 6;
+   const int STDHGAP = 10;
 #endif
 
 // -----------------------------------------------------------------------------

@@ -111,13 +111,13 @@ const wxString UNNAMED = _("UNNAMED");
 const int HGAP = 12;
 const int BIGVGAP = 12;
 
-// following ensures OK/Cancel buttons are aligned with Add and Delete buttons
+// following ensures OK/Cancel buttons are better aligned
 #ifdef __WXMAC__
    const int STDHGAP = 0;
 #elif defined(__WXMSW__)
    const int STDHGAP = 9;
 #else
-   const int STDHGAP = 6;
+   const int STDHGAP = 10;
 #endif
 
 void RuleDialog::CreateControls()
