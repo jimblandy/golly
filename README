@@ -20,7 +20,7 @@ Main features:
 - Full screen option (no menu/status/tool/scroll bars).
 - Supports multiple layers, including cloned layers.
 - HTML-based help with integrated Life Lexicon.
-- Scriptable via Python.
+- Scriptable via Perl or Python.
 - Free, open source and cross-platform (Windows, Mac, Linux).
 
 The Golly application can be installed anywhere you like, but

@@ -2379,7 +2379,8 @@ void RunPerlScript(const wxString &filepath)
    
    perl_construct(my_perl);
    
-   // note that this requires Perl 5.7.2+
+   // set PERL_EXIT_DESTRUCT_END flag so that perl_destruct will execute
+   // any END blocks in given script (this flag requires Perl 5.7.2+)
    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
    /* this code works but doesn't let us capture error messages
@@ -2403,7 +2404,15 @@ void RunPerlScript(const wxString &filepath)
    wxString command = wxT("do '") + fpath + wxT("'; g_fatal($@) if $@;");
    perl_eval_pv(command.mb_str(wxConvLocal), TRUE);
 
+   // any END blocks will now be executed by perl_destruct, so we temporarily
+   // clear scripterr so that RETURN_IF_ABORTED won't call Perl_croak;
+   // this allows g_* commands in END blocks to work after user hits escape
+   // or if g_exit has been called
+   wxString savestring = scripterr;
+   scripterr = wxEmptyString;
    perl_destruct(my_perl);
+   scripterr = savestring;
+   
    perl_free(my_perl);
 }
 

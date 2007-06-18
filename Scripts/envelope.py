@@ -1,32 +1,36 @@
 # Use multiple layers to create a history of the current pattern.
 # The "envelope" layer remembers all live cells.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), December 2006.
+# Updated for better compatibility with envelope.pl, June 2007.
 
-from glife import pattern
 import golly as g
 
 if g.empty(): g.exit("There is no pattern.")
 
-genprefix = "gen "
-envelopename = "envelope"
+currname = "current"
+envname = "envelope"
 currindex = g.getlayer()
 
-if currindex > 1 and g.getname(currindex).startswith(genprefix) \
-                 and g.getname(currindex-1) == envelopename:
+if currindex > 1 and g.getname(currindex) == currname \
+                 and g.getname(currindex - 1) == envname :
    # continue from where we left off
-   pass
+   envindex = currindex - 1
 
-elif currindex+1 < g.numlayers() \
-                 and g.getname(currindex) == envelopename \
-                 and g.getname(currindex+1).startswith(genprefix):
-   # switch from envelopename layer to genprefix layer and continue
-   g.setlayer(currindex+1)
+elif currindex + 1 < g.numlayers() \
+                 and g.getname(currindex) == envname \
+                 and g.getname(currindex + 1) == currname :
+   # switch from envelope layer to currname layer and continue
+   g.setlayer(currindex + 1)
+   envindex = currindex
+   currindex += 1
 
-elif currindex+2 < g.numlayers() \
-                 and g.getname(currindex+1) == envelopename \
-                 and g.getname(currindex+2).startswith(genprefix):
-   # switch from starting layer to genprefix layer and continue
-   g.setlayer(currindex+2)
+elif currindex + 2 < g.numlayers() \
+                 and g.getname(currindex + 1) == envname \
+                 and g.getname(currindex + 2) == currname :
+   # switch from starting layer to currname layer and continue
+   g.setlayer(currindex + 2)
+   envindex = currindex + 1
+   currindex += 2
 
 else:
    # start a new envelope using pattern in current layer
@@ -36,47 +40,46 @@ else:
       g.exit("You need to delete a layer.")
    
    # get starting pattern from current layer
-   startpatt = pattern( g.getcells(g.getrect()) )
+   startpatt = g.getcells(g.getrect())
+   startstep = g.getstep()
    
-   envelope = g.addlayer()    # create layer for remembering all live cells
-   startpatt.put(0,0)      # copy starting pattern into this layer
+   envindex = g.addlayer()    # create layer for remembering all live cells
+   g.putcells(startpatt)      # copy starting pattern into this layer
    
-   curr = g.addlayer()     # create layer for generating pattern
-   startpatt.put(0,0)      # copy starting pattern into this layer
+   currindex = g.addlayer()   # create layer for generating pattern
+   g.putcells(startpatt)      # copy starting pattern into this layer
+   g.setstep(startstep)
+   
+   # name the current and envelope layers so user can run script
+   # again and continue from where it was stopped
+   g.setname(currname)
+   g.setname(envname, envindex)
 
 # draw stacked layers using same location and scale
 g.setoption("stacklayers", 1)
 
-def main():
-   while True:
-      g.dokey( g.getkey() )
-      g.run(1)
-      if g.empty(): break
-      
-      # copy current pattern to envelope layer;
-      # we temporarily disable event checking so thumb scrolling
-      # and other mouse events won't cause confusing changes
-      currpatt = pattern( g.getcells(g.getrect()) )
-      g.check(0)
-      g.setlayer(envelope)
-      currpatt.put(0,0)
-      g.setlayer(curr)
-      g.check(1)
-      
-      exp = g.getstep()
-      if exp > 0:
-         step = g.getbase()**exp
-      else:
-         step = 1
-      if int(g.getgen()) % step == 0:
-         # display all 3 layers (start, envelope, curr)
-         g.update()
-
-try:
-   main()
-finally:
-   # name the current and envelope layers so user can run script
-   # again and continue from where it was stopped
-   g.setlayer(curr)
-   g.setname(genprefix + g.getgen(','))
-   g.setname(envelopename, g.getlayer() - 1)
+g.show("Hit escape key to stop script...")
+while True:
+   g.dokey( g.getkey() )
+   g.run(1)
+   if g.empty():
+      g.show("Pattern died out.")
+      break
+   
+   # copy current pattern to envelope layer;
+   # we temporarily disable event checking so thumb scrolling
+   # and other mouse events won't cause confusing changes
+   currpatt = g.getcells(g.getrect())
+   g.check(0)
+   g.setlayer(envindex)
+   g.putcells(currpatt)
+   g.setlayer(currindex)
+   g.check(1)
+   
+   step = 1
+   exp = g.getstep()
+   if exp > 0:
+      step = g.getbase()**exp
+   if int(g.getgen()) % step == 0:
+      # display all 3 layers (start, envelope, current)
+      g.update()
