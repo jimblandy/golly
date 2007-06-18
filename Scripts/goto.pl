@@ -11,7 +11,7 @@ use Time::HiRes qw ( time );
 # --------------------------------------------------------------------
 
 sub go_to {
-   my $gen = $_[0];
+   my $gen = shift;
    my $currgen = g_getgen();
    my $newgen = $gen;
    if (substr($gen,0,1) eq '+') {

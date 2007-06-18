@@ -7,7 +7,7 @@ use strict;
 
 sub getminbox {
    # return a rect which is the minimal bounding box of given pattern
-   my $cells = $_[0];
+   my $cells = shift;
    my $minx =  10000000000;    #!!!???  maxint;
    my $maxx = -10000000000;    #!!!??? -maxint;
    my $miny =  10000000000;    #!!!???  maxint;
