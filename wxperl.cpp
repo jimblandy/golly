@@ -767,17 +767,25 @@ XS(pl_parse)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 7)
-      PERL_ERROR("Usage: $outcells = g_parse($string,$x,$y,$axx,$axy,$ayx,$ayy)");
+   if (items < 1 || items > 7)
+      PERL_ERROR("Usage: $outcells = g_parse($string,$x=0,$y=0,$axx=1,$axy=0,$ayx=0,$ayy=1)");
 
    STRLEN n_a;
    char* s = SvPV(ST(0), n_a);
-   int x0  = SvIV(ST(1));
-   int y0  = SvIV(ST(2));
-   int axx = SvIV(ST(3));
-   int axy = SvIV(ST(4));
-   int ayx = SvIV(ST(5));
-   int ayy = SvIV(ST(6));
+
+   // default values for optional params
+   int x0  = 0;
+   int y0  = 0;
+   int axx = 1;
+   int axy = 0;
+   int ayx = 0;
+   int ayy = 1;
+   if (items > 1) x0  = SvIV(ST(1));
+   if (items > 2) y0  = SvIV(ST(2));
+   if (items > 3) axx = SvIV(ST(3));
+   if (items > 4) axy = SvIV(ST(4));
+   if (items > 5) ayx = SvIV(ST(5));
+   if (items > 6) ayy = SvIV(ST(6));
 
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
@@ -838,8 +846,8 @@ XS(pl_transform)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 7)
-      PERL_ERROR("Usage: $outcells = g_transform($cells,$x,$y,$axx,$axy,$ayx,$ayy)");
+   if (items < 3 || items > 7)
+      PERL_ERROR("Usage: $outcells = g_transform($cells,$x,$y,$axx=1,$axy=0,$ayx=0,$ayy=1)");
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
@@ -851,10 +859,16 @@ XS(pl_transform)
 
    int x0  = SvIV(ST(1));
    int y0  = SvIV(ST(2));
-   int axx = SvIV(ST(3));
-   int axy = SvIV(ST(4));
-   int ayx = SvIV(ST(5));
-   int ayy = SvIV(ST(6));
+
+   // default values for optional params
+   int axx = 1;
+   int axy = 0;
+   int ayx = 0;
+   int ayy = 1;
+   if (items > 3) axx = SvIV(ST(3));
+   if (items > 4) axy = SvIV(ST(4));
+   if (items > 5) ayx = SvIV(ST(5));
+   if (items > 6) ayy = SvIV(ST(6));
 
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
@@ -961,7 +975,7 @@ XS(pl_putcells)
    int num_cells = (av_len(inarray) + 1) / 2;
    // note that av_len returns max index or -1 if array is empty
 
-   // defaults for affine transform params
+   // default values for optional params
    int x0  = 0;
    int y0  = 0;
    int axx = 1;

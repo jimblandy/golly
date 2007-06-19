@@ -15,102 +15,102 @@ my $ylen = 500;        # length of y axis
 # ------------------------------------------------------------------------------
 
 # create a mono-spaced ASCII font
-my %mfont = ();
-$mfont{' '} = g_parse('',0,0,1,0,0,1);
-$mfont{'!'} = g_parse('2bo$2bo$2bo$2bo$2bo2$2bo!',0,0,1,0,0,1);
-$mfont{'"'} = g_parse('bobo$bobo$bobo!',0,0,1,0,0,1);
-$mfont{'#'} = g_parse('bobo$bobo$5o$bobo$5o$bobo$bobo!',0,0,1,0,0,1);
-$mfont{'$'} = g_parse('b3o$obobo$obo$b3o$2bobo$obobo$b3o!',0,0,1,0,0,1);
-$mfont{'%'} = g_parse('2o2bo$2o2bo$3bo$2bo$bo$o2b2o$o2b2o!',0,0,1,0,0,1);
-$mfont{'&'} = g_parse('b2o$o2bo$o2bo$b2o$o2bo$o2bo$b2obo!',0,0,1,0,0,1);
-$mfont{'\''} = g_parse('2bo$2bo$2bo!',0,0,1,0,0,1);
-$mfont{'('} = g_parse('3bo$2bo$2bo$2bo$2bo$2bo$3bo!',0,0,1,0,0,1);
-$mfont{')'} = g_parse('bo$2bo$2bo$2bo$2bo$2bo$bo!',0,0,1,0,0,1);
-$mfont{'*'} = g_parse('$obobo$b3o$5o$b3o$obobo!',0,0,1,0,0,1);
-$mfont{'+'} = g_parse('$2bo$2bo$5o$2bo$2bo!',0,0,1,0,0,1);
-$mfont{','} = g_parse('6$2bo$2bo$bo!',0,0,1,0,0,1);
-$mfont{'-'} = g_parse('3$5o!',0,0,1,0,0,1);
-$mfont{'.'} = g_parse('6$2bo!',0,0,1,0,0,1);
-$mfont{'/'} = g_parse('3bo$3bo$2bo$2bo$2bo$bo$bo!',0,0,1,0,0,1);
-$mfont{'0'} = g_parse('b3o$o3bo$o2b2o$obobo$2o2bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'1'} = g_parse('2bo$b2o$2bo$2bo$2bo$2bo$b3o!',0,0,1,0,0,1);
-$mfont{'2'} = g_parse('b3o$o3bo$4bo$3bo$2bo$bo$5o!',0,0,1,0,0,1);
-$mfont{'3'} = g_parse('b3o$o3bo$4bo$2b2o$4bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'4'} = g_parse('3bo$2b2o$bobo$o2bo$5o$3bo$3bo!',0,0,1,0,0,1);
-$mfont{'5'} = g_parse('5o$o$o$b3o$4bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'6'} = g_parse('b3o$o$o$4o$o3bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'7'} = g_parse('5o$4bo$3bo$2bo$bo$o$o!',0,0,1,0,0,1);
-$mfont{'8'} = g_parse('b3o$o3bo$o3bo$b3o$o3bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'9'} = g_parse('b3o$o3bo$o3bo$b4o$4bo$4bo$b3o!',0,0,1,0,0,1);
-$mfont{':'} = g_parse('2$2bo4$2bo!',0,0,1,0,0,1);
-$mfont{';'} = g_parse('2$2bo4$2bo$2bo$bo!',0,0,1,0,0,1);
-$mfont{'<'} = g_parse('$3bo$2bo$bo$2bo$3bo!',0,0,1,0,0,1);
-$mfont{'='} = g_parse('2$5o2$5o!',0,0,1,0,0,1);
-$mfont{'>'} = g_parse('$bo$2bo$3bo$2bo$bo!',0,0,1,0,0,1);
-$mfont{'?'} = g_parse('b3o$o3bo$4bo$2b2o$2bo2$2bo!',0,0,1,0,0,1);
-$mfont{'@'} = g_parse('b3o$o3bo$ob3o$obobo$ob2o$o$b3o!',0,0,1,0,0,1);
-$mfont{'A'} = g_parse('b3o$o3bo$o3bo$5o$o3bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'B'} = g_parse('4o$o3bo$o3bo$4o$o3bo$o3bo$4o!',0,0,1,0,0,1);
-$mfont{'C'} = g_parse('b3o$o3bo$o$o$o$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'D'} = g_parse('4o$o3bo$o3bo$o3bo$o3bo$o3bo$4o!',0,0,1,0,0,1);
-$mfont{'E'} = g_parse('5o$o$o$3o$o$o$5o!',0,0,1,0,0,1);
-$mfont{'F'} = g_parse('5o$o$o$3o$o$o$o!',0,0,1,0,0,1);
-$mfont{'G'} = g_parse('b3o$o3bo$o$o2b2o$o3bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'H'} = g_parse('o3bo$o3bo$o3bo$5o$o3bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'I'} = g_parse('b3o$2bo$2bo$2bo$2bo$2bo$b3o!',0,0,1,0,0,1);
-$mfont{'J'} = g_parse('2b3o$3bo$3bo$3bo$3bo$o2bo$b2o!',0,0,1,0,0,1);
-$mfont{'K'} = g_parse('o3bo$o2bo$obo$2o$obo$o2bo$o3bo!',0,0,1,0,0,1);
-$mfont{'L'} = g_parse('o$o$o$o$o$o$5o!',0,0,1,0,0,1);
-$mfont{'M'} = g_parse('o3bo$2ob2o$obobo$obobo$o3bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'N'} = g_parse('o3bo$2o2bo$obobo$o2b2o$o3bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'O'} = g_parse('b3o$o3bo$o3bo$o3bo$o3bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'P'} = g_parse('4o$o3bo$o3bo$4o$o$o$o!',0,0,1,0,0,1);
-$mfont{'Q'} = g_parse('b3o$o3bo$o3bo$o3bo$obobo$o2bo$b2obo!',0,0,1,0,0,1);
-$mfont{'R'} = g_parse('4o$o3bo$o3bo$4o$o2bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'S'} = g_parse('b3o$o3bo$o$b3o$4bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'T'} = g_parse('5o$2bo$2bo$2bo$2bo$2bo$2bo!',0,0,1,0,0,1);
-$mfont{'U'} = g_parse('o3bo$o3bo$o3bo$o3bo$o3bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'V'} = g_parse('o3bo$o3bo$o3bo$o3bo$o3bo$bobo$2bo!',0,0,1,0,0,1);
-$mfont{'W'} = g_parse('o3bo$o3bo$o3bo$obobo$obobo$2ob2o$o3bo!',0,0,1,0,0,1);
-$mfont{'X'} = g_parse('o3bo$o3bo$bobo$2bo$bobo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'Y'} = g_parse('o3bo$o3bo$bobo$2bo$2bo$2bo$2bo!',0,0,1,0,0,1);
-$mfont{'Z'} = g_parse('5o$4bo$3bo$2bo$bo$o$5o!',0,0,1,0,0,1);
-$mfont{'['} = g_parse('2b2o$2bo$2bo$2bo$2bo$2bo$2b2o!',0,0,1,0,0,1);
-$mfont{'\\'} = g_parse('bo$bo$2bo$2bo$2bo$3bo$3bo!',0,0,1,0,0,1);
-$mfont{']'} = g_parse('b2o$2bo$2bo$2bo$2bo$2bo$b2o!',0,0,1,0,0,1);
-$mfont{'^'} = g_parse('2bo$bobo$o3bo!',0,0,1,0,0,1);
-$mfont{'_'} = g_parse('6$5o!',0,0,1,0,0,1);
-$mfont{'`'} = g_parse('o$bo!',0,0,1,0,0,1);
-$mfont{'a'} = g_parse('2$b4o$o3bo$o3bo$o3bo$b4o!',0,0,1,0,0,1);
-$mfont{'b'} = g_parse('o$o$4o$o3bo$o3bo$o3bo$4o!',0,0,1,0,0,1);
-$mfont{'c'} = g_parse('2$b4o$o$o$o$b4o!',0,0,1,0,0,1);
-$mfont{'d'} = g_parse('4bo$4bo$b4o$o3bo$o3bo$o3bo$b4o!',0,0,1,0,0,1);
-$mfont{'e'} = g_parse('2$b3o$o3bo$5o$o$b4o!',0,0,1,0,0,1);
-$mfont{'f'} = g_parse('2b2o$bo2bo$bo$3o$bo$bo$bo!',0,0,1,0,0,1);
-$mfont{'g'} = g_parse('2$b3o$o3bo$o3bo$o3bo$b4o$4bo$b3o!',0,0,1,0,0,1);
-$mfont{'h'} = g_parse('o$o$ob2o$2o2bo$o3bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'i'} = g_parse('$2bo2$2bo$2bo$2bo$2b2o!',0,0,1,0,0,1);
-$mfont{'j'} = g_parse('$3bo2$3bo$3bo$3bo$3bo$o2bo$b2o!',0,0,1,0,0,1);
-$mfont{'k'} = g_parse('o$o$o2bo$obo$3o$o2bo$o3bo!',0,0,1,0,0,1);
-$mfont{'l'} = g_parse('b2o$2bo$2bo$2bo$2bo$2bo$2b2o!',0,0,1,0,0,1);
-$mfont{'m'} = g_parse('2$bobo$obobo$obobo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'n'} = g_parse('2$4o$o3bo$o3bo$o3bo$o3bo!',0,0,1,0,0,1);
-$mfont{'o'} = g_parse('2$b3o$o3bo$o3bo$o3bo$b3o!',0,0,1,0,0,1);
-$mfont{'p'} = g_parse('2$4o$o3bo$o3bo$o3bo$4o$o$o!',0,0,1,0,0,1);
-$mfont{'q'} = g_parse('2$b4o$o3bo$o3bo$o3bo$b4o$4bo$4bo!',0,0,1,0,0,1);
-$mfont{'r'} = g_parse('2$ob2o$2o2bo$o$o$o!',0,0,1,0,0,1);
-$mfont{'s'} = g_parse('2$b4o$o$b3o$4bo$4o!',0,0,1,0,0,1);
-$mfont{'t'} = g_parse('$2bo$5o$2bo$2bo$2bo$3b2o!',0,0,1,0,0,1);
-$mfont{'u'} = g_parse('2$o3bo$o3bo$o3bo$o3bo$b4o!',0,0,1,0,0,1);
-$mfont{'v'} = g_parse('2$o3bo$o3bo$o3bo$bobo$2bo!',0,0,1,0,0,1);
-$mfont{'w'} = g_parse('2$o3bo$o3bo$obobo$2ob2o$o3bo!',0,0,1,0,0,1);
-$mfont{'x'} = g_parse('2$o3bo$bobo$2bo$bobo$o3bo!',0,0,1,0,0,1);
-$mfont{'y'} = g_parse('2$o3bo$o3bo$o3bo$o3bo$b4o$4bo$b3o!',0,0,1,0,0,1);
-$mfont{'z'} = g_parse('2$5o$3bo$2bo$bo$5o!',0,0,1,0,0,1);
-$mfont{'{'} = g_parse('3bo$2bo$2bo$bo$2bo$2bo$3bo!',0,0,1,0,0,1);
-$mfont{'|'} = g_parse('2bo$2bo$2bo$2bo$2bo$2bo$2bo!',0,0,1,0,0,1);
-$mfont{'}'} = g_parse('bo$2bo$2bo$3bo$2bo$2bo$bo!',0,0,1,0,0,1);
-$mfont{'~'} = g_parse('2$bo$obobo$3bo!',0,0,1,0,0,1);
+my %mfont;
+$mfont{' '} = g_parse('');
+$mfont{'!'} = g_parse('2bo$2bo$2bo$2bo$2bo2$2bo!');
+$mfont{'"'} = g_parse('bobo$bobo$bobo!');
+$mfont{'#'} = g_parse('bobo$bobo$5o$bobo$5o$bobo$bobo!');
+$mfont{'$'} = g_parse('b3o$obobo$obo$b3o$2bobo$obobo$b3o!');
+$mfont{'%'} = g_parse('2o2bo$2o2bo$3bo$2bo$bo$o2b2o$o2b2o!');
+$mfont{'&'} = g_parse('b2o$o2bo$o2bo$b2o$o2bo$o2bo$b2obo!');
+$mfont{'\''} = g_parse('2bo$2bo$2bo!');
+$mfont{'('} = g_parse('3bo$2bo$2bo$2bo$2bo$2bo$3bo!');
+$mfont{')'} = g_parse('bo$2bo$2bo$2bo$2bo$2bo$bo!');
+$mfont{'*'} = g_parse('$obobo$b3o$5o$b3o$obobo!');
+$mfont{'+'} = g_parse('$2bo$2bo$5o$2bo$2bo!');
+$mfont{','} = g_parse('6$2bo$2bo$bo!');
+$mfont{'-'} = g_parse('3$5o!');
+$mfont{'.'} = g_parse('6$2bo!');
+$mfont{'/'} = g_parse('3bo$3bo$2bo$2bo$2bo$bo$bo!');
+$mfont{'0'} = g_parse('b3o$o3bo$o2b2o$obobo$2o2bo$o3bo$b3o!');
+$mfont{'1'} = g_parse('2bo$b2o$2bo$2bo$2bo$2bo$b3o!');
+$mfont{'2'} = g_parse('b3o$o3bo$4bo$3bo$2bo$bo$5o!');
+$mfont{'3'} = g_parse('b3o$o3bo$4bo$2b2o$4bo$o3bo$b3o!');
+$mfont{'4'} = g_parse('3bo$2b2o$bobo$o2bo$5o$3bo$3bo!');
+$mfont{'5'} = g_parse('5o$o$o$b3o$4bo$o3bo$b3o!');
+$mfont{'6'} = g_parse('b3o$o$o$4o$o3bo$o3bo$b3o!');
+$mfont{'7'} = g_parse('5o$4bo$3bo$2bo$bo$o$o!');
+$mfont{'8'} = g_parse('b3o$o3bo$o3bo$b3o$o3bo$o3bo$b3o!');
+$mfont{'9'} = g_parse('b3o$o3bo$o3bo$b4o$4bo$4bo$b3o!');
+$mfont{':'} = g_parse('2$2bo4$2bo!');
+$mfont{';'} = g_parse('2$2bo4$2bo$2bo$bo!');
+$mfont{'<'} = g_parse('$3bo$2bo$bo$2bo$3bo!');
+$mfont{'='} = g_parse('2$5o2$5o!');
+$mfont{'>'} = g_parse('$bo$2bo$3bo$2bo$bo!');
+$mfont{'?'} = g_parse('b3o$o3bo$4bo$2b2o$2bo2$2bo!');
+$mfont{'@'} = g_parse('b3o$o3bo$ob3o$obobo$ob2o$o$b3o!');
+$mfont{'A'} = g_parse('b3o$o3bo$o3bo$5o$o3bo$o3bo$o3bo!');
+$mfont{'B'} = g_parse('4o$o3bo$o3bo$4o$o3bo$o3bo$4o!');
+$mfont{'C'} = g_parse('b3o$o3bo$o$o$o$o3bo$b3o!');
+$mfont{'D'} = g_parse('4o$o3bo$o3bo$o3bo$o3bo$o3bo$4o!');
+$mfont{'E'} = g_parse('5o$o$o$3o$o$o$5o!');
+$mfont{'F'} = g_parse('5o$o$o$3o$o$o$o!');
+$mfont{'G'} = g_parse('b3o$o3bo$o$o2b2o$o3bo$o3bo$b3o!');
+$mfont{'H'} = g_parse('o3bo$o3bo$o3bo$5o$o3bo$o3bo$o3bo!');
+$mfont{'I'} = g_parse('b3o$2bo$2bo$2bo$2bo$2bo$b3o!');
+$mfont{'J'} = g_parse('2b3o$3bo$3bo$3bo$3bo$o2bo$b2o!');
+$mfont{'K'} = g_parse('o3bo$o2bo$obo$2o$obo$o2bo$o3bo!');
+$mfont{'L'} = g_parse('o$o$o$o$o$o$5o!');
+$mfont{'M'} = g_parse('o3bo$2ob2o$obobo$obobo$o3bo$o3bo$o3bo!');
+$mfont{'N'} = g_parse('o3bo$2o2bo$obobo$o2b2o$o3bo$o3bo$o3bo!');
+$mfont{'O'} = g_parse('b3o$o3bo$o3bo$o3bo$o3bo$o3bo$b3o!');
+$mfont{'P'} = g_parse('4o$o3bo$o3bo$4o$o$o$o!');
+$mfont{'Q'} = g_parse('b3o$o3bo$o3bo$o3bo$obobo$o2bo$b2obo!');
+$mfont{'R'} = g_parse('4o$o3bo$o3bo$4o$o2bo$o3bo$o3bo!');
+$mfont{'S'} = g_parse('b3o$o3bo$o$b3o$4bo$o3bo$b3o!');
+$mfont{'T'} = g_parse('5o$2bo$2bo$2bo$2bo$2bo$2bo!');
+$mfont{'U'} = g_parse('o3bo$o3bo$o3bo$o3bo$o3bo$o3bo$b3o!');
+$mfont{'V'} = g_parse('o3bo$o3bo$o3bo$o3bo$o3bo$bobo$2bo!');
+$mfont{'W'} = g_parse('o3bo$o3bo$o3bo$obobo$obobo$2ob2o$o3bo!');
+$mfont{'X'} = g_parse('o3bo$o3bo$bobo$2bo$bobo$o3bo$o3bo!');
+$mfont{'Y'} = g_parse('o3bo$o3bo$bobo$2bo$2bo$2bo$2bo!');
+$mfont{'Z'} = g_parse('5o$4bo$3bo$2bo$bo$o$5o!');
+$mfont{'['} = g_parse('2b2o$2bo$2bo$2bo$2bo$2bo$2b2o!');
+$mfont{'\\'} = g_parse('bo$bo$2bo$2bo$2bo$3bo$3bo!');
+$mfont{']'} = g_parse('b2o$2bo$2bo$2bo$2bo$2bo$b2o!');
+$mfont{'^'} = g_parse('2bo$bobo$o3bo!');
+$mfont{'_'} = g_parse('6$5o!');
+$mfont{'`'} = g_parse('o$bo!');
+$mfont{'a'} = g_parse('2$b4o$o3bo$o3bo$o3bo$b4o!');
+$mfont{'b'} = g_parse('o$o$4o$o3bo$o3bo$o3bo$4o!');
+$mfont{'c'} = g_parse('2$b4o$o$o$o$b4o!');
+$mfont{'d'} = g_parse('4bo$4bo$b4o$o3bo$o3bo$o3bo$b4o!');
+$mfont{'e'} = g_parse('2$b3o$o3bo$5o$o$b4o!');
+$mfont{'f'} = g_parse('2b2o$bo2bo$bo$3o$bo$bo$bo!');
+$mfont{'g'} = g_parse('2$b3o$o3bo$o3bo$o3bo$b4o$4bo$b3o!');
+$mfont{'h'} = g_parse('o$o$ob2o$2o2bo$o3bo$o3bo$o3bo!');
+$mfont{'i'} = g_parse('$2bo2$2bo$2bo$2bo$2b2o!');
+$mfont{'j'} = g_parse('$3bo2$3bo$3bo$3bo$3bo$o2bo$b2o!');
+$mfont{'k'} = g_parse('o$o$o2bo$obo$3o$o2bo$o3bo!');
+$mfont{'l'} = g_parse('b2o$2bo$2bo$2bo$2bo$2bo$2b2o!');
+$mfont{'m'} = g_parse('2$bobo$obobo$obobo$o3bo$o3bo!');
+$mfont{'n'} = g_parse('2$4o$o3bo$o3bo$o3bo$o3bo!');
+$mfont{'o'} = g_parse('2$b3o$o3bo$o3bo$o3bo$b3o!');
+$mfont{'p'} = g_parse('2$4o$o3bo$o3bo$o3bo$4o$o$o!');
+$mfont{'q'} = g_parse('2$b4o$o3bo$o3bo$o3bo$b4o$4bo$4bo!');
+$mfont{'r'} = g_parse('2$ob2o$2o2bo$o$o$o!');
+$mfont{'s'} = g_parse('2$b4o$o$b3o$4bo$4o!');
+$mfont{'t'} = g_parse('$2bo$5o$2bo$2bo$2bo$3b2o!');
+$mfont{'u'} = g_parse('2$o3bo$o3bo$o3bo$o3bo$b4o!');
+$mfont{'v'} = g_parse('2$o3bo$o3bo$o3bo$bobo$2bo!');
+$mfont{'w'} = g_parse('2$o3bo$o3bo$obobo$2ob2o$o3bo!');
+$mfont{'x'} = g_parse('2$o3bo$bobo$2bo$bobo$o3bo!');
+$mfont{'y'} = g_parse('2$o3bo$o3bo$o3bo$o3bo$b4o$4bo$b3o!');
+$mfont{'z'} = g_parse('2$5o$3bo$2bo$bo$5o!');
+$mfont{'{'} = g_parse('3bo$2bo$2bo$bo$2bo$2bo$3bo!');
+$mfont{'|'} = g_parse('2bo$2bo$2bo$2bo$2bo$2bo$2bo!');
+$mfont{'}'} = g_parse('bo$2bo$2bo$3bo$2bo$2bo$bo!');
+$mfont{'~'} = g_parse('2$bo$obobo$3bo!');
 
 # ------------------------------------------------------------------------------
 
@@ -119,14 +119,12 @@ sub make_text {
    my $string = shift;
    my @p = ();
    my $x = 0;
-   
    for my $ch (split(//,$string)) {
       $ch = '?' if not exists $mfont{$ch};
-      my $symbol = g_transform($mfont{$ch}, $x, 0, 1, 0, 0, 1);
+      my $symbol = g_transform($mfont{$ch}, $x, 0);
       push(@p, @{$symbol});
       $x += 6;
    }
-   
    return \@p;
 }
 
@@ -184,22 +182,25 @@ sub fit_if_not_visible {
 
 # ------------------------------------------------------------------------------
 
+# return a rect which is the minimal bounding box of given pattern
 sub getminbox {
-   # return a rect which is the minimal bounding box of given pattern
    my $cells = shift;
-   my $minx =  10000000000;    #!!!???  maxint;
-   my $maxx = -10000000000;    #!!!??? -maxint;
-   my $miny =  10000000000;    #!!!???  maxint;
-   my $maxy = -10000000000;    #!!!??? -maxint;
-   my $clen = @{$cells};
-   for (my $x = 0; $x < $clen; $x += 2) {
+   my $len = @{$cells};
+   return () if $len < 2;
+   
+   my $minx = $cells->[0];
+   my $miny = $cells->[1];
+   my $maxx = $minx;
+   my $maxy = $miny;
+   for (my $x = 0; $x < $len; $x += 2) {
       if ($cells->[$x] < $minx) { $minx = $cells->[$x] }
       if ($cells->[$x] > $maxx) { $maxx = $cells->[$x] }
    }
-   for (my $y = 1; $y < $clen; $y += 2) {
+   for (my $y = 1; $y < $len; $y += 2) {
       if ($cells->[$y] < $miny) { $miny = $cells->[$y] }
       if ($cells->[$y] > $maxy) { $maxy = $cells->[$y] }
    }
+   
    return ($minx, $miny, $maxx - $minx + 1, $maxy - $miny + 1);
 }
 

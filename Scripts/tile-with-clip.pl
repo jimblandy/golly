@@ -46,7 +46,7 @@ if (@{$p} > 0) {
          if (($right <= $selright) and ($bottom <= $selbottom)) {
             g_putcells($p, $x, $y);
          } else {
-            my $tempcells = g_transform($p, $x, $y, 1, 0, 0, 1);
+            my $tempcells = g_transform($p, $x, $y);
             clip_rb($tempcells, $selright, $selbottom);
          }
          $x += $pwidth;

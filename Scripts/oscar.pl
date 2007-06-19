@@ -75,8 +75,7 @@ sub oscillating {
    
    # get current pattern and create "normalized" version -- ie. shift its
    # top left corner to 0,0 -- so we can detect spaceships and knightships
-   my $shifted = g_transform(g_getcells(@pbox), -$pbox[0], -$pbox[1],
-                             1, 0, 0, 1);
+   my $shifted = g_transform(g_getcells(@pbox), -$pbox[0], -$pbox[1]);
    
    # create hash value of shifted pattern
    #!!!??? need a better, faster g_hash(@rect) function which would also

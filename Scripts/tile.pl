@@ -5,22 +5,25 @@ use strict;
 
 # ------------------------------------------------------------------------------
 
+# return a rect which is the minimal bounding box of given pattern
 sub getminbox {
-   # return a rect which is the minimal bounding box of given pattern
    my $cells = shift;
-   my $minx =  10000000000;    #!!!???  maxint;
-   my $maxx = -10000000000;    #!!!??? -maxint;
-   my $miny =  10000000000;    #!!!???  maxint;
-   my $maxy = -10000000000;    #!!!??? -maxint;
-   my $clen = @{$cells};
-   for (my $x = 0; $x < $clen; $x += 2) {
+   my $len = @{$cells};
+   return () if $len < 2;
+   
+   my $minx = $cells->[0];
+   my $miny = $cells->[1];
+   my $maxx = $minx;
+   my $maxy = $miny;
+   for (my $x = 0; $x < $len; $x += 2) {
       if ($cells->[$x] < $minx) { $minx = $cells->[$x] }
       if ($cells->[$x] > $maxx) { $maxx = $cells->[$x] }
    }
-   for (my $y = 1; $y < $clen; $y += 2) {
+   for (my $y = 1; $y < $len; $y += 2) {
       if ($cells->[$y] < $miny) { $miny = $cells->[$y] }
       if ($cells->[$y] > $maxy) { $maxy = $cells->[$y] }
    }
+   
    return ($minx, $miny, $maxx - $minx + 1, $maxy - $miny + 1);
 }
 
@@ -104,7 +107,7 @@ while ($left > $selleft) {
    if ($left >= $selleft) {
       g_putcells($selpatt, -$bbox[2] * $i, 0);
    } else {
-      my $tempcells = g_transform($selpatt, -$bbox[2] * $i, 0, 1, 0, 0, 1);
+      my $tempcells = g_transform($selpatt, -$bbox[2] * $i, 0);
       clip_left($tempcells, $selleft);
    }
 }
@@ -115,7 +118,7 @@ while ($right < $selright) {
    if ($right <= $selright) {
       g_putcells($selpatt, $bbox[2] * $i, 0);
    } else {
-      my $tempcells = g_transform($selpatt, $bbox[2] * $i, 0, 1, 0, 0, 1);
+      my $tempcells = g_transform($selpatt, $bbox[2] * $i, 0);
       clip_right($tempcells, $selright);
    }
 }
@@ -132,7 +135,7 @@ while ($top > $seltop) {
    if ($top >= $seltop) {
       g_putcells($selpatt, 0, -$bbox[3] * $i);
    } else {
-      my $tempcells = g_transform($selpatt, 0, -$bbox[3] * $i, 1, 0, 0, 1);
+      my $tempcells = g_transform($selpatt, 0, -$bbox[3] * $i);
       clip_top($tempcells, $seltop);
    }
 }
@@ -143,7 +146,7 @@ while ($bottom < $selbottom) {
    if ($bottom <= $selbottom) {
       g_putcells($selpatt, 0, $bbox[3] * $i);
    } else {
-      my $tempcells = g_transform($selpatt, 0, $bbox[3] * $i, 1, 0, 0, 1);
+      my $tempcells = g_transform($selpatt, 0, $bbox[3] * $i);
       clip_bottom($tempcells, $selbottom);
    }
 }

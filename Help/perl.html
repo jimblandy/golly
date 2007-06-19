@@ -337,7 +337,7 @@ number of generations and return a reference to the new cell array.
 <dd> Example: <b>$newpatt = g_evolve($currpatt, 100);</b></dd>
 </p>
 
-<a name="transform"></a><p><dt><b>g_transform(<i>$cellarray, $x0, $y0, $axx, $axy, $ayx, $ayy</i>)</b></dt>
+<a name="transform"></a><p><dt><b>g_transform(<i>$cellarray, $x0, $y0, $axx=1, $axy=0, $ayx=0, $ayy=1</i>)</b></dt>
 <dd>
 Apply an affine transformation to the pattern in the given cell array reference
 and return a reference to the new cell array.
@@ -347,12 +347,12 @@ is calculated as xn = x0 + x*axx + y*axy, yn = y0 + x*ayx + y*ayy.
 <dd> Example: <b>$rot_blinker = g_transform($blinker, 0, 0, 0, -1, 1, 0);</b></dd>
 </p>
 
-<a name="parse"></a><p><dt><b>g_parse(<i>$string, $x0, $y0, $axx, $axy, $ayx, $ayy</i>)</b></dt>
+<a name="parse"></a><p><dt><b>g_parse(<i>$string, $x0=0, $y0=0, $axx=1, $axy=0, $ayx=0, $ayy=1</i>)</b></dt>
 <dd>
-Parse an RLE or Life 1.05 string and return a reference to the new
-(possibly transformed) cell array.
+Parse an RLE or Life 1.05 string and return a reference to
+an optionally transformed cell array.
 </dd>
-<dd> Example: <b>$blinker = g_parse("3o!", 0, 0, 1, 0, 0, 1);</b></dd>
+<dd> Example: <b>$blinker = g_parse("3o!");</b></dd>
 </p>
 
 <a name="putcells"></a><p><dt><b>g_putcells(<i>$cellarray, $x0=0, $y0=0, $axx=1, $axy=0, $ayx=0, $ayy=1, $mode="or"</i>)</b></dt>
@@ -513,10 +513,9 @@ The optional parameter (default = "") specifies a separator
 character that can be used to make the resulting string more readable.
 For example, <b>g_getgen(",")</b> would return a string like "1,234,567"
 but <b>g_getgen()</b> would return "1234567".  Use the latter call if
-you want to do arithmetic on the generation count because then it's
-easy to use <b>int</b> to convert the string to an integer.
+you want to do arithmetic on the generation count.
 </dd>
-<dd> Example: <b>$gen = int( g_getgen() );</b></dd>
+<dd> Example: <b>$gen = g_getgen();</b></dd>
 </p>
 
 <a name="getpop"></a><p><dt><b>g_getpop(<i>$sepchar=""</i>)</b></dt>
@@ -528,7 +527,7 @@ For example, <b>g_getpop(",")</b> would return a string like "1,234,567"
 but <b>g_getpop()</b> would return "1234567".  Use the latter call if
 you want to do arithmetic on the population count.
 </dd>
-<dd> Example: <b>$pop = int( g_getpop() );</b></dd>
+<dd> Example: <b>$pop = g_getpop();</b></dd>
 </p>
 
 <a name="empty"></a><p><dt><b>g_empty()</b></dt>
@@ -829,7 +828,7 @@ If the initial string is supplied it will be shown and selected.
 If the title string is supplied it will be used in the dialog's title bar.
 The script will be aborted if the user hits the dialog's Cancel button.
 </dd>
-<dd> Example: <b>$i = int( g_getstring("Enter a number:","100") );</b></dd>
+<dd> Example: <b>$i = g_getstring("Enter a number:","100");</b></dd>
 </p>
 
 <a name="getkey"></a><p><dt><b>g_getkey()</b></dt>

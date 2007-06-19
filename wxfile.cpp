@@ -663,13 +663,14 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
             linelen = 0;
             if (*p) p++;
             break;
-         case '$':
-            dollars++;
-            linelen++;
-            p++;
+         case '$': dollars++; linelen++; p++;
+            break;
+         case ':': colons++; linelen++; p++;
+            break;
+         case ';': semicolons++; linelen++; p++;
             break;
          case 13: case 10:
-            // look for colon/semicolon at eol
+            // if colon/semicolon is at eol then count it twice
             if (linelen > 0 && p[-1] == ':') colons++;
             if (linelen > 0 && p[-1] == ';') semicolons++;
             linelen = 0;
@@ -689,17 +690,16 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
                linelen++;
             }
             p++;
-            break;
       }
    }
    
-   // give keywords more weight
-   imports *= 5;
-   froms *= 5;
-   uses *= 5;
-   mys *= 5;
+   // give keywords much more weight
+   imports *= 10;
+   froms *= 10;
+   uses *= 10;
+   mys *= 10;
    
-   /* check
+   /* check totals:
    char msg[128];
    sprintf(msg, "uses=%d mys=%d dollars=%d semicolons=%d imports=%d froms=%d colons=%d",
                   uses, mys, dollars, semicolons, imports, froms, colons);

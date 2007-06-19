@@ -31,7 +31,7 @@ __eafont[' '].width=2  # allow spaces to mark unknown characters
 __eafont['-'] = pattern ("", 0, 0)
 __eafont['-'].width=0  #
 
-# Mono-spaced ASCII font (used in Scripts/pop-plot.py)
+# Mono-spaced ASCII font
 
 __mfont = dict()
 __mfont[' '] = pattern("")

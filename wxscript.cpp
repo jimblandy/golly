@@ -607,7 +607,7 @@ bool IsScript(const wxString& filename)
 
 // -----------------------------------------------------------------------------
 
-void CheckScriptError()
+void CheckScriptError(const wxString& ext)
 {
    if (scripterr.IsEmpty()) {
       return;
@@ -620,8 +620,13 @@ void CheckScriptError()
       #ifdef __WXMAC__
          wxSetCursor(*wxSTANDARD_CURSOR);
       #endif
-      wxMessageBox(scripterr, _("Script error:"),
-                     wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+      wxString errtype;
+      if (ext.IsSameAs(wxT("pl"), false)) {
+         errtype = _("Perl error:");
+      } else {
+         errtype = _("Python error:");
+      }
+      wxMessageBox(scripterr, errtype, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
    }
    // don't change message if GSF_exit was used to stop script
    if (!exitcalled) statusptr->DisplayMessage(_("Script aborted."));
@@ -696,7 +701,7 @@ void RunScript(const wxString& filename)
    wxSetWorkingDirectory(gollydir);
 
    // display any Perl/Python error message
-   CheckScriptError();
+   CheckScriptError(ext);
 
    // update title, menu bar, cursor, viewport, status bar, tool bar, etc
    if (showtitle) mainptr->SetWindowTitle(wxEmptyString);

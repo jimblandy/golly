@@ -363,7 +363,7 @@ and return the resulting cell list.
 <dd> Example: <b>newpatt = golly.evolve(currpatt, 100)</b></dd>
 </p>
 
-<a name="transform"></a><p><dt><b>transform(<i>cell-list, x0, y0, axx, axy, ayx, ayy</i>)</b></dt>
+<a name="transform"></a><p><dt><b>transform(<i>cell-list, x0, y0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
 <dd>
 Apply an affine transformation to the given cell list and return the resulting cell list.
 For each x,y cell in the input list the corresponding xn,yn cell in the output list
@@ -372,11 +372,11 @@ is calculated as xn = x0 + x*axx + y*axy, yn = y0 + x*ayx + y*ayy.
 <dd> Example: <b>rot_blinker = golly.transform(blinker, 0, 0, 0, -1, 1, 0)</b></dd>
 </p>
 
-<a name="parse"></a><p><dt><b>parse(<i>string, x0, y0, axx, axy, ayx, ayy</i>)</b></dt>
+<a name="parse"></a><p><dt><b>parse(<i>string, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
 <dd>
-Parse an RLE or Life 1.05 string and return a (possibly transformed) cell list.
+Parse an RLE or Life 1.05 string and return an optionally transformed cell list.
 </dd>
-<dd> Example: <b>blinker = golly.parse("3o!", 0, 0, 1, 0, 0, 1)</b></dd>
+<dd> Example: <b>blinker = golly.parse("3o!")</b></dd>
 </p>
 
 <a name="putcells"></a><p><dt><b>putcells(<i>cell-list, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1, mode="or"</i>)</b></dt>

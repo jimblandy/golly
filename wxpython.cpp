@@ -791,9 +791,16 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char* s;
-   long x0, y0, axx, axy, ayx, ayy;
 
-   if (!PyArg_ParseTuple(args, "sllllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
+   // defaults for optional params
+   long x0  = 0;
+   long y0  = 0;
+   long axx = 1;
+   long axy = 0;
+   long ayx = 0;
+   long ayy = 1;
+
+   if (!PyArg_ParseTuple(args, "s|llllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
    PyObject* outlist = PyList_New(0);
@@ -848,10 +855,16 @@ static PyObject* py_transform(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   long x0, y0, axx, axy, ayx, ayy;
    PyObject* inlist;
+   long x0, y0;
 
-   if (!PyArg_ParseTuple(args, "O!llllll", &PyList_Type, &inlist, &x0, &y0, &axx, &axy, &ayx, &ayy))
+   // defaults for optional params
+   long axx = 1;
+   long axy = 0;
+   long ayx = 0;
+   long ayy = 1;
+
+   if (!PyArg_ParseTuple(args, "O!ll|llll", &PyList_Type, &inlist, &x0, &y0, &axx, &axy, &ayx, &ayy))
       return NULL;
 
    PyObject* outlist = PyList_New(0);
@@ -934,8 +947,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
+   PyObject* list;
 
-   // defaults for affine transform params
+   // defaults for optional params
    long x0  = 0;
    long y0  = 0;
    long axx = 1;
@@ -946,7 +960,6 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    // 'copy' mode currently has the same effect as 'or' mode
    // because there is no bounding box to set OFF cells
    char* mode = "or";
-   PyObject* list;
 
    if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
       return NULL;
