@@ -95,7 +95,7 @@ item in the File menu and then simply click on the script you wish to run.
 You can also select one of the <b>Run</b> items in the File menu.
 
 <p>
-If a script called golly-start.pl exists in the same folder as the Golly
+If a script called <b>golly-start.pl</b> exists in the same folder as the Golly
 application then it is automatically executed when Golly starts up.
 
 <p>
@@ -167,16 +167,17 @@ or you can search for individual commands alphabetically:
 <a href="#getselrect"><b>g_getselrect</b></a><br>
 <a href="#getstep"><b>g_getstep</b></a><br>
 <a href="#getstring"><b>g_getstring</b></a><br>
+<a href="#hash"><b>g_hash</b></a><br>
 <a href="#load"><b>g_load</b></a><br>
 <a href="#maxlayers"><b>g_maxlayers</b></a><br>
 <a href="#movelayer"><b>g_movelayer</b></a><br>
 <a href="#new"><b>g_new</b></a><br>
 <a href="#note"><b>g_note</b></a><br>
-<a href="#numlayers"><b>g_numlayers</b></a><br>
-<a href="#open"><b>g_open</b></a>
+<a href="#numlayers"><b>g_numlayers</b></a>
 </td>
 <td valign=top width=20> </td>
 <td valign=top>
+<a href="#open"><b>g_open</b></a><br>
 <a href="#parse"><b>g_parse</b></a><br>
 <a href="#paste"><b>g_paste</b></a><br>
 <a href="#putcells"><b>g_putcells</b></a><br>
@@ -190,11 +191,11 @@ or you can search for individual commands alphabetically:
 <a href="#setcell"><b>g_setcell</b></a><br>
 <a href="#setcolor"><b>g_setcolor</b></a><br>
 <a href="#setcursor"><b>g_setcursor</b></a><br>
-<a href="#setlayer"><b>g_setlayer</b></a><br>
-<a href="#setmag"><b>g_setmag</b></a>
+<a href="#setlayer"><b>g_setlayer</b></a>
 </td>
 <td valign=top width=20> </td>
 <td valign=top>
+<a href="#setmag"><b>g_setmag</b></a><br>
 <a href="#setname"><b>g_setname</b></a><br>
 <a href="#setoption"><b>g_setoption</b></a><br>
 <a href="#setpos"><b>g_setpos</b></a><br>
@@ -379,6 +380,18 @@ Parse the pattern data in the clipboard and return a cell array reference.
 <dd> Example: <b>$cells = g_getclip();</b></dd>
 </p>
 
+<a name="hash"></a><p><dt><b>g_hash(<i>@rectarray</i>)</b></dt>
+<dd>
+Return an integer hash value for the pattern in the given rectangle.
+Two identical patterns will have the same hash value, regardless of their
+location in the universe.  The hash command provides a fast way to
+detect pattern equality, but there is a tiny probability that two different
+patterns will have the same hash value, so you might need to use additional
+(slower) tests to check for true pattern equality.
+</dd>
+<dd> Example: <b>$h = g_hash( g_getrect() );</b></dd>
+</p>
+
 <a name="select"></a><p><dt><b>g_select(<i>@rectarray</i>)</b></dt>
 <dd>
 Create a selection if the given array represents a valid rectangle of the form
@@ -533,9 +546,9 @@ you want to do arithmetic on the population count.
 <a name="empty"></a><p><dt><b>g_empty()</b></dt>
 <dd>
 Return 1 if the universe is empty or 0 if there is at least one live cell.
-This is much more efficient than testing <b>getpop() == "0"</b>.
+This is much more efficient than testing <b>getpop() == 0</b>.
 </dd>
-<dd> Example: <b>if (g_empty()) { g_exit("All cells are dead.") }</b></dd>
+<dd> Example: <b>g_exit("All cells are dead.") if g_empty();</b></dd>
 </p>
 
 <a name="setrule"></a><p><dt><b>g_setrule(<i>$string</i>)</b></dt>
@@ -618,7 +631,7 @@ The script aborts with an error message if there is no selection.
 Return 1 if the given rectangle is completely visible in the viewport.
 The rectangle must be an array of the form (x,y,width,height).
 </dd>
-<dd> Example: <b>if (!g_visrect(@selrect)) { g_fitsel() }</b></dd>
+<dd> Example: <b>g_fitsel() if !g_visrect(@selrect);</b></dd>
 </p>
 
 <a name="autoupdate"></a><p><dt><b>g_autoupdate(<i>$bool</i>)</b></dt>
@@ -714,7 +727,7 @@ Return the index of the current layer, an integer from 0 to <b>g_numlayers()</b>
 <dd>
 Return the number of existing layers, an integer from 1 to <b>g_maxlayers()</b>.
 </dd>
-<dd> Example: <b>if (g_numlayers() > 1) { g_setoption("tilelayers",1) }</b></dd>
+<dd> Example: <b>g_setoption("tilelayers",1) if g_numlayers() > 1;</b></dd>
 </p>
 
 <a name="maxlayers"></a><p><dt><b>g_maxlayers()</b></dt>
@@ -736,7 +749,7 @@ if no index is supplied.
 Return the given layer's name, or the current layer's name
 if no index is supplied.
 </dd>
-<dd> Example: <b>if (g_getname() == "temporary") { g_dellayer() }</b></dd>
+<dd> Example: <b>g_dellayer() if g_getname() eq "temporary";</b></dd>
 </p>
 
 <p><a name="miscellaneous">
@@ -787,7 +800,7 @@ Here are all the valid option names and their possible values:
 Return the current value of the given option.
 See above for a list of all the valid option names.
 </dd>
-<dd> Example: <b>if (!g_getoption("hashing")) { g_setrule("b0") }</b></dd>
+<dd> Example: <b>g_setrule("b0/s1") if !g_getoption("hashing");</b></dd>
 </p>
 
 <a name="setcolor"></a><p><dt><b>g_setcolor(<i>$name, $r, $g, $b</i>)</b></dt>
@@ -912,7 +925,7 @@ along with a beep, just like the <a href="#error"><b>g_error</b></a> command.
 If no message is supplied, or if the string is empty, then there is no beep
 and the current status bar message will not be changed.
 </dd>
-<dd> Example: <b>if (g_empty()) { g_exit("There is no pattern.") }</b></dd>
+<dd> Example: <b>g_exit("There is no pattern.") if g_empty();</b></dd>
 </p>
 
 
@@ -947,8 +960,8 @@ The width and height must be greater than zero.
 
 <p>
 Unlike cell arrays, rectangle arrays only contain a few items (0 or 4),
-so all commands that accept or return rectangle arrays don't have to
-bother using array references.
+so all commands that accept or return rectangle arrays don't bother
+using array references.
 
 
 <p><a name="problems">

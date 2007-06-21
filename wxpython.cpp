@@ -1090,6 +1090,66 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_hash(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   PyObject* rect_list;
+
+   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &rect_list)) return NULL;
+
+   int numitems = PyList_Size(rect_list);
+   if (numitems != 4) {
+      PyErr_SetString(PyExc_RuntimeError, "hash error: arg must be [x,y,wd,ht].");
+      return NULL;
+   }
+
+   int x  = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
+   int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
+   int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
+   int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+   // first check that wd & ht are > 0
+   if (wd <= 0) {
+      PyErr_SetString(PyExc_RuntimeError, "hash error: width must be > 0.");
+      return NULL;
+   }
+   if (ht <= 0) {
+      PyErr_SetString(PyExc_RuntimeError, "hash error: height must be > 0.");
+      return NULL;
+   }
+   int right = x + wd - 1;
+   int bottom = y + ht - 1;
+   int cx, cy;
+   int cntr = 0;
+   
+   // calculate a hash value for pattern in given rect
+   int hash = 31415962;
+   lifealgo* curralgo = currlayer->algo;
+   for ( cy=y; cy<=bottom; cy++ ) {
+      int yshift = cy - y;
+      for ( cx=x; cx<=right; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip >= 0) {
+            // found next live cell in this row
+            cx += skip;
+            if (cx <= right) {
+               hash = (hash * 33 + yshift) ^ (cx - x);
+            }
+         } else {
+            cx = right;  // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0 && PythonScriptAborted()) {
+            return NULL;
+         }
+      }
+   }
+
+   return Py_BuildValue("i", hash);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_getclip(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2275,6 +2335,7 @@ static PyMethodDef py_methods[] = {
    { "evolve",       py_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
    { "putcells",     py_putcells,   METH_VARARGS, "paste given cell list into current universe" },
    { "getcells",     py_getcells,   METH_VARARGS, "return cell list in given rectangle" },
+   { "hash",         py_hash,       METH_VARARGS, "return hash value for pattern in given rectangle" },
    { "getclip",      py_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
    { "select",       py_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },
    { "getrect",      py_getrect,    METH_VARARGS, "return pattern rectangle as [] or [x, y, wd, ht]" },

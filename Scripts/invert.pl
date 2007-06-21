@@ -2,7 +2,7 @@
 # Author: Andrew Trevorrow (andrew@trevorrow.com), May 2007.
 
 use strict;
-use Time::HiRes qw ( time );
+use Time::HiRes qw (time);
 
 my @rect = g_getselrect();
 g_exit("There is no selection.") if @rect == 0;

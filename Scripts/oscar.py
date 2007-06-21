@@ -68,8 +68,11 @@ def oscillating():
    
    # get current pattern and create hash of "normalized" version -- ie. shift
    # its top left corner to 0,0 -- so we can detect spaceships and knightships
-   currpatt = pattern( g.getcells(prect) )
-   h = hash( tuple( currpatt(-pbox.left, -pbox.top) ) )
+   ## currpatt = pattern( g.getcells(prect) )
+   ## h = hash( tuple( currpatt(-pbox.left, -pbox.top) ) )
+
+   # use Golly's hash command (3 times faster than above code)
+   h = g.hash(prect)
    
    # determine where to insert h into hashlist
    pos = 0

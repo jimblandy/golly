@@ -1099,6 +1099,50 @@ XS(pl_getcells)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_hash)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 4) PERL_ERROR("Usage: $int = g_hash(@rect)");
+
+   int x  = SvIV(ST(0));
+   int y  = SvIV(ST(1));
+   int wd = SvIV(ST(2));
+   int ht = SvIV(ST(3));
+   if (wd <= 0) PERL_ERROR("g_hash error: width must be > 0");
+   if (ht <= 0) PERL_ERROR("g_hash error: height must be > 0");
+   int right = x + wd - 1;
+   int bottom = y + ht - 1;
+   int cx, cy;
+   int cntr = 0;
+   
+   // calculate a hash value for pattern in given rect
+   int hash = 31415962;
+   lifealgo* curralgo = currlayer->algo;
+   for ( cy=y; cy<=bottom; cy++ ) {
+      int yshift = cy - y;
+      for ( cx=x; cx<=right; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip >= 0) {
+            // found next live cell in this row
+            cx += skip;
+            if (cx <= right) {
+               hash = (hash * 33 + yshift) ^ (cx - x);
+            }
+         } else {
+            cx = right;  // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) RETURN_IF_ABORTED;
+      }
+   }
+
+   XSRETURN_IV(hash);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_getclip)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2312,6 +2356,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_evolve",       pl_evolve,       file);
    newXS("g_putcells",     pl_putcells,     file);
    newXS("g_getcells",     pl_getcells,     file);
+   newXS("g_hash",         pl_hash,         file);
    newXS("g_getclip",      pl_getclip,      file);
    newXS("g_select",       pl_select,       file);
    newXS("g_getrect",      pl_getrect,      file);
