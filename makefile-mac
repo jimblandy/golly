@@ -4,7 +4,7 @@
 # cd WX_DIR
 # mkdir BUILD_DIR
 # cd BUILD_DIR
-# ../configure --with-mac --enable-universal_binary --disable-shared
+# ../configure --with-mac --enable-universal_binary --disable-shared --enable-unicode
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
@@ -15,16 +15,10 @@ WX_RELEASE = 2.8
 WX_DIR = /HD/wxWidgets/wxMac-2.8.0
 ### WX_DIR = /HD/wxWidgets/CVS-HEAD/wxWidgets
 
-# To build a Unicode version of wxWidgets add "--enable-unicode" to the
-# above configure command and append "UNICODE=1" when you make Golly.
-ifeq ($(UNICODE),1)
-	BUILD_DIR = $(WX_DIR)/build-osx-u
-	WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-unicode-release-static-$(WX_RELEASE)
-	WXUNICODEFLAG = u
-else
-	BUILD_DIR = $(WX_DIR)/build-osx
-	WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-ansi-release-static-$(WX_RELEASE)
-endif
+# we assume you built a Unicode version of wxWidgets:
+BUILD_DIR = $(WX_DIR)/build-osx
+WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-unicode-release-static-$(WX_RELEASE)
+WXUNICODEFLAG = u
 
 APP_NAME = Golly
 APP_VERSION = 1.3
@@ -33,19 +27,12 @@ APP_VERSION = 1.3
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
 PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 
-#!!! try loading Perl lib dynamically (but boot_DynaLoader is still statically linked???)
-#!!! PERL_LINK = /System/Library/Perl/5.8.6/darwin-thread-multi-2level/auto/DynaLoader/DynaLoader.a
-#!!! PERL_LINK = 
-
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 # following python command doesn't generate correct info on OS 10.4
 # PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
    -framework Foundation -framework Python
-
-#!!! try loading Python lib dynamically
-#!!! PYTHON_LINK = 
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -81,7 +68,7 @@ LDFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
 EXTRALIBS = -lz -lpthread -liconv
 EXTRALIBS_GUI = -framework WebKit
 
-OBJDIR = ObjMac$(WXUNICODEFLAG)
+OBJDIR = ObjMac
 OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \

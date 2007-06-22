@@ -654,7 +654,7 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
    int colons = 0;
    int linelen = 0;
    
-   char* p = (char*) text.mb_str(wxConvLocal);
+   const char* p = (const char*) text.mb_str(wxConvLocal);
    while (*p) {
       switch (*p) {
          case '#':

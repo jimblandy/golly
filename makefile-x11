@@ -2,7 +2,7 @@
 # It assumes you've built and installed wxWidgets with commands like these:
 #
 # cd WX_DIR
-# ./configure --with-x11 --disable-shared
+# ./configure --with-x11 --disable-shared --enable-unicode
 # make
 
 # change next line to specify where you installed wxX11

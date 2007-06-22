@@ -2284,7 +2284,7 @@ XS(pl_fatal)
    // don't call RETURN_IF_ABORTED;
    dXSARGS;
    // don't call PERL_ERROR in here
-   if (items != 1) Warning("Bug: usage is g_fatal($string)");
+   if (items != 1) Warning(_("Bug: usage is g_fatal($string)"));
 
    STRLEN n_a;
    char* errmsg = SvPV(ST(0),n_a);

@@ -1,7 +1,7 @@
 # Makefile for building Mac OS 10.3.9 PPC version of Golly using wxWidgets.
 # It assumes you've built wxWidgets using the Xcode project.
 
-######## RUN THESE COMMAND FIRST ########################
+######## RUN THESE COMMANDS FIRST #######################
 #    setenv MACOSX_DEPLOYMENT_TARGET 10.3
 #    setenv NEXT_ROOT /Developer/SDKs/MacOSX10.4u.sdk
 #########################################################
@@ -26,11 +26,6 @@ PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distut
 # PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
    -framework Foundation -framework Python
-
-# use -F/Library/Frameworks to force linking against newer Python, but it would
-# probably cause app to fail on systems that don't have that Python installed
-# PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
-#   -framework Foundation -F/Library/Frameworks -framework Python
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)

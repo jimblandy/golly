@@ -4,7 +4,7 @@
 # cd <wx-install-dir>
 # mkdir buildgtk
 # cd buildgtk
-# ../configure --with-gtk --disable-shared
+# ../configure --with-gtk --disable-shared --enable-unicode
 # make
 # su
 # make install

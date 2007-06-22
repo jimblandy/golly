@@ -20,25 +20,29 @@ Golly should compile with wxWidgets 2.6.3 or later, but it's best to
 use the latest stable version.
 
 
-Installing wxWidgets on Windows
--------------------------------
+Building wxWidgets on Windows
+-----------------------------
 
 Run the wxWidgets installer and follow the instructions.  We'll assume
 this creates a C:\wxWidgets directory.  Open up a command window and
 type these commands:
 
    cd \wxWidgets\build\msw
-   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static
+   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1
 
-It's a good idea to edit \wxWidgets\build\msw\config.vc and set
-BUILD=release and RUNTIME_LIBS=static so you won't have to specify
-those settings each time you run nmake to build Golly.
+This assumes you have the MS Visual C++ compiler and linker installed.
+It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
 
-You'll also need to have MS Visual C++ installed.
+   BUILD=release
+   RUNTIME_LIBS=static
+   UNICODE=1
+
+so you won't have to specify those settings each time you run nmake
+to build Golly.
 
 
-Installing wxWidgets on Mac OS X
---------------------------------
+Building wxWidgets on Mac OS X
+------------------------------
 
 Unpack the wxMac source archive wherever you like, start up Terminal
 and type these commands (using the correct version number):
@@ -46,12 +50,13 @@ and type these commands (using the correct version number):
    cd /path/to/wxMac-2.8.0
    mkdir build-osx
    cd build-osx
-   ../configure --with-mac --enable-universal_binary --disable-shared
+   ../configure --with-mac --disable-shared --enable-unicode \
+                --enable-universal_binary
    make
 
 
-Installing wxWidgets on Linux/Unix with GTK+
---------------------------------------------
+Building wxWidgets on Linux/Unix with GTK+
+------------------------------------------
 
 Unpack the wxGTK source archive wherever you like, start up a terminal
 session and type these commands (using the correct version number):
@@ -59,7 +64,7 @@ session and type these commands (using the correct version number):
    cd /path/to/wxGTK-2.8.0
    mkdir build-gtk
    cd build-gtk
-   ../configure --with-gtk --disable-shared
+   ../configure --with-gtk --disable-shared --enable-unicode
    make
    su
    make install
@@ -70,21 +75,21 @@ installs the wx-config program which will be called by makefile-gtk
 to set the appropriate compile and link options for building Golly.
 
 
-Installing wxWidgets on Linux/Unix with X11
--------------------------------------------
+Building wxWidgets on Linux/Unix with X11
+-----------------------------------------
 
 Unpack the wxX11 source archive wherever you like, start up a terminal
 session and type these commands (using the correct version number):
 
-   cd /path/to/wxGTK-2.8.0
-   ./configure --with-x11 --disable-shared
+   cd /path/to/wxX11-2.8.0
+   ./configure --with-x11 --disable-shared --enable-unicode
    make
 
 Note that configure is run in the top-level wxWidgets directory and
 there is no "make install" step as in the above GTK+ commands.
 This allows you to have both GTK+ and X11 builds of wxWidgets on
-the one system.  (There are probably other ways to achieve this goal,
-but the above arrangement is the one currently required by Golly's
+the one system.  (There are other ways to achieve this goal, but
+the above arrangement is the one currently required by Golly's
 makefile-gtk and makefile-x11.)
 
 

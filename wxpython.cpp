@@ -2149,7 +2149,7 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   return Py_BuildValue("s", result.mb_str(wxConvLocal));
+   return Py_BuildValue("s", (const char*)result.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------

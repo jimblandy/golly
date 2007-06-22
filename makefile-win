@@ -1,15 +1,16 @@
 # Makefile for Windows version of Golly using wxWidgets.
-# To compile the wxWidgets libraries on Windows I used:
+# To compile the wxWidgets libraries on Windows:
 # 
 #    cd \wxWidgets\build\msw
-#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static
+#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1
 # 
-# Then I edited \wxWidgets\build\msw\config.vc and set:
+# If you like, edit \wxWidgets\build\msw\config.vc and set:
 # 
 #    BUILD=release
 #    RUNTIME_LIBS=static
+#    UNICODE=1
 # 
-# So now I don't have to specify those settings to nmake.
+# Then you don't have to specify those settings to nmake.
 
 # Change the next 2 lines to specify where you installed wxWidgets:
 !include </wxWidgets/build/msw/config.vc>
@@ -26,7 +27,7 @@ PERL_INCLUDE = \
 -DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
 -DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl\lib\CORE"
 
-# We load Perl lib at runtime so don't need PERL_LINK.
+# We load the Perl library at runtime so no need for PERL_LINK.
 # Simplified output from "perl -MExtUtils::Embed -e ldopts":
 # PERL_LINK = \
 # -libpath:"C:\Perl\lib\CORE" C:\Perl\lib\CORE\perl58.lib C:\MVCT\lib\oldnames.lib
