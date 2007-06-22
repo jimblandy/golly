@@ -5,6 +5,7 @@
 # mkdir buildgtk
 # cd buildgtk
 # ../configure --with-gtk --disable-shared --enable-unicode
+# (depending on your g++ version you might also need --disable-precomp-headers)
 # make
 # su
 # make install
@@ -18,7 +19,8 @@ SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-wi
 BINFILES = golly bgolly
 
 CXXC = g++
-CXXFLAGS = `wx-config --cxxflags` -O5 -Wall -DZLIB -DVERSION=$(VERSION)
+CXXFLAGS = `wx-config --cxxflags` -O5 -DZLIB -DVERSION=$(VERSION) \
+   -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
 LDFLAGS = `wx-config --libs` -lz
 
 # for Perl script support
