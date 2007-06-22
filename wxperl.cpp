@@ -2444,9 +2444,10 @@ void RunPerlScript(const wxString &filepath)
    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
    /* this code works but doesn't let us capture error messages
+   wxCharBuffer buff = filepath.mb_str(wxConvLocal);
    char* my_argv[2];
    my_argv[0] = "";
-   my_argv[1] = (char*) filepath.mb_str(wxConvLocal);
+   my_argv[1] = (char*) buff;
    perl_parse(my_perl, xs_init, 2, my_argv, NULL);
    perl_run(my_perl);
    */

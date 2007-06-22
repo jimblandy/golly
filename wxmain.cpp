@@ -1702,6 +1702,7 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 
 bool MainFrame::SaveCurrentLayer()
 {
+   if (currlayer->algo->isEmpty()) return true;    // no need to save empty universe
    wxString query;
    if (numlayers > 1) {
       // make it clear which layer we're asking about

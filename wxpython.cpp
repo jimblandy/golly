@@ -2034,8 +2034,9 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   const char* name = GetLayer(index)->currname.mb_str(wxConvLocal);
-   return Py_BuildValue("s", name);
+   // need to be careful converting Unicode wxString to char*
+   wxCharBuffer name = GetLayer(index)->currname.mb_str(wxConvLocal);
+   return Py_BuildValue("s", (const char*)name);
 }
 
 // -----------------------------------------------------------------------------
