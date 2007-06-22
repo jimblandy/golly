@@ -2006,8 +2006,9 @@ XS(pl_getname)
       PERL_ERROR(msg);
    }
 
-   const char* name = GetLayer(index)->currname.mb_str(wxConvLocal);
-   XSRETURN_PV(name);
+   // need to be careful converting Unicode wxString to char*
+   wxCharBuffer name = GetLayer(index)->currname.mb_str(wxConvLocal);
+   XSRETURN_PV((const char*)name);
 }
 
 // -----------------------------------------------------------------------------
