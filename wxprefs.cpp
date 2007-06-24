@@ -53,7 +53,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    // cursor bitmaps are loaded via .rc file
 #else
    #ifdef __WXX11__
-      // wxX11 doesn't support creating cursors from a bitmap file!!!
+      // wxX11 doesn't support creating cursors from a bitmap file
    #else
       #include "bitmaps/hand_curs.xpm"
       #include "bitmaps/zoomin_curs.xpm"
@@ -221,7 +221,7 @@ void CreateCursors()
    if (curs_cross == NULL) Fatal(_("Failed to create cross cursor!"));
 
    #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or bits!!!
+      // wxX11 doesn't support creating cursor from wxImage or bits
       curs_hand = new wxCursor(wxCURSOR_HAND);
    #else
       wxBitmap bitmap_hand = wxBITMAP(hand_curs);
@@ -233,7 +233,7 @@ void CreateCursors()
    if (curs_hand == NULL) Fatal(_("Failed to create hand cursor!"));
 
    #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or from bits!!!
+      // wxX11 doesn't support creating cursor from wxImage or from bits;
       // don't use plus sign -- confusing with crosshair, and no minus sign for zoom out
       // curs_zoomin = new wxCursor(wxCURSOR_MAGNIFIER);
       curs_zoomin = new wxCursor(wxCURSOR_POINT_RIGHT);
@@ -247,7 +247,7 @@ void CreateCursors()
    if (curs_zoomin == NULL) Fatal(_("Failed to create zoomin cursor!"));
 
    #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or bits!!!
+      // wxX11 doesn't support creating cursor from wxImage or bits
       curs_zoomout = new wxCursor(wxCURSOR_POINT_LEFT);
    #else
       wxBitmap bitmap_zoomout = wxBITMAP(zoomout_curs);
@@ -1106,9 +1106,9 @@ public:
 
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
-   #ifdef __WXMAC__
-      void OnSpinCtrlChar(wxKeyEvent& event);
-   #endif
+#ifdef __WXMAC__
+   void OnSpinCtrlChar(wxKeyEvent& event);
+#endif
 
 private:
    enum {
@@ -1230,8 +1230,12 @@ public:
 void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
+   
+   if (event.CmdDown()) {
+      // allow handling of cmd-x/v/etc
+      event.Skip();
 
-   if ( key == WXK_TAB ) {
+   } else if ( key == WXK_TAB ) {
       // note that FindFocus() returns pointer to wxTextCtrl window in wxSpinCtrl
       if ( currpage == FILE_PAGE ) {
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_PATTERNS);

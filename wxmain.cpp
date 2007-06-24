@@ -2249,6 +2249,9 @@ MainFrame::MainFrame()
 
    CreateMenus();
    CreateToolbar();
+   
+   // if tool bar is visible then adjust position of other child windows
+   int toolwd = showtool ? toolbarwd : 0;
 
    int wd, ht;
    GetClientSize(&wd, &ht);
@@ -2258,16 +2261,17 @@ MainFrame::MainFrame()
 
    // wxStatusBar can only appear at bottom of frame so we use our own
    // status bar class which creates a child window at top of frame
+   // but to the right of the tool bar
    int statht = showexact ? STATUS_EXHT : STATUS_HT;
    if (!showstatus) statht = 0;
-   statusptr = new StatusBar(this, 0, 0, wd, statht);
+   statusptr = new StatusBar(this, toolwd, 0, wd - toolwd, statht);
    if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
    
    // create a split window with pattern/script directory in left pane
    // and layer bar plus pattern viewport in right pane
    splitwin = new wxSplitterWindow(this, wxID_ANY,
-                                   wxPoint(0, statht),
-                                   wxSize(wd, ht - statht),
+                                   wxPoint(toolwd, statht),
+                                   wxSize(wd - toolwd, ht - statht),
                                    #ifdef __WXMSW__
                                       wxSP_BORDER |
                                    #endif
@@ -2278,7 +2282,7 @@ MainFrame::MainFrame()
    CreateDirControls();
    
    // create a window for right pane which contains layer bar and pattern viewport
-   rightpane = new RightWindow(splitwin, 0, 0, wd, ht - statht);
+   rightpane = new RightWindow(splitwin, 0, 0, wd - toolwd, ht - statht);
    if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
    
    // create layer bar and initial layer

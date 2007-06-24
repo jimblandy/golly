@@ -546,6 +546,13 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
 #endif
 {
    int key = event.GetKeyCode();
+   #ifdef __WXMAC__
+      // let cmd-W close help window or about box
+      if (event.CmdDown() && key == 'W') {
+         GetParent()->Close(true);
+         return;
+      }
+   #endif
    if ( event.CmdDown() || event.AltDown() ) {
       if ( key == 'C' ) {
          // copy any selected text to the clipboard

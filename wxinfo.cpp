@@ -95,6 +95,13 @@ END_EVENT_TABLE()
 
 void TextView::OnKeyDown(wxKeyEvent& event) {
    int key = event.GetKeyCode();
+   #ifdef __WXMAC__
+      // let cmd-W close info window
+      if (event.CmdDown() && key == 'W') {
+         infoptr->Close(true);
+         return;
+      }
+   #endif
    if ( event.CmdDown() || event.AltDown() ) {
       // let default handler see things like cmd-C 
       event.Skip();

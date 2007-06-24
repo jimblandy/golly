@@ -1082,6 +1082,16 @@ void PatternView::SetViewSize(int wd, int ht)
 
 void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
+   //!!! wxBell();
+   //!!! wxMilliSleep(500);
+   /* avoid unwanted drawing in certain situations???
+   if (ignorepaint) {
+      ignorepaint = false;
+      wxPaintDC dc(this);
+      return;
+   }
+   */
+
    int wd, ht;
    GetClientSize(&wd, &ht);
    // wd or ht might be < 1 on Win/X11 platforms

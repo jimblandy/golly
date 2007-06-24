@@ -156,15 +156,9 @@ bool GetString(const wxString& title, const wxString& prompt,
    StringDialog dialog(wxGetApp().GetTopWindow(), title, prompt, instring);
    if ( dialog.ShowModal() == wxID_OK ) {
       outstring = dialog.GetValue();
-      #ifdef __WXMAC__
-         CGDisplayShowCursor(kCGDirectMainDisplay);   // doesn't fix bug!!!
-      #endif
       return true;
    } else {
       // user hit Cancel button
-      #ifdef __WXMAC__
-         CGDisplayShowCursor(kCGDirectMainDisplay);   // doesn't fix bug!!!
-      #endif
       return false;
    }
 }

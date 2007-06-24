@@ -1051,9 +1051,8 @@ The Python interpreter's memory allocator never releases memory back to the
 operating system.  If you run a complicated or buggy script that uses lots
 of (Python) memory then that memory is no longer available for use by Golly,
 so you might need to quit Golly and restart.
-This problem is hopefully only temporary.  The next major release of Python
-has a smarter memory allocator (available now if you're willing to build
-Python from the latest source code).
+Python 2.5 has a smarter memory allocator that does release memory in
+some stuations, but it's still far from ideal.
 
 <p>
 2.
