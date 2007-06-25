@@ -2441,9 +2441,11 @@ bool InitPython()
             ) < 0
          ) Warning(_("StderrCatcher code failed!"));
 
-      // build absolute path to Golly's Scripts folder and add to Python's
+      // build absolute path to Scripts/Python folder and add to Python's
       // import search list so scripts can import glife from anywhere
       wxString scriptsdir = gollydir + _("Scripts");
+      scriptsdir += wxFILE_SEP_PATH;
+      scriptsdir += _("Python");
       scriptsdir.Replace(wxT("\\"), wxT("\\\\"));
       wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
       if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )

@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.3 (released !!!)
 
+AKT: Created Perl and Python subfolders inside Scripts.
 AKT: Mac app allows cmd-w to close all windows except main frame.
 AKT: All builds are now Unicode versions (and fixed some mb_str bugs).
 AKT: Added hash command to speed up oscar.pl/py.
