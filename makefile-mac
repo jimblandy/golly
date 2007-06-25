@@ -12,7 +12,7 @@
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
 WX_RELEASE = 2.8
-WX_DIR = /HD/wxWidgets/wxMac-2.8.0
+WX_DIR = /HD/wxWidgets/wxMac-2.8.4
 ### WX_DIR = /HD/wxWidgets/CVS-HEAD/wxWidgets
 
 # we assume you built a Unicode version of wxWidgets:

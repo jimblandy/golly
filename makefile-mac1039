@@ -1,16 +1,11 @@
 # Makefile for building Mac OS 10.3.9 PPC version of Golly using wxWidgets.
 # It assumes you've built wxWidgets using the Xcode project.
 
-######## RUN THESE COMMANDS FIRST #######################
-#    setenv MACOSX_DEPLOYMENT_TARGET 10.3
-#    setenv NEXT_ROOT /Developer/SDKs/MacOSX10.4u.sdk
-#########################################################
-
 # In the lines below, change WX_DIR to where you installed wxWidgets,
 # and change WX_RELEASE to match your wxWidgets version.
 
 WX_RELEASE = 2.8
-WX_DIR = /HD/wxWidgets/wxMac-2.8.0
+WX_DIR = /HD/wxWidgets/wxMac-2.8.4
 WXINC_DIR = $(WX_DIR)/src/build/include
 
 APP_NAME = Golly
@@ -36,7 +31,7 @@ SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-wi
 # Variables:
 
 ###CXXC = g++
-CXXC = /usr/bin/gcc-3.3
+CXXC = MACOSX_DEPLOYMENT_TARGET=10.3 NEXT_ROOT=/Developer/SDKs/MacOSX10.4u.sdk /usr/bin/g++-3.3
 
 CXXFLAGS = -x c++ -arch ppc -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks \
    -DNO_GCC_PRAGMA -D__WXMAC__ -DwxUSE_BASE=1 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
@@ -76,7 +71,7 @@ clean:
 	rm -rf $(APP_NAME).app
 
 app.bin: $(OBJFILES)
-	/usr/bin/g++-3.3 -o $@ $(OBJFILES) \
+	$(CXXC) -o $@ $(OBJFILES) \
    -arch ppc -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3 \
    -L$(LIBDIRNAME) -lwx_mac_static \
    -framework Carbon -framework System -framework AGL -framework IOKit \

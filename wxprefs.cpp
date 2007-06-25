@@ -1200,10 +1200,18 @@ END_EVENT_TABLE()
 // -----------------------------------------------------------------------------
 
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
-   // fix wxMac 2.7.2 bug in wxTextCtrl::SetSelection
+   // fix wxMac 2.7.2+ bug in wxTextCtrl::SetSelection
    #define ALL_TEXT 0,999
 #else
    #define ALL_TEXT -1,-1
+#endif
+
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
+   // only happens when a wxStaticText box is next to a wxChoice box
+   #define FIX_ALIGN_BUG wxBOTTOM,4
+#else
+   #define FIX_ALIGN_BUG wxALL,0
 #endif
 
 // -----------------------------------------------------------------------------
@@ -1408,14 +1416,6 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    #define LRGAP (5)
    #define SPINGAP (6)
    #define CHOICEGAP (6)
-#endif
-
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
-   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0;
-   // only happens when a wxStaticText box is next to a wxChoice box
-   #define FIX_ALIGN_BUG wxBOTTOM,4
-#else
-   #define FIX_ALIGN_BUG wxALL,0
 #endif
 
 // -----------------------------------------------------------------------------
