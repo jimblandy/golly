@@ -1057,6 +1057,15 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
 
 void MainFrame::ToggleShowPatterns()
 {
+   if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
+   #ifndef __WXMAC__
+      if (splitwin->IsSplit()) {
+         // hide scroll bars
+         bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+         bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+      }
+   #endif
+   
    showpatterns = !showpatterns;
    if (showpatterns && showscripts) {
       showscripts = false;
@@ -1065,19 +1074,26 @@ void MainFrame::ToggleShowPatterns()
    } else {
       if (splitwin->IsSplit()) {
          // hide left pane
-         dirwinwd = splitwin->GetSashPosition();
          splitwin->Unsplit(patternctrl);
       } else {
          splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
       }
       viewptr->SetFocus();
    }
+   
+   #ifndef __WXMAC__
+      if (splitwin->IsSplit()) {
+         // restore scroll bars
+         bigview->UpdateScrollBars();
+      }
+   #endif
 }
 
 // -----------------------------------------------------------------------------
 
 void MainFrame::ToggleShowScripts()
 {
+   if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
    showscripts = !showscripts;
    if (showscripts && showpatterns) {
       showpatterns = false;
@@ -1086,7 +1102,6 @@ void MainFrame::ToggleShowScripts()
    } else {
       if (splitwin->IsSplit()) {
          // hide left pane
-         dirwinwd = splitwin->GetSashPosition();
          splitwin->Unsplit(scriptctrl);
       } else {
          splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
