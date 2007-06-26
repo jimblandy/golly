@@ -990,6 +990,21 @@ void MainFrame::SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId r
    if ( diritem->HasFiles() || diritem->HasSubDirs() ) {
       treectrl->SetItemHasChildren(id);
       treectrl->Expand(id);
+      
+      // nicer to expand Perl & Python subdirs inside Scripts
+      if ( dir == gollydir + _("Scripts") ) {
+         wxTreeItemId child;
+         wxTreeItemIdValue cookie;
+         child = treectrl->GetFirstChild(id, cookie);
+         while ( child.IsOk() ) {
+            wxString name = treectrl->GetItemText(child);
+            if ( name == _("Perl") || name == _("Python") ) {
+               treectrl->Expand(child);
+            }
+            child = treectrl->GetNextChild(id, cookie);
+         }
+      }
+      
       #ifndef __WXMSW__
          // causes crash on Windows
          treectrl->ScrollTo(root);
@@ -2199,7 +2214,7 @@ void MainFrame::CreateDirControls()
       scriptctrl->SetWindowStyle(wxNO_BORDER);
    #endif
 
-   #ifdef __WXGTK__
+   #if defined(__WXGTK__)
       // make sure background is white when using KDE's GTK theme
       patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
       scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
@@ -2208,16 +2223,24 @@ void MainFrame::CreateDirControls()
       // reduce indent a bit
       patternctrl->GetTreeCtrl()->SetIndent(8);
       scriptctrl->GetTreeCtrl()->SetIndent(8);
+   #elif defined(__WXMAC__)
+      // reduce indent a bit more
+      patternctrl->GetTreeCtrl()->SetIndent(6);
+      scriptctrl->GetTreeCtrl()->SetIndent(6);
    #else
       // reduce indent a lot
       patternctrl->GetTreeCtrl()->SetIndent(4);
       scriptctrl->GetTreeCtrl()->SetIndent(4);
    #endif
    
-   // reduce font size -- doesn't seem to reduce line height
-   // wxFont font = *(statusptr->GetStatusFont());
-   // patternctrl->GetTreeCtrl()->SetFont(font);
-   // scriptctrl->GetTreeCtrl()->SetFont(font);
+   #ifdef __WXMAC__
+      // reduce font size (to get this to reduce line height we had to
+      // make a few changes to wxMac/src/generic/treectlg.cpp)
+      wxFont font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+      font.SetPointSize(12);
+      patternctrl->GetTreeCtrl()->SetFont(font);
+      scriptctrl->GetTreeCtrl()->SetFont(font);
+   #endif
    
    if ( wxFileName::DirExists(patterndir) ) {
       // only show patterndir and its contents
