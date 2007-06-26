@@ -1059,11 +1059,9 @@ void MainFrame::ToggleShowPatterns()
 {
    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
    #ifndef __WXMAC__
-      if (splitwin->IsSplit()) {
-         // hide scroll bars
-         bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-         bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-      }
+      // hide scroll bars
+      bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+      bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
    #endif
    
    showpatterns = !showpatterns;
@@ -1082,10 +1080,8 @@ void MainFrame::ToggleShowPatterns()
    }
    
    #ifndef __WXMAC__
-      if (splitwin->IsSplit()) {
-         // restore scroll bars
-         bigview->UpdateScrollBars();
-      }
+      // restore scroll bars
+      bigview->UpdateScrollBars();
    #endif
 }
 
@@ -1094,6 +1090,12 @@ void MainFrame::ToggleShowPatterns()
 void MainFrame::ToggleShowScripts()
 {
    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
+   #ifndef __WXMAC__
+      // hide scroll bars
+      bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+      bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+   #endif
+ 
    showscripts = !showscripts;
    if (showscripts && showpatterns) {
       showpatterns = false;
@@ -1108,6 +1110,11 @@ void MainFrame::ToggleShowScripts()
       }
       viewptr->SetFocus();
    }
+   
+   #ifndef __WXMAC__
+      // restore scroll bars
+      bigview->UpdateScrollBars();
+   #endif
 }
 
 // -----------------------------------------------------------------------------
