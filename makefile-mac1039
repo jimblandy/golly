@@ -1,6 +1,13 @@
 # Makefile for building Mac OS 10.3.9 PPC version of Golly using wxWidgets.
-# It assumes you've built wxWidgets using the Xcode project.
-
+# 
+# WARNING: It assumes you've built wxWidgets using these steps:
+# - Edit include/wx/mac/setup.h and set wxUSE_UNICODE to 1.
+# - Open src/wxWindows.xcodeproj.
+# - Select Project > Set Active Target > static.
+# - Select Project > Set Active Build Configuration > Deployment.
+# - Hit the Build button.
+# - Open Terminal and run "ranlib src/build/Deployment/libwx_mac_static.a".
+# 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
 # and change WX_RELEASE to match your wxWidgets version.
 
@@ -70,8 +77,12 @@ clean:
 	rm -f $(OBJDIR)/*.o
 	rm -rf $(APP_NAME).app
 
+# Note that -headerpad_max_install_names is used so we can run
+# install_name_tool below to change Perl lib path to a longer path.
+
 app.bin: $(OBJFILES)
 	$(CXXC) -o $@ $(OBJFILES) \
+   -headerpad_max_install_names \
    -arch ppc -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3 \
    -L$(LIBDIRNAME) -lwx_mac_static \
    -framework Carbon -framework System -framework AGL -framework IOKit \
@@ -92,6 +103,10 @@ app.icns file-mc.icns file-rle.icns
 	echo -n "APPLGoLy" >$(APP_NAME).app/Contents/PkgInfo
 	
 	mv -f app.bin $(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+	
+	install_name_tool -change /System/Library/Perl/lib/5.8/libperl.dylib \
+	/System/Library/Perl/5.8.1/darwin-thread-multi-2level/CORE/libperl.dylib \
+	$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	
 	cp -f *.icns $(APP_NAME).app/Contents/Resources
 
