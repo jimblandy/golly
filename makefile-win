@@ -36,7 +36,7 @@ PERL_INCLUDE = \
 VERSION = 1.3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
-SHAREDDIRS = Help Help\Lexicon Scripts Scripts\glife \
+SHAREDDIRS = Help Help\Lexicon Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \
    Patterns Patterns\Breeders Patterns\Guns Patterns\Hashing-Examples Patterns\Methuselahs \
    Patterns\Miscellaneous Patterns\Oscillators Patterns\Other-Rules Patterns\Puffers \
    Patterns\Rakes Patterns\Signal-Circuitry Patterns\Still-Lifes Patterns\Spaceships \
