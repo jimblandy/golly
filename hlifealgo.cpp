@@ -1491,6 +1491,7 @@ default:       return "Illegal character in readmacrocell." ;
          n = sscanf(line, "%d %d %d %d %d %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n == 0)
             // AKT: shouldn't this be an error???!!!
+            // note that it does not detect a blank line
             continue ;
          if (n < 5)
             // AKT: best not to use lifefatal here because user won't see any

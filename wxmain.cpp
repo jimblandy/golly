@@ -1165,6 +1165,10 @@ void MainFrame::ToggleToolBar()
    if (showstatus) {
       ResizeStatusBar(wd, ht);
    }
+   if (showtool) {
+      // resize tool bar in case window was made larger while tool bar hidden
+      toolbarptr->SetSize(0, 0, toolbarwd, ht);
+   }
    ResizeSplitWindow(wd, ht);
    toolbarptr->Show(showtool);
 }

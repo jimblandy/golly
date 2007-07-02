@@ -1091,7 +1091,7 @@ void DrawTileBorders(wxDC& dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawView(wxDC &dc, int tileindex)
+void DrawView(wxDC& dc, int tileindex)
 {
    wxRect r;
    Layer *savelayer = NULL;

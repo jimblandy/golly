@@ -682,8 +682,14 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    int ileft = left.toint();
    int ibottom = bottom.toint();
    int iright = right.toint();
-   bigint ht = ibottom - itop + 1;
    bigint wd = iright - ileft + 1;
+   bigint ht = ibottom - itop + 1;
+   
+   // check for corrupt/incomplete clipboard data
+   if (wd <= bigint::zero || ht <= bigint::zero) {
+      statusptr->ErrorMessage(_("Clipboard pattern is corrupt or incomplete."));
+      return;
+   }
    
    if ( toselection ) {
       bigint selht = currlayer->selbottom;  selht -= currlayer->seltop;   selht += 1;

@@ -394,7 +394,7 @@ Return any live cells in the specified rectangle as a cell list.
 The given list can be empty (in which case the cell list is empty)
 or it must represent a valid rectangle of the form [x,y,width,height].
 </dd>
-<dd> Example: <b>clist = golly.getcells( getrect() )</b></dd>
+<dd> Example: <b>clist = golly.getcells( golly.getrect() )</b></dd>
 </p>
 
 <a name="hash"></a><p><dt><b>hash(<i>rect_list</i>)</b></dt>
@@ -406,7 +406,7 @@ detect pattern equality, but there is a tiny probability that two different
 patterns will have the same hash value, so you might need to use additional
 (slower) tests to check for true pattern equality.
 </dd>
-<dd> Example: <b>h = golly.hash( getrect() )</b></dd>
+<dd> Example: <b>h = golly.hash( golly.getrect() )</b></dd>
 </p>
 
 <a name="getclip"></a><p><dt><b>getclip()</b></dt>
