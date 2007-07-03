@@ -1432,6 +1432,7 @@ node *hlifealgo::runpattern() {
 const char *hlifealgo::readmacrocell(char *line) {
    int n=0, i=1, nw, ne, sw, se, r, d, indlen=0 ;
    node **ind = 0 ;
+   root = 0 ;
    while (getline(line, 10000)) {
       if (i >= indlen) {
          int nlen = i + indlen + 10 ;
@@ -1512,6 +1513,8 @@ default:       return "Illegal character in readmacrocell." ;
    }
    if (ind)
       free(ind) ;
+   if (root == 0)
+      return "Invalid macrocell file:  no nodes" ;
    hashed = 1 ;
    return 0 ;
 }
