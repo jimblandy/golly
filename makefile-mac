@@ -63,6 +63,7 @@ CXXFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
    -fno-strict-aliasing -fno-common
 
 LDFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
+   -Wl,-dead_strip -Wl,-S \
    -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
 
 EXTRALIBS = -lz -lpthread -liconv

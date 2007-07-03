@@ -89,6 +89,7 @@ app.bin: $(OBJFILES)
    -framework WebKit -framework AppKit -framework QuickTime -framework Cocoa \
    $(PYTHON_LINK) $(PERL_LINK) \
    -prebind -mmacosx-version-min=10.3 -lz -lpthread -liconv \
+   -Wl,-dead_strip -Wl,-S \
    -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk
 
 $(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
