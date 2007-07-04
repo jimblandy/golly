@@ -411,7 +411,10 @@ patterns will have the same hash value, so you might need to use additional
 
 <a name="getclip"></a><p><dt><b>getclip()</b></dt>
 <dd>
-Parse the pattern data in the clipboard and return a cell list.
+Parse the pattern data in the clipboard and return a cell list,
+but where the first two numbers are the pattern's width and height
+(not necessarily the minimal bounding box because the pattern might
+have empty borders, or it might even be empty).
 </dd>
 <dd> Example: <b>clist = golly.getclip()</b></dd>
 </p>

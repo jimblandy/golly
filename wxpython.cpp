@@ -1175,7 +1175,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)
    bigint top, left, bottom, right;
-   if ( viewptr->GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
+   if ( viewptr->GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          PyErr_SetString(PyExc_RuntimeError, "getclip error: pattern is too big.");
          Py_DECREF(outlist);

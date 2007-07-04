@@ -82,7 +82,7 @@ bool PatternView::SelectionExists()
 
 // -----------------------------------------------------------------------------
 
-bool PatternView::SelectionVisible(wxRect *visrect)
+bool PatternView::SelectionVisible(wxRect* visrect)
 {
    if (!SelectionExists()) return false;
 
@@ -151,8 +151,8 @@ void PatternView::EmptyUniverse()
 // -----------------------------------------------------------------------------
 
 bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
-                           lifealgo *srcalgo, lifealgo *destalgo,
-                           bool erasesrc, const wxString &progmsg)
+                           lifealgo* srcalgo, lifealgo* destalgo,
+                           bool erasesrc, const wxString& progmsg)
 {
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
@@ -196,8 +196,8 @@ bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
 // -----------------------------------------------------------------------------
 
 void PatternView::CopyAllRect(int itop, int ileft, int ibottom, int iright,
-                              lifealgo *srcalgo, lifealgo *destalgo,
-                              const wxString &progmsg)
+                              lifealgo* srcalgo, lifealgo* destalgo,
+                              const wxString& progmsg)
 {
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
@@ -271,7 +271,7 @@ void PatternView::ClearSelection()
    int cntr = 0;
    bool abort = false;
    BeginProgress(_("Clearing selection"));
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          int skip = curralgo->nextcell(cx, cy);
@@ -339,7 +339,7 @@ void PatternView::ClearOutsideSelection()
    }
    
    // create a new universe
-   lifealgo *newalgo;
+   lifealgo* newalgo;
    if ( currlayer->hash ) {
       newalgo = new hlifealgo();
       newalgo->setMaxMemory(maxhashmem);
@@ -369,7 +369,7 @@ void PatternView::ClearOutsideSelection()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::AddEOL(char **chptr)
+void PatternView::AddEOL(char** chptr)
 {
    #ifdef __WXMAC__
       **chptr = '\r';      // nicer for stupid apps like LifeLab :)
@@ -390,9 +390,9 @@ void PatternView::AddEOL(char **chptr)
 const unsigned int maxrleline = 70;    // max line length for RLE data
 
 void PatternView::AddRun(char ch,
-                         unsigned int *run,        // in and out
-                         unsigned int *linelen,    // ditto
-                         char **chptr)             // ditto
+                         unsigned int* run,        // in and out
+                         unsigned int* linelen,    // ditto
+                         char** chptr)             // ditto
 {
    // output of RLE pattern data is channelled thru here to make it easier to
    // ensure all lines have <= maxrleline characters
@@ -441,11 +441,11 @@ void PatternView::CopySelectionToClipboard(bool cut)
    unsigned int ht = ibottom - itop + 1;
 
    // convert cells in selection to RLE data in textptr
-   char *textptr;
-   char *etextptr;
+   char* textptr;
+   char* etextptr;
    int cursize = 4096;
    
-   textptr = (char *)malloc(cursize);
+   textptr = (char*)malloc(cursize);
    if (textptr == NULL) {
       statusptr->ErrorMessage(_("Not enough memory for clipboard data!"));
       return;
@@ -454,7 +454,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
 
    // add RLE header line
    sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, currlayer->algo->getrule());
-   char *chptr = textptr;
+   char* chptr = textptr;
    chptr += strlen(textptr);
    AddEOL(&chptr);
    // save start of data in case livecount is zero
@@ -477,7 +477,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
    else
       BeginProgress(_("Copying selection"));
 
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       // set lastchar to anything except 'o' or 'b'
       lastchar = 0;
@@ -529,7 +529,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
          }
          if (chptr + 60 >= etextptr) {
             // nearly out of space; try to increase allocation
-            char *ntxtptr = (char *)realloc(textptr, 2*cursize);
+            char* ntxtptr = (char*)realloc(textptr, 2*cursize);
             if (ntxtptr == 0) {
                statusptr->ErrorMessage(_("No more memory for clipboard data!"));
                // don't return here -- best to set abort flag and break so that
@@ -670,7 +670,7 @@ void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
+void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                              bigint top, bigint left, bigint bottom, bigint right)
 {
    // make sure given edges are within getcell/setcell limits
@@ -684,12 +684,6 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
    int iright = right.toint();
    bigint wd = iright - ileft + 1;
    bigint ht = ibottom - itop + 1;
-   
-   // check for corrupt/incomplete clipboard data
-   if (wd <= bigint::zero || ht <= bigint::zero) {
-      statusptr->ErrorMessage(_("Clipboard pattern is corrupt or incomplete."));
-      return;
-   }
    
    if ( toselection ) {
       bigint selht = currlayer->selbottom;  selht -= currlayer->seltop;   selht += 1;
@@ -709,7 +703,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       statusptr->DisplayMessage(_("Click where you want to paste..."));
 
       // temporarily change cursor to cross
-      wxCursor *savecurs = currlayer->curs;
+      wxCursor* savecurs = currlayer->curs;
       currlayer->curs = curs_cross;
       // CheckCursor(true);            // probs on Mac if Paste menu item selected
       #ifdef __WXMAC__
@@ -845,7 +839,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
       usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
    }
    
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    if ( usenextcell ) {
       cy = pastey;
       for ( ty=itop; ty<=ibottom; ty++ ) {
@@ -923,8 +917,8 @@ void PatternView::PasteTemporaryToCurrent(lifealgo *tempalgo, bool toselection,
 
 // -----------------------------------------------------------------------------
 
-bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
-                                      bigint *t, bigint *l, bigint *b, bigint *r)
+bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
+                                      bigint* t, bigint* l, bigint* b, bigint* r)
 {
    #ifdef __WXX11__
       if ( !wxFileExists(mainptr->clipfile) ) return false;
@@ -947,15 +941,15 @@ bool PatternView::GetClipboardPattern(lifealgo *tempalgo,
       tmpfile.Close();
    #endif         
 
-   const char *err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
-                                   *tempalgo, t, l, b, r);
+   const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
+                                   **tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so we have to use hlife
-      delete tempalgo;
-      tempalgo = new hlifealgo();
-      tempalgo->setpoll(wxGetApp().Poller());
+      delete *tempalgo;
+      *tempalgo = new hlifealgo();
+      (*tempalgo)->setpoll(wxGetApp().Poller());
       err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
-                          *tempalgo, t, l, b, r);
+                          **tempalgo, t, l, b, r);
    }
    #ifdef __WXX11__
       // don't delete clipboard file
@@ -979,13 +973,15 @@ void PatternView::PasteClipboard(bool toselection)
    if (toselection && !SelectionExists()) return;
 
    // create a temporary universe for storing clipboard pattern
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();               // qlife's setcell/getcell are faster
    tempalgo->setpoll(wxGetApp().Poller());
 
-   // read clipboard pattern into temporary universe
+   // read clipboard pattern into temporary universe;
+   // note that tempalgo will be deleted and re-created as a hlifealgo
+   // if clipboard contains macrocell data
    bigint top, left, bottom, right;
-   if ( GetClipboardPattern(tempalgo, &top, &left, &bottom, &right) ) {
+   if ( GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
    }
 
@@ -1138,7 +1134,7 @@ void PatternView::ShrinkSelection(bool fit)
    // copy selection into new universe and then call findedges;
    // a faster way would be to scan selection from top to bottom until first
    // live cell found, then from bottom to top, left to right and right to left!!!
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();         // qlife's findedges is faster
    tempalgo->setpoll(wxGetApp().Poller());
    
@@ -1201,7 +1197,7 @@ void PatternView::RandomFill()
    bool abort = false;
    BeginProgress(_("Randomly filling selection"));
    int cx, cy;
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
@@ -1258,7 +1254,7 @@ void PatternView::FlipLeftRight()
    int cx, cy;
    int mirrorx = iright;
    iright = (ileft - 1) + wd / 2;
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cx=ileft; cx<=iright; cx++ ) {
       for ( cy=itop; cy<=ibottom; cy++ ) {
          int currstate = curralgo->getcell(cx, cy);
@@ -1316,7 +1312,7 @@ void PatternView::FlipTopBottom()
    int cx, cy;
    int mirrory = ibottom;
    ibottom = (itop - 1) + ht / 2;
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          int currstate = curralgo->getcell(cx, cy);
@@ -1351,7 +1347,7 @@ void PatternView::RotatePattern(bool clockwise,
                                 bigint &newleft, bigint &newright)
 {
    // create new universe of same type as current universe
-   lifealgo *newalgo;
+   lifealgo* newalgo;
    if ( currlayer->hash ) {
       newalgo = new hlifealgo();
       newalgo->setMaxMemory(maxhashmem);
@@ -1388,7 +1384,7 @@ void PatternView::RotatePattern(bool clockwise,
       newxinc = 1;
    }
 
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1503,7 +1499,7 @@ void PatternView::RotateSelection(bool clockwise)
 
    // create temporary universe; doesn't need to match current universe so
    // use qlife because its setcell/getcell calls are faster
-   lifealgo *tempalgo;
+   lifealgo* tempalgo;
    tempalgo = new qlifealgo();
    tempalgo->setpoll(wxGetApp().Poller());
    
@@ -1533,7 +1529,7 @@ void PatternView::RotateSelection(bool clockwise)
       newxinc = 1;
    }
 
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1602,7 +1598,7 @@ void PatternView::RotateSelection(bool clockwise)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::SetCursorMode(wxCursor *cursor)
+void PatternView::SetCursorMode(wxCursor* cursor)
 {
    currlayer->curs = cursor;
 }

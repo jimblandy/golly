@@ -375,7 +375,10 @@ or it must represent a valid rectangle of the form (x,y,width,height).
 
 <a name="getclip"></a><p><dt><b>g_getclip()</b></dt>
 <dd>
-Parse the pattern data in the clipboard and return a cell array reference.
+Parse the pattern data in the clipboard and return a cell array reference,
+but where the first two numbers are the pattern's width and height
+(not necessarily the minimal bounding box because the pattern might
+have empty borders, or it might even be empty).
 </dd>
 <dd> Example: <b>$cells = g_getclip();</b></dd>
 </p>

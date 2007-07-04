@@ -1499,7 +1499,7 @@ default:       return "Illegal character in readmacrocell." ;
 	    while (*ws && *ws <= ' ')
 	       ws++ ;
 	    if (*ws > 0)
-	       return "Parse error in macrocell format" ;
+	       return "Parse error in macrocell format." ;
 	    continue ;
 	 }
          if (n < 5)
@@ -1521,8 +1521,12 @@ default:       return "Illegal character in readmacrocell." ;
    }
    if (ind)
       free(ind) ;
-   if (root == 0)
-      return "Invalid macrocell file:  no nodes" ;
+   if (root == 0) {
+      // AKT: allow empty macrocell pattern; note that endofpattern()
+      // will be called soon so don't set hashed here
+      // return "Invalid macrocell file: no nodes." ;
+      return 0 ;
+   }
    hashed = 1 ;
    return 0 ;
 }

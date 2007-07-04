@@ -215,12 +215,10 @@ void readrle(lifealgo &imp, char *line) {
          }
 
          if (getedges) {
-            bigint bigwd = wd - 1;
-            bigint bight = ht - 1;
             top = yoff;
             left = xoff;
-            bottom = top;   bottom += bight;
-            right = left;   right += bigwd;
+            bottom = yoff + ht - 1;
+            right = xoff + wd - 1;
          }
          
          while (*p && *p != 'r') p++;
@@ -463,6 +461,9 @@ const char *readclipboard(const char *filename, lifealgo &imp,
    *l = left;
    *b = bottom;
    *r = right;
+   // make sure we return a valid rect
+   if (bottom < top) *b = top;
+   if (right < left) *r = left;
          
    // restore rule
    imp.setrule(saverule);
