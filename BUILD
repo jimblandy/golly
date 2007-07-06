@@ -23,6 +23,8 @@ use the latest stable version.
 Building wxWidgets on Windows
 -----------------------------
 
+If you have an older version of wxWidgets already installed then make
+sure you uninstall that version before installing a newer version.
 Run the wxWidgets installer and follow the instructions.  We'll assume
 this creates a C:\wxWidgets directory.  Open up a command window and
 type these commands:
