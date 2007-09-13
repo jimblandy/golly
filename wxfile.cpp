@@ -172,6 +172,9 @@ void MainFrame::NewPattern(const wxString& title)
    currlayer->startgen = 0;
    currlayer->warp = 0;
    CreateUniverse();
+   
+   // clear all undo/redo history
+   currlayer->undoredo->ClearUndoRedo();
 
    // rule doesn't change so no need to call setrule
 
@@ -241,6 +244,7 @@ bool MainFrame::LoadImage()
 
 void MainFrame::LoadPattern(const wxString& newtitle)
 {
+   // newtitle is only empty if called from ResetPattern
    if (!newtitle.IsEmpty()) {
       if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
       currlayer->savestart = false;
@@ -249,10 +253,13 @@ void MainFrame::LoadPattern(const wxString& newtitle)
          // comments will no longer be relevant so close info window
          GetInfoFrame()->Close(true);
       }
+      // clear all undo/redo history
+      currlayer->undoredo->ClearUndoRedo();
    }
+   
    if (!showbanner) statusptr->ClearMessage();
 
-   // set this flag BEFORE UpdateStatus() call so we see gen=0 and pop=0;
+   // set nopattupdate BEFORE UpdateStatus() call so we see gen=0 and pop=0;
    // in particular, it avoids getPopulation being called which would
    // slow down hlife pattern loading
    viewptr->nopattupdate = true;

@@ -85,8 +85,11 @@ enum {
    // wxID_PREFERENCES,
    
    // Edit menu
+   // wxID_UNDO,
+   // wxID_REDO,
    ID_CUT,
    ID_COPY,
+   ID_NO_UNDO,
    ID_CLEAR,
    ID_OUTSIDE,
    ID_PASTE,
@@ -782,6 +785,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SCRIPT_DIR,      active);
       mbar->Enable(wxID_PREFERENCES,   !busy);
 
+      mbar->Enable(wxID_UNDO,    active && !busy && currlayer->undoredo->CanUndo());
+      mbar->Enable(wxID_REDO,    active && !busy && currlayer->undoredo->CanRedo());
+      mbar->Enable(ID_NO_UNDO,   active && !busy);
       mbar->Enable(ID_CUT,       active && !busy && selexists);
       mbar->Enable(ID_COPY,      active && !busy && selexists);
       mbar->Enable(ID_CLEAR,     active && !busy && selexists);
@@ -858,6 +864,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SAVE_XRLE,     savexrle);
       mbar->Check(ID_SHOW_PATTERNS, showpatterns);
       mbar->Check(ID_SHOW_SCRIPTS,  showscripts);
+      mbar->Check(ID_NO_UNDO,       !allowundo);
       mbar->Check(ID_AUTO,       currlayer->autofit);
       mbar->Check(ID_HASH,       currlayer->hash);
       mbar->Check(ID_HYPER,      currlayer->hyperspeed);
@@ -1287,6 +1294,14 @@ void MainFrame::ToggleFullScreen()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ToggleAllowUndo()
+{
+   allowundo = !allowundo;
+   if (!allowundo) currlayer->undoredo->ClearUndoRedo();
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ShowPatternInfo()
 {
    if (viewptr->waitingforclick || currlayer->currfile.IsEmpty()) return;
@@ -1341,6 +1356,9 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
       case wxID_EXIT:         QuitApp(); break;
       // Edit menu
+      case wxID_UNDO:         currlayer->undoredo->UndoChange(); break;
+      case wxID_REDO:         currlayer->undoredo->RedoChange(); break;
+      case ID_NO_UNDO:        ToggleAllowUndo(); break;
       case ID_CUT:            viewptr->CutSelection(); break;
       case ID_COPY:           viewptr->CopySelection(); break;
       case ID_CLEAR:          viewptr->ClearSelection(); break;
@@ -2021,6 +2039,10 @@ void MainFrame::CreateMenus()
    // and the app name is appended to "Quit "
    fileMenu->Append(wxID_EXIT, _("Quit\tCtrl+Q"));
 
+   editMenu->Append(wxID_UNDO, _("Undo\tCtrl+Z"));
+   editMenu->Append(wxID_REDO, _("Redo\tShift+Ctrl+Z"));
+   editMenu->AppendCheckItem(ID_NO_UNDO, _("Disable Undo/Redo"));
+   editMenu->AppendSeparator();
    editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
    editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
    #ifdef __WXMSW__

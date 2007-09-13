@@ -164,7 +164,14 @@ void MainFrame::ResetPattern()
    
    // now restore rule, window title (in case rule changed), scale and location
    currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
-   SetWindowTitle(wxEmptyString);
+   if ( currlayer->startfile.IsEmpty() ) {
+      // pattern was restored via non-temporary file so make sure dirty flag
+      // is reset in case user modified pattern *after* generating it
+      MarkLayerClean(currlayer->currname);
+      // above calls SetWindowTitle
+   } else {
+      SetWindowTitle(wxEmptyString);
+   }
    viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
    UpdateEverything();
 }
@@ -514,7 +521,6 @@ void MainFrame::AdvanceOutsideSelection()
    }
    
    // switch to new universe (best to do this even if aborted)
-   currlayer->savestart = true;
    MarkLayerDirty();
    delete currlayer->algo;
    currlayer->algo = newalgo;
@@ -626,7 +632,6 @@ void MainFrame::AdvanceSelection()
          viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                               tempalgo, currlayer->algo, _("Copying advanced selection"));
 
-         currlayer->savestart = true;
          MarkLayerDirty();
          UpdateEverything();
       }

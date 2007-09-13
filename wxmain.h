@@ -70,6 +70,9 @@ public:
    #if wxUSE_DRAG_AND_DROP
       wxDropTarget* NewDropTarget();
    #endif
+   
+   // edit functions
+   void ToggleAllowUndo();
 
    // prefs functions
    void SetRandomFillPercentage();

@@ -988,12 +988,14 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          int newy = y0 + x * ayx + y * ayy;
          int s = curralgo->getcell(newx, newy);
 
+         if (allowundo && !currlayer->stayclean)
+            currlayer->undoredo->SaveCellChange(newx, newy);
+
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(newx, newy, 1-s);
 
          if ((n % 4096) == 0 && PythonScriptAborted()) {
             curralgo->endofpattern();
-            currlayer->savestart = true;
             MarkLayerDirty();
             return NULL;
          }
@@ -1003,13 +1005,17 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       for (int n = 0; n < num_cells; n++) {
          long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
          long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+         int newx = x0 + x * axx + y * axy;
+         int newy = y0 + x * ayx + y * ayy;
+
+         if (allowundo && !currlayer->stayclean && cellstate != currlayer->algo->getcell(newx, newy))
+            currlayer->undoredo->SaveCellChange(newx, newy);
 
          // paste (possibly transformed) cell into current universe
-         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, cellstate);
+         curralgo->setcell(newx, newy, cellstate);
 
          if ((n % 4096) == 0 && PythonScriptAborted()) {
             curralgo->endofpattern();
-            currlayer->savestart = true;
             MarkLayerDirty();
             return NULL;
          }
@@ -1017,7 +1023,6 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    }
 
    curralgo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    DoAutoUpdate();
 
@@ -1339,9 +1344,11 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
 
+   if (allowundo && !currlayer->stayclean && state != currlayer->algo->getcell(x, y))
+      currlayer->undoredo->SaveCellChange(x, y);
+
    currlayer->algo->setcell(x, y, state);
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    DoAutoUpdate();
 

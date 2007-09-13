@@ -694,8 +694,19 @@ void RunScript(const wxString& filename)
    pyscript = false;
 
    // reset all stayclean flags (set by MarkLayerClean)
-   for ( int i = 0; i < numlayers; i++ )
-      GetLayer(i)->stayclean = false;
+   for ( int i = 0; i < numlayers; i++ ) {
+      Layer* layer = GetLayer(i);
+      
+      if (allowundo) {
+         // one or more SaveCellChange calls might have been made
+         if (layer->stayclean)
+            layer->undoredo->ForgetChanges();
+         else
+            layer->undoredo->RememberChanges(_("Script Changes"));
+      }
+      
+      layer->stayclean = false;
+   }
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollydir);

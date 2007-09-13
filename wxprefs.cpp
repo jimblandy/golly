@@ -122,6 +122,7 @@ bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 bool scrollpencil = true;        // scroll if pencil cursor is dragged outside view?
 bool scrollcross = true;         // scroll if cross cursor is dragged outside view?
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
+bool allowundo = true;           // allow undo/redo?
 int randomfill = 50;             // random fill percentage (1..100)
 int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
 int tileborder = 3;              // thickness of tiled window borders
@@ -531,6 +532,7 @@ void SavePrefs()
    }
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
 
+   fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
    fprintf(f, "scroll_pencil=%d\n", scrollpencil ? 1 : 0);
@@ -803,6 +805,9 @@ void GetPrefs()
          if (infowd < mininfowd) infowd = mininfowd;
          if (infoht < mininfoht) infoht = mininfoht;
          CheckVisibility(&infox, &infoy, &infowd, &infoht);
+
+      } else if (strcmp(keyword, "allow_undo") == 0) {
+         allowundo = value[0] == '1';
 
       } else if (strcmp(keyword, "paste_location") == 0) {
          SetPasteLocation(value);

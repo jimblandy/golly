@@ -27,9 +27,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "bigint.h"           // for bigint class
 #include "viewport.h"         // for viewport class
 
+
+//!!! move undo/redo stuff into wxundo.h/cpp
+// this class implements unlimited undo/redo
+class UndoRedo {
+public:
+   UndoRedo();
+   ~UndoRedo();
+   
+   void SaveCellChange(int x, int y);
+   // cell at x,y has changed state
+   
+   void ForgetChanges();
+   // ignore the changes made by previous SaveCellChange calls
+   
+   void RememberChanges(const wxString& action);
+   // remember the changes made by previous SaveCellChange calls;
+   // the given string is appended to the Undo/Redo menu item names
+   
+   bool CanUndo();            // can a change be undone?
+   bool CanRedo();            // can an undone change be redone?
+   
+   void UndoChange();         // undo a change
+   void RedoChange();         // redo an undone change
+
+   void ClearUndoRedo();      // clear all undo/redo history
+
+private:
+   wxList undolist;           // list of undoable changes
+   wxList redolist;           // list of redoable changes
+
+   int cellchanges;           // number of cells that changed state
+   wxArrayInt* cellarray;     // x,y coordinates of those cells
+};
+
+
 // Golly supports multiple layers.  Each layer is a separate universe
 // (unless cloned) with its own algorithm, rule, viewport, window title,
-// selection, etc.
+// selection, undo/redo history, etc.
 
 class Layer {
 public:
@@ -46,8 +81,9 @@ public:
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode
+   UndoRedo* undoredo;        // undo/redo history
 
-   // WARNING: this rule is used to remember the current rule when
+   // WARNING: this string is used to remember the current rule when
    // switching to another layer; to determine the current rule at any
    // time, use global_liferules.getrule() or currlayer->algo->getrule()
    wxString rule;

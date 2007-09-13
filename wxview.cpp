@@ -580,7 +580,6 @@ void PatternView::ProcessKey(int key, bool shiftdown)
 void PatternView::ShowDrawing()
 {
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
 
    // update status bar
    if (showstatus) statusptr->Refresh(false);
@@ -598,6 +597,9 @@ void PatternView::ShowDrawing()
 
 void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
 {
+   // remember this cell for later undo/redo
+   if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy);
+
    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // drawing must be done via UpdateView in ShowDrawing
       return;
@@ -610,9 +612,8 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
    wxCoord x = (cx - lefttop.first.toint()) * cellsize;
    wxCoord y = (cy - lefttop.second.toint()) * cellsize;
    
-   if (cellsize > 2) {
-      cellsize--;       // allow for gap between cells
-   }
+   if (cellsize > 2) cellsize--;    // allow for gap between cells
+   
    dc.DrawRectangle(x, y, cellsize, cellsize);
    
    // overlay selection image if cell is within selection
@@ -648,7 +649,7 @@ void PatternView::StartDrawingCells(int x, int y)
    dc.SetPen(wxNullPen);            // restore pen
    
    ShowDrawing();
-
+   
    drawingcells = true;
    CaptureMouse();                  // get mouse up event even if outside view
    dragtimer->Start(DRAG_RATE);     // see OnDragTimer
@@ -1015,9 +1016,14 @@ void PatternView::StopDraggingMouse()
 {
    if (selectingcells)
       mainptr->UpdateMenuItems(true);     // update Edit menu items
+   
+   if (drawingcells && allowundo)
+      currlayer->undoredo->RememberChanges(_("Drawing"));
+   
    drawingcells = false;
    selectingcells = false;
    movingview = false;
+   
    if ( HasCapture() ) ReleaseMouse();
    if ( dragtimer->IsRunning() ) dragtimer->Stop();
 }
@@ -1082,8 +1088,6 @@ void PatternView::SetViewSize(int wd, int ht)
 
 void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
-   //!!! wxBell();
-   //!!! wxMilliSleep(500);
    /* avoid unwanted drawing in certain situations???
    if (ignorepaint) {
       ignorepaint = false;

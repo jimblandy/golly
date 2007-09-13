@@ -295,7 +295,6 @@ void PatternView::ClearSelection()
       if (abort) break;
    }
    curralgo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    EndProgress();
    
@@ -355,7 +354,6 @@ void PatternView::ClearOutsideSelection()
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                  currlayer->algo, newalgo, false, _("Saving selection")) ) {
       // delete old universe and point currlayer->algo at new universe
-      currlayer->savestart = true;
       MarkLayerDirty();
       delete currlayer->algo;
       currlayer->algo = newalgo;
@@ -566,7 +564,6 @@ void PatternView::CopySelectionToClipboard(bool cut)
       AddRun('!', &dollrun, &linelen, &chptr);
       if (cut) {
          currlayer->algo->endofpattern();
-         currlayer->savestart = true;
          MarkLayerDirty();
       }
    }
@@ -906,7 +903,6 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    }
 
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    EndProgress();
    
@@ -1215,7 +1211,6 @@ void PatternView::RandomFill()
       if (abort) break;
    }
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    EndProgress();
    mainptr->UpdatePatternAndStatus();
@@ -1273,7 +1268,6 @@ void PatternView::FlipLeftRight()
       mirrorx--;
    }
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    EndProgress();
    mainptr->UpdatePatternAndStatus();
@@ -1331,7 +1325,6 @@ void PatternView::FlipTopBottom()
       mirrory--;
    }
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    EndProgress();
    mainptr->UpdatePatternAndStatus();
@@ -1424,7 +1417,6 @@ void PatternView::RotatePattern(bool clockwise,
       currlayer->selleft   = newleft;
       currlayer->selright  = newright;
       // switch to new universe and display results
-      currlayer->savestart = true;
       MarkLayerDirty();
       delete currlayer->algo;
       currlayer->algo = newalgo;
@@ -1589,7 +1581,6 @@ void PatternView::RotateSelection(bool clockwise)
    }
    
    // delete temporary universe and display results
-   currlayer->savestart = true;
    MarkLayerDirty();
    delete tempalgo;
    DisplaySelectionSize();

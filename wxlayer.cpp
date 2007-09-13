@@ -296,7 +296,7 @@ void LayerBar::OnKillFocus(wxFocusEvent& event)
 
 // -----------------------------------------------------------------------------
 
-//!!! flag is not used at the moment (probably need later for dragging button)
+// flag is not used at the moment (probably need later for dragging button)
 bool layerbuttdown = false;
 
 void LayerBar::OnButtonDown(wxMouseEvent& event)
@@ -347,11 +347,11 @@ if ( r.Inside(pt) ) {
 
 // -----------------------------------------------------------------------------
 
-//!!! not used at the moment (probably need later for button dragging)
+// not used at the moment (probably need later for button dragging)
 void LayerBar::OnMouseMotion(wxMouseEvent& event)
 {   
    if (layerbuttdown) {
-      //!!!
+      //???
    }
    event.Skip();
 }
@@ -818,6 +818,11 @@ void SyncClones()
             cloneptr->algo = currlayer->algo;
             cloneptr->hash = currlayer->hash;
             cloneptr->rule = currlayer->rule;
+            
+            // no need to sync undo/redo history???
+            // cloneptr->undoredo = currlayer->undoredo;
+            if (cloneptr->undoredo != currlayer->undoredo)
+               Warning(_("We need to sync undo/redo history!"));
 
             // along with view, don't sync these settings
             // cloneptr->autofit = currlayer->autofit;
@@ -1213,7 +1218,7 @@ void MoveLayer(int fromindex, int toindex)
 
 // -----------------------------------------------------------------------------
 
-//!!! remove this eventually if user can drag layer buttons???
+// remove this eventually if user can drag layer buttons???
 void MoveLayerDialog()
 {
    if (mainptr->generating || inscript || numlayers <= 1) return;
@@ -1244,6 +1249,9 @@ void NameLayerDialog()
 
 void MarkLayerDirty()
 {
+   // need to save starting pattern so reset will work
+   currlayer->savestart = true;
+   
    // if script has reset dirty flag then don't change it; this makes sense
    // for scripts that call new() and then construct a pattern
    if (currlayer->stayclean) return;
@@ -1273,8 +1281,10 @@ void MarkLayerDirty()
 void MarkLayerClean(const wxString& title)
 {
    currlayer->dirty = false;
+   currlayer->savestart = false;
    
-   // if script is resetting dirty flag -- eg. via new() -- then keep it that way
+   // if script is resetting dirty flag -- eg. via new() -- then don't allow
+   // dirty flag to be set true for the remainder of the script
    if (inscript) currlayer->stayclean = true;
    
    // set currlayer->currname and call UpdateLayerItem(currindex)
@@ -1465,6 +1475,9 @@ Layer::Layer()
          algo = new qlifealgo();
       }
       algo->setpoll(wxGetApp().Poller());
+      
+      // initialize undo/redo history
+      undoredo = new UndoRedo();
 
       // set rule using initrule stored in prefs file;
       // errors can only occur if someone has edited the prefs file
@@ -1524,8 +1537,9 @@ Layer::Layer()
             numclones++;
          }
 
-         // clones share the same universe
+         // clones share the same universe and undo/redo history
          algo = currlayer->algo;
+         undoredo = currlayer->undoredo;
 
          // clones use same name for starting file
          tempstart = currlayer->tempstart;
@@ -1542,6 +1556,9 @@ Layer::Layer()
             algo = new qlifealgo();
          }
          algo->setpoll(wxGetApp().Poller());
+         
+         // initialize undo/redo history
+         undoredo = new UndoRedo();
 
          // add unique suffix to tempstart
          tempstart += wxString::Format(_("%d"), GetUniqueSuffix());
@@ -1652,8 +1669,9 @@ Layer::~Layer()
       }
       
    } else {
-      // not a clone so delete algo and tempstart file
+      // not a clone so delete algo and undo/redo history
       if (algo) delete algo;
+      if (undoredo) delete undoredo;
       
       // delete tempstart file if it exists
       if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
@@ -1667,4 +1685,181 @@ Layer::~Layer()
          Warning(_("Problem with tempstart suffix: ") + tempstart);
       }
    }
+}
+
+// -----------------------------------------------------------------------------
+
+// encapsulate change info stored in undo/redo lists
+
+class ChangeNode: public wxObject {
+public:
+   ChangeNode(wxArrayInt* cells);
+   ~ChangeNode();
+
+   void ChangeCells();        // change cell states using cellcoords
+
+private:
+   wxArrayInt* cellcoords;    // x,y coordinates (ie. 2 elements per cell)
+};
+
+// -----------------------------------------------------------------------------
+
+ChangeNode::ChangeNode(wxArrayInt* cells)
+{
+   cellcoords = cells;
+}
+
+// -----------------------------------------------------------------------------
+
+ChangeNode::~ChangeNode()
+{
+   delete cellcoords;
+}
+
+// -----------------------------------------------------------------------------
+
+void ChangeNode::ChangeCells()
+{
+   // change state of cell(s)
+   for (unsigned int i = 0; i < cellcoords->GetCount(); i += 2) {
+      int x = cellcoords->Item(i);
+      int y = cellcoords->Item(i + 1);
+      int state = currlayer->algo->getcell(x, y);
+      currlayer->algo->setcell(x, y, 1 - state);
+   }
+   currlayer->algo->endofpattern();
+   mainptr->UpdatePatternAndStatus();
+}
+
+// -----------------------------------------------------------------------------
+
+UndoRedo::UndoRedo()
+{
+   cellchanges = 0;     // for 1st SaveCellChange
+}
+
+// -----------------------------------------------------------------------------
+
+UndoRedo::~UndoRedo()
+{
+   ClearUndoRedo();
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::SaveCellChange(int x, int y)
+{
+   if (cellchanges == 0) cellarray = new wxArrayInt;
+   // either ~ChangeNode or ForgetChanges will delete cellarray
+
+   cellarray->Add(x);
+   cellarray->Add(y);
+   cellchanges++;
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::ForgetChanges()
+{
+   if (cellchanges > 0) {
+      cellchanges = 0;        // reset for next SaveCellChange
+      delete cellarray;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberChanges(const wxString& action)
+{
+   if (cellchanges > 0) {
+      cellchanges = 0;        // reset for next SaveCellChange
+      cellarray->Shrink();    // frees unused memory
+
+      // clear the redo history
+      WX_CLEAR_LIST(wxList, redolist);
+      
+      // add new change node to head of undo list
+      undolist.Insert( new ChangeNode(cellarray) );
+      
+      // update Undo item in Edit menu
+      //!!! append given action string
+      mainptr->UpdateMenuItems(mainptr->IsActive());
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool UndoRedo::CanUndo()
+{
+   return !undolist.IsEmpty();
+}
+
+// -----------------------------------------------------------------------------
+
+bool UndoRedo::CanRedo()
+{
+   return !redolist.IsEmpty();
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::UndoChange()
+{
+   if (undolist.IsEmpty()) return;
+   
+   // get change info from head of undo list
+   wxList::compatibility_iterator node = undolist.GetFirst();
+   ChangeNode* change = (ChangeNode*) node->GetData();
+   
+   // do the change
+   change->ChangeCells();
+   
+   // remove node from head of undo list (doesn't delete node's data)
+   undolist.Erase(node);
+   
+   if (undolist.IsEmpty()) {
+      // clear dirty flag, update window title and Layer menu items
+      MarkLayerClean(currlayer->currname);
+   }
+
+   // add change to head of redo list
+   redolist.Insert(change);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RedoChange()
+{
+   if (redolist.IsEmpty()) return;
+   
+   // get change info from head of redo list
+   wxList::compatibility_iterator node = redolist.GetFirst();
+   ChangeNode* change = (ChangeNode*) node->GetData();
+   
+   // do the change
+   change->ChangeCells();
+   
+   // remove node from head of redo list (doesn't delete node's data)
+   redolist.Erase(node);
+   
+   if (undolist.IsEmpty()) {
+      // set dirty flag, update window title and Layer menu items
+      MarkLayerDirty();
+   }
+
+   // add change to head of undo list
+   undolist.Insert(change);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::ClearUndoRedo()
+{
+   // delete cellarray in case there were SaveCellChange calls not followed
+   // by ForgetChanges or RememberChanges
+   ForgetChanges();
+
+   // clear the undo/redo lists (and delete each node's data)
+   WX_CLEAR_LIST(wxList, undolist);
+   WX_CLEAR_LIST(wxList, redolist);
 }

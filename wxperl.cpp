@@ -1018,6 +1018,9 @@ XS(pl_putcells)
          int newy = y0 + x * ayx + y * ayy;
          int s = curralgo->getcell(newx, newy);
 
+         if (allowundo && !currlayer->stayclean)
+            currlayer->undoredo->SaveCellChange(newx, newy);
+
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(newx, newy, 1-s);
 
@@ -1028,16 +1031,20 @@ XS(pl_putcells)
       for (int n = 0; n < num_cells; n++) {
          int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
          int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
+         int newx = x0 + x * axx + y * axy;
+         int newy = y0 + x * ayx + y * ayy;
+
+         if (allowundo && !currlayer->stayclean && cellstate != currlayer->algo->getcell(newx, newy))
+            currlayer->undoredo->SaveCellChange(newx, newy);
 
          // paste (possibly transformed) cell into current universe
-         curralgo->setcell(x0 + x * axx + y * axy, y0 + x * ayx + y * ayy, cellstate);
+         curralgo->setcell(newx, newy, cellstate);
 
          if ((n % 4096) == 0 && PerlScriptAborted()) break;
       }
    }
 
    curralgo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    DoAutoUpdate();
 
@@ -1320,10 +1327,16 @@ XS(pl_setcell)
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 3) PERL_ERROR("Usage: g_setcell($x,$y,$state)");
+   
+   int x = SvIV(ST(0));
+   int y = SvIV(ST(1));
+   int state = SvIV(ST(2));
 
-   currlayer->algo->setcell(SvIV(ST(0)), SvIV(ST(1)), SvIV(ST(2)));
+   if (allowundo && !currlayer->stayclean && state != currlayer->algo->getcell(x, y))
+      currlayer->undoredo->SaveCellChange(x, y);
+
+   currlayer->algo->setcell(x, y, state);
    currlayer->algo->endofpattern();
-   currlayer->savestart = true;
    MarkLayerDirty();
    DoAutoUpdate();
    
