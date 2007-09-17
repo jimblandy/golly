@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for gollydir, etc
+#include "wxundo.h"        // for undoredo->...
 #include "wxlayer.h"       // for currlayer
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
@@ -679,6 +680,11 @@ void RunScript(const wxString& filename)
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* layer = GetLayer(i);
          layer->savedirty = layer->dirty;
+         // also save current selection for use by RememberSelection
+         layer->savetop = layer->seltop;
+         layer->savebottom = layer->selbottom;
+         layer->saveleft = layer->selleft;
+         layer->saveright = layer->selright;
       }
    }
 
@@ -707,13 +713,19 @@ void RunScript(const wxString& filename)
       Layer* layer = GetLayer(i);
       
       if (allowundo) {
-         // one or more SaveCellChange calls might have been made
+         // one or more SaveCellChange calls might have been made,
+         // or selection may have changed
          if (layer->stayclean) {
             layer->undoredo->ForgetChanges();
          } else {
             // any MarkLayerDirty calls will have set the dirty flag, so we need to
             // pass in the flag state saved before the script started
             layer->undoredo->RememberChanges(_("Script Changes"), layer->savedirty);
+            // also remember change in selection
+            layer->undoredo->RememberSelection(layer->savetop, layer->saveleft,
+                                               layer->savebottom, layer->saveright,
+                                               layer->seltop, layer->selleft,
+                                               layer->selbottom, layer->selright);
          }
       }
       

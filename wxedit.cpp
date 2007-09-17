@@ -43,6 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for CreatePasteImage
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for PatternView
+#include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
 
 #ifdef __WXMAC__
@@ -1039,8 +1040,33 @@ void PatternView::DisplaySelectionSize()
 
 // -----------------------------------------------------------------------------
 
+void PatternView::SaveCurrentSelection()
+{
+   if (allowundo && !inscript) {
+      currlayer->savetop = currlayer->seltop;
+      currlayer->saveleft = currlayer->selleft;
+      currlayer->savebottom = currlayer->selbottom;
+      currlayer->saveright = currlayer->selright;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::RememberNewSelection()
+{
+   if (allowundo && !inscript) {
+      currlayer->undoredo->RememberSelection(currlayer->savetop, currlayer->saveleft,
+                                             currlayer->savebottom, currlayer->saveright,
+                                             currlayer->seltop, currlayer->selleft,
+                                             currlayer->selbottom, currlayer->selright);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::SelectAll()
 {
+   SaveCurrentSelection();
    if (SelectionExists()) {
       NoSelection();
       mainptr->UpdatePatternAndStatus();
@@ -1048,11 +1074,14 @@ void PatternView::SelectAll()
 
    if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
+      RememberNewSelection();
       return;
    }
    
    currlayer->algo->findedges(&currlayer->seltop, &currlayer->selleft,
                               &currlayer->selbottom, &currlayer->selright);
+
+   RememberNewSelection();
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1062,7 +1091,9 @@ void PatternView::SelectAll()
 void PatternView::RemoveSelection()
 {
    if (SelectionExists()) {
+      SaveCurrentSelection();
       NoSelection();
+      RememberNewSelection();
       mainptr->UpdatePatternAndStatus();
    }
 }
@@ -1086,10 +1117,12 @@ void PatternView::ShrinkSelection(bool fit)
    if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
       // shrink edges
+      SaveCurrentSelection();
       currlayer->seltop = top;
-      currlayer->selbottom = bottom;
       currlayer->selleft = left;
+      currlayer->selbottom = bottom;
       currlayer->selright = right;
+      RememberNewSelection();
       DisplaySelectionSize();
       if (fit)
          FitSelection();   // calls UpdateEverything
@@ -1130,8 +1163,10 @@ void PatternView::ShrinkSelection(bool fit)
       if ( tempalgo->isEmpty() ) {
          statusptr->ErrorMessage(empty_selection);
       } else {
+         SaveCurrentSelection();
          tempalgo->findedges(&currlayer->seltop, &currlayer->selleft,
                              &currlayer->selbottom, &currlayer->selright);
+         RememberNewSelection();
          DisplaySelectionSize();
          if (!fit) mainptr->UpdatePatternAndStatus();
       }

@@ -26,52 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"           // for bigint class
 #include "viewport.h"         // for viewport class
-
-
-//!!! move undo/redo stuff into wxundo.h/cpp
-// this class implements unlimited undo/redo
-class UndoRedo {
-public:
-   UndoRedo();
-   ~UndoRedo();
-   
-   void SaveCellChange(int x, int y);
-   // cell at x,y has changed state
-   
-   void ForgetChanges();
-   // ignore the changes made by previous SaveCellChange calls
-   
-   void RememberChanges(const wxString& action, bool wasdirty);
-   // remember the changes made by previous SaveCellChange calls
-   // and the state of the layer's dirty flag BEFORE the change;
-   // the given action string is appended to the Undo/Redo item names
-   
-   void RememberFlip(bool topbot, int t, int l, int b, int r, bool wasdirty);
-   // remember the flip's direction and rectangle, as well as the state
-   // of the layer's dirty flag BEFORE the change
-   
-   bool CanUndo();            // can a change be undone?
-   bool CanRedo();            // can an undone change be redone?
-   
-   void UndoChange();         // undo a change
-   void RedoChange();         // redo an undone change
-
-   void ClearUndoRedo();      // clear all undo/redo history
-
-private:
-   wxList undolist;           // list of undoable changes
-   wxList redolist;           // list of redoable changes
-
-   int* cellarray;            // x,y coordinates of changed cells
-   unsigned int intcount;     // number of elements (2 * number of cells)
-   unsigned int maxcount;     // number of elements allocated
-   bool badalloc;             // malloc/realloc failed?
-   
-   void UpdateUndoItem(const wxString& action);
-   void UpdateRedoItem(const wxString& action);
-   // update the Undo/Redo items in the Edit menu
-};
-
+#include "wxundo.h"           // for UndoRedo class
 
 // Golly supports multiple layers.  Each layer is a separate universe
 // (unless cloned) with its own algorithm, rule, viewport, window title,
@@ -100,8 +55,11 @@ public:
    // time, use global_liferules.getrule() or currlayer->algo->getrule()
    wxString rule;
    
-   // selection edges
+   // current selection edges
    bigint seltop, selbottom, selleft, selright;
+   
+   // saved selection edges used to restore selection and by undo/redo
+   bigint savetop, savebottom, saveleft, saveright;
 
    bigint originx;            // X origin offset
    bigint originy;            // Y origin offset

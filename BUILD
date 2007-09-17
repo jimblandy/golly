@@ -184,6 +184,11 @@ wxlayer.*      - Layer menu functions.
                  AddLayer() adds a new, empty layer.
                  DeleteLayer() deletes the current layer.
 
+wxundo.*       - Implements unlimited undo/redo.
+                 RememberChanges() saves cell state changes.
+                 UndoChange() undoes a recent change.
+                 RedoChange() redoes an undone change.
+
 wxstatus.*     - Implements status bar at top of main window.
                  DrawStatusBar() shows gen count, pop count, etc.
                  DisplayMessage() shows message in bottom line.

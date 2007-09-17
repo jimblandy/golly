@@ -165,6 +165,8 @@ private:
                                       bigint& newleft, bigint& newright);
    void AddEOL(char** chptr);
    void AddRun(char ch, unsigned int* run, unsigned int* linelen, char** chptr);
+   void SaveCurrentSelection();
+   void RememberNewSelection();
 
    // scroll functions
    void PanUp(int amount);
@@ -185,10 +187,6 @@ private:
    bool forceh;                  // resize selection horizontally?
    bool forcev;                  // resize selection vertically?
    bigint anchorx, anchory;      // anchor cell of current selection
-   bigint origtop;               // edges of original selection
-   bigint origbottom;            // (used to restore selection if user hits escape)
-   bigint origleft;
-   bigint origright;
    bigint prevtop;               // previous edges of new selection
    bigint prevbottom;            // (used to decide if new selection has to be drawn)
    bigint prevleft;

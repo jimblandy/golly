@@ -49,6 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for AddLayer, maxlayers, currlayer, etc
+#include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxmain.h"
 
 #ifdef __WXMAC__

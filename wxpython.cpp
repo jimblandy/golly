@@ -61,6 +61,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for pythonlib, gollydir, etc
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
+#include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxlayer.h"       // for AddLayer, currlayer, currindex, etc
 #include "wxscript.h"      // for inscript, abortmsg, GSF_*, etc
 #include "wxpython.h"

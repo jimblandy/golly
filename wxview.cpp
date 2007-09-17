@@ -43,7 +43,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
-#include "wxlayer.h"       // for ResizeLayers, currlayer, etc
+#include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxlayer.h"       // for currlayer, ResizeLayers, etc
 #include "wxview.h"
 
 // This module contains most View menu functions (a few like ToggleFullScreen
@@ -873,11 +874,12 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
    anchorx = cellpos.first;
    anchory = cellpos.second;
 
-   // save original selection so it can be restored if user hits escape
-   origtop = currlayer->seltop;
-   origbottom = currlayer->selbottom;
-   origleft = currlayer->selleft;
-   origright = currlayer->selright;
+   // save original selection so it can be restored if user hits escape;
+   // also used by RememberNewSelection
+   currlayer->savetop = currlayer->seltop;
+   currlayer->saveleft = currlayer->selleft;
+   currlayer->savebottom = currlayer->selbottom;
+   currlayer->saveright = currlayer->selright;
 
    // set previous selection to anything impossible
    prevtop = 1;
@@ -1018,14 +1020,16 @@ void PatternView::MoveView(int x, int y)
 
 void PatternView::StopDraggingMouse()
 {
-   if (selectingcells)
-      mainptr->UpdateMenuItems(true);     // enable various Edit menu items
+   if (selectingcells) {
+      if (allowundo) RememberNewSelection();
+      mainptr->UpdateMenuItems(true);        // enable various Edit menu items
+   }
    
    if (drawingcells && allowundo) {
       // MarkLayerDirty (in ShowDrawing) has set dirty flag, so we need to
       // pass in the flag state saved before drawing started
       currlayer->undoredo->RememberChanges(_("Drawing"), currlayer->savedirty);
-      mainptr->UpdateMenuItems(true);     // enable Undo item
+      mainptr->UpdateMenuItems(true);        // enable Undo item
    }
    
    drawingcells = false;
@@ -1209,10 +1213,10 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
 
 void PatternView::RestoreSelection()
 {
-   currlayer->seltop = origtop;
-   currlayer->selbottom = origbottom;
-   currlayer->selleft = origleft;
-   currlayer->selright = origright;
+   currlayer->seltop = currlayer->savetop;
+   currlayer->selleft = currlayer->saveleft;
+   currlayer->selbottom = currlayer->savebottom;
+   currlayer->selright = currlayer->saveright;
    StopDraggingMouse();
    
    // allow mouse interaction if script is running
