@@ -238,6 +238,7 @@ void PatternView::ClearSelection()
         currlayer->selleft <= left && currlayer->selright >= right ) {
       // selection encloses entire pattern so just create empty universe
       EmptyUniverse();
+      MarkLayerDirty();
       return;
    }
 
@@ -322,6 +323,7 @@ void PatternView::ClearOutsideSelection()
    if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
         currlayer->selleft > right || currlayer->selright < left ) {
       EmptyUniverse();
+      MarkLayerDirty();
       return;
    }
    
@@ -337,15 +339,8 @@ void PatternView::ClearOutsideSelection()
       return;
    }
    
-   // create a new universe
-   lifealgo* newalgo;
-   if ( currlayer->hash ) {
-      newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-   }
-   newalgo->setpoll(wxGetApp().Poller());
+   // create a new universe of same type
+   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -527,7 +522,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
          }
          if (chptr + 60 >= etextptr) {
             // nearly out of space; try to increase allocation
-            char* ntxtptr = (char*)realloc(textptr, 2*cursize);
+            char* ntxtptr = (char*) realloc(textptr, 2*cursize);
             if (ntxtptr == 0) {
                statusptr->ErrorMessage(_("No more memory for clipboard data!"));
                // don't return here -- best to set abort flag and break so that
@@ -942,8 +937,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so we have to use hlife
       delete *tempalgo;
-      *tempalgo = new hlifealgo();
-      (*tempalgo)->setpoll(wxGetApp().Poller());
+      *tempalgo = CreateNewUniverse(true);
       err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                           **tempalgo, t, l, b, r);
    }
@@ -968,10 +962,9 @@ void PatternView::PasteClipboard(bool toselection)
    if (mainptr->generating || waitingforclick || !mainptr->ClipboardHasText()) return;
    if (toselection && !SelectionExists()) return;
 
-   // create a temporary universe for storing clipboard pattern
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();               // qlife's setcell/getcell are faster
-   tempalgo->setpoll(wxGetApp().Poller());
+   // create a temporary universe for storing clipboard pattern;
+   // use qlife because its setcell/getcell calls are faster
+   lifealgo* tempalgo = CreateNewUniverse(false);
 
    // read clipboard pattern into temporary universe;
    // note that tempalgo will be deleted and re-created as a hlifealgo
@@ -1128,11 +1121,8 @@ void PatternView::ShrinkSelection(bool fit)
    
    // the easy way to shrink selection is to create a new temporary universe,
    // copy selection into new universe and then call findedges;
-   // a faster way would be to scan selection from top to bottom until first
-   // live cell found, then from bottom to top, left to right and right to left!!!
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();         // qlife's findedges is faster
-   tempalgo->setpoll(wxGetApp().Poller());
+   // use qlife because its findedges call is faster
+   lifealgo* tempalgo = CreateNewUniverse(false);
    
    // copy live cells in selection to temporary universe
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -1173,8 +1163,12 @@ void PatternView::RandomFill()
       if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
            currlayer->selleft <= left && currlayer->selright >= right ) {
          // selection encloses entire pattern so create empty universe
-         EmptyUniverse();
-         killcells = false;
+         if (allowundo && !currlayer->stayclean) {
+            // don't kill pattern otherwise we can't use SaveCellChange below
+         } else {
+            EmptyUniverse();
+            killcells = false;
+         }
       } else if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
                   currlayer->selleft > right || currlayer->selright < left ) {
          // selection is completely outside pattern edges
@@ -1197,10 +1191,23 @@ void PatternView::RandomFill()
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
-         if ((rand() % 100) < randomfill) {
-            curralgo->setcell(cx, cy, 1);
-         } else if (killcells) {
-            curralgo->setcell(cx, cy, 0);
+         if (allowundo && !currlayer->stayclean) {
+            // remember cell coords if state changes
+            if ((rand() % 100) < randomfill) {
+               if (!killcells || curralgo->getcell(cx, cy) == 0) {
+                  curralgo->setcell(cx, cy, 1);
+                  currlayer->undoredo->SaveCellChange(cx, cy);
+               }
+            } else if (killcells && curralgo->getcell(cx, cy) > 0) {
+               curralgo->setcell(cx, cy, 0);
+               currlayer->undoredo->SaveCellChange(cx, cy);
+            }
+         } else {
+            if ((rand() % 100) < randomfill) {
+               curralgo->setcell(cx, cy, 1);
+            } else if (killcells) {
+               curralgo->setcell(cx, cy, 0);
+            }
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1211,103 +1218,35 @@ void PatternView::RandomFill()
       if (abort) break;
    }
    currlayer->algo->endofpattern();
-   MarkLayerDirty();
    EndProgress();
+
+   if (allowundo && !currlayer->stayclean)
+      currlayer->undoredo->RememberChanges(_("Random Fill"), currlayer->dirty);
+
+   // update dirty flag AFTER RememberChanges
+   MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
 
-void PatternView::FlipLeftRight()
+void PatternView::FlipTopBottom(int itop, int ileft, int ibottom, int iright)
 {
-   if (mainptr->generating || !SelectionExists()) return;
-
-   // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
-                      currlayer->selleft, currlayer->selright) ) {
-      statusptr->ErrorMessage(selection_too_big);
-      return;
-   }
-   
-   int itop = currlayer->seltop.toint();
-   int ileft = currlayer->selleft.toint();
-   int ibottom = currlayer->selbottom.toint();
-   int iright = currlayer->selright.toint();
-   int wd = iright - ileft + 1;
-   int ht = ibottom - itop + 1;
-   
-   if (wd == 1) return;
-   
    // following code can be optimized by using faster nextcell calls!!!
    // ie. if entire pattern is selected then flip into new universe and
    // switch to that universe
    
-   double maxcount = (double)wd * (double)ht / 2.0;
-   int cntr = 0;
-   bool abort = false;
-   BeginProgress(_("Flipping selection left-right"));
-   int cx, cy;
-   int mirrorx = iright;
-   iright = (ileft - 1) + wd / 2;
-   lifealgo* curralgo = currlayer->algo;
-   for ( cx=ileft; cx<=iright; cx++ ) {
-      for ( cy=itop; cy<=ibottom; cy++ ) {
-         int currstate = curralgo->getcell(cx, cy);
-         int mirrstate = curralgo->getcell(mirrorx, cy);
-         if ( currstate != mirrstate ) {
-            curralgo->setcell(cx, cy, mirrstate);
-            curralgo->setcell(mirrorx, cy, currstate);
-         }
-         cntr++;
-         if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
-            if (abort) break;
-         }
-      }
-      if (abort) break;
-      mirrorx--;
-   }
-   currlayer->algo->endofpattern();
-   MarkLayerDirty();
-   EndProgress();
-   mainptr->UpdatePatternAndStatus();
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::FlipTopBottom()
-{
-   if (mainptr->generating || !SelectionExists()) return;
-
-   // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
-                      currlayer->selleft, currlayer->selright) ) {
-      statusptr->ErrorMessage(selection_too_big);
-      return;
-   }
-   
-   int itop = currlayer->seltop.toint();
-   int ileft = currlayer->selleft.toint();
-   int ibottom = currlayer->selbottom.toint();
-   int iright = currlayer->selright.toint();
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
-   
-   if (ht == 1) return;
-   
-   // following code can be optimized by using faster nextcell calls!!!
-   // ie. if entire pattern is selected then flip into new universe and
-   // switch to that universe
-   
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
-   BeginProgress(_("Flipping selection up-down"));
+   BeginProgress(_("Flipping top-bottom"));
    int cx, cy;
    int mirrory = ibottom;
-   ibottom = (itop - 1) + ht / 2;
+   int halfway = (itop - 1) + ht / 2;
    lifealgo* curralgo = currlayer->algo;
-   for ( cy=itop; cy<=ibottom; cy++ ) {
+   for ( cy=itop; cy<=halfway; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          int currstate = curralgo->getcell(cx, cy);
          int mirrstate = curralgo->getcell(cx, mirrory);
@@ -1325,8 +1264,82 @@ void PatternView::FlipTopBottom()
       mirrory--;
    }
    currlayer->algo->endofpattern();
-   MarkLayerDirty();
    EndProgress();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::FlipLeftRight(int itop, int ileft, int ibottom, int iright)
+{
+   // following code can be optimized by using faster nextcell calls!!!
+   // ie. if entire pattern is selected then flip into new universe and
+   // switch to that universe
+   
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   double maxcount = (double)wd * (double)ht / 2.0;
+   int cntr = 0;
+   bool abort = false;
+   BeginProgress(_("Flipping left-right"));
+   int cx, cy;
+   int mirrorx = iright;
+   int halfway = (ileft - 1) + wd / 2;
+   lifealgo* curralgo = currlayer->algo;
+   for ( cx=ileft; cx<=halfway; cx++ ) {
+      for ( cy=itop; cy<=ibottom; cy++ ) {
+         int currstate = curralgo->getcell(cx, cy);
+         int mirrstate = curralgo->getcell(mirrorx, cy);
+         if ( currstate != mirrstate ) {
+            curralgo->setcell(cx, cy, mirrstate);
+            curralgo->setcell(mirrorx, cy, currstate);
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+      mirrorx--;
+   }
+   currlayer->algo->endofpattern();
+   EndProgress();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::FlipSelection(bool topbottom)
+{
+   if (mainptr->generating || !SelectionExists()) return;
+
+   // can only use getcell/setcell in limited domain
+   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
+                      currlayer->selleft, currlayer->selright) ) {
+      statusptr->ErrorMessage(selection_too_big);
+      return;
+   }
+   
+   int itop = currlayer->seltop.toint();
+   int ileft = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright = currlayer->selright.toint();
+   
+   if (topbottom) {
+      if (ibottom == itop) return;
+      FlipTopBottom(itop, ileft, ibottom, iright);
+   } else {
+      if (iright == ileft) return;
+      FlipLeftRight(itop, ileft, ibottom, iright);
+   }
+
+   // flips are always reversible so no need to use SaveCellChange and RememberChanges
+   // UNLESS we'd like to be able to undo after a lengthy flip is cancelled!!!
+   if (allowundo && !currlayer->stayclean)
+      currlayer->undoredo->RememberFlip(topbottom, itop, ileft, ibottom, iright,
+                                        currlayer->dirty);
+   
+   // update dirty flag AFTER RememberFlip
+   MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
 }
 
@@ -1340,14 +1353,7 @@ void PatternView::RotatePattern(bool clockwise,
                                 bigint &newleft, bigint &newright)
 {
    // create new universe of same type as current universe
-   lifealgo* newalgo;
-   if ( currlayer->hash ) {
-      newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-   }
-   newalgo->setpoll(wxGetApp().Poller());
+   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -1491,9 +1497,7 @@ void PatternView::RotateSelection(bool clockwise)
 
    // create temporary universe; doesn't need to match current universe so
    // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();
-   tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(false);
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees
@@ -1580,8 +1584,9 @@ void PatternView::RotateSelection(bool clockwise)
       currlayer->selright  = newright;
    }
    
-   // delete temporary universe and display results
    MarkLayerDirty();
+
+   // delete temporary universe and display results
    delete tempalgo;
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();

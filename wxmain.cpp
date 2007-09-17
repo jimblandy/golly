@@ -1298,6 +1298,8 @@ void MainFrame::ToggleAllowUndo()
 {
    allowundo = !allowundo;
    if (!allowundo) currlayer->undoredo->ClearUndoRedo();
+   // don't clear undo/redo history for other layers here; only do it
+   // if allowundo is false when user switches to another layer
 }
 
 // -----------------------------------------------------------------------------
@@ -1377,8 +1379,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_REMOVE:         viewptr->RemoveSelection(); break;
       case ID_SHRINK:         viewptr->ShrinkSelection(false); break;
       case ID_RANDOM:         viewptr->RandomFill(); break;
-      case ID_FLIPTB:         viewptr->FlipTopBottom(); break;
-      case ID_FLIPLR:         viewptr->FlipLeftRight(); break;
+      case ID_FLIPTB:         viewptr->FlipSelection(true); break;
+      case ID_FLIPLR:         viewptr->FlipSelection(false); break;
       case ID_ROTATEC:        viewptr->RotateSelection(true); break;
       case ID_ROTATEA:        viewptr->RotateSelection(false); break;
       case ID_DRAW:           viewptr->SetCursorMode(curs_pencil); break;

@@ -673,6 +673,15 @@ void RunScript(const wxString& filename)
       #endif
    #endif
 
+   if (allowundo) {
+      // save each layer's dirty state for use by RememberChanges when
+      // the script has finished (see below)
+      for ( int i = 0; i < numlayers; i++ ) {
+         Layer* layer = GetLayer(i);
+         layer->savedirty = layer->dirty;
+      }
+   }
+
    inscript = true;
    mainptr->UpdateUserInterface(mainptr->IsActive());
 
@@ -693,16 +702,19 @@ void RunScript(const wxString& filename)
    plscript = false;
    pyscript = false;
 
-   // reset all stayclean flags (set by MarkLayerClean)
+   // reset all stayclean flags set by MarkLayerClean
    for ( int i = 0; i < numlayers; i++ ) {
       Layer* layer = GetLayer(i);
       
       if (allowundo) {
          // one or more SaveCellChange calls might have been made
-         if (layer->stayclean)
+         if (layer->stayclean) {
             layer->undoredo->ForgetChanges();
-         else
-            layer->undoredo->RememberChanges(_("Script Changes"));
+         } else {
+            // any MarkLayerDirty calls will have set the dirty flag, so we need to
+            // pass in the flag state saved before the script started
+            layer->undoredo->RememberChanges(_("Script Changes"), layer->savedirty);
+         }
       }
       
       layer->stayclean = false;

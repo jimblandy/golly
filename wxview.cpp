@@ -635,6 +635,10 @@ void PatternView::StartDrawingCells(int x, int y)
       statusptr->ErrorMessage(_("Drawing is not allowed outside +/- 10^9 boundary."));
       return;
    }
+   
+   // ShowDrawing will call MarkLayerDirty so we need to save dirty state now
+   // for later use by RememberChanges
+   if (allowundo) currlayer->savedirty = currlayer->dirty;
 
    cellx = cellpos.first.toint();
    celly = cellpos.second.toint();
@@ -1015,10 +1019,14 @@ void PatternView::MoveView(int x, int y)
 void PatternView::StopDraggingMouse()
 {
    if (selectingcells)
-      mainptr->UpdateMenuItems(true);     // update Edit menu items
+      mainptr->UpdateMenuItems(true);     // enable various Edit menu items
    
-   if (drawingcells && allowundo)
-      currlayer->undoredo->RememberChanges(_("Drawing"));
+   if (drawingcells && allowundo) {
+      // MarkLayerDirty (in ShowDrawing) has set dirty flag, so we need to
+      // pass in the flag state saved before drawing started
+      currlayer->undoredo->RememberChanges(_("Drawing"), currlayer->savedirty);
+      mainptr->UpdateMenuItems(true);     // enable Undo item
+   }
    
    drawingcells = false;
    selectingcells = false;

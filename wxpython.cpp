@@ -447,9 +447,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "s", &filename)) return NULL;
 
    // create temporary qlife universe
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
 
    // readpattern might change global rule table
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -459,9 +457,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
    if (err && strcmp(err,cannotreadhash) == 0) {
       // macrocell file, so switch to hlife universe
       delete tempalgo;
-      tempalgo = new hlifealgo();
-      tempalgo->setMaxMemory(maxhashmem);
-      if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+      tempalgo = CreateNewUniverse(true, allowcheck);
       err = readpattern(FILENAME, *tempalgo);
    }
 
@@ -501,9 +497,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
       return NULL;
 
    // create temporary qlife universe
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
 
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -748,10 +742,7 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "i", &direction)) return NULL;
 
    if (viewptr->SelectionExists()) {
-      if (direction == 0)
-         viewptr->FlipLeftRight();
-      else
-         viewptr->FlipTopBottom();
+      viewptr->FlipSelection(direction);
       DoAutoUpdate();
    } else {
       PyErr_SetString(PyExc_RuntimeError, "flip error: no selection.");
@@ -898,14 +889,7 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
 
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo* tempalgo;
-   if (currlayer->hash) {
-      tempalgo = new hlifealgo();
-      tempalgo->setMaxMemory(maxhashmem);
-   } else {
-      tempalgo = new qlifealgo();
-   }
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->hash, allowcheck);
 
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -1172,10 +1156,9 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
    // because the pattern might have empty borders, or it might even be empty)
    PyObject* outlist = PyList_New(0);
 
-   // create a temporary universe for storing clipboard pattern
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();   // qlife's setcell/getcell are faster
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   // create a temporary universe for storing clipboard pattern;
+   // use qlife because its setcell/getcell calls are faster
+   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)
@@ -2336,7 +2319,7 @@ static PyMethodDef py_methods[] = {
    { "paste",        py_paste,      METH_VARARGS, "paste clipboard pattern at x,y using given mode" },
    { "shrink",       py_shrink,     METH_VARARGS, "shrink selection" },
    { "randfill",     py_randfill,   METH_VARARGS, "randomly fill selection to given percentage" },
-   { "flip",         py_flip,       METH_VARARGS, "flip selection left-right or up-down" },
+   { "flip",         py_flip,       METH_VARARGS, "flip selection top-bottom or left-right" },
    { "rotate",       py_rotate,     METH_VARARGS, "rotate selection 90 deg clockwise or anticlockwise" },
    { "parse",        py_parse,      METH_VARARGS, "parse RLE or Life 1.05 string and return cell list" },
    { "transform",    py_transform,  METH_VARARGS, "apply an affine transformation to cell list" },

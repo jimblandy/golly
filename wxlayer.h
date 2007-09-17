@@ -41,9 +41,14 @@ public:
    void ForgetChanges();
    // ignore the changes made by previous SaveCellChange calls
    
-   void RememberChanges(const wxString& action);
-   // remember the changes made by previous SaveCellChange calls;
-   // the given string is appended to the Undo/Redo menu item names
+   void RememberChanges(const wxString& action, bool wasdirty);
+   // remember the changes made by previous SaveCellChange calls
+   // and the state of the layer's dirty flag BEFORE the change;
+   // the given action string is appended to the Undo/Redo item names
+   
+   void RememberFlip(bool topbot, int t, int l, int b, int r, bool wasdirty);
+   // remember the flip's direction and rectangle, as well as the state
+   // of the layer's dirty flag BEFORE the change
    
    bool CanUndo();            // can a change be undone?
    bool CanRedo();            // can an undone change be redone?
@@ -57,8 +62,14 @@ private:
    wxList undolist;           // list of undoable changes
    wxList redolist;           // list of redoable changes
 
-   int cellchanges;           // number of cells that changed state
-   wxArrayInt* cellarray;     // x,y coordinates of those cells
+   int* cellarray;            // x,y coordinates of changed cells
+   unsigned int intcount;     // number of elements (2 * number of cells)
+   unsigned int maxcount;     // number of elements allocated
+   bool badalloc;             // malloc/realloc failed?
+   
+   void UpdateUndoItem(const wxString& action);
+   void UpdateRedoItem(const wxString& action);
+   // update the Undo/Redo items in the Edit menu
 };
 
 
@@ -77,6 +88,7 @@ public:
    bool showhashinfo;         // show hash info if hash is true?
    bool autofit;              // auto fit pattern while generating?
    bool dirty;                // user has modified pattern?
+   bool savedirty;            // state of dirty flag before drawing/script change
    bool stayclean;            // script has reset dirty flag?
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
@@ -100,6 +112,7 @@ public:
    // for saving and restoring starting pattern
    bool savestart;            // need to save starting pattern?
    bool starthash;            // hashing was on at start?
+   bool startdirty;           // starting state of dirty flag
    wxString startfile;        // file for saving starting pattern
    wxString startrule;        // starting rule
    bigint startgen;           // starting generation (>= 0)
@@ -126,6 +139,10 @@ extern int numlayers;         // number of existing layers
 extern int numclones;         // number of cloned layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer
+
+lifealgo* CreateNewUniverse(bool hashing, bool allowcheck = true);
+// Create a new universe of given type.  If allowcheck is true then
+// event checking is allowed; ie. poller is set to wxGetApp().Poller().
 
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.

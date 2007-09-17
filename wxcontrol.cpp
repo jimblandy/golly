@@ -58,8 +58,9 @@ bool MainFrame::SaveStartingPattern()
       return true;
    }
    
-   // save current rule, scale, location, step size and hashing option
+   // save current rule, dirty flag, scale, location, step size and hashing option
    currlayer->startrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   currlayer->startdirty = currlayer->dirty;
    currlayer->startmag = viewptr->GetMag();
    viewptr->GetPos(currlayer->startx, currlayer->starty);
    currlayer->startwarp = currlayer->warp;
@@ -67,7 +68,6 @@ bool MainFrame::SaveStartingPattern()
    
    if ( !currlayer->savestart ) {
       // no need to save pattern; ResetPattern will load currfile
-      // (note that currfile == tempstart if pattern created via OpenClipboard)
       currlayer->startfile.Clear();
       return true;
    }
@@ -159,20 +159,18 @@ void MainFrame::ResetPattern()
    if ( !currlayer->startfile.IsEmpty() ) {
       // restore currfile
       currlayer->currfile = oldfile;
-      currlayer->savestart = true;       // should not be necessary, but play safe
    }
    
-   // now restore rule, window title (in case rule changed), scale and location
+   // play safe and ensure savestart flag is correct
+   currlayer->savestart = !currlayer->startfile.IsEmpty();
+   
+   // restore settings saved by SaveStartingPattern
    currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
-   if ( currlayer->startfile.IsEmpty() ) {
-      // pattern was restored via non-temporary file so make sure dirty flag
-      // is reset in case user modified pattern *after* generating it
-      MarkLayerClean(currlayer->currname);
-      // above calls SetWindowTitle
-   } else {
-      SetWindowTitle(wxEmptyString);
-   }
+   currlayer->dirty = currlayer->startdirty;
    viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
+
+   // update window title in case rule or dirty flag changed
+   SetWindowTitle(wxEmptyString);
    UpdateEverything();
 }
 
@@ -400,6 +398,8 @@ void MainFrame::AdvanceOutsideSelection()
    // check if selection is completely outside pattern edges;
    // can't do this if qlife because it uses gen parity to decide which bits to draw
    if ( currlayer->hash &&
+        //!!! also avoid this if undo/redo is enabled (too messy to remember cell changes)
+        !(allowundo && !currlayer->stayclean) &&
          ( currlayer->seltop > bottom || currlayer->selbottom < top ||
            currlayer->selleft > right || currlayer->selright < left ) ) {
       generating = true;
@@ -415,8 +415,9 @@ void MainFrame::AdvanceOutsideSelection()
    
       generating = false;
       
-      // if pattern expanded then may need to clear ONE edge of selection!!!
+      // if pattern expanded then may need to clear ONE edge of selection
       viewptr->ClearSelection();
+      // MarkLayerDirty has been called
       UpdateEverything();
       return;
    }
@@ -428,14 +429,8 @@ void MainFrame::AdvanceOutsideSelection()
    }
    
    // create a new universe of same type
-   lifealgo *newalgo;
-   if ( currlayer->hash ) {
-      newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-   }
-   newalgo->setpoll(wxGetApp().Poller());
+   lifealgo *newalgo = CreateNewUniverse(currlayer->hash);
+
    newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy (and kill) live cells in selection to new universe
@@ -557,6 +552,8 @@ void MainFrame::AdvanceSelection()
    // check if selection encloses entire pattern;
    // can't do this if qlife because it uses gen parity to decide which bits to draw
    if ( currlayer->hash &&
+        //!!! also avoid this if undo/redo is enabled (too messy to remember cell changes)
+        !(allowundo && !currlayer->stayclean) &&
         currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
       generating = true;
@@ -572,8 +569,9 @@ void MainFrame::AdvanceSelection()
    
       generating = false;
       
-      // only need to clear 1-cell thick strips just outside selection!!!
+      // clear 1-cell thick strips just outside selection
       viewptr->ClearOutsideSelection();
+      // MarkLayerDirty has been called
       UpdateEverything();
       return;
    }
@@ -592,14 +590,7 @@ void MainFrame::AdvanceSelection()
    
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo *tempalgo;
-   if (currlayer->hash) {
-      tempalgo = new hlifealgo();
-      tempalgo->setMaxMemory(maxhashmem);
-   } else {
-      tempalgo = new qlifealgo();
-   }
-   tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo *tempalgo = CreateNewUniverse(currlayer->hash);
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -740,14 +731,7 @@ void MainFrame::ToggleHashing()
    UpdateStatus();
 
    // create a new universe of the right flavor
-   lifealgo *newalgo;
-   if ( currlayer->hash ) {
-      newalgo = new hlifealgo();
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-   }
-   newalgo->setpoll(wxGetApp().Poller());
+   lifealgo *newalgo = CreateNewUniverse(currlayer->hash);
    
    // even though universes share a global rule table we still need to call setrule
    // due to internal differences in the handling of Wolfram rules

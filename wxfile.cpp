@@ -145,15 +145,7 @@ void MainFrame::CreateUniverse()
    // first delete old universe if it exists
    if (currlayer->algo) delete currlayer->algo;
 
-   if (currlayer->hash) {
-      currlayer->algo = new hlifealgo();
-      currlayer->algo->setMaxMemory(maxhashmem);
-   } else {
-      currlayer->algo = new qlifealgo();
-   }
-
-   // currlayer->algo->step() will call wx_poll::checkevents()
-   currlayer->algo->setpoll(wxGetApp().Poller());
+   currlayer->algo = CreateNewUniverse(currlayer->hash);
 
    // increment has been reset to 1 but that's probably not always desirable
    // so set increment using current warp value

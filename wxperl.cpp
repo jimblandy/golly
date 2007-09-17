@@ -423,9 +423,7 @@ XS(pl_load)
    char* filename = SvPV(ST(0), n_a);
 
    // create temporary qlife universe
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
 
    // readpattern might change global rule table
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -435,9 +433,7 @@ XS(pl_load)
    if (err && strcmp(err,cannotreadhash) == 0) {
       // macrocell file, so switch to hlife universe
       delete tempalgo;
-      tempalgo = new hlifealgo();
-      tempalgo->setMaxMemory(maxhashmem);
-      if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+      tempalgo = CreateNewUniverse(true, allowcheck);
       err = readpattern(FILENAME, *tempalgo);
    }
 
@@ -489,9 +485,7 @@ XS(pl_store)
    char* filename = SvPV(ST(1), n_a);
 
    // create temporary qlife universe
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
 
    // copy cell list into temporary universe
    for (int n = 0; n < num_cells; n++) {
@@ -727,10 +721,7 @@ XS(pl_flip)
    int direction = SvIV(ST(0));
 
    if (viewptr->SelectionExists()) {
-      if (direction == 0)
-         viewptr->FlipLeftRight();
-      else
-         viewptr->FlipTopBottom();
+      viewptr->FlipSelection(direction);
       DoAutoUpdate();
    } else {
       PERL_ERROR("g_flip error: no selection");
@@ -909,14 +900,7 @@ XS(pl_evolve)
 
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo* tempalgo;
-   if (currlayer->hash) {
-      tempalgo = new hlifealgo();
-      tempalgo->setMaxMemory(maxhashmem);
-   } else {
-      tempalgo = new qlifealgo();
-   }
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->hash, allowcheck);
 
    // copy cell array into temporary universe
    for (int n = 0; n < num_cells; n++) {
@@ -1166,10 +1150,9 @@ XS(pl_getclip)
    // because the pattern might have empty borders, or it might even be empty)
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
-   // create a temporary universe for storing clipboard pattern
-   lifealgo* tempalgo;
-   tempalgo = new qlifealgo();   // qlife's setcell/getcell are faster
-   if (allowcheck) tempalgo->setpoll(wxGetApp().Poller());
+   // create a temporary universe for storing clipboard pattern;
+   // use qlife because its setcell/getcell calls are faster
+   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)

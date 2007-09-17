@@ -52,15 +52,16 @@ public:
    void RemoveSelection();
    void ShrinkSelection(bool fit);
    void RandomFill();
-   void FlipTopBottom();
-   void FlipLeftRight();
+   void FlipTopBottom(int top, int left, int bottom, int right);
+   void FlipLeftRight(int top, int left, int bottom, int right);
+   void FlipSelection(bool topbottom);
    void RotateSelection(bool clockwise);
    void SetCursorMode(wxCursor* curs);
    void CycleCursorMode();
-   bool CopyRect(int itop, int ileft, int ibottom, int iright,
+   bool CopyRect(int top, int left, int bottom, int right,
                  lifealgo* srcalgo, lifealgo* destalgo,
                  bool erasesrc, const wxString& progmsg);
-   void CopyAllRect(int itop, int ileft, int ibottom, int iright,
+   void CopyAllRect(int top, int left, int bottom, int right,
                     lifealgo* srcalgo, lifealgo* destalgo,
                     const wxString& progmsg);
 

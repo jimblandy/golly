@@ -1873,7 +1873,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
    wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
 
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_ASK_NEW, _("Creating a new pattern"));
-   wxCheckBox* check2 = new wxCheckBox(panel, PREF_ASK_LOAD, _("Loading a pattern file"));
+   wxCheckBox* check2 = new wxCheckBox(panel, PREF_ASK_LOAD, _("Opening a pattern file"));
    wxCheckBox* check3 = new wxCheckBox(panel, PREF_ASK_DELETE, _("Deleting layer"));
    wxCheckBox* check4 = new wxCheckBox(panel, PREF_ASK_QUIT, _("Quitting application"));
 
