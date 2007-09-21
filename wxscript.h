@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXSCRIPT_H_
 
 extern bool inscript;
-// Is a script currently running?  We allow access to global flag
+// Is a script currently running?  We allow access to this flag
 // so clients can temporarily save and restore its setting.
 
 extern bool canswitch;
@@ -44,6 +44,17 @@ void PassKeyToScript(int key);
 
 void ShowTitleLater();
 // Called if a script is running and window title has changed.
+
+void ChangeCell(int x, int y);
+// A setcell/putcells command is changing state of cell at x,y.
+
+void SavePendingChanges();
+// Called to save any pending cell changes made by ChangeCell calls.
+// This will accumulate potentially many cell changes in a single
+// undo/redo change node so that a script like invert.pl/py can
+// be undone with just a single Undo operation.
+// Must be called BEFORE all undoredo->Remember... calls but
+// only if inscript && allowundo && !currlayer->stayclean.
 
 void FinishScripting();
 // Called when app quits to abort a running script.
@@ -67,6 +78,8 @@ const char* GSF_open(char* filename, int remember);
 const char* GSF_save(char* filename, char* format, int remember);
 const char* GSF_setrule(char* rulestring);
 void GSF_setname(char* name, int index);
+void GSF_setcell(int x, int y, int state);
+void GSF_select(int x, int y, int wd, int ht);
 bool GSF_setoption(char* optname, int newval, int* oldval);
 bool GSF_getoption(char* optname, int* optval);
 bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol);

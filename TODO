@@ -8,7 +8,7 @@ For future versions:
   GollyPrefs, then (much harder) write a nice UI to change settings
   in Prefs > Keys.  Use KeyBinder code at wxcode.sourceforge.net?
 
-- Implement Undo (even just undoing the last draw would be very useful).
+- Allow dragging zoom-in cursor to zoom into rect.
 
 - Support toroidal universes (see LifeLab).  Or provide this as part
   of an MCell-compatible lifealgo.
@@ -28,9 +28,6 @@ For future versions:
 
 - Implement a history bar for hlife.
 
-- If other X11 apps like xlife or fontforge allow clipboard support
-  then examine their source code and use it.
-
 - Build the Help menu items dynamically by looking at the .html files
   inside the Help folder.  Or maybe read a special Help/menu.data file?
 
@@ -43,11 +40,12 @@ User suggestions:
 
 [Nick Gotts]
 - Need a way to copy exact gen/pop counts to clipboard.
-  [No longer necessary now that a Python script can get this info?]
+  [No longer necessary now that a script can get this info?]
 
 [Jason Summers]
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
+  [Could be done quite easily via a script that prompts for X,Y,Z.]
 - Allow diagonal selection rectangles.
 
 [Dave Greene]
@@ -64,7 +62,6 @@ User suggestions:
   its contents) when user loads another pattern.
 
 [H Koenig]
-- Mulitiple undo/redo.
 - Multiple windows.  [No real need now that we allow multiple layers.]
 
 [Gabriel Nivasch]

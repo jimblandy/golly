@@ -951,6 +951,13 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
 
    int num_cells = PyList_Size(list) / 2;
    lifealgo* curralgo = currlayer->algo;
+   
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   // better to use ChangeCell and combine all changes due to consecutive setcell/putcells
+   // if (savecells) SavePendingChanges();
+
+   bool abort = false;
 
    wxString modestr = wxString(mode, wxConvLocal);
    if ( !(modestr.IsSameAs(wxT("or"), false)
@@ -960,6 +967,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       PyErr_SetString(PyExc_RuntimeError, "putcells error: unknown mode.");
       return NULL;
    }
+   
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
    }
@@ -973,16 +981,15 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          int newy = y0 + x * ayx + y * ayy;
          int s = curralgo->getcell(newx, newy);
 
-         if (allowundo && !currlayer->stayclean)
-            currlayer->undoredo->SaveCellChange(newx, newy);
+         // if (savecells) currlayer->undoredo->SaveCellChange(newx, newy);
+         if (savecells) ChangeCell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(newx, newy, 1-s);
 
          if ((n % 4096) == 0 && PythonScriptAborted()) {
-            curralgo->endofpattern();
-            MarkLayerDirty();
-            return NULL;
+            abort = true;
+            break;
          }
       }
    } else {
@@ -993,23 +1000,29 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
 
-         if (allowundo && !currlayer->stayclean && cellstate != currlayer->algo->getcell(newx, newy))
-            currlayer->undoredo->SaveCellChange(newx, newy);
+         if (savecells && cellstate != currlayer->algo->getcell(newx, newy))
+            // currlayer->undoredo->SaveCellChange(newx, newy);
+            ChangeCell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(newx, newy, cellstate);
 
          if ((n % 4096) == 0 && PythonScriptAborted()) {
-            curralgo->endofpattern();
-            MarkLayerDirty();
-            return NULL;
+            abort = true;
+            break;
          }
       }
    }
 
    curralgo->endofpattern();
+   
+   // better to combine all changes due to consecutive setcell/putcells
+   // if (savecells) currlayer->undoredo->RememberChanges(_("Cell Changes"), currlayer->dirty);
+   
    MarkLayerDirty();
    DoAutoUpdate();
+   
+   if (abort) return NULL;
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -1226,7 +1239,7 @@ static PyObject* py_select(PyObject* self, PyObject* args)
    int numitems = PyList_Size(rect_list);
    if (numitems == 0) {
       // remove any existing selection
-      viewptr->NoSelection();
+      GSF_select(0, 0, 0, 0);
    } else if (numitems == 4) {
       int x  = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
       int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
@@ -1241,11 +1254,8 @@ static PyObject* py_select(PyObject* self, PyObject* args)
          PyErr_SetString(PyExc_RuntimeError, "select error: height must be > 0.");
          return NULL;
       }
-      // set selection edges
-      currlayer->selleft = x;
-      currlayer->seltop = y;
-      currlayer->selright = x + wd - 1;
-      currlayer->selbottom = y + ht - 1;
+      // set selection rect
+      GSF_select(x, y, wd, ht);
    } else {
       PyErr_SetString(PyExc_RuntimeError, "select error: arg must be [] or [x,y,wd,ht].");
       return NULL;
@@ -1328,13 +1338,7 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
 
-   if (allowundo && !currlayer->stayclean && state != currlayer->algo->getcell(x, y))
-      currlayer->undoredo->SaveCellChange(x, y);
-
-   currlayer->algo->setcell(x, y, state);
-   currlayer->algo->endofpattern();
-   MarkLayerDirty();
-   DoAutoUpdate();
+   GSF_setcell(x, y, state);
 
    Py_INCREF(Py_None);
    return Py_None;

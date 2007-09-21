@@ -983,6 +983,11 @@ XS(pl_putcells)
 
    lifealgo* curralgo = currlayer->algo;
 
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   // better to use ChangeCell and combine all changes due to consecutive setcell/putcells
+   // if (savecells) SavePendingChanges();
+
    wxString modestr = wxString(mode, wxConvLocal);
    if ( !(modestr.IsSameAs(wxT("or"), false)
           || modestr.IsSameAs(wxT("xor"), false)
@@ -990,6 +995,7 @@ XS(pl_putcells)
           || modestr.IsSameAs(wxT("not"), false)) ) {
       PERL_ERROR("g_putcells error: unknown mode");
    }
+   
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
    }
@@ -1003,8 +1009,8 @@ XS(pl_putcells)
          int newy = y0 + x * ayx + y * ayy;
          int s = curralgo->getcell(newx, newy);
 
-         if (allowundo && !currlayer->stayclean)
-            currlayer->undoredo->SaveCellChange(newx, newy);
+         // if (savecells) currlayer->undoredo->SaveCellChange(newx, newy);
+         if (savecells) ChangeCell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(newx, newy, 1-s);
@@ -1019,8 +1025,9 @@ XS(pl_putcells)
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
 
-         if (allowundo && !currlayer->stayclean && cellstate != currlayer->algo->getcell(newx, newy))
-            currlayer->undoredo->SaveCellChange(newx, newy);
+         if (savecells && cellstate != currlayer->algo->getcell(newx, newy))
+            // currlayer->undoredo->SaveCellChange(newx, newy);
+            ChangeCell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
          curralgo->setcell(newx, newy, cellstate);
@@ -1030,6 +1037,10 @@ XS(pl_putcells)
    }
 
    curralgo->endofpattern();
+   
+   // better to combine all changes due to consecutive setcell/putcells
+   // if (savecells) currlayer->undoredo->RememberChanges(_("Cell Changes"), currlayer->dirty);
+
    MarkLayerDirty();
    DoAutoUpdate();
 
@@ -1219,7 +1230,7 @@ XS(pl_select)
 
    if (items == 0) {
       // remove any existing selection
-      viewptr->NoSelection();
+      GSF_select(0, 0, 0, 0);
    } else {
       // items == 4
       int x  = SvIV(ST(0));
@@ -1229,11 +1240,8 @@ XS(pl_select)
       // first check that wd & ht are > 0
       if (wd <= 0) PERL_ERROR("g_select error: width must be > 0");
       if (ht <= 0) PERL_ERROR("g_select error: height must be > 0");
-      // set selection edges
-      currlayer->selleft = x;
-      currlayer->seltop = y;
-      currlayer->selright = x + wd - 1;
-      currlayer->selbottom = y + ht - 1;
+      // set selection rect
+      GSF_select(x, y, wd, ht);
    }
    DoAutoUpdate();
 
@@ -1316,13 +1324,7 @@ XS(pl_setcell)
    int y = SvIV(ST(1));
    int state = SvIV(ST(2));
 
-   if (allowundo && !currlayer->stayclean && state != currlayer->algo->getcell(x, y))
-      currlayer->undoredo->SaveCellChange(x, y);
-
-   currlayer->algo->setcell(x, y, state);
-   currlayer->algo->endofpattern();
-   MarkLayerDirty();
-   DoAutoUpdate();
+   GSF_setcell(x, y, state);
    
    XSRETURN(0);
 }

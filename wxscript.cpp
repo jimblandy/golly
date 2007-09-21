@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for gollydir, etc
+#include "wxprefs.h"       // for gollydir, allowundo, etc
 #include "wxundo.h"        // for undoredo->...
 #include "wxlayer.h"       // for currlayer
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
@@ -184,6 +184,39 @@ void GSF_setname(char* name, int index)
          // show name in given layer's menu item
          mainptr->UpdateLayerItem(index);
       }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void GSF_setcell(int x, int y, int state)
+{
+   if (allowundo && !currlayer->stayclean && state != currlayer->algo->getcell(x, y))
+      ChangeCell(x, y);
+
+   currlayer->algo->setcell(x, y, state);
+   currlayer->algo->endofpattern();
+   MarkLayerDirty();
+   DoAutoUpdate();
+}
+
+// -----------------------------------------------------------------------------
+
+void GSF_select(int x, int y, int wd, int ht)
+{
+   if (wd < 1 || ht < 1) {
+      // remove any existing selection
+      viewptr->SaveCurrentSelection();
+      viewptr->NoSelection();
+      viewptr->RememberNewSelection(_("Deselection"));
+   } else {
+      // set selection edges
+      viewptr->SaveCurrentSelection();
+      currlayer->selleft = x;
+      currlayer->seltop = y;
+      currlayer->selright = x + wd - 1;
+      currlayer->selbottom = y + ht - 1;
+      viewptr->RememberNewSelection(_("Selection"));
    }
 }
 
@@ -635,6 +668,31 @@ void CheckScriptError(const wxString& ext)
 
 // -----------------------------------------------------------------------------
 
+void ChangeCell(int x, int y)
+{
+   // setcell/putcells command is changing state of cell at x,y
+   currlayer->undoredo->SaveCellChange(x, y);
+   if (!currlayer->savechanges) {
+      currlayer->savechanges = true;
+      // save layer's dirty state for later RememberChanges call
+      currlayer->savedirty = currlayer->dirty;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void SavePendingChanges()
+{
+   // if ChangeCell has been called then remember accumulated changes;
+   // should only be called if inscript && allowundo && !currlayer->stayclean
+   if (currlayer->savechanges) {
+      currlayer->undoredo->RememberChanges(_("Cell Changes"), currlayer->savedirty);
+      currlayer->savechanges = false;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void RunScript(const wxString& filename)
 {
    if ( inscript ) return;    // play safe and avoid re-entrancy
@@ -680,11 +738,7 @@ void RunScript(const wxString& filename)
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* layer = GetLayer(i);
          layer->savedirty = layer->dirty;
-         // also save current selection for use by RememberSelection
-         layer->savetop = layer->seltop;
-         layer->savebottom = layer->selbottom;
-         layer->saveleft = layer->selleft;
-         layer->saveright = layer->selright;
+         layer->savechanges = false;
       }
    }
 
@@ -711,24 +765,13 @@ void RunScript(const wxString& filename)
    // reset all stayclean flags set by MarkLayerClean
    for ( int i = 0; i < numlayers; i++ ) {
       Layer* layer = GetLayer(i);
-      
-      if (allowundo) {
-         // one or more SaveCellChange calls might have been made,
-         // or selection may have changed
-         if (layer->stayclean) {
+      if (allowundo && layer->savechanges) {
+         // some SaveCellChange calls have not been processed by SavePendingChanges
+         if (layer->stayclean)
             layer->undoredo->ForgetChanges();
-         } else {
-            // any MarkLayerDirty calls will have set the dirty flag, so we need to
-            // pass in the flag state saved before the script started
-            layer->undoredo->RememberChanges(_("Script Changes"), layer->savedirty);
-            // also remember change in selection
-            layer->undoredo->RememberSelection(layer->savetop, layer->saveleft,
-                                               layer->savebottom, layer->saveright,
-                                               layer->seltop, layer->selleft,
-                                               layer->selbottom, layer->selright);
-         }
+         else
+            layer->undoredo->RememberChanges(_("Cell Changes"), layer->savedirty);
       }
-      
       layer->stayclean = false;
    }
 

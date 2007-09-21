@@ -834,9 +834,10 @@ void SyncClones()
             // cloneptr->originx = currlayer->originx;
             // cloneptr->originy = currlayer->originy;
             
-            // sync dirty flag
+            // sync various flags
             cloneptr->dirty = currlayer->dirty;
             cloneptr->savedirty = currlayer->savedirty;
+            cloneptr->savechanges = currlayer->savechanges;
             cloneptr->stayclean = currlayer->stayclean;
             
             // sync speed
@@ -923,8 +924,14 @@ void CurrentLayerChanged()
       if (mainptr->IsActive()) viewptr->SetFocus();
    }
    
-   // if undo/redo is disabled then clear history
-   if (!allowundo) currlayer->undoredo->ClearUndoRedo();
+   if (allowundo) {
+      // update Undo/Redo items so they show the correct suffix
+      currlayer->undoredo->UpdateUndoRedoItems();
+   } else {
+      // undo/redo is disabled so clear history;
+      // this also removes suffix from Undo/Redo items
+      currlayer->undoredo->ClearUndoRedo();
+   }
 
    mainptr->SetWarp(currlayer->warp);
    mainptr->SetWindowTitle(currlayer->currname);
@@ -1445,9 +1452,10 @@ Layer::Layer()
 
    dirty = false;                // user has not modified pattern
    savedirty = false;            // in case script created layer
+   savechanges = false;          // no pending cell changes
    stayclean = inscript;         // if true then keep the dirty flag false
                                  // for the duration of the script
-   savestart = false;            // no need to save starting pattern just yet
+   savestart = false;            // no need to save starting pattern
    startfile.Clear();            // no starting pattern
    startgen = 0;                 // initial starting generation
    currname = _("untitled");     // initial window title
@@ -1579,6 +1587,8 @@ Layer::Layer()
          currname = currlayer->currname;
          dirty = currlayer->dirty;
          savedirty = currlayer->savedirty;
+         // we don't copy undo/redo history when duplicating so don't keep savechanges false
+         if (cloning) savechanges = currlayer->savechanges;
          stayclean = currlayer->stayclean;
          warp = currlayer->warp;
          autofit = currlayer->autofit;

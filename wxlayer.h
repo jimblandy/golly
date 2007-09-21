@@ -44,6 +44,7 @@ public:
    bool autofit;              // auto fit pattern while generating?
    bool dirty;                // user has modified pattern?
    bool savedirty;            // state of dirty flag before drawing/script change
+   bool savechanges;          // one or more cell changes need to be remembered?
    bool stayclean;            // script has reset dirty flag?
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
@@ -110,12 +111,11 @@ void AddLayer();
 // and location, and the same cursor mode.
 
 void CloneLayer();
-// Like AddLayer but shares the same universe as the current layer.
-// All the current layer's settings are duplicated and most will be
-// kept synchronized; ie. changing one clone changes all the others,
-// but each cloned layer has a separate viewport so the same pattern
-// can be viewed at different scales and locations (at the same time
-// if the layers are tiled).
+// Like AddLayer but shares the same universe and undo/redo history
+// as the current layer.  All the current layer's settings are duplicated
+// and most will be kept synchronized; ie. changing one clone changes all
+// the others, but each cloned layer has a separate viewport so the same
+// pattern can be viewed at different scales and locations.
 
 void SyncClones();
 // If the current layer is a clone then this call ensures the universe

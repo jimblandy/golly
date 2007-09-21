@@ -1021,7 +1021,7 @@ void PatternView::MoveView(int x, int y)
 void PatternView::StopDraggingMouse()
 {
    if (selectingcells) {
-      if (allowundo) RememberNewSelection();
+      if (allowundo) RememberNewSelection(_("Selection"));
       mainptr->UpdateMenuItems(true);        // enable various Edit menu items
    }
    

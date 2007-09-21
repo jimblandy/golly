@@ -60,7 +60,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 static bigint min_coord = -1000000000;
 static bigint max_coord = +1000000000;
 
-bool PatternView::OutsideLimits(bigint &t, bigint &l, bigint &b, bigint &r)
+bool PatternView::OutsideLimits(bigint& t, bigint& l, bigint& b, bigint& r)
 {
    return ( t < min_coord || l < min_coord || b > max_coord || r > max_coord );
 }
@@ -151,6 +151,39 @@ void PatternView::EmptyUniverse()
 
 // -----------------------------------------------------------------------------
 
+bool PatternView::SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
+                                  int itop, int ileft, int ibottom, int iright)
+{
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   
+   // compare patterns in given algos and call SaveCellChange for each different cell
+   BeginProgress(_("Saving cell changes"));
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         if ( oldalgo->getcell(cx, cy) != newalgo->getcell(cx, cy) ) {
+            // assume this is only called if allowundo && !currlayer->stayclean
+            currlayer->undoredo->SaveCellChange(cx, cy);
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   EndProgress();
+   
+   return !abort;
+}
+
+// -----------------------------------------------------------------------------
+
 bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
                            lifealgo* srcalgo, lifealgo* destalgo,
                            bool erasesrc, const wxString& progmsg)
@@ -188,6 +221,7 @@ bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
       }
       if (abort) break;
    }
+   if (erasesrc) srcalgo->endofpattern();
    destalgo->endofpattern();
    EndProgress();
    
@@ -233,9 +267,15 @@ void PatternView::ClearSelection()
    // no need to do anything if there is no pattern
    if (currlayer->algo->isEmpty()) return;
    
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
+   
    bigint top, left, bottom, right;
    currlayer->algo->findedges(&top, &left, &bottom, &right);
-   if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
+
+   if ( !savecells &&
+        currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
       // selection encloses entire pattern so just create empty universe
       EmptyUniverse();
@@ -272,6 +312,7 @@ void PatternView::ClearSelection()
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
+   bool selchanged = false;
    BeginProgress(_("Clearing selection"));
    lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -283,6 +324,8 @@ void PatternView::ClearSelection()
             // found next live cell
             cx += skip;
             curralgo->setcell(cx, cy, 0);
+            selchanged = true;
+            if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -296,11 +339,83 @@ void PatternView::ClearSelection()
       }
       if (abort) break;
    }
-   curralgo->endofpattern();
-   MarkLayerDirty();
+   if (selchanged) curralgo->endofpattern();
    EndProgress();
    
-   mainptr->UpdatePatternAndStatus();
+   if (selchanged) {
+      if (savecells) currlayer->undoredo->RememberChanges(_("Clear"), currlayer->dirty);
+      MarkLayerDirty();
+      mainptr->UpdatePatternAndStatus();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool PatternView::SaveOutsideSelection(bigint& t, bigint& l, bigint& b, bigint& r)
+{
+   if ( OutsideLimits(t, l, b, r) ) {
+      statusptr->ErrorMessage(pattern_too_big);
+      return false;
+   }
+   
+   int itop = t.toint();
+   int ileft = l.toint();
+   int ibottom = b.toint();
+   int iright = r.toint();
+   
+   // save ALL cells if selection is completely outside pattern edges
+   bool saveall = currlayer->seltop > b || currlayer->selbottom < t ||
+                  currlayer->selleft > r || currlayer->selright < l;
+
+   // integer selection edges must not be outside pattern edges
+   int stop = itop;
+   int sleft = ileft;
+   int sbottom = ibottom;
+   int sright = iright;
+   if (!saveall) {
+      if (currlayer->seltop > t)    stop = currlayer->seltop.toint();
+      if (currlayer->selleft > l)   sleft = currlayer->selleft.toint();
+      if (currlayer->selbottom < b) sbottom = currlayer->selbottom.toint();
+      if (currlayer->selright < r)  sright = currlayer->selright.toint();
+   }
+   
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   BeginProgress(_("Saving outside selection"));
+   lifealgo* curralgo = currlayer->algo;
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            if (saveall || cx < sleft || cx > sright || cy < stop || cy > sbottom) {
+               // cell is outside selection edges
+               currlayer->undoredo->SaveCellChange(cx, cy);
+            }
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, wxEmptyString);
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   EndProgress();
+   
+   if (abort) currlayer->undoredo->ForgetChanges();
+   return !abort;
 }
 
 // -----------------------------------------------------------------------------
@@ -319,13 +434,24 @@ void PatternView::ClearOutsideSelection()
         currlayer->selleft <= left && currlayer->selright >= right ) {
       return;
    }
+   
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
 
-   // create empty universe if selection is completely outside pattern edges
-   if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
-        currlayer->selleft > right || currlayer->selright < left ) {
-      EmptyUniverse();
-      MarkLayerDirty();
-      return;
+   if (savecells) {
+      // save live cells outside selection
+      if ( !SaveOutsideSelection(top, left, bottom, right) ) {
+         return;
+      }
+   } else {
+      // create empty universe if selection is completely outside pattern edges
+      if ( currlayer->seltop > bottom || currlayer->selbottom < top ||
+           currlayer->selleft > right || currlayer->selright < left ) {
+         EmptyUniverse();
+         MarkLayerDirty();
+         return;
+      }
    }
    
    // find intersection of selection and pattern to minimize work
@@ -350,14 +476,16 @@ void PatternView::ClearOutsideSelection()
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                  currlayer->algo, newalgo, false, _("Saving selection")) ) {
       // delete old universe and point currlayer->algo at new universe
-      MarkLayerDirty();
       delete currlayer->algo;
       currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
+      if (savecells) currlayer->undoredo->RememberChanges(_("Clear Outside"), currlayer->dirty);
+      MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    } else {
-      // aborted, so don't change current universe
+      // CopyRect was aborted, so don't change current universe
       delete newalgo;
+      if (savecells) currlayer->undoredo->ForgetChanges();
    }
 }
 
@@ -462,6 +590,10 @@ void PatternView::CopySelectionToClipboard(bool cut)
    unsigned int dollrun = 0;
    char lastchar;
    int cx, cy;
+
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
    
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
@@ -496,7 +628,10 @@ void PatternView::CopySelectionToClipboard(bool cut)
             // found next live cell
             cx += skip;
             livecount++;
-            if (cut) curralgo->setcell(cx, cy, 0);
+            if (cut) {
+               curralgo->setcell(cx, cy, 0);
+               if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+            }
             if (lastchar == 'o') {
                orun++;
             } else {
@@ -558,18 +693,19 @@ void PatternView::CopySelectionToClipboard(bool cut)
       // terminate RLE data
       dollrun = 1;
       AddRun('!', &dollrun, &linelen, &chptr);
-      if (cut) {
-         currlayer->algo->endofpattern();
-         MarkLayerDirty();
-      }
+      if (cut) currlayer->algo->endofpattern();
    }
    AddEOL(&chptr);
    *chptr = 0;
    
    EndProgress();
    
-   if (cut && livecount > 0)
+   if (cut && livecount > 0) {
+      if (savecells) currlayer->undoredo->RememberChanges(_("Cut"), currlayer->dirty);
+      // update dirty flag AFTER RememberChanges
+      MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
+   }
    
    wxString text = wxString(textptr,wxConvLocal);
    mainptr->CopyTextToClipboard(text);
@@ -594,7 +730,7 @@ void PatternView::CopySelection()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
+void PatternView::SetPasteRect(wxRect& rect, bigint& wd, bigint& ht)
 {
    int x, y, pastewd, pasteht;
    int mag = currlayer->view->getmag();
@@ -664,7 +800,7 @@ void PatternView::SetPasteRect(wxRect &rect, bigint &wd, bigint &ht)
 // -----------------------------------------------------------------------------
 
 void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
-                             bigint top, bigint left, bigint bottom, bigint right)
+                                          bigint top, bigint left, bigint bottom, bigint right)
 {
    // make sure given edges are within getcell/setcell limits
    if ( OutsideLimits(top, left, bottom, right) ) {
@@ -812,11 +948,16 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    pastex = left.toint();
    pastey = top.toint();
 
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
+
    // copy pattern from temporary universe to current universe
    int tx, ty, cx, cy;
    double maxcount = wd.todouble() * ht.todouble();
    int cntr = 0;
    bool abort = false;
+   bool pattchanged = false;
    BeginProgress(_("Pasting pattern"));
    
    // we can speed up pasting sparse patterns by using nextcell in these cases:
@@ -845,7 +986,11 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               curralgo->setcell(cx, cy, 1);
+               if (curralgo->getcell(cx, cy) != 1) {
+                  curralgo->setcell(cx, cy, 1);
+                  pattchanged = true;
+                  if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+               }
                cx++;
             } else {
                tx = iright + 1;     // done this row
@@ -869,20 +1014,32 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          cx = pastex;
          for ( tx=ileft; tx<=iright; tx++ ) {
             tempstate = tempalgo->getcell(tx, ty);
+            currstate = curralgo->getcell(cx, cy);
             switch (pmode) {
                case Copy:
-                  curralgo->setcell(cx, cy, tempstate);
+                  if (tempstate != currstate) {
+                     curralgo->setcell(cx, cy, tempstate);
+                     pattchanged = true;
+                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                  }
                   break;
                case Or:
                   // Or mode is done using above nextcell loop;
                   // we only include this case to avoid compiler warning
                   break;
                case Xor:
-                  currstate = curralgo->getcell(cx, cy);
                   if (tempstate == currstate) {
-                     if (currstate != 0) curralgo->setcell(cx, cy, 0);
+                     if (currstate != 0) {
+                        curralgo->setcell(cx, cy, 0);
+                        pattchanged = true;
+                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                     }
                   } else {
-                     if (currstate != 1) curralgo->setcell(cx, cy, 1);
+                     if (currstate != 1) {
+                        curralgo->setcell(cx, cy, 1);
+                        pattchanged = true;
+                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                     }
                   }
                   break;
             }
@@ -898,13 +1055,16 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       }
    }
 
-   currlayer->algo->endofpattern();
-   MarkLayerDirty();
+   if (pattchanged) currlayer->algo->endofpattern();
    EndProgress();
    
    // tidy up and display result
    statusptr->ClearMessage();
-   mainptr->UpdatePatternAndStatus();
+   if (pattchanged) {
+      if (savecells) currlayer->undoredo->RememberChanges(_("Paste"), currlayer->dirty);
+      MarkLayerDirty();
+      mainptr->UpdatePatternAndStatus();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1028,7 +1188,7 @@ void PatternView::CyclePasteMode()
 
 void PatternView::DisplaySelectionSize()
 {
-   if (waitingforclick) return;
+   if (waitingforclick || inscript) return;
    bigint wd = currlayer->selright;    wd -= currlayer->selleft;   wd += bigint::one;
    bigint ht = currlayer->selbottom;   ht -= currlayer->seltop;    ht += bigint::one;
    wxString msg = _("Selection wd x ht = ");
@@ -1042,7 +1202,7 @@ void PatternView::DisplaySelectionSize()
 
 void PatternView::SaveCurrentSelection()
 {
-   if (allowundo && !inscript) {
+   if (allowundo && !currlayer->stayclean) {
       currlayer->savetop = currlayer->seltop;
       currlayer->saveleft = currlayer->selleft;
       currlayer->savebottom = currlayer->selbottom;
@@ -1052,10 +1212,12 @@ void PatternView::SaveCurrentSelection()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::RememberNewSelection()
+void PatternView::RememberNewSelection(const wxString& action)
 {
-   if (allowundo && !inscript) {
-      currlayer->undoredo->RememberSelection(currlayer->savetop, currlayer->saveleft,
+   if (allowundo && !currlayer->stayclean) {
+      if (inscript) SavePendingChanges();
+      currlayer->undoredo->RememberSelection(action,
+                                             currlayer->savetop, currlayer->saveleft,
                                              currlayer->savebottom, currlayer->saveright,
                                              currlayer->seltop, currlayer->selleft,
                                              currlayer->selbottom, currlayer->selright);
@@ -1074,14 +1236,14 @@ void PatternView::SelectAll()
 
    if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
-      RememberNewSelection();
+      RememberNewSelection(_("Deselection"));
       return;
    }
    
    currlayer->algo->findedges(&currlayer->seltop, &currlayer->selleft,
                               &currlayer->selbottom, &currlayer->selright);
 
-   RememberNewSelection();
+   RememberNewSelection(_("Select All"));
    DisplaySelectionSize();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1093,7 +1255,7 @@ void PatternView::RemoveSelection()
    if (SelectionExists()) {
       SaveCurrentSelection();
       NoSelection();
-      RememberNewSelection();
+      RememberNewSelection(_("Deselection"));
       mainptr->UpdatePatternAndStatus();
    }
 }
@@ -1122,7 +1284,7 @@ void PatternView::ShrinkSelection(bool fit)
       currlayer->selleft = left;
       currlayer->selbottom = bottom;
       currlayer->selright = right;
-      RememberNewSelection();
+      RememberNewSelection(_("Shrink Selection"));
       DisplaySelectionSize();
       if (fit)
          FitSelection();   // calls UpdateEverything
@@ -1166,7 +1328,7 @@ void PatternView::ShrinkSelection(bool fit)
          SaveCurrentSelection();
          tempalgo->findedges(&currlayer->seltop, &currlayer->selleft,
                              &currlayer->selbottom, &currlayer->selright);
-         RememberNewSelection();
+         RememberNewSelection(_("Shrink Selection"));
          DisplaySelectionSize();
          if (!fit) mainptr->UpdatePatternAndStatus();
       }
@@ -1189,6 +1351,10 @@ void PatternView::RandomFill()
       return;
    }
 
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
+
    // no need to kill cells if selection is empty
    bool killcells = !currlayer->algo->isEmpty();
    if ( killcells ) {
@@ -1198,7 +1364,7 @@ void PatternView::RandomFill()
       if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
            currlayer->selleft <= left && currlayer->selright >= right ) {
          // selection encloses entire pattern so create empty universe
-         if (allowundo && !currlayer->stayclean) {
+         if (savecells) {
             // don't kill pattern otherwise we can't use SaveCellChange below
          } else {
             EmptyUniverse();
@@ -1226,7 +1392,7 @@ void PatternView::RandomFill()
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
-         if (allowundo && !currlayer->stayclean) {
+         if (savecells) {
             // remember cell coords if state changes
             if ((rand() % 100) < randomfill) {
                if (!killcells || curralgo->getcell(cx, cy) == 0) {
@@ -1255,8 +1421,7 @@ void PatternView::RandomFill()
    currlayer->algo->endofpattern();
    EndProgress();
 
-   if (allowundo && !currlayer->stayclean)
-      currlayer->undoredo->RememberChanges(_("Random Fill"), currlayer->dirty);
+   if (savecells) currlayer->undoredo->RememberChanges(_("Random Fill"), currlayer->dirty);
 
    // update dirty flag AFTER RememberChanges
    MarkLayerDirty();
@@ -1265,7 +1430,7 @@ void PatternView::RandomFill()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::FlipTopBottom(int itop, int ileft, int ibottom, int iright)
+bool PatternView::FlipTopBottom(int itop, int ileft, int ibottom, int iright)
 {
    // following code can be optimized by using faster nextcell calls!!!
    // ie. if entire pattern is selected then flip into new universe and
@@ -1276,6 +1441,7 @@ void PatternView::FlipTopBottom(int itop, int ileft, int ibottom, int iright)
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
+   
    BeginProgress(_("Flipping top-bottom"));
    int cx, cy;
    int mirrory = ibottom;
@@ -1300,11 +1466,13 @@ void PatternView::FlipTopBottom(int itop, int ileft, int ibottom, int iright)
    }
    currlayer->algo->endofpattern();
    EndProgress();
+   
+   return !abort;
 }
 
 // -----------------------------------------------------------------------------
 
-void PatternView::FlipLeftRight(int itop, int ileft, int ibottom, int iright)
+bool PatternView::FlipLeftRight(int itop, int ileft, int ibottom, int iright)
 {
    // following code can be optimized by using faster nextcell calls!!!
    // ie. if entire pattern is selected then flip into new universe and
@@ -1315,6 +1483,7 @@ void PatternView::FlipLeftRight(int itop, int ileft, int ibottom, int iright)
    double maxcount = (double)wd * (double)ht / 2.0;
    int cntr = 0;
    bool abort = false;
+   
    BeginProgress(_("Flipping left-right"));
    int cx, cy;
    int mirrorx = iright;
@@ -1339,19 +1508,21 @@ void PatternView::FlipLeftRight(int itop, int ileft, int ibottom, int iright)
    }
    currlayer->algo->endofpattern();
    EndProgress();
+   
+   return !abort;
 }
 
 // -----------------------------------------------------------------------------
 
-void PatternView::FlipSelection(bool topbottom)
+bool PatternView::FlipSelection(bool topbottom)
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (mainptr->generating || !SelectionExists()) return false;
 
    // can only use getcell/setcell in limited domain
    if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
                       currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
-      return;
+      return false;
    }
    
    int itop = currlayer->seltop.toint();
@@ -1360,22 +1531,24 @@ void PatternView::FlipSelection(bool topbottom)
    int iright = currlayer->selright.toint();
    
    if (topbottom) {
-      if (ibottom == itop) return;
-      FlipTopBottom(itop, ileft, ibottom, iright);
+      if (ibottom == itop) return false;
+      if (!FlipTopBottom(itop, ileft, ibottom, iright)) return false;
    } else {
-      if (iright == ileft) return;
-      FlipLeftRight(itop, ileft, ibottom, iright);
+      if (iright == ileft) return false;
+      if (!FlipLeftRight(itop, ileft, ibottom, iright)) return false;
    }
 
    // flips are always reversible so no need to use SaveCellChange and RememberChanges
-   // UNLESS we'd like to be able to undo after a lengthy flip is cancelled!!!
-   if (allowundo && !currlayer->stayclean)
-      currlayer->undoredo->RememberFlip(topbottom, itop, ileft, ibottom, iright,
-                                        currlayer->dirty);
+   if (allowundo && !currlayer->stayclean) {
+      if (inscript) SavePendingChanges();
+      currlayer->undoredo->RememberFlip(topbottom, currlayer->dirty);
+   }
    
    // update dirty flag AFTER RememberFlip
    MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
+   
+   return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -1383,9 +1556,73 @@ void PatternView::FlipSelection(bool topbottom)
 const wxString rotate_clockwise       = _("Rotating selection +90 degrees");
 const wxString rotate_anticlockwise   = _("Rotating selection -90 degrees");
 
-void PatternView::RotatePattern(bool clockwise,
-                                bigint &newtop, bigint &newbottom,
-                                bigint &newleft, bigint &newright)
+bool PatternView::RotateRect(bool clockwise,
+                             lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                             int itop, int ileft, int ibottom, int iright,
+                             int ntop, int nleft, int nbottom, int nright)
+{
+   int wd = iright - ileft + 1;
+   int ht = ibottom - itop + 1;
+   double maxcount = (double)wd * (double)ht;
+   int cntr = 0;
+   bool abort = false;
+   int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
+   
+   if (clockwise) {
+      BeginProgress(rotate_clockwise);
+      firstnewy = ntop;
+      newx = nright;
+      newyinc = 1;
+      newxinc = -1;
+   } else {
+      BeginProgress(rotate_anticlockwise);
+      firstnewy = nbottom;
+      newx = nleft;
+      newyinc = -1;
+      newxinc = 1;
+   }
+
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      newy = firstnewy;
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = srcalgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            if (erasesrc) srcalgo->setcell(cx, cy, 0);
+            newy += newyinc * skip;
+            destalgo->setcell(newx, newy, 1);
+         } else {
+            cx = iright + 1;     // done this row
+         }
+         cntr++;
+         if ((cntr % 4096) == 0) {
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, wxEmptyString);
+            if (abort) break;
+         }
+         newy += newyinc;
+      }
+      if (abort) break;
+      newx += newxinc;
+   }
+   
+   destalgo->endofpattern();
+   srcalgo->endofpattern();
+   EndProgress();
+
+   return !abort;
+}
+
+// -----------------------------------------------------------------------------
+
+bool PatternView::RotatePattern(bool clockwise,
+                                bigint& newtop, bigint& newbottom,
+                                bigint& newleft, bigint& newright,
+                                bool inundoredo)
 {
    // create new universe of same type as current universe
    lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
@@ -1404,6 +1641,7 @@ void PatternView::RotatePattern(bool clockwise,
    int cntr = 0;
    bool abort = false;
    int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
+   
    if (clockwise) {
       BeginProgress(rotate_clockwise);
       firstnewy = newtop.toint();
@@ -1457,21 +1695,33 @@ void PatternView::RotatePattern(bool clockwise,
       currlayer->selbottom = newbottom;
       currlayer->selleft   = newleft;
       currlayer->selright  = newright;
+      
       // switch to new universe and display results
-      MarkLayerDirty();
       delete currlayer->algo;
       currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
       DisplaySelectionSize();
+      
+      // rotating entire pattern is easily reversible so no need to use
+      // SaveCellChange and RememberChanges in this case
+      if (allowundo && !currlayer->stayclean && !inundoredo) {
+         if (inscript) SavePendingChanges();
+         currlayer->undoredo->RememberRotation(clockwise, currlayer->dirty);
+      }
+      
+      // update dirty flag AFTER RememberRotation
+      if (!inundoredo) MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    }
+
+   return !abort;
 }
 
 // -----------------------------------------------------------------------------
 
-void PatternView::RotateSelection(bool clockwise)
+bool PatternView::RotateSelection(bool clockwise, bool inundoredo)
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (mainptr->generating || !SelectionExists()) return false;
    
    // determine rotated selection edges
    bigint halfht = currlayer->selbottom;   halfht -= currlayer->seltop;    halfht.div2();
@@ -1483,51 +1733,89 @@ void PatternView::RotateSelection(bool clockwise)
    bigint newleft   = midx;   newleft   += currlayer->seltop;      newleft   -= midy;
    bigint newright  = midx;   newright  += currlayer->selbottom;   newright  -= midy;
    
-   // things are simple if there is no pattern
+   // if there is no pattern then just rotate the selection edges
    if (currlayer->algo->isEmpty()) {
+      SaveCurrentSelection();
       currlayer->seltop    = newtop;
       currlayer->selbottom = newbottom;
       currlayer->selleft   = newleft;
       currlayer->selright  = newright;
+      RememberNewSelection(_("Rotation"));
       DisplaySelectionSize();
       mainptr->UpdatePatternAndStatus();
-      return;
+      return true;
    }
    
-   // things are also simple if the selection and rotated selection are both
-   // outside the pattern edges (ie. both are empty)
+   // if the current selection and the rotated selection are both outside the
+   // pattern edges (ie. both are empty) then just rotate the selection edges
    bigint top, left, bottom, right;
    currlayer->algo->findedges(&top, &left, &bottom, &right);
    if ( (currlayer->seltop > bottom || currlayer->selbottom < top ||
          currlayer->selleft > right || currlayer->selright < left) &&
         (newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
+      SaveCurrentSelection();
       currlayer->seltop    = newtop;
       currlayer->selbottom = newbottom;
       currlayer->selleft   = newleft;
       currlayer->selright  = newright;
+      RememberNewSelection(_("Rotation"));
       DisplaySelectionSize();
       mainptr->UpdatePatternAndStatus();
-      return;
+      return true;
    }
 
    // can only use nextcell/getcell/setcell in limited domain
    if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
                       currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
-      return;
+      return false;
    }
 
    // make sure rotated selection edges are also within limits
    if ( OutsideLimits(newtop, newbottom, newleft, newright) ) {
       statusptr->ErrorMessage(_("New selection would be outside +/- 10^9 boundary."));
-      return;
+      return false;
    }
    
    // use faster method if selection encloses entire pattern
    if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
-      RotatePattern(clockwise, newtop, newbottom, newleft, newright);
-      return;
+      return RotatePattern(clockwise, newtop, newbottom, newleft, newright, inundoredo);
+   }
+
+   int itop    = currlayer->seltop.toint();
+   int ileft   = currlayer->selleft.toint();
+   int ibottom = currlayer->selbottom.toint();
+   int iright  = currlayer->selright.toint();
+
+   int ntop    = newtop.toint();
+   int nleft   = newleft.toint();
+   int nbottom = newbottom.toint();
+   int nright  = newright.toint();
+   
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   // and we're not undoing/redoing an earlier rotation
+   bool savecells = allowundo && !currlayer->stayclean && !inundoredo;
+   if (savecells && inscript) SavePendingChanges();
+   
+   lifealgo* oldalgo = NULL;
+   int otop = itop;
+   int oleft = ileft;
+   int obottom = ibottom;
+   int oright = iright;
+
+   if (savecells) {
+      // copy current pattern to oldalgo using union of old and new selection rects
+      if (otop > ntop) otop = ntop;
+      if (oleft > nleft) oleft = nleft;
+      if (obottom < nbottom) obottom = nbottom;
+      if (oright < nright) oright = nright;
+      oldalgo = CreateNewUniverse(false);
+      if ( !CopyRect(otop, oleft, obottom, oright,
+                     currlayer->algo, oldalgo, false, _("Saving part of pattern")) ) {
+         delete oldalgo;
+         return false;
+      }
    }
 
    // create temporary universe; doesn't need to match current universe so
@@ -1536,95 +1824,69 @@ void PatternView::RotateSelection(bool clockwise)
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees
-   int itop    = currlayer->seltop.toint();
-   int ileft   = currlayer->selleft.toint();
-   int ibottom = currlayer->selbottom.toint();
-   int iright  = currlayer->selright.toint();
-   int wd = iright - ileft + 1;
-   int ht = ibottom - itop + 1;
-   double maxcount = (double)wd * (double)ht;
-   int cntr = 0;
-   bool abort = false;
-   int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
-   if (clockwise) {
-      BeginProgress(rotate_clockwise);
-      firstnewy = newtop.toint();
-      newx = newright.toint();
-      newyinc = 1;
-      newxinc = -1;
-   } else {
-      BeginProgress(rotate_anticlockwise);
-      firstnewy = newbottom.toint();
-      newx = newleft.toint();
-      newyinc = -1;
-      newxinc = 1;
-   }
-
-   lifealgo* curralgo = currlayer->algo;
-   for ( cy=itop; cy<=ibottom; cy++ ) {
-      newy = firstnewy;
-      for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
-         if (skip + cx > iright)
-            skip = -1;           // pretend we found no more live cells
-         if (skip >= 0) {
-            // found next live cell
-            cx += skip;
-            curralgo->setcell(cx, cy, 0);
-            newy += newyinc * skip;
-            tempalgo->setcell(newx, newy, 1);
-         } else {
-            cx = iright + 1;     // done this row
-         }
-         cntr++;
-         if ((cntr % 4096) == 0) {
-            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
-                           (cx - ileft)) / maxcount;
-            abort = AbortProgress(prog, wxEmptyString);
-            if (abort) break;
-         }
-         newy += newyinc;
-      }
-      if (abort) break;
-      newx += newxinc;
-   }
-   
-   tempalgo->endofpattern();
-   currlayer->algo->endofpattern();
-   EndProgress();
-   
-   if (abort) {
-      // perhaps we should restore original selection???
-   } else {
-      // copy rotated selection from temporary universe to current universe
-      itop    = newtop.toint();
-      ileft   = newleft.toint();
-      ibottom = newbottom.toint();
-      iright  = newright.toint();
-      // check if new selection rect is outside modified pattern edges
-      currlayer->algo->findedges(&top, &left, &bottom, &right);
-      if ( newtop > bottom || newbottom < top || newleft > right || newright < left ) {
-         // safe to use fast nextcell calls
+   if ( !RotateRect(clockwise, currlayer->algo, tempalgo, true,
+                    itop, ileft, ibottom, iright,
+                    ntop, nleft, nbottom, nright) ) {
+      // user aborted rotation
+      if (savecells) {
+         // use oldalgo to restore erased selection
          CopyRect(itop, ileft, ibottom, iright,
-                  tempalgo, currlayer->algo, false, _("Merging rotated selection"));
+                  oldalgo, currlayer->algo, false, _("Restoring selection"));
+         delete oldalgo;
       } else {
-         // have to use slow getcell calls
-         CopyAllRect(itop, ileft, ibottom, iright,
-                     tempalgo, currlayer->algo, _("Pasting rotated selection"));
-      }      
-      // rotate the selection edges
-      currlayer->seltop    = newtop;
-      currlayer->selbottom = newbottom;
-      currlayer->selleft   = newleft;
-      currlayer->selright  = newright;
+         // restore erased selection by rotating tempalgo in opposite direction
+         // back into the current universe
+         RotateRect(!clockwise, tempalgo, currlayer->algo, false,
+                    ntop, nleft, nbottom, nright,
+                    itop, ileft, ibottom, iright);
+      }
+      delete tempalgo;
+      mainptr->UpdatePatternAndStatus();
+      return false;
    }
    
-   MarkLayerDirty();
-
-   // delete temporary universe and display results
+   // copy rotated selection from temporary universe to current universe;
+   // check if new selection rect is outside modified pattern edges
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( newtop > bottom || newbottom < top || newleft > right || newright < left ) {
+      // safe to use fast nextcell calls
+      CopyRect(ntop, nleft, nbottom, nright,
+               tempalgo, currlayer->algo, false, _("Adding rotated selection"));
+   } else {
+      // have to use slow getcell calls
+      CopyAllRect(ntop, nleft, nbottom, nright,
+                  tempalgo, currlayer->algo, _("Pasting rotated selection"));
+   }
+   // don't need temporary universe any more
    delete tempalgo;
+   
+   // rotate the selection edges
+   currlayer->seltop    = newtop;
+   currlayer->selbottom = newbottom;
+   currlayer->selleft   = newleft;
+   currlayer->selright  = newright;
+   
+   if (savecells) {
+      // compare patterns in oldalgo and currlayer->algo and call SaveCellChange
+      // for each cell that has a different state
+      if ( SaveDifferences(oldalgo, currlayer->algo, otop, oleft, obottom, oright) ) {
+         currlayer->undoredo->RememberRotation(clockwise,
+                                               itop, ileft, ibottom, iright,
+                                               ntop, nleft, nbottom, nright,
+                                               currlayer->dirty);
+      } else {
+         currlayer->undoredo->ForgetChanges();
+         Warning(_("You can't undo this change!"));
+      }
+      delete oldalgo;
+   }
+
+   // display results
    DisplaySelectionSize();
+   if (!inundoredo) MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
+   
+   return true;
 }
 
 // -----------------------------------------------------------------------------

@@ -246,7 +246,7 @@ void MainFrame::GeneratePattern()
       return;
    }
 
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
@@ -394,12 +394,16 @@ void MainFrame::AdvanceOutsideSelection()
       statusptr->ErrorMessage(empty_outside);
       return;
    }
+   
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
 
    // check if selection is completely outside pattern edges;
    // can't do this if qlife because it uses gen parity to decide which bits to draw
    if ( currlayer->hash &&
-        //!!! also avoid this if undo/redo is enabled (too messy to remember cell changes)
-        !(allowundo && !currlayer->stayclean) &&
+        // also avoid this if undo/redo is enabled (too messy to remember cell changes)
+        !(savecells) &&
          ( currlayer->seltop > bottom || currlayer->selbottom < top ||
            currlayer->selleft > right || currlayer->selright < left ) ) {
       generating = true;
@@ -417,7 +421,7 @@ void MainFrame::AdvanceOutsideSelection()
       
       // if pattern expanded then may need to clear ONE edge of selection
       viewptr->ClearSelection();
-      // MarkLayerDirty has been called
+      MarkLayerDirty();
       UpdateEverything();
       return;
    }
@@ -428,9 +432,21 @@ void MainFrame::AdvanceOutsideSelection()
       return;
    }
    
+   lifealgo* oldalgo = NULL;
+   if (savecells) {
+      // copy current pattern to oldalgo, using same type and gen count
+      // so we can switch to oldalgo if user decides to abort below
+      oldalgo = CreateNewUniverse(currlayer->hash);
+      oldalgo->setGeneration( currlayer->algo->getGeneration() );
+      if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                              currlayer->algo, oldalgo, false, _("Saving pattern")) ) {
+         delete oldalgo;
+         return;
+      }
+   }
+   
    // create a new universe of same type
-   lifealgo *newalgo = CreateNewUniverse(currlayer->hash);
-
+   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
    newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy (and kill) live cells in selection to new universe
@@ -449,6 +465,7 @@ void MainFrame::AdvanceOutsideSelection()
                            _("Restoring selection"));
       }
       delete newalgo;
+      if (savecells) delete oldalgo;
       UpdateEverything();
       return;
    }
@@ -460,17 +477,16 @@ void MainFrame::AdvanceOutsideSelection()
    currlayer->algo->step();
    generating = false;
    
-   // note that we have to copy advanced pattern to new universe because
-   // qlife uses gen parity to decide which bits to draw
-   
    if ( !currlayer->algo->isEmpty() ) {
       // find new edges and copy current pattern to new universe,
       // except for any cells that were created in selection
-      currlayer->algo->findedges(&top, &left, &bottom, &right);
-      int itop = top.toint();
-      int ileft = left.toint();
-      int ibottom = bottom.toint();
-      int iright = right.toint();
+      // (newalgo contains the original selection)
+      bigint t, l, b, r;
+      currlayer->algo->findedges(&t, &l, &b, &r);
+      int itop = t.toint();
+      int ileft = l.toint();
+      int ibottom = b.toint();
+      int iright = r.toint();
       int ht = ibottom - itop + 1;
       int cx, cy;
    
@@ -482,7 +498,7 @@ void MainFrame::AdvanceOutsideSelection()
       bool abort = false;
       BeginProgress(_("Copying advanced pattern"));
    
-      lifealgo *curralgo = currlayer->algo;
+      lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
@@ -513,13 +529,48 @@ void MainFrame::AdvanceOutsideSelection()
       
       newalgo->endofpattern();
       EndProgress();
+      
+      if (abort and savecells) {
+         // revert back to pattern saved in oldalgo
+         delete newalgo;
+         delete currlayer->algo;
+         currlayer->algo = oldalgo;
+         SetGenIncrement();
+         UpdateEverything();
+         return;
+      }
    }
    
    // switch to new universe (best to do this even if aborted)
-   MarkLayerDirty();
    delete currlayer->algo;
    currlayer->algo = newalgo;
    SetGenIncrement();
+   
+   if (savecells) {
+      // compare patterns in oldalgo and currlayer->algo and call SaveCellChange
+      // for each cell that has a different state; note that we expand the
+      // original pattern rect by 1 in case generating caused expansion
+      if ( viewptr->SaveDifferences(oldalgo, currlayer->algo,
+                                    top.toint() - 1, left.toint() - 1,
+                                    bottom.toint() + 1, right.toint() + 1) ) {
+         delete oldalgo;
+         if ( !currlayer->undoredo->RememberChanges(_("Advance Outside"), currlayer->dirty) ) {
+            // pattern outside selection didn't change
+            UpdateEverything();
+            return;
+         }
+      } else {
+         // revert back to pattern saved in oldalgo
+         currlayer->undoredo->ForgetChanges();
+         delete currlayer->algo;
+         currlayer->algo = oldalgo;
+         SetGenIncrement();
+         UpdateEverything();
+         return;
+      }
+   }
+   
+   MarkLayerDirty();
    UpdateEverything();
 }
 
@@ -548,12 +599,16 @@ void MainFrame::AdvanceSelection()
       statusptr->ErrorMessage(empty_selection);
       return;
    }
+   
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   if (savecells && inscript) SavePendingChanges();
 
    // check if selection encloses entire pattern;
    // can't do this if qlife because it uses gen parity to decide which bits to draw
    if ( currlayer->hash &&
-        //!!! also avoid this if undo/redo is enabled (too messy to remember cell changes)
-        !(allowundo && !currlayer->stayclean) &&
+        // also avoid this if undo/redo is enabled (too messy to remember cell changes)
+        !(savecells) &&
         currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
       generating = true;
@@ -571,7 +626,7 @@ void MainFrame::AdvanceSelection()
       
       // clear 1-cell thick strips just outside selection
       viewptr->ClearOutsideSelection();
-      // MarkLayerDirty has been called
+      MarkLayerDirty();
       UpdateEverything();
       return;
    }
@@ -590,45 +645,69 @@ void MainFrame::AdvanceSelection()
    
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo *tempalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->hash);
    
    // copy live cells in selection to temporary universe
-   if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                          currlayer->algo, tempalgo, false, _("Saving selection")) ) {
-      if ( tempalgo->isEmpty() ) {
-         statusptr->ErrorMessage(empty_selection);
+   if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                           currlayer->algo, tempalgo, false, _("Saving selection")) ) {
+      delete tempalgo;
+      return;
+   }
+   
+   if ( tempalgo->isEmpty() ) {
+      statusptr->ErrorMessage(empty_selection);
+      delete tempalgo;
+      return;
+   }
+   
+   // advance temporary universe by one gen
+   generating = true;
+   wxGetApp().PollerReset();
+   tempalgo->setIncrement(1);
+   tempalgo->step();
+   generating = false;
+   
+   if ( !tempalgo->isEmpty() ) {
+      // temporary pattern might have expanded
+      bigint temptop, templeft, tempbottom, tempright;
+      tempalgo->findedges(&temptop, &templeft, &tempbottom, &tempright);
+      if (temptop < top) top = temptop;
+      if (templeft < left) left = templeft;
+      if (tempbottom > bottom) bottom = tempbottom;
+      if (tempright > right) right = tempright;
+   
+      // but ignore live cells created outside selection edges
+      if (top < currlayer->seltop) top = currlayer->seltop;
+      if (left < currlayer->selleft) left = currlayer->selleft;
+      if (bottom > currlayer->selbottom) bottom = currlayer->selbottom;
+      if (right > currlayer->selright) right = currlayer->selright;
+   }
+   
+   if (savecells) {
+      // compare selection rect in currlayer->algo and tempalgo and call SaveCellChange
+      // for each cell that has a different state
+      if ( viewptr->SaveDifferences(currlayer->algo, tempalgo,
+                                    top.toint(), left.toint(),
+                                    bottom.toint(), right.toint()) ) {
+         if ( !currlayer->undoredo->RememberChanges(_("Advance Selection"), currlayer->dirty) ) {
+            // pattern inside selection didn't change
+            delete tempalgo;
+            return;
+         }
       } else {
-         // advance temporary universe by one gen
-         generating = true;
-         wxGetApp().PollerReset();
-         tempalgo->setIncrement(1);
-         tempalgo->step();
-         generating = false;
-         
-         // temporary pattern might have expanded
-         bigint temptop, templeft, tempbottom, tempright;
-         tempalgo->findedges(&temptop, &templeft, &tempbottom, &tempright);
-         if (temptop < top) top = temptop;
-         if (templeft < left) left = templeft;
-         if (tempbottom > bottom) bottom = tempbottom;
-         if (tempright > right) right = tempright;
-
-         // but ignore live cells created outside selection edges
-         if (top < currlayer->seltop) top = currlayer->seltop;
-         if (left < currlayer->selleft) left = currlayer->selleft;
-         if (bottom > currlayer->selbottom) bottom = currlayer->selbottom;
-         if (right > currlayer->selright) right = currlayer->selright;
-         
-         // copy all cells in new selection from tempalgo to currlayer->algo
-         viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                              tempalgo, currlayer->algo, _("Copying advanced selection"));
-
-         MarkLayerDirty();
-         UpdateEverything();
+         currlayer->undoredo->ForgetChanges();
+         delete tempalgo;
+         return;
       }
    }
    
+   // copy all cells in new selection from tempalgo to currlayer->algo
+   viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                        tempalgo, currlayer->algo, _("Copying advanced selection"));
+
    delete tempalgo;
+   MarkLayerDirty();
+   UpdateEverything();   
 }
 
 // -----------------------------------------------------------------------------
@@ -641,7 +720,7 @@ void MainFrame::NextGeneration(bool useinc)
       return;
    }
 
-   lifealgo *curralgo = currlayer->algo;
+   lifealgo* curralgo = currlayer->algo;
    if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
@@ -731,7 +810,7 @@ void MainFrame::ToggleHashing()
    UpdateStatus();
 
    // create a new universe of the right flavor
-   lifealgo *newalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
    
    // even though universes share a global rule table we still need to call setrule
    // due to internal differences in the handling of Wolfram rules
@@ -757,7 +836,7 @@ void MainFrame::ToggleHashing()
       bool abort = false;
       BeginProgress(_("Converting pattern"));
    
-      lifealgo *curralgo = currlayer->algo;
+      lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {

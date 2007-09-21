@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXUNDO_H_
 #define _WXUNDO_H_
 
-#include "bigint.h"           // for bigint class
+#include "bigint.h"     // for bigint class
 
 // This class implements unlimited undo/redo:
 
@@ -37,37 +37,49 @@ public:
    // cell at x,y has changed state
    
    void ForgetChanges();
-   // ignore the changes made by previous SaveCellChange calls
+   // ignore changes made by previous SaveCellChange calls
    
-   void RememberChanges(const wxString& action, bool wasdirty);
-   // remember the changes made by previous SaveCellChange calls
+   bool RememberChanges(const wxString& action, bool wasdirty);
+   // remember changes made by previous SaveCellChange calls
    // and the state of the layer's dirty flag BEFORE the change;
-   // the given action string is appended to the Undo/Redo item names
+   // the given action string will be appended to the Undo/Redo items;
+   // return true if one or more cells changed state, false otherwise
    
-   void RememberFlip(bool topbot, int t, int l, int b, int r, bool wasdirty);
-   // remember the flip's direction and rectangle, as well as the state
-   // of the layer's dirty flag BEFORE the change
+   void RememberFlip(bool topbot, bool wasdirty);
+   // remember flip's direction
+
+   void RememberRotation(bool clockwise, bool wasdirty);
+   // remember simple rotation (selection includes entire pattern)
    
-   void RememberSelection(bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
+   void RememberRotation(bool clockwise,
+                         int oldt, int oldl, int oldb, int oldr,
+                         int newt, int newl, int newb, int newr,
+                         bool wasdirty);
+   // remember rotation's direction and old and new selection edges;
+   // this variant assumes SaveCellChange has been called
+   
+   void RememberSelection(const wxString& action,
+                          bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
                           bigint& newt, bigint& newl, bigint& newb, bigint& newr);
    // remember change in selection (no-op if old edges equal new edges)
 
-   bool CanUndo();            // can a change be undone?
-   bool CanRedo();            // can an undone change be redone?
+   bool CanUndo();               // can a change be undone?
+   bool CanRedo();               // can an undone change be redone?
    
-   void UndoChange();         // undo a change
-   void RedoChange();         // redo an undone change
+   void UndoChange();            // undo a change
+   void RedoChange();            // redo an undone change
 
-   void ClearUndoRedo();      // clear all undo/redo history
+   void UpdateUndoRedoItems();   // update Undo/Redo items in Edit menu
+   void ClearUndoRedo();         // clear all undo/redo history
 
 private:
-   wxList undolist;           // list of undoable changes
-   wxList redolist;           // list of redoable changes
+   wxList undolist;              // list of undoable changes
+   wxList redolist;              // list of redoable changes
 
-   int* cellarray;            // x,y coordinates of changed cells
-   unsigned int intcount;     // number of elements (2 * number of cells)
-   unsigned int maxcount;     // number of elements allocated
-   bool badalloc;             // malloc/realloc failed?
+   int* cellarray;               // x,y coordinates of changed cells
+   unsigned int intcount;        // number of elements (2 * number of cells)
+   unsigned int maxcount;        // number of elements allocated
+   bool badalloc;                // malloc/realloc failed?
    
    void UpdateUndoItem(const wxString& action);
    void UpdateRedoItem(const wxString& action);

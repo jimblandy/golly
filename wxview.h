@@ -52,10 +52,10 @@ public:
    void RemoveSelection();
    void ShrinkSelection(bool fit);
    void RandomFill();
-   void FlipTopBottom(int top, int left, int bottom, int right);
-   void FlipLeftRight(int top, int left, int bottom, int right);
-   void FlipSelection(bool topbottom);
-   void RotateSelection(bool clockwise);
+   bool FlipTopBottom(int top, int left, int bottom, int right);
+   bool FlipLeftRight(int top, int left, int bottom, int right);
+   bool FlipSelection(bool topbottom);
+   bool RotateSelection(bool clockwise, bool inundoredo = false);
    void SetCursorMode(wxCursor* curs);
    void CycleCursorMode();
    bool CopyRect(int top, int left, int bottom, int right,
@@ -64,15 +64,19 @@ public:
    void CopyAllRect(int top, int left, int bottom, int right,
                     lifealgo* srcalgo, lifealgo* destalgo,
                     const wxString& progmsg);
+   bool SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
+                        int itop, int ileft, int ibottom, int iright);
+   void SaveCurrentSelection();
+   void RememberNewSelection(const wxString& action);
 
-   // return true if given rect is outside getcell/setcell limits
    bool OutsideLimits(bigint& t, bigint& l, bigint& b, bigint& r);
+   // return true if given rect is outside getcell/setcell limits
 
-   // return true and get mouse location's cell coords if over viewport
    bool GetCellPos(bigint& xpos, bigint& ypos);
+   // return true and get mouse location's cell coords if over viewport
 
-   // return true if given screen position is in viewport
    bool PointInView(int x, int y);
+   // return true if given screen position is in viewport
 
    // display functions
    bool GridVisible();
@@ -113,10 +117,10 @@ public:
    bool nopattupdate;            // disable pattern updates?
    wxRect pasterect;             // area to be pasted
 
+   int tileindex;
    // if the tileindex is >= 0 then this is a tiled window (such windows
    // lie on top of the main viewport window when tilelayers is true);
    // the tileindex matches the layer position
-   int tileindex;
    
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -161,12 +165,16 @@ private:
    void SetPasteRect(wxRect& rect, bigint& wd, bigint& ht);
    void PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);
-   void RotatePattern(bool clockwise, bigint& newtop, bigint& newbottom,
-                                      bigint& newleft, bigint& newright);
+   bool RotatePattern(bool clockwise,
+                      bigint& newtop, bigint& newbottom,
+                      bigint& newleft, bigint& newright,
+                      bool inundoredo = false);
+   bool RotateRect(bool clockwise, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                   int itop, int ileft, int ibottom, int iright,
+                   int ntop, int nleft, int nbottom, int nright);
    void AddEOL(char** chptr);
    void AddRun(char ch, unsigned int* run, unsigned int* linelen, char** chptr);
-   void SaveCurrentSelection();
-   void RememberNewSelection();
+   bool SaveOutsideSelection(bigint& t, bigint& l, bigint& b, bigint& r);
 
    // scroll functions
    void PanUp(int amount);
@@ -202,6 +210,7 @@ const wxString empty_selection     = _("There are no live cells in the selection
 const wxString empty_outside       = _("There are no live cells outside the selection.");
 const wxString no_selection        = _("There is no selection.");
 const wxString selection_too_big   = _("Selection is outside +/- 10^9 boundary.");
+const wxString pattern_too_big     = _("Pattern is outside +/- 10^9 boundary.");
 const wxString origin_restored     = _("Origin restored.");
 
 #endif

@@ -34,8 +34,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, Fatal
+#include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
 #include "wxundo.h"
+
+const wxString lack_of_memory = _("Due to lack of memory, some changes can't be undone!");
 
 // -----------------------------------------------------------------------------
 
@@ -43,86 +46,52 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 typedef enum {
    cellstates,       // toggle cell states
-   fliptb,           // flip rect top-bottom
-   fliplr,           // flip rect left-right
-   selchange         // selection change
+   fliptb,           // flip selection top-bottom
+   fliplr,           // flip selection left-right
+   rotatecw,         // rotate selection clockwise
+   rotateacw,        // rotate selection anticlockwise
+   rotatepattcw,     // rotate pattern clockwise
+   rotatepattacw,    // rotate pattern anticlockwise
+   selchange         // change selection
 } change_type;
 
 class ChangeNode: public wxObject {
 public:
-   ChangeNode(int* cells, unsigned int numcells, const wxString& action);
-   ChangeNode(bool topbot, int t, int l, int b, int r);
-   ChangeNode(bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
-              bigint& newt, bigint& newl, bigint& newb, bigint& newr);
+   ChangeNode();
    ~ChangeNode();
 
-   void DoChange(bool undo);     // do the undo/redo
+   bool DoChange(bool undo);
+   // do the undo/redo; if it returns false (eg. user has aborted a lengthy
+   // rotate/flip operation) then cancel the undo/redo
 
-   change_type changeid;         // specifies the type of change
-   wxString suffix;              // string to append to Undo/Redo item
-   bool wasdirty;                // dirty state BEFORE change was made
-
-private:
+   change_type changeid;                  // specifies the type of change
+   wxString suffix;                       // action string for Undo/Redo item
+   bool wasdirty;                         // dirty state BEFORE change was made
    int* cellcoords;                       // array of x,y coordinates (2 ints per cell)
    unsigned int cellcount;                // number of cells in array
-   int top, left, bottom, right;          // rectangle edges for flip/rotate/etc
+   int oldt, oldl, oldb, oldr;            // old selection edges for rotate
+   int newt, newl, newb, newr;            // new selection edges for rotate
    bigint prevt, prevl, prevb, prevr;     // old selection edges
    bigint nextt, nextl, nextb, nextr;     // new selection edges
 };
 
 // -----------------------------------------------------------------------------
 
-ChangeNode::ChangeNode(int* cells, unsigned int numcells, const wxString& action)
+ChangeNode::ChangeNode()
 {
-   changeid = cellstates;
-   cellcoords = cells;
-   if (cellcoords == NULL) Warning(_("Bug in ChangeNode!"));
-   cellcount = numcells;
-   suffix = action;
-}
-
-// -----------------------------------------------------------------------------
-
-ChangeNode::ChangeNode(bool topbot, int t, int l, int b, int r)
-{
-   changeid = topbot ? fliptb : fliplr;
-   top = t;
-   left = l;
-   bottom = b;
-   right = r;
-   suffix = _("Flip");
-}
-
-// -----------------------------------------------------------------------------
-
-ChangeNode::ChangeNode(bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
-                       bigint& newt, bigint& newl, bigint& newb, bigint& newr)
-{
-   changeid = selchange;
-   prevt = oldt;
-   prevl = oldl;
-   prevb = oldb;
-   prevr = oldr;
-   nextt = newt;
-   nextl = newl;
-   nextb = newb;
-   nextr = newr;
-   if (newt <= newb)
-      suffix = _("Selection");
-   else
-      suffix = _("Deselection");
+   cellcoords = NULL;
 }
 
 // -----------------------------------------------------------------------------
 
 ChangeNode::~ChangeNode()
 {
-   if (changeid == cellstates) free(cellcoords);
+   if (cellcoords) free(cellcoords);
 }
 
 // -----------------------------------------------------------------------------
 
-void ChangeNode::DoChange(bool undo)
+bool ChangeNode::DoChange(bool undo)
 {
    switch (changeid) {
       case cellstates:
@@ -141,13 +110,62 @@ void ChangeNode::DoChange(bool undo)
          break;
 
       case fliptb:
-         viewptr->FlipTopBottom(top, left, bottom, right);
+      case fliplr:
+         // safer not to call FlipSelection (it calls MarkLayerDirty)
+         {
+            bool done = true;
+            int itop = currlayer->seltop.toint();
+            int ileft = currlayer->selleft.toint();
+            int ibottom = currlayer->selbottom.toint();
+            int iright = currlayer->selright.toint();
+            if (ibottom <= itop || iright <= ileft) {
+               // should never happen???
+               Warning(_("Flip bug detected in DoChange!"));
+               return false;
+            } else if (changeid == fliptb) {
+               done = viewptr->FlipTopBottom(itop, ileft, ibottom, iright);
+            } else {
+               done = viewptr->FlipLeftRight(itop, ileft, ibottom, iright);
+            }
+            mainptr->UpdatePatternAndStatus();
+            if (!done) return false;
+         }
+         break;
+
+      case rotatecw:
+      case rotateacw:
+         // change state of cell(s) stored in cellcoords array
+         {
+            unsigned int i = 0;
+            while (i < cellcount * 2) {
+               int x = cellcoords[i++];
+               int y = cellcoords[i++];
+               int state = currlayer->algo->getcell(x, y);
+               currlayer->algo->setcell(x, y, 1 - state);
+            }
+            currlayer->algo->endofpattern();
+         }
+         // rotate selection edges
+         if (undo) {
+            currlayer->seltop = oldt;
+            currlayer->selleft = oldl;
+            currlayer->selbottom = oldb;
+            currlayer->selright = oldr;
+         } else {
+            currlayer->seltop = newt;
+            currlayer->selleft = newl;
+            currlayer->selbottom = newb;
+            currlayer->selright = newr;
+         }
+         viewptr->DisplaySelectionSize();
          mainptr->UpdatePatternAndStatus();
          break;
 
-      case fliplr:
-         viewptr->FlipLeftRight(top, left, bottom, right);
-         mainptr->UpdatePatternAndStatus();
+      case rotatepattcw:
+      case rotatepattacw:
+         // pass in true so RotateSelection won't save changes or call MarkLayerDirty
+         if (!viewptr->RotateSelection(changeid == rotatepattcw ? !undo : undo, true))
+            return false;
          break;
       
       case selchange:
@@ -162,9 +180,11 @@ void ChangeNode::DoChange(bool undo)
             currlayer->selbottom = nextb;
             currlayer->selright = nextr;
          }
+         if (viewptr->SelectionExists()) viewptr->DisplaySelectionSize();
          mainptr->UpdatePatternAndStatus();
          break;
    }
+   return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -219,7 +239,11 @@ void UndoRedo::SaveCellChange(int x, int y)
 void UndoRedo::ForgetChanges()
 {
    if (intcount > 0) {
-      free(cellarray);
+      if (cellarray) {
+         free(cellarray);
+      } else {
+         Warning(_("Bug detected in ForgetChanges!"));
+      }
       intcount = 0;        // reset for next SaveCellChange
       maxcount = 0;        // ditto
       badalloc = false;
@@ -228,7 +252,7 @@ void UndoRedo::ForgetChanges()
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
+bool UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
 {
    if (intcount > 0) {
       if (intcount < maxcount) {
@@ -244,9 +268,15 @@ void UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
       UpdateRedoItem(wxEmptyString);
       
       // add new change node to head of undo list
-      ChangeNode* change = new ChangeNode(cellarray, intcount/2, action);
-      if (change == NULL) Fatal(_("Failed to create new change node!"));
+      ChangeNode* change = new ChangeNode();
+      if (change == NULL) Fatal(_("Failed to create change node!"));
+      
+      change->changeid = cellstates;
+      change->cellcoords = cellarray;
+      change->cellcount = intcount / 2;
+      change->suffix = action;
       change->wasdirty = wasdirty;
+      
       undolist.Insert(change);
       
       // update Undo item in Edit menu
@@ -256,24 +286,30 @@ void UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
       maxcount = 0;        // ditto
 
       if (badalloc) {
-         Warning(_("Due to lack of memory, some changes can't be undone!"));
+         Warning(lack_of_memory);
          badalloc = false;
       }
+      return true;   // at least one cell changed state
    }
+   return false;     // no cells changed state (SaveCellChange wasn't called)
 }
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberFlip(bool topbot, int t, int l, int b, int r, bool wasdirty)
+void UndoRedo::RememberFlip(bool topbot, bool wasdirty)
 {
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
-      
+   
    // add new change node to head of undo list
-   ChangeNode* change = new ChangeNode(topbot, t, l, b, r);
-   if (change == NULL) Fatal(_("Failed to create new flip node!"));
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create flip node!"));
+
+   change->changeid = topbot ? fliptb : fliplr;
+   change->suffix = _("Flip");
    change->wasdirty = wasdirty;
+
    undolist.Insert(change);
    
    // update Undo item in Edit menu
@@ -282,7 +318,82 @@ void UndoRedo::RememberFlip(bool topbot, int t, int l, int b, int r, bool wasdir
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberSelection(bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
+void UndoRedo::RememberRotation(bool clockwise, bool wasdirty)
+{
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add new change node to head of undo list
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create simple rotation node!"));
+
+   change->changeid = clockwise ? rotatepattcw : rotatepattacw;
+   change->suffix = _("Rotation");
+   change->wasdirty = wasdirty;
+
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberRotation(bool clockwise,
+                                int oldt, int oldl, int oldb, int oldr,
+                                int newt, int newl, int newb, int newr,
+                                bool wasdirty)
+{
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add new change node to head of undo list
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create rotation node!"));
+
+   change->changeid = clockwise ? rotatecw : rotateacw;
+   change->oldt = oldt;
+   change->oldl = oldl;
+   change->oldb = oldb;
+   change->oldr = oldr;
+   change->newt = newt;
+   change->newl = newl;
+   change->newb = newb;
+   change->newr = newr;
+   change->suffix = _("Rotation");
+   change->wasdirty = wasdirty;
+
+   // if intcount == 0 we still need to rotate selection edges
+   if (intcount > 0) {
+      if (intcount < maxcount) {
+         // reduce size of cellarray
+         int* newptr = (int*) realloc(cellarray, intcount * sizeof(int));
+         if (newptr != NULL) cellarray = newptr;
+      }
+
+      change->cellcoords = cellarray;
+      change->cellcount = intcount / 2;
+      
+      intcount = 0;        // reset for next SaveCellChange
+      maxcount = 0;        // ditto
+      if (badalloc) {
+         Warning(lack_of_memory);
+         badalloc = false;
+      }
+   }
+
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberSelection(const wxString& action,
+                                 bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
                                  bigint& newt, bigint& newl, bigint& newb, bigint& newr)
 {
    if (oldt == newt && oldl == newl && oldb == newb && oldr == newr) {
@@ -293,12 +404,26 @@ void UndoRedo::RememberSelection(bigint& oldt, bigint& oldl, bigint& oldb, bigin
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
-      
+   
    // add new change node to head of undo list
-   ChangeNode* change = new ChangeNode(oldt, oldl, oldb, oldr,
-                                       newt, newl, newb, newr);
-   if (change == NULL) Fatal(_("Failed to create new selection node!"));
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create selection node!"));
+
+   change->changeid = selchange;
+   change->prevt = oldt;
+   change->prevl = oldl;
+   change->prevb = oldb;
+   change->prevr = oldr;
+   change->nextt = newt;
+   change->nextl = newl;
+   change->nextb = newb;
+   change->nextr = newr;
+   if (newt <= newb)
+      change->suffix = action;
+   else
+      change->suffix = _("Deselection");
    // change->wasdirty is not used for selection changes
+
    undolist.Insert(change);
    
    // update Undo item in Edit menu
@@ -328,7 +453,9 @@ void UndoRedo::UndoChange()
    // get change info from head of undo list and do the change
    wxList::compatibility_iterator node = undolist.GetFirst();
    ChangeNode* change = (ChangeNode*) node->GetData();
-   change->DoChange(true);
+
+   // user might abort the undo (eg. a lengthy rotate/flip)
+   if (!change->DoChange(true)) return;
    
    // remove node from head of undo list (doesn't delete node's data)
    undolist.Erase(node);
@@ -376,7 +503,9 @@ void UndoRedo::RedoChange()
    // get change info from head of redo list and do the change
    wxList::compatibility_iterator node = redolist.GetFirst();
    ChangeNode* change = (ChangeNode*) node->GetData();
-   change->DoChange(false);
+   
+   // user might abort the redo (eg. a lengthy rotate/flip)
+   if (!change->DoChange(false)) return;
    
    // remove node from head of redo list (doesn't delete node's data)
    redolist.Erase(node);
@@ -414,6 +543,27 @@ void UndoRedo::ClearUndoRedo()
    
    UpdateUndoItem(wxEmptyString);
    UpdateRedoItem(wxEmptyString);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::UpdateUndoRedoItems()
+{
+   if (undolist.IsEmpty()) {
+      UpdateUndoItem(wxEmptyString);
+   } else {
+      wxList::compatibility_iterator node = undolist.GetFirst();
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      UpdateUndoItem(change->suffix);
+   }
+
+   if (redolist.IsEmpty()) {
+      UpdateRedoItem(wxEmptyString);
+   } else {
+      wxList::compatibility_iterator node = redolist.GetFirst();
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      UpdateRedoItem(change->suffix);
+   }
 }
 
 // -----------------------------------------------------------------------------
