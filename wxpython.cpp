@@ -743,7 +743,7 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "i", &direction)) return NULL;
 
    if (viewptr->SelectionExists()) {
-      viewptr->FlipSelection(direction);
+      viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
       DoAutoUpdate();
    } else {
       PyErr_SetString(PyExc_RuntimeError, "flip error: no selection.");

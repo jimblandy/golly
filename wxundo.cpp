@@ -571,7 +571,9 @@ void UndoRedo::UpdateUndoRedoItems()
 void UndoRedo::UpdateUndoItem(const wxString& action)
 {
    wxMenuBar* mbar = mainptr->GetMenuBar();
-   if (mbar) mbar->SetLabel(wxID_UNDO, _("Undo ") + action);
+   if (mbar) {
+      mbar->SetLabel(wxID_UNDO, wxString::Format(_("Undo %s\tCtrl+Z"), action));
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -579,5 +581,7 @@ void UndoRedo::UpdateUndoItem(const wxString& action)
 void UndoRedo::UpdateRedoItem(const wxString& action)
 {
    wxMenuBar* mbar = mainptr->GetMenuBar();
-   if (mbar) mbar->SetLabel(wxID_REDO, _("Redo ") + action);
+   if (mbar) {
+      mbar->SetLabel(wxID_REDO, wxString::Format(_("Redo %s\tShift+Ctrl+Z"), action));
+   }
 }

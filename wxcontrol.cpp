@@ -530,7 +530,7 @@ void MainFrame::AdvanceOutsideSelection()
       newalgo->endofpattern();
       EndProgress();
       
-      if (abort and savecells) {
+      if (abort && savecells) {
          // revert back to pattern saved in oldalgo
          delete newalgo;
          delete currlayer->algo;

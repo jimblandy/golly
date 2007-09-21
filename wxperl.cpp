@@ -722,7 +722,7 @@ XS(pl_flip)
    int direction = SvIV(ST(0));
 
    if (viewptr->SelectionExists()) {
-      viewptr->FlipSelection(direction);
+      viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
       DoAutoUpdate();
    } else {
       PERL_ERROR("g_flip error: no selection");

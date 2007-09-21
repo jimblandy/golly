@@ -138,7 +138,7 @@ void readtextpattern(lifealgo &imp, char *line) {
  */
 void ParseXRLELine(char *line, int *xoff, int *yoff, bigint &gen) {
    char *key = line;
-   while (true) {
+   while (key) {
       // set key to start of next key word
       while (*key && *key != ' ') key++;
       while (*key == ' ') key++;
