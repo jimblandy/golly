@@ -56,12 +56,19 @@ public:
                          int newt, int newl, int newb, int newr,
                          bool wasdirty);
    // remember rotation's direction and old and new selection edges;
-   // this variant assumes SaveCellChange has been called
+   // this variant assumes SaveCellChange may have been called
    
    void RememberSelection(const wxString& action,
                           bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
                           bigint& newt, bigint& newl, bigint& newb, bigint& newr);
    // remember change in selection (no-op if old edges equal new edges)
+
+   void RememberScriptStart();
+   // remember that script is about to start; this allows us to undo/redo
+   // any script changes all at once
+
+   void RememberScriptFinish();
+   // remember that script has ended
 
    bool CanUndo();               // can a change be undone?
    bool CanRedo();               // can an undone change be redone?

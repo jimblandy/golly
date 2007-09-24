@@ -475,6 +475,13 @@ void PatternView::ProcessKey(int key, bool shiftdown)
             if (!inscript) ClearSelection();
          }
          break;
+
+      case 'z':   if (currlayer->undoredo->CanUndo())
+                     currlayer->undoredo->UndoChange();
+                  break;
+      case 'Z':   if (currlayer->undoredo->CanRedo())
+                     currlayer->undoredo->RedoChange();
+                  break;
       
       case 'a':   SelectAll(); break;
       case 'k':   RemoveSelection(); break;
@@ -1022,6 +1029,7 @@ void PatternView::StopDraggingMouse()
 {
    if (selectingcells) {
       if (allowundo) RememberNewSelection(_("Selection"));
+      selectingcells = false;                // tested by CanUndo
       mainptr->UpdateMenuItems(true);        // enable various Edit menu items
    }
    
@@ -1029,6 +1037,7 @@ void PatternView::StopDraggingMouse()
       // MarkLayerDirty (in ShowDrawing) has set dirty flag, so we need to
       // pass in the flag state saved before drawing started
       currlayer->undoredo->RememberChanges(_("Drawing"), currlayer->savedirty);
+      drawingcells = false;                  // tested by CanUndo
       mainptr->UpdateMenuItems(true);        // enable Undo item
    }
    

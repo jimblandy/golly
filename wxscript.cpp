@@ -739,6 +739,11 @@ void RunScript(const wxString& filename)
          Layer* layer = GetLayer(i);
          layer->savedirty = layer->dirty;
          layer->savechanges = false;
+         // add a special node to indicate that the script is about to start;
+         // this allows all changes made by the script to be undone/redone
+         // in one go; note that the UndoRedo ctor calls RememberScriptStart
+         // if the script creates a new layer
+         layer->undoredo->RememberScriptStart();
       }
    }
 
@@ -762,15 +767,20 @@ void RunScript(const wxString& filename)
    plscript = false;
    pyscript = false;
 
-   // reset all stayclean flags set by MarkLayerClean
+   // tidy up the undo/redo history for each layer and reset the stayclean flag
+   // in case it was set by MarkLayerClean
    for ( int i = 0; i < numlayers; i++ ) {
       Layer* layer = GetLayer(i);
-      if (allowundo && layer->savechanges) {
-         // some SaveCellChange calls have not been processed by SavePendingChanges
-         if (layer->stayclean)
-            layer->undoredo->ForgetChanges();
-         else
-            layer->undoredo->RememberChanges(_("Cell Changes"), layer->savedirty);
+      if (allowundo) {
+         if (layer->savechanges) {
+            // some cell changes were not processed by SavePendingChanges
+            if (layer->stayclean)
+               layer->undoredo->ForgetChanges();
+            else
+               layer->undoredo->RememberChanges(_("Cell Changes"), layer->savedirty);
+         }
+         // add a special node to indicate that the script has finished
+         layer->undoredo->RememberScriptFinish();
       }
       layer->stayclean = false;
    }

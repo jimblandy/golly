@@ -786,8 +786,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SCRIPT_DIR,      active);
       mbar->Enable(wxID_PREFERENCES,   !busy);
 
-      mbar->Enable(wxID_UNDO,    active && !busy && currlayer->undoredo->CanUndo());
-      mbar->Enable(wxID_REDO,    active && !busy && currlayer->undoredo->CanRedo());
+      mbar->Enable(wxID_UNDO,    active && currlayer->undoredo->CanUndo());
+      mbar->Enable(wxID_REDO,    active && currlayer->undoredo->CanRedo());
       mbar->Enable(ID_NO_UNDO,   active && !busy);
       mbar->Enable(ID_CUT,       active && !busy && selexists);
       mbar->Enable(ID_COPY,      active && !busy && selexists);
@@ -1826,6 +1826,8 @@ void MainFrame::OnClose(wxCloseEvent& event)
    for (int i = 0; i < numlayers; i++) {
       Layer* layer = GetLayer(i);
       if (wxFileExists(layer->tempstart)) wxRemoveFile(layer->tempstart);
+      // also clear undo/redo history
+      layer->undoredo->ClearUndoRedo();
    }
    
    #ifndef __WXMAC__

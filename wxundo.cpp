@@ -52,7 +52,9 @@ typedef enum {
    rotateacw,        // rotate selection anticlockwise
    rotatepattcw,     // rotate pattern clockwise
    rotatepattacw,    // rotate pattern anticlockwise
-   selchange         // change selection
+   selchange,        // change selection
+   scriptstart,      // any later changes were made by script
+   scriptfinish      // any earlier changes were made by script
 } change_type;
 
 class ChangeNode: public wxObject {
@@ -183,6 +185,12 @@ bool ChangeNode::DoChange(bool undo)
          if (viewptr->SelectionExists()) viewptr->DisplaySelectionSize();
          mainptr->UpdatePatternAndStatus();
          break;
+      
+      case scriptstart:
+      case scriptfinish:
+         // should never happen
+         Warning(_("Bug detected in DoChange!"));
+         break;
    }
    return true;
 }
@@ -195,6 +203,9 @@ UndoRedo::UndoRedo()
    maxcount = 0;        // ditto
    badalloc = false;    // true if malloc/realloc fails
    cellarray = NULL;    // play safe
+   
+   // need to remember if script has created a new layer
+   if (inscript) RememberScriptStart();
 }
 
 // -----------------------------------------------------------------------------
@@ -267,9 +278,9 @@ bool UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
       WX_CLEAR_LIST(wxList, redolist);
       UpdateRedoItem(wxEmptyString);
       
-      // add new change node to head of undo list
+      // add cellstates node to head of undo list
       ChangeNode* change = new ChangeNode();
-      if (change == NULL) Fatal(_("Failed to create change node!"));
+      if (change == NULL) Fatal(_("Failed to create cellstates node!"));
       
       change->changeid = cellstates;
       change->cellcoords = cellarray;
@@ -302,7 +313,7 @@ void UndoRedo::RememberFlip(bool topbot, bool wasdirty)
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
    
-   // add new change node to head of undo list
+   // add fliptb/fliplr node to head of undo list
    ChangeNode* change = new ChangeNode();
    if (change == NULL) Fatal(_("Failed to create flip node!"));
 
@@ -324,7 +335,7 @@ void UndoRedo::RememberRotation(bool clockwise, bool wasdirty)
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
    
-   // add new change node to head of undo list
+   // add rotatepattcw/rotatepattacw node to head of undo list
    ChangeNode* change = new ChangeNode();
    if (change == NULL) Fatal(_("Failed to create simple rotation node!"));
 
@@ -349,7 +360,7 @@ void UndoRedo::RememberRotation(bool clockwise,
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
    
-   // add new change node to head of undo list
+   // add rotatecw/rotateacw node to head of undo list
    ChangeNode* change = new ChangeNode();
    if (change == NULL) Fatal(_("Failed to create rotation node!"));
 
@@ -405,9 +416,9 @@ void UndoRedo::RememberSelection(const wxString& action,
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
    
-   // add new change node to head of undo list
+   // add selchange node to head of undo list
    ChangeNode* change = new ChangeNode();
-   if (change == NULL) Fatal(_("Failed to create selection node!"));
+   if (change == NULL) Fatal(_("Failed to create selchange node!"));
 
    change->changeid = selchange;
    change->prevt = oldt;
@@ -432,16 +443,70 @@ void UndoRedo::RememberSelection(const wxString& action,
 
 // -----------------------------------------------------------------------------
 
+void UndoRedo::RememberScriptStart()
+{
+   // add scriptstart node to head of undo list
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create scriptstart node!"));
+
+   change->changeid = scriptstart;
+   change->suffix = _("Script Changes");
+
+   undolist.Insert(change);
+   
+   // don't alter Undo item in Edit menu
+   // UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberScriptFinish()
+{
+   if (undolist.IsEmpty()) {
+      // this should only ever happen if the script called a command like new()
+      // which cleared all the undo/redo history
+      return;
+   }
+   
+   // if head of undo list is a scriptstart node then simply remove it
+   // and return (ie. the script didn't make any changes)
+   wxList::compatibility_iterator node = undolist.GetFirst();
+   ChangeNode* change = (ChangeNode*) node->GetData();
+   if (change->changeid == scriptstart) {
+      undolist.Erase(node);
+      delete change;
+      return;
+   }
+
+   // add scriptfinish node to head of undo list
+   change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create scriptfinish node!"));
+
+   change->changeid = scriptfinish;
+   change->suffix = _("Script Changes");
+
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
 bool UndoRedo::CanUndo()
 {
-   return !undolist.IsEmpty();
+   return !undolist.IsEmpty() && !inscript && !mainptr->generating &&
+          !viewptr->waitingforclick && !viewptr->drawingcells &&
+          !viewptr->selectingcells;
 }
 
 // -----------------------------------------------------------------------------
 
 bool UndoRedo::CanRedo()
 {
-   return !redolist.IsEmpty();
+   return !redolist.IsEmpty() && !inscript && !mainptr->generating &&
+          !viewptr->waitingforclick && !viewptr->drawingcells &&
+          !viewptr->selectingcells;
 }
 
 // -----------------------------------------------------------------------------
@@ -454,13 +519,42 @@ void UndoRedo::UndoChange()
    wxList::compatibility_iterator node = undolist.GetFirst();
    ChangeNode* change = (ChangeNode*) node->GetData();
 
-   // user might abort the undo (eg. a lengthy rotate/flip)
-   if (!change->DoChange(true)) return;
+   if (change->changeid == scriptfinish) {
+      // undo all changes between scriptfinish and scriptstart nodes;
+      // first remove scriptfinish node from undo list and add it to redo list
+      undolist.Erase(node);
+      redolist.Insert(change);
+
+      while (change->changeid != scriptstart) {
+         // call UndoChange recursively, temporarily setting inscript true to
+         // 1) prevent UndoChange returning if DoChange is aborted, and
+         // 2) prevent intermediate updates
+         inscript = true;
+         UndoChange();
+         inscript = false;
+         node = undolist.GetFirst();
+         if (node == NULL) Fatal(_("Bug in UndoChange!"));
+         change = (ChangeNode*) node->GetData();
+      }
+      mainptr->UpdatePatternAndStatus();
+      // continue below so that scriptstart node is removed from undo list
+      // and added to redo list
+
+   } else {
+      // user might abort the undo (eg. a lengthy rotate/flip)
+      if (!change->DoChange(true) && !inscript) return;
+
+      // sigh... MarkLayerClean tests inscript flag so reset it now
+      // in case this change is between scriptfinish and scriptstart
+      inscript = false;
+   }
    
    // remove node from head of undo list (doesn't delete node's data)
    undolist.Erase(node);
    
-   if (change->changeid != selchange && change->wasdirty != currlayer->dirty) {
+   if (change->changeid == selchange || change->changeid == scriptstart) {
+      // ignore dirty flag
+   } else if (change->wasdirty != currlayer->dirty) {
       if (currlayer->dirty) {
          // clear dirty flag, update window title and Layer menu items
          MarkLayerClean(currlayer->currname);
@@ -504,13 +598,42 @@ void UndoRedo::RedoChange()
    wxList::compatibility_iterator node = redolist.GetFirst();
    ChangeNode* change = (ChangeNode*) node->GetData();
    
-   // user might abort the redo (eg. a lengthy rotate/flip)
-   if (!change->DoChange(false)) return;
+   if (change->changeid == scriptstart) {
+      // redo all changes between scriptstart and scriptfinish nodes;
+      // first remove scriptstart node from redo list and add it to undo list
+      redolist.Erase(node);
+      undolist.Insert(change);
+
+      while (change->changeid != scriptfinish) {
+         // call RedoChange recursively, temporarily setting inscript true to
+         // 1) prevent RedoChange returning if DoChange is aborted, and
+         // 2) prevent intermediate updates
+         inscript = true;
+         RedoChange();
+         inscript = false;
+         node = redolist.GetFirst();
+         if (node == NULL) Fatal(_("Bug in RedoChange!"));
+         change = (ChangeNode*) node->GetData();
+      }
+      mainptr->UpdatePatternAndStatus();
+      // continue below so that scriptfinish node is removed from redo list
+      // and added to undo list
+
+   } else {
+      // user might abort the redo (eg. a lengthy rotate/flip)
+      if (!change->DoChange(false) && !inscript) return;
+
+      // reset inscript in case this change is between scriptstart and scriptfinish
+      // (otherwise window title doesn't get updated by MarkLayerDirty below)
+      inscript = false;
+   }
    
    // remove node from head of redo list (doesn't delete node's data)
    redolist.Erase(node);
    
-   if (change->changeid != selchange && !change->wasdirty) {
+   if (change->changeid == selchange || change->changeid == scriptfinish) {
+      // ignore dirty flag
+   } else if (!change->wasdirty) {
       // set dirty flag, update window title and Layer menu items
       MarkLayerDirty();
    }

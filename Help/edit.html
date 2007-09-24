@@ -6,6 +6,42 @@
 NOTE: [key] next to a menu item indicates a keyboard shortcut.
 
 <p>
+<font size=+1><b>Undo</b></font>
+
+<p>
+Lets you undo one or more recent editing changes, including
+changes to the selection size.  The number of changes you
+can undo is limited only by memory.
+Each layer maintains its own undo/redo history (except for cloned
+layers; they share the same undo/redo history).
+The current layer's undo/redo history is automatically cleared
+when a new pattern is created or after opening a pattern file.
+A duplicated layer starts with an empty undo/redo history;
+i.e., the original layer's undo/redo history is <em>not</em> copied.
+
+<p>
+<font size=+1><b>Redo</b></font>
+
+<p>
+Lets you redo one or more recently undone changes.
+Note that the redo history is automatically cleared after
+you make a new change; i.e., if you do something like rotate
+the current selection, undo the rotation, then edit some cells
+or change the selection, then you can't redo the rotation.
+
+<p>
+<font size=+1><b>Disable Undo/Redo</b></font>
+
+<p>
+If ticked then the Undo and Redo items are disabled, and any
+existing undo/redo history for the current layer is cleared.
+This will speed up most editing operations, so you may want to
+temporarily disable undo/redo while editing a very large pattern.
+Be careful when using this feature.  If you switch to another layer
+when this item is ticked then that layer's undo/redo history is
+also cleared.
+
+<p>
 <font size=+1><b>Cut</b></font>
 
 <p>
