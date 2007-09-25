@@ -353,7 +353,7 @@ $(OBJDIR)/lifepoll.obj: lifepoll.cpp lifepoll.h util.h
 
 $(OBJDIR)/wxutils.obj: wxutils.cpp wxutils.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxview.h wxmain.h
+wxgolly.h wxview.h wxmain.h wxscript.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxutils.cpp
 
 $(OBJDIR)/wxprefs.obj: wxprefs.cpp wxprefs.h \

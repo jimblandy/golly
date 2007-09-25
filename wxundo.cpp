@@ -199,10 +199,12 @@ bool ChangeNode::DoChange(bool undo)
 
 UndoRedo::UndoRedo()
 {
-   intcount = 0;        // for 1st SaveCellChange
-   maxcount = 0;        // ditto
-   badalloc = false;    // true if malloc/realloc fails
-   cellarray = NULL;    // play safe
+   intcount = 0;                 // for 1st SaveCellChange
+   maxcount = 0;                 // ditto
+   badalloc = false;             // true if malloc/realloc fails
+   cellarray = NULL;             // play safe
+   savechanges = false;          // no script cell changes are pending
+   doingscriptchanges = false;   // not undoing/redoing script changes
    
    // need to remember if script has created a new layer
    if (inscript) RememberScriptStart();
@@ -403,11 +405,12 @@ void UndoRedo::RememberRotation(bool clockwise,
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberSelection(const wxString& action,
-                                 bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
-                                 bigint& newt, bigint& newl, bigint& newb, bigint& newr)
+void UndoRedo::RememberSelection(const wxString& action)
 {
-   if (oldt == newt && oldl == newl && oldb == newb && oldr == newr) {
+   if (currlayer->savetop == currlayer->seltop &&
+       currlayer->saveleft == currlayer->selleft &&
+       currlayer->savebottom == currlayer->selbottom &&
+       currlayer->saveright == currlayer->selright) {
       // selection has not changed
       return;
    }
@@ -421,15 +424,15 @@ void UndoRedo::RememberSelection(const wxString& action,
    if (change == NULL) Fatal(_("Failed to create selchange node!"));
 
    change->changeid = selchange;
-   change->prevt = oldt;
-   change->prevl = oldl;
-   change->prevb = oldb;
-   change->prevr = oldr;
-   change->nextt = newt;
-   change->nextl = newl;
-   change->nextb = newb;
-   change->nextr = newr;
-   if (newt <= newb)
+   change->prevt = currlayer->savetop;
+   change->prevl = currlayer->saveleft;
+   change->prevb = currlayer->savebottom;
+   change->prevr = currlayer->saveright;
+   change->nextt = currlayer->seltop;
+   change->nextl = currlayer->selleft;
+   change->nextb = currlayer->selbottom;
+   change->nextr = currlayer->selright;
+   if (currlayer->seltop <= currlayer->selbottom)
       change->suffix = action;
    else
       change->suffix = _("Deselection");
@@ -526,12 +529,12 @@ void UndoRedo::UndoChange()
       redolist.Insert(change);
 
       while (change->changeid != scriptstart) {
-         // call UndoChange recursively, temporarily setting inscript true to
-         // 1) prevent UndoChange returning if DoChange is aborted, and
-         // 2) prevent intermediate updates
-         inscript = true;
+         // call UndoChange recursively; we set doingscriptchanges temporarily
+         // so that 1) UndoChange won't return if DoChange is aborted, and
+         // 2) the user won't see any intermediate pattern/status updates
+         doingscriptchanges = true;
          UndoChange();
-         inscript = false;
+         doingscriptchanges = false;
          node = undolist.GetFirst();
          if (node == NULL) Fatal(_("Bug in UndoChange!"));
          change = (ChangeNode*) node->GetData();
@@ -542,11 +545,7 @@ void UndoRedo::UndoChange()
 
    } else {
       // user might abort the undo (eg. a lengthy rotate/flip)
-      if (!change->DoChange(true) && !inscript) return;
-
-      // sigh... MarkLayerClean tests inscript flag so reset it now
-      // in case this change is between scriptfinish and scriptstart
-      inscript = false;
+      if (!change->DoChange(true) && !doingscriptchanges) return;
    }
    
    // remove node from head of undo list (doesn't delete node's data)
@@ -605,12 +604,12 @@ void UndoRedo::RedoChange()
       undolist.Insert(change);
 
       while (change->changeid != scriptfinish) {
-         // call RedoChange recursively, temporarily setting inscript true to
-         // 1) prevent RedoChange returning if DoChange is aborted, and
-         // 2) prevent intermediate updates
-         inscript = true;
+         // call RedoChange recursively; we set doingscriptchanges temporarily
+         // so that 1) RedoChange won't return if DoChange is aborted, and
+         // 2) the user won't see any intermediate pattern/status updates
+         doingscriptchanges = true;
          RedoChange();
-         inscript = false;
+         doingscriptchanges = false;
          node = redolist.GetFirst();
          if (node == NULL) Fatal(_("Bug in RedoChange!"));
          change = (ChangeNode*) node->GetData();
@@ -621,11 +620,7 @@ void UndoRedo::RedoChange()
 
    } else {
       // user might abort the redo (eg. a lengthy rotate/flip)
-      if (!change->DoChange(false) && !inscript) return;
-
-      // reset inscript in case this change is between scriptstart and scriptfinish
-      // (otherwise window title doesn't get updated by MarkLayerDirty below)
-      inscript = false;
+      if (!change->DoChange(false) && !doingscriptchanges) return;
    }
    
    // remove node from head of redo list (doesn't delete node's data)
@@ -695,7 +690,8 @@ void UndoRedo::UpdateUndoItem(const wxString& action)
 {
    wxMenuBar* mbar = mainptr->GetMenuBar();
    if (mbar) {
-      mbar->SetLabel(wxID_UNDO, wxString::Format(_("Undo %s\tCtrl+Z"), action.c_str()));
+      mbar->SetLabel(wxID_UNDO,
+                     wxString::Format(_("Undo %s\tCtrl+Z"), action.c_str()));
    }
 }
 
@@ -705,6 +701,7 @@ void UndoRedo::UpdateRedoItem(const wxString& action)
 {
    wxMenuBar* mbar = mainptr->GetMenuBar();
    if (mbar) {
-      mbar->SetLabel(wxID_REDO, wxString::Format(_("Redo %s\tShift+Ctrl+Z"), action.c_str()));
+      mbar->SetLabel(wxID_REDO,
+                     wxString::Format(_("Redo %s\tShift+Ctrl+Z"), action.c_str()));
    }
 }

@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXUNDO_H_
 #define _WXUNDO_H_
 
-#include "bigint.h"     // for bigint class
-
 // This class implements unlimited undo/redo:
 
 class UndoRedo {
@@ -58,10 +56,8 @@ public:
    // remember rotation's direction and old and new selection edges;
    // this variant assumes SaveCellChange may have been called
    
-   void RememberSelection(const wxString& action,
-                          bigint& oldt, bigint& oldl, bigint& oldb, bigint& oldr,
-                          bigint& newt, bigint& newl, bigint& newb, bigint& newr);
-   // remember change in selection (no-op if old edges equal new edges)
+   void RememberSelection(const wxString& action);
+   // remember change in selection (no-op if selection hasn't changed)
 
    void RememberScriptStart();
    // remember that script is about to start; this allows us to undo/redo
@@ -69,6 +65,9 @@ public:
 
    void RememberScriptFinish();
    // remember that script has ended
+   
+   bool savechanges;             // script cell changes need to be remembered?
+   bool doingscriptchanges;      // are script changes being undone/redone?
 
    bool CanUndo();               // can a change be undone?
    bool CanRedo();               // can an undone change be redone?

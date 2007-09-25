@@ -1188,7 +1188,9 @@ void PatternView::CyclePasteMode()
 
 void PatternView::DisplaySelectionSize()
 {
-   if (waitingforclick || inscript) return;
+   if (waitingforclick || inscript || currlayer->undoredo->doingscriptchanges)
+      return;
+   
    bigint wd = currlayer->selright;    wd -= currlayer->selleft;   wd += bigint::one;
    bigint ht = currlayer->selbottom;   ht -= currlayer->seltop;    ht += bigint::one;
    wxString msg = _("Selection wd x ht = ");
@@ -1216,11 +1218,7 @@ void PatternView::RememberNewSelection(const wxString& action)
 {
    if (allowundo && !currlayer->stayclean) {
       if (inscript) SavePendingChanges();
-      currlayer->undoredo->RememberSelection(action,
-                                             currlayer->savetop, currlayer->saveleft,
-                                             currlayer->savebottom, currlayer->saveright,
-                                             currlayer->seltop, currlayer->selleft,
-                                             currlayer->selbottom, currlayer->selright);
+      currlayer->undoredo->RememberSelection(action);
    }
 }
 

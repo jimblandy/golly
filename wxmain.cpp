@@ -958,7 +958,7 @@ void MainFrame::UpdateEverything()
 // only update viewport and status bar
 void MainFrame::UpdatePatternAndStatus()
 {
-   if (inscript) return;
+   if (inscript || currlayer->undoredo->doingscriptchanges) return;
 
    if (!IsIconized()) {
       UpdateView();

@@ -837,7 +837,6 @@ void SyncClones()
             // sync various flags
             cloneptr->dirty = currlayer->dirty;
             cloneptr->savedirty = currlayer->savedirty;
-            cloneptr->savechanges = currlayer->savechanges;
             cloneptr->stayclean = currlayer->stayclean;
             
             // sync speed
@@ -1452,7 +1451,6 @@ Layer::Layer()
 
    dirty = false;                // user has not modified pattern
    savedirty = false;            // in case script created layer
-   savechanges = false;          // no pending cell changes
    stayclean = inscript;         // if true then keep the dirty flag false
                                  // for the duration of the script
    savestart = false;            // no need to save starting pattern
@@ -1587,8 +1585,6 @@ Layer::Layer()
          currname = currlayer->currname;
          dirty = currlayer->dirty;
          savedirty = currlayer->savedirty;
-         // we don't copy undo/redo history when duplicating so don't keep savechanges false
-         if (cloning) savechanges = currlayer->savechanges;
          stayclean = currlayer->stayclean;
          warp = currlayer->warp;
          autofit = currlayer->autofit;

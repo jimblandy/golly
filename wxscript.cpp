@@ -672,9 +672,9 @@ void ChangeCell(int x, int y)
 {
    // setcell/putcells command is changing state of cell at x,y
    currlayer->undoredo->SaveCellChange(x, y);
-   if (!currlayer->savechanges) {
-      currlayer->savechanges = true;
-      // save layer's dirty state for later RememberChanges call
+   if (!currlayer->undoredo->savechanges) {
+      currlayer->undoredo->savechanges = true;
+      // save layer's dirty state for next RememberChanges call
       currlayer->savedirty = currlayer->dirty;
    }
 }
@@ -683,11 +683,11 @@ void ChangeCell(int x, int y)
 
 void SavePendingChanges()
 {
-   // if ChangeCell has been called then remember accumulated changes;
-   // should only be called if inscript && allowundo && !currlayer->stayclean
-   if (currlayer->savechanges) {
+   // this should only be called if inscript && allowundo && !currlayer->stayclean
+   if (currlayer->undoredo->savechanges) {
+      // ChangeCell has been called so remember accumulated changes
       currlayer->undoredo->RememberChanges(_("Cell Changes"), currlayer->savedirty);
-      currlayer->savechanges = false;
+      currlayer->undoredo->savechanges = false;
    }
 }
 
@@ -733,12 +733,11 @@ void RunScript(const wxString& filename)
    #endif
 
    if (allowundo) {
-      // save each layer's dirty state for use by RememberChanges when
-      // the script has finished (see below)
+      // save each layer's dirty state for use by next RememberChanges call
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* layer = GetLayer(i);
          layer->savedirty = layer->dirty;
-         layer->savechanges = false;
+         layer->undoredo->savechanges = false;
          // add a special node to indicate that the script is about to start;
          // this allows all changes made by the script to be undone/redone
          // in one go; note that the UndoRedo ctor calls RememberScriptStart
@@ -772,7 +771,7 @@ void RunScript(const wxString& filename)
    for ( int i = 0; i < numlayers; i++ ) {
       Layer* layer = GetLayer(i);
       if (allowundo) {
-         if (layer->savechanges) {
+         if (layer->undoredo->savechanges) {
             // some cell changes were not processed by SavePendingChanges
             if (layer->stayclean)
                layer->undoredo->ForgetChanges();

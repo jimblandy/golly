@@ -31,9 +31,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/progdlg.h"    // for wxProgressDialog
 #include "wx/image.h"      // for wxImage
 
-#include "wxgolly.h"       // for wxGetApp, etc
+#include "wxgolly.h"       // for wxGetApp, viewptr, mainptr
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
+#include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxutils.h"
 
 #ifdef __WXMAC__
@@ -498,8 +499,13 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
       #else
          prognext = msecs + 100;     // call Update about 10 times per sec
       #endif
-      // Update returns false if user hits Cancel button
-      return !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg);
+      if ( !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg) ) {
+         // user hit Cancel button
+         if (inscript) PassKeyToScript(WXK_ESCAPE);     // abort script
+         return true;
+      } else {
+         return false;
+      }
    } else {
       // note that fraction_done is not always an accurate estimator for how long
       // the task will take, especially when we use nextcell for cut/copy

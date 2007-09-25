@@ -173,7 +173,7 @@ $(OBJDIR)/lifepoll.o: lifepoll.cpp lifepoll.h util.h
 
 $(OBJDIR)/wxutils.o: wxutils.cpp wxutils.h \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxview.h wxmain.h
+wxgolly.h wxview.h wxmain.h wxscript.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \

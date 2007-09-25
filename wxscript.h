@@ -41,6 +41,7 @@ void RunScript(const wxString& filename);
 
 void PassKeyToScript(int key);
 // Called if a script is running and user hits a key.
+// Can also be used to abort a script by passing WXK_ESCAPE.
 
 void ShowTitleLater();
 // Called if a script is running and window title has changed.

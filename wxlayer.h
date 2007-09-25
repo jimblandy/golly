@@ -44,7 +44,6 @@ public:
    bool autofit;              // auto fit pattern while generating?
    bool dirty;                // user has modified pattern?
    bool savedirty;            // state of dirty flag before drawing/script change
-   bool savechanges;          // one or more cell changes need to be remembered?
    bool stayclean;            // script has reset dirty flag?
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
@@ -59,7 +58,7 @@ public:
    // current selection edges
    bigint seltop, selbottom, selleft, selright;
    
-   // saved selection edges used to restore selection and by undo/redo
+   // saved selection edges used to restore selection, and for undo/redo
    bigint savetop, savebottom, saveleft, saveright;
 
    bigint originx;            // X origin offset
