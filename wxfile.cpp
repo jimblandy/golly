@@ -206,9 +206,9 @@ bool MainFrame::LoadImage()
          bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
          int wd = image.GetWidth();
          int ht = image.GetHeight();
-         unsigned char *idata = image.GetData();
+         unsigned char* idata = image.GetData();
          int x, y;
-         lifealgo *curralgo = currlayer->algo;
+         lifealgo* curralgo = currlayer->algo;
          for (y = 0; y < ht; y++)
             for (x = 0; x < wd; x++) {
                long pos = (y * wd + x) * 3;
@@ -368,7 +368,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
          patternSubMenu->Insert(numpatterns - 1, id, path);
       } else {
          // replace last item with new path
-         wxMenuItem *item = patternSubMenu->FindItemByPosition(maxpatterns - 1);
+         wxMenuItem* item = patternSubMenu->FindItemByPosition(maxpatterns - 1);
          item->SetText(path);
          id = GetID_OPEN_RECENT() + maxpatterns;
       }
@@ -376,9 +376,9 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
    // path exists in patternSubMenu 
    if ( id > GetID_OPEN_RECENT() + 1 ) {
       // move path to start of menu
-      wxMenuItem *item;
+      wxMenuItem* item;
       while ( id > GetID_OPEN_RECENT() + 1 ) {
-         wxMenuItem *previtem = patternSubMenu->FindItem(id - 1);
+         wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
          wxString prevpath = previtem->GetText();
          item = patternSubMenu->FindItem(id);
          item->SetText(prevpath);
@@ -409,7 +409,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
          scriptSubMenu->Insert(numscripts - 1, id, path);
       } else {
          // replace last item with new path
-         wxMenuItem *item = scriptSubMenu->FindItemByPosition(maxscripts - 1);
+         wxMenuItem* item = scriptSubMenu->FindItemByPosition(maxscripts - 1);
          item->SetText(path);
          id = GetID_RUN_RECENT() + maxscripts;
       }
@@ -417,9 +417,9 @@ void MainFrame::AddRecentScript(const wxString& inpath)
    // path exists in scriptSubMenu 
    if ( id > GetID_RUN_RECENT() + 1 ) {
       // move path to start of menu
-      wxMenuItem *item;
+      wxMenuItem* item;
       while ( id > GetID_RUN_RECENT() + 1 ) {
-         wxMenuItem *previtem = scriptSubMenu->FindItem(id - 1);
+         wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
          wxString prevpath = previtem->GetText();
          item = scriptSubMenu->FindItem(id);
          item->SetText(prevpath);
@@ -534,7 +534,7 @@ bool MainFrame::CopyTextToClipboard(wxString &text)
 
 // -----------------------------------------------------------------------------
 
-bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
+bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 {
    bool gotdata = false;
    
@@ -561,7 +561,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject *textdata)
                */
                int wd = image.GetWidth();
                int ht = image.GetHeight();
-               unsigned char *idata = image.GetData();
+               unsigned char* idata = image.GetData();
                int x, y;
                for (y = 0; y < ht; y++) {
                   for (x = 0; x < wd; x++) {
@@ -741,7 +741,7 @@ void MainFrame::RunClipboard()
 
 void MainFrame::OpenRecentPattern(int id)
 {
-   wxMenuItem *item = patternSubMenu->FindItem(id);
+   wxMenuItem* item = patternSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
 
@@ -759,7 +759,7 @@ void MainFrame::OpenRecentPattern(int id)
 
 void MainFrame::OpenRecentScript(int id)
 {
-   wxMenuItem *item = scriptSubMenu->FindItem(id);
+   wxMenuItem* item = scriptSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
 
@@ -778,7 +778,7 @@ void MainFrame::ClearMissingPatterns()
 {
    int pos = 0;
    while (pos < numpatterns) {
-      wxMenuItem *item = patternSubMenu->FindItemByPosition(pos);
+      wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
       wxString path = item->GetText();
       
       // if path isn't absolute then prepend Golly directory
@@ -792,7 +792,7 @@ void MainFrame::ClearMissingPatterns()
          // remove this item by shifting up later items
          int nextpos = pos + 1;
          while (nextpos < numpatterns) {
-            wxMenuItem *nextitem = patternSubMenu->FindItemByPosition(nextpos);
+            wxMenuItem* nextitem = patternSubMenu->FindItemByPosition(nextpos);
             item->SetText( nextitem->GetText() );
             item = nextitem;
             nextpos++;
@@ -802,7 +802,7 @@ void MainFrame::ClearMissingPatterns()
          numpatterns--;
       }
    }
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) mbar->Enable(GetID_OPEN_RECENT(), numpatterns > 0);
 }
 
@@ -812,7 +812,7 @@ void MainFrame::ClearMissingScripts()
 {
    int pos = 0;
    while (pos < numscripts) {
-      wxMenuItem *item = scriptSubMenu->FindItemByPosition(pos);
+      wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
       wxString path = item->GetText();
       
       // if path isn't absolute then prepend Golly directory
@@ -826,7 +826,7 @@ void MainFrame::ClearMissingScripts()
          // remove this item by shifting up later items
          int nextpos = pos + 1;
          while (nextpos < numscripts) {
-            wxMenuItem *nextitem = scriptSubMenu->FindItemByPosition(nextpos);
+            wxMenuItem* nextitem = scriptSubMenu->FindItemByPosition(nextpos);
             item->SetText( nextitem->GetText() );
             item = nextitem;
             nextpos++;
@@ -836,7 +836,7 @@ void MainFrame::ClearMissingScripts()
          numscripts--;
       }
    }
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) mbar->Enable(GetID_RUN_RECENT(), numscripts > 0);
 }
 
@@ -848,7 +848,7 @@ void MainFrame::ClearAllPatterns()
       patternSubMenu->Delete( patternSubMenu->FindItemByPosition(0) );
       numpatterns--;
    }
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) mbar->Enable(GetID_OPEN_RECENT(), false);
 }
 
@@ -860,7 +860,7 @@ void MainFrame::ClearAllScripts()
       scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(0) );
       numscripts--;
    }
-   wxMenuBar *mbar = GetMenuBar();
+   wxMenuBar* mbar = GetMenuBar();
    if (mbar) mbar->Enable(GetID_RUN_RECENT(), false);
 }
 
@@ -873,10 +873,12 @@ const char* MainFrame::WritePattern(const wxString& path,
    #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
       // use decomposed UTF8 so fopen will work
       const char* err = writepattern(path.fn_str(),
-                        *currlayer->algo, format, top, left, bottom, right);
+                                     *currlayer->algo, format,
+                                     top, left, bottom, right);
    #else
       const char* err = writepattern(path.mb_str(wxConvLocal),
-                        *currlayer->algo, format, top, left, bottom, right);
+                                     *currlayer->algo, format,
+                                     top, left, bottom, right);
    #endif
    
    #ifdef __WXMAC__

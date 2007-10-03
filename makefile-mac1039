@@ -246,8 +246,8 @@ wxundo.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
 
 $(OBJDIR)/wxundo.o: wxundo.cpp wxundo.h \
-lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
-wxgolly.h wxmain.h wxview.h wxutils.h wxscript.h wxlayer.h
+lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h writepattern.h \
+wxgolly.h wxmain.h wxview.h wxutils.h wxscript.h wxlayer.h wxprefs.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxundo.cpp
 
 $(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \

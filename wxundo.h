@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXUNDO_H_
 #define _WXUNDO_H_
 
+#include "bigint.h"     // for bigint class
+
 // This class implements unlimited undo/redo:
 
 class UndoRedo {
@@ -59,9 +61,18 @@ public:
    void RememberSelection(const wxString& action);
    // remember change in selection (no-op if selection hasn't changed)
 
+   void RememberGenStart();
+   // remember info before generating pattern
+
+   void RememberGenFinish();
+   // remember info after generating pattern
+   
+   void SyncUndoHistory();
+   // called at the end of ResetPattern to synchronize the undo history
+
    void RememberScriptStart();
    // remember that script is about to start; this allows us to undo/redo
-   // any script changes all at once
+   // any changes made by the script all at once
 
    void RememberScriptFinish();
    // remember that script has ended
@@ -86,6 +97,18 @@ private:
    unsigned int intcount;        // number of elements (2 * number of cells)
    unsigned int maxcount;        // number of elements allocated
    bool badalloc;                // malloc/realloc failed?
+   
+   bigint prevgen;               // generation count at start of gen change
+   wxString prevfile;            // for saving pattern at start of gen change
+   bigint prevt, prevl;          // selection edges at start of gen change
+   bigint prevb, prevr;
+   bigint prevx, prevy;          // viewport position at start of gen change
+   int prevmag;                  // scale at start of gen change
+   int prevwarp;                 // speed at start of gen change
+   bool prevhash;                // hash state at start of gen change
+   
+   void SaveCurrentPattern(const wxString& filename);
+   // save current pattern to given file
    
    void UpdateUndoItem(const wxString& action);
    void UpdateRedoItem(const wxString& action);

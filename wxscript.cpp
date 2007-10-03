@@ -115,7 +115,6 @@ const char* GSF_open(char* filename, int remember)
    }
 
    // convert non-absolute filename to absolute path relative to scriptloc
-   // so it can be selected later from Open Recent submenu
    wxString fname = wxString(filename,wxConvLocal);
    wxFileName fullname(fname);
    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
@@ -132,7 +131,6 @@ const char* GSF_open(char* filename, int remember)
 const char* GSF_save(char* filename, char* format, int remember)
 {
    // convert non-absolute filename to absolute path relative to scriptloc
-   // so it can be selected later from Open Recent submenu
    wxString fname = wxString(filename,wxConvLocal);
    wxFileName fullname(fname);
    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;

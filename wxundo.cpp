@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"
 #include "lifealgo.h"
+#include "writepattern.h"  // for MC_format, XRLE_format
 
 #include "wxgolly.h"       // for mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
@@ -36,25 +37,33 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
+#include "wxprefs.h"       // for gollydir
 #include "wxundo.h"
 
+// -----------------------------------------------------------------------------
+
 const wxString lack_of_memory = _("Due to lack of memory, some changes can't be undone!");
+
+// globals for creating unique temporary file names
+static int filecount = 0;
+const wxString fileprefix = _(".golly_undo_%d");
 
 // -----------------------------------------------------------------------------
 
 // encapsulate change info stored in undo/redo lists
 
 typedef enum {
-   cellstates,       // toggle cell states
-   fliptb,           // flip selection top-bottom
-   fliplr,           // flip selection left-right
-   rotatecw,         // rotate selection clockwise
-   rotateacw,        // rotate selection anticlockwise
-   rotatepattcw,     // rotate pattern clockwise
-   rotatepattacw,    // rotate pattern anticlockwise
-   selchange,        // change selection
-   scriptstart,      // any later changes were made by script
-   scriptfinish      // any earlier changes were made by script
+   cellstates,          // one or more cell states were changed
+   fliptb,              // selection was flipped top-bottom
+   fliplr,              // selection was flipped left-right
+   rotatecw,            // selection was rotated clockwise
+   rotateacw,           // selection was rotated anticlockwise
+   rotatepattcw,        // pattern was rotated clockwise
+   rotatepattacw,       // pattern was rotated anticlockwise
+   selchange,           // selection was changed
+   genchange,           // pattern was generated
+   scriptstart,         // later changes were made by script
+   scriptfinish         // earlier changes were made by script
 } change_type;
 
 class ChangeNode: public wxObject {
@@ -68,13 +77,27 @@ public:
 
    change_type changeid;                  // specifies the type of change
    wxString suffix;                       // action string for Undo/Redo item
-   bool wasdirty;                         // dirty state BEFORE change was made
+   bool wasdirty;                         // layer's dirty state BEFORE change was made
+   
+   // cellstates info
    int* cellcoords;                       // array of x,y coordinates (2 ints per cell)
    unsigned int cellcount;                // number of cells in array
-   int oldt, oldl, oldb, oldr;            // old selection edges for rotate
-   int newt, newl, newb, newr;            // new selection edges for rotate
+   
+   // rotatecw/rotateacw info
+   int oldt, oldl, oldb, oldr;            // selection edges before rotation
+   int newt, newl, newb, newr;            // selection edges after rotation
+   
+   // selchange/genchange info
    bigint prevt, prevl, prevb, prevr;     // old selection edges
    bigint nextt, nextl, nextb, nextr;     // new selection edges
+   
+   // genchange info
+   bigint oldgen, newgen;                 // old and new generation counts
+   wxString oldfile, newfile;             // old and new pattern files
+   bigint oldx, oldy, newx, newy;         // old and new positions
+   int oldmag, newmag;                    // old and new scales
+   int oldwarp, newwarp;                  // old and new speeds
+   bool oldhash, newhash;                 // old and new hash states
 };
 
 // -----------------------------------------------------------------------------
@@ -82,6 +105,8 @@ public:
 ChangeNode::ChangeNode()
 {
    cellcoords = NULL;
+   oldfile = wxEmptyString;
+   newfile = wxEmptyString;
 }
 
 // -----------------------------------------------------------------------------
@@ -89,6 +114,9 @@ ChangeNode::ChangeNode()
 ChangeNode::~ChangeNode()
 {
    if (cellcoords) free(cellcoords);
+   
+   if (!oldfile.IsEmpty() && wxFileExists(oldfile)) wxRemoveFile(oldfile);
+   if (!newfile.IsEmpty() && wxFileExists(newfile)) wxRemoveFile(newfile);
 }
 
 // -----------------------------------------------------------------------------
@@ -121,7 +149,7 @@ bool ChangeNode::DoChange(bool undo)
             int ibottom = currlayer->selbottom.toint();
             int iright = currlayer->selright.toint();
             if (ibottom <= itop || iright <= ileft) {
-               // should never happen???
+               // should never happen
                Warning(_("Flip bug detected in DoChange!"));
                return false;
             } else if (changeid == fliptb) {
@@ -186,6 +214,22 @@ bool ChangeNode::DoChange(bool undo)
          mainptr->UpdatePatternAndStatus();
          break;
       
+      case genchange:
+         if (undo) {
+            currlayer->seltop = prevt;
+            currlayer->selleft = prevl;
+            currlayer->selbottom = prevb;
+            currlayer->selright = prevr;
+            mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldwarp, oldhash);
+         } else {
+            currlayer->seltop = nextt;
+            currlayer->selleft = nextl;
+            currlayer->selbottom = nextb;
+            currlayer->selright = nextr;
+            mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newwarp, newhash);
+         }
+         break;
+      
       case scriptstart:
       case scriptfinish:
          // should never happen
@@ -230,7 +274,7 @@ void UndoRedo::SaveCellChange(int x, int y)
             badalloc = true;
             return;
          }
-         // note that either ~ChangeNode or ForgetChanges will free cellarray
+         // ChangeNode::~ChangeNode or UndoRedo::ForgetChanges will free cellarray
       } else {
          // double size of cellarray
          int* newptr = (int*) realloc(cellarray, maxcount * 2 * sizeof(int));
@@ -415,6 +459,12 @@ void UndoRedo::RememberSelection(const wxString& action)
       return;
    }
    
+   if (mainptr->generating) {
+      // don't record selection changes while a pattern is generating;
+      // RememberGenStart and RememberGenFinish will remember the overall change
+      return;
+   }
+   
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
@@ -432,16 +482,161 @@ void UndoRedo::RememberSelection(const wxString& action)
    change->nextl = currlayer->selleft;
    change->nextb = currlayer->selbottom;
    change->nextr = currlayer->selright;
-   if (currlayer->seltop <= currlayer->selbottom)
+   if (currlayer->seltop <= currlayer->selbottom) {
       change->suffix = action;
-   else
+   } else {
       change->suffix = _("Deselection");
+   }
    // change->wasdirty is not used for selection changes
 
    undolist.Insert(change);
    
    // update Undo item in Edit menu
    UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::SaveCurrentPattern(const wxString& filename)
+{
+   const char* err = NULL;
+   if ( currlayer->hash ) {
+      // save hlife pattern in a macrocell file
+      err = mainptr->WritePattern(filename, MC_format, 0, 0, 0, 0);
+   } else {
+      // can only save RLE file if edges are within getcell/setcell limits
+      bigint top, left, bottom, right;
+      currlayer->algo->findedges(&top, &left, &bottom, &right);      
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         err = "Pattern is too big to save.";
+      } else {
+         // use XRLE format so the pattern's top left location and the current
+         // generation count are stored in the file
+         err = mainptr->WritePattern(filename, XRLE_format,
+                                     top.toint(), left.toint(),
+                                     bottom.toint(), right.toint());
+      }
+   }
+   if (err) Warning(wxString(err,wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberGenStart()
+{
+   // save current generation, selection, position, scale, speed, etc
+   prevgen = currlayer->algo->getGeneration();
+   
+   prevt = currlayer->seltop;
+   prevl = currlayer->selleft;
+   prevb = currlayer->selbottom;
+   prevr = currlayer->selright;
+
+   viewptr->GetPos(prevx, prevy);
+   prevmag = viewptr->GetMag();
+   prevwarp = currlayer->warp;
+   prevhash = currlayer->hash;
+
+   if (prevgen == currlayer->startgen) {
+      // we can just reset to starting pattern
+      prevfile = wxEmptyString;
+   } else {
+      // if head of undo list is a genchange node then we can just set
+      // prevfile to the file saved by previous RememberGenFinish call
+      if (!undolist.IsEmpty()) {
+         wxList::compatibility_iterator node = undolist.GetFirst();
+         ChangeNode* change = (ChangeNode*) node->GetData();
+         if (change->changeid == genchange) {
+            prevfile = change->newfile;
+            return;
+         }
+      }
+      // save starting pattern to unique temporary file
+      //!!! create in system temp dir so file is eventually deleted if app crashes
+      prevfile = gollydir + wxString::Format(fileprefix, filecount++);
+      SaveCurrentPattern(prevfile);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberGenFinish()
+{
+   // generation count might not have changed
+   if (prevgen == currlayer->algo->getGeneration()) {
+      // don't delete prevfile -- it might be used by previous genchange node
+      // if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+      return;
+   }
+   
+   // save finishing pattern to unique temporary file
+   //!!! create in system temp dir so file is eventually deleted if app crashes
+   wxString fpath = gollydir + wxString::Format(fileprefix, filecount++);
+   SaveCurrentPattern(fpath);
+   
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add genchange node to head of undo list
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create genchange node!"));
+
+   change->changeid = genchange;
+   change->oldgen = prevgen;
+   change->newgen = currlayer->algo->getGeneration();
+   change->oldfile = prevfile;
+   change->newfile = fpath;
+   change->oldx = prevx;
+   change->oldy = prevy;
+   change->oldmag = prevmag;
+   change->oldwarp = prevwarp;
+   change->oldhash = prevhash;
+   viewptr->GetPos(change->newx, change->newy);
+   change->newmag = viewptr->GetMag();
+   change->newwarp = currlayer->warp;
+   change->newhash = currlayer->hash;
+   change->prevt = prevt;
+   change->prevl = prevl;
+   change->prevb = prevb;
+   change->prevr = prevr;
+   change->nextt = currlayer->seltop;
+   change->nextl = currlayer->selleft;
+   change->nextb = currlayer->selbottom;
+   change->nextr = currlayer->selright;
+   change->suffix = _("Generation");
+   // change->wasdirty is not used for generation changes
+
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::SyncUndoHistory()
+{
+   // at the end of a ResetPattern call we need to wind back the undo list
+   // to just past the oldest genchange node
+   wxList::compatibility_iterator node;
+   ChangeNode* change;
+   while (!undolist.IsEmpty()) {
+      node = undolist.GetFirst();
+      change = (ChangeNode*) node->GetData();
+
+      // remove node from head of undo list and append it to redo list
+      undolist.Erase(node);
+      redolist.Insert(change);
+
+      if (change->changeid == genchange && change->oldgen == currlayer->startgen) {
+         // update Undo/Redo items so they show the correct suffix
+         UpdateUndoRedoItems();
+         return;
+      }
+   }
+   // should never get here
+   Warning(_("Bug detected in SyncUndoHistory!"));
 }
 
 // -----------------------------------------------------------------------------
@@ -551,7 +746,9 @@ void UndoRedo::UndoChange()
    // remove node from head of undo list (doesn't delete node's data)
    undolist.Erase(node);
    
-   if (change->changeid == selchange || change->changeid == scriptstart) {
+   if (change->changeid == selchange ||
+         change->changeid == genchange ||
+            change->changeid == scriptstart) {
       // ignore dirty flag
    } else if (change->wasdirty != currlayer->dirty) {
       if (currlayer->dirty) {
@@ -567,7 +764,7 @@ void UndoRedo::UndoChange()
                currlayer->savestart = true;     // pattern created by script
          }
       } else {
-         // should never happen???
+         // should never happen
          Warning(_("Bug? UndoChange is setting dirty flag!"));
          MarkLayerDirty();
       }
@@ -626,7 +823,9 @@ void UndoRedo::RedoChange()
    // remove node from head of redo list (doesn't delete node's data)
    redolist.Erase(node);
    
-   if (change->changeid == selchange || change->changeid == scriptfinish) {
+   if (change->changeid == selchange ||
+         change->changeid == genchange ||
+            change->changeid == scriptfinish) {
       // ignore dirty flag
    } else if (!change->wasdirty) {
       // set dirty flag, update window title and Layer menu items

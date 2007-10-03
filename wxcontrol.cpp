@@ -75,7 +75,7 @@ bool MainFrame::SaveStartingPattern()
    // save starting pattern in tempstart file
    if ( currlayer->hash ) {
       // much faster to save hlife pattern in a macrocell file
-      const char *err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
+      const char* err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
          // don't allow user to continue generating
@@ -96,7 +96,7 @@ bool MainFrame::SaveStartingPattern()
       int iright = right.toint();      
       // use XRLE format so the pattern's top left location and the current
       // generation count are stored in the file
-      const char *err = WritePattern(currlayer->tempstart, XRLE_format,
+      const char* err = WritePattern(currlayer->tempstart, XRLE_format,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
@@ -172,6 +172,39 @@ void MainFrame::ResetPattern()
    // update window title in case rule or dirty flag changed
    SetWindowTitle(wxEmptyString);
    UpdateEverything();
+   
+   if (allowundo && !inscript) {
+      // we must also wind back the undo history to the starting pattern
+      currlayer->undoredo->SyncUndoHistory();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
+                               bigint& x, bigint& y, int mag, int warp, bool hash)
+{
+   // called to undo/redo a generating change
+   if (gen == currlayer->startgen) {
+      // restore starting pattern, temporarily turning off allowundo so that
+      // SyncUndoHistory won't be called
+      allowundo = false;
+      ResetPattern();
+      allowundo = true;
+   } else {
+      // restore pattern and various settings
+      currlayer->warp = warp;
+      currlayer->hash = hash;
+
+      wxString oldfile = currlayer->currfile;
+      currlayer->currfile = filename;
+      LoadPattern(wxEmptyString);         // load filename
+      currlayer->currfile = oldfile;
+
+      viewptr->SetPosMag(x, y, mag);
+      SetWindowTitle(wxEmptyString);      // in case rule changed
+      UpdatePatternAndStatus();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -255,6 +288,10 @@ void MainFrame::GeneratePattern()
    if (!SaveStartingPattern()) {
       return;
    }
+      
+   // GeneratePattern is never called while running a script so no need
+   // to test inscript or currlayer->stayclean
+   if (allowundo) currlayer->undoredo->RememberGenStart();
 
    // for DisplayTimingInfo
    begintime = stopwatch->Time();
@@ -314,12 +351,16 @@ void MainFrame::GeneratePattern()
       // UpdateEverything will be called at end of ResetPattern/ToggleHashing
    } else {
       UpdateEverything();
+      // GeneratePattern is never called while running a script so no need
+      // to test inscript or currlayer->stayclean
+      if (allowundo) currlayer->undoredo->RememberGenFinish();
    }
 
    if (reset_pending) {
       reset_pending = false;
       ResetPattern();
    }
+   
    if (hash_pending) {
       hash_pending = false;
       
@@ -729,7 +770,7 @@ void MainFrame::NextGeneration(bool useinc)
    if (!SaveStartingPattern()) {
       return;
    }
-      
+
    // curralgo->step() calls checkevents so set generating flag to avoid recursion
    generating = true;
    
@@ -737,6 +778,7 @@ void MainFrame::NextGeneration(bool useinc)
    if (!inscript) {
       wxGetApp().PollerReset();
       viewptr->CheckCursor(IsActive());
+      if (allowundo) currlayer->undoredo->RememberGenStart();
    }
 
    if (useinc) {
@@ -761,6 +803,7 @@ void MainFrame::NextGeneration(bool useinc)
       if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
          viewptr->FitInView(0);
       UpdateEverything();
+      if (allowundo) currlayer->undoredo->RememberGenFinish();
    }
 }
 

@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dirctrl.h"    // for wxGenericDirCtrl
 #include "wx/treectrl.h"   // for wxTreeCtrl, wxTreeEvent
 #include "wx/dataobj.h"    // for wxTextDataObject
+
+#include "bigint.h"        // for bigint
 #include "writepattern.h"  // for pattern_format
 
 // Define the main window:
@@ -67,12 +69,17 @@ public:
    void SavePattern();
    bool SaveCurrentLayer();
    const char* SaveFile(const wxString& path, const wxString& format, bool remember);
+   const char* WritePattern(const wxString& path,
+                            pattern_format format,
+                            int top, int left, int bottom, int right);
    #if wxUSE_DRAG_AND_DROP
       wxDropTarget* NewDropTarget();
    #endif
    
    // edit functions
    void ToggleAllowUndo();
+   void RestorePattern(bigint& gen, const wxString& filename,
+                       bigint& x, bigint& y, int mag, int warp, bool hash);
 
    // prefs functions
    void SetRandomFillPercentage();
@@ -158,9 +165,6 @@ private:
    void ClearAllScripts();
    void ChangeScriptDir();
    wxString GetScriptFileName(const wxString& text);
-   const char *WritePattern(const wxString& path,
-                            pattern_format format,
-                            int top, int left, int bottom, int right);
 
    // control functions
    bool SaveStartingPattern();
