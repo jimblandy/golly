@@ -668,10 +668,16 @@ void CheckScriptError(const wxString& ext)
 
 void ChangeCell(int x, int y)
 {
+   // first check if there are any pending gen changes that need to be remembered
+   if (currlayer->undoredo->savegenchanges) {
+      currlayer->undoredo->savegenchanges = false;
+      currlayer->undoredo->RememberGenFinish();
+   }
+
    // setcell/putcells command is changing state of cell at x,y
    currlayer->undoredo->SaveCellChange(x, y);
-   if (!currlayer->undoredo->savechanges) {
-      currlayer->undoredo->savechanges = true;
+   if (!currlayer->undoredo->savecellchanges) {
+      currlayer->undoredo->savecellchanges = true;
       // save layer's dirty state for next RememberChanges call
       currlayer->savedirty = currlayer->dirty;
    }
@@ -679,13 +685,19 @@ void ChangeCell(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-void SavePendingChanges()
+void SavePendingChanges(bool checkgenchanges)
 {
    // this should only be called if inscript && allowundo && !currlayer->stayclean
-   if (currlayer->undoredo->savechanges) {
-      // ChangeCell has been called so remember accumulated changes
+   if (currlayer->undoredo->savecellchanges) {
+      currlayer->undoredo->savecellchanges = false;
+      // remember accumulated cell changes
       currlayer->undoredo->RememberChanges(_("Cell Changes"), currlayer->savedirty);
-      currlayer->undoredo->savechanges = false;
+   }
+
+   if (checkgenchanges && currlayer->undoredo->savegenchanges) {
+      currlayer->undoredo->savegenchanges = false;
+      // remember accumulated gen changes
+      currlayer->undoredo->RememberGenFinish();
    }
 }
 
@@ -735,7 +747,9 @@ void RunScript(const wxString& filename)
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* layer = GetLayer(i);
          layer->savedirty = layer->dirty;
-         layer->undoredo->savechanges = false;
+         // at start of script there are no pending cell/gen changes
+         layer->undoredo->savecellchanges = false;
+         layer->undoredo->savegenchanges = false;
          // add a special node to indicate that the script is about to start;
          // this allows all changes made by the script to be undone/redone
          // in one go; note that the UndoRedo ctor calls RememberScriptStart
@@ -759,28 +773,35 @@ void RunScript(const wxString& filename)
       wxString err = _("Unexpected extension in script file:\n") + filename;
       Warning(err);
    }
-   
-   inscript = false;
-   plscript = false;
-   pyscript = false;
 
    // tidy up the undo/redo history for each layer and reset the stayclean flag
    // in case it was set by MarkLayerClean
    for ( int i = 0; i < numlayers; i++ ) {
       Layer* layer = GetLayer(i);
       if (allowundo) {
-         if (layer->undoredo->savechanges) {
-            // some cell changes were not processed by SavePendingChanges
+         if (layer->undoredo->savecellchanges) {
+            layer->undoredo->savecellchanges = false;
+            // remember pending cell changes
             if (layer->stayclean)
                layer->undoredo->ForgetChanges();
             else
                layer->undoredo->RememberChanges(_("Cell Changes"), layer->savedirty);
+         }
+         if (layer->undoredo->savegenchanges) {
+            layer->undoredo->savegenchanges = false;
+            // remember pending gen changes
+            if (!layer->stayclean) layer->undoredo->RememberGenFinish();
          }
          // add a special node to indicate that the script has finished
          layer->undoredo->RememberScriptFinish();
       }
       layer->stayclean = false;
    }
+   
+   // must reset inscript after RememberGenFinish
+   inscript = false;
+   plscript = false;
+   pyscript = false;
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollydir);

@@ -186,13 +186,12 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
 {
    // called to undo/redo a generating change
    if (gen == currlayer->startgen) {
-      // restore starting pattern, temporarily turning off allowundo so that
-      // SyncUndoHistory won't be called
-      allowundo = false;
+      // restore starting pattern
+      allowundo = false;                  // so SyncUndoHistory won't be called
       ResetPattern();
       allowundo = true;
    } else {
-      // restore pattern and various settings
+      // restore pattern in filename and various settings
       currlayer->warp = warp;
       currlayer->hash = hash;
 
@@ -408,6 +407,72 @@ void MainFrame::DisplayTimingInfo()
       s.Printf(_("%g gens in %g secs (%g gens/sec)"), gens, secs, gens / secs);
       statusptr->DisplayMessage(s);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::NextGeneration(bool useinc)
+{
+   if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
+      // don't play sound here because it'll be heard if user holds down tab key
+      // wxBell();
+      return;
+   }
+
+   lifealgo* curralgo = currlayer->algo;
+   if (curralgo->isEmpty()) {
+      statusptr->ErrorMessage(empty_pattern);
+      return;
+   }
+   
+   if (!SaveStartingPattern()) {
+      return;
+   }
+
+   // curralgo->step() calls checkevents so set generating flag to avoid recursion
+   generating = true;
+   
+   // avoid doing some things if NextGeneration is called from a script;
+   // ie. by a run/step command
+   if (!inscript) {
+      wxGetApp().PollerReset();
+      viewptr->CheckCursor(IsActive());
+   }
+
+   if (allowundo && !currlayer->stayclean) {
+      if (inscript) {
+         // pass in false so we don't test savegenchanges flag
+         SavePendingChanges(false);
+      }
+      currlayer->undoredo->RememberGenStart();
+   }
+
+   if (useinc) {
+      // step by current increment
+      if (curralgo->getIncrement() > bigint::one && !inscript) {
+         UpdateToolBar(IsActive());
+         UpdateMenuItems(IsActive());
+      }
+      curralgo->step();
+   } else {
+      // make sure we only step by one gen
+      bigint saveinc = curralgo->getIncrement();
+      curralgo->setIncrement(1);
+      curralgo->step();
+      curralgo->setIncrement(saveinc);
+   }
+
+   generating = false;
+
+   if (!inscript) {
+      // autofit is only used when doing many gens
+      if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
+         viewptr->FitInView(0);
+      UpdateEverything();
+   }
+
+   if (allowundo && !currlayer->stayclean)
+      currlayer->undoredo->RememberGenFinish();
 }
 
 // -----------------------------------------------------------------------------
@@ -749,62 +814,6 @@ void MainFrame::AdvanceSelection()
    delete tempalgo;
    MarkLayerDirty();
    UpdateEverything();   
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::NextGeneration(bool useinc)
-{
-   if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
-      // don't play sound here because it'll be heard if user holds down tab key
-      // wxBell();
-      return;
-   }
-
-   lifealgo* curralgo = currlayer->algo;
-   if (curralgo->isEmpty()) {
-      statusptr->ErrorMessage(empty_pattern);
-      return;
-   }
-   
-   if (!SaveStartingPattern()) {
-      return;
-   }
-
-   // curralgo->step() calls checkevents so set generating flag to avoid recursion
-   generating = true;
-   
-   // avoid doing some things if NextGeneration is called from a script
-   if (!inscript) {
-      wxGetApp().PollerReset();
-      viewptr->CheckCursor(IsActive());
-      if (allowundo) currlayer->undoredo->RememberGenStart();
-   }
-
-   if (useinc) {
-      // step by current increment
-      if (curralgo->getIncrement() > bigint::one && !inscript) {
-         UpdateToolBar(IsActive());
-         UpdateMenuItems(IsActive());
-      }
-      curralgo->step();
-   } else {
-      // make sure we only step by one gen
-      bigint saveinc = curralgo->getIncrement();
-      curralgo->setIncrement(1);
-      curralgo->step();
-      curralgo->setIncrement(saveinc);
-   }
-
-   generating = false;
-
-   if (!inscript) {
-      // autofit is only used when doing many gens
-      if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
-         viewptr->FitInView(0);
-      UpdateEverything();
-      if (allowundo) currlayer->undoredo->RememberGenFinish();
-   }
 }
 
 // -----------------------------------------------------------------------------

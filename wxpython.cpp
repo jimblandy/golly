@@ -1555,7 +1555,7 @@ static PyObject* py_reset(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   if (currlayer->algo->getGeneration() != bigint::zero) {
+   if (currlayer->algo->getGeneration() != currlayer->startgen) {
       mainptr->ResetPattern();
       DoAutoUpdate();
    }

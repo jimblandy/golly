@@ -49,11 +49,13 @@ void ShowTitleLater();
 void ChangeCell(int x, int y);
 // A setcell/putcells command is changing state of cell at x,y.
 
-void SavePendingChanges();
+void SavePendingChanges(bool checkgenchanges = true);
 // Called to save any pending cell changes made by ChangeCell calls.
-// This will accumulate potentially many cell changes in a single
-// undo/redo change node so that a script like invert.pl/py can
-// be undone with just a single Undo operation.
+// If checkgenchanges is true then it will also save any pending
+// generating changes.  This lets us accumulate consecutive cell/gen
+// changes in a single undo/redo change node, which is better for
+// scripts like invert.py that can call setcell many times, or
+// for scripts like oscar.py that can call run many times.
 // Must be called BEFORE all undoredo->Remember... calls but
 // only if inscript && allowundo && !currlayer->stayclean.
 

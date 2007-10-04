@@ -1535,7 +1535,7 @@ XS(pl_reset)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: g_reset()");
 
-   if (currlayer->algo->getGeneration() != bigint::zero) {
+   if (currlayer->algo->getGeneration() != currlayer->startgen) {
       mainptr->ResetPattern();
       DoAutoUpdate();
    }

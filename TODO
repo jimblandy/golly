@@ -3,12 +3,19 @@ For future versions:
 
 - Improve batchmode.
 
+- Automatically reduce an overlarge hash memory request (with suitable
+  warning) to 80% (?) of physical memory (is there a wx call to get that?).
+
 - Add ability to let users assign their own keyboard shortcuts.
   First step would be to allow users to edit *_key=char settings in
   GollyPrefs, then (much harder) write a nice UI to change settings
   in Prefs > Keys.  Use KeyBinder code at wxcode.sourceforge.net?
 
 - Allow dragging zoom-in cursor to zoom into rect.
+
+- When pasting an RLE pattern that has a rule specified, it would be
+  nice to have Golly switch to that rule (make it optional -- see
+  solution proposed in LifeCA).
 
 - Support toroidal universes (see LifeLab).  Or provide this as part
   of an MCell-compatible lifealgo.
@@ -24,7 +31,8 @@ For future versions:
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).
 
-- Allow non-rectangular (and disjoint) selections.
+- Allow non-rectangular (and disjoint) selections.  First factor out
+  all selection stuff to a new Selection class.
 
 - Implement a history bar for hlife.
 

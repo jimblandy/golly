@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/filename.h"   // for wxFileName
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "writepattern.h"  // for MC_format, XRLE_format
@@ -43,10 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 const wxString lack_of_memory = _("Due to lack of memory, some changes can't be undone!");
-
-// globals for creating unique temporary file names
-static int filecount = 0;
-const wxString fileprefix = _(".golly_undo_%d");
+const wxString temp_prefix = _("golly_undo_");
 
 // -----------------------------------------------------------------------------
 
@@ -98,6 +97,7 @@ public:
    int oldmag, newmag;                    // old and new scales
    int oldwarp, newwarp;                  // old and new speeds
    bool oldhash, newhash;                 // old and new hash states
+   bool scriptgen;                        // gen change done by script?
 };
 
 // -----------------------------------------------------------------------------
@@ -247,7 +247,8 @@ UndoRedo::UndoRedo()
    maxcount = 0;                 // ditto
    badalloc = false;             // true if malloc/realloc fails
    cellarray = NULL;             // play safe
-   savechanges = false;          // no script cell changes are pending
+   savecellchanges = false;      // no script cell changes are pending
+   savegenchanges = false;       // no script gen changes are pending
    doingscriptchanges = false;   // not undoing/redoing script changes
    
    // need to remember if script has created a new layer
@@ -497,12 +498,12 @@ void UndoRedo::RememberSelection(const wxString& action)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::SaveCurrentPattern(const wxString& filename)
+void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
 {
    const char* err = NULL;
    if ( currlayer->hash ) {
       // save hlife pattern in a macrocell file
-      err = mainptr->WritePattern(filename, MC_format, 0, 0, 0, 0);
+      err = mainptr->WritePattern(tempfile, MC_format, 0, 0, 0, 0);
    } else {
       // can only save RLE file if edges are within getcell/setcell limits
       bigint top, left, bottom, right;
@@ -512,7 +513,7 @@ void UndoRedo::SaveCurrentPattern(const wxString& filename)
       } else {
          // use XRLE format so the pattern's top left location and the current
          // generation count are stored in the file
-         err = mainptr->WritePattern(filename, XRLE_format,
+         err = mainptr->WritePattern(tempfile, XRLE_format,
                                      top.toint(), left.toint(),
                                      bottom.toint(), right.toint());
       }
@@ -524,6 +525,13 @@ void UndoRedo::SaveCurrentPattern(const wxString& filename)
 
 void UndoRedo::RememberGenStart()
 {
+   if (inscript) {
+      if (savegenchanges) return;   // ignore consecutive run/step command
+      savegenchanges = true;
+      // we're about to do first run/step command of a (possibly long)
+      // sequence, so save starting info
+   }
+
    // save current generation, selection, position, scale, speed, etc
    prevgen = currlayer->algo->getGeneration();
    
@@ -551,9 +559,9 @@ void UndoRedo::RememberGenStart()
             return;
          }
       }
-      // save starting pattern to unique temporary file
-      //!!! create in system temp dir so file is eventually deleted if app crashes
-      prevfile = gollydir + wxString::Format(fileprefix, filecount++);
+      // save starting pattern in unique temporary file;
+      // on the Mac the file will be in /private/var/tmp/folders.502/TemporaryItems/
+      prevfile = wxFileName::CreateTempFileName(temp_prefix);
       SaveCurrentPattern(prevfile);
    }
 }
@@ -562,6 +570,8 @@ void UndoRedo::RememberGenStart()
 
 void UndoRedo::RememberGenFinish()
 {
+   if (inscript && savegenchanges) return;   // ignore consecutive run/step command
+
    // generation count might not have changed
    if (prevgen == currlayer->algo->getGeneration()) {
       // don't delete prevfile -- it might be used by previous genchange node
@@ -569,9 +579,8 @@ void UndoRedo::RememberGenFinish()
       return;
    }
    
-   // save finishing pattern to unique temporary file
-   //!!! create in system temp dir so file is eventually deleted if app crashes
-   wxString fpath = gollydir + wxString::Format(fileprefix, filecount++);
+   // save finishing pattern in unique temporary file
+   wxString fpath = wxFileName::CreateTempFileName(temp_prefix);
    SaveCurrentPattern(fpath);
    
    // clear the redo history
@@ -583,6 +592,7 @@ void UndoRedo::RememberGenFinish()
    if (change == NULL) Fatal(_("Failed to create genchange node!"));
 
    change->changeid = genchange;
+   change->scriptgen = inscript;
    change->oldgen = prevgen;
    change->newgen = currlayer->algo->getGeneration();
    change->oldfile = prevfile;
@@ -630,6 +640,17 @@ void UndoRedo::SyncUndoHistory()
       redolist.Insert(change);
 
       if (change->changeid == genchange && change->oldgen == currlayer->startgen) {
+         if (change->scriptgen) {
+            // gen change was done by a script so keep winding back the undo list
+            // to just past the scriptstart node, or until the list is empty
+            while (!undolist.IsEmpty()) {
+               node = undolist.GetFirst();
+               change = (ChangeNode*) node->GetData();
+               undolist.Erase(node);
+               redolist.Insert(change);
+               if (change->changeid == scriptstart) break;
+            }
+         }
          // update Undo/Redo items so they show the correct suffix
          UpdateUndoRedoItems();
          return;

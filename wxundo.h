@@ -37,10 +37,10 @@ public:
    // cell at x,y has changed state
    
    void ForgetChanges();
-   // ignore changes made by previous SaveCellChange calls
+   // ignore cell changes made by previous SaveCellChange calls
    
    bool RememberChanges(const wxString& action, bool wasdirty);
-   // remember changes made by previous SaveCellChange calls
+   // remember cell changes made by previous SaveCellChange calls,
    // and the state of the layer's dirty flag BEFORE the change;
    // the given action string will be appended to the Undo/Redo items;
    // return true if one or more cells changed state, false otherwise
@@ -77,8 +77,9 @@ public:
    void RememberScriptFinish();
    // remember that script has ended
    
-   bool savechanges;             // script cell changes need to be remembered?
-   bool doingscriptchanges;      // are script changes being undone/redone?
+   bool savecellchanges;         // script's cell changes need to be remembered?
+   bool savegenchanges;          // script's gen changes need to be remembered?
+   bool doingscriptchanges;      // are script's changes being undone/redone?
 
    bool CanUndo();               // can a change be undone?
    bool CanRedo();               // can an undone change be redone?
@@ -107,8 +108,8 @@ private:
    int prevwarp;                 // speed at start of gen change
    bool prevhash;                // hash state at start of gen change
    
-   void SaveCurrentPattern(const wxString& filename);
-   // save current pattern to given file
+   void SaveCurrentPattern(const wxString& tempfile);
+   // save current pattern to given temporary file
    
    void UpdateUndoItem(const wxString& action);
    void UpdateRedoItem(const wxString& action);
