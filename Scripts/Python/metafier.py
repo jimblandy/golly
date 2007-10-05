@@ -1,12 +1,7 @@
 # metafier.py:
-# Builds the current selection into a Brice Due metapixel pattern
-# and places the result in a new Life universe.
-# Based on http://www.trevorrow.com/golly/metafier2.py.
+# Uses the current selection to build a Brice Due metapixel pattern.
 # See http://otcametapixel.blogspot.com for more info.
-#
 # Original author: Dave Greene, 12 June 2006.
-# Modified by Andrew Trevorrow, 20 July 2006 (faster, simpler and
-# doesn't change the current clipboard).
 #
 # Dave Greene, 23 June 2006:  added non-Conway's-Life rule support.
 # Also reduced the script size by a factor of six, at the expense of
@@ -29,6 +24,12 @@
 #
 # If metapixel-ON.rle and metapixel-OFF.rle become corrupted, they
 # should be deleted so the script can re-generate them.
+#
+# Modified by Andrew Trevorrow, 20 July 2006 (faster, simpler and
+# doesn't change the current clipboard).
+#
+# Modified by Andrew Trevorrow, 5 October 2007 (metafied pattern is
+# created in a separate layer so we don't clobber the selection).
 
 import os
 import golly as g
@@ -36,6 +37,27 @@ from glife import *
 
 selrect = g.getselrect()
 if len(selrect) == 0: g.exit("There is no selection.")
+
+# check that a layer is available for the metafied pattern;
+# if metafied layer already exists then we'll use that
+layername = "metafied"
+metalayer = -1
+for i in xrange(g.numlayers()):
+   if g.getname(i) == layername:
+      metalayer = i
+      break
+if metalayer < 0 and g.numlayers() == g.maxlayers():
+   g.exit("You need to delete a layer.")
+
+# get the current selection
+slist = g.getcells(selrect)
+selwidth = selrect[2]
+selheight = selrect[3]
+
+# create a 2D list of 0s and 1s representing entire selection
+livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
+for i in xrange(0, len(slist), 2):
+   livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
 
 # build a patch pattern based on the current rule
 #  that fixes the appropriate broken eaters in the rules table
@@ -46,7 +68,15 @@ elif r1[:1] == "S":
     Svalues, Bvalues = r1.replace("S",""), r2.replace("B","")
 else:
     Svalues, Bvalues = r1, r2
-rule ()
+
+# create metafied pattern in separate layer
+if metalayer >= 0:
+   g.setlayer(metalayer)         # switch to existing layer
+else:
+   metalayer = g.addlayer()      # create new layer
+
+# set rule to Life
+rule()
 
 Brle = Srle = "b10$b10$b26$b10$b10$b26$b10$b10$b!"
 for ch in Bvalues:
@@ -57,14 +87,9 @@ for ch in Svalues:
     Srle = Srle[:ind] + "o" + Srle[ind+1:]
 RuleBits = pattern(Brle, 148, 1404) + pattern(Srle, 162, 1406)
 
-# process the current selection:
-slist = g.getcells(selrect)
-selwidth = selrect[2]
-selheight = selrect[3]
-
 # load or generate the OFFcell tile:
-OFFcellFileName = os.path.join(g.appdir() + "Scripts","metapixel-OFF.rle")
-ONcellFileName = os.path.join(g.appdir() + "Scripts","metapixel-ON.rle")
+OFFcellFileName = os.path.join(g.appdir() + "Scripts", "metapixel-OFF.rle")
+ONcellFileName = os.path.join(g.appdir() + "Scripts", "metapixel-ON.rle")
 if os.access(OFFcellFileName, os.R_OK) and os.access(ONcellFileName, os.R_OK):
     g.show("Opening metapixel-OFF and metapixel-ON from saved pattern file.")
     OFFcell = pattern(g.transform(g.load(OFFcellFileName),-5,-5,1,0,0,1))
@@ -766,30 +791,26 @@ else:
 OFFcell += RuleBits
 ONcell += RuleBits
 
-# create a 2D list of 0s and 1s representing entire selection
-livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
-for i in xrange(0, len(slist), 2):
-   livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
-
 g.autoupdate(True)
-g.new("metafied")   
-g.setoption("hashing", False)    # qlife setcell is faster
+g.new(layername)   
+g.setoption("hashing", False)       # qlife setcell is faster
 
 for j in xrange(selheight):
-    for i in xrange(selwidth):
-        golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile" \
-          + " in a " + str(selwidth) + " by " + str(selheight) + " rectangle.")
-        if livecell[i][j]:
-            ONcell.put(2048 * i - 5, 2048 * j - 5)
-        else:
-            OFFcell.put(2048 * i - 5, 2048 * j - 5)
-        g.fit()
+   for i in xrange(selwidth):
+      golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile" +
+                 " in a " + str(selwidth) + " by " + str(selheight) + " rectangle.")
+      if livecell[i][j]:
+         ONcell.put(2048 * i - 5, 2048 * j - 5)
+      else:
+         OFFcell.put(2048 * i - 5, 2048 * j - 5)
+      g.fit()
    
 g.show("")
-g.setoption("hashing", True) # not much point in running a metapattern without hashing
+g.setoption("hashing", True)        # no point running a metapattern without hashing
+g.setoption("hyperspeed", False)    # avoid going too fast
+g.setbase(8)
 g.setstep(4)
-g.setoption("hyperspeed", False) # otherwise it tends to ratchet too high eventually
-g.step() # (forces Golly to save start pattern, populate hash tables)
+g.step()                            # save start and populate hash tables
 
 # g.run(35328) # run one full cycle (can lock up Golly if construction has failed)
 #
