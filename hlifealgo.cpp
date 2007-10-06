@@ -1629,7 +1629,8 @@ int hlifealgo::writecell_2p1(node *root, int depth) {
    if (depth == 2) {
       thiscell = ++cellcounter ;
       // note:  we *must* not abort this prescan
-      if ((cellcounter & 4095) == 0)
+      // turned off temporarily because this can crash
+      if (0 && (cellcounter & 4095) == 0)
 	 lifeabortprogress(0, "Scanning tree") ;
       root->nw = (node *)thiscell ;
    } else {
@@ -1639,7 +1640,7 @@ int hlifealgo::writecell_2p1(node *root, int depth) {
       writecell_2p1(root->se, depth-1) ;
       thiscell = ++cellcounter ;
       // note:  we *must* not abort this prescan
-      if ((cellcounter & 4095) == 0)
+      if (0 && (cellcounter & 4095) == 0)
 	 lifeabortprogress(0, "Scanning tree") ;
       root->next = (node *)thiscell ;
    }
@@ -1658,7 +1659,7 @@ int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       if (cellcounter + 1 != (int)(root->nw))
 	 return (int)(root->nw) ;
       thiscell = ++cellcounter ;
-      if ((cellcounter & 4095) == 0) {
+      if (0 && (cellcounter & 4095) == 0) {
 	 unsigned long siz = ftell(f) ;
          sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
 	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
@@ -1692,7 +1693,7 @@ int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
 	 return (int)(root->next) ;
       }
       thiscell = ++cellcounter ;
-      if ((cellcounter & 4095) == 0) {
+      if (0 && (cellcounter & 4095) == 0) {
 	 unsigned long siz = ftell(f) ;
          sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
 	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
