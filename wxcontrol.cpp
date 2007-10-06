@@ -66,6 +66,12 @@ bool MainFrame::SaveStartingPattern()
    currlayer->startwarp = currlayer->warp;
    currlayer->starthash = currlayer->hash;
    
+   // save current selection
+   currlayer->starttop = currlayer->seltop;
+   currlayer->startleft = currlayer->selleft;
+   currlayer->startbottom = currlayer->selbottom;
+   currlayer->startright = currlayer->selright;
+   
    if ( !currlayer->savestart ) {
       // no need to save pattern; ResetPattern will load currfile
       currlayer->startfile.Clear();
@@ -111,7 +117,7 @@ bool MainFrame::SaveStartingPattern()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ResetPattern()
+void MainFrame::ResetPattern(bool resetundo)
 {
    if (currlayer->algo->getGeneration() == currlayer->startgen) return;
    
@@ -137,6 +143,11 @@ void MainFrame::ResetPattern()
       // if this happens then savestart logic is wrong
       Warning(_("Starting pattern cannot be restored!"));
       return;
+   }
+   
+   if (allowundo && !currlayer->stayclean && inscript) {
+      // script has called reset() command
+      SavePendingChanges();
    }
    
    // restore pattern and settings saved by SaveStartingPattern;
@@ -169,11 +180,17 @@ void MainFrame::ResetPattern()
    currlayer->dirty = currlayer->startdirty;
    viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
 
+   // restore selection
+   currlayer->seltop = currlayer->starttop;
+   currlayer->selleft = currlayer->startleft;
+   currlayer->selbottom = currlayer->startbottom;
+   currlayer->selright = currlayer->startright;   
+
    // update window title in case rule or dirty flag changed
    SetWindowTitle(wxEmptyString);
    UpdateEverything();
    
-   if (allowundo && !inscript) {
+   if (allowundo && !currlayer->stayclean && resetundo) {
       // we must also wind back the undo history to the starting pattern
       currlayer->undoredo->SyncUndoHistory();
    }
@@ -181,17 +198,15 @@ void MainFrame::ResetPattern()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
+void MainFrame::RestorePattern(bigint& gen, const wxString& filename, const wxString& rule,
                                bigint& x, bigint& y, int mag, int warp, bool hash)
 {
    // called to undo/redo a generating change
    if (gen == currlayer->startgen) {
       // restore starting pattern
-      allowundo = false;                  // so SyncUndoHistory won't be called
-      ResetPattern();
-      allowundo = true;
+      ResetPattern(false);                // false == don't call SyncUndoHistory
    } else {
-      // restore pattern in filename and various settings
+      // restore pattern in filename along with given settings
       currlayer->warp = warp;
       currlayer->hash = hash;
 
@@ -200,6 +215,12 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
       LoadPattern(wxEmptyString);         // load filename
       currlayer->currfile = oldfile;
 
+      //!!! no need for setrule here??? readpattern should do it when loading file???
+      //!!! currlayer->algo->setrule(rule.mb_str(wxConvLocal));
+      wxString r = wxString(currlayer->algo->getrule(), wxConvLocal);
+      if (r != rule)
+         Warning(wxString::Format(_("Rules differ: %s != %s"), r.c_str(), rule.c_str()));
+      
       viewptr->SetPosMag(x, y, mag);
       SetWindowTitle(wxEmptyString);      // in case rule changed
       UpdatePatternAndStatus();
@@ -350,10 +371,11 @@ void MainFrame::GeneratePattern()
       // UpdateEverything will be called at end of ResetPattern/ToggleHashing
    } else {
       UpdateEverything();
-      // GeneratePattern is never called while running a script so no need
-      // to test inscript or currlayer->stayclean
-      if (allowundo) currlayer->undoredo->RememberGenFinish();
    }
+
+   // GeneratePattern is never called while running a script so no need
+   // to test inscript or currlayer->stayclean
+   if (allowundo) currlayer->undoredo->RememberGenFinish();
 
    if (reset_pending) {
       reset_pending = false;
@@ -439,12 +461,25 @@ void MainFrame::NextGeneration(bool useinc)
       viewptr->CheckCursor(IsActive());
    }
 
-   if (allowundo && !currlayer->stayclean) {
-      if (inscript) {
-         // pass in false so we don't test savegenchanges flag
-         SavePendingChanges(false);
+   if (allowundo) {
+      if (currlayer->stayclean) {
+         // script has called run/step after a command (eg. new)
+         // has set stayclean true by calling MarkLayerClean
+         if (curralgo->getGeneration() == currlayer->startgen) {
+            // starting pattern has just been saved so we need to remember
+            // this gen change in case user does a Reset after script ends
+            // (RememberGenFinish will be called at the end of RunScript)
+            currlayer->undoredo->RememberGenStart();
+         }
+      } else {
+         // !currlayer->stayclean
+         if (inscript) {
+            // pass in false so we don't test savegenchanges flag;
+            // ie. we only want to save pending cell changes here
+            SavePendingChanges(false);
+         }
+         currlayer->undoredo->RememberGenStart();
       }
-      currlayer->undoredo->RememberGenStart();
    }
 
    if (useinc) {

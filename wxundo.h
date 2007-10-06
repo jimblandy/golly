@@ -62,11 +62,17 @@ public:
    // remember change in selection (no-op if selection hasn't changed)
 
    void RememberGenStart();
-   // remember info before generating pattern
+   // remember info before generating the current pattern
 
    void RememberGenFinish();
-   // remember info after generating pattern
+   // remember generating change after pattern has finished generating
    
+   void AddGenChange();
+   // in some situations the undo list is empty but ResetPattern can still
+   // be called because the gen count is > startgen, so this routine adds
+   // a generating change to the undo list so the user can Undo or Reset
+   // (and then Redo if they wish)
+
    void SyncUndoHistory();
    // called at the end of ResetPattern to synchronize the undo history
 
@@ -99,8 +105,9 @@ private:
    unsigned int maxcount;        // number of elements allocated
    bool badalloc;                // malloc/realloc failed?
    
-   bigint prevgen;               // generation count at start of gen change
    wxString prevfile;            // for saving pattern at start of gen change
+   wxString prevrule;            // rule at start of gen change
+   bigint prevgen;               // generation count at start of gen change
    bigint prevt, prevl;          // selection edges at start of gen change
    bigint prevb, prevr;
    bigint prevx, prevy;          // viewport position at start of gen change

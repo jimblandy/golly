@@ -865,6 +865,10 @@ void SyncClones()
             cloneptr->startfile = currlayer->startfile;
             cloneptr->startgen = currlayer->startgen;
             cloneptr->currfile = currlayer->currfile;
+            cloneptr->starttop = currlayer->starttop;
+            cloneptr->startleft = currlayer->startleft;
+            cloneptr->startbottom = currlayer->startbottom;
+            cloneptr->startright = currlayer->startright;
          }
       }
    }
@@ -1010,6 +1014,12 @@ void DuplicateLayer()
    duplicating = true;
    AddLayer();
    duplicating = false;
+
+   if (allowundo && currlayer->algo->getGeneration() > currlayer->startgen) {
+      // undo list is empty but user can Reset, so add a generating change
+      // to undo list so user can Undo or Reset (and Redo if they wish)
+      currlayer->undoredo->AddGenChange();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1210,14 +1220,12 @@ void MoveLayer(int fromindex, int toindex)
    
    if (fromindex > toindex) {
       Layer* savelayer = layer[fromindex];
-      for (int i = fromindex; i > toindex; i--)
-         layer[i] = layer[i - 1];
+      for (int i = fromindex; i > toindex; i--) layer[i] = layer[i - 1];
       layer[toindex] = savelayer;
    } else {
       // fromindex < toindex
       Layer* savelayer = layer[fromindex];
-      for (int i = fromindex; i < toindex; i++)
-         layer[i] = layer[i + 1];
+      for (int i = fromindex; i < toindex; i++) layer[i] = layer[i + 1];
       layer[toindex] = savelayer;
    }
 
@@ -1616,6 +1624,10 @@ Layer::Layer()
          startfile = currlayer->startfile;
          startgen = currlayer->startgen;
          currfile = currlayer->currfile;
+         starttop = currlayer->starttop;
+         startleft = currlayer->startleft;
+         startbottom = currlayer->startbottom;
+         startright = currlayer->startright;
       }
       
       if (duplicating) {

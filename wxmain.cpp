@@ -1298,9 +1298,17 @@ void MainFrame::ToggleFullScreen()
 void MainFrame::ToggleAllowUndo()
 {
    allowundo = !allowundo;
-   if (!allowundo) currlayer->undoredo->ClearUndoRedo();
-   // don't clear undo/redo history for other layers here; only do it
-   // if allowundo is false when user switches to another layer
+   if (allowundo) {
+      if (currlayer->algo->getGeneration() > currlayer->startgen) {
+         // undo list is empty but user can Reset, so add a generating change
+         // to undo list so user can Undo or Reset (and Redo if they wish)
+         currlayer->undoredo->AddGenChange();
+      }
+   } else {
+      currlayer->undoredo->ClearUndoRedo();
+      // don't clear undo/redo history for other layers here; only do it
+      // if allowundo is false when user switches to another layer
+   }
 }
 
 // -----------------------------------------------------------------------------

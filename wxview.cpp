@@ -476,12 +476,8 @@ void PatternView::ProcessKey(int key, bool shiftdown)
          }
          break;
 
-      case 'z':   if (currlayer->undoredo->CanUndo())
-                     currlayer->undoredo->UndoChange();
-                  break;
-      case 'Z':   if (currlayer->undoredo->CanRedo())
-                     currlayer->undoredo->RedoChange();
-                  break;
+      case 'z':   currlayer->undoredo->UndoChange(); break;
+      case 'Z':   currlayer->undoredo->RedoChange(); break;
       
       case 'a':   SelectAll(); break;
       case 'k':   RemoveSelection(); break;

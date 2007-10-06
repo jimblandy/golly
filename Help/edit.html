@@ -9,13 +9,18 @@ NOTE: [key] next to a menu item indicates a keyboard shortcut.
 <font size=+1><b>Undo</b></font>&nbsp;&nbsp;[z]
 
 <p>
-Lets you undo one or more recent editing changes, including
-changes to the selection size.  The number of changes you
-can undo is limited only by memory.
-Each layer maintains its own undo/redo history (except for cloned
-layers; they share the same undo/redo history).
+Lets you undo one or more recent changes, including all editing
+changes, generating changes and selection changes.
+The number of changes you can undo is limited only by
+available memory and disk space.
+Multiple changes made by a script are treated like a single change
+and will be undone all at once.
+
+<p>
+Each layer maintains its own undo/redo history (but cloned
+layers share the same undo/redo history).
 The current layer's undo/redo history is automatically cleared
-when a new pattern is created or after opening a pattern file.
+after creating a new pattern or opening a pattern file.
 A duplicated layer starts with an empty undo/redo history;
 i.e., the original layer's undo/redo history is <em>not</em> copied.
 
@@ -35,11 +40,11 @@ or change the selection, then you can't redo the rotation.
 <p>
 If ticked then the Undo and Redo items are disabled, and any
 existing undo/redo history for the current layer is cleared.
-This will speed up most editing operations, so you may want to
-temporarily disable undo/redo while editing a very large pattern.
-Be careful when using this feature.  If you switch to another layer
-when this item is ticked then that layer's undo/redo history is
-also cleared.
+When editing or generating a very large pattern you may want to
+temporarily disable undo/redo to speed up some operations.
+But be careful using this feature &mdash; if you switch to another
+layer when this item is ticked then that layer's undo/redo history
+is also cleared.
 
 <p>
 <font size=+1><b>Cut</b></font>

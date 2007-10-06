@@ -77,6 +77,9 @@ public:
    bigint startx, starty;     // starting location
    int startwarp;             // starting speed
    int startmag;              // starting scale
+
+   // for saving and restoring starting selection
+   bigint starttop, startleft, startbottom, startright;
    
    // temporary file used to restore starting pattern or to show comments;
    // each layer uses a different file name

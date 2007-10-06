@@ -39,7 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
-#include "wxprefs.h"       // for gollydir
 #include "wxundo.h"
 
 // -----------------------------------------------------------------------------
@@ -91,13 +90,14 @@ public:
    bigint nextt, nextl, nextb, nextr;     // new selection edges
    
    // genchange info
-   bigint oldgen, newgen;                 // old and new generation counts
    wxString oldfile, newfile;             // old and new pattern files
+   wxString oldrule, newrule;             // old and new rules
+   bigint oldgen, newgen;                 // old and new generation counts
    bigint oldx, oldy, newx, newy;         // old and new positions
    int oldmag, newmag;                    // old and new scales
    int oldwarp, newwarp;                  // old and new speeds
    bool oldhash, newhash;                 // old and new hash states
-   bool scriptgen;                        // gen change done by script?
+   bool scriptgen;                        // gen change was done by script?
 };
 
 // -----------------------------------------------------------------------------
@@ -220,13 +220,15 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->selleft = prevl;
             currlayer->selbottom = prevb;
             currlayer->selright = prevr;
-            mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldwarp, oldhash);
+            mainptr->RestorePattern(oldgen, oldfile, oldrule,
+                                    oldx, oldy, oldmag, oldwarp, oldhash);
          } else {
             currlayer->seltop = nextt;
             currlayer->selleft = nextl;
             currlayer->selbottom = nextb;
             currlayer->selright = nextr;
-            mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newwarp, newhash);
+            mainptr->RestorePattern(newgen, newfile, newrule,
+                                    newx, newy, newmag, newwarp, newhash);
          }
          break;
       
@@ -250,6 +252,7 @@ UndoRedo::UndoRedo()
    savecellchanges = false;      // no script cell changes are pending
    savegenchanges = false;       // no script gen changes are pending
    doingscriptchanges = false;   // not undoing/redoing script changes
+   prevfile = wxEmptyString;     // play safe for ClearUndoRedo
    
    // need to remember if script has created a new layer
    if (inscript) RememberScriptStart();
@@ -534,12 +537,11 @@ void UndoRedo::RememberGenStart()
 
    // save current generation, selection, position, scale, speed, etc
    prevgen = currlayer->algo->getGeneration();
-   
+   prevrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    prevt = currlayer->seltop;
    prevl = currlayer->selleft;
    prevb = currlayer->selbottom;
    prevr = currlayer->selright;
-
    viewptr->GetPos(prevx, prevy);
    prevmag = viewptr->GetMag();
    prevwarp = currlayer->warp;
@@ -549,19 +551,29 @@ void UndoRedo::RememberGenStart()
       // we can just reset to starting pattern
       prevfile = wxEmptyString;
    } else {
-      // if head of undo list is a genchange node then we can just set
-      // prevfile to the file saved by previous RememberGenFinish call
+      // save starting pattern in a unique temporary file;
+      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems/
+      prevfile = wxFileName::CreateTempFileName(temp_prefix);
+
+      // if head of undo list is a genchange node with same rule and hash state
+      // then we can copy that change node's newfile to prevfile; this makes
+      // consecutive generating runs faster (setting prevfile to newfile would
+      // be even faster but it's difficult to avoid the file being deleted
+      // if the redo list is cleared)
       if (!undolist.IsEmpty()) {
          wxList::compatibility_iterator node = undolist.GetFirst();
          ChangeNode* change = (ChangeNode*) node->GetData();
-         if (change->changeid == genchange) {
-            prevfile = change->newfile;
-            return;
+         if (change->changeid == genchange &&
+             change->newrule == prevrule && change->newhash == prevhash) {
+            if (wxCopyFile(change->newfile, prevfile, true)) {
+               return;
+            } else {
+               Warning(_("Failed to copy temporary file!"));
+               // continue and call SaveCurrentPattern
+            }
          }
       }
-      // save starting pattern in unique temporary file;
-      // on the Mac the file will be in /private/var/tmp/folders.502/TemporaryItems/
-      prevfile = wxFileName::CreateTempFileName(temp_prefix);
+      
       SaveCurrentPattern(prevfile);
    }
 }
@@ -574,12 +586,13 @@ void UndoRedo::RememberGenFinish()
 
    // generation count might not have changed
    if (prevgen == currlayer->algo->getGeneration()) {
-      // don't delete prevfile -- it might be used by previous genchange node
-      // if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+      // delete prevfile created by RememberGenStart
+      if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+      prevfile = wxEmptyString;
       return;
    }
    
-   // save finishing pattern in unique temporary file
+   // save finishing pattern in a unique temporary file
    wxString fpath = wxFileName::CreateTempFileName(temp_prefix);
    SaveCurrentPattern(fpath);
    
@@ -597,14 +610,16 @@ void UndoRedo::RememberGenFinish()
    change->newgen = currlayer->algo->getGeneration();
    change->oldfile = prevfile;
    change->newfile = fpath;
+   change->oldrule = prevrule;
+   change->newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    change->oldx = prevx;
    change->oldy = prevy;
-   change->oldmag = prevmag;
-   change->oldwarp = prevwarp;
-   change->oldhash = prevhash;
    viewptr->GetPos(change->newx, change->newy);
+   change->oldmag = prevmag;
    change->newmag = viewptr->GetMag();
+   change->oldwarp = prevwarp;
    change->newwarp = currlayer->warp;
+   change->oldhash = prevhash;
    change->newhash = currlayer->hash;
    change->prevt = prevt;
    change->prevl = prevl;
@@ -617,6 +632,9 @@ void UndoRedo::RememberGenFinish()
    change->suffix = _("Generation");
    // change->wasdirty is not used for generation changes
 
+   // prevfile has been saved in change->oldfile (~ChangeNode will delete it)
+   prevfile = wxEmptyString;
+
    undolist.Insert(change);
    
    // update Undo item in Edit menu
@@ -625,10 +643,54 @@ void UndoRedo::RememberGenFinish()
 
 // -----------------------------------------------------------------------------
 
+void UndoRedo::AddGenChange()
+{
+   // add a genchange node to empty undo list
+   if (!undolist.IsEmpty())
+      Warning(_("AddGenChange bug: undo list NOT empty!"));
+   
+   // use starting pattern info for previous state
+   prevgen = currlayer->startgen;
+   prevrule = currlayer->startrule;
+   prevt = currlayer->starttop;
+   prevl = currlayer->startleft;
+   prevb = currlayer->startbottom;
+   prevr = currlayer->startright;
+   prevx = currlayer->startx;
+   prevy = currlayer->starty;
+   prevmag = currlayer->startmag;
+   prevwarp = currlayer->startwarp;
+   prevhash = currlayer->starthash;
+   prevfile = wxEmptyString;
+   
+   // avoid RememberGenFinish returning early if inscript is true
+   savegenchanges = false;
+   RememberGenFinish();
+
+   if (undolist.IsEmpty())
+      Warning(_("AddGenChange bug: undo list is empty!"));
+}
+
+// -----------------------------------------------------------------------------
+
 void UndoRedo::SyncUndoHistory()
 {
-   // at the end of a ResetPattern call we need to wind back the undo list
-   // to just past the oldest genchange node
+   // synchronize undo history due to a ResetPattern call
+   if (inscript) {
+      // ResetPattern was called via reset() command
+      if (savegenchanges) {
+         // do pending gen changes to ensure there is at least one genchange node
+         savegenchanges = false;
+         RememberGenFinish();
+      }
+      // it's unlikely the script has done any gen changes before the reset()
+      // but if so then we need to delete all undo nodes back until just
+      // past the oldest genchange node
+      wxBell();//!!!
+      return;
+   }
+
+   // wind back the undo list to just past the oldest genchange node
    wxList::compatibility_iterator node;
    ChangeNode* change;
    while (!undolist.IsEmpty()) {
@@ -656,6 +718,7 @@ void UndoRedo::SyncUndoHistory()
          return;
       }
    }
+   
    // should never get here
    Warning(_("Bug detected in SyncUndoHistory!"));
 }
@@ -682,8 +745,8 @@ void UndoRedo::RememberScriptStart()
 void UndoRedo::RememberScriptFinish()
 {
    if (undolist.IsEmpty()) {
-      // this should only ever happen if the script called a command like new()
-      // which cleared all the undo/redo history
+      // there should be at least a scriptstart node (see ClearUndoRedo)
+      Warning(_("Bug detected in RememberScriptFinish!"));
       return;
    }
    
@@ -732,7 +795,7 @@ bool UndoRedo::CanRedo()
 
 void UndoRedo::UndoChange()
 {
-   if (undolist.IsEmpty()) return;
+   if (!CanUndo()) return;
    
    // get change info from head of undo list and do the change
    wxList::compatibility_iterator node = undolist.GetFirst();
@@ -809,7 +872,7 @@ void UndoRedo::UndoChange()
 
 void UndoRedo::RedoChange()
 {
-   if (redolist.IsEmpty()) return;
+   if (!CanRedo()) return;
    
    // get change info from head of redo list and do the change
    wxList::compatibility_iterator node = redolist.GetFirst();
@@ -874,19 +937,34 @@ void UndoRedo::ClearUndoRedo()
    // free cellarray in case there were SaveCellChange calls not followed
    // by ForgetChanges or RememberChanges
    ForgetChanges();
+   
+   // delete prevfile in case RememberGenStart not followed by RememberGenFinish
+   if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+   prevfile = wxEmptyString;
 
    // clear the undo/redo lists (and delete each node's data)
    WX_CLEAR_LIST(wxList, undolist);
    WX_CLEAR_LIST(wxList, redolist);
    
-   UpdateUndoItem(wxEmptyString);
-   UpdateRedoItem(wxEmptyString);
+   if (inscript) {
+      // script has called a command like new() so add a scriptstart node
+      // to the undo list to match the final scriptfinish node
+      RememberScriptStart();
+      // also safer to reset flags (ie. no pending cell/gen changes)
+      savecellchanges = false;
+      savegenchanges = false;
+   } else {
+      UpdateUndoItem(wxEmptyString);
+      UpdateRedoItem(wxEmptyString);
+   }
 }
 
 // -----------------------------------------------------------------------------
 
 void UndoRedo::UpdateUndoRedoItems()
 {
+   if (inscript) return;   // update Undo/Redo items at end of script
+
    if (undolist.IsEmpty()) {
       UpdateUndoItem(wxEmptyString);
    } else {
@@ -908,6 +986,8 @@ void UndoRedo::UpdateUndoRedoItems()
 
 void UndoRedo::UpdateUndoItem(const wxString& action)
 {
+   if (inscript) return;   // update Undo/Redo items at end of script
+
    wxMenuBar* mbar = mainptr->GetMenuBar();
    if (mbar) {
       mbar->SetLabel(wxID_UNDO,
@@ -919,6 +999,8 @@ void UndoRedo::UpdateUndoItem(const wxString& action)
 
 void UndoRedo::UpdateRedoItem(const wxString& action)
 {
+   if (inscript) return;   // update Undo/Redo items at end of script
+
    wxMenuBar* mbar = mainptr->GetMenuBar();
    if (mbar) {
       mbar->SetLabel(wxID_REDO,

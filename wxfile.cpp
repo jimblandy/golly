@@ -993,7 +993,6 @@ void MainFrame::SavePattern()
       
       SetCurrentFile( savedlg.GetPath() );
       AddRecentPattern( savedlg.GetPath() );
-      MarkLayerClean( savedlg.GetFilename() );
       
       const char* err = WritePattern(savedlg.GetPath(), format,
                                      itop, ileft, ibottom, iright);
@@ -1004,6 +1003,7 @@ void MainFrame::SavePattern()
          if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
             // no need to save starting pattern (ResetPattern can load currfile)
             currlayer->savestart = false;
+            MarkLayerClean( savedlg.GetFilename() );
          }
       }
    }
@@ -1042,13 +1042,13 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
    
    SetCurrentFile(path);
    if (remember) AddRecentPattern(path);
-   MarkLayerClean( GetBaseName(path) );
 
    const char* err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
       if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
          // no need to save starting pattern (ResetPattern can load currfile)
          currlayer->savestart = false;
+         MarkLayerClean( GetBaseName(path) );
       }
    }
    

@@ -78,7 +78,7 @@ public:
    
    // edit functions
    void ToggleAllowUndo();
-   void RestorePattern(bigint& gen, const wxString& filename,
+   void RestorePattern(bigint& gen, const wxString& filename, const wxString& rule,
                        bigint& x, bigint& y, int mag, int warp, bool hash);
 
    // prefs functions
@@ -102,7 +102,7 @@ public:
    void ToggleHashInfo();
    void SetWarp(int newwarp);
    void SetGenIncrement();
-   void ResetPattern();
+   void ResetPattern(bool resetundo = true);
 
    // view functions
    void ToggleStatusBar();

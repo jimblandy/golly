@@ -10,7 +10,9 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.3 (released !!!)
 
-AKT: Script is aborted if a progress dialog appears and user hits Cancel.
+AKT: The Reset item restores starting selection (for consistency with Undo).
+AKT: The metafier.py script creates the metafied pattern in a separate layer.
+AKT: A script is aborted if a progress dialog appears and you hit Cancel.
 AKT: Added support for unlimited undo/redo.
 AKT: Fixed bug clearing entire pattern but not marking layer dirty.
 AKT: Fixed bug pasting a macrocell pattern.
