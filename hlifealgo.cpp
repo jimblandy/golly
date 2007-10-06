@@ -146,6 +146,12 @@ void hlifealgo::resize() {
      lifestatus(statusline) ;
    }
    nhashtab = (node **)calloc(nhashprime, sizeof(node *)) ;
+   if (nhashtab == 0) {
+     lifewarning("Out of memory; running in a somewhat slower mode; "
+                 "try reducing the hash memory limit after restarting.") ;
+     hashlimit = 2000000000 ;
+     return ;
+   }
    alloced += sizeof(node *) * (nhashprime - hashprime) ;
    for (i=0; i<(int)hashprime; i++) {
       for (p=hashtab[i]; p;) {
@@ -462,6 +468,8 @@ node *hlifealgo::newnode() {
    if (freenodes == 0) {
       int i ;
       freenodes = (node *)calloc(1001, sizeof(node)) ;
+      if (freenodes == 0)
+         lifefatal("Out of memory; try reducing the hash memory limit.") ;
       alloced += 1001 * sizeof(node) ;
       freenodes->next = nodeblocks ;
       nodeblocks = freenodes++ ;
@@ -511,6 +519,8 @@ hlifealgo::hlifealgo() {
    hashlimit = hashprime ;
    hashpop = 0 ;
    hashtab = (node **)calloc(hashprime, sizeof(node *)) ;
+   if (hashtab == 0)
+     lifefatal("Out of memory.") ;
    alloced += hashprime * sizeof(node *) ;
    ngens = 0 ;
    stacksize = 0 ;
@@ -678,6 +688,8 @@ node *hlifealgo::zeronode(int depth) {
       int nnzeros = 2 * nzeros + 10 ;
       zeronodea = (node **)realloc(zeronodea,
                                           nnzeros * sizeof(node *)) ;
+      if (zeronodea == 0)
+	lifefatal("Out of memory.") ;
       alloced += (nnzeros - nzeros) * sizeof(node *) ;
       while (nzeros < nnzeros)
          zeronodea[nzeros++] = 0 ;
@@ -1178,6 +1190,8 @@ node *hlifealgo::save(node *n) {
       int nstacksize = stacksize * 2 + 100 ;
       alloced += sizeof(node *)*(nstacksize-stacksize) ;
       stack = (node **)realloc(stack, nstacksize * sizeof(node *)) ;
+      if (stack == 0)
+	lifefatal("Out of memory.") ;
       stacksize = nstacksize ;
    }
    stack[gsp++] = n ;
@@ -1437,6 +1451,8 @@ const char *hlifealgo::readmacrocell(char *line) {
       if (i >= indlen) {
          int nlen = i + indlen + 10 ;
          ind = (node **)realloc(ind, sizeof(int) * nlen) ;
+	 if (ind == 0)
+	   lifefatal("Out of memory.") ;
          while (indlen < nlen)
             ind[indlen++] = 0 ;
       }
