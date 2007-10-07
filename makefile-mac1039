@@ -54,11 +54,25 @@ CXXFLAGS = -x c++ -arch ppc -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks \
    -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
 
+# for bgolly
+CXXBASE = -arch ppc \
+   -isystem /Developer/SDKs/MacOSX10.4u.sdk/usr/include/gcc/darwin/3.3 \
+   -I/Developer/SDKs/MacOSX10.4u.sdk/usr/include/gcc/darwin/3.3/c++ \
+   -I/Developer/SDKs/MacOSX10.4u.sdk/usr/include/gcc/darwin/3.3/c++/ppc-darwin \
+   -isystem /Developer/SDKs/MacOSX10.4u.sdk/usr/include \
+   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -fno-strict-aliasing -fno-common
+LDBASE = -arch ppc \
+   -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3 \
+   -mmacosx-version-min=10.3 -lz \
+   -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk
+
 OBJDIR = ObjMacPPC
-OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
+BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
-   $(OBJDIR)/lifepoll.o $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
+   $(OBJDIR)/lifepoll.o
+WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxundo.o \
@@ -68,20 +82,28 @@ LIBDIRNAME = $(WX_DIR)/src/build/Deployment
 
 # Targets:
 
-all: $(OBJDIR) app.bin app_bundle
+all: $(OBJDIR) app.bin app_bundle bgolly
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 clean: 
-	rm -f $(OBJDIR)/*.o
+	rm -f $(OBJDIR)/*.o bgolly
 	rm -rf $(APP_NAME).app
+
+bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
+	$(CXXC) $(CXXBASE) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDBASE)
+
+$(OBJDIR)/bgolly.o: bgolly.cpp \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
+	$(CXXC) $(CXXBASE) -c -o $@ bgolly.cpp
 
 # Note that -headerpad_max_install_names is used so we can run
 # install_name_tool below to change Perl lib path to a longer path.
 
-app.bin: $(OBJFILES)
-	$(CXXC) -o $@ $(OBJFILES) \
+app.bin: $(WXOBJ)
+	$(CXXC) -o $@ $(WXOBJ) \
    -headerpad_max_install_names \
    -arch ppc -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3 \
    -L$(LIBDIRNAME) -lwx_mac_static \
@@ -286,7 +308,7 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-mac
 	mkdir $(RELEASENAME)-mac
-	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
+	cp -rp $(APP_NAME).app bgolly $(SHAREDFILES) $(RELEASENAME)-mac
 	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/README
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/LICENSE

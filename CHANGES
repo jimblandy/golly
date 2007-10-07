@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.3 (released !!!)
 
+AKT: Included bgolly in the Mac distribution.
+TGR: Fixed crash if pattern update occurred while saving a .mc file.
 AKT: The Reset item restores starting selection (for consistency with Undo).
 AKT: The metafier.py script creates the metafied pattern in a separate layer.
 AKT: A script is aborted if a progress dialog appears and you hit Cancel.

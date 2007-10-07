@@ -66,14 +66,21 @@ LDFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
    -Wl,-dead_strip -Wl,-S \
    -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
 
+# for bgolly
+CXXBASE = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
+   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -fno-strict-aliasing -fno-common
+LDBASE = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 -lz
+
 EXTRALIBS = -lz -lpthread -liconv
 EXTRALIBS_GUI = -framework WebKit
 
 OBJDIR = ObjMac
-OBJFILES = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
+BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
-   $(OBJDIR)/lifepoll.o $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
+   $(OBJDIR)/lifepoll.o
+WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxundo.o \
@@ -93,17 +100,25 @@ __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
-all: $(OBJDIR) app.bin app_bundle
+all: $(OBJDIR) app.bin app_bundle bgolly
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 clean: 
-	rm -f $(OBJDIR)/*.o
+	rm -f $(OBJDIR)/*.o bgolly
 	rm -rf $(APP_NAME).app
 
-app.bin: $(OBJFILES)
-	$(CXXC) -o $@ $(OBJFILES) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
+bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
+	$(CXXC) $(CXXBASE) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDBASE)
+
+$(OBJDIR)/bgolly.o: bgolly.cpp \
+lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
+hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
+	$(CXXC) $(CXXBASE) -c -o $@ bgolly.cpp
+
+app.bin: $(BASEOBJ) $(WXOBJ)
+	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
    $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LINK) $(PERL_LINK)
 
@@ -297,7 +312,7 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-mac
 	mkdir $(RELEASENAME)-mac
-	cp -rp $(APP_NAME).app $(SHAREDFILES) $(RELEASENAME)-mac
+	cp -rp $(APP_NAME).app bgolly $(SHAREDFILES) $(RELEASENAME)-mac
 	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/README
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/LICENSE

@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 const wxString lack_of_memory = _("Due to lack of memory, some changes can't be undone!");
 const wxString temp_prefix = _("golly_undo_");
+const wxString to_gen = _("to Gen ");
 
 // -----------------------------------------------------------------------------
 
@@ -629,7 +630,7 @@ void UndoRedo::RememberGenFinish()
    change->nextl = currlayer->selleft;
    change->nextb = currlayer->selbottom;
    change->nextr = currlayer->selright;
-   change->suffix = _("Generation");
+   change->suffix = to_gen + wxString(prevgen.tostring(), wxConvLocal);
    // change->wasdirty is not used for generation changes
 
    // prevfile has been saved in change->oldfile (~ChangeNode will delete it)
@@ -808,9 +809,10 @@ void UndoRedo::UndoChange()
       redolist.Insert(change);
 
       while (change->changeid != scriptstart) {
-         // call UndoChange recursively; we set doingscriptchanges temporarily
-         // so that 1) UndoChange won't return if DoChange is aborted, and
-         // 2) the user won't see any intermediate pattern/status updates
+         // call UndoChange recursively; temporarily set doingscriptchanges so
+         // 1) UndoChange won't return if DoChange is aborted
+         // 2) user won't see any intermediate pattern/status updates
+         // 3) Undo/Redo items won't be updated
          doingscriptchanges = true;
          UndoChange();
          doingscriptchanges = false;
@@ -858,14 +860,7 @@ void UndoRedo::UndoChange()
    redolist.Insert(change);
    
    // update Undo/Redo items in Edit menu
-   UpdateRedoItem(change->suffix);
-   if (undolist.IsEmpty()) {
-      UpdateUndoItem(wxEmptyString);
-   } else {
-      node = undolist.GetFirst();
-      change = (ChangeNode*) node->GetData();
-      UpdateUndoItem(change->suffix);
-   }
+   UpdateUndoRedoItems();
 }
 
 // -----------------------------------------------------------------------------
@@ -885,9 +880,10 @@ void UndoRedo::RedoChange()
       undolist.Insert(change);
 
       while (change->changeid != scriptfinish) {
-         // call RedoChange recursively; we set doingscriptchanges temporarily
-         // so that 1) RedoChange won't return if DoChange is aborted, and
-         // 2) the user won't see any intermediate pattern/status updates
+         // call RedoChange recursively; temporarily set doingscriptchanges so
+         // 1) RedoChange won't return if DoChange is aborted
+         // 2) user won't see any intermediate pattern/status updates
+         // 3) Undo/Redo items won't be updated
          doingscriptchanges = true;
          RedoChange();
          doingscriptchanges = false;
@@ -920,13 +916,63 @@ void UndoRedo::RedoChange()
    undolist.Insert(change);
    
    // update Undo/Redo items in Edit menu
-   UpdateUndoItem(change->suffix);
+   UpdateUndoRedoItems();
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::UpdateUndoRedoItems()
+{
+   if (inscript) return;   // update Undo/Redo items at end of script
+   
+   if (doingscriptchanges) return;
+
+   if (undolist.IsEmpty()) {
+      UpdateUndoItem(wxEmptyString);
+   } else {
+      wxList::compatibility_iterator node = undolist.GetFirst();
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      if (change->changeid == genchange) {
+         change->suffix = to_gen + wxString(change->oldgen.tostring(), wxConvLocal);
+      }
+      UpdateUndoItem(change->suffix);
+   }
+
    if (redolist.IsEmpty()) {
       UpdateRedoItem(wxEmptyString);
    } else {
-      node = redolist.GetFirst();
-      change = (ChangeNode*) node->GetData();
+      wxList::compatibility_iterator node = redolist.GetFirst();
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      if (change->changeid == genchange) {
+         change->suffix = to_gen + wxString(change->newgen.tostring(), wxConvLocal);
+      }
       UpdateRedoItem(change->suffix);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::UpdateUndoItem(const wxString& action)
+{
+   if (inscript) return;   // update Undo/Redo items at end of script
+
+   wxMenuBar* mbar = mainptr->GetMenuBar();
+   if (mbar) {
+      mbar->SetLabel(wxID_UNDO,
+                     wxString::Format(_("Undo %s\tCtrl+Z"), action.c_str()));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::UpdateRedoItem(const wxString& action)
+{
+   if (inscript) return;   // update Undo/Redo items at end of script
+
+   wxMenuBar* mbar = mainptr->GetMenuBar();
+   if (mbar) {
+      mbar->SetLabel(wxID_REDO,
+                     wxString::Format(_("Redo %s\tShift+Ctrl+Z"), action.c_str()));
    }
 }
 
@@ -956,54 +1002,5 @@ void UndoRedo::ClearUndoRedo()
    } else {
       UpdateUndoItem(wxEmptyString);
       UpdateRedoItem(wxEmptyString);
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void UndoRedo::UpdateUndoRedoItems()
-{
-   if (inscript) return;   // update Undo/Redo items at end of script
-
-   if (undolist.IsEmpty()) {
-      UpdateUndoItem(wxEmptyString);
-   } else {
-      wxList::compatibility_iterator node = undolist.GetFirst();
-      ChangeNode* change = (ChangeNode*) node->GetData();
-      UpdateUndoItem(change->suffix);
-   }
-
-   if (redolist.IsEmpty()) {
-      UpdateRedoItem(wxEmptyString);
-   } else {
-      wxList::compatibility_iterator node = redolist.GetFirst();
-      ChangeNode* change = (ChangeNode*) node->GetData();
-      UpdateRedoItem(change->suffix);
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void UndoRedo::UpdateUndoItem(const wxString& action)
-{
-   if (inscript) return;   // update Undo/Redo items at end of script
-
-   wxMenuBar* mbar = mainptr->GetMenuBar();
-   if (mbar) {
-      mbar->SetLabel(wxID_UNDO,
-                     wxString::Format(_("Undo %s\tCtrl+Z"), action.c_str()));
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-void UndoRedo::UpdateRedoItem(const wxString& action)
-{
-   if (inscript) return;   // update Undo/Redo items at end of script
-
-   wxMenuBar* mbar = mainptr->GetMenuBar();
-   if (mbar) {
-      mbar->SetLabel(wxID_REDO,
-                     wxString::Format(_("Redo %s\tShift+Ctrl+Z"), action.c_str()));
    }
 }

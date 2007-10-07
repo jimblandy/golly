@@ -188,9 +188,9 @@ void MainFrame::NewPattern(const wxString& title)
 
 // -----------------------------------------------------------------------------
 
-bool MainFrame::LoadImage()
+bool MainFrame::LoadImage(const wxString& path)
 {
-   wxString ext = currlayer->currfile.AfterLast(wxT('.'));
+   wxString ext = path.AfterLast(wxT('.'));
    
    // supported extensions match image handlers added in GollyApp::OnInit()
    if ( ext.IsSameAs(wxT("bmp"),false) ||
@@ -199,7 +199,7 @@ bool MainFrame::LoadImage()
         ext.IsSameAs(wxT("tif"),false) ||
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
-      if ( image.LoadFile(currlayer->currfile) ) {
+      if ( image.LoadFile(path) ) {
          currlayer->algo->setrule("B3/S23");
          
          unsigned char maskr, maskg, maskb;
@@ -235,9 +235,10 @@ bool MainFrame::LoadImage()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::LoadPattern(const wxString& newtitle)
+void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
+                            bool updatestatus)
 {
-   // newtitle is only empty if called from ResetPattern
+   // newtitle is only empty if called from ResetPattern/RestorePattern
    if (!newtitle.IsEmpty()) {
       if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
       currlayer->savestart = false;
@@ -257,9 +258,12 @@ void MainFrame::LoadPattern(const wxString& newtitle)
    // slow down hlife pattern loading
    viewptr->nopattupdate = true;
    
-   // update all of status bar so we don't see different colored lines;
-   // on Mac, DrawView also gets called if there are pending updates
-   UpdateStatus();
+   if (updatestatus) {
+      // update all of status bar so we don't see different colored lines;
+      // on Mac, DrawView also gets called if there are pending updates
+      UpdateStatus();
+   }
+   
    CreateUniverse();
 
    if (!newtitle.IsEmpty()) {
@@ -269,24 +273,24 @@ void MainFrame::LoadPattern(const wxString& newtitle)
       MySetTitle(_("Loading ") + newtitle);
    }
 
-   if (LoadImage()) {
+   if (LoadImage(path)) {
       viewptr->nopattupdate = false;
    } else {
-      const char* err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
+      const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
       if (err && strcmp(err,cannotreadhash) == 0 && !currlayer->hash) {
          currlayer->hash = true;
          statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
+         err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
       } else if (global_liferules.hasB0notS8 && currlayer->hash && !newtitle.IsEmpty()) {
          currlayer->hash = false;
          statusptr->SetMessage(_("Hashing has been turned off due to B0-not-S8 rule."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
-         err = readpattern(currlayer->currfile.mb_str(wxConvLocal), *currlayer->algo);
+         err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
       }
       viewptr->nopattupdate = false;
       if (err) Warning(wxString(err,wxConvLocal));
@@ -303,7 +307,7 @@ void MainFrame::LoadPattern(const wxString& newtitle)
       UpdateEverything();
       showbanner = false;
    } else {
-      // ResetPattern sets rule, window title, scale and location
+      // ResetPattern/RestorePattern does the update
    }
 }
 
@@ -344,7 +348,7 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
       // load pattern
       SetCurrentFile(path);
       if (remember) AddRecentPattern(path);
-      LoadPattern( GetBaseName(path) );
+      LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
 
@@ -466,7 +470,7 @@ void MainFrame::OpenPattern()
       } else {
          SetCurrentFile( opendlg.GetPath() );
          AddRecentPattern( opendlg.GetPath() );
-         LoadPattern( opendlg.GetFilename() );
+         LoadPattern(currlayer->currfile, opendlg.GetFilename());
       }
    }
 }
@@ -614,7 +618,7 @@ void MainFrame::OpenClipboard()
       // clipfile to tempstart (for use by ResetPattern and ShowPatternInfo)
       if ( wxCopyFile(clipfile, currlayer->tempstart, true) ) {
          currlayer->currfile = currlayer->tempstart;
-         LoadPattern(_("clipboard"));
+         LoadPattern(currlayer->currfile, _("clipboard"));
       } else {
          statusptr->ErrorMessage(_("Could not copy clipfile!"));
       }
@@ -628,7 +632,7 @@ void MainFrame::OpenClipboard()
             outfile.Write( data.GetText() );
             outfile.Close();
             currlayer->currfile = currlayer->tempstart;
-            LoadPattern(_("clipboard"));
+            LoadPattern(currlayer->currfile, _("clipboard"));
             // do NOT delete tempstart -- it can be reloaded by ResetPattern
             // or used by ShowPatternInfo
          } else {
@@ -751,7 +755,7 @@ void MainFrame::OpenRecentPattern(int id)
 
       SetCurrentFile(path);
       AddRecentPattern(path);
-      LoadPattern(GetBaseName(path));
+      LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
 

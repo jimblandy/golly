@@ -58,7 +58,8 @@ public:
 
    // file functions
    void OpenFile(const wxString& path, bool remember = true);
-   void LoadPattern(const wxString& newtitle);
+   void LoadPattern(const wxString& path, const wxString& newtitle,
+                    bool updatestatus = true);
    void NewPattern(const wxString& title = _("untitled"));
    void CreateUniverse();
    void SetWindowTitle(const wxString& filename);
@@ -150,7 +151,7 @@ private:
    void OnClose(wxCloseEvent& event);
 
    // file functions
-   bool LoadImage();
+   bool LoadImage(const wxString& path);
    void MySetTitle(const wxString& title);
    void SetCurrentFile(const wxString& path);
    wxString GetBaseName(const wxString& fullpath);

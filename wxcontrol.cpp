@@ -155,22 +155,14 @@ void MainFrame::ResetPattern(bool resetundo)
    currlayer->warp = currlayer->startwarp;
    currlayer->hash = currlayer->starthash;
 
-   wxString oldfile;
    if ( !currlayer->startfile.IsEmpty() ) {
-      // temporarily change currfile to startfile
-      oldfile = currlayer->currfile;
-      currlayer->currfile = currlayer->startfile;
+      // restore pattern from startfile
+      LoadPattern(currlayer->startfile, wxEmptyString);
+   } else {
+      // restore pattern from currfile
+      LoadPattern(currlayer->currfile, wxEmptyString);
    }
-   
-   // restore starting pattern from currfile;
-   // pass in empty string so savestart, warp and curs won't change
-   LoadPattern(wxEmptyString);
    // gen count has been reset to startgen
-   
-   if ( !currlayer->startfile.IsEmpty() ) {
-      // restore currfile
-      currlayer->currfile = oldfile;
-   }
    
    // play safe and ensure savestart flag is correct
    currlayer->savestart = !currlayer->startfile.IsEmpty();
@@ -208,15 +200,14 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename, const wxSt
    } else {
       // restore pattern in filename along with given settings
       currlayer->warp = warp;
+      // only update status bar if hashing state has changed
+      bool updatestatus = currlayer->hash != hash;
       currlayer->hash = hash;
 
-      wxString oldfile = currlayer->currfile;
-      currlayer->currfile = filename;
-      LoadPattern(wxEmptyString);         // load filename
-      currlayer->currfile = oldfile;
+      LoadPattern(filename, wxEmptyString, updatestatus);
 
-      //!!! no need for setrule here??? readpattern should do it when loading file???
-      //!!! currlayer->algo->setrule(rule.mb_str(wxConvLocal));
+      // no need for setrule here??? readpattern should do it when loading file
+      // currlayer->algo->setrule(rule.mb_str(wxConvLocal));
       wxString r = wxString(currlayer->algo->getrule(), wxConvLocal);
       if (r != rule)
          Warning(wxString::Format(_("Rules differ: %s != %s"), r.c_str(), rule.c_str()));

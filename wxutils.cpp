@@ -108,7 +108,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
 
    // create the controls
-   wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    SetSizer(topSizer);
 
    textbox = new wxTextCtrl(this, wxID_ANY, instring);
@@ -117,7 +117,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
    
    // position the controls
-   wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
    wxSize minsize = stdhbox->GetMinSize();
    if (minsize.GetWidth() < 250) {
@@ -202,7 +202,7 @@ private:
 class MySpinCtrl : public wxSpinCtrl
 {
 public:
-   MySpinCtrl(wxWindow *parent, wxWindowID id) : wxSpinCtrl(parent, id)
+   MySpinCtrl(wxWindow* parent, wxWindowID id) : wxSpinCtrl(parent, id)
    {
       // create a dynamic event handler for the underlying wxTextCtrl
       wxTextCtrl* textctrl = GetText();
@@ -258,7 +258,7 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    maxint = maxval;
 
    // create the controls
-   wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    SetSizer(topSizer);
 
    spinctrl = new MySpinCtrl(this, ID_SPIN_CTRL);
@@ -270,7 +270,7 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
    
    // position the controls
-   wxBoxSizer *stdhbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
    wxSize minsize = stdhbox->GetMinSize();
    if (minsize.GetWidth() < 250) {
@@ -423,13 +423,13 @@ int SaveChanges(const wxString& query, const wxString& msg)
 
 // globals for showing progress
 
-wxProgressDialog *progdlg = NULL;         // progress dialog
+wxProgressDialog* progdlg = NULL;         // progress dialog
 #ifdef __WXX11__
    const int maxprogrange = 10000;        // maximum range must be < 32K on X11?
 #else
    const int maxprogrange = 1000000000;   // maximum range (best if very large)
 #endif
-wxStopWatch *progwatch = NULL;            // stopwatch for progress dialog
+wxStopWatch* progwatch = NULL;            // stopwatch for progress dialog
 long prognext;                            // when to update progress dialog
 wxString progtitle;                       // title for progress dialog
 
@@ -577,9 +577,8 @@ void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap)
 
    wxImage newimg;
    newimg.Create(oldimg.GetWidth(), oldimg.GetHeight(), false);
-   unsigned char *dest = newimg.GetData();
-
-   unsigned char *src = oldimg.GetData();
+   unsigned char* dest = newimg.GetData();
+   unsigned char* src = oldimg.GetData();
    bool hasMask = oldimg.HasMask();
    unsigned char maskRed = oldimg.GetMaskRed();
    unsigned char maskGreen = oldimg.GetMaskGreen();
@@ -604,10 +603,12 @@ void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap)
    // copy the alpha channel, if any
    if (oldimg.HasAlpha()) {
       const size_t alphaSize = oldimg.GetWidth() * oldimg.GetHeight();
-      unsigned char *alpha = (unsigned char*) malloc(alphaSize);
-      memcpy(alpha, oldimg.GetAlpha(), alphaSize);
-      newimg.InitAlpha();
-      newimg.SetAlpha(alpha);
+      unsigned char* alpha = (unsigned char*) malloc(alphaSize);
+      if (alpha) {
+         memcpy(alpha, oldimg.GetAlpha(), alphaSize);
+         newimg.InitAlpha();
+         newimg.SetAlpha(alpha);
+      }
    }
 
    outmap = wxBitmap(newimg);

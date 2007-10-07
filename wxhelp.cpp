@@ -465,7 +465,7 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell)
                   outfile.Close();
                   currlayer->currfile = currlayer->tempstart;
                   // load lexicon pattern into current layer
-                  mainptr->LoadPattern(_("lexicon"));
+                  mainptr->LoadPattern(currlayer->currfile, _("lexicon"));
                } else {
                   Warning(_("Could not create tempstart file!"));
                }
