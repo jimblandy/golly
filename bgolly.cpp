@@ -44,6 +44,22 @@ public:
    virtual void blit(int, int, int, int, int*, int=1) {}
 } ;
 nullrender renderer ;
+/*
+ *   This is a "lifeerrors" that we can use to test some edge
+ *   conditions.  In this case the only real thing we use
+ *   it for is to check rendering during a progress dialog.
+ */
+class nullerrors : public lifeerrors {
+public:
+   nullerrors() {}
+   virtual void fatal(const char *) {}
+   virtual void warning(const char *) {}
+   virtual void status(const char *) {}
+   virtual void beginprogress(const char *s) { abortprogress(0, s) ; }
+   virtual bool abortprogress(double, const char *) ;
+   virtual void endprogress() { abortprogress(1, "") ; }
+} ;
+nullerrors nullerror ;
 char *filename ;
 lifealgo *imp = 0 ;
 struct options {
@@ -55,7 +71,7 @@ struct options {
 } ;
 bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
-int hyper, hashlife, render, autofit, quiet, popcount ;
+int hyper, hashlife, render, autofit, quiet, popcount, progress ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
 char *outfilename = 0 ;
@@ -74,6 +90,7 @@ options options[] = {
   { "-o", "--output", "Output file (*.rle, *.mc, *.rle.gz, *.mc.gz)", 's',
                                                                &outfilename },
   { "",   "--render", "Render (benchmarking)", 'b', &render },
+  { "",   "--progress", "Render during progress dialog (debugging)", 'b', &progress },
   { "",   "--popcount", "Popcount (benchmarking)", 'b', &popcount },
   { "",   "--scale", "Rendering scale", 's', &renderscale },
 //{ "",   "--stepthreshold", "Stepsize >= gencount/this (default 1)",
@@ -374,6 +391,10 @@ struct edgescmd : public cmdbase {
       cout << " " << b.tostring() << endl ;
    }
 } edges_inst ;
+bool nullerrors::abortprogress(double p, const char *s) {
+   imp->draw(viewport, renderer) ;
+   return 0 ;
+}
 void runtestscript(const char *testscript) {
    FILE *cmdfile = 0 ;
    if (strcmp(testscript, "-") != 0)
@@ -469,6 +490,8 @@ case 's':
      imp = new hlifealgo() ;
    else
      imp = new qlifealgo() ;
+   if (progress)
+     lifeerrors::seterrorhandler(&nullerror) ;
    imp->setMaxMemory(maxmem) ;
    if (testscript) {
      if (argc > 1) {

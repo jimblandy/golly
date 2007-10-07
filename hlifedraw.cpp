@@ -232,7 +232,7 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
       viewh = uviewh ;
       vieww = uvieww ;
    }
-   int d = node_depth(root) ;
+   int d = depth ;
    fill_ll(d) ;
    int maxd = vieww ;
    int i ;
@@ -309,7 +309,7 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
          renderbm(-llx, -lly) ;
       }
    } else {
-      z = zeronode(node_depth(sw)) ;
+      z = zeronode(d) ;
       maxd = 1 << (d - mag + 2) ;
       clearrect(0, maxd-lly, vieww, viewh-maxd+lly) ;
       clearrect(0, 0, vieww, -lly) ;
@@ -384,7 +384,7 @@ void hlifealgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
    bigint xmax = 1 ;
    bigint ymin = -1 ;
    bigint ymax = 1 ;
-   int currdepth = node_depth(root) ;
+   int currdepth = depth ;
    int i;
    if (root == zeronode(currdepth)) {
       // AKT: return impossible edges to indicate empty pattern;
@@ -571,7 +571,7 @@ void hlifealgo::fit(viewport &view, int force) {
       ygoal = 8 ;
    int xsize = 2 ;
    int ysize = 2 ;
-   int currdepth = node_depth(root) ;
+   int currdepth = depth ;
    int i;
    if (root == zeronode(currdepth)) {
       view.center() ;
