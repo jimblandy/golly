@@ -593,9 +593,15 @@ void UndoRedo::RememberGenFinish()
       return;
    }
    
-   // save finishing pattern in a unique temporary file
-   wxString fpath = wxFileName::CreateTempFileName(temp_prefix);
-   SaveCurrentPattern(fpath);
+   wxString fpath;
+   if (currlayer->algo->getGeneration() == currlayer->startgen) {
+      // this can happen if script called reset() so just use starting pattern
+      fpath = wxEmptyString;
+   } else {
+      // save finishing pattern in a unique temporary file
+      fpath = wxFileName::CreateTempFileName(temp_prefix);
+      SaveCurrentPattern(fpath);
+   }
    
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
@@ -676,21 +682,7 @@ void UndoRedo::AddGenChange()
 
 void UndoRedo::SyncUndoHistory()
 {
-   // synchronize undo history due to a ResetPattern call
-   if (inscript) {
-      // ResetPattern was called via reset() command
-      if (savegenchanges) {
-         // do pending gen changes to ensure there is at least one genchange node
-         savegenchanges = false;
-         RememberGenFinish();
-      }
-      // it's unlikely the script has done any gen changes before the reset()
-      // but if so then we need to delete all undo nodes back until just
-      // past the oldest genchange node
-      wxBell();//!!!
-      return;
-   }
-
+   // synchronize undo history due to a ResetPattern call;
    // wind back the undo list to just past the oldest genchange node
    wxList::compatibility_iterator node;
    ChangeNode* change;
@@ -719,7 +711,6 @@ void UndoRedo::SyncUndoHistory()
          return;
       }
    }
-   
    // should never get here
    Warning(_("Bug detected in SyncUndoHistory!"));
 }
@@ -850,8 +841,8 @@ void UndoRedo::UndoChange()
                currlayer->savestart = true;     // pattern created by script
          }
       } else {
-         // should never happen
-         Warning(_("Bug? UndoChange is setting dirty flag!"));
+         // this can happen if user creates a new pattern, does some editing,
+         // saves pattern (which calls MarkLayerClean), then does Undo
          MarkLayerDirty();
       }
    }

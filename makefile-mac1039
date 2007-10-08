@@ -27,7 +27,7 @@ PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distut
 # following python command doesn't generate correct info on OS 10.4
 # PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
-   -framework Foundation -framework Python
+   -framework Foundation -F/System/Library/Frameworks -framework Python
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -109,7 +109,7 @@ app.bin: $(WXOBJ)
    -L$(LIBDIRNAME) -lwx_mac_static \
    -framework Carbon -framework System -framework AGL -framework IOKit \
    -framework WebKit -framework AppKit -framework QuickTime -framework Cocoa \
-   $(PYTHON_LINK) $(PERL_LINK) \
+   $(PERL_LINK) $(PYTHON_LINK) \
    -prebind -mmacosx-version-min=10.3 -lz -lpthread -liconv \
    -Wl,-dead_strip -Wl,-S \
    -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk

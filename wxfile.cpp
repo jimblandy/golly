@@ -346,8 +346,8 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
       RunScript(path);
    } else {
       // load pattern
-      SetCurrentFile(path);
       if (remember) AddRecentPattern(path);
+      SetCurrentFile(path);
       LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
@@ -468,8 +468,8 @@ void MainFrame::OpenPattern()
          AddRecentScript( opendlg.GetPath() );
          RunScript( opendlg.GetPath() );
       } else {
-         SetCurrentFile( opendlg.GetPath() );
          AddRecentPattern( opendlg.GetPath() );
+         SetCurrentFile( opendlg.GetPath() );
          LoadPattern(currlayer->currfile, opendlg.GetFilename());
       }
    }
@@ -753,8 +753,8 @@ void MainFrame::OpenRecentPattern(int id)
       wxFileName fname(path);
       if (!fname.IsAbsolute()) path = gollydir + path;
 
-      SetCurrentFile(path);
       AddRecentPattern(path);
+      SetCurrentFile(path);
       LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
@@ -995,17 +995,16 @@ void MainFrame::SavePattern()
          return;
       }
       
-      SetCurrentFile( savedlg.GetPath() );
-      AddRecentPattern( savedlg.GetPath() );
-      
       const char* err = WritePattern(savedlg.GetPath(), format,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
          statusptr->DisplayMessage(_("Pattern saved in file."));
+         AddRecentPattern( savedlg.GetPath() );
          if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
             // no need to save starting pattern (ResetPattern can load currfile)
+            SetCurrentFile( savedlg.GetPath() );
             currlayer->savestart = false;
             MarkLayerClean( savedlg.GetFilename() );
          }
@@ -1043,14 +1042,13 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
    } else {
       return "Unknown pattern format.";
    }   
-   
-   SetCurrentFile(path);
-   if (remember) AddRecentPattern(path);
 
    const char* err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
+      if (remember) AddRecentPattern(path);
       if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
          // no need to save starting pattern (ResetPattern can load currfile)
+         SetCurrentFile(path);
          currlayer->savestart = false;
          MarkLayerClean( GetBaseName(path) );
       }

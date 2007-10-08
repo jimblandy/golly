@@ -146,8 +146,9 @@ void MainFrame::ResetPattern(bool resetundo)
    }
    
    if (allowundo && !currlayer->stayclean && inscript) {
-      // script has called reset() command
+      // script called reset()
       SavePendingChanges();
+      currlayer->undoredo->RememberGenStart();
    }
    
    // restore pattern and settings saved by SaveStartingPattern;
@@ -182,9 +183,14 @@ void MainFrame::ResetPattern(bool resetundo)
    SetWindowTitle(wxEmptyString);
    UpdateEverything();
    
-   if (allowundo && !currlayer->stayclean && resetundo) {
-      // we must also wind back the undo history to the starting pattern
-      currlayer->undoredo->SyncUndoHistory();
+   if (allowundo && !currlayer->stayclean) {
+      if (inscript) {
+         // script called reset() so remember gen change
+         currlayer->undoredo->RememberGenFinish();
+      } else if (resetundo) {
+         // wind back the undo history to the starting pattern
+         currlayer->undoredo->SyncUndoHistory();
+      }
    }
 }
 

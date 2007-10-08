@@ -30,9 +30,9 @@ PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 # following python command doesn't generate correct info on OS 10.4
-# PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+### PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
-   -framework Foundation -framework Python
+   -framework Foundation -F/System/Library/Frameworks -framework Python
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -120,7 +120,7 @@ hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
 app.bin: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
    $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
-   $(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LINK) $(PERL_LINK)
+   $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
 $(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
 app.icns file-mc.icns file-rle.icns
