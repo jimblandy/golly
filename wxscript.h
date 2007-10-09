@@ -54,8 +54,8 @@ void SavePendingChanges(bool checkgenchanges = true);
 // If checkgenchanges is true then it will also save any pending
 // generating changes.  This lets us accumulate consecutive cell/gen
 // changes in a single undo/redo change node, which is better for
-// scripts like invert.py that can call setcell many times, or
-// for scripts like oscar.py that can call run many times.
+// scripts like invert.py that can call setcell() many times, or
+// for scripts like oscar.py that can call run() many times.
 // Must be called BEFORE all undoredo->Remember... calls but
 // only if inscript && allowundo && !currlayer->stayclean.
 
@@ -80,6 +80,8 @@ void DoAutoUpdate();          // update display if autoupdate is true
 const char* GSF_open(char* filename, int remember);
 const char* GSF_save(char* filename, char* format, int remember);
 const char* GSF_setrule(char* rulestring);
+const char* GSF_setgen(char* genstring);
+const char* GSF_setpos(char* x, char* y);
 void GSF_setname(char* name, int index);
 void GSF_setcell(int x, int y, int state);
 void GSF_select(int x, int y, int wd, int ht);

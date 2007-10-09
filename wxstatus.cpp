@@ -445,6 +445,16 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+bool StatusBar::ClickInGenBox(int x, int y)
+{
+   if (showexact)
+      return x >= 0 && y > (GENLINE+DESCHT-LINEHT) && y <= (GENLINE+DESCHT);
+   else
+      return x >= h_gen && x <= h_pop - 20 && y <= (BASELINE1+DESCHT);
+}
+
+// -----------------------------------------------------------------------------
+
 bool StatusBar::ClickInScaleBox(int x, int y)
 {
    if (showexact)
@@ -469,11 +479,16 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
 {
    if (inscript) return;    // let script control scale and step
    ClearMessage();
-   if ( ClickInScaleBox(event.GetX(), event.GetY()) ) {
+
+   if ( ClickInGenBox(event.GetX(), event.GetY()) && !mainptr->generating ) {
+      mainptr->SetGeneration();
+
+   } else if ( ClickInScaleBox(event.GetX(), event.GetY()) ) {
       if (viewptr->GetMag() != 0) {
          // reset scale to 1:1
          viewptr->SetMag(0);
       }
+
    } else if ( ClickInStepBox(event.GetX(), event.GetY()) ) {
       if (currlayer->warp != 0) {
          // reset step to 1 gen
@@ -483,6 +498,7 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
          Update();
       }
    }
+
    #ifdef __WXX11__
       // make sure viewport keeps keyboard focus
       viewptr->SetFocus();

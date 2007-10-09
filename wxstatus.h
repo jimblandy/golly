@@ -34,35 +34,35 @@ public:
     StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
     ~StatusBar();
 
-   // erase bottom line of status bar
    void ClearMessage();
+   // erase bottom line of status bar
 
-   // display message on bottom line of status bar
    void DisplayMessage(const wxString& s);
+   // display message on bottom line of status bar
 
-   // beep and display message on bottom line of status bar
    void ErrorMessage(const wxString& s);
+   // beep and display message on bottom line of status bar
 
-   // set message string without displaying it (until next update)
    void SetMessage(const wxString& s);
+   // set message string without displaying it (until next update)
 
-   // XY location needs to be updated
    void UpdateXYLocation();
+   // XY location needs to be updated
 
-   // check location of mouse and update XY location if necessary
    void CheckMouseLocation(bool active);
+   // check location of mouse and update XY location if necessary
 
-   // convert given number to string suitable for display
    wxString Stringify(const bigint& b);
+   // convert given number to string suitable for display
    
-   // return current delay (in millisecs)
    int GetCurrentDelay();
+   // return current delay (in millisecs)
 
    wxFont* GetStatusFont() { return statusfont; }
    int GetTextAscent() { return textascent; }
 
-   // status bar height (0 if not visible, else STATUS_HT or STATUS_EXHT)
    int statusht;
+   // status bar height (0 if not visible, else STATUS_HT or STATUS_EXHT)
    
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -73,6 +73,7 @@ private:
    void OnMouseDown(wxMouseEvent& event);
    void OnEraseBackground(wxEraseEvent& event);
 
+   bool ClickInGenBox(int x, int y);
    bool ClickInScaleBox(int x, int y);
    bool ClickInStepBox(int x, int y);
    void SetStatusFont(wxDC& dc);

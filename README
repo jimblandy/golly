@@ -1,9 +1,7 @@
-Welcome to Golly, a Game of Life simulator.  Please visit the
-Golly web site for the latest information:
+Welcome to Golly, a sophisticated tool for exploring Conway's
+Game of Life and other cellular automata.
 
-  http://golly.sourceforge.net/
-
-Main features:
+Key features:
 
 - Unbounded universe (limited only by memory).
 - Fast, memory-efficient conventional algorithm.
@@ -15,13 +13,15 @@ Main features:
 - Supports other Life-like rules and Wolfram's 1D rules.
 - Fast loading of large patterns.
 - Paste in patterns from the clipboard.
+- Unlimited undo/redo.
 - Unbounded zooming out for astronomical patterns.
-- Auto fit option keeps your pattern sized to the window.
+- Auto fit option keeps a generating pattern within view.
 - Full screen option (no menu/status/tool/scroll bars).
 - Supports multiple layers, including cloned layers.
 - HTML-based help with integrated Life Lexicon.
 - Scriptable via Perl or Python.
 - Free, open source and cross-platform (Windows, Mac, Linux).
+- We also provide bgolly, a GUI-less version.
 
 The Golly application can be installed anywhere you like, but
 make sure you move the whole folder because the Help subfolder
@@ -29,6 +29,9 @@ must be kept with the application.
 
 To run Golly, just click on the application icon or type golly
 on the command line.  See the Help menu for all the details.
+The latest information can be found at the Golly web site:
+
+  http://golly.sourceforge.net/
 
 Now go forth and generate!
 

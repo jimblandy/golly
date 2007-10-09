@@ -132,6 +132,7 @@ enum {
    ID_NEXT,
    ID_STEP,
    ID_RESET,
+   ID_SETGEN,
    ID_FASTER,
    ID_SLOWER,
    ID_AUTO,
@@ -814,6 +815,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_RESET,     active && !inscript &&
                                  // allow reset while a pattern is generating
                                  (generating || currlayer->algo->getGeneration() > currlayer->startgen));
+      mbar->Enable(ID_SETGEN,    active && !busy);
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
@@ -1403,6 +1405,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_NEXT:           NextGeneration(false); break;
       case ID_STEP:           NextGeneration(true); break;
       case ID_RESET:          ResetPattern(); break;
+      case ID_SETGEN:         SetGeneration(); break;
       case ID_FASTER:         GoFaster(); break;
       case ID_SLOWER:         GoSlower(); break;
       case ID_AUTO:           ToggleAutoFit(); break;
@@ -2096,7 +2099,9 @@ void MainFrame::CreateMenus()
       controlMenu->Append(ID_NEXT, _("Next\tSpace"));
       controlMenu->Append(ID_STEP, _("Next Step\tTab"));
    #endif
+   controlMenu->AppendSeparator();
    controlMenu->Append(ID_RESET, _("Reset\tCtrl+R"));
+   controlMenu->Append(ID_SETGEN, _("Set Generation..."));
    controlMenu->AppendSeparator();
    #ifdef __WXMSW__
       // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to

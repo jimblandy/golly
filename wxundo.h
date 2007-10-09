@@ -74,8 +74,12 @@ public:
    // (and then Redo if they wish)
 
    void SyncUndoHistory();
-   // called at the end of ResetPattern to synchronize the undo history
+   // called by ResetPattern to synchronize the undo history
 
+   void RememberSetGen(bigint& oldgen, bigint& newgen,
+                       bigint& oldstart, bool oldsave);
+   // remember change of generation count
+   
    void RememberScriptStart();
    // remember that script is about to start; this allows us to undo/redo
    // any changes made by the script all at once

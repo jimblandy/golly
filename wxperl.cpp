@@ -1545,6 +1545,24 @@ XS(pl_reset)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_setgen)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_setgen($string)");
+
+   STRLEN n_a;
+   char* genstring = SvPV(ST(0), n_a);
+
+   const char* errmsg = GSF_setgen(genstring);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_getgen)
 {
    IGNORE_UNUSED_PARAMS;
@@ -1593,10 +1611,8 @@ XS(pl_setrule)
    STRLEN n_a;
    char* rulestring = SvPV(ST(0), n_a);
 
-   const char* err = GSF_setrule(rulestring);
-   if (err) {
-      PERL_ERROR(err);
-   }
+   const char* errmsg = GSF_setrule(rulestring);
+   if (errmsg) PERL_ERROR(errmsg);
 
    XSRETURN(0);
 }
@@ -1626,27 +1642,8 @@ XS(pl_setpos)
    char* x = SvPV(ST(0), n_a);
    char* y = SvPV(ST(1), n_a);
 
-   // disallow alphabetic chars in x,y
-   int i;
-   int xlen = strlen(x);
-   for (i=0; i<xlen; i++)
-      if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') ) {
-         char msg[256];
-         sprintf(msg, "g_setpos error: illegal x value (%s)", x);
-         PERL_ERROR(msg);
-      }
-   int ylen = strlen(y);
-   for (i=0; i<ylen; i++)
-      if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') ) {
-         char msg[256];
-         sprintf(msg, "g_setpos error: illegal y value (%s)", y);
-         PERL_ERROR(msg);
-      }
-
-   bigint bigx(x);
-   bigint bigy(y);
-   viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
-   DoAutoUpdate();
+   const char* errmsg = GSF_setpos(x, y);
+   if (errmsg) PERL_ERROR(errmsg);
 
    XSRETURN(0);
 }
@@ -2375,6 +2372,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_getbase",      pl_getbase,      file);
    newXS("g_advance",      pl_advance,      file);
    newXS("g_reset",        pl_reset,        file);
+   newXS("g_setgen",       pl_setgen,       file);
    newXS("g_getgen",       pl_getgen,       file);
    newXS("g_getpop",       pl_getpop,       file);
    newXS("g_setrule",      pl_setrule,      file);

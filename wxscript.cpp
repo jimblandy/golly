@@ -170,6 +170,40 @@ const char* GSF_setrule(char* rulestring)
 
 // -----------------------------------------------------------------------------
 
+const char* GSF_setgen(char* genstring)
+{
+   const char* err = mainptr->ChangeGenCount(genstring);
+   if (!err) DoAutoUpdate();
+
+   return err;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_setpos(char* x, char* y)
+{
+   // disallow alphabetic chars in x,y
+   int i;
+   int xlen = strlen(x);
+   for (i = 0; i < xlen; i++)
+      if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') )
+         return "Illegal character in x value.";
+
+   int ylen = strlen(y);
+   for (i = 0; i < ylen; i++)
+      if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') )
+         return "Illegal character in y value.";
+
+   bigint bigx(x);
+   bigint bigy(y);
+   viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
+   DoAutoUpdate();
+
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 void GSF_setname(char* name, int index)
 {
    if (name[0]) {

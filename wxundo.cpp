@@ -59,8 +59,14 @@ typedef enum {
    rotateacw,           // selection was rotated anticlockwise
    rotatepattcw,        // pattern was rotated clockwise
    rotatepattacw,       // pattern was rotated anticlockwise
+   
+   // WARNING: code in UndoChange/RedoChange assumes only changes < selchange
+   // can alter the layer's dirty state; ie. the wasdirty flag is not used
+   // for all the following changes
+   
    selchange,           // selection was changed
    genchange,           // pattern was generated
+   setgen,              // generation count was changed
    scriptstart,         // later changes were made by script
    scriptfinish         // earlier changes were made by script
 } change_type;
@@ -90,7 +96,7 @@ public:
    bigint prevt, prevl, prevb, prevr;     // old selection edges
    bigint nextt, nextl, nextb, nextr;     // new selection edges
    
-   // genchange info
+   // genchange/setgen info
    wxString oldfile, newfile;             // old and new pattern files
    wxString oldrule, newrule;             // old and new rules
    bigint oldgen, newgen;                 // old and new generation counts
@@ -99,6 +105,10 @@ public:
    int oldwarp, newwarp;                  // old and new speeds
    bool oldhash, newhash;                 // old and new hash states
    bool scriptgen;                        // gen change was done by script?
+   
+   // setgen info
+   bigint oldstart, newstart;             // old and new startgen values
+   bool oldsave, newsave;                 // old and new savestart states
 };
 
 // -----------------------------------------------------------------------------
@@ -231,6 +241,20 @@ bool ChangeNode::DoChange(bool undo)
             mainptr->RestorePattern(newgen, newfile, newrule,
                                     newx, newy, newmag, newwarp, newhash);
          }
+         break;
+      
+      case setgen:
+         if (undo) {
+            mainptr->ChangeGenCount(oldgen.tostring(), true);
+            currlayer->startgen = oldstart;
+            currlayer->savestart = oldsave;
+         } else {
+            mainptr->ChangeGenCount(newgen.tostring(), true);
+            currlayer->startgen = newstart;
+            currlayer->savestart = newsave;
+         }
+         // Reset item may become enabled/disabled
+         if (!inscript) mainptr->UpdateMenuItems(mainptr->IsActive());
          break;
       
       case scriptstart:
@@ -717,6 +741,35 @@ void UndoRedo::SyncUndoHistory()
 
 // -----------------------------------------------------------------------------
 
+void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
+                              bigint& oldstart, bool oldsave)
+{
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add setgen node to head of undo list
+   ChangeNode* change = new ChangeNode();
+   if (change == NULL) Fatal(_("Failed to create setgen node!"));
+
+   change->changeid = setgen;
+   change->oldgen = oldgen;
+   change->newgen = newgen;
+   change->oldstart = oldstart;
+   change->newstart = currlayer->startgen;
+   change->oldsave = oldsave;
+   change->newsave = currlayer->savestart;
+   change->suffix = _("Set Generation");
+   // change->wasdirty is not used
+
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
 void UndoRedo::RememberScriptStart()
 {
    // add scriptstart node to head of undo list
@@ -725,6 +778,7 @@ void UndoRedo::RememberScriptStart()
 
    change->changeid = scriptstart;
    change->suffix = _("Script Changes");
+   // change->wasdirty is not used
 
    undolist.Insert(change);
    
@@ -758,6 +812,7 @@ void UndoRedo::RememberScriptFinish()
 
    change->changeid = scriptfinish;
    change->suffix = _("Script Changes");
+   // change->wasdirty is not used
 
    undolist.Insert(change);
    
@@ -823,11 +878,7 @@ void UndoRedo::UndoChange()
    // remove node from head of undo list (doesn't delete node's data)
    undolist.Erase(node);
    
-   if (change->changeid == selchange ||
-         change->changeid == genchange ||
-            change->changeid == scriptstart) {
-      // ignore dirty flag
-   } else if (change->wasdirty != currlayer->dirty) {
+   if (change->changeid < selchange && change->wasdirty != currlayer->dirty) {
       if (currlayer->dirty) {
          // clear dirty flag, update window title and Layer menu items
          MarkLayerClean(currlayer->currname);
@@ -894,11 +945,7 @@ void UndoRedo::RedoChange()
    // remove node from head of redo list (doesn't delete node's data)
    redolist.Erase(node);
    
-   if (change->changeid == selchange ||
-         change->changeid == genchange ||
-            change->changeid == scriptfinish) {
-      // ignore dirty flag
-   } else if (!change->wasdirty) {
+   if (change->changeid < selchange && !change->wasdirty) {
       // set dirty flag, update window title and Layer menu items
       MarkLayerDirty();
    }

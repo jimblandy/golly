@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.3 (released !!!)
 
+AKT: Added a setgen(str) script command.
+AKT: Added Set Generation... item to Control menu.
 AKT: Included bgolly in the Mac distribution.
 TGR: Fixed crash if pattern update occurred while saving a .mc file.
 AKT: The Reset item restores starting selection (for consistency with Undo).

@@ -1566,6 +1566,26 @@ static PyObject* py_reset(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_setgen(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* genstring = NULL;
+
+   if (!PyArg_ParseTuple(args, "s", &genstring)) return NULL;
+
+   const char* errmsg = GSF_setgen(genstring);
+   if (errmsg) {
+      PyErr_SetString(PyExc_RuntimeError, errmsg);
+      return NULL;
+   }
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_getgen(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -1600,9 +1620,9 @@ static PyObject* py_setrule(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s", &rulestring)) return NULL;
 
-   const char* err = GSF_setrule(rulestring);
-   if (err) {
-      PyErr_SetString(PyExc_RuntimeError, err);
+   const char* errmsg = GSF_setrule(rulestring);
+   if (errmsg) {
+      PyErr_SetString(PyExc_RuntimeError, errmsg);
       return NULL;
    }
 
@@ -1633,25 +1653,11 @@ static PyObject* py_setpos(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "ss", &x, &y)) return NULL;
 
-   // disallow alphabetic chars in x,y
-   int i;
-   int xlen = strlen(x);
-   for (i=0; i<xlen; i++)
-      if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') ) {
-         PyErr_SetString(PyExc_RuntimeError, "setpos error: illegal character in x value.");
-         return NULL;
-      }
-   int ylen = strlen(y);
-   for (i=0; i<ylen; i++)
-      if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') ) {
-         PyErr_SetString(PyExc_RuntimeError, "setpos error: illegal character in y value.");
-         return NULL;
-      }
-
-   bigint bigx(x);
-   bigint bigy(y);
-   viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
-   DoAutoUpdate();
+   const char* errmsg = GSF_setpos(x, y);
+   if (errmsg) {
+      PyErr_SetString(PyExc_RuntimeError, errmsg);
+      return NULL;
+   }
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -2350,6 +2356,7 @@ static PyMethodDef py_methods[] = {
    { "getbase",      py_getbase,    METH_VARARGS, "return current base step" },
    { "advance",      py_advance,    METH_VARARGS, "advance inside/outside selection by given gens" },
    { "reset",        py_reset,      METH_VARARGS, "restore starting pattern" },
+   { "setgen",       py_setgen,     METH_VARARGS, "set current generation to given string" },
    { "getgen",       py_getgen,     METH_VARARGS, "return current generation as string" },
    { "getpop",       py_getpop,     METH_VARARGS, "return current population as string" },
    { "setrule",      py_setrule,    METH_VARARGS, "set current rule according to string" },

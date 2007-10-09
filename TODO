@@ -17,6 +17,8 @@ For future versions:
   nice to have Golly switch to that rule (make it optional -- see
   solution proposed in LifeCA).
 
+- Use wxFileName::CreateTempFileName for all temporary files.
+
 - Support toroidal universes (see LifeLab).  Or provide this as part
   of an MCell-compatible lifealgo.
 
@@ -77,7 +79,6 @@ User suggestions:
 - Add a Default button to each Preferences pane (at bottom left?).
 
 [Bill Gosper]
-- Add a setgen(str) script command.
 - Modify info window so it can be used to edit and save comments.
 - For scales > 1:1 make the pixel color depend on lg(# of ones in it).
 

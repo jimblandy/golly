@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
-#include "wxutils.h"       // for BeginProgress, etc
+#include "wxutils.h"       // for BeginProgress, GetString, etc
 #include "wxprefs.h"       // for maxhashmem, etc
 #include "wxrule.h"        // for ChangeRule
 #include "wxstatus.h"      // for statusptr->...
@@ -221,6 +221,90 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename, const wxSt
       viewptr->SetPosMag(x, y, mag);
       SetWindowTitle(wxEmptyString);      // in case rule changed
       UpdatePatternAndStatus();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
+{
+   // disallow alphabetic chars in genstring
+   for (unsigned int i = 0; i < strlen(genstring); i++)
+      if ( (genstring[i] >= 'a' && genstring[i] <= 'z') ||
+           (genstring[i] >= 'A' && genstring[i] <= 'Z') )
+         return "Illegal character in generation string.";
+   
+   bigint oldgen = currlayer->algo->getGeneration();
+   bigint newgen(genstring);
+   if (newgen == oldgen) return NULL;
+
+   if (!inundoredo && allowundo && !currlayer->stayclean && inscript) {
+      // script called setgen()
+      SavePendingChanges();
+   }
+
+   if (!currlayer->hash && newgen.odd() != oldgen.odd()) {
+      // qlife stores pattern in different bits depending on gen parity,
+      // so we need to create a new qlife universe, set its gen, copy the
+      // current pattern to the new universe, then switch to that universe
+      bigint top, left, bottom, right;
+      currlayer->algo->findedges(&top, &left, &bottom, &right);
+      if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         return "Pattern is too big to copy.";
+      }
+      // create a new universe of same type
+      lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+      newalgo->setGeneration(newgen);
+      // copy pattern
+      if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                              currlayer->algo, newalgo, false, _("Copying pattern")) ) {
+         delete newalgo;
+         return "Failed to copy pattern.";
+      }
+      // switch to new universe
+      delete currlayer->algo;
+      currlayer->algo = newalgo;
+      SetGenIncrement();
+   } else {
+      currlayer->algo->setGeneration(newgen);
+   }
+   
+   if (!inundoredo) {
+      // save some settings for RememberSetGen call below
+      bigint oldstart = currlayer->startgen;
+      bool oldsave = currlayer->savestart;
+      
+      // may need to change startgen and savestart
+      if (oldgen == currlayer->startgen) {
+         currlayer->startgen = newgen;
+         currlayer->savestart = true;
+      } else if (newgen <= currlayer->startgen) {
+         currlayer->startgen = newgen;
+         currlayer->savestart = true;
+      }
+   
+      if (allowundo && !currlayer->stayclean) {
+         currlayer->undoredo->RememberSetGen(oldgen, newgen, oldstart, oldsave);
+      }
+
+      // Reset/Undo/Redo items might become disabled/enabled
+      if (!inscript) UpdateMenuItems(IsActive());
+   }
+   
+   UpdateStatus();
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetGeneration()
+{
+   bigint oldgen = currlayer->algo->getGeneration();
+   wxString result;
+   if ( GetString(_("Set Generation"), _("Enter a new generation count:"),
+                  wxString(oldgen.tostring(), wxConvLocal), result) ) {
+      const char* err = ChangeGenCount(result.mb_str(wxConvLocal));
+      if (err) Warning(wxString(err,wxConvLocal));
    }
 }
 

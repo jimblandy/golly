@@ -217,10 +217,11 @@ or you can search for individual commands alphabetically:
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
-<a href="#setlayer"><b>setlayer</b></a>
+<a href="#setgen"><b>setgen</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#setlayer"><b>setlayer</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setname"><b>setname</b></a><br>
 <a href="#setoption"><b>setoption</b></a><br>
@@ -544,6 +545,15 @@ to the values they had at the starting generation.
 The starting generation is usually zero, but it can be larger after
 loading an RLE/macrocell file that stores a non-zero generation count.
 </dd>
+</p>
+
+<a name="setgen"></a><p><dt><b>setgen(<i>gen</i>)</b></dt>
+<dd>
+Set the generation count using the given string.
+Commas and other punctuation marks can be used to make a large number
+more readable.
+</dd>
+<dd> Example: <b>golly.setgen("123,456,789")</b></dd>
 </p>
 
 <a name="getgen"></a><p><dt><b>getgen(<i>sepchar='\0'</i>)</b></dt>

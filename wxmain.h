@@ -104,6 +104,8 @@ public:
    void SetWarp(int newwarp);
    void SetGenIncrement();
    void ResetPattern(bool resetundo = true);
+   void SetGeneration();
+   const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
 
    // view functions
    void ToggleStatusBar();
