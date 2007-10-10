@@ -275,20 +275,21 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       bool oldsave = currlayer->savestart;
       
       // may need to change startgen and savestart
-      if (oldgen == currlayer->startgen) {
-         currlayer->startgen = newgen;
-         currlayer->savestart = true;
-      } else if (newgen <= currlayer->startgen) {
+      if (oldgen == currlayer->startgen || newgen <= currlayer->startgen) {
          currlayer->startgen = newgen;
          currlayer->savestart = true;
       }
    
       if (allowundo && !currlayer->stayclean) {
-         currlayer->undoredo->RememberSetGen(oldgen, newgen, oldstart, oldsave);
+         if (oldgen > oldstart && newgen <= oldstart && !inscript) {
+            // if currlayer->startfile is not an empty string then its contents
+            // will be clobbered by next generating change
+            //!!! not sure how to handle this, so for now just clear all undo/redo history
+            currlayer->undoredo->ClearUndoRedo();
+         } else {
+            currlayer->undoredo->RememberSetGen(oldgen, newgen, oldstart, oldsave);
+         }
       }
-
-      // Reset/Undo/Redo items might become disabled/enabled
-      if (!inscript) UpdateMenuItems(IsActive());
    }
    
    UpdateStatus();
@@ -303,8 +304,16 @@ void MainFrame::SetGeneration()
    wxString result;
    if ( GetString(_("Set Generation"), _("Enter a new generation count:"),
                   wxString(oldgen.tostring(), wxConvLocal), result) ) {
+
       const char* err = ChangeGenCount(result.mb_str(wxConvLocal));
-      if (err) Warning(wxString(err,wxConvLocal));
+      
+      if (err) {
+         Warning(wxString(err,wxConvLocal));
+      } else {
+         // Reset/Undo/Redo items might become enabled or disabled
+         // (we need to do this if user clicked "Generation=..." text)
+         UpdateMenuItems(IsActive());
+      }
    }
 }
 

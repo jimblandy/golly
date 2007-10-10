@@ -96,7 +96,7 @@ public:
    bigint prevt, prevl, prevb, prevr;     // old selection edges
    bigint nextt, nextl, nextb, nextr;     // new selection edges
    
-   // genchange/setgen info
+   // genchange info
    wxString oldfile, newfile;             // old and new pattern files
    wxString oldrule, newrule;             // old and new rules
    bigint oldgen, newgen;                 // old and new generation counts
@@ -109,6 +109,7 @@ public:
    // setgen info
    bigint oldstart, newstart;             // old and new startgen values
    bool oldsave, newsave;                 // old and new savestart states
+   // also uses oldgen, newgen
 };
 
 // -----------------------------------------------------------------------------
@@ -761,7 +762,7 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
    change->newsave = currlayer->savestart;
    change->suffix = _("Set Generation");
    // change->wasdirty is not used
-
+   
    undolist.Insert(change);
    
    // update Undo item in Edit menu
@@ -1034,7 +1035,7 @@ void UndoRedo::ClearUndoRedo()
       // script has called a command like new() so add a scriptstart node
       // to the undo list to match the final scriptfinish node
       RememberScriptStart();
-      // also safer to reset flags (ie. no pending cell/gen changes)
+      // reset flags to indicate no pending cell/gen changes
       savecellchanges = false;
       savegenchanges = false;
    } else {
