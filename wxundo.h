@@ -118,6 +118,7 @@ private:
    int prevmag;                  // scale at start of gen change
    int prevwarp;                 // speed at start of gen change
    bool prevhash;                // hash state at start of gen change
+   int startcount;               // unfinished RememberGenStart calls
    
    void SaveCurrentPattern(const wxString& tempfile);
    // save current pattern to given temporary file

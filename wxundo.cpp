@@ -279,6 +279,7 @@ UndoRedo::UndoRedo()
    savegenchanges = false;       // no script gen changes are pending
    doingscriptchanges = false;   // not undoing/redoing script changes
    prevfile = wxEmptyString;     // play safe for ClearUndoRedo
+   startcount = 0;               // unfinished RememberGenStart calls
    
    // need to remember if script has created a new layer
    if (inscript) RememberScriptStart();
@@ -554,6 +555,13 @@ void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
 
 void UndoRedo::RememberGenStart()
 {
+   startcount++;
+   if (startcount > 1) {
+      // return immediately and ignore next RememberGenFinish call;
+      // this can happen in wxGTK app if user holds down space bar
+      return;
+   }
+
    if (inscript) {
       if (savegenchanges) return;   // ignore consecutive run/step command
       savegenchanges = true;
@@ -578,7 +586,8 @@ void UndoRedo::RememberGenStart()
       prevfile = wxEmptyString;
    } else {
       // save starting pattern in a unique temporary file;
-      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems/
+      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems
+      // and on Linux the file is in /tmp
       prevfile = wxFileName::CreateTempFileName(temp_prefix);
 
       // if head of undo list is a genchange node with same rule and hash state
@@ -608,9 +617,12 @@ void UndoRedo::RememberGenStart()
 
 void UndoRedo::RememberGenFinish()
 {
+   startcount--;
+   if (startcount > 0) return;
+
    if (inscript && savegenchanges) return;   // ignore consecutive run/step command
 
-   // generation count might not have changed
+   // generation count might not have changed (can happen in wxGTK)
    if (prevgen == currlayer->algo->getGeneration()) {
       // delete prevfile created by RememberGenStart
       if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
@@ -1023,9 +1035,12 @@ void UndoRedo::ClearUndoRedo()
    // by ForgetChanges or RememberChanges
    ForgetChanges();
    
-   // delete prevfile in case RememberGenStart not followed by RememberGenFinish
-   if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
-   prevfile = wxEmptyString;
+   if (startcount > 0) {
+      // RememberGenStart was not followed by RememberGenFinish
+      if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+      prevfile = wxEmptyString;
+      startcount = 0;
+   }
 
    // clear the undo/redo lists (and delete each node's data)
    WX_CLEAR_LIST(wxList, undolist);

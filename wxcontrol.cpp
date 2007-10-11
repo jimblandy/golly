@@ -541,16 +541,6 @@ void MainFrame::NextGeneration(bool useinc)
       return;
    }
 
-   // curralgo->step() calls checkevents so set generating flag to avoid recursion
-   generating = true;
-   
-   // avoid doing some things if NextGeneration is called from a script;
-   // ie. by a run/step command
-   if (!inscript) {
-      wxGetApp().PollerReset();
-      viewptr->CheckCursor(IsActive());
-   }
-
    if (allowundo) {
       if (currlayer->stayclean) {
          // script has called run/step after a command (eg. new)
@@ -572,6 +562,16 @@ void MainFrame::NextGeneration(bool useinc)
       }
    }
 
+   // curralgo->step() calls checkevents so set generating flag to avoid recursion
+   generating = true;
+   
+   // avoid doing some things if NextGeneration is called from a script;
+   // ie. by a run/step command
+   if (!inscript) {
+      wxGetApp().PollerReset();
+      viewptr->CheckCursor(IsActive());
+   }
+
    if (useinc) {
       // step by current increment
       if (curralgo->getIncrement() > bigint::one && !inscript) {
@@ -588,7 +588,7 @@ void MainFrame::NextGeneration(bool useinc)
    }
 
    generating = false;
-
+   
    if (!inscript) {
       // autofit is only used when doing many gens
       if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
