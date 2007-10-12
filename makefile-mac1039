@@ -102,8 +102,8 @@ hlifealgo.h liferules.h qlifealgo.h writepattern.h util.h
 # Note that -headerpad_max_install_names is used so we can run
 # install_name_tool below to change Perl lib path to a longer path.
 
-app.bin: $(WXOBJ)
-	$(CXXC) -o $@ $(WXOBJ) \
+app.bin: $(BASEOBJ) $(WXOBJ)
+	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) \
    -headerpad_max_install_names \
    -arch ppc -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3 \
    -L$(LIBDIRNAME) -lwx_mac_static \
@@ -306,11 +306,11 @@ srcdist:
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
 bindist: all
-	-rm -rf $(RELEASENAME)-mac
-	mkdir $(RELEASENAME)-mac
-	cp -rp $(APP_NAME).app bgolly $(SHAREDFILES) $(RELEASENAME)-mac
-	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
-	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/README
-	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/LICENSE
-	echo Now create zip archive of $(RELEASENAME)-mac
-###tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz
+	-rm -rf $(RELEASENAME)-mac1039
+	mkdir $(RELEASENAME)-mac1039
+	cp -rp $(APP_NAME).app bgolly $(SHAREDFILES) $(RELEASENAME)-mac1039
+	find $(RELEASENAME)-mac1039 -name CVS | xargs rm -rf
+	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac1039/README
+	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac1039/LICENSE
+	echo Now create zip archive of $(RELEASENAME)-mac1039
+###tar -cf - ./$(RELEASENAME)-mac1039 | gzip > $(RELEASENAME)-mac1039.tar.gz

@@ -211,6 +211,12 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename, const wxSt
       currlayer->hash = hash;
 
       LoadPattern(filename, wxEmptyString, updatestatus);
+      
+      if (gen != currlayer->algo->getGeneration()) {
+         // current gen will be 0 if filename could not be loaded
+         // for some reason, so best to set correct gen count
+         currlayer->algo->setGeneration(gen);
+      }
 
       // no need for setrule here??? readpattern should do it when loading file
       // currlayer->algo->setrule(rule.mb_str(wxConvLocal));
@@ -232,10 +238,19 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
    for (unsigned int i = 0; i < strlen(genstring); i++)
       if ( (genstring[i] >= 'a' && genstring[i] <= 'z') ||
            (genstring[i] >= 'A' && genstring[i] <= 'Z') )
-         return "Illegal character in generation string.";
+         return "Alphabetic character is not allowed in generation string.";
    
    bigint oldgen = currlayer->algo->getGeneration();
    bigint newgen(genstring);
+
+   if (genstring[0] == '+' || genstring[0] == '-') {
+      // leading +/- sign so make newgen relative to oldgen
+      bigint relgen = newgen;
+      newgen = oldgen;
+      newgen += relgen;
+      if (newgen < bigint::zero) newgen = bigint::zero;
+   }
+   
    if (newgen == oldgen) return NULL;
 
    if (!inundoredo && allowundo && !currlayer->stayclean && inscript) {
@@ -302,7 +317,9 @@ void MainFrame::SetGeneration()
 {
    bigint oldgen = currlayer->algo->getGeneration();
    wxString result;
-   if ( GetString(_("Set Generation"), _("Enter a new generation count:"),
+   wxString prompt = _("Enter a new generation count:");
+   prompt += _("\n(+n/-n is relative to current count)");
+   if ( GetString(_("Set Generation"), prompt,
                   wxString(oldgen.tostring(), wxConvLocal), result) ) {
 
       const char* err = ChangeGenCount(result.mb_str(wxConvLocal));

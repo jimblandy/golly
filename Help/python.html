@@ -551,9 +551,10 @@ loading an RLE/macrocell file that stores a non-zero generation count.
 <dd>
 Set the generation count using the given string.
 Commas and other punctuation marks can be used to make a large number
-more readable.
+more readable.  Include a leading +/- sign to specify a number relative
+to the current generation count.
 </dd>
-<dd> Example: <b>golly.setgen("123,456,789")</b></dd>
+<dd> Example: <b>golly.setgen("-1,000")</b></dd>
 </p>
 
 <a name="getgen"></a><p><dt><b>getgen(<i>sepchar='\0'</i>)</b></dt>

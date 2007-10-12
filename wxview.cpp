@@ -588,12 +588,18 @@ void PatternView::ShowDrawing()
    // update status bar
    if (showstatus) statusptr->Refresh(false);
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
+   // assume makefile-mac1039 has been used to build Golly,
+   // so use UpdateView to avoid wxMac bug on Mac OS 10.3.9
+   UpdateView();
+#else
    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // update all layers; this is rather slow but most people won't be
-      // drawing cells when all layers are displayed (too confusing)
+      // drawing cells when all layers are displayed
       UpdateView();
    }
-   
+#endif
+
    MarkLayerDirty();
 }
 
@@ -604,10 +610,16 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
    // remember this cell for later undo/redo
    if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy);
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
+   // assume makefile-mac1039 has been used to build Golly,
+   // so use UpdateView to avoid wxMac bug on Mac OS 10.3.9
+   return;
+#else
    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // drawing must be done via UpdateView in ShowDrawing
       return;
    }
+#endif
 
    int cellsize = 1 << currlayer->view->getmag();
 
