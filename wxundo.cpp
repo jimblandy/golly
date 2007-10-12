@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
+#include "wxprefs.h"       // for allowundo
 #include "wxundo.h"
 
 // -----------------------------------------------------------------------------
@@ -67,13 +68,15 @@ typedef enum {
    selchange,           // selection was changed
    genchange,           // pattern was generated
    setgen,              // generation count was changed
+   rulechange,          // rule was changed
+   algochange,          // algorithm was changed (ie. hashing was toggled)
    scriptstart,         // later changes were made by script
    scriptfinish         // earlier changes were made by script
 } change_type;
 
 class ChangeNode: public wxObject {
 public:
-   ChangeNode();
+   ChangeNode(change_type id);
    ~ChangeNode();
 
    bool DoChange(bool undo);
@@ -98,13 +101,16 @@ public:
    
    // genchange info
    wxString oldfile, newfile;             // old and new pattern files
-   wxString oldrule, newrule;             // old and new rules
    bigint oldgen, newgen;                 // old and new generation counts
    bigint oldx, oldy, newx, newy;         // old and new positions
    int oldmag, newmag;                    // old and new scales
    int oldwarp, newwarp;                  // old and new speeds
    bool oldhash, newhash;                 // old and new hash states
    bool scriptgen;                        // gen change was done by script?
+   // also uses oldrule, newrule
+
+   // rulechange info
+   wxString oldrule, newrule;             // old and new rules
    
    // setgen info
    bigint oldstart, newstart;             // old and new startgen values
@@ -114,8 +120,9 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ChangeNode::ChangeNode()
+ChangeNode::ChangeNode(change_type id)
 {
+   changeid = id;
    cellcoords = NULL;
    oldfile = wxEmptyString;
    newfile = wxEmptyString;
@@ -257,6 +264,23 @@ bool ChangeNode::DoChange(bool undo)
          // Reset item may become enabled/disabled
          if (!inscript) mainptr->UpdateMenuItems(mainptr->IsActive());
          break;
+
+      case rulechange:
+         if (undo) {
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+         } else {
+            currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+         }
+         // show new rule in window title (file name doesn't change)
+         if (!inscript) mainptr->SetWindowTitle(wxEmptyString);
+         break;
+
+      case algochange:
+         // temporarily reset allowundo so ToggleHashing won't call RememberAlgoChange
+         allowundo = false;
+         mainptr->ToggleHashing();
+         allowundo = true;
+         break;
       
       case scriptstart:
       case scriptfinish:
@@ -356,10 +380,9 @@ bool UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
       UpdateRedoItem(wxEmptyString);
       
       // add cellstates node to head of undo list
-      ChangeNode* change = new ChangeNode();
+      ChangeNode* change = new ChangeNode(cellstates);
       if (change == NULL) Fatal(_("Failed to create cellstates node!"));
       
-      change->changeid = cellstates;
       change->cellcoords = cellarray;
       change->cellcount = intcount / 2;
       change->suffix = action;
@@ -391,10 +414,9 @@ void UndoRedo::RememberFlip(bool topbot, bool wasdirty)
    UpdateRedoItem(wxEmptyString);
    
    // add fliptb/fliplr node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(topbot ? fliptb : fliplr);
    if (change == NULL) Fatal(_("Failed to create flip node!"));
 
-   change->changeid = topbot ? fliptb : fliplr;
    change->suffix = _("Flip");
    change->wasdirty = wasdirty;
 
@@ -413,10 +435,9 @@ void UndoRedo::RememberRotation(bool clockwise, bool wasdirty)
    UpdateRedoItem(wxEmptyString);
    
    // add rotatepattcw/rotatepattacw node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(clockwise ? rotatepattcw : rotatepattacw);
    if (change == NULL) Fatal(_("Failed to create simple rotation node!"));
 
-   change->changeid = clockwise ? rotatepattcw : rotatepattacw;
    change->suffix = _("Rotation");
    change->wasdirty = wasdirty;
 
@@ -438,10 +459,9 @@ void UndoRedo::RememberRotation(bool clockwise,
    UpdateRedoItem(wxEmptyString);
    
    // add rotatecw/rotateacw node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(clockwise ? rotatecw : rotateacw);
    if (change == NULL) Fatal(_("Failed to create rotation node!"));
 
-   change->changeid = clockwise ? rotatecw : rotateacw;
    change->oldt = oldt;
    change->oldl = oldl;
    change->oldb = oldb;
@@ -501,10 +521,9 @@ void UndoRedo::RememberSelection(const wxString& action)
    UpdateRedoItem(wxEmptyString);
    
    // add selchange node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(selchange);
    if (change == NULL) Fatal(_("Failed to create selchange node!"));
 
-   change->changeid = selchange;
    change->prevt = currlayer->savetop;
    change->prevl = currlayer->saveleft;
    change->prevb = currlayer->savebottom;
@@ -645,10 +664,9 @@ void UndoRedo::RememberGenFinish()
    UpdateRedoItem(wxEmptyString);
    
    // add genchange node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(genchange);
    if (change == NULL) Fatal(_("Failed to create genchange node!"));
 
-   change->changeid = genchange;
    change->scriptgen = inscript;
    change->oldgen = prevgen;
    change->newgen = currlayer->algo->getGeneration();
@@ -762,10 +780,9 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
    UpdateRedoItem(wxEmptyString);
    
    // add setgen node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(setgen);
    if (change == NULL) Fatal(_("Failed to create setgen node!"));
 
-   change->changeid = setgen;
    change->oldgen = oldgen;
    change->newgen = newgen;
    change->oldstart = oldstart;
@@ -783,13 +800,63 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
 
 // -----------------------------------------------------------------------------
 
+void UndoRedo::RememberRuleChange(const wxString& oldrule)
+{
+   if (inscript) SavePendingChanges();
+   
+   wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   if (oldrule == newrule) return;
+   
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add rulechange node to head of undo list
+   ChangeNode* change = new ChangeNode(rulechange);
+   if (change == NULL) Fatal(_("Failed to create rulechange node!"));
+
+   change->oldrule = oldrule;
+   change->newrule = newrule;
+   change->suffix = _("Rule Change");
+   // change->wasdirty is not used
+   
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::RememberAlgoChange()
+{
+   if (inscript) SavePendingChanges();
+   
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add algochange node to head of undo list
+   ChangeNode* change = new ChangeNode(algochange);
+   if (change == NULL) Fatal(_("Failed to create algochange node!"));
+
+   change->suffix = _("Hashing Change");
+   // change->wasdirty is not used
+   
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
 void UndoRedo::RememberScriptStart()
 {
    // add scriptstart node to head of undo list
-   ChangeNode* change = new ChangeNode();
+   ChangeNode* change = new ChangeNode(scriptstart);
    if (change == NULL) Fatal(_("Failed to create scriptstart node!"));
 
-   change->changeid = scriptstart;
    change->suffix = _("Script Changes");
    // change->wasdirty is not used
 
@@ -820,10 +887,9 @@ void UndoRedo::RememberScriptFinish()
    }
 
    // add scriptfinish node to head of undo list
-   change = new ChangeNode();
+   change = new ChangeNode(scriptfinish);
    if (change == NULL) Fatal(_("Failed to create scriptfinish node!"));
 
-   change->changeid = scriptfinish;
    change->suffix = _("Script Changes");
    // change->wasdirty is not used
 

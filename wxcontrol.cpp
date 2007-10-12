@@ -34,12 +34,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for BeginProgress, GetString, etc
-#include "wxprefs.h"       // for maxhashmem, etc
+#include "wxprefs.h"       // for maxhashmem, allowundo, etc
 #include "wxrule.h"        // for ChangeRule
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxmain.h"        // for MainFrame
+#include "wxundo.h"        // for undoredo->...
 #include "wxlayer.h"       // for currlayer, etc
 
 // Control menu functions:
@@ -479,15 +480,6 @@ void MainFrame::GeneratePattern()
    } else {
       UpdateEverything();
    }
-
-   // GeneratePattern is never called while running a script so no need
-   // to test inscript or currlayer->stayclean
-   if (allowundo) currlayer->undoredo->RememberGenFinish();
-
-   if (reset_pending) {
-      reset_pending = false;
-      ResetPattern();
-   }
    
    if (hash_pending) {
       hash_pending = false;
@@ -496,16 +488,30 @@ void MainFrame::GeneratePattern()
       // to avoid UpdateToolBar/UpdateLayerBar flashing their buttons
       bool saveshowtool = showtool;    showtool = false;
       bool saveshowlayer = showlayer;  showlayer = false;
+
+      // temporarily set allowundo false so we don't remember hashing changes
+      // while generating (RememberGenFinish below will do that)
+      bool saveallowundo = allowundo;  allowundo = false;
       
       ToggleHashing();
       
-      // restore tool/layer bar flags
+      // restore tool/layer bar flags and allowundo
       showtool = saveshowtool;
       showlayer = saveshowlayer;
+      allowundo = saveallowundo;
       
       // send Go command to event queue to call GeneratePattern again
       wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_GO());
       wxPostEvent(this->GetEventHandler(), goevt);
+   }
+
+   // GeneratePattern is never called while running a script so no need
+   // to test inscript or currlayer->stayclean
+   if (allowundo) currlayer->undoredo->RememberGenFinish();
+
+   if (reset_pending) {
+      reset_pending = false;
+      ResetPattern();
    }
 }
 
@@ -1062,6 +1068,9 @@ void MainFrame::ToggleHashing()
    currlayer->algo = newalgo;   
    SetGenIncrement();
    UpdateEverything();
+   
+   if (allowundo && !currlayer->stayclean)
+      currlayer->undoredo->RememberAlgoChange();
 }
 
 // -----------------------------------------------------------------------------
@@ -1094,7 +1103,7 @@ void MainFrame::ShowRuleDialog()
 {
    if (generating) return;
    if (ChangeRule()) {
-      // show rule in window title (file name doesn't change)
+      // show new rule in window title (file name doesn't change)
       SetWindowTitle(wxEmptyString);
    }
 }

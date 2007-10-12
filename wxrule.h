@@ -29,6 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 bool ChangeRule();
 
 // If given rule has a name then return name, otherwise return the rule.
-wxString GetRuleName(const wxString &rulestring);
+wxString GetRuleName(const wxString& rulestring);
 
 #endif

@@ -31,8 +31,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "liferules.h"     // for global_liferules
 
 #include "wxgolly.h"       // for wxGetApp
-#include "wxprefs.h"       // for namedrules
+#include "wxprefs.h"       // for namedrules, allowundo
 #include "wxutils.h"       // for Warning
+#include "wxundo.h"        // for undoredo->...
 #include "wxlayer.h"       // for currlayer
 #include "wxrule.h"
 
@@ -122,13 +123,13 @@ const int BIGVGAP = 12;
 
 void RuleDialog::CreateControls()
 {
-   wxBoxSizer *topSizer = new wxBoxSizer( wxVERTICAL );
+   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
    SetSizer(topSizer);
    
    // create the controls:
    
    ruletext = new wxTextCtrl(this, RULE_TEXT,
-                             wxString(currlayer->algo->getrule(),wxConvLocal));
+                             wxString(currlayer->algo->getrule(), wxConvLocal));
    wxString title = _("Enter a 2D rule using B0..8/S0..8 notation\n");
    title +=         _("or a 1D rule as Wn (n = 0 to 254 and even):");
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
@@ -164,17 +165,17 @@ void RuleDialog::CreateControls()
    
    // now position the controls:
 
-   wxBoxSizer *hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(namechoice, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox1->AddSpacer(HGAP);
    hbox1->Add(delbutt, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-   wxBoxSizer *hbox2 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
    hbox2->Add(addtext, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox2->AddSpacer(HGAP);
    hbox2->Add(addbutt, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-   wxBoxSizer *stdhbox = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* stdhbox = new wxBoxSizer( wxHORIZONTAL );
    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
 
    topSizer->AddSpacer(BIGVGAP);
@@ -194,7 +195,7 @@ void RuleDialog::CreateControls()
 // -----------------------------------------------------------------------------
 
 // convert given rule string to a canonical bit pattern
-int CanonicalRule(const char *rulestring)
+int CanonicalRule(const char* rulestring)
 {
    const int survbit = 9;              // bits 0..8 for birth, 9..17 for survival
    const int wolfbit = survbit * 2;
@@ -233,7 +234,7 @@ int CanonicalRule(const char *rulestring)
 // -----------------------------------------------------------------------------
 
 // return true if given strings are equivalent rules
-bool MatchingRules(const wxString &rule1, const wxString &rule2)
+bool MatchingRules(const wxString& rule1, const wxString& rule2)
 {
    if (rule1 == rule2) {
       return true;
@@ -335,7 +336,7 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
    
    // validate new rule
    wxString newrule = ruletext->GetValue();
-   const char *err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+   const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
       Warning(_("Rule is not valid."));
       ruletext->SetFocus();
@@ -425,9 +426,9 @@ bool RuleDialog::TransferDataFromWindow()
       currlayer->algo->setrule("B3/S23");
       return true;
    }
-   const char *err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+   const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
-      Warning(wxString(err,wxConvLocal));
+      Warning(wxString(err, wxConvLocal));
       return false;
    } else if ( global_liferules.hasB0notS8 && currlayer->hash ) {
       Warning(_("B0-not-S8 rules are not allowed when hashing."));
@@ -441,11 +442,14 @@ bool RuleDialog::TransferDataFromWindow()
 bool ChangeRule()
 {
    wxArrayString oldnames = namedrules;
-   wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
    RuleDialog dialog( wxGetApp().GetTopWindow() );
    if ( dialog.ShowModal() == wxID_OK ) {
       // TransferDataFromWindow has validated and changed rule
+      if (allowundo) {
+         currlayer->undoredo->RememberRuleChange(oldrule);
+      }
       return true;
    } else {
       // user hit Cancel so restore rule and name array
@@ -458,7 +462,7 @@ bool ChangeRule()
 
 // -----------------------------------------------------------------------------
 
-wxString GetRuleName(const wxString &rulestring)
+wxString GetRuleName(const wxString& rulestring)
 {
    // search namedrules array for matching rule
    wxString rulename;

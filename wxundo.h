@@ -80,6 +80,12 @@ public:
                        bigint& oldstart, bool oldsave);
    // remember change of generation count
    
+   void RememberRuleChange(const wxString& oldrule);
+   // remember rule change
+   
+   void RememberAlgoChange();
+   // remember algorithm change (ie. hashing toggled)
+   
    void RememberScriptStart();
    // remember that script is about to start; this allows us to undo/redo
    // any changes made by the script all at once

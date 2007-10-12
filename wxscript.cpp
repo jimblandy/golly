@@ -165,6 +165,10 @@ const char* GSF_setrule(char* rulestring)
    // show new rule in main window's title but don't change name
    ChangeWindowTitle(wxEmptyString);
    
+   if (allowundo && !currlayer->stayclean) {
+      currlayer->undoredo->RememberRuleChange(oldrule);
+   }
+   
    return NULL;
 }
 
