@@ -605,8 +605,11 @@ void UndoRedo::RememberGenStart()
       prevfile = wxEmptyString;
    } else {
       // save starting pattern in a unique temporary file;
-      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems
-      // and on Linux the file is in /tmp
+      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems,
+      // on WinXP the file is in C:\Documents and Settings\Andy\Local Settings\Temp
+      // (or shorter equivalent C:\DOCUME~1\Andy\LOCALS~1\Temp) but the file name
+      // is gol*.tmp (ie. temp_prefix is ignored),
+      // on Linux the file is in /tmp
       prevfile = wxFileName::CreateTempFileName(temp_prefix);
 
       // if head of undo list is a genchange node with same rule and hash state
