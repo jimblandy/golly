@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/filename.h"   // for wxFileName
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -38,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
-#include "wxprefs.h"       // for gollydir, inithash, initrule, etc
+#include "wxprefs.h"       // for inithash, initrule, etc
 #include "wxscript.h"      // for inscript
 #include "wxundo.h"        // for UndoRedo, etc
 #include "wxlayer.h"
@@ -52,9 +54,7 @@ int currindex = -1;              // index of current layer
 Layer* currlayer;                // pointer to current layer
 Layer* layer[maxlayers];         // array of layers
 
-bool suffavail[maxlayers];       // for setting unique tempstart suffix
 bool cloneavail[maxlayers];      // for setting unique cloneid
-
 bool cloning = false;            // adding a cloned layer?
 bool duplicating = false;        // adding a duplicated layer?
 
@@ -820,19 +820,17 @@ void SyncClones()
             cloneptr->hash = currlayer->hash;
             cloneptr->rule = currlayer->rule;
             
-            // no need to sync undo/redo history???
+            // no need to sync undo/redo history
             // cloneptr->undoredo = currlayer->undoredo;
-            if (cloneptr->undoredo != currlayer->undoredo)
-               Warning(_("We need to sync undo/redo history!"));
 
             // along with view, don't sync these settings
             // cloneptr->autofit = currlayer->autofit;
             // cloneptr->hyperspeed = currlayer->hyperspeed;
             // cloneptr->showhashinfo = currlayer->showhashinfo;
             // cloneptr->curs = currlayer->curs;
-            // cloneptr->currname = currlayer->currname;
             // cloneptr->originx = currlayer->originx;
             // cloneptr->originy = currlayer->originy;
+            // cloneptr->currname = currlayer->currname;
             
             // sync various flags
             cloneptr->dirty = currlayer->dirty;
@@ -857,6 +855,7 @@ void SyncClones()
             cloneptr->savestart = currlayer->savestart;
             cloneptr->starthash = currlayer->starthash;
             cloneptr->startdirty = currlayer->startdirty;
+            cloneptr->startname = currlayer->startname;
             cloneptr->startrule = currlayer->startrule;
             cloneptr->startx = currlayer->startx;
             cloneptr->starty = currlayer->starty;
@@ -928,11 +927,11 @@ void CurrentLayerChanged()
    }
    
    if (allowundo) {
-      // update Undo/Redo items so they show the correct suffix
+      // update Undo/Redo items so they show the correct action
       currlayer->undoredo->UpdateUndoRedoItems();
    } else {
       // undo/redo is disabled so clear history;
-      // this also removes suffix from Undo/Redo items
+      // this also removes action from Undo/Redo items
       currlayer->undoredo->ClearUndoRedo();
    }
 
@@ -1260,14 +1259,26 @@ void MoveLayerDialog()
 
 void NameLayerDialog()
 {
-   if (inscript) return;
+   if (mainptr->generating || inscript) return;
 
+   wxString oldname = currlayer->currname;
    wxString newname;
    if ( GetString(_("Name Layer"), _("Enter a new name for the current layer:"),
-                  currlayer->currname, newname) && !newname.IsEmpty() ) {
+                  oldname, newname) &&
+        !newname.IsEmpty() && oldname != newname ) {
+
+      // inscript is false so no need to call SavePendingChanges
+      // if (allowundo) SavePendingChanges();
+
       // show new name in main window's title bar;
       // also sets currlayer->currname and updates menu item
       mainptr->SetWindowTitle(newname);
+
+      if (allowundo) {
+         // note that currfile and savestart/dirty flags don't change here
+         currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+                                                 currlayer->savestart, currlayer->dirty);
+      }
    }
 }
 
@@ -1275,7 +1286,7 @@ void NameLayerDialog()
 
 void MarkLayerDirty()
 {
-   // need to save starting pattern so reset will work
+   // need to save starting pattern
    currlayer->savestart = true;
    
    // if script has reset dirty flag then don't change it; this makes sense
@@ -1309,7 +1320,9 @@ void MarkLayerClean(const wxString& title)
    currlayer->dirty = false;
    
    // if script is resetting dirty flag -- eg. via new() -- then don't allow
-   // dirty flag to be set true for the remainder of the script
+   // dirty flag to be set true for the remainder of the script; this is
+   // nicer for scripts that construct a pattern (ie. running such a script
+   // is equivalent to loading a pattern file)
    if (inscript) currlayer->stayclean = true;
    
    // set currlayer->currname and call UpdateLayerItem(currindex)
@@ -1324,8 +1337,9 @@ void MarkLayerClean(const wxString& title)
             cloneptr->dirty = false;
             if (inscript) cloneptr->stayclean = true;
             
-            // also best if clone uses same name at this stage
-            cloneptr->currname = currlayer->currname;
+            // also best if clone uses same name at this stage???
+            // NO -- always allow clones to have different names
+            // cloneptr->currname = currlayer->currname;
             
             // remove asterisk from layer item
             mainptr->UpdateLayerItem(i);
@@ -1435,27 +1449,12 @@ int GetUniqueCloneID()
 
 // -----------------------------------------------------------------------------
 
-int GetUniqueSuffix()
-{
-   // find first available index to use as tempstart suffix
-   for (int i = 0; i < maxlayers; i++) {
-      if (suffavail[i]) {
-         suffavail[i] = false;
-         return i;
-      }
-   }
-   // bug if we get here
-   Warning(_("Bug in GetUniqueSuffix!"));
-   return 0;
-}
-
-// -----------------------------------------------------------------------------
-
 Layer::Layer()
 {
-   // set tempstart prefix (unique suffix will be added below);
-   // WARNING: ~Layer() assumes prefix ends with '_'
-   tempstart = gollydir + wxT(".golly_start_");
+   if (!cloning) {
+      // use a unique temporary file for saving starting patterns
+      tempstart = wxFileName::CreateTempFileName(_("golly_start_"));
+   }
 
    dirty = false;                // user has not modified pattern
    savedirty = false;            // in case script created layer
@@ -1519,11 +1518,6 @@ Layer::Layer()
       // set cursor in case newcurs/opencurs are set to "No Change"
       curs = curs_pencil;
       
-      // add suffix to tempstart and initialize suffavail array
-      tempstart += wxT("0");
-      suffavail[0] = false;
-      for (int i = 1; i < maxlayers; i++) suffavail[i] = true;
-      
       // first layer can't be a clone
       cloneid = 0;
       
@@ -1569,9 +1563,6 @@ Layer::Layer()
          // initialize undo/redo history
          undoredo = new UndoRedo();
          if (undoredo == NULL) Fatal(_("Failed to create new undo/redo object!"));
-
-         // add unique suffix to tempstart
-         tempstart += wxString::Format(_("%d"), GetUniqueSuffix());
       }
       
       // inherit current rule in global_liferules (NOT in currlayer->rule)
@@ -1616,6 +1607,7 @@ Layer::Layer()
          savestart = currlayer->savestart;
          starthash = currlayer->starthash;
          startdirty = currlayer->startdirty;
+         startname = currlayer->startname;
          startrule = currlayer->startrule;
          startx = currlayer->startx;
          starty = currlayer->starty;
@@ -1646,11 +1638,11 @@ Layer::Layer()
             }
          }
          
-         // tempstart must remain unique
+         // tempstart must remain unique in duplicate layer
          if (currlayer->startfile == currlayer->tempstart)
             startfile = tempstart;
          
-         // if currlayer->tempstart exists then copy it to this layer's unique tempstart
+         // if currlayer->tempstart exists then copy it to this layer's tempstart
          if ( wxFileExists(currlayer->tempstart) ) {
             if ( wxCopyFile(currlayer->tempstart, tempstart, true) ) {
                if (currlayer->currfile == currlayer->tempstart)
@@ -1675,6 +1667,9 @@ Layer::~Layer()
       int clonecount = 0;
       for (int i = 0; i < numlayers; i++) {
          if (layer[i]->cloneid == cloneid) clonecount++;
+         
+         // tell undo/redo which clone is being deleted
+         if (this == layer[i]) undoredo->DeletingClone(i);
       }     
       if (clonecount > 2) {
          // only delete this clone
@@ -1682,7 +1677,7 @@ Layer::~Layer()
       } else {
          // first make this cloneid available for the next clone
          cloneavail[cloneid] = true;
-         // reset other cloneid to 0 (should only be one such clone)
+         // reset the other cloneid to 0 (should only be one such clone)
          for (int i = 0; i < numlayers; i++) {
             // careful -- layer[i] might be this layer
             if (this != layer[i] && layer[i]->cloneid == cloneid)
@@ -1698,15 +1693,6 @@ Layer::~Layer()
       
       // delete tempstart file if it exists
       if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
-      
-      // make tempstart suffix available for new layers
-      wxString suffix = tempstart.AfterLast('_');
-      long val;
-      if (suffix.ToLong(&val) && val >= 0 && val < maxlayers) {
-         suffavail[val] = true;
-      } else {
-         Warning(_("Problem with tempstart suffix: ") + tempstart);
-      }
    }
 }
 

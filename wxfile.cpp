@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for SavePrefs, etc
+#include "wxprefs.h"       // for SavePrefs, allowundo, etc
 #include "wxrule.h"        // for GetRuleName
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxstatus.h"      // for statusptr->...
@@ -313,10 +313,10 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
 // -----------------------------------------------------------------------------
 
-wxString MainFrame::GetBaseName(const wxString& fullpath)
+wxString MainFrame::GetBaseName(const wxString& path)
 {
    // extract basename from given path
-   return fullpath.AfterLast(wxFILE_SEP_PATH);
+   return path.AfterLast(wxFILE_SEP_PATH);
 }
 
 // -----------------------------------------------------------------------------
@@ -592,7 +592,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
       } else {
          #ifdef __WXX11__
             statusptr->ErrorMessage(_("Sorry, but there is no clipboard support for X11."));
-            // do X11 apps like xlife or fontforge have clipboard support???!!!
+            // do X11 apps like xlife or fontforge have clipboard support???
          #else
             statusptr->ErrorMessage(_("No data in clipboard."));
          #endif
@@ -1000,14 +1000,9 @@ void MainFrame::SavePattern()
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
       } else {
-         statusptr->DisplayMessage(_("Pattern saved in file."));
-         AddRecentPattern( savedlg.GetPath() );
-         if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
-            // no need to save starting pattern (ResetPattern can load currfile)
-            SetCurrentFile( savedlg.GetPath() );
-            currlayer->savestart = false;
-            MarkLayerClean( savedlg.GetFilename() );
-         }
+         statusptr->DisplayMessage(_("Pattern saved in file: ") + savedlg.GetPath());
+         AddRecentPattern(savedlg.GetPath());
+         SaveSucceeded(savedlg.GetPath());
       }
    }
 }
@@ -1046,15 +1041,38 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
    const char* err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
       if (remember) AddRecentPattern(path);
-      if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
-         // no need to save starting pattern (ResetPattern can load currfile)
-         SetCurrentFile(path);
-         currlayer->savestart = false;
-         MarkLayerClean( GetBaseName(path) );
-      }
+      SaveSucceeded(path);
    }
    
    return err;
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SaveSucceeded(const wxString& path)
+{
+   // save old info for RememberNameChange
+   wxString oldname = currlayer->currname;
+   wxString oldfile = currlayer->currfile;
+   bool oldsave = currlayer->savestart;
+   bool olddirty = currlayer->dirty;
+
+   if (allowundo && !currlayer->stayclean && inscript) {
+      SavePendingChanges();
+   }
+
+   if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
+      // no need to save starting pattern (ResetPattern can load currfile)
+      SetCurrentFile(path);
+      currlayer->savestart = false;
+   }
+   
+   // set dirty flag false and update currlayer->currname
+   MarkLayerClean(GetBaseName(path));
+   
+   if (allowundo && !currlayer->stayclean) {
+      currlayer->undoredo->RememberNameChange(oldname, oldfile, oldsave, olddirty);
+   }
 }
 
 // -----------------------------------------------------------------------------

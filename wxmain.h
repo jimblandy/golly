@@ -156,7 +156,8 @@ private:
    bool LoadImage(const wxString& path);
    void MySetTitle(const wxString& title);
    void SetCurrentFile(const wxString& path);
-   wxString GetBaseName(const wxString& fullpath);
+   wxString GetBaseName(const wxString& path);
+   void SaveSucceeded(const wxString& path);
    void AddRecentPattern(const wxString& path);
    void OpenRecentPattern(int id);
    void ClearMissingPatterns();
@@ -178,7 +179,7 @@ private:
    void CreateMenus();
    void CreateToolbar();
    void CreateDirControls();
-   void SimplifyTree(wxString &dir, wxTreeCtrl* treectrl, wxTreeItemId root);
+   void SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root);
    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
    void QuitApp();
 

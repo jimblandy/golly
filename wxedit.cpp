@@ -343,7 +343,7 @@ void PatternView::ClearSelection()
    EndProgress();
    
    if (selchanged) {
-      if (savecells) currlayer->undoredo->RememberChanges(_("Clear"), currlayer->dirty);
+      if (savecells) currlayer->undoredo->RememberCellChanges(_("Clear"), currlayer->dirty);
       MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    }
@@ -414,7 +414,7 @@ bool PatternView::SaveOutsideSelection(bigint& t, bigint& l, bigint& b, bigint& 
    }
    EndProgress();
    
-   if (abort) currlayer->undoredo->ForgetChanges();
+   if (abort) currlayer->undoredo->ForgetCellChanges();
    return !abort;
 }
 
@@ -479,13 +479,13 @@ void PatternView::ClearOutsideSelection()
       delete currlayer->algo;
       currlayer->algo = newalgo;
       mainptr->SetGenIncrement();
-      if (savecells) currlayer->undoredo->RememberChanges(_("Clear Outside"), currlayer->dirty);
+      if (savecells) currlayer->undoredo->RememberCellChanges(_("Clear Outside"), currlayer->dirty);
       MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    } else {
       // CopyRect was aborted, so don't change current universe
       delete newalgo;
-      if (savecells) currlayer->undoredo->ForgetChanges();
+      if (savecells) currlayer->undoredo->ForgetCellChanges();
    }
 }
 
@@ -701,8 +701,8 @@ void PatternView::CopySelectionToClipboard(bool cut)
    EndProgress();
    
    if (cut && livecount > 0) {
-      if (savecells) currlayer->undoredo->RememberChanges(_("Cut"), currlayer->dirty);
-      // update dirty flag AFTER RememberChanges
+      if (savecells) currlayer->undoredo->RememberCellChanges(_("Cut"), currlayer->dirty);
+      // update dirty flag AFTER RememberCellChanges
       MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    }
@@ -1061,7 +1061,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    // tidy up and display result
    statusptr->ClearMessage();
    if (pattchanged) {
-      if (savecells) currlayer->undoredo->RememberChanges(_("Paste"), currlayer->dirty);
+      if (savecells) currlayer->undoredo->RememberCellChanges(_("Paste"), currlayer->dirty);
       MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    }
@@ -1419,9 +1419,9 @@ void PatternView::RandomFill()
    currlayer->algo->endofpattern();
    EndProgress();
 
-   if (savecells) currlayer->undoredo->RememberChanges(_("Random Fill"), currlayer->dirty);
+   if (savecells) currlayer->undoredo->RememberCellChanges(_("Random Fill"), currlayer->dirty);
 
-   // update dirty flag AFTER RememberChanges
+   // update dirty flag AFTER RememberCellChanges
    MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
 }
@@ -1536,7 +1536,7 @@ bool PatternView::FlipSelection(bool topbottom)
       if (!FlipLeftRight(itop, ileft, ibottom, iright)) return false;
    }
 
-   // flips are always reversible so no need to use SaveCellChange and RememberChanges
+   // flips are always reversible so no need to use SaveCellChange and RememberCellChanges
    if (allowundo && !currlayer->stayclean) {
       if (inscript) SavePendingChanges();
       currlayer->undoredo->RememberFlip(topbottom, currlayer->dirty);
@@ -1701,7 +1701,7 @@ bool PatternView::RotatePattern(bool clockwise,
       DisplaySelectionSize();
       
       // rotating entire pattern is easily reversible so no need to use
-      // SaveCellChange and RememberChanges in this case
+      // SaveCellChange and RememberCellChanges in this case
       if (allowundo && !currlayer->stayclean && !inundoredo) {
          if (inscript) SavePendingChanges();
          currlayer->undoredo->RememberRotation(clockwise, currlayer->dirty);
@@ -1873,7 +1873,7 @@ bool PatternView::RotateSelection(bool clockwise, bool inundoredo)
                                                ntop, nleft, nbottom, nright,
                                                currlayer->dirty);
       } else {
-         currlayer->undoredo->ForgetChanges();
+         currlayer->undoredo->ForgetCellChanges();
          Warning(_("You can't undo this change!"));
       }
       delete oldalgo;

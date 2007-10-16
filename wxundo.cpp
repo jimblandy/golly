@@ -60,10 +60,11 @@ typedef enum {
    rotateacw,           // selection was rotated anticlockwise
    rotatepattcw,        // pattern was rotated clockwise
    rotatepattacw,       // pattern was rotated anticlockwise
+   namechange,          // layer name was changed
    
    // WARNING: code in UndoChange/RedoChange assumes only changes < selchange
-   // can alter the layer's dirty state; ie. the wasdirty flag is not used
-   // for all the following changes
+   // can alter the layer's dirty state; ie. the olddirty/newdirty flags are
+   // not used for all the following changes
    
    selchange,           // selection was changed
    genchange,           // pattern was generated
@@ -85,7 +86,8 @@ public:
 
    change_type changeid;                  // specifies the type of change
    wxString suffix;                       // action string for Undo/Redo item
-   bool wasdirty;                         // layer's dirty state BEFORE change was made
+   bool olddirty;                         // layer's dirty state before change
+   bool newdirty;                         // layer's dirty state after change
    
    // cellstates info
    int* cellcoords;                       // array of x,y coordinates (2 ints per cell)
@@ -108,14 +110,23 @@ public:
    bool oldhash, newhash;                 // old and new hash states
    bool scriptgen;                        // gen change was done by script?
    // also uses oldrule, newrule
+   
+   // setgen info
+   bigint oldstartgen, newstartgen;       // old and new startgen values
+   bool oldsave, newsave;                 // old and new savestart states
+   wxString oldtempstart, newtempstart;   // old and new tempstart paths
+   wxString oldstartfile, newstartfile;   // old and new startfile paths
+   wxString oldcurrfile, newcurrfile;     // old and new currfile paths
+   // also uses oldgen, newgen
+   
+   // namechange info
+   wxString oldname, newname;             // old and new layer names
+   Layer* whichlayer;                     // which layer was changed
+   // also uses oldsave, newsave
+   // and oldcurrfile, newcurrfile
 
    // rulechange info
    wxString oldrule, newrule;             // old and new rules
-   
-   // setgen info
-   bigint oldstart, newstart;             // old and new startgen values
-   bool oldsave, newsave;                 // old and new savestart states
-   // also uses oldgen, newgen
 };
 
 // -----------------------------------------------------------------------------
@@ -126,6 +137,8 @@ ChangeNode::ChangeNode(change_type id)
    cellcoords = NULL;
    oldfile = wxEmptyString;
    newfile = wxEmptyString;
+   oldtempstart = wxEmptyString;
+   newtempstart = wxEmptyString;
 }
 
 // -----------------------------------------------------------------------------
@@ -136,6 +149,21 @@ ChangeNode::~ChangeNode()
    
    if (!oldfile.IsEmpty() && wxFileExists(oldfile)) wxRemoveFile(oldfile);
    if (!newfile.IsEmpty() && wxFileExists(newfile)) wxRemoveFile(newfile);
+   
+   // only delete oldtempstart/newtempstart if they're not being used to
+   // store the current layer's starting pattern
+   if ( !oldtempstart.IsEmpty() &&
+        oldtempstart != currlayer->startfile &&
+        oldtempstart != currlayer->currfile &&
+        wxFileExists(oldtempstart) ) {
+      wxRemoveFile(oldtempstart);
+   }
+   if ( !newtempstart.IsEmpty() &&
+        newtempstart != currlayer->startfile &&
+        newtempstart != currlayer->currfile &&
+        wxFileExists(newtempstart) ) {
+      wxRemoveFile(newtempstart);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -254,15 +282,48 @@ bool ChangeNode::DoChange(bool undo)
       case setgen:
          if (undo) {
             mainptr->ChangeGenCount(oldgen.tostring(), true);
-            currlayer->startgen = oldstart;
+            currlayer->startgen = oldstartgen;
             currlayer->savestart = oldsave;
+            currlayer->tempstart = oldtempstart;
+            currlayer->startfile = oldstartfile;
+            currlayer->currfile = oldcurrfile;
          } else {
             mainptr->ChangeGenCount(newgen.tostring(), true);
-            currlayer->startgen = newstart;
+            currlayer->startgen = newstartgen;
             currlayer->savestart = newsave;
+            currlayer->tempstart = newtempstart;
+            currlayer->startfile = newstartfile;
+            currlayer->currfile = newcurrfile;
          }
          // Reset item may become enabled/disabled
-         if (!inscript) mainptr->UpdateMenuItems(mainptr->IsActive());
+         mainptr->UpdateMenuItems(mainptr->IsActive());
+         break;
+
+      case namechange:
+         if (whichlayer == NULL) {
+            // the layer has been deleted so ignore name change
+         } else {
+            // note that if whichlayer != currlayer then we're changing the
+            // name of a non-active cloned layer
+            if (undo) {
+               whichlayer->currname = oldname;
+               currlayer->currfile = oldcurrfile;
+               currlayer->savestart = oldsave;
+            } else {
+               whichlayer->currname = newname;
+               currlayer->currfile = newcurrfile;
+               currlayer->savestart = newsave;
+            }
+            if (whichlayer == currlayer) {
+               if (olddirty == newdirty) mainptr->SetWindowTitle(currlayer->currname);
+               // if olddirty != newdirty then UndoChange/RedoChange will call
+               // MarkLayerClean/MarkLayerDirty (they call SetWindowTitle)
+            } else {
+               // whichlayer is non-active clone so only update Layer menu items
+               for (int i = 0; i < numlayers; i++)
+                  mainptr->UpdateLayerItem(i);
+            }
+         }
          break;
 
       case rulechange:
@@ -272,7 +333,7 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
          }
          // show new rule in window title (file name doesn't change)
-         if (!inscript) mainptr->SetWindowTitle(wxEmptyString);
+         mainptr->SetWindowTitle(wxEmptyString);
          break;
 
       case algochange:
@@ -329,7 +390,7 @@ void UndoRedo::SaveCellChange(int x, int y)
             badalloc = true;
             return;
          }
-         // ChangeNode::~ChangeNode or UndoRedo::ForgetChanges will free cellarray
+         // ~ChangeNode or ForgetCellChanges will free cellarray
       } else {
          // double size of cellarray
          int* newptr = (int*) realloc(cellarray, maxcount * 2 * sizeof(int));
@@ -348,13 +409,13 @@ void UndoRedo::SaveCellChange(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::ForgetChanges()
+void UndoRedo::ForgetCellChanges()
 {
    if (intcount > 0) {
       if (cellarray) {
          free(cellarray);
       } else {
-         Warning(_("Bug detected in ForgetChanges!"));
+         Warning(_("Bug detected in ForgetCellChanges!"));
       }
       intcount = 0;        // reset for next SaveCellChange
       maxcount = 0;        // ditto
@@ -364,7 +425,7 @@ void UndoRedo::ForgetChanges()
 
 // -----------------------------------------------------------------------------
 
-bool UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
+bool UndoRedo::RememberCellChanges(const wxString& action, bool olddirty)
 {
    if (intcount > 0) {
       if (intcount < maxcount) {
@@ -383,10 +444,11 @@ bool UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
       ChangeNode* change = new ChangeNode(cellstates);
       if (change == NULL) Fatal(_("Failed to create cellstates node!"));
       
+      change->suffix = action;
       change->cellcoords = cellarray;
       change->cellcount = intcount / 2;
-      change->suffix = action;
-      change->wasdirty = wasdirty;
+      change->olddirty = olddirty;
+      change->newdirty = true;
       
       undolist.Insert(change);
       
@@ -407,7 +469,7 @@ bool UndoRedo::RememberChanges(const wxString& action, bool wasdirty)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberFlip(bool topbot, bool wasdirty)
+void UndoRedo::RememberFlip(bool topbot, bool olddirty)
 {
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
@@ -418,7 +480,8 @@ void UndoRedo::RememberFlip(bool topbot, bool wasdirty)
    if (change == NULL) Fatal(_("Failed to create flip node!"));
 
    change->suffix = _("Flip");
-   change->wasdirty = wasdirty;
+   change->olddirty = olddirty;
+   change->newdirty = true;
 
    undolist.Insert(change);
    
@@ -428,7 +491,7 @@ void UndoRedo::RememberFlip(bool topbot, bool wasdirty)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberRotation(bool clockwise, bool wasdirty)
+void UndoRedo::RememberRotation(bool clockwise, bool olddirty)
 {
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
@@ -439,7 +502,8 @@ void UndoRedo::RememberRotation(bool clockwise, bool wasdirty)
    if (change == NULL) Fatal(_("Failed to create simple rotation node!"));
 
    change->suffix = _("Rotation");
-   change->wasdirty = wasdirty;
+   change->olddirty = olddirty;
+   change->newdirty = true;
 
    undolist.Insert(change);
    
@@ -452,7 +516,7 @@ void UndoRedo::RememberRotation(bool clockwise, bool wasdirty)
 void UndoRedo::RememberRotation(bool clockwise,
                                 int oldt, int oldl, int oldb, int oldr,
                                 int newt, int newl, int newb, int newr,
-                                bool wasdirty)
+                                bool olddirty)
 {
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
@@ -462,6 +526,7 @@ void UndoRedo::RememberRotation(bool clockwise,
    ChangeNode* change = new ChangeNode(clockwise ? rotatecw : rotateacw);
    if (change == NULL) Fatal(_("Failed to create rotation node!"));
 
+   change->suffix = _("Rotation");
    change->oldt = oldt;
    change->oldl = oldl;
    change->oldb = oldb;
@@ -470,8 +535,8 @@ void UndoRedo::RememberRotation(bool clockwise,
    change->newl = newl;
    change->newb = newb;
    change->newr = newr;
-   change->suffix = _("Rotation");
-   change->wasdirty = wasdirty;
+   change->olddirty = olddirty;
+   change->newdirty = true;
 
    // if intcount == 0 we still need to rotate selection edges
    if (intcount > 0) {
@@ -524,6 +589,11 @@ void UndoRedo::RememberSelection(const wxString& action)
    ChangeNode* change = new ChangeNode(selchange);
    if (change == NULL) Fatal(_("Failed to create selchange node!"));
 
+   if (currlayer->seltop <= currlayer->selbottom) {
+      change->suffix = action;
+   } else {
+      change->suffix = _("Deselection");
+   }
    change->prevt = currlayer->savetop;
    change->prevl = currlayer->saveleft;
    change->prevb = currlayer->savebottom;
@@ -532,12 +602,6 @@ void UndoRedo::RememberSelection(const wxString& action)
    change->nextl = currlayer->selleft;
    change->nextb = currlayer->selbottom;
    change->nextr = currlayer->selright;
-   if (currlayer->seltop <= currlayer->selbottom) {
-      change->suffix = action;
-   } else {
-      change->suffix = _("Deselection");
-   }
-   // change->wasdirty is not used for selection changes
 
    undolist.Insert(change);
    
@@ -670,6 +734,7 @@ void UndoRedo::RememberGenFinish()
    ChangeNode* change = new ChangeNode(genchange);
    if (change == NULL) Fatal(_("Failed to create genchange node!"));
 
+   change->suffix = to_gen + wxString(prevgen.tostring(), wxConvLocal);
    change->scriptgen = inscript;
    change->oldgen = prevgen;
    change->newgen = currlayer->algo->getGeneration();
@@ -694,8 +759,6 @@ void UndoRedo::RememberGenFinish()
    change->nextl = currlayer->selleft;
    change->nextb = currlayer->selbottom;
    change->nextr = currlayer->selright;
-   change->suffix = to_gen + wxString(prevgen.tostring(), wxConvLocal);
-   // change->wasdirty is not used for generation changes
 
    // prevfile has been saved in change->oldfile (~ChangeNode will delete it)
    prevfile = wxEmptyString;
@@ -776,8 +839,21 @@ void UndoRedo::SyncUndoHistory()
 // -----------------------------------------------------------------------------
 
 void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
-                              bigint& oldstart, bool oldsave)
+                              bigint& oldstartgen, bool oldsave)
 {
+   wxString oldtempstart = currlayer->tempstart;
+   wxString oldstartfile = currlayer->startfile;
+   wxString oldcurrfile = currlayer->currfile;
+   if (oldgen > oldstartgen && newgen <= oldstartgen) {
+      // if pattern is generated then tempstart will be clobbered by
+      // SaveStartingPattern, so change tempstart to a new temporary file
+      currlayer->tempstart = wxFileName::CreateTempFileName(_("golly_setgen_"));
+
+      // also need to update startfile and currfile (currlayer->savestart is true)
+      currlayer->startfile = currlayer->tempstart;
+      currlayer->currfile = wxEmptyString;
+   }
+
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);
@@ -786,14 +862,19 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
    ChangeNode* change = new ChangeNode(setgen);
    if (change == NULL) Fatal(_("Failed to create setgen node!"));
 
+   change->suffix = _("Set Generation");
    change->oldgen = oldgen;
    change->newgen = newgen;
-   change->oldstart = oldstart;
-   change->newstart = currlayer->startgen;
+   change->oldstartgen = oldstartgen;
+   change->newstartgen = currlayer->startgen;
    change->oldsave = oldsave;
    change->newsave = currlayer->savestart;
-   change->suffix = _("Set Generation");
-   // change->wasdirty is not used
+   change->oldtempstart = oldtempstart;
+   change->newtempstart = currlayer->tempstart;
+   change->oldstartfile = oldstartfile;
+   change->newstartfile = currlayer->startfile;
+   change->oldcurrfile = oldcurrfile;
+   change->newcurrfile = currlayer->currfile;
    
    undolist.Insert(change);
    
@@ -803,8 +884,76 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
 
 // -----------------------------------------------------------------------------
 
+void UndoRedo::RememberNameChange(const wxString& oldname, const wxString& oldcurrfile,
+                                  bool oldsave, bool olddirty)
+{
+   if (oldname == currlayer->currname && oldcurrfile == currlayer->currfile &&
+       oldsave == currlayer->savestart && olddirty == currlayer->dirty) return;
+   
+   // clear the redo history
+   WX_CLEAR_LIST(wxList, redolist);
+   UpdateRedoItem(wxEmptyString);
+   
+   // add namechange node to head of undo list
+   ChangeNode* change = new ChangeNode(namechange);
+   if (change == NULL) Fatal(_("Failed to create namechange node!"));
+
+   change->suffix = _("Name Change");
+   change->oldname = oldname;
+   change->newname = currlayer->currname;
+   change->oldcurrfile = oldcurrfile;
+   change->newcurrfile = currlayer->currfile;
+   change->oldsave = oldsave;
+   change->newsave = currlayer->savestart;
+   change->olddirty = olddirty;
+   change->newdirty = currlayer->dirty;
+   
+   // cloned layers share the same undo/redo history but each clone
+   // can have a different name, so we need to remember which layer
+   // was changed
+   change->whichlayer = currlayer;
+   
+   undolist.Insert(change);
+   
+   // update Undo item in Edit menu
+   UpdateUndoItem(change->suffix);
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::DeletingClone(int index)
+{
+   // the given cloned layer is about to be deleted, so we need to go thru the
+   // undo/redo lists and, for each namechange node, set a matching whichlayer
+   // ptr to NULL so DoChange can ignore later changes involving this layer;
+   // very ugly, but I don't see any better solution if we're going to allow
+   // cloned layers to have different names
+
+   Layer* cloneptr = GetLayer(index);
+   wxList::compatibility_iterator node;
+   
+   node = undolist.GetFirst();
+   while (node) {
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      if (change->changeid == namechange && change->whichlayer == cloneptr)
+         change->whichlayer = NULL;
+      node = node->GetNext();
+   }
+
+   node = redolist.GetFirst();
+   while (node) {
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      if (change->changeid == namechange && change->whichlayer == cloneptr)
+         change->whichlayer = NULL;
+      node = node->GetNext();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void UndoRedo::RememberRuleChange(const wxString& oldrule)
 {
+   // safe to call SavePendingChanges here because dirty flag hasn't changed
    if (inscript) SavePendingChanges();
    
    wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -818,10 +967,9 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
    ChangeNode* change = new ChangeNode(rulechange);
    if (change == NULL) Fatal(_("Failed to create rulechange node!"));
 
+   change->suffix = _("Rule Change");
    change->oldrule = oldrule;
    change->newrule = newrule;
-   change->suffix = _("Rule Change");
-   // change->wasdirty is not used
    
    undolist.Insert(change);
    
@@ -833,6 +981,7 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
 
 void UndoRedo::RememberAlgoChange()
 {
+   // safe to call SavePendingChanges here because dirty flag hasn't changed
    if (inscript) SavePendingChanges();
    
    // clear the redo history
@@ -844,7 +993,6 @@ void UndoRedo::RememberAlgoChange()
    if (change == NULL) Fatal(_("Failed to create algochange node!"));
 
    change->suffix = _("Hashing Change");
-   // change->wasdirty is not used
    
    undolist.Insert(change);
    
@@ -861,7 +1009,6 @@ void UndoRedo::RememberScriptStart()
    if (change == NULL) Fatal(_("Failed to create scriptstart node!"));
 
    change->suffix = _("Script Changes");
-   // change->wasdirty is not used
 
    undolist.Insert(change);
    
@@ -894,7 +1041,6 @@ void UndoRedo::RememberScriptFinish()
    if (change == NULL) Fatal(_("Failed to create scriptfinish node!"));
 
    change->suffix = _("Script Changes");
-   // change->wasdirty is not used
 
    undolist.Insert(change);
    
@@ -960,23 +1106,13 @@ void UndoRedo::UndoChange()
    // remove node from head of undo list (doesn't delete node's data)
    undolist.Erase(node);
    
-   if (change->changeid < selchange && change->wasdirty != currlayer->dirty) {
-      if (currlayer->dirty) {
-         // clear dirty flag, update window title and Layer menu items
-         MarkLayerClean(currlayer->currname);
-         if (currlayer->algo->getGeneration() == currlayer->startgen) {
-            // restore savestart flag to correct state
-            if (currlayer->algo->isEmpty())
-               currlayer->savestart = false;
-            else if (!currlayer->currfile.IsEmpty())
-               currlayer->savestart = false;
-            else
-               currlayer->savestart = true;     // pattern created by script
-         }
-      } else {
-         // this can happen if user creates a new pattern, does some editing,
-         // saves pattern (which calls MarkLayerClean), then does Undo
+   if (change->changeid < selchange && change->olddirty != change->newdirty) {
+      // change dirty flag, update window title and Layer menu items
+      if (change->olddirty) {
+         currlayer->dirty = false;  // make sure it changes
          MarkLayerDirty();
+      } else {
+         MarkLayerClean(currlayer->currname);
       }
    }
 
@@ -1027,9 +1163,14 @@ void UndoRedo::RedoChange()
    // remove node from head of redo list (doesn't delete node's data)
    redolist.Erase(node);
    
-   if (change->changeid < selchange && !change->wasdirty) {
-      // set dirty flag, update window title and Layer menu items
-      MarkLayerDirty();
+   if (change->changeid < selchange && change->olddirty != change->newdirty) {
+      // change dirty flag, update window title and Layer menu items
+      if (change->newdirty) {
+         currlayer->dirty = false;  // make sure it changes
+         MarkLayerDirty();
+      } else {
+         MarkLayerClean(currlayer->currname);
+      }
    }
 
    // add change to head of undo list
@@ -1101,8 +1242,8 @@ void UndoRedo::UpdateRedoItem(const wxString& action)
 void UndoRedo::ClearUndoRedo()
 {
    // free cellarray in case there were SaveCellChange calls not followed
-   // by ForgetChanges or RememberChanges
-   ForgetChanges();
+   // by ForgetCellChanges or RememberCellChanges
+   ForgetCellChanges();
    
    if (startcount > 0) {
       // RememberGenStart was not followed by RememberGenFinish

@@ -59,13 +59,24 @@ bool MainFrame::SaveStartingPattern()
       return true;
    }
    
-   // save current rule, dirty flag, scale, location, step size and hashing option
+   // save current rule, dirty flag, scale, location, etc
    currlayer->startrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    currlayer->startdirty = currlayer->dirty;
    currlayer->startmag = viewptr->GetMag();
    viewptr->GetPos(currlayer->startx, currlayer->starty);
    currlayer->startwarp = currlayer->warp;
    currlayer->starthash = currlayer->hash;
+   
+   // save current name of this layer and any of its clones
+   currlayer->startname = currlayer->currname;
+   if (currlayer->cloneid > 0) {
+      for ( int i = 0; i < numlayers; i++ ) {
+         Layer* cloneptr = GetLayer(i);
+         if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+            cloneptr->startname = cloneptr->currname;
+         }
+      }
+   }
    
    // save current selection
    currlayer->starttop = currlayer->seltop;
@@ -166,7 +177,7 @@ void MainFrame::ResetPattern(bool resetundo)
    }
    // gen count has been reset to startgen
    
-   // play safe and ensure savestart flag is correct
+   // ensure savestart flag is correct
    currlayer->savestart = !currlayer->startfile.IsEmpty();
    
    // restore settings saved by SaveStartingPattern
@@ -174,14 +185,29 @@ void MainFrame::ResetPattern(bool resetundo)
    currlayer->dirty = currlayer->startdirty;
    viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
 
+   // restore starting name of this layer and any of its clones
+   currlayer->currname = currlayer->startname;
+   if (currlayer->cloneid > 0) {
+      for ( int i = 0; i < numlayers; i++ ) {
+         Layer* cloneptr = GetLayer(i);
+         if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+            cloneptr->currname = cloneptr->startname;
+            // also synchronize dirty flags and update items in Layer menu
+            cloneptr->dirty = currlayer->dirty;
+            mainptr->UpdateLayerItem(i);
+         }
+      }
+   }
+
    // restore selection
    currlayer->seltop = currlayer->starttop;
    currlayer->selleft = currlayer->startleft;
    currlayer->selbottom = currlayer->startbottom;
    currlayer->selright = currlayer->startright;   
 
-   // update window title in case rule or dirty flag changed
-   SetWindowTitle(wxEmptyString);
+   // update window title in case currname, rule or dirty flag changed;
+   // note that UpdateLayerItem(currindex) gets called
+   SetWindowTitle(currlayer->currname);
    UpdateEverything();
    
    if (allowundo && !currlayer->stayclean) {
@@ -286,8 +312,8 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
    }
    
    if (!inundoredo) {
-      // save some settings for RememberSetGen call below
-      bigint oldstart = currlayer->startgen;
+      // save some settings for RememberSetGen below
+      bigint oldstartgen = currlayer->startgen;
       bool oldsave = currlayer->savestart;
       
       // may need to change startgen and savestart
@@ -297,14 +323,7 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       }
    
       if (allowundo && !currlayer->stayclean) {
-         if (oldgen > oldstart && newgen <= oldstart && !inscript) {
-            // if currlayer->startfile is not an empty string then its contents
-            // will be clobbered by next generating change
-            //!!! not sure how to handle this, so for now just clear all undo/redo history
-            currlayer->undoredo->ClearUndoRedo();
-         } else {
-            currlayer->undoredo->RememberSetGen(oldgen, newgen, oldstart, oldsave);
-         }
+         currlayer->undoredo->RememberSetGen(oldgen, newgen, oldstartgen, oldsave);
       }
    }
    
@@ -808,14 +827,14 @@ void MainFrame::AdvanceOutsideSelection()
                                     top.toint() - 1, left.toint() - 1,
                                     bottom.toint() + 1, right.toint() + 1) ) {
          delete oldalgo;
-         if ( !currlayer->undoredo->RememberChanges(_("Advance Outside"), currlayer->dirty) ) {
+         if ( !currlayer->undoredo->RememberCellChanges(_("Advance Outside"), currlayer->dirty) ) {
             // pattern outside selection didn't change
             UpdateEverything();
             return;
          }
       } else {
          // revert back to pattern saved in oldalgo
-         currlayer->undoredo->ForgetChanges();
+         currlayer->undoredo->ForgetCellChanges();
          delete currlayer->algo;
          currlayer->algo = oldalgo;
          SetGenIncrement();
@@ -943,13 +962,13 @@ void MainFrame::AdvanceSelection()
       if ( viewptr->SaveDifferences(currlayer->algo, tempalgo,
                                     top.toint(), left.toint(),
                                     bottom.toint(), right.toint()) ) {
-         if ( !currlayer->undoredo->RememberChanges(_("Advance Selection"), currlayer->dirty) ) {
+         if ( !currlayer->undoredo->RememberCellChanges(_("Advance Selection"), currlayer->dirty) ) {
             // pattern inside selection didn't change
             delete tempalgo;
             return;
          }
       } else {
-         currlayer->undoredo->ForgetChanges();
+         currlayer->undoredo->ForgetCellChanges();
          delete tempalgo;
          return;
       }

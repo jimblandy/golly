@@ -812,14 +812,13 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_STOP,      active && busy);
       mbar->Enable(ID_NEXT,      active && !busy);
       mbar->Enable(ID_STEP,      active && !busy);
-      mbar->Enable(ID_RESET,     active && !inscript &&
-                                 // allow reset while a pattern is generating
+      mbar->Enable(ID_RESET,     active && !inscript &&     // allow reset while generating
                                  (generating || currlayer->algo->getGeneration() > currlayer->startgen));
       mbar->Enable(ID_SETGEN,    active && !busy);
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
-      mbar->Enable(ID_HASH,      active && !inscript);   // allow toggling while generating
+      mbar->Enable(ID_HASH,      active && !inscript);      // allow toggling while generating
       mbar->Enable(ID_HYPER,     active);
       mbar->Enable(ID_HINFO,     active);
       mbar->Enable(ID_RULE,      active && !busy);
@@ -855,7 +854,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
       mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
-      mbar->Enable(ID_NAME_LAYER,   active && !inscript);
+      mbar->Enable(ID_NAME_LAYER,   active && !busy);
       mbar->Enable(ID_SYNC_VIEW,    active);
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
@@ -1850,7 +1849,10 @@ void MainFrame::OnClose(wxCloseEvent& event)
       // avoid seg fault on Linux
       if (generating) exit(0);
    #else
-      if (generating) Stop();
+      if (generating) {
+         allowundo = false;   // prevent RememberGenFinish being called
+         Stop();
+      }
    #endif
    
    Destroy();

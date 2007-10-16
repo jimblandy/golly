@@ -36,30 +36,30 @@ public:
    void SaveCellChange(int x, int y);
    // cell at x,y has changed state
    
-   void ForgetChanges();
-   // ignore cell changes made by previous SaveCellChange calls
+   void ForgetCellChanges();
+   // ignore cell changes made by any previous SaveCellChange calls
    
-   bool RememberChanges(const wxString& action, bool wasdirty);
-   // remember cell changes made by previous SaveCellChange calls,
+   bool RememberCellChanges(const wxString& action, bool olddirty);
+   // remember cell changes made by any previous SaveCellChange calls,
    // and the state of the layer's dirty flag BEFORE the change;
    // the given action string will be appended to the Undo/Redo items;
    // return true if one or more cells changed state, false otherwise
    
-   void RememberFlip(bool topbot, bool wasdirty);
+   void RememberFlip(bool topbot, bool olddirty);
    // remember flip's direction
 
-   void RememberRotation(bool clockwise, bool wasdirty);
+   void RememberRotation(bool clockwise, bool olddirty);
    // remember simple rotation (selection includes entire pattern)
    
    void RememberRotation(bool clockwise,
                          int oldt, int oldl, int oldb, int oldr,
                          int newt, int newl, int newb, int newr,
-                         bool wasdirty);
+                         bool olddirty);
    // remember rotation's direction and old and new selection edges;
    // this variant assumes SaveCellChange may have been called
    
    void RememberSelection(const wxString& action);
-   // remember change in selection (no-op if selection hasn't changed)
+   // remember selection change (no-op if selection hasn't changed)
 
    void RememberGenStart();
    // remember info before generating the current pattern
@@ -77,8 +77,16 @@ public:
    // called by ResetPattern to synchronize the undo history
 
    void RememberSetGen(bigint& oldgen, bigint& newgen,
-                       bigint& oldstart, bool oldsave);
+                       bigint& oldstartgen, bool oldsave);
    // remember change of generation count
+   
+   void RememberNameChange(const wxString& oldname, const wxString& oldcurrfile,
+                           bool oldsave, bool olddirty);
+   // remember change to current layer's name
+   
+   void DeletingClone(int index);
+   // the given cloned layer is about to be deleted, so we must ignore
+   // any later name changes involving this layer
    
    void RememberRuleChange(const wxString& oldrule);
    // remember rule change

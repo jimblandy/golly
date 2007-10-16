@@ -981,7 +981,6 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          int newy = y0 + x * ayx + y * ayy;
          int s = curralgo->getcell(newx, newy);
 
-         // if (savecells) currlayer->undoredo->SaveCellChange(newx, newy);
          if (savecells) ChangeCell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
@@ -1001,7 +1000,6 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          int newy = y0 + x * ayx + y * ayy;
 
          if (savecells && cellstate != currlayer->algo->getcell(newx, newy))
-            // currlayer->undoredo->SaveCellChange(newx, newy);
             ChangeCell(newx, newy);
 
          // paste (possibly transformed) cell into current universe
@@ -1015,9 +1013,6 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    }
 
    curralgo->endofpattern();
-   
-   // better to combine all changes due to consecutive setcell/putcells
-   // if (savecells) currlayer->undoredo->RememberChanges(_("Cell Changes"), currlayer->dirty);
    
    MarkLayerDirty();
    DoAutoUpdate();

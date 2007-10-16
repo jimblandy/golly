@@ -653,7 +653,7 @@ void PatternView::StartDrawingCells(int x, int y)
    }
    
    // ShowDrawing will call MarkLayerDirty so we need to save dirty state now
-   // for later use by RememberChanges
+   // for later use by RememberCellChanges
    if (allowundo) currlayer->savedirty = currlayer->dirty;
 
    cellx = cellpos.first.toint();
@@ -1044,7 +1044,7 @@ void PatternView::StopDraggingMouse()
    if (drawingcells && allowundo) {
       // MarkLayerDirty (in ShowDrawing) has set dirty flag, so we need to
       // pass in the flag state saved before drawing started
-      currlayer->undoredo->RememberChanges(_("Drawing"), currlayer->savedirty);
+      currlayer->undoredo->RememberCellChanges(_("Drawing"), currlayer->savedirty);
       drawingcells = false;                  // tested by CanUndo
       mainptr->UpdateMenuItems(true);        // enable Undo item
    }

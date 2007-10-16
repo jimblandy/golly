@@ -210,16 +210,44 @@ const char* GSF_setpos(char* x, char* y)
 
 void GSF_setname(char* name, int index)
 {
-   if (name[0]) {
-      if (index == currindex) {
-         // show new name in main window's title;
-         // also sets currlayer->currname and updates menu item
-         ChangeWindowTitle(wxString(name, wxConvLocal));
-      } else {
-         GetLayer(index)->currname = wxString(name, wxConvLocal);
-         // show name in given layer's menu item
-         mainptr->UpdateLayerItem(index);
+   if (name == NULL || name[0] == 0) return;
+
+   // inscript should be true but play safe
+   if (allowundo && !currlayer->stayclean && inscript)
+      SavePendingChanges();
+
+   if (index == currindex) {
+      // save old name for RememberNameChange
+      wxString oldname = currlayer->currname;
+      
+      // show new name in main window's title;
+      // also sets currlayer->currname and updates menu item
+      ChangeWindowTitle(wxString(name, wxConvLocal));
+
+      if (allowundo && !currlayer->stayclean) {
+         // note that currfile and savestart/dirty flags don't change
+         currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+                                                 currlayer->savestart, currlayer->dirty);
       }
+   } else {
+      // temporarily change currlayer (used in RememberNameChange)
+      Layer* savelayer = currlayer;
+      currlayer = GetLayer(index);
+      wxString oldname = currlayer->currname;
+
+      currlayer->currname = wxString(name, wxConvLocal);
+
+      if (allowundo && !currlayer->stayclean) {
+         // note that currfile and savestart/dirty flags don't change
+         currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+                                                 currlayer->savestart, currlayer->dirty);
+      }
+      
+      // restore currlayer
+      currlayer = savelayer;
+      
+      // show name in given layer's menu item
+      mainptr->UpdateLayerItem(index);
    }
 }
 
@@ -716,7 +744,7 @@ void ChangeCell(int x, int y)
    currlayer->undoredo->SaveCellChange(x, y);
    if (!currlayer->undoredo->savecellchanges) {
       currlayer->undoredo->savecellchanges = true;
-      // save layer's dirty state for next RememberChanges call
+      // save layer's dirty state for next RememberCellChanges call
       currlayer->savedirty = currlayer->dirty;
    }
 }
@@ -726,10 +754,13 @@ void ChangeCell(int x, int y)
 void SavePendingChanges(bool checkgenchanges)
 {
    // this should only be called if inscript && allowundo && !currlayer->stayclean
+   if ( !(inscript && allowundo && !currlayer->stayclean) )
+      Warning(_("Bug detected in SavePendingChanges!"));
+   
    if (currlayer->undoredo->savecellchanges) {
       currlayer->undoredo->savecellchanges = false;
       // remember accumulated cell changes
-      currlayer->undoredo->RememberChanges(_("bug1"), currlayer->savedirty);
+      currlayer->undoredo->RememberCellChanges(_("bug1"), currlayer->savedirty);
       // action string should never be seen
    }
 
@@ -782,7 +813,7 @@ void RunScript(const wxString& filename)
    #endif
 
    if (allowundo) {
-      // save each layer's dirty state for use by next RememberChanges call
+      // save each layer's dirty state for use by next RememberCellChanges call
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* layer = GetLayer(i);
          layer->savedirty = layer->dirty;
@@ -824,9 +855,9 @@ void RunScript(const wxString& filename)
             currlayer->undoredo->savecellchanges = false;
             // remember pending cell change(s)
             if (currlayer->stayclean)
-               currlayer->undoredo->ForgetChanges();
+               currlayer->undoredo->ForgetCellChanges();
             else
-               currlayer->undoredo->RememberChanges(_("bug2"), currlayer->savedirty);
+               currlayer->undoredo->RememberCellChanges(_("bug2"), currlayer->savedirty);
                // action string should never be seen
          }
          if (currlayer->undoredo->savegenchanges) {

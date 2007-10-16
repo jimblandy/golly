@@ -37,7 +37,7 @@ public:
    Layer();
    ~Layer();
 
-   lifealgo* algo;            // this layer's universe
+   lifealgo* algo;            // this layer's universe (shared by clones)
    bool hash;                 // does it use hlife?
    bool hyperspeed;           // use hyperspeed if hash is true?
    bool showhashinfo;         // show hash info if hash is true?
@@ -48,7 +48,7 @@ public:
    int warp;                  // speed setting (ie. step exponent)
    viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode
-   UndoRedo* undoredo;        // undo/redo history
+   UndoRedo* undoredo;        // undo/redo history (shared by clones)
 
    // WARNING: this string is used to remember the current rule when
    // switching to another layer; to determine the current rule at any
@@ -72,6 +72,7 @@ public:
    bool starthash;            // hashing was on at start?
    bool startdirty;           // starting state of dirty flag
    wxString startfile;        // file for saving starting pattern
+   wxString startname;        // starting currname
    wxString startrule;        // starting rule
    bigint startgen;           // starting generation (>= 0)
    bigint startx, starty;     // starting location
@@ -82,7 +83,7 @@ public:
    bigint starttop, startleft, startbottom, startright;
    
    // temporary file used to restore starting pattern or to show comments;
-   // each layer uses a different file name
+   // each non-cloned layer uses a different temporary file
    wxString tempstart;
    
    // used when tilelayers is true

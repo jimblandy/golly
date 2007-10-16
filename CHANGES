@@ -15,7 +15,7 @@ AKT: Added a setgen(str) script command.
 AKT: Added Set Generation... item to Control menu.
 AKT: Included bgolly in the Mac distribution.
 TGR: Fixed crash if pattern update occurred while saving a .mc file.
-AKT: The Reset item restores starting selection (for consistency with Undo).
+AKT: Reset restores starting selection and name (for consistency with Undo).
 AKT: The metafier.py script creates the metafied pattern in a separate layer.
 AKT: A script is aborted if a progress dialog appears and you hit Cancel.
 AKT: Added support for unlimited undo/redo.
