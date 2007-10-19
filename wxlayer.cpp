@@ -855,13 +855,7 @@ void SyncClones()
             cloneptr->savestart = currlayer->savestart;
             cloneptr->starthash = currlayer->starthash;
             cloneptr->startdirty = currlayer->startdirty;
-            // clones can have different starting names
-            // cloneptr->startname = currlayer->startname;
             cloneptr->startrule = currlayer->startrule;
-            cloneptr->startx = currlayer->startx;
-            cloneptr->starty = currlayer->starty;
-            cloneptr->startwarp = currlayer->startwarp;
-            cloneptr->startmag = currlayer->startmag;
             cloneptr->startfile = currlayer->startfile;
             cloneptr->startgen = currlayer->startgen;
             cloneptr->currfile = currlayer->currfile;
@@ -869,6 +863,12 @@ void SyncClones()
             cloneptr->startleft = currlayer->startleft;
             cloneptr->startbottom = currlayer->startbottom;
             cloneptr->startright = currlayer->startright;
+            // clone can have different starting name, pos, scale, speed
+            // cloneptr->startname = currlayer->startname;
+            // cloneptr->startx = currlayer->startx;
+            // cloneptr->starty = currlayer->starty;
+            // cloneptr->startmag = currlayer->startmag;
+            // cloneptr->startwarp = currlayer->startwarp;
          }
       }
    }

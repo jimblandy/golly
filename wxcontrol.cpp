@@ -60,6 +60,7 @@ bool MainFrame::SaveStartingPattern()
    }
    
    // save current rule, dirty flag, scale, location, etc
+   currlayer->startname = currlayer->currname;
    currlayer->startrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    currlayer->startdirty = currlayer->dirty;
    currlayer->startmag = viewptr->GetMag();
@@ -67,13 +68,16 @@ bool MainFrame::SaveStartingPattern()
    currlayer->startwarp = currlayer->warp;
    currlayer->starthash = currlayer->hash;
    
-   // save current name of this layer and any of its clones
-   currlayer->startname = currlayer->currname;
+   // if this layer is a clone then save some settings in other clones
    if (currlayer->cloneid > 0) {
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* cloneptr = GetLayer(i);
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
             cloneptr->startname = cloneptr->currname;
+            cloneptr->startx = cloneptr->view->x;
+            cloneptr->starty = cloneptr->view->y;
+            cloneptr->startmag = cloneptr->view->getmag();
+            cloneptr->startwarp = cloneptr->warp;
          }
       }
    }
@@ -181,17 +185,20 @@ void MainFrame::ResetPattern(bool resetundo)
    currlayer->savestart = !currlayer->startfile.IsEmpty();
    
    // restore settings saved by SaveStartingPattern
+   currlayer->currname = currlayer->startname;
    currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
    currlayer->dirty = currlayer->startdirty;
    viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
 
-   // restore starting name of this layer and any of its clones
-   currlayer->currname = currlayer->startname;
+   // if this layer is a clone then restore some settings in other clones
    if (currlayer->cloneid > 0) {
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* cloneptr = GetLayer(i);
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
             cloneptr->currname = cloneptr->startname;
+            cloneptr->view->setpositionmag(cloneptr->startx, cloneptr->starty,
+                                           cloneptr->startmag);
+            cloneptr->warp = cloneptr->startwarp;
             // also synchronize dirty flags and update items in Layer menu
             cloneptr->dirty = currlayer->dirty;
             mainptr->UpdateLayerItem(i);
