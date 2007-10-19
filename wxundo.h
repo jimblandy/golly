@@ -133,6 +133,7 @@ private:
    int prevwarp;                 // speed at start of gen change
    bool prevhash;                // hash state at start of gen change
    int startcount;               // unfinished RememberGenStart calls
+   bool fixsetgen;               // setgen node needs to be updated?
    
    void SaveCurrentPattern(const wxString& tempfile);
    // save current pattern to given temporary file

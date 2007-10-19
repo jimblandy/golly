@@ -117,7 +117,12 @@ public:
    wxString oldtempstart, newtempstart;   // old and new tempstart paths
    wxString oldstartfile, newstartfile;   // old and new startfile paths
    wxString oldcurrfile, newcurrfile;     // old and new currfile paths
+   wxString oldclone[maxlayers];          // old starting names for cloned layers
+   wxString newclone[maxlayers];          // new starting names for cloned layers
    // also uses oldgen, newgen
+   // and oldx, oldy, newx, newy, oldmag, newmag
+   // and oldwarp, newwarp, oldhash, newhash
+   // and prevt, prevl, prevb, prevr, nextt, nextl, nextb, nextr
    
    // namechange info
    wxString oldname, newname;             // old and new layer names
@@ -188,7 +193,6 @@ bool ChangeNode::DoChange(bool undo)
 
       case fliptb:
       case fliplr:
-         // safer not to call FlipSelection (it calls MarkLayerDirty)
          {
             bool done = true;
             int itop = currlayer->seltop.toint();
@@ -287,6 +291,28 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->tempstart = oldtempstart;
             currlayer->startfile = oldstartfile;
             currlayer->currfile = oldcurrfile;
+            if (oldtempstart != newtempstart) {
+               currlayer->startdirty = olddirty;
+               currlayer->starthash = oldhash;
+               currlayer->startrule = oldrule;
+               currlayer->startx = oldx;
+               currlayer->starty = oldy;
+               currlayer->startmag = oldmag;
+               currlayer->startwarp = oldwarp;
+               currlayer->starttop = prevt;
+               currlayer->startleft = prevl;
+               currlayer->startbottom = prevb;
+               currlayer->startright = prevr;
+               currlayer->startname = oldname;
+               if (currlayer->cloneid > 0) {
+                  for ( int i = 0; i < numlayers; i++ ) {
+                     Layer* cloneptr = GetLayer(i);
+                     if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+                        cloneptr->startname = oldclone[i];
+                     }
+                  }
+               }
+            }
          } else {
             mainptr->ChangeGenCount(newgen.tostring(), true);
             currlayer->startgen = newstartgen;
@@ -294,6 +320,28 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->tempstart = newtempstart;
             currlayer->startfile = newstartfile;
             currlayer->currfile = newcurrfile;
+            if (oldtempstart != newtempstart) {
+               currlayer->startdirty = newdirty;
+               currlayer->starthash = newhash;
+               currlayer->startrule = newrule;
+               currlayer->startx = newx;
+               currlayer->starty = newy;
+               currlayer->startmag = newmag;
+               currlayer->startwarp = newwarp;
+               currlayer->starttop = nextt;
+               currlayer->startleft = nextl;
+               currlayer->startbottom = nextb;
+               currlayer->startright = nextr;
+               currlayer->startname = newname;
+               if (currlayer->cloneid > 0) {
+                  for ( int i = 0; i < numlayers; i++ ) {
+                     Layer* cloneptr = GetLayer(i);
+                     if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+                        cloneptr->startname = newclone[i];
+                     }
+                  }
+               }
+            }
          }
          // Reset item may become enabled/disabled
          mainptr->UpdateMenuItems(mainptr->IsActive());
@@ -365,6 +413,7 @@ UndoRedo::UndoRedo()
    doingscriptchanges = false;   // not undoing/redoing script changes
    prevfile = wxEmptyString;     // play safe for ClearUndoRedo
    startcount = 0;               // unfinished RememberGenStart calls
+   fixsetgen = false;            // no setgen nodes need fixing
    
    // need to remember if script has created a new layer
    if (inscript) RememberScriptStart();
@@ -667,12 +716,48 @@ void UndoRedo::RememberGenStart()
    if (prevgen == currlayer->startgen) {
       // we can just reset to starting pattern
       prevfile = wxEmptyString;
+      
+      if (fixsetgen) {
+         // SaveStartingPattern has just been called so search undolist for setgen
+         // node that changed tempstart and update the starting info in that node;
+         // yuk -- is there a simpler solution???
+         wxList::compatibility_iterator node = undolist.GetFirst();
+         while (node) {
+            ChangeNode* change = (ChangeNode*) node->GetData();
+            if (change->changeid == setgen &&
+                change->oldtempstart != change->newtempstart) {
+               change->newdirty = currlayer->startdirty;
+               change->newhash = currlayer->starthash;
+               change->newrule = currlayer->startrule;
+               change->newx = currlayer->startx;
+               change->newy = currlayer->starty;
+               change->newmag = currlayer->startmag;
+               change->newwarp = currlayer->startwarp;
+               change->nextt = currlayer->starttop;
+               change->nextl = currlayer->startleft;
+               change->nextb = currlayer->startbottom;
+               change->nextr = currlayer->startright;
+               change->newname = currlayer->startname;
+               if (currlayer->cloneid > 0) {
+                  for ( int i = 0; i < numlayers; i++ ) {
+                     Layer* cloneptr = GetLayer(i);
+                     if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+                        change->newclone[i] = cloneptr->startname;
+                     }
+                  }
+               }
+               break;
+            }
+            node = node->GetNext();
+         }
+      }
+      
    } else {
       // save starting pattern in a unique temporary file;
-      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems,
+      // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems;
       // on WinXP the file is in C:\Documents and Settings\Andy\Local Settings\Temp
       // (or shorter equivalent C:\DOCUME~1\Andy\LOCALS~1\Temp) but the file name
-      // is gol*.tmp (ie. temp_prefix is ignored),
+      // is gol*.tmp (ie. only 1st 3 chars of temp_prefix are used);
       // on Linux the file is in /tmp
       prevfile = wxFileName::CreateTempFileName(temp_prefix);
 
@@ -875,6 +960,55 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
    change->newstartfile = currlayer->startfile;
    change->oldcurrfile = oldcurrfile;
    change->newcurrfile = currlayer->currfile;
+   
+   if (change->oldtempstart != change->newtempstart) {
+      // save extra starting info set by previous SaveStartingPattern so that
+      // Undoing this setgen change will restore the correct info for a Reset
+      change->olddirty = currlayer->startdirty;
+      change->oldhash = currlayer->starthash;
+      change->oldrule = currlayer->startrule;
+      change->oldx = currlayer->startx;
+      change->oldy = currlayer->starty;
+      change->oldmag = currlayer->startmag;
+      change->oldwarp = currlayer->startwarp;
+      change->prevt = currlayer->starttop;
+      change->prevl = currlayer->startleft;
+      change->prevb = currlayer->startbottom;
+      change->prevr = currlayer->startright;
+      change->oldname = currlayer->startname;
+      if (currlayer->cloneid > 0) {
+         for ( int i = 0; i < numlayers; i++ ) {
+            Layer* cloneptr = GetLayer(i);
+            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+               change->oldclone[i] = cloneptr->startname;
+            }
+         }
+      }
+      
+      // following settings will be updated by next RememberGenStart call so that
+      // Redoing this setgen change will restore the correct info for a Reset
+      fixsetgen = true;
+      change->newdirty = currlayer->startdirty;
+      change->newhash = currlayer->starthash;
+      change->newrule = currlayer->startrule;
+      change->newx = currlayer->startx;
+      change->newy = currlayer->starty;
+      change->newmag = currlayer->startmag;
+      change->newwarp = currlayer->startwarp;
+      change->nextt = currlayer->starttop;
+      change->nextl = currlayer->startleft;
+      change->nextb = currlayer->startbottom;
+      change->nextr = currlayer->startright;
+      change->newname = currlayer->startname;
+      if (currlayer->cloneid > 0) {
+         for ( int i = 0; i < numlayers; i++ ) {
+            Layer* cloneptr = GetLayer(i);
+            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+               change->newclone[i] = cloneptr->startname;
+            }
+         }
+      }
+   }
    
    undolist.Insert(change);
    
@@ -1255,6 +1389,8 @@ void UndoRedo::ClearUndoRedo()
    // clear the undo/redo lists (and delete each node's data)
    WX_CLEAR_LIST(wxList, undolist);
    WX_CLEAR_LIST(wxList, redolist);
+   
+   fixsetgen = false;
    
    if (inscript) {
       // script has called a command like new() so add a scriptstart node

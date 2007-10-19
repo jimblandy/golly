@@ -2322,7 +2322,8 @@ EXTERN_C void xs_init(pTHX)
    // DynaLoader allows dynamic loading of other Perl extensions
    newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 
-   /* can't get this approach to work!!!
+   /* for this approach to work we presumably need to create a golly.pm file
+      in Scripts/Perl and add that path to @INC!!!
       "use golly" causes error: Can't locate golly.pm in @INC
       newXS("golly::boot_golly", boot_golly, file);
    */

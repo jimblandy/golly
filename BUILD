@@ -185,7 +185,7 @@ wxlayer.*      - Layer menu functions.
                  DeleteLayer() deletes the current layer.
 
 wxundo.*       - Implements unlimited undo/redo.
-                 RememberChanges() saves cell state changes.
+                 RememberCellChanges() saves cell state changes.
                  UndoChange() undoes a recent change.
                  RedoChange() redoes an undone change.
 

@@ -855,7 +855,8 @@ void SyncClones()
             cloneptr->savestart = currlayer->savestart;
             cloneptr->starthash = currlayer->starthash;
             cloneptr->startdirty = currlayer->startdirty;
-            cloneptr->startname = currlayer->startname;
+            // clones can have different starting names
+            // cloneptr->startname = currlayer->startname;
             cloneptr->startrule = currlayer->startrule;
             cloneptr->startx = currlayer->startx;
             cloneptr->starty = currlayer->starty;
