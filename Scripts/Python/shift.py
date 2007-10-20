@@ -2,14 +2,17 @@
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2006.
 # Updated to use exit command, Nov 2006.
 
-from glife import getstring, validint, inside
+from glife import validint, inside
 from string import lower
 import golly as g
 
 selrect = g.getselrect()
 if len(selrect) == 0: g.exit("There is no selection.")
 
-answer = getstring("Enter x y amounts and optional mode (default is or):")
+answer = g.getstring("Enter x y shift amounts and an optional mode\n" +
+                     "(valid modes are copy/or/xor, default is or):",
+                     "0 0 or",
+                     "Shift selection")
 xym = answer.split()
 
 # extract x and y amounts

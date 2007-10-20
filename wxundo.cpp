@@ -746,6 +746,9 @@ void UndoRedo::RememberGenStart()
                      }
                   }
                }
+               // do NOT reset fixsetgen to false here; the gen change might
+               // be removed when clearing the redo list and so we may need
+               // to update this setgen node again after a new gen change
                break;
             }
             node = node->GetNext();
