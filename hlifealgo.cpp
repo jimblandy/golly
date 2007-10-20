@@ -1689,7 +1689,8 @@ int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       int ne = writecell_2p2(f, root->ne, depth-1) ;
       int sw = writecell_2p2(f, root->sw, depth-1) ;
       int se = writecell_2p2(f, root->se, depth-1) ;
-      if (cellcounter + 1 != (int)(root->next)) { // this should never happen
+      if (!isaborted() &&
+	  cellcounter + 1 != (int)(root->next)) { // this should never happen
 	 lifefatal("Internal in writecell_2p2") ;
 	 return (int)(root->next) ;
       }
