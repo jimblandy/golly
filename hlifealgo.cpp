@@ -520,7 +520,7 @@ hlifealgo::hlifealgo() {
    hashpop = 0 ;
    hashtab = (node **)calloc(hashprime, sizeof(node *)) ;
    if (hashtab == 0)
-     lifefatal("Out of memory.") ;
+     lifefatal("Out of memory (1).") ;
    alloced += hashprime * sizeof(node *) ;
    ngens = 0 ;
    stacksize = 0 ;
@@ -689,7 +689,7 @@ node *hlifealgo::zeronode(int depth) {
       zeronodea = (node **)realloc(zeronodea,
                                           nnzeros * sizeof(node *)) ;
       if (zeronodea == 0)
-	lifefatal("Out of memory.") ;
+	lifefatal("Out of memory (2).") ;
       alloced += (nnzeros - nzeros) * sizeof(node *) ;
       while (nzeros < nnzeros)
          zeronodea[nzeros++] = 0 ;
@@ -1191,7 +1191,7 @@ node *hlifealgo::save(node *n) {
       alloced += sizeof(node *)*(nstacksize-stacksize) ;
       stack = (node **)realloc(stack, nstacksize * sizeof(node *)) ;
       if (stack == 0)
-	lifefatal("Out of memory.") ;
+	lifefatal("Out of memory (3).") ;
       stacksize = nstacksize ;
    }
    stack[gsp++] = n ;
@@ -1452,7 +1452,7 @@ const char *hlifealgo::readmacrocell(char *line) {
          int nlen = i + indlen + 10 ;
          ind = (node **)realloc(ind, sizeof(int) * nlen) ;
 	 if (ind == 0)
-	   lifefatal("Out of memory.") ;
+	   lifefatal("Out of memory (4).") ;
          while (indlen < nlen)
             ind[indlen++] = 0 ;
       }
@@ -1483,6 +1483,7 @@ case '$':      x = 0 ;
 default:       return "Illegal character in readmacrocell." ;
             }
          }
+	 clearstack() ;
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
       } else if (line[0] == '#') {
          switch (line[1]) {
@@ -1531,6 +1532,7 @@ default:       return "Illegal character in readmacrocell." ;
              se < 0 || se >= i || ind[se] == 0) {
             return "Node out of range in readmacrocell." ;
          }
+	 clearstack() ;
          root = ind[i++] = find_node(ind[nw], ind[ne], ind[sw], ind[se]) ;
          depth = d - 1 ;
       }
