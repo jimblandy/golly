@@ -702,7 +702,7 @@ void PatternView::CopySelectionToClipboard(bool cut)
    
    if (cut && livecount > 0) {
       if (savecells) currlayer->undoredo->RememberCellChanges(_("Cut"), currlayer->dirty);
-      // update dirty flag AFTER RememberCellChanges
+      // update currlayer->dirty AFTER RememberCellChanges
       MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    }
@@ -1421,129 +1421,185 @@ void PatternView::RandomFill()
 
    if (savecells) currlayer->undoredo->RememberCellChanges(_("Random Fill"), currlayer->dirty);
 
-   // update dirty flag AFTER RememberCellChanges
+   // update currlayer->dirty AFTER RememberCellChanges
    MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
 }
 
 // -----------------------------------------------------------------------------
 
-bool PatternView::FlipTopBottom(int itop, int ileft, int ibottom, int iright)
+bool PatternView::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                           int itop, int ileft, int ibottom, int iright)
 {
-   // following code can be optimized by using faster nextcell calls!!!
-   // ie. if entire pattern is selected then flip into new universe and
-   // switch to that universe
-   
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
-   double maxcount = (double)wd * (double)ht / 2.0;
+   double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
+   int cx, cy, newx, newy, newxinc, newyinc;
    
-   BeginProgress(_("Flipping top-bottom"));
-   int cx, cy;
-   int mirrory = ibottom;
-   int halfway = (itop - 1) + ht / 2;
-   lifealgo* curralgo = currlayer->algo;
-   for ( cy=itop; cy<=halfway; cy++ ) {
+   if (topbottom) {
+      BeginProgress(_("Flipping top-bottom"));
+      newy = ibottom;
+      newyinc = -1;
+      newxinc = 1;
+   } else {
+      BeginProgress(_("Flipping left-right"));
+      newy = itop;
+      newyinc = 1;
+      newxinc = -1;
+   }
+
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      newx = topbottom ? ileft : iright;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int currstate = curralgo->getcell(cx, cy);
-         int mirrstate = curralgo->getcell(cx, mirrory);
-         if ( currstate != mirrstate ) {
-            curralgo->setcell(cx, cy, mirrstate);
-            curralgo->setcell(cx, mirrory, currstate);
+         int skip = srcalgo->nextcell(cx, cy);
+         if (skip + cx > iright)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell
+            cx += skip;
+            if (erasesrc) srcalgo->setcell(cx, cy, 0);
+            newx += newxinc * skip;
+            destalgo->setcell(newx, newy, 1);
+         } else {
+            cx = iright + 1;     // done this row
          }
          cntr++;
          if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
+            double prog = ((cy - itop) * (double)(iright - ileft + 1) +
+                           (cx - ileft)) / maxcount;
+            abort = AbortProgress(prog, wxEmptyString);
             if (abort) break;
          }
+         newx += newxinc;
       }
       if (abort) break;
-      mirrory--;
+      newy += newyinc;
    }
-   currlayer->algo->endofpattern();
-   EndProgress();
    
+   if (erasesrc) srcalgo->endofpattern();
+   destalgo->endofpattern();
+   EndProgress();
+
    return !abort;
 }
 
 // -----------------------------------------------------------------------------
 
-bool PatternView::FlipLeftRight(int itop, int ileft, int ibottom, int iright)
-{
-   // following code can be optimized by using faster nextcell calls!!!
-   // ie. if entire pattern is selected then flip into new universe and
-   // switch to that universe
-   
-   int wd = iright - ileft + 1;
-   int ht = ibottom - itop + 1;
-   double maxcount = (double)wd * (double)ht / 2.0;
-   int cntr = 0;
-   bool abort = false;
-   
-   BeginProgress(_("Flipping left-right"));
-   int cx, cy;
-   int mirrorx = iright;
-   int halfway = (ileft - 1) + wd / 2;
-   lifealgo* curralgo = currlayer->algo;
-   for ( cx=ileft; cx<=halfway; cx++ ) {
-      for ( cy=itop; cy<=ibottom; cy++ ) {
-         int currstate = curralgo->getcell(cx, cy);
-         int mirrstate = curralgo->getcell(mirrorx, cy);
-         if ( currstate != mirrstate ) {
-            curralgo->setcell(cx, cy, mirrstate);
-            curralgo->setcell(mirrorx, cy, currstate);
-         }
-         cntr++;
-         if ((cntr % 4096) == 0) {
-            abort = AbortProgress((double)cntr / maxcount, wxEmptyString);
-            if (abort) break;
-         }
-      }
-      if (abort) break;
-      mirrorx--;
-   }
-   currlayer->algo->endofpattern();
-   EndProgress();
-   
-   return !abort;
-}
-
-// -----------------------------------------------------------------------------
-
-bool PatternView::FlipSelection(bool topbottom)
+bool PatternView::FlipSelection(bool topbottom, bool inundoredo)
 {
    if (mainptr->generating || !SelectionExists()) return false;
 
+   if (topbottom) {
+      if (currlayer->seltop == currlayer->selbottom) return true;
+   } else {
+      if (currlayer->selleft == currlayer->selright) return true;
+   }
+   
+   if (currlayer->algo->isEmpty()) return true;
+   
+   bigint top, left, bottom, right;
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+
+   bigint stop = currlayer->seltop;
+   bigint sleft = currlayer->selleft;
+   bigint sbottom = currlayer->selbottom;
+   bigint sright = currlayer->selright;
+
+   bool simpleflip;
+   if ( stop <= top && sbottom >= bottom && sleft <= left && sright >= right ) {
+      // selection encloses entire pattern so we may only need to flip a smaller rectangle
+      if (topbottom) {
+         bigint tdiff = top; tdiff -= stop;
+         bigint bdiff = sbottom; bdiff -= bottom;
+         bigint mindiff = tdiff;
+         if (bdiff < mindiff) mindiff = bdiff;
+         stop += mindiff;
+         sbottom -= mindiff;
+         sleft = left;
+         sright = right;
+      } else {
+         bigint ldiff = left; ldiff -= sleft;
+         bigint rdiff = sright; rdiff -= right;
+         bigint mindiff = ldiff;
+         if (rdiff < mindiff) mindiff = rdiff;
+         sleft += mindiff;
+         sright -= mindiff;
+         stop = top;
+         sbottom = bottom;
+      }
+      simpleflip = true;
+   } else {
+      // selection encloses part of pattern so we can clip some selection edges
+      // if they are outside the pattern edges
+      if (topbottom) {
+         if (sleft < left) sleft = left;
+         if (sright > right) sright = right;
+      } else {
+         if (stop < top) stop = top;
+         if (sbottom > bottom) sbottom = bottom;
+      }
+      simpleflip = false;
+   }
+   
    // can only use getcell/setcell in limited domain
-   if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
-                      currlayer->selleft, currlayer->selright) ) {
+   if ( OutsideLimits(stop, sbottom, sleft, sright) ) {
       statusptr->ErrorMessage(selection_too_big);
       return false;
    }
    
-   int itop = currlayer->seltop.toint();
-   int ileft = currlayer->selleft.toint();
-   int ibottom = currlayer->selbottom.toint();
-   int iright = currlayer->selright.toint();
+   int itop = stop.toint();
+   int ileft = sleft.toint();
+   int ibottom = sbottom.toint();
+   int iright = sright.toint();
    
-   if (topbottom) {
-      if (ibottom == itop) return false;
-      if (!FlipTopBottom(itop, ileft, ibottom, iright)) return false;
+   if (simpleflip) {
+      // selection encloses all of pattern so we can flip into new universe
+      // (must be same type) without killing live cells in selection
+      lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+      newalgo->setGeneration( currlayer->algo->getGeneration() );
+
+      if ( FlipRect(topbottom, currlayer->algo, newalgo, false,
+                    itop, ileft, ibottom, iright) ) {
+         // switch to newalgo
+         delete currlayer->algo;
+         currlayer->algo = newalgo;
+         mainptr->SetGenIncrement();
+      } else {
+         // user aborted flip
+         delete newalgo;
+         return false;
+      }
    } else {
-      if (iright == ileft) return false;
-      if (!FlipLeftRight(itop, ileft, ibottom, iright)) return false;
+      // flip into temporary universe and kill all live cells in selection;
+      // use qlife because its setcell/getcell calls are faster
+      lifealgo* tempalgo = CreateNewUniverse(false);
+
+      if ( FlipRect(topbottom, currlayer->algo, tempalgo, true,
+                    itop, ileft, ibottom, iright) ) {
+         // find pattern edges in temporary universe (could be much smaller)
+         // and copy temporary pattern into current universe
+         tempalgo->findedges(&top, &left, &bottom, &right);
+         CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
+                  tempalgo, currlayer->algo, false, _("Adding flipped selection"));
+         delete tempalgo;
+      } else {
+         // user aborted flip so flip tempalgo pattern back into current universe
+         FlipRect(topbottom, tempalgo, currlayer->algo, false, itop, ileft, ibottom, iright);
+         delete tempalgo;
+         return false;
+      }
    }
 
    // flips are always reversible so no need to use SaveCellChange and RememberCellChanges
-   if (allowundo && !currlayer->stayclean) {
+   if (allowundo && !currlayer->stayclean && !inundoredo) {
       if (inscript) SavePendingChanges();
       currlayer->undoredo->RememberFlip(topbottom, currlayer->dirty);
    }
    
-   // update dirty flag AFTER RememberFlip
-   MarkLayerDirty();
+   // update currlayer->dirty AFTER RememberFlip
+   if (!inundoredo) MarkLayerDirty();
    mainptr->UpdatePatternAndStatus();
    
    return true;
@@ -1564,24 +1620,22 @@ bool PatternView::RotateRect(bool clockwise,
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
-   int cx, cy, newx, newy, newxinc, newyinc, firstnewy;
+   int cx, cy, newx, newy, newxinc, newyinc;
    
    if (clockwise) {
       BeginProgress(rotate_clockwise);
-      firstnewy = ntop;
       newx = nright;
       newyinc = 1;
       newxinc = -1;
    } else {
       BeginProgress(rotate_anticlockwise);
-      firstnewy = nbottom;
       newx = nleft;
       newyinc = -1;
       newxinc = 1;
    }
 
    for ( cy=itop; cy<=ibottom; cy++ ) {
-      newy = firstnewy;
+      newy = clockwise ? ntop : nbottom;
       for ( cx=ileft; cx<=iright; cx++ ) {
          int skip = srcalgo->nextcell(cx, cy);
          if (skip + cx > iright)
@@ -1608,8 +1662,8 @@ bool PatternView::RotateRect(bool clockwise,
       newx += newxinc;
    }
    
+   if (erasesrc) srcalgo->endofpattern();
    destalgo->endofpattern();
-   srcalgo->endofpattern();
    EndProgress();
 
    return !abort;
@@ -1707,7 +1761,7 @@ bool PatternView::RotatePattern(bool clockwise,
          currlayer->undoredo->RememberRotation(clockwise, currlayer->dirty);
       }
       
-      // update dirty flag AFTER RememberRotation
+      // update currlayer->dirty AFTER RememberRotation
       if (!inundoredo) MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    }

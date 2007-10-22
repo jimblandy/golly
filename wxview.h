@@ -52,9 +52,7 @@ public:
    void RemoveSelection();
    void ShrinkSelection(bool fit);
    void RandomFill();
-   bool FlipTopBottom(int top, int left, int bottom, int right);
-   bool FlipLeftRight(int top, int left, int bottom, int right);
-   bool FlipSelection(bool topbottom);
+   bool FlipSelection(bool topbottom, bool inundoredo = false);
    bool RotateSelection(bool clockwise, bool inundoredo = false);
    void SetCursorMode(wxCursor* curs);
    void CycleCursorMode();
@@ -165,6 +163,8 @@ private:
    void SetPasteRect(wxRect& rect, bigint& wd, bigint& ht);
    void PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);
+   bool FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                 int top, int left, int bottom, int right);
    bool RotatePattern(bool clockwise,
                       bigint& newtop, bigint& newbottom,
                       bigint& newleft, bigint& newright,

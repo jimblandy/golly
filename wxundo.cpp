@@ -193,24 +193,16 @@ bool ChangeNode::DoChange(bool undo)
 
       case fliptb:
       case fliplr:
-         {
-            bool done = true;
-            int itop = currlayer->seltop.toint();
-            int ileft = currlayer->selleft.toint();
-            int ibottom = currlayer->selbottom.toint();
-            int iright = currlayer->selright.toint();
-            if (ibottom <= itop || iright <= ileft) {
-               // should never happen
-               Warning(_("Flip bug detected in DoChange!"));
-               return false;
-            } else if (changeid == fliptb) {
-               done = viewptr->FlipTopBottom(itop, ileft, ibottom, iright);
-            } else {
-               done = viewptr->FlipLeftRight(itop, ileft, ibottom, iright);
-            }
-            mainptr->UpdatePatternAndStatus();
-            if (!done) return false;
-         }
+         // pass in true so FlipSelection won't save changes or call MarkLayerDirty
+         if (!viewptr->FlipSelection(changeid == fliptb, true))
+            return false;
+         break;
+
+      case rotatepattcw:
+      case rotatepattacw:
+         // pass in true so RotateSelection won't save changes or call MarkLayerDirty
+         if (!viewptr->RotateSelection(changeid == rotatepattcw ? !undo : undo, true))
+            return false;
          break;
 
       case rotatecw:
@@ -240,13 +232,6 @@ bool ChangeNode::DoChange(bool undo)
          }
          viewptr->DisplaySelectionSize();
          mainptr->UpdatePatternAndStatus();
-         break;
-
-      case rotatepattcw:
-      case rotatepattacw:
-         // pass in true so RotateSelection won't save changes or call MarkLayerDirty
-         if (!viewptr->RotateSelection(changeid == rotatepattcw ? !undo : undo, true))
-            return false;
          break;
       
       case selchange:
