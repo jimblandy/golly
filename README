@@ -27,8 +27,6 @@ The Golly application can be installed anywhere you like, but
 make sure you move the whole folder because the Help subfolder
 must be kept with the application.
 
-To run Golly, just click on the application icon or type golly
-on the command line.  See the Help menu for all the details.
 The latest information can be found at the Golly web site:
 
   http://golly.sourceforge.net/

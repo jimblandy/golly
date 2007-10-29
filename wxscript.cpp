@@ -626,7 +626,7 @@ void GSF_getkey(char* s)
 // -----------------------------------------------------------------------------
 
 // also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
-// getclick returns [] or [x,y,button,shift,ctrl,alt]
+// getclick returns [] or [x,y,button,modifiers]
 
 void GSF_dokey(char* ascii)
 {
@@ -646,7 +646,9 @@ void GSF_dokey(char* ascii)
          default: key = *ascii;
       }
 
-      viewptr->ProcessKey(key, false);
+      //!!! can we handle modifiers and be backward compatible???
+      // or do we need new getmodkey & domodkey commands???
+      viewptr->ProcessKey(key, wxMOD_NONE);
 
       // see any cursor change, including in tool bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -905,9 +907,7 @@ void PassKeyToScript(int key)
       // so that scripts can be platform-independent;
       // note that GSF_dokey does the reverse conversion
       /*
-      char msg[64];
-      sprintf(msg, "key=%d ch=%c", key, (char)key);
-      Warning(msg);
+      Warning(wxString::Format(_("key=%d ch=%c"), key, (char)key));
       */
       char ascii;
       switch (key) {

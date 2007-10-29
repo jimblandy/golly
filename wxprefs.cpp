@@ -38,6 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/tooltip.h" // for wxToolTip
 #endif
 
+#include <string>;         // for std::string
+
 #include "lifealgo.h"
 #include "viewport.h"      // for MAX_MAG
 
@@ -74,7 +76,7 @@ const wxString PATT_DIR = wxT("Patterns");
 // location of supplied scripts (relative to app)
 const wxString SCRIPT_DIR = wxT("Scripts");
 
-const int PREFS_VERSION = 2;     // may change if file syntax changes
+const int PREFS_VERSION = 3;     // may change if file syntax changes
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
 const int BITMAP_WD = 60;        // width of bitmap in color buttons
@@ -142,8 +144,8 @@ bool askonquit = true;           // ask to save changes before quitting app?
 int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
-wxCursor *newcurs = NULL;        // cursor after creating new pattern (if not NULL)
-wxCursor *opencurs = NULL;       // cursor after opening pattern (if not NULL)
+wxCursor* newcurs = NULL;        // cursor after creating new pattern (if not NULL)
+wxCursor* opencurs = NULL;       // cursor after opening pattern (if not NULL)
 int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
 int qbasestep = 10;              // qlife's base step
@@ -159,30 +161,30 @@ wxString pythonlib;              // name of Python library (loaded at runtime)
 int dirwinwd = 180;              // width of directory window
 bool showpatterns = true;        // show pattern directory?
 bool showscripts = false;        // show script directory?
-wxMenu *patternSubMenu = NULL;   // submenu of recent pattern files
-wxMenu *scriptSubMenu = NULL;    // submenu of recent script files
+wxMenu* patternSubMenu = NULL;   // submenu of recent pattern files
+wxMenu* scriptSubMenu = NULL;    // submenu of recent script files
 int numpatterns = 0;             // current number of recent pattern files
 int numscripts = 0;              // current number of recent script files
 int maxpatterns = 20;            // maximum number of recent pattern files (1..MAX_RECENT)
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
-wxColor *livergb[10];            // color for live cells in each layer
-wxColor *deadrgb;                // color for dead cells
-wxColor *pastergb;               // color for pasted pattern
-wxColor *selectrgb;              // color for selected cells
-wxColor *qlifergb;               // status bar background when using qlifealgo
-wxColor *hlifergb;               // status bar background when using hlifealgo
+wxColor* livergb[10];            // color for live cells in each layer
+wxColor* deadrgb;                // color for dead cells
+wxColor* pastergb;               // color for pasted pattern
+wxColor* selectrgb;              // color for selected cells
+wxColor* qlifergb;               // status bar background when using qlifealgo
+wxColor* hlifergb;               // status bar background when using hlifealgo
 
-wxBrush *livebrush[10];          // for drawing live cells in each layer
-wxBrush *deadbrush;              // for drawing dead cells
-wxBrush *qlifebrush;             // for status bar background when using qlifealgo
-wxBrush *hlifebrush;             // for status bar background when using hlifealgo
-wxPen *pastepen;                 // for drawing paste rect
-wxPen *gridpen;                  // for drawing plain grid
-wxPen *boldpen;                  // for drawing bold grid
-wxPen *sgridpen[10];             // for drawing plain grid if swapcolors is true
-wxPen *sboldpen[10];             // for drawing bold grid if swapcolors is true
+wxBrush* livebrush[10];          // for drawing live cells in each layer
+wxBrush* deadbrush;              // for drawing dead cells
+wxBrush* qlifebrush;             // for status bar background when using qlifealgo
+wxBrush* hlifebrush;             // for status bar background when using hlifealgo
+wxPen* pastepen;                 // for drawing paste rect
+wxPen* gridpen;                  // for drawing plain grid
+wxPen* boldpen;                  // for drawing bold grid
+wxPen* sgridpen[10];             // for drawing plain grid if swapcolors is true
+wxPen* sboldpen[10];             // for drawing bold grid if swapcolors is true
 
 // these settings must be static -- they are changed by GetPrefs *before* the
 // view window is created
@@ -190,17 +192,530 @@ paste_location plocation = TopLeft;
 paste_mode pmode = Or;
 
 // these must be static -- they are created before the view window is created
-wxCursor *curs_pencil;           // for drawing cells
-wxCursor *curs_cross;            // for selecting cells
-wxCursor *curs_hand;             // for moving view by dragging
-wxCursor *curs_zoomin;           // for zooming in to a clicked cell
-wxCursor *curs_zoomout;          // for zooming out from a clicked cell
+wxCursor* curs_pencil;           // for drawing cells
+wxCursor* curs_cross;            // for selecting cells
+wxCursor* curs_hand;             // for moving view by dragging
+wxCursor* curs_zoomin;           // for zooming in to a clicked cell
+wxCursor* curs_zoomout;          // for zooming out from a clicked cell
 
 // local (ie. non-exported) globals:
 
 int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
+
+// set of modifier keys
+const int MK_META    = 1;        // command key on Mac, control key on Win/Linux
+const int MK_ALT     = 2;        // option key on Mac
+const int MK_SHIFT   = 4;
+#ifdef __WXMAC__
+const int MK_CTRL    = 8;        // control key is separate modifier on Mac
+const int MAX_MODS   = 16;
+#else
+const int MAX_MODS   = 8;
+#endif
+
+// WXK_* key codes like WXK_F1 have values > 128 so we use our own
+// internal key codes for function keys and a few other keys
+const int IK_HOME       = 1;
+const int IK_HELP       = 2;
+const int IK_ENTER      = 3;
+const int IK_F1         = 'A';   // we use shift+a for the real A, etc
+const int IK_F24        = 'X';
+const int MAX_KEYCODES  = 128;
+
+// names of the non-displayable keys we currently support
+const char NK_HOME[]    = "home";
+const char NK_HELP[]    = "help";
+const char NK_ENTER[]   = "enter";
+const char NK_BACK[]    = "backspace";
+const char NK_TAB[]     = "tab";
+const char NK_RETURN[]  = "return";
+const char NK_LEFT[]    = "left";
+const char NK_RIGHT[]   = "right";
+const char NK_UP[]      = "up";
+const char NK_DOWN[]    = "down";
+const char NK_SPACE[]   = "space";
+const char NK_DELETE[]  = "delete";
+
+// table for converting key combinations into actions
+//!!! put inside struct so we can save in temporary table before prefs dlg???
+action_id keyaction[MAX_KEYCODES][MAX_MODS] = {DO_NOTHING};
+
+// -----------------------------------------------------------------------------
+
+action_id FindAction(int key, int modifiers)
+{
+   // convert given wx key code and modifier set to our internal values
+   // and return the corresponding action
+   int ourkey = 0;
+   int ourmods = 0;
+   
+   // modifiers = value returned by wxKeyEvent::GetModifiers
+   if (modifiers & wxMOD_CMD)       ourmods |= MK_META;
+   if (modifiers & wxMOD_ALT)       ourmods |= MK_ALT;
+   if (modifiers & wxMOD_SHIFT)     ourmods |= MK_SHIFT;
+#ifdef __WXMAC__
+   if (modifiers & wxMOD_CONTROL)   ourmods |= MK_CTRL;
+#endif
+
+   if (key >= 'A' && key <= 'Z') {
+      // convert A..Z to shift+a..shift+z so we can use A..X
+      // for our internal function keys (IK_F1 to IK_F24)
+      ourkey = key + 32;
+      ourmods |= MK_SHIFT;
+   } else if (key >= WXK_F1 && key <= WXK_F24) {
+      // convert wx function key code to IK_F1..IK_F24
+      ourkey = IK_F1 + (key - WXK_F1);
+   } else {
+      switch (key) {
+         case WXK_HOME:          ourkey = IK_HOME; break;
+         case WXK_HELP:          ourkey = IK_HELP; break;
+         case WXK_NUMPAD_ENTER:  ourkey = IK_ENTER; break;
+         case WXK_LEFT:          ourkey = 28; break;
+         case WXK_RIGHT:         ourkey = 29; break;
+         case WXK_UP:            ourkey = 30; break;
+         case WXK_DOWN:          ourkey = 31; break;
+         case WXK_ADD:           ourkey = '+'; break;
+         case WXK_SUBTRACT:      ourkey = '-'; break;
+         case WXK_DIVIDE:        ourkey = '/'; break;
+         case WXK_MULTIPLY:      ourkey = '*'; break;
+         default:
+            if (key >= 0 && key < MAX_KEYCODES)
+               ourkey = key;
+            else
+               return DO_NOTHING;
+      }
+   }
+
+   return keyaction[ourkey][ourmods];
+}
+
+// -----------------------------------------------------------------------------
+
+void AddDefaultKeyActions()
+{
+   //!!! rethink default shortcuts -- keep to a bare minimum???
+
+   // File menu
+   keyaction[(int)'n'][MK_META] =   DO_NEWPATT;
+   keyaction[(int)'o'][MK_META] =   DO_OPENPATT;
+   keyaction[(int)'o'][MK_SHIFT+MK_META] = DO_OPENCLIP;
+   keyaction[(int)'s'][MK_META] =   DO_SAVE;
+   keyaction[(int)'p'][0] =         DO_PATTERNS;
+   keyaction[(int)'p'][MK_SHIFT] =  DO_SCRIPTS;
+#ifdef __WXMSW__
+   // Windows does not support ctrl+non-alpha
+#else
+   keyaction[(int)','][MK_META] =   DO_PREFS;
+#endif
+   keyaction[(int)','][0] =         DO_PREFS;
+   keyaction[(int)'q'][MK_META] =   DO_QUIT;
+
+   // Edit menu
+   keyaction[(int)'z'][0] =         DO_UNDO;
+   keyaction[(int)'z'][MK_META] =   DO_UNDO;
+   keyaction[(int)'z'][MK_SHIFT] =  DO_REDO;
+   keyaction[(int)'z'][MK_SHIFT+MK_META] = DO_REDO;
+   keyaction[(int)'x'][MK_META] =   DO_CUT;
+   keyaction[(int)'c'][MK_META] =   DO_COPY;
+   keyaction[8][0] =                DO_CLEAR;      // in wxMac, delete key generates backspace
+   keyaction[127][0] =              DO_CLEAR;
+   keyaction[8][MK_SHIFT] =         DO_CLEAROUT;
+   keyaction[127][MK_SHIFT] =       DO_CLEAROUT;
+   keyaction[(int)'v'][0] =         DO_PASTE;
+   keyaction[(int)'v'][MK_META] =   DO_PASTE;
+   keyaction[(int)'m'][MK_SHIFT] =  DO_PASTEMODE;
+   keyaction[(int)'l'][MK_SHIFT] =  DO_PASTELOC;
+   keyaction[(int)'a'][MK_META] =   DO_SELALL;
+   keyaction[(int)'a'][0] =         DO_SELALL;
+   keyaction[(int)'k'][0] =         DO_REMOVESEL;
+   keyaction[(int)'s'][0] =         DO_SHRINKFIT;
+   keyaction[(int)'5'][MK_META] =   DO_RANDFILL;
+   keyaction[IK_F1+4][0] =          DO_CURSDRAW;
+   keyaction[IK_F1+5][0] =          DO_CURSSEL;
+   keyaction[IK_F1+6][0] =          DO_CURSMOVE;
+   keyaction[IK_F1+7][0] =          DO_CURSIN;
+   keyaction[IK_F1+8][0] =          DO_CURSOUT;
+   keyaction[(int)'c'][0] =         DO_CURSCYCLE;
+
+   // Control menu
+   keyaction[13][0] =               DO_STARTSTOP;
+   keyaction[IK_ENTER][0] =         DO_STARTSTOP;
+   keyaction[(int)' '][0] =         DO_NEXTGEN;
+   keyaction[(int)'\t'][0] =        DO_NEXTSTEP;
+   keyaction[(int)'r'][MK_META] =   DO_RESET;
+   keyaction[(int)'+'][0] =         DO_FASTER;
+   keyaction[(int)'+'][MK_SHIFT] =  DO_FASTER;
+   keyaction[(int)'='][0] =         DO_FASTER;
+   keyaction[(int)'_'][0] =         DO_SLOWER;
+   keyaction[(int)'_'][MK_SHIFT] =  DO_SLOWER;
+   keyaction[(int)'-'][0] =         DO_SLOWER;
+   keyaction[(int)'t'][0] =         DO_AUTOFIT;
+   keyaction[(int)'t'][MK_META] =   DO_AUTOFIT;
+   keyaction[(int)'u'][MK_META] =   DO_HASHING;
+#ifdef __WXMAC__
+   keyaction[(int)' '][MK_CTRL] =   DO_ADVANCE;
+#else
+   // on Windows/Linux MK_META is control key
+   keyaction[(int)' '][MK_META] =   DO_ADVANCE;
+#endif
+   keyaction[(int)' '][MK_SHIFT] =  DO_ADVANCEOUT;
+   keyaction[(int)'t'][MK_SHIFT] =  DO_TIMING;
+
+   // View menu
+   keyaction[28][0] =               DO_LEFT;
+   keyaction[29][0] =               DO_RIGHT;
+   keyaction[30][0] =               DO_UP;
+   keyaction[31][0] =               DO_DOWN;
+#ifdef __WXMAC__
+   keyaction[IK_F1][0] =            DO_FULLSCREEN;
+#else
+   // use F11 on Windows/Linux
+   keyaction[IK_F1+10][0] =         DO_FULLSCREEN;
+#endif
+   keyaction[(int)'f'][0] =         DO_FIT;
+   keyaction[(int)'f'][MK_SHIFT] =  DO_FITSEL;
+   keyaction[(int)'m'][0] =         DO_MIDDLE;
+   keyaction[(int)'0'][0] =         DO_CHANGE00;
+   keyaction[(int)'9'][0] =         DO_RESTORE00;
+   keyaction[(int)']'][0] =         DO_ZOOMIN;
+   keyaction[(int)'*'][0] =         DO_ZOOMIN;
+   keyaction[(int)'*'][MK_SHIFT] =  DO_ZOOMIN;
+   keyaction[(int)'['][0] =         DO_ZOOMOUT;
+   keyaction[(int)'/'][0] =         DO_ZOOMOUT;
+   keyaction[(int)'1'][0] =         DO_SCALE1;
+   keyaction[(int)'2'][0] =         DO_SCALE2;
+   keyaction[(int)'4'][0] =         DO_SCALE4;
+   keyaction[(int)'8'][0] =         DO_SCALE8;
+   keyaction[(int)'6'][0] =         DO_SCALE16;
+   keyaction[(int)'\''][0] =        DO_SHOWTOOL;
+   keyaction[(int)'\\'][0] =        DO_SHOWLAYER;
+   keyaction[(int)';'][0] =         DO_SHOWSTATUS;
+   keyaction[(int)'e'][0] =         DO_SHOWEXACT;
+   keyaction[(int)'l'][0] =         DO_SHOWGRID;
+   keyaction[(int)'b'][0] =         DO_SWAPCOLORS;
+   keyaction[(int)'i'][0] =         DO_INFO;
+
+   // Layer menu
+   // none
+
+   // Help menu
+   keyaction[(int)'h'][0] =         DO_HELP;
+   keyaction[(int)'?'][0] =         DO_HELP;
+   keyaction[(int)'?'][MK_SHIFT] =  DO_HELP;
+   keyaction[IK_HELP][0] =          DO_HELP;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GetActionName(action_id action)
+{
+   switch (action) {
+      case DO_NOTHING:        return "NONE";
+      // File menu
+      case DO_NEWPATT:        return "new pattern";
+      case DO_OPENPATT:       return "open pattern...";
+      case DO_OPENCLIP:       return "open clipboard";
+      case DO_PATTERNS:       return "show patterns";
+      case DO_PATTDIR:        return "set pattern folder...";
+      case DO_SAVE:           return "save pattern...";
+      case DO_SAVEXRLE:       return "save extended rle";
+      case DO_RUNSCRIPT:      return "run script...";
+      case DO_RUNCLIP:        return "run clipboard";
+      case DO_SCRIPTS:        return "show scripts";
+      case DO_SCRIPTDIR:      return "set script folder...";
+      case DO_PREFS:          return "preferences...";
+      case DO_QUIT:           return "quit";
+      // Edit menu
+      case DO_UNDO:           return "undo";
+      case DO_REDO:           return "redo";
+      case DO_DISABLE:        return "disable undo/redo";
+      case DO_CUT:            return "cut selection";
+      case DO_COPY:           return "copy selection";
+      case DO_CLEAR:          return "clear selection";
+      case DO_CLEAROUT:       return "clear outside";
+      case DO_PASTE:          return "paste";
+      case DO_PASTEMODE:      return "cycle paste mode";
+      case DO_PASTELOC:       return "cycle paste location";
+      case DO_PASTESEL:       return "paste to selection";
+      case DO_SELALL:         return "select all";
+      case DO_REMOVESEL:      return "remove selection";
+      case DO_SHRINK:         return "shrink selection";
+      case DO_SHRINKFIT:      return "shrink and fit";
+      case DO_RANDFILL:       return "random fill";
+      case DO_FLIPTB:         return "flip top-bottom";
+      case DO_FLIPLR:         return "flip left-right";
+      case DO_ROTATECW:       return "rotate clockwise";
+      case DO_ROTATEACW:      return "rotate anticlockwise";
+      case DO_CURSDRAW:       return "cursor mode: draw";
+      case DO_CURSSEL:        return "cursor mode: select";
+      case DO_CURSMOVE:       return "cursor mode: move";
+      case DO_CURSIN:         return "cursor mode: zoom in";
+      case DO_CURSOUT:        return "cursor mode: zoom out";
+      case DO_CURSCYCLE:      return "cycle cursor mode";
+      // Control menu
+      case DO_STARTSTOP:      return "start/stop";
+      case DO_NEXTGEN:        return "next generation";
+      case DO_NEXTSTEP:       return "next step";
+      case DO_RESET:          return "reset";
+      case DO_SETGEN:         return "set generation...";
+      case DO_FASTER:         return "faster";
+      case DO_SLOWER:         return "slower";
+      case DO_AUTOFIT:        return "auto fit";
+      case DO_HASHING:        return "use hashing";
+      case DO_HYPER:          return "hyperspeed";
+      case DO_HASHINFO:       return "show hash info";
+      case DO_RULE:           return "change rule...";
+      case DO_ADVANCE:        return "advance selection";
+      case DO_ADVANCEOUT:     return "advance outside";
+      case DO_TIMING:         return "show timing";
+      // View menu
+      case DO_LEFT:           return "scroll left";
+      case DO_RIGHT:          return "scroll right";
+      case DO_UP:             return "scroll up";
+      case DO_DOWN:           return "scroll down";
+      case DO_FULLSCREEN:     return "full screen";
+      case DO_FIT:            return "fit pattern";
+      case DO_FITSEL:         return "fit selection";
+      case DO_MIDDLE:         return "middle";
+      case DO_CHANGE00:       return "change origin";
+      case DO_RESTORE00:      return "restore origin";
+      case DO_ZOOMIN:         return "zoom in";
+      case DO_ZOOMOUT:        return "zoom out";
+      case DO_SCALE1:         return "set scale 1:1";
+      case DO_SCALE2:         return "set scale 1:2";
+      case DO_SCALE4:         return "set scale 1:4";
+      case DO_SCALE8:         return "set scale 1:8";
+      case DO_SCALE16:        return "set scale 1:16";
+      case DO_SHOWTOOL:       return "show tool bar";
+      case DO_SHOWLAYER:      return "show layer bar";
+      case DO_SHOWSTATUS:     return "show status bar";
+      case DO_SHOWEXACT:      return "show exact numbers";
+      case DO_SHOWGRID:       return "show grid lines";
+      case DO_SWAPCOLORS:     return "swap cell colors";
+      case DO_BUFFERED:       return "buffered";
+      case DO_INFO:           return "pattern info";
+      // Layer menu
+      case DO_ADD:            return "add layer";
+      case DO_CLONE:          return "clone layer";
+      case DO_DUPLICATE:      return "duplicate layer";
+      case DO_DELETE:         return "delete layer";
+      case DO_DELOTHERS:      return "delete other layers";
+      case DO_MOVELAYER:      return "move layer...";
+      case DO_NAMELAYER:      return "name layer...";
+      case DO_SYNCVIEWS:      return "synchronize views";
+      case DO_SYNCCURS:       return "synchronize cursors";
+      case DO_STACK:          return "stack layers";
+      case DO_TILE:           return "tile layers";
+      // Help menu
+      case DO_HELP:           return "show help";
+      case DO_ABOUT:          return "about";
+      default:                Warning(_("Bug detected in GetActionName!"));
+   }
+   return "BUG";
+}
+
+// -----------------------------------------------------------------------------
+
+void GetKeyAction(char* value)
+{
+   // parse strings like "z undo" or "space+ctrl advance selection";
+   // note that any errors detected here can be Fatal because the user
+   // has to quit Golly anyway to edit the prefs file
+   char* start = value;
+   char* p = start;
+   int modset = 0;
+   int key = -1;
+
+   // extract key, skipping first char in case it's '+'
+   if (*p > 0) p++;
+   while (1) {
+      if (*p == 0) {
+         Fatal(wxString::Format(_("Bad key_action value: %s"),
+                                wxString(value,wxConvLocal).c_str()));
+      }
+      if (*p == ' ' || *p == '+') {
+         // we found end of key
+         char oldp = *p;
+         *p = 0;
+         int len = strlen(start);
+         if (len == 1) {
+            key = start[0];
+            if (key < ' ' || key > '~') {
+               Fatal(wxString::Format(_("Non-displayable key in key_action: code = %d"), key));
+            }
+            if (key >= 'A' && key <= 'Z') {
+               // convert A..Z to shift+a..shift+z so we can use A..X
+               // for our internal function keys (IK_F1 to IK_F24)
+               key += 32;
+               modset |= MK_SHIFT;
+            }
+         } else if (len > 1) {
+            if (start[0] == 'f' && start[1] >= '1' && start[1] <= '9') {
+               // we have a function key
+               char* p = &start[1];
+               int num;
+               sscanf(p, "%d", &num);
+               if (num >= 1 && num <= 24) key = IK_F1 + num - 1;
+            } else {
+               if      (strcmp(start, NK_HOME) == 0)     key = IK_HOME;
+               else if (strcmp(start, NK_HELP) == 0)     key = IK_HELP;
+               else if (strcmp(start, NK_ENTER) == 0)    key = IK_ENTER;
+               else if (strcmp(start, NK_BACK) == 0)     key = 8;
+               else if (strcmp(start, NK_TAB) == 0)      key = 9;
+               else if (strcmp(start, NK_RETURN) == 0)   key = 13;
+               else if (strcmp(start, NK_LEFT) == 0)     key = 28;
+               else if (strcmp(start, NK_RIGHT) == 0)    key = 29;
+               else if (strcmp(start, NK_UP) == 0)       key = 30;
+               else if (strcmp(start, NK_DOWN) == 0)     key = 31;
+               else if (strcmp(start, NK_SPACE) == 0)    key = 32;
+               else if (strcmp(start, NK_DELETE) == 0)   key = 127;
+            }
+            if (key < 0)
+               Fatal(wxString::Format(_("Unknown key in key_action: %s"),
+                                      wxString(start,wxConvLocal).c_str()));
+         }
+         *p = oldp;     // restore ' ' or '+'
+         start = p;
+         start++;
+         break;
+      }
+      p++;
+   }
+   
+   // *p is ' ' or '+' so extract zero or more modifiers
+   while (*p != ' ') {
+      p++;
+      if (*p == 0) {
+         Fatal(wxString::Format(_("No action in key_action value: %s"),
+                                wxString(value,wxConvLocal).c_str()));
+      }
+      if (*p == ' ' || *p == '+') {
+         // we found end of modifier
+         char oldp = *p;
+         *p = 0;
+         #ifdef __WXMAC__
+            if      (strcmp(start, "cmd") == 0)   modset |= MK_META;
+            else if (strcmp(start, "opt") == 0)   modset |= MK_ALT;
+            else if (strcmp(start, "ctrl") == 0)  modset |= MK_CTRL;
+         #else
+            if      (strcmp(start, "ctrl") == 0)  modset |= MK_META;
+            else if (strcmp(start, "alt") == 0)   modset |= MK_ALT;
+         #endif
+         else if    (strcmp(start, "shift") == 0) modset |= MK_SHIFT;
+         else
+            Fatal(wxString::Format(_("Unknown modifier in key_action: %s"),
+                                   wxString(start,wxConvLocal).c_str()));
+         *p = oldp;     // restore ' ' or '+'
+         start = p;
+         start++;
+      }
+   }
+   
+   // *p is ' ' so skip and check the action string
+   p++;
+   action_id action = DO_NOTHING;
+   int i = (int) action;
+   while (1) {
+      action = (action_id) ++i;
+      if (action == MAX_ACTIONS)
+         Fatal(wxString::Format(_("Unknown action in key_action: %s"),
+                                wxString(p,wxConvLocal).c_str()));
+      if (strcmp(p, GetActionName(action)) == 0) break;
+   }
+   
+   keyaction[key][modset] = action;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GetModifiers(int modset)
+{
+   std::string modkeys;
+#ifdef __WXMAC__
+   if (MK_ALT & modset)    modkeys += "+opt";
+   if (MK_SHIFT & modset)  modkeys += "+shift";
+   if (MK_CTRL & modset)   modkeys += "+ctrl";
+   if (MK_META & modset)   modkeys += "+cmd";
+#else
+   if (MK_ALT & modset)    modkeys += "+alt";
+   if (MK_SHIFT & modset)  modkeys += "+shift";
+   if (MK_META & modset)   modkeys += "+ctrl";
+#endif
+   return modkeys.c_str();
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GetKeyName(int key)
+{
+   if (key >= IK_F1 && key <= IK_F24) {
+      // function key
+      static char funckey[4];
+      char* p = &funckey[1];
+      int num = key - IK_F1 + 1;
+      funckey[0] = 'f';
+      sprintf(p, "%d", num);
+      funckey[num < 10 ? 2 : 3] = 0;
+      return (const char*) &funckey;
+   }
+
+   if (key > ' ' && key <= '~') {
+      // displayable char (but not space -- that's handled below)
+      static char keystring[2];
+      keystring[0] = key;
+      keystring[1] = 0;
+      return (const char*) &keystring;
+   }
+   
+   switch (key) {
+      // non-displayable char
+      case IK_HOME:     return NK_HOME;
+      case IK_HELP:     return NK_HELP;
+      case IK_ENTER:    return NK_ENTER;
+      case 8:           return NK_BACK;
+      case 9:           return NK_TAB;
+      case 13:          return NK_RETURN;
+      case 28:          return NK_LEFT;
+      case 29:          return NK_RIGHT;
+      case 30:          return NK_UP;
+      case 31:          return NK_DOWN;
+      case ' ':         return NK_SPACE;
+      case 127:         return NK_DELETE;
+      default:          Warning(wxString::Format(_("Bad key in GetKeyName: %d"),key));
+   }
+   
+   return "BUG";
+}
+
+// -----------------------------------------------------------------------------
+
+void SaveKeyActions(FILE* f)
+{
+   bool assigned[MAX_ACTIONS] = {false};
+
+   fputs("\n", f);
+   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
+      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+         action_id action = keyaction[key][modset];
+         if ( action != DO_NOTHING ) {
+            assigned[action] = true;
+            fprintf(f, "key_action=%s%s %s\n",
+                    GetKeyName(key), GetModifiers(modset), GetActionName(action));
+         }
+      }
+   }
+   
+   // list all unassigned actions in comment lines
+   fputs("# unassigned actions:\n", f);
+   for ( int i = 1; i < MAX_ACTIONS; i++ ) {
+      if ( !assigned[i] )
+         fprintf(f, "# key_action=key+mods %s\n", GetActionName((action_id)i));
+   }
+   
+   fputs("\n", f);
+}
 
 // -----------------------------------------------------------------------------
 
@@ -264,7 +779,9 @@ void CreateCursors()
    opencurs = curs_zoomin;
 }
 
-const char* CursorToString(wxCursor *curs)
+// -----------------------------------------------------------------------------
+
+const char* CursorToString(wxCursor* curs)
 {
    if (curs == curs_pencil) return "Draw";
    if (curs == curs_cross) return "Select";
@@ -274,7 +791,9 @@ const char* CursorToString(wxCursor *curs)
    return "No Change";   // curs is NULL
 }
 
-wxCursor* StringToCursor(const char *s)
+// -----------------------------------------------------------------------------
+
+wxCursor* StringToCursor(const char* s)
 {
    if (strcmp(s, "Draw") == 0) return curs_pencil;
    if (strcmp(s, "Select") == 0) return curs_cross;
@@ -284,7 +803,9 @@ wxCursor* StringToCursor(const char *s)
    return NULL;   // "No Change"
 }
 
-int CursorToIndex(wxCursor *curs)
+// -----------------------------------------------------------------------------
+
+int CursorToIndex(wxCursor* curs)
 {
    if (curs == curs_pencil) return 0;
    if (curs == curs_cross) return 1;
@@ -293,6 +814,8 @@ int CursorToIndex(wxCursor *curs)
    if (curs == curs_zoomout) return 4;
    return 5;   // curs is NULL
 }
+
+// -----------------------------------------------------------------------------
 
 wxCursor* IndexToCursor(int i)
 {
@@ -321,7 +844,9 @@ const char* GetPasteLocation()
    }
 }
 
-void SetPasteLocation(const char *s)
+// -----------------------------------------------------------------------------
+
+void SetPasteLocation(const char* s)
 {
    if (strcmp(s, "TopLeft") == 0) {
       plocation = TopLeft;
@@ -336,6 +861,8 @@ void SetPasteLocation(const char *s)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 const char* GetPasteMode()
 {
    switch (pmode) {
@@ -346,7 +873,9 @@ const char* GetPasteMode()
    }
 }
 
-void SetPasteMode(const char *s)
+// -----------------------------------------------------------------------------
+
+void SetPasteMode(const char* s)
 {
    if (strcmp(s, "Copy") == 0) {
       pmode = Copy;
@@ -386,6 +915,8 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
    }
 }
 
+// -----------------------------------------------------------------------------
+
 void SetBrushesAndPens()
 {
    for (int i=0; i<10; i++) livebrush[i]->SetColour(*livergb[i]);
@@ -396,6 +927,8 @@ void SetBrushesAndPens()
    SetGridPens(deadrgb, gridpen, boldpen);
    for (int i=0; i<10; i++) SetGridPens(livergb[i], sgridpen[i], sboldpen[i]);
 }
+
+// -----------------------------------------------------------------------------
 
 void CreateDefaultColors()
 {
@@ -433,14 +966,18 @@ void CreateDefaultColors()
    SetBrushesAndPens();
 }
 
-void GetColor(const char *value, wxColor *rgb)
+// -----------------------------------------------------------------------------
+
+void GetColor(const char* value, wxColor* rgb)
 {
    unsigned int r, g, b;
    sscanf(value, "%u,%u,%u", &r, &g, &b);
    rgb->Set(r, g, b);
 }
 
-void SaveColor(FILE *f, const char *name, const wxColor *rgb)
+// -----------------------------------------------------------------------------
+
+void SaveColor(FILE* f, const char* name, const wxColor* rgb)
 {
    fprintf(f, "%s=%d,%d,%d\n", name, rgb->Red(), rgb->Green(), rgb->Blue());
 }
@@ -449,7 +986,7 @@ void SaveColor(FILE *f, const char *name, const wxColor *rgb)
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char *GOLLY_VERSION = STRINGIFY(VERSION);
+const char* GOLLY_VERSION = STRINGIFY(VERSION);
 
 void SavePrefs()
 {
@@ -458,7 +995,7 @@ void SavePrefs()
       return;
    }
    
-   FILE *f = fopen(PREFS_NAME, "w");
+   FILE* f = fopen(PREFS_NAME, "w");
    if (f == NULL) {
       Warning(_("Could not save preferences file!"));
       return;
@@ -479,6 +1016,8 @@ void SavePrefs()
    #else
       fprintf(f, "platform=unknown\n");
    #endif
+
+   SaveKeyActions(f);
 
    // save main window's location and size
    #ifdef __WXMSW__
@@ -633,7 +1172,7 @@ void SavePrefs()
       fputs("\n", f);
       int i;
       for (i=0; i<numpatterns; i++) {
-         wxMenuItem *item = patternSubMenu->FindItemByPosition(i);
+         wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_pattern=%s\n",
                            (const char*)item->GetText().mb_str(wxConvLocal));
       }
@@ -643,7 +1182,7 @@ void SavePrefs()
       fputs("\n", f);
       int i;
       for (i=0; i<numscripts; i++) {
-         wxMenuItem *item = scriptSubMenu->FindItemByPosition(i);
+         wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_script=%s\n",
                            (const char*)item->GetText().mb_str(wxConvLocal));
       }
@@ -676,7 +1215,7 @@ void AddDefaultRules()
 
 // -----------------------------------------------------------------------------
 
-bool GetKeyVal(FILE *f, char *line, char **keyword, char **value)
+bool GetKeyVal(FILE* f, char* line, char** keyword, char** value)
 {
    while ( fgets(line, PREF_LINE_SIZE, f) != 0 ) {
       if ( line[0] == '#' || line[0] == '\n' ) {
@@ -696,7 +1235,7 @@ bool GetKeyVal(FILE *f, char *line, char **keyword, char **value)
 
 // -----------------------------------------------------------------------------
 
-void CheckVisibility(int *x, int *y, int *wd, int *ht)
+void CheckVisibility(int* x, int* y, int* wd, int* ht)
 {
    wxRect maxrect = wxGetClientDisplayRect();
    // reset x,y if title bar isn't clearly visible
@@ -754,18 +1293,19 @@ void GetPrefs()
 
    if ( !wxFileExists(wxString(PREFS_NAME,wxConvLocal)) ) {
       AddDefaultRules();
+      AddDefaultKeyActions();
       return;
    }
    
-   FILE *f = fopen(PREFS_NAME, "r");
+   FILE* f = fopen(PREFS_NAME, "r");
    if (f == NULL) {
       Warning(_("Could not read preferences file!"));
       return;
    }
 
    char line[PREF_LINE_SIZE];
-   char *keyword;
-   char *value;
+   char* keyword;
+   char* value;
    while ( GetKeyVal(f, line, &keyword, &value) ) {
       // remove \n from end of value
       int len = strlen(value);
@@ -775,9 +1315,10 @@ void GetPrefs()
 
       if (strcmp(keyword, "prefs_version") == 0) {
          sscanf(value, "%d", &currversion);
-         if (currversion < PREFS_VERSION) {
-            // may need to do something in the future if syntax changes
-         }
+         if (currversion < 3) AddDefaultKeyActions();
+
+      } else if (strcmp(keyword, "key_action") == 0) {
+         GetKeyAction(value);
 
       } else if (strcmp(keyword, "main_window") == 0) {
          sscanf(value, "%d,%d,%d,%d", &mainx, &mainy, &mainwd, &mainht);
@@ -1185,12 +1726,12 @@ private:
    bool ignore_page_event;       // used to prevent currpage being changed
    bool color_changed;           // have one or more colors changed?
 
-   wxColor *new_livergb[10];     // new color for live cells in each layer
-   wxColor *new_deadrgb;         // new color for dead cells
-   wxColor *new_pastergb;        // new color for pasted pattern
-   wxColor *new_selectrgb;       // new color for selected cells
-   wxColor *new_qlifergb;        // new status bar color when using qlifealgo
-   wxColor *new_hlifergb;        // new status bar color when using hlifealgo
+   wxColor* new_livergb[10];     // new color for live cells in each layer
+   wxColor* new_deadrgb;         // new color for dead cells
+   wxColor* new_pastergb;        // new color for pasted pattern
+   wxColor* new_selectrgb;       // new color for selected cells
+   wxColor* new_qlifergb;        // new status bar color when using qlifealgo
+   wxColor* new_hlifergb;        // new status bar color when using hlifealgo
 
    DECLARE_EVENT_TABLE()
 };
@@ -1227,7 +1768,7 @@ END_EVENT_TABLE()
 class MySpinCtrl : public wxSpinCtrl
 {
 public:
-   MySpinCtrl(wxWindow *parent, wxWindowID id, const wxString& str,
+   MySpinCtrl(wxWindow* parent, wxWindowID id, const wxString& str,
               const wxPoint& pos, const wxSize& size)
       : wxSpinCtrl(parent, id, str, pos, size)
    {
@@ -2184,7 +2725,7 @@ int PrefsDialog::GetSpinVal(long id)
 
 // -----------------------------------------------------------------------------
 
-bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const wxString &prefix)
+bool PrefsDialog::BadSpinVal(int id, int minval, int maxval, const wxString& prefix)
 {
    wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
 #if defined(__WXMSW__) || defined(__WXGTK__)

@@ -67,6 +67,8 @@ public:
    void OpenScript();
    void ToggleShowPatterns();
    void ToggleShowScripts();
+   void ChangePatternDir();
+   void ChangeScriptDir();
    void SavePattern();
    bool SaveCurrentLayer();
    const char* SaveFile(const wxString& path, const wxString& format, bool remember);
@@ -106,6 +108,7 @@ public:
    void ResetPattern(bool resetundo = true);
    void SetGeneration();
    const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
+   void ShowRuleDialog();
 
    // view functions
    void ToggleStatusBar();
@@ -121,6 +124,9 @@ public:
    void UpdateLayerItem(int index);
    void AppendLayerItem();
    void RemoveLayerItem();
+
+   // miscellaneous functions
+   void QuitApp();
 
    // flags
    bool generating;           // currently generating pattern?
@@ -162,17 +168,14 @@ private:
    void OpenRecentPattern(int id);
    void ClearMissingPatterns();
    void ClearAllPatterns();
-   void ChangePatternDir();
    void AddRecentScript(const wxString& path);
    void OpenRecentScript(int id);
    void ClearMissingScripts();
    void ClearAllScripts();
-   void ChangeScriptDir();
    wxString GetScriptFileName(const wxString& text);
 
    // control functions
    bool SaveStartingPattern();
-   void ShowRuleDialog();
    void DisplayPattern();
 
    // miscellaneous functions
@@ -181,7 +184,6 @@ private:
    void CreateDirControls();
    void SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root);
    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
-   void QuitApp();
 
    // splittable window contains pattern/script directory in left pane
    // and layer bar plus viewport window in right pane

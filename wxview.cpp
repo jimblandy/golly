@@ -455,127 +455,138 @@ void PatternView::UpdateScrollBars()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ProcessKey(int key, bool shiftdown)
+void PatternView::ProcessKey(int key, int modifiers)
 {
    mainptr->showbanner = false;
-   switch (key) {
-      case WXK_LEFT:    PanLeft( SmallScroll(currlayer->view->getwidth()) ); break;
-      case WXK_RIGHT:   PanRight( SmallScroll(currlayer->view->getwidth()) ); break;
-      case WXK_UP:      PanUp( SmallScroll(currlayer->view->getheight()) ); break;
-      case WXK_DOWN:    PanDown( SmallScroll(currlayer->view->getheight()) ); break;
 
-      // note that ProcessKey can be called from the golly_dokey command
-      // so best to avoid changing pattern while running a script
+   // WARNING: ProcessKey can be called from the GSF_dokey command, so we must
+   // avoid doing any actions that could cause havoc while running a script.
 
-      case WXK_BACK:       // delete key generates backspace code
-      case WXK_DELETE:     // probably never happens but play safe
-         if (shiftdown) {
-            if (!inscript) ClearOutsideSelection();
-         } else {
-            if (!inscript) ClearSelection();
-         }
-         break;
-
-      case 'z':   currlayer->undoredo->UndoChange(); break;
-      case 'Z':   currlayer->undoredo->RedoChange(); break;
-      
-      case 'a':   SelectAll(); break;
-      case 'k':   RemoveSelection(); break;
-      case 's':   ShrinkSelection(true); break;
-      case 'v':   if (!inscript) PasteClipboard(false); break;
-      
-      case 'L':   CyclePasteLocation(); break;
-      case 'M':   CyclePasteMode(); break;
-      case 'c':   CycleCursorMode(); break;
-
-      #ifdef __WXX11__
-         // need this so we can use function keys immediately without having
-         // to open Edit menu -- sheesh
-         case WXK_F5:   SetCursorMode(curs_pencil); break;
-         case WXK_F6:   SetCursorMode(curs_cross); break;
-         case WXK_F7:   SetCursorMode(curs_hand); break;
-         case WXK_F8:   SetCursorMode(curs_zoomin); break;
-         case WXK_F9:   SetCursorMode(curs_zoomout); break;
-      #endif
-
-      case 'g':
-      case WXK_NUMPAD_ENTER:
-      case WXK_RETURN:
-         // not generating -- see PatternView::OnChar
-         if (!inscript) mainptr->GeneratePattern();
-         break;
-
-      case ' ':
-         // not generating -- see PatternView::OnChar
-         if (!inscript) mainptr->NextGeneration(false);  // do only 1 gen
-         break;
-
-      case WXK_TAB:
-         if (!inscript) mainptr->NextGeneration(true);   // use current increment
-         break;
-
-      case 't':   mainptr->ToggleAutoFit(); break;
-      
-      // timing info is only for GeneratePattern calls
-      case 'T':   if (!inscript) mainptr->DisplayTimingInfo(); break;
-
-      case WXK_ADD:        // for X11
-      case '+':
-      case '=':   mainptr->GoFaster(); break;
-
-      case WXK_SUBTRACT:   // for X11
-      case '-':
-      case '_':   mainptr->GoSlower(); break;
-
-      // F11 is also used on non-Mac platforms (handled by MainFrame::OnMenu)
-      case WXK_F1: mainptr->ToggleFullScreen(); break;
-
-      case 'f':   FitPattern(); break;
-      case 'F':   FitSelection(); break;
-
-      case WXK_HOME:
-      case 'm':   ViewOrigin(); break;
-      case '0':   ChangeOrigin(); break;
-      case '9':   RestoreOrigin(); break;
-
-      case WXK_DIVIDE:     // for X11
-      case '[':
-      case '/':   ZoomOut(); break;
-
-      case WXK_MULTIPLY:   // for X11
-      case ']':
-      case '*':   ZoomIn(); break;
-
-      case '1':   SetPixelsPerCell(1); break;
-      case '2':   SetPixelsPerCell(2); break;
-      case '4':   SetPixelsPerCell(4); break;
-      case '8':   SetPixelsPerCell(8); break;
-      case '6':   SetPixelsPerCell(16); break;
-
-      case '\\':  ToggleLayerBar(); break;
-      case '\'':  mainptr->ToggleToolBar(); break;
-      case ';':   mainptr->ToggleStatusBar(); break;
-      case 'e':   mainptr->ToggleExactNumbers(); break;
-      case 'l':   ToggleGridLines(); break;
-      case 'b':   ToggleCellColors(); break;
-      case 'i':   mainptr->ShowPatternInfo(); break;
-      case ',':   mainptr->ShowPrefsDialog(); break;
-      case 'p':   mainptr->ToggleShowPatterns(); break;
-      case 'P':   mainptr->ToggleShowScripts(); break;
-   
-      case 'h':
-      case '?':
-      case WXK_HELP:
-         if (!waitingforclick) {
-            // if help window is open then bring it to the front,
-            // otherwise open it and display last help file
-            ShowHelp(wxEmptyString);
-         }
-         break;
-
-      default:
-         // any other key turns off full screen mode
+   action_id action = FindAction(key, modifiers);
+   switch (action) {
+      case DO_NOTHING:
+         // any unassigned key turns off full screen mode
          if (mainptr->fullscreen) mainptr->ToggleFullScreen();
+         break;
+
+      // File menu actions
+      case DO_NEWPATT:     if (!inscript) mainptr->NewPattern(); break;
+      case DO_OPENPATT:    if (!inscript) mainptr->OpenPattern(); break;
+      case DO_OPENCLIP:    if (!inscript) mainptr->OpenClipboard(); break;
+      case DO_SAVE:        if (!inscript) mainptr->SavePattern(); break;
+      case DO_SAVEXRLE:    if (!inscript) savexrle = !savexrle; break;
+      case DO_RUNSCRIPT:   if (!inscript) mainptr->OpenScript(); break;
+      case DO_RUNCLIP:     if (!inscript) mainptr->RunClipboard(); break;
+      case DO_PREFS:       if (!inscript) mainptr->ShowPrefsDialog(); break;
+      case DO_PATTERNS:    mainptr->ToggleShowPatterns(); break;
+      case DO_PATTDIR:     mainptr->ChangePatternDir(); break;
+      case DO_SCRIPTS:     mainptr->ToggleShowScripts(); break;
+      case DO_SCRIPTDIR:   mainptr->ChangeScriptDir(); break;
+      case DO_QUIT:        mainptr->QuitApp(); break;
+
+      // Edit menu actions
+      case DO_UNDO:        if (!inscript) currlayer->undoredo->UndoChange(); break;
+      case DO_REDO:        if (!inscript) currlayer->undoredo->RedoChange(); break;
+      case DO_DISABLE:     if (!inscript) mainptr->ToggleAllowUndo(); break;
+      case DO_CUT:         if (!inscript) CutSelection(); break;
+      case DO_COPY:        if (!inscript) CopySelection(); break;
+      case DO_CLEAR:       if (!inscript) ClearSelection(); break;
+      case DO_CLEAROUT:    if (!inscript) ClearOutsideSelection(); break;
+      case DO_PASTE:       if (!inscript) PasteClipboard(false); break;
+      case DO_PASTESEL:    if (!inscript) PasteClipboard(true); break;
+      case DO_SELALL:      if (!inscript) SelectAll(); break;
+      case DO_REMOVESEL:   if (!inscript) RemoveSelection(); break;
+      case DO_SHRINK:      if (!inscript) ShrinkSelection(false); break;
+      case DO_SHRINKFIT:   if (!inscript) ShrinkSelection(true); break;
+      case DO_RANDFILL:    if (!inscript) RandomFill(); break;
+      case DO_FLIPTB:      if (!inscript) FlipSelection(true); break;
+      case DO_FLIPLR:      if (!inscript) FlipSelection(false); break;
+      case DO_ROTATECW:    if (!inscript) RotateSelection(true); break;
+      case DO_ROTATEACW:   if (!inscript) RotateSelection(false); break;
+      case DO_CURSDRAW:    SetCursorMode(curs_pencil); break;
+      case DO_CURSSEL:     SetCursorMode(curs_cross); break;
+      case DO_CURSMOVE:    SetCursorMode(curs_hand); break;
+      case DO_CURSIN:      SetCursorMode(curs_zoomin); break;
+      case DO_CURSOUT:     SetCursorMode(curs_zoomout); break;
+      case DO_CURSCYCLE:   CycleCursorMode(); break;
+      case DO_PASTEMODE:   CyclePasteMode(); break;
+      case DO_PASTELOC:    CyclePasteLocation(); break;
+
+      // Control menu actions
+      case DO_STARTSTOP:   if (mainptr->generating || inscript)
+                              mainptr->Stop();
+                           else
+                              mainptr->GeneratePattern();
+                           break;
+      case DO_NEXTGEN:
+      case DO_NEXTSTEP:    if (mainptr->generating)
+                              mainptr->Stop();
+                           else if (!inscript)
+                              mainptr->NextGeneration(action == DO_NEXTSTEP);
+                           break;
+      case DO_RESET:       if (!inscript) mainptr->ResetPattern(); break;
+      case DO_SETGEN:      if (!inscript) mainptr->SetGeneration(); break;
+      case DO_FASTER:      mainptr->GoFaster(); break;
+      case DO_SLOWER:      mainptr->GoSlower(); break;
+      case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
+      case DO_HASHING:     if (!inscript) mainptr->ToggleHashing(); break;
+      case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
+      case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
+      case DO_RULE:        if (!inscript) mainptr->ShowRuleDialog(); break;
+      case DO_ADVANCE:     if (!inscript) mainptr->AdvanceSelection(); break;
+      case DO_ADVANCEOUT:  if (!inscript) mainptr->AdvanceOutsideSelection(); break;
+      case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
+
+      // View menu actions
+      case DO_LEFT:        PanLeft( SmallScroll(currlayer->view->getwidth()) ); break;
+      case DO_RIGHT:       PanRight( SmallScroll(currlayer->view->getwidth()) ); break;
+      case DO_UP:          PanUp( SmallScroll(currlayer->view->getheight()) ); break;
+      case DO_DOWN:        PanDown( SmallScroll(currlayer->view->getheight()) ); break;
+      case DO_FULLSCREEN:  mainptr->ToggleFullScreen(); break;
+      case DO_FIT:         FitPattern(); break;
+      case DO_FITSEL:      FitSelection(); break;
+      case DO_MIDDLE:      ViewOrigin(); break;
+      case DO_CHANGE00:    ChangeOrigin(); break;
+      case DO_RESTORE00:   RestoreOrigin(); break;
+      case DO_ZOOMIN:      ZoomIn(); break;
+      case DO_ZOOMOUT:     ZoomOut(); break;
+      case DO_SCALE1:      SetPixelsPerCell(1); break;
+      case DO_SCALE2:      SetPixelsPerCell(2); break;
+      case DO_SCALE4:      SetPixelsPerCell(4); break;
+      case DO_SCALE8:      SetPixelsPerCell(8); break;
+      case DO_SCALE16:     SetPixelsPerCell(16); break;
+      case DO_SHOWTOOL:    mainptr->ToggleToolBar(); break;
+      case DO_SHOWLAYER:   ToggleLayerBar(); break;
+      case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
+      case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
+      case DO_SHOWGRID:    ToggleGridLines(); break;
+      case DO_SWAPCOLORS:  ToggleCellColors(); break;
+      case DO_BUFFERED:    ToggleBuffering(); break;
+      case DO_INFO:        mainptr->ShowPatternInfo(); break;
+
+      // Layer menu actions
+      case DO_ADD:         if (!inscript) AddLayer(); break;
+      case DO_CLONE:       if (!inscript) CloneLayer(); break;
+      case DO_DUPLICATE:   if (!inscript) DuplicateLayer(); break;
+      case DO_DELETE:      if (!inscript) DeleteLayer(); break;
+      case DO_DELOTHERS:   if (!inscript) DeleteOtherLayers(); break;
+      case DO_MOVELAYER:   if (!inscript) MoveLayerDialog(); break;
+      case DO_NAMELAYER:   if (!inscript) NameLayerDialog(); break;
+      case DO_SYNCVIEWS:   if (!inscript) ToggleSyncViews(); break;
+      case DO_SYNCCURS:    if (!inscript) ToggleSyncCursors(); break;
+      case DO_STACK:       if (!inscript) ToggleStackLayers(); break;
+      case DO_TILE:        if (!inscript) ToggleTileLayers(); break;
+
+      // Help menu actions
+      case DO_HELP:        if (!waitingforclick) {
+                              // if help window is open then bring it to the front,
+                              // otherwise open it and display most recent help file
+                              ShowHelp(wxEmptyString);
+                           }
+                           break;
+      case DO_ABOUT:       if (!inscript) ShowAboutBox(); break;
+      
+      default:             Warning(_("Bug detected in ProcessKey!"));
    }
 }
 
@@ -1207,6 +1218,10 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
    }
+   
+   //!!!
+   printf("\n--- OnKeyDown: char=%c key=%d mods=%d\n", (char)key, key, event.GetModifiers());
+
    event.Skip();
 }
 
@@ -1223,6 +1238,10 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
    }
+   
+   //!!!
+   printf("--- OnKeyUp: key=%d\n", key);
+
    event.Skip();
 }
 
@@ -1251,6 +1270,9 @@ void PatternView::OnChar(wxKeyEvent& event)
 {
    // get translated keyboard event
    int key = event.GetKeyCode();
+   
+   //!!!
+   printf("OnChar: char=%c key=%d mods=%d\n", (char)key, key, event.GetModifiers());
 
    // do this check first because we allow user to make a selection while
    // generating a pattern or running a script
@@ -1263,12 +1285,6 @@ void PatternView::OnChar(wxKeyEvent& event)
       #ifdef __WXX11__
          // sigh... pressing shift key by itself causes key = 306, control key = 308
          // and other keys like caps lock and option = -1
-         /*
-         char msg[64];
-         char ch = key;
-         sprintf(msg, "key=%d char=%c shifted=%d", key, ch, event.ShiftDown() );
-         Warning(msg);
-         */
          if ( key < 0 || key > 255 ) return;
       #endif
       // let script decide what to do with the key
@@ -1284,33 +1300,13 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
    
-   if ( mainptr->generating &&
-        (key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ||
-         key == ' ' || key == '.') ) {
+   if ( mainptr->generating && key == WXK_ESCAPE ) {
       mainptr->Stop();
       return;
    }
 
-   if ( key == ' ' && event.ShiftDown() ) {
-      mainptr->AdvanceOutsideSelection();
-      return;
-   } else if ( key == ' ' && event.ControlDown() ) {
-      mainptr->AdvanceSelection();
-      return;
-   }
-
-   // this was added to test Fatal, but could be useful to quit without saving prefs
-   if ( key == 17 && event.ShiftDown() ) {
-      // ^Q == 17
-      Fatal(_("Quitting without saving preferences."));
-   }
-
-   if ( event.CmdDown() || event.AltDown() ) {
-      event.Skip();
-   } else {
-      ProcessKey(key, event.ShiftDown());
-      mainptr->UpdateUserInterface(mainptr->IsActive());
-   }
+   ProcessKey(key, event.GetModifiers());
+   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------

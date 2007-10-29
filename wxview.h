@@ -103,7 +103,7 @@ public:
    int CellVisible(const bigint& x, const bigint& y);
 
    // process keyboard and mouse events
-   void ProcessKey(int key, bool shiftdown);
+   void ProcessKey(int key, int modifiers);
    void ProcessControlClick(int x, int y);
    void ProcessClick(int x, int y, bool shiftdown);
 

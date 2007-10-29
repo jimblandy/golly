@@ -94,8 +94,8 @@ extern bool askonquit;           // ask to save changes before quitting app?
 extern int newmag;               // mag setting for new pattern
 extern bool newremovesel;        // new pattern removes selection?
 extern bool openremovesel;       // opening pattern removes selection?
-extern wxCursor *newcurs;        // cursor after creating new pattern
-extern wxCursor *opencurs;       // cursor after opening pattern
+extern wxCursor* newcurs;        // cursor after creating new pattern
+extern wxCursor* opencurs;       // cursor after opening pattern
 extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
 extern int qbasestep;            // qlife's base step
@@ -111,39 +111,147 @@ extern wxString pythonlib;       // name of Python library (loaded at runtime)
 extern int dirwinwd;             // width of pattern/script directory window
 extern bool showpatterns;        // show pattern directory?
 extern bool showscripts;         // show script directory?
-extern wxMenu *patternSubMenu;   // submenu of recent pattern files
-extern wxMenu *scriptSubMenu;    // submenu of recent script files
+extern wxMenu* patternSubMenu;   // submenu of recent pattern files
+extern wxMenu* scriptSubMenu;    // submenu of recent script files
 extern int numpatterns;          // current number of recent pattern files
 extern int numscripts;           // current number of recent script files
 extern int maxpatterns;          // maximum number of recent pattern files
 extern int maxscripts;           // maximum number of recent script files
 
+extern wxArrayString namedrules;
 // We maintain an array of named rules, where each string is of the form
 // "name of rule|B.../S...".  The first string is always "Life|B3/S23".
-extern wxArrayString namedrules;
+
+// Keyboard shortcuts:
+
+// define the actions that can be invoked by various key combinations
+typedef enum {
+   DO_NOTHING = 0,               // null action must be zero
+   // File menu
+   DO_NEWPATT,                   // new pattern
+   DO_OPENPATT,                  // open pattern...
+   DO_OPENCLIP,                  // open clipboard
+   DO_PATTERNS,                  // show patterns
+   DO_PATTDIR,                   // set pattern folder...
+   DO_SAVE,                      // save pattern...
+   DO_SAVEXRLE,                  // save extended rle
+   DO_RUNSCRIPT,                 // run script...
+   DO_RUNCLIP,                   // run clipboard
+   DO_SCRIPTS,                   // show scripts
+   DO_SCRIPTDIR,                 // set script folder...
+   DO_PREFS,                     // preferences...
+   DO_QUIT,                      // quit
+   // Edit menu
+   DO_UNDO,                      // undo
+   DO_REDO,                      // redo
+   DO_DISABLE,                   // disable undo/redo
+   DO_CUT,                       // cut selection
+   DO_COPY,                      // copy selection
+   DO_CLEAR,                     // clear selection
+   DO_CLEAROUT,                  // clear outside
+   DO_PASTE,                     // paste
+   DO_PASTEMODE,                 // cycle paste mode
+   DO_PASTELOC,                  // cycle paste location
+   DO_PASTESEL,                  // paste to selection
+   DO_SELALL,                    // select all
+   DO_REMOVESEL,                 // remove selection
+   DO_SHRINK,                    // shrink selection
+   DO_SHRINKFIT,                 // shrink and fit
+   DO_RANDFILL,                  // random fill
+   DO_FLIPTB,                    // flip top-bottom
+   DO_FLIPLR,                    // flip left-right
+   DO_ROTATECW,                  // rotate clockwise
+   DO_ROTATEACW,                 // rotate anticlockwise
+   DO_CURSDRAW,                  // cursor mode: draw
+   DO_CURSSEL,                   // cursor mode: select
+   DO_CURSMOVE,                  // cursor mode: move
+   DO_CURSIN,                    // cursor mode: zoom in
+   DO_CURSOUT,                   // cursor mode: zoom out
+   DO_CURSCYCLE,                 // cycle cursor mode
+   // Control menu
+   DO_STARTSTOP,                 // start/stop
+   DO_NEXTGEN,                   // next generation
+   DO_NEXTSTEP,                  // next step
+   DO_RESET,                     // reset
+   DO_SETGEN,                    // set generation...
+   DO_FASTER,                    // faster
+   DO_SLOWER,                    // slower
+   DO_AUTOFIT,                   // auto fit
+   DO_HASHING,                   // use hashing
+   DO_HYPER,                     // hyperspeed
+   DO_HASHINFO,                  // show hash info
+   DO_RULE,                      // change rule...
+   DO_ADVANCE,                   // advance selection
+   DO_ADVANCEOUT,                // advance outside
+   DO_TIMING,                    // show timing
+   // View menu
+   DO_LEFT,                      // scroll left
+   DO_RIGHT,                     // scroll right
+   DO_UP,                        // scroll up
+   DO_DOWN,                      // scroll down
+   DO_FULLSCREEN,                // full screen
+   DO_FIT,                       // fit pattern
+   DO_FITSEL,                    // fit selection
+   DO_MIDDLE,                    // middle
+   DO_CHANGE00,                  // change origin
+   DO_RESTORE00,                 // restore origin
+   DO_ZOOMIN,                    // zoom in
+   DO_ZOOMOUT,                   // zoom out
+   DO_SCALE1,                    // set scale 1:1
+   DO_SCALE2,                    // set scale 1:2
+   DO_SCALE4,                    // set scale 1:4
+   DO_SCALE8,                    // set scale 1:8
+   DO_SCALE16,                   // set scale 1:16
+   DO_SHOWTOOL,                  // show tool bar
+   DO_SHOWLAYER,                 // show layer bar
+   DO_SHOWSTATUS,                // show status bar
+   DO_SHOWEXACT,                 // show exact numbers
+   DO_SHOWGRID,                  // show grid lines
+   DO_SWAPCOLORS,                // swap cell colors
+   DO_BUFFERED,                  // buffered
+   DO_INFO,                      // pattern info
+   // Layer menu
+   DO_ADD,                       // add layer
+   DO_CLONE,                     // clone layer
+   DO_DUPLICATE,                 // duplicate layer
+   DO_DELETE,                    // delete layer
+   DO_DELOTHERS,                 // delete other layers
+   DO_MOVELAYER,                 // move layer...
+   DO_NAMELAYER,                 // name layer...
+   DO_SYNCVIEWS,                 // synchronize views
+   DO_SYNCCURS,                  // synchronize cursors
+   DO_STACK,                     // stack layers
+   DO_TILE,                      // tile layers
+   // Help menu
+   DO_HELP,                      // show help
+   DO_ABOUT,                     // about
+   MAX_ACTIONS
+} action_id;
+
+action_id FindAction(int key, int modifiers);
+// return the action for the given key and modifier set
 
 // Colors:
 
-extern wxColor *livergb[10];     // color for live cells in each layer
-extern wxColor *deadrgb;         // color for dead cells
-extern wxColor *pastergb;        // color for pasted pattern
-extern wxColor *selectrgb;       // color for selected cells
-extern wxColor *qlifergb;        // status bar background if using qlife
-extern wxColor *hlifergb;        // status bar background if using hlife
+extern wxColor* livergb[10];     // color for live cells in each layer
+extern wxColor* deadrgb;         // color for dead cells
+extern wxColor* pastergb;        // color for pasted pattern
+extern wxColor* selectrgb;       // color for selected cells
+extern wxColor* qlifergb;        // status bar background if using qlife
+extern wxColor* hlifergb;        // status bar background if using hlife
 
 // colored brushes and pens
-extern wxBrush *livebrush[10];   // for drawing live cells in each layer
-extern wxBrush *deadbrush;       // for drawing dead cells
-extern wxBrush *qlifebrush;      // for status bar background if using qlife
-extern wxBrush *hlifebrush;      // for status bar background if using hlife
-extern wxPen *pastepen;          // for drawing paste rect
-extern wxPen *gridpen;           // for drawing plain grid
-extern wxPen *boldpen;           // for drawing bold grid
-extern wxPen *sgridpen[10];      // for drawing plain grid if swapcolors is true
-extern wxPen *sboldpen[10];      // for drawing bold grid if swapcolors is true
+extern wxBrush* livebrush[10];   // for drawing live cells in each layer
+extern wxBrush* deadbrush;       // for drawing dead cells
+extern wxBrush* qlifebrush;      // for status bar background if using qlife
+extern wxBrush* hlifebrush;      // for status bar background if using hlife
+extern wxPen* pastepen;          // for drawing paste rect
+extern wxPen* gridpen;           // for drawing plain grid
+extern wxPen* boldpen;           // for drawing bold grid
+extern wxPen* sgridpen[10];      // for drawing plain grid if swapcolors is true
+extern wxPen* sboldpen[10];      // for drawing bold grid if swapcolors is true
 
-// update colors for brushes and pens
-void SetBrushesAndPens();
+void SetBrushesAndPens();        // update colors for brushes and pens
 
 // Various constants:
 
@@ -183,24 +291,24 @@ extern paste_mode pmode;         // logical paste mode
 
 // get/set plocation
 const char* GetPasteLocation();
-void SetPasteLocation(const char *s);
+void SetPasteLocation(const char* s);
 
 // get/set pmode
 const char* GetPasteMode();
-void SetPasteMode(const char *s);
+void SetPasteMode(const char* s);
 
 // Cursor modes:
 
-extern wxCursor *curs_pencil;    // for drawing cells
-extern wxCursor *curs_cross;     // for selecting cells
-extern wxCursor *curs_hand;      // for moving view by dragging
-extern wxCursor *curs_zoomin;    // for zooming in to a clicked cell
-extern wxCursor *curs_zoomout;   // for zooming out from a clicked cell
+extern wxCursor* curs_pencil;    // for drawing cells
+extern wxCursor* curs_cross;     // for selecting cells
+extern wxCursor* curs_hand;      // for moving view by dragging
+extern wxCursor* curs_zoomin;    // for zooming in to a clicked cell
+extern wxCursor* curs_zoomout;   // for zooming out from a clicked cell
 
+int CursorToIndex(wxCursor* curs);
 // convert given cursor to an index: 0 for curs_pencil, 1 for curs_cross, etc
-int CursorToIndex(wxCursor *curs);
 
-// convert given index to a cursor (NULL if i is not in 0..4)
 wxCursor* IndexToCursor(int i);
+// convert given index to a cursor (NULL if i is not in 0..4)
 
 #endif
