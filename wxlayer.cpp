@@ -28,6 +28,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/filename.h"   // for wxFileName
+#if wxUSE_TOOLTIPS
+   #include "wx/tooltip.h" // for wxToolTip
+#endif
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -256,11 +259,16 @@ void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
 
 void LayerBar::OnButton(wxCommandEvent& event)
 {
+   #ifdef __WXMAC__
+      // close any open tool tip window (fixes wxMac bug?)
+      wxToolTip::RemoveToolTips();
+   #endif
+   
    mainptr->showbanner = false;
    statusptr->ClearMessage();
 
    int id = event.GetId();
-   
+
    #ifdef __WXMSW__
       // disconnect focus handler and reset focus to viewptr;
       // we must do latter before button becomes disabled

@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/tooltip.h" // for wxToolTip
 #endif
 
-#include <string>;         // for std::string
+#include <string>          // for std::string
 
 #include "lifealgo.h"
 #include "viewport.h"      // for MAX_MAG

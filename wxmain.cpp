@@ -458,6 +458,11 @@ void ToolBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
 
 void ToolBar::OnButton(wxCommandEvent& event)
 {
+   #ifdef __WXMAC__
+      // close any open tool tip window (fixes wxMac bug?)
+      wxToolTip::RemoveToolTips();
+   #endif
+
    int id = event.GetId();
 
    int cmdid;
