@@ -38,8 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/tooltip.h" // for wxToolTip
 #endif
 
-#include <string>          // for std::string
-
 #include "lifealgo.h"
 #include "viewport.h"      // for MAX_MAG
 
@@ -204,12 +202,12 @@ int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
 
-// set of modifier keys
-const int MK_META    = 1;        // command key on Mac, control key on Win/Linux
-const int MK_ALT     = 2;        // option key on Mac
-const int MK_SHIFT   = 4;
+// set of modifier keys (MSVC didn't like MK_*)
+const int mk_META    = 1;        // command key on Mac, control key on Win/Linux
+const int mk_ALT     = 2;        // option key on Mac
+const int mk_SHIFT   = 4;
 #ifdef __WXMAC__
-const int MK_CTRL    = 8;        // control key is separate modifier on Mac
+const int mk_CTRL    = 8;        // control key is separate modifier on Mac
 const int MAX_MODS   = 16;
 #else
 const int MAX_MODS   = 8;
@@ -252,18 +250,18 @@ action_id FindAction(int key, int modifiers)
    int ourmods = 0;
    
    // modifiers = value returned by wxKeyEvent::GetModifiers
-   if (modifiers & wxMOD_CMD)       ourmods |= MK_META;
-   if (modifiers & wxMOD_ALT)       ourmods |= MK_ALT;
-   if (modifiers & wxMOD_SHIFT)     ourmods |= MK_SHIFT;
+   if (modifiers & wxMOD_CMD)       ourmods |= mk_META;
+   if (modifiers & wxMOD_ALT)       ourmods |= mk_ALT;
+   if (modifiers & wxMOD_SHIFT)     ourmods |= mk_SHIFT;
 #ifdef __WXMAC__
-   if (modifiers & wxMOD_CONTROL)   ourmods |= MK_CTRL;
+   if (modifiers & wxMOD_CONTROL)   ourmods |= mk_CTRL;
 #endif
 
    if (key >= 'A' && key <= 'Z') {
       // convert A..Z to shift+a..shift+z so we can use A..X
       // for our internal function keys (IK_F1 to IK_F24)
       ourkey = key + 32;
-      ourmods |= MK_SHIFT;
+      ourmods |= mk_SHIFT;
    } else if (key >= WXK_F1 && key <= WXK_F24) {
       // convert wx function key code to IK_F1..IK_F24
       ourkey = IK_F1 + (key - WXK_F1);
@@ -298,40 +296,40 @@ void AddDefaultKeyActions()
    //!!! rethink default shortcuts -- keep to a bare minimum???
 
    // File menu
-   keyaction[(int)'n'][MK_META] =   DO_NEWPATT;
-   keyaction[(int)'o'][MK_META] =   DO_OPENPATT;
-   keyaction[(int)'o'][MK_SHIFT+MK_META] = DO_OPENCLIP;
-   keyaction[(int)'s'][MK_META] =   DO_SAVE;
+   keyaction[(int)'n'][mk_META] =   DO_NEWPATT;
+   keyaction[(int)'o'][mk_META] =   DO_OPENPATT;
+   keyaction[(int)'o'][mk_SHIFT+mk_META] = DO_OPENCLIP;
+   keyaction[(int)'s'][mk_META] =   DO_SAVE;
    keyaction[(int)'p'][0] =         DO_PATTERNS;
-   keyaction[(int)'p'][MK_SHIFT] =  DO_SCRIPTS;
+   keyaction[(int)'p'][mk_SHIFT] =  DO_SCRIPTS;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alpha
 #else
-   keyaction[(int)','][MK_META] =   DO_PREFS;
+   keyaction[(int)','][mk_META] =   DO_PREFS;
 #endif
    keyaction[(int)','][0] =         DO_PREFS;
-   keyaction[(int)'q'][MK_META] =   DO_QUIT;
+   keyaction[(int)'q'][mk_META] =   DO_QUIT;
 
    // Edit menu
    keyaction[(int)'z'][0] =         DO_UNDO;
-   keyaction[(int)'z'][MK_META] =   DO_UNDO;
-   keyaction[(int)'z'][MK_SHIFT] =  DO_REDO;
-   keyaction[(int)'z'][MK_SHIFT+MK_META] = DO_REDO;
-   keyaction[(int)'x'][MK_META] =   DO_CUT;
-   keyaction[(int)'c'][MK_META] =   DO_COPY;
+   keyaction[(int)'z'][mk_META] =   DO_UNDO;
+   keyaction[(int)'z'][mk_SHIFT] =  DO_REDO;
+   keyaction[(int)'z'][mk_SHIFT+mk_META] = DO_REDO;
+   keyaction[(int)'x'][mk_META] =   DO_CUT;
+   keyaction[(int)'c'][mk_META] =   DO_COPY;
    keyaction[8][0] =                DO_CLEAR;      // in wxMac, delete key generates backspace
    keyaction[127][0] =              DO_CLEAR;
-   keyaction[8][MK_SHIFT] =         DO_CLEAROUT;
-   keyaction[127][MK_SHIFT] =       DO_CLEAROUT;
+   keyaction[8][mk_SHIFT] =         DO_CLEAROUT;
+   keyaction[127][mk_SHIFT] =       DO_CLEAROUT;
    keyaction[(int)'v'][0] =         DO_PASTE;
-   keyaction[(int)'v'][MK_META] =   DO_PASTE;
-   keyaction[(int)'m'][MK_SHIFT] =  DO_PASTEMODE;
-   keyaction[(int)'l'][MK_SHIFT] =  DO_PASTELOC;
-   keyaction[(int)'a'][MK_META] =   DO_SELALL;
+   keyaction[(int)'v'][mk_META] =   DO_PASTE;
+   keyaction[(int)'m'][mk_SHIFT] =  DO_PASTEMODE;
+   keyaction[(int)'l'][mk_SHIFT] =  DO_PASTELOC;
+   keyaction[(int)'a'][mk_META] =   DO_SELALL;
    keyaction[(int)'a'][0] =         DO_SELALL;
    keyaction[(int)'k'][0] =         DO_REMOVESEL;
    keyaction[(int)'s'][0] =         DO_SHRINKFIT;
-   keyaction[(int)'5'][MK_META] =   DO_RANDFILL;
+   keyaction[(int)'5'][mk_META] =   DO_RANDFILL;
    keyaction[IK_F1+4][0] =          DO_CURSDRAW;
    keyaction[IK_F1+5][0] =          DO_CURSSEL;
    keyaction[IK_F1+6][0] =          DO_CURSMOVE;
@@ -344,24 +342,24 @@ void AddDefaultKeyActions()
    keyaction[IK_ENTER][0] =         DO_STARTSTOP;
    keyaction[(int)' '][0] =         DO_NEXTGEN;
    keyaction[(int)'\t'][0] =        DO_NEXTSTEP;
-   keyaction[(int)'r'][MK_META] =   DO_RESET;
+   keyaction[(int)'r'][mk_META] =   DO_RESET;
    keyaction[(int)'+'][0] =         DO_FASTER;
-   keyaction[(int)'+'][MK_SHIFT] =  DO_FASTER;
+   keyaction[(int)'+'][mk_SHIFT] =  DO_FASTER;
    keyaction[(int)'='][0] =         DO_FASTER;
    keyaction[(int)'_'][0] =         DO_SLOWER;
-   keyaction[(int)'_'][MK_SHIFT] =  DO_SLOWER;
+   keyaction[(int)'_'][mk_SHIFT] =  DO_SLOWER;
    keyaction[(int)'-'][0] =         DO_SLOWER;
    keyaction[(int)'t'][0] =         DO_AUTOFIT;
-   keyaction[(int)'t'][MK_META] =   DO_AUTOFIT;
-   keyaction[(int)'u'][MK_META] =   DO_HASHING;
+   keyaction[(int)'t'][mk_META] =   DO_AUTOFIT;
+   keyaction[(int)'u'][mk_META] =   DO_HASHING;
 #ifdef __WXMAC__
-   keyaction[(int)' '][MK_CTRL] =   DO_ADVANCE;
+   keyaction[(int)' '][mk_CTRL] =   DO_ADVANCE;
 #else
-   // on Windows/Linux MK_META is control key
-   keyaction[(int)' '][MK_META] =   DO_ADVANCE;
+   // on Windows/Linux mk_META is control key
+   keyaction[(int)' '][mk_META] =   DO_ADVANCE;
 #endif
-   keyaction[(int)' '][MK_SHIFT] =  DO_ADVANCEOUT;
-   keyaction[(int)'t'][MK_SHIFT] =  DO_TIMING;
+   keyaction[(int)' '][mk_SHIFT] =  DO_ADVANCEOUT;
+   keyaction[(int)'t'][mk_SHIFT] =  DO_TIMING;
 
    // View menu
    keyaction[28][0] =               DO_LEFT;
@@ -375,13 +373,13 @@ void AddDefaultKeyActions()
    keyaction[IK_F1+10][0] =         DO_FULLSCREEN;
 #endif
    keyaction[(int)'f'][0] =         DO_FIT;
-   keyaction[(int)'f'][MK_SHIFT] =  DO_FITSEL;
+   keyaction[(int)'f'][mk_SHIFT] =  DO_FITSEL;
    keyaction[(int)'m'][0] =         DO_MIDDLE;
    keyaction[(int)'0'][0] =         DO_CHANGE00;
    keyaction[(int)'9'][0] =         DO_RESTORE00;
    keyaction[(int)']'][0] =         DO_ZOOMIN;
    keyaction[(int)'*'][0] =         DO_ZOOMIN;
-   keyaction[(int)'*'][MK_SHIFT] =  DO_ZOOMIN;
+   keyaction[(int)'*'][mk_SHIFT] =  DO_ZOOMIN;
    keyaction[(int)'['][0] =         DO_ZOOMOUT;
    keyaction[(int)'/'][0] =         DO_ZOOMOUT;
    keyaction[(int)'1'][0] =         DO_SCALE1;
@@ -403,7 +401,7 @@ void AddDefaultKeyActions()
    // Help menu
    keyaction[(int)'h'][0] =         DO_HELP;
    keyaction[(int)'?'][0] =         DO_HELP;
-   keyaction[(int)'?'][MK_SHIFT] =  DO_HELP;
+   keyaction[(int)'?'][mk_SHIFT] =  DO_HELP;
    keyaction[IK_HELP][0] =          DO_HELP;
 }
 
@@ -549,7 +547,7 @@ void GetKeyAction(char* value)
                // convert A..Z to shift+a..shift+z so we can use A..X
                // for our internal function keys (IK_F1 to IK_F24)
                key += 32;
-               modset |= MK_SHIFT;
+               modset |= mk_SHIFT;
             }
          } else if (len > 1) {
             if (start[0] == 'f' && start[1] >= '1' && start[1] <= '9') {
@@ -596,14 +594,14 @@ void GetKeyAction(char* value)
          char oldp = *p;
          *p = 0;
          #ifdef __WXMAC__
-            if      (strcmp(start, "cmd") == 0)   modset |= MK_META;
-            else if (strcmp(start, "opt") == 0)   modset |= MK_ALT;
-            else if (strcmp(start, "ctrl") == 0)  modset |= MK_CTRL;
+            if      (strcmp(start, "cmd") == 0)   modset |= mk_META;
+            else if (strcmp(start, "opt") == 0)   modset |= mk_ALT;
+            else if (strcmp(start, "ctrl") == 0)  modset |= mk_CTRL;
          #else
-            if      (strcmp(start, "ctrl") == 0)  modset |= MK_META;
-            else if (strcmp(start, "alt") == 0)   modset |= MK_ALT;
+            if      (strcmp(start, "ctrl") == 0)  modset |= mk_META;
+            else if (strcmp(start, "alt") == 0)   modset |= mk_ALT;
          #endif
-         else if    (strcmp(start, "shift") == 0) modset |= MK_SHIFT;
+         else if    (strcmp(start, "shift") == 0) modset |= mk_SHIFT;
          else
             Fatal(wxString::Format(_("Unknown modifier in key_action: %s"),
                                    wxString(start,wxConvLocal).c_str()));
@@ -630,63 +628,56 @@ void GetKeyAction(char* value)
 
 // -----------------------------------------------------------------------------
 
-const char* GetModifiers(int modset)
+wxString GetModifiers(int modset)
 {
-   std::string modkeys;
+   wxString modkeys = wxEmptyString;
 #ifdef __WXMAC__
-   if (MK_ALT & modset)    modkeys += "+opt";
-   if (MK_SHIFT & modset)  modkeys += "+shift";
-   if (MK_CTRL & modset)   modkeys += "+ctrl";
-   if (MK_META & modset)   modkeys += "+cmd";
+   if (mk_ALT & modset)    modkeys += wxString("+opt", wxConvLocal);
+   if (mk_SHIFT & modset)  modkeys += wxString("+shift", wxConvLocal);
+   if (mk_CTRL & modset)   modkeys += wxString("+ctrl", wxConvLocal);
+   if (mk_META & modset)   modkeys += wxString("+cmd", wxConvLocal);
 #else
-   if (MK_ALT & modset)    modkeys += "+alt";
-   if (MK_SHIFT & modset)  modkeys += "+shift";
-   if (MK_META & modset)   modkeys += "+ctrl";
+   if (mk_ALT & modset)    modkeys += wxString("+alt", wxConvLocal);
+   if (mk_SHIFT & modset)  modkeys += wxString("+shift", wxConvLocal);
+   if (mk_META & modset)   modkeys += wxString("+ctrl", wxConvLocal);
 #endif
-   return modkeys.c_str();
+   return modkeys;
 }
 
 // -----------------------------------------------------------------------------
 
-const char* GetKeyName(int key)
+wxString GetKeyName(int key)
 {
+   wxString result;
+
    if (key >= IK_F1 && key <= IK_F24) {
       // function key
-      static char funckey[4];
-      char* p = &funckey[1];
-      int num = key - IK_F1 + 1;
-      funckey[0] = 'f';
-      sprintf(p, "%d", num);
-      funckey[num < 10 ? 2 : 3] = 0;
-      return (const char*) &funckey;
-   }
-
-   if (key > ' ' && key <= '~') {
-      // displayable char (but not space -- that's handled below)
-      static char keystring[2];
-      keystring[0] = key;
-      keystring[1] = 0;
-      return (const char*) &keystring;
+      result.Printf(wxT("f%d"), key - IK_F1 + 1);
+   
+   } else if (key > ' ' && key <= '~') {
+      // displayable char, but excluding space (that's handled below)
+      result = wxChar(key);
+   
+   } else {
+      switch (key) {
+         // non-displayable char
+         case IK_HOME:     result = wxString(NK_HOME, wxConvLocal); break;
+         case IK_HELP:     result = wxString(NK_HELP, wxConvLocal); break;
+         case IK_ENTER:    result = wxString(NK_ENTER, wxConvLocal); break;
+         case 8:           result = wxString(NK_BACK, wxConvLocal); break;
+         case 9:           result = wxString(NK_TAB, wxConvLocal); break;
+         case 13:          result = wxString(NK_RETURN, wxConvLocal); break;
+         case 28:          result = wxString(NK_LEFT, wxConvLocal); break;
+         case 29:          result = wxString(NK_RIGHT, wxConvLocal); break;
+         case 30:          result = wxString(NK_UP, wxConvLocal); break;
+         case 31:          result = wxString(NK_DOWN, wxConvLocal); break;
+         case ' ':         result = wxString(NK_SPACE, wxConvLocal); break;
+         case 127:         result = wxString(NK_DELETE, wxConvLocal); break;
+         default:          result = wxEmptyString;
+      }
    }
    
-   switch (key) {
-      // non-displayable char
-      case IK_HOME:     return NK_HOME;
-      case IK_HELP:     return NK_HELP;
-      case IK_ENTER:    return NK_ENTER;
-      case 8:           return NK_BACK;
-      case 9:           return NK_TAB;
-      case 13:          return NK_RETURN;
-      case 28:          return NK_LEFT;
-      case 29:          return NK_RIGHT;
-      case 30:          return NK_UP;
-      case 31:          return NK_DOWN;
-      case ' ':         return NK_SPACE;
-      case 127:         return NK_DELETE;
-      default:          Warning(wxString::Format(_("Bad key in GetKeyName: %d"),key));
-   }
-   
-   return "BUG";
+   return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -702,7 +693,9 @@ void SaveKeyActions(FILE* f)
          if ( action != DO_NOTHING ) {
             assigned[action] = true;
             fprintf(f, "key_action=%s%s %s\n",
-                    GetKeyName(key), GetModifiers(modset), GetActionName(action));
+                    (const char*) GetKeyName(key).mb_str(wxConvLocal),
+                    (const char*) GetModifiers(modset).mb_str(wxConvLocal),
+                    GetActionName(action));
          }
       }
    }
@@ -713,7 +706,6 @@ void SaveKeyActions(FILE* f)
       if ( !assigned[i] )
          fprintf(f, "# key_action=key+mods %s\n", GetActionName((action_id)i));
    }
-   
    fputs("\n", f);
 }
 
