@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.3 (released !!!)
 
+AKT: Go and Stop items have been replaced by a single Start/Stop item.
 AKT: Flip operations are much faster.
 TGR: Reduced chances of out-of-memory problem when loading large .mc file.
 AKT: Fixed drawing problems on Mac OS 10.3.9 (probably wxMac bug).

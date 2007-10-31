@@ -231,6 +231,10 @@ typedef enum {
 action_id FindAction(int key, int modifiers);
 // return the action for the given key and modifier set
 
+wxString GetAccelerator(action_id action);
+// return a string, possibly empty, containing the menu item
+// accelerator(s) for the given action
+
 // Colors:
 
 extern wxColor* livergb[10];     // color for live cells in each layer

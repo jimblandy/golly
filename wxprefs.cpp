@@ -202,7 +202,7 @@ int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
 
-// set of modifier keys (MSVC didn't like MK_*)
+// set of modifier keys (note that MSVC didn't like MK_*)
 const int mk_META    = 1;        // command key on Mac, control key on Win/Linux
 const int mk_ALT     = 2;        // option key on Mac
 const int mk_SHIFT   = 4;
@@ -214,19 +214,28 @@ const int MAX_MODS   = 8;
 #endif
 
 // WXK_* key codes like WXK_F1 have values > 128 so we use our own
-// internal key codes for function keys and a few other keys
+// internal key codes for function keys and a few other special keys
+const int IK_NULL       = 0;     // probably best never to use this
 const int IK_HOME       = 1;
-const int IK_HELP       = 2;
-const int IK_ENTER      = 3;
+const int IK_END        = 2;
+const int IK_HELP       = 3;
+const int IK_ENTER      = 4;
+const int IK_TAB        = 9;
+const int IK_RETURN     = 13;
+const int IK_LEFT       = 28;
+const int IK_RIGHT      = 29;
+const int IK_UP         = 30;
+const int IK_DOWN       = 31;
 const int IK_F1         = 'A';   // we use shift+a for the real A, etc
 const int IK_F24        = 'X';
+const int IK_DELETE     = 127;
 const int MAX_KEYCODES  = 128;
 
 // names of the non-displayable keys we currently support
 const char NK_HOME[]    = "home";
+const char NK_END[]     = "end";
 const char NK_HELP[]    = "help";
 const char NK_ENTER[]   = "enter";
-const char NK_BACK[]    = "backspace";
 const char NK_TAB[]     = "tab";
 const char NK_RETURN[]  = "return";
 const char NK_LEFT[]    = "left";
@@ -240,6 +249,9 @@ const char NK_DELETE[]  = "delete";
 //!!! put inside struct so we can save in temporary table before prefs dlg???
 action_id keyaction[MAX_KEYCODES][MAX_MODS] = {DO_NOTHING};
 
+// strings for setting menu item accelerators
+wxString accelerator[MAX_ACTIONS];
+
 // -----------------------------------------------------------------------------
 
 action_id FindAction(int key, int modifiers)
@@ -249,7 +261,7 @@ action_id FindAction(int key, int modifiers)
    int ourkey = 0;
    int ourmods = 0;
    
-   // modifiers = value returned by wxKeyEvent::GetModifiers
+   // modifiers is the value returned by wxKeyEvent::GetModifiers
    if (modifiers & wxMOD_CMD)       ourmods |= mk_META;
    if (modifiers & wxMOD_ALT)       ourmods |= mk_ALT;
    if (modifiers & wxMOD_SHIFT)     ourmods |= mk_SHIFT;
@@ -268,16 +280,21 @@ action_id FindAction(int key, int modifiers)
    } else {
       switch (key) {
          case WXK_HOME:          ourkey = IK_HOME; break;
+         case WXK_END:           ourkey = IK_END; break;
          case WXK_HELP:          ourkey = IK_HELP; break;
          case WXK_NUMPAD_ENTER:  ourkey = IK_ENTER; break;
-         case WXK_LEFT:          ourkey = 28; break;
-         case WXK_RIGHT:         ourkey = 29; break;
-         case WXK_UP:            ourkey = 30; break;
-         case WXK_DOWN:          ourkey = 31; break;
+         case WXK_TAB:           ourkey = IK_TAB; break;
+         case WXK_RETURN:        ourkey = IK_RETURN; break;
+         case WXK_LEFT:          ourkey = IK_LEFT; break;
+         case WXK_RIGHT:         ourkey = IK_RIGHT; break;
+         case WXK_UP:            ourkey = IK_UP; break;
+         case WXK_DOWN:          ourkey = IK_DOWN; break;
          case WXK_ADD:           ourkey = '+'; break;
          case WXK_SUBTRACT:      ourkey = '-'; break;
          case WXK_DIVIDE:        ourkey = '/'; break;
          case WXK_MULTIPLY:      ourkey = '*'; break;
+         case WXK_BACK:          // treat backspace like delete
+         case WXK_DELETE:        ourkey = IK_DELETE; break;
          default:
             if (key >= 0 && key < MAX_KEYCODES)
                ourkey = key;
@@ -303,7 +320,7 @@ void AddDefaultKeyActions()
    keyaction[(int)'p'][0] =         DO_PATTERNS;
    keyaction[(int)'p'][mk_SHIFT] =  DO_SCRIPTS;
 #ifdef __WXMSW__
-   // Windows does not support ctrl+non-alpha
+   // Windows does not support ctrl+non-alphanumeric
 #else
    keyaction[(int)','][mk_META] =   DO_PREFS;
 #endif
@@ -317,10 +334,8 @@ void AddDefaultKeyActions()
    keyaction[(int)'z'][mk_SHIFT+mk_META] = DO_REDO;
    keyaction[(int)'x'][mk_META] =   DO_CUT;
    keyaction[(int)'c'][mk_META] =   DO_COPY;
-   keyaction[8][0] =                DO_CLEAR;      // in wxMac, delete key generates backspace
-   keyaction[127][0] =              DO_CLEAR;
-   keyaction[8][mk_SHIFT] =         DO_CLEAROUT;
-   keyaction[127][mk_SHIFT] =       DO_CLEAROUT;
+   keyaction[IK_DELETE][0] =        DO_CLEAR;
+   keyaction[IK_DELETE][mk_SHIFT] = DO_CLEAROUT;
    keyaction[(int)'v'][0] =         DO_PASTE;
    keyaction[(int)'v'][mk_META] =   DO_PASTE;
    keyaction[(int)'m'][mk_SHIFT] =  DO_PASTEMODE;
@@ -338,10 +353,10 @@ void AddDefaultKeyActions()
    keyaction[(int)'c'][0] =         DO_CURSCYCLE;
 
    // Control menu
-   keyaction[13][0] =               DO_STARTSTOP;
+   keyaction[IK_RETURN][0] =        DO_STARTSTOP;
    keyaction[IK_ENTER][0] =         DO_STARTSTOP;
    keyaction[(int)' '][0] =         DO_NEXTGEN;
-   keyaction[(int)'\t'][0] =        DO_NEXTSTEP;
+   keyaction[IK_TAB][0] =           DO_NEXTSTEP;
    keyaction[(int)'r'][mk_META] =   DO_RESET;
    keyaction[(int)'+'][0] =         DO_FASTER;
    keyaction[(int)'+'][mk_SHIFT] =  DO_FASTER;
@@ -362,10 +377,10 @@ void AddDefaultKeyActions()
    keyaction[(int)'t'][mk_SHIFT] =  DO_TIMING;
 
    // View menu
-   keyaction[28][0] =               DO_LEFT;
-   keyaction[29][0] =               DO_RIGHT;
-   keyaction[30][0] =               DO_UP;
-   keyaction[31][0] =               DO_DOWN;
+   keyaction[IK_LEFT][0] =          DO_LEFT;
+   keyaction[IK_RIGHT][0] =         DO_RIGHT;
+   keyaction[IK_UP][0] =            DO_UP;
+   keyaction[IK_DOWN][0] =          DO_DOWN;
 #ifdef __WXMAC__
    keyaction[IK_F1][0] =            DO_FULLSCREEN;
 #else
@@ -412,103 +427,103 @@ const char* GetActionName(action_id action)
    switch (action) {
       case DO_NOTHING:        return "NONE";
       // File menu
-      case DO_NEWPATT:        return "new pattern";
-      case DO_OPENPATT:       return "open pattern...";
-      case DO_OPENCLIP:       return "open clipboard";
-      case DO_PATTERNS:       return "show patterns";
-      case DO_PATTDIR:        return "set pattern folder...";
-      case DO_SAVE:           return "save pattern...";
-      case DO_SAVEXRLE:       return "save extended rle";
-      case DO_RUNSCRIPT:      return "run script...";
-      case DO_RUNCLIP:        return "run clipboard";
-      case DO_SCRIPTS:        return "show scripts";
-      case DO_SCRIPTDIR:      return "set script folder...";
-      case DO_PREFS:          return "preferences...";
-      case DO_QUIT:           return "quit";
+      case DO_NEWPATT:        return "New Pattern";
+      case DO_OPENPATT:       return "Open Pattern...";
+      case DO_OPENCLIP:       return "Open Clipboard";
+      case DO_PATTERNS:       return "Show Patterns";
+      case DO_PATTDIR:        return "Set Pattern Folder...";
+      case DO_SAVE:           return "Save Pattern...";
+      case DO_SAVEXRLE:       return "Save Extended RLE";
+      case DO_RUNSCRIPT:      return "Run Script...";
+      case DO_RUNCLIP:        return "Run Clipboard";
+      case DO_SCRIPTS:        return "Show Scripts";
+      case DO_SCRIPTDIR:      return "Set Script Folder...";
+      case DO_PREFS:          return "Preferences...";
+      case DO_QUIT:           return "Quit Golly";
       // Edit menu
-      case DO_UNDO:           return "undo";
-      case DO_REDO:           return "redo";
-      case DO_DISABLE:        return "disable undo/redo";
-      case DO_CUT:            return "cut selection";
-      case DO_COPY:           return "copy selection";
-      case DO_CLEAR:          return "clear selection";
-      case DO_CLEAROUT:       return "clear outside";
-      case DO_PASTE:          return "paste";
-      case DO_PASTEMODE:      return "cycle paste mode";
-      case DO_PASTELOC:       return "cycle paste location";
-      case DO_PASTESEL:       return "paste to selection";
-      case DO_SELALL:         return "select all";
-      case DO_REMOVESEL:      return "remove selection";
-      case DO_SHRINK:         return "shrink selection";
-      case DO_SHRINKFIT:      return "shrink and fit";
-      case DO_RANDFILL:       return "random fill";
-      case DO_FLIPTB:         return "flip top-bottom";
-      case DO_FLIPLR:         return "flip left-right";
-      case DO_ROTATECW:       return "rotate clockwise";
-      case DO_ROTATEACW:      return "rotate anticlockwise";
-      case DO_CURSDRAW:       return "cursor mode: draw";
-      case DO_CURSSEL:        return "cursor mode: select";
-      case DO_CURSMOVE:       return "cursor mode: move";
-      case DO_CURSIN:         return "cursor mode: zoom in";
-      case DO_CURSOUT:        return "cursor mode: zoom out";
-      case DO_CURSCYCLE:      return "cycle cursor mode";
+      case DO_UNDO:           return "Undo";
+      case DO_REDO:           return "Redo";
+      case DO_DISABLE:        return "Disable Undo/Redo";
+      case DO_CUT:            return "Cut Selection";
+      case DO_COPY:           return "Copy Selection";
+      case DO_CLEAR:          return "Clear Selection";
+      case DO_CLEAROUT:       return "Clear Outside";
+      case DO_PASTE:          return "Paste";
+      case DO_PASTEMODE:      return "Cycle Paste Mode";
+      case DO_PASTELOC:       return "Cycle Paste Location";
+      case DO_PASTESEL:       return "Paste to Selection";
+      case DO_SELALL:         return "Select All";
+      case DO_REMOVESEL:      return "Remove Selection";
+      case DO_SHRINK:         return "Shrink Selection";
+      case DO_SHRINKFIT:      return "Shrink and Fit";
+      case DO_RANDFILL:       return "Random Fill";
+      case DO_FLIPTB:         return "Flip Top-Bottom";
+      case DO_FLIPLR:         return "Flip Left-Right";
+      case DO_ROTATECW:       return "Rotate Clockwise";
+      case DO_ROTATEACW:      return "Rotate Anticlockwise";
+      case DO_CURSDRAW:       return "Cursor Mode: Draw";
+      case DO_CURSSEL:        return "Cursor Mode: Select";
+      case DO_CURSMOVE:       return "Cursor Mode: Move";
+      case DO_CURSIN:         return "Cursor Mode: Zoom In";
+      case DO_CURSOUT:        return "Cursor Mode: Zoom Out";
+      case DO_CURSCYCLE:      return "Cycle Cursor Mode";
       // Control menu
-      case DO_STARTSTOP:      return "start/stop";
-      case DO_NEXTGEN:        return "next generation";
-      case DO_NEXTSTEP:       return "next step";
-      case DO_RESET:          return "reset";
-      case DO_SETGEN:         return "set generation...";
-      case DO_FASTER:         return "faster";
-      case DO_SLOWER:         return "slower";
-      case DO_AUTOFIT:        return "auto fit";
-      case DO_HASHING:        return "use hashing";
-      case DO_HYPER:          return "hyperspeed";
-      case DO_HASHINFO:       return "show hash info";
-      case DO_RULE:           return "change rule...";
-      case DO_ADVANCE:        return "advance selection";
-      case DO_ADVANCEOUT:     return "advance outside";
-      case DO_TIMING:         return "show timing";
+      case DO_STARTSTOP:      return "Start/Stop";
+      case DO_NEXTGEN:        return "Next Generation";
+      case DO_NEXTSTEP:       return "Next Step";
+      case DO_RESET:          return "Reset";
+      case DO_SETGEN:         return "Set Generation...";
+      case DO_FASTER:         return "Faster";
+      case DO_SLOWER:         return "Slower";
+      case DO_AUTOFIT:        return "Auto Fit";
+      case DO_HASHING:        return "Use Hashing";
+      case DO_HYPER:          return "Hyperspeed";
+      case DO_HASHINFO:       return "Show Hash Info";
+      case DO_RULE:           return "Set Rule...";
+      case DO_ADVANCE:        return "Advance Selection";
+      case DO_ADVANCEOUT:     return "Advance Outside";
+      case DO_TIMING:         return "Show Timing";
       // View menu
-      case DO_LEFT:           return "scroll left";
-      case DO_RIGHT:          return "scroll right";
-      case DO_UP:             return "scroll up";
-      case DO_DOWN:           return "scroll down";
-      case DO_FULLSCREEN:     return "full screen";
-      case DO_FIT:            return "fit pattern";
-      case DO_FITSEL:         return "fit selection";
-      case DO_MIDDLE:         return "middle";
-      case DO_CHANGE00:       return "change origin";
-      case DO_RESTORE00:      return "restore origin";
-      case DO_ZOOMIN:         return "zoom in";
-      case DO_ZOOMOUT:        return "zoom out";
-      case DO_SCALE1:         return "set scale 1:1";
-      case DO_SCALE2:         return "set scale 1:2";
-      case DO_SCALE4:         return "set scale 1:4";
-      case DO_SCALE8:         return "set scale 1:8";
-      case DO_SCALE16:        return "set scale 1:16";
-      case DO_SHOWTOOL:       return "show tool bar";
-      case DO_SHOWLAYER:      return "show layer bar";
-      case DO_SHOWSTATUS:     return "show status bar";
-      case DO_SHOWEXACT:      return "show exact numbers";
-      case DO_SHOWGRID:       return "show grid lines";
-      case DO_SWAPCOLORS:     return "swap cell colors";
-      case DO_BUFFERED:       return "buffered";
-      case DO_INFO:           return "pattern info";
+      case DO_LEFT:           return "Scroll Left";
+      case DO_RIGHT:          return "Scroll Right";
+      case DO_UP:             return "Scroll Up";
+      case DO_DOWN:           return "Scroll Down";
+      case DO_FULLSCREEN:     return "Full Screen";
+      case DO_FIT:            return "Fit Pattern";
+      case DO_FITSEL:         return "Fit Selection";
+      case DO_MIDDLE:         return "Middle";
+      case DO_CHANGE00:       return "Change Origin";
+      case DO_RESTORE00:      return "Restore Origin";
+      case DO_ZOOMIN:         return "Zoom In";
+      case DO_ZOOMOUT:        return "Zoom Out";
+      case DO_SCALE1:         return "Set Scale 1:1";
+      case DO_SCALE2:         return "Set Scale 1:2";
+      case DO_SCALE4:         return "Set Scale 1:4";
+      case DO_SCALE8:         return "Set Scale 1:8";
+      case DO_SCALE16:        return "Set Scale 1:16";
+      case DO_SHOWTOOL:       return "Show Tool Bar";
+      case DO_SHOWLAYER:      return "Show Layer Bar";
+      case DO_SHOWSTATUS:     return "Show Status Bar";
+      case DO_SHOWEXACT:      return "Show Exact Numbers";
+      case DO_SHOWGRID:       return "Show Grid Lines";
+      case DO_SWAPCOLORS:     return "Swap Cell Colors";
+      case DO_BUFFERED:       return "Buffered";
+      case DO_INFO:           return "Pattern Info";
       // Layer menu
-      case DO_ADD:            return "add layer";
-      case DO_CLONE:          return "clone layer";
-      case DO_DUPLICATE:      return "duplicate layer";
-      case DO_DELETE:         return "delete layer";
-      case DO_DELOTHERS:      return "delete other layers";
-      case DO_MOVELAYER:      return "move layer...";
-      case DO_NAMELAYER:      return "name layer...";
-      case DO_SYNCVIEWS:      return "synchronize views";
-      case DO_SYNCCURS:       return "synchronize cursors";
-      case DO_STACK:          return "stack layers";
-      case DO_TILE:           return "tile layers";
+      case DO_ADD:            return "Add Layer";
+      case DO_CLONE:          return "Clone Layer";
+      case DO_DUPLICATE:      return "Duplicate Layer";
+      case DO_DELETE:         return "Delete Layer";
+      case DO_DELOTHERS:      return "Delete Other Layers";
+      case DO_MOVELAYER:      return "Move Layer...";
+      case DO_NAMELAYER:      return "Name Layer...";
+      case DO_SYNCVIEWS:      return "Synchronize Views";
+      case DO_SYNCCURS:       return "Synchronize Cursors";
+      case DO_STACK:          return "Stack Layers";
+      case DO_TILE:           return "Tile Layers";
       // Help menu
-      case DO_HELP:           return "show help";
-      case DO_ABOUT:          return "about";
+      case DO_HELP:           return "Show Help";
+      case DO_ABOUT:          return "About Golly";
       default:                Warning(_("Bug detected in GetActionName!"));
    }
    return "BUG";
@@ -558,17 +573,17 @@ void GetKeyAction(char* value)
                if (num >= 1 && num <= 24) key = IK_F1 + num - 1;
             } else {
                if      (strcmp(start, NK_HOME) == 0)     key = IK_HOME;
+               else if (strcmp(start, NK_END) == 0)      key = IK_END;
                else if (strcmp(start, NK_HELP) == 0)     key = IK_HELP;
                else if (strcmp(start, NK_ENTER) == 0)    key = IK_ENTER;
-               else if (strcmp(start, NK_BACK) == 0)     key = 8;
-               else if (strcmp(start, NK_TAB) == 0)      key = 9;
-               else if (strcmp(start, NK_RETURN) == 0)   key = 13;
-               else if (strcmp(start, NK_LEFT) == 0)     key = 28;
-               else if (strcmp(start, NK_RIGHT) == 0)    key = 29;
-               else if (strcmp(start, NK_UP) == 0)       key = 30;
-               else if (strcmp(start, NK_DOWN) == 0)     key = 31;
-               else if (strcmp(start, NK_SPACE) == 0)    key = 32;
-               else if (strcmp(start, NK_DELETE) == 0)   key = 127;
+               else if (strcmp(start, NK_TAB) == 0)      key = IK_TAB;
+               else if (strcmp(start, NK_RETURN) == 0)   key = IK_RETURN;
+               else if (strcmp(start, NK_LEFT) == 0)     key = IK_LEFT;
+               else if (strcmp(start, NK_RIGHT) == 0)    key = IK_RIGHT;
+               else if (strcmp(start, NK_UP) == 0)       key = IK_UP;
+               else if (strcmp(start, NK_DOWN) == 0)     key = IK_DOWN;
+               else if (strcmp(start, NK_SPACE) == 0)    key = ' ';
+               else if (strcmp(start, NK_DELETE) == 0)   key = IK_DELETE;
             }
             if (key < 0)
                Fatal(wxString::Format(_("Unknown key in key_action: %s"),
@@ -659,20 +674,20 @@ wxString GetKeyName(int key)
       result = wxChar(key);
    
    } else {
+      // non-displayable char
       switch (key) {
-         // non-displayable char
          case IK_HOME:     result = wxString(NK_HOME, wxConvLocal); break;
+         case IK_END:      result = wxString(NK_END, wxConvLocal); break;
          case IK_HELP:     result = wxString(NK_HELP, wxConvLocal); break;
          case IK_ENTER:    result = wxString(NK_ENTER, wxConvLocal); break;
-         case 8:           result = wxString(NK_BACK, wxConvLocal); break;
-         case 9:           result = wxString(NK_TAB, wxConvLocal); break;
-         case 13:          result = wxString(NK_RETURN, wxConvLocal); break;
-         case 28:          result = wxString(NK_LEFT, wxConvLocal); break;
-         case 29:          result = wxString(NK_RIGHT, wxConvLocal); break;
-         case 30:          result = wxString(NK_UP, wxConvLocal); break;
-         case 31:          result = wxString(NK_DOWN, wxConvLocal); break;
+         case IK_TAB:      result = wxString(NK_TAB, wxConvLocal); break;
+         case IK_RETURN:   result = wxString(NK_RETURN, wxConvLocal); break;
+         case IK_LEFT:     result = wxString(NK_LEFT, wxConvLocal); break;
+         case IK_RIGHT:    result = wxString(NK_RIGHT, wxConvLocal); break;
+         case IK_UP:       result = wxString(NK_UP, wxConvLocal); break;
+         case IK_DOWN:     result = wxString(NK_DOWN, wxConvLocal); break;
          case ' ':         result = wxString(NK_SPACE, wxConvLocal); break;
-         case 127:         result = wxString(NK_DELETE, wxConvLocal); break;
+         case IK_DELETE:   result = wxString(NK_DELETE, wxConvLocal); break;
          default:          result = wxEmptyString;
       }
    }
@@ -707,6 +722,78 @@ void SaveKeyActions(FILE* f)
          fprintf(f, "# key_action=key+mods %s\n", GetActionName((action_id)i));
    }
    fputs("\n", f);
+}
+
+// -----------------------------------------------------------------------------
+
+void UpdateAccelerators()
+{
+   for ( int i = 0; i < MAX_ACTIONS; i++ )
+      accelerator[i] = wxEmptyString;
+   
+   // go thru keyaction table looking for key combos that are valid menu item
+   // accelerators and construct suitable strings like "\tCtrl+Alt+Shift+K"
+   // or "\tF12" or "\tReturn" etc
+   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
+      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+         action_id action = keyaction[key][modset];
+         if (action != DO_NOTHING && accelerator[action].IsEmpty()) {
+            
+            // check if key can be used as an accelerator
+            bool validaccel = false;
+            if ( (key >= IK_F1 && key <= IK_F24) ||
+                 (key >= IK_LEFT && key <= IK_DOWN) ||
+                  key == ' ' ||
+                  key == IK_HOME ||
+                  key == IK_END ||
+                  key == IK_ENTER ||
+                  key == IK_TAB ||
+                  key == IK_RETURN ||
+                  key == IK_DELETE ) {
+               validaccel = true;
+            } else if ( (modset & mk_META) && (key > ' ' && key <= '~') ) {
+               #ifdef __WXMSW__
+                  // Windows only allows Ctrl+alphanumeric
+                  if ( (key >= 'a' && key <= 'z') || (key >= '0' && key <= '9') )
+                     validaccel = true;
+               #else
+                  validaccel = true;
+               #endif
+            }
+            
+            if (validaccel) {
+               accelerator[action] = wxT("\t");
+               if (modset & mk_META) accelerator[action] += wxT("Ctrl+");
+               if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
+               if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
+               #ifdef __WXMAC__
+                  //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K???
+                  // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
+               #endif
+               if (key >= 'a' && key <= 'z') {
+                  // convert a..z to A..Z
+                  accelerator[action] += wxChar(key - 32);
+               } else {
+                  accelerator[action] += GetKeyName(key);
+               }
+            }
+         }
+      }
+   }
+   
+   //!!! wxMac bug: can't change labels of menu items that have been moved to app menu
+   /*
+   mbar->SetLabel(wxID_ABOUT, _("About XXX Golly\tCtrl+J"));   // no change
+   mbar->SetLabel(wxID_PREFERENCES, _("Prefs\tCtrl+7"));       // no change
+   mbar->SetLabel(wxID_NEW, _("XXX\tCtrl+3"));                 // works
+   */
+}
+
+// -----------------------------------------------------------------------------
+
+wxString GetAccelerator(action_id action)
+{
+   return accelerator[action];
 }
 
 // -----------------------------------------------------------------------------
@@ -1286,6 +1373,7 @@ void GetPrefs()
    if ( !wxFileExists(wxString(PREFS_NAME,wxConvLocal)) ) {
       AddDefaultRules();
       AddDefaultKeyActions();
+      UpdateAccelerators();
       return;
    }
    
@@ -1621,6 +1709,9 @@ void GetPrefs()
    
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();
+
+   // initialize accelerator strings
+   UpdateAccelerators();
 }
 
 // -----------------------------------------------------------------------------

@@ -84,6 +84,7 @@ enum {
    ID_SHOW_SCRIPTS,
    ID_SCRIPT_DIR,
    // wxID_PREFERENCES,
+   // wxID_EXIT,
    
    // Edit menu
    // wxID_UNDO,
@@ -127,8 +128,7 @@ enum {
    ID_ZOOMOUT,
 
    // Control menu
-   ID_GO,
-   ID_STOP,
+   ID_START,
    ID_NEXT,
    ID_STEP,
    ID_RESET,
@@ -217,8 +217,7 @@ int GetID_RUN_RECENT()              { return ID_RUN_RECENT; }
 
 // static routines used to post commands to the event queue
 
-int GetID_GO()    { return ID_GO; }
-int GetID_STOP()  { return ID_STOP; }
+int GetID_START() { return ID_START; }
 int GetID_RESET() { return ID_RESET; }
 int GetID_HASH()  { return ID_HASH; }
 
@@ -226,7 +225,7 @@ int GetID_HASH()  { return ID_HASH; }
 
 // one-shot timer to fix problems in wxMac and wxGTK -- see OnOneTimer;
 // must be static because it's used in DnDFile::OnDropFiles
-wxTimer *onetimer;
+wxTimer* onetimer;
 
 #ifdef __WXMSW__
 bool callUnselect = false;    // OnIdle needs to call Unselect?
@@ -234,7 +233,7 @@ bool callUnselect = false;    // OnIdle needs to call Unselect?
 
 // ids for bitmap buttons in tool bar
 enum {
-   GO_TOOL = 0,
+   START_TOOL = 0,
    STOP_TOOL,
    HASH_TOOL,
    NEW_TOOL,
@@ -303,8 +302,8 @@ public:
    // enable/disable button
    void EnableButton(int id, bool enable);
 
-   // set state of go/stop button
-   void SetGoStopButton();
+   // set state of start/stop button
+   void SetStartStopButton();
    
    // set state of a toggle button
    void SelectButton(int id, bool select);
@@ -361,7 +360,7 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #endif
 
    // init bitmaps for normal state
-   normtool[GO_TOOL] =        wxBITMAP(play);
+   normtool[START_TOOL] =     wxBITMAP(play);
    normtool[STOP_TOOL] =      wxBITMAP(stop);
    normtool[HASH_TOOL] =      wxBITMAP(hash);
    normtool[NEW_TOOL] =       wxBITMAP(new);
@@ -467,7 +466,7 @@ void ToolBar::OnButton(wxCommandEvent& event)
 
    int cmdid;
    switch (id) {
-      case GO_TOOL:        cmdid = (inscript || mainptr->generating) ? ID_STOP : ID_GO; break;
+      case START_TOOL:     cmdid = ID_START; break;
       case HASH_TOOL:      cmdid = ID_HASH; break;
       case NEW_TOOL:       cmdid = wxID_NEW; break;
       case OPEN_TOOL:      cmdid = wxID_OPEN; break;
@@ -485,7 +484,7 @@ void ToolBar::OnButton(wxCommandEvent& event)
    }
    
    // call MainFrame::OnMenu after OnButton finishes;
-   // this avoids go/stop button problem in GTK app
+   // this avoids start/stop button problem in GTK app
    wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
    wxPostEvent(mainptr->GetEventHandler(), cmdevt);
 }
@@ -577,7 +576,7 @@ void ToolBar::EnableButton(int id, bool enable)
    if (enable == tbbutt[id]->IsEnabled()) return;
 
    #ifdef __WXMSW__
-      if (id == GO_TOOL && (inscript || mainptr->generating)) {
+      if (id == START_TOOL && (inscript || mainptr->generating)) {
          tbbutt[id]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
          
       } else if (id == HASH_TOOL && currlayer->hash) {
@@ -614,23 +613,26 @@ void ToolBar::EnableButton(int id, bool enable)
 
 // -----------------------------------------------------------------------------
 
-void ToolBar::SetGoStopButton()
+void ToolBar::SetStartStopButton()
 {
    if (inscript || mainptr->generating) {
       // show stop bitmap
-      tbbutt[GO_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
-      if (inscript) tbbutt[GO_TOOL]->SetToolTip(_("Stop script"));
+      tbbutt[START_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
+      if (inscript)
+         tbbutt[START_TOOL]->SetToolTip(_("Stop script"));
+      else
+         tbbutt[START_TOOL]->SetToolTip(_("Stop generating"));
    } else {
-      // show go bitmap
-      tbbutt[GO_TOOL]->SetBitmapLabel(normtool[GO_TOOL]);
-      tbbutt[GO_TOOL]->SetToolTip(_("Start/stop generating"));
+      // show start bitmap
+      tbbutt[START_TOOL]->SetBitmapLabel(normtool[START_TOOL]);
+      tbbutt[START_TOOL]->SetToolTip(_("Start generating"));
    }
 
    #ifdef __WXX11__
-      tbbutt[GO_TOOL]->ClearBackground();    // fix wxX11 problem
+      tbbutt[START_TOOL]->ClearBackground();    // fix wxX11 problem
    #endif
 
-   tbbutt[GO_TOOL]->Refresh(false);
+   tbbutt[START_TOOL]->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -661,7 +663,7 @@ void MainFrame::CreateToolbar()
    if (toolbarptr == NULL) Fatal(_("Failed to create tool bar!"));
 
    // add buttons to tool bar
-   toolbarptr->AddButton(GO_TOOL,         _("Start/stop generating"));
+   toolbarptr->AddButton(START_TOOL,      _("Start generating"));
    toolbarptr->AddButton(HASH_TOOL,       _("Toggle hashing"));
    toolbarptr->AddSeparator();
    toolbarptr->AddButton(NEW_TOOL,        _("New pattern"));
@@ -692,8 +694,8 @@ void MainFrame::UpdateToolBar(bool active)
       if (viewptr->waitingforclick) active = false;
       bool busy = generating || inscript;
 
-      // set state of go/stop button
-      toolbarptr->SetGoStopButton();
+      // set state of start/stop button
+      toolbarptr->SetStartStopButton();
 
       // set state of toggle buttons
       toolbarptr->SelectButton(HASH_TOOL,       currlayer->hash);
@@ -705,7 +707,7 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->SelectButton(ZOOMIN_TOOL,     currlayer->curs == curs_zoomin);
       toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
       
-      toolbarptr->EnableButton(GO_TOOL,         active);
+      toolbarptr->EnableButton(START_TOOL,      active);
       toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);   // allow while generating
       toolbarptr->EnableButton(NEW_TOOL,        active && !busy);
       toolbarptr->EnableButton(OPEN_TOOL,       active && !busy);
@@ -813,8 +815,12 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_ROTATEA,   active && !busy && selexists);
       mbar->Enable(ID_CMODE,     active);
 
-      mbar->Enable(ID_GO,        active && !busy);
-      mbar->Enable(ID_STOP,      active && busy);
+      if (busy)
+         mbar->SetLabel(ID_START, _("Stop") + GetAccelerator(DO_STARTSTOP));
+      else
+         mbar->SetLabel(ID_START, _("Start") + GetAccelerator(DO_STARTSTOP));
+
+      mbar->Enable(ID_START,     active);
       mbar->Enable(ID_NEXT,      active && !busy);
       mbar->Enable(ID_STEP,      active && !busy);
       mbar->Enable(ID_RESET,     active && !inscript &&     // allow reset while generating
@@ -1404,8 +1410,11 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_ZOOMIN:         viewptr->SetCursorMode(curs_zoomin); break;
       case ID_ZOOMOUT:        viewptr->SetCursorMode(curs_zoomout); break;
       // Control menu
-      case ID_GO:             GeneratePattern(); break;
-      case ID_STOP:           Stop(); break;
+      case ID_START:          if (inscript || mainptr->generating)
+                                 Stop();
+                              else
+                                 GeneratePattern();
+                              break;
       case ID_NEXT:           NextGeneration(false); break;
       case ID_STEP:           NextGeneration(true); break;
       case ID_RESET:          ResetPattern(); break;
@@ -1928,7 +1937,8 @@ void MainFrame::SetRandomFillPercentage()
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
       wxString randlabel;
-      randlabel.Printf(_("Random Fill (%d%c)\tCtrl+5"), randomfill, '%');
+      randlabel.Printf(_("Random Fill (%d%c)"), randomfill, '%');
+      randlabel += GetAccelerator(DO_RANDFILL);
       mbar->SetLabel(ID_RANDOM, randlabel);
    }
 }
@@ -1995,232 +2005,182 @@ void MainFrame::RemoveLayerItem()
 
 void MainFrame::CreateMenus()
 {
-   wxMenu *fileMenu = new wxMenu();
-   wxMenu *editMenu = new wxMenu();
-   wxMenu *controlMenu = new wxMenu();
-   wxMenu *viewMenu = new wxMenu();
-   wxMenu *layerMenu = new wxMenu();
-   wxMenu *helpMenu = new wxMenu();
+   wxMenu* fileMenu = new wxMenu();
+   wxMenu* editMenu = new wxMenu();
+   wxMenu* controlMenu = new wxMenu();
+   wxMenu* viewMenu = new wxMenu();
+   wxMenu* layerMenu = new wxMenu();
+   wxMenu* helpMenu = new wxMenu();
 
    // create submenus
-   wxMenu *plocSubMenu = new wxMenu();
-   wxMenu *pmodeSubMenu = new wxMenu();
-   wxMenu *cmodeSubMenu = new wxMenu();
-   wxMenu *scaleSubMenu = new wxMenu();
+   wxMenu* plocSubMenu = new wxMenu();
+   wxMenu* pmodeSubMenu = new wxMenu();
+   wxMenu* cmodeSubMenu = new wxMenu();
+   wxMenu* scaleSubMenu = new wxMenu();
 
-   plocSubMenu->AppendCheckItem(ID_PL_TL, _("Top Left"));
-   plocSubMenu->AppendCheckItem(ID_PL_TR, _("Top Right"));
-   plocSubMenu->AppendCheckItem(ID_PL_BR, _("Bottom Right"));
-   plocSubMenu->AppendCheckItem(ID_PL_BL, _("Bottom Left"));
-   plocSubMenu->AppendCheckItem(ID_PL_MID, _("Middle"));
+   plocSubMenu->AppendCheckItem(ID_PL_TL,       _("Top Left"));
+   plocSubMenu->AppendCheckItem(ID_PL_TR,       _("Top Right"));
+   plocSubMenu->AppendCheckItem(ID_PL_BR,       _("Bottom Right"));
+   plocSubMenu->AppendCheckItem(ID_PL_BL,       _("Bottom Left"));
+   plocSubMenu->AppendCheckItem(ID_PL_MID,      _("Middle"));
 
-   pmodeSubMenu->AppendCheckItem(ID_PM_COPY, _("Copy"));
-   pmodeSubMenu->AppendCheckItem(ID_PM_OR, _("Or"));
-   pmodeSubMenu->AppendCheckItem(ID_PM_XOR, _("Xor"));
+   pmodeSubMenu->AppendCheckItem(ID_PM_COPY,    _("Copy"));
+   pmodeSubMenu->AppendCheckItem(ID_PM_OR,      _("Or"));
+   pmodeSubMenu->AppendCheckItem(ID_PM_XOR,     _("Xor"));
 
-   cmodeSubMenu->AppendCheckItem(ID_DRAW, _("Draw\tF5"));
-   cmodeSubMenu->AppendCheckItem(ID_SELECT, _("Select\tF6"));
-   cmodeSubMenu->AppendCheckItem(ID_MOVE, _("Move\tF7"));
-   cmodeSubMenu->AppendCheckItem(ID_ZOOMIN, _("Zoom In\tF8"));
-   cmodeSubMenu->AppendCheckItem(ID_ZOOMOUT, _("Zoom Out\tF9"));
+   cmodeSubMenu->AppendCheckItem(ID_DRAW,       _("Draw") + GetAccelerator(DO_CURSDRAW));
+   cmodeSubMenu->AppendCheckItem(ID_SELECT,     _("Select") + GetAccelerator(DO_CURSSEL));
+   cmodeSubMenu->AppendCheckItem(ID_MOVE,       _("Move") + GetAccelerator(DO_CURSMOVE));
+   cmodeSubMenu->AppendCheckItem(ID_ZOOMIN,     _("Zoom In") + GetAccelerator(DO_CURSIN));
+   cmodeSubMenu->AppendCheckItem(ID_ZOOMOUT,    _("Zoom Out") + GetAccelerator(DO_CURSOUT));
 
-   scaleSubMenu->AppendCheckItem(ID_SCALE_1, _("1:1\tCtrl+1"));
-   scaleSubMenu->AppendCheckItem(ID_SCALE_2, _("1:2\tCtrl+2"));
-   scaleSubMenu->AppendCheckItem(ID_SCALE_4, _("1:4\tCtrl+4"));
-   scaleSubMenu->AppendCheckItem(ID_SCALE_8, _("1:8\tCtrl+8"));
-   scaleSubMenu->AppendCheckItem(ID_SCALE_16, _("1:16\tCtrl+6"));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_1,    _("1:1") + GetAccelerator(DO_SCALE1));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_2,    _("1:2") + GetAccelerator(DO_SCALE2));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_4,    _("1:4") + GetAccelerator(DO_SCALE4));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_8,    _("1:8") + GetAccelerator(DO_SCALE8));
+   scaleSubMenu->AppendCheckItem(ID_SCALE_16,   _("1:16") + GetAccelerator(DO_SCALE16));
 
-   fileMenu->Append(wxID_NEW, _("New Pattern\tCtrl+N"));
+   fileMenu->Append(wxID_NEW,                   _("New Pattern") + GetAccelerator(DO_NEWPATT));
    fileMenu->AppendSeparator();
-   fileMenu->Append(wxID_OPEN, _("Open Pattern...\tCtrl+O"));
-   fileMenu->Append(ID_OPEN_CLIP, _("Open Clipboard\tShift+Ctrl+O"));
-   fileMenu->Append(ID_OPEN_RECENT, _("Open Recent"), patternSubMenu);
+   fileMenu->Append(wxID_OPEN,                  _("Open Pattern...") + GetAccelerator(DO_OPENPATT));
+   fileMenu->Append(ID_OPEN_CLIP,               _("Open Clipboard") + GetAccelerator(DO_OPENCLIP));
+   fileMenu->Append(ID_OPEN_RECENT,             _("Open Recent"), patternSubMenu);
    fileMenu->AppendSeparator();
-   fileMenu->AppendCheckItem(ID_SHOW_PATTERNS, _("Show Patterns\tCtrl+P"));
-   fileMenu->Append(ID_PATTERN_DIR, _("Set Pattern Folder..."));
+   fileMenu->AppendCheckItem(ID_SHOW_PATTERNS,  _("Show Patterns") + GetAccelerator(DO_PATTERNS));
+   fileMenu->Append(ID_PATTERN_DIR,             _("Set Pattern Folder...") + GetAccelerator(DO_PATTDIR));
    fileMenu->AppendSeparator();
-   fileMenu->Append(wxID_SAVE, _("Save Pattern...\tCtrl+S"));
-   fileMenu->AppendCheckItem(ID_SAVE_XRLE, _("Save Extended RLE"));
+   fileMenu->Append(wxID_SAVE,                  _("Save Pattern...") + GetAccelerator(DO_SAVE));
+   fileMenu->AppendCheckItem(ID_SAVE_XRLE,      _("Save Extended RLE") + GetAccelerator(DO_SAVEXRLE));
    fileMenu->AppendSeparator();
-   fileMenu->Append(ID_RUN_SCRIPT, _("Run Script..."));
-   fileMenu->Append(ID_RUN_CLIP, _("Run Clipboard"));
-   fileMenu->Append(ID_RUN_RECENT, _("Run Recent"), scriptSubMenu);
+   fileMenu->Append(ID_RUN_SCRIPT,              _("Run Script...") + GetAccelerator(DO_RUNSCRIPT));
+   fileMenu->Append(ID_RUN_CLIP,                _("Run Clipboard") + GetAccelerator(DO_RUNCLIP));
+   fileMenu->Append(ID_RUN_RECENT,              _("Run Recent"), scriptSubMenu);
    fileMenu->AppendSeparator();
-   fileMenu->AppendCheckItem(ID_SHOW_SCRIPTS, _("Show Scripts\tShift+Ctrl+P"));
-   fileMenu->Append(ID_SCRIPT_DIR, _("Set Script Folder..."));
+   fileMenu->AppendCheckItem(ID_SHOW_SCRIPTS,   _("Show Scripts") + GetAccelerator(DO_SCRIPTS));
+   fileMenu->Append(ID_SCRIPT_DIR,              _("Set Script Folder...") + GetAccelerator(DO_SCRIPTDIR));
    fileMenu->AppendSeparator();
-   #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
-      // use non-Ctrl shortcut because it can't be used when menu is disabled
-      fileMenu->Append(wxID_PREFERENCES, _("Preferences..."));
-   #else
-      // on the Mac the Preferences item gets moved to the app menu
-      fileMenu->Append(wxID_PREFERENCES, _("Preferences...\tCtrl+,"));
-   #endif
+   fileMenu->Append(wxID_PREFERENCES,           _("Preferences...") + GetAccelerator(DO_PREFS));
    fileMenu->AppendSeparator();
-   // on the Mac the Ctrl+Q is changed to Cmd-Q, the item is moved to the app menu,
-   // and the app name is appended to "Quit "
-   fileMenu->Append(wxID_EXIT, _("Quit\tCtrl+Q"));
+   // on the Mac the item is moved to the app menu and the app name is appended to "Quit "
+   fileMenu->Append(wxID_EXIT,                  _("Quit") + GetAccelerator(DO_QUIT));
 
-   editMenu->Append(wxID_UNDO, _("Undo\tCtrl+Z"));
-   editMenu->Append(wxID_REDO, _("Redo\tShift+Ctrl+Z"));
-   editMenu->AppendCheckItem(ID_NO_UNDO, _("Disable Undo/Redo"));
+   editMenu->Append(wxID_UNDO,                  _("Undo") + GetAccelerator(DO_UNDO));
+   editMenu->Append(wxID_REDO,                  _("Redo") + GetAccelerator(DO_REDO));
+   editMenu->AppendCheckItem(ID_NO_UNDO,        _("Disable Undo/Redo") + GetAccelerator(DO_DISABLE));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_CUT, _("Cut\tCtrl+X"));
-   editMenu->Append(ID_COPY, _("Copy\tCtrl+C"));
-   #ifdef __WXMSW__
-      // avoid non-Ctrl shortcut because it can't be used when menu is disabled
-      editMenu->Append(ID_CLEAR, _("Clear"));
-      editMenu->Append(ID_OUTSIDE, _("Clear Outside"));
-   #else
-      editMenu->Append(ID_CLEAR, _("Clear\tDelete"));
-      editMenu->Append(ID_OUTSIDE, _("Clear Outside\tShift+Delete"));
-   #endif
+   editMenu->Append(ID_CUT,                     _("Cut") + GetAccelerator(DO_CUT));
+   editMenu->Append(ID_COPY,                    _("Copy") + GetAccelerator(DO_COPY));
+   editMenu->Append(ID_CLEAR,                   _("Clear") + GetAccelerator(DO_CLEAR));
+   editMenu->Append(ID_OUTSIDE,                 _("Clear Outside") + GetAccelerator(DO_CLEAROUT));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_PASTE, _("Paste\tCtrl+V"));
-   editMenu->Append(ID_PMODE, _("Paste Mode"), pmodeSubMenu);
-   editMenu->Append(ID_PLOCATION, _("Paste Location"), plocSubMenu);
-   editMenu->Append(ID_PASTE_SEL, _("Paste to Selection"));
+   editMenu->Append(ID_PASTE,                   _("Paste") + GetAccelerator(DO_PASTE));
+   editMenu->Append(ID_PMODE,                   _("Paste Mode"), pmodeSubMenu);
+   editMenu->Append(ID_PLOCATION,               _("Paste Location"), plocSubMenu);
+   editMenu->Append(ID_PASTE_SEL,               _("Paste to Selection") + GetAccelerator(DO_PASTESEL));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_SELALL, _("Select All\tCtrl+A"));
-   editMenu->Append(ID_REMOVE, _("Remove Selection\tCtrl+K"));
-   editMenu->Append(ID_SHRINK, _("Shrink Selection"));
+   editMenu->Append(ID_SELALL,                  _("Select All") + GetAccelerator(DO_SELALL));
+   editMenu->Append(ID_REMOVE,                  _("Remove Selection") + GetAccelerator(DO_REMOVESEL));
+   editMenu->Append(ID_SHRINK,                  _("Shrink Selection") + GetAccelerator(DO_SHRINK));
    // full label will be set later by SetRandomFillPercentage
-   editMenu->Append(ID_RANDOM, _("Random Fill\tCtrl+5"));
-   editMenu->Append(ID_FLIPTB, _("Flip Top-Bottom"));
-   editMenu->Append(ID_FLIPLR, _("Flip Left-Right"));
-   editMenu->Append(ID_ROTATEC, _("Rotate Clockwise"));
-   editMenu->Append(ID_ROTATEA, _("Rotate Anticlockwise"));
+   editMenu->Append(ID_RANDOM,                  _("Random Fill") + GetAccelerator(DO_RANDFILL));
+   editMenu->Append(ID_FLIPTB,                  _("Flip Top-Bottom") + GetAccelerator(DO_FLIPTB));
+   editMenu->Append(ID_FLIPLR,                  _("Flip Left-Right") + GetAccelerator(DO_FLIPLR));
+   editMenu->Append(ID_ROTATEC,                 _("Rotate Clockwise") + GetAccelerator(DO_ROTATECW));
+   editMenu->Append(ID_ROTATEA,                 _("Rotate Anticlockwise") + GetAccelerator(DO_ROTATEACW));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_CMODE, _("Cursor Mode"), cmodeSubMenu);
+   editMenu->Append(ID_CMODE,                   _("Cursor Mode"), cmodeSubMenu);
 
-   controlMenu->Append(ID_GO, _("Go\tCtrl+G"));
-   #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
-      // use non-Ctrl shortcut because it can't be used when menu is disabled
-      controlMenu->Append(ID_STOP, _("Stop"));
-      controlMenu->Append(ID_NEXT, _("Next"));
-      controlMenu->Append(ID_STEP, _("Next Step"));
-   #else
-      controlMenu->Append(ID_STOP, _("Stop\tCtrl+."));
-      controlMenu->Append(ID_NEXT, _("Next\tSpace"));
-      controlMenu->Append(ID_STEP, _("Next Step\tTab"));
-   #endif
+   controlMenu->Append(ID_START,                _("Start") + GetAccelerator(DO_STARTSTOP));
+   controlMenu->Append(ID_NEXT,                 _("Next") + GetAccelerator(DO_NEXTGEN));
+   controlMenu->Append(ID_STEP,                 _("Next Step") + GetAccelerator(DO_NEXTSTEP));
    controlMenu->AppendSeparator();
-   controlMenu->Append(ID_RESET, _("Reset\tCtrl+R"));
-   controlMenu->Append(ID_SETGEN, _("Set Generation..."));
+   controlMenu->Append(ID_RESET,                _("Reset") + GetAccelerator(DO_RESET));
+   controlMenu->Append(ID_SETGEN,               _("Set Generation...") + GetAccelerator(DO_SETGEN));
    controlMenu->AppendSeparator();
-   #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
-      // use non-Ctrl shortcut because it can't be used when menu is disabled
-      controlMenu->Append(ID_FASTER, _("Faster"));
-      controlMenu->Append(ID_SLOWER, _("Slower"));
-   #else
-      controlMenu->Append(ID_FASTER, _("Faster\tCtrl++"));
-      controlMenu->Append(ID_SLOWER, _("Slower\tCtrl+-"));
-   #endif
+   controlMenu->Append(ID_FASTER,               _("Faster") + GetAccelerator(DO_FASTER));
+   controlMenu->Append(ID_SLOWER,               _("Slower") + GetAccelerator(DO_SLOWER));
    controlMenu->AppendSeparator();
-   controlMenu->AppendCheckItem(ID_AUTO, _("Auto Fit\tCtrl+T"));
-   controlMenu->AppendCheckItem(ID_HASH, _("Use Hashing\tCtrl+U"));
-   controlMenu->AppendCheckItem(ID_HYPER, _("Hyperspeed"));
-   controlMenu->AppendCheckItem(ID_HINFO, _("Show Hash Info"));
+   controlMenu->AppendCheckItem(ID_AUTO,        _("Auto Fit") + GetAccelerator(DO_AUTOFIT));
+   controlMenu->AppendCheckItem(ID_HASH,        _("Use Hashing") + GetAccelerator(DO_HASHING));
+   controlMenu->AppendCheckItem(ID_HYPER,       _("Hyperspeed") + GetAccelerator(DO_HYPER));
+   controlMenu->AppendCheckItem(ID_HINFO,       _("Show Hash Info") + GetAccelerator(DO_HASHINFO));
    controlMenu->AppendSeparator();
-   controlMenu->Append(ID_RULE, _("Rule..."));
+   controlMenu->Append(ID_RULE,                 _("Set Rule...") + GetAccelerator(DO_RULE));
 
-   #ifdef __WXMAC__
-      // F11 is a default activation key for Expose so use F1 instead
-      viewMenu->Append(ID_FULL, _("Full Screen\tF1"));
-   #else
-      viewMenu->Append(ID_FULL, _("Full Screen\tF11"));
-   #endif
+   viewMenu->Append(ID_FULL,                    _("Full Screen") + GetAccelerator(DO_FULLSCREEN));
    viewMenu->AppendSeparator();
-   viewMenu->Append(ID_FIT, _("Fit Pattern\tCtrl+F"));
-   viewMenu->Append(ID_FIT_SEL, _("Fit Selection\tShift+Ctrl+F"));
-   viewMenu->Append(ID_MIDDLE, _("Middle\tCtrl+M"));
-   viewMenu->Append(ID_RESTORE00, _("Restore Origin\tCtrl+9"));
+   viewMenu->Append(ID_FIT,                     _("Fit Pattern") + GetAccelerator(DO_FIT));
+   viewMenu->Append(ID_FIT_SEL,                 _("Fit Selection") + GetAccelerator(DO_FITSEL));
+   viewMenu->Append(ID_MIDDLE,                  _("Middle") + GetAccelerator(DO_MIDDLE));
+   viewMenu->Append(ID_RESTORE00,               _("Restore Origin") + GetAccelerator(DO_RESTORE00));
    viewMenu->AppendSeparator();
-   #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
-      // use non-Ctrl shortcut because it can't be used when menu is disabled
-      viewMenu->Append(wxID_ZOOM_IN, _("Zoom In"));
-      viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out"));
-   #else
-      viewMenu->Append(wxID_ZOOM_IN, _("Zoom In\tCtrl+]"));
-      viewMenu->Append(wxID_ZOOM_OUT, _("Zoom Out\tCtrl+["));
-   #endif
-   viewMenu->Append(ID_SET_SCALE, _("Set Scale"), scaleSubMenu);
+   viewMenu->Append(wxID_ZOOM_IN,               _("Zoom In") + GetAccelerator(DO_ZOOMIN));
+   viewMenu->Append(wxID_ZOOM_OUT,              _("Zoom Out") + GetAccelerator(DO_ZOOMOUT));
+   viewMenu->Append(ID_SET_SCALE,               _("Set Scale"), scaleSubMenu);
    viewMenu->AppendSeparator();
-   #ifdef __WXMSW__
-      // Windows doesn't support Ctrl+<non-alpha> menu shortcut, and best not to
-      // use non-Ctrl shortcut because it can't be used when menu is disabled
-      viewMenu->AppendCheckItem(ID_TOOL_BAR, _("Show Tool Bar"));
-      viewMenu->AppendCheckItem(ID_LAYER_BAR, _("Show Layer Bar"));
-      viewMenu->AppendCheckItem(ID_STATUS_BAR, _("Show Status Bar"));
-   #else
-      viewMenu->AppendCheckItem(ID_TOOL_BAR, _("Show Tool Bar\tCtrl+'"));
-      viewMenu->AppendCheckItem(ID_LAYER_BAR, _("Show Layer Bar\tCtrl+\\"));
-      viewMenu->AppendCheckItem(ID_STATUS_BAR, _("Show Status Bar\tCtrl+;"));
-   #endif
-   viewMenu->AppendCheckItem(ID_EXACT, _("Show Exact Numbers\tCtrl+E"));
-   viewMenu->AppendCheckItem(ID_GRID, _("Show Grid Lines\tCtrl+L"));
-   viewMenu->AppendCheckItem(ID_COLORS, _("Swap Cell Colors\tCtrl+B"));
-   viewMenu->AppendCheckItem(ID_BUFF, _("Buffered"));
+   viewMenu->AppendCheckItem(ID_TOOL_BAR,       _("Show Tool Bar") + GetAccelerator(DO_SHOWTOOL));
+   viewMenu->AppendCheckItem(ID_LAYER_BAR,      _("Show Layer Bar") + GetAccelerator(DO_SHOWLAYER));
+   viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
+   viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
+   viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
+   viewMenu->AppendCheckItem(ID_COLORS,         _("Swap Cell Colors") + GetAccelerator(DO_SWAPCOLORS));
+   viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
    viewMenu->AppendSeparator();
-   viewMenu->Append(ID_INFO, _("Pattern Info\tCtrl+I"));
+   viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
 
-   layerMenu->Append(ID_ADD_LAYER, _("Add Layer"));
-   layerMenu->Append(ID_CLONE, _("Clone Layer"));
-   layerMenu->Append(ID_DUPLICATE, _("Duplicate Layer"));
+   layerMenu->Append(ID_ADD_LAYER,              _("Add Layer") + GetAccelerator(DO_ADD));
+   layerMenu->Append(ID_CLONE,                  _("Clone Layer") + GetAccelerator(DO_CLONE));
+   layerMenu->Append(ID_DUPLICATE,              _("Duplicate Layer") + GetAccelerator(DO_DUPLICATE));
    layerMenu->AppendSeparator();
-   layerMenu->Append(ID_DEL_LAYER, _("Delete Layer"));
-   layerMenu->Append(ID_DEL_OTHERS, _("Delete Other Layers"));
+   layerMenu->Append(ID_DEL_LAYER,              _("Delete Layer") + GetAccelerator(DO_DELETE));
+   layerMenu->Append(ID_DEL_OTHERS,             _("Delete Other Layers") + GetAccelerator(DO_DELOTHERS));
    layerMenu->AppendSeparator();
-   layerMenu->Append(ID_MOVE_LAYER, _("Move Layer..."));
-   layerMenu->Append(ID_NAME_LAYER, _("Name Layer..."));
+   layerMenu->Append(ID_MOVE_LAYER,             _("Move Layer...") + GetAccelerator(DO_MOVELAYER));
+   layerMenu->Append(ID_NAME_LAYER,             _("Name Layer...") + GetAccelerator(DO_NAMELAYER));
    layerMenu->AppendSeparator();
-   layerMenu->AppendCheckItem(ID_SYNC_VIEW, _("Synchronize Views"));
-   layerMenu->AppendCheckItem(ID_SYNC_CURS, _("Synchronize Cursors"));
+   layerMenu->AppendCheckItem(ID_SYNC_VIEW,     _("Synchronize Views") + GetAccelerator(DO_SYNCVIEWS));
+   layerMenu->AppendCheckItem(ID_SYNC_CURS,     _("Synchronize Cursors") + GetAccelerator(DO_SYNCCURS));
    layerMenu->AppendSeparator();
-   layerMenu->AppendCheckItem(ID_STACK, _("Stack Layers"));
-   layerMenu->AppendCheckItem(ID_TILE, _("Tile Layers"));
+   layerMenu->AppendCheckItem(ID_STACK,         _("Stack Layers") + GetAccelerator(DO_STACK));
+   layerMenu->AppendCheckItem(ID_TILE,          _("Tile Layers") + GetAccelerator(DO_TILE));
    layerMenu->AppendSeparator();
-   layerMenu->AppendCheckItem(ID_LAYER0, _("0"));
+   layerMenu->AppendCheckItem(ID_LAYER0,        _("0"));
    // UpdateLayerItem will soon change the above item name
 
-   helpMenu->Append(ID_HELP_INDEX, _("Contents"));
-   helpMenu->Append(ID_HELP_INTRO, _("Introduction"));
-   helpMenu->Append(ID_HELP_TIPS, _("Hints and Tips"));
-   helpMenu->Append(ID_HELP_SHORTCUTS, _("Shortcuts"));
-   helpMenu->Append(ID_HELP_PERL, _("Perl Scripting"));
-   helpMenu->Append(ID_HELP_PYTHON, _("Python Scripting"));
-   helpMenu->Append(ID_HELP_LEXICON, _("Life Lexicon"));
+   helpMenu->Append(ID_HELP_INDEX,              _("Contents"));
+   helpMenu->Append(ID_HELP_INTRO,              _("Introduction"));
+   helpMenu->Append(ID_HELP_TIPS,               _("Hints and Tips"));
+   helpMenu->Append(ID_HELP_SHORTCUTS,          _("Shortcuts"));
+   helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
+   helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
+   helpMenu->Append(ID_HELP_LEXICON,            _("Life Lexicon"));
    helpMenu->AppendSeparator();
-   helpMenu->Append(ID_HELP_FILE, _("File Menu"));
-   helpMenu->Append(ID_HELP_EDIT, _("Edit Menu"));
-   helpMenu->Append(ID_HELP_CONTROL, _("Control Menu"));
-   helpMenu->Append(ID_HELP_VIEW, _("View Menu"));
-   helpMenu->Append(ID_HELP_LAYER, _("Layer Menu"));
-   helpMenu->Append(ID_HELP_HELP, _("Help Menu"));
+   helpMenu->Append(ID_HELP_FILE,               _("File Menu"));
+   helpMenu->Append(ID_HELP_EDIT,               _("Edit Menu"));
+   helpMenu->Append(ID_HELP_CONTROL,            _("Control Menu"));
+   helpMenu->Append(ID_HELP_VIEW,               _("View Menu"));
+   helpMenu->Append(ID_HELP_LAYER,              _("Layer Menu"));
+   helpMenu->Append(ID_HELP_HELP,               _("Help Menu"));
    helpMenu->AppendSeparator();
-   helpMenu->Append(ID_HELP_REFS, _("References"));
-   helpMenu->Append(ID_HELP_PROBLEMS, _("Known Problems"));
-   helpMenu->Append(ID_HELP_CHANGES, _("Changes"));
-   helpMenu->Append(ID_HELP_CREDITS, _("Credits"));
+   helpMenu->Append(ID_HELP_REFS,               _("References"));
+   helpMenu->Append(ID_HELP_PROBLEMS,           _("Known Problems"));
+   helpMenu->Append(ID_HELP_CHANGES,            _("Changes"));
+   helpMenu->Append(ID_HELP_CREDITS,            _("Credits"));
    #ifndef __WXMAC__
       helpMenu->AppendSeparator();
    #endif
    // on the Mac the wxID_ABOUT item gets moved to the app menu
-   helpMenu->Append(wxID_ABOUT, _("About Golly"));
+   helpMenu->Append(wxID_ABOUT,                 _("About Golly") + GetAccelerator(DO_ABOUT));
 
    // create the menu bar and append menus
    wxMenuBar* menuBar = new wxMenuBar();
    if (menuBar == NULL) Fatal(_("Failed to create menu bar!"));
-   menuBar->Append(fileMenu, _("&File"));
-   menuBar->Append(editMenu, _("&Edit"));
-   menuBar->Append(controlMenu, _("&Control"));
-   menuBar->Append(viewMenu, _("&View"));
-   menuBar->Append(layerMenu, _("&Layer"));
-   menuBar->Append(helpMenu, _("&Help"));
+   menuBar->Append(fileMenu,     _("&File"));
+   menuBar->Append(editMenu,     _("&Edit"));
+   menuBar->Append(controlMenu,  _("&Control"));
+   menuBar->Append(viewMenu,     _("&View"));
+   menuBar->Append(layerMenu,    _("&Layer"));
+   menuBar->Append(helpMenu,     _("&Help"));
    
    #ifdef __WXMAC__
       // prevent Window menu being added automatically by wxMac 2.6.1+

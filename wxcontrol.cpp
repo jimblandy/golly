@@ -526,8 +526,8 @@ void MainFrame::GeneratePattern()
       showlayer = saveshowlayer;
       allowundo = saveallowundo;
       
-      // send Go command to event queue to call GeneratePattern again
-      wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_GO());
+      // send command to event queue to call GeneratePattern again
+      wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_START());
       wxPostEvent(this->GetEventHandler(), goevt);
    }
 

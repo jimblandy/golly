@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
-#include "wxprefs.h"       // for allowundo
+#include "wxprefs.h"       // for allowundo, GetAccelerator, etc
 #include "wxundo.h"
 
 // -----------------------------------------------------------------------------
@@ -1341,8 +1341,10 @@ void UndoRedo::UpdateUndoItem(const wxString& action)
 
    wxMenuBar* mbar = mainptr->GetMenuBar();
    if (mbar) {
-      mbar->SetLabel(wxID_UNDO,
-                     wxString::Format(_("Undo %s\tCtrl+Z"), action.c_str()));
+      wxString label = _("Undo ");
+      label += action;
+      label += GetAccelerator(DO_UNDO);
+      mbar->SetLabel(wxID_UNDO, label);
    }
 }
 
@@ -1354,8 +1356,10 @@ void UndoRedo::UpdateRedoItem(const wxString& action)
 
    wxMenuBar* mbar = mainptr->GetMenuBar();
    if (mbar) {
-      mbar->SetLabel(wxID_REDO,
-                     wxString::Format(_("Redo %s\tShift+Ctrl+Z"), action.c_str()));
+      wxString label = _("Redo ");
+      label += action;
+      label += GetAccelerator(DO_REDO);
+      mbar->SetLabel(wxID_REDO, label);
    }
 }
 
