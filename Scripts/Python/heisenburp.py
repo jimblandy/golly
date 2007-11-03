@@ -1,10 +1,11 @@
 # Stable pseudo-Heisenburp device.
 # Show several views of a multi-stage signal-processing circuit,
-# optionally using Golly 1.2's layer-cloning system.
+# optionally using Golly 1.2+'s layer-cloning system.
 # Author: Dave Greene, 27 February 2007.
 #    Latest changes: corrected timing of signal-tracking selection highlight
 #                    switched to three spaces per indent
 #                    replaced long instruction message with Help note
+#                    added rule() to be sure to run in the right universe...
 
 from glife import getstring, validint
 from time import sleep
@@ -13,12 +14,6 @@ import golly as g
 from glife import *
 from string import *
 import sys
-
-# test if there is multi-layer functionality (Golly 1.2+)
-try:
-   multilayer = g.numlayers() > 0
-except:
-   multilayer = False
 
 def burp():
    test_signal=pattern("""
@@ -41,15 +36,10 @@ def burp():
    selx=600.0
    sely=365.0
    place_signal=3
-   t=""
-
-   if multilayer:
-      t=""" in any pane;
-T toggles between a tiled view and a single-pane view"""
    helpstring="""Use ENTER and SPACE to run or halt the pattern;
 use + and - to change the step size or delay value;
-use arrow keys and mouse tools to pan and zoom""" \
-   + t + """;
+use arrow keys and mouse tools to pan and zoom in any pane;
+T toggles between a tiled view and a single-pane view;
 S creates another signal fleet near the detection mechanism;
 R resets the Heisenburp device to its initial state;
 Q quits out of the script and restores original settings."""
@@ -87,7 +77,7 @@ Q quits out of the script and restores original settings."""
       
       elif lower(ch)=="h":
          g.note(helpstring)
-      elif lower(ch)=="t" and multilayer:
+      elif lower(ch)=="t":
          g.setoption("tilelayers",1-g.getoption("tilelayers"))
          
       elif ch=="=" or ch=="+":
@@ -160,11 +150,16 @@ Q quits out of the script and restores original settings."""
             g.check(True)
          
          # change viewport speed at appropriate times to follow the action
-         if oldticks<4570 and ticks>=4570: sel_speed=.666667
-         if oldticks<6860 and ticks>=6860: sel_speed=0          
+         if oldticks<4570 and ticks>=4570:
+            sel_speed=.666667
+            # one-time correction to catch up with the signal at high sim speeds
+            g.select([600+(ticks-4570)*1.5, 365+(ticks-4570)*1.5, w, h])
+         if selx>2125:
+            sel_speed=0
+            g.select([2125, sely+2125-selx, w, h])
          if oldticks<4750 and ticks>=4750: viewport_speed=1.5
          if oldticks<6125 and ticks>=6125: viewport_speed=16
-         if oldticks>=8705: viewport_speed=99999.9
+         if oldticks>=11995: viewport_speed=99999.9
          
          # stop automatically after the last signal passes through the device
          if oldticks - last_signal<8705 and ticks - last_signal>=8705:
@@ -412,42 +407,39 @@ def prepare_burp():
    
    all=highway_robber(86,0) + connecting_neck(195,262) + transmitter2c3(347,219) \
          + wire2c3 + receiver2c3(2103,1763) + inserter2c3(2024,2042)
-   if multilayer:
-      while g.numlayers()>1: g.dellayer()
+   while g.numlayers()>1: g.dellayer()
    
    all.display("Stable Pseudo-Heisenburp Device")
    g.setmag(0)
    setposint(120,200)
    
-   # skip layer-related code silently if running < Golly 1.2
-   if multilayer: 
-      g.setname("Highway Robber")
-      g.clone()
-      g.setname("2c/3 Transmitter")
-      setposint(500,400)
-      g.clone()
-      g.setname("2c/3 Receiver")
-      setposint(2175,2000)
-      g.clone()
-      g.setname("Stable Pseudo-Heisenburp Device")
-      g.clone()
-      g.setname("Glider Fleet")
-      setposint(330,290)
-      
-      # since the tiles change size depending on how many layers have been created,
-      # have to create all five layers before checking visibility of components --
-      # now go back and check that the critical areas are all visible:
-      g.setlayer(0)
-      while not g.visrect([100,100,150,175]): g.setmag(g.getmag()-1)
-      g.setlayer(1)
-      while not g.visrect([350,225,400,350]): g.setmag(g.getmag()-1)
-      g.setlayer(2)
-      while not g.visrect([2100,1750,225,300]): g.setmag(g.getmag()-1)
-      g.setlayer(3)
-      g.fit()
-      g.setlayer(4)
-      while not g.visrect([0,200,300,400]): g.setmag(g.getmag()-1)
-      g.update()
+   g.setname("Highway Robber")
+   g.clone()
+   g.setname("2c/3 Transmitter")
+   setposint(500,400)
+   g.clone()
+   g.setname("2c/3 Receiver")
+   setposint(2175,2000)
+   g.clone()
+   g.setname("Stable Pseudo-Heisenburp Device")
+   g.clone()
+   g.setname("Glider Fleet")
+   setposint(330,290)
+   
+   # since the tiles change size depending on how many layers have been created,
+   # have to create all five layers before checking visibility of components --
+   # now go back and check that the critical areas are all visible:
+   g.setlayer(0)
+   while not g.visrect([100,100,150,175]): g.setmag(g.getmag()-1)
+   g.setlayer(1)
+   while not g.visrect([350,225,400,350]): g.setmag(g.getmag()-1)
+   g.setlayer(2)
+   while not g.visrect([2100,1750,225,300]): g.setmag(g.getmag()-1)
+   g.setlayer(3)
+   g.fit()
+   g.setlayer(4)
+   while not g.visrect([0,200,300,400]): g.setmag(g.getmag()-1)
+   g.update()
       
 # -----------------------------------------------------
 
@@ -463,21 +455,19 @@ def show_status_text(s, d, t):
 # -----------------------------------------------------
 
 # if there are multiple layers, get permission to remove them
-if multilayer:
-    g.setoption("switchlayers", True)   # allow user to switch layers
-    oldtile = g.setoption("tilelayers", True)
-    if g.numlayers() > 1:
-         answer = getstring("This script will remove all existing layers and set up a tiled display for a P1 Heisenburp device.   OK?")
-         if lower(answer[:1]) == "n":
-             g.setoption("tilelayers", oldtile)
-             g.exit()
-
+if g.numlayers() > 1:
+   answer = g.getstring("All existing layers will be removed. OK?")
+   if lower(answer[:1]) == "n":
+      g.exit()
+oldswitch = g.setoption("switchlayers", True) # allow user to switch layers
+oldtile = g.setoption("tilelayers", True)
+rule()
 try:
-    burp()
+   burp()
 finally:
-    if multilayer:
-         # remove the cloned layers added by the script
-         while g.numlayers() > 1: g.dellayer()
-         g.setname("Stable Pseudo-Heisenburp Device")
-         g.setoption("tilelayers", oldtile)
-    g.show("")
+   # remove the cloned layers added by the script
+   while g.numlayers() > 1: g.dellayer()
+   g.setname("Stable Pseudo-Heisenburp Device")
+   g.setoption("tilelayers", oldtile)
+   g.setoption("switchlayers", oldswitch)
+   g.show("")
