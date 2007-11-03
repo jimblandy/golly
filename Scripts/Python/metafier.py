@@ -25,6 +25,9 @@
 # If metapixel-ON.rle and metapixel-OFF.rle become corrupted, they
 # should be deleted so the script can re-generate them.
 #
+# 3 July 2007:  added code to avoid errors in rules like Seeds,
+#  where the Golly canonical form of the rule doesn't include a '/'
+#
 # Modified by Andrew Trevorrow, 20 July 2006 (faster, simpler and
 # doesn't change the current clipboard).
 #
@@ -59,9 +62,15 @@ livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
 for i in xrange(0, len(slist), 2):
    livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
 
+# get standardized rule string
+rulestr = g.getrule().upper()
+if rulestr.find("/") == -1:
+   if rulestr.startswith("B"): rulestr += "/S"
+   elif rulestr.startswith("S"): rulestr = "B/" + rulestr
+
 # build a patch pattern based on the current rule
 #  that fixes the appropriate broken eaters in the rules table
-r1, r2 = g.getrule().upper().split("/")
+r1, r2 = rulestr.split("/")
 if r1[:1] == "B":
     Bvalues, Svalues = r1.replace("B",""), r2.replace("S","")
 elif r1[:1] == "S":
