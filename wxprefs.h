@@ -39,6 +39,7 @@ bool ChangePrefs();
 // Global preference data:
 
 extern wxString gollydir;        // path of directory containing app
+extern int debuglevel;           // for displaying debug info if > 0
 
 extern int mainx;                // main window's location
 extern int mainy;
@@ -127,6 +128,9 @@ extern wxArrayString namedrules;
 // define the actions that can be invoked by various key combinations
 typedef enum {
    DO_NOTHING = 0,               // null action must be zero
+   DO_OPENFILE,                  // open specified pattern file
+   DO_RUNFILE,                   // run specified script file
+   DO_HELPFILE,                  // show specified html file
    // File menu
    DO_NEWPATT,                   // new pattern
    DO_OPENPATT,                  // open pattern...
@@ -228,8 +232,13 @@ typedef enum {
    MAX_ACTIONS
 } action_id;
 
-action_id FindAction(int key, int modifiers);
-// return the action for the given key and modifier set
+typedef struct {
+   action_id id;
+   wxString file;    // non-empty for DO_OPENFILE, DO_RUNFILE, DO_HELPFILE
+} action_info;
+
+action_info FindAction(int key, int modifiers);
+// return the action info for the given key and modifier set
 
 wxString GetAccelerator(action_id action);
 // return a string, possibly empty, containing the menu item

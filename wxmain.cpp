@@ -815,10 +815,14 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_ROTATEA,   active && !busy && selexists);
       mbar->Enable(ID_CMODE,     active);
 
-      if (busy)
-         mbar->SetLabel(ID_START, _("Stop") + GetAccelerator(DO_STARTSTOP));
-      else
-         mbar->SetLabel(ID_START, _("Start") + GetAccelerator(DO_STARTSTOP));
+      if (inscript) {
+         // don't use DO_STARTSTOP key to abort a running script
+         mbar->SetLabel(ID_START, _("Stop Script\tEscape"));
+      } else if (generating) {
+         mbar->SetLabel(ID_START, _("Stop Generating") + GetAccelerator(DO_STARTSTOP));
+      } else {
+         mbar->SetLabel(ID_START, _("Start Generating") + GetAccelerator(DO_STARTSTOP));
+      }
 
       mbar->Enable(ID_START,     active);
       mbar->Enable(ID_NEXT,      active && !busy);
@@ -1410,10 +1414,11 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_ZOOMIN:         viewptr->SetCursorMode(curs_zoomin); break;
       case ID_ZOOMOUT:        viewptr->SetCursorMode(curs_zoomout); break;
       // Control menu
-      case ID_START:          if (inscript || mainptr->generating)
+      case ID_START:          if (inscript || generating) {
                                  Stop();
-                              else
+                              } else {
                                  GeneratePattern();
+                              }
                               break;
       case ID_NEXT:           NextGeneration(false); break;
       case ID_STEP:           NextGeneration(true); break;
@@ -1717,6 +1722,18 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
             #ifdef __WXX11__
                // needed for scripts which prompt user to enter a string
                viewptr->SetFocus();
+            #endif
+
+            #ifdef __WXMAC__
+               if ( !wxFileName::FileExists(filepath) ) {
+                  // avoid wxMac bug in wxGenericDirCtrl::GetFilePath; ie. file name
+                  // can contain "/" rather than ":" (but directory path is okay)
+                  wxFileName fullpath(filepath);
+                  wxString dir = fullpath.GetPath();
+                  wxString name = fullpath.GetFullName();
+                  wxString newpath = dir + wxT(":") + name;
+                  if ( wxFileName::FileExists(newpath) ) filepath = newpath;
+               }
             #endif
             
             // load pattern or run script
@@ -2090,8 +2107,8 @@ void MainFrame::CreateMenus()
    editMenu->AppendSeparator();
    editMenu->Append(ID_CMODE,                   _("Cursor Mode"), cmodeSubMenu);
 
-   controlMenu->Append(ID_START,                _("Start") + GetAccelerator(DO_STARTSTOP));
-   controlMenu->Append(ID_NEXT,                 _("Next") + GetAccelerator(DO_NEXTGEN));
+   controlMenu->Append(ID_START,                _("Start Generating") + GetAccelerator(DO_STARTSTOP));
+   controlMenu->Append(ID_NEXT,                 _("Next Generation") + GetAccelerator(DO_NEXTGEN));
    controlMenu->Append(ID_STEP,                 _("Next Step") + GetAccelerator(DO_NEXTSTEP));
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_RESET,                _("Reset") + GetAccelerator(DO_RESET));

@@ -459,15 +459,21 @@ void PatternView::ProcessKey(int key, int modifiers)
 {
    mainptr->showbanner = false;
 
-   // WARNING: ProcessKey can be called from the GSF_dokey command, so we must
-   // avoid doing any actions that could cause havoc while running a script.
+   // WARNING: ProcessKey can be called while running a script or while
+   // generating a pattern, so we must avoid doing any actions that could
+   // cause havoc at such times.
+   bool busy = mainptr->generating || inscript;
 
-   action_id action = FindAction(key, modifiers);
-   switch (action) {
+   action_info action = FindAction(key, modifiers);
+   switch (action.id) {
       case DO_NOTHING:
          // any unassigned key turns off full screen mode
          if (mainptr->fullscreen) mainptr->ToggleFullScreen();
          break;
+
+      case DO_OPENFILE:    if (!busy) mainptr->OpenFile(action.file, true); break;
+      case DO_RUNFILE:     if (!busy) mainptr->OpenFile(action.file, true); break;
+      case DO_HELPFILE:    if (!waitingforclick) ShowHelp(action.file); break;
 
       // File menu actions
       case DO_NEWPATT:     if (!inscript) mainptr->NewPattern(); break;
@@ -513,16 +519,22 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_PASTELOC:    CyclePasteLocation(); break;
 
       // Control menu actions
-      case DO_STARTSTOP:   if (mainptr->generating || inscript)
-                              mainptr->Stop();
-                           else
-                              mainptr->GeneratePattern();
+      case DO_STARTSTOP:   if (!inscript) {
+                              if (mainptr->generating) {
+                                 mainptr->Stop();
+                              } else {
+                                 mainptr->GeneratePattern();
+                              }
+                           }
                            break;
       case DO_NEXTGEN:
-      case DO_NEXTSTEP:    if (mainptr->generating)
-                              mainptr->Stop();
-                           else if (!inscript)
-                              mainptr->NextGeneration(action == DO_NEXTSTEP);
+      case DO_NEXTSTEP:    if (!inscript) {
+                              if (mainptr->generating) {
+                                 mainptr->Stop();
+                              } else {
+                                 mainptr->NextGeneration(action.id == DO_NEXTSTEP);
+                              }
+                           }
                            break;
       case DO_RESET:       if (!inscript) mainptr->ResetPattern(); break;
       case DO_SETGEN:      if (!inscript) mainptr->SetGeneration(); break;
@@ -1070,6 +1082,25 @@ void PatternView::StopDraggingMouse()
 
 // -----------------------------------------------------------------------------
 
+void PatternView::RestoreSelection()
+{
+   currlayer->seltop = currlayer->savetop;
+   currlayer->selleft = currlayer->saveleft;
+   currlayer->selbottom = currlayer->savebottom;
+   currlayer->selright = currlayer->saveright;
+   StopDraggingMouse();
+   
+   // allow mouse interaction if script is running
+   bool saveinscript = inscript;
+   inscript = false;
+   mainptr->UpdatePatternAndStatus();
+   inscript = saveinscript;
+   
+   statusptr->DisplayMessage(_("New selection aborted."));
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::TestAutoFit()
 {
    if (currlayer->autofit && mainptr->generating) {
@@ -1200,11 +1231,16 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
+wxString debugkey;
+
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
    statusptr->ClearMessage();
-   int key = event.GetKeyCode();
-   if (key == WXK_SHIFT) {
+
+   realkey = event.GetKeyCode();
+   int mods = event.GetModifiers();
+
+   if (realkey == WXK_SHIFT) {
       // pressing shift key temporarily toggles zoom in/out cursor;
       // some platforms (eg. WinXP) send multiple key-down events while
       // a key is pressed so we must be careful to toggle only once
@@ -1219,8 +1255,19 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
       }
    }
    
-   //!!!
-   printf("\n--- OnKeyDown: char=%c key=%d mods=%d\n", (char)key, key, event.GetModifiers());
+   if (debuglevel == 1) {
+      // set debugkey now but don't show it until OnChar
+      debugkey = wxString::Format(_("OnKeyDown: key=%d (%c) mods=%d"),
+                                  realkey, realkey < 128 ? wxChar(realkey) : wxChar('?'), mods);
+   }
+
+   #ifdef __WXMAC__
+      // fix problems caused by the way wxMac handles keys modified by option/ctrl
+      if (mods == wxMOD_NONE || realkey == WXK_ESCAPE || realkey > 127) {
+         // tell OnChar handler to ignore realkey
+         realkey = 0;
+      }
+   #endif
 
    event.Skip();
 }
@@ -1230,6 +1277,7 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
 void PatternView::OnKeyUp(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
+
    if (key == WXK_SHIFT) {
       // releasing shift key sets zoom in/out cursor back to original state
       if (oldzoom) {
@@ -1238,30 +1286,8 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
    }
-   
-   //!!!
-   printf("--- OnKeyUp: key=%d\n", key);
 
    event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::RestoreSelection()
-{
-   currlayer->seltop = currlayer->savetop;
-   currlayer->selleft = currlayer->saveleft;
-   currlayer->selbottom = currlayer->savebottom;
-   currlayer->selright = currlayer->saveright;
-   StopDraggingMouse();
-   
-   // allow mouse interaction if script is running
-   bool saveinscript = inscript;
-   inscript = false;
-   mainptr->UpdatePatternAndStatus();
-   inscript = saveinscript;
-   
-   statusptr->DisplayMessage(_("New selection aborted."));
 }
 
 // -----------------------------------------------------------------------------
@@ -1270,9 +1296,26 @@ void PatternView::OnChar(wxKeyEvent& event)
 {
    // get translated keyboard event
    int key = event.GetKeyCode();
+   int mods = event.GetModifiers();
    
-   //!!!
-   printf("OnChar: char=%c key=%d mods=%d\n", (char)key, key, event.GetModifiers());
+   if (debuglevel == 1) {
+      debugkey += wxString::Format(_("\nOnChar: key=%d (%c) mods=%d"),
+                                   key, key < 128 ? wxChar(key) : wxChar('?'), mods);
+      Warning(debugkey);
+   }
+
+   #ifdef __WXMAC__
+      // fix problems caused by the way wxMac handles keys modified by option/ctrl
+      if (realkey > 0 && ((mods & wxMOD_ALT) || (mods & wxMOD_CONTROL))) {
+         // use key code seen by OnKeyDown
+         key = realkey;
+         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
+         if (debuglevel == 1) {
+            Warning(wxString::Format(_("OnChar: new key=%d (%c) mods=%d"),
+                                     key, key < 128 ? wxChar(key) : wxChar('?'), mods));
+         }
+      }
+   #endif
 
    // do this check first because we allow user to make a selection while
    // generating a pattern or running a script
@@ -1305,7 +1348,7 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
-   ProcessKey(key, event.GetModifiers());
+   ProcessKey(key, mods);
    mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 

@@ -2443,7 +2443,9 @@ bool InitPython()
       wxString scriptsdir = gollydir + _("Scripts");
       scriptsdir += wxFILE_SEP_PATH;
       scriptsdir += _("Python");
+      // convert any \ to \\ and then convert any ' to \'
       scriptsdir.Replace(wxT("\\"), wxT("\\\\"));
+      scriptsdir.Replace(wxT("'"), wxT("\\'"));
       wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
       if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
          Warning(_("Failed to append Scripts path!"));
@@ -2508,10 +2510,11 @@ void RunPythonScript(const wxString &filepath)
 {
    if (!InitPython()) return;
 
-   // if file name contains backslashes then we must convert them to "\\"
-   // to avoid "\a" being treated as escape char
+   // we must convert any backslashes to "\\" to avoid "\a" being treated as
+   // escape char, then we must escape any apostrophes
    wxString fpath = filepath;
    fpath.Replace(wxT("\\"), wxT("\\\\"));
+   fpath.Replace(wxT("'"), wxT("\\'"));
 
    // execute the given script
    wxString command = wxT("execfile('") + fpath + wxT("')");

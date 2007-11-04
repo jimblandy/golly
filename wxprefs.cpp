@@ -83,6 +83,7 @@ const int BITMAP_HT = 20;        // height of bitmap in color buttons
 // initialize exported preferences:
 
 wxString gollydir;               // path of directory containing app
+int debuglevel = 0;              // for displaying debug info if > 0
 
 int mainx = 30;                  // main window's initial location
 int mainy = 40;
@@ -219,7 +220,7 @@ const int IK_NULL       = 0;     // probably best never to use this
 const int IK_HOME       = 1;
 const int IK_END        = 2;
 const int IK_HELP       = 3;
-const int IK_ENTER      = 4;
+const int IK_ENTER      = 4;     //!!! or treat same as return for consistency with GSF_dokey???
 const int IK_TAB        = 9;
 const int IK_RETURN     = 13;
 const int IK_LEFT       = 28;
@@ -228,7 +229,7 @@ const int IK_UP         = 30;
 const int IK_DOWN       = 31;
 const int IK_F1         = 'A';   // we use shift+a for the real A, etc
 const int IK_F24        = 'X';
-const int IK_DELETE     = 127;
+const int IK_DELETE     = 127;   //!!! or 8 for consistency with GSF_dokey???
 const int MAX_KEYCODES  = 128;
 
 // names of the non-displayable keys we currently support
@@ -245,16 +246,18 @@ const char NK_DOWN[]    = "down";
 const char NK_SPACE[]   = "space";
 const char NK_DELETE[]  = "delete";
 
+const action_info nullaction = { DO_NOTHING, wxEmptyString };
+
 // table for converting key combinations into actions
 //!!! put inside struct so we can save in temporary table before prefs dlg???
-action_id keyaction[MAX_KEYCODES][MAX_MODS] = {DO_NOTHING};
+action_info keyaction[MAX_KEYCODES][MAX_MODS] = { nullaction };
 
 // strings for setting menu item accelerators
 wxString accelerator[MAX_ACTIONS];
 
 // -----------------------------------------------------------------------------
 
-action_id FindAction(int key, int modifiers)
+action_info FindAction(int key, int modifiers)
 {
    // convert given wx key code and modifier set to our internal values
    // and return the corresponding action
@@ -299,7 +302,7 @@ action_id FindAction(int key, int modifiers)
             if (key >= 0 && key < MAX_KEYCODES)
                ourkey = key;
             else
-               return DO_NOTHING;
+               return nullaction;
       }
    }
 
@@ -313,111 +316,111 @@ void AddDefaultKeyActions()
    //!!! rethink default shortcuts -- keep to a bare minimum???
 
    // File menu
-   keyaction[(int)'n'][mk_META] =   DO_NEWPATT;
-   keyaction[(int)'o'][mk_META] =   DO_OPENPATT;
-   keyaction[(int)'o'][mk_SHIFT+mk_META] = DO_OPENCLIP;
-   keyaction[(int)'s'][mk_META] =   DO_SAVE;
-   keyaction[(int)'p'][0] =         DO_PATTERNS;
-   keyaction[(int)'p'][mk_SHIFT] =  DO_SCRIPTS;
+   keyaction[(int)'n'][mk_META].id =   DO_NEWPATT;
+   keyaction[(int)'o'][mk_META].id =   DO_OPENPATT;
+   keyaction[(int)'o'][mk_SHIFT+mk_META].id = DO_OPENCLIP;
+   keyaction[(int)'s'][mk_META].id =   DO_SAVE;
+   keyaction[(int)'p'][0].id =         DO_PATTERNS;
+   keyaction[(int)'p'][mk_SHIFT].id =  DO_SCRIPTS;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
-   keyaction[(int)','][mk_META] =   DO_PREFS;
+   keyaction[(int)','][mk_META].id =   DO_PREFS;
 #endif
-   keyaction[(int)','][0] =         DO_PREFS;
-   keyaction[(int)'q'][mk_META] =   DO_QUIT;
+   keyaction[(int)','][0].id =         DO_PREFS;
+   keyaction[(int)'q'][mk_META].id =   DO_QUIT;
 
    // Edit menu
-   keyaction[(int)'z'][0] =         DO_UNDO;
-   keyaction[(int)'z'][mk_META] =   DO_UNDO;
-   keyaction[(int)'z'][mk_SHIFT] =  DO_REDO;
-   keyaction[(int)'z'][mk_SHIFT+mk_META] = DO_REDO;
-   keyaction[(int)'x'][mk_META] =   DO_CUT;
-   keyaction[(int)'c'][mk_META] =   DO_COPY;
-   keyaction[IK_DELETE][0] =        DO_CLEAR;
-   keyaction[IK_DELETE][mk_SHIFT] = DO_CLEAROUT;
-   keyaction[(int)'v'][0] =         DO_PASTE;
-   keyaction[(int)'v'][mk_META] =   DO_PASTE;
-   keyaction[(int)'m'][mk_SHIFT] =  DO_PASTEMODE;
-   keyaction[(int)'l'][mk_SHIFT] =  DO_PASTELOC;
-   keyaction[(int)'a'][mk_META] =   DO_SELALL;
-   keyaction[(int)'a'][0] =         DO_SELALL;
-   keyaction[(int)'k'][0] =         DO_REMOVESEL;
-   keyaction[(int)'s'][0] =         DO_SHRINKFIT;
-   keyaction[(int)'5'][mk_META] =   DO_RANDFILL;
-   keyaction[IK_F1+4][0] =          DO_CURSDRAW;
-   keyaction[IK_F1+5][0] =          DO_CURSSEL;
-   keyaction[IK_F1+6][0] =          DO_CURSMOVE;
-   keyaction[IK_F1+7][0] =          DO_CURSIN;
-   keyaction[IK_F1+8][0] =          DO_CURSOUT;
-   keyaction[(int)'c'][0] =         DO_CURSCYCLE;
+   keyaction[(int)'z'][0].id =         DO_UNDO;
+   keyaction[(int)'z'][mk_META].id =   DO_UNDO;
+   keyaction[(int)'z'][mk_SHIFT].id =  DO_REDO;
+   keyaction[(int)'z'][mk_SHIFT+mk_META].id = DO_REDO;
+   keyaction[(int)'x'][mk_META].id =   DO_CUT;
+   keyaction[(int)'c'][mk_META].id =   DO_COPY;
+   keyaction[IK_DELETE][0].id =        DO_CLEAR;
+   keyaction[IK_DELETE][mk_SHIFT].id = DO_CLEAROUT;
+   keyaction[(int)'v'][0].id =         DO_PASTE;
+   keyaction[(int)'v'][mk_META].id =   DO_PASTE;
+   keyaction[(int)'m'][mk_SHIFT].id =  DO_PASTEMODE;
+   keyaction[(int)'l'][mk_SHIFT].id =  DO_PASTELOC;
+   keyaction[(int)'a'][mk_META].id =   DO_SELALL;
+   keyaction[(int)'a'][0].id =         DO_SELALL;
+   keyaction[(int)'k'][0].id =         DO_REMOVESEL;
+   keyaction[(int)'s'][0].id =         DO_SHRINKFIT;
+   keyaction[(int)'5'][mk_META].id =   DO_RANDFILL;
+   keyaction[IK_F1+4][0].id =          DO_CURSDRAW;
+   keyaction[IK_F1+5][0].id =          DO_CURSSEL;
+   keyaction[IK_F1+6][0].id =          DO_CURSMOVE;
+   keyaction[IK_F1+7][0].id =          DO_CURSIN;
+   keyaction[IK_F1+8][0].id =          DO_CURSOUT;
+   keyaction[(int)'c'][0].id =         DO_CURSCYCLE;
 
    // Control menu
-   keyaction[IK_RETURN][0] =        DO_STARTSTOP;
-   keyaction[IK_ENTER][0] =         DO_STARTSTOP;
-   keyaction[(int)' '][0] =         DO_NEXTGEN;
-   keyaction[IK_TAB][0] =           DO_NEXTSTEP;
-   keyaction[(int)'r'][mk_META] =   DO_RESET;
-   keyaction[(int)'+'][0] =         DO_FASTER;
-   keyaction[(int)'+'][mk_SHIFT] =  DO_FASTER;
-   keyaction[(int)'='][0] =         DO_FASTER;
-   keyaction[(int)'_'][0] =         DO_SLOWER;
-   keyaction[(int)'_'][mk_SHIFT] =  DO_SLOWER;
-   keyaction[(int)'-'][0] =         DO_SLOWER;
-   keyaction[(int)'t'][0] =         DO_AUTOFIT;
-   keyaction[(int)'t'][mk_META] =   DO_AUTOFIT;
-   keyaction[(int)'u'][mk_META] =   DO_HASHING;
+   keyaction[IK_RETURN][0].id =        DO_STARTSTOP;
+   keyaction[IK_ENTER][0].id =         DO_STARTSTOP;
+   keyaction[(int)' '][0].id =         DO_NEXTGEN;
+   keyaction[IK_TAB][0].id =           DO_NEXTSTEP;
+   keyaction[(int)'r'][mk_META].id =   DO_RESET;
+   keyaction[(int)'+'][0].id =         DO_FASTER;
+   keyaction[(int)'+'][mk_SHIFT].id =  DO_FASTER;
+   keyaction[(int)'='][0].id =         DO_FASTER;
+   keyaction[(int)'_'][0].id =         DO_SLOWER;
+   keyaction[(int)'_'][mk_SHIFT].id =  DO_SLOWER;
+   keyaction[(int)'-'][0].id =         DO_SLOWER;
+   keyaction[(int)'t'][0].id =         DO_AUTOFIT;
+   keyaction[(int)'t'][mk_META].id =   DO_AUTOFIT;
+   keyaction[(int)'u'][mk_META].id =   DO_HASHING;
 #ifdef __WXMAC__
-   keyaction[(int)' '][mk_CTRL] =   DO_ADVANCE;
+   keyaction[(int)' '][mk_CTRL].id =   DO_ADVANCE;
 #else
    // on Windows/Linux mk_META is control key
-   keyaction[(int)' '][mk_META] =   DO_ADVANCE;
+   keyaction[(int)' '][mk_META].id =   DO_ADVANCE;
 #endif
-   keyaction[(int)' '][mk_SHIFT] =  DO_ADVANCEOUT;
-   keyaction[(int)'t'][mk_SHIFT] =  DO_TIMING;
+   keyaction[(int)' '][mk_SHIFT].id =  DO_ADVANCEOUT;
+   keyaction[(int)'t'][mk_SHIFT].id =  DO_TIMING;
 
    // View menu
-   keyaction[IK_LEFT][0] =          DO_LEFT;
-   keyaction[IK_RIGHT][0] =         DO_RIGHT;
-   keyaction[IK_UP][0] =            DO_UP;
-   keyaction[IK_DOWN][0] =          DO_DOWN;
+   keyaction[IK_LEFT][0].id =          DO_LEFT;
+   keyaction[IK_RIGHT][0].id =         DO_RIGHT;
+   keyaction[IK_UP][0].id =            DO_UP;
+   keyaction[IK_DOWN][0].id =          DO_DOWN;
 #ifdef __WXMAC__
-   keyaction[IK_F1][0] =            DO_FULLSCREEN;
+   keyaction[IK_F1][0].id =            DO_FULLSCREEN;
 #else
    // use F11 on Windows/Linux
-   keyaction[IK_F1+10][0] =         DO_FULLSCREEN;
+   keyaction[IK_F1+10][0].id =         DO_FULLSCREEN;
 #endif
-   keyaction[(int)'f'][0] =         DO_FIT;
-   keyaction[(int)'f'][mk_SHIFT] =  DO_FITSEL;
-   keyaction[(int)'m'][0] =         DO_MIDDLE;
-   keyaction[(int)'0'][0] =         DO_CHANGE00;
-   keyaction[(int)'9'][0] =         DO_RESTORE00;
-   keyaction[(int)']'][0] =         DO_ZOOMIN;
-   keyaction[(int)'*'][0] =         DO_ZOOMIN;
-   keyaction[(int)'*'][mk_SHIFT] =  DO_ZOOMIN;
-   keyaction[(int)'['][0] =         DO_ZOOMOUT;
-   keyaction[(int)'/'][0] =         DO_ZOOMOUT;
-   keyaction[(int)'1'][0] =         DO_SCALE1;
-   keyaction[(int)'2'][0] =         DO_SCALE2;
-   keyaction[(int)'4'][0] =         DO_SCALE4;
-   keyaction[(int)'8'][0] =         DO_SCALE8;
-   keyaction[(int)'6'][0] =         DO_SCALE16;
-   keyaction[(int)'\''][0] =        DO_SHOWTOOL;
-   keyaction[(int)'\\'][0] =        DO_SHOWLAYER;
-   keyaction[(int)';'][0] =         DO_SHOWSTATUS;
-   keyaction[(int)'e'][0] =         DO_SHOWEXACT;
-   keyaction[(int)'l'][0] =         DO_SHOWGRID;
-   keyaction[(int)'b'][0] =         DO_SWAPCOLORS;
-   keyaction[(int)'i'][0] =         DO_INFO;
+   keyaction[(int)'f'][0].id =         DO_FIT;
+   keyaction[(int)'f'][mk_SHIFT].id =  DO_FITSEL;
+   keyaction[(int)'m'][0].id =         DO_MIDDLE;
+   keyaction[(int)'0'][0].id =         DO_CHANGE00;
+   keyaction[(int)'9'][0].id =         DO_RESTORE00;
+   keyaction[(int)']'][0].id =         DO_ZOOMIN;
+   keyaction[(int)'*'][0].id =         DO_ZOOMIN;
+   keyaction[(int)'*'][mk_SHIFT].id =  DO_ZOOMIN;
+   keyaction[(int)'['][0].id =         DO_ZOOMOUT;
+   keyaction[(int)'/'][0].id =         DO_ZOOMOUT;
+   keyaction[(int)'1'][0].id =         DO_SCALE1;
+   keyaction[(int)'2'][0].id =         DO_SCALE2;
+   keyaction[(int)'4'][0].id =         DO_SCALE4;
+   keyaction[(int)'8'][0].id =         DO_SCALE8;
+   keyaction[(int)'6'][0].id =         DO_SCALE16;
+   keyaction[(int)'\''][0].id =        DO_SHOWTOOL;
+   keyaction[(int)'\\'][0].id =        DO_SHOWLAYER;
+   keyaction[(int)';'][0].id =         DO_SHOWSTATUS;
+   keyaction[(int)'e'][0].id =         DO_SHOWEXACT;
+   keyaction[(int)'l'][0].id =         DO_SHOWGRID;
+   keyaction[(int)'b'][0].id =         DO_SWAPCOLORS;
+   keyaction[(int)'i'][0].id =         DO_INFO;
 
    // Layer menu
    // none
 
    // Help menu
-   keyaction[(int)'h'][0] =         DO_HELP;
-   keyaction[(int)'?'][0] =         DO_HELP;
-   keyaction[(int)'?'][mk_SHIFT] =  DO_HELP;
-   keyaction[IK_HELP][0] =          DO_HELP;
+   keyaction[(int)'h'][0].id =         DO_HELP;
+   keyaction[(int)'?'][0].id =         DO_HELP;
+   keyaction[(int)'?'][mk_SHIFT].id =  DO_HELP;
+   keyaction[IK_HELP][0].id =          DO_HELP;
 }
 
 // -----------------------------------------------------------------------------
@@ -426,6 +429,9 @@ const char* GetActionName(action_id action)
 {
    switch (action) {
       case DO_NOTHING:        return "NONE";
+      case DO_OPENFILE:       return "Open:";
+      case DO_RUNFILE:        return "Run:";
+      case DO_HELPFILE:       return "Help:";
       // File menu
       case DO_NEWPATT:        return "New Pattern";
       case DO_OPENPATT:       return "Open Pattern...";
@@ -468,7 +474,7 @@ const char* GetActionName(action_id action)
       case DO_CURSOUT:        return "Cursor Mode: Zoom Out";
       case DO_CURSCYCLE:      return "Cycle Cursor Mode";
       // Control menu
-      case DO_STARTSTOP:      return "Start/Stop";
+      case DO_STARTSTOP:      return "Start/Stop Generating";
       case DO_NEXTGEN:        return "Next Generation";
       case DO_NEXTSTEP:       return "Next Step";
       case DO_RESET:          return "Reset";
@@ -628,15 +634,34 @@ void GetKeyAction(char* value)
    
    // *p is ' ' so skip and check the action string
    p++;
-   action_id action = DO_NOTHING;
-   int i = (int) action;
-   while (1) {
-      action = (action_id) ++i;
-      if (action == MAX_ACTIONS)
-         Fatal(wxString::Format(_("Unknown action in key_action: %s"),
-                                wxString(p,wxConvLocal).c_str()));
-      if (strcmp(p, GetActionName(action)) == 0) break;
+   action_info action = nullaction;
+
+   // first look for "Open:" or "Run:" or "Help:" followed by file path
+   if (strncmp(p, "Open:", 5) == 0) {
+      action.id = DO_OPENFILE;
+      action.file = wxString(&p[5], wxConvLocal);
+
+   } else if (strncmp(p, "Run:", 4) == 0) {
+      action.id = DO_RUNFILE;
+      action.file = wxString(&p[4], wxConvLocal);
+
+   } else if (strncmp(p, "Help:", 5) == 0) {
+      action.id = DO_HELPFILE;
+      action.file = wxString(&p[5], wxConvLocal);
+
+   } else {
+      // assume DO_NOTHING is 0 and start with action 1
+      for ( int i = 1; i < MAX_ACTIONS; i++ ) {
+         if (strcmp(p, GetActionName((action_id) i)) == 0) {
+            action.id = (action_id) i;
+            break;
+         }
+      }
    }
+   
+   if (action.id == DO_NOTHING)
+      Fatal(wxString::Format(_("Unknown action in key_action: %s"),
+                             wxString(p,wxConvLocal).c_str()));
    
    keyaction[key][modset] = action;
 }
@@ -704,13 +729,14 @@ void SaveKeyActions(FILE* f)
    fputs("\n", f);
    for ( int key = 0; key < MAX_KEYCODES; key++ ) {
       for ( int modset = 0; modset < MAX_MODS; modset++ ) {
-         action_id action = keyaction[key][modset];
-         if ( action != DO_NOTHING ) {
-            assigned[action] = true;
-            fprintf(f, "key_action=%s%s %s\n",
+         action_info action = keyaction[key][modset];
+         if ( action.id != DO_NOTHING ) {
+            assigned[action.id] = true;
+            fprintf(f, "key_action=%s%s %s%s\n",
                     (const char*) GetKeyName(key).mb_str(wxConvLocal),
                     (const char*) GetModifiers(modset).mb_str(wxConvLocal),
-                    GetActionName(action));
+                    GetActionName(action.id),
+                    (const char*) action.file.mb_str(wxConvLocal));
          }
       }
    }
@@ -718,8 +744,13 @@ void SaveKeyActions(FILE* f)
    // list all unassigned actions in comment lines
    fputs("# unassigned actions:\n", f);
    for ( int i = 1; i < MAX_ACTIONS; i++ ) {
-      if ( !assigned[i] )
-         fprintf(f, "# key_action=key+mods %s\n", GetActionName((action_id)i));
+      if ( !assigned[i] ) {
+         fprintf(f, "# key_action=key+mods %s", GetActionName((action_id) i));
+         if ( i == DO_OPENFILE || i == DO_RUNFILE || i == DO_HELPFILE ) {
+            fputs("file", f);
+         }
+         fputs("\n", f);
+      }
    }
    fputs("\n", f);
 }
@@ -736,7 +767,8 @@ void UpdateAccelerators()
    // or "\tF12" or "\tReturn" etc
    for ( int key = 0; key < MAX_KEYCODES; key++ ) {
       for ( int modset = 0; modset < MAX_MODS; modset++ ) {
-         action_id action = keyaction[key][modset];
+         action_info info = keyaction[key][modset];
+         action_id action = info.id;
          if (action != DO_NOTHING && accelerator[action].IsEmpty()) {
             
             // check if key can be used as an accelerator
@@ -1084,6 +1116,8 @@ void SavePrefs()
    fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n\n");
    fprintf(f, "prefs_version=%d\n", PREFS_VERSION);
    fprintf(f, "golly_version=%s\n", GOLLY_VERSION);
+   wxString wxversion = wxVERSION_STRING;
+   fprintf(f, "wx_version=%s\n", (const char*)wxversion.mb_str(wxConvLocal));
    #if defined(__WXMAC__)
       fprintf(f, "platform=Mac\n");
    #elif defined(__WXMSW__)
@@ -1095,6 +1129,7 @@ void SavePrefs()
    #else
       fprintf(f, "platform=unknown\n");
    #endif
+   fprintf(f, "debug_level=%d\n", debuglevel);
 
    SaveKeyActions(f);
 
@@ -1396,6 +1431,9 @@ void GetPrefs()
       if (strcmp(keyword, "prefs_version") == 0) {
          sscanf(value, "%d", &currversion);
          if (currversion < 3) AddDefaultKeyActions();
+
+      } else if (strcmp(keyword, "debug_level") == 0) {
+         sscanf(value, "%d", &debuglevel);
 
       } else if (strcmp(keyword, "key_action") == 0) {
          GetKeyAction(value);

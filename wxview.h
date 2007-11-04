@@ -203,6 +203,7 @@ private:
    int pastex, pastey;           // where user wants to paste clipboard pattern
    wxCursor* oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions
+   int realkey;                  // key code set by OnKeyDown
 };
 
 const wxString empty_pattern       = _("All cells are dead.");
