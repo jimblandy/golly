@@ -250,7 +250,7 @@ const action_info nullaction = { DO_NOTHING, wxEmptyString };
 
 // table for converting key combinations into actions
 //!!! put inside struct so we can save in temporary table before prefs dlg???
-action_info keyaction[MAX_KEYCODES][MAX_MODS] = { nullaction };
+action_info keyaction[MAX_KEYCODES][MAX_MODS] = {{ nullaction }};
 
 // strings for setting menu item accelerators
 wxString accelerator[MAX_ACTIONS];
