@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for gollydir, allowundo, etc
 #include "wxundo.h"        // for undoredo->...
-#include "wxlayer.h"       // for currlayer
+#include "wxlayer.h"       // for currlayer, SyncClones
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
 #include "wxscript.h"
@@ -822,10 +822,11 @@ void RunScript(const wxString& filename)
          // at start of script there are no pending cell/gen changes
          layer->undoredo->savecellchanges = false;
          layer->undoredo->savegenchanges = false;
-         // add special node to indicate that the script is about to start;
-         // this allows all changes made by the script to be undone/redone
-         // in one go; note that the UndoRedo ctor calls RememberScriptStart
-         // if the script creates a new layer
+         // add a special node to indicate that the script is about to start so
+         // that all changes made by the script can be undone/redone in one go;
+         // note that the UndoRedo ctor calls RememberScriptStart if the script
+         // creates a new non-cloned layer, and we let RememberScriptStart handle
+         // multiple calls if this layer is a clone
          layer->undoredo->RememberScriptStart();
       }
    }
@@ -848,7 +849,10 @@ void RunScript(const wxString& filename)
 
    // tidy up the undo/redo history for each layer; note that some calls
    // use currlayer (eg. RememberGenFinish) so we temporarily set currlayer
-   // to each layer -- bit yukky but it should be safe
+   // to each layer -- this is a bit yukky but should be safe as long as we
+   // synchronize clone info, especially currlayer->algo ptrs because they
+   // can change if the script called new()
+   SyncClones();
    Layer* savelayer = currlayer;
    for ( int i = 0; i < numlayers; i++ ) {
       currlayer = GetLayer(i);
@@ -868,7 +872,9 @@ void RunScript(const wxString& filename)
             // (if it's true then NextGeneration called RememberGenStart)
             currlayer->undoredo->RememberGenFinish();
          }
-         // add special node to indicate that the script has finished
+         // add special node to indicate that the script has finished;
+         // we let RememberScriptFinish handle multiple calls if this
+         // layer is a clone
          currlayer->undoredo->RememberScriptFinish();
       }
       // reset the stayclean flag in case it was set by MarkLayerClean

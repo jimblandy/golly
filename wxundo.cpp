@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
-#include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
+#include "wxlayer.h"       // for currlayer, numclones, MarkLayerDirty, etc
 #include "wxprefs.h"       // for allowundo, GetAccelerator, etc
 #include "wxundo.h"
 
@@ -400,7 +400,7 @@ UndoRedo::UndoRedo()
    startcount = 0;               // unfinished RememberGenStart calls
    fixsetgen = false;            // no setgen nodes need fixing
    
-   // need to remember if script has created a new layer
+   // need to remember if script has created a new layer (not a clone)
    if (inscript) RememberScriptStart();
 }
 
@@ -1126,6 +1126,17 @@ void UndoRedo::RememberAlgoChange()
 
 void UndoRedo::RememberScriptStart()
 {
+   if (!undolist.IsEmpty()) {
+      wxList::compatibility_iterator node = undolist.GetFirst();
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      if (change->changeid == scriptstart) {
+         // ignore consecutive RememberScriptStart calls made by RunScript
+         // due to cloned layers
+         if (numclones == 0) Warning(_("Unexpected RememberScriptStart call!"));
+         return;
+      }
+   }
+
    // add scriptstart node to head of undo list
    ChangeNode* change = new ChangeNode(scriptstart);
    if (change == NULL) Fatal(_("Failed to create scriptstart node!"));
@@ -1143,8 +1154,12 @@ void UndoRedo::RememberScriptStart()
 void UndoRedo::RememberScriptFinish()
 {
    if (undolist.IsEmpty()) {
-      // there should be at least a scriptstart node (see ClearUndoRedo)
-      Warning(_("Bug detected in RememberScriptFinish!"));
+      // this can happen if RunScript calls RememberScriptFinish multiple times
+      // due to cloned layers AND the script made no changes
+      if (numclones == 0) {
+         // there should be at least a scriptstart node (see ClearUndoRedo)
+         Warning(_("Bug detected in RememberScriptFinish!"));
+      }
       return;
    }
    
@@ -1155,6 +1170,11 @@ void UndoRedo::RememberScriptFinish()
    if (change->changeid == scriptstart) {
       undolist.Erase(node);
       delete change;
+      return;
+   } else if (change->changeid == scriptfinish) {
+      // ignore consecutive RememberScriptFinish calls made by RunScript
+      // due to cloned layers
+      if (numclones == 0) Warning(_("Unexpected RememberScriptFinish call!"));
       return;
    }
 
