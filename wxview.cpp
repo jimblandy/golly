@@ -471,9 +471,17 @@ void PatternView::ProcessKey(int key, int modifiers)
          if (mainptr->fullscreen) mainptr->ToggleFullScreen();
          break;
 
-      case DO_OPENFILE:    if (!busy) mainptr->OpenFile(action.file, true); break;
-      case DO_RUNFILE:     if (!busy) mainptr->OpenFile(action.file, true); break;
-      case DO_HELPFILE:    if (!waitingforclick) ShowHelp(action.file); break;
+      case DO_OPENFILE:
+         {  wxString ext = action.file.AfterLast(wxT('.'));
+            if ( ext.IsSameAs(wxT("html"),false) || ext.IsSameAs(wxT("htm"),false) ) {
+               // show HTML file in help window
+               if (!waitingforclick) ShowHelp(action.file);
+            } else {
+               // load pattern or run script
+               if (!busy) mainptr->OpenFile(action.file, true);
+            }
+         }
+         break;
 
       // File menu actions
       case DO_NEWPATT:     if (!inscript) mainptr->NewPattern(); break;
@@ -519,23 +527,25 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_PASTELOC:    CyclePasteLocation(); break;
 
       // Control menu actions
-      case DO_STARTSTOP:   if (!inscript) {
-                              if (mainptr->generating) {
-                                 mainptr->Stop();
-                              } else {
-                                 mainptr->GeneratePattern();
-                              }
-                           }
-                           break;
+      case DO_STARTSTOP:
+         if (!inscript) {
+            if (mainptr->generating) {
+               mainptr->Stop();
+            } else {
+               mainptr->GeneratePattern();
+            }
+         }
+         break;
       case DO_NEXTGEN:
-      case DO_NEXTSTEP:    if (!inscript) {
-                              if (mainptr->generating) {
-                                 mainptr->Stop();
-                              } else {
-                                 mainptr->NextGeneration(action.id == DO_NEXTSTEP);
-                              }
-                           }
-                           break;
+      case DO_NEXTSTEP:
+         if (!inscript) {
+            if (mainptr->generating) {
+               mainptr->Stop();
+            } else {
+               mainptr->NextGeneration(action.id == DO_NEXTSTEP);
+            }
+         }
+         break;
       case DO_RESET:       if (!inscript) mainptr->ResetPattern(); break;
       case DO_SETGEN:      if (!inscript) mainptr->SetGeneration(); break;
       case DO_FASTER:      mainptr->GoFaster(); break;
@@ -590,12 +600,13 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_TILE:        if (!inscript) ToggleTileLayers(); break;
 
       // Help menu actions
-      case DO_HELP:        if (!waitingforclick) {
-                              // if help window is open then bring it to the front,
-                              // otherwise open it and display most recent help file
-                              ShowHelp(wxEmptyString);
-                           }
-                           break;
+      case DO_HELP:
+         if (!waitingforclick) {
+            // if help window is open then bring it to the front,
+            // otherwise open it and display most recent help file
+            ShowHelp(wxEmptyString);
+         }
+         break;
       case DO_ABOUT:       if (!inscript) ShowAboutBox(); break;
       
       default:             Warning(_("Bug detected in ProcessKey!"));

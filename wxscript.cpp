@@ -635,15 +635,16 @@ void GSF_dokey(char* ascii)
       // note that PassKeyToScript does the reverse conversion
       int key;
       switch (*ascii) {
-         case 8:  key = WXK_BACK;   break;
-         case 9:  key = WXK_TAB;    break;
-         case 10: // play safe
-         case 13: key = WXK_RETURN; break;
-         case 28: key = WXK_LEFT;   break;
-         case 29: key = WXK_RIGHT;  break;
-         case 30: key = WXK_UP;     break;
-         case 31: key = WXK_DOWN;   break;
-         default: key = *ascii;
+         case 127:   // treat delete like backspace
+         case 8:     key = WXK_BACK;   break;
+         case 9:     key = WXK_TAB;    break;
+         case 10:    // treat linefeed like return
+         case 13:    key = WXK_RETURN; break;
+         case 28:    key = WXK_LEFT;   break;
+         case 29:    key = WXK_RIGHT;  break;
+         case 30:    key = WXK_UP;     break;
+         case 31:    key = WXK_DOWN;   break;
+         default:    key = *ascii;
       }
 
       //!!! can we handle modifiers and be backward compatible???
@@ -917,10 +918,10 @@ void PassKeyToScript(int key)
       */
       char ascii;
       switch (key) {
-         case WXK_DELETE:
+         case WXK_DELETE:     // treat delete like backspace
          case WXK_BACK:       ascii = 8;     break;
          case WXK_TAB:        ascii = 9;     break;
-         case WXK_NUMPAD_ENTER: // treat enter key like return key
+         case WXK_NUMPAD_ENTER: // treat enter like return
          case WXK_RETURN:     ascii = 13;    break;
          case WXK_LEFT:       ascii = 28;    break;
          case WXK_RIGHT:      ascii = 29;    break;

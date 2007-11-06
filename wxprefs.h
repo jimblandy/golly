@@ -105,6 +105,7 @@ extern int mindelay;             // minimum millisec delay (when warp = -1)
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
+extern wxString choosedir;       // directory used by Choose File button
 extern wxString patterndir;      // directory used by Show Patterns
 extern wxString scriptdir;       // directory used by Show Scripts
 extern wxString perllib;         // name of Perl library (loaded at runtime)
@@ -128,9 +129,7 @@ extern wxArrayString namedrules;
 // define the actions that can be invoked by various key combinations
 typedef enum {
    DO_NOTHING = 0,               // null action must be zero
-   DO_OPENFILE,                  // open specified pattern file
-   DO_RUNFILE,                   // run specified script file
-   DO_HELPFILE,                  // show specified html file
+   DO_OPENFILE,                  // open a chosen pattern/script/html file
    // File menu
    DO_NEWPATT,                   // new pattern
    DO_OPENPATT,                  // open pattern...
@@ -144,7 +143,7 @@ typedef enum {
    DO_SCRIPTS,                   // show scripts
    DO_SCRIPTDIR,                 // set script folder...
    DO_PREFS,                     // preferences...
-   DO_QUIT,                      // quit
+   DO_QUIT,                      // quit Golly
    // Edit menu
    DO_UNDO,                      // undo
    DO_REDO,                      // redo
@@ -228,13 +227,13 @@ typedef enum {
    DO_TILE,                      // tile layers
    // Help menu
    DO_HELP,                      // show help
-   DO_ABOUT,                     // about
+   DO_ABOUT,                     // about Golly
    MAX_ACTIONS
 } action_id;
 
 typedef struct {
-   action_id id;
-   wxString file;    // non-empty for DO_OPENFILE, DO_RUNFILE, DO_HELPFILE
+   action_id id;                 // one of the above
+   wxString file;                // non-empty if id is DO_OPENFILE
 } action_info;
 
 action_info FindAction(int key, int modifiers);

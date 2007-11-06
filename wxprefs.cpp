@@ -153,6 +153,7 @@ int mindelay = 250;              // minimum millisec delay (when warp = -1)
 int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
+wxString choosedir;              // directory used by Choose File button
 wxString patterndir;             // directory used by Show Patterns
 wxString scriptdir;              // directory used by Show Scripts
 wxString perllib;                // name of Perl library (loaded at runtime)
@@ -220,7 +221,7 @@ const int IK_NULL       = 0;     // probably best never to use this
 const int IK_HOME       = 1;
 const int IK_END        = 2;
 const int IK_HELP       = 3;
-const int IK_ENTER      = 4;     //!!! or treat same as return for consistency with GSF_dokey???
+const int IK_DELETE     = 8;     // treat delete like backspace (consistent with GSF_dokey)
 const int IK_TAB        = 9;
 const int IK_RETURN     = 13;
 const int IK_LEFT       = 28;
@@ -229,27 +230,28 @@ const int IK_UP         = 30;
 const int IK_DOWN       = 31;
 const int IK_F1         = 'A';   // we use shift+a for the real A, etc
 const int IK_F24        = 'X';
-const int IK_DELETE     = 127;   //!!! or 8 for consistency with GSF_dokey???
 const int MAX_KEYCODES  = 128;
 
 // names of the non-displayable keys we currently support
 const char NK_HOME[]    = "home";
 const char NK_END[]     = "end";
 const char NK_HELP[]    = "help";
-const char NK_ENTER[]   = "enter";
+const char NK_DELETE[]  = "delete";
 const char NK_TAB[]     = "tab";
+#ifdef __WXMSW__
+const char NK_RETURN[]  = "enter";
+#else
 const char NK_RETURN[]  = "return";
+#endif
 const char NK_LEFT[]    = "left";
 const char NK_RIGHT[]   = "right";
 const char NK_UP[]      = "up";
 const char NK_DOWN[]    = "down";
 const char NK_SPACE[]   = "space";
-const char NK_DELETE[]  = "delete";
 
 const action_info nullaction = { DO_NOTHING, wxEmptyString };
 
 // table for converting key combinations into actions
-//!!! put inside struct so we can save in temporary table before prefs dlg???
 action_info keyaction[MAX_KEYCODES][MAX_MODS] = {{ nullaction }};
 
 // strings for setting menu item accelerators
@@ -257,36 +259,36 @@ wxString accelerator[MAX_ACTIONS];
 
 // -----------------------------------------------------------------------------
 
-action_info FindAction(int key, int modifiers)
+bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
 {
-   // convert given wx key code and modifier set to our internal values
-   // and return the corresponding action
-   int ourkey = 0;
+   // first convert given wx modifiers (set by wxKeyEvent::GetModifiers)
    int ourmods = 0;
-   
-   // modifiers is the value returned by wxKeyEvent::GetModifiers
-   if (modifiers & wxMOD_CMD)       ourmods |= mk_META;
-   if (modifiers & wxMOD_ALT)       ourmods |= mk_ALT;
-   if (modifiers & wxMOD_SHIFT)     ourmods |= mk_SHIFT;
+   if (wxmods & wxMOD_CMD)       ourmods |= mk_META;
+   if (wxmods & wxMOD_ALT)       ourmods |= mk_ALT;
+   if (wxmods & wxMOD_SHIFT)     ourmods |= mk_SHIFT;
 #ifdef __WXMAC__
-   if (modifiers & wxMOD_CONTROL)   ourmods |= mk_CTRL;
+   if (wxmods & wxMOD_CONTROL)   ourmods |= mk_CTRL;
 #endif
 
-   if (key >= 'A' && key <= 'Z') {
+   // now convert given wx key code
+   int ourkey;
+   if (wxkey >= 'A' && wxkey <= 'Z') {
       // convert A..Z to shift+a..shift+z so we can use A..X
       // for our internal function keys (IK_F1 to IK_F24)
-      ourkey = key + 32;
+      ourkey = wxkey + 32;
       ourmods |= mk_SHIFT;
-   } else if (key >= WXK_F1 && key <= WXK_F24) {
+   } else if (wxkey >= WXK_F1 && wxkey <= WXK_F24) {
       // convert wx function key code to IK_F1..IK_F24
-      ourkey = IK_F1 + (key - WXK_F1);
+      ourkey = IK_F1 + (wxkey - WXK_F1);
    } else {
-      switch (key) {
+      switch (wxkey) {
          case WXK_HOME:          ourkey = IK_HOME; break;
          case WXK_END:           ourkey = IK_END; break;
          case WXK_HELP:          ourkey = IK_HELP; break;
-         case WXK_NUMPAD_ENTER:  ourkey = IK_ENTER; break;
+         case WXK_BACK:          // treat backspace like delete
+         case WXK_DELETE:        ourkey = IK_DELETE; break;
          case WXK_TAB:           ourkey = IK_TAB; break;
+         case WXK_NUMPAD_ENTER:  // treat enter like return
          case WXK_RETURN:        ourkey = IK_RETURN; break;
          case WXK_LEFT:          ourkey = IK_LEFT; break;
          case WXK_RIGHT:         ourkey = IK_RIGHT; break;
@@ -296,24 +298,36 @@ action_info FindAction(int key, int modifiers)
          case WXK_SUBTRACT:      ourkey = '-'; break;
          case WXK_DIVIDE:        ourkey = '/'; break;
          case WXK_MULTIPLY:      ourkey = '*'; break;
-         case WXK_BACK:          // treat backspace like delete
-         case WXK_DELETE:        ourkey = IK_DELETE; break;
-         default:
-            if (key >= 0 && key < MAX_KEYCODES)
-               ourkey = key;
-            else
-               return nullaction;
+         default:                ourkey = wxkey;
       }
    }
 
-   return keyaction[ourkey][ourmods];
+   if (ourkey < 0 || ourkey >= MAX_KEYCODES) return false;
+
+   *newkey = ourkey;
+   *newmods = ourmods;
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+action_info FindAction(int wxkey, int wxmods)
+{
+   // convert given wx key code and modifier set to our internal values
+   // and return the corresponding action
+   int ourkey, ourmods;
+   if ( ConvertKeyAndModifiers(wxkey, wxmods, &ourkey, &ourmods) ) {
+      return keyaction[ourkey][ourmods];
+   } else {
+      return nullaction;
+   }
 }
 
 // -----------------------------------------------------------------------------
 
 void AddDefaultKeyActions()
 {
-   //!!! rethink default shortcuts -- keep to a bare minimum???
+   // set default shortcuts similar to v1.2, or maybe keep to a bare minimum???
 
    // File menu
    keyaction[(int)'n'][mk_META].id =   DO_NEWPATT;
@@ -321,7 +335,9 @@ void AddDefaultKeyActions()
    keyaction[(int)'o'][mk_SHIFT+mk_META].id = DO_OPENCLIP;
    keyaction[(int)'s'][mk_META].id =   DO_SAVE;
    keyaction[(int)'p'][0].id =         DO_PATTERNS;
+   keyaction[(int)'p'][mk_META].id =   DO_PATTERNS;
    keyaction[(int)'p'][mk_SHIFT].id =  DO_SCRIPTS;
+   keyaction[(int)'p'][mk_SHIFT+mk_META].id = DO_SCRIPTS;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
@@ -343,9 +359,10 @@ void AddDefaultKeyActions()
    keyaction[(int)'v'][mk_META].id =   DO_PASTE;
    keyaction[(int)'m'][mk_SHIFT].id =  DO_PASTEMODE;
    keyaction[(int)'l'][mk_SHIFT].id =  DO_PASTELOC;
-   keyaction[(int)'a'][mk_META].id =   DO_SELALL;
    keyaction[(int)'a'][0].id =         DO_SELALL;
+   keyaction[(int)'a'][mk_META].id =   DO_SELALL;
    keyaction[(int)'k'][0].id =         DO_REMOVESEL;
+   keyaction[(int)'k'][mk_META].id =   DO_REMOVESEL;
    keyaction[(int)'s'][0].id =         DO_SHRINKFIT;
    keyaction[(int)'5'][mk_META].id =   DO_RANDFILL;
    keyaction[IK_F1+4][0].id =          DO_CURSDRAW;
@@ -357,7 +374,6 @@ void AddDefaultKeyActions()
 
    // Control menu
    keyaction[IK_RETURN][0].id =        DO_STARTSTOP;
-   keyaction[IK_ENTER][0].id =         DO_STARTSTOP;
    keyaction[(int)' '][0].id =         DO_NEXTGEN;
    keyaction[IK_TAB][0].id =           DO_NEXTSTEP;
    keyaction[(int)'r'][mk_META].id =   DO_RESET;
@@ -391,15 +407,25 @@ void AddDefaultKeyActions()
    keyaction[IK_F1+10][0].id =         DO_FULLSCREEN;
 #endif
    keyaction[(int)'f'][0].id =         DO_FIT;
+   keyaction[(int)'f'][mk_META].id =   DO_FIT;
    keyaction[(int)'f'][mk_SHIFT].id =  DO_FITSEL;
+   keyaction[(int)'f'][mk_SHIFT+mk_META].id = DO_FITSEL;
    keyaction[(int)'m'][0].id =         DO_MIDDLE;
+   keyaction[(int)'m'][mk_META].id =   DO_MIDDLE;
    keyaction[(int)'0'][0].id =         DO_CHANGE00;
    keyaction[(int)'9'][0].id =         DO_RESTORE00;
+   keyaction[(int)'9'][mk_META].id =   DO_RESTORE00;
    keyaction[(int)']'][0].id =         DO_ZOOMIN;
    keyaction[(int)'*'][0].id =         DO_ZOOMIN;
    keyaction[(int)'*'][mk_SHIFT].id =  DO_ZOOMIN;
    keyaction[(int)'['][0].id =         DO_ZOOMOUT;
    keyaction[(int)'/'][0].id =         DO_ZOOMOUT;
+#ifdef __WXMSW__
+   // Windows does not support ctrl+non-alphanumeric
+#else
+   keyaction[(int)']'][mk_META].id =   DO_ZOOMIN;
+   keyaction[(int)'['][mk_META].id =   DO_ZOOMOUT;
+#endif
    keyaction[(int)'1'][0].id =         DO_SCALE1;
    keyaction[(int)'2'][0].id =         DO_SCALE2;
    keyaction[(int)'4'][0].id =         DO_SCALE4;
@@ -408,10 +434,21 @@ void AddDefaultKeyActions()
    keyaction[(int)'\''][0].id =        DO_SHOWTOOL;
    keyaction[(int)'\\'][0].id =        DO_SHOWLAYER;
    keyaction[(int)';'][0].id =         DO_SHOWSTATUS;
+#ifdef __WXMSW__
+   // Windows does not support ctrl+non-alphanumeric
+#else
+   keyaction[(int)'\''][mk_META].id =  DO_SHOWTOOL;
+   keyaction[(int)'\\'][mk_META].id =  DO_SHOWLAYER;
+   keyaction[(int)';'][mk_META].id =   DO_SHOWSTATUS;
+#endif
    keyaction[(int)'e'][0].id =         DO_SHOWEXACT;
+   keyaction[(int)'e'][mk_META].id =   DO_SHOWEXACT;
    keyaction[(int)'l'][0].id =         DO_SHOWGRID;
+   keyaction[(int)'l'][mk_META].id =   DO_SHOWGRID;
    keyaction[(int)'b'][0].id =         DO_SWAPCOLORS;
+   keyaction[(int)'b'][mk_META].id =   DO_SWAPCOLORS;
    keyaction[(int)'i'][0].id =         DO_INFO;
+   keyaction[(int)'i'][mk_META].id =   DO_INFO;
 
    // Layer menu
    // none
@@ -421,6 +458,12 @@ void AddDefaultKeyActions()
    keyaction[(int)'?'][0].id =         DO_HELP;
    keyaction[(int)'?'][mk_SHIFT].id =  DO_HELP;
    keyaction[IK_HELP][0].id =          DO_HELP;
+
+   // examples of new actions
+   keyaction[(int)'s'][mk_ALT].id =    DO_OPENFILE;
+   keyaction[(int)'s'][mk_ALT].file =  wxT("Scripts/Python/shift.py");
+   keyaction[(int)'l'][mk_ALT].id =    DO_OPENFILE;
+   keyaction[(int)'l'][mk_ALT].file =  wxT("Help/Lexicon/lex.htm");
 }
 
 // -----------------------------------------------------------------------------
@@ -430,8 +473,6 @@ const char* GetActionName(action_id action)
    switch (action) {
       case DO_NOTHING:        return "NONE";
       case DO_OPENFILE:       return "Open:";
-      case DO_RUNFILE:        return "Run:";
-      case DO_HELPFILE:       return "Help:";
       // File menu
       case DO_NEWPATT:        return "New Pattern";
       case DO_OPENPATT:       return "Open Pattern...";
@@ -581,7 +622,7 @@ void GetKeyAction(char* value)
                if      (strcmp(start, NK_HOME) == 0)     key = IK_HOME;
                else if (strcmp(start, NK_END) == 0)      key = IK_END;
                else if (strcmp(start, NK_HELP) == 0)     key = IK_HELP;
-               else if (strcmp(start, NK_ENTER) == 0)    key = IK_ENTER;
+               else if (strcmp(start, NK_DELETE) == 0)   key = IK_DELETE;
                else if (strcmp(start, NK_TAB) == 0)      key = IK_TAB;
                else if (strcmp(start, NK_RETURN) == 0)   key = IK_RETURN;
                else if (strcmp(start, NK_LEFT) == 0)     key = IK_LEFT;
@@ -589,7 +630,6 @@ void GetKeyAction(char* value)
                else if (strcmp(start, NK_UP) == 0)       key = IK_UP;
                else if (strcmp(start, NK_DOWN) == 0)     key = IK_DOWN;
                else if (strcmp(start, NK_SPACE) == 0)    key = ' ';
-               else if (strcmp(start, NK_DELETE) == 0)   key = IK_DELETE;
             }
             if (key < 0)
                Fatal(wxString::Format(_("Unknown key in key_action: %s"),
@@ -636,19 +676,10 @@ void GetKeyAction(char* value)
    p++;
    action_info action = nullaction;
 
-   // first look for "Open:" or "Run:" or "Help:" followed by file path
+   // first look for "Open:" followed by file path
    if (strncmp(p, "Open:", 5) == 0) {
       action.id = DO_OPENFILE;
       action.file = wxString(&p[5], wxConvLocal);
-
-   } else if (strncmp(p, "Run:", 4) == 0) {
-      action.id = DO_RUNFILE;
-      action.file = wxString(&p[4], wxConvLocal);
-
-   } else if (strncmp(p, "Help:", 5) == 0) {
-      action.id = DO_HELPFILE;
-      action.file = wxString(&p[5], wxConvLocal);
-
    } else {
       // assume DO_NOTHING is 0 and start with action 1
       for ( int i = 1; i < MAX_ACTIONS; i++ ) {
@@ -668,18 +699,73 @@ void GetKeyAction(char* value)
 
 // -----------------------------------------------------------------------------
 
+wxString GetKeyCombo(int key, int modset)
+{
+   // build a key combo string for display in prefs dialog
+   wxString result = wxEmptyString;
+   
+#ifdef __WXMAC__
+   if (mk_ALT & modset)    result += wxT("Option-");
+   if (mk_SHIFT & modset)  result += wxT("Shift-");
+   if (mk_CTRL & modset)   result += wxT("Control-");
+   if (mk_META & modset)   result += wxT("Command-");
+#else
+   if (mk_ALT & modset)    result += wxT("Alt-");
+   if (mk_SHIFT & modset)  result += wxT("Shift-");
+   if (mk_META & modset)   result += wxT("Control-");
+#endif
+
+   if (key >= IK_F1 && key <= IK_F24) {
+      // function key
+      result += wxString::Format(wxT("F%d"), key - IK_F1 + 1);
+   
+   } else if (key >= 'a' && key <= 'z') {
+      // display A..Z rather than a..z
+      result += wxChar(key - 32);
+   
+   } else if (key > ' ' && key <= '~') {
+      // displayable char, but excluding space (that's handled below)
+      result += wxChar(key);
+   
+   } else {
+      // non-displayable char
+      switch (key) {
+         case IK_HOME:     result += wxT("Home"); break;
+         case IK_END:      result += wxT("End"); break;
+         case IK_HELP:     result += wxT("Help"); break;
+         case IK_DELETE:   result += wxT("Delete"); break;
+         case IK_TAB:      result += wxT("Tab"); break;
+      #ifdef __WXMSW__
+         case IK_RETURN:   result += wxT("Enter"); break;
+      #else
+         case IK_RETURN:   result += wxT("Return"); break;
+      #endif
+         case IK_LEFT:     result += wxT("Left"); break;
+         case IK_RIGHT:    result += wxT("Right"); break;
+         case IK_UP:       result += wxT("Up"); break;
+         case IK_DOWN:     result += wxT("Down"); break;
+         case ' ':         result += wxT("Space"); break;
+         default:          result = wxEmptyString;
+      }
+   }
+   
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
 wxString GetModifiers(int modset)
 {
    wxString modkeys = wxEmptyString;
 #ifdef __WXMAC__
-   if (mk_ALT & modset)    modkeys += wxString("+opt", wxConvLocal);
-   if (mk_SHIFT & modset)  modkeys += wxString("+shift", wxConvLocal);
-   if (mk_CTRL & modset)   modkeys += wxString("+ctrl", wxConvLocal);
-   if (mk_META & modset)   modkeys += wxString("+cmd", wxConvLocal);
+   if (mk_ALT & modset)    modkeys += wxT("+opt");
+   if (mk_SHIFT & modset)  modkeys += wxT("+shift");
+   if (mk_CTRL & modset)   modkeys += wxT("+ctrl");
+   if (mk_META & modset)   modkeys += wxT("+cmd");
 #else
-   if (mk_ALT & modset)    modkeys += wxString("+alt", wxConvLocal);
-   if (mk_SHIFT & modset)  modkeys += wxString("+shift", wxConvLocal);
-   if (mk_META & modset)   modkeys += wxString("+ctrl", wxConvLocal);
+   if (mk_ALT & modset)    modkeys += wxT("+alt");
+   if (mk_SHIFT & modset)  modkeys += wxT("+shift");
+   if (mk_META & modset)   modkeys += wxT("+ctrl");
 #endif
    return modkeys;
 }
@@ -704,7 +790,7 @@ wxString GetKeyName(int key)
          case IK_HOME:     result = wxString(NK_HOME, wxConvLocal); break;
          case IK_END:      result = wxString(NK_END, wxConvLocal); break;
          case IK_HELP:     result = wxString(NK_HELP, wxConvLocal); break;
-         case IK_ENTER:    result = wxString(NK_ENTER, wxConvLocal); break;
+         case IK_DELETE:   result = wxString(NK_DELETE, wxConvLocal); break;
          case IK_TAB:      result = wxString(NK_TAB, wxConvLocal); break;
          case IK_RETURN:   result = wxString(NK_RETURN, wxConvLocal); break;
          case IK_LEFT:     result = wxString(NK_LEFT, wxConvLocal); break;
@@ -712,7 +798,6 @@ wxString GetKeyName(int key)
          case IK_UP:       result = wxString(NK_UP, wxConvLocal); break;
          case IK_DOWN:     result = wxString(NK_DOWN, wxConvLocal); break;
          case ' ':         result = wxString(NK_SPACE, wxConvLocal); break;
-         case IK_DELETE:   result = wxString(NK_DELETE, wxConvLocal); break;
          default:          result = wxEmptyString;
       }
    }
@@ -746,9 +831,7 @@ void SaveKeyActions(FILE* f)
    for ( int i = 1; i < MAX_ACTIONS; i++ ) {
       if ( !assigned[i] ) {
          fprintf(f, "# key_action=key+mods %s", GetActionName((action_id) i));
-         if ( i == DO_OPENFILE || i == DO_RUNFILE || i == DO_HELPFILE ) {
-            fputs("file", f);
-         }
+         if ( i == DO_OPENFILE ) fputs("file", f);
          fputs("\n", f);
       }
    }
@@ -778,10 +861,9 @@ void UpdateAccelerators()
                   key == ' ' ||
                   key == IK_HOME ||
                   key == IK_END ||
-                  key == IK_ENTER ||
+                  key == IK_DELETE ||
                   key == IK_TAB ||
-                  key == IK_RETURN ||
-                  key == IK_DELETE ) {
+                  key == IK_RETURN ) {
                validaccel = true;
             } else if ( (modset & mk_META) && (key > ' ' && key <= '~') ) {
                #ifdef __WXMSW__
@@ -1272,6 +1354,7 @@ void SavePrefs()
 
    fprintf(f, "open_save_dir=%s\n", (const char*)opensavedir.mb_str(wxConvLocal));
    fprintf(f, "run_dir=%s\n", (const char*)rundir.mb_str(wxConvLocal));
+   fprintf(f, "choose_dir=%s\n", (const char*)choosedir.mb_str(wxConvLocal));
    fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.mb_str(wxConvLocal));
    fprintf(f, "script_dir=%s\n", (const char*)scriptdir.mb_str(wxConvLocal));
    fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
@@ -1371,6 +1454,7 @@ void GetPrefs()
 
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
+   choosedir = gollydir;
    patterndir = gollydir + PATT_DIR;
    scriptdir = gollydir + SCRIPT_DIR;
    
@@ -1669,6 +1753,13 @@ void GetPrefs()
             rundir = gollydir + SCRIPT_DIR;
          }
 
+      } else if (strcmp(keyword, "choose_dir") == 0) {
+         choosedir = wxString(value,wxConvLocal);
+         if ( !wxFileName::DirExists(choosedir) ) {
+            // reset to app directory
+            choosedir = gollydir;
+         }
+
       } else if (strcmp(keyword, "pattern_dir") == 0) {
          patterndir = wxString(value,wxConvLocal);
          if ( !wxFileName::DirExists(patterndir) ) {
@@ -1716,7 +1807,7 @@ void GetPrefs()
             wxString path(value, wxConvLocal);
             if (currversion < 2 && path.StartsWith(gollydir)) {
                // remove gollydir from start of path
-               path = path.erase(0, gollydir.length());
+               path.erase(0, gollydir.length());
             }
             patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns, path);
          }
@@ -1728,7 +1819,7 @@ void GetPrefs()
             wxString path(value, wxConvLocal);
             if (currversion < 2 && path.StartsWith(gollydir)) {
                // remove gollydir from start of path
-               path = path.erase(0, gollydir.length());
+               path.erase(0, gollydir.length());
             }
             scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts, path);
          }
@@ -1758,6 +1849,12 @@ void GetPrefs()
 
 size_t currpage = 0;    // current page in PrefsDialog
 
+// for some reason (maybe wxMac bug?) we need to make these static globals
+// otherwise the OnChar handler doesn't change the same data seen
+// by the OnChoice handler
+int currkey = ' ';                           // current key code
+int currmods = mk_ALT + mk_SHIFT + mk_META;  // current modifiers
+
 class PrefsDialog : public wxPropertySheetDialog
 {
 public:
@@ -1770,12 +1867,17 @@ public:
    wxPanel* CreateViewPrefs(wxWindow* parent);
    wxPanel* CreateLayerPrefs(wxWindow* parent);
    wxPanel* CreateColorPrefs(wxWindow* parent);
+   wxPanel* CreateKeyboardPrefs(wxWindow* parent);
 
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
 #ifdef __WXMAC__
    void OnSpinCtrlChar(wxKeyEvent& event);
 #endif
+
+   // handlers for keycombo
+   void OnKeyDown(wxKeyEvent& event);
+   void OnChar(wxKeyEvent& event);
 
 private:
    enum {
@@ -1786,6 +1888,7 @@ private:
       VIEW_PAGE,
       LAYER_PAGE,
       COLOR_PAGE,
+      KEYBOARD_PAGE,
       // File prefs
       PREF_NEW_REM_SEL = wxID_HIGHEST,  // avoid problems with FindWindowById
       PREF_NEW_CURSOR,
@@ -1826,7 +1929,12 @@ private:
       PREF_PASTE_RGB,
       PREF_SELECT_RGB,
       PREF_QLIFE_RGB,
-      PREF_HLIFE_RGB
+      PREF_HLIFE_RGB,
+      // Keyboard prefs
+      PREF_KEYCOMBO,
+      PREF_ACTION,
+      PREF_CHOOSE,
+      PREF_FILE_BOX
    };
 
    bool GetCheckVal(long id);
@@ -1838,11 +1946,14 @@ private:
    void AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
                        int id, wxColor* rgb, const wxString& text);
+   void UpdateChooseFile();
    
    void OnCheckBoxClicked(wxCommandEvent& event);
    void OnColorButton(wxCommandEvent& event);
    void OnPageChanging(wxNotebookEvent& event);
    void OnPageChanged(wxNotebookEvent& event);
+   void OnChoice(wxCommandEvent& event);
+   void OnButton(wxCommandEvent& event);
 
    bool ignore_page_event;       // used to prevent currpage being changed
    bool color_changed;           // have one or more colors changed?
@@ -1854,6 +1965,10 @@ private:
    wxColor* new_qlifergb;        // new status bar color when using qlifealgo
    wxColor* new_hlifergb;        // new status bar color when using hlifealgo
 
+   int realkey;                  // key code set by OnKeyDown
+   wxTextCtrl* keycombo;         // displays current key combination
+   wxChoice* actionmenu;         // for selecting actions
+
    DECLARE_EVENT_TABLE()
 };
 
@@ -1862,6 +1977,8 @@ BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnColorButton)
    EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY, PrefsDialog::OnPageChanging)
    EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
+   EVT_CHOICE                 (wxID_ANY, PrefsDialog::OnChoice)
+   EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnButton)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -1886,6 +2003,7 @@ END_EVENT_TABLE()
 #ifdef __WXMAC__
 
 // override key event handler for wxSpinCtrl to allow key checking
+// and to get tab key navigation to work correctly
 class MySpinCtrl : public wxSpinCtrl
 {
 public:
@@ -1947,7 +2065,6 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          wxTextCtrl* t1 = s1->GetText();
          wxTextCtrl* t2 = s2->GetText();
          wxWindow* focus = FindFocus();
-         // why does FindWindow(PREF_SHOW_BOLD) fail here???
          wxCheckBox* checkbox = (wxCheckBox*) FindWindowById(PREF_SHOW_BOLD);
          if (checkbox) {
             if (checkbox->GetValue()) {
@@ -1967,6 +2084,8 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          // only one spin ctrl on this page
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_OPACITY);
          if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+      } else if ( currpage == KEYBOARD_PAGE ) {
+         // no spin ctrls on this page
       }
 
    } else if ( key >= ' ' && key <= '~' ) {
@@ -2007,6 +2126,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    wxPanel* viewPrefs = CreateViewPrefs(notebook);
    wxPanel* layerPrefs = CreateLayerPrefs(notebook);
    wxPanel* colorPrefs = CreateColorPrefs(notebook);
+   wxPanel* keyboardPrefs = CreateKeyboardPrefs(notebook);
    
    // AddPage and SetSelection cause OnPageChanging and OnPageChanged to be called
    // so we use a flag to prevent currpage being changed (and unnecessary validation)
@@ -2018,30 +2138,13 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    notebook->AddPage(viewPrefs, _("View"));
    notebook->AddPage(layerPrefs, _("Layer"));
    notebook->AddPage(colorPrefs, _("Color"));
+   notebook->AddPage(keyboardPrefs, _("Keyboard"));
 
    // show last selected page
    notebook->SetSelection(currpage);
 
    ignore_page_event = false;
    color_changed = false;
-
-   #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
-      // wxMac bug: avoid ALL spin control values being selected
-      wxSpinCtrl* sp;
-      // deselect other spin control on FILE_PAGE
-      sp = (wxSpinCtrl*) FindWindow(PREF_MAX_SCRIPTS); sp->SetSelection(0,0);
-      // deselect other spin controls on CONTROL_PAGE
-      sp = (wxSpinCtrl*) FindWindow(PREF_QBASE); sp->SetSelection(0,0);
-      sp = (wxSpinCtrl*) FindWindow(PREF_HBASE); sp->SetSelection(0,0);
-      sp = (wxSpinCtrl*) FindWindow(PREF_MIN_DELAY); sp->SetSelection(0,0);
-      sp = (wxSpinCtrl*) FindWindow(PREF_MAX_DELAY); sp->SetSelection(0,0);
-      // deselect other spin control on VIEW_PAGE
-      if (showboldlines) {
-         sp = (wxSpinCtrl*) FindWindow(PREF_THUMB_RANGE); sp->SetSelection(0,0);
-      } else {
-         sp = (wxSpinCtrl*) FindWindow(PREF_BOLD_SPACING); sp->SetSelection(0,0);
-      }
-   #endif
    
    LayoutDialog();
 }
@@ -2223,6 +2326,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    choice4->SetSelection(opencursindex);
    spin1->SetRange(1, MAX_RECENT); spin1->SetValue(maxpatterns);
    spin2->SetRange(1, MAX_RECENT); spin2->SetValue(maxscripts);
+   spin1->SetFocus();   //!!!??? only if __WXMAC__
    spin1->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -2269,6 +2373,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    // init control values
    spin1->SetRange(1, 100);
    spin1->SetValue(randomfill);
+   spin1->SetFocus();   //!!!??? only if __WXMAC__
    spin1->SetSelection(ALL_TEXT);
    check1->SetValue(scrollpencil);
    check2->SetValue(scrollcross);
@@ -2378,6 +2483,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin5->SetRange(MIN_HASHMB, MAX_HASHMB); spin5->SetValue(maxhashmem);
+   spin5->SetFocus();   //!!!??? only if __WXMAC__
    spin5->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -2507,8 +2613,10 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
    spin2->Enable(showboldlines);
    if (showboldlines) {
+      spin2->SetFocus();   //!!!??? only if __WXMAC__
       spin2->SetSelection(ALL_TEXT);
    } else {
+      spin5->SetFocus();   //!!!??? only if __WXMAC__
       spin5->SetSelection(ALL_TEXT);
    }
    mingridindex = mingridmag - 2;
@@ -2583,6 +2691,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
    // init control value
    spin1->SetRange(1, 10);
    spin1->SetValue(tileborder);
+   spin1->SetFocus();   //!!!??? only if __WXMAC__
    spin1->SetSelection(ALL_TEXT);
    check1->SetValue(askonnew);
    check2->SetValue(askonload);
@@ -2689,6 +2798,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    // init control value
    spin1->SetRange(1, 100);
    spin1->SetValue(opacity);
+   spin1->SetFocus();   //!!!??? only if __WXMAC__
    spin1->SetSelection(ALL_TEXT);
    
    AddLayerButtons(panel, vbox);
@@ -2711,6 +2821,227 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    panel->SetSizer(topSizer);
    topSizer->Fit(panel);
    return panel;
+}
+
+// -----------------------------------------------------------------------------
+
+wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
+{
+   wxPanel* panel = new wxPanel(parent, wxID_ANY);
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
+   
+   wxArrayString actionChoices;
+   for ( int i = 0; i < MAX_ACTIONS; i++ ) {
+      actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
+   }
+   actionChoices[DO_OPENFILE] = _("Open Chosen File");
+   actionmenu = new wxChoice(panel, PREF_ACTION,
+                             wxDefaultPosition, wxDefaultSize, actionChoices);
+
+   keycombo = new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
+                             wxDefaultPosition, wxSize(230, wxDefaultCoord),
+                             wxTE_READONLY | wxTE_CENTER);
+
+   // connect handlers to intercept keyboard events
+   keycombo->Connect(wxID_ANY, wxEVT_KEY_DOWN, wxKeyEventHandler(PrefsDialog::OnKeyDown));
+   keycombo->Connect(wxID_ANY, wxEVT_CHAR, wxKeyEventHandler(PrefsDialog::OnChar));
+
+   wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
+   hbox0->Add(new wxStaticText(panel, wxID_STATIC,
+                               _("Type a key combination, then select the desired action:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+
+   wxBoxSizer* keybox = new wxBoxSizer(wxVERTICAL);
+   keybox->Add(new wxStaticText(panel, wxID_STATIC, _("Key Combination")), 0, wxALIGN_CENTER, 0);
+   keybox->AddSpacer(5);
+   keybox->Add(keycombo, 0, wxALIGN_CENTER, 0);
+
+   wxBoxSizer* actbox = new wxBoxSizer(wxVERTICAL);
+#ifdef __WXMAC__
+   actbox->AddSpacer(2);
+#endif
+   actbox->Add(new wxStaticText(panel, wxID_STATIC, _("Action")), 0, wxALIGN_CENTER, 0);
+   actbox->AddSpacer(5);
+   actbox->Add(actionmenu, 0, wxALIGN_CENTER, 0);
+
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
+   hbox1->Add(keybox, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
+   hbox1->Add(actbox, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
+
+   wxButton* choose = new wxButton(panel, PREF_CHOOSE, _("Choose File..."));
+   wxStaticText* filebox = new wxStaticText(panel, PREF_FILE_BOX, wxEmptyString);
+
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
+   hbox2->Add(choose, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
+   hbox2->Add(filebox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
+
+   vbox->AddSpacer(5);
+   vbox->Add(hbox0, 0, wxALIGN_CENTER, 0);
+   vbox->AddSpacer(15);
+   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(15);
+   vbox->Add(hbox2, 0, wxLEFT, LRGAP);
+
+   // initialize controls
+   keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
+   keycombo->SetFocus();
+   keycombo->SetSelection(ALL_TEXT);
+   actionmenu->SetSelection( keyaction[currkey][currmods].id );
+   UpdateChooseFile();
+   
+   topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+   panel->SetSizer(topSizer);
+   topSizer->Fit(panel);
+   return panel;
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnKeyDown(wxKeyEvent& event)
+{
+   realkey = event.GetKeyCode();
+   int mods = event.GetModifiers();
+   
+   if (realkey == WXK_ESCAPE) {
+      //!!!??? display Warning: "Escape key is reserved for other uses."
+      // or display in a Notes section at bottom of page
+      wxBell();
+      return;
+   }
+
+   // WARNING: logic must match that in PatternView::OnKeyDown
+   #ifdef __WXMAC__
+      // fix problems caused by the way wxMac handles keys modified by option/ctrl
+      if (mods == wxMOD_NONE || realkey > 127) {
+         // tell OnChar handler to ignore realkey
+         realkey = 0;
+      }
+   #endif
+
+   event.Skip();     // pass event to OnChar handler
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnChar(wxKeyEvent& event)
+{
+   int key = event.GetKeyCode();
+   int mods = event.GetModifiers();
+
+   // WARNING: logic must match that in PatternView::OnChar
+   #ifdef __WXMAC__
+      // fix problems caused by the way wxMac handles keys modified by option/ctrl
+      if (realkey > 0 && ((mods & wxMOD_ALT) || (mods & wxMOD_CONTROL))) {
+         // use key code seen by OnKeyDown
+         key = realkey;
+         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
+      }
+   #endif
+   
+   // convert wx key and mods to our internal key code and modifiers
+   // and, if they are valid, display the key combo and update the action
+   if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
+      // why does keycombo-> and actionmenu-> crash!!!???
+      wxTextCtrl* textctrl = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
+      wxChoice* choice = (wxChoice*) FindWindowById(PREF_ACTION);
+      if (textctrl && choice) {
+         wxString keystring = GetKeyCombo(currkey, currmods);
+         if (!keystring.IsEmpty()) {
+            textctrl->ChangeValue(keystring);
+         } else {
+            currkey = 0;
+            currmods = 0;
+            textctrl->ChangeValue(_("UNKNOWN KEY"));
+         }
+         textctrl->SetSelection(ALL_TEXT);
+         choice->SetSelection(keyaction[currkey][currmods].id);
+         UpdateChooseFile();
+      } else {
+         Warning(_("Failed to find control!"));
+      }
+   } else {
+      // unsupported key combo
+      wxBell();
+   }
+
+   // do NOT pass event on to next handler
+   // event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::UpdateChooseFile()
+{
+   action_id action = keyaction[currkey][currmods].id;
+
+   wxButton* choose = (wxButton*) FindWindowById(PREF_CHOOSE);
+   wxStaticText* filebox = (wxStaticText*) FindWindowById(PREF_FILE_BOX);
+
+   if (choose && filebox) {
+      if (action == DO_OPENFILE) {
+         // enable button and display current file name
+         choose->Enable(true);
+         filebox->SetLabel(keyaction[currkey][currmods].file);
+      } else {
+         // disable button and clear file name
+         choose->Enable(false);
+         filebox->SetLabel(wxEmptyString);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnChoice(wxCommandEvent& event)
+{
+   if ( event.GetId() == PREF_ACTION ) {
+      action_id action = (action_id) actionmenu->GetSelection();
+      keyaction[currkey][currmods].id = action;
+      
+      if ( action == DO_OPENFILE && keyaction[currkey][currmods].file.IsEmpty() ) {
+         // call OnButton (which will call UpdateChooseFile)
+         wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, PREF_CHOOSE);
+         OnButton(buttevt);
+      } else {
+         UpdateChooseFile();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnButton(wxCommandEvent& event)
+{
+   if ( event.GetId() == PREF_CHOOSE ) {
+      // ask user to choose an appropriate file
+      wxString filetypes = _("All files (*)|*");
+      filetypes +=         _("|Pattern (*.rle;*.mc;*.lif)|*.rle;*.mc;*.lif");
+      filetypes +=         _("|Script (*.pl;*.py)|*.pl;*.py");
+      filetypes +=         _("|HTML (*.html;*.htm)|*.html;*.htm");
+      
+      wxFileDialog opendlg(this, _("Choose a pattern, script or HTML file"),
+                           choosedir, wxEmptyString, filetypes,
+                           wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+      #ifdef __WXGTK__
+         // choosedir is ignored above (bug in wxGTK 2.8.0???)
+         opendlg.SetDirectory(choosedir);
+      #endif
+      if ( opendlg.ShowModal() == wxID_OK ) {
+         wxFileName fullpath( opendlg.GetPath() );
+         choosedir = fullpath.GetPath();
+         wxString path = opendlg.GetPath();
+         if (path.StartsWith(gollydir)) {
+            // remove gollydir from start of path
+            path.erase(0, gollydir.length());
+         }
+         keyaction[currkey][currmods].file = path;
+      }
+      
+      UpdateChooseFile();
+   }
+   
+   event.Skip();  // need this so other buttons work correctly
 }
 
 // -----------------------------------------------------------------------------
@@ -2911,6 +3242,9 @@ bool PrefsDialog::ValidatePage()
    } else if (currpage == COLOR_PAGE) {
       if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
          return false;
+
+   } else if (currpage == KEYBOARD_PAGE) {
+      // no spin ctrls on this page
    
    } else {
       Warning(_("Bug in ValidatePage!"));
@@ -3002,6 +3336,17 @@ bool PrefsDialog::TransferDataFromWindow()
       SetBrushesAndPens();
    }
 
+   // KEYBOARD_PAGE
+   // go thru keyaction table and make sure the file field is empty
+   // if the action isn't DO_OPENFILE
+   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
+      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+         if ( keyaction[key][modset].id != DO_OPENFILE &&
+              !keyaction[key][modset].file.IsEmpty() )
+            keyaction[key][modset].file = wxEmptyString;
+      }
+   }
+
    // update globals corresponding to the wxChoice menu selections
    mingridmag = mingridindex + 2;
    newcurs = IndexToCursor(newcursindex);
@@ -3020,17 +3365,29 @@ PrefsDialog::~PrefsDialog()
    delete new_selectrgb;
    delete new_qlifergb;
    delete new_hlifergb;
+   
+   delete keycombo;
+   delete actionmenu;
 }
 
 // -----------------------------------------------------------------------------
 
 bool ChangePrefs()
 {
+   action_info savekeyaction[MAX_KEYCODES][MAX_MODS];
+   for ( int key = 0; key < MAX_KEYCODES; key++ )
+      for ( int modset = 0; modset < MAX_MODS; modset++ )
+         savekeyaction[key][modset] = keyaction[key][modset];
+
    PrefsDialog dialog(mainptr);
    if (dialog.ShowModal() == wxID_OK) {
       // TransferDataFromWindow has validated and updated all global prefs
       return true;
    } else {
+      // restore keyaction array in case it was changed
+      for ( int key = 0; key < MAX_KEYCODES; key++ )
+         for ( int modset = 0; modset < MAX_MODS; modset++ )
+            keyaction[key][modset] = savekeyaction[key][modset];
       return false;
    }
 }

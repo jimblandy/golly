@@ -359,7 +359,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
    wxString path = inpath;
    if (path.StartsWith(gollydir)) {
       // remove gollydir from start of path
-      path = path.erase(0, gollydir.length());
+      path.erase(0, gollydir.length());
    }
 
    // put given path at start of patternSubMenu
@@ -400,7 +400,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
    wxString path = inpath;
    if (path.StartsWith(gollydir)) {
       // remove gollydir from start of path
-      path = path.erase(0, gollydir.length());
+      path.erase(0, gollydir.length());
    }
 
    // put given path at start of scriptSubMenu
