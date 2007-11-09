@@ -719,9 +719,9 @@ wxString GetKeyCombo(int key, int modset)
    if (mk_CTRL & modset)   result += wxT("Control-");
    if (mk_META & modset)   result += wxT("Command-");
 #else
-   if (mk_ALT & modset)    result += wxT("Alt-");
-   if (mk_SHIFT & modset)  result += wxT("Shift-");
-   if (mk_META & modset)   result += wxT("Control-");
+   if (mk_ALT & modset)    result += wxT("Alt+");
+   if (mk_SHIFT & modset)  result += wxT("Shift+");
+   if (mk_META & modset)   result += wxT("Control+");
 #endif
 
    if (key >= IK_F1 && key <= IK_F24) {
@@ -1877,7 +1877,7 @@ public:
    void OnSpinCtrlChar(wxKeyEvent& event);
 #endif
 
-   // handlers for keycombo
+   // handlers to intercept keyboard events
    void OnKeyDown(wxKeyEvent& event);
    void OnChar(wxKeyEvent& event);
 
@@ -2328,7 +2328,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    choice4->SetSelection(opencursindex);
    spin1->SetRange(1, MAX_RECENT); spin1->SetValue(maxpatterns);
    spin2->SetRange(1, MAX_RECENT); spin2->SetValue(maxscripts);
-   spin1->SetFocus();   //!!!??? only if __WXMAC__
+   spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -2375,7 +2375,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    // init control values
    spin1->SetRange(1, 100);
    spin1->SetValue(randomfill);
-   spin1->SetFocus();   //!!!??? only if __WXMAC__
+   spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
    check1->SetValue(scrollpencil);
    check2->SetValue(scrollcross);
@@ -2485,7 +2485,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin5->SetRange(MIN_HASHMB, MAX_HASHMB); spin5->SetValue(maxhashmem);
-   spin5->SetFocus();   //!!!??? only if __WXMAC__
+   spin5->SetFocus();
    spin5->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -2615,10 +2615,10 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
    spin2->Enable(showboldlines);
    if (showboldlines) {
-      spin2->SetFocus();   //!!!??? only if __WXMAC__
+      spin2->SetFocus();
       spin2->SetSelection(ALL_TEXT);
    } else {
-      spin5->SetFocus();   //!!!??? only if __WXMAC__
+      spin5->SetFocus();
       spin5->SetSelection(ALL_TEXT);
    }
    mingridindex = mingridmag - 2;
@@ -2693,7 +2693,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
    // init control value
    spin1->SetRange(1, 10);
    spin1->SetValue(tileborder);
-   spin1->SetFocus();   //!!!??? only if __WXMAC__
+   spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
    check1->SetValue(askonnew);
    check2->SetValue(askonload);
@@ -2800,7 +2800,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    // init control value
    spin1->SetRange(1, 100);
    spin1->SetValue(opacity);
-   spin1->SetFocus();   //!!!??? only if __WXMAC__
+   spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
    
    AddLayerButtons(panel, vbox);
@@ -2843,7 +2843,9 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
 
    keycombo = new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                              wxDefaultPosition, wxSize(230, wxDefaultCoord),
-                             wxTE_READONLY | wxTE_CENTER);
+                             //!!!??? wxTE_READONLY |
+                             wxTE_PROCESS_TAB | wxTE_RICH2 |   //!!! better for Windows???
+                             wxTE_CENTER);
 
    // connect handlers to intercept keyboard events
    keycombo->Connect(wxID_ANY, wxEVT_KEY_DOWN, wxKeyEventHandler(PrefsDialog::OnKeyDown));
@@ -2919,12 +2921,31 @@ void PrefsDialog::OnKeyDown(wxKeyEvent& event)
    }
 
    // WARNING: logic must match that in PatternView::OnKeyDown
-   #ifdef __WXMAC__
+   #if 1 //!!! do on all platforms??? def __WXMAC__
       // fix problems caused by the way wxMac handles keys modified by option/ctrl
       if (mods == wxMOD_NONE || realkey > 127) {
          // tell OnChar handler to ignore realkey
          realkey = 0;
       }
+   #endif
+   
+   #ifdef __WXMAC__
+      // prevent ctrl-[ cancelling dialog (it translates to escape)
+      if (realkey == '[' && (mods & wxMOD_CONTROL)) {
+         OnChar(event);
+         return;
+      }
+   #endif
+   
+   //!!!??? we may need to do a similar thing on Linux to avoid alt-C selecting
+   // Cancel button and alt-O selecting OK button
+   #if defined(__WXGTK__) && defined(__WXX11__)
+      /*
+      if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
+         OnChar(event);
+         return;
+      }
+      */
    #endif
 
    event.Skip();     // pass event to OnChar handler
@@ -2938,7 +2959,7 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
    int mods = event.GetModifiers();
 
    // WARNING: logic must match that in PatternView::OnChar
-   #ifdef __WXMAC__
+   #if 1 //!!! do on all platforms??? def __WXMAC__
       // fix problems caused by the way wxMac handles modifier keys
       if (realkey > 0 && mods != wxMOD_NONE) {
          if (mods == wxMOD_SHIFT && key != realkey) {
@@ -3283,6 +3304,12 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 {
    if (ignore_page_event) return;
    currpage = event.GetSelection();
+   
+   //!!! better for Windows???
+   if (currpage == KEYBOARD_PAGE) {
+      keycombo->SetFocus();
+      keycombo->SetSelection(ALL_TEXT);
+   }
 }
 
 // -----------------------------------------------------------------------------

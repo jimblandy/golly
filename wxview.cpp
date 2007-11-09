@@ -1273,7 +1273,7 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
    }
 
    // WARNING: logic must match that in PrefsDialog::OnKeyDown
-   #ifdef __WXMAC__
+   #if 1 //!!! do on all platforms??? def __WXMAC__
       // fix problems caused by the way wxMac handles keys modified by option/ctrl
       if (mods == wxMOD_NONE || realkey == WXK_ESCAPE || realkey > 127) {
          // tell OnChar handler to ignore realkey
@@ -1317,7 +1317,7 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
 
    // WARNING: logic must match that in PrefsDialog::OnChar
-   #ifdef __WXMAC__
+   #if 1 //!!! do on all platforms??? def __WXMAC__
       // fix problems caused by the way wxMac handles modifier keys
       if (realkey > 0 && mods != wxMOD_NONE) {
          if (mods == wxMOD_SHIFT && key != realkey) {
