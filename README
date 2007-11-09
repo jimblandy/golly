@@ -20,6 +20,7 @@ Key features:
 - Supports multiple layers, including cloned layers.
 - HTML-based help with integrated Life Lexicon.
 - Scriptable via Perl or Python.
+- User-configurable keyboard shortcuts.
 - Free, open source and cross-platform (Windows, Mac, Linux).
 - We also provide bgolly, a GUI-less version.
 

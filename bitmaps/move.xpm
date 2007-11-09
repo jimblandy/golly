@@ -1,5 +1,5 @@
 /* XPM */
-static char *move_xpm[] =
+static const char *move_xpm[] =
 {
 /* width height ncolors chars_per_pixel */
 "16 16 8 1",

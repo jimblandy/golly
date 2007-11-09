@@ -48,6 +48,7 @@ public:
    void UpdateMenuItems(bool active);
    void UpdatePatternAndStatus();
    void UpdateStatus();
+   void UpdateMenuAccelerators();
 
    // clipboard functions
    bool ClipboardHasText();

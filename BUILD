@@ -16,7 +16,7 @@ the appropriate source archive for your platform:
    wxGTK   - for Linux/Unix with GTK+
    wxX11   - for Linux/Unix with X11
 
-Golly should compile with wxWidgets 2.6.3 or later, but it's best to
+Golly should compile with wxWidgets 2.7.0 or later, but it's best to
 use the latest stable version.
 
 

@@ -1,5 +1,5 @@
 /* XPM */
-static char *tile_xpm[] =
+static const char *tile_xpm[] =
 {
 /* width height ncolors chars_per_pixel */
 "16 16 3 1",

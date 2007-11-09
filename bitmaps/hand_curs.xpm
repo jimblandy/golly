@@ -1,5 +1,5 @@
 /* XPM */
-static char *hand_curs_xpm[] =
+static const char *hand_curs_xpm[] =
 {
 /* width height ncolors chars_per_pixel */
 "16 16 3 1",

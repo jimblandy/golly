@@ -327,7 +327,14 @@ action_info FindAction(int wxkey, int wxmods)
 
 void AddDefaultKeyActions()
 {
-   // set default shortcuts similar to v1.2, or maybe keep to a bare minimum???
+   // these default shortcuts are similar to those in v1.2;
+   // maybe it would be better to keep them to a bare minimum???
+
+   // include some examples of DO_OPENFILE
+   keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
+   keyaction[(int)'s'][mk_SHIFT].file =   wxT("Scripts/Python/shift.py");
+   keyaction[(int)'l'][mk_ALT].id =       DO_OPENFILE;
+   keyaction[(int)'l'][mk_ALT].file =     wxT("Help/Lexicon/lex.htm");
 
    // File menu
    keyaction[(int)'n'][mk_META].id =   DO_NEWPATT;
@@ -456,14 +463,16 @@ void AddDefaultKeyActions()
    // Help menu
    keyaction[(int)'h'][0].id =         DO_HELP;
    keyaction[(int)'?'][0].id =         DO_HELP;
-   keyaction[(int)'?'][mk_SHIFT].id =  DO_HELP;
    keyaction[IK_HELP][0].id =          DO_HELP;
-
-   // examples of new actions
-   keyaction[(int)'s'][mk_ALT].id =    DO_OPENFILE;
-   keyaction[(int)'s'][mk_ALT].file =  wxT("Scripts/Python/shift.py");
-   keyaction[(int)'l'][mk_ALT].id =    DO_OPENFILE;
-   keyaction[(int)'l'][mk_ALT].file =  wxT("Help/Lexicon/lex.htm");
+#ifdef __WXMAC__
+   // cmd-? is the usual shortcut in Mac apps
+   keyaction[(int)'?'][mk_META].id =   DO_HELP;
+   //!!! but wxMac can only detect shift+cmd+/ so we have to assume '?' is above '/' -- yuk
+   keyaction[(int)'/'][mk_SHIFT+mk_META].id = DO_HELP;
+#else
+   // F1 is the usual shortcut in Win/Linux apps
+   keyaction[IK_F1][0].id =            DO_HELP;
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -840,7 +849,7 @@ void SaveKeyActions(FILE* f)
 
 // -----------------------------------------------------------------------------
 
-void UpdateAccelerators()
+void UpdateAcceleratorStrings()
 {
    for ( int i = 0; i < MAX_ACTIONS; i++ )
       accelerator[i] = wxEmptyString;
@@ -881,7 +890,7 @@ void UpdateAccelerators()
                if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
                if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
                #ifdef __WXMAC__
-                  //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K???
+                  //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
                   // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
                #endif
                if (key >= 'a' && key <= 'z') {
@@ -894,13 +903,6 @@ void UpdateAccelerators()
          }
       }
    }
-   
-   //!!! wxMac bug: can't change labels of menu items that have been moved to app menu
-   /*
-   mbar->SetLabel(wxID_ABOUT, _("About XXX Golly\tCtrl+J"));   // no change
-   mbar->SetLabel(wxID_PREFERENCES, _("Prefs\tCtrl+7"));       // no change
-   mbar->SetLabel(wxID_NEW, _("XXX\tCtrl+3"));                 // works
-   */
 }
 
 // -----------------------------------------------------------------------------
@@ -1492,7 +1494,7 @@ void GetPrefs()
    if ( !wxFileExists(wxString(PREFS_NAME,wxConvLocal)) ) {
       AddDefaultRules();
       AddDefaultKeyActions();
-      UpdateAccelerators();
+      UpdateAcceleratorStrings();
       return;
    }
    
@@ -1839,8 +1841,8 @@ void GetPrefs()
    // if no named_rule entries then add default names
    if (namedrules.GetCount() == 1) AddDefaultRules();
 
-   // initialize accelerator strings
-   UpdateAccelerators();
+   // initialize accelerator array
+   UpdateAcceleratorStrings();
 }
 
 // -----------------------------------------------------------------------------
@@ -2849,8 +2851,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    hbox0->Add(new wxStaticText(panel, wxID_STATIC,
-                               _("Type a key combination, then select the desired action:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
+                               _("Type a key combination, then select the desired action:")));
 
    wxBoxSizer* keybox = new wxBoxSizer(wxVERTICAL);
    keybox->Add(new wxStaticText(panel, wxID_STATIC, _("Key Combination")), 0, wxALIGN_CENTER, 0);
@@ -2876,12 +2877,20 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    hbox2->Add(choose, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
    hbox2->Add(filebox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
 
+   wxString notes = _("Note:\n");
+   notes += _("- The Escape key is reserved for other uses.\n");
+   notes += _("- Different key combinations can be assigned to the same action.");
+   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
+   hbox3->Add(new wxStaticText(panel, wxID_STATIC, notes));
+
    vbox->AddSpacer(5);
-   vbox->Add(hbox0, 0, wxALIGN_CENTER, 0);
+   vbox->Add(hbox0, 0, wxLEFT, LRGAP);    // or wxALIGN_CENTER, 0???
    vbox->AddSpacer(15);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(15);
    vbox->Add(hbox2, 0, wxLEFT, LRGAP);
+   vbox->AddSpacer(30);
+   vbox->Add(hbox3, 0, wxLEFT, LRGAP);
 
    // initialize controls
    keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
@@ -2904,8 +2913,7 @@ void PrefsDialog::OnKeyDown(wxKeyEvent& event)
    int mods = event.GetModifiers();
    
    if (realkey == WXK_ESCAPE) {
-      //!!!??? display Warning: "Escape key is reserved for other uses."
-      // or display in a Notes section at bottom of page
+      // escape key is reserved for other uses
       wxBell();
       return;
    }
@@ -2931,18 +2939,24 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
 
    // WARNING: logic must match that in PatternView::OnChar
    #ifdef __WXMAC__
-      // fix problems caused by the way wxMac handles keys modified by option/ctrl
-      if (realkey > 0 && ((mods & wxMOD_ALT) || (mods & wxMOD_CONTROL))) {
-         // use key code seen by OnKeyDown
-         key = realkey;
-         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
+      // fix problems caused by the way wxMac handles modifier keys
+      if (realkey > 0 && mods != wxMOD_NONE) {
+         if (mods == wxMOD_SHIFT && key != realkey) {
+            // use translated key code but remove shift key;
+            // eg. shift-'/' will be seen as '?'
+            mods = wxMOD_NONE;
+         } else {
+            // use key code seen by OnKeyDown
+            key = realkey;
+            if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
+         }
       }
    #endif
    
    // convert wx key and mods to our internal key code and modifiers
    // and, if they are valid, display the key combo and update the action
    if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
-      // why does keycombo-> and actionmenu-> crash!!!???
+      // why does keycombo-> and actionmenu-> crash???
       wxTextCtrl* textctrl = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
       wxChoice* choice = (wxChoice*) FindWindowById(PREF_ACTION);
       if (textctrl && choice) {
@@ -3339,15 +3353,13 @@ bool PrefsDialog::TransferDataFromWindow()
    // KEYBOARD_PAGE
    // go thru keyaction table and make sure the file field is empty
    // if the action isn't DO_OPENFILE
-   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
-      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+   for ( int key = 0; key < MAX_KEYCODES; key++ )
+      for ( int modset = 0; modset < MAX_MODS; modset++ )
          if ( keyaction[key][modset].id != DO_OPENFILE &&
               !keyaction[key][modset].file.IsEmpty() )
             keyaction[key][modset].file = wxEmptyString;
-      }
-   }
 
-   // update globals corresponding to the wxChoice menu selections
+   // update globals corresponding to some wxChoice menu selections
    mingridmag = mingridindex + 2;
    newcurs = IndexToCursor(newcursindex);
    opencurs = IndexToCursor(opencursindex);
@@ -3374,17 +3386,29 @@ PrefsDialog::~PrefsDialog()
 
 bool ChangePrefs()
 {
+   // save current keyboard shortcuts so we can restore them or detect a change
    action_info savekeyaction[MAX_KEYCODES][MAX_MODS];
    for ( int key = 0; key < MAX_KEYCODES; key++ )
       for ( int modset = 0; modset < MAX_MODS; modset++ )
          savekeyaction[key][modset] = keyaction[key][modset];
 
    PrefsDialog dialog(mainptr);
+
    if (dialog.ShowModal() == wxID_OK) {
-      // TransferDataFromWindow has validated and updated all global prefs
+      // TransferDataFromWindow has validated and updated all global prefs;
+      // if a keyboard shortcut changed then update menu item accelerators
+      for ( int key = 0; key < MAX_KEYCODES; key++ )
+         for ( int modset = 0; modset < MAX_MODS; modset++ )
+            if (savekeyaction[key][modset].id != keyaction[key][modset].id) {
+               // first update accelerator array
+               UpdateAcceleratorStrings();
+               mainptr->UpdateMenuAccelerators();
+               goto done;
+            }
+      done:
       return true;
    } else {
-      // restore keyaction array in case it was changed
+      // user hit Cancel, so restore keyaction array in case it was changed
       for ( int key = 0; key < MAX_KEYCODES; key++ )
          for ( int modset = 0; modset < MAX_MODS; modset++ )
             keyaction[key][modset] = savekeyaction[key][modset];

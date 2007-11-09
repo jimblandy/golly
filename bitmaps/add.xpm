@@ -1,5 +1,5 @@
 /* XPM */
-static char *add_xpm[] =
+static const char *add_xpm[] =
 {
 /* width height ncolors chars_per_pixel */
 "16 16 2 1",
