@@ -215,12 +215,14 @@ const int MAX_MODS   = 16;
 const int MAX_MODS   = 8;
 #endif
 
-// WXK_* key codes like WXK_F1 have values > 128 so we use our own
-// internal key codes for function keys and a few other special keys
+// WXK_* key codes like WXK_F1 have values > 300 so we use our own
+// internal key codes for function keys and other special keys
 const int IK_NULL       = 0;     // probably best never to use this
 const int IK_HOME       = 1;
 const int IK_END        = 2;
-const int IK_HELP       = 3;
+const int IK_PAGEUP     = 3;
+const int IK_PAGEDOWN   = 4;
+const int IK_HELP       = 5;
 const int IK_DELETE     = 8;     // treat delete like backspace (consistent with GSF_dokey)
 const int IK_TAB        = 9;
 const int IK_RETURN     = 13;
@@ -232,22 +234,26 @@ const int IK_F1         = 'A';   // we use shift+a for the real A, etc
 const int IK_F24        = 'X';
 const int MAX_KEYCODES  = 128;
 
-// names of the non-displayable keys we currently support
-const char NK_HOME[]    = "home";
-const char NK_END[]     = "end";
-const char NK_HELP[]    = "help";
-const char NK_DELETE[]  = "delete";
-const char NK_TAB[]     = "tab";
+// names of the non-displayable keys we currently support;
+// note that these names can be used in menu item accelerator strings
+// so they must match legal wx names (listed in wxMenu::Append docs)
+const char NK_HOME[]    = "Home";
+const char NK_END[]     = "End";
+const char NK_PGUP[]    = "PgUp";
+const char NK_PGDN[]    = "PgDn";
+const char NK_HELP[]    = "Help";
+const char NK_DELETE[]  = "Delete";
+const char NK_TAB[]     = "Tab";
 #ifdef __WXMSW__
-const char NK_RETURN[]  = "enter";
+const char NK_RETURN[]  = "Enter";
 #else
-const char NK_RETURN[]  = "return";
+const char NK_RETURN[]  = "Return";
 #endif
-const char NK_LEFT[]    = "left";
-const char NK_RIGHT[]   = "right";
-const char NK_UP[]      = "up";
-const char NK_DOWN[]    = "down";
-const char NK_SPACE[]   = "space";
+const char NK_LEFT[]    = "Left";
+const char NK_RIGHT[]   = "Right";
+const char NK_UP[]      = "Up";
+const char NK_DOWN[]    = "Down";
+const char NK_SPACE[]   = "Space";
 
 const action_info nullaction = { DO_NOTHING, wxEmptyString };
 
@@ -262,6 +268,7 @@ wxString accelerator[MAX_ACTIONS];
 bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
 {
    // first convert given wx modifiers (set by wxKeyEvent::GetModifiers)
+   // to a corresponding set of mk_* values
    int ourmods = 0;
    if (wxmods & wxMOD_CMD)       ourmods |= mk_META;
    if (wxmods & wxMOD_ALT)       ourmods |= mk_ALT;
@@ -270,7 +277,7 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
    if (wxmods & wxMOD_CONTROL)   ourmods |= mk_CTRL;
 #endif
 
-   // now convert given wx key code
+   // now convert given wx key code to corresponding IK_* code
    int ourkey;
    if (wxkey >= 'A' && wxkey <= 'Z') {
       // convert A..Z to shift+a..shift+z so we can use A..X
@@ -284,6 +291,8 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
       switch (wxkey) {
          case WXK_HOME:          ourkey = IK_HOME; break;
          case WXK_END:           ourkey = IK_END; break;
+         case WXK_PAGEUP:        ourkey = IK_PAGEUP; break;
+         case WXK_PAGEDOWN:      ourkey = IK_PAGEDOWN; break;
          case WXK_HELP:          ourkey = IK_HELP; break;
          case WXK_BACK:          // treat backspace like delete
          case WXK_DELETE:        ourkey = IK_DELETE; break;
@@ -621,24 +630,26 @@ void GetKeyAction(char* value)
                modset |= mk_SHIFT;
             }
          } else if (len > 1) {
-            if (start[0] == 'f' && start[1] >= '1' && start[1] <= '9') {
+            if ((start[0] == 'f' || start[0] == 'F') && start[1] >= '1' && start[1] <= '9') {
                // we have a function key
                char* p = &start[1];
                int num;
                sscanf(p, "%d", &num);
                if (num >= 1 && num <= 24) key = IK_F1 + num - 1;
             } else {
-               if      (strcmp(start, NK_HOME) == 0)     key = IK_HOME;
-               else if (strcmp(start, NK_END) == 0)      key = IK_END;
-               else if (strcmp(start, NK_HELP) == 0)     key = IK_HELP;
-               else if (strcmp(start, NK_DELETE) == 0)   key = IK_DELETE;
-               else if (strcmp(start, NK_TAB) == 0)      key = IK_TAB;
-               else if (strcmp(start, NK_RETURN) == 0)   key = IK_RETURN;
-               else if (strcmp(start, NK_LEFT) == 0)     key = IK_LEFT;
-               else if (strcmp(start, NK_RIGHT) == 0)    key = IK_RIGHT;
-               else if (strcmp(start, NK_UP) == 0)       key = IK_UP;
-               else if (strcmp(start, NK_DOWN) == 0)     key = IK_DOWN;
-               else if (strcmp(start, NK_SPACE) == 0)    key = ' ';
+               if      (strcasecmp(start, NK_HOME) == 0)    key = IK_HOME;
+               else if (strcasecmp(start, NK_END) == 0)     key = IK_END;
+               else if (strcasecmp(start, NK_PGUP) == 0)    key = IK_PAGEUP;
+               else if (strcasecmp(start, NK_PGDN) == 0)    key = IK_PAGEDOWN;
+               else if (strcasecmp(start, NK_HELP) == 0)    key = IK_HELP;
+               else if (strcasecmp(start, NK_DELETE) == 0)  key = IK_DELETE;
+               else if (strcasecmp(start, NK_TAB) == 0)     key = IK_TAB;
+               else if (strcasecmp(start, NK_RETURN) == 0)  key = IK_RETURN;
+               else if (strcasecmp(start, NK_LEFT) == 0)    key = IK_LEFT;
+               else if (strcasecmp(start, NK_RIGHT) == 0)   key = IK_RIGHT;
+               else if (strcasecmp(start, NK_UP) == 0)      key = IK_UP;
+               else if (strcasecmp(start, NK_DOWN) == 0)    key = IK_DOWN;
+               else if (strcasecmp(start, NK_SPACE) == 0)   key = ' ';
             }
             if (key < 0)
                Fatal(wxString::Format(_("Unknown key in key_action: %s"),
@@ -664,14 +675,14 @@ void GetKeyAction(char* value)
          char oldp = *p;
          *p = 0;
          #ifdef __WXMAC__
-            if      (strcmp(start, "cmd") == 0)   modset |= mk_META;
-            else if (strcmp(start, "opt") == 0)   modset |= mk_ALT;
-            else if (strcmp(start, "ctrl") == 0)  modset |= mk_CTRL;
+            if      (strcasecmp(start, "cmd") == 0)   modset |= mk_META;
+            else if (strcasecmp(start, "opt") == 0)   modset |= mk_ALT;
+            else if (strcasecmp(start, "ctrl") == 0)  modset |= mk_CTRL;
          #else
-            if      (strcmp(start, "ctrl") == 0)  modset |= mk_META;
-            else if (strcmp(start, "alt") == 0)   modset |= mk_ALT;
+            if      (strcasecmp(start, "ctrl") == 0)  modset |= mk_META;
+            else if (strcasecmp(start, "alt") == 0)   modset |= mk_ALT;
          #endif
-         else if    (strcmp(start, "shift") == 0) modset |= mk_SHIFT;
+         else if    (strcasecmp(start, "shift") == 0) modset |= mk_SHIFT;
          else
             Fatal(wxString::Format(_("Unknown modifier in key_action: %s"),
                                    wxString(start,wxConvLocal).c_str()));
@@ -739,8 +750,12 @@ wxString GetKeyCombo(int key, int modset)
    } else {
       // non-displayable char
       switch (key) {
+         // these strings are only seen in prefs dialog so can be more
+         // descriptive than the NK_* strings
          case IK_HOME:     result += wxT("Home"); break;
          case IK_END:      result += wxT("End"); break;
+         case IK_PAGEUP:   result += wxT("PageUp"); break;
+         case IK_PAGEDOWN: result += wxT("PageDown"); break;
          case IK_HELP:     result += wxT("Help"); break;
          case IK_DELETE:   result += wxT("Delete"); break;
          case IK_TAB:      result += wxT("Tab"); break;
@@ -787,7 +802,7 @@ wxString GetKeyName(int key)
 
    if (key >= IK_F1 && key <= IK_F24) {
       // function key
-      result.Printf(wxT("f%d"), key - IK_F1 + 1);
+      result.Printf(wxT("F%d"), key - IK_F1 + 1);
    
    } else if (key > ' ' && key <= '~') {
       // displayable char, but excluding space (that's handled below)
@@ -798,6 +813,8 @@ wxString GetKeyName(int key)
       switch (key) {
          case IK_HOME:     result = wxString(NK_HOME, wxConvLocal); break;
          case IK_END:      result = wxString(NK_END, wxConvLocal); break;
+         case IK_PAGEUP:   result = wxString(NK_PGUP, wxConvLocal); break;
+         case IK_PAGEDOWN: result = wxString(NK_PGDN, wxConvLocal); break;
          case IK_HELP:     result = wxString(NK_HELP, wxConvLocal); break;
          case IK_DELETE:   result = wxString(NK_DELETE, wxConvLocal); break;
          case IK_TAB:      result = wxString(NK_TAB, wxConvLocal); break;
@@ -870,6 +887,8 @@ void UpdateAcceleratorStrings()
                   key == ' ' ||
                   key == IK_HOME ||
                   key == IK_END ||
+                  key == IK_PAGEUP ||
+                  key == IK_PAGEDOWN ||
                   key == IK_DELETE ||
                   key == IK_TAB ||
                   key == IK_RETURN ) {
@@ -2844,7 +2863,8 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    keycombo = new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                              wxDefaultPosition, wxSize(230, wxDefaultCoord),
                              wxTE_PROCESS_TAB |
-                             wxTE_RICH2 |       // better for Windows???
+                             wxTE_PROCESS_ENTER |  //!!! better for Windows???
+                             wxTE_RICH2 |          // better for Windows???
                              wxTE_CENTER);
 
    // connect handlers to intercept keyboard events
@@ -2991,9 +3011,6 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
    } else {
       // unsupported key combo
       wxBell();
-      //!!! why are key combos like alt-L failing on Windows???
-      Warning(wxString::Format(_("key=%d (%c) mods=%d"),
-                               key, key < 128 ? wxChar(key) : wxChar('?'), mods));//!!!
    }
 
    // do NOT pass event on to next handler
@@ -3301,7 +3318,8 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    if (ignore_page_event) return;
    currpage = event.GetSelection();
    
-   // better for Windows (but why doesn't it work in wxGTK!!!???)
+   // better for Windows
+   //!!! but why doesn't it work in wxGTK??? is it causing the crashes???
    if (currpage == KEYBOARD_PAGE) {
       keycombo->SetFocus();
       keycombo->SetSelection(ALL_TEXT);

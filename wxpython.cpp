@@ -2256,12 +2256,12 @@ static PyObject* py_note(PyObject* self, PyObject* args)
 
 static PyObject* py_check(PyObject* self, PyObject* args)
 {
+   // if (PythonScriptAborted()) return NULL;
    // don't call checkevents() here otherwise we can't safely write code like
    //    if g.getlayer() == target:
    //       g.check(0)
    //       ... do stuff to target layer ...
    //       g.check(1)
-   // if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int flag;
 
