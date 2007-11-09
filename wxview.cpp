@@ -1273,13 +1273,10 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
    }
 
    // WARNING: logic must match that in PrefsDialog::OnKeyDown
-   #if 1 //!!! do on all platforms??? def __WXMAC__
-      // fix problems caused by the way wxMac handles keys modified by option/ctrl
-      if (mods == wxMOD_NONE || realkey == WXK_ESCAPE || realkey > 127) {
-         // tell OnChar handler to ignore realkey
-         realkey = 0;
-      }
-   #endif
+   if (mods == wxMOD_NONE || realkey == WXK_ESCAPE || realkey > 127) {
+      // tell OnChar handler to ignore realkey
+      realkey = 0;
+   }
 
    event.Skip();
 }
@@ -1317,20 +1314,17 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
 
    // WARNING: logic must match that in PrefsDialog::OnChar
-   #if 1 //!!! do on all platforms??? def __WXMAC__
-      // fix problems caused by the way wxMac handles modifier keys
-      if (realkey > 0 && mods != wxMOD_NONE) {
-         if (mods == wxMOD_SHIFT && key != realkey) {
-            // use translated key code but remove shift key;
-            // eg. shift-'/' will be seen as '?'
-            mods = wxMOD_NONE;
-         } else {
-            // use key code seen by OnKeyDown
-            key = realkey;
-            if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
-         }
+   if (realkey > 0 && mods != wxMOD_NONE) {
+      if (mods == wxMOD_SHIFT && key != realkey) {
+         // use translated key code but remove shift key;
+         // eg. shift-'/' will be seen as '?'
+         mods = wxMOD_NONE;
+      } else {
+         // use key code seen by OnKeyDown
+         key = realkey;
+         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
       }
-   #endif
+   }
 
    // do this check first because we allow user to make a selection while
    // generating a pattern or running a script

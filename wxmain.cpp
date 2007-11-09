@@ -2210,30 +2210,32 @@ void MainFrame::CreateMenus()
 
 // -----------------------------------------------------------------------------
 
-#define SET_ACCEL(x,y) mbar->SetLabel(x, mbar->GetLabel(x) + GetAccelerator(y))
+// note that we need to remove any accelerator string from GetLabel text
+#define SET_ACCEL(i,a) mbar->SetLabel(i, wxMenuItem::GetLabelFromText(mbar->GetLabel(i)) \
+                                         + GetAccelerator(a))
 
 void MainFrame::UpdateMenuAccelerators()
 {
    // keyboard shortcuts have changed, so update all menu item accelerators
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
-      //!!! following won't work due to wxMac bug???
+      //!!! following app menu items aren't updated due to wxMac bug???
       SET_ACCEL(wxID_ABOUT,         DO_ABOUT);
       SET_ACCEL(wxID_PREFERENCES,   DO_PREFS);
       SET_ACCEL(wxID_EXIT,          DO_QUIT);
-
+      
       SET_ACCEL(ID_DRAW,            DO_CURSDRAW);
       SET_ACCEL(ID_SELECT,          DO_CURSSEL);
       SET_ACCEL(ID_MOVE,            DO_CURSMOVE);
       SET_ACCEL(ID_ZOOMIN,          DO_CURSIN);
       SET_ACCEL(ID_ZOOMOUT,         DO_CURSOUT);
-   
+      
       SET_ACCEL(ID_SCALE_1,         DO_SCALE1);
       SET_ACCEL(ID_SCALE_2,         DO_SCALE2);
       SET_ACCEL(ID_SCALE_4,         DO_SCALE4);
       SET_ACCEL(ID_SCALE_8,         DO_SCALE8);
       SET_ACCEL(ID_SCALE_16,        DO_SCALE16);
-   
+      
       SET_ACCEL(wxID_NEW,           DO_NEWPATT);
       SET_ACCEL(wxID_OPEN,          DO_OPENPATT);
       SET_ACCEL(ID_OPEN_CLIP,       DO_OPENCLIP);
@@ -2245,7 +2247,7 @@ void MainFrame::UpdateMenuAccelerators()
       SET_ACCEL(ID_RUN_CLIP,        DO_RUNCLIP);
       SET_ACCEL(ID_SHOW_SCRIPTS,    DO_SCRIPTS);
       SET_ACCEL(ID_SCRIPT_DIR,      DO_SCRIPTDIR);
-   
+      
       SET_ACCEL(wxID_UNDO,          DO_UNDO);
       SET_ACCEL(wxID_REDO,          DO_REDO);
       SET_ACCEL(ID_NO_UNDO,         DO_DISABLE);
@@ -2263,7 +2265,7 @@ void MainFrame::UpdateMenuAccelerators()
       SET_ACCEL(ID_FLIPLR,          DO_FLIPLR);
       SET_ACCEL(ID_ROTATEC,         DO_ROTATECW);
       SET_ACCEL(ID_ROTATEA,         DO_ROTATEACW);
-   
+      
       SET_ACCEL(ID_START,           DO_STARTSTOP);
       SET_ACCEL(ID_NEXT,            DO_NEXTGEN);
       SET_ACCEL(ID_STEP,            DO_NEXTSTEP);
@@ -2276,7 +2278,7 @@ void MainFrame::UpdateMenuAccelerators()
       SET_ACCEL(ID_HYPER,           DO_HYPER);
       SET_ACCEL(ID_HINFO,           DO_HASHINFO);
       SET_ACCEL(ID_RULE,            DO_RULE);
-   
+      
       SET_ACCEL(ID_FULL,            DO_FULLSCREEN);
       SET_ACCEL(ID_FIT,             DO_FIT);
       SET_ACCEL(ID_FIT_SEL,         DO_FITSEL);
@@ -2292,7 +2294,7 @@ void MainFrame::UpdateMenuAccelerators()
       SET_ACCEL(ID_COLORS,          DO_SWAPCOLORS);
       SET_ACCEL(ID_BUFF,            DO_BUFFERED);
       SET_ACCEL(ID_INFO,            DO_INFO);
-   
+      
       SET_ACCEL(ID_ADD_LAYER,       DO_ADD);
       SET_ACCEL(ID_CLONE,           DO_CLONE);
       SET_ACCEL(ID_DUPLICATE,       DO_DUPLICATE);
@@ -2304,10 +2306,6 @@ void MainFrame::UpdateMenuAccelerators()
       SET_ACCEL(ID_SYNC_CURS,       DO_SYNCCURS);
       SET_ACCEL(ID_STACK,           DO_STACK);
       SET_ACCEL(ID_TILE,            DO_TILE);
-      
-      #ifdef __WXMAC__
-         DrawMenuBar();//!!!??? if this works then do by mbar->Refresh();???
-      #endif
    }
 }
 

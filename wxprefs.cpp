@@ -2843,8 +2843,8 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
 
    keycombo = new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                              wxDefaultPosition, wxSize(230, wxDefaultCoord),
-                             //!!!??? wxTE_READONLY |
-                             wxTE_PROCESS_TAB | wxTE_RICH2 |   //!!! better for Windows???
+                             wxTE_PROCESS_TAB |
+                             wxTE_RICH2 |       // better for Windows???
                              wxTE_CENTER);
 
    // connect handlers to intercept keyboard events
@@ -2921,13 +2921,10 @@ void PrefsDialog::OnKeyDown(wxKeyEvent& event)
    }
 
    // WARNING: logic must match that in PatternView::OnKeyDown
-   #if 1 //!!! do on all platforms??? def __WXMAC__
-      // fix problems caused by the way wxMac handles keys modified by option/ctrl
-      if (mods == wxMOD_NONE || realkey > 127) {
-         // tell OnChar handler to ignore realkey
-         realkey = 0;
-      }
-   #endif
+   if (mods == wxMOD_NONE || realkey > 127) {
+      // tell OnChar handler to ignore realkey
+      realkey = 0;
+   }
    
    #ifdef __WXMAC__
       // prevent ctrl-[ cancelling dialog (it translates to escape)
@@ -2937,16 +2934,15 @@ void PrefsDialog::OnKeyDown(wxKeyEvent& event)
       }
    #endif
    
-   //!!!??? we may need to do a similar thing on Linux to avoid alt-C selecting
-   // Cancel button and alt-O selecting OK button
+   //!!!??? on Linux we need to avoid alt-C/O selecting Cancel/OK button
+   /* this didn't work -- OnKeyDown is not getting called
    #if defined(__WXGTK__) && defined(__WXX11__)
-      /*
       if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
          OnChar(event);
          return;
       }
-      */
    #endif
+   */
 
    event.Skip();     // pass event to OnChar handler
 }
@@ -2959,20 +2955,17 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
    int mods = event.GetModifiers();
 
    // WARNING: logic must match that in PatternView::OnChar
-   #if 1 //!!! do on all platforms??? def __WXMAC__
-      // fix problems caused by the way wxMac handles modifier keys
-      if (realkey > 0 && mods != wxMOD_NONE) {
-         if (mods == wxMOD_SHIFT && key != realkey) {
-            // use translated key code but remove shift key;
-            // eg. shift-'/' will be seen as '?'
-            mods = wxMOD_NONE;
-         } else {
-            // use key code seen by OnKeyDown
-            key = realkey;
-            if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
-         }
+   if (realkey > 0 && mods != wxMOD_NONE) {
+      if (mods == wxMOD_SHIFT && key != realkey) {
+         // use translated key code but remove shift key;
+         // eg. shift-'/' will be seen as '?'
+         mods = wxMOD_NONE;
+      } else {
+         // use key code seen by OnKeyDown
+         key = realkey;
+         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
       }
-   #endif
+   }
    
    // convert wx key and mods to our internal key code and modifiers
    // and, if they are valid, display the key combo and update the action
@@ -2998,6 +2991,9 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
    } else {
       // unsupported key combo
       wxBell();
+      //!!! why are key combos like alt-L failing on Windows???
+      Warning(wxString::Format(_("key=%d (%c) mods=%d"),
+                               key, key < 128 ? wxChar(key) : wxChar('?'), mods));//!!!
    }
 
    // do NOT pass event on to next handler
@@ -3305,7 +3301,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    if (ignore_page_event) return;
    currpage = event.GetSelection();
    
-   //!!! better for Windows???
+   // better for Windows (but why doesn't it work in wxGTK!!!???)
    if (currpage == KEYBOARD_PAGE) {
       keycombo->SetFocus();
       keycombo->SetSelection(ALL_TEXT);
