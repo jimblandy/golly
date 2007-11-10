@@ -1875,13 +1875,17 @@ void GetPrefs()
 
 // define a multi-page dialog for changing various preferences
 
-size_t currpage = 0;    // current page in PrefsDialog
+size_t currpage = 0;          // current page in PrefsDialog
 
 // for some reason (maybe wxMac bug?) we need to make these static globals
 // otherwise the OnChar handler doesn't change the same data seen
 // by the OnChoice handler
 int currkey = ' ';                           // current key code
 int currmods = mk_ALT + mk_SHIFT + mk_META;  // current modifiers
+
+//!!! these need to be globals to avoid crashes in wxGTK???
+wxTextCtrl* keycombo;         // for displaying current key combination
+wxChoice* actionmenu;         // for displaying and selecting actions
 
 class PrefsDialog : public wxPropertySheetDialog
 {
@@ -1994,8 +1998,6 @@ private:
    wxColor* new_hlifergb;        // new status bar color when using hlifealgo
 
    int realkey;                  // key code set by OnKeyDown
-   wxTextCtrl* keycombo;         // displays current key combination
-   wxChoice* actionmenu;         // for selecting actions
 
    DECLARE_EVENT_TABLE()
 };
@@ -2870,7 +2872,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    keycombo = new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                              wxDefaultPosition, wxSize(230, wxDefaultCoord),
                              wxTE_PROCESS_TAB |
-                             wxTE_PROCESS_ENTER |  //!!! better for Windows???
+                             wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
                              wxTE_RICH2 |          // better for Windows???
                              wxTE_CENTER);
 
@@ -3327,6 +3329,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    
    // better for Windows
    //!!! but why doesn't it work in wxGTK??? is it causing the crashes???
+   // maybe make keycombo and actionmenu globals???
    if (currpage == KEYBOARD_PAGE) {
       keycombo->SetFocus();
       keycombo->SetSelection(ALL_TEXT);
