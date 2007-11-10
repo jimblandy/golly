@@ -728,7 +728,7 @@ void GetKeyAction(char* value)
 
 wxString GetKeyCombo(int key, int modset)
 {
-   // build a key combo string for display in prefs dialog
+   // build a key combo string for display in prefs dialog and help window
    wxString result = wxEmptyString;
    
 #ifdef __WXMAC__
@@ -757,8 +757,7 @@ wxString GetKeyCombo(int key, int modset)
    } else {
       // non-displayable char
       switch (key) {
-         // these strings are only seen in prefs dialog so can be more
-         // descriptive than the NK_* strings
+         // these strings can be more descriptive than the NK_* strings
          case IK_HOME:     result += wxT("Home"); break;
          case IK_END:      result += wxT("End"); break;
          case IK_PAGEUP:   result += wxT("PageUp"); break;
@@ -780,6 +779,33 @@ wxString GetKeyCombo(int key, int modset)
       }
    }
    
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+wxString GetShortcutTable()
+{
+   // return HTML data to display current keyboard shortcuts in help window
+   wxString result = wxEmptyString;
+
+   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
+      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+         action_info action = keyaction[key][modset];
+         if ( action.id != DO_NOTHING ) {
+            result += wxT("<tr><td align=right>");
+            result += GetKeyCombo(key, modset);
+            result += wxT("&nbsp;</td><td>&nbsp;");
+            result += wxString(GetActionName(action.id), wxConvLocal);
+            if (action.id == DO_OPENFILE) {
+               result += wxT("&nbsp;");
+               result += action.file;
+            }
+            result += wxT("</td></tr>");
+         }
+      }
+   }
+
    return result;
 }
 

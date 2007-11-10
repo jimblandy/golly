@@ -243,6 +243,9 @@ wxString GetAccelerator(action_id action);
 // return a string, possibly empty, containing the menu item
 // accelerator(s) for the given action
 
+wxString GetShortcutTable();
+// return HTML data to display current keyboard shortcuts
+
 // Colors:
 
 extern wxColor* livergb[10];     // color for live cells in each layer

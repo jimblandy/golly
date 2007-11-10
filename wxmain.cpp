@@ -170,7 +170,8 @@ enum {
    ID_HELP_INDEX,
    ID_HELP_INTRO,
    ID_HELP_TIPS,
-   ID_HELP_SHORTCUTS,
+   ID_HELP_KEYBOARD,
+   ID_HELP_MOUSE,
    ID_HELP_PERL,
    ID_HELP_PYTHON,
    ID_HELP_LEXICON,
@@ -1475,7 +1476,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
       case ID_HELP_TIPS:      ShowHelp(_("Help/tips.html")); break;
-      case ID_HELP_SHORTCUTS: ShowHelp(_("Help/shortcuts.html")); break;
+      case ID_HELP_KEYBOARD:  ShowHelp(SHOW_KEYBOARD_SHORTCUTS); break;
+      case ID_HELP_MOUSE:     ShowHelp(_("Help/mouse.html")); break;
       case ID_HELP_PERL:      ShowHelp(_("Help/perl.html")); break;
       case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
       case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
@@ -2174,7 +2176,8 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_INDEX,              _("Contents"));
    helpMenu->Append(ID_HELP_INTRO,              _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS,               _("Hints and Tips"));
-   helpMenu->Append(ID_HELP_SHORTCUTS,          _("Shortcuts"));
+   helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));
+   helpMenu->Append(ID_HELP_MOUSE,              _("Mouse Shortcuts"));
    helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
    helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
    helpMenu->Append(ID_HELP_LEXICON,            _("Life Lexicon"));
