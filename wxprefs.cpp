@@ -596,6 +596,13 @@ const char* GetActionName(action_id action)
 
 // -----------------------------------------------------------------------------
 
+// is there really no C++ standard for case-insensitive string comparison???
+#ifdef __WXMSW__
+#define ISTRCMP stricmp
+#else
+#define ISTRCMP strcasecmp
+#endif
+
 void GetKeyAction(char* value)
 {
    // parse strings like "z undo" or "space+ctrl advance selection";
@@ -637,19 +644,19 @@ void GetKeyAction(char* value)
                sscanf(p, "%d", &num);
                if (num >= 1 && num <= 24) key = IK_F1 + num - 1;
             } else {
-               if      (strcasecmp(start, NK_HOME) == 0)    key = IK_HOME;
-               else if (strcasecmp(start, NK_END) == 0)     key = IK_END;
-               else if (strcasecmp(start, NK_PGUP) == 0)    key = IK_PAGEUP;
-               else if (strcasecmp(start, NK_PGDN) == 0)    key = IK_PAGEDOWN;
-               else if (strcasecmp(start, NK_HELP) == 0)    key = IK_HELP;
-               else if (strcasecmp(start, NK_DELETE) == 0)  key = IK_DELETE;
-               else if (strcasecmp(start, NK_TAB) == 0)     key = IK_TAB;
-               else if (strcasecmp(start, NK_RETURN) == 0)  key = IK_RETURN;
-               else if (strcasecmp(start, NK_LEFT) == 0)    key = IK_LEFT;
-               else if (strcasecmp(start, NK_RIGHT) == 0)   key = IK_RIGHT;
-               else if (strcasecmp(start, NK_UP) == 0)      key = IK_UP;
-               else if (strcasecmp(start, NK_DOWN) == 0)    key = IK_DOWN;
-               else if (strcasecmp(start, NK_SPACE) == 0)   key = ' ';
+               if      (ISTRCMP(start, NK_HOME) == 0)    key = IK_HOME;
+               else if (ISTRCMP(start, NK_END) == 0)     key = IK_END;
+               else if (ISTRCMP(start, NK_PGUP) == 0)    key = IK_PAGEUP;
+               else if (ISTRCMP(start, NK_PGDN) == 0)    key = IK_PAGEDOWN;
+               else if (ISTRCMP(start, NK_HELP) == 0)    key = IK_HELP;
+               else if (ISTRCMP(start, NK_DELETE) == 0)  key = IK_DELETE;
+               else if (ISTRCMP(start, NK_TAB) == 0)     key = IK_TAB;
+               else if (ISTRCMP(start, NK_RETURN) == 0)  key = IK_RETURN;
+               else if (ISTRCMP(start, NK_LEFT) == 0)    key = IK_LEFT;
+               else if (ISTRCMP(start, NK_RIGHT) == 0)   key = IK_RIGHT;
+               else if (ISTRCMP(start, NK_UP) == 0)      key = IK_UP;
+               else if (ISTRCMP(start, NK_DOWN) == 0)    key = IK_DOWN;
+               else if (ISTRCMP(start, NK_SPACE) == 0)   key = ' ';
             }
             if (key < 0)
                Fatal(wxString::Format(_("Unknown key in key_action: %s"),
@@ -675,14 +682,14 @@ void GetKeyAction(char* value)
          char oldp = *p;
          *p = 0;
          #ifdef __WXMAC__
-            if      (strcasecmp(start, "cmd") == 0)   modset |= mk_META;
-            else if (strcasecmp(start, "opt") == 0)   modset |= mk_ALT;
-            else if (strcasecmp(start, "ctrl") == 0)  modset |= mk_CTRL;
+            if      (ISTRCMP(start, "cmd") == 0)   modset |= mk_META;
+            else if (ISTRCMP(start, "opt") == 0)   modset |= mk_ALT;
+            else if (ISTRCMP(start, "ctrl") == 0)  modset |= mk_CTRL;
          #else
-            if      (strcasecmp(start, "ctrl") == 0)  modset |= mk_META;
-            else if (strcasecmp(start, "alt") == 0)   modset |= mk_ALT;
+            if      (ISTRCMP(start, "ctrl") == 0)  modset |= mk_META;
+            else if (ISTRCMP(start, "alt") == 0)   modset |= mk_ALT;
          #endif
-         else if    (strcasecmp(start, "shift") == 0) modset |= mk_SHIFT;
+         else if    (ISTRCMP(start, "shift") == 0) modset |= mk_SHIFT;
          else
             Fatal(wxString::Format(_("Unknown modifier in key_action: %s"),
                                    wxString(start,wxConvLocal).c_str()));
