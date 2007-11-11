@@ -1931,11 +1931,9 @@ void GetPrefs()
 
 size_t currpage = 0;          // current page in PrefsDialog
 
-// for some reason (maybe wxMac bug?) we need to make these static globals
-// otherwise the OnChar handler doesn't change the same data seen
-// by the OnChoice handler
-int currkey = ' ';                           // current key code
-int currmods = mk_ALT + mk_SHIFT + mk_META;  // current modifiers
+// these are global so we can remember current key combination
+int currkey = ' ';
+int currmods = mk_ALT + mk_SHIFT + mk_META;
 
 class PrefsDialog : public wxPropertySheetDialog
 {
@@ -2057,7 +2055,11 @@ BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnColorButton)
    EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY, PrefsDialog::OnPageChanging)
    EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
+#if defined(__WXGTK__) || defined(__WXX11__)
+   EVT_COMBOBOX               (wxID_ANY, PrefsDialog::OnChoice)
+#else
    EVT_CHOICE                 (wxID_ANY, PrefsDialog::OnChoice)
+#endif
    EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnButton)
 END_EVENT_TABLE()
 
@@ -2916,8 +2918,14 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
       actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
    }
    actionChoices[DO_OPENFILE] = _("Open Chosen File");
+#if defined(__WXGTK__) || defined(__WXX11__)
+   wxComboBox* actionmenu = new wxComboBox(panel, PREF_ACTION, wxT("NONE"),
+                                           wxDefaultPosition, wxDefaultSize, actionChoices,
+                                           wxCB_READONLY);
+#else
    wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
                                        wxDefaultPosition, wxDefaultSize, actionChoices);
+#endif
 
    wxTextCtrl* keycombo =
       new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
@@ -3014,15 +3022,14 @@ void PrefsDialog::OnKeyDown(wxKeyEvent& event)
       }
    #endif
    
-   //!!!??? on Linux we need to avoid alt-C/O selecting Cancel/OK button
-   /* this didn't work -- OnKeyDown is not getting called
-   #if defined(__WXGTK__) && defined(__WXX11__)
+   #if defined(__WXGTK__) || defined(__WXX11__)
+      //!!!??? on Linux we need to avoid alt-C/O selecting Cancel/OK button
       if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
+         wxBell();//!!!
          OnChar(event);
          return;
       }
    #endif
-   */
 
    event.Skip();     // pass event to OnChar handler
 }
@@ -3051,7 +3058,11 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
    // and, if they are valid, display the key combo and update the action
    if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
       wxTextCtrl* keycombo = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
-      wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
+      #if defined(__WXGTK__) || defined(__WXX11__)
+         wxComboBox* actionmenu = (wxComboBox*) FindWindowById(PREF_ACTION);
+      #else
+         wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
+      #endif
       if (keycombo && actionmenu) {
          wxString keystring = GetKeyCombo(currkey, currmods);
          if (!keystring.IsEmpty()) {
@@ -3385,6 +3396,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    
    // better for Windows
    //!!! but why doesn't it work in wxGTK??? is it causing the crashes???
+   //!!! try using pending event to set focus???
    if (currpage == KEYBOARD_PAGE) {
       wxTextCtrl* keycombo = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (keycombo) {
