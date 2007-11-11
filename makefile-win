@@ -359,7 +359,7 @@ wxgolly.h wxview.h wxmain.h wxscript.h
 $(OBJDIR)/wxprefs.obj: wxprefs.cpp wxprefs.h \
 Help/about.html \
 lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxundo.h wxlayer.h
+wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxundo.h wxlayer.h wxscript.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp
 
 $(OBJDIR)/wxrule.obj: wxrule.cpp wxrule.h \

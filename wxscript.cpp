@@ -834,6 +834,11 @@ void RunScript(const wxString& filename)
 
    inscript = true;
    mainptr->UpdateUserInterface(mainptr->IsActive());
+   #ifdef __WXMSW__
+      // temporarily clear non-ctrl and non-func key accelerators from
+      // menu items so keys like tab/enter/space can be passed to script
+      mainptr->UpdateMenuAccelerators();
+   #endif
 
    wxString ext = filename.AfterLast(wxT('.'));
    if (ext.IsSameAs(wxT("pl"), false)) {
@@ -887,12 +892,12 @@ void RunScript(const wxString& filename)
    inscript = false;
    plscript = false;
    pyscript = false;
-   
-   // update Undo/Redo items based on current layer's history
-   if (allowundo) currlayer->undoredo->UpdateUndoRedoItems();
 
    // restore current directory to location of Golly app
    wxSetWorkingDirectory(gollydir);
+   
+   // update Undo/Redo items based on current layer's history
+   if (allowundo) currlayer->undoredo->UpdateUndoRedoItems();
 
    // display any Perl/Python error message
    CheckScriptError(ext);
@@ -900,6 +905,11 @@ void RunScript(const wxString& filename)
    // update title, menu bar, cursor, viewport, status bar, tool bar, etc
    if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
    mainptr->UpdateEverything();
+   
+   #ifdef __WXMSW__
+      // restore accelerators that were cleared above
+      mainptr->UpdateMenuAccelerators();
+   #endif
 }
 
 // -----------------------------------------------------------------------------

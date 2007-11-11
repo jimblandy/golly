@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxlayer.h"       // for currlayer
+#include "wxscript.h"      // for inscript
 #include "wxprefs.h"
 
 #ifdef __WXMSW__
@@ -962,6 +963,33 @@ void UpdateAcceleratorStrings()
 wxString GetAccelerator(action_id action)
 {
    return accelerator[action];
+}
+
+// -----------------------------------------------------------------------------
+
+void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
+{
+   // we need to remove old accelerator string from GetLabel text
+   wxString text = wxMenuItem::GetLabelFromText(mbar->GetLabel(item));
+   wxString accel = accelerator[action];
+   
+#ifdef __WXMSW__
+   if (inscript) {
+      // clear non-ctrl/non-func key accelerator from menu item
+      // so keys like tab/enter/space can be passed to script
+      if (accel.IsEmpty()) return;
+      int Fpos = accel.Find('F');
+      if ( accel.Find(wxT("Ctrl")) != wxNOT_FOUND ||
+           (Fpos != wxNOT_FOUND && accel[Fpos+1] >= '1' && accel[Fpos+1] <= '9') ) {
+         // no need to change accelerator
+         return;
+      } else {
+         accel = wxEmptyString;
+      }
+   }
+#endif
+
+   mbar->SetLabel(item, text + accel);
 }
 
 // -----------------------------------------------------------------------------
@@ -1908,10 +1936,6 @@ size_t currpage = 0;          // current page in PrefsDialog
 // by the OnChoice handler
 int currkey = ' ';                           // current key code
 int currmods = mk_ALT + mk_SHIFT + mk_META;  // current modifiers
-
-//!!! these need to be globals to avoid crashes in wxGTK???
-wxTextCtrl* keycombo;         // for displaying current key combination
-wxChoice* actionmenu;         // for displaying and selecting actions
 
 class PrefsDialog : public wxPropertySheetDialog
 {
@@ -2892,15 +2916,16 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
       actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
    }
    actionChoices[DO_OPENFILE] = _("Open Chosen File");
-   actionmenu = new wxChoice(panel, PREF_ACTION,
-                             wxDefaultPosition, wxDefaultSize, actionChoices);
+   wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
+                                       wxDefaultPosition, wxDefaultSize, actionChoices);
 
-   keycombo = new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
-                             wxDefaultPosition, wxSize(230, wxDefaultCoord),
-                             wxTE_PROCESS_TAB |
-                             wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
-                             wxTE_RICH2 |          // better for Windows???
-                             wxTE_CENTER);
+   wxTextCtrl* keycombo =
+      new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
+                       wxDefaultPosition, wxSize(230, wxDefaultCoord),
+                       wxTE_PROCESS_TAB |
+                       wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
+                       wxTE_RICH2 |          // also better for Windows???
+                       wxTE_CENTER);
 
    // connect handlers to intercept keyboard events
    keycombo->Connect(wxID_ANY, wxEVT_KEY_DOWN, wxKeyEventHandler(PrefsDialog::OnKeyDown));
@@ -3025,20 +3050,19 @@ void PrefsDialog::OnChar(wxKeyEvent& event)
    // convert wx key and mods to our internal key code and modifiers
    // and, if they are valid, display the key combo and update the action
    if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
-      // why does keycombo-> and actionmenu-> crash???
-      wxTextCtrl* textctrl = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
-      wxChoice* choice = (wxChoice*) FindWindowById(PREF_ACTION);
-      if (textctrl && choice) {
+      wxTextCtrl* keycombo = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
+      wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
+      if (keycombo && actionmenu) {
          wxString keystring = GetKeyCombo(currkey, currmods);
          if (!keystring.IsEmpty()) {
-            textctrl->ChangeValue(keystring);
+            keycombo->ChangeValue(keystring);
          } else {
             currkey = 0;
             currmods = 0;
-            textctrl->ChangeValue(_("UNKNOWN KEY"));
+            keycombo->ChangeValue(_("UNKNOWN KEY"));
          }
-         textctrl->SetSelection(ALL_TEXT);
-         choice->SetSelection(keyaction[currkey][currmods].id);
+         keycombo->SetSelection(ALL_TEXT);
+         actionmenu->SetSelection(keyaction[currkey][currmods].id);
          UpdateChooseFile();
       } else {
          Warning(_("Failed to find control!"));
@@ -3079,7 +3103,13 @@ void PrefsDialog::UpdateChooseFile()
 void PrefsDialog::OnChoice(wxCommandEvent& event)
 {
    if ( event.GetId() == PREF_ACTION ) {
-      action_id action = (action_id) actionmenu->GetSelection();
+      int i = event.GetSelection();
+      if (i < 0 || i >= MAX_ACTIONS) {
+         // should never happen but play safe
+         wxBell();
+         return;
+      }
+      action_id action = (action_id) i;
       keyaction[currkey][currmods].id = action;
       
       if ( action == DO_OPENFILE && keyaction[currkey][currmods].file.IsEmpty() ) {
@@ -3355,10 +3385,14 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    
    // better for Windows
    //!!! but why doesn't it work in wxGTK??? is it causing the crashes???
-   // maybe make keycombo and actionmenu globals???
    if (currpage == KEYBOARD_PAGE) {
-      keycombo->SetFocus();
-      keycombo->SetSelection(ALL_TEXT);
+      wxTextCtrl* keycombo = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
+      if (keycombo) {
+         keycombo->SetFocus();
+         keycombo->SetSelection(ALL_TEXT);
+      } else {
+         wxBell();
+      }
    }
 }
 
@@ -3454,9 +3488,6 @@ PrefsDialog::~PrefsDialog()
    delete new_selectrgb;
    delete new_qlifergb;
    delete new_hlifergb;
-   
-   delete keycombo;
-   delete actionmenu;
 }
 
 // -----------------------------------------------------------------------------

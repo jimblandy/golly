@@ -2220,102 +2220,98 @@ void MainFrame::CreateMenus()
 
 // -----------------------------------------------------------------------------
 
-// note that we need to remove any accelerator string from GetLabel text
-#define SET_ACCEL(i,a) mbar->SetLabel(i, wxMenuItem::GetLabelFromText(mbar->GetLabel(i)) \
-                                         + GetAccelerator(a))
-
 void MainFrame::UpdateMenuAccelerators()
 {
    // keyboard shortcuts have changed, so update all menu item accelerators
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
-      //!!! following app menu items aren't updated due to wxMac bug???
-      SET_ACCEL(wxID_ABOUT,         DO_ABOUT);
-      SET_ACCEL(wxID_PREFERENCES,   DO_PREFS);
-      SET_ACCEL(wxID_EXIT,          DO_QUIT);
+      //!!! these app menu items aren't updated due to wxMac bug
+      SetAccelerator(mbar, wxID_ABOUT,         DO_ABOUT);
+      SetAccelerator(mbar, wxID_PREFERENCES,   DO_PREFS);
+      SetAccelerator(mbar, wxID_EXIT,          DO_QUIT);
       
-      SET_ACCEL(ID_DRAW,            DO_CURSDRAW);
-      SET_ACCEL(ID_SELECT,          DO_CURSSEL);
-      SET_ACCEL(ID_MOVE,            DO_CURSMOVE);
-      SET_ACCEL(ID_ZOOMIN,          DO_CURSIN);
-      SET_ACCEL(ID_ZOOMOUT,         DO_CURSOUT);
+      SetAccelerator(mbar, ID_DRAW,            DO_CURSDRAW);
+      SetAccelerator(mbar, ID_SELECT,          DO_CURSSEL);
+      SetAccelerator(mbar, ID_MOVE,            DO_CURSMOVE);
+      SetAccelerator(mbar, ID_ZOOMIN,          DO_CURSIN);
+      SetAccelerator(mbar, ID_ZOOMOUT,         DO_CURSOUT);
       
-      SET_ACCEL(ID_SCALE_1,         DO_SCALE1);
-      SET_ACCEL(ID_SCALE_2,         DO_SCALE2);
-      SET_ACCEL(ID_SCALE_4,         DO_SCALE4);
-      SET_ACCEL(ID_SCALE_8,         DO_SCALE8);
-      SET_ACCEL(ID_SCALE_16,        DO_SCALE16);
+      SetAccelerator(mbar, ID_SCALE_1,         DO_SCALE1);
+      SetAccelerator(mbar, ID_SCALE_2,         DO_SCALE2);
+      SetAccelerator(mbar, ID_SCALE_4,         DO_SCALE4);
+      SetAccelerator(mbar, ID_SCALE_8,         DO_SCALE8);
+      SetAccelerator(mbar, ID_SCALE_16,        DO_SCALE16);
       
-      SET_ACCEL(wxID_NEW,           DO_NEWPATT);
-      SET_ACCEL(wxID_OPEN,          DO_OPENPATT);
-      SET_ACCEL(ID_OPEN_CLIP,       DO_OPENCLIP);
-      SET_ACCEL(ID_SHOW_PATTERNS,   DO_PATTERNS);
-      SET_ACCEL(ID_PATTERN_DIR,     DO_PATTDIR);
-      SET_ACCEL(wxID_SAVE,          DO_SAVE);
-      SET_ACCEL(ID_SAVE_XRLE,       DO_SAVEXRLE);
-      SET_ACCEL(ID_RUN_SCRIPT,      DO_RUNSCRIPT);
-      SET_ACCEL(ID_RUN_CLIP,        DO_RUNCLIP);
-      SET_ACCEL(ID_SHOW_SCRIPTS,    DO_SCRIPTS);
-      SET_ACCEL(ID_SCRIPT_DIR,      DO_SCRIPTDIR);
+      SetAccelerator(mbar, wxID_NEW,           DO_NEWPATT);
+      SetAccelerator(mbar, wxID_OPEN,          DO_OPENPATT);
+      SetAccelerator(mbar, ID_OPEN_CLIP,       DO_OPENCLIP);
+      SetAccelerator(mbar, ID_SHOW_PATTERNS,   DO_PATTERNS);
+      SetAccelerator(mbar, ID_PATTERN_DIR,     DO_PATTDIR);
+      SetAccelerator(mbar, wxID_SAVE,          DO_SAVE);
+      SetAccelerator(mbar, ID_SAVE_XRLE,       DO_SAVEXRLE);
+      SetAccelerator(mbar, ID_RUN_SCRIPT,      DO_RUNSCRIPT);
+      SetAccelerator(mbar, ID_RUN_CLIP,        DO_RUNCLIP);
+      SetAccelerator(mbar, ID_SHOW_SCRIPTS,    DO_SCRIPTS);
+      SetAccelerator(mbar, ID_SCRIPT_DIR,      DO_SCRIPTDIR);
       
-      SET_ACCEL(wxID_UNDO,          DO_UNDO);
-      SET_ACCEL(wxID_REDO,          DO_REDO);
-      SET_ACCEL(ID_NO_UNDO,         DO_DISABLE);
-      SET_ACCEL(ID_CUT,             DO_CUT);
-      SET_ACCEL(ID_COPY,            DO_COPY);
-      SET_ACCEL(ID_CLEAR,           DO_CLEAR);
-      SET_ACCEL(ID_OUTSIDE,         DO_CLEAROUT);
-      SET_ACCEL(ID_PASTE,           DO_PASTE);
-      SET_ACCEL(ID_PASTE_SEL,       DO_PASTESEL);
-      SET_ACCEL(ID_SELALL,          DO_SELALL);
-      SET_ACCEL(ID_REMOVE,          DO_REMOVESEL);
-      SET_ACCEL(ID_SHRINK,          DO_SHRINK);
-      SET_ACCEL(ID_RANDOM,          DO_RANDFILL);
-      SET_ACCEL(ID_FLIPTB,          DO_FLIPTB);
-      SET_ACCEL(ID_FLIPLR,          DO_FLIPLR);
-      SET_ACCEL(ID_ROTATEC,         DO_ROTATECW);
-      SET_ACCEL(ID_ROTATEA,         DO_ROTATEACW);
+      SetAccelerator(mbar, wxID_UNDO,          DO_UNDO);
+      SetAccelerator(mbar, wxID_REDO,          DO_REDO);
+      SetAccelerator(mbar, ID_NO_UNDO,         DO_DISABLE);
+      SetAccelerator(mbar, ID_CUT,             DO_CUT);
+      SetAccelerator(mbar, ID_COPY,            DO_COPY);
+      SetAccelerator(mbar, ID_CLEAR,           DO_CLEAR);
+      SetAccelerator(mbar, ID_OUTSIDE,         DO_CLEAROUT);
+      SetAccelerator(mbar, ID_PASTE,           DO_PASTE);
+      SetAccelerator(mbar, ID_PASTE_SEL,       DO_PASTESEL);
+      SetAccelerator(mbar, ID_SELALL,          DO_SELALL);
+      SetAccelerator(mbar, ID_REMOVE,          DO_REMOVESEL);
+      SetAccelerator(mbar, ID_SHRINK,          DO_SHRINK);
+      SetAccelerator(mbar, ID_RANDOM,          DO_RANDFILL);
+      SetAccelerator(mbar, ID_FLIPTB,          DO_FLIPTB);
+      SetAccelerator(mbar, ID_FLIPLR,          DO_FLIPLR);
+      SetAccelerator(mbar, ID_ROTATEC,         DO_ROTATECW);
+      SetAccelerator(mbar, ID_ROTATEA,         DO_ROTATEACW);
       
-      SET_ACCEL(ID_START,           DO_STARTSTOP);
-      SET_ACCEL(ID_NEXT,            DO_NEXTGEN);
-      SET_ACCEL(ID_STEP,            DO_NEXTSTEP);
-      SET_ACCEL(ID_RESET,           DO_RESET);
-      SET_ACCEL(ID_SETGEN,          DO_SETGEN);
-      SET_ACCEL(ID_FASTER,          DO_FASTER);
-      SET_ACCEL(ID_SLOWER,          DO_SLOWER);
-      SET_ACCEL(ID_AUTO,            DO_AUTOFIT);
-      SET_ACCEL(ID_HASH,            DO_HASHING);
-      SET_ACCEL(ID_HYPER,           DO_HYPER);
-      SET_ACCEL(ID_HINFO,           DO_HASHINFO);
-      SET_ACCEL(ID_RULE,            DO_RULE);
+      SetAccelerator(mbar, ID_START,           DO_STARTSTOP);
+      SetAccelerator(mbar, ID_NEXT,            DO_NEXTGEN);
+      SetAccelerator(mbar, ID_STEP,            DO_NEXTSTEP);
+      SetAccelerator(mbar, ID_RESET,           DO_RESET);
+      SetAccelerator(mbar, ID_SETGEN,          DO_SETGEN);
+      SetAccelerator(mbar, ID_FASTER,          DO_FASTER);
+      SetAccelerator(mbar, ID_SLOWER,          DO_SLOWER);
+      SetAccelerator(mbar, ID_AUTO,            DO_AUTOFIT);
+      SetAccelerator(mbar, ID_HASH,            DO_HASHING);
+      SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
+      SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);
+      SetAccelerator(mbar, ID_RULE,            DO_RULE);
       
-      SET_ACCEL(ID_FULL,            DO_FULLSCREEN);
-      SET_ACCEL(ID_FIT,             DO_FIT);
-      SET_ACCEL(ID_FIT_SEL,         DO_FITSEL);
-      SET_ACCEL(ID_MIDDLE,          DO_MIDDLE);
-      SET_ACCEL(ID_RESTORE00,       DO_RESTORE00);
-      SET_ACCEL(wxID_ZOOM_IN,       DO_ZOOMIN);
-      SET_ACCEL(wxID_ZOOM_OUT,      DO_ZOOMOUT);
-      SET_ACCEL(ID_TOOL_BAR,        DO_SHOWTOOL);
-      SET_ACCEL(ID_LAYER_BAR,       DO_SHOWLAYER);
-      SET_ACCEL(ID_STATUS_BAR,      DO_SHOWSTATUS);
-      SET_ACCEL(ID_EXACT,           DO_SHOWEXACT);
-      SET_ACCEL(ID_GRID,            DO_SHOWGRID);
-      SET_ACCEL(ID_COLORS,          DO_SWAPCOLORS);
-      SET_ACCEL(ID_BUFF,            DO_BUFFERED);
-      SET_ACCEL(ID_INFO,            DO_INFO);
+      SetAccelerator(mbar, ID_FULL,            DO_FULLSCREEN);
+      SetAccelerator(mbar, ID_FIT,             DO_FIT);
+      SetAccelerator(mbar, ID_FIT_SEL,         DO_FITSEL);
+      SetAccelerator(mbar, ID_MIDDLE,          DO_MIDDLE);
+      SetAccelerator(mbar, ID_RESTORE00,       DO_RESTORE00);
+      SetAccelerator(mbar, wxID_ZOOM_IN,       DO_ZOOMIN);
+      SetAccelerator(mbar, wxID_ZOOM_OUT,      DO_ZOOMOUT);
+      SetAccelerator(mbar, ID_TOOL_BAR,        DO_SHOWTOOL);
+      SetAccelerator(mbar, ID_LAYER_BAR,       DO_SHOWLAYER);
+      SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
+      SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
+      SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
+      SetAccelerator(mbar, ID_COLORS,          DO_SWAPCOLORS);
+      SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
+      SetAccelerator(mbar, ID_INFO,            DO_INFO);
       
-      SET_ACCEL(ID_ADD_LAYER,       DO_ADD);
-      SET_ACCEL(ID_CLONE,           DO_CLONE);
-      SET_ACCEL(ID_DUPLICATE,       DO_DUPLICATE);
-      SET_ACCEL(ID_DEL_LAYER,       DO_DELETE);
-      SET_ACCEL(ID_DEL_OTHERS,      DO_DELOTHERS);
-      SET_ACCEL(ID_MOVE_LAYER,      DO_MOVELAYER);
-      SET_ACCEL(ID_NAME_LAYER,      DO_NAMELAYER);
-      SET_ACCEL(ID_SYNC_VIEW,       DO_SYNCVIEWS);
-      SET_ACCEL(ID_SYNC_CURS,       DO_SYNCCURS);
-      SET_ACCEL(ID_STACK,           DO_STACK);
-      SET_ACCEL(ID_TILE,            DO_TILE);
+      SetAccelerator(mbar, ID_ADD_LAYER,       DO_ADD);
+      SetAccelerator(mbar, ID_CLONE,           DO_CLONE);
+      SetAccelerator(mbar, ID_DUPLICATE,       DO_DUPLICATE);
+      SetAccelerator(mbar, ID_DEL_LAYER,       DO_DELETE);
+      SetAccelerator(mbar, ID_DEL_OTHERS,      DO_DELOTHERS);
+      SetAccelerator(mbar, ID_MOVE_LAYER,      DO_MOVELAYER);
+      SetAccelerator(mbar, ID_NAME_LAYER,      DO_NAMELAYER);
+      SetAccelerator(mbar, ID_SYNC_VIEW,       DO_SYNCVIEWS);
+      SetAccelerator(mbar, ID_SYNC_CURS,       DO_SYNCCURS);
+      SetAccelerator(mbar, ID_STACK,           DO_STACK);
+      SetAccelerator(mbar, ID_TILE,            DO_TILE);
    }
 }
 

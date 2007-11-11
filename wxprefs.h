@@ -243,6 +243,9 @@ wxString GetAccelerator(action_id action);
 // return a string, possibly empty, containing the menu item
 // accelerator(s) for the given action
 
+void SetAccelerator(wxMenuBar* mbar, int item, action_id action);
+// update accelerator for given menu item using given action
+
 wxString GetShortcutTable();
 // return HTML data to display current keyboard shortcuts
 
