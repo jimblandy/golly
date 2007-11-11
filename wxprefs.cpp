@@ -1927,13 +1927,87 @@ void GetPrefs()
 
 // -----------------------------------------------------------------------------
 
-// define a multi-page dialog for changing various preferences
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
+   // fix wxMac 2.7.2+ bug in wxTextCtrl::SetSelection
+   #define ALL_TEXT 0,999
+#else
+   #define ALL_TEXT -1,-1
+#endif
+
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
+   // only happens when a wxStaticText box is next to a wxChoice box
+   #define FIX_ALIGN_BUG wxBOTTOM,4
+#else
+   #define FIX_ALIGN_BUG wxALL,0
+#endif
+
+// -----------------------------------------------------------------------------
 
 size_t currpage = 0;          // current page in PrefsDialog
+
+enum {
+   // these *_PAGE values must correspond to currpage values
+   FILE_PAGE = 0,
+   EDIT_PAGE,
+   CONTROL_PAGE,
+   VIEW_PAGE,
+   LAYER_PAGE,
+   COLOR_PAGE,
+   KEYBOARD_PAGE,
+   // File prefs
+   PREF_NEW_REM_SEL = wxID_HIGHEST,  // avoid problems with FindWindowById
+   PREF_NEW_CURSOR,
+   PREF_NEW_SCALE,
+   PREF_OPEN_REM_SEL,
+   PREF_OPEN_CURSOR,
+   PREF_MAX_PATTERNS,
+   PREF_MAX_SCRIPTS,
+   // Edit prefs
+   PREF_RANDOM_FILL,
+   PREF_SCROLL_PENCIL,
+   PREF_SCROLL_CROSS,
+   PREF_SCROLL_HAND,
+   // Control prefs
+   PREF_MAX_HASH_MEM,
+   PREF_QBASE,
+   PREF_HBASE,
+   PREF_MIN_DELAY,
+   PREF_MAX_DELAY,
+   // View prefs
+   PREF_SHOW_TIPS,
+   PREF_Y_UP,
+   PREF_SHOW_BOLD,
+   PREF_BOLD_SPACING,
+   PREF_MIN_GRID_SCALE,
+   PREF_MOUSE_WHEEL,
+   PREF_THUMB_RANGE,
+   // Layer prefs
+   PREF_TILE_BORDER,
+   PREF_ASK_NEW,
+   PREF_ASK_LOAD,
+   PREF_ASK_DELETE,
+   PREF_ASK_QUIT,
+   // Color prefs
+   PREF_OPACITY,
+   PREF_LIVE_RGB,
+   PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
+   PREF_PASTE_RGB,
+   PREF_SELECT_RGB,
+   PREF_QLIFE_RGB,
+   PREF_HLIFE_RGB,
+   // Keyboard prefs
+   PREF_KEYCOMBO,
+   PREF_ACTION,
+   PREF_CHOOSE,
+   PREF_FILE_BOX
+};
 
 // these are global so we can remember current key combination
 int currkey = ' ';
 int currmods = mk_ALT + mk_SHIFT + mk_META;
+
+// define a multi-page dialog for changing various preferences
 
 class PrefsDialog : public wxPropertySheetDialog
 {
@@ -1955,68 +2029,9 @@ public:
    void OnSpinCtrlChar(wxKeyEvent& event);
 #endif
 
-   // handlers to intercept keyboard events
-   void OnKeyDown(wxKeyEvent& event);
-   void OnChar(wxKeyEvent& event);
+   static void UpdateChooseFile();
 
 private:
-   enum {
-      // these *_PAGE values must correspond to currpage values
-      FILE_PAGE = 0,
-      EDIT_PAGE,
-      CONTROL_PAGE,
-      VIEW_PAGE,
-      LAYER_PAGE,
-      COLOR_PAGE,
-      KEYBOARD_PAGE,
-      // File prefs
-      PREF_NEW_REM_SEL = wxID_HIGHEST,  // avoid problems with FindWindowById
-      PREF_NEW_CURSOR,
-      PREF_NEW_SCALE,
-      PREF_OPEN_REM_SEL,
-      PREF_OPEN_CURSOR,
-      PREF_MAX_PATTERNS,
-      PREF_MAX_SCRIPTS,
-      // Edit prefs
-      PREF_RANDOM_FILL,
-      PREF_SCROLL_PENCIL,
-      PREF_SCROLL_CROSS,
-      PREF_SCROLL_HAND,
-      // Control prefs
-      PREF_MAX_HASH_MEM,
-      PREF_QBASE,
-      PREF_HBASE,
-      PREF_MIN_DELAY,
-      PREF_MAX_DELAY,
-      // View prefs
-      PREF_SHOW_TIPS,
-      PREF_Y_UP,
-      PREF_SHOW_BOLD,
-      PREF_BOLD_SPACING,
-      PREF_MIN_GRID_SCALE,
-      PREF_MOUSE_WHEEL,
-      PREF_THUMB_RANGE,
-      // Layer prefs
-      PREF_TILE_BORDER,
-      PREF_ASK_NEW,
-      PREF_ASK_LOAD,
-      PREF_ASK_DELETE,
-      PREF_ASK_QUIT,
-      // Color prefs
-      PREF_OPACITY,
-      PREF_LIVE_RGB,
-      PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
-      PREF_PASTE_RGB,
-      PREF_SELECT_RGB,
-      PREF_QLIFE_RGB,
-      PREF_HLIFE_RGB,
-      // Keyboard prefs
-      PREF_KEYCOMBO,
-      PREF_ACTION,
-      PREF_CHOOSE,
-      PREF_FILE_BOX
-   };
-
    bool GetCheckVal(long id);
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
@@ -2026,7 +2041,6 @@ private:
    void AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
                        int id, wxColor* rgb, const wxString& text);
-   void UpdateChooseFile();
    
    void OnCheckBoxClicked(wxCommandEvent& event);
    void OnColorButton(wxCommandEvent& event);
@@ -2045,8 +2059,6 @@ private:
    wxColor* new_qlifergb;        // new status bar color when using qlifealgo
    wxColor* new_hlifergb;        // new status bar color when using hlifealgo
 
-   int realkey;                  // key code set by OnKeyDown
-
    DECLARE_EVENT_TABLE()
 };
 
@@ -2055,30 +2067,124 @@ BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnColorButton)
    EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY, PrefsDialog::OnPageChanging)
    EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
-#if defined(__WXGTK__) || defined(__WXX11__)
-   EVT_COMBOBOX               (wxID_ANY, PrefsDialog::OnChoice)
-#else
    EVT_CHOICE                 (wxID_ANY, PrefsDialog::OnChoice)
-#endif
    EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnButton)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
-   // fix wxMac 2.7.2+ bug in wxTextCtrl::SetSelection
-   #define ALL_TEXT 0,999
-#else
-   #define ALL_TEXT -1,-1
-#endif
+// define a text control for showing current key combination
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
-   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
-   // only happens when a wxStaticText box is next to a wxChoice box
-   #define FIX_ALIGN_BUG wxBOTTOM,4
-#else
-   #define FIX_ALIGN_BUG wxALL,0
-#endif
+class MyTextCtrl : public wxTextCtrl
+{
+public:
+   MyTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
+              const wxPoint& pos, const wxSize& size, int style = 0)
+      : wxTextCtrl(parent, id, value, pos, size, style) {}
+   ~MyTextCtrl() {}
+
+   // handlers to intercept keyboard events
+   void OnKeyDown(wxKeyEvent& event);
+   void OnChar(wxKeyEvent& event);
+
+private:
+   int realkey;            // key code set by OnKeyDown
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(MyTextCtrl, wxTextCtrl)
+   EVT_KEY_DOWN  (MyTextCtrl::OnKeyDown)
+   EVT_CHAR      (MyTextCtrl::OnChar)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void MyTextCtrl::OnKeyDown(wxKeyEvent& event)
+{
+   realkey = event.GetKeyCode();
+   int mods = event.GetModifiers();
+   
+   if (realkey == WXK_ESCAPE) {
+      // escape key is reserved for other uses
+      wxBell();
+      return;
+   }
+
+   // WARNING: logic must match that in PatternView::OnKeyDown
+   if (mods == wxMOD_NONE || realkey > 127) {
+      // tell OnChar handler to ignore realkey
+      realkey = 0;
+   }
+   
+   #ifdef __WXMAC__
+      // prevent ctrl-[ cancelling dialog (it translates to escape)
+      if (realkey == '[' && (mods & wxMOD_CONTROL)) {
+         OnChar(event);
+         return;
+      }
+   #endif
+   
+   /* this didn't work -- not getting called
+   #if defined(__WXGTK__) || defined(__WXX11__)
+      //!!! on Linux we need to avoid alt-C/O selecting Cancel/OK button
+      if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
+         OnChar(event);
+         return;
+      }
+   #endif
+   */
+
+   event.Skip();     // pass event to OnChar handler
+}
+
+// -----------------------------------------------------------------------------
+
+void MyTextCtrl::OnChar(wxKeyEvent& event)
+{
+   int key = event.GetKeyCode();
+   int mods = event.GetModifiers();
+
+   // WARNING: logic must match that in PatternView::OnChar
+   if (realkey > 0 && mods != wxMOD_NONE) {
+      if (mods == wxMOD_SHIFT && key != realkey) {
+         // use translated key code but remove shift key;
+         // eg. shift-'/' will be seen as '?'
+         mods = wxMOD_NONE;
+      } else {
+         // use key code seen by OnKeyDown
+         key = realkey;
+         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
+      }
+   }
+   
+   // convert wx key and mods to our internal key code and modifiers
+   // and, if they are valid, display the key combo and update the action
+   if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
+      wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
+      if (actionmenu) {
+         wxString keystring = GetKeyCombo(currkey, currmods);
+         if (!keystring.IsEmpty()) {
+            ChangeValue(keystring);
+         } else {
+            currkey = 0;
+            currmods = 0;
+            ChangeValue(_("UNKNOWN KEY"));
+         }
+         SetSelection(ALL_TEXT);
+         actionmenu->SetSelection(keyaction[currkey][currmods].id);
+         PrefsDialog::UpdateChooseFile();
+      } else {
+         Warning(_("Failed to find wxChoice control!"));
+      }
+   } else {
+      // unsupported key combo
+      wxBell();
+   }
+
+   // do NOT pass event on to next handler
+   // event.Skip();
+}
 
 // -----------------------------------------------------------------------------
 
@@ -2918,27 +3024,17 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
       actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
    }
    actionChoices[DO_OPENFILE] = _("Open Chosen File");
-#if defined(__WXGTK__) || defined(__WXX11__)
-   wxComboBox* actionmenu = new wxComboBox(panel, PREF_ACTION, wxT("NONE"),
-                                           wxDefaultPosition, wxDefaultSize, actionChoices,
-                                           wxCB_READONLY);
-#else
    wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
                                        wxDefaultPosition, wxDefaultSize, actionChoices);
-#endif
 
-   wxTextCtrl* keycombo =
-      new wxTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
+   MyTextCtrl* keycombo =
+      new MyTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                        wxDefaultPosition, wxSize(230, wxDefaultCoord),
                        wxTE_PROCESS_TAB |
                        wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
                        wxTE_RICH2 |          // also better for Windows???
                        wxTE_CENTER);
-
-   // connect handlers to intercept keyboard events
-   keycombo->Connect(wxID_ANY, wxEVT_KEY_DOWN, wxKeyEventHandler(PrefsDialog::OnKeyDown));
-   keycombo->Connect(wxID_ANY, wxEVT_CHAR, wxKeyEventHandler(PrefsDialog::OnChar));
-
+   
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    hbox0->Add(new wxStaticText(panel, wxID_STATIC,
                                _("Type a key combination, then select the desired action:")));
@@ -2993,98 +3089,6 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    panel->SetSizer(topSizer);
    topSizer->Fit(panel);
    return panel;
-}
-
-// -----------------------------------------------------------------------------
-
-void PrefsDialog::OnKeyDown(wxKeyEvent& event)
-{
-   realkey = event.GetKeyCode();
-   int mods = event.GetModifiers();
-   
-   if (realkey == WXK_ESCAPE) {
-      // escape key is reserved for other uses
-      wxBell();
-      return;
-   }
-
-   // WARNING: logic must match that in PatternView::OnKeyDown
-   if (mods == wxMOD_NONE || realkey > 127) {
-      // tell OnChar handler to ignore realkey
-      realkey = 0;
-   }
-   
-   #ifdef __WXMAC__
-      // prevent ctrl-[ cancelling dialog (it translates to escape)
-      if (realkey == '[' && (mods & wxMOD_CONTROL)) {
-         OnChar(event);
-         return;
-      }
-   #endif
-   
-   #if defined(__WXGTK__) || defined(__WXX11__)
-      //!!!??? on Linux we need to avoid alt-C/O selecting Cancel/OK button
-      if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
-         wxBell();//!!!
-         OnChar(event);
-         return;
-      }
-   #endif
-
-   event.Skip();     // pass event to OnChar handler
-}
-
-// -----------------------------------------------------------------------------
-
-void PrefsDialog::OnChar(wxKeyEvent& event)
-{
-   int key = event.GetKeyCode();
-   int mods = event.GetModifiers();
-
-   // WARNING: logic must match that in PatternView::OnChar
-   if (realkey > 0 && mods != wxMOD_NONE) {
-      if (mods == wxMOD_SHIFT && key != realkey) {
-         // use translated key code but remove shift key;
-         // eg. shift-'/' will be seen as '?'
-         mods = wxMOD_NONE;
-      } else {
-         // use key code seen by OnKeyDown
-         key = realkey;
-         if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
-      }
-   }
-   
-   // convert wx key and mods to our internal key code and modifiers
-   // and, if they are valid, display the key combo and update the action
-   if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
-      wxTextCtrl* keycombo = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
-      #if defined(__WXGTK__) || defined(__WXX11__)
-         wxComboBox* actionmenu = (wxComboBox*) FindWindowById(PREF_ACTION);
-      #else
-         wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
-      #endif
-      if (keycombo && actionmenu) {
-         wxString keystring = GetKeyCombo(currkey, currmods);
-         if (!keystring.IsEmpty()) {
-            keycombo->ChangeValue(keystring);
-         } else {
-            currkey = 0;
-            currmods = 0;
-            keycombo->ChangeValue(_("UNKNOWN KEY"));
-         }
-         keycombo->SetSelection(ALL_TEXT);
-         actionmenu->SetSelection(keyaction[currkey][currmods].id);
-         UpdateChooseFile();
-      } else {
-         Warning(_("Failed to find control!"));
-      }
-   } else {
-      // unsupported key combo
-      wxBell();
-   }
-
-   // do NOT pass event on to next handler
-   // event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -3395,10 +3399,10 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    currpage = event.GetSelection();
    
    // better for Windows
-   //!!! but why doesn't it work in wxGTK??? is it causing the crashes???
+   //!!! but why doesn't it work in wxGTK???
    //!!! try using pending event to set focus???
    if (currpage == KEYBOARD_PAGE) {
-      wxTextCtrl* keycombo = (wxTextCtrl*) FindWindowById(PREF_KEYCOMBO);
+      MyTextCtrl* keycombo = (MyTextCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (keycombo) {
          keycombo->SetFocus();
          keycombo->SetSelection(ALL_TEXT);
