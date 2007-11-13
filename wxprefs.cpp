@@ -216,14 +216,16 @@ const int MAX_MODS   = 16;
 const int MAX_MODS   = 8;
 #endif
 
-// WXK_* key codes like WXK_F1 have values > 300 so we use our own
-// internal key codes for function keys and other special keys
+// WXK_* key codes like WXK_F1 have values > 300, so to minimize the
+// size of the keyaction table (see below) we use our own internal
+// key codes for function keys and other special keys
 const int IK_NULL       = 0;     // probably best never to use this
 const int IK_HOME       = 1;
 const int IK_END        = 2;
 const int IK_PAGEUP     = 3;
 const int IK_PAGEDOWN   = 4;
 const int IK_HELP       = 5;
+const int IK_INSERT     = 6;
 const int IK_DELETE     = 8;     // treat delete like backspace (consistent with GSF_dokey)
 const int IK_TAB        = 9;
 const int IK_RETURN     = 13;
@@ -243,6 +245,7 @@ const char NK_END[]     = "End";
 const char NK_PGUP[]    = "PgUp";
 const char NK_PGDN[]    = "PgDn";
 const char NK_HELP[]    = "Help";
+const char NK_INSERT[]  = "Insert";
 const char NK_DELETE[]  = "Delete";
 const char NK_TAB[]     = "Tab";
 #ifdef __WXMSW__
@@ -285,9 +288,15 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
       // for our internal function keys (IK_F1 to IK_F24)
       ourkey = wxkey + 32;
       ourmods |= mk_SHIFT;
+
    } else if (wxkey >= WXK_F1 && wxkey <= WXK_F24) {
       // convert wx function key code to IK_F1..IK_F24
       ourkey = IK_F1 + (wxkey - WXK_F1);
+
+   } else if (wxkey >= WXK_NUMPAD0 && wxkey <= WXK_NUMPAD9) {
+      // treat numpad digits like ordinary digits
+      ourkey = '0' + (wxkey - WXK_NUMPAD0);
+
    } else {
       switch (wxkey) {
          case WXK_HOME:          ourkey = IK_HOME; break;
@@ -295,6 +304,7 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
          case WXK_PAGEUP:        ourkey = IK_PAGEUP; break;
          case WXK_PAGEDOWN:      ourkey = IK_PAGEDOWN; break;
          case WXK_HELP:          ourkey = IK_HELP; break;
+         case WXK_INSERT:        ourkey = IK_INSERT; break;
          case WXK_BACK:          // treat backspace like delete
          case WXK_DELETE:        ourkey = IK_DELETE; break;
          case WXK_TAB:           ourkey = IK_TAB; break;
@@ -337,8 +347,7 @@ action_info FindAction(int wxkey, int wxmods)
 
 void AddDefaultKeyActions()
 {
-   // these default shortcuts are similar to those in v1.2;
-   // maybe it would be better to keep them to a bare minimum???
+   // these default shortcuts are similar to the hard-wired shortcuts in v1.2
 
    // include some examples of DO_OPENFILE
    keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
@@ -382,6 +391,10 @@ void AddDefaultKeyActions()
    keyaction[(int)'k'][mk_META].id =   DO_REMOVESEL;
    keyaction[(int)'s'][0].id =         DO_SHRINKFIT;
    keyaction[(int)'5'][mk_META].id =   DO_RANDFILL;
+   keyaction[(int)'y'][0].id =         DO_FLIPTB;
+   keyaction[(int)'x'][0].id =         DO_FLIPLR;
+   keyaction[(int)'>'][0].id =         DO_ROTATECW;
+   keyaction[(int)'<'][0].id =         DO_ROTATEACW;
    keyaction[IK_F1+4][0].id =          DO_CURSDRAW;
    keyaction[IK_F1+5][0].id =          DO_CURSSEL;
    keyaction[IK_F1+6][0].id =          DO_CURSMOVE;
@@ -650,6 +663,7 @@ void GetKeyAction(char* value)
                else if (ISTRCMP(start, NK_PGUP) == 0)    key = IK_PAGEUP;
                else if (ISTRCMP(start, NK_PGDN) == 0)    key = IK_PAGEDOWN;
                else if (ISTRCMP(start, NK_HELP) == 0)    key = IK_HELP;
+               else if (ISTRCMP(start, NK_INSERT) == 0)  key = IK_INSERT;
                else if (ISTRCMP(start, NK_DELETE) == 0)  key = IK_DELETE;
                else if (ISTRCMP(start, NK_TAB) == 0)     key = IK_TAB;
                else if (ISTRCMP(start, NK_RETURN) == 0)  key = IK_RETURN;
@@ -759,23 +773,24 @@ wxString GetKeyCombo(int key, int modset)
       // non-displayable char
       switch (key) {
          // these strings can be more descriptive than the NK_* strings
-         case IK_HOME:     result += wxT("Home"); break;
-         case IK_END:      result += wxT("End"); break;
-         case IK_PAGEUP:   result += wxT("PageUp"); break;
-         case IK_PAGEDOWN: result += wxT("PageDown"); break;
-         case IK_HELP:     result += wxT("Help"); break;
-         case IK_DELETE:   result += wxT("Delete"); break;
-         case IK_TAB:      result += wxT("Tab"); break;
+         case IK_HOME:     result += _("Home"); break;
+         case IK_END:      result += _("End"); break;
+         case IK_PAGEUP:   result += _("PageUp"); break;
+         case IK_PAGEDOWN: result += _("PageDown"); break;
+         case IK_HELP:     result += _("Help"); break;
+         case IK_INSERT:   result += _("Insert"); break;
+         case IK_DELETE:   result += _("Delete"); break;
+         case IK_TAB:      result += _("Tab"); break;
       #ifdef __WXMSW__
-         case IK_RETURN:   result += wxT("Enter"); break;
+         case IK_RETURN:   result += _("Enter"); break;
       #else
-         case IK_RETURN:   result += wxT("Return"); break;
+         case IK_RETURN:   result += _("Return"); break;
       #endif
-         case IK_LEFT:     result += wxT("Left"); break;
-         case IK_RIGHT:    result += wxT("Right"); break;
-         case IK_UP:       result += wxT("Up"); break;
-         case IK_DOWN:     result += wxT("Down"); break;
-         case ' ':         result += wxT("Space"); break;
+         case IK_LEFT:     result += _("Left"); break;
+         case IK_RIGHT:    result += _("Right"); break;
+         case IK_UP:       result += _("Up"); break;
+         case IK_DOWN:     result += _("Down"); break;
+         case ' ':         result += _("Space"); break;
          default:          result = wxEmptyString;
       }
    }
@@ -794,8 +809,12 @@ wxString GetShortcutTable()
       for ( int modset = 0; modset < MAX_MODS; modset++ ) {
          action_info action = keyaction[key][modset];
          if ( action.id != DO_NOTHING ) {
+            wxString keystring = GetKeyCombo(key, modset);
+            if (key == '<') {
+               keystring.Replace(wxT("<"), wxT("&lt;"));
+            }
             result += wxT("<tr><td align=right>");
-            result += GetKeyCombo(key, modset);
+            result += keystring;
             result += wxT("&nbsp;</td><td>&nbsp;");
             result += wxString(GetActionName(action.id), wxConvLocal);
             if (action.id == DO_OPENFILE) {
@@ -850,6 +869,7 @@ wxString GetKeyName(int key)
          case IK_PAGEUP:   result = wxString(NK_PGUP, wxConvLocal); break;
          case IK_PAGEDOWN: result = wxString(NK_PGDN, wxConvLocal); break;
          case IK_HELP:     result = wxString(NK_HELP, wxConvLocal); break;
+         case IK_INSERT:   result = wxString(NK_INSERT, wxConvLocal); break;
          case IK_DELETE:   result = wxString(NK_DELETE, wxConvLocal); break;
          case IK_TAB:      result = wxString(NK_TAB, wxConvLocal); break;
          case IK_RETURN:   result = wxString(NK_RETURN, wxConvLocal); break;
@@ -969,13 +989,12 @@ wxString GetAccelerator(action_id action)
 
 void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
-   // we need to remove old accelerator string from GetLabel text
-   wxString text = wxMenuItem::GetLabelFromText(mbar->GetLabel(item));
    wxString accel = accelerator[action];
    
 #ifdef __WXMSW__
    if (inscript) {
-      // clear non-ctrl/non-func key accelerator from menu item
+      // RunScript has called mainptr->UpdateMenuAccelerators();
+      // remove non-ctrl/non-func key accelerator from menu item
       // so keys like tab/enter/space can be passed to script
       if (accel.IsEmpty()) return;
       int Fpos = accel.Find('F');
@@ -989,7 +1008,8 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
    }
 #endif
 
-   mbar->SetLabel(item, text + accel);
+   // we need to remove old accelerator string from GetLabel text
+   mbar->SetLabel(item, wxMenuItem::GetLabelFromText(mbar->GetLabel(item)) + accel);
 }
 
 // -----------------------------------------------------------------------------
@@ -2029,7 +2049,7 @@ public:
    void OnSpinCtrlChar(wxKeyEvent& event);
 #endif
 
-   static void UpdateChooseFile();
+   static void UpdateChosenFile();
 
 private:
    bool GetCheckVal(long id);
@@ -2075,13 +2095,13 @@ END_EVENT_TABLE()
 
 // define a text control for showing current key combination
 
-class MyTextCtrl : public wxTextCtrl
+class KeyComboCtrl : public wxTextCtrl
 {
 public:
-   MyTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
-              const wxPoint& pos, const wxSize& size, int style = 0)
+   KeyComboCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
+                const wxPoint& pos, const wxSize& size, int style = 0)
       : wxTextCtrl(parent, id, value, pos, size, style) {}
-   ~MyTextCtrl() {}
+   ~KeyComboCtrl() {}
 
    // handlers to intercept keyboard events
    void OnKeyDown(wxKeyEvent& event);
@@ -2093,14 +2113,14 @@ private:
    DECLARE_EVENT_TABLE()
 };
 
-BEGIN_EVENT_TABLE(MyTextCtrl, wxTextCtrl)
-   EVT_KEY_DOWN  (MyTextCtrl::OnKeyDown)
-   EVT_CHAR      (MyTextCtrl::OnChar)
+BEGIN_EVENT_TABLE(KeyComboCtrl, wxTextCtrl)
+   EVT_KEY_DOWN  (KeyComboCtrl::OnKeyDown)
+   EVT_CHAR      (KeyComboCtrl::OnChar)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-void MyTextCtrl::OnKeyDown(wxKeyEvent& event)
+void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
 {
    realkey = event.GetKeyCode();
    int mods = event.GetModifiers();
@@ -2117,6 +2137,15 @@ void MyTextCtrl::OnKeyDown(wxKeyEvent& event)
       realkey = 0;
    }
    
+   #ifdef __WXMSW__
+      // on Windows, OnChar is NOT called for some ctrl-key combos like
+      // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
+      if (realkey > 0 && (mods & wxMOD_CONTROL)) {
+         OnChar(event);
+         return;
+      }
+   #endif
+   
    #ifdef __WXMAC__
       // prevent ctrl-[ cancelling dialog (it translates to escape)
       if (realkey == '[' && (mods & wxMOD_CONTROL)) {
@@ -2125,9 +2154,9 @@ void MyTextCtrl::OnKeyDown(wxKeyEvent& event)
       }
    #endif
    
-   /* this didn't work -- not getting called
+   /* //!!! didn't work -- OnKeyDown is not getting called
    #if defined(__WXGTK__) || defined(__WXX11__)
-      //!!! on Linux we need to avoid alt-C/O selecting Cancel/OK button
+      // on Linux we need to avoid alt-C/O selecting Cancel/OK button
       if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
          OnChar(event);
          return;
@@ -2135,12 +2164,12 @@ void MyTextCtrl::OnKeyDown(wxKeyEvent& event)
    #endif
    */
 
-   event.Skip();     // pass event to OnChar handler
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
 
-void MyTextCtrl::OnChar(wxKeyEvent& event)
+void KeyComboCtrl::OnChar(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
    int mods = event.GetModifiers();
@@ -2149,7 +2178,7 @@ void MyTextCtrl::OnChar(wxKeyEvent& event)
    if (realkey > 0 && mods != wxMOD_NONE) {
       if (mods == wxMOD_SHIFT && key != realkey) {
          // use translated key code but remove shift key;
-         // eg. shift-'/' will be seen as '?'
+         // eg. we want shift-'/' to be seen as '?'
          mods = wxMOD_NONE;
       } else {
          // use key code seen by OnKeyDown
@@ -2165,15 +2194,23 @@ void MyTextCtrl::OnChar(wxKeyEvent& event)
       if (actionmenu) {
          wxString keystring = GetKeyCombo(currkey, currmods);
          if (!keystring.IsEmpty()) {
-            ChangeValue(keystring);
+            #ifdef __WXX11__
+               SetValue(keystring);
+            #else
+               ChangeValue(keystring);
+            #endif
          } else {
             currkey = 0;
             currmods = 0;
-            ChangeValue(_("UNKNOWN KEY"));
+            #ifdef __WXX11__
+               SetValue(_("UNKNOWN KEY"));
+            #else
+               ChangeValue(_("UNKNOWN KEY"));
+            #endif
          }
          SetSelection(ALL_TEXT);
          actionmenu->SetSelection(keyaction[currkey][currmods].id);
-         PrefsDialog::UpdateChooseFile();
+         PrefsDialog::UpdateChosenFile();
       } else {
          Warning(_("Failed to find wxChoice control!"));
       }
@@ -3027,8 +3064,8 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
                                        wxDefaultPosition, wxDefaultSize, actionChoices);
 
-   MyTextCtrl* keycombo =
-      new MyTextCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
+   KeyComboCtrl* keycombo =
+      new KeyComboCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                        wxDefaultPosition, wxSize(230, wxDefaultCoord),
                        wxTE_PROCESS_TAB |
                        wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
@@ -3079,11 +3116,15 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    vbox->Add(hbox3, 0, wxLEFT, LRGAP);
 
    // initialize controls
-   keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
+   #ifdef __WXX11__
+      keycombo->SetValue( GetKeyCombo(currkey, currmods) );
+   #else
+      keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
+   #endif
    keycombo->SetFocus();
    keycombo->SetSelection(ALL_TEXT);
    actionmenu->SetSelection( keyaction[currkey][currmods].id );
-   UpdateChooseFile();
+   UpdateChosenFile();
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -3093,21 +3134,18 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
-void PrefsDialog::UpdateChooseFile()
+void PrefsDialog::UpdateChosenFile()
 {
-   action_id action = keyaction[currkey][currmods].id;
-
-   wxButton* choose = (wxButton*) FindWindowById(PREF_CHOOSE);
    wxStaticText* filebox = (wxStaticText*) FindWindowById(PREF_FILE_BOX);
-
-   if (choose && filebox) {
+   if (filebox) {
+      action_id action = keyaction[currkey][currmods].id;
       if (action == DO_OPENFILE) {
-         // enable button and display current file name
-         choose->Enable(true);
+         // display current file name
          filebox->SetLabel(keyaction[currkey][currmods].file);
       } else {
-         // disable button and clear file name
-         choose->Enable(false);
+         // clear file name; don't set keyaction[currkey][currmods].file empty
+         // here because user might change their mind (TransferDataFromWindow
+         // will eventually set the file empty)
          filebox->SetLabel(wxEmptyString);
       }
    }
@@ -3128,11 +3166,11 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
       keyaction[currkey][currmods].id = action;
       
       if ( action == DO_OPENFILE && keyaction[currkey][currmods].file.IsEmpty() ) {
-         // call OnButton (which will call UpdateChooseFile)
+         // call OnButton (which will call UpdateChosenFile)
          wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, PREF_CHOOSE);
          OnButton(buttevt);
       } else {
-         UpdateChooseFile();
+         UpdateChosenFile();
       }
    }
 }
@@ -3164,9 +3202,14 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
             path.erase(0, gollydir.length());
          }
          keyaction[currkey][currmods].file = path;
+         keyaction[currkey][currmods].id = DO_OPENFILE;
+         wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
+         if (actionmenu) {
+            actionmenu->SetSelection(DO_OPENFILE);
+         }
       }
       
-      UpdateChooseFile();
+      UpdateChosenFile();
    }
    
    event.Skip();  // need this so other buttons work correctly
@@ -3402,7 +3445,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    //!!! but why doesn't it work in wxGTK???
    //!!! try using pending event to set focus???
    if (currpage == KEYBOARD_PAGE) {
-      MyTextCtrl* keycombo = (MyTextCtrl*) FindWindowById(PREF_KEYCOMBO);
+      KeyComboCtrl* keycombo = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (keycombo) {
          keycombo->SetFocus();
          keycombo->SetSelection(ALL_TEXT);

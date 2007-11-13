@@ -8,7 +8,7 @@ TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 
-Changes in version 1.3 (released !!!)
+Changes in version 1.3 (released November 2007)
 
 AKT: Implemented user-configurable keyboard shortcuts.
 AKT: Fixed bug if apostrophe was in Python script path or file name.

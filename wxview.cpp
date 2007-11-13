@@ -1272,11 +1272,20 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
                                   realkey, realkey < 128 ? wxChar(realkey) : wxChar('?'), mods);
    }
 
-   // WARNING: logic must match that in PrefsDialog::OnKeyDown
+   // WARNING: logic must match that in KeyComboCtrl::OnKeyDown in wxprefs.cpp
    if (mods == wxMOD_NONE || realkey == WXK_ESCAPE || realkey > 127) {
       // tell OnChar handler to ignore realkey
       realkey = 0;
    }
+   
+   #ifdef __WXMSW__
+      // on Windows, OnChar is NOT called for some ctrl-key combos like
+      // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
+      if (realkey > 0 && (mods & wxMOD_CONTROL)) {
+         OnChar(event);
+         return;
+      }
+   #endif
 
    event.Skip();
 }
@@ -1313,11 +1322,11 @@ void PatternView::OnChar(wxKeyEvent& event)
       Warning(debugkey);
    }
 
-   // WARNING: logic must match that in PrefsDialog::OnChar
+   // WARNING: logic must match that in KeyComboCtrl::OnChar in wxprefs.cpp
    if (realkey > 0 && mods != wxMOD_NONE) {
       if (mods == wxMOD_SHIFT && key != realkey) {
          // use translated key code but remove shift key;
-         // eg. shift-'/' will be seen as '?'
+         // eg. we want shift-'/' to be seen as '?'
          mods = wxMOD_NONE;
       } else {
          // use key code seen by OnKeyDown

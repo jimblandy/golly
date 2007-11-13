@@ -2199,15 +2199,22 @@ void MainFrame::CreateMenus()
    // on the Mac the wxID_ABOUT item gets moved to the app menu
    helpMenu->Append(wxID_ABOUT,                 _("About Golly") + GetAccelerator(DO_ABOUT));
 
-   // create the menu bar and append menus
+   // create the menu bar and append menus;
+   // avoid using "&" in menu names because it prevents using keyboard shortcuts
+   // like Alt+L on Linux
    wxMenuBar* menuBar = new wxMenuBar();
    if (menuBar == NULL) Fatal(_("Failed to create menu bar!"));
-   menuBar->Append(fileMenu,     _("&File"));
-   menuBar->Append(editMenu,     _("&Edit"));
-   menuBar->Append(controlMenu,  _("&Control"));
-   menuBar->Append(viewMenu,     _("&View"));
-   menuBar->Append(layerMenu,    _("&Layer"));
-   menuBar->Append(helpMenu,     _("&Help"));
+   menuBar->Append(fileMenu,     _("File"));
+   menuBar->Append(editMenu,     _("Edit"));
+   menuBar->Append(controlMenu,  _("Control"));
+   menuBar->Append(viewMenu,     _("View"));
+   menuBar->Append(layerMenu,    _("Layer"));
+   #ifdef __WXMAC__
+      // wxMac bug: need the "&" otherwise we get an extra Help menu
+      menuBar->Append(helpMenu,  _("&Help"));
+   #else
+      menuBar->Append(helpMenu,  _("Help"));
+   #endif
    
    #ifdef __WXMAC__
       // prevent Window menu being added automatically by wxMac 2.6.1+
@@ -2225,7 +2232,7 @@ void MainFrame::UpdateMenuAccelerators()
    // keyboard shortcuts have changed, so update all menu item accelerators
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
-      //!!! these app menu items aren't updated due to wxMac bug
+      //!!! wxMac bug: these app menu items aren't updated
       SetAccelerator(mbar, wxID_ABOUT,         DO_ABOUT);
       SetAccelerator(mbar, wxID_PREFERENCES,   DO_PREFS);
       SetAccelerator(mbar, wxID_EXIT,          DO_QUIT);

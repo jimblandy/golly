@@ -356,6 +356,7 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
 
 void MainFrame::AddRecentPattern(const wxString& inpath)
 {
+   if (inpath.IsEmpty()) return;
    wxString path = inpath;
    if (path.StartsWith(gollydir)) {
       // remove gollydir from start of path
@@ -397,6 +398,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
 
 void MainFrame::AddRecentScript(const wxString& inpath)
 {
+   if (inpath.IsEmpty()) return;
    wxString path = inpath;
    if (path.StartsWith(gollydir)) {
       // remove gollydir from start of path

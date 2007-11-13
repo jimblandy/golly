@@ -130,104 +130,99 @@ extern wxArrayString namedrules;
 typedef enum {
    DO_NOTHING = 0,               // null action must be zero
    DO_OPENFILE,                  // open a chosen pattern/script/html file
-   // File menu
-   DO_NEWPATT,                   // new pattern
-   DO_OPENPATT,                  // open pattern...
-   DO_OPENCLIP,                  // open clipboard
-   DO_PATTERNS,                  // show patterns
-   DO_PATTDIR,                   // set pattern folder...
-   DO_SAVE,                      // save pattern...
-   DO_SAVEXRLE,                  // save extended rle
-   DO_RUNSCRIPT,                 // run script...
-   DO_RUNCLIP,                   // run clipboard
-   DO_SCRIPTS,                   // show scripts
-   DO_SCRIPTDIR,                 // set script folder...
-   DO_PREFS,                     // preferences...
-   DO_QUIT,                      // quit Golly
-   // Edit menu
-   DO_UNDO,                      // undo
-   DO_REDO,                      // redo
-   DO_DISABLE,                   // disable undo/redo
-   DO_CUT,                       // cut selection
-   DO_COPY,                      // copy selection
-   DO_CLEAR,                     // clear selection
+   // rest are in alphabetical order
+   DO_ABOUT,                     // about Golly
+   DO_ADD,                       // add layer
+   DO_ADVANCEOUT,                // advance outside
+   DO_ADVANCE,                   // advance selection
+   DO_AUTOFIT,                   // auto fit
+   DO_BUFFERED,                  // buffered
+   DO_CHANGE00,                  // change origin
    DO_CLEAROUT,                  // clear outside
-   DO_PASTE,                     // paste
-   DO_PASTEMODE,                 // cycle paste mode
-   DO_PASTELOC,                  // cycle paste location
-   DO_PASTESEL,                  // paste to selection
-   DO_SELALL,                    // select all
-   DO_REMOVESEL,                 // remove selection
-   DO_SHRINK,                    // shrink selection
-   DO_SHRINKFIT,                 // shrink and fit
-   DO_RANDFILL,                  // random fill
-   DO_FLIPTB,                    // flip top-bottom
-   DO_FLIPLR,                    // flip left-right
-   DO_ROTATECW,                  // rotate clockwise
-   DO_ROTATEACW,                 // rotate anticlockwise
+   DO_CLEAR,                     // clear selection
+   DO_CLONE,                     // clone layer
+   DO_COPY,                      // copy selection
    DO_CURSDRAW,                  // cursor mode: draw
-   DO_CURSSEL,                   // cursor mode: select
    DO_CURSMOVE,                  // cursor mode: move
+   DO_CURSSEL,                   // cursor mode: select
    DO_CURSIN,                    // cursor mode: zoom in
    DO_CURSOUT,                   // cursor mode: zoom out
+   DO_CUT,                       // cut selection
    DO_CURSCYCLE,                 // cycle cursor mode
-   // Control menu
-   DO_STARTSTOP,                 // start/stop
+   DO_PASTELOC,                  // cycle paste location
+   DO_PASTEMODE,                 // cycle paste mode
+   DO_DELETE,                    // delete layer
+   DO_DELOTHERS,                 // delete other layers
+   DO_DISABLE,                   // disable undo/redo
+   DO_DUPLICATE,                 // duplicate layer
+   DO_FASTER,                    // faster
+   DO_FIT,                       // fit pattern
+   DO_FITSEL,                    // fit selection
+   DO_FLIPLR,                    // flip left-right
+   DO_FLIPTB,                    // flip top-bottom
+   DO_FULLSCREEN,                // full screen
+   DO_HYPER,                     // hyperspeed
+   DO_MIDDLE,                    // middle
+   DO_MOVELAYER,                 // move layer...
+   DO_NAMELAYER,                 // name layer...
+   DO_NEWPATT,                   // new pattern
    DO_NEXTGEN,                   // next generation
    DO_NEXTSTEP,                  // next step
+   DO_OPENCLIP,                  // open clipboard
+   DO_OPENPATT,                  // open pattern...
+   DO_PASTE,                     // paste
+   DO_PASTESEL,                  // paste to selection
+   DO_INFO,                      // pattern info
+   DO_PREFS,                     // preferences...
+   DO_QUIT,                      // quit Golly
+   DO_RANDFILL,                  // random fill
+   DO_REDO,                      // redo
+   DO_REMOVESEL,                 // remove selection
    DO_RESET,                     // reset
-   DO_SETGEN,                    // set generation...
-   DO_FASTER,                    // faster
-   DO_SLOWER,                    // slower
-   DO_AUTOFIT,                   // auto fit
-   DO_HASHING,                   // use hashing
-   DO_HYPER,                     // hyperspeed
-   DO_HASHINFO,                  // show hash info
-   DO_RULE,                      // change rule...
-   DO_ADVANCE,                   // advance selection
-   DO_ADVANCEOUT,                // advance outside
-   DO_TIMING,                    // show timing
-   // View menu
+   DO_RESTORE00,                 // restore origin
+   DO_ROTATEACW,                 // rotate anticlockwise
+   DO_ROTATECW,                  // rotate clockwise
+   DO_RUNCLIP,                   // run clipboard
+   DO_RUNSCRIPT,                 // run script...
+   DO_SAVEXRLE,                  // save extended rle
+   DO_SAVE,                      // save pattern...
+   DO_DOWN,                      // scroll down
    DO_LEFT,                      // scroll left
    DO_RIGHT,                     // scroll right
    DO_UP,                        // scroll up
-   DO_DOWN,                      // scroll down
-   DO_FULLSCREEN,                // full screen
-   DO_FIT,                       // fit pattern
-   DO_FITSEL,                    // fit selection
-   DO_MIDDLE,                    // middle
-   DO_CHANGE00,                  // change origin
-   DO_RESTORE00,                 // restore origin
-   DO_ZOOMIN,                    // zoom in
-   DO_ZOOMOUT,                   // zoom out
+   DO_SELALL,                    // select all
+   DO_SETGEN,                    // set generation...
+   DO_PATTDIR,                   // set pattern folder...
+   DO_RULE,                      // set rule...
    DO_SCALE1,                    // set scale 1:1
    DO_SCALE2,                    // set scale 1:2
    DO_SCALE4,                    // set scale 1:4
    DO_SCALE8,                    // set scale 1:8
    DO_SCALE16,                   // set scale 1:16
-   DO_SHOWTOOL,                  // show tool bar
-   DO_SHOWLAYER,                 // show layer bar
-   DO_SHOWSTATUS,                // show status bar
+   DO_SCRIPTDIR,                 // set script folder...
    DO_SHOWEXACT,                 // show exact numbers
    DO_SHOWGRID,                  // show grid lines
-   DO_SWAPCOLORS,                // swap cell colors
-   DO_BUFFERED,                  // buffered
-   DO_INFO,                      // pattern info
-   // Layer menu
-   DO_ADD,                       // add layer
-   DO_CLONE,                     // clone layer
-   DO_DUPLICATE,                 // duplicate layer
-   DO_DELETE,                    // delete layer
-   DO_DELOTHERS,                 // delete other layers
-   DO_MOVELAYER,                 // move layer...
-   DO_NAMELAYER,                 // name layer...
-   DO_SYNCVIEWS,                 // synchronize views
-   DO_SYNCCURS,                  // synchronize cursors
-   DO_STACK,                     // stack layers
-   DO_TILE,                      // tile layers
-   // Help menu
+   DO_HASHINFO,                  // show hash info
    DO_HELP,                      // show help
-   DO_ABOUT,                     // about Golly
+   DO_SHOWLAYER,                 // show layer bar
+   DO_PATTERNS,                  // show patterns
+   DO_SCRIPTS,                   // show scripts
+   DO_SHOWSTATUS,                // show status bar
+   DO_TIMING,                    // show timing
+   DO_SHOWTOOL,                  // show tool bar
+   DO_SHRINKFIT,                 // shrink and fit
+   DO_SHRINK,                    // shrink selection
+   DO_SLOWER,                    // slower
+   DO_STACK,                     // stack layers
+   DO_STARTSTOP,                 // start/stop generating
+   DO_SWAPCOLORS,                // swap cell colors
+   DO_SYNCCURS,                  // synchronize cursors
+   DO_SYNCVIEWS,                 // synchronize views
+   DO_TILE,                      // tile layers
+   DO_UNDO,                      // undo
+   DO_HASHING,                   // use hashing
+   DO_ZOOMIN,                    // zoom in
+   DO_ZOOMOUT,                   // zoom out
    MAX_ACTIONS
 } action_id;
 
