@@ -1950,6 +1950,8 @@ void GetPrefs()
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
    // fix wxMac 2.7.2+ bug in wxTextCtrl::SetSelection
    #define ALL_TEXT 0,999
+#elif defined(__WXX11__)
+   #define ALL_TEXT 0,999
 #else
    #define ALL_TEXT -1,-1
 #endif
@@ -2120,10 +2122,18 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
+static wxString debugkey;
+
 void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
 {
    realkey = event.GetKeyCode();
    int mods = event.GetModifiers();
+   
+   if (debuglevel == 1) {
+      // set debugkey now but don't show it until OnChar
+      debugkey = wxString::Format(_("OnKeyDown: key=%d (%c) mods=%d"),
+                                  realkey, realkey < 128 ? wxChar(realkey) : wxChar('?'), mods);
+   }
    
    if (realkey == WXK_ESCAPE) {
       // escape key is reserved for other uses
@@ -2173,9 +2183,21 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
    int mods = event.GetModifiers();
+   
+   if (debuglevel == 1) {
+      debugkey += wxString::Format(_("\nOnChar: key=%d (%c) mods=%d"),
+                                   key, key < 128 ? wxChar(key) : wxChar('?'), mods);
+      Warning(debugkey);
+   }
 
    // WARNING: logic must match that in PatternView::OnChar
    if (realkey > 0 && mods != wxMOD_NONE) {
+      #ifdef __WXGTK__
+         // sigh... wxGTK returns inconsistent results for shift-comma combinations
+         // so we have to assume that '<' is produced by pressing shift-comma
+         // (which might only be true for US keyboards)
+         if (key == '<' && (mods & wxMOD_SHIFT)) realkey = ',';
+      #endif
       if (mods == wxMOD_SHIFT && key != realkey) {
          // use translated key code but remove shift key;
          // eg. we want shift-'/' to be seen as '?'
@@ -2194,23 +2216,16 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
       if (actionmenu) {
          wxString keystring = GetKeyCombo(currkey, currmods);
          if (!keystring.IsEmpty()) {
-            #ifdef __WXX11__
-               SetValue(keystring);
-            #else
-               ChangeValue(keystring);
-            #endif
+            ChangeValue(keystring);
          } else {
             currkey = 0;
             currmods = 0;
-            #ifdef __WXX11__
-               SetValue(_("UNKNOWN KEY"));
-            #else
-               ChangeValue(_("UNKNOWN KEY"));
-            #endif
+            ChangeValue(_("UNKNOWN KEY"));
          }
-         SetSelection(ALL_TEXT);
          actionmenu->SetSelection(keyaction[currkey][currmods].id);
          PrefsDialog::UpdateChosenFile();
+         SetFocus();
+         SetSelection(ALL_TEXT);
       } else {
          Warning(_("Failed to find wxChoice control!"));
       }
@@ -3067,10 +3082,10 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    KeyComboCtrl* keycombo =
       new KeyComboCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                        wxDefaultPosition, wxSize(230, wxDefaultCoord),
+                       wxTE_CENTER |
                        wxTE_PROCESS_TAB |
                        wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
-                       wxTE_RICH2 |          // also better for Windows???
-                       wxTE_CENTER);
+                       wxTE_RICH2 );         // also better for Windows???
    
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    hbox0->Add(new wxStaticText(panel, wxID_STATIC,
@@ -3116,15 +3131,11 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    vbox->Add(hbox3, 0, wxLEFT, LRGAP);
 
    // initialize controls
-   #ifdef __WXX11__
-      keycombo->SetValue( GetKeyCombo(currkey, currmods) );
-   #else
-      keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
-   #endif
-   keycombo->SetFocus();
-   keycombo->SetSelection(ALL_TEXT);
+   keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
    actionmenu->SetSelection( keyaction[currkey][currmods].id );
    UpdateChosenFile();
+   keycombo->SetFocus();
+   keycombo->SetSelection(ALL_TEXT);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);

@@ -1242,7 +1242,7 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
-wxString debugkey;
+static wxString debugkey;
 
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
@@ -1324,6 +1324,12 @@ void PatternView::OnChar(wxKeyEvent& event)
 
    // WARNING: logic must match that in KeyComboCtrl::OnChar in wxprefs.cpp
    if (realkey > 0 && mods != wxMOD_NONE) {
+      #ifdef __WXGTK__
+         // sigh... wxGTK returns inconsistent results for shift-comma combinations
+         // so we have to assume that '<' is produced by pressing shift-comma
+         // (which might only be true for US keyboards)
+         if (key == '<' && (mods & wxMOD_SHIFT)) realkey = ',';
+      #endif
       if (mods == wxMOD_SHIFT && key != realkey) {
          // use translated key code but remove shift key;
          // eg. we want shift-'/' to be seen as '?'
