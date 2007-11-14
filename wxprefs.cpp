@@ -2193,16 +2193,16 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
    // WARNING: logic must match that in PatternView::OnChar
    if (realkey > 0 && mods != wxMOD_NONE) {
       #ifdef __WXGTK__
-         // sigh... wxGTK returns inconsistent results for shift-comma combinations
-         // so we have to assume that '<' is produced by pressing shift-comma
+         // sigh... wxGTK returns inconsistent results for shift-comma combos
+         // so we assume that '<' is produced by pressing shift-comma
          // (which might only be true for US keyboards)
          if (key == '<' && (mods & wxMOD_SHIFT)) realkey = ',';
       #endif
       #ifdef __WXMSW__
-         // sigh... wxMSW returns inconsistent results for shift-`/=
+         // sigh... wxMSW returns inconsistent results for some shift-key combos
          // so again we assume we're using a US keyboard
-         if (key == '~' && mods == wxMOD_SHIFT) realkey = '`';
-         if (key == '+' && mods == wxMOD_SHIFT) realkey = '=';
+         if (key == '~' && (mods & wxMOD_SHIFT)) realkey = '`';
+         if (key == '+' && (mods & wxMOD_SHIFT)) realkey = '=';
       #endif
       if (mods == wxMOD_SHIFT && key != realkey) {
          // use translated key code but remove shift key;
