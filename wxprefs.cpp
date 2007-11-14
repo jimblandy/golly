@@ -2198,6 +2198,12 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
          // (which might only be true for US keyboards)
          if (key == '<' && (mods & wxMOD_SHIFT)) realkey = ',';
       #endif
+      #ifdef __WXMSW__
+         // sigh... wxMSW returns inconsistent results for shift-`/=
+         // so again we assume we're using a US keyboard
+         if (key == '~' && mods == wxMOD_SHIFT) realkey = '`';
+         if (key == '+' && mods == wxMOD_SHIFT) realkey = '=';
+      #endif
       if (mods == wxMOD_SHIFT && key != realkey) {
          // use translated key code but remove shift key;
          // eg. we want shift-'/' to be seen as '?'
