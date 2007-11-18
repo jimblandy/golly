@@ -2493,6 +2493,12 @@ MainFrame::MainFrame()
    if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
    if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
 
+   #ifdef __WXMAC__
+      // avoid wxMac bug: can't use keyboard shortcuts if pattern dir and
+      // script dir are both disabled
+      if (!showpatterns && !showscripts) viewptr->SetFocus();
+   #endif
+
    InitDrawingData();      // do this after viewport size has been set
 
    pendingfiles.Clear();   // no pending script/pattern files
