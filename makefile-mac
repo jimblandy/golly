@@ -13,7 +13,8 @@
 
 WX_RELEASE = 2.8
 WX_DIR = /HD/wxWidgets/wxMac-2.8.4
-### WX_DIR = /HD/wxWidgets/CVS-HEAD/wxWidgets
+#!!! 2.8.6 causes problems with selection color and pencil cursor
+#!!! WX_DIR = /HD/wxWidgets/wxMac-2.8.6
 
 # we assume you built a Unicode version of wxWidgets:
 BUILD_DIR = $(WX_DIR)/build-osx

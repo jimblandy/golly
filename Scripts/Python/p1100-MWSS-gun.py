@@ -96,10 +96,4 @@ for i in range(46):
 g.show("")
 
 # reset gen count to 0
-cells = g.getcells( g.getrect() )
-x,y = g.getpos()
-mag = g.getmag()
-g.new("")         # don't change title
-g.setmag(mag)
-g.setpos(x,y)
-g.putcells(cells)
+g.setgen("0")

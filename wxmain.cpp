@@ -1540,10 +1540,16 @@ void MainFrame::OnActivate(wxActivateEvent& event)
    // note that IsActive() doesn't always match event.GetActive()
 
    #ifdef __WXMAC__
-      if (!event.GetActive()) wxSetCursor(*wxSTANDARD_CURSOR);
       // to avoid disabled menu items after a modal dialog closes
       // don't call UpdateMenuItems on deactivation
-      if (event.GetActive()) UpdateUserInterface(true);
+      if (event.GetActive()) {
+         UpdateUserInterface(true);
+         // need to set focus to avoid next IsActive() call returning false
+         // (presumably due to a wxMac bug)
+         viewptr->SetFocus();
+      } else {
+         wxSetCursor(*wxSTANDARD_CURSOR);
+      }
    #else
       UpdateUserInterface(event.GetActive());
    #endif
@@ -2493,11 +2499,14 @@ MainFrame::MainFrame()
    if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
    if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
 
+   // no need for this fix now that OnActivate calls viewptr->SetFocus()
+   /*
    #ifdef __WXMAC__
       // avoid wxMac bug: can't use keyboard shortcuts if pattern dir and
       // script dir are both disabled
       if (!showpatterns && !showscripts) viewptr->SetFocus();
    #endif
+   */
 
    InitDrawingData();      // do this after viewport size has been set
 

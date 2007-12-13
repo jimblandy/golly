@@ -137,13 +137,7 @@ for (my $i = 0; $i < 46; $i += 1) {
    g_putcells(\@MWSSrecipes);
    g_run(1100);
 }
+g_show("");
 
 # reset gen count to 0
-my $cells = g_getcells( g_getrect() );
-my ($x,$y) = g_getpos();
-my $mag = g_getmag();
-g_new("");        # don't change title
-g_setmag($mag);
-g_setpos($x,$y);
-g_putcells($cells);
-g_show("");
+g_setgen("0");
