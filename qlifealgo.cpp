@@ -75,10 +75,10 @@ linkedmem *qlifealgo::filllist(int size) {
       lifefatal("No memory.") ;
    r->next = memused ;
    memused = r ;
-   safep = p = (linkedmem *)((((int)(r+1))+i-1)&-i) ;
-   while (((int)p) + 2 * size <= MEMCHUNK+(int)r) {
-      p->next = (linkedmem *)(size + (int)p) ;
-      p = (linkedmem *)(size + (int)p) ;
+   safep = p = (linkedmem *)((((g_uintptr_t)(r+1))+i-1)&-i) ;
+   while (((g_uintptr_t)p) + 2 * size <= MEMCHUNK+(g_uintptr_t)r) {
+      p->next = (linkedmem *)(size + (g_uintptr_t)p) ;
+      p = (linkedmem *)(size + (g_uintptr_t)p) ;
    }
    return safep ;
 }
@@ -211,7 +211,7 @@ void qlifealgo::uproot() {
  *   out as a 256x256 universe.
  */
 qlifealgo::qlifealgo() {
-   int test = (INT_MAX != 0x7fffffff || sizeof(int *) != sizeof(int)) ;
+   int test = (INT_MAX != 0x7fffffff) ;
    if (test)
       lifefatal("bad platform for this program") ;
    memused = 0 ;
@@ -274,13 +274,14 @@ qlifealgo::~qlifealgo() {
 void qlifealgo::setMaxMemory(int newmemlimit) {
    if (newmemlimit < 10)
      newmemlimit = 10 ;
-   else if (newmemlimit > 4000)
+   else if (sizeof(maxmemory) <= 4 && newmemlimit > 4000)
      newmemlimit = 4000 ;
-   if (usedmemory > (unsigned int)(newmemlimit << 20)) {
-      lifefatal("Sorry, more memory currently used than allowed.") ;
+   g_uintptr_t newlimit = ((g_uintptr_t)newmemlimit) << 20 ;
+   if (usedmemory > newlimit) {
+      lifewarning("Sorry, more memory currently used than allowed.") ;
       return ;
    }
-   maxmemory = newmemlimit << 20 ;
+   maxmemory = newlimit ;
 }
 /*
  *   Finally, our first generation subroutine!  This one handles supertiles

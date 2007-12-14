@@ -216,14 +216,14 @@ private:
  */
    node **stack ;
    int stacksize ;
-   unsigned int hashpop, hashlimit, hashprime ;
+   g_uintptr_t hashpop, hashlimit, hashprime ;
    node **hashtab ;
    int halvesdone ;
    int gsp ;
-   unsigned int alloced, maxmem ;
+   g_uintptr_t alloced, maxmem ;
    node *freenodes ;
    int okaytogc ;
-   int totalthings ;
+   g_uintptr_t totalthings ;
    node *nodeblocks ;
    char *ruletable ;
    bigint generation ;
@@ -245,8 +245,8 @@ private:
    char *llxb, *llyb ;
    int hashed ;
    int cacheinvalid ;
-   int cellcounter ; // used when writing
-   int writecells ; // how many to write
+   g_uintptr_t cellcounter ; // used when writing
+   g_uintptr_t writecells ; // how many to write
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
    static int verbose ;
@@ -296,9 +296,9 @@ private:
    void fill_ll(int d) ;
    void drawnode(node *n, int llx, int lly, int depth, node *z) ;
    void ensure_hashed() ;
-   int writecell(FILE *f, node *root, int depth) ;
-   int writecell_2p1(node *root, int depth) ;
-   int writecell_2p2(FILE *f, node *root, int depth) ;
+   g_uintptr_t writecell(FILE *f, node *root, int depth) ;
+   g_uintptr_t writecell_2p1(node *root, int depth) ;
+   g_uintptr_t writecell_2p2(FILE *f, node *root, int depth) ;
    void unpack8x8(unsigned short nw, unsigned short ne,
 		  unsigned short sw, unsigned short se,
 		  unsigned int *top, unsigned int *bot) ;

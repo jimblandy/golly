@@ -42,8 +42,8 @@ using namespace std ;
 /*
  *   Prime hash sizes tend to work best.
  */
-static int nextprime(int i) {
-   int j ;
+static g_uintptr_t nextprime(g_uintptr_t i) {
+   g_uintptr_t j ;
    i |= 1 ;
    for (;; i+=2) {
       for (j=3; j*j<=i; j+=2)
@@ -116,17 +116,17 @@ void hlifealgo::leafres(leaf *n) {
  *   We do now support garbage collection, but there are some routines we
  *   call frequently to help us.
  */
-#define node_hash(a,b,c,d) (((int)d)+3*(((int)c)+3*(((int)b)+3*((int)a)+3)))
+#define node_hash(a,b,c,d) (((g_uintptr_t)d)+3*(((g_uintptr_t)c)+3*(((g_uintptr_t)b)+3*((g_uintptr_t)a)+3)))
 #define leaf_hash(a,b,c,d) ((d)+9*((c)+9*((b)+9*(a))))
 /*
  *   Resize the hash.
  */
 void hlifealgo::resize() {
-   int i, nhashprime = nextprime(2 * hashprime) ;
+   g_uintptr_t i, nhashprime = nextprime(2 * hashprime) ;
    node *p, **nhashtab ;
    if (alloced > maxmem ||
-       nhashprime * sizeof(node *) > (unsigned int)(maxmem - alloced)) {
-      hashlimit = 2000000000 ;
+       nhashprime * sizeof(node *) > (maxmem - alloced)) {
+      hashlimit = G_MAX ;
       return ;
    }
    /*
@@ -134,10 +134,10 @@ void hlifealgo::resize() {
     *   memory.  If we're starting to strain memory, let the buckets
     *   fill up a bit more.
     */
-   if (nhashprime > (int)(maxmem/100)) {
-      nhashprime = nextprime(maxmem/100) ;
-      if (nhashprime == (int)hashprime) {
-         hashlimit = 2000000000 ;
+   if (nhashprime > (maxmem/(25*sizeof(int *)))) {
+      nhashprime = nextprime(maxmem/(25*sizeof(int *))) ;
+      if (nhashprime == hashprime) {
+         hashlimit = G_MAX ;
          return ;
       }
    }
@@ -149,14 +149,14 @@ void hlifealgo::resize() {
    if (nhashtab == 0) {
      lifewarning("Out of memory; running in a somewhat slower mode; "
                  "try reducing the hash memory limit after restarting.") ;
-     hashlimit = 2000000000 ;
+     hashlimit = G_MAX ;
      return ;
    }
    alloced += sizeof(node *) * (nhashprime - hashprime) ;
-   for (i=0; i<(int)hashprime; i++) {
+   for (i=0; i<hashprime; i++) {
       for (p=hashtab[i]; p;) {
          node *np = p->next ;
-         unsigned int h ;
+         g_uintptr_t h ;
          if (is_node(p)) {
             h = node_hash(p->nw, p->ne, p->sw, p->se) ;
          } else {
@@ -186,7 +186,7 @@ void hlifealgo::resize() {
  */
 node *hlifealgo::find_node(node *nw, node *ne, node *sw, node *se) {
    node *p ;
-   unsigned int h = node_hash(nw,ne,sw,se) ;
+   g_uintptr_t h = node_hash(nw,ne,sw,se) ;
    node *pred = 0 ;
    h = h % hashprime ;
    for (p=hashtab[h]; p; p = p->next) { /* make sure to compare nw *first* */
@@ -215,7 +215,7 @@ node *hlifealgo::find_node(node *nw, node *ne, node *sw, node *se) {
 }
 void hlifealgo::unhash_node(node *n) {
    node *p ;
-   unsigned int h = node_hash(n->nw,n->ne,n->sw,n->se) ;
+   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
    node *pred = 0 ;
    h = h % hashprime ;
    for (p=hashtab[h]; p; p = p->next) {
@@ -231,7 +231,7 @@ void hlifealgo::unhash_node(node *n) {
    lifefatal("Didn't find node to unhash") ;
 }
 void hlifealgo::rehash_node(node *n) {
-   unsigned int h = node_hash(n->nw,n->ne,n->sw,n->se) ;
+   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
    h = h % hashprime ;
    n->next = hashtab[h] ;
    hashtab[h] = n ;
@@ -240,7 +240,7 @@ leaf *hlifealgo::find_leaf(unsigned short nw, unsigned short ne,
                                   unsigned short sw, unsigned short se) {
    leaf *p ;
    leaf *pred = 0 ;
-   unsigned int h = leaf_hash(nw, ne, sw, se) ;
+   g_uintptr_t h = leaf_hash(nw, ne, sw, se) ;
    h = h % hashprime ;
    for (p=(leaf *)hashtab[h]; p; p = (leaf *)p->next) {
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se &&
@@ -479,8 +479,7 @@ node *hlifealgo::newnode() {
       }
       totalthings += 1000 ;
    }
-   if (freenodes->next == 0 && alloced + 1000 * sizeof(node) >
-       (unsigned int)maxmem &&
+   if (freenodes->next == 0 && alloced + 1000 * sizeof(node) > maxmem &&
        okaytogc) {
       do_gc(0) ;
    }
@@ -632,13 +631,14 @@ void hlifealgo::step() {
 void hlifealgo::setMaxMemory(int newmemlimit) {
    if (newmemlimit < 10)
      newmemlimit = 10 ;
-   else if (newmemlimit > 4000)
+   else if (sizeof(maxmem) <= 4 && newmemlimit > 4000)
      newmemlimit = 4000 ;
-   if (alloced > (unsigned int)(newmemlimit << 20)) {
+   g_uintptr_t newlimit = ((g_uintptr_t)newmemlimit) << 20 ;
+   if (alloced > newlimit) {
       lifewarning("Sorry, more memory currently used than allowed.") ;
       return ;
    }
-   maxmem = newmemlimit << 20 ;
+   maxmem = newlimit ;
    hashlimit = hashprime ;
 }
 /**
@@ -1093,17 +1093,17 @@ node *hlifealgo::popzeros(node *n) {
  *   (or abusing) the cache (res) field, and the least significant bit of
  *   the hash next field (as a visited bit).
  */
-#define marked(n) (1 & (int)(n)->next)
-#define mark(n) ((n)->next = (node *)(1 | (int)(n)->next))
-#define clearmark(n) ((n)->next = (node *)(~1 & (int)(n)->next))
-#define clearmarkbit(p) ((node *)(~1 & (int)(p)))
+#define marked(n) (1 & (g_uintptr_t)(n)->next)
+#define mark(n) ((n)->next = (node *)(1 | (g_uintptr_t)(n)->next))
+#define clearmark(n) ((n)->next = (node *)(~1 & (g_uintptr_t)(n)->next))
+#define clearmarkbit(p) ((node *)(~1 & (g_uintptr_t)(p)))
 /*
  *   Sometimes we want to use *res* instead of next to mark.  You cannot
  *   do this to leaves, though.
  */
-#define marked2(n) (1 & (int)(n)->res)
-#define mark2(n) ((n)->res = (node *)(1 | (int)(n)->res))
-#define clearmark2(n) ((n)->res = (node *)(~1 & (int)(n)->res))
+#define marked2(n) (1 & (g_uintptr_t)(n)->res)
+#define mark2(n) ((n)->res = (node *)(1 | (g_uintptr_t)(n)->res))
+#define clearmark2(n) ((n)->res = (node *)(~1 & (g_uintptr_t)(n)->res))
 static void sum4(bigint &dest, const bigint &a, const bigint &b,
                  const bigint &c, const bigint &d) {
    dest = a ;
@@ -1238,7 +1238,7 @@ void hlifealgo::gc_mark(node *root, int invalidate) {
  */
 void hlifealgo::do_gc(int invalidate) {
    int i ;
-   unsigned int freed_nodes=0 ;
+   g_uintptr_t freed_nodes=0 ;
    node *p, *pp ;
    inGC = 1 ;
    gccount++ ;
@@ -1332,7 +1332,7 @@ void hlifealgo::clearcache() {
  *   values.
  */
 void hlifealgo::new_ngens(int newval) {
-   int i ;
+   g_uintptr_t i ;
    node *p, *pp ;
    int clearto = ngens ;
    if (newval > ngens && halvesdone == 0) {
@@ -1350,7 +1350,7 @@ void hlifealgo::new_ngens(int newval) {
       clearto = 3 ;
    ngens = newval ;
    inGC = 1 ;
-   for (i=0; i<(int)hashprime; i++)
+   for (i=0; i<hashprime; i++)
       for (p=hashtab[i]; p; p=clearmarkbit(p->next))
 	 if (is_node(p) && !marked(p))
             clearcache(p, node_depth(p), clearto) ;
@@ -1444,12 +1444,14 @@ node *hlifealgo::runpattern() {
    return n ;
 }
 const char *hlifealgo::readmacrocell(char *line) {
-   int n=0, i=1, nw, ne, sw, se, r, d, indlen=0 ;
+   int n=0 ;
+   g_uintptr_t i=1, nw, ne, sw, se, indlen=0 ;
+   int r, d ;
    node **ind = 0 ;
    root = 0 ;
    while (getline(line, 10000)) {
       if (i >= indlen) {
-         int nlen = i + indlen + 10 ;
+         g_uintptr_t nlen = i + indlen + 10 ;
          ind = (node **)realloc(ind, sizeof(int) * nlen) ;
 	 if (ind == 0)
 	   lifefatal("Out of memory (4).") ;
@@ -1506,7 +1508,7 @@ default:       return "Illegal character in readmacrocell." ;
             break ;
          }
       } else {
-         n = sscanf(line, "%d %d %d %d %d %d", &d, &nw, &ne, &sw, &se, &r) ;
+         n = sscanf(line, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n < 0) // blank line; permit
             continue ;
 	 if (n == 0) {
@@ -1567,16 +1569,16 @@ void hlifealgo::unpack8x8(unsigned short nw, unsigned short ne,
  *   Write out the native macrocell format.  This is the one we use when
  *   we're not interactive and displaying a progress dialog.
  */
-int hlifealgo::writecell(FILE *f, node *root, int depth) {
-   int thiscell = 0 ;
+g_uintptr_t hlifealgo::writecell(FILE *f, node *root, int depth) {
+   g_uintptr_t thiscell = 0 ;
    if (root == zeronode(depth))
       return 0 ;
    if (depth == 2) {
       if (root->nw != 0)
-         return (int)(root->nw) ;
+         return (g_uintptr_t)(root->nw) ;
    } else {
       if (marked2(root))
-         return (int)(root->next) ;
+         return (g_uintptr_t)(root->next) ;
       unhash_node(root) ;
       mark2(root) ;
    }
@@ -1600,13 +1602,13 @@ int hlifealgo::writecell(FILE *f, node *root, int depth) {
       }
       fputs("\n", f) ;
    } else {
-      int nw = writecell(f, root->nw, depth-1) ;
-      int ne = writecell(f, root->ne, depth-1) ;
-      int sw = writecell(f, root->sw, depth-1) ;
-      int se = writecell(f, root->se, depth-1) ;
+      g_uintptr_t nw = writecell(f, root->nw, depth-1) ;
+      g_uintptr_t ne = writecell(f, root->ne, depth-1) ;
+      g_uintptr_t sw = writecell(f, root->sw, depth-1) ;
+      g_uintptr_t se = writecell(f, root->se, depth-1) ;
       thiscell = ++cellcounter ;
       root->next = (node *)thiscell ;
-      fprintf(f, "%d %d %d %d %d\n", depth+1, nw, ne, sw, se) ;
+      fprintf(f, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR "\n", depth+1, nw, ne, sw, se) ;
    }
    return thiscell ;
 }
@@ -1615,16 +1617,16 @@ int hlifealgo::writecell(FILE *f, node *root, int depth) {
  *   nodes and counts the number of nodes that should be sent, so we can
  *   display an accurate progress dialog.
  */
-int hlifealgo::writecell_2p1(node *root, int depth) {
-   int thiscell = 0 ;
+g_uintptr_t hlifealgo::writecell_2p1(node *root, int depth) {
+   g_uintptr_t thiscell = 0 ;
    if (root == zeronode(depth))
       return 0 ;
    if (depth == 2) {
       if (root->nw != 0)
-         return (int)(root->nw) ;
+         return (g_uintptr_t)(root->nw) ;
    } else {
       if (marked2(root))
-         return (int)(root->next) ;
+         return (g_uintptr_t)(root->next) ;
       unhash_node(root) ;
       mark2(root) ;
    }
@@ -1652,13 +1654,13 @@ int hlifealgo::writecell_2p1(node *root, int depth) {
  *   numbered, and displaying a progress dialog.
  */
 static char progressmsg[80] ;
-int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
-   int thiscell = 0 ;
+g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
+   g_uintptr_t thiscell = 0 ;
    if (root == zeronode(depth))
       return 0 ;
    if (depth == 2) {
-      if (cellcounter + 1 != (int)(root->nw))
-	 return (int)(root->nw) ;
+      if (cellcounter + 1 != (g_uintptr_t)(root->nw))
+	 return (g_uintptr_t)(root->nw) ;
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
 	 unsigned long siz = ftell(f) ;
@@ -1683,16 +1685,16 @@ int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       }
       fputs("\n", f) ;
    } else {
-      if (cellcounter + 1 > (int)(root->next) || isaborted())
-	 return (int)(root->next) ;
-      int nw = writecell_2p2(f, root->nw, depth-1) ;
-      int ne = writecell_2p2(f, root->ne, depth-1) ;
-      int sw = writecell_2p2(f, root->sw, depth-1) ;
-      int se = writecell_2p2(f, root->se, depth-1) ;
+      if (cellcounter + 1 > (g_uintptr_t)(root->next) || isaborted())
+	 return (g_uintptr_t)(root->next) ;
+      g_uintptr_t nw = writecell_2p2(f, root->nw, depth-1) ;
+      g_uintptr_t ne = writecell_2p2(f, root->ne, depth-1) ;
+      g_uintptr_t sw = writecell_2p2(f, root->sw, depth-1) ;
+      g_uintptr_t se = writecell_2p2(f, root->se, depth-1) ;
       if (!isaborted() &&
-	  cellcounter + 1 != (int)(root->next)) { // this should never happen
+	  cellcounter + 1 != (g_uintptr_t)(root->next)) { // this should never happen
 	 lifefatal("Internal in writecell_2p2") ;
-	 return (int)(root->next) ;
+	 return (g_uintptr_t)(root->next) ;
       }
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
@@ -1701,7 +1703,7 @@ int hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
 	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       root->next = (node *)thiscell ;
-      fprintf(f, "%d %d %d %d %d\n", depth+1, nw, ne, sw, se) ;
+      fprintf(f, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR "\n", depth+1, nw, ne, sw, se) ;
    }
    return thiscell ;
 }
