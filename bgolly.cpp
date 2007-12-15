@@ -66,7 +66,7 @@ struct options {
   const char *shortopt ;
   const char *longopt ;
   const char *desc ;
-  const char opttype ;
+  char opttype ;
   void *data ;
 } ;
 bigint maxgen = -1, inc = 0 ;
@@ -391,7 +391,7 @@ struct edgescmd : public cmdbase {
       cout << " " << b.tostring() << endl ;
    }
 } edges_inst ;
-bool nullerrors::abortprogress(double p, const char *s) {
+bool nullerrors::abortprogress(double, const char *) {
    imp->draw(viewport, renderer) ;
    return 0 ;
 }
