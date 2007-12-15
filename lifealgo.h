@@ -34,31 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "liferender.h"
 #include "lifepoll.h"
 #include "readpattern.h"
-/*
- *   We need to convert pointers to integers and back for two
- *   reasons.  First, hlife structures use the address of a node
- *   as its label, and we need to hash these labels.  Secondly,
- *   we use bit tricks for garbage collection and need to set and
- *   clear low-order bits in a pointer.  Normally the typedef
- *   below is all we need, but if your platform doesn't have
- *   uintptr_t you can change that here.  We also need this type
- *   for anything that might hold the *count* of nodes, since
- *   this might be larger than an int.  If inttypes does not
- *   exist, and you're compiling for a 64-bit platform, you may
- *   need to make some changes here.
- */
-#ifdef __LP64__
-#define __STDC_FORMAT_MACROS
-#define __STDC_LIMIT_MACROS
-#include <inttypes.h>
-#include <stdint.h>
-typedef uintptr_t g_uintptr_t ;
-#define G_MAX SIZE_MAX
-#else
-#define PRIuPTR "u"
-typedef unsigned int g_uintptr_t ;
-#define G_MAX UINT_MAX
-#endif
+#include "platform.h"
 
 const char cannotreadhash[] = "cannot read hash" ;
 class lifealgo {
