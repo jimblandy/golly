@@ -1452,7 +1452,7 @@ const char *hlifealgo::readmacrocell(char *line) {
    while (getline(line, 10000)) {
       if (i >= indlen) {
          g_uintptr_t nlen = i + indlen + 10 ;
-         ind = (node **)realloc(ind, sizeof(int) * nlen) ;
+         ind = (node **)realloc(ind, sizeof(node*) * nlen) ;
 	 if (ind == 0)
 	   lifefatal("Out of memory (4).") ;
          while (indlen < nlen)

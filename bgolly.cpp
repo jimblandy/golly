@@ -63,10 +63,10 @@ nullerrors nullerror ;
 char *filename ;
 lifealgo *imp = 0 ;
 struct options {
-  char *shortopt ;
-  char *longopt ;
-  char *desc ;
-  char opttype ;
+  const char *shortopt ;
+  const char *longopt ;
+  const char *desc ;
+  const char opttype ;
   void *data ;
 } ;
 bigint maxgen = -1, inc = 0 ;
@@ -75,7 +75,7 @@ int hyper, hashlife, render, autofit, quiet, popcount, progress ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
 char *outfilename = 0 ;
-char *renderscale = "1" ;
+char *renderscale = (char *)"1" ;
 char *testscript = 0 ;
 int outputgzip, outputismc ;
 int numberoffset ; // where to insert file name numbers
@@ -158,7 +158,7 @@ void writepat(int fc) {
 }
 const int MAXCMDLENGTH = 2048 ;
 struct cmdbase {
-   cmdbase(char *cmdarg, char *argsarg) {
+   cmdbase(const char *cmdarg, const char *argsarg) {
       verb = cmdarg ;
       args = argsarg ;
       next = list ;
