@@ -39,7 +39,7 @@ def slideshow ():
             if inithash != g.getoption("hashing"):
                if inithash:
                   # turn on hashing (B0-not-S8 rule turned it off)
-                  g.setrule("b3/s23")
+                  g.setrule("B3/S23")
                   g.setoption("hashing", True)
                else:
                   # turn off hashing (.mc file turned it on)

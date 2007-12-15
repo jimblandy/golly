@@ -3,7 +3,7 @@
 
 from glife.base import *
 
-rule("b3/s23")
+rule("B3/S23")
 
 def collision (i, j):
 	return pentadecathlon + glider[i + 11] (-8 + j, -10, flip)
