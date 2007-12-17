@@ -133,8 +133,6 @@ NOTES:
 - In makefile-win you need to include the headers for Perl and Python
   so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
 
-- Your compiler must use 32-bit integers and 32-bit pointers.
-
 
 How to build bgolly (the batch mode version)
 --------------------------------------------
@@ -226,6 +224,8 @@ by the above GUI code:
 
 bgolly.cpp     - The batch mode program.
                  main() does all the option parsing.
+
+platform.h     - Platform specific defines (eg. 64-bit changes).
 
 lifealgo.*     - Abstract Life algorithm operations:
                  setcell() sets given cell to given state.

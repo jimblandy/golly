@@ -82,8 +82,8 @@ public:
    
    // edit functions
    void ToggleAllowUndo();
-   void RestorePattern(bigint& gen, const wxString& filename, const wxString& rule,
-                       bigint& x, bigint& y, int mag, int warp, bool hash);
+   void RestorePattern(bigint& gen, const wxString& filename,
+                       bigint& x, bigint& y, int mag, int warp);
 
    // prefs functions
    void SetRandomFillPercentage();

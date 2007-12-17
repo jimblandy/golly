@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+TGR: Added platform.h and 64-bit changes.
+AKT: Fixed bug when undoing/redoing generating changes using hashing.
 AKT: Fixed bug in Mac app's activate event handler.
 
 Changes in version 1.3 (released November 2007)

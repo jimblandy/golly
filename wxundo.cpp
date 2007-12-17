@@ -107,21 +107,21 @@ public:
    bigint oldx, oldy, newx, newy;         // old and new positions
    int oldmag, newmag;                    // old and new scales
    int oldwarp, newwarp;                  // old and new speeds
-   bool oldhash, newhash;                 // old and new hash states
    bool scriptgen;                        // gen change was done by script?
-   // also uses oldrule, newrule
    
    // setgen info
    bigint oldstartgen, newstartgen;       // old and new startgen values
    bool oldsave, newsave;                 // old and new savestart states
+   bool oldhash, newhash;                 // old and new hash states
    wxString oldtempstart, newtempstart;   // old and new tempstart paths
    wxString oldstartfile, newstartfile;   // old and new startfile paths
    wxString oldcurrfile, newcurrfile;     // old and new currfile paths
    wxString oldclone[maxlayers];          // old starting names for cloned layers
    wxString newclone[maxlayers];          // new starting names for cloned layers
    // also uses oldgen, newgen
+   // and oldrule, newrule
    // and oldx, oldy, newx, newy, oldmag, newmag
-   // and oldwarp, newwarp, oldhash, newhash
+   // and oldwarp, newwarp
    // and prevt, prevl, prevb, prevr, nextt, nextl, nextb, nextr
    
    // namechange info
@@ -256,15 +256,13 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->selleft = prevl;
             currlayer->selbottom = prevb;
             currlayer->selright = prevr;
-            mainptr->RestorePattern(oldgen, oldfile, oldrule,
-                                    oldx, oldy, oldmag, oldwarp, oldhash);
+            mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldwarp);
          } else {
             currlayer->seltop = nextt;
             currlayer->selleft = nextl;
             currlayer->selbottom = nextb;
             currlayer->selright = nextr;
-            mainptr->RestorePattern(newgen, newfile, newrule,
-                                    newx, newy, newmag, newwarp, newhash);
+            mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newwarp);
          }
          break;
       
@@ -688,7 +686,6 @@ void UndoRedo::RememberGenStart()
 
    // save current generation, selection, position, scale, speed, etc
    prevgen = currlayer->algo->getGeneration();
-   prevrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    prevt = currlayer->seltop;
    prevl = currlayer->selleft;
    prevb = currlayer->selbottom;
@@ -696,7 +693,6 @@ void UndoRedo::RememberGenStart()
    viewptr->GetPos(prevx, prevy);
    prevmag = viewptr->GetMag();
    prevwarp = currlayer->warp;
-   prevhash = currlayer->hash;
 
    if (prevgen == currlayer->startgen) {
       // we can just reset to starting pattern
@@ -749,16 +745,14 @@ void UndoRedo::RememberGenStart()
       // on Linux the file is in /tmp
       prevfile = wxFileName::CreateTempFileName(temp_prefix);
 
-      // if head of undo list is a genchange node with same rule and hash state
-      // then we can copy that change node's newfile to prevfile; this makes
-      // consecutive generating runs faster (setting prevfile to newfile would
-      // be even faster but it's difficult to avoid the file being deleted
-      // if the redo list is cleared)
+      // if head of undo list is a genchange node then we can copy that
+      // change node's newfile to prevfile; this makes consecutive generating
+      // runs faster (setting prevfile to newfile would be even faster but it's
+      // difficult to avoid the file being deleted if the redo list is cleared)
       if (!undolist.IsEmpty()) {
          wxList::compatibility_iterator node = undolist.GetFirst();
          ChangeNode* change = (ChangeNode*) node->GetData();
-         if (change->changeid == genchange &&
-             change->newrule == prevrule && change->newhash == prevhash) {
+         if (change->changeid == genchange) {
             if (wxCopyFile(change->newfile, prevfile, true)) {
                return;
             } else {
@@ -813,8 +807,6 @@ void UndoRedo::RememberGenFinish()
    change->newgen = currlayer->algo->getGeneration();
    change->oldfile = prevfile;
    change->newfile = fpath;
-   change->oldrule = prevrule;
-   change->newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    change->oldx = prevx;
    change->oldy = prevy;
    viewptr->GetPos(change->newx, change->newy);
@@ -822,8 +814,6 @@ void UndoRedo::RememberGenFinish()
    change->newmag = viewptr->GetMag();
    change->oldwarp = prevwarp;
    change->newwarp = currlayer->warp;
-   change->oldhash = prevhash;
-   change->newhash = currlayer->hash;
    change->prevt = prevt;
    change->prevl = prevl;
    change->prevb = prevb;
@@ -852,7 +842,6 @@ void UndoRedo::AddGenChange()
    
    // use starting pattern info for previous state
    prevgen = currlayer->startgen;
-   prevrule = currlayer->startrule;
    prevt = currlayer->starttop;
    prevl = currlayer->startleft;
    prevb = currlayer->startbottom;
@@ -861,7 +850,6 @@ void UndoRedo::AddGenChange()
    prevy = currlayer->starty;
    prevmag = currlayer->startmag;
    prevwarp = currlayer->startwarp;
-   prevhash = currlayer->starthash;
    prevfile = wxEmptyString;
    
    // avoid RememberGenFinish returning early if inscript is true
@@ -1075,9 +1063,6 @@ void UndoRedo::DeletingClone(int index)
 
 void UndoRedo::RememberRuleChange(const wxString& oldrule)
 {
-   // safe to call SavePendingChanges here because dirty flag hasn't changed
-   if (inscript) SavePendingChanges();
-   
    wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    if (oldrule == newrule) return;
    
@@ -1103,9 +1088,6 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
 
 void UndoRedo::RememberAlgoChange()
 {
-   // safe to call SavePendingChanges here because dirty flag hasn't changed
-   if (inscript) SavePendingChanges();
-   
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
    UpdateRedoItem(wxEmptyString);

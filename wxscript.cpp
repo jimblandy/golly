@@ -146,6 +146,13 @@ const char* GSF_setrule(char* rulestring)
 {
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
+   // inscript should be true but play safe
+   if (allowundo && !currlayer->stayclean && inscript) {
+      // note that we must save pending gen changes BEFORE changing rule
+      // otherwise temporary files will store incorrect rule info
+      SavePendingChanges();
+   }
+
    const char* err;
    if (rulestring == NULL || rulestring[0] == 0) {
       err = currlayer->algo->setrule("B3/S23");

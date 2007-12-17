@@ -230,36 +230,27 @@ void MainFrame::ResetPattern(bool resetundo)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::RestorePattern(bigint& gen, const wxString& filename, const wxString& rule,
-                               bigint& x, bigint& y, int mag, int warp, bool hash)
+void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
+                               bigint& x, bigint& y, int mag, int warp)
 {
    // called to undo/redo a generating change
    if (gen == currlayer->startgen) {
-      // restore starting pattern
-      ResetPattern(false);                // false == don't call SyncUndoHistory
+      // restore starting pattern (false means don't call SyncUndoHistory)
+      ResetPattern(false);
    } else {
-      // restore pattern in filename along with given settings
+      // restore pattern in filename along with given pos/scale/speed settings
       currlayer->warp = warp;
-      // only update status bar if hashing state has changed
-      bool updatestatus = currlayer->hash != hash;
-      currlayer->hash = hash;
 
-      LoadPattern(filename, wxEmptyString, updatestatus);
+      // false means don't update status bar (algorithm should NOT change)
+      LoadPattern(filename, wxEmptyString, false);
       
       if (gen != currlayer->algo->getGeneration()) {
          // current gen will be 0 if filename could not be loaded
          // for some reason, so best to set correct gen count
          currlayer->algo->setGeneration(gen);
       }
-
-      // no need for setrule here??? readpattern should do it when loading file
-      // currlayer->algo->setrule(rule.mb_str(wxConvLocal));
-      wxString r = wxString(currlayer->algo->getrule(), wxConvLocal);
-      if (r != rule)
-         Warning(wxString::Format(_("Rules differ: %s != %s"), r.c_str(), rule.c_str()));
       
       viewptr->SetPosMag(x, y, mag);
-      SetWindowTitle(wxEmptyString);      // in case rule changed
       UpdatePatternAndStatus();
    }
 }
@@ -506,6 +497,11 @@ void MainFrame::GeneratePattern()
    } else {
       UpdateEverything();
    }
+
+   // GeneratePattern is never called while running a script so no need
+   // to test inscript or currlayer->stayclean; note that we must call
+   // RememberGenFinish before ToggleHashing
+   if (allowundo) currlayer->undoredo->RememberGenFinish();
    
    if (hash_pending) {
       hash_pending = false;
@@ -514,26 +510,17 @@ void MainFrame::GeneratePattern()
       // to avoid UpdateToolBar/UpdateLayerBar flashing their buttons
       bool saveshowtool = showtool;    showtool = false;
       bool saveshowlayer = showlayer;  showlayer = false;
-
-      // temporarily set allowundo false so we don't remember hashing changes
-      // while generating (RememberGenFinish below will do that)
-      bool saveallowundo = allowundo;  allowundo = false;
       
       ToggleHashing();
       
-      // restore tool/layer bar flags and allowundo
+      // restore tool/layer bar flags
       showtool = saveshowtool;
       showlayer = saveshowlayer;
-      allowundo = saveallowundo;
       
       // send command to event queue to call GeneratePattern again
       wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_START());
       wxPostEvent(this->GetEventHandler(), goevt);
    }
-
-   // GeneratePattern is never called while running a script so no need
-   // to test inscript or currlayer->stayclean
-   if (allowundo) currlayer->undoredo->RememberGenFinish();
 
    if (reset_pending) {
       reset_pending = false;
@@ -1029,6 +1016,12 @@ void MainFrame::ToggleHashing()
       hash_pending = true;
       return;
    }
+   
+   if (allowundo && !currlayer->stayclean && inscript) {
+      // note that we must save pending gen changes BEFORE changing hash flag
+      // otherwise temporary files won't be the correct type (mc or rle)
+      SavePendingChanges();
+   }
 
    // toggle hashing option and update status bar immediately
    currlayer->hash = !currlayer->hash;
@@ -1127,7 +1120,7 @@ void MainFrame::SetWarp(int newwarp)
 
 void MainFrame::ShowRuleDialog()
 {
-   if (generating) return;
+   if (generating || inscript) return;
    if (ChangeRule()) {
       // show new rule in window title (file name doesn't change)
       SetWindowTitle(wxEmptyString);

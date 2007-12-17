@@ -124,14 +124,12 @@ private:
    bool badalloc;                // malloc/realloc failed?
    
    wxString prevfile;            // for saving pattern at start of gen change
-   wxString prevrule;            // rule at start of gen change
    bigint prevgen;               // generation count at start of gen change
    bigint prevt, prevl;          // selection edges at start of gen change
    bigint prevb, prevr;
    bigint prevx, prevy;          // viewport position at start of gen change
    int prevmag;                  // scale at start of gen change
    int prevwarp;                 // speed at start of gen change
-   bool prevhash;                // hash state at start of gen change
    int startcount;               // unfinished RememberGenStart calls
    bool fixsetgen;               // setgen node needs to be updated?
    
