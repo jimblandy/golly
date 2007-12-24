@@ -85,7 +85,7 @@ my @selrect = g_getselrect();
 g_exit("There is no selection.") if @selrect == 0;
 
 my $selpatt = g_getcells(@selrect);
-g_exit("No pattern in selection.") if !$selpatt;
+g_exit("No pattern in selection.") if @{$selpatt} == 0;
 
 # set selection edges
 my $selleft = $selrect[0];
