@@ -723,7 +723,7 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
    char msg[128];
    sprintf(msg, "uses=%d mys=%d dollars=%d semicolons=%d imports=%d froms=%d colons=%d",
                   uses, mys, dollars, semicolons, imports, froms, colons);
-   Note(msg);
+   Note(wxString(msg,wxConvLocal));
    */
 
    if (uses + mys + dollars + semicolons > imports + froms + colons)
@@ -746,7 +746,18 @@ void MainFrame::RunClipboard()
       // copy clipboard data to scriptfile
       wxFile outfile(scriptfile, wxFile::write);
       if ( outfile.IsOpened() ) {
-         outfile.Write( data.GetText() );
+         #ifdef __WXMAC__
+            if (scriptfile == perlfile) {
+               // Perl script, so replace CRs with LFs
+               wxString str = data.GetText();
+               str.Replace(wxT("\015"), wxT("\012"));
+               outfile.Write( str );
+            } else {
+               outfile.Write( data.GetText() );
+            }
+         #else
+            outfile.Write( data.GetText() );
+         #endif
          outfile.Close();
          RunScript(scriptfile);
       } else {

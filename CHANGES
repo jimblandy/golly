@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Mac app automatically replaces CRs with LFs in Perl clipboard data.
 DMG: Fixed Perl/Python auto-recognition bug in scripts containing quoted RLE.
 TGR: Added platform.h and 64-bit changes.
 AKT: Fixed bug when undoing/redoing generating changes using hashing.
