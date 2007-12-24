@@ -84,7 +84,7 @@ void MainFrame::SetWindowTitle(const wxString& filename)
       // show currname in current layer's menu item
       UpdateLayerItem(currindex);
    }
-   
+
    if (inscript) {
       // avoid window title flashing; eg. script might be switching layers
       ShowTitleLater();
@@ -92,10 +92,10 @@ void MainFrame::SetWindowTitle(const wxString& filename)
    }
 
    wxString prefix = wxEmptyString;
-   
+
    // display asterisk if pattern has been modified
    if (currlayer->dirty) prefix += wxT('*');
-   
+
    int cid = currlayer->cloneid;
    while (cid > 0) {
       // display one or more "=" chars to indicate this is a cloned layer
@@ -165,7 +165,7 @@ void MainFrame::NewPattern(const wxString& title)
    currlayer->startgen = 0;
    currlayer->warp = 0;
    CreateUniverse();
-   
+
    // clear all undo/redo history
    currlayer->undoredo->ClearUndoRedo();
 
@@ -191,7 +191,7 @@ void MainFrame::NewPattern(const wxString& title)
 bool MainFrame::LoadImage(const wxString& path)
 {
    wxString ext = path.AfterLast(wxT('.'));
-   
+
    // supported extensions match image handlers added in GollyApp::OnInit()
    if ( ext.IsSameAs(wxT("bmp"),false) ||
         ext.IsSameAs(wxT("gif"),false) ||
@@ -201,7 +201,7 @@ bool MainFrame::LoadImage(const wxString& path)
       wxImage image;
       if ( image.LoadFile(path) ) {
          currlayer->algo->setrule("B3/S23");
-         
+
          unsigned char maskr, maskg, maskb;
          bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
          int wd = image.GetWidth();
@@ -222,7 +222,7 @@ bool MainFrame::LoadImage(const wxString& path)
                   curralgo->setcell(x, y, 1);
                }
             }
-         
+
          curralgo->endofpattern();
       } else {
          Warning(_("Could not load image from file!"));
@@ -250,20 +250,20 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       // clear all undo/redo history
       currlayer->undoredo->ClearUndoRedo();
    }
-   
+
    if (!showbanner) statusptr->ClearMessage();
 
    // set nopattupdate BEFORE UpdateStatus() call so we see gen=0 and pop=0;
    // in particular, it avoids getPopulation being called which would
    // slow down hlife pattern loading
    viewptr->nopattupdate = true;
-   
+
    if (updatestatus) {
       // update all of status bar so we don't see different colored lines;
       // on Mac, DrawView also gets called if there are pending updates
       UpdateStatus();
    }
-   
+
    CreateUniverse();
 
    if (!newtitle.IsEmpty()) {
@@ -301,7 +301,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
       if (openremovesel) viewptr->NoSelection();
       if (opencurs) currlayer->curs = opencurs;
-      
+
       viewptr->FitInView(1);
       currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
       UpdateEverything();
@@ -378,7 +378,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
          id = GetID_OPEN_RECENT() + maxpatterns;
       }
    }
-   // path exists in patternSubMenu 
+   // path exists in patternSubMenu
    if ( id > GetID_OPEN_RECENT() + 1 ) {
       // move path to start of menu
       wxMenuItem* item;
@@ -420,7 +420,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
          id = GetID_RUN_RECENT() + maxscripts;
       }
    }
-   // path exists in scriptSubMenu 
+   // path exists in scriptSubMenu
    if ( id > GetID_RUN_RECENT() + 1 ) {
       // move path to start of menu
       wxMenuItem* item;
@@ -452,7 +452,7 @@ void MainFrame::OpenPattern()
    filetypes +=         _("|GIF (*.gif)|*.gif");
    filetypes +=         _("|PNG (*.png)|*.png");
    filetypes +=         _("|TIFF (*.tiff;*.tif)|*.tiff;*.tif");
-   
+
    wxFileDialog opendlg(this, _("Choose a pattern"),
                         opensavedir, wxEmptyString, filetypes,
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
@@ -543,7 +543,7 @@ bool MainFrame::CopyTextToClipboard(wxString &text)
 bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 {
    bool gotdata = false;
-   
+
    if ( wxTheClipboard->Open() ) {
       if ( wxTheClipboard->IsSupported( wxDF_TEXT ) ) {
          gotdata = wxTheClipboard->GetData( *textdata );
@@ -604,7 +604,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
    } else {
       statusptr->ErrorMessage(_("Could not open clipboard!"));
    }
-   
+
    return gotdata;
 }
 
@@ -613,7 +613,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 void MainFrame::OpenClipboard()
 {
    if (generating) return;
-   
+
    // load and view pattern data stored in clipboard
    #ifdef __WXX11__
       // on X11 the clipboard data is in non-temporary clipfile, so copy
@@ -659,7 +659,7 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
    int semicolons = 0;
    int colons = 0;
    int linelen = 0;
-   
+
    // need to be careful converting Unicode wxString to char*
    wxCharBuffer buff = text.mb_str(wxConvLocal);
    const char* p = (const char*) buff;
@@ -668,6 +668,18 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
          case '#':
             // probably a comment, so ignore rest of line
             while (*p && *p != 13 && *p != 10) p++;
+            linelen = 0;
+            if (*p) p++;
+            break;
+         case 34: // double quote -- ignore until quote closes, even multiple lines
+            p++;
+            while (*p && *p != 34) p++;
+            linelen = 0;
+            if (*p) p++;
+            break;
+         case 39: // single quote -- ignore until quote closes
+            p++;
+            while (*p && *p != 39 && *p != 13 && *p != 10) p++;
             linelen = 0;
             if (*p) p++;
             break;
@@ -700,20 +712,20 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
             p++;
       }
    }
-   
+
    // give keywords much more weight
    imports *= 10;
    froms *= 10;
    uses *= 10;
    mys *= 10;
-   
+
    /* check totals:
    char msg[128];
    sprintf(msg, "uses=%d mys=%d dollars=%d semicolons=%d imports=%d froms=%d colons=%d",
                   uses, mys, dollars, semicolons, imports, froms, colons);
    Note(msg);
    */
-   
+
    if (uses + mys + dollars + semicolons > imports + froms + colons)
       return perlfile;
    else
@@ -786,11 +798,11 @@ void MainFrame::ClearMissingPatterns()
    while (pos < numpatterns) {
       wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
       wxString path = item->GetText();
-      
+
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
       if (!fname.IsAbsolute()) path = gollydir + path;
-      
+
       if (wxFileExists(path)) {
          // keep this item
          pos++;
@@ -820,11 +832,11 @@ void MainFrame::ClearMissingScripts()
    while (pos < numscripts) {
       wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
       wxString path = item->GetText();
-      
+
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
       if (!fname.IsAbsolute()) path = gollydir + path;
-      
+
       if (wxFileExists(path)) {
          // keep this item
          pos++;
@@ -886,7 +898,7 @@ const char* MainFrame::WritePattern(const wxString& path,
                                      *currlayer->algo, format,
                                      top, left, bottom, right);
    #endif
-   
+
    #ifdef __WXMAC__
       if (!err) {
          // set the file's creator and type
@@ -901,7 +913,7 @@ const char* MainFrame::WritePattern(const wxString& path,
          filename.MacSetTypeAndCreator(type, creator);
       }
    #endif
-   
+
    return err;
 }
 
@@ -910,23 +922,23 @@ const char* MainFrame::WritePattern(const wxString& path,
 void MainFrame::SavePattern()
 {
    if (generating) return;
-   
+
    wxString filetypes;
    int RLEindex, L105index, MCindex;
-   
+
    // initially all formats are not allowed (use any -ve number)
    RLEindex = L105index = MCindex = -1;
-   
+
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    currlayer->algo->findedges(&top, &left, &bottom, &right);
-   
+
    wxString RLEstring;
    if (savexrle)
       RLEstring = _("Extended RLE (*.rle)|*.rle");
    else
       RLEstring = _("RLE (*.rle)|*.rle");
-   
+
    if (currlayer->hash) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          // too big so only allow saving as MC file
@@ -949,7 +961,7 @@ void MainFrame::SavePattern()
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
          return;
-      }   
+      }
       itop = top.toint();
       ileft = left.toint();
       ibottom = bottom.toint();
@@ -996,7 +1008,7 @@ void MainFrame::SavePattern()
          statusptr->ErrorMessage(_("Bug in SavePattern!"));
          return;
       }
-      
+
       const char* err = WritePattern(savedlg.GetPath(), format,
                                      itop, ileft, ibottom, iright);
       if (err) {
@@ -1018,12 +1030,12 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    currlayer->algo->findedges(&top, &left, &bottom, &right);
-   
+
    pattern_format pattfmt;
    if ( format.IsSameAs(wxT("rle"),false) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          return "Pattern is too big to save as RLE.";
-      }   
+      }
       pattfmt = savexrle ? XRLE_format : RLE_format;
       itop = top.toint();
       ileft = left.toint();
@@ -1038,14 +1050,14 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
       itop = ileft = ibottom = iright = 0;
    } else {
       return "Unknown pattern format.";
-   }   
+   }
 
    const char* err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
    if (!err) {
       if (remember) AddRecentPattern(path);
       SaveSucceeded(path);
    }
-   
+
    return err;
 }
 
@@ -1068,10 +1080,10 @@ void MainFrame::SaveSucceeded(const wxString& path)
       SetCurrentFile(path);
       currlayer->savestart = false;
    }
-   
+
    // set dirty flag false and update currlayer->currname
    MarkLayerClean(GetBaseName(path));
-   
+
    if (allowundo && !currlayer->stayclean) {
       currlayer->undoredo->RememberNameChange(oldname, oldfile, oldsave, olddirty);
    }
@@ -1087,7 +1099,7 @@ void MainFrame::ToggleShowPatterns()
       bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
       bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
    #endif
-   
+
    showpatterns = !showpatterns;
    if (showpatterns && showscripts) {
       showscripts = false;
@@ -1102,7 +1114,7 @@ void MainFrame::ToggleShowPatterns()
       }
       viewptr->SetFocus();
    }
-   
+
    #ifndef __WXMAC__
       // restore scroll bars
       bigview->UpdateScrollBars();
@@ -1119,7 +1131,7 @@ void MainFrame::ToggleShowScripts()
       bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
       bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
    #endif
- 
+
    showscripts = !showscripts;
    if (showscripts && showpatterns) {
       showpatterns = false;
@@ -1134,7 +1146,7 @@ void MainFrame::ToggleShowScripts()
       }
       viewptr->SetFocus();
    }
-   
+
    #ifndef __WXMAC__
       // restore scroll bars
       bigview->UpdateScrollBars();
@@ -1211,10 +1223,10 @@ void MainFrame::UpdateWarp()
 void MainFrame::ShowPrefsDialog()
 {
    if (inscript || generating || viewptr->waitingforclick) return;
-   
+
    if (ChangePrefs()) {
       // user hit OK button
-   
+
       // selection color may have changed
       SetSelectionColor();
 
@@ -1229,25 +1241,25 @@ void MainFrame::ShowPrefsDialog()
          numscripts--;
          scriptSubMenu->Delete( scriptSubMenu->FindItemByPosition(numscripts) );
       }
-      
+
       // randomfill might have changed
       SetRandomFillPercentage();
-      
+
       // if mindelay/maxdelay changed then may need to change minwarp and warp
       UpdateWarp();
-      
+
       // we currently don't allow user to edit prefs while generating,
       // but in case that changes:
       if (generating && currlayer->warp < 0) {
          whentosee = 0;    // best to see immediately
       }
-      
+
       // maxhashmem might have changed
       for (int i = 0; i < numlayers; i++) {
          Layer* layer = GetLayer(i);
          if (layer->hash) layer->algo->setMaxMemory(maxhashmem);
       }
-      
+
       // tileborder might have changed
       if (tilelayers && numlayers > 1) {
          int wd, ht;
@@ -1257,7 +1269,7 @@ void MainFrame::ShowPrefsDialog()
          if (ht < 1) ht = 1;
          ResizeLayers(wd, ht);
       }
-      
+
       SavePrefs();
       UpdateEverything();
    }
