@@ -13,12 +13,12 @@
 # 
 #   8 12 13.
 # 
-# When the current hash matches one of the saved hashes, it is highly likely
-# the pattern is oscillating_  By keeping a corresponding list of generation
+# If the current hash matches one of the saved hashes, it is highly likely
+# the pattern is oscillating.  By keeping a corresponding list of generation
 # counts we can calculate the period.  We also keep lists of population
-# counts and bounding boxes; they are used to reduce the chance of spurious
-# oscillator detection due to hash collisions.  The bounding box info also
-# allows us to detect moving oscillators (spaceships/knightships).
+# counts and bounding boxes to reduce the chance of spurious oscillator
+# detection due to hash collisions.  The bounding box info also allows us
+# to detect moving oscillators (spaceships/knightships).
 
 use strict;
 use Time::HiRes qw ( time );

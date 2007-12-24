@@ -648,13 +648,10 @@ void MainFrame::OpenClipboard()
 
 wxString MainFrame::GetScriptFileName(const wxString& text)
 {
-   // examine text to see if it contains Perl or Python code;
-   // we don't attempt anything too fancy -- just count various
-   // language-specific elements and compare the final totals
-   int imports = 0;
-   int froms = 0;
-   int uses = 0;
-   int mys = 0;
+   // examine given text to see if it contains Perl or Python code;
+   // if "use" or "my" occurs at start of line then we assume Perl,
+   // if "import" or "from" occurs at start of line then we assume Python,
+   // otherwise we compare counts for dollars + semicolons vs colons
    int dollars = 0;
    int semicolons = 0;
    int colons = 0;
@@ -697,11 +694,11 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
             p++;
             break;
          case ' ':
-            // look for language-specific keywords at start of line
-            if (linelen == 6 && strncmp(p-6,"import",6) == 0) imports++;
-            if (linelen == 4 && strncmp(p-4,"from",4) == 0) froms++;
-            if (linelen == 3 && strncmp(p-3,"use",3) == 0) uses++;
-            if (linelen == 2 && strncmp(p-2,"my",2) == 0) mys++;
+            // look for language-specific keyword at start of line
+            if (linelen == 2 && strncmp(p-2,"my",2) == 0) return perlfile;
+            if (linelen == 3 && strncmp(p-3,"use",3) == 0) return perlfile;
+            if (linelen == 4 && strncmp(p-4,"from",4) == 0) return pythonfile;
+            if (linelen == 6 && strncmp(p-6,"import",6) == 0) return pythonfile;
             // don't break
          default:
             if (linelen == 0 && (*p == ' ' || *p == 9)) {
@@ -713,20 +710,13 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
       }
    }
 
-   // give keywords much more weight
-   imports *= 10;
-   froms *= 10;
-   uses *= 10;
-   mys *= 10;
-
    /* check totals:
    char msg[128];
-   sprintf(msg, "uses=%d mys=%d dollars=%d semicolons=%d imports=%d froms=%d colons=%d",
-                  uses, mys, dollars, semicolons, imports, froms, colons);
+   sprintf(msg, "dollars=%d semicolons=%d colons=%d", dollars, semicolons, colons);
    Note(wxString(msg,wxConvLocal));
    */
 
-   if (uses + mys + dollars + semicolons > imports + froms + colons)
+   if (dollars + semicolons > colons)
       return perlfile;
    else
       return pythonfile;
@@ -745,7 +735,7 @@ void MainFrame::RunClipboard()
       wxString scriptfile = GetScriptFileName( data.GetText() );
       // copy clipboard data to scriptfile
       wxFile outfile(scriptfile, wxFile::write);
-      if ( outfile.IsOpened() ) {
+      if (outfile.IsOpened()) {
          #ifdef __WXMAC__
             if (scriptfile == perlfile) {
                // Perl script, so replace CRs with LFs
