@@ -166,6 +166,9 @@ void MainFrame::NewPattern(const wxString& title)
    currlayer->warp = 0;
    CreateUniverse();
 
+   // reset timing info used in DisplayTimingInfo
+   endtime = begintime = 0;
+
    // clear all undo/redo history
    currlayer->undoredo->ClearUndoRedo();
 
@@ -247,6 +250,10 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          // comments will no longer be relevant so close info window
          GetInfoFrame()->Close(true);
       }
+
+      // reset timing info used in DisplayTimingInfo
+      endtime = begintime = 0;
+
       // clear all undo/redo history
       currlayer->undoredo->ClearUndoRedo();
    }
