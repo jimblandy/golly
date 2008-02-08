@@ -3,6 +3,9 @@ For future versions:
 
 - Improve batchmode.
 
+- Fix qlifealgo::lowerRightPixel to prevent off-by-one error when
+  selecting large pattern like caterpillar.
+
 - Automatically reduce an overlarge hash memory request (with suitable
   warning) to 80% (?) of physical memory (is there a wx call to get that?).
 

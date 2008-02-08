@@ -1262,7 +1262,7 @@ void PatternView::RemoveSelection()
 
 void PatternView::ShrinkSelection(bool fit)
 {
-   if (!SelectionExists()) return;
+   if (mainptr->generating || !SelectionExists()) return;
    
    // check if there is no pattern
    if (currlayer->algo->isEmpty()) {

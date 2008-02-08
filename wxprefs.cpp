@@ -3121,9 +3121,9 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    hbox2->Add(choose, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
    hbox2->Add(filebox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
 
-   wxString notes = _("Note:\n");
-   notes += _("- The Escape key is reserved for other uses.\n");
-   notes += _("- Different key combinations can be assigned to the same action.");
+   wxString notes = _("Note:");
+   notes += _("\n- Different key combinations can be assigned to the same action.");
+   notes += _("\n- The Escape key is reserved for hard-wired actions.");
    wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
    hbox3->Add(new wxStaticText(panel, wxID_STATIC, notes));
 

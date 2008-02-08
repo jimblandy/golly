@@ -806,9 +806,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_PASTE_SEL, active && !busy && textinclip && selexists);
       mbar->Enable(ID_PLOCATION, active);
       mbar->Enable(ID_PMODE,     active);
-      mbar->Enable(ID_SELALL,    active);
-      mbar->Enable(ID_REMOVE,    active && selexists);
-      mbar->Enable(ID_SHRINK,    active && selexists);
+      mbar->Enable(ID_SELALL,    active && !inscript);
+      mbar->Enable(ID_REMOVE,    active && !inscript && selexists);
+      mbar->Enable(ID_SHRINK,    active && !busy && selexists);
       mbar->Enable(ID_RANDOM,    active && !busy && selexists);
       mbar->Enable(ID_FLIPTB,    active && !busy && selexists);
       mbar->Enable(ID_FLIPLR,    active && !busy && selexists);
