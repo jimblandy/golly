@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Only show hashing info while generating (avoids paste crash in Mac app).
 AKT: Changing selection isn't allowed while running a script.
 AKT: Shrinking selection isn't allowed while generating a pattern.
 AKT: Mac app automatically replaces CRs with LFs in Perl clipboard data.

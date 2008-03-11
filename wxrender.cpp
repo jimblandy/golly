@@ -1086,7 +1086,7 @@ void DrawTileBorders(wxDC& dc)
    // draw different colored border to indicate tile for current layer
    trect = GetLayer(currindex)->tilerect;
    brush.SetColour(brightgreen);                   //??? or *selectrgb
-   DrawTileFrame(dc, trect, brush, tileborder);    //??? or thinner: (tileborder + 1) / 2);
+   DrawTileFrame(dc, trect, brush, tileborder);
 }
 
 // -----------------------------------------------------------------------------

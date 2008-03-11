@@ -921,8 +921,6 @@ void CurrentLayerChanged()
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
    }
    
-   hlifealgo::setVerbose(currlayer->showhashinfo);
-   
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
    if (synccursors) currlayer->curs = oldcurs;
 
@@ -1487,13 +1485,11 @@ Layer::Layer()
    if (numlayers == 0) {
       // creating very first layer
       
-      // set hash etc using initial values stored in prefs file
+      // set some options using initial values stored in prefs file
       hash = inithash;
       hyperspeed = inithyperspeed;
       showhashinfo = initshowhashinfo;
       autofit = initautofit;
-      
-      hlifealgo::setVerbose(initshowhashinfo);
       
       // create empty universe
       algo = CreateNewUniverse(hash);

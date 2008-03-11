@@ -446,11 +446,16 @@ void MainFrame::GeneratePattern()
    wxGetApp().PollerReset();
    UpdateUserInterface(IsActive());
    
-   if (currlayer->warp < 0) {
-      whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-   }
-   int hypdown = 64;
+   // only show hashing info while generating, otherwise Mac app can crash
+   // after a paste due to hlifealgo::resize() calling lifestatus() which
+   // then causes the viewport to be repainted for some inexplicable reason
+   if (currlayer->hash)
+      hlifealgo::setVerbose( currlayer->showhashinfo );
 
+   if (currlayer->warp < 0)
+      whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
+
+   int hypdown = 64;
    while (true) {
       if (currlayer->warp < 0) {
          // slow down by only doing one gen every GetCurrentDelay() millisecs
@@ -485,6 +490,8 @@ void MainFrame::GeneratePattern()
    }
 
    generating = false;
+
+   if (currlayer->hash) hlifealgo::setVerbose(0);
 
    // for DisplayTimingInfo
    endtime = stopwatch->Time();
@@ -600,6 +607,9 @@ void MainFrame::NextGeneration(bool useinc)
 
    // curralgo->step() calls checkevents so set generating flag to avoid recursion
    generating = true;
+
+   // only show hashing info while generating
+   if (currlayer->hash) hlifealgo::setVerbose( currlayer->showhashinfo );
    
    // avoid doing some things if NextGeneration is called from a script;
    // ie. by a run/step command
@@ -624,6 +634,8 @@ void MainFrame::NextGeneration(bool useinc)
    }
 
    generating = false;
+
+   if (currlayer->hash) hlifealgo::setVerbose(0);
    
    if (!inscript) {
       // autofit is only used when doing many gens
@@ -1104,7 +1116,10 @@ void MainFrame::ToggleHyperspeed()
 void MainFrame::ToggleHashInfo()
 {
    currlayer->showhashinfo = !currlayer->showhashinfo;
-   hlifealgo::setVerbose( currlayer->showhashinfo ) ;
+   
+   // only show hashing info while generating
+   if (generating && currlayer->hash)
+      hlifealgo::setVerbose( currlayer->showhashinfo );
 }
 
 // -----------------------------------------------------------------------------

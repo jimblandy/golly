@@ -92,7 +92,7 @@ END_EVENT_TABLE()
 
 RuleDialog::RuleDialog(wxWindow* parent)
 {
-   Create(parent, wxID_ANY, _("Rule"), wxDefaultPosition, wxDefaultSize);
+   Create(parent, wxID_ANY, _("Set Rule"), wxDefaultPosition, wxDefaultSize);
    ignore_text_change = true;
    CreateControls();
    GetSizer()->Fit(this);
