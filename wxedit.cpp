@@ -1262,7 +1262,7 @@ void PatternView::RemoveSelection()
 
 void PatternView::ShrinkSelection(bool fit)
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (!SelectionExists()) return;
    
    // check if there is no pattern
    if (currlayer->algo->isEmpty()) {
@@ -1319,7 +1319,7 @@ void PatternView::ShrinkSelection(bool fit)
    
    // copy live cells in selection to temporary universe
    if ( CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                 currlayer->algo, tempalgo, false, _("Saving selection")) ) {
+                 currlayer->algo, tempalgo, false, _("Copying selection")) ) {
       if ( tempalgo->isEmpty() ) {
          statusptr->ErrorMessage(empty_selection);
       } else {

@@ -216,7 +216,8 @@ public:
    virtual int nextcell(int x, int y) ;
    // call after setcell/clearcell calls
    virtual void endofpattern() {
-     poller->bailIfCalculating() ;
+     // AKT: unnecessary??? (prevents shrinking selection while generating)
+     // poller->bailIfCalculating() ;
      popValid = 0 ;
    }
    virtual void setIncrement(bigint inc) { stepsize = inc ; }
