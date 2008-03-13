@@ -41,13 +41,8 @@ int lifepoll::inner_poll() {
   return interrupted ;
 }
 void lifepoll::bailIfCalculating() {
-  if (isCalculating()) {
-    //!!!
-    char* p = 0;
-    *p = ' ';
-  
+  if (isCalculating())
     lifefatal("recursive poll called.") ;
-  }
 }
 void lifepoll::updatePop() {}
 lifepoll default_poller ;
