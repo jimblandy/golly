@@ -70,9 +70,9 @@ IMPLEMENT_APP(GollyApp)
 MainFrame* mainptr = NULL;       // main window
 PatternView* viewptr = NULL;     // current viewport window (possibly a tile)
 PatternView* bigview = NULL;     // main viewport window
-
 StatusBar* statusptr = NULL;     // status bar window
 wxStopWatch* stopwatch;          // global stopwatch
+bool insideYield = false;        // processing an event via Yield()?
 
 // -----------------------------------------------------------------------------
 
@@ -119,18 +119,21 @@ public:
 
 void CallYield()
 {
-   if (mainptr->IsActive()) {
-      // make sure viewport window keeps keyboard focus
-      viewptr->SetFocus();
-   }
+   #ifdef __WXX11__
+      // don't change focus here as it causes menu problems in X11 app
+   #else
+      if (mainptr->IsActive()) {
+         // make sure viewport window keeps keyboard focus
+         viewptr->SetFocus();
+      }
+   #endif
+   insideYield = true;
    wxGetApp().Yield(true);
+   insideYield = false;
 }
 
 int wx_poll::checkevents()
 {
-   // avoid processing further events if user has interrupted a task???
-   //??? if (isInterrupted()) return 1;
-   
    #ifdef __WXMSW__
       // on Windows it seems that Time has a higher overhead than Yield
       CallYield();
@@ -139,11 +142,7 @@ int wx_poll::checkevents()
       long t = stopwatch->Time();
       if (t > nextcheck) {
          nextcheck = t + 100;        // 10 times per sec
-         #ifdef __WXX11__
-            wxGetApp().Yield(true);            
-         #else
-            CallYield();
-         #endif
+         CallYield();
       }
    #endif
    return isInterrupted();
@@ -331,9 +330,7 @@ bool GollyApp::OnInit()
       // prevent main window being resized very small to avoid nasty errors
       // mainptr->SetMinSize(wxSize(minmainwd, minmainht));
       // above works but moves window to default pos!!!
-      // and calling Move clobbers effect of SetMinSize!!! sigh
-      // Yield(true);
-      // mainptr->Move(mainx, mainy);
+      // and calling Move(mainx, mainy) clobbers effect of SetMinSize!!! sigh
    #endif
 
    // true means call wxApp::OnRun() which will enter the main event loop;

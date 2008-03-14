@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr, statusptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, statusptr, insideYield
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for randomfill, etc
 #include "wxmain.h"        // for mainptr->...
@@ -1310,6 +1310,19 @@ void PatternView::ShrinkSelection(bool fit)
       statusptr->ErrorMessage(selection_too_big);
       if (fit) FitSelection();
       return;
+   }
+   
+   if ( insideYield ) {
+      // we've been called from checkevents() so we don't attempt to shrink a very
+      // large selection because the progress dialog can't be cancelled, presumably
+      // because normal event handling isn't available inside Yield()
+      double wd = right.todouble() - left.todouble() + 1.0;
+      double ht = bottom.todouble() - top.todouble() + 1.0;
+      if ( wd * ht > 1.0e12 ) {
+         statusptr->ErrorMessage(_("Selection is too big to shrink."));
+         if (fit) FitSelection();
+         return;
+      }
    }
    
    // the easy way to shrink selection is to create a new temporary universe,

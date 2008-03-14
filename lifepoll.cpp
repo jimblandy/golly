@@ -32,7 +32,9 @@ int lifepoll::checkevents() {
   return 0 ;
 }
 int lifepoll::inner_poll() {
-  bailIfCalculating() ;
+  // AKT: bailIfCalculating() ;
+  if (isCalculating())
+    lifefatal("recursive poll called.") ;
   countdown = POLLINTERVAL ;
   calculating++ ;
   if (!interrupted)
@@ -42,7 +44,8 @@ int lifepoll::inner_poll() {
 }
 void lifepoll::bailIfCalculating() {
   if (isCalculating())
-    lifefatal("recursive poll called.") ;
+    // AKT: lifefatal("recursive poll called.") ;
+    lifefatal("illegal operation while calculating.") ;
 }
 void lifepoll::updatePop() {}
 lifepoll default_poller ;

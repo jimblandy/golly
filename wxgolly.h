@@ -63,5 +63,6 @@ extern PatternView* viewptr;     // current viewport window (possibly a tile)
 extern PatternView* bigview;     // main viewport window
 extern StatusBar* statusptr;     // status bar window
 extern wxStopWatch* stopwatch;   // global stopwatch (started in OnInit)
+extern bool insideYield;         // processing an event via Yield()?
 
 #endif
