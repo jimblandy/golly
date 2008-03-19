@@ -95,7 +95,7 @@ public:
    int cloneid;
 };
 
-const int maxlayers = 10;     // maximum number of layers
+const int MAX_LAYERS = 10;    // maximum number of layers
 
 extern int numlayers;         // number of existing layers
 extern int numclones;         // number of cloned layers

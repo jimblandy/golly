@@ -48,179 +48,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
-#include "wxlayer.h"       // for AddLayer, maxlayers, currlayer, etc
+#include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxmain.h"
 
 #ifdef __WXMAC__
    #include <Carbon/Carbon.h>    // for GetCurrentProcess, etc
 #endif
-
-// -----------------------------------------------------------------------------
-
-// IDs for timer and menu commands
-enum {
-   // one-shot timer
-   ID_ONE_TIMER = wxID_HIGHEST,
-
-   // File menu
-   // wxID_NEW,
-   // wxID_OPEN,
-   ID_OPEN_CLIP,
-   ID_OPEN_RECENT,
-   // last 2 items in Open Recent submenu
-   ID_CLEAR_MISSING_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
-   ID_CLEAR_ALL_PATTERNS,
-   ID_SHOW_PATTERNS,
-   ID_PATTERN_DIR,
-   // wxID_SAVE,
-   ID_SAVE_XRLE,
-   ID_RUN_SCRIPT,
-   ID_RUN_CLIP,
-   ID_RUN_RECENT,
-   // last 2 items in Run Recent submenu
-   ID_CLEAR_MISSING_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
-   ID_CLEAR_ALL_SCRIPTS,
-   ID_SHOW_SCRIPTS,
-   ID_SCRIPT_DIR,
-   // wxID_PREFERENCES,
-   // wxID_EXIT,
-   
-   // Edit menu
-   // wxID_UNDO,
-   // wxID_REDO,
-   ID_CUT,
-   ID_COPY,
-   ID_NO_UNDO,
-   ID_CLEAR,
-   ID_OUTSIDE,
-   ID_PASTE,
-   ID_PMODE,
-   ID_PLOCATION,
-   ID_PASTE_SEL,
-   ID_SELALL,
-   ID_REMOVE,
-   ID_SHRINK,
-   ID_RANDOM,
-   ID_FLIPTB,
-   ID_FLIPLR,
-   ID_ROTATEC,
-   ID_ROTATEA,
-   ID_CMODE,
-
-   // Paste Location submenu
-   ID_PL_TL,
-   ID_PL_TR,
-   ID_PL_BR,
-   ID_PL_BL,
-   ID_PL_MID,
-
-   // Paste Mode submenu
-   ID_PM_COPY,
-   ID_PM_OR,
-   ID_PM_XOR,
-
-   // Cursor Mode submenu
-   ID_DRAW,
-   ID_SELECT,
-   ID_MOVE,
-   ID_ZOOMIN,
-   ID_ZOOMOUT,
-
-   // Control menu
-   ID_START,
-   ID_NEXT,
-   ID_STEP,
-   ID_RESET,
-   ID_SETGEN,
-   ID_FASTER,
-   ID_SLOWER,
-   ID_AUTO,
-   ID_HASH,
-   ID_HYPER,
-   ID_HINFO,
-   ID_RULE,
-   
-   // View menu
-   ID_FULL,
-   ID_FIT,
-   ID_FIT_SEL,
-   ID_MIDDLE,
-   ID_RESTORE00,
-   // wxID_ZOOM_IN,
-   // wxID_ZOOM_OUT,
-   ID_SET_SCALE,
-   ID_TOOL_BAR,
-   ID_LAYER_BAR,
-   ID_STATUS_BAR,
-   ID_EXACT,
-   ID_GRID,
-   ID_COLORS,
-   ID_BUFF,
-   ID_INFO,
-
-   // Set Scale submenu
-   ID_SCALE_1,
-   ID_SCALE_2,
-   ID_SCALE_4,
-   ID_SCALE_8,
-   ID_SCALE_16,
-   
-   // Help menu
-   ID_HELP_INDEX,
-   ID_HELP_INTRO,
-   ID_HELP_TIPS,
-   ID_HELP_KEYBOARD,
-   ID_HELP_MOUSE,
-   ID_HELP_PERL,
-   ID_HELP_PYTHON,
-   ID_HELP_LEXICON,
-   ID_HELP_FILE,
-   ID_HELP_EDIT,
-   ID_HELP_CONTROL,
-   ID_HELP_VIEW,
-   ID_HELP_LAYER,
-   ID_HELP_HELP,
-   ID_HELP_REFS,
-   ID_HELP_PROBLEMS,
-   ID_HELP_CHANGES,
-   ID_HELP_CREDITS,
-   ID_SHOW_HELP,        // for help button in tool bar
-
-   // Layer menu
-   ID_ADD_LAYER,
-   ID_CLONE,
-   ID_DUPLICATE,
-   ID_DEL_LAYER,
-   ID_DEL_OTHERS,
-   ID_MOVE_LAYER,
-   ID_NAME_LAYER,
-   ID_SYNC_VIEW,
-   ID_SYNC_CURS,
-   ID_STACK,
-   ID_TILE,
-   ID_LAYER0,
-   ID_LAYERMAX = ID_LAYER0 + maxlayers - 1
-};
-
-// -----------------------------------------------------------------------------
-
-// static routines used by GetPrefs() to get IDs for items in Open/Run Recent submenus;
-// can't be MainFrame methods because GetPrefs() is called before creating main window
-// and I'd rather not expose the IDs in a header file
-
-int GetID_CLEAR_MISSING_PATTERNS()  { return ID_CLEAR_MISSING_PATTERNS; }
-int GetID_CLEAR_ALL_PATTERNS()      { return ID_CLEAR_ALL_PATTERNS; }
-int GetID_OPEN_RECENT()             { return ID_OPEN_RECENT; }
-int GetID_CLEAR_MISSING_SCRIPTS()   { return ID_CLEAR_MISSING_SCRIPTS; }
-int GetID_CLEAR_ALL_SCRIPTS()       { return ID_CLEAR_ALL_SCRIPTS; }
-int GetID_RUN_RECENT()              { return ID_RUN_RECENT; }
-
-// static routines used to post commands to the event queue
-
-int GetID_START() { return ID_START; }
-int GetID_RESET() { return ID_RESET; }
-int GetID_HASH()  { return ID_HASH; }
 
 // -----------------------------------------------------------------------------
 
@@ -871,9 +705,9 @@ void MainFrame::UpdateMenuItems(bool active)
       #endif
       mbar->Enable(ID_INFO,      !currlayer->currfile.IsEmpty());
 
-      mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < maxlayers);
-      mbar->Enable(ID_CLONE,        active && !busy && numlayers < maxlayers);
-      mbar->Enable(ID_DUPLICATE,    active && !busy && numlayers < maxlayers);
+      mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < MAX_LAYERS);
+      mbar->Enable(ID_CLONE,        active && !busy && numlayers < MAX_LAYERS);
+      mbar->Enable(ID_DUPLICATE,    active && !busy && numlayers < MAX_LAYERS);
       mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
       mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
@@ -1360,7 +1194,7 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 #endif
    EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
    EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
-   EVT_TIMER               (ID_ONE_TIMER,    MainFrame::OnOneTimer)
+   EVT_TIMER               (wxID_ANY,        MainFrame::OnOneTimer)
    EVT_CLOSE               (                 MainFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -1822,7 +1656,7 @@ void MainFrame::OnClose(wxCloseEvent& event)
    if (event.CanVeto() && askonquit) {
       // keep track of which unique clones have been seen;
       // we add 1 below to allow for cloneseen[0] (always false)
-      const int maxseen = maxlayers/2 + 1;
+      const int maxseen = MAX_LAYERS/2 + 1;
       bool cloneseen[maxseen];
       for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
    
@@ -1948,7 +1782,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
    #ifdef __WXMAC__
       // need to call Refresh a bit later to remove colored frame on Mac
       onetimer->Start(10, wxTIMER_ONE_SHOT);
-      // OnOneTimer will be called once after a delay of 0.01 sec
+      // OnOneTimer will be called once after a delay of 0.01 secs
    #endif
    
    return true;
@@ -2416,7 +2250,7 @@ MainFrame::MainFrame()
    pythonfile = gollydir + wxT(".golly_clip.py");
 
    // create one-shot timer (see OnOneTimer)
-   onetimer = new wxTimer(this, ID_ONE_TIMER);
+   onetimer = new wxTimer(this, wxID_ANY);
 
    CreateMenus();
    CreateToolbar();

@@ -143,7 +143,7 @@ void MainFrame::ResetPattern(bool resetundo)
       reset_pending = true;
       /* can't use wxPostEvent here because Yield processes all pending events
       // send Reset command to event queue
-      wxCommandEvent resetevt(wxEVT_COMMAND_MENU_SELECTED, GetID_RESET());
+      wxCommandEvent resetevt(wxEVT_COMMAND_MENU_SELECTED, ID_RESET);
       wxPostEvent(this->GetEventHandler(), resetevt);
       */
       return;
@@ -525,7 +525,7 @@ void MainFrame::GeneratePattern()
       showlayer = saveshowlayer;
       
       // send command to event queue to call GeneratePattern again
-      wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, GetID_START());
+      wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
       wxPostEvent(this->GetEventHandler(), goevt);
    }
 

@@ -48,7 +48,7 @@ public:
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
 private:
-   // control IDs
+   // control ids
    enum {
       RULE_TEXT,
       RULE_NAME,

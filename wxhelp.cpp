@@ -48,9 +48,9 @@ public:
    HelpFrame();
 
 private:
-   // IDs for buttons in help window (see also wxID_CLOSE)
+   // ids for buttons in help window (see also wxID_CLOSE)
    enum {
-      ID_BACK_BUTT = wxID_HIGHEST,
+      ID_BACK_BUTT = wxID_HIGHEST + 1,
       ID_FORWARD_BUTT,
       ID_CONTENTS_BUTT
    };
@@ -449,7 +449,7 @@ void LoadLexiconPattern(const wxHtmlCell *htmlcell)
                if (lexlayer >= 0) {
                   SetLayer(lexlayer);
                } else {
-                  if (numlayers == maxlayers) {
+                  if (numlayers == MAX_LAYERS) {
                      Warning(_("Cannot create new layer for lexicon pattern."));
                      return;
                   }

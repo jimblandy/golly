@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"        // for bigint
 #include "writepattern.h"  // for pattern_format
+#include "wxprefs.h"       // for MAX_RECENT
+#include "wxlayer.h"       // for MAX_LAYERS
 
 // Define the main window:
 
@@ -198,19 +200,146 @@ private:
    double begingen, endgen;      // ditto
 };
 
-// static routines needed by GetPrefs() to get IDs for items in Open Recent and
-// Run Recent submenus; they can't be MainFrame methods because GetPrefs() is
-// called before the main window is created
-int GetID_CLEAR_MISSING_PATTERNS();
-int GetID_CLEAR_ALL_PATTERNS();
-int GetID_OPEN_RECENT();
-int GetID_CLEAR_MISSING_SCRIPTS();
-int GetID_CLEAR_ALL_SCRIPTS();
-int GetID_RUN_RECENT();
+// ids for menu commands
+enum {
+   // File menu
+   // wxID_NEW,
+   // wxID_OPEN,
+   ID_OPEN_CLIP = wxID_HIGHEST + 1,
+   ID_OPEN_RECENT,
+   // last 2 items in Open Recent submenu
+   ID_CLEAR_MISSING_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
+   ID_CLEAR_ALL_PATTERNS,
+   ID_SHOW_PATTERNS,
+   ID_PATTERN_DIR,
+   // wxID_SAVE,
+   ID_SAVE_XRLE,
+   ID_RUN_SCRIPT,
+   ID_RUN_CLIP,
+   ID_RUN_RECENT,
+   // last 2 items in Run Recent submenu
+   ID_CLEAR_MISSING_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
+   ID_CLEAR_ALL_SCRIPTS,
+   ID_SHOW_SCRIPTS,
+   ID_SCRIPT_DIR,
+   // wxID_PREFERENCES,
+   // wxID_EXIT,
+   
+   // Edit menu
+   // wxID_UNDO,
+   // wxID_REDO,
+   ID_CUT,
+   ID_COPY,
+   ID_NO_UNDO,
+   ID_CLEAR,
+   ID_OUTSIDE,
+   ID_PASTE,
+   ID_PMODE,
+   ID_PLOCATION,
+   ID_PASTE_SEL,
+   ID_SELALL,
+   ID_REMOVE,
+   ID_SHRINK,
+   ID_RANDOM,
+   ID_FLIPTB,
+   ID_FLIPLR,
+   ID_ROTATEC,
+   ID_ROTATEA,
+   ID_CMODE,
 
-// static routines used to post commands to the event queue
-int GetID_START();
-int GetID_RESET();
-int GetID_HASH();
+   // Paste Location submenu
+   ID_PL_TL,
+   ID_PL_TR,
+   ID_PL_BR,
+   ID_PL_BL,
+   ID_PL_MID,
+
+   // Paste Mode submenu
+   ID_PM_COPY,
+   ID_PM_OR,
+   ID_PM_XOR,
+
+   // Cursor Mode submenu
+   ID_DRAW,
+   ID_SELECT,
+   ID_MOVE,
+   ID_ZOOMIN,
+   ID_ZOOMOUT,
+
+   // Control menu
+   ID_START,
+   ID_NEXT,
+   ID_STEP,
+   ID_RESET,
+   ID_SETGEN,
+   ID_FASTER,
+   ID_SLOWER,
+   ID_AUTO,
+   ID_HASH,
+   ID_HYPER,
+   ID_HINFO,
+   ID_RULE,
+   
+   // View menu
+   ID_FULL,
+   ID_FIT,
+   ID_FIT_SEL,
+   ID_MIDDLE,
+   ID_RESTORE00,
+   // wxID_ZOOM_IN,
+   // wxID_ZOOM_OUT,
+   ID_SET_SCALE,
+   ID_TOOL_BAR,
+   ID_LAYER_BAR,
+   ID_STATUS_BAR,
+   ID_EXACT,
+   ID_GRID,
+   ID_COLORS,
+   ID_BUFF,
+   ID_INFO,
+
+   // Set Scale submenu
+   ID_SCALE_1,
+   ID_SCALE_2,
+   ID_SCALE_4,
+   ID_SCALE_8,
+   ID_SCALE_16,
+
+   // Layer menu
+   ID_ADD_LAYER,
+   ID_CLONE,
+   ID_DUPLICATE,
+   ID_DEL_LAYER,
+   ID_DEL_OTHERS,
+   ID_MOVE_LAYER,
+   ID_NAME_LAYER,
+   ID_SYNC_VIEW,
+   ID_SYNC_CURS,
+   ID_STACK,
+   ID_TILE,
+   ID_LAYER0,
+   ID_LAYERMAX = ID_LAYER0 + MAX_LAYERS - 1,
+   
+   // Help menu
+   ID_HELP_INDEX,
+   ID_HELP_INTRO,
+   ID_HELP_TIPS,
+   ID_HELP_KEYBOARD,
+   ID_HELP_MOUSE,
+   ID_HELP_PERL,
+   ID_HELP_PYTHON,
+   ID_HELP_LEXICON,
+   ID_HELP_FILE,
+   ID_HELP_EDIT,
+   ID_HELP_CONTROL,
+   ID_HELP_VIEW,
+   ID_HELP_LAYER,
+   ID_HELP_HELP,
+   ID_HELP_REFS,
+   ID_HELP_PROBLEMS,
+   ID_HELP_CHANGES,
+   ID_HELP_CREDITS,
+   ID_SHOW_HELP         // for help button in tool bar
+};
 
 #endif

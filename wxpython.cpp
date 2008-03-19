@@ -1824,7 +1824,7 @@ static PyObject* py_addlayer(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   if (numlayers >= maxlayers) {
+   if (numlayers >= MAX_LAYERS) {
       PyErr_SetString(PyExc_RuntimeError, "addlayer error: no more layers can be added.");
       return NULL;
    } else {
@@ -1845,7 +1845,7 @@ static PyObject* py_clone(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   if (numlayers >= maxlayers) {
+   if (numlayers >= MAX_LAYERS) {
       PyErr_SetString(PyExc_RuntimeError, "clone error: no more layers can be added.");
       return NULL;
    } else {
@@ -1866,7 +1866,7 @@ static PyObject* py_duplicate(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   if (numlayers >= maxlayers) {
+   if (numlayers >= MAX_LAYERS) {
       PyErr_SetString(PyExc_RuntimeError, "duplicate error: no more layers can be added.");
       return NULL;
    } else {
@@ -1986,7 +1986,7 @@ static PyObject* py_maxlayers(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", maxlayers);
+   return Py_BuildValue("i", MAX_LAYERS);
 }
 
 // -----------------------------------------------------------------------------

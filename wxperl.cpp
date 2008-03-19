@@ -1796,7 +1796,7 @@ XS(pl_addlayer)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $newindex = g_addlayer()");
 
-   if (numlayers >= maxlayers) {
+   if (numlayers >= MAX_LAYERS) {
       PERL_ERROR("g_addlayer error: no more layers can be added");
    } else {
       AddLayer();
@@ -1816,7 +1816,7 @@ XS(pl_clone)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $newindex = g_clone()");
 
-   if (numlayers >= maxlayers) {
+   if (numlayers >= MAX_LAYERS) {
       PERL_ERROR("g_clone error: no more layers can be added");
    } else {
       CloneLayer();
@@ -1836,7 +1836,7 @@ XS(pl_duplicate)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $newindex = g_duplicate()");
 
-   if (numlayers >= maxlayers) {
+   if (numlayers >= MAX_LAYERS) {
       PERL_ERROR("g_duplicate error: no more layers can be added");
    } else {
       DuplicateLayer();
@@ -1951,7 +1951,7 @@ XS(pl_maxlayers)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: g_maxlayers()");
 
-   XSRETURN_IV(maxlayers);
+   XSRETURN_IV(MAX_LAYERS);
 }
 
 // -----------------------------------------------------------------------------

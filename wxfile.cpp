@@ -376,20 +376,20 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       if ( numpatterns < maxpatterns ) {
          // add new path
          numpatterns++;
-         id = GetID_OPEN_RECENT() + numpatterns;
+         id = ID_OPEN_RECENT + numpatterns;
          patternSubMenu->Insert(numpatterns - 1, id, path);
       } else {
          // replace last item with new path
          wxMenuItem* item = patternSubMenu->FindItemByPosition(maxpatterns - 1);
          item->SetText(path);
-         id = GetID_OPEN_RECENT() + maxpatterns;
+         id = ID_OPEN_RECENT + maxpatterns;
       }
    }
    // path exists in patternSubMenu
-   if ( id > GetID_OPEN_RECENT() + 1 ) {
+   if ( id > ID_OPEN_RECENT + 1 ) {
       // move path to start of menu
       wxMenuItem* item;
-      while ( id > GetID_OPEN_RECENT() + 1 ) {
+      while ( id > ID_OPEN_RECENT + 1 ) {
          wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
          wxString prevpath = previtem->GetText();
          item = patternSubMenu->FindItem(id);
@@ -418,20 +418,20 @@ void MainFrame::AddRecentScript(const wxString& inpath)
       if ( numscripts < maxscripts ) {
          // add new path
          numscripts++;
-         id = GetID_RUN_RECENT() + numscripts;
+         id = ID_RUN_RECENT + numscripts;
          scriptSubMenu->Insert(numscripts - 1, id, path);
       } else {
          // replace last item with new path
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(maxscripts - 1);
          item->SetText(path);
-         id = GetID_RUN_RECENT() + maxscripts;
+         id = ID_RUN_RECENT + maxscripts;
       }
    }
    // path exists in scriptSubMenu
-   if ( id > GetID_RUN_RECENT() + 1 ) {
+   if ( id > ID_RUN_RECENT + 1 ) {
       // move path to start of menu
       wxMenuItem* item;
-      while ( id > GetID_RUN_RECENT() + 1 ) {
+      while ( id > ID_RUN_RECENT + 1 ) {
          wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
          wxString prevpath = previtem->GetText();
          item = scriptSubMenu->FindItem(id);
@@ -829,7 +829,7 @@ void MainFrame::ClearMissingPatterns()
       }
    }
    wxMenuBar* mbar = GetMenuBar();
-   if (mbar) mbar->Enable(GetID_OPEN_RECENT(), numpatterns > 0);
+   if (mbar) mbar->Enable(ID_OPEN_RECENT, numpatterns > 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -863,7 +863,7 @@ void MainFrame::ClearMissingScripts()
       }
    }
    wxMenuBar* mbar = GetMenuBar();
-   if (mbar) mbar->Enable(GetID_RUN_RECENT(), numscripts > 0);
+   if (mbar) mbar->Enable(ID_RUN_RECENT, numscripts > 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -875,7 +875,7 @@ void MainFrame::ClearAllPatterns()
       numpatterns--;
    }
    wxMenuBar* mbar = GetMenuBar();
-   if (mbar) mbar->Enable(GetID_OPEN_RECENT(), false);
+   if (mbar) mbar->Enable(ID_OPEN_RECENT, false);
 }
 
 // -----------------------------------------------------------------------------
@@ -887,7 +887,7 @@ void MainFrame::ClearAllScripts()
       numscripts--;
    }
    wxMenuBar* mbar = GetMenuBar();
-   if (mbar) mbar->Enable(GetID_RUN_RECENT(), false);
+   if (mbar) mbar->Enable(ID_RUN_RECENT, false);
 }
 
 // -----------------------------------------------------------------------------

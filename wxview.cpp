@@ -55,7 +55,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 const int DRAG_RATE = 20;        // call OnDragTimer 50 times per sec
-const int ID_DRAG_TIMER = 1000;
 
 // -----------------------------------------------------------------------------
 
@@ -79,7 +78,7 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_ENTER_WINDOW     (                 PatternView::OnMouseEnter)
    EVT_LEAVE_WINDOW     (                 PatternView::OnMouseExit)
    EVT_MOUSEWHEEL       (                 PatternView::OnMouseWheel)
-   EVT_TIMER            (ID_DRAG_TIMER,   PatternView::OnDragTimer)
+   EVT_TIMER            (wxID_ANY,        PatternView::OnDragTimer)
    EVT_SCROLLWIN        (                 PatternView::OnScroll)
    EVT_ERASE_BACKGROUND (                 PatternView::OnEraseBackground)
 END_EVENT_TABLE()
@@ -1796,7 +1795,7 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style)
    : wxWindow(parent, wxID_ANY, wxPoint(x,y), wxSize(wd,ht), style)
 {
-   dragtimer = new wxTimer(this, ID_DRAG_TIMER);
+   dragtimer = new wxTimer(this, wxID_ANY);
    if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
    
    // avoid erasing background on GTK+

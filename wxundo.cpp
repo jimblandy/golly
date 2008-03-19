@@ -116,8 +116,8 @@ public:
    wxString oldtempstart, newtempstart;   // old and new tempstart paths
    wxString oldstartfile, newstartfile;   // old and new startfile paths
    wxString oldcurrfile, newcurrfile;     // old and new currfile paths
-   wxString oldclone[maxlayers];          // old starting names for cloned layers
-   wxString newclone[maxlayers];          // new starting names for cloned layers
+   wxString oldclone[MAX_LAYERS];         // old starting names for cloned layers
+   wxString newclone[MAX_LAYERS];         // new starting names for cloned layers
    // also uses oldgen, newgen
    // and oldrule, newrule
    // and oldx, oldy, newx, newy, oldmag, newmag

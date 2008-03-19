@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"      // for MAX_MAG
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
-#include "wxmain.h"        // for GetID_*, mainptr->...
+#include "wxmain.h"        // for ID_*, mainptr->...
 #include "wxutils.h"       // for Warning, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
@@ -1580,14 +1580,14 @@ void GetPrefs()
    // initialize Open Recent submenu
    patternSubMenu = new wxMenu();
    patternSubMenu->AppendSeparator();
-   patternSubMenu->Append(GetID_CLEAR_MISSING_PATTERNS(), _("Clear Missing Files"));
-   patternSubMenu->Append(GetID_CLEAR_ALL_PATTERNS(), _("Clear All Files"));
+   patternSubMenu->Append(ID_CLEAR_MISSING_PATTERNS, _("Clear Missing Files"));
+   patternSubMenu->Append(ID_CLEAR_ALL_PATTERNS, _("Clear All Files"));
    
    // initialize Run Recent submenu
    scriptSubMenu = new wxMenu();
    scriptSubMenu->AppendSeparator();
-   scriptSubMenu->Append(GetID_CLEAR_MISSING_SCRIPTS(), _("Clear Missing Files"));
-   scriptSubMenu->Append(GetID_CLEAR_ALL_SCRIPTS(), _("Clear All Files"));
+   scriptSubMenu->Append(ID_CLEAR_MISSING_SCRIPTS, _("Clear Missing Files"));
+   scriptSubMenu->Append(ID_CLEAR_ALL_SCRIPTS, _("Clear All Files"));
 
    namedrules.Add(wxT("Life|B3/S23"));      // must be 1st entry
 
@@ -1911,7 +1911,7 @@ void GetPrefs()
                // remove gollydir from start of path
                path.erase(0, gollydir.length());
             }
-            patternSubMenu->Insert(numpatterns - 1, GetID_OPEN_RECENT() + numpatterns, path);
+            patternSubMenu->Insert(numpatterns - 1, ID_OPEN_RECENT + numpatterns, path);
          }
 
       } else if (strcmp(keyword, "recent_script") == 0) {
@@ -1923,7 +1923,7 @@ void GetPrefs()
                // remove gollydir from start of path
                path.erase(0, gollydir.length());
             }
-            scriptSubMenu->Insert(numscripts - 1, GetID_RUN_RECENT() + numscripts, path);
+            scriptSubMenu->Insert(numscripts - 1, ID_RUN_RECENT + numscripts, path);
          }
       }
    }
@@ -1976,9 +1976,12 @@ enum {
    VIEW_PAGE,
    LAYER_PAGE,
    COLOR_PAGE,
-   KEYBOARD_PAGE,
+   KEYBOARD_PAGE
+};
+
+enum {
    // File prefs
-   PREF_NEW_REM_SEL = wxID_HIGHEST,  // avoid problems with FindWindowById
+   PREF_NEW_REM_SEL = wxID_HIGHEST + 1,  // avoid problems with FindWindowById
    PREF_NEW_CURSOR,
    PREF_NEW_SCALE,
    PREF_OPEN_REM_SEL,

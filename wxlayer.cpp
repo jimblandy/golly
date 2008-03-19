@@ -55,9 +55,9 @@ int numclones = 0;               // number of cloned layers
 int currindex = -1;              // index of current layer
 
 Layer* currlayer;                // pointer to current layer
-Layer* layer[maxlayers];         // array of layers
+Layer* layer[MAX_LAYERS];        // array of layers
 
-bool cloneavail[maxlayers];      // for setting unique cloneid
+bool cloneavail[MAX_LAYERS];     // for setting unique cloneid
 bool cloning = false;            // adding a cloned layer?
 bool duplicating = false;        // adding a duplicated layer?
 
@@ -71,7 +71,7 @@ wxCursor* oldcurs;               // cursor mode in old layer
 // ids for bitmap buttons in layer bar
 enum {
    LAYER_0 = 0,                  // LAYER_0 must be first id
-   LAYER_LAST = LAYER_0 + maxlayers - 1,
+   LAYER_LAST = LAYER_0 + MAX_LAYERS - 1,
    ADD_LAYER,
    CLONE_LAYER,
    DELETE_LAYER,
@@ -538,14 +538,14 @@ void CreateLayerBar(wxWindow* parent)
    layerbarptr->AddButton(STACK_LAYERS, 0, _("Toggle stacked layers"));
    layerbarptr->AddButton(TILE_LAYERS,  0, _("Toggle tiled layers"));
    layerbarptr->AddSeparator();
-   for (int i = 0; i < maxlayers; i++) {
+   for (int i = 0; i < MAX_LAYERS; i++) {
       wxString tip;
       tip.Printf(_("Switch to layer %d"), i);
       layerbarptr->AddButton(i, '0' + i, tip);
    }
   
    // hide all layer buttons except layer 0
-   for (int i = 1; i < maxlayers; i++) lbbutt[i]->Show(false);
+   for (int i = 1; i < MAX_LAYERS; i++) lbbutt[i]->Show(false);
    
    // select STACK_LAYERS or TILE_LAYERS if necessary
    if (stacklayers) layerbarptr->SelectButton(STACK_LAYERS, true);
@@ -574,8 +574,8 @@ void UpdateLayerBar(bool active)
       if (viewptr->waitingforclick) active = false;
       bool busy = mainptr->generating || inscript;
 
-      layerbarptr->EnableButton(ADD_LAYER,      active && !busy && numlayers < maxlayers);
-      layerbarptr->EnableButton(CLONE_LAYER,    active && !busy && numlayers < maxlayers);
+      layerbarptr->EnableButton(ADD_LAYER,      active && !busy && numlayers < MAX_LAYERS);
+      layerbarptr->EnableButton(CLONE_LAYER,    active && !busy && numlayers < MAX_LAYERS);
       layerbarptr->EnableButton(DELETE_LAYER,   active && !busy && numlayers > 1);
       layerbarptr->EnableButton(STACK_LAYERS,   active);
       layerbarptr->EnableButton(TILE_LAYERS,    active);
@@ -964,7 +964,7 @@ void UpdateLayerNames()
 void AddLayer()
 {
    if (mainptr && mainptr->generating) return;
-   if (numlayers >= maxlayers) return;
+   if (numlayers >= MAX_LAYERS) return;
    
    if (numlayers == 0) {
       // creating the very first layer
@@ -1076,7 +1076,7 @@ void DeleteOtherLayers()
    if (askondelete) {
       // keep track of which unique clones have been seen;
       // we add 1 below to allow for cloneseen[0] (always false)
-      const int maxseen = maxlayers/2 + 1;
+      const int maxseen = MAX_LAYERS/2 + 1;
       bool cloneseen[maxseen];
       for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
    
@@ -1443,7 +1443,7 @@ Layer* GetLayer(int index)
 int GetUniqueCloneID()
 {
    // find first available index (> 0) to use as cloneid
-   for (int i = 1; i < maxlayers; i++) {
+   for (int i = 1; i < MAX_LAYERS; i++) {
       if (cloneavail[i]) {
          cloneavail[i] = false;
          return i;
@@ -1498,8 +1498,7 @@ Layer::Layer()
       undoredo = new UndoRedo();
       if (undoredo == NULL) Fatal(_("Failed to create new undo/redo object!"));
 
-      // set rule using initrule stored in prefs file;
-      // errors can only occur if someone has edited the prefs file
+      // set rule using initrule stored in prefs file
       const char *err = algo->setrule(initrule);
       if (err) {
          Warning(wxString(err,wxConvLocal));
@@ -1528,7 +1527,7 @@ Layer::Layer()
       
       // initialize cloneavail array (cloneavail[0] is never used)
       cloneavail[0] = false;
-      for (int i = 1; i < maxlayers; i++) cloneavail[i] = true;
+      for (int i = 1; i < MAX_LAYERS; i++) cloneavail[i] = true;
 
    } else {
       // adding a new layer after currlayer (see AddLayer)

@@ -186,7 +186,7 @@ public:
 
 private:   
    enum {
-      ID_SPIN_CTRL = wxID_HIGHEST
+      ID_SPIN_CTRL = wxID_HIGHEST + 1
    };
    wxSpinCtrl* spinctrl;   // for entering the integer
    int minint;             // minimum value
