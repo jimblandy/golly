@@ -1176,7 +1176,7 @@ void UndoRedo::RememberScriptFinish()
 
 bool UndoRedo::CanUndo()
 {
-   return !undolist.IsEmpty() && !inscript && !mainptr->generating &&
+   return !undolist.IsEmpty() && !inscript &&
           !viewptr->waitingforclick && !viewptr->drawingcells &&
           !viewptr->selectingcells;
 }
@@ -1195,6 +1195,14 @@ bool UndoRedo::CanRedo()
 void UndoRedo::UndoChange()
 {
    if (!CanUndo()) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(wxID_UNDO);
+      return;
+   }
    
    // get change info from head of undo list and do the change
    wxList::compatibility_iterator node = undolist.GetFirst();
@@ -1252,6 +1260,16 @@ void UndoRedo::UndoChange()
 void UndoRedo::RedoChange()
 {
    if (!CanRedo()) return;
+
+   /* can't redo while generating -- redo list will be empty
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(wxID_REDO);
+      return;
+   }
+   */
    
    // get change info from head of redo list and do the change
    wxList::compatibility_iterator node = redolist.GetFirst();

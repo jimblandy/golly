@@ -262,10 +262,18 @@ void PatternView::CopyAllRect(int itop, int ileft, int ibottom, int iright,
 
 void PatternView::ClearSelection()
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (!SelectionExists()) return;
    
    // no need to do anything if there is no pattern
    if (currlayer->algo->isEmpty()) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_CLEAR);
+      return;
+   }
    
    // save cell changes if undo/redo is enabled and script isn't constructing a pattern
    bool savecells = allowundo && !currlayer->stayclean;
@@ -422,7 +430,7 @@ bool PatternView::SaveOutsideSelection(bigint& t, bigint& l, bigint& b, bigint& 
 
 void PatternView::ClearOutsideSelection()
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (!SelectionExists()) return;
    
    // no need to do anything if there is no pattern
    if (currlayer->algo->isEmpty()) return;
@@ -432,6 +440,14 @@ void PatternView::ClearOutsideSelection()
    currlayer->algo->findedges(&top, &left, &bottom, &right);
    if ( currlayer->seltop <= top && currlayer->selbottom >= bottom &&
         currlayer->selleft <= left && currlayer->selright >= right ) {
+      return;
+   }
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_OUTSIDE);
       return;
    }
    
@@ -716,7 +732,16 @@ void PatternView::CopySelectionToClipboard(bool cut)
 
 void PatternView::CutSelection()
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (!SelectionExists()) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_CUT);
+      return;
+   }
+
    CopySelectionToClipboard(true);
 }
 
@@ -724,7 +749,16 @@ void PatternView::CutSelection()
 
 void PatternView::CopySelection()
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (!SelectionExists()) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_COPY);
+      return;
+   }
+
    CopySelectionToClipboard(false);
 }
 
@@ -1120,8 +1154,16 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
 
 void PatternView::PasteClipboard(bool toselection)
 {
-   if (mainptr->generating || waitingforclick || !mainptr->ClipboardHasText()) return;
+   if (waitingforclick || !mainptr->ClipboardHasText()) return;
    if (toselection && !SelectionExists()) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(toselection ? ID_PASTE_SEL : ID_PASTE);
+      return;
+   }
 
    // create a temporary universe for storing clipboard pattern;
    // use qlife because its setcell/getcell calls are faster
@@ -1353,12 +1395,20 @@ void PatternView::ShrinkSelection(bool fit)
 
 void PatternView::RandomFill()
 {
-   if (mainptr->generating || !SelectionExists()) return;
+   if (!SelectionExists()) return;
 
    // can only use getcell/setcell in limited domain
    if ( OutsideLimits(currlayer->seltop, currlayer->selbottom,
                       currlayer->selleft, currlayer->selright) ) {
       statusptr->ErrorMessage(selection_too_big);
+      return;
+   }
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_RANDOM);
       return;
    }
 
@@ -1502,7 +1552,15 @@ bool PatternView::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo
 
 bool PatternView::FlipSelection(bool topbottom, bool inundoredo)
 {
-   if (mainptr->generating || !SelectionExists()) return false;
+   if (!SelectionExists()) return false;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(topbottom ? ID_FLIPTB : ID_FLIPLR);
+      return true;
+   }
 
    if (topbottom) {
       if (currlayer->seltop == currlayer->selbottom) return true;
@@ -1786,7 +1844,15 @@ bool PatternView::RotatePattern(bool clockwise,
 
 bool PatternView::RotateSelection(bool clockwise, bool inundoredo)
 {
-   if (mainptr->generating || !SelectionExists()) return false;
+   if (!SelectionExists()) return false;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(clockwise ? ID_ROTATEC : ID_ROTATEA);
+      return true;
+   }
    
    // determine rotated selection edges
    bigint halfht = currlayer->selbottom;   halfht -= currlayer->seltop;    halfht.div2();

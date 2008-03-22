@@ -47,11 +47,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-bool reset_pending = false;      // user selected Reset while generating?
-bool hash_pending = false;       // user selected Use Hashing while generating?
-
-// -----------------------------------------------------------------------------
-
 bool MainFrame::SaveStartingPattern()
 {
    if ( currlayer->algo->getGeneration() > currlayer->startgen ) {
@@ -138,10 +133,11 @@ void MainFrame::ResetPattern(bool resetundo)
    if (currlayer->algo->getGeneration() == currlayer->startgen) return;
    
    if (generating) {
-      // terminate GeneratePattern loop and set reset_pending flag
+      // terminate generating loop and set command_pending flag
       Stop();
-      reset_pending = true;
-      /* can't use wxPostEvent here because Yield processes all pending events
+      command_pending = true;
+      cmdevent.SetId(ID_RESET);
+      /* can't use wxPostEvent here because Yield processes all pending events:
       // send Reset command to event queue
       wxCommandEvent resetevt(wxEVT_COMMAND_MENU_SELECTED, ID_RESET);
       wxPostEvent(this->GetEventHandler(), resetevt);
@@ -333,6 +329,14 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
 
 void MainFrame::SetGeneration()
 {
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_SETGEN);
+      return;
+   }
+
    bigint oldgen = currlayer->algo->getGeneration();
    wxString result;
    wxString prompt = _("Enter a new generation count:");
@@ -499,39 +503,115 @@ void MainFrame::GeneratePattern()
    
    // display the final pattern
    if (currlayer->autofit) viewptr->FitInView(0);
-   if (reset_pending || hash_pending) {
-      // UpdateEverything will be called at end of ResetPattern/ToggleHashing
+   if (command_pending || draw_pending) {
+      // let the pending command/draw do the update
    } else {
       UpdateEverything();
    }
 
    // GeneratePattern is never called while running a script so no need
    // to test inscript or currlayer->stayclean; note that we must call
-   // RememberGenFinish before ToggleHashing
+   // RememberGenFinish BEFORE processing any pending command
    if (allowundo) currlayer->undoredo->RememberGenFinish();
    
-   if (hash_pending) {
-      hash_pending = false;
+   DoPendingAction(true);     // true means can restart generating loop
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::DoPendingAction(bool restart)
+{
+   if (command_pending) {
+      command_pending = false;
       
+      int id = cmdevent.GetId();
+      switch (id) {
+         // don't restart the generating loop after some commands
+         case wxID_NEW:       NewPattern(); break;
+         case wxID_OPEN:      OpenPattern(); break;
+         case ID_OPEN_CLIP:   OpenClipboard(); break;
+         case ID_RUN_SCRIPT:  OpenScript(); break;
+         case ID_RUN_CLIP:    RunClipboard(); break;
+         case ID_RESET:       ResetPattern(); break;
+         case ID_SETGEN:      SetGeneration(); break;
+         case wxID_UNDO:      currlayer->undoredo->UndoChange(); break;
+         case ID_ADD_LAYER:   AddLayer(); break;
+         case ID_DUPLICATE:   DuplicateLayer(); break;   // or continue generating???
+         default:
+            if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
+               OpenRecentPattern(id);
+            } else if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
+               OpenRecentScript(id);
+            } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
+               int oldcloneid = currlayer->cloneid;
+               SetLayer(id - ID_LAYER0);
+               // continue generating if new layer is a clone of old layer
+               if (restart && currlayer->cloneid > 0 && currlayer->cloneid == oldcloneid) {
+                  wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+                  wxPostEvent(this->GetEventHandler(), goevt);
+               }
+            } else if ( id == ID_DEL_LAYER ) {
+               int wasclone = currlayer->cloneid > 0 &&
+                     ((currindex == 0 && currlayer->cloneid == GetLayer(1)->cloneid) ||
+                      (currindex > 0 && currlayer->cloneid == GetLayer(currindex-1)->cloneid));
+               DeleteLayer();
+               // continue generating if new layer is/was a clone of old layer
+               if (restart && wasclone) {
+                  wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+                  wxPostEvent(this->GetEventHandler(), goevt);
+               }
+            } else {
+               // temporarily pretend the tool/layer bars are not showing
+               // to avoid UpdateToolBar/UpdateLayerBar changing button states
+               bool saveshowtool = showtool;    showtool = false;
+               bool saveshowlayer = showlayer;  showlayer = false;
+               
+               // process the pending command
+               cmdevent.SetEventType(wxEVT_COMMAND_MENU_SELECTED);
+               cmdevent.SetEventObject(mainptr);
+               mainptr->ProcessEvent(cmdevent);
+               
+               // restore tool/layer bar flags
+               showtool = saveshowtool;
+               showlayer = saveshowlayer;
+               
+               if (restart) {
+                  // call GeneratePattern again
+                  wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+                  wxPostEvent(this->GetEventHandler(), goevt);
+               }
+            }
+      }
+   }
+   
+   if (draw_pending) {
+      draw_pending = false;
+
       // temporarily pretend the tool/layer bars are not showing
-      // to avoid UpdateToolBar/UpdateLayerBar flashing their buttons
+      // to avoid UpdateToolBar/UpdateLayerBar changing button states
       bool saveshowtool = showtool;    showtool = false;
       bool saveshowlayer = showlayer;  showlayer = false;
       
-      ToggleHashing();
+      UpdateEverything();
+      
+      // do the drawing
+      mouseevent.SetEventType(wxEVT_LEFT_DOWN);
+      mouseevent.SetEventObject(viewptr);
+      viewptr->ProcessEvent(mouseevent);
+      while (viewptr->drawingcells) {
+         wxGetApp().Yield(true);
+         wxMilliSleep(5);             // don't hog CPU
+      }
       
       // restore tool/layer bar flags
       showtool = saveshowtool;
       showlayer = saveshowlayer;
       
-      // send command to event queue to call GeneratePattern again
-      wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
-      wxPostEvent(this->GetEventHandler(), goevt);
-   }
-
-   if (reset_pending) {
-      reset_pending = false;
-      ResetPattern();
+      if (restart) {
+         // call GeneratePattern again
+         wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+         wxPostEvent(this->GetEventHandler(), goevt);
+      }
    }
 }
 
@@ -646,6 +726,9 @@ void MainFrame::NextGeneration(bool useinc)
 
    if (allowundo && !currlayer->stayclean)
       currlayer->undoredo->RememberGenFinish();
+   
+   if (!inscript)
+      DoPendingAction(false);     // true means don't restart generating loop
 }
 
 // -----------------------------------------------------------------------------
@@ -1023,9 +1106,10 @@ void MainFrame::ToggleHashing()
    }
 
    if (generating) {
-      // terminate GeneratePattern loop and set hash_pending flag
+      // terminate generating loop and set command_pending flag
       Stop();
-      hash_pending = true;
+      command_pending = true;
+      cmdevent.SetId(ID_HASH);
       return;
    }
    
@@ -1135,7 +1219,16 @@ void MainFrame::SetWarp(int newwarp)
 
 void MainFrame::ShowRuleDialog()
 {
-   if (generating || inscript) return;
+   if (inscript || viewptr->waitingforclick) return;
+
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_RULE);
+      return;
+   }
+
    if (ChangeRule()) {
       // show new rule in window title (file name doesn't change)
       SetWindowTitle(wxEmptyString);

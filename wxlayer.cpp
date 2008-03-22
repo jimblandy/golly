@@ -572,11 +572,10 @@ void UpdateLayerBar(bool active)
 {
    if (layerbarptr && showlayer) {
       if (viewptr->waitingforclick) active = false;
-      bool busy = mainptr->generating || inscript;
 
-      layerbarptr->EnableButton(ADD_LAYER,      active && !busy && numlayers < MAX_LAYERS);
-      layerbarptr->EnableButton(CLONE_LAYER,    active && !busy && numlayers < MAX_LAYERS);
-      layerbarptr->EnableButton(DELETE_LAYER,   active && !busy && numlayers > 1);
+      layerbarptr->EnableButton(ADD_LAYER,      active && !inscript && numlayers < MAX_LAYERS);
+      layerbarptr->EnableButton(CLONE_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
+      layerbarptr->EnableButton(DELETE_LAYER,   active && !inscript && numlayers > 1);
       layerbarptr->EnableButton(STACK_LAYERS,   active);
       layerbarptr->EnableButton(TILE_LAYERS,    active);
       for (int i = 0; i < numlayers; i++)
@@ -963,8 +962,16 @@ void UpdateLayerNames()
 
 void AddLayer()
 {
-   if (mainptr && mainptr->generating) return;
    if (numlayers >= MAX_LAYERS) return;
+
+   // we need to test mainptr here because AddLayer is called from main window's ctor
+   if (mainptr && mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_ADD_LAYER);
+      return;
+   }
    
    if (numlayers == 0) {
       // creating the very first layer
@@ -1008,6 +1015,16 @@ void AddLayer()
 
 void CloneLayer()
 {
+   if (numlayers >= MAX_LAYERS) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_CLONE);
+      return;
+   }
+
    cloning = true;
    AddLayer();
    cloning = false;
@@ -1017,6 +1034,16 @@ void CloneLayer()
 
 void DuplicateLayer()
 {
+   if (numlayers >= MAX_LAYERS) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_DUPLICATE);
+      return;
+   }
+
    duplicating = true;
    AddLayer();
    duplicating = false;
@@ -1032,7 +1059,15 @@ void DuplicateLayer()
 
 void DeleteLayer()
 {
-   if (mainptr->generating || numlayers <= 1) return;
+   if (numlayers <= 1) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_DEL_LAYER);
+      return;
+   }
 
    // note that we don't need to ask to delete a clone
    if (!inscript && currlayer->dirty && currlayer->cloneid == 0 &&
@@ -1160,10 +1195,11 @@ void SetLayer(int index)
 
    if (inscript) {
       // always allow a script to switch layers
-   } else if (mainptr->generating && !CanSwitchLayer(index)) {
-      // status bar error is nicer than Warning dialog
-      statusptr->ErrorMessage(
-         _("You cannot switch to another universe while a pattern is generating."));
+   } else if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_LAYER0 + index);
       return;
    }
    
@@ -1180,12 +1216,6 @@ bool CanSwitchLayer(int index)
    if (inscript) {
       // user can only switch layers if script has set the appropriate option
       return canswitch;
-
-   } else if (mainptr->generating) {
-      // user can only switch to a clone of the current universe
-      // (mainly because all universes share a global rule table)
-      return currlayer->cloneid > 0 && currlayer->cloneid == layer[index]->cloneid;
-
    } else {
       // user can switch to any layer
       return true;
@@ -1218,7 +1248,7 @@ void SwitchToClickedTile(int index)
 
 void MoveLayer(int fromindex, int toindex)
 {
-   if (mainptr->generating || fromindex == toindex) return;
+   if (fromindex == toindex) return;
    if (fromindex < 0 || fromindex >= numlayers) return;
    if (toindex < 0 || toindex >= numlayers) return;
 
@@ -1253,7 +1283,15 @@ void MoveLayer(int fromindex, int toindex)
 // remove this eventually if user can drag layer buttons???
 void MoveLayerDialog()
 {
-   if (mainptr->generating || inscript || numlayers <= 1) return;
+   if (inscript || numlayers <= 1) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_MOVE_LAYER);
+      return;
+   }
    
    int i;
    if ( GetInteger(_("Move Layer"), _("Move the current layer to a new index:"),
@@ -1266,7 +1304,15 @@ void MoveLayerDialog()
 
 void NameLayerDialog()
 {
-   if (mainptr->generating || inscript) return;
+   if (inscript) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_NAME_LAYER);
+      return;
+   }
 
    wxString oldname = currlayer->currname;
    wxString newname;

@@ -527,7 +527,6 @@ void MainFrame::UpdateToolBar(bool active)
    // update tool bar buttons according to the current state
    if (toolbarptr && showtool) {
       if (viewptr->waitingforclick) active = false;
-      bool busy = generating || inscript;
 
       // set state of start/stop button
       toolbarptr->SetStartStopButton();
@@ -543,10 +542,10 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
       
       toolbarptr->EnableButton(START_TOOL,      active);
-      toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);   // allow while generating
-      toolbarptr->EnableButton(NEW_TOOL,        active && !busy);
-      toolbarptr->EnableButton(OPEN_TOOL,       active && !busy);
-      toolbarptr->EnableButton(SAVE_TOOL,       active && !busy);
+      toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);
+      toolbarptr->EnableButton(NEW_TOOL,        active && !inscript);
+      toolbarptr->EnableButton(OPEN_TOOL,       active && !inscript);
+      toolbarptr->EnableButton(SAVE_TOOL,       active && !inscript);
       toolbarptr->EnableButton(PATTERNS_TOOL,   active);
       toolbarptr->EnableButton(SCRIPTS_TOOL,    active);
       toolbarptr->EnableButton(DRAW_TOOL,       active);
@@ -610,44 +609,43 @@ void MainFrame::UpdateMenuItems(bool active)
    if (mbar) {
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
-      bool busy = generating || inscript;
 
       if (viewptr->waitingforclick) active = false;
       
-      mbar->Enable(wxID_NEW,           active && !busy);
-      mbar->Enable(wxID_OPEN,          active && !busy);
-      mbar->Enable(ID_OPEN_CLIP,       active && !busy && textinclip);
-      mbar->Enable(ID_OPEN_RECENT,     active && !busy && numpatterns > 0);
+      mbar->Enable(wxID_NEW,           active && !inscript);
+      mbar->Enable(wxID_OPEN,          active && !inscript);
+      mbar->Enable(ID_OPEN_CLIP,       active && !inscript && textinclip);
+      mbar->Enable(ID_OPEN_RECENT,     active && !inscript && numpatterns > 0);
       mbar->Enable(ID_SHOW_PATTERNS,   active);
       mbar->Enable(ID_PATTERN_DIR,     active);
-      mbar->Enable(wxID_SAVE,          active && !busy);
+      mbar->Enable(wxID_SAVE,          active && !inscript);
       mbar->Enable(ID_SAVE_XRLE,       active);
-      mbar->Enable(ID_RUN_SCRIPT,      active && !busy);
-      mbar->Enable(ID_RUN_CLIP,        active && !busy && textinclip);
-      mbar->Enable(ID_RUN_RECENT,      active && !busy && numscripts > 0);
+      mbar->Enable(ID_RUN_SCRIPT,      active && !inscript);
+      mbar->Enable(ID_RUN_CLIP,        active && !inscript && textinclip);
+      mbar->Enable(ID_RUN_RECENT,      active && !inscript && numscripts > 0);
       mbar->Enable(ID_SHOW_SCRIPTS,    active);
       mbar->Enable(ID_SCRIPT_DIR,      active);
-      mbar->Enable(wxID_PREFERENCES,   !busy);
+      mbar->Enable(wxID_PREFERENCES,   !inscript);
 
       mbar->Enable(wxID_UNDO,    active && currlayer->undoredo->CanUndo());
       mbar->Enable(wxID_REDO,    active && currlayer->undoredo->CanRedo());
-      mbar->Enable(ID_NO_UNDO,   active && !busy);
-      mbar->Enable(ID_CUT,       active && !busy && selexists);
-      mbar->Enable(ID_COPY,      active && !busy && selexists);
-      mbar->Enable(ID_CLEAR,     active && !busy && selexists);
-      mbar->Enable(ID_OUTSIDE,   active && !busy && selexists);
-      mbar->Enable(ID_PASTE,     active && !busy && textinclip);
-      mbar->Enable(ID_PASTE_SEL, active && !busy && textinclip && selexists);
+      mbar->Enable(ID_NO_UNDO,   active && !inscript);
+      mbar->Enable(ID_CUT,       active && !inscript && selexists);
+      mbar->Enable(ID_COPY,      active && !inscript && selexists);
+      mbar->Enable(ID_CLEAR,     active && !inscript && selexists);
+      mbar->Enable(ID_OUTSIDE,   active && !inscript && selexists);
+      mbar->Enable(ID_PASTE,     active && !inscript && textinclip);
+      mbar->Enable(ID_PASTE_SEL, active && !inscript && textinclip && selexists);
       mbar->Enable(ID_PLOCATION, active);
       mbar->Enable(ID_PMODE,     active);
       mbar->Enable(ID_SELALL,    active && !inscript);
       mbar->Enable(ID_REMOVE,    active && !inscript && selexists);
-      mbar->Enable(ID_SHRINK,    active && !busy && selexists);
-      mbar->Enable(ID_RANDOM,    active && !busy && selexists);
-      mbar->Enable(ID_FLIPTB,    active && !busy && selexists);
-      mbar->Enable(ID_FLIPLR,    active && !busy && selexists);
-      mbar->Enable(ID_ROTATEC,   active && !busy && selexists);
-      mbar->Enable(ID_ROTATEA,   active && !busy && selexists);
+      mbar->Enable(ID_SHRINK,    active && !inscript && selexists);
+      mbar->Enable(ID_RANDOM,    active && !inscript && selexists);
+      mbar->Enable(ID_FLIPTB,    active && !inscript && selexists);
+      mbar->Enable(ID_FLIPLR,    active && !inscript && selexists);
+      mbar->Enable(ID_ROTATEC,   active && !inscript && selexists);
+      mbar->Enable(ID_ROTATEA,   active && !inscript && selexists);
       mbar->Enable(ID_CMODE,     active);
 
       if (inscript) {
@@ -667,18 +665,18 @@ void MainFrame::UpdateMenuItems(bool active)
       }
 
       mbar->Enable(ID_START,     active);
-      mbar->Enable(ID_NEXT,      active && !busy);
-      mbar->Enable(ID_STEP,      active && !busy);
-      mbar->Enable(ID_RESET,     active && !inscript &&     // allow reset while generating
+      mbar->Enable(ID_NEXT,      active && !generating && !inscript);
+      mbar->Enable(ID_STEP,      active && !generating && !inscript);
+      mbar->Enable(ID_RESET,     active && !inscript &&
                                  (generating || currlayer->algo->getGeneration() > currlayer->startgen));
-      mbar->Enable(ID_SETGEN,    active && !busy);
+      mbar->Enable(ID_SETGEN,    active && !inscript);
       mbar->Enable(ID_FASTER,    active);
       mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,      active);
-      mbar->Enable(ID_HASH,      active && !inscript);      // allow toggling while generating
+      mbar->Enable(ID_HASH,      active && !inscript);
       mbar->Enable(ID_HYPER,     active);
       mbar->Enable(ID_HINFO,     active);
-      mbar->Enable(ID_RULE,      active && !busy);
+      mbar->Enable(ID_RULE,      active && !inscript);
 
       mbar->Enable(ID_FULL,      active);
       mbar->Enable(ID_FIT,       active);
@@ -705,13 +703,13 @@ void MainFrame::UpdateMenuItems(bool active)
       #endif
       mbar->Enable(ID_INFO,      !currlayer->currfile.IsEmpty());
 
-      mbar->Enable(ID_ADD_LAYER,    active && !busy && numlayers < MAX_LAYERS);
-      mbar->Enable(ID_CLONE,        active && !busy && numlayers < MAX_LAYERS);
-      mbar->Enable(ID_DUPLICATE,    active && !busy && numlayers < MAX_LAYERS);
-      mbar->Enable(ID_DEL_LAYER,    active && !busy && numlayers > 1);
+      mbar->Enable(ID_ADD_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
+      mbar->Enable(ID_CLONE,        active && !inscript && numlayers < MAX_LAYERS);
+      mbar->Enable(ID_DUPLICATE,    active && !inscript && numlayers < MAX_LAYERS);
+      mbar->Enable(ID_DEL_LAYER,    active && !inscript && numlayers > 1);
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
-      mbar->Enable(ID_MOVE_LAYER,   active && !busy && numlayers > 1);
-      mbar->Enable(ID_NAME_LAYER,   active && !busy);
+      mbar->Enable(ID_MOVE_LAYER,   active && !inscript && numlayers > 1);
+      mbar->Enable(ID_NAME_LAYER,   active && !inscript);
       mbar->Enable(ID_SYNC_VIEW,    active);
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
@@ -1155,6 +1153,14 @@ void MainFrame::ToggleFullScreen()
 
 void MainFrame::ToggleAllowUndo()
 {
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_NO_UNDO);
+      return;
+   }
+
    allowundo = !allowundo;
    if (allowundo) {
       if (currlayer->algo->getGeneration() > currlayer->startgen) {
@@ -1553,12 +1559,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
             if ( showpatterns )
                Warning(_("Cannot load pattern while a script is running."));
             else
-               Warning(_("Cannot run script while another one is running."));
-         } else if ( generating ) {
-            if ( showpatterns )
-               statusptr->ErrorMessage(_("Cannot load pattern while generating."));
-            else
-               statusptr->ErrorMessage(_("Cannot run script while generating."));
+               Warning(_("Cannot run script while another script is running."));
          } else {
             // reset background of previously selected file by traversing entire tree;
             // we can't just remember previously selected id because ids don't persist
@@ -1585,8 +1586,21 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
                }
             #endif
             
-            // load pattern or run script
-            OpenFile(filepath);
+            if ( generating ) {
+               // terminate generating loop and set command_pending flag
+               Stop();
+               command_pending = true;
+               if ( showpatterns ) {
+                  AddRecentPattern(filepath);
+                  cmdevent.SetId(ID_OPEN_RECENT + 1);
+               } else {
+                  AddRecentScript(filepath);
+                  cmdevent.SetId(ID_RUN_RECENT + 1);
+               }
+            } else {
+               // load pattern or run script
+               OpenFile(filepath);
+            }
          }
       }
 
@@ -2342,12 +2356,14 @@ MainFrame::MainFrame()
    #endif
    */
 
-   InitDrawingData();      // do this after viewport size has been set
+   InitDrawingData();         // do this after viewport size has been set
 
-   pendingfiles.Clear();   // no pending script/pattern files
-   generating = false;     // not generating pattern
-   fullscreen = false;     // not in full screen mode
-   showbanner = true;      // avoid first file clearing banner message
+   pendingfiles.Clear();      // no pending script/pattern files
+   command_pending = false;   // no pending command
+   draw_pending = false;      // no pending draw
+   generating = false;        // not generating pattern
+   fullscreen = false;        // not in full screen mode
+   showbanner = true;         // avoid first file clearing banner message
 }
 
 // -----------------------------------------------------------------------------

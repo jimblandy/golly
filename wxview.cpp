@@ -56,6 +56,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 const int DRAG_RATE = 20;        // call OnDragTimer 50 times per sec
 
+bool stop_drawing = false;       // terminate a draw done while generating?
+
 // -----------------------------------------------------------------------------
 
 // event table and handlers:
@@ -706,6 +708,12 @@ void PatternView::StartDrawingCells(int x, int y)
    drawingcells = true;
    CaptureMouse();                  // get mouse up event even if outside view
    dragtimer->Start(DRAG_RATE);     // see OnDragTimer
+   
+   if (stop_drawing) {
+      // mouse up event has already been seen so terminate drawing immediately
+      stop_drawing = false;
+      StopDraggingMouse();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1364,6 +1372,8 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
+   // test waitingforclick before mainptr->generating so user can cancel
+   // a paste operation while generating
    if ( waitingforclick && key == WXK_ESCAPE ) {
       // cancel paste
       pastex = -1;
@@ -1413,12 +1423,17 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          Warning(_("Drawing is not allowed while a script is running."));
          return;
       }
-      if (mainptr->generating) {
-         statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
-         return;
-      }
       if (currlayer->view->getmag() < 0) {
          statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
+         return;
+      }
+      if (mainptr->generating) {
+         // we now allow drawing while generating
+         // statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
+         mainptr->Stop();
+         mainptr->draw_pending = true;
+         mainptr->mouseevent.m_x = x;
+         mainptr->mouseevent.m_y = y;
          return;
       }
       StartDrawingCells(x, y);
@@ -1482,6 +1497,10 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
 {
    if (drawingcells || selectingcells || movingview) {
       StopDraggingMouse();
+   } else if (mainptr->draw_pending) {
+      // this can happen if user does a quick click while pattern is generating,
+      // so set a special flag to force drawing to terminate 
+      stop_drawing = true;
    }
 }
 

@@ -157,7 +157,14 @@ void MainFrame::CreateUniverse()
 
 void MainFrame::NewPattern(const wxString& title)
 {
-   if (generating) return;
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(wxID_NEW);
+      return;
+   }
+   
    if (askonnew && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
 
    currlayer->savestart = false;
@@ -447,7 +454,13 @@ void MainFrame::AddRecentScript(const wxString& inpath)
 
 void MainFrame::OpenPattern()
 {
-   if (generating) return;
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(wxID_OPEN);
+      return;
+   }
 
    wxString filetypes = _("All files (*)|*");
    filetypes +=         _("|RLE (*.rle)|*.rle");
@@ -488,7 +501,13 @@ void MainFrame::OpenPattern()
 
 void MainFrame::OpenScript()
 {
-   if (generating) return;
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_RUN_SCRIPT);
+      return;
+   }
 
    wxString filetypes = _("Perl or Python (*.pl;*.py)|*.pl;*.py");
    filetypes +=         _("|Perl (*.pl)|*.pl");
@@ -619,7 +638,13 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 
 void MainFrame::OpenClipboard()
 {
-   if (generating) return;
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_OPEN_CLIP);
+      return;
+   }
 
    // load and view pattern data stored in clipboard
    #ifdef __WXX11__
@@ -733,7 +758,14 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
 
 void MainFrame::RunClipboard()
 {
-   if (generating) return;
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_RUN_CLIP);
+      return;
+   }
+
    // run script stored in clipboard
    wxTextDataObject data;
    if (GetTextFromClipboard(&data)) {
@@ -767,6 +799,14 @@ void MainFrame::RunClipboard()
 
 void MainFrame::OpenRecentPattern(int id)
 {
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(id);
+      return;
+   }
+
    wxMenuItem* item = patternSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
@@ -785,6 +825,14 @@ void MainFrame::OpenRecentPattern(int id)
 
 void MainFrame::OpenRecentScript(int id)
 {
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(id);
+      return;
+   }
+
    wxMenuItem* item = scriptSubMenu->FindItem(id);
    if (item) {
       wxString path = item->GetText();
@@ -929,7 +977,13 @@ const char* MainFrame::WritePattern(const wxString& path,
 
 void MainFrame::SavePattern()
 {
-   if (generating) return;
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(wxID_SAVE);
+      return;
+   }
 
    wxString filetypes;
    int RLEindex, L105index, MCindex;
@@ -1230,7 +1284,15 @@ void MainFrame::UpdateWarp()
 
 void MainFrame::ShowPrefsDialog()
 {
-   if (inscript || generating || viewptr->waitingforclick) return;
+   if (inscript || viewptr->waitingforclick) return;
+
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(wxID_PREFERENCES);
+      return;
+   }
 
    if (ChangePrefs()) {
       // user hit OK button

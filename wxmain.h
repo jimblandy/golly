@@ -131,10 +131,14 @@ public:
    // miscellaneous functions
    void QuitApp();
 
-   // flags
    bool generating;           // currently generating pattern?
    bool fullscreen;           // in full screen mode?
    bool showbanner;           // showing banner message?
+   
+   bool command_pending;      // user selected a command while generating?
+   bool draw_pending;         // user wants to draw while generating?
+   wxCommandEvent cmdevent;   // the pending command
+   wxMouseEvent mouseevent;   // the pending draw
 
    // temporary files
    wxString clipfile;         // name of temporary file for storing clipboard data
@@ -187,6 +191,7 @@ private:
    void CreateDirControls();
    void SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root);
    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
+   void DoPendingAction(bool restart);
 
    // splittable window contains pattern/script directory in left pane
    // and layer bar plus viewport window in right pane
