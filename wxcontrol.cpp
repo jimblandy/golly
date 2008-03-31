@@ -144,6 +144,8 @@ void MainFrame::ResetPattern(bool resetundo)
       */
       return;
    }
+
+   if (inscript) stop_after_script = true;
    
    if (currlayer->algo->getGeneration() < currlayer->startgen) {
       // if this happens then startgen logic is wrong
@@ -271,6 +273,10 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       newgen += relgen;
       if (newgen < bigint::zero) newgen = bigint::zero;
    }
+
+   // set stop_after_script BEFORE testing newgen == oldgen so scripts
+   // can call setgen("+0") to prevent further generating
+   if (inscript) stop_after_script = true;
    
    if (newgen == oldgen) return NULL;
 
@@ -504,7 +510,7 @@ void MainFrame::GeneratePattern()
    // display the final pattern
    if (currlayer->autofit) viewptr->FitInView(0);
    if (command_pending || draw_pending) {
-      // let the pending command/draw do the update
+      // let the pending command/draw do the update below
    } else {
       UpdateEverything();
    }
@@ -530,18 +536,32 @@ void MainFrame::DoPendingAction(bool restart)
          case wxID_NEW:       NewPattern(); break;
          case wxID_OPEN:      OpenPattern(); break;
          case ID_OPEN_CLIP:   OpenClipboard(); break;
-         case ID_RUN_SCRIPT:  OpenScript(); break;
-         case ID_RUN_CLIP:    RunClipboard(); break;
          case ID_RESET:       ResetPattern(); break;
          case ID_SETGEN:      SetGeneration(); break;
          case wxID_UNDO:      currlayer->undoredo->UndoChange(); break;
          case ID_ADD_LAYER:   AddLayer(); break;
-         case ID_DUPLICATE:   DuplicateLayer(); break;   // or continue generating???
+         case ID_DUPLICATE:   DuplicateLayer(); break;
          default:
             if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
                OpenRecentPattern(id);
             } else if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
                OpenRecentScript(id);
+               if (restart && !stop_after_script) {
+                  wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+                  wxPostEvent(this->GetEventHandler(), goevt);
+               }
+            } else if ( id == ID_RUN_SCRIPT ) {
+               OpenScript();
+               if (restart && !stop_after_script) {
+                  wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+                  wxPostEvent(this->GetEventHandler(), goevt);
+               }
+            } else if ( id == ID_RUN_CLIP ) {
+               RunClipboard();
+               if (restart && !stop_after_script) {
+                  wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
+                  wxPostEvent(this->GetEventHandler(), goevt);
+               }
             } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
                int oldcloneid = currlayer->cloneid;
                SetLayer(id - ID_LAYER0);
@@ -653,6 +673,9 @@ void MainFrame::NextGeneration(bool useinc)
       // wxBell();
       return;
    }
+
+   // best if generating stops after running a script like oscar.py or goto.py
+   if (inscript) stop_after_script = true;
 
    lifealgo* curralgo = currlayer->algo;
    if (curralgo->isEmpty()) {

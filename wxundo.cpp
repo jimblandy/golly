@@ -152,8 +152,14 @@ ChangeNode::~ChangeNode()
 {
    if (cellcoords) free(cellcoords);
    
-   if (!oldfile.IsEmpty() && wxFileExists(oldfile)) wxRemoveFile(oldfile);
-   if (!newfile.IsEmpty() && wxFileExists(newfile)) wxRemoveFile(newfile);
+   if (!oldfile.IsEmpty() && wxFileExists(oldfile)) {
+      wxRemoveFile(oldfile);
+      //printf("removed oldfile: %s\n", (const char*)oldfile.mb_str(wxConvLocal));
+   }
+   if (!newfile.IsEmpty() && wxFileExists(newfile)) {
+      wxRemoveFile(newfile);
+      //printf("removed newfile: %s\n", (const char*)newfile.mb_str(wxConvLocal));
+   }
    
    // only delete oldtempstart/newtempstart if they're not being used to
    // store the current layer's starting pattern
@@ -773,12 +779,21 @@ void UndoRedo::RememberGenFinish()
    startcount--;
    if (startcount > 0) return;
 
+   if (startcount < 0) {
+      // this can happen if a script has pending gen changes that need
+      // to be remembered (ie. savegenchanges is now false) so reset
+      // startcount for the next RememberGenStart call
+      startcount = 0;
+   }
+
    if (inscript && savegenchanges) return;   // ignore consecutive run/step command
 
    // generation count might not have changed (can happen in wxGTK)
    if (prevgen == currlayer->algo->getGeneration()) {
       // delete prevfile created by RememberGenStart
-      if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+      if (!prevfile.IsEmpty() && wxFileExists(prevfile)) {
+         wxRemoveFile(prevfile);
+      }
       prevfile = wxEmptyString;
       return;
    }
@@ -851,6 +866,9 @@ void UndoRedo::AddGenChange()
    prevmag = currlayer->startmag;
    prevwarp = currlayer->startwarp;
    prevfile = wxEmptyString;
+
+   // play safe and pretend RememberGenStart was called
+   startcount = 1;
    
    // avoid RememberGenFinish returning early if inscript is true
    savegenchanges = false;
@@ -1393,7 +1411,9 @@ void UndoRedo::ClearUndoRedo()
    
    if (startcount > 0) {
       // RememberGenStart was not followed by RememberGenFinish
-      if (!prevfile.IsEmpty() && wxFileExists(prevfile)) wxRemoveFile(prevfile);
+      if (!prevfile.IsEmpty() && wxFileExists(prevfile)) {
+         wxRemoveFile(prevfile);
+      }
       prevfile = wxEmptyString;
       startcount = 0;
    }

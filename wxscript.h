@@ -31,6 +31,9 @@ extern bool inscript;
 extern bool canswitch;
 // Can user switch layers while a script is running?
 
+extern bool stop_after_script;
+// Stop generating pattern after running script?
+
 bool IsScript(const wxString& filename);
 // Return true if the given file is a Perl or Python script.
 // It simply checks if the file's extension is ".pl" or ".py"

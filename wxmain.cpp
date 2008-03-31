@@ -1586,21 +1586,8 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
                }
             #endif
             
-            if ( generating ) {
-               // terminate generating loop and set command_pending flag
-               Stop();
-               command_pending = true;
-               if ( showpatterns ) {
-                  AddRecentPattern(filepath);
-                  cmdevent.SetId(ID_OPEN_RECENT + 1);
-               } else {
-                  AddRecentScript(filepath);
-                  cmdevent.SetId(ID_RUN_RECENT + 1);
-               }
-            } else {
-               // load pattern or run script
-               OpenFile(filepath);
-            }
+            // load pattern or run script
+            OpenFile(filepath);
          }
       }
 
@@ -1775,9 +1762,7 @@ public:
 
 bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
 {
-   if (mainptr->generating) return false;
-
-   // is there a wx call to bring app to front???
+   // bring app to front
    #ifdef __WXMAC__
       ProcessSerialNumber process;
       if ( GetCurrentProcess(&process) == noErr )

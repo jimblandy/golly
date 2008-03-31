@@ -236,7 +236,6 @@ void GollyApp::SetFrameIcon(wxFrame* frame)
 
 void GollyApp::MacOpenFile(const wxString& fullPath)
 {
-   if (mainptr->generating) return;
    mainptr->Raise();
    mainptr->OpenFile(fullPath);
 }

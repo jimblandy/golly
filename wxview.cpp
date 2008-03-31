@@ -461,9 +461,8 @@ void PatternView::ProcessKey(int key, int modifiers)
    mainptr->showbanner = false;
 
    // WARNING: ProcessKey can be called while running a script or while
-   // generating a pattern, so we must avoid doing any actions that could
-   // cause havoc at such times.
-   bool busy = mainptr->generating || inscript;
+   // waiting for a paste click, so we must avoid doing any actions that
+   // could cause havoc at such times.
 
    action_info action = FindAction(key, modifiers);
    switch (action.id) {
@@ -479,7 +478,7 @@ void PatternView::ProcessKey(int key, int modifiers)
                if (!waitingforclick) ShowHelp(action.file);
             } else {
                // load pattern or run script
-               if (!busy) mainptr->OpenFile(action.file, true);
+               if (!inscript) mainptr->OpenFile(action.file, true);
             }
          }
          break;

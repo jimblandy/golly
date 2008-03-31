@@ -167,6 +167,7 @@ void MainFrame::NewPattern(const wxString& title)
    
    if (askonnew && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
 
+   if (inscript) stop_after_script = true;
    currlayer->savestart = false;
    currlayer->currfile.Clear();
    currlayer->startgen = 0;
@@ -251,6 +252,8 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    // newtitle is only empty if called from ResetPattern/RestorePattern
    if (!newtitle.IsEmpty()) {
       if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
+
+      if (inscript) stop_after_script = true;
       currlayer->savestart = false;
       currlayer->warp = 0;
       if (GetInfoFrame()) {
@@ -354,6 +357,21 @@ void MainFrame::SetCurrentFile(const wxString& path)
 
 void MainFrame::OpenFile(const wxString& path, bool remember)
 {
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      // assume remember is true (should only be false if called from a script)
+      if ( IsScript(path) ) {
+         AddRecentScript(path);
+         cmdevent.SetId(ID_RUN_RECENT + 1);
+      } else {
+         AddRecentPattern(path);
+         cmdevent.SetId(ID_OPEN_RECENT + 1);
+      }
+      return;
+   }
+
    if ( IsScript(path) ) {
       // execute script
       if (remember) AddRecentScript(path);

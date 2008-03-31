@@ -52,6 +52,7 @@ bool inscript = false;     // a script is running?
 bool plscript = false;     // a Perl script is running?
 bool pyscript = false;     // a Python script is running?
 bool canswitch;            // can user switch layers while script is running?
+bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
 bool allowcheck;           // allow event checking?
 bool showtitle;            // need to update window title?
@@ -798,6 +799,7 @@ void RunScript(const wxString& filename)
    scripterr.Clear();
    scriptchars.Clear();
    canswitch = false;
+   stop_after_script = false;
    autoupdate = false;
    exitcalled = false;
    allowcheck = true;
