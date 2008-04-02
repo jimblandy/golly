@@ -269,7 +269,7 @@ $(OBJDIR)/wxcontrol.o: wxcontrol.cpp \
 platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h \
 wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h \
-wxundo.h wxlayer.h
+wxhelp.h wxundo.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
 
 $(OBJDIR)/wxundo.o: wxundo.cpp wxundo.h \

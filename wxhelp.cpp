@@ -83,7 +83,7 @@ END_EVENT_TABLE()
 class HtmlView : public wxHtmlWindow
 {
 public:
-   HtmlView(wxWindow *parent, wxWindowID id, const wxPoint& pos,
+   HtmlView(wxWindow* parent, wxWindowID id, const wxPoint& pos,
             const wxSize& size, long style)
       : wxHtmlWindow(parent, id, pos, size, style) { }
 
@@ -114,7 +114,7 @@ private:
    void OnSize(wxSizeEvent& event);
    void OnTimer(wxTimerEvent& event);
 
-   wxTimer *htmltimer;
+   wxTimer* htmltimer;
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -134,20 +134,21 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-HelpFrame *helpptr = NULL;    // help window
-HtmlView *htmlwin = NULL;     // html child window
+HelpFrame* helpptr = NULL;    // help window
+HtmlView* htmlwin = NULL;     // html child window
 
-wxButton *backbutt;           // back button
-wxButton *forwbutt;           // forwards button
-wxButton *contbutt;           // Contents button
+wxButton* backbutt;           // back button
+wxButton* forwbutt;           // forwards button
+wxButton* contbutt;           // Contents button
 
 long whenactive;              // when help window became active (elapsed millisecs)
 
-// contents page
-const wxString helphome = _("Help/index.html");
+const wxString helphome = _("Help/index.html");    // contents page
+wxString currhelp = helphome;                      // current help file
+const wxString lexicon_name = _("lexicon");        // name of lexicon layer
 
-// current help file
-wxString currhelp = helphome;
+int lexlayer;                 // index of existing lexicon layer (-ve if not present)
+wxString lexpattern;          // lexicon pattern data
 
 // -----------------------------------------------------------------------------
 
@@ -203,8 +204,8 @@ HelpFrame::HelpFrame()
    htmlwin->SetBorders(4);
    SetFontSizes(helpfontsize);
 
-   wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
-   wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
 
    backbutt = new wxButton(this, ID_BACK_BUTT, _("<"),
                            wxDefaultPosition, wxSize(40,wxDefaultCoord));
@@ -219,7 +220,7 @@ HelpFrame::HelpFrame()
 
    hbox->AddStretchSpacer(1);
 
-   wxButton *closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
+   wxButton* closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
    closebutt->SetDefault();
    hbox->Add(closebutt, 0, wxALL | wxALIGN_RIGHT, 10);
 
@@ -385,93 +386,102 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void AddEOL(wxString& str)
-{
-   // append eol char(s) to given string
-   #ifdef __WXMAC__
-      str += '\r';
-   #elif defined(__WXMSW__)
-      str += '\r';
-      str += '\n';
-   #else // assume Unix
-      str += '\n';
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void LoadLexiconPattern(const wxHtmlCell *htmlcell)
+void ClickLexiconPattern(const wxHtmlCell* htmlcell)
 {
    if (inscript) {
-      Warning(_("A script is currently running."));
+      Warning(_("Cannot load lexicon pattern while a script is running."));
       return;
    }
-   if (mainptr->generating) {
-      Warning(_("Another pattern is currently generating."));
-      return;
-   }
+   
    if (htmlcell) {
-      wxHtmlContainerCell *parent = htmlcell->GetParent();
+      wxHtmlContainerCell* parent = htmlcell->GetParent();
       if (parent) {
          parent = parent->GetParent();
          if (parent) {
-            wxHtmlCell *container = parent->GetFirstChild();
-            wxString textpict;
+            wxHtmlCell* container = parent->GetFirstChild();
+            
+            // extract pattern data and store in lexpattern
+            lexpattern.Clear();
             while (container) {
-               wxHtmlCell *cell = container->GetFirstChild();
+               wxHtmlCell* cell = container->GetFirstChild();
                while (cell) {
                   wxString celltext = cell->ConvertToText(NULL);
                   if (celltext.IsEmpty()) {
                      // probably a formatting cell
                   } else {
-                     textpict += celltext;
-                     AddEOL(textpict);
+                     lexpattern += celltext;
+                     // append eol char(s)
+                     #ifdef __WXMAC__
+                        lexpattern += '\r';
+                     #elif defined(__WXMSW__)
+                        lexpattern += '\r';
+                        lexpattern += '\n';
+                     #else // assume Unix
+                        lexpattern += '\n';
+                     #endif
                   }
                   cell = cell->GetNext();
                }
                container = container->GetNext();
             }
-            if (!textpict.IsEmpty()) {
+            
+            if (!lexpattern.IsEmpty()) {
                mainptr->Raise();
                #ifdef __WXX11__
                   mainptr->SetFocus();    // activate window
                #endif
                
-               // look for existing "lexicon" layer
-               int lexlayer = -1;
+               // look for existing lexicon layer
+               lexlayer = -1;
                for (int i = 0; i < numlayers; i++) {
-                  if (GetLayer(i)->currname == _("lexicon")) {
+                  if (GetLayer(i)->currname == lexicon_name) {
                      lexlayer = i;
                      break;
                   }
                }
-               
-               if (lexlayer >= 0) {
-                  SetLayer(lexlayer);
-               } else {
-                  if (numlayers == MAX_LAYERS) {
-                     Warning(_("Cannot create new layer for lexicon pattern."));
-                     return;
-                  }
-                  AddLayer();
-                  mainptr->SetWindowTitle(_("lexicon"));
+               if (lexlayer < 0 && numlayers == MAX_LAYERS) {
+                  Warning(_("Cannot create new layer for lexicon pattern."));
+                  return;
                }
                
-               // copy textpict data to tempstart file so we can handle
-               // all formats supported by readpattern
-               wxFile outfile(currlayer->tempstart, wxFile::write);
-               if ( outfile.IsOpened() ) {
-                  outfile.Write(textpict);
-                  outfile.Close();
-                  currlayer->currfile = currlayer->tempstart;
-                  // load lexicon pattern into current layer
-                  mainptr->LoadPattern(currlayer->currfile, _("lexicon"));
-               } else {
-                  Warning(_("Could not create tempstart file!"));
+               if (mainptr->generating) {
+                  // terminate generating loop and set command_pending flag
+                  mainptr->Stop();
+                  mainptr->command_pending = true;
+                  mainptr->cmdevent.SetId(ID_LOAD_LEXICON);
+                  return;
                }
+               
+               LoadLexiconPattern();
             }
          }
       }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void LoadLexiconPattern()
+{
+   // switch to existing lexicon layer or create a new such layer
+   if (lexlayer >= 0) {
+      SetLayer(lexlayer);
+   } else {
+      AddLayer();
+      mainptr->SetWindowTitle(lexicon_name);
+   }
+   
+   // copy lexpattern data to tempstart file so we can handle
+   // all formats supported by readpattern
+   wxFile outfile(currlayer->tempstart, wxFile::write);
+   if ( outfile.IsOpened() ) {
+      outfile.Write(lexpattern);
+      outfile.Close();
+      currlayer->currfile = currlayer->tempstart;
+      // load lexicon pattern into current layer
+      mainptr->LoadPattern(currlayer->currfile, lexicon_name);
+   } else {
+      Warning(_("Could not create tempstart file!"));
    }
 }
 
@@ -509,7 +519,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       #endif
    } else if ( url.StartsWith(wxT("lexpatt:")) ) {
       // user clicked on pattern in Life Lexicon
-      LoadLexiconPattern( link.GetHtmlCell() );
+      ClickLexiconPattern( link.GetHtmlCell() );
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);
@@ -697,7 +707,7 @@ void ShowAboutBox()
    const wxString title = _("About Golly");
    wxDialog dlg(mainptr, wxID_ANY, title);
    
-   HtmlView *html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
+   HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
                                  #if defined(__WXX11__) || defined(__WXGTK__)
                                     wxSize(460, 220),
                                  #else
@@ -709,10 +719,10 @@ void ShowAboutBox()
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                  html->GetInternalRepresentation()->GetHeight());
    
-   wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
+   wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
    topsizer->Add(html, 1, wxALL, 10);
 
-   wxButton *okbutt = new wxButton(&dlg, wxID_OK, _("OK"));
+   wxButton* okbutt = new wxButton(&dlg, wxID_OK, _("OK"));
    okbutt->SetDefault();
    topsizer->Add(okbutt, 0, wxBOTTOM | wxALIGN_CENTER, 10);
    

@@ -137,6 +137,7 @@ public:
    
    bool command_pending;      // user selected a command while generating?
    bool draw_pending;         // user wants to draw while generating?
+   bool keepmessage;          // don't clear message created by script?
    wxCommandEvent cmdevent;   // the pending command
    wxMouseEvent mouseevent;   // the pending draw
 
@@ -344,6 +345,9 @@ enum {
    ID_HELP_PROBLEMS,
    ID_HELP_CHANGES,
    ID_HELP_CREDITS,
+   
+   // these ids don't have a menu item
+   ID_LOAD_LEXICON,     // load lexicon pattern
    ID_SHOW_HELP         // for help button in tool bar
 };
 

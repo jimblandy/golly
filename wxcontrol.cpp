@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for BeginProgress, GetString, etc
 #include "wxprefs.h"       // for maxhashmem, allowundo, etc
 #include "wxrule.h"        // for ChangeRule
+#include "wxhelp.h"        // for LoadLexiconPattern
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxscript.h"      // for inscript, PassKeyToScript
@@ -533,35 +534,46 @@ void MainFrame::DoPendingAction(bool restart)
       int id = cmdevent.GetId();
       switch (id) {
          // don't restart the generating loop after some commands
-         case wxID_NEW:       NewPattern(); break;
-         case wxID_OPEN:      OpenPattern(); break;
-         case ID_OPEN_CLIP:   OpenClipboard(); break;
-         case ID_RESET:       ResetPattern(); break;
-         case ID_SETGEN:      SetGeneration(); break;
-         case wxID_UNDO:      currlayer->undoredo->UndoChange(); break;
-         case ID_ADD_LAYER:   AddLayer(); break;
-         case ID_DUPLICATE:   DuplicateLayer(); break;
+         case wxID_NEW:          NewPattern(); break;
+         case wxID_OPEN:         OpenPattern(); break;
+         case ID_OPEN_CLIP:      OpenClipboard(); break;
+         case ID_RESET:          ResetPattern(); break;
+         case ID_SETGEN:         SetGeneration(); break;
+         case wxID_UNDO:         currlayer->undoredo->UndoChange(); break;
+         case ID_ADD_LAYER:      AddLayer(); break;
+         case ID_DUPLICATE:      DuplicateLayer(); break;
+         case ID_LOAD_LEXICON:   LoadLexiconPattern(); break;
          default:
             if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
                OpenRecentPattern(id);
+
             } else if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
                OpenRecentScript(id);
                if (restart && !stop_after_script) {
                   wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
                   wxPostEvent(this->GetEventHandler(), goevt);
+                  // avoid clearing status message due to script like density.py
+                  keepmessage = true;
                }
+
             } else if ( id == ID_RUN_SCRIPT ) {
                OpenScript();
                if (restart && !stop_after_script) {
                   wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
                   wxPostEvent(this->GetEventHandler(), goevt);
+                  // avoid clearing status message due to script like density.py
+                  keepmessage = true;
                }
+
             } else if ( id == ID_RUN_CLIP ) {
                RunClipboard();
                if (restart && !stop_after_script) {
                   wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
                   wxPostEvent(this->GetEventHandler(), goevt);
+                  // avoid clearing status message due to script like density.py
+                  keepmessage = true;
                }
+
             } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
                int oldcloneid = currlayer->cloneid;
                SetLayer(id - ID_LAYER0);
@@ -570,6 +582,7 @@ void MainFrame::DoPendingAction(bool restart)
                   wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
                   wxPostEvent(this->GetEventHandler(), goevt);
                }
+
             } else if ( id == ID_DEL_LAYER ) {
                int wasclone = currlayer->cloneid > 0 &&
                      ((currindex == 0 && currlayer->cloneid == GetLayer(1)->cloneid) ||
@@ -580,6 +593,7 @@ void MainFrame::DoPendingAction(bool restart)
                   wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
                   wxPostEvent(this->GetEventHandler(), goevt);
                }
+
             } else {
                // temporarily pretend the tool/layer bars are not showing
                // to avoid UpdateToolBar/UpdateLayerBar changing button states

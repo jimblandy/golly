@@ -1209,7 +1209,13 @@ END_EVENT_TABLE()
 void MainFrame::OnMenu(wxCommandEvent& event)
 {
    showbanner = false;
-   statusptr->ClearMessage();
+   if (keepmessage) {
+      // don't clear message created by script while generating a pattern
+      keepmessage = false;
+   } else {
+      statusptr->ClearMessage();
+   }
+   
    int id = event.GetId();
    switch (id) {
       // File menu
@@ -1349,6 +1355,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
             }
          }
    }
+   
    UpdateUserInterface(IsActive());
 }
 
@@ -2346,6 +2353,7 @@ MainFrame::MainFrame()
    pendingfiles.Clear();      // no pending script/pattern files
    command_pending = false;   // no pending command
    draw_pending = false;      // no pending draw
+   keepmessage = false;       // clear status message
    generating = false;        // not generating pattern
    fullscreen = false;        // not in full screen mode
    showbanner = true;         // avoid first file clearing banner message
