@@ -699,6 +699,12 @@ void UndoRedo::RememberGenStart()
    viewptr->GetPos(prevx, prevy);
    prevmag = viewptr->GetMag();
    prevwarp = currlayer->warp;
+   
+   if (!inscript) {
+      // make sure Undo and Redo items show correct actions while generating
+      UpdateUndoItem(to_gen + wxString(prevgen.tostring(), wxConvLocal));
+      UpdateRedoItem(wxEmptyString);
+   }
 
    if (prevgen == currlayer->startgen) {
       // we can just reset to starting pattern
@@ -1145,8 +1151,9 @@ void UndoRedo::RememberScriptStart()
 
    undolist.Insert(change);
    
-   // don't alter Undo item in Edit menu
-   // UpdateUndoItem(change->suffix);
+   // update Undo action and clear Redo action
+   UpdateUndoItem(change->suffix);
+   UpdateRedoItem(wxEmptyString);
 }
 
 // -----------------------------------------------------------------------------
