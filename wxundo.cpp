@@ -1201,6 +1201,10 @@ void UndoRedo::RememberScriptFinish()
 
 bool UndoRedo::CanUndo()
 {
+   // we need to allow undo if generating even though undo list might be empty
+   // (selecting Undo will stop generating and add genchange node to undo list)
+   if (mainptr->generating) return true;
+   
    return !undolist.IsEmpty() && !inscript &&
           !viewptr->waitingforclick && !viewptr->drawingcells &&
           !viewptr->selectingcells;
