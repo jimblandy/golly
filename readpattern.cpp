@@ -266,7 +266,7 @@ void readpclife(lifealgo &imp, char *line) {
    char *p ;
    char *ruleptr;
 
-   while (getline(line, LINESIZE)) {
+   do {
       if (line[0] == '#') {
          if (line[1] == 'P') {
             sscanf(line + 2, " %d %d", &x, &y) ;
@@ -294,7 +294,7 @@ void readpclife(lifealgo &imp, char *line) {
          x = leftx ;
          y++ ;
       }
-   }
+   } while (getline(line, LINESIZE));
 }
 
 /*
@@ -367,6 +367,15 @@ const char *loadpattern(lifealgo &imp) {
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
+      readpclife(imp, line) ;
+      imp.endofpattern() ;
+      if (getedges && !imp.isEmpty()) {
+         imp.findedges(&top, &left, &bottom, &right) ;
+      }
+
+   } else if (line[0] == '#' && line[1] == 'P' && line[2] == ' ') {
+      // WinLifeSearch creates clipboard patterns similar to
+      // Life 1.05 format but without the header line
       readpclife(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
