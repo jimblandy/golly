@@ -1211,7 +1211,7 @@ void SetLayer(int index)
 
 // -----------------------------------------------------------------------------
 
-bool CanSwitchLayer(int index)
+bool CanSwitchLayer(int WXUNUSED(index))
 {
    if (inscript) {
       // user can only switch layers if script has set the appropriate option
