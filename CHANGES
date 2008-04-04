@@ -10,6 +10,9 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Ignore comma at end of rule string in RLE file.
+AKT: Display warning dialog if bad rule string detected when loading pattern.
+AKT: Added support for reading WinLifeSearch output.
 AKT: Editing and other actions are now allowed while generating a pattern.
 AKT: Fixed problem shrinking selection while generating a pattern.
 AKT: Only show hashing info while generating (avoids paste crash in Mac app).

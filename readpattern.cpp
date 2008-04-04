@@ -172,10 +172,11 @@ void ParseXRLELine(char *line, int *xoff, int *yoff, bigint &gen) {
 /*
  *   Read an RLE pattern into given life algorithm implementation.
  */
-void readrle(lifealgo &imp, char *line) {
+const char *readrle(lifealgo &imp, char *line) {
    int n=0, x=0, y=0 ;
    char *p ;
    char *ruleptr;
+   const char *errmsg = 0;
    int wd=0, ht=0, xoff=0, yoff=0;
    bigint gen = bigint::zero;
    bool xrle = false;               // extended RLE format?
@@ -185,7 +186,7 @@ void readrle(lifealgo &imp, char *line) {
       ParseXRLELine(line, &xoff, &yoff, gen);
       imp.setGeneration(gen);
       xrle = true;
-      if (getline(line, LINESIZE) == NULL) return;
+      if (getline(line, LINESIZE) == NULL) return errmsg;
    }
    
    do {
@@ -197,7 +198,7 @@ void readrle(lifealgo &imp, char *line) {
             p = ruleptr;
             while (*p > ' ') p++;
             *p = 0;
-            imp.setrule(ruleptr) ;
+            errmsg = imp.setrule(ruleptr) ;
          }
       } else if (line[0] == 'x') {
          // extract wd and ht
@@ -207,12 +208,12 @@ void readrle(lifealgo &imp, char *line) {
          while (*p && *p != '=') p++; p++;
          sscanf(p, "%d", &ht);
          
+         /* we no longer center RLE pattern around 0,0
          if (!xrle) {
-            /* no longer center RLE pattern around 0,0
             xoff = -(wd / 2);
             yoff = -(ht / 2);
-            */
          }
+         */
 
          if (getedges) {
             top = yoff;
@@ -227,8 +228,10 @@ void readrle(lifealgo &imp, char *line) {
             while (*p && (*p <= ' ' || *p == '=')) p++;
             ruleptr = p;
             while (*p > ' ') p++;
+            // remove any comma at end of rule
+            if (p[-1] == ',') p--;
             *p = 0;
-            imp.setrule(ruleptr) ;
+            errmsg = imp.setrule(ruleptr) ;
          }
       } else {
          n = 0 ;
@@ -247,24 +250,27 @@ void readrle(lifealgo &imp, char *line) {
                   x = 0 ;
                   y += n ;
                } else if (*p == '!') {
-                  return ;
+                  return errmsg;
                }
                n = 0 ;
             }
          }
       }
    } while (getline(line, LINESIZE));
+   
+   return errmsg;
 }
 
 /*
  *   This ugly bit of code will go undocumented.  It reads Alan Hensel's
  *   PC Life format, either 1.05 or 1.06.
  */
-void readpclife(lifealgo &imp, char *line) {
+const char *readpclife(lifealgo &imp, char *line) {
    int x=0, y=0 ;
    int leftx = x ;
    char *p ;
    char *ruleptr;
+   const char *errmsg = 0;
 
    do {
       if (line[0] == '#') {
@@ -280,7 +286,7 @@ void readpclife(lifealgo &imp, char *line) {
             p = ruleptr;
             while (*p > ' ') p++;
             *p = 0;
-            imp.setrule(ruleptr) ;
+            errmsg = imp.setrule(ruleptr) ;
          }
       } else if (line[0] == '-' || ('0' <= line[0] && line[0] <= '9')) {
          sscanf(line, "%d %d", &x, &y) ;
@@ -295,6 +301,8 @@ void readpclife(lifealgo &imp, char *line) {
          y++ ;
       }
    } while (getline(line, LINESIZE));
+   
+   return errmsg;
 }
 
 /*
@@ -350,7 +358,7 @@ const char *loadpattern(lifealgo &imp) {
    char line[LINESIZE + 1] ;
    const char *errmsg = 0;
 
-   // always reset rules to Conway's Life
+   // reset rule to Conway's Life (default if explicit rule isn't supplied)
    imp.setrule("B3/S23") ;
 
    buffcount = 0;
@@ -361,13 +369,13 @@ const char *loadpattern(lifealgo &imp) {
    else
       lifebeginprogress("Reading pattern file");
 
-   // skip any blank lines at start of file to avoid problems
-   // when copying patterns from Internet Explorer
+   // skip any blank lines at start to avoid problem when copying pattern
+   // from Internet Explorer
    while (getline(line, LINESIZE) && line[0] == 0) ;
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
-      readpclife(imp, line) ;
+      errmsg = readpclife(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
@@ -376,14 +384,14 @@ const char *loadpattern(lifealgo &imp) {
    } else if (line[0] == '#' && line[1] == 'P' && line[2] == ' ') {
       // WinLifeSearch creates clipboard patterns similar to
       // Life 1.05 format but without the header line
-      readpclife(imp, line) ;
+      errmsg = readpclife(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
       }
 
    } else if (line[0] == '#' || line[0] == 'x') {
-      readrle(imp, line) ;
+      errmsg = readrle(imp, line) ;
       imp.endofpattern() ;
       // if getedges is true then readrle has set top,left,bottom,right
 
@@ -397,7 +405,7 @@ const char *loadpattern(lifealgo &imp) {
    } else if (line[0] == '[') {
       errmsg = imp.readmacrocell(line) ;
       imp.endofpattern() ;
-      if (errmsg == 0 && getedges && !imp.isEmpty()) {
+      if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
       }
 
@@ -519,8 +527,8 @@ const char *readcomments(const char *filename, char **commptr)
    if (maxbuffs < 1.0) maxbuffs = 1.0;
    lifebeginprogress("Loading comments");
 
-   // skip any blank lines at start of file to avoid problems
-   // when copying patterns from Internet Explorer
+   // skip any blank lines at start to avoid problem when copying pattern
+   // from Internet Explorer
    while (getline(line, LINESIZE) && line[0] == 0) ;
 
    // test for 'i' to cater for #LLAB comment in LifeLab file

@@ -75,7 +75,8 @@ const char *liferules::setrule(const char *rulestring) {
    int addend = 17 ;
    int i ;
 
-   // set rule string even if bad character detected
+   // set rule string even if bad character detected;
+   // note that rulestring is duplicated carefully to allow setrule(getrule())
    rulestring = strdup(rulestring) ;
    if (rule)
       free((void *)rule) ;
