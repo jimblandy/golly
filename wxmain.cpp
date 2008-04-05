@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2008 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -63,8 +63,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 wxTimer* onetimer;
 
 #ifdef __WXMSW__
-bool callUnselect = false;    // OnIdle needs to call Unselect?
+bool call_unselect = false;   // OnIdle needs to call Unselect?
 #endif
+
+bool call_close = false;      // OnIdle needs to call Close?
 
 // ids for bitmap buttons in tool bar
 enum {
@@ -1483,11 +1485,11 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
    #endif
    
    #ifdef __WXMSW__
-      if ( callUnselect ) {
+      if ( call_unselect ) {
          // deselect file/folder so user can click the same item
          if (showpatterns) patternctrl->GetTreeCtrl()->Unselect();
          if (showscripts) scriptctrl->GetTreeCtrl()->Unselect();
-         callUnselect = false;
+         call_unselect = false;
          
          // calling SetFocus once doesn't stuff up layer bar buttons
          if ( IsActive() && viewptr ) viewptr->SetFocus();
@@ -1498,6 +1500,11 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
       // in layer bar buttons
       if ( IsActive() && viewptr ) viewptr->SetFocus();
    #endif
+   
+   if (call_close) {
+      call_close = false;
+      Close(false);        // false allows OnClose handler to veto close
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1600,7 +1607,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 
       #ifdef __WXMSW__
          // calling Unselect() here causes a crash so do later in OnIdle
-         callUnselect = true;
+         call_unselect = true;
       #endif
 
       // changing focus here works on X11 but not on Mac or Windows
@@ -1661,41 +1668,44 @@ bool MainFrame::SaveCurrentLayer()
 
 void MainFrame::OnClose(wxCloseEvent& event)
 {
-   if (event.CanVeto() && askonquit) {
-      // keep track of which unique clones have been seen;
-      // we add 1 below to allow for cloneseen[0] (always false)
-      const int maxseen = MAX_LAYERS/2 + 1;
-      bool cloneseen[maxseen];
-      for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
+   if (event.CanVeto()) {
+      // we can cancel the close event if necessary
+      if (inscript || generating) {
+         Stop();
+         /* using wxPostEvent doesn't work if we've been called from Yield:
+         wxCommandEvent quitevt(wxEVT_COMMAND_MENU_SELECTED, wxID_EXIT);
+         wxPostEvent(this->GetEventHandler(), quitevt);
+         */
+         // set flag so OnClose gets called again in next OnIdle
+         call_close = true;
+         event.Veto();
+         return;
+      }
    
-      // for each dirty layer, ask user if they want to save changes
-      int oldindex = currindex;
-      for (int i = 0; i < numlayers; i++) {
-         // only ask once for each unique clone (cloneid == 0 for non-clone)
-         int cid = GetLayer(i)->cloneid;
-         if (!cloneseen[cid]) {
-            if (cid > 0) cloneseen[cid] = true;
-            if (GetLayer(i)->dirty) {
-               // temporarily turn off inscript and generating flags
-               bool oldscr = inscript;
-               bool oldgen = generating;
-               inscript = false;
-               generating = false;
-               
-               if (i != currindex) SetLayer(i);
-               if (!SaveCurrentLayer()) {
-                  // user cancelled "save changes" dialog;
-                  // restore current layer and inscript and generating flags
-                  SetLayer(oldindex);
-                  inscript = oldscr;
-                  generating = oldgen;
-                  UpdateUserInterface(IsActive());
-                  event.Veto();
-                  return;
+      if (askonquit) {
+         // keep track of which unique clones have been seen;
+         // we add 1 below to allow for cloneseen[0] (always false)
+         const int maxseen = MAX_LAYERS/2 + 1;
+         bool cloneseen[maxseen];
+         for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
+      
+         // for each dirty layer, ask user if they want to save changes
+         int oldindex = currindex;
+         for (int i = 0; i < numlayers; i++) {
+            // only ask once for each unique clone (cloneid == 0 for non-clone)
+            int cid = GetLayer(i)->cloneid;
+            if (!cloneseen[cid]) {
+               if (cid > 0) cloneseen[cid] = true;
+               if (GetLayer(i)->dirty) {
+                  if (i != currindex) SetLayer(i);
+                  if (!SaveCurrentLayer()) {
+                     // user cancelled "save changes" dialog so restore layer
+                     SetLayer(oldindex);
+                     UpdateUserInterface(IsActive());
+                     event.Veto();
+                     return;
+                  }
                }
-               
-               inscript = oldscr;
-               generating = oldgen;
             }
          }
       }
@@ -1706,10 +1716,10 @@ void MainFrame::OnClose(wxCloseEvent& event)
    
    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
    
-   #ifndef __WXMAC__
-      // if script is running we need to call exit below
-      bool wasinscript = inscript;
-   #endif
+   // if script is running or pattern is generating then CanVeto was false
+   // (probably due to user logging out or shutting down system)
+   // and we need to call exit below
+   bool callexit = inscript || generating;
 
    // abort any running script and tidy up; also restores current directory
    // to location of Golly app so prefs file will be saved in correct place
@@ -1724,24 +1734,12 @@ void MainFrame::OnClose(wxCloseEvent& event)
    for (int i = 0; i < numlayers; i++) {
       Layer* layer = GetLayer(i);
       if (wxFileExists(layer->tempstart)) wxRemoveFile(layer->tempstart);
-      // also clear undo/redo history
+      // clear all undo/redo history for this layer
       layer->undoredo->ClearUndoRedo();
    }
    
-   #ifndef __WXMAC__
-      // avoid error message on Windows or seg fault on Linux
-      if (wasinscript) exit(0);
-   #endif
-
-   #if defined(__WXX11__) || defined(__WXGTK__)
-      // avoid seg fault on Linux
-      if (generating) exit(0);
-   #else
-      if (generating) {
-         allowundo = false;   // prevent RememberGenFinish being called
-         Stop();
-      }
-   #endif
+   // avoid possible error message or seg fault
+   if (callexit) exit(0);
    
    Destroy();
 }
