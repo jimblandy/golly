@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2008 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -418,7 +418,7 @@ void runtestscript(const char *testscript) {
 }
 int main(int argc, char *argv[]) {
    cout << 
-    "This is bgolly " STRINGIFY(VERSION) " Copyright 2007 The Golly Gang."
+    "This is bgolly " STRINGIFY(VERSION) " Copyright 2008 The Golly Gang."
                                                             << endl << flush ;
    while (argc > 1 && argv[1][0] == '-') {
       argc-- ;

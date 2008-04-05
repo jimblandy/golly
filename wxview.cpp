@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2007 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2008 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1498,7 +1498,7 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
       StopDraggingMouse();
    } else if (mainptr->draw_pending) {
       // this can happen if user does a quick click while pattern is generating,
-      // so set a special flag to force drawing to terminate 
+      // so set a special flag to force drawing to terminate
       stop_drawing = true;
    }
 }
