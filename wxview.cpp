@@ -491,7 +491,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SAVEXRLE:    if (!inscript) savexrle = !savexrle; break;
       case DO_RUNSCRIPT:   if (!inscript) mainptr->OpenScript(); break;
       case DO_RUNCLIP:     if (!inscript) mainptr->RunClipboard(); break;
-      case DO_PREFS:       if (!inscript) mainptr->ShowPrefsDialog(); break;
+      case DO_PREFS:       mainptr->ShowPrefsDialog(); break;
       case DO_PATTERNS:    mainptr->ToggleShowPatterns(); break;
       case DO_PATTDIR:     mainptr->ChangePatternDir(); break;
       case DO_SCRIPTS:     mainptr->ToggleShowScripts(); break;

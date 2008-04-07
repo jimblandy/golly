@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Prefs dialog can be opened via "prefs#pagename" link in help window.
 AKT: Fixed some problems if app is quit while running a script.
 AKT: Ignore comma at end of rule string in RLE file.
 AKT: Display warning dialog if bad rule string detected when loading pattern.

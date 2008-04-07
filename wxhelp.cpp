@@ -517,9 +517,15 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          if ( !wxLaunchDefaultBrowser(url) )
             Warning(_("Could not launch browser!"));
       #endif
+
    } else if ( url.StartsWith(wxT("lexpatt:")) ) {
       // user clicked on pattern in Life Lexicon
       ClickLexiconPattern( link.GetHtmlCell() );
+
+   } else if ( url.StartsWith(wxT("prefs#")) ) {
+      // user clicked on link to Preferences dialog
+      mainptr->ShowPrefsDialog( link.GetHref().After('#') );
+
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);

@@ -605,9 +605,9 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
             wxImage image = bmap.ConvertToImage();
             if (image.Ok()) {
                /* there doesn't seem to be any mask or alpha info, at least on Mac
-               if (bmap.GetMask() != NULL) Warning("Bitmap has mask!");
-               if (image.HasMask()) Warning("Image has mask!");
-               if (image.HasAlpha()) Warning("Image has alpha!");
+               if (bmap.GetMask() != NULL) Warning(_("Bitmap has mask!"));
+               if (image.HasMask()) Warning(_("Image has mask!"));
+               if (image.HasAlpha()) Warning(_("Image has alpha!"));
                */
                int wd = image.GetWidth();
                int ht = image.GetHeight();
@@ -1300,9 +1300,9 @@ void MainFrame::UpdateWarp()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ShowPrefsDialog()
+void MainFrame::ShowPrefsDialog(const wxString& page)
 {
-   if (inscript || viewptr->waitingforclick) return;
+   if (viewptr->waitingforclick) return;
 
    if (generating) {
       // terminate generating loop and set command_pending flag
@@ -1311,8 +1311,14 @@ void MainFrame::ShowPrefsDialog()
       cmdevent.SetId(wxID_PREFERENCES);
       return;
    }
+   
+   if (inscript) {
+      // safe to allow prefs dialog while script is running???
+      // if so, maybe we need some sort of warning like this:
+      // Warning(_("The currently running script might clobber any changes you make."));
+   }
 
-   if (ChangePrefs()) {
+   if (ChangePrefs(page)) {
       // user hit OK button
 
       // selection color may have changed
@@ -1335,12 +1341,6 @@ void MainFrame::ShowPrefsDialog()
 
       // if mindelay/maxdelay changed then may need to change minwarp and warp
       UpdateWarp();
-
-      // we currently don't allow user to edit prefs while generating,
-      // but in case that changes:
-      if (generating && currlayer->warp < 0) {
-         whentosee = 0;    // best to see immediately
-      }
 
       // maxhashmem might have changed
       for (int i = 0; i < numlayers; i++) {

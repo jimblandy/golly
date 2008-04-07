@@ -8,8 +8,10 @@
 <p>
 <ul>
 <li> Editing and other actions are now allowed while generating a pattern.
+<li> The Preferences dialog can be opened from the help window by clicking
+     on links like <a href="prefs#view">Preferences > View</a>.
 <li> Improved automatic detection of Perl/Python code used by Run Clipboard.
-<li> Warning is displayed if a bad rule string is detected when loading a pattern.
+<li> A warning is displayed if a bad rule string is detected while loading a pattern.
 <li> Added support for reading WinLifeSearch output.
 <li> Fixed some problems if app is quit while running a script.
 <li> Fixed problem shrinking selection while generating a pattern.
@@ -26,7 +28,8 @@
 <li> Added unlimited undo/redo; see the <a href="edit.html">Edit Menu</a> help
      for details.  For consistency with Undo, the Reset item now restores
      the starting selection and layer name.
-<li> Keyboard shortcuts are now configurable using Preferences > Keyboard.
+<li> Keyboard shortcuts are now configurable using
+     <a href="prefs#keyboard">Preferences > Keyboard</a>.
      Note that you can also specify key combinations to open a pattern,
      run a script, or show any HTML file in the help window.
 <li> Golly can be scripted using Perl;
@@ -80,9 +83,9 @@
 <li> If a pattern has been modified then its layer name is prefixed with an asterisk
      and a "save changes" dialog will appear before certain actions, such as
      opening a pattern file or quitting Golly.  The dialog can be disabled
-     via check boxes in Preferences > Layer.
+     via check boxes in <a href="prefs#layer">Preferences > Layer</a>.
 <li> Scrolling is optional if the pencil/cross/hand cursor is dragged outside
-     the view window; see Preferences > Edit.
+     the view window; see <a href="prefs#edit">Preferences > Edit</a>.
 <li> The hand cursor no longer has a pointing finger.
 <li> A .py file selected via Open Pattern is run as a script.
 <li> If golly-start.py exists in the same folder as the application
@@ -139,7 +142,8 @@
      see the new <a href="python.html">Python Scripting</a> help.
 <li> Golly is available for Linux/GTK.
 <li> Mac app is a Universal Binary (4 times faster on an Intel Mac).
-<li> Added ability to change various colors via Preferences > Color.
+<li> Added ability to change various colors via
+     <a href="prefs#color">Preferences > Color</a>.
      The Black on White option has been replaced by Swap Cell Colors.
 <li> Increased the base step limit from 100 to 10,000.
 <li> Added Show Hash Info option to the Control menu.
@@ -172,10 +176,12 @@
 <li> The clipboard pattern is displayed when pasting.
 <li> Pasting large, sparse patterns is much faster when using Or mode.
 <li> Added more items to the View menu: Fit Selection, Restore Origin and Set Scale.
-<li> The thumb scroll range is adjustable (via Preferences > View).
+<li> The thumb scroll range is adjustable
+     (see <a href="prefs#view">Preferences > View</a>).
 <li> The Reset item now restores the rule, scale, location, step size and
      hashing option to the values they had at generation 0.
-<li> Removed Max Hash Memory from Control menu (now set in Preferences > Control).
+<li> Removed Max Hash Memory from Control menu
+     (now set in <a href="prefs#control">Preferences > Control</a>).
 <li> The Rule dialog lets you select/add/delete named rules.
      If a rule has a name then it's shown in the main window's title bar.
 <li> Hit control-space to advance the selection, or shift-space to advance

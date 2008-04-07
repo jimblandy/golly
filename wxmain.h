@@ -91,7 +91,7 @@ public:
    void SetRandomFillPercentage();
    void SetMinimumWarp();
    void UpdateWarp();
-   void ShowPrefsDialog();
+   void ShowPrefsDialog(const wxString& page = wxEmptyString);
 
    // control functions
    void GeneratePattern();

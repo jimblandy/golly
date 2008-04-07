@@ -32,7 +32,7 @@ void GetPrefs();
 void SavePrefs();
 // Write preferences to the GollyPrefs file.
 
-bool ChangePrefs();
+bool ChangePrefs(const wxString& page);
 // Open a modal dialog so user can change various preferences.
 // Returns true if the user hits OK (so client can call SavePrefs).
 

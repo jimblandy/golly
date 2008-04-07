@@ -2037,7 +2037,7 @@ int currmods = mk_ALT + mk_SHIFT + mk_META;
 class PrefsDialog : public wxPropertySheetDialog
 {
 public:
-   PrefsDialog(wxWindow* parent);
+   PrefsDialog(wxWindow* parent, const wxString& page);
    ~PrefsDialog();
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
@@ -2359,7 +2359,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
-PrefsDialog::PrefsDialog(wxWindow* parent)
+PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
 {
    // not using validators so no need for this:
    // SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
@@ -2388,8 +2388,18 @@ PrefsDialog::PrefsDialog(wxWindow* parent)
    notebook->AddPage(layerPrefs, _("Layer"));
    notebook->AddPage(colorPrefs, _("Color"));
    notebook->AddPage(keyboardPrefs, _("Keyboard"));
+   
+   if (!page.IsEmpty()) {
+      if (page == wxT("file"))            currpage = FILE_PAGE;
+      else if (page == wxT("edit"))       currpage = EDIT_PAGE;
+      else if (page == wxT("control"))    currpage = CONTROL_PAGE;
+      else if (page == wxT("view"))       currpage = VIEW_PAGE;
+      else if (page == wxT("layer"))      currpage = LAYER_PAGE;
+      else if (page == wxT("color"))      currpage = COLOR_PAGE;
+      else if (page == wxT("keyboard"))   currpage = KEYBOARD_PAGE;
+   }
 
-   // show last selected page
+   // show the desired page
    notebook->SetSelection(currpage);
 
    ignore_page_event = false;
@@ -3571,7 +3581,7 @@ PrefsDialog::~PrefsDialog()
 
 // -----------------------------------------------------------------------------
 
-bool ChangePrefs()
+bool ChangePrefs(const wxString& page)
 {
    // save current keyboard shortcuts so we can restore them or detect a change
    action_info savekeyaction[MAX_KEYCODES][MAX_MODS];
@@ -3579,7 +3589,7 @@ bool ChangePrefs()
       for ( int modset = 0; modset < MAX_MODS; modset++ )
          savekeyaction[key][modset] = keyaction[key][modset];
 
-   PrefsDialog dialog(mainptr);
+   PrefsDialog dialog(mainptr, page);
 
    if (dialog.ShowModal() == wxID_OK) {
       // TransferDataFromWindow has validated and updated all global prefs;

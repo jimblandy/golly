@@ -627,7 +627,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_RUN_RECENT,      active && !inscript && numscripts > 0);
       mbar->Enable(ID_SHOW_SCRIPTS,    active);
       mbar->Enable(ID_SCRIPT_DIR,      active);
-      mbar->Enable(wxID_PREFERENCES,   !inscript);
+      // safe to allow prefs dialog while script is running???
+      // mbar->Enable(wxID_PREFERENCES,   !inscript);
 
       mbar->Enable(wxID_UNDO,    active && currlayer->undoredo->CanUndo());
       mbar->Enable(wxID_REDO,    active && currlayer->undoredo->CanRedo());
