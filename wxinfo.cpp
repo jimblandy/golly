@@ -47,6 +47,7 @@ public:
 private:
    // event handlers
    void OnActivate(wxActivateEvent& event);
+   void OnSelectAll(wxCommandEvent& event);
    void OnCloseButton(wxCommandEvent& event);
    void OnClose(wxCloseEvent& event);
 
@@ -61,9 +62,10 @@ wxFrame* GetInfoFrame() {
 }
 
 BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
-   EVT_ACTIVATE   (              InfoFrame::OnActivate)
-   EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
-   EVT_CLOSE      (              InfoFrame::OnClose)
+   EVT_ACTIVATE   (                 InfoFrame::OnActivate)
+   EVT_MENU       (wxID_SELECTALL,  InfoFrame::OnSelectAll)
+   EVT_BUTTON     (wxID_CLOSE,      InfoFrame::OnCloseButton)
+   EVT_CLOSE      (                 InfoFrame::OnClose)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -80,15 +82,13 @@ public:
 private:
    // event handlers
    void OnKeyDown(wxKeyEvent& event);
-   void OnSetFocus(wxFocusEvent& event);
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
-   EVT_KEY_DOWN   (TextView::OnKeyDown)
-   EVT_SET_FOCUS  (TextView::OnSetFocus)
+   EVT_KEY_DOWN   (                 TextView::OnKeyDown)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -113,12 +113,6 @@ void TextView::OnKeyDown(wxKeyEvent& event) {
          event.Skip();
       }
    }
-}
-
-void TextView::OnSetFocus(wxFocusEvent& WXUNUSED(event)) {
-   #ifdef __WXMAC__
-      // wxMac prob: remove focus ring around read-only textctrl???!!!
-   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -172,6 +166,8 @@ InfoFrame::InfoFrame(char *comments)
    #endif
 }
 
+// -----------------------------------------------------------------------------
+
 void InfoFrame::OnActivate(wxActivateEvent& event)
 {
    if ( event.GetActive() ) {
@@ -182,9 +178,21 @@ void InfoFrame::OnActivate(wxActivateEvent& event)
    event.Skip();
 }
 
+// -----------------------------------------------------------------------------
+
+void InfoFrame::OnSelectAll(wxCommandEvent& event) {
+   wxBell();//!!!
+   //!!! textctrl->SetSelection(-1, -1);
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
 void InfoFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
    Close(true);
 }
+
+// -----------------------------------------------------------------------------
 
 void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
    #ifdef __WXMSW__

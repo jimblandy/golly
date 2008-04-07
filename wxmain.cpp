@@ -630,26 +630,26 @@ void MainFrame::UpdateMenuItems(bool active)
       // safe to allow prefs dialog while script is running???
       // mbar->Enable(wxID_PREFERENCES,   !inscript);
 
-      mbar->Enable(wxID_UNDO,    active && currlayer->undoredo->CanUndo());
-      mbar->Enable(wxID_REDO,    active && currlayer->undoredo->CanRedo());
-      mbar->Enable(ID_NO_UNDO,   active && !inscript);
-      mbar->Enable(ID_CUT,       active && !inscript && selexists);
-      mbar->Enable(ID_COPY,      active && !inscript && selexists);
-      mbar->Enable(ID_CLEAR,     active && !inscript && selexists);
-      mbar->Enable(ID_OUTSIDE,   active && !inscript && selexists);
-      mbar->Enable(ID_PASTE,     active && !inscript && textinclip);
-      mbar->Enable(ID_PASTE_SEL, active && !inscript && textinclip && selexists);
-      mbar->Enable(ID_PLOCATION, active);
-      mbar->Enable(ID_PMODE,     active);
-      mbar->Enable(ID_SELALL,    active && !inscript);
-      mbar->Enable(ID_REMOVE,    active && !inscript && selexists);
-      mbar->Enable(ID_SHRINK,    active && !inscript && selexists);
-      mbar->Enable(ID_RANDOM,    active && !inscript && selexists);
-      mbar->Enable(ID_FLIPTB,    active && !inscript && selexists);
-      mbar->Enable(ID_FLIPLR,    active && !inscript && selexists);
-      mbar->Enable(ID_ROTATEC,   active && !inscript && selexists);
-      mbar->Enable(ID_ROTATEA,   active && !inscript && selexists);
-      mbar->Enable(ID_CMODE,     active);
+      mbar->Enable(wxID_UNDO,          active && currlayer->undoredo->CanUndo());
+      mbar->Enable(wxID_REDO,          active && currlayer->undoredo->CanRedo());
+      mbar->Enable(ID_NO_UNDO,         active && !inscript);
+      mbar->Enable(wxID_CUT,           active && !inscript && selexists);
+      mbar->Enable(wxID_COPY,          active && !inscript && selexists);
+      mbar->Enable(wxID_CLEAR,         active && !inscript && selexists);
+      mbar->Enable(ID_OUTSIDE,         active && !inscript && selexists);
+      mbar->Enable(wxID_PASTE,         active && !inscript && textinclip);
+      mbar->Enable(ID_PASTE_SEL,       active && !inscript && textinclip && selexists);
+      mbar->Enable(ID_PLOCATION,       active);
+      mbar->Enable(ID_PMODE,           active);
+      mbar->Enable(wxID_SELECTALL,     active && !inscript);
+      mbar->Enable(ID_REMOVE,          active && !inscript && selexists);
+      mbar->Enable(ID_SHRINK,          active && !inscript && selexists);
+      mbar->Enable(ID_RANDOM,          active && !inscript && selexists);
+      mbar->Enable(ID_FLIPTB,          active && !inscript && selexists);
+      mbar->Enable(ID_FLIPLR,          active && !inscript && selexists);
+      mbar->Enable(ID_ROTATEC,         active && !inscript && selexists);
+      mbar->Enable(ID_ROTATEA,         active && !inscript && selexists);
+      mbar->Enable(ID_CMODE,           active);
 
       if (inscript) {
          // don't use DO_STARTSTOP key to abort a running script
@@ -667,44 +667,44 @@ void MainFrame::UpdateMenuItems(bool active)
          mbar->SetLabel(ID_START, _("Start Generating") + GetAccelerator(DO_STARTSTOP));
       }
 
-      mbar->Enable(ID_START,     active);
-      mbar->Enable(ID_NEXT,      active && !generating && !inscript);
-      mbar->Enable(ID_STEP,      active && !generating && !inscript);
-      mbar->Enable(ID_RESET,     active && !inscript &&
-                                 (generating || currlayer->algo->getGeneration() > currlayer->startgen));
-      mbar->Enable(ID_SETGEN,    active && !inscript);
-      mbar->Enable(ID_FASTER,    active);
-      mbar->Enable(ID_SLOWER,    active && currlayer->warp > minwarp);
-      mbar->Enable(ID_AUTO,      active);
-      mbar->Enable(ID_HASH,      active && !inscript);
-      mbar->Enable(ID_HYPER,     active);
-      mbar->Enable(ID_HINFO,     active);
-      mbar->Enable(ID_RULE,      active && !inscript);
+      mbar->Enable(ID_START,        active);
+      mbar->Enable(ID_NEXT,         active && !generating && !inscript);
+      mbar->Enable(ID_STEP,         active && !generating && !inscript);
+      mbar->Enable(ID_RESET,        active && !inscript && (generating ||
+                                       currlayer->algo->getGeneration() > currlayer->startgen));
+      mbar->Enable(ID_SETGEN,       active && !inscript);
+      mbar->Enable(ID_FASTER,       active);
+      mbar->Enable(ID_SLOWER,       active && currlayer->warp > minwarp);
+      mbar->Enable(ID_AUTO,         active);
+      mbar->Enable(ID_HASH,         active && !inscript);
+      mbar->Enable(ID_HYPER,        active);
+      mbar->Enable(ID_HINFO,        active);
+      mbar->Enable(ID_RULE,         active && !inscript);
 
-      mbar->Enable(ID_FULL,      active);
-      mbar->Enable(ID_FIT,       active);
-      mbar->Enable(ID_FIT_SEL,   active && selexists);
-      mbar->Enable(ID_MIDDLE,    active);
-      mbar->Enable(ID_RESTORE00, active && (currlayer->originx != bigint::zero ||
-                                            currlayer->originy != bigint::zero));
-      mbar->Enable(wxID_ZOOM_IN, active && viewptr->GetMag() < MAX_MAG);
-      mbar->Enable(wxID_ZOOM_OUT, active);
-      mbar->Enable(ID_SET_SCALE, active);
-      mbar->Enable(ID_TOOL_BAR,  active);
-      mbar->Enable(ID_LAYER_BAR, active);
-      mbar->Enable(ID_STATUS_BAR,active);
-      mbar->Enable(ID_EXACT,     active);
-      mbar->Enable(ID_GRID,      active);
-      mbar->Enable(ID_COLORS,    active);
+      mbar->Enable(ID_FULL,         active);
+      mbar->Enable(ID_FIT,          active);
+      mbar->Enable(ID_FIT_SEL,      active && selexists);
+      mbar->Enable(ID_MIDDLE,       active);
+      mbar->Enable(ID_RESTORE00,    active && (currlayer->originx != bigint::zero ||
+                                               currlayer->originy != bigint::zero));
+      mbar->Enable(wxID_ZOOM_IN,    active && viewptr->GetMag() < MAX_MAG);
+      mbar->Enable(wxID_ZOOM_OUT,   active);
+      mbar->Enable(ID_SET_SCALE,    active);
+      mbar->Enable(ID_TOOL_BAR,     active);
+      mbar->Enable(ID_LAYER_BAR,    active);
+      mbar->Enable(ID_STATUS_BAR,   active);
+      mbar->Enable(ID_EXACT,        active);
+      mbar->Enable(ID_GRID,         active);
+      mbar->Enable(ID_COLORS,       active);
       #if defined(__WXMAC__) || defined(__WXGTK__)
          // windows on Mac OS X and GTK+ 2.0 are automatically buffered
-         mbar->Enable(ID_BUFF,   false);
-         mbar->Check(ID_BUFF,    true);
+         mbar->Enable(ID_BUFF,      false);
+         mbar->Check(ID_BUFF,       true);
       #else
-         mbar->Enable(ID_BUFF,   active);
-         mbar->Check(ID_BUFF,    buffered);
+         mbar->Enable(ID_BUFF,      active);
+         mbar->Check(ID_BUFF,       buffered);
       #endif
-      mbar->Enable(ID_INFO,      !currlayer->currfile.IsEmpty());
+      mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
 
       mbar->Enable(ID_ADD_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
       mbar->Enable(ID_CLONE,        active && !inscript && numlayers < MAX_LAYERS);
@@ -1243,11 +1243,11 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_UNDO:         currlayer->undoredo->UndoChange(); break;
       case wxID_REDO:         currlayer->undoredo->RedoChange(); break;
       case ID_NO_UNDO:        ToggleAllowUndo(); break;
-      case ID_CUT:            viewptr->CutSelection(); break;
-      case ID_COPY:           viewptr->CopySelection(); break;
-      case ID_CLEAR:          viewptr->ClearSelection(); break;
+      case wxID_CUT:          viewptr->CutSelection(); break;
+      case wxID_COPY:         viewptr->CopySelection(); break;
+      case wxID_CLEAR:        viewptr->ClearSelection(); break;
       case ID_OUTSIDE:        viewptr->ClearOutsideSelection(); break;
-      case ID_PASTE:          viewptr->PasteClipboard(false); break;
+      case wxID_PASTE:        viewptr->PasteClipboard(false); break;
       case ID_PASTE_SEL:      viewptr->PasteClipboard(true); break;
       case ID_PL_TL:          SetPasteLocation("TopLeft"); break;
       case ID_PL_TR:          SetPasteLocation("TopRight"); break;
@@ -1257,7 +1257,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_PM_COPY:        SetPasteMode("Copy"); break;
       case ID_PM_OR:          SetPasteMode("Or"); break;
       case ID_PM_XOR:         SetPasteMode("Xor"); break;
-      case ID_SELALL:         viewptr->SelectAll(); break;
+      case wxID_SELECTALL:    viewptr->SelectAll(); break;
       case ID_REMOVE:         viewptr->RemoveSelection(); break;
       case ID_SHRINK:         viewptr->ShrinkSelection(false); break;
       case ID_RANDOM:         viewptr->RandomFill(); break;
@@ -1939,17 +1939,17 @@ void MainFrame::CreateMenus()
    editMenu->Append(wxID_REDO,                  _("Redo") + GetAccelerator(DO_REDO));
    editMenu->AppendCheckItem(ID_NO_UNDO,        _("Disable Undo/Redo") + GetAccelerator(DO_DISABLE));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_CUT,                     _("Cut") + GetAccelerator(DO_CUT));
-   editMenu->Append(ID_COPY,                    _("Copy") + GetAccelerator(DO_COPY));
-   editMenu->Append(ID_CLEAR,                   _("Clear") + GetAccelerator(DO_CLEAR));
+   editMenu->Append(wxID_CUT,                   _("Cut") + GetAccelerator(DO_CUT));
+   editMenu->Append(wxID_COPY,                  _("Copy") + GetAccelerator(DO_COPY));
+   editMenu->Append(wxID_CLEAR,                 _("Clear") + GetAccelerator(DO_CLEAR));
    editMenu->Append(ID_OUTSIDE,                 _("Clear Outside") + GetAccelerator(DO_CLEAROUT));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_PASTE,                   _("Paste") + GetAccelerator(DO_PASTE));
+   editMenu->Append(wxID_PASTE,                 _("Paste") + GetAccelerator(DO_PASTE));
    editMenu->Append(ID_PMODE,                   _("Paste Mode"), pmodeSubMenu);
    editMenu->Append(ID_PLOCATION,               _("Paste Location"), plocSubMenu);
    editMenu->Append(ID_PASTE_SEL,               _("Paste to Selection") + GetAccelerator(DO_PASTESEL));
    editMenu->AppendSeparator();
-   editMenu->Append(ID_SELALL,                  _("Select All") + GetAccelerator(DO_SELALL));
+   editMenu->Append(wxID_SELECTALL,             _("Select All") + GetAccelerator(DO_SELALL));
    editMenu->Append(ID_REMOVE,                  _("Remove Selection") + GetAccelerator(DO_REMOVESEL));
    editMenu->Append(ID_SHRINK,                  _("Shrink Selection") + GetAccelerator(DO_SHRINK));
    // full label will be set later by SetRandomFillPercentage
@@ -2109,13 +2109,13 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, wxID_UNDO,          DO_UNDO);
       SetAccelerator(mbar, wxID_REDO,          DO_REDO);
       SetAccelerator(mbar, ID_NO_UNDO,         DO_DISABLE);
-      SetAccelerator(mbar, ID_CUT,             DO_CUT);
-      SetAccelerator(mbar, ID_COPY,            DO_COPY);
-      SetAccelerator(mbar, ID_CLEAR,           DO_CLEAR);
+      SetAccelerator(mbar, wxID_CUT,           DO_CUT);
+      SetAccelerator(mbar, wxID_COPY,          DO_COPY);
+      SetAccelerator(mbar, wxID_CLEAR,         DO_CLEAR);
       SetAccelerator(mbar, ID_OUTSIDE,         DO_CLEAROUT);
-      SetAccelerator(mbar, ID_PASTE,           DO_PASTE);
+      SetAccelerator(mbar, wxID_PASTE,         DO_PASTE);
       SetAccelerator(mbar, ID_PASTE_SEL,       DO_PASTESEL);
-      SetAccelerator(mbar, ID_SELALL,          DO_SELALL);
+      SetAccelerator(mbar, wxID_SELECTALL,     DO_SELALL);
       SetAccelerator(mbar, ID_REMOVE,          DO_REMOVESEL);
       SetAccelerator(mbar, ID_SHRINK,          DO_SHRINK);
       SetAccelerator(mbar, ID_RANDOM,          DO_RANDFILL);
