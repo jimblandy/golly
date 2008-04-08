@@ -168,7 +168,7 @@ InfoFrame::InfoFrame(char *comments)
       vbox->SetDimension(0, 0, infowd, infoht);
    #endif
    
-   // only need this if wxGTK???
+   // need this on Linux
    textctrl->SetFocus();
 }
 
