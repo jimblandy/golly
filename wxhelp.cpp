@@ -584,6 +584,11 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
          GetParent()->Close(true);
          return;
       }
+      // let cmd-A select all text
+      if (event.CmdDown() && key == 'A') {
+         SelectAll();
+         return;
+      }
    #endif
    if ( event.CmdDown() || event.AltDown() ) {
       if ( key == 'C' ) {

@@ -47,7 +47,6 @@ public:
 private:
    // event handlers
    void OnActivate(wxActivateEvent& event);
-   void OnSelectAll(wxCommandEvent& event);
    void OnCloseButton(wxCommandEvent& event);
    void OnClose(wxCloseEvent& event);
 
@@ -62,10 +61,9 @@ wxFrame* GetInfoFrame() {
 }
 
 BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
-   EVT_ACTIVATE   (                 InfoFrame::OnActivate)
-   EVT_MENU       (wxID_SELECTALL,  InfoFrame::OnSelectAll)
-   EVT_BUTTON     (wxID_CLOSE,      InfoFrame::OnCloseButton)
-   EVT_CLOSE      (                 InfoFrame::OnClose)
+   EVT_ACTIVATE   (              InfoFrame::OnActivate)
+   EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
+   EVT_CLOSE      (              InfoFrame::OnClose)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -88,7 +86,7 @@ private:
 };
 
 BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
-   EVT_KEY_DOWN   (                 TextView::OnKeyDown)
+   EVT_KEY_DOWN   (TextView::OnKeyDown)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -99,6 +97,11 @@ void TextView::OnKeyDown(wxKeyEvent& event) {
       // let cmd-W close info window
       if (event.CmdDown() && key == 'W') {
          infoptr->Close(true);
+         return;
+      }
+      // let cmd-A select all text
+      if (event.CmdDown() && key == 'A') {
+         SetSelection(-1, -1);
          return;
       }
    #endif
@@ -164,6 +167,9 @@ InfoFrame::InfoFrame(char *comments)
       // expand sizer now to avoid flicker
       vbox->SetDimension(0, 0, infowd, infoht);
    #endif
+   
+   // only need this if wxGTK???
+   textctrl->SetFocus();
 }
 
 // -----------------------------------------------------------------------------
@@ -175,14 +181,6 @@ void InfoFrame::OnActivate(wxActivateEvent& event)
       // is clicked while app is in background
       mainptr->UpdateMenuItems(false);
    }
-   event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
-void InfoFrame::OnSelectAll(wxCommandEvent& event) {
-   wxBell();//!!!
-   //!!! textctrl->SetSelection(-1, -1);
    event.Skip();
 }
 

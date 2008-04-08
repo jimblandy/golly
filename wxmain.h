@@ -234,16 +234,18 @@ enum {
    // Edit menu
    // wxID_UNDO,
    // wxID_REDO,
-   // wxID_CUT,
-   // wxID_COPY,
+   // due to wxMac bug we don't use wxID_CUT/COPY/CLEAR/PASTE/SELECTALL
+   // (problems occur when info window or a modal dialog is active)
+   ID_CUT,
+   ID_COPY,
    ID_NO_UNDO,
-   // wxID_CLEAR,
+   ID_CLEAR,
    ID_OUTSIDE,
-   // wxID_PASTE,
+   ID_PASTE,
    ID_PMODE,
    ID_PLOCATION,
    ID_PASTE_SEL,
-   // wxID_SELECTALL,
+   ID_SELECTALL,
    ID_REMOVE,
    ID_SHRINK,
    ID_RANDOM,

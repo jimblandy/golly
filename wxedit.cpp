@@ -271,7 +271,7 @@ void PatternView::ClearSelection()
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(wxID_CLEAR);
+      mainptr->cmdevent.SetId(ID_CLEAR);
       return;
    }
    
@@ -738,7 +738,7 @@ void PatternView::CutSelection()
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(wxID_CUT);
+      mainptr->cmdevent.SetId(ID_CUT);
       return;
    }
 
@@ -755,7 +755,7 @@ void PatternView::CopySelection()
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(wxID_COPY);
+      mainptr->cmdevent.SetId(ID_COPY);
       return;
    }
 
@@ -1161,7 +1161,7 @@ void PatternView::PasteClipboard(bool toselection)
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(toselection ? ID_PASTE_SEL : (int) wxID_PASTE);
+      mainptr->cmdevent.SetId(toselection ? ID_PASTE_SEL : ID_PASTE);
       return;
    }
 
