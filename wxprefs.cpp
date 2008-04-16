@@ -1571,8 +1571,7 @@ void InitPrefsPath()
    datadir = wxStandardPaths::Get().GetUserDataDir();
    if ( !wxFileName::DirExists(datadir) ) {
       if ( !wxFileName::Mkdir(datadir, 0777, wxPATH_MKDIR_FULL) ) {
-         Warning(_("Could not create user-specific data directory!\n"
-                   "Will try to use application directory instead."));
+         Warning(_("Could not create user-specific data directory!\nWill try to use application directory instead."));
          datadir = gollydir;
       }
    }
