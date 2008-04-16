@@ -66,7 +66,8 @@ def goto(gen):
 
 # --------------------------------------------------------------------
 
-GotoINIFileName = os.path.join(golly.appdir() + "Scripts", "goto.ini")
+# use same file name as in goto.pl
+GotoINIFileName = golly.datadir() + "goto.ini"
 previousgen = ""
 if os.access(GotoINIFileName, os.R_OK):
    f = open(GotoINIFileName, 'r')

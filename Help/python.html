@@ -158,6 +158,7 @@ or you can search for individual commands alphabetically:
 <a href="#clone"><b>clone</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
+<a href="#datadir"><b>datadir</b></a><br>
 <a href="#dellayer"><b>dellayer</b></a><br>
 <a href="#dokey"><b>dokey</b></a><br>
 <a href="#duplicate"><b>duplicate</b></a><br>
@@ -286,9 +287,28 @@ If the <b>savexrle</b> option is True then extended RLE format is used
 
 <a name="appdir"></a><p><dt><b>appdir()</b></dt>
 <dd>
-Return the location of the Golly application as a string.
+Return the Golly application directory as a string.
 </dd>
 <dd> Example: <b>golly.open(golly.appdir() + "Patterns/Breeders/breeder.lif")</b></dd>
+</p>
+
+<a name="datadir"></a><p><dt><b>datadir()</b></dt>
+<dd>
+Return Golly's user-specific data directory as a string:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>On Linux:</td><td width=20>
+    </td><td>~/.golly/</td></tr>
+<tr><td>On Mac OS X:</td><td width=20>
+    </td><td>~/Library/Application Support/Golly/</td></tr>
+<tr><td>On Windows:</td><td width=20>
+    </td><td>C:\Documents and Settings\username\Application Data\Golly\</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>golly.store(clist, golly.datadir() + "foo.rle")</b></dd>
 </p>
 
 <p><a name="editing">

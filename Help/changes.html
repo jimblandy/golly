@@ -8,12 +8,17 @@
 <p>
 <ul>
 <li> Editing and other actions are now allowed while generating a pattern.
+<li> Golly saves files in the standard user-specific data directory on each platform
+     rather than in the application directory.  However, you can still keep
+     the GollyPrefs file in the application directory if you prefer that option.
 <li> The Preferences dialog can be opened from the help window by clicking
      on links like <a href="prefs#view">Preferences > View</a>.
 <li> Improved automatic detection of Perl/Python code used by Run Clipboard.
+<li> Added <a href="python.html#datadir">datadir</a> command so scripts can
+     save files in Golly's user-specific data directory.
 <li> A warning is displayed if a bad rule string is detected while loading a pattern.
 <li> Added support for reading WinLifeSearch output.
-<li> Fixed some problems if app is quit while running a script.
+<li> Fixed some problems if you quit Golly while running a script.
 <li> Fixed problem shrinking selection while generating a pattern.
 <li> Fixed "Rules differ" warning when undoing/redoing generating changes using hashing.
 <li> Fixed bug in Mac app's activate event handler.

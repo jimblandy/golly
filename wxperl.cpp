@@ -531,6 +531,18 @@ XS(pl_appdir)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_datadir)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $dir = g_datadir()");
+
+   XSRETURN_PV((const char*) datadir.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_new)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2334,6 +2346,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_load",         pl_load,         file);
    newXS("g_store",        pl_store,        file);
    newXS("g_appdir",       pl_appdir,       file);
+   newXS("g_datadir",      pl_datadir,      file);
    // editing
    newXS("g_new",          pl_new,          file);
    newXS("g_cut",          pl_cut,          file);

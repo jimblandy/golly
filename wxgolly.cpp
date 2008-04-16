@@ -182,9 +182,8 @@ void SetAppDirectory(const char* argv0)
    #ifdef __WXMSW__
       // on Windows we need to reset current directory to app directory if user
       // dropped file from somewhere else onto app to start it up (otherwise we
-      // can't find Help files and prefs file gets saved to wrong location)
-      wxStandardPaths wxstdpaths;
-      wxString appdir = wxstdpaths.GetDataDir();
+      // can't find Help files)
+      wxString appdir = wxStandardPaths::Get().GetDataDir();
       wxString currdir = wxGetCwd();
       if ( currdir.CmpNoCase(appdir) != 0 )
          wxSetWorkingDirectory(appdir);
@@ -265,7 +264,7 @@ bool GollyApp::OnInit()
    if (initdir.Last() != wxFILE_SEP_PATH) initdir += wxFILE_SEP_PATH;
 
    // make sure current working directory contains application otherwise
-   // we can't open Help files and prefs file gets saved in wrong location
+   // we can't open Help files
    SetAppDirectory( wxString(argv[0]).mb_str(wxConvLocal) );
 
    // now set global gollydir for use in GetPrefs and elsewhere

@@ -70,8 +70,8 @@ sub go_to {
 
 # --------------------------------------------------------------------
 
-# we use same file name as in goto.py
-my $GotoINIFileName = g_appdir()."Scripts/goto.ini";
+# use same file name as in goto.py
+my $GotoINIFileName = g_datadir()."goto.ini";
 my $previousgen = "";
 
 if (open(INFILE, $GotoINIFileName)) {

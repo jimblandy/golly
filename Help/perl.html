@@ -132,6 +132,7 @@ or you can search for individual commands alphabetically:
 <a href="#clone"><b>g_clone</b></a><br>
 <a href="#copy"><b>g_copy</b></a><br>
 <a href="#cut"><b>g_cut</b></a><br>
+<a href="#datadir"><b>g_datadir</b></a><br>
 <a href="#dellayer"><b>g_dellayer</b></a><br>
 <a href="#dokey"><b>g_dokey</b></a><br>
 <a href="#duplicate"><b>g_duplicate</b></a><br>
@@ -260,9 +261,28 @@ If the <b>savexrle</b> option is 1 then extended RLE format is used
 
 <a name="appdir"></a><p><dt><b>g_appdir()</b></dt>
 <dd>
-Return the location of the Golly application as a string.
+Return the Golly application directory as a string.
 </dd>
 <dd> Example: <b>g_open(g_appdir()."Patterns/Breeders/breeder.lif");</b></dd>
+</p>
+
+<a name="datadir"></a><p><dt><b>g_datadir()</b></dt>
+<dd>
+Return Golly's user-specific data directory as a string:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>On Linux:</td><td width=20>
+    </td><td>~/.golly/</td></tr>
+<tr><td>On Mac OS X:</td><td width=20>
+    </td><td>~/Library/Application Support/Golly/</td></tr>
+<tr><td>On Windows:</td><td width=20>
+    </td><td>C:\Documents and Settings\username\Application Data\Golly\</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>g_store($cellarray, g_datadir()."foo.rle");</b></dd>
 </p>
 
 <p><a name="editing">

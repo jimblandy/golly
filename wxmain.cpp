@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for Warning, Fatal, etc
-#include "wxprefs.h"       // for gollydir, SavePrefs, SetPasteMode, etc
+#include "wxprefs.h"       // for gollydir, datadir, SavePrefs, etc
 #include "wxinfo.h"        // for ShowInfo, GetInfoFrame
 #include "wxhelp.h"        // for ShowHelp, GetHelpFrame
 #include "wxstatus.h"      // for statusptr->...
@@ -2247,12 +2247,12 @@ MainFrame::MainFrame()
 {
    wxGetApp().SetFrameIcon(this);
 
-   // initialize hidden files to be in same folder as Golly app;
-   // they must be absolute paths in case they are used from a script command when
-   // the current directory has been changed to the location of the script file
-   clipfile = gollydir + wxT(".golly_clipboard");
-   perlfile = gollydir + wxT(".golly_clip.pl");
-   pythonfile = gollydir + wxT(".golly_clip.py");
+   // initialize paths to some temporary files (in datadir so no need to be hidden);
+   // they must be absolute paths in case they are used from a script command when the
+   // current directory has been changed to the location of the script file
+   clipfile = datadir + wxT("golly_clipboard");
+   perlfile = datadir + wxT("golly_clip.pl");
+   pythonfile = datadir + wxT("golly_clip.py");
 
    // create one-shot timer (see OnOneTimer)
    onetimer = new wxTimer(this, wxID_ANY);

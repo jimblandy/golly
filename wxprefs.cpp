@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/stdpaths.h"   // for wxStandardPaths
 #include "wx/filename.h"   // for wxFileName
 #include "wx/propdlg.h"    // for wxPropertySheetDialog
 #include "wx/colordlg.h"   // for wxColourDialog
@@ -64,10 +65,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-// Golly's preferences file is a simple text file created in the same directory
-// as the application.  This makes uninstalling simple and allows multiple
-// copies of the app to have separate settings.
-const char PREFS_NAME[] = "GollyPrefs";
+// Golly's preferences file is a simple text file.  It's initially created in
+// a user-specific data directory (datadir) but we also look in the application
+// directory (gollydir) because this makes uninstalling simple and allows
+// multiple copies of the app to have separate preferences.
+const wxString PREFS_NAME = wxT("GollyPrefs");
+
+wxString prefspath;              // full path to prefs file
 
 // location of supplied pattern collection (relative to app)
 const wxString PATT_DIR = wxT("Patterns");
@@ -84,6 +88,8 @@ const int BITMAP_HT = 20;        // height of bitmap in color buttons
 // initialize exported preferences:
 
 wxString gollydir;               // path of directory containing app
+wxString datadir;                // path of directory containing user-specific data
+
 int debuglevel = 0;              // for displaying debug info if > 0
 
 int mainx = 30;                  // main window's initial location
@@ -1290,7 +1296,7 @@ void SavePrefs()
       return;
    }
    
-   FILE* f = fopen(PREFS_NAME, "w");
+   FILE* f = fopen((const char*)prefspath.mb_str(wxConvLocal), "w");
    if (f == NULL) {
       Warning(_("Could not save preferences file!"));
       return;
@@ -1554,6 +1560,27 @@ void GetPrefs()
 {
    int currversion = PREFS_VERSION;
 
+   // init datadir and create the directory if it doesn't exist;
+   // the directory will probably be:
+   // Win: C:\Documents and Settings\username\Application Data\Golly
+   // Mac: ~/Library/Application Support/Golly
+   // Unix: ~/.golly
+   datadir = wxStandardPaths::Get().GetUserDataDir();
+   if ( !wxFileName::DirExists(datadir) ) {
+      if ( !wxFileName::Mkdir(datadir, 0777, wxPATH_MKDIR_FULL) ) {
+         Warning(_("Could not create user-specific data directory!\n"
+                   "Will try to use application directory instead."));
+         datadir = gollydir;
+      }
+   }
+   if (datadir.Last() != wxFILE_SEP_PATH) datadir += wxFILE_SEP_PATH;
+   
+   // init prefspath -- look in gollydir first, then in datadir
+   prefspath = gollydir + PREFS_NAME;
+   if ( !wxFileExists(prefspath) ) {
+      prefspath = datadir + PREFS_NAME;
+   }
+
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
    choosedir = gollydir;
@@ -1591,14 +1618,14 @@ void GetPrefs()
 
    namedrules.Add(wxT("Life|B3/S23"));      // must be 1st entry
 
-   if ( !wxFileExists(wxString(PREFS_NAME,wxConvLocal)) ) {
+   if ( !wxFileExists(prefspath) ) {
       AddDefaultRules();
       AddDefaultKeyActions();
       UpdateAcceleratorStrings();
       return;
    }
    
-   FILE* f = fopen(PREFS_NAME, "r");
+   FILE* f = fopen((const char*)prefspath.mb_str(wxConvLocal), "r");
    if (f == NULL) {
       Warning(_("Could not read preferences file!"));
       return;

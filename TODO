@@ -18,8 +18,6 @@ For future versions:
   nice to have Golly switch to that rule (make it optional -- see
   solution proposed in LifeCA).
 
-- Use wxFileName::CreateTempFileName for all temporary files.
-
 - Support toroidal universes (see LifeLab).  Or provide this as part
   of an MCell-compatible lifealgo.
 

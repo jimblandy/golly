@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Don't create files in app directory except (optionally) GollyPrefs.
 AKT: Cmd-A/Ctrl-A selects all text in info/help window.
 AKT: Prefs dialog can be opened via "prefs#pagename" link in help window.
 AKT: Fixed some problems if app is quit while running a script.

@@ -39,6 +39,8 @@ bool ChangePrefs(const wxString& page);
 // Global preference data:
 
 extern wxString gollydir;        // path of directory containing app
+extern wxString datadir;         // path of directory containing user-specific data
+
 extern int debuglevel;           // for displaying debug info if > 0
 
 extern int mainx;                // main window's location
