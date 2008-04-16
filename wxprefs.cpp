@@ -1556,9 +1556,12 @@ void CheckVisibility(int* x, int* y, int* wd, int* ht)
 
 // -----------------------------------------------------------------------------
 
-void GetPrefs()
+void InitPrefsPath()
 {
-   int currversion = PREFS_VERSION;
+   #if defined(__WXGTK__) || defined(__WXX11__)
+      // on Linux we want datadir to be "~/.golly" rather than "~/.Golly"
+      wxGetApp().SetAppName(_("golly"));
+   #endif
 
    // init datadir and create the directory if it doesn't exist;
    // the directory will probably be:
@@ -1574,12 +1577,27 @@ void GetPrefs()
       }
    }
    if (datadir.Last() != wxFILE_SEP_PATH) datadir += wxFILE_SEP_PATH;
+
+   #if defined(__WXGTK__) || defined(__WXX11__)
+      // "Golly" is nicer for warning dialogs etc
+      wxGetApp().SetAppName(_("Golly"));
+   #endif
    
    // init prefspath -- look in gollydir first, then in datadir
    prefspath = gollydir + PREFS_NAME;
    if ( !wxFileExists(prefspath) ) {
       prefspath = datadir + PREFS_NAME;
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void GetPrefs()
+{
+   int currversion = PREFS_VERSION;
+   
+   // init datadir and prefspath
+   InitPrefsPath();
 
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
