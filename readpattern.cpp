@@ -345,7 +345,7 @@ long getfilesize(const char *filename) {
       flen = ftell(f);
       fclose(f);
    }
-   char *p = strrchr(filename, '.');
+   const char *p = strrchr(filename, '.');
    if ( p != NULL && p[1] == 'g' && p[2] == 'z' ) {
       // is there a fast way to get uncompressed size of a .gz file???!!!
       // for now we just multiply flen by a fudge factor -- yuk!
