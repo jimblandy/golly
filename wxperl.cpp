@@ -74,6 +74,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <perl.h>
 #include <XSUB.h>
 
+/*
+ * Quoting Jan Dubois of Active State:
+ *    ActivePerl build 822 still identifies itself as 5.8.8 but already
+ *    contains many of the changes from the upcoming Perl 5.8.9 release.
+ *
+ * The changes include addition of two symbols (Perl_sv_2iv_flags,
+ * Perl_newXS_flags) not present in earlier releases.
+ *
+ * Jan Dubois suggested the following guarding scheme:
+ */
+#if (ACTIVEPERL_VERSION >= 822)
+# define PERL589_OR_LATER
+#endif
+#if (PERL_REVISION == 5) && (PERL_VERSION == 8) && (PERL_SUBVERSION >= 9)
+# define PERL589_OR_LATER
+#endif
+#if (PERL_REVISION == 5) && (PERL_VERSION >= 9)
+# define PERL589_OR_LATER
+#endif
+
 // restore wxWidgets definition for _ (from include/wx/intl.h)
 #undef _
 #define _(s) wxGetTranslation(_T(s))
@@ -128,6 +148,10 @@ extern "C"
    int(*G_perl_parse)(PerlInterpreter*, XSINIT_t, int, char**, char**) = NULL;
    int(*G_perl_run)(PerlInterpreter*) = NULL;
    SV*(*G_Perl_eval_pv)(pTHX_ const char*, I32) = NULL;
+#ifdef PERL589_OR_LATER
+   IV (*G_Perl_sv_2iv_flags)(pTHX_ SV* sv, I32 flags);
+#endif
+
 #ifdef __WXMSW__
    void(*G_boot_DynaLoader)(pTHX_ CV*) = NULL;
 #endif
@@ -161,6 +185,9 @@ extern "C"
 #define perl_parse               G_perl_parse
 #define perl_run                 G_perl_run
 #define Perl_eval_pv             G_Perl_eval_pv
+#ifdef PERL589_OR_LATER
+#  define Perl_sv_2iv_flags G_Perl_sv_2iv_flags
+#endif
 #ifdef __WXMSW__
 #define boot_DynaLoader          G_boot_DynaLoader
 #endif
@@ -206,6 +233,9 @@ static struct PerlFunc
    PERL_FUNC(perl_parse)
    PERL_FUNC(perl_run)
    PERL_FUNC(Perl_eval_pv)
+#ifdef PERL589_OR_LATER
+   PERL_FUNC(Perl_sv_2iv_flags)
+#endif
 #ifdef __WXMSW__
    PERL_FUNC(boot_DynaLoader)
 #endif
