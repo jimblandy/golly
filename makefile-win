@@ -279,7 +279,7 @@ $(OBJDIR):
 	mkdir $(OBJDIR)
 
 clean: 
-	-if exist $(OBJDIR)/*.obj del $(OBJDIR)/*.obj
+	-if exist $(OBJDIR)\*.obj del $(OBJDIR)\*.obj
 	-if exist *.res del *.res
 	-if exist Golly.exe del Golly.exe
 	-if exist golly.pdb del golly.pdb
