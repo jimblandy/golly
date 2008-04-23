@@ -61,13 +61,6 @@ public:
    void CopyAllRect(int top, int left, int bottom, int right,
                     lifealgo* srcalgo, lifealgo* destalgo,
                     const wxString& progmsg);
-   bool FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
-                 int top, int left, int bottom, int right);
-   bool RotateRect(bool clockwise, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
-                   int itop, int ileft, int ibottom, int iright,
-                   int ntop, int nleft, int nbottom, int nright);
-   bool SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
-                        int itop, int ileft, int ibottom, int iright);
    void SaveCurrentSelection();
    void RememberNewSelection(const wxString& action);
 

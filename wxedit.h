@@ -24,7 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXEDIT_H_
 #define _WXEDIT_H_
 
-#include "bigint.h"     // for bigint class
+#include "bigint.h"     // for bigint
+#include "lifealgo.h"   // for lifealgo
 
 // Most editing functions operate on the current selection.
 // This class encapsulates all of the selection-related operations:
@@ -130,11 +131,30 @@ private:
    void AddEOL(char** chptr);
    // these routines are used by CopyToClipboard to create RLE data
 
+   bool SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
+                        int itop, int ileft, int ibottom, int iright);
+   // compare same rectangle in the given universes and remember the differences
+   // in cell states; return false only if user aborts lengthy comparison
+
+   bool FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                 int top, int left, int bottom, int right);
+   // called by Flip to flip given rectangle from source universe to
+   // destination universe and optionally kill cells in the source rectangle;
+   // return false only if user aborts lengthy flip
+
+   bool RotateRect(bool clockwise, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                   int itop, int ileft, int ibottom, int iright,
+                   int ntop, int nleft, int nbottom, int nright);
+   // called by Rotate to rotate given rectangle from source universe to
+   // destination universe and optionally kill cells in the source rectangle;
+   // return false only if user aborts lengthy rotation
+
    bool RotatePattern(bool clockwise,
                       bigint& newtop, bigint& newbottom,
                       bigint& newleft, bigint& newright,
                       bool inundoredo);
-   // called by Rotate when the selection encloses the entire pattern
+   // called by Rotate when the selection encloses the entire pattern;
+   // return false only if user aborts lengthy rotation
    
    bigint seltop, selleft, selbottom, selright;
    // currently we only support a single rectangular selection

@@ -184,7 +184,7 @@ wxview.h wxrender.h wxscript.h wxmain.h wxundo.h wxlayer.h
 $(OBJDIR)/wxedit.o: wxedit.cpp wxedit.h \
 platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
 qlifealgo.h liferules.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxmain.h wxstatus.h wxrender.h wxscript.h wxview.h \
+wxgolly.h wxutils.h wxprefs.h wxmain.h wxstatus.h wxscript.h wxview.h \
 wxundo.h wxlayer.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxedit.cpp
 
