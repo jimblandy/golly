@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"           // for bigint class
 #include "viewport.h"         // for viewport class
+#include "wxedit.h"           // for Selection class
 #include "wxundo.h"           // for UndoRedo class
 
 // Golly supports multiple layers.  Each layer is a separate universe
@@ -46,20 +47,21 @@ public:
    bool savedirty;            // state of dirty flag before drawing/script change
    bool stayclean;            // script has reset dirty flag?
    int warp;                  // speed setting (ie. step exponent)
-   viewport* view;            // viewport for displaying patterns
    wxCursor* curs;            // cursor mode
    UndoRedo* undoredo;        // undo/redo history (shared by clones)
+
+   // each layer (cloned or not) has its own viewport for displaying patterns;
+   // note that we use a pointer to the viewport to allow temporary switching
+   // in wxrender.cpp (eg. in DrawStackedLayers)
+   viewport* view;
 
    // WARNING: this string is used to remember the current rule when
    // switching to another layer; to determine the current rule at any
    // time, use global_liferules.getrule() or currlayer->algo->getrule()
    wxString rule;
    
-   // current selection edges
-   bigint seltop, selbottom, selleft, selright;
-   
-   // saved selection edges used to restore selection, and for undo/redo
-   bigint savetop, savebottom, saveleft, saveright;
+   Selection currsel;         // current selection
+   Selection savesel;         // for saving/restoring selection
 
    bigint originx;            // X origin offset
    bigint originy;            // Y origin offset
@@ -78,9 +80,7 @@ public:
    bigint startx, starty;     // starting location
    int startwarp;             // starting speed
    int startmag;              // starting scale
-
-   // for saving and restoring starting selection
-   bigint starttop, startleft, startbottom, startright;
+   Selection startsel;        // starting selection
    
    // temporary file used to restore starting pattern or to show comments;
    // each non-cloned layer uses a different temporary file

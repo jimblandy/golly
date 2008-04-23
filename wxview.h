@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"     // for bigint
 #include "lifealgo.h"   // for lifealgo
+#include "wxedit.h"     // for Selection
 
 // Define a child window for viewing and editing patterns:
 
@@ -40,13 +41,11 @@ public:
    void CopySelection();
    void ClearSelection();
    void ClearOutsideSelection();
-   void CopySelectionToClipboard(bool cut);
    bool GetClipboardPattern(lifealgo** tempalgo, bigint* t, bigint* l, bigint* b, bigint* r);
    void PasteClipboard(bool toselection);
    void CyclePasteLocation();
    void CyclePasteMode();
    void DisplaySelectionSize();
-   void NoSelection();
    bool SelectionExists();
    void SelectAll();
    void RemoveSelection();
@@ -62,6 +61,11 @@ public:
    void CopyAllRect(int top, int left, int bottom, int right,
                     lifealgo* srcalgo, lifealgo* destalgo,
                     const wxString& progmsg);
+   bool FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                 int top, int left, int bottom, int right);
+   bool RotateRect(bool clockwise, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
+                   int itop, int ileft, int ibottom, int iright,
+                   int ntop, int nleft, int nbottom, int nright);
    bool SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
                         int itop, int ileft, int ibottom, int iright);
    void SaveCurrentSelection();
@@ -76,10 +80,6 @@ public:
    bool PointInView(int x, int y);
    // return true if given screen position is in viewport
 
-   // display functions
-   bool GridVisible();
-   bool SelectionVisible(wxRect* visrect);
-
    // view functions
    void ZoomOut();
    void ZoomIn();
@@ -90,6 +90,7 @@ public:
    void ChangeOrigin();
    void RestoreOrigin();
    void SetViewSize(int wd, int ht);
+   bool GridVisible();
    void ToggleGridLines();
    void ToggleCellColors();
    void ToggleBuffering();
@@ -101,6 +102,7 @@ public:
    void GetPos(bigint& x, bigint& y);
    void FitInView(int force);
    int CellVisible(const bigint& x, const bigint& y);
+   void TestAutoFit();
 
    // process keyboard and mouse events
    void ProcessKey(int key, int modifiers);
@@ -149,32 +151,17 @@ private:
    void DrawOneCell(int cx, int cy, wxDC& dc);
    void StartDrawingCells(int x, int y);
    void DrawCells(int x, int y);
-   void ModifySelection(bigint& xclick, bigint& yclick);
    void StartSelectingCells(int x, int y, bool shiftdown);
    void SelectCells(int x, int y);
    void StartMovingView(int x, int y);
    void MoveView(int x, int y);
    void StopDraggingMouse();
    void RestoreSelection();
-   void TestAutoFit();
    void ZoomInPos(int x, int y);
    void ZoomOutPos(int x, int y);
-   void EmptyUniverse();
    void SetPasteRect(wxRect& rect, bigint& wd, bigint& ht);
    void PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);
-   bool FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
-                 int top, int left, int bottom, int right);
-   bool RotatePattern(bool clockwise,
-                      bigint& newtop, bigint& newbottom,
-                      bigint& newleft, bigint& newright,
-                      bool inundoredo = false);
-   bool RotateRect(bool clockwise, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
-                   int itop, int ileft, int ibottom, int iright,
-                   int ntop, int nleft, int nbottom, int nright);
-   void AddEOL(char** chptr);
-   void AddRun(char ch, unsigned int* run, unsigned int* linelen, char** chptr);
-   bool SaveOutsideSelection(bigint& t, bigint& l, bigint& b, bigint& r);
 
    // scroll functions
    void PanUp(int amount);
@@ -195,10 +182,7 @@ private:
    bool forceh;                  // resize selection horizontally?
    bool forcev;                  // resize selection vertically?
    bigint anchorx, anchory;      // anchor cell of current selection
-   bigint prevtop;               // previous edges of new selection
-   bigint prevbottom;            // (used to decide if new selection has to be drawn)
-   bigint prevleft;
-   bigint prevright;
+   Selection prevsel;            // previous selection
    int drawstate;                // new cell state (0 or 1)
    int pastex, pastey;           // where user wants to paste clipboard pattern
    wxCursor* oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor

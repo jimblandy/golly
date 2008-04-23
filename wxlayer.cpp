@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxedit.h"        // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
@@ -847,16 +848,9 @@ void SyncClones()
             // sync speed
             cloneptr->warp = currlayer->warp;
             
-            // sync selection
-            cloneptr->seltop = currlayer->seltop;
-            cloneptr->selbottom = currlayer->selbottom;
-            cloneptr->selleft = currlayer->selleft;
-            cloneptr->selright = currlayer->selright;
-
-            cloneptr->savetop = currlayer->savetop;
-            cloneptr->savebottom = currlayer->savebottom;
-            cloneptr->saveleft = currlayer->saveleft;
-            cloneptr->saveright = currlayer->saveright;
+            // sync selection info
+            cloneptr->currsel = currlayer->currsel;
+            cloneptr->savesel = currlayer->savesel;
             
             // sync the stuff needed to reset pattern
             cloneptr->savestart = currlayer->savestart;
@@ -866,10 +860,7 @@ void SyncClones()
             cloneptr->startfile = currlayer->startfile;
             cloneptr->startgen = currlayer->startgen;
             cloneptr->currfile = currlayer->currfile;
-            cloneptr->starttop = currlayer->starttop;
-            cloneptr->startleft = currlayer->startleft;
-            cloneptr->startbottom = currlayer->startbottom;
-            cloneptr->startright = currlayer->startright;
+            cloneptr->startsel = currlayer->startsel;
             // clone can have different starting name, pos, scale, speed
             // cloneptr->startname = currlayer->startname;
             // cloneptr->startx = currlayer->startx;
@@ -1521,12 +1512,6 @@ Layer::Layer()
    warp = 0;                     // initial speed setting
    originx = 0;                  // no X origin offset
    originy = 0;                  // no Y origin offset
-   
-   // no selection
-   seltop = savetop = 1;
-   selbottom = savebottom = 0;
-   selleft = saveleft = 0;
-   selright = saveright = 0;
 
    if (numlayers == 0) {
       // creating very first layer
@@ -1642,16 +1627,9 @@ Layer::Layer()
          originx = currlayer->originx;
          originy = currlayer->originy;
          
-         // duplicate selection
-         seltop = currlayer->seltop;
-         selbottom = currlayer->selbottom;
-         selleft = currlayer->selleft;
-         selright = currlayer->selright;
-
-         savetop = currlayer->savetop;
-         savebottom = currlayer->savebottom;
-         saveleft = currlayer->saveleft;
-         saveright = currlayer->saveright;
+         // duplicate selection info
+         currsel = currlayer->currsel;
+         savesel = currlayer->savesel;
 
          // duplicate the stuff needed to reset pattern
          savestart = currlayer->savestart;
@@ -1666,10 +1644,7 @@ Layer::Layer()
          startfile = currlayer->startfile;
          startgen = currlayer->startgen;
          currfile = currlayer->currfile;
-         starttop = currlayer->starttop;
-         startleft = currlayer->startleft;
-         startbottom = currlayer->startbottom;
-         startright = currlayer->startright;
+         startsel = currlayer->startsel;
       }
       
       if (duplicating) {
@@ -1710,7 +1685,7 @@ Layer::Layer()
 
 Layer::~Layer()
 {
-   if (view) delete view;
+   delete view;   // delete viewport
 
    if (cloneid > 0) {
       // count how many layers have the same cloneid
@@ -1737,9 +1712,9 @@ Layer::~Layer()
       }
       
    } else {
-      // not a clone so delete algo and undo/redo history
-      if (algo) delete algo;
-      if (undoredo) delete undoredo;
+      // not a clone so delete universe and undo/redo history
+      delete algo;
+      delete undoredo;
       
       // delete tempstart file if it exists
       if (wxFileExists(tempstart)) wxRemoveFile(tempstart);

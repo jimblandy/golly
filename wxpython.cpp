@@ -55,6 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxedit.h"        // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Note, GetString, etc
@@ -656,13 +657,10 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   // temporarily change selection rect and paste mode
-   bigint oldleft = currlayer->selleft;
-   bigint oldtop = currlayer->seltop;
-   bigint oldright = currlayer->selright;
-   bigint oldbottom = currlayer->selbottom;
-
+   // temporarily change selection and paste mode
+   Selection oldsel = currlayer->currsel;
    const char* oldmode = GetPasteMode();
+
    wxString modestr = wxString(mode, wxConvLocal);
    if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
@@ -673,18 +671,12 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
    }
 
    // create huge selection rect so no possibility of error message
-   currlayer->selleft = x;
-   currlayer->seltop = y;
-   currlayer->selright = currlayer->selleft;   currlayer->selright += INT_MAX;
-   currlayer->selbottom = currlayer->seltop;   currlayer->selbottom += INT_MAX;
+   currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
 
    viewptr->PasteClipboard(true);      // true = paste to selection
 
-   // restore selection rect and paste mode
-   currlayer->selleft = oldleft;
-   currlayer->seltop = oldtop;
-   currlayer->selright = oldright;
-   currlayer->selbottom = oldbottom;
+   // restore selection and paste mode
+   currlayer->currsel = oldsel;
    SetPasteMode(oldmode);
 
    DoAutoUpdate();
@@ -1317,16 +1309,13 @@ static PyObject* py_getselrect(PyObject* self, PyObject* args)
    PyObject* outlist = PyList_New(0);
 
    if (viewptr->SelectionExists()) {
-      if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
-                                  currlayer->selbottom, currlayer->selright) ) {
+      if (currlayer->currsel.TooBig()) {
          PyErr_SetString(PyExc_RuntimeError, "getselrect error: selection is too big.");
          Py_DECREF(outlist);
          return NULL;
       }
-      long x = currlayer->selleft.toint();
-      long y = currlayer->seltop.toint();
-      long wd = currlayer->selright.toint() - x + 1;
-      long ht = currlayer->selbottom.toint() - y + 1;
+      int x, y, wd, ht;
+      currlayer->currsel.GetRect(&x, &y, &wd, &ht);
 
       AddCell(outlist, x, y);
       AddCell(outlist, wd, ht);
@@ -1538,9 +1527,9 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
          while (ngens > 0) {
             ngens--;
             if (where == 0)
-               mainptr->AdvanceSelection();
+               currlayer->currsel.Advance();
             else
-               mainptr->AdvanceOutsideSelection();
+               currlayer->currsel.AdvanceOutside();
          }
          DoAutoUpdate();
       } else {

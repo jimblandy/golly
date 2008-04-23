@@ -182,7 +182,7 @@ void MainFrame::NewPattern(const wxString& title)
 
    // rule doesn't change so no need to call setrule
 
-   if (newremovesel) viewptr->NoSelection();
+   if (newremovesel) currlayer->currsel.Deselect();
    if (newcurs) currlayer->curs = newcurs;
    viewptr->SetPosMag(bigint::zero, bigint::zero, newmag);
 
@@ -316,7 +316,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
 
-      if (openremovesel) viewptr->NoSelection();
+      if (openremovesel) currlayer->currsel.Deselect();
       if (opencurs) currlayer->curs = opencurs;
 
       viewptr->FitInView(1);

@@ -1225,20 +1225,17 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_NEW:          NewPattern(); break;
       case wxID_OPEN:         OpenPattern(); break;
       case ID_OPEN_CLIP:      OpenClipboard(); break;
-      case ID_CLEAR_MISSING_PATTERNS:  ClearMissingPatterns(); break;
-      case ID_CLEAR_ALL_PATTERNS:      ClearAllPatterns(); break;
       case ID_SHOW_PATTERNS:  ToggleShowPatterns(); break;
       case ID_PATTERN_DIR:    ChangePatternDir(); break;
       case wxID_SAVE:         SavePattern(); break;
       case ID_SAVE_XRLE:      savexrle = !savexrle; break;
       case ID_RUN_SCRIPT:     OpenScript(); break;
       case ID_RUN_CLIP:       RunClipboard(); break;
-      case ID_CLEAR_MISSING_SCRIPTS:   ClearMissingScripts(); break;
-      case ID_CLEAR_ALL_SCRIPTS:       ClearAllScripts(); break;
       case ID_SHOW_SCRIPTS:   ToggleShowScripts(); break;
       case ID_SCRIPT_DIR:     ChangeScriptDir(); break;
       case wxID_PREFERENCES:  ShowPrefsDialog(); break;
       case wxID_EXIT:         QuitApp(); break;
+
       // Edit menu
       case wxID_UNDO:         currlayer->undoredo->UndoChange(); break;
       case wxID_REDO:         currlayer->undoredo->RedoChange(); break;
@@ -1270,6 +1267,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_MOVE:           viewptr->SetCursorMode(curs_hand); break;
       case ID_ZOOMIN:         viewptr->SetCursorMode(curs_zoomin); break;
       case ID_ZOOMOUT:        viewptr->SetCursorMode(curs_zoomout); break;
+
       // Control menu
       case ID_START:          if (inscript || generating) {
                                  Stop();
@@ -1288,6 +1286,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HYPER:          ToggleHyperspeed(); break;
       case ID_HINFO:          ToggleHashInfo(); break;
       case ID_RULE:           ShowRuleDialog(); break;
+
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
       case ID_TOOL_BAR:       ToggleToolBar(); break;
@@ -1309,6 +1308,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_COLORS:         viewptr->ToggleCellColors(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
+
       // Layer menu
       case ID_ADD_LAYER:      AddLayer(); break;
       case ID_CLONE:          CloneLayer(); break;
@@ -1321,6 +1321,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SYNC_CURS:      ToggleSyncCursors(); break;
       case ID_STACK:          ToggleStackLayers(); break;
       case ID_TILE:           ToggleTileLayers(); break;
+
       // Help menu
       case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
@@ -1342,6 +1343,13 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
       case ID_SHOW_HELP:      ShowHelp(wxEmptyString); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
+
+      // Open/Run Recent submenus
+      case ID_CLEAR_MISSING_PATTERNS:  ClearMissingPatterns(); break;
+      case ID_CLEAR_ALL_PATTERNS:      ClearAllPatterns(); break;
+      case ID_CLEAR_MISSING_SCRIPTS:   ClearMissingScripts(); break;
+      case ID_CLEAR_ALL_SCRIPTS:       ClearAllScripts(); break;
+
       default:
          if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
             OpenRecentPattern(id);

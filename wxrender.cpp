@@ -185,7 +185,7 @@ const wxColor brightgreen(0, 255, 0);
 void InitMagnifyTable()
 {
    int inttest = 1;
-   unsigned char *p = (unsigned char *)&inttest;
+   unsigned char* p = (unsigned char*) &inttest;
    int i;
    for (i=0; i<8; i++)
       if (*p)
@@ -283,7 +283,7 @@ void DestroyDrawingData()
 // -----------------------------------------------------------------------------
 
 // called from wx_render::blit to magnify given bitmap by pmag (2, 4, ... 2^MAX_MAG)
-void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, int pmag)
+void DrawStretchedBitmap(wxDC& dc, int xoff, int yoff, int* bmdata, int bmsize, int pmag)
 {
    int blocksize, magsize, rowshorts, numblocks, numshorts, numbytes;
    int rowbytes = bmsize / 8;
@@ -317,7 +317,7 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
       } else if (pmag == 8) {
          gapmask = 0x7F7F;
       } else if (pmag == 16) {
-         unsigned char *p = (unsigned char *)&gapmask;
+         unsigned char* p = (unsigned char*) &gapmask;
          gapmask = 0xFF7F;
          // swap byte order if little-endian processor
          if (*p != 0xFF) gapmask = 0x7FFF;
@@ -333,7 +333,7 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
               yw < currht && yw + magsize >= 0 ) {
             // some part of magnified block will be visible;
             // set bptr to address of byte at top left corner of current block
-            unsigned char *bptr = (unsigned char *)bmdata + (row * blocksize * rowbytes) +
+            unsigned char* bptr = (unsigned char*) bmdata + (row * blocksize * rowbytes) +
                                                             (col * blocksize / 8);
             
             int rowindex = 0;       // first row in magbuf
@@ -346,7 +346,7 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
                }
                while (numshorts < rowshorts) {
                   // stretch completed bytes in current row starting from right end
-                  unsigned char *p = (unsigned char *)&magarray[rowindex + numshorts];
+                  unsigned char* p = (unsigned char*) &magarray[rowindex + numshorts];
                   for ( j = numshorts * 2 - 1; j >= 0; j-- ) {
                      p--;
                      magarray[rowindex + j] = Magnify2[ *p ];
@@ -376,7 +376,7 @@ void DrawStretchedBitmap(wxDC &dc, int xoff, int yoff, int *bmdata, int bmsize, 
                bptr += rowbytes;          // start of next row in current block
             }
             
-            wxBitmap magmap = wxBitmap((const char *)magbuf, magsize, magsize, 1);
+            wxBitmap magmap = wxBitmap((const char*)magbuf, magsize, magsize, 1);
             dc.DrawBitmap(magmap, xw, yw, false);
          }
          xw += magsize;     // across to next block
@@ -393,7 +393,7 @@ public:
    wx_render() {}
    virtual ~wx_render() {}
    virtual void killrect(int x, int y, int w, int h);
-   virtual void blit(int x, int y, int w, int h, int *bm, int bmscale=1);
+   virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1);
 };
 
 void wx_render::killrect(int x, int y, int w, int h)
@@ -411,10 +411,10 @@ void wx_render::killrect(int x, int y, int w, int h)
    #endif
 }
 
-void wx_render::blit(int x, int y, int w, int h, int *bmdata, int bmscale)
+void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
 {
    if (bmscale == 1) {
-      wxBitmap bmap = wxBitmap((const char *)bmdata, w, h, 1);
+      wxBitmap bmap = wxBitmap((const char*)bmdata, w, h, 1);
       currdc->DrawBitmap(bmap, x, y);
    } else {
       // stretch bitmap by bmscale
@@ -460,7 +460,7 @@ void SetSelectionColor()
 
 // -----------------------------------------------------------------------------
 
-void DrawSelection(wxDC &dc, wxRect &rect)
+void DrawSelection(wxDC& dc, wxRect& rect)
 {
    if (selbitmap) {
       #ifdef __WXGTK__
@@ -489,7 +489,7 @@ void DrawSelection(wxDC &dc, wxRect &rect)
 
 // -----------------------------------------------------------------------------
 
-void DrawInactiveSelection(wxDC &dc, wxRect &rect)
+void DrawInactiveSelection(wxDC& dc, wxRect& rect)
 {
    if (graybitmap) {
       #ifdef __WXGTK__
@@ -514,7 +514,7 @@ void DrawInactiveSelection(wxDC &dc, wxRect &rect)
 
 // -----------------------------------------------------------------------------
 
-void CreatePasteImage(lifealgo *palgo, wxRect &bbox)
+void CreatePasteImage(lifealgo* palgo, wxRect& bbox)
 {
    pastealgo = palgo;      // save for use in CheckPasteImage
    pastebbox = bbox;       // ditto
@@ -789,7 +789,7 @@ void CheckPasteImage()
 
 // -----------------------------------------------------------------------------
 
-void DrawPasteImage(wxDC &dc)
+void DrawPasteImage(wxDC& dc)
 {
    if (pastebitmap) {
       // draw paste image
@@ -866,7 +866,7 @@ void DrawPasteImage(wxDC &dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC &dc, wxRect &r, int layerindex)
+void DrawGridLines(wxDC& dc, wxRect& r, int layerindex)
 {
    int cellsize = 1 << currlayer->view->getmag();
    int h, v, i, topbold, leftbold;
@@ -939,7 +939,7 @@ void DrawGridLines(wxDC &dc, wxRect &r, int layerindex)
 
 // -----------------------------------------------------------------------------
 
-void DrawOneLayer(wxDC &dc, int index)
+void DrawOneLayer(wxDC& dc, int index)
 {
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
@@ -975,7 +975,7 @@ void DrawOneLayer(wxDC &dc, int index)
 
 // -----------------------------------------------------------------------------
 
-void DrawStackedLayers(wxDC &dc)
+void DrawStackedLayers(wxDC& dc)
 {
    // check if layerbitmap needs to be created or resized
    if ( layerwd != currlayer->view->getwidth() ||
@@ -1005,11 +1005,11 @@ void DrawStackedLayers(wxDC &dc)
    
    // draw patterns in layers 1..numlayers-1
    for ( int i = 1; i < numlayers; i++ ) {
-      Layer *savelayer = currlayer;
+      Layer* savelayer = currlayer;
       currlayer = GetLayer(i);
       
       // use real current layer's viewport
-      viewport *saveview = currlayer->view;
+      viewport* saveview = currlayer->view;
       currlayer->view = savelayer->view;
       
       // avoid drawing a cloned layer more than once??? draw first or last clone???
@@ -1020,7 +1020,7 @@ void DrawStackedLayers(wxDC &dc)
       
       // draw this layer's selection if necessary
       wxRect r;
-      if ( viewptr->SelectionVisible(&r) ) {
+      if ( currlayer->currsel.Visible(&r) ) {
          CheckSelectionSize(layerwd, layerht);
          if (i == currindex)
             DrawSelection(dc, r);
@@ -1094,8 +1094,8 @@ void DrawTileBorders(wxDC& dc)
 void DrawView(wxDC& dc, int tileindex)
 {
    wxRect r;
-   Layer *savelayer = NULL;
-   viewport *saveview0 = NULL;
+   Layer* savelayer = NULL;
+   viewport* saveview0 = NULL;
    int colorindex;
    
    if ( viewptr->nopattupdate ) {
@@ -1168,7 +1168,7 @@ void DrawView(wxDC& dc, int tileindex)
       DrawGridLines(dc, r, colorindex);
    }
    
-   if ( viewptr->SelectionVisible(&r) ) {
+   if ( currlayer->currsel.Visible(&r) ) {
       CheckSelectionSize(currlayer->view->getwidth(), currlayer->view->getheight());
       if (colorindex == currindex)
          DrawSelection(dc, r);

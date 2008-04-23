@@ -43,6 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
+#include "wxedit.h"        // for Selection
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
 #include "wxview.h"
@@ -137,26 +138,7 @@ void PatternView::FitSelection()
 {
    if (!SelectionExists()) return;
 
-   bigint newx = currlayer->selright;
-   newx -= currlayer->selleft;
-   newx += bigint::one;
-   newx.div2();
-   newx += currlayer->selleft;
-
-   bigint newy = currlayer->selbottom;
-   newy -= currlayer->seltop;
-   newy += bigint::one;
-   newy.div2();
-   newy += currlayer->seltop;
-
-   int mag = MAX_MAG;
-   while (true) {
-      currlayer->view->setpositionmag(newx, newy, mag);
-      if ( currlayer->view->contains(currlayer->selleft, currlayer->seltop) &&
-           currlayer->view->contains(currlayer->selright, currlayer->selbottom) )
-         break;
-      mag--;
-   }
+   currlayer->currsel.Fit();
    
    TestAutoFit();
    mainptr->UpdateEverything();
@@ -214,6 +196,13 @@ void PatternView::RestoreOrigin()
       else
          statusptr->UpdateXYLocation();
    }
+}
+
+// -----------------------------------------------------------------------------
+
+bool PatternView::GridVisible()
+{
+   return ( showgridlines && currlayer->view->getmag() >= mingridmag );
 }
 
 // -----------------------------------------------------------------------------
@@ -517,6 +506,8 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_FLIPLR:      if (!inscript) FlipSelection(false); break;
       case DO_ROTATECW:    if (!inscript) RotateSelection(true); break;
       case DO_ROTATEACW:   if (!inscript) RotateSelection(false); break;
+      case DO_ADVANCE:     if (!inscript) currlayer->currsel.Advance(); break;
+      case DO_ADVANCEOUT:  if (!inscript) currlayer->currsel.AdvanceOutside(); break;
       case DO_CURSDRAW:    SetCursorMode(curs_pencil); break;
       case DO_CURSSEL:     SetCursorMode(curs_cross); break;
       case DO_CURSMOVE:    SetCursorMode(curs_hand); break;
@@ -555,8 +546,6 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
       case DO_RULE:        if (!inscript) mainptr->ShowRuleDialog(); break;
-      case DO_ADVANCE:     if (!inscript) mainptr->AdvanceSelection(); break;
-      case DO_ADVANCEOUT:  if (!inscript) mainptr->AdvanceOutsideSelection(); break;
       case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
 
       // View menu actions
@@ -667,9 +656,7 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
    dc.DrawRectangle(x, y, cellsize, cellsize);
    
    // overlay selection image if cell is within selection
-   if ( SelectionExists() &&
-        cx >= currlayer->selleft.toint() && cx <= currlayer->selright.toint() &&
-        cy >= currlayer->seltop.toint() && cy <= currlayer->selbottom.toint() ) {
+   if ( SelectionExists() && currlayer->currsel.ContainsCell(cx, cy) ) {
       wxRect r = wxRect(x, y, cellsize, cellsize);
       DrawSelection(dc, r);
    }
@@ -798,131 +785,6 @@ void PatternView::DrawCells(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ModifySelection(bigint& xclick, bigint& yclick)
-{
-   // note that we include "=" in following tests to get sensible
-   // results when modifying small selections (ht or wd <= 3)
-   if ( yclick <= currlayer->seltop && xclick <= currlayer->selleft ) {
-      // click is in or outside top left corner
-      currlayer->seltop = yclick;
-      currlayer->selleft = xclick;
-      anchory = currlayer->selbottom;
-      anchorx = currlayer->selright;
-
-   } else if ( yclick <= currlayer->seltop && xclick >= currlayer->selright ) {
-      // click is in or outside top right corner
-      currlayer->seltop = yclick;
-      currlayer->selright = xclick;
-      anchory = currlayer->selbottom;
-      anchorx = currlayer->selleft;
-
-   } else if ( yclick >= currlayer->selbottom && xclick >= currlayer->selright ) {
-      // click is in or outside bottom right corner
-      currlayer->selbottom = yclick;
-      currlayer->selright = xclick;
-      anchory = currlayer->seltop;
-      anchorx = currlayer->selleft;
-
-   } else if ( yclick >= currlayer->selbottom && xclick <= currlayer->selleft ) {
-      // click is in or outside bottom left corner
-      currlayer->selbottom = yclick;
-      currlayer->selleft = xclick;
-      anchory = currlayer->seltop;
-      anchorx = currlayer->selright;
-   
-   } else if (yclick <= currlayer->seltop) {
-      // click is in or above top edge
-      forcev = true;
-      currlayer->seltop = yclick;
-      anchory = currlayer->selbottom;
-   
-   } else if (yclick >= currlayer->selbottom) {
-      // click is in or below bottom edge
-      forcev = true;
-      currlayer->selbottom = yclick;
-      anchory = currlayer->seltop;
-   
-   } else if (xclick <= currlayer->selleft) {
-      // click is in or left of left edge
-      forceh = true;
-      currlayer->selleft = xclick;
-      anchorx = currlayer->selright;
-   
-   } else if (xclick >= currlayer->selright) {
-      // click is in or right of right edge
-      forceh = true;
-      currlayer->selright = xclick;
-      anchorx = currlayer->selleft;
-   
-   } else {
-      // click is somewhere inside selection
-      double wd = currlayer->selright.todouble() - currlayer->selleft.todouble() + 1.0;
-      double ht = currlayer->selbottom.todouble() - currlayer->seltop.todouble() + 1.0;
-      double onethirdx = currlayer->selleft.todouble() + wd / 3.0;
-      double twothirdx = currlayer->selleft.todouble() + wd * 2.0 / 3.0;
-      double onethirdy = currlayer->seltop.todouble() + ht / 3.0;
-      double twothirdy = currlayer->seltop.todouble() + ht * 2.0 / 3.0;
-      double midy = currlayer->seltop.todouble() + ht / 2.0;
-      double x = xclick.todouble();
-      double y = yclick.todouble();
-      
-      if ( y < onethirdy && x < onethirdx ) {
-         // click is near top left corner
-         currlayer->seltop = yclick;
-         currlayer->selleft = xclick;
-         anchory = currlayer->selbottom;
-         anchorx = currlayer->selright;
-      
-      } else if ( y < onethirdy && x > twothirdx ) {
-         // click is near top right corner
-         currlayer->seltop = yclick;
-         currlayer->selright = xclick;
-         anchory = currlayer->selbottom;
-         anchorx = currlayer->selleft;
-   
-      } else if ( y > twothirdy && x > twothirdx ) {
-         // click is near bottom right corner
-         currlayer->selbottom = yclick;
-         currlayer->selright = xclick;
-         anchory = currlayer->seltop;
-         anchorx = currlayer->selleft;
-   
-      } else if ( y > twothirdy && x < onethirdx ) {
-         // click is near bottom left corner
-         currlayer->selbottom = yclick;
-         currlayer->selleft = xclick;
-         anchory = currlayer->seltop;
-         anchorx = currlayer->selright;
-
-      } else if ( x < onethirdx ) {
-         // click is near middle of left edge
-         forceh = true;
-         currlayer->selleft = xclick;
-         anchorx = currlayer->selright;
-
-      } else if ( x > twothirdx ) {
-         // click is near middle of right edge
-         forceh = true;
-         currlayer->selright = xclick;
-         anchorx = currlayer->selleft;
-
-      } else if ( y < midy ) {
-         // click is below middle section of top edge
-         forcev = true;
-         currlayer->seltop = yclick;
-         anchory = currlayer->selbottom;
-      
-      } else {
-         // click is above middle section of bottom edge
-         forcev = true;
-         currlayer->selbottom = yclick;
-         anchory = currlayer->seltop;
-      }
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 {
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
@@ -931,16 +793,10 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 
    // save original selection so it can be restored if user hits escape;
    // also used by RememberNewSelection
-   currlayer->savetop = currlayer->seltop;
-   currlayer->saveleft = currlayer->selleft;
-   currlayer->savebottom = currlayer->selbottom;
-   currlayer->saveright = currlayer->selright;
+   currlayer->savesel = currlayer->currsel;
 
-   // set previous selection to anything impossible
-   prevtop = 1;
-   prevleft = 1;
-   prevbottom = 0;
-   prevright = 0;
+   // reset previous selection
+   prevsel.Deselect();
    
    // for avoiding 1x1 selection if mouse doesn't move much
    initselx = x;
@@ -953,11 +809,12 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
    if (SelectionExists()) {
       if (shiftdown) {
          // modify current selection
-         ModifySelection(cellpos.first, cellpos.second);
+         currlayer->currsel.Modify(cellpos.first, cellpos.second,
+                                   anchorx, anchory, &forceh, &forcev);
          DisplaySelectionSize();
       } else {
          // remove current selection
-         NoSelection();
+         currlayer->currsel.Deselect();
       }
       // allow mouse interaction if script is running
       bool saveinscript = inscript;
@@ -981,27 +838,10 @@ void PatternView::SelectCells(int x, int y)
    }
 
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
-   if (!forcev) {
-      if (cellpos.first <= anchorx) {
-         currlayer->selleft = cellpos.first;
-         currlayer->selright = anchorx;
-      } else {
-         currlayer->selleft = anchorx;
-         currlayer->selright = cellpos.first;
-      }
-   }
-   if (!forceh) {
-      if (cellpos.second <= anchory) {
-         currlayer->seltop = cellpos.second;
-         currlayer->selbottom = anchory;
-      } else {
-         currlayer->seltop = anchory;
-         currlayer->selbottom = cellpos.second;
-      }
-   }
+   if (!forcev) currlayer->currsel.SetLeftRight(cellpos.first, anchorx);
+   if (!forceh) currlayer->currsel.SetTopBottom(cellpos.second, anchory);
 
-   if ( currlayer->seltop != prevtop || currlayer->selbottom != prevbottom ||
-        currlayer->selleft != prevleft || currlayer->selright != prevright ) {
+   if (currlayer->currsel != prevsel) {
       // selection has changed
       DisplaySelectionSize();
       
@@ -1011,10 +851,7 @@ void PatternView::SelectCells(int x, int y)
       mainptr->UpdatePatternAndStatus();
       inscript = saveinscript;
       
-      prevtop = currlayer->seltop;
-      prevbottom = currlayer->selbottom;
-      prevleft = currlayer->selleft;
-      prevright = currlayer->selright;
+      prevsel = currlayer->currsel;
    }
 }
 
@@ -1101,10 +938,7 @@ void PatternView::StopDraggingMouse()
 
 void PatternView::RestoreSelection()
 {
-   currlayer->seltop = currlayer->savetop;
-   currlayer->selleft = currlayer->saveleft;
-   currlayer->selbottom = currlayer->savebottom;
-   currlayer->selright = currlayer->saveright;
+   currlayer->currsel = currlayer->savesel;
    StopDraggingMouse();
    
    // allow mouse interaction if script is running
@@ -1210,7 +1044,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
       wxPaintDC dc(this);
       DrawView(dc, tileindex);
    #else
-      if ( buffered || waitingforclick || GridVisible() || SelectionVisible(NULL) ||
+      if ( buffered || waitingforclick || GridVisible() || currlayer->currsel.Visible(NULL) ||
            (numlayers > 1 && (stacklayers || tilelayers)) ) {
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
@@ -1398,16 +1232,6 @@ void PatternView::ProcessControlClick(int x, int y)
       ZoomOutPos(x, y);
    } else if (currlayer->curs == curs_zoomout) {
       ZoomInPos(x, y);
-   } else {
-      /* let all other cursor modes advance clicked region -- probably unwise
-      pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
-      if ( cellpos.first < currlayer->selleft || cellpos.first > currlayer->selright ||
-           cellpos.second < currlayer->seltop || cellpos.second > currlayer->selbottom ) {
-         mainptr->AdvanceOutsideSelection();
-      } else {
-         mainptr->AdvanceSelection();
-      }
-      */
    }
 }
 

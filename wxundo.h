@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXUNDO_H_
 
 #include "bigint.h"     // for bigint class
+#include "wxedit.h"     // for Selection class
 
 // This class implements unlimited undo/redo:
 
@@ -51,11 +52,9 @@ public:
    void RememberRotation(bool clockwise, bool olddirty);
    // remember simple rotation (selection includes entire pattern)
    
-   void RememberRotation(bool clockwise,
-                         int oldt, int oldl, int oldb, int oldr,
-                         int newt, int newl, int newb, int newr,
+   void RememberRotation(bool clockwise, Selection& oldsel, Selection& newsel,
                          bool olddirty);
-   // remember rotation's direction and old and new selection edges;
+   // remember rotation's direction and old and new selections;
    // this variant assumes SaveCellChange may have been called
    
    void RememberSelection(const wxString& action);
@@ -125,11 +124,10 @@ private:
    
    wxString prevfile;            // for saving pattern at start of gen change
    bigint prevgen;               // generation count at start of gen change
-   bigint prevt, prevl;          // selection edges at start of gen change
-   bigint prevb, prevr;
    bigint prevx, prevy;          // viewport position at start of gen change
    int prevmag;                  // scale at start of gen change
    int prevwarp;                 // speed at start of gen change
+   Selection prevsel;            // selection at start of gen change
    int startcount;               // unfinished RememberGenStart calls
    bool fixsetgen;               // setgen node needs to be updated?
    

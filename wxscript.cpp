@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxedit.h"        // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
@@ -279,15 +280,12 @@ void GSF_select(int x, int y, int wd, int ht)
    if (wd < 1 || ht < 1) {
       // remove any existing selection
       viewptr->SaveCurrentSelection();
-      viewptr->NoSelection();
+      currlayer->currsel.Deselect();
       viewptr->RememberNewSelection(_("Deselection"));
    } else {
       // set selection edges
       viewptr->SaveCurrentSelection();
-      currlayer->selleft = x;
-      currlayer->seltop = y;
-      currlayer->selright = x + wd - 1;
-      currlayer->selbottom = y + ht - 1;
+      currlayer->currsel.SetRect(x, y, wd, ht);
       viewptr->RememberNewSelection(_("Selection"));
    }
 }

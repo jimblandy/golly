@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxedit.h"        // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Note, GetString, etc
@@ -121,39 +122,38 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 // declare G_* wrappers for the functions we want to use from Perl lib
 extern "C"
 {
-   perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*) = NULL;
-   U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*) = NULL;
-   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*) = NULL;
-   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*) = NULL;
-   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*) = NULL;
-   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*) = NULL;
-   SV**(*G_Perl_av_fetch)(pTHX_ AV*, I32, I32) = NULL;
-   I32(*G_Perl_av_len)(pTHX_ AV*) = NULL;
-   void(*G_Perl_av_push)(pTHX_ AV*, SV*) = NULL;
-   void(*G_Perl_croak)(pTHX_ const char*, ...) = NULL;
-   void*(*G_Perl_get_context)(void) = NULL;
-   AV*(*G_Perl_newAV)(pTHX) = NULL;
-   SV*(*G_Perl_newRV)(pTHX_ SV*) = NULL;
-   SV*(*G_Perl_newSViv)(pTHX_ IV) = NULL;
-   SV*(*G_Perl_newSVpv)(pTHX_ const char*, STRLEN) = NULL;
-   CV*(*G_Perl_newXS)(pTHX_ char*, XSUBADDR_t, char*) = NULL;
-   SV**(*G_Perl_stack_grow)(pTHX_ SV**, SV**, int) = NULL;
-   IV(*G_Perl_sv_2iv)(pTHX_ SV*) = NULL;
-   SV*(*G_Perl_sv_2mortal)(pTHX_ SV*) = NULL;
-   char*(*G_Perl_sv_2pv_flags)(pTHX_ SV*, STRLEN*, I32) = NULL;
-   PerlInterpreter*(*G_perl_alloc)(void) = NULL;
-   void(*G_perl_construct)(PerlInterpreter*) = NULL;
-   int(*G_perl_destruct)(PerlInterpreter*) = NULL;
-   void(*G_perl_free)(PerlInterpreter*) = NULL;
-   int(*G_perl_parse)(PerlInterpreter*, XSINIT_t, int, char**, char**) = NULL;
-   int(*G_perl_run)(PerlInterpreter*) = NULL;
-   SV*(*G_Perl_eval_pv)(pTHX_ const char*, I32) = NULL;
+   perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*);
+   U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*);
+   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
+   SV**(*G_Perl_av_fetch)(pTHX_ AV*, I32, I32);
+   I32(*G_Perl_av_len)(pTHX_ AV*);
+   void(*G_Perl_av_push)(pTHX_ AV*, SV*);
+   void(*G_Perl_croak)(pTHX_ const char*, ...);
+   void*(*G_Perl_get_context)(void);
+   AV*(*G_Perl_newAV)(pTHX);
+   SV*(*G_Perl_newRV)(pTHX_ SV*);
+   SV*(*G_Perl_newSViv)(pTHX_ IV);
+   SV*(*G_Perl_newSVpv)(pTHX_ const char*, STRLEN);
+   CV*(*G_Perl_newXS)(pTHX_ char*, XSUBADDR_t, char*);
+   SV**(*G_Perl_stack_grow)(pTHX_ SV**, SV**, int);
+   IV(*G_Perl_sv_2iv)(pTHX_ SV*);
+   SV*(*G_Perl_sv_2mortal)(pTHX_ SV*);
+   char*(*G_Perl_sv_2pv_flags)(pTHX_ SV*, STRLEN*, I32);
+   PerlInterpreter*(*G_perl_alloc)(void);
+   void(*G_perl_construct)(PerlInterpreter*);
+   int(*G_perl_destruct)(PerlInterpreter*);
+   void(*G_perl_free)(PerlInterpreter*);
+   int(*G_perl_parse)(PerlInterpreter*, XSINIT_t, int, char**, char**);
+   int(*G_perl_run)(PerlInterpreter*);
+   SV*(*G_Perl_eval_pv)(pTHX_ const char*, I32);
 #ifdef PERL589_OR_LATER
    IV (*G_Perl_sv_2iv_flags)(pTHX_ SV* sv, I32 flags);
 #endif
-
 #ifdef __WXMSW__
-   void(*G_boot_DynaLoader)(pTHX_ CV*) = NULL;
+   void(*G_boot_DynaLoader)(pTHX_ CV*);
 #endif
 }
 
@@ -186,7 +186,7 @@ extern "C"
 #define perl_run                 G_perl_run
 #define Perl_eval_pv             G_Perl_eval_pv
 #ifdef PERL589_OR_LATER
-#  define Perl_sv_2iv_flags G_Perl_sv_2iv_flags
+#define Perl_sv_2iv_flags        G_Perl_sv_2iv_flags
 #endif
 #ifdef __WXMSW__
 #define boot_DynaLoader          G_boot_DynaLoader
@@ -670,13 +670,10 @@ XS(pl_paste)
       PERL_ERROR("g_paste error: no pattern in clipboard");
    }
 
-   // temporarily change selection rect and paste mode
-   bigint oldleft = currlayer->selleft;
-   bigint oldtop = currlayer->seltop;
-   bigint oldright = currlayer->selright;
-   bigint oldbottom = currlayer->selbottom;
-
+   // temporarily change selection and paste mode
+   Selection oldsel = currlayer->currsel;
    const char* oldmode = GetPasteMode();
+   
    wxString modestr = wxString(mode, wxConvLocal);
    if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
@@ -686,18 +683,12 @@ XS(pl_paste)
    }
 
    // create huge selection rect so no possibility of error message
-   currlayer->selleft = x;
-   currlayer->seltop = y;
-   currlayer->selright = currlayer->selleft;   currlayer->selright += INT_MAX;
-   currlayer->selbottom = currlayer->seltop;   currlayer->selbottom += INT_MAX;
+   currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
 
    viewptr->PasteClipboard(true);      // true = paste to selection
 
-   // restore selection rect and paste mode
-   currlayer->selleft = oldleft;
-   currlayer->seltop = oldtop;
-   currlayer->selright = oldright;
-   currlayer->selbottom = oldbottom;
+   // restore selection and paste mode
+   currlayer->currsel = oldsel;
    SetPasteMode(oldmode);
 
    DoAutoUpdate();
@@ -1327,14 +1318,11 @@ XS(pl_getselrect)
    if (items != 0) PERL_ERROR("Usage: @rect = g_getselrect()");
    
    if (viewptr->SelectionExists()) {
-      if ( viewptr->OutsideLimits(currlayer->seltop, currlayer->selleft,
-                                  currlayer->selbottom, currlayer->selright) ) {
+      if (currlayer->currsel.TooBig()) {
          PERL_ERROR("g_getselrect error: selection is too big");
       }
-      int x = currlayer->selleft.toint();
-      int y = currlayer->seltop.toint();
-      int wd = currlayer->selright.toint() - x + 1;
-      int ht = currlayer->selbottom.toint() - y + 1;
+      int x, y, wd, ht;
+      currlayer->currsel.GetRect(&x, &y, &wd, &ht);
       
       // items == 0 so no need to reset stack pointer
       // SP -= items;
@@ -1550,9 +1538,9 @@ XS(pl_advance)
          while (ngens > 0) {
             ngens--;
             if (where == 0)
-               mainptr->AdvanceSelection();
+               currlayer->currsel.Advance();
             else
-               mainptr->AdvanceOutsideSelection();
+               currlayer->currsel.AdvanceOutside();
          }
          DoAutoUpdate();
       } else {

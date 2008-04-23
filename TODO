@@ -32,8 +32,7 @@ For future versions:
 - Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
   NB. Means creating non-XBM bitmaps (ie. no bit reversal).
 
-- Allow non-rectangular (and disjoint) selections.  First factor out
-  all selection stuff to a new Selection class.
+- Allow non-rectangular (and disjoint) selections.
 
 - Implement a history bar for hlife.
 

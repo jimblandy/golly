@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxedit.h"        // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
@@ -93,13 +94,8 @@ public:
    int* cellcoords;                       // array of x,y coordinates (2 ints per cell)
    unsigned int cellcount;                // number of cells in array
    
-   // rotatecw/rotateacw info
-   int oldt, oldl, oldb, oldr;            // selection edges before rotation
-   int newt, newl, newb, newr;            // selection edges after rotation
-   
-   // selchange/genchange info
-   bigint prevt, prevl, prevb, prevr;     // old selection edges
-   bigint nextt, nextl, nextb, nextr;     // new selection edges
+   // rotatecw/rotateacw/selchange info
+   Selection oldsel, newsel;              // old and new selections
    
    // genchange info
    wxString oldfile, newfile;             // old and new pattern files
@@ -108,6 +104,7 @@ public:
    int oldmag, newmag;                    // old and new scales
    int oldwarp, newwarp;                  // old and new speeds
    bool scriptgen;                        // gen change was done by script?
+   // also uses oldsel, newsel
    
    // setgen info
    bigint oldstartgen, newstartgen;       // old and new startgen values
@@ -122,7 +119,7 @@ public:
    // and oldrule, newrule
    // and oldx, oldy, newx, newy, oldmag, newmag
    // and oldwarp, newwarp
-   // and prevt, prevl, prevb, prevr, nextt, nextl, nextb, nextr
+   // and oldsel, newsel
    
    // namechange info
    wxString oldname, newname;             // old and new layer names
@@ -226,15 +223,9 @@ bool ChangeNode::DoChange(bool undo)
          }
          // rotate selection edges
          if (undo) {
-            currlayer->seltop = oldt;
-            currlayer->selleft = oldl;
-            currlayer->selbottom = oldb;
-            currlayer->selright = oldr;
+            currlayer->currsel = oldsel;
          } else {
-            currlayer->seltop = newt;
-            currlayer->selleft = newl;
-            currlayer->selbottom = newb;
-            currlayer->selright = newr;
+            currlayer->currsel = newsel;
          }
          viewptr->DisplaySelectionSize();
          mainptr->UpdatePatternAndStatus();
@@ -242,15 +233,9 @@ bool ChangeNode::DoChange(bool undo)
       
       case selchange:
          if (undo) {
-            currlayer->seltop = prevt;
-            currlayer->selleft = prevl;
-            currlayer->selbottom = prevb;
-            currlayer->selright = prevr;
+            currlayer->currsel = oldsel;
          } else {
-            currlayer->seltop = nextt;
-            currlayer->selleft = nextl;
-            currlayer->selbottom = nextb;
-            currlayer->selright = nextr;
+            currlayer->currsel = newsel;
          }
          if (viewptr->SelectionExists()) viewptr->DisplaySelectionSize();
          mainptr->UpdatePatternAndStatus();
@@ -258,16 +243,10 @@ bool ChangeNode::DoChange(bool undo)
       
       case genchange:
          if (undo) {
-            currlayer->seltop = prevt;
-            currlayer->selleft = prevl;
-            currlayer->selbottom = prevb;
-            currlayer->selright = prevr;
+            currlayer->currsel = oldsel;
             mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldwarp);
          } else {
-            currlayer->seltop = nextt;
-            currlayer->selleft = nextl;
-            currlayer->selbottom = nextb;
-            currlayer->selright = nextr;
+            currlayer->currsel = newsel;
             mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newwarp);
          }
          break;
@@ -288,10 +267,7 @@ bool ChangeNode::DoChange(bool undo)
                currlayer->starty = oldy;
                currlayer->startmag = oldmag;
                currlayer->startwarp = oldwarp;
-               currlayer->starttop = prevt;
-               currlayer->startleft = prevl;
-               currlayer->startbottom = prevb;
-               currlayer->startright = prevr;
+               currlayer->startsel = oldsel;
                currlayer->startname = oldname;
                if (currlayer->cloneid > 0) {
                   for ( int i = 0; i < numlayers; i++ ) {
@@ -317,10 +293,7 @@ bool ChangeNode::DoChange(bool undo)
                currlayer->starty = newy;
                currlayer->startmag = newmag;
                currlayer->startwarp = newwarp;
-               currlayer->starttop = nextt;
-               currlayer->startleft = nextl;
-               currlayer->startbottom = nextb;
-               currlayer->startright = nextr;
+               currlayer->startsel = newsel;
                currlayer->startname = newname;
                if (currlayer->cloneid > 0) {
                   for ( int i = 0; i < numlayers; i++ ) {
@@ -551,9 +524,7 @@ void UndoRedo::RememberRotation(bool clockwise, bool olddirty)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberRotation(bool clockwise,
-                                int oldt, int oldl, int oldb, int oldr,
-                                int newt, int newl, int newb, int newr,
+void UndoRedo::RememberRotation(bool clockwise, Selection& oldsel, Selection& newsel,
                                 bool olddirty)
 {
    // clear the redo history
@@ -565,14 +536,8 @@ void UndoRedo::RememberRotation(bool clockwise,
    if (change == NULL) Fatal(_("Failed to create rotation node!"));
 
    change->suffix = _("Rotation");
-   change->oldt = oldt;
-   change->oldl = oldl;
-   change->oldb = oldb;
-   change->oldr = oldr;
-   change->newt = newt;
-   change->newl = newl;
-   change->newb = newb;
-   change->newr = newr;
+   change->oldsel = oldsel;
+   change->newsel = newsel;
    change->olddirty = olddirty;
    change->newdirty = true;
 
@@ -605,10 +570,7 @@ void UndoRedo::RememberRotation(bool clockwise,
 
 void UndoRedo::RememberSelection(const wxString& action)
 {
-   if (currlayer->savetop == currlayer->seltop &&
-       currlayer->saveleft == currlayer->selleft &&
-       currlayer->savebottom == currlayer->selbottom &&
-       currlayer->saveright == currlayer->selright) {
+   if (currlayer->savesel == currlayer->currsel) {
       // selection has not changed
       return;
    }
@@ -627,19 +589,13 @@ void UndoRedo::RememberSelection(const wxString& action)
    ChangeNode* change = new ChangeNode(selchange);
    if (change == NULL) Fatal(_("Failed to create selchange node!"));
 
-   if (currlayer->seltop <= currlayer->selbottom) {
+   if (currlayer->currsel.Exists()) {
       change->suffix = action;
    } else {
       change->suffix = _("Deselection");
    }
-   change->prevt = currlayer->savetop;
-   change->prevl = currlayer->saveleft;
-   change->prevb = currlayer->savebottom;
-   change->prevr = currlayer->saveright;
-   change->nextt = currlayer->seltop;
-   change->nextl = currlayer->selleft;
-   change->nextb = currlayer->selbottom;
-   change->nextr = currlayer->selright;
+   change->oldsel = currlayer->savesel;
+   change->newsel = currlayer->currsel;
 
    undolist.Insert(change);
    
@@ -692,10 +648,7 @@ void UndoRedo::RememberGenStart()
 
    // save current generation, selection, position, scale, speed, etc
    prevgen = currlayer->algo->getGeneration();
-   prevt = currlayer->seltop;
-   prevl = currlayer->selleft;
-   prevb = currlayer->selbottom;
-   prevr = currlayer->selright;
+   prevsel = currlayer->currsel;
    viewptr->GetPos(prevx, prevy);
    prevmag = viewptr->GetMag();
    prevwarp = currlayer->warp;
@@ -726,10 +679,7 @@ void UndoRedo::RememberGenStart()
                change->newy = currlayer->starty;
                change->newmag = currlayer->startmag;
                change->newwarp = currlayer->startwarp;
-               change->nextt = currlayer->starttop;
-               change->nextl = currlayer->startleft;
-               change->nextb = currlayer->startbottom;
-               change->nextr = currlayer->startright;
+               change->newsel = currlayer->startsel;
                change->newname = currlayer->startname;
                if (currlayer->cloneid > 0) {
                   for ( int i = 0; i < numlayers; i++ ) {
@@ -835,14 +785,8 @@ void UndoRedo::RememberGenFinish()
    change->newmag = viewptr->GetMag();
    change->oldwarp = prevwarp;
    change->newwarp = currlayer->warp;
-   change->prevt = prevt;
-   change->prevl = prevl;
-   change->prevb = prevb;
-   change->prevr = prevr;
-   change->nextt = currlayer->seltop;
-   change->nextl = currlayer->selleft;
-   change->nextb = currlayer->selbottom;
-   change->nextr = currlayer->selright;
+   change->oldsel = prevsel;
+   change->newsel = currlayer->currsel;
 
    // prevfile has been saved in change->oldfile (~ChangeNode will delete it)
    prevfile = wxEmptyString;
@@ -863,10 +807,7 @@ void UndoRedo::AddGenChange()
    
    // use starting pattern info for previous state
    prevgen = currlayer->startgen;
-   prevt = currlayer->starttop;
-   prevl = currlayer->startleft;
-   prevb = currlayer->startbottom;
-   prevr = currlayer->startright;
+   prevsel = currlayer->startsel;
    prevx = currlayer->startx;
    prevy = currlayer->starty;
    prevmag = currlayer->startmag;
@@ -971,10 +912,7 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
       change->oldy = currlayer->starty;
       change->oldmag = currlayer->startmag;
       change->oldwarp = currlayer->startwarp;
-      change->prevt = currlayer->starttop;
-      change->prevl = currlayer->startleft;
-      change->prevb = currlayer->startbottom;
-      change->prevr = currlayer->startright;
+      change->oldsel = currlayer->startsel;
       change->oldname = currlayer->startname;
       if (currlayer->cloneid > 0) {
          for ( int i = 0; i < numlayers; i++ ) {
@@ -995,10 +933,7 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
       change->newy = currlayer->starty;
       change->newmag = currlayer->startmag;
       change->newwarp = currlayer->startwarp;
-      change->nextt = currlayer->starttop;
-      change->nextl = currlayer->startleft;
-      change->nextb = currlayer->startbottom;
-      change->nextr = currlayer->startright;
+      change->newsel = currlayer->startsel;
       change->newname = currlayer->startname;
       if (currlayer->cloneid > 0) {
          for ( int i = 0; i < numlayers; i++ ) {

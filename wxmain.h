@@ -100,8 +100,6 @@ public:
    void Stop();
    void DisplayTimingInfo();
    void NextGeneration(bool useinc);
-   void AdvanceOutsideSelection();
-   void AdvanceSelection();
    void ToggleAutoFit();
    void ToggleHashing();
    void ToggleHyperspeed();
