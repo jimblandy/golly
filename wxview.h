@@ -181,6 +181,7 @@ private:
    wxCursor* oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions
    int realkey;                  // key code set by OnKeyDown
+   wxString debugkey;            // display debug info for OnKeyDown and OnChar
 };
 
 const wxString empty_pattern       = _("All cells are dead.");

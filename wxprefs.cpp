@@ -2158,6 +2158,7 @@ public:
 
 private:
    int realkey;            // key code set by OnKeyDown
+   wxString debugkey;      // display debug info for OnKeyDown and OnChar
 
    DECLARE_EVENT_TABLE()
 };
@@ -2168,8 +2169,6 @@ BEGIN_EVENT_TABLE(KeyComboCtrl, wxTextCtrl)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
-
-static wxString debugkey;
 
 void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
 {

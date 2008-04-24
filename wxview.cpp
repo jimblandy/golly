@@ -1805,8 +1805,6 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
-static wxString debugkey;
-
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
    statusptr->ClearMessage();
@@ -1847,6 +1845,15 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
       if (realkey > 0 && (mods & wxMOD_CONTROL)) {
          OnChar(event);
          return;
+      }
+   #endif
+
+   #ifdef __WXGTK__
+      if (realkey == ' ' && mods == wxMOD_SHIFT) {
+         // fix wxGTK bug (curiously, the bug isn't seen in the prefs dialog);
+         // OnChar won't see the shift modifier, so set realkey to a special
+         // value to tell OnChar that shift-space was pressed
+         realkey = -666;
       }
    #endif
 
@@ -1909,6 +1916,15 @@ void PatternView::OnChar(wxKeyEvent& event)
          if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
       }
    }
+
+   #ifdef __WXGTK__
+      if (realkey == -666) {
+         // OnKeyDown saw that shift-space was pressed but for some reason
+         // OnChar doesn't see the modifier (ie. mods is wxMOD_NONE)
+         key = ' ';
+         mods = wxMOD_SHIFT;
+      }
+   #endif
 
    // do this check first because we allow user to make a selection while
    // generating a pattern or running a script
