@@ -202,6 +202,14 @@ void MainFrame::NewPattern(const wxString& title)
 bool MainFrame::LoadImage(const wxString& path)
 {
    wxString ext = path.AfterLast(wxT('.'));
+   
+   // don't try to load JPEG file
+   if ( ext.IsSameAs(wxT("jpg"),false) ||
+        ext.IsSameAs(wxT("jpeg"),false) ) {
+      Warning(_("Golly cannot import JPEG data, only BMP/GIF/PNG/TIFF."));
+      // return true so pattern will be empty
+      return true;
+   }
 
    // supported extensions match image handlers added in GollyApp::OnInit()
    if ( ext.IsSameAs(wxT("bmp"),false) ||

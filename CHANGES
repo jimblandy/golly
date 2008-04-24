@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Error message is displayed if user tries to load JPEG file.
+AKT: Fixed wxGTK bug that prevented using shift-space as a keyboard shortcut.
 AKT: All selection stuff is in a new Selection class defined in wxedit.h.
 AKT: Don't create files in app directory except (optionally) GollyPrefs.
 AKT: Cmd-A/Ctrl-A selects all text in info/help window.

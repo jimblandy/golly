@@ -1051,7 +1051,7 @@ void CreateCursors()
 
    #ifdef __WXX11__
       // wxX11 doesn't support creating cursor from wxImage or from bits;
-      // don't use plus sign -- confusing with crosshair, and no minus sign for zoom out
+      // don't use plus sign -- confusing with cross, and no minus sign for zoom out
       // curs_zoomin = new wxCursor(wxCURSOR_MAGNIFIER);
       curs_zoomin = new wxCursor(wxCURSOR_POINT_RIGHT);
    #else
