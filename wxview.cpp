@@ -1848,6 +1848,16 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
       }
    #endif
 
+   #ifdef __WXMAC__
+      // allow option-E/I/N/U/` (OnChar is not called for those key combos
+      // although the prefs dialog KeyComboCtrl::OnChar *is* called)
+      if (mods == wxMOD_ALT && (realkey == 'E' || realkey == 'I' || realkey == 'N' ||
+                                realkey == 'U' || realkey == '`')) {
+         OnChar(event);
+         return;
+      }
+   #endif
+
    #ifdef __WXGTK__
       if (realkey == ' ' && mods == wxMOD_SHIFT) {
          // fix wxGTK bug (curiously, the bug isn't seen in the prefs dialog);

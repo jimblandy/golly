@@ -2208,6 +2208,12 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
          OnChar(event);
          return;
       }
+      // avoid translating option-E/I/N/U/`
+      if (mods == wxMOD_ALT && (realkey == 'E' || realkey == 'I' || realkey == 'N' ||
+                                realkey == 'U' || realkey == '`')) {
+         OnChar(event);
+         return;
+      }
    #endif
    
    /* //!!! didn't work -- OnKeyDown is not getting called

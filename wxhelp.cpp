@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"       // for Warning
-#include "wxprefs.h"       // for helpx/y/wd/ht, helpfontsize, gollydir, etc
+#include "wxprefs.h"       // for GetShortcutTable, helpfontsize, gollydir, etc
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for numlayers, GetLayer, etc
 #include "wxhelp.h"
@@ -545,7 +545,8 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
       wxT("<html><title>Golly Help: Keyboard Shortcuts</title>")
       wxT("<body bgcolor=\"#FFFFCE\">")
       wxT("<p><font size=+1><b>Keyboard shortcuts</b></font>")
-      wxT("<p>Use Preferences > Keyboard to change the following keyboard shortcuts.")
+      wxT("<p>Use <a href=\"prefs#keyboard\">Preferences > Keyboard</a>")
+      wxT(" to change the following keyboard shortcuts.")
       wxT("<p><center>")
       wxT("<table cellspacing=1 border=2 cols=2 width=\"90%\">")
       wxT("<tr><td align=center>Key Combination</td><td align=center>Action</td></tr>");

@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Mac app allows option-E/I/N/U/` as keyboard shortcuts.
 AKT: Error message is displayed if user tries to load JPEG file.
 AKT: Fixed wxGTK bug that prevented using shift-space as a keyboard shortcut.
 AKT: All selection stuff is in a new Selection class defined in wxedit.h.
