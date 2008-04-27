@@ -55,9 +55,6 @@ User suggestions:
 - Allow diagonal selection rectangles.
 
 [Dave Greene]
-- Provide some way to open current pattern file in user's text editor.
-  Maybe just an "Edit Pattern" item in File menu?  And/or option-click
-  on pattern/script in navigation panel?
 - Provide a way to click-and-drag a selection to move it around.
 - Make page and arrow scrolling amounts configurable (in Prefs > View).
 - Add a getvisrect() script command that returns current viewport rect
@@ -76,9 +73,11 @@ User suggestions:
 
 [Bill Gosper]
 - Modify info window so it can be used to edit and save comments.
+  [Not needed if we can open current pattern file in text editor?]
 - For scales > 1:1 make the pixel color depend on lg(# of ones in it).
 
 [Brice Due]
+- Provide MCell-like editing capabilities.
 - Provide a thumbnail option as an alternative to tiled layers;
   ie. the current layer would be displayed in a large "focal" viewport.
   All layers would be displayed as small, active thumbnails (at left

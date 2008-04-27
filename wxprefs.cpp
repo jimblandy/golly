@@ -163,6 +163,7 @@ wxString rundir;                 // directory for Run Script dialog
 wxString choosedir;              // directory used by Choose File button
 wxString patterndir;             // directory used by Show Patterns
 wxString scriptdir;              // directory used by Show Scripts
+wxString texteditor;             // path of user's preferred text editor
 wxString perllib;                // name of Perl library (loaded at runtime)
 wxString pythonlib;              // name of Python library (loaded at runtime)
 int dirwinwd = 180;              // width of directory window
@@ -1465,6 +1466,7 @@ void SavePrefs()
    fprintf(f, "choose_dir=%s\n", (const char*)choosedir.mb_str(wxConvLocal));
    fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.mb_str(wxConvLocal));
    fprintf(f, "script_dir=%s\n", (const char*)scriptdir.mb_str(wxConvLocal));
+   fprintf(f, "text_editor=%s\n", (const char*)texteditor.mb_str(wxConvLocal));
    fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
    fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
    fprintf(f, "dir_width=%d\n", dirwinwd);
@@ -1603,7 +1605,17 @@ void GetPrefs()
    choosedir = gollydir;
    patterndir = gollydir + PATT_DIR;
    scriptdir = gollydir + SCRIPT_DIR;
+
+   // init user's preferred text editor
+   #ifdef __WXMSW__
+      texteditor = wxT("notepad");
+   #elif defined(__WXMAC__)
+      texteditor = wxT("TextEdit");
+   #else // assume Unix
+      texteditor = wxT("/usr/bin/gedit");
+   #endif
    
+   // init names of Perl and Python libraries
    #ifdef __WXMSW__
       perllib = wxT("perl58.dll");
       pythonlib = wxT("python24.dll");
@@ -1611,7 +1623,7 @@ void GetPrefs()
       // not used (Perl & Python are loaded at link time)
       perllib = wxEmptyString;
       pythonlib = wxEmptyString;
-   #elif defined(__UNIX__)
+   #else // assume Unix
       perllib = wxT("libperl.so");
       pythonlib = wxT("libpython2.4.so");
    #endif
@@ -1919,6 +1931,9 @@ void GetPrefs()
             // reset to supplied script directory
             scriptdir = gollydir + SCRIPT_DIR;
          }
+
+      } else if (strcmp(keyword, "text_editor") == 0) {
+         texteditor = wxString(value,wxConvLocal);
 
       } else if (strcmp(keyword, "perl_lib") == 0) {
          perllib = wxString(value,wxConvLocal);

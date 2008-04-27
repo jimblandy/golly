@@ -500,6 +500,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          return;
       }
    #endif
+
    wxString url = link.GetHref();
    if ( url.StartsWith(wxT("http:")) || url.StartsWith(wxT("mailto:")) ) {
       // pass http/mailto URL to user's preferred browser/emailer

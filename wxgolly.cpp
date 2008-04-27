@@ -192,7 +192,7 @@ void SetAppDirectory(const char* argv0)
    #elif defined(__WXMAC__)
       // wxMac has set current directory to location of .app bundle so no need
       // to do anything
-   #elif defined(__UNIX__)
+   #else // assume Unix
       // user might have started app from a different directory so find
       // last "/" in argv0 and change cwd if "/" isn't part of "./" prefix
       unsigned int pos = strlen(argv0);

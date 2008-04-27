@@ -110,6 +110,7 @@ extern wxString rundir;          // directory for Run Script dialog
 extern wxString choosedir;       // directory used by Choose File button
 extern wxString patterndir;      // directory used by Show Patterns
 extern wxString scriptdir;       // directory used by Show Scripts
+extern wxString texteditor;      // path of user's preferred text editor
 extern wxString perllib;         // name of Perl library (loaded at runtime)
 extern wxString pythonlib;       // name of Python library (loaded at runtime)
 extern int dirwinwd;             // width of pattern/script directory window

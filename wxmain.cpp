@@ -1540,6 +1540,36 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+static bool editfile = false;    // edit clicked file?
+
+void MainFrame::OnTreeClick(wxMouseEvent& event)
+{
+   // set global flag for testing in OnDirTreeSelection
+   editfile = event.AltDown() || event.RightDown();
+   
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::EditFile(const wxString& filepath)
+{
+   // open given pattern/script file in user's preferred text editor
+   wxString cmd;
+   #ifdef __WXMAC__
+      cmd = wxString::Format(wxT("open -a \"%s\" \"%s\""), texteditor.c_str(), filepath.c_str());
+   #elif defined(__WXMSW__)
+      //!!!??? works if texteditor is "notepad" but not "C:\Program Files\metapad[.exe]"
+      cmd = wxString::Format(wxT("\"%s\" \"%s\""), texteditor.c_str(), filepath.c_str());
+   #else
+      // assume Unix
+      cmd = wxString::Format(wxT("\"%s\" \"%s\""), texteditor.c_str(), filepath.c_str());
+   #endif
+   wxExecute(cmd, wxEXEC_ASYNC);
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 {
    // note that viewptr will be NULL if called from MainFrame::MainFrame
@@ -1575,6 +1605,11 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
             treectrl->Expand(id);
          }
          */
+
+      } else if (editfile) {
+         // open file in text editor
+         EditFile(filepath);
+
       } else {
          // user clicked on a file name
          if ( inscript ) {
@@ -2085,7 +2120,8 @@ void MainFrame::UpdateMenuAccelerators()
    // keyboard shortcuts have changed, so update all menu item accelerators
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
-      //!!! wxMac bug: these app menu items aren't updated
+      // wxMac bug: these app menu items aren't updated (but user isn't likely
+      // to change them so don't bother trying to fix the bug)
       SetAccelerator(mbar, wxID_ABOUT,         DO_ABOUT);
       SetAccelerator(mbar, wxID_PREFERENCES,   DO_PREFS);
       SetAccelerator(mbar, wxID_EXIT,          DO_QUIT);
@@ -2245,6 +2281,16 @@ void MainFrame::CreateDirControls()
       // only show scriptdir and its contents
       SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
    }
+
+   // install event handler to detect alt/option/right-click on a file
+   patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
+                                       wxMouseEventHandler(MainFrame::OnTreeClick));
+   patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
+                                       wxMouseEventHandler(MainFrame::OnTreeClick));
+   scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
+                                      wxMouseEventHandler(MainFrame::OnTreeClick));
+   scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
+                                      wxMouseEventHandler(MainFrame::OnTreeClick));
 }
 
 // -----------------------------------------------------------------------------

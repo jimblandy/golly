@@ -127,6 +127,8 @@ public:
    void RemoveLayerItem();
 
    // miscellaneous functions
+   void OnTreeClick(wxMouseEvent& event);
+   void EditFile(const wxString& filepath);
    void QuitApp();
 
    bool generating;           // currently generating pattern?
