@@ -1540,12 +1540,13 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-static bool editfile = false;    // edit clicked file?
+static bool editfile = false;    // edit the clicked file?
 
 void MainFrame::OnTreeClick(wxMouseEvent& event)
 {
-   // set global flag for testing in OnDirTreeSelection
-   editfile = event.AltDown() || event.RightDown();
+   // set global flag for testing in OnDirTreeSelection;
+   // we can't use AltDown() because Linux/GTK uses alt-click to drag window
+   editfile = event.ControlDown() || event.RightDown();
    
    event.Skip();
 }
@@ -1558,11 +1559,8 @@ void MainFrame::EditFile(const wxString& filepath)
    wxString cmd;
    #ifdef __WXMAC__
       cmd = wxString::Format(wxT("open -a \"%s\" \"%s\""), texteditor.c_str(), filepath.c_str());
-   #elif defined(__WXMSW__)
-      //!!!??? works if texteditor is "notepad" but not "C:\Program Files\metapad[.exe]"
-      cmd = wxString::Format(wxT("\"%s\" \"%s\""), texteditor.c_str(), filepath.c_str());
    #else
-      // assume Unix
+      // Windows or Unix
       cmd = wxString::Format(wxT("\"%s\" \"%s\""), texteditor.c_str(), filepath.c_str());
    #endif
    wxExecute(cmd, wxEXEC_ASYNC);
@@ -2282,14 +2280,14 @@ void MainFrame::CreateDirControls()
       SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
    }
 
-   // install event handler to detect alt/option/right-click on a file
-   patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
-                                       wxMouseEventHandler(MainFrame::OnTreeClick));
+   // install event handler to detect control/right-click on a file
    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
                                        wxMouseEventHandler(MainFrame::OnTreeClick));
-   scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
-                                      wxMouseEventHandler(MainFrame::OnTreeClick));
+   patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
+                                       wxMouseEventHandler(MainFrame::OnTreeClick));
    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
+                                      wxMouseEventHandler(MainFrame::OnTreeClick));
+   scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
                                       wxMouseEventHandler(MainFrame::OnTreeClick));
 }
 
