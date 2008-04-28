@@ -1608,11 +1608,15 @@ void GetPrefs()
 
    // init user's preferred text editor
    #ifdef __WXMSW__
-      texteditor = wxT("notepad");
+      texteditor = wxT("Notepad");
    #elif defined(__WXMAC__)
-      texteditor = wxT("TextEdit");
+      texteditor = wxT("/Applications/TextEdit.app");
    #else // assume Unix
-      texteditor = wxT("/usr/bin/gedit");
+      // use VISUAL or EDITOR environment variable if set
+      const char* editor = getenv("VISUAL");
+      if (!editor) editor = getenv("EDITOR");
+      if (!editor) editor = "/usr/bin/gedit";
+      texteditor = wxString(editor, wxConvLocal);
    #endif
    
    // init names of Perl and Python libraries
@@ -2047,6 +2051,8 @@ enum {
    PREF_OPEN_CURSOR,
    PREF_MAX_PATTERNS,
    PREF_MAX_SCRIPTS,
+   PREF_TEXT_EDITOR,
+   PREF_EDITOR_BOX,
    // Edit prefs
    PREF_RANDOM_FILL,
    PREF_SCROLL_PENCIL,
@@ -2142,6 +2148,8 @@ private:
    wxColor* new_selectrgb;       // new color for selected cells
    wxColor* new_qlifergb;        // new status bar color when using qlifealgo
    wxColor* new_hlifergb;        // new status bar color when using hlifealgo
+
+   wxString neweditor;           // new text editor
 
    DECLARE_EVENT_TABLE()
 };
@@ -2627,6 +2635,14 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    hsbox->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hsbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 
+   wxButton* editorbutt = new wxButton(panel, PREF_TEXT_EDITOR, _("Text Editor..."));
+   wxStaticText* editorbox = new wxStaticText(panel, PREF_EDITOR_BOX, texteditor);
+   neweditor = texteditor;
+
+   wxBoxSizer* hebox = new wxBoxSizer(wxHORIZONTAL);
+   hebox->Add(editorbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
+   hebox->Add(editorbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
+
    vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
    vbox->AddSpacer(10);
    vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
@@ -2634,6 +2650,9 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    vbox->Add(hpbox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hsbox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(10);
+   vbox->Add(hebox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(5);
 
    #ifdef __WXX11__
       vbox->AddSpacer(15);
@@ -3305,7 +3324,38 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
       
       UpdateChosenFile();
    }
-   
+
+   if ( event.GetId() == PREF_TEXT_EDITOR ) {
+      // ask user to choose a text editor
+      #ifdef __WXMSW__
+         wxString filetypes = _("Applications (*.exe)|*.exe");
+      #elif defined(__WXMAC__)
+         wxString filetypes = _("Applications (*.app)|*.app");
+      #else // assume Unix
+         wxString filetypes = _("All files (*)|*");
+      #endif
+      
+      wxFileDialog opendlg(this, _("Choose a text editor"),
+                           wxEmptyString, wxEmptyString, filetypes,
+                           wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+      #ifdef __WXMSW__
+         opendlg.SetDirectory(_("C:\Program Files"));
+      #elif defined(__WXMAC__)
+         opendlg.SetDirectory(_("/Applications"));
+      #else // assume Unix
+         opendlg.SetDirectory(_("/usr/bin"));
+      #endif
+      
+      if ( opendlg.ShowModal() == wxID_OK ) {
+         neweditor = opendlg.GetPath();
+         wxStaticText* editorbox = (wxStaticText*) FindWindowById(PREF_EDITOR_BOX);
+         if (editorbox) {
+            editorbox->SetLabel(neweditor);
+         }
+      }
+   }
+
    event.Skip();  // need this so other buttons work correctly
 }
 
@@ -3565,6 +3615,7 @@ bool PrefsDialog::TransferDataFromWindow()
    opencursindex = GetChoiceVal(PREF_OPEN_CURSOR);
    maxpatterns   = GetSpinVal(PREF_MAX_PATTERNS);
    maxscripts    = GetSpinVal(PREF_MAX_SCRIPTS);
+   texteditor    = neweditor;
 
    // EDIT_PAGE
    randomfill   = GetSpinVal(PREF_RANDOM_FILL);
