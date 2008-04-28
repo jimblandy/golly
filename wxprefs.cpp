@@ -3340,7 +3340,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
                            wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
       #ifdef __WXMSW__
-         opendlg.SetDirectory(_("C:\Program Files"));
+         opendlg.SetDirectory(_("C:\\Program Files"));
       #elif defined(__WXMAC__)
          opendlg.SetDirectory(_("/Applications"));
       #else // assume Unix
