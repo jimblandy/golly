@@ -1039,11 +1039,13 @@ void DuplicateLayer()
    AddLayer();
    duplicating = false;
 
+   /* this is no longer necessary now that we duplicate undo/redo history
    if (allowundo && currlayer->algo->getGeneration() > currlayer->startgen) {
       // undo list is empty but user can Reset, so add a generating change
       // to undo list so user can Undo or Reset (and Redo if they wish)
       currlayer->undoredo->AddGenChange();
    }
+   */
 }
 
 // -----------------------------------------------------------------------------
@@ -1677,6 +1679,9 @@ Layer::Layer()
                Warning(_("Could not copy tempstart file!"));
             }
          }
+         
+         // duplicate undo/redo history
+         undoredo->Duplicate(currlayer->undoredo);
       }
    }
 }

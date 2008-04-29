@@ -100,6 +100,9 @@ public:
    void RememberScriptFinish();
    // remember that script has ended
    
+   void Duplicate(UndoRedo* history);
+   // duplicate given undo/redo history
+   
    bool savecellchanges;         // script's cell changes need to be remembered?
    bool savegenchanges;          // script's gen changes need to be remembered?
    bool doingscriptchanges;      // are script's changes being undone/redone?

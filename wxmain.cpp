@@ -1555,6 +1555,12 @@ void MainFrame::OnTreeClick(wxMouseEvent& event)
 
 void MainFrame::EditFile(const wxString& filepath)
 {
+   // prompt user if text editor hasn't been set yet
+   if (texteditor.IsEmpty()) {
+      ChooseTextEditor(this, texteditor);
+      if (texteditor.IsEmpty()) return;
+   }
+   
    // open given pattern/script file in user's preferred text editor
    wxString cmd;
    #ifdef __WXMAC__

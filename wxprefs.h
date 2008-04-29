@@ -36,6 +36,10 @@ bool ChangePrefs(const wxString& page);
 // Open a modal dialog so user can change various preferences.
 // Returns true if the user hits OK (so client can call SavePrefs).
 
+void ChooseTextEditor(wxWindow* parent, wxString& result);
+// Let user select their preferred text editor.  The result is the
+// path to the application or empty if the user cancels the dialog.
+
 // Global preference data:
 
 extern wxString gollydir;        // path of directory containing app

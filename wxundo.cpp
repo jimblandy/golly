@@ -1382,3 +1382,40 @@ void UndoRedo::ClearUndoRedo()
       UpdateRedoItem(wxEmptyString);
    }
 }
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::Duplicate(UndoRedo* history)
+{
+   // clear any current history
+   ClearUndoRedo();
+
+   // do a shallow copy
+   // *this = *history;
+   // this caused a crash, presumably because undolist & redolist need a deep copy
+   
+   // do my own shallow copy
+   savecellchanges = history->savecellchanges;
+   savegenchanges = history->savegenchanges;
+   doingscriptchanges = history->doingscriptchanges;
+   intcount = history->intcount;
+   maxcount = history->maxcount;
+   badalloc = history->badalloc;
+   prevfile = history->prevfile;
+   prevgen = history->prevgen;
+   prevx = history->prevx;
+   prevy = history->prevy;
+   prevmag = history->prevmag;
+   prevwarp = history->prevwarp;
+   prevsel = history->prevsel;
+   startcount = history->startcount;
+   fixsetgen = history->fixsetgen;
+
+   // do a deep copy of dynamically allocated data,
+   // and copy all temporary files so they have new names
+   //!!!
+   cellarray = history->cellarray;
+   undolist = history->undolist;
+   redolist = history->redolist;
+}
+

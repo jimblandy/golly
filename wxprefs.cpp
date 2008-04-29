@@ -1606,17 +1606,16 @@ void GetPrefs()
    patterndir = gollydir + PATT_DIR;
    scriptdir = gollydir + SCRIPT_DIR;
 
-   // init user's preferred text editor
+   // init the text editor to something reasonable
    #ifdef __WXMSW__
       texteditor = wxT("Notepad");
    #elif defined(__WXMAC__)
       texteditor = wxT("/Applications/TextEdit.app");
    #else // assume Unix
-      // use VISUAL or EDITOR environment variable if set
-      const char* editor = getenv("VISUAL");
-      if (!editor) editor = getenv("EDITOR");
-      if (!editor) editor = "/usr/bin/gedit";
-      texteditor = wxString(editor, wxConvLocal);
+      // don't attempt to guess which editor might be available;
+      // set the string empty so the user is asked to choose their
+      // preferred editor the first time texteditor is used
+      texteditor = wxEmptyString;
    #endif
    
    // init names of Perl and Python libraries
@@ -3290,6 +3289,37 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
+void ChooseTextEditor(wxWindow* parent, wxString& result)
+{
+   #ifdef __WXMSW__
+      wxString filetypes = _("Applications (*.exe)|*.exe");
+   #elif defined(__WXMAC__)
+      wxString filetypes = _("Applications (*.app)|*.app");
+   #else // assume Unix
+      wxString filetypes = _("All files (*)|*");
+   #endif
+   
+   wxFileDialog opendlg(parent, _("Choose a text editor"),
+                        wxEmptyString, wxEmptyString, filetypes,
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+   #ifdef __WXMSW__
+      opendlg.SetDirectory(_("C:\\Program Files"));
+   #elif defined(__WXMAC__)
+      opendlg.SetDirectory(_("/Applications"));
+   #else // assume Unix
+      opendlg.SetDirectory(_("/usr/bin"));
+   #endif
+   
+   if ( opendlg.ShowModal() == wxID_OK ) {
+      result = opendlg.GetPath();
+   } else {
+      result = wxEmptyString;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void PrefsDialog::OnButton(wxCommandEvent& event)
 {
    if ( event.GetId() == PREF_CHOOSE ) {
@@ -3327,28 +3357,10 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
 
    if ( event.GetId() == PREF_TEXT_EDITOR ) {
       // ask user to choose a text editor
-      #ifdef __WXMSW__
-         wxString filetypes = _("Applications (*.exe)|*.exe");
-      #elif defined(__WXMAC__)
-         wxString filetypes = _("Applications (*.app)|*.app");
-      #else // assume Unix
-         wxString filetypes = _("All files (*)|*");
-      #endif
-      
-      wxFileDialog opendlg(this, _("Choose a text editor"),
-                           wxEmptyString, wxEmptyString, filetypes,
-                           wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-
-      #ifdef __WXMSW__
-         opendlg.SetDirectory(_("C:\\Program Files"));
-      #elif defined(__WXMAC__)
-         opendlg.SetDirectory(_("/Applications"));
-      #else // assume Unix
-         opendlg.SetDirectory(_("/usr/bin"));
-      #endif
-      
-      if ( opendlg.ShowModal() == wxID_OK ) {
-         neweditor = opendlg.GetPath();
+      wxString result;
+      ChooseTextEditor(this, result);
+      if ( !result.IsEmpty() ) {
+         neweditor = result;
          wxStaticText* editorbox = (wxStaticText*) FindWindowById(PREF_EDITOR_BOX);
          if (editorbox) {
             editorbox->SetLabel(neweditor);
