@@ -160,16 +160,14 @@ ChangeNode::~ChangeNode()
    
    // only delete oldtempstart/newtempstart if they're not being used to
    // store the current layer's starting pattern
-   if ( !oldtempstart.IsEmpty() &&
+   if ( !oldtempstart.IsEmpty() && wxFileExists(oldtempstart) &&
         oldtempstart != currlayer->startfile &&
-        oldtempstart != currlayer->currfile &&
-        wxFileExists(oldtempstart) ) {
+        oldtempstart != currlayer->currfile ) {
       wxRemoveFile(oldtempstart);
    }
-   if ( !newtempstart.IsEmpty() &&
+   if ( !newtempstart.IsEmpty() && wxFileExists(newtempstart) &&
         newtempstart != currlayer->startfile &&
-        newtempstart != currlayer->currfile &&
-        wxFileExists(newtempstart) ) {
+        newtempstart != currlayer->currfile ) {
       wxRemoveFile(newtempstart);
    }
 }
@@ -1385,16 +1383,65 @@ void UndoRedo::ClearUndoRedo()
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::Duplicate(UndoRedo* history)
+bool CopyTempFiles(ChangeNode* srcnode, ChangeNode* destnode, const wxString& tempstart1)
+{
+   // if srcnode has any existing temporary files then create new
+   // temporary file names in the destnode and copy each file
+   bool allcopied = true;
+
+   if ( !srcnode->oldfile.IsEmpty() && wxFileExists(srcnode->oldfile) ) {
+      destnode->oldfile = wxFileName::CreateTempFileName(_("golly_dupe1_"));
+      if ( !wxCopyFile(srcnode->oldfile, destnode->oldfile, true) )
+         allcopied = false;
+   }
+   
+   if ( !srcnode->newfile.IsEmpty() && wxFileExists(srcnode->newfile) ) {
+      destnode->newfile = wxFileName::CreateTempFileName(_("golly_dupe2_"));
+      if ( !wxCopyFile(srcnode->newfile, destnode->newfile, true) )
+         allcopied = false;
+   }
+   
+   if ( !srcnode->oldtempstart.IsEmpty() && wxFileExists(srcnode->oldtempstart) ) {
+      if (srcnode->oldtempstart == currlayer->tempstart) {
+         // the file has already been copied to tempstart1 by Layer::Layer()
+         destnode->oldtempstart = tempstart1;
+      } else {
+         destnode->oldtempstart = wxFileName::CreateTempFileName(_("golly_dupe3_"));
+         if ( !wxCopyFile(srcnode->oldtempstart, destnode->oldtempstart, true) )
+            allcopied = false;
+      }
+      if (srcnode->oldstartfile == srcnode->oldtempstart)
+         destnode->oldstartfile = destnode->oldtempstart;
+      if (srcnode->oldcurrfile == srcnode->oldtempstart)
+         destnode->oldcurrfile = destnode->oldtempstart;
+   }
+   
+   if ( !srcnode->newtempstart.IsEmpty() && wxFileExists(srcnode->newtempstart) ) {
+      if (srcnode->newtempstart == currlayer->tempstart) {
+         // the file has already been copied to tempstart1 by Layer::Layer()
+         destnode->newtempstart = tempstart1;
+      } else {
+         destnode->newtempstart = wxFileName::CreateTempFileName(_("golly_dupe4_"));
+         if ( !wxCopyFile(srcnode->newtempstart, destnode->newtempstart, true) )
+            allcopied = false;
+      }
+      if (srcnode->newstartfile == srcnode->newtempstart)
+         destnode->newstartfile = destnode->newtempstart;
+      if (srcnode->newcurrfile == srcnode->newtempstart)
+         destnode->newcurrfile = destnode->newtempstart;
+   }
+   
+   return allcopied;
+}
+
+// -----------------------------------------------------------------------------
+
+void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
 {
    // clear any current history
    ClearUndoRedo();
-
-   // do a shallow copy
-   // *this = *history;
-   // this caused a crash, presumably because undolist & redolist need a deep copy
    
-   // do my own shallow copy
+   // safer to do our own shallow copy (avoids setting undolist/redolist)
    savecellchanges = history->savecellchanges;
    savegenchanges = history->savegenchanges;
    doingscriptchanges = history->doingscriptchanges;
@@ -1410,12 +1457,104 @@ void UndoRedo::Duplicate(UndoRedo* history)
    prevsel = history->prevsel;
    startcount = history->startcount;
    fixsetgen = history->fixsetgen;
+   
+   // copy existing temporary file to new name
+   if ( !prevfile.IsEmpty() && wxFileExists(prevfile) ) {
+      prevfile = wxFileName::CreateTempFileName(temp_prefix);
+      if ( !wxCopyFile(history->prevfile, prevfile, true) ) {
+         Warning(_("Could not copy prevfile!"));
+         return;
+      }
+   }
 
-   // do a deep copy of dynamically allocated data,
-   // and copy all temporary files so they have new names
-   //!!!
-   cellarray = history->cellarray;
-   undolist = history->undolist;
-   redolist = history->redolist;
+   // do a deep copy of dynamically allocated data
+   cellarray = NULL;
+   if (intcount > 0 && history->cellarray) {
+      cellarray = (int*) malloc(maxcount * sizeof(int));
+      if (cellarray == NULL) {
+         Warning(_("Could not allocate cellarray!"));
+         return;
+      }
+      // copy history->cellarray data to this cellarray
+      memcpy(cellarray, history->cellarray, intcount * sizeof(int));
+   } 
+
+   wxList::compatibility_iterator node;
+   
+   // build a new undolist using history->undolist
+   node = history->undolist.GetFirst();
+   while (node) {
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      
+      ChangeNode* newchange = new ChangeNode(change->changeid);
+      if (newchange == NULL) {
+         Warning(_("Failed to copy undolist!"));
+         WX_CLEAR_LIST(wxList, undolist);
+         return;
+      }
+      
+      // shallow copy the change node
+      *newchange = *change;
+      
+      // deep copy any dynamically allocated data
+      if (change->cellcoords) {
+         int bytes = change->cellcount * 2 * sizeof(int);
+         newchange->cellcoords = (int*) malloc(bytes);
+         if (newchange->cellcoords == NULL) {
+            Warning(_("Could not copy undolist!"));
+            WX_CLEAR_LIST(wxList, undolist);
+            return;
+         }
+         memcpy(newchange->cellcoords, change->cellcoords, bytes);
+      }
+      
+      // copy any existing temporary files to new names
+      if (!CopyTempFiles(change, newchange, tempstart)) {
+         Warning(_("Failed to copy temporary file in undolist!"));
+         WX_CLEAR_LIST(wxList, undolist);
+         return;
+      }
+      
+      undolist.Append(newchange);
+      node = node->GetNext();
+   }
+   
+   // build a new redolist using history->redolist
+   node = history->redolist.GetFirst();
+   while (node) {
+      ChangeNode* change = (ChangeNode*) node->GetData();
+      
+      ChangeNode* newchange = new ChangeNode(change->changeid);
+      if (newchange == NULL) {
+         Warning(_("Failed to copy redolist!"));
+         WX_CLEAR_LIST(wxList, redolist);
+         return;
+      }
+      
+      // shallow copy the change node
+      *newchange = *change;
+      
+      // deep copy any dynamically allocated data
+      if (change->cellcoords) {
+         int bytes = change->cellcount * 2 * sizeof(int);
+         newchange->cellcoords = (int*) malloc(bytes);
+         if (newchange->cellcoords == NULL) {
+            Warning(_("Could not copy redolist!"));
+            WX_CLEAR_LIST(wxList, redolist);
+            return;
+         }
+         memcpy(newchange->cellcoords, change->cellcoords, bytes);
+      }
+      
+      // copy any existing temporary files to new names
+      if (!CopyTempFiles(change, newchange, tempstart)) {
+         Warning(_("Failed to copy temporary file in redolist!"));
+         WX_CLEAR_LIST(wxList, redolist);
+         return;
+      }
+      
+      redolist.Append(newchange);
+      node = node->GetNext();
+   }
 }
 

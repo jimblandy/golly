@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: A duplicated layer gets a copy of the original layer's undo/redo history.
 AKT: Right/ctrl-click on pattern/script file to open it in text editor.
 AKT: Mac app allows option-E/I/N/U/` as keyboard shortcuts.
 AKT: Error message is displayed if user tries to load JPEG file.

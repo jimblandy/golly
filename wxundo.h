@@ -100,7 +100,7 @@ public:
    void RememberScriptFinish();
    // remember that script has ended
    
-   void Duplicate(UndoRedo* history);
+   void Duplicate(UndoRedo* history, const wxString& tempstart);
    // duplicate given undo/redo history
    
    bool savecellchanges;         // script's cell changes need to be remembered?

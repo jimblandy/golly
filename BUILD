@@ -162,9 +162,8 @@ wxfile.cpp     - File menu functions.
                  NewPattern() creates a new, empty universe.
                  LoadPattern() reads in a pattern file.
 
-wxedit.*       - Edit menu functions and Selection class.
+wxedit.*       - Implements operations on selections.
                  CopyToClipboard() copies selection to clipboard.
-                 PasteClipboard() pastes in clipboard pattern.
                  RandomFill() randomly fills current selection.
                  Rotate() rotates current selection.
                  Flip() flips current selection.

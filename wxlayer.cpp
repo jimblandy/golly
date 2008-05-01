@@ -1038,14 +1038,6 @@ void DuplicateLayer()
    duplicating = true;
    AddLayer();
    duplicating = false;
-
-   /* this is no longer necessary now that we duplicate undo/redo history
-   if (allowundo && currlayer->algo->getGeneration() > currlayer->startgen) {
-      // undo list is empty but user can Reset, so add a generating change
-      // to undo list so user can Undo or Reset (and Redo if they wish)
-      currlayer->undoredo->AddGenChange();
-   }
-   */
 }
 
 // -----------------------------------------------------------------------------
@@ -1665,23 +1657,25 @@ Layer::Layer()
             }
          }
          
-         // tempstart must remain unique in duplicate layer
-         if (currlayer->startfile == currlayer->tempstart)
-            startfile = tempstart;
-         
-         // if currlayer->tempstart exists then copy it to this layer's tempstart
+         // tempstart file must remain unique in duplicate layer
          if ( wxFileExists(currlayer->tempstart) ) {
-            if ( wxCopyFile(currlayer->tempstart, tempstart, true) ) {
-               if (currlayer->currfile == currlayer->tempstart)
-                  // starting pattern came from clipboard or lexicon pattern
-                  currfile = tempstart;
-            } else {
+            if ( !wxCopyFile(currlayer->tempstart, tempstart, true) ) {
                Warning(_("Could not copy tempstart file!"));
             }
          }
+
+         if (currlayer->startfile == currlayer->tempstart) {
+            startfile = tempstart;
+         }
+         if (currlayer->currfile == currlayer->tempstart) {
+            // starting pattern came from clipboard or lexicon pattern
+            currfile = tempstart;
+         }
          
-         // duplicate undo/redo history
-         undoredo->Duplicate(currlayer->undoredo);
+         if (allowundo) {
+            // duplicate undo/redo history
+            undoredo->Duplicate(currlayer->undoredo, tempstart);
+         }
       }
    }
 }

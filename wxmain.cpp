@@ -1168,7 +1168,7 @@ void MainFrame::ToggleAllowUndo()
    if (allowundo) {
       if (currlayer->algo->getGeneration() > currlayer->startgen) {
          // undo list is empty but user can Reset, so add a generating change
-         // to undo list so user can Undo or Reset (and Redo if they wish)
+         // to undo list so user can Undo or Reset (and then Redo if they wish)
          currlayer->undoredo->AddGenChange();
       }
    } else {
