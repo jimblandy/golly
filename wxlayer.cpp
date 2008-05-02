@@ -75,6 +75,7 @@ enum {
    LAYER_LAST = LAYER_0 + MAX_LAYERS - 1,
    ADD_LAYER,
    CLONE_LAYER,
+   DUPLICATE_LAYER,
    DELETE_LAYER,
    STACK_LAYERS,
    TILE_LAYERS                   // if moved then change NUM_BUTTONS
@@ -89,6 +90,7 @@ const int NUM_BUTTONS = TILE_LAYERS + 1;
    // LAYER_0..LAYER_LAST buttons are created in LayerBar::AddButton
    #include "bitmaps/add.xpm"
    #include "bitmaps/clone.xpm"
+   #include "bitmaps/duplicate.xpm"
    #include "bitmaps/delete.xpm"
    #include "bitmaps/stack.xpm"
    #include "bitmaps/stack_down.xpm"
@@ -175,11 +177,12 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 
    // init bitmaps for normal state;
    // note that bitmaps for layer buttons are created in AddButton
-   normbutt[ADD_LAYER] =    wxBITMAP(add);
-   normbutt[CLONE_LAYER] =  wxBITMAP(clone);
-   normbutt[DELETE_LAYER] = wxBITMAP(delete);
-   normbutt[STACK_LAYERS] = wxBITMAP(stack);
-   normbutt[TILE_LAYERS] =  wxBITMAP(tile);
+   normbutt[ADD_LAYER] =         wxBITMAP(add);
+   normbutt[CLONE_LAYER] =       wxBITMAP(clone);
+   normbutt[DUPLICATE_LAYER] =   wxBITMAP(duplicate);
+   normbutt[DELETE_LAYER] =      wxBITMAP(delete);
+   normbutt[STACK_LAYERS] =      wxBITMAP(stack);
+   normbutt[TILE_LAYERS] =       wxBITMAP(tile);
    
    // toggle buttons also have a down state
    downbutt[STACK_LAYERS] = wxBITMAP(stack_down);
@@ -187,15 +190,16 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 
    #ifdef __WXMSW__
       // create bitmaps for disabled buttons
-      CreatePaleBitmap(normbutt[ADD_LAYER],     disnormbutt[ADD_LAYER]);
-      CreatePaleBitmap(normbutt[CLONE_LAYER],   disnormbutt[CLONE_LAYER]);
-      CreatePaleBitmap(normbutt[DELETE_LAYER],  disnormbutt[DELETE_LAYER]);
-      CreatePaleBitmap(normbutt[STACK_LAYERS],  disnormbutt[STACK_LAYERS]);
-      CreatePaleBitmap(normbutt[TILE_LAYERS],   disnormbutt[TILE_LAYERS]);
+      CreatePaleBitmap(normbutt[ADD_LAYER],        disnormbutt[ADD_LAYER]);
+      CreatePaleBitmap(normbutt[CLONE_LAYER],      disnormbutt[CLONE_LAYER]);
+      CreatePaleBitmap(normbutt[DUPLICATE_LAYER],  disnormbutt[DUPLICATE_LAYER]);
+      CreatePaleBitmap(normbutt[DELETE_LAYER],     disnormbutt[DELETE_LAYER]);
+      CreatePaleBitmap(normbutt[STACK_LAYERS],     disnormbutt[STACK_LAYERS]);
+      CreatePaleBitmap(normbutt[TILE_LAYERS],      disnormbutt[TILE_LAYERS]);
       
       // create bitmaps for disabled buttons in down state
-      CreatePaleBitmap(downbutt[STACK_LAYERS],  disdownbutt[STACK_LAYERS]);
-      CreatePaleBitmap(downbutt[TILE_LAYERS],   disdownbutt[TILE_LAYERS]);
+      CreatePaleBitmap(downbutt[STACK_LAYERS],     disdownbutt[STACK_LAYERS]);
+      CreatePaleBitmap(downbutt[TILE_LAYERS],      disdownbutt[TILE_LAYERS]);
    #endif
 
    // init position variables used by AddButton and AddSeparator
@@ -279,11 +283,12 @@ void LayerBar::OnButton(wxCommandEvent& event)
    #endif
 
    switch (id) {
-      case ADD_LAYER:      AddLayer(); break;
-      case CLONE_LAYER:    CloneLayer(); break;
-      case DELETE_LAYER:   DeleteLayer(); break;
-      case STACK_LAYERS:   ToggleStackLayers(); break;
-      case TILE_LAYERS:    ToggleTileLayers(); break;
+      case ADD_LAYER:         AddLayer(); break;
+      case CLONE_LAYER:       CloneLayer(); break;
+      case DUPLICATE_LAYER:   DuplicateLayer(); break;
+      case DELETE_LAYER:      DeleteLayer(); break;
+      case STACK_LAYERS:      ToggleStackLayers(); break;
+      case TILE_LAYERS:       ToggleTileLayers(); break;
       default:
          SetLayer(id);
          if (inscript) {
@@ -532,12 +537,13 @@ void CreateLayerBar(wxWindow* parent)
    if (layerbarptr == NULL) Fatal(_("Failed to create layer bar!"));
 
    // add buttons to layer bar
-   layerbarptr->AddButton(ADD_LAYER,    0, _("Add new layer"));
-   layerbarptr->AddButton(CLONE_LAYER,  0, _("Clone current layer"));
-   layerbarptr->AddButton(DELETE_LAYER, 0, _("Delete current layer"));
+   layerbarptr->AddButton(ADD_LAYER,         0, _("Add new layer"));
+   layerbarptr->AddButton(CLONE_LAYER,       0, _("Clone current layer"));
+   layerbarptr->AddButton(DUPLICATE_LAYER,   0, _("Duplicate current layer"));
+   layerbarptr->AddButton(DELETE_LAYER,      0, _("Delete current layer"));
    layerbarptr->AddSeparator();
-   layerbarptr->AddButton(STACK_LAYERS, 0, _("Toggle stacked layers"));
-   layerbarptr->AddButton(TILE_LAYERS,  0, _("Toggle tiled layers"));
+   layerbarptr->AddButton(STACK_LAYERS,      0, _("Toggle stacked layers"));
+   layerbarptr->AddButton(TILE_LAYERS,       0, _("Toggle tiled layers"));
    layerbarptr->AddSeparator();
    for (int i = 0; i < MAX_LAYERS; i++) {
       wxString tip;
@@ -574,11 +580,12 @@ void UpdateLayerBar(bool active)
    if (layerbarptr && showlayer) {
       if (viewptr->waitingforclick) active = false;
 
-      layerbarptr->EnableButton(ADD_LAYER,      active && !inscript && numlayers < MAX_LAYERS);
-      layerbarptr->EnableButton(CLONE_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
-      layerbarptr->EnableButton(DELETE_LAYER,   active && !inscript && numlayers > 1);
-      layerbarptr->EnableButton(STACK_LAYERS,   active);
-      layerbarptr->EnableButton(TILE_LAYERS,    active);
+      layerbarptr->EnableButton(ADD_LAYER,         active && !inscript && numlayers < MAX_LAYERS);
+      layerbarptr->EnableButton(CLONE_LAYER,       active && !inscript && numlayers < MAX_LAYERS);
+      layerbarptr->EnableButton(DUPLICATE_LAYER,   active && !inscript && numlayers < MAX_LAYERS);
+      layerbarptr->EnableButton(DELETE_LAYER,      active && !inscript && numlayers > 1);
+      layerbarptr->EnableButton(STACK_LAYERS,      active);
+      layerbarptr->EnableButton(TILE_LAYERS,       active);
       for (int i = 0; i < numlayers; i++)
          layerbarptr->EnableButton(i, active && CanSwitchLayer(i));
    }

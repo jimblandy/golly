@@ -36,6 +36,7 @@ zoomout_down  BITMAP "bitmaps/zoomout_down.bmp"
 // layer bar buttons
 add           BITMAP "bitmaps/add.bmp"
 clone         BITMAP "bitmaps/clone.bmp"
+duplicate     BITMAP "bitmaps/duplicate.bmp"
 delete        BITMAP "bitmaps/delete.bmp"
 stack         BITMAP "bitmaps/stack.bmp"
 tile          BITMAP "bitmaps/tile.bmp"
