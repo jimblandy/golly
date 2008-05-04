@@ -10,6 +10,7 @@ appicon1 ICON "appicon16.ico"
 // tool bar buttons
 play          BITMAP "bitmaps/play.bmp"
 stop          BITMAP "bitmaps/stop.bmp"
+reset         BITMAP "bitmaps/reset.bmp"
 hash          BITMAP "bitmaps/hash.bmp"
 new           BITMAP "bitmaps/new.bmp"
 open          BITMAP "bitmaps/open.bmp"

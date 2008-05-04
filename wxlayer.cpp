@@ -78,10 +78,9 @@ enum {
    DUPLICATE_LAYER,
    DELETE_LAYER,
    STACK_LAYERS,
-   TILE_LAYERS                   // if moved then change NUM_BUTTONS
+   TILE_LAYERS,
+   NUM_BUTTONS                   // must be last
 };
-
-const int NUM_BUTTONS = TILE_LAYERS + 1;
 
 #ifdef __WXMSW__
    // bitmaps are loaded via .rc file

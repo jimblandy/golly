@@ -287,7 +287,7 @@ wxundo.h wxedit.h
 
 $(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
 bitmaps/play.xpm bitmaps/stop.xpm bitmaps/hash.xpm bitmaps/hash_down.xpm \
-bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm \
+bitmaps/reset.xpm bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm \
 bitmaps/patterns.xpm bitmaps/patterns_down.xpm bitmaps/scripts.xpm bitmaps/scripts_down.xpm \
 bitmaps/draw.xpm bitmaps/draw_down.xpm bitmaps/select.xpm bitmaps/select_down.xpm \
 bitmaps/move.xpm bitmaps/move_down.xpm bitmaps/zoomin.xpm bitmaps/zoomin_down.xpm \

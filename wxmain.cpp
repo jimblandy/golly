@@ -68,10 +68,13 @@ bool call_unselect = false;   // OnIdle needs to call Unselect?
 
 bool call_close = false;      // OnIdle needs to call Close?
 
+// -----------------------------------------------------------------------------
+
 // ids for bitmap buttons in tool bar
 enum {
    START_TOOL = 0,
    STOP_TOOL,
+   RESET_TOOL,
    HASH_TOOL,
    NEW_TOOL,
    OPEN_TOOL,
@@ -84,10 +87,9 @@ enum {
    ZOOMIN_TOOL,
    ZOOMOUT_TOOL,
    INFO_TOOL,
-   HELP_TOOL      // if moved then change NUM_BUTTONS
+   HELP_TOOL,
+   NUM_BUTTONS    // must be last
 };
-
-const int NUM_BUTTONS = HELP_TOOL + 1;
 
 #ifdef __WXMSW__
    // bitmaps are loaded via .rc file
@@ -95,6 +97,7 @@ const int NUM_BUTTONS = HELP_TOOL + 1;
    // bitmaps for tool bar buttons
    #include "bitmaps/play.xpm"
    #include "bitmaps/stop.xpm"
+   #include "bitmaps/reset.xpm"
    #include "bitmaps/hash.xpm"
    #include "bitmaps/new.xpm"
    #include "bitmaps/open.xpm"
@@ -199,6 +202,7 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    // init bitmaps for normal state
    normtool[START_TOOL] =     wxBITMAP(play);
    normtool[STOP_TOOL] =      wxBITMAP(stop);
+   normtool[RESET_TOOL] =     wxBITMAP(reset);
    normtool[HASH_TOOL] =      wxBITMAP(hash);
    normtool[NEW_TOOL] =       wxBITMAP(new);
    normtool[OPEN_TOOL] =      wxBITMAP(open);
@@ -304,6 +308,7 @@ void ToolBar::OnButton(wxCommandEvent& event)
    int cmdid;
    switch (id) {
       case START_TOOL:     cmdid = ID_START; break;
+      case RESET_TOOL:     cmdid = ID_RESET; break;
       case HASH_TOOL:      cmdid = ID_HASH; break;
       case NEW_TOOL:       cmdid = wxID_NEW; break;
       case OPEN_TOOL:      cmdid = wxID_OPEN; break;
@@ -501,6 +506,7 @@ void MainFrame::CreateToolbar()
 
    // add buttons to tool bar
    toolbarptr->AddButton(START_TOOL,      _("Start generating"));
+   toolbarptr->AddButton(RESET_TOOL,      _("Reset"));
    toolbarptr->AddButton(HASH_TOOL,       _("Toggle hashing"));
    toolbarptr->AddSeparator();
    toolbarptr->AddButton(NEW_TOOL,        _("New pattern"));
@@ -544,6 +550,8 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
       
       toolbarptr->EnableButton(START_TOOL,      active);
+      toolbarptr->EnableButton(RESET_TOOL,      active && !inscript && (generating ||
+                                                currlayer->algo->getGeneration() > currlayer->startgen));
       toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);
       toolbarptr->EnableButton(NEW_TOOL,        active && !inscript);
       toolbarptr->EnableButton(OPEN_TOOL,       active && !inscript);
@@ -671,7 +679,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_NEXT,         active && !generating && !inscript);
       mbar->Enable(ID_STEP,         active && !generating && !inscript);
       mbar->Enable(ID_RESET,        active && !inscript && (generating ||
-                                       currlayer->algo->getGeneration() > currlayer->startgen));
+                                    currlayer->algo->getGeneration() > currlayer->startgen));
       mbar->Enable(ID_SETGEN,       active && !inscript);
       mbar->Enable(ID_FASTER,       active);
       mbar->Enable(ID_SLOWER,       active && currlayer->warp > minwarp);
