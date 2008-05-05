@@ -14,10 +14,6 @@ For future versions:
 
 - Allow dragging zoom-in cursor to zoom into rect.
 
-- When pasting an RLE pattern that has a rule specified, it would be
-  nice to have Golly switch to that rule (make it optional -- see
-  solution proposed in LifeCA).
-
 - Support toroidal universes (see LifeLab).  Or provide this as part
   of an MCell-compatible lifealgo.
 

@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Pasting a pattern with explicit rule can optionally change to that rule.
 AKT: Added Reset button to tool bar.
 AKT: Added Duplicate Layer button to layer bar.
 AKT: A duplicated layer gets a copy of the original layer's undo/redo history.

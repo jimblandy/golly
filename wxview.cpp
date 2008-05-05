@@ -35,10 +35,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "viewport.h"
+#include "liferules.h"     // for global_liferules
 
 #include "wxgolly.h"       // for mainptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal
-#include "wxprefs.h"       // for showgridlines, etc
+#include "wxprefs.h"       // for showgridlines, canchangerule, etc
 #include "wxhelp.h"        // for ShowHelp
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
@@ -50,16 +51,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"
 
 #ifdef __WXMAC__
-   #include <Carbon/Carbon.h>    // for Button
+   #include <Carbon/Carbon.h>       // for Button
 #endif
 
 // This module implements a viewport window for editing and viewing patterns.
 
 // -----------------------------------------------------------------------------
 
-const int DRAG_RATE = 20;        // call OnDragTimer 50 times per sec
+const int DRAG_RATE = 20;           // call OnDragTimer 50 times per sec
 
-bool stop_drawing = false;       // terminate a draw done while generating?
+static bool stop_drawing = false;   // terminate a draw done while generating?
+
+static wxString oldrule;            // rule before readclipboard is called
+static wxString newrule;            // rule after readclipboard is called
 
 // -----------------------------------------------------------------------------
 
@@ -559,8 +563,21 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    statusptr->ClearMessage();
    if (pattchanged) {
       if (savecells) currlayer->undoredo->RememberCellChanges(_("Paste"), currlayer->dirty);
-      MarkLayerDirty();
+      MarkLayerDirty();    // calls SetWindowTitle
       mainptr->UpdatePatternAndStatus();
+   }
+   
+   // pasting clipboard pattern can also cause a rule change
+   if (canchangerule > 0 && oldrule != newrule) {
+      currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+      if (global_liferules.hasB0notS8 && currlayer->hash) {
+         currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+         Warning(_("B0-not-S8 rules are not allowed when hashing."));
+      } else {
+         // show new rule in title bar
+         mainptr->SetWindowTitle(wxEmptyString);
+         if (savecells) currlayer->undoredo->RememberRuleChange(oldrule);
+      }
    }
 }
 
@@ -590,6 +607,9 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
       tmpfile.Close();
    #endif         
 
+   // remember rule before readclipboard changes it (all algos share a global rule)
+   oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+
    const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                                    **tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
@@ -599,6 +619,21 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
       err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                           **tempalgo, t, l, b, r);
    }
+
+   if (canchangerule > 0) {
+      // set newrule for later use in PasteTemporaryToCurrent
+      if (canchangerule == 1 && !currlayer->algo->isEmpty()) {
+         // don't change rule if universe isn't empty
+         newrule = oldrule;
+      } else {
+         // remember rule set by readclipboard
+         newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+      }
+   }
+   
+   // restore rule now in case error occurred
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+
    #ifdef __WXX11__
       // don't delete clipboard file
    #else
@@ -606,6 +641,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    #endif
 
    if (err) {
+      // note that error could be due to bad rule string in clipboard data
       Warning(wxString(err,wxConvLocal));
       return false;
    }

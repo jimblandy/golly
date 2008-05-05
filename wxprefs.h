@@ -82,6 +82,7 @@ extern bool scrollpencil;        // scroll if pencil cursor is dragged outside v
 extern bool scrollcross;         // scroll if cross cursor is dragged outside view?
 extern bool scrollhand;          // scroll if hand cursor is dragged outside view?
 extern bool allowundo;           // allow undo/redo?
+extern int canchangerule;        // if > 0 then paste can change rule
 extern int randomfill;           // random fill percentage
 extern int opacity;              // percentage opacity of live cells in overlays
 extern int tileborder;           // width of tiled window borders

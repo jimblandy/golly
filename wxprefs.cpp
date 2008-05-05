@@ -131,6 +131,7 @@ bool scrollpencil = true;        // scroll if pencil cursor is dragged outside v
 bool scrollcross = true;         // scroll if cross cursor is dragged outside view?
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
 bool allowundo = true;           // allow undo/redo?
+int canchangerule = 0;           // if > 0 then paste can change rule
 int randomfill = 50;             // random fill percentage (1..100)
 int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
 int tileborder = 3;              // thickness of tiled window borders
@@ -1382,6 +1383,7 @@ void SavePrefs()
    fprintf(f, "scroll_pencil=%d\n", scrollpencil ? 1 : 0);
    fprintf(f, "scroll_cross=%d\n", scrollcross ? 1 : 0);
    fprintf(f, "scroll_hand=%d\n", scrollhand ? 1 : 0);
+   fprintf(f, "can_change_rule=%d (0..2)\n", canchangerule);
    fprintf(f, "random_fill=%d (1..100)\n", randomfill);
    fprintf(f, "q_base_step=%d (2..%d)\n", qbasestep, MAX_BASESTEP);
    fprintf(f, "h_base_step=%d (2..%d, best if power of 2)\n", hbasestep, MAX_BASESTEP);
@@ -1728,6 +1730,11 @@ void GetPrefs()
       } else if (strcmp(keyword, "scroll_hand") == 0) {
          scrollhand = value[0] == '1';
 
+      } else if (strcmp(keyword, "can_change_rule") == 0) {
+         sscanf(value, "%d", &canchangerule);
+         if (canchangerule < 0) canchangerule = 0;
+         if (canchangerule > 2) canchangerule = 2;
+
       } else if (strcmp(keyword, "random_fill") == 0) {
          sscanf(value, "%d", &randomfill);
          if (randomfill < 1) randomfill = 1;
@@ -2054,6 +2061,9 @@ enum {
    PREF_EDITOR_BOX,
    // Edit prefs
    PREF_RANDOM_FILL,
+   PREF_PASTE_0,
+   PREF_PASTE_1,
+   PREF_PASTE_2,
    PREF_SCROLL_PENCIL,
    PREF_SCROLL_CROSS,
    PREF_SCROLL_HAND,
@@ -2124,6 +2134,7 @@ private:
    bool GetCheckVal(long id);
    int GetChoiceVal(long id);
    int GetSpinVal(long id);
+   int GetRadioVal(long firstid, int numbuttons);
    bool BadSpinVal(int id, int minval, int maxval, const wxString& prefix);
    bool ValidatePage();
    void ChangeColor(int id, wxColor* rgb);
@@ -2489,7 +2500,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
    #define SBBOTGAP (2)       // vertical gap after last item in wxStaticBoxSizer
    #define SVGAP (4)          // vertical gap above wxSpinCtrl box
    #define S2VGAP (0)         // vertical gap between 2 wxSpinCtrl boxes
-   #define CH2VGAP (9)        // vertical gap between 2 check boxes
+   #define CH2VGAP (6)        // vertical gap between 2 check/radio boxes
    #define CVGAP (9)          // vertical gap above wxChoice box
    #define LRGAP (5)          // space left and right of vertically stacked boxes
    #define SPINGAP (3)        // horizontal gap around each wxSpinCtrl box
@@ -2500,18 +2511,18 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
    #define SBBOTGAP (7)
    #define SVGAP (7)
    #define S2VGAP (5)
-   #define CH2VGAP (11)
+   #define CH2VGAP (8)
    #define CVGAP (7)
    #define LRGAP (5)
    #define SPINGAP (6)
    #define CHOICEGAP (6)
-#else
+#else // assume Unix
    #define GROUPGAP (10)
    #define SBTOPGAP (12)
    #define SBBOTGAP (7)
    #define SVGAP (7)
    #define S2VGAP (5)
-   #define CH2VGAP (11)
+   #define CH2VGAP (8)
    #define CVGAP (7)
    #define LRGAP (5)
    #define SPINGAP (6)
@@ -2693,29 +2704,62 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    
+   // can_change_rule
+
+   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("When pasting a clipboard pattern:"));
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+   
+   wxRadioButton* radio1 = new wxRadioButton(panel, PREF_PASTE_0, _("Never change rule"),
+                                    wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+   wxRadioButton* radio2 = new wxRadioButton(panel, PREF_PASTE_1,
+                                    _("Only change rule if one is specified and universe is empty"));
+   wxRadioButton* radio3 = new wxRadioButton(panel, PREF_PASTE_2,
+                                    _("Always change rule if one is specified"));
+
+   ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(radio1, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(CH2VGAP);
+   ssizer1->Add(radio2, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(CH2VGAP);
+   ssizer1->Add(radio3, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(SBBOTGAP);
+   
    // scroll_pencil, scroll_cross, scroll_hand
+
+   wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY,
+                                        _("If the cursor is dragged outside the viewport:"));
+   wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
    
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_SCROLL_PENCIL,
-                                       _("Scroll if pencil cursor is dragged outside view"));
+                                       _("Scroll when drawing cells (using pencil cursor)"));
    wxCheckBox* check2 = new wxCheckBox(panel, PREF_SCROLL_CROSS,
-                                       _("Scroll if cross cursor is dragged outside view"));
+                                       _("Scroll when selecting cells (using cross cursor)"));
    wxCheckBox* check3 = new wxCheckBox(panel, PREF_SCROLL_HAND,
-                                       _("Scroll if hand cursor is dragged outside view"));
+                                       _("Scroll when moving view (using hand cursor)"));
+
+   ssizer2->AddSpacer(SBTOPGAP);
+   ssizer2->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer2->AddSpacer(CH2VGAP);
+   ssizer2->Add(check2, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer2->AddSpacer(CH2VGAP);
+   ssizer2->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer2->AddSpacer(SBBOTGAP);
 
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(GROUPGAP);
-   vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
-   vbox->AddSpacer(CH2VGAP);
-   vbox->Add(check2, 0, wxLEFT | wxRIGHT, LRGAP);
-   vbox->AddSpacer(CH2VGAP);
-   vbox->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
    
    // init control values
    spin1->SetRange(1, 100);
    spin1->SetValue(randomfill);
    spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
+   radio1->SetValue(canchangerule == 0);
+   radio2->SetValue(canchangerule == 1);
+   radio3->SetValue(canchangerule == 2);
    check1->SetValue(scrollpencil);
    check2->SetValue(scrollcross);
    check3->SetValue(scrollhand);
@@ -2929,7 +2973,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    vbox->AddSpacer(5);
 #if wxUSE_TOOLTIPS
    vbox->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
-   vbox->AddSpacer(CH2VGAP);
+   vbox->AddSpacer(CH2VGAP + 3);
 #endif
    vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
@@ -3011,7 +3055,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
 
    ssizer1->AddSpacer(SBTOPGAP);
    ssizer1->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
-   ssizer1->AddSpacer(CH2VGAP - 3);
+   ssizer1->AddSpacer(CH2VGAP);
    ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
    
@@ -3491,6 +3535,18 @@ int PrefsDialog::GetChoiceVal(long id)
 
 // -----------------------------------------------------------------------------
 
+int PrefsDialog::GetRadioVal(long firstid, int numbuttons)
+{
+   for ( int i = 0; i < numbuttons; i++ ) {
+      wxRadioButton* radio = (wxRadioButton*) FindWindow(firstid + i);
+      if (radio->GetValue()) return i;
+   }
+   Warning(_("Bug in GetRadioVal!"));
+   return 0;
+}
+
+// -----------------------------------------------------------------------------
+
 int PrefsDialog::GetSpinVal(long id)
 {
    wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(id);
@@ -3630,10 +3686,11 @@ bool PrefsDialog::TransferDataFromWindow()
    texteditor    = neweditor;
 
    // EDIT_PAGE
-   randomfill   = GetSpinVal(PREF_RANDOM_FILL);
-   scrollpencil = GetCheckVal(PREF_SCROLL_PENCIL);
-   scrollcross  = GetCheckVal(PREF_SCROLL_CROSS);
-   scrollhand   = GetCheckVal(PREF_SCROLL_HAND);
+   randomfill    = GetSpinVal(PREF_RANDOM_FILL);
+   canchangerule = GetRadioVal(PREF_PASTE_0, 3);
+   scrollpencil  = GetCheckVal(PREF_SCROLL_PENCIL);
+   scrollcross   = GetCheckVal(PREF_SCROLL_CROSS);
+   scrollhand    = GetCheckVal(PREF_SCROLL_HAND);
 
    // CONTROL_PAGE
    maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);

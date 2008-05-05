@@ -37,9 +37,9 @@ const char *readpattern(const char *filename, lifealgo &imp) ;
 char *getline(char *line, int maxlinelen) ;
 
 /*
- *   Similar to readpattern but we don't change the current rule and
- *   we return pattern edges (which might not be the minimal bounding box;
- *   eg. if an RLE pattern is empty or has empty borders).
+ *   Similar to readpattern but we return the pattern edges
+ *   (not necessarily the minimal bounding box; eg. if an
+ *   RLE pattern is empty or has empty borders).
  */
 const char *readclipboard(const char *filename, lifealgo &imp,
                           bigint *t, bigint *l, bigint *b, bigint *r) ;

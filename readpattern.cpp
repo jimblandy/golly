@@ -278,7 +278,7 @@ const char *readpclife(lifealgo &imp, char *line) {
             sscanf(line + 2, " %d %d", &x, &y) ;
             leftx = x ;
          } else if (line[1] == 'N') {
-            // already done so no need for this
+            imp.setrule("B3/S23") ;
          } else if (line[1] == 'R') {
             ruleptr = line;
             ruleptr += 2;
@@ -358,8 +358,13 @@ const char *loadpattern(lifealgo &imp) {
    char line[LINESIZE + 1] ;
    const char *errmsg = 0;
 
-   // reset rule to Conway's Life (default if explicit rule isn't supplied)
-   imp.setrule("B3/S23") ;
+   if (getedges) {
+      // called from readclipboard so don't reset rule;
+      // ie. only change rule if an explicit rule is supplied
+   } else {
+      // reset rule to Conway's Life (default if explicit rule isn't supplied)
+      imp.setrule("B3/S23") ;
+   }
 
    buffcount = 0;
    maxbuffs = (double)filesize / (double)BUFFSIZE;
@@ -463,10 +468,6 @@ const char *readclipboard(const char *filename, lifealgo &imp,
    buffpos = BUFFSIZE;                       // for 1st getchar call
    prevchar = 0;                             // for 1st getline call
 
-   // save current rule changed by loadpattern
-   char saverule[128];
-   strncpy(saverule, imp.getrule(), sizeof(saverule));
-
    top = 0;
    left = 0;
    bottom = 0;
@@ -481,9 +482,6 @@ const char *readclipboard(const char *filename, lifealgo &imp,
    // make sure we return a valid rect
    if (bottom < top) *b = top;
    if (right < left) *r = left;
-         
-   // restore rule
-   imp.setrule(saverule);
 
 #ifdef ZLIB
    gzclose(zinstream) ;
