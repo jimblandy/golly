@@ -2786,7 +2786,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("megabytes")),
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~80% of RAM)")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    
    // q_base_step and h_base_step

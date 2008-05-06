@@ -6,9 +6,6 @@ For future versions:
 - Fix qlifealgo::lowerRightPixel to prevent off-by-one error when
   selecting large pattern like caterpillar.
 
-- Automatically reduce an overlarge hash memory request (with suitable
-  warning) to 80% (?) of physical memory (is there a wx call to get that?).
-
 - Change all Python commands to g_* for consistency with Perl commands.
   The old commands would still work but would be deprecated.
 
