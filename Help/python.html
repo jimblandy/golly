@@ -164,14 +164,14 @@ or you can search for individual commands alphabetically:
 <a href="#duplicate"><b>duplicate</b></a><br>
 <a href="#empty"><b>empty</b></a><br>
 <a href="#error"><b>error</b></a><br>
-<a href="#evolve"><b>evolve</b></a>
-</td>
-<td valign=top width=30> </td>
-<td valign=top>
+<a href="#evolve"><b>evolve</b></a><br>
 <a href="#exit"><b>exit</b></a><br>
 <a href="#fit"><b>fit</b></a><br>
 <a href="#fitsel"><b>fitsel</b></a><br>
-<a href="#flip"><b>flip</b></a><br>
+<a href="#flip"><b>flip</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
 <a href="#getbase"><b>getbase</b></a><br>
 <a href="#getcell"><b>getcell</b></a><br>
 <a href="#getcells"><b>getcells</b></a><br>
@@ -182,10 +182,7 @@ or you can search for individual commands alphabetically:
 <a href="#getkey"><b>getkey</b></a><br>
 <a href="#getlayer"><b>getlayer</b></a><br>
 <a href="#getmag"><b>getmag</b></a><br>
-<a href="#getname"><b>getname</b></a>
-</td>
-<td valign=top width=30> </td>
-<td valign=top>
+<a href="#getname"><b>getname</b></a><br>
 <a href="#getoption"><b>getoption</b></a><br>
 <a href="#getpop"><b>getpop</b></a><br>
 <a href="#getpos"><b>getpos</b></a><br>
@@ -194,16 +191,17 @@ or you can search for individual commands alphabetically:
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
 <a href="#getstring"><b>getstring</b></a><br>
-<a href="#hash"><b>hash</b></a><br>
+<a href="#hash"><b>hash</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#help"><b>help</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
 <a href="#new"><b>new</b></a><br>
 <a href="#note"><b>note</b></a><br>
-<a href="#numlayers"><b>numlayers</b></a>
-</td>
-<td valign=top width=30> </td>
-<td valign=top>
+<a href="#numlayers"><b>numlayers</b></a><br>
 <a href="#open"><b>open</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
@@ -216,12 +214,12 @@ or you can search for individual commands alphabetically:
 <a href="#select"><b>select</b></a><br>
 <a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
-<a href="#setcolor"><b>setcolor</b></a><br>
-<a href="#setcursor"><b>setcursor</b></a><br>
-<a href="#setgen"><b>setgen</b></a>
+<a href="#setcolor"><b>setcolor</b></a>
 </td>
-<td valign=top width=30> </td>
+<td valign=top width=40> </td>
 <td valign=top>
+<a href="#setcursor"><b>setcursor</b></a><br>
+<a href="#setgen"><b>setgen</b></a><br>
 <a href="#setlayer"><b>setlayer</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setname"><b>setname</b></a><br>
@@ -966,6 +964,14 @@ Show the given string in a modal information dialog.
 Useful for displaying multi-line results.
 </dd>
 <dd> Example: <b>golly.note("Line 1\nLine 2\nLine 3")</b></dd>
+</p>
+
+<a name="help"></a><p><dt><b>help(<i>htmlfile</i>)</b></dt>
+<dd>
+Open the given HTML file in the help window.
+A non-absolute path is relative to the location of the script.
+</dd>
+<dd> Example: <b>golly.help("results.html")</b></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>

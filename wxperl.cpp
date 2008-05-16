@@ -2263,6 +2263,23 @@ XS(pl_note)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_help)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_help($string)");
+
+   STRLEN n_a;
+   char* htmlfile = SvPV(ST(0), n_a);
+
+   ShowHelp(wxString(htmlfile,wxConvLocal));
+   
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_check)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2438,6 +2455,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_error",        pl_error,        file);
    newXS("g_warn",         pl_warn,         file);
    newXS("g_note",         pl_note,         file);
+   newXS("g_help",         pl_help,         file);
    newXS("g_check",        pl_check,        file);
    newXS("g_exit",         pl_exit,         file);
    // internal use only (don't document)

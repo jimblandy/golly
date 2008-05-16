@@ -397,6 +397,8 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
 // The following py_* routines can be called from Python scripts; some are
 // based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
 
+#define RETURN_NONE Py_INCREF(Py_None); return Py_None
+
 static PyObject* py_open(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -412,8 +414,7 @@ static PyObject* py_open(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -434,8 +435,7 @@ static PyObject* py_save(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -529,8 +529,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -570,8 +569,7 @@ static PyObject* py_new(PyObject* self, PyObject* args)
    mainptr->NewPattern(wxString(title,wxConvLocal));
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -591,8 +589,7 @@ static PyObject* py_cut(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -612,8 +609,7 @@ static PyObject* py_copy(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -637,8 +633,7 @@ static PyObject* py_clear(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -681,8 +676,7 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
 
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -702,8 +696,7 @@ static PyObject* py_shrink(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -732,8 +725,7 @@ static PyObject* py_randfill(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -754,8 +746,7 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -776,8 +767,7 @@ static PyObject* py_rotate(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1023,8 +1013,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    
    if (abort) return NULL;
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1262,8 +1251,7 @@ static PyObject* py_select(PyObject* self, PyObject* args)
 
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1336,8 +1324,7 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
 
    GSF_setcell(x, y, state);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1424,8 +1411,7 @@ static PyObject* py_run(PyObject* self, PyObject* args)
       DoAutoUpdate();
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1442,8 +1428,7 @@ static PyObject* py_step(PyObject* self, PyObject* args)
       DoAutoUpdate();
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1459,8 +1444,7 @@ static PyObject* py_setstep(PyObject* self, PyObject* args)
    mainptr->SetWarp(exp);
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1496,8 +1480,7 @@ static PyObject* py_setbase(PyObject* self, PyObject* args)
    mainptr->UpdateWarp();
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1538,8 +1521,7 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
       }
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1556,8 +1538,7 @@ static PyObject* py_reset(PyObject* self, PyObject* args)
       DoAutoUpdate();
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1576,8 +1557,7 @@ static PyObject* py_setgen(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1622,8 +1602,7 @@ static PyObject* py_setrule(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1655,8 +1634,7 @@ static PyObject* py_setpos(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1692,8 +1670,7 @@ static PyObject* py_setmag(PyObject* self, PyObject* args)
    viewptr->SetMag(mag);
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1720,8 +1697,7 @@ static PyObject* py_fit(PyObject* self, PyObject* args)
    viewptr->FitPattern();
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1741,8 +1717,7 @@ static PyObject* py_fitsel(PyObject* self, PyObject* args)
       return NULL;
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1796,8 +1771,7 @@ static PyObject* py_update(PyObject* self, PyObject* args)
 
    GSF_update();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1812,8 +1786,7 @@ static PyObject* py_autoupdate(PyObject* self, PyObject* args)
 
    autoupdate = (flag != 0);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1896,8 +1869,7 @@ static PyObject* py_dellayer(PyObject* self, PyObject* args)
       DoAutoUpdate();
    }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1926,8 +1898,7 @@ static PyObject* py_movelayer(PyObject* self, PyObject* args)
    MoveLayer(fromindex, toindex);
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1950,8 +1921,7 @@ static PyObject* py_setlayer(PyObject* self, PyObject* args)
    SetLayer(index);
    DoAutoUpdate();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2010,8 +1980,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
 
    GSF_setname(name, index);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2177,8 +2146,7 @@ static PyObject* py_dokey(PyObject* self, PyObject* args)
 
    GSF_dokey(ascii);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2197,8 +2165,7 @@ static PyObject* py_show(PyObject* self, PyObject* args)
    // make sure status bar is visible
    if (!showstatus) mainptr->ToggleStatusBar();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2217,8 +2184,7 @@ static PyObject* py_error(PyObject* self, PyObject* args)
    // make sure status bar is visible
    if (!showstatus) mainptr->ToggleStatusBar();
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2233,8 +2199,7 @@ static PyObject* py_warn(PyObject* self, PyObject* args)
 
    Warning(wxString(s,wxConvLocal));
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2249,8 +2214,22 @@ static PyObject* py_note(PyObject* self, PyObject* args)
 
    Note(wxString(s,wxConvLocal));
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_help(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* htmlfile = NULL;
+
+   if (!PyArg_ParseTuple(args, "s", &htmlfile)) return NULL;
+
+   ShowHelp(wxString(htmlfile,wxConvLocal));
+
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2270,8 +2249,7 @@ static PyObject* py_check(PyObject* self, PyObject* args)
 
    allowcheck = (flag != 0);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2305,8 +2283,7 @@ static PyObject* py_stderr(PyObject* self, PyObject* args)
    // accumulate stderr messages in global string (shown after script finishes)
    scripterr = wxString(s, wxConvLocal);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2392,6 +2369,7 @@ static PyMethodDef py_methods[] = {
    { "error",        py_error,      METH_VARARGS, "beep and show given string in status bar" },
    { "warn",         py_warn,       METH_VARARGS, "show given string in warning dialog" },
    { "note",         py_note,       METH_VARARGS, "show given string in note dialog" },
+   { "help",         py_help,       METH_VARARGS, "show given HTML file in help window" },
    { "check",        py_check,      METH_VARARGS, "allow event checking?" },
    { "exit",         py_exit,       METH_VARARGS, "exit script with optional error message" },
    // for internal use (don't document)

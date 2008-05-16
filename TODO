@@ -7,16 +7,17 @@ For future versions:
   selecting large pattern like caterpillar.
 
 - Change all Python commands to g_* for consistency with Perl commands.
-  The old commands would still work but would be deprecated.
+  Unfortutely, we can't really keep the old commands in same module
+  because doing "from golly import *" exposes old and new commands and
+  so a script like goto.py that calls a non-Golly open command will fail.
+  We could put old commands in a separate module called "oldgolly".
+  Maybe best to leave this change for when the scripting API needs
+  significant changes due to multi-rect selections or 256-state cells.
 
 - Allow dragging zoom-in cursor to zoom into rect.
 
 - Support toroidal universes (see LifeLab).  Or provide this as part
   of an MCell-compatible lifealgo.
-
-- Add info() command to display current pattern info.
-  Add help(html-file) to open the help window and display contents of
-  given html file (not necessarily in Help folder).
 
 - Stop generating if pattern becomes empty, constant or p2 (qlife only)
   and display suitable message in status bar.  Or maybe just add
@@ -28,9 +29,6 @@ For future versions:
 - Allow non-rectangular (and disjoint) selections.
 
 - Implement a history bar for hlife.
-
-- Build the Help menu items dynamically by looking at the .html files
-  inside the Help folder.  Or maybe read a special Help/menu.data file?
 
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
 
