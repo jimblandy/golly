@@ -1481,25 +1481,6 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
    #if defined(__WXX11__) || defined(__WXGTK__)
       if (inidle) return;
    #endif
-
-   // process any pending script/pattern files passed via command line
-   if ( pendingfiles.GetCount() > 0 ) {
-      #if defined(__WXX11__) || defined(__WXGTK__)
-         inidle = true;
-      #endif
-      for ( size_t n = 0; n < pendingfiles.GetCount(); n++ ) {
-         OpenFile(pendingfiles[n]);
-      }
-      #if defined(__WXX11__) || defined(__WXGTK__)
-         inidle = false;
-      #endif
-      pendingfiles.Clear();
-   }
-
-   #ifdef __WXX11__
-      // don't change focus here because it prevents menus staying open
-      return;
-   #endif
    
    #ifdef __WXMSW__
       if ( call_unselect ) {
@@ -1516,6 +1497,25 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
       // note that we can't do this on Windows because it stuffs up clicks
       // in layer bar buttons
       if ( IsActive() && viewptr ) viewptr->SetFocus();
+   #endif
+
+   // process any pending script/pattern files
+   if ( pendingfiles.GetCount() > 0 ) {
+      #if defined(__WXX11__) || defined(__WXGTK__)
+         inidle = true;
+      #endif
+      for ( size_t n = 0; n < pendingfiles.GetCount(); n++ ) {
+         OpenFile(pendingfiles[n]);
+      }
+      #if defined(__WXX11__) || defined(__WXGTK__)
+         inidle = false;
+      #endif
+      pendingfiles.Clear();
+   }
+
+   #ifdef __WXX11__
+      // don't change focus here because it prevents menus staying open
+      return;
    #endif
    
    if (call_close) {
@@ -1552,8 +1552,7 @@ static bool editfile = false;    // edit the clicked file?
 
 void MainFrame::OnTreeClick(wxMouseEvent& event)
 {
-   // set global flag for testing in OnDirTreeSelection;
-   // we can't use AltDown() because Linux/GTK uses alt-click to drag window
+   // set global flag for testing in OnDirTreeSelection
    editfile = event.ControlDown() || event.RightDown();
    
    event.Skip();
@@ -1657,7 +1656,10 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
             #endif
             
             // load pattern or run script
-            OpenFile(filepath);
+            // OpenFile(filepath);
+            // call OpenFile in later OnIdle -- this prevents the main window
+            // moving in front of the help window if a script calls help(...)
+            pendingfiles.Add(filepath);
          }
       }
 
