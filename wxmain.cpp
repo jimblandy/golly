@@ -59,14 +59,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 // one-shot timer to fix problems in wxMac and wxGTK -- see OnOneTimer;
-// must be static because it's used in DnDFile::OnDropFiles
-wxTimer* onetimer;
+// must be static global because it's used in DnDFile::OnDropFiles
+static wxTimer* onetimer;
 
 #ifdef __WXMSW__
-bool call_unselect = false;   // OnIdle needs to call Unselect?
+static bool call_unselect = false;         // OnIdle needs to call Unselect?
+static wxString editpath = wxEmptyString;  // OnIdle calls EditFile if this isn't empty
 #endif
 
-bool call_close = false;      // OnIdle needs to call Close?
+static bool call_close = false;            // OnIdle needs to call Close?
+static bool editfile = false;              // edit the clicked file?
 
 // -----------------------------------------------------------------------------
 
@@ -1492,6 +1494,11 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
          // calling SetFocus once doesn't stuff up layer bar buttons
          if ( IsActive() && viewptr ) viewptr->SetFocus();
       }
+      
+      if (!editpath.IsEmpty()) {
+         EditFile(editpath);
+         editpath.Clear();
+      }
    #else
       // ensure viewport window has keyboard focus if main window is active;
       // note that we can't do this on Windows because it stuffs up clicks
@@ -1548,12 +1555,34 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-static bool editfile = false;    // edit the clicked file?
-
 void MainFrame::OnTreeClick(wxMouseEvent& event)
 {
    // set global flag for testing in OnDirTreeSelection
    editfile = event.ControlDown() || event.RightDown();
+   
+#ifdef __WXMSW__
+   // fix wxMSW problem handling right-click -- without this fix
+   // OnDirTreeSelection gets called but the 1st item (ie. folder) is always
+   // selected and so wxGenericDirCtrl::GetFilePath returns an empty string
+   if (event.RightDown()) {
+      wxGenericDirCtrl* dirctrl = NULL;
+      // for some reason we need to use mainptr to access these members
+      if (showpatterns) dirctrl = mainptr->patternctrl;
+      if (showscripts) dirctrl = mainptr->scriptctrl;
+      if (dirctrl) {
+         wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
+         if (treectrl) {
+            wxPoint pt = event.GetPosition();
+            int flags;
+            wxTreeItemId id = treectrl->HitTest(pt, flags);
+            if (id.IsOk()) {
+               treectrl->SelectItem(id, true);
+               // OnDirTreeSelection gets called a few times for some reason
+            }
+         }
+      }
+   }
+#endif
    
    event.Skip();
 }
@@ -1619,7 +1648,12 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 
       } else if (editfile) {
          // open file in text editor
-         EditFile(filepath);
+         #ifdef __WXMSW__
+            // call EditFile in later OnIdle to avoid right-click problem
+            editpath = filepath;
+         #else
+            EditFile(filepath);
+         #endif
 
       } else {
          // user clicked on a file name
