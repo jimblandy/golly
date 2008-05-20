@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.4 (released !!!)
 
+AKT: Fixed unwanted selection after expanding/collapsing folder in Win app.
 AKT: Added help("foo.html") command to open given HTML file in help window.
 AKT: Pasting a pattern with explicit rule can optionally change to that rule.
 AKT: Added Reset button to tool bar.
