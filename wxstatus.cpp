@@ -531,7 +531,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
       int major, minor;
       wxGetOsVersion(&major, &minor);
       if ( major > 5 || (major == 5 && minor >= 1) ) {
-         // 5.1+ means XP or later
+         // 5.1+ means XP or later (Vista if major >= 6)
          textascent = 11;
       } else {
          textascent = 10;

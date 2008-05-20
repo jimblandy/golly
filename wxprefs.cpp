@@ -1623,14 +1623,14 @@ void GetPrefs()
    // init names of Perl and Python libraries
    #ifdef __WXMSW__
       perllib = wxT("perl58.dll");
-      pythonlib = wxT("python24.dll");
+      pythonlib = wxT("python25.dll");
    #elif defined(__WXMAC__)
       // not used (Perl & Python are loaded at link time)
       perllib = wxEmptyString;
       pythonlib = wxEmptyString;
    #else // assume Unix
       perllib = wxT("libperl.so");
-      pythonlib = wxT("libpython2.4.so");
+      pythonlib = wxT("libpython2.5.so");
    #endif
 
    // create curs_* and initialize newcurs and opencurs
