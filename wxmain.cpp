@@ -1208,11 +1208,7 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_SIZE                (                 MainFrame::OnSize)
    EVT_IDLE                (                 MainFrame::OnIdle)
 #if defined(__WXMAC__) || defined(__WXMSW__)
-#ifdef __WXMAC__
    EVT_TREE_ITEM_EXPANDED   (wxID_TREECTRL,  MainFrame::OnDirTreeExpand)
-#else
-   EVT_TREE_ITEM_EXPANDING  (wxID_TREECTRL,  MainFrame::OnDirTreeExpand)
-#endif
    EVT_TREE_ITEM_COLLAPSING (wxID_TREECTRL,  MainFrame::OnDirTreeCollapse)
    // wxMac bug??? EVT_TREE_ITEM_COLLAPSED doesn't get called
 #endif
