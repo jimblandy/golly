@@ -65,6 +65,7 @@ static wxTimer* onetimer;
 #ifdef __WXMSW__
 static bool call_unselect = false;         // OnIdle needs to call Unselect?
 static wxString editpath = wxEmptyString;  // OnIdle calls EditFile if this isn't empty
+static bool ignore_selection = false;      // ignore next selection?
 #endif
 
 static bool call_close = false;            // OnIdle needs to call Close?
@@ -1206,10 +1207,14 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_ACTIVATE            (                 MainFrame::OnActivate)
    EVT_SIZE                (                 MainFrame::OnSize)
    EVT_IDLE                (                 MainFrame::OnIdle)
+#if defined(__WXMAC__) || defined(__WXMSW__)
 #ifdef __WXMAC__
-   EVT_TREE_ITEM_EXPANDED  (wxID_TREECTRL,   MainFrame::OnDirTreeExpand)
-   // wxMac bug??? EVT_TREE_ITEM_COLLAPSED doesn't get called
+   EVT_TREE_ITEM_EXPANDED   (wxID_TREECTRL,  MainFrame::OnDirTreeExpand)
+#else
+   EVT_TREE_ITEM_EXPANDING  (wxID_TREECTRL,  MainFrame::OnDirTreeExpand)
+#endif
    EVT_TREE_ITEM_COLLAPSING (wxID_TREECTRL,  MainFrame::OnDirTreeCollapse)
+   // wxMac bug??? EVT_TREE_ITEM_COLLAPSED doesn't get called
 #endif
    EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
    EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
@@ -1535,22 +1540,36 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 
 void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
 {
-   if ((generating || inscript) && (showpatterns || showscripts)) {
-      // send idle event so directory tree gets updated
-      wxIdleEvent idleevent;
-      wxGetApp().SendIdleEvents(this, idleevent);
-   }
+   #ifdef __WXMAC__
+      if ((generating || inscript) && (showpatterns || showscripts)) {
+         // send idle event so directory tree gets updated
+         wxIdleEvent idleevent;
+         wxGetApp().SendIdleEvents(this, idleevent);
+      }
+   #endif
+   #ifdef __WXMSW__
+      // avoid bug -- expanding/collapsing a folder can cause top visible item
+      // to become selected and thus OnDirTreeSelection gets called
+      ignore_selection = true;
+   #endif
 }
 
 // -----------------------------------------------------------------------------
 
 void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 {
-   if ((generating || inscript) && (showpatterns || showscripts)) {
-      // send idle event so directory tree gets updated
-      wxIdleEvent idleevent;
-      wxGetApp().SendIdleEvents(this, idleevent);
-   }
+   #ifdef __WXMAC__
+      if ((generating || inscript) && (showpatterns || showscripts)) {
+         // send idle event so directory tree gets updated
+         wxIdleEvent idleevent;
+         wxGetApp().SendIdleEvents(this, idleevent);
+      }
+   #endif
+   #ifdef __WXMSW__
+      // avoid bug -- expanding/collapsing a folder can cause top visible item
+      // to become selected and thus OnDirTreeSelection gets called
+      ignore_selection = true;
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1561,6 +1580,8 @@ void MainFrame::OnTreeClick(wxMouseEvent& event)
    editfile = event.ControlDown() || event.RightDown();
    
 #ifdef __WXMSW__
+   ignore_selection = false;
+   
    // fix wxMSW problem handling right-click -- without this fix
    // OnDirTreeSelection gets called but the 1st item (ie. folder) is always
    // selected and so wxGenericDirCtrl::GetFilePath returns an empty string
@@ -1627,7 +1648,13 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
       // deselect file/folder so this handler will be called if user clicks same item
       wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
       #ifdef __WXMSW__
-         // can't call UnselectAll() or Unselect() here
+         // calling UnselectAll() or Unselect() here causes a crash
+         if (ignore_selection) {
+            // ignore possible spurious selection due to expanding/collapsing folder
+            ignore_selection = false;
+            call_unselect = true;
+            return;
+         }
       #else
          treectrl->UnselectAll();
       #endif
@@ -1688,12 +1715,25 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
                   if ( wxFileName::FileExists(newpath) ) filepath = newpath;
                }
             #endif
-            
-            // load pattern or run script
-            // OpenFile(filepath);
-            // call OpenFile in later OnIdle -- this prevents the main window
-            // moving in front of the help window if a script calls help(...)
-            pendingfiles.Add(filepath);
+
+            if (generating) {
+               // terminate generating loop and set command_pending flag
+               Stop();
+               command_pending = true;
+               if ( IsScript(filepath) ) {
+                  AddRecentScript(filepath);
+                  cmdevent.SetId(ID_RUN_RECENT + 1);
+               } else {
+                  AddRecentPattern(filepath);
+                  cmdevent.SetId(ID_OPEN_RECENT + 1);
+               }
+            } else {
+               // load pattern or run script
+               // OpenFile(filepath);
+               // call OpenFile in later OnIdle -- this prevents the main window
+               // moving in front of the help window if a script calls help(...)
+               pendingfiles.Add(filepath);
+            }
          }
       }
 
