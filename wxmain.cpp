@@ -65,7 +65,7 @@ static wxTimer* onetimer;
 #ifdef __WXMSW__
 static bool call_unselect = false;         // OnIdle needs to call Unselect?
 static wxString editpath = wxEmptyString;  // OnIdle calls EditFile if this isn't empty
-static bool ignore_selection = false;      // ignore next selection?
+static bool ignore_selection = false;      // ignore spurious selection?
 #endif
 
 static bool call_close = false;            // OnIdle needs to call Close?
@@ -1576,26 +1576,32 @@ void MainFrame::OnTreeClick(wxMouseEvent& event)
    editfile = event.ControlDown() || event.RightDown();
    
 #ifdef __WXMSW__
+   // this handler gets called even if user clicks outside an item,
+   // and in some cases can result in the top visible item becoming
+   // selected, so we need to avoid that
    ignore_selection = false;
-   
-   // fix wxMSW problem handling right-click -- without this fix
-   // OnDirTreeSelection gets called but the 1st item (ie. folder) is always
-   // selected and so wxGenericDirCtrl::GetFilePath returns an empty string
-   if (event.RightDown()) {
-      wxGenericDirCtrl* dirctrl = NULL;
-      // for some reason we need to use mainptr to access these members
-      if (showpatterns) dirctrl = mainptr->patternctrl;
-      if (showscripts) dirctrl = mainptr->scriptctrl;
-      if (dirctrl) {
-         wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
-         if (treectrl) {
-            wxPoint pt = event.GetPosition();
-            int flags;
-            wxTreeItemId id = treectrl->HitTest(pt, flags);
-            if (id.IsOk()) {
+   wxGenericDirCtrl* dirctrl = NULL;
+   // for some reason we need to use mainptr to access next 2 members
+   // (it's something to do with using Connect)
+   if (showpatterns) dirctrl = mainptr->patternctrl;
+   if (showscripts) dirctrl = mainptr->scriptctrl;
+   if (dirctrl) {
+      wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
+      if (treectrl) {
+         wxPoint pt = event.GetPosition();
+         int flags;
+         wxTreeItemId id = treectrl->HitTest(pt, flags);
+         if (id.IsOk() && (flags & wxTREE_HITTEST_ONITEMLABEL ||
+                           flags & wxTREE_HITTEST_ONITEMICON)) {
+            // fix problem with right-click
+            if (event.RightDown()) {
                treectrl->SelectItem(id, true);
                // OnDirTreeSelection gets called a few times for some reason
             }
+            // fix problem with double-click
+            if (event.LeftDClick()) ignore_selection = true;
+         } else {
+            ignore_selection = true;
          }
       }
    }
@@ -1646,7 +1652,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
       #ifdef __WXMSW__
          // calling UnselectAll() or Unselect() here causes a crash
          if (ignore_selection) {
-            // ignore possible spurious selection due to expanding/collapsing folder
+            // ignore spurious selection
             ignore_selection = false;
             call_unselect = true;
             return;
@@ -2375,6 +2381,13 @@ void MainFrame::CreateDirControls()
                                       wxMouseEventHandler(MainFrame::OnTreeClick));
    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
                                       wxMouseEventHandler(MainFrame::OnTreeClick));
+   #ifdef __WXMSW__
+      // fix double-click problem
+      patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK,
+                                          wxMouseEventHandler(MainFrame::OnTreeClick));
+      scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK,
+                                         wxMouseEventHandler(MainFrame::OnTreeClick));
+   #endif
 }
 
 // -----------------------------------------------------------------------------
