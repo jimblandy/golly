@@ -8,9 +8,9 @@ TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 
-Changes in version 1.4 (released !!!)
+Changes in version 1.4 (released May 2008)
 
-AKT: Fixed unwanted selection after expanding/collapsing folder in Win app.
+AKT: Fixed problems with unwanted selections in Win app's file directory.
 AKT: Added help("foo.html") command to open given HTML file in help window.
 AKT: Pasting a pattern with explicit rule can optionally change to that rule.
 AKT: Added Reset button to tool bar.
