@@ -1485,7 +1485,7 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
       if (inidle) return;
    #endif
    
-   #ifdef __WXMSW__
+   #if defined(__WXMSW__)
       if ( call_unselect ) {
          // deselect file/folder so user can click the same item
          if (showpatterns) patternctrl->GetTreeCtrl()->Unselect();
@@ -1500,6 +1500,8 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
          EditFile(editpath);
          editpath.Clear();
       }
+   #elif defined(__WXX11__)
+      // don't change focus here because it prevents menus staying open
    #else
       // ensure viewport window has keyboard focus if main window is active;
       // note that we can't do this on Windows because it stuffs up clicks
@@ -1520,12 +1522,7 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
       #endif
       pendingfiles.Clear();
    }
-
-   #ifdef __WXX11__
-      // don't change focus here because it prevents menus staying open
-      return;
-   #endif
-   
+  
    if (call_close) {
       call_close = false;
       Close(false);        // false allows OnClose handler to veto close
