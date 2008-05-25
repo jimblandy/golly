@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for BeginProgress, GetString, etc
@@ -43,6 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxmain.h"        // for MainFrame
 #include "wxundo.h"        // for undoredo->...
+#include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, etc
 
 // Control menu functions:
@@ -63,7 +65,7 @@ bool MainFrame::SaveStartingPattern()
    currlayer->startmag = viewptr->GetMag();
    viewptr->GetPos(currlayer->startx, currlayer->starty);
    currlayer->startwarp = currlayer->warp;
-   currlayer->starthash = currlayer->hash;
+   currlayer->startalgo = currlayer->algtype;
    
    // if this layer is a clone then save some settings in other clones
    if (currlayer->cloneid > 0) {
@@ -89,7 +91,7 @@ bool MainFrame::SaveStartingPattern()
    }
 
    // save starting pattern in tempstart file
-   if ( currlayer->hash ) {
+   if ( currlayer->algtype == HLIFE_ALGO ) {
       // much faster to save hlife pattern in a macrocell file
       const char* err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
       if (err) {
@@ -98,7 +100,7 @@ bool MainFrame::SaveStartingPattern()
          return false;
       }
    } else {
-      // can only save qlife pattern if edges are within getcell/setcell limits
+      // can only save as RLE if edges are within getcell/setcell limits
       bigint top, left, bottom, right;
       currlayer->algo->findedges(&top, &left, &bottom, &right);      
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
@@ -167,7 +169,7 @@ void MainFrame::ResetPattern(bool resetundo)
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, hashing option and starting pattern
    currlayer->warp = currlayer->startwarp;
-   currlayer->hash = currlayer->starthash;
+   currlayer->algtype = currlayer->startalgo;
 
    if ( !currlayer->startfile.IsEmpty() ) {
       // restore pattern from startfile
@@ -281,7 +283,8 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       SavePendingChanges();
    }
 
-   if (!currlayer->hash && newgen.odd() != oldgen.odd()) {
+   //!!! need IsParityShifted() method???
+   if (currlayer->algtype == QLIFE_ALGO && newgen.odd() != oldgen.odd()) {
       // qlife stores pattern in different bits depending on gen parity,
       // so we need to create a new qlife universe, set its gen, copy the
       // current pattern to the new universe, then switch to that universe
@@ -291,7 +294,7 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
          return "Pattern is too big to copy.";
       }
       // create a new universe of same type
-      lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+      lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
       newalgo->setGeneration(newgen);
       // copy pattern
       if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -455,7 +458,7 @@ void MainFrame::GeneratePattern()
    // only show hashing info while generating, otherwise Mac app can crash
    // after a paste due to hlifealgo::resize() calling lifestatus() which
    // then causes the viewport to be repainted for some inexplicable reason
-   if (currlayer->hash)
+   if (currlayer->algtype == HLIFE_ALGO)
       hlifealgo::setVerbose( currlayer->showhashinfo );
 
    if (currlayer->warp < 0)
@@ -497,7 +500,7 @@ void MainFrame::GeneratePattern()
 
    generating = false;
 
-   if (currlayer->hash) hlifealgo::setVerbose(0);
+   if (currlayer->algtype == HLIFE_ALGO) hlifealgo::setVerbose(0);
 
    // for DisplayTimingInfo
    endtime = stopwatch->Time();
@@ -721,7 +724,8 @@ void MainFrame::NextGeneration(bool useinc)
    generating = true;
 
    // only show hashing info while generating
-   if (currlayer->hash) hlifealgo::setVerbose( currlayer->showhashinfo );
+   if (currlayer->algtype == HLIFE_ALGO)
+      hlifealgo::setVerbose( currlayer->showhashinfo );
    
    // avoid doing some things if NextGeneration is called from a script;
    // ie. by a run/step command
@@ -747,7 +751,8 @@ void MainFrame::NextGeneration(bool useinc)
 
    generating = false;
 
-   if (currlayer->hash) hlifealgo::setVerbose(0);
+   if (currlayer->algtype == HLIFE_ALGO)
+      hlifealgo::setVerbose(0);
    
    if (!inscript) {
       // autofit is only used when doing many gens
@@ -778,10 +783,59 @@ void MainFrame::ToggleAutoFit()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ToggleHashing()
+void MainFrame::ToggleHyperspeed()
 {
-   if ( global_liferules.hasB0notS8 && !currlayer->hash ) {
-      statusptr->ErrorMessage(_("Hashing cannot be used with a B0-not-S8 rule."));
+   currlayer->hyperspeed = !currlayer->hyperspeed;
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ToggleHashInfo()
+{
+   currlayer->showhashinfo = !currlayer->showhashinfo;
+   
+   // only show hashing info while generating
+   if (generating && currlayer->algtype == HLIFE_ALGO)
+      hlifealgo::setVerbose( currlayer->showhashinfo );
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetWarp(int newwarp)
+{
+   currlayer->warp = newwarp;
+   if (currlayer->warp < minwarp) currlayer->warp = minwarp;
+   SetGenIncrement();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ShowRuleDialog()
+{
+   if (inscript || viewptr->waitingforclick) return;
+
+   if (generating) {
+      // terminate generating loop and set command_pending flag
+      Stop();
+      command_pending = true;
+      cmdevent.SetId(ID_RULE);
+      return;
+   }
+
+   if (ChangeRule()) {
+      // show new rule in window title (file name doesn't change)
+      SetWindowTitle(wxEmptyString);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ChangeAlgorithm(algo_type newalgotype)
+{
+   if (newalgotype == currlayer->algtype) return;
+
+   if ( global_liferules.hasB0notS8 && newalgotype == HLIFE_ALGO ) {
+      statusptr->ErrorMessage(_("HashLife cannot be used with a B0-not-S8 rule."));
       return;
    }
 
@@ -800,7 +854,7 @@ void MainFrame::ToggleHashing()
       // terminate generating loop and set command_pending flag
       Stop();
       command_pending = true;
-      cmdevent.SetId(ID_HASH);
+      cmdevent.SetId(ID_ALGO0 + (int)newalgotype);
       return;
    }
    
@@ -810,13 +864,14 @@ void MainFrame::ToggleHashing()
       SavePendingChanges();
    }
 
-   // toggle hashing option and update status bar immediately
-   currlayer->hash = !currlayer->hash;
+   // change algorithm type and update status bar immediately
+   algo_type oldalgotype = currlayer->algtype;
+   currlayer->algtype = newalgotype;
    currlayer->warp = 0;
    UpdateStatus();
 
    // create a new universe of the right flavor
-   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
    
    // even though universes share a global rule table we still need to call setrule
    // due to internal differences in the handling of Wolfram rules
@@ -876,52 +931,5 @@ void MainFrame::ToggleHashing()
    UpdateEverything();
    
    if (allowundo && !currlayer->stayclean)
-      currlayer->undoredo->RememberAlgoChange();
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::ToggleHyperspeed()
-{
-   currlayer->hyperspeed = !currlayer->hyperspeed;
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::ToggleHashInfo()
-{
-   currlayer->showhashinfo = !currlayer->showhashinfo;
-   
-   // only show hashing info while generating
-   if (generating && currlayer->hash)
-      hlifealgo::setVerbose( currlayer->showhashinfo );
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::SetWarp(int newwarp)
-{
-   currlayer->warp = newwarp;
-   if (currlayer->warp < minwarp) currlayer->warp = minwarp;
-   SetGenIncrement();
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::ShowRuleDialog()
-{
-   if (inscript || viewptr->waitingforclick) return;
-
-   if (generating) {
-      // terminate generating loop and set command_pending flag
-      Stop();
-      command_pending = true;
-      cmdevent.SetId(ID_RULE);
-      return;
-   }
-
-   if (ChangeRule()) {
-      // show new rule in window title (file name doesn't change)
-      SetWindowTitle(wxEmptyString);
-   }
+      currlayer->undoredo->RememberAlgoChange(oldalgotype);
 }

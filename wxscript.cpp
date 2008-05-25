@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for gollydir, allowundo, etc
 #include "wxundo.h"        // for undoredo->...
+#include "wxalgos.h"       // for *_ALGO, algorgb
 #include "wxlayer.h"       // for currlayer, SyncClones
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
@@ -166,9 +167,9 @@ const char* GSF_setrule(char* rulestring)
       currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
       return err;
    }
-   if ( global_liferules.hasB0notS8 && currlayer->hash ) {
+   if ( global_liferules.hasB0notS8 && currlayer->algtype == HLIFE_ALGO ) {
       currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-      return "B0-not-S8 rules are not allowed when hashing.";
+      return "B0-not-S8 rules are not allowed in HashLife.";
    }
    
    // show new rule in main window's title but don't change name
@@ -310,11 +311,13 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
+   //!!! add new setalgo/getalgo commands???
    } else if (strcmp(optname, "hashing") == 0) {
-      *oldval = currlayer->hash ? 1 : 0;
+      *oldval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
       if (*oldval != newval) {
-         mainptr->ToggleHashing();
-         DoAutoUpdate();               // status bar color might change
+         mainptr->ChangeAlgorithm(newval ? HLIFE_ALGO : QLIFE_ALGO);
+         // status bar color might change
+         DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "hyperspeed") == 0) {
@@ -497,7 +500,9 @@ bool GSF_getoption(char* optname, int* optval)
    if      (strcmp(optname, "autofit") == 0)       *optval = currlayer->autofit ? 1 : 0;
    else if (strcmp(optname, "boldspacing") == 0)   *optval = boldspacing;
    else if (strcmp(optname, "fullscreen") == 0)    *optval = mainptr->fullscreen ? 1 : 0;
-   else if (strcmp(optname, "hashing") == 0)       *optval = currlayer->hash ? 1 : 0;
+   //!!! add new setalgo/getalgo commands???
+   else if (strcmp(optname, "hashing") == 0)
+           *optval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
    else if (strcmp(optname, "hyperspeed") == 0)    *optval = currlayer->hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      *optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      *optval = maxdelay;
@@ -567,18 +572,19 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
          DoAutoUpdate();
       }
 
+   //!!! deprecate next two
    } else if (strcmp(colname, "hashing") == 0) {
-      oldcol = *hlifergb;
+      oldcol = *algorgb[HLIFE_ALGO];
       if (oldcol != newcol) {
-         *hlifergb = newcol;
+         *algorgb[HLIFE_ALGO] = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
 
    } else if (strcmp(colname, "nothashing") == 0) {
-      oldcol = *qlifergb;
+      oldcol = *algorgb[QLIFE_ALGO];
       if (oldcol != newcol) {
-         *qlifergb = newcol;
+         *algorgb[QLIFE_ALGO] = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
@@ -605,8 +611,10 @@ bool GSF_getcolor(char* colname, wxColor& color)
    else if (strcmp(colname, "deadcells") == 0)  color = *deadrgb;
    else if (strcmp(colname, "paste") == 0)      color = *pastergb;
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
-   else if (strcmp(colname, "hashing") == 0)    color = *hlifergb;
-   else if (strcmp(colname, "nothashing") == 0) color = *qlifergb;
+   //!!! add "algo0..algoN" like we do for livecells above???
+   //!!! deprecate next two
+   else if (strcmp(colname, "hashing") == 0)    color = *algorgb[HLIFE_ALGO];
+   else if (strcmp(colname, "nothashing") == 0) color = *algorgb[QLIFE_ALGO];
    else {
       // unknown color name
       return false;

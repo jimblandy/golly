@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"     // for bigint class
 #include "wxedit.h"     // for Selection class
+#include "wxalgos.h"    // for algo_type
 
 // This class implements unlimited undo/redo:
 
@@ -90,8 +91,8 @@ public:
    void RememberRuleChange(const wxString& oldrule);
    // remember rule change
    
-   void RememberAlgoChange();
-   // remember algorithm change (ie. hashing toggled)
+   void RememberAlgoChange(algo_type oldalgo);
+   // remember algorithm change
    
    void RememberScriptStart();
    // remember that script is about to start; this allows us to undo/redo

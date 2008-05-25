@@ -55,9 +55,8 @@ DrawView() does the following tasks:
   when the scale is < 1:1 (ie. mag < 0).  At scales 1:2 and above,
   DrawStretchedBitmap() is called from wx_render::blit().
   
-  Each lifealgo needs to implement its own draw() method.  Currently
-  we have hlifealgo::draw() in hlifedraw.cpp and qlifealgo::draw()
-  in qlifedraw.cpp.
+  Each lifealgo needs to implement its own draw() method; for example,
+  hlifealgo::draw() in hlifedraw.cpp.
 
 - Calls DrawGridLines() to overlay grid lines if they are visible.
 

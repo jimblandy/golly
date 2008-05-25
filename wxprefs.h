@@ -65,7 +65,6 @@ extern int infowd;               // info window's size
 extern int infoht;
 
 extern char initrule[];          // initial rule
-extern bool inithash;            // initial layer uses hlife algorithm?
 extern bool initautofit;         // initial autofit setting
 extern bool inithyperspeed;      // initial hyperspeed setting
 extern bool initshowhashinfo;    // initial showhashinfo setting
@@ -106,8 +105,6 @@ extern wxCursor* newcurs;        // cursor after creating new pattern
 extern wxCursor* opencurs;       // cursor after opening pattern
 extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
-extern int qbasestep;            // qlife's base step
-extern int hbasestep;            // hlife's base step (best if power of 2)
 extern int mindelay;             // minimum millisec delay (when warp = -1)
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open and Save dialogs
@@ -258,21 +255,17 @@ extern wxColor* livergb[10];     // color for live cells in each layer
 extern wxColor* deadrgb;         // color for dead cells
 extern wxColor* pastergb;        // color for pasted pattern
 extern wxColor* selectrgb;       // color for selected cells
-extern wxColor* qlifergb;        // status bar background if using qlife
-extern wxColor* hlifergb;        // status bar background if using hlife
 
 // colored brushes and pens
 extern wxBrush* livebrush[10];   // for drawing live cells in each layer
 extern wxBrush* deadbrush;       // for drawing dead cells
-extern wxBrush* qlifebrush;      // for status bar background if using qlife
-extern wxBrush* hlifebrush;      // for status bar background if using hlife
 extern wxPen* pastepen;          // for drawing paste rect
 extern wxPen* gridpen;           // for drawing plain grid
 extern wxPen* boldpen;           // for drawing bold grid
 extern wxPen* sgridpen[10];      // for drawing plain grid if swapcolors is true
 extern wxPen* sboldpen[10];      // for drawing bold grid if swapcolors is true
 
-void SetBrushesAndPens();        // update colors for brushes and pens
+void SetBrushesAndPens();        // update colors in above brushes and pens
 
 // Various constants:
 
@@ -293,7 +286,7 @@ const int MAX_SPACING = 1000;    // maximum value of boldspacing
 const int MIN_HASHMB = 10;       // minimum value of maxhashmem
 const int MAX_HASHMB =           // maximum value of maxhashmem
             sizeof(char*) <= 4 ? 4000 : 100000000;
-const int MAX_BASESTEP = 10000;  // maximum qbasestep or hbasestep
+const int MAX_BASESTEP = 10000;  // maximum base step
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
 const int MAX_THUMBRANGE = 500;  // maximum thumbrange
 const int MIN_DIRWD = 50;        // minimum dirwinwd

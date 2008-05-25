@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 #include "viewport.h"
 #include "liferules.h"     // for global_liferules
 
@@ -47,6 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxedit.h"        // for Selection
 #include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
 #include "wxview.h"
 
@@ -570,9 +572,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    // pasting clipboard pattern can also cause a rule change
    if (canchangerule > 0 && oldrule != newrule) {
       currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-      if (global_liferules.hasB0notS8 && currlayer->hash) {
+      // note that setrule should succeed (earlier readclipboard didn't return error)
+      if (global_liferules.hasB0notS8 && currlayer->algo->hyperCapable()) {
          currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-         Warning(_("B0-not-S8 rules are not allowed when hashing."));
+         Warning(_("B0-not-S8 rules are not allowed in this algorithm."));
       } else {
          // show new rule in title bar
          mainptr->SetWindowTitle(wxEmptyString);
@@ -613,9 +616,9 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                                    **tempalgo, t, l, b, r);
    if (err && strcmp(err,cannotreadhash) == 0) {
-      // clipboard contains macrocell data so we have to use hlife
+      // clipboard contains macrocell data so use hlife
       delete *tempalgo;
-      *tempalgo = CreateNewUniverse(true);
+      *tempalgo = CreateNewUniverse(HLIFE_ALGO);
       err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                           **tempalgo, t, l, b, r);
    }
@@ -665,8 +668,8 @@ void PatternView::PasteClipboard(bool toselection)
    }
 
    // create a temporary universe for storing clipboard pattern;
-   // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(false);
+   // try to use qlife because its setcell/getcell calls are faster
+   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
 
    // read clipboard pattern into temporary universe;
    // note that tempalgo will be deleted and re-created as a hlifealgo
@@ -1301,7 +1304,15 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_FASTER:      mainptr->GoFaster(); break;
       case DO_SLOWER:      mainptr->GoSlower(); break;
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
-      case DO_HASHING:     if (!inscript) mainptr->ToggleHashing(); break;
+      //!!! remove this action??? or change it to DO_CYCLEALGO???
+      case DO_HASHING:
+         if (!inscript) {
+            if (currlayer->algtype != HLIFE_ALGO)
+               mainptr->ChangeAlgorithm(HLIFE_ALGO);
+            else
+               mainptr->ChangeAlgorithm(QLIFE_ALGO);
+         }
+         break;
       case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
       case DO_RULE:        if (!inscript) mainptr->ShowRuleDialog(); break;

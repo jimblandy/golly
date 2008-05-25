@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 #include "viewport.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr, insideYield
@@ -41,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for viewptr->...
 #include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, MarkLayerDirty, etc
 #include "wxedit.h"
 
@@ -258,7 +260,7 @@ void Selection::Advance()
    // check if selection encloses entire pattern;
    // can't do this if qlife because it uses gen parity to decide which bits to draw;
    // also avoid this if undo/redo is enabled (too messy to remember cell changes)
-   if ( currlayer->hash && !savecells && Contains(top, left, bottom, right) ) {
+   if ( currlayer->algtype != QLIFE_ALGO && !savecells && Contains(top, left, bottom, right) ) {
       mainptr->generating = true;
       wxGetApp().PollerReset();
 
@@ -293,7 +295,7 @@ void Selection::Advance()
    
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo* tempalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
    
    // copy live cells in selection to temporary universe
    if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -389,7 +391,7 @@ void Selection::AdvanceOutside()
    // check if selection is completely outside pattern edges;
    // can't do this if qlife because it uses gen parity to decide which bits to draw;
    // also avoid this if undo/redo is enabled (too messy to remember cell changes)
-   if ( currlayer->hash && !savecells && Outside(top, left, bottom, right) ) {
+   if ( currlayer->algtype != QLIFE_ALGO && !savecells && Outside(top, left, bottom, right) ) {
       mainptr->generating = true;
       wxGetApp().PollerReset();
 
@@ -420,7 +422,7 @@ void Selection::AdvanceOutside()
    if (savecells) {
       // copy current pattern to oldalgo, using same type and gen count
       // so we can switch to oldalgo if user decides to abort below
-      oldalgo = CreateNewUniverse(currlayer->hash);
+      oldalgo = CreateNewUniverse(currlayer->algtype);
       oldalgo->setGeneration( currlayer->algo->getGeneration() );
       if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                               currlayer->algo, oldalgo, false, _("Saving pattern")) ) {
@@ -430,7 +432,7 @@ void Selection::AdvanceOutside()
    }
    
    // create a new universe of same type
-   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
    newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy (and kill) live cells in selection to new universe
@@ -807,7 +809,7 @@ void Selection::Shrink(bool fit)
    // the easy way to shrink selection is to create a new temporary universe,
    // copy selection into new universe and then call findedges;
    // use qlife because its findedges call is faster
-   lifealgo* tempalgo = CreateNewUniverse(false);
+   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -1109,7 +1111,7 @@ void Selection::ClearOutside()
    }
    
    // create a new universe of same type
-   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -1601,7 +1603,7 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
    if (simpleflip) {
       // selection encloses all of pattern so we can flip into new universe
       // (must be same type) without killing live cells in selection
-      lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+      lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
       newalgo->setGeneration( currlayer->algo->getGeneration() );
 
       if ( FlipRect(topbottom, currlayer->algo, newalgo, false, itop, ileft, ibottom, iright) ) {
@@ -1617,7 +1619,7 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
    } else {
       // flip into temporary universe and kill all live cells in selection;
       // use qlife because its setcell/getcell calls are faster
-      lifealgo* tempalgo = CreateNewUniverse(false);
+      lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
 
       if ( FlipRect(topbottom, currlayer->algo, tempalgo, true, itop, ileft, ibottom, iright) ) {
          // find pattern edges in temporary universe (could be much smaller)
@@ -1719,7 +1721,7 @@ bool Selection::RotatePattern(bool clockwise,
                               bool inundoredo)
 {
    // create new universe of same type as current universe
-   lifealgo* newalgo = CreateNewUniverse(currlayer->hash);
+   lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -1909,7 +1911,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
       if (oleft > nleft) oleft = nleft;
       if (obottom < nbottom) obottom = nbottom;
       if (oright < nright) oright = nright;
-      oldalgo = CreateNewUniverse(false);
+      oldalgo = CreateNewUniverse(QLIFE_ALGO);
       if ( !viewptr->CopyRect(otop, oleft, obottom, oright, currlayer->algo, oldalgo,
                               false, _("Saving part of pattern")) ) {
          delete oldalgo;
@@ -1919,7 +1921,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
 
    // create temporary universe; doesn't need to match current universe so
    // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(false);
+   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees

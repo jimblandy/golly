@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 #include "viewport.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr
@@ -44,9 +45,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
-#include "wxprefs.h"       // for inithash, initrule, etc
+#include "wxprefs.h"       // for initrule, etc
 #include "wxscript.h"      // for inscript
 #include "wxundo.h"        // for UndoRedo, etc
+#include "wxalgos.h"       // for algo_type, initalgo, CreateNewUniverse
 #include "wxlayer.h"
 
 // -----------------------------------------------------------------------------
@@ -62,8 +64,8 @@ bool cloneavail[MAX_LAYERS];     // for setting unique cloneid
 bool cloning = false;            // adding a cloned layer?
 bool duplicating = false;        // adding a duplicated layer?
 
-bool oldhash;                    // hash setting in old layer
-wxString oldrule;                // rule string in old layer
+algo_type oldalgo;               // algorithm in old layer
+wxString oldrule;                // rule in old layer
 int oldmag;                      // scale in old layer
 bigint oldx;                     // X position in old layer
 bigint oldy;                     // Y position in old layer
@@ -829,9 +831,9 @@ void SyncClones()
       for ( int i = 0; i < numlayers; i++ ) {
          Layer* cloneptr = layer[i];
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-            // universe might have been re-created, or hashing changed
+            // universe might have been re-created, or algorithm changed
             cloneptr->algo = currlayer->algo;
-            cloneptr->hash = currlayer->hash;
+            cloneptr->algtype = currlayer->algtype;
             cloneptr->rule = currlayer->rule;
             
             // no need to sync undo/redo history
@@ -859,8 +861,8 @@ void SyncClones()
             cloneptr->savesel = currlayer->savesel;
             
             // sync the stuff needed to reset pattern
+            cloneptr->startalgo = currlayer->startalgo;
             cloneptr->savestart = currlayer->savestart;
-            cloneptr->starthash = currlayer->starthash;
             cloneptr->startdirty = currlayer->startdirty;
             cloneptr->startrule = currlayer->startrule;
             cloneptr->startfile = currlayer->startfile;
@@ -885,8 +887,8 @@ void SaveLayerSettings()
    // a good place to synchronize clone info
    SyncClones();
 
-   // set oldhash and oldrule for use in CurrentLayerChanged
-   oldhash = currlayer->hash;
+   // set oldalgo and oldrule for use in CurrentLayerChanged
+   oldalgo = currlayer->algtype;
    oldrule = wxString(global_liferules.getrule(), wxConvLocal);
    
    // we're about to change layer so remember current rule
@@ -911,9 +913,9 @@ void SaveLayerSettings()
 void CurrentLayerChanged()
 {
    // currlayer has changed since SaveLayerSettings was called;
-   // need to update global rule table if the new currlayer has a
-   // different hash setting or different rule
-   if ( currlayer->hash != oldhash || !currlayer->rule.IsSameAs(oldrule,false) ) {
+   // need to update global rule table if the new currlayer has
+   // a different algorithm or a different rule
+   if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
    }
    
@@ -1517,13 +1519,13 @@ Layer::Layer()
       // creating very first layer
       
       // set some options using initial values stored in prefs file
-      hash = inithash;
+      algtype = initalgo;
       hyperspeed = inithyperspeed;
       showhashinfo = initshowhashinfo;
       autofit = initautofit;
       
       // create empty universe
-      algo = CreateNewUniverse(hash);
+      algo = CreateNewUniverse(algtype);
       
       // initialize undo/redo history
       undoredo = new UndoRedo();
@@ -1534,12 +1536,6 @@ Layer::Layer()
       if (err) {
          Warning(wxString(err,wxConvLocal));
          // user will see offending rule string in window title
-      } else if (global_liferules.hasB0notS8 && hash) {
-         // silently turn off hashing
-         hash = false;
-         delete algo;
-         algo = CreateNewUniverse(hash);
-         algo->setrule(initrule);
       }
    
       // don't need to remember rule here (SaveLayerSettings will do it)
@@ -1564,7 +1560,7 @@ Layer::Layer()
       // adding a new layer after currlayer (see AddLayer)
 
       // inherit current universe type and other settings
-      hash = currlayer->hash;
+      algtype = currlayer->algtype;
       hyperspeed = currlayer->hyperspeed;
       showhashinfo = currlayer->showhashinfo;
       autofit = currlayer->autofit;
@@ -1593,7 +1589,7 @@ Layer::Layer()
          cloneid = 0;
          
          // create empty universe
-         algo = CreateNewUniverse(hash);
+         algo = CreateNewUniverse(algtype);
          
          // initialize undo/redo history
          undoredo = new UndoRedo();
@@ -1633,7 +1629,7 @@ Layer::Layer()
 
          // duplicate the stuff needed to reset pattern
          savestart = currlayer->savestart;
-         starthash = currlayer->starthash;
+         startalgo = currlayer->startalgo;
          startdirty = currlayer->startdirty;
          startname = currlayer->startname;
          startrule = currlayer->startrule;
@@ -1724,21 +1720,4 @@ Layer::~Layer()
       // delete tempstart file if it exists
       if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
    }
-}
-
-// -----------------------------------------------------------------------------
-
-lifealgo* CreateNewUniverse(bool hashing, bool allowcheck)
-{
-   lifealgo* newalgo;
-   if (hashing) {
-      newalgo = new hlifealgo();
-      if (newalgo == NULL) Fatal(_("Failed to create new hlifealgo!"));
-      newalgo->setMaxMemory(maxhashmem);
-   } else {
-      newalgo = new qlifealgo();
-      if (newalgo == NULL) Fatal(_("Failed to create new qlifealgo!"));
-   }
-   if (allowcheck) newalgo->setpoll(wxGetApp().Poller());
-   return newalgo;
 }

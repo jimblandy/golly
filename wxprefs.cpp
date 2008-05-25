@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
+#include "wxalgos.h"       // for *_ALGO, MAX_ALGOS, InitAlgorithms, etc
 #include "wxlayer.h"       // for currlayer
 #include "wxscript.h"      // for inscript
 #include "wxprefs.h"
@@ -114,7 +115,6 @@ int infowd = 700;                // info window's initial size
 int infoht = 500;
 
 char initrule[128] = "B3/S23";   // initial rule
-bool inithash = false;           // initial layer uses hlife algorithm?
 bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
 bool initshowhashinfo = false;   // initial showhashinfo setting
@@ -155,8 +155,6 @@ wxCursor* newcurs = NULL;        // cursor after creating new pattern (if not NU
 wxCursor* opencurs = NULL;       // cursor after opening pattern (if not NULL)
 int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
-int qbasestep = 10;              // qlife's base step
-int hbasestep = 8;               // hlife's base step (best if power of 2)
 int mindelay = 250;              // minimum millisec delay (when warp = -1)
 int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
@@ -182,13 +180,9 @@ wxColor* livergb[10];            // color for live cells in each layer
 wxColor* deadrgb;                // color for dead cells
 wxColor* pastergb;               // color for pasted pattern
 wxColor* selectrgb;              // color for selected cells
-wxColor* qlifergb;               // status bar background when using qlifealgo
-wxColor* hlifergb;               // status bar background when using hlifealgo
 
 wxBrush* livebrush[10];          // for drawing live cells in each layer
 wxBrush* deadbrush;              // for drawing dead cells
-wxBrush* qlifebrush;             // for status bar background when using qlifealgo
-wxBrush* hlifebrush;             // for status bar background when using hlifealgo
 wxPen* pastepen;                 // for drawing paste rect
 wxPen* gridpen;                  // for drawing plain grid
 wxPen* boldpen;                  // for drawing bold grid
@@ -1222,13 +1216,12 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 
 void SetBrushesAndPens()
 {
-   for (int i=0; i<10; i++) livebrush[i]->SetColour(*livergb[i]);
+   for (int i = 0; i < MAX_ALGOS; i++) algobrush[i]->SetColour(*algorgb[i]);
+   for (int i = 0; i < 10; i++) livebrush[i]->SetColour(*livergb[i]);
    deadbrush->SetColour(*deadrgb);
-   qlifebrush->SetColour(*qlifergb);
-   hlifebrush->SetColour(*hlifergb);
    pastepen->SetColour(*pastergb);
    SetGridPens(deadrgb, gridpen, boldpen);
-   for (int i=0; i<10; i++) SetGridPens(livergb[i], sgridpen[i], sboldpen[i]);
+   for (int i = 0; i < 10; i++) SetGridPens(livergb[i], sgridpen[i], sboldpen[i]);
 }
 
 // -----------------------------------------------------------------------------
@@ -1249,18 +1242,14 @@ void CreateDefaultColors()
    deadrgb    = new wxColor( 48,  48,  48);  // dark gray (nicer if no alpha channel support)
    pastergb   = new wxColor(255,   0,   0);  // red
    selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
-   qlifergb   = new wxColor(255, 255, 206);  // pale yellow
-   hlifergb   = new wxColor(226, 250, 248);  // pale blue
 
    // create brushes and pens
-   for (int i=0; i<10; i++) livebrush[i] = new wxBrush(*wxBLACK);
+   for (int i = 0; i < 10; i++) livebrush[i] = new wxBrush(*wxBLACK);
    deadbrush = new wxBrush(*wxBLACK);
-   qlifebrush = new wxBrush(*wxBLACK);
-   hlifebrush = new wxBrush(*wxBLACK);
    pastepen = new wxPen(*wxBLACK);
    gridpen = new wxPen(*wxBLACK);
    boldpen = new wxPen(*wxBLACK);
-   for (int i=0; i<10; i++) {
+   for (int i = 0; i < 10; i++) {
       sgridpen[i] = new wxPen(*wxBLACK);
       sboldpen[i] = new wxPen(*wxBLACK);
    }
@@ -1385,15 +1374,19 @@ void SavePrefs()
    fprintf(f, "scroll_hand=%d\n", scrollhand ? 1 : 0);
    fprintf(f, "can_change_rule=%d (0..2)\n", canchangerule);
    fprintf(f, "random_fill=%d (1..100)\n", randomfill);
-   fprintf(f, "q_base_step=%d (2..%d)\n", qbasestep, MAX_BASESTEP);
-   fprintf(f, "h_base_step=%d (2..%d, best if power of 2)\n", hbasestep, MAX_BASESTEP);
    fprintf(f, "min_delay=%d (0..%d millisecs)\n", mindelay, MAX_DELAY);
    fprintf(f, "max_delay=%d (0..%d millisecs)\n", maxdelay, MAX_DELAY);
    fprintf(f, "auto_fit=%d\n", currlayer->autofit ? 1 : 0);
-   fprintf(f, "hashing=%d\n", currlayer->hash ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
    fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
    fprintf(f, "max_hash_mem=%d\n", maxhashmem);
+   
+   fputs("\n", f);
+
+   fprintf(f, "init_algo=%d\n", (int)currlayer->algtype);
+   for (int i = 0; i < MAX_ALGOS; i++) {
+      fprintf(f, "algo_base_%d=%d\n", i, algobase[i]);
+   }
    
    fputs("\n", f);
 
@@ -1446,8 +1439,11 @@ void SavePrefs()
    SaveColor(f, "dead_rgb", deadrgb);
    SaveColor(f, "paste_rgb", pastergb);
    SaveColor(f, "select_rgb", selectrgb);
-   SaveColor(f, "qlife_rgb", qlifergb);
-   SaveColor(f, "hlife_rgb", hlifergb);
+   for (int i = 0; i < MAX_ALGOS; i++) {
+      char keyword[32];
+      sprintf(keyword, "algo_rgb_%d", i);
+      SaveColor(f, keyword, algorgb[i]);
+   }
    
    fputs("\n", f);
    
@@ -1480,7 +1476,7 @@ void SavePrefs()
    if (numpatterns > 0) {
       fputs("\n", f);
       int i;
-      for (i=0; i<numpatterns; i++) {
+      for (i = 0; i < numpatterns; i++) {
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_pattern=%s\n",
                            (const char*)item->GetText().mb_str(wxConvLocal));
@@ -1490,7 +1486,7 @@ void SavePrefs()
    if (numscripts > 0) {
       fputs("\n", f);
       int i;
-      for (i=0; i<numscripts; i++) {
+      for (i = 0; i < numscripts; i++) {
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_script=%s\n",
                            (const char*)item->GetText().mb_str(wxConvLocal));
@@ -1601,6 +1597,9 @@ void GetPrefs()
    
    // init datadir and prefspath
    InitPrefsPath();
+
+   // init algobase, algorgb, algobrush, etc
+   InitAlgorithms();
 
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
@@ -1740,15 +1739,31 @@ void GetPrefs()
          if (randomfill < 1) randomfill = 1;
          if (randomfill > 100) randomfill = 100;
 
-      } else if (strcmp(keyword, "q_base_step") == 0) {
-         sscanf(value, "%d", &qbasestep);
-         if (qbasestep < 2) qbasestep = 2;
-         if (qbasestep > MAX_BASESTEP) qbasestep = MAX_BASESTEP;
+      } else if (strcmp(keyword, "q_base_step") == 0) {     // deprecated
+         int base;
+         sscanf(value, "%d", &base);
+         if (base < 2) base = 2;
+         if (base > MAX_BASESTEP) base = MAX_BASESTEP;
+         algobase[QLIFE_ALGO] = base;
 
-      } else if (strcmp(keyword, "h_base_step") == 0) {
-         sscanf(value, "%d", &hbasestep);
-         if (hbasestep < 2) hbasestep = 2;
-         if (hbasestep > MAX_BASESTEP) hbasestep = MAX_BASESTEP;
+      } else if (strcmp(keyword, "h_base_step") == 0) {     // deprecated
+         int base;
+         sscanf(value, "%d", &base);
+         if (base < 2) base = 2;
+         if (base > MAX_BASESTEP) base = MAX_BASESTEP;
+         algobase[HLIFE_ALGO] = base;
+
+      } else if (strncmp(keyword, "algo_base_", 10) == 0) {
+         char* p = keyword + 10;
+         int i;
+         sscanf(p, "%d", &i);
+         if (i >= 0 && i < MAX_ALGOS) {
+            int base;
+            sscanf(value, "%d", &base);
+            if (base < 2) base = 2;
+            if (base > MAX_BASESTEP) base = MAX_BASESTEP;
+            algobase[i] = base;
+         }
 
       } else if (strcmp(keyword, "min_delay") == 0) {
          sscanf(value, "%d", &mindelay);
@@ -1763,8 +1778,13 @@ void GetPrefs()
       } else if (strcmp(keyword, "auto_fit") == 0) {
          initautofit = value[0] == '1';
 
-      } else if (strcmp(keyword, "hashing") == 0) {
-         inithash = value[0] == '1';
+      } else if (strcmp(keyword, "init_algo") == 0 ||
+                 strcmp(keyword, "hashing") == 0) {      // deprecated
+         int i;
+         sscanf(value, "%d", &i);
+         if (i < 0) i = 0;
+         if (i >= MAX_ALGOS) i = MAX_ALGOS - 1;
+         initalgo = (algo_type)i;
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
          inithyperspeed = value[0] == '1';
@@ -1868,11 +1888,17 @@ void GetPrefs()
       } else if (strcmp(keyword, "select_rgb") == 0) {
          GetColor(value, selectrgb);
 
-      } else if (strcmp(keyword, "qlife_rgb") == 0) {
-         GetColor(value, qlifergb);
+      } else if (strcmp(keyword, "qlife_rgb") == 0) {    // deprecated
+         GetColor(value, algorgb[QLIFE_ALGO]);
 
-      } else if (strcmp(keyword, "hlife_rgb") == 0) {
-         GetColor(value, hlifergb);
+      } else if (strcmp(keyword, "hlife_rgb") == 0) {    // deprecated
+         GetColor(value, algorgb[HLIFE_ALGO]);
+
+      } else if (strncmp(keyword, "algo_rgb_", 9) == 0) {
+         char* p = keyword + 9;
+         int i;
+         sscanf(p, "%d", &i);
+         if (i >= 0 && i < MAX_ALGOS) GetColor(value, algorgb[i]);
 
       } else if (strcmp(keyword, "buffered") == 0) {
          buffered = value[0] == '1';
@@ -2149,17 +2175,16 @@ private:
    void OnChoice(wxCommandEvent& event);
    void OnButton(wxCommandEvent& event);
 
-   bool ignore_page_event;       // used to prevent currpage being changed
-   bool color_changed;           // have one or more colors changed?
+   bool ignore_page_event;          // used to prevent currpage being changed
+   bool color_changed;              // have one or more colors changed?
 
-   wxColor* new_livergb[10];     // new color for live cells in each layer
-   wxColor* new_deadrgb;         // new color for dead cells
-   wxColor* new_pastergb;        // new color for pasted pattern
-   wxColor* new_selectrgb;       // new color for selected cells
-   wxColor* new_qlifergb;        // new status bar color when using qlifealgo
-   wxColor* new_hlifergb;        // new status bar color when using hlifealgo
+   wxColor* new_algorgb[MAX_ALGOS]; // new status bar color for each algorithm
+   wxColor* new_livergb[10];        // new color for live cells in each layer
+   wxColor* new_deadrgb;            // new color for dead cells
+   wxColor* new_pastergb;           // new color for pasted pattern
+   wxColor* new_selectrgb;          // new color for selected cells
 
-   wxString neweditor;           // new text editor
+   wxString neweditor;              // new text editor
 
    DECLARE_EVENT_TABLE()
 };
@@ -2789,7 +2814,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~80% of RAM)")),
               0, wxALIGN_CENTER_VERTICAL, 0);
    
-   // q_base_step and h_base_step
+   // base step for each algorithm
 
    wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
    longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if not hashing:")),
@@ -2863,8 +2888,8 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    // init control values;
    // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying
    // the min,max,init values in the wxSpinCtrl constructor
-   spin1->SetRange(2, MAX_BASESTEP);        spin1->SetValue(qbasestep);
-   spin2->SetRange(2, MAX_BASESTEP);        spin2->SetValue(hbasestep);
+   spin1->SetRange(2, MAX_BASESTEP);        spin1->SetValue(algobase[QLIFE_ALGO]);
+   spin2->SetRange(2, MAX_BASESTEP);        spin2->SetValue(algobase[HLIFE_ALGO]);
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin5->SetRange(MIN_HASHMB, MAX_HASHMB); spin5->SetValue(maxhashmem);
@@ -3095,7 +3120,7 @@ void PrefsDialog::AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox)
 {
    wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
 
-   for (int i=0; i<10; i++) {
+   for (int i = 0; i < 10; i++) {
       // layer buttons are square; ie. smaller width
       wxBitmap bitmap(BITMAP_HT, BITMAP_HT);
       wxMemoryDC dc;
@@ -3192,15 +3217,15 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    AddColorButton(panel, vbox, PREF_PASTE_RGB, pastergb, _("Pasted pattern"));
    AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
    vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_QLIFE_RGB, qlifergb, _("Status bar background if not hashing"));
-   AddColorButton(panel, vbox, PREF_HLIFE_RGB, hlifergb, _("Status bar background if hashing"));
+   //!!! create a choice menu to select algo
+   AddColorButton(panel, vbox, PREF_QLIFE_RGB, algorgb[QLIFE_ALGO], _("Status bar background if not hashing"));
+   AddColorButton(panel, vbox, PREF_HLIFE_RGB, algorgb[HLIFE_ALGO], _("Status bar background if hashing"));
 
-   for (int i=0; i<10; i++) new_livergb[i] = new wxColor(*livergb[i]);
+   for (int i = 0; i < MAX_ALGOS; i++) new_algorgb[i] = new wxColor(*algorgb[i]);
+   for (int i = 0; i < 10; i++) new_livergb[i] = new wxColor(*livergb[i]);
    new_deadrgb = new wxColor(*deadrgb);
    new_pastergb = new wxColor(*pastergb);
    new_selectrgb = new wxColor(*selectrgb);
-   new_qlifergb = new wxColor(*qlifergb);
-   new_hlifergb = new wxColor(*hlifergb);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -3496,10 +3521,10 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
       ChangeColor(id, new_selectrgb);
 
    } else if ( id == PREF_QLIFE_RGB ) {
-      ChangeColor(id, new_qlifergb);
+      ChangeColor(id, new_algorgb[QLIFE_ALGO]);
 
    } else if ( id == PREF_HLIFE_RGB ) {
-      ChangeColor(id, new_hlifergb);
+      ChangeColor(id, new_algorgb[HLIFE_ALGO]);
    
    } else {
       // process other buttons like Cancel and OK
@@ -3694,8 +3719,8 @@ bool PrefsDialog::TransferDataFromWindow()
 
    // CONTROL_PAGE
    maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);
-   qbasestep  = GetSpinVal(PREF_QBASE);
-   hbasestep  = GetSpinVal(PREF_HBASE);
+   algobase[QLIFE_ALGO] = GetSpinVal(PREF_QBASE);
+   algobase[HLIFE_ALGO] = GetSpinVal(PREF_HBASE);
    mindelay   = GetSpinVal(PREF_MIN_DELAY);
    maxdelay   = GetSpinVal(PREF_MAX_DELAY);
 
@@ -3723,12 +3748,11 @@ bool PrefsDialog::TransferDataFromWindow()
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11
-      for (int i=0; i<10; i++) *livergb[i] = *new_livergb[i];
+      for (int i = 0; i < MAX_ALGOS; i++) *algorgb[i] = *new_algorgb[i];
+      for (int i = 0; i < 10; i++) *livergb[i] = *new_livergb[i];
       *deadrgb     = *new_deadrgb;
       *pastergb    = *new_pastergb;
       *selectrgb   = *new_selectrgb;
-      *qlifergb    = *new_qlifergb;
-      *hlifergb    = *new_hlifergb;
    
       // update colors for brushes and pens
       SetBrushesAndPens();
@@ -3755,12 +3779,11 @@ bool PrefsDialog::TransferDataFromWindow()
 
 PrefsDialog::~PrefsDialog()
 {
-   for (int i=0; i<10; i++) delete new_livergb[i];
+   for (int i = 0; i < MAX_ALGOS; i++) delete new_algorgb[i];
+   for (int i = 0; i < 10; i++) delete new_livergb[i];
    delete new_deadrgb;
    delete new_pastergb;
    delete new_selectrgb;
-   delete new_qlifergb;
-   delete new_hlifergb;
 }
 
 // -----------------------------------------------------------------------------

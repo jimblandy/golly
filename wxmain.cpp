@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for Warning, Fatal, etc
@@ -48,7 +49,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
-#include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer, etc
+#include "wxalgos.h"       // for algo_type, MAX_ALGOS, algomenu
+#include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxmain.h"
 
@@ -78,7 +80,7 @@ enum {
    START_TOOL = 0,
    STOP_TOOL,
    RESET_TOOL,
-   HASH_TOOL,
+   ALGO_TOOL,
    NEW_TOOL,
    OPEN_TOOL,
    SAVE_TOOL,
@@ -101,7 +103,7 @@ enum {
    #include "bitmaps/play.xpm"
    #include "bitmaps/stop.xpm"
    #include "bitmaps/reset.xpm"
-   #include "bitmaps/hash.xpm"
+   #include "bitmaps/algo.xpm"
    #include "bitmaps/new.xpm"
    #include "bitmaps/open.xpm"
    #include "bitmaps/save.xpm"
@@ -115,7 +117,6 @@ enum {
    #include "bitmaps/info.xpm"
    #include "bitmaps/help.xpm"
    // bitmaps for down state of toggle buttons
-   #include "bitmaps/hash_down.xpm"
    #include "bitmaps/patterns_down.xpm"
    #include "bitmaps/scripts_down.xpm"
    #include "bitmaps/draw_down.xpm"
@@ -206,7 +207,7 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    normtool[START_TOOL] =     wxBITMAP(play);
    normtool[STOP_TOOL] =      wxBITMAP(stop);
    normtool[RESET_TOOL] =     wxBITMAP(reset);
-   normtool[HASH_TOOL] =      wxBITMAP(hash);
+   normtool[ALGO_TOOL] =      wxBITMAP(algo);
    normtool[NEW_TOOL] =       wxBITMAP(new);
    normtool[OPEN_TOOL] =      wxBITMAP(open);
    normtool[SAVE_TOOL] =      wxBITMAP(save);
@@ -221,7 +222,6 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    normtool[HELP_TOOL] =      wxBITMAP(help);
    
    // toggle buttons also have a down state
-   downtool[HASH_TOOL] =      wxBITMAP(hash_down);
    downtool[PATTERNS_TOOL] =  wxBITMAP(patterns_down);
    downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts_down);
    downtool[DRAW_TOOL] =      wxBITMAP(draw_down);
@@ -234,7 +234,6 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       for (int i = 0; i < NUM_BUTTONS; i++) {
          CreatePaleBitmap(normtool[i], disnormtool[i]);
       }
-      CreatePaleBitmap(downtool[HASH_TOOL],       disdowntool[HASH_TOOL]);
       CreatePaleBitmap(downtool[PATTERNS_TOOL],   disdowntool[PATTERNS_TOOL]);
       CreatePaleBitmap(downtool[SCRIPTS_TOOL],    disdowntool[SCRIPTS_TOOL]);
       CreatePaleBitmap(downtool[DRAW_TOOL],       disdowntool[DRAW_TOOL]);
@@ -301,18 +300,13 @@ void ToolBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
 
 void ToolBar::OnButton(wxCommandEvent& event)
 {
-   #ifdef __WXMAC__
-      // close any open tool tip window (fixes wxMac bug?)
-      wxToolTip::RemoveToolTips();
-   #endif
-
    int id = event.GetId();
 
    int cmdid;
    switch (id) {
       case START_TOOL:     cmdid = ID_START; break;
       case RESET_TOOL:     cmdid = ID_RESET; break;
-      case HASH_TOOL:      cmdid = ID_HASH; break;
+      case ALGO_TOOL:      return;                    // handled in OnButtonDown
       case NEW_TOOL:       cmdid = wxID_NEW; break;
       case OPEN_TOOL:      cmdid = wxID_OPEN; break;
       case SAVE_TOOL:      cmdid = wxID_SAVE; break;
@@ -324,7 +318,7 @@ void ToolBar::OnButton(wxCommandEvent& event)
       case ZOOMIN_TOOL:    cmdid = ID_ZOOMIN; break;
       case ZOOMOUT_TOOL:   cmdid = ID_ZOOMOUT; break;
       case INFO_TOOL:      cmdid = ID_INFO; break;
-      case HELP_TOOL:      cmdid = ID_SHOW_HELP; break;
+      case HELP_TOOL:      cmdid = ID_HELP_BUTT; break;
       default:             Warning(_("Unexpected button id!")); return;
    }
    
@@ -349,10 +343,25 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
    // a tool bar button has been pressed
    int id = event.GetId();
    
-   // connect a handler that keeps focus with the pressed button
-   tbbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
-                       wxFocusEventHandler(ToolBar::OnKillFocus));
-        
+   #ifdef __WXMSW__
+      // connect a handler that keeps focus with the pressed button
+      tbbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
+                          wxFocusEventHandler(ToolBar::OnKillFocus));
+   #endif
+
+   #ifdef __WXMAC__
+      // close any open tool tip window (probably wxMac bug)
+      wxToolTip::RemoveToolTips();
+   #endif
+
+   // we want pop-up menu to appear as soon as ALGO_TOOL button is pressed
+   //!!! works on all platforms???
+   if (id == ALGO_TOOL) {
+      //!!! how can we force button to appear selected???
+      // maybe use one-shot timer to delay calling PopupMenu???
+      tbbutt[id]->PopupMenu(algomenu, 0, 30);
+   }
+
    event.Skip();
 }
 
@@ -403,6 +412,9 @@ void ToolBar::AddButton(int id, const wxString& tip)
          // due to focus being changed to viewptr
          tbbutt[id]->Connect(id, wxEVT_LEFT_DOWN, wxMouseEventHandler(ToolBar::OnButtonDown));
          tbbutt[id]->Connect(id, wxEVT_LEFT_UP, wxMouseEventHandler(ToolBar::OnButtonUp));
+      #else
+         // allow pop-up menu to appear as soon as ALGO_TOOL button is pressed
+         tbbutt[id]->Connect(id, wxEVT_LEFT_DOWN, wxMouseEventHandler(ToolBar::OnButtonDown));
       #endif
    }
 }
@@ -423,9 +435,6 @@ void ToolBar::EnableButton(int id, bool enable)
    #ifdef __WXMSW__
       if (id == START_TOOL && (inscript || mainptr->generating)) {
          tbbutt[id]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
-         
-      } else if (id == HASH_TOOL && currlayer->hash) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
          
       } else if (id == PATTERNS_TOOL && showpatterns) {
          tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
@@ -510,7 +519,7 @@ void MainFrame::CreateToolbar()
    // add buttons to tool bar
    toolbarptr->AddButton(START_TOOL,      _("Start generating"));
    toolbarptr->AddButton(RESET_TOOL,      _("Reset"));
-   toolbarptr->AddButton(HASH_TOOL,       _("Toggle hashing"));
+   toolbarptr->AddButton(ALGO_TOOL,       _("Set algorithm"));
    toolbarptr->AddSeparator();
    toolbarptr->AddButton(NEW_TOOL,        _("New pattern"));
    toolbarptr->AddButton(OPEN_TOOL,       _("Open pattern"));
@@ -543,7 +552,6 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->SetStartStopButton();
 
       // set state of toggle buttons
-      toolbarptr->SelectButton(HASH_TOOL,       currlayer->hash);
       toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
       toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
       toolbarptr->SelectButton(DRAW_TOOL,       currlayer->curs == curs_pencil);
@@ -555,7 +563,7 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->EnableButton(START_TOOL,      active);
       toolbarptr->EnableButton(RESET_TOOL,      active && !inscript && (generating ||
                                                 currlayer->algo->getGeneration() > currlayer->startgen));
-      toolbarptr->EnableButton(HASH_TOOL,       active && !inscript);
+      toolbarptr->EnableButton(ALGO_TOOL,       active && !inscript);
       toolbarptr->EnableButton(NEW_TOOL,        active && !inscript);
       toolbarptr->EnableButton(OPEN_TOOL,       active && !inscript);
       toolbarptr->EnableButton(SAVE_TOOL,       active && !inscript);
@@ -687,10 +695,10 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_FASTER,       active);
       mbar->Enable(ID_SLOWER,       active && currlayer->warp > minwarp);
       mbar->Enable(ID_AUTO,         active);
-      mbar->Enable(ID_HASH,         active && !inscript);
       mbar->Enable(ID_HYPER,        active);
       mbar->Enable(ID_HINFO,        active);
       mbar->Enable(ID_RULE,         active && !inscript);
+      mbar->Enable(ID_SETALGO,      active && !inscript);
 
       mbar->Enable(ID_FULL,         active);
       mbar->Enable(ID_FIT,          active);
@@ -737,7 +745,6 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SHOW_SCRIPTS,  showscripts);
       mbar->Check(ID_NO_UNDO,       !allowundo);
       mbar->Check(ID_AUTO,       currlayer->autofit);
-      mbar->Check(ID_HASH,       currlayer->hash);
       mbar->Check(ID_HYPER,      currlayer->hyperspeed);
       mbar->Check(ID_HINFO,      currlayer->showhashinfo);
       mbar->Check(ID_TOOL_BAR,   showtool);
@@ -768,8 +775,12 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SYNC_CURS,  synccursors);
       mbar->Check(ID_STACK,      stacklayers);
       mbar->Check(ID_TILE,       tilelayers);
-      for (int i = 0; i < numlayers; i++)
+      for (int i = 0; i < MAX_ALGOS; i++) {
+         mbar->Check(ID_ALGO0 + i, currlayer->algtype == i);
+      }
+      for (int i = 0; i < numlayers; i++) {
          mbar->Check(ID_LAYER0 + i, currindex == i);
+      }
    }
 }
 
@@ -1293,7 +1304,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_FASTER:         GoFaster(); break;
       case ID_SLOWER:         GoSlower(); break;
       case ID_AUTO:           ToggleAutoFit(); break;
-      case ID_HASH:           ToggleHashing(); break;
       case ID_HYPER:          ToggleHyperspeed(); break;
       case ID_HINFO:          ToggleHashInfo(); break;
       case ID_RULE:           ShowRuleDialog(); break;
@@ -1352,7 +1362,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_PROBLEMS:  ShowHelp(_("Help/problems.html")); break;
       case ID_HELP_CHANGES:   ShowHelp(_("Help/changes.html")); break;
       case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
-      case ID_SHOW_HELP:      ShowHelp(wxEmptyString); break;
+      case ID_HELP_BUTT:      ShowHelp(wxEmptyString); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
 
       // Open/Run Recent submenus
@@ -1364,8 +1374,14 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       default:
          if ( id > ID_OPEN_RECENT && id <= ID_OPEN_RECENT + numpatterns ) {
             OpenRecentPattern(id);
+
          } else if ( id > ID_RUN_RECENT && id <= ID_RUN_RECENT + numscripts ) {
             OpenRecentScript(id);
+
+         } else if ( id >= ID_ALGO0 && id <= ID_ALGOMAX ) {
+            int newtype = id - ID_ALGO0;
+            ChangeAlgorithm((algo_type) newtype);
+
          } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
             SetLayer(id - ID_LAYER0);
             if (inscript) {
@@ -2102,10 +2118,10 @@ void MainFrame::CreateMenus()
    controlMenu->Append(ID_SLOWER,               _("Slower") + GetAccelerator(DO_SLOWER));
    controlMenu->AppendSeparator();
    controlMenu->AppendCheckItem(ID_AUTO,        _("Auto Fit") + GetAccelerator(DO_AUTOFIT));
-   controlMenu->AppendCheckItem(ID_HASH,        _("Use Hashing") + GetAccelerator(DO_HASHING));
    controlMenu->AppendCheckItem(ID_HYPER,       _("Hyperspeed") + GetAccelerator(DO_HYPER));
    controlMenu->AppendCheckItem(ID_HINFO,       _("Show Hash Info") + GetAccelerator(DO_HASHINFO));
    controlMenu->AppendSeparator();
+   controlMenu->Append(ID_SETALGO,              _("Set Algorithm"), algomenu);
    controlMenu->Append(ID_RULE,                 _("Set Rule...") + GetAccelerator(DO_RULE));
 
    viewMenu->Append(ID_FULL,                    _("Full Screen") + GetAccelerator(DO_FULLSCREEN));
@@ -2263,7 +2279,6 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_FASTER,          DO_FASTER);
       SetAccelerator(mbar, ID_SLOWER,          DO_SLOWER);
       SetAccelerator(mbar, ID_AUTO,            DO_AUTOFIT);
-      SetAccelerator(mbar, ID_HASH,            DO_HASHING);
       SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
       SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);
       SetAccelerator(mbar, ID_RULE,            DO_RULE);

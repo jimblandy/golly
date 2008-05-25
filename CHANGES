@@ -8,6 +8,11 @@ TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 
+Changes in version 1.5 or 2.0??? (released !!! 2008)
+
+AKT: Changed GUI to support more than 2 algos and more than 2 cell states.
+TGR: Implemented John von Neumann's 29-state CA.
+
 Changes in version 1.4 (released May 2008)
 
 AKT: Fixed problems with unwanted selections in Win app's file directory.

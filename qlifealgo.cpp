@@ -1126,25 +1126,25 @@ const char *qlifealgo::setrule(const char *s) {
       // current rule doesn't have B0, or it has both B0 and S8
       ruletable = global_liferules.rule0 ;
       if (!global_liferules.vertically_symmetrical() &&
-	  !global_liferules.already_flipped()) {
-	// qlifealgo has an opposite interpretation of the orientation
-	// of ruletable than hlifealgo.  For vertically symmetrical
-	// rules, this doesn't matter.  This is a tad tricky because
-	// we want to turn both the input and the output of this function
-	// upside down.
-	for (int i=0; i<65536; i++) {
-	  int j = ((i & 0xf) << 12) +
-	    ((i & 0xf0) << 4) + ((i & 0xf00) >> 4) + ((i & 0xf000) >> 12) ;
-	  if (i <= j) {
-	    char fi = ruletable[i] ;
-	    char fj = ruletable[j] ;
-	    fi = ((fi & 0x30) >> 4) + ((fi & 0x3) << 4) ;
-	    fj = ((fj & 0x30) >> 4) + ((fj & 0x3) << 4) ;
-	    ruletable[i] = fj ;
-	    ruletable[j] = fi ;
-	  }
-	}
-	global_liferules.set_flipped() ;
+          !global_liferules.already_flipped()) {
+         // qlifealgo has an opposite interpretation of the orientation
+         // of ruletable than hlifealgo.  For vertically symmetrical
+         // rules, this doesn't matter.  This is a tad tricky because
+         // we want to turn both the input and the output of this function
+         // upside down.
+         for (int i=0; i<65536; i++) {
+            int j = ((i & 0xf) << 12) +
+                     ((i & 0xf0) << 4) + ((i & 0xf00) >> 4) + ((i & 0xf000) >> 12) ;
+            if (i <= j) {
+               char fi = ruletable[i] ;
+               char fj = ruletable[j] ;
+               fi = ((fi & 0x30) >> 4) + ((fi & 0x3) << 4) ;
+               fj = ((fj & 0x30) >> 4) + ((fj & 0x3) << 4) ;
+               ruletable[i] = fj ;
+               ruletable[j] = fi ;
+            }
+         }
+         global_liferules.set_flipped() ;
       }
    } else {
       // ruletable will be set in step() depending on gen parity

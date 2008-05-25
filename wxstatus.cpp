@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
 #include "wxscript.h"      // for inscript
+#include "wxalgos.h"       // for algobase, algobrush
 #include "wxlayer.h"       // for currlayer
 #include "wxstatus.h"
 
@@ -251,7 +252,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
    if (wd < 1 || ht < 1) return;
 
    wxRect r = wxRect(0, 0, wd, ht);
-   FillRect(dc, r, currlayer->hash ? *hlifebrush : *qlifebrush);
+   FillRect(dc, r, *algobrush[currlayer->algtype]);
 
    #if defined(__WXMSW__)
       // draw gray lines at top and left edges
@@ -311,12 +312,8 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             // show delay in secs
             strbuf.Printf(_("Delay = %gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
-            // no real need to show step as an exact number???
-            if (currlayer->hash) {
-               strbuf.Printf(_("Step = %d^%d"), hbasestep, currlayer->warp);
-            } else {
-               strbuf.Printf(_("Step = %d^%d"), qbasestep, currlayer->warp);
-            }
+            // no real need to show step as an exact number
+            strbuf.Printf(_("Step = %d^%d"), algobase[currlayer->algtype], currlayer->warp);
          }
          DisplayText(dc, strbuf, h_gen, STEPLINE);
       }
@@ -370,11 +367,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             // show delay in secs
             strbuf.Printf(_("Delay=%gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
-            if (currlayer->hash) {
-               strbuf.Printf(_("Step=%d^%d"), hbasestep, currlayer->warp);
-            } else {
-               strbuf.Printf(_("Step=%d^%d"), qbasestep, currlayer->warp);
-            }
+            strbuf.Printf(_("Step=%d^%d"), algobase[currlayer->algtype], currlayer->warp);
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
       }

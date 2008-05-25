@@ -32,9 +32,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "bigint.h"        // for bigint
 #include "writepattern.h"  // for pattern_format
 #include "wxprefs.h"       // for MAX_RECENT
+#include "wxalgos.h"       // for MAX_ALGOS, algo_type
 #include "wxlayer.h"       // for MAX_LAYERS
 
-// Define the main window:
+// Golly's main window:
 
 class MainFrame : public wxFrame
 {
@@ -101,7 +102,7 @@ public:
    void DisplayTimingInfo();
    void NextGeneration(bool useinc);
    void ToggleAutoFit();
-   void ToggleHashing();
+   void ChangeAlgorithm(algo_type newalgotype);
    void ToggleHyperspeed();
    void ToggleHashInfo();
    void SetWarp(int newwarp);
@@ -283,10 +284,14 @@ enum {
    ID_FASTER,
    ID_SLOWER,
    ID_AUTO,
-   ID_HASH,
    ID_HYPER,
    ID_HINFO,
+   ID_SETALGO,
    ID_RULE,
+
+   // Set Algorithm submenu
+   ID_ALGO0,
+   ID_ALGOMAX = ID_ALGO0 + MAX_ALGOS - 1,
    
    // View menu
    ID_FULL,
@@ -348,9 +353,9 @@ enum {
    ID_HELP_CHANGES,
    ID_HELP_CREDITS,
    
-   // these ids don't have a menu item
+   // these ids aren't associated with any menu item
    ID_LOAD_LEXICON,     // load lexicon pattern
-   ID_SHOW_HELP         // for help button in tool bar
+   ID_HELP_BUTT         // help button in tool bar
 };
 
 #endif

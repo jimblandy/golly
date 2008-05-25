@@ -430,8 +430,8 @@ bool RuleDialog::TransferDataFromWindow()
    if (err) {
       Warning(wxString(err, wxConvLocal));
       return false;
-   } else if ( global_liferules.hasB0notS8 && currlayer->hash ) {
-      Warning(_("B0-not-S8 rules are not allowed when hashing."));
+   } else if ( global_liferules.hasB0notS8 && currlayer->algo->hyperCapable() ) {
+      Warning(_("B0-not-S8 rules are not allowed in this algorithm."));
       return false;
    }
    return true;

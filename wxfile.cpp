@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 #include "readpattern.h"
 #include "writepattern.h"  // for writepattern, pattern_format
 
@@ -52,6 +53,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase
 #include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
@@ -123,15 +125,11 @@ void MainFrame::SetGenIncrement()
 {
    if (currlayer->warp > 0) {
       bigint inc = 1;
-      // WARNING: if this code changes then also change StatusBar::DrawStatusBar
-      if (currlayer->hash) {
-         // set inc to hbasestep^warp
-         int i = currlayer->warp;
-         while (i > 0) { inc.mul_smallint(hbasestep); i--; }
-      } else {
-         // set inc to qbasestep^warp
-         int i = currlayer->warp;
-         while (i > 0) { inc.mul_smallint(qbasestep); i--; }
+      // set inc to base^warp
+      int i = currlayer->warp;
+      while (i > 0) {
+         inc.mul_smallint(algobase[currlayer->algtype]);
+         i--;
       }
       currlayer->algo->setIncrement(inc);
    } else {
@@ -146,7 +144,7 @@ void MainFrame::CreateUniverse()
    // first delete old universe if it exists
    if (currlayer->algo) delete currlayer->algo;
 
-   currlayer->algo = CreateNewUniverse(currlayer->hash);
+   currlayer->algo = CreateNewUniverse(currlayer->algtype);
 
    // increment has been reset to 1 but that's probably not always desirable
    // so set increment using current warp value
@@ -302,16 +300,19 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       viewptr->nopattupdate = false;
    } else {
       const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
-      if (err && strcmp(err,cannotreadhash) == 0 && !currlayer->hash) {
-         currlayer->hash = true;
-         statusptr->SetMessage(_("Hashing has been turned on for macrocell format."));
+      if (err && strcmp(err,cannotreadhash) == 0 &&
+          //!!! need !currlayer->algo->CanReadMC()???
+          !currlayer->algo->hyperCapable()) {
+         currlayer->algtype = HLIFE_ALGO;
+         statusptr->SetMessage(_("Using HashLife due to macrocell format."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
          err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
-      } else if (global_liferules.hasB0notS8 && currlayer->hash && !newtitle.IsEmpty()) {
-         currlayer->hash = false;
-         statusptr->SetMessage(_("Hashing has been turned off due to B0-not-S8 rule."));
+      } else if (global_liferules.hasB0notS8 &&
+                 currlayer->algo->hyperCapable() && !newtitle.IsEmpty()) {
+         currlayer->algtype = QLIFE_ALGO;
+         statusptr->SetMessage(_("Using QuickLife due to B0-not-S8 rule."));
          // update all of status bar so we don't see different colored lines
          UpdateStatus();
          CreateUniverse();
@@ -1027,7 +1028,8 @@ void MainFrame::SavePattern()
    else
       RLEstring = _("RLE (*.rle)|*.rle");
 
-   if (currlayer->hash) {
+   //!!! need currlayer->algo->CanWriteMC()???
+   if (currlayer->algo->hyperCapable()) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          // too big so only allow saving as MC file
          itop = ileft = ibottom = iright = 0;
@@ -1130,8 +1132,9 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
       ibottom = bottom.toint();
       iright = right.toint();
    } else if ( format.IsSameAs(wxT("mc"),false) ) {
-      if (!currlayer->hash) {
-         return "Macrocell format is only allowed if hashing.";
+      //!!! need currlayer->algo->CanWriteMC()???
+      if (!currlayer->algo->hyperCapable()) {
+         return "Macrocell format is not supported by the current algorithm.";
       }
       pattfmt = MC_format;
       // writepattern will ignore itop, ileft, ibottom, iright
@@ -1302,7 +1305,7 @@ void MainFrame::UpdateWarp()
       currlayer->warp = minwarp;
       currlayer->algo->setIncrement(1);   // warp is <= 0
    } else if (currlayer->warp > 0) {
-      SetGenIncrement();                  // in case qbasestep/hbasestep changed
+      SetGenIncrement();                  // in case base step changed
    }
 }
 
@@ -1353,7 +1356,7 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       // maxhashmem might have changed
       for (int i = 0; i < numlayers; i++) {
          Layer* layer = GetLayer(i);
-         if (layer->hash) layer->algo->setMaxMemory(maxhashmem);
+         if (layer->algo->hyperCapable()) layer->algo->setMaxMemory(maxhashmem);
       }
 
       // tileborder might have changed

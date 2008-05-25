@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"         // for viewport class
 #include "wxedit.h"           // for Selection class
 #include "wxundo.h"           // for UndoRedo class
+#include "wxalgos.h"          // for algo_type
 
 // Golly supports multiple layers.  Each layer is a separate universe
 // (unless cloned) with its own algorithm, rule, viewport, window title,
@@ -39,9 +40,9 @@ public:
    ~Layer();
 
    lifealgo* algo;            // this layer's universe (shared by clones)
-   bool hash;                 // does it use hlife?
-   bool hyperspeed;           // use hyperspeed if hash is true?
-   bool showhashinfo;         // show hash info if hash is true?
+   algo_type algtype;         // type of universe
+   bool hyperspeed;           // use speed acceleration?
+   bool showhashinfo;         // show hashing info?
    bool autofit;              // auto fit pattern while generating?
    bool dirty;                // user has modified pattern?
    bool savedirty;            // state of dirty flag before drawing/script change
@@ -70,8 +71,8 @@ public:
    wxString currname;         // name seen in window title and Layer menu
 
    // for saving and restoring starting pattern
+   algo_type startalgo;       // starting algorithm
    bool savestart;            // need to save starting pattern?
-   bool starthash;            // hashing was on at start?
    bool startdirty;           // starting state of dirty flag
    wxString startfile;        // file for saving starting pattern
    wxString startname;        // starting currname
@@ -96,15 +97,10 @@ public:
 };
 
 const int MAX_LAYERS = 10;    // maximum number of layers
-
 extern int numlayers;         // number of existing layers
 extern int numclones;         // number of cloned layers
 extern int currindex;         // index of current layer (0..numlayers-1)
 extern Layer* currlayer;      // pointer to current layer
-
-lifealgo* CreateNewUniverse(bool hashing, bool allowcheck = true);
-// Create a new universe of given type.  If allowcheck is true then
-// event checking is allowed; ie. poller is set to wxGetApp().Poller().
 
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.

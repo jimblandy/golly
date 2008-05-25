@@ -179,6 +179,9 @@ wxview.*       - Implements the viewport window.
 wxrender.*     - Rendering routines for updating the viewport.
                  DrawView() draws the pattern, grid lines, etc.
 
+wxalgos.*      - Implements support for multiple algorithms.
+                 CreateNewUniverse() creates new algo of given type.
+
 wxlayer.*      - Layer menu functions.
                  AddLayer() adds a new, empty layer.
                  DeleteLayer() deletes the current layer.

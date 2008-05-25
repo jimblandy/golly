@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript
+#include "wxalgos.h"       // for algo_type
 #include "wxlayer.h"       // for currlayer, numclones, MarkLayerDirty, etc
 #include "wxprefs.h"       // for allowundo, GetAccelerator, etc
 #include "wxundo.h"
@@ -71,7 +72,7 @@ typedef enum {
    genchange,           // pattern was generated
    setgen,              // generation count was changed
    rulechange,          // rule was changed
-   algochange,          // algorithm was changed (ie. hashing was toggled)
+   algochange,          // algorithm was changed
    scriptstart,         // later changes were made by script
    scriptfinish         // earlier changes were made by script
 } change_type;
@@ -109,7 +110,6 @@ public:
    // setgen info
    bigint oldstartgen, newstartgen;       // old and new startgen values
    bool oldsave, newsave;                 // old and new savestart states
-   bool oldhash, newhash;                 // old and new hash states
    wxString oldtempstart, newtempstart;   // old and new tempstart paths
    wxString oldstartfile, newstartfile;   // old and new startfile paths
    wxString oldcurrfile, newcurrfile;     // old and new currfile paths
@@ -120,6 +120,7 @@ public:
    // and oldx, oldy, newx, newy, oldmag, newmag
    // and oldwarp, newwarp
    // and oldsel, newsel
+   // and oldalgo, newalgo
    
    // namechange info
    wxString oldname, newname;             // old and new layer names
@@ -129,6 +130,9 @@ public:
 
    // rulechange info
    wxString oldrule, newrule;             // old and new rules
+   
+   // algochange info
+   algo_type oldalgo, newalgo;            // old and new algorithm types
 };
 
 // -----------------------------------------------------------------------------
@@ -259,7 +263,7 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->currfile = oldcurrfile;
             if (oldtempstart != newtempstart) {
                currlayer->startdirty = olddirty;
-               currlayer->starthash = oldhash;
+               currlayer->startalgo = oldalgo;
                currlayer->startrule = oldrule;
                currlayer->startx = oldx;
                currlayer->starty = oldy;
@@ -285,7 +289,7 @@ bool ChangeNode::DoChange(bool undo)
             currlayer->currfile = newcurrfile;
             if (oldtempstart != newtempstart) {
                currlayer->startdirty = newdirty;
-               currlayer->starthash = newhash;
+               currlayer->startalgo = newalgo;
                currlayer->startrule = newrule;
                currlayer->startx = newx;
                currlayer->starty = newy;
@@ -345,9 +349,9 @@ bool ChangeNode::DoChange(bool undo)
          break;
 
       case algochange:
-         // temporarily reset allowundo so ToggleHashing won't call RememberAlgoChange
+         // temporarily reset allowundo so ChangeAlgorithm won't call RememberAlgoChange
          allowundo = false;
-         mainptr->ToggleHashing();
+         mainptr->ChangeAlgorithm(undo ? oldalgo : newalgo);
          allowundo = true;
          break;
       
@@ -606,7 +610,8 @@ void UndoRedo::RememberSelection(const wxString& action)
 void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
 {
    const char* err = NULL;
-   if ( currlayer->hash ) {
+   //!!! need lifealgo::CanWriteMC() method???
+   if ( currlayer->algo->hyperCapable() ) {
       // save hlife pattern in a macrocell file
       err = mainptr->WritePattern(tempfile, MC_format, 0, 0, 0, 0);
    } else {
@@ -671,7 +676,7 @@ void UndoRedo::RememberGenStart()
             if (change->changeid == setgen &&
                 change->oldtempstart != change->newtempstart) {
                change->newdirty = currlayer->startdirty;
-               change->newhash = currlayer->starthash;
+               change->newalgo = currlayer->startalgo;
                change->newrule = currlayer->startrule;
                change->newx = currlayer->startx;
                change->newy = currlayer->starty;
@@ -904,7 +909,7 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
       // save extra starting info set by previous SaveStartingPattern so that
       // Undoing this setgen change will restore the correct info for a Reset
       change->olddirty = currlayer->startdirty;
-      change->oldhash = currlayer->starthash;
+      change->oldalgo = currlayer->startalgo;
       change->oldrule = currlayer->startrule;
       change->oldx = currlayer->startx;
       change->oldy = currlayer->starty;
@@ -925,7 +930,7 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
       // Redoing this setgen change will restore the correct info for a Reset
       fixsetgen = true;
       change->newdirty = currlayer->startdirty;
-      change->newhash = currlayer->starthash;
+      change->newalgo = currlayer->startalgo;
       change->newrule = currlayer->startrule;
       change->newx = currlayer->startx;
       change->newy = currlayer->starty;
@@ -1043,7 +1048,7 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberAlgoChange()
+void UndoRedo::RememberAlgoChange(algo_type oldalgo)
 {
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
@@ -1053,7 +1058,9 @@ void UndoRedo::RememberAlgoChange()
    ChangeNode* change = new ChangeNode(algochange);
    if (change == NULL) Fatal(_("Failed to create algochange node!"));
 
-   change->suffix = _("Hashing Change");
+   change->suffix = _("Algorithm Change");
+   change->oldalgo = oldalgo;
+   change->newalgo = currlayer->algtype;
    
    undolist.Insert(change);
    

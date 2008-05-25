@@ -42,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 #include "readpattern.h"
 #include "writepattern.h"
 
@@ -55,6 +56,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase
 #include "wxlayer.h"       // for AddLayer, currlayer, currindex, etc
 #include "wxscript.h"      // for inscript, abortmsg, GSF_*, etc
 #include "wxperl.h"
@@ -454,7 +456,7 @@ XS(pl_load)
    char* filename = SvPV(ST(0), n_a);
 
    // create temporary qlife universe
-   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
+   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
 
    // readpattern might change global rule table
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -464,7 +466,7 @@ XS(pl_load)
    if (err && strcmp(err,cannotreadhash) == 0) {
       // macrocell file, so switch to hlife universe
       delete tempalgo;
-      tempalgo = CreateNewUniverse(true, allowcheck);
+      tempalgo = CreateNewUniverse(HLIFE_ALGO, allowcheck);
       err = readpattern(FILENAME, *tempalgo);
    }
 
@@ -516,7 +518,7 @@ XS(pl_store)
    char* filename = SvPV(ST(1), n_a);
 
    // create temporary qlife universe
-   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
+   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
 
    // copy cell list into temporary universe
    for (int n = 0; n < num_cells; n++) {
@@ -934,7 +936,7 @@ XS(pl_evolve)
 
    // create a temporary universe of same type as current universe so we
    // don't have to update the global rule table (in case it's a Wolfram rule)
-   lifealgo* tempalgo = CreateNewUniverse(currlayer->hash, allowcheck);
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
    // copy cell array into temporary universe
    for (int n = 0; n < num_cells; n++) {
@@ -1192,7 +1194,7 @@ XS(pl_getclip)
 
    // create a temporary universe for storing clipboard pattern;
    // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(false, allowcheck);
+   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)
@@ -1498,11 +1500,7 @@ XS(pl_setbase)
 
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-   if (currlayer->hash) {
-      hbasestep = base;
-   } else {
-      qbasestep = base;
-   }
+   algobase[currlayer->algtype] = base;
    mainptr->UpdateWarp();
    DoAutoUpdate();
 
@@ -1518,7 +1516,7 @@ XS(pl_getbase)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $int = g_getbase()");
 
-   XSRETURN_IV(currlayer->hash ? hbasestep : qbasestep);
+   XSRETURN_IV(algobase[currlayer->algtype]);
 }
 
 // -----------------------------------------------------------------------------
