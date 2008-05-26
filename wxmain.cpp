@@ -345,8 +345,9 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
    
    #ifdef __WXMSW__
       // connect a handler that keeps focus with the pressed button
-      tbbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
-                          wxFocusEventHandler(ToolBar::OnKillFocus));
+      if (id != ALGO_TOOL)
+         tbbutt[id]->Connect(id, wxEVT_KILL_FOCUS,
+                             wxFocusEventHandler(ToolBar::OnKillFocus));
    #endif
 
    #ifdef __WXMAC__
@@ -359,7 +360,15 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
    if (id == ALGO_TOOL) {
       //!!! how can we force button to appear selected???
       // maybe use one-shot timer to delay calling PopupMenu???
-      tbbutt[id]->PopupMenu(algomenu, 0, 30);
+      
+      #ifdef __WXMSW__
+         tbbutt[id]->PopupMenu(algomenu, 0, 25);
+         // fix prob on Win (almost -- button-up doesn't always close menu)
+         viewptr->SetFocus();
+         return;
+      #else
+         tbbutt[id]->PopupMenu(algomenu, 0, 30);
+      #endif
    }
 
    event.Skip();
@@ -379,8 +388,9 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
    wxRect r(0, 0, wd, ht);
 
    // diconnect kill-focus handler
-   tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
-                          wxFocusEventHandler(ToolBar::OnKillFocus));
+   if (id != ALGO_TOOL)
+      tbbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS,
+                             wxFocusEventHandler(ToolBar::OnKillFocus));
    viewptr->SetFocus();
 
 #if wxCHECK_VERSION(2,7,0)
