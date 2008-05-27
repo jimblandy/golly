@@ -42,6 +42,8 @@ public:
    virtual ~nullrender() {}
    virtual void killrect(int, int, int, int) {}
    virtual void blit(int, int, int, int, int*, int=1) {}
+   // AKT !!!???
+   virtual void pixblit(int, int, int, int, char*, int) {}
 } ;
 nullrender renderer ;
 /*

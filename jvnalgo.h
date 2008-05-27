@@ -192,6 +192,10 @@ public:
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
+
+   // AKT: maximum number of cell states in this universe
+   virtual int MaxCellStates() { return 256; }   // or 29???
+
 private:
 /*
  *   Some globals representing our universe.  The root is the
@@ -302,5 +306,10 @@ private:
    void unpack8x8(unsigned short nw, unsigned short ne,
 		  unsigned short sw, unsigned short se,
 		  unsigned int *top, unsigned int *bot) ;
+
+   // AKT: set all pixels to background color
+   void killpixels();
+   // AKT: this was a static routine in jvndraw.cpp
+   void drawpixel(int x, int y);
 } ;
 #endif

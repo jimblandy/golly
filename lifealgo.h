@@ -68,6 +68,15 @@ public:
    virtual const char *writeNativeFormat(FILE *f, char *comments) = 0 ;
    void setpoll(lifepoll *pollerarg) { poller = pollerarg ; }
    virtual const char *readmacrocell(char *) { return cannotreadhash ; }
+   
+   // AKT: return maximum number of cell states in this universe (2..256)
+   virtual int MaxCellStates() { return 2; }
+
+   // AKT: rgb values for each cell state (only used if MaxCellStates > 2)
+   unsigned char cellred[256];
+   unsigned char cellgreen[256];
+   unsigned char cellblue[256];
+
 protected:
    lifepoll *poller ;
 } ;

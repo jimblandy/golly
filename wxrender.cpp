@@ -393,6 +393,13 @@ public:
    virtual ~wx_render() {}
    virtual void killrect(int x, int y, int w, int h);
    virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1);
+   //!!!???
+   virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
+   /* !!!???
+   wxBitmap* pixmap = NULL;
+   int pixmapwd = -1;
+   int pixmapht = -1;
+   */
 };
 
 void wx_render::killrect(int x, int y, int w, int h)
@@ -418,6 +425,45 @@ void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
    } else {
       // stretch bitmap by bmscale
       DrawStretchedBitmap(*currdc, x, y, bmdata, w / bmscale, bmscale);
+   }
+}
+
+void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
+{
+   if (pmscale == 1) {
+      
+      wxBitmap pixmap(w, h, 32);
+      /* !!!??? or faster to create new pixmap only when size changes
+      if (pixmapwd != w || pixmapht != h) {
+         delete pixmap;
+         pixmap = new wxBitmap(w, h, 32);
+         pixmapwd = w;
+         pixmapht = h;
+      }
+         and change pixmap to *pixmap below
+      */
+      wxAlphaPixelData pxldata(pixmap);
+      if (pxldata) {
+         wxAlphaPixelData::Iterator p(pxldata);
+         char* byteptr = pmdata;
+         for ( int y = 0; y < h; y++ ) {
+            wxAlphaPixelData::Iterator rowStart = p;
+            for ( int x = 0; x < w; x++ ) {
+               p.Red()   = *byteptr; byteptr++;
+               p.Green() = *byteptr; byteptr++;
+               p.Blue()  = *byteptr; byteptr++;
+               p++;
+            }
+            p = rowStart;
+            p.OffsetY(pxldata, 1);
+         }
+      }
+      currdc->DrawBitmap(pixmap, x, y);
+
+   } else {
+      // stretch pixmap by pmscale
+      //!!! need DrawStretchedPixmap??? or call from new magblit() method???
+      //!!! DrawStretchedPixmap(*currdc, x, y, pmdata, w / pmscale, pmscale);
    }
 }
 
@@ -1155,8 +1201,15 @@ void DrawView(wxDC& dc, int tileindex)
 
    // set brush color used in killrect
    killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
+   
+   //!!!??? set rgb values for dead cells in pixblit and killrect calls
+   if (currlayer->algo->MaxCellStates() > 2) {
+      currlayer->algo->cellred[0] = deadrgb->Red();
+      currlayer->algo->cellgreen[0] = deadrgb->Green();
+      currlayer->algo->cellblue[0] = deadrgb->Blue();
+   }
 
-   // draw pattern using a sequence of blit and killrect calls
+   // draw pattern using a sequence of blit/pixblit and killrect calls
    currdc = &dc;
    currwd = currlayer->view->getwidth();
    currht = currlayer->view->getheight();

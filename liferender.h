@@ -48,13 +48,20 @@ class liferender {
 public:
    liferender() {}
    virtual ~liferender() ;
+
    // killrect is only ever used to draw background (ie. dead cells)
    virtual void killrect(int x, int y, int w, int h) = 0 ;
+
    /*
     *   If bmscale > 1 it must be a power of two, and the x/y/w/h
     *   values are still in terms of the viewport (that is, they
     *   are already multiplied appropriately).
     */
    virtual void blit(int x, int y, int w, int h, int *bm, int bmscale=1) = 0 ;
+
+   // AKT !!!???
+   // pixblit is used to draw a pixel map which contains w x h x 3 bytes;
+   // ie. each pixel has 3 r,g,b values
+   virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale) = 0 ;
 } ;
 #endif

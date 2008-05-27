@@ -36,13 +36,26 @@ using namespace std ;
 const int logbmsize = 7 ;                 // 6=64x64  7=128x128  8=256x256
 const int bmsize = (1<<logbmsize) ;
 const int byteoff = (bmsize/8) ;
+/* AKT
 const int ibufsize = (bmsize*bmsize/32) ;
 static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for up to 256x256 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
+*/
+const int rowoff = (bmsize*3) ;           // AKT
+const int ibufsize = (bmsize*bmsize*3) ;  // each pixel has 3 r,g,b values
+static char ibigbuf[ibufsize] ;           // a shared buffer for up to 256x256 pixels
+static char *bigbuf = ibigbuf ;
 
-// this version draws in XBM bitmap format
-static void drawpixel(int x, int y) {
-  bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (1 << (x & 7)) ;
+// AKT: made this a method of jvnalgo so it can use cellred etc
+void jvnalgo::drawpixel(int x, int y) {
+   /* AKT
+   bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (1 << (x & 7)) ;
+   */
+   int i = (bmsize-1-y) * rowoff + x;
+   // AKT: for this test we assume all live cells are in state 1
+   bigbuf[i]   = cellred[1];
+   bigbuf[i+1] = cellgreen[1];
+   bigbuf[i+2] = cellblue[1];
 }
 /*
  *   Draw a 4x4 area yielding 1x1, 2x2, or 4x4 pixels.
@@ -50,6 +63,7 @@ static void drawpixel(int x, int y) {
 static
 void draw4x4_1(unsigned short sw, unsigned short se,
                unsigned short nw, unsigned short ne, int llx, int lly) {
+   /* AKT
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
    int bit = 1 << ((-llx) & 0x7) ;
    if (sw) *p |= bit ;
@@ -57,9 +71,16 @@ void draw4x4_1(unsigned short sw, unsigned short se,
    p -= byteoff ;
    if (nw) *p |= bit ;
    if (ne) *p |= (bit << 1) ;
+   */
+   // AKT: just draw 1 pixel for this test
+   int i = (bmsize-1+lly) * rowoff - llx;
+   bigbuf[i]   = 255;//!!!cellred[1];
+   bigbuf[i+1] = 255;//!!!cellgreen[1];
+   bigbuf[i+2] = 255;//!!!cellblue[1];
 }
 static
 void draw4x4_1(jnode *n, jnode *z, int llx, int lly) {
+   /* AKT
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
    int bit = 1 << ((-llx) & 0x7) ;
    if (n->sw != z) *p |= bit ;
@@ -67,26 +88,63 @@ void draw4x4_1(jnode *n, jnode *z, int llx, int lly) {
    p -= byteoff ;
    if (n->nw != z) *p |= bit ;
    if (n->ne != z) *p |= (bit << 1) ;
+   */
+   // AKT: just draw 1 pixel for this test
+   int i = (bmsize-1+lly) * rowoff - llx;
+   bigbuf[i]   = 255;//!!!cellred[1];
+   bigbuf[i+1] = 255;//!!!cellgreen[1];
+   bigbuf[i+2] = 255;//!!!cellblue[1];
 }
 static unsigned char compress4x4[256] ;
 static unsigned char rev8[256] ;
 static
 void draw4x4_2(unsigned short bits1, unsigned short bits2, int llx, int lly) {
+   /* AKT
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
    int mask = (((-llx) & 0x4) ? 0xf0 : 0x0f) ;
    int db = ((bits1 | (bits1 << 4)) & 0xf0f0) +
             ((bits2 | (bits2 >> 4)) & 0x0f0f) ;
    p[0] |= mask & compress4x4[db & 255] ;
    p[-byteoff] |= mask & compress4x4[db >> 8] ;
+   */
+   // AKT: just draw 1 pixel for this test
+   int i = (bmsize-1+lly) * rowoff - llx;
+   bigbuf[i]   = 255;//!!!cellred[1];
+   bigbuf[i+1] = 255;//!!!cellgreen[1];
+   bigbuf[i+2] = 255;//!!!cellblue[1];
 }
 static
 void draw4x4_4(unsigned short bits1, unsigned short bits2, int llx, int lly) {
+   /* AKT
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
    p[0] = rev8[((bits1 << 4) & 0xf0) + (bits2 & 0xf)] ;
    p[-byteoff] = rev8[(bits1 & 0xf0) + ((bits2 >> 4) & 0xf)] ;
    p[-2*byteoff] = rev8[((bits1 >> 4) & 0xf0) + ((bits2 >> 8) & 0xf)] ;
    p[-3*byteoff] = rev8[((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf)] ;
+   */
+   // AKT: just draw 1 pixel for this test
+   int i = (bmsize-1+lly) * rowoff - llx;
+   bigbuf[i]   = 255;//!!!cellred[1];
+   bigbuf[i+1] = 255;//!!!cellgreen[1];
+   bigbuf[i+2] = 255;//!!!cellblue[1];
 }
+
+// AKT: set all pixels to background color
+void jvnalgo::killpixels() {
+   if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
+      // use fast method
+      memset(bigbuf, cellred[0], sizeof(ibigbuf));
+   } else {
+      // use slow method
+      // or create a single killed row at start of draw() and use memcpy here???
+      for (int i = 0; i < ibufsize/3; i += 3) {
+         bigbuf[i]   = cellred[0];
+         bigbuf[i+1] = cellgreen[0];
+         bigbuf[i+2] = cellblue[0];
+      }
+   }
+}
+
 void jvnalgo::clearrect(int minx, int miny, int w, int h) {
    // minx,miny is lower left corner
    if (w <= 0 || h <= 0)
@@ -114,8 +172,12 @@ void jvnalgo::renderbm(int x, int y) {
       rh *= pmag ;
    }
    ry = uviewh - ry - rh ;
+   /* AKT
    renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
+   */
+   renderer->pixblit(rx, ry, rw, rh, bigbuf, pmag);
+   killpixels();
 }
 /*
  *   Here, llx and lly are coordinates in screen pixels describing
@@ -218,7 +280,11 @@ static void init_rev8() {
 void jvnalgo::draw(viewport &viewarg, liferender &rendererarg) {
    if (rev8[255] == 0)
       init_rev8() ;
+   /* AKT
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
+   */
+   killpixels();
+   
    ensure_hashed() ;
    renderer = &rendererarg ;
    view = &viewarg ;
@@ -383,7 +449,7 @@ void sortunique(vector<jnode *> &dest, vector<jnode *> &src) {
 }
 
 void jvnalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pright) {
-   // AKT: following code is from fit() but all goal/size stuff
+   // following code is from fit() but all goal/size stuff
    // has been removed so it finds the exact pattern edges
    ensure_hashed() ;
    bigint xmin = -1 ;
@@ -393,7 +459,7 @@ void jvnalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
    int currdepth = depth ;
    int i;
    if (root == zerojnode(currdepth)) {
-      // AKT: return impossible edges to indicate empty pattern;
+      // return impossible edges to indicate empty pattern;
       // not really a problem because caller should check first
       *ptop = 1 ;
       *pleft = 1 ;

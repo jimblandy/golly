@@ -555,6 +555,11 @@ jvnalgo::jvnalgo() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
+
+   // AKT: init colors for all cell states here!!!???
+   cellred[1] = 255;
+   cellgreen[1] = 255;
+   cellblue[1] = 255;
 }
 /**
  *   Destructor frees memory.
