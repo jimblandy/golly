@@ -62,8 +62,8 @@ public:
    // AKT: pixblit is used to draw a pixel map by passing data in two formats:
    // If pmscale == 1 then pm data contains 3*w*h bytes where each
    // byte triplet contains the rgb values for the corresponding pixel.
-   // If pmscale > 1 then pm data contains w*h bytes where each byte
-   // is a cell state (0..255).
+   // If pmscale > 1 then pm data contains (w/pmscale)*(h/pmscale) bytes
+   // where each byte is a cell state (0..255).
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale) = 0 ;
 } ;
 #endif

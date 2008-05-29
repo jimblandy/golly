@@ -397,7 +397,6 @@ public:
    virtual ~wx_render() {}
    virtual void killrect(int x, int y, int w, int h);
    virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1);
-   //!!!???
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
 };
 
@@ -1298,7 +1297,7 @@ void DrawView(wxDC& dc, int tileindex)
    killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
    cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
-   //!!!??? set rgb values for dead cells in pixblit (ignore swapcolors???)
+   // set rgb values for dead cells in pixblit (ignore swapcolors!!!???)
    if (currlayer->algo->MaxCellStates() > 2) {
       currlayer->algo->cellred[0] = deadrgb->Red();
       currlayer->algo->cellgreen[0] = deadrgb->Green();
