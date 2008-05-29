@@ -421,53 +421,61 @@ void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
    if (bmscale == 1) {
       wxBitmap bmap((const char*)bmdata, w, h, 1);
       currdc->DrawBitmap(bmap, x, y);
+#ifdef __WXMSW__
+   // on Windows it's almost never faster to draw rectangles
    } else {
       // stretch bitmap by bmscale
-      if (savexrle) {//!!!
-         DrawStretchedBitmap(*currdc, x, y, bmdata, w / bmscale, bmscale);
-      } else {
-         //!!! on Mac it's faster to draw rectangles when bmscale > 2
-         //!!! test on Win (can only do if buffered???) and Linux
-         wxRect r(x, y, w, h);
-         FillRect(*currdc, r, *killbrush);
-         w = w / bmscale;
-         h = h / bmscale;
-         int rectsize = bmscale > 2 ? bmscale - 1 : bmscale;
-         char* byteptr = (char*) bmdata;
-         int bit = 1;
-         currdc->SetPen(*wxTRANSPARENT_PEN);
-         currdc->SetBrush(*cellbrush);
-         for ( int row = 0; row < h; row++ ) {
-            for ( int col = 0; col < w; col++ ) {
-               if (*byteptr & bit) {
-                  // draw live cell
-                  wxRect r(x + col * bmscale, y + row * bmscale, rectsize, rectsize);
-                  currdc->DrawRectangle(r);
-               }
-               if (bit < 128) {
-                  bit *= 2;
-               } else {
-                  bit = 1;
-                  byteptr++;
-               }
+      DrawStretchedBitmap(*currdc, x, y, bmdata, w / bmscale, bmscale);
+   }
+#else
+   // on Mac and Linux it's faster to draw rectangles when bmscale > 2
+   } else if (bmscale == 2) {
+      // stretch bitmap by bmscale
+      DrawStretchedBitmap(*currdc, x, y, bmdata, w / bmscale, bmscale);
+   } else {
+      // bmscale > 2
+      wxRect r(x, y, w, h);
+      FillRect(*currdc, r, *killbrush);
+      w = w / bmscale;
+      h = h / bmscale;
+      int cellsize = bmscale - 1;
+      char* byteptr = (char*) bmdata;
+      int bit = 1;
+      currdc->SetPen(*wxTRANSPARENT_PEN);
+      currdc->SetBrush(*cellbrush);
+      for ( int row = 0; row < h; row++ ) {
+         for ( int col = 0; col < w; col++ ) {
+            if (*byteptr & bit) {
+               // draw live cell
+               wxRect r(x + col * bmscale, y + row * bmscale, cellsize, cellsize);
+               currdc->DrawRectangle(r);
+            }
+            if (bit < 128) {
+               bit *= 2;
+            } else {
+               bit = 1;
+               byteptr++;
             }
          }
-         currdc->SetBrush(wxNullBrush);     // restore brush
-         currdc->SetPen(wxNullPen);         // restore pen
       }
+      currdc->SetBrush(wxNullBrush);     // restore brush
+      currdc->SetPen(wxNullPen);         // restore pen
    }
+#endif
 }
 
 void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
+   // faster to create new pixmap only when size changes
+   if (pixmapwd != w || pixmapht != h) {
+      delete pixmap;
+      pixmap = new wxBitmap(w, h, 32);
+      pixmapwd = w;
+      pixmapht = h;
+   }
+
    if (pmscale == 1) {
-      // faster to create new pixmap only when size changes
-      if (pixmapwd != w || pixmapht != h) {
-         delete pixmap;
-         pixmap = new wxBitmap(w, h, 32);
-         pixmapwd = w;
-         pixmapht = h;
-      }
+      // pmdata contains 3 bytes (ie. the rgb values) for each pixel
       wxAlphaPixelData pxldata(*pixmap);
       if (pxldata) {
          wxAlphaPixelData::Iterator p(pxldata);
@@ -487,9 +495,64 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
       currdc->DrawBitmap(*pixmap, x, y);
 
    } else {
-      // stretch pixmap by pmscale
-      //!!! need DrawStretchedPixmap??? or call from new magblit() method???
-      //!!! DrawStretchedPixmap(*currdc, x, y, pmdata, w / pmscale, pmscale);
+      // stretch pixmap by pmscale, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
+      // where each byte contains a cell state
+      w = w / pmscale;
+      h = h / pmscale;
+      int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+      bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
+                     (pmscale >= (1 << mingridmag) && !showgridlines);
+      lifealgo* curralgo = currlayer->algo;
+      //!!! might be faster to draw rectangles above certain scales???
+      wxAlphaPixelData pxldata(*pixmap);
+      if (pxldata) {
+         wxAlphaPixelData::Iterator p(pxldata);
+         unsigned char* byteptr = (unsigned char*) pmdata;
+         for ( int row = 0; row < h; row++ ) {
+            wxAlphaPixelData::Iterator rowStart = p;
+            for ( int col = 0; col < w; col++ ) {
+               unsigned char r = curralgo->cellred[*byteptr];
+               unsigned char g = curralgo->cellgreen[*byteptr];
+               unsigned char b = curralgo->cellblue[*byteptr];
+               
+               // expand byte into cellsize*cellsize pixels
+               wxAlphaPixelData::Iterator topleft = p;
+               for (int i = 0; i < cellsize; i++) {
+                  wxAlphaPixelData::Iterator colStart = p;
+                  for (int j = 0; j < cellsize; j++) {
+                     p.Red()   = r;
+                     p.Green() = g;
+                     p.Blue()  = b;
+                     p++;
+                  }
+                  if (drawgap) {
+                     // draw dead pixels at right edge of cell
+                     p.Red()   = curralgo->cellred[0];
+                     p.Green() = curralgo->cellgreen[0];
+                     p.Blue()  = curralgo->cellblue[0];
+                  }
+                  p = colStart;
+                  p.OffsetY(pxldata, 1);
+               }
+               if (drawgap) {
+                  // draw dead pixels at bottom edge of cell
+                  for (int j = 0; j <= cellsize; j++) {
+                     p.Red()   = curralgo->cellred[0];
+                     p.Green() = curralgo->cellgreen[0];
+                     p.Blue()  = curralgo->cellblue[0];
+                     p++;
+                  }
+               }
+               p = topleft;
+               p.OffsetX(pxldata, pmscale);
+               
+               byteptr++;        // move to next byte in pmdata
+            }
+            p = rowStart;
+            p.OffsetY(pxldata, pmscale);
+         }
+      }
+      currdc->DrawBitmap(*pixmap, x, y);
    }
 }
 

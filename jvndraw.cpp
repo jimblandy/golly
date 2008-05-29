@@ -129,18 +129,25 @@ void draw4x4_4(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    bigbuf[i+2] = 255;//!!!cellblue[1];
 }
 
-// AKT: set all pixels to background color
+// AKT: kill all cells in bigbuf
 void jvnalgo::killpixels() {
-   if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
-      // use fast method
-      memset(bigbuf, cellred[0], sizeof(ibigbuf));
+   if (pmag > 1) {
+      // pixblit assumes bigbuf contains bmsize*bmsize bytes where each byte
+      // is a cell state, so it's easy to kill all cells
+      memset(bigbuf, 0, bmsize*bmsize);
    } else {
-      // use slow method
-      // or create a single killed row at start of draw() and use memcpy here???
-      for (int i = 0; i < ibufsize/3; i += 3) {
-         bigbuf[i]   = cellred[0];
-         bigbuf[i+1] = cellgreen[0];
-         bigbuf[i+2] = cellblue[0];
+      // pixblit assumes bigbuf contains 3 bytes (r,g,b) for each pixel
+      if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
+         // use fast method
+         memset(bigbuf, cellred[0], sizeof(ibigbuf));
+      } else {
+         // use slow method
+         // or create a single killed row at start of draw() and use memcpy here???
+         for (int i = 0; i < ibufsize/3; i += 3) {
+            bigbuf[i]   = cellred[0];
+            bigbuf[i+1] = cellgreen[0];
+            bigbuf[i+2] = cellblue[0];
+         }
       }
    }
 }
@@ -170,6 +177,17 @@ void jvnalgo::renderbm(int x, int y) {
       ry *= pmag ;
       rw *= pmag ;
       rh *= pmag ;
+      // AKT: pixblit assumes that bigbuf contains bmsize*bmsize bytes
+      // where each byte is a cell state, so test my pixblit code:
+      bigbuf[0] = 1;                // top left corner
+      bigbuf[1] = 0;
+      bigbuf[2] = 1;
+      bigbuf[bmsize-1] = 1;         // top right corner
+      bigbuf[bmsize] = 1;
+      bigbuf[bmsize+1] = 1;
+      bigbuf[bmsize+2] = 1;
+      bigbuf[bmsize*(bmsize-1)] = 1;   // bot left corner
+      bigbuf[bmsize*bmsize-1] = 1;     // bot right corner
    }
    ry = uviewh - ry - rh ;
    /* AKT
@@ -280,10 +298,9 @@ static void init_rev8() {
 void jvnalgo::draw(viewport &viewarg, liferender &rendererarg) {
    if (rev8[255] == 0)
       init_rev8() ;
-   /* AKT
+   /* AKT: call killpixels below
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
    */
-   killpixels();
    
    ensure_hashed() ;
    renderer = &rendererarg ;
@@ -302,6 +319,10 @@ void jvnalgo::draw(viewport &viewarg, liferender &rendererarg) {
       viewh = uviewh ;
       vieww = uvieww ;
    }
+
+   // AKT: must call killpixels after setting pmag
+   killpixels();
+
    int d = depth ;
    fill_ll(d) ;
    int maxd = vieww ;
