@@ -143,7 +143,11 @@ wxUint16 Magnify2[256];
 // globals used in wx_render routines
 wxDC* currdc;              // current device context for viewport
 int currwd, currht;        // current width and height of viewport
-wxBrush* killbrush;        // brush used in killrect
+wxBrush* killbrush;        // brush used to draw dead cells
+wxBrush* cellbrush;        // brush used to draw live cells
+wxBitmap* pixmap = NULL;   // 32-bit deep bitmap used in pixblit
+int pixmapwd = -1;         // width of pixmap
+int pixmapht = -1;         // height of pixmap
 
 // for drawing multiple layers
 wxBitmap* layerbitmap = NULL;    // layer bitmap
@@ -274,9 +278,9 @@ void InitDrawingData()
 
 void DestroyDrawingData()
 {
-   if (layerbitmap) delete layerbitmap;
-   if (selbitmap) delete selbitmap;
-   if (graybitmap) delete graybitmap;
+   delete layerbitmap;
+   delete selbitmap;
+   delete graybitmap;
 }
 
 // -----------------------------------------------------------------------------
@@ -375,8 +379,8 @@ void DrawStretchedBitmap(wxDC& dc, int xoff, int yoff, int* bmdata, int bmsize, 
                bptr += rowbytes;          // start of next row in current block
             }
             
-            wxBitmap magmap = wxBitmap((const char*)magbuf, magsize, magsize, 1);
-            dc.DrawBitmap(magmap, xw, yw, false);
+            wxBitmap magmap((const char*)magbuf, magsize, magsize, 1);
+            dc.DrawBitmap(magmap, xw, yw);
          }
          xw += magsize;     // across to next block
       }
@@ -395,11 +399,6 @@ public:
    virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1);
    //!!!???
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
-   /* !!!???
-   wxBitmap* pixmap = NULL;
-   int pixmapwd = -1;
-   int pixmapht = -1;
-   */
 };
 
 void wx_render::killrect(int x, int y, int w, int h)
@@ -420,35 +419,62 @@ void wx_render::killrect(int x, int y, int w, int h)
 void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
 {
    if (bmscale == 1) {
-      wxBitmap bmap = wxBitmap((const char*)bmdata, w, h, 1);
+      wxBitmap bmap((const char*)bmdata, w, h, 1);
       currdc->DrawBitmap(bmap, x, y);
    } else {
       // stretch bitmap by bmscale
-      DrawStretchedBitmap(*currdc, x, y, bmdata, w / bmscale, bmscale);
+      if (savexrle) {//!!!
+         DrawStretchedBitmap(*currdc, x, y, bmdata, w / bmscale, bmscale);
+      } else {
+         //!!! on Mac it's faster to draw rectangles when bmscale > 2
+         //!!! test on Win (can only do if buffered???) and Linux
+         wxRect r(x, y, w, h);
+         FillRect(*currdc, r, *killbrush);
+         w = w / bmscale;
+         h = h / bmscale;
+         int rectsize = bmscale > 2 ? bmscale - 1 : bmscale;
+         char* byteptr = (char*) bmdata;
+         int bit = 1;
+         currdc->SetPen(*wxTRANSPARENT_PEN);
+         currdc->SetBrush(*cellbrush);
+         for ( int row = 0; row < h; row++ ) {
+            for ( int col = 0; col < w; col++ ) {
+               if (*byteptr & bit) {
+                  // draw live cell
+                  wxRect r(x + col * bmscale, y + row * bmscale, rectsize, rectsize);
+                  currdc->DrawRectangle(r);
+               }
+               if (bit < 128) {
+                  bit *= 2;
+               } else {
+                  bit = 1;
+                  byteptr++;
+               }
+            }
+         }
+         currdc->SetBrush(wxNullBrush);     // restore brush
+         currdc->SetPen(wxNullPen);         // restore pen
+      }
    }
 }
 
 void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
    if (pmscale == 1) {
-      
-      wxBitmap pixmap(w, h, 32);
-      /* !!!??? or faster to create new pixmap only when size changes
+      // faster to create new pixmap only when size changes
       if (pixmapwd != w || pixmapht != h) {
          delete pixmap;
          pixmap = new wxBitmap(w, h, 32);
          pixmapwd = w;
          pixmapht = h;
       }
-         and change pixmap to *pixmap below
-      */
-      wxAlphaPixelData pxldata(pixmap);
+      wxAlphaPixelData pxldata(*pixmap);
       if (pxldata) {
          wxAlphaPixelData::Iterator p(pxldata);
          char* byteptr = pmdata;
-         for ( int y = 0; y < h; y++ ) {
+         for ( int row = 0; row < h; row++ ) {
             wxAlphaPixelData::Iterator rowStart = p;
-            for ( int x = 0; x < w; x++ ) {
+            for ( int col = 0; col < w; col++ ) {
                p.Red()   = *byteptr; byteptr++;
                p.Green() = *byteptr; byteptr++;
                p.Blue()  = *byteptr; byteptr++;
@@ -458,7 +484,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
             p.OffsetY(pxldata, 1);
          }
       }
-      currdc->DrawBitmap(pixmap, x, y);
+      currdc->DrawBitmap(*pixmap, x, y);
 
    } else {
       // stretch pixmap by pmscale
@@ -480,8 +506,8 @@ void CheckSelectionSize(int viewwd, int viewht)
          // resize selbitmap and graybitmap
          selwd = viewwd;
          selht = viewht;
-         if (selbitmap) delete selbitmap;
-         if (graybitmap) delete graybitmap;
+         delete selbitmap;
+         delete graybitmap;
          // use depth 32 so bitmaps have an alpha channel
          selbitmap = new wxBitmap(selwd, selht, 32);
          graybitmap = new wxBitmap(selwd, selht, 32);
@@ -682,7 +708,7 @@ void CheckPasteImage()
       
       if (pastewd <= 2 || pasteht <= 2) {
          // no need to draw paste image because border lines will cover it
-         if (pastebitmap) delete pastebitmap;
+         delete pastebitmap;
          pastebitmap = NULL;
          if (pimagewd != 1 || pimageht != 1) {
             pimagewd = 1;
@@ -769,7 +795,7 @@ void CheckPasteImage()
       }
       
       // delete old bitmap even if size hasn't changed
-      if (pastebitmap) delete pastebitmap;
+      delete pastebitmap;
       pimagewd = pastewd;
       pimageht = pasteht;
       #ifdef __WXX11__
@@ -797,7 +823,7 @@ void CheckPasteImage()
          wxMemoryDC pattdc;
          pattdc.SelectObject(*pastebitmap);
          
-         // set foreground and background colors for DrawBitmap calls
+         // set foreground and background colors for drawing monochrome bitmaps
          #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
              (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
             // use opposite meaning
@@ -808,8 +834,10 @@ void CheckPasteImage()
             pattdc.SetTextBackground(*deadrgb);
          #endif
 
-         // set brush color used in killrect
+         // set brush colors used in killrect and blit
          killbrush = deadbrush;
+         wxBrush* pastebrush = new wxBrush(*pastergb);
+         cellbrush = pastebrush;
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -821,6 +849,7 @@ void CheckPasteImage()
          pastealgo->draw(tempview, renderer);
          
          showgridlines = saveshow;
+         delete pastebrush;
    
          // make dead pixels 100% transparent and live pixels 100% opaque
          MaskDeadPixels(pastebitmap, pimagewd, pimageht, 255);
@@ -989,7 +1018,7 @@ void DrawOneLayer(wxDC& dc, int index)
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
    
-   // set foreground and background colors for DrawBitmap calls
+   // set foreground and background colors for drawing monochrome bitmaps
    #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
        (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
       // use opposite meaning
@@ -999,6 +1028,9 @@ void DrawOneLayer(wxDC& dc, int index)
       layerdc.SetTextForeground(*livergb[index]);
       layerdc.SetTextBackground(*deadrgb);
    #endif
+   
+   // set brush color used in blit
+   cellbrush = livebrush[index];
    
    currdc = &layerdc;
    currlayer->algo->draw(*currlayer->view, renderer);
@@ -1027,7 +1059,7 @@ void DrawStackedLayers(wxDC& dc)
         layerht != currlayer->view->getheight() ) {
       layerwd = currlayer->view->getwidth();
       layerht = currlayer->view->getheight();
-      if (layerbitmap) delete layerbitmap;
+      delete layerbitmap;
       #ifdef __WXX11__
          // create a bitmap with screen depth
          layerbitmap = new wxBitmap(layerwd, layerht, -1);
@@ -1045,7 +1077,7 @@ void DrawStackedLayers(wxDC& dc)
    bool saveshow = showgridlines;
    showgridlines = false;
 
-   // set brush color used in killrect
+   // set brush color used in killrect and blit
    killbrush = deadbrush;
    
    // draw patterns in layers 1..numlayers-1
@@ -1184,7 +1216,7 @@ void DrawView(wxDC& dc, int tileindex)
       colorindex = currindex;
    }
 
-// set foreground and background colors for DrawBitmap calls
+// set foreground and background colors for drawing monochrome bitmaps
 #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
     (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
    // use opposite meaning
@@ -1199,10 +1231,11 @@ void DrawView(wxDC& dc, int tileindex)
       dc.SetTextBackground(*livergb[colorindex]);
    }
 
-   // set brush color used in killrect
+   // set brush colors used in killrect and blit
    killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
+   cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
-   //!!!??? set rgb values for dead cells in pixblit and killrect calls
+   //!!!??? set rgb values for dead cells in pixblit (ignore swapcolors???)
    if (currlayer->algo->MaxCellStates() > 2) {
       currlayer->algo->cellred[0] = deadrgb->Red();
       currlayer->algo->cellgreen[0] = deadrgb->Green();

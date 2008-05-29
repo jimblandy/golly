@@ -1819,7 +1819,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
             // need to create a new bitmap for current viewport
-            if (viewbitmap) delete viewbitmap;
+            delete viewbitmap;
             viewbitmap = new wxBitmap(wd, ht);
             if (viewbitmap == NULL) Fatal(_("Not enough memory to do buffering!"));
             viewbitmapwd = wd;
@@ -2457,6 +2457,6 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
 // destroy the viewport window
 PatternView::~PatternView()
 {
-   if (dragtimer) delete dragtimer;
-   if (viewbitmap) delete viewbitmap;
+   delete dragtimer;
+   delete viewbitmap;
 }

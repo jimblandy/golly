@@ -423,7 +423,7 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       if (ht < 1) ht = 1;
       if (wd != statbitmapwd || ht != statbitmapht) {
          // need to create a new bitmap for status bar
-         if (statbitmap) delete statbitmap;
+         delete statbitmap;
          statbitmap = new wxBitmap(wd, ht);
          statbitmapwd = wd;
          statbitmapht = ht;
@@ -572,6 +572,6 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
 
 StatusBar::~StatusBar()
 {
-   if (statusfont) delete statusfont;
-   if (statbitmap) delete statbitmap;
+   delete statusfont;
+   delete statbitmap;
 }

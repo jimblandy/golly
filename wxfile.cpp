@@ -141,8 +141,8 @@ void MainFrame::SetGenIncrement()
 
 void MainFrame::CreateUniverse()
 {
-   // first delete old universe if it exists
-   if (currlayer->algo) delete currlayer->algo;
+   // first delete old universe
+   delete currlayer->algo;
 
    currlayer->algo = CreateNewUniverse(currlayer->algtype);
 
