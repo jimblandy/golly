@@ -213,7 +213,7 @@ public:
    virtual void clearall() ;
    virtual void setcell(int x, int y, int newstate) ;
    virtual int getcell(int x, int y) ;
-   virtual int nextcell(int x, int y) ;
+   virtual int nextcell(int x, int y, int &v) ;
    // call after setcell/clearcell calls
    virtual void endofpattern() {
      // AKT: unnecessary??? (prevents shrinking selection while generating)

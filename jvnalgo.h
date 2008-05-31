@@ -164,7 +164,7 @@ public:
    virtual void clearall() ; // not implemented
    virtual void setcell(int x, int y, int newstate) ;
    virtual int getcell(int x, int y) ;
-   virtual int nextcell(int x, int y) ;
+   virtual int nextcell(int x, int y, int &v) ;
    virtual void endofpattern() ;
    virtual void setIncrement(bigint inc) ;
    virtual void setIncrement(int inc) { setIncrement(bigint(inc)) ; }

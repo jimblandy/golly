@@ -181,9 +181,10 @@ struct cmdbase {
       int miny = iargs[1] ;
       int maxx = iargs[2] ;
       int maxy = iargs[3] ;
+      int v ;
       for (int y=miny; y<=maxy; y++) {
 	 for (int x=minx; x<=maxx; x++) {
-	    int dx = imp->nextcell(x, y) ;
+	    int dx = imp->nextcell(x, y, v) ;
 	    if (dx < 0)
 	       break ;
 	    if (x > 0 && (x + dx) < 0)
@@ -314,8 +315,9 @@ struct getcmd : public cmdbase {
 struct getnextcmd : public cmdbase {
    getnextcmd() : cmdbase("getnext", "ii") {}
    virtual void doit() {
+     int v ;
      cout << "At " << iargs[0] << "," << iargs[1] << " next is " <<
-        imp->nextcell(iargs[0], iargs[1]) << endl ;
+        imp->nextcell(iargs[0], iargs[1], v) << endl ;
    }
 } getnext_inst ;
 vector<pair<int, int> > cutbuf ;

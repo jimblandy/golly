@@ -34,7 +34,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 #include "viewport.h"
 #include "liferules.h"     // for global_liferules
 
@@ -126,6 +125,7 @@ bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
    int cx, cy;
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
+   int v = 0 ;
    bool abort = false;
    
    // copy (and erase if requested) live cells from given rect
@@ -133,13 +133,13 @@ bool PatternView::CopyRect(int itop, int ileft, int ibottom, int iright,
    BeginProgress(progmsg);
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         int skip = srcalgo->nextcell(cx, cy);
+	 int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
             // found next live cell
             cx += skip;
-            destalgo->setcell(cx, cy, 1);
+            destalgo->setcell(cx, cy, v);
             if (erasesrc) srcalgo->setcell(cx, cy, 0);
          } else {
             cx = iright + 1;     // done this row
@@ -478,19 +478,21 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    
    lifealgo* curralgo = currlayer->algo;
    if ( usenextcell ) {
+      int v = 0 ;
       cy = pastey;
       for ( ty=itop; ty<=ibottom; ty++ ) {
          cx = pastex;
          for ( tx=ileft; tx<=iright; tx++ ) {
-            int skip = tempalgo->nextcell(tx, ty);
+	   int skip = tempalgo->nextcell(tx, ty, v);
             if (skip + tx > iright)
                skip = -1;           // pretend we found no more live cells
             if (skip >= 0) {
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               if (curralgo->getcell(cx, cy) != 1) {
-                  curralgo->setcell(cx, cy, 1);
+               if (curralgo->getcell(cx, cy) == 0) {
+		 // above was != 1; for multistate, we probably prefer == 0
+                  curralgo->setcell(cx, cy, v);
                   pattchanged = true;
                   if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
                }

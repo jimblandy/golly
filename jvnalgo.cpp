@@ -999,7 +999,8 @@ int jvnalgo::getcell(int x, int y) {
  *   current universe, or -1 if none set to the right, or if
  *   the next set pixel is out of range.
  */
-int jvnalgo::nextcell(int x, int y) {
+int jvnalgo::nextcell(int x, int y, int &v) {
+   v = 1 ; // FIXME
    y = - y ;
    int sx = x ;
    int sy = y ;

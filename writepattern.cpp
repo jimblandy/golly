@@ -135,13 +135,14 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
       double maxcount = imp.getPopulation().todouble() + ht;
       double accumcount = 0;
       int currcount = 0;
-
+      int v = 0 ;
       for ( cy=top; cy<=bottom; cy++ ) {
          // set lastchar to anything except 'o' or 'b'
          lastchar = 0;
          currcount++;
          for ( cx=left; cx<=right; cx++ ) {
-            int skip = imp.nextcell(cx, cy);
+	    /** FIXME:  support multistate */
+	    int skip = imp.nextcell(cx, cy, v);
             if (skip + cx > right)
                skip = -1;           // pretend we found no more live cells
             if (skip > 0) {

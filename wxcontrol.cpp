@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for BeginProgress, GetString, etc
@@ -895,17 +894,18 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
       double accumcount = 0;
       int currcount = 0;
       bool abort = false;
+      int v = 0 ;
       BeginProgress(_("Converting pattern"));
    
       lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
+	    int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
-               newalgo->setcell(cx, cy, 1);
+               newalgo->setcell(cx, cy, v);
                currcount++;
             } else {
                cx = iright;  // done this row

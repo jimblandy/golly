@@ -994,7 +994,8 @@ int hlifealgo::getcell(int x, int y) {
  *   current universe, or -1 if none set to the right, or if
  *   the next set pixel is out of range.
  */
-int hlifealgo::nextcell(int x, int y) {
+int hlifealgo::nextcell(int x, int y, int &v) {
+   v = 1 ;
    y = - y ;
    int sx = x ;
    int sy = y ;

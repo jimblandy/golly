@@ -36,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 #include "viewport.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr

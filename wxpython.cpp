@@ -50,7 +50,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 #include "readpattern.h"
 #include "writepattern.h"
 
@@ -370,10 +369,12 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
       int ibottom = bottom.toint();
       int iright = right.toint();
       int cx, cy;
+      int v = 0 ;
+      /** FIXME:  support multistate */
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = universe->nextcell(cx, cy);
+	    int skip = universe->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -1053,11 +1054,13 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
       int iright = ileft + wd - 1;
       int ibottom = itop + ht - 1;
       int cx, cy;
+      int v = 0 ;
       int cntr = 0;
       lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy);
+	   /** FIXME:  make it work with multistate */
+	    int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -1113,6 +1116,7 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    int right = x + wd - 1;
    int bottom = y + ht - 1;
    int cx, cy;
+   int v = 0 ;
    int cntr = 0;
    
    // calculate a hash value for pattern in given rect
@@ -1121,7 +1125,8 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    for ( cy=y; cy<=bottom; cy++ ) {
       int yshift = cy - y;
       for ( cx=x; cx<=right; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy);
+	/** FIXME:  make it work with multistate */
+	int skip = curralgo->nextcell(cx, cy, v);
          if (skip >= 0) {
             // found next live cell in this row
             cx += skip;
@@ -1179,6 +1184,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
       int iright = right.toint();
       int wd = iright - ileft + 1;
       int ht = ibottom - itop + 1;
+      int v = 0 ;
 
       AddCell(outlist, wd, ht);
 
@@ -1187,7 +1193,8 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = tempalgo->nextcell(cx, cy);
+	    /** FIXME:  make it work with multistate */
+	    int skip = tempalgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;

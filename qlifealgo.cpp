@@ -815,7 +815,8 @@ int qlifealgo::getcell(int x, int y) {
 /**
  *   Similar but returns the distance to the next set cell horizontally.
  */
-int qlifealgo::nextcell(int x, int y) {
+int qlifealgo::nextcell(int x, int y, int &v) {
+   v = 1 ;
    y = - y ;
    int odd = generation.odd() ;
    if (odd) {
