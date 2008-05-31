@@ -60,7 +60,7 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 
 OBJDIR = ObjWin
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(OBJDIR)/hlifedraw.obj \
-   $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/jvndraw.obj \
+   $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ghashdraw.obj \
    $(OBJDIR)/readpattern.obj $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj $(OBJDIR)/wxrule.obj \
@@ -307,7 +307,7 @@ bgolly.exe: $(BASEOBJ) $(OBJDIR)/bgolly.obj
 
 $(OBJDIR)/bgolly.obj: bgolly.cpp \
 platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-hlifealgo.h qlifealgo.h jvnalgo.h liferules.h writepattern.h util.h
+hlifealgo.h qlifealgo.h jvnalgo.h ghashbase.h liferules.h writepattern.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bgolly.cpp
 
 $(OBJDIR)/bigint.obj: bigint.cpp bigint.h util.h
@@ -333,13 +333,17 @@ $(OBJDIR)/qlifedraw.obj: qlifedraw.cpp qlifealgo.h platform.h lifealgo.h bigint.
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) qlifedraw.cpp
 
-$(OBJDIR)/jvnalgo.obj: jvnalgo.cpp jvnalgo.h platform.h lifealgo.h bigint.h \
+$(OBJDIR)/jvnalgo.obj: jvnalgo.cpp ghashbase.h jvnalgo.h platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) jvnalgo.cpp
 
-$(OBJDIR)/jvndraw.obj: jvndraw.cpp jvnalgo.h platform.h lifealgo.h bigint.h \
+$(OBJDIR)/ghashbase.obj: ghashbase.cpp ghashbase.h platform.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashbase.cpp
+
+$(OBJDIR)/ghashdraw.obj: ghashdraw.cpp jvnalgo.h platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) jvndraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashdraw.cpp
 
 $(OBJDIR)/liferules.obj: liferules.cpp liferules.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) liferules.cpp
