@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "jvnalgo.h"
 #include "readpattern.h"
 #include "util.h"
 #include "viewport.h"
@@ -73,7 +74,7 @@ struct options {
 } ;
 bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
-int hyper, hashlife, render, autofit, quiet, popcount, progress ;
+int hyper, hashlife, ghashlife, render, autofit, quiet, popcount, progress ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
 char *outfilename = 0 ;
@@ -89,6 +90,7 @@ options options[] = {
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
   { "-h", "--hashlife", "Use Hashlife algorithm", 'b', &hashlife },
+  { "-g", "--ghashlife", "Use generalized hashlife algorithm", 'b', &ghashlife },
   { "-o", "--output", "Output file (*.rle, *.mc, *.rle.gz, *.mc.gz)", 's',
                                                                &outfilename },
   { "",   "--render", "Render (benchmarking)", 'b', &render },
@@ -365,7 +367,9 @@ struct newcmd : public cmdbase {
    virtual void doit() {
      if (imp != 0)
        delete imp ;
-     if (hashlife)
+     if (ghashlife)
+       imp = new jvnalgo() ;
+     else if (hashlife)
        imp = new hlifealgo() ;
      else
        imp = new qlifealgo() ;
@@ -378,6 +382,12 @@ struct sethashingcmd : public cmdbase {
       hashlife = iargs[0] ;
    }
 } sethashing_inst ;
+struct setghashingcmd : public cmdbase {
+   setghashingcmd() : cmdbase("setghashing", "i") {}
+   virtual void doit() {
+      ghashlife = iargs[0] ;
+   }
+} setghashing_inst ;
 struct setmaxmemcmd : public cmdbase {
    setmaxmemcmd() : cmdbase("setmaxmem", "i") {}
    virtual void doit() {
@@ -490,7 +500,9 @@ case 's':
       if (strlen(outfilename) > 200)
          lifefatal("Output filename too long") ;
    }
-   if (hashlife)
+   if (ghashlife)
+     imp = new jvnalgo() ;
+   else if (hashlife)
      imp = new hlifealgo() ;
    else
      imp = new qlifealgo() ;
