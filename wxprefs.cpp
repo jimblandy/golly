@@ -1385,7 +1385,9 @@ void SavePrefs()
 
    fprintf(f, "init_algo=%d\n", (int)currlayer->algtype);
    for (int i = 0; i < MAX_ALGOS; i++) {
-      fprintf(f, "algo_base_%d=%d\n", i, algobase[i]);
+      fprintf(f, "algorithm=%s\n", GetAlgoName((algo_type) i));
+      fprintf(f, "base_step=%d\n", algobase[i]);
+      SaveColor(f, "status_rgb", algorgb[i]);
    }
    
    fputs("\n", f);
@@ -1439,11 +1441,6 @@ void SavePrefs()
    SaveColor(f, "dead_rgb", deadrgb);
    SaveColor(f, "paste_rgb", pastergb);
    SaveColor(f, "select_rgb", selectrgb);
-   for (int i = 0; i < MAX_ALGOS; i++) {
-      char keyword[32];
-      sprintf(keyword, "algo_rgb_%d", i);
-      SaveColor(f, keyword, algorgb[i]);
-   }
    
    fputs("\n", f);
    
@@ -1594,6 +1591,7 @@ void InitPrefsPath()
 void GetPrefs()
 {
    int currversion = PREFS_VERSION;
+   int algoindex = -1;                 // unknown algorithm
    
    // init datadir and prefspath
    InitPrefsPath();
@@ -1753,17 +1751,27 @@ void GetPrefs()
          if (base > MAX_BASESTEP) base = MAX_BASESTEP;
          algobase[HLIFE_ALGO] = base;
 
-      } else if (strncmp(keyword, "algo_base_", 10) == 0) {
-         char* p = keyword + 10;
-         int i;
-         sscanf(p, "%d", &i);
-         if (i >= 0 && i < MAX_ALGOS) {
+      } else if (strcmp(keyword, "algorithm") == 0) {
+         algoindex = -1;
+         for (int i = 0; i < MAX_ALGOS; i++) {
+            if (strcmp(value, GetAlgoName((algo_type) i)) == 0) {
+               algoindex = i;
+               break;
+            }
+         }
+
+      } else if (strcmp(keyword, "base_step") == 0) {
+         if (algoindex >= 0 && algoindex < MAX_ALGOS) {
             int base;
             sscanf(value, "%d", &base);
             if (base < 2) base = 2;
             if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-            algobase[i] = base;
+            algobase[algoindex] = base;
          }
+
+      } else if (strcmp(keyword, "status_rgb") == 0) {
+         if (algoindex >= 0 && algoindex < MAX_ALGOS)
+            GetColor(value, algorgb[algoindex]);
 
       } else if (strcmp(keyword, "min_delay") == 0) {
          sscanf(value, "%d", &mindelay);
@@ -1784,7 +1792,7 @@ void GetPrefs()
          sscanf(value, "%d", &i);
          if (i < 0) i = 0;
          if (i >= MAX_ALGOS) i = MAX_ALGOS - 1;
-         initalgo = (algo_type)i;
+         initalgo = (algo_type) i;
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
          inithyperspeed = value[0] == '1';
@@ -1893,12 +1901,6 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "hlife_rgb") == 0) {    // deprecated
          GetColor(value, algorgb[HLIFE_ALGO]);
-
-      } else if (strncmp(keyword, "algo_rgb_", 9) == 0) {
-         char* p = keyword + 9;
-         int i;
-         sscanf(p, "%d", &i);
-         if (i >= 0 && i < MAX_ALGOS) GetColor(value, algorgb[i]);
 
       } else if (strcmp(keyword, "buffered") == 0) {
          buffered = value[0] == '1';
