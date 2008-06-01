@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
-#include <iostream>
 using namespace std ;
 /*
  *   Prime hash sizes tend to work best.
@@ -766,22 +765,22 @@ int ghashbase::nextbit(ghnode *n, int x, int y, int depth, int &v) {
    if (depth == 0) {
       ghleaf *l = (ghleaf *)n ;
       if (y < 0) {
-	if (x <= 0 && l->sw) {
+	if (x < 0 && l->sw) {
 	  v = l->sw ;
 	  return 0 ;
 	}
-	if (x <= 1 && l->se) {
+	if (l->se) {
 	  v = l->se ;
-	  return 1 ;
+	  return -x ;
 	}
       } else {
-	if (x <= 0 && l->nw) {
+	if (x < 0 && l->nw) {
 	  v = l->nw ;
 	  return 0 ;
 	}
-	if (x <= 1 && l->ne) {
+	if (l->ne) {
 	  v = l->ne ;
-	  return 1 ;
+	  return -x ;
 	}
       }
       return -1 ; // none found
