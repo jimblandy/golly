@@ -29,7 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "util.h"
 #include <vector>
 #include <cstring>
-#include <iostream>
 #include <cstdio>
 #include <algorithm>
 using namespace std ;
@@ -388,7 +387,6 @@ void sortunique(vector<ghnode *> &dest, vector<ghnode *> &src) {
   dest.erase(new_end, dest.end()) ;
   src.clear() ;
 }
-#include <iostream>
 using namespace std ;
 void ghashbase::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pright) {
    // following code is from fit() but all goal/size stuff
@@ -753,14 +751,17 @@ void ghashbase::fit(viewport &view, int force) {
       if (xsize > xgoal || ysize > ygoal)
          break ;
    }
-   xmin >>= 1 ;
-   xmax >>= 1 ;
-   ymin >>= 1 ;
-   ymax >>= 1 ;
-   xmin <<= (currdepth + 3) ;
-   ymin <<= (currdepth + 3) ;
-   xmax <<= (currdepth + 3) ;
-   ymax <<= (currdepth + 3) ;
+   if (currdepth < 0){
+     xmin >>= -currdepth ;
+     ymin >>= -currdepth ;
+     xmax >>= -currdepth ;
+     ymax >>= -currdepth ;
+   } else {
+     xmin <<= currdepth ;
+     ymin <<= currdepth ;
+     xmax <<= currdepth ;
+     ymax <<= currdepth ;
+   }
    xmax -= 1 ;
    ymax -= 1 ;
    ymin.mul_smallint(-1) ;
