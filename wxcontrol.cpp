@@ -901,7 +901,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-	    int skip = curralgo->nextcell(cx, cy, v);
+            int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;

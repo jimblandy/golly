@@ -211,10 +211,10 @@ private:
    g_uintptr_t writecell_2p2(FILE *f, ghnode *root, int depth) ;
    // AKT: set all pixels to background color
    void killpixels();
-   // AKT: this was a static routine in jvndraw.cpp
    void drawpixel(int x, int y);
    void draw4x4_1(unsigned short sw, unsigned short se,
-		  unsigned short nw, unsigned short ne, int llx, int lly) ;
+                  unsigned short nw, unsigned short ne,
+                  int llx, int lly) ;
    void draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) ;
 } ;
 #endif

@@ -225,7 +225,7 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
       data.UseAlpha();
       wxAlphaPixelData::Iterator p(data);
       for ( int y = 0; y < selht; y++ ) {
-         wxAlphaPixelData::Iterator rowStart = p;
+         wxAlphaPixelData::Iterator rowstart = p;
          for ( int x = 0; x < selwd; x++ ) {
             p.Red()   = r;
             p.Green() = g;
@@ -233,7 +233,7 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
             p.Alpha() = alpha;
             p++;
          }
-         p = rowStart;
+         p = rowstart;
          p.OffsetY(data, 1);
       }
    }
@@ -478,16 +478,16 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
       wxAlphaPixelData pxldata(*pixmap);
       if (pxldata) {
          wxAlphaPixelData::Iterator p(pxldata);
-         char* byteptr = pmdata;
+         unsigned char* byteptr = (unsigned char*) pmdata;
          for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowStart = p;
+            wxAlphaPixelData::Iterator rowstart = p;
             for ( int col = 0; col < w; col++ ) {
                p.Red()   = *byteptr; byteptr++;
                p.Green() = *byteptr; byteptr++;
                p.Blue()  = *byteptr; byteptr++;
                p++;
             }
-            p = rowStart;
+            p = rowstart;
             p.OffsetY(pxldata, 1);
          }
       }
@@ -508,7 +508,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
          wxAlphaPixelData::Iterator p(pxldata);
          unsigned char* byteptr = (unsigned char*) pmdata;
          for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowStart = p;
+            wxAlphaPixelData::Iterator rowstart = p;
             for ( int col = 0; col < w; col++ ) {
                unsigned char r = curralgo->cellred[*byteptr];
                unsigned char g = curralgo->cellgreen[*byteptr];
@@ -547,7 +547,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
                
                byteptr++;        // move to next byte in pmdata
             }
-            p = rowStart;
+            p = rowstart;
             p.OffsetY(pxldata, pmscale);
          }
       }
@@ -691,7 +691,7 @@ void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
          data.UseAlpha();
          wxAlphaPixelData::Iterator p(data);
          for ( int y = 0; y < ht; y++ ) {
-            wxAlphaPixelData::Iterator rowStart = p;
+            wxAlphaPixelData::Iterator rowstart = p;
             for ( int x = 0; x < wd; x++ ) {
                // get pixel color
                int r = p.Red();
@@ -723,7 +723,7 @@ void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
    
                p++;
             }
-            p = rowStart;
+            p = rowstart;
             p.OffsetY(data, 1);
          }
       }
@@ -1297,12 +1297,10 @@ void DrawView(wxDC& dc, int tileindex)
    killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
    cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
-   // set rgb values for dead cells in pixblit (ignore swapcolors!!!???)
-   if (currlayer->algo->MaxCellStates() > 2) {
-      currlayer->algo->cellred[0] = deadrgb->Red();
-      currlayer->algo->cellgreen[0] = deadrgb->Green();
-      currlayer->algo->cellblue[0] = deadrgb->Blue();
-   }
+   // set rgb values for dead cells in pixblit calls (ignore swapcolors!!!???)
+   currlayer->algo->cellred[0] = deadrgb->Red();
+   currlayer->algo->cellgreen[0] = deadrgb->Green();
+   currlayer->algo->cellblue[0] = deadrgb->Blue();
 
    // draw pattern using a sequence of blit/pixblit and killrect calls
    currdc = &dc;

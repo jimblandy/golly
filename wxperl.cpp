@@ -378,7 +378,7 @@ const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = fals
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-	    int skip = universe->nextcell(cx, cy, v);
+            int skip = universe->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -1109,8 +1109,8 @@ XS(pl_getcells)
       lifealgo* curralgo = currlayer->algo;
       for ( cy=y; cy<=bottom; cy++ ) {
          for ( cx=x; cx<=right; cx++ ) {
-	    /** FIXME:  make it work with multistate */
-	    int skip = curralgo->nextcell(cx, cy, v);
+            /** FIXME:  make it work with multistate */
+            int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row so add coords to outarray
                cx += skip;
@@ -1160,8 +1160,8 @@ XS(pl_hash)
    for ( cy=y; cy<=bottom; cy++ ) {
       int yshift = cy - y;
       for ( cx=x; cx<=right; cx++ ) {
-	 /** FIXME:  make it work with multistate */
-	 int skip = curralgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = curralgo->nextcell(cx, cy, v);
          if (skip >= 0) {
             // found next live cell in this row
             cx += skip;
@@ -1224,8 +1224,8 @@ XS(pl_getclip)
       int v = 0 ;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-	   /** FIXME:  make it work with multistate */
-	    int skip = tempalgo->nextcell(cx, cy, v);
+            /** FIXME:  make it work with multistate */
+            int skip = tempalgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;

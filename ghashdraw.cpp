@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 /**
- *   This file is where we figure out how to draw jvn structures,
+ *   This file is where we figure out how to draw ghashbase structures,
  *   no matter what the magnification or renderer.
  */
 #include "ghashbase.h"
@@ -35,54 +35,103 @@ using namespace std ;
 
 const int logbmsize = 7 ;                 // 6=64x64  7=128x128  8=256x256
 const int bmsize = (1<<logbmsize) ;
-const int byteoff = (bmsize/8) ;
-/* AKT
-const int ibufsize = (bmsize*bmsize/32) ;
-static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for up to 256x256 pixels
-static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
-*/
-const int rowoff = (bmsize*3) ;           // AKT
+const int rowoff = (bmsize*3) ;           // row offset
 const int ibufsize = (bmsize*bmsize*3) ;  // each pixel has 3 r,g,b values
 static unsigned char ibigbuf[ibufsize] ;  // a shared buffer for up to 256x256 pixels
 static unsigned char *bigbuf = ibigbuf ;
 
-// AKT: made this a method of ghashbase so it can use cellred etc
 void ghashbase::drawpixel(int x, int y) {
-   int i = (bmsize-1-y) * rowoff + x*3;
-   // AKT: for this test we assume all live cells are in state 1
-   bigbuf[i]   = cellred[1];
-   bigbuf[i+1] = cellgreen[1];
-   bigbuf[i+2] = cellblue[1];
+   // AKT: for this test we assume all live cells are in state 1 -- fix!!!
+   if (pmag > 1) {
+      bigbuf[(bmsize-1-y) * bmsize + x] = 1;
+   } else {
+      int i = (bmsize-1-y) * rowoff + x*3;
+      bigbuf[i]   = cellred[1];
+      bigbuf[i+1] = cellgreen[1];
+      bigbuf[i+2] = cellblue[1];
+   }
 }
+
 /*
  *   Draw a 4x4 area yielding 1x1, 2x2, or 4x4 pixels.
  */
 void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
                           unsigned short nw, unsigned short ne,
-			  int llx, int lly) {
-   int i = (bmsize-1+lly) * rowoff - (llx*3);
-   bigbuf[i]   = cellred[sw] ;
-   bigbuf[i+1] = cellblue[sw] ;
-   bigbuf[i+2] = cellgreen[sw] ;
-   i += 3 ;
-   bigbuf[i]   = cellred[se] ;
-   bigbuf[i+1] = cellblue[se] ;
-   bigbuf[i+2] = cellgreen[se] ;
-   i += rowoff ;
-   bigbuf[i]   = cellred[ne] ;
-   bigbuf[i+1] = cellblue[ne] ;
-   bigbuf[i+2] = cellgreen[ne] ;
-   i -= 3 ;
-   bigbuf[i]   = cellred[nw] ;
-   bigbuf[i+1] = cellblue[nw] ;
-   bigbuf[i+2] = cellgreen[nw] ;
+                          int llx, int lly) {
+   // AKT: fix this so sw/se/nw/ne contain state values???!!! (0 or 1 at the moment)
+   // but that may only be sensible if pmag >= 1???
+   if (pmag > 1) {
+      int i = (bmsize-1+lly) * bmsize - llx;
+      if (sw) bigbuf[i] = sw;
+      if (se) bigbuf[i+1] = se;
+      i -= bmsize;
+      if (nw) bigbuf[i] = nw;
+      if (ne) bigbuf[i+1] = ne;
+   } else {
+      int i = (bmsize-1+lly) * rowoff - (llx*3);
+      if (sw) {
+         bigbuf[i]   = cellred[sw] ;
+         bigbuf[i+1] = cellblue[sw] ;
+         bigbuf[i+2] = cellgreen[sw] ;
+      }
+      i += 3 ;
+      if (se) {
+         bigbuf[i]   = cellred[se] ;
+         bigbuf[i+1] = cellblue[se] ;
+         bigbuf[i+2] = cellgreen[se] ;
+      }
+      i -= rowoff ;
+      if (ne) {
+         bigbuf[i]   = cellred[ne] ;
+         bigbuf[i+1] = cellblue[ne] ;
+         bigbuf[i+2] = cellgreen[ne] ;
+      }
+      i -= 3 ;
+      if (nw) {
+         bigbuf[i]   = cellred[nw] ;
+         bigbuf[i+1] = cellblue[nw] ;
+         bigbuf[i+2] = cellgreen[nw] ;
+      }
+   }
 }
+
 void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
-   int i = (bmsize-1+lly) * rowoff - (llx*3);
-   bigbuf[i]   = 255;//!!!cellred[1];
-   bigbuf[i+1] = 255;//!!!cellgreen[1];
-   bigbuf[i+2] = 255;//!!!cellblue[1];
+   // AKT: this currently assumes all live cells are in state 1 -- fix!!!
+   if (pmag > 1) {
+      int i = (bmsize-1+lly) * bmsize - llx;
+      if (n->sw != z) bigbuf[i] = 1;
+      if (n->se != z) bigbuf[i+1] = 1;
+      i -= bmsize;
+      if (n->nw != z) bigbuf[i] = 1;
+      if (n->ne != z) bigbuf[i+1] = 1;
+   } else {
+      int i = (bmsize-1+lly) * rowoff - (llx*3);
+      if (n->sw != z) {
+         bigbuf[i]   = cellred[1];
+         bigbuf[i+1] = cellgreen[1];
+         bigbuf[i+2] = cellblue[1];
+      }
+      i += 3;
+      if (n->se != z) {
+         bigbuf[i]   = cellred[1];
+         bigbuf[i+1] = cellgreen[1];
+         bigbuf[i+2] = cellblue[1];
+      }
+      i -= rowoff;
+      if (n->ne != z) {
+         bigbuf[i]   = cellred[1] ;
+         bigbuf[i+1] = cellblue[1] ;
+         bigbuf[i+2] = cellgreen[1] ;
+      }
+      i -= 3;
+      if (n->nw != z) {
+         bigbuf[i]   = cellred[1] ;
+         bigbuf[i+1] = cellblue[1] ;
+         bigbuf[i+2] = cellgreen[1] ;
+      }
+   }
 }
+
 // AKT: kill all cells in bigbuf
 void ghashbase::killpixels() {
    if (pmag > 1) {
@@ -175,7 +224,7 @@ void ghashbase::drawghnode(ghnode *n, int llx, int lly, int depth, ghnode *z) {
       if (sw == 1) {
          draw4x4_1(l->sw, l->se, l->nw, l->ne, llx, lly) ;
       } else {
-	 lifefatal("Can't happen") ;
+         lifefatal("Can't happen") ;
       }
    }
 }

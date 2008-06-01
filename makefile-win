@@ -346,7 +346,7 @@ $(OBJDIR)/ghashbase.obj: ghashbase.cpp ghashbase.h platform.h lifealgo.h bigint.
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashbase.cpp
 
-$(OBJDIR)/ghashdraw.obj: ghashdraw.cpp platform.h lifealgo.h bigint.h \
+$(OBJDIR)/ghashdraw.obj: ghashdraw.cpp ghashbase.h platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashdraw.cpp
 

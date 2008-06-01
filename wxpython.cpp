@@ -374,7 +374,7 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-	    int skip = universe->nextcell(cx, cy, v);
+            int skip = universe->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -1059,8 +1059,8 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
       lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-	   /** FIXME:  make it work with multistate */
-	    int skip = curralgo->nextcell(cx, cy, v);
+            /** FIXME:  make it work with multistate */
+            int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -1125,8 +1125,8 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    for ( cy=y; cy<=bottom; cy++ ) {
       int yshift = cy - y;
       for ( cx=x; cx<=right; cx++ ) {
-	/** FIXME:  make it work with multistate */
-	int skip = curralgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = curralgo->nextcell(cx, cy, v);
          if (skip >= 0) {
             // found next live cell in this row
             cx += skip;
@@ -1193,8 +1193,8 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-	    /** FIXME:  make it work with multistate */
-	    int skip = tempalgo->nextcell(cx, cy, v);
+            /** FIXME:  make it work with multistate */
+            int skip = tempalgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;

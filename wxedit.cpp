@@ -488,7 +488,7 @@ void Selection::AdvanceOutside()
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
-	    int skip = curralgo->nextcell(cx, cy, v);
+            int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
@@ -957,8 +957,9 @@ void Selection::Clear()
    lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-	/** FIXME:  make it work with multistate */
-	 int skip = curralgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         //!!! probably bug in ghashbase::nextcell
+         int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
@@ -1030,8 +1031,8 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
    lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-	/** FIXME:  make it work with multistate */
-	int skip = curralgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
@@ -1255,8 +1256,8 @@ void Selection::CopyToClipboard(bool cut)
       // set lastchar to anything except 'o' or 'b'
       lastchar = 0;
       for ( cx=ileft; cx<=iright; cx++ ) {
-	/** FIXME:  make it work with multistate */
-	int skip = curralgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip > 0) {
@@ -1498,8 +1499,8 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newx = topbottom ? ileft : iright;
       for ( cx=ileft; cx<=iright; cx++ ) {
-	/** FIXME:  make it work with multistate */
-	int skip = srcalgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
@@ -1689,8 +1690,8 @@ bool Selection::RotateRect(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = clockwise ? ntop : nbottom;
       for ( cx=ileft; cx<=iright; cx++ ) {
-	/** FIXME:  make it work with multistate */
-	int skip = srcalgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
@@ -1765,8 +1766,8 @@ bool Selection::RotatePattern(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-	 /** FIXME:  make it work with multistate */
-	 int skip = curralgo->nextcell(cx, cy, v);
+         /** FIXME:  make it work with multistate */
+         int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip >= 0) {
