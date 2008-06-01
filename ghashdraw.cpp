@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *   no matter what the magnification or renderer.
  */
 #include "ghashbase.h"
+#include "util.h"
 #include <vector>
 #include <cstring>
 #include <iostream>
@@ -48,92 +49,47 @@ static unsigned char *bigbuf = ibigbuf ;
 
 // AKT: made this a method of ghashbase so it can use cellred etc
 void ghashbase::drawpixel(int x, int y) {
-   /* AKT
-   bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (1 << (x & 7)) ;
-   */
    int i = (bmsize-1-y) * rowoff + x*3;
    // AKT: for this test we assume all live cells are in state 1
-   bigbuf[i]   = 255;//!!!cellred[1];
-   bigbuf[i+1] = 255;//!!!cellgreen[1];
-   bigbuf[i+2] = 255;//!!!cellblue[1];
+   bigbuf[i]   = cellred[1];
+   bigbuf[i+1] = cellgreen[1];
+   bigbuf[i+2] = cellblue[1];
 }
 /*
  *   Draw a 4x4 area yielding 1x1, 2x2, or 4x4 pixels.
  */
-static
-void draw4x4_1(unsigned short sw, unsigned short se,
-               unsigned short nw, unsigned short ne, int llx, int lly) {
-   /* AKT
-   unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   int bit = 1 << ((-llx) & 0x7) ;
-   if (sw) *p |= bit ;
-   if (se) *p |= (bit << 1) ;
-   p -= byteoff ;
-   if (nw) *p |= bit ;
-   if (ne) *p |= (bit << 1) ;
-   */
-   // AKT: just draw 1 pixel for this test
+void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
+                          unsigned short nw, unsigned short ne,
+			  int llx, int lly) {
+   int i = (bmsize-1+lly) * rowoff - (llx*3);
+   bigbuf[i]   = cellred[sw] ;
+   bigbuf[i+1] = cellblue[sw] ;
+   bigbuf[i+2] = cellgreen[sw] ;
+   i += 3 ;
+   bigbuf[i]   = cellred[se] ;
+   bigbuf[i+1] = cellblue[se] ;
+   bigbuf[i+2] = cellgreen[se] ;
+   i += rowoff ;
+   bigbuf[i]   = cellred[ne] ;
+   bigbuf[i+1] = cellblue[ne] ;
+   bigbuf[i+2] = cellgreen[ne] ;
+   i -= 3 ;
+   bigbuf[i]   = cellred[nw] ;
+   bigbuf[i+1] = cellblue[nw] ;
+   bigbuf[i+2] = cellgreen[nw] ;
+}
+void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
    int i = (bmsize-1+lly) * rowoff - (llx*3);
    bigbuf[i]   = 255;//!!!cellred[1];
    bigbuf[i+1] = 255;//!!!cellgreen[1];
    bigbuf[i+2] = 255;//!!!cellblue[1];
 }
-static
-void draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
-   /* AKT
-   unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   int bit = 1 << ((-llx) & 0x7) ;
-   if (n->sw != z) *p |= bit ;
-   if (n->se != z) *p |= (bit << 1) ;
-   p -= byteoff ;
-   if (n->nw != z) *p |= bit ;
-   if (n->ne != z) *p |= (bit << 1) ;
-   */
-   // AKT: just draw 1 pixel for this test
-   int i = (bmsize-1+lly) * rowoff - (llx*3);
-   bigbuf[i]   = 255;//!!!cellred[1];
-   bigbuf[i+1] = 255;//!!!cellgreen[1];
-   bigbuf[i+2] = 255;//!!!cellblue[1];
-}
-static unsigned char compress4x4[256] ;
-static
-void draw4x4_2(unsigned short bits1, unsigned short bits2, int llx, int lly) {
-   /* AKT
-   unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   int mask = (((-llx) & 0x4) ? 0xf0 : 0x0f) ;
-   int db = ((bits1 | (bits1 << 4)) & 0xf0f0) +
-            ((bits2 | (bits2 >> 4)) & 0x0f0f) ;
-   p[0] |= mask & compress4x4[db & 255] ;
-   p[-byteoff] |= mask & compress4x4[db >> 8] ;
-   */
-   // AKT: just draw 1 pixel for this test
-   int i = (bmsize-1+lly) * rowoff - (llx*3);
-   bigbuf[i]   = 255;//!!!cellred[1];
-   bigbuf[i+1] = 255;//!!!cellgreen[1];
-   bigbuf[i+2] = 255;//!!!cellblue[1];
-}
-static
-void draw4x4_4(unsigned short bits1, unsigned short bits2, int llx, int lly) {
-   /* AKT
-   unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   p[0] = rev8[((bits1 << 4) & 0xf0) + (bits2 & 0xf)] ;
-   p[-byteoff] = rev8[(bits1 & 0xf0) + ((bits2 >> 4) & 0xf)] ;
-   p[-2*byteoff] = rev8[((bits1 >> 4) & 0xf0) + ((bits2 >> 8) & 0xf)] ;
-   p[-3*byteoff] = rev8[((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf)] ;
-   */
-   // AKT: just draw 1 pixel for this test
-   int i = (bmsize-1+lly) * rowoff - (llx*3);
-   bigbuf[i]   = 255;//!!!cellred[1];
-   bigbuf[i+1] = 255;//!!!cellgreen[1];
-   bigbuf[i+2] = 255;//!!!cellblue[1];
-}
-
 // AKT: kill all cells in bigbuf
 void ghashbase::killpixels() {
    if (pmag > 1) {
       // pixblit assumes bigbuf contains bmsize*bmsize bytes where each byte
       // is a cell state, so it's easy to kill all cells
-      memset(bigbuf, 0, bmsize*bmsize);
+      memset(bigbuf, 0, bmsize*bmsize*3);
    } else {
       // pixblit assumes bigbuf contains 3 bytes (r,g,b) for each pixel
       if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
@@ -142,7 +98,7 @@ void ghashbase::killpixels() {
       } else {
          // use slow method
          // or create a single killed row at start of draw() and use memcpy here???
-         for (int i = 0; i < ibufsize/3; i += 3) {
+         for (int i = 0; i < ibufsize; i += 3) {
             bigbuf[i]   = cellred[0];
             bigbuf[i+1] = cellgreen[0];
             bigbuf[i+2] = cellblue[0];
@@ -176,23 +132,8 @@ void ghashbase::renderbm(int x, int y) {
       ry *= pmag ;
       rw *= pmag ;
       rh *= pmag ;
-      // AKT: pixblit assumes that bigbuf contains bmsize*bmsize bytes
-      // where each byte is a cell state, so test my pixblit code:
-      bigbuf[0] = 1;                // top left corner
-      bigbuf[1] = 0;
-      bigbuf[2] = 1;
-      bigbuf[bmsize-1] = 1;         // top right corner
-      bigbuf[bmsize] = 1;
-      bigbuf[bmsize+1] = 1;
-      bigbuf[bmsize+2] = 1;
-      bigbuf[bmsize*(bmsize-1)] = 1;   // bot left corner
-      bigbuf[bmsize*bmsize-1] = 1;     // bot right corner
    }
    ry = uviewh - ry - rh ;
-   /* AKT
-   renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
-   memset(bigbuf, 0, sizeof(ibigbuf)) ;
-   */
    renderer->pixblit(rx, ry, rw, rh, (char *)bigbuf, pmag);
    killpixels();
 }
@@ -234,12 +175,8 @@ void ghashbase::drawghnode(ghnode *n, int llx, int lly, int depth, ghnode *z) {
       sw >>= 1 ;
       if (sw == 1) {
          draw4x4_1(l->sw, l->se, l->nw, l->ne, llx, lly) ;
-      } else if (sw == 2) {
-         draw4x4_2(l->sw, l->se, llx, lly) ;
-         draw4x4_2(l->nw, l->ne, llx, lly-sw) ;
       } else {
-         draw4x4_4(l->sw, l->se, llx, lly) ;
-         draw4x4_4(l->nw, l->ne, llx, lly-sw) ;
+	 lifefatal("Can't happen") ;
       }
    }
 }
@@ -661,15 +598,15 @@ void ghashbase::fit(viewport &view, int force) {
    bottom.push_back(root) ;
    right.push_back(root) ;
    int topbm = 0, bottombm = 0, rightbm = 0, leftbm = 0 ;
-   while (currdepth >= 0) {
+   while (currdepth >= -2) {
       currdepth-- ;
-      if (currdepth == 1) { // we have ghleaf ghnodes; turn them into bitmasks
+      if (currdepth == -1) { // we have ghleaf ghnodes; turn them into bitmasks
          topbm = getbitsfromleaves(top) & 0xff ;
 	 bottombm = getbitsfromleaves(bottom) & 0xff ;
 	 leftbm = getbitsfromleaves(left) >> 8 ;
 	 rightbm = getbitsfromleaves(right) >> 8 ;
       }
-      if (currdepth <= 1) {
+      if (currdepth == -1) {
 	 int sz = 1 << (currdepth + 2) ;
 	 int maskhi = (1 << sz) - (1 << (sz >> 1)) ;
 	 int masklo = (1 << (sz >> 1)) - 1 ;
@@ -701,7 +638,7 @@ void ghashbase::fit(viewport &view, int force) {
 	 }
          xsize <<= 1 ;
          ysize <<= 1 ;
-      } else {
+      } else if (currdepth >= 0) {
          ghnode *z = 0 ;
          if (hashed)
             z = zeroghnode(currdepth) ;
@@ -820,10 +757,10 @@ void ghashbase::fit(viewport &view, int force) {
    xmax >>= 1 ;
    ymin >>= 1 ;
    ymax >>= 1 ;
-   xmin <<= (currdepth + 1) ;
-   ymin <<= (currdepth + 1) ;
-   xmax <<= (currdepth + 1) ;
-   ymax <<= (currdepth + 1) ;
+   xmin <<= (currdepth + 3) ;
+   ymin <<= (currdepth + 3) ;
+   xmax <<= (currdepth + 3) ;
+   ymax <<= (currdepth + 3) ;
    xmax -= 1 ;
    ymax -= 1 ;
    ymin.mul_smallint(-1) ;

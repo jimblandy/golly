@@ -213,5 +213,8 @@ private:
    void killpixels();
    // AKT: this was a static routine in jvndraw.cpp
    void drawpixel(int x, int y);
+   void draw4x4_1(unsigned short sw, unsigned short se,
+		  unsigned short nw, unsigned short ne, int llx, int lly) ;
+   void draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) ;
 } ;
 #endif

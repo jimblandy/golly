@@ -450,6 +450,21 @@ ghashbase::ghashbase() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
+   for (int i=0; i<256; i++)
+     cellred[i] = cellgreen[i] = cellblue[i] = 0 ;
+   cellred[1] |= 128 ;
+   cellblue[2] |= 128 ;
+   cellgreen[4] |= 128 ;
+   cellred[8] |= 64 ;
+   cellblue[16] |= 64 ;
+   cellgreen[32] |= 64 ;
+   cellred[64] |= 32 ;
+   cellgreen[128] |= 32 ;
+   for (int i=1; i<256; i++) {
+     cellred[i] = cellred[i&-1] | cellred[i&(i-1)] ;
+     cellgreen[i] = cellgreen[i&-1] | cellgreen[i&(i-1)] ;
+     cellblue[i] = cellblue[i&-1] | cellblue[i&(i-1)] ;
+   }
 }
 /**
  *   Destructor frees memory.
