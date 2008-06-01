@@ -62,13 +62,11 @@ static int bits(state mcode, state code, state dir) {
 }
 static state cres[] = {0x22, 0x23, 0x40, 0x41, 0x42, 0x43, 0x10, 0x20, 0x21} ;
 jvnalgo::jvnalgo() {
-   // AKT: init default colors for each cell state:
-   // use black for dead cells (GUI will override this)
-   cellred[0] = cellgreen[0] = cellblue[0] = 0;
-   // for testing just use white for all live states
-   for (int i = 0; i < MaxCellStates(); i++) {
-      cellred[i] = cellgreen[i] = cellblue[i] = 255;
-   }
+  /* Cellred, green, and blue initialized in lifealgo; we'll move it to
+     the individual algorithms soom but this will get us bootstrapped.
+     Removed from here so we can distinguish the different states.
+     We'll introduce a new method to set up th ecolors and/or icons
+     that is overriden by each subclass. */
 }
 jvnalgo::~jvnalgo() {
 }
