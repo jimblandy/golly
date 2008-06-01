@@ -43,8 +43,10 @@ static unsigned char *bigbuf = ibigbuf ;
 void ghashbase::drawpixel(int x, int y) {
    // AKT: for this test we assume all live cells are in state 1 -- fix!!!
    if (pmag > 1) {
+      // store state info
       bigbuf[(bmsize-1-y) * bmsize + x] = 1;
    } else {
+      // store rgb info
       int i = (bmsize-1-y) * rowoff + x*3;
       bigbuf[i]   = cellred[1];
       bigbuf[i+1] = cellgreen[1];
@@ -61,6 +63,7 @@ void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
    // AKT: fix this so sw/se/nw/ne contain state values???!!! (0 or 1 at the moment)
    // but that may only be sensible if pmag >= 1???
    if (pmag > 1) {
+      // store state info
       int i = (bmsize-1+lly) * bmsize - llx;
       if (sw) bigbuf[i] = sw;
       if (se) bigbuf[i+1] = se;
@@ -68,6 +71,7 @@ void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
       if (nw) bigbuf[i] = nw;
       if (ne) bigbuf[i+1] = ne;
    } else {
+      // store rgb info
       int i = (bmsize-1+lly) * rowoff - (llx*3);
       if (sw) {
          bigbuf[i]   = cellred[sw] ;
@@ -98,6 +102,7 @@ void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
 void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
    // AKT: this currently assumes all live cells are in state 1 -- fix!!!
    if (pmag > 1) {
+      // store state info
       int i = (bmsize-1+lly) * bmsize - llx;
       if (n->sw != z) bigbuf[i] = 1;
       if (n->se != z) bigbuf[i+1] = 1;
@@ -105,6 +110,7 @@ void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
       if (n->nw != z) bigbuf[i] = 1;
       if (n->ne != z) bigbuf[i+1] = 1;
    } else {
+      // store rgb info
       int i = (bmsize-1+lly) * rowoff - (llx*3);
       if (n->sw != z) {
          bigbuf[i]   = cellred[1];
