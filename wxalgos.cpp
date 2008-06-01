@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "slifealgo.h"
 #include "jvnalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
@@ -62,10 +63,12 @@ void InitAlgorithms()
    //!!! perhaps use static *algo::GetBestBaseStep()???
    algobase[QLIFE_ALGO] = 10;
    algobase[HLIFE_ALGO] = 8;        // best if power of 2
+   algobase[SLIFE_ALGO] = 8 ;
    algobase[JVN_ALGO] = 8;          //!!!??? best if power of 2
 
    algorgb[QLIFE_ALGO] = new wxColor(255, 255, 206);  // pale yellow
    algorgb[HLIFE_ALGO] = new wxColor(226, 250, 248);  // pale blue
+   algorgb[SLIFE_ALGO] = new wxColor(255, 225, 225);  // pale red
    algorgb[JVN_ALGO]   = new wxColor(225, 255, 225);  // pale green
 
    for (int i = 0; i < MAX_ALGOS; i++)
@@ -86,6 +89,10 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
       case HLIFE_ALGO:
          newalgo = new hlifealgo();
          if (newalgo == NULL) Fatal(_("Failed to create new hlifealgo!"));
+         break;
+      case SLIFE_ALGO:
+         newalgo = new slifealgo();
+         if (newalgo == NULL) Fatal(_("Failed to create new slifealgo!"));
          break;
       case JVN_ALGO:
          newalgo = new jvnalgo();
@@ -111,6 +118,7 @@ const char* GetAlgoName(algo_type algotype)
    switch (algotype) {
       case QLIFE_ALGO:  return "QuickLife";
       case HLIFE_ALGO:  return "HashLife";
+      case SLIFE_ALGO:  return "SlowLife";
       case JVN_ALGO:    return "JvN 29-state CA";
       default:          Fatal(_("Bug detected in GetAlgoName!"));
    }

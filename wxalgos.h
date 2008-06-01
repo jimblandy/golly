@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 typedef enum {
    QLIFE_ALGO,       // QuickLife
    HLIFE_ALGO,       // HashLife
+   SLIFE_ALGO,       // Not-so-fast Life
    JVN_ALGO,         // John von Neumann's 29-state CA
    MAX_ALGOS
 } algo_type;

@@ -60,7 +60,8 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 
 OBJDIR = ObjWin
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj $(OBJDIR)/hlifedraw.obj \
-   $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ghashdraw.obj \
+   $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/slifealgo.obj \
+   $(OBJDIR)/ghashbase.obj $(OBJDIR)/ghashdraw.obj \
    $(OBJDIR)/readpattern.obj $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj $(OBJDIR)/wxrule.obj \
@@ -337,11 +338,15 @@ $(OBJDIR)/jvnalgo.obj: jvnalgo.cpp ghashbase.h jvnalgo.h platform.h lifealgo.h b
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) jvnalgo.cpp
 
+$(OBJDIR)/slifealgo.obj: slifealgo.cpp ghashbase.h slifealgo.h platform.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) slifealgo.cpp
+
 $(OBJDIR)/ghashbase.obj: ghashbase.cpp ghashbase.h platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashbase.cpp
 
-$(OBJDIR)/ghashdraw.obj: ghashdraw.cpp jvnalgo.h platform.h lifealgo.h bigint.h \
+$(OBJDIR)/ghashdraw.obj: ghashdraw.cpp platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashdraw.cpp
 
@@ -381,7 +386,7 @@ wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxundo.h wxlayer.h wxscript.h wxa
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp
 
 $(OBJDIR)/wxalgos.obj: wxalgos.cpp wxalgos.h \
-platform.h bigint.h lifealgo.h  qlifealgo.h hlifealgo.h jvnalgo.h lifepoll.h \
+platform.h bigint.h lifealgo.h  qlifealgo.h hlifealgo.h jvnalgo.h slifealgo.h lifepoll.h \
 wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxalgos.cpp
 

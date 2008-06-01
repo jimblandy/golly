@@ -21,18 +21,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
 
                         / ***/
-#ifndef JVNALGO_H
-#define JVNALGO_H
-#include "ghashbase.h"
-/**
- *   Our jvnalgo class.
- */
-class jvnalgo : public ghashbase {
-public:
-   jvnalgo() ;
-   virtual ~jvnalgo() ;
-   virtual state slowcalc(state nw, state n, state ne, state w, state c,
-			  state e, state sw, state s, state se) ;
-   virtual int MaxCellStates() { return 256; }
-};
-#endif
+#include "slifealgo.h"
+using namespace std ;
+slifealgo::slifealgo() {
+}
+slifealgo::~slifealgo() {
+}
+state slifealgo::slowcalc(state nw, state n, state ne, state w, state c,
+			state e, state sw, state s, state se) {
+  int sum = nw + n + ne + w + e + sw + s + se ;
+  if (sum == 3 || (sum == 2 && c == 1))
+    return 1 ;
+  else
+    return 0 ;
+}

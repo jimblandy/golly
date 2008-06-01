@@ -21,18 +21,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
 
                         / ***/
-#ifndef JVNALGO_H
-#define JVNALGO_H
+#ifndef SLIFEALGO_H
+#define SLIFEALGO_H
 #include "ghashbase.h"
 /**
- *   Our jvnalgo class.
+ *   Our slifealgo class.
  */
-class jvnalgo : public ghashbase {
+class slifealgo : public ghashbase {
 public:
-   jvnalgo() ;
-   virtual ~jvnalgo() ;
+   slifealgo() ;
+   virtual ~slifealgo() ;
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
 			  state e, state sw, state s, state se) ;
-   virtual int MaxCellStates() { return 256; }
 };
 #endif
