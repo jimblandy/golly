@@ -651,7 +651,7 @@ void ghashbase::fit(viewport &view, int force) {
    bottom.push_back(root) ;
    right.push_back(root) ;
    int topbm = 0, bottombm = 0, rightbm = 0, leftbm = 0 ;
-   while (currdepth >= -2) {
+   while (currdepth >= 0) {
       currdepth-- ;
       if (currdepth == -1) { // we have ghleaf ghnodes; turn them into bitmasks
          topbm = getbitsfromleaves(top) & 0xff ;
