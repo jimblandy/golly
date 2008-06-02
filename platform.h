@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *   exist, and you're compiling for a 64-bit platform, you may
  *   need to make some changes here.
  */
+#include <limits.h>
 #ifdef __LP64__
 #define __STDC_FORMAT_MACROS
 #define __STDC_LIMIT_MACROS
