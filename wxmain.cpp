@@ -723,6 +723,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_STATUS_BAR,   active);
       mbar->Enable(ID_EXACT,        active);
       mbar->Enable(ID_GRID,         active);
+      mbar->Enable(ID_ICONS,        active && currlayer->algo->MaxCellStates() > 2);
       mbar->Enable(ID_COLORS,       active);
       #if defined(__WXMAC__) || defined(__WXGTK__)
          // windows on Mac OS X and GTK+ 2.0 are automatically buffered
@@ -761,6 +762,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_STATUS_BAR, showstatus);
       mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
+      mbar->Check(ID_ICONS,      showicons);
       mbar->Check(ID_COLORS,     swapcolors);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
       mbar->Check(ID_PL_TR,      plocation == TopRight);
@@ -1336,6 +1338,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
       case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
       case ID_GRID:           viewptr->ToggleGridLines(); break;
+      case ID_ICONS:          viewptr->ToggleCellIcons(); break;
       case ID_COLORS:         viewptr->ToggleCellColors(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
 
@@ -2149,6 +2152,7 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
    viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
+   viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") /*!!!+ GetAccelerator(DO_SHOWICONS)*/);
    viewMenu->AppendCheckItem(ID_COLORS,         _("Swap Cell Colors") + GetAccelerator(DO_SWAPCOLORS));
    viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
    viewMenu->AppendSeparator();
@@ -2304,6 +2308,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
       SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
       SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
+      //!!! SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
       SetAccelerator(mbar, ID_COLORS,          DO_SWAPCOLORS);
       SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
       SetAccelerator(mbar, ID_INFO,            DO_INFO);

@@ -85,6 +85,7 @@ public:
    void SetViewSize(int wd, int ht);
    bool GridVisible();
    void ToggleGridLines();
+   void ToggleCellIcons();
    void ToggleCellColors();
    void ToggleBuffering();
    void UpdateScrollBars();         // update thumb positions

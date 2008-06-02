@@ -982,6 +982,14 @@ void PatternView::ToggleGridLines()
 
 // -----------------------------------------------------------------------------
 
+void PatternView::ToggleCellIcons()
+{
+   showicons = !showicons;
+   mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::ToggleCellColors()
 {
    swapcolors = !swapcolors;
@@ -1342,6 +1350,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;
+      //!!! case DO_SHOWICONS:   ToggleCellIcons(); break;
       case DO_SWAPCOLORS:  ToggleCellColors(); break;
       case DO_BUFFERED:    ToggleBuffering(); break;
       case DO_INFO:        mainptr->ShowPatternInfo(); break;

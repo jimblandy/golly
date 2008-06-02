@@ -37,8 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
-#include <iostream>     // AKT: needed for UINT_MAX (= G_MAX if not 64-bit)
-                        // or maybe platform.h should include <limits.h>???
 using namespace std ;
 /*
  *   Prime hash sizes tend to work best.
@@ -467,15 +465,6 @@ ghashbase::ghashbase() {
      cellblue[i] = cellblue[i&-i] | cellblue[i&(i-1)] ;
    }
    cellred[0] = cellgreen[0] = cellblue[0] = 255 ;
-   /*!!! AKT test
-   cellred[1] = 255;   cellgreen[1] =   0;   cellblue[1] =   0;
-   cellred[2] =   0;   cellgreen[2] = 255;   cellblue[2] =   0;
-   cellred[3] =   0;   cellgreen[3] =   0;   cellblue[3] = 255;
-   cellred[4] = 255;   cellgreen[4] = 255;   cellblue[4] = 255;
-   cellred[5] = 255;   cellgreen[5] = 255;   cellblue[5] =   0;
-   cellred[6] = 255;   cellgreen[6] =   0;   cellblue[6] = 255;
-   cellred[7] =   0;   cellgreen[7] = 255;   cellblue[7] = 255;
-   */
 }
 /**
  *   Destructor frees memory.

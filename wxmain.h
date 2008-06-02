@@ -307,6 +307,7 @@ enum {
    ID_STATUS_BAR,
    ID_EXACT,
    ID_GRID,
+   ID_ICONS,
    ID_COLORS,
    ID_BUFF,
    ID_INFO,

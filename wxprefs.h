@@ -75,6 +75,7 @@ extern bool showlayer;           // show layer bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
+extern bool showicons;           // display icons for cell states?
 extern bool swapcolors;          // swap colors used for cell states?
 extern bool buffered;            // use wxWdgets buffering to avoid flicker?
 extern bool scrollpencil;        // scroll if pencil cursor is dragged outside view?

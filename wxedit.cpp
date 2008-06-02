@@ -1432,6 +1432,8 @@ void Selection::RandomFill()
    BeginProgress(_("Randomly filling selection"));
    int cx, cy;
    lifealgo* curralgo = currlayer->algo;
+   int livestates = curralgo->MaxCellStates() - 1;    // don't count dead state
+   
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
@@ -1439,7 +1441,11 @@ void Selection::RandomFill()
             // remember cell coords if state changes
             if ((rand() % 100) < randomfill) {
                if (!killcells || curralgo->getcell(cx, cy) == 0) {
-                  curralgo->setcell(cx, cy, 1);
+                  if (livestates > 1) {
+                     curralgo->setcell(cx, cy, 1 + (rand() % livestates));
+                  } else {
+                     curralgo->setcell(cx, cy, 1);
+                  }
                   currlayer->undoredo->SaveCellChange(cx, cy);
                }
             } else if (killcells && curralgo->getcell(cx, cy) > 0) {
@@ -1448,7 +1454,11 @@ void Selection::RandomFill()
             }
          } else {
             if ((rand() % 100) < randomfill) {
-               curralgo->setcell(cx, cy, 1);
+               if (livestates > 1) {
+                  curralgo->setcell(cx, cy, 1 + (rand() % livestates));
+               } else {
+                  curralgo->setcell(cx, cy, 1);
+               }
             } else if (killcells) {
                curralgo->setcell(cx, cy, 0);
             }
@@ -1461,6 +1471,7 @@ void Selection::RandomFill()
       }
       if (abort) break;
    }
+   
    currlayer->algo->endofpattern();
    EndProgress();
 

@@ -125,6 +125,7 @@ bool showlayer = false;          // show layer bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showgridlines = true;       // display grid lines?
+bool showicons = false;          // display icons for cell states?
 bool swapcolors = false;         // swap colors used for cell states?
 bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 bool scrollpencil = true;        // scroll if pencil cursor is dragged outside view?
@@ -1426,6 +1427,7 @@ void SavePrefs()
    
    fputs("\n", f);
 
+   fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    fprintf(f, "opacity=%d (1..100)\n", opacity);
    SaveColor(f, "live0_rgb", livergb[0]);
@@ -1866,6 +1868,9 @@ void GetPrefs()
       } else if (strcmp(keyword, "ask_on_load") == 0)   { askonload = value[0] == '1';
       } else if (strcmp(keyword, "ask_on_delete") == 0) { askondelete = value[0] == '1';
       } else if (strcmp(keyword, "ask_on_quit") == 0)   { askonquit = value[0] == '1';
+
+      } else if (strcmp(keyword, "show_icons") == 0) {
+         showicons = value[0] == '1';
 
       } else if (strcmp(keyword, "swap_colors") == 0) {
          swapcolors = value[0] == '1';
@@ -2813,7 +2818,12 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+#ifdef __WXMSW__
+   // Vista needs more RAM for itself
+   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~70% of RAM)")),
+#else
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~80% of RAM)")),
+#endif
               0, wxALIGN_CENTER_VERTICAL, 0);
    
    // base step for each algorithm
