@@ -462,10 +462,11 @@ ghashbase::ghashbase() {
    cellred[64] |= 32 ;
    cellgreen[128] |= 32 ;
    for (int i=1; i<256; i++) {
-     cellred[i] = cellred[i&-1] | cellred[i&(i-1)] ;
-     cellgreen[i] = cellgreen[i&-1] | cellgreen[i&(i-1)] ;
-     cellblue[i] = cellblue[i&-1] | cellblue[i&(i-1)] ;
+     cellred[i] = cellred[i&-i] | cellred[i&(i-1)] ;
+     cellgreen[i] = cellgreen[i&-i] | cellgreen[i&(i-1)] ;
+     cellblue[i] = cellblue[i&-i] | cellblue[i&(i-1)] ;
    }
+   cellred[0] = cellgreen[0] = cellblue[0] = 255 ;
    /*!!! AKT test
    cellred[1] = 255;   cellgreen[1] =   0;   cellblue[1] =   0;
    cellred[2] =   0;   cellgreen[2] = 255;   cellblue[2] =   0;
