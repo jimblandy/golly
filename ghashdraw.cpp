@@ -60,8 +60,7 @@ void ghashbase::drawpixel(int x, int y) {
 void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
                           unsigned short nw, unsigned short ne,
                           int llx, int lly) {
-   // AKT: fix this so sw/se/nw/ne contain state values???!!! (0 or 1 at the moment)
-   // but that may only be sensible if pmag >= 1???
+   // sw,se,nw,ne contain cell states (0..255)
    if (pmag > 1) {
       // store state info
       int i = (bmsize-1+lly) * bmsize - llx;
@@ -75,26 +74,26 @@ void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
       int i = (bmsize-1+lly) * rowoff - (llx*3);
       if (sw) {
          bigbuf[i]   = cellred[sw] ;
-         bigbuf[i+1] = cellblue[sw] ;
-         bigbuf[i+2] = cellgreen[sw] ;
+         bigbuf[i+1] = cellgreen[sw] ;
+         bigbuf[i+2] = cellblue[sw] ;
       }
       i += 3 ;
       if (se) {
          bigbuf[i]   = cellred[se] ;
-         bigbuf[i+1] = cellblue[se] ;
-         bigbuf[i+2] = cellgreen[se] ;
+         bigbuf[i+1] = cellgreen[se] ;
+         bigbuf[i+2] = cellblue[se] ;
       }
       i -= rowoff ;
       if (ne) {
          bigbuf[i]   = cellred[ne] ;
-         bigbuf[i+1] = cellblue[ne] ;
-         bigbuf[i+2] = cellgreen[ne] ;
+         bigbuf[i+1] = cellgreen[ne] ;
+         bigbuf[i+2] = cellblue[ne] ;
       }
       i -= 3 ;
       if (nw) {
          bigbuf[i]   = cellred[nw] ;
-         bigbuf[i+1] = cellblue[nw] ;
-         bigbuf[i+2] = cellgreen[nw] ;
+         bigbuf[i+1] = cellgreen[nw] ;
+         bigbuf[i+2] = cellblue[nw] ;
       }
    }
 }
@@ -126,14 +125,14 @@ void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
       i -= rowoff;
       if (n->ne != z) {
          bigbuf[i]   = cellred[1] ;
-         bigbuf[i+1] = cellblue[1] ;
-         bigbuf[i+2] = cellgreen[1] ;
+         bigbuf[i+1] = cellgreen[1] ;
+         bigbuf[i+2] = cellblue[1] ;
       }
       i -= 3;
       if (n->nw != z) {
          bigbuf[i]   = cellred[1] ;
-         bigbuf[i+1] = cellblue[1] ;
-         bigbuf[i+2] = cellgreen[1] ;
+         bigbuf[i+1] = cellgreen[1] ;
+         bigbuf[i+2] = cellblue[1] ;
       }
    }
 }

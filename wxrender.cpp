@@ -439,6 +439,8 @@ void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
       h = h / bmscale;
       int cellsize = bmscale - 1;
       char* byteptr = (char*) bmdata;
+      // note that bmdata is in XBM format (bits in each byte are reversed)
+      // so we start at bit 1 and work up to bit 8
       int bit = 1;
       currdc->SetPen(*wxTRANSPARENT_PEN);
       currdc->SetBrush(*cellbrush);
@@ -453,12 +455,12 @@ void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
                bit *= 2;
             } else {
                bit = 1;
-               byteptr++;
+               byteptr++;                 // move to next byte
             }
          }
       }
-      currdc->SetBrush(wxNullBrush);     // restore brush
-      currdc->SetPen(wxNullPen);         // restore pen
+      currdc->SetBrush(wxNullBrush);      // restore brush
+      currdc->SetPen(wxNullPen);          // restore pen
    }
 #endif
 }
@@ -482,9 +484,9 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
          for ( int row = 0; row < h; row++ ) {
             wxAlphaPixelData::Iterator rowstart = p;
             for ( int col = 0; col < w; col++ ) {
-               p.Red()   = *byteptr; byteptr++;
-               p.Green() = *byteptr; byteptr++;
-               p.Blue()  = *byteptr; byteptr++;
+               p.Red()   = *byteptr++;
+               p.Green() = *byteptr++;
+               p.Blue()  = *byteptr++;
                p++;
             }
             p = rowstart;
@@ -502,7 +504,12 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
       bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
                      (pmscale >= (1 << mingridmag) && !showgridlines);
       lifealgo* curralgo = currlayer->algo;
-      //!!! might be faster to draw rectangles above certain scales???
+      unsigned char deadred, deadgreen, deadblue;
+      deadred = curralgo->cellred[0];
+      deadgreen = curralgo->cellgreen[0];
+      deadblue = curralgo->cellblue[0];
+
+      //!!! might be faster to draw rectangles (and clip!) above certain scales???
       wxAlphaPixelData pxldata(*pixmap);
       if (pxldata) {
          wxAlphaPixelData::Iterator p(pxldata);
@@ -510,14 +517,15 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
          for ( int row = 0; row < h; row++ ) {
             wxAlphaPixelData::Iterator rowstart = p;
             for ( int col = 0; col < w; col++ ) {
-               unsigned char r = curralgo->cellred[*byteptr];
-               unsigned char g = curralgo->cellgreen[*byteptr];
-               unsigned char b = curralgo->cellblue[*byteptr];
+               unsigned char state = *byteptr;
+               unsigned char r = curralgo->cellred[state];
+               unsigned char g = curralgo->cellgreen[state];
+               unsigned char b = curralgo->cellblue[state];
                
                // expand byte into cellsize*cellsize pixels
                wxAlphaPixelData::Iterator topleft = p;
                for (int i = 0; i < cellsize; i++) {
-                  wxAlphaPixelData::Iterator colStart = p;
+                  wxAlphaPixelData::Iterator colstart = p;
                   for (int j = 0; j < cellsize; j++) {
                      p.Red()   = r;
                      p.Green() = g;
@@ -526,19 +534,19 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
                   }
                   if (drawgap) {
                      // draw dead pixels at right edge of cell
-                     p.Red()   = curralgo->cellred[0];
-                     p.Green() = curralgo->cellgreen[0];
-                     p.Blue()  = curralgo->cellblue[0];
+                     p.Red()   = deadred;
+                     p.Green() = deadgreen;
+                     p.Blue()  = deadblue;
                   }
-                  p = colStart;
+                  p = colstart;
                   p.OffsetY(pxldata, 1);
                }
                if (drawgap) {
                   // draw dead pixels at bottom edge of cell
                   for (int j = 0; j <= cellsize; j++) {
-                     p.Red()   = curralgo->cellred[0];
-                     p.Green() = curralgo->cellgreen[0];
-                     p.Blue()  = curralgo->cellblue[0];
+                     p.Red()   = deadred;
+                     p.Green() = deadgreen;
+                     p.Blue()  = deadblue;
                      p++;
                   }
                }
