@@ -355,7 +355,7 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
    #endif
 
    // we want pop-up menu to appear as soon as ALGO_TOOL button is pressed
-   //!!! works on all platforms???
+   //!!! doesn't work 100% correctly on Windows
    if (id == ALGO_TOOL) {
       //!!! how can we force button to appear selected???
       // maybe use one-shot timer to delay calling PopupMenu???
@@ -2152,7 +2152,7 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
    viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
-   viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") /*!!!+ GetAccelerator(DO_SHOWICONS)*/);
+   viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
    viewMenu->AppendCheckItem(ID_COLORS,         _("Swap Cell Colors") + GetAccelerator(DO_SWAPCOLORS));
    viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
    viewMenu->AppendSeparator();
@@ -2308,7 +2308,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
       SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
       SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
-      //!!! SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
+      SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
       SetAccelerator(mbar, ID_COLORS,          DO_SWAPCOLORS);
       SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
       SetAccelerator(mbar, ID_INFO,            DO_INFO);

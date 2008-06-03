@@ -407,6 +407,13 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "showicons") == 0) {
+      *oldval = showicons ? 1 : 0;
+      if (*oldval != newval) {
+         viewptr->ToggleCellIcons();
+         DoAutoUpdate();
+      }
+
    } else if (strcmp(optname, "swapcolors") == 0) {
       *oldval = swapcolors ? 1 : 0;
       if (*oldval != newval) {
@@ -512,6 +519,7 @@ bool GSF_getoption(char* optname, int* optval)
    else if (strcmp(optname, "showexact") == 0)     *optval = showexact ? 1 : 0;
    else if (strcmp(optname, "showgrid") == 0)      *optval = showgridlines ? 1 : 0;
    else if (strcmp(optname, "showhashinfo") == 0)  *optval = currlayer->showhashinfo ? 1 : 0;
+   else if (strcmp(optname, "showicons") == 0)     *optval = showicons ? 1 : 0;
    else if (strcmp(optname, "showlayerbar") == 0)  *optval = showlayer ? 1 : 0;
    else if (strcmp(optname, "showpatterns") == 0)  *optval = showpatterns ? 1 : 0;
    else if (strcmp(optname, "showscripts") == 0)   *optval = showscripts ? 1 : 0;

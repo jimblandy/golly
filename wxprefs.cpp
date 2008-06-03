@@ -588,6 +588,7 @@ const char* GetActionName(action_id action)
       case DO_SHOWSTATUS:     return "Show Status Bar";
       case DO_SHOWEXACT:      return "Show Exact Numbers";
       case DO_SHOWGRID:       return "Show Grid Lines";
+      case DO_SHOWICONS:      return "Show Cell Icons";
       case DO_SWAPCOLORS:     return "Swap Cell Colors";
       case DO_BUFFERED:       return "Buffered";
       case DO_INFO:           return "Pattern Info";
