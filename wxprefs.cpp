@@ -2126,8 +2126,8 @@ enum {
    PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
    PREF_PASTE_RGB,
    PREF_SELECT_RGB,
-   PREF_QLIFE_RGB,
-   PREF_HLIFE_RGB,
+   PREF_STATUS_RGB,
+   PREF_ALGO,
    // Keyboard prefs
    PREF_KEYCOMBO,
    PREF_ACTION,
@@ -2173,7 +2173,7 @@ private:
    void ChangeColor(int id, wxColor* rgb);
    void AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
-                       int id, wxColor* rgb, const wxString& text);
+                       int id, wxColor* rgb, const wxString& text, wxChoice* = NULL);
    
    void OnCheckBoxClicked(wxCommandEvent& event);
    void OnColorButton(wxCommandEvent& event);
@@ -2184,6 +2184,7 @@ private:
 
    bool ignore_page_event;          // used to prevent currpage being changed
    bool color_changed;              // have one or more colors changed?
+   int whichalgo;                   // selected algorithm in choice menu
 
    wxColor* new_algorgb[MAX_ALGOS]; // new status bar color for each algorithm
    wxColor* new_livergb[10];        // new color for live cells in each layer
@@ -3174,7 +3175,8 @@ void PrefsDialog::AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox)
 // -----------------------------------------------------------------------------
 
 void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
-                                 int id, wxColor* rgb, const wxString& text)
+                                 int id, wxColor* rgb, const wxString& text,
+                                 wxChoice* choice)
 {
    wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
    wxMemoryDC dc;
@@ -3185,13 +3187,20 @@ void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
    dc.SelectObject(wxNullBitmap);
    
    wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0, 0));
-   if (bb == NULL) {
-      Warning(_("Failed to create color button!"));
-   } else {
-      wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* textbox = new wxBoxSizer(wxHORIZONTAL);
+   if (bb && hbox && textbox) {
       hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
-      hbox->Add(new wxStaticText(parent, wxID_STATIC, text),
-                0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+      if (choice) {
+         // need to fix wxALIGN_CENTER_VERTICAL bug in wxMac
+         textbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, FIX_ALIGN_BUG);
+      } else {
+         textbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, wxALL, 0);
+      }
+      hbox->Add(textbox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+      if (choice) {
+         hbox->Add(choice, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, CHOICEGAP);
+      }
       vbox->AddSpacer(5);
       vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
    }
@@ -3223,15 +3232,25 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
    
+   // create a choice menu to select algo
+   wxArrayString algoChoices;
+   for ( int i = 0; i < MAX_ALGOS; i++ ) {
+      algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
+   }
+   wxChoice* algomenu = new wxChoice(panel, PREF_ALGO, wxDefaultPosition, wxDefaultSize, algoChoices);
+   whichalgo = currlayer->algtype;
+   algomenu->SetSelection(whichalgo);
+   
    AddLayerButtons(panel, vbox);
+   vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_DEAD_RGB, deadrgb, _("Dead cells"));
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_PASTE_RGB, pastergb, _("Pasted pattern"));
+   vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
    vbox->AddSpacer(GROUPGAP);
-   //!!! create a choice menu to select algo
-   AddColorButton(panel, vbox, PREF_QLIFE_RGB, algorgb[QLIFE_ALGO], _("Status bar background if not hashing"));
-   AddColorButton(panel, vbox, PREF_HLIFE_RGB, algorgb[HLIFE_ALGO], _("Status bar background if hashing"));
+   AddColorButton(panel, vbox, PREF_STATUS_RGB, algorgb[whichalgo], _("Status bar background for"),
+                  algomenu);
 
    for (int i = 0; i < MAX_ALGOS; i++) new_algorgb[i] = new wxColor(*algorgb[i]);
    for (int i = 0; i < 10; i++) new_livergb[i] = new wxColor(*livergb[i]);
@@ -3304,7 +3323,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    hbox3->Add(new wxStaticText(panel, wxID_STATIC, notes));
 
    vbox->AddSpacer(5);
-   vbox->Add(hbox0, 0, wxLEFT, LRGAP);    // or wxALIGN_CENTER, 0???
+   vbox->Add(hbox0, 0, wxLEFT, LRGAP);
    vbox->AddSpacer(15);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(15);
@@ -3348,22 +3367,42 @@ void PrefsDialog::UpdateChosenFile()
 
 void PrefsDialog::OnChoice(wxCommandEvent& event)
 {
-   if ( event.GetId() == PREF_ACTION ) {
+   int id = event.GetId();
+   
+   if ( id == PREF_ACTION ) {
       int i = event.GetSelection();
-      if (i < 0 || i >= MAX_ACTIONS) {
-         // should never happen but play safe
-         wxBell();
-         return;
+      if (i >= 0 && i < MAX_ACTIONS) {
+         action_id action = (action_id) i;
+         keyaction[currkey][currmods].id = action;
+         
+         if ( action == DO_OPENFILE && keyaction[currkey][currmods].file.IsEmpty() ) {
+            // call OnButton (which will call UpdateChosenFile)
+            wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, PREF_CHOOSE);
+            OnButton(buttevt);
+         } else {
+            UpdateChosenFile();
+         }
       }
-      action_id action = (action_id) i;
-      keyaction[currkey][currmods].id = action;
-      
-      if ( action == DO_OPENFILE && keyaction[currkey][currmods].file.IsEmpty() ) {
-         // call OnButton (which will call UpdateChosenFile)
-         wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, PREF_CHOOSE);
-         OnButton(buttevt);
-      } else {
-         UpdateChosenFile();
+   }
+   
+   if ( id == PREF_ALGO ) {
+      int i = event.GetSelection();
+      if (i >= 0 && i < MAX_ALGOS && i != whichalgo) {
+         whichalgo = i;
+         // update status button color to new_algorgb[whichalgo]
+         wxBitmapButton* bb = (wxBitmapButton*) FindWindow(PREF_STATUS_RGB);
+         if (bb) {
+            wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+            wxMemoryDC dc;
+            dc.SelectObject(bitmap);
+            wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+            wxBrush brush(*new_algorgb[whichalgo]);
+            FillRect(dc, rect, brush);
+            dc.SelectObject(wxNullBitmap);
+            bb->SetBitmapLabel(bitmap);
+            bb->Refresh();
+            bb->Update();
+         }
       }
    }
 }
@@ -3532,11 +3571,8 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
    } else if ( id == PREF_SELECT_RGB ) {
       ChangeColor(id, new_selectrgb);
 
-   } else if ( id == PREF_QLIFE_RGB ) {
-      ChangeColor(id, new_algorgb[QLIFE_ALGO]);
-
-   } else if ( id == PREF_HLIFE_RGB ) {
-      ChangeColor(id, new_algorgb[HLIFE_ALGO]);
+   } else if ( id == PREF_STATUS_RGB ) {
+      ChangeColor(id, new_algorgb[whichalgo]);
    
    } else {
       // process other buttons like Cancel and OK
