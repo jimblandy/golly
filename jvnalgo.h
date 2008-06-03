@@ -33,6 +33,6 @@ public:
    virtual ~jvnalgo() ;
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
 			  state e, state sw, state s, state se) ;
-   virtual int MaxCellStates() { return 29; }      // AKT: better than 256
+   virtual int NumCellStates() { return 29; }
 };
 #endif

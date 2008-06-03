@@ -105,8 +105,8 @@ public:
    virtual const char *readmacrocell(char *line) ;
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
 
-   // AKT: maximum number of cell states in this universe
-   virtual int MaxCellStates() { return 2 ; }
+   // AKT: number of cell states in this universe
+   virtual int NumCellStates() { return 2 ; }
 private:
 /*
  *   Some globals representing our universe.  The root is the

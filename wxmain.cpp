@@ -723,7 +723,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_STATUS_BAR,   active);
       mbar->Enable(ID_EXACT,        active);
       mbar->Enable(ID_GRID,         active);
-      mbar->Enable(ID_ICONS,        active && currlayer->algo->MaxCellStates() > 2);
+      mbar->Enable(ID_ICONS,        active);
       mbar->Enable(ID_COLORS,       active);
       #if defined(__WXMAC__) || defined(__WXGTK__)
          // windows on Mac OS X and GTK+ 2.0 are automatically buffered
