@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 wxMenu* algomenu;                   // menu of algorithm names
 algo_type initalgo = QLIFE_ALGO;    // initial layer's algorithm
+int algomem[MAX_ALGOS];             // maximum memory (in MB) for each algorithm
 int algobase[MAX_ALGOS];            // base step for each algorithm
 wxColor* algorgb[MAX_ALGOS];        // status bar color for each algorithm
 wxBrush* algobrush[MAX_ALGOS];      // corresponding brushes
@@ -53,18 +54,25 @@ wxBrush* algobrush[MAX_ALGOS];      // corresponding brushes
 
 void InitAlgorithms()
 {
-   // algomenu is used when algo button is pressed
+   // algomenu is used when algo button is pressed and for Set Algo submenu
    algomenu = new wxMenu();
    for ( int i = 0; i < MAX_ALGOS; i++ ) {
       wxString name = wxString(GetAlgoName((algo_type)i), wxConvLocal);
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
    }
 
+   //!!! perhaps use static *algo::GetBestMaxMem()???
+   //!!! use -1 to indicate the algo ignores setMaxMemory???
+   algomem[QLIFE_ALGO] = 0;         // no limit
+   algomem[HLIFE_ALGO] = 300;       // in megabytes
+   algomem[SLIFE_ALGO] = 300;       // ditto
+   algomem[JVN_ALGO]   = 300;       // ditto
+
    //!!! perhaps use static *algo::GetBestBaseStep()???
    algobase[QLIFE_ALGO] = 10;
    algobase[HLIFE_ALGO] = 8;        // best if power of 2
    algobase[SLIFE_ALGO] = 8 ;
-   algobase[JVN_ALGO] = 8;          //!!!??? best if power of 2
+   algobase[JVN_ALGO]   = 8;        // best if power of 2
 
    algorgb[QLIFE_ALGO] = new wxColor(255, 255, 206);  // pale yellow
    algorgb[HLIFE_ALGO] = new wxColor(226, 250, 248);  // pale blue
@@ -82,28 +90,18 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
    lifealgo* newalgo = NULL;
 
    switch (algotype) {
-      case QLIFE_ALGO:
-         newalgo = new qlifealgo();
-         if (newalgo == NULL) Fatal(_("Failed to create new qlifealgo!"));
-         break;
-      case HLIFE_ALGO:
-         newalgo = new hlifealgo();
-         if (newalgo == NULL) Fatal(_("Failed to create new hlifealgo!"));
-         break;
-      case SLIFE_ALGO:
-         newalgo = new slifealgo();
-         if (newalgo == NULL) Fatal(_("Failed to create new slifealgo!"));
-         break;
-      case JVN_ALGO:
-         newalgo = new jvnalgo();
-         if (newalgo == NULL) Fatal(_("Failed to create new jvnalgo!"));
-         break;
+      case QLIFE_ALGO:  newalgo = new qlifealgo(); break;
+      case HLIFE_ALGO:  newalgo = new hlifealgo(); break;
+      case SLIFE_ALGO:  newalgo = new slifealgo(); break;
+      case JVN_ALGO:    newalgo = new jvnalgo(); break;
       default:
          Fatal(_("Bug detected in CreateNewUniverse!"));
    }
 
-   //!!! or call setMaxMemory for all algos???
-   if (newalgo->hyperCapable()) newalgo->setMaxMemory(maxhashmem);
+   if (newalgo == NULL) Fatal(_("Failed to create new universe!"));
+
+   //!!! safe to call setMaxMemory for all algos???
+   if (algomem[algotype] >= 0) newalgo->setMaxMemory(algomem[algotype]);
 
    // allow event checking?
    if (allowcheck) newalgo->setpoll(wxGetApp().Poller());

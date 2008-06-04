@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
 #include "wxutils.h"       // for BeginProgress, GetString, etc
-#include "wxprefs.h"       // for maxhashmem, allowundo, etc
+#include "wxprefs.h"       // for allowundo, etc
 #include "wxrule.h"        // for ChangeRule
 #include "wxhelp.h"        // for LoadLexiconPattern
 #include "wxstatus.h"      // for statusptr->...

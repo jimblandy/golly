@@ -86,7 +86,6 @@ extern int canchangerule;        // if > 0 then paste can change rule
 extern int randomfill;           // random fill percentage
 extern int opacity;              // percentage opacity of live cells in overlays
 extern int tileborder;           // width of tiled window borders
-extern int maxhashmem;           // maximum hash memory (in megabytes)
 extern int mingridmag;           // minimum mag to draw grid lines
 extern int boldspacing;          // spacing of bold grid lines
 extern bool showboldlines;       // show bold grid lines?
@@ -285,8 +284,8 @@ const int mininfoht = 100;       // info window's minimum height
 
 const int MAX_RECENT = 100;      // maximum value of maxpatterns and maxscripts
 const int MAX_SPACING = 1000;    // maximum value of boldspacing
-const int MIN_HASHMB = 10;       // minimum value of maxhashmem
-const int MAX_HASHMB =           // maximum value of maxhashmem
+const int MIN_MEM_MB = 0;        // minimum value of maximum memory
+const int MAX_MEM_MB =           // maximum value of maximum memory
             sizeof(char*) <= 4 ? 4000 : 100000000;
 const int MAX_BASESTEP = 10000;  // maximum base step
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay

@@ -136,7 +136,6 @@ int canchangerule = 0;           // if > 0 then paste can change rule
 int randomfill = 50;             // random fill percentage (1..100)
 int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
 int tileborder = 3;              // thickness of tiled window borders
-int maxhashmem = 300;            // maximum hash memory (in megabytes)
 int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
 bool showboldlines = true;       // show bold grid lines?
@@ -1381,13 +1380,13 @@ void SavePrefs()
    fprintf(f, "auto_fit=%d\n", currlayer->autofit ? 1 : 0);
    fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
    fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
-   fprintf(f, "max_hash_mem=%d\n", maxhashmem);
    
    fputs("\n", f);
 
    fprintf(f, "init_algo=%d\n", (int)currlayer->algtype);
    for (int i = 0; i < MAX_ALGOS; i++) {
       fprintf(f, "algorithm=%s\n", GetAlgoName((algo_type) i));
+      fprintf(f, "max_mem=%d\n", algomem[i]);
       fprintf(f, "base_step=%d\n", algobase[i]);
       SaveColor(f, "status_rgb", algorgb[i]);
    }
@@ -1599,7 +1598,7 @@ void GetPrefs()
    // init datadir and prefspath
    InitPrefsPath();
 
-   // init algobase, algorgb, algobrush, etc
+   // init algomem, algobase, algorgb, algobrush, etc
    InitAlgorithms();
 
    opensavedir = gollydir + PATT_DIR;
@@ -1763,6 +1762,15 @@ void GetPrefs()
             }
          }
 
+      } else if (strcmp(keyword, "max_mem") == 0) {
+         if (algoindex >= 0 && algoindex < MAX_ALGOS) {
+            int maxmem;
+            sscanf(value, "%d", &maxmem);
+            if (maxmem < MIN_MEM_MB) maxmem = MIN_MEM_MB;
+            if (maxmem > MAX_MEM_MB) maxmem = MAX_MEM_MB;
+            algomem[algoindex] = maxmem;
+         }
+
       } else if (strcmp(keyword, "base_step") == 0) {
          if (algoindex >= 0 && algoindex < MAX_ALGOS) {
             int base;
@@ -1803,10 +1811,14 @@ void GetPrefs()
       } else if (strcmp(keyword, "hash_info") == 0) {
          initshowhashinfo = value[0] == '1';
 
-      } else if (strcmp(keyword, "max_hash_mem") == 0) {
-         sscanf(value, "%d", &maxhashmem);
-         if (maxhashmem < MIN_HASHMB) maxhashmem = MIN_HASHMB;
-         if (maxhashmem > MAX_HASHMB) maxhashmem = MAX_HASHMB;
+      } else if (strcmp(keyword, "max_hash_mem") == 0) {    // deprecated
+         int maxmem;
+         sscanf(value, "%d", &maxmem);
+         if (maxmem < MIN_MEM_MB) maxmem = MIN_MEM_MB;
+         if (maxmem > MAX_MEM_MB) maxmem = MAX_MEM_MB;
+         // change all except QLIFE_ALGO
+         for (int i = 0; i < MAX_ALGOS; i++)
+            if (i != QLIFE_ALGO) algomem[i] = maxmem;
 
       } else if (strcmp(keyword, "rule") == 0) {
          strncpy(initrule, value, sizeof(initrule));
@@ -2102,9 +2114,9 @@ enum {
    PREF_SCROLL_CROSS,
    PREF_SCROLL_HAND,
    // Control prefs
-   PREF_MAX_HASH_MEM,
-   PREF_QBASE,
-   PREF_HBASE,
+   PREF_ALGO_MENU1,
+   PREF_MAX_MEM,
+   PREF_BASE_STEP,
    PREF_MIN_DELAY,
    PREF_MAX_DELAY,
    // View prefs
@@ -2128,7 +2140,7 @@ enum {
    PREF_PASTE_RGB,
    PREF_SELECT_RGB,
    PREF_STATUS_RGB,
-   PREF_ALGO,
+   PREF_ALGO_MENU2,
    // Keyboard prefs
    PREF_KEYCOMBO,
    PREF_ACTION,
@@ -2185,8 +2197,11 @@ private:
 
    bool ignore_page_event;          // used to prevent currpage being changed
    bool color_changed;              // have one or more colors changed?
-   int whichalgo;                   // selected algorithm in choice menu
+   int algopos1;                    // selected algorithm in PREF_ALGO_MENU1
+   int algopos2;                    // selected algorithm in PREF_ALGO_MENU2
 
+   int new_algomem[MAX_ALGOS];      // new max mem values for each algorithm
+   int new_algobase[MAX_ALGOS];     // new base step values for each algorithm
    wxColor* new_algorgb[MAX_ALGOS]; // new status bar color for each algorithm
    wxColor* new_livergb[10];        // new color for live cells in each layer
    wxColor* new_deadrgb;            // new color for dead cells
@@ -2408,22 +2423,19 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
          if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == CONTROL_PAGE ) {
-         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_HASH_MEM);
-         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_QBASE);
-         wxSpinCtrl* s3 = (wxSpinCtrl*) FindWindowById(PREF_HBASE);
-         wxSpinCtrl* s4 = (wxSpinCtrl*) FindWindowById(PREF_MIN_DELAY);
-         wxSpinCtrl* s5 = (wxSpinCtrl*) FindWindowById(PREF_MAX_DELAY);
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_MEM);
+         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_BASE_STEP);
+         wxSpinCtrl* s3 = (wxSpinCtrl*) FindWindowById(PREF_MIN_DELAY);
+         wxSpinCtrl* s4 = (wxSpinCtrl*) FindWindowById(PREF_MAX_DELAY);
          wxTextCtrl* t1 = s1->GetText();
          wxTextCtrl* t2 = s2->GetText();
          wxTextCtrl* t3 = s3->GetText();
          wxTextCtrl* t4 = s4->GetText();
-         wxTextCtrl* t5 = s5->GetText();
          wxWindow* focus = FindFocus();
          if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
          if ( focus == t2 ) { s3->SetFocus(); s3->SetSelection(ALL_TEXT); }
          if ( focus == t3 ) { s4->SetFocus(); s4->SetSelection(ALL_TEXT); }
-         if ( focus == t4 ) { s5->SetFocus(); s5->SetSelection(ALL_TEXT); }
-         if ( focus == t5 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+         if ( focus == t4 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
       } else if ( currpage == VIEW_PAGE ) {
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_BOLD_SPACING);
          wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_THUMB_RANGE);
@@ -2812,51 +2824,56 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
-   // max_hash_mem
-
-   wxBoxSizer* hbox5 = new wxBoxSizer(wxHORIZONTAL);
-   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory for hashing:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_MAX_HASH_MEM, wxEmptyString,
-                                      wxDefaultPosition, wxSize(80, wxDefaultCoord));
-   hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-#ifdef __WXMSW__
-   // Vista needs more RAM for itself
-   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~70% of RAM)")),
-#else
-   hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~80% of RAM)")),
-#endif
-              0, wxALIGN_CENTER_VERTICAL, 0);
+   // create a choice menu to select algo
    
-   // base step for each algorithm
+   wxArrayString algoChoices;
+   for ( int i = 0; i < MAX_ALGOS; i++ ) {
+      algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
+   }
+   wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU1,
+                                     wxDefaultPosition, wxDefaultSize, algoChoices);
+   algopos1 = currlayer->algtype;
+   algomenu->SetSelection(algopos1);
 
    wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
-   longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if not hashing:")),
-                0, wxALL, 0);
+   longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Settings for this algorithm:")),
+                0, FIX_ALIGN_BUG);
 
-   wxBoxSizer* shortbox = new wxBoxSizer(wxHORIZONTAL);
-   shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step if hashing:")),
-                 0, wxALL, 0);
+   wxBoxSizer* menubox = new wxBoxSizer(wxHORIZONTAL);
+   menubox->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   menubox->Add(algomenu, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+   
+   // maximum memory and base step
 
-   // align spin controls by setting shortbox same width as longbox
-   shortbox->SetMinSize( longbox->GetMinSize() );
+   wxBoxSizer* membox = new wxBoxSizer(wxHORIZONTAL);
+   membox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory:")), 0, wxALL, 0);
+
+   wxBoxSizer* basebox = new wxBoxSizer(wxHORIZONTAL);
+   basebox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step:")), 0, wxALL, 0);
+
+   // align spin controls
+   membox->SetMinSize( longbox->GetMinSize() );
+   basebox->SetMinSize( longbox->GetMinSize() );
 
    wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
-   hbox1->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_QBASE, wxEmptyString,
+   hbox1->Add(membox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_MAX_MEM, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+#ifdef __WXMSW__
+   // Vista needs more RAM for itself
+   hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~70% of RAM)")),
+#else
+   hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~80% of RAM)")),
+#endif
+              0, wxALIGN_CENTER_VERTICAL, 0);
 
    wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
-   hbox2->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_HBASE, wxEmptyString,
+   hbox2->Add(basebox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_BASE_STEP, wxEmptyString,
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-#ifdef __WXX11__
-   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)  ")),
-#else
    hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)")),
-#endif
               0, wxALIGN_CENTER_VERTICAL, 0);
    
    // min_delay and max_delay
@@ -2867,7 +2884,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* maxbox = new wxBoxSizer(wxHORIZONTAL);
    maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum delay:")), 0, wxALL, 0);
 
-   // align spin controls by setting minbox same width as maxbox
+   // align spin controls
    minbox->SetMinSize( maxbox->GetMinSize() );
 
    wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
@@ -2886,15 +2903,27 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
 
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
-   vbox->AddSpacer(GROUPGAP);
+   /* !!! weird wxMac bug (due to spin ctrls in wxStaticBox?) stops us doing this:
+   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Settings for each algorithm:"));
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+   ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(algomenu, 0, wxALIGN_CENTER, 0);
+   ssizer1->AddSpacer(10);
+   ssizer1->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(S2VGAP);
+   ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(SBBOTGAP);
+   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+   */
+   vbox->AddSpacer(5);
+   vbox->Add(menubox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
+   
+   vbox->AddSpacer(5);
    vbox->AddSpacer(GROUPGAP);
-   vbox->AddSpacer(SVGAP);
    vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -2902,13 +2931,17 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    // init control values;
    // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying
    // the min,max,init values in the wxSpinCtrl constructor
-   spin1->SetRange(2, MAX_BASESTEP);        spin1->SetValue(algobase[QLIFE_ALGO]);
-   spin2->SetRange(2, MAX_BASESTEP);        spin2->SetValue(algobase[HLIFE_ALGO]);
+   spin1->SetRange(MIN_MEM_MB, MAX_MEM_MB); spin1->SetValue(algomem[algopos1]);
+   spin2->SetRange(2, MAX_BASESTEP);        spin2->SetValue(algobase[algopos1]);
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
-   spin5->SetRange(MIN_HASHMB, MAX_HASHMB); spin5->SetValue(maxhashmem);
-   spin5->SetFocus();
-   spin5->SetSelection(ALL_TEXT);
+   spin1->SetFocus();
+   spin1->SetSelection(ALL_TEXT);
+   
+   for (int i = 0; i < MAX_ALGOS; i++) {
+      new_algomem[i] = algomem[i];
+      new_algobase[i] = algobase[i];
+   }
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -3238,9 +3271,10 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    for ( int i = 0; i < MAX_ALGOS; i++ ) {
       algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
    }
-   wxChoice* algomenu = new wxChoice(panel, PREF_ALGO, wxDefaultPosition, wxDefaultSize, algoChoices);
-   whichalgo = currlayer->algtype;
-   algomenu->SetSelection(whichalgo);
+   wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU2,
+                                     wxDefaultPosition, wxDefaultSize, algoChoices);
+   algopos2 = currlayer->algtype;
+   algomenu->SetSelection(algopos2);
    
    AddLayerButtons(panel, vbox);
    vbox->AddSpacer(GROUPGAP);
@@ -3250,7 +3284,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
    vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_STATUS_RGB, algorgb[whichalgo], _("Status bar background for"),
+   AddColorButton(panel, vbox, PREF_STATUS_RGB, algorgb[algopos2], _("Status bar background for"),
                   algomenu);
 
    for (int i = 0; i < MAX_ALGOS; i++) new_algorgb[i] = new wxColor(*algorgb[i]);
@@ -3386,18 +3420,40 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
       }
    }
    
-   if ( id == PREF_ALGO ) {
+   if ( id == PREF_ALGO_MENU1 ) {
       int i = event.GetSelection();
-      if (i >= 0 && i < MAX_ALGOS && i != whichalgo) {
-         whichalgo = i;
-         // update status button color to new_algorgb[whichalgo]
+      if (i >= 0 && i < MAX_ALGOS && i != algopos1) {
+         // first update values for previous selection
+         new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
+         new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
+         algopos1 = i;
+         // show values for new selection
+         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_MEM);
+         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_BASE_STEP);
+         if (s1 && s2) {
+            s1->SetValue(new_algomem[algopos1]);
+            s2->SetValue(new_algobase[algopos1]);
+            wxTextCtrl* t1 = s1->GetText();
+            wxTextCtrl* t2 = s2->GetText();
+            wxWindow* focus = FindFocus();
+            if (focus == t1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+            if (focus == t2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+         }
+      }
+   }
+   
+   if ( id == PREF_ALGO_MENU2 ) {
+      int i = event.GetSelection();
+      if (i >= 0 && i < MAX_ALGOS && i != algopos2) {
+         algopos2 = i;
+         // update status button color to new_algorgb[algopos2]
          wxBitmapButton* bb = (wxBitmapButton*) FindWindow(PREF_STATUS_RGB);
          if (bb) {
             wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
             wxMemoryDC dc;
             dc.SelectObject(bitmap);
             wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
-            wxBrush brush(*new_algorgb[whichalgo]);
+            wxBrush brush(*new_algorgb[algopos2]);
             FillRect(dc, rect, brush);
             dc.SelectObject(wxNullBitmap);
             bb->SetBitmapLabel(bitmap);
@@ -3573,7 +3629,7 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
       ChangeColor(id, new_selectrgb);
 
    } else if ( id == PREF_STATUS_RGB ) {
-      ChangeColor(id, new_algorgb[whichalgo]);
+      ChangeColor(id, new_algorgb[algopos2]);
    
    } else {
       // process other buttons like Cancel and OK
@@ -3675,11 +3731,9 @@ bool PrefsDialog::ValidatePage()
          return false;
 
    } else if (currpage == CONTROL_PAGE) {
-      if ( BadSpinVal(PREF_MAX_HASH_MEM, MIN_HASHMB, MAX_HASHMB, _("Maximum memory for hashing")) )
+      if ( BadSpinVal(PREF_MAX_MEM, MIN_MEM_MB, MAX_MEM_MB, _("Maximum memory")) )
          return false;
-      if ( BadSpinVal(PREF_QBASE, 2, MAX_BASESTEP, _("Base step if not hashing")) )
-         return false;
-      if ( BadSpinVal(PREF_HBASE, 2, MAX_BASESTEP, _("Base step if hashing")) )
+      if ( BadSpinVal(PREF_BASE_STEP, 2, MAX_BASESTEP, _("Base step")) )
          return false;
       if ( BadSpinVal(PREF_MIN_DELAY, 0, MAX_DELAY, _("Minimum delay")) )
          return false;
@@ -3767,11 +3821,14 @@ bool PrefsDialog::TransferDataFromWindow()
    scrollhand    = GetCheckVal(PREF_SCROLL_HAND);
 
    // CONTROL_PAGE
-   maxhashmem = GetSpinVal(PREF_MAX_HASH_MEM);
-   algobase[QLIFE_ALGO] = GetSpinVal(PREF_QBASE);
-   algobase[HLIFE_ALGO] = GetSpinVal(PREF_HBASE);
-   mindelay   = GetSpinVal(PREF_MIN_DELAY);
-   maxdelay   = GetSpinVal(PREF_MAX_DELAY);
+   new_algomem[algopos1]  = GetSpinVal(PREF_MAX_MEM);
+   new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
+   for (int i = 0; i < MAX_ALGOS; i++) {
+      algomem[i] = new_algomem[i];
+      algobase[i] = new_algobase[i];
+   }
+   mindelay = GetSpinVal(PREF_MIN_DELAY);
+   maxdelay = GetSpinVal(PREF_MAX_DELAY);
 
    // VIEW_PAGE
 #if wxUSE_TOOLTIPS

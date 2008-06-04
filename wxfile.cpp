@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase, algomem
 #include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
@@ -1352,10 +1352,11 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       // if mindelay/maxdelay changed then may need to change minwarp and warp
       UpdateWarp();
 
-      // maxhashmem might have changed
+      // maximum memory might have changed
       for (int i = 0; i < numlayers; i++) {
          Layer* layer = GetLayer(i);
-         if (layer->algo->hyperCapable()) layer->algo->setMaxMemory(maxhashmem);
+         if (algomem[layer->algtype] >= 0)
+            layer->algo->setMaxMemory(algomem[layer->algtype]);
       }
 
       // tileborder might have changed

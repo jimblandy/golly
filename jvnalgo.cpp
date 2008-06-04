@@ -77,7 +77,7 @@ static state cres[] = {0x22, 0x23, 0x40, 0x41, 0x42, 0x43, 0x10, 0x20, 0x21} ;
 jvnalgo::jvnalgo() {
   for (int i=0; i<256; i++)
     compress[i] = 255 ;
-  for (int i=0; i<sizeof(uncompress)/sizeof(uncompress[0]); i++)
+  for (unsigned int i=0; i<sizeof(uncompress)/sizeof(uncompress[0]); i++)
     compress[uncompress[i]] = i ;
 }
 jvnalgo::~jvnalgo() {
