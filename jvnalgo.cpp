@@ -40,6 +40,19 @@ const int BIT_OEXC = 1 ;
 const int BIT_SEXC = 2 ;
 const int BIT_ONEXC = 4 ;
 const int BIT_CEXC = 8 ;
+static state compress[256] ;
+/**
+ *   These are the legal *internal* states.
+ */
+static state uncompress[] = { 0, /* dead */
+			      1, 2, 3, 4, 5, 6, 7, 8, /* construction states */
+			      16, 17, /* confluent state */
+			      32, 33, 34, 35, /* ordinary */
+			      64, 65, 66, 67, /* special */
+			      144, 145, /* more confluent state */
+			      160, 161, 162, 163, /* ordinary active */
+			      192, 193, 194, 195 /* special active */
+} ;
 static int bits(state mcode, state code, state dir) {
    if (code & (TEXC | OTRANS | CONF | CEXC) == 0)
       return 0 ;
@@ -62,18 +75,18 @@ static int bits(state mcode, state code, state dir) {
 }
 static state cres[] = {0x22, 0x23, 0x40, 0x41, 0x42, 0x43, 0x10, 0x20, 0x21} ;
 jvnalgo::jvnalgo() {
-  /* Cellred, green, and blue initialized in lifealgo; we'll move it to
-     the individual algorithms soom but this will get us bootstrapped.
-     Removed from here so we can distinguish the different states.
-     We'll introduce a new method to set up th ecolors and/or icons
-     that is overriden by each subclass. */
+  for (int i=0; i<256; i++)
+    compress[i] = 255 ;
+  for (int i=0; i<sizeof(uncompress)/sizeof(uncompress[0]); i++)
+    compress[uncompress[i]] = i ;
 }
 jvnalgo::~jvnalgo() {
 }
 state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
 			state, state s, state) {
-  int mbits = bits(c, n, SOUTH) | bits(c, w, EAST) |
-               bits(c, e, WEST) | bits(c, s, NORTH) ;
+  c = uncompress[c] ;
+  int mbits = bits(c, uncompress[n], SOUTH) | bits(c, uncompress[w], EAST) |
+               bits(c, uncompress[e], WEST) | bits(c, uncompress[s], NORTH) ;
    if (c < CONF) {
       if (mbits & (BIT_OEXC | BIT_SEXC))
          c = 2 * c + 1 ;
@@ -97,5 +110,5 @@ state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
       else
          c &= 127 ;
    }
-   return c ;
+   return compress[c] ;
 }
