@@ -3433,11 +3433,17 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
          if (s1 && s2) {
             s1->SetValue(new_algomem[algopos1]);
             s2->SetValue(new_algobase[algopos1]);
-            wxTextCtrl* t1 = s1->GetText();
-            wxTextCtrl* t2 = s2->GetText();
             wxWindow* focus = FindFocus();
-            if (focus == t1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
-            if (focus == t2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+            #ifdef __WXMAC__
+               // FindFocus returns pointer to text ctrl
+               wxTextCtrl* t1 = s1->GetText();
+               wxTextCtrl* t2 = s2->GetText();
+               if (focus == t1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+               if (focus == t2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+            #else
+               if (focus == s1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+               if (focus == s2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+            #endif
          }
       }
    }
