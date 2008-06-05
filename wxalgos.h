@@ -34,16 +34,17 @@ typedef enum {
    MAX_ALGOS
 } algo_type;
 
-extern wxMenu* algomenu;               // menu of algorithm names
-extern algo_type initalgo;             // initial layer's algorithm
-extern int algomem[MAX_ALGOS];         // maximum memory (in MB) for each algorithm
-extern int algobase[MAX_ALGOS];        // base step for each algorithm
-extern wxColor* algorgb[MAX_ALGOS];    // status bar color for each algorithm
-extern wxBrush* algobrush[MAX_ALGOS];  // corresponding brush
+extern wxMenu* algomenu;                  // menu of algorithm names
+extern algo_type initalgo;                // initial layer's algorithm
+extern int algomem[MAX_ALGOS];            // maximum memory (in MB) for each algorithm
+extern int algobase[MAX_ALGOS];           // base step for each algorithm
+extern wxColor* algorgb[MAX_ALGOS];       // status bar color for each algorithm
+extern wxBrush* algobrush[MAX_ALGOS];     // corresponding brush
+extern wxBitmap** icons7x7[MAX_ALGOS];    // icon bitmaps for scale 1:8
+extern wxBitmap** icons15x15[MAX_ALGOS];  // icon bitmaps for scale 1:16
 
 void InitAlgorithms();
-// Initialize algomenu, algomem, algobase, algorgb, algobrush.
-// Must be called very early (before reading prefs file).
+// Initialize above data.  Must be called very early (before reading prefs file).
 
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck = true);
 // Create a new universe of given type.  If allowcheck is true then

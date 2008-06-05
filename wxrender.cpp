@@ -148,6 +148,7 @@ wxBrush* cellbrush;        // brush used to draw live cells
 wxBitmap* pixmap = NULL;   // 32-bit deep bitmap used in pixblit
 int pixmapwd = -1;         // width of pixmap
 int pixmapht = -1;         // height of pixmap
+wxBitmap** iconmaps;       // ptr to array of icon bitmaps
 
 // for drawing multiple layers
 wxBitmap* layerbitmap = NULL;    // layer bitmap
@@ -402,7 +403,8 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    deadgreen = curralgo->cellgreen[0];
    deadblue = curralgo->cellblue[0];
 
-   //!!! might be faster to draw rectangles (and clip!) above certain scales???
+   //!!! might be faster to draw rectangles above certain scales???
+   //!!! do clipping???
    wxAlphaPixelData pxldata(*pixmap);
    if (pxldata) {
       wxAlphaPixelData::Iterator p(pxldata);
@@ -464,12 +466,8 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
       for ( int col = 0; col < w; col++ ) {
          if (*byteptr) {
             // draw icon for this live cell
-            //!!!
-            /*
-            wxBitmap* bmap = iconmaps[currlayer->algtype]->cellicon[*byteptr];???
-            if (bmap)
-               currdc->DrawBitmap(*bmap, x + col * pmscale, y + row * pmscale);
-            */
+            wxBitmap* bmap = iconmaps[*byteptr];
+            if (bmap) currdc->DrawBitmap(*bmap, x + col * pmscale, y + row * pmscale);
          }
          byteptr++;     // move to next byte
       }
@@ -591,7 +589,8 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
       }
       currdc->DrawBitmap(*pixmap, x, y);
 
-   } else if (showicons && pmscale > 2) {
+   } else if (showicons && pmscale > 4 && iconmaps) {
+      // draw icons only at scales 1:8 or 1:16
       wxRect r(x, y, w, h);
       FillRect(*currdc, r, *killbrush);   //!!! requires buffered drawing on Windows
       DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
@@ -1347,6 +1346,13 @@ void DrawView(wxDC& dc, int tileindex)
    currlayer->algo->cellred[0] = deadrgb->Red();
    currlayer->algo->cellgreen[0] = deadrgb->Green();
    currlayer->algo->cellblue[0] = deadrgb->Blue();
+
+   if (showicons && currlayer->view->getmag() > 2) {
+      if (currlayer->view->getmag() == 3)
+         iconmaps = icons7x7[currlayer->algtype];
+      else
+         iconmaps = icons15x15[currlayer->algtype];
+   }
 
    // draw pattern using a sequence of blit/pixblit and killrect calls
    currdc = &dc;

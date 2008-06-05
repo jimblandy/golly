@@ -50,6 +50,270 @@ int algobase[MAX_ALGOS];            // base step for each algorithm
 wxColor* algorgb[MAX_ALGOS];        // status bar color for each algorithm
 wxBrush* algobrush[MAX_ALGOS];      // corresponding brushes
 
+wxBitmap** icons7x7[MAX_ALGOS] = {NULL};    // icon bitmaps for scale 1:8
+wxBitmap** icons15x15[MAX_ALGOS] = {NULL};  // icon bitmaps for scale 1:16
+
+// -----------------------------------------------------------------------------
+
+//!!! get this static icon data from jvnalgo.h???
+// maybe add char** GetIconData7x7() { return NULL; } in lifealgo.h???
+//!!! first check that current code works on Win/Linux
+
+// XPM data for the 28 7x7 icons used in JvN algo
+static char* jvn7x7[] = {
+// width height ncolors chars_per_pixel
+"7 196 9 1",
+// colors
+"A c #FFFFFFFFFFFF",
+"B c #FFFFFFFF0000",
+"C c #FFFFA5A54242",
+"D c #FFFF0000FFFF",
+"E c #FFFF00000000",
+"F c #A5A5A5A58484",
+"G c #0000FFFFFFFF",
+"H c #00009494FFFF",
+"I c None",             // transparent
+// pixels
+"IIEEEII",
+"IEEEEEI",
+"EEEEEEE",
+"EEEEEEE",
+"EEEEEEE",
+"IEEEEEI",
+"IIEEEII",
+"IIBBBII",
+"IBBBBBI",
+"BBBBBBB",
+"IIIIIII",
+"EEEEEEE",
+"IEEEEEI",
+"IIEEEII",
+"IIEEEII",
+"IEEEEEI",
+"EEEEEEE",
+"IIIIIII",
+"BBBBBBB",
+"IBBBBBI",
+"IIBBBII",
+"IIBIBII",
+"IBBIBBI",
+"BBBIBBB",
+"IIIIIII",
+"EEEIEEE",
+"IEEIEEI",
+"IIEIEII",
+"IIBIEII",
+"IBBIEEI",
+"BBBIEEE",
+"IIIIIII",
+"EEEIBBB",
+"IEEIBBI",
+"IIEIBII",
+"IIEIBII",
+"IEEIBBI",
+"EEEIBBB",
+"IIIIIII",
+"BBBIEEE",
+"IBBIEEI",
+"IIBIEII",
+"IIEIEII",
+"IEEIEEI",
+"EEEIEEE",
+"IIIIIII",
+"BBBIBBB",
+"IBBIBBI",
+"IIBIBII",
+"IIBIBII",
+"IBBIBBI",
+"BBBIBBB",
+"IIIIIII",
+"BBBIBBB",
+"IBBIBBI",
+"IIBIBII",
+"IIIIIII",
+"IIIIHII",
+"IIIIHHI",
+"HHHHHHH",
+"IIIIHHI",
+"IIIIHII",
+"IIIIIII",
+"IIIHIII",
+"IIHHHII",
+"IHHHHHI",
+"IIIHIII",
+"IIIHIII",
+"IIIHIII",
+"IIIHIII",
+"IIIIIII",
+"IIHIIII",
+"IHHIIII",
+"HHHHHHH",
+"IHHIIII",
+"IIHIIII",
+"IIIIIII",
+"IIIHIII",
+"IIIHIII",
+"IIIHIII",
+"IIIHIII",
+"IHHHHHI",
+"IIHHHII",
+"IIIHIII",
+"IIIIIII",
+"IIIIGII",
+"IIIIGGI",
+"GGGGGGG",
+"IIIIGGI",
+"IIIIGII",
+"IIIIIII",
+"IIIGIII",
+"IIGGGII",
+"IGGGGGI",
+"IIIGIII",
+"IIIGIII",
+"IIIGIII",
+"IIIGIII",
+"IIIIIII",
+"IIGIIII",
+"IGGIIII",
+"GGGGGGG",
+"IGGIIII",
+"IIGIIII",
+"IIIIIII",
+"IIIGIII",
+"IIIGIII",
+"IIIGIII",
+"IIIGIII",
+"IGGGGGI",
+"IIGGGII",
+"IIIGIII",
+"IIIIIII",
+"IIIIEII",
+"IIIIEEI",
+"EEEEEEE",
+"IIIIEEI",
+"IIIIEII",
+"IIIIIII",
+"IIIEIII",
+"IIEEEII",
+"IEEEEEI",
+"IIIEIII",
+"IIIEIII",
+"IIIEIII",
+"IIIEIII",
+"IIIIIII",
+"IIEIIII",
+"IEEIIII",
+"EEEEEEE",
+"IEEIIII",
+"IIEIIII",
+"IIIIIII",
+"IIIEIII",
+"IIIEIII",
+"IIIEIII",
+"IIIEIII",
+"IEEEEEI",
+"IIEEEII",
+"IIIEIII",
+"IIIIIII",
+"IIIIDII",
+"IIIIDDI",
+"DDDDDDD",
+"IIIIDDI",
+"IIIIDII",
+"IIIIIII",
+"IIIDIII",
+"IIDDDII",
+"IDDDDDI",
+"IIIDIII",
+"IIIDIII",
+"IIIDIII",
+"IIIDIII",
+"IIIIIII",
+"IIDIIII",
+"IDDIIII",
+"DDDDDDD",
+"IDDIIII",
+"IIDIIII",
+"IIIIIII",
+"IIIDIII",
+"IIIDIII",
+"IIIDIII",
+"IIIDIII",
+"IDDDDDI",
+"IIDDDII",
+"IIIDIII",
+"IIIFIII",
+"IIFFFII",
+"IFFIFFI",
+"FFIIIFF",
+"IFFIFFI",
+"IIFFFII",
+"IIIFIII",
+"IIICIII",
+"IICCCII",
+"ICCICCI",
+"CCIIICC",
+"ICCICCI",
+"IICCCII",
+"IIICIII",
+"IIIBIII",
+"IIBBBII",
+"IBBBBBI",
+"BBBIBBB",
+"IBBBBBI",
+"IIBBBII",
+"IIIBIII",
+"IIIAIII",
+"IIAAAII",
+"IAAAAAI",
+"AAAAAAA",
+"IAAAAAI",
+"IIAAAII",
+"IIIAIII"
+};
+
+// -----------------------------------------------------------------------------
+
+static wxBitmap** CreateIconBitmaps(char** xpmdata)
+{
+   wxBitmap allicons(xpmdata, wxBITMAP_TYPE_XPM);
+   int wd = allicons.GetWidth();
+   int numicons = allicons.GetHeight() / wd;
+   
+   wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+   if (iconptr) {
+      for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+      
+      if (numicons > 255) numicons = 255;    // play safe
+      for (int i = 0; i < numicons; i++) {
+         wxRect rect(0, i*wd, wd, wd);
+         // add 1 because iconptr[0] must be NULL (ie. dead state)
+         iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+      }
+   }
+   return iconptr;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
+{
+   if (srcicons == NULL) return NULL;
+   
+   wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+   if (iconptr) {
+      for (int i = 0; i < 256; i++) {
+         if (srcicons[i] == NULL) {
+            iconptr[i] = NULL;
+         } else {
+            wxImage image = srcicons[i]->ConvertToImage();
+            iconptr[i] = new wxBitmap(image.Scale(size, size));
+         }
+      }
+   }
+   return iconptr;
+}
+
 // -----------------------------------------------------------------------------
 
 void InitAlgorithms()
@@ -81,6 +345,10 @@ void InitAlgorithms()
 
    for (int i = 0; i < MAX_ALGOS; i++)
       algobrush[i] = new wxBrush(*algorgb[i]);
+   
+   //!!! for now we assume only JVN_ALGO uses icons
+   icons7x7[JVN_ALGO] = CreateIconBitmaps(jvn7x7);
+   icons15x15[JVN_ALGO] = ScaleIconBitmaps(icons7x7[JVN_ALGO], 15);
 }
 
 // -----------------------------------------------------------------------------

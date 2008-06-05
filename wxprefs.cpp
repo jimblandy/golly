@@ -3441,6 +3441,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
                if (focus == t1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
                if (focus == t2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
             #else
+               // probably pointless -- pop-up menu has focus on Win & Linux???
                if (focus == s1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
                if (focus == s2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
             #endif
