@@ -29,7 +29,6 @@ const int EAST = 0 ;
 const int WEST = 2 ;
 const int FLIPDIR = 2 ;
 const int DIRMASK = 3 ;
-const int SENS = 1 ;
 const int CONF = 0x10 ;
 const int OTRANS = 0x20 ;
 const int STRANS = 0x40 ;
@@ -46,12 +45,12 @@ static state compress[256] ;
  */
 static state uncompress[] = { 0, /* dead */
 			      1, 2, 3, 4, 5, 6, 7, 8, /* construction states */
-			      16, 17, /* confluent state */
 			      32, 33, 34, 35, /* ordinary */
-			      64, 65, 66, 67, /* special */
-			      144, 145, /* more confluent state */
 			      160, 161, 162, 163, /* ordinary active */
-			      192, 193, 194, 195 /* special active */
+			      64, 65, 66, 67, /* special */
+			      192, 193, 194, 195, /* special active */
+			      16, 144, /* confluent state */
+			      17, 145, /* more confluent state */
 } ;
 static int bits(state mcode, state code, state dir) {
    if (code & (TEXC | OTRANS | CONF | CEXC) == 0)
