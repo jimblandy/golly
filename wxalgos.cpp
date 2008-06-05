@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef WX_PRECOMP
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
-
+  
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -57,7 +57,6 @@ wxBitmap** icons15x15[MAX_ALGOS] = {NULL};  // icon bitmaps for scale 1:16
 
 //!!! get this static icon data from jvnalgo.h???
 // maybe add char** GetIconData7x7() { return NULL; } in lifealgo.h???
-//!!! first check that current code works on Win/Linux
 
 // XPM data for the 28 7x7 icons used in JvN algo
 static char* jvn7x7[] = {
@@ -276,7 +275,13 @@ static char* jvn7x7[] = {
 
 static wxBitmap** CreateIconBitmaps(char** xpmdata)
 {
-   wxBitmap allicons(xpmdata, wxBITMAP_TYPE_XPM);
+   #ifdef __WXMSW__
+      wxImage image(xpmdata);
+      wxBitmap allicons(image);
+   #else
+      wxBitmap allicons(xpmdata, wxBITMAP_TYPE_XPM);
+   #endif
+
    int wd = allicons.GetWidth();
    int numicons = allicons.GetHeight() / wd;
    

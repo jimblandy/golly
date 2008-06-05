@@ -464,12 +464,14 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
    //!!! do clipping
    for ( int row = 0; row < h; row++ ) {
       for ( int col = 0; col < w; col++ ) {
-         if (*byteptr) {
+         if (*byteptr && iconmaps[*byteptr]) {
             // draw icon for this live cell
-            wxBitmap* bmap = iconmaps[*byteptr];
-            if (bmap) currdc->DrawBitmap(*bmap, x + col * pmscale, y + row * pmscale);
+            currdc->DrawBitmap(*iconmaps[*byteptr],
+                               x + col * pmscale,
+                               y + row * pmscale,
+                               true);                // bitmap has mask
          }
-         byteptr++;     // move to next byte
+         byteptr++;
       }
    }
 }
