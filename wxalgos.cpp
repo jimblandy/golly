@@ -72,7 +72,6 @@ static char* jvn7x7[] = {
 "G c #0000FFFFFFFF",
 "H c #00009494FFFF",
 "I c #000000000000",    // black will become transparent
-//!!! "I c None",             // transparent
 // pixels
 "IIEEEII",
 "IEEEEEI",
@@ -286,7 +285,6 @@ static char *jvn15x15[] = {
 "G c #0000FFFFFFFF",
 "H c #00009494FFFF",
 "I c #000000000000",    // black will become transparent
-//!!! "I c None",             // transparent
 // pixels
 "IIIIIIIIIIIIIII",
 "IIIIIIEEEIIIIII",

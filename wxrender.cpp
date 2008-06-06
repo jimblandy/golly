@@ -466,8 +466,9 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 // called from wx_render::pixblit to draw icons for each live cell
 void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 {
-   /* this is too slow on Windows -- use DrawStretchedPixmap approach!!!
-   // but this is faster on Mac!!!
+   /* this method is much too slow on Windows;
+   // it's slightly faster on Mac but then we'd have to call FillRect for
+   // the background and create masks for the icon bitmaps, so forget it
    for ( int row = 0; row < h; row++ ) {
       for ( int col = 0; col < w; col++ ) {
          if (*byteptr && iconmaps[*byteptr]) {
@@ -745,17 +746,6 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
    } else if (showicons && pmscale > 4 && iconmaps) {
       // draw icons only at scales 1:8 or 1:16
-      /* !!! no need for FillRect here???
-      int clipx = x < 0 ? 0 : x;
-      int clipy = y < 0 ? 0 : y;
-      int clipr = x + w;
-      int clipb = y + h;
-      if (clipr > currwd) clipr = currwd;
-      if (clipb > currht) clipb = currht;
-      wxRect r(clipx, clipy, clipr - clipx, clipb - clipy);
-      //!!! requires buffered drawing on Windows
-      FillRect(*currdc, r, *killbrush);
-      */
       DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
 
    } else {
