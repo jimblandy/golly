@@ -404,47 +404,52 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    deadblue = curralgo->cellblue[0];
 
    //!!! might be faster to draw rectangles above certain scales???
-   //!!! do clipping???
    wxAlphaPixelData pxldata(*pixmap);
    if (pxldata) {
       wxAlphaPixelData::Iterator p(pxldata);
       for ( int row = 0; row < h; row++ ) {
          wxAlphaPixelData::Iterator rowstart = p;
          for ( int col = 0; col < w; col++ ) {
-            unsigned char state = *byteptr;
-            unsigned char r = curralgo->cellred[state];
-            unsigned char g = curralgo->cellgreen[state];
-            unsigned char b = curralgo->cellblue[state];
-            
-            // expand byte into cellsize*cellsize pixels
-            wxAlphaPixelData::Iterator topleft = p;
-            for (int i = 0; i < cellsize; i++) {
-               wxAlphaPixelData::Iterator colstart = p;
-               for (int j = 0; j < cellsize; j++) {
-                  p.Red()   = r;
-                  p.Green() = g;
-                  p.Blue()  = b;
-                  p++;
+            int newx = x + col * pmscale;
+            int newy = y + row * pmscale;
+            if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
+               // clip cell outside viewport
+            } else {
+               unsigned char state = *byteptr;
+               unsigned char r = curralgo->cellred[state];
+               unsigned char g = curralgo->cellgreen[state];
+               unsigned char b = curralgo->cellblue[state];
+               
+               // expand byte into cellsize*cellsize pixels
+               wxAlphaPixelData::Iterator topleft = p;
+               for (int i = 0; i < cellsize; i++) {
+                  wxAlphaPixelData::Iterator colstart = p;
+                  for (int j = 0; j < cellsize; j++) {
+                     p.Red()   = r;
+                     p.Green() = g;
+                     p.Blue()  = b;
+                     p++;
+                  }
+                  if (drawgap) {
+                     // draw dead pixels at right edge of cell
+                     p.Red()   = deadred;
+                     p.Green() = deadgreen;
+                     p.Blue()  = deadblue;
+                  }
+                  p = colstart;
+                  p.OffsetY(pxldata, 1);
                }
                if (drawgap) {
-                  // draw dead pixels at right edge of cell
-                  p.Red()   = deadred;
-                  p.Green() = deadgreen;
-                  p.Blue()  = deadblue;
+                  // draw dead pixels at bottom edge of cell
+                  for (int j = 0; j <= cellsize; j++) {
+                     p.Red()   = deadred;
+                     p.Green() = deadgreen;
+                     p.Blue()  = deadblue;
+                     p++;
+                  }
                }
-               p = colstart;
-               p.OffsetY(pxldata, 1);
+               p = topleft;
             }
-            if (drawgap) {
-               // draw dead pixels at bottom edge of cell
-               for (int j = 0; j <= cellsize; j++) {
-                  p.Red()   = deadred;
-                  p.Green() = deadgreen;
-                  p.Blue()  = deadblue;
-                  p++;
-               }
-            }
-            p = topleft;
             p.OffsetX(pxldata, pmscale);
             
             byteptr++;        // move to next byte in pmdata
@@ -461,15 +466,18 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 // called from wx_render::pixblit to draw icons for each live cell
 void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 {
-   //!!! do clipping
    for ( int row = 0; row < h; row++ ) {
       for ( int col = 0; col < w; col++ ) {
          if (*byteptr && iconmaps[*byteptr]) {
-            // draw icon for this live cell
-            currdc->DrawBitmap(*iconmaps[*byteptr],
-                               x + col * pmscale,
-                               y + row * pmscale,
-                               true);                // bitmap has mask
+            int newx = x + col * pmscale;
+            int newy = y + row * pmscale;
+            if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
+               // clip cell outside viewport
+            } else {
+               // draw icon for this live cell
+               currdc->DrawBitmap(*iconmaps[*byteptr],
+                                  newx, newy, true);     // bitmap has mask
+            }
          }
          byteptr++;
       }
@@ -494,8 +502,21 @@ wx_render renderer;     // create instance
 
 void wx_render::killrect(int x, int y, int w, int h)
 {
+   //!!! is Tom's hashdraw code doing unnecessary work???
+   if (x >= currwd || y >= currht) return;
+   if (x + w <= 0 || y + h <= 0) return;
+      
    if (w <= 0 || h <= 0) return;
-   wxRect r(x, y, w, h);
+
+   // clip to viewport just to be safe
+   int clipx = x < 0 ? 0 : x;
+   int clipy = y < 0 ? 0 : y;
+   int clipr = x + w;
+   int clipb = y + h;
+   if (clipr > currwd) clipr = currwd;
+   if (clipb > currht) clipb = currht;
+   wxRect r(clipx, clipy, clipr - clipx, clipb - clipy);
+
    #if 0
       // use a different pale color each time to see any probs
       wxBrush randbrush(wxColor((rand()&127)+128,
@@ -511,6 +532,10 @@ void wx_render::killrect(int x, int y, int w, int h)
 
 void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
 {
+   //!!! is Tom's hashdraw code doing unnecessary work???
+   if (x >= currwd || y >= currht) return;
+   if (x + w <= 0 || y + h <= 0) return;
+      
    if (bmscale == 1) {
       wxBitmap bmap((const char*)bmdata, w, h, 1);
       currdc->DrawBitmap(bmap, x, y);
@@ -541,9 +566,15 @@ void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
       for ( int row = 0; row < h; row++ ) {
          for ( int col = 0; col < w; col++ ) {
             if (*byteptr & bit) {
-               // draw live cell
-               wxRect r(x + col * bmscale, y + row * bmscale, cellsize, cellsize);
-               currdc->DrawRectangle(r);
+               int newx = x + col * bmscale;
+               int newy = y + row * bmscale;
+               if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
+                  // clip cell outside viewport
+               } else {
+                  // draw live cell
+                  wxRect r(newx, newy, cellsize, cellsize);
+                  currdc->DrawRectangle(r);
+               }
             }
             if (bit < 128) {
                bit *= 2;
@@ -563,6 +594,10 @@ void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
 
 void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
+   //!!! is Tom's hashdraw code doing unnecessary work???
+   if (x >= currwd || y >= currht) return;
+   if (x + w <= 0 || y + h <= 0) return;
+      
    // faster to create new pixmap only when size changes
    if (pixmapwd != w || pixmapht != h) {
       delete pixmap;
@@ -572,7 +607,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
    }
 
    if (pmscale == 1) {
-      // pmdata contains 3 bytes (ie. the rgb values) for each pixel
+      // pmdata contains 3 bytes (the rgb values) for each pixel
       wxAlphaPixelData pxldata(*pixmap);
       if (pxldata) {
          wxAlphaPixelData::Iterator p(pxldata);
@@ -593,8 +628,24 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
    } else if (showicons && pmscale > 4 && iconmaps) {
       // draw icons only at scales 1:8 or 1:16
-      wxRect r(x, y, w, h);
-      FillRect(*currdc, r, *killbrush);   //!!! requires buffered drawing on Windows
+      int clipx = x < 0 ? 0 : x;
+      int clipy = y < 0 ? 0 : y;
+      int clipr = x + w;
+      int clipb = y + h;
+      if (clipr > currwd) clipr = currwd;
+      if (clipb > currht) clipb = currht;
+      wxRect r(clipx, clipy, clipr - clipx, clipb - clipy);
+      
+      /* debug
+      currdc->SetPen(*wxRED_PEN);
+      currdc->SetBrush(*wxWHITE_BRUSH);
+      currdc->DrawRectangle(r);
+      currdc->SetBrush(wxNullBrush);
+      currdc->SetPen(wxNullPen);
+      */
+
+      //!!! requires buffered drawing on Windows
+      FillRect(*currdc, r, *killbrush);
       DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
 
    } else {
@@ -962,10 +1013,6 @@ void CheckPasteImage()
    
          // make dead pixels 100% transparent and live pixels 100% opaque
          MaskDeadPixels(pastebitmap, pimagewd, pimageht, 255);
-         
-      } else {
-         // give some indication that pastebitmap could not be created
-         wxBell();
       }
    }
 }
