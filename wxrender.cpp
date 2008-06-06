@@ -512,13 +512,15 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                wxAlphaPixelData::Iterator topleft = p;
                if (state && iconmaps[state]) {
                   // copy cellsize*cellsize pixels from iconmaps[state]
-                  // but convert black pixels to dead cell color
-                  wxAlphaPixelData icondata(*iconmaps[state]);
+                  // but convert black pixels to dead cell color;
+                  // note that wxMSW requires using wxNativePixelData for
+                  // bitmaps with no alpha channel
+                  wxNativePixelData icondata(*iconmaps[state]);
                   if (icondata) {
-                     wxAlphaPixelData::Iterator iconpxl(icondata);
+                     wxNativePixelData::Iterator iconpxl(icondata);
                      for (int i = 0; i < cellsize; i++) {
                         wxAlphaPixelData::Iterator colstart = p;
-                        wxAlphaPixelData::Iterator iconrow = iconpxl;
+                        wxNativePixelData::Iterator iconrow = iconpxl;
                         for (int j = 0; j < cellsize; j++) {
                            if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
                               // non-black pixel
