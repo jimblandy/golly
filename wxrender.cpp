@@ -466,6 +466,8 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 // called from wx_render::pixblit to draw icons for each live cell
 void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 {
+   /* this is too slow on Windows -- use DrawStretchedPixmap approach!!!
+   // but this is faster on Mac!!!
    for ( int row = 0; row < h; row++ ) {
       for ( int col = 0; col < w; col++ ) {
          if (*byteptr && iconmaps[*byteptr]) {
@@ -482,6 +484,119 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
          byteptr++;
       }
    }
+   */
+   
+   // assume pmscale > 2 (should be 8 or 16)
+   int cellsize = pmscale - 1;
+   bool drawgap = (pmscale < (1 << mingridmag)) ||
+                  (pmscale >= (1 << mingridmag) && !showgridlines);
+   lifealgo* curralgo = currlayer->algo;
+   unsigned char deadred, deadgreen, deadblue;
+   deadred = curralgo->cellred[0];
+   deadgreen = curralgo->cellgreen[0];
+   deadblue = curralgo->cellblue[0];
+
+   wxAlphaPixelData pxldata(*pixmap);
+   if (pxldata) {
+      wxAlphaPixelData::Iterator p(pxldata);
+      for ( int row = 0; row < h; row++ ) {
+         wxAlphaPixelData::Iterator rowstart = p;
+         for ( int col = 0; col < w; col++ ) {
+            int newx = x + col * pmscale;
+            int newy = y + row * pmscale;
+            if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
+               // clip cell outside viewport
+            } else {
+               unsigned char state = *byteptr;
+               
+               wxAlphaPixelData::Iterator topleft = p;
+               if (state && iconmaps[state]) {
+                  // copy cellsize*cellsize pixels from iconmaps[state]
+                  // but convert black pixels to dead cell color
+                  wxAlphaPixelData icondata(*iconmaps[state]);
+                  if (icondata) {
+                     wxAlphaPixelData::Iterator iconpxl(icondata);
+                     for (int i = 0; i < cellsize; i++) {
+                        wxAlphaPixelData::Iterator colstart = p;
+                        wxAlphaPixelData::Iterator iconrow = iconpxl;
+                        for (int j = 0; j < cellsize; j++) {
+                           if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
+                              // non-black pixel
+                              p.Red()   = iconpxl.Red();
+                              p.Green() = iconpxl.Green();
+                              p.Blue()  = iconpxl.Blue();
+                           } else {
+                              // black pixel is transparent
+                              p.Red()   = deadred;
+                              p.Green() = deadgreen;
+                              p.Blue()  = deadblue;
+                           }
+                           p++;
+                           iconpxl++;
+                        }
+                        if (drawgap) {
+                           // draw dead pixels at right edge of cell
+                           p.Red()   = deadred;
+                           p.Green() = deadgreen;
+                           p.Blue()  = deadblue;
+                        }
+                        p = colstart;
+                        p.OffsetY(pxldata, 1);
+                        // move to next row of icon bitmap
+                        iconpxl = iconrow;
+                        iconpxl.OffsetY(icondata, 1);
+                     }
+                     if (drawgap) {
+                        // draw dead pixels at bottom edge of cell
+                        for (int j = 0; j <= cellsize; j++) {
+                           p.Red()   = deadred;
+                           p.Green() = deadgreen;
+                           p.Blue()  = deadblue;
+                           p++;
+                        }
+                     }
+                  }
+               } else {
+                  // draw dead cell
+                  for (int i = 0; i < cellsize; i++) {
+                     wxAlphaPixelData::Iterator colstart = p;
+                     for (int j = 0; j < cellsize; j++) {
+                        p.Red()   = deadred;
+                        p.Green() = deadgreen;
+                        p.Blue()  = deadblue;
+                        p++;
+                     }
+                     if (drawgap) {
+                        // draw dead pixels at right edge of cell
+                        p.Red()   = deadred;
+                        p.Green() = deadgreen;
+                        p.Blue()  = deadblue;
+                     }
+                     p = colstart;
+                     p.OffsetY(pxldata, 1);
+                  }
+                  if (drawgap) {
+                     // draw dead pixels at bottom edge of cell
+                     for (int j = 0; j <= cellsize; j++) {
+                        p.Red()   = deadred;
+                        p.Green() = deadgreen;
+                        p.Blue()  = deadblue;
+                        p++;
+                     }
+                  }
+               }
+               p = topleft;
+               
+            }
+            p.OffsetX(pxldata, pmscale);
+            
+            byteptr++;        // move to next byte in pmdata
+         }
+         p = rowstart;
+         p.OffsetY(pxldata, pmscale);
+      }
+   }
+   currdc->DrawBitmap(*pixmap, x, y);   
 }
 
 // -----------------------------------------------------------------------------
@@ -628,6 +743,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
    } else if (showicons && pmscale > 4 && iconmaps) {
       // draw icons only at scales 1:8 or 1:16
+      /* !!! no need for FillRect here???
       int clipx = x < 0 ? 0 : x;
       int clipy = y < 0 ? 0 : y;
       int clipr = x + w;
@@ -635,17 +751,9 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
       if (clipr > currwd) clipr = currwd;
       if (clipb > currht) clipb = currht;
       wxRect r(clipx, clipy, clipr - clipx, clipb - clipy);
-      
-      /* debug
-      currdc->SetPen(*wxRED_PEN);
-      currdc->SetBrush(*wxWHITE_BRUSH);
-      currdc->DrawRectangle(r);
-      currdc->SetBrush(wxNullBrush);
-      currdc->SetPen(wxNullPen);
-      */
-
       //!!! requires buffered drawing on Windows
       FillRect(*currdc, r, *killbrush);
+      */
       DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
 
    } else {
