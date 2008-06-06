@@ -48,7 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
 #include "wxscript.h"      // for inscript
-#include "wxalgos.h"       // for algo_type, MAX_ALGOS, algomenu
+#include "wxalgos.h"       // for algo_type, NUM_ALGOS, algomenu
 #include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxmain.h"
@@ -786,7 +786,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SYNC_CURS,  synccursors);
       mbar->Check(ID_STACK,      stacklayers);
       mbar->Check(ID_TILE,       tilelayers);
-      for (int i = 0; i < MAX_ALGOS; i++) {
+      for (int i = 0; i < NUM_ALGOS; i++) {
          mbar->Check(ID_ALGO0 + i, currlayer->algtype == i);
       }
       for (int i = 0; i < numlayers; i++) {

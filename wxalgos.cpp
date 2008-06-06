@@ -45,13 +45,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 wxMenu* algomenu;                   // menu of algorithm names
 algo_type initalgo = QLIFE_ALGO;    // initial layer's algorithm
-int algomem[MAX_ALGOS];             // maximum memory (in MB) for each algorithm
-int algobase[MAX_ALGOS];            // base step for each algorithm
-wxColor* algorgb[MAX_ALGOS];        // status bar color for each algorithm
-wxBrush* algobrush[MAX_ALGOS];      // corresponding brushes
+int algomem[NUM_ALGOS];             // maximum memory (in MB) for each algorithm
+int algobase[NUM_ALGOS];            // base step for each algorithm
+wxColor* algorgb[NUM_ALGOS];        // status bar color for each algorithm
+wxBrush* algobrush[NUM_ALGOS];      // corresponding brushes
 
-wxBitmap** icons7x7[MAX_ALGOS] = {NULL};    // icon bitmaps for scale 1:8
-wxBitmap** icons15x15[MAX_ALGOS] = {NULL};  // icon bitmaps for scale 1:16
+wxBitmap** icons7x7[NUM_ALGOS] = {NULL};    // icon bitmaps for scale 1:8
+wxBitmap** icons15x15[NUM_ALGOS] = {NULL};  // icon bitmaps for scale 1:16
 
 // -----------------------------------------------------------------------------
 
@@ -764,7 +764,7 @@ void InitAlgorithms()
 {
    // algomenu is used when algo button is pressed and for Set Algo submenu
    algomenu = new wxMenu();
-   for ( int i = 0; i < MAX_ALGOS; i++ ) {
+   for ( int i = 0; i < NUM_ALGOS; i++ ) {
       wxString name = wxString(GetAlgoName((algo_type)i), wxConvLocal);
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
    }
@@ -787,7 +787,7 @@ void InitAlgorithms()
    algorgb[SLIFE_ALGO] = new wxColor(255, 225, 225);  // pale red
    algorgb[JVN_ALGO]   = new wxColor(225, 255, 225);  // pale green
 
-   for (int i = 0; i < MAX_ALGOS; i++)
+   for (int i = 0; i < NUM_ALGOS; i++)
       algobrush[i] = new wxBrush(*algorgb[i]);
    
    // at the moment only JVN_ALGO uses icons
@@ -810,8 +810,7 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
       case HLIFE_ALGO:  newalgo = new hlifealgo(); break;
       case SLIFE_ALGO:  newalgo = new slifealgo(); break;
       case JVN_ALGO:    newalgo = new jvnalgo(); break;
-      default:
-         Fatal(_("Bug detected in CreateNewUniverse!"));
+      default:          Fatal(_("Bug detected in CreateNewUniverse!"));
    }
 
    if (newalgo == NULL) Fatal(_("Failed to create new universe!"));

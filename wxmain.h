@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "bigint.h"        // for bigint
 #include "writepattern.h"  // for pattern_format
 #include "wxprefs.h"       // for MAX_RECENT
-#include "wxalgos.h"       // for MAX_ALGOS, algo_type
+#include "wxalgos.h"       // for NUM_ALGOS, algo_type
 #include "wxlayer.h"       // for MAX_LAYERS
 
 // Golly's main window:
@@ -291,7 +291,7 @@ enum {
 
    // Set Algorithm submenu
    ID_ALGO0,
-   ID_ALGOMAX = ID_ALGO0 + MAX_ALGOS - 1,
+   ID_ALGOMAX = ID_ALGO0 + NUM_ALGOS - 1,
    
    // View menu
    ID_FULL,

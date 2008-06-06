@@ -31,26 +31,27 @@ typedef enum {
    HLIFE_ALGO,       // HashLife
    SLIFE_ALGO,       // Not-so-fast Life
    JVN_ALGO,         // John von Neumann's 29-state CA
-   MAX_ALGOS
+   NUM_ALGOS
 } algo_type;
 
 extern wxMenu* algomenu;                  // menu of algorithm names
 extern algo_type initalgo;                // initial layer's algorithm
-extern int algomem[MAX_ALGOS];            // maximum memory (in MB) for each algorithm
-extern int algobase[MAX_ALGOS];           // base step for each algorithm
-extern wxColor* algorgb[MAX_ALGOS];       // status bar color for each algorithm
-extern wxBrush* algobrush[MAX_ALGOS];     // corresponding brush
-extern wxBitmap** icons7x7[MAX_ALGOS];    // icon bitmaps for scale 1:8
-extern wxBitmap** icons15x15[MAX_ALGOS];  // icon bitmaps for scale 1:16
+extern int algomem[NUM_ALGOS];            // maximum memory (in MB) for each algorithm
+extern int algobase[NUM_ALGOS];           // base step for each algorithm
+extern wxColor* algorgb[NUM_ALGOS];       // status bar color for each algorithm
+extern wxBrush* algobrush[NUM_ALGOS];     // corresponding brush
+extern wxBitmap** icons7x7[NUM_ALGOS];    // icon bitmaps for scale 1:8
+extern wxBitmap** icons15x15[NUM_ALGOS];  // icon bitmaps for scale 1:16
 
 void InitAlgorithms();
-// Initialize above data.  Must be called very early (before reading prefs file).
+// Initialize above data -- must be called very early (before reading prefs file).
 
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck = true);
 // Create a new universe of given type.  If allowcheck is true then
 // event checking is allowed; ie. poller is set to wxGetApp().Poller().
 
 const char* GetAlgoName(algo_type algotype);
-// Return name of given algorithm (for displaying in various menus).
+// Return name of given algorithm.  This name appears in various menus
+// and is also stored in the prefs file.
 
 #endif
