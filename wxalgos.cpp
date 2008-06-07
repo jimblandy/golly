@@ -715,8 +715,16 @@ static wxBitmap** CreateIconBitmaps(char** xpmdata)
    #ifdef __WXMSW__
       wxImage image(xpmdata);
       wxBitmap allicons(image);
+   #elif defined(__WXMAC__)
+      //!!!??? wxBitmap allicons(xpmdata, wxBITMAP_TYPE_XPM);
+      wxImage image(xpmdata);
+      image.SetMaskColour(0, 0, 0);  // make black transparent
+      wxBitmap allicons(image);
    #else
-      wxBitmap allicons(xpmdata, wxBITMAP_TYPE_XPM);
+      // assume Linux
+      wxImage image(xpmdata);
+      image.SetMaskColour(0, 0, 0);  // make black transparent
+      wxBitmap allicons(image);      // depth is 24 on my Debian system
    #endif
 
    int wd = allicons.GetWidth();
