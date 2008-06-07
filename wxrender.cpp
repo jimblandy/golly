@@ -105,6 +105,8 @@ Other points of interest:
   displays the user's preferred pattern or script folder.  This is all
   handled in wxmain.cpp.
 
+!!! update above notes
+
 ----------------------------------------------------------------------------- */
 
 #include "wx/wxprec.h"     // for compilers that support precompilation

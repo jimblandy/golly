@@ -712,20 +712,12 @@ static char *jvn15x15[] = {
 
 static wxBitmap** CreateIconBitmaps(char** xpmdata)
 {
-   #ifdef __WXMSW__
-      wxImage image(xpmdata);
-      wxBitmap allicons(image);
-   #elif defined(__WXMAC__)
-      //!!!??? wxBitmap allicons(xpmdata, wxBITMAP_TYPE_XPM);
-      wxImage image(xpmdata);
-      image.SetMaskColour(0, 0, 0);  // make black transparent
-      wxBitmap allicons(image);
-   #else
-      // assume Linux
-      wxImage image(xpmdata);
-      image.SetMaskColour(0, 0, 0);  // make black transparent
-      wxBitmap allicons(image);      // depth is 24 on my Debian system
+   wxImage image(xpmdata);
+   #ifndef __WXMSW__
+      // need this on Mac and Linux
+      image.SetMaskColour(0, 0, 0);    // make black transparent
    #endif
+   wxBitmap allicons(image);
 
    int wd = allicons.GetWidth();
    int numicons = allicons.GetHeight() / wd;
