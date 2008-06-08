@@ -1549,5 +1549,4 @@ const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    aftercalcpop2(root, depth, 0) ;
    return 0 ;
 }
-int ghashbase::verbose = 0 ;
 char ghashbase::statusline[120] ;

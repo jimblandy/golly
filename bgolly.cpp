@@ -63,6 +63,22 @@ public:
    virtual void endprogress() { abortprogress(1, "") ; }
 } ;
 nullerrors nullerror ;
+/*
+ *   This is a "lifeerrors" that we can use to test some edge
+ *   conditions.  In this case the only real thing we use
+ *   it for is to check rendering during a progress dialog.
+ */
+class verbosestatus : public lifeerrors {
+public:
+   verbosestatus() {}
+   virtual void fatal(const char *) {}
+   virtual void warning(const char *) {}
+   virtual void status(const char *s) { cout << s << endl ; }
+   virtual void beginprogress(const char *) {}
+   virtual bool abortprogress(double, const char *) { return 0 ; }
+   virtual void endprogress() {}
+} ;
+verbosestatus verbosestatus_instance ;
 char *filename ;
 lifealgo *imp = 0 ;
 struct options {
@@ -75,6 +91,7 @@ struct options {
 bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
 int hyper, hashlife, ghashlife, render, autofit, quiet, popcount, progress ;
+int verbose ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
 char *outfilename = 0 ;
@@ -93,6 +110,7 @@ options options[] = {
   { "-g", "--ghashlife", "Use generalized hashlife algorithm", 'b', &ghashlife },
   { "-o", "--output", "Output file (*.rle, *.mc, *.rle.gz, *.mc.gz)", 's',
                                                                &outfilename },
+  { "-v", "--verbose", "Verbose", 'b', &verbose },
   { "",   "--render", "Render (benchmarking)", 'b', &render },
   { "",   "--progress", "Render during progress dialog (debugging)", 'b', &progress },
   { "",   "--popcount", "Popcount (benchmarking)", 'b', &popcount },
@@ -508,6 +526,10 @@ case 's':
      imp = new qlifealgo() ;
    if (progress)
      lifeerrors::seterrorhandler(&nullerror) ;
+   else if (verbose) {
+     lifeerrors::seterrorhandler(&verbosestatus_instance) ;
+     hlifealgo::setVerbose(1) ;
+   }
    imp->setMaxMemory(maxmem) ;
    if (testscript) {
      if (argc > 1) {

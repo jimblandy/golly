@@ -76,8 +76,13 @@ public:
    unsigned char cellred[256];
    unsigned char cellgreen[256];
    unsigned char cellblue[256];
+   // Verbosity crosses algorithms.  We need to embed this sort of option
+   // into some global shared thing or something rather than use static.
+   static void setVerbose(int v) { verbose = v ; }
+   static int getVerbose() { return verbose ; }
 
 protected:
    lifepoll *poller ;
+   static int verbose ;
 } ;
 #endif

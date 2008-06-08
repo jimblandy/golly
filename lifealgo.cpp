@@ -22,4 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 #include "lifealgo.h"
-lifealgo::~lifealgo() {}
+lifealgo::~lifealgo() {
+   poller = 0 ;
+}
+int lifealgo::verbose ;

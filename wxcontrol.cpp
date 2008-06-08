@@ -457,8 +457,7 @@ void MainFrame::GeneratePattern()
    // only show hashing info while generating, otherwise Mac app can crash
    // after a paste due to hlifealgo::resize() calling lifestatus() which
    // then causes the viewport to be repainted for some inexplicable reason
-   if (currlayer->algtype == HLIFE_ALGO)
-      hlifealgo::setVerbose( currlayer->showhashinfo );
+   lifealgo::setVerbose( currlayer->showhashinfo );
 
    if (currlayer->warp < 0)
       whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
@@ -499,7 +498,7 @@ void MainFrame::GeneratePattern()
 
    generating = false;
 
-   if (currlayer->algtype == HLIFE_ALGO) hlifealgo::setVerbose(0);
+   lifealgo::setVerbose(0);
 
    // for DisplayTimingInfo
    endtime = stopwatch->Time();
@@ -723,8 +722,7 @@ void MainFrame::NextGeneration(bool useinc)
    generating = true;
 
    // only show hashing info while generating
-   if (currlayer->algtype == HLIFE_ALGO)
-      hlifealgo::setVerbose( currlayer->showhashinfo );
+   lifealgo::setVerbose( currlayer->showhashinfo );
    
    // avoid doing some things if NextGeneration is called from a script;
    // ie. by a run/step command
@@ -750,8 +748,7 @@ void MainFrame::NextGeneration(bool useinc)
 
    generating = false;
 
-   if (currlayer->algtype == HLIFE_ALGO)
-      hlifealgo::setVerbose(0);
+   lifealgo::setVerbose(0);
    
    if (!inscript) {
       // autofit is only used when doing many gens
@@ -794,8 +791,8 @@ void MainFrame::ToggleHashInfo()
    currlayer->showhashinfo = !currlayer->showhashinfo;
    
    // only show hashing info while generating
-   if (generating && currlayer->algtype == HLIFE_ALGO)
-      hlifealgo::setVerbose( currlayer->showhashinfo );
+   if (generating)
+      lifealgo::setVerbose( currlayer->showhashinfo );
 }
 
 // -----------------------------------------------------------------------------

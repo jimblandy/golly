@@ -1740,5 +1740,4 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    aftercalcpop2(root, depth, 0) ;
    return 0 ;
 }
-int hlifealgo::verbose = 0 ;
 char hlifealgo::statusline[120] ;

@@ -179,8 +179,6 @@ public:
    virtual const char *setrule(const char *s) ;
    virtual const char *getrule() { return global_liferules.getrule() ; }
    virtual void step() ;
-   static void setVerbose(int v) { verbose = v ; }
-   static int getVerbose() { return verbose ; }
    /*
     *   The contract of draw() is that it render every pixel in the
     *   viewport precisely once.  This allows us to eliminate all
@@ -249,7 +247,6 @@ private:
    g_uintptr_t writecells ; // how many to write
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
-   static int verbose ;
    static char statusline[] ;
 //
    void leafres(leaf *n) ;
