@@ -1477,17 +1477,12 @@ void PatternView::StartDrawingCells(int x, int y)
    cellx = cellpos.first.toint();
    celly = cellpos.second.toint();
    int currstate = currlayer->algo->getcell(cellx, celly);
-   if (currlayer->algo->NumCellStates() > 2) {
-      if (currstate == currlayer->drawingstate) {
-         drawstate = 0;
-      } else {
-         drawstate = currlayer->drawingstate;
-      }
+
+   if (currstate == currlayer->drawingstate) {
+      drawstate = 0;
    } else {
-      // keep old toggle behavior for 2-state universes???
-      drawstate = 1 - currstate;
+      drawstate = currlayer->drawingstate;
    }
-   
    if (currstate != drawstate) {
       currlayer->algo->setcell(cellx, celly, drawstate);
    

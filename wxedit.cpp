@@ -347,8 +347,8 @@ void ResizeEditBar(int wd)
 void UpdateEditBar(bool active)
 {
    if (editbarptr && showedit) {
+      if (viewptr->waitingforclick) active = false;
       //!!! eventually edit bar will all have all buttons for setting cursor mode???
-      // if (viewptr->waitingforclick) active = false;
       // editbarptr->EnableButton(EYE_DROPPER, active);
 
       editbarptr->Refresh(false);
