@@ -177,7 +177,8 @@ private:
    bool forcev;                  // resize selection vertically?
    bigint anchorx, anchory;      // anchor cell of current selection
    Selection prevsel;            // previous selection
-   int drawstate;                // new cell state (0 or 1)
+   int drawstate;                // new cell state (0..255)
+   wxBrush* cellbrush;           // brush used to draw live cells
    int pastex, pastey;           // where user wants to paste clipboard pattern
    wxCursor* oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
    int hthumb, vthumb;           // current thumb box positions

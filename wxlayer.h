@@ -48,6 +48,7 @@ public:
    bool savedirty;            // state of dirty flag before drawing/script change
    bool stayclean;            // script has reset dirty flag?
    int warp;                  // speed setting (ie. step exponent)
+   int drawingstate;          // current drawing state
    wxCursor* curs;            // cursor mode
    UndoRedo* undoredo;        // undo/redo history (shared by clones)
 
@@ -194,12 +195,13 @@ Layer* GetLayer(int index);
 // Return a pointer to the layer specified by the given index.
 
 
-// Layer bar data and routines:
-
-const int layerbarht = 32;       // height of layer bar
+// Layer bar routines:
 
 void CreateLayerBar(wxWindow* parent);
 // Create layer bar window at top of given parent window.
+
+int LayerBarHeight();
+// Return height of layer bar.
 
 void ResizeLayerBar(int wd);
 // Change width of layer bar.

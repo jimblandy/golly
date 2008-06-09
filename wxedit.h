@@ -27,6 +27,30 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "bigint.h"     // for bigint
 #include "lifealgo.h"   // for lifealgo
 
+// Edit bar routines:
+
+void CreateEditBar(wxWindow* parent);
+// Create edit bar window at top of given parent window
+// or underneath layer bar if it's present.
+
+int EditBarHeight();
+// Return height of edit bar.
+
+void ResizeEditBar(int wd);
+// Change width of edit bar.
+
+void UpdateEditBar(bool active);
+// Update state of buttons in edit bar.
+
+void ToggleEditBar();
+// Show/hide edit bar.
+
+void ShiftEditBar(int yamount);
+// Shift edit bar up/down by given amount.
+
+
+//!!! move following into wxselect.h???
+
 // Most editing functions operate on the current selection.
 // This class encapsulates all of the selection-related operations:
 

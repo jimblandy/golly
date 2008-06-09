@@ -591,19 +591,21 @@ void MainFrame::DoPendingAction(bool restart)
                }
 
             } else {
-               // temporarily pretend the tool/layer bars are not showing
-               // to avoid UpdateToolBar/UpdateLayerBar changing button states
+               // temporarily pretend the tool/layer/edit bars are not showing
+               // to avoid Update[Tool/Layer/Edit]Bar changing button states
                bool saveshowtool = showtool;    showtool = false;
                bool saveshowlayer = showlayer;  showlayer = false;
+               bool saveshowedit = showedit;    showedit = false;
                
                // process the pending command
                cmdevent.SetEventType(wxEVT_COMMAND_MENU_SELECTED);
                cmdevent.SetEventObject(mainptr);
                mainptr->ProcessEvent(cmdevent);
                
-               // restore tool/layer bar flags
+               // restore tool/layer/edit bar flags
                showtool = saveshowtool;
                showlayer = saveshowlayer;
+               showedit = saveshowedit;
                
                if (restart) {
                   // call GeneratePattern again
@@ -617,10 +619,11 @@ void MainFrame::DoPendingAction(bool restart)
    if (draw_pending) {
       draw_pending = false;
 
-      // temporarily pretend the tool/layer bars are not showing
-      // to avoid UpdateToolBar/UpdateLayerBar changing button states
+      // temporarily pretend the tool/layer/edit bars are not showing
+      // to avoid Update[Tool/Layer/Edit]Bar changing button states
       bool saveshowtool = showtool;    showtool = false;
       bool saveshowlayer = showlayer;  showlayer = false;
+      bool saveshowedit = showedit;    showedit = false;
       
       UpdateEverything();
       
@@ -633,9 +636,10 @@ void MainFrame::DoPendingAction(bool restart)
          wxMilliSleep(5);             // don't hog CPU
       }
       
-      // restore tool/layer bar flags
+      // restore tool/layer/edit bar flags
       showtool = saveshowtool;
       showlayer = saveshowlayer;
+      showedit = saveshowedit;
       
       if (restart) {
          // call GeneratePattern again

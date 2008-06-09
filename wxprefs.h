@@ -72,6 +72,7 @@ extern bool savexrle;            // save RLE file using XRLE format?
 extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
 extern bool showlayer;           // show layer bar?
+extern bool showedit;            // show edit bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
@@ -206,6 +207,7 @@ typedef enum {
    DO_SCALE16,                   // set scale 1:16
    DO_SCRIPTDIR,                 // set script folder...
    DO_SHOWICONS,                 // show cell icons
+   DO_SHOWEDIT,                  // show edit bar
    DO_SHOWEXACT,                 // show exact numbers
    DO_SHOWGRID,                  // show grid lines
    DO_HASHINFO,                  // show hash info

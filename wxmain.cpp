@@ -720,6 +720,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_SET_SCALE,    active);
       mbar->Enable(ID_TOOL_BAR,     active);
       mbar->Enable(ID_LAYER_BAR,    active);
+      mbar->Enable(ID_EDIT_BAR,     active);
       mbar->Enable(ID_STATUS_BAR,   active);
       mbar->Enable(ID_EXACT,        active);
       mbar->Enable(ID_GRID,         active);
@@ -759,6 +760,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_HINFO,      currlayer->showhashinfo);
       mbar->Check(ID_TOOL_BAR,   showtool);
       mbar->Check(ID_LAYER_BAR,  showlayer);
+      mbar->Check(ID_EDIT_BAR,   showedit);
       mbar->Check(ID_STATUS_BAR, showstatus);
       mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
@@ -801,6 +803,7 @@ void MainFrame::UpdateUserInterface(bool active)
 {
    UpdateToolBar(active);
    UpdateLayerBar(active);
+   UpdateEditBar(active);
    UpdateMenuItems(active);
    viewptr->CheckCursor(active);
    statusptr->CheckMouseLocation(active);
@@ -969,10 +972,19 @@ void RightWindow::OnSize(wxSizeEvent& event)
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0 && bigview) {
-      // resize layer bar and main viewport window
+      // resize layer bar, edit bar and main viewport window
       ResizeLayerBar(wd);
-      bigview->SetSize(0, showlayer ? layerbarht : 0,
-                       wd, showlayer ? ht - layerbarht : ht);
+      ResizeEditBar(wd);
+      int y = 0;
+      if (showlayer) {
+         y += LayerBarHeight();
+         ht -= LayerBarHeight();
+      }
+      if (showedit) {
+         y += EditBarHeight();
+         ht -= EditBarHeight();
+      }
+      bigview->SetSize(0, y, wd, ht);
    }
    event.Skip();
 }
@@ -1083,6 +1095,7 @@ void MainFrame::ToggleFullScreen()
    #else
       static bool restorestatusbar; // restore status bar at end of full screen mode?
       static bool restorelayerbar;  // restore layer bar?
+      static bool restoreeditbar;   // restore edit bar?
       static bool restoretoolbar;   // restore tool bar?
       static bool restorepattdir;   // restore pattern directory?
       static bool restorescrdir;    // restore script directory?
@@ -1117,6 +1130,12 @@ void MainFrame::ToggleFullScreen()
          restorelayerbar = showlayer;
          if (restorelayerbar) {
             ToggleLayerBar();
+         }
+         
+         // hide edit bar if necessary
+         restoreeditbar = showedit;
+         if (restoreeditbar) {
+            ToggleEditBar();
          }
          
          // hide tool bar if necessary
@@ -1158,9 +1177,10 @@ void MainFrame::ToggleFullScreen()
          }
 
          // show layer bar if necessary
-         if (restorelayerbar && !showlayer) {
-            ToggleLayerBar();
-         }
+         if (restorelayerbar && !showlayer) ToggleLayerBar();
+
+         // show edit bar if necessary
+         if (restoreeditbar && !showedit) ToggleEditBar();
 
          // restore pattern/script directory if necessary
          if ( restorepattdir && !splitwin->IsSplit() ) {
@@ -1323,6 +1343,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_FULL:           ToggleFullScreen(); break;
       case ID_TOOL_BAR:       ToggleToolBar(); break;
       case ID_LAYER_BAR:      ToggleLayerBar(); break;
+      case ID_EDIT_BAR:       ToggleEditBar(); break;
       case ID_STATUS_BAR:     ToggleStatusBar(); break;
       case ID_EXACT:          ToggleExactNumbers(); break;
       case ID_INFO:           ShowPatternInfo(); break;
@@ -2149,6 +2170,7 @@ void MainFrame::CreateMenus()
    viewMenu->AppendSeparator();
    viewMenu->AppendCheckItem(ID_TOOL_BAR,       _("Show Tool Bar") + GetAccelerator(DO_SHOWTOOL));
    viewMenu->AppendCheckItem(ID_LAYER_BAR,      _("Show Layer Bar") + GetAccelerator(DO_SHOWLAYER));
+   viewMenu->AppendCheckItem(ID_EDIT_BAR,       _("Show Edit Bar") + GetAccelerator(DO_SHOWEDIT));
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
    viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
@@ -2305,6 +2327,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, wxID_ZOOM_OUT,      DO_ZOOMOUT);
       SetAccelerator(mbar, ID_TOOL_BAR,        DO_SHOWTOOL);
       SetAccelerator(mbar, ID_LAYER_BAR,       DO_SHOWLAYER);
+      SetAccelerator(mbar, ID_EDIT_BAR,        DO_SHOWEDIT);
       SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
       SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
       SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
@@ -2475,15 +2498,21 @@ MainFrame::MainFrame()
    // create layer bar and initial layer
    CreateLayerBar(rightpane);
    AddLayer();
+   
+   // create edit bar
+   CreateEditBar(rightpane);
 
-   // enable/disable tool tips after creating tool bar and layer bar
+   // enable/disable tool tips after creating bars with buttons
    #if wxUSE_TOOLTIPS
       wxToolTip::Enable(showtips);
       wxToolTip::SetDelay(1500);    // 1.5 secs
    #endif
    
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
-   viewptr = new PatternView(rightpane, 0, showlayer ? layerbarht : 0, 40, 40,
+   int y = 0;
+   if (showlayer) y += LayerBarHeight();
+   if (showedit) y += EditBarHeight();
+   viewptr = new PatternView(rightpane, 0, y, 40, 40,
                              wxNO_BORDER |
                              wxWANTS_CHARS |              // receive all keyboard events
                              wxFULL_REPAINT_ON_RESIZE |

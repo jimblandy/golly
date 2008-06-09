@@ -61,7 +61,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 const int DRAG_RATE = 20;           // call OnDragTimer 50 times per sec
 
-static bool stop_drawing = false;   // terminate a draw done while generating?
+static bool stopdrawing = false;    // terminate a draw done while generating?
+static bool slowdraw = false;       // do slow cell drawing via UpdateView?
 
 static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
@@ -353,6 +354,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       mainptr->EnableAllMenus(false);  // disable all menu items
       mainptr->UpdateToolBar(false);   // disable all tool bar buttons
       UpdateLayerBar(false);           // disable all layer bar buttons
+      UpdateEditBar(false);            // disable all edit bar buttons
       CaptureMouse();                  // get mouse down event even if outside view
       pasterect = wxRect(-1,-1,0,0);
 
@@ -1347,6 +1349,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SCALE16:     SetPixelsPerCell(16); break;
       case DO_SHOWTOOL:    mainptr->ToggleToolBar(); break;
       case DO_SHOWLAYER:   ToggleLayerBar(); break;
+      case DO_SHOWEDIT:    ToggleEditBar(); break;
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;
@@ -1391,17 +1394,11 @@ void PatternView::ShowDrawing()
    // update status bar
    if (showstatus) statusptr->Refresh(false);
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
-   // assume makefile-mac1039 has been used to build Golly,
-   // so use UpdateView to avoid wxMac bug on Mac OS 10.3.9
-   UpdateView();
-#else
-   if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
-      // update all layers; this is rather slow but most people won't be
-      // drawing cells when all layers are displayed
+   if (slowdraw) {
+      // we have to draw by updating entire view
+      slowdraw = false;
       UpdateView();
    }
-#endif
 
    MarkLayerDirty();
 }
@@ -1414,12 +1411,13 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
    if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy);
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
-   // assume makefile-mac1039 has been used to build Golly,
-   // so use UpdateView to avoid wxMac bug on Mac OS 10.3.9
+   // use UpdateView to avoid wxMac bug on Mac OS 10.3.9
+   slowdraw = true;
    return;
 #else
    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // drawing must be done via UpdateView in ShowDrawing
+      slowdraw = true;
       return;
    }
 #endif
@@ -1433,10 +1431,29 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
    
    if (cellsize > 2) cellsize--;    // allow for gap between cells
    
-   dc.DrawRectangle(x, y, cellsize, cellsize);
+   wxBitmap** iconmaps = NULL;
+   if (currlayer->view->getmag() == 3) {
+      iconmaps = icons7x7[currlayer->algtype];
+   } else if (currlayer->view->getmag() == 4) {
+      iconmaps = icons15x15[currlayer->algtype];
+   }
+
+   if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
+       iconmaps && iconmaps[drawstate]) {
+      if (SelectionExists() && currlayer->currsel.ContainsCell(cx, cy)) {
+         // icon has mask so have to draw via UpdateView in ShowDrawing
+         //!!! can we fix that -- easy if drawing is buffered!!!
+         slowdraw = true;
+         return;
+      }
+      // draw icon
+      dc.DrawBitmap(*iconmaps[drawstate], x, y, true);
+   } else {
+      dc.DrawRectangle(x, y, cellsize, cellsize);
+   }
    
    // overlay selection image if cell is within selection
-   if ( SelectionExists() && currlayer->currsel.ContainsCell(cx, cy) ) {
+   if (SelectionExists() && currlayer->currsel.ContainsCell(cx, cy)) {
       wxRect r = wxRect(x, y, cellsize, cellsize);
       DrawSelection(dc, r);
    }
@@ -1459,25 +1476,50 @@ void PatternView::StartDrawingCells(int x, int y)
 
    cellx = cellpos.first.toint();
    celly = cellpos.second.toint();
-   drawstate = 1 - currlayer->algo->getcell(cellx, celly);
-   currlayer->algo->setcell(cellx, celly, drawstate);
-
-   wxClientDC dc(this);
-   dc.SetPen(*wxTRANSPARENT_PEN);
-   dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
-   DrawOneCell(cellx, celly, dc);
-   dc.SetBrush(wxNullBrush);        // restore brush
-   dc.SetPen(wxNullPen);            // restore pen
+   int currstate = currlayer->algo->getcell(cellx, celly);
+   if (currlayer->algo->NumCellStates() > 2) {
+      if (currstate == currlayer->drawingstate) {
+         drawstate = 0;
+      } else {
+         drawstate = currlayer->drawingstate;
+      }
+   } else {
+      // keep old toggle behavior for 2-state universes???
+      drawstate = 1 - currstate;
+   }
    
-   ShowDrawing();
+   if (currstate != drawstate) {
+      currlayer->algo->setcell(cellx, celly, drawstate);
+   
+      wxClientDC dc(this);
+      dc.SetPen(*wxTRANSPARENT_PEN);
+      if (currlayer->algo->NumCellStates() > 2) {
+         //!!! ignore swapcolors???
+         if (drawstate == 0) {
+            cellbrush->SetColour(*deadrgb);
+         } else {
+            cellbrush->SetColour(currlayer->algo->cellred[drawstate],
+                                 currlayer->algo->cellgreen[drawstate],
+                                 currlayer->algo->cellblue[drawstate]);
+         }
+         dc.SetBrush(*cellbrush);
+      } else {
+         dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
+      }
+      DrawOneCell(cellx, celly, dc);
+      dc.SetBrush(wxNullBrush);
+      dc.SetPen(wxNullPen);
+      
+      ShowDrawing();
+   }
    
    drawingcells = true;
-   CaptureMouse();                  // get mouse up event even if outside view
-   dragtimer->Start(DRAG_RATE);     // see OnDragTimer
+   CaptureMouse();                     // get mouse up event even if outside view
+   dragtimer->Start(DRAG_RATE);        // see OnDragTimer
    
-   if (stop_drawing) {
+   if (stopdrawing) {
       // mouse up event has already been seen so terminate drawing immediately
-      stop_drawing = false;
+      stopdrawing = false;
       StopDraggingMouse();
    }
 }
@@ -1497,7 +1539,11 @@ void PatternView::DrawCells(int x, int y)
    if ( newx != cellx || newy != celly ) {
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
-      dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
+      if (currlayer->algo->NumCellStates() > 2) {
+         dc.SetBrush(*cellbrush);
+      } else {
+         dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
+      }
 
       int numchanged = 0;
       
@@ -2129,7 +2175,7 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
    } else if (mainptr->draw_pending) {
       // this can happen if user does a quick click while pattern is generating,
       // so set a special flag to force drawing to terminate
-      stop_drawing = true;
+      stopdrawing = true;
    }
 }
 
@@ -2446,6 +2492,9 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
    dragtimer = new wxTimer(this, wxID_ANY);
    if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
    
+   cellbrush = new wxBrush(*wxBLACK_BRUSH);
+   if (cellbrush == NULL) Fatal(_("Failed to create cell brush!"));
+   
    // avoid erasing background on GTK+
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
@@ -2469,4 +2518,5 @@ PatternView::~PatternView()
 {
    delete dragtimer;
    delete viewbitmap;
+   delete cellbrush;
 }

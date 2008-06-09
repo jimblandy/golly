@@ -1554,10 +1554,11 @@ void DrawView(wxDC& dc, int tileindex)
    currlayer->algo->cellblue[0] = deadrgb->Blue();
 
    if (showicons && currlayer->view->getmag() > 2) {
-      if (currlayer->view->getmag() == 3)
+      if (currlayer->view->getmag() == 3) {
          iconmaps = icons7x7[currlayer->algtype];
-      else
+      } else {
          iconmaps = icons15x15[currlayer->algtype];
+      }
    }
 
    // draw pattern using a sequence of blit/pixblit and killrect calls

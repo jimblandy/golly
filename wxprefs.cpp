@@ -122,6 +122,7 @@ bool savexrle = true;            // save RLE file using XRLE format?
 bool showtips = true;            // show button tips?
 bool showtool = true;            // show tool bar?
 bool showlayer = false;          // show layer bar?
+bool showedit = false;           // show edit bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showgridlines = true;       // display grid lines?
@@ -448,10 +449,7 @@ void AddDefaultKeyActions()
    keyaction[(int)'9'][0].id =         DO_RESTORE00;
    keyaction[(int)'9'][mk_META].id =   DO_RESTORE00;
    keyaction[(int)']'][0].id =         DO_ZOOMIN;
-   keyaction[(int)'*'][0].id =         DO_ZOOMIN;
-   keyaction[(int)'*'][mk_SHIFT].id =  DO_ZOOMIN;
    keyaction[(int)'['][0].id =         DO_ZOOMOUT;
-   keyaction[(int)'/'][0].id =         DO_ZOOMOUT;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
@@ -465,12 +463,14 @@ void AddDefaultKeyActions()
    keyaction[(int)'6'][0].id =         DO_SCALE16;
    keyaction[(int)'\''][0].id =        DO_SHOWTOOL;
    keyaction[(int)'\\'][0].id =        DO_SHOWLAYER;
+   keyaction[(int)'/'][0].id =         DO_SHOWEDIT;
    keyaction[(int)';'][0].id =         DO_SHOWSTATUS;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
    keyaction[(int)'\''][mk_META].id =  DO_SHOWTOOL;
    keyaction[(int)'\\'][mk_META].id =  DO_SHOWLAYER;
+   keyaction[(int)'/'][mk_META].id =   DO_SHOWEDIT;
    keyaction[(int)';'][mk_META].id =   DO_SHOWSTATUS;
 #endif
    keyaction[(int)'e'][0].id =         DO_SHOWEXACT;
@@ -584,6 +584,7 @@ const char* GetActionName(action_id action)
       case DO_SCALE16:        return "Set Scale 1:16";
       case DO_SHOWTOOL:       return "Show Tool Bar";
       case DO_SHOWLAYER:      return "Show Layer Bar";
+      case DO_SHOWEDIT:       return "Show Edit Bar";
       case DO_SHOWSTATUS:     return "Show Status Bar";
       case DO_SHOWEXACT:      return "Show Exact Numbers";
       case DO_SHOWGRID:       return "Show Grid Lines";
@@ -1405,6 +1406,7 @@ void SavePrefs()
    fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
    fprintf(f, "show_tool=%d\n", showtool ? 1 : 0);
    fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
+   fprintf(f, "show_edit=%d\n", showedit ? 1 : 0);
    fprintf(f, "show_status=%d\n", showstatus ? 1 : 0);
    fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
@@ -1834,6 +1836,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "show_layer") == 0) {
          showlayer = value[0] == '1';
+
+      } else if (strcmp(keyword, "show_edit") == 0) {
+         showedit = value[0] == '1';
 
       } else if (strcmp(keyword, "show_status") == 0) {
          showstatus = value[0] == '1';

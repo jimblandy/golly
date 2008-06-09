@@ -367,6 +367,14 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "showeditbar") == 0) {
+      *oldval = showedit ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleEditBar();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
    } else if (strcmp(optname, "showpatterns") == 0) {
       *oldval = showpatterns ? 1 : 0;
       if (*oldval != newval) {
@@ -516,6 +524,7 @@ bool GSF_getoption(char* optname, int* optval)
    else if (strcmp(optname, "opacity") == 0)       *optval = opacity;
    else if (strcmp(optname, "savexrle") == 0)      *optval = savexrle ? 1 : 0;
    else if (strcmp(optname, "showboldlines") == 0) *optval = showboldlines ? 1 : 0;
+   else if (strcmp(optname, "showeditbar") == 0)   *optval = showedit ? 1 : 0;
    else if (strcmp(optname, "showexact") == 0)     *optval = showexact ? 1 : 0;
    else if (strcmp(optname, "showgrid") == 0)      *optval = showgridlines ? 1 : 0;
    else if (strcmp(optname, "showhashinfo") == 0)  *optval = currlayer->showhashinfo ? 1 : 0;

@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxedit.h"        // for Selection
+#include "wxedit.h"        // for ShiftEditBar, Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
@@ -51,6 +51,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxlayer.h"
 
 // -----------------------------------------------------------------------------
+
+const int layerbarht = 32;       // height of layer bar
 
 int numlayers = 0;               // number of existing layers
 int numclones = 0;               // number of cloned layers
@@ -204,7 +206,7 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 
    // init position variables used by AddButton and AddSeparator
    biggap = 16;
-   xpos = biggap;       // nicer than 4 when no pattern/script window
+   xpos = 4;
    #ifdef __WXGTK__
       ypos = 3;
       smallgap = 6;
@@ -238,17 +240,19 @@ void LayerBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       FillRect(dc, r, brush);
    #endif
    
-   // draw gray border line at bottom edge
-   #if defined(__WXMSW__)
-      dc.SetPen(*wxGREY_PEN);
-   #elif defined(__WXMAC__)
-      wxPen linepen(wxColor(140,140,140));
-      dc.SetPen(linepen);
-   #else
-      dc.SetPen(*wxLIGHT_GREY_PEN);
-   #endif
-   dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
-   dc.SetPen(wxNullPen);
+   if (!showedit) {
+      // draw gray border line at bottom edge
+      #if defined(__WXMSW__)
+         dc.SetPen(*wxGREY_PEN);
+      #elif defined(__WXMAC__)
+         wxPen linepen(wxColor(140,140,140));
+         dc.SetPen(linepen);
+      #else
+         dc.SetPen(*wxLIGHT_GREY_PEN);
+      #endif
+      dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
+      dc.SetPen(wxNullPen);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -566,6 +570,12 @@ void CreateLayerBar(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
+int LayerBarHeight() {
+   return layerbarht;
+}
+
+// -----------------------------------------------------------------------------
+
 void ResizeLayerBar(int wd)
 {
    if (layerbarptr) {
@@ -588,6 +598,9 @@ void UpdateLayerBar(bool active)
       layerbarptr->EnableButton(TILE_LAYERS,       active);
       for (int i = 0; i < numlayers; i++)
          layerbarptr->EnableButton(i, active && CanSwitchLayer(i));
+
+      layerbarptr->Refresh(false);
+      layerbarptr->Update();
    }
 }
 
@@ -602,10 +615,12 @@ void ToggleLayerBar()
       // show layer bar at top of viewport window
       r.y += layerbarht;
       r.height -= layerbarht;
+      ShiftEditBar(layerbarht);     // move edit bar down
    } else {
       // hide layer bar
       r.y -= layerbarht;
       r.height += layerbarht;
+      ShiftEditBar(-layerbarht);    // move edit bar up
    }
    
    bigview->SetSize(r);
@@ -842,6 +857,7 @@ void SyncClones()
             // cloneptr->autofit = currlayer->autofit;
             // cloneptr->hyperspeed = currlayer->hyperspeed;
             // cloneptr->showhashinfo = currlayer->showhashinfo;
+            // cloneptr->drawingstate = currlayer->drawingstate;
             // cloneptr->curs = currlayer->curs;
             // cloneptr->originx = currlayer->originx;
             // cloneptr->originy = currlayer->originy;
@@ -1547,6 +1563,7 @@ Layer::Layer()
       
       // set cursor in case newcurs/opencurs are set to "No Change"
       curs = curs_pencil;
+      drawingstate = 1;
       
       // first layer can't be a clone
       cloneid = 0;
@@ -1606,8 +1623,9 @@ Layer::Layer()
       view->setpositionmag( currlayer->view->x, currlayer->view->y,
                             currlayer->view->getmag() );
       
-      // inherit current cursor
+      // inherit current cursor and drawing state
       curs = currlayer->curs;
+      drawingstate = currlayer->drawingstate;
 
       if (cloning || duplicating) {
          // duplicate all the other current settings
