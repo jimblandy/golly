@@ -779,10 +779,7 @@ static char *jvn15x15[] = {
 static wxBitmap** CreateIconBitmaps(char** xpmdata)
 {
    wxImage image(xpmdata);
-   #ifndef __WXMSW__
-      // need this on Mac and Linux
-      image.SetMaskColour(0, 0, 0);    // make black transparent
-   #endif
+   image.SetMaskColour(0, 0, 0);    // make black transparent
    wxBitmap allicons(image);
 
    int wd = allicons.GetWidth();

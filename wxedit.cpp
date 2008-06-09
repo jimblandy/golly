@@ -27,8 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
-
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -69,10 +67,6 @@ private:
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
    void DrawEditBar(wxDC& dc, int wd, int ht);
-
-   wxBitmap* editbitmap;         // edit bar bitmap
-   int editbitmapwd;             // width of edit bar bitmap
-   int editbitmapht;             // height of edit bar bitmap
    
    int h_col1;                   // horizontal position of labels
    int h_col2;                   // horizontal position of info for state 0
@@ -139,10 +133,6 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    dc.GetTextExtent(_("States:"), &textwd, &textht);
    h_col2 = h_col1 + textwd + 4;
    dc.GetTextExtent(_("9"), &digitwd, &textht);
-
-   editbitmap = NULL;
-   editbitmapwd = -1;
-   editbitmapht = -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -150,7 +140,6 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 EditBar::~EditBar()
 {
    delete editfont;
-   delete editbitmap;
 }
 
 // -----------------------------------------------------------------------------
@@ -176,11 +165,6 @@ void EditBar::DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y)
 
 void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
 {
-   #ifdef __WXMSW__
-      // needed on Windows
-      dc.Clear();
-   #endif
-   
    wxRect r = wxRect(0, 0, wd, ht);
    
    #ifdef __WXMAC__
@@ -281,20 +265,17 @@ void EditBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       // windows on Mac OS X and GTK+ 2.0 are automatically buffered
       wxPaintDC dc(this);
    #else
-      // use wxWidgets buffering to avoid flicker
-      if (wd != editbitmapwd || ht != editbitmapht) {
-         // need to create a new bitmap for edit bar
-         delete editbitmap;
-         editbitmap = new wxBitmap(wd, ht);
-         editbitmapwd = wd;
-         editbitmapht = ht;
-      }
-      if (editbitmap == NULL) Fatal(_("Not enough memory to render edit bar!"));
-      wxBufferedPaintDC dc(this, *editbitmap);
+      // do NOT use wxBufferedPaintDC on Windows -- causes white bg
+      wxPaintDC dc(this);
    #endif
    
    if (!showedit) return;
-
+   
+   #ifdef __WXMSW__
+      // needed on Windows
+      dc.Clear();
+   #endif
+   
    // no need to pass in update rect???
    // wxRect updaterect = GetUpdateRegion().GetBox();
    DrawEditBar(dc, wd, ht);
