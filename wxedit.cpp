@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -66,7 +68,7 @@ private:
 
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
-   void DrawEditBar(wxDC& dc, int wd, int ht, wxRect& updaterect);
+   void DrawEditBar(wxDC& dc, int wd, int ht);
 
    wxBitmap* editbitmap;         // edit bar bitmap
    int editbitmapwd;             // width of edit bar bitmap
@@ -172,7 +174,7 @@ void EditBar::DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y)
 
 // -----------------------------------------------------------------------------
 
-void EditBar::DrawEditBar(wxDC& dc, int wd, int ht, wxRect& updaterect)
+void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
 {
    #ifdef __WXMSW__
       // needed on Windows
@@ -293,8 +295,9 @@ void EditBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    
    if (!showedit) return;
 
-   wxRect updaterect = GetUpdateRegion().GetBox();
-   DrawEditBar(dc, wd, ht, updaterect);
+   // no need to pass in update rect???
+   // wxRect updaterect = GetUpdateRegion().GetBox();
+   DrawEditBar(dc, wd, ht);
 }
 
 // -----------------------------------------------------------------------------
