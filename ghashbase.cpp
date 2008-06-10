@@ -451,14 +451,14 @@ ghashbase::ghashbase() {
    gcstep = 0 ;
    for (int i=0; i<256; i++)
      cellred[i] = cellgreen[i] = cellblue[i] = 0 ;
-   cellred[1] |= 128 ;
-   cellblue[2] |= 128 ;
-   cellgreen[4] |= 128 ;
-   cellred[8] |= 64 ;
-   cellblue[16] |= 64 ;
-   cellgreen[32] |= 64 ;
-   cellred[64] |= 32 ;
-   cellgreen[128] |= 32 ;
+   cellred[1] |= 0x92 ;
+   cellblue[2] |= 0x92 ;
+   cellgreen[4] |= 0x92 ;
+   cellred[8] |= 0x49 ;
+   cellblue[16] |= 0x49 ;
+   cellgreen[32] |= 0x49 ;
+   cellred[64] |= 0x24 ;
+   cellgreen[128] |= 0x24 ;
    for (int i=1; i<256; i++) {
      cellred[i] = cellred[i&-i] | cellred[i&(i-1)] ;
      cellgreen[i] = cellgreen[i&-i] | cellgreen[i&(i-1)] ;

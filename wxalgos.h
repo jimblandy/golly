@@ -31,6 +31,7 @@ typedef enum {
    HLIFE_ALGO,       // HashLife
    SLIFE_ALGO,       // Not-so-fast Life
    JVN_ALGO,         // John von Neumann's 29-state CA
+   WW_ALGO,          // WireWorld!
    NUM_ALGOS
 } algo_type;
 

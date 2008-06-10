@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "slifealgo.h"
 #include "jvnalgo.h"
+#include "wwalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
@@ -838,17 +839,20 @@ void InitAlgorithms()
    algomem[HLIFE_ALGO] = 300;       // in megabytes
    algomem[SLIFE_ALGO] = 300;       // ditto
    algomem[JVN_ALGO]   = 300;       // ditto
+   algomem[WW_ALGO]    = 300;
 
    //!!! perhaps use static *algo::GetBestBaseStep()???
    algobase[QLIFE_ALGO] = 10;
    algobase[HLIFE_ALGO] = 8;        // best if power of 2
    algobase[SLIFE_ALGO] = 8 ;
    algobase[JVN_ALGO]   = 8;        // best if power of 2
+   algobase[WW_ALGO]    = 8;
 
    algorgb[QLIFE_ALGO] = new wxColor(255, 255, 206);  // pale yellow
    algorgb[HLIFE_ALGO] = new wxColor(226, 250, 248);  // pale blue
    algorgb[SLIFE_ALGO] = new wxColor(255, 225, 225);  // pale red
    algorgb[JVN_ALGO]   = new wxColor(225, 255, 225);  // pale green
+   algorgb[WW_ALGO]    = new wxColor(225, 225, 255);  // not sure
 
    for (int i = 0; i < NUM_ALGOS; i++)
       algobrush[i] = new wxBrush(*algorgb[i]);
@@ -873,6 +877,7 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
       case HLIFE_ALGO:  newalgo = new hlifealgo(); break;
       case SLIFE_ALGO:  newalgo = new slifealgo(); break;
       case JVN_ALGO:    newalgo = new jvnalgo(); break;
+      case WW_ALGO:     newalgo = new wwalgo(); break;
       default:          Fatal(_("Bug detected in CreateNewUniverse!"));
    }
 
@@ -896,6 +901,7 @@ const char* GetAlgoName(algo_type algotype)
       case HLIFE_ALGO:  return "HashLife";
       case SLIFE_ALGO:  return "SlowLife";
       case JVN_ALGO:    return "JvN 29-state CA";
+      case WW_ALGO:     return "WireWorld";
       default:          Fatal(_("Bug detected in GetAlgoName!"));
    }
    return "BUG";        // avoid gcc warning
