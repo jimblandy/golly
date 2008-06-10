@@ -32,7 +32,9 @@ public:
    jvnalgo() ;
    virtual ~jvnalgo() ;
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
-			  state e, state sw, state s, state se) ;
-   virtual int NumCellStates() { return 29; }
+                          state e, state sw, state s, state se) ;
+   // AKT
+   virtual char** GetIconData(int size);
+   virtual int NumCellStates();
 };
 #endif

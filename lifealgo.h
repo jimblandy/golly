@@ -69,6 +69,14 @@ public:
    void setpoll(lifepoll *pollerarg) { poller = pollerarg ; }
    virtual const char *readmacrocell(char *) { return cannotreadhash ; }
    
+   // Verbosity crosses algorithms.  We need to embed this sort of option
+   // into some global shared thing or something rather than use static.
+   static void setVerbose(int v) { verbose = v ; }
+   static int getVerbose() { return verbose ; }
+   
+   // AKT: return icon bitmap data (NULL or array of strings in XPM format)
+   virtual char** GetIconData(int size) { return NULL; }
+   
    // AKT: return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
 
@@ -76,10 +84,6 @@ public:
    unsigned char cellred[256];
    unsigned char cellgreen[256];
    unsigned char cellblue[256];
-   // Verbosity crosses algorithms.  We need to embed this sort of option
-   // into some global shared thing or something rather than use static.
-   static void setVerbose(int v) { verbose = v ; }
-   static int getVerbose() { return verbose ; }
 
 protected:
    lifepoll *poller ;

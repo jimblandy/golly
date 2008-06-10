@@ -39,7 +39,8 @@ PYTHON_LINK =
 ### put .o files in an X11-specific subdir to avoid conflict with .o files created by GTK build
 OBJDIR = ObjX11
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
-   $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/jvnalgo.o $(OBJDIR)/slifealgo.o \
+   $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/jvnalgo.o \
+   $(OBJDIR)/slifealgo.o $(OBJDIR)/wwalgo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o
@@ -66,7 +67,7 @@ bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 
 $(OBJDIR)/bgolly.o: bgolly.cpp \
 platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-hlifealgo.h qlifealgo.h jvnalgo.h ghashbase.h liferules.h writepattern.h util.h
+hlifealgo.h qlifealgo.h jvnalgo.h wwalgo.h ghashbase.h liferules.h writepattern.h util.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ bgolly.cpp
 
 $(OBJDIR)/bigint.o: bigint.cpp bigint.h util.h
@@ -95,6 +96,10 @@ viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 $(OBJDIR)/jvnalgo.o: jvnalgo.cpp ghashbase.h jvnalgo.h platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ jvnalgo.cpp
+
+$(OBJDIR)/wwalgo.o: wwalgo.cpp ghashbase.h wwalgo.h platform.h lifealgo.h bigint.h \
+viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+	$(CXXC) $(CXXFLAGS) -c -o $@ wwalgo.cpp
 
 $(OBJDIR)/slifealgo.o: slifealgo.cpp ghashbase.h slifealgo.h platform.h lifealgo.h bigint.h \
 viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
@@ -145,7 +150,7 @@ wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxundo.h wxlayer.h wxscript.h wxa
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
 
 $(OBJDIR)/wxalgos.o: wxalgos.cpp wxalgos.h \
-platform.h bigint.h lifealgo.h  qlifealgo.h hlifealgo.h jvnalgo.h slifealgo.h lifepoll.h \
+platform.h bigint.h lifealgo.h  qlifealgo.h hlifealgo.h jvnalgo.h wwalgo.h slifealgo.h lifepoll.h \
 wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxalgos.cpp
 

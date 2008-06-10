@@ -1440,9 +1440,7 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
 
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
        iconmaps && iconmaps[drawstate]) {
-      // draw icon -- icon bitmaps are masked so first we have to
-      // draw the background (if this causes too much flashing
-      // on Windows then draw into wxMemoryDC!!!???)
+      // draw icon; icon bitmaps are masked so first we have to draw the background
       dc.SetBrush(swapcolors ? *livebrush[currindex] : *deadbrush);
       dc.DrawRectangle(x, y, cellsize, cellsize);
       dc.DrawBitmap(*iconmaps[drawstate], x, y, true);
