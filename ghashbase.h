@@ -104,7 +104,7 @@ public:
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
 
    // AKT
-   virtual char** GetIconData(int size) { return NULL; }
+   virtual char** GetIconData(int size) { size=0; return NULL; }
    virtual int NumCellStates() { return 2; }
 private:
 /*

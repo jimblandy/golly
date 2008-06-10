@@ -78,7 +78,7 @@ public:
    virtual const char* DefaultRule() { return "B3/S23"; }
    
    // AKT: return icon bitmap data (NULL or array of strings in XPM format)
-   virtual char** GetIconData(int size) { return NULL; }
+   virtual char** GetIconData(int size) { size=0; return NULL; }
    
    // AKT: return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }

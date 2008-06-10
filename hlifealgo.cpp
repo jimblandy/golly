@@ -1491,6 +1491,7 @@ default:       return "Illegal character in readmacrocell." ;
       } else if (line[0] == '#') {
          switch (line[1]) {
          char *p, *pp ;
+         const char *err ;
          case 'R':
             p = line + 2 ;
             while (*p && *p <= ' ') p++ ;
@@ -1499,7 +1500,7 @@ default:       return "Illegal character in readmacrocell." ;
             *pp = 0 ;
             
             // AKT: need to check for B0-not-S8 rule
-            const char* err = global_liferules.setrule(p);
+            err = global_liferules.setrule(p);
             if (err)
                return err;
             if (global_liferules.hasB0notS8)
