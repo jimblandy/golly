@@ -823,7 +823,7 @@ void MainFrame::ShowRuleDialog()
    }
 
    if (ChangeRule()) {
-      // show new rule in window title (file name doesn't change)
+      // show new rule in window title (but don't change file name)
       SetWindowTitle(wxEmptyString);
    }
 }
@@ -833,11 +833,6 @@ void MainFrame::ShowRuleDialog()
 void MainFrame::ChangeAlgorithm(algo_type newalgotype)
 {
    if (newalgotype == currlayer->algtype) return;
-
-   if ( global_liferules.hasB0notS8 && newalgotype == HLIFE_ALGO ) {
-      statusptr->ErrorMessage(_("HashLife cannot be used with a B0-not-S8 rule."));
-      return;
-   }
 
    // check if current pattern is too big to use getcell/setcell
    bigint top, left, bottom, right;
@@ -874,19 +869,16 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
    
    // try to use same rule
+   bool rulechanged = false;
    const char* err = newalgo->setrule( (char*)currlayer->algo->getrule() );
    if (err) {
-      // switch to default rule for new algo
-      //!!! newalgo->setrule( newalgo->DefaultRule() );
+      // switch to new algo's default rule
+      newalgo->setrule( newalgo->DefaultRule() );
+      rulechanged = true;
    }
    
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
-   
-   // reset drawing state if it wouldn't be valid
-   if (currlayer->drawingstate >= newalgo->NumCellStates()) {
-      currlayer->drawingstate = 1;
-   }
 
    if ( !currlayer->algo->isEmpty() ) {
       // copy pattern in current universe to new universe
@@ -937,8 +929,15 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
    delete currlayer->algo;
    currlayer->algo = newalgo;   
    SetGenIncrement();
+
+   if (rulechanged) {
+      // show new rule in window title (but don't change file name)
+      SetWindowTitle(wxEmptyString);
+      statusptr->DisplayMessage(_("Rule has changed."));
+   }
+
    UpdateEverything();
-   
+
    if (allowundo && !currlayer->stayclean)
       currlayer->undoredo->RememberAlgoChange(oldalgotype);
 }

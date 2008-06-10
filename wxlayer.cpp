@@ -904,7 +904,7 @@ void SaveLayerSettings()
 
    // set oldalgo and oldrule for use in CurrentLayerChanged
    oldalgo = currlayer->algtype;
-   oldrule = wxString(global_liferules.getrule(), wxConvLocal);
+   oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    
    // we're about to change layer so remember current rule
    // in case we switch back to this layer
@@ -928,10 +928,10 @@ void SaveLayerSettings()
 void CurrentLayerChanged()
 {
    // currlayer has changed since SaveLayerSettings was called;
-   // need to update global rule table if the new currlayer has
-   // a different algorithm or a different rule
+   // update rule if the new currlayer has a different algorithm or rule
    if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
+      //!!! error should never occur here???
    }
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
@@ -1549,8 +1549,8 @@ Layer::Layer()
       // set rule using initrule stored in prefs file
       const char *err = algo->setrule(initrule);
       if (err) {
-         Warning(wxString(err,wxConvLocal));
-         // user will see offending rule string in window title
+         // switch to algo's default rule (user probably edited rule in prefs file)
+         algo->setrule( algo->DefaultRule() );
       }
    
       // don't need to remember rule here (SaveLayerSettings will do it)
@@ -1612,8 +1612,8 @@ Layer::Layer()
          if (undoredo == NULL) Fatal(_("Failed to create new undo/redo object!"));
       }
       
-      // inherit current rule in global_liferules (NOT in currlayer->rule)
-      rule = wxString(global_liferules.getrule(), wxConvLocal);
+      // inherit current rule
+      rule = wxString(currlayer->algo->getrule(), wxConvLocal);
       
       // inherit current viewport's size, scale and location
       view = new viewport(100,100);

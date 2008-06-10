@@ -81,6 +81,11 @@ const char *liferules::setrule(const char *rulestring) {
    if (rule)
       free((void *)rule) ;
    rule = rulestring ;
+   
+   // AKT: don't allow empty string
+   if (rulestring[0] == 0) {
+      return "Rule cannot be empty string." ;
+   }
 
    // need to emulate B0-not-S8 rule?
    hasB0notS8 = false;
@@ -95,6 +100,10 @@ const char *liferules::setrule(const char *rulestring) {
       } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
          rulebits |= 1 << (addend + rulestring[i] - '0') ;
       } else if (rulestring[i] == 'w' || rulestring[i] == 'W') {
+         // AKT: check for digit after W otherwise rule like "WiredWorld" is accepted
+         if (rulestring[i+1] < '0' || rulestring[i+1] > '9') {
+            return "Digit expected after W." ;
+         }
          wolfram = atol(rulestring+i+1) ;
          if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
             // when we support toroidal universe we can allow all numbers from 0..255!!!

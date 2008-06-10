@@ -201,7 +201,7 @@ const char* GetAlgoName(algo_type algotype)
       case QLIFE_ALGO:  return "QuickLife";
       case HLIFE_ALGO:  return "HashLife";
       case SLIFE_ALGO:  return "SlowLife";
-      case JVN_ALGO:    return "JvN 29-state CA";
+      case JVN_ALGO:    return "JvN";
       case WW_ALGO:     return "WireWorld";
       default:          Fatal(_("Bug detected in GetAlgoName!"));
    }

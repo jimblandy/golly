@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase, algomem
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algo_type, etc
 #include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
@@ -286,6 +286,9 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       UpdateStatus();
    }
 
+   // save current rule so we can restore it below
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   
    CreateUniverse();
 
    if (!newtitle.IsEmpty()) {
@@ -298,27 +301,30 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    if (LoadImage(path)) {
       viewptr->nopattupdate = false;
    } else {
+      algo_type oldalgtype = currlayer->algtype;
       const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
-      if (err && strcmp(err,cannotreadhash) == 0 &&
-          //!!! need !currlayer->algo->CanReadMC()???
-          !currlayer->algo->hyperCapable()) {
-         currlayer->algtype = HLIFE_ALGO;
-         statusptr->SetMessage(_("Using HashLife due to macrocell format."));
-         // update all of status bar so we don't see different colored lines
-         UpdateStatus();
-         CreateUniverse();
-         err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
-      } else if (global_liferules.hasB0notS8 &&
-                 currlayer->algo->hyperCapable() && !newtitle.IsEmpty()) {
-         currlayer->algtype = QLIFE_ALGO;
-         statusptr->SetMessage(_("Using QuickLife due to B0-not-S8 rule."));
-         // update all of status bar so we don't see different colored lines
-         UpdateStatus();
-         CreateUniverse();
-         err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
+      if (err) {
+         const char* olderr = err;
+         // cycle thru all other algos until readpattern succeeds
+         for (int i = 0; i < NUM_ALGOS; i++) {
+            if (i != oldalgtype) {
+               currlayer->algtype = (algo_type) i;
+               CreateUniverse();
+               err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
+               if (!err) break;
+            }
+         }
+         viewptr->nopattupdate = false;
+         if (err) {
+            // no algo could read pattern so restore original algo and rule
+            // and report original error
+            currlayer->algtype = oldalgtype;
+            CreateUniverse();
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            Warning( wxString(olderr,wxConvLocal) );
+         }
       }
       viewptr->nopattupdate = false;
-      if (err) Warning(wxString(err,wxConvLocal));
    }
 
    if (!newtitle.IsEmpty()) {

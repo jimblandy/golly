@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "viewport.h"
-#include "liferules.h"     // for global_liferules
 
 #include "wxgolly.h"       // for mainptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal
@@ -574,11 +573,11 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    
    // pasting clipboard pattern can also cause a rule change
    if (canchangerule > 0 && oldrule != newrule) {
-      currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-      // note that setrule should succeed (earlier readclipboard didn't return error)
-      if (global_liferules.hasB0notS8 && currlayer->algo->hyperCapable()) {
+      const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+      // setrule should succeed (earlier readclipboard didn't return error) but play safe
+      if (err) {
          currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-         Warning(_("B0-not-S8 rules are not allowed in this algorithm."));
+         Warning( wxString(err,wxConvLocal) );
       } else {
          // show new rule in title bar
          mainptr->SetWindowTitle(wxEmptyString);
@@ -1473,6 +1472,11 @@ void PatternView::StartDrawingCells(int x, int y)
    cellx = cellpos.first.toint();
    celly = cellpos.second.toint();
    int currstate = currlayer->algo->getcell(cellx, celly);
+   
+   // reset drawing state in case it's no longer valid (due to algo/rule change)
+   if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
+      currlayer->drawingstate = 1;
+   }
 
    if (currstate == currlayer->drawingstate) {
       drawstate = 0;

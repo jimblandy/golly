@@ -29,8 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/filename.h"   // for wxFileName
 
-#include "liferules.h"     // for global_liferules
-
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxedit.h"        // for Selection
@@ -158,18 +156,14 @@ const char* GSF_setrule(char* rulestring)
 
    const char* err;
    if (rulestring == NULL || rulestring[0] == 0) {
-      err = currlayer->algo->setrule("B3/S23");
+      // set default rule for current algo
+      err = currlayer->algo->setrule( currlayer->algo->DefaultRule() );
    } else {
       err = currlayer->algo->setrule(rulestring);
    }
-
    if (err) {
       currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
       return err;
-   }
-   if ( global_liferules.hasB0notS8 && currlayer->algtype == HLIFE_ALGO ) {
-      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-      return "B0-not-S8 rules are not allowed in HashLife.";
    }
    
    // show new rule in main window's title but don't change name

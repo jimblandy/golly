@@ -1497,7 +1497,14 @@ default:       return "Illegal character in readmacrocell." ;
             pp = p ;
             while (*pp > ' ') pp++ ;
             *pp = 0 ;
-            global_liferules.setrule(p) ;
+            
+            // AKT: need to check for B0-not-S8 rule
+            const char* err = global_liferules.setrule(p);
+            if (err)
+               return err;
+            if (global_liferules.hasB0notS8)
+               return "B0-not-S8 rules are not allowed in HashLife.";
+            
             break ;
          case 'G':
             p = line + 2 ;
@@ -1554,7 +1561,15 @@ default:       return "Illegal character in readmacrocell." ;
 const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
    clearcache() ;
-   return global_liferules.setrule(s) ;
+   
+   // AKT: need to check for B0-not-S8 rule
+   const char* err = global_liferules.setrule(s);
+   if (err)
+      return err;
+   if (global_liferules.hasB0notS8)
+      return "B0-not-S8 rules are not allowed in HashLife.";
+   
+   return 0 ;
 }
 void hlifealgo::unpack8x8(unsigned short nw, unsigned short ne,
 			  unsigned short sw, unsigned short se,

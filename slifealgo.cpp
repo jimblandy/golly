@@ -22,6 +22,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 #include "slifealgo.h"
+
+// AKT: for case-insensitive string comparison
+#include <string.h>
+#ifndef WIN32
+   #define stricmp strcasecmp
+#endif
+
+// AKT: this algo only supports B3/S23
+const char SLOW_RULE[] = "B3/S23";
+
+const char* slifealgo::setrule(const char *s) {
+   if (stricmp(s, SLOW_RULE) == 0) return NULL;
+   return "This algorithm only supports a single rule (B3/S23).";
+}
+
+const char* slifealgo::getrule() {
+   return SLOW_RULE;
+}
+
+const char* slifealgo::DefaultRule() {
+   return SLOW_RULE;
+}
+
 using namespace std ;
 slifealgo::slifealgo() {
 }

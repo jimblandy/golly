@@ -59,7 +59,7 @@ public:
 
    // WARNING: this string is used to remember the current rule when
    // switching to another layer; to determine the current rule at any
-   // time, use global_liferules.getrule() or currlayer->algo->getrule()
+   // time, use currlayer->algo->getrule()
    wxString rule;
    
    Selection currsel;         // current selection

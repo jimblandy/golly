@@ -22,9 +22,39 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 #include "wwalgo.h"
+
+// AKT: for case-insensitive string comparison
+#include <string.h>
+#ifndef WIN32
+   #define stricmp strcasecmp
+#endif
+
 using namespace std ;
+
+// AKT: this algo only supports a single rule
+const char WW_RULE[] = "WireWorld";
+
+const char* wwalgo::setrule(const char *s) {
+   if (stricmp(s, WW_RULE) == 0) return NULL;
+   return "This algorithm only supports a single rule (WireWorld).";
+}
+
+const char* wwalgo::getrule() {
+   return WW_RULE;
+}
+
+const char* wwalgo::DefaultRule() {
+   return WW_RULE;
+}
+
 wwalgo::wwalgo() {
-  cellred[1] = cellgreen[1] = cellblue[1] = 255 ;
+   // AKT: match colors used at http://www.quinapalus.com/wi-index.html
+   //!!! Actually, this is dumb to set color info here -- I need
+   // to use a GetColorData method (like GetIconData) and put
+   // the cell* arrays in the UI code.
+   cellred[1] = 0;    cellgreen[1] = 128;  cellblue[1] = 255;
+   cellred[2] = 255;  cellgreen[2] = 255;  cellblue[2] = 255;
+   cellred[3] = 255;  cellgreen[3] = 128;  cellblue[3] = 0;
 }
 wwalgo::~wwalgo() {
 }

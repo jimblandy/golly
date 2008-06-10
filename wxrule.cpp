@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "lifealgo.h"
-#include "liferules.h"     // for global_liferules
 
 #include "wxgolly.h"       // for wxGetApp
 #include "wxprefs.h"       // for namedrules, allowundo
@@ -130,6 +129,7 @@ void RuleDialog::CreateControls()
    
    ruletext = new wxTextCtrl(this, RULE_TEXT,
                              wxString(currlayer->algo->getrule(), wxConvLocal));
+   //!!! comments are not correct for JvN, WireWorld, etc
    wxString title = _("Enter a 2D rule using B0..8/S0..8 notation\n");
    title +=         _("or a 1D rule as Wn (n = 0 to 254 and even):");
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
@@ -216,6 +216,9 @@ int CanonicalRule(const char* rulestring)
       } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
          rulebits |= 1 << (addend + rulestring[i] - '0');
       } else if (rulestring[i] == 'w' || rulestring[i] == 'W') {
+         if (rulestring[i+1] < '0' || rulestring[i+1] > '9') {
+            return -1;
+         }
          int wolfram = atol(rulestring+i+1);
          if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
             // when we support toroidal universe we can allow all numbers from 0..255!!!
@@ -423,15 +426,12 @@ bool RuleDialog::TransferDataFromWindow()
    // get and validate new rule
    wxString newrule = ruletext->GetValue();
    if ( newrule.IsEmpty() ) {
-      currlayer->algo->setrule("B3/S23");
+      currlayer->algo->setrule( currlayer->algo->DefaultRule() );
       return true;
    }
    const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
    if (err) {
       Warning(wxString(err, wxConvLocal));
-      return false;
-   } else if ( global_liferules.hasB0notS8 && currlayer->algo->hyperCapable() ) {
-      Warning(_("B0-not-S8 rules are not allowed in this algorithm."));
       return false;
    }
    return true;

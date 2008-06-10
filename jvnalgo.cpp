@@ -23,7 +23,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "jvnalgo.h"
 
+// AKT: for case-insensitive string comparison
+#include <string.h>
+#ifndef WIN32
+   #define stricmp strcasecmp
+#endif
+
 using namespace std ;
+
+// AKT: this algo only supports 2 rules
+const char JVN_RULE[] = "JvN-29";
+const char EJVN_RULE[] = "JvN-32";
+
+static int numstates = 29;   // 29 or 32
+
+int jvnalgo::NumCellStates() {
+   return numstates;
+}
+
+const char* jvnalgo::setrule(const char *s) {
+   if (stricmp(s, JVN_RULE) == 0) {
+      numstates = 29;
+      return NULL;
+   } else if (stricmp(s, EJVN_RULE) == 0) {
+      numstates = 32;
+      return NULL;
+   }
+   return "This algorithm only supports two rules (JvN-29 or JvN-32).";
+}
+
+const char* jvnalgo::getrule() {
+   if (numstates == 29) return JVN_RULE;
+   if (numstates == 32) return EJVN_RULE;
+   return "Bug in jvnalgo::getrule!";
+}
+
+const char* jvnalgo::DefaultRule() {
+   return JVN_RULE;
+}
 
 const int NORTH = 1 ;
 const int SOUTH = 3 ;
@@ -840,9 +877,4 @@ char** jvnalgo::GetIconData(int size) {
    if (size == 7) return jvn7x7;
    if (size == 15) return jvn15x15;
    return NULL;
-}
-
-int jvnalgo::NumCellStates() {
-   //!!! return 29 or 32 depending on current rule (jvn or ejvn)
-   return 29;
 }

@@ -33,5 +33,9 @@ public:
    virtual ~slifealgo() ;
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
 			  state e, state sw, state s, state se) ;
+   // AKT
+   virtual const char* setrule(const char* s);
+   virtual const char* getrule();
+   virtual const char* DefaultRule();
 };
 #endif

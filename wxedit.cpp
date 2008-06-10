@@ -241,6 +241,11 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       }
    }
    
+   // reset drawing state in case it's no longer valid (due to algo/rule change)
+   if (currlayer->drawingstate >= curralgo->NumCellStates()) {
+      currlayer->drawingstate = 1;
+   }
+   
    // draw rect around current drawing state
    int x = 1 + h_col2 + COLWD * currlayer->drawingstate;
    r = wxRect(x, 2, COLWD - 1, editbarht - 4);

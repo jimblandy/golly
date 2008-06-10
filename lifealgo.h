@@ -74,6 +74,9 @@ public:
    static void setVerbose(int v) { verbose = v ; }
    static int getVerbose() { return verbose ; }
    
+   // AKT: return default rule
+   virtual const char* DefaultRule() { return "B3/S23"; }
+   
    // AKT: return icon bitmap data (NULL or array of strings in XPM format)
    virtual char** GetIconData(int size) { return NULL; }
    
