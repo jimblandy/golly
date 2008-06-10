@@ -193,16 +193,16 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    wxBitmap** iconmaps = icons7x7[currlayer->algtype];
    lifealgo* curralgo = currlayer->algo;
 
-   // set rgb values for dead cells (ignore swapcolors!!!???)
-   curralgo->cellred[0] = deadrgb->Red();
-   curralgo->cellgreen[0] = deadrgb->Green();
-   curralgo->cellblue[0] = deadrgb->Blue();
+   // set rgb values for dead cells
+   curralgo->cellred[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   curralgo->cellgreen[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   curralgo->cellblue[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
    
    if (curralgo->NumCellStates() == 2) {
       // set rgb values for live cells in 2-state universe
-      curralgo->cellred[1] = livergb[currindex]->Red();
-      curralgo->cellgreen[1] = livergb[currindex]->Green();
-      curralgo->cellblue[1] = livergb[currindex]->Blue();
+      curralgo->cellred[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      curralgo->cellgreen[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      curralgo->cellblue[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
    }
 
    for (int i = 0; i < curralgo->NumCellStates(); i++) {
@@ -290,7 +290,6 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
    statusptr->ClearMessage();
 
    // user can change drawing state by clicking in appropriate box
-   // (but only if in drawing mode???)
    int x = event.GetX();
    int right = h_col2 + COLWD * currlayer->algo->NumCellStates();
    int box = -1;
@@ -299,7 +298,8 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
       box = (x - h_col2) / COLWD;
    }
    
-   if (box >= 0 && box < currlayer->algo->NumCellStates()) {
+   if (box >= 0 && box < currlayer->algo->NumCellStates() &&
+       currlayer->drawingstate != box) {
       currlayer->drawingstate = box;
       Refresh(false);
       Update();
@@ -388,7 +388,7 @@ void ShiftEditBar(int yamount)
 
 // -----------------------------------------------------------------------------
 
-//!!! move following into wxselect.cpp???
+//!!! move following Selection stuff into wxselect.cpp???
 
 // This module implements operations on selections.
 
@@ -1302,8 +1302,6 @@ void Selection::Clear()
    lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         /** FIXME:  make it work with multistate */
-         //!!! probably bug in ghashbase::nextcell
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells

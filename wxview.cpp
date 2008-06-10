@@ -1440,13 +1440,11 @@ void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
 
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
        iconmaps && iconmaps[drawstate]) {
-      if (SelectionExists() && currlayer->currsel.ContainsCell(cx, cy)) {
-         // icon has mask so have to draw via UpdateView in ShowDrawing
-         //!!! can we fix that -- easy if drawing is buffered!!!
-         slowdraw = true;
-         return;
-      }
-      // draw icon
+      // draw icon -- icon bitmaps are masked so first we have to
+      // draw the background (if this causes too much flashing
+      // on Windows then draw into wxMemoryDC!!!???)
+      dc.SetBrush(swapcolors ? *livebrush[currindex] : *deadbrush);
+      dc.DrawRectangle(x, y, cellsize, cellsize);
       dc.DrawBitmap(*iconmaps[drawstate], x, y, true);
    } else {
       dc.DrawRectangle(x, y, cellsize, cellsize);
@@ -1489,9 +1487,8 @@ void PatternView::StartDrawingCells(int x, int y)
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
       if (currlayer->algo->NumCellStates() > 2) {
-         //!!! ignore swapcolors???
          if (drawstate == 0) {
-            cellbrush->SetColour(*deadrgb);
+            cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
             cellbrush->SetColour(currlayer->algo->cellred[drawstate],
                                  currlayer->algo->cellgreen[drawstate],
@@ -1535,6 +1532,13 @@ void PatternView::DrawCells(int x, int y)
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
       if (currlayer->algo->NumCellStates() > 2) {
+         if (drawstate == 0) {
+            cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
+         } else {
+            cellbrush->SetColour(currlayer->algo->cellred[drawstate],
+                                 currlayer->algo->cellgreen[drawstate],
+                                 currlayer->algo->cellblue[drawstate]);
+         }
          dc.SetBrush(*cellbrush);
       } else {
          dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);

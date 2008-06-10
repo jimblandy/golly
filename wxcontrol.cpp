@@ -873,12 +873,20 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
    // create a new universe of the right flavor
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
    
-   // even though universes share a global rule table we still need to call setrule
-   // due to internal differences in the handling of Wolfram rules
-   newalgo->setrule( (char*)currlayer->algo->getrule() );
+   // try to use same rule
+   const char* err = newalgo->setrule( (char*)currlayer->algo->getrule() );
+   if (err) {
+      // switch to default rule for new algo
+      //!!! newalgo->setrule( newalgo->DefaultRule() );
+   }
    
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
+   
+   // reset drawing state if it wouldn't be valid
+   if (currlayer->drawingstate >= newalgo->NumCellStates()) {
+      currlayer->drawingstate = 1;
+   }
 
    if ( !currlayer->algo->isEmpty() ) {
       // copy pattern in current universe to new universe

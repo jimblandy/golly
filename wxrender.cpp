@@ -1548,10 +1548,10 @@ void DrawView(wxDC& dc, int tileindex)
    killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
    cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
-   // set rgb values for dead cells in pixblit calls (ignore swapcolors!!!???)
-   currlayer->algo->cellred[0] = deadrgb->Red();
-   currlayer->algo->cellgreen[0] = deadrgb->Green();
-   currlayer->algo->cellblue[0] = deadrgb->Blue();
+   // set rgb values for dead cells in pixblit calls
+   currlayer->algo->cellred[0] = swapcolors ? livergb[colorindex]->Red() : deadrgb->Red();
+   currlayer->algo->cellgreen[0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
+   currlayer->algo->cellblue[0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();
 
    if (showicons && currlayer->view->getmag() > 2) {
       if (currlayer->view->getmag() == 3) {
