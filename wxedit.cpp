@@ -1159,8 +1159,10 @@ void Selection::Shrink(bool fit)
    
    // the easy way to shrink selection is to create a new temporary universe,
    // copy selection into new universe and then call findedges;
-   // use qlife because its findedges call is faster
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
+   // if only 2 cell states then use qlife because its findedges call is faster
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
+                                          currlayer->algtype :
+                                          QLIFE_ALGO);
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -1856,7 +1858,6 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newx = topbottom ? ileft : iright;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         //!!! make it work with multistate
          int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -1865,7 +1866,7 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
             cx += skip;
             if (erasesrc) srcalgo->setcell(cx, cy, 0);
             newx += newxinc * skip;
-            destalgo->setcell(newx, newy, 1);
+            destalgo->setcell(newx, newy, v);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -1984,8 +1985,10 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
       }
    } else {
       // flip into temporary universe and kill all live cells in selection;
-      // use qlife because its setcell/getcell calls are faster
-      lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
+      // if only 2 cell states then use qlife because its setcell/getcell calls are faster
+      lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
+                                             currlayer->algtype :
+                                             QLIFE_ALGO);
 
       if ( FlipRect(topbottom, currlayer->algo, tempalgo, true, itop, ileft, ibottom, iright) ) {
          // find pattern edges in temporary universe (could be much smaller)
@@ -2047,7 +2050,6 @@ bool Selection::RotateRect(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = clockwise ? ntop : nbottom;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         //!!! make it work with multistate
          int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -2056,7 +2058,7 @@ bool Selection::RotateRect(bool clockwise,
             cx += skip;
             if (erasesrc) srcalgo->setcell(cx, cy, 0);
             newy += newyinc * skip;
-            destalgo->setcell(newx, newy, 1);
+            destalgo->setcell(newx, newy, v);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -2123,7 +2125,6 @@ bool Selection::RotatePattern(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -2131,7 +2132,7 @@ bool Selection::RotatePattern(bool clockwise,
             // found next live cell
             cx += skip;
             newy += newyinc * skip;
-            newalgo->setcell(newx, newy, 1);
+            newalgo->setcell(newx, newy, v);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -2279,7 +2280,9 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
       if (oleft > nleft) oleft = nleft;
       if (obottom < nbottom) obottom = nbottom;
       if (oright < nright) oright = nright;
-      oldalgo = CreateNewUniverse(QLIFE_ALGO);
+      oldalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
+                                  currlayer->algtype :
+                                  QLIFE_ALGO);
       if ( !viewptr->CopyRect(otop, oleft, obottom, oright, currlayer->algo, oldalgo,
                               false, _("Saving part of pattern")) ) {
          delete oldalgo;
@@ -2288,8 +2291,10 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
    }
 
    // create temporary universe; doesn't need to match current universe so
-   // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
+   // if only 2 cell states then use qlife because its setcell/getcell calls are faster
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
+                                          currlayer->algtype :
+                                          QLIFE_ALGO);
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees
