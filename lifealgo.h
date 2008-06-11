@@ -36,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "readpattern.h"
 #include "platform.h"
 
-const char cannotreadhash[] = "cannot read hash" ;
 class lifealgo {
 public:
    lifealgo() { poller = &default_poller ; }
@@ -67,7 +66,7 @@ public:
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) = 0 ;
    virtual const char *writeNativeFormat(FILE *f, char *comments) = 0 ;
    void setpoll(lifepoll *pollerarg) { poller = pollerarg ; }
-   virtual const char *readmacrocell(char *) { return cannotreadhash ; }
+   virtual const char *readmacrocell(char *) { return "cannot read hash" ; }
    
    // Verbosity crosses algorithms.  We need to embed this sort of option
    // into some global shared thing or something rather than use static.

@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxedit.h"        // for Selection
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse
+#include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
 #include "wxview.h"
 
@@ -616,18 +616,20 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
       tmpfile.Close();
    #endif         
 
-   // remember rule before readclipboard changes it (all algos share a global rule)
+   // remember rule in case readclipboard changes it
    oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
-   const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
-                                   **tempalgo, t, l, b, r);
-   //!!! forget cannotreadhash test -- try all other algos until readclipboard succeeds
-   if (err && strcmp(err,cannotreadhash) == 0) {
-      // clipboard contains macrocell data so use hlife
-      delete *tempalgo;
-      *tempalgo = CreateNewUniverse(HLIFE_ALGO);
-      err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
-                          **tempalgo, t, l, b, r);
+   const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
+   if (err) {
+      // cycle thru all other algos until readclipboard succeeds
+      for (int i = 0; i < NUM_ALGOS; i++) {
+         if (i != currlayer->algtype) {
+            delete *tempalgo;
+            *tempalgo = CreateNewUniverse((algo_type) i);
+            err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
+            if (!err) break;
+         }
+      }
    }
 
    if (canchangerule > 0) {
@@ -651,7 +653,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    #endif
 
    if (err) {
-      // note that error could be due to bad rule string in clipboard data
+      // error could be due to bad rule string in clipboard data
       Warning(wxString(err,wxConvLocal));
       return false;
    }
@@ -675,12 +677,11 @@ void PatternView::PasteClipboard(bool toselection)
    }
 
    // create a temporary universe for storing clipboard pattern;
-   // try to use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO);
+   // GetClipboardPattern assumes it is same type as current universe
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
 
    // read clipboard pattern into temporary universe;
-   // note that tempalgo will be deleted and re-created as a hlifealgo
-   // if clipboard contains macrocell data
+   // note that tempalgo may be deleted and re-created
    bigint top, left, bottom, right;
    if ( GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);

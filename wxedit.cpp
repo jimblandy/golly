@@ -644,8 +644,7 @@ void Selection::Advance()
       return;
    }
    
-   // create a temporary universe of same type as current universe so we
-   // don't have to update the global rule table (in case it's a Wolfram rule)
+   // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
    
    // copy live cells in selection to temporary universe

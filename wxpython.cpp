@@ -451,20 +451,24 @@ static PyObject* py_load(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s", &filename)) return NULL;
 
-   // create temporary qlife universe
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
+   // create temporary universe of same type
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
-   // readpattern might change global rule table
+   // readpattern might change rule
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
    // read pattern into temporary universe
    const char* err = readpattern(FILENAME, *tempalgo);
-   //!!! forget cannotreadhash test -- try all other algos until readclipboard succeeds
-   if (err && strcmp(err,cannotreadhash) == 0) {
-      // macrocell file, so switch to hlife universe
-      delete tempalgo;
-      tempalgo = CreateNewUniverse(HLIFE_ALGO, allowcheck);
-      err = readpattern(FILENAME, *tempalgo);
+   if (err) {
+      // try all other algos until readpattern succeeds
+      for (int i = 0; i < NUM_ALGOS; i++) {
+         if (i != currlayer->algtype) {
+            delete tempalgo;
+            tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
+            err = readpattern(FILENAME, *tempalgo);
+            if (!err) break;
+         }
+      }
    }
 
    // restore rule
@@ -502,6 +506,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "O!s|s", &PyList_Type, &given_list, &filename, &desc))
       return NULL;
 
+   //!!! fix to handle > 2 states
    // create temporary qlife universe
    lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
 
@@ -886,8 +891,7 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &ngens)) return NULL;
 
-   // create a temporary universe of same type as current universe so we
-   // don't have to update the global rule table (in case it's a Wolfram rule)
+   // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
    // copy cell list into temporary universe
@@ -1166,8 +1170,8 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
    PyObject* outlist = PyList_New(0);
 
    // create a temporary universe for storing clipboard pattern;
-   // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
+   // GetClipboardPattern assumes it is same type as current universe
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)

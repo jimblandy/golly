@@ -90,8 +90,9 @@ bool MainFrame::SaveStartingPattern()
    }
 
    // save starting pattern in tempstart file
-   if ( currlayer->algtype == HLIFE_ALGO ) {
-      // much faster to save hlife pattern in a macrocell file
+   //!!! use CanWriteFormat(MC_format)???
+   if ( currlayer->algo->hyperCapable() ) {
+      // much faster to save pattern in a macrocell file
       const char* err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));

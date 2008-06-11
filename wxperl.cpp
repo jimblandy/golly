@@ -456,20 +456,24 @@ XS(pl_load)
    STRLEN n_a;
    char* filename = SvPV(ST(0), n_a);
 
-   // create temporary qlife universe
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
+   // create temporary universe of same type
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
-   // readpattern might change global rule table
+   // readpattern might change rule
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
    // read pattern into temporary universe
    const char* err = readpattern(FILENAME, *tempalgo);
-   //!!! forget cannotreadhash test -- try all other algos until readclipboard succeeds
-   if (err && strcmp(err,cannotreadhash) == 0) {
-      // macrocell file, so switch to hlife universe
-      delete tempalgo;
-      tempalgo = CreateNewUniverse(HLIFE_ALGO, allowcheck);
-      err = readpattern(FILENAME, *tempalgo);
+   if (err) {
+      // try all other algos until readpattern succeeds
+      for (int i = 0; i < NUM_ALGOS; i++) {
+         if (i != currlayer->algtype) {
+            delete tempalgo;
+            tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
+            err = readpattern(FILENAME, *tempalgo);
+            if (!err) break;
+         }
+      }
    }
 
    // restore rule
@@ -519,6 +523,7 @@ XS(pl_store)
    STRLEN n_a;
    char* filename = SvPV(ST(1), n_a);
 
+   //!!! fix to handle > 2 states
    // create temporary qlife universe
    lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
 
@@ -936,8 +941,7 @@ XS(pl_evolve)
 
    int ngens = SvIV(ST(1));
 
-   // create a temporary universe of same type as current universe so we
-   // don't have to update the global rule table (in case it's a Wolfram rule)
+   // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
    // copy cell array into temporary universe
@@ -1198,8 +1202,8 @@ XS(pl_getclip)
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
    // create a temporary universe for storing clipboard pattern;
-   // use qlife because its setcell/getcell calls are faster
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
+   // GetClipboardPattern assumes it is same type as current universe
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)
