@@ -1661,6 +1661,18 @@ XS(pl_getrule)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_numstates)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $int = g_numstates()");
+
+   XSRETURN_IV(currlayer->algo->NumCellStates());
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_setpos)
 {
    IGNORE_UNUSED_PARAMS;
@@ -1960,7 +1972,7 @@ XS(pl_getlayer)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) PERL_ERROR("Usage: g_getlayer()");
+   if (items != 0) PERL_ERROR("Usage: $int = g_getlayer()");
 
    XSRETURN_IV(currindex);
 }
@@ -1972,7 +1984,7 @@ XS(pl_numlayers)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) PERL_ERROR("Usage: g_numlayers()");
+   if (items != 0) PERL_ERROR("Usage: $int = g_numlayers()");
 
    XSRETURN_IV(numlayers);
 }
@@ -1984,7 +1996,7 @@ XS(pl_maxlayers)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) PERL_ERROR("Usage: g_maxlayers()");
+   if (items != 0) PERL_ERROR("Usage: $int = g_maxlayers()");
 
    XSRETURN_IV(MAX_LAYERS);
 }
@@ -2426,6 +2438,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_getpop",       pl_getpop,       file);
    newXS("g_setrule",      pl_setrule,      file);
    newXS("g_getrule",      pl_getrule,      file);
+   newXS("g_numstates",    pl_numstates,    file);
    // viewing
    newXS("g_setpos",       pl_setpos,       file);
    newXS("g_getpos",       pl_getpos,       file);

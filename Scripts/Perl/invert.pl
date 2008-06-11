@@ -1,5 +1,6 @@
 # Invert all cell states in the current selection.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), May 2007.
+# Updated to use g_numstates command, Jun 2008.
 
 use strict;
 use Time::HiRes qw (time);
@@ -12,6 +13,7 @@ my $wd = $rect[2];
 my $ht = $rect[3];
 
 my $oldsecs = time;
+my $maxstate = g_numstates() - 1;
 
 for (my $row = $y; $row < $y + $ht; $row++) {
    # if large selection then give some indication of progress
@@ -25,7 +27,7 @@ for (my $row = $y; $row < $y + $ht; $row++) {
    g_dokey( g_getkey() );
 
    for (my $col = $x; $col < $x + $wd; $col++) {
-      g_setcell($col, $row, 1 - g_getcell($col, $row));
+      g_setcell($col, $row, $maxstate - g_getcell($col, $row));
    }
 }
 

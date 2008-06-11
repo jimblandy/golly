@@ -1623,6 +1623,18 @@ static PyObject* py_getrule(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_numstates(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   return Py_BuildValue("i", currlayer->algo->NumCellStates());
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2339,6 +2351,7 @@ static PyMethodDef py_methods[] = {
    { "getpop",       py_getpop,     METH_VARARGS, "return current population as string" },
    { "setrule",      py_setrule,    METH_VARARGS, "set current rule according to string" },
    { "getrule",      py_getrule,    METH_VARARGS, "return current rule string" },
+   { "numstates",    py_numstates,  METH_VARARGS, "return number of cell states in current universe" },
    // viewing
    { "setpos",       py_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       py_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
