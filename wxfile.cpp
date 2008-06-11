@@ -216,7 +216,8 @@ bool MainFrame::LoadImage(const wxString& path)
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
       if ( image.LoadFile(path) ) {
-         currlayer->algo->setrule("B3/S23");
+         //!!! might be better not to change the rule at all???
+         // currlayer->algo->setrule("B3/S23");
 
          unsigned char maskr, maskg, maskb;
          bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);

@@ -28,14 +28,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxedit.h"     // for Selection class
 #include "wxalgos.h"    // for algo_type
 
-// This class implements unlimited undo/redo:
+// This module implements unlimited undo/redo:
+
+typedef struct {
+   int x;               // cell's x position
+   int y;               // cell's y position
+   int oldstate;        // old state
+   int newstate;        // new state
+} cell_change;          // stores a single cell change
 
 class UndoRedo {
 public:
    UndoRedo();
    ~UndoRedo();
    
-   void SaveCellChange(int x, int y);
+   void SaveCellChange(int x, int y, int oldstate, int newstate);
    // cell at x,y has changed state
    
    void ForgetCellChanges();
@@ -121,9 +128,9 @@ private:
    wxList undolist;              // list of undoable changes
    wxList redolist;              // list of redoable changes
 
-   int* cellarray;               // x,y coordinates of changed cells
-   unsigned int intcount;        // number of elements (2 * number of cells)
-   unsigned int maxcount;        // number of elements allocated
+   cell_change* cellarray;       // dynamic array of cell changes
+   unsigned int numchanges;      // number of cell changes
+   unsigned int maxchanges;      // number allocated
    bool badalloc;                // malloc/realloc failed?
    
    wxString prevfile;            // for saving pattern at start of gen change

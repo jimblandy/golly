@@ -374,7 +374,7 @@ const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = fals
       int iright = right.toint();
       int cx, cy;
       int v = 0 ;
-      /** FIXME:  support multistate */
+      //!!! make it work with multistate
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1044,29 +1044,28 @@ XS(pl_putcells)
          int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
-         int s = curralgo->getcell(newx, newy);
+         int oldstate = curralgo->getcell(newx, newy);
 
-         if (savecells) ChangeCell(newx, newy);
+         if (savecells) ChangeCell(newx, newy, oldstate, 1-oldstate);
 
          // paste (possibly transformed) cell into current universe
-         curralgo->setcell(newx, newy, 1-s);
+         curralgo->setcell(newx, newy, 1-oldstate);
 
          if ((n % 4096) == 0 && PerlScriptAborted()) break;
       }
    } else {
-      int cellstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
+      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
       for (int n = 0; n < num_cells; n++) {
          int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
          int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
-
-         if (savecells && cellstate != currlayer->algo->getcell(newx, newy))
-            ChangeCell(newx, newy);
-
-         // paste (possibly transformed) cell into current universe
-         curralgo->setcell(newx, newy, cellstate);
-
+         int oldstate = curralgo->getcell(newx, newy);
+         if (newstate != oldstate) {
+            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+            // paste (possibly transformed) cell into current universe
+            curralgo->setcell(newx, newy, newstate);
+         }
          if ((n % 4096) == 0 && PerlScriptAborted()) break;
       }
    }
@@ -1110,7 +1109,7 @@ XS(pl_getcells)
       lifealgo* curralgo = currlayer->algo;
       for ( cy=y; cy<=bottom; cy++ ) {
          for ( cx=x; cx<=right; cx++ ) {
-            /** FIXME:  make it work with multistate */
+            //!!! make it work with multistate
             int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row so add coords to outarray
@@ -1161,7 +1160,7 @@ XS(pl_hash)
    for ( cy=y; cy<=bottom; cy++ ) {
       int yshift = cy - y;
       for ( cx=x; cx<=right; cx++ ) {
-         /** FIXME:  make it work with multistate */
+         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip >= 0) {
             // found next live cell in this row
@@ -1225,7 +1224,7 @@ XS(pl_getclip)
       int v = 0 ;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            /** FIXME:  make it work with multistate */
+            //!!! make it work with multistate
             int skip = tempalgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row

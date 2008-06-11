@@ -142,7 +142,7 @@ private:
    
    // edit functions
    void ShowDrawing();
-   void DrawOneCell(int cx, int cy, wxDC& dc);
+   void DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newstate);
    void StartDrawingCells(int x, int y);
    void DrawCells(int x, int y);
    void StartSelectingCells(int x, int y, bool shiftdown);

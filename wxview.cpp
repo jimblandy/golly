@@ -491,10 +491,11 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               if (curralgo->getcell(cx, cy) == 0) {
+               int oldstate = curralgo->getcell(cx, cy);
+               if (oldstate != v) {
                   curralgo->setcell(cx, cy, v);
                   pattchanged = true;
-                  if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                  if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, oldstate, v);
                }
                cx++;
             } else {
@@ -525,7 +526,8 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                   if (tempstate != currstate) {
                      curralgo->setcell(cx, cy, tempstate);
                      pattchanged = true;
-                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                     if (savecells)
+                        currlayer->undoredo->SaveCellChange(cx, cy, currstate, tempstate);
                   }
                   break;
                case Or:
@@ -537,13 +539,15 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                      if (currstate != 0) {
                         curralgo->setcell(cx, cy, 0);
                         pattchanged = true;
-                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                        if (savecells)
+                           currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
                      }
                   } else {
-                     if (currstate != 1) {
-                        curralgo->setcell(cx, cy, 1);
+                     if (currstate != tempstate) {
+                        curralgo->setcell(cx, cy, tempstate);
                         pattchanged = true;
-                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+                        if (savecells)
+                           currlayer->undoredo->SaveCellChange(cx, cy, currstate, tempstate);
                      }
                   }
                   break;
@@ -1405,10 +1409,10 @@ void PatternView::ShowDrawing()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::DrawOneCell(int cx, int cy, wxDC& dc)
+void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newstate)
 {
-   // remember this cell for later undo/redo
-   if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy);
+   // remember this cell change for later undo/redo
+   if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy, oldstate, newstate);
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
    // use UpdateView to avoid wxMac bug on Mac OS 10.3.9
@@ -1501,7 +1505,7 @@ void PatternView::StartDrawingCells(int x, int y)
       } else {
          dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
       }
-      DrawOneCell(cellx, celly, dc);
+      DrawOneCell(dc, cellx, celly, currstate, drawstate);
       dc.SetBrush(wxNullBrush);
       dc.SetPen(wxNullPen);
       
@@ -1532,6 +1536,7 @@ void PatternView::DrawCells(int x, int y)
    int newx = cellpos.first.toint();
    int newy = cellpos.second.toint();
    if ( newx != cellx || newy != celly ) {
+      int currstate;
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
       if (currlayer->algo->NumCellStates() > 2) {
@@ -1566,10 +1571,11 @@ void PatternView::DrawCells(int x, int y)
       if (ai > aj) {
          d = aj - (ai >> 1);
          while (ii != newx) {
-            if ( curralgo->getcell(ii, jj) != drawstate) {
+            currstate = curralgo->getcell(ii, jj);
+            if (currstate != drawstate) {
                curralgo->setcell(ii, jj, drawstate);
+               DrawOneCell(dc, ii, jj, currstate, drawstate);
                numchanged++;
-               DrawOneCell(ii, jj, dc);
             }
             if (d >= 0) {
                jj += sj;
@@ -1581,10 +1587,11 @@ void PatternView::DrawCells(int x, int y)
       } else {
          d = ai - (aj >> 1);
          while (jj != newy) {
-            if ( curralgo->getcell(ii, jj) != drawstate) {
+            currstate = curralgo->getcell(ii, jj);
+            if (currstate != drawstate) {
                curralgo->setcell(ii, jj, drawstate);
+               DrawOneCell(dc, ii, jj, currstate, drawstate);
                numchanged++;
-               DrawOneCell(ii, jj, dc);
             }
             if (d >= 0) {
                ii += si;
@@ -1598,16 +1605,17 @@ void PatternView::DrawCells(int x, int y)
       cellx = newx;
       celly = newy;
       
-      if ( curralgo->getcell(cellx, celly) != drawstate) {
+      currstate = curralgo->getcell(cellx, celly);
+      if (currstate != drawstate) {
          curralgo->setcell(cellx, celly, drawstate);
+         DrawOneCell(dc, cellx, celly, currstate, drawstate);
          numchanged++;
-         DrawOneCell(cellx, celly, dc);
       }
       
       dc.SetBrush(wxNullBrush);     // restore brush
       dc.SetPen(wxNullPen);         // restore pen
       
-      if ( numchanged > 0 ) ShowDrawing();
+      if (numchanged > 0) ShowDrawing();
    }
 }
 

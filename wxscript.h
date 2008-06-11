@@ -49,7 +49,7 @@ void PassKeyToScript(int key);
 void ShowTitleLater();
 // Called if a script is running and window title has changed.
 
-void ChangeCell(int x, int y);
+void ChangeCell(int x, int y, int oldstate, int newstate);
 // A setcell/putcells command is changing state of cell at x,y.
 
 void SavePendingChanges(bool checkgenchanges = true);
@@ -86,7 +86,7 @@ const char* GSF_setrule(char* rulestring);
 const char* GSF_setgen(char* genstring);
 const char* GSF_setpos(char* x, char* y);
 void GSF_setname(char* name, int index);
-void GSF_setcell(int x, int y, int state);
+void GSF_setcell(int x, int y, int newstate);
 void GSF_select(int x, int y, int wd, int ht);
 bool GSF_setoption(char* optname, int newval, int* oldval);
 bool GSF_getoption(char* optname, int* optval);

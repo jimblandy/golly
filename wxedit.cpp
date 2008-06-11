@@ -560,9 +560,11 @@ bool Selection::SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
    BeginProgress(_("Saving cell changes"));
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         if ( oldalgo->getcell(cx, cy) != newalgo->getcell(cx, cy) ) {
+         int oldstate = oldalgo->getcell(cx, cy);
+         int newstate = newalgo->getcell(cx, cy);
+         if ( oldstate != newstate ) {
             // assume this is only called if allowundo && !currlayer->stayclean
-            currlayer->undoredo->SaveCellChange(cx, cy);
+            currlayer->undoredo->SaveCellChange(cx, cy, oldstate, newstate);
          }
          cntr++;
          if ((cntr % 4096) == 0) {
@@ -1315,7 +1317,7 @@ void Selection::Clear()
             cx += skip;
             curralgo->setcell(cx, cy, 0);
             selchanged = true;
-            if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+            if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
          } else {
             cx = iright + 1;     // done this row
          }
@@ -1379,7 +1381,6 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
    lifealgo* curralgo = currlayer->algo;
    for ( cy=itop; cy<=ibottom; cy++ ) {
       for ( cx=ileft; cx<=iright; cx++ ) {
-         /** FIXME:  make it work with multistate */
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -1388,7 +1389,7 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
             cx += skip;
             if (saveall || cx < sleft || cx > sright || cy < stop || cy > sbottom) {
                // cell is outside selection edges
-               currlayer->undoredo->SaveCellChange(cx, cy);
+               currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
             }
          } else {
             cx = iright + 1;     // done this row
@@ -1604,7 +1605,7 @@ void Selection::CopyToClipboard(bool cut)
       // set lastchar to anything except 'o' or 'b'
       lastchar = 0;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         /** FIXME:  make it work with multistate */
+         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -1627,7 +1628,7 @@ void Selection::CopyToClipboard(bool cut)
             livecount++;
             if (cut) {
                curralgo->setcell(cx, cy, 0);
-               if (savecells) currlayer->undoredo->SaveCellChange(cx, cy);
+               if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
             }
             if (lastchar == 'o') {
                orun++;
@@ -1786,26 +1787,24 @@ void Selection::RandomFill()
       for ( cx=ileft; cx<=iright; cx++ ) {
          // randomfill is from 1..100
          if (savecells) {
-            // remember cell coords if state changes
+            // remember cell change only if state changes
+            int oldstate = curralgo->getcell(cx, cy);
             if ((rand() % 100) < randomfill) {
-               if (!killcells || curralgo->getcell(cx, cy) == 0) {
-                  if (livestates > 1) {
-                     curralgo->setcell(cx, cy, 1 + (rand() % livestates));
-                  } else {
-                     curralgo->setcell(cx, cy, 1);
-                  }
-                  currlayer->undoredo->SaveCellChange(cx, cy);
+               int newstate = livestates < 2 ? 1 : 1 + (rand() % livestates);
+               if (oldstate != newstate) {
+                  curralgo->setcell(cx, cy, newstate);
+                  currlayer->undoredo->SaveCellChange(cx, cy, oldstate, newstate);
                }
-            } else if (killcells && curralgo->getcell(cx, cy) > 0) {
+            } else if (killcells && oldstate > 0) {
                curralgo->setcell(cx, cy, 0);
-               currlayer->undoredo->SaveCellChange(cx, cy);
+               currlayer->undoredo->SaveCellChange(cx, cy, oldstate, 0);
             }
          } else {
             if ((rand() % 100) < randomfill) {
-               if (livestates > 1) {
-                  curralgo->setcell(cx, cy, 1 + (rand() % livestates));
-               } else {
+               if (livestates < 2) {
                   curralgo->setcell(cx, cy, 1);
+               } else {
+                  curralgo->setcell(cx, cy, 1 + (rand() % livestates));
                }
             } else if (killcells) {
                curralgo->setcell(cx, cy, 0);
@@ -1858,7 +1857,7 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newx = topbottom ? ileft : iright;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         /** FIXME:  make it work with multistate */
+         //!!! make it work with multistate
          int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -2049,7 +2048,7 @@ bool Selection::RotateRect(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = clockwise ? ntop : nbottom;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         /** FIXME:  make it work with multistate */
+         //!!! make it work with multistate
          int skip = srcalgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
@@ -2125,7 +2124,7 @@ bool Selection::RotatePattern(bool clockwise,
    for ( cy=itop; cy<=ibottom; cy++ ) {
       newy = firstnewy;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         /** FIXME:  make it work with multistate */
+         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells

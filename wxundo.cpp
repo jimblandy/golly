@@ -92,8 +92,8 @@ public:
    bool newdirty;                         // layer's dirty state after change
    
    // cellstates info
-   int* cellcoords;                       // array of x,y coordinates (2 ints per cell)
-   unsigned int cellcount;                // number of cells in array
+   cell_change* cellinfo;                 // dynamic array of cell changes
+   unsigned int cellcount;                // number of cell changes in array
    
    // rotatecw/rotateacw/selchange info
    Selection oldsel, newsel;              // old and new selections
@@ -140,7 +140,7 @@ public:
 ChangeNode::ChangeNode(change_type id)
 {
    changeid = id;
-   cellcoords = NULL;
+   cellinfo = NULL;
    oldfile = wxEmptyString;
    newfile = wxEmptyString;
    oldtempstart = wxEmptyString;
@@ -151,7 +151,7 @@ ChangeNode::ChangeNode(change_type id)
 
 ChangeNode::~ChangeNode()
 {
-   if (cellcoords) free(cellcoords);
+   if (cellinfo) free(cellinfo);
    
    if (!oldfile.IsEmpty() && wxFileExists(oldfile)) {
       wxRemoveFile(oldfile);
@@ -182,14 +182,15 @@ bool ChangeNode::DoChange(bool undo)
 {
    switch (changeid) {
       case cellstates:
-         // change state of cell(s) stored in cellcoords array
+         // change state of cell(s) stored in cellinfo array
          {
             unsigned int i = 0;
-            while (i < cellcount * 2) {
-               int x = cellcoords[i++];
-               int y = cellcoords[i++];
-               int state = currlayer->algo->getcell(x, y);
-               currlayer->algo->setcell(x, y, 1 - state);
+            while (i < cellcount) {
+               int x = cellinfo[i].x;
+               int y = cellinfo[i].y;
+               int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
+               currlayer->algo->setcell(x, y, state);
+               i++;
             }
             currlayer->algo->endofpattern();
             mainptr->UpdatePatternAndStatus();
@@ -212,14 +213,15 @@ bool ChangeNode::DoChange(bool undo)
 
       case rotatecw:
       case rotateacw:
-         // change state of cell(s) stored in cellcoords array
+         // change state of cell(s) stored in cellinfo array
          {
             unsigned int i = 0;
-            while (i < cellcount * 2) {
-               int x = cellcoords[i++];
-               int y = cellcoords[i++];
-               int state = currlayer->algo->getcell(x, y);
-               currlayer->algo->setcell(x, y, 1 - state);
+            while (i < cellcount) {
+               int x = cellinfo[i].x;
+               int y = cellinfo[i].y;
+               int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
+               currlayer->algo->setcell(x, y, state);
+               i++;
             }
             currlayer->algo->endofpattern();
          }
@@ -368,8 +370,8 @@ bool ChangeNode::DoChange(bool undo)
 
 UndoRedo::UndoRedo()
 {
-   intcount = 0;                 // for 1st SaveCellChange
-   maxcount = 0;                 // ditto
+   numchanges = 0;               // for 1st SaveCellChange
+   maxchanges = 0;               // ditto
    badalloc = false;             // true if malloc/realloc fails
    cellarray = NULL;             // play safe
    savecellchanges = false;      // no script cell changes are pending
@@ -392,13 +394,13 @@ UndoRedo::~UndoRedo()
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::SaveCellChange(int x, int y)
+void UndoRedo::SaveCellChange(int x, int y, int oldstate, int newstate)
 {
-   if (intcount == maxcount) {
-      if (intcount == 0) {
-         // initially allocate room for 1 cell (x and y coords)
-         maxcount = 2;
-         cellarray = (int*) malloc(maxcount * sizeof(int));
+   if (numchanges == maxchanges) {
+      if (numchanges == 0) {
+         // initially allocate room for 1 cell change
+         maxchanges = 1;
+         cellarray = (cell_change*) malloc(maxchanges * sizeof(cell_change));
          if (cellarray == NULL) {
             badalloc = true;
             return;
@@ -406,32 +408,37 @@ void UndoRedo::SaveCellChange(int x, int y)
          // ~ChangeNode or ForgetCellChanges will free cellarray
       } else {
          // double size of cellarray
-         int* newptr = (int*) realloc(cellarray, maxcount * 2 * sizeof(int));
+         cell_change* newptr =
+            (cell_change*) realloc(cellarray, maxchanges * 2 * sizeof(cell_change));
          if (newptr == NULL) {
             badalloc = true;
             return;
          }
          cellarray = newptr;
-         maxcount *= 2;
+         maxchanges *= 2;
       }
    }
    
-   cellarray[intcount++] = x;
-   cellarray[intcount++] = y;
+   cellarray[numchanges].x = x;
+   cellarray[numchanges].y = y;
+   cellarray[numchanges].oldstate = oldstate;
+   cellarray[numchanges].newstate = newstate;
+   
+   numchanges++;
 }
 
 // -----------------------------------------------------------------------------
 
 void UndoRedo::ForgetCellChanges()
 {
-   if (intcount > 0) {
+   if (numchanges > 0) {
       if (cellarray) {
          free(cellarray);
       } else {
          Warning(_("Bug detected in ForgetCellChanges!"));
       }
-      intcount = 0;        // reset for next SaveCellChange
-      maxcount = 0;        // ditto
+      numchanges = 0;      // reset for next SaveCellChange
+      maxchanges = 0;      // ditto
       badalloc = false;
    }
 }
@@ -440,10 +447,11 @@ void UndoRedo::ForgetCellChanges()
 
 bool UndoRedo::RememberCellChanges(const wxString& action, bool olddirty)
 {
-   if (intcount > 0) {
-      if (intcount < maxcount) {
+   if (numchanges > 0) {
+      if (numchanges < maxchanges) {
          // reduce size of cellarray
-         int* newptr = (int*) realloc(cellarray, intcount * sizeof(int));
+         cell_change* newptr =
+            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
          if (newptr != NULL) cellarray = newptr;
          // in the unlikely event that newptr is NULL, cellarray should
          // still point to valid data
@@ -458,8 +466,8 @@ bool UndoRedo::RememberCellChanges(const wxString& action, bool olddirty)
       if (change == NULL) Fatal(_("Failed to create cellstates node!"));
       
       change->suffix = action;
-      change->cellcoords = cellarray;
-      change->cellcount = intcount / 2;
+      change->cellinfo = cellarray;
+      change->cellcount = numchanges;
       change->olddirty = olddirty;
       change->newdirty = true;
       
@@ -468,8 +476,8 @@ bool UndoRedo::RememberCellChanges(const wxString& action, bool olddirty)
       // update Undo item in Edit menu
       UpdateUndoItem(change->suffix);
       
-      intcount = 0;        // reset for next SaveCellChange
-      maxcount = 0;        // ditto
+      numchanges = 0;      // reset for next SaveCellChange
+      maxchanges = 0;      // ditto
 
       if (badalloc) {
          Warning(lack_of_memory);
@@ -543,19 +551,20 @@ void UndoRedo::RememberRotation(bool clockwise, Selection& oldsel, Selection& ne
    change->olddirty = olddirty;
    change->newdirty = true;
 
-   // if intcount == 0 we still need to rotate selection edges
-   if (intcount > 0) {
-      if (intcount < maxcount) {
+   // if numchanges == 0 we still need to rotate selection edges
+   if (numchanges > 0) {
+      if (numchanges < maxchanges) {
          // reduce size of cellarray
-         int* newptr = (int*) realloc(cellarray, intcount * sizeof(int));
+         cell_change* newptr =
+            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
          if (newptr != NULL) cellarray = newptr;
       }
 
-      change->cellcoords = cellarray;
-      change->cellcount = intcount / 2;
+      change->cellinfo = cellarray;
+      change->cellcount = numchanges;
       
-      intcount = 0;        // reset for next SaveCellChange
-      maxcount = 0;        // ditto
+      numchanges = 0;      // reset for next SaveCellChange
+      maxchanges = 0;      // ditto
       if (badalloc) {
          Warning(lack_of_memory);
          badalloc = false;
@@ -1452,8 +1461,8 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
    savecellchanges = history->savecellchanges;
    savegenchanges = history->savegenchanges;
    doingscriptchanges = history->doingscriptchanges;
-   intcount = history->intcount;
-   maxcount = history->maxcount;
+   numchanges = history->numchanges;
+   maxchanges = history->maxchanges;
    badalloc = history->badalloc;
    prevfile = history->prevfile;
    prevgen = history->prevgen;
@@ -1476,14 +1485,14 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
 
    // do a deep copy of dynamically allocated data
    cellarray = NULL;
-   if (intcount > 0 && history->cellarray) {
-      cellarray = (int*) malloc(maxcount * sizeof(int));
+   if (numchanges > 0 && history->cellarray) {
+      cellarray = (cell_change*) malloc(maxchanges * sizeof(cell_change));
       if (cellarray == NULL) {
          Warning(_("Could not allocate cellarray!"));
          return;
       }
       // copy history->cellarray data to this cellarray
-      memcpy(cellarray, history->cellarray, intcount * sizeof(int));
+      memcpy(cellarray, history->cellarray, numchanges * sizeof(cell_change));
    } 
 
    wxList::compatibility_iterator node;
@@ -1504,15 +1513,15 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
       *newchange = *change;
       
       // deep copy any dynamically allocated data
-      if (change->cellcoords) {
-         int bytes = change->cellcount * 2 * sizeof(int);
-         newchange->cellcoords = (int*) malloc(bytes);
-         if (newchange->cellcoords == NULL) {
+      if (change->cellinfo) {
+         int bytes = change->cellcount * sizeof(cell_change);
+         newchange->cellinfo = (cell_change*) malloc(bytes);
+         if (newchange->cellinfo == NULL) {
             Warning(_("Could not copy undolist!"));
             WX_CLEAR_LIST(wxList, undolist);
             return;
          }
-         memcpy(newchange->cellcoords, change->cellcoords, bytes);
+         memcpy(newchange->cellinfo, change->cellinfo, bytes);
       }
       
       // copy any existing temporary files to new names
@@ -1542,15 +1551,15 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
       *newchange = *change;
       
       // deep copy any dynamically allocated data
-      if (change->cellcoords) {
-         int bytes = change->cellcount * 2 * sizeof(int);
-         newchange->cellcoords = (int*) malloc(bytes);
-         if (newchange->cellcoords == NULL) {
+      if (change->cellinfo) {
+         int bytes = change->cellcount * sizeof(cell_change);
+         newchange->cellinfo = (cell_change*) malloc(bytes);
+         if (newchange->cellinfo == NULL) {
             Warning(_("Could not copy redolist!"));
             WX_CLEAR_LIST(wxList, redolist);
             return;
          }
-         memcpy(newchange->cellcoords, change->cellcoords, bytes);
+         memcpy(newchange->cellinfo, change->cellinfo, bytes);
       }
       
       // copy any existing temporary files to new names

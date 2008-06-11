@@ -257,15 +257,18 @@ void GSF_setname(char* name, int index)
 
 // -----------------------------------------------------------------------------
 
-void GSF_setcell(int x, int y, int state)
+void GSF_setcell(int x, int y, int newstate)
 {
-   if (allowundo && !currlayer->stayclean && state != currlayer->algo->getcell(x, y))
-      ChangeCell(x, y);
-
-   currlayer->algo->setcell(x, y, state);
-   currlayer->algo->endofpattern();
-   MarkLayerDirty();
-   DoAutoUpdate();
+   int oldstate = currlayer->algo->getcell(x, y);
+   if (newstate != oldstate) {
+      if (allowundo && !currlayer->stayclean) {
+         ChangeCell(x, y, oldstate, newstate);
+      }
+      currlayer->algo->setcell(x, y, newstate);
+      currlayer->algo->endofpattern();
+      MarkLayerDirty();
+      DoAutoUpdate();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -760,7 +763,7 @@ void CheckScriptError(const wxString& ext)
 
 // -----------------------------------------------------------------------------
 
-void ChangeCell(int x, int y)
+void ChangeCell(int x, int y, int oldstate, int newstate)
 {
    // first check if there are any pending gen changes that need to be remembered
    if (currlayer->undoredo->savegenchanges) {
@@ -769,7 +772,7 @@ void ChangeCell(int x, int y)
    }
 
    // setcell/putcells command is changing state of cell at x,y
-   currlayer->undoredo->SaveCellChange(x, y);
+   currlayer->undoredo->SaveCellChange(x, y, oldstate, newstate);
    if (!currlayer->undoredo->savecellchanges) {
       currlayer->undoredo->savecellchanges = true;
       // save layer's dirty state for next RememberCellChanges call
