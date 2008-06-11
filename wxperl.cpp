@@ -464,6 +464,7 @@ XS(pl_load)
 
    // read pattern into temporary universe
    const char* err = readpattern(FILENAME, *tempalgo);
+   //!!! forget cannotreadhash test -- try all other algos until readclipboard succeeds
    if (err && strcmp(err,cannotreadhash) == 0) {
       // macrocell file, so switch to hlife universe
       delete tempalgo;

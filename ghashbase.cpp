@@ -1341,6 +1341,19 @@ const char *ghashbase::readmacrocell(char *line) {
       if (line[0] == '#') {
          switch (line[1]) {
          char *p, *pp ;
+
+         // AKT: need to check for explicit rule
+         const char *err ;
+         case 'R':
+            p = line + 2 ;
+            while (*p && *p <= ' ') p++ ;
+            pp = p ;
+            while (*pp > ' ') pp++ ;
+            *pp = 0 ;
+            err = setrule(p);
+            if (err) return err;
+            break ;
+
          case 'G':
             p = line + 2 ;
             while (*p && *p <= ' ') p++ ;
@@ -1365,7 +1378,7 @@ const char *ghashbase::readmacrocell(char *line) {
 	    continue ;
 	 }
          if (n < 5)
-            // AKT: best not to use lifefatal here because user won't see any
+            // best not to use lifefatal here because user won't see any
             // error message when reading clipboard data starting with "[..."
             return "Parse error in readmacrocell." ;
          if (d < 1)
@@ -1391,7 +1404,7 @@ const char *ghashbase::readmacrocell(char *line) {
    if (ind)
       free(ind) ;
    if (root == 0) {
-      // AKT: allow empty macrocell pattern; note that endofpattern()
+      // allow empty macrocell pattern; note that endofpattern()
       // will be called soon so don't set hashed here
       // return "Invalid macrocell file: no ghnodes." ;
       return 0 ;
@@ -1402,7 +1415,10 @@ const char *ghashbase::readmacrocell(char *line) {
 const char *ghashbase::setrule(const char *s) {
    poller->bailIfCalculating() ;
    // silently ignore
-   return 0 ;
+   // return 0 ;
+   // AKT: better to do this??? ie. all algos derived from ghashbase
+   // should implement their own setrule() method
+   return "setrule has not been implemented!";
 }
 /**
  *   Write out the native macrocell format.  This is the one we use when
@@ -1523,10 +1539,17 @@ const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    int depth = ghnode_depth(root) ;
    fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
    fputs("\n", f) ;
+   
+   /* AKT
    if (!global_liferules.isRegularLife()) {
       // write non-Life rule
       fprintf(f, "#R %s\n", global_liferules.getrule()) ;
    }
+   */
+   // AKT: always write out explicit rule, and avoid global_liferules
+   // because not all algos use it
+   fprintf(f, "#R %s\n", getrule()) ;
+   
    if (generation > bigint::zero) {
       // write non-zero gen count
       fprintf(f, "#G %s\n", generation.tostring('\0')) ;

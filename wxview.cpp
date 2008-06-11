@@ -617,6 +617,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
 
    const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal),
                                    **tempalgo, t, l, b, r);
+   //!!! forget cannotreadhash test -- try all other algos until readclipboard succeeds
    if (err && strcmp(err,cannotreadhash) == 0) {
       // clipboard contains macrocell data so use hlife
       delete *tempalgo;
