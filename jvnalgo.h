@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define JVNALGO_H
 #include "ghashbase.h"
 /**
- *   Our jvnalgo class.
+ *   Our JvN algo class.
  */
 class jvnalgo : public ghashbase {
 public:
@@ -37,7 +37,8 @@ public:
    virtual const char* setrule(const char* s);
    virtual const char* getrule();
    virtual const char* DefaultRule();
-   virtual char** GetIconData(int size);
    virtual int NumCellStates();
+   virtual char** GetIconData(int size);
+   virtual unsigned char* GetColorData(int& numcolors);
 };
 #endif

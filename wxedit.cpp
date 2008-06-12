@@ -191,21 +191,20 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    DisplayText(dc, _("Icons:"),  h_col1, BASELINE3);
 
    wxBitmap** iconmaps = icons7x7[currlayer->algtype];
-   lifealgo* curralgo = currlayer->algo;
 
    // set rgb values for dead cells
-   curralgo->cellred[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
-   curralgo->cellgreen[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
-   curralgo->cellblue[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   cellr[currlayer->algtype][0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   cellg[currlayer->algtype][0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   cellb[currlayer->algtype][0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
    
-   if (curralgo->NumCellStates() == 2) {
+   if (currlayer->algo->NumCellStates() == 2) {
       // set rgb values for live cells in 2-state universe
-      curralgo->cellred[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
-      curralgo->cellgreen[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
-      curralgo->cellblue[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
+      cellr[currlayer->algtype][1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      cellg[currlayer->algtype][1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      cellb[currlayer->algtype][1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
    }
 
-   for (int i = 0; i < curralgo->NumCellStates(); i++) {
+   for (int i = 0; i < currlayer->algo->NumCellStates(); i++) {
       wxString strbuf;
       int x;
       
@@ -216,9 +215,9 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       
       // draw color box
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
-      wxBrush brush(wxColor(curralgo->cellred[i],
-                            curralgo->cellgreen[i],
-                            curralgo->cellblue[i]));
+      wxBrush brush(wxColor(cellr[currlayer->algtype][i],
+                            cellg[currlayer->algtype][i],
+                            cellb[currlayer->algtype][i]));
       wxRect r(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
       dc.SetPen(*wxBLACK_PEN);
       dc.SetBrush(brush);
@@ -242,7 +241,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    }
    
    // reset drawing state in case it's no longer valid (due to algo/rule change)
-   if (currlayer->drawingstate >= curralgo->NumCellStates()) {
+   if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
       currlayer->drawingstate = 1;
    }
    

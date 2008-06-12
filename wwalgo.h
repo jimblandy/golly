@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define WWALGO_H
 #include "ghashbase.h"
 /**
- *   Our wwalgo class.
+ *   Our WireWorld algo class.
  */
 class wwalgo : public ghashbase {
 public:
@@ -38,5 +38,6 @@ public:
    virtual const char* getrule();
    virtual const char* DefaultRule();
    virtual int NumCellStates() { return 4; }
+   virtual unsigned char* GetColorData(int& numcolors);
 };
 #endif

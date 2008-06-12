@@ -449,6 +449,8 @@ ghashbase::ghashbase() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
+   /* AKT: can't do this here (it would clobber user's preferred colors
+      if/when we let people override the default colors)
    for (int i=0; i<256; i++)
      cellred[i] = cellgreen[i] = cellblue[i] = 0 ;
    cellred[1] |= 0x92 ;
@@ -465,6 +467,7 @@ ghashbase::ghashbase() {
      cellblue[i] = cellblue[i&-i] | cellblue[i&(i-1)] ;
    }
    cellred[0] = cellgreen[0] = cellblue[0] = 255 ;
+   */
 }
 /**
  *   Destructor frees memory.

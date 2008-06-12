@@ -51,8 +51,30 @@ int algobase[NUM_ALGOS];            // base step for each algorithm
 wxColor* algorgb[NUM_ALGOS];        // status bar color for each algorithm
 wxBrush* algobrush[NUM_ALGOS];      // corresponding brushes
 
-wxBitmap** icons7x7[NUM_ALGOS] = {NULL};    // icon bitmaps for scale 1:8
-wxBitmap** icons15x15[NUM_ALGOS] = {NULL};  // icon bitmaps for scale 1:16
+wxBitmap** icons7x7[NUM_ALGOS] = {NULL};     // icon bitmaps for scale 1:8
+wxBitmap** icons15x15[NUM_ALGOS] = {NULL};   // icon bitmaps for scale 1:16
+
+unsigned char cellr[NUM_ALGOS][256] = {{0}};
+unsigned char cellg[NUM_ALGOS][256] = {{0}};
+unsigned char cellb[NUM_ALGOS][256] = {{0}};
+// rgb colors for each cell state in each algorithm
+
+// -----------------------------------------------------------------------------
+
+static void InitCellColors(algo_type algotype, lifealgo& algo)
+{
+   int numcolors;
+   unsigned char* rgbptr = algo.GetColorData(numcolors);
+   if (rgbptr) {
+      if (numcolors > 256) numcolors = 256;     // play safe
+      for (int i = 0; i < numcolors; i++) {
+         cellr[algotype][i] = *rgbptr++;
+         cellg[algotype][i] = *rgbptr++;
+         cellb[algotype][i] = *rgbptr++;
+      }
+   }
+   //!!! else set graduated pale colors rather than leave them black???
+}
 
 // -----------------------------------------------------------------------------
 
@@ -118,30 +140,37 @@ void InitAlgorithms()
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
    }
 
-   //!!! perhaps use temp_*.GetInitialMaxMem()???
-   //!!! use -1 to indicate the algo ignores setMaxMemory???
-   algomem[QLIFE_ALGO] = 0;         // no limit
-   algomem[HLIFE_ALGO] = 300;       // in megabytes
-   algomem[SLIFE_ALGO] = 300;       // ditto
-   algomem[JVN_ALGO]   = 300;       // ditto
-   algomem[WW_ALGO]    = 300;
+   // set default max memory settings
+   algomem[QLIFE_ALGO] = temp_qlife.DefaultMaxMem();
+   algomem[HLIFE_ALGO] = temp_hlife.DefaultMaxMem();
+   algomem[SLIFE_ALGO] = temp_slife.DefaultMaxMem();
+   algomem[JVN_ALGO]   = temp_jvn.DefaultMaxMem();
+   algomem[WW_ALGO]    = temp_ww.DefaultMaxMem();
 
-   //!!! perhaps use temp_*.GetInitialBaseStep()???
-   algobase[QLIFE_ALGO] = 10;
-   algobase[HLIFE_ALGO] = 8;        // best if power of 2
-   algobase[SLIFE_ALGO] = 8 ;
-   algobase[JVN_ALGO]   = 8;        // best if power of 2
-   algobase[WW_ALGO]    = 8;
+   // set default base steps
+   algobase[QLIFE_ALGO] = temp_qlife.DefaultBaseStep();
+   algobase[HLIFE_ALGO] = temp_hlife.DefaultBaseStep();
+   algobase[SLIFE_ALGO] = temp_slife.DefaultBaseStep();
+   algobase[JVN_ALGO]   = temp_jvn.DefaultBaseStep();
+   algobase[WW_ALGO]    = temp_ww.DefaultBaseStep();
 
    // set status bar background for each algo
    algorgb[QLIFE_ALGO] = new wxColor(255, 255, 206);  // pale yellow
    algorgb[HLIFE_ALGO] = new wxColor(226, 250, 248);  // pale blue
-   algorgb[SLIFE_ALGO] = new wxColor(255, 225, 225);  // pale red
+   algorgb[SLIFE_ALGO] = new wxColor(225, 225, 225);  // not sure
    algorgb[JVN_ALGO]   = new wxColor(225, 255, 225);  // pale green
-   algorgb[WW_ALGO]    = new wxColor(225, 225, 255);  // not sure
+   algorgb[WW_ALGO]    = new wxColor(255, 225, 255);  // pale red
 
+   // create corresponding brushes
    for (int i = 0; i < NUM_ALGOS; i++)
       algobrush[i] = new wxBrush(*algorgb[i]);
+   
+   // get initial cell colors for each algo
+   InitCellColors(QLIFE_ALGO, temp_qlife);
+   InitCellColors(HLIFE_ALGO, temp_hlife);
+   InitCellColors(SLIFE_ALGO, temp_slife);
+   InitCellColors(JVN_ALGO,   temp_jvn);
+   InitCellColors(WW_ALGO,    temp_ww);
    
    // build icon bitmaps for each algo (if icon data is present)
    icons7x7  [QLIFE_ALGO]  = CreateIconBitmaps( temp_qlife.GetIconData(7) );

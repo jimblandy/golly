@@ -73,19 +73,25 @@ public:
    static void setVerbose(int v) { verbose = v ; }
    static int getVerbose() { return verbose ; }
    
-   // AKT: return default rule
+   // AKT: return the default rule for this universe
    virtual const char* DefaultRule() { return "B3/S23"; }
    
-   // AKT: return icon bitmap data (NULL or array of strings in XPM format)
-   virtual char** GetIconData(int size) { size=0; return NULL; }
+   // AKT: return default setting for maximum memory (in MB)
+   virtual int DefaultMaxMem() { return 300; }
+   
+   // AKT: return default base step
+   virtual int DefaultBaseStep() { return 10; }
    
    // AKT: return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
+   
+   // AKT: return rgb colors for each cell state (only used if NumCellStates > 2)
+   virtual unsigned char* GetColorData(int& numcolors)
+      { numcolors = 0; return NULL; }
 
-   // AKT: rgb values for each cell state (only used if NumCellStates > 2)
-   unsigned char cellred[256];
-   unsigned char cellgreen[256];
-   unsigned char cellblue[256];
+   // AKT: return icon bitmap data (NULL or array of strings in XPM format)
+   virtual char** GetIconData(int size)
+      { size = 0; return NULL; }
 
 protected:
    lifepoll *poller ;

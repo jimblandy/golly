@@ -216,7 +216,7 @@ bool MainFrame::LoadImage(const wxString& path)
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
       if ( image.LoadFile(path) ) {
-         //!!! might be better not to change the rule at all???
+         // probably better not to change the rule
          // currlayer->algo->setrule("B3/S23");
 
          unsigned char maskr, maskg, maskb;
@@ -305,7 +305,6 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       algo_type oldalgtype = currlayer->algtype;
       const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
       if (err) {
-         const char* olderr = err;
          // cycle thru all other algos until readpattern succeeds
          for (int i = 0; i < NUM_ALGOS; i++) {
             if (i != oldalgtype) {
@@ -318,11 +317,14 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          viewptr->nopattupdate = false;
          if (err) {
             // no algo could read pattern so restore original algo and rule
-            // and report original error
             currlayer->algtype = oldalgtype;
             CreateUniverse();
             currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-            Warning( wxString(olderr,wxConvLocal) );
+            // Warning( wxString(err,wxConvLocal) );
+            // current error and original error are not necessarily meaningful
+            // so report a more generic error
+            Warning(_("File could not be loaded by any algorithm\n"
+                      "(probably due to an unknown rule)."));
          }
       }
       viewptr->nopattupdate = false;

@@ -216,7 +216,7 @@ public:
    virtual int nextcell(int x, int y, int &v) ;
    // call after setcell/clearcell calls
    virtual void endofpattern() {
-     // AKT: unnecessary??? (prevents shrinking selection while generating)
+     // AKT: unnecessary (and prevents shrinking selection while generating)
      // poller->bailIfCalculating() ;
      popValid = 0 ;
    }
@@ -241,6 +241,10 @@ public:
    virtual const char *writeNativeFormat(FILE *, char *) {
       return "No native format for qlifealgo yet." ;
    }
+
+   // AKT: return default setting for maximum memory (in MB)
+   virtual int DefaultMaxMem() { return 0; }    // no limit
+
 private:
    linkedmem *filllist(int size) ;
    brick *newbrick() ;

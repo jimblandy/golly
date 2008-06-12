@@ -43,8 +43,9 @@ public:
    virtual ~nullrender() {}
    virtual void killrect(int, int, int, int) {}
    virtual void blit(int, int, int, int, int*, int=1) {}
-   // AKT !!!???
    virtual void pixblit(int, int, int, int, char*, int) {}
+   // AKT: is there a way to avoid need for this!!!???
+   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) {}
 } ;
 nullrender renderer ;
 /*

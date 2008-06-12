@@ -878,3 +878,45 @@ char** jvnalgo::GetIconData(int size) {
    if (size == 15) return jvn15x15;
    return NULL;
 }
+
+// colors for each cell state (we try to match colors used in icons)
+static unsigned char jvncolors[] = {
+     0,   0,   0,    // not used (replaced by user's dead cell color)
+   255,   0,   0,    // 1  red
+   255, 125,   0,    // 2  orange (to match red and yellow)
+   255, 150,  25,    // 3   lighter
+   255, 175,  50,    // 4    lighter
+   255, 200,  75,    // 5     lighter
+   255, 225, 100,    // 6      lighter
+   255, 250, 125,    // 7       lighter
+   235, 235,  25,    // 8  dark yellow
+     0, 150, 255,    // 9  blue
+    25, 175, 255,    // 10  lighter
+    50, 200, 255,    // 11   lighter
+    75, 225, 255,    // 12    lighter
+     0, 255, 255,    // 13 cyan
+    25, 255, 255,    // 14  lighter
+    50, 255, 255,    // 15   lighter
+    75, 255, 255,    // 16    lighter
+   255,   0,   0,    // 17 red
+   255,  25,  25,    // 18  lighter
+   255,  50,  50,    // 19   lighter
+   255,  75,  75,    // 20    lighter
+   255,   0, 255,    // 21 purple
+   255,  25, 255,    // 22  lighter
+   255,  50, 255,    // 23   lighter
+   255,  75, 255,    // 24    lighter
+   164, 166, 128,    // 25 olive green
+   255, 164,  40,    // 26 light orange
+   255, 255,   0,    // 27 yellow
+   255, 255, 255,    // 28 white
+   230, 230, 230,    // 29  darker
+   205, 205, 205,    // 30   darker
+   180, 180, 180     // 31    darker
+};
+
+unsigned char* jvnalgo::GetColorData(int& numcolors)
+{
+   numcolors = sizeof(jvncolors) / (3 * sizeof(jvncolors[0]));
+   return jvncolors;
+}

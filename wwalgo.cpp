@@ -47,19 +47,29 @@ const char* wwalgo::DefaultRule() {
    return WW_RULE;
 }
 
-wwalgo::wwalgo() {
-   // AKT: match colors used at http://www.quinapalus.com/wi-index.html
-   //!!! Actually, this is dumb to set color info here -- I need
-   // to use a GetColorData method (like GetIconData) and put
-   // the cell* arrays in the UI code.
-   cellred[1] = 0;    cellgreen[1] = 128;  cellblue[1] = 255;
-   cellred[2] = 255;  cellgreen[2] = 255;  cellblue[2] = 255;
-   cellred[3] = 255;  cellgreen[3] = 128;  cellblue[3] = 0;
+// colors for each cell state match those used at
+// http://www.quinapalus.com/wi-index.html
+static unsigned char wwcolors[] = {
+     0,   0,   0,    // not used (replaced by user's dead cell color)
+     0, 128, 255,    // 1 = lightish blue
+   255, 255, 255,    // 2 = white
+   255, 128,   0     // 3 = orange
+};
+
+unsigned char* wwalgo::GetColorData(int& numcolors)
+{
+   numcolors = sizeof(wwcolors) / (3 * sizeof(wwcolors[0]));
+   return wwcolors;
 }
+
+wwalgo::wwalgo() {
+}
+
 wwalgo::~wwalgo() {
 }
+
 state wwalgo::slowcalc(state nw, state n, state ne, state w, state c, state e,
-		       state sw, state s, state se) {
+                       state sw, state s, state se) {
   switch (c) {
   case 0: return 0 ;
   case 1: return 2 ;

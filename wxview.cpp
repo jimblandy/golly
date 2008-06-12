@@ -1498,9 +1498,9 @@ void PatternView::StartDrawingCells(int x, int y)
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            cellbrush->SetColour(currlayer->algo->cellred[drawstate],
-                                 currlayer->algo->cellgreen[drawstate],
-                                 currlayer->algo->cellblue[drawstate]);
+            cellbrush->SetColour(cellr[currlayer->algtype][drawstate],
+                                 cellg[currlayer->algtype][drawstate],
+                                 cellb[currlayer->algtype][drawstate]);
          }
          dc.SetBrush(*cellbrush);
       } else {
@@ -1544,9 +1544,9 @@ void PatternView::DrawCells(int x, int y)
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            cellbrush->SetColour(currlayer->algo->cellred[drawstate],
-                                 currlayer->algo->cellgreen[drawstate],
-                                 currlayer->algo->cellblue[drawstate]);
+            cellbrush->SetColour(cellr[currlayer->algtype][drawstate],
+                                 cellg[currlayer->algtype][drawstate],
+                                 cellb[currlayer->algtype][drawstate]);
          }
          dc.SetBrush(*cellbrush);
       } else {

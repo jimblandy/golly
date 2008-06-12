@@ -104,8 +104,12 @@ public:
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
 
    // AKT
-   virtual char** GetIconData(int size) { size=0; return NULL; }
-   virtual int NumCellStates() { return 2; }
+   //!!!??? virtual char** GetIconData(int size) { size=0; return NULL; }
+   //!!!??? virtual int NumCellStates() { return 2; }
+   
+   // AKT: hashlife algos prefer that base step is power of 2
+   virtual int DefaultBaseStep() { return 8; }
+
 private:
 /*
  *   Some globals representing our universe.  The root is the

@@ -44,6 +44,11 @@ extern wxBrush* algobrush[NUM_ALGOS];     // corresponding brush
 extern wxBitmap** icons7x7[NUM_ALGOS];    // icon bitmaps for scale 1:8
 extern wxBitmap** icons15x15[NUM_ALGOS];  // icon bitmaps for scale 1:16
 
+extern unsigned char cellr[NUM_ALGOS][256];
+extern unsigned char cellg[NUM_ALGOS][256];
+extern unsigned char cellb[NUM_ALGOS][256];
+// rgb colors for each cell state in each algorithm
+
 void InitAlgorithms();
 // Initialize above data -- must be called very early (before reading prefs file).
 
