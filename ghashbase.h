@@ -102,12 +102,8 @@ public:
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
-
-   // AKT
-   //!!!??? virtual char** GetIconData(int size) { size=0; return NULL; }
-   //!!!??? virtual int NumCellStates() { return 2; }
    
-   // AKT: hashlife algos prefer that base step is power of 2
+   // AKT: hashlife algos prefer that the base step is a power of 2
    virtual int DefaultBaseStep() { return 8; }
 
 private:

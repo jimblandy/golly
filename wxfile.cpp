@@ -323,8 +323,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
             // Warning( wxString(err,wxConvLocal) );
             // current error and original error are not necessarily meaningful
             // so report a more generic error
-            Warning(_("File could not be loaded by any algorithm\n"
-                      "(probably due to an unknown rule)."));
+            Warning(_("File could not be loaded by any algorithm\n(probably due to an unknown rule)."));
          }
       }
       viewptr->nopattupdate = false;
