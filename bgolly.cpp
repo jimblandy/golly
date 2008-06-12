@@ -45,7 +45,7 @@ public:
    virtual void blit(int, int, int, int, int*, int=1) {}
    virtual void pixblit(int, int, int, int, char*, int) {}
    // AKT: is there a way to avoid need for this!!!???
-   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) {}
+   virtual void getcolors(unsigned char**, unsigned char**, unsigned char**) {}
 } ;
 nullrender renderer ;
 /*
