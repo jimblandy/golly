@@ -831,7 +831,7 @@ void MainFrame::ShowRuleDialog()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ChangeAlgorithm(algo_type newalgotype)
+void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
 {
    if (newalgotype == currlayer->algtype) return;
 
@@ -853,9 +853,12 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
       cmdevent.SetId(ID_ALGO0 + (int)newalgotype);
       return;
    }
-   
-   if (allowundo && !currlayer->stayclean && inscript) {
-      // note that we must save pending gen changes BEFORE changing hash flag
+
+   // save changes if undo/redo is enabled and script isn't constructing a pattern
+   // and we're not undoing/redoing an earlier algo change
+   bool savechanges = allowundo && !currlayer->stayclean && !inundoredo;
+   if (savechanges && inscript) {
+      // note that we must save pending gen changes BEFORE changing algo type
       // otherwise temporary files won't be the correct type (mc or rle)
       SavePendingChanges();
    }
@@ -871,6 +874,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
    
    // try to use same rule
    bool rulechanged = false;
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    const char* err = newalgo->setrule( (char*)currlayer->algo->getrule() );
    if (err) {
       // switch to new algo's default rule
@@ -881,6 +885,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
 
+   bool patternchanged = false;
    if ( !currlayer->algo->isEmpty() ) {
       // copy pattern in current universe to new universe
       int itop = top.toint();
@@ -898,8 +903,14 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
       bool abort = false;
       int v = 0 ;
       BeginProgress(_("Converting pattern"));
-   
+      
       lifealgo* curralgo = currlayer->algo;
+      
+      // only need to check for state change if new algo has fewer states than old algo
+      int newmaxstate = newalgo->NumCellStates() - 1;
+      int oldmaxstate = curralgo->NumCellStates() - 1;
+      bool checkstate = savechanges && newmaxstate < oldmaxstate;
+   
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
@@ -907,6 +918,12 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
+               if (checkstate && v > newmaxstate) {
+                  // reduce v to largest state in new algo
+                  currlayer->undoredo->SaveCellChange(cx, cy, v, newmaxstate);
+                  v = newmaxstate;
+                  patternchanged = true;
+               }
                newalgo->setcell(cx, cy, v);
                currcount++;
             } else {
@@ -931,14 +948,22 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype)
    currlayer->algo = newalgo;   
    SetGenIncrement();
 
-   if (rulechanged) {
-      // show new rule in window title (but don't change file name)
-      SetWindowTitle(wxEmptyString);
-      statusptr->DisplayMessage(_("Rule has changed."));
+   if (!inundoredo) {
+      if (rulechanged) {
+         // show new rule in window title (but don't change file name)
+         SetWindowTitle(wxEmptyString);
+         if (patternchanged) {
+            statusptr->DisplayMessage(_("Rule has changed and pattern has changed (new algorithm has fewer states)."));
+         } else {
+            statusptr->DisplayMessage(_("Rule has changed."));
+         }
+      } else if (patternchanged) {
+         statusptr->DisplayMessage(_("Pattern has changed (new algorithm has fewer states)."));
+      }
+      UpdateEverything();
    }
 
-   UpdateEverything();
-
-   if (allowundo && !currlayer->stayclean)
-      currlayer->undoredo->RememberAlgoChange(oldalgotype);
+   if (savechanges) {
+      currlayer->undoredo->RememberAlgoChange(oldalgotype, oldrule);
+   }
 }

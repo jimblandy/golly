@@ -133,6 +133,7 @@ public:
    
    // algochange info
    algo_type oldalgo, newalgo;            // old and new algorithm types
+   // also uses oldrule, newrule
 };
 
 // -----------------------------------------------------------------------------
@@ -141,6 +142,7 @@ ChangeNode::ChangeNode(change_type id)
 {
    changeid = id;
    cellinfo = NULL;
+   cellcount = 0;
    oldfile = wxEmptyString;
    newfile = wxEmptyString;
    oldtempstart = wxEmptyString;
@@ -182,8 +184,8 @@ bool ChangeNode::DoChange(bool undo)
 {
    switch (changeid) {
       case cellstates:
-         // change state of cell(s) stored in cellinfo array
-         {
+         if (cellcount > 0) {
+            // change state of cell(s) stored in cellinfo array
             unsigned int i = 0;
             while (i < cellcount) {
                int x = cellinfo[i].x;
@@ -213,8 +215,8 @@ bool ChangeNode::DoChange(bool undo)
 
       case rotatecw:
       case rotateacw:
-         // change state of cell(s) stored in cellinfo array
-         {
+         if (cellcount > 0) {
+            // change state of cell(s) stored in cellinfo array
             unsigned int i = 0;
             while (i < cellcount) {
                int x = cellinfo[i].x;
@@ -351,10 +353,28 @@ bool ChangeNode::DoChange(bool undo)
          break;
 
       case algochange:
-         // temporarily reset allowundo so ChangeAlgorithm won't call RememberAlgoChange
-         allowundo = false;
-         mainptr->ChangeAlgorithm(undo ? oldalgo : newalgo);
-         allowundo = true;
+         // pass in true so ChangeAlgorithm won't call RememberAlgoChange
+         mainptr->ChangeAlgorithm(undo ? oldalgo : newalgo, true);
+         if (undo) {
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+         } else {
+            currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+         }
+         // show new rule in window title (file name doesn't change)
+         mainptr->SetWindowTitle(wxEmptyString);
+         if (cellcount > 0) {
+            // change state of cell(s) stored in cellinfo array
+            unsigned int i = 0;
+            while (i < cellcount) {
+               int x = cellinfo[i].x;
+               int y = cellinfo[i].y;
+               int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
+               currlayer->algo->setcell(x, y, state);
+               i++;
+            }
+            currlayer->algo->endofpattern();
+         }
+         mainptr->UpdateEverything();
          break;
       
       case scriptstart:
@@ -619,7 +639,7 @@ void UndoRedo::RememberSelection(const wxString& action)
 void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
 {
    const char* err = NULL;
-   //!!! need lifealgo::CanWriteMC() method???
+   //!!! need lifealgo::CanWriteFormat(MC_format) method???
    if ( currlayer->algo->hyperCapable() ) {
       // save hlife pattern in a macrocell file
       err = mainptr->WritePattern(tempfile, MC_format, 0, 0, 0, 0);
@@ -1057,7 +1077,7 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberAlgoChange(algo_type oldalgo)
+void UndoRedo::RememberAlgoChange(algo_type oldalgo, const wxString& oldrule)
 {
    // clear the redo history
    WX_CLEAR_LIST(wxList, redolist);
@@ -1070,6 +1090,28 @@ void UndoRedo::RememberAlgoChange(algo_type oldalgo)
    change->suffix = _("Algorithm Change");
    change->oldalgo = oldalgo;
    change->newalgo = currlayer->algtype;
+   change->oldrule = oldrule;
+   change->newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   
+   // SaveCellChange may have been called
+   if (numchanges > 0) {
+      if (numchanges < maxchanges) {
+         // reduce size of cellarray
+         cell_change* newptr =
+            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
+         if (newptr != NULL) cellarray = newptr;
+      }
+
+      change->cellinfo = cellarray;
+      change->cellcount = numchanges;
+      
+      numchanges = 0;      // reset for next SaveCellChange
+      maxchanges = 0;      // ditto
+      if (badalloc) {
+         Warning(lack_of_memory);
+         badalloc = false;
+      }
+   }
    
    undolist.Insert(change);
    

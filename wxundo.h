@@ -98,8 +98,9 @@ public:
    void RememberRuleChange(const wxString& oldrule);
    // remember rule change
    
-   void RememberAlgoChange(algo_type oldalgo);
-   // remember algorithm change
+   void RememberAlgoChange(algo_type oldalgo, const wxString& oldrule);
+   // remember algorithm change, including a possible rule change
+   // and possible cell changes (SaveCellChange may have been called)
    
    void RememberScriptStart();
    // remember that script is about to start; this allows us to undo/redo

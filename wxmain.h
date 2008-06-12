@@ -102,7 +102,7 @@ public:
    void DisplayTimingInfo();
    void NextGeneration(bool useinc);
    void ToggleAutoFit();
-   void ChangeAlgorithm(algo_type newalgotype);
+   void ChangeAlgorithm(algo_type newalgotype, bool inundoredo = false);
    void ToggleHyperspeed();
    void ToggleHashInfo();
    void SetWarp(int newwarp);
