@@ -44,9 +44,11 @@ int jvnalgo::NumCellStates() {
 const char* jvnalgo::setrule(const char *s) {
    if (stricmp(s, JVN_RULE) == 0) {
       numstates = 29;
+      maxCellStates = 29 ;
       return NULL;
    } else if (stricmp(s, EJVN_RULE) == 0) {
       numstates = 32;
+      maxCellStates = 32 ;
       return NULL;
    }
    return "This algorithm only supports two rules (JvN-29 or JvN-32).";
@@ -121,6 +123,7 @@ jvnalgo::jvnalgo() {
     compress[i] = 255 ;
   for (unsigned int i=0; i<sizeof(uncompress)/sizeof(uncompress[0]); i++)
     compress[uncompress[i]] = i ;
+  maxCellStates = numstates ;
 }
 
 jvnalgo::~jvnalgo() {

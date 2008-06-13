@@ -674,7 +674,9 @@ void qlifealgo::markglobalchange() {
  *   We walk down the tree to the particular bit, setting changing flags as
  *   we go.
  */
-void qlifealgo::setcell(int x, int y, int newstate) {
+int qlifealgo::setcell(int x, int y, int newstate) {
+   if (newstate & ~1)
+      return -1 ;
    y = - y ;
    supertile *b ;
    tile *p ;
@@ -755,6 +757,7 @@ void qlifealgo::setcell(int x, int y, int newstate) {
                                   &= ~(1 << (31 - (y & 7) * 4 - (x & 3))) ;
    }
    deltaforward = 0xffffffff ;
+   return 0 ;
 }
 /*
  *   This subroutine gets a bit at a particular location.

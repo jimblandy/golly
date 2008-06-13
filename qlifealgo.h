@@ -211,7 +211,7 @@ public:
    qlifealgo() ;
    virtual ~qlifealgo() ;
    virtual void clearall() ;
-   virtual void setcell(int x, int y, int newstate) ;
+   virtual int setcell(int x, int y, int newstate) ;
    virtual int getcell(int x, int y) ;
    virtual int nextcell(int x, int y, int &v) ;
    // call after setcell/clearcell calls

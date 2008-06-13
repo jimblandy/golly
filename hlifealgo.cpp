@@ -938,7 +938,9 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
  *   unhashed (but it's faster when unhashed).  We also turn on the inGC
  *   flag to inhibit popcount.
  */
-void hlifealgo::setcell(int x, int y, int newstate) {
+int hlifealgo::setcell(int x, int y, int newstate) {
+   if (newstate & ~1)
+      return -1 ;
    if (hashed) {
       clearstack() ;
       save(root) ;
@@ -969,6 +971,7 @@ void hlifealgo::setcell(int x, int y, int newstate) {
    if (hashed) {
       okaytogc = 0 ;
    }
+   return 0 ;
 }
 /*
  *   Our nonrecurse top-level bit getting routine.

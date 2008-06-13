@@ -74,7 +74,7 @@ public:
    // the full cache information but just sets the current pattern to
    // the empty pattern.
    virtual void clearall() ;
-   virtual void setcell(int x, int y, int newstate) ;
+   virtual int setcell(int x, int y, int newstate) ;
    virtual int getcell(int x, int y) ;
    virtual int nextcell(int x, int y, int &v) ;
    virtual void endofpattern() ;

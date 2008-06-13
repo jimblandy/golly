@@ -40,7 +40,8 @@ class lifealgo {
 public:
    lifealgo() { poller = &default_poller ; }
    virtual void clearall() = 0 ;
-   virtual void setcell(int x, int y, int newstate) = 0 ;
+   // returns <0 if error
+   virtual int setcell(int x, int y, int newstate) = 0 ;
    virtual int getcell(int x, int y) = 0 ;
    virtual int nextcell(int x, int y, int &v) = 0 ;
    // call after setcell/clearcell calls
@@ -96,5 +97,6 @@ public:
 protected:
    lifepoll *poller ;
    static int verbose ;
+   int maxCellStates ; // keep up to date; setcell depends on it
 } ;
 #endif

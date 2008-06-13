@@ -63,6 +63,7 @@ unsigned char* wwalgo::GetColorData(int& numcolors)
 }
 
 wwalgo::wwalgo() {
+   maxCellStates = 4 ;
 }
 
 wwalgo::~wwalgo() {

@@ -823,7 +823,9 @@ int ghashbase::nextbit(ghnode *n, int x, int y, int depth, int &v) {
  *   unhashed (but it's faster when unhashed).  We also turn on the inGC
  *   flag to inhibit popcount.
  */
-void ghashbase::setcell(int x, int y, int newstate) {
+int ghashbase::setcell(int x, int y, int newstate) {
+   if (newstate < 0 || newstate >= maxCellStates)
+     return -1 ;
    if (hashed) {
       clearstack() ;
       save(root) ;
@@ -854,6 +856,7 @@ void ghashbase::setcell(int x, int y, int newstate) {
    if (hashed) {
       okaytogc = 0 ;
    }
+   return 0 ;
 }
 /*
  *   Our nonrecurse top-level bit getting routine.
