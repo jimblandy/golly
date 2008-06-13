@@ -1392,8 +1392,8 @@ const char *ghashbase::readmacrocell(char *line) {
 	 if (d == 1) {
 	   if (nw < 0 || ne < 0 || sw < 0 || se < 0)
 	      return "Illegal negative cell state values" ;
-	   if (nw >= maxCellStates || ne >= maxCellStates ||
-	       sw >= maxCellStates || se >= maxCellStates)
+	   if (nw >= (g_uintptr_t)maxCellStates || ne >= (g_uintptr_t)maxCellStates ||
+	       sw >= (g_uintptr_t)maxCellStates || se >= (g_uintptr_t)maxCellStates)
 	      return "Cell state values too high for this algorithm." ;
 	   root = ind[i++] = (ghnode *)find_ghleaf((state)nw, (state)ne,
 						   (state)sw, (state)se) ;

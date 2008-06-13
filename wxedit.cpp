@@ -1570,6 +1570,8 @@ void Selection::CopyToClipboard(bool cut)
    }
    etextptr = textptr + cursize;
 
+   //!!! make it work with multistate
+   
    // add RLE header line
    sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, currlayer->algo->getrule());
    char* chptr = textptr;
@@ -1605,7 +1607,6 @@ void Selection::CopyToClipboard(bool cut)
       // set lastchar to anything except 'o' or 'b'
       lastchar = 0;
       for ( cx=ileft; cx<=iright; cx++ ) {
-         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells

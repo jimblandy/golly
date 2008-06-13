@@ -123,9 +123,9 @@ const char *readtextpattern(lifealgo &imp, char *line) {
          } else if (*p == '$') {
             x += 10;
          } else {
-	    if (imp.setcell(x, y, 1) < 0) {
-	       return SETCELLERROR ;
-	    }
+            if (imp.setcell(x, y, 1) < 0) {
+               return SETCELLERROR ;
+            }
             x++;
          }
       }
@@ -181,7 +181,7 @@ const char *readrle(lifealgo &imp, char *line) {
    int n=0, x=0, y=0 ;
    char *p ;
    char *ruleptr;
-   const char *errmsg = 0;
+   const char *errmsg;
    int wd=0, ht=0, xoff=0, yoff=0;
    bigint gen = bigint::zero;
    bool xrle = false;               // extended RLE format?
@@ -191,7 +191,7 @@ const char *readrle(lifealgo &imp, char *line) {
       ParseXRLELine(line, &xoff, &yoff, gen);
       imp.setGeneration(gen);
       xrle = true;
-      if (getline(line, LINESIZE) == NULL) return errmsg;
+      if (getline(line, LINESIZE) == NULL) return 0;
    }
    
    do {
@@ -203,7 +203,8 @@ const char *readrle(lifealgo &imp, char *line) {
             p = ruleptr;
             while (*p > ' ') p++;
             *p = 0;
-            errmsg = imp.setrule(ruleptr) ;
+            errmsg = imp.setrule(ruleptr);
+            if (errmsg) return errmsg;
          }
       } else if (line[0] == 'x') {
          // extract wd and ht
@@ -236,7 +237,8 @@ const char *readrle(lifealgo &imp, char *line) {
             // remove any comma at end of rule
             if (p[-1] == ',') p--;
             *p = 0;
-            errmsg = imp.setrule(ruleptr) ;
+            errmsg = imp.setrule(ruleptr);
+            if (errmsg) return errmsg;
          }
       } else {
          n = 0 ;
@@ -249,15 +251,15 @@ const char *readrle(lifealgo &imp, char *line) {
                if (*p == 'b') {
                   x += n ;
                } else if (*p == 'o') {
-		  while (n-- > 0) {
-		     if (imp.setcell(xoff + x++, yoff + y, 1) < 0)
-		        return SETCELLERROR ;
-		  }
+                  while (n-- > 0) {
+                     if (imp.setcell(xoff + x++, yoff + y, 1) < 0)
+                        return SETCELLERROR ;
+                  }
                } else if (*p == '$') {
                   x = 0 ;
                   y += n ;
                } else if (*p == '!') {
-                  return errmsg;
+                  return 0;
                }
                n = 0 ;
             }
@@ -265,7 +267,7 @@ const char *readrle(lifealgo &imp, char *line) {
       }
    } while (getline(line, LINESIZE));
    
-   return errmsg;
+   return 0;
 }
 
 /*
@@ -277,7 +279,7 @@ const char *readpclife(lifealgo &imp, char *line) {
    int leftx = x ;
    char *p ;
    char *ruleptr;
-   const char *errmsg = 0;
+   const char *errmsg;
 
    do {
       if (line[0] == '#') {
@@ -294,16 +296,17 @@ const char *readpclife(lifealgo &imp, char *line) {
             while (*p > ' ') p++;
             *p = 0;
             errmsg = imp.setrule(ruleptr) ;
+            if (errmsg) return errmsg;
          }
       } else if (line[0] == '-' || ('0' <= line[0] && line[0] <= '9')) {
          sscanf(line, "%d %d", &x, &y) ;
          if (imp.setcell(x, y, 1) < 0)
-	    return SETCELLERROR ;
+            return SETCELLERROR ;
       } else if (line[0] == '.' || line[0] == '*') {
          for (p = line; *p; p++) {
-	    if (*p == '*') {
-	       if (imp.setcell(x, y, 1) < 0)
-		 return SETCELLERROR ;
+            if (*p == '*') {
+               if (imp.setcell(x, y, 1) < 0)
+                  return SETCELLERROR ;
             }
             x++ ;
          }
@@ -312,7 +315,7 @@ const char *readpclife(lifealgo &imp, char *line) {
       }
    } while (getline(line, LINESIZE));
    
-   return errmsg;
+   return 0;
 }
 
 /*
@@ -335,8 +338,8 @@ const char *readdblife(lifealgo &imp, char *line) {
                   x += n;
                } else if (*p == 'O') {
                   while (n-- > 0)
-		    if (imp.setcell(x++, y, 1) < 0)
-		       return SETCELLERROR ;
+                     if (imp.setcell(x++, y, 1) < 0)
+                        return SETCELLERROR ;
                } else {
                   // ignore dblife commands like "5k10h@"
                }
@@ -346,6 +349,7 @@ const char *readdblife(lifealgo &imp, char *line) {
          y++;
       }
    }
+   return 0;
 }
 
 long getfilesize(const char *filename) {
