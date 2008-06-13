@@ -215,9 +215,10 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       
       // draw color box
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
-      wxBrush brush(wxColor(cellr[currlayer->algtype][i],
-                            cellg[currlayer->algtype][i],
-                            cellb[currlayer->algtype][i]));
+      wxColor color(cellr[currlayer->algtype][i],
+                    cellg[currlayer->algtype][i],
+                    cellb[currlayer->algtype][i]) ;
+      wxBrush brush(color) ;
       wxRect r(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
       dc.SetPen(*wxBLACK_PEN);
       dc.SetBrush(brush);

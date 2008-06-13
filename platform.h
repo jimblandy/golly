@@ -44,9 +44,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define __STDC_LIMIT_MACROS
 #include <inttypes.h>
 #include <stdint.h>
+#include <limits.h>
 typedef uintptr_t g_uintptr_t ;
 #define G_MAX SIZE_MAX
 #else
+#include <limits.h>
 #define PRIuPTR "u"
 typedef unsigned int g_uintptr_t ;
 #define G_MAX UINT_MAX
