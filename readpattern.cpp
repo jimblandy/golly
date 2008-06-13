@@ -107,10 +107,12 @@ char *getline(char *line, int maxlinelen) {
    return line;
 }
 
+const char *SETCELLERROR = "Impossible; set cell error for state 1" ;
+
 // Read a text pattern like "...ooo$$$ooo" where '.', ',' and chars <= ' '
 // represent dead cells, '$' represents 10 dead cells, and all other chars
 // represent live cells.
-void readtextpattern(lifealgo &imp, char *line) {
+const char *readtextpattern(lifealgo &imp, char *line) {
    int x=0, y=0;
    char *p;
 
@@ -121,7 +123,9 @@ void readtextpattern(lifealgo &imp, char *line) {
          } else if (*p == '$') {
             x += 10;
          } else {
-            imp.setcell(x, y, 1);
+	    if (imp.setcell(x, y, 1) < 0) {
+	       return SETCELLERROR ;
+	    }
             x++;
          }
       }
@@ -131,6 +135,7 @@ void readtextpattern(lifealgo &imp, char *line) {
    } while (getline(line, LINESIZE));
 
    if (getedges) bottom = y - 1;
+   return 0 ;
 }
 
 /*
@@ -244,8 +249,10 @@ const char *readrle(lifealgo &imp, char *line) {
                if (*p == 'b') {
                   x += n ;
                } else if (*p == 'o') {
-                  while (n-- > 0)
-                     imp.setcell(xoff + x++, yoff + y, 1) ;
+		  while (n-- > 0) {
+		     if (imp.setcell(xoff + x++, yoff + y, 1) < 0)
+		        return SETCELLERROR ;
+		  }
                } else if (*p == '$') {
                   x = 0 ;
                   y += n ;
@@ -290,11 +297,14 @@ const char *readpclife(lifealgo &imp, char *line) {
          }
       } else if (line[0] == '-' || ('0' <= line[0] && line[0] <= '9')) {
          sscanf(line, "%d %d", &x, &y) ;
-         imp.setcell(x, y, 1) ;
+         if (imp.setcell(x, y, 1) < 0)
+	    return SETCELLERROR ;
       } else if (line[0] == '.' || line[0] == '*') {
          for (p = line; *p; p++) {
-            if (*p == '*')
-               imp.setcell(x, y, 1) ;
+	    if (*p == '*') {
+	       if (imp.setcell(x, y, 1) < 0)
+		 return SETCELLERROR ;
+            }
             x++ ;
          }
          x = leftx ;
@@ -308,7 +318,7 @@ const char *readpclife(lifealgo &imp, char *line) {
 /*
  *   This routine reads David Bell's dblife format.
  */
-void readdblife(lifealgo &imp, char *line) {
+const char *readdblife(lifealgo &imp, char *line) {
    int n=0, x=0, y=0;
    char *p;
 
@@ -324,7 +334,9 @@ void readdblife(lifealgo &imp, char *line) {
                if (*p == '.') {
                   x += n;
                } else if (*p == 'O') {
-                  while (n-- > 0) imp.setcell(x++, y, 1);
+                  while (n-- > 0)
+		    if (imp.setcell(x++, y, 1) < 0)
+		       return SETCELLERROR ;
                } else {
                   // ignore dblife commands like "5k10h@"
                }
@@ -401,7 +413,7 @@ const char *loadpattern(lifealgo &imp) {
       // if getedges is true then readrle has set top,left,bottom,right
 
    } else if (line[0] == '!') {
-      readdblife(imp, line) ;
+      errmsg = readdblife(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
@@ -416,7 +428,7 @@ const char *loadpattern(lifealgo &imp) {
 
    } else {
       // read a text pattern like "...ooo$$$ooo"
-      readtextpattern(imp, line) ;
+      errmsg = readtextpattern(imp, line) ;
       imp.endofpattern() ;
       // if getedges is true then readtextpattern has set top,left,bottom,right
    }
