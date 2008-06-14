@@ -243,24 +243,40 @@ const char *readrle(lifealgo &imp, char *line) {
       } else {
          n = 0 ;
          for (p=line; *p; p++) {
-            if ('0' <= *p && *p <= '9') {
-               n = n * 10 + *p - '0' ;
+	    char c = *p ;
+            if ('0' <= c && c <= '9') {
+               n = n * 10 + c - '0' ;
             } else {
                if (n == 0)
                   n = 1 ;
-               if (*p == 'b') {
+               if (c == 'b' || c == '.') {
                   x += n ;
-               } else if (*p == 'o') {
-                  while (n-- > 0) {
-                     if (imp.setcell(xoff + x++, yoff + y, 1) < 0)
-                        return SETCELLERROR ;
-                  }
-               } else if (*p == '$') {
+               } else if (c == '$') {
                   x = 0 ;
                   y += n ;
-               } else if (*p == '!') {
+               } else if (c == '!') {
                   return 0;
-               }
+               } else if (('o' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+		  int state = -1 ;
+		  if (c == 'o')
+		     state = 1 ;
+		  else if (c < 'o') {
+		     state = c - 'A' + 1 ;
+		  } else {
+		     state = 24 * (c - 'p' + 1) ;
+		     p++ ;
+		     c = *p ;
+		     if ('A' <= c && c <= 'X') {
+		        state = state + c - 'A' + 1 ;
+		     } else {
+		        return "Illegal multi-char state" ;
+		     }
+		  }
+                  while (n-- > 0) {
+                     if (imp.setcell(xoff + x++, yoff + y, state) < 0)
+		        return "Cell state out of range for this algorithm" ;
+                  }
+	       }
                n = 0 ;
             }
          }

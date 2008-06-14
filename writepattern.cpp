@@ -49,34 +49,52 @@ void putchar(char ch, FILE *f) {
    outpos++;
 }
 
+const int WRLE_NONE = -3 ;
+const int WRLE_EOP = -2 ;
+const int WRLE_NEWLINE = -1 ;
+
 // output of RLE pattern data is channelled thru here to make it easier to
 // ensure all lines have <= 70 characters
-void AddRun (FILE *f,
-             char ch,
-             unsigned int *run,        // in and out
-             unsigned int *linelen)    // ditto
+void AddRun(FILE *f,
+            int state,                // in: state of cell to write
+	    int multistate,           // true if #cell states > 2
+            unsigned int &run,        // in and out
+            unsigned int &linelen)    // ditto
 {
    unsigned int i, numlen;
    char numstr[32];
 
-   if ( *run > 1 ) {
-      sprintf(numstr, "%u", *run);
+   if ( run > 1 ) {
+      sprintf(numstr, "%u", run);
       numlen = strlen(numstr);
    } else {
       numlen = 0;                      // no run count shown if 1
    }
-   if ( *linelen + numlen + 1 > 70 ) {
+   if ( linelen + numlen + 1 + multistate > 70 ) {
       putchar('\n', f);
-      *linelen = 0;
+      linelen = 0;
    }
    i = 0;
    while (i < numlen) {
       putchar(numstr[i], f);
       i++;
    }
-   putchar(ch, f);
-   *linelen += numlen + 1;
-   *run = 0;                           // reset run count
+   if (multistate) {
+      if (state <= 0)
+	 putchar(".$!"[-state], f) ;
+      else {
+	 if (state > 24) {
+	    int hi = (state - 25) / 24 ;
+	    putchar(hi + 'p', f) ;
+	    linelen++ ;
+	    state -= (hi + 1) * 24 ;
+	 }
+	 putchar('A' + state - 1, f) ;
+      }
+   } else
+      putchar("!$bo"[state+2]) ;
+   linelen += numlen + 1;
+   run = 0;                           // reset run count
 }
 
 // write current pattern to file using extended RLE format
@@ -127,7 +145,8 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
       unsigned int brun = 0;
       unsigned int orun = 0;
       unsigned int dollrun = 0;
-      char lastchar;
+      int laststate = WRLE_NONE ;
+      int multistate = imp.NumCellStates() > 2 ;
       int cx, cy;
       
       // for showing accurate progress we need to add pattern height to pop count
@@ -138,41 +157,40 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
       int v = 0 ;
       for ( cy=top; cy<=bottom; cy++ ) {
          // set lastchar to anything except 'o' or 'b'
-         lastchar = 0;
+	 laststate = WRLE_NONE ;
          currcount++;
          for ( cx=left; cx<=right; cx++ ) {
-	    /** FIXME:  support multistate */
 	    int skip = imp.nextcell(cx, cy, v);
             if (skip + cx > right)
                skip = -1;           // pretend we found no more live cells
             if (skip > 0) {
                // have exactly "skip" dead cells here
-               if (lastchar == 'b') {
+	       if (laststate == 0) {
                   brun += skip;
                } else {
                   if (orun > 0) {
                      // output current run of live cells
-                     AddRun(f, 'o', &orun, &linelen);
+		     AddRun(f, laststate, multistate, orun, linelen);
                   }
-                  lastchar = 'b';
+                  laststate = 0 ;
                   brun = skip;
                }
             }
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
-               if (lastchar == 'o') {
+               if (laststate == v) {
                   orun++;
                } else {
-                  if (dollrun > 0) {
+                  if (dollrun > 0)
                      // output current run of $ chars
-                     AddRun(f, '$', &dollrun, &linelen);
-                  }
-                  if (brun > 0) {
+		     AddRun(f, WRLE_NEWLINE, multistate, dollrun, linelen);
+                  if (brun > 0)
                      // output current run of dead cells
-                     AddRun(f, 'b', &brun, &linelen);
-                  }
-                  lastchar = 'o';
+		     AddRun(f, 0, multistate, brun, linelen);
+		  if (orun > 0)
+		     AddRun(f, laststate, multistate, orun, linelen) ;
+                  laststate = v ;
                   orun = 1;
                }
                currcount++;
@@ -189,19 +207,18 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
          }
          // end of current row
          if (isaborted()) break;
-         if (lastchar == 'b') {
+         if (laststate == 0)
             // forget dead cells at end of row
             brun = 0;
-         } else if (lastchar == 'o') {
+         else if (laststate >= 0)
             // output current run of live cells
-            AddRun(f, 'o', &orun, &linelen);
-         }
+	    AddRun(f, laststate, multistate, orun, linelen);
          dollrun++;
       }
       
       // terminate RLE data
       dollrun = 1;
-      AddRun(f, '!', &dollrun, &linelen);
+      AddRun(f, WRLE_EOP, multistate, dollrun, linelen);
       putchar('\n', f);
       
       // flush outbuff

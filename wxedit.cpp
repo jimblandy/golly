@@ -1490,28 +1490,33 @@ void Selection::ClearOutside()
 
 // -----------------------------------------------------------------------------
 
-void Selection::AddEOL(char** chptr)
+void Selection::AddEOL(char* &chptr)
 {
    #if defined(__WXMAC__)
-      **chptr = '\r';      // nicer for stupid apps like LifeLab :)
-      *chptr += 1;
+      *chptr = '\r';      // nicer for stupid apps like LifeLab :)
+      chptr += 1;
    #elif defined(__WXMSW__)
-      **chptr = '\r';
-      *chptr += 1;
-      **chptr = '\n';
-      *chptr += 1;
+      *chptr = '\r';
+      chptr += 1;
+      *chptr = '\n';
+      chptr += 1;
    #else // assume Unix
-      **chptr = '\n';
-      *chptr += 1;
+      *chptr = '\n';
+      chptr += 1;
    #endif
 }
 
 // -----------------------------------------------------------------------------
 
-void Selection::AddRun(char ch,
-                       unsigned int* run,        // in and out
-                       unsigned int* linelen,    // ditto
-                       char** chptr)             // ditto
+const int WRLE_NONE = -3 ;
+const int WRLE_EOP = -2 ;
+const int WRLE_NEWLINE = -1 ;
+
+void Selection::AddRun(int state,                // in:  state of cell to write
+		       int multistate,           // true if #cell states > 2
+                       unsigned int &run,        // in and out
+                       unsigned int &linelen,    // ditto
+                       char* &chptr)             // ditto
 {
    // output of RLE pattern data is channelled thru here to make it easier to
    // ensure all lines have <= maxrleline characters
@@ -1519,27 +1524,41 @@ void Selection::AddRun(char ch,
    unsigned int i, numlen;
    char numstr[32];
    
-   if ( *run > 1 ) {
-      sprintf(numstr, "%u", *run);
+   if ( run > 1 ) {
+      sprintf(numstr, "%u", run);
       numlen = strlen(numstr);
    } else {
       numlen = 0;                      // no run count shown if 1
    }
    // keep linelen <= maxrleline
-   if ( *linelen + numlen + 1 > maxrleline ) {
+   if ( linelen + numlen + 1 + multistate > maxrleline ) {
       AddEOL(chptr);
-      *linelen = 0;
+      linelen = 0;
    }
    i = 0;
    while (i < numlen) {
-      **chptr = numstr[i];
-      *chptr += 1;
+      *chptr = numstr[i];
+      chptr += 1;
       i++;
    }
-   **chptr = ch;
-   *chptr += 1;
-   *linelen += numlen + 1;
-   *run = 0;                           // reset run count
+   if (multistate) {
+      if (state <= 0)
+	 *chptr = ".$!"[-state] ;
+      else {
+	 if (state > 24) {
+	    int hi = (state - 25) / 24 ;
+	    *chptr = hi + 'p' ;
+	    chptr += 1 ;
+	    linelen += 1 ;
+	    state -= (hi + 1) * 24 ;
+	 }
+	 *chptr = 'A' + state - 1 ;
+      }
+   } else
+      *chptr = "!$bo"[state+2] ;
+   chptr += 1;
+   linelen += numlen + 1;
+   run = 0;                           // reset run count
 }
 
 // -----------------------------------------------------------------------------
@@ -1577,7 +1596,7 @@ void Selection::CopyToClipboard(bool cut)
    sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, currlayer->algo->getrule());
    char* chptr = textptr;
    chptr += strlen(textptr);
-   AddEOL(&chptr);
+   AddEOL(chptr);
    // save start of data in case livecount is zero
    int datastart = chptr - textptr;
    
@@ -1587,7 +1606,7 @@ void Selection::CopyToClipboard(bool cut)
    unsigned int brun = 0;
    unsigned int orun = 0;
    unsigned int dollrun = 0;
-   char lastchar;
+   int laststate ;
    int cx, cy;
    int v = 0 ;
 
@@ -1604,23 +1623,23 @@ void Selection::CopyToClipboard(bool cut)
       BeginProgress(_("Copying selection"));
 
    lifealgo* curralgo = currlayer->algo;
+   int multistate = curralgo->NumCellStates() > 2 ;
    for ( cy=itop; cy<=ibottom; cy++ ) {
-      // set lastchar to anything except 'o' or 'b'
-      lastchar = 0;
+      laststate = WRLE_NONE ;
       for ( cx=ileft; cx<=iright; cx++ ) {
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
             skip = -1;           // pretend we found no more live cells
          if (skip > 0) {
             // have exactly "skip" empty cells here
-            if (lastchar == 'b') {
+            if (laststate == 0) {
                brun += skip;
             } else {
                if (orun > 0) {
                   // output current run of live cells
-                  AddRun('o', &orun, &linelen, &chptr);
+		  AddRun(laststate, multistate, orun, linelen, chptr);
                }
-               lastchar = 'b';
+               laststate = 0 ;
                brun = skip;
             }
          }
@@ -1632,18 +1651,19 @@ void Selection::CopyToClipboard(bool cut)
                curralgo->setcell(cx, cy, 0);
                if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
             }
-            if (lastchar == 'o') {
+            if (laststate == v) {
                orun++;
             } else {
-               if (dollrun > 0) {
+               if (dollrun > 0)
                   // output current run of $ chars
-                  AddRun('$', &dollrun, &linelen, &chptr);
-               }
-               if (brun > 0) {
+		  AddRun(WRLE_NEWLINE, multistate, dollrun, linelen, chptr);
+               if (brun > 0)
                   // output current run of dead cells
-                  AddRun('b', &brun, &linelen, &chptr);
-               }
-               lastchar = 'o';
+		 AddRun(0, multistate, brun, linelen, chptr);
+               if (orun > 0)
+                  // output current run of other live cells
+		 AddRun(laststate, multistate, orun, linelen, chptr);
+               laststate = v ;
                orun = 1;
             }
          } else {
@@ -1674,13 +1694,12 @@ void Selection::CopyToClipboard(bool cut)
       }
       if (abort) break;
       // end of current row
-      if (lastchar == 'b') {
+      if (laststate == 0)
          // forget dead cells at end of row
          brun = 0;
-      } else if (lastchar == 'o') {
+      else if (laststate >= 0)
          // output current run of live cells
-         AddRun('o', &orun, &linelen, &chptr);
-      }
+	 AddRun(laststate, multistate, orun, linelen, chptr);
       dollrun++;
    }
    
@@ -1692,10 +1711,10 @@ void Selection::CopyToClipboard(bool cut)
    } else {
       // terminate RLE data
       dollrun = 1;
-      AddRun('!', &dollrun, &linelen, &chptr);
+      AddRun(WRLE_EOP, multistate, dollrun, linelen, chptr);
       if (cut) currlayer->algo->endofpattern();
    }
-   AddEOL(&chptr);
+   AddEOL(chptr);
    *chptr = 0;
    
    EndProgress();

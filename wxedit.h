@@ -151,8 +151,10 @@ private:
    void EmptyUniverse();
    // kill all cells by creating a new, empty universe
 
-   void AddRun(char ch, unsigned int* run, unsigned int* linelen, char** chptr);
-   void AddEOL(char** chptr);
+   void AddRun(int state, int multistate, unsigned int &run,
+	       unsigned int &linelen, char* &chptr);
+
+   void AddEOL(char* &chptr);
    // these routines are used by CopyToClipboard to create RLE data
 
    bool SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,

@@ -626,8 +626,8 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
          if (i != currlayer->algtype) {
             delete *tempalgo;
             *tempalgo = CreateNewUniverse((algo_type) i);
-            err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
-            if (!err) break;
+            const char *otherErr = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
+            if (!otherErr) break;
          }
       }
    }

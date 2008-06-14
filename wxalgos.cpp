@@ -198,11 +198,9 @@ void InitAlgorithms()
 }
 
 // -----------------------------------------------------------------------------
-
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
 {
    lifealgo* newalgo = NULL;
-
    switch (algotype) {
       case QLIFE_ALGO:  newalgo = new qlifealgo(); break;
       case HLIFE_ALGO:  newalgo = new hlifealgo(); break;
