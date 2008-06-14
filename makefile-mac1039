@@ -92,8 +92,8 @@ LIBDIRNAME = $(WX_DIR)/src/build/Deployment
 
 all: $(OBJDIR) app.bin app_bundle bgolly
 
-$BASEOBJ: $BASEH
-$WXOBJ: $BASEH $WXH *.xpm bitmaps/*.xpm
+$(BASEOBJ): $(BASEH)
+$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)

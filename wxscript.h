@@ -86,7 +86,7 @@ const char* GSF_setrule(char* rulestring);
 const char* GSF_setgen(char* genstring);
 const char* GSF_setpos(char* x, char* y);
 void GSF_setname(char* name, int index);
-void GSF_setcell(int x, int y, int newstate);
+const char *GSF_setcell(int x, int y, int newstate);
 void GSF_select(int x, int y, int wd, int ht);
 bool GSF_setoption(char* optname, int newval, int* oldval);
 bool GSF_getoption(char* optname, int* optval);

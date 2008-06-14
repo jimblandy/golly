@@ -1362,8 +1362,9 @@ XS(pl_setcell)
    int y = SvIV(ST(1));
    int state = SvIV(ST(2));
 
-   GSF_setcell(x, y, state);
-   
+   const char *err = GSF_setcell(x, y, state);
+   if (err != 0)
+     PERL_ERROR(err) ;
    XSRETURN(0);
 }
 

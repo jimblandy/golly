@@ -1335,7 +1335,11 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
 
-   GSF_setcell(x, y, state);
+   const char *err = GSF_setcell(x, y, state);
+   if (err) {
+     PyErr_SetString(PyExc_RuntimeError, err) ;
+     return NULL ;
+   }
 
    RETURN_NONE;
 }

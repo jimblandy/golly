@@ -58,8 +58,8 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
 
 all: $(OBJDIR) golly bgolly
 
-$BASEOBJ: $BASEH
-$WXOBJ: $BASEH $WXH *.xpm bitmaps/*.xpm
+$(BASEOBJ): $(BASEH)
+$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)

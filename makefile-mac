@@ -111,8 +111,8 @@ __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 all: $(OBJDIR) app.bin app_bundle bgolly
 
-$BASEOBJ: $BASEH
-$WXOBJ: $BASEH $WXH *.xpm bitmaps/*.xpm
+$(BASEOBJ): $(BASEH)
+$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)

@@ -257,18 +257,21 @@ void GSF_setname(char* name, int index)
 
 // -----------------------------------------------------------------------------
 
-void GSF_setcell(int x, int y, int newstate)
+const char *GSF_setcell(int x, int y, int newstate)
 {
    int oldstate = currlayer->algo->getcell(x, y);
    if (newstate != oldstate) {
       if (allowundo && !currlayer->stayclean) {
          ChangeCell(x, y, oldstate, newstate);
       }
-      currlayer->algo->setcell(x, y, newstate);
+      int rval = currlayer->algo->setcell(x, y, newstate);
       currlayer->algo->endofpattern();
       MarkLayerDirty();
       DoAutoUpdate();
+      if (rval < 0)
+	 return "Error in setcell; state value out of range." ;
    }
+   return 0 ;
 }
 
 // -----------------------------------------------------------------------------
