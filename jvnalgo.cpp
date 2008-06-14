@@ -45,10 +45,12 @@ const char* jvnalgo::setrule(const char *s) {
    if (stricmp(s, JVN_RULE) == 0) {
       numstates = 29;
       maxCellStates = 29 ;
+      ghashbase::setrule(s) ;
       return NULL;
    } else if (stricmp(s, EJVN_RULE) == 0) {
       numstates = 32;
       maxCellStates = 32 ;
+      ghashbase::setrule(s) ;
       return NULL;
    }
    return "This algorithm only supports two rules (JvN-29 or JvN-32).";

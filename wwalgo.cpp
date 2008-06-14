@@ -35,7 +35,10 @@ using namespace std ;
 const char WW_RULE[] = "WireWorld";
 
 const char* wwalgo::setrule(const char *s) {
-   if (stricmp(s, WW_RULE) == 0) return NULL;
+   if (stricmp(s, WW_RULE) == 0) {
+      ghashbase::setrule(s) ;
+      return NULL;
+   }
    return "This algorithm only supports a single rule (WireWorld).";
 }
 

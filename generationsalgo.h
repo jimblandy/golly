@@ -21,43 +21,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
 
                         / ***/
-#include "slifealgo.h"
-
-// AKT: for case-insensitive string comparison
-#include <string.h>
-#ifndef WIN32
-   #define stricmp strcasecmp
+#ifndef GENERALGO_H
+#define GENERALGO_H
+#include "ghashbase.h"
+/**
+ *   Our WireWorld algo class.
+ */
+static const int MAXRULESIZE = 60 ;
+class generationsalgo : public ghashbase {
+public:
+   generationsalgo() ;
+   virtual ~generationsalgo() ;
+   virtual state slowcalc(state nw, state n, state ne, state w, state c,
+			  state e, state sw, state s, state se) ;
+   // AKT
+   virtual const char* setrule(const char* s);
+   virtual const char* getrule();
+   virtual const char* DefaultRule();
+   virtual unsigned char *GetColorData(int &numcolors);
+   virtual int NumCellStates() ;
+   int bornbits ;
+   int staybits ;
+   char rulecopy[MAXRULESIZE] ;
+};
 #endif
-
-// AKT: this algo only supports B3/S23
-const char SLOW_RULE[] = "B3/S23";
-
-const char* slifealgo::setrule(const char *s) {
-   if (stricmp(s, SLOW_RULE) == 0) {
-      ghashbase::setrule(s) ;
-      return NULL;
-   }
-   return "This algorithm only supports a single rule (B3/S23).";
-}
-
-const char* slifealgo::getrule() {
-   return SLOW_RULE;
-}
-
-const char* slifealgo::DefaultRule() {
-   return SLOW_RULE;
-}
-
-using namespace std ;
-slifealgo::slifealgo() {
-}
-slifealgo::~slifealgo() {
-}
-state slifealgo::slowcalc(state nw, state n, state ne, state w, state c,
-			state e, state sw, state s, state se) {
-  int sum = nw + n + ne + w + e + sw + s + se ;
-  if (sum == 3 || (sum == 2 && c == 1))
-    return 1 ;
-  else
-    return 0 ;
-}

@@ -1425,11 +1425,8 @@ const char *ghashbase::readmacrocell(char *line) {
 }
 const char *ghashbase::setrule(const char *s) {
    poller->bailIfCalculating() ;
-   // silently ignore
-   // return 0 ;
-   // AKT: better to do this??? ie. all algos derived from ghashbase
-   // should implement their own setrule() method
-   return "setrule has not been implemented!";
+   clearcache() ;
+   return 0 ;
 }
 /**
  *   Write out the native macrocell format.  This is the one we use when

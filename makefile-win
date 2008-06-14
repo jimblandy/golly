@@ -61,13 +61,14 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 OBJDIR = ObjWin
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
-   util.h viewport.h writepattern.h wwalgo.h
+   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/slifealgo.obj $(OBJDIR)/wwalgo.obj \
    $(OBJDIR)/ghashbase.obj $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
-   $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj
+   $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
+   $(OBJDIR)/generationsalgo.obj
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
    wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxstatus.h \
    wxundo.h wxutils.h wxview.h
@@ -344,6 +345,9 @@ $(OBJDIR)/jvnalgo.obj: jvnalgo.cpp
 
 $(OBJDIR)/wwalgo.obj: wwalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wwalgo.cpp
+
+$(OBJDIR)/generationsalgo.obj: generationsalgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) generationsalgo.cpp
 
 $(OBJDIR)/slifealgo.obj: slifealgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) slifealgo.cpp

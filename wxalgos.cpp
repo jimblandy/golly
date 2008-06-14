@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "slifealgo.h"
 #include "jvnalgo.h"
 #include "wwalgo.h"
+#include "generationsalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
@@ -132,6 +133,7 @@ void InitAlgorithms()
    slifealgo temp_slife;
    jvnalgo   temp_jvn;
    wwalgo    temp_ww;
+   generationsalgo   temp_gen;
 
    // algomenu is used when algo button is pressed and for Set Algo submenu
    algomenu = new wxMenu();
@@ -146,6 +148,7 @@ void InitAlgorithms()
    algomem[SLIFE_ALGO] = temp_slife.DefaultMaxMem();
    algomem[JVN_ALGO]   = temp_jvn.DefaultMaxMem();
    algomem[WW_ALGO]    = temp_ww.DefaultMaxMem();
+   algomem[GEN_ALGO]   = temp_gen.DefaultMaxMem();
 
    // set default base steps
    algobase[QLIFE_ALGO] = temp_qlife.DefaultBaseStep();
@@ -153,6 +156,7 @@ void InitAlgorithms()
    algobase[SLIFE_ALGO] = temp_slife.DefaultBaseStep();
    algobase[JVN_ALGO]   = temp_jvn.DefaultBaseStep();
    algobase[WW_ALGO]    = temp_ww.DefaultBaseStep();
+   algobase[GEN_ALGO]   = temp_gen.DefaultBaseStep();
 
    // set status bar background for each algo
    algorgb[QLIFE_ALGO] = new wxColor(255, 255, 206);  // pale yellow
@@ -160,6 +164,7 @@ void InitAlgorithms()
    algorgb[SLIFE_ALGO] = new wxColor(225, 225, 225);  // not sure
    algorgb[JVN_ALGO]   = new wxColor(225, 255, 225);  // pale green
    algorgb[WW_ALGO]    = new wxColor(255, 225, 255);  // pale red
+   algorgb[GEN_ALGO]   = new wxColor(255, 225, 225);  // not sure
 
    // create corresponding brushes
    for (int i = 0; i < NUM_ALGOS; i++)
@@ -171,6 +176,7 @@ void InitAlgorithms()
    InitCellColors(SLIFE_ALGO, temp_slife);
    InitCellColors(JVN_ALGO,   temp_jvn);
    InitCellColors(WW_ALGO,    temp_ww);
+   InitCellColors(GEN_ALGO,   temp_gen);
    
    // build icon bitmaps for each algo (if icon data is present)
    icons7x7  [QLIFE_ALGO]  = CreateIconBitmaps( temp_qlife.GetIconData(7) );
@@ -183,6 +189,8 @@ void InitAlgorithms()
    icons15x15[JVN_ALGO]    = CreateIconBitmaps( temp_jvn.GetIconData(15) );
    icons7x7  [WW_ALGO]     = CreateIconBitmaps( temp_ww.GetIconData(7) );
    icons15x15[WW_ALGO]     = CreateIconBitmaps( temp_ww.GetIconData(15) );
+   icons7x7  [GEN_ALGO]    = CreateIconBitmaps( temp_gen.GetIconData(7) );
+   icons15x15[GEN_ALGO]    = CreateIconBitmaps( temp_gen.GetIconData(15) );
    
    // create scaled bitmaps if only one size is supplied
    for (int i = 0; i < NUM_ALGOS; i++) {
@@ -207,6 +215,7 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
       case SLIFE_ALGO:  newalgo = new slifealgo(); break;
       case JVN_ALGO:    newalgo = new jvnalgo(); break;
       case WW_ALGO:     newalgo = new wwalgo(); break;
+      case GEN_ALGO:    newalgo = new generationsalgo(); break;
       default:          Fatal(_("Bug detected in CreateNewUniverse!"));
    }
 
@@ -230,6 +239,7 @@ const char* GetAlgoName(algo_type algotype)
       case SLIFE_ALGO:  return "SlowLife";
       case JVN_ALGO:    return "JvN";
       case WW_ALGO:     return "WireWorld";
+      case GEN_ALGO:    return "Generations";
       default:          Fatal(_("Bug detected in GetAlgoName!"));
    }
    return "BUG";        // avoid gcc warning
