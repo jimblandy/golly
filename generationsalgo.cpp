@@ -30,7 +30,7 @@ int generationsalgo::NumCellStates() {
 }
 
 const char* generationsalgo::setrule(const char *s) {
-   if (strlen(s) + 10 > MAXRULESIZE)
+   if ((int)strlen(s) + 10 > MAXRULESIZE)
       return "Rule too long for Generations" ;
    // a legal rule goes:
    // [0-8]+/[1-8]+/[1-9][0-9]*
