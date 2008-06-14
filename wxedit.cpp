@@ -130,7 +130,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    int textwd, textht;
    SetEditFont(dc);
    h_col1 = 4;
-   dc.GetTextExtent(_("States:"), &textwd, &textht);
+   dc.GetTextExtent(_("State:"), &textwd, &textht);
    h_col2 = h_col1 + textwd + 4;
    dc.GetTextExtent(_("9"), &digitwd, &textht);
 }
@@ -186,9 +186,9 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    
    SetEditFont(dc);     // for DisplayText calls
 
-   DisplayText(dc, _("States:"), h_col1, BASELINE1);
-   DisplayText(dc, _("Colors:"), h_col1, BASELINE2);
-   DisplayText(dc, _("Icons:"),  h_col1, BASELINE3);
+   DisplayText(dc, _("State:"), h_col1, BASELINE1);
+   DisplayText(dc, _("Color:"), h_col1, BASELINE2);
+   DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
 
    wxBitmap** iconmaps = icons7x7[currlayer->algtype];
 

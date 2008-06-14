@@ -38,12 +38,18 @@ PYTHON_LINK =
 
 ### put .o files in a GTK-specific subdir to avoid conflict with .o files created by X11 build
 OBJDIR = ObjGTK
+BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
+   liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
+   util.h viewport.h writepattern.h wwalgo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/jvnalgo.o \
    $(OBJDIR)/slifealgo.o $(OBJDIR)/wwalgo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o
+WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
+   wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxstatus.h \
+   wxundo.h wxutils.h wxview.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
@@ -51,6 +57,9 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
    $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 all: $(OBJDIR) golly bgolly
+
+$BASEOBJ: $BASEH
+$WXOBJ: $BASEH $WXH *.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
@@ -65,198 +74,118 @@ golly: $(BASEOBJ) $(WXOBJ)
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS)
 
-$(OBJDIR)/bgolly.o: bgolly.cpp \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-hlifealgo.h qlifealgo.h jvnalgo.h wwalgo.h ghashbase.h liferules.h writepattern.h util.h
+$(OBJDIR)/bgolly.o: bgolly.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ bgolly.cpp
 
-$(OBJDIR)/bigint.o: bigint.cpp bigint.h util.h
+$(OBJDIR)/bigint.o: bigint.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ bigint.cpp
 
-$(OBJDIR)/lifealgo.o: lifealgo.cpp lifealgo.h platform.h bigint.h viewport.h \
-liferender.h lifepoll.h readpattern.h
+$(OBJDIR)/lifealgo.o: lifealgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ lifealgo.cpp
 
-$(OBJDIR)/hlifealgo.o: hlifealgo.cpp hlifealgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/hlifealgo.o: hlifealgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ hlifealgo.cpp
 
-$(OBJDIR)/hlifedraw.o: hlifedraw.cpp hlifealgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h
+$(OBJDIR)/hlifedraw.o: hlifedraw.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ hlifedraw.cpp
 
-$(OBJDIR)/qlifealgo.o: qlifealgo.cpp qlifealgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/qlifealgo.o: qlifealgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ qlifealgo.cpp
 
-$(OBJDIR)/qlifedraw.o: qlifedraw.cpp qlifealgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/qlifedraw.o: qlifedraw.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ qlifedraw.cpp
 
-$(OBJDIR)/jvnalgo.o: jvnalgo.cpp ghashbase.h jvnalgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/jvnalgo.o: jvnalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ jvnalgo.cpp
 
-$(OBJDIR)/wwalgo.o: wwalgo.cpp ghashbase.h wwalgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/wwalgo.o: wwalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wwalgo.cpp
 
-$(OBJDIR)/slifealgo.o: slifealgo.cpp ghashbase.h slifealgo.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/slifealgo.o: slifealgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ slifealgo.cpp
 
-$(OBJDIR)/ghashbase.o: ghashbase.cpp ghashbase.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h util.h
+$(OBJDIR)/ghashbase.o: ghashbase.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ghashbase.cpp
 
-$(OBJDIR)/ghashdraw.o: ghashdraw.cpp ghashbase.h platform.h lifealgo.h bigint.h \
-viewport.h liferender.h lifepoll.h readpattern.h liferules.h
+$(OBJDIR)/ghashdraw.o: ghashdraw.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ghashdraw.cpp
 
-$(OBJDIR)/liferules.o: liferules.cpp liferules.h util.h
+$(OBJDIR)/liferules.o: liferules.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ liferules.cpp
 
-$(OBJDIR)/liferender.o: liferender.cpp liferender.h
+$(OBJDIR)/liferender.o: liferender.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ liferender.cpp
 
-$(OBJDIR)/readpattern.o: readpattern.cpp readpattern.h bigint.h platform.h lifealgo.h \
-viewport.h liferender.h lifepoll.h util.h
+$(OBJDIR)/readpattern.o: readpattern.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ readpattern.cpp
 
-$(OBJDIR)/writepattern.o: writepattern.cpp writepattern.h platform.h lifealgo.h \
-bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h
+$(OBJDIR)/writepattern.o: writepattern.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ writepattern.cpp
 
-$(OBJDIR)/util.o: util.cpp util.h
+$(OBJDIR)/util.o: util.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ util.cpp
 
-$(OBJDIR)/viewport.o: viewport.cpp viewport.h bigint.h platform.h lifealgo.h \
-liferender.h lifepoll.h readpattern.h
+$(OBJDIR)/viewport.o: viewport.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ viewport.cpp
 
-$(OBJDIR)/lifepoll.o: lifepoll.cpp lifepoll.h util.h
+$(OBJDIR)/lifepoll.o: lifepoll.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ lifepoll.cpp
 
-$(OBJDIR)/wxutils.o: wxutils.cpp wxutils.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxview.h wxmain.h wxscript.h
+$(OBJDIR)/wxutils.o: wxutils.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
 
-$(OBJDIR)/wxprefs.o: wxprefs.cpp wxprefs.h \
-Help/about.html \
-bitmaps/hand_curs.xpm bitmaps/zoomin_curs.xpm bitmaps/zoomout_curs.xpm \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxhelp.h wxinfo.h wxundo.h wxlayer.h wxscript.h wxalgos.h
+$(OBJDIR)/wxprefs.o: wxprefs.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
 
-$(OBJDIR)/wxalgos.o: wxalgos.cpp wxalgos.h \
-platform.h bigint.h lifealgo.h  qlifealgo.h hlifealgo.h jvnalgo.h wwalgo.h slifealgo.h lifepoll.h \
-wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h
+$(OBJDIR)/wxalgos.o: wxalgos.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxalgos.cpp
 
-$(OBJDIR)/wxrule.o: wxrule.cpp wxrule.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h liferules.h \
-wxgolly.h wxutils.h wxprefs.h wxundo.h wxlayer.h
+$(OBJDIR)/wxrule.o: wxrule.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrule.cpp
 
-$(OBJDIR)/wxinfo.o: wxinfo.cpp wxinfo.h \
-readpattern.h bigint.h wxgolly.h wxmain.h wxutils.h wxprefs.h
+$(OBJDIR)/wxinfo.o: wxinfo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxinfo.cpp
 
-$(OBJDIR)/wxhelp.o: wxhelp.cpp wxhelp.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxmain.h wxutils.h wxprefs.h wxscript.h wxundo.h wxlayer.h
+$(OBJDIR)/wxhelp.o: wxhelp.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxhelp.cpp
 
-$(OBJDIR)/wxstatus.o: wxstatus.cpp wxstatus.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-wxgolly.h wxutils.h wxprefs.h wxview.h wxmain.h wxscript.h wxundo.h wxlayer.h wxalgos.h
+$(OBJDIR)/wxstatus.o: wxstatus.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
 
-$(OBJDIR)/wxview.o: wxview.cpp wxview.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-liferules.h qlifealgo.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxhelp.h wxmain.h wxstatus.h wxrender.h \
-wxscript.h wxundo.h wxlayer.h wxedit.h wxalgos.h
+$(OBJDIR)/wxview.o: wxview.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxview.cpp
 
-$(OBJDIR)/wxrender.o: wxrender.cpp wxrender.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-liferules.h qlifealgo.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxhelp.h wxstatus.h wxview.h wxundo.h wxlayer.h
+$(OBJDIR)/wxrender.o: wxrender.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
-$(OBJDIR)/wxperl.o: wxperl.cpp wxperl.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h \
-qlifealgo.h hlifealgo.h readpattern.h writepattern.h \
-wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h \
-wxinfo.h wxhelp.h wxundo.h wxlayer.h wxscript.h wxedit.h wxalgos.h
+$(OBJDIR)/wxperl.o: wxperl.cpp
 	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
 
-$(OBJDIR)/wxpython.o: wxpython.cpp wxpython.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h \
-qlifealgo.h hlifealgo.h readpattern.h writepattern.h \
-wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h \
-wxinfo.h wxhelp.h wxundo.h wxlayer.h wxscript.h wxedit.h wxalgos.h
+$(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
 
-$(OBJDIR)/wxscript.o: wxscript.cpp wxscript.h \
-liferules.h \
-wxgolly.h wxmain.h wxview.h wxrender.h wxstatus.h wxutils.h wxprefs.h \
-wxundo.h wxlayer.h wxperl.h wxpython.h wxedit.h wxalgos.h
+$(OBJDIR)/wxscript.o: wxscript.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
 
-$(OBJDIR)/wxfile.o: wxfile.cpp \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-liferules.h qlifealgo.h hlifealgo.h writepattern.h \
-wxgolly.h wxutils.h wxprefs.h wxrule.h wxinfo.h wxstatus.h \
-wxview.h wxrender.h wxscript.h wxmain.h wxundo.h wxlayer.h wxalgos.h
+$(OBJDIR)/wxfile.o: wxfile.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxfile.cpp
 
-$(OBJDIR)/wxedit.o: wxedit.cpp wxedit.h \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-liferules.h qlifealgo.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxmain.h wxstatus.h wxscript.h wxview.h \
-wxundo.h wxlayer.h wxalgos.h
+$(OBJDIR)/wxedit.o: wxedit.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxedit.cpp
 
-$(OBJDIR)/wxcontrol.o: wxcontrol.cpp \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-liferules.h qlifealgo.h hlifealgo.h \
-wxgolly.h wxutils.h wxprefs.h wxrule.h wxstatus.h wxview.h wxscript.h wxmain.h \
-wxhelp.h wxundo.h wxlayer.h wxedit.h wxalgos.h
+$(OBJDIR)/wxcontrol.o: wxcontrol.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
 
-$(OBJDIR)/wxundo.o: wxundo.cpp wxundo.h \
-platform.h lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h writepattern.h \
-wxgolly.h wxmain.h wxview.h wxutils.h wxscript.h wxlayer.h wxprefs.h wxedit.h wxalgos.h
+$(OBJDIR)/wxundo.o: wxundo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxundo.cpp
 
-$(OBJDIR)/wxlayer.o: wxlayer.cpp wxlayer.h \
-bitmaps/add.xpm bitmaps/clone.xpm bitmaps/duplicate.xpm bitmaps/delete.xpm \
-bitmaps/stack.xpm bitmaps/stack_down.xpm bitmaps/tile.xpm bitmaps/tile_down.xpm \
-platform.h lifealgo.h bigint.h qlifealgo.h hlifealgo.h viewport.h \
-wxgolly.h wxmain.h wxview.h wxstatus.h wxutils.h wxprefs.h wxscript.h \
-wxundo.h wxedit.h wxalgos.h
+$(OBJDIR)/wxlayer.o: wxlayer.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
 
-$(OBJDIR)/wxmain.o: wxmain.cpp wxmain.h \
-bitmaps/play.xpm bitmaps/stop.xpm bitmaps/algo.xpm \
-bitmaps/reset.xpm bitmaps/new.xpm bitmaps/open.xpm bitmaps/save.xpm \
-bitmaps/patterns.xpm bitmaps/patterns_down.xpm bitmaps/scripts.xpm bitmaps/scripts_down.xpm \
-bitmaps/draw.xpm bitmaps/draw_down.xpm bitmaps/select.xpm bitmaps/select_down.xpm \
-bitmaps/move.xpm bitmaps/move_down.xpm bitmaps/zoomin.xpm bitmaps/zoomin_down.xpm \
-bitmaps/zoomout.xpm bitmaps/zoomout_down.xpm bitmaps/info.xpm bitmaps/help.xpm \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h \
-liferules.h qlifealgo.h hlifealgo.h writepattern.h \
-wxgolly.h wxutils.h wxprefs.h wxinfo.h wxhelp.h wxstatus.h \
-wxview.h wxrender.h wxscript.h wxundo.h wxlayer.h wxalgos.h
+$(OBJDIR)/wxmain.o: wxmain.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
 
-$(OBJDIR)/wxgolly.o: wxgolly.cpp wxgolly.h \
-Help/about.html appicon.xpm \
-platform.h lifealgo.h bigint.h viewport.h liferender.h lifepoll.h readpattern.h util.h \
-wxmain.h wxstatus.h wxview.h wxutils.h wxprefs.h
+$(OBJDIR)/wxgolly.o: wxgolly.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp
 
 srcdist:
