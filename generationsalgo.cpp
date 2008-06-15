@@ -75,6 +75,10 @@ const char* generationsalgo::DefaultRule() {
    return DEFAULTRULE ;
 }
 
+/*
+ *   These colors are not presently used; we'll go back to them
+ *   when we permit colors to change with rules.
+ */
 static unsigned char defcolors[256*3] ;
 static int lastcolorset = -1 ;
 unsigned char *generationsalgo::GetColorData(int &numcolors) {
@@ -119,5 +123,4 @@ void generationsalgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Generations") ;
    ai.setAlgorithmCreator(&creator) ;
-   ai.initCellColors(sizeof(defcolors)/(sizeof(defcolors[0])*3), defcolors) ;
 }

@@ -42,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxalgos.h"
+#include "wxdefaultcolors.h" // pick up the default colors here only
 
 // -----------------------------------------------------------------------------
 
@@ -207,6 +208,16 @@ void InitAlgorithms()
 	ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15) ;
       if (!ad->icons7x7)
 	ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 15) ;
+      if (ad->cellr[0] == ad->cellr[1] && ad->cellg[0] == ad->cellg[1] &&
+	  ad->cellb[0] == ad->cellb[1]) {
+	// colors are nonsensical, probably unset; fold in defaults
+	unsigned char *rgbptr = default_colors ;
+	for (int c = 0; c < 256; c++) {
+	  ad->cellr[c] = *rgbptr++;
+	  ad->cellg[c] = *rgbptr++;
+	  ad->cellb[c] = *rgbptr++;
+	}
+      }
    }
 }
 
