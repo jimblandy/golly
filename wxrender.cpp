@@ -1565,9 +1565,9 @@ void DrawView(wxDC& dc, int tileindex)
 
    if (showicons && currlayer->view->getmag() > 2) {
       if (currlayer->view->getmag() == 3) {
-	 iconmaps = algoDatas[currlayer->algtype]->icons7x7 ;
+	 iconmaps = currlayer->algodata->icons7x7 ;
       } else {
-	 iconmaps = algoDatas[currlayer->algtype]->icons15x15 ;
+	 iconmaps = currlayer->algodata->icons15x15 ;
       }
    }
 
