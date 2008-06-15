@@ -102,7 +102,7 @@ public:
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
-   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
+   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
    
 private:
 /*

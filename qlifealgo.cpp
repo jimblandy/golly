@@ -1156,7 +1156,7 @@ const char *qlifealgo::setrule(const char *s) {
    return p;
 }
 static lifealgo *creator() { return new qlifealgo() ; }
-void qlifealgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+void qlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("QuickLife") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(10) ;

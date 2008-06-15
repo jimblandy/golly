@@ -83,7 +83,7 @@ state wwalgo::slowcalc(state nw, state n, state ne, state w, state c, state e,
   }
 }
 static lifealgo *creator() { return new wwalgo() ; }
-void wwalgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+void wwalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("WireWorld") ;
    ai.setAlgorithmCreator(&creator) ;

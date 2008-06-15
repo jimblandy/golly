@@ -89,21 +89,28 @@ protected:
  *   if that information is available.  The ones marked optional need
  *   not be called.
  */
-class initializeAlgoInfo {
+class staticAlgoInfo {
 public:
+   staticAlgoInfo() ;
    /* mandatory */
-   virtual void setAlgorithmName(const char *) {}
-   virtual void setAlgorithmCreator(lifealgo *()) {}
-   /* optional */
+   void setAlgorithmName(const char *s) { algoName = s ; }
+   void setAlgorithmCreator(lifealgo *(*f)()) { creator = f ; }
+   /* optional; override if you want to retain this data */
    virtual void initCellColors(int, unsigned char *) {}
    virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) {}
    virtual void setDefaultBaseStep(int) {}
    virtual void setDefaultMaxMem(int) {}
    virtual void setStatusRGB(int /* r */, int /* g */, int /* b */) {}
+   /* basic data */
+   const char *algoName ;
+   lifealgo *(*creator)() ;
+   int id ; // my index
+   staticAlgoInfo *next ;
    /* support:  give me sequential algorithm IDs */
-   initializeAlgoInfo &tick() { id = nextAlgoId++ ; return *this ; } ;
    static int getNumAlgos() { return nextAlgoId ; }
    static int nextAlgoId ;
-   int id ; // the current one being worked on
+   static staticAlgoInfo *head ;
+   static staticAlgoInfo *byName(const char *s) ;
+   static int nameToIndex(const char *s) ;
 } ;
 #endif

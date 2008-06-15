@@ -43,6 +43,6 @@ public:
    int bornbits ;
    int staybits ;
    static char rulecopy[MAXRULESIZE] ;
-   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
+   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 };
 #endif

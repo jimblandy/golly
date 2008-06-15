@@ -1761,7 +1761,7 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
 }
 char hlifealgo::statusline[120] ;
 static lifealgo *creator() { return new hlifealgo() ; }
-void hlifealgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+void hlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("HashLife") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(8) ;

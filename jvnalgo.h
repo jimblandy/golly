@@ -37,6 +37,6 @@ public:
    virtual const char* setrule(const char* s);
    virtual const char* getrule();
    virtual int NumCellStates();
-   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
+   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 };
 #endif

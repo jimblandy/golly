@@ -122,7 +122,7 @@ state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
    return 0 ;
 }
 static lifealgo *creator() { return new generationsalgo() ; }
-void generationsalgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Generations") ;
    ai.setAlgorithmCreator(&creator) ;

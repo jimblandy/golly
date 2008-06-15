@@ -1581,7 +1581,7 @@ const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    return 0 ;
 }
 char ghashbase::statusline[120] ;
-void ghashbase::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+void ghashbase::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setDefaultBaseStep(8) ;
    ai.setDefaultMaxMem(300) ;
 }

@@ -50,50 +50,43 @@ wxMenu* algomenu;                   // menu of algorithm names
 algoData *algoDatas[MAX_NUM_ALGOS] ;
 
 algoData::algoData() {
-   memset(this, 0, sizeof(*this)) ;
+  algomem = algobase = 0 ;
+  algorgb = 0 ;
+  algobrush = 0 ;
+  icons7x7 = icons15x15 = 0 ;
+  memset(statusrgb, 0, sizeof(statusrgb)) ;
+  memset(cellr, 0, sizeof(cellr)) ;
+  memset(cellg, 0, sizeof(cellg)) ;
+  memset(cellb, 0, sizeof(cellb)) ;
 }
 
 // rgb colors for each cell state in each algorithm
 
 // -----------------------------------------------------------------------------
 
-class wxInitializeAlgoInfo : public initializeAlgoInfo {
-public:
-   virtual void setAlgorithmName(const char *name) {
-      me()->algoName = name ;
-   }
-   virtual void setAlgorithmCreator(lifealgo *(*f)()) {
-      me()->creator = f ;
-   }
-   virtual void initCellColors(int, unsigned char *) ;
-   virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) ;
-   virtual void setDefaultBaseStep(int v) {
-      me()->algobase = v ;
-   }
-   virtual void setDefaultMaxMem(int v) {
-      me()->algomem = v ;
-   }
-   virtual void setStatusRGB(int r, int g, int b) {
-      me()->statusrgb[0] = r ;
-      me()->statusrgb[1] = g ;
-      me()->statusrgb[2] = b ;
-   }
-   algoData *me() {
-      if (algoDatas[id] == 0)
-	 algoDatas[id] = new algoData() ;
-      return algoDatas[id] ;
-   }
-} wxai ;
+void algoData::setStatusRGB(int r, int g, int b) {
+   statusrgb[0] = r ;
+   statusrgb[1] = g ;
+   statusrgb[2] = b ;
+}
 
-void wxInitializeAlgoInfo::initCellColors(int numcolors,
-                                          unsigned char *rgbptr) {
-   algoData *ad = me() ;
+#include <cstdio>
+#include "util.h"
+using namespace std ;
+
+algoData &algoData::tick() {
+   algoData *r = new algoData() ;
+   algoDatas[r->id] = r ;
+   return *r ;
+}
+
+void algoData::initCellColors(int numcolors, unsigned char *rgbptr) {
    if (rgbptr) {
       if (numcolors > 256) numcolors = 256;     // play safe
       for (int i = 0; i < numcolors; i++) {
-         ad->cellr[i] = *rgbptr++;
-         ad->cellg[i] = *rgbptr++;
-         ad->cellb[i] = *rgbptr++;
+         cellr[i] = *rgbptr++;
+         cellg[i] = *rgbptr++;
+         cellb[i] = *rgbptr++;
       }
    }
 }
@@ -145,24 +138,24 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
    return iconptr;
 }
 
-void wxInitializeAlgoInfo::createIconBitmaps(int size, char **xpmdata) {
+void algoData::createIconBitmaps(int size, char **xpmdata) {
    wxBitmap **bm = CreateIconBitmaps(xpmdata) ;
    if (size == 7)
-      me()->icons7x7 = bm ;
+      icons7x7 = bm ;
    else if (size == 15)
-      me()->icons15x15 = bm ;
+      icons15x15 = bm ;
 }
 
 // -----------------------------------------------------------------------------
 
 void InitAlgorithms()
 {
-   qlifealgo::doInitializeAlgoInfo(wxai.tick()) ;
-   hlifealgo::doInitializeAlgoInfo(wxai.tick()) ;
-   slifealgo::doInitializeAlgoInfo(wxai.tick()) ;
-   jvnalgo::doInitializeAlgoInfo(wxai.tick()) ;
-   wwalgo::doInitializeAlgoInfo(wxai.tick()) ;
-   generationsalgo::doInitializeAlgoInfo(wxai.tick()) ;
+   qlifealgo::doInitializeAlgoInfo(algoData::tick()) ;
+   hlifealgo::doInitializeAlgoInfo(algoData::tick()) ;
+   slifealgo::doInitializeAlgoInfo(algoData::tick()) ;
+   jvnalgo::doInitializeAlgoInfo(algoData::tick()) ;
+   wwalgo::doInitializeAlgoInfo(algoData::tick()) ;
+   generationsalgo::doInitializeAlgoInfo(algoData::tick()) ;
 
    // algomenu is used when algo button is pressed and for Set Algo submenu
    algomenu = new wxMenu();
@@ -243,6 +236,6 @@ const char* GetAlgoName(algo_type algotype) {
    return algoDatas[algotype]->algoName ;
 }
 int getNumberAlgorithms() {
-   return initializeAlgoInfo::getNumAlgos() ;
+   return staticAlgoInfo::getNumAlgos() ;
 }
 algo_type initalgo ;

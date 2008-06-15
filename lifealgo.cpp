@@ -27,4 +27,22 @@ lifealgo::~lifealgo() {
    maxCellStates = 2 ;
 }
 int lifealgo::verbose ;
-int initializeAlgoInfo::nextAlgoId = 0 ;
+int staticAlgoInfo::nextAlgoId = 0 ;
+staticAlgoInfo *staticAlgoInfo::head = 0 ;
+staticAlgoInfo::staticAlgoInfo() {
+   id = nextAlgoId++ ;
+   next = head ;
+   head = this ;
+}
+staticAlgoInfo *staticAlgoInfo::byName(const char *s) {
+   for (staticAlgoInfo *i=head; i; i=i->next)
+      if (strcmp(i->algoName, s) == 0)
+	 return i ;
+   return 0 ;
+}
+int staticAlgoInfo::nameToIndex(const char *s) {
+   staticAlgoInfo *r = byName(s) ;
+   if (r == 0)
+      return -1 ;
+   return r->id ;
+}

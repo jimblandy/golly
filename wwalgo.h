@@ -38,6 +38,6 @@ public:
    virtual const char* getrule();
    virtual const char* DefaultRule();
    virtual int NumCellStates() { return 4; }
-   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
+   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 };
 #endif

@@ -62,7 +62,7 @@ state slifealgo::slowcalc(state nw, state n, state ne, state w, state c,
     return 0 ;
 }
 static lifealgo *creator() { return new slifealgo() ; }
-void slifealgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+void slifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("SlowLife") ;
    ai.setAlgorithmCreator(&creator) ;

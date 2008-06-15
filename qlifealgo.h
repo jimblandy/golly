@@ -241,7 +241,7 @@ public:
    virtual const char *writeNativeFormat(FILE *, char *) {
       return "No native format for qlifealgo yet." ;
    }
-   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
+   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 private:
    linkedmem *filllist(int size) ;
    brick *newbrick() ;
