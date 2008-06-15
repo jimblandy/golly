@@ -399,9 +399,10 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
    bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
                   (pmscale >= (1 << mingridmag) && !showgridlines);
-   unsigned char deadred   = cellr[currlayer->algtype][0];
-   unsigned char deadgreen = cellg[currlayer->algtype][0];
-   unsigned char deadblue  = cellb[currlayer->algtype][0];
+   algoData *ad = currlayer->algodata ;
+   unsigned char deadred   = ad->cellr[0];
+   unsigned char deadgreen = ad->cellg[0];
+   unsigned char deadblue  = ad->cellb[0];
 
    //!!! might be faster to draw rectangles above certain scales???
    wxAlphaPixelData pxldata(*pixmap);
@@ -419,9 +420,9 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                // clip cell outside viewport
             } else {
                unsigned char state = *byteptr;
-               unsigned char r = cellr[currlayer->algtype][state];
-               unsigned char g = cellg[currlayer->algtype][state];
-               unsigned char b = cellb[currlayer->algtype][state];
+               unsigned char r = ad->cellr[state];
+               unsigned char g = ad->cellg[state];
+               unsigned char b = ad->cellb[state];
                
                // expand byte into cellsize*cellsize pixels
                wxAlphaPixelData::Iterator topleft = p;
@@ -504,9 +505,10 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
    int cellsize = pmscale - 1;
    bool drawgap = (pmscale < (1 << mingridmag)) ||
                   (pmscale >= (1 << mingridmag) && !showgridlines);
-   unsigned char deadred   = cellr[currlayer->algtype][0];
-   unsigned char deadgreen = cellg[currlayer->algtype][0];
-   unsigned char deadblue  = cellb[currlayer->algtype][0];
+   algoData *ad = currlayer->algodata ;
+   unsigned char deadred   = ad->cellr[0];
+   unsigned char deadgreen = ad->cellg[0];
+   unsigned char deadblue  = ad->cellb[0];
 
    wxAlphaPixelData pxldata(*pixmap);
    if (pxldata) {
@@ -813,9 +815,10 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
 void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
 {
-   *r = cellr[currlayer->algtype];
-   *g = cellg[currlayer->algtype];
-   *b = cellb[currlayer->algtype];
+   algoData *ad = currlayer->algodata ;
+   *r = ad->cellr ;
+   *g = ad->cellg ;
+   *b = ad->cellb ;
 }
 
 // -----------------------------------------------------------------------------
@@ -1555,15 +1558,16 @@ void DrawView(wxDC& dc, int tileindex)
    cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
    // set rgb values for dead cells in pixblit calls
-   cellr[currlayer->algtype][0] = swapcolors ? livergb[colorindex]->Red() : deadrgb->Red();
-   cellg[currlayer->algtype][0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
-   cellb[currlayer->algtype][0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();
+   algoData *ad = currlayer->algodata ;
+   ad->cellr[0] = swapcolors ? livergb[colorindex]->Red() : deadrgb->Red();
+   ad->cellg[0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
+   ad->cellb[0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();
 
    if (showicons && currlayer->view->getmag() > 2) {
       if (currlayer->view->getmag() == 3) {
-         iconmaps = icons7x7[currlayer->algtype];
+	 iconmaps = algoDatas[currlayer->algtype]->icons7x7 ;
       } else {
-         iconmaps = icons15x15[currlayer->algtype];
+	 iconmaps = algoDatas[currlayer->algtype]->icons15x15 ;
       }
    }
 

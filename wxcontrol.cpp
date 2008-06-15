@@ -169,7 +169,7 @@ void MainFrame::ResetPattern(bool resetundo)
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, hashing option and starting pattern
    currlayer->warp = currlayer->startwarp;
-   currlayer->algtype = currlayer->startalgo;
+   currlayer->setAlgType(currlayer->startalgo);
 
    if ( !currlayer->startfile.IsEmpty() ) {
       // restore pattern from startfile
@@ -865,7 +865,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
 
    // change algorithm type and update status bar immediately
    algo_type oldalgotype = currlayer->algtype;
-   currlayer->algtype = newalgotype;
+   currlayer->setAlgType(newalgotype) ;
    currlayer->warp = 0;
    UpdateStatus();
 

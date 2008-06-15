@@ -59,12 +59,6 @@ static unsigned char wwcolors[] = {
    255, 128,   0     // 3 = orange
 };
 
-unsigned char* wwalgo::GetColorData(int& numcolors)
-{
-   numcolors = sizeof(wwcolors) / (3 * sizeof(wwcolors[0]));
-   return wwcolors;
-}
-
 wwalgo::wwalgo() {
    maxCellStates = 4 ;
 }
@@ -87,4 +81,11 @@ state wwalgo::slowcalc(state nw, state n, state ne, state w, state c, state e,
   default:
     return 0 ; // should throw an error here
   }
+}
+static lifealgo *creator() { return new wwalgo() ; }
+void wwalgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+   ghashbase::doInitializeAlgoInfo(ai) ;
+   ai.setAlgorithmName("WireWorld") ;
+   ai.setAlgorithmCreator(&creator) ;
+   ai.initCellColors(sizeof(wwcolors)/(sizeof(wwcolors[0])*3), wwcolors) ;
 }

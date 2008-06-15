@@ -291,7 +291,7 @@ enum {
 
    // Set Algorithm submenu
    ID_ALGO0,
-   ID_ALGOMAX = ID_ALGO0 + NUM_ALGOS - 1,
+   ID_ALGOMAX = ID_ALGO0 + MAX_NUM_ALGOS,
    
    // View menu
    ID_FULL,

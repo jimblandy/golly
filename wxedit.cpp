@@ -190,18 +190,18 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    DisplayText(dc, _("Color:"), h_col1, BASELINE2);
    DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
 
-   wxBitmap** iconmaps = icons7x7[currlayer->algtype];
+   wxBitmap** iconmaps = currlayer->algodata->icons7x7 ;
 
    // set rgb values for dead cells
-   cellr[currlayer->algtype][0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
-   cellg[currlayer->algtype][0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
-   cellb[currlayer->algtype][0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   currlayer->algodata->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   currlayer->algodata->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   currlayer->algodata->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
    
    if (currlayer->algo->NumCellStates() == 2) {
       // set rgb values for live cells in 2-state universe
-      cellr[currlayer->algtype][1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
-      cellg[currlayer->algtype][1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
-      cellb[currlayer->algtype][1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
+      currlayer->algodata->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      currlayer->algodata->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      currlayer->algodata->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
    }
 
    for (int i = 0; i < currlayer->algo->NumCellStates(); i++) {
@@ -215,9 +215,9 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       
       // draw color box
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
-      wxColor color(cellr[currlayer->algtype][i],
-                    cellg[currlayer->algtype][i],
-                    cellb[currlayer->algtype][i]) ;
+      wxColor color(currlayer->algodata->cellr[i],
+                    currlayer->algodata->cellg[i],
+                    currlayer->algodata->cellb[i]) ;
       wxBrush brush(color) ;
       wxRect r(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
       dc.SetPen(*wxBLACK_PEN);

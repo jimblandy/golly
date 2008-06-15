@@ -127,7 +127,7 @@ void MainFrame::SetGenIncrement()
       // set inc to base^warp
       int i = currlayer->warp;
       while (i > 0) {
-         inc.mul_smallint(algobase[currlayer->algtype]);
+         inc.mul_smallint(currlayer->algodata->algobase);
          i--;
       }
       currlayer->algo->setIncrement(inc);
@@ -306,9 +306,9 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
       if (err) {
          // cycle thru all other algos until readpattern succeeds
-         for (int i = 0; i < NUM_ALGOS; i++) {
+	 for (int i = 0; i < getNumberAlgorithms(); i++) {
             if (i != oldalgtype) {
-               currlayer->algtype = (algo_type) i;
+	       currlayer->setAlgType((algo_type) i) ;
                CreateUniverse();
                err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
                if (!err) break;
@@ -317,7 +317,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          viewptr->nopattupdate = false;
          if (err) {
             // no algo could read pattern so restore original algo and rule
-            currlayer->algtype = oldalgtype;
+	    currlayer->setAlgType(oldalgtype) ;
             CreateUniverse();
             currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
             // Warning( wxString(err,wxConvLocal) );
@@ -1363,8 +1363,8 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       // maximum memory might have changed
       for (int i = 0; i < numlayers; i++) {
          Layer* layer = GetLayer(i);
-         if (algomem[layer->algtype] >= 0)
-            layer->algo->setMaxMemory(algomem[layer->algtype]);
+	 if (layer->algodata->algomem >= 0)
+	    layer->algo->setMaxMemory(layer->algodata->algomem) ;
       }
 
       // tileborder might have changed

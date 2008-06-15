@@ -466,7 +466,7 @@ XS(pl_load)
    const char* err = readpattern(FILENAME, *tempalgo);
    if (err) {
       // try all other algos until readpattern succeeds
-      for (int i = 0; i < NUM_ALGOS; i++) {
+      for (int i = 0; i < getNumberAlgorithms(); i++) {
          if (i != currlayer->algtype) {
             delete tempalgo;
             tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
@@ -1512,7 +1512,7 @@ XS(pl_setbase)
 
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-   algobase[currlayer->algtype] = base;
+   currlayer->algodata->algobase = base;
    mainptr->UpdateWarp();
    DoAutoUpdate();
 
@@ -1528,7 +1528,7 @@ XS(pl_getbase)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $int = g_getbase()");
 
-   XSRETURN_IV(algobase[currlayer->algtype]);
+   XSRETURN_IV(currlayer->algodata->algobase);
 }
 
 // -----------------------------------------------------------------------------

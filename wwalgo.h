@@ -38,6 +38,6 @@ public:
    virtual const char* getrule();
    virtual const char* DefaultRule();
    virtual int NumCellStates() { return 4; }
-   virtual unsigned char* GetColorData(int& numcolors);
+   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
 };
 #endif

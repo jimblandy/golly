@@ -241,10 +241,7 @@ public:
    virtual const char *writeNativeFormat(FILE *, char *) {
       return "No native format for qlifealgo yet." ;
    }
-
-   // AKT: return default setting for maximum memory (in MB)
-   virtual int DefaultMaxMem() { return 0; }    // no limit
-
+   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
 private:
    linkedmem *filllist(int size) ;
    brick *newbrick() ;

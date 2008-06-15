@@ -27,3 +27,4 @@ lifealgo::~lifealgo() {
    maxCellStates = 2 ;
 }
 int lifealgo::verbose ;
+int initializeAlgoInfo::nextAlgoId = 0 ;

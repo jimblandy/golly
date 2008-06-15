@@ -62,10 +62,6 @@ const char* jvnalgo::getrule() {
    return "Bug in jvnalgo::getrule!";
 }
 
-const char* jvnalgo::DefaultRule() {
-   return JVN_RULE;
-}
-
 const int NORTH = 1 ;
 const int SOUTH = 3 ;
 const int EAST = 0 ;
@@ -124,7 +120,7 @@ jvnalgo::jvnalgo() {
   for (int i=0; i<256; i++)
     compress[i] = 255 ;
   for (unsigned int i=0; i<sizeof(uncompress)/sizeof(uncompress[0]); i++)
-    compress[uncompress[i]] = i ;
+     compress[uncompress[i]] = (state)i ;
   maxCellStates = numstates ;
 }
 
@@ -878,12 +874,6 @@ static char *jvn15x15[] = {
 "IIIIIIIIIIIIIII"
 };
 
-char** jvnalgo::GetIconData(int size) {
-   if (size == 7) return jvn7x7;
-   if (size == 15) return jvn15x15;
-   return NULL;
-}
-
 // colors for each cell state (we try to match colors used in icons)
 static unsigned char jvncolors[] = {
      0,   0,   0,    // not used (replaced by user's dead cell color)
@@ -919,9 +909,13 @@ static unsigned char jvncolors[] = {
    205, 205, 205,    // 30   darker
    180, 180, 180     // 31    darker
 };
-
-unsigned char* jvnalgo::GetColorData(int& numcolors)
-{
-   numcolors = sizeof(jvncolors) / (3 * sizeof(jvncolors[0]));
-   return jvncolors;
+static lifealgo *creator() { return new jvnalgo() ; }
+void jvnalgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+   ghashbase::doInitializeAlgoInfo(ai) ;
+   ai.setAlgorithmName("JvN") ;
+   ai.setAlgorithmCreator(&creator) ;
+   ai.initCellColors(sizeof(jvncolors)/(sizeof(jvncolors[0])*3), jvncolors) ;
+   ai.createIconBitmaps(7, jvn7x7) ;
+   ai.createIconBitmaps(15, jvn15x15) ;
 }
+

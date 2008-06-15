@@ -102,10 +102,8 @@ public:
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
    virtual const char *writeNativeFormat(FILE *f, char *comments) ;
+   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
    
-   // AKT: hashlife algos prefer that the base step is a power of 2
-   virtual int DefaultBaseStep() { return 8; }
-
 private:
 /*
  *   Some globals representing our universe.  The root is the

@@ -788,7 +788,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_SYNC_CURS,  synccursors);
       mbar->Check(ID_STACK,      stacklayers);
       mbar->Check(ID_TILE,       tilelayers);
-      for (int i = 0; i < NUM_ALGOS; i++) {
+      for (int i = 0; i < getNumberAlgorithms(); i++) {
          mbar->Check(ID_ALGO0 + i, currlayer->algtype == i);
       }
       for (int i = 0; i < numlayers; i++) {

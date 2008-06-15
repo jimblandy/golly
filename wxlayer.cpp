@@ -847,7 +847,7 @@ void SyncClones()
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
             // universe might have been re-created, or algorithm changed
             cloneptr->algo = currlayer->algo;
-            cloneptr->algtype = currlayer->algtype;
+	    cloneptr->setAlgType(currlayer->algtype) ;
             cloneptr->rule = currlayer->rule;
             
             // no need to sync undo/redo history
@@ -1534,7 +1534,7 @@ Layer::Layer()
       // creating very first layer
       
       // set some options using initial values stored in prefs file
-      algtype = initalgo;
+      setAlgType(initalgo) ;
       hyperspeed = inithyperspeed;
       showhashinfo = initshowhashinfo;
       autofit = initautofit;
@@ -1576,7 +1576,7 @@ Layer::Layer()
       // adding a new layer after currlayer (see AddLayer)
 
       // inherit current universe type and other settings
-      algtype = currlayer->algtype;
+      setAlgType(currlayer->algtype) ;
       hyperspeed = currlayer->hyperspeed;
       showhashinfo = currlayer->showhashinfo;
       autofit = currlayer->autofit;

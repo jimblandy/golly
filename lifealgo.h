@@ -73,30 +73,37 @@ public:
    // into some global shared thing or something rather than use static.
    static void setVerbose(int v) { verbose = v ; }
    static int getVerbose() { return verbose ; }
-   
-   // AKT: return the default rule for this universe
    virtual const char* DefaultRule() { return "B3/S23"; }
-   
-   // AKT: return default setting for maximum memory (in MB)
-   virtual int DefaultMaxMem() { return 300; }
-   
-   // AKT: return default base step
-   virtual int DefaultBaseStep() { return 10; }
-   
    // AKT: return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
-   
-   // AKT: return rgb colors for each cell state (only used if NumCellStates > 2)
-   virtual unsigned char* GetColorData(int& numcolors)
-      { numcolors = 0; return NULL; }
-
-   // AKT: return icon bitmap data (NULL or array of strings in XPM format)
-   virtual char** GetIconData(int size)
-      { size = 0; return NULL; }
-
 protected:
    lifepoll *poller ;
    static int verbose ;
    int maxCellStates ; // keep up to date; setcell depends on it
+} ;
+/**
+ *   If you need any static information from a lifealgo, this class can be
+ *   called (or overridden) to set up all that data.  Right now the
+ *   functions do nothing; override if you need that info.  These are
+ *   called one by one by a static method in the algorithm itself,
+ *   if that information is available.  The ones marked optional need
+ *   not be called.
+ */
+class initializeAlgoInfo {
+public:
+   /* mandatory */
+   virtual void setAlgorithmName(const char *) {}
+   virtual void setAlgorithmCreator(lifealgo *()) {}
+   /* optional */
+   virtual void initCellColors(int, unsigned char *) {}
+   virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) {}
+   virtual void setDefaultBaseStep(int) {}
+   virtual void setDefaultMaxMem(int) {}
+   virtual void setStatusRGB(int /* r */, int /* g */, int /* b */) {}
+   /* support:  give me sequential algorithm IDs */
+   initializeAlgoInfo &tick() { id = nextAlgoId++ ; return *this ; } ;
+   static int getNumAlgos() { return nextAlgoId ; }
+   static int nextAlgoId ;
+   int id ; // the current one being worked on
 } ;
 #endif

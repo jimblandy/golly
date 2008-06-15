@@ -41,6 +41,11 @@ public:
 
    lifealgo* algo;            // this layer's universe (shared by clones)
    algo_type algtype;         // type of universe
+   algoData *algodata;        // static algorithm data
+   void setAlgType(int algType) {
+     algtype = algType ;
+     algodata = algoDatas[algtype] ;
+   }
    bool hyperspeed;           // use speed acceleration?
    bool showhashinfo;         // show hashing info?
    bool autofit;              // auto fit pattern while generating?

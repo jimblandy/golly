@@ -252,7 +252,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
    if (wd < 1 || ht < 1) return;
 
    wxRect r = wxRect(0, 0, wd, ht);
-   FillRect(dc, r, *algobrush[currlayer->algtype]);
+   FillRect(dc, r, *(currlayer->algodata->algobrush));
 
    #if defined(__WXMSW__)
       // draw gray lines at top and left edges
@@ -313,7 +313,9 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             strbuf.Printf(_("Delay = %gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
             // no real need to show step as an exact number
-            strbuf.Printf(_("Step = %d^%d"), algobase[currlayer->algtype], currlayer->warp);
+            strbuf.Printf(_("Step = %d^%d"),
+			  currlayer->algodata->algobase,
+			  currlayer->warp);
          }
          DisplayText(dc, strbuf, h_gen, STEPLINE);
       }
@@ -367,7 +369,9 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             // show delay in secs
             strbuf.Printf(_("Delay=%gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
-            strbuf.Printf(_("Step=%d^%d"), algobase[currlayer->algtype], currlayer->warp);
+            strbuf.Printf(_("Step=%d^%d"),
+			  currlayer->algodata->algobase,
+			  currlayer->warp);
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
       }

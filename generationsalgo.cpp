@@ -101,8 +101,7 @@ generationsalgo::generationsalgo() {
    setrule(DEFAULTRULE) ;
 }
 
-generationsalgo::~generationsalgo() {
-}
+generationsalgo::~generationsalgo() {}
 
 state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
 				state e, state sw, state s, state se) {
@@ -114,4 +113,11 @@ state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
    if (c > 0 && c+1 < maxCellStates)
       return c + 1 ;
    return 0 ;
+}
+static lifealgo *creator() { return new generationsalgo() ; }
+void generationsalgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+   ghashbase::doInitializeAlgoInfo(ai) ;
+   ai.setAlgorithmName("Generations") ;
+   ai.setAlgorithmCreator(&creator) ;
+   ai.initCellColors(sizeof(defcolors)/(sizeof(defcolors[0])*3), defcolors) ;
 }

@@ -24,31 +24,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXALGOS_H_
 #define _WXALGOS_H_
 
-// Golly supports multiple algorithms.
+// Golly supports multiple algorithms.  The first algorithm
+// registered must *always* be qlifealgo.  The second must
+// *always* be hlifealgo.  (These are to support old scripts.)
+// The order of the rest do not matter and indeed should soon
+// be capable of being dynamic.
 
 typedef enum {
    QLIFE_ALGO,       // QuickLife
    HLIFE_ALGO,       // HashLife
-   SLIFE_ALGO,       // Not-so-fast Life
-   JVN_ALGO,         // John von Neumann's 29-state CA
-   WW_ALGO,          // WireWorld!
-   GEN_ALGO,         // Generations
-   NUM_ALGOS
-} algo_type;
+} ;
+typedef int algo_type; // it's now open-ended
 
 extern wxMenu* algomenu;                  // menu of algorithm names
 extern algo_type initalgo;                // initial layer's algorithm
-extern int algomem[NUM_ALGOS];            // maximum memory (in MB) for each algorithm
-extern int algobase[NUM_ALGOS];           // base step for each algorithm
-extern wxColor* algorgb[NUM_ALGOS];       // status bar color for each algorithm
-extern wxBrush* algobrush[NUM_ALGOS];     // corresponding brush
-extern wxBitmap** icons7x7[NUM_ALGOS];    // icon bitmaps for scale 1:8
-extern wxBitmap** icons15x15[NUM_ALGOS];  // icon bitmaps for scale 1:16
-
-extern unsigned char cellr[NUM_ALGOS][256];
-extern unsigned char cellg[NUM_ALGOS][256];
-extern unsigned char cellb[NUM_ALGOS][256];
-// rgb colors for each cell state in each algorithm
 
 void InitAlgorithms();
 // Initialize above data -- must be called very early (before reading prefs file).
@@ -60,5 +49,27 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck = true);
 const char* GetAlgoName(algo_type algotype);
 // Return name of given algorithm.  This name appears in various menus
 // and is also stored in the prefs file.
+
+int getNumberAlgorithms() ;
+
+const int MAX_NUM_ALGOS = 256 ;     // no more than this number of algos
+
+/**
+ *   A class for all the info that wx needs about a particular algorithm.
+ */
+class algoData {
+public:
+   algoData() ;
+   const char *algoName ;
+   lifealgo *(*creator)() ;
+   int algomem, algobase ;
+   unsigned char statusrgb[3] ;
+   wxColor *algorgb ;
+   wxBrush *algobrush ;
+   wxBitmap **icons7x7, **icons15x15 ;
+   unsigned char cellr[256], cellg[256], cellb[256] ;
+} ;
+
+extern algoData *algoDatas[MAX_NUM_ALGOS] ;
 
 #endif

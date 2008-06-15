@@ -37,5 +37,6 @@ public:
    virtual const char* setrule(const char* s);
    virtual const char* getrule();
    virtual const char* DefaultRule();
+   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
 };
 #endif

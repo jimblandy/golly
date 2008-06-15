@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
-#include "wxalgos.h"       // for *_ALGO, NUM_ALGOS, InitAlgorithms, etc
+#include "wxalgos.h"       // for *_ALGO, getNumberAlgorithms(), InitAlgorithms, etc
 #include "wxlayer.h"       // for currlayer
 #include "wxscript.h"      // for inscript
 #include "wxprefs.h"
@@ -1218,7 +1218,8 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 
 void SetBrushesAndPens()
 {
-   for (int i = 0; i < NUM_ALGOS; i++) algobrush[i]->SetColour(*algorgb[i]);
+   for (int i = 0; i < getNumberAlgorithms(); i++)
+      algoDatas[i]->algobrush->SetColour(*(algoDatas[i]->algorgb));
    for (int i = 0; i < 10; i++) livebrush[i]->SetColour(*livergb[i]);
    deadbrush->SetColour(*deadrgb);
    pastepen->SetColour(*pastergb);
@@ -1385,11 +1386,11 @@ void SavePrefs()
    fputs("\n", f);
 
    fprintf(f, "init_algo=%d\n", (int)currlayer->algtype);
-   for (int i = 0; i < NUM_ALGOS; i++) {
+   for (int i = 0; i < getNumberAlgorithms(); i++) {
       fprintf(f, "algorithm=%s\n", GetAlgoName((algo_type) i));
-      fprintf(f, "max_mem=%d\n", algomem[i]);
-      fprintf(f, "base_step=%d\n", algobase[i]);
-      SaveColor(f, "status_rgb", algorgb[i]);
+      fprintf(f, "max_mem=%d\n", algoDatas[i]->algomem);
+      fprintf(f, "base_step=%d\n", algoDatas[i]->algobase);
+      SaveColor(f, "status_rgb", algoDatas[i]->algorgb);
    }
    
    fputs("\n", f);
@@ -1746,18 +1747,18 @@ void GetPrefs()
          sscanf(value, "%d", &base);
          if (base < 2) base = 2;
          if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-         algobase[QLIFE_ALGO] = base;
+         algoDatas[QLIFE_ALGO]->algobase = base;
 
       } else if (strcmp(keyword, "h_base_step") == 0) {     // deprecated
          int base;
          sscanf(value, "%d", &base);
          if (base < 2) base = 2;
          if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-         algobase[HLIFE_ALGO] = base;
+         algoDatas[HLIFE_ALGO]->algobase = base;
 
       } else if (strcmp(keyword, "algorithm") == 0) {
          algoindex = -1;
-         for (int i = 0; i < NUM_ALGOS; i++) {
+         for (int i = 0; i < getNumberAlgorithms(); i++) {
             if (strcmp(value, GetAlgoName((algo_type) i)) == 0) {
                algoindex = i;
                break;
@@ -1765,26 +1766,26 @@ void GetPrefs()
          }
 
       } else if (strcmp(keyword, "max_mem") == 0) {
-         if (algoindex >= 0 && algoindex < NUM_ALGOS) {
+         if (algoindex >= 0 && algoindex < getNumberAlgorithms()) {
             int maxmem;
             sscanf(value, "%d", &maxmem);
             if (maxmem < MIN_MEM_MB) maxmem = MIN_MEM_MB;
             if (maxmem > MAX_MEM_MB) maxmem = MAX_MEM_MB;
-            algomem[algoindex] = maxmem;
+            algoDatas[algoindex]->algomem = maxmem;
          }
 
       } else if (strcmp(keyword, "base_step") == 0) {
-         if (algoindex >= 0 && algoindex < NUM_ALGOS) {
+         if (algoindex >= 0 && algoindex < getNumberAlgorithms()) {
             int base;
             sscanf(value, "%d", &base);
             if (base < 2) base = 2;
             if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-            algobase[algoindex] = base;
+            algoDatas[algoindex]->algobase = base;
          }
 
       } else if (strcmp(keyword, "status_rgb") == 0) {
-         if (algoindex >= 0 && algoindex < NUM_ALGOS)
-            GetColor(value, algorgb[algoindex]);
+         if (algoindex >= 0 && algoindex < getNumberAlgorithms())
+	    GetColor(value, algoDatas[algoindex]->algorgb);
 
       } else if (strcmp(keyword, "min_delay") == 0) {
          sscanf(value, "%d", &mindelay);
@@ -1804,7 +1805,7 @@ void GetPrefs()
          int i;
          sscanf(value, "%d", &i);
          if (i < 0) i = 0;
-         if (i >= NUM_ALGOS) i = NUM_ALGOS - 1;
+         if (i >= getNumberAlgorithms()) i = getNumberAlgorithms() - 1;
          initalgo = (algo_type) i;
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
@@ -1819,8 +1820,8 @@ void GetPrefs()
          if (maxmem < MIN_MEM_MB) maxmem = MIN_MEM_MB;
          if (maxmem > MAX_MEM_MB) maxmem = MAX_MEM_MB;
          // change all except QLIFE_ALGO
-         for (int i = 0; i < NUM_ALGOS; i++)
-            if (i != QLIFE_ALGO) algomem[i] = maxmem;
+         for (int i = 0; i < getNumberAlgorithms(); i++)
+            if (i != QLIFE_ALGO) algoDatas[i]->algomem = maxmem;
 
       } else if (strcmp(keyword, "rule") == 0) {
          strncpy(initrule, value, sizeof(initrule));
@@ -1920,10 +1921,10 @@ void GetPrefs()
          GetColor(value, selectrgb);
 
       } else if (strcmp(keyword, "qlife_rgb") == 0) {    // deprecated
-         GetColor(value, algorgb[QLIFE_ALGO]);
+	 GetColor(value, algoDatas[QLIFE_ALGO]->algorgb);
 
       } else if (strcmp(keyword, "hlife_rgb") == 0) {    // deprecated
-         GetColor(value, algorgb[HLIFE_ALGO]);
+	 GetColor(value, algoDatas[HLIFE_ALGO]->algorgb);
 
       } else if (strcmp(keyword, "buffered") == 0) {
          buffered = value[0] == '1';
@@ -2205,9 +2206,9 @@ private:
    int algopos1;                    // selected algorithm in PREF_ALGO_MENU1
    int algopos2;                    // selected algorithm in PREF_ALGO_MENU2
 
-   int new_algomem[NUM_ALGOS];      // new max mem values for each algorithm
-   int new_algobase[NUM_ALGOS];     // new base step values for each algorithm
-   wxColor* new_algorgb[NUM_ALGOS]; // new status bar color for each algorithm
+   int new_algomem[MAX_NUM_ALGOS];      // new max mem values for each algorithm
+   int new_algobase[MAX_NUM_ALGOS];     // new base step values for each algorithm
+   wxColor* new_algorgb[MAX_NUM_ALGOS]; // new status bar color for each algorithm
    wxColor* new_livergb[10];        // new color for live cells in each layer
    wxColor* new_deadrgb;            // new color for dead cells
    wxColor* new_pastergb;           // new color for pasted pattern
@@ -2832,7 +2833,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    // create a choice menu to select algo
    
    wxArrayString algoChoices;
-   for ( int i = 0; i < NUM_ALGOS; i++ ) {
+   for ( int i = 0; i < getNumberAlgorithms(); i++ ) {
       algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
    }
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU1,
@@ -2942,16 +2943,18 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    // init control values;
    // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying
    // the min,max,init values in the wxSpinCtrl constructor
-   spin1->SetRange(MIN_MEM_MB, MAX_MEM_MB); spin1->SetValue(algomem[algopos1]);
-   spin2->SetRange(2, MAX_BASESTEP);        spin2->SetValue(algobase[algopos1]);
+   spin1->SetRange(MIN_MEM_MB, MAX_MEM_MB);
+   spin1->SetValue(algoDatas[algopos1]->algomem);
+   spin2->SetRange(2, MAX_BASESTEP);
+   spin2->SetValue(algoDatas[algopos1]->algobase);
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
    
-   for (int i = 0; i < NUM_ALGOS; i++) {
-      new_algomem[i] = algomem[i];
-      new_algobase[i] = algobase[i];
+   for (int i = 0; i < getNumberAlgorithms(); i++) {
+      new_algomem[i] = algoDatas[i]->algomem ;
+      new_algobase[i] = algoDatas[i]->algobase;
    }
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -3279,7 +3282,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    
    // create a choice menu to select algo
    wxArrayString algoChoices;
-   for ( int i = 0; i < NUM_ALGOS; i++ ) {
+   for ( int i = 0; i < getNumberAlgorithms(); i++ ) {
       algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
    }
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU2,
@@ -3295,10 +3298,12 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
    vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_STATUS_RGB, algorgb[algopos2], _("Status bar background for"),
+   AddColorButton(panel, vbox, PREF_STATUS_RGB, algoDatas[algopos2]->algorgb,
+		  _("Status bar background for"),
                   algomenu);
 
-   for (int i = 0; i < NUM_ALGOS; i++) new_algorgb[i] = new wxColor(*algorgb[i]);
+   for (int i = 0; i < getNumberAlgorithms(); i++)
+      new_algorgb[i] = new wxColor(*(algoDatas[i]->algorgb));
    for (int i = 0; i < 10; i++) new_livergb[i] = new wxColor(*livergb[i]);
    new_deadrgb = new wxColor(*deadrgb);
    new_pastergb = new wxColor(*pastergb);
@@ -3433,7 +3438,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
    
    if ( id == PREF_ALGO_MENU1 ) {
       int i = event.GetSelection();
-      if (i >= 0 && i < NUM_ALGOS && i != algopos1) {
+      if (i >= 0 && i < getNumberAlgorithms() && i != algopos1) {
          // first update values for previous selection
          new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
          new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
@@ -3462,7 +3467,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
    
    if ( id == PREF_ALGO_MENU2 ) {
       int i = event.GetSelection();
-      if (i >= 0 && i < NUM_ALGOS && i != algopos2) {
+      if (i >= 0 && i < getNumberAlgorithms() && i != algopos2) {
          algopos2 = i;
          // update status button color to new_algorgb[algopos2]
          wxBitmapButton* bb = (wxBitmapButton*) FindWindow(PREF_STATUS_RGB);
@@ -3841,9 +3846,9 @@ bool PrefsDialog::TransferDataFromWindow()
    // CONTROL_PAGE
    new_algomem[algopos1]  = GetSpinVal(PREF_MAX_MEM);
    new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
-   for (int i = 0; i < NUM_ALGOS; i++) {
-      algomem[i] = new_algomem[i];
-      algobase[i] = new_algobase[i];
+   for (int i = 0; i < getNumberAlgorithms(); i++) {
+      algoDatas[i]->algomem = new_algomem[i];
+      algoDatas[i]->algobase = new_algobase[i];
    }
    mindelay = GetSpinVal(PREF_MIN_DELAY);
    maxdelay = GetSpinVal(PREF_MAX_DELAY);
@@ -3872,7 +3877,8 @@ bool PrefsDialog::TransferDataFromWindow()
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11
-      for (int i = 0; i < NUM_ALGOS; i++) *algorgb[i] = *new_algorgb[i];
+      for (int i = 0; i < getNumberAlgorithms(); i++)
+	*(algoDatas[i]->algorgb) = *new_algorgb[i];
       for (int i = 0; i < 10; i++) *livergb[i] = *new_livergb[i];
       *deadrgb     = *new_deadrgb;
       *pastergb    = *new_pastergb;
@@ -3903,7 +3909,7 @@ bool PrefsDialog::TransferDataFromWindow()
 
 PrefsDialog::~PrefsDialog()
 {
-   for (int i = 0; i < NUM_ALGOS; i++) delete new_algorgb[i];
+   for (int i = 0; i < getNumberAlgorithms(); i++) delete new_algorgb[i];
    for (int i = 0; i < 10; i++) delete new_livergb[i];
    delete new_deadrgb;
    delete new_pastergb;

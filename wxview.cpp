@@ -622,7 +622,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
    if (err) {
       // cycle thru all other algos until readclipboard succeeds
-      for (int i = 0; i < NUM_ALGOS; i++) {
+     for (int i = 0; i < getNumberAlgorithms(); i++) {
          if (i != currlayer->algtype) {
             delete *tempalgo;
             *tempalgo = CreateNewUniverse((algo_type) i);
@@ -1438,9 +1438,9 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    
    wxBitmap** iconmaps = NULL;
    if (currlayer->view->getmag() == 3) {
-      iconmaps = icons7x7[currlayer->algtype];
+      iconmaps = currlayer->algodata->icons7x7 ;
    } else if (currlayer->view->getmag() == 4) {
-      iconmaps = icons15x15[currlayer->algtype];
+      iconmaps = currlayer->algodata->icons15x15 ;
    }
 
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
@@ -1498,9 +1498,10 @@ void PatternView::StartDrawingCells(int x, int y)
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            cellbrush->SetColour(cellr[currlayer->algtype][drawstate],
-                                 cellg[currlayer->algtype][drawstate],
-                                 cellb[currlayer->algtype][drawstate]);
+	    algoData *ad = currlayer->algodata ;
+            cellbrush->SetColour(ad->cellr[drawstate],
+                                 ad->cellg[drawstate],
+                                 ad->cellb[drawstate]);
          }
          dc.SetBrush(*cellbrush);
       } else {
@@ -1544,9 +1545,10 @@ void PatternView::DrawCells(int x, int y)
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            cellbrush->SetColour(cellr[currlayer->algtype][drawstate],
-                                 cellg[currlayer->algtype][drawstate],
-                                 cellb[currlayer->algtype][drawstate]);
+	    algoData *ad = currlayer->algodata ;
+            cellbrush->SetColour(ad->cellr[drawstate],
+                                 ad->cellg[drawstate],
+                                 ad->cellb[drawstate]);
          }
          dc.SetBrush(*cellbrush);
       } else {

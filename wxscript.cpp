@@ -591,17 +591,17 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
 
    //!!! deprecate next two
    } else if (strcmp(colname, "hashing") == 0) {
-      oldcol = *algorgb[HLIFE_ALGO];
+      oldcol = *(algoDatas[HLIFE_ALGO]->algorgb) ;
       if (oldcol != newcol) {
-         *algorgb[HLIFE_ALGO] = newcol;
+         *(algoDatas[HLIFE_ALGO]->algorgb) = newcol ;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
 
    } else if (strcmp(colname, "nothashing") == 0) {
-      oldcol = *algorgb[QLIFE_ALGO];
+      oldcol = *(algoDatas[QLIFE_ALGO]->algorgb) ;
       if (oldcol != newcol) {
-         *algorgb[QLIFE_ALGO] = newcol;
+         *(algoDatas[QLIFE_ALGO]->algorgb) = newcol ;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
@@ -630,8 +630,8 @@ bool GSF_getcolor(char* colname, wxColor& color)
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
    //!!! add "algo0..algoN" like we do for livecells above???
    //!!! deprecate next two
-   else if (strcmp(colname, "hashing") == 0)    color = *algorgb[HLIFE_ALGO];
-   else if (strcmp(colname, "nothashing") == 0) color = *algorgb[QLIFE_ALGO];
+   else if (strcmp(colname, "hashing") == 0)    color = *(algoDatas[HLIFE_ALGO]->algorgb);
+   else if (strcmp(colname, "nothashing") == 0) color = *(algoDatas[QLIFE_ALGO]->algorgb);
    else {
       // unknown color name
       return false;

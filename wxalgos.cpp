@@ -46,35 +46,55 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 wxMenu* algomenu;                   // menu of algorithm names
-algo_type initalgo = QLIFE_ALGO;    // initial layer's algorithm
-int algomem[NUM_ALGOS];             // maximum memory (in MB) for each algorithm
-int algobase[NUM_ALGOS];            // base step for each algorithm
-wxColor* algorgb[NUM_ALGOS];        // status bar color for each algorithm
-wxBrush* algobrush[NUM_ALGOS];      // corresponding brushes
+algoData *algoDatas[MAX_NUM_ALGOS] ;
 
-wxBitmap** icons7x7[NUM_ALGOS] = {NULL};     // icon bitmaps for scale 1:8
-wxBitmap** icons15x15[NUM_ALGOS] = {NULL};   // icon bitmaps for scale 1:16
+algoData::algoData() {
+   memset(this, 0, sizeof(*this)) ;
+}
 
-unsigned char cellr[NUM_ALGOS][256] = {{0}};
-unsigned char cellg[NUM_ALGOS][256] = {{0}};
-unsigned char cellb[NUM_ALGOS][256] = {{0}};
 // rgb colors for each cell state in each algorithm
 
 // -----------------------------------------------------------------------------
 
-static void InitCellColors(algo_type algotype, lifealgo& algo)
-{
-   int numcolors;
-   unsigned char* rgbptr = algo.GetColorData(numcolors);
+class wxInitializeAlgoInfo : public initializeAlgoInfo {
+public:
+   virtual void setAlgorithmName(const char *name) {
+      me()->algoName = name ;
+   }
+   virtual void setAlgorithmCreator(lifealgo *(*f)()) {
+      me()->creator = f ;
+   }
+   virtual void initCellColors(int, unsigned char *) ;
+   virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) ;
+   virtual void setDefaultBaseStep(int v) {
+      me()->algobase = v ;
+   }
+   virtual void setDefaultMaxMem(int v) {
+      me()->algomem = v ;
+   }
+   virtual void setStatusRGB(int r, int g, int b) {
+      me()->statusrgb[0] = r ;
+      me()->statusrgb[1] = g ;
+      me()->statusrgb[2] = b ;
+   }
+   algoData *me() {
+      if (algoDatas[id] == 0)
+	 algoDatas[id] = new algoData() ;
+      return algoDatas[id] ;
+   }
+} wxai ;
+
+void wxInitializeAlgoInfo::initCellColors(int numcolors,
+                                          unsigned char *rgbptr) {
+   algoData *ad = me() ;
    if (rgbptr) {
       if (numcolors > 256) numcolors = 256;     // play safe
       for (int i = 0; i < numcolors; i++) {
-         cellr[algotype][i] = *rgbptr++;
-         cellg[algotype][i] = *rgbptr++;
-         cellb[algotype][i] = *rgbptr++;
+         ad->cellr[i] = *rgbptr++;
+         ad->cellg[i] = *rgbptr++;
+         ad->cellb[i] = *rgbptr++;
       }
    }
-   //!!! else set graduated pale colors rather than leave them black???
 }
 
 // -----------------------------------------------------------------------------
@@ -124,84 +144,69 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
    return iconptr;
 }
 
+void wxInitializeAlgoInfo::createIconBitmaps(int size, char **xpmdata) {
+   wxBitmap **bm = CreateIconBitmaps(xpmdata) ;
+   if (size == 7)
+      me()->icons7x7 = bm ;
+   else if (size == 15)
+      me()->icons15x15 = bm ;
+}
+
 // -----------------------------------------------------------------------------
 
 void InitAlgorithms()
 {
-   qlifealgo temp_qlife;
-   hlifealgo temp_hlife;
-   slifealgo temp_slife;
-   jvnalgo   temp_jvn;
-   wwalgo    temp_ww;
-   generationsalgo   temp_gen;
+   qlifealgo::doInitializeAlgoInfo(wxai.tick()) ;
+   hlifealgo::doInitializeAlgoInfo(wxai.tick()) ;
+   slifealgo::doInitializeAlgoInfo(wxai.tick()) ;
+   jvnalgo::doInitializeAlgoInfo(wxai.tick()) ;
+   wwalgo::doInitializeAlgoInfo(wxai.tick()) ;
+   generationsalgo::doInitializeAlgoInfo(wxai.tick()) ;
 
    // algomenu is used when algo button is pressed and for Set Algo submenu
    algomenu = new wxMenu();
-   for ( int i = 0; i < NUM_ALGOS; i++ ) {
-      wxString name = wxString(GetAlgoName((algo_type)i), wxConvLocal);
+   for (int i = 0; i < getNumberAlgorithms(); i++ ) {
+      algoData *ad = algoDatas[i] ;
+      if (ad->algoName == 0 || ad->creator == 0)
+	 Fatal(_("Algorithm did not set name and/or creator")) ;
+      wxString name = wxString(ad->algoName, wxConvLocal);
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
-   }
-
-   // set default max memory settings
-   algomem[QLIFE_ALGO] = temp_qlife.DefaultMaxMem();
-   algomem[HLIFE_ALGO] = temp_hlife.DefaultMaxMem();
-   algomem[SLIFE_ALGO] = temp_slife.DefaultMaxMem();
-   algomem[JVN_ALGO]   = temp_jvn.DefaultMaxMem();
-   algomem[WW_ALGO]    = temp_ww.DefaultMaxMem();
-   algomem[GEN_ALGO]   = temp_gen.DefaultMaxMem();
-
-   // set default base steps
-   algobase[QLIFE_ALGO] = temp_qlife.DefaultBaseStep();
-   algobase[HLIFE_ALGO] = temp_hlife.DefaultBaseStep();
-   algobase[SLIFE_ALGO] = temp_slife.DefaultBaseStep();
-   algobase[JVN_ALGO]   = temp_jvn.DefaultBaseStep();
-   algobase[WW_ALGO]    = temp_ww.DefaultBaseStep();
-   algobase[GEN_ALGO]   = temp_gen.DefaultBaseStep();
-
-   // set status bar background for each algo
-   algorgb[QLIFE_ALGO] = new wxColor(255, 255, 206);  // pale yellow
-   algorgb[HLIFE_ALGO] = new wxColor(226, 250, 248);  // pale blue
-   algorgb[SLIFE_ALGO] = new wxColor(225, 225, 225);  // not sure
-   algorgb[JVN_ALGO]   = new wxColor(225, 255, 225);  // pale green
-   algorgb[WW_ALGO]    = new wxColor(255, 225, 255);  // pale red
-   algorgb[GEN_ALGO]   = new wxColor(255, 225, 225);  // not sure
-
-   // create corresponding brushes
-   for (int i = 0; i < NUM_ALGOS; i++)
-      algobrush[i] = new wxBrush(*algorgb[i]);
-   
-   // get initial cell colors for each algo
-   InitCellColors(QLIFE_ALGO, temp_qlife);
-   InitCellColors(HLIFE_ALGO, temp_hlife);
-   InitCellColors(SLIFE_ALGO, temp_slife);
-   InitCellColors(JVN_ALGO,   temp_jvn);
-   InitCellColors(WW_ALGO,    temp_ww);
-   InitCellColors(GEN_ALGO,   temp_gen);
-   
-   // build icon bitmaps for each algo (if icon data is present)
-   icons7x7  [QLIFE_ALGO]  = CreateIconBitmaps( temp_qlife.GetIconData(7) );
-   icons15x15[QLIFE_ALGO]  = CreateIconBitmaps( temp_qlife.GetIconData(15) );
-   icons7x7  [HLIFE_ALGO]  = CreateIconBitmaps( temp_hlife.GetIconData(7) );
-   icons15x15[HLIFE_ALGO]  = CreateIconBitmaps( temp_hlife.GetIconData(15) );
-   icons7x7  [SLIFE_ALGO]  = CreateIconBitmaps( temp_slife.GetIconData(7) );
-   icons15x15[SLIFE_ALGO]  = CreateIconBitmaps( temp_slife.GetIconData(15) );
-   icons7x7  [JVN_ALGO]    = CreateIconBitmaps( temp_jvn.GetIconData(7) );
-   icons15x15[JVN_ALGO]    = CreateIconBitmaps( temp_jvn.GetIconData(15) );
-   icons7x7  [WW_ALGO]     = CreateIconBitmaps( temp_ww.GetIconData(7) );
-   icons15x15[WW_ALGO]     = CreateIconBitmaps( temp_ww.GetIconData(15) );
-   icons7x7  [GEN_ALGO]    = CreateIconBitmaps( temp_gen.GetIconData(7) );
-   icons15x15[GEN_ALGO]    = CreateIconBitmaps( temp_gen.GetIconData(15) );
-   
-   // create scaled bitmaps if only one size is supplied
-   for (int i = 0; i < NUM_ALGOS; i++) {
-      if (!icons15x15[i]) {
-         // scale up 7x7 bitmaps (looks ugly)
-         icons15x15[i] = ScaleIconBitmaps(icons7x7[i], 15);
+      if (ad->statusrgb[0] == 0 && ad->statusrgb[1] == 0 &&
+	  ad->statusrgb[2] == 0) {
+	 // make a new pale status color as far from the other
+	 // colors as we can.
+	 int bd = -1 ;
+	 for (int j=0; j<64; j++) {
+	     int tr = 191 + ((j & 1) << 5) + ((j & 8) << 1) ;
+	     int tg = 191 + ((j & 2) << 4) + (j & 16) ;
+	     int tb = 191 + ((j & 4) << 3) + ((j & 32) >> 1) ;
+	     int md = 3 * 256 * 256 ;
+	     for (int k=0; k<getNumberAlgorithms(); k++) {
+	        if (k == i)
+		   continue ;
+	        int or = algoDatas[k]->statusrgb[0] ;
+	        int og = algoDatas[k]->statusrgb[1] ;
+	        int ob = algoDatas[k]->statusrgb[2] ;
+		int td = (or - tr) * (or - tr) + (og - tg) * (og - tg) +
+		  (ob - tb) * (ob - tb) ;
+		if (td < md)
+		  md = td ;
+	     }
+	     if (md > bd) {
+	       ad->statusrgb[0] = tr ;
+	       ad->statusrgb[1] = tg ;
+	       ad->statusrgb[2] = tb ;
+	       bd = md ;
+	     }
+	 }
       }
-      if (!icons7x7[i]) {
-         // scale down 15x15 bitmaps (not too bad)
-         icons7x7[i] = ScaleIconBitmaps(icons15x15[i], 7);
-      }
+      ad->algorgb = new wxColor(ad->statusrgb[0], ad->statusrgb[1],
+			        ad->statusrgb[2]) ;
+      ad->algobrush = new wxBrush(*ad->algorgb) ;
+      if (!ad->icons15x15)
+	ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15) ;
+      if (!ad->icons7x7)
+	ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 15) ;
    }
 }
 
@@ -209,21 +214,13 @@ void InitAlgorithms()
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
 {
    lifealgo* newalgo = NULL;
-   switch (algotype) {
-      case QLIFE_ALGO:  newalgo = new qlifealgo(); break;
-      case HLIFE_ALGO:  newalgo = new hlifealgo(); break;
-      case SLIFE_ALGO:  newalgo = new slifealgo(); break;
-      case JVN_ALGO:    newalgo = new jvnalgo(); break;
-      case WW_ALGO:     newalgo = new wwalgo(); break;
-      case GEN_ALGO:    newalgo = new generationsalgo(); break;
-      default:          Fatal(_("Bug detected in CreateNewUniverse!"));
-   }
+   newalgo = algoDatas[algotype]->creator() ;
 
    if (newalgo == NULL) Fatal(_("Failed to create new universe!"));
 
-   if (algomem[algotype] >= 0) newalgo->setMaxMemory(algomem[algotype]);
+   if (algoDatas[algotype]->algomem >= 0)
+      newalgo->setMaxMemory(algoDatas[algotype]->algomem);
 
-   // allow event checking?
    if (allowcheck) newalgo->setpoll(wxGetApp().Poller());
 
    return newalgo;
@@ -231,16 +228,10 @@ lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
 
 // -----------------------------------------------------------------------------
 
-const char* GetAlgoName(algo_type algotype)
-{
-   switch (algotype) {
-      case QLIFE_ALGO:  return "QuickLife";
-      case HLIFE_ALGO:  return "HashLife";
-      case SLIFE_ALGO:  return "SlowLife";
-      case JVN_ALGO:    return "JvN";
-      case WW_ALGO:     return "WireWorld";
-      case GEN_ALGO:    return "Generations";
-      default:          Fatal(_("Bug detected in GetAlgoName!"));
-   }
-   return "BUG";        // avoid gcc warning
+const char* GetAlgoName(algo_type algotype) {
+   return algoDatas[algotype]->algoName ;
 }
+int getNumberAlgorithms() {
+   return initializeAlgoInfo::getNumAlgos() ;
+}
+algo_type initalgo ;

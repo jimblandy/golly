@@ -36,9 +36,7 @@ public:
    // AKT
    virtual const char* setrule(const char* s);
    virtual const char* getrule();
-   virtual const char* DefaultRule();
    virtual int NumCellStates();
-   virtual char** GetIconData(int size);
-   virtual unsigned char* GetColorData(int& numcolors);
+   static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
 };
 #endif

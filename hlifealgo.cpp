@@ -1760,3 +1760,11 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    return 0 ;
 }
 char hlifealgo::statusline[120] ;
+static lifealgo *creator() { return new hlifealgo() ; }
+void hlifealgo::doInitializeAlgoInfo(initializeAlgoInfo &ai) {
+   ai.setAlgorithmName("HashLife") ;
+   ai.setAlgorithmCreator(&creator) ;
+   ai.setDefaultBaseStep(8) ;
+   ai.setDefaultMaxMem(300) ;
+   ai.setStatusRGB(226, 250, 248) ;
+}
