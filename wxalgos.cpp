@@ -184,11 +184,11 @@ void InitAlgorithms()
 	     for (int k=0; k<getNumberAlgorithms(); k++) {
 	        if (k == i)
 		   continue ;
-	        int or = algoDatas[k]->statusrgb[0] ;
-	        int og = algoDatas[k]->statusrgb[1] ;
-	        int ob = algoDatas[k]->statusrgb[2] ;
-		int td = (or - tr) * (or - tr) + (og - tg) * (og - tg) +
-		  (ob - tb) * (ob - tb) ;
+	        int oldr = algoDatas[k]->statusrgb[0] ;
+	        int oldg = algoDatas[k]->statusrgb[1] ;
+	        int oldb = algoDatas[k]->statusrgb[2] ;
+		int td = (oldr - tr) * (oldr - tr) + (oldg - tg) * (oldg - tg) +
+		  (oldb - tb) * (oldb - tb) ;
 		if (td < md)
 		  md = td ;
 	     }
