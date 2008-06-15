@@ -1386,6 +1386,7 @@ void SavePrefs()
    fputs("\n", f);
 
    fprintf(f, "init_algo=%d\n", (int)currlayer->algtype);
+   fprintf(f, "init_algo_name=%s\n", (int)currlayer->algodata->algoName);
    for (int i = 0; i < getNumberAlgorithms(); i++) {
       fprintf(f, "algorithm=%s\n", GetAlgoName((algo_type) i));
       fprintf(f, "max_mem=%d\n", algoDatas[i]->algomem);
@@ -1802,12 +1803,17 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "init_algo") == 0 ||
                  strcmp(keyword, "hashing") == 0) {      // deprecated
+	// this value may be overriden by a later init_algo_name
          int i;
          sscanf(value, "%d", &i);
          if (i < 0) i = 0;
          if (i >= getNumberAlgorithms()) i = getNumberAlgorithms() - 1;
          initalgo = (algo_type) i;
 
+      } else if (strcmp(keyword, "init_algo_name") == 0) { // override init_algo
+	 int i = staticAlgoInfo::nameToIndex(value) ;
+	 if (i >= 0 && i < staticAlgoInfo::getNumAlgos())
+	    initalgo = (algo_type)i ;
       } else if (strcmp(keyword, "hyperspeed") == 0) {
          inithyperspeed = value[0] == '1';
 
