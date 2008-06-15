@@ -1386,7 +1386,7 @@ void SavePrefs()
    fputs("\n", f);
 
    fprintf(f, "init_algo=%d\n", (int)currlayer->algtype);
-   fprintf(f, "init_algo_name=%s\n", (int)currlayer->algodata->algoName);
+   fprintf(f, "init_algo_name=%s\n", currlayer->algodata->algoName);
    for (int i = 0; i < getNumberAlgorithms(); i++) {
       fprintf(f, "algorithm=%s\n", GetAlgoName((algo_type) i));
       fprintf(f, "max_mem=%d\n", algoDatas[i]->algomem);
