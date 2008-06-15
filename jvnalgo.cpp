@@ -48,10 +48,13 @@ const char* jvnalgo::setrule(const char *s) {
       ghashbase::setrule(s) ;
       return NULL;
    } else if (stricmp(s, EJVN_RULE) == 0) {
+      return "This algorithm does not support any extended JVN rules yet." ;
+     /*
       numstates = 32;
       maxCellStates = 32 ;
       ghashbase::setrule(s) ;
       return NULL;
+     */
    }
    return "This algorithm only supports two rules (JvN-29 or JvN-32).";
 }
