@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 #include "lifealgo.h"
+#include "string.h"
+using namespace std ;
 lifealgo::~lifealgo() {
    poller = 0 ;
    maxCellStates = 2 ;
