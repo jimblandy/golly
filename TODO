@@ -1,3 +1,102 @@
+For version 1.5a
+----------------
+
+Andrew's list:
+
+- Paste image needs to be updated if showicons is toggled.
+
+- Fix pasting from one algo to another -- should only cause error
+  if current algo has fewer states than temp algo.
+
+- Store pattern_dir/script_dir/etc as relative paths if in gollydir.
+  Careful -- check what we did with recent_file stuff.
+
+- Fix comments in Prefs > Control (add MB to max mem).  If selected
+  algo is hyperCapable() then:
+  - show "(best if ~N% of RAM)" next to max mem
+    or "(0 means no limit)" if not hyper (ie. qlife)
+  - show "(best if power of 2)" next to base step
+
+- Fix JvN cell colors so different shades are obvious.
+
+- Remove SlowLife (comment out in wxalgos.h/cpp).
+
+- Build and test Win/GTK versions.  Upload to ftp site and
+  announce in golly-test.
+
+Tom's list:
+
+- Add large replication example.
+
+- Add ejvn rule.
+
+For post-alpha version (1.5 or 2.0?):
+-------------------------------------
+
+Andrew's list:
+
+- Fix glitches in the way algo button works:
+  - On Mac we want button to look selected before menu appears.
+  - On Win we want to be able to press-select-release.
+
+- Implement scripting changes:
+  - numalgos() returns # of algorithms (simply NUM_ALGOS).
+  - setalgo(name) sets algo to given name.
+  - name = getalgo(index=current) returns name of current algo
+    or name of algo at given index in menu (0..NUM_ALGOS-1).
+  - Provide command to get/set colors if # states > 2.
+  - Decide how to handle cell lists if # states > 2.
+    Maybe such lists contain 3 ints per cell:
+    [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn ]
+
+- Resolve how to handle swapcolors flag if # states > 2.
+  Remove flag completely?  Or just ignore it when # states > 2.
+  What about colors used when layers are stacked?
+
+- Rename Hashing-Examples to HashLife-Examples and convert all files
+  to .mc format (with explicit rules).
+
+- Avoid any remaining algo assumptions:
+  - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
+
+- Check all !!!/FIXME comments in code and try to remove.
+
+- Update docs (Help files, BUILD notes, README, etc).
+
+- At this point release a beta version of Golly 2.0.  Probably enough
+  significant changes to justify a major version increment.
+
+Tom's list:
+
+File I/O
+
+- Have hlifealgo .mc compatible with ghashbase .mc
+- Generalized RLE in MC?
+
+Algos
+
+- Unzoom color merging
+- Better status reports (% of hashtable full)
+
+Scripting
+
+- Tape construction script for replicator
+
+Samples
+
+- Small JVN examples
+
+Fun
+
+- htreebase
+- hgridbase (finite universe; torus, etc.)
+- allow (base) x (slow) algorithm "multiplication"
+- pluggability of externally-defined algos
+- perl/python slowcalc callbacks
+- cache of slowcalc
+- generational gc
+- 32-bit indexed hashlife on 64-bit platforms
+
 For future versions:
 --------------------
 
