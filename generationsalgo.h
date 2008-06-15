@@ -42,7 +42,7 @@ public:
    virtual int NumCellStates() ;
    int bornbits ;
    int staybits ;
-   char rulecopy[MAXRULESIZE] ;
+   static char rulecopy[MAXRULESIZE] ;
    static void doInitializeAlgoInfo(initializeAlgoInfo &) ;
 };
 #endif

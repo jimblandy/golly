@@ -62,9 +62,11 @@ const char* generationsalgo::setrule(const char *s) {
    staybits = tstaybits ;
    maxCellStates = tnumstates ;
    strcpy(rulecopy, s) ;
-   ghashbase::setrule(s) ;
+   ghashbase::setrule(rulecopy) ;
    return 0 ;
 }
+
+char generationsalgo::rulecopy[MAXRULESIZE] ;
 
 const char* generationsalgo::getrule() {
    return rulecopy ;
@@ -102,7 +104,8 @@ unsigned char *generationsalgo::GetColorData(int &numcolors) {
 }
 
 generationsalgo::generationsalgo() {
-   setrule(DEFAULTRULE) ;
+   // we may need this to be >2 here so it's recognized as multistate
+   maxCellStates = 3 ;
 }
 
 generationsalgo::~generationsalgo() {}
