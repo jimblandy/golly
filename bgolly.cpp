@@ -534,8 +534,6 @@ case 's':
       }
       if (outputgzip)
          lifefatal("Gzipped output files not supported yet") ;
-      if (outputismc && !hashlife)
-         lifefatal("Cannot write MC files if not using hash") ;
       if (strlen(outfilename) > 200)
          lifefatal("Output filename too long") ;
    }
