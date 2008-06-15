@@ -48,3 +48,6 @@ int staticAlgoInfo::nameToIndex(const char *s) {
       return -1 ;
    return r->id ;
 }
+staticAlgoInfo &staticAlgoInfo::tick() {
+   return *(new staticAlgoInfo()) ;
+}

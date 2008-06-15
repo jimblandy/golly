@@ -109,6 +109,7 @@ public:
    /* support:  give me sequential algorithm IDs */
    static int getNumAlgos() { return nextAlgoId ; }
    static int nextAlgoId ;
+   static staticAlgoInfo &tick() ;
    static staticAlgoInfo *head ;
    static staticAlgoInfo *byName(const char *s) ;
    static int nameToIndex(const char *s) ;

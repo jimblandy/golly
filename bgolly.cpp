@@ -24,6 +24,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "jvnalgo.h"
+#include "slifealgo.h"
+#include "wwalgo.h"
+#include "generationsalgo.h"
 #include "readpattern.h"
 #include "util.h"
 #include "viewport.h"
@@ -91,7 +94,9 @@ struct options {
 } ;
 bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
-int hyper, hashlife, ghashlife, render, autofit, quiet, popcount, progress ;
+int hyper, render, autofit, quiet, popcount, progress ;
+int hashlife ;
+char *algoName = "QuickLife" ;
 int verbose ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
@@ -108,7 +113,7 @@ options options[] = {
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
   { "-h", "--hashlife", "Use Hashlife algorithm", 'b', &hashlife },
-  { "-g", "--ghashlife", "Use generalized hashlife algorithm", 'b', &ghashlife },
+  { "-a", "--algorithm", "Select algorithm by name", 's', &algoName },
   { "-o", "--output", "Output file (*.rle, *.mc, *.rle.gz, *.mc.gz)", 's',
                                                                &outfilename },
   { "-v", "--verbose", "Verbose", 'b', &verbose },
@@ -381,18 +386,27 @@ struct showcutcmd : public cmdbase {
 	 cout << cutbuf[i].first << " " << cutbuf[i].second << endl ;
    }
 } showcut_inst ;
+lifealgo *createUniverse() {
+   if (algoName == 0)
+     if (hashlife)
+       algoName = "HashLife" ;
+     else
+       algoName = "QuickLife" ;
+   staticAlgoInfo *ai = staticAlgoInfo::byName(algoName) ;
+   if (ai == 0)
+      lifefatal("No such algorithm") ;
+   lifealgo *imp = (ai->creator)() ;
+   if (imp == 0)
+      lifefatal("Could not create universe") ;
+   imp->setMaxMemory(maxmem) ;
+   return imp ;
+}
 struct newcmd : public cmdbase {
    newcmd() : cmdbase("new", "") {}
    virtual void doit() {
      if (imp != 0)
-       delete imp ;
-     if (ghashlife)
-       imp = new jvnalgo() ;
-     else if (hashlife)
-       imp = new hlifealgo() ;
-     else
-       imp = new qlifealgo() ;
-     imp->setMaxMemory(maxmem) ;
+        delete imp ;
+     imp = createUniverse() ;
    }
 } new_inst ;
 struct sethashingcmd : public cmdbase {
@@ -401,18 +415,18 @@ struct sethashingcmd : public cmdbase {
       hashlife = iargs[0] ;
    }
 } sethashing_inst ;
-struct setghashingcmd : public cmdbase {
-   setghashingcmd() : cmdbase("setghashing", "i") {}
-   virtual void doit() {
-      ghashlife = iargs[0] ;
-   }
-} setghashing_inst ;
 struct setmaxmemcmd : public cmdbase {
    setmaxmemcmd() : cmdbase("setmaxmem", "i") {}
    virtual void doit() {
       maxmem = iargs[0] ;
    }
 } setmaxmem_inst ;
+struct setalgocmd : public cmdbase {
+   setalgocmd() : cmdbase("setalgo", "s") {}
+   virtual void doit() {
+      algoName = sarg ;
+   }
+} setalgocmd_inst ;
 struct edgescmd : public cmdbase {
    edgescmd() : cmdbase("edges", "") {}
    virtual void doit() {
@@ -453,6 +467,12 @@ int main(int argc, char *argv[]) {
    cout << 
     "This is bgolly " STRINGIFY(VERSION) " Copyright 2008 The Golly Gang."
                                                             << endl << flush ;
+   qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   slifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   jvnalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   wwalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    while (argc > 1 && argv[1][0] == '-') {
       argc-- ;
       argv++ ;
@@ -519,12 +539,7 @@ case 's':
       if (strlen(outfilename) > 200)
          lifefatal("Output filename too long") ;
    }
-   if (ghashlife)
-     imp = new jvnalgo() ;
-   else if (hashlife)
-     imp = new hlifealgo() ;
-   else
-     imp = new qlifealgo() ;
+   imp = createUniverse() ;
    if (progress)
      lifeerrors::seterrorhandler(&nullerror) ;
    else if (verbose) {
