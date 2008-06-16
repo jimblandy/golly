@@ -92,7 +92,7 @@ void AddRun(FILE *f,
          putchar('A' + state - 1, f) ;
       }
    } else
-      putchar("!$bo"[state+2]) ;
+      putchar("!$bo"[state+2], f) ;
    linelen += numlen + 1;
    run = 0;                           // reset run count
 }
