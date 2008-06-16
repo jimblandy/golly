@@ -369,7 +369,7 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
       int ibottom = bottom.toint();
       int iright = right.toint();
       int cx, cy;
-      int v = 0 ;
+      int v = 0;
       //!!! make it work with multistate
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -461,7 +461,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
    const char* err = readpattern(FILENAME, *tempalgo);
    if (err) {
       // try all other algos until readpattern succeeds
-      for (int i = 0; i < getNumberAlgorithms(); i++) {
+      for (int i = 0; i < NumAlgos(); i++) {
          if (i != currlayer->algtype) {
             delete tempalgo;
             tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
@@ -994,7 +994,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          }
       }
    } else {
-      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
+      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1;
       for (int n = 0; n < num_cells; n++) {
          long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
          long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
@@ -1058,7 +1058,7 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
       int iright = ileft + wd - 1;
       int ibottom = itop + ht - 1;
       int cx, cy;
-      int v = 0 ;
+      int v = 0;
       int cntr = 0;
       lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -1120,7 +1120,7 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    int right = x + wd - 1;
    int bottom = y + ht - 1;
    int cx, cy;
-   int v = 0 ;
+   int v = 0;
    int cntr = 0;
    
    // calculate a hash value for pattern in given rect
@@ -1188,7 +1188,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
       int iright = right.toint();
       int wd = iright - ileft + 1;
       int ht = ibottom - itop + 1;
-      int v = 0 ;
+      int v = 0;
 
       AddCell(outlist, wd, ht);
 
@@ -1335,10 +1335,10 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
 
-   const char *err = GSF_setcell(x, y, state);
+   const char* err = GSF_setcell(x, y, state);
    if (err) {
-     PyErr_SetString(PyExc_RuntimeError, err) ;
-     return NULL ;
+     PyErr_SetString(PyExc_RuntimeError, err);
+     return NULL;
    }
 
    RETURN_NONE;

@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #ifndef _WXALGOS_H_
 #define _WXALGOS_H_
+
 #include "lifealgo.h"
 
 // Golly supports multiple algorithms.  The first algorithm
@@ -32,11 +33,41 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // be capable of being dynamic.
 
 typedef enum {
-   QLIFE_ALGO,       // QuickLife
-   HLIFE_ALGO,       // HashLife
-} ;
-typedef int algo_type; // it's now open-ended
+   QLIFE_ALGO,    // QuickLife
+   HLIFE_ALGO     // HashLife
+};
 
+const int MAX_ALGOS = 200;       // maximum number of algorithms
+
+typedef int algo_type;           // 0..MAX_ALGOS-1
+
+// A class for all the static info we need about a particular algorithm.
+class AlgoData : public staticAlgoInfo {
+public:
+   AlgoData();
+   virtual void initCellColors(int, unsigned char*);
+   virtual void createIconBitmaps(int, char**);
+   virtual void setDefaultBaseStep(int v) { algobase = v; }
+   virtual void setDefaultMaxMem(int v) { algomem = v; }
+   virtual void setStatusRGB(int, int, int);
+
+   // additional data
+   int algomem;                  // maximum memory (in MB)
+   int algobase;                 // base step
+   unsigned char statusrgb[3];
+   wxColor* algorgb;             // status bar color
+   wxBrush* algobrush;           // corresponding brush
+   wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
+   wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
+   
+   // rgb colors for each cell state
+   unsigned char cellr[256], cellg[256], cellb[256];
+   
+   // static allocator
+   static AlgoData& tick();
+};
+
+extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
 extern wxMenu* algomenu;                  // menu of algorithm names
 extern algo_type initalgo;                // initial layer's algorithm
 
@@ -51,31 +82,7 @@ const char* GetAlgoName(algo_type algotype);
 // Return name of given algorithm.  This name appears in various menus
 // and is also stored in the prefs file.
 
-int getNumberAlgorithms() ;
+int NumAlgos();
+// Return current number of algorithms.
 
-const int MAX_NUM_ALGOS = 256 ;     // no more than this number of algos
-
-/**
- *   A class for all the info that wx needs about a particular algorithm.
- */
-class algoData : public staticAlgoInfo {
-public:
-   algoData() ;
-   virtual void initCellColors(int, unsigned char *) ;
-   virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) ;
-   virtual void setDefaultBaseStep(int v) { algobase = v ; }
-   virtual void setDefaultMaxMem(int v) { algomem = v ; }
-   virtual void setStatusRGB(int /* r */, int /* g */, int /* b */) ;
-   /* additional data used by wx */
-   int algomem, algobase ;
-   unsigned char statusrgb[3] ;
-   wxColor *algorgb ;
-   wxBrush *algobrush ;
-   wxBitmap **icons7x7, **icons15x15 ;
-   unsigned char cellr[256], cellg[256], cellb[256] ;
-   /* static allocator */
-   static algoData &tick() ;
-} ;
-
-extern algoData *algoDatas[MAX_NUM_ALGOS] ;
 #endif

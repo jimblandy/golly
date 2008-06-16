@@ -190,7 +190,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    DisplayText(dc, _("Color:"), h_col1, BASELINE2);
    DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
 
-   wxBitmap** iconmaps = currlayer->algodata->icons7x7 ;
+   wxBitmap** iconmaps = currlayer->algodata->icons7x7;
 
    // set rgb values for dead cells
    currlayer->algodata->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
@@ -217,8 +217,8 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
       wxColor color(currlayer->algodata->cellr[i],
                     currlayer->algodata->cellg[i],
-                    currlayer->algodata->cellb[i]) ;
-      wxBrush brush(color) ;
+                    currlayer->algodata->cellb[i]);
+      wxBrush brush(color);
       wxRect r(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
       dc.SetPen(*wxBLACK_PEN);
       dc.SetBrush(brush);
@@ -831,7 +831,7 @@ void Selection::AdvanceOutside()
       double maxcount = currlayer->algo->getPopulation().todouble() + ht;
       double accumcount = 0;
       int currcount = 0;
-      int v = 0 ;
+      int v = 0;
       bool abort = false;
       BeginProgress(_("Copying advanced pattern"));
    
@@ -1303,7 +1303,7 @@ void Selection::Clear()
    int cx, cy;
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
-   int v = 0 ;
+   int v = 0;
    bool abort = false;
    bool selchanged = false;
    BeginProgress(_("Clearing selection"));
@@ -1374,7 +1374,7 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
    int wd = iright - ileft + 1;
    int ht = ibottom - itop + 1;
    int cx, cy;
-   int v = 0 ;
+   int v = 0;
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
@@ -1508,12 +1508,12 @@ void Selection::AddEOL(char* &chptr)
 
 // -----------------------------------------------------------------------------
 
-const int WRLE_NONE = -3 ;
-const int WRLE_EOP = -2 ;
-const int WRLE_NEWLINE = -1 ;
+const int WRLE_NONE = -3;
+const int WRLE_EOP = -2;
+const int WRLE_NEWLINE = -1;
 
-void Selection::AddRun(int state,                // in:  state of cell to write
-		       int multistate,           // true if #cell states > 2
+void Selection::AddRun(int state,                // in: state of cell to write
+                       int multistate,           // true if #cell states > 2
                        unsigned int &run,        // in and out
                        unsigned int &linelen,    // ditto
                        char* &chptr)             // ditto
@@ -1543,19 +1543,19 @@ void Selection::AddRun(int state,                // in:  state of cell to write
    }
    if (multistate) {
       if (state <= 0)
-	 *chptr = ".$!"[-state] ;
+         *chptr = ".$!"[-state];
       else {
-	 if (state > 24) {
-	    int hi = (state - 25) / 24 ;
-	    *chptr = hi + 'p' ;
-	    chptr += 1 ;
-	    linelen += 1 ;
-	    state -= (hi + 1) * 24 ;
-	 }
-	 *chptr = 'A' + state - 1 ;
+         if (state > 24) {
+            int hi = (state - 25) / 24;
+            *chptr = hi + 'p';
+            chptr += 1;
+            linelen += 1;
+            state -= (hi + 1) * 24;
+         }
+         *chptr = 'A' + state - 1;
       }
    } else
-      *chptr = "!$bo"[state+2] ;
+      *chptr = "!$bo"[state+2];
    chptr += 1;
    linelen += numlen + 1;
    run = 0;                           // reset run count
@@ -1589,8 +1589,6 @@ void Selection::CopyToClipboard(bool cut)
       return;
    }
    etextptr = textptr + cursize;
-
-   //!!! make it work with multistate
    
    // add RLE header line
    sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, currlayer->algo->getrule());
@@ -1606,9 +1604,9 @@ void Selection::CopyToClipboard(bool cut)
    unsigned int brun = 0;
    unsigned int orun = 0;
    unsigned int dollrun = 0;
-   int laststate ;
+   int laststate;
    int cx, cy;
-   int v = 0 ;
+   int v = 0;
 
    // save cell changes if undo/redo is enabled and script isn't constructing a pattern
    bool savecells = allowundo && !currlayer->stayclean;
@@ -1623,9 +1621,9 @@ void Selection::CopyToClipboard(bool cut)
       BeginProgress(_("Copying selection"));
 
    lifealgo* curralgo = currlayer->algo;
-   int multistate = curralgo->NumCellStates() > 2 ;
+   int multistate = curralgo->NumCellStates() > 2;
    for ( cy=itop; cy<=ibottom; cy++ ) {
-      laststate = WRLE_NONE ;
+      laststate = WRLE_NONE;
       for ( cx=ileft; cx<=iright; cx++ ) {
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip + cx > iright)
@@ -1637,9 +1635,9 @@ void Selection::CopyToClipboard(bool cut)
             } else {
                if (orun > 0) {
                   // output current run of live cells
-		  AddRun(laststate, multistate, orun, linelen, chptr);
+                  AddRun(laststate, multistate, orun, linelen, chptr);
                }
-               laststate = 0 ;
+               laststate = 0;
                brun = skip;
             }
          }
@@ -1656,14 +1654,14 @@ void Selection::CopyToClipboard(bool cut)
             } else {
                if (dollrun > 0)
                   // output current run of $ chars
-		  AddRun(WRLE_NEWLINE, multistate, dollrun, linelen, chptr);
+                  AddRun(WRLE_NEWLINE, multistate, dollrun, linelen, chptr);
                if (brun > 0)
                   // output current run of dead cells
-		 AddRun(0, multistate, brun, linelen, chptr);
+                  AddRun(0, multistate, brun, linelen, chptr);
                if (orun > 0)
                   // output current run of other live cells
-		 AddRun(laststate, multistate, orun, linelen, chptr);
-               laststate = v ;
+                  AddRun(laststate, multistate, orun, linelen, chptr);
+               laststate = v;
                orun = 1;
             }
          } else {
@@ -1699,7 +1697,7 @@ void Selection::CopyToClipboard(bool cut)
          brun = 0;
       else if (laststate >= 0)
          // output current run of live cells
-	 AddRun(laststate, multistate, orun, linelen, chptr);
+         AddRun(laststate, multistate, orun, linelen, chptr);
       dollrun++;
    }
    
@@ -1860,7 +1858,7 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
    double maxcount = (double)wd * (double)ht;
    int cntr = 0;
    bool abort = false;
-   int v = 0 ;
+   int v = 0;
    int cx, cy, newx, newy, newxinc, newyinc;
    
    if (topbottom) {

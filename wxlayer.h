@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"         // for viewport class
 #include "wxedit.h"           // for Selection class
 #include "wxundo.h"           // for UndoRedo class
-#include "wxalgos.h"          // for algo_type
+#include "wxalgos.h"          // for AlgoData, algo_type, algoinfo
 
 // Golly supports multiple layers.  Each layer is a separate universe
 // (unless cloned) with its own algorithm, rule, viewport, window title,
@@ -41,10 +41,10 @@ public:
 
    lifealgo* algo;            // this layer's universe (shared by clones)
    algo_type algtype;         // type of universe
-   algoData *algodata;        // static algorithm data
+   AlgoData* algodata;        // static algorithm data
    void setAlgType(int algType) {
-     algtype = algType ;
-     algodata = algoDatas[algtype] ;
+     algtype = algType;
+     algodata = algoinfo[algtype];
    }
    bool hyperspeed;           // use speed acceleration?
    bool showhashinfo;         // show hashing info?

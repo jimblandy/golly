@@ -314,8 +314,8 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
          } else {
             // no real need to show step as an exact number
             strbuf.Printf(_("Step = %d^%d"),
-			  currlayer->algodata->algobase,
-			  currlayer->warp);
+                          currlayer->algodata->algobase,
+                          currlayer->warp);
          }
          DisplayText(dc, strbuf, h_gen, STEPLINE);
       }
@@ -370,8 +370,8 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             strbuf.Printf(_("Delay=%gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
             strbuf.Printf(_("Step=%d^%d"),
-			  currlayer->algodata->algobase,
-			  currlayer->warp);
+                          currlayer->algodata->algobase,
+                          currlayer->warp);
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
       }

@@ -257,21 +257,21 @@ void GSF_setname(char* name, int index)
 
 // -----------------------------------------------------------------------------
 
-const char *GSF_setcell(int x, int y, int newstate)
+const char* GSF_setcell(int x, int y, int newstate)
 {
    int oldstate = currlayer->algo->getcell(x, y);
    if (newstate != oldstate) {
+      if (currlayer->algo->setcell(x, y, newstate) < 0) {
+         return "Error in setcell; state value out of range.";
+      }
+      currlayer->algo->endofpattern();
       if (allowundo && !currlayer->stayclean) {
          ChangeCell(x, y, oldstate, newstate);
       }
-      int rval = currlayer->algo->setcell(x, y, newstate);
-      currlayer->algo->endofpattern();
       MarkLayerDirty();
       DoAutoUpdate();
-      if (rval < 0)
-	 return "Error in setcell; state value out of range." ;
    }
-   return 0 ;
+   return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -591,17 +591,17 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
 
    //!!! deprecate next two
    } else if (strcmp(colname, "hashing") == 0) {
-      oldcol = *(algoDatas[HLIFE_ALGO]->algorgb) ;
+      oldcol = *(algoinfo[HLIFE_ALGO]->algorgb);
       if (oldcol != newcol) {
-         *(algoDatas[HLIFE_ALGO]->algorgb) = newcol ;
+         *(algoinfo[HLIFE_ALGO]->algorgb) = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
 
    } else if (strcmp(colname, "nothashing") == 0) {
-      oldcol = *(algoDatas[QLIFE_ALGO]->algorgb) ;
+      oldcol = *(algoinfo[QLIFE_ALGO]->algorgb);
       if (oldcol != newcol) {
-         *(algoDatas[QLIFE_ALGO]->algorgb) = newcol ;
+         *(algoinfo[QLIFE_ALGO]->algorgb) = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
@@ -630,8 +630,8 @@ bool GSF_getcolor(char* colname, wxColor& color)
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
    //!!! add "algo0..algoN" like we do for livecells above???
    //!!! deprecate next two
-   else if (strcmp(colname, "hashing") == 0)    color = *(algoDatas[HLIFE_ALGO]->algorgb);
-   else if (strcmp(colname, "nothashing") == 0) color = *(algoDatas[QLIFE_ALGO]->algorgb);
+   else if (strcmp(colname, "hashing") == 0)    color = *(algoinfo[HLIFE_ALGO]->algorgb);
+   else if (strcmp(colname, "nothashing") == 0) color = *(algoinfo[QLIFE_ALGO]->algorgb);
    else {
       // unknown color name
       return false;

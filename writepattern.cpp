@@ -57,7 +57,7 @@ const int WRLE_NEWLINE = -1 ;
 // ensure all lines have <= 70 characters
 void AddRun(FILE *f,
             int state,                // in: state of cell to write
-	    int multistate,           // true if #cell states > 2
+            int multistate,           // true if #cell states > 2
             unsigned int &run,        // in and out
             unsigned int &linelen)    // ditto
 {
@@ -81,15 +81,15 @@ void AddRun(FILE *f,
    }
    if (multistate) {
       if (state <= 0)
-	 putchar(".$!"[-state], f) ;
+         putchar(".$!"[-state], f) ;
       else {
-	 if (state > 24) {
-	    int hi = (state - 25) / 24 ;
-	    putchar(hi + 'p', f) ;
-	    linelen++ ;
-	    state -= (hi + 1) * 24 ;
-	 }
-	 putchar('A' + state - 1, f) ;
+         if (state > 24) {
+            int hi = (state - 25) / 24 ;
+            putchar(hi + 'p', f) ;
+            linelen++ ;
+            state -= (hi + 1) * 24 ;
+         }
+         putchar('A' + state - 1, f) ;
       }
    } else
       putchar("!$bo"[state+2]) ;
@@ -157,20 +157,20 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
       int v = 0 ;
       for ( cy=top; cy<=bottom; cy++ ) {
          // set lastchar to anything except 'o' or 'b'
-	 laststate = WRLE_NONE ;
+         laststate = WRLE_NONE ;
          currcount++;
          for ( cx=left; cx<=right; cx++ ) {
-	    int skip = imp.nextcell(cx, cy, v);
+            int skip = imp.nextcell(cx, cy, v);
             if (skip + cx > right)
                skip = -1;           // pretend we found no more live cells
             if (skip > 0) {
                // have exactly "skip" dead cells here
-	       if (laststate == 0) {
+               if (laststate == 0) {
                   brun += skip;
                } else {
                   if (orun > 0) {
                      // output current run of live cells
-		     AddRun(f, laststate, multistate, orun, linelen);
+                     AddRun(f, laststate, multistate, orun, linelen);
                   }
                   laststate = 0 ;
                   brun = skip;
@@ -184,12 +184,12 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
                } else {
                   if (dollrun > 0)
                      // output current run of $ chars
-		     AddRun(f, WRLE_NEWLINE, multistate, dollrun, linelen);
+                     AddRun(f, WRLE_NEWLINE, multistate, dollrun, linelen);
                   if (brun > 0)
                      // output current run of dead cells
-		     AddRun(f, 0, multistate, brun, linelen);
-		  if (orun > 0)
-		     AddRun(f, laststate, multistate, orun, linelen) ;
+                     AddRun(f, 0, multistate, brun, linelen);
+                  if (orun > 0)
+                     AddRun(f, laststate, multistate, orun, linelen) ;
                   laststate = v ;
                   orun = 1;
                }
@@ -212,7 +212,7 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
             brun = 0;
          else if (laststate >= 0)
             // output current run of live cells
-	    AddRun(f, laststate, multistate, orun, linelen);
+            AddRun(f, laststate, multistate, orun, linelen);
          dollrun++;
       }
       

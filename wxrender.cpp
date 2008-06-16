@@ -399,7 +399,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
    bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
                   (pmscale >= (1 << mingridmag) && !showgridlines);
-   algoData *ad = currlayer->algodata ;
+   AlgoData* ad = currlayer->algodata;
    unsigned char deadred   = ad->cellr[0];
    unsigned char deadgreen = ad->cellg[0];
    unsigned char deadblue  = ad->cellb[0];
@@ -505,7 +505,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
    int cellsize = pmscale - 1;
    bool drawgap = (pmscale < (1 << mingridmag)) ||
                   (pmscale >= (1 << mingridmag) && !showgridlines);
-   algoData *ad = currlayer->algodata ;
+   AlgoData* ad = currlayer->algodata;
    unsigned char deadred   = ad->cellr[0];
    unsigned char deadgreen = ad->cellg[0];
    unsigned char deadblue  = ad->cellb[0];
@@ -815,10 +815,10 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
 void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
 {
-   algoData *ad = currlayer->algodata ;
-   *r = ad->cellr ;
-   *g = ad->cellg ;
-   *b = ad->cellb ;
+   AlgoData* ad = currlayer->algodata;
+   *r = ad->cellr;
+   *g = ad->cellg;
+   *b = ad->cellb;
 }
 
 // -----------------------------------------------------------------------------
@@ -1558,16 +1558,16 @@ void DrawView(wxDC& dc, int tileindex)
    cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
    // set rgb values for dead cells in pixblit calls
-   algoData *ad = currlayer->algodata ;
+   AlgoData* ad = currlayer->algodata;
    ad->cellr[0] = swapcolors ? livergb[colorindex]->Red() : deadrgb->Red();
    ad->cellg[0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
    ad->cellb[0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();
 
    if (showicons && currlayer->view->getmag() > 2) {
       if (currlayer->view->getmag() == 3) {
-	 iconmaps = currlayer->algodata->icons7x7 ;
+         iconmaps = ad->icons7x7;
       } else {
-	 iconmaps = currlayer->algodata->icons15x15 ;
+         iconmaps = ad->icons15x15;
       }
    }
 

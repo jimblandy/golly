@@ -19,8 +19,6 @@ Andrew's list:
 
 - Fix JvN cell colors so different shades are obvious.
 
-- Remove SlowLife (comment out in wxalgos.h/cpp).
-
 - Build and test Win/GTK versions.  Upload to ftp site and
   announce in golly-test.
 
@@ -45,15 +43,26 @@ Andrew's list:
     Maybe such lists contain 3 ints per cell:
     [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn ]
 
+- Improve edit bar:
+  - Allow bar to scroll left-right (via arrows or shift-click-and-drag?).
+  - Let user change colors by ctrl/right-click.
+  - Move all cursor mode buttons into edit bar (at bottom?).
+  - Add new buttons: eraser, eye-dropper, fill, etc?
+
+- Allow users to override default icons by looking for and loading
+  special files like JvN7.xpm in golly dir then user data dir?
+
 - Resolve how to handle swapcolors flag if # states > 2.
   Remove flag completely?  Or just ignore it when # states > 2.
   What about colors used when layers are stacked?
 
-- Rename Hashing-Examples to HashLife-Examples and convert all files
-  to .mc format (with explicit rules).
+- Rename Hashing-Examples to HashLife-Examples (or just HashLife?)
+  and convert all files to .mc format (with explicit rules).
 
-- Avoid any remaining algo assumptions:
+- Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
+
+- Remove SlowLife (comment out in wxalgos.h/cpp).
 
 - Check all !!!/FIXME comments in code and try to remove.
 

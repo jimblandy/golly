@@ -373,7 +373,7 @@ const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = fals
       int ibottom = bottom.toint();
       int iright = right.toint();
       int cx, cy;
-      int v = 0 ;
+      int v = 0;
       //!!! make it work with multistate
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -466,7 +466,7 @@ XS(pl_load)
    const char* err = readpattern(FILENAME, *tempalgo);
    if (err) {
       // try all other algos until readpattern succeeds
-      for (int i = 0; i < getNumberAlgorithms(); i++) {
+      for (int i = 0; i < NumAlgos(); i++) {
          if (i != currlayer->algtype) {
             delete tempalgo;
             tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
@@ -1058,7 +1058,7 @@ XS(pl_putcells)
          if ((n % 4096) == 0 && PerlScriptAborted()) break;
       }
    } else {
-      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1 ;
+      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1;
       for (int n = 0; n < num_cells; n++) {
          int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
          int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
@@ -1108,7 +1108,7 @@ XS(pl_getcells)
       int right = x + wd - 1;
       int bottom = y + ht - 1;
       int cx, cy;
-      int v = 0 ;
+      int v = 0;
       int cntr = 0;
       lifealgo* curralgo = currlayer->algo;
       for ( cy=y; cy<=bottom; cy++ ) {
@@ -1155,7 +1155,7 @@ XS(pl_hash)
    int right = x + wd - 1;
    int bottom = y + ht - 1;
    int cx, cy;
-   int v = 0 ;
+   int v = 0;
    int cntr = 0;
    
    // calculate a hash value for pattern in given rect
@@ -1225,7 +1225,7 @@ XS(pl_getclip)
       // extract cells from tempalgo
       int cx, cy;
       int cntr = 0;
-      int v = 0 ;
+      int v = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
             //!!! make it work with multistate
@@ -1362,9 +1362,9 @@ XS(pl_setcell)
    int y = SvIV(ST(1));
    int state = SvIV(ST(2));
 
-   const char *err = GSF_setcell(x, y, state);
-   if (err != 0)
-     PERL_ERROR(err) ;
+   const char* err = GSF_setcell(x, y, state);
+   if (err) PERL_ERROR(err);
+   
    XSRETURN(0);
 }
 

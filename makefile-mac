@@ -89,7 +89,7 @@ BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/generationsalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
    wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxstatus.h \
-   wxundo.h wxutils.h wxview.h wxdefaultcolors.h
+   wxundo.h wxutils.h wxview.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
@@ -118,7 +118,7 @@ $(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
-clean: 
+clean:
 	rm -f $(OBJDIR)/*.o bgolly
 	rm -rf $(APP_NAME).app
 

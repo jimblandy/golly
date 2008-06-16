@@ -865,7 +865,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
 
    // change algorithm type and update status bar immediately
    algo_type oldalgotype = currlayer->algtype;
-   currlayer->setAlgType(newalgotype) ;
+   currlayer->setAlgType(newalgotype);
    currlayer->warp = 0;
    UpdateStatus();
 
@@ -901,7 +901,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
       double accumcount = 0;
       int currcount = 0;
       bool abort = false;
-      int v = 0 ;
+      int v = 0;
       BeginProgress(_("Converting pattern"));
       
       lifealgo* curralgo = currlayer->algo;
