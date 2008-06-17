@@ -40,7 +40,7 @@ const int ibufsize = (bmsize*bmsize*3) ;  // each pixel has 3 r,g,b values
 static unsigned char ibigbuf[ibufsize] ;  // a shared buffer for up to 256x256 pixels
 static unsigned char *bigbuf = ibigbuf ;
 
-// AKT
+// AKT: arrays of rgb colors for each cell state (set by getcolors call)
 static unsigned char* cellred;
 static unsigned char* cellgreen;
 static unsigned char* cellblue;
@@ -285,7 +285,7 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    ensure_hashed() ;
    renderer = &rendererarg ;
    
-   // AKT: set cellred/green/blue ptrs -- is there a better way???!!!
+   // AKT: set cellred/green/blue ptrs
    renderer->getcolors(&cellred, &cellgreen, &cellblue);
 
    view = &viewarg ;

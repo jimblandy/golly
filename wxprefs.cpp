@@ -1281,6 +1281,32 @@ void SaveColor(FILE* f, const char* name, const wxColor* rgb)
 
 // -----------------------------------------------------------------------------
 
+void GetDirPath(const char* value, wxString& path, const wxString& defdir)
+{
+   path = wxString(value, wxConvLocal);
+
+   // if path isn't absolute then prepend Golly directory
+   wxFileName fname(path);
+   if (!fname.IsAbsolute()) path = gollydir + path;
+
+   // if path doesn't exist then reset to default directory
+   if (!wxFileName::DirExists(path)) path = gollydir + defdir;
+}
+
+// -----------------------------------------------------------------------------
+
+void SaveDirPath(FILE* f, const char* name, wxString path)
+{
+   // if given path is inside Golly directory then save as a relative path
+   if (path.StartsWith(gollydir)) {
+      // remove gollydir from start of path
+      path.erase(0, gollydir.length());
+   }
+   fprintf(f, "%s=%s\n", name, (const char*)path.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 const char* GOLLY_VERSION = STRINGIFY(VERSION);
@@ -1463,11 +1489,14 @@ void SavePrefs()
    
    fputs("\n", f);
 
-   fprintf(f, "open_save_dir=%s\n", (const char*)opensavedir.mb_str(wxConvLocal));
-   fprintf(f, "run_dir=%s\n", (const char*)rundir.mb_str(wxConvLocal));
-   fprintf(f, "choose_dir=%s\n", (const char*)choosedir.mb_str(wxConvLocal));
-   fprintf(f, "pattern_dir=%s\n", (const char*)patterndir.mb_str(wxConvLocal));
-   fprintf(f, "script_dir=%s\n", (const char*)scriptdir.mb_str(wxConvLocal));
+   SaveDirPath(f, "open_save_dir", opensavedir);
+   SaveDirPath(f, "run_dir", rundir);
+   SaveDirPath(f, "choose_dir", choosedir);
+   SaveDirPath(f, "pattern_dir", patterndir);
+   SaveDirPath(f, "script_dir", scriptdir);
+   
+   fputs("\n", f);
+
    fprintf(f, "text_editor=%s\n", (const char*)texteditor.mb_str(wxConvLocal));
    fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
    fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
@@ -1914,14 +1943,9 @@ void GetPrefs()
       } else if (strcmp(keyword, "live8_rgb") == 0) { GetColor(value, livergb[8]);
       } else if (strcmp(keyword, "live9_rgb") == 0) { GetColor(value, livergb[9]);
 
-      } else if (strcmp(keyword, "dead_rgb") == 0) {
-         GetColor(value, deadrgb);
-
-      } else if (strcmp(keyword, "paste_rgb") == 0) {
-         GetColor(value, pastergb);
-
-      } else if (strcmp(keyword, "select_rgb") == 0) {
-         GetColor(value, selectrgb);
+      } else if (strcmp(keyword, "dead_rgb") == 0) { GetColor(value, deadrgb);
+      } else if (strcmp(keyword, "paste_rgb") == 0) { GetColor(value, pastergb);
+      } else if (strcmp(keyword, "select_rgb") == 0) { GetColor(value, selectrgb);
 
       } else if (strcmp(keyword, "qlife_rgb") == 0) {    // deprecated
          GetColor(value, algoinfo[QLIFE_ALGO]->algorgb);
@@ -1962,40 +1986,11 @@ void GetPrefs()
       } else if (strcmp(keyword, "save_xrle") == 0) {
          savexrle = value[0] == '1';
 
-      } else if (strcmp(keyword, "open_save_dir") == 0) {
-         opensavedir = wxString(value,wxConvLocal);
-         if ( !wxFileName::DirExists(opensavedir) ) {
-            // reset to supplied pattern directory
-            opensavedir = gollydir + PATT_DIR;
-         }
-
-      } else if (strcmp(keyword, "run_dir") == 0) {
-         rundir = wxString(value,wxConvLocal);
-         if ( !wxFileName::DirExists(rundir) ) {
-            // reset to supplied script directory
-            rundir = gollydir + SCRIPT_DIR;
-         }
-
-      } else if (strcmp(keyword, "choose_dir") == 0) {
-         choosedir = wxString(value,wxConvLocal);
-         if ( !wxFileName::DirExists(choosedir) ) {
-            // reset to app directory
-            choosedir = gollydir;
-         }
-
-      } else if (strcmp(keyword, "pattern_dir") == 0) {
-         patterndir = wxString(value,wxConvLocal);
-         if ( !wxFileName::DirExists(patterndir) ) {
-            // reset to supplied pattern directory
-            patterndir = gollydir + PATT_DIR;
-         }
-
-      } else if (strcmp(keyword, "script_dir") == 0) {
-         scriptdir = wxString(value,wxConvLocal);
-         if ( !wxFileName::DirExists(scriptdir) ) {
-            // reset to supplied script directory
-            scriptdir = gollydir + SCRIPT_DIR;
-         }
+      } else if (strcmp(keyword, "open_save_dir") == 0) { GetDirPath(value, opensavedir, PATT_DIR);
+      } else if (strcmp(keyword, "run_dir") == 0)       { GetDirPath(value, rundir, SCRIPT_DIR);
+      } else if (strcmp(keyword, "choose_dir") == 0)    { GetDirPath(value, choosedir, wxEmptyString);
+      } else if (strcmp(keyword, "pattern_dir") == 0)   { GetDirPath(value, patterndir, PATT_DIR);
+      } else if (strcmp(keyword, "script_dir") == 0)    { GetDirPath(value, scriptdir, SCRIPT_DIR);
 
       } else if (strcmp(keyword, "text_editor") == 0) {
          texteditor = wxString(value,wxConvLocal);

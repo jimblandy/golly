@@ -47,7 +47,6 @@ public:
    virtual void killrect(int, int, int, int) {}
    virtual void blit(int, int, int, int, int*, int=1) {}
    virtual void pixblit(int, int, int, int, char*, int) {}
-   // AKT: is there a way to avoid need for this!!!???
    virtual void getcolors(unsigned char**, unsigned char**, unsigned char**) {}
 } ;
 nullrender renderer ;
@@ -170,7 +169,7 @@ void writepat(int fc) {
       FILE *f = fopen(thisfilename, "w") ;
       if (f == 0)
          lifefatal("Cannot open file for writing") ;
-      err = imp->writeNativeFormat(f, NULL) ;   // AKT: NULL means no comments
+      err = imp->writeNativeFormat(f, NULL) ;   // NULL means no comments
       fclose(f) ;
    } else {
       bigint t, l, b, r ;

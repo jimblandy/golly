@@ -272,6 +272,11 @@ qlifealgo::~qlifealgo() {
  *   Set the max memory
  */
 void qlifealgo::setMaxMemory(int newmemlimit) {
+   // AKT: allow setting maxmemory to 0
+   if (newmemlimit == 0) {
+      maxmemory = 0 ;
+      return;
+   }
    if (newmemlimit < 10)
      newmemlimit = 10 ;
    else if (sizeof(maxmemory) <= 4 && newmemlimit > 4000)

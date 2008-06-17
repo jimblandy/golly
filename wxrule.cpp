@@ -129,9 +129,9 @@ void RuleDialog::CreateControls()
    
    ruletext = new wxTextCtrl(this, RULE_TEXT,
                              wxString(currlayer->algo->getrule(), wxConvLocal));
-   //!!! comments are not correct for JvN, WireWorld, etc
-   wxString title = _("Enter a 2D rule using B0..8/S0..8 notation\n");
-   title +=         _("or a 1D rule as Wn (n = 0 to 254 and even):");
+   //!!! show algo-specific comment???
+   // or maybe show in a Note dialog via a wx help button???
+   wxString title = _("Enter a new rule:");
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
    
    wxArrayString namearray;

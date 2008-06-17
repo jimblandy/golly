@@ -176,6 +176,7 @@ int prectht;               // must match viewptr->pasterect.height
 int pastemag;              // must match current viewport's scale
 int cvwd, cvht;            // must match current viewport's width and height
 paste_location pasteloc;   // must match plocation
+bool pasteicons;           // must match showicons
 lifealgo* pastealgo;       // universe containing paste pattern
 wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
 
@@ -921,6 +922,7 @@ void CreatePasteImage(lifealgo* palgo, wxRect& bbox)
    pimagewd = -1;          // force CheckPasteImage to rescale paste image
    pimageht = -1;
    pastemag = viewptr->GetMag();
+   pasteicons = showicons;
 }
 
 // -----------------------------------------------------------------------------
@@ -1012,12 +1014,13 @@ int PixelsToCells(int pixels) {
 void CheckPasteImage()
 {
    // paste image needs to be updated if pasterect size changed
-   // or viewport size changed or cell colors changed or plocation changed
+   // or viewport size changed or plocation changed or showicons changed
    if ( prectwd != viewptr->pasterect.width ||
         prectht != viewptr->pasterect.height ||
         cvwd != currlayer->view->getwidth() ||
         cvht != currlayer->view->getheight() ||
-        pasteloc != plocation
+        pasteloc != plocation ||
+        pasteicons != showicons
       ) {
       prectwd = viewptr->pasterect.width;
       prectht = viewptr->pasterect.height;
@@ -1025,6 +1028,7 @@ void CheckPasteImage()
       cvwd = currlayer->view->getwidth();
       cvht = currlayer->view->getheight();
       pasteloc = plocation;
+      pasteicons = showicons;
 
       // calculate size of paste image; we could just set it to pasterect size
       // but that would be slow and wasteful for large pasterects, so we use

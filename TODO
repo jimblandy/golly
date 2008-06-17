@@ -3,14 +3,6 @@ For version 1.5a
 
 Andrew's list:
 
-- Paste image needs to be updated if showicons is toggled.
-
-- Fix pasting from one algo to another -- should only cause error
-  if current algo has fewer states than temp algo.
-
-- Store pattern_dir/script_dir/etc as relative paths if in gollydir.
-  Careful -- check what we did with recent_file stuff.
-
 - Fix comments in Prefs > Control (add MB to max mem).  If selected
   algo is hyperCapable() then:
   - show "(best if ~N% of RAM)" next to max mem
@@ -50,7 +42,7 @@ Andrew's list:
   - Add new buttons: eraser, eye-dropper, fill, etc?
 
 - Allow users to override default icons by looking for and loading
-  special files like JvN7.xpm in golly dir then user data dir?
+  special files like JvN7.xpm (look in golly dir then user data dir?).
 
 - Resolve how to handle swapcolors flag if # states > 2.
   Remove flag completely?  Or just ignore it when # states > 2.
@@ -61,6 +53,13 @@ Andrew's list:
 
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
+
+- Fix Set Rule dialog so the text is different depending on the
+  current algo -- probably need a new getRuleHelpText() method.
+
+- Need some way to display info about the current algorithm,
+  perhaps via a new Algorithm Info item in Control menu that
+  displays text (from algo's static data) in a Note dialog.
 
 - Remove SlowLife (comment out in wxalgos.h/cpp).
 
