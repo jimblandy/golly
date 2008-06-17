@@ -71,6 +71,7 @@ void liferules::initruletable(char *rptr, int rulebits,
 const char *liferules::setrule(const char *rulestring) {
    wolfram = -1 ;
    rulebits = 0 ;
+   int slashcount = 0 ;
    hexmask = 0x777 ;
    int addend = 17 ;
    int i ;
@@ -94,6 +95,8 @@ const char *liferules::setrule(const char *rulestring) {
       if (rulestring[i] == 'h' || rulestring[i] == 'H') {
          hexmask = 0x673 ;
       } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
+         if (rulestring[i]== '/' && slashcount++ > 0)
+            return "Only one slash permitted in life rule" ;
          addend = 0 ;
       } else if (rulestring[i] == 's' || rulestring[i] == 'S') {
          addend = 17 ;
