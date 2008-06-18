@@ -3,12 +3,6 @@ For version 1.5a
 
 Andrew's list:
 
-- Fix comments in Prefs > Control (add MB to max mem).  If selected
-  algo is hyperCapable() then:
-  - show "(best if ~N% of RAM)" next to max mem
-    or "(0 means no limit)" if not hyper (ie. qlife)
-  - show "(best if power of 2)" next to base step
-
 - Fix JvN cell colors so different shades are obvious.
 
 - Build and test Win/GTK versions.  Upload to ftp site and

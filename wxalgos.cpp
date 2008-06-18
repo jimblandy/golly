@@ -222,6 +222,9 @@ void InitAlgorithms()
       wxString name = wxString(ad->algoName, wxConvLocal);
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
       
+      // does algo use hashing?
+      ad->canhash = ad->algobase == 8;    //!!! safer method needed???
+      
       if (ad->statusrgb[0] == 0 && ad->statusrgb[1] == 0 && ad->statusrgb[2] == 0) {
          // make a new pale status color as far from the other colors as we can
          int bd = -1;

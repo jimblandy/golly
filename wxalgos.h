@@ -52,6 +52,7 @@ public:
    virtual void setStatusRGB(int, int, int);
 
    // additional data
+   bool canhash;                 // algo uses hashing?
    int algomem;                  // maximum memory (in MB)
    int algobase;                 // base step
    unsigned char statusrgb[3];

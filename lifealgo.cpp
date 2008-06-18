@@ -39,7 +39,7 @@ staticAlgoInfo::staticAlgoInfo() {
 staticAlgoInfo *staticAlgoInfo::byName(const char *s) {
    for (staticAlgoInfo *i=head; i; i=i->next)
       if (strcmp(i->algoName, s) == 0)
-	 return i ;
+         return i ;
    return 0 ;
 }
 int staticAlgoInfo::nameToIndex(const char *s) {

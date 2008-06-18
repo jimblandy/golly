@@ -2086,6 +2086,16 @@ void GetPrefs()
    #define FIX_ALIGN_BUG wxALL,0
 #endif
 
+#ifdef __WXMSW__
+   // Vista needs more RAM for itself
+   const wxString HASH_MEM_NOTE = _("MB (best if ~70% of RAM)");
+#else
+   const wxString HASH_MEM_NOTE = _("MB (best if ~80% of RAM)");
+#endif
+const wxString HASH_STEP_NOTE = _("(best if power of 2)");
+const wxString NONHASH_MEM_NOTE = _("MB (0 means no limit)");
+const wxString NONHASH_STEP_NOTE = _(" ");
+
 // -----------------------------------------------------------------------------
 
 size_t currpage = 0;          // current page in PrefsDialog
@@ -2123,7 +2133,9 @@ enum {
    // Control prefs
    PREF_ALGO_MENU1,
    PREF_MAX_MEM,
+   PREF_MEM_NOTE,
    PREF_BASE_STEP,
+   PREF_STEP_NOTE,
    PREF_MIN_DELAY,
    PREF_MAX_DELAY,
    // View prefs
@@ -2840,7 +2852,6 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU1,
                                      wxDefaultPosition, wxDefaultSize, algoChoices);
    algopos1 = currlayer->algtype;
-   algomenu->SetSelection(algopos1);
 
    wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
    longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Settings for this algorithm:")),
@@ -2868,15 +2879,9 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 
-   /* !!! dynamically show/hide this comment depending on useshashing[algopos1]???
-#ifdef __WXMSW__
-   // Vista needs more RAM for itself
-   hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~70% of RAM)")),
-#else
-   hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("MB (best if ~80% of RAM)")),
-#endif
+   wxString memnote = algoinfo[algopos1]->canhash ? HASH_MEM_NOTE : NONHASH_MEM_NOTE;
+   hbox1->Add(new wxStaticText(panel, PREF_MEM_NOTE, memnote),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   */
    
    wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
    hbox2->Add(basebox, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -2884,10 +2889,9 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
                                       wxDefaultPosition, wxSize(80, wxDefaultCoord));
    hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 
-   /* !!! dynamically show/hide this comment depending on useshashing[algopos1]???
-   hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("(best if power of 2)")),
+   wxString stepnote = algoinfo[algopos1]->canhash ? HASH_STEP_NOTE : NONHASH_STEP_NOTE;
+   hbox2->Add(new wxStaticText(panel, PREF_STEP_NOTE, stepnote),
               0, wxALIGN_CENTER_VERTICAL, 0);
-   */
    
    // min_delay and max_delay
 
@@ -2952,6 +2956,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
+   algomenu->SetSelection(algopos1);
    
    for (int i = 0; i < NumAlgos(); i++) {
       new_algomem[i] = algoinfo[i]->algomem;
@@ -3444,6 +3449,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
          new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
          new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
          algopos1 = i;
+         
          // show values for new selection
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_MEM);
          wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_BASE_STEP);
@@ -3462,6 +3468,19 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
                if (focus == s1) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
                if (focus == s2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
             #endif
+         }
+         
+         // change comments depending on whether or not algo uses hashing
+         wxStaticText* membox = (wxStaticText*) FindWindowById(PREF_MEM_NOTE);
+         wxStaticText* stepbox = (wxStaticText*) FindWindowById(PREF_STEP_NOTE);
+         if (membox && stepbox) {
+            if (algoinfo[algopos1]->canhash) {
+               membox->SetLabel(HASH_MEM_NOTE);
+               stepbox->SetLabel(HASH_STEP_NOTE);
+            } else {
+               membox->SetLabel(NONHASH_MEM_NOTE);
+               stepbox->SetLabel(NONHASH_STEP_NOTE);
+            }
          }
       }
    }
