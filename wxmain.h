@@ -102,7 +102,6 @@ public:
    void DisplayTimingInfo();
    void NextGeneration(bool useinc);
    void ToggleAutoFit();
-   void ChangeAlgorithm(algo_type newalgotype, bool inundoredo = false);
    void ToggleHyperspeed();
    void ToggleHashInfo();
    void SetWarp(int newwarp);
@@ -110,7 +109,11 @@ public:
    void ResetPattern(bool resetundo = true);
    void SetGeneration();
    const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
+   void ReduceCellStates(int newmaxstate);
    void ShowRuleDialog();
+   void ChangeAlgorithm(algo_type newalgotype,
+                        const wxString& newrule = wxEmptyString,
+                        bool inundoredo = false);
 
    // view functions
    void ToggleStatusBar();

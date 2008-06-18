@@ -88,4 +88,5 @@ void wwalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("WireWorld") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.initCellColors(sizeof(wwcolors)/(sizeof(wwcolors[0])*3), wwcolors) ;
+   ai.setStatusRGB(243, 225, 255) ;    // pale purple
 }

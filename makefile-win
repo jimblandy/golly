@@ -33,7 +33,7 @@ PERL_INCLUDE = \
 # -libpath:"C:\Perl\lib\CORE" C:\Perl\lib\CORE\perl58.lib C:\MVCT\lib\oldnames.lib
 
 ### Golly-related variables: ###
-VERSION = 1.5
+VERSION = 1.5a
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Help\Lexicon Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \

@@ -176,7 +176,7 @@ AlgoData& AlgoData::tick() {
 
 // -----------------------------------------------------------------------------
 
-void AlgoData::initCellColors(int numcolors, unsigned char *rgbptr) {
+void AlgoData::initCellColors(int numcolors, unsigned char* rgbptr) {
    if (rgbptr) {
       if (numcolors > 256) numcolors = 256;     // play safe
       for (int i = 0; i < numcolors; i++) {
@@ -189,8 +189,8 @@ void AlgoData::initCellColors(int numcolors, unsigned char *rgbptr) {
 
 // -----------------------------------------------------------------------------
 
-void AlgoData::createIconBitmaps(int size, char **xpmdata) {
-   wxBitmap **bm = CreateIconBitmaps(xpmdata);
+void AlgoData::createIconBitmaps(int size, char** xpmdata) {
+   wxBitmap** bm = CreateIconBitmaps(xpmdata);
    if (size == 7)
       icons7x7 = bm;
    else if (size == 15)
@@ -223,8 +223,7 @@ void InitAlgorithms()
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
       
       if (ad->statusrgb[0] == 0 && ad->statusrgb[1] == 0 && ad->statusrgb[2] == 0) {
-         // make a new pale status color as far from the other
-         // colors as we can.
+         // make a new pale status color as far from the other colors as we can
          int bd = -1;
          for (int j=0; j<64; j++) {
             int tr = 191 + ((j & 1) << 5) + ((j & 8) << 1);
@@ -271,7 +270,7 @@ void InitAlgorithms()
           ad->cellg[0] == ad->cellg[1] &&
           ad->cellb[0] == ad->cellb[1]) {
          // colors are nonsensical, probably unset; use defaults
-         unsigned char *rgbptr = default_colors;
+         unsigned char* rgbptr = default_colors;
          for (int c = 0; c < 256; c++) {
             ad->cellr[c] = *rgbptr++;
             ad->cellg[c] = *rgbptr++;

@@ -126,4 +126,5 @@ void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Generations") ;
    ai.setAlgorithmCreator(&creator) ;
+   ai.setStatusRGB(255, 226, 226) ;    // pale pink
 }

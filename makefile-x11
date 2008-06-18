@@ -9,7 +9,7 @@
 # change next line to specify where you installed wxX11
 WX_DIR = ~/wxX11-2.8.4
 
-VERSION = 1.5
+VERSION = 1.5a
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = Help Patterns Scripts README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \

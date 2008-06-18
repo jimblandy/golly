@@ -458,6 +458,8 @@ XS(pl_load)
 
    // create temporary universe of same type
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   // readpattern will call setrule
+   // tempalgo->setrule(currlayer->algo->getrule());
 
    // readpattern might change rule
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -943,6 +945,7 @@ XS(pl_evolve)
 
    // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   tempalgo->setrule(currlayer->algo->getrule());
 
    // copy cell array into temporary universe
    for (int n = 0; n < num_cells; n++) {
@@ -1204,6 +1207,7 @@ XS(pl_getclip)
    // create a temporary universe for storing clipboard pattern;
    // GetClipboardPattern assumes it is same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   tempalgo->setrule(currlayer->algo->getrule());
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)

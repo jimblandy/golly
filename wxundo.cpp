@@ -86,6 +86,9 @@ public:
    // do the undo/redo; if it returns false (eg. user has aborted a lengthy
    // rotate/flip operation) then cancel the undo/redo
 
+   void ChangeCells(bool undo);
+   // change cell states using cellinfo
+
    change_type changeid;                  // specifies the type of change
    wxString suffix;                       // action string for Undo/Redo item
    bool olddirty;                         // layer's dirty state before change
@@ -180,21 +183,28 @@ ChangeNode::~ChangeNode()
 
 // -----------------------------------------------------------------------------
 
+void ChangeNode::ChangeCells(bool undo)
+{
+   // change state of cell(s) stored in cellinfo array
+   unsigned int i = 0;
+   while (i < cellcount) {
+      int x = cellinfo[i].x;
+      int y = cellinfo[i].y;
+      int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
+      currlayer->algo->setcell(x, y, state);
+      i++;
+   }
+   if (cellcount > 0) currlayer->algo->endofpattern();
+}
+
+// -----------------------------------------------------------------------------
+
 bool ChangeNode::DoChange(bool undo)
 {
    switch (changeid) {
       case cellstates:
          if (cellcount > 0) {
-            // change state of cell(s) stored in cellinfo array
-            unsigned int i = 0;
-            while (i < cellcount) {
-               int x = cellinfo[i].x;
-               int y = cellinfo[i].y;
-               int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
-               currlayer->algo->setcell(x, y, state);
-               i++;
-            }
-            currlayer->algo->endofpattern();
+            ChangeCells(undo);
             mainptr->UpdatePatternAndStatus();
          }
          break;
@@ -216,16 +226,7 @@ bool ChangeNode::DoChange(bool undo)
       case rotatecw:
       case rotateacw:
          if (cellcount > 0) {
-            // change state of cell(s) stored in cellinfo array
-            unsigned int i = 0;
-            while (i < cellcount) {
-               int x = cellinfo[i].x;
-               int y = cellinfo[i].y;
-               int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
-               currlayer->algo->setcell(x, y, state);
-               i++;
-            }
-            currlayer->algo->endofpattern();
+            ChangeCells(undo);
          }
          // rotate selection edges
          if (undo) {
@@ -350,29 +351,23 @@ bool ChangeNode::DoChange(bool undo)
          }
          // show new rule in window title (file name doesn't change)
          mainptr->SetWindowTitle(wxEmptyString);
+         if (cellcount > 0) {
+            ChangeCells(undo);
+            mainptr->UpdatePatternAndStatus();
+         }
          break;
 
       case algochange:
          // pass in true so ChangeAlgorithm won't call RememberAlgoChange
-         mainptr->ChangeAlgorithm(undo ? oldalgo : newalgo, true);
          if (undo) {
-            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            mainptr->ChangeAlgorithm(oldalgo, oldrule, true);
          } else {
-            currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+            mainptr->ChangeAlgorithm(newalgo, newrule, true);
          }
          // show new rule in window title (file name doesn't change)
          mainptr->SetWindowTitle(wxEmptyString);
          if (cellcount > 0) {
-            // change state of cell(s) stored in cellinfo array
-            unsigned int i = 0;
-            while (i < cellcount) {
-               int x = cellinfo[i].x;
-               int y = cellinfo[i].y;
-               int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
-               currlayer->algo->setcell(x, y, state);
-               i++;
-            }
-            currlayer->algo->endofpattern();
+            ChangeCells(undo);
          }
          mainptr->UpdateEverything();
          break;
@@ -1068,6 +1063,26 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
    change->suffix = _("Rule Change");
    change->oldrule = oldrule;
    change->newrule = newrule;
+   
+   // SaveCellChange may have been called
+   if (numchanges > 0) {
+      if (numchanges < maxchanges) {
+         // reduce size of cellarray
+         cell_change* newptr =
+            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
+         if (newptr != NULL) cellarray = newptr;
+      }
+
+      change->cellinfo = cellarray;
+      change->cellcount = numchanges;
+      
+      numchanges = 0;      // reset for next SaveCellChange
+      maxchanges = 0;      // ditto
+      if (badalloc) {
+         Warning(lack_of_memory);
+         badalloc = false;
+      }
+   }
    
    undolist.Insert(change);
    

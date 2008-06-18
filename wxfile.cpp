@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algo_type, etc
+#include "wxalgos.h"       // for CreateNewUniverse, algo_type, etc
 #include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
@@ -140,10 +140,15 @@ void MainFrame::SetGenIncrement()
 
 void MainFrame::CreateUniverse()
 {
-   // first delete old universe
+   // save current rule
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   
+   // delete old universe and create new one of same type
    delete currlayer->algo;
-
    currlayer->algo = CreateNewUniverse(currlayer->algtype);
+   
+   // ensure new universe uses same rule (and thus same # of cell states)
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
    // increment has been reset to 1 but that's probably not always desirable
    // so set increment using current warp value
@@ -169,6 +174,8 @@ void MainFrame::NewPattern(const wxString& title)
    currlayer->currfile.Clear();
    currlayer->startgen = 0;
    currlayer->warp = 0;
+   
+   // create new, empty universe of same type and using same rule
    CreateUniverse();
 
    // reset timing info used in DisplayTimingInfo
@@ -290,12 +297,17 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    // save current rule so we can restore it below
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    
-   CreateUniverse();
+   // delete old universe and create new one of same type
+   delete currlayer->algo;
+   currlayer->algo = CreateNewUniverse(currlayer->algtype);
+   // don't call setrule here -- readpattern will do it
+
+   // set increment using current warp value
+   SetGenIncrement();
 
    if (!newtitle.IsEmpty()) {
       // show new file name in window title but no rule (which readpattern can change);
-      // nicer if user can see file name while loading a very large pattern,
-      // even if a script is running???
+      // nicer if user can see file name while loading a very large pattern
       MySetTitle(_("Loading ") + newtitle);
    }
 
@@ -309,7 +321,9 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          for (int i = 0; i < NumAlgos(); i++) {
             if (i != oldalgtype) {
                currlayer->setAlgType((algo_type) i);
-               CreateUniverse();
+               delete currlayer->algo;
+               currlayer->algo = CreateNewUniverse(currlayer->algtype);
+               // readpattern will call setrule
                err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
                if (!err) break;
             }
@@ -318,7 +332,8 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          if (err) {
             // no algo could read pattern so restore original algo and rule
             currlayer->setAlgType(oldalgtype);
-            CreateUniverse();
+            delete currlayer->algo;
+            currlayer->algo = CreateNewUniverse(currlayer->algtype);
             currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
             // Warning( wxString(err,wxConvLocal) );
             // current error and original error are not necessarily meaningful

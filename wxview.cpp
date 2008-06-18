@@ -462,6 +462,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    int cntr = 0;
    bool abort = false;
    bool pattchanged = false;
+   bool reduced = false;
+   lifealgo* curralgo = currlayer->algo;
+   int maxstate = curralgo->NumCellStates() - 1;
+
    BeginProgress(_("Pasting pattern"));
    
    // we can speed up pasting sparse patterns by using nextcell in these cases:
@@ -469,15 +473,14 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    // - if current universe is empty
    // - if paste rect is outside current pattern edges
    bool usenextcell;
-   if ( pmode == Or || currlayer->algo->isEmpty() ) {
+   if ( pmode == Or || curralgo->isEmpty() ) {
       usenextcell = true;
    } else {
       bigint ctop, cleft, cbottom, cright;
-      currlayer->algo->findedges(&ctop, &cleft, &cbottom, &cright);
+      curralgo->findedges(&ctop, &cleft, &cbottom, &cright);
       usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
    }
    
-   lifealgo* curralgo = currlayer->algo;
    if ( usenextcell ) {
       int v = 0;
       cy = pastey;
@@ -493,6 +496,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                cx += skip;
                int oldstate = curralgo->getcell(cx, cy);
                if (oldstate != v) {
+                  if (v > maxstate) {
+                     v = maxstate;
+                     reduced = true;
+                  }
                   curralgo->setcell(cx, cy, v);
                   pattchanged = true;
                   if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, oldstate, v);
@@ -525,6 +532,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
             switch (pmode) {
                case Copy:
                   if (tempstate != currstate) {
+                     if (tempstate > maxstate) {
+                        tempstate = maxstate;
+                        reduced = true;
+                     }
                      curralgo->setcell(cx, cy, tempstate);
                      pattchanged = true;
                      if (savecells)
@@ -567,7 +578,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       }
    }
 
-   if (pattchanged) currlayer->algo->endofpattern();
+   if (pattchanged) curralgo->endofpattern();
    EndProgress();
    
    // tidy up and display result
@@ -578,13 +589,17 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       mainptr->UpdatePatternAndStatus();
    }
    
+   if (reduced) {
+      statusptr->ErrorMessage(_("Some cell states were reduced."));
+   }
+   
    // pasting clipboard pattern can also cause a rule change
    if (canchangerule > 0 && oldrule != newrule) {
-      const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+      const char* err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
       // setrule can fail if readclipboard loaded clipboard pattern into
       // a different type of algo
       if (err) {
-         currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+         curralgo->setrule( oldrule.mb_str(wxConvLocal) );
          Warning(_("Paste could not change rule:\n") + wxString(err,wxConvLocal));
       } else {
          // show new rule in title bar
@@ -684,18 +699,19 @@ void PatternView::PasteClipboard(bool toselection)
    // create a temporary universe for storing clipboard pattern;
    // GetClipboardPattern assumes it is same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
+   // no need to call setrule here -- readclipboard will do it
 
    // read clipboard pattern into temporary universe
    bigint top, left, bottom, right;
    if ( GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       // tempalgo might have been deleted and re-created as a different type
       // of universe
+      /* !!! better to proceed with paste and only report error if one or more setcell calls fail???
       if (currlayer->algo->NumCellStates() < tempalgo->NumCellStates()) {
-         //!!! or proceed with paste and only report error if one or more setcell calls fail???
-         Warning(_("Paste not allowed if clipboard pattern has more states than current universe."));
-      } else {
-         PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
-      }
+         statusptr->ErrorMessage(_("Paste not allowed if clipboard pattern has more states than current universe."));
+      } else
+      */
+      PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
    }
 
    delete tempalgo;

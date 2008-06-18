@@ -24,11 +24,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXRULE_H_
 #define _WXRULE_H_
 
+bool ChangeRule();
 // Open a dialog that lets the user change the current rule.
 // Return true if the rule change succeeds.
-bool ChangeRule();
 
-// If given rule has a name then return name, otherwise return the rule.
 wxString GetRuleName(const wxString& rulestring);
+// If given rule has a name then return name, otherwise return the rule.
 
 #endif

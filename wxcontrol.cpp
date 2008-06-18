@@ -293,8 +293,9 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          return "Pattern is too big to copy.";
       }
-      // create a new universe of same type
+      // create a new universe of same type and same rule
       lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
+      newalgo->setrule(currlayer->algo->getrule());
       newalgo->setGeneration(newgen);
       // copy pattern
       if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -811,6 +812,75 @@ void MainFrame::SetWarp(int newwarp)
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ReduceCellStates(int newmaxstate)
+{
+   // check current pattern and reduce any cell states > newmaxstate
+   bool patternchanged = false;
+   bool savechanges = allowundo && !currlayer->stayclean;
+
+   // check if current pattern is too big to use nextcell/setcell
+   bigint top, left, bottom, right;
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+      statusptr->ErrorMessage(_("Pattern too big to check (outside +/- 10^9 boundary)."));
+      return;
+   }
+   
+   int itop = top.toint();
+   int ileft = left.toint();
+   int ibottom = bottom.toint();
+   int iright = right.toint();
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+
+   // for showing accurate progress we need to add pattern height to pop count
+   // in case this is a huge pattern with many blank rows
+   double maxcount = currlayer->algo->getPopulation().todouble() + ht;
+   double accumcount = 0;
+   int currcount = 0;
+   bool abort = false;
+   int v = 0;
+   BeginProgress(_("Checking cell states"));
+   
+   lifealgo* curralgo = currlayer->algo;
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      currcount++;
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy, v);
+         if (skip >= 0) {
+            // found next live cell in this row
+            cx += skip;
+            if (v > newmaxstate) {
+               // reduce cell's current state to largest state
+               if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, newmaxstate);
+               curralgo->setcell(cx, cy, newmaxstate);
+               patternchanged = true;
+            }
+            currcount++;
+         } else {
+            cx = iright;  // done this row
+         }
+         if (currcount > 1024) {
+            accumcount += currcount;
+            currcount = 0;
+            abort = AbortProgress(accumcount / maxcount, wxEmptyString);
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   
+   curralgo->endofpattern();
+   EndProgress();
+
+   if (patternchanged) {
+      statusptr->ErrorMessage(_("Pattern has changed (new rule has fewer states)."));
+      UpdateEverything();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ShowRuleDialog()
 {
    if (inscript || viewptr->waitingforclick) return;
@@ -823,19 +893,37 @@ void MainFrame::ShowRuleDialog()
       return;
    }
 
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   int oldmaxstate = currlayer->algo->NumCellStates() - 1;
+
    if (ChangeRule()) {
-      // show new rule in window title (but don't change file name)
-      SetWindowTitle(wxEmptyString);
+      // rule might have changed
+      wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+      if (oldrule != newrule) {
+         // show new rule in window title (but don't change file name)
+         SetWindowTitle(wxEmptyString);
+
+         // rule change might have changed the number of cell states;
+         // if there are fewer states then pattern might change
+         int newmaxstate = currlayer->algo->NumCellStates() - 1;
+         if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+            ReduceCellStates(newmaxstate);
+         }
+         
+         if (allowundo) {
+            currlayer->undoredo->RememberRuleChange(oldrule);
+         }
+      }
    }
 }
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
+void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, bool inundoredo)
 {
    if (newalgotype == currlayer->algtype) return;
 
-   // check if current pattern is too big to use getcell/setcell
+   // check if current pattern is too big to use nextcell/setcell
    bigint top, left, bottom, right;
    if ( !currlayer->algo->isEmpty() ) {
       currlayer->algo->findedges(&top, &left, &bottom, &right);
@@ -869,17 +957,23 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
    currlayer->warp = 0;
    UpdateStatus();
 
-   // create a new universe of the right flavor
-   lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
+   // create a new universe of the requested flavor
+   lifealgo* newalgo = CreateNewUniverse(newalgotype);
    
-   // try to use same rule
    bool rulechanged = false;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   const char* err = newalgo->setrule( (char*)currlayer->algo->getrule() );
-   if (err) {
-      // switch to new algo's default rule
-      newalgo->setrule( newalgo->DefaultRule() );
-      rulechanged = true;
+   
+   if (inundoredo) {
+      // switch to given newrule (no error should occur)
+      newalgo->setrule( newrule.mb_str(wxConvLocal) );
+   } else {
+      // try to use same rule
+      const char* err = newalgo->setrule( currlayer->algo->getrule() );
+      if (err) {
+         // switch to new algo's default rule
+         newalgo->setrule( newalgo->DefaultRule() );
+         rulechanged = true;
+      }
    }
    
    // set same gen count
@@ -953,12 +1047,13 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, bool inundoredo)
          // show new rule in window title (but don't change file name)
          SetWindowTitle(wxEmptyString);
          if (patternchanged) {
-            statusptr->DisplayMessage(_("Rule has changed and pattern has changed (new algorithm has fewer states)."));
+            statusptr->ErrorMessage(_("Rule has changed and pattern has changed (new algorithm has fewer states)."));
          } else {
+            // don't beep if only the rule changed???
             statusptr->DisplayMessage(_("Rule has changed."));
          }
       } else if (patternchanged) {
-         statusptr->DisplayMessage(_("Pattern has changed (new algorithm has fewer states)."));
+         statusptr->ErrorMessage(_("Pattern has changed (new algorithm has fewer states)."));
       }
       UpdateEverything();
    }

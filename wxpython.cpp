@@ -453,6 +453,8 @@ static PyObject* py_load(PyObject* self, PyObject* args)
 
    // create temporary universe of same type
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   // readpattern will call setrule
+   // tempalgo->setrule(currlayer->algo->getrule());
 
    // readpattern might change rule
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -893,6 +895,7 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
 
    // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   tempalgo->setrule(currlayer->algo->getrule());
 
    // copy cell list into temporary universe
    int num_cells = PyList_Size(given_list) / 2;
@@ -1172,6 +1175,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
    // create a temporary universe for storing clipboard pattern;
    // GetClipboardPattern assumes it is same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   tempalgo->setrule(currlayer->algo->getrule());
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)

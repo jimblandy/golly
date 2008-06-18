@@ -190,19 +190,22 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    DisplayText(dc, _("Color:"), h_col1, BASELINE2);
    DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
 
-   wxBitmap** iconmaps = currlayer->algodata->icons7x7;
+   AlgoData* ad = currlayer->algodata;
+   wxBitmap** iconmaps = ad->icons7x7;
 
    // set rgb values for dead cells
-   currlayer->algodata->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
-   currlayer->algodata->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
-   currlayer->algodata->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   ad->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   ad->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   ad->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
    
    if (currlayer->algo->NumCellStates() == 2) {
       // set rgb values for live cells in 2-state universe
-      currlayer->algodata->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
-      currlayer->algodata->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
-      currlayer->algodata->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
+      ad->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      ad->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      ad->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
    }
+
+   dc.SetPen(*wxBLACK_PEN);
 
    for (int i = 0; i < currlayer->algo->NumCellStates(); i++) {
       wxString strbuf;
@@ -215,25 +218,19 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       
       // draw color box
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
-      wxColor color(currlayer->algodata->cellr[i],
-                    currlayer->algodata->cellg[i],
-                    currlayer->algodata->cellb[i]);
+      wxColor color(ad->cellr[i], ad->cellg[i], ad->cellb[i]);
       wxBrush brush(color);
       wxRect r(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
-      dc.SetPen(*wxBLACK_PEN);
       dc.SetBrush(brush);
       dc.DrawRectangle(r);
       dc.SetBrush(wxNullBrush);
-      dc.SetPen(wxNullPen);
       
       // draw icon box or "x" if no icon
       if (iconmaps && iconmaps[i]) {
          wxRect r(x, BASELINE3 - BOXWD, BOXWD, BOXWD);
-         dc.SetPen(*wxBLACK_PEN);
          dc.SetBrush(*deadbrush);
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
-         dc.SetPen(wxNullPen);
          dc.DrawBitmap(*iconmaps[i], x + 1, BASELINE3 - BOXWD + 1, true);
       } else {
          x = h_col2 + i * COLWD + (COLWD - digitwd) / 2;
@@ -249,10 +246,10 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    // draw rect around current drawing state
    int x = 1 + h_col2 + COLWD * currlayer->drawingstate;
    r = wxRect(x, 2, COLWD - 1, editbarht - 4);
-   dc.SetPen(*wxBLACK_PEN);
    dc.SetBrush(*wxTRANSPARENT_BRUSH);
    dc.DrawRectangle(r);
    dc.SetBrush(wxNullBrush);
+
    dc.SetPen(wxNullPen);
 }
 
@@ -646,6 +643,7 @@ void Selection::Advance()
    
    // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
+   tempalgo->setrule(currlayer->algo->getrule());
    
    // copy live cells in selection to temporary universe
    if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -773,6 +771,7 @@ void Selection::AdvanceOutside()
       // copy current pattern to oldalgo, using same type and gen count
       // so we can switch to oldalgo if user decides to abort below
       oldalgo = CreateNewUniverse(currlayer->algtype);
+      oldalgo->setrule(currlayer->algo->getrule());
       oldalgo->setGeneration( currlayer->algo->getGeneration() );
       if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                               currlayer->algo, oldalgo, false, _("Saving pattern")) ) {
@@ -783,6 +782,7 @@ void Selection::AdvanceOutside()
    
    // create a new universe of same type
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
+   newalgo->setrule(currlayer->algo->getrule());
    newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy (and kill) live cells in selection to new universe
@@ -1163,6 +1163,9 @@ void Selection::Shrink(bool fit)
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
                                           currlayer->algtype :
                                           QLIFE_ALGO);
+   // make sure temporary universe has same # of cell states
+   if (currlayer->algo->NumCellStates() > 2)
+      tempalgo->setrule(currlayer->algo->getrule());
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -2007,6 +2010,9 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
       lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
                                              currlayer->algtype :
                                              QLIFE_ALGO);
+      // make sure temporary universe has same # of cell states
+      if (currlayer->algo->NumCellStates() > 2)
+         tempalgo->setrule(currlayer->algo->getrule());
 
       if ( FlipRect(topbottom, currlayer->algo, tempalgo, true, itop, ileft, ibottom, iright) ) {
          // find pattern edges in temporary universe (could be much smaller)
@@ -2301,6 +2307,9 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
       oldalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
                                   currlayer->algtype :
                                   QLIFE_ALGO);
+      // make sure universe has same # of cell states
+      if (currlayer->algo->NumCellStates() > 2)
+         oldalgo->setrule(currlayer->algo->getrule());
       if ( !viewptr->CopyRect(otop, oleft, obottom, oright, currlayer->algo, oldalgo,
                               false, _("Saving part of pattern")) ) {
          delete oldalgo;
@@ -2313,6 +2322,9 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
                                           currlayer->algtype :
                                           QLIFE_ALGO);
+   // make sure temporary universe has same # of cell states
+   if (currlayer->algo->NumCellStates() > 2)
+      tempalgo->setrule(currlayer->algo->getrule());
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees

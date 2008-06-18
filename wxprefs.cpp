@@ -114,7 +114,7 @@ int infoy = 90;
 int infowd = 700;                // info window's initial size
 int infoht = 500;
 
-char initrule[128] = "B3/S23";   // initial rule
+char initrule[256] = "B3/S23";   // initial rule
 bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
 bool initshowhashinfo = false;   // initial showhashinfo setting

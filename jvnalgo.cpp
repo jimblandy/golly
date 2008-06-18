@@ -920,5 +920,6 @@ void jvnalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.initCellColors(sizeof(jvncolors)/(sizeof(jvncolors[0])*3), jvncolors) ;
    ai.createIconBitmaps(7, jvn7x7) ;
    ai.createIconBitmaps(15, jvn15x15) ;
+   ai.setStatusRGB(225, 255, 225) ;    // pale green
 }
 

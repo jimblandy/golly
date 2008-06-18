@@ -146,6 +146,7 @@ const char* GSF_save(char* filename, char* format, int remember)
 const char* GSF_setrule(char* rulestring)
 {
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
    // inscript should be true but play safe
    if (allowundo && !currlayer->stayclean && inscript) {
@@ -165,12 +166,24 @@ const char* GSF_setrule(char* rulestring)
       currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
       return err;
    }
-   
-   // show new rule in main window's title but don't change name
-   ChangeWindowTitle(wxEmptyString);
-   
-   if (allowundo && !currlayer->stayclean) {
-      currlayer->undoredo->RememberRuleChange(oldrule);
+
+   wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   if (oldrule != newrule) {
+      // show new rule in main window's title but don't change name
+      ChangeWindowTitle(wxEmptyString);
+
+      // rule change might have changed the number of cell states;
+      // if there are fewer states then pattern might change
+      int newmaxstate = currlayer->algo->NumCellStates() - 1;
+      if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+         mainptr->ReduceCellStates(newmaxstate);
+         // pattern might have changed
+         DoAutoUpdate();
+      }
+      
+      if (allowundo && !currlayer->stayclean) {
+         currlayer->undoredo->RememberRuleChange(oldrule);
+      }
    }
    
    return NULL;

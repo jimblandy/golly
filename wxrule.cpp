@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp
 #include "wxprefs.h"       // for namedrules, allowundo
 #include "wxutils.h"       // for Warning
-#include "wxundo.h"        // for undoredo->...
 #include "wxlayer.h"       // for currlayer
 #include "wxrule.h"
 
@@ -447,9 +446,6 @@ bool ChangeRule()
    RuleDialog dialog( wxGetApp().GetTopWindow() );
    if ( dialog.ShowModal() == wxID_OK ) {
       // TransferDataFromWindow has validated and changed rule
-      if (allowundo) {
-         currlayer->undoredo->RememberRuleChange(oldrule);
-      }
       return true;
    } else {
       // user hit Cancel so restore rule and name array

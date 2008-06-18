@@ -26,10 +26,10 @@ Andrew's list:
   - On Win we want to be able to press-select-release.
 
 - Implement scripting changes:
-  - numalgos() returns # of algorithms (simply NUM_ALGOS).
+  - numalgos() returns # of algorithms.
   - setalgo(name) sets algo to given name.
-  - name = getalgo(index=current) returns name of current algo
-    or name of algo at given index in menu (0..NUM_ALGOS-1).
+  - name = getalgo(index=current) returns name of algo at given index
+    in menu (0..numalgos-1) or current algo if index is not supplied.
   - Provide command to get/set colors if # states > 2.
   - Decide how to handle cell lists if # states > 2.
     Maybe such lists contain 3 ints per cell:
@@ -59,9 +59,10 @@ Andrew's list:
 
 - Need some way to display info about the current algorithm,
   perhaps via a new Algorithm Info item in Control menu that
-  displays text (from algo's static data) in a Note dialog.
+  displays text (from algo's static data) in a Note dialog
+  or in Info window.
 
-- Remove SlowLife (comment out in wxalgos.h/cpp).
+- Remove SlowLife (simply comment out 1 line in wxalgos.cpp).
 
 - Check all !!!/FIXME comments in code and try to remove.
 

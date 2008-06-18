@@ -931,7 +931,7 @@ void CurrentLayerChanged()
    // update rule if the new currlayer has a different algorithm or rule
    if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
-      //!!! error should never occur here???
+      // error should never occur here
    }
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
@@ -1541,13 +1541,9 @@ Layer::Layer()
       
       // create empty universe
       algo = CreateNewUniverse(algtype);
-      
-      // initialize undo/redo history
-      undoredo = new UndoRedo();
-      if (undoredo == NULL) Fatal(_("Failed to create new undo/redo object!"));
 
       // set rule using initrule stored in prefs file
-      const char *err = algo->setrule(initrule);
+      const char* err = algo->setrule(initrule);
       if (err) {
          // switch to algo's default rule (user probably edited rule in prefs file)
          algo->setrule( algo->DefaultRule() );
@@ -1555,6 +1551,10 @@ Layer::Layer()
    
       // don't need to remember rule here (SaveLayerSettings will do it)
       rule = wxEmptyString;
+      
+      // initialize undo/redo history
+      undoredo = new UndoRedo();
+      if (undoredo == NULL) Fatal(_("Failed to create new undo/redo object!"));
       
       // create viewport; the initial size is not important because
       // ResizeLayers will soon be called
@@ -1606,6 +1606,10 @@ Layer::Layer()
          
          // create empty universe
          algo = CreateNewUniverse(algtype);
+         
+         // use current rule
+         algo->setrule(currlayer->algo->getrule());
+         // error should never occur here
          
          // initialize undo/redo history
          undoredo = new UndoRedo();
