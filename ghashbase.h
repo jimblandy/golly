@@ -208,9 +208,7 @@ private:
    // AKT: set all pixels to background color
    void killpixels();
    void drawpixel(int x, int y);
-   void draw4x4_1(unsigned short sw, unsigned short se,
-                  unsigned short nw, unsigned short ne,
-                  int llx, int lly) ;
+   void draw4x4_1(state sw, state se, state nw, state ne, int llx, int lly) ;
    void draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) ;
 } ;
 #endif

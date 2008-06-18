@@ -1423,7 +1423,7 @@ const char *ghashbase::readmacrocell(char *line) {
    hashed = 1 ;
    return 0 ;
 }
-const char *ghashbase::setrule(const char *s) {
+const char *ghashbase::setrule(const char *) {
    poller->bailIfCalculating() ;
    clearcache() ;
    return 0 ;

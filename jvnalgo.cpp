@@ -97,7 +97,7 @@ static state uncompress[] = { 0, /* dead */
 } ;
 
 static int bits(state mcode, state code, state dir) {
-   if (code & (TEXC | OTRANS | CONF | CEXC) == 0)
+   if ((code & (TEXC | OTRANS | CONF | CEXC)) == 0)
       return 0 ;
    if (code & CONF) {
       if ((mcode & (OTRANS | STRANS)) && ((mcode & DIRMASK) ^ FLIPDIR) == dir)

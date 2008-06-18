@@ -62,8 +62,7 @@ void ghashbase::drawpixel(int x, int y) {
 /*
  *   Draw a 4x4 area yielding 1x1, 2x2, or 4x4 pixels.
  */
-void ghashbase::draw4x4_1(unsigned short sw, unsigned short se,
-                          unsigned short nw, unsigned short ne,
+void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
                           int llx, int lly) {
    // sw,se,nw,ne contain cell states (0..255)
    if (pmag > 1) {

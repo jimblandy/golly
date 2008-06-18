@@ -85,11 +85,11 @@ void AddRun(FILE *f,
       else {
          if (state > 24) {
             int hi = (state - 25) / 24 ;
-            putchar(hi + 'p', f) ;
+            putchar((char)(hi + 'p'), f) ;
             linelen++ ;
             state -= (hi + 1) * 24 ;
          }
-         putchar('A' + state - 1, f) ;
+         putchar((char)('A' + state - 1), f) ;
       }
    } else
       putchar("!$bo"[state+2], f) ;
