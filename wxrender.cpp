@@ -114,9 +114,7 @@ Other points of interest:
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#ifndef __WXX11__
-   #include "wx/rawbmp.h"  // for wxAlphaPixelData
-#endif
+#include "wx/rawbmp.h"     // for wxAlphaPixelData
 
 #include "bigint.h"
 #include "lifealgo.h"
