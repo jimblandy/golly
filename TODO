@@ -3,28 +3,24 @@ For version 1.5a
 
 Andrew's list:
 
-- Fix JvN cell colors so different shades are obvious.
-
 - Build and test Win/GTK versions.  Upload to ftp site and
   announce in golly-test.
-
-Tom's list:
 
 For post-alpha version (1.5 or 2.0?):
 -------------------------------------
 
 Andrew's list:
 
-- Fix glitches in the way algo button works:
+- Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
   - On Win we want to be able to press-select-release.
 
 - Implement scripting changes:
   - numalgos() returns # of algorithms.
   - setalgo(name) sets algo to given name.
-  - name = getalgo(index=current) returns name of algo at given index
-    in menu (0..numalgos-1) or current algo if index is not supplied.
-  - Provide command to get/set colors if # states > 2.
+  - getalgo(index=current) returns name of algo at given index in
+    menu (0..numalgos-1) or current algo if index is not supplied.
+  - Provide commands to get/set colors if # states > 2.
   - Decide how to handle cell lists if # states > 2.
     Maybe such lists contain 3 ints per cell:
     [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn ]
@@ -56,6 +52,10 @@ Andrew's list:
   displays text (from algo's static data) in a Note dialog
   or in Info window.
 
+- May need check boxes in Prefs > Control (initially ticked):
+  * Warn me about rule/pattern changes when switching algorithms
+  * Warn me about pattern changes when switching rules
+
 - Remove SlowLife (simply comment out 1 line in wxalgos.cpp).
 
 - Check all !!!/FIXME comments in code and try to remove.
@@ -69,6 +69,8 @@ Tom's list:
 
 File I/O
 
+- Describe RLE/MC formats in Help/formats.html (Andrew will add new
+  Help > File Formats item).
 - Have hlifealgo .mc compatible with ghashbase .mc
 - Generalized RLE in MC?
 

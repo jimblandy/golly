@@ -185,6 +185,7 @@ const char *readrle(lifealgo &imp, char *line) {
    int wd=0, ht=0, xoff=0, yoff=0;
    bigint gen = bigint::zero;
    bool xrle = false;               // extended RLE format?
+   bool sawrule = false;            // saw explicit rule?
 
    // parse any #CXRLE line(s) at start
    while (strncmp(line, "#CXRLE", 6) == 0) {
@@ -205,6 +206,7 @@ const char *readrle(lifealgo &imp, char *line) {
             *p = 0;
             errmsg = imp.setrule(ruleptr);
             if (errmsg) return errmsg;
+            sawrule = true;
          }
       } else if (line[0] == 'x') {
          // extract wd and ht
@@ -238,6 +240,14 @@ const char *readrle(lifealgo &imp, char *line) {
             if (p[-1] == ',') p--;
             *p = 0;
             errmsg = imp.setrule(ruleptr);
+            if (errmsg) return errmsg;
+            sawrule = true;
+         }
+         
+         if (!sawrule) {
+            // if no rule given then try Conway's Life; if it fails then
+            // return error so Golly will look for matching algo
+            errmsg = imp.setrule("B3/S23");
             if (errmsg) return errmsg;
          }
       } else {
@@ -296,14 +306,24 @@ const char *readpclife(lifealgo &imp, char *line) {
    char *p ;
    char *ruleptr;
    const char *errmsg;
+   bool sawrule = false;            // saw explicit rule?
 
    do {
       if (line[0] == '#') {
          if (line[1] == 'P') {
+            if (!sawrule) {
+               // if no rule given then try Conway's Life; if it fails then
+               // return error so Golly will look for matching algo
+               errmsg = imp.setrule("B3/S23");
+               if (errmsg) return errmsg;
+               sawrule = true;      // in case there are many #P lines
+            }
             sscanf(line + 2, " %d %d", &x, &y) ;
             leftx = x ;
          } else if (line[1] == 'N') {
-            imp.setrule("B3/S23") ;
+            errmsg = imp.setrule("B3/S23");
+            if (errmsg) return errmsg;
+            sawrule = true;
          } else if (line[1] == 'R') {
             ruleptr = line;
             ruleptr += 2;
@@ -311,8 +331,9 @@ const char *readpclife(lifealgo &imp, char *line) {
             p = ruleptr;
             while (*p > ' ') p++;
             *p = 0;
-            errmsg = imp.setrule(ruleptr) ;
+            errmsg = imp.setrule(ruleptr);
             if (errmsg) return errmsg;
+            sawrule = true;
          }
       } else if (line[0] == '-' || ('0' <= line[0] && line[0] <= '9')) {
          sscanf(line, "%d %d", &x, &y) ;
@@ -395,7 +416,10 @@ const char *loadpattern(lifealgo &imp) {
       // ie. only change rule if an explicit rule is supplied
    } else {
       // reset rule to Conway's Life (default if explicit rule isn't supplied)
-      imp.setrule("B3/S23") ;
+      const char *err = imp.setrule("B3/S23") ;
+      // if given algo doesn't support B3/S23 then probably safer to use
+      // the algo's default rule
+      if (err) imp.setrule( imp.DefaultRule() ) ;
    }
 
    buffcount = 0;

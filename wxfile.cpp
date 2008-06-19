@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "readpattern.h"
+#include "readpattern.h"   // for readpattern
 #include "writepattern.h"  // for writepattern, pattern_format
 
 #include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
@@ -223,7 +223,8 @@ bool MainFrame::LoadImage(const wxString& path)
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
       if ( image.LoadFile(path) ) {
-         // probably better not to change the rule
+         // best not to change the current rule -- that way image can
+         // be loaded into any algo
          // currlayer->algo->setrule("B3/S23");
 
          unsigned char maskr, maskg, maskb;
