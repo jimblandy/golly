@@ -35,6 +35,7 @@ const char SLOW_RULE[] = "B3/S23";
 const char* slifealgo::setrule(const char *s) {
    if (stricmp(s, SLOW_RULE) == 0) {
       ghashbase::setrule(s) ;
+      maxCellStates = 2 ;
       return NULL;
    }
    return "This algorithm only supports a single rule (B3/S23).";
@@ -50,6 +51,7 @@ const char* slifealgo::DefaultRule() {
 
 using namespace std ;
 slifealgo::slifealgo() {
+   maxCellStates = 2 ;
 }
 slifealgo::~slifealgo() {
 }

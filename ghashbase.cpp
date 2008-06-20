@@ -823,7 +823,12 @@ int ghashbase::nextbit(ghnode *n, int x, int y, int depth, int &v) {
  *   unhashed (but it's faster when unhashed).  We also turn on the inGC
  *   flag to inhibit popcount.
  */
+#include <cstdio>
+#include "util.h"
 int ghashbase::setcell(int x, int y, int newstate) {
+  FILE *f = getdebugfile() ;
+  fprintf(f, "Setting %d %d %d r %d\n", x, y, newstate, maxCellStates) ;
+  fflush(f) ;
    if (newstate < 0 || newstate >= maxCellStates)
      return -1 ;
    if (hashed) {
@@ -856,6 +861,8 @@ int ghashbase::setcell(int x, int y, int newstate) {
    if (hashed) {
       okaytogc = 0 ;
    }
+  fprintf(f, "Done; good.\n") ;
+  fflush(f) ;
    return 0 ;
 }
 /*
