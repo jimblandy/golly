@@ -56,6 +56,8 @@ const char* generationsalgo::setrule(const char *s) {
       if (tnumstates > 256)
 	 return "Number of states too high in Generations rule" ;
    }
+   if (tnumstates < 2)
+      return "Number of states too low in Generations rule" ;
    if (*p)
       return "Extra stuff at end of Generations rule" ;
    bornbits = tbornbits ;
