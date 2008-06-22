@@ -68,6 +68,10 @@ File I/O
 
 Algos
 
+- Replace WireWorld with generalized Rules Tables (lift rule length
+  limit everywhere needed)
+- EJVN
+- Make ghashbase() check for high cell states on rule change
 - Unzoom color merging
 - Better status reports (% of hashtable full)
 
