@@ -491,13 +491,7 @@ XS(pl_load)
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
    err = ExtractCellArray(outarray, tempalgo, true);
    delete tempalgo;
-   if (err) {
-      // assume Perl interpreter will free all memory when it quits???
-      // int key = av_len(inarray);
-      // while (key >= 0) { av_delete(outarray, key, G_DISCARD); key--; }
-      // av_undef(outarray);
-      PERL_ERROR(err);
-   }
+   if (err) PERL_ERROR(err);
 
    SP -= items;
    ST(0) = newRV( (SV*)outarray );
@@ -893,8 +887,8 @@ XS(pl_transform)
    int num_cells = (av_len(inarray) + 1) / 2;
    // note that av_len returns max index or -1 if array is empty
 
-   int x0  = SvIV(ST(1));
-   int y0  = SvIV(ST(2));
+   int x0 = SvIV(ST(1));
+   int y0 = SvIV(ST(2));
 
    // default values for optional params
    int axx = 1;
@@ -972,13 +966,7 @@ XS(pl_evolve)
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
    const char* err = ExtractCellArray(outarray, tempalgo);
    delete tempalgo;
-   if (err) {
-      // assume Perl interpreter will free all memory when it quits???
-      // int key = av_len(inarray);
-      // while (key >= 0) { av_delete(outarray, key, G_DISCARD); key--; }
-      // av_undef(outarray);
-      PERL_ERROR(err);
-   }
+   if (err) PERL_ERROR(err);
 
    SP -= items;
    ST(0) = newRV( (SV*)outarray );

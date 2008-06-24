@@ -3,6 +3,11 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
+- Allow Set Rule dlg (and GSF_setule) to change algo.
+
+- *algo::getrule should return canonical format of last (valid) rule
+  string given to setrule.  Then eliminate my CanonicalRule routine.
+
 - Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
   - On Win we want to be able to press-select-release.
@@ -15,7 +20,11 @@ Andrew's list:
   - Provide commands to get/set colors if # states > 2.
   - Decide how to handle cell lists if # states > 2.
     Maybe such lists contain 3 ints per cell:
-    [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn ]
+    [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn (,int) ]
+    If necessary, append pad int (0 or -2B?) so that # of ints is odd,
+    then commands like transform/putcells know what sort of cell list
+    they've been given without having to assume it depends on current
+    algo's # of states.
 
 - Improve edit bar:
   - Allow bar to scroll left-right (via arrows or shift-click-and-drag?).

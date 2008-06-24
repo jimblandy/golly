@@ -1009,7 +1009,7 @@ int PixelsToCells(int pixels) {
 
 // -----------------------------------------------------------------------------
 
-void CheckPasteImage()
+void CheckPasteImage(int colorindex)
 {
    // paste image needs to be updated if pasterect size changed
    // or viewport size changed or plocation changed or showicons changed
@@ -1166,6 +1166,27 @@ void CheckPasteImage()
          killbrush = deadbrush;
          wxBrush* pastebrush = new wxBrush(*pastergb);
          cellbrush = pastebrush;
+
+         // set rgb values for dead cells in pixblit calls
+         AlgoData* ad = currlayer->algodata;
+         ad->cellr[0] = deadrgb->Red();
+         ad->cellg[0] = deadrgb->Green();
+         ad->cellb[0] = deadrgb->Blue();
+      
+         unsigned char saver=0, saveg=0, saveb=0;
+         int numstates = currlayer->algo->NumCellStates();
+         if (numstates == 2) {
+            // set rgb values for live cells in pixblit calls, but only temporarily
+            // because the current algo might allow rules with a varying # of cell states
+            // (eg. current Generations rule could be 12/34/2)
+            //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
+            saver = ad->cellr[1];
+            saveg = ad->cellg[1];
+            saveb = ad->cellb[1];
+            ad->cellr[1] = livergb[colorindex]->Red();
+            ad->cellg[1] = livergb[colorindex]->Green();
+            ad->cellb[1] = livergb[colorindex]->Blue();
+         }
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -1178,7 +1199,14 @@ void CheckPasteImage()
          
          showgridlines = saveshow;
          delete pastebrush;
-   
+         
+         if (numstates == 2) {
+            // restore live cell color changed above
+            ad->cellr[1] = saver;
+            ad->cellg[1] = saveg;
+            ad->cellb[1] = saveb;
+         }
+         
          // make dead pixels 100% transparent and live pixels 100% opaque
          MaskDeadPixels(pastebitmap, pimagewd, pimageht, 255);
       }
@@ -1355,6 +1383,8 @@ void DrawOneLayer(wxDC& dc, int index)
    
    // set brush color used in blit
    cellbrush = livebrush[index];
+   
+   //!!! what about colors used in pixblit calls???
    
    currdc = &layerdc;
    currlayer->algo->draw(*currlayer->view, renderer);
@@ -1565,6 +1595,21 @@ void DrawView(wxDC& dc, int tileindex)
    ad->cellg[0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
    ad->cellb[0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();
 
+   unsigned char saver=0, saveg=0, saveb=0;
+   int numstates = currlayer->algo->NumCellStates();
+   if (numstates == 2) {
+      // set rgb values for live cells in pixblit calls, but only temporarily
+      // because the current algo might allow rules with a varying # of cell states
+      // (eg. current Generations rule could be 12/34/2)
+      //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
+      saver = ad->cellr[1];
+      saveg = ad->cellg[1];
+      saveb = ad->cellb[1];
+      ad->cellr[1] = swapcolors ? deadrgb->Red() : livergb[colorindex]->Red();
+      ad->cellg[1] = swapcolors ? deadrgb->Green() : livergb[colorindex]->Green();
+      ad->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[colorindex]->Blue();
+   }
+
    if (showicons && currlayer->view->getmag() > 2) {
       if (currlayer->view->getmag() == 3) {
          iconmaps = ad->icons7x7;
@@ -1578,6 +1623,13 @@ void DrawView(wxDC& dc, int tileindex)
    currwd = currlayer->view->getwidth();
    currht = currlayer->view->getheight();
    currlayer->algo->draw(*currlayer->view, renderer);
+
+   if (numstates == 2) {
+      // restore live cell color changed above
+      ad->cellr[1] = saver;
+      ad->cellg[1] = saveg;
+      ad->cellb[1] = saveb;
+   }
 
    if ( viewptr->GridVisible() ) {
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
@@ -1611,7 +1663,7 @@ void DrawView(wxDC& dc, int tileindex)
            prectht == viewptr->pasterect.height && prectht > 1 ) {
          // don't draw old paste image, a new one is coming very soon
       } else {
-         CheckPasteImage();
+         CheckPasteImage(colorindex);
          DrawPasteImage(dc);
       }
    }

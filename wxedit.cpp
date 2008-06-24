@@ -198,8 +198,15 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    ad->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
    ad->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
    
+   unsigned char saver=0, saveg=0, saveb=0;
    if (currlayer->algo->NumCellStates() == 2) {
-      // set rgb values for live cells in 2-state universe
+      // set rgb values for live cells in 2-state universe, but only temporarily
+      // because the current algo might allow rules with a varying # of cell states
+      // (eg. current Generations rule could be 12/34/2)
+      //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
+      saver = ad->cellr[1];
+      saveg = ad->cellg[1];
+      saveb = ad->cellb[1];
       ad->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
       ad->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
       ad->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
@@ -236,6 +243,13 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
          x = h_col2 + i * COLWD + (COLWD - digitwd) / 2;
          DisplayText(dc, _("x"), x, BASELINE3);
       }
+   }
+
+   if (currlayer->algo->NumCellStates() == 2) {
+      // restore live cell color changed above
+      ad->cellr[1] = saver;
+      ad->cellg[1] = saveg;
+      ad->cellb[1] = saveb;
    }
    
    // reset drawing state in case it's no longer valid (due to algo/rule change)

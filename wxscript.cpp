@@ -177,9 +177,10 @@ const char* GSF_setrule(char* rulestring)
       int newmaxstate = currlayer->algo->NumCellStates() - 1;
       if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
          mainptr->ReduceCellStates(newmaxstate);
-         // pattern might have changed
-         DoAutoUpdate();
       }
+
+      // pattern might have changed or new rule might have changed colors
+      DoAutoUpdate();
       
       if (allowundo && !currlayer->stayclean) {
          currlayer->undoredo->RememberRuleChange(oldrule);

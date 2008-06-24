@@ -875,7 +875,6 @@ void MainFrame::ReduceCellStates(int newmaxstate)
 
    if (patternchanged) {
       statusptr->ErrorMessage(_("Pattern has changed (new rule has fewer states)."));
-      UpdateEverything();
    }
 }
 
@@ -909,6 +908,9 @@ void MainFrame::ShowRuleDialog()
          if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
             ReduceCellStates(newmaxstate);
          }
+         
+         // pattern might have changed or new rule might have changed colors
+         UpdateEverything();
          
          if (allowundo) {
             currlayer->undoredo->RememberRuleChange(oldrule);
