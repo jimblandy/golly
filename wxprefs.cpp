@@ -67,9 +67,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 // Golly's preferences file is a simple text file.  It's initially created in
-// a user-specific data directory (datadir) but we also look in the application
-// directory (gollydir) because this makes uninstalling simple and allows
-// multiple copies of the app to have separate preferences.
+// a user-specific data directory (datadir) but we look in the application
+// directory (gollydir) first because this makes uninstalling simple and allows
+// multiple copies/versions of the app to have separate preferences.
+
 const wxString PREFS_NAME = wxT("GollyPrefs");
 
 wxString prefspath;              // full path to prefs file
@@ -80,7 +81,8 @@ const wxString PATT_DIR = wxT("Patterns");
 // location of supplied scripts (relative to app)
 const wxString SCRIPT_DIR = wxT("Scripts");
 
-const int PREFS_VERSION = 3;     // may change if file syntax changes
+const int PREFS_VERSION = 4;     // increment if necessary due to changes in syntax/semantics
+int currversion = PREFS_VERSION; // might be changed by prefs_version
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
 const int BITMAP_WD = 60;        // width of bitmap in color buttons
@@ -624,7 +626,7 @@ const char* GetActionName(action_id action)
 void GetKeyAction(char* value)
 {
    // parse strings like "z undo" or "space+ctrl advance selection";
-   // note that any errors detected here can be Fatal because the user
+   // note that some errors detected here can be Fatal because the user
    // has to quit Golly anyway to edit the prefs file
    char* start = value;
    char* p = start;
@@ -736,9 +738,11 @@ void GetKeyAction(char* value)
       }
    }
    
+   // probably better to warn user about an unknown action rather than quit
+   // (probably only happens if old Golly is reading newer prefs)
    if (action.id == DO_NOTHING)
-      Fatal(wxString::Format(_("Unknown action in key_action: %s"),
-                             wxString(p,wxConvLocal).c_str()));
+      Warning(wxString::Format(_("Unknown action in key_action: %s"),
+                               wxString(p,wxConvLocal).c_str()));
    
    keyaction[key][modset] = action;
 }
@@ -1285,8 +1289,19 @@ void GetDirPath(const char* value, wxString& path, const wxString& defdir)
 {
    path = wxString(value, wxConvLocal);
 
-   // if path isn't absolute then prepend Golly directory
    wxFileName fname(path);
+
+   if (currversion < 4 && fname.IsAbsolute() && defdir.length() > 0) {
+      // if old version's absolute path ends with defdir then update
+      // path so new version will see correct dir
+      wxString suffix = wxFILE_SEP_PATH + defdir;
+      if (path.EndsWith(suffix)) {
+         path = gollydir + defdir;
+         return;
+      }
+   }
+
+   // if path isn't absolute then prepend Golly directory
    if (!fname.IsAbsolute()) path = gollydir + path;
 
    // if path doesn't exist then reset to default directory
@@ -1626,7 +1641,6 @@ void InitPrefsPath()
 
 void GetPrefs()
 {
-   int currversion = PREFS_VERSION;
    int algoindex = -1;                 // unknown algorithm
    bool sawkeyaction = false;          // saw at least one key_action entry?
    
@@ -1711,6 +1725,11 @@ void GetPrefs()
 
       if (strcmp(keyword, "prefs_version") == 0) {
          sscanf(value, "%d", &currversion);
+         /* !!! should we prevent older Golly clobbering newer Golly's prefs???
+         if (currversion > PREFS_VERSION) {
+            Fatal(...);
+         }
+         */
 
       } else if (strcmp(keyword, "debug_level") == 0) {
          sscanf(value, "%d", &debuglevel);

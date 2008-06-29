@@ -11,7 +11,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
 TGR: Made makefiles simpler and safer.
-TGR: Implemented WireWorld.
+TGR: Implemented WireWorld and Generations.
 AKT: Rendering in Mac and Linux apps is faster at scales 1:4/8/16.
 AKT: Changed GUI to support more than 2 algos and more than 2 cell states.
 TGR: Implemented John von Neumann's 29-state CA.
