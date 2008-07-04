@@ -73,10 +73,11 @@ const int OTRANS = 0x20 ;
 const int STRANS = 0x40 ;
 const int TEXC = 0x80 ;
 const int CDEXC = 0x80 ;
+const int CROSSEXC = 6 ;
 const int CEXC = 1 ;
 const int BIT_ONEXC = 1 ;
-const int BIT_OEXC_NS = 2 ;
-const int BIT_OEXC_EW = 4 ;
+const int BIT_OEXC_EW = 2 ;
+const int BIT_OEXC_NS = 4 ;
 const int BIT_OEXC = BIT_OEXC_NS | BIT_OEXC_EW ;
 const int BIT_SEXC = 8 ;
 const int BIT_CEXC = 16 ;
@@ -118,9 +119,9 @@ static int bits(state mcode, state code, state dir) {
    if (code & CONF) {
       if ((mcode & (OTRANS | STRANS)) && ((mcode & DIRMASK) ^ FLIPDIR) == dir)
          return 0 ;
-      if ((code & 2) && (dir & 1))
+      if ((code & 2) && !(dir & 1))
          return BIT_CEXC ;
-      if ((code & 4) && !(dir & 1))
+      if ((code & 4) && (dir & 1))
          return BIT_CEXC ;
       if (code & 1)
          return BIT_CEXC ;
@@ -198,12 +199,17 @@ state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
             c = (mbits & BIT_OEXC) + CONF + 0x80 ;
          else
             c = CONF ;
-      } else if ((mbits & BIT_OEXC) && !(mbits & BIT_ONEXC))
-         c = ((c & CDEXC) >> 7) + (CDEXC | CONF) ;
-      else if ((mbits & BIT_ANY_OUT) || numstates == 29)
-         c = ((c & CDEXC) >> 7) + CONF ;
-      else
-         /* no change */ ;
+      } else {
+         if (c & CROSSEXC) {// was a cross, is no more
+            c = (c & ~(CROSSEXC | CDEXC)) ;
+         }
+         if ((mbits & BIT_OEXC) && !(mbits & BIT_ONEXC))
+            c = ((c & CDEXC) >> 7) + (CDEXC | CONF) ;
+         else if ((mbits & BIT_ANY_OUT) || numstates == 29)
+            c = ((c & CDEXC) >> 7) + CONF ;
+         else
+            /* no change */ ;
+      }
    } else {
       if (((c & OTRANS) && (mbits & BIT_SEXC)) ||
           ((c & STRANS) && (mbits & BIT_OEXC)))
