@@ -48,13 +48,10 @@ const char* jvnalgo::setrule(const char *s) {
       ghashbase::setrule(s) ;
       return NULL;
    } else if (stricmp(s, EJVN_RULE) == 0) {
-      return "This algorithm does not support any extended JVN rules yet." ;
-     /*
       numstates = 32;
       maxCellStates = 32 ;
       ghashbase::setrule(s) ;
       return NULL;
-     */
    }
    return "This algorithm only supports two rules (JvN-29 or JvN-32).";
 }
@@ -77,10 +74,20 @@ const int STRANS = 0x40 ;
 const int TEXC = 0x80 ;
 const int CDEXC = 0x80 ;
 const int CEXC = 1 ;
-const int BIT_OEXC = 1 ;
-const int BIT_SEXC = 2 ;
-const int BIT_ONEXC = 4 ;
-const int BIT_CEXC = 8 ;
+const int BIT_ONEXC = 1 ;
+const int BIT_OEXC_NS = 2 ;
+const int BIT_OEXC_EW = 4 ;
+const int BIT_OEXC = BIT_OEXC_NS | BIT_OEXC_EW ;
+const int BIT_SEXC = 8 ;
+const int BIT_CEXC = 16 ;
+const int BIT_NS_IN = 32 ;
+const int BIT_EW_IN = 64 ;
+const int BIT_NS_OUT = 128 ;
+const int BIT_EW_OUT = 256 ;
+const int BIT_CROSS = (BIT_NS_IN | BIT_EW_IN | BIT_NS_OUT | BIT_EW_OUT) ;
+const int BIT_ANY_OUT = (BIT_NS_OUT | BIT_EW_OUT) ;
+const int BIT_OEXC_OTHER = 512 ;
+const int BIT_SEXC_OTHER = 1024 ;
 static state compress[256] ;
 
 /**
@@ -92,29 +99,68 @@ static state uncompress[] = { 0, /* dead */
 			      160, 161, 162, 163, /* ordinary active */
 			      64, 65, 66, 67, /* special */
 			      192, 193, 194, 195, /* special active */
-			      16, 144, /* confluent state */
-			      17, 145, /* more confluent state */
+			      16, 144, /* confluent states */
+			      17, 145, /* more confluent states */
+                              146, 148, 150 /* crossing confluent states */
 } ;
 
+/**
+ *   The behavior of the confluent states under the extended
+ *   rules was verified empirically by the wjvn executable,
+ *   because I could not interpret the paper sufficiently to
+ *   cover some cases I thought were ambiguous, or where the
+ *   simulator seemed to contradict the transition rules in the
+ *   paper.   -tgr
+ */
 static int bits(state mcode, state code, state dir) {
-   if ((code & (TEXC | OTRANS | CONF | CEXC)) == 0)
+   if ((code & (TEXC | OTRANS | STRANS | CONF | CEXC)) == 0)
       return 0 ;
    if (code & CONF) {
       if ((mcode & (OTRANS | STRANS)) && ((mcode & DIRMASK) ^ FLIPDIR) == dir)
          return 0 ;
+      if ((code & 2) && (dir & 1))
+         return BIT_CEXC ;
+      if ((code & 4) && !(dir & 1))
+         return BIT_CEXC ;
       if (code & 1)
          return BIT_CEXC ;
-   } else {
-      if ((code & DIRMASK) != dir)
-         return 0 ;
-      if (code & OTRANS) {
-         if (code & TEXC)
-            return BIT_OEXC ;
-         return BIT_ONEXC ;
-      } else if ((code & (STRANS | TEXC)) == (STRANS | TEXC))
-         return BIT_SEXC ;
+      return 0 ;
    }
-   return 0 ;
+   if ((code & (OTRANS | STRANS)) == 0)
+      return 0 ;
+   int r = 0 ;
+   if ((code & DIRMASK) == dir) {
+      if (code & OTRANS) {
+         if (dir & 1) {
+           r |= BIT_NS_IN ;
+           if (code & TEXC)
+             r |= BIT_OEXC_NS ;
+           else
+             r |= BIT_ONEXC ;
+         } else {
+           r |= BIT_EW_IN ;
+           if (code & TEXC)
+             r |= BIT_OEXC_EW ;
+           else
+             r |= BIT_ONEXC ;
+         }
+      } else if ((code & (STRANS | TEXC)) == (STRANS | TEXC))
+         r |= BIT_SEXC ;
+      if ((mcode & (OTRANS | STRANS)) && (dir ^ (mcode & DIRMASK)) == 2) {
+         // don't permit these bits to propogate; head to head
+      } else {
+        if (r & BIT_OEXC)
+           r |= BIT_OEXC_OTHER ;
+        if (r & BIT_SEXC)
+           r |= BIT_SEXC_OTHER ;
+      }
+   } else {
+      if (dir & 1)
+         r |= BIT_NS_OUT ;
+      else
+         r |= BIT_EW_OUT ;
+   }
+   return r ;
 }
 
 static state cres[] = {0x22, 0x23, 0x40, 0x41, 0x42, 0x43, 0x10, 0x20, 0x21} ;
@@ -132,9 +178,11 @@ jvnalgo::~jvnalgo() {
 
 state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
 			state, state s, state) {
-  c = uncompress[c] ;
-  int mbits = bits(c, uncompress[n], SOUTH) | bits(c, uncompress[w], EAST) |
-               bits(c, uncompress[e], WEST) | bits(c, uncompress[s], NORTH) ;
+   c = uncompress[c] ;
+   int mbits = bits(c, uncompress[n], SOUTH) |
+     bits(c, uncompress[w], EAST) |
+     bits(c, uncompress[e], WEST) |
+     bits(c, uncompress[s], NORTH) ;
    if (c < CONF) {
       if (mbits & (BIT_OEXC | BIT_SEXC))
          c = 2 * c + 1 ;
@@ -145,15 +193,22 @@ state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
    } else if (c & CONF) {
       if (mbits & BIT_SEXC)
          c = 0 ;
-      else if ((mbits & (BIT_OEXC | BIT_ONEXC)) == BIT_OEXC)
+      else if (numstates == 32 && (mbits & BIT_CROSS) == BIT_CROSS) {
+         if (mbits & BIT_OEXC)
+            c = (mbits & BIT_OEXC) + CONF + 0x80 ;
+         else
+            c = CONF ;
+      } else if ((mbits & BIT_OEXC) && !(mbits & BIT_ONEXC))
          c = ((c & CDEXC) >> 7) + (CDEXC | CONF) ;
-      else
+      else if ((mbits & BIT_ANY_OUT) || numstates == 29)
          c = ((c & CDEXC) >> 7) + CONF ;
+      else
+         /* no change */ ;
    } else {
       if (((c & OTRANS) && (mbits & BIT_SEXC)) ||
           ((c & STRANS) && (mbits & BIT_OEXC)))
          c = 0 ;
-      else if (mbits & (BIT_SEXC | BIT_OEXC | BIT_CEXC))
+      else if (mbits & (BIT_SEXC_OTHER | BIT_OEXC_OTHER | BIT_CEXC))
          c |= 128 ;
       else
          c &= 127 ;
