@@ -6,7 +6,7 @@
 #C   by William R. Buckley.  Includes tape of itself; will replicate
 #C   and start the replicant, which will then create a grandchild
 #C   and so on.  First demonstrated working self-replicator in 29-state
-#C   JVN automata.
+#C   JVN automata.  Zoom in on the left to see the machine itself.
 #C
 #R JvN-29
 1 9 9 10 0
