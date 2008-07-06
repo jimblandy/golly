@@ -208,7 +208,11 @@ const char *readrle(lifealgo &imp, char *line) {
             if (errmsg) return errmsg;
             sawrule = true;
          }
-      } else if (line[0] == 'x') {
+         // there's a slight ambiguity here for extended RLE when a line
+         // starts with 'x'; we only treat it as a dimension line if the
+         // next char is whitespace or '=', since 'x' will only otherwise
+         // occur as a two-char token followed by an upper case alphabetic.
+      } else if (line[0] == 'x' && (line[1] <= ' ' || line[1] == '=')) {
          // extract wd and ht
          p = line;
          while (*p && *p != '=') p++; p++;
