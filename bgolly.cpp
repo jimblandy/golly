@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <iostream>
 #include <cstdio>
+#include <string.h>
+#include <cstdlib>
 using namespace std ;
 viewport viewport(1000, 1000) ;
 /*
