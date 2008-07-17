@@ -7,8 +7,7 @@
 #C   child into life.  Load this, zoom in on the left, and speed up
 #C   the simulation (+ key).  Note that 300MB of hash memory is
 #C   insufficient to see this operate smoothly; you should increase
-#C   the hash memory size setting if you have more than 500MB in your
-#C   machine.
+#C   the hash memory size setting if your machine has more than 500MB.
 #C
 #R JvN-29
 #G 261467406336

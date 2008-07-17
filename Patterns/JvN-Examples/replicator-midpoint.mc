@@ -6,8 +6,8 @@
 #C   finished duplicating its own tape, and right before it is about to
 #C   start constructing the child machine itself.  Load this, zoom in on the
 #C   left side, and speed up the simulation (+ key) until things start
-#C   moving, to see the construction rocess.  You may want to increase
-#C   your memory limit (on the File->Preferences->Control panel).
+#C   moving, to see the construction process.  You may want to increase
+#C   the JvN algorithm's memory limit (via Preferences > Control).
 #C
 #R JvN-29
 #G 174603710464
