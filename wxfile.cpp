@@ -263,6 +263,12 @@ bool MainFrame::LoadImage(const wxString& path)
 void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
                             bool updatestatus)
 {
+   if ( !wxFileName::FileExists(path) ) {
+      wxString err = _("The pattern file does not exist:\n") + path;
+      Warning(err);
+      return;
+   }
+
    // newtitle is only empty if called from ResetPattern/RestorePattern
    if (!newtitle.IsEmpty()) {
       if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
