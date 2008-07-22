@@ -285,6 +285,7 @@ static bool LoadPerlLib()
       }
    }
 
+   int missingsyms = 0;
    if ( dynlib.IsLoaded() ) {
       // load all functions named in perlFuncs
       void *funcptr;
@@ -292,21 +293,28 @@ static bool LoadPerlLib()
       while ( pf->ptr ) {
          funcptr = dynlib.GetSymbol(pf->name);
          if ( !funcptr ) {
-            wxString err = _("Perl library does not have this symbol:\n");
-            err += pf->name;
-            Warning(err);
-            FreePerlLib();
-            break;
+            missingsyms++;
+            if (debuglevel > 0) {
+               wxString err = _("Perl library does not have this symbol:\n");
+               err += pf->name;
+               Warning(err);
+            }
          }
-
          *(pf++->ptr) = (PERL_PROC)funcptr;
       }
-
       if ( !pf->ptr ) {
          perldll = dynlib.Detach();
       }
    }
 
+   if (missingsyms > 5) {
+      FreePerlLib();
+      wxString err = _("Perl library has too many missing symbols.\n");
+      err         += _("Try installing a newer version of Perl.");
+      Warning(err);
+      return false;
+   }
+   
    if ( perldll == NULL ) {
       // should never happen
       Warning(_("Oh dear, the Perl library is not loaded!"));

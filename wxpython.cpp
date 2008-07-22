@@ -273,6 +273,7 @@ static bool LoadPythonLib()
       }
    }
 
+   int missingsyms = 0;
    if ( dynlib.IsLoaded() ) {
       // load all functions named in pythonFuncs
       void *funcptr;
@@ -280,19 +281,26 @@ static bool LoadPythonLib()
       while ( pf->ptr ) {
          funcptr = dynlib.GetSymbol(pf->name);
          if ( !funcptr ) {
-            wxString err = _("Python library does not have this symbol:\n");
-            err += pf->name;
-            Warning(err);
-            FreePythonLib();
-            break;
+            missingsyms++;
+            if (debuglevel > 0) {
+               wxString err = _("Python library does not have this symbol:\n");
+               err += pf->name;
+               Warning(err);
+            }
          }
-
          *(pf++->ptr) = (PYTHON_PROC)funcptr;
       }
-
       if ( !pf->ptr ) {
          pythondll = dynlib.Detach();
       }
+   }
+
+   if (missingsyms > 5) {
+      FreePythonLib();
+      wxString err = _("Python library has too many missing symbols.\n");
+      err         += _("Try installing a newer version of Python.");
+      Warning(err);
+      return false;
    }
 
    if ( pythondll == NULL ) {
@@ -819,7 +827,8 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
          c = *s++;
       }
    } else {
-      // parsing 'RLE' format
+      // parsing RLE format
+      //!!! make it work with multistate xrle
       int prefix = 0;
       bool done = false;
       int c = *s++;
