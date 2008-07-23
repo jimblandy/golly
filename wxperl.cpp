@@ -158,16 +158,18 @@ extern "C"
    IV (*G_Perl_sv_2iv_flags)(pTHX_ SV* sv, I32 flags);
 #endif
 #ifdef PERL510_OR_LATER
+   void(*G_Perl_sys_init3)(int*, char***, char***);
+   void(*G_Perl_sys_term)(void);
    I32**(*G_Perl_Imarkstack_ptr_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Istack_base_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Istack_max_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Istack_sp_ptr)(register PerlInterpreter*);
-#endif
-   //!!! keep old function names as well???
+#else
    I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
+#endif
 #ifdef __WXMSW__
    void(*G_boot_DynaLoader)(pTHX_ CV*);
 #endif
@@ -201,16 +203,18 @@ extern "C"
    #define Perl_sv_2iv_flags        G_Perl_sv_2iv_flags
 #endif
 #ifdef PERL510_OR_LATER
+   #define Perl_sys_init3           G_Perl_sys_init3
+   #define Perl_sys_term            G_Perl_sys_term
    #define Perl_Imarkstack_ptr_ptr  G_Perl_Imarkstack_ptr_ptr
    #define Perl_Istack_base_ptr     G_Perl_Istack_base_ptr
    #define Perl_Istack_max_ptr      G_Perl_Istack_max_ptr
    #define Perl_Istack_sp_ptr       G_Perl_Istack_sp_ptr
-#endif
-   //!!! keep old function names as well???
+#else
    #define Perl_Tmarkstack_ptr_ptr  G_Perl_Tmarkstack_ptr_ptr
    #define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
    #define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
    #define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
+#endif
 #ifdef __WXMSW__
    #define boot_DynaLoader          G_boot_DynaLoader
 #endif
@@ -257,16 +261,18 @@ static struct PerlFunc
    PERL_FUNC(Perl_sv_2iv_flags)
 #endif
 #ifdef PERL510_OR_LATER
+   PERL_FUNC(Perl_sys_init3)
+   PERL_FUNC(Perl_sys_term)
    PERL_FUNC(Perl_Imarkstack_ptr_ptr)
    PERL_FUNC(Perl_Istack_base_ptr)
    PERL_FUNC(Perl_Istack_max_ptr)
    PERL_FUNC(Perl_Istack_sp_ptr)
-#endif
-   //!!! keep old function names as well???
+#else
    PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
    PERL_FUNC(Perl_Tstack_base_ptr)
    PERL_FUNC(Perl_Tstack_max_ptr)
    PERL_FUNC(Perl_Tstack_sp_ptr)
+#endif
 #ifdef __WXMSW__
    PERL_FUNC(boot_DynaLoader)
 #endif
@@ -296,7 +302,7 @@ static bool LoadPerlLib()
    // is needed to avoid an ImportError when importing some modules (eg. time)
    while ( !dynlib.Load(perllib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
       // prompt user for a different Perl library;
-      // on Windows perllib should be something like "perl5.dll"
+      // on Windows perllib should be something like "perl58.dll"
       // and on Linux it should be something like "libperl.so"
       wxBell();
       wxString str = _("If Perl isn't installed then you'll have to Cancel,");
@@ -315,34 +321,27 @@ static bool LoadPerlLib()
       }
    }
 
-   int missingsyms = 0;
    if ( dynlib.IsLoaded() ) {
       // load all functions named in perlFuncs
-      void *funcptr;
-      PerlFunc *pf = perlFuncs;
-      while ( pf->ptr ) {
+      void* funcptr;
+      PerlFunc* pf = perlFuncs;
+      while ( pf->name[0] ) {
          funcptr = dynlib.GetSymbol(pf->name);
          if ( !funcptr ) {
-            missingsyms++;
-            if (debuglevel > 0) {
-               wxString err = _("Perl library does not have this symbol:\n");
-               err += pf->name;
-               Warning(err);
-            }
+            wxString err = _("The Perl library does not have this symbol:\n");
+            err         += pf->name;
+            err         += _("\nYou need to install Perl ");
+            #ifdef PERL510_OR_LATER
+               err      += _("5.10 or later.");
+            #else
+               err      += _("5.8.x.");
+            #endif
+            Warning(err);
+            return false;
          }
          *(pf++->ptr) = (PERL_PROC)funcptr;
       }
-      if ( !pf->ptr ) {
-         perldll = dynlib.Detach();
-      }
-   }
-
-   if (missingsyms > 5) {
-      FreePerlLib();
-      wxString err = _("Perl library has too many missing symbols.\n");
-      err         += _("Try installing a newer version of Perl.");
-      Warning(err);
-      return false;
+      perldll = dynlib.Detach();
    }
    
    if ( perldll == NULL ) {
@@ -2517,12 +2516,25 @@ EXTERN_C void xs_init(pTHX)
 
 // =============================================================================
 
+#ifdef PERL510_OR_LATER
+   static bool inited = false;
+#endif
+
 void RunPerlScript(const wxString &filepath)
 {
    #ifdef USE_PERL_DYNAMIC
       if (perldll == NULL) {
          // try to load Perl library
          if ( !LoadPerlLib() ) return;
+      }
+   #endif
+
+   #ifdef PERL510_OR_LATER
+      if (!inited) {
+         int argc = 3;
+         static char *argv[] = { "", "-e", "" };
+         Perl_sys_init3(&argc, (char***)&argv, NULL);
+         inited = true;
       }
    #endif
 
@@ -2576,6 +2588,10 @@ void RunPerlScript(const wxString &filepath)
 
 void FinishPerlScripting()
 {
+   #ifdef PERL510_OR_LATER
+      if (inited) Perl_sys_term();
+   #endif
+
    #ifdef USE_PERL_DYNAMIC
       // probably don't really need to do this
       FreePerlLib();

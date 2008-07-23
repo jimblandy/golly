@@ -273,34 +273,21 @@ static bool LoadPythonLib()
       }
    }
 
-   int missingsyms = 0;
    if ( dynlib.IsLoaded() ) {
       // load all functions named in pythonFuncs
-      void *funcptr;
-      PythonFunc *pf = pythonFuncs;
-      while ( pf->ptr ) {
+      void* funcptr;
+      PythonFunc* pf = pythonFuncs;
+      while ( pf->name[0] ) {
          funcptr = dynlib.GetSymbol(pf->name);
          if ( !funcptr ) {
-            missingsyms++;
-            if (debuglevel > 0) {
-               wxString err = _("Python library does not have this symbol:\n");
-               err += pf->name;
-               Warning(err);
-            }
+            wxString err = _("The Python library does not have this symbol:\n");
+            err += pf->name;
+            Warning(err);
+            return false;
          }
          *(pf++->ptr) = (PYTHON_PROC)funcptr;
       }
-      if ( !pf->ptr ) {
-         pythondll = dynlib.Detach();
-      }
-   }
-
-   if (missingsyms > 5) {
-      FreePythonLib();
-      wxString err = _("Python library has too many missing symbols.\n");
-      err         += _("Try installing a newer version of Python.");
-      Warning(err);
-      return false;
+      pythondll = dynlib.Detach();
    }
 
    if ( pythondll == NULL ) {
