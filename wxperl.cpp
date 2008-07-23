@@ -87,13 +87,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * Jan Dubois suggested the following guarding scheme:
  */
 #if (ACTIVEPERL_VERSION >= 822)
-# define PERL589_OR_LATER
+   #define PERL589_OR_LATER
 #endif
 #if (PERL_REVISION == 5) && (PERL_VERSION == 8) && (PERL_SUBVERSION >= 9)
-# define PERL589_OR_LATER
+   #define PERL589_OR_LATER
 #endif
 #if (PERL_REVISION == 5) && (PERL_VERSION >= 9)
-# define PERL589_OR_LATER
+   #define PERL589_OR_LATER
+#endif
+
+// check if we're building with Perl 5.10
+#if (ACTIVEPERL_VERSION >= 1000)
+   #define PERL510_OR_LATER
+#endif
+#if (PERL_REVISION == 5) && (PERL_VERSION >= 10)
+   #define PERL510_OR_LATER
 #endif
 
 // restore wxWidgets definition for _ (from include/wx/intl.h)
@@ -125,10 +133,6 @@ extern "C"
 {
    perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*);
    U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*);
-   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
    SV**(*G_Perl_av_fetch)(pTHX_ AV*, I32, I32);
    I32(*G_Perl_av_len)(pTHX_ AV*);
    void(*G_Perl_av_push)(pTHX_ AV*, SV*);
@@ -153,6 +157,17 @@ extern "C"
 #ifdef PERL589_OR_LATER
    IV (*G_Perl_sv_2iv_flags)(pTHX_ SV* sv, I32 flags);
 #endif
+#ifdef PERL510_OR_LATER
+   I32**(*G_Perl_Imarkstack_ptr_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Istack_base_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Istack_max_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Istack_sp_ptr)(register PerlInterpreter*);
+#endif
+   //!!! keep old function names as well???
+   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
 #ifdef __WXMSW__
    void(*G_boot_DynaLoader)(pTHX_ CV*);
 #endif
@@ -161,10 +176,6 @@ extern "C"
 // redefine Perl functions to their equivalent G_* wrappers
 #define Perl_Gthr_key_ptr        G_Perl_Gthr_key_ptr
 #define Perl_Iexit_flags_ptr     G_Perl_Iexit_flags_ptr
-#define Perl_Tmarkstack_ptr_ptr  G_Perl_Tmarkstack_ptr_ptr
-#define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
-#define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
-#define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
 #define Perl_av_fetch            G_Perl_av_fetch
 #define Perl_av_len              G_Perl_av_len
 #define Perl_av_push             G_Perl_av_push
@@ -187,10 +198,21 @@ extern "C"
 #define perl_run                 G_perl_run
 #define Perl_eval_pv             G_Perl_eval_pv
 #ifdef PERL589_OR_LATER
-#define Perl_sv_2iv_flags        G_Perl_sv_2iv_flags
+   #define Perl_sv_2iv_flags        G_Perl_sv_2iv_flags
 #endif
+#ifdef PERL510_OR_LATER
+   #define Perl_Imarkstack_ptr_ptr  G_Perl_Imarkstack_ptr_ptr
+   #define Perl_Istack_base_ptr     G_Perl_Istack_base_ptr
+   #define Perl_Istack_max_ptr      G_Perl_Istack_max_ptr
+   #define Perl_Istack_sp_ptr       G_Perl_Istack_sp_ptr
+#endif
+   //!!! keep old function names as well???
+   #define Perl_Tmarkstack_ptr_ptr  G_Perl_Tmarkstack_ptr_ptr
+   #define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
+   #define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
+   #define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
 #ifdef __WXMSW__
-#define boot_DynaLoader          G_boot_DynaLoader
+   #define boot_DynaLoader          G_boot_DynaLoader
 #endif
 
 #ifdef __WXMSW__
@@ -198,6 +220,7 @@ extern "C"
 #else
    #define PERL_PROC void *
 #endif
+
 #define PERL_FUNC(func) { _T(#func), (PERL_PROC*)&G_ ## func },
 
 // store function names and their addresses in Perl lib
@@ -209,10 +232,6 @@ static struct PerlFunc
 {
    PERL_FUNC(Perl_Gthr_key_ptr)
    PERL_FUNC(Perl_Iexit_flags_ptr)
-   PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
-   PERL_FUNC(Perl_Tstack_base_ptr)
-   PERL_FUNC(Perl_Tstack_max_ptr)
-   PERL_FUNC(Perl_Tstack_sp_ptr)
    PERL_FUNC(Perl_av_fetch)
    PERL_FUNC(Perl_av_len)
    PERL_FUNC(Perl_av_push)
@@ -237,6 +256,17 @@ static struct PerlFunc
 #ifdef PERL589_OR_LATER
    PERL_FUNC(Perl_sv_2iv_flags)
 #endif
+#ifdef PERL510_OR_LATER
+   PERL_FUNC(Perl_Imarkstack_ptr_ptr)
+   PERL_FUNC(Perl_Istack_base_ptr)
+   PERL_FUNC(Perl_Istack_max_ptr)
+   PERL_FUNC(Perl_Istack_sp_ptr)
+#endif
+   //!!! keep old function names as well???
+   PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
+   PERL_FUNC(Perl_Tstack_base_ptr)
+   PERL_FUNC(Perl_Tstack_max_ptr)
+   PERL_FUNC(Perl_Tstack_sp_ptr)
 #ifdef __WXMSW__
    PERL_FUNC(boot_DynaLoader)
 #endif
