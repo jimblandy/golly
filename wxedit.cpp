@@ -367,8 +367,25 @@ void UpdateEditBar(bool active)
       //!!! eventually edit bar will all have all buttons for setting cursor mode???
       // editbarptr->EnableButton(EYE_DROPPER, active);
 
+      // avoid updating edit bar if nothing has changed since last update;
+      // this avoids flickering on Windows because it doesn't use buffered drawing
+      static algo_type oldalgtype = MAX_ALGOS;
+      static wxString oldrule = wxEmptyString;
+      static int olddrawingstate = 0;
+      static wxCursor* oldcurs = NULL;
+      if (  oldalgtype == currlayer->algtype &&
+            oldrule == wxString(currlayer->algo->getrule(), wxConvLocal) &&
+            olddrawingstate == currlayer->drawingstate &&
+            oldcurs == currlayer->curs
+         ) return;
+      
       editbarptr->Refresh(false);
       editbarptr->Update();
+      
+      oldalgtype = currlayer->algtype;
+      oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+      olddrawingstate = currlayer->drawingstate;
+      oldcurs = currlayer->curs;
    }
 }
 
