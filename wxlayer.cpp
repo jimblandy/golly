@@ -134,7 +134,6 @@ private:
    DECLARE_EVENT_TABLE()
 
    // event handlers
-   void OnEraseBackground(wxEraseEvent& event);
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
@@ -157,7 +156,6 @@ private:
 };
 
 BEGIN_EVENT_TABLE(LayerBar, wxPanel)
-   EVT_ERASE_BACKGROUND (           LayerBar::OnEraseBackground)
    EVT_PAINT            (           LayerBar::OnPaint)
    EVT_LEFT_DOWN        (           LayerBar::OnMouseDown)
    EVT_BUTTON           (wxID_ANY,  LayerBar::OnButton)
@@ -218,14 +216,6 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #endif
    
    downid = -1;         // no layer button down as yet
-}
-
-// -----------------------------------------------------------------------------
-
-//!!! avoid flickering buttons on Windows???
-void LayerBar::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
-{
-   // do nothing because we'll be painting the entire layer bar
 }
 
 // -----------------------------------------------------------------------------

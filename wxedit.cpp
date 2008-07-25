@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/dcbuffer.h"   // for wxBufferedPaintDC
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -67,6 +69,10 @@ private:
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
    void DrawEditBar(wxDC& dc, int wd, int ht);
+
+   wxBitmap* editbitmap;         // edit bar bitmap
+   int editbitmapwd;             // width of edit bar bitmap
+   int editbitmapht;             // height of edit bar bitmap
    
    int h_col1;                   // horizontal position of labels
    int h_col2;                   // horizontal position of info for state 0
@@ -133,6 +139,10 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    dc.GetTextExtent(_("State:"), &textwd, &textht);
    h_col2 = h_col1 + textwd + 4;
    dc.GetTextExtent(_("9"), &digitwd, &textht);
+
+   editbitmap = NULL;
+   editbitmapwd = -1;
+   editbitmapht = -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -140,6 +150,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 EditBar::~EditBar()
 {
    delete editfont;
+   delete editbitmap;
 }
 
 // -----------------------------------------------------------------------------
@@ -169,6 +180,12 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    
    #ifdef __WXMAC__
       wxBrush brush(wxColor(202,202,202));
+      FillRect(dc, r, brush);
+   #endif
+   
+   #ifdef __WXMSW__
+      //!!! use theme background color on Windows???
+      wxBrush brush(GetBackgroundColour());
       FillRect(dc, r, brush);
    #endif
    
@@ -281,19 +298,25 @@ void EditBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       // windows on Mac OS X and GTK+ 2.0 are automatically buffered
       wxPaintDC dc(this);
    #else
-      // do NOT use wxBufferedPaintDC on Windows -- causes white bg
-      wxPaintDC dc(this);
+      // use wxWidgets buffering to avoid flicker
+      if (wd != editbitmapwd || ht != editbitmapht) {
+         // need to create a new bitmap for edit bar
+         delete editbitmap;
+         editbitmap = new wxBitmap(wd, ht);
+         editbitmapwd = wd;
+         editbitmapht = ht;
+      }
+      if (editbitmap == NULL) Fatal(_("Not enough memory to render edit bar!"));
+      wxBufferedPaintDC dc(this, *editbitmap);
    #endif
    
    if (!showedit) return;
    
    #ifdef __WXMSW__
       // needed on Windows
-      dc.Clear();
+      //!!!??? dc.Clear();
    #endif
    
-   // no need to pass in update rect???
-   // wxRect updaterect = GetUpdateRegion().GetBox();
    DrawEditBar(dc, wd, ht);
 }
 
@@ -366,26 +389,9 @@ void UpdateEditBar(bool active)
       if (viewptr->waitingforclick) active = false;
       //!!! eventually edit bar will all have all buttons for setting cursor mode???
       // editbarptr->EnableButton(EYE_DROPPER, active);
-
-      // avoid updating edit bar if nothing has changed since last update;
-      // this avoids flickering on Windows because it doesn't use buffered drawing
-      static algo_type oldalgtype = MAX_ALGOS;
-      static wxString oldrule = wxEmptyString;
-      static int olddrawingstate = 0;
-      static wxCursor* oldcurs = NULL;
-      if (  oldalgtype == currlayer->algtype &&
-            oldrule == wxString(currlayer->algo->getrule(), wxConvLocal) &&
-            olddrawingstate == currlayer->drawingstate &&
-            oldcurs == currlayer->curs
-         ) return;
       
       editbarptr->Refresh(false);
       editbarptr->Update();
-      
-      oldalgtype = currlayer->algtype;
-      oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-      olddrawingstate = currlayer->drawingstate;
-      oldcurs = currlayer->curs;
    }
 }
 
