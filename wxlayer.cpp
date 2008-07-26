@@ -599,8 +599,9 @@ void UpdateLayerBar(bool active)
       for (int i = 0; i < numlayers; i++)
          layerbarptr->EnableButton(i, active && CanSwitchLayer(i));
 
-      layerbarptr->Refresh(false);
-      layerbarptr->Update();
+      // no need to redraw entire bar if it only contains buttons
+      // layerbarptr->Refresh(false);
+      // layerbarptr->Update();
    }
 }
 
