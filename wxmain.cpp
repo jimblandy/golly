@@ -175,6 +175,10 @@ private:
       wxBitmap disdowntool[NUM_BUTTONS];
    #endif
    
+   // remember state of toggle buttons to avoid unnecessary drawing;
+   // 0 = not yet initialized, 1 = selected, -1 = not selected
+   int buttstate[NUM_BUTTONS];
+   
    // positioning data used by AddButton and AddSeparator
    int ypos, xpos, smallgap, biggap;
 };
@@ -241,6 +245,10 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       CreatePaleBitmap(downtool[ZOOMIN_TOOL],     disdowntool[ZOOMIN_TOOL]);
       CreatePaleBitmap(downtool[ZOOMOUT_TOOL],    disdowntool[ZOOMOUT_TOOL]);
    #endif
+
+   for (int i = 0; i < NUM_BUTTONS; i++) {
+      buttstate[i] = 0;
+   }
 
    // init position variables used by AddButton and AddSeparator
    ypos = 4;
@@ -480,6 +488,8 @@ void ToolBar::SetStartStopButton()
 {
    if (inscript || mainptr->generating) {
       // show stop bitmap
+      if (buttstate[START_TOOL] == 1) return;
+      buttstate[START_TOOL] = 1;
       tbbutt[START_TOOL]->SetBitmapLabel(normtool[STOP_TOOL]);
       if (inscript)
          tbbutt[START_TOOL]->SetToolTip(_("Stop script"));
@@ -487,6 +497,8 @@ void ToolBar::SetStartStopButton()
          tbbutt[START_TOOL]->SetToolTip(_("Stop generating"));
    } else {
       // show start bitmap
+      if (buttstate[START_TOOL] == -1) return;
+      buttstate[START_TOOL] = -1;
       tbbutt[START_TOOL]->SetBitmapLabel(normtool[START_TOOL]);
       tbbutt[START_TOOL]->SetToolTip(_("Start generating"));
    }
@@ -503,8 +515,12 @@ void ToolBar::SetStartStopButton()
 void ToolBar::SelectButton(int id, bool select)
 {
    if (select) {
+      if (buttstate[id] == 1) return;
+      buttstate[id] = 1;
       tbbutt[id]->SetBitmapLabel(downtool[id]);
    } else {
+      if (buttstate[id] == -1) return;
+      buttstate[id] = -1;
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
 

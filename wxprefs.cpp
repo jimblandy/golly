@@ -1670,7 +1670,7 @@ void GetPrefs()
    
    // init names of Perl and Python libraries
    #ifdef __WXMSW__
-      perllib = wxT("perl58.dll");
+      perllib = wxT("perl510.dll");
       pythonlib = wxT("python25.dll");
    #elif defined(__WXMAC__)
       // not used (Perl & Python are loaded at link time)
@@ -1725,7 +1725,7 @@ void GetPrefs()
 
       if (strcmp(keyword, "prefs_version") == 0) {
          sscanf(value, "%d", &currversion);
-         /* !!! should we prevent older Golly clobbering newer Golly's prefs???
+         /* should we prevent older Golly clobbering newer Golly's prefs???
          if (currversion > PREFS_VERSION) {
             Fatal(...);
          }

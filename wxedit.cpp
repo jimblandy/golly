@@ -184,7 +184,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    #endif
    
    #ifdef __WXMSW__
-      //!!! use theme background color on Windows???
+      // use theme background color on Windows
       wxBrush brush(GetBackgroundColour());
       FillRect(dc, r, brush);
    #endif
@@ -311,11 +311,6 @@ void EditBar::OnPaint(wxPaintEvent& WXUNUSED(event))
    #endif
    
    if (!showedit) return;
-   
-   #ifdef __WXMSW__
-      // needed on Windows
-      //!!!??? dc.Clear();
-   #endif
    
    DrawEditBar(dc, wd, ht);
 }

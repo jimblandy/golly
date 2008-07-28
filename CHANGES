@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: Win/Linux apps require Perl 5.10 or later.
 TGR: Made makefiles simpler and safer.
 TGR: Implemented WireWorld and Generations.
 AKT: Rendering in Mac and Linux apps is faster at scales 1:4/8/16.
