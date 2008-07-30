@@ -82,16 +82,17 @@ void DoAutoUpdate();          // update display if autoupdate is true
 
 const char* GSF_open(char* filename, int remember);
 const char* GSF_save(char* filename, char* format, int remember);
+const char* GSF_setalgo(char* algostring);
 const char* GSF_setrule(char* rulestring);
 const char* GSF_setgen(char* genstring);
 const char* GSF_setpos(char* x, char* y);
-void GSF_setname(char* name, int index);
 const char *GSF_setcell(int x, int y, int newstate);
-void GSF_select(int x, int y, int wd, int ht);
 bool GSF_setoption(char* optname, int newval, int* oldval);
 bool GSF_getoption(char* optname, int* optval);
 bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol);
 bool GSF_getcolor(char* colname, wxColor& color);
+void GSF_setname(char* name, int index);
+void GSF_select(int x, int y, int wd, int ht);
 void GSF_getkey(char* s);
 void GSF_dokey(char* ascii);
 void GSF_update();

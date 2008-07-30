@@ -931,7 +931,6 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Pattern cannot be converted (outside +/- 10^9 boundary)."));
-         // ask user if they want to continue anyway???
          return;
       }
    }

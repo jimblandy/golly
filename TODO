@@ -3,7 +3,7 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
-- Allow Set Rule dlg (and GSF_setule) to change algo.
+- Allow Set Rule dlg (and GSF_setrule) to change algo.
 
 - *algo::getrule should return canonical format of last (valid) rule
   string given to setrule.  Then eliminate my CanonicalRule routine.
@@ -13,10 +13,6 @@ Andrew's list:
   - On Win we want to be able to press-select-release.
 
 - Implement scripting changes:
-  - numalgos() returns # of algorithms.
-  - setalgo(name) sets algo to given name.
-  - getalgo(index=current) returns name of algo at given index in
-    menu (0..numalgos-1) or current algo if index is not supplied.
   - Provide commands to get/set colors if # states > 2.
   - Decide how to handle cell lists if # states > 2.
     Maybe such lists contain 3 ints per cell:

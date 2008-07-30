@@ -172,6 +172,7 @@ or you can search for individual commands alphabetically:
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#getalgo"><b>getalgo</b></a><br>
 <a href="#getbase"><b>getbase</b></a><br>
 <a href="#getcell"><b>getcell</b></a><br>
 <a href="#getcells"><b>getcells</b></a><br>
@@ -190,18 +191,20 @@ or you can search for individual commands alphabetically:
 <a href="#getrule"><b>getrule</b></a><br>
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
-<a href="#getstring"><b>getstring</b></a><br>
-<a href="#hash"><b>hash</b></a>
+<a href="#getstring"><b>getstring</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#hash"><b>hash</b></a><br>
 <a href="#help"><b>help</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
 <a href="#new"><b>new</b></a><br>
 <a href="#note"><b>note</b></a><br>
+<a href="#numalgos"><b>numalgos</b></a><br>
 <a href="#numlayers"><b>numlayers</b></a><br>
+<a href="#numstates"><b>numstates</b></a><br>
 <a href="#open"><b>open</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
@@ -211,13 +214,14 @@ or you can search for individual commands alphabetically:
 <a href="#rotate"><b>rotate</b></a><br>
 <a href="#run"><b>run</b></a><br>
 <a href="#save"><b>save</b></a><br>
-<a href="#select"><b>select</b></a><br>
-<a href="#setbase"><b>setbase</b></a><br>
-<a href="#setcell"><b>setcell</b></a><br>
-<a href="#setcolor"><b>setcolor</b></a>
+<a href="#select"><b>select</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#setalgo"><b>setalgo</b></a><br>
+<a href="#setbase"><b>setbase</b></a><br>
+<a href="#setcell"><b>setcell</b></a><br>
+<a href="#setcolor"><b>setcolor</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
 <a href="#setgen"><b>setgen</b></a><br>
 <a href="#setlayer"><b>setlayer</b></a><br>
@@ -608,6 +612,37 @@ Return True if the universe is empty or False if there is at least one live cell
 This is much more efficient than testing <b>getpop() == "0"</b>.
 </dd>
 <dd> Example: <b>if golly.empty(): golly.show("All cells are dead.")</b></dd>
+</p>
+
+<a name="numstates"></a><p><dt><b>numstates()</b></dt>
+<dd>
+Return the number of cell states in the current universe.  This will be a
+number from 2 to 256, depending on the current algorithm and rule.
+</dd>
+<dd> Example: <b>maxstate = golly.numstates() - 1</b></dd>
+</p>
+
+<a name="numalgos"></a><p><dt><b>numalgos()</b></dt>
+<dd>
+Return the number of algorithms (ie. the number of items in the Set Algorithm menu).
+</dd>
+<dd> Example: <b>maxalgo = golly.numalgos() - 1</b></dd>
+</p>
+
+<a name="setalgo"></a><p><dt><b>setalgo(<i>string</i>)</b></dt>
+<dd>
+Set the current algorithm according to the given string which must match
+one of the names in the Set Algorithm menu.
+</dd>
+<dd> Example: <b>golly.setalgo("HashLife")</b></dd>
+</p>
+
+<a name="getalgo"></a><p><dt><b>getalgo(<i>index=current</i>)</b></dt>
+<dd>
+Return the algorithm name at the given index in the Set Algorithm menu,
+or the current algorithm's name if no index is supplied.
+</dd>
+<dd> Example: <b>lastalgo = golly.getalgo( golly.numalgos() - 1 )</b></dd>
 </p>
 
 <a name="setrule"></a><p><dt><b>setrule(<i>string</i>)</b></dt>

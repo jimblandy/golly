@@ -143,6 +143,40 @@ const char* GSF_save(char* filename, char* format, int remember)
 
 // -----------------------------------------------------------------------------
 
+const char* GSF_setalgo(char* algostring)
+{
+   // find index for given algo name
+   algo_type algoindex = -1;
+   for (int i = 0; i < NumAlgos(); i++) {
+      if (strcmp(algostring, GetAlgoName(i)) == 0) {
+         algoindex = i;
+         break;
+      }
+   }
+   if (algoindex < 0) {
+      static char err[256];
+      sprintf(err, "Unknown algorithm: %s", algostring);
+      return err;
+   }
+   
+   if (algoindex != currlayer->algtype) {
+      mainptr->ChangeAlgorithm(algoindex);
+      if (algoindex != currlayer->algtype) {
+         // this can happen if pattern is too big to convert
+         return "Algorithm could not be changed!";
+      } else {
+         // rule might have changed
+         ChangeWindowTitle(wxEmptyString);
+         // pattern might have changed or colors might have changed
+         DoAutoUpdate();
+      }
+   }
+   
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* GSF_setrule(char* rulestring)
 {
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);

@@ -1600,6 +1600,45 @@ static PyObject* py_getpop(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_setalgo(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* algostring = NULL;
+
+   if (!PyArg_ParseTuple(args, "s", &algostring)) return NULL;
+
+   const char* errmsg = GSF_setalgo(algostring);
+   if (errmsg) {
+      PyErr_SetString(PyExc_RuntimeError, errmsg);
+      return NULL;
+   }
+
+   RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_getalgo(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int index = currlayer->algtype;
+
+   if (!PyArg_ParseTuple(args, "|i", &index)) return NULL;
+
+   if (index < 0 || index >= NumAlgos()) {
+      char msg[64];
+      sprintf(msg, "Bad getalgo index: %d", index);
+      PyErr_SetString(PyExc_RuntimeError, msg);
+      return NULL;
+   }
+
+   return Py_BuildValue("s", GetAlgoName(index));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setrule(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -1639,6 +1678,18 @@ static PyObject* py_numstates(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    return Py_BuildValue("i", currlayer->algo->NumCellStates());
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_numalgos(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, "")) return NULL;
+
+   return Py_BuildValue("i", NumAlgos());
 }
 
 // -----------------------------------------------------------------------------
@@ -2357,9 +2408,12 @@ static PyMethodDef py_methods[] = {
    { "setgen",       py_setgen,     METH_VARARGS, "set current generation to given string" },
    { "getgen",       py_getgen,     METH_VARARGS, "return current generation as string" },
    { "getpop",       py_getpop,     METH_VARARGS, "return current population as string" },
-   { "setrule",      py_setrule,    METH_VARARGS, "set current rule according to string" },
-   { "getrule",      py_getrule,    METH_VARARGS, "return current rule string" },
    { "numstates",    py_numstates,  METH_VARARGS, "return number of cell states in current universe" },
+   { "numalgos",     py_numalgos,   METH_VARARGS, "return number of algorithms" },
+   { "setalgo",      py_setalgo,    METH_VARARGS, "set current algorithm using given string" },
+   { "getalgo",      py_getalgo,    METH_VARARGS, "return name of given or current algorithm" },
+   { "setrule",      py_setrule,    METH_VARARGS, "set current rule using given string" },
+   { "getrule",      py_getrule,    METH_VARARGS, "return current rule" },
    // viewing
    { "setpos",       py_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       py_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },

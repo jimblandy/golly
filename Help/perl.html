@@ -146,6 +146,7 @@ or you can search for individual commands alphabetically:
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#getalgo"><b>g_getalgo</b></a><br>
 <a href="#getbase"><b>g_getbase</b></a><br>
 <a href="#getcell"><b>g_getcell</b></a><br>
 <a href="#getcells"><b>g_getcells</b></a><br>
@@ -164,18 +165,20 @@ or you can search for individual commands alphabetically:
 <a href="#getrule"><b>g_getrule</b></a><br>
 <a href="#getselrect"><b>g_getselrect</b></a><br>
 <a href="#getstep"><b>g_getstep</b></a><br>
-<a href="#getstring"><b>g_getstring</b></a><br>
-<a href="#hash"><b>g_hash</b></a>
+<a href="#getstring"><b>g_getstring</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#hash"><b>g_hash</b></a><br>
 <a href="#help"><b>g_help</b></a><br>
 <a href="#load"><b>g_load</b></a><br>
 <a href="#maxlayers"><b>g_maxlayers</b></a><br>
 <a href="#movelayer"><b>g_movelayer</b></a><br>
 <a href="#new"><b>g_new</b></a><br>
 <a href="#note"><b>g_note</b></a><br>
+<a href="#numalgos"><b>g_numalgos</b></a><br>
 <a href="#numlayers"><b>g_numlayers</b></a><br>
+<a href="#numstates"><b>g_numstates</b></a><br>
 <a href="#open"><b>g_open</b></a><br>
 <a href="#parse"><b>g_parse</b></a><br>
 <a href="#paste"><b>g_paste</b></a><br>
@@ -185,13 +188,14 @@ or you can search for individual commands alphabetically:
 <a href="#rotate"><b>g_rotate</b></a><br>
 <a href="#run"><b>g_run</b></a><br>
 <a href="#save"><b>g_save</b></a><br>
-<a href="#select"><b>g_select</b></a><br>
-<a href="#setbase"><b>g_setbase</b></a><br>
-<a href="#setcell"><b>g_setcell</b></a><br>
-<a href="#setcolor"><b>g_setcolor</b></a>
+<a href="#select"><b>g_select</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#setalgo"><b>g_setalgo</b></a><br>
+<a href="#setbase"><b>g_setbase</b></a><br>
+<a href="#setcell"><b>g_setcell</b></a><br>
+<a href="#setcolor"><b>g_setcolor</b></a><br>
 <a href="#setcursor"><b>g_setcursor</b></a><br>
 <a href="#setgen"><b>g_setgen</b></a><br>
 <a href="#setlayer"><b>g_setlayer</b></a><br>
@@ -581,6 +585,37 @@ Return 1 if the universe is empty or 0 if there is at least one live cell.
 This is much more efficient than testing <b>getpop() == 0</b>.
 </dd>
 <dd> Example: <b>g_exit("All cells are dead.") if g_empty();</b></dd>
+</p>
+
+<a name="numstates"></a><p><dt><b>g_numstates()</b></dt>
+<dd>
+Return the number of cell states in the current universe.  This will be a
+number from 2 to 256, depending on the current algorithm and rule.
+</dd>
+<dd> Example: <b>$maxstate = g_numstates() - 1;</b></dd>
+</p>
+
+<a name="numalgos"></a><p><dt><b>g_numalgos()</b></dt>
+<dd>
+Return the number of algorithms (ie. the number of items in the Set Algorithm menu).
+</dd>
+<dd> Example: <b>$maxalgo = g_numalgos() - 1;</b></dd>
+</p>
+
+<a name="setalgo"></a><p><dt><b>g_setalgo(<i>$string</i>)</b></dt>
+<dd>
+Set the current algorithm according to the given string which must match
+one of the names in the Set Algorithm menu.
+</dd>
+<dd> Example: <b>g_setalgo("HashLife");</b></dd>
+</p>
+
+<a name="getalgo"></a><p><dt><b>g_getalgo(<i>$index=current</i>)</b></dt>
+<dd>
+Return the algorithm name at the given index in the Set Algorithm menu,
+or the current algorithm's name if no index is supplied.
+</dd>
+<dd> Example: <b>$lastalgo = g_getalgo( g_numalgos() - 1 );</b></dd>
 </p>
 
 <a name="setrule"></a><p><dt><b>g_setrule(<i>$string</i>)</b></dt>

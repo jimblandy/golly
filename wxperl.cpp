@@ -1665,6 +1665,45 @@ XS(pl_getpop)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_setalgo)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_setalgo($string)");
+
+   STRLEN n_a;
+   char* algostring = SvPV(ST(0), n_a);
+
+   const char* errmsg = GSF_setalgo(algostring);
+   if (errmsg) PERL_ERROR(errmsg);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_getalgo)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items > 1) PERL_ERROR("Usage: $algo = g_getalgo($index=current)");
+
+   int index = currlayer->algtype;
+   if (items > 0) index = SvIV(ST(0));
+
+   if (index < 0 || index >= NumAlgos()) {
+      char msg[64];
+      sprintf(msg, "Bad g_getalgo index (%d)", index);
+      PERL_ERROR(msg);
+   }
+
+   XSRETURN_PV(GetAlgoName(index));
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_setrule)
 {
    IGNORE_UNUSED_PARAMS;
@@ -1703,6 +1742,18 @@ XS(pl_numstates)
    if (items != 0) PERL_ERROR("Usage: $int = g_numstates()");
 
    XSRETURN_IV(currlayer->algo->NumCellStates());
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_numalgos)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $int = g_numalgos()");
+
+   XSRETURN_IV(NumAlgos());
 }
 
 // -----------------------------------------------------------------------------
@@ -2470,9 +2521,12 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_setgen",       pl_setgen,       file);
    newXS("g_getgen",       pl_getgen,       file);
    newXS("g_getpop",       pl_getpop,       file);
+   newXS("g_numstates",    pl_numstates,    file);
+   newXS("g_numalgos",     pl_numalgos,     file);
+   newXS("g_setalgo",      pl_setalgo,      file);
+   newXS("g_getalgo",      pl_getalgo,      file);
    newXS("g_setrule",      pl_setrule,      file);
    newXS("g_getrule",      pl_getrule,      file);
-   newXS("g_numstates",    pl_numstates,    file);
    // viewing
    newXS("g_setpos",       pl_setpos,       file);
    newXS("g_getpos",       pl_getpos,       file);
