@@ -466,7 +466,12 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       wxMenuItem* item;
       while ( id > ID_OPEN_RECENT + 1 ) {
          wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
-         wxString prevpath = previtem->GetLabel();
+         #ifdef __WXGTK__
+            // avoid wxGTK bug if item contains underscore
+            wxString prevpath = previtem->GetLabel();
+         #else
+            wxString prevpath = previtem->GetText();
+         #endif
          item = patternSubMenu->FindItem(id);
          item->SetText(prevpath);
          id--;
@@ -520,7 +525,12 @@ void MainFrame::AddRecentScript(const wxString& inpath)
       wxMenuItem* item;
       while ( id > ID_RUN_RECENT + 1 ) {
          wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
-         wxString prevpath = previtem->GetLabel();
+         #ifdef __WXGTK__
+            // avoid wxGTK bug if item contains underscore
+            wxString prevpath = previtem->GetLabel();
+         #else
+            wxString prevpath = previtem->GetText();
+         #endif
          item = scriptSubMenu->FindItem(id);
          item->SetText(prevpath);
          id--;
@@ -889,7 +899,12 @@ void MainFrame::OpenRecentPattern(int id)
 
    wxMenuItem* item = patternSubMenu->FindItem(id);
    if (item) {
-      wxString path = item->GetLabel();
+      #ifdef __WXGTK__
+         // avoid wxGTK bug if item contains underscore
+         wxString path = item->GetLabel();
+      #else
+         wxString path = item->GetText();
+      #endif
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -915,7 +930,12 @@ void MainFrame::OpenRecentScript(int id)
 
    wxMenuItem* item = scriptSubMenu->FindItem(id);
    if (item) {
-      wxString path = item->GetLabel();
+      #ifdef __WXGTK__
+         // avoid wxGTK bug if item contains underscore
+         wxString path = item->GetLabel();
+      #else
+         wxString path = item->GetText();
+      #endif
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -933,7 +953,12 @@ void MainFrame::ClearMissingPatterns()
    int pos = 0;
    while (pos < numpatterns) {
       wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
-      wxString path = item->GetLabel();
+      #ifdef __WXGTK__
+         // avoid wxGTK bug if item contains underscore
+         wxString path = item->GetLabel();
+      #else
+         wxString path = item->GetText();
+      #endif
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -947,7 +972,12 @@ void MainFrame::ClearMissingPatterns()
          int nextpos = pos + 1;
          while (nextpos < numpatterns) {
             wxMenuItem* nextitem = patternSubMenu->FindItemByPosition(nextpos);
-            item->SetText( nextitem->GetLabel() );
+            #ifdef __WXGTK__
+               // avoid wxGTK bug if item contains underscore
+               item->SetText( nextitem->GetLabel() );
+            #else
+               item->SetText( nextitem->GetText() );
+            #endif
             item = nextitem;
             nextpos++;
          }
@@ -967,7 +997,12 @@ void MainFrame::ClearMissingScripts()
    int pos = 0;
    while (pos < numscripts) {
       wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
-      wxString path = item->GetLabel();
+      #ifdef __WXGTK__
+         // avoid wxGTK bug if item contains underscore
+         wxString path = item->GetLabel();
+      #else
+         wxString path = item->GetText();
+      #endif
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -981,7 +1016,12 @@ void MainFrame::ClearMissingScripts()
          int nextpos = pos + 1;
          while (nextpos < numscripts) {
             wxMenuItem* nextitem = scriptSubMenu->FindItemByPosition(nextpos);
-            item->SetText( nextitem->GetLabel() );
+            #ifdef __WXGTK__
+               // avoid wxGTK bug if item contains underscore
+               item->SetText( nextitem->GetLabel() );
+            #else
+               item->SetText( nextitem->GetText() );
+            #endif
             item = nextitem;
             nextpos++;
          }

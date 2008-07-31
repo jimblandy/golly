@@ -1527,7 +1527,12 @@ void SavePrefs()
       for (i = 0; i < numpatterns; i++) {
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_pattern=%s\n",
-                           (const char*)item->GetLabel().mb_str(wxConvLocal));
+                           #ifdef __WXGTK__
+                              // avoid wxGTK bug if item contains underscore
+                              (const char*)item->GetLabel().mb_str(wxConvLocal));
+                           #else
+                              (const char*)item->GetText().mb_str(wxConvLocal));
+                           #endif
       }
    }
 
@@ -1537,7 +1542,12 @@ void SavePrefs()
       for (i = 0; i < numscripts; i++) {
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
          if (item) fprintf(f, "recent_script=%s\n",
-                           (const char*)item->GetLabel().mb_str(wxConvLocal));
+                           #ifdef __WXGTK__
+                              // avoid wxGTK bug if item contains underscore
+                              (const char*)item->GetLabel().mb_str(wxConvLocal));
+                           #else
+                              (const char*)item->GetText().mb_str(wxConvLocal));
+                           #endif
       }
    }
    
