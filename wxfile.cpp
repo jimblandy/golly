@@ -434,7 +434,19 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
    }
 
    // put given path at start of patternSubMenu
-   int id = patternSubMenu->FindItem(path);
+   #ifdef __WXGTK__
+      // avoid wxGTK bug in FindItem if path contains underscores
+      int id = wxNOT_FOUND;
+      for (int i = 0; i < numpatterns; i++) {
+         wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
+         if (item->GetLabel() == path) {
+            id = ID_OPEN_RECENT + 1 + i;
+            break;
+         }
+      }
+   #else
+      int id = patternSubMenu->FindItem(path);
+   #endif
    if ( id == wxNOT_FOUND ) {
       if ( numpatterns < maxpatterns ) {
          // add new path
@@ -454,7 +466,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       wxMenuItem* item;
       while ( id > ID_OPEN_RECENT + 1 ) {
          wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
-         wxString prevpath = previtem->GetText();
+         wxString prevpath = previtem->GetLabel();
          item = patternSubMenu->FindItem(id);
          item->SetText(prevpath);
          id--;
@@ -476,7 +488,19 @@ void MainFrame::AddRecentScript(const wxString& inpath)
    }
 
    // put given path at start of scriptSubMenu
-   int id = scriptSubMenu->FindItem(path);
+   #ifdef __WXGTK__
+      // avoid wxGTK bug in FindItem if path contains underscores
+      int id = wxNOT_FOUND;
+      for (int i = 0; i < numscripts; i++) {
+         wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
+         if (item->GetLabel() == path) {
+            id = ID_RUN_RECENT + 1 + i;
+            break;
+         }
+      }
+   #else
+      int id = scriptSubMenu->FindItem(path);
+   #endif
    if ( id == wxNOT_FOUND ) {
       if ( numscripts < maxscripts ) {
          // add new path
@@ -496,7 +520,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
       wxMenuItem* item;
       while ( id > ID_RUN_RECENT + 1 ) {
          wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
-         wxString prevpath = previtem->GetText();
+         wxString prevpath = previtem->GetLabel();
          item = scriptSubMenu->FindItem(id);
          item->SetText(prevpath);
          id--;
@@ -865,7 +889,7 @@ void MainFrame::OpenRecentPattern(int id)
 
    wxMenuItem* item = patternSubMenu->FindItem(id);
    if (item) {
-      wxString path = item->GetText();
+      wxString path = item->GetLabel();
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -891,7 +915,7 @@ void MainFrame::OpenRecentScript(int id)
 
    wxMenuItem* item = scriptSubMenu->FindItem(id);
    if (item) {
-      wxString path = item->GetText();
+      wxString path = item->GetLabel();
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -909,7 +933,7 @@ void MainFrame::ClearMissingPatterns()
    int pos = 0;
    while (pos < numpatterns) {
       wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
-      wxString path = item->GetText();
+      wxString path = item->GetLabel();
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -923,7 +947,7 @@ void MainFrame::ClearMissingPatterns()
          int nextpos = pos + 1;
          while (nextpos < numpatterns) {
             wxMenuItem* nextitem = patternSubMenu->FindItemByPosition(nextpos);
-            item->SetText( nextitem->GetText() );
+            item->SetText( nextitem->GetLabel() );
             item = nextitem;
             nextpos++;
          }
@@ -943,7 +967,7 @@ void MainFrame::ClearMissingScripts()
    int pos = 0;
    while (pos < numscripts) {
       wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
-      wxString path = item->GetText();
+      wxString path = item->GetLabel();
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -957,7 +981,7 @@ void MainFrame::ClearMissingScripts()
          int nextpos = pos + 1;
          while (nextpos < numscripts) {
             wxMenuItem* nextitem = scriptSubMenu->FindItemByPosition(nextpos);
-            item->SetText( nextitem->GetText() );
+            item->SetText( nextitem->GetLabel() );
             item = nextitem;
             nextpos++;
          }
