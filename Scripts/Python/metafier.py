@@ -52,6 +52,11 @@ for i in xrange(g.numlayers()):
 if metalayer < 0 and g.numlayers() == g.maxlayers():
    g.exit("You need to delete a layer.")
 
+# note that getrule returns canonical rule string
+rulestr = g.getrule()
+if (not rulestr.startswith("B")) or (rulestr.find("/S") == -1):
+   g.exit("This script only works with B*/S* rules.")
+
 # get the current selection
 slist = g.getcells(selrect)
 selwidth = selrect[2]
@@ -61,12 +66,6 @@ selheight = selrect[3]
 livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
 for i in xrange(0, len(slist), 2):
    livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
-
-# get standardized rule string
-rulestr = g.getrule().upper()
-if rulestr.find("/") == -1:
-   if rulestr.startswith("B"): rulestr += "/S"
-   elif rulestr.startswith("S"): rulestr = "B/" + rulestr
 
 # build a patch pattern based on the current rule
 #  that fixes the appropriate broken eaters in the rules table
@@ -802,7 +801,7 @@ ONcell += RuleBits
 
 g.autoupdate(True)
 g.new(layername)   
-g.setoption("hashing", False)       # qlife setcell is faster
+g.setalgo("QuickLife")              # qlife's setcell is faster
 
 for j in xrange(selheight):
    for i in xrange(selwidth):
@@ -815,7 +814,7 @@ for j in xrange(selheight):
       g.fit()
    
 g.show("")
-g.setoption("hashing", True)        # no point running a metapattern without hashing
+g.setalgo("HashLife")               # no point running a metapattern without hashing
 g.setoption("hyperspeed", False)    # avoid going too fast
 g.setbase(8)
 g.setstep(4)

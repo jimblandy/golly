@@ -1,9 +1,11 @@
-# p1100-MWSS-gun.py
 # Bill Gosper's pure-period p1100 double MWSS gun, circa 1984.
 
 import golly as g
 from glife import *
-g.setoption("hashing", True)
+
+g.new("P1100 gun")
+g.setalgo("HashLife")
+g.setrule("B3/S23")
 
 glider = pattern("bo$bbo$3o!")
 block = pattern("oo$oo!")
@@ -81,7 +83,6 @@ center = block(1081,6791) + block(2731,6791) + block(3831,6791) \
 MWSSrecipes += MWSSrecipes(0,13583,flip_y)
 all += all(0,13583,flip_y) + center
 
-g.new("P1100 gun")
 g.putcells(all)
 g.fit()
 

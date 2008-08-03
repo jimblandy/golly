@@ -6,15 +6,15 @@ import golly as g
 
 import os
 from os.path import join
-
 from time import sleep
-
-# remember initial hashing state so we can restore it if changed by a pattern file
-inithash = g.getoption("hashing")
 
 # ------------------------------------------------------------------------------
 
 def slideshow ():
+   oldalgo = g.getalgo()
+   oldrule = g.getrule()
+   
+   g.show("Hit space to continue or escape to exit the slide show...")
    for root, dirs, files in os.walk(g.appdir() + "Patterns"):
       for name in files:
          if name.startswith("."):
@@ -28,25 +28,20 @@ def slideshow ():
             g.open(fullname, False)       # don't add file to Open Recent submenu
             g.update()
             
-            g.show("Hit space to continue or escape to exit the slide show...")
             while True:
-               sleep(0.01)                # avoid hogging cpu
                ch = g.getkey()
                if ch == " ": break
                g.dokey(ch)                # allow keyboard interaction
-            
-            g.new("")
-            if inithash != g.getoption("hashing"):
-               if inithash:
-                  # turn on hashing (B0-not-S8 rule turned it off)
-                  g.setrule("B3/S23")
-                  g.setoption("hashing", True)
-               else:
-                  # turn off hashing (.mc file turned it on)
-                  g.setoption("hashing", False)
+               sleep(0.01)                # avoid hogging cpu
       
       if "CVS" in dirs:
          dirs.remove("CVS")  # don't visit CVS directories
+   
+   # if all patterns have been displayed then restore original algo and rule
+   # (don't do this if user hits escape in case they want to explore pattern)
+   g.new("untitled")
+   g.setalgo(oldalgo)
+   g.setrule(oldrule)
 
 # ------------------------------------------------------------------------------
 

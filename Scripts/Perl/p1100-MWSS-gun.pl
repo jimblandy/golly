@@ -1,7 +1,10 @@
 # Bill Gosper's pure-period p1100 double MWSS gun, circa 1984
 
 use strict;
-g_setoption("hashing", 1);
+
+g_new("P1100 gun");
+g_setalgo("HashLife");
+g_setrule("B3/S23");
 
 my $glider = g_parse('bo$bbo$3o!');
 my $block = g_parse('oo$oo!');
@@ -124,7 +127,6 @@ push @all, @{g_transform(\@all,0,13583,1,0,0,-1)},
 
 push @MWSSrecipes,@{g_transform(\@MWSSrecipes,0,13583,1,0,0,-1)};
 
-g_new("P1100 gun");
 g_putcells(\@all);
 g_fit();
 
