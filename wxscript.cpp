@@ -813,20 +813,21 @@ void CheckScriptError(const wxString& ext)
       // error was caused by AbortPerlScript/AbortPythonScript
       // so don't display scripterr
    } else {
-      scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
+      wxString errtype;
+      if (ext.IsSameAs(wxT("pl"), false)) {
+         errtype = _("Perl error:");
+         scripterr.Replace(wxT(". at "), wxT("\nat "));
+      } else {
+         errtype = _("Python error:");
+         scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
+      }
       wxBell();
       #ifdef __WXMAC__
          wxSetCursor(*wxSTANDARD_CURSOR);
       #endif
-      wxString errtype;
-      if (ext.IsSameAs(wxT("pl"), false)) {
-         errtype = _("Perl error:");
-      } else {
-         errtype = _("Python error:");
-      }
       wxMessageBox(scripterr, errtype, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
    }
-   // don't change message if GSF_exit was used to stop script
+   // don't change status message if GSF_exit was used to stop script
    if (!exitcalled) statusptr->DisplayMessage(_("Script aborted."));
 }
 
