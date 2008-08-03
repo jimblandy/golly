@@ -892,16 +892,27 @@ void MainFrame::ShowRuleDialog()
       return;
    }
 
+   algo_type oldalgotype = currlayer->algtype;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
    if (ChangeRule()) {
-      // rule might have changed
+      // if ChangeAlgorithm was called then we're done
+      if (currlayer->algtype != oldalgotype) {
+         // except we have to call UpdateEverything here now that the
+         // main window is active
+         UpdateEverything();
+         return;
+      }
+      
+      // show new rule in window title (but don't change file name);
+      // even if the rule didn't change we still need to do this because
+      // the user might have simply added/deleted a named rule
+      SetWindowTitle(wxEmptyString);
+      
+      // check if rule actually changed
       wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
       if (oldrule != newrule) {
-         // show new rule in window title (but don't change file name)
-         SetWindowTitle(wxEmptyString);
-
          // rule change might have changed the number of cell states;
          // if there are fewer states then pattern might change
          int newmaxstate = currlayer->algo->NumCellStates() - 1;
@@ -939,7 +950,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       // terminate generating loop and set command_pending flag
       Stop();
       command_pending = true;
-      cmdevent.SetId(ID_ALGO0 + (int)newalgotype);
+      cmdevent.SetId(ID_ALGO0 + newalgotype);
       return;
    }
 
@@ -966,10 +977,18 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    
    if (inundoredo) {
       // switch to given newrule (no error should occur)
-      newalgo->setrule( newrule.mb_str(wxConvLocal) );
+      const char* err = newalgo->setrule( newrule.mb_str(wxConvLocal) );
+      if (err) Warning(_("Bug detected in ChangeAlgorithm!"));
    } else {
-      // try to use same rule
-      const char* err = newalgo->setrule( currlayer->algo->getrule() );
+      const char* err;
+      if (newrule.IsEmpty()) {
+         // try to use same rule
+         err = newalgo->setrule( currlayer->algo->getrule() );
+      } else {
+         // switch to newrule (ChangeRule has called ChangeAlgorithm)
+         err = newalgo->setrule( newrule.mb_str(wxConvLocal) );
+         rulechanged = true;
+      }
       if (err) {
          // switch to new algo's default rule
          newalgo->setrule( newalgo->DefaultRule() );
@@ -1056,16 +1075,33 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
             currlayer->savestart = true;
          }
          
-         if (patternchanged) {
-            statusptr->ErrorMessage(_("Rule has changed and pattern has changed (new algorithm has fewer states)."));
+         if (newrule.IsEmpty()) {
+            if (patternchanged) {
+               statusptr->ErrorMessage(_("Rule has changed and pattern has changed (new algorithm has fewer states)."));
+            } else {
+               // don't beep
+               statusptr->DisplayMessage(_("Rule has changed."));
+            }
          } else {
-            // don't beep if only the rule changed???
-            statusptr->DisplayMessage(_("Rule has changed."));
+            // ChangeRule called ChangeAlgorithm
+            if (patternchanged) {
+               statusptr->ErrorMessage(_("Algorithm has changed and pattern has changed (new algorithm has fewer states)."));
+            } else {
+               // don't beep
+               statusptr->DisplayMessage(_("Algorithm has changed."));
+            }
          }
       } else if (patternchanged) {
          statusptr->ErrorMessage(_("Pattern has changed (new algorithm has fewer states)."));
       }
-      UpdateEverything();
+      
+      // only call UpdateEverything here if we're not inside ChangeRule,
+      // otherwise a wxMac bug will cause menu items to remain disabled
+      // after the modal rule dialog closes
+      //!!! didn't avoid bug
+      if (newrule.IsEmpty()) {
+         UpdateEverything();
+      }
    }
 
    if (savechanges) {

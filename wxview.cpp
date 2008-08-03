@@ -641,7 +641,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    const char* err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
    if (err) {
       // cycle thru all other algos until readclipboard succeeds
-     for (int i = 0; i < NumAlgos(); i++) {
+      for (int i = 0; i < NumAlgos(); i++) {
          if (i != currlayer->algtype) {
             delete *tempalgo;
             *tempalgo = CreateNewUniverse((algo_type) i);
@@ -706,7 +706,7 @@ void PatternView::PasteClipboard(bool toselection)
    if ( GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       // tempalgo might have been deleted and re-created as a different type
       // of universe
-      /* !!! better to proceed with paste and only report error if one or more setcell calls fail???
+      /* better to proceed with paste and only report error if one or more setcell calls fail???
       if (currlayer->algo->NumCellStates() < tempalgo->NumCellStates()) {
          statusptr->ErrorMessage(_("Paste not allowed if clipboard pattern has more states than current universe."));
       } else

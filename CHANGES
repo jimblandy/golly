@@ -10,7 +10,11 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
-AKT: Win/Linux apps require Perl 5.10 or later.
+AKT: Changing rule via Set Rule dialog or setrule() can change algorithm.
+AKT: getrule() returns canonical rule string.
+AKT: Fixed wxGTK bug if recent pattern/script path contained underscore.
+AKT: Added new commands: numstates, numalgos, setalgo, getalgo.
+AKT: Win app requires Perl 5.10 or later (5.8 is not binary compatible).
 TGR: Made makefiles simpler and safer.
 TGR: Implemented WireWorld and Generations.
 AKT: Rendering in Mac and Linux apps is faster at scales 1:4/8/16.

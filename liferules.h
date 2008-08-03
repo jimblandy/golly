@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *   This class implements the life rules; parses them, validates them,
  *   builds the 65K entry table for them.  Normally this is statically
  *   instantiated and shared by all algorithms, but there is no absolute
- *   requirement this be the case.
+ *   requirement for this.
  *
  *   A rule lookup table is used for computing a new 2x2 grid from
  *   a provided 4x4 grid (two tables are used to emulate B0-not-S8 rules).
@@ -37,13 +37,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #ifndef LIFERULES_H
 #define LIFERULES_H
+const int MAXRULESIZE = 200 ;
 class liferules {
 public:
    liferules() ;
    ~liferules() ;
    // string returned by setrule is any error
    const char *setrule(const char *s) ;
-   const char *getrule() const { return rule ; }
+   const char *getrule() ;
    bool vertically_symmetrical() const { return !wolfram ; }
    bool already_flipped() const { return !!flipped ; }
    void set_flipped() { flipped = 1 ; }
@@ -52,10 +53,11 @@ public:
                            // or for all gens if rule has no B0, or it has B0 *and* S8
    char rule1[65536];      // rule table for odd gens if rule has B0 but not S8
    bool hasB0notS8;        // set by setrule; true if rule has B0 but not S8
-   bool isRegularLife() ;  // is this s23b3?
+   bool isRegularLife() ;  // is this B3/S23?
 private:
    void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) ;
-   const char *rule ;      // copy of string passed into setrule
+   // canonical version of valid rule passed into setrule
+   char canonrule[MAXRULESIZE] ;
    int hexmask ;           // really neighbormask
    int rulebits ;
    int wolfram ;

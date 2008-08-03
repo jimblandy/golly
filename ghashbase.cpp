@@ -1548,12 +1548,6 @@ const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
    fputs("\n", f) ;
    
-   /* AKT
-   if (!global_liferules.isRegularLife()) {
-      // write non-Life rule
-      fprintf(f, "#R %s\n", global_liferules.getrule()) ;
-   }
-   */
    // AKT: always write out explicit rule, and avoid global_liferules
    // because not all algos use it
    fprintf(f, "#R %s\n", getrule()) ;

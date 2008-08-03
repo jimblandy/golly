@@ -35,7 +35,7 @@ const char* generationsalgo::setrule(const char *s) {
    // a legal rule goes:
    // [0-8]+/[1-8]+/[1-9][0-9]*
    const char *p = s ;
-   int tbornbits = 0, tstaybits = 0, tnumstates = 0 ;
+   int tstaybits = 0, tbornbits = 0, tnumstates = 0 ;
    while ('0' <= *p && *p <= '8') {
       tstaybits |= 1<<(*p-'0') ;
       p++ ;
@@ -54,24 +54,40 @@ const char* generationsalgo::setrule(const char *s) {
       tnumstates = 10 * tnumstates + *p - '0' ;
       p++ ;
       if (tnumstates > 256)
-	 return "Number of states too high in Generations rule" ;
+         return "Number of states too high in Generations rule" ;
    }
    if (tnumstates < 2)
       return "Number of states too low in Generations rule" ;
    if (*p)
       return "Extra stuff at end of Generations rule" ;
-   bornbits = tbornbits ;
    staybits = tstaybits ;
+   bornbits = tbornbits ;
    maxCellStates = tnumstates ;
-   strcpy(rulecopy, s) ;
-   ghashbase::setrule(rulecopy) ;
+   
+   // AKT: store rule in canonical format for getrule()
+   int i, j = 0 ;
+   char states[4] ;        // room for "2".."256" and null
+   for (i=0; i<=8; i++) {
+      if (staybits & (1 << i)) canonrule[j++] = '0' + i ;
+   }
+   canonrule[j++] = '/' ;
+   for (i=1; i<=8; i++) {
+      if (bornbits & (1 << i)) canonrule[j++] = '0' + i ;
+   }
+   canonrule[j++] = '/' ;
+   sprintf(states, "%d", tnumstates) ;
+   i = 0 ;
+   while (states[i]) {
+      canonrule[j++] = states[i++] ;
+   }
+   canonrule[j] = 0 ;
+   
+   ghashbase::setrule(canonrule) ;
    return 0 ;
 }
 
-char generationsalgo::rulecopy[MAXRULESIZE] ;
-
 const char* generationsalgo::getrule() {
-   return rulecopy ;
+   return canonrule ;
 }
 
 static const char *DEFAULTRULE = "12/34/3" ;
@@ -90,16 +106,16 @@ unsigned char *generationsalgo::GetColorData(int &numcolors) {
    if (lastcolorset != numcolors) {
       /* use Yellow (255,255,0) -> Red (255,0,0) */
       if (numcolors <= 2) {
-	 defcolors[3] = 255 ;
-	 defcolors[4] = 255 ;
-	 defcolors[5] = 0 ;
+         defcolors[3] = 255 ;
+         defcolors[4] = 255 ;
+         defcolors[5] = 0 ;
       } else {
-	 for (int i=1; i<numcolors; i++) {
-	    defcolors[i*3] = 255 ;
-	    defcolors[i*3+1] = (unsigned char)
+         for (int i=1; i<numcolors; i++) {
+            defcolors[i*3] = 255 ;
+            defcolors[i*3+1] = (unsigned char)
                                  (255 * (numcolors-i-1) / (numcolors-2)) ;
             defcolors[i*3+2] = 0 ;
-	 }
+         }
       }
    }
    return defcolors ;
@@ -113,7 +129,7 @@ generationsalgo::generationsalgo() {
 generationsalgo::~generationsalgo() {}
 
 state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
-				state e, state sw, state s, state se) {
+                                state e, state sw, state s, state se) {
    int nn = (nw==1)+(n==1)+(ne==1)+(w==1)+(e==1)+(sw==1)+(s==1)+(se==1) ;
    if (c==1 && (staybits & (1 << nn)))
       return 1 ;

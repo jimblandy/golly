@@ -33,10 +33,9 @@ public:
    virtual ~jvnalgo() ;
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
                           state e, state sw, state s, state se) ;
-   // AKT
-   virtual const char* setrule(const char* s);
-   virtual const char* getrule();
-   virtual int NumCellStates();
+   virtual const char* setrule(const char* s) ;
+   virtual const char* getrule() ;
+   virtual int NumCellStates() ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 };
 #endif

@@ -30,10 +30,76 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 
 #include "wxgolly.h"       // for wxGetApp
+#include "wxmain.h"        // for mainptr->
 #include "wxprefs.h"       // for namedrules, allowundo
 #include "wxutils.h"       // for Warning
 #include "wxlayer.h"       // for currlayer
+#include "wxalgos.h"       // for NumAlgos, CreateNewUniverse
 #include "wxrule.h"
+
+// -----------------------------------------------------------------------------
+
+bool ValidRule(wxString& rule)
+{
+   // return true if given rule is valid in at least one algorithm
+   // and convert rule to canonical form
+   
+   // qlife and hlife share global_liferules, so we need to save
+   // and restore the current rule -- yuk
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   
+   for (int i = 0; i < NumAlgos(); i++) {
+      lifealgo* tempalgo = CreateNewUniverse(i);
+      const char* err = tempalgo->setrule( rule.mb_str(wxConvLocal) );
+      if (!err) {
+         // convert rule to canonical form
+         rule = wxString(tempalgo->getrule(), wxConvLocal);
+         delete tempalgo;
+         currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+         return true;
+      }
+      delete tempalgo;
+   }
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+   return false;
+}
+
+// -----------------------------------------------------------------------------
+
+bool MatchingRules(const wxString& rule1, const wxString& rule2)
+{
+   // return true if given strings are equivalent rules
+   if (rule1 == rule2) {
+      return true;
+   } else {
+      // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules
+      // to canonical form (if valid) and then compare
+      wxString canon1 = rule1;
+      wxString canon2 = rule2;
+      return ValidRule(canon1) && ValidRule(canon2) && canon1 == canon2;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+wxString GetRuleName(const wxString& rulestring)
+{
+   // search namedrules array for matching rule
+   wxString rulename;
+   size_t i;
+   for (i = 0; i < namedrules.GetCount(); i++) {
+      // extract rule after '|'
+      wxString thisrule = namedrules[i].AfterFirst('|');
+      if ( MatchingRules(rulestring, thisrule) ) {
+         // extract name before '|'
+         rulename = namedrules[i].BeforeFirst('|');
+         return rulename;
+      }
+   }
+   // given rulestring has not been named
+   rulename = rulestring;
+   return rulename;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -57,7 +123,7 @@ private:
 
    void CreateControls();     // init ruletext, addtext, namechoice
    void UpdateName();         // update namechoice depending on ruletext
-   
+
    wxTextCtrl* ruletext;      // text box for user to type in rule
    wxTextCtrl* addtext;       // text box for user to type in name of rule
    wxChoice* namechoice;      // kept in sync with namedrules but can have one
@@ -124,12 +190,9 @@ void RuleDialog::CreateControls()
    wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
    SetSizer(topSizer);
    
-   // create the controls:
-   
    ruletext = new wxTextCtrl(this, RULE_TEXT,
                              wxString(currlayer->algo->getrule(), wxConvLocal));
-   //!!! show algo-specific comment???
-   // or maybe show in a Note dialog via a wx help button???
+
    wxString title = _("Enter a new rule:");
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, title);
    
@@ -161,8 +224,6 @@ void RuleDialog::CreateControls()
                             wxDefaultPosition, wxSize(160,wxDefaultCoord));
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
-   
-   // now position the controls:
 
    wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
    hbox1->Add(namechoice, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -189,65 +250,6 @@ void RuleDialog::CreateControls()
    topSizer->Add(hbox2, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(stdhbox, 1, wxGROW | wxTOP | wxBOTTOM, 10);
-}
-
-// -----------------------------------------------------------------------------
-
-// convert given rule string to a canonical bit pattern
-int CanonicalRule(const char* rulestring)
-{
-   const int survbit = 9;              // bits 0..8 for birth, 9..17 for survival
-   const int wolfbit = survbit * 2;
-   const int hexbit = wolfbit + 1;
-
-   // WARNING: this code is a simplified version of liferules::setrule()
-   int rulebits = 0;
-   int addend = survbit;
-   int i;
-   
-   for (i=0; rulestring[i]; i++) {
-      if (rulestring[i] == 'h' || rulestring[i] == 'H') {
-         rulebits |= 1 << hexbit;
-      } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
-         addend = 0;
-      } else if (rulestring[i] == 's' || rulestring[i] == 'S') {
-         addend = survbit;
-      } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
-         rulebits |= 1 << (addend + rulestring[i] - '0');
-      } else if (rulestring[i] == 'w' || rulestring[i] == 'W') {
-         if (rulestring[i+1] < '0' || rulestring[i+1] > '9') {
-            return -1;
-         }
-         int wolfram = atol(rulestring+i+1);
-         if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
-            // when we support toroidal universe we can allow all numbers from 0..255!!!
-            return -1;
-         }
-         return wolfram | (1 << wolfbit);
-      } else {
-         // unexpected character so not a valid rule
-         return -1;
-      }
-   }
-   
-   return rulebits;
-}
-
-// -----------------------------------------------------------------------------
-
-// return true if given strings are equivalent rules
-bool MatchingRules(const wxString& rule1, const wxString& rule2)
-{
-   if (rule1 == rule2) {
-      return true;
-   } else {
-      // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules to
-      // a canonical bit pattern and compare
-      int canon1 = CanonicalRule(rule1.mb_str(wxConvLocal));
-      int canon2 = CanonicalRule(rule2.mb_str(wxConvLocal));
-      // both rules must also be valid (non-negative) for a match
-      return canon1 >= 0 && canon2 >= 0 && canon1 == canon2;
-   }
 }
 
 // -----------------------------------------------------------------------------
@@ -281,7 +283,7 @@ void RuleDialog::UpdateName()
       }
    } else {
       // no match found so use index of UNNAMED item,
-      // appending it if it doesn't exist
+      // appending it if it doesn't exist;
       // use (int) twice to avoid warnings on wx 2.6.x/2.7
       if ( (int) namechoice->GetCount() == (int) namedrules.GetCount() ) {
          namechoice->Append(UNNAMED);
@@ -336,11 +338,10 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
       return;
    }
    
-   // validate new rule
+   // validate new rule and convert to canonical form
    wxString newrule = ruletext->GetValue();
-   const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-   if (err) {
-      Warning(_("Rule is not valid."));
+   if (!ValidRule(newrule)) {
+      Warning(_("The new rule is not valid in any algorithm."));
       ruletext->SetFocus();
       ruletext->SetSelection(-1,-1);
       return;
@@ -424,16 +425,30 @@ bool RuleDialog::TransferDataFromWindow()
 {
    // get and validate new rule
    wxString newrule = ruletext->GetValue();
-   if ( newrule.IsEmpty() ) {
-      currlayer->algo->setrule( currlayer->algo->DefaultRule() );
-      return true;
-   }
+   if (newrule.IsEmpty()) newrule = wxT("B3/S23");
+   
+   // first try new rule in current algorithm
    const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-   if (err) {
-      Warning(wxString(err, wxConvLocal));
-      return false;
+   if (!err) return true;
+   
+   // try to find another algorithm that supports the new rule
+   for (int i = 0; i < NumAlgos(); i++) {
+      if (i != currlayer->algtype) {
+         lifealgo* tempalgo = CreateNewUniverse(i);
+         err = tempalgo->setrule( newrule.mb_str(wxConvLocal) );
+         delete tempalgo;
+         if (!err) {
+            // change the current algorithm and switch to the new rule
+            mainptr->ChangeAlgorithm(i, newrule);
+            return true;
+         }
+      }
    }
-   return true;
+   
+   Warning(_("The new rule is not valid in any algorithm."));
+   ruletext->SetFocus();
+   ruletext->SetSelection(-1,-1);
+   return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -445,7 +460,8 @@ bool ChangeRule()
 
    RuleDialog dialog( wxGetApp().GetTopWindow() );
    if ( dialog.ShowModal() == wxID_OK ) {
-      // TransferDataFromWindow has validated and changed rule
+      // TransferDataFromWindow has changed the current rule,
+      // and possibly the current algorithm as well
       return true;
    } else {
       // user hit Cancel so restore rule and name array
@@ -454,25 +470,4 @@ bool ChangeRule()
       namedrules = oldnames;
       return false;
    }
-}
-
-// -----------------------------------------------------------------------------
-
-wxString GetRuleName(const wxString& rulestring)
-{
-   // search namedrules array for matching rule
-   wxString rulename;
-   size_t i;
-   for (i=0; i<namedrules.GetCount(); i++) {
-      // extract rule after '|'
-      wxString thisrule = namedrules[i].AfterFirst('|');
-      if ( MatchingRules(rulestring, thisrule) ) {
-         // extract name before '|'
-         rulename = namedrules[i].BeforeFirst('|');
-         return rulename;
-      }
-   }
-   // given rulestring has not been named
-   rulename = rulestring;
-   return rulename;
 }

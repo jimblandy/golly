@@ -648,15 +648,17 @@ or the current algorithm's name if no index is supplied.
 <a name="setrule"></a><p><dt><b>setrule(<i>string</i>)</b></dt>
 <dd>
 Set the current rule according to the given string.
-If the string is invalid then you'll get an error message and the script will
-be aborted (and the original rule will be restored).
+If the current algorithm doesn't support the specified rule then
+Golly will automatically switch to the first algorithm that does
+support the rule.  If no such algorithm can be found then you'll get
+an error message and the script will be aborted.
 </dd>
 <dd> Example: <b>golly.setrule("b3/s23")</b></dd>
 </p>
 
 <a name="getrule"></a><p><dt><b>getrule()</b></dt>
 <dd>
-Return the current rule as a string.
+Return the current rule as a string in canonical format.
 </dd>
 <dd> Example: <b>oldrule = golly.getrule()</b></dd>
 </dd>

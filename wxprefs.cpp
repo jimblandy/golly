@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for ID_*, mainptr->...
-#include "wxutils.h"       // for Warning, FillRect
+#include "wxutils.h"       // for Warning, Fatal, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxalgos.h"       // for InitAlgorithms, NumAlgos, etc
@@ -738,11 +738,13 @@ void GetKeyAction(char* value)
       }
    }
    
-   // probably better to warn user about an unknown action rather than quit
-   // (probably only happens if old Golly is reading newer prefs)
+   // probably best to silently ignore an unknown action
+   // (friendlier if old Golly is reading newer prefs)
+   /*
    if (action.id == DO_NOTHING)
       Warning(wxString::Format(_("Unknown action in key_action: %s"),
                                wxString(p,wxConvLocal).c_str()));
+   */
    
    keyaction[key][modset] = action;
 }

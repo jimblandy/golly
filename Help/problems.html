@@ -56,23 +56,9 @@ Pattern rendering needs to be optimized.
 <font size=+1><b>Linux/X11 problems</b></font>
 
 <p>
-Linux users are strongly advised to install GTK+ and run the GTK
-version of Golly.  Unfortunately the X11 version has lots of bugs:
-
-<p>
-<ul>
-<li> Resizing the main window very small can cause Golly to crash
-     (and another bug prevents setting the window's minimum size &mdash; sheesh!).
-<li> No support for full screen mode.
-<li> No support for dropping pattern files onto the main window.
-<li> Limited clipboard support (you can only Paste after using Cut/Copy).
-<li> You can't use <a href="prefs#color">Preferences > Color</a> to change any colors.
-     You'll have to quit Golly and edit the *_rgb settings in GollyPrefs.
-<li> Links in the help window can lose their color.
-<li> No alpha channel support so inversion is used for selections.
-<li> Can't create our own magnifying-glass cursors so arrows are used.
-<li> Escape key doesn't cancel progress dialog.
-</ul>
+The Linux/X11 app is no longer supported (the source code doesn't compile
+due to limitations in wxX11).
+Linux users will have to run the GTK version of Golly.
 
 </body>
 </html>

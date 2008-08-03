@@ -3,10 +3,8 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
-- Allow Set Rule dlg (and GSF_setrule) to change algo.
-
-- *algo::getrule should return canonical format of last (valid) rule
-  string given to setrule.  Then eliminate my CanonicalRule routine.
+- Fix missing &s in recent file paths (replace each & with &&) and
+  fix underscore bug in Linux app by trying wxGTK 2.8.8.
 
 - Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
@@ -105,6 +103,17 @@ For future versions:
 - Fix qlifealgo::lowerRightPixel to prevent off-by-one error when
   selecting large pattern like caterpillar.
 
+- Optimize rendering by eliminating lots of DrawRectangle/DrawBitmap calls.
+  Instead, each layer has a viewport-sized buffer into which we "draw"
+  and then convert that to a wxBitmap and call DrawBitmap *once*.
+  If we use a double-size buffer we could ping-pong and check which parts
+  of the viewport have changed and only call DrawBitmap on the area that
+  has changed (possibly not at all).  Other advantages:
+  1. We could expose the buffer to scripting commands (setpixel/getpixel)
+     so that scripts could do fancy stuff like overlay images/text.
+  2. It should make it easier further down the track if we wanted to avoid
+     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL.
+
 - Change all Python commands to g_* for consistency with Perl commands.
   Unfortutely, we can't really keep the old commands in same module
   because doing "from golly import *" exposes old and new commands and
@@ -130,6 +139,9 @@ For future versions:
 - Implement a history bar for hlife.
 
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
+
+- Revisit universal scripting idea, but using shared memory for IPC
+  rather than redirecting stdin/out.
 
 User suggestions:
 -----------------
@@ -174,3 +186,10 @@ User suggestions:
   or top edge of focal viewport, depending on aspect ratio?).
 - Allow mc files to set step base and/or exponent via comment line like
   #X stepbase=8 stepexp=3
+
+[Tim Hutton]
+- Add a script command "file = getfile(...)"? to let user select a file
+  via std open dialog.
+- Add a script command to save comments in a pattern file.  Add optional
+  param to existing save command?
+

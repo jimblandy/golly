@@ -26,7 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 bool ChangeRule();
 // Open a dialog that lets the user change the current rule.
-// Return true if the rule change succeeds.
+// Return true if the rule change succeeds.  Note that the
+// current algorithm might also change.
 
 wxString GetRuleName(const wxString& rulestring);
 // If given rule has a name then return name, otherwise return the rule.

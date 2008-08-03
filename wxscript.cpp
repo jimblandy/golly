@@ -162,8 +162,7 @@ const char* GSF_setalgo(char* algostring)
    if (algoindex != currlayer->algtype) {
       mainptr->ChangeAlgorithm(algoindex);
       if (algoindex != currlayer->algtype) {
-         // this can happen if pattern is too big to convert
-         return "Algorithm could not be changed!";
+         return "Algorithm could not be changed (pattern is too big to convert).";
       } else {
          // rule might have changed
          ChangeWindowTitle(wxEmptyString);
@@ -179,7 +178,7 @@ const char* GSF_setalgo(char* algostring)
 
 const char* GSF_setrule(char* rulestring)
 {
-   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
    // inscript should be true but play safe
@@ -191,17 +190,37 @@ const char* GSF_setrule(char* rulestring)
 
    const char* err;
    if (rulestring == NULL || rulestring[0] == 0) {
-      // set default rule for current algo
-      err = currlayer->algo->setrule( currlayer->algo->DefaultRule() );
+      // set normal Life
+      err = currlayer->algo->setrule("B3/S23");
    } else {
       err = currlayer->algo->setrule(rulestring);
    }
    if (err) {
+      // try to find another algorithm that supports the new rule
+      for (int i = 0; i < NumAlgos(); i++) {
+         if (i != currlayer->algtype) {
+            lifealgo* tempalgo = CreateNewUniverse(i);
+            err = tempalgo->setrule(rulestring);
+            delete tempalgo;
+            if (!err) {
+               // change the current algorithm and switch to the new rule
+               mainptr->ChangeAlgorithm(i, wxString(rulestring,wxConvLocal));
+               if (i != currlayer->algtype) {
+                  currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+                  return "Algorithm could not be changed (pattern is too big to convert).";
+               } else {
+                  ChangeWindowTitle(wxEmptyString);
+                  DoAutoUpdate();
+                  return NULL;
+               }
+            }
+         }
+      }
       currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-      return err;
+      return "Given rule is not valid in any algorithm.";
    }
 
-   wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
    if (oldrule != newrule) {
       // show new rule in main window's title but don't change name
       ChangeWindowTitle(wxEmptyString);
@@ -274,7 +293,7 @@ void GSF_setname(char* name, int index)
       
       // show new name in main window's title;
       // also sets currlayer->currname and updates menu item
-      ChangeWindowTitle(wxString(name, wxConvLocal));
+      ChangeWindowTitle(wxString(name,wxConvLocal));
 
       if (allowundo && !currlayer->stayclean) {
          // note that currfile and savestart/dirty flags don't change
@@ -287,7 +306,7 @@ void GSF_setname(char* name, int index)
       currlayer = GetLayer(index);
       wxString oldname = currlayer->currname;
 
-      currlayer->currname = wxString(name, wxConvLocal);
+      currlayer->currname = wxString(name,wxConvLocal);
 
       if (allowundo && !currlayer->stayclean) {
          // note that currfile and savestart/dirty flags don't change
@@ -359,12 +378,11 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
-   //!!! add new setalgo/getalgo commands???
+   // this option is deprecated (use setalgo/getalgo commands)
    } else if (strcmp(optname, "hashing") == 0) {
       *oldval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
       if (*oldval != newval) {
          mainptr->ChangeAlgorithm(newval ? HLIFE_ALGO : QLIFE_ALGO);
-         // status bar color might change
          DoAutoUpdate();
       }
 
@@ -888,7 +906,7 @@ void RunScript(const wxString& filename)
    #ifdef __WXMAC__
       // use decomposed UTF8 so interpreter can open names with non-ASCII chars
       #if wxCHECK_VERSION(2, 7, 0)
-         fpath = wxString(fpath.fn_str(), wxConvLocal);
+         fpath = wxString(fpath.fn_str(),wxConvLocal);
       #else
          // wxMac 2.6.x or older
          fpath = wxString(fpath.wc_str(wxConvLocal), wxConvUTF8);

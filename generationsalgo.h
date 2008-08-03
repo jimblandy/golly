@@ -27,22 +27,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 /**
  *   Our WireWorld algo class.
  */
-static const int MAXRULESIZE = 60 ;
 class generationsalgo : public ghashbase {
 public:
    generationsalgo() ;
    virtual ~generationsalgo() ;
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
-			  state e, state sw, state s, state se) ;
-   // AKT
-   virtual const char* setrule(const char* s);
-   virtual const char* getrule();
-   virtual const char* DefaultRule();
-   virtual unsigned char *GetColorData(int &numcolors);
+                          state e, state sw, state s, state se) ;
+   virtual const char* setrule(const char* s) ;
+   virtual const char* getrule() ;
+   virtual const char* DefaultRule() ;
+   virtual unsigned char *GetColorData(int &numcolors) ;
    virtual int NumCellStates() ;
+   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
+private:
    int bornbits ;
    int staybits ;
-   static char rulecopy[MAXRULESIZE] ;
-   static void doInitializeAlgoInfo(staticAlgoInfo &) ;
+   // canonical version of valid rule passed into setrule
+   char canonrule[MAXRULESIZE] ;
 };
 #endif

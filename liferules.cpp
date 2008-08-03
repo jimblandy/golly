@@ -28,14 +28,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 
 liferules::liferules() {
-   rule = 0 ;
    flipped = 0 ;
    setrule("B3/S23") ;
 }
 
 liferules::~liferules() {
-   if (rule)
-      free((void *)rule) ;
 }
 
 // returns a count of the number of bits set in given int
@@ -76,13 +73,6 @@ const char *liferules::setrule(const char *rulestring) {
    hexmask = 0x777 ;
    int addend = 17 ;
    int i ;
-
-   // set rule string even if bad character detected;
-   // note that rulestring is duplicated carefully to allow setrule(getrule())
-   rulestring = strdup(rulestring) ;
-   if (rule)
-      free((void *)rule) ;
-   rule = rulestring ;
    
    // AKT: don't allow empty string
    if (rulestring[0] == 0) {
@@ -104,7 +94,7 @@ const char *liferules::setrule(const char *rulestring) {
       } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
          rulebits |= 1 << (addend + rulestring[i] - '0') ;
       } else if (rulestring[i] == 'w' || rulestring[i] == 'W') {
-         // AKT: check for digit after W otherwise rule like "WiredWorld" is accepted
+         // AKT: check for digit after W otherwise rule like "WireWorld" is accepted
          if (rulestring[i+1] < '0' || rulestring[i+1] > '9') {
             return "Digit expected after W." ;
          }
@@ -139,44 +129,64 @@ const char *liferules::setrule(const char *rulestring) {
          The trick is to do both changes: invert the bits, and swap Bx for S(8-x).
          eg. B03/S238 => B123478/S0123467 (for ALL gens).
       */
-      int origrulebits = rulebits;
       if (rulebits & (1 << (17+8))) {
          // B0-and-S8 rule
          // change rule for all gens; eg. B03/S238 => B123478/S0123467
-         rulebits = 0;
+         int newrulebits = 0;
          for (i=0; i<9; i++) {
-            if ( (origrulebits & (1 << i     )) == 0 ) rulebits |= 1 << (17+8-i);
-            if ( (origrulebits & (1 << (17+i))) == 0 ) rulebits |= 1 << (8-i);
+            if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << (17+8-i);
+            if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (8-i);
          }
-         initruletable(rule0, rulebits, hexmask, wolfram);
+         initruletable(rule0, newrulebits, hexmask, wolfram);
       } else {
          // B0-not-S8 rule
          hasB0notS8 = true;
          // change rule for even gens; eg. B03/S23 => B1245678/S0145678
-         rulebits = 0;
+         int newrulebits = 0;
          for (i=0; i<9; i++) {
-            if ( (origrulebits & (1 << i     )) == 0 ) rulebits |= 1 << i;
-            if ( (origrulebits & (1 << (17+i))) == 0 ) rulebits |= 1 << (17+i);
+            if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << i;
+            if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (17+i);
          }
-         initruletable(rule0, rulebits, hexmask, wolfram);
+         initruletable(rule0, newrulebits, hexmask, wolfram);
          // change rule for odd gens; eg. B03/S23 => B56/S58
-         rulebits = 0;
+         newrulebits = 0;
          for (i=0; i<9; i++) {
-            if ( origrulebits & (1 << (17+8-i)) ) rulebits |= 1 << i;
-            if ( origrulebits & (1 << (   8-i)) ) rulebits |= 1 << (17+i);
+            if ( rulebits & (1 << (17+8-i)) ) newrulebits |= 1 << i;
+            if ( rulebits & (1 << (   8-i)) ) newrulebits |= 1 << (17+i);
          }
-         initruletable(rule1, rulebits, hexmask, wolfram);
+         initruletable(rule1, newrulebits, hexmask, wolfram);
       }
    } else {
       // rule doesn't have B0 so we'll use rule0 for all gens
       initruletable(rule0, rulebits, hexmask, wolfram);
    }
+   
+   // AKT: store valid rule in canonical format for getrule()
+   if (wolfram >= 0) {
+      sprintf(canonrule, "W%d", wolfram) ;
+   } else {
+      int p = 0 ;
+      canonrule[p++] = 'B' ;
+      for (i=0; i<=8; i++) {
+         if (rulebits & (1 << i)) canonrule[p++] = '0' + i ;
+      }
+      canonrule[p++] = '/' ;
+      canonrule[p++] = 'S' ;
+      for (i=0; i<=8; i++) {
+         if (rulebits & (1 << (17+i))) canonrule[p++] = '0' + i ;
+      }
+      if (hexmask != 0x777) canonrule[p++] = 'H' ;
+      canonrule[p] = 0 ;
+   }
 
    return 0 ;
 }
 
-// B3S23 -> (1 << 3) + (1 << (17 + 2)) + (1 << (17 + 3)) =
-//          0x180008
+const char* liferules::getrule() {
+   return canonrule ;
+}
+
+// B3/S23 -> (1 << 3) + (1 << (17 + 2)) + (1 << (17 + 3)) = 0x180008
 bool liferules::isRegularLife() {
   return (hexmask == 0x777 && rulebits == 0x180008 && wolfram < 0) ;
 }
