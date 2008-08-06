@@ -1408,6 +1408,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_LAYER:     ShowHelp(_("Help/layer.html")); break;
       case ID_HELP_HELP:      ShowHelp(_("Help/help.html")); break;
       case ID_HELP_REFS:      ShowHelp(_("Help/refs.html")); break;
+      case ID_HELP_FORMATS:   ShowHelp(_("Help/formats.html")); break;
       case ID_HELP_PROBLEMS:  ShowHelp(_("Help/problems.html")); break;
       case ID_HELP_CHANGES:   ShowHelp(_("Help/changes.html")); break;
       case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
@@ -2232,6 +2233,7 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_HELP,               _("Help Menu"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_REFS,               _("References"));
+   helpMenu->Append(ID_HELP_FORMATS,            _("File Formats"));
    helpMenu->Append(ID_HELP_PROBLEMS,           _("Known Problems"));
    helpMenu->Append(ID_HELP_CHANGES,            _("Changes"));
    helpMenu->Append(ID_HELP_CREDITS,            _("Credits"));

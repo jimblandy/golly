@@ -1,0 +1,126 @@
+<html>
+<title>Golly Help: File Formats</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+Golly can read pattern files in a variety of formats,
+but patterns are only saved in two formats:
+
+<p>
+<font size=+1><b>Extended RLE format</b></font>
+
+<p>
+Golly prefers to store patterns and pattern fragments in a simple
+concise textual format we call "Extended RLE" (it's a modified version
+of the RLE format created by Dave Buckingham).  The data is run-length
+encoded which works well for sparse patterns while still being easy to
+interpret (either by a machine or by a person).  The format permits
+retention of the most critical data:
+
+<p>
+<ul>
+<li> The cell configuration; ie. which cells have what values.
+<li> The transition rule to be applied.
+<li> Any comments or description.
+<li> The generation count.
+<li> The absolute position on the screen.
+</ul>
+
+<p>
+Golly uses this format for internal cuts and pastes, which makes it
+very convenient to move cell configurations to and from text files.
+For instance, the r-pentomino is represented as
+
+<p>
+<dd><tt>x = 3, y = 3, rule = B3/S23</tt></dd>
+<dd><tt>b2o$2o$bo!</tt></dd>
+</p>
+
+<p>
+I just drew this pattern in Golly, selected the whole thing,
+copied it to the clipboard, and then in my editor I did a paste
+to get the textual version.  Similarly, data in this format can
+be cut from a browser or email window and pasted directly into Golly.
+
+<p>
+RLE data is indicated by a file whose first non-comment line starts
+with "x".  A comment line is either a blank line or a line beginning
+with "#".  The line starting with "x" gives the dimensions of the
+pattern and usually the rule, and has the following format:
+
+<p>
+<dd><tt>x = <i>width</i>, y = <i>height</i>, rule = <i>rule</i></tt></dd>
+</p>
+
+<p>
+where <i>width</i> and <i>height</i> are the dimensions of the pattern
+and <i>rule</i> is the rule to be applied.
+Whitespace can be inserted at any point in this line
+except at the beginning or where it would split a token.
+The dimension data is ignored when Golly loads a pattern, so it need
+not be accurate, but it is <em>not</em> ignored when Golly pastes a pattern;
+it is used as the boundary of what to paste, so it may be larger or
+smaller than the smallest rectangle enclosing all live cells.
+
+<p>
+Any line that is not blank, or does not start with a "#" or "x " or
+"x=" is treated as run-length encoded pattern data.  The data is
+ordered a row at a time from top to bottom, and each row is ordered
+left to right.  A "$" represents the end of each row and an optional
+"!" represents the end of the pattern.
+
+<p>
+For two-state rules, a "b" represents an off cell, and a "o"
+represents an on cell.  For rules with more than two states, a "."
+represents a zero state; states 1..24 are represented by "A".."X",
+states 25..48 by "pA".."pX", states 49..72 by "qA".."qZ", and on up to
+states 241..255 represented by "yA".."yo".  The pattern reader is
+flexible and will permit "b" and "." interchangeably and "o" and "A"
+interchangeably.
+
+<p>
+Any data value or row terminator can be immediately preceded with an
+integer indicating a repetition count.  Thus, "3o" and "ooo"
+both represent a sequence of three on cells, and "5$" means finish the
+current row and insert four blank rows, and start at the left side of
+the row after that.
+
+<p>
+The pattern writer attempts to keep lines about 70 characters long for
+convenience when sharing patterns or storing them in text files, but the
+reader will accept much longer lines.
+
+<p>
+If the File menu's "Save Extended RLE" option is ticked then comment
+lines with a specific format will be added at the start of the file
+to convey extra information.
+These comment lines start with "#CXRLE" and contain keyword/value pairs.
+The keywords currently supported are "Pos", which denotes the absolute
+position of the upper left cell (which may be on or off),
+and "Gen", which denotes the generation count.  For instance,
+
+<p>
+<dd><tt>#CXRLE Pos=0,-1377 Gen=3480106827776</tt></dd>
+</p>
+
+<p>
+indicates that the upper left corner of the enclosing rectange is at
+an X coordinate of 0 and a Y coordinate of -1377, and that the
+pattern stored is at generation 3,480,106,827,776.
+
+<p>
+All comment lines that are not CXRLE lines, and occur at the top or
+bottom of the file, are treated as information lines and are displayed
+when the user clicks the "information" button in Golly's tool bar.
+Any comment lines interspersed with the pattern data will not be
+displayed.
+
+
+<p>
+<font size=+1><b>Macrocell format</b></font>
+
+<p>
+!!!
+
+</body>
+</html>

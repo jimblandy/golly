@@ -17,7 +17,7 @@ Andrew's list:
 
 - Resolve how to handle swapcolors flag if # states > 2.
   Remove flag completely?  Or just ignore it when # states > 2.
-  What about colors used when layers are stacked?
+  What about colors used when multi-state layers are stacked?
   Need MaxCellStates() method to solve prob when Gens algo uses a
   rule with only 2 states?
 
@@ -69,8 +69,7 @@ Tom's list:
 
 File I/O
 
-- Describe RLE/MC formats in Help/formats.html (Andrew will add new
-  Help > File Formats item).
+- Describe MC format at end of Help/formats.html.
 - Have hlifealgo .mc compatible with ghashbase .mc
 - Generalized RLE in MC?
 
@@ -198,3 +197,5 @@ User suggestions:
 - Add a script command to save comments in a pattern file.  Add optional
   param to existing save command?
 
+[William Buckley]
+- Provide an option to increase spacing between buttons.
