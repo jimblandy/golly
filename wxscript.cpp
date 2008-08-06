@@ -378,14 +378,6 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
-   // this option is deprecated (use setalgo/getalgo commands)
-   } else if (strcmp(optname, "hashing") == 0) {
-      *oldval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
-      if (*oldval != newval) {
-         mainptr->ChangeAlgorithm(newval ? HLIFE_ALGO : QLIFE_ALGO);
-         DoAutoUpdate();
-      }
-
    } else if (strcmp(optname, "hyperspeed") == 0) {
       *oldval = currlayer->hyperspeed ? 1 : 0;
       if (*oldval != newval)
@@ -562,6 +554,14 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // no need for DoAutoUpdate();
       }
 
+   // this option is deprecated (use setalgo command)
+   } else if (strcmp(optname, "hashing") == 0) {
+      *oldval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
+      if (*oldval != newval) {
+         mainptr->ChangeAlgorithm(newval ? HLIFE_ALGO : QLIFE_ALGO);
+         DoAutoUpdate();
+      }
+
    } else {
       // unknown option
       return false;
@@ -581,9 +581,6 @@ bool GSF_getoption(char* optname, int* optval)
    if      (strcmp(optname, "autofit") == 0)       *optval = currlayer->autofit ? 1 : 0;
    else if (strcmp(optname, "boldspacing") == 0)   *optval = boldspacing;
    else if (strcmp(optname, "fullscreen") == 0)    *optval = mainptr->fullscreen ? 1 : 0;
-   //!!! add new setalgo/getalgo commands???
-   else if (strcmp(optname, "hashing") == 0)
-           *optval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
    else if (strcmp(optname, "hyperspeed") == 0)    *optval = currlayer->hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      *optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      *optval = maxdelay;
@@ -606,6 +603,9 @@ bool GSF_getoption(char* optname, int* optval)
    else if (strcmp(optname, "synccursors") == 0)   *optval = synccursors ? 1 : 0;
    else if (strcmp(optname, "syncviews") == 0)     *optval = syncviews ? 1 : 0;
    else if (strcmp(optname, "tilelayers") == 0)    *optval = tilelayers ? 1 : 0;
+   // this option is deprecated (use getalgo command)
+   else if (strcmp(optname, "hashing") == 0)
+           *optval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
    else {
       // unknown option
       return false;
@@ -655,8 +655,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
          DoAutoUpdate();
       }
 
-   //!!! deprecate next two
-   } else if (strcmp(colname, "hashing") == 0) {
+   } else if (strcmp(colname, "hashing") == 0) {      // deprecated
       oldcol = *(algoinfo[HLIFE_ALGO]->algorgb);
       if (oldcol != newcol) {
          *(algoinfo[HLIFE_ALGO]->algorgb) = newcol;
@@ -664,7 +663,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
          DoAutoUpdate();
       }
 
-   } else if (strcmp(colname, "nothashing") == 0) {
+   } else if (strcmp(colname, "nothashing") == 0) {   // deprecated
       oldcol = *(algoinfo[QLIFE_ALGO]->algorgb);
       if (oldcol != newcol) {
          *(algoinfo[QLIFE_ALGO]->algorgb) = newcol;
@@ -673,6 +672,18 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
       }
 
    } else {
+      // look for algo name
+      for (int i = 0; i < NumAlgos(); i++) {
+         if (strcmp(colname, GetAlgoName(i)) == 0) {
+            oldcol = *(algoinfo[i]->algorgb);
+            if (oldcol != newcol) {
+               *(algoinfo[i]->algorgb) = newcol;
+               SetBrushesAndPens();
+               DoAutoUpdate();
+            }
+            return true;
+         }
+      }
       // unknown color name
       return false;
    }
@@ -694,11 +705,17 @@ bool GSF_getcolor(char* colname, wxColor& color)
    else if (strcmp(colname, "deadcells") == 0)  color = *deadrgb;
    else if (strcmp(colname, "paste") == 0)      color = *pastergb;
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
-   //!!! add "algo0..algoN" like we do for livecells above???
-   //!!! deprecate next two
+   // next two are deprecated
    else if (strcmp(colname, "hashing") == 0)    color = *(algoinfo[HLIFE_ALGO]->algorgb);
    else if (strcmp(colname, "nothashing") == 0) color = *(algoinfo[QLIFE_ALGO]->algorgb);
    else {
+      // look for algo name
+      for (int i = 0; i < NumAlgos(); i++) {
+         if (strcmp(colname, GetAlgoName(i)) == 0) {
+            color = *(algoinfo[i]->algorgb);
+            return true;
+         }
+      }
       // unknown color name
       return false;
    }

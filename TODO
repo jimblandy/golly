@@ -14,7 +14,6 @@ Andrew's list:
     setcolors("Generations", "", []) -- to restore default colors?
     And to override icons:
     seticons("JvN", "*", datadir()+"jvnicons.xpm")
-  - setcolor("status", r, g, b) to set status bar background for current algo
 
 - Resolve how to handle swapcolors flag if # states > 2.
   Remove flag completely?  Or just ignore it when # states > 2.

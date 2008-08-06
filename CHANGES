@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: setcolor(algoname,r,g,b) sets status bar background for given algo.
 AKT: Look for golly-start.pl/py in user-specific data dir after app dir.
 AKT: Changing rule via Set Rule dialog or setrule() can change algorithm.
 AKT: getrule() returns canonical rule string.

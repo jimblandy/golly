@@ -889,12 +889,11 @@ Here is a list of all the valid color names and how they are used:
 <tr><td><b>"deadcells"</b></td><td width=20>   </td><td>for displaying dead cells</td></tr>
 <tr><td><b>"paste"</b></td><td width=20>       </td><td>for pasting patterns</td></tr>
 <tr><td><b>"select"</b></td><td width=20>      </td><td>for selections (will be 50% transparent)</td></tr>
-<tr><td><b>"hashing"</b></td><td width=20>     </td><td>for status bar background if hashing</td></tr>
-<tr><td><b>"nothashing"</b></td><td width=20>  </td><td>for status bar background if not hashing</td></tr>
+<tr><td><b><i>algoname</i></b></td><td width=20> </td><td>status bar background for given algorithm</td></tr>
 </table>
 </dd>
 <p>
-<dd> Example: <b>@oldrgb = g_setcolor("livecells0", 0, 0, 255);</b></dd>
+<dd> Example: <b>@oldrgb = g_setcolor("HashLife", 255, 255, 255);</b></dd>
 </p>
 
 <a name="getcolor"></a><p><dt><b>g_getcolor(<i>$name</i>)</b></dt>
@@ -912,7 +911,7 @@ If the initial string is supplied it will be shown and selected.
 If the title string is supplied it will be used in the dialog's title bar.
 The script will be aborted if the user hits the dialog's Cancel button.
 </dd>
-<dd> Example: <b>$i = g_getstring("Enter a number:","100");</b></dd>
+<dd> Example: <b>$i = g_getstring("Enter a number:", "100");</b></dd>
 </p>
 
 <a name="getkey"></a><p><dt><b>g_getkey()</b></dt>
