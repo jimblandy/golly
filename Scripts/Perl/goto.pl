@@ -28,8 +28,8 @@ sub go_to {
    if ($newgen < $currgen) {
       # try to go back to starting gen (not necessarily 0) and
       # then forwards to newgen; note that reset() also restores
-      # rule and hashing option, so too bad if user changed
-      # those options after the starting info was saved;
+      # algorithm and/or rule, so too bad if user changed those
+      # after the starting info was saved;
       # first save current location and scale
       my ($midx, $midy) = g_getpos();
       my $mag = g_getmag();

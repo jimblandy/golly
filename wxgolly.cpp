@@ -302,14 +302,29 @@ bool GollyApp::OnInit()
    // in OnIdle; this avoids a crash in Win/X11 app if a script is run before
    // showing the main window, and also avoids event problems in Win app with
    // a long-running script (eg. user can't hit escape to abort script)
-   wxString startscript = gollydir + wxT("golly-start.pl");
+   const wxString START_PERL = wxT("golly-start.pl");
+   const wxString START_PYTHON = wxT("golly-start.py");
+   wxString startscript = gollydir + START_PERL;
    if (wxFileExists(startscript)) {
       mainptr->pendingfiles.Add(startscript);
+   } else {
+      // look in user-specific data directory
+      startscript = datadir + START_PERL;
+      if (wxFileExists(startscript)) {
+         mainptr->pendingfiles.Add(startscript);
+      }
    }
-   startscript = gollydir + wxT("golly-start.py");
+   startscript = gollydir + START_PYTHON;
    if (wxFileExists(startscript)) {
       mainptr->pendingfiles.Add(startscript);
+   } else {
+      // look in user-specific data directory
+      startscript = datadir + START_PYTHON;
+      if (wxFileExists(startscript)) {
+         mainptr->pendingfiles.Add(startscript);
+      }
    }
+   
    // argc is > 1 if command line has one or more script/pattern files
    for (int n = 1; n < argc; n++) {
       wxFileName filename(argv[n]);

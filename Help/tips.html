@@ -10,22 +10,24 @@
 <li>
 To view a pattern file just drop it onto the Golly app or onto the
 Golly window if the app is already running.
-[Not supported on X11.]
 </li>
 <li>
-If a script called golly-start.pl or golly-start.py exists in the same
-folder as the application then it is automatically executed when
-Golly starts up.
+When Golly starts up it looks for scripts called
+<b>golly-start.pl</b> or <b>golly-start.py</b>
+in the same directory as the Golly application and then in a user-specific
+data directory (see the <a href="file.html#prefs">Preferences</a> item
+for the likely path on your system).
+If either script is found then it is automatically executed.
 </li>
 <li>
 Displaying the population count can cause a significant slow-down when
-generating large patterns, especially when using the hashing option.
+generating large patterns, especially when using HashLife.
 If you want to generate at maximum speed then just hit ";" to hide
 the status bar.  You can toggle the status bar at any time,
 even in full screen mode.
 </li>
 <li>
-Editing operations are faster when the hashing option is turned off.
+Editing operations are fastest in QuickLife.
 </li>
 <li>
 Pasting large, sparse patterns is much faster if using Or mode,

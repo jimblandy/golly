@@ -85,8 +85,8 @@ void StatusBar::ClearMessage()
          wxRect r = wxRect( wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
                             wxPoint(wd-1,ht-1) );
          Refresh(false, &r);
-         // don't call Update() otherwise Win/X11 users see blue & yellow bands
-         // when toggling hashing option
+         // don't call Update() otherwise Win/X11 users see different
+         // colored bands when changing algos
       }
    }
 }

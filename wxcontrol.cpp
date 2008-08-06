@@ -167,7 +167,7 @@ void MainFrame::ResetPattern(bool resetundo)
    }
    
    // restore pattern and settings saved by SaveStartingPattern;
-   // first restore step size, hashing option and starting pattern
+   // first restore step size, algorithm and starting pattern
    currlayer->warp = currlayer->startwarp;
    currlayer->setAlgType(currlayer->startalgo);
 

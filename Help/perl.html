@@ -95,8 +95,11 @@ item in the File menu and then simply click on the script you wish to run.
 You can also select one of the <b>Run</b> items in the File menu.
 
 <p>
-If a script called <b>golly-start.pl</b> exists in the same folder as the Golly
-application then it is automatically executed when Golly starts up.
+When Golly starts up it looks for a script called <b>golly-start.pl</b>
+in the same directory as the Golly application and then in a user-specific
+data directory (see the <a href="#datadir"><b>datadir</b></a> command for
+the likely path on your system).
+If the script is found then it is automatically executed.
 
 <p>
 There are a number of ways to abort a running script.  Hit the escape key,
@@ -512,8 +515,7 @@ Return the current step exponent.
 
 <a name="setbase"></a><p><dt><b>g_setbase(<i>$base</i>)</b></dt>
 <dd>
-Set the base step for the current universe type (hashing or non-hashing),
-so you might need to call <b>g_setoption("hashing",1/0)</b> first.
+Set the base step for the current algorithm.
 The given base must be an integer from 2 to 10000.
 The current step is also changed to base^exp where exp is the current step
 exponent returned by <b>g_getstep()</b>.
@@ -523,7 +525,7 @@ exponent returned by <b>g_getstep()</b>.
 
 <a name="getbase"></a><p><dt><b>g_getbase()</b></dt>
 <dd>
-Return the current base step for the current universe type (hashing or non-hashing).
+Return the current base step for the current algorithm.
 </dd>
 </p>
 
@@ -538,7 +540,7 @@ specified number of generations.  The generation count does not change.
 <a name="reset"></a><p><dt><b>g_reset()</b></dt>
 <dd>
 Restore the starting pattern and generation count.
-Also reset the rule, scale, location, step exponent and hashing option
+Also reset the algorithm, rule, scale, location and step exponent
 to the values they had at the starting generation.
 The starting generation is usually zero, but it can be larger after
 loading an RLE/macrocell file that stores a non-zero generation count.
@@ -837,13 +839,13 @@ Here are all the valid option names and their possible values:
 <tr><td><b>"autofit"</b></td><td width=20>       </td><td>1 or 0</td></tr>
 <tr><td><b>"boldspacing"</b></td><td width=20>   </td><td>2 to 1000 (cells)</td></tr>
 <tr><td><b>"fullscreen"</b></td><td width=20>    </td><td>1 or 0</td></tr>
-<tr><td><b>"hashing"</b></td><td width=20>       </td><td>1 or 0</td></tr>
 <tr><td><b>"hyperspeed"</b></td><td width=20>    </td><td>1 or 0</td></tr>
 <tr><td><b>"maxdelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
 <tr><td><b>"mindelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
 <tr><td><b>"opacity"</b></td><td width=20>       </td><td>1 to 100 (percent)</td></tr>
 <tr><td><b>"savexrle"</b></td><td width=20>      </td><td>1 or 0</td></tr>
 <tr><td><b>"showboldlines"</b></td><td width=20> </td><td>1 or 0</td></tr>
+<tr><td><b>"showeditbar"</b></td><td width=20>   </td><td>1 or 0</td></tr>
 <tr><td><b>"showexact"</b></td><td width=20>     </td><td>1 or 0</td></tr>
 <tr><td><b>"showgrid"</b></td><td width=20>      </td><td>1 or 0</td></tr>
 <tr><td><b>"showhashinfo"</b></td><td width=20>  </td><td>1 or 0</td></tr>
@@ -861,7 +863,7 @@ Here are all the valid option names and their possible values:
 </table>
 </dd>
 <p>
-<dd> Example: <b>$oldhash = g_setoption("hashing", 1);</b></dd>
+<dd> Example: <b>$oldgrid = g_setoption("showgrid", 1);</b></dd>
 </p>
 
 <a name="getoption"></a><p><dt><b>g_getoption(<i>$name</i>)</b></dt>
@@ -869,7 +871,7 @@ Here are all the valid option names and their possible values:
 Return the current value of the given option.
 See above for a list of all the valid option names.
 </dd>
-<dd> Example: <b>g_setrule("b0/s1") if !g_getoption("hashing");</b></dd>
+<dd> Example: <b>g_fit() if g_getoption("autofit");</b></dd>
 </p>
 
 <a name="setcolor"></a><p><dt><b>g_setcolor(<i>$name, $r, $g, $b</i>)</b></dt>

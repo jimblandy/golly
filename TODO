@@ -3,22 +3,28 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
-- Fix missing &s in recent file paths (replace each & with &&) and
-  fix underscore bug in Linux app by trying wxGTK 2.8.8.
-
-- Fix glitches in the way the algo button works:
-  - On Mac we want button to look selected before menu appears.
-  - On Win we want to be able to press-select-release.
-
 - Implement scripting changes:
-  - Provide commands to get/set colors if # states > 2.
   - Decide how to handle cell lists if # states > 2.
     Maybe such lists contain 3 ints per cell:
     [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn (,int) ]
-    If necessary, append pad int (0 or -2B?) so that # of ints is odd,
-    then commands like transform/putcells know what sort of cell list
-    they've been given without having to assume it depends on current
-    algo's # of states.
+    If necessary, append pad int (0 or -2B?) so that # of ints is odd.
+  - Provide commands to get/set colors if # states > 2:
+    setcolors("JvN", "JvN-32", [200,200,200,1])
+    setcolors("Generations", "*", [r0,g0,b0,s0, ... sn,rn,gn,bn])
+    setcolors("Generations", "", []) -- to restore default colors?
+    And to override icons:
+    seticons("JvN", "*", datadir()+"jvnicons.xpm")
+  - setcolor("status", r, g, b) to set status bar background for current algo
+
+- Resolve how to handle swapcolors flag if # states > 2.
+  Remove flag completely?  Or just ignore it when # states > 2.
+  What about colors used when layers are stacked?
+  Need MaxCellStates() method to solve prob when Gens algo uses a
+  rule with only 2 states?
+
+- Allow users to override default icons by looking for and loading
+  special files like JvN7.xpm (look in golly dir then user data dir?).
+  Or do this via new seticons command (see above) in golly-start.pl/py?
 
 - Improve edit bar:
   - Allow bar to scroll left-right (via arrows or shift-click-and-drag?).
@@ -26,12 +32,12 @@ Andrew's list:
   - Move all cursor mode buttons into edit bar (at bottom?).
   - Add new buttons: eraser, eye-dropper, fill, etc?
 
-- Allow users to override default icons by looking for and loading
-  special files like JvN7.xpm (look in golly dir then user data dir?).
+- Fix missing &s in recent file paths (replace each & with &&) and
+  fix underscore bug in Linux app by trying wxGTK 2.8.8.
 
-- Resolve how to handle swapcolors flag if # states > 2.
-  Remove flag completely?  Or just ignore it when # states > 2.
-  What about colors used when layers are stacked?
+- Fix glitches in the way the algo button works:
+  - On Mac we want button to look selected before menu appears.
+  - On Win we want to be able to press-select-release.
 
 - Rename Hashing-Examples to HashLife-Examples (or just HashLife?)
   and convert all files to .mc format (with explicit rules).
