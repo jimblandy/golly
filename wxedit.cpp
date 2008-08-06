@@ -409,6 +409,11 @@ void ToggleEditBar()
    
    bigview->SetSize(r);
    editbarptr->Show(showedit);    // needed on Windows
+   
+   if (showlayer) {
+      // line at bottom of layer bar may need to be added/removed
+      RedrawLayerBar();
+   }
 }
 
 // -----------------------------------------------------------------------------

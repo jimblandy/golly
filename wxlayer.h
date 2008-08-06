@@ -214,6 +214,10 @@ void ResizeLayerBar(int wd);
 void UpdateLayerBar(bool active);
 // Update state of buttons in layer bar.
 
+void RedrawLayerBar();
+// Redraw layer bar.  This is needed because UpdateLayerBar doesn't
+// refresh the layer bar (to avoid unwanted flashing).
+
 void ToggleLayerBar();
 // Show/hide layer bar.
 
