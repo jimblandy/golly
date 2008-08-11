@@ -56,7 +56,7 @@ slifealgo::slifealgo() {
 slifealgo::~slifealgo() {
 }
 state slifealgo::slowcalc(state nw, state n, state ne, state w, state c,
-			state e, state sw, state s, state se) {
+                          state e, state sw, state s, state se) {
   int sum = nw + n + ne + w + e + sw + s + se ;
   if (sum == 3 || (sum == 2 && c == 1))
     return 1 ;

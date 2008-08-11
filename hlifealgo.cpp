@@ -300,7 +300,7 @@ node *hlifealgo::getres(node *n, int depth) {
        res = dorecurs(n->nw, n->ne, n->sw, n->se, depth) ;
      } else {
        res = (node *)dorecurs_leaf((leaf *)n->nw, (leaf *)n->ne,
-				   (leaf *)n->sw, (leaf *)n->se) ;
+                                   (leaf *)n->sw, (leaf *)n->se) ;
      }
    } else {
      if (halvesdone < 1000)
@@ -309,10 +309,10 @@ node *hlifealgo::getres(node *n, int depth) {
        res = dorecurs_half(n->nw, n->ne, n->sw, n->se, depth) ;
      } else if (ngens == 0) {
        res = (node *)dorecurs_leaf_quarter((leaf *)n->nw, (leaf *)n->ne,
-					   (leaf *)n->sw, (leaf *)n->se) ;
+                                           (leaf *)n->sw, (leaf *)n->se) ;
      } else {
        res = (node *)dorecurs_leaf_half((leaf *)n->nw, (leaf *)n->ne,
-					(leaf *)n->sw, (leaf *)n->se) ;
+                                        (leaf *)n->sw, (leaf *)n->se) ;
      }
    }
    pop(sp) ;
@@ -603,10 +603,10 @@ void hlifealgo::step() {
          lifefatal("bad increment") ;
       int downto = newpow2 ;
       if (ngens < newpow2)
-	 downto = ngens ;
+         downto = ngens ;
       if (newpow2 != ngens && cleareddownto > downto) {
          new_ngens(newpow2) ;
-	 cleareddownto = downto ;
+         cleareddownto = downto ;
       } else {
          ngens = newpow2 ;
       }
@@ -689,7 +689,7 @@ node *hlifealgo::zeronode(int depth) {
       zeronodea = (node **)realloc(zeronodea,
                                           nnzeros * sizeof(node *)) ;
       if (zeronodea == 0)
-	lifefatal("Out of memory (2).") ;
+        lifefatal("Out of memory (2).") ;
       alloced += (nnzeros - nzeros) * sizeof(node *) ;
       while (nzeros < nnzeros)
          zeronodea[nzeros++] = 0 ;
@@ -785,7 +785,7 @@ node *hlifealgo::setbit(node *n, int x, int y, int newstate, int depth) {
    } else {
       int w = 1 << depth ;
       if (depth > 31)
-	 w = 0 ;
+         w = 0 ;
       depth-- ;
       node **nptr ;
       if (x < 0) {
@@ -855,13 +855,13 @@ int hlifealgo::getbit(node *n, int x, int y, int depth) {
    } else {
       int w = 1 << depth ;
       if (depth > 31)
-	 w = 0 ;
+         w = 0 ;
       node *nptr ;
       depth-- ;
       if (x < 0) {
          if (y < 0)
             nptr = n->sw ;
-	 else
+         else
             nptr = n->nw ;
       } else {
          if (y < 0)
@@ -887,20 +887,20 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
       leaf *l = (leaf *)n ;
       int test = 0 ;
       if (y < 0)
-	test = (((l->sw >> (4 * (y & 3))) & 15) << 4) |
-	        ((l->se >> (4 * (y & 3))) & 15) ;
+        test = (((l->sw >> (4 * (y & 3))) & 15) << 4) |
+                ((l->se >> (4 * (y & 3))) & 15) ;
       else
-	test = (((l->nw >> (4 * (y & 3))) & 15) << 4) |
-	        ((l->ne >> (4 * (y & 3))) & 15) ;
+        test = (((l->nw >> (4 * (y & 3))) & 15) << 4) |
+                ((l->ne >> (4 * (y & 3))) & 15) ;
       test &= (1 << (4 - x)) - 1 ;
       if (test) {
-	int r = 0 ;
-	int b = 1 << (3 - x) ;
-	while ((test & b) == 0) {
-	  r++ ;
-	  b >>= 1 ;
-	}
-	return r ;
+        int r = 0 ;
+        int b = 1 << (3 - x) ;
+        while ((test & b) == 0) {
+          r++ ;
+          b >>= 1 ;
+        }
+        return r ;
       }
       return -1 ; // none found
    } else {
@@ -909,25 +909,25 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
       node *lft, *rght ;
       depth-- ;
       if (y < 0) {
-	lft = n->sw ;
-	rght = n->se ;
+        lft = n->sw ;
+        rght = n->se ;
       } else {
-	lft = n->nw ;
-	rght = n->ne ;
+        lft = n->nw ;
+        rght = n->ne ;
       }
       int r = 0 ;
       if (x < 0) {
-	int t = nextbit(lft, (x & (w-1)) - wh,
-			(y & (w - 1)) - wh, depth) ;
-	if (t >= 0)
-	  return t ;
-	r = -x ;
-	x = 0 ;
+        int t = nextbit(lft, (x & (w-1)) - wh,
+                        (y & (w - 1)) - wh, depth) ;
+        if (t >= 0)
+          return t ;
+        r = -x ;
+        x = 0 ;
       }
       int t = nextbit(rght, (x & (w-1)) - wh,
-		      (y & (w - 1)) - wh, depth) ;
+                      (y & (w - 1)) - wh, depth) ;
       if (t >= 0)
-	return r + t ;
+        return r + t ;
       return -1 ;
    }
 }
@@ -1023,11 +1023,11 @@ int hlifealgo::nextcell(int x, int y, int &v) {
       struct node tnode = *root ;
       int mdepth = depth ;
       while (mdepth > 30) {
-	 tnode.nw = tnode.nw->se ;
-	 tnode.ne = tnode.ne->sw ;
-	 tnode.sw = tnode.sw->ne ;
-	 tnode.se = tnode.se->nw ;
-	 mdepth-- ;
+         tnode.nw = tnode.nw->se ;
+         tnode.ne = tnode.ne->sw ;
+         tnode.sw = tnode.sw->ne ;
+         tnode.se = tnode.se->nw ;
+         mdepth-- ;
       }
       return nextbit(&tnode, x, y, mdepth) ;
    }
@@ -1195,7 +1195,7 @@ node *hlifealgo::save(node *n) {
       alloced += sizeof(node *)*(nstacksize-stacksize) ;
       stack = (node **)realloc(stack, nstacksize * sizeof(node *)) ;
       if (stack == 0)
-	lifefatal("Out of memory (3).") ;
+        lifefatal("Out of memory (3).") ;
       stacksize = nstacksize ;
    }
    stack[gsp++] = n ;
@@ -1229,10 +1229,10 @@ void hlifealgo::gc_mark(node *root, int invalidate) {
          gc_mark(root->sw, invalidate) ;
          gc_mark(root->se, invalidate) ;
          if (root->res)
-	    if (invalidate)
-	      root->res = 0 ;
-	    else
-	      gc_mark(root->res, invalidate) ;
+            if (invalidate)
+              root->res = 0 ;
+            else
+              gc_mark(root->res, invalidate) ;
       }
    }
 }
@@ -1311,7 +1311,7 @@ void hlifealgo::clearcache(node *n, int depth, int clearto) {
       mark(n) ;
       if (depth > 3) {
          depth-- ;
-	 poller->poll() ;
+         poller->poll() ;
          clearcache(n->nw, depth, clearto) ;
          clearcache(n->ne, depth, clearto) ;
          clearcache(n->sw, depth, clearto) ;
@@ -1356,7 +1356,7 @@ void hlifealgo::new_ngens(int newval) {
    inGC = 1 ;
    for (i=0; i<hashprime; i++)
       for (p=hashtab[i]; p; p=clearmarkbit(p->next))
-	 if (is_node(p) && !marked(p))
+         if (is_node(p) && !marked(p))
             clearcache(p, node_depth(p), clearto) ;
    for (p=nodeblocks; p; p=p->next) {
       poller->poll() ;
@@ -1396,12 +1396,12 @@ const bigint &hlifealgo::getPopulation() {
    // since that will mess up the gc.
    if (!popValid) {
       if (inGC) {
-	needPop = 1 ;
-	return negone ;
+        needPop = 1 ;
+        return negone ;
       } else {
-	calcPopulation(root) ;
-	popValid = 1 ;
-	needPop = 0 ;
+        calcPopulation(root) ;
+        popValid = 1 ;
+        needPop = 0 ;
       }
    }
    return population ;
@@ -1457,8 +1457,8 @@ const char *hlifealgo::readmacrocell(char *line) {
       if (i >= indlen) {
          g_uintptr_t nlen = i + indlen + 10 ;
          ind = (node **)realloc(ind, sizeof(node*) * nlen) ;
-	 if (ind == 0)
-	   lifefatal("Out of memory (4).") ;
+         if (ind == 0)
+           lifefatal("Out of memory (4).") ;
          while (indlen < nlen)
             ind[indlen++] = 0 ;
       }
@@ -1489,7 +1489,7 @@ case '$':      x = 0 ;
 default:       return "Illegal character in readmacrocell." ;
             }
          }
-	 clearstack() ;
+         clearstack() ;
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
       } else if (line[0] == '#') {
          switch (line[1]) {
@@ -1523,16 +1523,16 @@ default:       return "Illegal character in readmacrocell." ;
          n = sscanf(line, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n < 0) // blank line; permit
             continue ;
-	 if (n == 0) {
-	    // conversion error in first argument; we allow only if the only
-	    // content on the line is whitespace.
-	    char *ws = line ;
-	    while (*ws && *ws <= ' ')
-	       ws++ ;
-	    if (*ws > 0)
-	       return "Parse error in macrocell format." ;
-	    continue ;
-	 }
+         if (n == 0) {
+            // conversion error in first argument; we allow only if the only
+            // content on the line is whitespace.
+            char *ws = line ;
+            while (*ws && *ws <= ' ')
+               ws++ ;
+            if (*ws > 0)
+               return "Parse error in macrocell format." ;
+            continue ;
+         }
          if (n < 5)
             // AKT: best not to use lifefatal here because user won't see any
             // error message when reading clipboard data starting with "[..."
@@ -1546,7 +1546,7 @@ default:       return "Illegal character in readmacrocell." ;
              se < 0 || se >= i || ind[se] == 0) {
             return "Node out of range in readmacrocell." ;
          }
-	 clearstack() ;
+         clearstack() ;
          root = ind[i++] = find_node(ind[nw], ind[ne], ind[sw], ind[se]) ;
          depth = d - 1 ;
       }
@@ -1576,8 +1576,8 @@ const char *hlifealgo::setrule(const char *s) {
    return 0 ;
 }
 void hlifealgo::unpack8x8(unsigned short nw, unsigned short ne,
-			  unsigned short sw, unsigned short se,
-			  unsigned int *top, unsigned int *bot) {
+                          unsigned short sw, unsigned short se,
+                          unsigned int *top, unsigned int *bot) {
    *top = ((nw & 0xf000) << 16) | (((ne & 0xf000) | (nw & 0xf00)) << 12) |
           (((ne & 0xf00) | (nw & 0xf0)) << 8) |
           (((ne & 0xf0) | (nw & 0xf)) << 4) | (ne & 0xf) ;
@@ -1654,7 +1654,7 @@ g_uintptr_t hlifealgo::writecell_2p1(node *root, int depth) {
       thiscell = ++cellcounter ;
       // note:  we *must* not abort this prescan
       if ((cellcounter & 4095) == 0)
-	 lifeabortprogress(0, "Scanning tree") ;
+         lifeabortprogress(0, "Scanning tree") ;
       root->nw = (node *)thiscell ;
    } else {
       writecell_2p1(root->nw, depth-1) ;
@@ -1664,7 +1664,7 @@ g_uintptr_t hlifealgo::writecell_2p1(node *root, int depth) {
       thiscell = ++cellcounter ;
       // note:  we *must* not abort this prescan
       if ((cellcounter & 4095) == 0)
-	 lifeabortprogress(0, "Scanning tree") ;
+         lifeabortprogress(0, "Scanning tree") ;
       root->next = (node *)thiscell ;
    }
    return thiscell ;
@@ -1680,12 +1680,12 @@ g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       return 0 ;
    if (depth == 2) {
       if (cellcounter + 1 != (g_uintptr_t)(root->nw))
-	 return (g_uintptr_t)(root->nw) ;
+         return (g_uintptr_t)(root->nw) ;
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
-	 unsigned long siz = ftell(f) ;
+         unsigned long siz = ftell(f) ;
          sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
-	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
+         lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       int i, j ;
       unsigned int top, bot ;
@@ -1706,21 +1706,21 @@ g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       fputs("\n", f) ;
    } else {
       if (cellcounter + 1 > (g_uintptr_t)(root->next) || isaborted())
-	 return (g_uintptr_t)(root->next) ;
+         return (g_uintptr_t)(root->next) ;
       g_uintptr_t nw = writecell_2p2(f, root->nw, depth-1) ;
       g_uintptr_t ne = writecell_2p2(f, root->ne, depth-1) ;
       g_uintptr_t sw = writecell_2p2(f, root->sw, depth-1) ;
       g_uintptr_t se = writecell_2p2(f, root->se, depth-1) ;
       if (!isaborted() &&
-	  cellcounter + 1 != (g_uintptr_t)(root->next)) { // this should never happen
-	 lifefatal("Internal in writecell_2p2") ;
-	 return (g_uintptr_t)(root->next) ;
+          cellcounter + 1 != (g_uintptr_t)(root->next)) { // this should never happen
+         lifefatal("Internal in writecell_2p2") ;
+         return (g_uintptr_t)(root->next) ;
       }
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
-	 unsigned long siz = ftell(f) ;
+         unsigned long siz = ftell(f) ;
          sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
-	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
+         lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       root->next = (node *)thiscell ;
       fprintf(f, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR "\n", depth+1, nw, ne, sw, se) ;

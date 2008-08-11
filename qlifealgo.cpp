@@ -194,7 +194,7 @@ void qlifealgo::uproot() {
      root = newsupertile(rootlev) ;
      if (rootlev > 1)
        root->flags = 0xf0000000 |
-	 (upchanging(oroot->flags) << (3 + (generation.odd()))) ;
+         (upchanging(oroot->flags) << (3 + (generation.odd()))) ;
      root->d[4] = oroot ;
      if (oroot != nullroot) {
        nullroots[rootlev] = nullroot = newsupertile(rootlev) ;
@@ -545,7 +545,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
  */
          p->c[i+2] |= (maskprev >> (6 - j)) & 0x1ff ;
          p->c[i+1] =
-	   (short)(((p->c[i+1] & 0x100) << 1) | (maskprev >> (21 - j))) ;
+           (short)(((p->c[i+1] & 0x100) << 1) | (maskprev >> (21 - j))) ;
       } else
          p->c[i+1] = 0 ;
 /*
@@ -635,7 +635,7 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
             j++ ;
          }
          p->c[i+1] =
-	   (short)(((p->c[i+1] & 0x100) << 1) | (maskprev >> (14 + j))) ;
+           (short)(((p->c[i+1] & 0x100) << 1) | (maskprev >> (14 + j))) ;
          p->c[i] |= (maskprev >> j) & 0x1ff ;
       } else
          p->c[i+1] = 0 ;
@@ -663,7 +663,7 @@ void qlifealgo::markglobalchange(supertile *p, int lev) {
       }
    } else {
       if (p != nullroots[lev]) {
-	 p->flags |= 0xfffffff ;
+         p->flags |= 0xfffffff ;
          for (i=0; i<8; i++)
             markglobalchange(p->d[i], lev-1) ;
       }
@@ -704,7 +704,7 @@ int qlifealgo::setcell(int x, int y, int newstate) {
    while (lev > 0) {
       int i, d = 1 ;
       if (lev & 1) {
-	 int s = (lev >> 1) + lev - 1 ;
+         int s = (lev >> 1) + lev - 1 ;
          i = (xdel >> s) & 7 ;
          s = (1 << (s + 5)) - 2 ;
          if ((xc & s) == ((odd) ? s : 0))
@@ -712,7 +712,7 @@ int qlifealgo::setcell(int x, int y, int newstate) {
          if ((yc & s) == ((odd) ? s : 0))
             d += d << 9 ;
       } else {
-	 int s = (lev >> 1) + lev - 3 ;
+         int s = (lev >> 1) + lev - 3 ;
          i = (ydel >> s) & 7 ;
          s = (1 << (s + 5)) - 2 ;
          if ((yc & s) == ((odd) ? s : 0))
@@ -790,10 +790,10 @@ int qlifealgo::getcell(int x, int y) {
    while (lev > 0) {
       int i ;
       if (lev & 1) {
-	 int s = (lev >> 1) + lev - 1 ;
+         int s = (lev >> 1) + lev - 1 ;
          i = (xdel >> s) & 7 ;
       } else {
-	 int s = (lev >> 1) + lev - 3 ;
+         int s = (lev >> 1) + lev - 3 ;
          i = (ydel >> s) & 7 ;
       }
       if (b->d[i] == nullroots[lev-1])
@@ -840,31 +840,31 @@ int qlifealgo::nextcell(int x, int y, int &v) {
 int qlifealgo::nextcell(int x, int y, supertile *n, int lev) {
    if (lev > 0) {
       if (n == nullroots[lev])
-	 return -1 ;
+         return -1 ;
       int xdel = (x >> 5) - minlow32 ;
       int ydel = (y >> 5) - minlow32 ;
       int i ;
       if (lev & 1) {
-	 int s = (lev >> 1) + lev - 1 ;
+         int s = (lev >> 1) + lev - 1 ;
          i = (xdel >> s) & 7 ;
-	 int r = 0 ;
-	 int off = (x & 31) + ((xdel & ((1 << s) - 1)) << 5) ;
-	 while (i < 8) {
-	    int t = nextcell(x, y, n->d[i], lev-1) ;
-	    if (t < 0) {
-	      r += (32 << s) - off ;
-	      x += (32 << s) - off ;
-	      off = 0 ;
-	    } else {
-	      return r + t ;
-	    }
-	    i++ ;
-	 }
-	 return -1 ;
+         int r = 0 ;
+         int off = (x & 31) + ((xdel & ((1 << s) - 1)) << 5) ;
+         while (i < 8) {
+            int t = nextcell(x, y, n->d[i], lev-1) ;
+            if (t < 0) {
+              r += (32 << s) - off ;
+              x += (32 << s) - off ;
+              off = 0 ;
+            } else {
+              return r + t ;
+            }
+            i++ ;
+         }
+         return -1 ;
       } else {
-	 int s = (lev >> 1) + lev - 3 ;
+         int s = (lev >> 1) + lev - 3 ;
          i = (ydel >> s) & 7 ;
-	 return nextcell(x, y, n->d[i], lev-1) ;
+         return nextcell(x, y, n->d[i], lev-1) ;
       }
    }
    x &= 31 ;
@@ -912,8 +912,8 @@ G_INT64 qlifealgo::find_set_bits(supertile *p, int lev, int gm1) {
                for (j=0; j<8; j++) {
                   k = pp->b[i]->d[j+gm1*8] ;
                   if (k)
-		    pop += bc[k & 255] + bc[(k >> 8) & 255] +
-		      bc[(k >> 16) & 255] + bc[(k >> 24) & 255] ;
+                    pop += bc[k & 255] + bc[(k >> 8) & 255] +
+                      bc[(k >> 16) & 255] + bc[(k >> 24) & 255] ;
                }
             }
          }
@@ -928,8 +928,8 @@ G_INT64 qlifealgo::find_set_bits(supertile *p, int lev, int gm1) {
             p->pop[gm1] = (long)pop ;
             p->flags &= ~(0x20000000 << gm1) ;
          } else {
-	    p->pop[gm1] = 0xfffffff ; // placeholder; *some* bits are set
-	 }
+            p->pop[gm1] = 0xfffffff ; // placeholder; *some* bits are set
+         }
       } else {
          pop = p->pop[gm1] ;
       }

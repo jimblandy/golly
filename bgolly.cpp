@@ -145,7 +145,7 @@ void usage(const char *s) {
   fprintf(stderr, "Usage:  bgolly [options] patternfile\n") ;
   for (int i=0; options[i].shortopt; i++)
     fprintf(stderr, "%3s %-15s %s\n", options[i].shortopt, options[i].longopt,
-	    options[i].desc) ;
+            options[i].desc) ;
   if (s)
     lifefatal(s) ;
   exit(0) ;
@@ -210,17 +210,17 @@ struct cmdbase {
       int maxy = iargs[3] ;
       int v ;
       for (int y=miny; y<=maxy; y++) {
-	 for (int x=minx; x<=maxx; x++) {
-	    int dx = imp->nextcell(x, y, v) ;
-	    if (dx < 0)
-	       break ;
-	    if (x > 0 && (x + dx) < 0)
-	       break ;
-	    x += dx ;
-	    if (x > maxx)
-	       break ;
-	    nextloopinner(x, y) ;
-	 }
+         for (int x=minx; x<=maxx; x++) {
+            int dx = imp->nextcell(x, y, v) ;
+            if (dx < 0)
+               break ;
+            if (x > 0 && (x + dx) < 0)
+               break ;
+            x += dx ;
+            if (x > maxx)
+               break ;
+            nextloopinner(x, y) ;
+         }
       }
    }
    virtual void nextloopinner(int, int) {}
@@ -228,53 +228,53 @@ struct cmdbase {
       int iargn = 0 ;
       char sbuf[MAXCMDLENGTH+2] ;
       for (const char *rargs = args; *rargs; rargs++) {
-	 while (*cmdargs && *cmdargs <= ' ')
-	    cmdargs++ ;
-	 if (*cmdargs == 0) {
-	    lifewarning("Missing needed argument") ;
-	    return 0 ;
-	 }
-	 switch (*rargs) {
-	 case 'i':
-	   if (sscanf(cmdargs, "%d", iargs+iargn) != 1) {
-	     lifewarning("Missing needed integer argument") ;
-	     return 0 ;
-	   }
-	   iargn++ ;
-	   break ;
-	 case 'b':
-	   {
-	      int i = 0 ;
-	      for (i=0; cmdargs[i] > ' '; i++)
-		 sbuf[i] = cmdargs[i] ;
-	      sbuf[i] = 0 ;
-	      barg = bigint(sbuf) ;
-	   }
-	   break ;
-	 case 's':
-	   if (sscanf(cmdargs, "%s", sbuf) != 1) {
-	     lifewarning("Missing needed string argument") ;
-	     return 0 ;
-	   }
-	   sarg = strdup(sbuf) ;
-	   break ;
-	 default:
-	   lifefatal("Internal error in parseargs") ;
-	 }
-	 while (*cmdargs && *cmdargs > ' ')
-	   cmdargs++ ;
+         while (*cmdargs && *cmdargs <= ' ')
+            cmdargs++ ;
+         if (*cmdargs == 0) {
+            lifewarning("Missing needed argument") ;
+            return 0 ;
+         }
+         switch (*rargs) {
+         case 'i':
+           if (sscanf(cmdargs, "%d", iargs+iargn) != 1) {
+             lifewarning("Missing needed integer argument") ;
+             return 0 ;
+           }
+           iargn++ ;
+           break ;
+         case 'b':
+           {
+              int i = 0 ;
+              for (i=0; cmdargs[i] > ' '; i++)
+                 sbuf[i] = cmdargs[i] ;
+              sbuf[i] = 0 ;
+              barg = bigint(sbuf) ;
+           }
+           break ;
+         case 's':
+           if (sscanf(cmdargs, "%s", sbuf) != 1) {
+             lifewarning("Missing needed string argument") ;
+             return 0 ;
+           }
+           sarg = strdup(sbuf) ;
+           break ;
+         default:
+           lifefatal("Internal error in parseargs") ;
+         }
+         while (*cmdargs && *cmdargs > ' ')
+           cmdargs++ ;
       }
       return 1 ;
    }
    static void docmd(const char *cmdline) {
       for (cmdbase *cmd=list; cmd; cmd = cmd->next)
-	 if (strncmp(cmdline, cmd->verb, strlen(cmd->verb)) == 0 &&
-	     cmdline[strlen(cmd->verb)] <= ' ') {
-	    if (cmd->parseargs(cmdline+strlen(cmd->verb))) {
-	       cmd->doit() ;
-	    }
-	    return ;
-	 }
+         if (strncmp(cmdline, cmd->verb, strlen(cmd->verb)) == 0 &&
+             cmdline[strlen(cmd->verb)] <= ' ') {
+            if (cmd->parseargs(cmdline+strlen(cmd->verb))) {
+               cmd->doit() ;
+            }
+            return ;
+         }
       lifewarning("Didn't understand command") ;
    }
    cmdbase *next ;
@@ -329,7 +329,7 @@ struct helpcmd : public cmdbase {
    helpcmd() : cmdbase("help", "") {}
    virtual void doit() {
       for (cmdbase *cmd=list; cmd; cmd = cmd->next)
-	 cout << cmd->verb << " " << cmd->args << endl ;
+         cout << cmd->verb << " " << cmd->args << endl ;
    }
 } help_inst ;
 struct getcmd : public cmdbase {
@@ -376,7 +376,7 @@ struct pastecmd : public cmdbase {
    pastecmd() : cmdbase("paste", "ii") {}
    virtual void doit() {
       for (unsigned int i=0; i<cutbuf.size(); i++)
-	 imp->setcell(cutbuf[i].first, cutbuf[i].second, 1) ;
+         imp->setcell(cutbuf[i].first, cutbuf[i].second, 1) ;
       cout << cutbuf.size() << " pixels pasted." << endl ;
    }
 } paste_inst ;
@@ -384,7 +384,7 @@ struct showcutcmd : public cmdbase {
    showcutcmd() : cmdbase("showcut", "") {}
    virtual void doit() {
       for (unsigned int i=0; i<cutbuf.size(); i++)
-	 cout << cutbuf[i].first << " " << cutbuf[i].second << endl ;
+         cout << cutbuf[i].first << " " << cutbuf[i].second << endl ;
    }
 } showcut_inst ;
 lifealgo *createUniverse() {
@@ -480,40 +480,40 @@ int main(int argc, char *argv[]) {
       char *opt = argv[0] ;
       int hit = 0 ;
       for (int i=0; options[i].shortopt; i++) {
-	if (strcmp(opt, options[i].shortopt) == 0 ||
-	    strcmp(opt, options[i].longopt) == 0) {
-	  switch (options[i].opttype) {
+        if (strcmp(opt, options[i].shortopt) == 0 ||
+            strcmp(opt, options[i].longopt) == 0) {
+          switch (options[i].opttype) {
 case 'i':
              if (argc < 2)
-	        lifefatal("Bad option argument") ;
+                lifefatal("Bad option argument") ;
              *(int *)options[i].data = atol(argv[1]) ;
-	     argc-- ;
-	     argv++ ;
+             argc-- ;
+             argv++ ;
              break ;
 case 'I':
              if (argc < 2)
-	        lifefatal("Bad option argument") ;
+                lifefatal("Bad option argument") ;
              *(bigint *)options[i].data = bigint(argv[1]) ;
-	     argc-- ;
-	     argv++ ;
+             argc-- ;
+             argv++ ;
              break ;
 case 'b':
              (*(int *)options[i].data) += 1 ;
              break ;
 case 's':
              if (argc < 2)
-	        lifefatal("Bad option argument") ;
+                lifefatal("Bad option argument") ;
              *(char **)options[i].data = argv[1] ;
-	     argc-- ;
-	     argv++ ;
+             argc-- ;
+             argv++ ;
              break ;
-	  }
-	  hit++ ;
-	  break ;
-	}
+          }
+          hit++ ;
+          break ;
+        }
       }
       if (!hit)
-	usage("Bad option given") ;
+        usage("Bad option given") ;
    }
    if (argc < 2 && !testscript)
      usage("No pattern argument given") ;
@@ -551,7 +551,7 @@ case 's':
        filename = argv[1] ;
        const char *err = readpattern(argv[1], *imp) ;
        if (err)
-	 lifefatal(err) ;
+         lifefatal(err) ;
      }
      runtestscript(testscript) ;
    }
@@ -568,16 +568,16 @@ case 's':
       if (quiet < 2) {
          cout << imp->getGeneration().tostring() ;
          if (!quiet)
-	   cout << ": " << imp->getPopulation().tostring() << endl ;
+           cout << ": " << imp->getPopulation().tostring() << endl ;
          else
-	   cout << endl ;
+           cout << endl ;
       }
       if (popcount)
          imp->getPopulation() ;
       if (autofit)
-	imp->fit(viewport, 1) ;
+        imp->fit(viewport, 1) ;
       if (render)
-	imp->draw(viewport, renderer) ;
+        imp->draw(viewport, renderer) ;
       if (maxgen >= 0 && imp->getGeneration() >= maxgen)
          break ;
       if (!hyper && maxgen > 0 && inc == 0) {

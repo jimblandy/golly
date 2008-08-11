@@ -74,7 +74,7 @@ state wwalgo::slowcalc(state nw, state n, state ne, state w, state c, state e,
   case 2: return 3 ;
   case 3:
     if ((((1+(nw==1)+(n==1)+(ne==1)+(w==1)+(e==1)+(sw==1)+
-	     (s==1)+(se==1))) | 1) == 3)
+             (s==1)+(se==1))) | 1) == 3)
       return 1 ;
     else
       return 3 ;

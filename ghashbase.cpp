@@ -308,15 +308,15 @@ ghnode *ghashbase::dorecurs_half(ghnode *n, ghnode *ne, ghnode *t,
       *t21 = find_ghnode(t->ne->se, e->nw->sw, t->se->ne, e->sw->nw),
       *t22 = find_ghnode(e->nw->se, e->ne->sw, e->sw->ne, e->se->nw) ;
       n = find_ghnode(getres(find_ghnode(t00, t01, t10, t11), depth),
-		      getres(find_ghnode(t01, t02, t11, t12), depth),
-		      getres(find_ghnode(t10, t11, t20, t21), depth),
-		      getres(find_ghnode(t11, t12, t21, t22), depth)) ;
+                      getres(find_ghnode(t01, t02, t11, t12), depth),
+                      getres(find_ghnode(t10, t11, t20, t21), depth),
+                      getres(find_ghnode(t11, t12, t21, t22), depth)) ;
    } else {
       ghnode
       *t00 = getres(n, depth),
-	*t01 = getres(find_ghnode(n->ne, ne->nw, n->se, ne->sw), depth),
-	*t10 = getres(find_ghnode(n->sw, n->se, t->nw, t->ne), depth),
-	*t11 = getres(find_ghnode(n->se, ne->sw, t->ne, e->nw), depth),
+      *t01 = getres(find_ghnode(n->ne, ne->nw, n->se, ne->sw), depth),
+      *t10 = getres(find_ghnode(n->sw, n->se, t->nw, t->ne), depth),
+      *t11 = getres(find_ghnode(n->se, ne->sw, t->ne, e->nw), depth),
       *t02 = getres(ne, depth),
       *t12 = getres(find_ghnode(ne->sw, ne->se, e->nw, e->ne), depth),
       *t20 = getres(t, depth),
@@ -349,7 +349,7 @@ ghnode *ghashbase::dorecurs_half(ghnode *n, ghnode *ne, ghnode *t,
  *   save/pop mumbo-jumbo.
  */
 ghleaf *ghashbase::dorecurs_ghleaf(ghleaf *nw, ghleaf *ne, ghleaf *sw,
-				   ghleaf *se) {
+                                   ghleaf *se) {
    return find_ghleaf(
              slowcalc(nw->nw, nw->ne, ne->nw,
                       nw->sw, nw->se, ne->sw,
@@ -516,10 +516,10 @@ void ghashbase::step() {
          lifefatal("bad increment") ;
       int downto = newpow2 ;
       if (ngens < newpow2)
-	 downto = ngens ;
+         downto = ngens ;
       if (newpow2 != ngens && cleareddownto > downto) {
          new_ngens(newpow2) ;
-	 cleareddownto = downto ;
+         cleareddownto = downto ;
       } else {
          ngens = newpow2 ;
       }
@@ -602,7 +602,7 @@ ghnode *ghashbase::zeroghnode(int depth) {
       zeroghnodea = (ghnode **)realloc(zeroghnodea,
                                           nnzeros * sizeof(ghnode *)) ;
       if (zeroghnodea == 0)
-	lifefatal("Out of memory (2).") ;
+        lifefatal("Out of memory (2).") ;
       alloced += (nnzeros - nzeros) * sizeof(ghnode *) ;
       while (nzeros < nnzeros)
          zeroghnodea[nzeros++] = 0 ;
@@ -646,33 +646,33 @@ ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
          state sw = l->sw ;
          state ne = l->ne ;
          state se = l->se ;
-	 if (x < 0)
-	   if (y < 0)
-	     sw = (state)newstate ;
-	   else
-	     nw = (state)newstate ;
-	 else
-	   if (y < 0)
-	     se = (state)newstate ;
-	   else
-	     ne = (state)newstate ;
+         if (x < 0)
+           if (y < 0)
+             sw = (state)newstate ;
+           else
+             nw = (state)newstate ;
+         else
+           if (y < 0)
+             se = (state)newstate ;
+           else
+             ne = (state)newstate ;
          return save((ghnode *)find_ghleaf(nw, ne, sw, se)) ;
       }
       if (x < 0)
-	if (y < 0)
-	  l->sw = (state)newstate ;
-	else
-	  l->nw = (state)newstate ;
+        if (y < 0)
+          l->sw = (state)newstate ;
+        else
+          l->nw = (state)newstate ;
       else
-	if (y < 0)
-	  l->se = (state)newstate ;
-	else
-	  l->ne = (state)newstate ;
+        if (y < 0)
+          l->se = (state)newstate ;
+        else
+          l->ne = (state)newstate ;
       return (ghnode *)l ;
    } else {
       int w = 1 << depth ;
       if (depth > 31)
-	 w = 0 ;
+         w = 0 ;
       depth-- ;
       ghnode **nptr ;
       if (x < 0) {
@@ -693,7 +693,7 @@ ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
             *nptr = newclearedghnode() ;
       }
       ghnode *s = setbit(*nptr, (x & (w - 1)) - (w >> 1),
-			 (y & (w - 1)) - (w >> 1), newstate, depth) ;
+                         (y & (w - 1)) - (w >> 1), newstate, depth) ;
       if (hashed) {
          ghnode *nw = n->nw ;
          ghnode *sw = n->sw ;
@@ -727,24 +727,24 @@ int ghashbase::getbit(ghnode *n, int x, int y, int depth) {
       ghleaf *l = (ghleaf *)n ;
       if (x < 0)
          if (y < 0)
-	   return l->sw ;
+           return l->sw ;
          else
-	   return l->nw ;
+           return l->nw ;
       else
          if (y < 0)
-	   return l->se ;
+           return l->se ;
          else
-	   return l->ne ;
+           return l->ne ;
    } else {
       int w = 1 << depth ;
       if (depth > 31)
-	 w = 0 ;
+         w = 0 ;
       ghnode *nptr ;
       depth-- ;
       if (x < 0) {
          if (y < 0)
             nptr = n->sw ;
-	 else
+         else
             nptr = n->nw ;
       } else {
          if (y < 0)
@@ -769,23 +769,23 @@ int ghashbase::nextbit(ghnode *n, int x, int y, int depth, int &v) {
    if (depth == 0) {
       ghleaf *l = (ghleaf *)n ;
       if (y < 0) {
-	if (x < 0 && l->sw) {
-	  v = l->sw ;
-	  return 0 ;
-	}
-	if (l->se) {
-	  v = l->se ;
-	  return -x ;
-	}
+        if (x < 0 && l->sw) {
+          v = l->sw ;
+          return 0 ;
+        }
+        if (l->se) {
+          v = l->se ;
+          return -x ;
+        }
       } else {
-	if (x < 0 && l->nw) {
-	  v = l->nw ;
-	  return 0 ;
-	}
-	if (l->ne) {
-	  v = l->ne ;
-	  return -x ;
-	}
+        if (x < 0 && l->nw) {
+          v = l->nw ;
+          return 0 ;
+        }
+        if (l->ne) {
+          v = l->ne ;
+          return -x ;
+        }
       }
       return -1 ; // none found
    } else {
@@ -794,25 +794,25 @@ int ghashbase::nextbit(ghnode *n, int x, int y, int depth, int &v) {
       ghnode *lft, *rght ;
       depth-- ;
       if (y < 0) {
-	lft = n->sw ;
-	rght = n->se ;
+        lft = n->sw ;
+        rght = n->se ;
       } else {
-	lft = n->nw ;
-	rght = n->ne ;
+        lft = n->nw ;
+        rght = n->ne ;
       }
       int r = 0 ;
       if (x < 0) {
-	int t = nextbit(lft, (x & (w-1)) - wh,
-			(y & (w - 1)) - wh, depth, v) ;
-	if (t >= 0)
-	  return t ;
-	r = -x ;
-	x = 0 ;
+        int t = nextbit(lft, (x & (w-1)) - wh,
+                        (y & (w - 1)) - wh, depth, v) ;
+        if (t >= 0)
+          return t ;
+        r = -x ;
+        x = 0 ;
       }
       int t = nextbit(rght, (x & (w-1)) - wh,
-		      (y & (w - 1)) - wh, depth, v) ;
+                      (y & (w - 1)) - wh, depth, v) ;
       if (t >= 0)
-	return r + t ;
+        return r + t ;
       return -1 ;
    }
 }
@@ -907,11 +907,11 @@ int ghashbase::nextcell(int x, int y, int &v) {
       struct ghnode tghnode = *root ;
       int mdepth = depth ;
       while (mdepth > 30) {
-	 tghnode.nw = tghnode.nw->se ;
-	 tghnode.ne = tghnode.ne->sw ;
-	 tghnode.sw = tghnode.sw->ne ;
-	 tghnode.se = tghnode.se->nw ;
-	 mdepth-- ;
+         tghnode.nw = tghnode.nw->se ;
+         tghnode.ne = tghnode.ne->sw ;
+         tghnode.sw = tghnode.sw->ne ;
+         tghnode.se = tghnode.se->nw ;
+         mdepth-- ;
       }
       return nextbit(&tghnode, x, y, mdepth, v) ;
    }
@@ -1079,7 +1079,7 @@ ghnode *ghashbase::save(ghnode *n) {
       alloced += sizeof(ghnode *)*(nstacksize-stacksize) ;
       stack = (ghnode **)realloc(stack, nstacksize * sizeof(ghnode *)) ;
       if (stack == 0)
-	lifefatal("Out of memory (3).") ;
+        lifefatal("Out of memory (3).") ;
       stacksize = nstacksize ;
    }
    stack[gsp++] = n ;
@@ -1113,10 +1113,10 @@ void ghashbase::gc_mark(ghnode *root, int invalidate) {
          gc_mark(root->sw, invalidate) ;
          gc_mark(root->se, invalidate) ;
          if (root->res)
-	    if (invalidate)
-	      root->res = 0 ;
-	    else
-	      gc_mark(root->res, invalidate) ;
+            if (invalidate)
+              root->res = 0 ;
+            else
+              gc_mark(root->res, invalidate) ;
       }
    }
 }
@@ -1193,7 +1193,7 @@ void ghashbase::clearcache(ghnode *n, int depth, int clearto) {
       mark(n) ;
       if (depth > 1) {
          depth-- ;
-	 poller->poll() ;
+         poller->poll() ;
          clearcache(n->nw, depth, clearto) ;
          clearcache(n->ne, depth, clearto) ;
          clearcache(n->sw, depth, clearto) ;
@@ -1238,7 +1238,7 @@ void ghashbase::new_ngens(int newval) {
    inGC = 1 ;
    for (i=0; i<hashprime; i++)
       for (p=hashtab[i]; p; p=clearmarkbit(p->next))
-	 if (is_ghnode(p) && !marked(p))
+         if (is_ghnode(p) && !marked(p))
             clearcache(p, ghnode_depth(p), clearto) ;
    for (p=ghnodeblocks; p; p=p->next) {
       poller->poll() ;
@@ -1278,12 +1278,12 @@ const bigint &ghashbase::getPopulation() {
    // since that will mess up the gc.
    if (!popValid) {
       if (inGC) {
-	needPop = 1 ;
-	return negone ;
+        needPop = 1 ;
+        return negone ;
       } else {
-	calcPopulation(root) ;
-	popValid = 1 ;
-	needPop = 0 ;
+        calcPopulation(root) ;
+        popValid = 1 ;
+        needPop = 0 ;
       }
    }
    return population ;
@@ -1339,8 +1339,8 @@ const char *ghashbase::readmacrocell(char *line) {
       if (i >= indlen) {
          g_uintptr_t nlen = i + indlen + 10 ;
          ind = (ghnode **)realloc(ind, sizeof(ghnode*) * nlen) ;
-	 if (ind == 0)
-	   lifefatal("Out of memory (4).") ;
+         if (ind == 0)
+           lifefatal("Out of memory (4).") ;
          while (indlen < nlen)
             ind[indlen++] = 0 ;
       }
@@ -1373,43 +1373,43 @@ const char *ghashbase::readmacrocell(char *line) {
          n = sscanf(line, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %d", &d, &nw, &ne, &sw, &se, &r) ;
          if (n < 0) // blank line; permit
             continue ;
-	 if (n == 0) {
-	    // conversion error in first argument; we allow only if the only
-	    // content on the line is whitespace.
-	    char *ws = line ;
-	    while (*ws && *ws <= ' ')
-	       ws++ ;
-	    if (*ws > 0)
-	       return "Parse error in macrocell format." ;
-	    continue ;
-	 }
+         if (n == 0) {
+            // conversion error in first argument; we allow only if the only
+            // content on the line is whitespace.
+            char *ws = line ;
+            while (*ws && *ws <= ' ')
+               ws++ ;
+            if (*ws > 0)
+               return "Parse error in macrocell format." ;
+            continue ;
+         }
          if (n < 5)
             // best not to use lifefatal here because user won't see any
             // error message when reading clipboard data starting with "[..."
             return "Parse error in readmacrocell." ;
          if (d < 1)
             return "Oops; bad depth in readmacrocell." ;
-	 if (d == 1) {
-	   if (nw < 0 || ne < 0 || sw < 0 || se < 0)
-	      return "Illegal negative cell state values" ;
-	   if (nw >= (g_uintptr_t)maxCellStates || ne >= (g_uintptr_t)maxCellStates ||
-	       sw >= (g_uintptr_t)maxCellStates || se >= (g_uintptr_t)maxCellStates)
-	      return "Cell state values too high for this algorithm." ;
-	   root = ind[i++] = (ghnode *)find_ghleaf((state)nw, (state)ne,
-						   (state)sw, (state)se) ;
-	   depth = d - 1 ;
-	 } else {
-	   ind[0] = zeroghnode(d-2) ; /* allow zeros to work right */
-	   if (nw < 0 || nw >= i || ind[nw] == 0 ||
-	       ne < 0 || ne >= i || ind[ne] == 0 ||
-	       sw < 0 || sw >= i || ind[sw] == 0 ||
-	       se < 0 || se >= i || ind[se] == 0) {
-	     return "Node out of range in readmacrocell." ;
-	   }
-	   clearstack() ;
-	   root = ind[i++] = find_ghnode(ind[nw], ind[ne], ind[sw], ind[se]) ;
-	   depth = d - 1 ;
-	 }
+         if (d == 1) {
+           if (nw < 0 || ne < 0 || sw < 0 || se < 0)
+              return "Illegal negative cell state values" ;
+           if (nw >= (g_uintptr_t)maxCellStates || ne >= (g_uintptr_t)maxCellStates ||
+               sw >= (g_uintptr_t)maxCellStates || se >= (g_uintptr_t)maxCellStates)
+              return "Cell state values too high for this algorithm." ;
+           root = ind[i++] = (ghnode *)find_ghleaf((state)nw, (state)ne,
+                                                   (state)sw, (state)se) ;
+           depth = d - 1 ;
+         } else {
+           ind[0] = zeroghnode(d-2) ; /* allow zeros to work right */
+           if (nw < 0 || nw >= i || ind[nw] == 0 ||
+               ne < 0 || ne >= i || ind[ne] == 0 ||
+               sw < 0 || sw >= i || ind[sw] == 0 ||
+               se < 0 || se >= i || ind[se] == 0) {
+             return "Node out of range in readmacrocell." ;
+           }
+           clearstack() ;
+           root = ind[i++] = find_ghnode(ind[nw], ind[ne], ind[sw], ind[se]) ;
+           depth = d - 1 ;
+         }
       }
    }
    if (ind)
@@ -1482,7 +1482,7 @@ g_uintptr_t ghashbase::writecell_2p1(ghnode *root, int depth) {
       thiscell = ++cellcounter ;
       // note:  we *must* not abort this prescan
       if ((cellcounter & 4095) == 0)
-	 lifeabortprogress(0, "Scanning tree") ;
+         lifeabortprogress(0, "Scanning tree") ;
       root->nw = (ghnode *)thiscell ;
    } else {
       writecell_2p1(root->nw, depth-1) ;
@@ -1492,7 +1492,7 @@ g_uintptr_t ghashbase::writecell_2p1(ghnode *root, int depth) {
       thiscell = ++cellcounter ;
       // note:  we *must* not abort this prescan
       if ((cellcounter & 4095) == 0)
-	 lifeabortprogress(0, "Scanning tree") ;
+         lifeabortprogress(0, "Scanning tree") ;
       root->next = (ghnode *)thiscell ;
    }
    return thiscell ;
@@ -1508,33 +1508,33 @@ g_uintptr_t ghashbase::writecell_2p2(FILE *f, ghnode *root, int depth) {
       return 0 ;
    if (depth == 0) {
       if (cellcounter + 1 != (g_uintptr_t)(root->nw))
-	 return (g_uintptr_t)(root->nw) ;
+         return (g_uintptr_t)(root->nw) ;
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
-	 unsigned long siz = ftell(f) ;
+         unsigned long siz = ftell(f) ;
          sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
-	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
+         lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       ghleaf *n = (ghleaf *)root ;
       root->nw = (ghnode *)thiscell ;
       fprintf(f, "1 %d %d %d %d\n", n->nw, n->ne, n->sw, n->se) ;
    } else {
       if (cellcounter + 1 > (g_uintptr_t)(root->next) || isaborted())
-	 return (g_uintptr_t)(root->next) ;
+         return (g_uintptr_t)(root->next) ;
       g_uintptr_t nw = writecell_2p2(f, root->nw, depth-1) ;
       g_uintptr_t ne = writecell_2p2(f, root->ne, depth-1) ;
       g_uintptr_t sw = writecell_2p2(f, root->sw, depth-1) ;
       g_uintptr_t se = writecell_2p2(f, root->se, depth-1) ;
       if (!isaborted() &&
-	  cellcounter + 1 != (g_uintptr_t)(root->next)) { // this should never happen
-	 lifefatal("Internal in writecell_2p2") ;
-	 return (g_uintptr_t)(root->next) ;
+          cellcounter + 1 != (g_uintptr_t)(root->next)) { // this should never happen
+         lifefatal("Internal in writecell_2p2") ;
+         return (g_uintptr_t)(root->next) ;
       }
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
-	 unsigned long siz = ftell(f) ;
+         unsigned long siz = ftell(f) ;
          sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
-	 lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
+         lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       root->next = (ghnode *)thiscell ;
       fprintf(f, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR "\n", depth+1, nw, ne, sw, se) ;

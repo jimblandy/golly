@@ -94,15 +94,16 @@ static state compress[256] ;
 /**
  *   These are the legal *internal* states.
  */
-static state uncompress[] = { 0, /* dead */
-			      1, 2, 3, 4, 5, 6, 7, 8, /* construction states */
-			      32, 33, 34, 35, /* ordinary */
-			      160, 161, 162, 163, /* ordinary active */
-			      64, 65, 66, 67, /* special */
-			      192, 193, 194, 195, /* special active */
-			      16, 144, /* confluent states */
-			      17, 145, /* more confluent states */
-                              146, 148, 150 /* crossing confluent states */
+static state uncompress[] = {
+   0,                      /* dead */
+   1, 2, 3, 4, 5, 6, 7, 8, /* construction states */
+   32, 33, 34, 35,         /* ordinary */
+   160, 161, 162, 163,     /* ordinary active */
+   64, 65, 66, 67,         /* special */
+   192, 193, 194, 195,     /* special active */
+   16, 144,                /* confluent states */
+   17, 145,                /* more confluent states */
+   146, 148, 150           /* crossing confluent states */
 } ;
 
 /**
@@ -178,7 +179,7 @@ jvnalgo::~jvnalgo() {
 }
 
 state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
-			state, state s, state) {
+                        state, state s, state) {
    c = uncompress[c] ;
    int mbits = bits(c, uncompress[n], SOUTH) |
      bits(c, uncompress[w], EAST) |

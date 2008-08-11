@@ -298,7 +298,7 @@ private:
    g_uintptr_t writecell_2p1(node *root, int depth) ;
    g_uintptr_t writecell_2p2(FILE *f, node *root, int depth) ;
    void unpack8x8(unsigned short nw, unsigned short ne,
-		  unsigned short sw, unsigned short se,
-		  unsigned int *top, unsigned int *bot) ;
+                  unsigned short sw, unsigned short se,
+                  unsigned int *top, unsigned int *bot) ;
 } ;
 #endif

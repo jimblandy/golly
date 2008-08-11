@@ -81,7 +81,7 @@ void qlifealgo::clearrect(int minx, int miny, int w, int h) {
  *   a certain level; we'll deal with higher levels later.
  */
 void qlifealgo::BlitCells(supertile *p,
-			  int xoff, int yoff, int wd, int ht, int lev) {
+                          int xoff, int yoff, int wd, int ht, int lev) {
    int i, xinc=0, yinc=0, ypos, x, yy;
    int liveseen = 0 ;
    
@@ -188,12 +188,12 @@ void qlifealgo::BlitCells(supertile *p,
 // the popcount child if needed.
 
 void qlifealgo::ShrinkCells(supertile *p,
-			    int xoff, int yoff, int wd, int ht, int lev) {
+                            int xoff, int yoff, int wd, int ht, int lev) {
    int i ;
    if (lev >= bmlev) {
       if (xoff >= vieww || xoff + wd < 0 || yoff >= viewh || yoff + ht < 0)
          // no part of this supertile/tile is visible
-	 return ;
+         return ;
       if (p == nullroots[lev]) {
          clearrect(xoff, yoff, wd, ht) ;
          return ;
@@ -204,7 +204,7 @@ void qlifealgo::ShrinkCells(supertile *p,
       }
    } else {
       if (p == nullroots[lev])
-	 return ;
+         return ;
    }
    int bminc = -1 << (logshbmsize-3) ;
    unsigned char *bm = bigbuf + (((shbmsize-1)-yoff+bmtop) << (logshbmsize-3)) +
@@ -245,7 +245,7 @@ void qlifealgo::ShrinkCells(supertile *p,
                int bbit = bit ;
                for (int j=0; j<8; j++) {
                   if (pp->d[j] != nullroots[lev-2]) {
-		     if (0 == (*bm & bbit)) {
+                     if (0 == (*bm & bbit)) {
                         supertile *ppp = pp->d[j] ;
                         if (lev > 2) {
                            if ( ppp->pop[oddgen] != 0 )
@@ -256,7 +256,7 @@ void qlifealgo::ShrinkCells(supertile *p,
                               *bm |= bbit ;
                         }
                      }
-		  }
+                  }
                   if ((j ^ (j + 1)) >> sh)
                      bbit <<= 1 ;
                }
@@ -404,9 +404,9 @@ void qlifealgo::ShrinkCells(supertile *p,
                      bit = 1 ;
                   }
                }
-	       bmm -= 2 ;
+               bmm -= 2 ;
             }
-	    bmm += 4 * bminc ;
+            bmm += 4 * bminc ;
          }
       }
       break;
@@ -486,15 +486,15 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
       lly = (lly << 1) + llyb[i] ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
          clearrect(0, 0, vieww, viewh) ;
-	 renderer = 0 ;
-	 view = 0 ;
-	 return ;
+         renderer = 0 ;
+         view = 0 ;
+         return ;
       }
    }
    /*  Find the lowest four we need to examine */
    int curlev = rootlev ;
    while (d > 8 && d - mag > 2 &&
-	  (d - mag > 28 || (1 << (d - mag)) > 32 * maxd)) {
+          (d - mag > 28 || (1 << (d - mag)) > 32 * maxd)) {
       // d is 5 + 3 * i for some positive i
       llx = (llx << 3) + (llxb[d-1] << 2) + (llxb[d-2] << 1) + llxb[d-3] ;
       lly = (lly << 3) + (llyb[d-1] << 2) + (llyb[d-2] << 1) + llyb[d-3] ;
@@ -510,36 +510,36 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
          yp = 7 ;
       if (xp == 7) {
          if (yp == 7) {
-	    ne = ne->d[0]->d[0] ;
-	    se = se->d[7]->d[0] ;
-	    nw = nw->d[0]->d[7] ;
-	    sw = sw->d[7]->d[7] ;
+            ne = ne->d[0]->d[0] ;
+            se = se->d[7]->d[0] ;
+            nw = nw->d[0]->d[7] ;
+            sw = sw->d[7]->d[7] ;
          } else {
-	    ne = se->d[yp+1]->d[0] ;
-	    se = se->d[yp]->d[0] ;
-	    nw = sw->d[yp+1]->d[7] ;
-	    sw = sw->d[yp]->d[7] ;
+            ne = se->d[yp+1]->d[0] ;
+            se = se->d[yp]->d[0] ;
+            nw = sw->d[yp+1]->d[7] ;
+            sw = sw->d[yp]->d[7] ;
          }
       } else {
          if (yp == 7) {
-	    ne = nw->d[0]->d[xp+1] ;
-	    se = sw->d[7]->d[xp+1] ;
-	    nw = nw->d[0]->d[xp] ;
-	    sw = sw->d[7]->d[xp] ;
+            ne = nw->d[0]->d[xp+1] ;
+            se = sw->d[7]->d[xp+1] ;
+            nw = nw->d[0]->d[xp] ;
+            sw = sw->d[7]->d[xp] ;
          } else {
-	    ne = sw->d[yp+1]->d[xp+1] ;
-	    se = sw->d[yp]->d[xp+1] ;
-	    nw = sw->d[yp+1]->d[xp] ;
-	    sw = sw->d[yp]->d[xp] ;
+            ne = sw->d[yp+1]->d[xp+1] ;
+            se = sw->d[yp]->d[xp+1] ;
+            nw = sw->d[yp+1]->d[xp] ;
+            sw = sw->d[yp]->d[xp] ;
          }
       }
       llx -= xp ;
       lly -= yp ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
          clearrect(0, 0, vieww, viewh) ;
-	 renderer = 0 ;
-	 view = 0 ;
-	 return ;
+         renderer = 0 ;
+         view = 0 ;
+         return ;
       }
       d -= 3 ;
       curlev -= 2 ;
@@ -621,7 +621,7 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
  *   Find the subsupertiles with the smallest indices.
  */
 int qlifealgo::lowsub(vector<supertile*> &src, vector<supertile*> &dst,
-		      int lev) {
+                      int lev) {
   int lowlev = 7 ;
   dst.clear() ;
   supertile *z = nullroots[lev-1] ;
@@ -629,23 +629,23 @@ int qlifealgo::lowsub(vector<supertile*> &src, vector<supertile*> &dst,
     for (int i=0; i<(int)src.size(); i++) {
       supertile *p = src[i] ;
       for (int j=0; j<lowlev; j++)
-	if (p->d[j] != z && (p->d[j]->pop[oddgen])) {
-	  lowlev = j ;
-	  dst.clear() ;
-	}
+        if (p->d[j] != z && (p->d[j]->pop[oddgen])) {
+          lowlev = j ;
+          dst.clear() ;
+        }
       if (p->d[lowlev] != z && (p->d[lowlev]->pop[oddgen]))
-	dst.push_back(p->d[lowlev]) ;
+        dst.push_back(p->d[lowlev]) ;
     }
   } else {
     for (int i=0; i<(int)src.size(); i++) {
       supertile *p = src[i] ;
       for (int j=0; j<lowlev; j++)
-	if (p->d[j] != z && (((tile *)(p->d[j]))->flags & quickb)) {
-	  lowlev = j ;
-	  dst.clear() ;
-	}
+        if (p->d[j] != z && (((tile *)(p->d[j]))->flags & quickb)) {
+          lowlev = j ;
+          dst.clear() ;
+        }
       if (p->d[lowlev] != z && (((tile *)(p->d[lowlev]))->flags & quickb))
-	dst.push_back(p->d[lowlev]) ;
+        dst.push_back(p->d[lowlev]) ;
     }
   }
   return lowlev ;
@@ -654,7 +654,7 @@ int qlifealgo::lowsub(vector<supertile*> &src, vector<supertile*> &dst,
  *   Find the subsupertiles with the highest indices.
  */
 int qlifealgo::highsub(vector<supertile*> &src, vector<supertile*> &dst,
-		       int lev) {
+                       int lev) {
   int highlev = 0 ;
   dst.clear() ;
   supertile *z = nullroots[lev-1] ;
@@ -662,23 +662,23 @@ int qlifealgo::highsub(vector<supertile*> &src, vector<supertile*> &dst,
     for (int i=0; i<(int)src.size(); i++) {
       supertile *p = src[i] ;
       for (int j=7; j>highlev; j--)
-	if (p->d[j] != z && (p->d[j]->pop[oddgen])) {
-	  highlev = j ;
-	  dst.clear() ;
-	}
+        if (p->d[j] != z && (p->d[j]->pop[oddgen])) {
+          highlev = j ;
+          dst.clear() ;
+        }
       if (p->d[highlev] != z && (p->d[highlev]->pop[oddgen]))
-	dst.push_back(p->d[highlev]) ;
+        dst.push_back(p->d[highlev]) ;
     }
   } else {
     for (int i=0; i<(int)src.size(); i++) {
       supertile *p = src[i] ;
       for (int j=7; j>highlev; j--)
-	if (p->d[j] != z && (((tile *)(p->d[j]))->flags & quickb)) {
-	  highlev = j ;
-	  dst.clear() ;
-	}
+        if (p->d[j] != z && (((tile *)(p->d[j]))->flags & quickb)) {
+          highlev = j ;
+          dst.clear() ;
+        }
       if (p->d[highlev] != z && (((tile *)(p->d[highlev]))->flags & quickb))
-	dst.push_back(p->d[highlev]) ;
+        dst.push_back(p->d[highlev]) ;
     }
   }
   return highlev ;
@@ -687,22 +687,22 @@ int qlifealgo::highsub(vector<supertile*> &src, vector<supertile*> &dst,
  *   Find all nonzero sub-supertiles.
  */
 void qlifealgo::allsub(vector<supertile*> &src, vector<supertile*> &dst,
-		       int lev) {
+                       int lev) {
   dst.clear() ;
   supertile *z = nullroots[lev-1] ;
   if (lev > 1) {
     for (int i=0; i<(int)src.size(); i++) {
       supertile *p = src[i] ;
       for (int j=0; j<8; j++)
-	if (p->d[j] != z && (p->d[j]->pop[oddgen]))
-	  dst.push_back(p->d[j]) ;
+        if (p->d[j] != z && (p->d[j]->pop[oddgen]))
+          dst.push_back(p->d[j]) ;
     }
   } else {
     for (int i=0; i<(int)src.size(); i++) {
       supertile *p = src[i] ;
       for (int j=0; j<8; j++)
-	if (p->d[j] != z && (((tile *)(p->d[j]))->flags & quickb))
-	  dst.push_back(p->d[j]) ;
+        if (p->d[j] != z && (((tile *)(p->d[j]))->flags & quickb))
+          dst.push_back(p->d[j]) ;
     }
   }
 }
@@ -715,8 +715,8 @@ int qlifealgo::gethbitsfromleaves(vector<supertile *> v) {
     tile *p = (tile *)v[i] ;
     for (int j=0; j<4; j++)
       if (p->b[j] != emptybrick)
-	for (int k=0; k<8; k++)
-	  h[k] |= p->b[j]->d[k+kadd] ;
+        for (int k=0; k<8; k++)
+          h[k] |= p->b[j]->d[k+kadd] ;
   }
   int r = 0 ;
   for (i=0; i<8; i++) {
@@ -737,8 +737,8 @@ int qlifealgo::getvbitsfromleaves(vector<supertile *> vec) {
     tile *p = (tile *)vec[i] ;
     for (int j=0; j<4; j++)
       if (p->b[j] != emptybrick)
-	for (int k=0; k<8; k++)
-	  v[j] |= p->b[j]->d[k+kadd] ;
+        for (int k=0; k<8; k++)
+          v[j] |= p->b[j]->d[k+kadd] ;
   }
   int r = 0 ;
   for (i=3; i>=0; i--) {
@@ -746,7 +746,7 @@ int qlifealgo::getvbitsfromleaves(vector<supertile *> vec) {
     for (int j=0; j<8; j++) {
       r += r ;
       if (vv & (0xf << (4 * j)))
-	r++ ;
+        r++ ;
     }
   }
   return r ;

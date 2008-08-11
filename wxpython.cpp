@@ -304,6 +304,10 @@ static bool LoadPythonLib()
 
 // some useful macros
 
+#define RETURN_NONE Py_INCREF(Py_None); return Py_None
+
+#define PYTHON_ERROR(msg) { PyErr_SetString(PyExc_RuntimeError, msg); return NULL; }
+
 #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
    // use decomposed UTF8 so fopen will work
    #define FILENAME wxString(filename,wxConvLocal).fn_str()
@@ -335,9 +339,11 @@ bool PythonScriptAborted()
 
 // -----------------------------------------------------------------------------
 
-// helper routine used in calls that build cell lists
-void AddCell(PyObject* list, long x, long y)
+static void AddTwoInts(PyObject* list, long x, long y)
 {
+   // append two ints to the given list -- these ints can be:
+   // the x,y coords of a live cell in a two-state cell list,
+   // or the x,y location of a rect, or the wd,ht of a rect
    PyObject* xo = PyInt_FromLong(x);
    PyObject* yo = PyInt_FromLong(y);
    PyList_Append(list, xo);
@@ -349,9 +355,35 @@ void AddCell(PyObject* list, long x, long y)
 
 // -----------------------------------------------------------------------------
 
-// helper routine to extract cell list from given universe
-bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
+static void AddState(PyObject* list, long s)
 {
+   // append cell state (possibly dead) to a multi-state cell list
+   PyObject* so = PyInt_FromLong(s);
+   PyList_Append(list, so);
+   Py_DECREF(so);
+}
+
+// -----------------------------------------------------------------------------
+
+static void AddPadding(PyObject* list)
+{
+   // assume list is multi-state and add an extra int if necessary so the list
+   // has an odd number of ints (this is how we distinguish multi-state lists
+   // from two-state lists -- the latter always have an even number of ints)
+   int len = PyList_Size(list);
+   if (len == 0) return;         // always return [] rather than [0] !!!???
+   if ((len & 1) == 0) {
+      PyObject* padding = PyInt_FromLong(0L);
+      PyList_Append(list, padding);
+      Py_DECREF(padding);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
+{
+   // extract cell list from given universe
    if ( !universe->isEmpty() ) {
       bigint top, left, bottom, right;
       universe->findedges(&top, &left, &bottom, &right);
@@ -359,13 +391,13 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
          PyErr_SetString(PyExc_RuntimeError, "Universe is too big to extract all cells!");
          return false;
       }
+      bool multistate = universe->NumCellStates() > 2;
       int itop = top.toint();
       int ileft = left.toint();
       int ibottom = bottom.toint();
       int iright = right.toint();
       int cx, cy;
       int v = 0;
-      //!!! make it work with multistate
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
@@ -375,10 +407,11 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
                cx += skip;
                if (shift) {
                   // shift cells so that top left cell of bounding box is at 0,0
-                  AddCell(list, cx - ileft, cy - itop);
+                  AddTwoInts(list, cx - ileft, cy - itop);
                } else {
-                  AddCell(list, cx, cy);
+                  AddTwoInts(list, cx, cy);
                }
+               if (multistate) AddState(list, v);
             } else {
                cx = iright;  // done this row
             }
@@ -386,6 +419,7 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
             if ((cntr % 4096) == 0 && PythonScriptAborted()) return false;
          }
       }
+      if (multistate) AddPadding(list);
    }
    return true;
 }
@@ -394,8 +428,6 @@ bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = false)
 
 // The following py_* routines can be called from Python scripts; some are
 // based on code in PLife's lifeint.cc (see http://plife.sourceforge.net/).
-
-#define RETURN_NONE Py_INCREF(Py_None); return Py_None
 
 static PyObject* py_open(PyObject* self, PyObject* args)
 {
@@ -406,11 +438,8 @@ static PyObject* py_open(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s|i", &filename, &remember)) return NULL;
    
-   const char* errmsg = GSF_open(filename, remember);
-   if (errmsg) {
-      PyErr_SetString(PyExc_RuntimeError, errmsg);
-      return NULL;
-   }
+   const char* err = GSF_open(filename, remember);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -427,11 +456,8 @@ static PyObject* py_save(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "ss|i", &filename, &format, &remember)) return NULL;
    
-   const char* errmsg = GSF_save(filename, format, remember);
-   if (errmsg) {
-      PyErr_SetString(PyExc_RuntimeError, errmsg);
-      return NULL;
-   }
+   const char* err = GSF_save(filename, format, remember);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -446,7 +472,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s", &filename)) return NULL;
 
-   // create temporary universe of same type
+   // create temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
    // readpattern will call setrule
    // tempalgo->setrule(currlayer->algo->getrule());
@@ -473,8 +499,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
 
    if (err) {
       delete tempalgo;
-      PyErr_SetString(PyExc_RuntimeError, err);
-      return NULL;
+      PYTHON_ERROR(err);
    }
 
    // convert pattern into a cell list, shifting cell coords so that the
@@ -496,25 +521,34 @@ static PyObject* py_store(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   PyObject* given_list;
+   PyObject* inlist;
    char* filename;
    char* desc = NULL;      // the description string is currently ignored!!!
 
-   if (!PyArg_ParseTuple(args, "O!s|s", &PyList_Type, &given_list, &filename, &desc))
+   if (!PyArg_ParseTuple(args, "O!s|s", &PyList_Type, &inlist, &filename, &desc))
       return NULL;
 
-   //!!! fix to handle > 2 states
-   // create temporary qlife universe
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
+   // create temporary universe of same type as current universe
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
    // copy cell list into temporary universe
-   int num_cells = PyList_Size(given_list) / 2;
+   bool multistate = (PyList_Size(inlist) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = PyList_Size(inlist) / ints_per_cell;
    for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
-
-      tempalgo->setcell(x, y, 1);
-
+      int item = ints_per_cell * n;
+      long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
+      long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+      if (multistate) {
+         long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
+         if (tempalgo->setcell(x, y, state) < 0) {
+            tempalgo->endofpattern();
+            delete tempalgo;
+            PYTHON_ERROR("store error: state value is out of range.");
+         }
+      } else {
+         tempalgo->setcell(x, y, 1);
+      }
       if ((n % 4096) == 0 && PythonScriptAborted()) {
          tempalgo->endofpattern();
          delete tempalgo;
@@ -530,10 +564,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
                         savexrle ? XRLE_format : RLE_format,
                         top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
-   if (err) {
-      PyErr_SetString(PyExc_RuntimeError, err);
-      return NULL;
-   }
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -591,8 +622,7 @@ static PyObject* py_cut(PyObject* self, PyObject* args)
       viewptr->CutSelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "cut error: no selection.");
-      return NULL;
+      PYTHON_ERROR("cut error: no selection.");
    }
 
    RETURN_NONE;
@@ -611,8 +641,7 @@ static PyObject* py_copy(PyObject* self, PyObject* args)
       viewptr->CopySelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "copy error: no selection.");
-      return NULL;
+      PYTHON_ERROR("copy error: no selection.");
    }
 
    RETURN_NONE;
@@ -635,8 +664,7 @@ static PyObject* py_clear(PyObject* self, PyObject* args)
          viewptr->ClearOutsideSelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "clear error: no selection.");
-      return NULL;
+      PYTHON_ERROR("clear error: no selection.");
    }
 
    RETURN_NONE;
@@ -654,8 +682,7 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "iis", &x, &y, &mode)) return NULL;
 
    if (!mainptr->ClipboardHasText()) {
-      PyErr_SetString(PyExc_RuntimeError, "paste error: no pattern in clipboard.");
-      return NULL;
+      PYTHON_ERROR("paste error: no pattern in clipboard.");
    }
 
    // temporarily change selection and paste mode
@@ -667,8 +694,7 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
    else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
    else {
-      PyErr_SetString(PyExc_RuntimeError, "paste error: unknown mode.");
-      return NULL;
+      PYTHON_ERROR("paste error: unknown mode.");
    }
 
    // create huge selection rect so no possibility of error message
@@ -698,8 +724,7 @@ static PyObject* py_shrink(PyObject* self, PyObject* args)
       viewptr->ShrinkSelection(false);    // false == don't fit in viewport
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "shrink error: no selection.");
-      return NULL;
+      PYTHON_ERROR("shrink error: no selection.");
    }
 
    RETURN_NONE;
@@ -716,8 +741,7 @@ static PyObject* py_randfill(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "i", &perc)) return NULL;
 
    if (perc < 1 || perc > 100) {
-      PyErr_SetString(PyExc_RuntimeError, "randfill error: percentage must be from 1 to 100.");
-      return NULL;
+      PYTHON_ERROR("randfill error: percentage must be from 1 to 100.");
    }
 
    if (viewptr->SelectionExists()) {
@@ -727,8 +751,7 @@ static PyObject* py_randfill(PyObject* self, PyObject* args)
       randomfill = oldperc;
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "randfill error: no selection.");
-      return NULL;
+      PYTHON_ERROR("randfill error: no selection.");
    }
 
    RETURN_NONE;
@@ -748,8 +771,7 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
       viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "flip error: no selection.");
-      return NULL;
+      PYTHON_ERROR("flip error: no selection.");
    }
 
    RETURN_NONE;
@@ -769,8 +791,7 @@ static PyObject* py_rotate(PyObject* self, PyObject* args)
       viewptr->RotateSelection(direction == 0);    // 0 = clockwise
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "rotate error: no selection.");
-      return NULL;
+      PYTHON_ERROR("rotate error: no selection.");
    }
 
    RETURN_NONE;
@@ -807,15 +828,23 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
          case '\n': if (x) { x = 0; y++; } break;
          case '.': x++; break;
          case '*':
-            AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+            AddTwoInts(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
             x++;
             break;
          }
          c = *s++;
       }
    } else {
-      // parsing RLE format
-      //!!! make it work with multistate xrle
+      // parsing RLE format; first check if multi-state data is present
+      bool multistate = false;
+      char* p = s;
+      while (*p) {
+         char c = *p++;
+         if ((c == '.') || ('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+            multistate = true;
+            break;
+         }
+      }
       int prefix = 0;
       bool done = false;
       int c = *s++;
@@ -828,15 +857,40 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
             case '!': done = true; break;
             case '$': x = 0; y += prefix; break;
             case 'b': x += prefix; break;
+            case '.': x += prefix; break;
             case 'o':
-               for (int k = 0; k < prefix; k++, x++)
-                  AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+               for (int k = 0; k < prefix; k++, x++) {
+                  AddTwoInts(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+                  if (multistate) AddState(outlist, 1);
+               }
                break;
+            default:
+               if (('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+                  // multistate must be true
+                  int state;
+                  if (c < 'p') {
+                     state = c - 'A' + 1;
+                  } else {
+                     state = 24 * (c - 'p' + 1);
+                     c = *s++;
+                     if ('A' <= c && c <= 'X') {
+                        state = state + c - 'A' + 1;
+                     } else {
+                        Py_DECREF(outlist);
+                        PYTHON_ERROR("parse error: illegal multi-char state.");
+                     }
+                  }
+                  for (int k = 0; k < prefix; k++, x++) {
+                     AddTwoInts(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
+                     AddState(outlist, state);
+                  }
+               }
             }
             prefix = 0;
          }
          c = *s++;
       }
+      if (multistate) AddPadding(outlist);
    }
 
    return outlist;
@@ -862,18 +916,25 @@ static PyObject* py_transform(PyObject* self, PyObject* args)
 
    PyObject* outlist = PyList_New(0);
 
-   int num_cells = PyList_Size(inlist) / 2;
+   bool multistate = (PyList_Size(inlist) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = PyList_Size(inlist) / ints_per_cell;
    for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem(inlist, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem(inlist, 2 * n + 1) );
-
-      AddCell(outlist, x0 + x * axx + y * axy, y0 + x * ayx + y * ayy);
-
+      int item = ints_per_cell * n;
+      long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
+      long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+      AddTwoInts(outlist, x0 + x * axx + y * axy,
+                          y0 + x * ayx + y * ayy);
+      if (multistate) {
+         long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
+         AddState(outlist, state);
+      }
       if ((n % 4096) == 0 && PythonScriptAborted()) {
          Py_DECREF(outlist);
          return NULL;
       }
    }
+   if (multistate) AddPadding(outlist);
 
    return outlist;
 }
@@ -885,22 +946,32 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    int ngens = 0;
-   PyObject* given_list;
+   PyObject* inlist;
 
-   if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &given_list, &ngens)) return NULL;
+   if (!PyArg_ParseTuple(args, "O!i", &PyList_Type, &inlist, &ngens)) return NULL;
 
    // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
    tempalgo->setrule(currlayer->algo->getrule());
 
    // copy cell list into temporary universe
-   int num_cells = PyList_Size(given_list) / 2;
+   bool multistate = (PyList_Size(inlist) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = PyList_Size(inlist) / ints_per_cell;
    for (int n = 0; n < num_cells; n++) {
-      long x = PyInt_AsLong( PyList_GetItem(given_list, 2 * n) );
-      long y = PyInt_AsLong( PyList_GetItem(given_list, 2 * n + 1) );
-
-      tempalgo->setcell(x, y, 1);
-
+      int item = ints_per_cell * n;
+      long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
+      long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+      if (multistate) {
+         long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
+         if (tempalgo->setcell(x, y, state) < 0) {
+            tempalgo->endofpattern();
+            delete tempalgo;
+            PYTHON_ERROR("evolve error: state value is out of range.");
+         }
+      } else {
+         tempalgo->setcell(x, y, 1);
+      }
       if ((n % 4096) == 0 && PythonScriptAborted()) {
          tempalgo->endofpattern();
          delete tempalgo;
@@ -929,6 +1000,8 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static const char* BAD_STATE = "putcells error: state value is out of range.";
+
 static PyObject* py_putcells(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -950,24 +1023,25 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
       return NULL;
 
-   int num_cells = PyList_Size(list) / 2;
-   lifealgo* curralgo = currlayer->algo;
-   
-   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
-   bool savecells = allowundo && !currlayer->stayclean;
-   // better to use ChangeCell and combine all changes due to consecutive setcell/putcells
-   // if (savecells) SavePendingChanges();
-
-   bool abort = false;
-
    wxString modestr = wxString(mode, wxConvLocal);
    if ( !(modestr.IsSameAs(wxT("or"), false)
           || modestr.IsSameAs(wxT("xor"), false)
           || modestr.IsSameAs(wxT("copy"), false)
           || modestr.IsSameAs(wxT("not"), false)) ) {
-      PyErr_SetString(PyExc_RuntimeError, "putcells error: unknown mode.");
-      return NULL;
+      PYTHON_ERROR("putcells error: unknown mode.");
    }
+   
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   // use ChangeCell below and combine all changes due to consecutive setcell/putcells
+   // if (savecells) SavePendingChanges();
+
+   bool multistate = (PyList_Size(list) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = PyList_Size(list) / ints_per_cell;
+   bool abort = false;
+   bool pattchanged = false;
+   lifealgo* curralgo = currlayer->algo;
    
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
@@ -975,35 +1049,77 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
 
    if (modestr.IsSameAs(wxT("xor"), false)) {
       // loop code is duplicated here to allow 'or' case to execute faster
+      int numstates = curralgo->NumCellStates();
       for (int n = 0; n < num_cells; n++) {
-         long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
-         long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+         int item = ints_per_cell * n;
+         long x = PyInt_AsLong( PyList_GetItem(list, item) );
+         long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
          int oldstate = curralgo->getcell(newx, newy);
-
-         if (savecells) ChangeCell(newx, newy, oldstate, 1-oldstate);
-
-         // paste (possibly transformed) cell into current universe
-         curralgo->setcell(newx, newy, 1-oldstate);
-
+         int newstate;
+         if (multistate) {
+            // multi-state lists can contain dead cells so newstate might be 0
+            newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
+            if (newstate == oldstate) {
+               if (oldstate != 0) newstate = 0;
+            } else {
+               newstate = newstate ^ oldstate;
+               // if xor overflows then don't change current state
+               if (newstate >= numstates) newstate = oldstate;
+            }
+            if (newstate != oldstate) {
+               // paste (possibly transformed) cell into current universe
+               if (curralgo->setcell(newx, newy, newstate) < 0) {
+                  PyErr_SetString(PyExc_RuntimeError, BAD_STATE);
+                  abort = true;
+                  break;
+               }
+               if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+               pattchanged = true;
+            }
+         } else {
+            // two-state lists only contain live cells
+            newstate = 1 - oldstate;
+            // paste (possibly transformed) cell into current universe
+            if (curralgo->setcell(newx, newy, newstate) < 0) {
+               PyErr_SetString(PyExc_RuntimeError, BAD_STATE);
+               abort = true;
+               break;
+            }
+            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+            pattchanged = true;
+         }
          if ((n % 4096) == 0 && PythonScriptAborted()) {
             abort = true;
             break;
          }
       }
    } else {
-      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1;
+      bool negate = modestr.IsSameAs(wxT("not"), false);
+      int newstate = negate ? 0 : 1;
+      int maxstate = curralgo->NumCellStates() - 1;
       for (int n = 0; n < num_cells; n++) {
-         long x = PyInt_AsLong( PyList_GetItem(list, 2 * n) );
-         long y = PyInt_AsLong( PyList_GetItem(list, 2 * n + 1) );
+         int item = ints_per_cell * n;
+         long x = PyInt_AsLong( PyList_GetItem(list, item) );
+         long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
          int oldstate = curralgo->getcell(newx, newy);
+         if (multistate) {
+            // multi-state lists can contain dead cells so newstate might be 0
+            newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
+            if (negate) newstate = maxstate - newstate;
+         }
          if (newstate != oldstate) {
-            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
             // paste (possibly transformed) cell into current universe
-            curralgo->setcell(newx, newy, newstate);
+            if (curralgo->setcell(newx, newy, newstate) < 0) {
+               PyErr_SetString(PyExc_RuntimeError, BAD_STATE);
+               abort = true;
+               break;
+            }
+            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+            pattchanged = true;
          }
          if ((n % 4096) == 0 && PythonScriptAborted()) {
             abort = true;
@@ -1012,10 +1128,11 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       }
    }
 
-   curralgo->endofpattern();
-   
-   MarkLayerDirty();
-   DoAutoUpdate();
+   if (pattchanged) {
+      curralgo->endofpattern();
+      MarkLayerDirty();
+      DoAutoUpdate();
+   }
    
    if (abort) return NULL;
 
@@ -1045,14 +1162,12 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
       if (wd <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "getcells error: width must be > 0.");
          Py_DECREF(outlist);
-         return NULL;
+         PYTHON_ERROR("getcells error: width must be > 0.");
       }
       if (ht <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "getcells error: height must be > 0.");
          Py_DECREF(outlist);
-         return NULL;
+         PYTHON_ERROR("getcells error: height must be > 0.");
       }
       int iright = ileft + wd - 1;
       int ibottom = itop + ht - 1;
@@ -1060,14 +1175,17 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
       int v = 0;
       int cntr = 0;
       lifealgo* curralgo = currlayer->algo;
+      bool multistate = curralgo->NumCellStates() > 2;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            //!!! make it work with multistate
             int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
-               if (cx <= iright) AddCell(outlist, cx, cy);
+               if (cx <= iright) {
+                  AddTwoInts(outlist, cx, cy);
+                  if (multistate) AddState(outlist, v);
+               }
             } else {
                cx = iright;  // done this row
             }
@@ -1078,10 +1196,10 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
             }
          }
       }
+      if (multistate) AddPadding(outlist);
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "getcells error: arg must be [] or [x,y,wd,ht].");
       Py_DECREF(outlist);
-      return NULL;
+      PYTHON_ERROR("getcells error: arg must be [] or [x,y,wd,ht].");
    }
 
    return outlist;
@@ -1099,8 +1217,7 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
 
    int numitems = PyList_Size(rect_list);
    if (numitems != 4) {
-      PyErr_SetString(PyExc_RuntimeError, "hash error: arg must be [x,y,wd,ht].");
-      return NULL;
+      PYTHON_ERROR("hash error: arg must be [x,y,wd,ht].");
    }
 
    int x  = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
@@ -1108,14 +1225,8 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
    // first check that wd & ht are > 0
-   if (wd <= 0) {
-      PyErr_SetString(PyExc_RuntimeError, "hash error: width must be > 0.");
-      return NULL;
-   }
-   if (ht <= 0) {
-      PyErr_SetString(PyExc_RuntimeError, "hash error: height must be > 0.");
-      return NULL;
-   }
+   if (wd <= 0) PYTHON_ERROR("hash error: width must be > 0.");
+   if (ht <= 0) PYTHON_ERROR("hash error: height must be > 0.");
    int right = x + wd - 1;
    int bottom = y + ht - 1;
    int cx, cy;
@@ -1128,13 +1239,13 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    for ( cy=y; cy<=bottom; cy++ ) {
       int yshift = cy - y;
       for ( cx=x; cx<=right; cx++ ) {
-         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip >= 0) {
             // found next live cell in this row
             cx += skip;
             if (cx <= right) {
-               hash = (hash * 33 + yshift) ^ (cx - x);
+               //note that v is 1 in a two-state universe
+               hash = (hash * 33 + yshift) ^ ((cx - x) * v);
             }
          } else {
             cx = right;  // done this row
@@ -1159,8 +1270,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (!mainptr->ClipboardHasText()) {
-      PyErr_SetString(PyExc_RuntimeError, "getclip error: no pattern in clipboard.");
-      return NULL;
+      PYTHON_ERROR("getclip error: no pattern in clipboard.");
    }
 
    // convert pattern in clipboard into a cell list, but where the first 2 items
@@ -1178,9 +1288,8 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
    bigint top, left, bottom, right;
    if ( viewptr->GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PyErr_SetString(PyExc_RuntimeError, "getclip error: pattern is too big.");
          Py_DECREF(outlist);
-         return NULL;
+         PYTHON_ERROR("getclip error: pattern is too big.");
       }
       int itop = top.toint();
       int ileft = left.toint();
@@ -1188,22 +1297,23 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
       int iright = right.toint();
       int wd = iright - ileft + 1;
       int ht = ibottom - itop + 1;
-      int v = 0;
 
-      AddCell(outlist, wd, ht);
+      AddTwoInts(outlist, wd, ht);
 
       // extract cells from tempalgo
+      bool multistate = tempalgo->NumCellStates() > 2;
       int cx, cy;
       int cntr = 0;
+      int v = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            //!!! make it work with multistate
             int skip = tempalgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
                // shift cells so that top left cell of bounding box is at 0,0
-               AddCell(outlist, cx - ileft, cy - itop);
+               AddTwoInts(outlist, cx - ileft, cy - itop);
+               if (multistate) AddState(outlist, v);
             } else {
                cx = iright;  // done this row
             }
@@ -1214,6 +1324,10 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
                return NULL;
             }
          }
+      }
+      // if no live cells then return [wd,ht] rather than [wd,ht,0] !!!???
+      if (multistate && PyList_Size(outlist) > 2) {
+         AddPadding(outlist);
       }
 
       delete tempalgo;
@@ -1247,19 +1361,12 @@ static PyObject* py_select(PyObject* self, PyObject* args)
       int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
       // first check that wd & ht are > 0
-      if (wd <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "select error: width must be > 0.");
-         return NULL;
-      }
-      if (ht <= 0) {
-         PyErr_SetString(PyExc_RuntimeError, "select error: height must be > 0.");
-         return NULL;
-      }
+      if (wd <= 0) PYTHON_ERROR("select error: width must be > 0.");
+      if (ht <= 0) PYTHON_ERROR("select error: height must be > 0.");
       // set selection rect
       GSF_select(x, y, wd, ht);
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "select error: arg must be [] or [x,y,wd,ht].");
-      return NULL;
+      PYTHON_ERROR("select error: arg must be [] or [x,y,wd,ht].");
    }
 
    DoAutoUpdate();
@@ -1282,17 +1389,16 @@ static PyObject* py_getrect(PyObject* self, PyObject* args)
       bigint top, left, bottom, right;
       currlayer->algo->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-         PyErr_SetString(PyExc_RuntimeError, "getrect error: pattern is too big.");
          Py_DECREF(outlist);
-         return NULL;
+         PYTHON_ERROR("getrect error: pattern is too big.");
       }
       long x = left.toint();
       long y = top.toint();
       long wd = right.toint() - x + 1;
       long ht = bottom.toint() - y + 1;
 
-      AddCell(outlist, x, y);
-      AddCell(outlist, wd, ht);
+      AddTwoInts(outlist, x, y);
+      AddTwoInts(outlist, wd, ht);
    }
 
    return outlist;
@@ -1311,15 +1417,14 @@ static PyObject* py_getselrect(PyObject* self, PyObject* args)
 
    if (viewptr->SelectionExists()) {
       if (currlayer->currsel.TooBig()) {
-         PyErr_SetString(PyExc_RuntimeError, "getselrect error: selection is too big.");
          Py_DECREF(outlist);
-         return NULL;
+         PYTHON_ERROR("getselrect error: selection is too big.");
       }
       int x, y, wd, ht;
       currlayer->currsel.GetRect(&x, &y, &wd, &ht);
 
-      AddCell(outlist, x, y);
-      AddCell(outlist, wd, ht);
+      AddTwoInts(outlist, x, y);
+      AddTwoInts(outlist, wd, ht);
    }
 
    return outlist;
@@ -1336,10 +1441,7 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "iii", &x, &y, &state)) return NULL;
 
    const char* err = GSF_setcell(x, y, state);
-   if (err) {
-     PyErr_SetString(PyExc_RuntimeError, err);
-     return NULL;
-   }
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -1374,8 +1476,7 @@ static PyObject* py_setcursor(PyObject* self, PyObject* args)
       // see the cursor change, including in tool bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "setcursor error: bad cursor index.");
-      return NULL;
+      PYTHON_ERROR("setcursor error: bad cursor index.");
    }
 
    // return old index (simplifies saving and restoring cursor)
@@ -1528,8 +1629,7 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
          }
          DoAutoUpdate();
       } else {
-         PyErr_SetString(PyExc_RuntimeError, "advance error: no selection.");
-         return NULL;
+         PYTHON_ERROR("advance error: no selection.");
       }
    }
 
@@ -1563,11 +1663,8 @@ static PyObject* py_setgen(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s", &genstring)) return NULL;
 
-   const char* errmsg = GSF_setgen(genstring);
-   if (errmsg) {
-      PyErr_SetString(PyExc_RuntimeError, errmsg);
-      return NULL;
-   }
+   const char* err = GSF_setgen(genstring);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -1608,11 +1705,8 @@ static PyObject* py_setalgo(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s", &algostring)) return NULL;
 
-   const char* errmsg = GSF_setalgo(algostring);
-   if (errmsg) {
-      PyErr_SetString(PyExc_RuntimeError, errmsg);
-      return NULL;
-   }
+   const char* err = GSF_setalgo(algostring);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -1630,8 +1724,7 @@ static PyObject* py_getalgo(PyObject* self, PyObject* args)
    if (index < 0 || index >= NumAlgos()) {
       char msg[64];
       sprintf(msg, "Bad getalgo index: %d", index);
-      PyErr_SetString(PyExc_RuntimeError, msg);
-      return NULL;
+      PYTHON_ERROR(msg);
    }
 
    return Py_BuildValue("s", GetAlgoName(index));
@@ -1647,11 +1740,8 @@ static PyObject* py_setrule(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "s", &rulestring)) return NULL;
 
-   const char* errmsg = GSF_setrule(rulestring);
-   if (errmsg) {
-      PyErr_SetString(PyExc_RuntimeError, errmsg);
-      return NULL;
-   }
+   const char* err = GSF_setrule(rulestring);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -1703,11 +1793,8 @@ static PyObject* py_setpos(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "ss", &x, &y)) return NULL;
 
-   const char* errmsg = GSF_setpos(x, y);
-   if (errmsg) {
-      PyErr_SetString(PyExc_RuntimeError, errmsg);
-      return NULL;
-   }
+   const char* err = GSF_setpos(x, y);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -1788,8 +1875,7 @@ static PyObject* py_fitsel(PyObject* self, PyObject* args)
       viewptr->FitSelection();
       DoAutoUpdate();
    } else {
-      PyErr_SetString(PyExc_RuntimeError, "fitsel error: no selection.");
-      return NULL;
+      PYTHON_ERROR("fitsel error: no selection.");
    }
 
    RETURN_NONE;
@@ -1807,8 +1893,7 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
 
    int numitems = PyList_Size(rect_list);
    if (numitems != 4) {
-      PyErr_SetString(PyExc_RuntimeError, "visrect error: arg must be [x,y,wd,ht].");
-      return NULL;
+      PYTHON_ERROR("visrect error: arg must be [x,y,wd,ht].");
    }
 
    int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
@@ -1816,14 +1901,8 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
    int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
    // check that wd & ht are > 0
-   if (wd <= 0) {
-      PyErr_SetString(PyExc_RuntimeError, "visrect error: width must be > 0.");
-      return NULL;
-   }
-   if (ht <= 0) {
-      PyErr_SetString(PyExc_RuntimeError, "visrect error: height must be > 0.");
-      return NULL;
-   }
+   if (wd <= 0) PYTHON_ERROR("visrect error: width must be > 0.");
+   if (ht <= 0) PYTHON_ERROR("visrect error: height must be > 0.");
 
    bigint left = x;
    bigint top = y;
@@ -1874,8 +1953,7 @@ static PyObject* py_addlayer(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers >= MAX_LAYERS) {
-      PyErr_SetString(PyExc_RuntimeError, "addlayer error: no more layers can be added.");
-      return NULL;
+      PYTHON_ERROR("addlayer error: no more layers can be added.");
    } else {
       AddLayer();
       DoAutoUpdate();
@@ -1895,8 +1973,7 @@ static PyObject* py_clone(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers >= MAX_LAYERS) {
-      PyErr_SetString(PyExc_RuntimeError, "clone error: no more layers can be added.");
-      return NULL;
+      PYTHON_ERROR("clone error: no more layers can be added.");
    } else {
       CloneLayer();
       DoAutoUpdate();
@@ -1916,8 +1993,7 @@ static PyObject* py_duplicate(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers >= MAX_LAYERS) {
-      PyErr_SetString(PyExc_RuntimeError, "duplicate error: no more layers can be added.");
-      return NULL;
+      PYTHON_ERROR("duplicate error: no more layers can be added.");
    } else {
       DuplicateLayer();
       DoAutoUpdate();
@@ -1937,8 +2013,7 @@ static PyObject* py_dellayer(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
    if (numlayers <= 1) {
-      PyErr_SetString(PyExc_RuntimeError, "dellayer error: there is only one layer.");
-      return NULL;
+      PYTHON_ERROR("dellayer error: there is only one layer.");
    } else {
       DeleteLayer();
       DoAutoUpdate();
@@ -1960,14 +2035,12 @@ static PyObject* py_movelayer(PyObject* self, PyObject* args)
    if (fromindex < 0 || fromindex >= numlayers) {
       char msg[64];
       sprintf(msg, "Bad movelayer fromindex: %d", fromindex);
-      PyErr_SetString(PyExc_RuntimeError, msg);
-      return NULL;
+      PYTHON_ERROR(msg);
    }
    if (toindex < 0 || toindex >= numlayers) {
       char msg[64];
       sprintf(msg, "Bad movelayer toindex: %d", toindex);
-      PyErr_SetString(PyExc_RuntimeError, msg);
-      return NULL;
+      PYTHON_ERROR(msg);
    }
 
    MoveLayer(fromindex, toindex);
@@ -1989,8 +2062,7 @@ static PyObject* py_setlayer(PyObject* self, PyObject* args)
    if (index < 0 || index >= numlayers) {
       char msg[64];
       sprintf(msg, "Bad setlayer index: %d", index);
-      PyErr_SetString(PyExc_RuntimeError, msg);
-      return NULL;
+      PYTHON_ERROR(msg);
    }
 
    SetLayer(index);
@@ -2049,8 +2121,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
    if (index < 0 || index >= numlayers) {
       char msg[64];
       sprintf(msg, "Bad setname index: %d", index);
-      PyErr_SetString(PyExc_RuntimeError, msg);
-      return NULL;
+      PYTHON_ERROR(msg);
    }
 
    GSF_setname(name, index);
@@ -2071,8 +2142,7 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
    if (index < 0 || index >= numlayers) {
       char msg[64];
       sprintf(msg, "Bad getname index: %d", index);
-      PyErr_SetString(PyExc_RuntimeError, msg);
-      return NULL;
+      PYTHON_ERROR(msg);
    }
 
    // need to be careful converting Unicode wxString to char*
@@ -2092,8 +2162,7 @@ static PyObject* py_setoption(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "si", &optname, &newval)) return NULL;
 
    if (!GSF_setoption(optname, newval, &oldval)) {
-      PyErr_SetString(PyExc_RuntimeError, "setoption error: unknown option.");
-      return NULL;
+      PYTHON_ERROR("setoption error: unknown option.");
    }
 
    // return old value (simplifies saving and restoring settings)
@@ -2112,8 +2181,7 @@ static PyObject* py_getoption(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "s", &optname)) return NULL;
 
    if (!GSF_getoption(optname, &optval)) {
-      PyErr_SetString(PyExc_RuntimeError, "getoption error: unknown option.");
-      return NULL;
+      PYTHON_ERROR("getoption error: unknown option.");
    }
 
    return Py_BuildValue("i", optval);
@@ -2134,8 +2202,7 @@ static PyObject* py_setcolor(PyObject* self, PyObject* args)
    wxColor oldcol;
 
    if (!GSF_setcolor(colname, newcol, oldcol)) {
-      PyErr_SetString(PyExc_RuntimeError, "setcolor error: unknown color.");
-      return NULL;
+      PYTHON_ERROR("setcolor error: unknown color.");
    }
 
    // return old r,g,b values (simplifies saving and restoring colors)
@@ -2158,8 +2225,7 @@ static PyObject* py_getcolor(PyObject* self, PyObject* args)
    if (!PyArg_ParseTuple(args, "s", &colname)) return NULL;
 
    if (!GSF_getcolor(colname, color)) {
-      PyErr_SetString(PyExc_RuntimeError, "getcolor error: unknown color.");
-      return NULL;
+      PYTHON_ERROR("getcolor error: unknown color.");
    }
 
    // return r,g,b tuple
@@ -2333,11 +2399,11 @@ static PyObject* py_exit(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char* errmsg = NULL;
+   char* err = NULL;
 
-   if (!PyArg_ParseTuple(args, "|s", &errmsg)) return NULL;
+   if (!PyArg_ParseTuple(args, "|s", &err)) return NULL;
 
-   GSF_exit(errmsg);
+   GSF_exit(err);
    AbortPythonScript();
 
    // exception raised so must return NULL
@@ -2493,7 +2559,7 @@ bool InitPython()
 
             // also create dummy sys.argv so scripts can import Tkinter
             "sys.argv = ['golly-app']\n"
-            // works, but Golly's menus get permanently changed on Mac!!!
+            // works, but Golly's menus get permanently changed on Mac
             ) < 0
          ) Warning(_("StderrCatcher code failed!"));
 
@@ -2511,7 +2577,7 @@ bool InitPython()
 
       // nicer to reload all modules in case changes were made by user;
       // code comes from http://pyunit.sourceforge.net/notes/reloading.html
-      /* unfortunately it causes an AttributeError!!!
+      /* unfortunately it causes an AttributeError
       if ( PyRun_SimpleString(
             "import __builtin__\n"
             "class RollbackImporter:\n"
@@ -2542,7 +2608,7 @@ bool InitPython()
             "sys.stderr.data = ''\n"
 
             // reload all modules in case changes were made by user
-            /* this almost works except for strange error the 2nd time we run gun-demo.py!!!
+            /* this almost works except for strange error the 2nd time we run gun-demo.py
             "import sys\n"
             "for m in sys.modules.keys():\n"
             "   t = str(type(sys.modules[m]))\n"
@@ -2552,7 +2618,7 @@ bool InitPython()
             "      reload(sys.modules[m])\n"
             */
 
-            /* RollbackImporter code causes an error!!!
+            /* RollbackImporter code causes an error
             "if rollbackImporter: rollbackImporter.uninstall()\n"
             "rollbackImporter = RollbackImporter()\n"
             */

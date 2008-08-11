@@ -3,17 +3,12 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
-- Implement scripting changes:
-  - Decide how to handle cell lists if # states > 2.
-    Maybe such lists contain 3 ints per cell:
-    [ x1, y1, s1, x2, y2, s2, . . . xn, yn, sn (,int) ]
-    If necessary, append pad int (0 or -2B?) so that # of ints is odd.
-  - Provide commands to get/set colors if # states > 2:
-    setcolors("JvN", "JvN-32", [200,200,200,1])
-    setcolors("Generations", "*", [r0,g0,b0,s0, ... sn,rn,gn,bn])
-    setcolors("Generations", "", []) -- to restore default colors?
-    And to override icons:
-    seticons("JvN", "*", datadir()+"jvnicons.xpm")
+- Implement scripting commands to get/set colors if # states > 2:
+  setcolors("JvN", "JvN-32", [200,200,200,1])
+  setcolors("Generations", "*", [r0,g0,b0,s0, ... sn,rn,gn,bn])
+  setcolors("Generations", "", []) -- to restore default colors?
+  And to override icons:
+  seticons("JvN", "*", datadir()+"jvnicons.xpm")
 
 - Resolve how to handle swapcolors flag if # states > 2.
   Remove flag completely?  Or just ignore it when # states > 2.
@@ -31,12 +26,19 @@ Andrew's list:
   - Move all cursor mode buttons into edit bar (at bottom?).
   - Add new buttons: eraser, eye-dropper, fill, etc?
 
+- Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
+  methods, and maybe GetTransformedState as well for use in
+  transform() command.
+
 - Fix missing &s in recent file paths (replace each & with &&) and
   fix underscore bug in Linux app by trying wxGTK 2.8.8.
 
 - Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
   - On Win we want to be able to press-select-release.
+
+- Fix wxMac bug: Undo Algo Change item is disabled after Set Rule
+  results in an algo change.  May have to fix in next OnIdle?
 
 - Rename Hashing-Examples to HashLife-Examples (or just HashLife?)
   and convert all files to .mc format (with explicit rules).
@@ -124,7 +126,7 @@ For future versions:
   so a script like goto.py that calls a non-Golly open command will fail.
   We could put old commands in a separate module called "oldgolly".
   Maybe best to leave this change for when the scripting API needs
-  significant changes due to multi-rect selections or 256-state cells.
+  significant changes due to multi-rect selections.
 
 - Allow dragging zoom-in cursor to zoom into rect.
 
@@ -171,7 +173,7 @@ User suggestions:
   its contents) when user loads another pattern.
 
 [H Koenig]
-- Multiple windows.  [No real need now that we allow multiple layers.]
+- Multiple windows.  [No real need now that we have multiple layers.]
 
 [Gabriel Nivasch]
 - Make paste pattern semi-transparent.  [Tried it -- somewhat confusing.]
@@ -179,7 +181,6 @@ User suggestions:
 
 [Bill Gosper]
 - Modify info window so it can be used to edit and save comments.
-  [Not needed if we can open current pattern file in text editor?]
 - For scales > 1:1 make the pixel color depend on lg(# of ones in it).
 
 [Brice Due]

@@ -556,7 +556,9 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                      }
                   } else {
                      // tempstate != currstate
-                     int newstate = (tempstate ^ currstate) % numstates;   //!!!???
+                     int newstate = tempstate ^ currstate;
+                     // if xor overflows then don't change current state
+                     if (newstate >= numstates) newstate = currstate;
                      if (currstate != newstate) {
                         curralgo->setcell(cx, cy, newstate);
                         pattchanged = true;
@@ -1347,7 +1349,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_FASTER:      mainptr->GoFaster(); break;
       case DO_SLOWER:      mainptr->GoSlower(); break;
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
-      //!!! remove this action??? or change it to DO_CYCLEALGO???
+      //!!! remove this action??? or change it to DO_ALGOCYCLE???
       case DO_HASHING:
          if (!inscript) {
             if (currlayer->algtype != HLIFE_ALGO)

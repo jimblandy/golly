@@ -329,7 +329,7 @@ const char* GSF_setcell(int x, int y, int newstate)
    int oldstate = currlayer->algo->getcell(x, y);
    if (newstate != oldstate) {
       if (currlayer->algo->setcell(x, y, newstate) < 0) {
-         return "Error in setcell; state value out of range.";
+         return "setcell error: state value is out of range.";
       }
       currlayer->algo->endofpattern();
       if (allowundo && !currlayer->stayclean) {
@@ -761,7 +761,7 @@ void GSF_dokey(char* ascii)
          default:    key = *ascii;
       }
 
-      //!!! can we handle modifiers and be backward compatible???
+      // can we handle modifiers and be backward compatible???
       // or do we need new getmodkey & domodkey commands???
       viewptr->ProcessKey(key, wxMOD_NONE);
 

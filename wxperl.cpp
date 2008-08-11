@@ -114,13 +114,13 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
 // =============================================================================
 
-// On Windows and Linux we try to load the Perl library at runtime
+// On Windows we try to load the Perl library at runtime
 // so Golly will start up even if Perl isn't installed.
 
-//!!! On Linux we can't load libperl.so dynamically because DynaLoader.a
-//!!! has to be statically linked (for boot_DynaLoader) but it uses calls
-//!!! in libperl.so -- sheesh.
-//!!! #ifndef __WXMAC__
+// On Linux we can't load libperl.so dynamically because DynaLoader.a
+// has to be statically linked (for boot_DynaLoader) but it uses calls
+// in libperl.so -- sheesh.
+
 #ifdef __WXMSW__
    // load Perl lib at runtime
    #define USE_PERL_DYNAMIC
@@ -396,22 +396,36 @@ bool PerlScriptAborted()
 
 // -----------------------------------------------------------------------------
 
-// helper routine to extract cell array from given universe
-const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = false)
+static void AddPadding(AV* array)
 {
+   // assume array is multi-state and add an extra int if necessary so the array
+   // has an odd number of ints (this is how we distinguish multi-state arrays
+   // from two-state arrays -- the latter always have an even number of ints)
+   int len = av_len(array) + 1;
+   if (len == 0) return;         // always return () rather than (0) !!!???
+   if ((len & 1) == 0) {
+      av_push(array, newSViv(0));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = false)
+{
+   // extract cell array from given universe
    if ( !universe->isEmpty() ) {
       bigint top, left, bottom, right;
       universe->findedges(&top, &left, &bottom, &right);
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          return "Universe is too big to extract all cells!";
       }
+      bool multistate = universe->NumCellStates() > 2;
       int itop = top.toint();
       int ileft = left.toint();
       int ibottom = bottom.toint();
       int iright = right.toint();
       int cx, cy;
       int v = 0;
-      //!!! make it work with multistate
       int cntr = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
@@ -427,6 +441,7 @@ const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = fals
                   av_push(outarray, newSViv(cx));
                   av_push(outarray, newSViv(cy));
                }
+               if (multistate) av_push(outarray, newSViv(v));
             } else {
                cx = iright;  // done this row
             }
@@ -434,6 +449,7 @@ const char* ExtractCellArray(AV* outarray, lifealgo* universe, bool shift = fals
             if ((cntr % 4096) == 0 && PerlScriptAborted()) return NULL;
          }
       }
+      if (multistate) AddPadding(outarray);
    }
    return NULL;
 }
@@ -454,8 +470,8 @@ XS(pl_open)
    int remember = 0;
    if (items > 1) remember = SvIV(ST(1));
    
-   const char* errmsg = GSF_open(filename, remember);
-   if (errmsg) PERL_ERROR(errmsg);
+   const char* err = GSF_open(filename, remember);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -475,8 +491,8 @@ XS(pl_save)
    int remember = 0;
    if (items > 2) remember = SvIV(ST(2));
    
-   const char* errmsg = GSF_save(filename, format, remember);
-   if (errmsg) PERL_ERROR(errmsg);
+   const char* err = GSF_save(filename, format, remember);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -493,7 +509,7 @@ XS(pl_load)
    STRLEN n_a;
    char* filename = SvPV(ST(0), n_a);
 
-   // create temporary universe of same type
+   // create temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
    // readpattern will call setrule
    // tempalgo->setrule(currlayer->algo->getrule());
@@ -550,23 +566,31 @@ XS(pl_store)
        PERL_ERROR("g_store error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
-   int num_cells = (av_len(inarray) + 1) / 2;
-   // note that av_len returns max index or -1 if array is empty
    
    STRLEN n_a;
    char* filename = SvPV(ST(1), n_a);
 
-   //!!! fix to handle > 2 states
-   // create temporary qlife universe
-   lifealgo* tempalgo = CreateNewUniverse(QLIFE_ALGO, allowcheck);
+   // create temporary universe of same type as current universe
+   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
 
-   // copy cell list into temporary universe
+   // copy cell array into temporary universe
+   bool multistate = ((av_len(inarray) + 1) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = (av_len(inarray) + 1) / ints_per_cell;
    for (int n = 0; n < num_cells; n++) {
-      int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
-      int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
-
-      tempalgo->setcell(x, y, 1);
-
+      int item = ints_per_cell * n;
+      int x = SvIV( *av_fetch(inarray, item, 0) );
+      int y = SvIV( *av_fetch(inarray, item + 1, 0) );
+      if (multistate) {
+         int state = SvIV( *av_fetch(inarray, item + 2, 0) );
+         if (tempalgo->setcell(x, y, state) < 0) {
+            tempalgo->endofpattern();
+            delete tempalgo;
+            PERL_ERROR("g_store error: state value is out of range.");
+         }
+      } else {
+         tempalgo->setcell(x, y, 1);
+      }
       if ((n % 4096) == 0 && PerlScriptAborted()) {
          tempalgo->endofpattern();
          delete tempalgo;
@@ -582,9 +606,7 @@ XS(pl_store)
                         savexrle ? XRLE_format : RLE_format,
                         top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
-   if (err) {
-      PERL_ERROR(err);
-   }
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -874,7 +896,16 @@ XS(pl_parse)
          c = *s++;
       }
    } else {
-      // parsing 'RLE' format
+      // parsing RLE format; first check if multi-state data is present
+      bool multistate = false;
+      char* p = s;
+      while (*p) {
+         char c = *p++;
+         if ((c == '.') || ('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+            multistate = true;
+            break;
+         }
+      }
       int prefix = 0;
       bool done = false;
       int c = *s++;
@@ -887,17 +918,41 @@ XS(pl_parse)
             case '!': done = true; break;
             case '$': x = 0; y += prefix; break;
             case 'b': x += prefix; break;
+            case '.': x += prefix; break;
             case 'o':
                for (int k = 0; k < prefix; k++, x++) {
                   av_push(outarray, newSViv(x0 + x * axx + y * axy));
                   av_push(outarray, newSViv(y0 + x * ayx + y * ayy));
+                  if (multistate) av_push(outarray, newSViv(1));
                }
                break;
+            default:
+               if (('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+                  // multistate must be true
+                  int state;
+                  if (c < 'p') {
+                     state = c - 'A' + 1;
+                  } else {
+                     state = 24 * (c - 'p' + 1);
+                     c = *s++;
+                     if ('A' <= c && c <= 'X') {
+                        state = state + c - 'A' + 1;
+                     } else {
+                        PERL_ERROR("g_parse error: illegal multi-char state.");
+                     }
+                  }
+                  for (int k = 0; k < prefix; k++, x++) {
+                     av_push(outarray, newSViv(x0 + x * axx + y * axy));
+                     av_push(outarray, newSViv(y0 + x * ayx + y * ayy));
+                     av_push(outarray, newSViv(state));
+                  }
+               }
             }
             prefix = 0;
          }
          c = *s++;
       }
+      if (multistate) AddPadding(outarray);
    }
 
    SP -= items;
@@ -921,8 +976,6 @@ XS(pl_transform)
        PERL_ERROR("g_transform error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
-   int num_cells = (av_len(inarray) + 1) / 2;
-   // note that av_len returns max index or -1 if array is empty
 
    int x0 = SvIV(ST(1));
    int y0 = SvIV(ST(2));
@@ -939,15 +992,22 @@ XS(pl_transform)
 
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
+   bool multistate = ((av_len(inarray) + 1) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = (av_len(inarray) + 1) / ints_per_cell;
    for (int n = 0; n < num_cells; n++) {
-      int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
-      int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
-
+      int item = ints_per_cell * n;
+      int x = SvIV( *av_fetch(inarray, item, 0) );
+      int y = SvIV( *av_fetch(inarray, item + 1, 0) );
       av_push(outarray, newSViv(x0 + x * axx + y * axy));
       av_push(outarray, newSViv(y0 + x * ayx + y * ayy));
-
+      if (multistate) {
+         int state = SvIV( *av_fetch(inarray, item + 2, 0) );
+         av_push(outarray, newSViv(state));
+      }
       if ((n % 4096) == 0 && PerlScriptAborted()) break;
    }
+   if (multistate) AddPadding(outarray);
 
    SP -= items;
    ST(0) = newRV( (SV*)outarray );
@@ -969,8 +1029,6 @@ XS(pl_evolve)
        PERL_ERROR("g_evolve error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
-   int num_cells = (av_len(inarray) + 1) / 2;
-   // note that av_len returns max index or -1 if array is empty
 
    int ngens = SvIV(ST(1));
 
@@ -979,12 +1037,23 @@ XS(pl_evolve)
    tempalgo->setrule(currlayer->algo->getrule());
 
    // copy cell array into temporary universe
+   bool multistate = ((av_len(inarray) + 1) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = (av_len(inarray) + 1) / ints_per_cell;
    for (int n = 0; n < num_cells; n++) {
-      int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
-      int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
-
-      tempalgo->setcell(x, y, 1);
-
+      int item = ints_per_cell * n;
+      int x = SvIV( *av_fetch(inarray, item, 0) );
+      int y = SvIV( *av_fetch(inarray, item + 1, 0) );
+      if (multistate) {
+         int state = SvIV( *av_fetch(inarray, item + 2, 0) );
+         if (tempalgo->setcell(x, y, state) < 0) {
+            tempalgo->endofpattern();
+            delete tempalgo;
+            PERL_ERROR("g_evolve error: state value is out of range.");
+         }
+      } else {
+         tempalgo->setcell(x, y, 1);
+      }
       if ((n % 4096) == 0 && PerlScriptAborted()) {
          tempalgo->endofpattern();
          delete tempalgo;
@@ -1013,6 +1082,8 @@ XS(pl_evolve)
 
 // -----------------------------------------------------------------------------
 
+static const char* BAD_STATE = "g_putcells error: state value is out of range.";
+
 XS(pl_putcells)
 {
    IGNORE_UNUSED_PARAMS;
@@ -1026,8 +1097,6 @@ XS(pl_putcells)
        PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
-   int num_cells = (av_len(inarray) + 1) / 2;
-   // note that av_len returns max index or -1 if array is empty
 
    // default values for optional params
    int x0  = 0;
@@ -1050,13 +1119,6 @@ XS(pl_putcells)
    if (items > 6) ayy = SvIV(ST(6));
    if (items > 7) mode = SvPV(ST(7), n_a);
 
-   lifealgo* curralgo = currlayer->algo;
-
-   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
-   bool savecells = allowundo && !currlayer->stayclean;
-   // better to use ChangeCell and combine all changes due to consecutive setcell/putcells
-   // if (savecells) SavePendingChanges();
-
    wxString modestr = wxString(mode, wxConvLocal);
    if ( !(modestr.IsSameAs(wxT("or"), false)
           || modestr.IsSameAs(wxT("xor"), false)
@@ -1064,6 +1126,19 @@ XS(pl_putcells)
           || modestr.IsSameAs(wxT("not"), false)) ) {
       PERL_ERROR("g_putcells error: unknown mode.");
    }
+
+   // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+   bool savecells = allowundo && !currlayer->stayclean;
+   // use ChangeCell below and combine all changes due to consecutive setcell/putcells
+   // if (savecells) SavePendingChanges();
+
+   // note that av_len returns max index or -1 if array is empty
+   bool multistate = ((av_len(inarray) + 1) & 1) == 1;
+   int ints_per_cell = multistate ? 3 : 2;
+   int num_cells = (av_len(inarray) + 1) / ints_per_cell;
+   const char* err = NULL;
+   bool pattchanged = false;
+   lifealgo* curralgo = currlayer->algo;
    
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
@@ -1071,41 +1146,83 @@ XS(pl_putcells)
 
    if (modestr.IsSameAs(wxT("xor"), false)) {
       // loop code is duplicated here to allow 'or' case to execute faster
+      int numstates = curralgo->NumCellStates();
       for (int n = 0; n < num_cells; n++) {
-         int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
-         int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
+         int item = ints_per_cell * n;
+         int x = SvIV( *av_fetch(inarray, item, 0) );
+         int y = SvIV( *av_fetch(inarray, item + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
          int oldstate = curralgo->getcell(newx, newy);
-
-         if (savecells) ChangeCell(newx, newy, oldstate, 1-oldstate);
-
-         // paste (possibly transformed) cell into current universe
-         curralgo->setcell(newx, newy, 1-oldstate);
-
+         int newstate;
+         if (multistate) {
+            // multi-state lists can contain dead cells so newstate might be 0
+            newstate = SvIV( *av_fetch(inarray, item + 2, 0) );
+            if (newstate == oldstate) {
+               if (oldstate != 0) newstate = 0;
+            } else {
+               newstate = newstate ^ oldstate;
+               // if xor overflows then don't change current state
+               if (newstate >= numstates) newstate = oldstate;
+            }
+            if (newstate != oldstate) {
+               // paste (possibly transformed) cell into current universe
+               if (curralgo->setcell(newx, newy, newstate) < 0) {
+                  err = BAD_STATE;
+                  break;
+               }
+               if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+               pattchanged = true;
+            }
+         } else {
+            // two-state lists only contain live cells
+            newstate = 1 - oldstate;
+            // paste (possibly transformed) cell into current universe
+            if (curralgo->setcell(newx, newy, newstate) < 0) {
+               err = BAD_STATE;
+               break;
+            }
+            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+            pattchanged = true;
+         }
          if ((n % 4096) == 0 && PerlScriptAborted()) break;
       }
    } else {
-      int newstate = (modestr.IsSameAs(wxT("not"), false)) ? 0 : 1;
+      bool negate = modestr.IsSameAs(wxT("not"), false);
+      int newstate = negate ? 0 : 1;
+      int maxstate = curralgo->NumCellStates() - 1;
       for (int n = 0; n < num_cells; n++) {
-         int x = SvIV( *av_fetch(inarray, 2 * n, 0) );
-         int y = SvIV( *av_fetch(inarray, 2 * n + 1, 0) );
+         int item = ints_per_cell * n;
+         int x = SvIV( *av_fetch(inarray, item, 0) );
+         int y = SvIV( *av_fetch(inarray, item + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
          int oldstate = curralgo->getcell(newx, newy);
+         if (multistate) {
+            // multi-state lists can contain dead cells so newstate might be 0
+            newstate = SvIV( *av_fetch(inarray, item + 2, 0) );
+            if (negate) newstate = maxstate - newstate;
+         }
          if (newstate != oldstate) {
-            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
             // paste (possibly transformed) cell into current universe
-            curralgo->setcell(newx, newy, newstate);
+            if (curralgo->setcell(newx, newy, newstate) < 0) {
+               err = BAD_STATE;
+               break;
+            }
+            if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+            pattchanged = true;
          }
          if ((n % 4096) == 0 && PerlScriptAborted()) break;
       }
    }
 
-   curralgo->endofpattern();
-
-   MarkLayerDirty();
-   DoAutoUpdate();
+   if (pattchanged) {
+      curralgo->endofpattern();
+      MarkLayerDirty();
+      DoAutoUpdate();
+   }
+   
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -1139,9 +1256,9 @@ XS(pl_getcells)
       int v = 0;
       int cntr = 0;
       lifealgo* curralgo = currlayer->algo;
+      bool multistate = curralgo->NumCellStates() > 2;
       for ( cy=y; cy<=bottom; cy++ ) {
          for ( cx=x; cx<=right; cx++ ) {
-            //!!! make it work with multistate
             int skip = curralgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row so add coords to outarray
@@ -1149,6 +1266,7 @@ XS(pl_getcells)
                if (cx <= right) {
                   av_push(outarray, newSViv(cx));
                   av_push(outarray, newSViv(cy));
+                  if (multistate) av_push(outarray, newSViv(v));
                }
             } else {
                cx = right;  // done this row
@@ -1157,6 +1275,7 @@ XS(pl_getcells)
             if ((cntr % 4096) == 0) RETURN_IF_ABORTED;
          }
       }
+      if (multistate) AddPadding(outarray);
    }
 
    SP -= items;
@@ -1192,13 +1311,13 @@ XS(pl_hash)
    for ( cy=y; cy<=bottom; cy++ ) {
       int yshift = cy - y;
       for ( cx=x; cx<=right; cx++ ) {
-         //!!! make it work with multistate
          int skip = curralgo->nextcell(cx, cy, v);
          if (skip >= 0) {
             // found next live cell in this row
             cx += skip;
             if (cx <= right) {
-               hash = (hash * 33 + yshift) ^ (cx - x);
+               //note that v is 1 in a two-state universe
+               hash = (hash * 33 + yshift) ^ ((cx - x) * v);
             }
          } else {
             cx = right;  // done this row
@@ -1252,12 +1371,12 @@ XS(pl_getclip)
       av_push(outarray, newSViv(ht));
 
       // extract cells from tempalgo
+      bool multistate = tempalgo->NumCellStates() > 2;
       int cx, cy;
       int cntr = 0;
       int v = 0;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          for ( cx=ileft; cx<=iright; cx++ ) {
-            //!!! make it work with multistate
             int skip = tempalgo->nextcell(cx, cy, v);
             if (skip >= 0) {
                // found next live cell in this row
@@ -1265,6 +1384,7 @@ XS(pl_getclip)
                // shift cells so that top left cell of bounding box is at 0,0
                av_push(outarray, newSViv(cx - ileft));
                av_push(outarray, newSViv(cy - itop));
+               if (multistate) av_push(outarray, newSViv(v));
             } else {
                cx = iright;  // done this row
             }
@@ -1274,6 +1394,10 @@ XS(pl_getclip)
                Perl_croak(aTHX_ NULL);
             }
          }
+      }
+      // if no live cells then return (wd,ht) rather than (wd,ht,0) !!!???
+      if (multistate && (av_len(outarray) + 1) > 2) {
+         AddPadding(outarray);
       }
 
       delete tempalgo;
@@ -1619,8 +1743,8 @@ XS(pl_setgen)
    STRLEN n_a;
    char* genstring = SvPV(ST(0), n_a);
 
-   const char* errmsg = GSF_setgen(genstring);
-   if (errmsg) PERL_ERROR(errmsg);
+   const char* err = GSF_setgen(genstring);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -1675,8 +1799,8 @@ XS(pl_setalgo)
    STRLEN n_a;
    char* algostring = SvPV(ST(0), n_a);
 
-   const char* errmsg = GSF_setalgo(algostring);
-   if (errmsg) PERL_ERROR(errmsg);
+   const char* err = GSF_setalgo(algostring);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -1714,8 +1838,8 @@ XS(pl_setrule)
    STRLEN n_a;
    char* rulestring = SvPV(ST(0), n_a);
 
-   const char* errmsg = GSF_setrule(rulestring);
-   if (errmsg) PERL_ERROR(errmsg);
+   const char* err = GSF_setrule(rulestring);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -1769,8 +1893,8 @@ XS(pl_setpos)
    char* x = SvPV(ST(0), n_a);
    char* y = SvPV(ST(1), n_a);
 
-   const char* errmsg = GSF_setpos(x, y);
-   if (errmsg) PERL_ERROR(errmsg);
+   const char* err = GSF_setpos(x, y);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -2410,9 +2534,9 @@ XS(pl_exit)
    if (items > 1) PERL_ERROR("Usage: g_exit($string='').");
 
    STRLEN n_a;
-   char* errmsg = (items == 1) ? SvPV(ST(0),n_a) : NULL;
+   char* err = (items == 1) ? SvPV(ST(0),n_a) : NULL;
    
-   GSF_exit(errmsg);
+   GSF_exit(err);
    AbortPerlScript();
    Perl_croak(aTHX_ NULL);
 }
@@ -2428,10 +2552,10 @@ XS(pl_fatal)
    if (items != 1) Warning(_("Bug: usage is g_fatal($string)"));
 
    STRLEN n_a;
-   char* errmsg = SvPV(ST(0),n_a);
+   char* err = SvPV(ST(0),n_a);
    
    // store message in global string (shown after script finishes)
-   scripterr = wxString(errmsg, wxConvLocal);
+   scripterr = wxString(err, wxConvLocal);
    
    XSRETURN(0);
 }

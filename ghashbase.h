@@ -69,7 +69,7 @@ public:
    //  This is the method that computes the next generation, slowly.
    //  This should be overridden by a deriving class.
    virtual state slowcalc(state nw, state n, state ne, state w, state c,
-			  state e, state sw, state s, state se) = 0 ;
+                          state e, state sw, state s, state se) = 0 ;
    // note that for ghashbase, clearall() releases no memory; it retains
    // the full cache information but just sets the current pattern to
    // the empty pattern.

@@ -702,7 +702,7 @@ void MainFrame::UpdateMenuItems(bool active)
             // change the accelerator (it just looks like it does!) -- this is because escape
             // (key code 27) is used by SetItemCmd to indicate the item has a submenu;
             // see UMASetMenuItemShortcut in wx/src/mac/carbon/uma.cpp
-            mbar->SetLabel(ID_START, _("xxx"));
+            mbar->SetLabel(ID_START, _("x"));
          #endif
          mbar->SetLabel(ID_START, _("Stop Script\tEscape"));
       } else if (generating) {

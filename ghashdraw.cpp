@@ -321,35 +321,35 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
       lly = (lly << 1) + llyb[i] ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
          clearrect(0, 0, vieww, viewh) ;
-	 goto bail ;
+         goto bail ;
       }
    }
    /*  Find the lowest four we need to examine */
    while (d > 0 && d - mag >= 0 &&
-	  (d - mag > 28 || (1 << (d - mag)) > 2 * maxd)) {
+          (d - mag > 28 || (1 << (d - mag)) > 2 * maxd)) {
       llx = (llx << 1) + llxb[d] ;
       lly = (lly << 1) + llyb[d] ;
       if (llx >= 1) {
-	 if (lly >= 1) {
+         if (lly >= 1) {
             ne = ne->sw ;
             nw = nw->se ;
             se = se->nw ;
             sw = sw->ne ;
-	    lly-- ;
+            lly-- ;
          } else {
             ne = se->nw ;
             nw = sw->ne ;
             se = se->sw ;
             sw = sw->se ;
          }
-	 llx-- ;
+         llx-- ;
       } else {
-	 if (lly >= 1) {
+         if (lly >= 1) {
             ne = nw->se ;
             nw = nw->sw ;
             se = sw->ne ;
             sw = sw->nw ;
-	    lly-- ;
+            lly-- ;
          } else {
             ne = sw->ne ;
             nw = sw->nw ;
@@ -533,7 +533,7 @@ void ghashbase::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->se) ;
             }
          }
-	 sortunique(top, newv) ;
+         sortunique(top, newv) ;
          ymax += ymax ;
          if (!outer) {
             ymax.add_smallint(-2) ;
@@ -557,7 +557,7 @@ void ghashbase::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->ne) ;
             }
          }
-	 sortunique(bottom, newv) ;
+         sortunique(bottom, newv) ;
          ymin += ymin ;
          if (!outer) {
             ymin.add_smallint(2) ;
@@ -581,7 +581,7 @@ void ghashbase::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->sw) ;
             }
          }
-	 sortunique(right, newv) ;
+         sortunique(right, newv) ;
          xmax += xmax ;
          if (!outer) {
             xmax.add_smallint(-2) ;
@@ -605,7 +605,7 @@ void ghashbase::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *
                   newv.push_back(t->se) ;
             }
          }
-	 sortunique(left, newv) ;
+         sortunique(left, newv) ;
          xmin += xmin ;
          if (!outer) {
             xmin.add_smallint(2) ;
@@ -662,40 +662,40 @@ void ghashbase::fit(viewport &view, int force) {
       currdepth-- ;
       if (currdepth == -1) { // we have ghleaf ghnodes; turn them into bitmasks
          topbm = getbitsfromleaves(top) & 0xff ;
-	 bottombm = getbitsfromleaves(bottom) & 0xff ;
-	 leftbm = getbitsfromleaves(left) >> 8 ;
-	 rightbm = getbitsfromleaves(right) >> 8 ;
+         bottombm = getbitsfromleaves(bottom) & 0xff ;
+         leftbm = getbitsfromleaves(left) >> 8 ;
+         rightbm = getbitsfromleaves(right) >> 8 ;
       }
       if (currdepth == -1) {
-	 int sz = 1 << (currdepth + 2) ;
-	 int maskhi = (1 << sz) - (1 << (sz >> 1)) ;
-	 int masklo = (1 << (sz >> 1)) - 1 ;
+         int sz = 1 << (currdepth + 2) ;
+         int maskhi = (1 << sz) - (1 << (sz >> 1)) ;
+         int masklo = (1 << (sz >> 1)) - 1 ;
          ymax += ymax ;
-	 if ((topbm & maskhi) == 0) {
-	    ymax.add_smallint(-2) ;
-	    ysize-- ;
-	 } else {
-	    topbm >>= (sz >> 1) ;
-	 }
+         if ((topbm & maskhi) == 0) {
+            ymax.add_smallint(-2) ;
+            ysize-- ;
+         } else {
+            topbm >>= (sz >> 1) ;
+         }
          ymin += ymin ;
-	 if ((bottombm & masklo) == 0) {
-	   ymin.add_smallint(2) ;
-	   ysize-- ;
-	   bottombm >>= (sz >> 1) ;
-	 }
+         if ((bottombm & masklo) == 0) {
+           ymin.add_smallint(2) ;
+           ysize-- ;
+           bottombm >>= (sz >> 1) ;
+         }
          xmax += xmax ;
-	 if ((rightbm & masklo) == 0) {
-	    xmax.add_smallint(-2) ;
-	    xsize-- ;
-	    rightbm >>= (sz >> 1) ;
-	 }
+         if ((rightbm & masklo) == 0) {
+            xmax.add_smallint(-2) ;
+            xsize-- ;
+            rightbm >>= (sz >> 1) ;
+         }
          xmin += xmin ;
-	 if ((leftbm & maskhi) == 0) {
-	   xmin.add_smallint(2) ;
-	   xsize-- ;
-	 } else {
-	   leftbm >>= (sz >> 1) ;
-	 }
+         if ((leftbm & maskhi) == 0) {
+           xmin.add_smallint(2) ;
+           xsize-- ;
+         } else {
+           leftbm >>= (sz >> 1) ;
+         }
          xsize <<= 1 ;
          ysize <<= 1 ;
       } else if (currdepth >= 0) {
