@@ -62,6 +62,10 @@ const char* jvnalgo::getrule() {
    return "Bug in jvnalgo::getrule!";
 }
 
+const char* jvnalgo::DefaultRule() {
+   return JVN_RULE;
+}
+
 const int NORTH = 1 ;
 const int SOUTH = 3 ;
 const int EAST = 0 ;

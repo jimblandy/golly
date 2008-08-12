@@ -35,6 +35,7 @@ public:
                           state e, state sw, state s, state se) ;
    virtual const char* setrule(const char* s) ;
    virtual const char* getrule() ;
+   virtual const char* DefaultRule() ;
    virtual int NumCellStates() ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 };
