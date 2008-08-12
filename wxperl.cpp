@@ -402,7 +402,7 @@ static void AddPadding(AV* array)
    // has an odd number of ints (this is how we distinguish multi-state arrays
    // from two-state arrays -- the latter always have an even number of ints)
    int len = av_len(array) + 1;
-   if (len == 0) return;         // always return () rather than (0) !!!???
+   if (len == 0) return;         // always return () rather than (0)
    if ((len & 1) == 0) {
       av_push(array, newSViv(0));
    }
@@ -539,7 +539,7 @@ XS(pl_load)
       PERL_ERROR(err);
    }
 
-   // convert pattern into a cell list, shifting cell coords so that the
+   // convert pattern into a cell array, shifting cell coords so that the
    // bounding box's top left cell is at 0,0
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
    err = ExtractCellArray(outarray, tempalgo, true);
@@ -563,7 +563,7 @@ XS(pl_store)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_store error: 1st parameter is not a valid array reference.");
+      PERL_ERROR("g_store error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
    
@@ -973,7 +973,7 @@ XS(pl_transform)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_transform error: 1st parameter is not a valid array reference.");
+      PERL_ERROR("g_transform error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
 
@@ -1026,7 +1026,7 @@ XS(pl_evolve)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_evolve error: 1st parameter is not a valid array reference.");
+      PERL_ERROR("g_evolve error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
 
@@ -1094,7 +1094,7 @@ XS(pl_putcells)
 
    SV* cells = ST(0);
    if ( (!SvROK(cells)) || (SvTYPE(SvRV(cells)) != SVt_PVAV) ) {
-       PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference.");
+      PERL_ERROR("g_putcells error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
 
@@ -1156,7 +1156,7 @@ XS(pl_putcells)
          int oldstate = curralgo->getcell(newx, newy);
          int newstate;
          if (multistate) {
-            // multi-state lists can contain dead cells so newstate might be 0
+            // multi-state arrays can contain dead cells so newstate might be 0
             newstate = SvIV( *av_fetch(inarray, item + 2, 0) );
             if (newstate == oldstate) {
                if (oldstate != 0) newstate = 0;
@@ -1175,7 +1175,7 @@ XS(pl_putcells)
                pattchanged = true;
             }
          } else {
-            // two-state lists only contain live cells
+            // two-state arrays only contain live cells
             newstate = 1 - oldstate;
             // paste (possibly transformed) cell into current universe
             if (curralgo->setcell(newx, newy, newstate) < 0) {
@@ -1199,7 +1199,7 @@ XS(pl_putcells)
          int newy = y0 + x * ayx + y * ayy;
          int oldstate = curralgo->getcell(newx, newy);
          if (multistate) {
-            // multi-state lists can contain dead cells so newstate might be 0
+            // multi-state arrays can contain dead cells so newstate might be 0
             newstate = SvIV( *av_fetch(inarray, item + 2, 0) );
             if (negate) newstate = maxstate - newstate;
          }
@@ -1278,6 +1278,83 @@ XS(pl_getcells)
       if (multistate) AddPadding(outarray);
    }
 
+   SP -= items;
+   ST(0) = newRV( (SV*)outarray );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_join)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 2) PERL_ERROR("Usage: $outcells = g_join($cells1,$cells2).");
+
+   SV* cells1 = ST(0);
+   SV* cells2 = ST(1);
+
+   if ( (!SvROK(cells1)) || (SvTYPE(SvRV(cells1)) != SVt_PVAV) ) {
+      PERL_ERROR("g_join error: 1st parameter is not a valid array reference.");
+   }
+   if ( (!SvROK(cells2)) || (SvTYPE(SvRV(cells2)) != SVt_PVAV) ) {
+      PERL_ERROR("g_join error: 2nd parameter is not a valid array reference.");
+   }
+
+   AV* inarray1 = (AV*)SvRV(cells1);
+   AV* inarray2 = (AV*)SvRV(cells2);
+
+   bool multi1 = ((av_len(inarray1) + 1) & 1) == 1;
+   bool multi2 = ((av_len(inarray2) + 1) & 1) == 1;
+   bool multiout = multi1 || multi2;
+   int ints_per_cell, num_cells;
+   int x, y, state;
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
+
+   // append 1st array
+   ints_per_cell = multi1 ? 3 : 2;
+   num_cells = (av_len(inarray1) + 1) / ints_per_cell;
+   for (int n = 0; n < num_cells; n++) {
+      int item = ints_per_cell * n;
+      x = SvIV( *av_fetch(inarray1, item, 0) );
+      y = SvIV( *av_fetch(inarray1, item + 1, 0) );
+      if (multi1) {
+         state = SvIV( *av_fetch(inarray1, item + 2, 0) );
+      } else {
+         state = 1;
+      }
+      av_push(outarray, newSViv(x));
+      av_push(outarray, newSViv(y));
+      if (multiout) av_push(outarray, newSViv(state));
+      if ((n % 4096) == 0 && PerlScriptAborted()) {
+         Perl_croak(aTHX_ NULL);
+      }
+   }
+
+   // append 2nd array
+   ints_per_cell = multi2 ? 3 : 2;
+   num_cells = (av_len(inarray2) + 1) / ints_per_cell;
+   for (int n = 0; n < num_cells; n++) {
+      int item = ints_per_cell * n;
+      x = SvIV( *av_fetch(inarray2, item, 0) );
+      y = SvIV( *av_fetch(inarray2, item + 1, 0) );
+      if (multi2) {
+         state = SvIV( *av_fetch(inarray2, item + 2, 0) );
+      } else {
+         state = 1;
+      }
+      av_push(outarray, newSViv(x));
+      av_push(outarray, newSViv(y));
+      if (multiout) av_push(outarray, newSViv(state));
+      if ((n % 4096) == 0 && PerlScriptAborted()) {
+         Perl_croak(aTHX_ NULL);
+      }
+   }
+
+   if (multiout) AddPadding(outarray);
+   
    SP -= items;
    ST(0) = newRV( (SV*)outarray );
    sv_2mortal(ST(0));
@@ -1395,7 +1472,7 @@ XS(pl_getclip)
             }
          }
       }
-      // if no live cells then return (wd,ht) rather than (wd,ht,0) !!!???
+      // if no live cells then return (wd,ht) rather than (wd,ht,0)
       if (multistate && (av_len(outarray) + 1) > 2) {
          AddPadding(outarray);
       }
@@ -2623,6 +2700,7 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_evolve",       pl_evolve,       file);
    newXS("g_putcells",     pl_putcells,     file);
    newXS("g_getcells",     pl_getcells,     file);
+   newXS("g_join",         pl_join,         file);
    newXS("g_hash",         pl_hash,         file);
    newXS("g_getclip",      pl_getclip,      file);
    newXS("g_select",       pl_select,       file);

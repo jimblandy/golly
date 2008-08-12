@@ -1,65 +1,105 @@
 # Tile current selection with pattern inside selection.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
 # Updated to use exit command, Nov 2006.
+# Updated to handle multi-state cell lists, Aug 2008.
 
 from glife import *
 import golly as g
-
-# ------------------------------------------------------------------------------
-
-def clip_left (patt, left):
-   clist = list(patt)
-   x = 0
-   while x < len(clist):
-      if clist[x] < left:
-         clist[x : x+2] = []     # remove cell from list
-      else:
-         x += 2
-   return pattern(clist)
-
-# ------------------------------------------------------------------------------
-
-def clip_right (patt, right):
-   clist = list(patt)
-   x = 0
-   while x < len(clist):
-      if clist[x] > right:
-         clist[x : x+2] = []     # remove cell from list
-      else:
-         x += 2
-   return pattern(clist)
-
-# ------------------------------------------------------------------------------
-
-def clip_top (patt, top):
-   clist = list(patt)
-   y = 1
-   while y < len(clist):
-      if clist[y] < top:
-         clist[y-1 : y+1] = []   # remove cell from list
-      else:
-         y += 2
-   return pattern(clist)
-
-# ------------------------------------------------------------------------------
-
-def clip_bottom (patt, bottom):
-   clist = list(patt)
-   y = 1
-   while y < len(clist):
-      if clist[y] > bottom:
-         clist[y-1 : y+1] = []   # remove cell from list
-      else:
-         y += 2
-   return pattern(clist)
-
-# ------------------------------------------------------------------------------
 
 selrect = rect( g.getselrect() )
 if selrect.empty: g.exit("There is no selection.")
 
 selpatt = pattern( g.getcells(g.getselrect()) )
 if len(selpatt) == 0: g.exit("No pattern in selection.")
+
+# determine if selpatt is two-state or multi-state
+multistate = False
+inc = 2
+if len(selpatt) & 1 == 1:
+   multistate = True
+   inc = 3
+
+# ------------------------------------------------------------------------------
+
+def clip_left (patt, left):
+   clist = list(patt)
+   
+   #  remove padding int if present
+   if multistate and (len(clist) % 3 == 1): clist.pop()
+   
+   x = 0
+   while x < len(clist):
+      if clist[x] < left:
+         clist[x : x+inc] = []      # remove cell from list
+      else:
+         x += inc
+   
+   # append padding int if necessary
+   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   
+   return pattern(clist)
+
+# ------------------------------------------------------------------------------
+
+def clip_right (patt, right):
+   clist = list(patt)
+   
+   #  remove padding int if present
+   if multistate and (len(clist) % 3 == 1): clist.pop()
+   
+   x = 0
+   while x < len(clist):
+      if clist[x] > right:
+         clist[x : x+inc] = []      # remove cell from list
+      else:
+         x += inc
+   
+   # append padding int if necessary
+   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   
+   return pattern(clist)
+
+# ------------------------------------------------------------------------------
+
+def clip_top (patt, top):
+   clist = list(patt)
+   
+   #  remove padding int if present
+   if multistate and (len(clist) % 3 == 1): clist.pop()
+   
+   y = 1
+   while y < len(clist):
+      if clist[y] < top:
+         clist[y-1 : y-1+inc] = []     # remove cell from list
+      else:
+         y += inc
+   
+   # append padding int if necessary
+   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   
+   return pattern(clist)
+
+# ------------------------------------------------------------------------------
+
+def clip_bottom (patt, bottom):
+   clist = list(patt)
+   
+   #  remove padding int if present
+   if multistate and (len(clist) % 3 == 1): clist.pop()
+   
+   y = 1
+   while y < len(clist):
+      if clist[y] > bottom:
+         clist[y-1 : y-1+inc] = []     # remove cell from list
+      else:
+         y += inc
+   
+   # append padding int if necessary
+   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   
+   return pattern(clist)
+
+# ------------------------------------------------------------------------------
 
 # find selpatt's minimal bounding box
 bbox = getminbox(selpatt)

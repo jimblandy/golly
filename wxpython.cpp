@@ -371,7 +371,7 @@ static void AddPadding(PyObject* list)
    // has an odd number of ints (this is how we distinguish multi-state lists
    // from two-state lists -- the latter always have an even number of ints)
    int len = PyList_Size(list);
-   if (len == 0) return;         // always return [] rather than [0] !!!???
+   if (len == 0) return;         // always return [] rather than [0]
    if ((len & 1) == 0) {
       PyObject* padding = PyInt_FromLong(0L);
       PyList_Append(list, padding);
@@ -1207,6 +1207,70 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_join(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   PyObject* inlist1;
+   PyObject* inlist2;
+
+   if (!PyArg_ParseTuple(args, "O!O!", &PyList_Type, &inlist1, &PyList_Type, &inlist2))
+      return NULL;
+
+   bool multi1 = (PyList_Size(inlist1) & 1) == 1;
+   bool multi2 = (PyList_Size(inlist2) & 1) == 1;
+   bool multiout = multi1 || multi2;
+   int ints_per_cell, num_cells;
+   long x, y, state;
+   PyObject* outlist = PyList_New(0);
+
+   // append 1st list
+   ints_per_cell = multi1 ? 3 : 2;
+   num_cells = PyList_Size(inlist1) / ints_per_cell;
+   for (int n = 0; n < num_cells; n++) {
+      int item = ints_per_cell * n;
+      x = PyInt_AsLong( PyList_GetItem(inlist1, item) );
+      y = PyInt_AsLong( PyList_GetItem(inlist1, item + 1) );
+      if (multi1) {
+         state = PyInt_AsLong( PyList_GetItem(inlist1, item + 2) );
+      } else {
+         state = 1;
+      }
+      AddTwoInts(outlist, x, y);
+      if (multiout) AddState(outlist, state);
+      if ((n % 4096) == 0 && PythonScriptAborted()) {
+         Py_DECREF(outlist);
+         return NULL;
+      }
+   }
+
+   // append 2nd list
+   ints_per_cell = multi2 ? 3 : 2;
+   num_cells = PyList_Size(inlist2) / ints_per_cell;
+   for (int n = 0; n < num_cells; n++) {
+      int item = ints_per_cell * n;
+      x = PyInt_AsLong( PyList_GetItem(inlist2, item) );
+      y = PyInt_AsLong( PyList_GetItem(inlist2, item + 1) );
+      if (multi2) {
+         state = PyInt_AsLong( PyList_GetItem(inlist2, item + 2) );
+      } else {
+         state = 1;
+      }
+      AddTwoInts(outlist, x, y);
+      if (multiout) AddState(outlist, state);
+      if ((n % 4096) == 0 && PythonScriptAborted()) {
+         Py_DECREF(outlist);
+         return NULL;
+      }
+   }
+
+   if (multiout) AddPadding(outlist);
+   
+   return outlist;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_hash(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -1325,7 +1389,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
             }
          }
       }
-      // if no live cells then return [wd,ht] rather than [wd,ht,0] !!!???
+      // if no live cells then return [wd,ht] rather than [wd,ht,0]
       if (multistate && PyList_Size(outlist) > 2) {
          AddPadding(outlist);
       }
@@ -2452,6 +2516,7 @@ static PyMethodDef py_methods[] = {
    { "evolve",       py_evolve,     METH_VARARGS, "generate pattern contained in given cell list" },
    { "putcells",     py_putcells,   METH_VARARGS, "paste given cell list into current universe" },
    { "getcells",     py_getcells,   METH_VARARGS, "return cell list in given rectangle" },
+   { "join",         py_join,       METH_VARARGS, "return concatenation of given cell lists" },
    { "hash",         py_hash,       METH_VARARGS, "return hash value for pattern in given rectangle" },
    { "getclip",      py_getclip,    METH_VARARGS, "return pattern in clipboard (as cell list)" },
    { "select",       py_select,     METH_VARARGS, "select [x, y, wd, ht] rectangle or remove if []" },

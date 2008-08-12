@@ -112,7 +112,7 @@ class pattern(list):
 
    def __add__(self, q):
       """Join patterns."""
-      return pattern(list.__add__(self, q))
+      return pattern(golly.join(self, q))
 
    def __getitem__(self, N):
       """\
@@ -209,19 +209,30 @@ def load(fn):
 # --------------------------------------------------------------------
 
 def getminbox(patt):
-   # return a rect which is the minimal bounding box of given pattern
+   # return a rect which is the minimal bounding box of given pattern;
+   # note that if the pattern is a multi-state list then any dead cells
+   # are included in the bounding box
    minx =  maxint
    maxx = -maxint
    miny =  maxint
    maxy = -maxint
    clist = list(patt)
    clen = len(clist)
-   for x in xrange(0, clen, 2):
+   inc = 2
+   if clen & 1 == 1:
+      # multi-state list (3 ints per cell)
+      inc = 3
+      # ignore padding int if it is present
+      if clen % 3 == 1: clen -= 1
+   
+   for x in xrange(0, clen, inc):
       if clist[x] < minx: minx = clist[x]
       if clist[x] > maxx: maxx = clist[x]
-   for y in xrange(1, clen, 2):
+   
+   for y in xrange(1, clen, inc):
       if clist[y] < miny: miny = clist[y]
       if clist[y] > maxy: maxy = clist[y]
+   
    return rect( [ minx, miny, maxx - minx + 1, maxy - miny + 1 ] )
 
 # --------------------------------------------------------------------
@@ -260,7 +271,7 @@ def getstring(prompt):
 
 def validint(s):
    # return True if given string represents a valid integer
-   if len(s)==0: return False
+   if len(s) == 0: return False
    s = s.replace(",","")
    if s[0] == '+' or s[0] == '-': s = s[1:]
    return s.isdigit()
