@@ -1,21 +1,38 @@
 # Tile current selection with clipboard pattern.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2007.
+# Updated to handle multi-state patterns, Aug 2008.
 
 use strict;
+
+# assume two-state cell array (may change below)
+my $multistate = 0;
 
 # ------------------------------------------------------------------------------
 
 sub clip_rb {
    # set given cells except those outside given right and bottom edges
    my ($cells, $right, $bottom) = @_;
+   my $len = @{$cells};
    my $x = 0;
    my $y = 1;
-   while ($x < @{$cells}) {
-      if (($cells->[$x] <= $right) and ($cells->[$y] <= $bottom)) {
-         g_setcell($cells->[$x], $cells->[$y], 1);
+   if ($multistate) {
+      #  ignore padding int if present
+      $len -= 1 if $len % 3 == 1;
+      while ($x < $len) {
+         if (($cells->[$x] <= $right) and ($cells->[$y] <= $bottom)) {
+            g_setcell($cells->[$x], $cells->[$y], $cells->[$x+2]);
+         }
+         $x += 3;
+         $y += 3;
       }
-      $x += 2;
-      $y += 2;
+   } else {   
+      while ($x < $len) {
+         if (($cells->[$x] <= $right) and ($cells->[$y] <= $bottom)) {
+            g_setcell($cells->[$x], $cells->[$y], 1);
+         }
+         $x += 2;
+         $y += 2;
+      }
    }
 }
 
@@ -33,6 +50,8 @@ my $selbottom = $seltop + $selrect[3] - 1;
 my $p = g_getclip();          # 1st 2 items are wd,ht
 my $pwidth = shift(@{$p});
 my $pheight = shift(@{$p});
+
+if (@{$p} & 1 == 1) { $multistate = 1 }
 
 g_clear(0);
 if (@{$p} > 0) {

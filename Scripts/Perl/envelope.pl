@@ -1,6 +1,7 @@
 # Use multiple layers to create a history of the current pattern.
 # The "envelope" layer remembers all live cells.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2007.
+# Updated to handle multi-state patterns, Aug 2008.
 
 use strict;
 
@@ -10,6 +11,10 @@ my $currname = "current";
 my $envname = "envelope";
 my $currindex = g_getlayer();
 my $envindex;
+
+my $multistate = g_numstates() > 2;
+my $curralgo = g_getalgo();
+my $currrule = g_getrule();
 
 if ($currindex > 1
          and g_getname($currindex) eq $currname
@@ -48,6 +53,12 @@ else {
    
    $envindex = g_addlayer();  # create layer for remembering all live cells
    g_putcells($startpatt);    # copy starting pattern into this layer
+   if ($multistate) {
+      # convert all cell states to 1
+      g_setalgo("QuickLife");
+      g_setalgo($curralgo);
+      g_setrule($currrule);
+   }
    
    $currindex = g_addlayer(); # create layer for generating pattern
    g_putcells($startpatt);    # copy starting pattern into this layer
@@ -77,7 +88,17 @@ while (1) {
    my $currpatt = g_getcells(g_getrect());
    g_check(0);
    g_setlayer($envindex);
+   if ($multistate) {
+      # restore original algo+rule so putcells won't fail
+      g_setalgo($curralgo);
+      g_setrule($currrule);
+   }
    g_putcells($currpatt);
+   if ($multistate) {
+      # convert all cell states to 1 and leave envelope layer
+      # in qlife so envelope color is (probably) different
+      g_setalgo("QuickLife");
+   }
    g_setlayer($currindex);
    g_check(1);
    

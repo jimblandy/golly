@@ -6,6 +6,10 @@ g_new("P1100 gun");
 g_setalgo("HashLife");
 g_setrule("B3/S23");
 
+# update status bar now so we don't see different colors when
+# g_show is called
+g_update();
+
 my $glider = g_parse('bo$bbo$3o!');
 my $block = g_parse('oo$oo!');
 my $eater = g_parse('oo$bo$bobo$bboo!');

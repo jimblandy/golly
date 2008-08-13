@@ -3,18 +3,18 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
+- Resolve how to handle swapcolors flag if # states > 2.
+  Remove flag completely?  Or just ignore it when # states > 2.
+  What about colors used when multi-state layers are stacked?
+  Need MaxCellStates() method to solve prob when Gens algo uses a
+  rule with only 2 states?
+
 - Implement scripting commands to get/set colors if # states > 2:
   setcolors("JvN", "JvN-32", [200,200,200,1])
   setcolors("Generations", "*", [r0,g0,b0,s0, ... sn,rn,gn,bn])
   setcolors("Generations", "", []) -- to restore default colors?
   And to override icons:
   seticons("JvN", "*", datadir()+"jvnicons.xpm")
-
-- Resolve how to handle swapcolors flag if # states > 2.
-  Remove flag completely?  Or just ignore it when # states > 2.
-  What about colors used when multi-state layers are stacked?
-  Need MaxCellStates() method to solve prob when Gens algo uses a
-  rule with only 2 states?
 
 - Allow users to override default icons by looking for and loading
   special files like JvN7.xpm (look in golly dir then user data dir?).

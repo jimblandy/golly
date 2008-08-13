@@ -2,6 +2,7 @@
 # The "envelope" layer remembers all live cells.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), December 2006.
 # Updated for better compatibility with envelope.pl, June 2007.
+# Updated to handle multi-state patterns, Aug 2008.
 
 import golly as g
 
@@ -10,6 +11,11 @@ if g.empty(): g.exit("There is no pattern.")
 currname = "current"
 envname = "envelope"
 currindex = g.getlayer()
+envindex = 0
+
+multistate = g.numstates() > 2
+curralgo = g.getalgo()
+currrule = g.getrule()
 
 if currindex > 1 and g.getname(currindex) == currname \
                  and g.getname(currindex - 1) == envname :
@@ -45,6 +51,11 @@ else:
    
    envindex = g.addlayer()    # create layer for remembering all live cells
    g.putcells(startpatt)      # copy starting pattern into this layer
+   if multistate:
+      # convert all cell states to 1
+      g.setalgo("QuickLife")
+      g.setalgo(curralgo)
+      g.setrule(currrule)
    
    currindex = g.addlayer()   # create layer for generating pattern
    g.putcells(startpatt)      # copy starting pattern into this layer
@@ -72,7 +83,15 @@ while True:
    currpatt = g.getcells(g.getrect())
    g.check(0)
    g.setlayer(envindex)
+   if multistate:
+      # restore original algo+rule so putcells won't fail
+      g.setalgo(curralgo)
+      g.setrule(currrule)
    g.putcells(currpatt)
+   if multistate:
+      # convert all cell states to 1 and leave envelope layer
+      # in qlife so envelope color is (probably) different
+      g.setalgo("QuickLife")
    g.setlayer(currindex)
    g.check(1)
    

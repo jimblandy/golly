@@ -1,6 +1,6 @@
 # Tile current selection with pattern inside selection.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2007.
-# Updated to handle multi-state cell arrays, Aug 2008.
+# Updated to handle multi-state patterns, Aug 2008.
 
 use strict;
 
@@ -11,12 +11,8 @@ my $selpatt = g_getcells(@selrect);
 g_exit("No pattern in selection.") if @{$selpatt} == 0;
 
 # determine if selpatt is two-state or multi-state
-my $multistate = 0;
 my $inc = 2;
-if (@{$selpatt} & 1 == 1) {
-   $multistate = 1;
-   $inc = 3;
-}
+if (@{$selpatt} & 1 == 1) { $inc = 3 }
 
 # ------------------------------------------------------------------------------
 
@@ -32,7 +28,7 @@ sub getminbox {
    my $maxy = $miny;
 
    # ignore padding int if present
-   $len -= 1 if $multistate and ($len % 3 == 1);
+   $len -= 1 if ($inc == 3) and ($len % 3 == 1);
    
    for (my $x = 0; $x < $len; $x += $inc) {
       if ($cells->[$x] < $minx) { $minx = $cells->[$x] }
@@ -52,19 +48,22 @@ sub clip_left {
    my ($cells, $left) = @_;
    my $len = @{$cells};
    my $x = 0;
-   
-   #  ignore padding int if present
-   $len -= 1 if $multistate and ($len % 3 == 1);
-   
-   while ($x < $len) {
-      if ($cells->[$x] >= $left) {
-         if ($multistate) {
+   if ($inc == 3) {
+      #  ignore padding int if present
+      $len -= 1 if $len % 3 == 1;
+      while ($x < $len) {
+         if ($cells->[$x] >= $left) {
             g_setcell($cells->[$x], $cells->[$x+1], $cells->[$x+2]);
-         } else {
+         }
+         $x += 3;
+      }
+   } else {
+      while ($x < $len) {
+         if ($cells->[$x] >= $left) {
             g_setcell($cells->[$x], $cells->[$x+1], 1);
          }
+         $x += 2;
       }
-      $x += $inc;
    }
 }
 
@@ -74,19 +73,22 @@ sub clip_right {
    my ($cells, $right) = @_;
    my $len = @{$cells};
    my $x = 0;
-   
-   #  ignore padding int if present
-   $len -= 1 if $multistate and ($len % 3 == 1);
-   
-   while ($x < $len) {
-      if ($cells->[$x] <= $right) {
-         if ($multistate) {
+   if ($inc == 3) {
+      #  ignore padding int if present
+      $len -= 1 if $len % 3 == 1;
+      while ($x < $len) {
+         if ($cells->[$x] <= $right) {
             g_setcell($cells->[$x], $cells->[$x+1], $cells->[$x+2]);
-         } else {
+         }
+         $x += 3;
+      }
+   } else {   
+      while ($x < $len) {
+         if ($cells->[$x] <= $right) {
             g_setcell($cells->[$x], $cells->[$x+1], 1);
          }
+         $x += 2;
       }
-      $x += $inc;
    }
 }
 
@@ -96,19 +98,22 @@ sub clip_top {
    my ($cells, $top) = @_;
    my $len = @{$cells};
    my $y = 1;
-   
-   #  ignore padding int if present
-   $len -= 1 if $multistate and ($len % 3 == 1);
-   
-   while ($y < $len) {
-      if ($cells->[$y] >= $top) {
-         if ($multistate) {
+   if ($inc == 3) {
+      #  ignore padding int if present
+      $len -= 1 if $len % 3 == 1;
+      while ($y < $len) {
+         if ($cells->[$y] >= $top) {
             g_setcell($cells->[$y-1], $cells->[$y], $cells->[$y+1]);
-         } else {
+         }
+         $y += 3;
+      }
+   } else {   
+      while ($y < $len) {
+         if ($cells->[$y] >= $top) {
             g_setcell($cells->[$y-1], $cells->[$y], 1);
          }
+         $y += 2;
       }
-      $y += $inc;
    }
 }
 
@@ -118,19 +123,22 @@ sub clip_bottom {
    my ($cells, $bottom) = @_;
    my $len = @{$cells};
    my $y = 1;
-   
-   #  ignore padding int if present
-   $len -= 1 if $multistate and ($len % 3 == 1);
-   
-   while ($y < $len) {
-      if ($cells->[$y] <= $bottom) {
-         if ($multistate) {
+   if ($inc == 3) {
+      #  ignore padding int if present
+      $len -= 1 if $len % 3 == 1;
+      while ($y < $len) {
+         if ($cells->[$y] <= $bottom) {
             g_setcell($cells->[$y-1], $cells->[$y], $cells->[$y+1]);
-         } else {
+         }
+         $y += 3;
+      }
+   } else {   
+      while ($y < $len) {
+         if ($cells->[$y] <= $bottom) {
             g_setcell($cells->[$y-1], $cells->[$y], 1);
          }
+         $y += 2;
       }
-      $y += $inc;
    }
 }
 

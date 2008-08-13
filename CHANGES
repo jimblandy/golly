@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: Added list = join(list1,list2) command.
+AKT: Updated some scripts to handle multi-state patterns.
 AKT: Scripting commands support multi-state cell lists/arrays.
 AKT: Added "File Formats" item to Help menu.
 AKT: setcolor(algoname,r,g,b) sets status bar background for given algo.

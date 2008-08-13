@@ -886,6 +886,8 @@ void MainFrame::UpdatePatternAndStatus()
 // only update status bar
 void MainFrame::UpdateStatus()
 {
+   if (inscript || currlayer->undoredo->doingscriptchanges) return;
+
    if (!IsIconized()) {
       if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());

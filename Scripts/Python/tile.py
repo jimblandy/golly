@@ -1,7 +1,7 @@
 # Tile current selection with pattern inside selection.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
 # Updated to use exit command, Nov 2006.
-# Updated to handle multi-state cell lists, Aug 2008.
+# Updated to handle multi-state patterns, Aug 2008.
 
 from glife import *
 import golly as g
@@ -13,11 +13,8 @@ selpatt = pattern( g.getcells(g.getselrect()) )
 if len(selpatt) == 0: g.exit("No pattern in selection.")
 
 # determine if selpatt is two-state or multi-state
-multistate = False
 inc = 2
-if len(selpatt) & 1 == 1:
-   multistate = True
-   inc = 3
+if len(selpatt) & 1 == 1: inc = 3
 
 # ------------------------------------------------------------------------------
 
@@ -25,7 +22,7 @@ def clip_left (patt, left):
    clist = list(patt)
    
    #  remove padding int if present
-   if multistate and (len(clist) % 3 == 1): clist.pop()
+   if (inc == 3) and (len(clist) % 3 == 1): clist.pop()
    
    x = 0
    while x < len(clist):
@@ -35,7 +32,7 @@ def clip_left (patt, left):
          x += inc
    
    # append padding int if necessary
-   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   if (inc == 3) and (len(clist) & 1 == 0): clist.append(0)
    
    return pattern(clist)
 
@@ -45,7 +42,7 @@ def clip_right (patt, right):
    clist = list(patt)
    
    #  remove padding int if present
-   if multistate and (len(clist) % 3 == 1): clist.pop()
+   if (inc == 3) and (len(clist) % 3 == 1): clist.pop()
    
    x = 0
    while x < len(clist):
@@ -55,7 +52,7 @@ def clip_right (patt, right):
          x += inc
    
    # append padding int if necessary
-   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   if (inc == 3) and (len(clist) & 1 == 0): clist.append(0)
    
    return pattern(clist)
 
@@ -65,7 +62,7 @@ def clip_top (patt, top):
    clist = list(patt)
    
    #  remove padding int if present
-   if multistate and (len(clist) % 3 == 1): clist.pop()
+   if (inc == 3) and (len(clist) % 3 == 1): clist.pop()
    
    y = 1
    while y < len(clist):
@@ -75,7 +72,7 @@ def clip_top (patt, top):
          y += inc
    
    # append padding int if necessary
-   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   if (inc == 3) and (len(clist) & 1 == 0): clist.append(0)
    
    return pattern(clist)
 
@@ -85,7 +82,7 @@ def clip_bottom (patt, bottom):
    clist = list(patt)
    
    #  remove padding int if present
-   if multistate and (len(clist) % 3 == 1): clist.pop()
+   if (inc == 3) and (len(clist) % 3 == 1): clist.pop()
    
    y = 1
    while y < len(clist):
@@ -95,7 +92,7 @@ def clip_bottom (patt, bottom):
          y += inc
    
    # append padding int if necessary
-   if multistate and (len(clist) & 1 == 0): clist.append(0)
+   if (inc == 3) and (len(clist) & 1 == 0): clist.append(0)
    
    return pattern(clist)
 

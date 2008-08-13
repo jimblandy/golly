@@ -7,6 +7,10 @@ g.new("P1100 gun")
 g.setalgo("HashLife")
 g.setrule("B3/S23")
 
+# update status bar now so we don't see different colors when
+# g.show is called
+g.update()
+
 glider = pattern("bo$bbo$3o!")
 block = pattern("oo$oo!")
 eater = pattern("oo$bo$bobo$bboo!")

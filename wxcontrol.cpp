@@ -1020,10 +1020,8 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       
       lifealgo* curralgo = currlayer->algo;
       
-      // only need to check for state change if new algo has fewer states than old algo
+      // need to check for state change if new algo has fewer states than old algo
       int newmaxstate = newalgo->NumCellStates() - 1;
-      int oldmaxstate = curralgo->NumCellStates() - 1;
-      bool checkstate = savechanges && newmaxstate < oldmaxstate;
    
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
@@ -1032,9 +1030,9 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
-               if (checkstate && v > newmaxstate) {
+               if (v > newmaxstate) {
                   // reduce v to largest state in new algo
-                  currlayer->undoredo->SaveCellChange(cx, cy, v, newmaxstate);
+                  if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, newmaxstate);
                   v = newmaxstate;
                   patternchanged = true;
                }
@@ -1099,7 +1097,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       // otherwise a wxMac bug will cause menu items to remain disabled
       // after the modal rule dialog closes
       //!!! didn't avoid bug
-      if (newrule.IsEmpty()) {
+      if (newrule.IsEmpty() && !inscript) {
          UpdateEverything();
       }
    }
