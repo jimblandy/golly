@@ -1183,6 +1183,54 @@ void PatternView::PanRight(int amount)
 
 // -----------------------------------------------------------------------------
 
+void PatternView::PanNE()
+{
+   TestAutoFit();
+   int xamount = SmallScroll(currlayer->view->getwidth());
+   int yamount = SmallScroll(currlayer->view->getheight());
+   int amount = (xamount < yamount) ? xamount : yamount;
+   currlayer->view->move(amount, -amount);
+   mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::PanNW()
+{
+   TestAutoFit();
+   int xamount = SmallScroll(currlayer->view->getwidth());
+   int yamount = SmallScroll(currlayer->view->getheight());
+   int amount = (xamount < yamount) ? xamount : yamount;
+   currlayer->view->move(-amount, -amount);
+   mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::PanSE()
+{
+   TestAutoFit();
+   int xamount = SmallScroll(currlayer->view->getwidth());
+   int yamount = SmallScroll(currlayer->view->getheight());
+   int amount = (xamount < yamount) ? xamount : yamount;
+   currlayer->view->move(amount, amount);
+   mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::PanSW()
+{
+   TestAutoFit();
+   int xamount = SmallScroll(currlayer->view->getwidth());
+   int yamount = SmallScroll(currlayer->view->getheight());
+   int amount = (xamount < yamount) ? xamount : yamount;
+   currlayer->view->move(-amount, amount);
+   mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
 int PatternView::SmallScroll(int xysize)
 {
    int amount;
@@ -1368,6 +1416,10 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_RIGHT:       PanRight( SmallScroll(currlayer->view->getwidth()) ); break;
       case DO_UP:          PanUp( SmallScroll(currlayer->view->getheight()) ); break;
       case DO_DOWN:        PanDown( SmallScroll(currlayer->view->getheight()) ); break;
+      case DO_NE:          PanNE(); break;
+      case DO_NW:          PanNW(); break;
+      case DO_SE:          PanSE(); break;
+      case DO_SW:          PanSW(); break;
       case DO_FULLSCREEN:  mainptr->ToggleFullScreen(); break;
       case DO_FIT:         FitPattern(); break;
       case DO_FITSEL:      FitSelection(); break;

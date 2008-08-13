@@ -136,7 +136,7 @@ extern wxArrayString namedrules;
 typedef enum {
    DO_NOTHING = 0,               // null action must be zero
    DO_OPENFILE,                  // open a chosen pattern/script/html file
-   // rest are in alphabetical order
+   // rest are in alphabetical order (well, almost)
    DO_ABOUT,                     // about Golly
    DO_ADD,                       // add layer
    DO_ADVANCEOUT,                // advance outside
@@ -196,6 +196,10 @@ typedef enum {
    DO_LEFT,                      // scroll left
    DO_RIGHT,                     // scroll right
    DO_UP,                        // scroll up
+   DO_NE,                        // scroll NE
+   DO_NW,                        // scroll NW
+   DO_SE,                        // scroll SE
+   DO_SW,                        // scroll SW
    DO_SELALL,                    // select all
    DO_SETGEN,                    // set generation...
    DO_PATTDIR,                   // set pattern folder...

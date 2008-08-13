@@ -162,6 +162,10 @@ private:
    void PanDown(int amount);
    void PanLeft(int amount);
    void PanRight(int amount);
+   void PanNE();
+   void PanNW();
+   void PanSE();
+   void PanSW();
    int SmallScroll(int xysize);
    int BigScroll(int xysize);
 

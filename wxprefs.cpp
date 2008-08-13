@@ -571,6 +571,10 @@ const char* GetActionName(action_id action)
       case DO_RIGHT:          return "Scroll Right";
       case DO_UP:             return "Scroll Up";
       case DO_DOWN:           return "Scroll Down";
+      case DO_NE:             return "Scroll NE";
+      case DO_NW:             return "Scroll NW";
+      case DO_SE:             return "Scroll SE";
+      case DO_SW:             return "Scroll SW";
       case DO_FULLSCREEN:     return "Full Screen";
       case DO_FIT:            return "Fit Pattern";
       case DO_FITSEL:         return "Fit Selection";

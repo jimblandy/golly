@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: Implemented keyboard actions for diagonal scrolling.
 AKT: Added list = join(list1,list2) command.
 AKT: Updated some scripts to handle multi-state patterns.
 AKT: Scripting commands support multi-state cell lists/arrays.
