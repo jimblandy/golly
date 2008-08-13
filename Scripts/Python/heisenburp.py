@@ -2,10 +2,12 @@
 # Show several views of a multi-stage signal-processing circuit,
 # optionally using Golly 1.2+'s layer-cloning system.
 # Author: Dave Greene, 27 February 2007.
-#    Latest changes: corrected timing of signal-tracking selection highlight
-#                    switched to three spaces per indent
-#                    replaced long instruction message with Help note
-#                    added rule() to be sure to run in the right universe...
+# Latest changes:
+# - corrected timing of signal-tracking selection highlight
+# - switched to three spaces per indent
+# - replaced long instruction message with Help note
+# - added rule() to be sure to run in the right universe (B3/S23)
+# - removed "x = ..." lines from pattern strings
 
 from glife import getstring, validint
 from time import sleep
@@ -173,7 +175,6 @@ Q quits out of the script and restores original settings."""
 
 def prepare_burp():
    highway_robber=pattern("""
-   x = 208, y = 272, rule = B3/S23
    143bo$143b3o$146bo$145b2o2$126bo42bo$126b3o38b3o$129bo36bo$128b2o11b2o
    23b2o7b2o$141b2o32bo$108bo64bobo$108b3o6b2o54b2o$111bo5b2o$110b2o3$
    111b2o$111b2o3b2o$116b2o35b2o23bo$154bo22bobo$151b3o8b2o14bo$151bo11bo
@@ -224,7 +225,6 @@ def prepare_burp():
    o6bo4bobo$63bo9b4o2bo$62b2o7bobo2bobo$71b2o4bo!""")
    
    connecting_neck=pattern("""
-   x = 171, y = 118, rule = B3/S23
    24bo$22b3o$21bo$21b2o$6b2o$7bo$7bobo$8b2o10bo$19bobo$19bobo$20bo4b2o$
    8b2o15bobo$7bobo17bo$7bo19b2o$6b2o6$17b2o$17b2o7$23b2ob2o$22bobobobo$
    5b2o16bo2bobo$6bo19bob2o$6bobo16b2o3bo$7b2o13bobo2bobo$22b2o2b2ob2o11$
@@ -242,7 +242,6 @@ def prepare_burp():
    $145bobo$145bo4b2o$144b2o5bo$148b3o5bo$148bo6bobo$156bo!""")
    
    transmitter2c3=pattern("""
-   x = 402, y = 359, rule = B3/S23
    180b2o$180b2o$219bo$219b3o$178b2o42bo$116bo61b2o41b2o$115bobo47b2o99b
    2o14bo$116bo49bo74b2o24bo14b3o$166bobo73bo13b2o6b3o18bo$167b2o73bobo
    11b2o6bo19b2o12bo$110b2o51b2o78b2o53b3o$110b2o23b2o26b2o136bo$102b2o
@@ -344,7 +343,6 @@ def prepare_burp():
       wire2c3+=body2c3(i,i-236) # first one at (631, 395)
    
    receiver2c3=pattern("""
-   x = 223, y = 282, rule = B3/S23
    208bo$207bobo$208bo3$213b2o$188b2o23b2o$189bo31b2o$189bobo29bo$190b2o
    27bobo$213b2o4b2o$213b2o2$179b2o$180bo40b2o$180bobo39bo$181b2o34b2obo$
    217b2ob2o$199b2o$199b2o16b2ob2o$218bobo$218bobo$219bo8$192b2o$192b2o8$
@@ -390,7 +388,6 @@ def prepare_burp():
    44b2o!""")
             
    inserter2c3=pattern("""
-   x = 99, y = 155, rule = B3/S23
    51bo$49b3o$23b2o23bo$24bo23b2o$24bobo$25b2o2b2o37bo$29b2o35b3o15bo9bo$
    65bo18b3o5b3o$52b2o11b2o20bo3bo$52b2o32b2o3b2o8$23b2o52b2o$22bobo16b2o
    34b2o$22bo18bobo45b2o$21b2o20bo44bo2bo$37b2o4b2o44b2o4b2o$37bo2bo54bob
