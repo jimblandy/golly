@@ -6,7 +6,7 @@
 from glife import *
 import golly as g
 
-# assume two-state cell list (may change below)
+# assume one-state cell list (may change below)
 inc = 2
 
 # ------------------------------------------------------------------------------

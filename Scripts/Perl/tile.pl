@@ -10,7 +10,7 @@ g_exit("There is no selection.") if @selrect == 0;
 my $selpatt = g_getcells(@selrect);
 g_exit("No pattern in selection.") if @{$selpatt} == 0;
 
-# determine if selpatt is two-state or multi-state
+# determine if selpatt is one-state or multi-state
 my $inc = 2;
 if (@{$selpatt} & 1 == 1) { $inc = 3 }
 

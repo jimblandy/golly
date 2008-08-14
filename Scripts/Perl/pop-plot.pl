@@ -182,8 +182,8 @@ sub fit_if_not_visible {
 
 # ------------------------------------------------------------------------------
 
-# return a rect which is the minimal bounding box of given pattern;
-# note that pattern is two-state so we don't have to worry about
+# return a rect which is the minimal bounding box of the given pattern;
+# note that the pattern is two-state so we don't have to worry about
 # getting a multi-state cell array here
 sub getminbox {
    my $cells = shift;

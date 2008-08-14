@@ -6,7 +6,8 @@
 <dd><a href="#install"><b>Installing Python</b></a></dd>
 <dd><a href="#examples"><b>Example scripts</b></a></dd>
 <dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
-<dd><a href="#lists"><b>Cell lists and rectangle lists</b></a></dd>
+<dd><a href="#celllists"><b>Cell lists</b></a></dd>
+<dd><a href="#rectlists"><b>Rectangle lists</b></a></dd>
 <dd><a href="#glife"><b>Using the glife package</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
 <dd><a href="#macpython"><b>Universal Python on Mac OS X</b></a></dd>
@@ -200,6 +201,7 @@ or you can search for individual commands alphabetically:
 <td valign=top>
 <a href="#hash"><b>hash</b></a><br>
 <a href="#help"><b>help</b></a><br>
+<a href="#join"><b>join</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
@@ -390,6 +392,18 @@ and return the resulting cell list.
 <dd> Example: <b>newpatt = golly.evolve(currpatt, 100)</b></dd>
 </p>
 
+<a name="join"></a><p><dt><b>join(<i>cell_list1, cell_list2</i>)</b></dt>
+<dd>
+Join the given cell lists and return the resulting cell list.
+If the given lists are both one-state then the result is one-state.
+If at least one of the given lists is multi-state then the result is multi-state,
+but with one exception: if both lists have no cells then the result is []
+(an empty one-state list) rather than [0].  See <a href="#celllists">below</a>
+for a description of one-state and multi-state cell lists.
+</dd>
+<dd> Example: <b>result = golly.join(part1, part2)</b></dd>
+</p>
+
 <a name="transform"></a><p><dt><b>transform(<i>cell_list, x0, y0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
 <dd>
 Apply an affine transformation to the given cell list and return the resulting cell list.
@@ -423,6 +437,18 @@ or it must represent a valid rectangle of the form [x,y,width,height].
 <dd> Example: <b>clist = golly.getcells( golly.getrect() )</b></dd>
 </p>
 
+<a name="getclip"></a><p><dt><b>getclip()</b></dt>
+<dd>
+Parse the pattern data in the clipboard and return a cell list,
+but where the first two numbers are the pattern's width and height
+(not necessarily the minimal bounding box because the pattern might
+have empty borders, or it might even be empty).
+If the clipboard data is multi-state but all cell states happen to
+be zero then the returned cell list is [wd,ht] rather than [wd,ht,0].
+</dd>
+<dd> Example: <b>clist = golly.getclip()</b></dd>
+</p>
+
 <a name="hash"></a><p><dt><b>hash(<i>rect_list</i>)</b></dt>
 <dd>
 Return an integer hash value for the pattern in the given rectangle.
@@ -433,16 +459,6 @@ patterns will have the same hash value, so you might need to use additional
 (slower) tests to check for true pattern equality.
 </dd>
 <dd> Example: <b>h = golly.hash( golly.getrect() )</b></dd>
-</p>
-
-<a name="getclip"></a><p><dt><b>getclip()</b></dt>
-<dd>
-Parse the pattern data in the clipboard and return a cell list,
-but where the first two numbers are the pattern's width and height
-(not necessarily the minimal bounding box because the pattern might
-have empty borders, or it might even be empty).
-</dd>
-<dd> Example: <b>clist = golly.getclip()</b></dd>
 </p>
 
 <a name="select"></a><p><dt><b>select(<i>rect_list</i>)</b></dt>
@@ -1036,19 +1052,51 @@ and the current status bar message will not be changed.
 </p>
 
 
-<p><a name="lists">
+<p><a name="celllists">
 &nbsp;<br>
-<font size=+1><b>Cell lists and rectangle lists</b></font>
+<font size=+1><b>Cell lists</b></font>
 
 <p>
-Some of Golly's scripting commands manipulate patterns in the form of cell lists.
-A cell list is simply a Python list containing integer cell coordinates:
+Some scripting commands manipulate patterns in the form of cell lists.
+Golly supports two types of cell lists: one-state and multi-state.
+A one-state cell list contains an even number of integers specifying
+the x,y coordinates for a set of cells, all of which are assumed to
+be in state 1:
 <p>
-<dd><b>[ x1, y1, x2, y2 . . . xn, yn ]</b></dd>
+<dd><b>[ x1, y1, . . . xN, yN ]</b></dd>
 <p>
-A cell list should always contain an even number of integers.
-The ordering of cells within the list doesn't matter.
-Note that positive y values increase downwards in Golly's coordinate system.
+A multi-state cell list contains an odd number of integers specifying
+the x,y,state values for a set of cells.  If the number of cells is even
+then a padding integer (zero) is added at the end of the list to ensure
+the total number of integers is odd:
+<p>
+<dd><b>[ x1, y1, state1, . . . xN, yN, stateN ]</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if N is odd</dd>
+<dd><b>[ x1, y1, state1, . . . xN, yN, stateN, 0 ]</b>&nbsp; if N is even</dd>
+<p>
+All scripting commands that input cell lists use the length of the
+list to determine its type.  When writing a script to handle multi-state
+cell lists you may need to allow for the padding integer, especially
+if accessing cells within the list.  See tile.py for example.
+<p>
+Note that all scripting commands return <b>[]</b> if the resulting
+cell list has no cells.  They never return <b>[0]</b>, although this
+is a perfectly valid multi-state cell list and all commands can input
+such a list.  For example, <b>newlist = golly.join(list1,[0])</b>
+can be used to convert a non-empty one-state list to multi-state.
+<p>
+One-state cell lists are normally used in a two-state universe, but
+they can also be used in a universe with more than two states.
+A multi-state cell list can be used in a two-state universe, but
+only if the list's cell states are 0 or 1.
+<p>
+The ordering of cells within either type of list doesn't matter.
+Also note that positive y values increase downwards in Golly's
+coordinate system.
+
+
+<p><a name="rectlists">
+&nbsp;<br>
+<font size=+1><b>Rectangle lists</b></font>
 
 <p>
 Some commands manipulate rectangles in the form of lists.

@@ -4,7 +4,7 @@
 
 use strict;
 
-# assume two-state cell array (may change below)
+# assume one-state cell array (may change below)
 my $multistate = 0;
 
 # ------------------------------------------------------------------------------

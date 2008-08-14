@@ -6,7 +6,8 @@
 <dd><a href="#install"><b>Installing Perl</b></a></dd>
 <dd><a href="#examples"><b>Example scripts</b></a></dd>
 <dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
-<dd><a href="#arrays"><b>Cell arrays and rectangle arrays</b></a></dd>
+<dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
+<dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
 <dd><a href="#copyright"><b>Perl copyright notice</b></a></dd>
 </p>
@@ -174,6 +175,7 @@ or you can search for individual commands alphabetically:
 <td valign=top>
 <a href="#hash"><b>g_hash</b></a><br>
 <a href="#help"><b>g_help</b></a><br>
+<a href="#join"><b>g_join</b></a><br>
 <a href="#load"><b>g_load</b></a><br>
 <a href="#maxlayers"><b>g_maxlayers</b></a><br>
 <a href="#movelayer"><b>g_movelayer</b></a><br>
@@ -364,6 +366,18 @@ number of generations and return a reference to the new cell array.
 <dd> Example: <b>$newpatt = g_evolve($currpatt, 100);</b></dd>
 </p>
 
+<a name="join"></a><p><dt><b>g_join(<i>$cellarray1, $cellarray2</i>)</b></dt>
+<dd>
+Join the given cell arrays and return a reference to the resulting cell array.
+If the given arrays are both one-state then the result is one-state.
+If at least one of the given arrays is multi-state then the result is multi-state,
+but with one exception: if both arrays have no cells then the result is
+an empty one-state array.  See <a href="#cellarrays">below</a>
+for a description of one-state and multi-state cell arrays.
+</dd>
+<dd> Example: <b>$result = g_join($part1, $part2);</b></dd>
+</p>
+
 <a name="transform"></a><p><dt><b>g_transform(<i>$cellarray, $x0, $y0, $axx=1, $axy=0, $ayx=0, $ayy=1</i>)</b></dt>
 <dd>
 Apply an affine transformation to the pattern in the given cell array reference
@@ -405,6 +419,8 @@ Parse the pattern data in the clipboard and return a cell array reference,
 but where the first two numbers are the pattern's width and height
 (not necessarily the minimal bounding box because the pattern might
 have empty borders, or it might even be empty).
+If the clipboard data is multi-state but all cell states happen to
+be zero then the returned cell array is (wd,ht) rather than (wd,ht,0).
 </dd>
 <dd> Example: <b>$cells = g_getclip();</b></dd>
 </p>
@@ -1007,23 +1023,54 @@ and the current status bar message will not be changed.
 </p>
 
 
-<p><a name="arrays">
+<p><a name="cellarrays">
 &nbsp;<br>
-<font size=+1><b>Cell arrays and rectangle arrays</b></font>
+<font size=+1><b>Cell arrays</b></font>
 
 <p>
-Some of Golly's scripting commands manipulate patterns in the form of cell arrays.
-A cell array is simply a Perl array containing integer cell coordinates:
+Some scripting commands manipulate patterns in the form of cell arrays.
+Golly supports two types of cell arrays: one-state and multi-state.
+A one-state cell array contains an even number of integers specifying
+the x,y coordinates for a set of cells, all of which are assumed to
+be in state 1:
 <p>
-<dd><b>( x1, y1, x2, y2 . . . xn, yn )</b></dd>
+<dd><b>( x1, y1, . . . xN, yN )</b></dd>
 <p>
-A cell array should always contain an even number of integers.
-The ordering of cells within the array doesn't matter.
-Note that positive y values increase downwards in Golly's coordinate system.
-
+A multi-state cell array contains an odd number of integers specifying
+the x,y,state values for a set of cells.  If the number of cells is even
+then a padding integer (zero) is added at the end of the array to ensure
+the total number of integers is odd:
 <p>
-Cell arrays can contain millions of coordinates, so all commands that accept
+<dd><b>( x1, y1, state1, . . . xN, yN, stateN )</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if N is odd</dd>
+<dd><b>( x1, y1, state1, . . . xN, yN, stateN, 0 )</b>&nbsp; if N is even</dd>
+<p>
+All scripting commands that input cell arrays use the length of the
+array to determine its type.  When writing a script to handle multi-state
+cell arrays you may need to allow for the padding integer, especially
+if accessing cells within the array.  See tile.pl for example.
+<p>
+Note that all scripting commands return <b>()</b> if the resulting
+cell array has no cells.  They never return <b>(0)</b>, although this
+is a perfectly valid multi-state cell array and all commands can input
+such an array.  For example, <b>$newarray = g_join($array1,[0])</b>
+can be used to convert a non-empty one-state array to multi-state.
+<p>
+One-state cell arrays are normally used in a two-state universe, but
+they can also be used in a universe with more than two states.
+A multi-state cell array can be used in a two-state universe, but
+only if the array's cell states are 0 or 1.
+<p>
+The ordering of cells within either type of array doesn't matter.
+Also note that positive y values increase downwards in Golly's
+coordinate system.
+<p>
+Cell arrays can contain millions of integers, so all commands that accept
 or return cell arrays actually use references to those arrays.
+
+
+<p><a name="rectarrays">
+&nbsp;<br>
+<font size=+1><b>Rectangle arrays</b></font>
 
 <p>
 Some commands manipulate rectangles in the form of arrays.

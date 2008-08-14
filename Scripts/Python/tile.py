@@ -12,7 +12,7 @@ if selrect.empty: g.exit("There is no selection.")
 selpatt = pattern( g.getcells(g.getselrect()) )
 if len(selpatt) == 0: g.exit("No pattern in selection.")
 
-# determine if selpatt is two-state or multi-state
+# determine if selpatt is one-state or multi-state
 inc = 2
 if len(selpatt) & 1 == 1: inc = 3
 

@@ -400,7 +400,7 @@ static void AddPadding(AV* array)
 {
    // assume array is multi-state and add an extra int if necessary so the array
    // has an odd number of ints (this is how we distinguish multi-state arrays
-   // from two-state arrays -- the latter always have an even number of ints)
+   // from one-state arrays -- the latter always have an even number of ints)
    int len = av_len(array) + 1;
    if (len == 0) return;         // always return () rather than (0)
    if ((len & 1) == 0) {
@@ -1175,7 +1175,7 @@ XS(pl_putcells)
                pattchanged = true;
             }
          } else {
-            // two-state arrays only contain live cells
+            // one-state arrays only contain live cells
             newstate = 1 - oldstate;
             // paste (possibly transformed) cell into current universe
             if (curralgo->setcell(newx, newy, newstate) < 0) {

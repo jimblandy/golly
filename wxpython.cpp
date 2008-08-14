@@ -342,7 +342,7 @@ bool PythonScriptAborted()
 static void AddTwoInts(PyObject* list, long x, long y)
 {
    // append two ints to the given list -- these ints can be:
-   // the x,y coords of a live cell in a two-state cell list,
+   // the x,y coords of a live cell in a one-state cell list,
    // or the x,y location of a rect, or the wd,ht of a rect
    PyObject* xo = PyInt_FromLong(x);
    PyObject* yo = PyInt_FromLong(y);
@@ -369,7 +369,7 @@ static void AddPadding(PyObject* list)
 {
    // assume list is multi-state and add an extra int if necessary so the list
    // has an odd number of ints (this is how we distinguish multi-state lists
-   // from two-state lists -- the latter always have an even number of ints)
+   // from one-state lists -- the latter always have an even number of ints)
    int len = PyList_Size(list);
    if (len == 0) return;         // always return [] rather than [0]
    if ((len & 1) == 0) {
@@ -1079,7 +1079,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
                pattchanged = true;
             }
          } else {
-            // two-state lists only contain live cells
+            // one-state lists only contain live cells
             newstate = 1 - oldstate;
             // paste (possibly transformed) cell into current universe
             if (curralgo->setcell(newx, newy, newstate) < 0) {
