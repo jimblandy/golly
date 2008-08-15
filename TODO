@@ -119,6 +119,7 @@ For future versions:
      so that scripts could do fancy stuff like overlay images/text.
   2. It should make it easier further down the track if we wanted to avoid
      wx's DrawBitmap (which I suspect is not optimal) and use OpenGL.
+  Optimize Mac version to use CopyBits rather than wx's DrawBitmap?
 
 - Change all Python commands to g_* for consistency with Perl commands.
   Unfortutely, we can't really keep the old commands in same module
@@ -137,16 +138,13 @@ For future versions:
   and display suitable message in status bar.  Or maybe just add
   Gabriel's oscillation detection as an option (see oscar.py).
 
-- Optimize Mac version to use CopyBits rather than wx's DrawBitmap.
-  NB. Means creating non-XBM bitmaps (ie. no bit reversal).
-
 - Allow non-rectangular (and disjoint) selections.
 
-- Implement a history bar for hlife.
+- Implement a history bar for hlife (and maybe other algos?).
 
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
 
-- Revisit universal scripting idea, but using shared memory for IPC
+- Revisit universal scripting idea, but use shared memory for IPC
   rather than redirecting stdin/out.
 
 User suggestions:
@@ -165,10 +163,8 @@ User suggestions:
 [Dave Greene]
 - Provide a way to click-and-drag a selection to move it around.
 - Make page and arrow scrolling amounts configurable (in Prefs > View).
-- Add a getvisrect() script command that returns current viewport rect
-  and a setvisrect(rect) command to change viewport size and location.
-- Nicer if getrule always returned a standard form; eg. "B3/S23".
-  Could then remove horrible CanonicalRule code in wxrule.cpp.
+- Add a getview() script command that returns current viewport rect
+  and a setview(rect) command to change viewport size and location.
 - Make info window a floating window and keep it open (but update
   its contents) when user loads another pattern.
 
@@ -194,9 +190,9 @@ User suggestions:
 
 [Tim Hutton]
 - Add a script command "file = getfile(...)"? to let user select a file
-  via std open dialog.
+  via std open dialog.  May also need savefile(...)?
 - Add a script command to save comments in a pattern file.  Add optional
-  param to existing save command?
+  param to existing save() command?
 
 [William Buckley]
 - Provide an option to increase spacing between buttons.

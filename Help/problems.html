@@ -16,14 +16,18 @@ or Tom Rokicki
 <p>
 <ul>
 <li>
-Golly is a work in progress and we hope to add more features:
-support for toroidal universes, cells with more than two states,
-non-rectangular selections.
+Golly is a work in progress and we hope to add more features,
+including support for toroidal universes, non-rectangular selections
+and more sophisticated editing capabilities.
 <li>
 All editing operations are restricted to cells whose coordinates
-are within +/- 1 billion.  There is also a bug in the hashing
+are within +/- 1 billion.  There is also a bug in the HashLife
 algorithm that prevents you from editing any cell states if the
 pattern is very large (outside the +/- 1 billion limits).
+<li>
+The QuickLife algorithm has a minor bug that can cause selecting
+a large pattern to appear to be incorrect.  The selection is actually
+correct but the rectangle is slightly offset (by one pixel).
 <li>
 Pattern rendering needs to be optimized.
 </ul>
@@ -56,9 +60,12 @@ Pattern rendering needs to be optimized.
 <font size=+1><b>Linux/X11 problems</b></font>
 
 <p>
+<ul>
+<li>
 The Linux/X11 app is no longer supported (the source code doesn't compile
 due to limitations in wxX11).
 Linux users will have to run the GTK version of Golly.
+</ul>
 
 </body>
 </html>

@@ -7,8 +7,33 @@
 
 <p>
 <ul>
-<li> Golly supports John von Neumann's 29-state CA.
-<li> Rendering in Mac and Linux apps is faster at scales 1:4/8/16.
+<li> Golly now supports multiple algorithms and multi-state universes (up to 256 states).
+     The new algorithms include Generations, WireWorld and John von Neumann's 29-state CA.
+<li> The Patterns folder contains new example patterns.  In particular, see JvN-Examples
+     for different phases of a self-replicator created by William Buckley.
+<li> New script commands have been added to support the above changes:
+     <a href="python.html#setalgo">setalgo</a>,
+     <a href="python.html#getalgo">getalgo</a>,
+     <a href="python.html#numalgos">numalgos</a>,
+     <a href="python.html#numstates">numstates</a> and
+     <a href="python.html#join">join</a>.
+<li> Some script commands have been modified to handle multi-state patterns.
+     Perl users should read the section on <a href="perl.html#cellarrays">cell arrays</a>.
+     Python users should read the section on <a href="python.html#celllists">cell lists</a>.
+<li> The <a href="python.html#getrule">getrule</a> command now returns a canonical rule string.
+<li> Changing the current rule can change the current algorithm.  If the current algorithm
+     doesn't support the new rule then Golly will try to switch to the first algorithm
+     that does support it.
+<li> Similarly, changing the current algorithm can change the current rule.  If the new
+     algorithm doesn't support the current rule then Golly will switch to the new
+     algorithm's default rule.
+<li> Diagonal scrolling is supported.  Open <a href="prefs#keyboard">Preferences > Keyboard</a>
+     and assign keys to the new scrolling actions: Scroll NE/NW/SE/SW.
+<li> The Help menu has a new File Formats item.
+<li> Rendering in the Mac and Linux apps is faster at scales 1:4/8/16.
+<li> Fixed a bug in the Linux/GTK app if a recent pattern/script path contained an underscore.
+<li> The Linux/X11 app is no longer supported (due to limitations in wxX11).
+<li> The Win app requires Perl 5.10 or later (Perl 5.8 is not binary compatible).
 </ul>
 
 <p>
