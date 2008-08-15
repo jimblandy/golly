@@ -186,13 +186,20 @@ ChangeNode::~ChangeNode()
 void ChangeNode::ChangeCells(bool undo)
 {
    // change state of cell(s) stored in cellinfo array
-   unsigned int i = 0;
-   while (i < cellcount) {
-      int x = cellinfo[i].x;
-      int y = cellinfo[i].y;
-      int state = undo ? cellinfo[i].oldstate : cellinfo[i].newstate;
-      currlayer->algo->setcell(x, y, state);
-      i++;
+   if (undo) {
+      // we must undo the cell changes in reverse order in case
+      // a script has changed the same cell more than once
+      unsigned int i = cellcount;
+      while (i > 0) {
+         i--;
+         currlayer->algo->setcell(cellinfo[i].x, cellinfo[i].y, cellinfo[i].oldstate);
+      }
+   } else {
+      unsigned int i = 0;
+      while (i < cellcount) {
+         currlayer->algo->setcell(cellinfo[i].x, cellinfo[i].y, cellinfo[i].newstate);
+         i++;
+      }
    }
    if (cellcount > 0) currlayer->algo->endofpattern();
 }
