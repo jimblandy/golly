@@ -1106,8 +1106,9 @@ XS(pl_putcells)
    int ayx = 0;
    int ayy = 1;
    // default for mode is 'or'; 'xor' mode is also supported;
-   // 'copy' mode currently has the same effect as 'or' mode
-   // because there is no bounding box to set OFF cells
+   // for a one-state array 'copy' mode currently has the same effect as 'or' mode
+   // because there is no bounding box to set dead cells, but a multi-state array can
+   // have dead cells so in that case 'copy' mode is not the same as 'or' mode
    char* mode = "or";
    
    STRLEN n_a;
@@ -1189,6 +1190,7 @@ XS(pl_putcells)
       }
    } else {
       bool negate = modestr.IsSameAs(wxT("not"), false);
+      bool ormode = modestr.IsSameAs(wxT("or"), false);
       int newstate = negate ? 0 : 1;
       int maxstate = curralgo->NumCellStates() - 1;
       for (int n = 0; n < num_cells; n++) {
@@ -1202,6 +1204,7 @@ XS(pl_putcells)
             // multi-state arrays can contain dead cells so newstate might be 0
             newstate = SvIV( *av_fetch(inarray, item + 2, 0) );
             if (negate) newstate = maxstate - newstate;
+            if (ormode && newstate == 0) newstate = oldstate;
          }
          if (newstate != oldstate) {
             // paste (possibly transformed) cell into current universe

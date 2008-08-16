@@ -1016,8 +1016,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    long ayx = 0;
    long ayy = 1;
    // default for mode is 'or'; 'xor' mode is also supported;
-   // 'copy' mode currently has the same effect as 'or' mode
-   // because there is no bounding box to set OFF cells
+   // for a one-state list 'copy' mode currently has the same effect as 'or' mode
+   // because there is no bounding box to set dead cells, but a multi-state list can
+   // have dead cells so in that case 'copy' mode is not the same as 'or' mode
    char* mode = "or";
 
    if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
@@ -1096,8 +1097,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          }
       }
    } else {
-      bool negate = modestr.IsSameAs(wxT("not"), false);
-      int newstate = negate ? 0 : 1;
+      bool notmode = modestr.IsSameAs(wxT("not"), false);
+      bool ormode = modestr.IsSameAs(wxT("or"), false);
+      int newstate = notmode ? 0 : 1;
       int maxstate = curralgo->NumCellStates() - 1;
       for (int n = 0; n < num_cells; n++) {
          int item = ints_per_cell * n;
@@ -1109,7 +1111,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          if (multistate) {
             // multi-state lists can contain dead cells so newstate might be 0
             newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
-            if (negate) newstate = maxstate - newstate;
+            if (notmode) newstate = maxstate - newstate;
+            if (ormode && newstate == 0) newstate = oldstate;
          }
          if (newstate != oldstate) {
             // paste (possibly transformed) cell into current universe

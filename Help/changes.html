@@ -29,8 +29,15 @@
      algorithm's default rule.
 <li> Diagonal scrolling is supported.  Open <a href="prefs#keyboard">Preferences > Keyboard</a>
      and assign keys to the new scrolling actions: Scroll NE/NW/SE/SW.
-<li> The Help menu has a new File Formats item.
+<li> View > Show Edit Bar toggles the new edit bar which displays the colors and icons
+     for all states in the current universe.  A box is drawn around the current drawing state
+     and can be changed by clicking on a different state.
+<li> View > Show Cell Icons toggles whether cells are drawn as colored squares or icons
+     (if the current algorithm has any icons).  Icons are small masked bitmaps and are
+     only drawn at scales 1:8 or 1:16.
+<li> Help > File Formats describes Golly's extended RLE and macrocell file formats.
 <li> Rendering in the Mac and Linux apps is faster at scales 1:4/8/16.
+<li> Fixed an undo bug if a script changed the same cell more than once.
 <li> Fixed a bug in the Linux/GTK app if a recent pattern/script path contained an underscore.
 <li> The Linux/X11 app is no longer supported (due to limitations in wxX11).
 <li> The Win app requires Perl 5.10 or later (Perl 5.8 is not binary compatible).
