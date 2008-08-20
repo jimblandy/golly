@@ -530,6 +530,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
 
    // create temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   tempalgo->setrule(currlayer->algo->getrule());
 
    // copy cell list into temporary universe
    bool multistate = (PyList_Size(inlist) & 1) == 1;

@@ -572,6 +572,7 @@ XS(pl_store)
 
    // create temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+   tempalgo->setrule(currlayer->algo->getrule());
 
    // copy cell array into temporary universe
    bool multistate = ((av_len(inarray) + 1) & 1) == 1;

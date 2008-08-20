@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define GENERALGO_H
 #include "ghashbase.h"
 /**
- *   Our WireWorld algo class.
+ *   Our Generations algo class.
  */
 class generationsalgo : public ghashbase {
 public:

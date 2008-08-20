@@ -1273,7 +1273,8 @@ void Selection::EmptyUniverse()
    bigint savey = currlayer->view->y;
    bigint savegen = currlayer->algo->getGeneration();
 
-   // kill all live cells by replacing current universe with a new, empty universe
+   // kill all live cells by replacing the current universe with a
+   // new, empty universe which also uses the same rule
    mainptr->CreateUniverse();
    
    // restore speed, scale, position and gen count
@@ -1507,6 +1508,7 @@ void Selection::ClearOutside()
    
    // create a new universe of same type
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
+   newalgo->setrule(currlayer->algo->getrule());
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -2029,6 +2031,7 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
       // selection encloses all of pattern so we can flip into new universe
       // (must be same type) without killing live cells in selection
       lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
+      newalgo->setrule(currlayer->algo->getrule());
       newalgo->setGeneration( currlayer->algo->getGeneration() );
 
       if ( FlipRect(topbottom, currlayer->algo, newalgo, false, itop, ileft, ibottom, iright) ) {
@@ -2152,6 +2155,7 @@ bool Selection::RotatePattern(bool clockwise,
 {
    // create new universe of same type as current universe
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
+   newalgo->setrule(currlayer->algo->getrule());
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );

@@ -22,9 +22,11 @@ Andrew's list:
 
 - Improve edit bar:
   - Allow bar to scroll left-right (via scroll bar at right edge).
-  - Let user change colors by ctrl/right-click.
-  - Move all cursor mode buttons into edit bar (at bottom?).
-  - Add new buttons: eraser, eye-dropper, fill, etc?
+  - Let user change colors by ctrl/right-click?
+  - Move all cursor mode buttons into edit bar and (optionally) show the
+    current drawing state/color/icon with a scroll bar.  Add a button and
+    a Show All States item in View menu to show/hide all states/colors/icons.
+  - Add more buttons: eraser, eye-dropper, fill, etc?
 
 - Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
   methods, and maybe GetTransformedState as well for use in
@@ -118,8 +120,8 @@ For future versions:
   1. We could expose the buffer to scripting commands (setpixel/getpixel)
      so that scripts could do fancy stuff like overlay images/text.
   2. It should make it easier further down the track if we wanted to avoid
-     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL.
-  Optimize Mac version to use CopyBits rather than wx's DrawBitmap?
+     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or SDL.
+     On Mac, use CopyBits/Quartz?
 
 - Change all Python commands to g_* for consistency with Perl commands.
   Unfortutely, we can't really keep the old commands in same module

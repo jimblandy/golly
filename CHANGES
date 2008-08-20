@@ -10,7 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
-AKT: Fixed undo bug if script changed same cell more than once.
+AKT: Fixed undo bug if script changed same multi-state cell more than once.
 AKT: Implemented keyboard actions for diagonal scrolling.
 AKT: Added list = join(list1,list2) command.
 AKT: Updated some scripts to handle multi-state patterns.
