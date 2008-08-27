@@ -40,7 +40,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxedit.h"        // for ShiftEditBar, Selection
+#include "wxedit.h"        // for ShiftEditBar
+#include "wxselect.h"      // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
@@ -856,7 +857,7 @@ void SyncClones()
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
             // universe might have been re-created, or algorithm changed
             cloneptr->algo = currlayer->algo;
-            cloneptr->setAlgType(currlayer->algtype);
+            cloneptr->algtype = currlayer->algtype;
             cloneptr->rule = currlayer->rule;
             
             // no need to sync undo/redo history
@@ -1543,7 +1544,7 @@ Layer::Layer()
       // creating very first layer
       
       // set some options using initial values stored in prefs file
-      setAlgType(initalgo);
+      algtype = initalgo;
       hyperspeed = inithyperspeed;
       showhashinfo = initshowhashinfo;
       autofit = initautofit;
@@ -1585,7 +1586,7 @@ Layer::Layer()
       // adding a new layer after currlayer (see AddLayer)
 
       // inherit current universe type and other settings
-      setAlgType(currlayer->algtype);
+      algtype = currlayer->algtype;
       hyperspeed = currlayer->hyperspeed;
       showhashinfo = currlayer->showhashinfo;
       autofit = currlayer->autofit;

@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxedit.h"        // for Selection
+#include "wxselect.h"      // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxscript.h"      // for inscript

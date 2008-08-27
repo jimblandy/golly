@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _WXUNDO_H_
 
 #include "bigint.h"     // for bigint class
-#include "wxedit.h"     // for Selection class
+#include "wxselect.h"   // for Selection class
 #include "wxalgos.h"    // for algo_type
 
 // This module implements unlimited undo/redo:

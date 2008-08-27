@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"     // for bigint
 #include "lifealgo.h"   // for lifealgo
-#include "wxedit.h"     // for Selection
+#include "wxselect.h"   // for Selection
 
 // Define a child window for viewing and editing patterns:
 

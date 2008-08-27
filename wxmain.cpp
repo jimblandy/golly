@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
+#include "wxedit.h"        // for CreateEditBar, EditBarHeight, etc
 #include "wxscript.h"      // for inscript
 #include "wxalgos.h"       // for algo_type, algomenu
 #include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
@@ -1432,7 +1433,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
 
          } else if ( id >= ID_ALGO0 && id <= ID_ALGOMAX ) {
             int newtype = id - ID_ALGO0;
-            ChangeAlgorithm((algo_type) newtype);
+            ChangeAlgorithm(newtype);
 
          } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
             SetLayer(id - ID_LAYER0);

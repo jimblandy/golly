@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for CreateNewUniverse, algo_type, etc
+#include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo
 #include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
@@ -127,7 +127,7 @@ void MainFrame::SetGenIncrement()
       // set inc to base^warp
       int i = currlayer->warp;
       while (i > 0) {
-         inc.mul_smallint(currlayer->algodata->algobase);
+         inc.mul_smallint(algoinfo[currlayer->algtype]->algobase);
          i--;
       }
       currlayer->algo->setIncrement(inc);
@@ -327,7 +327,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          // cycle thru all other algos until readpattern succeeds
          for (int i = 0; i < NumAlgos(); i++) {
             if (i != oldalgtype) {
-               currlayer->setAlgType((algo_type) i);
+               currlayer->algtype = i;
                delete currlayer->algo;
                currlayer->algo = CreateNewUniverse(currlayer->algtype);
                // readpattern will call setrule
@@ -338,7 +338,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
          viewptr->nopattupdate = false;
          if (err) {
             // no algo could read pattern so restore original algo and rule
-            currlayer->setAlgType(oldalgtype);
+            currlayer->algtype = oldalgtype;
             delete currlayer->algo;
             currlayer->algo = CreateNewUniverse(currlayer->algtype);
             currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
@@ -1449,8 +1449,9 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       // maximum memory might have changed
       for (int i = 0; i < numlayers; i++) {
          Layer* layer = GetLayer(i);
-         if (layer->algodata->algomem >= 0)
-            layer->algo->setMaxMemory(layer->algodata->algomem);
+         AlgoData* ad = algoinfo[layer->algtype];
+         if (ad->algomem >= 0)
+            layer->algo->setMaxMemory(ad->algomem);
       }
 
       // tileborder might have changed

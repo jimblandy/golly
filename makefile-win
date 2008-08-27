@@ -71,7 +71,7 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
    $(OBJDIR)/generationsalgo.obj
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
-   wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxstatus.h \
+   wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
    wxundo.h wxutils.h wxview.h
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
    $(OBJDIR)/wxrule.obj $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj \
@@ -79,7 +79,7 @@ WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
    $(OBJDIR)/wxscript.obj $(OBJDIR)/wxperl.obj $(OBJDIR)/wxpython.obj \
    $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
    $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj $(OBJDIR)/wxmain.obj \
-   $(OBJDIR)/wxgolly.obj
+   $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -421,6 +421,9 @@ $(OBJDIR)/wxfile.obj: wxfile.cpp
 
 $(OBJDIR)/wxedit.obj: wxedit.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxedit.cpp
+
+$(OBJDIR)/wxselect.obj: wxselect.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxselect.cpp
 
 $(OBJDIR)/wxcontrol.obj: wxcontrol.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxcontrol.cpp

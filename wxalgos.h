@@ -70,7 +70,7 @@ public:
 
 extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
 extern wxMenu* algomenu;                  // menu of algorithm names
-extern algo_type initalgo;                // initial layer's algorithm
+extern algo_type initalgo;                // initial algorithm
 
 void InitAlgorithms();
 // Initialize above data -- must be called very early (before reading prefs file).

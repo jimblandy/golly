@@ -398,7 +398,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
    bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
                   (pmscale >= (1 << mingridmag) && !showgridlines);
-   AlgoData* ad = currlayer->algodata;
+   AlgoData* ad = algoinfo[currlayer->algtype];
    unsigned char deadred   = ad->cellr[0];
    unsigned char deadgreen = ad->cellg[0];
    unsigned char deadblue  = ad->cellb[0];
@@ -504,7 +504,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
    int cellsize = pmscale - 1;
    bool drawgap = (pmscale < (1 << mingridmag)) ||
                   (pmscale >= (1 << mingridmag) && !showgridlines);
-   AlgoData* ad = currlayer->algodata;
+   AlgoData* ad = algoinfo[currlayer->algtype];
    unsigned char deadred   = ad->cellr[0];
    unsigned char deadgreen = ad->cellg[0];
    unsigned char deadblue  = ad->cellb[0];
@@ -814,7 +814,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
 void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
 {
-   AlgoData* ad = currlayer->algodata;
+   AlgoData* ad = algoinfo[currlayer->algtype];
    *r = ad->cellr;
    *g = ad->cellg;
    *b = ad->cellb;
@@ -1168,7 +1168,7 @@ void CheckPasteImage(int colorindex)
          cellbrush = pastebrush;
 
          // set rgb values for dead cells in pixblit calls
-         AlgoData* ad = currlayer->algodata;
+         AlgoData* ad = algoinfo[currlayer->algtype];
          ad->cellr[0] = deadrgb->Red();
          ad->cellg[0] = deadrgb->Green();
          ad->cellb[0] = deadrgb->Blue();
@@ -1590,7 +1590,7 @@ void DrawView(wxDC& dc, int tileindex)
    cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
    
    // set rgb values for dead cells in pixblit calls
-   AlgoData* ad = currlayer->algodata;
+   AlgoData* ad = algoinfo[currlayer->algtype];
    ad->cellr[0] = swapcolors ? livergb[colorindex]->Red() : deadrgb->Red();
    ad->cellg[0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
    ad->cellb[0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();

@@ -44,7 +44,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
-#include "wxedit.h"        // for Selection
+#include "wxselect.h"      // for Selection
+#include "wxedit.h"        // for UpdateEditBar, ToggleEditBar
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
@@ -646,7 +647,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
       for (int i = 0; i < NumAlgos(); i++) {
          if (i != currlayer->algtype) {
             delete *tempalgo;
-            *tempalgo = CreateNewUniverse((algo_type) i);
+            *tempalgo = CreateNewUniverse(i);
             err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
             if (!err) break;
          }
@@ -1519,9 +1520,9 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    
    wxBitmap** iconmaps = NULL;
    if (currlayer->view->getmag() == 3) {
-      iconmaps = currlayer->algodata->icons7x7;
+      iconmaps = algoinfo[currlayer->algtype]->icons7x7;
    } else if (currlayer->view->getmag() == 4) {
-      iconmaps = currlayer->algodata->icons15x15;
+      iconmaps = algoinfo[currlayer->algtype]->icons15x15;
    }
 
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
@@ -1579,7 +1580,7 @@ void PatternView::StartDrawingCells(int x, int y)
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            AlgoData* ad = currlayer->algodata;
+            AlgoData* ad = algoinfo[currlayer->algtype];
             cellbrush->SetColour(ad->cellr[drawstate],
                                  ad->cellg[drawstate],
                                  ad->cellb[drawstate]);
@@ -1626,7 +1627,7 @@ void PatternView::DrawCells(int x, int y)
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            AlgoData* ad = currlayer->algodata;
+            AlgoData* ad = algoinfo[currlayer->algtype];
             cellbrush->SetColour(ad->cellr[drawstate],
                                  ad->cellg[drawstate],
                                  ad->cellb[drawstate]);

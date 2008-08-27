@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrule.h"        // for ChangeRule
 #include "wxhelp.h"        // for LoadLexiconPattern
 #include "wxstatus.h"      // for statusptr->...
-#include "wxedit.h"        // for Selection
+#include "wxselect.h"      // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxmain.h"        // for MainFrame
@@ -169,7 +169,7 @@ void MainFrame::ResetPattern(bool resetundo)
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, algorithm and starting pattern
    currlayer->warp = currlayer->startwarp;
-   currlayer->setAlgType(currlayer->startalgo);
+   currlayer->algtype = currlayer->startalgo;
 
    if ( !currlayer->startfile.IsEmpty() ) {
       // restore pattern from startfile
@@ -965,7 +965,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
 
    // change algorithm type and update status bar immediately
    algo_type oldalgotype = currlayer->algtype;
-   currlayer->setAlgType(newalgotype);
+   currlayer->algtype = newalgotype;
    currlayer->warp = 0;
    UpdateStatus();
 

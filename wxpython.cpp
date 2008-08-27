@@ -55,7 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxedit.h"        // for Selection
+#include "wxselect.h"      // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Note, GetString, etc
@@ -487,7 +487,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
       for (int i = 0; i < NumAlgos(); i++) {
          if (i != currlayer->algtype) {
             delete tempalgo;
-            tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
+            tempalgo = CreateNewUniverse(i, allowcheck);
             err = readpattern(FILENAME, *tempalgo);
             if (!err) break;
          }
@@ -1657,7 +1657,7 @@ static PyObject* py_setbase(PyObject* self, PyObject* args)
 
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-   currlayer->algodata->algobase = base;
+   algoinfo[currlayer->algtype]->algobase = base;
    mainptr->UpdateWarp();
    DoAutoUpdate();
 
@@ -1673,7 +1673,7 @@ static PyObject* py_getbase(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", currlayer->algodata->algobase);
+   return Py_BuildValue("i", algoinfo[currlayer->algtype]->algobase);
 }
 
 // -----------------------------------------------------------------------------

@@ -3,16 +3,19 @@ For post-alpha version (1.5 or 2.0?):
 
 Andrew's list:
 
-- Resolve how to handle swapcolors flag if # states > 2.
-  Remove flag completely?  Or just ignore it when # states > 2.
+- Ignore swapcolors flag if # states > 2?  Or change to Invert Cell Colors
+  and do (255 - x) for all rgb values in all algos?
   What about colors used when multi-state layers are stacked?
-  Need MaxCellStates() method to solve prob when Gens algo uses a
-  rule with only 2 states?
+  Need MaxCellStates() method in static algo data to solve prob when
+  Gens algo uses a rule with only 2 states?
 
-- Implement scripting commands to get/set colors if # states > 2:
-  setcolors("JvN", "JvN-32", [200,200,200,1])
-  setcolors("Generations", "*", [r0,g0,b0,s0, ... sn,rn,gn,bn])
+- Implement scripting commands to get/set colors (only if # states > 2?):
+  setcolors("JvN", "JvN-32", [1,200,200,200])
+  setcolors("Generations", "*", [s0,r0,g0,b0, ... sn,rn,gn,bn])
   setcolors("Generations", "", []) -- to restore default colors?
+  Or more flexible to specify color info in strings:
+  setcolors("Generations", "*", "s0,r0,g0,b0, ... sn,rn,gn,bn")
+  setcolors("Generations", "*", "gradient:r1,g1,b1,r2,g2,b2")
   And to override icons:
   seticons("JvN", "*", datadir()+"jvnicons.xpm")
 
@@ -120,8 +123,8 @@ For future versions:
   1. We could expose the buffer to scripting commands (setpixel/getpixel)
      so that scripts could do fancy stuff like overlay images/text.
   2. It should make it easier further down the track if we wanted to avoid
-     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or SDL.
-     On Mac, use CopyBits/Quartz?
+     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or
+     SDL or SFML.  On Mac, use Quartz?
 
 - Change all Python commands to g_* for consistency with Perl commands.
   Unfortutely, we can't really keep the old commands in same module
@@ -191,8 +194,8 @@ User suggestions:
   #X stepbase=8 stepexp=3
 
 [Tim Hutton]
-- Add a script command "file = getfile(...)"? to let user select a file
-  via std open dialog.  May also need savefile(...)?
+- Add a script command "filepath = getfile(...)"? to let user select a file
+  via std open dialog.  Also need filepath = putfile(...)?
 - Add a script command to save comments in a pattern file.  Add optional
   param to existing save() command?
 

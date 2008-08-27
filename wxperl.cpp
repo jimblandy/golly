@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxedit.h"        // for Selection
+#include "wxselect.h"      // for Selection
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Note, GetString, etc
@@ -524,7 +524,7 @@ XS(pl_load)
       for (int i = 0; i < NumAlgos(); i++) {
          if (i != currlayer->algtype) {
             delete tempalgo;
-            tempalgo = CreateNewUniverse((algo_type) i, allowcheck);
+            tempalgo = CreateNewUniverse(i, allowcheck);
             err = readpattern(FILENAME, *tempalgo);
             if (!err) break;
          }
@@ -1746,7 +1746,7 @@ XS(pl_setbase)
 
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-   currlayer->algodata->algobase = base;
+   algoinfo[currlayer->algtype]->algobase = base;
    mainptr->UpdateWarp();
    DoAutoUpdate();
 
@@ -1762,7 +1762,7 @@ XS(pl_getbase)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $int = g_getbase().");
 
-   XSRETURN_IV(currlayer->algodata->algobase);
+   XSRETURN_IV(algoinfo[currlayer->algtype]->algobase);
 }
 
 // -----------------------------------------------------------------------------

@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning, Fatal, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
-#include "wxalgos.h"       // for InitAlgorithms, NumAlgos, etc
+#include "wxalgos.h"       // for InitAlgorithms, NumAlgos, algoinfo, etc
 #include "wxlayer.h"       // for currlayer
 #include "wxscript.h"      // for inscript
 #include "wxprefs.h"
@@ -1434,9 +1434,9 @@ void SavePrefs()
    
    fputs("\n", f);
 
-   fprintf(f, "init_algo=%s\n", currlayer->algodata->algoName);
+   fprintf(f, "init_algo=%s\n", GetAlgoName(currlayer->algtype));
    for (int i = 0; i < NumAlgos(); i++) {
-      fprintf(f, "algorithm=%s\n", GetAlgoName((algo_type) i));
+      fprintf(f, "algorithm=%s\n", GetAlgoName(i));
       fprintf(f, "max_mem=%d\n", algoinfo[i]->algomem);
       fprintf(f, "base_step=%d\n", algoinfo[i]->algobase);
       SaveColor(f, "status_rgb", algoinfo[i]->algorgb);
@@ -1826,7 +1826,7 @@ void GetPrefs()
       } else if (strcmp(keyword, "algorithm") == 0) {
          algoindex = -1;
          for (int i = 0; i < NumAlgos(); i++) {
-            if (strcmp(value, GetAlgoName((algo_type) i)) == 0) {
+            if (strcmp(value, GetAlgoName(i)) == 0) {
                algoindex = i;
                break;
             }
@@ -1873,7 +1873,7 @@ void GetPrefs()
       } else if (strcmp(keyword, "init_algo") == 0) {
          int i = staticAlgoInfo::nameToIndex(value);
          if (i >= 0 && i < NumAlgos())
-            initalgo = (algo_type) i;
+            initalgo = i;
 
       } else if (strcmp(keyword, "hyperspeed") == 0) {
          inithyperspeed = value[0] == '1';
@@ -2882,7 +2882,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    
    wxArrayString algoChoices;
    for ( int i = 0; i < NumAlgos(); i++ ) {
-      algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
+      algoChoices.Add( wxString(GetAlgoName(i), wxConvLocal) );
    }
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU1,
                                      wxDefaultPosition, wxDefaultSize, algoChoices);
@@ -3324,7 +3324,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    // create a choice menu to select algo
    wxArrayString algoChoices;
    for ( int i = 0; i < NumAlgos(); i++ ) {
-      algoChoices.Add( wxString(GetAlgoName((algo_type) i), wxConvLocal) );
+      algoChoices.Add( wxString(GetAlgoName(i), wxConvLocal) );
    }
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU2,
                                      wxDefaultPosition, wxDefaultSize, algoChoices);
