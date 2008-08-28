@@ -135,6 +135,7 @@ bool scrollpencil = true;        // scroll if pencil cursor is dragged outside v
 bool scrollcross = true;         // scroll if cross cursor is dragged outside view?
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
 bool allowundo = true;           // allow undo/redo?
+bool restoreview = true;         // should reset/undo restore view?
 int canchangerule = 0;           // if > 0 then paste can change rule
 int randomfill = 50;             // random fill percentage (1..100)
 int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
@@ -1419,6 +1420,7 @@ void SavePrefs()
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
 
    fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
+   fprintf(f, "restore_view=%d\n", restoreview ? 1 : 0);
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
    fprintf(f, "scroll_pencil=%d\n", scrollpencil ? 1 : 0);
@@ -1783,6 +1785,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "allow_undo") == 0) {
          allowundo = value[0] == '1';
+
+      } else if (strcmp(keyword, "restore_view") == 0) {
+         restoreview = value[0] == '1';
 
       } else if (strcmp(keyword, "paste_location") == 0) {
          SetPasteLocation(value);
@@ -2175,6 +2180,7 @@ enum {
    PREF_MAX_DELAY,
    // View prefs
    PREF_SHOW_TIPS,
+   PREF_RESTORE,
    PREF_Y_UP,
    PREF_SHOW_BOLD,
    PREF_BOLD_SPACING,
@@ -3018,6 +3024,10 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    wxCheckBox* check3 = new wxCheckBox(panel, PREF_SHOW_TIPS, _("Show button tips"));
 #endif
    
+   // restore_view
+   
+   wxCheckBox* check4 = new wxCheckBox(panel, PREF_RESTORE, _("Reset/Undo should restore view"));
+   
    // math_coords
    
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP, _("Y coordinates increase upwards"));
@@ -3102,6 +3112,8 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    vbox->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(CH2VGAP + 3);
 #endif
+   vbox->Add(check4, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(CH2VGAP + 3);
    vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -3116,11 +3128,12 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
 
    // init control values
-   check1->SetValue(mathcoords);
-   check2->SetValue(showboldlines);
 #if wxUSE_TOOLTIPS
    check3->SetValue(showtips);
 #endif
+   check4->SetValue(restoreview);
+   check1->SetValue(mathcoords);
+   check2->SetValue(showboldlines);
    spin5->SetRange(2, MAX_THUMBRANGE); spin5->SetValue(thumbrange);
    spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
    spin2->Enable(showboldlines);
@@ -3913,6 +3926,7 @@ bool PrefsDialog::TransferDataFromWindow()
    showtips       = GetCheckVal(PREF_SHOW_TIPS);
    wxToolTip::Enable(showtips);
 #endif
+   restoreview    = GetCheckVal(PREF_RESTORE);
    mathcoords     = GetCheckVal(PREF_Y_UP);
    showboldlines  = GetCheckVal(PREF_SHOW_BOLD);
    boldspacing    = GetSpinVal(PREF_BOLD_SPACING);

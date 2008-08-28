@@ -187,7 +187,8 @@ void MainFrame::ResetPattern(bool resetundo)
    currlayer->currname = currlayer->startname;
    currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
    currlayer->dirty = currlayer->startdirty;
-   viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
+   if (restoreview)
+      viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
 
    // if this layer is a clone then restore some settings in other clones
    if (currlayer->cloneid > 0) {
@@ -234,7 +235,7 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
       // restore starting pattern (false means don't call SyncUndoHistory)
       ResetPattern(false);
    } else {
-      // restore pattern in filename along with given pos/scale/speed settings
+      // restore pattern in given filename
       currlayer->warp = warp;
 
       // false means don't update status bar (algorithm should NOT change)
@@ -246,7 +247,7 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
          currlayer->algo->setGeneration(gen);
       }
       
-      viewptr->SetPosMag(x, y, mag);
+      if (restoreview) viewptr->SetPosMag(x, y, mag);
       UpdatePatternAndStatus();
    }
 }
