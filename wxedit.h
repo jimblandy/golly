@@ -42,6 +42,9 @@ void UpdateEditBar(bool active);
 void ToggleEditBar();
 // Show/hide edit bar.
 
+void ToggleAllStates();
+// Show/hide all cell states at top of edit bar.
+
 void ShiftEditBar(int yamount);
 // Shift edit bar up/down by given amount.
 

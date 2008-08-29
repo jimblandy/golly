@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxselect.h"      // for Selection
-#include "wxedit.h"        // for UpdateEditBar, ToggleEditBar
+#include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
@@ -1437,6 +1437,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SHOWTOOL:    mainptr->ToggleToolBar(); break;
       case DO_SHOWLAYER:   ToggleLayerBar(); break;
       case DO_SHOWEDIT:    ToggleEditBar(); break;
+      case DO_SHOWSTATES:  ToggleAllStates(); break;
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;

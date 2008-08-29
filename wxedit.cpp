@@ -28,19 +28,52 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include "wx/dcbuffer.h"   // for wxBufferedPaintDC
+#if wxUSE_TOOLTIPS
+   #include "wx/tooltip.h" // for wxToolTip
+#endif
 
 #include "bigint.h"
 #include "lifealgo.h"
 
-#include "wxgolly.h"       // for viewptr, statusptr
+#include "wxgolly.h"       // for viewptr, statusptr, mainptr
+#include "wxmain.h"        // for mainptr->...
 #include "wxutils.h"       // for Fatal
-#include "wxprefs.h"       // for showedit, etc
+#include "wxprefs.h"       // for showedit, showallstates, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for viewptr->...
 #include "wxalgos.h"       // for AlgoData, algoinfo
 #include "wxlayer.h"       // for currlayer, LayerBarHeight
 #include "wxedit.h"
+
+// -----------------------------------------------------------------------------
+
+// ids for bitmap buttons in edit bar
+enum {
+   DRAW_BUTT = 0,
+   SELECT_BUTT,
+   MOVE_BUTT,
+   ZOOMIN_BUTT,
+   ZOOMOUT_BUTT,
+   NUM_BUTTONS    // must be last
+};
+
+#ifdef __WXMSW__
+   // bitmaps are loaded via .rc file
+#else
+   // bitmaps for edit bar buttons
+   #include "bitmaps/draw.xpm"
+   #include "bitmaps/select.xpm"
+   #include "bitmaps/move.xpm"
+   #include "bitmaps/zoomin.xpm"
+   #include "bitmaps/zoomout.xpm"
+   // bitmaps for down state of toggle buttons
+   #include "bitmaps/draw_down.xpm"
+   #include "bitmaps/select_down.xpm"
+   #include "bitmaps/move_down.xpm"
+   #include "bitmaps/zoomin_down.xpm"
+   #include "bitmaps/zoomout_down.xpm"
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -53,6 +86,26 @@ public:
    EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht);
    ~EditBar();
 
+   // add a bitmap button to edit bar
+   void AddButton(int id, const wxString& tip);
+
+   // add a vertical gap between buttons
+   void AddSeparator();
+   
+   // enable/disable button
+   void EnableButton(int id, bool enable);
+   
+   // set state of a toggle button
+   void SelectButton(int id, bool select);
+
+   // move buttons up or down depending on showallstates
+   void MoveButtons();
+
+   // detect press and release of a bitmap button
+   void OnButtonDown(wxMouseEvent& event);
+   void OnButtonUp(wxMouseEvent& event);
+   void OnKillFocus(wxFocusEvent& event);
+
 private:
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -60,10 +113,28 @@ private:
    // event handlers
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
+   void OnButton(wxCommandEvent& event);
 
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
    void DrawEditBar(wxDC& dc, int wd, int ht);
+   
+   // bitmaps for normal or down state
+   wxBitmap normbutt[NUM_BUTTONS];
+   wxBitmap downbutt[NUM_BUTTONS];
+
+   #ifdef __WXMSW__
+      // on Windows we need bitmaps for disabled buttons
+      wxBitmap disnormbutt[NUM_BUTTONS];
+      wxBitmap disdownbutt[NUM_BUTTONS];
+   #endif
+   
+   // remember state of toggle buttons to avoid unnecessary drawing;
+   // 0 = not yet initialized, 1 = selected, -1 = not selected
+   int buttstate[NUM_BUTTONS];
+   
+   // positioning data used by AddButton and AddSeparator
+   int ypos, xpos, smallgap, biggap;
 
    wxBitmap* editbitmap;         // edit bar bitmap
    int editbitmapwd;             // width of edit bar bitmap
@@ -77,14 +148,17 @@ private:
 };
 
 BEGIN_EVENT_TABLE(EditBar, wxPanel)
-   EVT_PAINT      (EditBar::OnPaint)
-   EVT_LEFT_DOWN  (EditBar::OnMouseDown)
+   EVT_PAINT      (           EditBar::OnPaint)
+   EVT_LEFT_DOWN  (           EditBar::OnMouseDown)
+   EVT_BUTTON     (wxID_ANY,  EditBar::OnButton)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
 EditBar* editbarptr = NULL;         // global pointer to edit bar
-const int editbarht = 48;           // height of edit bar
+const int BIGHT = 80;               // biggest height of edit bar
+const int SMALLHT = 32;             // smallest height of edit bar
+static int editbarht;               // current height (BIGHT or SMALLHT)
 
 const int LINEHT = 14;              // distance between each baseline
 const int BASELINE1 = LINEHT-1;     // baseline of 1st line
@@ -92,6 +166,9 @@ const int BASELINE2 = BASELINE1+LINEHT;   // baseline of 2nd line
 const int BASELINE3 = BASELINE2+LINEHT;   // baseline of 3rd line
 const int COLWD = 20;               // column width of state/color/icon info
 const int BOXWD = 9;                // width (and height) of color/icon boxes
+
+// edit bar buttons (must be global to use Connect/Disconect on Windows)
+wxBitmapButton* ebbutt[NUM_BUTTONS];
 
 // -----------------------------------------------------------------------------
 
@@ -103,6 +180,47 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       // avoid erasing background on GTK+
       SetBackgroundStyle(wxBG_STYLE_CUSTOM);
    #endif
+
+   // init bitmaps for normal state
+   normbutt[DRAW_BUTT] =      wxBITMAP(draw);
+   normbutt[SELECT_BUTT] =    wxBITMAP(select);
+   normbutt[MOVE_BUTT] =      wxBITMAP(move);
+   normbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin);
+   normbutt[ZOOMOUT_BUTT] =   wxBITMAP(zoomout);
+   
+   // toggle buttons also have a down state
+   downbutt[DRAW_BUTT] =      wxBITMAP(draw_down);
+   downbutt[SELECT_BUTT] =    wxBITMAP(select_down);
+   downbutt[MOVE_BUTT] =      wxBITMAP(move_down);
+   downbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin_down);
+   downbutt[ZOOMOUT_BUTT] =   wxBITMAP(zoomout_down);
+
+   #ifdef __WXMSW__
+      for (int i = 0; i < NUM_BUTTONS; i++) {
+         CreatePaleBitmap(normbutt[i], disnormbutt[i]);
+      }
+      CreatePaleBitmap(downbutt[DRAW_BUTT],       disdownbutt[DRAW_BUTT]);
+      CreatePaleBitmap(downbutt[SELECT_BUTT],     disdownbutt[SELECT_BUTT]);
+      CreatePaleBitmap(downbutt[MOVE_BUTT],       disdownbutt[MOVE_BUTT]);
+      CreatePaleBitmap(downbutt[ZOOMIN_BUTT],     disdownbutt[ZOOMIN_BUTT]);
+      CreatePaleBitmap(downbutt[ZOOMOUT_BUTT],    disdownbutt[ZOOMOUT_BUTT]);
+   #endif
+
+   for (int i = 0; i < NUM_BUTTONS; i++) {
+      buttstate[i] = 0;
+   }
+
+   // init position variables used by AddButton and AddSeparator
+   xpos = 4;
+   #ifdef __WXGTK__
+      ypos = 3;
+      smallgap = 6;
+   #else
+      ypos = 4;
+      smallgap = 4;
+   #endif
+   if (showallstates) ypos += BIGHT - SMALLHT;
+   biggap = 16;
 
    // create font for text in edit bar and set textascent for use in DisplayText
    #ifdef __WXMSW__
@@ -196,6 +314,8 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
    dc.SetPen(wxNullPen);
    
+   if (!showallstates) return;
+   
    SetEditFont(dc);     // for DisplayText calls
 
    DisplayText(dc, _("State:"), h_col1, BASELINE1);
@@ -271,7 +391,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    
    // draw rect around current drawing state
    int x = 1 + h_col2 + COLWD * currlayer->drawingstate;
-   r = wxRect(x, 2, COLWD - 1, editbarht - 4);
+   r = wxRect(x, 2, COLWD - 1, BIGHT - SMALLHT - 4);
    dc.SetBrush(*wxTRANSPARENT_BRUSH);
    dc.DrawRectangle(r);
    dc.SetBrush(wxNullBrush);
@@ -314,44 +434,225 @@ void EditBar::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 void EditBar::OnMouseDown(wxMouseEvent& event)
 {
-   if (inscript) return;    // let script control drawing state
-   
-   statusptr->ClearMessage();
-
-   // user can change drawing state by clicking in appropriate box
-   int x = event.GetX();
-   int right = h_col2 + COLWD * currlayer->algo->NumCellStates();
-   int box = -1;
-   
-   if (x > h_col2 && x < right) {
-      box = (x - h_col2) / COLWD;
-   }
-   
-   if (box >= 0 && box < currlayer->algo->NumCellStates() &&
-       currlayer->drawingstate != box) {
-      currlayer->drawingstate = box;
-      Refresh(false);
-      Update();
-   }
-   
    // on Windows we need to reset keyboard focus to viewport window
    viewptr->SetFocus();
+   
+   mainptr->showbanner = false;
+   statusptr->ClearMessage();
+
+   if (inscript) return;    // let script control drawing state
+   
+   if (showallstates) {
+      // user can change drawing state by clicking in appropriate box
+      int x = event.GetX();
+      int y = event.GetY();
+      int right = h_col2 + COLWD * currlayer->algo->NumCellStates();
+      int box = -1;
+      
+      if (x > h_col2 && x < right && y < (BIGHT - SMALLHT)) {
+         box = (x - h_col2) / COLWD;
+      }
+      
+      if (box >= 0 && box < currlayer->algo->NumCellStates() &&
+          currlayer->drawingstate != box) {
+         currlayer->drawingstate = box;
+         //!!! only refresh state info
+         Refresh(false);
+         Update();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::OnButton(wxCommandEvent& event)
+{
+   #ifdef __WXMAC__
+      // close any open tool tip window (fixes wxMac bug?)
+      wxToolTip::RemoveToolTips();
+   #endif
+   
+   mainptr->showbanner = false;
+   statusptr->ClearMessage();
+
+   int id = event.GetId();
+
+   int cmdid;
+   switch (id) {
+      case DRAW_BUTT:      cmdid = ID_DRAW; break;
+      case SELECT_BUTT:    cmdid = ID_SELECT; break;
+      case MOVE_BUTT:      cmdid = ID_MOVE; break;
+      case ZOOMIN_BUTT:    cmdid = ID_ZOOMIN; break;
+      case ZOOMOUT_BUTT:   cmdid = ID_ZOOMOUT; break;
+      default:             Warning(_("Unexpected button id!")); return;
+   }
+   
+   // call MainFrame::OnMenu after OnButton finishes
+   wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
+   wxPostEvent(mainptr->GetEventHandler(), cmdevt);
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::OnKillFocus(wxFocusEvent& event)
+{
+   int id = event.GetId();
+   ebbutt[id]->SetFocus();   // don't let button lose focus
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::OnButtonDown(wxMouseEvent& event)
+{
+   // edit bar button has been pressed
+   int id = event.GetId();
+   
+   // connect a handler that keeps focus with the pressed button
+   ebbutt[id]->Connect(id, wxEVT_KILL_FOCUS, wxFocusEventHandler(EditBar::OnKillFocus));
+
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::OnButtonUp(wxMouseEvent& event)
+{
+   // edit bar button has been released
+   int id = event.GetId();
+
+   wxPoint pt = ebbutt[id]->ScreenToClient( wxGetMousePosition() );
+
+   int wd, ht;
+   ebbutt[id]->GetClientSize(&wd, &ht);
+   wxRect r(0, 0, wd, ht);
+
+   // diconnect kill-focus handler
+   ebbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS, wxFocusEventHandler(EditBar::OnKillFocus));
+   viewptr->SetFocus();
+
+#if wxCHECK_VERSION(2,7,0)
+// Inside is deprecated
+if ( r.Contains(pt) ) {
+#else
+if ( r.Inside(pt) ) {
+#endif
+      // call OnButton
+      wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
+      buttevt.SetEventObject(ebbutt[id]);
+      ebbutt[id]->ProcessEvent(buttevt);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::AddButton(int id, const wxString& tip)
+{
+   ebbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos));
+   if (ebbutt[id] == NULL) {
+      Fatal(_("Failed to create edit bar button!"));
+   } else {
+      const int BUTTON_WD = 24;        // nominal width of bitmap buttons
+      xpos += BUTTON_WD + smallgap;
+      ebbutt[id]->SetToolTip(tip);
+      #ifdef __WXMSW__
+         // fix problem with edit bar buttons when generating/inscript
+         // due to focus being changed to viewptr
+         ebbutt[id]->Connect(id, wxEVT_LEFT_DOWN, wxMouseEventHandler(EditBar::OnButtonDown));
+         ebbutt[id]->Connect(id, wxEVT_LEFT_UP, wxMouseEventHandler(EditBar::OnButtonUp));
+      #endif
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::AddSeparator()
+{
+   xpos += biggap - smallgap;
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::EnableButton(int id, bool enable)
+{
+   if (enable == ebbutt[id]->IsEnabled()) return;
+
+   #ifdef __WXMSW__
+      if (id == DRAW_BUTT && currlayer->curs == curs_pencil) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else if (id == SELECT_BUTT && currlayer->curs == curs_cross) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else if (id == MOVE_BUTT && currlayer->curs == curs_hand) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else if (id == ZOOMIN_BUTT && currlayer->curs == curs_zoomin) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else if (id == ZOOMOUT_BUTT && currlayer->curs == curs_zoomout) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
+      } else {
+         ebbutt[id]->SetBitmapDisabled(disnormbutt[id]);
+      }
+   #endif
+
+   ebbutt[id]->Enable(enable);
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::SelectButton(int id, bool select)
+{
+   if (select) {
+      if (buttstate[id] == 1) return;
+      buttstate[id] = 1;
+      ebbutt[id]->SetBitmapLabel(downbutt[id]);
+   } else {
+      if (buttstate[id] == -1) return;
+      buttstate[id] = -1;
+      ebbutt[id]->SetBitmapLabel(normbutt[id]);
+   }
+
+   #ifdef __WXX11__
+      ebbutt[id]->ClearBackground();    // fix wxX11 problem
+   #endif
+
+   ebbutt[id]->Refresh(false);
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::MoveButtons()
+{
+   // showallstates has just been toggled
+   int yshift = BIGHT - SMALLHT;
+   if (!showallstates) yshift *= -1;
+   for (int id = 0; id < NUM_BUTTONS; id++) {
+      int x, y;
+      ebbutt[id]->GetPosition(&x, &y);
+      ebbutt[id]->Move(x, y + yshift);
+   }
 }
 
 // -----------------------------------------------------------------------------
 
 void CreateEditBar(wxWindow* parent)
 {
+   // create edit bar underneath layer bar
    int wd, ht;
    parent->GetClientSize(&wd, &ht);
 
-   int y = 0;
-   if (showlayer) y += LayerBarHeight();
-   editbarptr = new EditBar(parent, 0, y, wd, editbarht);
+   editbarht = showallstates ? BIGHT : SMALLHT;
+   editbarptr = new EditBar(parent, 0, LayerBarHeight(), wd, editbarht);
    if (editbarptr == NULL) Fatal(_("Failed to create edit bar!"));
 
-   //!!! eventually edit bar will all have all buttons for setting cursor mode???
-   //!!! editbarptr->AddButton(EYE_DROPPER, 0, _("Eye dropper"));
+   // add cursor mode buttons
+   editbarptr->AddButton(DRAW_BUTT,       _("Draw"));
+   editbarptr->AddButton(SELECT_BUTT,     _("Select"));
+   editbarptr->AddButton(MOVE_BUTT,       _("Move"));
+   editbarptr->AddButton(ZOOMIN_BUTT,     _("Zoom in"));
+   editbarptr->AddButton(ZOOMOUT_BUTT,    _("Zoom out"));
       
    editbarptr->Show(showedit);
 }
@@ -359,7 +660,7 @@ void CreateEditBar(wxWindow* parent)
 // -----------------------------------------------------------------------------
 
 int EditBarHeight() {
-   return editbarht;
+   return (showedit ? editbarht : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -377,9 +678,21 @@ void UpdateEditBar(bool active)
 {
    if (editbarptr && showedit) {
       if (viewptr->waitingforclick) active = false;
-      //!!! eventually edit bar will all have all buttons for setting cursor mode???
-      // editbarptr->EnableButton(EYE_DROPPER, active);
+
+      // set state of toggle buttons
+      editbarptr->SelectButton(DRAW_BUTT,       currlayer->curs == curs_pencil);
+      editbarptr->SelectButton(SELECT_BUTT,     currlayer->curs == curs_cross);
+      editbarptr->SelectButton(MOVE_BUTT,       currlayer->curs == curs_hand);
+      editbarptr->SelectButton(ZOOMIN_BUTT,     currlayer->curs == curs_zoomin);
+      editbarptr->SelectButton(ZOOMOUT_BUTT,    currlayer->curs == curs_zoomout);
+
+      editbarptr->EnableButton(DRAW_BUTT,       active);
+      editbarptr->EnableButton(SELECT_BUTT,     active);
+      editbarptr->EnableButton(MOVE_BUTT,       active);
+      editbarptr->EnableButton(ZOOMIN_BUTT,     active);
+      editbarptr->EnableButton(ZOOMOUT_BUTT,    active);
       
+      //!!! if showallstates then only refresh top portion???
       editbarptr->Refresh(false);
       editbarptr->Update();
    }
@@ -396,18 +709,45 @@ void ToggleEditBar()
       // show edit bar at top of viewport window or underneath layer bar
       r.y += editbarht;
       r.height -= editbarht;
+      ResizeEditBar(r.width);
    } else {
       // hide edit bar
       r.y -= editbarht;
       r.height += editbarht;
    }
-   
    bigview->SetSize(r);
    editbarptr->Show(showedit);    // needed on Windows
    
    if (showlayer) {
       // line at bottom of layer bar may need to be added/removed
       RedrawLayerBar();
+   }
+   
+   mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleAllStates()
+{
+   showallstates = !showallstates;
+   editbarht = showallstates ? BIGHT : SMALLHT;
+   // move buttons up/down
+   editbarptr->MoveButtons();
+   if (showedit) {
+      int diff = BIGHT - SMALLHT;
+      if (!showallstates) diff *= -1;
+      wxRect r = bigview->GetRect();
+      ResizeEditBar(r.width);
+      r.y += diff;
+      r.height -= diff;
+      bigview->SetSize(r);
+      mainptr->UpdateEverything();
+   } else if (showallstates) {
+      // show the edit bar using new height
+      ToggleEditBar();
+   } else {
+      mainptr->UpdateMenuItems(mainptr->IsActive());
    }
 }
 

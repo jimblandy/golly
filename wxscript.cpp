@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxselect.h"      // for Selection
-#include "wxedit.h"        // for ToggleEditBar
+#include "wxedit.h"        // for ToggleEditBar, ToggleAllStates
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
@@ -434,6 +434,14 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "showallstates") == 0) {
+      *oldval = showallstates ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleAllStates();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
    } else if (strcmp(optname, "showpatterns") == 0) {
       *oldval = showpatterns ? 1 : 0;
       if (*oldval != newval) {
@@ -587,6 +595,7 @@ bool GSF_getoption(char* optname, int* optval)
    else if (strcmp(optname, "maxdelay") == 0)      *optval = maxdelay;
    else if (strcmp(optname, "opacity") == 0)       *optval = opacity;
    else if (strcmp(optname, "savexrle") == 0)      *optval = savexrle ? 1 : 0;
+   else if (strcmp(optname, "showallstates") == 0) *optval = showallstates ? 1 : 0;
    else if (strcmp(optname, "showboldlines") == 0) *optval = showboldlines ? 1 : 0;
    else if (strcmp(optname, "showeditbar") == 0)   *optval = showedit ? 1 : 0;
    else if (strcmp(optname, "showexact") == 0)     *optval = showexact ? 1 : 0;

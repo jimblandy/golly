@@ -73,6 +73,7 @@ extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
 extern bool showlayer;           // show layer bar?
 extern bool showedit;            // show edit bar?
+extern bool showallstates;       // show all cell states in edit bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showgridlines;       // display grid lines?
@@ -211,6 +212,7 @@ typedef enum {
    DO_SCALE8,                    // set scale 1:8
    DO_SCALE16,                   // set scale 1:16
    DO_SCRIPTDIR,                 // set script folder...
+   DO_SHOWSTATES,                // show all states
    DO_SHOWICONS,                 // show cell icons
    DO_SHOWEDIT,                  // show edit bar
    DO_SHOWEXACT,                 // show exact numbers

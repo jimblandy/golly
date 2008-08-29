@@ -263,6 +263,9 @@ void LayerBar::OnMouseDown(wxMouseEvent& WXUNUSED(event))
    // this is NOT called if user clicks a layer bar button;
    // on Windows we need to reset keyboard focus to viewport window
    viewptr->SetFocus();
+   
+   mainptr->showbanner = false;
+   statusptr->ClearMessage();
 }
 
 // -----------------------------------------------------------------------------
@@ -572,7 +575,7 @@ void CreateLayerBar(wxWindow* parent)
 // -----------------------------------------------------------------------------
 
 int LayerBarHeight() {
-   return layerbarht;
+   return (showlayer ? layerbarht : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -635,6 +638,8 @@ void ToggleLayerBar()
    
    bigview->SetSize(r);
    layerbarptr->Show(showlayer);    // needed on Windows
+
+   mainptr->UpdateMenuItems(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------

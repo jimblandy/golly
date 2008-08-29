@@ -308,6 +308,7 @@ enum {
    ID_TOOL_BAR,
    ID_LAYER_BAR,
    ID_EDIT_BAR,
+   ID_ALL_STATES,
    ID_STATUS_BAR,
    ID_EXACT,
    ID_GRID,

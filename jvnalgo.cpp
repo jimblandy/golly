@@ -1010,7 +1010,9 @@ static unsigned char jvncolors[] = {
     24, 156, 156,    // 30   darker
     21, 137, 137     // 31    darker
 };
+
 static lifealgo *creator() { return new jvnalgo() ; }
+
 void jvnalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("JvN") ;

@@ -86,11 +86,6 @@ enum {
    SAVE_TOOL,
    PATTERNS_TOOL,
    SCRIPTS_TOOL,
-   DRAW_TOOL,
-   SELECT_TOOL,
-   MOVE_TOOL,
-   ZOOMIN_TOOL,
-   ZOOMOUT_TOOL,
    INFO_TOOL,
    HELP_TOOL,
    NUM_BUTTONS    // must be last
@@ -109,21 +104,11 @@ enum {
    #include "bitmaps/save.xpm"
    #include "bitmaps/patterns.xpm"
    #include "bitmaps/scripts.xpm"
-   #include "bitmaps/draw.xpm"
-   #include "bitmaps/select.xpm"
-   #include "bitmaps/move.xpm"
-   #include "bitmaps/zoomin.xpm"
-   #include "bitmaps/zoomout.xpm"
    #include "bitmaps/info.xpm"
    #include "bitmaps/help.xpm"
    // bitmaps for down state of toggle buttons
    #include "bitmaps/patterns_down.xpm"
    #include "bitmaps/scripts_down.xpm"
-   #include "bitmaps/draw_down.xpm"
-   #include "bitmaps/select_down.xpm"
-   #include "bitmaps/move_down.xpm"
-   #include "bitmaps/zoomin_down.xpm"
-   #include "bitmaps/zoomout_down.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -217,22 +202,12 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    normtool[SAVE_TOOL] =      wxBITMAP(save);
    normtool[PATTERNS_TOOL] =  wxBITMAP(patterns);
    normtool[SCRIPTS_TOOL] =   wxBITMAP(scripts);
-   normtool[DRAW_TOOL] =      wxBITMAP(draw);
-   normtool[SELECT_TOOL] =    wxBITMAP(select);
-   normtool[MOVE_TOOL] =      wxBITMAP(move);
-   normtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin);
-   normtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout);
    normtool[INFO_TOOL] =      wxBITMAP(info);
    normtool[HELP_TOOL] =      wxBITMAP(help);
    
    // toggle buttons also have a down state
    downtool[PATTERNS_TOOL] =  wxBITMAP(patterns_down);
    downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts_down);
-   downtool[DRAW_TOOL] =      wxBITMAP(draw_down);
-   downtool[SELECT_TOOL] =    wxBITMAP(select_down);
-   downtool[MOVE_TOOL] =      wxBITMAP(move_down);
-   downtool[ZOOMIN_TOOL] =    wxBITMAP(zoomin_down);
-   downtool[ZOOMOUT_TOOL] =   wxBITMAP(zoomout_down);
 
    #ifdef __WXMSW__
       for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -240,11 +215,6 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       }
       CreatePaleBitmap(downtool[PATTERNS_TOOL],   disdowntool[PATTERNS_TOOL]);
       CreatePaleBitmap(downtool[SCRIPTS_TOOL],    disdowntool[SCRIPTS_TOOL]);
-      CreatePaleBitmap(downtool[DRAW_TOOL],       disdowntool[DRAW_TOOL]);
-      CreatePaleBitmap(downtool[SELECT_TOOL],     disdowntool[SELECT_TOOL]);
-      CreatePaleBitmap(downtool[MOVE_TOOL],       disdowntool[MOVE_TOOL]);
-      CreatePaleBitmap(downtool[ZOOMIN_TOOL],     disdowntool[ZOOMIN_TOOL]);
-      CreatePaleBitmap(downtool[ZOOMOUT_TOOL],    disdowntool[ZOOMOUT_TOOL]);
    #endif
 
    for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -320,11 +290,6 @@ void ToolBar::OnButton(wxCommandEvent& event)
       case SAVE_TOOL:      cmdid = wxID_SAVE; break;
       case PATTERNS_TOOL:  cmdid = ID_SHOW_PATTERNS; break;
       case SCRIPTS_TOOL:   cmdid = ID_SHOW_SCRIPTS; break;
-      case DRAW_TOOL:      cmdid = ID_DRAW; break;
-      case SELECT_TOOL:    cmdid = ID_SELECT; break;
-      case MOVE_TOOL:      cmdid = ID_MOVE; break;
-      case ZOOMIN_TOOL:    cmdid = ID_ZOOMIN; break;
-      case ZOOMOUT_TOOL:   cmdid = ID_ZOOMOUT; break;
       case INFO_TOOL:      cmdid = ID_INFO; break;
       case HELP_TOOL:      cmdid = ID_HELP_BUTT; break;
       default:             Warning(_("Unexpected button id!")); return;
@@ -460,21 +425,6 @@ void ToolBar::EnableButton(int id, bool enable)
       } else if (id == SCRIPTS_TOOL && showscripts) {
          tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
          
-      } else if (id == DRAW_TOOL && currlayer->curs == curs_pencil) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-         
-      } else if (id == SELECT_TOOL && currlayer->curs == curs_cross) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-         
-      } else if (id == MOVE_TOOL && currlayer->curs == curs_hand) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-         
-      } else if (id == ZOOMIN_TOOL && currlayer->curs == curs_zoomin) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-         
-      } else if (id == ZOOMOUT_TOOL && currlayer->curs == curs_zoomout) {
-         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-         
       } else {
          tbbutt[id]->SetBitmapDisabled(disnormtool[id]);
       }
@@ -554,12 +504,6 @@ void MainFrame::CreateToolbar()
    toolbarptr->AddButton(PATTERNS_TOOL,   _("Show/hide patterns"));
    toolbarptr->AddButton(SCRIPTS_TOOL,    _("Show/hide scripts"));
    toolbarptr->AddSeparator();
-   toolbarptr->AddButton(DRAW_TOOL,       _("Draw"));
-   toolbarptr->AddButton(SELECT_TOOL,     _("Select"));
-   toolbarptr->AddButton(MOVE_TOOL,       _("Move"));
-   toolbarptr->AddButton(ZOOMIN_TOOL,     _("Zoom in"));
-   toolbarptr->AddButton(ZOOMOUT_TOOL,    _("Zoom out"));
-   toolbarptr->AddSeparator();
    toolbarptr->AddButton(INFO_TOOL,       _("Show pattern information"));
    toolbarptr->AddButton(HELP_TOOL,       _("Show help window"));
       
@@ -580,11 +524,6 @@ void MainFrame::UpdateToolBar(bool active)
       // set state of toggle buttons
       toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
       toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
-      toolbarptr->SelectButton(DRAW_TOOL,       currlayer->curs == curs_pencil);
-      toolbarptr->SelectButton(SELECT_TOOL,     currlayer->curs == curs_cross);
-      toolbarptr->SelectButton(MOVE_TOOL,       currlayer->curs == curs_hand);
-      toolbarptr->SelectButton(ZOOMIN_TOOL,     currlayer->curs == curs_zoomin);
-      toolbarptr->SelectButton(ZOOMOUT_TOOL,    currlayer->curs == curs_zoomout);
       
       toolbarptr->EnableButton(START_TOOL,      active);
       toolbarptr->EnableButton(RESET_TOOL,      active && !inscript && (generating ||
@@ -595,11 +534,6 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->EnableButton(SAVE_TOOL,       active && !inscript);
       toolbarptr->EnableButton(PATTERNS_TOOL,   active);
       toolbarptr->EnableButton(SCRIPTS_TOOL,    active);
-      toolbarptr->EnableButton(DRAW_TOOL,       active);
-      toolbarptr->EnableButton(SELECT_TOOL,     active);
-      toolbarptr->EnableButton(MOVE_TOOL,       active);
-      toolbarptr->EnableButton(ZOOMIN_TOOL,     active);
-      toolbarptr->EnableButton(ZOOMOUT_TOOL,    active);
       toolbarptr->EnableButton(INFO_TOOL,       active && !currlayer->currfile.IsEmpty());
       toolbarptr->EnableButton(HELP_TOOL,       active);
    }
@@ -738,6 +672,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_TOOL_BAR,     active);
       mbar->Enable(ID_LAYER_BAR,    active);
       mbar->Enable(ID_EDIT_BAR,     active);
+      mbar->Enable(ID_ALL_STATES,   active);
       mbar->Enable(ID_STATUS_BAR,   active);
       mbar->Enable(ID_EXACT,        active);
       mbar->Enable(ID_GRID,         active);
@@ -778,6 +713,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_TOOL_BAR,   showtool);
       mbar->Check(ID_LAYER_BAR,  showlayer);
       mbar->Check(ID_EDIT_BAR,   showedit);
+      mbar->Check(ID_ALL_STATES, showallstates);
       mbar->Check(ID_STATUS_BAR, showstatus);
       mbar->Check(ID_EXACT,      showexact);
       mbar->Check(ID_GRID,       showgridlines);
@@ -1080,9 +1016,11 @@ void MainFrame::ToggleExactNumbers()
       ResizeStatusBar(wd, ht);
       ResizeSplitWindow(wd, ht);
       UpdateEverything();
-   } else {
+   } else if (showexact) {
       // show the status bar using new size
       ToggleStatusBar();
+   } else {
+      UpdateMenuItems(IsActive());
    }
 }
 
@@ -1363,6 +1301,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_TOOL_BAR:       ToggleToolBar(); break;
       case ID_LAYER_BAR:      ToggleLayerBar(); break;
       case ID_EDIT_BAR:       ToggleEditBar(); break;
+      case ID_ALL_STATES:     ToggleAllStates(); break;
       case ID_STATUS_BAR:     ToggleStatusBar(); break;
       case ID_EXACT:          ToggleExactNumbers(); break;
       case ID_INFO:           ShowPatternInfo(); break;
@@ -2191,6 +2130,7 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_TOOL_BAR,       _("Show Tool Bar") + GetAccelerator(DO_SHOWTOOL));
    viewMenu->AppendCheckItem(ID_LAYER_BAR,      _("Show Layer Bar") + GetAccelerator(DO_SHOWLAYER));
    viewMenu->AppendCheckItem(ID_EDIT_BAR,       _("Show Edit Bar") + GetAccelerator(DO_SHOWEDIT));
+   viewMenu->AppendCheckItem(ID_ALL_STATES,     _("Show All States") + GetAccelerator(DO_SHOWSTATES));
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
    viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
@@ -2349,6 +2289,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_TOOL_BAR,        DO_SHOWTOOL);
       SetAccelerator(mbar, ID_LAYER_BAR,       DO_SHOWLAYER);
       SetAccelerator(mbar, ID_EDIT_BAR,        DO_SHOWEDIT);
+      SetAccelerator(mbar, ID_ALL_STATES,      DO_SHOWSTATES);
       SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
       SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
       SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);

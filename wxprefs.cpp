@@ -124,7 +124,8 @@ bool savexrle = true;            // save RLE file using XRLE format?
 bool showtips = true;            // show button tips?
 bool showtool = true;            // show tool bar?
 bool showlayer = false;          // show layer bar?
-bool showedit = false;           // show edit bar?
+bool showedit = true;            // show edit bar?
+bool showallstates = false;      // show all cell states in edit bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showgridlines = true;       // display grid lines?
@@ -467,6 +468,7 @@ void AddDefaultKeyActions()
    keyaction[(int)'\''][0].id =        DO_SHOWTOOL;
    keyaction[(int)'\\'][0].id =        DO_SHOWLAYER;
    keyaction[(int)'/'][0].id =         DO_SHOWEDIT;
+   keyaction[(int)'.'][0].id =         DO_SHOWSTATES;
    keyaction[(int)';'][0].id =         DO_SHOWSTATUS;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
@@ -474,6 +476,7 @@ void AddDefaultKeyActions()
    keyaction[(int)'\''][mk_META].id =  DO_SHOWTOOL;
    keyaction[(int)'\\'][mk_META].id =  DO_SHOWLAYER;
    keyaction[(int)'/'][mk_META].id =   DO_SHOWEDIT;
+   keyaction[(int)'.'][mk_META].id =   DO_SHOWSTATES;
    keyaction[(int)';'][mk_META].id =   DO_SHOWSTATUS;
 #endif
    keyaction[(int)'e'][0].id =         DO_SHOWEXACT;
@@ -592,6 +595,7 @@ const char* GetActionName(action_id action)
       case DO_SHOWTOOL:       return "Show Tool Bar";
       case DO_SHOWLAYER:      return "Show Layer Bar";
       case DO_SHOWEDIT:       return "Show Edit Bar";
+      case DO_SHOWSTATES:     return "Show All States";
       case DO_SHOWSTATUS:     return "Show Status Bar";
       case DO_SHOWEXACT:      return "Show Exact Numbers";
       case DO_SHOWGRID:       return "Show Grid Lines";
@@ -1459,6 +1463,7 @@ void SavePrefs()
    fprintf(f, "show_tool=%d\n", showtool ? 1 : 0);
    fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
    fprintf(f, "show_edit=%d\n", showedit ? 1 : 0);
+   fprintf(f, "show_states=%d\n", showallstates ? 1 : 0);
    fprintf(f, "show_status=%d\n", showstatus ? 1 : 0);
    fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
@@ -1912,6 +1917,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "show_edit") == 0) {
          showedit = value[0] == '1';
+
+      } else if (strcmp(keyword, "show_states") == 0) {
+         showallstates = value[0] == '1';
 
       } else if (strcmp(keyword, "show_status") == 0) {
          showstatus = value[0] == '1';
@@ -3026,7 +3034,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    
    // restore_view
    
-   wxCheckBox* check4 = new wxCheckBox(panel, PREF_RESTORE, _("Reset/Undo should restore view"));
+   wxCheckBox* check4 = new wxCheckBox(panel, PREF_RESTORE, _("Reset/Undo will restore view"));
    
    // math_coords
    
