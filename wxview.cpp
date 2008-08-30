@@ -875,6 +875,8 @@ void PatternView::CycleCursorMode()
       return;
 
    if (currlayer->curs == curs_pencil)
+      currlayer->curs = curs_pick;
+   else if (currlayer->curs == curs_pick)
       currlayer->curs = curs_cross;
    else if (currlayer->curs == curs_cross)
       currlayer->curs = curs_hand;
@@ -1365,6 +1367,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_ADVANCE:     if (!inscript) currlayer->currsel.Advance(); break;
       case DO_ADVANCEOUT:  if (!inscript) currlayer->currsel.AdvanceOutside(); break;
       case DO_CURSDRAW:    SetCursorMode(curs_pencil); break;
+      case DO_CURSPICK:    SetCursorMode(curs_pick); break;
       case DO_CURSSEL:     SetCursorMode(curs_cross); break;
       case DO_CURSMOVE:    SetCursorMode(curs_hand); break;
       case DO_CURSIN:      SetCursorMode(curs_zoomin); break;
@@ -1707,6 +1710,22 @@ void PatternView::DrawCells(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+void PatternView::PickCell(int x, int y)
+{
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+   if ( currlayer->view->getmag() < 0 ||
+        OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
+      return;
+   }
+
+   int cellx = cellpos.first.toint();
+   int celly = cellpos.second.toint();
+   currlayer->drawingstate = currlayer->algo->getcell(cellx, celly);
+   UpdateEditBar(true);
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 {
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
@@ -2012,15 +2031,23 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
    int mods = event.GetModifiers();
 
    if (realkey == WXK_SHIFT) {
-      // pressing shift key temporarily toggles zoom in/out cursor;
-      // some platforms (eg. WinXP) send multiple key-down events while
-      // a key is pressed so we must be careful to toggle only once
-      if (currlayer->curs == curs_zoomin && oldzoom == NULL) {
-         oldzoom = curs_zoomin;
+      // pressing shift key temporarily toggles the draw/pick cursors or the
+      // zoom in/out cursors; note that Windows sends multiple key-down events
+      // while shift key is pressed so we must be careful to toggle only once
+      if (currlayer->curs == curs_pencil && oldcursor == NULL) {
+         oldcursor = curs_pencil;
+         SetCursorMode(curs_pick);
+         mainptr->UpdateUserInterface(mainptr->IsActive());
+      } else if (currlayer->curs == curs_pick && oldcursor == NULL) {
+         oldcursor = curs_pick;
+         SetCursorMode(curs_pencil);
+         mainptr->UpdateUserInterface(mainptr->IsActive());
+      } else if (currlayer->curs == curs_zoomin && oldcursor == NULL) {
+         oldcursor = curs_zoomin;
          SetCursorMode(curs_zoomout);
          mainptr->UpdateUserInterface(mainptr->IsActive());
-      } else if (currlayer->curs == curs_zoomout && oldzoom == NULL) {
-         oldzoom = curs_zoomout;
+      } else if (currlayer->curs == curs_zoomout && oldcursor == NULL) {
+         oldcursor = curs_zoomout;
          SetCursorMode(curs_zoomin);
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
@@ -2076,10 +2103,10 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
    int key = event.GetKeyCode();
 
    if (key == WXK_SHIFT) {
-      // releasing shift key sets zoom in/out cursor back to original state
-      if (oldzoom) {
-         SetCursorMode(oldzoom);
-         oldzoom = NULL;
+      // releasing shift key sets cursor back to original state
+      if (oldcursor) {
+         SetCursorMode(oldcursor);
+         oldcursor = NULL;
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
    }
@@ -2208,6 +2235,18 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          return;
       }
       StartDrawingCells(x, y);
+
+   } else if (currlayer->curs == curs_pick) {
+      if (inscript) {
+         // statusptr->ErrorMessage does nothing if inscript is true
+         Warning(_("Picking is not allowed while a script is running."));
+         return;
+      }
+      if (currlayer->view->getmag() < 0) {
+         statusptr->ErrorMessage(_("Picking is not allowed at scales greater than 1 cell per pixel."));
+         return;
+      }
+      PickCell(x, y);
 
    } else if (currlayer->curs == curs_cross) {
       TestAutoFit();
@@ -2604,7 +2643,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
    movingview = false;        // not moving view
    waitingforclick = false;   // not waiting for user to click
    nopattupdate = false;      // enable pattern updates
-   oldzoom = NULL;            // not shift zooming
+   oldcursor = NULL;          // for toggling cursor via shift key 
 }
 
 // -----------------------------------------------------------------------------

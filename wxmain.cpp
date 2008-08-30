@@ -728,6 +728,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_PM_OR,      pmode == Or);
       mbar->Check(ID_PM_XOR,     pmode == Xor);
       mbar->Check(ID_DRAW,       currlayer->curs == curs_pencil);
+      mbar->Check(ID_PICK,       currlayer->curs == curs_pick);
       mbar->Check(ID_SELECT,     currlayer->curs == curs_cross);
       mbar->Check(ID_MOVE,       currlayer->curs == curs_hand);
       mbar->Check(ID_ZOOMIN,     currlayer->curs == curs_zoomin);
@@ -1273,6 +1274,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_ROTATEC:        viewptr->RotateSelection(true); break;
       case ID_ROTATEA:        viewptr->RotateSelection(false); break;
       case ID_DRAW:           viewptr->SetCursorMode(curs_pencil); break;
+      case ID_PICK:           viewptr->SetCursorMode(curs_pick); break;
       case ID_SELECT:         viewptr->SetCursorMode(curs_cross); break;
       case ID_MOVE:           viewptr->SetCursorMode(curs_hand); break;
       case ID_ZOOMIN:         viewptr->SetCursorMode(curs_zoomin); break;
@@ -2038,6 +2040,7 @@ void MainFrame::CreateMenus()
    pmodeSubMenu->AppendCheckItem(ID_PM_XOR,     _("Xor"));
 
    cmodeSubMenu->AppendCheckItem(ID_DRAW,       _("Draw") + GetAccelerator(DO_CURSDRAW));
+   cmodeSubMenu->AppendCheckItem(ID_PICK,       _("Pick") + GetAccelerator(DO_CURSPICK));
    cmodeSubMenu->AppendCheckItem(ID_SELECT,     _("Select") + GetAccelerator(DO_CURSSEL));
    cmodeSubMenu->AppendCheckItem(ID_MOVE,       _("Move") + GetAccelerator(DO_CURSMOVE));
    cmodeSubMenu->AppendCheckItem(ID_ZOOMIN,     _("Zoom In") + GetAccelerator(DO_CURSIN));
@@ -2226,6 +2229,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, wxID_EXIT,          DO_QUIT);
       
       SetAccelerator(mbar, ID_DRAW,            DO_CURSDRAW);
+      SetAccelerator(mbar, ID_PICK,            DO_CURSPICK);
       SetAccelerator(mbar, ID_SELECT,          DO_CURSSEL);
       SetAccelerator(mbar, ID_MOVE,            DO_CURSMOVE);
       SetAccelerator(mbar, ID_ZOOMIN,          DO_CURSIN);

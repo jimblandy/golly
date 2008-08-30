@@ -27,7 +27,7 @@ Andrew's list:
   - Allow all states to scroll left-right (via scroll bar at right edge).
   - Show the current drawing state/color/icon with a scroll bar.
   - Add a button to show/hide all states.
-  - Add more buttons: pick, erase, fill?
+  - Add more cursor mode buttons: erase, fill?
   - Let user open Set Colors dlg by ctrl/right-click anywhere in edit bar?
 
 - Fix rotation/flip of JvN states.  Probably need Begin/EndTransform

@@ -273,6 +273,7 @@ enum {
 
    // Cursor Mode submenu
    ID_DRAW,
+   ID_PICK,
    ID_SELECT,
    ID_MOVE,
    ID_ZOOMIN,

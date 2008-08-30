@@ -58,6 +58,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #ifdef __WXX11__
       // wxX11 doesn't support creating cursors from a bitmap file
    #else
+      #include "bitmaps/pick_curs.xpm"
       #include "bitmaps/hand_curs.xpm"
       #include "bitmaps/zoomin_curs.xpm"
       #include "bitmaps/zoomout_curs.xpm"
@@ -201,6 +202,7 @@ paste_mode pmode = Or;
 
 // these must be static -- they are created before the view window is created
 wxCursor* curs_pencil;           // for drawing cells
+wxCursor* curs_pick;             // for picking cell states
 wxCursor* curs_cross;            // for selecting cells
 wxCursor* curs_hand;             // for moving view by dragging
 wxCursor* curs_zoomin;           // for zooming in to a clicked cell
@@ -402,11 +404,12 @@ void AddDefaultKeyActions()
    keyaction[(int)'x'][0].id =         DO_FLIPLR;
    keyaction[(int)'>'][0].id =         DO_ROTATECW;
    keyaction[(int)'<'][0].id =         DO_ROTATEACW;
-   keyaction[IK_F1+4][0].id =          DO_CURSDRAW;
-   keyaction[IK_F1+5][0].id =          DO_CURSSEL;
-   keyaction[IK_F1+6][0].id =          DO_CURSMOVE;
-   keyaction[IK_F1+7][0].id =          DO_CURSIN;
-   keyaction[IK_F1+8][0].id =          DO_CURSOUT;
+   keyaction[IK_F1+2][0].id =          DO_CURSDRAW;
+   keyaction[IK_F1+3][0].id =          DO_CURSPICK;
+   keyaction[IK_F1+4][0].id =          DO_CURSSEL;
+   keyaction[IK_F1+5][0].id =          DO_CURSMOVE;
+   keyaction[IK_F1+6][0].id =          DO_CURSIN;
+   keyaction[IK_F1+7][0].id =          DO_CURSOUT;
    keyaction[(int)'c'][0].id =         DO_CURSCYCLE;
 
    // Control menu
@@ -437,12 +440,7 @@ void AddDefaultKeyActions()
    keyaction[IK_RIGHT][0].id =         DO_RIGHT;
    keyaction[IK_UP][0].id =            DO_UP;
    keyaction[IK_DOWN][0].id =          DO_DOWN;
-#ifdef __WXMAC__
-   keyaction[IK_F1][0].id =            DO_FULLSCREEN;
-#else
-   // use F11 on Windows/Linux
    keyaction[IK_F1+10][0].id =         DO_FULLSCREEN;
-#endif
    keyaction[(int)'f'][0].id =         DO_FIT;
    keyaction[(int)'f'][mk_META].id =   DO_FIT;
    keyaction[(int)'f'][mk_SHIFT].id =  DO_FITSEL;
@@ -549,6 +547,7 @@ const char* GetActionName(action_id action)
       case DO_ROTATECW:       return "Rotate Clockwise";
       case DO_ROTATEACW:      return "Rotate Anticlockwise";
       case DO_CURSDRAW:       return "Cursor Mode: Draw";
+      case DO_CURSPICK:       return "Cursor Mode: Pick";
       case DO_CURSSEL:        return "Cursor Mode: Select";
       case DO_CURSMOVE:       return "Cursor Mode: Move";
       case DO_CURSIN:         return "Cursor Mode: Zoom In";
@@ -1038,6 +1037,18 @@ void CreateCursors()
    curs_pencil = new wxCursor(wxCURSOR_PENCIL);
    if (curs_pencil == NULL) Fatal(_("Failed to create pencil cursor!"));
 
+   #ifdef __WXX11__
+      // wxX11 doesn't support creating cursor from wxImage or bits
+      curs_pick = new wxCursor(wxCURSOR_PICKER); //!!!???
+   #else
+      wxBitmap bitmap_pick = wxBITMAP(pick_curs);
+      wxImage image_pick = bitmap_pick.ConvertToImage();
+      image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 0);
+      image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 15);
+      curs_pick = new wxCursor(image_pick);
+   #endif
+   if (curs_pick == NULL) Fatal(_("Failed to create pick cursor!"));
+
    #ifdef __WXMSW__
       // don't use wxCURSOR_CROSS because it disappears on black background
       wxBitmap bitmap_cross = wxBITMAP(cross_curs);
@@ -1097,11 +1108,12 @@ void CreateCursors()
 
 const char* CursorToString(wxCursor* curs)
 {
-   if (curs == curs_pencil) return "Draw";
-   if (curs == curs_cross) return "Select";
-   if (curs == curs_hand) return "Move";
-   if (curs == curs_zoomin) return "Zoom In";
-   if (curs == curs_zoomout) return "Zoom Out";
+   if (curs == curs_pencil)   return "Draw";
+   if (curs == curs_pick)     return "Pick";
+   if (curs == curs_cross)    return "Select";
+   if (curs == curs_hand)     return "Move";
+   if (curs == curs_zoomin)   return "Zoom In";
+   if (curs == curs_zoomout)  return "Zoom Out";
    return "No Change";   // curs is NULL
 }
 
@@ -1109,11 +1121,12 @@ const char* CursorToString(wxCursor* curs)
 
 wxCursor* StringToCursor(const char* s)
 {
-   if (strcmp(s, "Draw") == 0) return curs_pencil;
-   if (strcmp(s, "Select") == 0) return curs_cross;
-   if (strcmp(s, "Move") == 0) return curs_hand;
-   if (strcmp(s, "Zoom In") == 0) return curs_zoomin;
-   if (strcmp(s, "Zoom Out") == 0) return curs_zoomout;
+   if (strcmp(s, "Draw") == 0)      return curs_pencil;
+   if (strcmp(s, "Pick") == 0)      return curs_pick;
+   if (strcmp(s, "Select") == 0)    return curs_cross;
+   if (strcmp(s, "Move") == 0)      return curs_hand;
+   if (strcmp(s, "Zoom In") == 0)   return curs_zoomin;
+   if (strcmp(s, "Zoom Out") == 0)  return curs_zoomout;
    return NULL;   // "No Change"
 }
 
@@ -1121,12 +1134,13 @@ wxCursor* StringToCursor(const char* s)
 
 int CursorToIndex(wxCursor* curs)
 {
-   if (curs == curs_pencil) return 0;
-   if (curs == curs_cross) return 1;
-   if (curs == curs_hand) return 2;
-   if (curs == curs_zoomin) return 3;
-   if (curs == curs_zoomout) return 4;
-   return 5;   // curs is NULL
+   if (curs == curs_pencil)   return 0;
+   if (curs == curs_pick)     return 1;
+   if (curs == curs_cross)    return 2;
+   if (curs == curs_hand)     return 3;
+   if (curs == curs_zoomin)   return 4;
+   if (curs == curs_zoomout)  return 5;
+   return 6;   // curs is NULL
 }
 
 // -----------------------------------------------------------------------------
@@ -1134,10 +1148,11 @@ int CursorToIndex(wxCursor* curs)
 wxCursor* IndexToCursor(int i)
 {
    if (i == 0) return curs_pencil;
-   if (i == 1) return curs_cross;
-   if (i == 2) return curs_hand;
-   if (i == 3) return curs_zoomin;
-   if (i == 4) return curs_zoomout;
+   if (i == 1) return curs_pick;
+   if (i == 2) return curs_cross;
+   if (i == 3) return curs_hand;
+   if (i == 4) return curs_zoomin;
+   if (i == 5) return curs_zoomout;
    return NULL;   // "No Change"
 }
 

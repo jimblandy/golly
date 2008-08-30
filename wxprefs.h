@@ -152,6 +152,7 @@ typedef enum {
    DO_COPY,                      // copy selection
    DO_CURSDRAW,                  // cursor mode: draw
    DO_CURSMOVE,                  // cursor mode: move
+   DO_CURSPICK,                  // cursor mode: pick
    DO_CURSSEL,                   // cursor mode: select
    DO_CURSIN,                    // cursor mode: zoom in
    DO_CURSOUT,                   // cursor mode: zoom out
@@ -325,15 +326,16 @@ void SetPasteMode(const char* s);
 // Cursor modes:
 
 extern wxCursor* curs_pencil;    // for drawing cells
+extern wxCursor* curs_pick;      // for picking cell states
 extern wxCursor* curs_cross;     // for selecting cells
 extern wxCursor* curs_hand;      // for moving view by dragging
 extern wxCursor* curs_zoomin;    // for zooming in to a clicked cell
 extern wxCursor* curs_zoomout;   // for zooming out from a clicked cell
 
 int CursorToIndex(wxCursor* curs);
-// convert given cursor to an index: 0 for curs_pencil, 1 for curs_cross, etc
+// convert given cursor to an index: 0 for curs_pencil, etc
 
 wxCursor* IndexToCursor(int i);
-// convert given index to a cursor (NULL if i is not in 0..4)
+// convert given index to a cursor (NULL if i is not in valid range)
 
 #endif

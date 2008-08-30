@@ -51,6 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // ids for bitmap buttons in edit bar
 enum {
    DRAW_BUTT = 0,
+   PICK_BUTT,
    SELECT_BUTT,
    MOVE_BUTT,
    ZOOMIN_BUTT,
@@ -63,12 +64,14 @@ enum {
 #else
    // bitmaps for edit bar buttons
    #include "bitmaps/draw.xpm"
+   #include "bitmaps/pick.xpm"
    #include "bitmaps/select.xpm"
    #include "bitmaps/move.xpm"
    #include "bitmaps/zoomin.xpm"
    #include "bitmaps/zoomout.xpm"
    // bitmaps for down state of toggle buttons
    #include "bitmaps/draw_down.xpm"
+   #include "bitmaps/pick_down.xpm"
    #include "bitmaps/select_down.xpm"
    #include "bitmaps/move_down.xpm"
    #include "bitmaps/zoomin_down.xpm"
@@ -117,6 +120,7 @@ private:
 
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
+   void DrawAllStates(wxDC& dc);
    void DrawEditBar(wxDC& dc, int wd, int ht);
    
    // bitmaps for normal or down state
@@ -183,6 +187,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 
    // init bitmaps for normal state
    normbutt[DRAW_BUTT] =      wxBITMAP(draw);
+   normbutt[PICK_BUTT] =      wxBITMAP(pick);
    normbutt[SELECT_BUTT] =    wxBITMAP(select);
    normbutt[MOVE_BUTT] =      wxBITMAP(move);
    normbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin);
@@ -190,6 +195,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    
    // toggle buttons also have a down state
    downbutt[DRAW_BUTT] =      wxBITMAP(draw_down);
+   downbutt[PICK_BUTT] =      wxBITMAP(pick_down);
    downbutt[SELECT_BUTT] =    wxBITMAP(select_down);
    downbutt[MOVE_BUTT] =      wxBITMAP(move_down);
    downbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin_down);
@@ -200,6 +206,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
          CreatePaleBitmap(normbutt[i], disnormbutt[i]);
       }
       CreatePaleBitmap(downbutt[DRAW_BUTT],       disdownbutt[DRAW_BUTT]);
+      CreatePaleBitmap(downbutt[PICK_BUTT],       disdownbutt[PICK_BUTT]);
       CreatePaleBitmap(downbutt[SELECT_BUTT],     disdownbutt[SELECT_BUTT]);
       CreatePaleBitmap(downbutt[MOVE_BUTT],       disdownbutt[MOVE_BUTT]);
       CreatePaleBitmap(downbutt[ZOOMIN_BUTT],     disdownbutt[ZOOMIN_BUTT]);
@@ -287,35 +294,8 @@ void EditBar::DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y)
 
 // -----------------------------------------------------------------------------
 
-void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
+void EditBar::DrawAllStates(wxDC& dc)
 {
-   wxRect r = wxRect(0, 0, wd, ht);
-   
-   #ifdef __WXMAC__
-      wxBrush brush(wxColor(202,202,202));
-      FillRect(dc, r, brush);
-   #endif
-   
-   #ifdef __WXMSW__
-      // use theme background color on Windows
-      wxBrush brush(GetBackgroundColour());
-      FillRect(dc, r, brush);
-   #endif
-   
-   // draw gray border line at bottom edge
-   #if defined(__WXMSW__)
-      dc.SetPen(*wxGREY_PEN);
-   #elif defined(__WXMAC__)
-      wxPen linepen(wxColor(140,140,140));
-      dc.SetPen(linepen);
-   #else
-      dc.SetPen(*wxLIGHT_GREY_PEN);
-   #endif
-   dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
-   dc.SetPen(wxNullPen);
-   
-   if (!showallstates) return;
-   
    SetEditFont(dc);     // for DisplayText calls
 
    DisplayText(dc, _("State:"), h_col1, BASELINE1);
@@ -384,19 +364,51 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       ad->cellb[1] = saveb;
    }
    
-   // reset drawing state in case it's no longer valid (due to algo/rule change)
-   if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
-      currlayer->drawingstate = 1;
-   }
-   
    // draw rect around current drawing state
    int x = 1 + h_col2 + COLWD * currlayer->drawingstate;
-   r = wxRect(x, 2, COLWD - 1, BIGHT - SMALLHT - 4);
+   wxRect r(x, 2, COLWD - 1, BIGHT - SMALLHT - 4);
    dc.SetBrush(*wxTRANSPARENT_BRUSH);
    dc.DrawRectangle(r);
    dc.SetBrush(wxNullBrush);
 
    dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
+{
+   wxRect r = wxRect(0, 0, wd, ht);
+   
+   #ifdef __WXMAC__
+      wxBrush brush(wxColor(202,202,202));
+      FillRect(dc, r, brush);
+   #endif
+   
+   #ifdef __WXMSW__
+      // use theme background color on Windows
+      wxBrush brush(GetBackgroundColour());
+      FillRect(dc, r, brush);
+   #endif
+   
+   // draw gray border line at bottom edge
+   #if defined(__WXMSW__)
+      dc.SetPen(*wxGREY_PEN);
+   #elif defined(__WXMAC__)
+      wxPen linepen(wxColor(140,140,140));
+      dc.SetPen(linepen);
+   #else
+      dc.SetPen(*wxLIGHT_GREY_PEN);
+   #endif
+   dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
+   dc.SetPen(wxNullPen);
+   
+   // reset drawing state in case it's no longer valid (due to algo/rule change)
+   if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
+      currlayer->drawingstate = 1;
+   }
+   
+   if (showallstates) DrawAllStates(dc);
 }
 
 // -----------------------------------------------------------------------------
@@ -480,6 +492,7 @@ void EditBar::OnButton(wxCommandEvent& event)
    int cmdid;
    switch (id) {
       case DRAW_BUTT:      cmdid = ID_DRAW; break;
+      case PICK_BUTT:      cmdid = ID_PICK; break;
       case SELECT_BUTT:    cmdid = ID_SELECT; break;
       case MOVE_BUTT:      cmdid = ID_MOVE; break;
       case ZOOMIN_BUTT:    cmdid = ID_ZOOMIN; break;
@@ -580,6 +593,9 @@ void EditBar::EnableButton(int id, bool enable)
       if (id == DRAW_BUTT && currlayer->curs == curs_pencil) {
          ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
          
+      } else if (id == PICK_BUTT && currlayer->curs == curs_pick) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
       } else if (id == SELECT_BUTT && currlayer->curs == curs_cross) {
          ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
          
@@ -649,6 +665,7 @@ void CreateEditBar(wxWindow* parent)
 
    // add cursor mode buttons
    editbarptr->AddButton(DRAW_BUTT,       _("Draw"));
+   editbarptr->AddButton(PICK_BUTT,       _("Pick"));
    editbarptr->AddButton(SELECT_BUTT,     _("Select"));
    editbarptr->AddButton(MOVE_BUTT,       _("Move"));
    editbarptr->AddButton(ZOOMIN_BUTT,     _("Zoom in"));
@@ -681,12 +698,14 @@ void UpdateEditBar(bool active)
 
       // set state of toggle buttons
       editbarptr->SelectButton(DRAW_BUTT,       currlayer->curs == curs_pencil);
+      editbarptr->SelectButton(PICK_BUTT,       currlayer->curs == curs_pick);
       editbarptr->SelectButton(SELECT_BUTT,     currlayer->curs == curs_cross);
       editbarptr->SelectButton(MOVE_BUTT,       currlayer->curs == curs_hand);
       editbarptr->SelectButton(ZOOMIN_BUTT,     currlayer->curs == curs_zoomin);
       editbarptr->SelectButton(ZOOMOUT_BUTT,    currlayer->curs == curs_zoomout);
 
       editbarptr->EnableButton(DRAW_BUTT,       active);
+      editbarptr->EnableButton(PICK_BUTT,       active);
       editbarptr->EnableButton(SELECT_BUTT,     active);
       editbarptr->EnableButton(MOVE_BUTT,       active);
       editbarptr->EnableButton(ZOOMIN_BUTT,     active);

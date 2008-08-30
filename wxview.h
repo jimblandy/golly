@@ -145,6 +145,7 @@ private:
    void DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newstate);
    void StartDrawingCells(int x, int y);
    void DrawCells(int x, int y);
+   void PickCell(int x, int y);
    void StartSelectingCells(int x, int y, bool shiftdown);
    void SelectCells(int x, int y);
    void StartMovingView(int x, int y);
@@ -184,7 +185,7 @@ private:
    int drawstate;                // new cell state (0..255)
    wxBrush* cellbrush;           // brush used to draw live cells
    int pastex, pastey;           // where user wants to paste clipboard pattern
-   wxCursor* oldzoom;            // non-NULL if shift key has toggled zoom in/out cursor
+   wxCursor* oldcursor;          // non-NULL if shift key has toggled cursor
    int hthumb, vthumb;           // current thumb box positions
    int realkey;                  // key code set by OnKeyDown
    wxString debugkey;            // display debug info for OnKeyDown and OnChar
