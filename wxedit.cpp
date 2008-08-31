@@ -56,7 +56,8 @@ enum {
    MOVE_BUTT,
    ZOOMIN_BUTT,
    ZOOMOUT_BUTT,
-   NUM_BUTTONS    // must be last
+   ALLSTATES_BUTT,
+   NUM_BUTTONS       // must be last
 };
 
 #ifdef __WXMSW__
@@ -69,6 +70,7 @@ enum {
    #include "bitmaps/move.xpm"
    #include "bitmaps/zoomin.xpm"
    #include "bitmaps/zoomout.xpm"
+   #include "bitmaps/allstates.xpm"
    // bitmaps for down state of toggle buttons
    #include "bitmaps/draw_down.xpm"
    #include "bitmaps/pick_down.xpm"
@@ -76,6 +78,7 @@ enum {
    #include "bitmaps/move_down.xpm"
    #include "bitmaps/zoomin_down.xpm"
    #include "bitmaps/zoomout_down.xpm"
+   #include "bitmaps/allstates_down.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -160,8 +163,8 @@ END_EVENT_TABLE()
 // -----------------------------------------------------------------------------
 
 EditBar* editbarptr = NULL;         // global pointer to edit bar
-const int BIGHT = 80;               // biggest height of edit bar
-const int SMALLHT = 32;             // smallest height of edit bar
+const int BIGHT = 80;               // height of edit bar if showallstates
+const int SMALLHT = 32;             // height of edit bar if not showallstates
 static int editbarht;               // current height (BIGHT or SMALLHT)
 
 const int LINEHT = 14;              // distance between each baseline
@@ -192,6 +195,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    normbutt[MOVE_BUTT] =      wxBITMAP(move);
    normbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin);
    normbutt[ZOOMOUT_BUTT] =   wxBITMAP(zoomout);
+   normbutt[ALLSTATES_BUTT] = wxBITMAP(allstates);
    
    // toggle buttons also have a down state
    downbutt[DRAW_BUTT] =      wxBITMAP(draw_down);
@@ -200,6 +204,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    downbutt[MOVE_BUTT] =      wxBITMAP(move_down);
    downbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin_down);
    downbutt[ZOOMOUT_BUTT] =   wxBITMAP(zoomout_down);
+   downbutt[ALLSTATES_BUTT] = wxBITMAP(allstates_down);
 
    #ifdef __WXMSW__
       for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -211,6 +216,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       CreatePaleBitmap(downbutt[MOVE_BUTT],       disdownbutt[MOVE_BUTT]);
       CreatePaleBitmap(downbutt[ZOOMIN_BUTT],     disdownbutt[ZOOMIN_BUTT]);
       CreatePaleBitmap(downbutt[ZOOMOUT_BUTT],    disdownbutt[ZOOMOUT_BUTT]);
+      CreatePaleBitmap(downbutt[ALLSTATES_BUTT,   disdownbutt[ALLSTATES_BUTT]);
    #endif
 
    for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -328,6 +334,7 @@ void EditBar::DrawAllStates(wxDC& dc)
 
    for (int i = 0; i < currlayer->algo->NumCellStates(); i++) {
       wxString strbuf;
+      wxRect r;
       int x;
       
       // draw state value
@@ -339,21 +346,22 @@ void EditBar::DrawAllStates(wxDC& dc)
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
       wxColor color(ad->cellr[i], ad->cellg[i], ad->cellb[i]);
       wxBrush brush(color);
-      wxRect r(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
+      r = wxRect(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
       dc.SetBrush(brush);
       dc.DrawRectangle(r);
       dc.SetBrush(wxNullBrush);
       
-      // draw icon box or "x" if no icon
+      // draw icon box
+      r = wxRect(x, BASELINE3 - BOXWD, BOXWD, BOXWD);
       if (iconmaps && iconmaps[i]) {
-         wxRect r(x, BASELINE3 - BOXWD, BOXWD, BOXWD);
          dc.SetBrush(*deadbrush);
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
          dc.DrawBitmap(*iconmaps[i], x + 1, BASELINE3 - BOXWD + 1, true);
       } else {
-         x = h_col2 + i * COLWD + (COLWD - digitwd) / 2;
-         DisplayText(dc, _("x"), x, BASELINE3);
+         dc.SetBrush(*wxTRANSPARENT_BRUSH);
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
       }
    }
 
@@ -497,6 +505,7 @@ void EditBar::OnButton(wxCommandEvent& event)
       case MOVE_BUTT:      cmdid = ID_MOVE; break;
       case ZOOMIN_BUTT:    cmdid = ID_ZOOMIN; break;
       case ZOOMOUT_BUTT:   cmdid = ID_ZOOMOUT; break;
+      case ALLSTATES_BUTT: cmdid = ID_ALL_STATES; break;
       default:             Warning(_("Unexpected button id!")); return;
    }
    
@@ -608,6 +617,9 @@ void EditBar::EnableButton(int id, bool enable)
       } else if (id == ZOOMOUT_BUTT && currlayer->curs == curs_zoomout) {
          ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
          
+      } else if (id == ALLSTATES_BUTT && showallstates) {
+         ebbutt[id]->SetBitmapDisabled(disdownbutt[id]);
+         
       } else {
          ebbutt[id]->SetBitmapDisabled(disnormbutt[id]);
       }
@@ -670,6 +682,8 @@ void CreateEditBar(wxWindow* parent)
    editbarptr->AddButton(MOVE_BUTT,       _("Move"));
    editbarptr->AddButton(ZOOMIN_BUTT,     _("Zoom in"));
    editbarptr->AddButton(ZOOMOUT_BUTT,    _("Zoom out"));
+   editbarptr->AddSeparator();
+   editbarptr->AddButton(ALLSTATES_BUTT,  _("Show/hide all states"));
       
    editbarptr->Show(showedit);
 }
@@ -703,6 +717,7 @@ void UpdateEditBar(bool active)
       editbarptr->SelectButton(MOVE_BUTT,       currlayer->curs == curs_hand);
       editbarptr->SelectButton(ZOOMIN_BUTT,     currlayer->curs == curs_zoomin);
       editbarptr->SelectButton(ZOOMOUT_BUTT,    currlayer->curs == curs_zoomout);
+      editbarptr->SelectButton(ALLSTATES_BUTT,  showallstates);
 
       editbarptr->EnableButton(DRAW_BUTT,       active);
       editbarptr->EnableButton(PICK_BUTT,       active);
@@ -710,6 +725,7 @@ void UpdateEditBar(bool active)
       editbarptr->EnableButton(MOVE_BUTT,       active);
       editbarptr->EnableButton(ZOOMIN_BUTT,     active);
       editbarptr->EnableButton(ZOOMOUT_BUTT,    active);
+      editbarptr->EnableButton(ALLSTATES_BUTT,  active);
       
       //!!! if showallstates then only refresh top portion???
       editbarptr->Refresh(false);
