@@ -216,7 +216,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       CreatePaleBitmap(downbutt[MOVE_BUTT],       disdownbutt[MOVE_BUTT]);
       CreatePaleBitmap(downbutt[ZOOMIN_BUTT],     disdownbutt[ZOOMIN_BUTT]);
       CreatePaleBitmap(downbutt[ZOOMOUT_BUTT],    disdownbutt[ZOOMOUT_BUTT]);
-      CreatePaleBitmap(downbutt[ALLSTATES_BUTT,   disdownbutt[ALLSTATES_BUTT]);
+      CreatePaleBitmap(downbutt[ALLSTATES_BUTT],  disdownbutt[ALLSTATES_BUTT]);
    #endif
 
    for (int i = 0; i < NUM_BUTTONS; i++) {
