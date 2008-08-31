@@ -291,7 +291,11 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    editbitmapht = -1;
    
    // add scroll bar
-   int scrollbarht = 15;
+#ifdef __WXMAC__
+   int scrollbarht = 15;   // must be this height on Mac
+#else
+   int scrollbarht = BOXSIZE;
+#endif
    int x = xpos + 3*digitwd + smallgap + 2*(BOXSIZE + smallgap);
    int y = editbarht - SMALLHT + (SMALLHT - (scrollbarht + 1)) / 2;
    leftbar = new wxScrollBar(this, LEFT_SCROLL, wxPoint(x, y),
@@ -449,8 +453,12 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    leftbar->SetScrollbar(state, 1, currlayer->algo->NumCellStates(), 1, true);
    // wxMac bug? scroll bar does not update in some cases so we have to call
    // leftbar->Refresh(false) explicitly in a few places
+   
+   #ifndef __WXMAC__
+      viewptr->SetFocus();    //!!! need on Win/Linux???
+   #endif
 
-   SetEditFont(dc);     // for DisplayText calls
+   SetEditFont(dc);           // for DisplayText calls
 
    if (showallstates) DrawAllStates(dc);
 
@@ -579,7 +587,9 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
          currlayer->drawingstate = box;
          Refresh(false);
          Update();
-         leftbar->Refresh(false);    // needed on Mac
+         #ifdef __WXMAC__
+            leftbar->Refresh(false);    // needed on Mac
+         #endif
          return;
       }
    }
@@ -669,6 +679,9 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
    } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
       //!!!??? Refresh(false);
       //!!!??? Update();
+      #ifndef __WXMAC__
+         viewptr->SetFocus();    //!!! need on Win/Linux???
+      #endif
    }
 }
 
@@ -876,8 +889,10 @@ void UpdateEditBar(bool active)
       editbarptr->Refresh(false);
       editbarptr->Update();
       
-      // need this on Mac to update scroll bar after changing algo
-      editbarptr->leftbar->Refresh(false);
+      #ifdef __WXMAC__
+         // need this on Mac to update scroll bar after changing algo
+         editbarptr->leftbar->Refresh(false);
+      #endif
    }
 }
 
