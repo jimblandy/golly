@@ -48,8 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-// ids for bitmap buttons in edit bar
 enum {
+   // ids for bitmap buttons in edit bar
    DRAW_BUTT = 0,
    PICK_BUTT,
    SELECT_BUTT,
@@ -57,7 +57,8 @@ enum {
    ZOOMIN_BUTT,
    ZOOMOUT_BUTT,
    ALLSTATES_BUTT,
-   NUM_BUTTONS       // must be last
+   NUM_BUTTONS,      // must be after all buttons
+   LEFT_SCROLL       // id for left scroll bar
 };
 
 #ifdef __WXMSW__
@@ -104,13 +105,15 @@ public:
    // set state of a toggle button
    void SelectButton(int id, bool select);
 
-   // move buttons up or down depending on showallstates
-   void MoveButtons();
+   // move controls up or down depending on showallstates
+   void MoveControls();
 
    // detect press and release of a bitmap button
    void OnButtonDown(wxMouseEvent& event);
    void OnButtonUp(wxMouseEvent& event);
    void OnKillFocus(wxFocusEvent& event);
+
+   wxScrollBar* leftbar;       // left scroll bar
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -120,6 +123,7 @@ private:
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
+   void OnLeftScroll(wxScrollEvent& event);
 
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
@@ -146,18 +150,23 @@ private:
    wxBitmap* editbitmap;         // edit bar bitmap
    int editbitmapwd;             // width of edit bar bitmap
    int editbitmapht;             // height of edit bar bitmap
+
+   wxRect colorbox;              // box showing current color
+   wxRect iconbox;               // box showing current icon
    
    int h_col1;                   // horizontal position of labels
    int h_col2;                   // horizontal position of info for state 0
    int digitwd;                  // width of digit in edit bar font
+   int digitht;                  // height of digit in edit bar font
    int textascent;               // vertical adjustment used in DrawText calls
    wxFont* editfont;             // edit bar font
 };
 
 BEGIN_EVENT_TABLE(EditBar, wxPanel)
-   EVT_PAINT      (           EditBar::OnPaint)
-   EVT_LEFT_DOWN  (           EditBar::OnMouseDown)
-   EVT_BUTTON     (wxID_ANY,  EditBar::OnButton)
+   EVT_PAINT            (              EditBar::OnPaint)
+   EVT_LEFT_DOWN        (              EditBar::OnMouseDown)
+   EVT_BUTTON           (wxID_ANY,     EditBar::OnButton)
+   EVT_COMMAND_SCROLL   (LEFT_SCROLL,  EditBar::OnLeftScroll)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -172,7 +181,8 @@ const int BASELINE1 = LINEHT-1;     // baseline of 1st line
 const int BASELINE2 = BASELINE1+LINEHT;   // baseline of 2nd line
 const int BASELINE3 = BASELINE2+LINEHT;   // baseline of 3rd line
 const int COLWD = 20;               // column width of state/color/icon info
-const int BOXWD = 9;                // width (and height) of color/icon boxes
+const int BOXWD = 9;                // width (and height) of small color/icon boxes
+const int BOXSIZE = 17;             // width and height of colorbox and iconbox
 
 // edit bar buttons (must be global to use Connect/Disconect on Windows)
 wxBitmapButton* ebbutt[NUM_BUTTONS];
@@ -235,6 +245,16 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    if (showallstates) ypos += BIGHT - SMALLHT;
    biggap = 16;
 
+   // add buttons
+   AddButton(DRAW_BUTT,       _("Draw"));
+   AddButton(PICK_BUTT,       _("Pick"));
+   AddButton(SELECT_BUTT,     _("Select"));
+   AddButton(MOVE_BUTT,       _("Move"));
+   AddButton(ZOOMIN_BUTT,     _("Zoom in"));
+   AddButton(ZOOMOUT_BUTT,    _("Zoom out"));
+   AddSeparator();
+   AddButton(ALLSTATES_BUTT,  _("Show/hide all states"));
+
    // create font for text in edit bar and set textascent for use in DisplayText
    #ifdef __WXMSW__
       // use smaller, narrower font on Windows
@@ -264,11 +284,20 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    h_col1 = 4;
    dc.GetTextExtent(_("State:"), &textwd, &textht);
    h_col2 = h_col1 + textwd + 4;
-   dc.GetTextExtent(_("9"), &digitwd, &textht);
+   dc.GetTextExtent(_("9"), &digitwd, &digitht);
 
    editbitmap = NULL;
    editbitmapwd = -1;
    editbitmapht = -1;
+   
+   // add scroll bar
+   int scrollbarht = 15;
+   int x = xpos + 3*digitwd + smallgap + 2*(BOXSIZE + smallgap);
+   int y = editbarht - SMALLHT + (SMALLHT - (scrollbarht + 1)) / 2;
+   leftbar = new wxScrollBar(this, LEFT_SCROLL, wxPoint(x, y),
+                             wxSize(100, scrollbarht),
+                             wxSB_HORIZONTAL);
+   if (leftbar == NULL) Fatal(_("Failed to create scroll bar!"));
 }
 
 // -----------------------------------------------------------------------------
@@ -277,6 +306,7 @@ EditBar::~EditBar()
 {
    delete editfont;
    delete editbitmap;
+   delete leftbar;
 }
 
 // -----------------------------------------------------------------------------
@@ -302,8 +332,6 @@ void EditBar::DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y)
 
 void EditBar::DrawAllStates(wxDC& dc)
 {
-   SetEditFont(dc);     // for DisplayText calls
-
    DisplayText(dc, _("State:"), h_col1, BASELINE1);
    DisplayText(dc, _("Color:"), h_col1, BASELINE2);
    DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
@@ -311,10 +339,11 @@ void EditBar::DrawAllStates(wxDC& dc)
    AlgoData* ad = algoinfo[currlayer->algtype];
    wxBitmap** iconmaps = ad->icons7x7;
 
-   // set rgb values for dead cells
+   // set rgb values for dead state
    ad->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
    ad->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
    ad->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   wxColor deadcolor(ad->cellr[0], ad->cellg[0], ad->cellb[0]);
    
    unsigned char saver=0, saveg=0, saveb=0;
    if (currlayer->algo->NumCellStates() == 2) {
@@ -345,16 +374,15 @@ void EditBar::DrawAllStates(wxDC& dc)
       // draw color box
       x = 1 + h_col2 + i * COLWD + (COLWD - BOXWD) / 2;
       wxColor color(ad->cellr[i], ad->cellg[i], ad->cellb[i]);
-      wxBrush brush(color);
       r = wxRect(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
-      dc.SetBrush(brush);
+      dc.SetBrush(wxBrush(color));
       dc.DrawRectangle(r);
       dc.SetBrush(wxNullBrush);
       
       // draw icon box
       r = wxRect(x, BASELINE3 - BOXWD, BOXWD, BOXWD);
       if (iconmaps && iconmaps[i]) {
-         dc.SetBrush(*deadbrush);
+         dc.SetBrush(wxBrush(deadcolor));
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
          dc.DrawBitmap(*iconmaps[i], x + 1, BASELINE3 - BOXWD + 1, true);
@@ -415,8 +443,80 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
       currlayer->drawingstate = 1;
    }
+   int state = currlayer->drawingstate;
    
+   // adjust scroll bar
+   leftbar->SetScrollbar(state, 1, currlayer->algo->NumCellStates(), 1, true);
+   // wxMac bug? scroll bar does not update in some cases so we have to call
+   // leftbar->Refresh(false) explicitly in a few places
+
+   SetEditFont(dc);     // for DisplayText calls
+
    if (showallstates) DrawAllStates(dc);
+
+   AlgoData* ad = algoinfo[currlayer->algtype];
+   unsigned char saver=0, saveg=0, saveb=0;
+
+   dc.SetPen(*wxBLACK_PEN);
+   
+   // draw current drawing state
+   int x = xpos;
+   int y = editbarht - 8;
+   wxString strbuf;
+   if (state < 10) x += digitwd;
+   if (state < 100) x += digitwd;
+   strbuf.Printf(_("%d"), state);
+   DisplayText(dc, strbuf, x, y - (digitht / 2) + 1);
+
+   // set rgb values for dead state
+   ad->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   ad->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   ad->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   wxColor deadcolor(ad->cellr[0], ad->cellg[0], ad->cellb[0]);
+
+   if (state == 1 && currlayer->algo->NumCellStates() == 2) {
+      // set rgb values for state 1 in 2-state universe, but only temporarily
+      // because the current algo might allow rules with a varying # of cell states
+      // (eg. current Generations rule could be 12/34/2)
+      //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
+      saver = ad->cellr[1];
+      saveg = ad->cellg[1];
+      saveb = ad->cellb[1];
+      ad->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      ad->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      ad->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
+   }
+   wxColor color(ad->cellr[state], ad->cellg[state], ad->cellb[state]);
+   if (state == 1 && currlayer->algo->NumCellStates() == 2) {
+      // restore state 1 color changed above
+      ad->cellr[1] = saver;
+      ad->cellg[1] = saveg;
+      ad->cellb[1] = saveb;
+   }
+   
+   // draw color box
+   x = xpos + 3*digitwd + smallgap;
+   colorbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
+   dc.SetBrush(wxBrush(color));
+   dc.DrawRectangle(colorbox);
+   dc.SetBrush(wxNullBrush);
+   
+   // draw icon box
+   x += BOXSIZE + smallgap;
+   iconbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
+   wxBitmap** iconmaps = ad->icons15x15;
+   if (iconmaps && iconmaps[state]) {
+      dc.SetBrush(wxBrush(deadcolor));
+      dc.DrawRectangle(iconbox);
+      dc.SetBrush(wxNullBrush);
+      dc.DrawBitmap(*iconmaps[state], x + 1, y - BOXSIZE + 1, true);
+   } else {
+      dc.SetBrush(*wxTRANSPARENT_BRUSH);
+      dc.DrawRectangle(iconbox);
+      dc.SetBrush(wxNullBrush);
+   }
+
+   dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------
@@ -461,11 +561,12 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
    statusptr->ClearMessage();
 
    if (inscript) return;    // let script control drawing state
+
+   int x = event.GetX();
+   int y = event.GetY();
    
    if (showallstates) {
       // user can change drawing state by clicking in appropriate box
-      int x = event.GetX();
-      int y = event.GetY();
       int right = h_col2 + COLWD * currlayer->algo->NumCellStates();
       int box = -1;
       
@@ -476,10 +577,18 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
       if (box >= 0 && box < currlayer->algo->NumCellStates() &&
           currlayer->drawingstate != box) {
          currlayer->drawingstate = box;
-         //!!! only refresh state info
          Refresh(false);
          Update();
+         leftbar->Refresh(false);    // needed on Mac
+         return;
       }
+   }
+   
+   // user can change icon mode by clicking in icon/color box
+   if (iconbox.Contains(x,y) && !showicons) {
+      viewptr->ToggleCellIcons();
+   } else if (colorbox.Contains(x,y) && showicons) {
+      viewptr->ToggleCellIcons();
    }
 }
 
@@ -512,6 +621,55 @@ void EditBar::OnButton(wxCommandEvent& event)
    // call MainFrame::OnMenu after OnButton finishes
    wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
    wxPostEvent(mainptr->GetEventHandler(), cmdevt);
+}
+
+// -----------------------------------------------------------------------------
+
+void EditBar::OnLeftScroll(wxScrollEvent& event)
+{
+   WXTYPE type = event.GetEventType();
+
+   if (type == wxEVT_SCROLL_LINEUP) {
+      currlayer->drawingstate--;
+      if (currlayer->drawingstate < 0)
+         currlayer->drawingstate = 0;
+      Refresh(false);
+      //!!!???Update();
+
+   } else if (type == wxEVT_SCROLL_LINEDOWN) {
+      currlayer->drawingstate++;
+      if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
+         currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
+      Refresh(false);
+      //!!!???Update();
+
+   } else if (type == wxEVT_SCROLL_PAGEUP) {
+      currlayer->drawingstate -= 10;
+      if (currlayer->drawingstate < 0)
+         currlayer->drawingstate = 0;
+      Refresh(false);
+      //!!!???Update();
+
+   } else if (type == wxEVT_SCROLL_PAGEDOWN) {
+      currlayer->drawingstate += 10;
+      if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
+         currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
+      Refresh(false);
+      //!!!???Update();
+
+   } else if (type == wxEVT_SCROLL_THUMBTRACK) {
+      currlayer->drawingstate = event.GetPosition();
+      if (currlayer->drawingstate < 0)
+         currlayer->drawingstate = 0;
+      if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
+         currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
+      Refresh(false);
+      //!!!???Update();
+
+   } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
+      //!!!??? Refresh(false);
+      //!!!??? Update();
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -552,12 +710,7 @@ void EditBar::OnButtonUp(wxMouseEvent& event)
    ebbutt[id]->Disconnect(id, wxEVT_KILL_FOCUS, wxFocusEventHandler(EditBar::OnKillFocus));
    viewptr->SetFocus();
 
-#if wxCHECK_VERSION(2,7,0)
-// Inside is deprecated
-if ( r.Contains(pt) ) {
-#else
-if ( r.Inside(pt) ) {
-#endif
+   if (r.Contains(pt)) {
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(ebbutt[id]);
@@ -651,16 +804,18 @@ void EditBar::SelectButton(int id, bool select)
 
 // -----------------------------------------------------------------------------
 
-void EditBar::MoveButtons()
+void EditBar::MoveControls()
 {
    // showallstates has just been toggled
+   int x, y;
    int yshift = BIGHT - SMALLHT;
    if (!showallstates) yshift *= -1;
    for (int id = 0; id < NUM_BUTTONS; id++) {
-      int x, y;
       ebbutt[id]->GetPosition(&x, &y);
       ebbutt[id]->Move(x, y + yshift);
    }
+   leftbar->GetPosition(&x, &y);
+   leftbar->Move(x, y + yshift);
 }
 
 // -----------------------------------------------------------------------------
@@ -674,16 +829,6 @@ void CreateEditBar(wxWindow* parent)
    editbarht = showallstates ? BIGHT : SMALLHT;
    editbarptr = new EditBar(parent, 0, LayerBarHeight(), wd, editbarht);
    if (editbarptr == NULL) Fatal(_("Failed to create edit bar!"));
-
-   // add cursor mode buttons
-   editbarptr->AddButton(DRAW_BUTT,       _("Draw"));
-   editbarptr->AddButton(PICK_BUTT,       _("Pick"));
-   editbarptr->AddButton(SELECT_BUTT,     _("Select"));
-   editbarptr->AddButton(MOVE_BUTT,       _("Move"));
-   editbarptr->AddButton(ZOOMIN_BUTT,     _("Zoom in"));
-   editbarptr->AddButton(ZOOMOUT_BUTT,    _("Zoom out"));
-   editbarptr->AddSeparator();
-   editbarptr->AddButton(ALLSTATES_BUTT,  _("Show/hide all states"));
       
    editbarptr->Show(showedit);
 }
@@ -730,6 +875,9 @@ void UpdateEditBar(bool active)
       //!!! if showallstates then only refresh top portion???
       editbarptr->Refresh(false);
       editbarptr->Update();
+      
+      // need this on Mac to update scroll bar after changing algo
+      editbarptr->leftbar->Refresh(false);
    }
 }
 
@@ -767,8 +915,8 @@ void ToggleAllStates()
 {
    showallstates = !showallstates;
    editbarht = showallstates ? BIGHT : SMALLHT;
-   // move buttons up/down
-   editbarptr->MoveButtons();
+   // move controls up/down
+   editbarptr->MoveControls();
    if (showedit) {
       int diff = BIGHT - SMALLHT;
       if (!showallstates) diff *= -1;
