@@ -294,7 +294,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #elif defined(__WXMSW__)
       digitht -= 4;
    #else // Linux
-      digitht -= 4;
+      digitht -= 6;
    #endif
 
    editbitmap = NULL;
