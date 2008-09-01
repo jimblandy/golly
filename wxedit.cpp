@@ -289,28 +289,38 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    dc.GetTextExtent(_("State:"), &textwd, &textht);
    h_col2 = h_col1 + textwd + 4;
    dc.GetTextExtent(_("9"), &digitwd, &digitht);
+   #ifdef __WXMAC__
+      digitht -= 4;
+   #elif defined(__WXMSW__)
+      digitht -= 4;
+   #else // Linux
+      digitht -= 4;
+   #endif
 
    editbitmap = NULL;
    editbitmapwd = -1;
    editbitmapht = -1;
    
    // add scroll bar
-#ifdef __WXMAC__
-   int scrollbarht = 15;   // must be this height on Mac
-#else
-   int scrollbarht = BOXSIZE;
-#endif
-   int x = xpos + 3*digitwd + smallgap + 2*(BOXSIZE + smallgap);
-   int y = editbarht - SMALLHT + (SMALLHT - (scrollbarht + 1)) / 2;
+   #ifdef __WXMAC__
+      int scrollbarht = 15;   // must be this height on Mac
+   #else
+      int scrollbarht = BOXSIZE;
+   #endif
+      int x = xpos + 3*digitwd + smallgap + 2*(BOXSIZE + smallgap);
+      int y = editbarht - SMALLHT + (SMALLHT - (scrollbarht + 1)) / 2;
+   #ifdef __WXGTK__
+      y++;
+   #endif
    leftbar = new wxScrollBar(this, LEFT_SCROLL, wxPoint(x, y),
                              wxSize(100, scrollbarht),
                              wxSB_HORIZONTAL);
    if (leftbar == NULL) Fatal(_("Failed to create scroll bar!"));
 
-#ifdef __WXGTK__
-   // wxGTK bug? need this so OnLeftScroll will be called
-   leftbar->SetScrollbar(0, 1, 100, 1, true);
-#endif
+   #ifdef __WXGTK__
+      // wxGTK bug? need this so OnLeftScroll will be called
+      leftbar->SetScrollbar(0, 1, 100, 1, true);
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -474,7 +484,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    if (state < 10) x += digitwd;
    if (state < 100) x += digitwd;
    strbuf.Printf(_("%d"), state);
-   DisplayText(dc, strbuf, x, y - (digitht / 2) + 1);
+   DisplayText(dc, strbuf, x, y - (BOXSIZE - digitht)/2);
 
    // set rgb values for dead state
    ad->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
