@@ -186,6 +186,7 @@ const int BASELINE3 = BASELINE2+LINEHT;   // baseline of 3rd line
 const int COLWD = 20;               // column width of state/color/icon info
 const int BOXWD = 9;                // width (and height) of small color/icon boxes
 const int BOXSIZE = 17;             // width and height of colorbox and iconbox
+const int PAGESIZE = 10;            // scroll amount when paging
 
 // edit bar buttons (must be global to use Connect/Disconect on Windows)
 wxBitmapButton* ebbutt[NUM_BUTTONS];
@@ -648,13 +649,13 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
       Refresh(false);
 
    } else if (type == wxEVT_SCROLL_PAGEUP) {
-      currlayer->drawingstate -= 10;
+      currlayer->drawingstate -= PAGESIZE;
       if (currlayer->drawingstate < 0)
          currlayer->drawingstate = 0;
       Refresh(false);
 
    } else if (type == wxEVT_SCROLL_PAGEDOWN) {
-      currlayer->drawingstate += 10;
+      currlayer->drawingstate += PAGESIZE;
       if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
          currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
       Refresh(false);
@@ -668,9 +669,7 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
       Refresh(false);
    }
    
-   #ifndef __WXMAC__
-      viewptr->SetFocus();    // need on Win/Linux
-   #endif
+   UpdateLeftScroll();
 }
 
 // -----------------------------------------------------------------------------
@@ -824,7 +823,7 @@ void EditBar::MoveControls()
 void EditBar::UpdateLeftScroll()
 {
    leftbar->SetScrollbar(currlayer->drawingstate, 1,
-                         currlayer->algo->NumCellStates(), 1, true);
+                         currlayer->algo->NumCellStates(), PAGESIZE, true);
    #ifndef __WXMAC__
       viewptr->SetFocus();    // need on Win/Linux
    #endif
