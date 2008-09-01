@@ -108,12 +108,13 @@ public:
    // move controls up or down depending on showallstates
    void MoveControls();
 
+   // update left scroll bar
+   void UpdateLeftScroll();
+
    // detect press and release of a bitmap button
    void OnButtonDown(wxMouseEvent& event);
    void OnButtonUp(wxMouseEvent& event);
    void OnKillFocus(wxFocusEvent& event);
-
-   wxScrollBar* leftbar;       // left scroll bar
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -153,6 +154,8 @@ private:
 
    wxRect colorbox;              // box showing current color
    wxRect iconbox;               // box showing current icon
+
+   wxScrollBar* leftbar;         // left scroll bar
    
    int h_col1;                   // horizontal position of labels
    int h_col2;                   // horizontal position of info for state 0
@@ -452,22 +455,8 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
       currlayer->drawingstate = 1;
    }
-   int state = currlayer->drawingstate;
-   
-   #ifdef __WXGTK__
-      // wxGTK bug? can't call SetScrollbar here (causes all sorts of problems)
-   #else
-      // adjust scroll bar
-      leftbar->SetScrollbar(state, 1, currlayer->algo->NumCellStates(), 1, true);
-      // wxMac bug? scroll bar does not update in some cases so we have to call
-      // leftbar->Refresh(false) explicitly in a few places
-   #endif
-   
-   #ifndef __WXMAC__
-      viewptr->SetFocus();    // need on Win/Linux
-   #endif
 
-   SetEditFont(dc);           // for DisplayText calls
+   SetEditFont(dc);  // for DisplayText calls
 
    if (showallstates) DrawAllStates(dc);
 
@@ -477,6 +466,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    dc.SetPen(*wxBLACK_PEN);
    
    // draw current drawing state
+   int state = currlayer->drawingstate;
    int x = xpos;
    int y = editbarht - 8;
    wxString strbuf;
@@ -596,13 +586,7 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
          currlayer->drawingstate = box;
          Refresh(false);
          Update();
-         #ifdef __WXMAC__
-            leftbar->Refresh(false);    // needed on Mac
-         #endif
-         #ifdef __WXGTK__
-            leftbar->SetScrollbar(currlayer->drawingstate, 1, currlayer->algo->NumCellStates(), 1, true);
-         #endif
-         return;
+         UpdateLeftScroll();
       }
    }
    
@@ -838,6 +822,17 @@ void EditBar::MoveControls()
 
 // -----------------------------------------------------------------------------
 
+void EditBar::UpdateLeftScroll()
+{
+   leftbar->SetScrollbar(currlayer->drawingstate, 1,
+                         currlayer->algo->NumCellStates(), 1, true);
+   #ifndef __WXMAC__
+      viewptr->SetFocus();    // need on Win/Linux
+   #endif
+}
+
+// -----------------------------------------------------------------------------
+
 void CreateEditBar(wxWindow* parent)
 {
    // create edit bar underneath layer bar
@@ -893,13 +888,8 @@ void UpdateEditBar(bool active)
       editbarptr->Refresh(false);
       editbarptr->Update();
       
-      #ifdef __WXMAC__
-         // need this on Mac to update scroll bar after changing algo
-         editbarptr->leftbar->Refresh(false);
-      #endif
-      #ifdef __WXGTK__
-         editbarptr->leftbar->SetScrollbar(currlayer->drawingstate, 1, currlayer->algo->NumCellStates(), 1, true);
-      #endif
+      // currlayer->drawingstate might have changed
+      editbarptr->UpdateLeftScroll();
    }
 }
 
