@@ -58,7 +58,7 @@ enum {
    ZOOMOUT_BUTT,
    ALLSTATES_BUTT,
    NUM_BUTTONS,      // must be after all buttons
-   LEFT_SCROLL       // id for left scroll bar
+   LEFT_SCROLL
 };
 
 #ifdef __WXMSW__
@@ -302,6 +302,11 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
                              wxSize(100, scrollbarht),
                              wxSB_HORIZONTAL);
    if (leftbar == NULL) Fatal(_("Failed to create scroll bar!"));
+
+#ifdef __WXGTK__
+   // wxGTK bug? need this so OnLeftScroll will be called
+   leftbar->SetScrollbar(0, 1, 100, 1, true);
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -449,13 +454,17 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    }
    int state = currlayer->drawingstate;
    
-   // adjust scroll bar
-   leftbar->SetScrollbar(state, 1, currlayer->algo->NumCellStates(), 1, true);
-   // wxMac bug? scroll bar does not update in some cases so we have to call
-   // leftbar->Refresh(false) explicitly in a few places
+   #ifdef __WXGTK__
+      // wxGTK bug? can't call SetScrollbar here (causes all sorts of problems)
+   #else
+      // adjust scroll bar
+      leftbar->SetScrollbar(state, 1, currlayer->algo->NumCellStates(), 1, true);
+      // wxMac bug? scroll bar does not update in some cases so we have to call
+      // leftbar->Refresh(false) explicitly in a few places
+   #endif
    
    #ifndef __WXMAC__
-      viewptr->SetFocus();    //!!! need on Win/Linux???
+      viewptr->SetFocus();    // need on Win/Linux
    #endif
 
    SetEditFont(dc);           // for DisplayText calls
@@ -590,6 +599,9 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
          #ifdef __WXMAC__
             leftbar->Refresh(false);    // needed on Mac
          #endif
+         #ifdef __WXGTK__
+            leftbar->SetScrollbar(currlayer->drawingstate, 1, currlayer->algo->NumCellStates(), 1, true);
+         #endif
          return;
       }
    }
@@ -644,28 +656,24 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
       if (currlayer->drawingstate < 0)
          currlayer->drawingstate = 0;
       Refresh(false);
-      //!!!???Update();
 
    } else if (type == wxEVT_SCROLL_LINEDOWN) {
       currlayer->drawingstate++;
       if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
          currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
       Refresh(false);
-      //!!!???Update();
 
    } else if (type == wxEVT_SCROLL_PAGEUP) {
       currlayer->drawingstate -= 10;
       if (currlayer->drawingstate < 0)
          currlayer->drawingstate = 0;
       Refresh(false);
-      //!!!???Update();
 
    } else if (type == wxEVT_SCROLL_PAGEDOWN) {
       currlayer->drawingstate += 10;
       if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
          currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
       Refresh(false);
-      //!!!???Update();
 
    } else if (type == wxEVT_SCROLL_THUMBTRACK) {
       currlayer->drawingstate = event.GetPosition();
@@ -674,13 +682,10 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
       if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
          currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
       Refresh(false);
-      //!!!???Update();
 
    } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
-      //!!!??? Refresh(false);
-      //!!!??? Update();
       #ifndef __WXMAC__
-         viewptr->SetFocus();    //!!! need on Win/Linux???
+         //???viewptr->SetFocus();    //!!! only need on Win???
       #endif
    }
 }
@@ -885,13 +890,15 @@ void UpdateEditBar(bool active)
       editbarptr->EnableButton(ZOOMOUT_BUTT,    active);
       editbarptr->EnableButton(ALLSTATES_BUTT,  active);
       
-      //!!! if showallstates then only refresh top portion???
       editbarptr->Refresh(false);
       editbarptr->Update();
       
       #ifdef __WXMAC__
          // need this on Mac to update scroll bar after changing algo
          editbarptr->leftbar->Refresh(false);
+      #endif
+      #ifdef __WXGTK__
+         editbarptr->leftbar->SetScrollbar(currlayer->drawingstate, 1, currlayer->algo->NumCellStates(), 1, true);
       #endif
    }
 }
