@@ -316,11 +316,6 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
                              wxSize(100, scrollbarht),
                              wxSB_HORIZONTAL);
    if (leftbar == NULL) Fatal(_("Failed to create scroll bar!"));
-
-   #ifdef __WXGTK__
-      // wxGTK bug? need this so OnLeftScroll will be called
-      leftbar->SetScrollbar(0, 1, 100, 1, true);
-   #endif
 }
 
 // -----------------------------------------------------------------------------
