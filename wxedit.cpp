@@ -666,12 +666,11 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
       if (currlayer->drawingstate >= currlayer->algo->NumCellStates())
          currlayer->drawingstate = currlayer->algo->NumCellStates() - 1;
       Refresh(false);
-
-   } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
-      #ifndef __WXMAC__
-         //???viewptr->SetFocus();    //!!! only need on Win???
-      #endif
    }
+   
+   #ifndef __WXMAC__
+      viewptr->SetFocus();    // need on Win/Linux
+   #endif
 }
 
 // -----------------------------------------------------------------------------
