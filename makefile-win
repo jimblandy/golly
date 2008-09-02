@@ -301,7 +301,6 @@ clean:
 
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) \
-	/LIBPATH:"c:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib" \
 	/SUBSYSTEM:WINDOWS $(BASEOBJ) $(WXOBJ) golly.res \
 	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) \
 	$(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib \
