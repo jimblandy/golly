@@ -188,6 +188,7 @@ const int BASELINE3 = BASELINE2+LINEHT;   // baseline of 3rd line
 const int COLWD = 22;               // column width of state/color/icon info
 const int BOXWD = 9;                // width (and height) of small color/icon boxes
 const int BOXSIZE = 17;             // width and height of colorbox and iconbox
+const int BOXGAP = 8;               // gap between colorbox and iconbox
 const int PAGESIZE = 10;            // scroll amount when paging
 
 // edit bar buttons (must be global to use Connect/Disconect on Windows)
@@ -313,7 +314,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #else
       int scrollbarht = BOXSIZE;
    #endif
-      int x = xpos + 3*digitwd + smallgap + 2*(BOXSIZE + smallgap);
+      int x = xpos + 3*digitwd + BOXGAP + 2*(BOXSIZE + BOXGAP);
       int y = editbarht - SMALLHT + (SMALLHT - (scrollbarht + 1)) / 2;
    #ifdef __WXGTK__
       y++;
@@ -542,14 +543,14 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    }
    
    // draw color box
-   x = xpos + 3*digitwd + smallgap;
+   x = xpos + 3*digitwd + BOXGAP;
    colorbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
    dc.SetBrush(wxBrush(color));
    dc.DrawRectangle(colorbox);
    dc.SetBrush(wxNullBrush);
    
    // draw icon box
-   x += BOXSIZE + smallgap;
+   x += BOXSIZE + BOXGAP;
    iconbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
    wxBitmap** iconmaps = ad->icons15x15;
    if (iconmaps && iconmaps[state]) {
@@ -562,6 +563,19 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       dc.DrawRectangle(iconbox);
       dc.SetBrush(wxNullBrush);
    }
+   
+   // show whether color or icon mode is selected
+   dc.SetBrush(*wxTRANSPARENT_BRUSH);
+   if (showicons) {
+      iconbox.Inflate(2,2);
+      dc.DrawRectangle(iconbox);
+      iconbox.Inflate(-2,-2);
+   } else {
+      colorbox.Inflate(2,2);
+      dc.DrawRectangle(colorbox);
+      colorbox.Inflate(-2,-2);
+   }
+   dc.SetBrush(wxNullBrush);
 
    dc.SetPen(wxNullPen);
 }
