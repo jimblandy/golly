@@ -29,6 +29,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/file.h"       // for wxFile
 #include "wx/dcbuffer.h"   // for wxBufferedPaintDC
+#if wxUSE_TOOLTIPS
+   #include "wx/tooltip.h" // for wxToolTip
+#endif
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -2025,6 +2028,11 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
+   #ifdef __WXMAC__
+      // close any open tool tip window (fixes wxMac bug?)
+      wxToolTip::RemoveToolTips();
+   #endif
+   
    statusptr->ClearMessage();
 
    realkey = event.GetKeyCode();

@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 enum {
-   // ids for bitmap buttons in edit bar
+   // ids for bitmap buttons
    DRAW_BUTT = 0,
    PICK_BUTT,
    SELECT_BUTT,
@@ -58,10 +58,7 @@ enum {
    ZOOMOUT_BUTT,
    ALLSTATES_BUTT,
    NUM_BUTTONS,      // must be after all buttons
-
-   // ids for scroll bars in edit bar
-   LEFT_SCROLL,
-   RIGHT_SCROLL
+   SCROLL_BAR
 };
 
 #ifdef __WXMSW__
@@ -111,9 +108,8 @@ public:
    // move controls up or down depending on showallstates
    void MoveControls();
 
-   // update scroll bars
-   void UpdateLeftScroll();
-   void UpdateRightScroll();
+   // update scroll bar
+   void UpdateScrollBar();
 
    // detect press and release of a bitmap button
    void OnButtonDown(wxMouseEvent& event);
@@ -128,8 +124,7 @@ private:
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
-   void OnLeftScroll(wxScrollEvent& event);
-   void OnRightScroll(wxScrollEvent& event);
+   void OnScroll(wxScrollEvent& event);
 
    void SetEditFont(wxDC& dc);
    void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
@@ -160,11 +155,8 @@ private:
    wxRect colorbox;              // box showing current color
    wxRect iconbox;               // box showing current icon
 
-   wxScrollBar* leftbar;         // scroll bar for changing drawing state
-   wxScrollBar* rightbar;        // scroll bar for changing visible states
-   
+   wxScrollBar* drawbar;         // scroll bar for changing drawing state
    int firststate;               // first visible state (if showing all states)
-   int maxfirst;                 // maximum value of firststate
    
    int h_col1;                   // horizontal position of labels
    int h_col2;                   // horizontal position of info for state 0
@@ -177,9 +169,9 @@ private:
 BEGIN_EVENT_TABLE(EditBar, wxPanel)
    EVT_PAINT            (              EditBar::OnPaint)
    EVT_LEFT_DOWN        (              EditBar::OnMouseDown)
+   EVT_LEFT_DCLICK      (              EditBar::OnMouseDown)
    EVT_BUTTON           (wxID_ANY,     EditBar::OnButton)
-   EVT_COMMAND_SCROLL   (LEFT_SCROLL,  EditBar::OnLeftScroll)
-   EVT_COMMAND_SCROLL   (RIGHT_SCROLL, EditBar::OnRightScroll)
+   EVT_COMMAND_SCROLL   (SCROLL_BAR,   EditBar::OnScroll)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -314,7 +306,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    editbitmapwd = -1;
    editbitmapht = -1;
    
-   // add scroll bars
+   // add scroll bar
    int scrollbarwd = 100;
    #ifdef __WXMAC__
       int scrollbarht = 15;   // must be this height on Mac
@@ -326,17 +318,10 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #ifdef __WXGTK__
       y++;
    #endif
-   leftbar = new wxScrollBar(this, LEFT_SCROLL, wxPoint(x, y),
+   drawbar = new wxScrollBar(this, SCROLL_BAR, wxPoint(x, y),
                              wxSize(scrollbarwd, scrollbarht),
                              wxSB_HORIZONTAL);
-   if (leftbar == NULL) Fatal(_("Failed to create left scroll bar!"));
-   
-   x += scrollbarwd + biggap;
-   rightbar = new wxScrollBar(this, RIGHT_SCROLL, wxPoint(x, y),
-                              wxSize(scrollbarwd, scrollbarht),
-                              wxSB_HORIZONTAL);
-   if (rightbar == NULL) Fatal(_("Failed to create right scroll bar!"));
-
+   if (drawbar == NULL) Fatal(_("Failed to create scroll bar!"));
    firststate = 0;
 }
 
@@ -346,8 +331,7 @@ EditBar::~EditBar()
 {
    delete editfont;
    delete editbitmap;
-   delete leftbar;
-   delete rightbar;
+   delete drawbar;
 }
 
 // -----------------------------------------------------------------------------
@@ -402,26 +386,34 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
 
    dc.SetPen(*wxBLACK_PEN);
 
-   // calculate number of visible states
+   // calculate number of (completely) visible states
    int visstates = (wd - h_col2) / COLWD;
    if (visstates >= currlayer->algo->NumCellStates()) {
       // all states are visible
       firststate = 0;
       visstates = currlayer->algo->NumCellStates();
    } else {
-      // calculate maxfirst for next OnRightScroll
-      maxfirst = currlayer->algo->NumCellStates() - visstates;
-      if (firststate > maxfirst) firststate = maxfirst;
+      // change firststate if necessary so that drawing state is visible
+      if (currlayer->drawingstate < firststate) {
+         firststate = currlayer->drawingstate;
+      } else if (currlayer->drawingstate >= firststate + visstates) {
+         firststate = currlayer->drawingstate - visstates + 1;
+      }
+      // may need to reduce firststate if window width has increased
+      if (firststate + visstates >= currlayer->algo->NumCellStates()) {
+         firststate = currlayer->algo->NumCellStates() - visstates;
+      }
    }
 
-   // we add 1 to visstates so we see partial box at right edge
+   // add 1 to visstates so we see partial box at right edge
    for (int i = firststate; i < firststate + visstates + 1; i++) {
-      wxString strbuf;
-      wxRect r;
-      int x;
       
       // this test is needed because we added 1 to visstates
       if (i >= currlayer->algo->NumCellStates()) break;
+      
+      wxString strbuf;
+      wxRect r;
+      int x;
       
       // draw state value
       strbuf.Printf(_("%d"), i);
@@ -634,7 +626,8 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
          currlayer->drawingstate = box;
          Refresh(false);
          Update();
-         UpdateLeftScroll();
+         UpdateScrollBar();
+         return;
       }
    }
    
@@ -679,7 +672,7 @@ void EditBar::OnButton(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void EditBar::OnLeftScroll(wxScrollEvent& event)
+void EditBar::OnScroll(wxScrollEvent& event)
 {
    WXTYPE type = event.GetEventType();
 
@@ -716,48 +709,7 @@ void EditBar::OnLeftScroll(wxScrollEvent& event)
       Refresh(false);
 
    } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
-      UpdateLeftScroll();
-   }
-
-   #ifndef __WXMAC__
-      viewptr->SetFocus();    // need on Win/Linux
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void EditBar::OnRightScroll(wxScrollEvent& event)
-{
-   WXTYPE type = event.GetEventType();
-
-   if (type == wxEVT_SCROLL_LINEUP) {
-      firststate--;
-      if (firststate < 0) firststate = 0;
-      Refresh(false);
-
-   } else if (type == wxEVT_SCROLL_LINEDOWN) {
-      firststate++;
-      if (firststate > maxfirst) firststate = maxfirst;
-      Refresh(false);
-
-   } else if (type == wxEVT_SCROLL_PAGEUP) {
-      firststate -= PAGESIZE;
-      if (firststate < 0) firststate = 0;
-      Refresh(false);
-
-   } else if (type == wxEVT_SCROLL_PAGEDOWN) {
-      firststate += PAGESIZE;
-      if (firststate > maxfirst) firststate = maxfirst;
-      Refresh(false);
-
-   } else if (type == wxEVT_SCROLL_THUMBTRACK) {
-      firststate = event.GetPosition();
-      if (firststate < 0) firststate = 0;
-      if (firststate > maxfirst) firststate = maxfirst;
-      Refresh(false);
-
-   } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
-      UpdateRightScroll();
+      UpdateScrollBar();
    }
 
    #ifndef __WXMAC__
@@ -909,42 +861,16 @@ void EditBar::MoveControls()
       ebbutt[id]->Move(x, y + yshift);
    }
 
-   leftbar->GetPosition(&x, &y);
-   leftbar->Move(x, y + yshift);
-
-   rightbar->GetPosition(&x, &y);
-   rightbar->Move(x, y + yshift);
+   drawbar->GetPosition(&x, &y);
+   drawbar->Move(x, y + yshift);
 }
 
 // -----------------------------------------------------------------------------
 
-void EditBar::UpdateLeftScroll()
+void EditBar::UpdateScrollBar()
 {
-   leftbar->SetScrollbar(currlayer->drawingstate, 1,
+   drawbar->SetScrollbar(currlayer->drawingstate, 1,
                          currlayer->algo->NumCellStates(), PAGESIZE, true);
-}
-
-// -----------------------------------------------------------------------------
-
-void EditBar::UpdateRightScroll()
-{
-   if (showallstates) {
-      // calculate number of visible states
-      wxRect r = GetRect();
-      int visstates = (r.width - h_col2) / COLWD;
-      if (visstates >= currlayer->algo->NumCellStates()) {
-         // all states are visible
-         firststate = 0;
-         rightbar->Show(false);
-      } else {
-         maxfirst = currlayer->algo->NumCellStates() - visstates;
-         if (firststate > maxfirst) firststate = maxfirst;
-         rightbar->SetScrollbar(firststate, 1, maxfirst+1, PAGESIZE, true);
-         rightbar->Show(true);
-      }
-   } else {
-      rightbar->Show(false);
-   }
 }
 
 // -----------------------------------------------------------------------------
@@ -974,7 +900,6 @@ void ResizeEditBar(int wd)
 {
    if (editbarptr) {
       editbarptr->SetSize(wd, editbarht);
-      editbarptr->UpdateRightScroll();
    }
 }
 
@@ -1006,9 +931,7 @@ void UpdateEditBar(bool active)
       editbarptr->Update();
       
       // drawing state might have changed
-      editbarptr->UpdateLeftScroll();
-      // total number of states might have changed
-      editbarptr->UpdateRightScroll();
+      editbarptr->UpdateScrollBar();
    }
 }
 
