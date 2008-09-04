@@ -1138,7 +1138,7 @@ void Selection::ClearOutside()
       MarkLayerDirty();
       mainptr->UpdatePatternAndStatus();
    } else {
-      // CopyRect was aborted, so don't change current universe
+      // CopyRect was aborted so don't change current universe
       delete newalgo;
       if (savecells) currlayer->undoredo->ForgetCellChanges();
    }
