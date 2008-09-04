@@ -40,7 +40,7 @@ It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
    UNICODE=1
 
 so you won't have to specify those settings each time you run nmake
-to build Golly.
+to build Golly or wxWidgets.
 
 
 Building wxWidgets on Mac OS X
@@ -118,12 +118,17 @@ How to build Golly
 Once wxWidgets, Perl and Python are installed, building Golly should
 be easy.  Just use the appropriate makefile for your platform:
 
-   nmake -f makefile-win   - on Windows 98 or later
+   nmake -f makefile-win   - on Windows 2000 or later
    make -f makefile-mac    - on Mac OS X 10.3.9 or later
    make -f makefile-gtk    - on Linux/Unix with GTK+
    make -f makefile-x11    - on Linux/Unix with X11
 
 NOTES:
+
+- On Windows, if you decided not to edit config.vc as recommended
+  above then you'll need to specify extra options to nmake:
+  
+  nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1
 
 - You need to edit makefile-win, makefile-mac and makefile-x11 to
   specify where wxWidgets is installed.  Change the WX_DIR path

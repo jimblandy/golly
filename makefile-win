@@ -4,13 +4,14 @@
 #    cd \wxWidgets\build\msw
 #    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1
 # 
-# If you like, edit \wxWidgets\build\msw\config.vc and set:
+# It's a good idea to edit \wxWidgets\build\msw\config.vc and set:
 # 
 #    BUILD=release
 #    RUNTIME_LIBS=static
 #    UNICODE=1
 # 
-# Then you don't have to specify those settings to nmake.
+# Then you don't have to specify those settings to nmake when you
+# build wxWidgets or Golly.
 
 # Change the next 2 lines to specify where you installed wxWidgets:
 !include </wxWidgets/build/msw/config.vc>
