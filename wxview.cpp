@@ -1860,6 +1860,7 @@ void PatternView::StopDraggingMouse()
       if (allowundo) RememberNewSelection(_("Selection"));
       selectingcells = false;                // tested by CanUndo
       mainptr->UpdateMenuItems(true);        // enable various Edit menu items
+      if (allowundo) UpdateEditBar(true);    // update Undo/Redo buttons
    }
    
    if (drawingcells && allowundo) {
@@ -1868,6 +1869,7 @@ void PatternView::StopDraggingMouse()
       currlayer->undoredo->RememberCellChanges(_("Drawing"), currlayer->savedirty);
       drawingcells = false;                  // tested by CanUndo
       mainptr->UpdateMenuItems(true);        // enable Undo item
+      UpdateEditBar(true);                   // update Undo/Redo buttons
    }
    
    drawingcells = false;

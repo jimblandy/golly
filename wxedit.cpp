@@ -44,13 +44,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxalgos.h"       // for AlgoData, algoinfo
 #include "wxlayer.h"       // for currlayer, LayerBarHeight
+#include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxedit.h"
 
 // -----------------------------------------------------------------------------
 
 enum {
    // ids for bitmap buttons
-   DRAW_BUTT = 0,
+   UNDO_BUTT = 0,
+   REDO_BUTT,
+   DRAW_BUTT,
    PICK_BUTT,
    SELECT_BUTT,
    MOVE_BUTT,
@@ -65,6 +68,8 @@ enum {
    // bitmaps are loaded via .rc file
 #else
    // bitmaps for edit bar buttons
+   #include "bitmaps/undo.xpm"
+   #include "bitmaps/redo.xpm"
    #include "bitmaps/draw.xpm"
    #include "bitmaps/pick.xpm"
    #include "bitmaps/select.xpm"
@@ -206,6 +211,8 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #endif
 
    // init bitmaps for normal state
+   normbutt[UNDO_BUTT] =      wxBITMAP(undo);
+   normbutt[REDO_BUTT] =      wxBITMAP(redo);
    normbutt[DRAW_BUTT] =      wxBITMAP(draw);
    normbutt[PICK_BUTT] =      wxBITMAP(pick);
    normbutt[SELECT_BUTT] =    wxBITMAP(select);
@@ -253,6 +260,9 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    biggap = 16;
 
    // add buttons
+   AddButton(UNDO_BUTT,       _("Undo"));
+   AddButton(REDO_BUTT,       _("Redo"));
+   AddSeparator();
    AddButton(DRAW_BUTT,       _("Draw"));
    AddButton(PICK_BUTT,       _("Pick"));
    AddButton(SELECT_BUTT,     _("Select"));
@@ -669,6 +679,8 @@ void EditBar::OnButton(wxCommandEvent& event)
 
    int cmdid;
    switch (id) {
+      case UNDO_BUTT:      cmdid = wxID_UNDO; break;
+      case REDO_BUTT:      cmdid = wxID_REDO; break;
       case DRAW_BUTT:      cmdid = ID_DRAW; break;
       case PICK_BUTT:      cmdid = ID_PICK; break;
       case SELECT_BUTT:    cmdid = ID_SELECT; break;
@@ -933,6 +945,13 @@ void UpdateEditBar(bool active)
       editbarptr->SelectButton(ZOOMOUT_BUTT,    currlayer->curs == curs_zoomout);
       editbarptr->SelectButton(ALLSTATES_BUTT,  showallstates);
 
+      // CanUndo() returns false if drawing/selecting cells so the user can't undo
+      // while in those modes (by pressing a key), but we want the Undo button to
+      // appear to be active
+      bool canundo = (allowundo && (viewptr->drawingcells || viewptr->selectingcells))
+                     || currlayer->undoredo->CanUndo();
+      editbarptr->EnableButton(UNDO_BUTT,       active && canundo);
+      editbarptr->EnableButton(REDO_BUTT,       active && currlayer->undoredo->CanRedo());
       editbarptr->EnableButton(DRAW_BUTT,       active);
       editbarptr->EnableButton(PICK_BUTT,       active);
       editbarptr->EnableButton(SELECT_BUTT,     active);

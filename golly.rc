@@ -23,6 +23,8 @@ patterns_down  BITMAP "bitmaps/patterns_down.bmp"
 scripts_down   BITMAP "bitmaps/scripts_down.bmp"
 
 // edit bar buttons
+undo           BITMAP "bitmaps/undo.bmp"
+redo           BITMAP "bitmaps/redo.bmp"
 draw           BITMAP "bitmaps/draw.bmp"
 pick           BITMAP "bitmaps/pick.bmp"
 select         BITMAP "bitmaps/select.bmp"

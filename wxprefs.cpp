@@ -404,12 +404,12 @@ void AddDefaultKeyActions()
    keyaction[(int)'x'][0].id =         DO_FLIPLR;
    keyaction[(int)'>'][0].id =         DO_ROTATECW;
    keyaction[(int)'<'][0].id =         DO_ROTATEACW;
-   keyaction[IK_F1+2][0].id =          DO_CURSDRAW;
-   keyaction[IK_F1+3][0].id =          DO_CURSPICK;
-   keyaction[IK_F1+4][0].id =          DO_CURSSEL;
-   keyaction[IK_F1+5][0].id =          DO_CURSMOVE;
-   keyaction[IK_F1+6][0].id =          DO_CURSIN;
-   keyaction[IK_F1+7][0].id =          DO_CURSOUT;
+   keyaction[IK_F1+1][0].id =          DO_CURSDRAW;
+   keyaction[IK_F1+2][0].id =          DO_CURSPICK;
+   keyaction[IK_F1+3][0].id =          DO_CURSSEL;
+   keyaction[IK_F1+4][0].id =          DO_CURSMOVE;
+   keyaction[IK_F1+5][0].id =          DO_CURSIN;
+   keyaction[IK_F1+6][0].id =          DO_CURSOUT;
    keyaction[(int)'c'][0].id =         DO_CURSCYCLE;
 
    // Control menu
