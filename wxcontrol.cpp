@@ -50,10 +50,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-long lastincrease ;
-
-// -----------------------------------------------------------------------------
-
 bool MainFrame::SaveStartingPattern()
 {
    if ( currlayer->algo->getGeneration() > currlayer->startgen ) {
@@ -459,7 +455,6 @@ void MainFrame::GeneratePattern()
 
    // for hyperspeed
    int hypdown = 64;
-   lastincrease = begintime;
    
    generating = true;               // avoid recursion
    wxGetApp().PollerReset();
@@ -500,11 +495,7 @@ void MainFrame::GeneratePattern()
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
-               // only increase step size if last increase was within 15 secs
-               if (stopwatch->Time() - lastincrease < 15000) {
-                  GoFaster();
-                  lastincrease = stopwatch->Time();
-               }
+               GoFaster();
             }
          }
       }
@@ -801,11 +792,6 @@ void MainFrame::ToggleAutoFit()
 void MainFrame::ToggleHyperspeed()
 {
    currlayer->hyperspeed = !currlayer->hyperspeed;
-   
-   if (generating && currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
-      // have to reset lastincrease
-      lastincrease = stopwatch->Time();
-   }
 }
 
 // -----------------------------------------------------------------------------
