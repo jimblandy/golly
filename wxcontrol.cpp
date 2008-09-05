@@ -46,7 +46,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse
 #include "wxlayer.h"       // for currlayer, etc
 
-// Control menu functions:
+// This module implements Control menu functions.
+
+// -----------------------------------------------------------------------------
+
+long lastincrease;         // time of last step increase (for hyperspeed)
 
 // -----------------------------------------------------------------------------
 
@@ -452,6 +456,10 @@ void MainFrame::GeneratePattern()
    // for DisplayTimingInfo
    begintime = stopwatch->Time();
    begingen = curralgo->getGeneration().todouble();
+
+   // for hyperspeed
+   int hypdown = 64;
+   lastincrease = begintime;
    
    generating = true;               // avoid recursion
    wxGetApp().PollerReset();
@@ -464,8 +472,7 @@ void MainFrame::GeneratePattern()
 
    if (currlayer->warp < 0)
       whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-
-   int hypdown = 64;
+   
    while (true) {
       if (currlayer->warp < 0) {
          // slow down by only doing one gen every GetCurrentDelay() millisecs
@@ -493,7 +500,11 @@ void MainFrame::GeneratePattern()
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
-               GoFaster();
+               // only increase step size if last increase was within 60 secs
+               if (stopwatch->Time() - lastincrease < 60000) {
+                  GoFaster();
+                  lastincrease = stopwatch->Time();
+               }
             }
          }
       }
@@ -776,9 +787,10 @@ void MainFrame::NextGeneration(bool useinc)
 void MainFrame::ToggleAutoFit()
 {
    currlayer->autofit = !currlayer->autofit;
+   
    // we only use autofit when generating; that's why the Auto Fit item
    // is in the Control menu and not in the View menu
-   if (currlayer->autofit && generating) {
+   if (generating && currlayer->autofit) {
       viewptr->FitInView(0);
       UpdateEverything();
    }
@@ -789,6 +801,11 @@ void MainFrame::ToggleAutoFit()
 void MainFrame::ToggleHyperspeed()
 {
    currlayer->hyperspeed = !currlayer->hyperspeed;
+   
+   if (generating && currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
+      // have to reset lastincrease
+      lastincrease = stopwatch->Time();
+   }
 }
 
 // -----------------------------------------------------------------------------
