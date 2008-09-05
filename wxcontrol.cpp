@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-long lastincrease;         // time of last step increase (for hyperspeed)
+long lastincrease ;
 
 // -----------------------------------------------------------------------------
 
@@ -500,8 +500,8 @@ void MainFrame::GeneratePattern()
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
-               // only increase step size if last increase was within 60 secs
-               if (stopwatch->Time() - lastincrease < 60000) {
+               // only increase step size if last increase was within 15 secs
+               if (stopwatch->Time() - lastincrease < 15000) {
                   GoFaster();
                   lastincrease = stopwatch->Time();
                }
