@@ -81,6 +81,8 @@ enum {
    STOP_TOOL,
    RESET_TOOL,
    ALGO_TOOL,
+   AUTOFIT_TOOL,
+   HYPER_TOOL,
    NEW_TOOL,
    OPEN_TOOL,
    SAVE_TOOL,
@@ -99,6 +101,8 @@ enum {
    #include "bitmaps/stop.xpm"
    #include "bitmaps/reset.xpm"
    #include "bitmaps/algo.xpm"
+   #include "bitmaps/autofit.xpm"
+   #include "bitmaps/hyper.xpm"
    #include "bitmaps/new.xpm"
    #include "bitmaps/open.xpm"
    #include "bitmaps/save.xpm"
@@ -107,6 +111,8 @@ enum {
    #include "bitmaps/info.xpm"
    #include "bitmaps/help.xpm"
    // bitmaps for down state of toggle buttons
+   #include "bitmaps/autofit_down.xpm"
+   #include "bitmaps/hyper_down.xpm"
    #include "bitmaps/patterns_down.xpm"
    #include "bitmaps/scripts_down.xpm"
 #endif
@@ -197,6 +203,8 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    normtool[STOP_TOOL] =      wxBITMAP(stop);
    normtool[RESET_TOOL] =     wxBITMAP(reset);
    normtool[ALGO_TOOL] =      wxBITMAP(algo);
+   normtool[AUTOFIT_TOOL] =   wxBITMAP(autofit);
+   normtool[HYPER_TOOL] =     wxBITMAP(hyper);
    normtool[NEW_TOOL] =       wxBITMAP(new);
    normtool[OPEN_TOOL] =      wxBITMAP(open);
    normtool[SAVE_TOOL] =      wxBITMAP(save);
@@ -206,6 +214,8 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    normtool[HELP_TOOL] =      wxBITMAP(help);
    
    // toggle buttons also have a down state
+   downtool[AUTOFIT_TOOL] =   wxBITMAP(autofit_down);
+   downtool[HYPER_TOOL] =     wxBITMAP(hyper_down);
    downtool[PATTERNS_TOOL] =  wxBITMAP(patterns_down);
    downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts_down);
 
@@ -213,8 +223,10 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       for (int i = 0; i < NUM_BUTTONS; i++) {
          CreatePaleBitmap(normtool[i], disnormtool[i]);
       }
-      CreatePaleBitmap(downtool[PATTERNS_TOOL],   disdowntool[PATTERNS_TOOL]);
-      CreatePaleBitmap(downtool[SCRIPTS_TOOL],    disdowntool[SCRIPTS_TOOL]);
+      CreatePaleBitmap(downtool[AUTOFIT_TOOL],  disdowntool[AUTOFIT_TOOL]);
+      CreatePaleBitmap(downtool[HYPER_TOOL],    disdowntool[HYPER_TOOL]);
+      CreatePaleBitmap(downtool[PATTERNS_TOOL], disdowntool[PATTERNS_TOOL]);
+      CreatePaleBitmap(downtool[SCRIPTS_TOOL],  disdowntool[SCRIPTS_TOOL]);
    #endif
 
    for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -285,6 +297,8 @@ void ToolBar::OnButton(wxCommandEvent& event)
       case START_TOOL:     cmdid = ID_START; break;
       case RESET_TOOL:     cmdid = ID_RESET; break;
       case ALGO_TOOL:      return;                    // handled in OnButtonDown
+      case AUTOFIT_TOOL:   cmdid = ID_AUTO; break;
+      case HYPER_TOOL:     cmdid = ID_HYPER; break;
       case NEW_TOOL:       cmdid = wxID_NEW; break;
       case OPEN_TOOL:      cmdid = wxID_OPEN; break;
       case SAVE_TOOL:      cmdid = wxID_SAVE; break;
@@ -419,6 +433,12 @@ void ToolBar::EnableButton(int id, bool enable)
       if (id == START_TOOL && (inscript || mainptr->generating)) {
          tbbutt[id]->SetBitmapDisabled(disnormtool[STOP_TOOL]);
          
+      } else if (id == AUTOFIT_TOOL && currlayer->autofit) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
+      } else if (id == HYPER_TOOL && currlayer->hyperspeed) {
+         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
+         
       } else if (id == PATTERNS_TOOL && showpatterns) {
          tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
          
@@ -495,7 +515,10 @@ void MainFrame::CreateToolbar()
    // add buttons to tool bar
    toolbarptr->AddButton(START_TOOL,      _("Start generating"));
    toolbarptr->AddButton(RESET_TOOL,      _("Reset"));
+   toolbarptr->AddSeparator();
    toolbarptr->AddButton(ALGO_TOOL,       _("Set algorithm"));
+   toolbarptr->AddButton(AUTOFIT_TOOL,    _("Auto fit"));
+   toolbarptr->AddButton(HYPER_TOOL,      _("Hyperspeed"));
    toolbarptr->AddSeparator();
    toolbarptr->AddButton(NEW_TOOL,        _("New pattern"));
    toolbarptr->AddButton(OPEN_TOOL,       _("Open pattern"));
@@ -522,6 +545,8 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->SetStartStopButton();
 
       // set state of toggle buttons
+      toolbarptr->SelectButton(AUTOFIT_TOOL,    currlayer->autofit);
+      toolbarptr->SelectButton(HYPER_TOOL,      currlayer->hyperspeed);
       toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
       toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
       
@@ -529,6 +554,8 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->EnableButton(RESET_TOOL,      active && !inscript && (generating ||
                                                 currlayer->algo->getGeneration() > currlayer->startgen));
       toolbarptr->EnableButton(ALGO_TOOL,       active && !inscript);
+      toolbarptr->EnableButton(AUTOFIT_TOOL,    active);
+      toolbarptr->EnableButton(HYPER_TOOL,      active);
       toolbarptr->EnableButton(NEW_TOOL,        active && !inscript);
       toolbarptr->EnableButton(OPEN_TOOL,       active && !inscript);
       toolbarptr->EnableButton(SAVE_TOOL,       active && !inscript);

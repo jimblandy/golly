@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: Added Auto Fit and Hyperspeed buttons to tool bar.
+AKT: Added Undo and Redo buttons to edit bar.
 AKT: Moved cursor mode buttons into edit bar and added Show All States item.
 AKT: Reset/Undo can ignore view changes (see Prefs > View).
 AKT: Fixed undo bug if script changed same multi-state cell more than once.
