@@ -512,6 +512,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    if (showallstates) DrawAllStates(dc, wd);
 
    AlgoData* ad = algoinfo[currlayer->algtype];
+   wxBitmap** iconmaps = ad->icons15x15;
    unsigned char saver=0, saveg=0, saveb=0;
 
    dc.SetPen(*wxBLACK_PEN);
@@ -562,7 +563,6 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    // draw icon box
    x += BOXSIZE + BOXGAP;
    iconbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
-   wxBitmap** iconmaps = ad->icons15x15;
    if (iconmaps && iconmaps[state]) {
       dc.SetBrush(wxBrush(deadcolor));
       dc.DrawRectangle(iconbox);
@@ -574,18 +574,20 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       dc.SetBrush(wxNullBrush);
    }
    
-   // show whether color or icon mode is selected
-   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-   if (showicons) {
-      iconbox.Inflate(2,2);
-      dc.DrawRectangle(iconbox);
-      iconbox.Inflate(-2,-2);
-   } else {
-      colorbox.Inflate(2,2);
-      dc.DrawRectangle(colorbox);
-      colorbox.Inflate(-2,-2);
+   // if current algo has icons then show whether color or icon mode is selected
+   if (iconmaps) {
+      dc.SetBrush(*wxTRANSPARENT_BRUSH);
+      if (showicons) {
+         iconbox.Inflate(2,2);
+         dc.DrawRectangle(iconbox);
+         iconbox.Inflate(-2,-2);
+      } else {
+         colorbox.Inflate(2,2);
+         dc.DrawRectangle(colorbox);
+         colorbox.Inflate(-2,-2);
+      }
+      dc.SetBrush(wxNullBrush);
    }
-   dc.SetBrush(wxNullBrush);
 
    dc.SetPen(wxNullPen);
 }
@@ -655,11 +657,15 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
       }
    }
    
-   // user can change icon mode by clicking in icon/color box
-   if (iconbox.Contains(x,y) && !showicons) {
-      viewptr->ToggleCellIcons();
-   } else if (colorbox.Contains(x,y) && showicons) {
-      viewptr->ToggleCellIcons();
+   // if current algo has icons then user can change color/icon mode
+   // by clicking in color/icon box
+   AlgoData* ad = algoinfo[currlayer->algtype];
+   if (ad->icons15x15) {
+      if (colorbox.Contains(x,y) && showicons) {
+         viewptr->ToggleCellIcons();
+      } else if (iconbox.Contains(x,y) && !showicons) {
+         viewptr->ToggleCellIcons();
+      }
    }
 }
 
