@@ -221,7 +221,7 @@ void RuleDialog::CreateControls()
    
    // create a choice menu to select algo
    wxArrayString algoarray;
-   for ( int i = 0; i < NumAlgos(); i++ ) {
+   for (int i = 0; i < NumAlgos(); i++) {
       algoarray.Add( wxString(GetAlgoName(i),wxConvLocal) );
    }
    algochoice = new wxChoice(this, RULE_ALGO,
@@ -231,8 +231,7 @@ void RuleDialog::CreateControls()
    
    // create a choice menu to select named rule
    wxArrayString namearray;
-   size_t i;
-   for (i=0; i<namedrules.GetCount(); i++) {
+   for (size_t i=0; i<namedrules.GetCount(); i++) {
       // remove "|..." part
       wxString name = namedrules[i].BeforeFirst('|');
       namearray.Add(name);
