@@ -4,7 +4,7 @@ static char *hyper_xpm[] = {
 "16 16 3 1",
 /* colors */
 "A c #000000008080",
-"B c #C0C0C0C0C0C0",
+"B c #8989A9A9DFDF",
 "C c None",
 /* pixels */
 "CCCCCCCCCCCCCCCC",
