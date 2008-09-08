@@ -550,8 +550,8 @@ void CreateLayerBar(wxWindow* parent)
    layerbarptr->AddButton(DUPLICATE_LAYER,   0, _("Duplicate current layer"));
    layerbarptr->AddButton(DELETE_LAYER,      0, _("Delete current layer"));
    layerbarptr->AddSeparator();
-   layerbarptr->AddButton(STACK_LAYERS,      0, _("Toggle stacked layers"));
-   layerbarptr->AddButton(TILE_LAYERS,       0, _("Toggle tiled layers"));
+   layerbarptr->AddButton(STACK_LAYERS,      0, _("Stack layers"));
+   layerbarptr->AddButton(TILE_LAYERS,       0, _("Tile layers"));
    layerbarptr->AddSeparator();
    for (int i = 0; i < MAX_LAYERS; i++) {
       wxString tip;

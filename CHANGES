@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: The setcursor/getcursor commands now accept/return strings.
 AKT: Added Auto Fit and Hyperspeed buttons to tool bar.
 AKT: Added Undo and Redo buttons to edit bar.
 AKT: Moved cursor mode buttons into edit bar and added Show All States item.

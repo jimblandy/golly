@@ -50,12 +50,13 @@ up_down = 1
 clockwise = 0
 anticlockwise = 1
 
-# for golly.setcursor
-draw = 0
-select = 1
-move = 2
-zoomin = 3
-zoomout = 4
+# for golly.setcursor (must match strings in Cursor Mode submenu)
+draw =    "Draw"
+pick =    "Pick"
+select =  "Select"
+move =    "Move"
+zoomin =  "Zoom In"
+zoomout = "Zoom Out"
 
 # --------------------------------------------------------------------
 

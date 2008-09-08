@@ -1533,22 +1533,22 @@ static PyObject* py_setcursor(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   int newindex;
+   const char* newcursor;
 
-   if (!PyArg_ParseTuple(args, "i", &newindex)) return NULL;
+   if (!PyArg_ParseTuple(args, "s", &newcursor)) return NULL;
 
-   int oldindex = CursorToIndex(currlayer->curs);
-   wxCursor* curs = IndexToCursor(newindex);
-   if (curs) {
-      viewptr->SetCursorMode(curs);
-      // see the cursor change, including in tool bar
+   const char* oldcursor = CursorToString(currlayer->curs);
+   wxCursor* cursptr = StringToCursor(newcursor);
+   if (cursptr) {
+      viewptr->SetCursorMode(cursptr);
+      // see the cursor change, including button in edit bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
    } else {
-      PYTHON_ERROR("setcursor error: bad cursor index.");
+      PYTHON_ERROR("setcursor error: unknown cursor string.");
    }
 
-   // return old index (simplifies saving and restoring cursor)
-   return Py_BuildValue("i", oldindex);
+   // return old cursor (simplifies saving and restoring cursor)
+   return Py_BuildValue("s", oldcursor);
 }
 
 // -----------------------------------------------------------------------------
@@ -1560,7 +1560,7 @@ static PyObject* py_getcursor(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, "")) return NULL;
 
-   return Py_BuildValue("i", CursorToIndex(currlayer->curs));
+   return Py_BuildValue("s", CursorToString(currlayer->curs));
 }
 
 // -----------------------------------------------------------------------------

@@ -332,6 +332,12 @@ extern wxCursor* curs_hand;      // for moving view by dragging
 extern wxCursor* curs_zoomin;    // for zooming in to a clicked cell
 extern wxCursor* curs_zoomout;   // for zooming out from a clicked cell
 
+const char* CursorToString(wxCursor* curs);
+// convert given cursor to corresponding string in Cursor Mode submenu
+
+wxCursor* StringToCursor(const char* s);
+// convert given string to a cursor (NULL if s is not valid)
+
 int CursorToIndex(wxCursor* curs);
 // convert given cursor to an index: 0 for curs_pencil, etc
 

@@ -477,18 +477,17 @@ The following example inverts the state of the cell at 0,0.
 <dd> Example: <b>g_setcell(0, 0, 1 - g_getcell(0, 0));</b></dd>
 </p>
 
-<a name="setcursor"></a><p><dt><b>g_setcursor(<i>$index</i>)</b></dt>
+<a name="setcursor"></a><p><dt><b>g_setcursor(<i>$string</i>)</b></dt>
 <dd>
-Set the cursor according to the given index and return the old cursor index.
-The valid index values are 0 for the pencil cursor, 1 for the cross cursor,
-2 for the hand cursor, 3 for the zoom-in cursor and 4 for the zoom-out cursor.
+Set the current cursor according to the given string and return the old cursor string.
+The given string must match one of the names in the Cursor Mode menu.
 </dd>
-<dd> Example: <b>$oldcurs = g_setcursor(3);</b></dd>
+<dd> Example: <b>$oldcurs = g_setcursor("Draw");</b></dd>
 </p>
 
 <a name="getcursor"></a><p><dt><b>g_getcursor()</b></dt>
 <dd>
-Return the current cursor index.
+Return the current cursor as a string (ie. the ticked name in the Cursor Mode menu).
 </dd>
 </p>
 

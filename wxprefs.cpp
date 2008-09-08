@@ -2668,6 +2668,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
 
    wxArrayString newcursorChoices;
    newcursorChoices.Add(wxT("Draw"));
+   newcursorChoices.Add(wxT("Pick"));
    newcursorChoices.Add(wxT("Select"));
    newcursorChoices.Add(wxT("Move"));
    newcursorChoices.Add(wxT("Zoom In"));

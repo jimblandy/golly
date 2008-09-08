@@ -23,8 +23,6 @@ Andrew's list:
   special files like JvN7.xpm (look in golly dir then user data dir?).
   Or do this via new seticons command (see above) in golly-start.pl/py?
 
-- setcursor/getcursor commands should accept/return strings?
-
 - Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
   methods, and maybe GetTransformedState as well for use in
   transform() command.

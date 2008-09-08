@@ -21,6 +21,8 @@
      Perl users should read the section on <a href="perl.html#cellarrays">cell arrays</a>.
      Python users should read the section on <a href="python.html#celllists">cell lists</a>.
 <li> The <a href="python.html#getrule">getrule</a> command now returns a canonical rule string.
+<li> The <a href="python.html#setcursor">setcursor</a>/<a href="python.html#getcursor">getcursor</a>
+     commands now accept/return strings.
 <li> Changing the current rule can change the current algorithm.  If the current algorithm
      doesn't support the new rule then Golly will try to switch to the first algorithm
      that does support it.
@@ -29,10 +31,12 @@
      algorithm's default rule.
 <li> Diagonal scrolling is supported.  Open <a href="prefs#keyboard">Preferences > Keyboard</a>
      and assign keys to the new scrolling actions: Scroll NE/NW/SE/SW.
-<li> Reset/Undo can be told not to restore view
-     (see new check box in <a href="prefs#view">Preferences > View</a>).
-<li> View > Show Edit Bar toggles the new edit bar which displays the colors and icons
-     for all states in the current universe.  A box is drawn around the current drawing state
+<li> Reset/Undo can be told not to restore the view
+     (see the new check box in <a href="prefs#view">Preferences > View</a>).
+<li> View > Show Edit Bar toggles the new edit bar.  The cursor mode buttons have been moved
+     from the tool bar into the edit bar.
+<li> View > Show All States toggles the display of colors and icons for all states
+     in the current universe.  A box is drawn around the current drawing state
      and can be changed by clicking on a different state.
 <li> View > Show Cell Icons toggles whether cells are drawn as colored squares or icons
      (if the current algorithm has any icons).  Icons are small masked bitmaps and are

@@ -1625,18 +1625,20 @@ XS(pl_setcursor)
    dXSARGS;
    if (items != 1) PERL_ERROR("Usage: $oldcurs = g_setcursor($newcurs).");
 
-   int oldindex = CursorToIndex(currlayer->curs);
-   wxCursor* curs = IndexToCursor(SvIV(ST(0)));
-   if (curs) {
-      viewptr->SetCursorMode(curs);
-      // see the cursor change, including in tool bar
+   STRLEN n_a;
+   const char* newcursor = SvPV(ST(0), n_a);
+   const char* oldcursor = CursorToString(currlayer->curs);
+   wxCursor* cursptr = StringToCursor(newcursor);
+   if (cursptr) {
+      viewptr->SetCursorMode(cursptr);
+      // see the cursor change, including button in edit bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
    } else {
-      PERL_ERROR("g_setcursor error: bad cursor index.");
+      PERL_ERROR("g_setcursor error: unknown cursor string.");
    }
 
-   // return old index (simplifies saving and restoring cursor)
-   XSRETURN_IV(oldindex);
+   // return old cursor (simplifies saving and restoring cursor)
+   XSRETURN_PV(oldcursor);
 }
 
 // -----------------------------------------------------------------------------
@@ -1646,9 +1648,9 @@ XS(pl_getcursor)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) PERL_ERROR("Usage: $int = g_getcursor().");
+   if (items != 0) PERL_ERROR("Usage: $string = g_getcursor().");
 
-   XSRETURN_IV(CursorToIndex(currlayer->curs));
+   XSRETURN_PV(CursorToString(currlayer->curs));
 }
 
 // -----------------------------------------------------------------------------
