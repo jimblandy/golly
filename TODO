@@ -43,14 +43,6 @@ Andrew's list:
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
-- Fix Set Rule dialog so it shows algo and add a help button that
-  displays modal dlg with info from Help/Algorithms/algoname.html.
-
-- Need some way to display info about the current algorithm,
-  perhaps via a new Algorithm Info item in Control menu that
-  displays text (from algo's static data) in a Note dialog
-  or in Info window.
-
 - May need check boxes in Prefs > Control (initially ticked):
   * Warn me about rule/pattern changes when switching algorithms
   * Warn me about pattern changes when switching rules

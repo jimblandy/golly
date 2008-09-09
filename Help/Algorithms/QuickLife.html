@@ -1,0 +1,52 @@
+<html>
+<title>Golly Help: QuickLife</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+QuickLife is a fast, conventional (non-hashing) algorithm for
+exploring Life and other 2D outer-totalistic rules.
+Such rules are defined using "B0...8/S0...8" notation, where
+the digits after B specify the counts of live neighbors necessary
+for a cell to be born in the next generation, and the digits
+after S specify the counts of live neighbors necessary for a
+cell to survive to the next generation.
+Here are some example rules:
+
+<p><b>B3/S23</b> [Life]<br>
+John Conway's rule is by far the best known and most explored CA.
+
+<p><b>B36/S23</b> [HighLife]<br>
+Very similar to Conway's Life but with an interesting replicator.
+
+<p><b>B3678/S34678</b> [Day & Night]<br>
+Dead cells in a sea of live cells behave the same as live cells
+in a sea of dead cells.
+
+<p><b>B35678/S5678</b> [Diamoeba]<br>
+Creates diamond-shaped blobs with unpredictable behavior.
+
+<p><b>B2</b> [Seeds]<br>
+Every living cell dies every generation, but most patterns still explode.
+
+<p><b>B234</b> [Serviettes or Persian Rug]<br>
+A single 2x2 block turns into a set of Persian rugs.
+
+<p><b>B345/S5</b> [LongLife]<br>
+Oscillators with extremely long periods can occur quite naturally.
+
+<p>
+QuickLife also supports Stephen Wolfram's 1D CA rules.
+These rules are specified as "Wn" where n is an even number from
+0 to 254.  For example:
+
+<p><b>W22</b><br>
+A single live cell creates a beautiful fractal pattern.
+
+<p><b>W30</b><br>
+Highly chaotic and an excellent random number generator.
+
+<p><b>W110</b><br>
+Matthew Cook proved that this rule is capable of universal computation.
+
+</body>
+</html>

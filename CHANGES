@@ -10,6 +10,7 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 1.5 or 2.0??? (released !!! 2008)
 
+AKT: Added algo menu and help button to Set Rule dialog.
 AKT: The setcursor/getcursor commands now accept/return strings.
 AKT: Added Auto Fit and Hyperspeed buttons to tool bar.
 AKT: Added Undo and Redo buttons to edit bar.

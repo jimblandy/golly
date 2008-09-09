@@ -27,12 +27,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/wxhtml.h"     // for wxHtmlWindow
+
 #include "lifealgo.h"
 
-#include "wxgolly.h"       // for wxGetApp
-#include "wxmain.h"        // for mainptr->
-#include "wxprefs.h"       // for namedrules, allowundo
-#include "wxutils.h"       // for Warning
+#include "wxgolly.h"       // for wxGetApp, mainptr
+#include "wxmain.h"        // for mainptr->...
+#include "wxprefs.h"       // for namedrules, gollydir, etc
+#include "wxutils.h"       // for Warning, Fatal
 #include "wxlayer.h"       // for currlayer
 #include "wxalgos.h"       // for NumAlgos, CreateNewUniverse, etc
 #include "wxrule.h"
@@ -103,8 +105,163 @@ wxString GetRuleName(const wxString& rulestring)
 
 // -----------------------------------------------------------------------------
 
-const wxString UNNAMED = _("UNNAMED");
-const wxString UNKNOWN = _("UNKNOWN");
+// define a html window for displaying algo help:
+
+class AlgoHelp : public wxHtmlWindow
+{
+public:
+   AlgoHelp(wxWindow* parent, wxWindowID id, const wxPoint& pos,
+            const wxSize& size, long style)
+      : wxHtmlWindow(parent, id, pos, size, style) { }
+
+   virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
+
+   void DisplayFile(const wxString& filepath);
+
+private:
+   #ifdef __WXMSW__
+      // see AlgoHelp::OnKeyUp for why we do this
+      void OnKeyUp(wxKeyEvent& event);
+   #else
+      void OnKeyDown(wxKeyEvent& event);
+   #endif
+   
+   void OnSize(wxSizeEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
+#ifdef __WXMSW__
+   // see AlgoHelp::OnKeyUp for why we do this
+   EVT_KEY_UP     (AlgoHelp::OnKeyUp)
+#else
+   EVT_KEY_DOWN   (AlgoHelp::OnKeyDown)
+#endif
+   EVT_SIZE       (AlgoHelp::OnSize)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
+{
+   wxString url = link.GetHref();
+   if ( url.StartsWith(wxT("http:")) || url.StartsWith(wxT("mailto:")) ) {
+      // pass http/mailto URL to user's preferred browser/emailer
+      #ifdef __WXMAC__
+         // wxLaunchDefaultBrowser doesn't work on Mac with IE (get msg in console.log)
+         // but it's easier just to use the Mac OS X open command
+         if ( wxExecute(wxT("open ") + url, wxEXEC_ASYNC) == -1 )
+            Warning(_("Could not open URL!"));
+      #elif defined(__WXGTK__)
+         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open;
+         // unfortunately it does not bring browser to front if it's already running
+         if ( wxExecute(wxT("gnome-open ") + url, wxEXEC_ASYNC) == -1 )
+            Warning(_("Could not open URL!"));
+      #else
+         if ( !wxLaunchDefaultBrowser(url) )
+            Warning(_("Could not launch browser!"));
+      #endif
+
+   } else {
+      // assume it's a link to a local target or another help file
+      DisplayFile(url);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::DisplayFile(const wxString& filepath)
+{
+   if ( filepath.IsEmpty() ) {
+      wxString contents =
+      wxT("<html><body bgcolor=\"#FFFFCE\">")
+      wxT("<p>The given rule is not valid in any algorithm.")
+      wxT("</body></html>");
+      SetPage(contents);
+
+   } else if ( filepath.StartsWith(gollydir) &&
+               !wxFileName::FileExists(filepath) ) {
+      wxString contents =
+      wxT("<html><body bgcolor=\"#FFFFCE\">")
+      wxT("<p>There is no help available for this algorithm.")
+      wxT("</body></html>");
+      SetPage(contents);
+
+   } else {
+      LoadPage(filepath);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXMSW__
+// we have to use OnKeyUp handler on Windows otherwise wxHtmlWindow's OnKeyUp
+// gets called which detects ctrl-C and clobbers our clipboard fix
+void AlgoHelp::OnKeyUp(wxKeyEvent& event)
+#else
+// we have to use OnKeyDown handler on Mac -- if OnKeyUp handler is used and
+// cmd-C is pressed quickly then key code is 400
+void AlgoHelp::OnKeyDown(wxKeyEvent& event)
+#endif
+{
+   int key = event.GetKeyCode();
+   if (event.CmdDown()) {
+      // let cmd-A select all text
+      if (key == 'A') {
+         SelectAll();
+         return;
+      }
+      #ifdef __WXMAC__
+         // let cmd-W close dialog
+         if (key == 'W') {
+            GetParent()->Close(true);
+            return;
+         }
+      #endif
+   }
+   if ( event.CmdDown() || event.AltDown() ) {
+      if ( key == 'C' ) {
+         // copy any selected text to the clipboard
+         wxString text = SelectionToText();
+         if ( text.Length() > 0 ) {
+            // remove any leading/trailing spaces
+            text = text.Trim(false);
+            text = text.Trim(true);
+            mainptr->CopyTextToClipboard(text);
+         }
+      } else {
+         event.Skip();
+      }
+   } else {
+      event.Skip();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnSize(wxSizeEvent& event)
+{
+   // avoid scroll position being reset to top when wxHtmlWindow is resized
+   int x, y;
+   GetViewStart(&x, &y);         // save current position
+
+   wxHtmlWindow::OnSize(event);
+
+   wxString currpage = GetOpenedPage();
+   if ( !currpage.IsEmpty() ) {
+      DisplayFile(currpage);     // reload page
+      Scroll(x, y);              // scroll to old position
+   }
+   
+   // prevent wxHtmlWindow::OnSize being called again
+   event.Skip(false);
+}
+
+// -----------------------------------------------------------------------------
+
+const wxString UNKNOWN = _("UNKNOWN");    // unknown algorithm
+const wxString UNNAMED = _("UNNAMED");    // unnamed rule
 
 const int HGAP = 12;
 const int BIGVGAP = 12;
@@ -150,11 +307,14 @@ private:
    void CreateControls();     // initialize all the controls
    void UpdateAlgo();         // update algochoice depending on rule
    void UpdateName();         // update namechoice depending on rule
+   void UpdateHelp();         // update algo help
+
+   AlgoHelp* htmlwin;         // html window for displaying algo help
 
    wxTextCtrl* ruletext;      // text box for user to type in rule
    wxTextCtrl* addtext;       // text box for user to type in name of rule
 
-   wxChoice* algochoice;      // kept in sync with rule but can have one
+   wxChoice* algochoice;      // lists the known algorithms but can have one
                               // more item appended (UNKNOWN)
    wxChoice* namechoice;      // kept in sync with namedrules but can have one
                               // more item appended (UNNAMED)
@@ -192,7 +352,8 @@ END_EVENT_TABLE()
 
 RuleDialog::RuleDialog(wxWindow* parent)
 {
-   Create(parent, wxID_ANY, _("Set Rule"), wxDefaultPosition, wxDefaultSize);
+   Create(parent, wxID_ANY, _("Set Rule"), wxDefaultPosition, wxDefaultSize,
+          wxDEFAULT_DIALOG_STYLE /* | wxRESIZE_BORDER ???!!! */);
    ignore_text_change = true;
    CreateControls();
    GetSizer()->Fit(this);
@@ -200,6 +361,14 @@ RuleDialog::RuleDialog(wxWindow* parent)
    Centre();
    ignore_text_change = false;
    expanded = false;
+
+   htmlwin = new AlgoHelp(this, wxID_ANY,
+                          // specify small size to avoid clipping scroll bar on resize
+                          wxDefaultPosition, wxSize(30,30),
+                          wxHW_DEFAULT_STYLE | wxSUNKEN_BORDER);
+   if (!htmlwin) Fatal(_("Could not create algo help window!"));
+   htmlwin->SetBorders(4);
+   htmlwin->Show(false);
 
    // select all of rule text
    ruletext->SetFocus();
@@ -210,9 +379,6 @@ RuleDialog::RuleDialog(wxWindow* parent)
 
 void RuleDialog::CreateControls()
 {
-   wxBoxSizer* topSizer = new wxBoxSizer( wxVERTICAL );
-   SetSizer(topSizer);
-
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, _("Enter a new rule:"));
    
    ruletext = new wxTextCtrl(this, RULE_TEXT,
@@ -252,7 +418,7 @@ void RuleDialog::CreateControls()
    addtext = new wxTextCtrl(this, RULE_ADD_TEXT, wxEmptyString,
                             wxDefaultPosition, wxSize(160,wxDefaultCoord));
 
-   wxBoxSizer* hbox0 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
    algolabel->Add(new wxStaticText(this, wxID_STATIC, _("Algorithm:")), 0, FIX_ALIGN_BUG);
    hbox0->Add(algolabel, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -262,23 +428,24 @@ void RuleDialog::CreateControls()
    helpbox->Add(helpbutt, 0, FIX_ALIGN_BUG);
    hbox0->Add(helpbox, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-   wxBoxSizer* hbox1 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(namechoice, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox1->AddSpacer(HGAP);
    wxBoxSizer* delbox = new wxBoxSizer(wxHORIZONTAL);
    delbox->Add(delbutt, 0, FIX_ALIGN_BUG);
    hbox1->Add(delbox, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-   wxBoxSizer* hbox2 = new wxBoxSizer( wxHORIZONTAL );
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
    hbox2->Add(addtext, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox2->AddSpacer(HGAP);
    hbox2->Add(addbutt, 0, wxALIGN_CENTER_VERTICAL, 0);
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
 
-   wxBoxSizer* stdhbox = new wxBoxSizer( wxHORIZONTAL );
-   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+   wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
+   stdhbox->Add(stdbutts, 1, wxALIGN_RIGHT | wxALIGN_BOTTOM | wxRIGHT, STDHGAP);
 
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(hbox0, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
@@ -292,7 +459,8 @@ void RuleDialog::CreateControls()
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(hbox2, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
-   topSizer->Add(stdhbox, 1, wxGROW | wxTOP | wxBOTTOM, 10);
+   topSizer->Add(stdhbox, 1, wxALIGN_RIGHT | wxALIGN_BOTTOM | wxTOP | wxBOTTOM, 10);
+   SetSizer(topSizer);
 }
 
 // -----------------------------------------------------------------------------
@@ -328,6 +496,7 @@ void RuleDialog::UpdateAlgo()
             }
             algoindex = newindex;
             algochoice->SetSelection(algoindex);
+            UpdateHelp();
          }
          return;
       }
@@ -339,6 +508,28 @@ void RuleDialog::UpdateAlgo()
       algochoice->Append(UNKNOWN);
       algoindex = NumAlgos();
       algochoice->SetSelection(algoindex);
+      UpdateHelp();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void RuleDialog::UpdateHelp()
+{
+   if (expanded) {
+      if (algoindex < NumAlgos()) {
+         // display Help/Algorithms/algoname.html
+         wxString filepath = gollydir + wxT("Help");
+         filepath += wxFILE_SEP_PATH;
+         filepath += wxT("Algorithms");
+         filepath += wxFILE_SEP_PATH;
+         filepath += wxString(GetAlgoName(algoindex),wxConvLocal);
+         filepath += wxT(".html");
+         htmlwin->DisplayFile(filepath);
+      } else {
+         // UNKNOWN algo
+         htmlwin->DisplayFile(wxEmptyString);
+      }
    }
 }
 
@@ -428,6 +619,8 @@ void RuleDialog::OnChooseAlgo(wxCommandEvent& event)
          }
       }
       delete tempalgo;
+      
+      UpdateHelp();
    }
 }
 
@@ -541,14 +734,24 @@ void RuleDialog::OnDeleteName(wxCommandEvent& WXUNUSED(event))
 
 void RuleDialog::OnHelpButton(wxCommandEvent& WXUNUSED(event))
 {
+   const int EXTRAWD = 500;
+   const int EXTRAHT = 300;
    wxRect r = GetRect();
    if (expanded) {
-      r.width -= 400;
+      r.width -= EXTRAWD;
+      r.height -= EXTRAHT;
    } else {
-      r.width += 400;
+      int wd, ht;
+      GetClientSize(&wd, &ht);
+      wxRect htmlrect(r.width, 10, EXTRAWD-10, ht+EXTRAHT-50);
+      htmlwin->SetSize(htmlrect);
+      r.width += EXTRAWD;
+      r.height += EXTRAHT;
    }
-   SetSize(r);
    expanded = !expanded;
+   UpdateHelp();
+   htmlwin->Show(expanded);
+   SetSize(r);
 }
 
 // -----------------------------------------------------------------------------

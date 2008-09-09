@@ -37,10 +37,11 @@ PERL_INCLUDE = \
 VERSION = 1.5a
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
-SHAREDDIRS = Help Help\Lexicon Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \
-   Patterns Patterns\Breeders Patterns\Guns Patterns\Hashing-Examples Patterns\JvN-Examples Patterns\Methuselahs \
-   Patterns\Miscellaneous Patterns\Oscillators Patterns\Other-Rules Patterns\Puffers \
-   Patterns\Rakes Patterns\Signal-Circuitry Patterns\Still-Lifes Patterns\Spaceships \
+SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
+   Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \
+   Patterns Patterns\Breeders Patterns\Guns Patterns\Hashing-Examples Patterns\JvN-Examples \
+   Patterns\Methuselahs Patterns\Miscellaneous Patterns\Oscillators Patterns\Other-Rules \
+   Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry Patterns\Still-Lifes Patterns\Spaceships \
    Patterns\Syntheses Patterns\WireWorld-Examples
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
