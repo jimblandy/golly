@@ -27,7 +27,7 @@
 # constructor operating in a CA space.
 #
 # Authors: Renato Nobili and Umberto Pesavento
-# Ruleset: EJVN
+# Ruleset: Nobili32
 #
 # Details:
 # http://www.pd.infn.it/~rnobili/wjvn/index.htm
@@ -91,7 +91,7 @@
 # -----------------------
 #
 #CXRLE Pos=0,-137 Gen=63403796306
-x = 145503, y = 307, rule = JvN-32
+x = 145503, y = 307, rule = Nobili32
 155.8ILILILILIL$155.J.J.pA.pA.IJIJIJIJL$155.J.J.J.J9.IL$149.IL4IpAIpA
 IpAIpAIpAIpAIpAIpA.LK$149.JIJ3.L.L.2LKLKLKLKLK.IL$149.J5.L.L.LILILILI
 LIL.LK.IL$149.J5.L.L.L.L.L.L.pA.pA.L2.JL$149.J5.16IL2.JL$149.J15.L6K

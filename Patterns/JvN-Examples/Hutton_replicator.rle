@@ -95,6 +95,7 @@
 #    0 respectively. After writing the cell reverts to being an OTS.
 # 2) A sensitized cell that is about to revert to an arrow bases its 
 #     direction upon that of the excited arrow that is pointing to it. 
+
 # 3) A TS 'c', with a sensitized state 's' on its output that will 
 #    become an OTS next (based on the state of 'c'), reverts to the 
 #    ground state if any of 'c's input is 1, else it quiesces. 
@@ -116,7 +117,7 @@
 #    old tape to prevent infection spreading from multiple copies.
 #
 #CXRLE Pos=20,16
-x = 3129, y = 4, rule = modJvN-32
+x = 3129, y = 4, rule = Hutton32
 2.J$2.J$2KpAOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
 5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO3KOKO5KO5KO5KO5KO
 5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKO2KO5KO
