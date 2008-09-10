@@ -38,5 +38,7 @@ public:
    virtual const char* DefaultRule() ;
    virtual int NumCellStates() ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
+private:
+   enum { JvN29, Nobili32, Hutton32 } current_rule ;
 };
 #endif

@@ -1602,6 +1602,10 @@ void AddDefaultRules()
    namedrules.Add(wxT("Wolfram 22|W22"));
    namedrules.Add(wxT("Wolfram 30|W30"));
    namedrules.Add(wxT("Wolfram 110|W110"));
+   namedrules.Add(wxT("WireWorld|WireWorld"));
+   namedrules.Add(wxT("JvN29|JvN29"));
+   namedrules.Add(wxT("Nobili32|Nobili32"));
+   namedrules.Add(wxT("Hutton32|Hutton32"));
 }
 
 // -----------------------------------------------------------------------------
