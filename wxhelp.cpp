@@ -234,10 +234,8 @@ HelpFrame::HelpFrame()
    SetMinSize(wxSize(minhelpwd, minhelpht));
    SetSizer(vbox);
 
-   #ifdef __WXMAC__
-      // expand sizer now to avoid seeing small htmlwin and buttons in top left corner
-      vbox->SetDimension(0, 0, helpwd, helpht);
-   #endif
+   // expand sizer now to avoid seeing small htmlwin and buttons in top left corner
+   vbox->SetDimension(0, 0, helpwd, helpht);
 }
 
 // -----------------------------------------------------------------------------

@@ -443,7 +443,7 @@ void RuleDialog::CreateControls()
    #ifdef __WXMAC__
       minwidth += 24;         // why is this fudge needed???
    #elif defined(__WXMSW__)
-      minwidth += 0;
+      minwidth += 16;
    #else
       minwidth += 0;
    #endif
