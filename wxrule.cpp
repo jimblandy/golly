@@ -440,12 +440,13 @@ void RuleDialog::CreateControls()
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
+   // can we avoid these fudges???
    #ifdef __WXMAC__
-      minwidth += 24;         // why is this fudge needed???
+      minwidth += 24;
    #elif defined(__WXMSW__)
       minwidth += 16;
    #else
-      minwidth += 0;
+      minwidth += 8;
    #endif
    vbox->Add(minwidth, 0, 0);
    vbox->Add(stdbutts, 1, wxALIGN_RIGHT, 0);
@@ -466,7 +467,6 @@ void RuleDialog::CreateControls()
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(vbox, 0, wxTOP | wxBOTTOM, 10);
    SetSizer(topSizer);
-   //!!!??? topSizer->Fit(this);
    topSizer->SetSizeHints(this);    // calls Fit
 }
 
