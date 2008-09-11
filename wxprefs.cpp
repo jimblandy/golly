@@ -117,6 +117,11 @@ int infoy = 90;
 int infowd = 700;                // info window's initial size
 int infoht = 500;
 
+int rulex = 200;                 // rule dialog's initial location
+int ruley = 200;
+int ruleexwd = 500;              // rule dialog's initial extra size
+int ruleexht = 200;
+
 char initrule[256] = "B3/S23";   // initial rule
 bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
@@ -1437,6 +1442,7 @@ void SavePrefs()
       infoht = r.height;
    }
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
+   fprintf(f, "rule_dialog=%d,%d,%d,%d\n", rulex, ruley, ruleexwd, ruleexht);
 
    fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
    fprintf(f, "restore_view=%d\n", restoreview ? 1 : 0);
@@ -1806,6 +1812,12 @@ void GetPrefs()
          if (infowd < mininfowd) infowd = mininfowd;
          if (infoht < mininfoht) infoht = mininfoht;
          CheckVisibility(&infox, &infoy, &infowd, &infoht);
+
+      } else if (strcmp(keyword, "rule_dialog") == 0) {
+         sscanf(value, "%d,%d,%d,%d", &rulex, &ruley, &ruleexwd, &ruleexht);
+         if (ruleexwd < 100) ruleexwd = 100;
+         if (ruleexht < 0) ruleexht = 0;
+         CheckVisibility(&rulex, &ruley, &ruleexwd, &ruleexht);
 
       } else if (strcmp(keyword, "allow_undo") == 0) {
          allowundo = value[0] == '1';

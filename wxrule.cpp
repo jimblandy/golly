@@ -119,24 +119,19 @@ public:
    void DisplayFile(const wxString& filepath);
 
 private:
-   #ifdef __WXMSW__
-      // see AlgoHelp::OnKeyUp for why we do this
-      void OnKeyUp(wxKeyEvent& event);
-   #else
-      void OnKeyDown(wxKeyEvent& event);
-   #endif
-   
+   void OnKeyUp(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
-#ifdef __WXMSW__
-   // see AlgoHelp::OnKeyUp for why we do this
    EVT_KEY_UP     (AlgoHelp::OnKeyUp)
-#else
-   EVT_KEY_DOWN   (AlgoHelp::OnKeyDown)
+#ifdef __WXMAC__
+   // on the Mac OnKeyUp is also called on a key-down event;
+   // this is needed because the key-up handler gets a key code of 400
+   // if cmd-C is pressed quickly
+   EVT_KEY_DOWN   (AlgoHelp::OnKeyUp)
 #endif
    EVT_SIZE       (AlgoHelp::OnSize)
 END_EVENT_TABLE()
@@ -195,27 +190,23 @@ void AlgoHelp::DisplayFile(const wxString& filepath)
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXMSW__
-// we have to use OnKeyUp handler on Windows otherwise wxHtmlWindow's OnKeyUp
-// gets called which detects ctrl-C and clobbers our clipboard fix
+// we have to use a key-up handler otherwise wxHtmlWindow's key-up handler
+// gets called which detects cmd/ctrl-C and clobbers our clipboard fix
 void AlgoHelp::OnKeyUp(wxKeyEvent& event)
-#else
-// we have to use OnKeyDown handler on Mac -- if OnKeyUp handler is used and
-// cmd-C is pressed quickly then key code is 400
-void AlgoHelp::OnKeyDown(wxKeyEvent& event)
-#endif
 {
    int key = event.GetKeyCode();
    if (event.CmdDown()) {
       // let cmd-A select all text
       if (key == 'A') {
          SelectAll();
+         event.Skip(false);
          return;
       }
       #ifdef __WXMAC__
          // let cmd-W close dialog
          if (key == 'W') {
             GetParent()->Close(true);
+            event.Skip(false);
             return;
          }
       #endif
@@ -225,17 +216,21 @@ void AlgoHelp::OnKeyDown(wxKeyEvent& event)
          // copy any selected text to the clipboard
          wxString text = SelectionToText();
          if ( text.Length() > 0 ) {
-            // remove any leading/trailing spaces
-            text = text.Trim(false);
-            text = text.Trim(true);
+            // remove any leading/trailing white space
+            while (text.GetChar(0) <= wxChar(' ')) {
+               text = text.Mid(1);
+            }
+            while (text.GetChar(text.Length()-1) <= wxChar(' ')) {
+               text.Truncate(text.Length()-1);
+            }
             mainptr->CopyTextToClipboard(text);
+            // don't call wxHtmlWindow's default key-up handler
+            event.Skip(false);
+            return;
          }
-      } else {
-         event.Skip();
       }
-   } else {
-      event.Skip();
    }
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -265,15 +260,6 @@ const wxString UNNAMED = _("UNNAMED");    // unnamed rule
 
 const int HGAP = 12;
 const int BIGVGAP = 12;
-
-// following ensures OK/Cancel buttons are better aligned
-#ifdef __WXMAC__
-   const int STDHGAP = 0;
-#elif defined(__WXMSW__)
-   const int STDHGAP = 9;
-#else
-   const int STDHGAP = 10;
-#endif
 
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
    // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
@@ -323,6 +309,7 @@ private:
    int nameindex;             // current namechoice selection
    bool ignore_text_change;   // prevent OnRuleTextChanged doing anything?
    bool expanded;             // help button has expanded dialog?
+   wxRect minrect;            // window rect for unexpanded dialog
    
    // event handlers
    void OnRuleTextChanged(wxCommandEvent& event);
@@ -333,6 +320,8 @@ private:
    void OnDeleteName(wxCommandEvent& event);
    void OnUpdateAdd(wxUpdateUIEvent& event);
    void OnUpdateDelete(wxUpdateUIEvent& event);
+   void OnSize(wxSizeEvent& event);
+   void OnMove(wxMoveEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
@@ -346,21 +335,29 @@ BEGIN_EVENT_TABLE(RuleDialog, wxDialog)
    EVT_BUTTON     (RULE_DEL_BUTT,   RuleDialog::OnDeleteName)
    EVT_UPDATE_UI  (RULE_ADD_BUTT,   RuleDialog::OnUpdateAdd)
    EVT_UPDATE_UI  (RULE_DEL_BUTT,   RuleDialog::OnUpdateDelete)
+   EVT_SIZE       (                 RuleDialog::OnSize)
+   EVT_MOVE       (                 RuleDialog::OnMove)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
 RuleDialog::RuleDialog(wxWindow* parent)
 {
-   Create(parent, wxID_ANY, _("Set Rule"), wxDefaultPosition, wxDefaultSize,
-          wxDEFAULT_DIALOG_STYLE /* | wxRESIZE_BORDER ???!!! */);
+   Create(parent, wxID_ANY, _("Set Rule"), wxPoint(rulex,ruley), wxDefaultSize,
+          wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+   
+   expanded = false;    // tested in RuleDialog::OnSize
+
    ignore_text_change = true;
    CreateControls();
-   GetSizer()->Fit(this);
-   GetSizer()->SetSizeHints(this);
-   Centre();
    ignore_text_change = false;
-   expanded = false;
+   
+   // dialog location is now set to rulex,ruley
+   // Centre();
+
+   minrect = GetRect();
+   // don't allow resizing when dialog isn't expanded
+   SetMaxSize( wxSize(minrect.width,minrect.height) );
 
    htmlwin = new AlgoHelp(this, wxID_ANY,
                           // specify small size to avoid clipping scroll bar on resize
@@ -380,43 +377,20 @@ RuleDialog::RuleDialog(wxWindow* parent)
 void RuleDialog::CreateControls()
 {
    wxStaticText* textlabel = new wxStaticText(this, wxID_STATIC, _("Enter a new rule:"));
-   
-   ruletext = new wxTextCtrl(this, RULE_TEXT,
-                             wxString(currlayer->algo->getrule(),wxConvLocal),
-                             wxDefaultPosition, wxSize(250,wxDefaultCoord));
+   wxStaticText* namelabel = new wxStaticText(this, wxID_STATIC, _("Or select a named rule:"));
+
+   wxButton* helpbutt = new wxButton(this, wxID_HELP, wxEmptyString);
+   wxButton* delbutt = new wxButton(this, RULE_DEL_BUTT, _("Delete"));
+   wxButton* addbutt = new wxButton(this, RULE_ADD_BUTT, _("Add"));
    
    // create a choice menu to select algo
    wxArrayString algoarray;
    for (int i = 0; i < NumAlgos(); i++) {
       algoarray.Add( wxString(GetAlgoName(i),wxConvLocal) );
    }
-   algochoice = new wxChoice(this, RULE_ALGO,
-                             wxDefaultPosition, wxDefaultSize, algoarray);
+   algochoice = new wxChoice(this, RULE_ALGO, wxDefaultPosition, wxDefaultSize, algoarray);
    algoindex = currlayer->algtype;
    algochoice->SetSelection(algoindex);
-   
-   // create a choice menu to select named rule
-   wxArrayString namearray;
-   for (size_t i=0; i<namedrules.GetCount(); i++) {
-      // remove "|..." part
-      wxString name = namedrules[i].BeforeFirst('|');
-      namearray.Add(name);
-   }
-   namechoice = new wxChoice(this, RULE_NAME,
-                             wxDefaultPosition, wxSize(160,wxDefaultCoord), namearray);
-   // choose appropriate name
-   nameindex = -1;
-   UpdateName();
-
-   wxStaticText* namelabel = new wxStaticText(this, wxID_STATIC,
-                                 _("Or select a named rule:"));
-
-   wxButton* helpbutt = new wxButton(this, wxID_HELP, wxEmptyString);
-   wxButton* delbutt = new wxButton(this, RULE_DEL_BUTT, _("Delete"));
-   wxButton* addbutt = new wxButton(this, RULE_ADD_BUTT, _("Add"));
-
-   addtext = new wxTextCtrl(this, RULE_ADD_TEXT, wxEmptyString,
-                            wxDefaultPosition, wxSize(160,wxDefaultCoord));
 
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
@@ -427,6 +401,30 @@ void RuleDialog::CreateControls()
    wxBoxSizer* helpbox = new wxBoxSizer(wxHORIZONTAL);
    helpbox->Add(helpbutt, 0, FIX_ALIGN_BUG);
    hbox0->Add(helpbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   
+   int minwidth = 250;
+   int algowd = hbox0->GetMinSize().GetWidth();
+   if (algowd > minwidth) minwidth = algowd;
+   
+   // create text box for entering new rule
+   ruletext = new wxTextCtrl(this, RULE_TEXT,
+                             wxString(currlayer->algo->getrule(),wxConvLocal),
+                             wxDefaultPosition, wxSize(minwidth,wxDefaultCoord));
+   
+   // create a choice menu to select named rule
+   wxArrayString namearray;
+   for (size_t i=0; i<namedrules.GetCount(); i++) {
+      // remove "|..." part
+      wxString name = namedrules[i].BeforeFirst('|');
+      namearray.Add(name);
+   }
+   namechoice = new wxChoice(this, RULE_NAME,
+                             wxDefaultPosition, wxSize(160,wxDefaultCoord), namearray);
+   nameindex = -1;
+   UpdateName();        // careful -- this uses ruletext
+
+   addtext = new wxTextCtrl(this, RULE_ADD_TEXT, wxEmptyString,
+                            wxDefaultPosition, wxSize(160,wxDefaultCoord));
 
    wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(namechoice, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -441,9 +439,16 @@ void RuleDialog::CreateControls()
    hbox2->Add(addbutt, 0, wxALIGN_CENTER_VERTICAL, 0);
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
-
-   wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
-   stdhbox->Add(stdbutts, 1, wxALIGN_RIGHT | wxALIGN_BOTTOM | wxRIGHT, STDHGAP);
+   wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
+   #ifdef __WXMAC__
+      minwidth += 24;         // why is this fudge needed???
+   #elif defined(__WXMSW__)
+      minwidth += 0;
+   #else
+      minwidth += 0;
+   #endif
+   vbox->Add(minwidth, 0, 0);
+   vbox->Add(stdbutts, 1, wxALIGN_RIGHT, 0);
 
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    topSizer->AddSpacer(BIGVGAP);
@@ -459,8 +464,10 @@ void RuleDialog::CreateControls()
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(hbox2, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
-   topSizer->Add(stdhbox, 1, wxALIGN_RIGHT | wxALIGN_BOTTOM | wxTOP | wxBOTTOM, 10);
+   topSizer->Add(vbox, 0, wxTOP | wxBOTTOM, 10);
    SetSizer(topSizer);
+   //!!!??? topSizer->Fit(this);
+   topSizer->SetSizeHints(this);    // calls Fit
 }
 
 // -----------------------------------------------------------------------------
@@ -732,30 +739,6 @@ void RuleDialog::OnDeleteName(wxCommandEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void RuleDialog::OnHelpButton(wxCommandEvent& WXUNUSED(event))
-{
-   const int EXTRAWD = 500;
-   const int EXTRAHT = 300;
-   wxRect r = GetRect();
-   if (expanded) {
-      r.width -= EXTRAWD;
-      r.height -= EXTRAHT;
-   } else {
-      int wd, ht;
-      GetClientSize(&wd, &ht);
-      wxRect htmlrect(r.width, 10, EXTRAWD-10, ht+EXTRAHT-50);
-      htmlwin->SetSize(htmlrect);
-      r.width += EXTRAWD;
-      r.height += EXTRAHT;
-   }
-   expanded = !expanded;
-   UpdateHelp();
-   htmlwin->Show(expanded);
-   SetSize(r);
-}
-
-// -----------------------------------------------------------------------------
-
 void RuleDialog::OnUpdateAdd(wxUpdateUIEvent& event)
 {
    // Add button is only enabled if UNNAMED item is selected
@@ -768,6 +751,75 @@ void RuleDialog::OnUpdateDelete(wxUpdateUIEvent& event)
 {
    // Delete button is only enabled if a non-Life named rule is selected
    event.Enable( nameindex > 0 && nameindex < (int) namedrules.GetCount() );
+}
+
+// -----------------------------------------------------------------------------
+
+void RuleDialog::OnHelpButton(wxCommandEvent& WXUNUSED(event))
+{
+   wxRect r = GetRect();
+   expanded = !expanded;
+   if (expanded) {
+      int wd, ht;
+      GetClientSize(&wd, &ht);
+      wxRect htmlrect(minrect.width, 10, ruleexwd - 10, ht + ruleexht - 20);
+      htmlwin->SetSize(htmlrect);
+      r.width = minrect.width + ruleexwd;
+      r.height = minrect.height + ruleexht;
+      // call SetMinSize below (AFTER SetSize call)
+      SetMaxSize( wxSize(-1,-1) );
+   } else {
+      wxWindow* focus = FindFocus();
+      if (focus != ruletext && focus != addtext) {
+         ruletext->SetFocus();
+      }
+      r.width = minrect.width;
+      r.height = minrect.height;
+      SetMinSize( wxSize(minrect.width,minrect.height) );
+      SetMaxSize( wxSize(minrect.width,minrect.height) );
+   }
+   
+   UpdateHelp();
+   htmlwin->Show(expanded);
+   SetSize(r);
+   
+   if (expanded) {
+      SetMinSize( wxSize(minrect.width+100,minrect.height) );
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void RuleDialog::OnSize(wxSizeEvent& event)
+{
+   if (expanded) {
+      // resize html window
+      int wd, ht;
+      GetClientSize(&wd, &ht);
+      wxRect r = GetRect();
+      ruleexwd = r.width - minrect.width;
+      ruleexht = r.height - minrect.height;
+      wxRect htmlrect(minrect.width, 10, wd - minrect.width - 10, ht - 20);
+      htmlwin->SetSize(htmlrect);
+   }
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void RuleDialog::OnMove(wxMoveEvent& event)
+{
+   // save current location for later use in SavePrefs
+   wxPoint pt = event.GetPosition();
+   rulex = pt.x;
+   ruley = pt.y;
+   
+   // sigh... wxMac doesn't return correct position
+   wxRect r = GetRect();
+   rulex = r.x;
+   ruley = r.y;
+   
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------

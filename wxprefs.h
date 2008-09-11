@@ -64,6 +64,11 @@ extern int infoy;
 extern int infowd;               // info window's size
 extern int infoht;
 
+extern int rulex;                // rule dialog's location
+extern int ruley;
+extern int ruleexwd;             // rule dialog's extra size
+extern int ruleexht;
+
 extern char initrule[];          // initial rule
 extern bool initautofit;         // initial autofit setting
 extern bool inithyperspeed;      // initial hyperspeed setting

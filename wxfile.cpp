@@ -622,7 +622,7 @@ void MainFrame::OpenScript()
 
 // -----------------------------------------------------------------------------
 
-bool MainFrame::CopyTextToClipboard(wxString &text)
+bool MainFrame::CopyTextToClipboard(const wxString& text)
 {
    bool result = true;
    #ifdef __WXX11__

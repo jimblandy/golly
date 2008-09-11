@@ -54,17 +54,20 @@ private:
    DECLARE_EVENT_TABLE()
 };
 
-InfoFrame *infoptr = NULL;    // pattern info window
-
-wxFrame* GetInfoFrame() {
-   return infoptr;
-}
-
 BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
    EVT_ACTIVATE   (              InfoFrame::OnActivate)
    EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
    EVT_CLOSE      (              InfoFrame::OnClose)
 END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+InfoFrame *infoptr = NULL;    // pattern info window
+
+wxFrame* GetInfoFrame()
+{
+   return infoptr;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -91,7 +94,8 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-void TextView::OnKeyDown(wxKeyEvent& event) {
+void TextView::OnKeyDown(wxKeyEvent& event)
+{
    int key = event.GetKeyCode();
    #ifdef __WXMAC__
       // let cmd-W close info window
@@ -186,13 +190,15 @@ void InfoFrame::OnActivate(wxActivateEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void InfoFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
+void InfoFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event))
+{
    Close(true);
 }
 
 // -----------------------------------------------------------------------------
 
-void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event))
+{
    #ifdef __WXMSW__
    if (!IsIconized()) {
    #endif
@@ -212,7 +218,8 @@ void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 // -----------------------------------------------------------------------------
 
-void ShowInfo(const wxString &filepath) {
+void ShowInfo(const wxString &filepath)
+{
    if (infoptr) {
       // info window exists so just bring it to front
       infoptr->Raise();
