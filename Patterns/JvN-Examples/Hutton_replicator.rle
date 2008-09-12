@@ -95,7 +95,6 @@
 #    0 respectively. After writing the cell reverts to being an OTS.
 # 2) A sensitized cell that is about to revert to an arrow bases its 
 #     direction upon that of the excited arrow that is pointing to it. 
-
 # 3) A TS 'c', with a sensitized state 's' on its output that will 
 #    become an OTS next (based on the state of 'c'), reverts to the 
 #    ground state if any of 'c's input is 1, else it quiesces. 
