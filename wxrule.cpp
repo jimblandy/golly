@@ -129,14 +129,18 @@ private:
 };
 
 BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
+#ifdef __WXGTK__
+   // don't call OnKeyUp in wxGTK because for some reason it prevents
+   // copied help text being pasted into the rule box
+#else
    EVT_KEY_UP        (AlgoHelp::OnKeyUp)
+#endif
 #ifdef __WXMAC__
-   // on the Mac OnKeyUp is also called on a key-down event;
-   // this is needed because the key-up handler gets a key code of 400
-   // if cmd-C is pressed quickly
+   // on the Mac OnKeyUp is also called on a key-down event because the
+   // key-up handler gets a key code of 400 if cmd-C is pressed quickly
    EVT_KEY_DOWN      (AlgoHelp::OnKeyUp)
-   //!!!??? fix bug losing focus after scroll bar clicked
-   /* failed to fix bug
+   //!!! try to fix wxMac bug losing focus after scroll bar clicked
+   /* this failed
    EVT_LEFT_DOWN     (AlgoHelp::OnMouseDown)
    EVT_LEFT_DCLICK   (AlgoHelp::OnMouseDown)
    EVT_SET_FOCUS     (AlgoHelp::OnSetFocus)
