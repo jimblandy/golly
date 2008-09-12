@@ -121,19 +121,29 @@ public:
 private:
    void OnKeyUp(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
+   void OnSetFocus(wxFocusEvent& event);
+   void OnKillFocus(wxFocusEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
-   EVT_KEY_UP     (AlgoHelp::OnKeyUp)
+   EVT_KEY_UP        (AlgoHelp::OnKeyUp)
 #ifdef __WXMAC__
    // on the Mac OnKeyUp is also called on a key-down event;
    // this is needed because the key-up handler gets a key code of 400
    // if cmd-C is pressed quickly
-   EVT_KEY_DOWN   (AlgoHelp::OnKeyUp)
+   EVT_KEY_DOWN      (AlgoHelp::OnKeyUp)
+   //!!!??? fix bug losing focus after scroll bar clicked
+   /* failed to fix bug
+   EVT_LEFT_DOWN     (AlgoHelp::OnMouseDown)
+   EVT_LEFT_DCLICK   (AlgoHelp::OnMouseDown)
+   EVT_SET_FOCUS     (AlgoHelp::OnSetFocus)
+   EVT_KILL_FOCUS    (AlgoHelp::OnKillFocus)
+   */
 #endif
-   EVT_SIZE       (AlgoHelp::OnSize)
+   EVT_SIZE          (AlgoHelp::OnSize)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -251,6 +261,48 @@ void AlgoHelp::OnSize(wxSizeEvent& event)
    
    // prevent wxHtmlWindow::OnSize being called again
    event.Skip(false);
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnMouseDown(wxMouseEvent& event)
+{
+   // this failed to fix wxMac bug
+   // SetFocus();
+   
+   // this also failed
+   wxWindow* former = FindFocus();
+   if (former == this) {
+      //!!!printf("html win has focus\n");
+   } else {
+      //!!!printf("html win does NOT have focus\n");
+
+      wxFocusEvent killevt(wxEVT_KILL_FOCUS, this->GetId());
+      killevt.SetEventObject(this);
+      this->GetEventHandler()->ProcessEvent(killevt);
+
+      wxFocusEvent setevt(wxEVT_SET_FOCUS, this->GetId());
+      setevt.SetEventObject(this);
+      this->GetEventHandler()->ProcessEvent(setevt);
+   }
+
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnSetFocus(wxFocusEvent& event)
+{
+   //!!!printf("set focus\n");
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnKillFocus(wxFocusEvent& event)
+{
+   //!!!printf("kill focus\n");
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -446,7 +498,7 @@ void RuleDialog::CreateControls()
    #elif defined(__WXMSW__)
       minwidth += 16;
    #else
-      minwidth += 8;
+      minwidth += 12;
    #endif
    vbox->Add(minwidth, 0, 0);
    vbox->Add(stdbutts, 1, wxALIGN_RIGHT, 0);
@@ -810,11 +862,11 @@ void RuleDialog::OnSize(wxSizeEvent& event)
 void RuleDialog::OnMove(wxMoveEvent& event)
 {
    // save current location for later use in SavePrefs
+   /*  sigh... wxMac doesn't return correct position
    wxPoint pt = event.GetPosition();
    rulex = pt.x;
    ruley = pt.y;
-   
-   // sigh... wxMac doesn't return correct position
+   */
    wxRect r = GetRect();
    rulex = r.x;
    ruley = r.y;
