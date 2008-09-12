@@ -14,8 +14,8 @@
 # build wxWidgets or Golly.
 
 # Change the next 2 lines to specify where you installed wxWidgets:
-!include </wxWidgets/build/msw/config.vc>
-WX_DIR = c:\wxWidgets
+!include <C:/wxWidgets/build/msw/config.vc>
+WX_DIR = C:\wxWidgets
 
 # Change the next line to match your wxWidgets version (first two digits):
 WX_RELEASE = 28
