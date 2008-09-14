@@ -23,13 +23,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "slifealgo.h"
 
-// AKT: for case-insensitive string comparison
+// for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
    #define stricmp strcasecmp
 #endif
 
-// AKT: this algo only supports B3/S23
+// this algo only supports B3/S23
 const char SLOW_RULE[] = "B3/S23";
 
 const char* slifealgo::setrule(const char *s) {
@@ -68,4 +68,10 @@ void slifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("SlowLife") ;
    ai.setAlgorithmCreator(&creator) ;
+   // init default color scheme
+   ai.defgradient = false;
+   ai.defr1 = ai.defg1 = ai.defb1 = 255;        // start color = white
+   ai.defr2 = ai.defg2 = ai.defb2 = 255;        // end color = white
+   ai.defr[0] = ai.defg[0] = ai.defb[0] = 0;    // 0 state = black
+   ai.defr[1] = ai.defg[1] = ai.defb[1] = 255;  // 1 state = white
 }

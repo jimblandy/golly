@@ -74,13 +74,14 @@ public:
    static void setVerbose(int v) { verbose = v ; }
    static int getVerbose() { return verbose ; }
    virtual const char* DefaultRule() { return "B3/S23"; }
-   // AKT: return number of cell states in this universe (2..256)
+   // return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
 protected:
    lifepoll *poller ;
    static int verbose ;
    int maxCellStates ; // keep up to date; setcell depends on it
 } ;
+
 /**
  *   If you need any static information from a lifealgo, this class can be
  *   called (or overridden) to set up all that data.  Right now the
@@ -92,21 +93,30 @@ protected:
 class staticAlgoInfo {
 public:
    staticAlgoInfo() ;
-   /* mandatory */
+
+   // mandatory
    void setAlgorithmName(const char *s) { algoName = s ; }
    void setAlgorithmCreator(lifealgo *(*f)()) { creator = f ; }
-   /* optional; override if you want to retain this data */
-   virtual void initCellColors(int, unsigned char *) {}
+   
+   // optional; override if you want to retain this data
    virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) {}
    virtual void setDefaultBaseStep(int) {}
    virtual void setDefaultMaxMem(int) {}
-   virtual void setStatusRGB(int /* r */, int /* g */, int /* b */) {}
-   /* basic data */
+   
+   // default color scheme
+   bool defgradient;                      // use color gradient?
+   unsigned char defr1, defg1, defb1;     // color at start of gradient
+   unsigned char defr2, defg2, defb2;     // color at end of gradient
+   // if defgradient is false then use these colors for each cell state
+   unsigned char defr[256], defg[256], defb[256];
+   
+   // basic data
    const char *algoName ;
    lifealgo *(*creator)() ;
    int id ; // my index
    staticAlgoInfo *next ;
-   /* support:  give me sequential algorithm IDs */
+   
+   // support:  give me sequential algorithm IDs
    static int getNumAlgos() { return nextAlgoId ; }
    static int nextAlgoId ;
    static staticAlgoInfo &tick() ;

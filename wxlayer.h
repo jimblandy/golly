@@ -92,6 +92,11 @@ public:
    PatternView* tilewin;      // tile window
    wxRect tilerect;           // tile window's size and position
 
+   // color scheme for this layer
+   unsigned char cellr[256];
+   unsigned char cellg[256];
+   unsigned char cellb[256];
+
    // if this is a cloned layer then cloneid is > 0 and all the
    // other clones have the same cloneid
    int cloneid;
@@ -190,6 +195,14 @@ void RefreshView();
 
 void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.
+
+void UpdateCellColors();
+// Update cell colors for the current layer depending on the current
+// algo and rule.  Must be called very soon after an algo/rule change,
+// and before the viewport is updated.
+
+void InvertCellColors();
+// Invert cell colors in all layers, including the dead cell color.
 
 Layer* GetLayer(int index);
 // Return a pointer to the layer specified by the given index.

@@ -896,14 +896,18 @@ bool RuleDialog::TransferDataFromWindow()
    if (algoindex == currlayer->algtype) {
       // new rule should be valid in current algorithm
       const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-      if (!err) return true;
+      if (!err) {
+         // cell colors depend on current algo and rule
+         UpdateCellColors();
+         return true;
+      }
       Warning(_("Bug detected in TransferDataFromWindow!"));
       return false;
+   } else {
+      // change the current algorithm and switch to the new rule
+      mainptr->ChangeAlgorithm(algoindex, newrule);
+      return true;
    }
-   
-   // change the current algorithm and switch to the new rule
-   mainptr->ChangeAlgorithm(algoindex, newrule);
-   return true;
 }
 
 // -----------------------------------------------------------------------------

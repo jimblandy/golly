@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "wwalgo.h"
 
-// AKT: for case-insensitive string comparison
+// for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
    #define stricmp strcasecmp
@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std ;
 
-// AKT: this algo only supports a single rule
+// this algo only supports a single rule
 const char WW_RULE[] = "WireWorld";
 
 const char* wwalgo::setrule(const char *s) {
@@ -49,15 +49,6 @@ const char* wwalgo::getrule() {
 const char* wwalgo::DefaultRule() {
    return WW_RULE;
 }
-
-// colors for each cell state match those used at
-// http://www.quinapalus.com/wi-index.html
-static unsigned char wwcolors[] = {
-     0,   0,   0,    // not used (replaced by user's dead cell color)
-     0, 128, 255,    // 1 = lightish blue
-   255, 255, 255,    // 2 = white
-   255, 128,   0     // 3 = orange
-};
 
 wwalgo::wwalgo() {
    maxCellStates = 4 ;
@@ -82,11 +73,31 @@ state wwalgo::slowcalc(state nw, state n, state ne, state w, state c, state e,
     return 0 ; // should throw an error here
   }
 }
+
+// colors for each cell state match those used at
+// http://www.quinapalus.com/wi-index.html
+static unsigned char wwcolors[] = {
+     0,   0,   0,    // not used (replaced by user's dead cell color)
+     0, 128, 255,    // 1 = light blue
+   255, 255, 255,    // 2 = white
+   255, 128,   0     // 3 = orange
+};
+
 static lifealgo *creator() { return new wwalgo() ; }
+
 void wwalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("WireWorld") ;
    ai.setAlgorithmCreator(&creator) ;
-   ai.initCellColors(sizeof(wwcolors)/(sizeof(wwcolors[0])*3), wwcolors) ;
-   ai.setStatusRGB(243, 225, 255) ;    // pale purple
+   // init default color scheme
+   ai.defgradient = false;
+   ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white
+   ai.defr2 = ai.defg2 = ai.defb2 = 0;       // end color = black
+   int numcolors = sizeof(wwcolors) / (sizeof(wwcolors[0])*3);
+   unsigned char* rgbptr = wwcolors;
+   for (int i = 0; i < numcolors; i++) {
+      ai.defr[i] = *rgbptr++;
+      ai.defg[i] = *rgbptr++;
+      ai.defb[i] = *rgbptr++;
+   }
 }

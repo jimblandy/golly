@@ -8,7 +8,7 @@ TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 
-Changes in version 1.5 or 2.0??? (released !!! 2008)
+Changes in version 2.0 (released !!! 2008)
 
 AKT: Added algo menu and help button to Set Rule dialog.
 AKT: The setcursor/getcursor commands now accept/return strings.

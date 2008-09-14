@@ -37,7 +37,7 @@ typedef enum {
    HLIFE_ALGO     // HashLife
 };
 
-const int MAX_ALGOS = 200;       // maximum number of algorithms
+const int MAX_ALGOS = 50;        // maximum number of algorithms
 
 typedef int algo_type;           // 0..MAX_ALGOS-1
 
@@ -45,27 +45,30 @@ typedef int algo_type;           // 0..MAX_ALGOS-1
 class AlgoData : public staticAlgoInfo {
 public:
    AlgoData();
-   virtual void initCellColors(int, unsigned char*);
    virtual void createIconBitmaps(int, char**);
    virtual void setDefaultBaseStep(int v) { algobase = v; }
    virtual void setDefaultMaxMem(int v) { algomem = v; }
-   virtual void setStatusRGB(int, int, int);
+
+   static AlgoData& tick();      // static allocator
 
    // additional data
    bool canhash;                 // algo uses hashing?
    int algomem;                  // maximum memory (in MB)
    int algobase;                 // base step
-   unsigned char statusrgb[3];
-   wxColor* algorgb;             // status bar color
-   wxBrush* algobrush;           // corresponding brush
+   wxColor* statusrgb;           // status bar color
+   wxBrush* statusbrush;         // corresponding brush
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
    
-   // rgb colors for each cell state
-   unsigned char cellr[256], cellg[256], cellb[256];
-   
-   // static allocator
-   static AlgoData& tick();
+   // current color scheme (the default color scheme is stored in the
+   // staticAlgoInfo class)
+   bool gradient;                // use color gradient?
+   unsigned char r1, g1, b1;     // color at start of gradient
+   unsigned char r2, g2, b2;     // color at end of gradient
+   // if gradient is false then use these colors for each cell state
+   unsigned char algor[256];
+   unsigned char algog[256];
+   unsigned char algob[256];
 };
 
 extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
@@ -73,7 +76,7 @@ extern wxMenu* algomenu;                  // menu of algorithm names
 extern algo_type initalgo;                // initial algorithm
 
 void InitAlgorithms();
-// Initialize above data -- must be called very early (before reading prefs file).
+// Initialize above data.  Must be called before reading the prefs file.
 
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck = true);
 // Create a new universe of given type.  If allowcheck is true then

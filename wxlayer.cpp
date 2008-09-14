@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/rawbmp.h"     // for wxAlphaPixelData
 #include "wx/filename.h"   // for wxFileName
 #if wxUSE_TOOLTIPS
    #include "wx/tooltip.h" // for wxToolTip
@@ -48,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for initrule, etc
 #include "wxscript.h"      // for inscript
 #include "wxundo.h"        // for UndoRedo, etc
-#include "wxalgos.h"       // for algo_type, initalgo, CreateNewUniverse
+#include "wxalgos.h"       // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
 #include "wxlayer.h"
 
 // -----------------------------------------------------------------------------
@@ -947,6 +948,7 @@ void CurrentLayerChanged()
    if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
       // error should never occur here
+      UpdateCellColors();
    }
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
@@ -1022,6 +1024,9 @@ void AddLayer()
    currlayer = new Layer();
    if (currlayer == NULL) Fatal(_("Failed to create new layer!"));
    layer[currindex] = currlayer;
+
+   // cell colors depend on current algo and rule
+   UpdateCellColors();
    
    numlayers++;
 
@@ -1492,6 +1497,150 @@ void ToggleTileLayers()
       inscript = true;
    } else {
       mainptr->UpdatePatternAndStatus();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void UpdateCellColors()
+{
+   AlgoData* ad = algoinfo[currlayer->algtype];
+   int maxstate = currlayer->algo->NumCellStates() - 1;
+   
+   if (ad->gradient) {
+      // set cell colors for states 1..maxstate using a color gradient
+      // starting with r1,g1,b1 and ending with r2,g2,b2
+      currlayer->cellr[1] = ad->r1;
+      currlayer->cellg[1] = ad->g1;
+      currlayer->cellb[1] = ad->b1;
+      if (maxstate > 2) {
+         int N = maxstate - 1;
+         double rfrac = (double)(ad->r2 - ad->r1) / (double)N;
+         double gfrac = (double)(ad->g2 - ad->g1) / (double)N;
+         double bfrac = (double)(ad->b2 - ad->b1) / (double)N;
+         for (int n = 1; n < N; n++) {
+            currlayer->cellr[n+1] = (int)(ad->r1 + n * rfrac + 0.5);
+            currlayer->cellg[n+1] = (int)(ad->g1 + n * gfrac + 0.5);
+            currlayer->cellb[n+1] = (int)(ad->b1 + n * bfrac + 0.5);
+         }
+      }
+      if (maxstate > 1) {
+         currlayer->cellr[maxstate] = ad->r2;
+         currlayer->cellg[maxstate] = ad->g2;
+         currlayer->cellb[maxstate] = ad->b2;
+      }
+   } else {
+      // set cell colors to algo's current colors
+      for (int n = 1; n <= maxstate; n++) {
+         currlayer->cellr[n] = ad->algor[n];
+         currlayer->cellg[n] = ad->algog[n];
+         currlayer->cellb[n] = ad->algob[n];
+      }
+   }
+   
+   if (swapcolors) {
+      // invert cell colors in current layer
+      for (int n = 1; n <= maxstate; n++) {
+         currlayer->cellr[n] = 255 - currlayer->cellr[n];
+         currlayer->cellg[n] = 255 - currlayer->cellg[n];
+         currlayer->cellb[n] = 255 - currlayer->cellb[n];
+      }
+   }
+   
+   // if current layer has clones then update their colors
+   if (currlayer->cloneid > 0) {
+      for (int i = 0; i < numlayers; i++) {
+         Layer* cloneptr = layer[i];
+         if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+            for (int n = 1; n <= maxstate; n++) {
+               cloneptr->cellr[n] = currlayer->cellr[n];
+               cloneptr->cellg[n] = currlayer->cellg[n];
+               cloneptr->cellb[n] = currlayer->cellb[n];
+            }
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void InvertCellColors()
+{
+   // invert cell colors in all layers
+   for (int i = 0; i < numlayers; i++) {
+      Layer* layerptr = layer[i];
+      for (int n = 1; n < 256; n++) {
+         layerptr->cellr[n] = 255 - layerptr->cellr[n];
+         layerptr->cellg[n] = 255 - layerptr->cellg[n];
+         layerptr->cellb[n] = 255 - layerptr->cellb[n];
+      }
+   }
+   
+   // invert deadrgb and update deadbrush, gridpen and boldpen
+   deadrgb->Set(255 - deadrgb->Red(),
+                255 - deadrgb->Green(),
+                255 - deadrgb->Blue());
+   SetBrushesAndPens();
+   
+   // invert non-black colors in all icon bitmaps
+   for (int a = 0; a < NumAlgos(); a++) {
+      for (int count = 0; count < 2; count++) {
+         wxBitmap** iconmaps;
+         int cellsize;
+         if (count == 0) {
+            iconmaps = algoinfo[a]->icons7x7;
+            cellsize = 7;
+         } else {
+            iconmaps = algoinfo[a]->icons15x15;
+            cellsize = 15;
+         }
+         if (iconmaps) {
+            for (int n = 1; n < 256; n++) {
+               if (iconmaps[n]) {
+                  #ifdef __WXMSW__
+                     // must use wxNativePixelData for bitmaps with no alpha channel
+                     wxNativePixelData icondata(*iconmaps[n]);
+                  #else
+                     wxAlphaPixelData icondata(*iconmaps[n]);
+                  #endif
+                  if (icondata) {
+                     #ifdef __WXMSW__
+                        wxNativePixelData::Iterator iconpxl(icondata);
+                     #else
+                        wxAlphaPixelData::Iterator iconpxl(icondata);
+                     #endif
+                     for (int i = 0; i < cellsize; i++) {
+                        #ifdef __WXMSW__
+                           wxNativePixelData::Iterator startrow = iconpxl;
+                        #else
+                           wxAlphaPixelData::Iterator startrow = iconpxl;
+                        #endif
+                        for (int j = 0; j < cellsize; j++) {
+                           if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
+                              // non-black pixel
+                              unsigned char r = iconpxl.Red();
+                              unsigned char g = iconpxl.Green();
+                              unsigned char b = iconpxl.Blue();
+                              if (r == 255 && g == 255 && b == 255) {
+                                 // change pure white to slightly different white
+                                 // so we don't end up with a black pixel for next invert
+                                 r = 254;
+                              }
+                              iconpxl.Red()   = 255 - r;
+                              iconpxl.Green() = 255 - g;
+                              iconpxl.Blue()  = 255 - b;
+                           }
+                           iconpxl++;
+                        }
+                        // move to next row of icon bitmap
+                        iconpxl = startrow;
+                        iconpxl.OffsetY(icondata, 1);
+                     }
+                  }
+               }
+            }
+         }
+      }
    }
 }
 

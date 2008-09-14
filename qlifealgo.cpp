@@ -1166,5 +1166,10 @@ void qlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(10) ;
    ai.setDefaultMaxMem(0) ;
-   ai.setStatusRGB(255, 255, 206) ;    // pale yellow
+   // init default color scheme
+   ai.defgradient = false;
+   ai.defr1 = ai.defg1 = ai.defb1 = 255;        // start color = white
+   ai.defr2 = ai.defg2 = ai.defb2 = 255;        // end color = white
+   ai.defr[0] = ai.defg[0] = ai.defb[0] = 0;    // 0 state = black
+   ai.defr[1] = ai.defg[1] = ai.defb[1] = 255;  // 1 state = white
 }

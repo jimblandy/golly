@@ -982,7 +982,7 @@ static char *jvn15x15[] = {
 
 // colors for each cell state (we try to match colors used in icons)
 static unsigned char jvncolors[] = {
-     0,   0,   0,    // not used (replaced by user's dead cell color)
+     0,   0,   0,    // 0  black
    255,   0,   0,    // 1  red
    255, 125,   0,    // 2  orange (to match red and yellow)
    255, 150,  25,    // 3   lighter
@@ -1022,12 +1022,20 @@ void jvnalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("JvN") ;
    ai.setAlgorithmCreator(&creator) ;
-   ai.initCellColors(sizeof(jvncolors)/(sizeof(jvncolors[0])*3), jvncolors) ;
    ai.createIconBitmaps(7, jvn7x7) ;
    ai.createIconBitmaps(15, jvn15x15) ;
-   ai.setStatusRGB(225, 255, 225) ;    // pale green
+   // init default color scheme
+   ai.defgradient = false;
+   ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white
+   ai.defr2 = ai.defg2 = ai.defb2 = 0;       // end color = black
+   int numcolors = sizeof(jvncolors) / (sizeof(jvncolors[0])*3);
+   unsigned char* rgbptr = jvncolors;
+   for (int i = 0; i < numcolors; i++) {
+      ai.defr[i] = *rgbptr++;
+      ai.defg[i] = *rgbptr++;
+      ai.defb[i] = *rgbptr++;
+   }
 }
-
 
 // ------------------- beginning of Hutton32 section -----------------------
 

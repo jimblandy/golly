@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for gollydir, allowundo, etc
 #include "wxundo.h"        // for undoredo->...
-#include "wxalgos.h"       // for *_ALGO, algorgb
+#include "wxalgos.h"       // for *_ALGO, statusrgb
 #include "wxlayer.h"       // for currlayer, SyncClones
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
@@ -232,6 +232,9 @@ const char* GSF_setrule(char* rulestring)
       if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
          mainptr->ReduceCellStates(newmaxstate);
       }
+
+      // cell colors depend on current algo and rule
+      UpdateCellColors();
 
       // pattern might have changed or new rule might have changed colors
       DoAutoUpdate();
@@ -666,17 +669,17 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
       }
 
    } else if (strcmp(colname, "hashing") == 0) {      // deprecated
-      oldcol = *(algoinfo[HLIFE_ALGO]->algorgb);
+      oldcol = *(algoinfo[HLIFE_ALGO]->statusrgb);
       if (oldcol != newcol) {
-         *(algoinfo[HLIFE_ALGO]->algorgb) = newcol;
+         *(algoinfo[HLIFE_ALGO]->statusrgb) = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
 
    } else if (strcmp(colname, "nothashing") == 0) {   // deprecated
-      oldcol = *(algoinfo[QLIFE_ALGO]->algorgb);
+      oldcol = *(algoinfo[QLIFE_ALGO]->statusrgb);
       if (oldcol != newcol) {
-         *(algoinfo[QLIFE_ALGO]->algorgb) = newcol;
+         *(algoinfo[QLIFE_ALGO]->statusrgb) = newcol;
          SetBrushesAndPens();
          DoAutoUpdate();
       }
@@ -685,9 +688,9 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
       // look for algo name
       for (int i = 0; i < NumAlgos(); i++) {
          if (strcmp(colname, GetAlgoName(i)) == 0) {
-            oldcol = *(algoinfo[i]->algorgb);
+            oldcol = *(algoinfo[i]->statusrgb);
             if (oldcol != newcol) {
-               *(algoinfo[i]->algorgb) = newcol;
+               *(algoinfo[i]->statusrgb) = newcol;
                SetBrushesAndPens();
                DoAutoUpdate();
             }
@@ -716,13 +719,13 @@ bool GSF_getcolor(char* colname, wxColor& color)
    else if (strcmp(colname, "paste") == 0)      color = *pastergb;
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
    // next two are deprecated
-   else if (strcmp(colname, "hashing") == 0)    color = *(algoinfo[HLIFE_ALGO]->algorgb);
-   else if (strcmp(colname, "nothashing") == 0) color = *(algoinfo[QLIFE_ALGO]->algorgb);
+   else if (strcmp(colname, "hashing") == 0)    color = *(algoinfo[HLIFE_ALGO]->statusrgb);
+   else if (strcmp(colname, "nothashing") == 0) color = *(algoinfo[QLIFE_ALGO]->statusrgb);
    else {
       // look for algo name
       for (int i = 0; i < NumAlgos(); i++) {
          if (strcmp(colname, GetAlgoName(i)) == 0) {
-            color = *(algoinfo[i]->algorgb);
+            color = *(algoinfo[i]->statusrgb);
             return true;
          }
       }

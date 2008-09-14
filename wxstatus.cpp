@@ -252,7 +252,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
    if (wd < 1 || ht < 1) return;
 
    wxRect r = wxRect(0, 0, wd, ht);
-   FillRect(dc, r, *(algoinfo[currlayer->algtype]->algobrush));
+   FillRect(dc, r, *(algoinfo[currlayer->algtype]->statusbrush));
 
    #if defined(__WXMSW__)
       // draw gray lines at top and left edges

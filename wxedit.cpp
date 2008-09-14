@@ -372,28 +372,34 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
    DisplayText(dc, _("Color:"), h_col1, BASELINE2);
    DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
 
-   AlgoData* ad = algoinfo[currlayer->algtype];
-   wxBitmap** iconmaps = ad->icons7x7;
+   wxBitmap** iconmaps = algoinfo[currlayer->algtype]->icons7x7;
 
    // set rgb values for dead state
-   ad->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
-   ad->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
-   ad->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
-   wxColor deadcolor(ad->cellr[0], ad->cellg[0], ad->cellb[0]);
+   /* remove!!!???
+   currlayer->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   currlayer->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   currlayer->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   */
+   currlayer->cellr[0] = deadrgb->Red();
+   currlayer->cellg[0] = deadrgb->Green();
+   currlayer->cellb[0] = deadrgb->Blue();
+   wxColor deadcolor(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
    
+   /* remove!!!???
    unsigned char saver=0, saveg=0, saveb=0;
    if (currlayer->algo->NumCellStates() == 2) {
       // set rgb values for live cells in 2-state universe, but only temporarily
       // because the current algo might allow rules with a varying # of cell states
       // (eg. current Generations rule could be 12/34/2)
       //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
-      saver = ad->cellr[1];
-      saveg = ad->cellg[1];
-      saveb = ad->cellb[1];
-      ad->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
-      ad->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
-      ad->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
+      saver = currlayer->cellr[1];
+      saveg = currlayer->cellg[1];
+      saveb = currlayer->cellb[1];
+      currlayer->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      currlayer->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      currlayer->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
    }
+   */
 
    dc.SetPen(*wxBLACK_PEN);
 
@@ -433,7 +439,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
       
       // draw color box
       x = 1 + h_col2 + (i - firststate) * COLWD + (COLWD - BOXWD) / 2;
-      wxColor color(ad->cellr[i], ad->cellg[i], ad->cellb[i]);
+      wxColor color(currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i]);
       r = wxRect(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
       dc.SetBrush(wxBrush(color));
       dc.DrawRectangle(r);
@@ -453,12 +459,14 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
       }
    }
 
+   /* remove!!!???
    if (currlayer->algo->NumCellStates() == 2) {
       // restore live cell color changed above
-      ad->cellr[1] = saver;
-      ad->cellg[1] = saveg;
-      ad->cellb[1] = saveb;
+      currlayer->cellr[1] = saver;
+      currlayer->cellg[1] = saveg;
+      currlayer->cellb[1] = saveb;
    }
+   */
    
    // draw rect around current drawing state
    if (currlayer->drawingstate >= firststate &&
@@ -511,9 +519,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
 
    if (showallstates) DrawAllStates(dc, wd);
 
-   AlgoData* ad = algoinfo[currlayer->algtype];
-   wxBitmap** iconmaps = ad->icons15x15;
-   unsigned char saver=0, saveg=0, saveb=0;
+   wxBitmap** iconmaps = algoinfo[currlayer->algtype]->icons15x15;
 
    dc.SetPen(*wxBLACK_PEN);
    
@@ -528,30 +534,42 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    DisplayText(dc, strbuf, x, y - (BOXSIZE - digitht)/2);
 
    // set rgb values for dead state
-   ad->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
-   ad->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
-   ad->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
-   wxColor deadcolor(ad->cellr[0], ad->cellg[0], ad->cellb[0]);
+   /* remove!!!???
+   currlayer->cellr[0] = swapcolors ? livergb[currindex]->Red() : deadrgb->Red();
+   currlayer->cellg[0] = swapcolors ? livergb[currindex]->Green() : deadrgb->Green();
+   currlayer->cellb[0] = swapcolors ? livergb[currindex]->Blue() : deadrgb->Blue();
+   */
+   currlayer->cellr[0] = deadrgb->Red();
+   currlayer->cellg[0] = deadrgb->Green();
+   currlayer->cellb[0] = deadrgb->Blue();
+   wxColor deadcolor(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
 
+   /* remove!!!???
+   unsigned char saver=0, saveg=0, saveb=0;
    if (state == 1 && currlayer->algo->NumCellStates() == 2) {
       // set rgb values for state 1 in 2-state universe, but only temporarily
       // because the current algo might allow rules with a varying # of cell states
       // (eg. current Generations rule could be 12/34/2)
       //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
-      saver = ad->cellr[1];
-      saveg = ad->cellg[1];
-      saveb = ad->cellb[1];
-      ad->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
-      ad->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
-      ad->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
+      saver = currlayer->cellr[1];
+      saveg = currlayer->cellg[1];
+      saveb = currlayer->cellb[1];
+      currlayer->cellr[1] = swapcolors ? deadrgb->Red() : livergb[currindex]->Red();
+      currlayer->cellg[1] = swapcolors ? deadrgb->Green() : livergb[currindex]->Green();
+      currlayer->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[currindex]->Blue();
    }
-   wxColor color(ad->cellr[state], ad->cellg[state], ad->cellb[state]);
+   */
+   
+   wxColor color(currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
+   
+   /* remove!!!???
    if (state == 1 && currlayer->algo->NumCellStates() == 2) {
       // restore state 1 color changed above
-      ad->cellr[1] = saver;
-      ad->cellg[1] = saveg;
-      ad->cellb[1] = saveb;
+      currlayer->cellr[1] = saver;
+      currlayer->cellg[1] = saveg;
+      currlayer->cellb[1] = saveb;
    }
+   */
    
    // draw color box
    x = xpos + 3*digitwd + BOXGAP;
@@ -659,8 +677,7 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
    
    // if current algo has icons then user can change color/icon mode
    // by clicking in color/icon box
-   AlgoData* ad = algoinfo[currlayer->algtype];
-   if (ad->icons15x15) {
+   if (algoinfo[currlayer->algtype]->icons15x15) {
       if (colorbox.Contains(x,y) && showicons) {
          viewptr->ToggleCellIcons();
       } else if (iconbox.Contains(x,y) && !showicons) {

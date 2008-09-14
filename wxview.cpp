@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse
+#include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
 #include "wxview.h"
 
@@ -608,6 +608,8 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          curralgo->setrule( oldrule.mb_str(wxConvLocal) );
          Warning(_("Paste could not change rule:\n") + wxString(err,wxConvLocal));
       } else {
+         // cell colors depend on current algo and rule
+         UpdateCellColors();
          // show new rule in title bar
          mainptr->SetWindowTitle(wxEmptyString);
          if (savecells) currlayer->undoredo->RememberRuleChange(oldrule);
@@ -1035,6 +1037,7 @@ void PatternView::ToggleCellIcons()
 void PatternView::ToggleCellColors()
 {
    swapcolors = !swapcolors;
+   InvertCellColors();
    mainptr->UpdateEverything();
 }
 
@@ -1535,7 +1538,11 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
        iconmaps && iconmaps[drawstate]) {
       // draw icon; icon bitmaps are masked so first we have to draw the background
+      /* remove!!!???
       dc.SetBrush(swapcolors ? *livebrush[currindex] : *deadbrush);
+      */
+      dc.SetBrush(*deadbrush);
+      
       dc.DrawRectangle(x, y, cellsize, cellsize);
       dc.DrawBitmap(*iconmaps[drawstate], x, y, true);
    } else {
@@ -1583,19 +1590,30 @@ void PatternView::StartDrawingCells(int x, int y)
    
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
+
+      /* remove!!!???
       if (currlayer->algo->NumCellStates() > 2) {
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            AlgoData* ad = algoinfo[currlayer->algtype];
-            cellbrush->SetColour(ad->cellr[drawstate],
-                                 ad->cellg[drawstate],
-                                 ad->cellb[drawstate]);
+            cellbrush->SetColour(currlayer->cellr[drawstate],
+                                 currlayer->cellg[drawstate],
+                                 currlayer->cellb[drawstate]);
          }
          dc.SetBrush(*cellbrush);
       } else {
          dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
       }
+      */
+      if (drawstate == 0) {
+         cellbrush->SetColour(*deadrgb);
+      } else {
+         cellbrush->SetColour(currlayer->cellr[drawstate],
+                              currlayer->cellg[drawstate],
+                              currlayer->cellb[drawstate]);
+      }
+      dc.SetBrush(*cellbrush);
+
       DrawOneCell(dc, cellx, celly, currstate, drawstate);
       dc.SetBrush(wxNullBrush);
       dc.SetPen(wxNullPen);
@@ -1630,19 +1648,29 @@ void PatternView::DrawCells(int x, int y)
       int currstate;
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
+
+      /* remove!!!???
       if (currlayer->algo->NumCellStates() > 2) {
          if (drawstate == 0) {
             cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
          } else {
-            AlgoData* ad = algoinfo[currlayer->algtype];
-            cellbrush->SetColour(ad->cellr[drawstate],
-                                 ad->cellg[drawstate],
-                                 ad->cellb[drawstate]);
+            cellbrush->SetColour(currlayer->cellr[drawstate],
+                                 currlayer->cellg[drawstate],
+                                 currlayer->cellb[drawstate]);
          }
          dc.SetBrush(*cellbrush);
       } else {
          dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
       }
+      */
+      if (drawstate == 0) {
+         cellbrush->SetColour(*deadrgb);
+      } else {
+         cellbrush->SetColour(currlayer->cellr[drawstate],
+                              currlayer->cellg[drawstate],
+                              currlayer->cellb[drawstate]);
+      }
+      dc.SetBrush(*cellbrush);
 
       int numchanged = 0;
       

@@ -144,5 +144,16 @@ void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Generations") ;
    ai.setAlgorithmCreator(&creator) ;
-   ai.setStatusRGB(255, 226, 226) ;    // pale pink
+   // init default color scheme
+   ai.defgradient = true;              // use gradient
+   ai.defr1 = 255;                     // start color = red
+   ai.defg1 = 0;
+   ai.defb1 = 0;
+   ai.defr2 = 255;                     // end color = yellow
+   ai.defg2 = 255;
+   ai.defb2 = 0;
+   // if not using gradient then set all states to white
+   for (int i=0; i<256; i++) {
+      ai.defr[i] = ai.defg[i] = ai.defb[i] = 255;
+   }
 }

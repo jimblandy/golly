@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxmain.h"        // for MainFrame
 #include "wxundo.h"        // for undoredo->...
-#include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse
+#include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, etc
 
 // This module implements Control menu functions.
@@ -186,6 +186,7 @@ void MainFrame::ResetPattern(bool resetundo)
    // restore settings saved by SaveStartingPattern
    currlayer->currname = currlayer->startname;
    currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
+   UpdateCellColors();
    currlayer->dirty = currlayer->startdirty;
    if (restoreview)
       viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
@@ -1063,6 +1064,9 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    delete currlayer->algo;
    currlayer->algo = newalgo;   
    SetGenIncrement();
+   
+   // cell colors depend on current algo and rule
+   UpdateCellColors();
 
    if (!inundoredo) {
       if (rulechanged) {

@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for IsScript, RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo
+#include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo, etc
 #include "wxlayer.h"       // for currlayer, etc
 
 #ifdef __WXMAC__
@@ -350,6 +350,9 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       }
       viewptr->nopattupdate = false;
    }
+
+   // cell colors depend on current algo and rule
+   UpdateCellColors();
 
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
