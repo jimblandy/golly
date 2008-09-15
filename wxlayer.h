@@ -197,12 +197,16 @@ void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.
 
 void UpdateCellColors();
-// Update cell colors for the current layer depending on the current
+// Update the cell colors for the current layer depending on the current
 // algo and rule.  Must be called very soon after an algo/rule change,
 // and before the viewport is updated.
 
 void InvertCellColors();
-// Invert cell colors in all layers, including the dead cell color.
+// Invert the cell colors in all layers, including the dead cell color,
+// grid lines, and the colors in all icon bitmaps.
+
+void InvertIconColors();
+// Invert the colors in all icon bitmaps.
 
 Layer* GetLayer(int index);
 // Return a pointer to the layer specified by the given index.

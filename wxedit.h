@@ -27,8 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Edit bar routines:
 
 void CreateEditBar(wxWindow* parent);
-// Create edit bar window at top of given parent window
-// or underneath layer bar if it's present.
+// Create edit bar window above given parent window,
+// but underneath layer bar if present.
 
 int EditBarHeight();
 // Return height of edit bar.
@@ -43,7 +43,7 @@ void ToggleEditBar();
 // Show/hide edit bar.
 
 void ToggleAllStates();
-// Show/hide all cell states at top of edit bar.
+// Show/hide all cell states in expanded edit bar.
 
 void ShiftEditBar(int yamount);
 // Shift edit bar up/down by given amount.

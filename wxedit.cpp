@@ -101,7 +101,7 @@ public:
    // add a bitmap button to edit bar
    void AddButton(int id, const wxString& tip);
 
-   // add a vertical gap between buttons
+   // add gap between buttons
    void AddSeparator();
    
    // enable/disable button
@@ -109,9 +109,6 @@ public:
    
    // set state of a toggle button
    void SelectButton(int id, bool select);
-
-   // move controls up or down depending on showallstates
-   void MoveControls();
 
    // update scroll bar
    void UpdateScrollBar();
@@ -182,12 +179,12 @@ END_EVENT_TABLE()
 // -----------------------------------------------------------------------------
 
 EditBar* editbarptr = NULL;         // global pointer to edit bar
-const int BIGHT = 78;               // height of edit bar if showallstates
+const int BIGHT = 80;               // height of edit bar if showallstates
 const int SMALLHT = 32;             // height of edit bar if not showallstates
 static int editbarht;               // current height (BIGHT or SMALLHT)
 
 const int LINEHT = 14;              // distance between each baseline
-const int BASELINE1 = LINEHT-1;     // baseline of 1st line
+const int BASELINE1 = SMALLHT+LINEHT-1;   // baseline of 1st line
 const int BASELINE2 = BASELINE1+LINEHT;   // baseline of 2nd line
 const int BASELINE3 = BASELINE2+LINEHT;   // baseline of 3rd line
 const int COLWD = 22;               // column width of state/color/icon info
@@ -256,7 +253,6 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       ypos = 4;
       smallgap = 4;
    #endif
-   if (showallstates) ypos += BIGHT - SMALLHT;
    biggap = 16;
 
    // add buttons
@@ -325,7 +321,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       int scrollbarht = BOXSIZE;
    #endif
       int x = xpos + 3*digitwd + BOXGAP + 2*(BOXSIZE + BOXGAP);
-      int y = editbarht - SMALLHT + (SMALLHT - (scrollbarht + 1)) / 2;
+      int y = (SMALLHT - (scrollbarht + 1)) / 2;
    #ifdef __WXGTK__
       y++;
    #endif
@@ -472,7 +468,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
    if (currlayer->drawingstate >= firststate &&
        currlayer->drawingstate <= firststate + visstates) {
       int x = 1 + h_col2 + (currlayer->drawingstate - firststate) * COLWD;
-      wxRect r(x, 2, COLWD - 1, BIGHT - SMALLHT - 3);
+      wxRect r(x, SMALLHT + 2, COLWD - 1, BIGHT - SMALLHT - 5);
       dc.SetBrush(*wxTRANSPARENT_BRUSH);
       dc.DrawRectangle(r);
       dc.SetBrush(wxNullBrush);
@@ -526,7 +522,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    // draw current drawing state
    int state = currlayer->drawingstate;
    int x = xpos;
-   int y = editbarht - 8;
+   int y = SMALLHT - 8;
    wxString strbuf;
    if (state < 10) x += digitwd;
    if (state < 100) x += digitwd;
@@ -661,7 +657,7 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
       int right = h_col2 + COLWD * currlayer->algo->NumCellStates();
       int box = -1;
       
-      if (x > h_col2 && x < right && y < (BIGHT - SMALLHT)) {
+      if (x > h_col2 && x < right && y > SMALLHT) {
          box = (x - h_col2) / COLWD + firststate;
       }
       
@@ -898,24 +894,6 @@ void EditBar::SelectButton(int id, bool select)
 
 // -----------------------------------------------------------------------------
 
-void EditBar::MoveControls()
-{
-   // showallstates has just been toggled
-   int x, y;
-   int yshift = BIGHT - SMALLHT;
-   if (!showallstates) yshift *= -1;
-
-   for (int id = 0; id < NUM_BUTTONS; id++) {
-      ebbutt[id]->GetPosition(&x, &y);
-      ebbutt[id]->Move(x, y + yshift);
-   }
-
-   drawbar->GetPosition(&x, &y);
-   drawbar->Move(x, y + yshift);
-}
-
-// -----------------------------------------------------------------------------
-
 void EditBar::UpdateScrollBar()
 {
    drawbar->SetScrollbar(currlayer->drawingstate, 1,
@@ -1025,8 +1003,6 @@ void ToggleAllStates()
 {
    showallstates = !showallstates;
    editbarht = showallstates ? BIGHT : SMALLHT;
-   // move controls up/down
-   editbarptr->MoveControls();
    if (showedit) {
       int diff = BIGHT - SMALLHT;
       if (!showallstates) diff *= -1;

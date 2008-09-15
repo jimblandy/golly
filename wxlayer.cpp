@@ -1584,6 +1584,14 @@ void InvertCellColors()
                 255 - deadrgb->Blue());
    SetBrushesAndPens();
    
+   // invert colors in all icons
+   InvertIconColors();
+}
+
+// -----------------------------------------------------------------------------
+
+void InvertIconColors()
+{
    // invert non-black colors in all icon bitmaps
    for (int a = 0; a < NumAlgos(); a++) {
       for (int count = 0; count < 2; count++) {
