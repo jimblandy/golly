@@ -1766,6 +1766,7 @@ void hlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(8) ;
    ai.setDefaultMaxMem(300) ;
+   ai.maxstates = 2 ;
    // init default color scheme
    ai.defgradient = false;
    ai.defr1 = ai.defg1 = ai.defb1 = 255;        // start color = white

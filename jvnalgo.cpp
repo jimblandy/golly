@@ -1024,6 +1024,7 @@ void jvnalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmCreator(&creator) ;
    ai.createIconBitmaps(7, jvn7x7) ;
    ai.createIconBitmaps(15, jvn15x15) ;
+   ai.maxstates = 32 ;
    // init default color scheme
    ai.defgradient = false;
    ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white

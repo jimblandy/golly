@@ -915,9 +915,6 @@ void SyncClones()
 
 void SaveLayerSettings()
 {
-   // a good place to synchronize clone info
-   SyncClones();
-
    // set oldalgo and oldrule for use in CurrentLayerChanged
    oldalgo = currlayer->algtype;
    oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -925,6 +922,9 @@ void SaveLayerSettings()
    // we're about to change layer so remember current rule
    // in case we switch back to this layer
    currlayer->rule = oldrule;
+
+   // synchronize clone info (do AFTER setting currlayer->rule)
+   SyncClones();
    
    if (syncviews) {
       // save scale and location for use in CurrentLayerChanged
@@ -944,7 +944,7 @@ void SaveLayerSettings()
 void CurrentLayerChanged()
 {
    // currlayer has changed since SaveLayerSettings was called;
-   // update rule if the new currlayer has a different algorithm or rule
+   // update rule if the new currlayer uses a different algorithm or rule
    if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
       // error should never occur here
@@ -1569,7 +1569,9 @@ void InvertCellColors()
    // invert cell colors in all layers
    for (int i = 0; i < numlayers; i++) {
       Layer* layerptr = layer[i];
-      for (int n = 1; n < 256; n++) {
+      // do NOT use layerptr->algo->... here -- it might not be correct
+      // for a non-current layer (but we can use layerptr->algtype)
+      for (int n = 1; n < algoinfo[layerptr->algtype]->maxstates; n++) {
          layerptr->cellr[n] = 255 - layerptr->cellr[n];
          layerptr->cellg[n] = 255 - layerptr->cellg[n];
          layerptr->cellb[n] = 255 - layerptr->cellb[n];
@@ -1595,7 +1597,7 @@ void InvertCellColors()
             cellsize = 15;
          }
          if (iconmaps) {
-            for (int n = 1; n < 256; n++) {
+            for (int n = 1; n < algoinfo[a]->maxstates; n++) {
                if (iconmaps[n]) {
                   #ifdef __WXMSW__
                      // must use wxNativePixelData for bitmaps with no alpha channel

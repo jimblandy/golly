@@ -103,6 +103,9 @@ public:
    virtual void setDefaultBaseStep(int) {}
    virtual void setDefaultMaxMem(int) {}
    
+   // maximum number of cell states supported by this algorithm
+   int maxstates;
+   
    // default color scheme
    bool defgradient;                      // use color gradient?
    unsigned char defr1, defg1, defb1;     // color at start of gradient

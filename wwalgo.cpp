@@ -89,6 +89,7 @@ void wwalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("WireWorld") ;
    ai.setAlgorithmCreator(&creator) ;
+   ai.maxstates = 4 ;
    // init default color scheme
    ai.defgradient = false;
    ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white

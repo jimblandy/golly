@@ -144,6 +144,7 @@ void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Generations") ;
    ai.setAlgorithmCreator(&creator) ;
+   ai.maxstates = 256 ;
    // init default color scheme
    ai.defgradient = true;              // use gradient
    ai.defr1 = 255;                     // start color = red

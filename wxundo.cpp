@@ -356,14 +356,14 @@ bool ChangeNode::DoChange(bool undo)
          } else {
             currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
          }
-         // cell colors depend on current algo and rule
-         UpdateCellColors();
          // show new rule in window title (file name doesn't change)
          mainptr->SetWindowTitle(wxEmptyString);
          if (cellcount > 0) {
             ChangeCells(undo);
-            mainptr->UpdatePatternAndStatus();
          }
+         // cell colors depend on current algo and rule
+         UpdateCellColors();
+         mainptr->UpdateEverything();
          break;
 
       case algochange:
