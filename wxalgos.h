@@ -55,7 +55,7 @@ public:
    bool canhash;                 // algo uses hashing?
    int algomem;                  // maximum memory (in MB)
    int algobase;                 // base step
-   wxColor* statusrgb;           // status bar color
+   wxColor statusrgb;            // status bar color
    wxBrush* statusbrush;         // corresponding brush
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
@@ -63,8 +63,8 @@ public:
    // current color scheme (the default color scheme is stored in the
    // staticAlgoInfo class)
    bool gradient;                // use color gradient?
-   unsigned char r1, g1, b1;     // color at start of gradient
-   unsigned char r2, g2, b2;     // color at end of gradient
+   wxColor fromrgb;              // color at start of gradient
+   wxColor torgb;                // color at end of gradient
    // if gradient is false then use these colors for each cell state
    unsigned char algor[256];
    unsigned char algog[256];
@@ -88,5 +88,8 @@ const char* GetAlgoName(algo_type algotype);
 
 int NumAlgos();
 // Return current number of algorithms.
+
+void SetColors();
+// Bring up a dialog that lets user change colors.
 
 #endif

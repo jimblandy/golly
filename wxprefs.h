@@ -176,6 +176,7 @@ typedef enum {
    DO_FLIPTB,                    // flip top-bottom
    DO_FULLSCREEN,                // full screen
    DO_HYPER,                     // hyperspeed
+   DO_INVERT,                    // invert colors
    DO_MIDDLE,                    // middle
    DO_MOVELAYER,                 // move layer...
    DO_NAMELAYER,                 // name layer...
@@ -209,9 +210,10 @@ typedef enum {
    DO_SE,                        // scroll SE
    DO_SW,                        // scroll SW
    DO_SELALL,                    // select all
+   DO_SETCOLORS,                 // set colors...
    DO_SETGEN,                    // set generation...
    DO_PATTDIR,                   // set pattern folder...
-   DO_RULE,                      // set rule...
+   DO_SETRULE,                   // set rule...
    DO_SCALE1,                    // set scale 1:1
    DO_SCALE2,                    // set scale 1:2
    DO_SCALE4,                    // set scale 1:4
@@ -236,7 +238,6 @@ typedef enum {
    DO_SLOWER,                    // slower
    DO_STACK,                     // stack layers
    DO_STARTSTOP,                 // start/stop generating
-   DO_SWAPCOLORS,                // swap cell colors
    DO_SYNCCURS,                  // synchronize cursors
    DO_SYNCVIEWS,                 // synchronize views
    DO_TILE,                      // tile layers

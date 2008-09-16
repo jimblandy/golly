@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/colordlg.h"   // for wxColourDialog
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -36,11 +38,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wwalgo.h"
 #include "generationsalgo.h"
 
-#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning, Fatal
+#include "wxprefs.h"       // for swapcolors, etc
+#include "wxscript.h"      // for inscript
+#include "wxutils.h"       // for Warning, Fatal, FillRect
+#include "wxlayer.h"       // for currlayer, InvertIconColors
 #include "wxalgos.h"
 
 // -----------------------------------------------------------------------------
@@ -153,7 +157,6 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
 
 AlgoData::AlgoData() {
    algomem = algobase = 0;
-   statusrgb = NULL;
    statusbrush = NULL;
    icons7x7 = icons15x15 = NULL;
 }
@@ -206,17 +209,17 @@ void InitAlgorithms()
       
       // set status bar background by cycling thru a few pale colors
       switch (i % 9) {
-         case 0: ad->statusrgb = new wxColor(255, 255, 206); break;  // pale yellow
-         case 1: ad->statusrgb = new wxColor(226, 250, 248); break;  // pale blue
-         case 2: ad->statusrgb = new wxColor(255, 233, 233); break;  // pale pink
-         case 3: ad->statusrgb = new wxColor(225, 255, 225); break;  // pale green
-         case 4: ad->statusrgb = new wxColor(243, 225, 255); break;  // pale purple
-         case 5: ad->statusrgb = new wxColor(255, 220, 180); break;  // pale orange
-         case 6: ad->statusrgb = new wxColor(200, 255, 255); break;  // pale aqua
-         case 7: ad->statusrgb = new wxColor(200, 200, 200); break;  // pale gray
-         case 8: ad->statusrgb = new wxColor(255, 255, 255); break;  // white
+         case 0: ad->statusrgb.Set(255, 255, 206); break;  // pale yellow
+         case 1: ad->statusrgb.Set(226, 250, 248); break;  // pale blue
+         case 2: ad->statusrgb.Set(255, 233, 233); break;  // pale pink
+         case 3: ad->statusrgb.Set(225, 255, 225); break;  // pale green
+         case 4: ad->statusrgb.Set(243, 225, 255); break;  // pale purple
+         case 5: ad->statusrgb.Set(255, 220, 180); break;  // pale orange
+         case 6: ad->statusrgb.Set(200, 255, 255); break;  // pale aqua
+         case 7: ad->statusrgb.Set(200, 200, 200); break;  // pale gray
+         case 8: ad->statusrgb.Set(255, 255, 255); break;  // white
       }
-      ad->statusbrush = new wxBrush(*ad->statusrgb);
+      ad->statusbrush = new wxBrush(ad->statusrgb);
 
       // create scaled bitmaps if only one size is supplied
       if (!ad->icons15x15) {
@@ -230,24 +233,20 @@ void InitAlgorithms()
       
       // set initial color scheme to default color scheme
       ad->gradient = ad->defgradient;
-      ad->r1 = ad->defr1;
-      ad->g1 = ad->defg1;
-      ad->b1 = ad->defb1;
-      ad->r2 = ad->defr2;
-      ad->g2 = ad->defg2;
-      ad->b2 = ad->defb2;
+      ad->fromrgb.Set(ad->defr1, ad->defg1, ad->defb1);
+      ad->torgb.Set(ad->defr2, ad->defg2, ad->defb2);
       if (ad->defr[0] == ad->defr[1] &&
           ad->defg[0] == ad->defg[1] &&
           ad->defb[0] == ad->defb[1]) {
          // colors are nonsensical, probably unset, so use above defaults
          unsigned char* rgbptr = default_colors;
-         for (int c = 0; c < 256; c++) {
+         for (int c = 0; c < ad->maxstates; c++) {
             ad->defr[c] = *rgbptr++;
             ad->defg[c] = *rgbptr++;
             ad->defb[c] = *rgbptr++;
          }
       }
-      for (int c = 0; c < 256; c++) {
+      for (int c = 0; c < ad->maxstates; c++) {
          ad->algor[c] = ad->defr[c];
          ad->algog[c] = ad->defg[c];
          ad->algob[c] = ad->defb[c];
@@ -284,4 +283,645 @@ const char* GetAlgoName(algo_type algotype)
 int NumAlgos()
 {
    return staticAlgoInfo::getNumAlgos();
+}
+
+// -----------------------------------------------------------------------------
+
+// global data used in CellPanel and ColorDialog methods:
+
+static int algoindex;         // currently selected algorithm
+static bool seeicons;         // show icons?
+
+const int CELLSIZE = 16;      // wd and ht of each cell in CellPanel
+const int NUMCOLS = 32;       // number of columns in CellPanel
+const int NUMROWS = 8;        // number of rows in CellPanel
+
+// -----------------------------------------------------------------------------
+
+// define a window for displaying cell colors/icons:
+
+class CellPanel : public wxPanel
+{
+public:
+   CellPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos,
+             const wxSize& size) : wxPanel(parent, id, pos, size) { }
+
+   wxStaticText* statebox;    // for showing state of cell under cursor
+   
+private:
+   void GetGradientColor(int state, unsigned char* r,
+                                    unsigned char* g,
+                                    unsigned char* b);
+
+   void OnEraseBackground(wxEraseEvent& event);
+   void OnPaint(wxPaintEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnMouseExit(wxMouseEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(CellPanel, wxPanel)
+   EVT_ERASE_BACKGROUND (CellPanel::OnEraseBackground)
+   EVT_PAINT            (CellPanel::OnPaint)
+   EVT_LEFT_DOWN        (CellPanel::OnMouseDown)
+   EVT_LEFT_DCLICK      (CellPanel::OnMouseDown)
+   EVT_MOTION           (CellPanel::OnMouseMotion)
+   EVT_ENTER_WINDOW     (CellPanel::OnMouseMotion)
+   EVT_LEAVE_WINDOW     (CellPanel::OnMouseExit)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void CellPanel::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing
+}
+
+// -----------------------------------------------------------------------------
+
+void CellPanel::GetGradientColor(int state, unsigned char* r,
+                                            unsigned char* g,
+                                            unsigned char* b)
+{
+   // calculate gradient color for given state (> 0 and < maxstates)
+   AlgoData* ad = algoinfo[algoindex];
+   if (state == 1) {
+      *r = ad->fromrgb.Red();
+      *g = ad->fromrgb.Green();
+      *b = ad->fromrgb.Blue();
+   } else if (state == ad->maxstates - 1) {
+      *r = ad->torgb.Red();
+      *g = ad->torgb.Green();
+      *b = ad->torgb.Blue();
+   } else {
+      unsigned char r1 = ad->fromrgb.Red();
+      unsigned char g1 = ad->fromrgb.Green();
+      unsigned char b1 = ad->fromrgb.Blue();
+      unsigned char r2 = ad->torgb.Red();
+      unsigned char g2 = ad->torgb.Green();
+      unsigned char b2 = ad->torgb.Blue();
+      int N = ad->maxstates - 1;
+      double rfrac = (double)(r2 - r1) / (double)N;
+      double gfrac = (double)(g2 - g1) / (double)N;
+      double bfrac = (double)(b2 - b1) / (double)N;
+      *r = (int)(r1 + (state-1) * rfrac + 0.5);
+      *g = (int)(g1 + (state-1) * gfrac + 0.5);
+      *b = (int)(b1 + (state-1) * bfrac + 0.5);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CellPanel::OnPaint(wxPaintEvent& event)
+{
+   wxPaintDC dc(this);
+   
+   dc.SetPen(*wxBLACK_PEN);
+
+   // draw cell boxes
+   wxRect r = wxRect(0, 0, CELLSIZE+1, CELLSIZE+1);
+   int col = 0;
+   for (int state = 0; state < 256; state++) {
+      if (state == 0) {
+         if (seeicons) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+         } else {
+            dc.SetBrush(*deadbrush);
+         }
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
+
+      } else if (state < algoinfo[algoindex]->maxstates) {
+         if (seeicons) {
+            wxBitmap** iconmaps = algoinfo[algoindex]->icons15x15;
+            if (iconmaps && iconmaps[state]) {
+               dc.SetBrush(*deadbrush);
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+               dc.DrawBitmap(*iconmaps[state], r.x + 1, r.y + 1, true);
+            } else {
+               dc.SetBrush(*wxTRANSPARENT_BRUSH);
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+            }
+         } else if (algoinfo[algoindex]->gradient) {
+            unsigned char red, green, blue;
+            GetGradientColor(state, &red, &green, &blue);
+            wxColor color(red, green, blue);
+            dc.SetBrush(wxBrush(color));
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);
+         } else {
+            wxColor color(algoinfo[algoindex]->algor[state],
+                          algoinfo[algoindex]->algog[state],
+                          algoinfo[algoindex]->algob[state]);
+            dc.SetBrush(wxBrush(color));
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);
+         }
+
+      } else {
+         // state >= maxstates
+         dc.SetBrush(*wxTRANSPARENT_BRUSH);
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
+      }
+      
+      col++;
+      if (col < NUMCOLS) {
+         r.x += CELLSIZE;
+      } else {
+         r.x = 0;
+         r.y += CELLSIZE;
+         col = 0;
+      }
+   }
+
+   dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void CellPanel::OnMouseDown(wxMouseEvent& event)
+{
+   int col = event.GetX() / CELLSIZE;
+   int row = event.GetY() / CELLSIZE;
+   int state = row * NUMCOLS + col;
+   if (state >= 0 || state < algoinfo[algoindex]->maxstates) {
+      if (seeicons || algoinfo[algoindex]->gradient) {
+         wxBell();
+      } else {
+         // let user change color of this cell state
+         //!!!
+      }
+   } 
+
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void CellPanel::OnMouseMotion(wxMouseEvent& event)
+{
+   int col = event.GetX() / CELLSIZE;
+   int row = event.GetY() / CELLSIZE;
+   int state = row * NUMCOLS + col;
+   if (state < 0 || state > 255) {
+      statebox->SetLabel(_(" "));
+   } else {
+      statebox->SetLabel(wxString::Format(_("%d"),state));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CellPanel::OnMouseExit(wxMouseEvent& WXUNUSED(event))
+{
+   statebox->SetLabel(_(" "));
+}
+
+// -----------------------------------------------------------------------------
+
+// define a modal dialog for changing colors
+
+class ColorDialog : public wxDialog
+{
+public:
+   ColorDialog(wxWindow* parent);
+   virtual bool TransferDataFromWindow();    // called when user hits OK
+
+   enum {
+      // control ids
+      ALGO_CHOICE = wxID_HIGHEST + 1,
+      GRADIENT_CHECK,
+      ICON_CHECK,
+      CELL_PANEL,
+      STATE_BOX,
+      STATUS_BUTT,
+      FROM_BUTT,
+      TO_BUTT,
+      DEAD_BUTT,
+      PASTE_BUTT,
+      SELECT_BUTT,
+      DEFAULT_BUTT
+   };
+
+   void CreateControls();     // initialize all the controls
+
+   void AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
+                       int id, wxColor* rgb, const wxString& text);
+   void ChangeButtonColor(int id, wxColor* rgb);
+   void UpdateButtonColor(int id, wxColor* rgb);
+
+   wxChoice* algochoice;      // menu of algorithms
+
+   CellPanel* cellpanel;      // for displaying cell colors/icons
+   wxCheckBox* gradcheck;     // use gradient?
+   wxCheckBox* iconcheck;     // show icons?
+   wxButton* defbutt;         // button to restore default color scheme
+   
+private:
+   // event handlers
+   void OnChooseAlgo(wxCommandEvent& event);
+   void OnCheckBoxClicked(wxCommandEvent& event);
+   void OnDefaultButton(wxCommandEvent& event);
+   void OnColorButton(wxCommandEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(ColorDialog, wxDialog)
+   EVT_CHOICE     (ALGO_CHOICE,     ColorDialog::OnChooseAlgo)
+   EVT_CHECKBOX   (wxID_ANY,        ColorDialog::OnCheckBoxClicked)
+   EVT_BUTTON     (DEFAULT_BUTT,    ColorDialog::OnDefaultButton)
+   EVT_BUTTON     (wxID_ANY,        ColorDialog::OnColorButton)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+// these consts are used to get nicely spaced controls on each platform:
+
+const int HGAP = 12;          // space left and right of vertically stacked boxes
+const int BIGVGAP = 12;       // vertical gap between groups of controls
+#ifdef __WXMAC__
+   #define SBTOPGAP (2)       // vertical gap before first item in wxStaticBoxSizer
+   #define SBBOTGAP (2)       // vertical gap after last item in wxStaticBoxSizer
+#elif defined(__WXMSW__)
+   #define SBTOPGAP (7)
+   #define SBBOTGAP (7)
+#else // assume Unix
+   #define SBTOPGAP (12)
+   #define SBBOTGAP (7)
+#endif
+
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
+   // only happens when a wxStaticText/wxButton box is next to a wxChoice box
+   #define FIX_ALIGN_BUG wxBOTTOM,4
+#else
+   #define FIX_ALIGN_BUG wxALL,0
+#endif
+
+const int BITMAP_WD = 60;     // width of bitmap in color buttons
+const int BITMAP_HT = 20;     // height of bitmap in color buttons
+
+// -----------------------------------------------------------------------------
+
+ColorDialog::ColorDialog(wxWindow* parent)
+{
+   Create(parent, wxID_ANY, _("Set Colors"), wxDefaultPosition, wxDefaultSize);
+   CreateControls();
+   Centre();
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::CreateControls()
+{
+   // create a choice menu to select algo
+   wxArrayString algoarray;
+   for (int i = 0; i < NumAlgos(); i++) {
+      algoarray.Add( wxString(GetAlgoName(i),wxConvLocal) );
+   }
+   algochoice = new wxChoice(this, ALGO_CHOICE, wxDefaultPosition, wxDefaultSize, algoarray);
+   algoindex = currlayer->algtype;
+   algochoice->SetSelection(algoindex);
+   
+   // create bitmap buttons
+   wxBoxSizer* statusbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* frombox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* tobox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* deadbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* selectbox = new wxBoxSizer(wxHORIZONTAL);
+   AddColorButton(this, statusbox, STATUS_BUTT,
+                        &algoinfo[algoindex]->statusrgb, _("Status bar background"));
+   AddColorButton(this, frombox, FROM_BUTT,
+                        &algoinfo[algoindex]->fromrgb, _("to"));
+   AddColorButton(this, tobox, TO_BUTT,
+                        &algoinfo[algoindex]->torgb, _(" "));
+   AddColorButton(this, deadbox, DEAD_BUTT,
+                        deadrgb, _("Dead cells (state 0)"));
+   deadbox->AddStretchSpacer();
+   AddColorButton(this, deadbox, PASTE_BUTT,
+                        pastergb, _("Paste rectangle"));
+   deadbox->AddStretchSpacer();
+   AddColorButton(this, selectbox, SELECT_BUTT,
+                        selectrgb, _("Selection (will be 50% transparent)"));
+
+   wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
+   algolabel->Add(new wxStaticText(this, wxID_STATIC, _("Algorithm:")), 0, FIX_ALIGN_BUG);
+   algobox->Add(algolabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+   algobox->Add(algochoice, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 6);
+   algobox->AddStretchSpacer();
+   algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, 10);
+   algobox->AddStretchSpacer();
+   
+   wxStaticBox* sbox1 = new wxStaticBox(this, wxID_ANY, _("Color scheme for this algorithm:"));
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+
+   gradcheck = new wxCheckBox(this, GRADIENT_CHECK, _("Use gradient from"));
+   gradcheck->SetValue(algoinfo[algoindex]->gradient);
+   
+   wxBoxSizer* gradbox = new wxBoxSizer(wxHORIZONTAL);
+   gradbox->Add(gradcheck, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+   gradbox->AddSpacer(5);
+   gradbox->Add(frombox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+   gradbox->AddSpacer(5);
+   gradbox->Add(tobox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+
+   // create child window for displaying cell colors/icons
+   cellpanel = new CellPanel(this, CELL_PANEL, wxPoint(0,0),
+                             wxSize(NUMCOLS*CELLSIZE+1,NUMROWS*CELLSIZE+1));
+
+   iconcheck = new wxCheckBox(this, ICON_CHECK, _("Show icons"));
+   seeicons = false;
+   iconcheck->SetValue(seeicons);
+
+   defbutt = new wxButton(this, DEFAULT_BUTT, _("Default"));
+
+   wxStaticText* statebox = new wxStaticText(this, STATE_BOX, _("999"));
+   cellpanel->statebox = statebox;
+   statebox->SetLabel(_(" "));
+
+   wxBoxSizer* defbox = new wxBoxSizer(wxHORIZONTAL);
+   defbox->Add(defbutt, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+   defbox->AddStretchSpacer();
+   defbox->Add(new wxStaticText(this, wxID_STATIC, _("Cell state: ")),
+               0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+   defbox->Add(statebox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+   defbox->AddStretchSpacer();
+   defbox->Add(iconcheck, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 0);
+   
+   ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(gradbox, 0, wxLEFT | wxRIGHT, 0);
+   ssizer1->AddSpacer(10);
+   ssizer1->Add(cellpanel, 0, wxLEFT | wxRIGHT, 0);
+   ssizer1->AddSpacer(10);
+   ssizer1->Add(defbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
+   ssizer1->AddSpacer(SBBOTGAP);
+   
+   wxStaticBox* sbox2 = new wxStaticBox(this, wxID_ANY, _("Global colors for all algorithms:"));
+   wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
+   
+   ssizer2->AddSpacer(SBTOPGAP);
+   ssizer2->Add(deadbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
+   ssizer2->AddSpacer(10);
+   ssizer2->Add(selectbox, 0, wxLEFT | wxRIGHT, 0);
+   ssizer2->AddSpacer(SBBOTGAP);
+
+   wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
+
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   topSizer->AddSpacer(BIGVGAP);
+   topSizer->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, HGAP);
+   topSizer->AddSpacer(BIGVGAP);
+   topSizer->Add(ssizer1, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
+   topSizer->AddSpacer(BIGVGAP);
+   topSizer->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
+   // topSizer->AddSpacer(BIGVGAP);
+   topSizer->Add(stdbutts, 1, wxALIGN_RIGHT | wxTOP | wxBOTTOM, 10);
+   SetSizer(topSizer);
+   topSizer->SetSizeHints(this);    // calls Fit
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::OnChooseAlgo(wxCommandEvent& event)
+{
+   int i = event.GetSelection();
+   if (i >= 0 && i < NumAlgos() && i != algoindex) {
+      algoindex = i;
+
+      gradcheck->SetValue(algoinfo[algoindex]->gradient);
+
+      // update colors in some bitmap buttons
+      UpdateButtonColor(STATUS_BUTT, &algoinfo[algoindex]->statusrgb);
+      UpdateButtonColor(FROM_BUTT, &algoinfo[algoindex]->fromrgb);
+      UpdateButtonColor(TO_BUTT, &algoinfo[algoindex]->torgb);
+      
+      cellpanel->Refresh(false);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::OnCheckBoxClicked(wxCommandEvent& event)
+{
+   if ( event.GetId() == GRADIENT_CHECK ) {
+      if (gradcheck->GetValue()) {
+         algoinfo[algoindex]->gradient = true;
+         cellpanel->Refresh(false);
+      } else {
+         algoinfo[algoindex]->gradient = false;
+         cellpanel->Refresh(false);
+      }
+   }
+
+   if ( event.GetId() == ICON_CHECK ) {
+      if (iconcheck->GetValue()) {
+         seeicons = true;
+         cellpanel->Refresh(false);
+      } else {
+         seeicons = false;
+         cellpanel->Refresh(false);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::OnDefaultButton(wxCommandEvent& WXUNUSED(event))
+{
+   // restore default color scheme for selected algo
+   //!!!
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
+                                 int id, wxColor* rgb, const wxString& text)
+{
+   wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+   wxMemoryDC dc;
+   dc.SelectObject(bitmap);
+   wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+   wxBrush brush(*rgb);
+   FillRect(dc, rect, brush);
+   dc.SelectObject(wxNullBitmap);
+   
+   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0));
+   wxBoxSizer* textbox = new wxBoxSizer(wxHORIZONTAL);
+   if (bb && textbox) {
+      hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
+      textbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, wxALL, 0);
+      hbox->Add(textbox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::UpdateButtonColor(int id, wxColor* rgb)
+{
+   wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
+   if (bb) {
+      wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+      wxMemoryDC dc;
+      dc.SelectObject(bitmap);
+      wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+      wxBrush brush(*rgb);
+      FillRect(dc, rect, brush);
+      dc.SelectObject(wxNullBitmap);
+      bb->SetBitmapLabel(bitmap);
+      bb->Refresh();
+      bb->Update();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::ChangeButtonColor(int id, wxColor* rgb)
+{
+   wxColourData data;
+   data.SetChooseFull(true);    // for Windows
+   data.SetColour(*rgb);
+   
+   wxColourDialog dialog(this, &data);
+   if ( dialog.ShowModal() == wxID_OK ) {
+      wxColourData retData = dialog.GetColourData();
+      wxColour c = retData.GetColour();
+      
+      if (*rgb != c) {
+         // change given color
+         rgb->Set(c.Red(), c.Green(), c.Blue());
+         
+         // also change color of bitmap in corresponding button
+         UpdateButtonColor(id, rgb);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::OnColorButton(wxCommandEvent& event)
+{
+   int id = event.GetId();
+
+   if ( id == STATUS_BUTT ) {
+      ChangeButtonColor(id, &algoinfo[algoindex]->statusrgb);
+   
+   } else if ( id == FROM_BUTT ) {
+      ChangeButtonColor(id, &algoinfo[algoindex]->fromrgb);
+   
+   } else if ( id == TO_BUTT ) {
+      ChangeButtonColor(id, &algoinfo[algoindex]->torgb);
+   
+   } else if ( id == DEAD_BUTT ) {
+      ChangeButtonColor(id, deadrgb);
+
+   } else if ( id == PASTE_BUTT ) {
+      ChangeButtonColor(id, pastergb);
+
+   } else if ( id == SELECT_BUTT ) {
+      ChangeButtonColor(id, selectrgb);
+   
+   } else {
+      // process other buttons like Cancel and OK
+      event.Skip();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool ColorDialog::TransferDataFromWindow()
+{
+   // no need to do any validation!!!???
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+// class for saving and restoring AlgoData color info in SetColors()
+class SaveData {
+public:
+   SaveData(AlgoData* ad) {
+      statusrgb = ad->statusrgb;
+      gradient = ad->gradient;
+      fromrgb = ad->fromrgb;
+      torgb = ad->torgb;
+      for (int i = 0; i < ad->maxstates; i++) {
+         algor[i] = ad->algor[i];
+         algog[i] = ad->algog[i];
+         algob[i] = ad->algob[i];
+      }
+   }
+
+   void RestoreData(AlgoData* ad) {
+      ad->statusrgb = statusrgb;
+      ad->gradient = gradient;
+      ad->fromrgb = fromrgb;
+      ad->torgb = torgb;
+      for (int i = 0; i < ad->maxstates; i++) {
+         ad->algor[i] = algor[i];
+         ad->algog[i] = algog[i];
+         ad->algob[i] = algob[i];
+      }
+   }
+   
+   // this must match color info in AlgoData
+   wxColor statusrgb;
+   bool gradient;
+   wxColor fromrgb;
+   wxColor torgb;
+   unsigned char algor[256];
+   unsigned char algog[256];
+   unsigned char algob[256];
+};
+
+// -----------------------------------------------------------------------------
+
+void SetColors()
+{
+   if (inscript || viewptr->waitingforclick) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(ID_SETCOLORS);
+      return;
+   }
+   
+   if (swapcolors) InvertIconColors();
+   
+   // save current color info so we can restore it if user cancels changes
+   wxColor save_deadrgb = *deadrgb;
+   wxColor save_pastergb = *pastergb;
+   wxColor save_selectrgb = *selectrgb;
+   SaveData* save_info[MAX_ALGOS];
+   for (int i = 0; i < NumAlgos(); i++) {
+      save_info[i] = new SaveData(algoinfo[i]);
+   }
+
+   ColorDialog dialog( wxGetApp().GetTopWindow() );
+   if ( dialog.ShowModal() == wxID_OK ) {
+      // TransferDataFromWindow returned true;
+      SetBrushesAndPens();
+   } else {
+      // user hit Cancel so restore color info saved above
+      *deadrgb = save_deadrgb;
+      *pastergb = save_pastergb;
+      *selectrgb = save_selectrgb;
+      for (int i = 0; i < NumAlgos(); i++) {
+         save_info[i]->RestoreData(algoinfo[i]);
+      }
+   }
+
+   for (int i = 0; i < NumAlgos(); i++) {
+      delete save_info[i];
+   }
+   
+   if (swapcolors) InvertIconColors();
 }

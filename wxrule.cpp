@@ -338,7 +338,7 @@ public:
 private:
    enum {
       // control ids
-      RULE_ALGO,
+      RULE_ALGO = wxID_HIGHEST + 1,
       RULE_NAME,
       RULE_TEXT,
       RULE_ADD_BUTT,

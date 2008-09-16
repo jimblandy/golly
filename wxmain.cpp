@@ -684,7 +684,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_AUTO,         active);
       mbar->Enable(ID_HYPER,        active);
       mbar->Enable(ID_HINFO,        active);
-      mbar->Enable(ID_RULE,         active && !inscript);
+      mbar->Enable(ID_SETRULE,      active && !inscript);
       mbar->Enable(ID_SETALGO,      active && !inscript);
 
       mbar->Enable(ID_FULL,         active);
@@ -702,9 +702,10 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_ALL_STATES,   active);
       mbar->Enable(ID_STATUS_BAR,   active);
       mbar->Enable(ID_EXACT,        active);
-      mbar->Enable(ID_GRID,         active);
+      mbar->Enable(ID_SETCOLORS,    active && !inscript);
       mbar->Enable(ID_ICONS,        active);
-      mbar->Enable(ID_COLORS,       active);
+      mbar->Enable(ID_INVERT,       active);
+      mbar->Enable(ID_GRID,         active);
       #if defined(__WXMAC__) || defined(__WXGTK__)
          // windows on Mac OS X and GTK+ 2.0 are automatically buffered
          mbar->Enable(ID_BUFF,      false);
@@ -743,9 +744,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_ALL_STATES, showallstates);
       mbar->Check(ID_STATUS_BAR, showstatus);
       mbar->Check(ID_EXACT,      showexact);
-      mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_ICONS,      showicons);
-      mbar->Check(ID_COLORS,     swapcolors);
+      mbar->Check(ID_INVERT,     swapcolors);
+      mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
       mbar->Check(ID_PL_TR,      plocation == TopRight);
       mbar->Check(ID_PL_BR,      plocation == BottomRight);
@@ -1323,7 +1324,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_AUTO:           ToggleAutoFit(); break;
       case ID_HYPER:          ToggleHyperspeed(); break;
       case ID_HINFO:          ToggleHashInfo(); break;
-      case ID_RULE:           ShowRuleDialog(); break;
+      case ID_SETRULE:        ShowRuleDialog(); break;
 
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
@@ -1345,9 +1346,10 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SCALE_4:        viewptr->SetPixelsPerCell(4); break;
       case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
       case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
-      case ID_GRID:           viewptr->ToggleGridLines(); break;
+      case ID_SETCOLORS:      SetColors(); break;
       case ID_ICONS:          viewptr->ToggleCellIcons(); break;
-      case ID_COLORS:         viewptr->ToggleCellColors(); break;
+      case ID_INVERT:         viewptr->ToggleCellColors(); break;
+      case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
 
       // Layer menu
@@ -2144,7 +2146,7 @@ void MainFrame::CreateMenus()
    controlMenu->AppendCheckItem(ID_HINFO,       _("Show Hash Info") + GetAccelerator(DO_HASHINFO));
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_SETALGO,              _("Set Algorithm"), algomenu);
-   controlMenu->Append(ID_RULE,                 _("Set Rule...") + GetAccelerator(DO_RULE));
+   controlMenu->Append(ID_SETRULE,              _("Set Rule...") + GetAccelerator(DO_SETRULE));
 
    viewMenu->Append(ID_FULL,                    _("Full Screen") + GetAccelerator(DO_FULLSCREEN));
    viewMenu->AppendSeparator();
@@ -2163,9 +2165,11 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_ALL_STATES,     _("Show All States") + GetAccelerator(DO_SHOWSTATES));
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
-   viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
+   viewMenu->AppendSeparator();
+   viewMenu->Append(ID_SETCOLORS,               _("Set Colors...") + GetAccelerator(DO_SETCOLORS));
    viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
-   viewMenu->AppendCheckItem(ID_COLORS,         _("Swap Cell Colors") + GetAccelerator(DO_SWAPCOLORS));
+   viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
+   viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
    viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
    viewMenu->AppendSeparator();
    viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
@@ -2308,7 +2312,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_AUTO,            DO_AUTOFIT);
       SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
       SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);
-      SetAccelerator(mbar, ID_RULE,            DO_RULE);
+      SetAccelerator(mbar, ID_SETRULE,         DO_SETRULE);
       
       SetAccelerator(mbar, ID_FULL,            DO_FULLSCREEN);
       SetAccelerator(mbar, ID_FIT,             DO_FIT);
@@ -2323,9 +2327,10 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_ALL_STATES,      DO_SHOWSTATES);
       SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
       SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
-      SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
+      SetAccelerator(mbar, ID_SETCOLORS,       DO_SETCOLORS);
       SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
-      SetAccelerator(mbar, ID_COLORS,          DO_SWAPCOLORS);
+      SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
+      SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
       SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
       SetAccelerator(mbar, ID_INFO,            DO_INFO);
       

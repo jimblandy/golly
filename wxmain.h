@@ -291,7 +291,7 @@ enum {
    ID_HYPER,
    ID_HINFO,
    ID_SETALGO,
-   ID_RULE,
+   ID_SETRULE,
 
    // Set Algorithm submenu
    ID_ALGO0,
@@ -312,9 +312,10 @@ enum {
    ID_ALL_STATES,
    ID_STATUS_BAR,
    ID_EXACT,
-   ID_GRID,
+   ID_SETCOLORS,
    ID_ICONS,
-   ID_COLORS,
+   ID_INVERT,
+   ID_GRID,
    ID_BUFF,
    ID_INFO,
 

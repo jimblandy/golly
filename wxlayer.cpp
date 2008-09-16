@@ -1510,24 +1510,30 @@ void UpdateCellColors()
    if (ad->gradient) {
       // set cell colors for states 1..maxstate using a color gradient
       // starting with r1,g1,b1 and ending with r2,g2,b2
-      currlayer->cellr[1] = ad->r1;
-      currlayer->cellg[1] = ad->g1;
-      currlayer->cellb[1] = ad->b1;
+      unsigned char r1 = ad->fromrgb.Red();
+      unsigned char g1 = ad->fromrgb.Green();
+      unsigned char b1 = ad->fromrgb.Blue();
+      unsigned char r2 = ad->torgb.Red();
+      unsigned char g2 = ad->torgb.Green();
+      unsigned char b2 = ad->torgb.Blue();
+      currlayer->cellr[1] = r1;
+      currlayer->cellg[1] = g1;
+      currlayer->cellb[1] = b1;
       if (maxstate > 2) {
          int N = maxstate - 1;
-         double rfrac = (double)(ad->r2 - ad->r1) / (double)N;
-         double gfrac = (double)(ad->g2 - ad->g1) / (double)N;
-         double bfrac = (double)(ad->b2 - ad->b1) / (double)N;
+         double rfrac = (double)(r2 - r1) / (double)N;
+         double gfrac = (double)(g2 - g1) / (double)N;
+         double bfrac = (double)(b2 - b1) / (double)N;
          for (int n = 1; n < N; n++) {
-            currlayer->cellr[n+1] = (int)(ad->r1 + n * rfrac + 0.5);
-            currlayer->cellg[n+1] = (int)(ad->g1 + n * gfrac + 0.5);
-            currlayer->cellb[n+1] = (int)(ad->b1 + n * bfrac + 0.5);
+            currlayer->cellr[n+1] = (int)(r1 + n * rfrac + 0.5);
+            currlayer->cellg[n+1] = (int)(g1 + n * gfrac + 0.5);
+            currlayer->cellb[n+1] = (int)(b1 + n * bfrac + 0.5);
          }
       }
       if (maxstate > 1) {
-         currlayer->cellr[maxstate] = ad->r2;
-         currlayer->cellg[maxstate] = ad->g2;
-         currlayer->cellb[maxstate] = ad->b2;
+         currlayer->cellr[maxstate] = r2;
+         currlayer->cellg[maxstate] = g2;
+         currlayer->cellb[maxstate] = b2;
       }
    } else {
       // set cell colors to algo's current colors

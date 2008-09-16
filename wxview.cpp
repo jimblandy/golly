@@ -1418,7 +1418,7 @@ void PatternView::ProcessKey(int key, int modifiers)
          break;
       case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
-      case DO_RULE:        if (!inscript) mainptr->ShowRuleDialog(); break;
+      case DO_SETRULE:     if (!inscript) mainptr->ShowRuleDialog(); break;
       case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
 
       // View menu actions
@@ -1449,9 +1449,10 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SHOWSTATES:  ToggleAllStates(); break;
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
-      case DO_SHOWGRID:    ToggleGridLines(); break;
+      case DO_SETCOLORS:   if (!inscript) SetColors(); break;
       case DO_SHOWICONS:   ToggleCellIcons(); break;
-      case DO_SWAPCOLORS:  ToggleCellColors(); break;
+      case DO_INVERT:      ToggleCellColors(); break;
+      case DO_SHOWGRID:    ToggleGridLines(); break;
       case DO_BUFFERED:    ToggleBuffering(); break;
       case DO_INFO:        mainptr->ShowPatternInfo(); break;
 

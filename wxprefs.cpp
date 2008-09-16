@@ -486,8 +486,8 @@ void AddDefaultKeyActions()
    keyaction[(int)'e'][mk_META].id =   DO_SHOWEXACT;
    keyaction[(int)'l'][0].id =         DO_SHOWGRID;
    keyaction[(int)'l'][mk_META].id =   DO_SHOWGRID;
-   keyaction[(int)'b'][0].id =         DO_SWAPCOLORS;
-   keyaction[(int)'b'][mk_META].id =   DO_SWAPCOLORS;
+   keyaction[(int)'b'][0].id =         DO_INVERT;
+   keyaction[(int)'b'][mk_META].id =   DO_INVERT;
    keyaction[(int)'i'][0].id =         DO_INFO;
    keyaction[(int)'i'][mk_META].id =   DO_INFO;
 
@@ -563,6 +563,7 @@ const char* GetActionName(action_id action)
       case DO_NEXTGEN:        return "Next Generation";
       case DO_NEXTSTEP:       return "Next Step";
       case DO_RESET:          return "Reset";
+      case DO_SETCOLORS:      return "Set Colors...";
       case DO_SETGEN:         return "Set Generation...";
       case DO_FASTER:         return "Faster";
       case DO_SLOWER:         return "Slower";
@@ -570,7 +571,7 @@ const char* GetActionName(action_id action)
       case DO_HASHING:        return "Use Hashing";
       case DO_HYPER:          return "Hyperspeed";
       case DO_HASHINFO:       return "Show Hash Info";
-      case DO_RULE:           return "Set Rule...";
+      case DO_SETRULE:        return "Set Rule...";
       case DO_ADVANCE:        return "Advance Selection";
       case DO_ADVANCEOUT:     return "Advance Outside";
       case DO_TIMING:         return "Show Timing";
@@ -604,7 +605,7 @@ const char* GetActionName(action_id action)
       case DO_SHOWEXACT:      return "Show Exact Numbers";
       case DO_SHOWGRID:       return "Show Grid Lines";
       case DO_SHOWICONS:      return "Show Cell Icons";
-      case DO_SWAPCOLORS:     return "Swap Cell Colors";
+      case DO_INVERT:         return "Invert Colors";
       case DO_BUFFERED:       return "Buffered";
       case DO_INFO:           return "Pattern Info";
       // Layer menu
@@ -749,6 +750,11 @@ void GetKeyAction(char* value)
             break;
          }
       }
+   }
+   
+   // test for some deprecated actions
+   if (action.id == DO_NOTHING) {
+      if (strcmp(p, "Swap Cell Colors") == 0) action.id = DO_INVERT;
    }
    
    // probably best to silently ignore an unknown action
@@ -1254,7 +1260,7 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 void SetBrushesAndPens()
 {
    for (int i = 0; i < NumAlgos(); i++)
-      algoinfo[i]->statusbrush->SetColour(*(algoinfo[i]->statusrgb));
+      algoinfo[i]->statusbrush->SetColour(algoinfo[i]->statusrgb);
    for (int i = 0; i < 10; i++)
       livebrush[i]->SetColour(*livergb[i]);
    deadbrush->SetColour(*deadrgb);
@@ -1466,7 +1472,7 @@ void SavePrefs()
       fprintf(f, "algorithm=%s\n", GetAlgoName(i));
       fprintf(f, "max_mem=%d\n", algoinfo[i]->algomem);
       fprintf(f, "base_step=%d\n", algoinfo[i]->algobase);
-      SaveColor(f, "status_rgb", algoinfo[i]->statusrgb);
+      SaveColor(f, "status_rgb", &algoinfo[i]->statusrgb);
    }
    
    fputs("\n", f);
@@ -1893,7 +1899,7 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "status_rgb") == 0) {
          if (algoindex >= 0 && algoindex < NumAlgos())
-            GetColor(value, algoinfo[algoindex]->statusrgb);
+            GetColor(value, &algoinfo[algoindex]->statusrgb);
 
       } else if (strcmp(keyword, "min_delay") == 0) {
          sscanf(value, "%d", &mindelay);
@@ -2027,10 +2033,10 @@ void GetPrefs()
       } else if (strcmp(keyword, "select_rgb") == 0) { GetColor(value, selectrgb);
 
       } else if (strcmp(keyword, "qlife_rgb") == 0) {       // deprecated
-         GetColor(value, algoinfo[QLIFE_ALGO]->statusrgb);
+         GetColor(value, &algoinfo[QLIFE_ALGO]->statusrgb);
 
       } else if (strcmp(keyword, "hlife_rgb") == 0) {       // deprecated
-         GetColor(value, algoinfo[HLIFE_ALGO]->statusrgb);
+         GetColor(value, &algoinfo[HLIFE_ALGO]->statusrgb);
 
       } else if (strcmp(keyword, "buffered") == 0) {
          buffered = value[0] == '1';
@@ -2257,7 +2263,7 @@ class PrefsDialog : public wxPropertySheetDialog
 {
 public:
    PrefsDialog(wxWindow* parent, const wxString& page);
-   ~PrefsDialog();
+   ~PrefsDialog() {}
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
    wxPanel* CreateEditPrefs(wxWindow* parent);
@@ -2282,7 +2288,7 @@ private:
    int GetRadioVal(long firstid, int numbuttons);
    bool BadSpinVal(int id, int minval, int maxval, const wxString& prefix);
    bool ValidatePage();
-   void ChangeColor(int id, wxColor* rgb);
+   void ChangeColor(int id, wxColor& rgb);
    void AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox);
    void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
                        int id, wxColor* rgb, const wxString& text, wxChoice* = NULL);
@@ -2301,11 +2307,11 @@ private:
 
    int new_algomem[MAX_ALGOS];         // new max mem values for each algorithm
    int new_algobase[MAX_ALGOS];        // new base step values for each algorithm
-   wxColor* new_statusrgb[MAX_ALGOS];  // new status bar color for each algorithm
-   wxColor* new_livergb[10];           // new color for live cells in each layer
-   wxColor* new_deadrgb;               // new color for dead cells
-   wxColor* new_pastergb;              // new color for pasted pattern
-   wxColor* new_selectrgb;             // new color for selected cells
+   wxColor new_statusrgb[MAX_ALGOS];   // new status bar color for each algorithm
+   wxColor new_livergb[10];            // new color for live cells in each layer
+   wxColor new_deadrgb;                // new color for dead cells
+   wxColor new_pastergb;               // new color for pasted pattern
+   wxColor new_selectrgb;              // new color for selected cells
 
    wxString neweditor;                 // new text editor
 
@@ -3392,16 +3398,16 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    vbox->AddSpacer(GROUPGAP);
    AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
    vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_STATUS_RGB, algoinfo[algopos2]->statusrgb,
+   AddColorButton(panel, vbox, PREF_STATUS_RGB, &algoinfo[algopos2]->statusrgb,
                   _("Status bar background for"), algomenu);
 
    for (int i = 0; i < NumAlgos(); i++)
-      new_statusrgb[i] = new wxColor(*(algoinfo[i]->statusrgb));
+      new_statusrgb[i] = algoinfo[i]->statusrgb;
    for (int i = 0; i < 10; i++)
-      new_livergb[i] = new wxColor(*livergb[i]);
-   new_deadrgb = new wxColor(*deadrgb);
-   new_pastergb = new wxColor(*pastergb);
-   new_selectrgb = new wxColor(*selectrgb);
+      new_livergb[i] = *livergb[i];
+   new_deadrgb = *deadrgb;
+   new_pastergb = *pastergb;
+   new_selectrgb = *selectrgb;
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -3584,7 +3590,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
             wxMemoryDC dc;
             dc.SelectObject(bitmap);
             wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
-            wxBrush brush(*new_statusrgb[algopos2]);
+            wxBrush brush(new_statusrgb[algopos2]);
             FillRect(dc, rect, brush);
             dc.SelectObject(wxNullBitmap);
             bb->SetBitmapLabel(bitmap);
@@ -3697,7 +3703,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void PrefsDialog::ChangeColor(int id, wxColor* rgb)
+void PrefsDialog::ChangeColor(int id, wxColor& rgb)
 {
 #ifdef __WXX11__
    // avoid horrible wxX11 bugs
@@ -3706,16 +3712,16 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
 #else
    wxColourData data;
    data.SetChooseFull(true);    // for Windows
-   data.SetColour(*rgb);
+   data.SetColour(rgb);
    
    wxColourDialog dialog(this, &data);
    if ( dialog.ShowModal() == wxID_OK ) {
       wxColourData retData = dialog.GetColourData();
       wxColour c = retData.GetColour();
       
-      if (*rgb != c) {
+      if (rgb != c) {
          // change given color
-         rgb->Set(c.Red(), c.Green(), c.Blue());
+         rgb.Set(c.Red(), c.Green(), c.Blue());
          color_changed = true;
          
          // also change color of bitmap in corresponding button
@@ -3728,7 +3734,7 @@ void PrefsDialog::ChangeColor(int id, wxColor* rgb)
             wxMemoryDC dc;
             dc.SelectObject(bitmap);
             wxRect rect(0, 0, bitmapwd, BITMAP_HT);
-            wxBrush brush(*rgb);
+            wxBrush brush(rgb);
             FillRect(dc, rect, brush);
             dc.SelectObject(wxNullBitmap);
    
@@ -3987,13 +3993,13 @@ bool PrefsDialog::TransferDataFromWindow()
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11
       for (int i = 0; i < NumAlgos(); i++)
-         *(algoinfo[i]->statusrgb) = *new_statusrgb[i];
+         algoinfo[i]->statusrgb = new_statusrgb[i];
       for (int i = 0; i < 10; i++)
-         *livergb[i] = *new_livergb[i];
-      *deadrgb     = *new_deadrgb;
-      *pastergb    = *new_pastergb;
-      *selectrgb   = *new_selectrgb;
-   
+         *livergb[i] = new_livergb[i];
+      *deadrgb     = new_deadrgb;
+      *pastergb    = new_pastergb;
+      *selectrgb   = new_selectrgb;
+      
       // update colors for brushes and pens
       SetBrushesAndPens();
    }
@@ -4013,17 +4019,6 @@ bool PrefsDialog::TransferDataFromWindow()
    opencurs = IndexToCursor(opencursindex);
       
    return true;
-}
-
-// -----------------------------------------------------------------------------
-
-PrefsDialog::~PrefsDialog()
-{
-   for (int i = 0; i < NumAlgos(); i++) delete new_statusrgb[i];
-   for (int i = 0; i < 10; i++) delete new_livergb[i];
-   delete new_deadrgb;
-   delete new_pastergb;
-   delete new_selectrgb;
 }
 
 // -----------------------------------------------------------------------------

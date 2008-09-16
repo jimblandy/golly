@@ -893,7 +893,7 @@ void MainFrame::ShowRuleDialog()
       // terminate generating loop and set command_pending flag
       Stop();
       command_pending = true;
-      cmdevent.SetId(ID_RULE);
+      cmdevent.SetId(ID_SETRULE);
       return;
    }
 
