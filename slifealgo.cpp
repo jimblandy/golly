@@ -68,6 +68,7 @@ void slifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("SlowLife") ;
    ai.setAlgorithmCreator(&creator) ;
+   ai.minstates = 2 ;
    ai.maxstates = 2 ;
    // init default color scheme
    ai.defgradient = false;

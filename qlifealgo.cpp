@@ -1166,6 +1166,7 @@ void qlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(10) ;
    ai.setDefaultMaxMem(0) ;
+   ai.minstates = 2 ;
    ai.maxstates = 2 ;
    // init default color scheme
    ai.defgradient = false;

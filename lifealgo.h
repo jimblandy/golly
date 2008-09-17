@@ -103,7 +103,9 @@ public:
    virtual void setDefaultBaseStep(int) {}
    virtual void setDefaultMaxMem(int) {}
    
-   // maximum number of cell states supported by this algorithm
+   // minimum and maximum number of cell states supported by this algorithm;
+   // both must be within 2..256
+   int minstates;
    int maxstates;
    
    // default color scheme
