@@ -299,6 +299,7 @@ int NumAlgos()
 // global data used in CellPanel and ColorDialog methods:
 
 static int algoindex;         // currently selected algorithm
+static int gradstates;        // current number of gradient states
 static bool seeicons;         // show icons?
 
 const int CELLSIZE = 16;      // wd and ht of each cell in CellPanel
@@ -361,7 +362,7 @@ void CellPanel::GetGradientColor(int state, unsigned char* r,
       *r = ad->fromrgb.Red();
       *g = ad->fromrgb.Green();
       *b = ad->fromrgb.Blue();
-   } else if (state == ad->maxstates - 1) {
+   } else if (state == gradstates - 1) {
       *r = ad->torgb.Red();
       *g = ad->torgb.Green();
       *b = ad->torgb.Blue();
@@ -372,7 +373,7 @@ void CellPanel::GetGradientColor(int state, unsigned char* r,
       unsigned char r2 = ad->torgb.Red();
       unsigned char g2 = ad->torgb.Green();
       unsigned char b2 = ad->torgb.Blue();
-      int N = ad->maxstates - 2;
+      int N = gradstates - 2;
       double rfrac = (double)(r2 - r1) / (double)N;
       double gfrac = (double)(g2 - g1) / (double)N;
       double bfrac = (double)(b2 - b1) / (double)N;
@@ -384,14 +385,14 @@ void CellPanel::GetGradientColor(int state, unsigned char* r,
 
 // -----------------------------------------------------------------------------
 
-void CellPanel::OnPaint(wxPaintEvent& event)
+void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
    wxPaintDC dc(this);
    
    dc.SetPen(*wxBLACK_PEN);
 
-   #if 1 //!!!??? def __WXMSW__
-      // use theme background color on Windows
+   #ifdef __WXMSW__
+      // we have to use theme background color on Windows
       wxBrush bgbrush(GetBackgroundColour());
    #else
       wxBrush bgbrush(*wxTRANSPARENT_BRUSH);
@@ -424,12 +425,18 @@ void CellPanel::OnPaint(wxPaintEvent& event)
                dc.SetBrush(wxNullBrush);
             }
          } else if (algoinfo[algoindex]->gradient) {
-            unsigned char red, green, blue;
-            GetGradientColor(state, &red, &green, &blue);
-            wxColor color(red, green, blue);
-            dc.SetBrush(wxBrush(color));
-            dc.DrawRectangle(r);
-            dc.SetBrush(wxNullBrush);
+            if (state < gradstates) {
+               unsigned char red, green, blue;
+               GetGradientColor(state, &red, &green, &blue);
+               wxColor color(red, green, blue);
+               dc.SetBrush(wxBrush(color));
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+            } else {
+               dc.SetBrush(bgbrush);
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+            }
          } else {
             wxColor color(algoinfo[algoindex]->algor[state],
                           algoinfo[algoindex]->algog[state],
@@ -554,6 +561,7 @@ public:
       GRADIENT_CHECK,
       ICON_CHECK,
       CELL_PANEL,
+      SCROLL_BAR,
       STATE_BOX,
       RGB_BOX,
       STATUS_BUTT,
@@ -565,19 +573,22 @@ public:
       DEFAULT_BUTT
    };
 
-   void CreateControls();     // initialize all the controls
+   void CreateControls();        // initialize all the controls
 
-   void AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
-                       int id, wxColor* rgb, const wxString& text);
+   wxBitmapButton* AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
+                                  int id, wxColor* rgb, const wxString& text);
    void ChangeButtonColor(int id, wxColor* rgb);
    void UpdateButtonColor(int id, wxColor* rgb);
+   void UpdateScrollBar();
 
-   wxChoice* algochoice;      // menu of algorithms
-
-   CellPanel* cellpanel;      // for displaying cell colors/icons
-   wxCheckBox* gradcheck;     // use gradient?
-   wxCheckBox* iconcheck;     // show icons?
-   wxButton* defbutt;         // button to restore default color scheme
+   wxChoice* algochoice;         // menu of algorithms
+   CellPanel* cellpanel;         // for displaying cell colors/icons
+   wxCheckBox* gradcheck;        // use gradient?
+   wxCheckBox* iconcheck;        // show icons?
+   wxButton* defbutt;            // button to restore default color scheme
+   wxBitmapButton* frombutt;     // button to set gradient's start color
+   wxBitmapButton* tobutt;       // button to set gradient's end color
+   wxScrollBar* scrollbar;       // for changing number of gradient states
    
 private:
    // event handlers
@@ -585,15 +596,17 @@ private:
    void OnCheckBoxClicked(wxCommandEvent& event);
    void OnDefaultButton(wxCommandEvent& event);
    void OnColorButton(wxCommandEvent& event);
+   void OnScroll(wxScrollEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(ColorDialog, wxDialog)
-   EVT_CHOICE     (ALGO_CHOICE,     ColorDialog::OnChooseAlgo)
-   EVT_CHECKBOX   (wxID_ANY,        ColorDialog::OnCheckBoxClicked)
-   EVT_BUTTON     (DEFAULT_BUTT,    ColorDialog::OnDefaultButton)
-   EVT_BUTTON     (wxID_ANY,        ColorDialog::OnColorButton)
+   EVT_CHOICE           (ALGO_CHOICE,     ColorDialog::OnChooseAlgo)
+   EVT_CHECKBOX         (wxID_ANY,        ColorDialog::OnCheckBoxClicked)
+   EVT_BUTTON           (DEFAULT_BUTT,    ColorDialog::OnDefaultButton)
+   EVT_BUTTON           (wxID_ANY,        ColorDialog::OnColorButton)
+   EVT_COMMAND_SCROLL   (SCROLL_BAR,      ColorDialog::OnScroll)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -635,6 +648,8 @@ const int BIGVGAP = 12;       // vertical gap between groups of controls
 const int BITMAP_WD = 60;     // width of bitmap in color buttons
 const int BITMAP_HT = 20;     // height of bitmap in color buttons
 
+const int PAGESIZE = 10;      // scroll amount when paging
+
 // -----------------------------------------------------------------------------
 
 ColorDialog::ColorDialog(wxWindow* parent)
@@ -664,9 +679,9 @@ void ColorDialog::CreateControls()
    wxBoxSizer* deadbox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* pastebox = new wxBoxSizer(wxHORIZONTAL);
    AddColorButton(this, statusbox, STATUS_BUTT,
-                        &algoinfo[algoindex]->statusrgb, _("Status bar background"));
-   AddColorButton(this, frombox, FROM_BUTT, &algoinfo[algoindex]->fromrgb, _("to"));
-   AddColorButton(this, tobox, TO_BUTT, &algoinfo[algoindex]->torgb, _(" "));
+                        &algoinfo[algoindex]->statusrgb, _("Status bar"));
+   frombutt = AddColorButton(this, frombox, FROM_BUTT, &algoinfo[algoindex]->fromrgb, _("to"));
+   tobutt = AddColorButton(this, tobox, TO_BUTT, &algoinfo[algoindex]->torgb, _(""));
    AddColorButton(this, deadbox, DEAD_BUTT, deadrgb, _("Dead cells (state 0)"));
    deadbox->AddStretchSpacer();
    AddColorButton(this, deadbox, SELECT_BUTT, selectrgb, _("Selection (will be 50% transparent)"));
@@ -674,12 +689,11 @@ void ColorDialog::CreateControls()
 
    wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
-   algolabel->Add(new wxStaticText(this, wxID_STATIC, _("Algorithm:")), 0, FIX_ALIGN_BUG);
+   algolabel->Add(new wxStaticText(this, wxID_STATIC, _("Color scheme for:")), 0, FIX_ALIGN_BUG);
    algobox->Add(algolabel, 0, wxALIGN_CENTER_VERTICAL, 0);
    algobox->Add(algochoice, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 6);
    algobox->AddStretchSpacer();
-   algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   //??? algobox->AddStretchSpacer();
+   algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 0);
 
    gradcheck = new wxCheckBox(this, GRADIENT_CHECK, _("Use gradient from"));
    gradcheck->SetValue(algoinfo[algoindex]->gradient);
@@ -690,6 +704,26 @@ void ColorDialog::CreateControls()
    gradbox->Add(frombox, 0, wxALIGN_CENTER_VERTICAL, 0);
    gradbox->AddSpacer(5);
    gradbox->Add(tobox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   gradbox->AddSpacer(HGAP);
+
+   // create scroll bar filling right part of gradbox
+   wxSize minsize = gradbox->GetMinSize();
+   int scrollbarwd = NUMCOLS*CELLSIZE+1 - minsize.GetWidth();
+   #ifdef __WXMAC__
+      int scrollbarht = 15;   // must be this height on Mac
+   #else
+      int scrollbarht = 16;
+   #endif
+   scrollbar = new wxScrollBar(this, SCROLL_BAR, wxDefaultPosition,
+                               wxSize(scrollbarwd, scrollbarht), wxSB_HORIZONTAL);
+   if (scrollbar == NULL) Fatal(_("Failed to create scroll bar!"));
+   gradbox->Add(scrollbar, 0, wxALIGN_CENTER_VERTICAL, 0);
+   
+   gradstates = algoinfo[algoindex]->maxstates;
+   UpdateScrollBar();
+   scrollbar->Enable(algoinfo[algoindex]->gradient);
+   frombutt->Enable(algoinfo[algoindex]->gradient);
+   tobutt->Enable(algoinfo[algoindex]->gradient);
 
    // create child window for displaying cell colors/icons
    cellpanel = new CellPanel(this, CELL_PANEL, wxPoint(0,0),
@@ -730,19 +764,16 @@ void ColorDialog::CreateControls()
    defbox->Add(iconcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
    
    //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
-   //!!! wxStaticBox* sbox1 = new wxStaticBox(this, wxID_ANY, _("Color scheme for this algorithm:"));
+   //!!! wxStaticBox* sbox1 = new wxStaticBox(this, wxID_ANY, _("Cell colors:"));
    //!!! wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
-   wxStaticText* sbox1 = new wxStaticText(this, wxID_STATIC,
-                                          _("Color scheme for this algorithm:"));
    wxBoxSizer* ssizer1 = new wxBoxSizer(wxVERTICAL);
    
-   ssizer1->Add(sbox1, 0, 0, 0);//!!! remove if we fix above bug
-   ssizer1->AddSpacer(SBTOPGAP);
-   ssizer1->Add(gradbox, 0, wxLEFT | wxRIGHT, HGAP);
+   //???ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(gradbox, 0, wxLEFT | wxRIGHT, 0);
    ssizer1->AddSpacer(10);
-   ssizer1->Add(cellpanel, 0, wxLEFT | wxRIGHT, HGAP);
+   ssizer1->Add(cellpanel, 0, wxLEFT | wxRIGHT, 0);
    ssizer1->AddSpacer(10);
-   ssizer1->Add(defbox, 1, wxGROW | wxLEFT | wxRIGHT, HGAP);
+   ssizer1->Add(defbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
    ssizer1->AddSpacer(SBBOTGAP);
    
    //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
@@ -754,9 +785,9 @@ void ColorDialog::CreateControls()
    
    ssizer2->Add(sbox2, 0, 0, 0);//!!! remove if we fix above bug
    ssizer2->AddSpacer(SBTOPGAP);
-   ssizer2->Add(deadbox, 1, wxGROW | wxLEFT | wxRIGHT, HGAP);
+   ssizer2->Add(deadbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
    ssizer2->AddSpacer(10);
-   ssizer2->Add(pastebox, 0, wxLEFT | wxRIGHT, HGAP);
+   ssizer2->Add(pastebox, 0, wxLEFT | wxRIGHT, 0);
    //!!!ssizer2->AddSpacer(SBBOTGAP);
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
@@ -766,7 +797,6 @@ void ColorDialog::CreateControls()
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    topSizer->AddSpacer(6);
    topSizer->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, HGAP);
-   topSizer->AddSpacer(8);
    topSizer->Add(ssizer1, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
@@ -784,12 +814,20 @@ void ColorDialog::OnChooseAlgo(wxCommandEvent& event)
    if (i >= 0 && i < NumAlgos() && i != algoindex) {
       algoindex = i;
 
-      gradcheck->SetValue(algoinfo[algoindex]->gradient);
+      AlgoData* ad = algoinfo[algoindex];
 
       // update colors in some bitmap buttons
-      UpdateButtonColor(STATUS_BUTT, &algoinfo[algoindex]->statusrgb);
-      UpdateButtonColor(FROM_BUTT, &algoinfo[algoindex]->fromrgb);
-      UpdateButtonColor(TO_BUTT, &algoinfo[algoindex]->torgb);
+      UpdateButtonColor(STATUS_BUTT, &ad->statusrgb);
+      UpdateButtonColor(FROM_BUTT, &ad->fromrgb);
+      UpdateButtonColor(TO_BUTT, &ad->torgb);
+
+      gradcheck->SetValue(ad->gradient);
+      scrollbar->Enable(ad->gradient);
+      frombutt->Enable(ad->gradient);
+      tobutt->Enable(ad->gradient);
+
+      gradstates = ad->maxstates;
+      UpdateScrollBar();
       
       cellpanel->Refresh(false);
    }
@@ -800,23 +838,17 @@ void ColorDialog::OnChooseAlgo(wxCommandEvent& event)
 void ColorDialog::OnCheckBoxClicked(wxCommandEvent& event)
 {
    if ( event.GetId() == GRADIENT_CHECK ) {
-      if (gradcheck->GetValue()) {
-         algoinfo[algoindex]->gradient = true;
-         cellpanel->Refresh(false);
-      } else {
-         algoinfo[algoindex]->gradient = false;
-         cellpanel->Refresh(false);
-      }
+      AlgoData* ad = algoinfo[algoindex];
+      ad->gradient = gradcheck->GetValue() == 1;
+      scrollbar->Enable(ad->gradient);
+      frombutt->Enable(ad->gradient);
+      tobutt->Enable(ad->gradient);
+      cellpanel->Refresh(false);
    }
 
    if ( event.GetId() == ICON_CHECK ) {
-      if (iconcheck->GetValue()) {
-         seeicons = true;
-         cellpanel->Refresh(false);
-      } else {
-         seeicons = false;
-         cellpanel->Refresh(false);
-      }
+      seeicons = iconcheck->GetValue() == 1;
+      cellpanel->Refresh(false);
    }
 }
 
@@ -828,18 +860,21 @@ void ColorDialog::OnDefaultButton(wxCommandEvent& WXUNUSED(event))
    AlgoData* ad = algoinfo[algoindex];
    ad->SetDefaultColors();
 
-   gradcheck->SetValue(ad->gradient);
-
    UpdateButtonColor(FROM_BUTT, &ad->fromrgb);
    UpdateButtonColor(TO_BUTT, &ad->torgb);
+
+   gradcheck->SetValue(ad->gradient);
+   scrollbar->Enable(ad->gradient);
+   frombutt->Enable(ad->gradient);
+   tobutt->Enable(ad->gradient);
    
    cellpanel->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
 
-void ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
-                                 int id, wxColor* rgb, const wxString& text)
+wxBitmapButton* ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
+                                            int id, wxColor* rgb, const wxString& text)
 {
    wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
    wxMemoryDC dc;
@@ -861,6 +896,7 @@ void ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
       }
       hbox->Add(textbox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
    }
+   return bb;
 }
 
 // -----------------------------------------------------------------------------
@@ -939,6 +975,59 @@ void ColorDialog::OnColorButton(wxCommandEvent& event)
    } else {
       // process other buttons like Cancel and OK
       event.Skip();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::UpdateScrollBar()
+{
+   AlgoData* ad = algoinfo[algoindex];
+   scrollbar->SetScrollbar(gradstates - ad->minstates, 1,
+                           ad->maxstates - ad->minstates + 1,  // range
+                           PAGESIZE, true);
+}
+
+// -----------------------------------------------------------------------------
+
+void ColorDialog::OnScroll(wxScrollEvent& event)
+{
+   WXTYPE type = event.GetEventType();
+
+   if (type == wxEVT_SCROLL_LINEUP) {
+      gradstates--;
+      if (gradstates < algoinfo[algoindex]->minstates)
+         gradstates = algoinfo[algoindex]->minstates;
+      cellpanel->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_LINEDOWN) {
+      gradstates++;
+      if (gradstates > algoinfo[algoindex]->maxstates)
+         gradstates = algoinfo[algoindex]->maxstates;
+      cellpanel->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_PAGEUP) {
+      gradstates -= PAGESIZE;
+      if (gradstates < algoinfo[algoindex]->minstates)
+         gradstates = algoinfo[algoindex]->minstates;
+      cellpanel->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_PAGEDOWN) {
+      gradstates += PAGESIZE;
+      if (gradstates > algoinfo[algoindex]->maxstates)
+         gradstates = algoinfo[algoindex]->maxstates;
+      cellpanel->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_THUMBTRACK) {
+      gradstates = algoinfo[algoindex]->minstates + event.GetPosition();
+      if (gradstates < algoinfo[algoindex]->minstates)
+         gradstates = algoinfo[algoindex]->minstates;
+      if (gradstates > algoinfo[algoindex]->maxstates)
+         gradstates = algoinfo[algoindex]->maxstates;
+      cellpanel->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
+      UpdateScrollBar();
    }
 }
 
