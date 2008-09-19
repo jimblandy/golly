@@ -60,8 +60,7 @@ public:
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
    
-   // current color scheme (the default color scheme is stored in the
-   // staticAlgoInfo class)
+   // default color scheme
    bool gradient;                // use color gradient?
    wxColor fromrgb;              // color at start of gradient
    wxColor torgb;                // color at end of gradient
@@ -69,8 +68,6 @@ public:
    unsigned char algor[256];
    unsigned char algog[256];
    unsigned char algob[256];
-
-   void SetDefaultColors();      // set current color scheme to defaults
 };
 
 extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
@@ -90,8 +87,5 @@ const char* GetAlgoName(algo_type algotype);
 
 int NumAlgos();
 // Return current number of algorithms.
-
-void SetColors();
-// Bring up a dialog that lets user change colors.
 
 #endif

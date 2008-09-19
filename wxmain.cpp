@@ -1346,7 +1346,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SCALE_4:        viewptr->SetPixelsPerCell(4); break;
       case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
       case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
-      case ID_SETCOLORS:      SetColors(); break;
+      case ID_SETCOLORS:      SetLayerColors(); break;
       case ID_ICONS:          viewptr->ToggleCellIcons(); break;
       case ID_INVERT:         viewptr->ToggleCellColors(); break;
       case ID_GRID:           viewptr->ToggleGridLines(); break;
@@ -2166,7 +2166,7 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
    viewMenu->AppendSeparator();
-   viewMenu->Append(ID_SETCOLORS,               _("Set Colors...") + GetAccelerator(DO_SETCOLORS));
+   viewMenu->Append(ID_SETCOLORS,               _("Set Layer Colors...") + GetAccelerator(DO_SETCOLORS));
    viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
    viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
    viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));

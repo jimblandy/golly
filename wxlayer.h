@@ -92,7 +92,9 @@ public:
    PatternView* tilewin;      // tile window
    wxRect tilerect;           // tile window's size and position
 
-   // color scheme for this layer
+   // current color scheme for this layer
+   wxColor fromrgb;           // start of gradient
+   wxColor torgb;             // end of gradient
    unsigned char cellr[256];
    unsigned char cellg[256];
    unsigned char cellb[256];
@@ -196,10 +198,23 @@ void RefreshView();
 void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.
 
+Layer* GetLayer(int index);
+// Return a pointer to the layer specified by the given index.
+
+
+//!!! move this color stuff into wxcolors.*???
+
+void CreateColorGradient();
+// Create a color gradient for the current layer using
+// currlayer->fromrgb and currlayer->torgb.
+
+void UpdateCloneColors();
+// If current layer has clones then update their colors.
+
 void UpdateCellColors();
-// Update the cell colors for the current layer depending on the current
-// algo and rule.  Must be called very soon after an algo/rule change,
-// and before the viewport is updated.
+// Update the cell colors for the current layer (and its clones)
+// aaccording to the current algo and rule.  Must be called very soon
+// after an algo/rule change, and before the viewport is updated.
 
 void InvertCellColors();
 // Invert the cell colors in all layers, including the dead cell color,
@@ -208,8 +223,8 @@ void InvertCellColors();
 void InvertIconColors();
 // Invert the colors in all icon bitmaps.
 
-Layer* GetLayer(int index);
-// Return a pointer to the layer specified by the given index.
+void SetLayerColors();
+// Let user change current layer's colors.
 
 
 // Layer bar routines:

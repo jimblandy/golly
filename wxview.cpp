@@ -1449,7 +1449,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SHOWSTATES:  ToggleAllStates(); break;
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
-      case DO_SETCOLORS:   if (!inscript) SetColors(); break;
+      case DO_SETCOLORS:   if (!inscript) SetLayerColors(); break;
       case DO_SHOWICONS:   ToggleCellIcons(); break;
       case DO_INVERT:      ToggleCellColors(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;

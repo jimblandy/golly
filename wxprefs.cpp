@@ -86,9 +86,6 @@ const int PREFS_VERSION = 4;     // increment if necessary due to changes in syn
 int currversion = PREFS_VERSION; // might be changed by prefs_version
 const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
-const int BITMAP_WD = 60;        // width of bitmap in color buttons
-const int BITMAP_HT = 20;        // height of bitmap in color buttons
-
 // initialize exported preferences:
 
 wxString gollydir;               // path of directory containing app
@@ -563,7 +560,6 @@ const char* GetActionName(action_id action)
       case DO_NEXTGEN:        return "Next Generation";
       case DO_NEXTSTEP:       return "Next Step";
       case DO_RESET:          return "Reset";
-      case DO_SETCOLORS:      return "Set Colors...";
       case DO_SETGEN:         return "Set Generation...";
       case DO_FASTER:         return "Faster";
       case DO_SLOWER:         return "Slower";
@@ -603,9 +599,10 @@ const char* GetActionName(action_id action)
       case DO_SHOWSTATES:     return "Show All States";
       case DO_SHOWSTATUS:     return "Show Status Bar";
       case DO_SHOWEXACT:      return "Show Exact Numbers";
-      case DO_SHOWGRID:       return "Show Grid Lines";
+      case DO_SETCOLORS:      return "Set Layer Colors...";
       case DO_SHOWICONS:      return "Show Cell Icons";
       case DO_INVERT:         return "Invert Colors";
+      case DO_SHOWGRID:       return "Show Grid Lines";
       case DO_BUFFERED:       return "Buffered";
       case DO_INFO:           return "Pattern Info";
       // Layer menu
@@ -2154,6 +2151,257 @@ void GetPrefs()
 
 // -----------------------------------------------------------------------------
 
+// global data used in CellBoxes and PrefsDialog methods:
+
+static int algopos2;          // currently selected algorithm in Color pane
+static int gradstates;        // current number of gradient states
+static bool seeicons;         // show icons?
+
+const int CELLSIZE = 16;      // wd and ht of each cell in CellBoxes
+const int NUMCOLS = 32;       // number of columns in CellBoxes
+const int NUMROWS = 8;        // number of rows in CellBoxes
+
+// -----------------------------------------------------------------------------
+
+// define a window for displaying cell colors/icons:
+
+class CellBoxes : public wxPanel
+{
+public:
+   CellBoxes(wxWindow* parent, wxWindowID id, const wxPoint& pos,
+             const wxSize& size) : wxPanel(parent, id, pos, size) { }
+
+   wxStaticText* statebox;    // for showing state of cell under cursor
+   wxStaticText* rgbbox;      // for showing color of cell under cursor
+   
+private:
+   void GetGradientColor(int state, unsigned char* r,
+                                    unsigned char* g,
+                                    unsigned char* b);
+
+   void OnEraseBackground(wxEraseEvent& event);
+   void OnPaint(wxPaintEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnMouseExit(wxMouseEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(CellBoxes, wxPanel)
+   EVT_ERASE_BACKGROUND (CellBoxes::OnEraseBackground)
+   EVT_PAINT            (CellBoxes::OnPaint)
+   EVT_LEFT_DOWN        (CellBoxes::OnMouseDown)
+   EVT_LEFT_DCLICK      (CellBoxes::OnMouseDown)
+   EVT_MOTION           (CellBoxes::OnMouseMotion)
+   EVT_ENTER_WINDOW     (CellBoxes::OnMouseMotion)
+   EVT_LEAVE_WINDOW     (CellBoxes::OnMouseExit)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void CellBoxes::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing
+}
+
+// -----------------------------------------------------------------------------
+
+void CellBoxes::GetGradientColor(int state, unsigned char* r,
+                                            unsigned char* g,
+                                            unsigned char* b)
+{
+   // calculate gradient color for given state (> 0 and < maxstates)
+   AlgoData* ad = algoinfo[algopos2];
+   if (state == 1) {
+      *r = ad->fromrgb.Red();
+      *g = ad->fromrgb.Green();
+      *b = ad->fromrgb.Blue();
+   } else if (state == gradstates - 1) {
+      *r = ad->torgb.Red();
+      *g = ad->torgb.Green();
+      *b = ad->torgb.Blue();
+   } else {
+      unsigned char r1 = ad->fromrgb.Red();
+      unsigned char g1 = ad->fromrgb.Green();
+      unsigned char b1 = ad->fromrgb.Blue();
+      unsigned char r2 = ad->torgb.Red();
+      unsigned char g2 = ad->torgb.Green();
+      unsigned char b2 = ad->torgb.Blue();
+      int N = gradstates - 2;
+      double rfrac = (double)(r2 - r1) / (double)N;
+      double gfrac = (double)(g2 - g1) / (double)N;
+      double bfrac = (double)(b2 - b1) / (double)N;
+      *r = (int)(r1 + (state-1) * rfrac + 0.5);
+      *g = (int)(g1 + (state-1) * gfrac + 0.5);
+      *b = (int)(b1 + (state-1) * bfrac + 0.5);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   wxPaintDC dc(this);
+   
+   dc.SetPen(*wxBLACK_PEN);
+
+   #ifdef __WXMSW__
+      // we have to use theme background color on Windows
+      wxBrush bgbrush(GetBackgroundColour());
+   #else
+      wxBrush bgbrush(*wxTRANSPARENT_BRUSH);
+   #endif
+
+   // draw cell boxes
+   wxRect r = wxRect(0, 0, CELLSIZE+1, CELLSIZE+1);
+   int col = 0;
+   for (int state = 0; state < 256; state++) {
+      if (state == 0) {
+         if (seeicons) {
+            dc.SetBrush(bgbrush);
+         } else {
+            dc.SetBrush(*deadbrush);
+         }
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
+
+      } else if (state < algoinfo[algopos2]->maxstates) {
+         if (seeicons) {
+            wxBitmap** iconmaps = algoinfo[algopos2]->icons15x15;
+            if (iconmaps && iconmaps[state]) {
+               dc.SetBrush(*deadbrush);
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+               dc.DrawBitmap(*iconmaps[state], r.x + 1, r.y + 1, true);
+            } else {
+               dc.SetBrush(bgbrush);
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+            }
+         } else if (algoinfo[algopos2]->gradient) {
+            if (state < gradstates) {
+               unsigned char red, green, blue;
+               GetGradientColor(state, &red, &green, &blue);
+               wxColor color(red, green, blue);
+               dc.SetBrush(wxBrush(color));
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+            } else {
+               dc.SetBrush(bgbrush);
+               dc.DrawRectangle(r);
+               dc.SetBrush(wxNullBrush);
+            }
+         } else {
+            wxColor color(algoinfo[algopos2]->algor[state],
+                          algoinfo[algopos2]->algog[state],
+                          algoinfo[algopos2]->algob[state]);
+            dc.SetBrush(wxBrush(color));
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);
+         }
+
+      } else {
+         // state >= maxstates
+         dc.SetBrush(bgbrush);
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
+      }
+      
+      col++;
+      if (col < NUMCOLS) {
+         r.x += CELLSIZE;
+      } else {
+         r.x = 0;
+         r.y += CELLSIZE;
+         col = 0;
+      }
+   }
+
+   dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void CellBoxes::OnMouseDown(wxMouseEvent& event)
+{
+   int col = event.GetX() / CELLSIZE;
+   int row = event.GetY() / CELLSIZE;
+   int state = row * NUMCOLS + col;
+   if (state >= 0 && state < algoinfo[algopos2]->maxstates) {
+      if (seeicons || algoinfo[algopos2]->gradient || state == 0) {
+         wxBell();
+      } else {
+         // let user change color of this cell state
+         wxColour rgb(algoinfo[algopos2]->algor[state],
+                      algoinfo[algopos2]->algog[state],
+                      algoinfo[algopos2]->algob[state]);
+         wxColourData data;
+         data.SetChooseFull(true);    // for Windows
+         data.SetColour(rgb);
+         
+         wxColourDialog dialog(this, &data);
+         if ( dialog.ShowModal() == wxID_OK ) {
+            wxColourData retData = dialog.GetColourData();
+            wxColour c = retData.GetColour();
+            if (rgb != c) {
+               // change color
+               algoinfo[algopos2]->algor[state] = c.Red();
+               algoinfo[algopos2]->algog[state] = c.Green();
+               algoinfo[algopos2]->algob[state] = c.Blue();
+               Refresh(false);
+            }
+         }
+      }
+   } 
+
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void CellBoxes::OnMouseMotion(wxMouseEvent& event)
+{
+   int col = event.GetX() / CELLSIZE;
+   int row = event.GetY() / CELLSIZE;
+   int state = row * NUMCOLS + col;
+   if (state < 0 || state > 255) {
+      statebox->SetLabel(_(" "));
+      rgbbox->SetLabel(_(" "));
+   } else {
+      statebox->SetLabel(wxString::Format(_("%d"),state));
+      if (seeicons) {
+         // or maybe show color of pixel in icon bitmap???
+         rgbbox->SetLabel(_(" "));
+      } else if (state == 0) {
+         rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
+                          deadrgb->Red(), deadrgb->Green(), deadrgb->Blue()));
+      } else if (state < algoinfo[algopos2]->maxstates) {
+         unsigned char r, g, b;
+         if (algoinfo[algopos2]->gradient) {
+            GetGradientColor(state, &r, &g, &b);
+         } else {
+            r = algoinfo[algopos2]->algor[state];
+            g = algoinfo[algopos2]->algog[state];
+            b = algoinfo[algopos2]->algob[state];
+         }
+         rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),r,g,b));
+      } else {
+         rgbbox->SetLabel(_(" "));
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
+{
+   statebox->SetLabel(_(" "));
+   rgbbox->SetLabel(_(" "));
+}
+
+// -----------------------------------------------------------------------------
+
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
    // fix wxMac 2.7.2+ bug in wxTextCtrl::SetSelection
    #define ALL_TEXT 0,999
@@ -2181,9 +2429,18 @@ const wxString HASH_STEP_NOTE = _("(best if power of 2)");
 const wxString NONHASH_MEM_NOTE = _("MB (0 means no limit)");
 const wxString NONHASH_STEP_NOTE = _(" ");
 
-// -----------------------------------------------------------------------------
+const int BITMAP_WD = 60;        // width of bitmap in color buttons
+const int BITMAP_HT = 20;        // height of bitmap in color buttons
 
-size_t currpage = 0;          // current page in PrefsDialog
+const int PAGESIZE = 10;         // scroll amount when paging
+
+static size_t currpage = 0;      // current page in PrefsDialog
+
+// these are global so we can remember current key combination
+static int currkey = ' ';
+static int currmods = mk_ALT + mk_SHIFT + mk_META;
+
+// -----------------------------------------------------------------------------
 
 enum {
    // these *_PAGE values must correspond to currpage values
@@ -2233,29 +2490,32 @@ enum {
    PREF_MOUSE_WHEEL,
    PREF_THUMB_RANGE,
    // Layer prefs
+   PREF_OPACITY,
    PREF_TILE_BORDER,
    PREF_ASK_NEW,
    PREF_ASK_LOAD,
    PREF_ASK_DELETE,
    PREF_ASK_QUIT,
    // Color prefs
-   PREF_OPACITY,
-   PREF_LIVE_RGB,
-   PREF_DEAD_RGB = PREF_LIVE_RGB + 10,
-   PREF_PASTE_RGB,
-   PREF_SELECT_RGB,
-   PREF_STATUS_RGB,
    PREF_ALGO_MENU2,
+   PREF_GRADIENT_CHECK,
+   PREF_ICON_CHECK,
+   PREF_CELL_PANEL,
+   PREF_SCROLL_BAR,
+   PREF_STATE_BOX,
+   PREF_RGB_BOX,
+   PREF_STATUS_BUTT,
+   PREF_FROM_BUTT,
+   PREF_TO_BUTT,
+   PREF_DEAD_BUTT,
+   PREF_SELECT_BUTT,
+   PREF_PASTE_BUTT,
    // Keyboard prefs
    PREF_KEYCOMBO,
    PREF_ACTION,
    PREF_CHOOSE,
    PREF_FILE_BOX
 };
-
-// these are global so we can remember current key combination
-int currkey = ' ';
-int currmods = mk_ALT + mk_SHIFT + mk_META;
 
 // define a multi-page dialog for changing various preferences
 
@@ -2288,10 +2548,11 @@ private:
    int GetRadioVal(long firstid, int numbuttons);
    bool BadSpinVal(int id, int minval, int maxval, const wxString& prefix);
    bool ValidatePage();
-   void ChangeColor(int id, wxColor& rgb);
-   void AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox);
-   void AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
-                       int id, wxColor* rgb, const wxString& text, wxChoice* = NULL);
+   wxBitmapButton* AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
+                                  int id, wxColor* rgb, const wxString& text);
+   void ChangeButtonColor(int id, wxColor& rgb);
+   void UpdateButtonColor(int id, wxColor& rgb);
+   void UpdateScrollBar();
    
    void OnCheckBoxClicked(wxCommandEvent& event);
    void OnColorButton(wxCommandEvent& event);
@@ -2299,19 +2560,26 @@ private:
    void OnPageChanged(wxNotebookEvent& event);
    void OnChoice(wxCommandEvent& event);
    void OnButton(wxCommandEvent& event);
+   void OnScroll(wxScrollEvent& event);
 
    bool ignore_page_event;             // used to prevent currpage being changed
    bool color_changed;                 // have one or more colors changed?
    int algopos1;                       // selected algorithm in PREF_ALGO_MENU1
-   int algopos2;                       // selected algorithm in PREF_ALGO_MENU2
+//!!!   int algopos2;                       // selected algorithm in PREF_ALGO_MENU2
 
    int new_algomem[MAX_ALGOS];         // new max mem values for each algorithm
    int new_algobase[MAX_ALGOS];        // new base step values for each algorithm
    wxColor new_statusrgb[MAX_ALGOS];   // new status bar color for each algorithm
-   wxColor new_livergb[10];            // new color for live cells in each layer
    wxColor new_deadrgb;                // new color for dead cells
    wxColor new_pastergb;               // new color for pasted pattern
    wxColor new_selectrgb;              // new color for selected cells
+
+   CellBoxes* cellboxes;               // for displaying cell colors/icons
+   wxCheckBox* gradcheck;              // use gradient?
+   wxCheckBox* iconcheck;              // show icons?
+   wxBitmapButton* frombutt;           // button to set gradient's start color
+   wxBitmapButton* tobutt;             // button to set gradient's end color
+   wxScrollBar* scrollbar;             // for changing number of gradient states
 
    wxString neweditor;                 // new text editor
 
@@ -2319,12 +2587,13 @@ private:
 };
 
 BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
-   EVT_CHECKBOX               (wxID_ANY, PrefsDialog::OnCheckBoxClicked)
-   EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnColorButton)
-   EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY, PrefsDialog::OnPageChanging)
-   EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY, PrefsDialog::OnPageChanged)
-   EVT_CHOICE                 (wxID_ANY, PrefsDialog::OnChoice)
-   EVT_BUTTON                 (wxID_ANY, PrefsDialog::OnButton)
+   EVT_CHECKBOX               (wxID_ANY,        PrefsDialog::OnCheckBoxClicked)
+   EVT_BUTTON                 (wxID_ANY,        PrefsDialog::OnColorButton)
+   EVT_NOTEBOOK_PAGE_CHANGING (wxID_ANY,        PrefsDialog::OnPageChanging)
+   EVT_NOTEBOOK_PAGE_CHANGED  (wxID_ANY,        PrefsDialog::OnPageChanged)
+   EVT_CHOICE                 (wxID_ANY,        PrefsDialog::OnChoice)
+   EVT_BUTTON                 (wxID_ANY,        PrefsDialog::OnButton)
+   EVT_COMMAND_SCROLL         (PREF_SCROLL_BAR, PrefsDialog::OnScroll)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -2559,13 +2828,15 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
             wxBell();
          }
       } else if ( currpage == LAYER_PAGE ) {
-         // only one spin ctrl on this page
-         wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_TILE_BORDER);
-         if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
-      } else if ( currpage == COLOR_PAGE ) {
-         // only one spin ctrl on this page
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_OPACITY);
-         if ( s1 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+         wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_TILE_BORDER);
+         wxTextCtrl* t1 = s1->GetText();
+         wxTextCtrl* t2 = s2->GetText();
+         wxWindow* focus = FindFocus();
+         if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+         if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+      } else if ( currpage == COLOR_PAGE ) {
+         // no spin ctrls on this page
       } else if ( currpage == KEYBOARD_PAGE ) {
          // no spin ctrls on this page
       }
@@ -2734,17 +3005,15 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
    hbox3->Add(setcurs1, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   hbox3->AddSpacer(20);
+   hbox3->AddStretchSpacer(20);
    hbox3->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox3->Add(choice1, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   #ifdef __WXX11__
-      hbox3->AddSpacer(10);
-   #endif
+   hbox3->AddStretchSpacer(20);
 
    ssizer1->AddSpacer(SBTOPGAP);
    ssizer1->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(CVGAP);
-   ssizer1->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->Add(hbox3, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
    
    // on opening pattern
@@ -3208,6 +3477,26 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
+   // opacity
+
+   wxBoxSizer* opacitybox = new wxBoxSizer(wxHORIZONTAL);
+   opacitybox->Add(new wxStaticText(panel, wxID_STATIC,
+                                    _("Opacity percentage when drawing stacked layers:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+   opacitybox->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   
+   // tile_border
+
+   wxBoxSizer* borderbox = new wxBoxSizer(wxHORIZONTAL);
+   borderbox->Add(new wxStaticText(panel, wxID_STATIC,
+                                   _("Border thickness for tiled layers:")),
+              0, wxALIGN_CENTER_VERTICAL, 0);
+   wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_TILE_BORDER, wxEmptyString,
+                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
+   borderbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   
    // ask_on_new, ask_on_load, ask_on_delete, ask_on_quit
 
    wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Ask to save changes to layer before:"));
@@ -3244,26 +3533,25 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
    ssizer1->AddSpacer(CH2VGAP);
    ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
-   
-   // tile_border
 
-   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
-   hbox3->Add(new wxStaticText(panel, wxID_STATIC,
-                               _("Thickness of border around tiled layers:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_TILE_BORDER, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
-   hbox3->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-
+   // position things
+   vbox->AddSpacer(SVGAP);
+   vbox->Add(opacitybox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(S2VGAP);
+   vbox->Add(borderbox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(GROUPGAP);
    vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
-   vbox->AddSpacer(10);
-   vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    
-   // init control value
-   spin1->SetRange(1, 10);
-   spin1->SetValue(tileborder);
+   // init control values
+   spin1->SetRange(1, 100);
+   spin1->SetValue(opacity);
+
+   spin2->SetRange(1, 10);
+   spin2->SetValue(tileborder);
+
    spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
+
    check1->SetValue(askonnew);
    check2->SetValue(askonload);
    check3->SetValue(askondelete);
@@ -3277,54 +3565,8 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
 
 // -----------------------------------------------------------------------------
 
-void PrefsDialog::AddLayerButtons(wxWindow* parent, wxBoxSizer* vbox)
-{
-   wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
-
-   for (int i = 0; i < 10; i++) {
-      // layer buttons are square; ie. smaller width
-      wxBitmap bitmap(BITMAP_HT, BITMAP_HT);
-      wxMemoryDC dc;
-      dc.SelectObject(bitmap);
-      wxRect rect(0, 0, BITMAP_HT, BITMAP_HT);
-      wxBrush brush(*livergb[i]);
-      FillRect(dc, rect, brush);
-      dc.SelectObject(wxNullBitmap);
-      
-      wxBitmapButton* bb = new wxBitmapButton(parent, PREF_LIVE_RGB + i,
-                                              bitmap, wxPoint(0, 0));
-      if (bb == NULL) {
-         Warning(_("Failed to create layer button!"));
-      } else {
-         wxBoxSizer* numbox = new wxBoxSizer(wxVERTICAL);
-
-         // show layer numbers above buttons
-         wxString num;
-         num.Printf(_("%d"), i);
-         numbox->Add(new wxStaticText(parent, wxID_STATIC, num),
-                     0, wxALIGN_CENTER, 0);
-         numbox->Add(bb, 0, wxALIGN_CENTER, 0);
-         
-         hbox->Add(numbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-      }
-   }
-   
-   wxBoxSizer* textbox = new wxBoxSizer(wxVERTICAL);
-   textbox->Add(new wxStaticText(parent, wxID_STATIC, _(" ")), 0, wxALIGN_CENTER, 0);
-   textbox->Add(new wxStaticText(parent, wxID_STATIC, _("Live cells in layers")),
-                0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
-
-   hbox->Add(textbox, 0, wxALIGN_CENTER_VERTICAL, 0);
-
-   vbox->AddSpacer(5);
-   vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
-}
-
-// -----------------------------------------------------------------------------
-
-void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
-                                 int id, wxColor* rgb, const wxString& text,
-                                 wxChoice* choice)
+wxBitmapButton* PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
+                                            int id, wxColor* rgb, const wxString& text)
 {
    wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
    wxMemoryDC dc;
@@ -3334,24 +3576,12 @@ void PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* vbox,
    FillRect(dc, rect, brush);
    dc.SelectObject(wxNullBitmap);
    
-   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0, 0));
-   wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
-   wxBoxSizer* textbox = new wxBoxSizer(wxHORIZONTAL);
-   if (bb && hbox && textbox) {
+   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0));
+   if (bb) {
+      hbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, wxALIGN_CENTER_VERTICAL, 0);
       hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
-      if (choice) {
-         // need to fix wxALIGN_CENTER_VERTICAL bug in wxMac
-         textbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, FIX_ALIGN_BUG);
-      } else {
-         textbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, wxALL, 0);
-      }
-      hbox->Add(textbox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
-      if (choice) {
-         hbox->Add(choice, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, CHOICEGAP);
-      }
-      vbox->AddSpacer(5);
-      vbox->Add(hbox, 0, wxLEFT | wxRIGHT, LRGAP);
    }
+   return bb;
 }
 
 // -----------------------------------------------------------------------------
@@ -3361,24 +3591,6 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-   
-   // opacity
-
-   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
-   hbox1->Add(new wxStaticText(panel, wxID_STATIC,
-                               _("Opacity percentage when drawing stacked layers:")),
-              0, wxALIGN_CENTER_VERTICAL, 0);
-   wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
-                                      wxDefaultPosition, wxSize(70, wxDefaultCoord));
-   hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-   vbox->AddSpacer(SVGAP);
-   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
-   
-   // init control value
-   spin1->SetRange(1, 100);
-   spin1->SetValue(opacity);
-   spin1->SetFocus();
-   spin1->SetSelection(ALL_TEXT);
    
    // create a choice menu to select algo
    wxArrayString algoChoices;
@@ -3390,25 +3602,130 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    algopos2 = currlayer->algtype;
    algomenu->SetSelection(algopos2);
    
-   AddLayerButtons(panel, vbox);
-   vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_DEAD_RGB, deadrgb, _("Dead cells"));
-   vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_PASTE_RGB, pastergb, _("Pasted pattern"));
-   vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_SELECT_RGB, selectrgb, _("Selection (will be 50% transparent)"));
-   vbox->AddSpacer(GROUPGAP);
-   AddColorButton(panel, vbox, PREF_STATUS_RGB, &algoinfo[algopos2]->statusrgb,
-                  _("Status bar background for"), algomenu);
+   // create bitmap buttons
+   wxBoxSizer* statusbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* frombox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* tobox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* deadbox = new wxBoxSizer(wxHORIZONTAL);
+   AddColorButton(panel, statusbox, PREF_STATUS_BUTT,
+                         &algoinfo[algopos2]->statusrgb, _("Status bar: "));
+   frombutt = AddColorButton(panel, frombox, PREF_FROM_BUTT, &algoinfo[algopos2]->fromrgb, _(""));
+   tobutt = AddColorButton(panel, tobox, PREF_TO_BUTT, &algoinfo[algopos2]->torgb, _(" to "));
+   AddColorButton(panel, deadbox, PREF_DEAD_BUTT, deadrgb, _("Dead cells: "));
+   deadbox->AddStretchSpacer();
+   AddColorButton(panel, deadbox, PREF_SELECT_BUTT, selectrgb, _("Selection: "));
+   deadbox->AddStretchSpacer();
+   AddColorButton(panel, deadbox, PREF_PASTE_BUTT, pastergb, _("Paste: "));
+
+   wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
+   algolabel->Add(new wxStaticText(panel, wxID_STATIC, _("Default colors for:")), 0, FIX_ALIGN_BUG);
+   algobox->Add(algolabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+   algobox->Add(algomenu, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 6);
+   algobox->AddStretchSpacer();
+   algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | FIX_ALIGN_BUG);
+
+   gradcheck = new wxCheckBox(panel, PREF_GRADIENT_CHECK, _("Use gradient from "));
+   gradcheck->SetValue(algoinfo[algopos2]->gradient);
+   
+   wxBoxSizer* gradbox = new wxBoxSizer(wxHORIZONTAL);
+   gradbox->Add(gradcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
+   gradbox->Add(frombox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   gradbox->Add(tobox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   gradbox->AddSpacer(10);
+
+   // create scroll bar filling right part of gradbox
+   wxSize minsize = gradbox->GetMinSize();
+   int scrollbarwd = NUMCOLS*CELLSIZE+1 - minsize.GetWidth();
+   #ifdef __WXMAC__
+      int scrollbarht = 15;   // must be this height on Mac
+   #else
+      int scrollbarht = 16;
+   #endif
+   scrollbar = new wxScrollBar(panel, PREF_SCROLL_BAR, wxDefaultPosition,
+                               wxSize(scrollbarwd, scrollbarht), wxSB_HORIZONTAL);
+   if (scrollbar == NULL) Fatal(_("Failed to create scroll bar!"));
+   gradbox->Add(scrollbar, 0, wxALIGN_CENTER_VERTICAL, 0);
+   
+   gradstates = algoinfo[algopos2]->maxstates;
+   UpdateScrollBar();
+   scrollbar->Enable(algoinfo[algopos2]->gradient);
+   frombutt->Enable(algoinfo[algopos2]->gradient);
+   tobutt->Enable(algoinfo[algopos2]->gradient);
+
+   // create child window for displaying cell colors/icons
+   cellboxes = new CellBoxes(panel, PREF_CELL_PANEL, wxPoint(0,0),
+                             wxSize(NUMCOLS*CELLSIZE+1,NUMROWS*CELLSIZE+1));
+
+   iconcheck = new wxCheckBox(panel, PREF_ICON_CHECK, _("Show icons"));
+   seeicons = false;
+   iconcheck->SetValue(seeicons);
+
+   wxStaticText* statebox = new wxStaticText(panel, PREF_STATE_BOX, _("999"));
+   cellboxes->statebox = statebox;
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
+   hbox1->Add(statebox, 0, 0, 0);
+   hbox1->SetMinSize( hbox1->GetMinSize() );
+
+   wxStaticText* rgbbox = new wxStaticText(panel, PREF_RGB_BOX, _("999,999,999"));
+   cellboxes->rgbbox = rgbbox;
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
+   hbox2->Add(rgbbox, 0, 0, 0);
+   hbox2->SetMinSize( hbox2->GetMinSize() );
+
+   statebox->SetLabel(_(" "));
+   rgbbox->SetLabel(_(" "));
+
+   wxBoxSizer* botbox = new wxBoxSizer(wxHORIZONTAL);
+   botbox->Add(new wxStaticText(panel, wxID_STATIC, _("State: ")),
+               0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(hbox1, 0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(20, 0, 0);
+   botbox->Add(new wxStaticText(panel, wxID_STATIC, _("RGB: ")),
+               0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(hbox2, 0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->AddStretchSpacer();
+   botbox->Add(iconcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
+   
+   //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
+   //!!! wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Cell colors:"));
+   //!!! wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+   wxBoxSizer* ssizer1 = new wxBoxSizer(wxVERTICAL);
+   
+   ssizer1->AddSpacer(10);//!!! SBTOPGAP
+   ssizer1->Add(gradbox, 0, wxLEFT | wxRIGHT, 0);
+   ssizer1->AddSpacer(8);
+   ssizer1->Add(cellboxes, 0, wxLEFT | wxRIGHT, 0);
+   ssizer1->AddSpacer(5);
+   ssizer1->Add(botbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
+   ssizer1->AddSpacer(SBBOTGAP);
+   
+   //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
+   //!!! wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY,
+   //!!!                                      _("Global colors used by all algorithms:"));
+   //!!! wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
+   wxStaticText* sbox2 = new wxStaticText(panel, wxID_STATIC,
+                                          _("Global colors used by all algorithms:"));
+   wxBoxSizer* ssizer2 = new wxBoxSizer(wxVERTICAL);
+   
+   ssizer2->Add(sbox2, 0, 0, 0);//!!! remove if we fix above bug
+   ssizer2->AddSpacer(10);//!!! SBTOPGAP
+   ssizer2->Add(deadbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
+   //!!!ssizer2->AddSpacer(SBBOTGAP);
+
+   vbox->AddSpacer(5);
+   vbox->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
+   vbox->Add(ssizer1, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(20);
+   vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(2);
 
    for (int i = 0; i < NumAlgos(); i++)
       new_statusrgb[i] = algoinfo[i]->statusrgb;
-   for (int i = 0; i < 10; i++)
-      new_livergb[i] = *livergb[i];
    new_deadrgb = *deadrgb;
    new_pastergb = *pastergb;
    new_selectrgb = *selectrgb;
-   
+
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
    topSizer->Fit(panel);
@@ -3458,6 +3775,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
 
    wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(keybox, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
+   hbox1->AddSpacer(15);
    hbox1->Add(actbox, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
 
    wxButton* choose = new wxButton(panel, PREF_CHOOSE, _("Choose File..."));
@@ -3466,6 +3784,11 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
    hbox2->Add(choose, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
    hbox2->Add(filebox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
+
+   wxBoxSizer* midbox = new wxBoxSizer(wxVERTICAL);
+   midbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   midbox->AddSpacer(15);
+   midbox->Add(hbox2, 0, wxLEFT, LRGAP);
 
    wxString notes = _("Note:");
    notes += _("\n- Different key combinations can be assigned to the same action.");
@@ -3476,9 +3799,12 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    vbox->AddSpacer(5);
    vbox->Add(hbox0, 0, wxLEFT, LRGAP);
    vbox->AddSpacer(15);
+   vbox->Add(midbox, 0, wxALIGN_CENTER, 0);
+   /* !!!???
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(15);
    vbox->Add(hbox2, 0, wxLEFT, LRGAP);
+   */
    vbox->AddSpacer(30);
    vbox->Add(hbox3, 0, wxLEFT, LRGAP);
 
@@ -3536,7 +3862,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
       }
    }
    
-   if ( id == PREF_ALGO_MENU1 ) {
+   else if ( id == PREF_ALGO_MENU1 ) {
       int i = event.GetSelection();
       if (i >= 0 && i < NumAlgos() && i != algopos1) {
          // first update values for previous selection
@@ -3579,24 +3905,27 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
       }
    }
    
-   if ( id == PREF_ALGO_MENU2 ) {
+   else if ( id == PREF_ALGO_MENU2 ) {
       int i = event.GetSelection();
       if (i >= 0 && i < NumAlgos() && i != algopos2) {
          algopos2 = i;
-         // update status button color to new_statusrgb[algopos2]
-         wxBitmapButton* bb = (wxBitmapButton*) FindWindow(PREF_STATUS_RGB);
-         if (bb) {
-            wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
-            wxMemoryDC dc;
-            dc.SelectObject(bitmap);
-            wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
-            wxBrush brush(new_statusrgb[algopos2]);
-            FillRect(dc, rect, brush);
-            dc.SelectObject(wxNullBitmap);
-            bb->SetBitmapLabel(bitmap);
-            bb->Refresh();
-            bb->Update();
-         }
+   
+         AlgoData* ad = algoinfo[algopos2];
+   
+         // update colors in some bitmap buttons
+         UpdateButtonColor(PREF_STATUS_BUTT, new_statusrgb[algopos2]);
+         UpdateButtonColor(PREF_FROM_BUTT, ad->fromrgb);
+         UpdateButtonColor(PREF_TO_BUTT, ad->torgb);
+   
+         gradstates = ad->maxstates;
+         UpdateScrollBar();
+   
+         gradcheck->SetValue(ad->gradient);
+         scrollbar->Enable(ad->gradient);
+         frombutt->Enable(ad->gradient);
+         tobutt->Enable(ad->gradient);
+         
+         cellboxes->Refresh(false);
       }
    }
 }
@@ -3689,7 +4018,9 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
 
 void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
 {
-   if ( event.GetId() == PREF_SHOW_BOLD ) {
+   int id = event.GetId();
+
+   if ( id == PREF_SHOW_BOLD ) {
       // enable/disable PREF_BOLD_SPACING spin control
       wxCheckBox* checkbox = (wxCheckBox*) FindWindow(PREF_SHOW_BOLD);
       wxSpinCtrl* spinctrl = (wxSpinCtrl*) FindWindow(PREF_BOLD_SPACING);
@@ -3698,18 +4029,44 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
          spinctrl->Enable(ticked);
          if (ticked) spinctrl->SetFocus();
       }
+
+   } else if ( id == PREF_GRADIENT_CHECK ) {
+      AlgoData* ad = algoinfo[algopos2];
+      ad->gradient = gradcheck->GetValue() == 1;
+      scrollbar->Enable(ad->gradient);
+      frombutt->Enable(ad->gradient);
+      tobutt->Enable(ad->gradient);
+      cellboxes->Refresh(false);
+
+   } else if ( event.GetId() == PREF_ICON_CHECK ) {
+      seeicons = iconcheck->GetValue() == 1;
+      cellboxes->Refresh(false);
    }
 }
 
 // -----------------------------------------------------------------------------
 
-void PrefsDialog::ChangeColor(int id, wxColor& rgb)
+void PrefsDialog::UpdateButtonColor(int id, wxColor& rgb)
 {
-#ifdef __WXX11__
-   // avoid horrible wxX11 bugs
-   Warning(_("Sorry, but due to wxX11 bugs you'll have to change colors\n"
-             "by quitting Golly, editing GollyPrefs and restarting."));
-#else
+   wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
+   if (bb) {
+      wxBitmap bitmap(BITMAP_WD, BITMAP_HT);
+      wxMemoryDC dc;
+      dc.SelectObject(bitmap);
+      wxRect rect(0, 0, BITMAP_WD, BITMAP_HT);
+      wxBrush brush(rgb);
+      FillRect(dc, rect, brush);
+      dc.SelectObject(wxNullBitmap);
+      bb->SetBitmapLabel(bitmap);
+      bb->Refresh();
+      bb->Update();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::ChangeButtonColor(int id, wxColor& rgb)
+{
    wxColourData data;
    data.SetChooseFull(true);    // for Windows
    data.SetColour(rgb);
@@ -3725,26 +4082,16 @@ void PrefsDialog::ChangeColor(int id, wxColor& rgb)
          color_changed = true;
          
          // also change color of bitmap in corresponding button
-         wxBitmapButton* bb = (wxBitmapButton*) FindWindow(id);
-         if (bb) {
-            // layer buttons are square
-            int bitmapwd = id < PREF_DEAD_RGB ? BITMAP_HT : BITMAP_WD;
+         UpdateButtonColor(id, rgb);
          
-            wxBitmap bitmap(bitmapwd, BITMAP_HT);
-            wxMemoryDC dc;
-            dc.SelectObject(bitmap);
-            wxRect rect(0, 0, bitmapwd, BITMAP_HT);
-            wxBrush brush(rgb);
-            FillRect(dc, rect, brush);
-            dc.SelectObject(wxNullBitmap);
-   
-            bb->SetBitmapLabel(bitmap);
-            bb->Refresh();
-            bb->Update();
+         if (id == PREF_DEAD_BUTT) {
+            SetBrushesAndPens();    // update deadbrush for OnPaint !!!???
+         }
+         if (id == PREF_FROM_BUTT || id == PREF_TO_BUTT || id == PREF_DEAD_BUTT) {
+            cellboxes->Refresh(false);
          }
       }
    }
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -3752,25 +4099,81 @@ void PrefsDialog::ChangeColor(int id, wxColor& rgb)
 void PrefsDialog::OnColorButton(wxCommandEvent& event)
 {
    int id = event.GetId();
+
+   if ( id == PREF_STATUS_BUTT ) {
+      ChangeButtonColor(id, new_statusrgb[algopos2]);
    
-   if ( id >= PREF_LIVE_RGB && id < PREF_DEAD_RGB ) {
-      ChangeColor(id, new_livergb[id - PREF_LIVE_RGB]);
+   } else if ( id == PREF_FROM_BUTT ) {
+      ChangeButtonColor(id, algoinfo[algopos2]->fromrgb);
+   
+   } else if ( id == PREF_TO_BUTT ) {
+      ChangeButtonColor(id, algoinfo[algopos2]->torgb);
 
-   } else if ( id == PREF_DEAD_RGB ) {
-      ChangeColor(id, new_deadrgb);
+   } else if ( id == PREF_DEAD_BUTT ) {
+      ChangeButtonColor(id, new_deadrgb);
 
-   } else if ( id == PREF_PASTE_RGB ) {
-      ChangeColor(id, new_pastergb);
+   } else if ( id == PREF_PASTE_BUTT ) {
+      ChangeButtonColor(id, new_pastergb);
 
-   } else if ( id == PREF_SELECT_RGB ) {
-      ChangeColor(id, new_selectrgb);
-
-   } else if ( id == PREF_STATUS_RGB ) {
-      ChangeColor(id, new_statusrgb[algopos2]);
+   } else if ( id == PREF_SELECT_BUTT ) {
+      ChangeButtonColor(id, new_selectrgb);
    
    } else {
       // process other buttons like Cancel and OK
       event.Skip();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::UpdateScrollBar()
+{
+   AlgoData* ad = algoinfo[algopos2];
+   scrollbar->SetScrollbar(gradstates - ad->minstates, 1,
+                           ad->maxstates - ad->minstates + 1,  // range
+                           PAGESIZE, true);
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnScroll(wxScrollEvent& event)
+{
+   WXTYPE type = event.GetEventType();
+
+   if (type == wxEVT_SCROLL_LINEUP) {
+      gradstates--;
+      if (gradstates < algoinfo[algopos2]->minstates)
+         gradstates = algoinfo[algopos2]->minstates;
+      cellboxes->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_LINEDOWN) {
+      gradstates++;
+      if (gradstates > algoinfo[algopos2]->maxstates)
+         gradstates = algoinfo[algopos2]->maxstates;
+      cellboxes->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_PAGEUP) {
+      gradstates -= PAGESIZE;
+      if (gradstates < algoinfo[algopos2]->minstates)
+         gradstates = algoinfo[algopos2]->minstates;
+      cellboxes->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_PAGEDOWN) {
+      gradstates += PAGESIZE;
+      if (gradstates > algoinfo[algopos2]->maxstates)
+         gradstates = algoinfo[algopos2]->maxstates;
+      cellboxes->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_THUMBTRACK) {
+      gradstates = algoinfo[algopos2]->minstates + event.GetPosition();
+      if (gradstates < algoinfo[algopos2]->minstates)
+         gradstates = algoinfo[algopos2]->minstates;
+      if (gradstates > algoinfo[algopos2]->maxstates)
+         gradstates = algoinfo[algopos2]->maxstates;
+      cellboxes->Refresh(false);
+
+   } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
+      UpdateScrollBar();
    }
 }
 
@@ -3884,12 +4287,13 @@ bool PrefsDialog::ValidatePage()
          return false;
 
    } else if (currpage == LAYER_PAGE) {
+      if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
+         return false;
       if ( BadSpinVal(PREF_TILE_BORDER, 1, 10, _("Tile border thickness")) )
          return false;
 
    } else if (currpage == COLOR_PAGE) {
-      if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
-         return false;
+      // no spin ctrls on this page
 
    } else if (currpage == KEYBOARD_PAGE) {
       // no spin ctrls on this page
@@ -3981,6 +4385,7 @@ bool PrefsDialog::TransferDataFromWindow()
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
 
    // LAYER_PAGE
+   opacity     = GetSpinVal(PREF_OPACITY);
    tileborder  = GetSpinVal(PREF_TILE_BORDER);
    askonnew    = GetCheckVal(PREF_ASK_NEW);
    askonload   = GetCheckVal(PREF_ASK_LOAD);
@@ -3988,14 +4393,11 @@ bool PrefsDialog::TransferDataFromWindow()
    askonquit   = GetCheckVal(PREF_ASK_QUIT);
 
    // COLOR_PAGE
-   opacity = GetSpinVal(PREF_OPACITY);
    if (color_changed) {
       // strictly speaking we shouldn't need the color_changed flag but it
       // minimizes problems caused by bug in wxX11
       for (int i = 0; i < NumAlgos(); i++)
          algoinfo[i]->statusrgb = new_statusrgb[i];
-      for (int i = 0; i < 10; i++)
-         *livergb[i] = new_livergb[i];
       *deadrgb     = new_deadrgb;
       *pastergb    = new_pastergb;
       *selectrgb   = new_selectrgb;
