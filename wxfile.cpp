@@ -260,8 +260,7 @@ bool MainFrame::LoadImage(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
-                            bool updatestatus)
+void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool updatestatus)
 {
    if ( !wxFileName::FileExists(path) ) {
       wxString err = _("The pattern file does not exist:\n") + path;
@@ -269,7 +268,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       return;
    }
 
-   // newtitle is only empty if called from ResetPattern/RestorePattern
+   // newtitle is empty if called from ResetPattern/RestorePattern
    if (!newtitle.IsEmpty()) {
       if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
 
@@ -303,6 +302,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
    // save current rule so we can restore it below
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   int oldnumstates = currlayer->algo->NumCellStates();
    
    // delete old universe and create new one of same type
    delete currlayer->algo;
@@ -351,11 +351,13 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       viewptr->nopattupdate = false;
    }
 
-   // cell colors depend on current algo and rule
-   UpdateCellColors();
-
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
+   
+      // restore default colors if new algo/rule changed the number of states
+      if (oldnumstates != currlayer->algo->NumCellStates()) {
+         UpdateCellColors();
+      }
 
       if (openremovesel) currlayer->currsel.Deselect();
       if (opencurs) currlayer->curs = opencurs;

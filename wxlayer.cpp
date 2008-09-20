@@ -949,7 +949,6 @@ void CurrentLayerChanged()
    if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
       currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
       // error should never occur here
-      UpdateCellColors();
    }
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
@@ -1021,13 +1020,27 @@ void AddLayer()
             layer[i] = layer[i-1];
       }
    }
+   
+   Layer* oldlayer = NULL;
+   if (cloning || duplicating) oldlayer = currlayer;
 
    currlayer = new Layer();
    if (currlayer == NULL) Fatal(_("Failed to create new layer!"));
    layer[currindex] = currlayer;
 
-   // cell colors depend on current algo and rule
-   UpdateCellColors();
+   if (cloning || duplicating) {
+      // copy old layer's colors to new layer
+      currlayer->fromrgb = oldlayer->fromrgb;
+      currlayer->torgb = oldlayer->torgb;
+      for (int n = 1; n < currlayer->algo->NumCellStates(); n++) {
+         currlayer->cellr[n] = oldlayer->cellr[n];
+         currlayer->cellg[n] = oldlayer->cellg[n];
+         currlayer->cellb[n] = oldlayer->cellb[n];
+      }
+   } else {
+      // set new layer's colors to default colors for current algo+rule
+      UpdateCellColors();
+   }
    
    numlayers++;
 
@@ -2223,7 +2236,9 @@ void ColorDialog::CreateControls()
 {
    wxString note =
            _("NOTE:  Changes made here are temporary and only affect the current layer\n");
-   note += _("and its clones.  Use Preferences > Color to make permanent color changes.");
+   note += _("and its clones.  If an algorithm or rule change causes the number of cell\n");
+   note += _("states to change then the colors will be reset to their default values.\n");
+   note += _("Use Preferences > Color to change the default colors for each algorithm.");
    wxStaticText* notebox = new wxStaticText(this, wxID_STATIC, note);
 
    // create bitmap buttons
@@ -2451,7 +2466,7 @@ void SetLayerColors()
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(ID_SETCOLORS);
+      mainptr->cmdevent.SetId(ID_SET_COLORS);
       return;
    }
    

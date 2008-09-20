@@ -165,18 +165,20 @@ void MainFrame::ResetPattern(bool resetundo)
       SavePendingChanges();
       currlayer->undoredo->RememberGenStart();
    }
+
+   int oldnumstates = currlayer->algo->NumCellStates();
    
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, algorithm and starting pattern
    currlayer->warp = currlayer->startwarp;
    currlayer->algtype = currlayer->startalgo;
 
-   if ( !currlayer->startfile.IsEmpty() ) {
-      // restore pattern from startfile
-      LoadPattern(currlayer->startfile, wxEmptyString);
-   } else {
+   if ( currlayer->startfile.IsEmpty() ) {
       // restore pattern from currfile
       LoadPattern(currlayer->currfile, wxEmptyString);
+   } else {
+      // restore pattern from startfile
+      LoadPattern(currlayer->startfile, wxEmptyString);
    }
    // gen count has been reset to startgen
    
@@ -186,10 +188,10 @@ void MainFrame::ResetPattern(bool resetundo)
    // restore settings saved by SaveStartingPattern
    currlayer->currname = currlayer->startname;
    currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
-   UpdateCellColors();
    currlayer->dirty = currlayer->startdirty;
-   if (restoreview)
+   if (restoreview) {
       viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
+   }
 
    // if this layer is a clone then restore some settings in other clones
    if (currlayer->cloneid > 0) {
@@ -197,8 +199,10 @@ void MainFrame::ResetPattern(bool resetundo)
          Layer* cloneptr = GetLayer(i);
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
             cloneptr->currname = cloneptr->startname;
-            cloneptr->view->setpositionmag(cloneptr->startx, cloneptr->starty,
-                                           cloneptr->startmag);
+            if (restoreview) {
+               cloneptr->view->setpositionmag(cloneptr->startx, cloneptr->starty,
+                                              cloneptr->startmag);
+            }
             cloneptr->warp = cloneptr->startwarp;
             // also synchronize dirty flags and update items in Layer menu
             cloneptr->dirty = currlayer->dirty;
@@ -209,6 +213,11 @@ void MainFrame::ResetPattern(bool resetundo)
 
    // restore selection
    currlayer->currsel = currlayer->startsel;
+
+   // restore default colors if new algo/rule changed the number of states
+   if (oldnumstates != currlayer->algo->NumCellStates()) {
+      UpdateCellColors();
+   }
 
    // update window title in case currname, rule or dirty flag changed;
    // note that UpdateLayerItem(currindex) gets called
@@ -967,6 +976,10 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       // otherwise temporary files won't be the correct type (mc or rle)
       SavePendingChanges();
    }
+   
+   bool rulechanged = false;
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   int oldnumstates = currlayer->algo->NumCellStates();
 
    // change algorithm type and update status bar immediately
    algo_type oldalgotype = currlayer->algtype;
@@ -976,9 +989,6 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
 
    // create a new universe of the requested flavor
    lifealgo* newalgo = CreateNewUniverse(newalgotype);
-   
-   bool rulechanged = false;
-   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    
    if (inundoredo) {
       // switch to given newrule (no error should occur)
@@ -1065,8 +1075,10 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    currlayer->algo = newalgo;   
    SetGenIncrement();
    
-   // cell colors depend on current algo and rule
-   UpdateCellColors();
+   // restore default colors if new algo/rule changed the number of states
+   if (oldnumstates != currlayer->algo->NumCellStates()) {
+      UpdateCellColors();
+   }
 
    if (!inundoredo) {
       if (rulechanged) {

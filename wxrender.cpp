@@ -1010,7 +1010,7 @@ int PixelsToCells(int pixels) {
 
 // -----------------------------------------------------------------------------
 
-void CheckPasteImage(int colorindex)
+void CheckPasteImage(/* remove!!!??? int colorindex */)
 {
    // paste image needs to be updated if pasterect size changed
    // or viewport size changed or plocation changed or showicons changed
@@ -1716,7 +1716,7 @@ void DrawView(wxDC& dc, int tileindex)
            prectht == viewptr->pasterect.height && prectht > 1 ) {
          // don't draw old paste image, a new one is coming very soon
       } else {
-         CheckPasteImage(colorindex);
+         CheckPasteImage(/* remove!!!??? colorindex */);
          DrawPasteImage(dc);
       }
    }

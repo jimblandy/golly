@@ -1466,10 +1466,26 @@ void SavePrefs()
 
    fprintf(f, "init_algo=%s\n", GetAlgoName(currlayer->algtype));
    for (int i = 0; i < NumAlgos(); i++) {
+      fputs("\n", f);
       fprintf(f, "algorithm=%s\n", GetAlgoName(i));
       fprintf(f, "max_mem=%d\n", algoinfo[i]->algomem);
       fprintf(f, "base_step=%d\n", algoinfo[i]->algobase);
       SaveColor(f, "status_rgb", &algoinfo[i]->statusrgb);
+      SaveColor(f, "from_rgb", &algoinfo[i]->fromrgb);
+      SaveColor(f, "to_rgb", &algoinfo[i]->torgb);
+      fprintf(f, "use_gradient=%d\n", algoinfo[i]->gradient ? 1 : 0);
+      fputs("colors=", f);
+      for (int state = 1; state < algoinfo[i]->maxstates; state++) {
+         // only write out state,r,g,b tuple if color is different
+         if (algoinfo[i]->algor[state] != algoinfo[i]->defr[state] ||
+             algoinfo[i]->algog[state] != algoinfo[i]->defg[state] ||
+             algoinfo[i]->algob[state] != algoinfo[i]->defb[state] ) {
+            fprintf(f, "%d,%d,%d,%d,", state, algoinfo[i]->algor[state],
+                                              algoinfo[i]->algog[state],
+                                              algoinfo[i]->algob[state]);
+         }
+      }
+      fputs("\n", f);
    }
    
    fputs("\n", f);
@@ -1897,6 +1913,34 @@ void GetPrefs()
       } else if (strcmp(keyword, "status_rgb") == 0) {
          if (algoindex >= 0 && algoindex < NumAlgos())
             GetColor(value, &algoinfo[algoindex]->statusrgb);
+
+      } else if (strcmp(keyword, "from_rgb") == 0) {
+         if (algoindex >= 0 && algoindex < NumAlgos())
+            GetColor(value, &algoinfo[algoindex]->fromrgb);
+
+      } else if (strcmp(keyword, "to_rgb") == 0) {
+         if (algoindex >= 0 && algoindex < NumAlgos())
+            GetColor(value, &algoinfo[algoindex]->torgb);
+
+      } else if (strcmp(keyword, "use_gradient") == 0) {
+         if (algoindex >= 0 && algoindex < NumAlgos())
+            algoinfo[algoindex]->gradient = value[0] == '1';
+
+      } else if (strcmp(keyword, "colors") == 0) {
+         if (algoindex >= 0 && algoindex < NumAlgos()) {
+            int state, r, g, b;
+            while (sscanf(value, "%d,%d,%d,%d,", &state, &r, &g, &b) == 4) {
+               if (state > 0 && state < algoinfo[algoindex]->maxstates) {
+                  algoinfo[algoindex]->algor[state] = r;
+                  algoinfo[algoindex]->algog[state] = g;
+                  algoinfo[algoindex]->algob[state] = b;
+               }
+               while (*value != ',') value++; value++;
+               while (*value != ',') value++; value++;
+               while (*value != ',') value++; value++;
+               while (*value != ',') value++; value++;
+            }
+         }
 
       } else if (strcmp(keyword, "min_delay") == 0) {
          sscanf(value, "%d", &mindelay);

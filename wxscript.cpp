@@ -233,8 +233,10 @@ const char* GSF_setrule(char* rulestring)
          mainptr->ReduceCellStates(newmaxstate);
       }
 
-      // cell colors depend on current algo and rule
-      UpdateCellColors();
+      if (oldmaxstate != newmaxstate) {
+         // restore default colors if new rule has different number of states
+         UpdateCellColors();
+      }
 
       // pattern might have changed or new rule might have changed colors
       DoAutoUpdate();

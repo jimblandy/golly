@@ -702,10 +702,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_ALL_STATES,   active);
       mbar->Enable(ID_STATUS_BAR,   active);
       mbar->Enable(ID_EXACT,        active);
-      mbar->Enable(ID_SETCOLORS,    active && !inscript);
+      mbar->Enable(ID_GRID,         active);
       mbar->Enable(ID_ICONS,        active);
       mbar->Enable(ID_INVERT,       active);
-      mbar->Enable(ID_GRID,         active);
       #if defined(__WXMAC__) || defined(__WXGTK__)
          // windows on Mac OS X and GTK+ 2.0 are automatically buffered
          mbar->Enable(ID_BUFF,      false);
@@ -723,6 +722,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_DEL_OTHERS,   active && !inscript && numlayers > 1);
       mbar->Enable(ID_MOVE_LAYER,   active && !inscript && numlayers > 1);
       mbar->Enable(ID_NAME_LAYER,   active && !inscript);
+      mbar->Enable(ID_SET_COLORS,   active && !inscript);
       mbar->Enable(ID_SYNC_VIEW,    active);
       mbar->Enable(ID_SYNC_CURS,    active);
       mbar->Enable(ID_STACK,        active);
@@ -744,9 +744,9 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_ALL_STATES, showallstates);
       mbar->Check(ID_STATUS_BAR, showstatus);
       mbar->Check(ID_EXACT,      showexact);
+      mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_ICONS,      showicons);
       mbar->Check(ID_INVERT,     swapcolors);
-      mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
       mbar->Check(ID_PL_TR,      plocation == TopRight);
       mbar->Check(ID_PL_BR,      plocation == BottomRight);
@@ -1328,13 +1328,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
 
       // View menu
       case ID_FULL:           ToggleFullScreen(); break;
-      case ID_TOOL_BAR:       ToggleToolBar(); break;
-      case ID_LAYER_BAR:      ToggleLayerBar(); break;
-      case ID_EDIT_BAR:       ToggleEditBar(); break;
-      case ID_ALL_STATES:     ToggleAllStates(); break;
-      case ID_STATUS_BAR:     ToggleStatusBar(); break;
-      case ID_EXACT:          ToggleExactNumbers(); break;
-      case ID_INFO:           ShowPatternInfo(); break;
       case ID_FIT:            viewptr->FitPattern(); break;
       case ID_FIT_SEL:        viewptr->FitSelection(); break;
       case ID_MIDDLE:         viewptr->ViewOrigin(); break;
@@ -1346,11 +1339,17 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SCALE_4:        viewptr->SetPixelsPerCell(4); break;
       case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
       case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
-      case ID_SETCOLORS:      SetLayerColors(); break;
+      case ID_TOOL_BAR:       ToggleToolBar(); break;
+      case ID_LAYER_BAR:      ToggleLayerBar(); break;
+      case ID_EDIT_BAR:       ToggleEditBar(); break;
+      case ID_ALL_STATES:     ToggleAllStates(); break;
+      case ID_STATUS_BAR:     ToggleStatusBar(); break;
+      case ID_EXACT:          ToggleExactNumbers(); break;
+      case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_ICONS:          viewptr->ToggleCellIcons(); break;
       case ID_INVERT:         viewptr->ToggleCellColors(); break;
-      case ID_GRID:           viewptr->ToggleGridLines(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
+      case ID_INFO:           ShowPatternInfo(); break;
 
       // Layer menu
       case ID_ADD_LAYER:      AddLayer(); break;
@@ -1360,6 +1359,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_DEL_OTHERS:     DeleteOtherLayers(); break;
       case ID_MOVE_LAYER:     MoveLayerDialog(); break;
       case ID_NAME_LAYER:     NameLayerDialog(); break;
+      case ID_SET_COLORS:     SetLayerColors(); break;
       case ID_SYNC_VIEW:      ToggleSyncViews(); break;
       case ID_SYNC_CURS:      ToggleSyncCursors(); break;
       case ID_STACK:          ToggleStackLayers(); break;
@@ -2165,11 +2165,9 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_ALL_STATES,     _("Show All States") + GetAccelerator(DO_SHOWSTATES));
    viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
    viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
-   viewMenu->AppendSeparator();
-   viewMenu->Append(ID_SETCOLORS,               _("Set Layer Colors...") + GetAccelerator(DO_SETCOLORS));
+   viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
    viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
    viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
-   viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
    viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
    viewMenu->AppendSeparator();
    viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
@@ -2183,6 +2181,7 @@ void MainFrame::CreateMenus()
    layerMenu->AppendSeparator();
    layerMenu->Append(ID_MOVE_LAYER,             _("Move Layer...") + GetAccelerator(DO_MOVELAYER));
    layerMenu->Append(ID_NAME_LAYER,             _("Name Layer...") + GetAccelerator(DO_NAMELAYER));
+   layerMenu->Append(ID_SET_COLORS,             _("Set Layer Colors...") + GetAccelerator(DO_SETCOLORS));
    layerMenu->AppendSeparator();
    layerMenu->AppendCheckItem(ID_SYNC_VIEW,     _("Synchronize Views") + GetAccelerator(DO_SYNCVIEWS));
    layerMenu->AppendCheckItem(ID_SYNC_CURS,     _("Synchronize Cursors") + GetAccelerator(DO_SYNCCURS));
@@ -2327,10 +2326,9 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_ALL_STATES,      DO_SHOWSTATES);
       SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
       SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
-      SetAccelerator(mbar, ID_SETCOLORS,       DO_SETCOLORS);
+      SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
       SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
       SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
-      SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
       SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
       SetAccelerator(mbar, ID_INFO,            DO_INFO);
       
@@ -2341,6 +2339,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_DEL_OTHERS,      DO_DELOTHERS);
       SetAccelerator(mbar, ID_MOVE_LAYER,      DO_MOVELAYER);
       SetAccelerator(mbar, ID_NAME_LAYER,      DO_NAMELAYER);
+      SetAccelerator(mbar, ID_SET_COLORS,      DO_SETCOLORS);
       SetAccelerator(mbar, ID_SYNC_VIEW,       DO_SYNCVIEWS);
       SetAccelerator(mbar, ID_SYNC_CURS,       DO_SYNCCURS);
       SetAccelerator(mbar, ID_STACK,           DO_STACK);

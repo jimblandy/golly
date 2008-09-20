@@ -51,13 +51,15 @@ current layer.  The new layer becomes the current layer and
 inherits the preceding layer's algorithm, rule, scale, location,
 and cursor mode.  The step exponent is set to 0, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
+The new layer starts off using the default color scheme for the current
+algorithm.
 
 <p>
 <font size=+1><b>Clone Layer</b></font>
 
 <p>
-Adds a new layer that shares the same universe and undo/redo history
-as the current layer.
+Adds a new layer that shares the same universe, undo/redo history,
+and color scheme as the current layer.
 All of the current layer's settings are duplicated and most will be
 kept synchronized so that a change to one clone automatically changes
 all the others.  Each cloned layer does however have a separate viewport,
@@ -104,6 +106,18 @@ in the layer sequence.
 Brings up a dialog that lets you change the name of the current layer.
 Note that loading a pattern file also changes the layer's name.
 Creating a new pattern resets the name to "untitled".
+
+<p>
+<font size=+1><b>Set Layer Colors...</b></font>
+
+<p>
+Brings up a dialog that lets you change the cell colors used by the
+current layer (and its clones).  Note that any changes you make are
+temporary and only remain in effect while the layer exists.
+Also, if an algorithm/rule change causes the number of cell states
+to change then the colors will be reset to default values.
+The default colors for each algorithm are specified in
+<a href="prefs#color">Preferences > Color</a>.
 
 <p>
 <font size=+1><b>Synchronize Views</b></font>
