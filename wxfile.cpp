@@ -1470,6 +1470,8 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       }
 
       SavePrefs();
-      UpdateEverything();
    }
+   
+   // safer to update everything even if user hit Cancel
+   UpdateEverything();
 }

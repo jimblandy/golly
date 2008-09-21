@@ -308,6 +308,13 @@ static bool LoadPythonLib()
 
 #define PYTHON_ERROR(msg) { PyErr_SetString(PyExc_RuntimeError, msg); return NULL; }
 
+#define CheckRGB(r,g,b,cmd)                                          \
+   if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {   \
+      char msg[128];                                                 \
+      sprintf(msg, "Bad rgb value in %s: %d,%d,%d", cmd, r, g, b);   \
+      PYTHON_ERROR(msg);                                             \
+   }
+
 #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
    // use decomposed UTF8 so fopen will work
    #define FILENAME wxString(filename,wxConvLocal).fn_str()
@@ -377,6 +384,26 @@ static void AddPadding(PyObject* list)
       PyList_Append(list, padding);
       Py_DECREF(padding);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void AddCellColor(PyObject* list, long s, long r, long g, long b)
+{
+   // append state,r,g,b values to given list
+   PyObject* so = PyInt_FromLong(s);
+   PyObject* ro = PyInt_FromLong(r);
+   PyObject* go = PyInt_FromLong(g);
+   PyObject* bo = PyInt_FromLong(b);
+   PyList_Append(list, so);
+   PyList_Append(list, ro);
+   PyList_Append(list, go);
+   PyList_Append(list, bo);
+   // must decrement references to avoid Python memory leak
+   Py_DECREF(so);
+   Py_DECREF(ro);
+   Py_DECREF(go);
+   Py_DECREF(bo);
 }
 
 // -----------------------------------------------------------------------------
@@ -1022,7 +1049,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    // have dead cells so in that case 'copy' mode is not the same as 'or' mode
    char* mode = "or";
 
-   if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list, &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
+   if (!PyArg_ParseTuple(args, "O!|lllllls", &PyList_Type, &list,
+                         &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
       return NULL;
 
    wxString modestr = wxString(mode, wxConvLocal);
@@ -2220,6 +2248,102 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_setcolors(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   PyObject* color_list;
+
+   if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &color_list)) return NULL;
+
+   int len = PyList_Size(color_list);
+   if (len == 0) {
+      // restore default colors
+      UpdateCellColors();
+   } else if (len == 6) {
+      // create gradient from r1,g1,b1 to r2,g2,b2
+      int r1 = PyInt_AsLong( PyList_GetItem(color_list, 0) );
+      int g1 = PyInt_AsLong( PyList_GetItem(color_list, 1) );
+      int b1 = PyInt_AsLong( PyList_GetItem(color_list, 2) );
+      int r2 = PyInt_AsLong( PyList_GetItem(color_list, 3) );
+      int g2 = PyInt_AsLong( PyList_GetItem(color_list, 4) );
+      int b2 = PyInt_AsLong( PyList_GetItem(color_list, 5) );
+      CheckRGB(r1, g1, b1, "setcolors");
+      CheckRGB(r2, g2, b2, "setcolors");
+      currlayer->fromrgb.Set(r1, g1, b1);
+      currlayer->torgb.Set(r2, g2, b2);
+      CreateColorGradient();
+   } else if (len % 4 == 0) {
+      int i = 0;
+      while (i < len) {
+         int s = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
+         int r = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
+         int g = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
+         int b = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
+         CheckRGB(r, g, b, "setcolors");
+         if (s == -1) {
+            // set all states to r,g,b
+            for (s = 1; s < currlayer->algo->NumCellStates(); s++) {
+               currlayer->cellr[s] = r;
+               currlayer->cellg[s] = g;
+               currlayer->cellb[s] = b;
+            }
+            break;
+         } else {
+            if (s < 1 || s >= currlayer->algo->NumCellStates()) {
+               char msg[64];
+               sprintf(msg, "Bad state in setcolors: %d", s);
+               PYTHON_ERROR(msg);
+            } else {
+               currlayer->cellr[s] = r;
+               currlayer->cellg[s] = g;
+               currlayer->cellb[s] = b;
+            }
+         }
+      }
+   } else {
+      PYTHON_ERROR("setcolors error: list length is not a multiple of 4.");
+   }
+
+   DoAutoUpdate();
+
+   RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_getcolors(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   int state = -1;
+
+   if (!PyArg_ParseTuple(args, "|i", &state)) return NULL;
+
+   PyObject* outlist = PyList_New(0);
+
+   if (state == -1) {
+      // return colors for all live states
+      for (state = 1; state < currlayer->algo->NumCellStates(); state++) {
+         AddCellColor(outlist, state, currlayer->cellr[state],
+                                      currlayer->cellg[state],
+                                      currlayer->cellb[state]);
+      }
+   } else if (state > 0 && state < currlayer->algo->NumCellStates()) {
+      AddCellColor(outlist, state, currlayer->cellr[state],
+                                   currlayer->cellg[state],
+                                   currlayer->cellb[state]);
+   } else {
+      char msg[64];
+      sprintf(msg, "Bad getcolors state: %d", state);
+      PYTHON_ERROR(msg);
+   }
+
+   return outlist;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setoption(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2571,6 +2695,8 @@ static PyMethodDef py_methods[] = {
    { "maxlayers",    py_maxlayers,  METH_VARARGS, "return maximum number of layers" },
    { "setname",      py_setname,    METH_VARARGS, "set name of given layer" },
    { "getname",      py_getname,    METH_VARARGS, "get name of given layer" },
+   { "setcolors",    py_setcolors,  METH_VARARGS, "set color(s) used in current layer" },
+   { "getcolors",    py_getcolors,  METH_VARARGS, "get color(s) used in current layer" },
    // miscellaneous
    { "setoption",    py_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
    { "getoption",    py_getoption,  METH_VARARGS, "return current value of given option" },

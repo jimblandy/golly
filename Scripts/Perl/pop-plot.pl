@@ -263,7 +263,6 @@ if ($poplayer == -1) {
 } else {
    g_setlayer($poplayer);
 }
-g_movelayer($poplayer, 0);   # layer 0 has nicer color scheme
 g_new($layername);
 
 my $minpop = min(@poplist);

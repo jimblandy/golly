@@ -741,7 +741,7 @@ void GetKeyAction(char* value)
       action.file = wxString(&p[5], wxConvLocal);
    } else {
       // assume DO_NOTHING is 0 and start with action 1
-      for ( int i = 1; i < MAX_ACTIONS; i++ ) {
+      for (int i = 1; i < MAX_ACTIONS; i++) {
          if (strcmp(p, GetActionName((action_id) i)) == 0) {
             action.id = (action_id) i;
             break;
@@ -831,8 +831,8 @@ wxString GetShortcutTable()
    // return HTML data to display current keyboard shortcuts in help window
    wxString result = wxEmptyString;
 
-   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
-      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+   for (int key = 0; key < MAX_KEYCODES; key++) {
+      for (int modset = 0; modset < MAX_MODS; modset++) {
          action_info action = keyaction[key][modset];
          if ( action.id != DO_NOTHING ) {
             wxString keystring = GetKeyCombo(key, modset);
@@ -918,8 +918,8 @@ void SaveKeyActions(FILE* f)
    bool assigned[MAX_ACTIONS] = {false};
 
    fputs("\n", f);
-   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
-      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+   for (int key = 0; key < MAX_KEYCODES; key++) {
+      for (int modset = 0; modset < MAX_MODS; modset++) {
          action_info action = keyaction[key][modset];
          if ( action.id != DO_NOTHING ) {
             assigned[action.id] = true;
@@ -934,7 +934,7 @@ void SaveKeyActions(FILE* f)
    
    // list all unassigned actions in comment lines
    fputs("# unassigned actions:\n", f);
-   for ( int i = 1; i < MAX_ACTIONS; i++ ) {
+   for (int i = 1; i < MAX_ACTIONS; i++) {
       if ( !assigned[i] ) {
          fprintf(f, "# key_action=key+mods %s", GetActionName((action_id) i));
          if ( i == DO_OPENFILE ) fputs("file", f);
@@ -948,14 +948,14 @@ void SaveKeyActions(FILE* f)
 
 void UpdateAcceleratorStrings()
 {
-   for ( int i = 0; i < MAX_ACTIONS; i++ )
+   for (int i = 0; i < MAX_ACTIONS; i++)
       accelerator[i] = wxEmptyString;
    
    // go thru keyaction table looking for key combos that are valid menu item
    // accelerators and construct suitable strings like "\tCtrl+Alt+Shift+K"
    // or "\tF12" or "\tReturn" etc
-   for ( int key = 0; key < MAX_KEYCODES; key++ ) {
-      for ( int modset = 0; modset < MAX_MODS; modset++ ) {
+   for (int key = 0; key < MAX_KEYCODES; key++) {
+      for (int modset = 0; modset < MAX_MODS; modset++) {
          action_info info = keyaction[key][modset];
          action_id action = info.id;
          if (action != DO_NOTHING && accelerator[action].IsEmpty()) {
@@ -2197,7 +2197,7 @@ void GetPrefs()
 
 // global data used in CellBoxes and PrefsDialog methods:
 
-static int algopos2;          // currently selected algorithm in Color pane
+static int coloralgo;         // currently selected algorithm in Color pane
 static int gradstates;        // current number of gradient states
 static bool seeicons;         // show icons?
 
@@ -2256,7 +2256,7 @@ void CellBoxes::GetGradientColor(int state, unsigned char* r,
                                             unsigned char* b)
 {
    // calculate gradient color for given state (> 0 and < maxstates)
-   AlgoData* ad = algoinfo[algopos2];
+   AlgoData* ad = algoinfo[coloralgo];
    if (state == 1) {
       *r = ad->fromrgb.Red();
       *g = ad->fromrgb.Green();
@@ -2310,9 +2310,9 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
 
-      } else if (state < algoinfo[algopos2]->maxstates) {
+      } else if (state < algoinfo[coloralgo]->maxstates) {
          if (seeicons) {
-            wxBitmap** iconmaps = algoinfo[algopos2]->icons15x15;
+            wxBitmap** iconmaps = algoinfo[coloralgo]->icons15x15;
             if (iconmaps && iconmaps[state]) {
                dc.SetBrush(*deadbrush);
                dc.DrawRectangle(r);
@@ -2323,7 +2323,7 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                dc.DrawRectangle(r);
                dc.SetBrush(wxNullBrush);
             }
-         } else if (algoinfo[algopos2]->gradient) {
+         } else if (algoinfo[coloralgo]->gradient) {
             if (state < gradstates) {
                unsigned char red, green, blue;
                GetGradientColor(state, &red, &green, &blue);
@@ -2337,9 +2337,9 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                dc.SetBrush(wxNullBrush);
             }
          } else {
-            wxColor color(algoinfo[algopos2]->algor[state],
-                          algoinfo[algopos2]->algog[state],
-                          algoinfo[algopos2]->algob[state]);
+            wxColor color(algoinfo[coloralgo]->algor[state],
+                          algoinfo[coloralgo]->algog[state],
+                          algoinfo[coloralgo]->algob[state]);
             dc.SetBrush(wxBrush(color));
             dc.DrawRectangle(r);
             dc.SetBrush(wxNullBrush);
@@ -2372,14 +2372,14 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
    int col = event.GetX() / CELLSIZE;
    int row = event.GetY() / CELLSIZE;
    int state = row * NUMCOLS + col;
-   if (state >= 0 && state < algoinfo[algopos2]->maxstates) {
-      if (seeicons || algoinfo[algopos2]->gradient || state == 0) {
+   if (state >= 0 && state < algoinfo[coloralgo]->maxstates) {
+      if (seeicons || algoinfo[coloralgo]->gradient || state == 0) {
          wxBell();
       } else {
          // let user change color of this cell state
-         wxColour rgb(algoinfo[algopos2]->algor[state],
-                      algoinfo[algopos2]->algog[state],
-                      algoinfo[algopos2]->algob[state]);
+         wxColour rgb(algoinfo[coloralgo]->algor[state],
+                      algoinfo[coloralgo]->algog[state],
+                      algoinfo[coloralgo]->algob[state]);
          wxColourData data;
          data.SetChooseFull(true);    // for Windows
          data.SetColour(rgb);
@@ -2390,9 +2390,9 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
             wxColour c = retData.GetColour();
             if (rgb != c) {
                // change color
-               algoinfo[algopos2]->algor[state] = c.Red();
-               algoinfo[algopos2]->algog[state] = c.Green();
-               algoinfo[algopos2]->algob[state] = c.Blue();
+               algoinfo[coloralgo]->algor[state] = c.Red();
+               algoinfo[coloralgo]->algog[state] = c.Green();
+               algoinfo[coloralgo]->algob[state] = c.Blue();
                Refresh(false);
             }
          }
@@ -2420,14 +2420,14 @@ void CellBoxes::OnMouseMotion(wxMouseEvent& event)
       } else if (state == 0) {
          rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
                           deadrgb->Red(), deadrgb->Green(), deadrgb->Blue()));
-      } else if (state < algoinfo[algopos2]->maxstates) {
+      } else if (state < algoinfo[coloralgo]->maxstates) {
          unsigned char r, g, b;
-         if (algoinfo[algopos2]->gradient) {
+         if (algoinfo[coloralgo]->gradient) {
             GetGradientColor(state, &r, &g, &b);
          } else {
-            r = algoinfo[algopos2]->algor[state];
-            g = algoinfo[algopos2]->algog[state];
-            b = algoinfo[algopos2]->algob[state];
+            r = algoinfo[coloralgo]->algor[state];
+            g = algoinfo[coloralgo]->algog[state];
+            b = algoinfo[coloralgo]->algob[state];
          }
          rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),r,g,b));
       } else {
@@ -2607,16 +2607,10 @@ private:
    void OnScroll(wxScrollEvent& event);
 
    bool ignore_page_event;             // used to prevent currpage being changed
-   bool color_changed;                 // have one or more colors changed?
    int algopos1;                       // selected algorithm in PREF_ALGO_MENU1
-//!!!   int algopos2;                       // selected algorithm in PREF_ALGO_MENU2
 
    int new_algomem[MAX_ALGOS];         // new max mem values for each algorithm
    int new_algobase[MAX_ALGOS];        // new base step values for each algorithm
-   wxColor new_statusrgb[MAX_ALGOS];   // new status bar color for each algorithm
-   wxColor new_deadrgb;                // new color for dead cells
-   wxColor new_pastergb;               // new color for pasted pattern
-   wxColor new_selectrgb;              // new color for selected cells
 
    CellBoxes* cellboxes;               // for displaying cell colors/icons
    wxCheckBox* gradcheck;              // use gradient?
@@ -2951,7 +2945,6 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
    notebook->SetSelection(currpage);
 
    ignore_page_event = false;
-   color_changed = false;
    
    LayoutDialog();
 }
@@ -3246,7 +3239,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    // create a choice menu to select algo
    
    wxArrayString algoChoices;
-   for ( int i = 0; i < NumAlgos(); i++ ) {
+   for (int i = 0; i < NumAlgos(); i++) {
       algoChoices.Add( wxString(GetAlgoName(i), wxConvLocal) );
    }
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU1,
@@ -3638,13 +3631,13 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    
    // create a choice menu to select algo
    wxArrayString algoChoices;
-   for ( int i = 0; i < NumAlgos(); i++ ) {
+   for (int i = 0; i < NumAlgos(); i++) {
       algoChoices.Add( wxString(GetAlgoName(i), wxConvLocal) );
    }
    wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU2,
                                      wxDefaultPosition, wxDefaultSize, algoChoices);
-   algopos2 = currlayer->algtype;
-   algomenu->SetSelection(algopos2);
+   coloralgo = currlayer->algtype;
+   algomenu->SetSelection(coloralgo);
    
    // create bitmap buttons
    wxBoxSizer* statusbox = new wxBoxSizer(wxHORIZONTAL);
@@ -3652,9 +3645,9 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    wxBoxSizer* tobox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* deadbox = new wxBoxSizer(wxHORIZONTAL);
    AddColorButton(panel, statusbox, PREF_STATUS_BUTT,
-                         &algoinfo[algopos2]->statusrgb, _("Status bar: "));
-   frombutt = AddColorButton(panel, frombox, PREF_FROM_BUTT, &algoinfo[algopos2]->fromrgb, _(""));
-   tobutt = AddColorButton(panel, tobox, PREF_TO_BUTT, &algoinfo[algopos2]->torgb, _(" to "));
+                         &algoinfo[coloralgo]->statusrgb, _("Status bar: "));
+   frombutt = AddColorButton(panel, frombox, PREF_FROM_BUTT, &algoinfo[coloralgo]->fromrgb, _(""));
+   tobutt = AddColorButton(panel, tobox, PREF_TO_BUTT, &algoinfo[coloralgo]->torgb, _(" to "));
    AddColorButton(panel, deadbox, PREF_DEAD_BUTT, deadrgb, _("Dead cells: "));
    deadbox->AddStretchSpacer();
    AddColorButton(panel, deadbox, PREF_SELECT_BUTT, selectrgb, _("Selection: "));
@@ -3670,7 +3663,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | FIX_ALIGN_BUG);
 
    gradcheck = new wxCheckBox(panel, PREF_GRADIENT_CHECK, _("Use gradient from "));
-   gradcheck->SetValue(algoinfo[algopos2]->gradient);
+   gradcheck->SetValue(algoinfo[coloralgo]->gradient);
    
    wxBoxSizer* gradbox = new wxBoxSizer(wxHORIZONTAL);
    gradbox->Add(gradcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -3691,11 +3684,11 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    if (scrollbar == NULL) Fatal(_("Failed to create scroll bar!"));
    gradbox->Add(scrollbar, 0, wxALIGN_CENTER_VERTICAL, 0);
    
-   gradstates = algoinfo[algopos2]->maxstates;
+   gradstates = algoinfo[coloralgo]->maxstates;
    UpdateScrollBar();
-   scrollbar->Enable(algoinfo[algopos2]->gradient);
-   frombutt->Enable(algoinfo[algopos2]->gradient);
-   tobutt->Enable(algoinfo[algopos2]->gradient);
+   scrollbar->Enable(algoinfo[coloralgo]->gradient);
+   frombutt->Enable(algoinfo[coloralgo]->gradient);
+   tobutt->Enable(algoinfo[coloralgo]->gradient);
 
    // create child window for displaying cell colors/icons
    cellboxes = new CellBoxes(panel, PREF_CELL_PANEL, wxPoint(0,0),
@@ -3764,12 +3757,6 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(2);
 
-   for (int i = 0; i < NumAlgos(); i++)
-      new_statusrgb[i] = algoinfo[i]->statusrgb;
-   new_deadrgb = *deadrgb;
-   new_pastergb = *pastergb;
-   new_selectrgb = *selectrgb;
-
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
    topSizer->Fit(panel);
@@ -3785,7 +3772,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    
    wxArrayString actionChoices;
-   for ( int i = 0; i < MAX_ACTIONS; i++ ) {
+   for (int i = 0; i < MAX_ACTIONS; i++) {
       actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
    }
    actionChoices[DO_OPENFILE] = _("Open Chosen File");
@@ -3951,13 +3938,13 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
    
    else if ( id == PREF_ALGO_MENU2 ) {
       int i = event.GetSelection();
-      if (i >= 0 && i < NumAlgos() && i != algopos2) {
-         algopos2 = i;
+      if (i >= 0 && i < NumAlgos() && i != coloralgo) {
+         coloralgo = i;
    
-         AlgoData* ad = algoinfo[algopos2];
+         AlgoData* ad = algoinfo[coloralgo];
    
          // update colors in some bitmap buttons
-         UpdateButtonColor(PREF_STATUS_BUTT, new_statusrgb[algopos2]);
+         UpdateButtonColor(PREF_STATUS_BUTT, ad->statusrgb);
          UpdateButtonColor(PREF_FROM_BUTT, ad->fromrgb);
          UpdateButtonColor(PREF_TO_BUTT, ad->torgb);
    
@@ -4075,7 +4062,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
       }
 
    } else if ( id == PREF_GRADIENT_CHECK ) {
-      AlgoData* ad = algoinfo[algopos2];
+      AlgoData* ad = algoinfo[coloralgo];
       ad->gradient = gradcheck->GetValue() == 1;
       scrollbar->Enable(ad->gradient);
       frombutt->Enable(ad->gradient);
@@ -4123,13 +4110,13 @@ void PrefsDialog::ChangeButtonColor(int id, wxColor& rgb)
       if (rgb != c) {
          // change given color
          rgb.Set(c.Red(), c.Green(), c.Blue());
-         color_changed = true;
          
          // also change color of bitmap in corresponding button
          UpdateButtonColor(id, rgb);
          
          if (id == PREF_DEAD_BUTT) {
-            SetBrushesAndPens();    // update deadbrush for OnPaint !!!???
+            // update deadbrush used in CellBoxes::OnPaint
+            SetBrushesAndPens();
          }
          if (id == PREF_FROM_BUTT || id == PREF_TO_BUTT || id == PREF_DEAD_BUTT) {
             cellboxes->Refresh(false);
@@ -4145,22 +4132,22 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
    int id = event.GetId();
 
    if ( id == PREF_STATUS_BUTT ) {
-      ChangeButtonColor(id, new_statusrgb[algopos2]);
+      ChangeButtonColor(id, algoinfo[coloralgo]->statusrgb);
    
    } else if ( id == PREF_FROM_BUTT ) {
-      ChangeButtonColor(id, algoinfo[algopos2]->fromrgb);
+      ChangeButtonColor(id, algoinfo[coloralgo]->fromrgb);
    
    } else if ( id == PREF_TO_BUTT ) {
-      ChangeButtonColor(id, algoinfo[algopos2]->torgb);
+      ChangeButtonColor(id, algoinfo[coloralgo]->torgb);
 
    } else if ( id == PREF_DEAD_BUTT ) {
-      ChangeButtonColor(id, new_deadrgb);
+      ChangeButtonColor(id, *deadrgb);
 
    } else if ( id == PREF_PASTE_BUTT ) {
-      ChangeButtonColor(id, new_pastergb);
+      ChangeButtonColor(id, *pastergb);
 
    } else if ( id == PREF_SELECT_BUTT ) {
-      ChangeButtonColor(id, new_selectrgb);
+      ChangeButtonColor(id, *selectrgb);
    
    } else {
       // process other buttons like Cancel and OK
@@ -4172,7 +4159,7 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
 
 void PrefsDialog::UpdateScrollBar()
 {
-   AlgoData* ad = algoinfo[algopos2];
+   AlgoData* ad = algoinfo[coloralgo];
    scrollbar->SetScrollbar(gradstates - ad->minstates, 1,
                            ad->maxstates - ad->minstates + 1,  // range
                            PAGESIZE, true);
@@ -4186,34 +4173,34 @@ void PrefsDialog::OnScroll(wxScrollEvent& event)
 
    if (type == wxEVT_SCROLL_LINEUP) {
       gradstates--;
-      if (gradstates < algoinfo[algopos2]->minstates)
-         gradstates = algoinfo[algopos2]->minstates;
+      if (gradstates < algoinfo[coloralgo]->minstates)
+         gradstates = algoinfo[coloralgo]->minstates;
       cellboxes->Refresh(false);
 
    } else if (type == wxEVT_SCROLL_LINEDOWN) {
       gradstates++;
-      if (gradstates > algoinfo[algopos2]->maxstates)
-         gradstates = algoinfo[algopos2]->maxstates;
+      if (gradstates > algoinfo[coloralgo]->maxstates)
+         gradstates = algoinfo[coloralgo]->maxstates;
       cellboxes->Refresh(false);
 
    } else if (type == wxEVT_SCROLL_PAGEUP) {
       gradstates -= PAGESIZE;
-      if (gradstates < algoinfo[algopos2]->minstates)
-         gradstates = algoinfo[algopos2]->minstates;
+      if (gradstates < algoinfo[coloralgo]->minstates)
+         gradstates = algoinfo[coloralgo]->minstates;
       cellboxes->Refresh(false);
 
    } else if (type == wxEVT_SCROLL_PAGEDOWN) {
       gradstates += PAGESIZE;
-      if (gradstates > algoinfo[algopos2]->maxstates)
-         gradstates = algoinfo[algopos2]->maxstates;
+      if (gradstates > algoinfo[coloralgo]->maxstates)
+         gradstates = algoinfo[coloralgo]->maxstates;
       cellboxes->Refresh(false);
 
    } else if (type == wxEVT_SCROLL_THUMBTRACK) {
-      gradstates = algoinfo[algopos2]->minstates + event.GetPosition();
-      if (gradstates < algoinfo[algopos2]->minstates)
-         gradstates = algoinfo[algopos2]->minstates;
-      if (gradstates > algoinfo[algopos2]->maxstates)
-         gradstates = algoinfo[algopos2]->maxstates;
+      gradstates = algoinfo[coloralgo]->minstates + event.GetPosition();
+      if (gradstates < algoinfo[coloralgo]->minstates)
+         gradstates = algoinfo[coloralgo]->minstates;
+      if (gradstates > algoinfo[coloralgo]->maxstates)
+         gradstates = algoinfo[coloralgo]->maxstates;
       cellboxes->Refresh(false);
 
    } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
@@ -4251,7 +4238,7 @@ int PrefsDialog::GetChoiceVal(long id)
 
 int PrefsDialog::GetRadioVal(long firstid, int numbuttons)
 {
-   for ( int i = 0; i < numbuttons; i++ ) {
+   for (int i = 0; i < numbuttons; i++) {
       wxRadioButton* radio = (wxRadioButton*) FindWindow(firstid + i);
       if (radio->GetValue()) return i;
    }
@@ -4437,24 +4424,13 @@ bool PrefsDialog::TransferDataFromWindow()
    askonquit   = GetCheckVal(PREF_ASK_QUIT);
 
    // COLOR_PAGE
-   if (color_changed) {
-      // strictly speaking we shouldn't need the color_changed flag but it
-      // minimizes problems caused by bug in wxX11
-      for (int i = 0; i < NumAlgos(); i++)
-         algoinfo[i]->statusrgb = new_statusrgb[i];
-      *deadrgb     = new_deadrgb;
-      *pastergb    = new_pastergb;
-      *selectrgb   = new_selectrgb;
-      
-      // update colors for brushes and pens
-      SetBrushesAndPens();
-   }
+   // no need to validate anything
 
    // KEYBOARD_PAGE
    // go thru keyaction table and make sure the file field is empty
    // if the action isn't DO_OPENFILE
-   for ( int key = 0; key < MAX_KEYCODES; key++ )
-      for ( int modset = 0; modset < MAX_MODS; modset++ )
+   for (int key = 0; key < MAX_KEYCODES; key++)
+      for (int modset = 0; modset < MAX_MODS; modset++)
          if ( keyaction[key][modset].id != DO_OPENFILE &&
               !keyaction[key][modset].file.IsEmpty() )
             keyaction[key][modset].file = wxEmptyString;
@@ -4469,21 +4445,77 @@ bool PrefsDialog::TransferDataFromWindow()
 
 // -----------------------------------------------------------------------------
 
+// class for saving and restoring AlgoData color info in ChangePrefs()
+class SaveColorInfo {
+public:
+   SaveColorInfo(AlgoData* ad) {
+      statusrgb = ad->statusrgb;
+      gradient = ad->gradient;
+      fromrgb = ad->fromrgb;
+      torgb = ad->torgb;
+      for (int i = 0; i < ad->maxstates; i++) {
+         algor[i] = ad->algor[i];
+         algog[i] = ad->algog[i];
+         algob[i] = ad->algob[i];
+      }
+   }
+
+   void RestoreData(AlgoData* ad) {
+      ad->statusrgb = statusrgb;
+      ad->gradient = gradient;
+      ad->fromrgb = fromrgb;
+      ad->torgb = torgb;
+      for (int i = 0; i < ad->maxstates; i++) {
+         ad->algor[i] = algor[i];
+         ad->algog[i] = algog[i];
+         ad->algob[i] = algob[i];
+      }
+   }
+   
+   // this must match color info in AlgoData
+   wxColor statusrgb;
+   bool gradient;
+   wxColor fromrgb;
+   wxColor torgb;
+   unsigned char algor[256];
+   unsigned char algog[256];
+   unsigned char algob[256];
+};
+
+// -----------------------------------------------------------------------------
+
 bool ChangePrefs(const wxString& page)
 {
    // save current keyboard shortcuts so we can restore them or detect a change
    action_info savekeyaction[MAX_KEYCODES][MAX_MODS];
-   for ( int key = 0; key < MAX_KEYCODES; key++ )
-      for ( int modset = 0; modset < MAX_MODS; modset++ )
+   for (int key = 0; key < MAX_KEYCODES; key++)
+      for (int modset = 0; modset < MAX_MODS; modset++)
          savekeyaction[key][modset] = keyaction[key][modset];
+   
+   bool wasswapped = swapcolors;
+   if (swapcolors) {
+      swapcolors = false;
+      InvertCellColors();
+      mainptr->UpdateEverything();
+   }
+   
+   // save current color info so we can restore it if user cancels changes
+   wxColor save_deadrgb = *deadrgb;
+   wxColor save_pastergb = *pastergb;
+   wxColor save_selectrgb = *selectrgb;
+   SaveColorInfo* save_info[MAX_ALGOS];
+   for (int i = 0; i < NumAlgos(); i++) {
+      save_info[i] = new SaveColorInfo(algoinfo[i]);
+   }
 
    PrefsDialog dialog(mainptr, page);
 
+   bool result;
    if (dialog.ShowModal() == wxID_OK) {
       // TransferDataFromWindow has validated and updated all global prefs;
       // if a keyboard shortcut changed then update menu item accelerators
-      for ( int key = 0; key < MAX_KEYCODES; key++ )
-         for ( int modset = 0; modset < MAX_MODS; modset++ )
+      for (int key = 0; key < MAX_KEYCODES; key++)
+         for (int modset = 0; modset < MAX_MODS; modset++)
             if (savekeyaction[key][modset].id != keyaction[key][modset].id) {
                // first update accelerator array
                UpdateAcceleratorStrings();
@@ -4491,12 +4523,37 @@ bool ChangePrefs(const wxString& page)
                goto done;
             }
       done:
-      return true;
+      result = true;
    } else {
       // user hit Cancel, so restore keyaction array in case it was changed
-      for ( int key = 0; key < MAX_KEYCODES; key++ )
-         for ( int modset = 0; modset < MAX_MODS; modset++ )
+      for (int key = 0; key < MAX_KEYCODES; key++)
+         for (int modset = 0; modset < MAX_MODS; modset++)
             keyaction[key][modset] = savekeyaction[key][modset];
-      return false;
+
+      // restore color info saved above
+      *deadrgb = save_deadrgb;
+      *pastergb = save_pastergb;
+      *selectrgb = save_selectrgb;
+      for (int i = 0; i < NumAlgos(); i++) {
+         save_info[i]->RestoreData(algoinfo[i]);
+      }
+
+      result = false;
    }
+
+   // update colors for brushes and pens
+   SetBrushesAndPens();
+
+   for (int i = 0; i < NumAlgos(); i++) {
+      delete save_info[i];
+   }
+   
+   if (wasswapped) {
+      swapcolors = true;
+      InvertCellColors();
+      // let caller do this
+      // mainptr->UpdateEverything();
+   }
+   
+   return result;
 }

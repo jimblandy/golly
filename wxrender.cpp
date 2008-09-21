@@ -1459,13 +1459,23 @@ void DrawStackedLayers(wxDC& dc)
    bool saveshow = showgridlines;
    showgridlines = false;
 
-   // set brush color used in killrect and blit
+   // set brush color used in killrect
    killbrush = deadbrush;
    
    // draw patterns in layers 1..numlayers-1
    for ( int i = 1; i < numlayers; i++ ) {
       Layer* savelayer = currlayer;
       currlayer = GetLayer(i);
+
+      // set brush color used in blit
+      cellbrush->SetColour(currlayer->cellr[1],
+                           currlayer->cellg[1],
+                           currlayer->cellb[1]);
+   
+      // set rgb values for dead cells in pixblit calls
+      currlayer->cellr[0] = deadrgb->Red();
+      currlayer->cellg[0] = deadrgb->Green();
+      currlayer->cellb[0] = deadrgb->Blue();
       
       // use real current layer's viewport
       viewport* saveview = currlayer->view;

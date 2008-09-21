@@ -362,6 +362,13 @@ static bool LoadPerlLib()
 
 #define PERL_ERROR(msg) { Perl_croak(aTHX_ msg); }
 
+#define CheckRGB(r,g,b,cmd)                                          \
+   if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {   \
+      char msg[128];                                                 \
+      sprintf(msg, "Bad rgb value in %s (%d,%d,%d).", cmd, r, g, b); \
+      PERL_ERROR(msg);                                               \
+   }
+
 #ifdef __WXMSW__
    #define IGNORE_UNUSED_PARAMS wxUnusedVar(cv); wxUnusedVar(my_perl);
 #else
@@ -2343,6 +2350,114 @@ XS(pl_getname)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_setcolors)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_setcolors($colors).");
+
+   SV* colors = ST(0);
+   if ( (!SvROK(colors)) || (SvTYPE(SvRV(colors)) != SVt_PVAV) ) {
+      PERL_ERROR("g_setcolors error: 1st parameter is not a valid array reference.");
+   }
+   AV* inarray = (AV*)SvRV(colors);
+
+   int len = av_len(inarray) + 1;
+   if (len == 0) {
+      // restore default colors
+      UpdateCellColors();
+   } else if (len == 6) {
+      // create gradient from r1,g1,b1 to r2,g2,b2
+      int r1 = SvIV( *av_fetch(inarray, 0, 0) );
+      int g1 = SvIV( *av_fetch(inarray, 1, 0) );
+      int b1 = SvIV( *av_fetch(inarray, 2, 0) );
+      int r2 = SvIV( *av_fetch(inarray, 3, 0) );
+      int g2 = SvIV( *av_fetch(inarray, 4, 0) );
+      int b2 = SvIV( *av_fetch(inarray, 5, 0) );
+      CheckRGB(r1, g1, b1, "g_setcolors");
+      CheckRGB(r2, g2, b2, "g_setcolors");
+      currlayer->fromrgb.Set(r1, g1, b1);
+      currlayer->torgb.Set(r2, g2, b2);
+      CreateColorGradient();
+   } else if (len % 4 == 0) {
+      int i = 0;
+      while (i < len) {
+         int s = SvIV( *av_fetch(inarray, i, 0) ); i++;
+         int r = SvIV( *av_fetch(inarray, i, 0) ); i++;
+         int g = SvIV( *av_fetch(inarray, i, 0) ); i++;
+         int b = SvIV( *av_fetch(inarray, i, 0) ); i++;
+         CheckRGB(r, g, b, "g_setcolors");
+         if (s == -1) {
+            // set all states to r,g,b
+            for (s = 1; s < currlayer->algo->NumCellStates(); s++) {
+               currlayer->cellr[s] = r;
+               currlayer->cellg[s] = g;
+               currlayer->cellb[s] = b;
+            }
+            break;
+         } else {
+            if (s < 1 || s >= currlayer->algo->NumCellStates()) {
+               char msg[64];
+               sprintf(msg, "Bad state in g_setcolors (%d).", s);
+               PERL_ERROR(msg);
+            } else {
+               currlayer->cellr[s] = r;
+               currlayer->cellg[s] = g;
+               currlayer->cellb[s] = b;
+            }
+         }
+      }
+   } else {
+      PERL_ERROR("g_setcolors error: array length is not a multiple of 4.");
+   }
+
+   DoAutoUpdate();
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_getcolors)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items > 1) PERL_ERROR("Usage: $colors = g_getcolors($state=-1).");
+   
+   int state = -1;
+   if (items > 0) state = SvIV(ST(0));
+
+   AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
+
+   if (state == -1) {
+      // return colors for all live states
+      for (state = 1; state < currlayer->algo->NumCellStates(); state++) {
+         av_push(outarray, newSViv(state));
+         av_push(outarray, newSViv(currlayer->cellr[state]));
+         av_push(outarray, newSViv(currlayer->cellg[state]));
+         av_push(outarray, newSViv(currlayer->cellb[state]));
+      }
+   } else if (state > 0 && state < currlayer->algo->NumCellStates()) {
+      av_push(outarray, newSViv(state));
+      av_push(outarray, newSViv(currlayer->cellr[state]));
+      av_push(outarray, newSViv(currlayer->cellg[state]));
+      av_push(outarray, newSViv(currlayer->cellb[state]));
+   } else {
+      char msg[64];
+      sprintf(msg, "Bad g_getcolors state (%d).", state);
+      PERL_ERROR(msg);
+   }
+   
+   SP -= items;
+   ST(0) = newRV( (SV*)outarray );
+   sv_2mortal(ST(0));
+   XSRETURN(1);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_setoption)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2757,6 +2872,8 @@ EXTERN_C void xs_init(pTHX)
    newXS("g_maxlayers",    pl_maxlayers,    file);
    newXS("g_setname",      pl_setname,      file);
    newXS("g_getname",      pl_getname,      file);
+   newXS("g_setcolors",    pl_setcolors,    file);
+   newXS("g_getcolors",    pl_getcolors,    file);
    // miscellaneous
    newXS("g_setoption",    pl_setoption,    file);
    newXS("g_getoption",    pl_getoption,    file);

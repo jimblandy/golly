@@ -780,7 +780,7 @@ void GSF_dokey(char* ascii)
       // or do we need new getmodkey & domodkey commands???
       viewptr->ProcessKey(key, wxMOD_NONE);
 
-      // see any cursor change, including in tool bar
+      // see any cursor change, including in edit bar
       mainptr->UpdateUserInterface(mainptr->IsActive());
 
       // update viewport, status bar, scroll bars, etc

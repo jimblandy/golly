@@ -112,7 +112,6 @@ if poplayer == -1:
    poplayer = g.addlayer()
 else:
    g.setlayer(poplayer)
-g.movelayer(poplayer, 0)   # layer 0 has nicer color scheme
 g.new(layername)
 
 minpop = min(poplist)
