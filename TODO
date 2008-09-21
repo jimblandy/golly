@@ -3,19 +3,10 @@ For version 2.0:
 
 Andrew's list:
 
-- Implement Set Colors dialog.
+- Implement Set Icons dialog (or add Prefs > Icons?).
 
-- Remove Swap Cell Colors or change it to Invert Colors?
-
-- Implement scripting commands to get/set colors:
-  setcolors("JvN", "JvN29", [1,200,200,200])
-  setcolors("Generations", "*", [s0,r0,g0,b0, ... sn,rn,gn,bn])
-  setcolors("Generations", "", []) -- to restore default colors?
-  Or more flexible to specify color info in strings:
-  setcolors("Generations", "*", "s0,r0,g0,b0, ... sn,rn,gn,bn")
-  setcolors("Generations", "*", "gradient:r1,g1,b1,r2,g2,b2")
-  And to override icons:
-  seticons("JvN", "*", datadir()+"jvnicons7x7.xpm")
+- Implement scripting command to override icons:
+  seticons("JvN", datadir()+"jvnicons7x7.xpm")
 
 - Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
   methods, and maybe GetTransformedState as well for use in

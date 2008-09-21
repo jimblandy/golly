@@ -351,20 +351,22 @@ bool ChangeNode::DoChange(bool undo)
          break;
 
       case rulechange:
-         int oldnumstates = currlayer->algo->NumCellStates();
-         if (undo) {
-            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-         } else {
-            currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-         }
-         // show new rule in window title (file name doesn't change)
-         mainptr->SetWindowTitle(wxEmptyString);
-         if (cellcount > 0) {
-            ChangeCells(undo);
-         }
-         if (oldnumstates != currlayer->algo->NumCellStates()) {
-            // restore default colors if new rule changed the number of states
-            UpdateCellColors();
+         {
+            int oldnumstates = currlayer->algo->NumCellStates();
+            if (undo) {
+               currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            } else {
+               currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+            }
+            // show new rule in window title (file name doesn't change)
+            mainptr->SetWindowTitle(wxEmptyString);
+            if (cellcount > 0) {
+               ChangeCells(undo);
+            }
+            if (oldnumstates != currlayer->algo->NumCellStates()) {
+               // restore default colors if new rule changed the number of states
+               UpdateCellColors();
+            }
          }
          mainptr->UpdateEverything();
          break;

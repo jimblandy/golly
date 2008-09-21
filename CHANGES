@@ -10,6 +10,8 @@ DMG = Dave Greene <david.m.greene@gmail.com>
 
 Changes in version 2.0 (released !!! 2008)
 
+AKT: Added setcolors/getcolors commands to set/get layer colors.
+AKT: Changed Swap Cell Colors to Invert Colors.
 AKT: Added Set Layer Colors dialog to Layer menu.
 AKT: Moved opacity option from Prefs > Color to Prefs > Layer.
 AKT: Prefs > Color is used to set default color scheme for each algorithm.
