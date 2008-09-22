@@ -226,7 +226,6 @@ bool MainFrame::LoadImage(const wxString& path)
          // best not to change the current rule -- that way image can
          // be loaded into any algo
          // currlayer->algo->setrule("B3/S23");
-
          unsigned char maskr, maskg, maskb;
          bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
          int wd = image.GetWidth();
@@ -234,7 +233,7 @@ bool MainFrame::LoadImage(const wxString& path)
          unsigned char* idata = image.GetData();
          int x, y;
          lifealgo* curralgo = currlayer->algo;
-         for (y = 0; y < ht; y++)
+         for (y = 0; y < ht; y++) {
             for (x = 0; x < wd; x++) {
                long pos = (y * wd + x) * 3;
                unsigned char r = idata[pos];
@@ -247,7 +246,7 @@ bool MainFrame::LoadImage(const wxString& path)
                   curralgo->setcell(x, y, 1);
                }
             }
-
+         }
          curralgo->endofpattern();
       } else {
          Warning(_("Could not load image from file!"));

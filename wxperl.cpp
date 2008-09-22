@@ -2365,7 +2365,7 @@ XS(pl_setcolors)
 
    int len = av_len(inarray) + 1;
    if (len == 0) {
-      // restore default colors
+      // restore default colors in current layer and its clones
       UpdateCellColors();
    } else if (len == 6) {
       // create gradient from r1,g1,b1 to r2,g2,b2
@@ -2380,6 +2380,7 @@ XS(pl_setcolors)
       currlayer->fromrgb.Set(r1, g1, b1);
       currlayer->torgb.Set(r2, g2, b2);
       CreateColorGradient();
+      UpdateCloneColors();
    } else if (len % 4 == 0) {
       int i = 0;
       while (i < len) {
@@ -2408,6 +2409,7 @@ XS(pl_setcolors)
             }
          }
       }
+      UpdateCloneColors();
    } else {
       PERL_ERROR("g_setcolors error: array length is not a multiple of 4.");
    }

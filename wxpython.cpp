@@ -2258,7 +2258,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
 
    int len = PyList_Size(color_list);
    if (len == 0) {
-      // restore default colors
+      // restore default colors in current layer and its clones
       UpdateCellColors();
    } else if (len == 6) {
       // create gradient from r1,g1,b1 to r2,g2,b2
@@ -2273,6 +2273,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
       currlayer->fromrgb.Set(r1, g1, b1);
       currlayer->torgb.Set(r2, g2, b2);
       CreateColorGradient();
+      UpdateCloneColors();
    } else if (len % 4 == 0) {
       int i = 0;
       while (i < len) {
@@ -2301,6 +2302,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
             }
          }
       }
+      UpdateCloneColors();
    } else {
       PYTHON_ERROR("setcolors error: list length is not a multiple of 4.");
    }

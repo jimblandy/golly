@@ -13,8 +13,8 @@
 
 WX_RELEASE = 2.8
 WX_DIR = /HD/wxWidgets/wxMac-2.8.4
-#!!! 2.8.6 causes problems with selection color and pencil cursor
-#!!! WX_DIR = /HD/wxWidgets/wxMac-2.8.6
+#!!! 2.8.8 causes problems with selection color (pre-multiply alpha change?)
+#!!! WX_DIR = /HD/wxWidgets/wxMac-2.8.8
 
 # we assume you built a Unicode version of wxWidgets:
 BUILD_DIR = $(WX_DIR)/build-osx
@@ -74,7 +74,8 @@ CXXBASE = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
 LDBASE = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 -lz
 
 EXTRALIBS = -lz -lpthread -liconv
-EXTRALIBS_GUI = -framework WebKit
+#!!! OpenGL is required for wxMac-2.8.8
+EXTRALIBS_GUI = -framework WebKit #!!! -framework OpenGL
 
 OBJDIR = ObjMac
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \

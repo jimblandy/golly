@@ -1572,9 +1572,9 @@ void UpdateCloneColors()
 
 // -----------------------------------------------------------------------------
 
-void UpdateCellColors()
+void UpdateCurrentColors()
 {
-   // update current layer's colors using current algo's default colors
+   // reset current layer's colors to current algo's default colors
    AlgoData* ad = algoinfo[currlayer->algtype];
    int maxstate = currlayer->algo->NumCellStates() - 1;
    
@@ -1601,6 +1601,14 @@ void UpdateCellColors()
          currlayer->cellb[n] = 255 - currlayer->cellb[n];
       }
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void UpdateCellColors()
+{
+   // reset current layer's colors to current algo's default colors
+   UpdateCurrentColors();
    
    // if current layer has clones then update their colors
    UpdateCloneColors();
@@ -2403,8 +2411,10 @@ void ColorDialog::OnButton(wxCommandEvent& event)
       cellpanel->Refresh(false);
    
    } else if ( id == DEFAULT_BUTT ) {
-      // change current layer's colors (and clones) to algo's default colors
-      UpdateCellColors();
+      // change current layer's colors to algo's default colors;
+      // do NOT call UpdateCellColors() here because we don't want to
+      // change clone layers at this stage (in case user cancels dialog)
+      UpdateCurrentColors();
       UpdateButtonColor(FROM_BUTT, &currlayer->fromrgb);
       UpdateButtonColor(TO_BUTT, &currlayer->torgb);
       cellpanel->Refresh(false);

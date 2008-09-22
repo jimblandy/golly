@@ -31,10 +31,6 @@ Andrew's list:
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
-- May need check boxes in Prefs > Control (initially ticked):
-  * Warn me about rule/pattern changes when switching algorithms
-  * Warn me about pattern changes when switching rules
-
 - Remove SlowLife (simply comment out 1 line in wxalgos.cpp).
 
 - Check all !!!/FIXME comments in code and try to remove.
@@ -123,6 +119,10 @@ For future versions:
 
 - Revisit universal scripting idea, but use shared memory for IPC
   rather than redirecting stdin/out.
+
+- May need check boxes in Prefs > Control (initially ticked):
+  * Warn me about rule/pattern changes when switching algorithms
+  * Warn me about pattern changes when switching rules
 
 User suggestions:
 -----------------
