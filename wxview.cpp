@@ -1542,11 +1542,7 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
        iconmaps && iconmaps[drawstate]) {
       // draw icon; icon bitmaps are masked so first we have to draw the background
-      /* remove!!!???
-      dc.SetBrush(swapcolors ? *livebrush[currindex] : *deadbrush);
-      */
       dc.SetBrush(*deadbrush);
-      
       dc.DrawRectangle(x, y, cellsize, cellsize);
       dc.DrawBitmap(*iconmaps[drawstate], x, y, true);
    } else {
@@ -1595,20 +1591,6 @@ void PatternView::StartDrawingCells(int x, int y)
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
 
-      /* remove!!!???
-      if (currlayer->algo->NumCellStates() > 2) {
-         if (drawstate == 0) {
-            cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
-         } else {
-            cellbrush->SetColour(currlayer->cellr[drawstate],
-                                 currlayer->cellg[drawstate],
-                                 currlayer->cellb[drawstate]);
-         }
-         dc.SetBrush(*cellbrush);
-      } else {
-         dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
-      }
-      */
       if (drawstate == 0) {
          cellbrush->SetColour(*deadrgb);
       } else {
@@ -1653,20 +1635,6 @@ void PatternView::DrawCells(int x, int y)
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
 
-      /* remove!!!???
-      if (currlayer->algo->NumCellStates() > 2) {
-         if (drawstate == 0) {
-            cellbrush->SetColour(swapcolors ? *livergb[currindex] : *deadrgb);
-         } else {
-            cellbrush->SetColour(currlayer->cellr[drawstate],
-                                 currlayer->cellg[drawstate],
-                                 currlayer->cellb[drawstate]);
-         }
-         dc.SetBrush(*cellbrush);
-      } else {
-         dc.SetBrush(drawstate == (int)swapcolors ? *deadbrush : *livebrush[currindex]);
-      }
-      */
       if (drawstate == 0) {
          cellbrush->SetColour(*deadrgb);
       } else {

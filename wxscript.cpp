@@ -632,16 +632,14 @@ bool GSF_getoption(char* optname, int* optval)
 
 bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
 {
-   // note that "livecells" = "livecells0"
    if (strncmp(colname, "livecells", 9) == 0) {
-      int layer = 0;
-      if (colname[9] >= '0' && colname[9] <= '9') {
-         layer = colname[9] - '0';
-      }
-      oldcol = *livergb[layer];
+      // livecells0..livecells9 are deprecated; get and set color of state 1
+      oldcol.Set(currlayer->cellr[1], currlayer->cellg[1], currlayer->cellb[1]);
       if (oldcol != newcol) {
-         *livergb[layer] = newcol;
-         SetBrushesAndPens();
+         currlayer->cellr[1] = newcol.Red();
+         currlayer->cellg[1] = newcol.Green();
+         currlayer->cellb[1] = newcol.Blue();
+         UpdateCloneColors();
          DoAutoUpdate();
       }
 
@@ -709,13 +707,9 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
 
 bool GSF_getcolor(char* colname, wxColor& color)
 {
-   // note that "livecells" = "livecells0"
    if (strncmp(colname, "livecells", 9) == 0) {
-      int layer = 0;
-      if (colname[9] >= '0' && colname[9] <= '9') {
-         layer = colname[9] - '0';
-      }
-      color = *livergb[layer];
+      // livecells0..livecells9 are deprecated; return color of state 1
+      color.Set(currlayer->cellr[1], currlayer->cellg[1], currlayer->cellb[1]);
    }
    else if (strcmp(colname, "deadcells") == 0)  color = *deadrgb;
    else if (strcmp(colname, "paste") == 0)      color = *pastergb;

@@ -184,25 +184,21 @@ int maxpatterns = 20;            // maximum number of recent pattern files (1..M
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
-wxColor* livergb[10];            // color for live cells in each layer
 wxColor* deadrgb;                // color for dead cells
 wxColor* pastergb;               // color for pasted pattern
 wxColor* selectrgb;              // color for selected cells
 
-wxBrush* livebrush[10];          // for drawing live cells in each layer
 wxBrush* deadbrush;              // for drawing dead cells
 wxPen* pastepen;                 // for drawing paste rect
 wxPen* gridpen;                  // for drawing plain grid
 wxPen* boldpen;                  // for drawing bold grid
-wxPen* sgridpen[10];             // for drawing plain grid if swapcolors is true
-wxPen* sboldpen[10];             // for drawing bold grid if swapcolors is true
 
-// these settings must be static -- they are changed by GetPrefs *before* the
+// these settings must be global -- they are changed by GetPrefs *before* the
 // view window is created
 paste_location plocation = TopLeft;
 paste_mode pmode = Or;
 
-// these must be static -- they are created before the view window is created
+// these must be global -- they are created before the view window is created
 wxCursor* curs_pencil;           // for drawing cells
 wxCursor* curs_pick;             // for picking cell states
 wxCursor* curs_cross;            // for selecting cells
@@ -1256,46 +1252,27 @@ void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
 
 void SetBrushesAndPens()
 {
-   for (int i = 0; i < NumAlgos(); i++)
+   for (int i = 0; i < NumAlgos(); i++) {
       algoinfo[i]->statusbrush->SetColour(algoinfo[i]->statusrgb);
-   for (int i = 0; i < 10; i++)
-      livebrush[i]->SetColour(*livergb[i]);
+   }
    deadbrush->SetColour(*deadrgb);
    pastepen->SetColour(*pastergb);
    SetGridPens(deadrgb, gridpen, boldpen);
-   for (int i = 0; i < 10; i++)
-      SetGridPens(livergb[i], sgridpen[i], sboldpen[i]);
 }
 
 // -----------------------------------------------------------------------------
 
 void CreateDefaultColors()
 {
-   livergb[0] = new wxColor(255, 255, 255);  // white
-   livergb[1] = new wxColor(200, 255, 200);  // pale green
-   livergb[2] = new wxColor(255, 255, 200);  // pale yellow
-   livergb[3] = new wxColor(200, 200, 255);  // pale blue
-   livergb[4] = new wxColor(255, 200, 200);  // pale red
-   livergb[5] = new wxColor(200, 255, 255);  // pale aqua
-   livergb[6] = new wxColor(255, 200, 255);  // pale purple
-   livergb[7] = new wxColor(255, 220, 180);  // pale orange
-   livergb[8] = new wxColor(200, 220, 255);  // very pale blue
-   livergb[9] = new wxColor(200, 200, 200);  // pale gray
-   
-   deadrgb    = new wxColor( 48,  48,  48);  // dark gray (nicer if no alpha channel support)
+   deadrgb    = new wxColor( 48,  48,  48);  // dark gray
    pastergb   = new wxColor(255,   0,   0);  // red
    selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
 
    // create brushes and pens
-   for (int i = 0; i < 10; i++) livebrush[i] = new wxBrush(*wxBLACK);
    deadbrush = new wxBrush(*wxBLACK);
    pastepen = new wxPen(*wxBLACK);
    gridpen = new wxPen(*wxBLACK);
    boldpen = new wxPen(*wxBLACK);
-   for (int i = 0; i < 10; i++) {
-      sgridpen[i] = new wxPen(*wxBLACK);
-      sboldpen[i] = new wxPen(*wxBLACK);
-   }
    
    // set their default colors (in case prefs file doesn't exist)
    SetBrushesAndPens();
@@ -1529,16 +1506,6 @@ void SavePrefs()
    fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    fprintf(f, "opacity=%d (1..100)\n", opacity);
-   SaveColor(f, "live0_rgb", livergb[0]);
-   SaveColor(f, "live1_rgb", livergb[1]);
-   SaveColor(f, "live2_rgb", livergb[2]);
-   SaveColor(f, "live3_rgb", livergb[3]);
-   SaveColor(f, "live4_rgb", livergb[4]);
-   SaveColor(f, "live5_rgb", livergb[5]);
-   SaveColor(f, "live6_rgb", livergb[6]);
-   SaveColor(f, "live7_rgb", livergb[7]);
-   SaveColor(f, "live8_rgb", livergb[8]);
-   SaveColor(f, "live9_rgb", livergb[9]);
    SaveColor(f, "dead_rgb", deadrgb);
    SaveColor(f, "paste_rgb", pastergb);
    SaveColor(f, "select_rgb", selectrgb);
@@ -2056,18 +2023,6 @@ void GetPrefs()
          sscanf(value, "%d", &opacity);
          if (opacity < 1) opacity = 1;
          if (opacity > 100) opacity = 100;
-
-      } else if (strcmp(keyword, "live_rgb") == 0)  { GetColor(value, livergb[0]);
-      } else if (strcmp(keyword, "live0_rgb") == 0) { GetColor(value, livergb[0]);
-      } else if (strcmp(keyword, "live1_rgb") == 0) { GetColor(value, livergb[1]);
-      } else if (strcmp(keyword, "live2_rgb") == 0) { GetColor(value, livergb[2]);
-      } else if (strcmp(keyword, "live3_rgb") == 0) { GetColor(value, livergb[3]);
-      } else if (strcmp(keyword, "live4_rgb") == 0) { GetColor(value, livergb[4]);
-      } else if (strcmp(keyword, "live5_rgb") == 0) { GetColor(value, livergb[5]);
-      } else if (strcmp(keyword, "live6_rgb") == 0) { GetColor(value, livergb[6]);
-      } else if (strcmp(keyword, "live7_rgb") == 0) { GetColor(value, livergb[7]);
-      } else if (strcmp(keyword, "live8_rgb") == 0) { GetColor(value, livergb[8]);
-      } else if (strcmp(keyword, "live9_rgb") == 0) { GetColor(value, livergb[9]);
 
       } else if (strcmp(keyword, "dead_rgb") == 0) { GetColor(value, deadrgb);
       } else if (strcmp(keyword, "paste_rgb") == 0) { GetColor(value, pastergb);

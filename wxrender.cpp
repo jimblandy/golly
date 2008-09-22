@@ -406,7 +406,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    unsigned char deadgreen = currlayer->cellg[0];
    unsigned char deadblue  = currlayer->cellb[0];
 
-   //!!! might be faster to draw rectangles above certain scales???
+   // might be faster to draw rectangles above certain scales???
    wxAlphaPixelData pxldata(*pixmap);
    if (pxldata) {
       #ifdef __WXGTK__
@@ -1010,7 +1010,7 @@ int PixelsToCells(int pixels) {
 
 // -----------------------------------------------------------------------------
 
-void CheckPasteImage(/* remove!!!??? int colorindex */)
+void CheckPasteImage()
 {
    // paste image needs to be updated if pasterect size changed
    // or viewport size changed or plocation changed or showicons changed
@@ -1157,16 +1157,10 @@ void CheckPasteImage(/* remove!!!??? int colorindex */)
              (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
             // use opposite meaning
             pattdc.SetTextForeground(*deadrgb);
-            /* remove!!!???
-            pattdc.SetTextBackground(*pastergb);
-            */
             pattdc.SetTextBackground(wxColour(currlayer->cellr[1],
                                               currlayer->cellg[1],
                                               currlayer->cellb[1]));
          #else
-            /* remove!!!???
-            pattdc.SetTextForeground(*pastergb);
-            */
             pattdc.SetTextForeground(wxColour(currlayer->cellr[1],
                                               currlayer->cellg[1],
                                               currlayer->cellb[1]));
@@ -1183,23 +1177,6 @@ void CheckPasteImage(/* remove!!!??? int colorindex */)
          currlayer->cellr[0] = deadrgb->Red();
          currlayer->cellg[0] = deadrgb->Green();
          currlayer->cellb[0] = deadrgb->Blue();
-      
-         /* remove!!!???
-         unsigned char saver=0, saveg=0, saveb=0;
-         int numstates = currlayer->algo->NumCellStates();
-         if (numstates == 2) {
-            // set rgb values for live cells in pixblit calls, but only temporarily
-            // because the current algo might allow rules with a varying # of cell states
-            // (eg. current Generations rule could be 12/34/2)
-            //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
-            saver = currlayer->cellr[1];
-            saveg = currlayer->cellg[1];
-            saveb = currlayer->cellb[1];
-            currlayer->cellr[1] = livergb[colorindex]->Red();
-            currlayer->cellg[1] = livergb[colorindex]->Green();
-            currlayer->cellb[1] = livergb[colorindex]->Blue();
-         }
-         */
          
          // temporarily turn off grid lines for DrawStretchedBitmap
          bool saveshow = showgridlines;
@@ -1211,15 +1188,6 @@ void CheckPasteImage(/* remove!!!??? int colorindex */)
          pastealgo->draw(tempview, renderer);
          
          showgridlines = saveshow;
-         
-         /* remove!!!???
-         if (numstates == 2) {
-            // restore live cell color changed above
-            currlayer->cellr[1] = saver;
-            currlayer->cellg[1] = saveg;
-            currlayer->cellb[1] = saveb;
-         }
-         */
          
          // make dead pixels 100% transparent and live pixels 100% opaque
          MaskDeadPixels(pastebitmap, pimagewd, pimageht, 255);
@@ -1306,7 +1274,7 @@ void DrawPasteImage(wxDC& dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC& dc, wxRect& r /* !!!??? , int layerindex*/)
+void DrawGridLines(wxDC& dc, wxRect& r)
 {
    int cellsize = 1 << currlayer->view->getmag();
    int h, v, i, topbold, leftbold;
@@ -1330,7 +1298,7 @@ void DrawGridLines(wxDC& dc, wxRect& r /* !!!??? , int layerindex*/)
    }
 
    // draw all plain lines first
-   dc.SetPen(/* !!!??? swapcolors ? *sgridpen[layerindex] : */ *gridpen);
+   dc.SetPen(*gridpen);
    
    i = showboldlines ? topbold : 1;
    v = -1;
@@ -1353,7 +1321,7 @@ void DrawGridLines(wxDC& dc, wxRect& r /* !!!??? , int layerindex*/)
 
    if (showboldlines) {
       // overlay bold lines
-      dc.SetPen(/* !!!??? swapcolors ? *sboldpen[layerindex] : */ *boldpen);
+      dc.SetPen(*boldpen);
       i = topbold;
       v = -1;
       while (true) {
@@ -1379,7 +1347,7 @@ void DrawGridLines(wxDC& dc, wxRect& r /* !!!??? , int layerindex*/)
 
 // -----------------------------------------------------------------------------
 
-void DrawOneLayer(wxDC& dc /* remove!!!???, int index*/)
+void DrawOneLayer(wxDC& dc)
 {
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
@@ -1389,17 +1357,11 @@ void DrawOneLayer(wxDC& dc /* remove!!!???, int index*/)
        (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
       // use opposite meaning
       layerdc.SetTextForeground(*deadrgb);
-      /* remove!!!???
-      layerdc.SetTextBackground(*livergb[index]);
-      */
       layerdc.SetTextBackground(wxColour(currlayer->cellr[1],
                                          currlayer->cellg[1],
                                          currlayer->cellb[1]));
       
    #else
-      /* remove!!!???
-      layerdc.SetTextForeground(*livergb[index]);
-      */
       layerdc.SetTextForeground(wxColour(currlayer->cellr[1],
                                          currlayer->cellg[1],
                                          currlayer->cellb[1]));
@@ -1407,9 +1369,6 @@ void DrawOneLayer(wxDC& dc /* remove!!!???, int index*/)
    #endif
    
    // set brush color used in blit
-   /* remove!!!???
-   cellbrush = livebrush[index];
-   */
    cellbrush->SetColour(currlayer->cellr[1],
                         currlayer->cellg[1],
                         currlayer->cellb[1]);
@@ -1484,7 +1443,7 @@ void DrawStackedLayers(wxDC& dc)
       // avoid drawing a cloned layer more than once??? draw first or last clone???
 
       if ( !currlayer->algo->isEmpty() ) {
-         DrawOneLayer(dc /* remove!!!???, i*/);
+         DrawOneLayer(dc);
       }
       
       // draw this layer's selection if necessary
@@ -1541,10 +1500,10 @@ void DrawTileBorders(wxDC& dc)
    int gray = (int) ((deadrgb->Red() + deadrgb->Green() + deadrgb->Blue()) / 3.0);
    if (gray > 127) {
       // deadrgb is light
-      brush.SetColour(/* !!!??? swapcolors ? ltgray : */ dkgray);
+      brush.SetColour(dkgray);
    } else {
       // deadrgb is dark
-      brush.SetColour(/* !!!??? swapcolors ? dkgray : */ ltgray);
+      brush.SetColour(ltgray);
    }
    wxRect trect;
    for ( int i = 0; i < numlayers; i++ ) {
@@ -1554,7 +1513,7 @@ void DrawTileBorders(wxDC& dc)
 
    // draw different colored border to indicate tile for current layer
    trect = GetLayer(currindex)->tilerect;
-   brush.SetColour(brightgreen);                   //??? or *selectrgb
+   brush.SetColour(brightgreen);
    DrawTileFrame(dc, trect, brush, tileborder);
 }
 
@@ -1570,10 +1529,9 @@ void DrawView(wxDC& dc, int tileindex)
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-      FillRect(dc, r, /* !!!??? swapcolors ? *livebrush[0] : */ *deadbrush);
-
+      FillRect(dc, r, *deadbrush);
       // might as well draw grid lines
-      if ( viewptr->GridVisible() ) DrawGridLines(dc, r /* !!!??? , 0*/);
+      if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
       return;
    }
 
@@ -1608,67 +1566,31 @@ void DrawView(wxDC& dc, int tileindex)
       colorindex = currindex;
    }
 
-// set foreground and background colors for drawing monochrome bitmaps
-#if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
-    (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
-   // use opposite meaning
-   if ( false /*!!!??? swapcolors*/ ) {
-#else
-   if ( true /*!!!??? !swapcolors*/ ) {
-#endif
-      /* remove!!!???
-      dc.SetTextForeground(*livergb[colorindex]);
-      */
+   // set foreground and background colors for drawing monochrome bitmaps
+   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
+       (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
+      // use opposite meaning
+      dc.SetTextForeground(*deadrgb);
+      dc.SetTextBackground(wxColour(currlayer->cellr[1],
+                                    currlayer->cellg[1],
+                                    currlayer->cellb[1]));
+   #else
       dc.SetTextForeground(wxColour(currlayer->cellr[1],
                                     currlayer->cellg[1],
                                     currlayer->cellb[1]));
       dc.SetTextBackground(*deadrgb);
-   } else {
-      dc.SetTextForeground(*deadrgb);
-      /* remove!!!???
-      dc.SetTextBackground(*livergb[colorindex]);
-      */
-      dc.SetTextBackground(wxColour(currlayer->cellr[1],
-                                    currlayer->cellg[1],
-                                    currlayer->cellb[1]));
-   }
+   #endif
 
    // set brush colors used in killrect and blit
-   /* remove!!!???
-   killbrush = swapcolors ? livebrush[colorindex] : deadbrush;
-   cellbrush = swapcolors ? deadbrush : livebrush[colorindex];
-   */
    killbrush = deadbrush;
    cellbrush->SetColour(currlayer->cellr[1],
                         currlayer->cellg[1],
                         currlayer->cellb[1]);
    
    // set rgb values for dead cells in pixblit calls
-   /* remove!!!???
-   currlayer->cellr[0] = swapcolors ? livergb[colorindex]->Red() : deadrgb->Red();
-   currlayer->cellg[0] = swapcolors ? livergb[colorindex]->Green() : deadrgb->Green();
-   currlayer->cellb[0] = swapcolors ? livergb[colorindex]->Blue() : deadrgb->Blue();
-   */
    currlayer->cellr[0] = deadrgb->Red();
    currlayer->cellg[0] = deadrgb->Green();
    currlayer->cellb[0] = deadrgb->Blue();
-
-   /* remove!!!???
-   unsigned char saver=0, saveg=0, saveb=0;
-   int numstates = currlayer->algo->NumCellStates();
-   if (numstates == 2) {
-      // set rgb values for live cells in pixblit calls, but only temporarily
-      // because the current algo might allow rules with a varying # of cell states
-      // (eg. current Generations rule could be 12/34/2)
-      //!!! yuk -- try to always use cellr/g/b, regardless of # of states?
-      saver = currlayer->cellr[1];
-      saveg = currlayer->cellg[1];
-      saveb = currlayer->cellb[1];
-      currlayer->cellr[1] = swapcolors ? deadrgb->Red() : livergb[colorindex]->Red();
-      currlayer->cellg[1] = swapcolors ? deadrgb->Green() : livergb[colorindex]->Green();
-      currlayer->cellb[1] = swapcolors ? deadrgb->Blue() : livergb[colorindex]->Blue();
-   }
-   */
 
    // only show icons at scales 1:8 and 1:16
    if (showicons && currlayer->view->getmag() > 2) {
@@ -1685,18 +1607,9 @@ void DrawView(wxDC& dc, int tileindex)
    currht = currlayer->view->getheight();
    currlayer->algo->draw(*currlayer->view, renderer);
 
-   /* remove!!!???
-   if (numstates == 2) {
-      // restore live cell color changed above
-      currlayer->cellr[1] = saver;
-      currlayer->cellg[1] = saveg;
-      currlayer->cellb[1] = saveb;
-   }
-   */
-
    if ( viewptr->GridVisible() ) {
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-      DrawGridLines(dc, r /* !!!??? , colorindex*/);
+      DrawGridLines(dc, r);
    }
    
    if ( currlayer->currsel.Visible(&r) ) {
@@ -1726,7 +1639,7 @@ void DrawView(wxDC& dc, int tileindex)
            prectht == viewptr->pasterect.height && prectht > 1 ) {
          // don't draw old paste image, a new one is coming very soon
       } else {
-         CheckPasteImage(/* remove!!!??? colorindex */);
+         CheckPasteImage();
          DrawPasteImage(dc);
       }
    }

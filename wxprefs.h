@@ -268,19 +268,13 @@ wxString GetShortcutTable();
 
 // Colors:
 
-extern wxColor* livergb[10];     // color for live cells in each layer
 extern wxColor* deadrgb;         // color for dead cells
 extern wxColor* pastergb;        // color for pasted pattern
 extern wxColor* selectrgb;       // color for selected cells
-
-// colored brushes and pens
-extern wxBrush* livebrush[10];   // for drawing live cells in each layer
-extern wxBrush* deadbrush;       // for drawing dead cells
-extern wxPen* pastepen;          // for drawing paste rect
-extern wxPen* gridpen;           // for drawing plain grid
-extern wxPen* boldpen;           // for drawing bold grid
-extern wxPen* sgridpen[10];      // for drawing plain grid if swapcolors is true
-extern wxPen* sboldpen[10];      // for drawing bold grid if swapcolors is true
+extern wxBrush* deadbrush;       // brush for drawing dead cells
+extern wxPen* pastepen;          // pen for drawing paste rect
+extern wxPen* gridpen;           // pen for drawing plain grid
+extern wxPen* boldpen;           // pen for drawing bold grid
 
 void SetBrushesAndPens();        // update colors in above brushes and pens
 
