@@ -40,6 +40,7 @@ SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
    Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \
    Patterns Patterns\Breeders Patterns\Guns Patterns\Hashing-Examples Patterns\JvN-Examples \
+   Patterns\Loops \
    Patterns\Methuselahs Patterns\Miscellaneous Patterns\Oscillators Patterns\Other-Rules \
    Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry Patterns\Still-Lifes Patterns\Spaceships \
    Patterns\Syntheses Patterns\WireWorld-Examples
@@ -64,10 +65,11 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 OBJDIR = ObjWin
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
-   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h
+   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h ruletable_algo.h
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/slifealgo.obj $(OBJDIR)/wwalgo.obj \
+   $(OBJDIR)/ruletable_algo.obj \
    $(OBJDIR)/ghashbase.obj $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
@@ -344,6 +346,9 @@ $(OBJDIR)/qlifedraw.obj: qlifedraw.cpp
 
 $(OBJDIR)/jvnalgo.obj: jvnalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) jvnalgo.cpp
+
+$(OBJDIR)/ruletable_algo.obj: ruletable_algo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ruletable_algo.cpp
 
 $(OBJDIR)/wwalgo.obj: wwalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wwalgo.cpp

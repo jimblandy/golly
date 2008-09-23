@@ -80,10 +80,11 @@ EXTRALIBS_GUI = -framework WebKit #!!! -framework OpenGL
 OBJDIR = ObjMac
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
-   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h
+   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h ruletable_algo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o \
    $(OBJDIR)/jvnalgo.o $(OBJDIR)/slifealgo.o $(OBJDIR)/wwalgo.o \
+   $(OBJDIR)/ruletable_algo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
@@ -171,6 +172,9 @@ $(OBJDIR)/qlifedraw.o: qlifedraw.cpp
 
 $(OBJDIR)/jvnalgo.o: jvnalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ jvnalgo.cpp
+
+$(OBJDIR)/ruletable_algo.o: ruletable_algo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ ruletable_algo.cpp
 
 $(OBJDIR)/wwalgo.o: wwalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wwalgo.cpp
