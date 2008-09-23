@@ -31,6 +31,28 @@
 # Bits per instruction  :     4
 # Replication time      :  5.87 x 10^9
 #
+# Instruction Set - fourteen total operations
+# -------------------------------------------
+#  
+#   00000   RL/QQ       Retract  CArm Left/Ground         Articulate
+#   00001   --          not used
+#   01111
+#   10000   OR          Ordinary Transmission Right       Construct
+#   10001   OU          Ordinary Transmission Up          Construct
+#   10010   OL          Ordinary Transmission Left        Construct
+#   10011   XU          Extend   CArm Up                  Articulate
+#   10100   OD          Ordinary Transmission Down        Construct
+#   10101   RD          Retract  CArm Down                Articulate
+#   10110   SR          Special  Transmission Right       Construct
+#   10111   --          not used
+#   11000   SU          Special  Transmission Up          Construct
+#   11001   XR          Extend   CArm Right               Articulate
+#   11010   SL          Special  Transmission Left        Construct
+#   11011   TM          Tape Mark                         Meta
+#   11100   SD          Special  Transmission Down        Construct
+#   11101   --          not used
+#   11110   CN          Confluent                         Construct
+#   11111   --          not used
 #
 #
 #CXRLE Pos=0,0
