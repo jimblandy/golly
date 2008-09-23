@@ -1,3 +1,38 @@
+# A self-reproducing machine for Nobili cellular automata. 
+# Copyright (C) 2008 by William R. Buckley <wrb@calevinst.org>
+#
+# The machine corpus appears at the left of the observed line;
+# zoom to see the machine.
+#
+# This configuration employs one mechanism of tape message
+# compression: the assumption that during construction (whether
+# of daughter corpus or tape copy), retraction of the construction
+# arm should be automatic - no need for a specific retract
+# instruction to appear on tape (such as after appearance of a
+# construct instruction).  Auto-retraction of the construction
+# arm yields an approximately 1/3 smaller tape, versus a tape
+# which contains explicit instructions for construction arm
+# retraction.
+#
+# Consequently, this configuration has minimal size, in accord
+# with the minimal functionality necessary to both read and
+# service the tape.
+#
+# This machine serves to demonstrate that one may obtain optimal
+# solutions to machine self-replication within von Neumannesque
+# cellular automata without the use of more complicated compression
+# schemes, like run-length encoding, and that indeed such schemes
+# may here serve to reduce the efficiency of solutions.
+#
+# Corpus cell count     :  3343
+# Bounding rectangle    :   110w 50t
+# Length of tape        : 44150 
+# Tape instruction count:  8830
+# Bits per instruction  :     4
+# Replication time      :  5.87 x 10^9
+#
+#
+#
 #CXRLE Pos=0,0
 x = 44266, y = 50, rule = Nobili32
 8.IK3IpA10IL14IpA13IpAIpA3IL8.13IL$7.IpAIJ2IpA7IL2.pAJ5IL.J3.2IpA13IpA
