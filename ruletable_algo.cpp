@@ -290,14 +290,15 @@ void ruletable_algo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.minstates = 2 ;
    ai.maxstates = 255 ;
    // init default color scheme
-   ai.defgradient = false;
-   ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white
-   ai.defr2 = ai.defg2 = ai.defb2 = 0;       // end color = black
-   /*int numcolors = sizeof(jvncolors) / (sizeof(jvncolors[0])*3);
-   unsigned char* rgbptr = jvncolors;
-   for (int i = 0; i < numcolors; i++) {
-      ai.defr[i] = *rgbptr++;
-      ai.defg[i] = *rgbptr++;
-      ai.defb[i] = *rgbptr++;
-   }*/
+   ai.defgradient = true;              // use gradient
+   ai.defr1 = 255;                     // start color = red
+   ai.defg1 = 0;
+   ai.defb1 = 0;
+   ai.defr2 = 255;                     // end color = yellow
+   ai.defg2 = 255;
+   ai.defb2 = 0;
+   // if not using gradient then set all states to white
+   for (int i=0; i<256; i++) {
+      ai.defr[i] = ai.defg[i] = ai.defb[i] = 255;
+   }
 }
