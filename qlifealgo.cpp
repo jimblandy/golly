@@ -1160,12 +1160,60 @@ const char *qlifealgo::setrule(const char *s) {
    }
    return p;
 }
+
+/* enable icon data once we use pixblit rather than blit!!!
+// XPM data for 7x7 icon
+static char* dot7x7[] = {
+// width height ncolors chars_per_pixel
+"7 7 2 1",
+// colors
+"A c #000000000000",    // black will become transparent
+"B c #FFFFFFFFFFFF",    // white
+// pixels
+"AABBBAA",
+"ABBBBBA",
+"BBBBBBB",
+"BBBBBBB",
+"BBBBBBB",
+"ABBBBBA",
+"AABBBAA"};
+
+// XPM data for 15x15 icon
+static char *dot15x15[] = {
+// width height ncolors chars_per_pixel
+"15 15 2 1",
+// colors
+"A c #000000000000",    // black will become transparent
+"B c #FFFFFFFFFFFF",    // white
+// pixels
+"AAAAAAAAAAAAAAA",
+"AAAAAABBBAAAAAA",
+"AAAABBBBBBBAAAA",
+"AAABBBBBBBBBAAA",
+"AABBBBBBBBBBBAA",
+"AABBBBBBBBBBBAA",
+"ABBBBBBBBBBBBBA",
+"ABBBBBBBBBBBBBA",
+"ABBBBBBBBBBBBBA",
+"AABBBBBBBBBBBAA",
+"AABBBBBBBBBBBAA",
+"AAABBBBBBBBBAAA",
+"AAAABBBBBBBAAAA",
+"AAAAAABBBAAAAAA",
+"AAAAAAAAAAAAAAA"};
+*/
+
 static lifealgo *creator() { return new qlifealgo() ; }
+
 void qlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("QuickLife") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(10) ;
    ai.setDefaultMaxMem(0) ;
+   // we can't use icons in qlife because drawing is done via blit rather than pixblit,
+   // so let's remove blit and do *all* drawing via pixblit (and killrect)!!!
+   // ai.createIconBitmaps(7, dot7x7) ;
+   // ai.createIconBitmaps(15, dot15x15) ;
    ai.minstates = 2 ;
    ai.maxstates = 2 ;
    // init default color scheme

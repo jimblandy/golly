@@ -84,23 +84,37 @@ public:
    virtual void fatal(const char* s) {
       Fatal(wxString(s,wxConvLocal));
    }
+
    virtual void warning(const char* s) {
       Warning(wxString(s,wxConvLocal));
    }
+
    virtual void status(const char* s) {
       statusptr->DisplayMessage(wxString(s,wxConvLocal));
    }
+
    virtual void beginprogress(const char* s) {
       BeginProgress(wxString(s,wxConvLocal));
       // init flag for isaborted() calls in non-wx modules
       aborted = false;
    }
+
    virtual bool abortprogress(double f, const char* s) {
       return AbortProgress(f, wxString(s,wxConvLocal));
    }
+
    virtual void endprogress() {
       EndProgress();
    }
+
+   virtual const char* getgollydir() {
+      // need to be careful converting Unicode wxString to char*
+      dirbuff = gollydir.mb_str(wxConvLocal);
+      return (const char*) dirbuff;
+   }
+
+private:
+   wxCharBuffer dirbuff;
 };
 
 wx_errors wxerrhandler;    // create instance

@@ -49,6 +49,9 @@ public:
    virtual void endprogress() {
       // do nothing
    }
+   virtual const char *getgollydir() {
+      return "" ;
+   }
 } ;
 
 baselifeerrors baselifeerrors ;
@@ -88,6 +91,10 @@ bool isaborted() {
 
 void lifeendprogress() {
    errorhandler->endprogress() ;
+}
+
+const char *lifegetgollydir() {
+   return errorhandler->getgollydir() ;
 }
 
 static FILE *f ;

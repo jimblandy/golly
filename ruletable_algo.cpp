@@ -23,7 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "ruletable_algo.h"
 
-// AKT: for case-insensitive string comparison
+#include "util.h"      // AKT: for lifegetgollydir()
+
+// for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
    #define stricmp strcasecmp
@@ -38,7 +40,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <set>
 using namespace std ;
 
-int ruletable_algo::NumCellStates() {
+int ruletable_algo::NumCellStates()
+{
    return this->n_states;
 }
 
@@ -48,13 +51,13 @@ bool starts_with(const string& line,const string& keyword)
 }
 
 const string prefix = "rule_table:";
-const char* ruletable_algo::setrule(const char *s) 
+const char* ruletable_algo::setrule(const char* s) 
 {
    if(!starts_with(s,prefix))
 	   return "Usage: rule_table:my_filename.txt";
 
    string ret = LoadRuleTable(s+prefix.length());
-   if(!ret.empty()) 
+   if(!ret.empty())
 	   return "error";
 	   
    this->current_rule = s;
@@ -98,8 +101,10 @@ string ruletable_algo::LoadRuleTable(string filename)
    const string variable_keyword = "var ";
    const string withRotations_symmetry_keyword = "withRotations";
    const string none_symmetry_keyword = "none";
-   
-   string full_filename = folder + filename;
+
+   // AKT: we need to prepend the full path to Golly because when it runs
+   // a script it temporarily changes the cwd to the location of the script
+   string full_filename = lifegetgollydir() + folder + filename;
    ifstream in(full_filename.c_str());
    if(!in.good()) 
       return "Failed to open file: "+full_filename;
@@ -235,7 +240,8 @@ ruletable_algo::ruletable_algo()
 {
 }
 
-ruletable_algo::~ruletable_algo() {
+ruletable_algo::~ruletable_algo()
+{
 }
 
 // --- the update function ---
@@ -288,7 +294,7 @@ void ruletable_algo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("RuleTable") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.minstates = 2 ;
-   ai.maxstates = 255 ;
+   ai.maxstates = 256 ;                // AKT: was 255
    // init default color scheme
    ai.defgradient = true;              // use gradient
    ai.defr1 = 255;                     // start color = red

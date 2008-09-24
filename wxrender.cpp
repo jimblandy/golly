@@ -148,7 +148,7 @@ wxBrush* cellbrush = NULL;    // brush used to draw live cells in blit calls
 wxBitmap* pixmap = NULL;      // 32-bit deep bitmap used in pixblit calls
 int pixmapwd = -1;            // width of pixmap
 int pixmapht = -1;            // height of pixmap
-wxBitmap** iconmaps;          // ptr to array of icon bitmaps
+wxBitmap** iconmaps;          // array of icon bitmaps
 
 // for drawing multiple layers
 wxBitmap* layerbitmap = NULL;    // layer bitmap
@@ -401,7 +401,15 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 {
    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
    bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
-                  (pmscale >= (1 << mingridmag) && !showgridlines);
+                  #ifdef __WXMAC__
+                     // wxMac seems to draw lines with semi-transparent pixels at the
+                     // top/left ends, so we have to draw gaps even if showing grid lines
+                     // otherwise we see annoying dots at the top/left edge of the viewport;
+                     // yet another reason to do our own rendering!!!
+                     (pmscale >= (1 << mingridmag));
+                  #else
+                     (pmscale >= (1 << mingridmag) && !showgridlines);
+                  #endif
    unsigned char deadred   = currlayer->cellr[0];
    unsigned char deadgreen = currlayer->cellg[0];
    unsigned char deadblue  = currlayer->cellb[0];
@@ -482,8 +490,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 {
 #ifdef __WXMAC__
-   // this method is much too slow on Windows and Linux/GTK
-   // but is slightly faster on Mac
+   // this method is much too slow on Windows and Linux but is slightly faster on Mac
    wxRect r(x, y, w*pmscale, h*pmscale);
    FillRect(*currdc, r, *killbrush);
    for ( int row = 0; row < h; row++ ) {
