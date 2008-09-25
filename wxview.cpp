@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for ShowHelp
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection
+#include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection, DrawOneIcon
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
@@ -1541,10 +1541,10 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
 
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
        iconmaps && iconmaps[drawstate]) {
-      // draw icon; icon bitmaps are masked so first we have to draw the background
-      dc.SetBrush(*deadbrush);
-      dc.DrawRectangle(x, y, cellsize, cellsize);
-      dc.DrawBitmap(*iconmaps[drawstate], x, y, true);
+      DrawOneIcon(dc, x, y, iconmaps[drawstate],
+                  currlayer->cellr[drawstate],
+                  currlayer->cellg[drawstate],
+                  currlayer->cellb[drawstate]);
    } else {
       dc.DrawRectangle(x, y, cellsize, cellsize);
    }

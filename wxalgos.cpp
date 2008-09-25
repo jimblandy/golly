@@ -103,7 +103,49 @@ static unsigned char default_colors[] = {
 
 // -----------------------------------------------------------------------------
 
-static wxBitmap** CreateIconBitmaps(char** xpmdata)
+// XPM data for default 7x7 icon
+static char* dot7x7[] = {
+// width height ncolors chars_per_pixel
+"7 7 2 1",
+// colors
+"A c #000000000000",    // black will be transparent
+"B c #FFFFFFFFFFFF",    // white
+// pixels
+"AABBBAA",
+"ABBBBBA",
+"BBBBBBB",
+"BBBBBBB",
+"BBBBBBB",
+"ABBBBBA",
+"AABBBAA"};
+
+// XPM data for default 15x15 icon
+static char *dot15x15[] = {
+// width height ncolors chars_per_pixel
+"15 15 2 1",
+// colors
+"A c #000000000000",    // black will be transparent
+"B c #FFFFFFFFFFFF",    // white
+// pixels
+"AAAAAAAAAAAAAAA",
+"AAAAAABBBAAAAAA",
+"AAAABBBBBBBAAAA",
+"AAABBBBBBBBBAAA",
+"AABBBBBBBBBBBAA",
+"AABBBBBBBBBBBAA",
+"ABBBBBBBBBBBBBA",
+"ABBBBBBBBBBBBBA",
+"ABBBBBBBBBBBBBA",
+"AABBBBBBBBBBBAA",
+"AABBBBBBBBBBBAA",
+"AAABBBBBBBBBAAA",
+"AAAABBBBBBBAAAA",
+"AAAAAABBBAAAAAA",
+"AAAAAAAAAAAAAAA"};
+
+// -----------------------------------------------------------------------------
+
+static wxBitmap** CreateIconBitmaps(char** xpmdata, int maxstates)
 {
    if (xpmdata == NULL) return NULL;
    
@@ -116,6 +158,7 @@ static wxBitmap** CreateIconBitmaps(char** xpmdata)
    
    wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
    if (iconptr) {
+      // only need to test < maxstates here, but play safe
       for (int i = 0; i < 256; i++) iconptr[i] = NULL;
       
       if (numicons > 255) numicons = 255;    // play safe
@@ -123,6 +166,14 @@ static wxBitmap** CreateIconBitmaps(char** xpmdata)
          wxRect rect(0, i*wd, wd, wd);
          // add 1 because iconptr[0] must be NULL (ie. dead state)
          iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+      }
+      
+      if (numicons < maxstates-1 && iconptr[numicons]) {
+         // duplicate last icon
+         wxRect rect(0, (numicons-1)*wd, wd, wd);
+         for (int i = numicons; i < maxstates-1; i++) {
+            iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+         }
       }
    }
    return iconptr;
@@ -167,7 +218,7 @@ AlgoData& AlgoData::tick() {
 // -----------------------------------------------------------------------------
 
 void AlgoData::createIconBitmaps(int size, char** xpmdata) {
-   wxBitmap** bm = CreateIconBitmaps(xpmdata);
+   wxBitmap** bm = CreateIconBitmaps(xpmdata, maxstates);
    if (size == 7)
       icons7x7 = bm;
    else if (size == 15)
@@ -216,6 +267,15 @@ void InitAlgorithms()
          case 8: ad->statusrgb.Set(255, 255, 255); break;  // white
       }
       ad->statusbrush = new wxBrush(ad->statusrgb);
+
+      // we can't use icons in qlife/hlife because drawing is done via blit rather than pixblit,
+      // so let's remove blit and do *all* drawing via pixblit (and killrect)!!!
+      
+      if (!ad->icons15x15 && !ad->icons7x7) {
+         // algo didn't supply any icons so use our default icon
+         ad->createIconBitmaps(15, dot15x15);
+         ad->createIconBitmaps(7, dot7x7);
+      }
 
       // create scaled bitmaps if only one size is supplied
       if (!ad->icons15x15) {

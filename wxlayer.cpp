@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
+#include "wxrender.h"      // for DrawOneIcon
 #include "wxprefs.h"       // for initrule, swapcolors, etc
 #include "wxscript.h"      // for inscript
 #include "wxundo.h"        // for UndoRedo, etc
@@ -1637,11 +1638,12 @@ void InvertCellColors()
    SetBrushesAndPens();
    
    // invert colors in all icons
-   InvertIconColors();
+   //!!! InvertIconColors();
 }
 
 // -----------------------------------------------------------------------------
 
+/*!!! no need for this routine if we automatically colorize monochrome icons
 void InvertIconColors()
 {
    // invert non-black colors in all icon bitmaps
@@ -1705,6 +1707,7 @@ void InvertIconColors()
       }
    }
 }
+*/
 
 // -----------------------------------------------------------------------------
 
@@ -2047,10 +2050,13 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
          if (seeicons) {
             wxBitmap** iconmaps = algoinfo[currlayer->algtype]->icons15x15;
             if (iconmaps && iconmaps[state]) {
-               dc.SetBrush(*deadbrush);
+               dc.SetBrush(*wxTRANSPARENT_BRUSH);
                dc.DrawRectangle(r);
-               dc.SetBrush(wxNullBrush);
-               dc.DrawBitmap(*iconmaps[state], r.x + 1, r.y + 1, true);
+               dc.SetBrush(wxNullBrush);               
+               DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                           currlayer->cellr[state],
+                           currlayer->cellg[state],
+                           currlayer->cellb[state]);
             } else {
                dc.SetBrush(bgbrush);
                dc.DrawRectangle(r);
@@ -2093,9 +2099,7 @@ void CellPanel::OnMouseDown(wxMouseEvent& event)
    int row = event.GetY() / CELLSIZE;
    int state = row * NUMCOLS + col;
    if (state >= 0 && state < currlayer->algo->NumCellStates()) {
-      if (seeicons) {
-         wxBell();
-      } else if (state == 0) {
+      if (state == 0) {
          Warning(_("Use Preferences > Color to change the color of dead cells."));
       } else {
          // let user change color of this cell state
@@ -2135,9 +2139,7 @@ void CellPanel::OnMouseMotion(wxMouseEvent& event)
       rgbbox->SetLabel(_(" "));
    } else {
       statebox->SetLabel(wxString::Format(_("%d"),state));
-      if (seeicons) {
-         rgbbox->SetLabel(_(" "));
-      } else if (state == 0) {
+      if (state == 0) {
          rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
                           deadrgb->Red(), deadrgb->Green(), deadrgb->Blue()));
       } else if (state < currlayer->algo->NumCellStates()) {

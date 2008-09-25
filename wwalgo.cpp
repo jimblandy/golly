@@ -94,7 +94,7 @@ void wwalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    // init default color scheme
    ai.defgradient = false;
    ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white
-   ai.defr2 = ai.defg2 = ai.defb2 = 0;       // end color = black
+   ai.defr2 = ai.defg2 = ai.defb2 = 128;     // end color = gray
    int numcolors = sizeof(wwcolors) / (sizeof(wwcolors[0])*3);
    unsigned char* rgbptr = wwcolors;
    for (int i = 0; i < numcolors; i++) {

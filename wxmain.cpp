@@ -2549,8 +2549,6 @@ MainFrame::MainFrame()
       if (!showpatterns && !showscripts) viewptr->SetFocus();
    #endif
    */
-   
-   if (swapcolors) InvertIconColors();
 
    InitDrawingData();         // do this after viewport size has been set
 

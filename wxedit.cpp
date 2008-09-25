@@ -42,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for viewptr->...
+#include "wxrender.h"      // for DrawOneIcon
 #include "wxalgos.h"       // for AlgoData, algoinfo
 #include "wxlayer.h"       // for currlayer, LayerBarHeight
 #include "wxundo.h"        // for currlayer->undoredo->...
@@ -374,7 +375,6 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
    currlayer->cellr[0] = deadrgb->Red();
    currlayer->cellg[0] = deadrgb->Green();
    currlayer->cellb[0] = deadrgb->Blue();
-   wxColor deadcolor(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
 
    dc.SetPen(*wxBLACK_PEN);
 
@@ -423,10 +423,13 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
       // draw icon box
       r = wxRect(x, BASELINE3 - BOXWD, BOXWD, BOXWD);
       if (iconmaps && iconmaps[i]) {
-         dc.SetBrush(wxBrush(deadcolor));
+         dc.SetBrush(*wxTRANSPARENT_BRUSH);
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
-         dc.DrawBitmap(*iconmaps[i], x + 1, BASELINE3 - BOXWD + 1, true);
+         DrawOneIcon(dc, x + 1, BASELINE3 - BOXWD + 1, iconmaps[i],
+                     currlayer->cellr[i],
+                     currlayer->cellg[i],
+                     currlayer->cellb[i]);
       } else {
          dc.SetBrush(*wxTRANSPARENT_BRUSH);
          dc.DrawRectangle(r);
@@ -503,7 +506,6 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    currlayer->cellr[0] = deadrgb->Red();
    currlayer->cellg[0] = deadrgb->Green();
    currlayer->cellb[0] = deadrgb->Blue();
-   wxColor deadcolor(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
    
    wxColor livecolor(currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
    
@@ -518,10 +520,13 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    x += BOXSIZE + BOXGAP;
    iconbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
    if (iconmaps && iconmaps[state]) {
-      dc.SetBrush(wxBrush(deadcolor));
+      dc.SetBrush(*wxTRANSPARENT_BRUSH);
       dc.DrawRectangle(iconbox);
       dc.SetBrush(wxNullBrush);
-      dc.DrawBitmap(*iconmaps[state], x + 1, y - BOXSIZE + 1, true);
+      DrawOneIcon(dc, x + 1, y - BOXSIZE + 1, iconmaps[state],
+                  currlayer->cellr[state],
+                  currlayer->cellg[state],
+                  currlayer->cellb[state]);
    } else {
       dc.SetBrush(*wxTRANSPARENT_BRUSH);
       dc.DrawRectangle(iconbox);

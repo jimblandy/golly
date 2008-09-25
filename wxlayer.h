@@ -220,9 +220,6 @@ void InvertCellColors();
 // Invert the cell colors in all layers, including the dead cell color,
 // grid lines, and the colors in all icon bitmaps.
 
-void InvertIconColors();
-// Invert the colors in all icon bitmaps.
-
 void SetLayerColors();
 // Let user change current layer's colors.
 

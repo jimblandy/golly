@@ -32,18 +32,22 @@ void InitDrawingData();
 // Initialize drawing data (such as the image used to draw selections).
 // Must be done after the viewport window has been created.
 
-void DrawView(wxDC &dc, int tileindex);
+void DrawView(wxDC& dc, int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
 // The given tile index is only used when drawing tiled layers.
 
-void DrawSelection(wxDC &dc, wxRect &rect);
+void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
+                 unsigned char r, unsigned char g, unsigned char b);
+// Draw the given icon using the given rgb color.
+
+void DrawSelection(wxDC &dc, wxRect& rect);
 // Draw the translucent selection image in the given rectangle.
 // We need to export this for drawing individual cells.
 
 void SetSelectionColor();
 // Update the selection image's color.
 
-void CreatePasteImage(lifealgo *pastealgo, wxRect &bbox);
+void CreatePasteImage(lifealgo* pastealgo, wxRect& bbox);
 // Create an image used to draw the given paste pattern.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).

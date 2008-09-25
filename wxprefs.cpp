@@ -48,6 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxalgos.h"       // for InitAlgorithms, NumAlgos, algoinfo, etc
+#include "wxrender.h"      // for DrawOneIcon
 #include "wxlayer.h"       // for currlayer
 #include "wxscript.h"      // for inscript
 #include "wxprefs.h"
@@ -2269,10 +2270,26 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
          if (seeicons) {
             wxBitmap** iconmaps = algoinfo[coloralgo]->icons15x15;
             if (iconmaps && iconmaps[state]) {
-               dc.SetBrush(*deadbrush);
+               dc.SetBrush(*wxTRANSPARENT_BRUSH);
                dc.DrawRectangle(r);
                dc.SetBrush(wxNullBrush);
-               dc.DrawBitmap(*iconmaps[state], r.x + 1, r.y + 1, true);
+               if (algoinfo[coloralgo]->gradient) {
+                  if (state < gradstates) {
+                     unsigned char red, green, blue;
+                     GetGradientColor(state, &red, &green, &blue);
+                     DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                                 red, green, blue);
+                  } else {
+                     dc.SetBrush(bgbrush);
+                     dc.DrawRectangle(r);
+                     dc.SetBrush(wxNullBrush);
+                  }
+               } else {
+                  DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                              algoinfo[coloralgo]->algor[state],
+                              algoinfo[coloralgo]->algog[state],
+                              algoinfo[coloralgo]->algob[state]);
+               }
             } else {
                dc.SetBrush(bgbrush);
                dc.DrawRectangle(r);
@@ -2328,7 +2345,7 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
    int row = event.GetY() / CELLSIZE;
    int state = row * NUMCOLS + col;
    if (state >= 0 && state < algoinfo[coloralgo]->maxstates) {
-      if (seeicons || algoinfo[coloralgo]->gradient || state == 0) {
+      if (algoinfo[coloralgo]->gradient || state == 0) {
          wxBell();
       } else {
          // let user change color of this cell state
@@ -2369,10 +2386,7 @@ void CellBoxes::OnMouseMotion(wxMouseEvent& event)
       rgbbox->SetLabel(_(" "));
    } else {
       statebox->SetLabel(wxString::Format(_("%d"),state));
-      if (seeicons) {
-         // or maybe show color of pixel in icon bitmap???
-         rgbbox->SetLabel(_(" "));
-      } else if (state == 0) {
+      if (state == 0) {
          rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
                           deadrgb->Red(), deadrgb->Green(), deadrgb->Blue()));
       } else if (state < algoinfo[coloralgo]->maxstates) {
