@@ -67,7 +67,7 @@ public:
    // code to display either icons or colors.
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale) = 0 ;
 
-   // AKT: Drawing code needs access to algo's cellr/g/b arrays.
+   // AKT: Drawing code needs access to current layer's cellr/g/b arrays.
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) = 0;
 } ;
 #endif

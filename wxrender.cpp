@@ -643,7 +643,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
    // and convert non-black pixels to given live cell color
    int wd = icon->GetWidth();
    int ht = icon->GetHeight();
-   wxBitmap pixmap(wd, ht, 32);      // need 32!!!??? test on Win/Linux
+   wxBitmap pixmap(wd, ht, 32);
 
    wxAlphaPixelData pxldata(pixmap);
    if (pxldata) {

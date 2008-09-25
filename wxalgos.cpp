@@ -104,29 +104,41 @@ static unsigned char default_colors[] = {
 // -----------------------------------------------------------------------------
 
 // XPM data for default 7x7 icon
-static char* dot7x7[] = {
+static char* default7x7[] = {
 // width height ncolors chars_per_pixel
 "7 7 2 1",
 // colors
 "A c #000000000000",    // black will be transparent
 "B c #FFFFFFFFFFFF",    // white
 // pixels
+/* dot is too ugly???
 "AABBBAA",
 "ABBBBBA",
 "BBBBBBB",
 "BBBBBBB",
 "BBBBBBB",
 "ABBBBBA",
-"AABBBAA"};
+"AABBBAA"
+*/
+// try a diamond
+"AAABAAA",
+"AABBBAA",
+"ABBBBBA",
+"BBBBBBB",
+"ABBBBBA",
+"AABBBAA",
+"AAABAAA"
+};
 
 // XPM data for default 15x15 icon
-static char *dot15x15[] = {
+static char *default15x15[] = {
 // width height ncolors chars_per_pixel
 "15 15 2 1",
 // colors
 "A c #000000000000",    // black will be transparent
 "B c #FFFFFFFFFFFF",    // white
 // pixels
+/* dot is too ugly???
 "AAAAAAAAAAAAAAA",
 "AAAAAABBBAAAAAA",
 "AAAABBBBBBBAAAA",
@@ -141,7 +153,25 @@ static char *dot15x15[] = {
 "AAABBBBBBBBBAAA",
 "AAAABBBBBBBAAAA",
 "AAAAAABBBAAAAAA",
-"AAAAAAAAAAAAAAA"};
+"AAAAAAAAAAAAAAA"
+*/
+// try a diamond
+"AAAAAAAAAAAAAAA",
+"AAAAAAABAAAAAAA",
+"AAAAAABBBAAAAAA",
+"AAAAABBBBBAAAAA",
+"AAAABBBBBBBAAAA",
+"AAABBBBBBBBBAAA",
+"AABBBBBBBBBBBAA",
+"ABBBBBBBBBBBBBA",
+"AABBBBBBBBBBBAA",
+"AAABBBBBBBBBAAA",
+"AAAABBBBBBBAAAA",
+"AAAAABBBBBAAAAA",
+"AAAAAABBBAAAAAA",
+"AAAAAAABAAAAAAA",
+"AAAAAAAAAAAAAAA"
+};
 
 // -----------------------------------------------------------------------------
 
@@ -273,8 +303,8 @@ void InitAlgorithms()
       
       if (!ad->icons15x15 && !ad->icons7x7) {
          // algo didn't supply any icons so use our default icon
-         ad->createIconBitmaps(15, dot15x15);
-         ad->createIconBitmaps(7, dot7x7);
+         ad->createIconBitmaps(15, default15x15);
+         ad->createIconBitmaps(7, default7x7);
       }
 
       // create scaled bitmaps if only one size is supplied
