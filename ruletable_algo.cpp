@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <functional>
 #include <fstream>
 #include <sstream>
-#include <set>
 using namespace std ;
 
 int ruletable_algo::NumCellStates()
