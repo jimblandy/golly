@@ -33,10 +33,11 @@ const char *rulefolder = "Rules" ; /* should be in util */
 const int MAXFILELEN = 4096 ;
 using namespace std ;
 const char* ruletreealgo::setrule(const char* s) {
-   if (strlen(s) >= MAXRULESIZE)
+   if (strlen(s) >= (unsigned int)MAXRULESIZE)
       return "Rule length too long" ;
    const char *gollydir = lifegetgollydir() ;
-   if (strlen(gollydir) + strlen(rulefolder) + strlen(s) + 15 > MAXFILELEN)
+   if (strlen(gollydir) + strlen(rulefolder) + strlen(s) + 15 >
+                                                   (unsigned int)MAXFILELEN)
       return "Path too long" ;
    char strbuf[MAXFILELEN+1] ;
    sprintf(strbuf, "%s%s/%s.tree", gollydir, rulefolder, s) ;
@@ -133,7 +134,8 @@ const char* ruletreealgo::DefaultRule() {
    return "Life" ;
 }
 
-ruletreealgo::ruletreealgo() : ghashbase(), a(0), b(0), base(0), num_neighbors(0),
+ruletreealgo::ruletreealgo() : ghashbase(), a(0), base(0), b(0),
+                               num_neighbors(0),
                                num_states(0), num_nodes(0) {
    rule[0] = 0 ;
 }

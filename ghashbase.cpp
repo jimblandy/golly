@@ -37,7 +37,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 using namespace std ;
+vector<ghnode*> kept ;
 /*
  *   Prime hash sizes tend to work best.
  */
@@ -528,6 +530,7 @@ void ghashbase::step() {
       while (newpow2--)
          pow2step += pow2step ;
    }
+// kept.push_back(root) ;
    gcstep = 0 ;
    for (int i=0; i<nonpow2; i++) {
       ghnode *newroot = runpattern() ;
@@ -1146,6 +1149,10 @@ void ghashbase::do_gc(int invalidate) {
    for (i=0; i<gsp; i++) {
       poller->poll() ;
       gc_mark(stack[i], invalidate) ;
+   }
+   for (i=0; i<kept.size(); i++) {
+      poller->poll() ;
+      gc_mark(kept[i], invalidate) ;
    }
    hashpop = 0 ;
    memset(hashtab, 0, sizeof(ghnode *) * hashprime) ;
