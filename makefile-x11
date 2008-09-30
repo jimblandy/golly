@@ -39,11 +39,11 @@ PYTHON_LINK =
 ### put .o files in an X11-specific subdir to avoid conflict with .o files created by GTK build
 OBJDIR = ObjX11
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
-   liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
-   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h ruletable_algo.h
+   liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
+   util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h ruletable_algo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o \
-   $(OBJDIR)/jvnalgo.o $(OBJDIR)/slifealgo.o $(OBJDIR)/wwalgo.o \
+   $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o \
    $(OBJDIR)/ruletable_algo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
@@ -103,14 +103,11 @@ $(OBJDIR)/jvnalgo.o: jvnalgo.cpp
 $(OBJDIR)/ruletable_algo.o: ruletable_algo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ruletable_algo.cpp
 
-$(OBJDIR)/wwalgo.o: wwalgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wwalgo.cpp
+$(OBJDIR)/ruletreealgo.o: ruletreealgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ ruletreealgo.cpp
 
 $(OBJDIR)/generationsalgo.o: generationsalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ generationsalgo.cpp
-
-$(OBJDIR)/slifealgo.o: slifealgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ slifealgo.cpp
 
 $(OBJDIR)/ghashbase.o: ghashbase.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ghashbase.cpp
