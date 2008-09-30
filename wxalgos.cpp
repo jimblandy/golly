@@ -44,6 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for ID_ALGO0
 #include "wxutils.h"       // for Fatal, Warning
 #include "wxrender.h"      // for DrawOneIcon
+#include "wxprefs.h"       // for gollydir
 #include "wxalgos.h"
 
 // -----------------------------------------------------------------------------
@@ -716,10 +717,25 @@ void IconDialog::CreateControls()
    
    // create bitmap showing icon format
    wxBitmap bmap(icon_format_xpm);
-   wxStaticBitmap* bitmapbox = new wxStaticBitmap(this, wxID_STATIC, bmap,
-                                                  wxDefaultPosition,
-                                                  wxSize(bmap.GetWidth(), bmap.GetHeight()),
-                                                  0);
+   wxStaticBitmap* bmapbox = new wxStaticBitmap(this, wxID_STATIC, bmap,
+                                                wxDefaultPosition,
+                                                wxSize(bmap.GetWidth(), bmap.GetHeight()),
+                                                0);
+
+   wxStaticText* wdbox = new wxStaticText(this, wxID_STATIC, _("width = 15xN"));
+
+   wxBoxSizer* htbox1 = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* htbox2 = new wxBoxSizer(wxHORIZONTAL);
+   htbox1->Add(new wxStaticText(this, wxID_STATIC, _("height = 22 (15+7)")), 0, 0, 0);
+   htbox2->Add(new wxStaticText(this, wxID_STATIC, wxEmptyString), 0, 0, 0);
+   htbox2->SetMinSize( htbox1->GetMinSize() );
+
+   wxBoxSizer* bitmapbox = new wxBoxSizer(wxHORIZONTAL);
+   bitmapbox->Add(htbox1, 0, wxALIGN_CENTER_VERTICAL, 0);
+   bitmapbox->AddSpacer(4);
+   bitmapbox->Add(bmapbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   bitmapbox->AddSpacer(4);
+   bitmapbox->Add(htbox2, 0, wxALIGN_CENTER_VERTICAL, 0);
 
    // create buttons
    wxButton* loadbutt = new wxButton(this, LOAD_BUTT, _("Load Icon File..."));
@@ -767,6 +783,7 @@ void IconDialog::CreateControls()
    topSizer->AddSpacer(10);
    topSizer->Add(notebox, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(10);
+   topSizer->Add(wdbox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, HGAP);
    topSizer->Add(bitmapbox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(20);
    topSizer->Add(vbox15, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
@@ -783,7 +800,12 @@ void IconDialog::CreateControls()
 void IconDialog::UpdateFileName()
 {
    if (algoinfo[algoindex]->iconfile.length() > 0) {
-      filebox->SetLabel(algoinfo[algoindex]->iconfile);
+      wxString path = algoinfo[algoindex]->iconfile;
+      if (path.StartsWith(gollydir)) {
+         // remove gollydir from start of path
+         path.erase(0, gollydir.length());
+      }
+      filebox->SetLabel(path);
    } else {
       filebox->SetLabel(_("(currently using default icons)"));
    }

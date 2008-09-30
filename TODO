@@ -3,11 +3,6 @@ For version 2.0:
 
 Andrew's list:
 
-- Implement Set Icons dialog (or add Prefs > Icons?).
-
-- Implement scripting command to override icons:
-  seticons("JvN", datadir()+"jvnicons7x7.xpm")
-
 - Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
   methods, and maybe GetTransformedState as well for use in
   transform() command.
