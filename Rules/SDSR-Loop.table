@@ -1,0 +1,356 @@
+# SDSR Loop
+# 
+# Hiroki Sayama.  "Introduction of Structural Dissolution into 
+# Langton's Self-Reproducing Loop."  Artificial Life VI: Proceedings 
+# of the Sixth International Conference on Artificial Life, C. Adami, 
+# R. K. Belew, H. Kitano, and C. E. Taylor, eds., pp.114-122, 
+# Los Angeles, California, 1998, MIT Press.
+#
+# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+#
+# Note that the transition table given in the above link is incomplete (it's the original
+# Langton's Loops one), and is patched by the function set_undefined_rule(). The table 
+# below has these changes incorporated, and was produced automatically by a bottom-up 
+# merging procedure from the full 9^5 rule table. Tim Hutton <tim.hutton@gmail.com>
+#
+# states: 9
+# rules: 202
+# variables: 130
+# format: CNESWC'
+#
+n_states:9
+neighbourhood_size:5
+symmetries:withRotations
+var a={0,8}
+var b={0,2,3,4,5,8}
+var c={0,1,2}
+var d={0,1}
+var e={0,1,2,3}
+var f={0,1,2,3,4,5,6,7}
+var g={0,1,2,3,4,6,7}
+var h={4,6,7}
+var i={5,8}
+var j={0,3,4,5}
+var k={0,3,4}
+var l={0,2,3,4}
+var m={0,2,3,4,5}
+var n={0,2}
+var o={1,6,7}
+var p={0,1,2,3,4,5,6,7,8}
+var q={2,3,4,5,6,7}
+var r={0,3,5}
+var s={0,2,3,4,5,6,7}
+var t={3,4,5,6,7}
+var u={3,5}
+var v={0,1,3,4,5,6,7}
+var w={0,2,3,5,8}
+var x={0,1,8}
+var y={1,4,6,7}
+var z={3,5,8}
+var A={2,8}
+var B={1,2,4,6,7}
+var C={1,3,4,5,6,7}
+var D={0,1,3,4,6,7}
+var E={2,4,6,7}
+var F={1,2,3,4,5,6,7}
+var G={0,4,6}
+var H={2,3,4,6,7}
+var I={0,2,4,5,6,7}
+var J={0,5}
+var K={0,1,2,3,4,5,6}
+var L={0,3,4,5,6,7}
+var M={1,3,4,6,7}
+var N={0,2,3,4,6}
+var O={2,3,4,6}
+var P={2,4,5,6,7}
+var Q={0,2,3,4,5,6}
+var R={4,5,6}
+var S={1,2}
+var T={1,5}
+var U={0,2,4,6,7}
+var V={0,4,6,7}
+var W={1,4,7}
+var X={1,6,8}
+var Y={0,1,2,4,6,7}
+var Z={0,1,2,8}
+var aa={0,3,5,8}
+var ab={0,1,2,3,4,5}
+var ac={0,1,2,3,4}
+var ad={1,2,4}
+var ae={0,3,5,6}
+var af={0,1,3,4,5,6}
+var ag={1,2,4,6}
+var ah={0,1,2,5,8}
+var ai={0,3,8}
+var aj={0,1,3,5,8}
+var ak={2,3,5}
+var al={2,3,5,8}
+var am={0,2,3,4,5,6,7,8}
+var an={1,8}
+var ao={1,3,5,8}
+var ap={0,1,2,3,5,8}
+var aq={0,1,3,4,5}
+var ar={0,3,4,5,6}
+var as={1,4,6}
+var at={1,2,3,5,8}
+var au={0,6}
+var av={2,6}
+var aw={2,5}
+var ax={0,7}
+var ay={2,7}
+var az={3,7}
+var aA={0,2,3,5,6}
+var aB={1,2,3,5,6}
+var aC={1,4,6,7,8}
+var aD={0,1,3,4}
+var aE={1,4}
+var aF={0,2,7}
+var aG={5,7}
+var aH={4,7}
+var aI={1,3,5}
+var aJ={1,2,5,6}
+var aK={0,1,2,3,6}
+var aL={1,2,5}
+var aM={1,2,3,4,6,7}
+var aN={2,3,4,5,6}
+var aO={2,5,8}
+var aP={1,3,4}
+var aQ={6,7}
+var aR={1,3,4,5}
+var aS={0,5,6}
+var aT={0,3}
+var aU={0,1,4,5,6,7}
+var aV={0,2,5}
+var aW={0,2,8}
+var aX={1,4,5,6,7}
+var aY={0,1,2,4,5,6,7}
+var aZ={1,2,5,6,7}
+var ba={4,5,6,7}
+var bb={0,1,2,4,5,7}
+var bc={0,1,4,6,7}
+var bd={0,1,4}
+var be={1,2,3,4,5,6}
+var bf={1,2,4,5,6,7}
+var bg={3,5,6,7}
+var bh={2,3}
+var bi={1,2,6}
+var bj={1,3}
+var bk={3,6}
+var bl={3,5,6}
+var bm={2,3,5,7}
+var bn={3,8}
+var bo={4,6,7,8}
+var bp={4,6,8}
+var bq={2,3,8}
+var br={0,3,7}
+var bs={0,1,7}
+var bt={1,3,5,6,7}
+var bu={3,4,5,6}
+var bv={0,1,4,7}
+var bw={5,6,7}
+var bx={1,2,8}
+var by={6,8}
+var bz={7,8}
+a,0,0,0,b,0
+0,0,0,c,1,2
+0,0,0,0,6,3
+0,d,d,d,7,1
+0,0,0,1,e,2
+0,f,g,1,h,1
+a,0,0,d,i,0
+a,j,k,l,m,0
+n,0,0,2,o,2
+d,p,p,q,8,8
+a,r,r,3,f,0
+0,f,f,h,1,1
+a,s,s,t,t,0
+a,r,r,u,v,0
+0,0,0,5,2,5
+n,0,0,o,2,2
+a,s,s,t,t,0
+w,x,x,8,x,0
+d,p,p,8,q,8
+0,f,1,f,y,1
+n,0,1,0,n,2
+a,0,d,0,z,0
+a,0,1,1,A,0
+0,v,1,B,C,1
+0,D,1,E,F,1
+0,g,1,q,B,1
+a,r,f,r,u,0
+a,G,H,I,q,0
+d,p,q,p,8,8
+0,f,B,1,C,1
+0,J,2,1,2,5
+0,K,B,F,1,1
+0,0,2,3,2,2
+a,s,s,t,t,0
+0,v,t,1,B,1
+0,v,F,B,1,1
+n,0,5,2,2,2
+a,L,q,s,t,0
+0,1,B,M,f,1
+0,1,7,2,5,5
+a,N,O,P,q,0
+a,q,Q,q,R,0
+0,S,T,2,7,1
+a,H,U,q,V,0
+W,r,r,r,m,8
+1,0,0,0,X,1
+1,U,Y,Y,7,7
+1,0,0,1,Z,1
+1,aa,aa,p,u,8
+1,ab,ac,ad,4,4
+1,ae,af,ag,6,6
+1,0,0,ah,1,1
+1,ai,aj,ak,al,8
+1,aa,aa,3,p,8
+1,ac,ac,4,ad,4
+1,aa,aa,u,am,8
+1,K,af,6,ag,6
+1,f,v,7,B,7
+y,x,x,x,8,1
+1,a,x,x,an,1
+1,ai,ao,ap,ak,8
+1,aq,ad,ab,4,4
+1,ar,as,K,6,6
+1,ai,ao,ak,at,8
+1,f,B,f,7,7
+1,g,B,7,s,7
+1,au,av,au,av,6
+1,aa,ak,aj,ao,8
+1,n,2,1,n,1
+1,K,ag,af,6,6
+1,n,n,2,1,1
+1,aa,w,aw,w,8
+1,0,2,2,6,3
+1,ax,ay,az,ay,7
+1,aA,ag,6,aB,6
+1,0,2,K,4,4
+aC,0,2,7,1,0
+1,aa,u,aa,p,8
+1,s,g,B,7,7
+1,aD,4,ad,ab,4
+1,aq,ab,ad,4,4
+1,L,f,B,7,7
+1,ab,ab,4,aE,4
+1,aF,aG,aH,ay,7
+C,aI,aI,aI,aI,8
+1,1,1,1,A,1
+1,1,1,2,aJ,1
+1,1,2,aK,2,1
+1,ao,ak,ao,aa,8
+1,1,S,2,aL,1
+1,ap,ak,i,w,8
+1,1,e,2,2,1
+1,B,aM,f,7,7
+1,as,aN,K,6,6
+1,ao,5,ap,ap,8
+1,y,F,f,7,7
+1,aE,ab,4,ab,4
+1,w,ak,aO,al,8
+1,ad,aP,ab,4,4
+1,2,aH,2,5,5
+1,ay,aH,ay,aQ,7
+1,ad,aR,aq,4,4
+ak,aS,aS,aS,aS,8
+2,0,n,n,ad,2
+2,aT,aT,aT,az,1
+ak,aU,aU,y,y,8
+2,v,v,v,3,1
+2,n,n,1,aV,2
+2,0,0,2,g,2
+A,aW,a,A,i,0
+2,c,0,3,2,6
+al,p,p,p,8,0
+2,0,0,4,2,3
+ak,aU,aU,h,aX,8
+2,0,0,5,1,7
+2,aY,V,aZ,2,2
+ak,aU,aU,ba,R,8
+2,n,0,5,7,5
+ak,aU,aX,aU,aX,8
+2,bb,bc,aZ,2,2
+2,f,F,F,3,1
+2,f,F,3,F,1
+2,aY,as,I,2,2
+2,bd,2,0,be,2
+2,0,2,0,7,3
+2,f,F,F,3,1
+2,I,2,bf,aX,2
+2,f,F,3,F,1
+2,I,2,B,aY,2
+2,I,2,bf,aX,2
+2,f,3,f,t,1
+2,f,3,bg,f,1
+2,I,bf,2,bf,2
+2,aT,u,u,bh,1
+2,aY,I,bi,2,2
+2,aY,h,bf,2,2
+2,bj,bj,bh,bk,1
+3,n,0,0,1,3
+3,0,0,au,2,2
+3,L,f,f,bl,8
+3,n,0,0,4,1
+3,0,0,0,7,6
+3,s,L,bm,F,8
+3,J,1,0,2,1
+3,v,F,C,s,8
+3,s,v,F,C,8
+bn,a,an,A,A,0
+3,f,q,f,q,8
+3,L,bm,aM,f,8
+3,F,M,F,f,8
+4,r,r,r,f,8
+bo,0,aU,B,B,0
+h,p,p,p,8,1
+bo,0,y,f,B,0
+bp,0,B,B,v,0
+bp,0,B,aU,B,0
+bo,0,B,y,f,0
+4,a,bq,A,A,1
+bo,0,B,f,y,0
+4,0,2,3,2,6
+bo,0,f,y,B,0
+bo,0,f,B,y,0
+aH,F,F,F,F,8
+5,v,v,v,v,8
+5,br,0,0,2,2
+5,f,v,M,f,8
+5,0,0,2,S,5
+5,v,v,f,R,8
+i,a,a,i,A,0
+5,d,2,bs,2,2
+5,v,F,s,bt,8
+5,0,2,1,aw,2
+5,v,F,s,bt,8
+i,x,A,A,A,0
+5,0,2,2,4,4
+5,s,F,bu,F,8
+5,L,C,f,F,8
+5,f,F,bl,F,8
+5,1,2,bv,2,2
+bw,q,q,q,q,8
+6,r,r,r,L,8
+6,a,a,a,bx,1
+aQ,r,r,f,u,8
+aQ,r,r,u,f,8
+aQ,r,f,r,u,8
+by,0,B,B,f,0
+by,0,B,f,B,0
+by,0,f,B,B,0
+aQ,C,aX,F,q,8
+6,1,2,S,2,5
+6,an,A,an,bn,1
+aQ,F,F,t,q,8
+7,r,r,r,K,8
+7,0,0,0,7,7
+bz,0,y,B,f,0
+bz,0,B,bc,B,0
+7,a,A,A,aO,1
+bz,0,B,B,D,0
+7,a,A,bq,A,1
+7,0,2,5,2,5
+bz,0,v,B,B,0
+8,p,p,p,p,0

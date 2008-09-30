@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wwalgo.h"
 #include "generationsalgo.h"
 #include "ruletable_algo.h"
+#include "ruletreealgo.h"
 
 #include "wxgolly.h"       // for wxGetApp
 #include "wxmain.h"        // for ID_ALGO0
@@ -257,8 +258,7 @@ void InitAlgorithms()
    generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
    jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
    ruletable_algo::doInitializeAlgoInfo(AlgoData::tick());
-   slifealgo::doInitializeAlgoInfo(AlgoData::tick());
-   wwalgo::doInitializeAlgoInfo(AlgoData::tick());
+   ruletreealgo::doInitializeAlgoInfo(AlgoData::tick()) ;
 
    // algomenu is used when algo button is pressed and for Set Algo submenu
    algomenu = new wxMenu();

@@ -49,16 +49,13 @@ bool starts_with(const string& line,const string& keyword)
 	return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
 }
 
-const string prefix = "rule_table:";
+using namespace std ;
 const char* ruletable_algo::setrule(const char* s) 
 {
-   if(!starts_with(s,prefix))
-	   return "Usage: rule_table:my_filename.txt";
-
-   string ret = LoadRuleTable(s+prefix.length());
+   string ret = LoadRuleTable(s) ;
    if(!ret.empty())
 	   return "error";
-	   
+
    this->current_rule = s;
    maxCellStates = this->n_states;
    ghashbase::setrule(s);
@@ -92,7 +89,7 @@ vector<string> tokenize(const string& str,const string& delimiters)
 
 string ruletable_algo::LoadRuleTable(string filename)
 {
-   const string folder = "Rule-Tables/";
+   const string folder = "Rules/";
    const string comment_keyword = "#";
    const string symmetries_keyword = "symmetries:";
    const string neighbourhood_size_keyword = "neighbourhood_size:";
@@ -103,7 +100,13 @@ string ruletable_algo::LoadRuleTable(string filename)
 
    // AKT: we need to prepend the full path to Golly because when it runs
    // a script it temporarily changes the cwd to the location of the script
-   string full_filename = lifegetgollydir() + folder + filename;
+   string full_filename = lifegetgollydir() + folder ;
+   int istart = full_filename.size() ;
+   full_filename += filename + ".table" ;
+   for (unsigned int i=istart; i<full_filename.size(); i++)
+     if (full_filename[i] == '/' || full_filename[i] == '\\' ||
+         full_filename[i] == ':')
+       full_filename[i] = '-' ;
    ifstream in(full_filename.c_str());
    if(!in.good()) 
       return "Failed to open file: "+full_filename;
@@ -232,7 +235,7 @@ const char* ruletable_algo::getrule() {
 }
 
 const char* ruletable_algo::DefaultRule() {
-	return "rule_table:Langtons-Loops.txt";
+	return "Langtons-Loops";
 }
 
 ruletable_algo::ruletable_algo()

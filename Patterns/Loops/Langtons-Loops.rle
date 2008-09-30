@@ -1,4 +1,4 @@
 #CXRLE Pos=-11,-10
-x = 15, y = 10, rule = rule_table:Langtons-Loops.txt
+x = 15, y = 10, rule = Langtons-Loops
 .8B$BAG.AD.ADB$B.6B.B$BGB4.BAB$BAB4.BAB$B.B4.BAB$BGB4.BAB$BA6BA5B$B.G
 A.GA.G5AB$.13B!

@@ -13,25 +13,8 @@
 # Then you don't have to specify those settings to nmake when you
 # build wxWidgets or Golly.
 
-# Change the next 2 lines to specify where you installed wxWidgets:
-!include <C:/wxWidgets/build/msw/config.vc>
-WX_DIR = C:\wxWidgets
-
-# Change the next line to match your wxWidgets version (first two digits):
-WX_RELEASE = 28
-
-# Change the next line depending on where you installed Python:
-PYTHON_INCLUDE = -I"C:\Python25\include"
-
-# Simplified output from "perl -MExtUtils::Embed -e ccopts":
-PERL_INCLUDE = \
--DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
--DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl\lib\CORE"
-
-# We load the Perl library at runtime so no need for PERL_LINK.
-# Simplified output from "perl -MExtUtils::Embed -e ldopts":
-# PERL_LINK = \
-# -libpath:"C:\Perl\lib\CORE" C:\Perl\lib\CORE\perl58.lib C:\MVCT\lib\oldnames.lib
+#   All system-dependent changes belong in local-win.mk
+!include local-win.mk
 
 ### Golly-related variables: ###
 VERSION = 2.0b
@@ -64,13 +47,14 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 
 OBJDIR = ObjWin
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
-   liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
-   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h ruletable_algo.h
+   liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
+   ruletreealgo.h ruletable_algo.h util.h viewport.h writepattern.h \
+   generationsalgo.h
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
-   $(OBJDIR)/jvnalgo.obj $(OBJDIR)/slifealgo.obj $(OBJDIR)/wwalgo.obj \
-   $(OBJDIR)/ruletable_algo.obj \
-   $(OBJDIR)/ghashbase.obj $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
+   $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
+   $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj \
+   $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
    $(OBJDIR)/generationsalgo.obj
@@ -350,14 +334,11 @@ $(OBJDIR)/jvnalgo.obj: jvnalgo.cpp
 $(OBJDIR)/ruletable_algo.obj: ruletable_algo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ruletable_algo.cpp
 
-$(OBJDIR)/wwalgo.obj: wwalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wwalgo.cpp
+$(OBJDIR)/ruletreealgo.obj: ruletreealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ruletreealgo.cpp
 
 $(OBJDIR)/generationsalgo.obj: generationsalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) generationsalgo.cpp
-
-$(OBJDIR)/slifealgo.obj: slifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) slifealgo.cpp
 
 $(OBJDIR)/ghashbase.obj: ghashbase.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashbase.cpp

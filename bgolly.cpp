@@ -24,8 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "jvnalgo.h"
-#include "slifealgo.h"
-#include "wwalgo.h"
+#include "ruletable_algo.h"
+#include "ruletreealgo.h"
 #include "generationsalgo.h"
 #include "readpattern.h"
 #include "util.h"
@@ -472,10 +472,10 @@ int main(int argc, char *argv[]) {
                                                             << endl << flush ;
    qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
-   slifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    jvnalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
-   wwalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   ruletable_algo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   ruletreealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    while (argc > 1 && argv[1][0] == '-') {
       argc-- ;
       argv++ ;
