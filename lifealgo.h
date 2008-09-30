@@ -99,7 +99,6 @@ public:
    void setAlgorithmCreator(lifealgo *(*f)()) { creator = f ; }
    
    // optional; override if you want to retain this data
-   virtual void createIconBitmaps(int /* size */, char ** /* xpmdata */ ) {}
    virtual void setDefaultBaseStep(int) {}
    virtual void setDefaultMaxMem(int) {}
    
@@ -114,6 +113,10 @@ public:
    unsigned char defr2, defg2, defb2;     // color at end of gradient
    // if defgradient is false then use these colors for each cell state
    unsigned char defr[256], defg[256], defb[256];
+   
+   // default icon data (in XPM format)
+   char **defxpm7x7;                      // 7x7 icons
+   char **defxpm15x15;                    // 15x15 icons
    
    // basic data
    const char *algoName ;

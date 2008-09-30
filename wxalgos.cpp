@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/filename.h"   // for wxFileName
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -39,7 +41,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp
 #include "wxmain.h"        // for ID_ALGO0
-#include "wxutils.h"       // for Fatal
+#include "wxutils.h"       // for Fatal, Warning
+#include "wxrender.h"      // for DrawOneIcon
 #include "wxalgos.h"
 
 // -----------------------------------------------------------------------------
@@ -111,16 +114,6 @@ static char* default7x7[] = {
 "A c #000000000000",    // black will be transparent
 "B c #FFFFFFFFFFFF",    // white
 // pixels
-/* dot is too ugly???
-"AABBBAA",
-"ABBBBBA",
-"BBBBBBB",
-"BBBBBBB",
-"BBBBBBB",
-"ABBBBBA",
-"AABBBAA"
-*/
-// try a diamond
 "AAABAAA",
 "AABBBAA",
 "ABBBBBA",
@@ -138,24 +131,6 @@ static char *default15x15[] = {
 "A c #000000000000",    // black will be transparent
 "B c #FFFFFFFFFFFF",    // white
 // pixels
-/* dot is too ugly???
-"AAAAAAAAAAAAAAA",
-"AAAAAABBBAAAAAA",
-"AAAABBBBBBBAAAA",
-"AAABBBBBBBBBAAA",
-"AABBBBBBBBBBBAA",
-"AABBBBBBBBBBBAA",
-"ABBBBBBBBBBBBBA",
-"ABBBBBBBBBBBBBA",
-"ABBBBBBBBBBBBBA",
-"AABBBBBBBBBBBAA",
-"AABBBBBBBBBBBAA",
-"AAABBBBBBBBBAAA",
-"AAAABBBBBBBAAAA",
-"AAAAAABBBAAAAAA",
-"AAAAAAAAAAAAAAA"
-*/
-// try a diamond
 "AAAAAAAAAAAAAAA",
 "AAAAAAABAAAAAAA",
 "AAAAAABBBAAAAAA",
@@ -185,13 +160,13 @@ static wxBitmap** CreateIconBitmaps(char** xpmdata, int maxstates)
 
    int wd = allicons.GetWidth();
    int numicons = allicons.GetHeight() / wd;
+   if (numicons > 255) numicons = 255;          // play safe
    
    wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
    if (iconptr) {
       // only need to test < maxstates here, but play safe
       for (int i = 0; i < 256; i++) iconptr[i] = NULL;
       
-      if (numicons > 255) numicons = 255;    // play safe
       for (int i = 0; i < numicons; i++) {
          wxRect rect(0, i*wd, wd, wd);
          // add 1 because iconptr[0] must be NULL (ie. dead state)
@@ -222,7 +197,7 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
             iconptr[i] = NULL;
          } else {
             wxImage image = srcicons[i]->ConvertToImage();
-            iconptr[i] = new wxBitmap(image.Scale(size, size));
+            iconptr[i] = new wxBitmap(image.Scale(size, size, wxIMAGE_QUALITY_HIGH));
          }
       }
    }
@@ -231,10 +206,36 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
 
 // -----------------------------------------------------------------------------
 
+static void CreateDefaultIcons(AlgoData* ad)
+{
+   if (ad->defxpm7x7 || ad->defxpm15x15) {
+      // create icons using given algo's default XPM data
+      ad->icons7x7 = CreateIconBitmaps(ad->defxpm7x7, ad->maxstates);
+      ad->icons15x15 = CreateIconBitmaps(ad->defxpm15x15, ad->maxstates);
+
+      // create scaled bitmaps if only one size was supplied
+      if (!ad->icons15x15) {
+         // scale up 7x7 bitmaps (looks ugly)
+         ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15);
+      }
+      if (!ad->icons7x7) {
+         // scale down 15x15 bitmaps (not too bad)
+         ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
+      }
+   } else {
+      // algo didn't supply any icons so use static XPM data defined above
+      ad->icons7x7 = CreateIconBitmaps(default7x7, ad->maxstates);
+      ad->icons15x15 = CreateIconBitmaps(default15x15, ad->maxstates);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 AlgoData::AlgoData() {
    algomem = algobase = 0;
    statusbrush = NULL;
    icons7x7 = icons15x15 = NULL;
+   iconfile = wxEmptyString;
 }
 
 // -----------------------------------------------------------------------------
@@ -243,16 +244,6 @@ AlgoData& AlgoData::tick() {
    AlgoData* r = new AlgoData();
    algoinfo[r->id] = r;
    return *r;
-}
-
-// -----------------------------------------------------------------------------
-
-void AlgoData::createIconBitmaps(int size, char** xpmdata) {
-   wxBitmap** bm = CreateIconBitmaps(xpmdata, maxstates);
-   if (size == 7)
-      icons7x7 = bm;
-   else if (size == 15)
-      icons15x15 = bm;
 }
 
 // -----------------------------------------------------------------------------
@@ -297,26 +288,8 @@ void InitAlgorithms()
          case 8: ad->statusrgb.Set(255, 255, 255); break;  // white
       }
       ad->statusbrush = new wxBrush(ad->statusrgb);
-
-      // we can't use icons in qlife/hlife because drawing is done via blit rather than pixblit,
-      // so let's remove blit and do *all* drawing via pixblit (and killrect)!!!
       
-      if (!ad->icons15x15 && !ad->icons7x7) {
-         // algo didn't supply any icons so use our default icon
-         ad->createIconBitmaps(15, default15x15);
-         ad->createIconBitmaps(7, default7x7);
-      }
-
-      // create scaled bitmaps if only one size is supplied
-      if (!ad->icons15x15) {
-         // scale up 7x7 bitmaps (looks ugly)
-         ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15);
-      }
-      if (!ad->icons7x7) {
-         // scale down 15x15 bitmaps (not too bad)
-         ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
-      }
-
+      // initialize default color scheme
       if (ad->defr[0] == ad->defr[1] &&
           ad->defg[0] == ad->defg[1] &&
           ad->defb[0] == ad->defb[1]) {
@@ -328,8 +301,6 @@ void InitAlgorithms()
             ad->defb[c] = *rgbptr++;
          }
       }
-      
-      // initialize default color scheme
       ad->gradient = ad->defgradient;
       ad->fromrgb.Set(ad->defr1, ad->defg1, ad->defb1);
       ad->torgb.Set(ad->defr2, ad->defg2, ad->defb2);
@@ -338,6 +309,8 @@ void InitAlgorithms()
          ad->algog[c] = ad->defg[c];
          ad->algob[c] = ad->defb[c];
       }
+      
+      CreateDefaultIcons(ad);
    }
 }
 
@@ -370,4 +343,532 @@ const char* GetAlgoName(algo_type algotype)
 int NumAlgos()
 {
    return staticAlgoInfo::getNumAlgos();
+}
+
+// -----------------------------------------------------------------------------
+
+static void LoadIconFile(AlgoData* ad)
+{
+   if (!wxFileName::FileExists(ad->iconfile)) {
+      wxString err = _("Icon file does not exist:\n") + ad->iconfile;
+      Warning(err);
+   } else {
+      wxImage image;
+      if (!image.LoadFile(ad->iconfile)) {
+         wxString err = _("Could not load icon images from file:\n") + ad->iconfile;
+         Warning(err);
+      } else {
+         wxBitmap allicons(image);
+         int wd = allicons.GetWidth();
+         int ht = allicons.GetHeight();
+         // check dimensions
+         if (ht != 15 && ht != 22) {
+            wxString err = _("Incorrect image height in icon file (must be 15 or 22):\n") +
+                           ad->iconfile;
+            Warning(err);
+         } else if (wd % 15 != 0) {
+            wxString err = _("Incorrect image width in icon file (must be multiple of 15):\n") +
+                           ad->iconfile;
+            Warning(err);
+         } else {
+            // first extract 15x15 icons
+            int numicons = wd / 15;
+            if (numicons > 255) numicons = 255;    // play safe
+
+            wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+            if (iconptr) {
+               for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+               for (int i = 0; i < numicons; i++) {
+                  wxRect rect(i*15, 0, 15, 15);
+                  // add 1 because iconptr[0] must be NULL (ie. dead state)
+                  iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+               }
+               if (numicons < ad->maxstates-1 && iconptr[numicons]) {
+                  // duplicate last icon
+                  wxRect rect((numicons-1)*15, 0, 15, 15);
+                  for (int i = numicons; i < ad->maxstates-1; i++) {
+                     iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                  }
+               }
+            }
+            ad->icons15x15 = iconptr;
+            
+            if (ht == 22) {
+               // extract 7x7 icons (below the 15x15 icons)
+               iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+               if (iconptr) {
+                  for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+                  for (int i = 0; i < numicons; i++) {
+                     wxRect rect(i*7, 15, 7, 7);
+                     // add 1 because iconptr[0] must be NULL (ie. dead state)
+                     iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                  }
+                  if (numicons < ad->maxstates-1 && iconptr[numicons]) {
+                     // duplicate last icon
+                     wxRect rect((numicons-1)*7, 15, 7, 7);
+                     for (int i = numicons; i < ad->maxstates-1; i++) {
+                        iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                     }
+                  }
+               }
+               ad->icons7x7 = iconptr;
+            } else {
+               // create 7x7 icons by scaling down 15x15 icons
+               ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
+            }
+            return;
+         }
+      }
+   }
+   
+   // some sort of error occurred, so restore default icons
+   ad->iconfile = wxEmptyString;
+   CreateDefaultIcons(ad);
+}
+
+// -----------------------------------------------------------------------------
+
+void LoadIcons(algo_type algotype)
+{
+   AlgoData* ad = algoinfo[algotype];
+
+   // deallocate old icons if they exist
+   if (ad->icons7x7) {
+      for (int i = 0; i < 256; i++) delete ad->icons7x7[i];
+      free(ad->icons7x7);
+      ad->icons7x7 = NULL;
+   }
+   if (ad->icons15x15) {
+      for (int i = 0; i < 256; i++) delete ad->icons15x15[i];
+      free(ad->icons15x15);
+      ad->icons15x15 = NULL;
+   }   
+   
+   if (ad->iconfile.length() > 0) {
+      // load icons from this file
+      LoadIconFile(ad);
+   } else {
+      // iconfile path is empty so restore default icons
+      CreateDefaultIcons(ad);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+// define a window for displaying icons:
+
+const int NUMCOLS = 32;       // number of columns
+const int NUMROWS = 8;        // number of rows
+
+class IconPanel : public wxPanel
+{
+public:
+   IconPanel(wxWindow* parent, wxWindowID id, int size, int algotype)
+      : wxPanel(parent, id, wxPoint(0,0), wxSize(NUMCOLS*size+1,NUMROWS*size+1))
+   { boxsize = size; algoindex = algotype; }
+
+   wxStaticText* statebox;    // for showing state of icon under cursor
+   int boxsize;               // wd and ht of each icon box
+   int algoindex;             // index into algoinfo
+   
+private:
+   void GetGradientColor(int state, unsigned char* r,
+                                    unsigned char* g,
+                                    unsigned char* b);
+
+   void OnEraseBackground(wxEraseEvent& event);
+   void OnPaint(wxPaintEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnMouseExit(wxMouseEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(IconPanel, wxPanel)
+   EVT_ERASE_BACKGROUND (IconPanel::OnEraseBackground)
+   EVT_PAINT            (IconPanel::OnPaint)
+   EVT_MOTION           (IconPanel::OnMouseMotion)
+   EVT_ENTER_WINDOW     (IconPanel::OnMouseMotion)
+   EVT_LEAVE_WINDOW     (IconPanel::OnMouseExit)
+END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void IconPanel::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing
+}
+
+// -----------------------------------------------------------------------------
+
+void IconPanel::GetGradientColor(int state, unsigned char* r,
+                                            unsigned char* g,
+                                            unsigned char* b)
+{
+   // calculate gradient color for given state (> 0 and < maxstates)
+   AlgoData* ad = algoinfo[algoindex];
+   if (state == 1) {
+      *r = ad->fromrgb.Red();
+      *g = ad->fromrgb.Green();
+      *b = ad->fromrgb.Blue();
+   } else if (state == ad->maxstates - 1) {
+      *r = ad->torgb.Red();
+      *g = ad->torgb.Green();
+      *b = ad->torgb.Blue();
+   } else {
+      unsigned char r1 = ad->fromrgb.Red();
+      unsigned char g1 = ad->fromrgb.Green();
+      unsigned char b1 = ad->fromrgb.Blue();
+      unsigned char r2 = ad->torgb.Red();
+      unsigned char g2 = ad->torgb.Green();
+      unsigned char b2 = ad->torgb.Blue();
+      int N = ad->maxstates - 2;
+      double rfrac = (double)(r2 - r1) / (double)N;
+      double gfrac = (double)(g2 - g1) / (double)N;
+      double bfrac = (double)(b2 - b1) / (double)N;
+      *r = (int)(r1 + (state-1) * rfrac + 0.5);
+      *g = (int)(g1 + (state-1) * gfrac + 0.5);
+      *b = (int)(b1 + (state-1) * bfrac + 0.5);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void IconPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+   wxPaintDC dc(this);
+   
+   dc.SetPen(*wxBLACK_PEN);
+
+   #ifdef __WXMSW__
+      // we have to use theme background color on Windows
+      wxBrush bgbrush(GetBackgroundColour());
+   #else
+      wxBrush bgbrush(*wxTRANSPARENT_BRUSH);
+   #endif
+
+   // draw icon boxes
+   wxRect r = wxRect(0, 0, boxsize+1, boxsize+1);
+   int col = 0;
+   for (int state = 0; state < 256; state++) {
+      if (state == 0) {
+         dc.SetBrush(bgbrush);
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
+
+      } else if (state < algoinfo[algoindex]->maxstates) {
+         wxBitmap** iconmaps;
+         if (boxsize > 8)
+            iconmaps = algoinfo[algoindex]->icons15x15;
+         else
+            iconmaps = algoinfo[algoindex]->icons7x7;
+         if (iconmaps && iconmaps[state]) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);               
+            if (algoinfo[algoindex]->gradient) {
+               unsigned char red, green, blue;
+               GetGradientColor(state, &red, &green, &blue);
+               DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                           red, green, blue);
+            } else {
+               DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                           algoinfo[algoindex]->algor[state],
+                           algoinfo[algoindex]->algog[state],
+                           algoinfo[algoindex]->algob[state]);
+            }
+         } else {
+            dc.SetBrush(bgbrush);
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);
+         }
+
+      } else {
+         // state >= algoinfo[algoindex]->maxstates
+         dc.SetBrush(bgbrush);
+         dc.DrawRectangle(r);
+         dc.SetBrush(wxNullBrush);
+      }
+      
+      col++;
+      if (col < NUMCOLS) {
+         r.x += boxsize;
+      } else {
+         r.x = 0;
+         r.y += boxsize;
+         col = 0;
+      }
+   }
+
+   dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void IconPanel::OnMouseMotion(wxMouseEvent& event)
+{
+   int col = event.GetX() / boxsize;
+   int row = event.GetY() / boxsize;
+   int state = row * NUMCOLS + col;
+   if (state < 0 || state > 255) {
+      statebox->SetLabel(_(" "));
+   } else {
+      statebox->SetLabel(wxString::Format(_("%d"),state));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void IconPanel::OnMouseExit(wxMouseEvent& WXUNUSED(event))
+{
+   statebox->SetLabel(_(" "));
+}
+
+// -----------------------------------------------------------------------------
+
+// define a modal dialog for loading icons from graphic files
+
+class IconDialog : public wxDialog
+{
+public:
+   IconDialog(wxWindow* parent, int algotype);
+
+   virtual bool TransferDataFromWindow();       // called when user hits OK
+
+   enum {
+      // control ids
+      ICON7_PANEL = wxID_HIGHEST + 1,
+      ICON15_PANEL,
+      STATE_BOX,
+      FILE_BOX,
+      LOAD_BUTT,
+      DEFAULT_BUTT
+   };
+
+   void CreateControls();        // initialize controls
+
+   int algoindex;                // index into algoinfo
+
+   IconPanel* iconpanel15;       // for displaying 15x15 icons
+   IconPanel* iconpanel7;        // for displaying 7x7 icons
+   
+   wxStaticText* filebox;        // for displaying icon file path
+
+private:
+   void UpdateFileName();        // update icon file path
+
+   // event handlers
+   void OnButton(wxCommandEvent& event);
+
+   DECLARE_EVENT_TABLE()
+};
+
+BEGIN_EVENT_TABLE(IconDialog, wxDialog)
+   EVT_BUTTON     (wxID_ANY,  IconDialog::OnButton)
+END_EVENT_TABLE()
+
+#include "bitmaps/icon_format.xpm"     // shows icon file format
+
+// -----------------------------------------------------------------------------
+
+// these consts are used to get nicely spaced controls on each platform:
+
+const int HGAP = 12;    // space left and right of vertically stacked boxes
+
+// following ensures OK/Cancel buttons are better aligned
+#ifdef __WXMAC__
+   const int STDHGAP = 0;
+#elif defined(__WXMSW__)
+   const int STDHGAP = 9;
+#else
+   const int STDHGAP = 10;
+#endif
+
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
+   // only happens when a wxStaticText/wxButton box is next to a wxChoice box
+   #define FIX_ALIGN_BUG wxBOTTOM,4
+#else
+   #define FIX_ALIGN_BUG wxALL,0
+#endif
+
+// -----------------------------------------------------------------------------
+
+IconDialog::IconDialog(wxWindow* parent, int algotype)
+{
+   Create(parent, wxID_ANY, _("Load Icons"), wxDefaultPosition, wxDefaultSize);
+   algoindex = algotype;
+   CreateControls();
+   Centre();
+}
+
+// -----------------------------------------------------------------------------
+
+void IconDialog::CreateControls()
+{
+   wxString note =
+           _("Golly can load icon bitmaps from BMP/GIF/PNG/TIFF files.  The picture below ");
+   note += _("shows how the bitmaps must be arranged.  The top row contains icons of size ");
+   note += _("15x15.  The bottom row contains icons of size 7x7 and is optional; if it isn't ");
+   note += _("supplied then Golly will create 7x7 icons by scaling down the 15x15 icons.");
+   wxStaticText* notebox = new wxStaticText(this, wxID_STATIC, note);
+   notebox->Wrap(NUMCOLS * 16 + 1);
+   
+   // create bitmap showing icon format
+   wxBitmap bmap(icon_format_xpm);
+   wxStaticBitmap* bitmapbox = new wxStaticBitmap(this, wxID_STATIC, bmap,
+                                                  wxDefaultPosition,
+                                                  wxSize(bmap.GetWidth(), bmap.GetHeight()),
+                                                  0);
+
+   // create buttons
+   wxButton* loadbutt = new wxButton(this, LOAD_BUTT, _("Load Icon File..."));
+   wxButton* defbutt = new wxButton(this, DEFAULT_BUTT, _("Default Icons"));
+
+   filebox = new wxStaticText(this, FILE_BOX, wxEmptyString);
+   UpdateFileName();
+   
+   wxBoxSizer* loadbox = new wxBoxSizer(wxHORIZONTAL);
+   loadbox->Add(loadbutt, 0, wxALIGN_CENTER_VERTICAL, 0);
+   loadbox->Add(filebox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, HGAP);
+
+   // create child windows for displaying icons
+   iconpanel15 = new IconPanel(this, ICON15_PANEL, 16, algoindex);
+   iconpanel7 = new IconPanel(this, ICON7_PANEL, 8, algoindex);
+
+   wxStaticText* statebox = new wxStaticText(this, STATE_BOX, _("999"));
+   iconpanel15->statebox = statebox;
+   iconpanel7->statebox = statebox;
+   wxBoxSizer* hbox15 = new wxBoxSizer(wxHORIZONTAL);
+   hbox15->Add(statebox, 0, 0, 0);
+
+   statebox->SetLabel(_(" "));
+
+   wxBoxSizer* botbox = new wxBoxSizer(wxHORIZONTAL);
+   botbox->Add(new wxStaticText(this, wxID_STATIC, _("State: ")), 0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(hbox15, 0, wxALIGN_CENTER_VERTICAL, 0);
+
+   wxBoxSizer* vbox15 = new wxBoxSizer(wxVERTICAL);
+   vbox15->Add(loadbox, 0, wxLEFT | wxRIGHT, 0);
+   vbox15->AddSpacer(10);
+   vbox15->Add(iconpanel15, 0, wxLEFT | wxRIGHT, 0);
+   vbox15->AddSpacer(5);
+   vbox15->Add(botbox, 0, wxLEFT | wxRIGHT, 0);
+
+   wxBoxSizer* vbox7 = new wxBoxSizer(wxVERTICAL);
+   vbox7->Add(iconpanel7, 0, wxLEFT | wxRIGHT, 0);
+
+   wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
+   wxBoxSizer* stdhbox = new wxBoxSizer( wxHORIZONTAL );
+   stdhbox->Add(defbutt, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, HGAP);
+   stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+
+   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+   topSizer->AddSpacer(10);
+   topSizer->Add(notebox, 0, wxLEFT | wxRIGHT, HGAP);
+   topSizer->AddSpacer(10);
+   topSizer->Add(bitmapbox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, HGAP);
+   topSizer->AddSpacer(20);
+   topSizer->Add(vbox15, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
+   // topSizer->AddSpacer(2);
+   topSizer->Add(vbox7, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, HGAP);
+   topSizer->AddSpacer(10);
+   topSizer->Add(stdhbox, 1, wxGROW | wxTOP | wxBOTTOM, 10);
+   SetSizer(topSizer);
+   topSizer->SetSizeHints(this);    // calls Fit
+}
+
+// -----------------------------------------------------------------------------
+
+void IconDialog::UpdateFileName()
+{
+   if (algoinfo[algoindex]->iconfile.length() > 0) {
+      filebox->SetLabel(algoinfo[algoindex]->iconfile);
+   } else {
+      filebox->SetLabel(_("(currently using default icons)"));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static void ChooseIconFile(wxWindow* parent, wxString& result)
+{
+   wxString filetypes = _("All files (*)|*");
+   filetypes +=         _("|BMP (*.bmp)|*.bmp");
+   filetypes +=         _("|GIF (*.gif)|*.gif");
+   filetypes +=         _("|PNG (*.png)|*.png");
+   filetypes +=         _("|TIFF (*.tiff;*.tif)|*.tiff;*.tif");
+   
+   wxFileDialog opendlg(parent, _("Choose an icon file"),
+                        wxEmptyString, wxEmptyString, filetypes,
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+   opendlg.SetDirectory(icondir);
+   
+   if ( opendlg.ShowModal() == wxID_OK ) {
+      result = opendlg.GetPath();
+      wxFileName fullpath(result);
+      icondir = fullpath.GetPath();
+   } else {
+      result = wxEmptyString;
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void IconDialog::OnButton(wxCommandEvent& event)
+{
+   int id = event.GetId();
+   
+   if ( id == LOAD_BUTT ) {
+      // ask user to choose an icon file
+      wxString result;
+      ChooseIconFile(this, result);
+      if ( !result.IsEmpty() ) {
+         algoinfo[algoindex]->iconfile = result;
+         LoadIcons(algoindex);
+         UpdateFileName();
+         iconpanel15->Refresh(false);
+         iconpanel7->Refresh(false);
+      }
+   
+   } else if ( id == DEFAULT_BUTT ) {
+      // restore default icons
+      algoinfo[algoindex]->iconfile = wxEmptyString;
+      LoadIcons(algoindex);
+      UpdateFileName();
+      iconpanel15->Refresh(false);
+      iconpanel7->Refresh(false);
+   
+   } else {
+      // process other buttons like Cancel and OK
+      event.Skip();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool IconDialog::TransferDataFromWindow()
+{
+   // no need to do any validation
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+void ChangeIcons(algo_type algotype)
+{
+   AlgoData* ad = algoinfo[algotype];
+   wxString oldiconfile = ad->iconfile;
+
+   IconDialog dialog( wxGetApp().GetTopWindow(), algotype );
+   if ( dialog.ShowModal() == wxID_OK ) {
+      // no need to do anything
+   } else {
+      // user hit Cancel so restore icon file if it was changed
+      if (ad->iconfile != oldiconfile) {
+         ad->iconfile = oldiconfile;
+         LoadIcons(algotype);
+      }
+   }
 }

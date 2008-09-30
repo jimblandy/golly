@@ -1636,9 +1636,6 @@ void InvertCellColors()
                 255 - deadrgb->Green(),
                 255 - deadrgb->Blue());
    SetBrushesAndPens();
-   
-   // invert colors in all icons
-   //!!! InvertIconColors();
 }
 
 // -----------------------------------------------------------------------------
@@ -2245,11 +2242,12 @@ ColorDialog::ColorDialog(wxWindow* parent)
 void ColorDialog::CreateControls()
 {
    wxString note =
-           _("NOTE:  Changes made here are temporary and only affect the current layer\n");
-   note += _("and its clones.  If an algorithm or rule change causes the number of cell\n");
-   note += _("states to change then the colors will be reset to their default values.\n");
+           _("NOTE:  Changes made here are temporary and only affect the current layer ");
+   note += _("and its clones.  If an algorithm or rule change causes the number of cell ");
+   note += _("states to change then the colors will be reset to their default values.  ");
    note += _("Use Preferences > Color to change the default colors for each algorithm.");
    wxStaticText* notebox = new wxStaticText(this, wxID_STATIC, note);
+   notebox->Wrap(NUMCOLS * CELLSIZE + 1);
 
    // create bitmap buttons
    wxBoxSizer* frombox = new wxBoxSizer(wxHORIZONTAL);
@@ -2257,7 +2255,7 @@ void ColorDialog::CreateControls()
    AddColorButton(this, frombox, FROM_BUTT, &currlayer->fromrgb);
    AddColorButton(this, tobox, TO_BUTT, &currlayer->torgb);
 
-   wxButton* defbutt = new wxButton(this, DEFAULT_BUTT, _("Default"));
+   wxButton* defbutt = new wxButton(this, DEFAULT_BUTT, _("Default Colors"));
    wxButton* gradbutt = new wxButton(this, GRADIENT_BUTT, _("Create Gradient"));
    
    wxBoxSizer* gradbox = new wxBoxSizer(wxHORIZONTAL);
@@ -2315,8 +2313,8 @@ void ColorDialog::CreateControls()
    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
 
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-   topSizer->AddSpacer(20);
-   topSizer->Add(notebox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, HGAP);
+   topSizer->AddSpacer(10);
+   topSizer->Add(notebox, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(20);
    topSizer->Add(vbox, 0, wxGROW | wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(10);

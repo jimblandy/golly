@@ -975,9 +975,7 @@ void jvnalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("JvN") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.minstates = 29 ;
-   ai.maxstates = 32 ;                       // must set before calling createIconBitmaps
-   ai.createIconBitmaps(7, jvn7x7) ;
-   ai.createIconBitmaps(15, jvn15x15) ;
+   ai.maxstates = 32 ;
    // init default color scheme
    ai.defgradient = false;
    ai.defr1 = ai.defg1 = ai.defb1 = 255;     // start color = white
@@ -989,6 +987,9 @@ void jvnalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
       ai.defg[i] = *rgbptr++;
       ai.defb[i] = *rgbptr++;
    }
+   // init default icon data
+   ai.defxpm7x7 = jvn7x7;
+   ai.defxpm15x15 = jvn15x15;
 }
 
 // ------------------- beginning of Hutton32 section -----------------------

@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/menuitem.h"   // for SetText
 #include "wx/clipbrd.h"    // for wxTheClipboard
 #include "wx/dataobj.h"    // for wxTextDataObject
-#include "wx/image.h"      // for wxImage
 
 #include "bigint.h"
 #include "lifealgo.h"

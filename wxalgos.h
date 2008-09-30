@@ -45,7 +45,6 @@ typedef int algo_type;           // 0..MAX_ALGOS-1
 class AlgoData : public staticAlgoInfo {
 public:
    AlgoData();
-   virtual void createIconBitmaps(int, char**);
    virtual void setDefaultBaseStep(int v) { algobase = v; }
    virtual void setDefaultMaxMem(int v) { algomem = v; }
 
@@ -59,6 +58,7 @@ public:
    wxBrush* statusbrush;         // corresponding brush
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
+   wxString iconfile;            // path to file containing icons
    
    // default color scheme
    bool gradient;                // use color gradient?
@@ -87,5 +87,12 @@ const char* GetAlgoName(algo_type algotype);
 
 int NumAlgos();
 // Return current number of algorithms.
+
+void ChangeIcons(algo_type algotype);
+// Let user change icons for the given algorithm by loading bitmap images
+// from a BMP/GIF/PNG/TIFF file.
+
+void LoadIcons(algo_type algotype);
+// Load icons for given algorithm using iconfile.
 
 #endif

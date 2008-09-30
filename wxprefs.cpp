@@ -168,6 +168,7 @@ int mindelay = 250;              // minimum millisec delay (when warp = -1)
 int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
+wxString icondir;                // directory used by Load Icon File button
 wxString choosedir;              // directory used by Choose File button
 wxString patterndir;             // directory used by Show Patterns
 wxString scriptdir;              // directory used by Show Scripts
@@ -1297,10 +1298,9 @@ void SaveColor(FILE* f, const char* name, const wxColor* rgb)
 
 // -----------------------------------------------------------------------------
 
-void GetDirPath(const char* value, wxString& path, const wxString& defdir)
+void GetRelPath(const char* value, wxString& path, const wxString& defdir = wxEmptyString)
 {
    path = wxString(value, wxConvLocal);
-
    wxFileName fname(path);
 
    if (currversion < 4 && fname.IsAbsolute() && defdir.length() > 0) {
@@ -1316,13 +1316,15 @@ void GetDirPath(const char* value, wxString& path, const wxString& defdir)
    // if path isn't absolute then prepend Golly directory
    if (!fname.IsAbsolute()) path = gollydir + path;
 
-   // if path doesn't exist then reset to default directory
-   if (!wxFileName::DirExists(path)) path = gollydir + defdir;
+   if (defdir.length() > 0) {
+      // if path doesn't exist then reset to default directory
+      if (!wxFileName::DirExists(path)) path = gollydir + defdir;
+   }
 }
 
 // -----------------------------------------------------------------------------
 
-void SaveDirPath(FILE* f, const char* name, wxString path)
+void SaveRelPath(FILE* f, const char* name, wxString path)
 {
    // if given path is inside Golly directory then save as a relative path
    if (path.StartsWith(gollydir)) {
@@ -1454,7 +1456,7 @@ void SavePrefs()
       fprintf(f, "use_gradient=%d\n", algoinfo[i]->gradient ? 1 : 0);
       fputs("colors=", f);
       for (int state = 1; state < algoinfo[i]->maxstates; state++) {
-         // only write out state,r,g,b tuple if color is different
+         // only write out state,r,g,b tuple if color is different to default
          if (algoinfo[i]->algor[state] != algoinfo[i]->defr[state] ||
              algoinfo[i]->algog[state] != algoinfo[i]->defg[state] ||
              algoinfo[i]->algob[state] != algoinfo[i]->defb[state] ) {
@@ -1464,6 +1466,9 @@ void SavePrefs()
          }
       }
       fputs("\n", f);
+      if (algoinfo[i]->iconfile.length() > 0) {
+         SaveRelPath(f, "icon_file", algoinfo[i]->iconfile);
+      }
    }
    
    fputs("\n", f);
@@ -1525,11 +1530,12 @@ void SavePrefs()
    
    fputs("\n", f);
 
-   SaveDirPath(f, "open_save_dir", opensavedir);
-   SaveDirPath(f, "run_dir", rundir);
-   SaveDirPath(f, "choose_dir", choosedir);
-   SaveDirPath(f, "pattern_dir", patterndir);
-   SaveDirPath(f, "script_dir", scriptdir);
+   SaveRelPath(f, "open_save_dir", opensavedir);
+   SaveRelPath(f, "run_dir", rundir);
+   SaveRelPath(f, "icon_dir", icondir);
+   SaveRelPath(f, "choose_dir", choosedir);
+   SaveRelPath(f, "pattern_dir", patterndir);
+   SaveRelPath(f, "script_dir", scriptdir);
    
    fputs("\n", f);
 
@@ -1687,6 +1693,7 @@ void GetPrefs()
 
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
+   icondir = gollydir;
    choosedir = gollydir;
    patterndir = gollydir + PATT_DIR;
    scriptdir = gollydir + SCRIPT_DIR;
@@ -1910,6 +1917,12 @@ void GetPrefs()
             }
          }
 
+      } else if (strcmp(keyword, "icon_file") == 0) {
+         if (algoindex >= 0 && algoindex < NumAlgos()) {
+            GetRelPath(value, algoinfo[algoindex]->iconfile);
+            LoadIcons(algoindex);
+         }
+
       } else if (strcmp(keyword, "min_delay") == 0) {
          sscanf(value, "%d", &mindelay);
          if (mindelay < 0) mindelay = 0;
@@ -2068,11 +2081,12 @@ void GetPrefs()
       } else if (strcmp(keyword, "save_xrle") == 0) {
          savexrle = value[0] == '1';
 
-      } else if (strcmp(keyword, "open_save_dir") == 0) { GetDirPath(value, opensavedir, PATT_DIR);
-      } else if (strcmp(keyword, "run_dir") == 0)       { GetDirPath(value, rundir, SCRIPT_DIR);
-      } else if (strcmp(keyword, "choose_dir") == 0)    { GetDirPath(value, choosedir, wxEmptyString);
-      } else if (strcmp(keyword, "pattern_dir") == 0)   { GetDirPath(value, patterndir, PATT_DIR);
-      } else if (strcmp(keyword, "script_dir") == 0)    { GetDirPath(value, scriptdir, SCRIPT_DIR);
+      } else if (strcmp(keyword, "open_save_dir") == 0) { GetRelPath(value, opensavedir, PATT_DIR);
+      } else if (strcmp(keyword, "run_dir") == 0)       { GetRelPath(value, rundir, SCRIPT_DIR);
+      } else if (strcmp(keyword, "icon_dir") == 0)      { GetRelPath(value, icondir);
+      } else if (strcmp(keyword, "choose_dir") == 0)    { GetRelPath(value, choosedir);
+      } else if (strcmp(keyword, "pattern_dir") == 0)   { GetRelPath(value, patterndir, PATT_DIR);
+      } else if (strcmp(keyword, "script_dir") == 0)    { GetRelPath(value, scriptdir, SCRIPT_DIR);
 
       } else if (strcmp(keyword, "text_editor") == 0) {
          texteditor = wxString(value,wxConvLocal);
@@ -2211,7 +2225,7 @@ void CellBoxes::GetGradientColor(int state, unsigned char* r,
                                             unsigned char* g,
                                             unsigned char* b)
 {
-   // calculate gradient color for given state (> 0 and < maxstates)
+   // calculate gradient color for given state (> 0 and < gradstates)
    AlgoData* ad = algoinfo[coloralgo];
    if (state == 1) {
       *r = ad->fromrgb.Red();
@@ -2520,6 +2534,7 @@ enum {
    PREF_STATUS_BUTT,
    PREF_FROM_BUTT,
    PREF_TO_BUTT,
+   PREF_ICON_BUTT,
    PREF_DEAD_BUTT,
    PREF_SELECT_BUTT,
    PREF_PASTE_BUTT,
@@ -3667,6 +3682,8 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    seeicons = false;
    iconcheck->SetValue(seeicons);
 
+   wxButton* iconbutt = new wxButton(panel, PREF_ICON_BUTT, _("Load Icons"));
+
    wxStaticText* statebox = new wxStaticText(panel, PREF_STATE_BOX, _("999"));
    cellboxes->statebox = statebox;
    wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
@@ -3683,41 +3700,34 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    rgbbox->SetLabel(_(" "));
 
    wxBoxSizer* botbox = new wxBoxSizer(wxHORIZONTAL);
-   botbox->Add(new wxStaticText(panel, wxID_STATIC, _("State: ")),
-               0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(new wxStaticText(panel, wxID_STATIC, _("State: ")), 0, wxALIGN_CENTER_VERTICAL, 0);
    botbox->Add(hbox1, 0, wxALIGN_CENTER_VERTICAL, 0);
    botbox->Add(20, 0, 0);
-   botbox->Add(new wxStaticText(panel, wxID_STATIC, _("RGB: ")),
-               0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(new wxStaticText(panel, wxID_STATIC, _("RGB: ")), 0, wxALIGN_CENTER_VERTICAL, 0);
    botbox->Add(hbox2, 0, wxALIGN_CENTER_VERTICAL, 0);
    botbox->AddStretchSpacer();
    botbox->Add(iconcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
+   botbox->Add(iconbutt, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
    
    //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
    //!!! wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Cell colors:"));
    //!!! wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
    wxBoxSizer* ssizer1 = new wxBoxSizer(wxVERTICAL);
    
-   ssizer1->AddSpacer(10);//!!! SBTOPGAP
+   ssizer1->AddSpacer(10);
    ssizer1->Add(gradbox, 0, wxLEFT | wxRIGHT, 0);
    ssizer1->AddSpacer(8);
    ssizer1->Add(cellboxes, 0, wxLEFT | wxRIGHT, 0);
-   ssizer1->AddSpacer(5);
+   ssizer1->AddSpacer(8);
    ssizer1->Add(botbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
    ssizer1->AddSpacer(SBBOTGAP);
    
-   //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
-   //!!! wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY,
-   //!!!                                      _("Global colors used by all algorithms:"));
-   //!!! wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
-   wxStaticText* sbox2 = new wxStaticText(panel, wxID_STATIC,
-                                          _("Global colors used by all algorithms:"));
+   wxStaticText* sbox2 = new wxStaticText(panel, wxID_STATIC, _("Global colors used by all algorithms:"));
    wxBoxSizer* ssizer2 = new wxBoxSizer(wxVERTICAL);
    
-   ssizer2->Add(sbox2, 0, 0, 0);//!!! remove if we fix above bug
-   ssizer2->AddSpacer(10);//!!! SBTOPGAP
+   ssizer2->Add(sbox2, 0, 0, 0);
+   ssizer2->AddSpacer(10);
    ssizer2->Add(deadbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
-   //!!!ssizer2->AddSpacer(SBBOTGAP);
 
    vbox->AddSpacer(5);
    vbox->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
@@ -3800,11 +3810,6 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    vbox->Add(hbox0, 0, wxLEFT, LRGAP);
    vbox->AddSpacer(15);
    vbox->Add(midbox, 0, wxALIGN_CENTER, 0);
-   /* !!!???
-   vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
-   vbox->AddSpacer(15);
-   vbox->Add(hbox2, 0, wxLEFT, LRGAP);
-   */
    vbox->AddSpacer(30);
    vbox->Add(hbox3, 0, wxLEFT, LRGAP);
 
@@ -4009,6 +4014,11 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
             editorbox->SetLabel(neweditor);
          }
       }
+   }
+
+   if ( event.GetId() == PREF_ICON_BUTT ) {
+      ChangeIcons(coloralgo);
+      cellboxes->Refresh(false);
    }
 
    event.Skip();  // need this so other buttons work correctly
@@ -4417,7 +4427,8 @@ bool PrefsDialog::TransferDataFromWindow()
 // class for saving and restoring AlgoData color info in ChangePrefs()
 class SaveColorInfo {
 public:
-   SaveColorInfo(AlgoData* ad) {
+   SaveColorInfo(int algo) {
+      AlgoData* ad = algoinfo[algo];
       statusrgb = ad->statusrgb;
       gradient = ad->gradient;
       fromrgb = ad->fromrgb;
@@ -4427,9 +4438,11 @@ public:
          algog[i] = ad->algog[i];
          algob[i] = ad->algob[i];
       }
+      iconfile = ad->iconfile;
    }
 
-   void RestoreData(AlgoData* ad) {
+   void RestoreColorInfo(int algo) {
+      AlgoData* ad = algoinfo[algo];
       ad->statusrgb = statusrgb;
       ad->gradient = gradient;
       ad->fromrgb = fromrgb;
@@ -4438,6 +4451,10 @@ public:
          ad->algor[i] = algor[i];
          ad->algog[i] = algog[i];
          ad->algob[i] = algob[i];
+      }
+      if (iconfile != ad->iconfile) {
+         ad->iconfile = iconfile;
+         LoadIcons(algo);
       }
    }
    
@@ -4449,6 +4466,7 @@ public:
    unsigned char algor[256];
    unsigned char algog[256];
    unsigned char algob[256];
+   wxString iconfile;
 };
 
 // -----------------------------------------------------------------------------
@@ -4474,7 +4492,7 @@ bool ChangePrefs(const wxString& page)
    wxColor save_selectrgb = *selectrgb;
    SaveColorInfo* save_info[MAX_ALGOS];
    for (int i = 0; i < NumAlgos(); i++) {
-      save_info[i] = new SaveColorInfo(algoinfo[i]);
+      save_info[i] = new SaveColorInfo(i);
    }
 
    PrefsDialog dialog(mainptr, page);
@@ -4504,7 +4522,7 @@ bool ChangePrefs(const wxString& page)
       *pastergb = save_pastergb;
       *selectrgb = save_selectrgb;
       for (int i = 0; i < NumAlgos(); i++) {
-         save_info[i]->RestoreData(algoinfo[i]);
+         save_info[i]->RestoreColorInfo(i);
       }
 
       result = false;

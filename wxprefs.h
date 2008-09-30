@@ -117,6 +117,7 @@ extern int mindelay;             // minimum millisec delay (when warp = -1)
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
+extern wxString icondir;         // directory used by Load Icon File button
 extern wxString choosedir;       // directory used by Choose File button
 extern wxString patterndir;      // directory used by Show Patterns
 extern wxString scriptdir;       // directory used by Show Scripts
