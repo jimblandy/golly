@@ -105,6 +105,12 @@ wxString GetRuleName(const wxString& rulestring)
 
 // -----------------------------------------------------------------------------
 
+// global used in AlgoHelp and RuleDialog classes:
+
+static wxTextCtrl* ruletext;      // text box for user to type in rule
+
+// -----------------------------------------------------------------------------
+
 // define a html window for displaying algo help:
 
 class AlgoHelp : public wxHtmlWindow
@@ -171,6 +177,12 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
          if ( !wxLaunchDefaultBrowser(url) )
             Warning(_("Could not launch browser!"));
       #endif
+
+   } else if ( url.StartsWith(wxT("rule#")) ) {
+      // user clicked on special rule link, so copy rule into rule box
+      ruletext->SetValue( link.GetHref().After('#') );
+      ruletext->SetFocus();
+      ruletext->SetSelection(-1,-1);
 
    } else {
       // assume it's a link to a local target or another help file
@@ -352,15 +364,11 @@ private:
    void UpdateHelp();         // update algo help
 
    AlgoHelp* htmlwin;         // html window for displaying algo help
-
-   wxTextCtrl* ruletext;      // text box for user to type in rule
    wxTextCtrl* addtext;       // text box for user to type in name of rule
-
    wxChoice* algochoice;      // lists the known algorithms but can have one
                               // more item appended (UNKNOWN)
    wxChoice* namechoice;      // kept in sync with namedrules but can have one
                               // more item appended (UNNAMED)
-   
    int algoindex;             // current algochoice selection
    int nameindex;             // current namechoice selection
    bool ignore_text_change;   // prevent OnRuleTextChanged doing anything?
@@ -425,7 +433,7 @@ RuleDialog::RuleDialog(wxWindow* parent)
 
    // select all of rule text
    ruletext->SetFocus();
-   ruletext->SetSelection(0,999);   // wxMac bug: -1,-1 doesn't work here
+   ruletext->SetSelection(-1,-1);
 }
 
 // -----------------------------------------------------------------------------
