@@ -370,6 +370,7 @@ private:
    wxChoice* namechoice;      // kept in sync with namedrules but can have one
                               // more item appended (UNNAMED)
    int algoindex;             // current algochoice selection
+   int startalgo;             // look for a valid rule starting with this algo
    int nameindex;             // current namechoice selection
    bool ignore_text_change;   // prevent OnRuleTextChanged doing anything?
    bool expanded;             // help button has expanded dialog?
@@ -454,6 +455,7 @@ void RuleDialog::CreateControls()
    }
    algochoice = new wxChoice(this, RULE_ALGO, wxDefaultPosition, wxDefaultSize, algoarray);
    algoindex = currlayer->algtype;
+   startalgo = currlayer->algtype;
    algochoice->SetSelection(algoindex);
 
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
@@ -538,42 +540,53 @@ void RuleDialog::CreateControls()
 
 void RuleDialog::UpdateAlgo()
 {
-   // may need to change algochoice depending on current rule text
+   // may need to change selected algo depending on current rule text
+   lifealgo* tempalgo;
+   const char* err;
    wxString newrule = ruletext->GetValue();
    if (newrule.IsEmpty()) newrule = wxT("B3/S23");
    
-   lifealgo* tempalgo;
-   const char* err;
-   
-   if (algoindex < NumAlgos()) {
-      // try new rule in currently selected algo
-      tempalgo = CreateNewUniverse(algoindex);
-      err = tempalgo->setrule( newrule.mb_str(wxConvLocal) );
-      delete tempalgo;
-      if (!err) return;
+   // first try new rule in starting algo (NOT necessarily the currently selected algo);
+   // this ensures that typing in a rule achieves the same result as pasting a rule
+   tempalgo = CreateNewUniverse(startalgo);
+   err = tempalgo->setrule( newrule.mb_str(wxConvLocal) );
+   delete tempalgo;
+   if (!err) {
+      if (startalgo != algoindex) {
+         if (algoindex >= NumAlgos()) {
+            // remove UNKNOWN item from end of algochoice
+            algochoice->Delete( algochoice->GetCount() - 1 );
+         }
+         algoindex = startalgo;
+         algochoice->SetSelection(algoindex);
+         UpdateHelp();
+      }
+      return;
    }
    
-   // try new rule in all algos
+   // now try new rule in all the other algos
    int newindex;
    for (newindex = 0; newindex < NumAlgos(); newindex++) {
-      tempalgo = CreateNewUniverse(newindex);
-      err = tempalgo->setrule( newrule.mb_str(wxConvLocal) );
-      delete tempalgo;
-      if (!err) {
-         if (newindex != algoindex) {
-            if (algoindex >= NumAlgos()) {
-               // remove UNKNOWN item from end of algochoice
-               algochoice->Delete( algochoice->GetCount() - 1 );
+      if (newindex != startalgo) {
+         tempalgo = CreateNewUniverse(newindex);
+         err = tempalgo->setrule( newrule.mb_str(wxConvLocal) );
+         delete tempalgo;
+         if (!err) {
+            if (newindex != algoindex) {
+               if (algoindex >= NumAlgos()) {
+                  // remove UNKNOWN item from end of algochoice
+                  algochoice->Delete( algochoice->GetCount() - 1 );
+               }
+               algoindex = newindex;
+               algochoice->SetSelection(algoindex);
+               UpdateHelp();
             }
-            algoindex = newindex;
-            algochoice->SetSelection(algoindex);
-            UpdateHelp();
+            return;
          }
-         return;
       }
    }
 
-   // new rule is not valid in any algo
+   // get here if new rule is not valid in any algo
    if (algoindex < NumAlgos()) {
       // append UNKNOWN item and select it
       algochoice->Append(UNKNOWN);
@@ -665,6 +678,7 @@ void RuleDialog::OnChooseAlgo(wxCommandEvent& event)
    if (i >= 0 && i < NumAlgos() && i != algoindex) {
       int oldindex = algoindex;
       algoindex = i;
+      startalgo = i;    // user has explicitly changed the preferred algo
       
       // check if the current rule is valid in newly selected algo
       wxString thisrule = ruletext->GetValue();

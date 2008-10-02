@@ -21,8 +21,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
 
                         / ***/
+
 #include "ruletreealgo.h"
 #include "util.h"      // AKT: for lifegetgollydir() -- replace with lifegetrulesdir!!!???
+// for case-insensitive string comparison
+#include <string.h>
+#ifndef WIN32
+   #define stricmp strcasecmp
+#endif
 #include <vector>
 #include <cstdio>
 using namespace std ;
@@ -40,7 +46,10 @@ static const char *defaultRuleData[] = {
   "7 16 20", "4 17 17", "5 18 22", "6 19 23", "7 20 24", "8 21 25",
   "5 22 22", "6 23 27", "7 24 28", "8 25 29", "9 26 30", 0 } ;
 const char* ruletreealgo::setrule(const char* s) {
-   int isDefaultRule = (strcmp(s, DefaultRule()) == 0) ;
+   // AKT: nicer to check for different versions of default rule
+   int isDefaultRule = (stricmp(s, "B3/S23") == 0 ||
+                        stricmp(s, "B3S23") == 0 ||
+                        strcmp(s, "23/3") == 0) ;
    char strbuf[MAXFILELEN+1] ;
    FILE *f = 0 ;
    if (!isDefaultRule) {
