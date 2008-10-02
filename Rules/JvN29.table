@@ -1,3 +1,21 @@
+# Transitions rules for John von Neumann's 29 state CA.
+#
+# Automatically extracted using simple bottom-up merging 
+# from Golly's JvN29 implementation.
+# Tim Hutton <tim.hutton@gmail.com>
+#
+# states: 29
+# neighbourhood: von Neumann
+# variables: 45
+# rules: 103
+# format: C,N,E,S,W,C'
+# symmetries: none (no rotation/reflection)
+# remaining rules default: there shouldn't be any cases not covered
+#
+# Where a variable appears more than once in a rule, it is not constrained
+# to have the same value each time. 
+# e.g. for var a={1,2}: 1,a,a,0,2,0 is 4 rules, not 2.
+#
 n_states:29
 neighbourhood_size:5
 symmetries:none
