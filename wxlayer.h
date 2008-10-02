@@ -211,17 +211,17 @@ void CreateColorGradient();
 void UpdateCloneColors();
 // If current layer has clones then update their colors.
 
-void UpdateCellColors();
+void UpdateLayerColors();
 // Update the cell colors for the current layer (and its clones)
 // aaccording to the current algo and rule.  Must be called very soon
-// after an algo/rule change, and before the viewport is updated.
+// after any algo/rule change, and before the viewport is updated.
 
 void InvertCellColors();
 // Invert the cell colors in all layers, including the dead cell color,
 // grid lines, and the colors in all icon bitmaps.
 
 void SetLayerColors();
-// Let user change current layer's colors.
+// Open a dialog to change the current layer's colors.
 
 
 // Layer bar routines:

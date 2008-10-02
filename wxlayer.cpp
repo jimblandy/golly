@@ -1040,7 +1040,7 @@ void AddLayer()
       }
    } else {
       // set new layer's colors to default colors for current algo+rule
-      UpdateCellColors();
+      UpdateLayerColors();
    }
    
    numlayers++;
@@ -1575,7 +1575,6 @@ void UpdateCloneColors()
 
 void UpdateCurrentColors()
 {
-   // reset current layer's colors to current algo's default colors
    AlgoData* ad = algoinfo[currlayer->algtype];
    int maxstate = currlayer->algo->NumCellStates() - 1;
    
@@ -1606,9 +1605,9 @@ void UpdateCurrentColors()
 
 // -----------------------------------------------------------------------------
 
-void UpdateCellColors()
+void UpdateLayerColors()
 {
-   // reset current layer's colors to current algo's default colors
+   // set current layer's default colors according to current algo and rule
    UpdateCurrentColors();
    
    // if current layer has clones then update their colors
@@ -2242,10 +2241,9 @@ ColorDialog::ColorDialog(wxWindow* parent)
 void ColorDialog::CreateControls()
 {
    wxString note =
-           _("NOTE:  Changes made here are temporary and only affect the current layer ");
-   note += _("and its clones.  If an algorithm or rule change causes the number of cell ");
-   note += _("states to change then the colors will be reset to their default values.  ");
-   note += _("Use Preferences > Color to change the default colors for each algorithm.");
+           _("NOTE:  Changes made here are temporary and only affect the current layer and ");
+   note += _("its clones.  Any algorithm or rule change will reset the colors to their ");
+   note += _("default values.  Use Preferences > Color to change the default colors.");
    wxStaticText* notebox = new wxStaticText(this, wxID_STATIC, note);
    notebox->Wrap(NUMCOLS * CELLSIZE + 1);
 
@@ -2411,9 +2409,9 @@ void ColorDialog::OnButton(wxCommandEvent& event)
       cellpanel->Refresh(false);
    
    } else if ( id == DEFAULT_BUTT ) {
-      // change current layer's colors to algo's default colors;
-      // do NOT call UpdateCellColors() here because we don't want to
-      // change clone layers at this stage (in case user cancels dialog)
+      // restore current layer's default colors, but don't call UpdateLayerColors
+      // here because we don't want to change any clone layers at this stage
+      // (in case user cancels dialog)
       UpdateCurrentColors();
       UpdateButtonColor(FROM_BUTT, &currlayer->fromrgb);
       UpdateButtonColor(TO_BUTT, &currlayer->torgb);

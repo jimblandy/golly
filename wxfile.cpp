@@ -298,9 +298,9 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
       UpdateStatus();
    }
 
-   // save current rule so we can restore it below
+   // save current algo and rule
+   algo_type oldalgo = currlayer->algtype;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   int oldnumstates = currlayer->algo->NumCellStates();
    
    // delete old universe and create new one of same type
    delete currlayer->algo;
@@ -319,12 +319,11 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
    if (LoadImage(path)) {
       viewptr->nopattupdate = false;
    } else {
-      algo_type oldalgtype = currlayer->algtype;
       const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
       if (err) {
          // cycle thru all other algos until readpattern succeeds
          for (int i = 0; i < NumAlgos(); i++) {
-            if (i != oldalgtype) {
+            if (i != oldalgo) {
                currlayer->algtype = i;
                delete currlayer->algo;
                currlayer->algo = CreateNewUniverse(currlayer->algtype);
@@ -336,7 +335,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
          viewptr->nopattupdate = false;
          if (err) {
             // no algo could read pattern so restore original algo and rule
-            currlayer->algtype = oldalgtype;
+            currlayer->algtype = oldalgo;
             delete currlayer->algo;
             currlayer->algo = CreateNewUniverse(currlayer->algtype);
             currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
@@ -352,9 +351,10 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
    
-      // restore default colors if new algo/rule changed the number of states
-      if (oldnumstates != currlayer->algo->NumCellStates()) {
-         UpdateCellColors();
+      // switch to default colors if algo/rule changed
+      wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+      if (oldalgo != currlayer->algtype || oldrule != newrule) {
+         UpdateLayerColors();
       }
 
       if (openremovesel) currlayer->currsel.Deselect();

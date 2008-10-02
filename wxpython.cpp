@@ -2259,7 +2259,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
    int len = PyList_Size(color_list);
    if (len == 0) {
       // restore default colors in current layer and its clones
-      UpdateCellColors();
+      UpdateLayerColors();
    } else if (len == 6) {
       // create gradient from r1,g1,b1 to r2,g2,b2
       int r1 = PyInt_AsLong( PyList_GetItem(color_list, 0) );

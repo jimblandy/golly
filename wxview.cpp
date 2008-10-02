@@ -601,7 +601,6 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    
    // pasting clipboard pattern can also cause a rule change
    if (canchangerule > 0 && oldrule != newrule) {
-      int oldnumstates = currlayer->algo->NumCellStates();
       const char* err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
       // setrule can fail if readclipboard loaded clipboard pattern into
       // a different type of algo
@@ -609,10 +608,8 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          curralgo->setrule( oldrule.mb_str(wxConvLocal) );
          Warning(_("Paste could not change rule:\n") + wxString(err,wxConvLocal));
       } else {
-         if (oldnumstates != currlayer->algo->NumCellStates()) {
-            // restore default colors if new rule has different number of states
-            UpdateCellColors();
-         }
+         // switch to default colors for new rule
+         UpdateLayerColors();
          // show new rule in title bar
          mainptr->SetWindowTitle(wxEmptyString);
          if (savecells) currlayer->undoredo->RememberRuleChange(oldrule);

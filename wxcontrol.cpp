@@ -166,7 +166,9 @@ void MainFrame::ResetPattern(bool resetundo)
       currlayer->undoredo->RememberGenStart();
    }
 
-   int oldnumstates = currlayer->algo->NumCellStates();
+   // save current algo and rule
+   algo_type oldalgo = currlayer->algtype;
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    
    // restore pattern and settings saved by SaveStartingPattern;
    // first restore step size, algorithm and starting pattern
@@ -214,9 +216,10 @@ void MainFrame::ResetPattern(bool resetundo)
    // restore selection
    currlayer->currsel = currlayer->startsel;
 
-   // restore default colors if new algo/rule changed the number of states
-   if (oldnumstates != currlayer->algo->NumCellStates()) {
-      UpdateCellColors();
+   // switch to default colors if algo/rule changed
+   wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   if (oldalgo != currlayer->algtype || oldrule != newrule) {
+      UpdateLayerColors();
    }
 
    // update window title in case currname, rule or dirty flag changed;
@@ -906,13 +909,13 @@ void MainFrame::ShowRuleDialog()
       return;
    }
 
-   algo_type oldalgotype = currlayer->algtype;
+   algo_type oldalgo = currlayer->algtype;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
    if (ChangeRule()) {
       // if ChangeAlgorithm was called then we're done
-      if (currlayer->algtype != oldalgotype) {
+      if (currlayer->algtype != oldalgo) {
          // except we have to call UpdateEverything here now that the
          // main window is active
          UpdateEverything();
@@ -979,10 +982,9 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    
    bool rulechanged = false;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   int oldnumstates = currlayer->algo->NumCellStates();
 
    // change algorithm type and update status bar immediately
-   algo_type oldalgotype = currlayer->algtype;
+   algo_type oldalgo = currlayer->algtype;
    currlayer->algtype = newalgotype;
    currlayer->warp = 0;
    UpdateStatus();
@@ -1075,10 +1077,8 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    currlayer->algo = newalgo;   
    SetGenIncrement();
    
-   // restore default colors if new algo/rule changed the number of states
-   if (oldnumstates != currlayer->algo->NumCellStates()) {
-      UpdateCellColors();
-   }
+   // switch to default colors for new algo+rule
+   UpdateLayerColors();
 
    if (!inundoredo) {
       if (rulechanged) {
@@ -1123,6 +1123,6 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    }
 
    if (savechanges) {
-      currlayer->undoredo->RememberAlgoChange(oldalgotype, oldrule);
+      currlayer->undoredo->RememberAlgoChange(oldalgo, oldrule);
    }
 }

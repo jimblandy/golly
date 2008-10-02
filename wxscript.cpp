@@ -233,12 +233,10 @@ const char* GSF_setrule(char* rulestring)
          mainptr->ReduceCellStates(newmaxstate);
       }
 
-      if (oldmaxstate != newmaxstate) {
-         // restore default colors if new rule has different number of states
-         UpdateCellColors();
-      }
+      // switch to default colors for new rule
+      UpdateLayerColors();
 
-      // pattern might have changed or new rule might have changed colors
+      // pattern might have changed or colors might have changed
       DoAutoUpdate();
       
       if (allowundo && !currlayer->stayclean) {

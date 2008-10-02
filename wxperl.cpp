@@ -2366,7 +2366,7 @@ XS(pl_setcolors)
    int len = av_len(inarray) + 1;
    if (len == 0) {
       // restore default colors in current layer and its clones
-      UpdateCellColors();
+      UpdateLayerColors();
    } else if (len == 6) {
       // create gradient from r1,g1,b1 to r2,g2,b2
       int r1 = SvIV( *av_fetch(inarray, 0, 0) );

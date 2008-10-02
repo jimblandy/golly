@@ -917,13 +917,10 @@ bool RuleDialog::TransferDataFromWindow()
    
    if (algoindex == currlayer->algtype) {
       // new rule should be valid in current algorithm
-      int oldnumstates = currlayer->algo->NumCellStates();
       const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
       if (!err) {
-         if (oldnumstates != currlayer->algo->NumCellStates()) {
-            // restore default colors if new rule has different number of states
-            UpdateCellColors();
-         }
+         // switch to default colors for new rule
+         UpdateLayerColors();
          return true;
       }
       Warning(_("Bug detected in TransferDataFromWindow!"));
