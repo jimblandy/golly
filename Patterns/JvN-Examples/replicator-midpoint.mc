@@ -9,7 +9,7 @@
 #C   moving, to see the construction process.  You may want to increase
 #C   the JvN algorithm's memory limit (via Preferences > Control).
 #C
-#R JvN-29
+#R JvN29
 #G 174603710464
 1 9 9 10 0
 2 0 0 0 1

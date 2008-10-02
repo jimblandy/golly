@@ -9,7 +9,7 @@
 #C   insufficient to see this operate smoothly; you should increase
 #C   the hash memory size setting if your machine has more than 500MB.
 #C
-#R JvN-29
+#R JvN29
 #G 261467406336
 1 0 0 9 12
 1 12 11 12 9

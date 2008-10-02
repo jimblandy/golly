@@ -8,7 +8,7 @@
 #C   and so on.  First demonstrated working self-replicator in 29-state
 #C   JVN automata.  Zoom in on the left to see the machine itself.
 #C
-#R JvN-29
+#R JvN29
 1 9 9 10 0
 2 0 0 0 1
 1 10 0 10 0
