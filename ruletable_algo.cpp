@@ -125,7 +125,7 @@ const char *defaultRuleData[] = {
  */
 struct freeme {
   freeme(ifstream *pp) : p(pp) {}
-  //  ~freeme() { if (p) delete p ; }
+  ~freeme() { if (p) delete p ; }   // AKT: why was this commented out?
   ifstream *p ;
 } ;
 string ruletable_algo::LoadRuleTable(string rule)
@@ -139,25 +139,25 @@ string ruletable_algo::LoadRuleTable(string rule)
    const string withRotations_symmetry_keyword = "withRotations";
    const string none_symmetry_keyword = "none";
 
-   // AKT: we need to prepend the full path to Golly because when it runs
-   // a script it temporarily changes the cwd to the location of the script
    int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0) ;
    string line ;
    ifstream *in = 0 ;
    freeme freeme(0) ;
    int lineno = 0 ;
    if (!isDefaultRule) {
-     string full_filename = lifegetgollydir() + folder ;
-     int istart = full_filename.size() ;
-     full_filename += rule + ".table" ;
-     for (unsigned int i=istart; i<full_filename.size(); i++)
-       if (full_filename[i] == '/' || full_filename[i] == '\\' ||
-           full_filename[i] == ':')
+      // AKT: we need to prepend the full path to Golly because when it runs
+      // a script it temporarily changes the cwd to the location of the script
+      string full_filename = lifegetgollydir() + folder ;
+      int istart = full_filename.size() ;
+      full_filename += rule + ".table" ;
+      for (unsigned int i=istart; i<full_filename.size(); i++)
+         if (full_filename[i] == '/' || full_filename[i] == '\\' ||
+            full_filename[i] == ':')
          full_filename[i] = '-' ;
-     in = new ifstream(full_filename.c_str());
-     freeme.p = in ; // make sure it goes away if we return with an error
-     if(in == 0 || !in->good()) 
-       return "Failed to open file: "+full_filename;
+      in = new ifstream(full_filename.c_str());
+      freeme.p = in ; // make sure it goes away if we return with an error
+      if (in == 0 || !in->good()) 
+         return "Failed to open file: "+full_filename;
    } else {
    }
    this->neighbourhood_size = 5; // default
@@ -358,7 +358,7 @@ void ruletable_algo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("RuleTable") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.minstates = 2 ;
-   ai.maxstates = 256 ;                // AKT: was 255
+   ai.maxstates = 256 ;
    // init default color scheme
    ai.defgradient = true;              // use gradient
    ai.defr1 = 255;                     // start color = red

@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 #include "ruletreealgo.h"
-#include "util.h"      // AKT: for lifegetgollydir()
+#include "util.h"      // AKT: for lifegetgollydir() -- replace with lifegetrulesdir!!!???
 #include <vector>
 #include <cstdio>
 using namespace std ;
@@ -84,10 +84,14 @@ const char* ruletreealgo::setrule(const char* s) {
           sscanf(strbuf, " num_nodes = %d", &mnum_nodes) != 1) {
          if (mnum_states < 2 || mnum_states > 256 ||
              (mnum_neighbors != 4 && mnum_neighbors != 8) ||
-             mnum_nodes < mnum_neighbors || mnum_nodes > 100000000)
+             mnum_nodes < mnum_neighbors || mnum_nodes > 100000000) {
+            if (!isDefaultRule) fclose(f) ; // AKT
             return "Bad basic values" ;
-         if (strbuf[0] < '1' || strbuf[0] > '0' + 1 + mnum_neighbors)
+         }
+         if (strbuf[0] < '1' || strbuf[0] > '0' + 1 + mnum_neighbors) {
+            if (!isDefaultRule) fclose(f) ; // AKT
             return "Bad line in ruletree file 1" ;
+         }
          lev = strbuf[0] - '0' ;
          int vcnt = 0 ;
          char *p = strbuf + 1 ;
@@ -96,27 +100,35 @@ const char* ruletreealgo::setrule(const char* s) {
          else
             noff.push_back(dat.size()) ;
          while (*p) {
-           while (*p && *p <= ' ')
-             p++ ;
-           int v = 0 ;
-           while (*p > ' ') {
-             if (*p < '0' || *p > '9')
-               return "Bad line in ruletree file 2" ;
-             v = v * 10 + *p++ - '0' ;
-           }
-           if (lev == 1) {
-             if (v < 0 || v >= mnum_states)
-               return "Bad state value in ruletree file" ;
-             datb.push_back((state)v) ;
-           } else {
-             if (v < 0 || ((unsigned int)v) >= noff.size())
-               return "Bad node value in ruletree file" ;
-             dat.push_back(noff[v]) ;
-           }
-           vcnt++ ;
+            while (*p && *p <= ' ')
+               p++ ;
+            int v = 0 ;
+            while (*p > ' ') {
+               if (*p < '0' || *p > '9') {
+                  if (!isDefaultRule) fclose(f) ; // AKT
+                  return "Bad line in ruletree file 2" ;
+               }
+               v = v * 10 + *p++ - '0' ;
+            }
+            if (lev == 1) {
+               if (v < 0 || v >= mnum_states) {
+                  if (!isDefaultRule) fclose(f) ; // AKT
+                  return "Bad state value in ruletree file" ;
+               }
+               datb.push_back((state)v) ;
+            } else {
+               if (v < 0 || ((unsigned int)v) >= noff.size()) {
+                  if (!isDefaultRule) fclose(f) ; // AKT
+                  return "Bad node value in ruletree file" ;
+               }
+               dat.push_back(noff[v]) ;
+            }
+            vcnt++ ;
          }
-         if (vcnt != mnum_states)
+         if (vcnt != mnum_states) {
+            if (!isDefaultRule) fclose(f) ; // AKT
             return "Bad number of values on ruletree line" ;
+         }
       }
    }
    if (!isDefaultRule)
@@ -188,7 +200,7 @@ void ruletreealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("RuleTree") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.minstates = 2 ;
-   ai.maxstates = 256 ;                // AKT: was 255
+   ai.maxstates = 256 ;
    // init default color scheme
    ai.defgradient = true;              // use gradient
    ai.defr1 = 255;                     // start color = red
