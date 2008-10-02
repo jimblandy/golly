@@ -7,7 +7,7 @@
 # rules: 27
 #
 n_states:4
-neighbourhood_size:9
+neighborhood_size:9
 symmetries:withRotations
 var a={0,1,2,3}
 var b={0,2,3}

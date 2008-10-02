@@ -11,7 +11,7 @@
 # format: CNESWC'
 #
 n_states:6
-neighbourhood_size:5
+neighborhood_size:5
 symmetries:withRotations
 000000
 000010

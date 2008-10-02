@@ -29,7 +29,7 @@
 # symmetry: none (no rotation/reflection)
 #
 n_states:10
-neighbourhood_size:9
+neighborhood_size:9
 symmetries:none
 var a={5,6,7,8,9}
 var b={1,2}

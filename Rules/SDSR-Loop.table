@@ -20,7 +20,7 @@
 # format: CNESWC'
 #
 n_states:9
-neighbourhood_size:5
+neighborhood_size:5
 symmetries:withRotations
 var a={0,8}
 var b={0,2,3,4,5,8}

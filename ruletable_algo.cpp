@@ -133,7 +133,7 @@ string ruletable_algo::LoadRuleTable(string rule)
    const string folder = "Rules/";
    const string comment_keyword = "#";
    const string symmetries_keyword = "symmetries:";
-   const string neighbourhood_size_keyword = "neighbourhood_size:";
+   const string neighbourhood_size_keyword = "neighborhood_size:";
    const string n_states_keyword = "n_states:";
    const string variable_keyword = "var ";
    const string withRotations_symmetry_keyword = "withRotations";
@@ -179,7 +179,7 @@ string ruletable_algo::LoadRuleTable(string rule)
       }
       lineno++ ;
       int allws = 1 ;
-      for (int i=0; i<line.size(); i++)
+      for (unsigned int i=0; i<line.size(); i++)
 	if (line[i] > ' ') {
 	  allws = 0 ;
 	  break ;
@@ -236,7 +236,7 @@ string ruletable_algo::LoadRuleTable(string rule)
         {
 		   // if there are single-digit states and no variables then use compressed form
 		   // e.g. 012345 for 0,1,2,3,4 -> 5
-		   if(line.length() != this->neighbourhood_size+1)
+		   if(line.length() < this->neighbourhood_size+1) // TJH: allowing for comments after the rule
 			   return "Error reading line: "+line;
 		   for(unsigned int i=0;i<this->neighbourhood_size;i++)
 		   {
@@ -252,11 +252,11 @@ string ruletable_algo::LoadRuleTable(string rule)
         }
         else 
 		{
-           vector<string> tokens = tokenize(line,",");
-		   if(tokens.size() != this->neighbourhood_size+1)
+           vector<string> tokens = tokenize(line,", #\t");
+		   if(tokens.size() < this->neighbourhood_size+1)
 		   {
 			   ostringstream oss;
-			   oss << "Error reading transition line, wrong number of entries (" << tokens.size() << ", expected " <<
+			   oss << "Error reading transition line, too few entries (" << tokens.size() << ", expected " <<
 				   (this->neighbourhood_size+1) << ") on line: " << line;
 			   return oss.str();
 		   }
