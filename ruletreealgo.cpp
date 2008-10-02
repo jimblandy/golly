@@ -31,29 +31,51 @@ int ruletreealgo::NumCellStates() {
 }
 const char *rulefolder = "Rules" ; /* should be in util */
 const int MAXFILELEN = 4096 ;
-using namespace std ;
+/* provide the ability to load the default rule without requiring a file */
+static const char *defaultRuleData[] = {
+  "num_states=2", "num_neighbors=8", "num_nodes=32",
+  "1 0 0", "2 0 0", "1 0 1", "2 0 2", "3 1 3", "1 1 1", "2 2 5", "3 3 6",
+  "4 4 7", "2 5 0", "3 6 9", "4 7 10", "5 8 11", "3 9 1", "4 10 13",
+  "5 11 14", "6 12 15", "3 1 1", "4 13 17", "5 14 18", "6 15 19",
+  "7 16 20", "4 17 17", "5 18 22", "6 19 23", "7 20 24", "8 21 25",
+  "5 22 22", "6 23 27", "7 24 28", "8 25 29", "9 26 30", 0 } ;
 const char* ruletreealgo::setrule(const char* s) {
-   if (strlen(s) >= (unsigned int)MAXRULESIZE)
-      return "Rule length too long" ;
-   const char *gollydir = lifegetgollydir() ;
-   if (strlen(gollydir) + strlen(rulefolder) + strlen(s) + 15 >
-                                                   (unsigned int)MAXFILELEN)
-      return "Path too long" ;
+   int isDefaultRule = (strcmp(s, DefaultRule()) == 0) ;
    char strbuf[MAXFILELEN+1] ;
-   sprintf(strbuf, "%s%s/%s.tree", gollydir, rulefolder, s) ;
-   /* change "dangerous" characters to hyphens */
-   for (char *p=strbuf + strlen(gollydir) + strlen(rulefolder) + 1; *p; p++)
-     if (*p == '/' || *p == '\\' || *p == ':')
-       *p = '-' ;
-   FILE *f = fopen(strbuf, "r") ;
-   if (f == 0)
-      return "File not found" ;
+   FILE *f = 0 ;
+   if (!isDefaultRule) {
+      if (strlen(s) >= (unsigned int)MAXRULESIZE)
+         return "Rule length too long" ;
+      const char *gollydir = lifegetgollydir() ;
+      if (strlen(gollydir) + strlen(rulefolder) + strlen(s) + 15 >
+                                                   (unsigned int)MAXFILELEN)
+         return "Path too long" ;
+      sprintf(strbuf, "%s%s/%s.tree", gollydir, rulefolder, s) ;
+      /* change "dangerous" characters to hyphens */
+      for (char *p=strbuf + strlen(gollydir) + strlen(rulefolder) + 1; *p; p++)
+        if (*p == '/' || *p == '\\' || *p == ':')
+          *p = '-' ;
+      f = fopen(strbuf, "r") ;
+      if (f == 0)
+         return "File not found" ;
+   } else {
+   }
+   int lineno = 0 ;
    int mnum_states=-1, mnum_neighbors=-1, mnum_nodes=-1 ;
    vector<int> dat ;
    vector<state> datb ;
    vector<int> noff ;
    int lev = 1000 ;
-   while (fgets(strbuf, MAXFILELEN, f)) {
+   for (;;) {
+      if (isDefaultRule) {
+         if (defaultRuleData[lineno] == 0)
+            break ;
+         strcpy(strbuf, defaultRuleData[lineno]) ;
+      } else {
+         if (fgets(strbuf, MAXFILELEN, f) == 0)
+            break ;
+      }
+      lineno++ ;
       while (strbuf[0] && strbuf[strlen(strbuf)-1] <= ' ')
          strbuf[strlen(strbuf)-1] = 0 ;
       if (strbuf[0] != '#' && strbuf[0] != 0 &&
@@ -97,7 +119,8 @@ const char* ruletreealgo::setrule(const char* s) {
             return "Bad number of values on ruletree line" ;
       }
    }
-   fclose(f) ;
+   if (!isDefaultRule)
+      fclose(f) ;
    if (dat.size() + datb.size() != (unsigned int)(mnum_nodes * mnum_states))
       return "Bad count of values in ruletree file" ;
    if (lev != mnum_neighbors + 1)
@@ -121,7 +144,6 @@ const char* ruletreealgo::setrule(const char* s) {
    b = nb ;
    base = noff[noff.size()-1] ;
    maxCellStates = num_states ;
-   fprintf(stderr, "Numstates is %d\n", mnum_states) ;
    ghashbase::setrule(s);
    strcpy(rule, s) ;
    return 0 ;
@@ -131,7 +153,7 @@ const char* ruletreealgo::getrule() {
 }
 
 const char* ruletreealgo::DefaultRule() {
-   return "Life" ;
+   return "B3/S23" ;
 }
 
 ruletreealgo::ruletreealgo() : ghashbase(), a(0), base(0), b(0),

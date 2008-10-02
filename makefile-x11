@@ -11,7 +11,7 @@ WX_DIR = ~/wxX11-2.8.4
 
 VERSION = 2.0b
 RELEASENAME = golly-$(VERSION)
-SHAREDFILES = Help Patterns Scripts README LICENSE
+SHAREDFILES = Help Patterns Scripts Rules README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 BINFILES = golly bgolly
