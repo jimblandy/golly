@@ -48,7 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
 #include "wxrender.h"      // for DrawOneIcon
-#include "wxprefs.h"       // for initrule, swapcolors, etc
+#include "wxprefs.h"       // for initrule, swapcolors, rulesdir, etc
 #include "wxscript.h"      // for inscript
 #include "wxundo.h"        // for UndoRedo, etc
 #include "wxalgos.h"       // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
@@ -992,6 +992,22 @@ void UpdateLayerNames()
 
 // -----------------------------------------------------------------------------
 
+static wxBitmap** CopyIcons(wxBitmap** srcicons, int size, int maxstate)
+{
+   wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+   if (iconptr) {
+      wxRect rect(0, 0, size, size);
+      for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+      for (int i = 1; i <= maxstate; i++) {
+         if (srcicons && srcicons[i])
+            iconptr[i] = new wxBitmap(srcicons[i]->GetSubBitmap(rect));
+      }
+   }
+   return iconptr;
+}
+
+// -----------------------------------------------------------------------------
+
 void AddLayer()
 {
    if (numlayers >= MAX_LAYERS) return;
@@ -1038,8 +1054,18 @@ void AddLayer()
          currlayer->cellg[n] = oldlayer->cellg[n];
          currlayer->cellb[n] = oldlayer->cellb[n];
       }
+      if (cloning) {
+         // use same icon pointers
+         currlayer->icons15x15 = oldlayer->icons15x15;
+         currlayer->icons7x7 = oldlayer->icons7x7;
+      } else {
+         // duplicate icons from old layer
+         int maxstate = currlayer->algo->NumCellStates() - 1;
+         currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
+         currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, 7, maxstate);
+      }
    } else {
-      // set new layer's colors to default colors for current algo+rule
+      // set new layer's colors+icons to default colors+icons for current algo+rule
       UpdateLayerColors();
    }
    
@@ -1566,6 +1592,9 @@ void UpdateCloneColors()
                cloneptr->cellg[n] = currlayer->cellg[n];
                cloneptr->cellb[n] = currlayer->cellb[n];
             }
+            // use same icon pointers
+            cloneptr->icons15x15 = currlayer->icons15x15;
+            cloneptr->icons7x7 = currlayer->icons7x7;
          }
       }
    }
@@ -1573,24 +1602,107 @@ void UpdateCloneColors()
 
 // -----------------------------------------------------------------------------
 
+static void LoadRuleColors(const wxString& rule, int maxstate)
+{
+   // if rule.colors exists in rulesdir then change colors according to info in file
+   wxString path = rulesdir + rule;
+   path += _(".colors");
+   FILE* f = fopen(path.mb_str(wxConvLocal), "r");
+   if (f) {
+      const int MAXLINELEN = 512;
+      char buf[MAXLINELEN + 1];
+      while (fgets(buf, MAXLINELEN, f) != 0) {
+         if (buf[0] == '#' || buf[0] == '\n') {
+            // skip comment or empty line
+         } else {
+            // look for "color" or "gradient" keyword at start of line
+            char* keyword = buf;
+            char* value;
+            while (*keyword == ' ') keyword++;
+            value = keyword;
+            while (*value >= 'a' && *value <= 'z') value++;
+            while (*value == ' ' || *value == '=') value++;
+            if (strncmp(keyword, "color", 5) == 0) {
+               int state, r, g, b;
+               if (sscanf(value, "%d%d%d%d", &state, &r, &g, &b) == 4) {
+                  if (state > 0 && state <= maxstate) {
+                     currlayer->cellr[state] = r;
+                     currlayer->cellg[state] = g;
+                     currlayer->cellb[state] = b;
+                  }
+               };
+            } else if (strncmp(keyword, "gradient", 8) == 0) {
+               int r1, g1, b1, r2, g2, b2;
+               if (sscanf(value, "%d%d%d%d%d%d", &r1, &g1, &b1, &r2, &g2, &b2) == 6) {
+                  currlayer->fromrgb.Set(r1, g1, b1);
+                  currlayer->torgb.Set(r2, g2, b2);
+                  CreateColorGradient();
+               };
+            }
+         }
+      }
+      fclose(f);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static bool LoadRuleIcons(const wxString& rule, int maxstate)
+{
+   // deallocate current layer's old icons if they exist
+   if (currlayer->icons15x15) {
+      for (int i = 0; i < 256; i++) delete currlayer->icons15x15[i];
+      free(currlayer->icons15x15);
+      currlayer->icons15x15 = NULL;
+   }
+   if (currlayer->icons7x7) {
+      for (int i = 0; i < 256; i++) delete currlayer->icons7x7[i];
+      free(currlayer->icons7x7);
+      currlayer->icons7x7 = NULL;
+   }
+
+   // if rule.icons exists in rulesdir then load icons for current layer
+   wxString path = rulesdir + rule;
+   path += _(".icons");
+   return wxFileName::FileExists(path) &&
+          LoadIconFile(path, maxstate, &currlayer->icons15x15, &currlayer->icons7x7);
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateCurrentColors()
 {
+   // set current layer's colors and icons according to current algo and rule
    AlgoData* ad = algoinfo[currlayer->algtype];
    int maxstate = currlayer->algo->NumCellStates() - 1;
-   
-   // these colors are used in CreateColorGradient and SetLayerColors
+
+   // copy default colors from current algo
    currlayer->fromrgb = ad->fromrgb;
    currlayer->torgb = ad->torgb;
-
    if (ad->gradient) {
       CreateColorGradient();
    } else {
-      // set cell colors to algo's default colors
       for (int n = 1; n <= maxstate; n++) {
          currlayer->cellr[n] = ad->algor[n];
          currlayer->cellg[n] = ad->algog[n];
          currlayer->cellb[n] = ad->algob[n];
       }
+   }
+   
+   wxString rule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   // replace any '\' and '/' and ':' chars with '-'
+   rule.Replace(wxT("\\"), wxT("-"));
+   rule.Replace(wxT("/"), wxT("-"));
+   rule.Replace(wxT(":"), wxT("-"));
+   
+   // check if rule.colors file exists and override default colors
+   LoadRuleColors(rule, maxstate);
+   
+   // update icons
+   if ( !LoadRuleIcons(rule, maxstate) ) {
+      // copy default icons from current algo
+      currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
+      currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
    }
    
    if (swapcolors) {
@@ -1607,7 +1719,6 @@ void UpdateCurrentColors()
 
 void UpdateLayerColors()
 {
-   // set current layer's default colors according to current algo and rule
    UpdateCurrentColors();
    
    // if current layer has clones then update their colors
@@ -1636,74 +1747,6 @@ void InvertCellColors()
                 255 - deadrgb->Blue());
    SetBrushesAndPens();
 }
-
-// -----------------------------------------------------------------------------
-
-/*!!! no need for this routine if we automatically colorize monochrome icons
-void InvertIconColors()
-{
-   // invert non-black colors in all icon bitmaps
-   for (int a = 0; a < NumAlgos(); a++) {
-      for (int count = 0; count < 2; count++) {
-         wxBitmap** iconmaps;
-         int cellsize;
-         if (count == 0) {
-            iconmaps = algoinfo[a]->icons7x7;
-            cellsize = 7;
-         } else {
-            iconmaps = algoinfo[a]->icons15x15;
-            cellsize = 15;
-         }
-         if (iconmaps) {
-            for (int n = 1; n < algoinfo[a]->maxstates; n++) {
-               if (iconmaps[n]) {
-                  #ifdef __WXMSW__
-                     // must use wxNativePixelData for bitmaps with no alpha channel
-                     wxNativePixelData icondata(*iconmaps[n]);
-                  #else
-                     wxAlphaPixelData icondata(*iconmaps[n]);
-                  #endif
-                  if (icondata) {
-                     #ifdef __WXMSW__
-                        wxNativePixelData::Iterator iconpxl(icondata);
-                     #else
-                        wxAlphaPixelData::Iterator iconpxl(icondata);
-                     #endif
-                     for (int i = 0; i < cellsize; i++) {
-                        #ifdef __WXMSW__
-                           wxNativePixelData::Iterator startrow = iconpxl;
-                        #else
-                           wxAlphaPixelData::Iterator startrow = iconpxl;
-                        #endif
-                        for (int j = 0; j < cellsize; j++) {
-                           if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                              // non-black pixel
-                              unsigned char r = iconpxl.Red();
-                              unsigned char g = iconpxl.Green();
-                              unsigned char b = iconpxl.Blue();
-                              if (r == 255 && g == 255 && b == 255) {
-                                 // change pure white to slightly different white
-                                 // so we don't end up with a black pixel for next invert
-                                 r = 254;
-                              }
-                              iconpxl.Red()   = 255 - r;
-                              iconpxl.Green() = 255 - g;
-                              iconpxl.Blue()  = 255 - b;
-                           }
-                           iconpxl++;
-                        }
-                        // move to next row of icon bitmap
-                        iconpxl = startrow;
-                        iconpxl.OffsetY(icondata, 1);
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-}
-*/
 
 // -----------------------------------------------------------------------------
 
@@ -1754,6 +1797,8 @@ Layer::Layer()
    warp = 0;                     // initial speed setting
    originx = 0;                  // no X origin offset
    originy = 0;                  // no Y origin offset
+   icons15x15 = NULL;            // no 15x15 icons
+   icons7x7 = NULL;              // no 7x7 icons
 
    if (numlayers == 0) {
       // creating very first layer
@@ -1965,6 +2010,16 @@ Layer::~Layer()
       
       // delete tempstart file if it exists
       if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
+      
+      // delete any icons
+      if (icons15x15) {
+         for (int i = 0; i < 256; i++) delete icons15x15[i];
+         free(icons15x15);
+      }
+      if (icons7x7) {
+         for (int i = 0; i < 256; i++) delete icons7x7[i];
+         free(icons7x7);
+      }
    }
 }
 
@@ -2044,7 +2099,7 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
 
       } else if (state < currlayer->algo->NumCellStates()) {
          if (seeicons) {
-            wxBitmap** iconmaps = algoinfo[currlayer->algtype]->icons15x15;
+            wxBitmap** iconmaps = currlayer->icons15x15;
             if (iconmaps && iconmaps[state]) {
                dc.SetBrush(*wxTRANSPARENT_BRUSH);
                dc.DrawRectangle(r);

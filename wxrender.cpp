@@ -1650,9 +1650,9 @@ void DrawView(wxDC& dc, int tileindex)
    // only show icons at scales 1:8 and 1:16
    if (showicons && currlayer->view->getmag() > 2) {
       if (currlayer->view->getmag() == 3) {
-         iconmaps = algoinfo[currlayer->algtype]->icons7x7;
+         iconmaps = currlayer->icons7x7;
       } else {
-         iconmaps = algoinfo[currlayer->algtype]->icons15x15;
+         iconmaps = currlayer->icons15x15;
       }
    }
 

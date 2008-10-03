@@ -95,4 +95,8 @@ void ChangeIcons(algo_type algotype);
 void LoadIcons(algo_type algotype);
 // Load icons for given algorithm using iconfile.
 
+bool LoadIconFile(const wxString& path, int maxstate,
+                  wxBitmap*** out15x15, wxBitmap*** out7x7);
+// Return true if we can successfully load icon bitmaps from given file.
+
 #endif

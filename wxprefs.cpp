@@ -90,6 +90,7 @@ const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 // initialize exported preferences:
 
 wxString gollydir;               // path of directory containing app
+wxString rulesdir;               // path of directory containing rule data
 wxString datadir;                // path of directory containing user-specific data
 
 int debuglevel = 0;              // for displaying debug info if > 0
@@ -1691,6 +1692,9 @@ void GetPrefs()
    // init algoinfo data
    InitAlgorithms();
 
+   rulesdir = gollydir + wxT("Rules");
+   rulesdir += wxFILE_SEP_PATH;
+   
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
    icondir = gollydir;
@@ -3682,7 +3686,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    seeicons = false;
    iconcheck->SetValue(seeicons);
 
-   wxButton* iconbutt = new wxButton(panel, PREF_ICON_BUTT, _("Load Icons"));
+   wxButton* iconbutt = new wxButton(panel, PREF_ICON_BUTT, _("Load Icons..."));
 
    wxStaticText* statebox = new wxStaticText(panel, PREF_STATE_BOX, _("999"));
    cellboxes->statebox = statebox;
@@ -3732,7 +3736,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    vbox->AddSpacer(5);
    vbox->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    vbox->Add(ssizer1, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
-   vbox->AddSpacer(20);
+   vbox->AddSpacer(15);
    vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(2);
 

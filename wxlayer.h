@@ -92,12 +92,16 @@ public:
    PatternView* tilewin;      // tile window
    wxRect tilerect;           // tile window's size and position
 
-   // current color scheme for this layer
+   // color scheme for this layer
    wxColor fromrgb;           // start of gradient
    wxColor torgb;             // end of gradient
    unsigned char cellr[256];
    unsigned char cellg[256];
    unsigned char cellb[256];
+
+   // icons for this layer
+   wxBitmap** icons7x7;       // icon bitmaps for scale 1:8
+   wxBitmap** icons15x15;     // icon bitmaps for scale 1:16
 
    // if this is a cloned layer then cloneid is > 0 and all the
    // other clones have the same cloneid

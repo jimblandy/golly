@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-//#include "jvnalgo.h"
+#include "jvnalgo.h"
 #include "generationsalgo.h"
 #include "ruletable_algo.h"
 #include "ruletreealgo.h"
@@ -255,7 +255,7 @@ void InitAlgorithms()
    hlifealgo::doInitializeAlgoInfo(AlgoData::tick());
    // nicer if the rest are in alphabetical order
    generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
-   //jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
+   jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
    ruletable_algo::doInitializeAlgoInfo(AlgoData::tick());
    ruletreealgo::doInitializeAlgoInfo(AlgoData::tick()) ;
 
@@ -346,83 +346,76 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
-static void LoadIconFile(AlgoData* ad)
+bool LoadIconFile(const wxString& path, int maxstate,
+                  wxBitmap*** out15x15, wxBitmap*** out7x7)
 {
-   if (!wxFileName::FileExists(ad->iconfile)) {
-      wxString err = _("Icon file does not exist:\n") + ad->iconfile;
-      Warning(err);
-   } else {
-      wxImage image;
-      if (!image.LoadFile(ad->iconfile)) {
-         wxString err = _("Could not load icon images from file:\n") + ad->iconfile;
-         Warning(err);
-      } else {
-         wxBitmap allicons(image);
-         int wd = allicons.GetWidth();
-         int ht = allicons.GetHeight();
-         // check dimensions
-         if (ht != 15 && ht != 22) {
-            wxString err = _("Incorrect image height in icon file (must be 15 or 22):\n") +
-                           ad->iconfile;
-            Warning(err);
-         } else if (wd % 15 != 0) {
-            wxString err = _("Incorrect image width in icon file (must be multiple of 15):\n") +
-                           ad->iconfile;
-            Warning(err);
-         } else {
-            // first extract 15x15 icons
-            int numicons = wd / 15;
-            if (numicons > 255) numicons = 255;    // play safe
+   wxImage image;
+   if (!image.LoadFile(path)) {
+      Warning(_("Could not load icon bitmaps from file:\n") + path);
+      return false;
+   }
+   
+   wxBitmap allicons(image);
+   int wd = allicons.GetWidth();
+   int ht = allicons.GetHeight();
 
-            wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
-            if (iconptr) {
-               for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-               for (int i = 0; i < numicons; i++) {
-                  wxRect rect(i*15, 0, 15, 15);
-                  // add 1 because iconptr[0] must be NULL (ie. dead state)
-                  iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
-               }
-               if (numicons < ad->maxstates-1 && iconptr[numicons]) {
-                  // duplicate last icon
-                  wxRect rect((numicons-1)*15, 0, 15, 15);
-                  for (int i = numicons; i < ad->maxstates-1; i++) {
-                     iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
-                  }
-               }
-            }
-            ad->icons15x15 = iconptr;
-            
-            if (ht == 22) {
-               // extract 7x7 icons (below the 15x15 icons)
-               iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
-               if (iconptr) {
-                  for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-                  for (int i = 0; i < numicons; i++) {
-                     wxRect rect(i*7, 15, 7, 7);
-                     // add 1 because iconptr[0] must be NULL (ie. dead state)
-                     iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
-                  }
-                  if (numicons < ad->maxstates-1 && iconptr[numicons]) {
-                     // duplicate last icon
-                     wxRect rect((numicons-1)*7, 15, 7, 7);
-                     for (int i = numicons; i < ad->maxstates-1; i++) {
-                        iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
-                     }
-                  }
-               }
-               ad->icons7x7 = iconptr;
-            } else {
-               // create 7x7 icons by scaling down 15x15 icons
-               ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
-            }
-            return;
+   // check dimensions
+   if (ht != 15 && ht != 22) {
+      Warning(_("Wrong bitmap height in icon file (must be 15 or 22):\n") + path);
+      return false;
+   }
+   if (wd % 15 != 0) {
+      Warning(_("Wrong bitmap width in icon file (must be multiple of 15):\n") + path);
+      return false;
+   }
+   
+   // first extract 15x15 icons
+   int numicons = wd / 15;
+   if (numicons > 255) numicons = 255;    // play safe
+
+   wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+   if (iconptr) {
+      for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+      for (int i = 0; i < numicons; i++) {
+         wxRect rect(i*15, 0, 15, 15);
+         // add 1 because iconptr[0] must be NULL (ie. dead state)
+         iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+      }
+      if (numicons < maxstate && iconptr[numicons]) {
+         // duplicate last icon
+         wxRect rect((numicons-1)*15, 0, 15, 15);
+         for (int i = numicons; i < maxstate; i++) {
+            iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
          }
       }
    }
+   *out15x15 = iconptr;
    
-   // some sort of error occurred, so restore default icons
-   ad->iconfile = wxEmptyString;
-   CreateDefaultIcons(ad);
+   if (ht == 22) {
+      // extract 7x7 icons (below the 15x15 icons)
+      iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+      if (iconptr) {
+         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+         for (int i = 0; i < numicons; i++) {
+            wxRect rect(i*7, 15, 7, 7);
+            // add 1 because iconptr[0] must be NULL (ie. dead state)
+            iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+         }
+         if (numicons < maxstate && iconptr[numicons]) {
+            // duplicate last icon
+            wxRect rect((numicons-1)*7, 15, 7, 7);
+            for (int i = numicons; i < maxstate; i++) {
+               iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+            }
+         }
+      }
+      *out7x7 = iconptr;
+   } else {
+      // create 7x7 icons by scaling down 15x15 icons
+      *out7x7 = ScaleIconBitmaps(*out15x15, 7);
+   }
+   
+   return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -431,23 +424,31 @@ void LoadIcons(algo_type algotype)
 {
    AlgoData* ad = algoinfo[algotype];
 
-   // deallocate old icons if they exist
+   // deallocate old algo icons if they exist
+   if (ad->icons15x15) {
+      for (int i = 0; i < 256; i++) delete ad->icons15x15[i];
+      free(ad->icons15x15);
+      ad->icons15x15 = NULL;
+   }
    if (ad->icons7x7) {
       for (int i = 0; i < 256; i++) delete ad->icons7x7[i];
       free(ad->icons7x7);
       ad->icons7x7 = NULL;
    }
-   if (ad->icons15x15) {
-      for (int i = 0; i < 256; i++) delete ad->icons15x15[i];
-      free(ad->icons15x15);
-      ad->icons15x15 = NULL;
-   }   
    
    if (ad->iconfile.length() > 0) {
-      // load icons from this file
-      LoadIconFile(ad);
+      // try to load icons from this file
+      if (!wxFileName::FileExists(ad->iconfile)) {
+         Warning(_("Icon file does not exist:\n") + ad->iconfile);
+      } else if (LoadIconFile(ad->iconfile, ad->maxstates-1, &ad->icons15x15, &ad->icons7x7)) {
+         // icons were successfully loaded
+         return;
+      }
+      // an error occurred, so restore default icons
+      ad->iconfile = wxEmptyString;
+      CreateDefaultIcons(ad);
    } else {
-      // iconfile path is empty so restore default icons
+      // iconfile path is empty, so restore default icons
       CreateDefaultIcons(ad);
    }
 }

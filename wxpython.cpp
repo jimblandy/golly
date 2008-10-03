@@ -2828,7 +2828,7 @@ bool InitPython()
 
 // -----------------------------------------------------------------------------
 
-void RunPythonScript(const wxString &filepath)
+void RunPythonScript(const wxString& filepath)
 {
    if (!InitPython()) return;
 

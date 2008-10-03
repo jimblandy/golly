@@ -43,7 +43,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for DrawOneIcon
-#include "wxalgos.h"       // for AlgoData, algoinfo
 #include "wxlayer.h"       // for currlayer, LayerBarHeight
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxedit.h"
@@ -369,7 +368,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
    DisplayText(dc, _("Color:"), h_col1, BASELINE2);
    DisplayText(dc, _("Icon:"),  h_col1, BASELINE3);
 
-   wxBitmap** iconmaps = algoinfo[currlayer->algtype]->icons7x7;
+   wxBitmap** iconmaps = currlayer->icons7x7;
 
    // set rgb values for dead state
    currlayer->cellr[0] = deadrgb->Red();
@@ -488,8 +487,6 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
 
    if (showallstates) DrawAllStates(dc, wd);
 
-   wxBitmap** iconmaps = algoinfo[currlayer->algtype]->icons15x15;
-
    dc.SetPen(*wxBLACK_PEN);
    
    // draw current drawing state
@@ -517,6 +514,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    dc.SetBrush(wxNullBrush);
    
    // draw icon box
+   wxBitmap** iconmaps = currlayer->icons15x15;
    x += BOXSIZE + BOXGAP;
    iconbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
    if (iconmaps && iconmaps[state]) {
@@ -533,20 +531,18 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       dc.SetBrush(wxNullBrush);
    }
    
-   // if current algo has icons then show whether color or icon mode is selected
-   if (iconmaps) {
-      dc.SetBrush(*wxTRANSPARENT_BRUSH);
-      if (showicons) {
-         iconbox.Inflate(2,2);
-         dc.DrawRectangle(iconbox);
-         iconbox.Inflate(-2,-2);
-      } else {
-         colorbox.Inflate(2,2);
-         dc.DrawRectangle(colorbox);
-         colorbox.Inflate(-2,-2);
-      }
-      dc.SetBrush(wxNullBrush);
+   // show whether color or icon mode is selected
+   dc.SetBrush(*wxTRANSPARENT_BRUSH);
+   if (showicons) {
+      iconbox.Inflate(2,2);
+      dc.DrawRectangle(iconbox);
+      iconbox.Inflate(-2,-2);
+   } else {
+      colorbox.Inflate(2,2);
+      dc.DrawRectangle(colorbox);
+      colorbox.Inflate(-2,-2);
    }
+   dc.SetBrush(wxNullBrush);
 
    dc.SetPen(wxNullPen);
 }
@@ -616,14 +612,11 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
       }
    }
    
-   // if current algo has icons then user can change color/icon mode
-   // by clicking in color/icon box
-   if (algoinfo[currlayer->algtype]->icons15x15) {
-      if (colorbox.Contains(x,y) && showicons) {
-         viewptr->ToggleCellIcons();
-      } else if (iconbox.Contains(x,y) && !showicons) {
-         viewptr->ToggleCellIcons();
-      }
+   // user can change color/icon mode by clicking in color/icon box
+   if (colorbox.Contains(x,y) && showicons) {
+      viewptr->ToggleCellIcons();
+   } else if (iconbox.Contains(x,y) && !showicons) {
+      viewptr->ToggleCellIcons();
    }
 }
 

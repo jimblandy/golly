@@ -49,7 +49,7 @@ public:
    virtual void endprogress() {
       // do nothing
    }
-   virtual const char *getgollydir() {
+   virtual const char *getrulesdir() {
       return "" ;
    }
 } ;
@@ -93,8 +93,8 @@ void lifeendprogress() {
    errorhandler->endprogress() ;
 }
 
-const char *lifegetgollydir() {
-   return errorhandler->getgollydir() ;
+const char *lifegetrulesdir() {
+   return errorhandler->getrulesdir() ;
 }
 
 static FILE *f ;

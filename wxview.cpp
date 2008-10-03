@@ -1531,9 +1531,9 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    
    wxBitmap** iconmaps = NULL;
    if (currlayer->view->getmag() == 3) {
-      iconmaps = algoinfo[currlayer->algtype]->icons7x7;
+      iconmaps = currlayer->icons7x7;
    } else if (currlayer->view->getmag() == 4) {
-      iconmaps = algoinfo[currlayer->algtype]->icons15x15;
+      iconmaps = currlayer->icons15x15;
    }
 
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&

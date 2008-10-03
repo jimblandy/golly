@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 
 #include "ruletreealgo.h"
-#include "util.h"      // AKT: for lifegetgollydir() -- replace with lifegetrulesdir!!!???
+#include "util.h"      // AKT: for lifegetrulesdir()
 // for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
@@ -35,7 +35,6 @@ using namespace std ;
 int ruletreealgo::NumCellStates() {
    return num_states ;
 }
-const char *rulefolder = "Rules" ; /* should be in util */
 const int MAXFILELEN = 4096 ;
 /* provide the ability to load the default rule without requiring a file */
 static const char *defaultRuleData[] = {
@@ -55,13 +54,12 @@ const char* ruletreealgo::setrule(const char* s) {
    if (!isDefaultRule) {
       if (strlen(s) >= (unsigned int)MAXRULESIZE)
          return "Rule length too long" ;
-      const char *gollydir = lifegetgollydir() ;
-      if (strlen(gollydir) + strlen(rulefolder) + strlen(s) + 15 >
-                                                   (unsigned int)MAXFILELEN)
+      const char *rulefolder = lifegetrulesdir() ;    // AKT: ends with dir separator
+      if (strlen(rulefolder) + strlen(s) + 15 > (unsigned int)MAXFILELEN)
          return "Path too long" ;
-      sprintf(strbuf, "%s%s/%s.tree", gollydir, rulefolder, s) ;
+      sprintf(strbuf, "%s%s.tree", rulefolder, s) ;
       /* change "dangerous" characters to hyphens */
-      for (char *p=strbuf + strlen(gollydir) + strlen(rulefolder) + 1; *p; p++)
+      for (char *p=strbuf + strlen(rulefolder); *p; p++)
         if (*p == '/' || *p == '\\' || *p == ':')
           *p = '-' ;
       f = fopen(strbuf, "r") ;

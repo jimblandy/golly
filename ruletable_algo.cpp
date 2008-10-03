@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "ruletable_algo.h"
 
-#include "util.h"      // AKT: for lifegetgollydir()
+#include "util.h"      // AKT: for lifegetrulesdir()
 
 // for case-insensitive string comparison
 #include <string.h>
@@ -44,10 +44,6 @@ int ruletable_algo::NumCellStates()
    return this->n_states;
 }
 
-bool starts_with(const string& line,const string& keyword)
-{
-	return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
-}
 const char* ruletable_algo::setrule(const char* s) 
 {
    string ret = LoadRuleTable(s) ;
@@ -85,8 +81,14 @@ vector<string> tokenize(const string& str,const string& delimiters)
 	return tokens;
 }
 
+bool starts_with(const string& line,const string& keyword)
+{
+	return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
+}
+
 const char *defaultRuleData[] = {
-  "n_states:8", "neighbourhood_size:5", "symmetries:withRotations",
+     // AKT: was neighbourhood_size
+  "n_states:8", "neighborhood_size:5", "symmetries:withRotations",
   "000000", "000012", "000020", "000030", "000050", "000063", "000071",
   "000112", "000122", "000132", "000212", "000220", "000230", "000262",
   "000272", "000320", "000525", "000622", "000722", "001022", "001120",
@@ -119,6 +121,7 @@ const char *defaultRuleData[] = {
   "600011", "600021", "602120", "612125", "612131", "612225", "700077",
   "701120", "701220", "701250", "702120", "702221", "702251", "702321",
   "702525", "702720", 0 } ;
+
 /*
  *   Make sure ifstream goes away even if we return, despite using a
  *   pointer variable.  Probably a cleaner way to do this.
@@ -128,9 +131,9 @@ struct freeme {
   ~freeme() { if (p) delete p ; }   // AKT: why was this commented out?
   ifstream *p ;
 } ;
+
 string ruletable_algo::LoadRuleTable(string rule)
 {
-   const string folder = "Rules/";
    const string comment_keyword = "#";
    const string symmetries_keyword = "symmetries:";
    const string neighbourhood_size_keyword = "neighborhood_size:";
@@ -145,9 +148,9 @@ string ruletable_algo::LoadRuleTable(string rule)
    freeme freeme(0) ;
    int lineno = 0 ;
    if (!isDefaultRule) {
-      // AKT: we need to prepend the full path to Golly because when it runs
-      // a script it temporarily changes the cwd to the location of the script
-      string full_filename = lifegetgollydir() + folder ;
+      // AKT: we need to prepend the full path to the rules dir because when Golly
+      // runs a script it temporarily changes the cwd to the location of the script
+      string full_filename = lifegetrulesdir() ;
       int istart = full_filename.size() ;
       full_filename += rule + ".table" ;
       for (unsigned int i=istart; i<full_filename.size(); i++)
