@@ -26,8 +26,6 @@ Andrew's list:
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
-- Remove SlowLife (simply comment out 1 line in wxalgos.cpp).
-
 - Check all !!!/FIXME comments in code and try to remove.
 
 - Update docs (Help files, BUILD notes, README, etc).
@@ -45,8 +43,6 @@ File I/O
 
 Algos
 
-- Replace WireWorld with generalized Rules Tables (lift rule length
-  limit everywhere needed)
 - Unzoom color merging
 - Better status reports (% of hashtable full)
 
