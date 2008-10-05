@@ -62,6 +62,7 @@ const char* ruletreealgo::setrule(const char* s) {
       for (char *p=strbuf + strlen(rulefolder); *p; p++)
         if (*p == '/' || *p == '\\' || *p == ':')
           *p = '-' ;
+      printf("Trying to open %s\n", strbuf) ; fflush(stdout) ;
       f = fopen(strbuf, "r") ;
       if (f == 0)
          return "File not found" ;

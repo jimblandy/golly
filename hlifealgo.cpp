@@ -116,8 +116,8 @@ void hlifealgo::leafres(leaf *n) {
  *   We do now support garbage collection, but there are some routines we
  *   call frequently to help us.
  */
-#define node_hash(a,b,c,d) (((g_uintptr_t)d)+3*(((g_uintptr_t)c)+3*(((g_uintptr_t)b)+3*((g_uintptr_t)a)+3)))
-#define leaf_hash(a,b,c,d) ((d)+9*((c)+9*((b)+9*(a))))
+#define node_hash(a,b,c,d) (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a))
+#define leaf_hash(a,b,c,d) (65537*(d)+257*(c)+17*(b)+5*(a))
 /*
  *   Resize the hash.
  */
