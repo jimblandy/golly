@@ -265,6 +265,15 @@ if ($poplayer == -1) {
 }
 g_new($layername);
 
+my ($deadr, $deadg, $deadb) = g_getcolor("deadcells");
+if (($deadr + $deadg + $deadb) / 3 > 128) {
+   # use black if light background
+   g_setcolors([1,0,0,0]);
+} else {
+   # use white if dark background
+   g_setcolors([1,255,255,255]);
+}
+
 my $minpop = min(@poplist);
 my $maxpop = max(@poplist);
 if ($minpop == $maxpop) {

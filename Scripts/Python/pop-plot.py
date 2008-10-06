@@ -114,6 +114,14 @@ else:
    g.setlayer(poplayer)
 g.new(layername)
 
+deadr, deadg, deadb = g.getcolor("deadcells")
+if (deadr + deadg + deadb) / 3 > 128:
+   # use black if light background
+   g.setcolors([1,0,0,0])
+else:
+   # use white if dark background
+   g.setcolors([1,255,255,255])
+
 minpop = min(poplist)
 maxpop = max(poplist)
 if minpop == maxpop:
