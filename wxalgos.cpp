@@ -392,18 +392,18 @@ bool LoadIconFile(const wxString& path, int maxstate,
    *out15x15 = iconptr;
    
    if (ht == 22) {
-      // extract 7x7 icons (below the 15x15 icons)
+      // extract 7x7 icons (at bottom left corner of each 15x15 icon)
       iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
       if (iconptr) {
          for (int i = 0; i < 256; i++) iconptr[i] = NULL;
          for (int i = 0; i < numicons; i++) {
-            wxRect rect(i*7, 15, 7, 7);
+            wxRect rect(i*15, 15, 7, 7);
             // add 1 because iconptr[0] must be NULL (ie. dead state)
             iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
          }
          if (numicons < maxstate && iconptr[numicons]) {
             // duplicate last icon
-            wxRect rect((numicons-1)*7, 15, 7, 7);
+            wxRect rect((numicons-1)*15, 15, 7, 7);
             for (int i = numicons; i < maxstate; i++) {
                iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
             }
