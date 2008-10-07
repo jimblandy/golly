@@ -2396,7 +2396,6 @@ XS(pl_setcolors)
                currlayer->cellg[s] = g;
                currlayer->cellb[s] = b;
             }
-            break;
          } else {
             if (s < 1 || s >= currlayer->algo->NumCellStates()) {
                char msg[64];
