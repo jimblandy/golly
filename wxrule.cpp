@@ -184,6 +184,20 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
       ruletext->SetFocus();
       ruletext->SetSelection(-1,-1);
 
+   } else if ( url.StartsWith(wxT("open#")) ) {
+      // open clicked pattern/script
+      wxString clickedfile = link.GetHref().After('#');
+      wxFileName fname(clickedfile);
+      if (!fname.IsAbsolute()) clickedfile = gollydir + clickedfile;
+      mainptr->pendingfiles.Add(clickedfile);   // next OnIdle will call OpenFile
+      // send OK event to close dialog
+      wxCommandEvent okevent(wxEVT_COMMAND_BUTTON_CLICKED, wxID_OK);
+      wxWindow* buttwin = GetParent()->FindWindow(wxID_OK);
+      if (buttwin) {
+         okevent.SetEventObject(buttwin);
+         buttwin->ProcessEvent(okevent);
+      }
+
    } else {
       // assume it's a link to a local target or another help file
       DisplayFile(url);

@@ -7,9 +7,14 @@ AKT = Andrew Trevorrow <andrew@trevorrow.com>
 TGR = Tom Rokicki <rokicki@gmail.com>
 JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
+TJH = Tim Hutton <tim.hutton@gmail.com>
 
 Changes in version 2.0 (released !!! 2008)
 
+AKT: Look for rule-specific colors and icons in Rules folder.
+TGR: Implemented the RuleTree algo (no need for separate WireWorld algo).
+TJH: Implemented the RuleTable algo.
+TJH: Implemented the Hutton32 rule in the JvN algo.
 AKT: Added setcolors/getcolors commands to set/get layer colors.
 AKT: Changed Swap Cell Colors to Invert Colors.
 AKT: Added Set Layer Colors dialog to Layer menu.

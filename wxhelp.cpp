@@ -525,6 +525,14 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       // user clicked on link to Preferences dialog
       mainptr->ShowPrefsDialog( link.GetHref().After('#') );
 
+   } else if ( url.StartsWith(wxT("open#")) ) {
+      // open clicked pattern/script
+      wxString path = link.GetHref().After('#');
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) path = gollydir + path;
+      mainptr->Raise();
+      mainptr->OpenFile(path);
+
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);
