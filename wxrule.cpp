@@ -187,6 +187,9 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
    } else if ( url.StartsWith(wxT("open#")) ) {
       // open clicked pattern/script
       wxString clickedfile = link.GetHref().After('#');
+      #ifdef __WXMSW__
+         clickedfile.Replace(wxT("/"), wxT("\\"));
+      #endif
       wxFileName fname(clickedfile);
       if (!fname.IsAbsolute()) clickedfile = gollydir + clickedfile;
       mainptr->pendingfiles.Add(clickedfile);   // next OnIdle will call OpenFile

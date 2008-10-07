@@ -528,6 +528,9 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
    } else if ( url.StartsWith(wxT("open#")) ) {
       // open clicked pattern/script
       wxString path = link.GetHref().After('#');
+      #ifdef __WXMSW__
+         path.Replace(wxT("/"), wxT("\\"));
+      #endif
       wxFileName fname(path);
       if (!fname.IsAbsolute()) path = gollydir + path;
       mainptr->Raise();
