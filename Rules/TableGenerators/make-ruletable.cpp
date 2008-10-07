@@ -37,6 +37,10 @@ using namespace std;
 
 Makes a rule-table for your transition function.
 
+To compile:
+g++ -O5 -o make-ruletable make-ruletable.cpp
+or in Microsoft Visual Studio, add to an empty CLR project.
+
 To use:
 1) fill slowcalc with your own transition function.
 2) set the parameters in main() at the bottom.
