@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Routines for displaying comments in a pattern file:
 
 // Open a modeless window and display the comments in given file.
-void ShowInfo(const wxString &filepath);
+void ShowInfo(const wxString& filepath);
 
 // Return a pointer to the info window.
 wxFrame* GetInfoFrame();

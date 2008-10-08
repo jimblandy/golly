@@ -14,7 +14,6 @@ the appropriate source archive for your platform:
    wxMSW   - for Windows (get the installer)
    wxMac   - for Mac OS X
    wxGTK   - for Linux/Unix with GTK+
-   wxX11   - for Linux/Unix with X11
 
 Golly should compile with wxWidgets 2.7.0 or later, but it's best to
 use the latest stable version.
@@ -77,24 +76,6 @@ installs the wx-config program which will be called by makefile-gtk
 to set the appropriate compile and link options for building Golly.
 
 
-Building wxWidgets on Linux/Unix with X11
------------------------------------------
-
-Unpack the wxX11 source archive wherever you like, start up a terminal
-session and type these commands (using the correct version number):
-
-   cd /path/to/wxX11-2.8.0
-   ./configure --with-x11 --disable-shared --enable-unicode
-   make
-
-Note that configure is run in the top-level wxWidgets directory and
-there is no "make install" step as in the above GTK+ commands.
-This allows you to have both GTK+ and X11 builds of wxWidgets on
-the one system.  (There are other ways to achieve this goal, but
-the above arrangement is the one currently required by Golly's
-makefile-gtk and makefile-x11.)
-
-
 How to install Perl and Python
 ------------------------------
 
@@ -121,7 +102,6 @@ be easy.  Just use the appropriate makefile for your platform:
    nmake -f makefile-win   - on Windows 2000 or later
    make -f makefile-mac    - on Mac OS X 10.3.9 or later
    make -f makefile-gtk    - on Linux/Unix with GTK+
-   make -f makefile-x11    - on Linux/Unix with X11
 
 NOTES:
 
@@ -130,10 +110,10 @@ NOTES:
   
   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1
 
-- You need to edit makefile-win, makefile-mac and makefile-x11 to
-  specify where wxWidgets is installed.  Change the WX_DIR path
-  near the start of the file.  Also make sure WX_RELEASE specifies
-  the first two digits of your wxWidgets version.
+- You need to edit makefile-win and makefile-mac to specify where
+  wxWidgets is installed.  Change the WX_DIR path near the start of
+  the file.  Also make sure WX_RELEASE specifies the first two digits
+  of your wxWidgets version.
 
 - In makefile-win you need to include the headers for Perl and Python
   so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
@@ -152,137 +132,240 @@ Source code road map
 --------------------
 
 If you'd like to modify Golly then the following notes should help you
-get started.  Each module is described, along with some key routines.
+get started.  Each module is described in (roughly) top-down order,
+and some key routines are mentioned.
 
 The GUI code is implemented in these wx* modules:
 
-wxgolly.*      - The GUI application.
-                 OnInit() is where it all starts.
+wxgolly.*
 
-wxmain.*       - Implements the main window.
-                 OnMenu() handles all menu commands.
-                 UpdateEverything() updates all parts of the GUI.
+   Defines the GollyApp class.
+   GollyApp::OnInit() is where it all starts.
 
-wxfile.cpp     - File menu functions.
-                 NewPattern() creates a new, empty universe.
-                 LoadPattern() reads in a pattern file.
+wxmain.*
 
-wxedit.*       - Edit bar functions.
-                 ToggleEditBar() shows/hides the edit bar.
+   Defines the MainFrame class for the main window.
+   MainFrame::OnMenu() handles all menu commands.
+   MainFrame::UpdateEverything() updates all parts of the GUI.
 
-wxselect.*     - Implements operations on selections.
-                 CopyToClipboard() copies selection to clipboard.
-                 RandomFill() randomly fills current selection.
-                 Rotate() rotates current selection.
-                 Flip() flips current selection.
+wxfile.cpp
 
-wxcontrol.cpp  - Control menu functions.
-                 GeneratePattern() runs the current pattern.
-                 ToggleHashing() toggles the hashing algorithm.
+   Implements various File menu functions.
+   MainFrame::NewPattern() creates a new, empty universe.
+   MainFrame::LoadPattern() reads in a pattern file.
 
-wxview.*       - Implements the viewport window.
-                 ProcessKey() processes keyboard shortcuts.
-                 ProcessClick() processes mouse clicks.
+wxcontrol.cpp
 
-wxrender.*     - Rendering routines for updating the viewport.
-                 DrawView() draws the pattern, grid lines, etc.
+   Implements various Control menu functions.
+   MainFrame::GeneratePattern() runs the current pattern.
+   MainFrame::ChangeAlgorithm() switches to a new algorithm.
 
-wxalgos.*      - Implements support for multiple algorithms.
-                 CreateNewUniverse() creates new algo of given type.
+wxrule.*
 
-wxlayer.*      - Layer menu functions.
-                 AddLayer() adds a new, empty layer.
-                 DeleteLayer() deletes the current layer.
+   Lets user change the current rule.
+   ChangeRule() opens the Set Rule dialog.
 
-wxundo.*       - Implements unlimited undo/redo.
-                 RememberCellChanges() saves cell state changes.
-                 UndoChange() undoes a recent change.
-                 RedoChange() redoes an undone change.
+wxedit.*
 
-wxstatus.*     - Implements status bar at top of main window.
-                 DrawStatusBar() shows gen count, pop count, etc.
-                 DisplayMessage() shows message in bottom line.
+   Implements Edit bar functions.
+   CreateEditBar() creates the edit bar above the viewport window.
+   ToggleEditBar() shows/hides the edit bar.
 
-wxhelp.*       - Implements a modeless help window.
-                 ShowHelp() displays given Help/*.html file.
+wxselect.*
 
-wxinfo.*       - Implements a modeless info window.
-                 ShowInfo() displays comments in given pattern file.
+   Defines the Selection class for operations on selections.
+   Selection::CopyToClipboard() copies the selection to the clipboard.
+   Selection::RandomFill() randomly fills the current selection.
+   Selection::Rotate() rotates the current selection.
+   Selection::Flip() flips the current selection.
 
-wxprefs.*      - For loading, saving and changing user preferences.
-                 GetPrefs() loads data from GollyPrefs file.
-                 SavePrefs() writes data to GollyPrefs file.
-                 ChangePrefs() opens the Preferences dialog.
+wxview.*
 
-wxrule.*       - Lets user change the current rule.
-                 ChangeRule() opens the Rule dialog.
+   Defines the PatternView class for the viewport window.
+   PatternView::ProcessKey() processes keyboard shortcuts.
+   PatternView::ProcessClick() processes mouse clicks.
 
-wxscript.*     - High-level scripting interface.
-                 RunScript() executes a given script file.
+wxrender.*
 
-wxperl.*       - Implements Perl script support.
-                 RunPerlScript() executes a given .pl file.
+   Implements rendering routines for updating the viewport.
+   DrawView() draws the pattern, grid lines, selection, etc.
 
-wxpython.*     - Implements Python script support.
-                 RunPythonScript() executes a given .py file.
+wxalgos.*
 
-wxutils.*      - Various utility routines.
-                 Warning() displays message in modal dialog.
-                 Fatal() displays message and exits app.
+   Implements support for multiple algorithms.
+   InitAlgorithms() initializes all algorithms and algoinfo data.
+   CreateNewUniverse() creates a new universe of given type.
+
+wxlayer.*
+
+   Defines the Layer class and implements Layer menu functions.
+   AddLayer() adds a new, empty layer.
+   DeleteLayer() deletes the current layer.
+   SetLayerColors() lets user change the current layer's colors.
+
+wxundo.*
+
+   Defines the UndoRedo class for unlimited undo/redo.
+   UndoRedo::RememberCellChanges() saves cell state changes.
+   UndoRedo::UndoChange() undoes a recent change.
+   UndoRedo::RedoChange() redoes an undone change.
+
+wxstatus.*
+
+   Implements a status bar at the top of the main window.
+   StatusBar::DrawStatusBar() shows gen count, pop count, etc.
+   StatusBar::DisplayMessage() shows message in bottom line.
+
+wxhelp.*
+
+   Implements a modeless help window.
+   ShowHelp() displays a given Help/*.html file.
+
+wxinfo.*
+
+   Implements a modeless info window.
+   ShowInfo() displays the comments in a given pattern file.
+
+wxscript.*
+
+   Implements the high-level scripting interface.
+   RunScript() runs a given script file.
+
+wxperl.*
+
+   Implements Perl script support.
+   RunPerlScript() runs a given .pl file.
+
+wxpython.*
+
+   Implements Python script support.
+   RunPythonScript() runs a given .py file.
+
+wxprefs.*
+
+   Routines for loading, saving and changing user preferences.
+   GetPrefs() loads data from GollyPrefs file.
+   SavePrefs() writes data to GollyPrefs file.
+   ChangePrefs() opens the Preferences dialog.
+
+wxutils.*
+
+   Implements various utility routines.
+   Warning() displays message in modal dialog.
+   Fatal() displays message and exits app.
 
 The following non-wx modules are sufficient to build bgolly.
 They also define abstract viewport and rendering interfaces used
 by the above GUI code:
 
-bgolly.cpp     - The batch mode program.
-                 main() does all the option parsing.
+bgolly.cpp
 
-platform.h     - Platform specific defines (eg. 64-bit changes).
+   The batch mode program.
+   main() does all the option parsing.
 
-lifealgo.*     - Abstract Life algorithm operations:
-                 setcell() sets given cell to given state.
-                 getcell() gets state of given cell.
-                 nextcell() finds next live cell in current row.
-                 step() advances pattern by current increment.
-                 fit() fits pattern within given viewport.
-                 draw() renders pattern in given viewport.
+platform.h
 
-qlifealgo.*    - Implements a quick, conventional algorithm.
+   Platform specific defines (eg. 64-bit changes).
 
-hlifealgo.*    - Implements a super fast hashing algorithm.
+lifealgo.*
 
-viewport.*     - Abstract viewport operations:
-                 zoom() zooms into a given location.
-                 unzoom() zooms out from a given location.
-                 setmag() sets the magnification.
-                 move() scrolls view by given number of pixels.
+   Defines abstract Life algorithm operations:
+   lifealgo::setcell() sets given cell to given state.
+   lifealgo::getcell() gets state of given cell.
+   lifealgo::nextcell() finds next live cell in current row.
+   lifealgo::step() advances pattern by current increment.
+   lifealgo::fit() fits pattern within given viewport.
+   lifealgo::draw() renders pattern in given viewport.
 
-liferender.*   - Abstract routines for rendering a pattern:
-                 killrect() fills rectangle with dead cell color.
-                 blit() draws bitmap with at least one live cell.
+liferules.*
 
-qlifedraw.cpp  - Rendering routines for qlifealgo.
+   Defines routines for setting/getting rules.
+   liferules::setrule() parses and validates a given rule string.
+   liferules::getrule() returns the current rule in canonical form.
 
-hlifedraw.cpp  - Rendering routines for hlifealgo.
+lifepoll.*
 
-liferules.*    - Implements rules used by lifealgo.
-                 setrule() parses and validates a given rule.
+   Allows lifealgo routines to do event processing.
+   lifepoll::checkevents() processes any pending events.
 
-lifepoll.*     - Allows lifealgo routines to do event processing.
-                 checkevents() processes events.
+viewport.*
 
-readpattern.*  - Reads pattern files in a variety of formats.
-                 readpattern() loads pattern into given universe.
-                 readcomments() extracts comments from given file.
+   Defines abstract viewport operations:
+   viewport::zoom() zooms into a given location.
+   viewport::unzoom() zooms out from a given location.
+   viewport::setmag() sets the magnification.
+   viewport::move() scrolls view by given number of pixels.
 
-writepattern.* - Saves current pattern to a file.
-                 writepattern() saves pattern in requested format.
+liferender.*
 
-bigint.*       - Operations on arbitrarily large integers.
+   Defines abstract routines for rendering a pattern:
+   liferender::killrect() fills an area with the dead cell color.
+   liferender::pixblit() draws an area with at least one live cell.
 
-util.*         - Utilities for displaying errors and progress info.
-                 warning() displays error message.
-                 fatal() displays error message and exits.
+qlifealgo.*
+
+   Implements QuickLife, a fast, conventional algorithm.
+
+hlifealgo.*
+
+   Implements HashLife, a super fast hashing algorithm.
+
+ghashbase.*
+
+   Defines an abstract class so other algorithms can use hashlife
+   in a multi-state universe.
+
+generationsalgo.*
+
+   Implements the Generations family of rules.
+
+jvnalgo.*
+
+   Implements John von Neumann's 29-state CA as well as some
+   32-state variants by Renato Nobili and Tim Hutton.
+
+ruletable_algo.*
+
+   Implements the RuleTable algorithm which loads externally
+   specified rules stored in .table files.
+
+ruletreealgo.*
+
+   Implements the RuleTree algorithm which loads externally
+   specified rules stored in .tree files.
+
+qlifedraw.cpp
+
+   Implements rendering routines for QuickLife.
+
+hlifedraw.cpp
+
+   Implements rendering routines for HashLife.
+
+ghashdraw.cpp
+
+   Implements rendering routines for all algos that use ghashbase.
+
+readpattern.*
+
+   Reads pattern files in a variety of formats.
+   readpattern() loads a pattern into the given universe.
+   readcomments() extracts comments from the given file.
+
+writepattern.*
+
+   Saves the current pattern in a file.
+   writepattern() saves the pattern in a specified format.
+
+bigint.*
+
+   Implements operations on arbitrarily large integers.
+
+util.*
+
+   Utilities for displaying errors and progress info.
+   warning() displays error message.
+   fatal() displays error message and exits.
 
 
 Have fun, and please let us know if you make any changes!

@@ -55,12 +55,12 @@ public:
 
 DECLARE_APP(GollyApp)            // so other files can use wxGetApp
 
-// At the risk of offending C++ purists, we use some static globals to simplify code:
+// At the risk of offending C++ purists, we use some globals to simplify code:
 // "mainptr->GetRect()" is more readable than "wxGetApp().GetMainFrame()->GetRect()".
 
 extern MainFrame* mainptr;       // main window
 extern PatternView* viewptr;     // current viewport window (possibly a tile)
-extern PatternView* bigview;     // main viewport window
+extern PatternView* bigview;     // big viewport window (encloses all tiles)
 extern StatusBar* statusptr;     // status bar window
 extern wxStopWatch* stopwatch;   // global stopwatch (started in OnInit)
 extern bool insideYield;         // processing an event via Yield()?

@@ -218,7 +218,7 @@ void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void ShowInfo(const wxString &filepath)
+void ShowInfo(const wxString& filepath)
 {
    if (infoptr) {
       // info window exists so just bring it to front
