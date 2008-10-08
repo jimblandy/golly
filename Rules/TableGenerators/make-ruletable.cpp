@@ -49,8 +49,6 @@ To use:
 For a 32-state 5-neighbourhood rule it took 16mins on a 2.2GHz machine.
 For a 4-state 9-neighbourhood rule it took 4s.
 
-No-change transitions are skipped - the engine should default to this. 
-
 The merging is very simple - if a transition is compatible with the first rule, 
 then merge the transition into the rule. If not, try the next rule. If there are
 no more rules, add a new rule containing just the transition. 
@@ -166,27 +164,45 @@ public:
 	{
 		if(ns1!=ns) return false; // can't merge if the outputs are different
 
-		// if you are running through your own transitions, you might want to turn off this 
-		// optimisation, to get better compression.
+		// If you are running through your own transitions, or for small state spaces,
+		// you might want to turn off this optimisation, to get better compression. 
+		// On JvN29 it doesn't make any difference but on Nobili32 it does.
+		const bool forbid_multiple_input_differences = true;
+
+		if(forbid_multiple_input_differences)
 		{
-			// optimisation: we skip this test if more than 2 entries are different, since we 
-			// will have considered the relevant one-change rules before this. 
+			// optimisation: we skip this rule if more than 2 entries are different, we 
+			// assume we will have considered the relevant one-change rules before this. 
 			int n_different=0;
 			for(int i=0;i<n_inputs;i++)
 				if(inputs[i].find(test_inputs[i])==inputs[i].end())
 					if(++n_different>1)
 						return false;
-		}
-
-		// just check the new permutations
-		for(int i=0;i<n_inputs;i++)
-		{
-			if(inputs[i].find(test_inputs[i])==inputs[i].end())
+			// just check the new permutations
+			for(int i=0;i<n_inputs;i++)
 			{
-				rule r1(*this);
-				r1.inputs[i].clear(); // (optimisation, since we don't need to re-test all the other permutations) 
-				r1.inputs[i].insert(test_inputs[i]);
-				if(!r1.all_true()) return false;
+				if(inputs[i].find(test_inputs[i])==inputs[i].end())
+				{
+					rule r1(*this);
+					r1.inputs[i].clear(); // (since we don't need to re-test all the other permutations) 
+					r1.inputs[i].insert(test_inputs[i]);
+					if(!r1.all_true()) return false;
+				}
+			}
+		}
+		else
+		{
+			// need to check all combinations - this can be very slow for large state spaces
+			for(int i=0;i<n_inputs;i++)
+			{
+				if(inputs[i].find(test_inputs[i])==inputs[i].end())
+				{
+					rule r1(*this);
+					r1.merge(test_inputs); // this is what makes it slow, we may introduce many new permutations
+					r1.inputs[i].clear(); // (since we don't need to re-test all the old permutations) 
+					r1.inputs[i].insert(test_inputs[i]);
+					if(!r1.all_true()) return false;
+				}
 			}
 		}
 		return true;
@@ -350,7 +366,7 @@ void print_rules(const vector<rule>& rules,ostream& out)
 	}
 }
 
-void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm)
+void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool remove_stasis)
 {
 	state c,n,ne,nw,sw,s,se,e,w,ns;
 	vector<rule>::iterator it;
@@ -366,6 +382,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm)
 			for(n=0;n<N;n++)
 			{
 				cout << ".";
+				cout.flush();
 				inputs[1]=n;
 				for(ne=0;ne<N;ne++)
 				{
@@ -388,7 +405,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm)
 										for(nw=0;nw<N;nw++)
 										{
 											ns = slowcalc(nw,n,ne,w,c,e,sw,s,se);
-											if(ns == c)
+											if(remove_stasis && ns == c)
 												continue; // we can ignore stasis transitions
 											// can we merge this transition with any existing rule?
 											inputs[8]=nw;
@@ -474,6 +491,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm)
 			for(n=0;n<N;n++)
 			{
 				cout << ".";
+				cout.flush();
 				inputs[1]=n;
 				for(e=0;e<N;e++)
 				{
@@ -484,7 +502,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm)
 						for(w=0;w<N;w++)
 						{
 							ns = slowcalc(0,n,0,w,c,e,0,s,0);
-							if(ns == c)
+							if(remove_stasis && ns == c)
 								continue; // we can ignore stasis transitions
 
 							// can we merge this transition with any existing rule?
@@ -629,11 +647,12 @@ int main()
 	const TSymm symmetry = rot8;
 	const int nhood_size = 9;
 	const string output_filename = "wireworld.table";
+	const bool remove_stasis_transitions = true;
 
 	vector<rule> rules;
 	time_t t1,t2;
 	time(&t1);
-	produce_rule_table(rules,N_STATES,nhood_size,symmetry);
+	produce_rule_table(rules,N_STATES,nhood_size,symmetry,remove_stasis_transitions);
 	time(&t2);
 	int n_secs = (int)difftime(t2,t1);
 	cout << "\nProcessing took: " << n_secs << " seconds." << endl;
@@ -648,6 +667,10 @@ int main()
 			out << "N,NE,E,SE,S,SW,W,NW";
 		out << ",C'";
 		out << "\n# N.B. Where the same variable appears multiple times,\n# it can take different values each time.\n#";
+		if(remove_stasis_transitions)
+			out << "\n# Default for transitions not listed: no change\n#";
+		else
+			out << "\n# All transitions should be included below, including no-change ones.\n#";
 		out << "\nn_states:" << N_STATES;
 		out << "\nneighborhood_size:" << nhood_size;
 		out << "\nsymmetries:" << symmetry_strings[symmetry] << "\n";
@@ -657,6 +680,7 @@ int main()
 
 	// optional: run through the entire state space, checking that new_slowcalc matches slowcalc
 	cout << "Verifying is correct (can abort if you're confident)...";
+	cout.flush();
 	if(is_correct(rules,N_STATES,nhood_size))
 		cout << "yes." << endl;
 	else
