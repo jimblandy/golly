@@ -563,7 +563,7 @@ const char* GetActionName(action_id action)
       case DO_FASTER:         return "Faster";
       case DO_SLOWER:         return "Slower";
       case DO_AUTOFIT:        return "Auto Fit";
-      case DO_HASHING:        return "Use Hashing";
+      case DO_HASHING:        return "Use Hashing";   //!!! deprecate???
       case DO_HYPER:          return "Hyperspeed";
       case DO_HASHINFO:       return "Show Hash Info";
       case DO_SETRULE:        return "Set Rule...";

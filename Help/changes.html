@@ -8,9 +8,33 @@
 <p>
 <ul>
 <li> Golly now supports multiple algorithms and multi-state universes (up to 256 states).
-     The new algorithms include Generations, WireWorld and John von Neumann's 29-state CA.
-<li> The Patterns folder contains new example patterns.  In particular, see JvN-Examples
-     for different phases of a self-replicator created by William Buckley.
+<li> The Generations algorithm supports an entire family of new rules, including
+     Brian's Brain (/2/3), Star Wars (345/2/4), and Transers (345/26/5).
+<li> The JvN algorithm implements John von Neumann's classic 29-state CA,
+     plus a couple of 32-state variants created by Renato Nobili and Tim Hutton.
+     See Patterns/JvN-Examples for a variety of self-replicators.
+<li> The RuleTable and RuleTree algorithms allow you to add new rules by creating
+     .table and .tree files in the Rules folder.  A number of example rules are
+     supplied, including Langtons-Loops, Evoloop, LifeOnTheEdge and WireWorld.
+<li> The tool bar has a new button for switching algorithms, or you can use the
+     Set Algorithm submenu in the Control menu.  The Use Hashing option has been removed.
+<li> The Control > Set Rule dialog also has a menu for changing the current algorithm.
+     A help button can be used to expand the dialog and display information
+     about the current algorithm along with examples of the rules it supports.
+<li> The ten layer-specific colors have been replaced by a more flexible approach
+     to cope with multi-state universes.  Each algorithm has a default color scheme
+     that can be changed in <a href="prefs#color">Preferences > Color</a>.
+<li> Each algorithm also has a default set of icons, small bitmaps that are only
+     drawn at scales 1:8 and 1:16, and only if the Show Cell Icons option
+     (in the View menu) is ticked.  The default icons can be changed by using the
+     Load Icons button in <a href="prefs#color">Preferences > Color</a>.
+<li> Rule-specific colors and icons can be created by adding suitably named
+     .colors and .icons files to the Rules folder.  Golly looks for these
+     files whenever it switches to a new rule.
+<li> The Layer > Set Layer Colors dialog can change one or more colors used by
+     the current layer (and its clones).  These changes are temporary and only remain
+     in effect while the layer exists, or until the layer's algorithm or rule changes.
+<li> The View > Swap Cell Colors option has been changed to Invert Colors.
 <li> New script commands have been added to support the above changes:
      <a href="python.html#setalgo">setalgo</a>,
      <a href="python.html#getalgo">getalgo</a>,
@@ -25,12 +49,6 @@
 <li> The <a href="python.html#getrule">getrule</a> command now returns a canonical rule string.
 <li> The <a href="python.html#setcursor">setcursor</a>/<a href="python.html#getcursor">getcursor</a>
      commands now accept/return strings.
-<li> Changing the current rule can change the current algorithm.  If the current algorithm
-     doesn't support the new rule then Golly will try to switch to the first algorithm
-     that does support it.
-<li> Similarly, changing the current algorithm can change the current rule.  If the new
-     algorithm doesn't support the current rule then Golly will switch to the new
-     algorithm's default rule.
 <li> It's now possible to open a pattern or run a script from the Help window
      by clicking on special links.  For example,
      open <a href="open#Patterns/Guns/golly-ticker.rle">golly-ticker.rle</a>
@@ -44,13 +62,10 @@
 <li> View > Show All States toggles the display of colors and icons for all states
      in the current universe.  A box is drawn around the current drawing state
      and can be changed by clicking on a different state.
-<li> View > Show Cell Icons toggles whether cells are drawn as colored squares or icons.
-     Icons are small bitmaps and are only drawn at scales 1:8 and 1:16.
-<li> The Swap Cell Colors option has been changed to Invert Colors.
-<li> Help > File Formats describes Golly's extended RLE and macrocell file formats.
+<li> Help > File Formats describes the extended RLE and macrocell file formats used by Golly.
 <li> Rendering in the Mac and Linux apps is faster at scales 1:4/8/16.
 <li> Fixed a bug in the Linux/GTK app if a recent pattern/script path contained an underscore.
-<li> The Linux/X11 app is no longer supported (due to limitations in wxX11).
+<li> The Linux/X11 app is no longer supported due to limitations in wxX11.
 <li> The Win app requires Perl 5.10 or later (Perl 5.8 is not binary compatible).
 </ul>
 
