@@ -69,6 +69,7 @@ static bool slowdraw = false;       // do slow cell drawing via UpdateView?
 
 static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
+static int newalgo;                 // new algo needed by readclipboard
 
 // -----------------------------------------------------------------------------
 
@@ -451,6 +452,24 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       statusptr->ErrorMessage(_("Pasting is not allowed outside +/- 10^9 boundary."));
       return;
    }
+   
+   // pasting clipboard pattern can cause a rule change
+   if (canchangerule > 0 && oldrule != newrule) {
+      const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+      // setrule can fail if readclipboard loaded clipboard pattern into
+      // a different type of algo (newalgo)
+      if (err) {
+         // allow rule change to cause algo change
+         mainptr->ChangeAlgorithm(newalgo, newrule);
+      } else {
+         // switch to default colors for new rule
+         UpdateLayerColors();
+         // show new rule in title bar
+         mainptr->SetWindowTitle(wxEmptyString);
+         if (allowundo && !currlayer->stayclean)
+            currlayer->undoredo->RememberRuleChange(oldrule);
+      }
+   }
 
    // set pastex,pastey to top left cell of paste rectangle
    pastex = left.toint();
@@ -598,23 +617,6 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    if (reduced) {
       statusptr->ErrorMessage(_("Some cell states were reduced."));
    }
-   
-   // pasting clipboard pattern can also cause a rule change
-   if (canchangerule > 0 && oldrule != newrule) {
-      const char* err = curralgo->setrule( newrule.mb_str(wxConvLocal) );
-      // setrule can fail if readclipboard loaded clipboard pattern into
-      // a different type of algo
-      if (err) {
-         curralgo->setrule( oldrule.mb_str(wxConvLocal) );
-         Warning(_("Paste could not change rule:\n") + wxString(err,wxConvLocal));
-      } else {
-         // switch to default colors for new rule
-         UpdateLayerColors();
-         // show new rule in title bar
-         mainptr->SetWindowTitle(wxEmptyString);
-         if (savecells) currlayer->undoredo->RememberRuleChange(oldrule);
-      }
-   }
 }
 
 // -----------------------------------------------------------------------------
@@ -654,7 +656,10 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
             delete *tempalgo;
             *tempalgo = CreateNewUniverse(i);
             err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
-            if (!err) break;
+            if (!err) {
+               newalgo = i;   // remember new algo for later use in PasteTemporaryToCurrent
+               break;
+            }
          }
       }
    }
@@ -712,13 +717,7 @@ void PatternView::PasteClipboard(bool toselection)
    // read clipboard pattern into temporary universe
    bigint top, left, bottom, right;
    if ( GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
-      // tempalgo might have been deleted and re-created as a different type
-      // of universe
-      /* better to proceed with paste and only report error if one or more setcell calls fail???
-      if (currlayer->algo->NumCellStates() < tempalgo->NumCellStates()) {
-         statusptr->ErrorMessage(_("Paste not allowed if clipboard pattern has more states than current universe."));
-      } else
-      */
+      // tempalgo might have been deleted and re-created as a different type of universe
       PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
    }
 

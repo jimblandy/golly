@@ -74,7 +74,6 @@ This is often the quickest way to delete escaping gliders.
 
 <p>
 Pastes a pattern stored in the clipboard into the existing pattern.
-Any rule information in the clipboard pattern is ignored.
 After selecting this item you'll be asked to click where you want
 the paste to occur.
 Before clicking you can use keyboard shortcuts to scroll,
@@ -82,6 +81,13 @@ change scale, etc.  You can also type "M" to change the paste mode
 or "L" to change the paste location (see below).
 To cancel the paste, just click anywhere outside the view area
 or hit the escape key.
+
+<p>
+Settings in <a href="prefs#edit">Preferences > Edit</a> specify
+how to handle rule information in the clipboard pattern.
+You can tell Golly not to change the current rule, or only change
+the rule if the universe is empty, or always change to the given rule.
+Note that a rule change might cause the current algorithm to change.
 
 <p>
 The <a href="refs.html">References</a> section has links to
@@ -182,7 +188,7 @@ There are other (quicker) ways to change the cursor mode:
 
 <p>
 <ul>
-<li> Click on the corresponding buttons in the tool bar.
+<li> Click on the corresponding buttons in the edit bar.
 <li> Hit the corresponding function keys (F2 to F7).
 <li> Hit "c" to cycle through all the cursor modes.
 <li> Press the shift key to temporarily toggle the draw/pick cursors
