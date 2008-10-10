@@ -355,6 +355,11 @@ bool LoadIconFile(const wxString& path, int maxstate,
       return false;
    }
    
+   #ifdef __WXGTK__
+      // need this on Linux
+      image.SetMaskColour(0, 0, 0);    // make black transparent
+   #endif
+   
    wxBitmap allicons(image);
    int wd = allicons.GetWidth();
    int ht = allicons.GetHeight();
