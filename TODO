@@ -21,15 +21,14 @@ Andrew's list:
   in scroll bar (and thus we can't copy text).
 
 - Rename Hashing-Examples to HashLife-Examples (or just HashLife?)
-  and convert all files to .mc format (with explicit rules).
+  and convert all files to .mc format (with explicit rules?).
 
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
 - Check all !!!/FIXME comments in code and try to remove.
 
-- Update docs (Help files, BUILD notes, README, etc).
-  Need to finish Help/Algorithms/Generations.html.
+- Need to finish Help/Algorithms/Generations.html, etc.
 
 - At this point release a beta version of Golly 2.0.
 
