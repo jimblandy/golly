@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxprefs.h"       // for namedrules, gollydir, etc
+#include "wxprefs.h"       // for namedrules, gollydir, showalgohelp, etc
 #include "wxutils.h"       // for Warning, Fatal
 #include "wxlayer.h"       // for currlayer
 #include "wxalgos.h"       // for NumAlgos, CreateNewUniverse, etc
@@ -430,17 +430,6 @@ RuleDialog::RuleDialog(wxWindow* parent)
    
    expanded = false;    // tested in RuleDialog::OnSize
 
-   ignore_text_change = true;
-   CreateControls();
-   ignore_text_change = false;
-   
-   // dialog location is now set to rulex,ruley
-   // Centre();
-
-   minrect = GetRect();
-   // don't allow resizing when dialog isn't expanded
-   SetMaxSize( wxSize(minrect.width,minrect.height) );
-
    htmlwin = new AlgoHelp(this, wxID_ANY,
                           // specify small size to avoid clipping scroll bar on resize
                           wxDefaultPosition, wxSize(30,30),
@@ -449,9 +438,30 @@ RuleDialog::RuleDialog(wxWindow* parent)
    htmlwin->SetBorders(4);
    htmlwin->Show(false);
 
+   ignore_text_change = true;
+   CreateControls();
+   ignore_text_change = false;
+   
+   // dialog location is set to rulex,ruley
+   // Centre();
+
+   minrect = GetRect();
+   // don't allow resizing when dialog isn't expanded
+   SetMaxSize( wxSize(minrect.width,minrect.height) );
+
    // select all of rule text
    ruletext->SetFocus();
    ruletext->SetSelection(-1,-1);
+   
+   if (showalgohelp) {
+      // send help button event to expand dialog
+      wxCommandEvent buttevent(wxEVT_COMMAND_BUTTON_CLICKED, wxID_HELP);
+      wxWindow* buttwin = FindWindow(wxID_HELP);
+      if (buttwin) {
+         buttevent.SetEventObject(buttwin);
+         buttwin->ProcessEvent(buttevent);
+      }
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -854,6 +864,7 @@ void RuleDialog::OnHelpButton(wxCommandEvent& WXUNUSED(event))
 {
    wxRect r = GetRect();
    expanded = !expanded;
+   showalgohelp = expanded;
    if (expanded) {
       int wd, ht;
       GetClientSize(&wd, &ht);

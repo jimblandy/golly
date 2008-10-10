@@ -120,6 +120,7 @@ int rulex = 200;                 // rule dialog's initial location
 int ruley = 200;
 int ruleexwd = 500;              // rule dialog's initial extra size
 int ruleexht = 200;
+bool showalgohelp = false;       // show algorithm help in rule dialog?
 
 char initrule[256] = "B3/S23";   // initial rule
 bool initautofit = false;        // initial autofit setting
@@ -1427,6 +1428,7 @@ void SavePrefs()
    }
    fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
    fprintf(f, "rule_dialog=%d,%d,%d,%d\n", rulex, ruley, ruleexwd, ruleexht);
+   fprintf(f, "show_algo_help=%d\n", showalgohelp ? 1 : 0);
 
    fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
    fprintf(f, "restore_view=%d\n", restoreview ? 1 : 0);
@@ -1816,6 +1818,9 @@ void GetPrefs()
          if (ruleexwd < 100) ruleexwd = 100;
          if (ruleexht < 0) ruleexht = 0;
          CheckVisibility(&rulex, &ruley, &ruleexwd, &ruleexht);
+
+      } else if (strcmp(keyword, "show_algo_help") == 0) {
+         showalgohelp = value[0] == '1';
 
       } else if (strcmp(keyword, "allow_undo") == 0) {
          allowundo = value[0] == '1';

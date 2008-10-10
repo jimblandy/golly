@@ -69,6 +69,7 @@ extern int rulex;                // rule dialog's location
 extern int ruley;
 extern int ruleexwd;             // rule dialog's extra size
 extern int ruleexht;
+extern bool showalgohelp;        // show algorithm help in rule dialog?
 
 extern char initrule[];          // initial rule
 extern bool initautofit;         // initial autofit setting
