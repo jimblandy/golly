@@ -356,7 +356,7 @@ bool LoadIconFile(const wxString& path, int maxstate,
    }
    
    #ifdef __WXGTK__
-      // need this on Linux
+      // need alpha channel on Linux
       image.SetMaskColour(0, 0, 0);    // make black transparent
    #endif
    
