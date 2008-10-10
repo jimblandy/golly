@@ -48,7 +48,7 @@ const char* ruletable_algo::setrule(const char* s)
 {
    string ret = LoadRuleTable(s) ;
    if(!ret.empty())
-	   return "error";
+      return "error";
 
    this->current_rule = s;
    maxCellStates = this->n_states;
@@ -58,32 +58,32 @@ const char* ruletable_algo::setrule(const char* s)
 
 vector<string> tokenize(const string& str,const string& delimiters)
 {
-	vector<string> tokens;
+   vector<string> tokens;
 
-	// skip delimiters at beginning.
-	string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+   // skip delimiters at beginning.
+   string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 
-	// find first "non-delimiter".
-	string::size_type pos = str.find_first_of(delimiters, lastPos);
+   // find first "non-delimiter".
+   string::size_type pos = str.find_first_of(delimiters, lastPos);
 
-	while (string::npos != pos || string::npos != lastPos)
-	{
-		// found a token, add it to the vector.
-		tokens.push_back(str.substr(lastPos, pos - lastPos));
+   while (string::npos != pos || string::npos != lastPos)
+   {
+      // found a token, add it to the vector.
+      tokens.push_back(str.substr(lastPos, pos - lastPos));
 
-		// skip delimiters.  Note the "not_of"
-		lastPos = str.find_first_not_of(delimiters, pos);
+      // skip delimiters.  Note the "not_of"
+      lastPos = str.find_first_not_of(delimiters, pos);
 
-		// find next "non-delimiter"
-		pos = str.find_first_of(delimiters, lastPos);
-	}
+      // find next "non-delimiter"
+      pos = str.find_first_of(delimiters, lastPos);
+   }
 
-	return tokens;
+   return tokens;
 }
 
 bool starts_with(const string& line,const string& keyword)
 {
-	return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
+   return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
 }
 
 const char *defaultRuleData[] = {
@@ -163,12 +163,13 @@ string ruletable_algo::LoadRuleTable(string rule)
          return "Failed to open file: "+full_filename;
    } else {
    }
+
    this->neighbourhood_size = 5; // default
    this->symmetries = withRotations; // default
    this->n_states = 8;  // default
-   this->transition_table.clear();
 
    map< string, vector<state> > variables;
+   map<vector<vector<state> >, state> transition_table;
 
    for (;;) {
       if (isDefaultRule) {
@@ -183,12 +184,12 @@ string ruletable_algo::LoadRuleTable(string rule)
       lineno++ ;
       int allws = 1 ;
       for (unsigned int i=0; i<line.size(); i++)
-	if (line[i] > ' ') {
-	  allws = 0 ;
-	  break ;
-	}
+   if (line[i] > ' ') {
+     allws = 0 ;
+     break ;
+   }
       if(starts_with(line,comment_keyword) || allws)
-		  continue; // comment line
+        continue; // comment line
       else if(starts_with(line,n_states_keyword))
       {
          // parse the rest of the line
@@ -197,12 +198,12 @@ string ruletable_algo::LoadRuleTable(string rule)
       }
       else if(starts_with(line,symmetries_keyword))
       {
-		  string remaining(line.begin()+symmetries_keyword.length(),line.end());
-		  if(starts_with(remaining,withRotations_symmetry_keyword))
-			  this->symmetries = withRotations;
-		  else if(starts_with(remaining,none_symmetry_keyword))
-			  this->symmetries = none;
-		  else
+        string remaining(line.begin()+symmetries_keyword.length(),line.end());
+        if(starts_with(remaining,withRotations_symmetry_keyword))
+           this->symmetries = withRotations;
+        else if(starts_with(remaining,none_symmetry_keyword))
+           this->symmetries = none;
+        else
               return "Error reading file: "+line;
       }
       else if(starts_with(line,neighbourhood_size_keyword))
@@ -210,88 +211,139 @@ string ruletable_algo::LoadRuleTable(string rule)
          // parse the rest of the line
          if(sscanf(line.c_str()+neighbourhood_size_keyword.length(),"%d",&this->neighbourhood_size)!=1)
             return "Error reading file: " + line;
-		 if(this->neighbourhood_size!=5 && this->neighbourhood_size!=9)
-			 return "Error reading file, unsupported neighbourhood_size: " + line;
+       if(this->neighbourhood_size!=5 && this->neighbourhood_size!=9)
+          return "Error reading file, unsupported neighbourhood_size: " + line;
      }
-	  else if(starts_with(line,variable_keyword))
-	  {
-		  // parse the rest of the line for the variable
-		  vector<string> tokens = tokenize(line,"= {,}");
-		  string variable_name = tokens[1];
-		  vector<state> states;
-		  if(tokens.size()<4)
-			  return "Error reading file: "+line;
-		  for(unsigned int i=2;i<tokens.size();i++)
-		  {
-			  istringstream iss(tokens[i]);
-			  int s;
-			  iss >> s;
-			  states.push_back((state)s);
-		  }
-		  variables[variable_name] = states;
-	  }
+     else if(starts_with(line,variable_keyword))
+     {
+        // parse the rest of the line for the variable
+        vector<string> tokens = tokenize(line,"= {,}");
+        string variable_name = tokens[1];
+        vector<state> states;
+        if(tokens.size()<4)
+           return "Error reading file: "+line;
+        for(unsigned int i=2;i<tokens.size();i++)
+        {
+           istringstream iss(tokens[i]);
+           int s;
+           iss >> s;
+           states.push_back((state)s);
+        }
+        variables[variable_name] = states;
+     }
       else
       {
         // must be a transitions line
-	    vector<vector<state> > inputs;
- 	    state output;
+       vector<vector<state> > inputs;
+       state output;
         if(this->n_states<=10 && variables.empty())
         {
-		   // if there are single-digit states and no variables then use compressed form
-		   // e.g. 012345 for 0,1,2,3,4 -> 5
-		   if(line.length() < this->neighbourhood_size+1) // TJH: allowing for comments after the rule
-			   return "Error reading line: "+line;
-		   for(unsigned int i=0;i<this->neighbourhood_size;i++)
-		   {
-			   char c = line[i];
-			   if(c<'0' || c>'9')
-				   return "Error reading line: "+line;
-			   inputs.push_back(vector<state>(1,c-'0'));
-		   }
-		   unsigned char c = line[this->neighbourhood_size];
-		   if(c<'0' || c>'9')
-			   return "Error reading line: "+line;
+         // if there are single-digit states and no variables then use compressed form
+         // e.g. 012345 for 0,1,2,3,4 -> 5
+         if(line.length() < this->neighbourhood_size+1) // TJH: allowing for comments after the rule
+            return "Error reading line: "+line;
+         for(unsigned int i=0;i<this->neighbourhood_size;i++)
+         {
+            char c = line[i];
+            if(c<'0' || c>'9')
+               return "Error reading line: "+line;
+            inputs.push_back(vector<state>(1,c-'0'));
+         }
+         unsigned char c = line[this->neighbourhood_size];
+         if(c<'0' || c>'9')
+            return "Error reading line: "+line;
            output = c-'0';
         }
         else 
-		{
+      {
            vector<string> tokens = tokenize(line,", #\t");
-		   if(tokens.size() < this->neighbourhood_size+1)
-		   {
-			   ostringstream oss;
-			   oss << "Error reading transition line, too few entries (" << tokens.size() << ", expected " <<
-				   (this->neighbourhood_size+1) << ") on line: " << line;
-			   return oss.str();
-		   }
-		   // parse the inputs
-		   for(unsigned int i=0;i<this->neighbourhood_size;i++)
-		   {
-			   map<string,vector<state> >::const_iterator found;
-			   found = variables.find(tokens[i]);
-			   if(found!=variables.end())
-			   {
-				   // found a variable name, replace it with the variable's contents
-				   inputs.push_back(found->second);
-				   // (variable must have been declared before this point in the file or it won't be found)
-			   }
-			   else
-			   {
-				   // found a single state value
-				   int s;
-				   if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
-					   return "Error reading transition line, expecting a value: "+line;	
-			       inputs.push_back(vector<state>(1,s));			   
-			   }
-		   }
-		   // parse the output
-		   int outp;
-		   if(sscanf(tokens[this->neighbourhood_size].c_str(),"%d",&outp)!=1)
-			   return "Error reading transition line, failed to parse output state: "+line;	
-			output = (state)outp;
+         if(tokens.size() < this->neighbourhood_size+1)
+         {
+            ostringstream oss;
+            oss << "Error reading transition line, too few entries (" << tokens.size() << ", expected " <<
+               (this->neighbourhood_size+1) << ") on line: " << line;
+            return oss.str();
+         }
+         // parse the inputs
+         for(unsigned int i=0;i<this->neighbourhood_size;i++)
+         {
+            map<string,vector<state> >::const_iterator found;
+            found = variables.find(tokens[i]);
+            if(found!=variables.end())
+            {
+               // found a variable name, replace it with the variable's contents
+               inputs.push_back(found->second);
+               // (variable must have been declared before this point in the file or it won't be found)
+            }
+            else
+            {
+               // found a single state value
+               int s;
+               if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
+                  return "Error reading transition line, expecting a value: "+line;	
+                inputs.push_back(vector<state>(1,s));			   
+            }
+         }
+         // parse the output
+         int outp;
+         if(sscanf(tokens[this->neighbourhood_size].c_str(),"%d",&outp)!=1)
+            return "Error reading transition line, failed to parse output state: "+line;	
+         output = (state)outp;
         }
-        this->transition_table[inputs]=output;
+        transition_table[inputs]=output;
       }
    }
+   // now convert transition table to bitmask lookup
+   {
+		unsigned int n_bits = sizeof(TBits)*8;
+		int n_rotations,rotation_skip;
+		if(this->symmetries == withRotations)
+		{
+			n_rotations=4;
+			if(this->neighbourhood_size==5)
+				rotation_skip=1;
+			else // neighbourhood_size==9
+				rotation_skip=2;
+		}
+		else
+		{
+			n_rotations=1;
+			rotation_skip=1;
+		}
+		unsigned int M = transition_table.size() * n_rotations; // (we need to expand out symmetry)
+		unsigned int MC = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
+		// initialize lookup table to all bits turned off 
+		this->lut.assign(neighbourhood_size,vector< vector<TBits> >(this->n_states,vector<TBits>(MC,0))); 
+		this->output.resize(M);
+		// work through the rules, filling the bit masks
+		unsigned int iRule=0,iRuleC,iBit,iNbor;
+		TBits mask;
+		// (each transition rule looks like, e.g. 1,[2,3,4],[2,4],0,3 -> 0 )
+		for(map<vector<vector<state> >,state >::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
+		{
+			const vector<vector<state> >& rule = rule_it->first;
+			for(int iRot=0;iRot<n_rotations;iRot++)
+			{
+				this->output[iRule] = rule_it->second;
+				iBit = iRule % n_bits;
+				iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
+				mask = (TBits)1 << iBit; // (we need to ensure this is a 64-bit shift, not a 32-bit shift)
+				for(iNbor=0;iNbor<this->neighbourhood_size;iNbor++)
+				{
+					const vector<state>& possibles = rule[iNbor];
+					for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
+					{
+						if(iNbor>0)
+							this->lut[1+((iNbor-1+iRot*rotation_skip)%(this->neighbourhood_size-1))][*poss_it][iRuleC] |= mask;
+						else
+							this->lut[iNbor][*poss_it][iRuleC] |= mask;
+					}
+				}
+				iRule++; // this is the index of the rule after expansion for symmetry
+			}
+		}
+   }
+
    return string(""); // success
 }
 
@@ -300,7 +352,7 @@ const char* ruletable_algo::getrule() {
 }
 
 const char* ruletable_algo::DefaultRule() {
-	return "Langtons-Loops";
+   return "Langtons-Loops";
 }
 
 ruletable_algo::ruletable_algo()
@@ -315,43 +367,31 @@ ruletable_algo::~ruletable_algo()
 state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, state e,
                         state sw, state s, state se) 
 {
-   // (fortunately Golly's hashing means that speed isn't critical here)
-   vector<state> inputs;   
-   if(this->neighbourhood_size == 5)
-   {
-	  // clockwise from N, following Langton (CTRBL)
-	  inputs.push_back(n); inputs.push_back(e); inputs.push_back(s); inputs.push_back(w);
-   }
-   else if(this->neighbourhood_size == 9)
-   {
-	  // clockwise from N
-	  inputs.push_back(n); inputs.push_back(ne); inputs.push_back(e); inputs.push_back(se); 
-	  inputs.push_back(s); inputs.push_back(sw); inputs.push_back(w); inputs.push_back(nw);
-   }
-   int n_rotations = (this->symmetries==withRotations)?4:1;
-   int rotation_skip = (this->neighbourhood_size==9)?2:1;
-   vector<state> rotated_inputs(this->neighbourhood_size);
-   rotated_inputs[0]=c;
-   for(int rotation=0;rotation<n_rotations;rotation++)
-   {
-	  // (by using angular order for the values, a list rotation is equivalent to a geometric rotation)
-	  rotate_copy(inputs.begin(),inputs.begin()+rotation*rotation_skip,inputs.end(),rotated_inputs.begin()+1);
-	  // does this sequence match any transition rule?
-	  for(map<vector<vector<state> >, state>::const_iterator it=this->transition_table.begin();it!=this->transition_table.end();it++)
-	  {
-		  const vector<vector<state> >& rule_inputs = it->first;
-		  bool rule_applies=true;
-		  for(unsigned int i=0;rule_applies && i<this->neighbourhood_size;i++)
-		  {
-			  const vector<state>& possible_states = rule_inputs[i];
-			  if(find(possible_states.begin(),possible_states.end(),rotated_inputs[i])==possible_states.end())
-				  rule_applies = false;
-		  }
-		  if(rule_applies)
-			  return it->second;
-	  }
-   }
-   return c; // default: no change
+   const unsigned int MC = this->lut[0][0].size();
+	unsigned int iRule;
+	TBits is_match;
+
+   for(iRule=0;iRule<MC;iRule++)
+	{
+      // is there a match for any of the sizeof(TBits)*8 rules within iRule?
+		if(this->neighbourhood_size==5)
+         is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
+            this->lut[3][s][iRule] & this->lut[4][w][iRule];
+      else // this->neighbourhood_size==9
+         is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][ne][iRule] & 
+         this->lut[3][e][iRule] & this->lut[4][se][iRule] & this->lut[5][s][iRule] & this->lut[6][sw][iRule] & 
+            this->lut[7][w][iRule] & this->lut[8][nw][iRule];
+      // if one of them matched, return the output of the first
+		if(is_match)
+		{
+         // find the least significant bit of is_match
+			unsigned int iBit=0;
+			while(!(is_match&((TBits)1<<iBit)))
+				++iBit;
+			return this->output[ iRule*sizeof(TBits)*8 + iBit ];
+		}
+	}
+	return c; // default: no change
 }
 
 static lifealgo *creator() { return new ruletable_algo() ; }

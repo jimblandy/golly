@@ -54,9 +54,13 @@ protected:
    unsigned int n_states;
    unsigned int neighbourhood_size; // 5=von Neumann; 9=Moore; others currently unsupported
 
-   std::map< std::vector< std::vector<state> > , state> transition_table;
-   // e.g. "1,[2,3,4],5,[2,6],7 -> 8" captures 6 different transitions, plus all their symmetries
-
    enum { none, withRotations } symmetries;
+
+   // we use a lookup table to match inputs to rules:
+   typedef unsigned long long int TBits; // we can use unsigned int if we hit portability issues (not much slower)
+   std::vector< std::vector< std::vector<TBits> > > lut; // TBits lut[neighbourhood_size][n_states][n_compressed_rules];
+
+   std::vector<state> output; // state output[n_rules];
+
 };
 #endif
