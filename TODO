@@ -5,7 +5,9 @@ Andrew's list:
 
 - Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
   methods, and maybe GetTransformedState as well for use in
-  transform() command.
+  transform() command.  Is there any point doing this given that there
+  are inherently non-symmetric rules like LifeOnTheEdge where the
+  above approach won't work?
 
 - Fix missing &s in recent file paths (replace each & with &&) and
   fix underscore bug in Linux app by trying wxGTK 2.8.8.
@@ -27,8 +29,6 @@ Andrew's list:
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
 - Check all !!!/FIXME comments in code and try to remove.
-
-- Need to finish Help/Algorithms/RuleTree.html.
 
 - At this point release a beta version of Golly 2.0.
 

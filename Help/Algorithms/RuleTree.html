@@ -13,47 +13,92 @@ Here are the currently supported rules:
 Conway's Life.  This is the default rule for the RuleTree algorithm.
 
 <p><b><a href="rule#BriansBrain">BriansBrain</a></b><br>
-!!!
+An alternative implementation of the Generations rule /2/3.
 
 <p><b><a href="rule#Byl-Loop">Byl-Loop</a></b><br>
-!!!
+A six state 5-neighborhood CA that supports small self-replicating loops.
+To see the rule in action, open
+<a href="open#Patterns/Loops/Byl-Loop.rle">Byl-Loop.rle</a>.</p>
 
 <p><b><a href="rule#Caterpillars">Caterpillars</a></b><br>
-!!!
+An alternative implementation of the Generations rule 124567/378/4.
 
 <p><b><a href="rule#Chou-Reggia-1">Chou-Reggia-1</a></b><br>
-!!!
+An eight state 5-neighborhood CA that supports tiny self-replicating loops.
+To see the rule in action, open
+<a href="open#Patterns/Loops/Chou-Reggia-Loop-1.rle">Chou-Reggia-Loop-1.rle</a>.</p>
 
 <p><b><a href="rule#Chou-Reggia-2">Chou-Reggia-2</a></b><br>
-!!!
+Similar to the above rule but supporting an even smaller self-replicating loop of only five cells.
+To see the rule in action, open
+<a href="open#Patterns/Loops/Chou-Reggia-Loop-2.rle">Chou-Reggia-Loop-2.rle</a>.</p>
 
 <p><b><a href="rule#Evoloop">Evoloop</a></b><br>
-!!!
-
-<p><b><a href="rule#Hutton32">Hutton32</a></b><br>
-!!!
-
-<p><b><a href="rule#JvN29">JvN29</a></b><br>
-!!!
+An extension of the SDSR Loop, designed to allow evolution through collisions.
+To see the rule in action, open
+<a href="open#Patterns/Loops/Evoloop.rle">Evoloop.rle</a>.</p>
 
 <p><b><a href="rule#Langtons-Loops">Langtons-Loops</a></b><br>
-!!!
+The original loop. Chris Langton adapted Codd's 1968 CA to support a simple form of
+self-replication based on a circulating loop of instructions.
+To see the rule in action, open
+<a href="open#Patterns/Loops/Langtons-Loops.rle">Langtons-Loops.rle</a>.</p>
 
-<p><b><a href="rule#Nobili32">Nobili32</a></b><br>
-!!!
+<p><b><a href="rule#LifeOnTheEdge">LifeOnTheEdge</a></b><br>
+A CA proposed by Franklin T. Adams-Watters in which all the action occurs on
+the edges of a square grid.  Each edge can be on or off and has six neighbors,
+three at each end.  An edge is on in the next generation iff exactly two of the
+edges in its seven edge neighborhood (including the edge itself) are on.
+This implementation has 3 live states with suitable icons that allow any pattern
+of edges to be created.
+
+<p><b><a href="rule#LifeOnTheSlope">LifeOnTheSlope</a></b><br>
+The same behavior as LifeOnTheEdge but patterns are rotated by 45 degrees.
+This implementation has only 2 live states (with icons \ and /), so it's a lot easier
+to enter patterns and they generate quite a bit faster.
 
 <p><b><a href="rule#SDSR-Loop">SDSR-Loop</a></b><br>
-!!!
+An extension of Langton's Loops, designed to cause dead loops to disappear,
+allowing other loops to replicate further.
+To see the rule in action, open
+<a href="open#Patterns/Loops/SDSR-Loop.rle">SDSR-Loop.rle</a>.</p>
 
 <p><b><a href="rule#StarWars">StarWars</a></b><br>
-!!!
+An alternative implementation of the Generations rule 345/2/4.
 
 <p><b><a href="rule#WireWorld">WireWorld</a></b><br>
 A 4-state CA created by Brian Silverman.
 WireWorld models the flow of currents in wires and makes it relatively
 easy to build logic gates and other digital circuits.
-For an impressive example, see the
-<a href="open#Patterns/WireWorld-Examples/wwprimes.mc">prime number generator</a>.
+For an impressive example, open
+<a href="open#Patterns/WireWorld-Examples/wwprimes.mc">wwprimes.mc</a>.</p>
+
+<p>
+<font size=+1><b>References:</b></font>
+
+<p><b>Byl-Loop</b> (1989)<br>
+<i>J. Byl. "Self-Reproduction in small cellular automata." Physica D, Vol. 34, pages 295-299, 1989.</i>
+
+<p><b>Chou-Reggia-1</b> and <b>Chou-Reggia-2</b> (1993)<br>
+<i>J. A. Reggia, S.L.Armentrout, H.-H. Chou, and Y. Peng.
+"Simple systems that exhibit self-directed replication."
+Science, Vol. 259, pages 1282-1287, February 1993.</i>
+
+<p><b>Evoloop</b> (1999)<br>
+<i>Hiroki Sayama "Toward the Realization of an Evolving Ecosystem on Cellular Automata",
+Proceedings of the Fourth International Symposium on Artificial Life and Robotics (AROB 4th '99),
+M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.</i>
+
+<p><b>Langtons-Loops</b> (1984)<br>
+<i>C.G.Langton. "Self-reproduction in cellular automata." Physica D, Vol. 10, pages 135-144, 1984.</i>
+
+<p><b>SDSR-Loop</b> (1998)<br>
+<i>Hiroki Sayama.  "Introduction of Structural Dissolution into Langton's Self-Reproducing Loop."
+Artificial Life VI: Proceedings of the Sixth International Conference on Artificial Life,
+C. Adami, R. K. Belew, H. Kitano, and C. E. Taylor, eds., pp.114-122, Los Angeles, California, 1998, MIT Press.</i>
+
+<p><b>WireWorld</b> (1987)<br>
+<i>Dewdney, A. K. Computer Recreations. Scientific American 282:136-139, 1990.</i>
 
 </body>
 </html>
