@@ -127,36 +127,14 @@ automatically synchronized with the cell's state color.
 Each algorithm can have a different set of icons.  You can change these
 icons by loading suitably formatted files via the "Load Icons" button
 in <a href="prefs#color">Preferences > Color</a>.
-Golly can load icon bitmaps from BMP, GIF, PNG or TIFF files.
-This picture shows how the bitmaps must be arranged:
-
-<p>
-<center><img src="icon_format.bmp"></center>
-
-<p>
-The top row contains one or more icons of size 15x15, so the total width
-must be a multiple of 15.
-The bottom row contains icons of size 7x7, with each icon under the
-bottom left corner of its corresponding 15x15 icon.
-The 7x7 icons are optional; if not supplied (i.e., the total height is 15
-rather than 22) then Golly will create them by scaling down the 15x15 icons.
-Scaled icons can look rather ugly, so this isn't recommended.
-Pure black (0,0,0) must be used for the areas you want to be transparent.
-The non-black areas will be replaced with the current cell's state color.
-If the number of icons supplied is fewer than the number of live states
-then the last icon is automatically duplicated.  If there are more icons
-than required then the extra icons are simply ignored.
 
 <p>
 It's also possible to have rule-specific icons.  Whenever Golly
 switches to a new rule it looks inside the Rules folder for a matching
 <i>rule</i>.icons file and, if it exists, loads the bitmaps stored in
 the file.  The format of a .icons file is identical to that used above.
-Note that a rule string can contain characters not allowed in file names
-("/", "\" and ":"), so in those cases Golly will look for a file name
-containing hyphens instead of the illegal characters.  For example,
-if you wanted to change the icon associated with the rule B3/S23 then
-you'd need to create a file called B3-S23.icons.
+See <a href="formats.html#icons">Help > File Formats</a> for a
+description of the format.
 
 <p>
 <font size=+1><b>Invert Colors</b></font>

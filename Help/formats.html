@@ -3,10 +3,19 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-Golly can read pattern files in a variety of formats,
-but patterns are only saved in two formats:
+Here are the important file formats used by Golly:
 
 <p>
+<dd><a href="#rle"><b>Extended RLE format (.rle)</b></a></dd>
+<dd><a href="#mc"><b>Macrocell format (.mc)</b></a></dd>
+<dd><a href="#table"><b>Rule tables (.table)</b></a></dd>
+<dd><a href="#tree"><b>Rule trees (.tree)</b></a></dd>
+<dd><a href="#colors"><b>Rule-specific colors (.colors)</b></a></dd>
+<dd><a href="#icons"><b>Rule-specific icons (.icons)</b></a></dd>
+</p>
+
+
+<p><a name="rle">&nbsp;<br>
 <font size=+1><b>Extended RLE format</b></font>
 
 <p>
@@ -116,11 +125,105 @@ Any comment lines interspersed with the pattern data will not be
 displayed.
 
 
-<p>
+<p><a name="mc">&nbsp;<br>
 <font size=+1><b>Macrocell format</b></font>
 
 <p>
 !!!
+
+
+<p><a name="table">&nbsp;<br>
+<font size=+1><b>Rule tables</b></font>
+
+<p>
+!!!
+
+
+<p><a name="tree">&nbsp;<br>
+<font size=+1><b>Rule trees</b></font>
+
+<p>
+!!!
+
+
+<p><a name="colors">&nbsp;<br>
+<font size=+1><b>Rule-specific colors</b></font>
+
+<p>
+Whenever Golly switches to a new rule it looks inside the Rules folder
+for a matching <i>rule</i>.colors file and, if it exists, loads the
+color information stored in the file.
+A rule string can contain characters not allowed in file names
+("/", "\" and ":"), so Golly will substitute those characters with hyphens.
+For example, if you wanted to change the colors associated with the rule
+B3/S23 then you'd need to create a file called B3-S23.colors.
+
+<p>
+A .colors file is an ordinary text file.
+Any blank lines or lines starting with "#" are ignored.
+To specify the rgb colors for states 1, 2 and 3 you could use
+lines like these:
+
+<p>
+<dd><tt>color = 1 &nbsp; 0 128 255 &nbsp; (light blue)</tt></dd>
+<dd><tt>color = 2 255 255 255      &nbsp; (white)</tt></dd>
+<dd><tt>color = 3 255 128 &nbsp; 0 &nbsp; (orange)</tt></dd>
+</p>
+
+<p>
+Any text after the final number on each line is ignored.
+To specify a color gradient you could use a line like this:
+
+<p>
+<dd><tt>gradient = 0 0 255 &nbsp;255 0 0 &nbsp; (blue to red)</tt></dd>
+</p>
+
+<p>
+Note that a .colors file is loaded <i>after</i> switching to the current
+algorithm's default color scheme.  So you have the choice of completely
+changing all the default colors, or replacing just a few of them.
+Use <a href="prefs#color">Preferences > Color</a> to change the default
+colors for each algorithm.
+
+
+<p><a name="icons">&nbsp;<br>
+<font size=+1><b>Rule-specific icons</b></font>
+
+<p>
+Whenever Golly switches to a new rule it looks inside the Rules folder
+for a matching <i>rule</i>.icons file and, if it exists, loads the
+icon bitmaps stored in the file.
+Note that a rule string can contain characters not allowed in file names
+("/", "\" and ":"), so Golly will substitute those characters with hyphens.
+For example, if you wanted to change the icon associated with the rule
+B3/S23 then you'd need to create a file called B3-S23.icons.
+
+<p>
+Golly can load the bitmaps from BMP, GIF, PNG or TIFF files.
+The following picture shows how the bitmaps must be arranged:
+
+<p><center><img src="icon_format.bmp"></center></p>
+
+<p>
+The top row contains one or more icons of size 15x15, so the total width
+must be a multiple of 15.
+The bottom row contains icons of size 7x7, with each icon under the
+bottom left corner of its corresponding 15x15 icon.
+The 7x7 icons are optional; if not supplied (i.e., the total height is 15
+rather than 22) then Golly will create them by scaling down the 15x15 icons.
+Scaled icons can look rather ugly, so this isn't recommended.
+Pure black (0,0,0) must be used for the areas you want to be transparent.
+The non-black areas will be replaced with the current cell's state color.
+If the number of icons supplied is fewer than the number of live states
+then the last icon is automatically duplicated.  If there are more icons
+than required then the extra icons are simply ignored.
+
+<p>
+If Golly can't find any rule-specific icons it will use the default
+icons associated with each algorithm.  You can change these icons by using
+the "Load Icons" button in <a href="prefs#color">Preferences > Color</a>
+to load files with the same format described above.  The only difference
+is that there is no need for a .icons extension.
 
 </body>
 </html>

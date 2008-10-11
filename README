@@ -12,7 +12,7 @@ Key features:
 - Use RuleTable and RuleTree to load your own rules.
 - Responsive even while generating or garbage collecting.
 - Reads RLE, Life 1.05/1.06, dblife, and macrocell formats.
-- Can also read common graphic formats: BMP, PNG, GIF, TIFF.
+  Can also read common graphic formats: BMP, PNG, GIF, TIFF.
 - Includes a state-of-the-art pattern collection.
 - Fast loading of large patterns.
 - Paste in patterns from the clipboard.
