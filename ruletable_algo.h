@@ -54,7 +54,7 @@ protected:
    unsigned int n_states;
    unsigned int neighbourhood_size; // 5=von Neumann; 9=Moore; others currently unsupported
 
-   enum { none, withRotations } symmetries;
+   enum TSymmetry { none, rotate4, rotate8, reflect, rotate4reflect, rotate8reflect } symmetries;
 
    // we use a lookup table to match inputs to rules:
    typedef unsigned long long int TBits; // we can use unsigned int if we hit portability issues (not much slower)
