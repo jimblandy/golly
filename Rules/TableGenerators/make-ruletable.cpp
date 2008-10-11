@@ -127,6 +127,26 @@ vector<state> rotate_inputs(const vector<state>& inputs,int rot)
 	return rotinp;
 }
 
+vector<state> reflect_inputs(const vector<state>& inputs,int neighbourhood_size)
+{
+   vector<state> refinp(inputs);
+   if(neighbourhood_size==5) // CNESW
+   {
+      refinp[2]=inputs[4]; // swap E and W
+      refinp[4]=inputs[2];
+   }
+   else // neighbourhood_size==9 (C,N,NE,E,SE,S,SW,W,NW)
+   {
+      refinp[2]=inputs[8];
+      refinp[8]=inputs[2];
+      refinp[3]=inputs[7];
+      refinp[7]=inputs[3];
+      refinp[4]=inputs[6];
+      refinp[6]=inputs[4]; // swap all E and W
+   }
+   return refinp;
+}
+
 // simple rule structure, e.g. 1,2,[4,5],8,2 -> 0
 class rule { 
 
@@ -217,41 +237,44 @@ public:
 	// is this set of inputs a match for the rule, for the given symmetry?
 	bool matches(const vector<state>& test_inputs) const
 	{
-		if(nosymm_matches(test_inputs))
-			return true;
-		if(symm==rotate4 || symm==rotate8)
-		{
-			if(n_inputs==5)
-			{
-				if(nosymm_matches(rotate_inputs(test_inputs,1)))
-					return true;
-				if(nosymm_matches(rotate_inputs(test_inputs,2)))
-					return true;
-				if(nosymm_matches(rotate_inputs(test_inputs,3)))
-					return true;
-			}
-			else // n_inputs==9
-			{
-				if(nosymm_matches(rotate_inputs(test_inputs,2)))
-					return true;
-				if(nosymm_matches(rotate_inputs(test_inputs,4)))
-					return true;
-				if(nosymm_matches(rotate_inputs(test_inputs,6)))
-					return true;
-			}
-		}
-		if(symm==rotate8) // n_inputs==9
-		{
-			if(nosymm_matches(rotate_inputs(test_inputs,1)))
-				return true;
-			if(nosymm_matches(rotate_inputs(test_inputs,3)))
-				return true;
-			if(nosymm_matches(rotate_inputs(test_inputs,5)))
-				return true;
-			if(nosymm_matches(rotate_inputs(test_inputs,7)))
-				return true;
-		}
-		return false;
+      int n_rotations,rotation_skip;
+      bool do_reflect;
+      switch(symm)
+      {
+         default:
+         case none: n_rotations=1; rotation_skip=1; do_reflect=false; break;
+         case rotate4:
+            if(n_inputs==5)
+            {
+               n_rotations=4; rotation_skip=1; do_reflect=false;
+            }
+            else
+            {
+               n_rotations=4; rotation_skip=2; do_reflect=false;
+            }
+            break;
+         case rotate8: n_rotations=8; rotation_skip=1; do_reflect=false; break;
+         case reflect: n_rotations=1; rotation_skip=1; do_reflect=true; break;
+         case rotate4reflect: 
+            if(n_inputs==5)
+            {
+               n_rotations=4; rotation_skip=1; do_reflect=true;
+            }
+            else
+            {
+               n_rotations=4; rotation_skip=2; do_reflect=true;
+            }
+            break;
+         case rotate8reflect: n_rotations=8; rotation_skip=1; do_reflect=true; break;
+      }
+      for(int iRot=0;iRot<n_rotations;iRot++)
+      {
+         if(nosymm_matches(rotate_inputs(test_inputs,iRot*rotation_skip)))
+            return true;
+         if(do_reflect && nosymm_matches(reflect_inputs(rotate_inputs(test_inputs,iRot*rotation_skip),n_inputs)))
+            return true;
+      }
+		return false; // no match found
 	}
 
 protected:
@@ -368,6 +391,37 @@ void print_rules(const vector<rule>& rules,ostream& out)
 
 void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool remove_stasis)
 {
+   int n_rotations,rotation_skip;
+   bool do_reflect;
+   switch(symm)
+   {
+      default:
+      case none: n_rotations=1; rotation_skip=1; do_reflect=false; break;
+      case rotate4:
+         if(nhood_size==5)
+         {
+            n_rotations=4; rotation_skip=1; do_reflect=false;
+         }
+         else
+         {
+            n_rotations=4; rotation_skip=2; do_reflect=false;
+         }
+         break;
+      case rotate8: n_rotations=8; rotation_skip=1; do_reflect=false; break;
+      case reflect: n_rotations=1; rotation_skip=1; do_reflect=true; break;
+      case rotate4reflect: 
+         if(nhood_size==5)
+         {
+            n_rotations=4; rotation_skip=1; do_reflect=true;
+         }
+         else
+         {
+            n_rotations=4; rotation_skip=2; do_reflect=true;
+         }
+         break;
+      case rotate8reflect: n_rotations=8; rotation_skip=1; do_reflect=true; break;
+   }
+
 	state c,n,ne,nw,sw,s,se,e,w,ns;
 	vector<rule>::iterator it;
 	bool merged;
@@ -413,67 +467,25 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool
 											for(it=rules.begin();!merged && it!=rules.end();it++)
 											{
 												rule &r = *it;
-												if(r.can_merge(inputs,ns))
-												{
-													r.merge(inputs);
-													merged = true;
-													//cout << "Expanded existing rule." << endl;
-												}
-												if(symm==rotate4 || symm==rotate8)
-												{
-													if(!merged && r.can_merge(rotate_inputs(inputs,2),ns))
-													{
-														r.merge(rotate_inputs(inputs,2));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-													if(!merged && r.can_merge(rotate_inputs(inputs,4),ns))
-													{
-														r.merge(rotate_inputs(inputs,4));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-													if(!merged && r.can_merge(rotate_inputs(inputs,6),ns))
-													{
-														r.merge(rotate_inputs(inputs,6));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-												}
-												if(symm==rotate8)
-												{
-													if(!merged && r.can_merge(rotate_inputs(inputs,1),ns))
-													{
-														r.merge(rotate_inputs(inputs,1));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-													if(!merged && r.can_merge(rotate_inputs(inputs,3),ns))
-													{
-														r.merge(rotate_inputs(inputs,3));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-													if(!merged && r.can_merge(rotate_inputs(inputs,5),ns))
-													{
-														r.merge(rotate_inputs(inputs,5));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-													if(!merged && r.can_merge(rotate_inputs(inputs,7),ns))
-													{
-														r.merge(rotate_inputs(inputs,7));
-														merged = true;
-														//cout << "Expanded existing rule." << endl;
-													}
-												}
+                                    for(int iRot=0;!merged && iRot<n_rotations;iRot++)
+                                    {
+                                       if(r.can_merge(rotate_inputs(inputs,iRot*rotation_skip),ns))
+                                       {
+                                          r.merge(rotate_inputs(inputs,iRot*rotation_skip));
+                                          merged = true;
+                                       }
+                                       else if(do_reflect && r.can_merge(reflect_inputs(rotate_inputs(inputs,iRot*rotation_skip),nhood_size),ns))
+                                       {
+                                          r.merge(reflect_inputs(rotate_inputs(inputs,iRot*rotation_skip),nhood_size));
+                                          merged = true;
+                                       }
+                                    }
 											}
 											if(!merged)
 											{
 												// need to make a new rule starting with this transition
 												rule r(inputs,nhood_size,ns,symm);
 												rules.push_back(r);
-												//cout << "Started a new rule." << endl;
 											}
 										}
 									}
@@ -511,40 +523,25 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool
 							for(it=rules.begin();!merged && it!=rules.end();it++)
 							{
 								rule &r = *it;
-								if(r.can_merge(inputs,ns))
-								{
-									r.merge(inputs);
-									merged = true;
-									//cout << "Expanded existing rule." << endl;
-								}
-								if(symm==rotate4)
-								{
-									if(!merged && r.can_merge(rotate_inputs(inputs,1),ns))
-									{
-										r.merge(rotate_inputs(inputs,1));
-										merged = true;
-										//cout << "Expanded existing rule." << endl;
-									}
-									if(!merged && r.can_merge(rotate_inputs(inputs,2),ns))
-									{
-										r.merge(rotate_inputs(inputs,2));
-										merged = true;
-										//cout << "Expanded existing rule." << endl;
-									}
-									if(!merged && r.can_merge(rotate_inputs(inputs,3),ns))
-									{
-										r.merge(rotate_inputs(inputs,3));
-										merged = true;
-										//cout << "Expanded existing rule." << endl;
-									}
-								}
+                        for(int iRot=0;!merged && iRot<n_rotations;iRot++)
+                        {
+								   if(r.can_merge(rotate_inputs(inputs,iRot*rotation_skip),ns))
+								   {
+									   r.merge(rotate_inputs(inputs,iRot*rotation_skip));
+									   merged = true;
+								   }
+                           else if(do_reflect && r.can_merge(reflect_inputs(rotate_inputs(inputs,iRot*rotation_skip),nhood_size),ns))
+                           {
+                              r.merge(reflect_inputs(rotate_inputs(inputs,iRot*rotation_skip),nhood_size));
+                              merged = true;
+                           }
+                        }
 							}
 							if(!merged)
 							{
 								// need to make a new rule starting with this transition
 								rule r(inputs,nhood_size,ns,symm);
 								rules.push_back(r);
-								//cout << "Started a new rule." << endl;
 							}
 						}
 					}
@@ -644,7 +641,7 @@ int main()
 {
 	// parameters for use:
 	const int N_STATES = 4;
-	const TSymm symmetry = rotate8;
+	const TSymm symmetry = rotate8reflect;
 	const int nhood_size = 9;
 	const string output_filename = "wireworld.table";
 	const bool remove_stasis_transitions = true;

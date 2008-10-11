@@ -21,7 +21,7 @@
 #
 n_states:9
 neighborhood_size:5
-symmetries:withRotations
+symmetries:rotate4
 var a={0,8}
 var b={0,2,3,4,5,8}
 var c={0,1,2}

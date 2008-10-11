@@ -12,7 +12,7 @@
 #
 n_states:6
 neighborhood_size:5
-symmetries:withRotations
+symmetries:rotate4
 000000
 000010
 000031
