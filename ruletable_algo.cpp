@@ -87,7 +87,7 @@ bool starts_with(const string& line,const string& keyword)
 }
 
 const char *defaultRuleData[] = {
-   "n_states:8", "neighborhood_size:5", "symmetries:withRotations",
+   "n_states:8", "neighborhood_size:5", "symmetries:rotate4",
    "000000", "000012", "000020", "000030", "000050", "000063", "000071",
    "000112", "000122", "000132", "000212", "000220", "000230", "000262",
    "000272", "000320", "000525", "000622", "000722", "001022", "001120",
@@ -138,8 +138,7 @@ string ruletable_algo::LoadRuleTable(string rule)
    const string neighbourhood_size_keyword = "neighborhood_size:";
    const string n_states_keyword = "n_states:";
    const string variable_keyword = "var ";
-   const string withRotations_symmetry_keyword = "withRotations";
-   const string none_symmetry_keyword = "none";
+   const string symmetry_keywords[6] = {"none","rotate4","rotate8","reflect","rotate4reflect","rotate8reflect"};
 
    int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0) ;
    string line ;
@@ -165,7 +164,7 @@ string ruletable_algo::LoadRuleTable(string rule)
    else {   }
 
    this->neighbourhood_size = 5; // default
-   this->symmetries = withRotations; // default
+   this->symmetries = rotate4; // default
    this->n_states = 8;  // default
 
    map< string, vector<state> > variables;
@@ -200,11 +199,14 @@ string ruletable_algo::LoadRuleTable(string rule)
       else if(starts_with(line,symmetries_keyword))
       {
          string remaining(line.begin()+symmetries_keyword.length(),line.end());
-         if(starts_with(remaining,withRotations_symmetry_keyword))
-            this->symmetries = withRotations;
-         else if(starts_with(remaining,none_symmetry_keyword))
-            this->symmetries = none;
-         else
+         bool found_symmetry=false;
+         for(int iS=0;iS<6;iS++)
+            if(starts_with(remaining,symmetry_keywords[iS]))
+            {
+               this->symmetries = (TSymmetry)iS;
+               found_symmetry = true;
+            }
+         if(!found_symmetry)
             return "Error reading file: "+line;
       }
       else if(starts_with(line,neighbourhood_size_keyword))
@@ -297,27 +299,77 @@ string ruletable_algo::LoadRuleTable(string rule)
    // now convert transition table to bitmask lookup
    {
       unsigned int n_bits = sizeof(TBits)*8;
-      int n_rotations,rotation_skip;
-      if(this->symmetries == withRotations)
+      int n_rotations,rotation_skip,n_reflections;
+      vector<int> reflect_remap[2];
+      if(this->neighbourhood_size==5)
       {
-         n_rotations=4;
-         if(this->neighbourhood_size==5)
-            rotation_skip=1;
-         else // neighbourhood_size==9
-            rotation_skip=2;
+         reflect_remap[0].resize(5);
+         reflect_remap[0][0]=0;
+         reflect_remap[0][1]=1;
+         reflect_remap[0][2]=2;
+         reflect_remap[0][3]=3;
+         reflect_remap[0][4]=4;
+         reflect_remap[1].resize(5);
+         reflect_remap[1][0]=0;
+         reflect_remap[1][1]=1;
+         reflect_remap[1][2]=4;
+         reflect_remap[1][3]=3;
+         reflect_remap[1][4]=2;  // we swap E and W
       }
-      else
+      else // this->neighbourhood_size==9
       {
-         n_rotations=1;
-         rotation_skip=1;
+         reflect_remap[0].resize(9);
+         reflect_remap[0][0]=0;
+         reflect_remap[0][1]=1;
+         reflect_remap[0][2]=2;
+         reflect_remap[0][3]=3;
+         reflect_remap[0][4]=4;
+         reflect_remap[0][5]=5;
+         reflect_remap[0][6]=6;
+         reflect_remap[0][7]=7;
+         reflect_remap[0][8]=8;
+         reflect_remap[1].resize(9);
+         reflect_remap[1][0]=0;
+         reflect_remap[1][1]=1;
+         reflect_remap[1][2]=8;
+         reflect_remap[1][3]=7;
+         reflect_remap[1][4]=6;
+         reflect_remap[1][5]=5;
+         reflect_remap[1][6]=4;
+         reflect_remap[1][7]=3;
+         reflect_remap[1][8]=2; // all E and W swapped
       }
-      unsigned int M = transition_table.size() * n_rotations; // (we need to expand out symmetry)
+      switch(this->symmetries)
+      {
+         default:
+         case none: n_rotations=1; rotation_skip=1; n_reflections=1; 
+            break;
+         case rotate4: n_rotations=4; n_reflections=1; 
+            if(this->neighbourhood_size==5)
+               rotation_skip=1;
+            else // neighbourhood_size==9
+               rotation_skip=2;
+            break;
+         case rotate8: n_rotations=8; rotation_skip=1; n_reflections=1; 
+            break;
+         case reflect: n_rotations=1; rotation_skip=1; n_reflections=2; 
+            break;
+         case rotate4reflect: n_rotations=4; n_reflections=2; 
+            if(this->neighbourhood_size==5)
+               rotation_skip=1;
+            else // neighbourhood_size==9
+               rotation_skip=2;
+            break;
+         case rotate8reflect: n_rotations=8; rotation_skip=1; n_reflections=2; 
+            break;
+      }
+      unsigned int M = transition_table.size() * n_rotations * n_reflections; // (we need to expand out symmetry)
       unsigned int MC = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
       // initialize lookup table to all bits turned off 
       this->lut.assign(neighbourhood_size,vector< vector<TBits> >(this->n_states,vector<TBits>(MC,0))); 
       this->output.resize(M);
       // work through the rules, filling the bit masks
-      unsigned int iRule=0,iRuleC,iBit,iNbor;
+      unsigned int iRule=0,iRuleC,iBit,iNbor,iExpandedNbor;
       TBits mask;
       // (each transition rule looks like, e.g. 1,[2,3,4],[2,4],0,3 -> 0 )
       for(map<vector<vector<state> >,state >::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
@@ -325,22 +377,30 @@ string ruletable_algo::LoadRuleTable(string rule)
          const vector<vector<state> >& rule = rule_it->first;
          for(int iRot=0;iRot<n_rotations;iRot++)
          {
-            this->output[iRule] = rule_it->second;
-            iBit = iRule % n_bits;
-            iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
-            mask = (TBits)1 << iBit; // (we need to ensure this is a 64-bit shift, not a 32-bit shift)
-            for(iNbor=0;iNbor<this->neighbourhood_size;iNbor++)
+            for(int iRef=0;iRef<n_reflections;iRef++)
             {
-               const vector<state>& possibles = rule[iNbor];
-               for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
+               this->output[iRule] = rule_it->second;
+               iBit = iRule % n_bits;
+               iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
+               mask = (TBits)1 << iBit; // (we need to ensure this is a 64-bit shift, not a 32-bit shift)
+               for(iNbor=0;iNbor<this->neighbourhood_size;iNbor++)
                {
-                  if(iNbor>0)
-                     this->lut[1+((iNbor-1+iRot*rotation_skip)%(this->neighbourhood_size-1))][*poss_it][iRuleC] |= mask;
-                  else
-                     this->lut[iNbor][*poss_it][iRuleC] |= mask;
+                  const vector<state>& possibles = rule[iNbor];
+                  for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
+                  {
+                     // apply the necessary rotation
+                     if(iNbor>0)
+                        iExpandedNbor = 1+((iNbor-1+iRot*rotation_skip)%(this->neighbourhood_size-1));
+                     else
+                        iExpandedNbor = iNbor;
+                     // apply any rotation
+                     iExpandedNbor = reflect_remap[iRef][iExpandedNbor];
+                     // apply the resulting bit mask
+                     this->lut[iExpandedNbor][*poss_it][iRuleC] |= mask;
+                  }
                }
+               iRule++; // this is the index of the rule after expansion for symmetry
             }
-            iRule++; // this is the index of the rule after expansion for symmetry
          }
       }
    }
@@ -374,6 +434,7 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
    for(iRule=0;iRule<MC;iRule++)
    {
       // is there a match for any of the sizeof(TBits)*8 rules within iRule?
+      // (we don't have to worry about symmetries here since that was expanded out in LoadRuleTable)
       if(this->neighbourhood_size==5)
          is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
             this->lut[3][s][iRule] & this->lut[4][w][iRule];

@@ -96,8 +96,8 @@ Contact: Tim Hutton <tim.hutton@gmail.com>
 
 // some typedefs and compile-time constants
 typedef unsigned short state;
-enum TSymm { none, rot4, rot8 };
-static const string symmetry_strings[] = {"none","rot4","rot8"};
+enum TSymm { none, rotate4, rotate8, reflect, rotate4reflect, rotate8reflect };
+static const string symmetry_strings[] = {"none","rotate4","rotate8","reflect","rotate4reflect","rotate8reflect"};
 
 // fill in this function with your desired transition rules
 // (for von Neumann neighbourhoods, just ignore the nw,se,sw,ne inputs)
@@ -219,7 +219,7 @@ public:
 	{
 		if(nosymm_matches(test_inputs))
 			return true;
-		if(symm==rot4 || symm==rot8)
+		if(symm==rotate4 || symm==rotate8)
 		{
 			if(n_inputs==5)
 			{
@@ -240,7 +240,7 @@ public:
 					return true;
 			}
 		}
-		if(symm==rot8) // n_inputs==9
+		if(symm==rotate8) // n_inputs==9
 		{
 			if(nosymm_matches(rotate_inputs(test_inputs,1)))
 				return true;
@@ -419,7 +419,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool
 													merged = true;
 													//cout << "Expanded existing rule." << endl;
 												}
-												if(symm==rot4 || symm==rot8)
+												if(symm==rotate4 || symm==rotate8)
 												{
 													if(!merged && r.can_merge(rotate_inputs(inputs,2),ns))
 													{
@@ -440,7 +440,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool
 														//cout << "Expanded existing rule." << endl;
 													}
 												}
-												if(symm==rot8)
+												if(symm==rotate8)
 												{
 													if(!merged && r.can_merge(rotate_inputs(inputs,1),ns))
 													{
@@ -517,7 +517,7 @@ void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool
 									merged = true;
 									//cout << "Expanded existing rule." << endl;
 								}
-								if(symm==rot4)
+								if(symm==rotate4)
 								{
 									if(!merged && r.can_merge(rotate_inputs(inputs,1),ns))
 									{
@@ -644,7 +644,7 @@ int main()
 {
 	// parameters for use:
 	const int N_STATES = 4;
-	const TSymm symmetry = rot8;
+	const TSymm symmetry = rotate8;
 	const int nhood_size = 9;
 	const string output_filename = "wireworld.table";
 	const bool remove_stasis_transitions = true;

@@ -1,41 +1,22 @@
 # WireWorld
 #
-# This representation of transitions isn't very efficient for cases
-# like this.
+# rules: 6
 #
-# variables: 2
-# rules: 27
+# Golly rule-table format.
+# Each rule: C,N,NE,E,SE,S,SW,W,NW,C'
+# N.B. Where the same variable appears multiple times,
+# it can take different values each time.
+#
+# Default for transitions not listed: no change
 #
 n_states:4
 neighborhood_size:9
-symmetries:withRotations
+symmetries:rotate8
 var a={0,1,2,3}
 var b={0,2,3}
-0,a,a,a,a,a,a,a,a,0
 1,a,a,a,a,a,a,a,a,2
 2,a,a,a,a,a,a,a,a,3
-3,b,b,b,b,b,b,b,b,3
 3,b,b,b,b,b,b,a,1,1
-3,b,b,b,b,b,b,1,a,1
-3,b,b,b,b,b,1,b,a,1
-3,b,b,b,b,b,1,a,b,1
-3,a,a,a,a,a,1,1,1,3
-3,b,b,b,b,1,b,b,a,1
-3,b,b,b,b,1,b,a,b,1
-3,a,a,a,a,1,a,1,1,3
-3,a,a,a,a,1,1,a,1,3
-3,a,a,a,a,1,1,1,a,3
-3,b,b,b,1,b,b,b,a,1
-3,b,b,b,1,b,b,a,b,1
-3,a,a,a,1,a,a,1,1,3
-3,a,a,a,1,a,1,a,1,3
-3,a,a,a,1,a,1,1,a,3
-3,a,a,a,1,1,a,a,1,3
-3,a,a,a,1,1,a,1,a,3
-3,b,b,1,b,b,b,a,b,1
-3,a,a,1,a,a,a,1,1,3
-3,a,a,1,a,a,1,a,1,3
-3,a,a,1,a,a,1,1,a,3
-3,a,a,1,a,1,a,a,1,3
-3,a,a,1,a,1,a,1,a,3
-
+3,b,b,b,b,b,1,b,1,1
+3,b,b,b,b,1,b,b,1,1
+3,b,b,b,1,b,b,b,1,1
