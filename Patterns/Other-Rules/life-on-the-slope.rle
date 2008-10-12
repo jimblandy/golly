@@ -1,0 +1,20 @@
+# In 2007 Franklin T. Adams-Watters described a CA in which all the action
+# occurs on the edges of a square grid.  Each edge can be on or off and has
+# six neighbors, three at each end.  An edge is on in the next generation
+# iff exactly two of the edges in its seven edge neighborhood (including
+# the edge itself) are on.
+#
+# LifeOnTheSlope has exactly the same behavior as LifeOnTheEdge, except
+# that patterns are rotated by 45 degrees.  There are only 2 live states
+# (with icons \ and /), so it's a lot easier to enter patterns and they
+# run quite a bit faster.
+#
+# This pattern shows a still life, some oscillators, a few spaceships and
+# a couple of puffers.
+#
+x = 58, y = 63, rule = LifeOnTheSlope
+AB.B$2.B$A2.B17.B$B2.A18.B$.B$B.BA6$11.ABAB$11.BABA7$37.ABA$.BABA32.B
+.B$BA2.BA32.BA$A4.B$B4.A$AB2.AB$.ABAB2$27.ABA$27.B2.A$29.A.A$30.A.A$
+32.B$31.BA6$18.AB37.B$21.ABA30.B2.A$16.A6.B29.BA$19.AB.BA30.B.B$18.A.
+A33.A.A$54.BAB11$34.A7.A$34.B5.BA$35.B3.BAB$37.A.AB$36.AB$36.B.BA$36.
+ABA$40.B$41.BA!
