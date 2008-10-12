@@ -364,7 +364,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             break;
       }
       unsigned int M = transition_table.size() * n_rotations * n_reflections; // (we need to expand out symmetry)
-      unsigned int MC = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
+      this->MC = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
       // initialize lookup table to all bits turned off 
       this->lut.assign(neighbourhood_size,vector< vector<TBits> >(this->n_states,vector<TBits>(MC,0))); 
       this->output.resize(M);
@@ -427,11 +427,10 @@ ruletable_algo::~ruletable_algo()
 state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, state e,
                         state sw, state s, state se) 
 {
-   const unsigned int MC = this->lut[0][0].size();
    unsigned int iRule;
    TBits is_match;
 
-   for(iRule=0;iRule<MC;iRule++)
+   for(iRule=0;iRule<this->MC;iRule++)
    {
       // is there a match for any of the sizeof(TBits)*8 rules within iRule?
       // (we don't have to worry about symmetries here since that was expanded out in LoadRuleTable)
@@ -447,8 +446,12 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
       {
          // find the least significant bit of is_match
          unsigned int iBit=0;
-         while(!(is_match&((TBits)1<<iBit)))
+         TBits mask=1;
+         while(!(is_match&mask))
+         {
             ++iBit;
+            mask <<= 1;
+         }
          return this->output[ iRule*sizeof(TBits)*8 + iBit ];
       }
    }

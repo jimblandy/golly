@@ -59,6 +59,7 @@ protected:
    // we use a lookup table to match inputs to rules:
    typedef unsigned long long int TBits; // we can use unsigned int if we hit portability issues (not much slower)
    std::vector< std::vector< std::vector<TBits> > > lut; // TBits lut[neighbourhood_size][n_states][n_compressed_rules];
+   unsigned int MC; // how many rules are there after compression?
 
    std::vector<state> output; // state output[n_rules];
 
