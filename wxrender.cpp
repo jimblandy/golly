@@ -156,12 +156,8 @@ int layerwd = -1;                // width of layer bitmap
 int layerht = -1;                // height of layer bitmap
 
 // for drawing translucent selection (initialized in InitDrawingData)
-#ifdef __WXX11__
-   // wxX11 doesn't support alpha channel
-#else
-   int selwd;                 // width of selection bitmap
-   int selht;                 // height of selection bitmap
-#endif
+int selwd;                    // width of selection bitmap
+int selht;                    // height of selection bitmap
 wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is used)
 wxBitmap* graybitmap = NULL;  // for inactive selections when drawing multiple layers
 
@@ -204,8 +200,6 @@ void InitMagnifyTable()
 
 // -----------------------------------------------------------------------------
 
-#ifndef __WXX11__
-
 void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
 {
    // set color and alpha of pixels in given bitmap
@@ -241,8 +235,6 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
    }
 }
 
-#endif
-
 // -----------------------------------------------------------------------------
 
 void InitDrawingData()
@@ -252,31 +244,27 @@ void InitDrawingData()
    cellbrush = new wxBrush(*wxBLACK_BRUSH);
    if (cellbrush == NULL) Fatal(_("Failed to create cell brush!"));
    
-   #ifdef __WXX11__
-      // wxX11 doesn't support alpha channel
-   #else
-      // create translucent selection bitmap
-      viewptr->GetClientSize(&selwd, &selht);
-      // selwd or selht might be < 1 on Win/X11 platforms
-      if (selwd < 1) selwd = 1;
-      if (selht < 1) selht = 1;
+   // create translucent selection bitmap
+   viewptr->GetClientSize(&selwd, &selht);
+   // selwd or selht might be < 1 on Windows
+   if (selwd < 1) selwd = 1;
+   if (selht < 1) selht = 1;
 
-      // use depth 32 so bitmap has an alpha channel
-      selbitmap = new wxBitmap(selwd, selht, 32);
-      if (selbitmap == NULL) {
-         Warning(_("Not enough memory for selection bitmap!"));
-      } else {
-         SetSelectionPixels(selbitmap, selectrgb);
-      }
-      
-      // create translucent gray bitmap for inactive selections
-      graybitmap = new wxBitmap(selwd, selht, 32);
-      if (graybitmap == NULL) {
-         Warning(_("Not enough memory for gray bitmap!"));
-      } else {
-         SetSelectionPixels(graybitmap, wxLIGHT_GREY);
-      }
-   #endif
+   // use depth 32 so bitmap has an alpha channel
+   selbitmap = new wxBitmap(selwd, selht, 32);
+   if (selbitmap == NULL) {
+      Warning(_("Not enough memory for selection bitmap!"));
+   } else {
+      SetSelectionPixels(selbitmap, selectrgb);
+   }
+   
+   // create translucent gray bitmap for inactive selections
+   graybitmap = new wxBitmap(selwd, selht, 32);
+   if (graybitmap == NULL) {
+      Warning(_("Not enough memory for gray bitmap!"));
+   } else {
+      SetSelectionPixels(graybitmap, wxLIGHT_GREY);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -880,34 +868,26 @@ void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** 
 
 void CheckSelectionSize(int viewwd, int viewht)
 {
-   #ifdef __WXX11__
-      // wxX11 doesn't support alpha channel
-   #else
-      if (viewwd != selwd || viewht != selht) {
-         // resize selbitmap and graybitmap
-         selwd = viewwd;
-         selht = viewht;
-         delete selbitmap;
-         delete graybitmap;
-         // use depth 32 so bitmaps have an alpha channel
-         selbitmap = new wxBitmap(selwd, selht, 32);
-         graybitmap = new wxBitmap(selwd, selht, 32);
-         if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
-         if (graybitmap) SetSelectionPixels(graybitmap, wxLIGHT_GREY);
-      }
-   #endif
+   if (viewwd != selwd || viewht != selht) {
+      // resize selbitmap and graybitmap
+      selwd = viewwd;
+      selht = viewht;
+      delete selbitmap;
+      delete graybitmap;
+      // use depth 32 so bitmaps have an alpha channel
+      selbitmap = new wxBitmap(selwd, selht, 32);
+      graybitmap = new wxBitmap(selwd, selht, 32);
+      if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
+      if (graybitmap) SetSelectionPixels(graybitmap, wxLIGHT_GREY);
+   }
 }
 
 // -----------------------------------------------------------------------------
 
 void SetSelectionColor()
 {
-   #ifdef __WXX11__
-      // wxX11 doesn't support alpha channel
-   #else
-      // selectrgb has changed
-      if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
-   #endif
+   // selectrgb has changed
+   if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
 }
 
 // -----------------------------------------------------------------------------
@@ -993,61 +973,53 @@ void DestroyPasteImage()
 
 void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
 {
-   #ifdef __WXX11__
-      // wxX11 doesn't support alpha channel
-      wxUnusedVar(wd);
-      wxUnusedVar(ht);
-      wxUnusedVar(livealpha);
-      bitmap->SetMask( new wxMask(*bitmap,*deadrgb) );
-   #else
-      // access pixels in given bitmap and make all dead pixels 100% transparent
-      // and use given alpha value for all live pixels
-      wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(wd,ht));
-      if (data) {
-         int deadr = deadrgb->Red();
-         int deadg = deadrgb->Green();
-         int deadb = deadrgb->Blue();
-   
-         data.UseAlpha();
-         wxAlphaPixelData::Iterator p(data);
-         for ( int y = 0; y < ht; y++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int x = 0; x < wd; x++ ) {
-               // get pixel color
-               int r = p.Red();
-               int g = p.Green();
-               int b = p.Blue();
-   
-               // set alpha value depending on whether pixel is live or dead
-               if (r == deadr && g == deadg && b == deadb) {
-                  // make dead pixel 100% transparent
-                  p.Red()   = 0;
-                  p.Green() = 0;
-                  p.Blue()  = 0;
-                  p.Alpha() = 0;
-               } else {
-                  // live pixel
-                  #ifdef __WXMSW__
-                     // premultiply the RGB values on Windows
-                     p.Red()   = r * livealpha / 255;
-                     p.Green() = g * livealpha / 255;
-                     p.Blue()  = b * livealpha / 255;
-                  #else
-                     // no change needed
-                     // p.Red()   = r;
-                     // p.Green() = g;
-                     // p.Blue()  = b;
-                  #endif
-                  p.Alpha() = livealpha;
-               }
-   
-               p++;
+   // access pixels in given bitmap and make all dead pixels 100% transparent
+   // and use given alpha value for all live pixels
+   wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(wd,ht));
+   if (data) {
+      int deadr = deadrgb->Red();
+      int deadg = deadrgb->Green();
+      int deadb = deadrgb->Blue();
+
+      data.UseAlpha();
+      wxAlphaPixelData::Iterator p(data);
+      for ( int y = 0; y < ht; y++ ) {
+         wxAlphaPixelData::Iterator rowstart = p;
+         for ( int x = 0; x < wd; x++ ) {
+            // get pixel color
+            int r = p.Red();
+            int g = p.Green();
+            int b = p.Blue();
+
+            // set alpha value depending on whether pixel is live or dead
+            if (r == deadr && g == deadg && b == deadb) {
+               // make dead pixel 100% transparent
+               p.Red()   = 0;
+               p.Green() = 0;
+               p.Blue()  = 0;
+               p.Alpha() = 0;
+            } else {
+               // live pixel
+               #ifdef __WXMSW__
+                  // premultiply the RGB values on Windows
+                  p.Red()   = r * livealpha / 255;
+                  p.Green() = g * livealpha / 255;
+                  p.Blue()  = b * livealpha / 255;
+               #else
+                  // no change needed
+                  // p.Red()   = r;
+                  // p.Green() = g;
+                  // p.Blue()  = b;
+               #endif
+               p.Alpha() = livealpha;
             }
-            p = rowstart;
-            p.OffsetY(data, 1);
+
+            p++;
          }
+         p = rowstart;
+         p.OffsetY(data, 1);
       }
-   #endif
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1182,13 +1154,8 @@ void CheckPasteImage()
       delete pastebitmap;
       pimagewd = pastewd;
       pimageht = pasteht;
-      #ifdef __WXX11__
-         // create a bitmap with screen depth
-         pastebitmap = new wxBitmap(pimagewd, pimageht, -1);
-      #else
-         // create a bitmap with depth 32 so it has an alpha channel
-         pastebitmap = new wxBitmap(pimagewd, pimageht, 32);
-      #endif
+      // create a bitmap with depth 32 so it has an alpha channel
+      pastebitmap = new wxBitmap(pimagewd, pimageht, 32);
       
       if (pastebitmap) {
          // create temporary viewport and draw pattern into pastebitmap
@@ -1435,15 +1402,7 @@ void DrawOneLayer(wxDC& dc)
    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
    
    // draw result
-   #ifdef __WXX11__
-      wxMemoryDC memdc;
-      memdc.SelectObject(*layerbitmap);
-      dc.Blit(0, 0, layerwd, layerht, &memdc, 0, 0, wxCOPY, true);
-      // need to delete mask
-      layerbitmap->SetMask(NULL);
-   #else
-      dc.DrawBitmap(*layerbitmap, 0, 0, true);
-   #endif
+   dc.DrawBitmap(*layerbitmap, 0, 0, true);
 }
 
 // -----------------------------------------------------------------------------
@@ -1456,13 +1415,8 @@ void DrawStackedLayers(wxDC& dc)
       layerwd = currlayer->view->getwidth();
       layerht = currlayer->view->getheight();
       delete layerbitmap;
-      #ifdef __WXX11__
-         // create a bitmap with screen depth
-         layerbitmap = new wxBitmap(layerwd, layerht, -1);
-      #else
-         // create a bitmap with depth 32 so it has an alpha channel
-         layerbitmap = new wxBitmap(layerwd, layerht, 32);
-      #endif
+      // create a bitmap with depth 32 so it has an alpha channel
+      layerbitmap = new wxBitmap(layerwd, layerht, 32);
       if (!layerbitmap) {
          Fatal(_("Not enough memory for layer bitmap!"));
          return;
