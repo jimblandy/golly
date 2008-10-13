@@ -3,11 +3,10 @@ For version 2.0:
 
 Andrew's list:
 
-- Fix rotation/flip of JvN states.  Probably need Begin/EndTransform
-  methods, and maybe GetTransformedState as well for use in
-  transform() command.  Is there any point doing this given that there
-  are inherently non-symmetric rules like LifeOnTheEdge where the
-  above approach won't work?
+- Fix rotation/reflection of JvN states.  Probably need Begin/EndTransform
+  methods, and maybe GetTransformedState as well for use in transform().
+  Is there any point doing this given that there are non-symmetric rules
+  like LifeOnTheEdge where the above approach won't work?
 
 - Fix missing &s in recent file paths (replace each & with &&) and
   fix underscore bug in Linux app by trying wxGTK 2.8.8.
@@ -94,8 +93,7 @@ For future versions:
 
 - Allow dragging zoom-in cursor to zoom into rect.
 
-- Support toroidal universes (see LifeLab).  Or provide this as part
-  of an MCell-compatible lifealgo.
+- Support toroidal universes (see LifeLab).
 
 - Stop generating if pattern becomes empty, constant or p2 (qlife only)
   and display suitable message in status bar.  Or maybe just add
