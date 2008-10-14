@@ -21,9 +21,6 @@ Andrew's list:
 - Fix wxMac bug: Set Rule's help win can't regain focus after clicking
   in scroll bar (and thus we can't copy text).
 
-- Rename Hashing-Examples to HashLife-Examples (or just HashLife?)
-  and convert all files to .mc format (with explicit rules?).
-
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
