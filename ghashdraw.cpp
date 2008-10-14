@@ -46,17 +46,12 @@ static unsigned char* cellgreen;
 static unsigned char* cellblue;
 
 void ghashbase::drawpixel(int x, int y) {
-   // AKT: for this test we assume all live cells are in state 1 -- fix!!!
-   if (pmag > 1) {
-      // store state info
-      bigbuf[(bmsize-1-y) * bmsize + x] = 1;
-   } else {
-      // store rgb info
-      int i = (bmsize-1-y) * rowoff + x*3;
-      bigbuf[i]   = cellred[1];
-      bigbuf[i+1] = cellgreen[1];
-      bigbuf[i+2] = cellblue[1];
-   }
+   // AKT: draw all live cells using state 1 color -- nicer to use an average color???
+   // pmag == 1, so store rgb info
+   int i = (bmsize-1-y) * rowoff + x*3;
+   bigbuf[i]   = cellred[1];
+   bigbuf[i+1] = cellgreen[1];
+   bigbuf[i+2] = cellblue[1];
 }
 
 /*
@@ -103,41 +98,31 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
 }
 
 void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
-   // AKT: this currently assumes all live cells are in state 1 -- fix!!!
-   if (pmag > 1) {
-      // store state info
-      int i = (bmsize-1+lly) * bmsize - llx;
-      if (n->sw != z) bigbuf[i] = 1;
-      if (n->se != z) bigbuf[i+1] = 1;
-      i -= bmsize;
-      if (n->nw != z) bigbuf[i] = 1;
-      if (n->ne != z) bigbuf[i+1] = 1;
-   } else {
-      // store rgb info
-      int i = (bmsize-1+lly) * rowoff - (llx*3);
-      if (n->sw != z) {
-         bigbuf[i]   = cellred[1];
-         bigbuf[i+1] = cellgreen[1];
-         bigbuf[i+2] = cellblue[1];
-      }
-      i += 3;
-      if (n->se != z) {
-         bigbuf[i]   = cellred[1];
-         bigbuf[i+1] = cellgreen[1];
-         bigbuf[i+2] = cellblue[1];
-      }
-      i -= rowoff;
-      if (n->ne != z) {
-         bigbuf[i]   = cellred[1] ;
-         bigbuf[i+1] = cellgreen[1] ;
-         bigbuf[i+2] = cellblue[1] ;
-      }
-      i -= 3;
-      if (n->nw != z) {
-         bigbuf[i]   = cellred[1] ;
-         bigbuf[i+1] = cellgreen[1] ;
-         bigbuf[i+2] = cellblue[1] ;
-      }
+   // AKT: draw all live cells using state 1 color -- nicer to use an average color???
+   // pmag == 1, so store rgb info
+   int i = (bmsize-1+lly) * rowoff - (llx*3);
+   if (n->sw != z) {
+      bigbuf[i]   = cellred[1];
+      bigbuf[i+1] = cellgreen[1];
+      bigbuf[i+2] = cellblue[1];
+   }
+   i += 3;
+   if (n->se != z) {
+      bigbuf[i]   = cellred[1];
+      bigbuf[i+1] = cellgreen[1];
+      bigbuf[i+2] = cellblue[1];
+   }
+   i -= rowoff;
+   if (n->ne != z) {
+      bigbuf[i]   = cellred[1] ;
+      bigbuf[i+1] = cellgreen[1] ;
+      bigbuf[i+2] = cellblue[1] ;
+   }
+   i -= 3;
+   if (n->nw != z) {
+      bigbuf[i]   = cellred[1] ;
+      bigbuf[i+1] = cellgreen[1] ;
+      bigbuf[i+2] = cellblue[1] ;
    }
 }
 
@@ -146,7 +131,7 @@ void ghashbase::killpixels() {
    if (pmag > 1) {
       // pixblit assumes bigbuf contains bmsize*bmsize bytes where each byte
       // is a cell state, so it's easy to kill all cells
-      memset(bigbuf, 0, bmsize*bmsize*3);
+      memset(bigbuf, 0, bmsize*bmsize);   // AKT: no need to multiply by 3
    } else {
       // pixblit assumes bigbuf contains 3 bytes (r,g,b) for each pixel
       if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
