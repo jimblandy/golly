@@ -393,6 +393,78 @@ const char *readdblife(lifealgo &imp, char *line) {
    return 0;
 }
 
+//
+// Read Mirek Wojtowicz's MCell format.
+// See http://psoup.math.wisc.edu/mcell/ca_files_formats.html for details.
+//
+const char *readmcell(lifealgo &imp, char *line) {
+   int x=0, y=0;
+   char *p;
+   const char *errmsg;
+   bool sawrule = false;            // saw explicit rule?
+
+   while (getline(line, LINESIZE)) {
+      if (line[0] == '#') {
+         if (line[1] == 'L' && line[2] == ' ') {
+            if (!sawrule) {
+               // if no rule given then try Conway's Life; if it fails then
+               // return error so Golly will look for matching algo
+               errmsg = imp.setrule("B3/S23");
+               if (errmsg) return errmsg;
+               sawrule = true;
+            }
+
+            int n = 0;
+            for (p=line+3; *p; p++) {
+               char c = *p;
+               if ('0' <= c && c <= '9') {
+                  n = n * 10 + c - '0';
+               } else {
+                  if (n == 0)
+                     n = 1;
+                  if (c == '.') {
+                     x += n;
+                  } else if (c == '$') {
+                     x = 0;
+                     y += n;
+                  } else {
+                     int state = 0;
+                     if ('a' <= c && c <= 'j') {
+                        state = 24 * (c - 'a' + 1);
+                        p++;
+                        c = *p;
+                     }
+                     if ('A' <= c && c <= 'X') {
+                        state = state + c - 'A' + 1;
+                     } else {
+                        return "Illegal multi-char state";
+                     }
+                     while (n-- > 0) {
+                        if (imp.setcell(x++, y, state) < 0)
+                           return "Cell state out of range";
+                     }
+                  }
+                  n = 0;
+               }
+            }
+
+         } else if (line[1] == 'R' && line[2] == 'U' &&
+                    line[3] == 'L' && line[4] == 'E' && !sawrule) {
+            char *ruleptr = line;
+            ruleptr += 5;
+            while (*ruleptr && *ruleptr <= ' ') ruleptr++;
+            p = ruleptr;
+            while (*p > ' ') p++;
+            *p = 0;
+            errmsg = imp.setrule(ruleptr);
+            if (errmsg) return errmsg;
+            sawrule = true;
+         }
+      }
+   }
+   return 0;
+}
+
 long getfilesize(const char *filename) {
    // following method is only accurate for uncompressed file
    long flen = 0;
@@ -450,6 +522,14 @@ const char *loadpattern(lifealgo &imp) {
       // WinLifeSearch creates clipboard patterns similar to
       // Life 1.05 format but without the header line
       errmsg = readpclife(imp, line) ;
+      imp.endofpattern() ;
+      if (getedges && !imp.isEmpty()) {
+         imp.findedges(&top, &left, &bottom, &right) ;
+      }
+
+   } else if (line[0] == '#' && line[1] == 'M' && line[2] == 'C' &&
+              line[3] == 'e' && line[4] == 'l' && line[5] == 'l' ) {
+      errmsg = readmcell(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
@@ -608,6 +688,22 @@ const char *readcomments(const char *filename, char **commptr)
          if (getline(line, LINESIZE) == NULL) break;
       }
 
+   } else if (line[0] == '#' && line[1] == 'M' && line[2] == 'C' &&
+              line[3] == 'e' && line[4] == 'l' && line[5] == 'l' ) {
+      // extract "#D ..." lines from MCell file
+      while (getline(line, LINESIZE)) {
+         if (line[0] != '#') break;
+         if (line[1] == 'L' && line[2] == ' ') break;
+         if (line[1] == 'D' && line[2] == ' ') {
+            int linelen = strlen(line);
+            if (commlen + linelen + 1 > maxcommlen) break;
+            strncpy(cptr + commlen, line, linelen);
+            commlen += linelen;
+            cptr[commlen] = '\n';         // getline strips off eol char(s)
+            commlen++;
+         }
+      }
+      
    } else if (line[0] == '#' || line[0] == 'x') {
       // extract comment lines from RLE file
       while (line[0] == '#') {
