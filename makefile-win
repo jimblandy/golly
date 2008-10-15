@@ -24,7 +24,8 @@ SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
    Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \
    Patterns Patterns\Breeders Patterns\Guns Patterns\HashLife-Examples \
    Patterns\JvN-Examples Patterns\Loops Patterns\Methuselahs \
-   Patterns\Miscellaneous Patterns\Oscillators Patterns\Other-Rules \
+   Patterns\Miscellaneous Patterns\Oscillators \
+   Patterns\Other-Rules Patterns\Other-Rules\Banks Patterns\Other-Rules\Morley \
    Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry \
    Patterns\Still-Lifes Patterns\Spaceships Patterns\Syntheses \
    Rules
