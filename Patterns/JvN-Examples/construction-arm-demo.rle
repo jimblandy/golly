@@ -30,7 +30,7 @@
 # of quiescent (non-active) cells, and of inserting one or more 
 # activation pulses. This functionality is used to allow a suitably
 # designed machine to construct a working copy of itself - see for 
-# example NobiliPesavento_replicator.rle
+# example NP-replicator.rle.
 #
 # Although this demonstration uses the extended von Neumann rules, the
 # construction arm in von Neumann's original design works in the same
