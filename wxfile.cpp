@@ -560,6 +560,7 @@ void MainFrame::OpenPattern()
    filetypes +=         _("|Macrocell (*.mc)|*.mc");
    filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
    filetypes +=         _("|dblife (*.l)|*.l");
+   filetypes +=         _("|MCell (*.mcl)|*.mcl");
    filetypes +=         _("|Gzip (*.gz)|*.gz");
    filetypes +=         _("|BMP (*.bmp)|*.bmp");
    filetypes +=         _("|GIF (*.gif)|*.gif");

@@ -11,7 +11,7 @@ Key features:
   WireWorld, Generations, and John von Neumann's 29-state CA.
 - Use RuleTable and RuleTree to load your own rules.
 - Responsive even while generating or garbage collecting.
-- Reads RLE, Life 1.05/1.06, dblife, and macrocell formats.
+- Reads RLE, macrocell, Life 1.05/1.06, dblife, and MCell files.
   Can also read common graphic formats: BMP, PNG, GIF, TIFF.
 - Includes a state-of-the-art pattern collection.
 - Fast loading of large patterns.
@@ -21,7 +21,7 @@ Key features:
 - Auto fit option keeps a generating pattern within view.
 - Full screen option (no menu/status/tool/scroll bars).
 - Supports multiple layers, including cloned layers.
-- HTML-based help with integrated Life Lexicon.
+- HTML-based help with an integrated Life Lexicon.
 - Scriptable via Perl or Python.
 - User-configurable keyboard shortcuts.
 - Free, open source and cross-platform (Windows, Mac, Linux).
