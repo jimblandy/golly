@@ -340,53 +340,59 @@ string get_variable_name(unsigned int iVar)
 void print_rules(const vector<rule>& rules,ostream& out)
 {
    // first collect all variables (makes reading easier)
-   map<set<state>,string> vars;
+   map< string , set<state> > vars;
+   ostringstream rules_out;
    for(vector<rule>::const_iterator r_it=rules.begin();r_it!=rules.end();r_it++)
    {
+      vector<string> variables_used;
       for(int i=0;i<r_it->n_inputs;i++)
       {
-         if(r_it->inputs[i].size()>1 && vars.find(r_it->inputs[i])==vars.end())
+         // if more than one state for this input, we need a variable 
+         if(r_it->inputs[i].size()>1)
          {
-            string var = get_variable_name(vars.size());
-            vars[r_it->inputs[i]] = var;
-            // print it
-            out << "var " << var << "={";
-            set<state>::const_iterator it=r_it->inputs[i].begin();
-            while(true)
+            string var;
+            // is there a variable that matches these inputs, and that we haven't used?
+            bool found_unused_var=false;
+            for(map<string, set<state> >::const_iterator v_it=vars.begin();v_it!=vars.end();v_it++)
             {
-               out << (int)*it;
-               it++;
-               if(it!=r_it->inputs[i].end()) out << ",";
-               else break;
+               if(v_it->second==r_it->inputs[i] && find(variables_used.begin(),variables_used.end(),v_it->first)==variables_used.end())
+               {
+                  found_unused_var = true;
+                  var = v_it->first;
+                  break;
+               }
             }
-            out << "}\n";
-         }
-      }
-   }
-   for(vector<rule>::const_iterator r_it=rules.begin();r_it!=rules.end();r_it++)
-   {
-      for(int i=0;i<r_it->n_inputs;i++)
-      {
-         // if m[i] is a variable then use that variable instead
-         map<set<state>,string>::const_iterator found = vars.find(r_it->inputs[i]);
-         if(found!=vars.end())
-         {
-            // output the variable name
-            out << found->second;
-         }
-         else if(r_it->inputs[i].size()==1)
-         {
-            // output the state
-            out << *r_it->inputs[i].begin();
+            if(!found_unused_var)
+            {
+               // we need to make a new one for this set of inputs
+               var = get_variable_name(vars.size());
+               // add it to the list of made variables
+               vars[var] = r_it->inputs[i];
+               // print it
+               out << "var " << var << "={";
+               set<state>::const_iterator it=r_it->inputs[i].begin();
+               while(true)
+               {
+                  out << (int)*it;
+                  it++;
+                  if(it!=r_it->inputs[i].end()) out << ",";
+                  else break;
+               }
+               out << "}\n";
+            }
+            // add the variable to the list of used ones
+            variables_used.push_back(var);
+            rules_out << var << ",";
          }
          else
          {
-            // internal error - should have replaced with a variable!
+            // just a state, output it
+            rules_out << (int)*r_it->inputs[i].begin() << ",";
          }
-         out << ",";
       }
-      out << r_it->ns << "\n";
+      rules_out << (int)r_it->ns << endl;
    }
+   out << rules_out.str();
 }
 
 void produce_rule_table(vector<rule>& rules,int N,int nhood_size,TSymm symm,bool remove_stasis)

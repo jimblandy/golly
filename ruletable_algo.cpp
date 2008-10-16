@@ -168,7 +168,7 @@ string ruletable_algo::LoadRuleTable(string rule)
    this->n_states = 8;  // default
 
    map< string, vector<state> > variables;
-   map<vector<vector<state> >, state> transition_table;
+   map< vector< vector<state> >, state > transition_table;
 
    for (;;) 
    {
@@ -215,7 +215,7 @@ string ruletable_algo::LoadRuleTable(string rule)
          if(sscanf(line.c_str()+neighbourhood_size_keyword.length(),"%d",&this->neighbourhood_size)!=1)
             return "Error reading file: " + line;
          if(this->neighbourhood_size!=5 && this->neighbourhood_size!=9)
-            return "Error reading file, unsupported neighbourhood_size: " + line;
+            return "Error reading file, unsupported neighborhood_size: " + line;
       }
       else if(starts_with(line,variable_keyword))
       {
@@ -227,9 +227,9 @@ string ruletable_algo::LoadRuleTable(string rule)
             return "Error reading file: "+line;
          for(unsigned int i=2;i<tokens.size();i++)
          {
-            istringstream iss(tokens[i]);
             int s;
-            iss >> s;
+            if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
+               return "Error reading file: "+line;
             states.push_back((state)s);
          }
          variables[variable_name] = states;
@@ -237,10 +237,10 @@ string ruletable_algo::LoadRuleTable(string rule)
       else
       {
          // must be a transitions line
-         vector<vector<state> > inputs;
-         state output;
          if(this->n_states<=10 && variables.empty())
          {
+            vector< vector<state> > inputs;
+            state output;
             // if there are single-digit states and no variables then use compressed form
             // e.g. 012345 for 0,1,2,3,4 -> 5
             if(line.length() < this->neighbourhood_size+1) // we allow for comments after the rule
@@ -256,9 +256,10 @@ string ruletable_algo::LoadRuleTable(string rule)
             if(c<'0' || c>'9')
                return "Error reading line: "+line;
             output = c-'0';
+            transition_table[inputs]=output;
          }
          else 
-         {
+         {  
             vector<string> tokens = tokenize(line,", #\t");
             if(tokens.size() < this->neighbourhood_size+1)
             {
@@ -267,33 +268,68 @@ string ruletable_algo::LoadRuleTable(string rule)
                   (this->neighbourhood_size+1) << ") on line: " << line;
                return oss.str();
             }
-            // parse the inputs
-            for(unsigned int i=0;i<this->neighbourhood_size;i++)
+            // first pass: which variables appear more than once? these are "bound" (must take the same value each time they appear in this transition)
+            vector<string> bound_variables;
+            for(map< string, vector<state> >::const_iterator var_it=variables.begin();var_it!=variables.end();var_it++)
+               if(find(bound_variables.begin(),bound_variables.end(),var_it->first)==bound_variables.end()
+                  && count(tokens.begin(),tokens.begin()+this->neighbourhood_size+1,var_it->first)>1)
+                     bound_variables.push_back(var_it->first);
+            unsigned int n_bound_variables = bound_variables.size();
+            // second pass: iterate through the possible states for the bound variables, adding a transition for each combination
+            vector< vector<state> > inputs(this->neighbourhood_size);
+            state output;
+            map<string,unsigned int> bound_variable_indices; // each is an index into vector<state> of 'variables' map
+            for(unsigned int i=0;i<n_bound_variables;i++)
+               bound_variable_indices[bound_variables[i]]=0;
+            for(;;)
             {
-               map<string,vector<state> >::const_iterator found;
-               found = variables.find(tokens[i]);
-               if(found!=variables.end())
+               // output the transition for the current set of bound variables
+               for(unsigned int i=0;i<this->neighbourhood_size;i++) // collect the inputs
                {
-                  // found a variable name, replace it with the variable's contents
-                  inputs.push_back(found->second);
-                  // (variable must have been declared before this point in the file or it won't be found)
+                  if(!bound_variables.empty() && find(bound_variables.begin(),bound_variables.end(),tokens[i])!=bound_variables.end())
+                    inputs[i] = vector<state>(1,variables[tokens[i]][bound_variable_indices[tokens[i]]]); // this input is a bound variable
+                  else if(variables.find(tokens[i])!=variables.end())
+                     inputs[i] = variables[tokens[i]]; // this input is an unbound variable
+                  else 
+                  {
+                     int s;
+                     if(sscanf(tokens[i].c_str(),"%d",&s)!=1) // this input is a state
+                        return "Error reading line: "+line;
+                     inputs[i] = vector<state>(1,s);
+                  }
                }
-               else
+               // collect the output
+               if(!bound_variables.empty() && 
+                  find(bound_variables.begin(),bound_variables.end(),tokens[this->neighbourhood_size])!=bound_variables.end())
+                     output = variables[tokens[this->neighbourhood_size]][bound_variable_indices[tokens[this->neighbourhood_size]]];
+               else 
                {
-                  // found a single state value
                   int s;
-                  if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
-                     return "Error reading transition line, expecting a value: "+line;
-                  inputs.push_back(vector<state>(1,s));
+                  if(sscanf(tokens[this->neighbourhood_size].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
+                    return "Error reading line: "+line;
+                  output = s;
+               }
+               transition_table[inputs]=output;
+               // move on to the next value of bound variables
+               {
+                  unsigned int iChanging=0;
+                  for(;iChanging<n_bound_variables;iChanging++)
+                  {
+                     if(bound_variable_indices[bound_variables[iChanging]] < variables[bound_variables[iChanging]].size()-1)
+                     {
+                        bound_variable_indices[bound_variables[iChanging]]++;
+                        break;
+                     }
+                     else
+                     {
+                        bound_variable_indices[bound_variables[iChanging]]=0;
+                     }
+                  }
+                  if(iChanging>=n_bound_variables)
+                     break;
                }
             }
-            // parse the output
-            int outp;
-            if(sscanf(tokens[this->neighbourhood_size].c_str(),"%d",&outp)!=1)
-               return "Error reading transition line, failed to parse output state: "+line;
-            output = (state)outp;
          }
-         transition_table[inputs]=output;
       }
    }
    // now convert transition table to bitmask lookup
@@ -371,10 +407,10 @@ string ruletable_algo::LoadRuleTable(string rule)
       // work through the rules, filling the bit masks
       unsigned int iRule=0,iRuleC,iBit,iNbor,iExpandedNbor;
       TBits mask;
-      // (each transition rule looks like, e.g. 1,[2,3,4],[2,4],0,3 -> 0 )
-      for(map<vector<vector<state> >,state >::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
+      // (each transition rule looks like, e.g. 1,[2,3,5],4,[0,1],3 -> 0 )
+      for(map<vector< vector<state> >,state>::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
       {
-         const vector<vector<state> >& rule = rule_it->first;
+         const vector< vector<state> >& rule_inputs = rule_it->first;
          for(int iRot=0;iRot<n_rotations;iRot++)
          {
             for(int iRef=0;iRef<n_reflections;iRef++)
@@ -382,18 +418,18 @@ string ruletable_algo::LoadRuleTable(string rule)
                this->output[iRule] = rule_it->second;
                iBit = iRule % n_bits;
                iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
-               mask = (TBits)1 << iBit; // (we need to ensure this is a 64-bit shift, not a 32-bit shift)
+               mask = (TBits)1 << iBit; // (cast needed to ensure this is a 64-bit shift, not a 32-bit shift)
                for(iNbor=0;iNbor<this->neighbourhood_size;iNbor++)
                {
-                  const vector<state>& possibles = rule[iNbor];
+                  const vector<state>& possibles = rule_inputs[iNbor];
                   for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
                   {
-                     // apply the necessary rotation
+                     // apply the necessary rotation to the non-centre cells
                      if(iNbor>0)
                         iExpandedNbor = 1+((iNbor-1+iRot*rotation_skip)%(this->neighbourhood_size-1));
                      else
                         iExpandedNbor = iNbor;
-                     // apply any rotation
+                     // apply any reflection
                      iExpandedNbor = reflect_remap[iRef][iExpandedNbor];
                      // apply the resulting bit mask
                      this->lut[iExpandedNbor][*poss_it][iRuleC] |= mask;
@@ -432,8 +468,8 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
 
    for(iRule=0;iRule<this->MC;iRule++)
    {
-      // is there a match for any of the sizeof(TBits)*8 rules within iRule?
-      // (we don't have to worry about symmetries here since that was expanded out in LoadRuleTable)
+      // is there a match for any of the (e.g.) 64 rules within iRule?
+      // (we don't have to worry about symmetries here since they were expanded out in LoadRuleTable)
       if(this->neighbourhood_size==5)
          is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
             this->lut[3][s][iRule] & this->lut[4][w][iRule];
@@ -441,7 +477,7 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
          is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][ne][iRule] & 
          this->lut[3][e][iRule] & this->lut[4][se][iRule] & this->lut[5][s][iRule] & this->lut[6][sw][iRule] & 
             this->lut[7][w][iRule] & this->lut[8][nw][iRule];
-      // if one of them matched, return the output of the first
+      // if any of them matched, return the output of the first
       if(is_match)
       {
          // find the least significant bit of is_match
