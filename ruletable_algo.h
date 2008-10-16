@@ -52,15 +52,13 @@ protected:
 
    std::string current_rule;
    unsigned int n_states;
-   unsigned int neighbourhood_size; // 5=von Neumann; 9=Moore; others currently unsupported
-
+   enum TNeighborhood { vonNeumann, Moore } neighborhood; // (hopefully will support more in future)
    enum TSymmetry { none, rotate4, rotate8, reflect, rotate4reflect, rotate8reflect } symmetries;
 
-   // we use a lookup table to match inputs to rules:
+   // we use a lookup table to match inputs to outputs:
    typedef unsigned long long int TBits; // we can use unsigned int if we hit portability issues (not much slower)
    std::vector< std::vector< std::vector<TBits> > > lut; // TBits lut[neighbourhood_size][n_states][n_compressed_rules];
    unsigned int MC; // how many rules are there after compression?
-
    std::vector<state> output; // state output[n_rules];
 
 };

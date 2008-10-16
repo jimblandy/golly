@@ -14,7 +14,7 @@
 #  In this case the method isn't really helping.)
 #
 n_states:4
-neighborhood_size:9
+neighborhood:Moore
 symmetries:rotate8
 var a={0,1,2,3}
 var b={0,1,2,3}

@@ -8,7 +8,7 @@
 # Format: C,N,E,S,W,C'
 #
 n_states:2
-neighborhood_size:5
+neighborhood:vonNeumann
 symmetries:rotate4reflect
 111000
 011101

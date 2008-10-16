@@ -10,7 +10,7 @@
 # Format: C,N,NE,E,SE,S,SW,W,NW,C'
 #
 n_states:2
-neighborhood_size:9
+neighborhood:Moore
 symmetries:rotate4reflect
 
 # transitions for signal propagation:

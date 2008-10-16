@@ -12,7 +12,7 @@
 # format: CNESWC'
 #
 n_states:8
-neighborhood_size:5
+neighborhood:vonNeumann
 symmetries:rotate4
 000000
 000200

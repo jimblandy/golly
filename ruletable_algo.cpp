@@ -87,7 +87,7 @@ bool starts_with(const string& line,const string& keyword)
 }
 
 const char *defaultRuleData[] = {
-   "n_states:8", "neighborhood_size:5", "symmetries:rotate4",
+   "n_states:8", "neighborhood:vonNeumann", "symmetries:rotate4",
    "000000", "000012", "000020", "000030", "000050", "000063", "000071",
    "000112", "000122", "000132", "000212", "000220", "000230", "000262",
    "000272", "000320", "000525", "000622", "000722", "001022", "001120",
@@ -135,7 +135,8 @@ string ruletable_algo::LoadRuleTable(string rule)
 {
    const string comment_keyword = "#";
    const string symmetries_keyword = "symmetries:";
-   const string neighbourhood_size_keyword = "neighborhood_size:";
+   const string neighborhood_keyword = "neighborhood:";
+   const string neighborhood_value_keywords[2]={"vonNeumann","Moore"};
    const string n_states_keyword = "n_states:";
    const string variable_keyword = "var ";
    const string symmetry_keywords[6] = {"none","rotate4","rotate8","reflect","rotate4reflect","rotate8reflect"};
@@ -163,9 +164,10 @@ string ruletable_algo::LoadRuleTable(string rule)
    }
    else {   }
 
-   this->neighbourhood_size = 5; // default
    this->symmetries = rotate4; // default
    this->n_states = 8;  // default
+
+   unsigned int n_inputs=-1;
 
    map< string, vector<state> > variables;
    map< vector< vector<state> >, state > transition_table;
@@ -209,13 +211,24 @@ string ruletable_algo::LoadRuleTable(string rule)
          if(!found_symmetry)
             return "Error reading file: "+line;
       }
-      else if(starts_with(line,neighbourhood_size_keyword))
+      else if(starts_with(line,neighborhood_keyword))
       {
          // parse the rest of the line
-         if(sscanf(line.c_str()+neighbourhood_size_keyword.length(),"%d",&this->neighbourhood_size)!=1)
-            return "Error reading file: " + line;
-         if(this->neighbourhood_size!=5 && this->neighbourhood_size!=9)
-            return "Error reading file, unsupported neighborhood_size: " + line;
+         string remaining(line.begin()+neighborhood_keyword.length(),line.end());
+         bool found_neighborhood=false;
+         for(int iN=0;iN<2;iN++)
+            if(starts_with(remaining,neighborhood_value_keywords[iN]))
+            {
+               this->neighborhood = (TNeighborhood)iN;
+               found_neighborhood = true;
+            }
+         if(!found_neighborhood)
+            return "Error reading file: "+line;
+         switch(this->neighborhood) {
+            default:
+            case vonNeumann: n_inputs=5; break;
+            case Moore: n_inputs=9; break;
+         }
       }
       else if(starts_with(line,variable_keyword))
       {
@@ -237,22 +250,24 @@ string ruletable_algo::LoadRuleTable(string rule)
       else
       {
          // must be a transitions line
+         if(n_inputs<0)
+            return "Error reading line: "+line+" - neighborhood not yet specified!";
          if(this->n_states<=10 && variables.empty())
          {
             vector< vector<state> > inputs;
             state output;
             // if there are single-digit states and no variables then use compressed form
             // e.g. 012345 for 0,1,2,3,4 -> 5
-            if(line.length() < this->neighbourhood_size+1) // we allow for comments after the rule
+            if(line.length() < n_inputs+1) // we allow for comments after the rule
                return "Error reading line: "+line;
-            for(unsigned int i=0;i<this->neighbourhood_size;i++)
+            for(unsigned int i=0;i<n_inputs;i++)
             {
                char c = line[i];
                if(c<'0' || c>'9')
                   return "Error reading line: "+line;
                inputs.push_back(vector<state>(1,c-'0'));
             }
-            unsigned char c = line[this->neighbourhood_size];
+            unsigned char c = line[n_inputs];
             if(c<'0' || c>'9')
                return "Error reading line: "+line;
             output = c-'0';
@@ -261,22 +276,22 @@ string ruletable_algo::LoadRuleTable(string rule)
          else 
          {  
             vector<string> tokens = tokenize(line,", #\t");
-            if(tokens.size() < this->neighbourhood_size+1)
+            if(tokens.size() < n_inputs+1)
             {
                ostringstream oss;
                oss << "Error reading transition line, too few entries (" << tokens.size() << ", expected " <<
-                  (this->neighbourhood_size+1) << ") on line: " << line;
+                  (n_inputs+1) << ") on line: " << line;
                return oss.str();
             }
             // first pass: which variables appear more than once? these are "bound" (must take the same value each time they appear in this transition)
             vector<string> bound_variables;
             for(map< string, vector<state> >::const_iterator var_it=variables.begin();var_it!=variables.end();var_it++)
                if(find(bound_variables.begin(),bound_variables.end(),var_it->first)==bound_variables.end()
-                  && count(tokens.begin(),tokens.begin()+this->neighbourhood_size+1,var_it->first)>1)
+                  && count(tokens.begin(),tokens.begin()+n_inputs+1,var_it->first)>1)
                      bound_variables.push_back(var_it->first);
             unsigned int n_bound_variables = bound_variables.size();
             // second pass: iterate through the possible states for the bound variables, adding a transition for each combination
-            vector< vector<state> > inputs(this->neighbourhood_size);
+            vector< vector<state> > inputs(n_inputs);
             state output;
             map<string,unsigned int> bound_variable_indices; // each is an index into vector<state> of 'variables' map
             for(unsigned int i=0;i<n_bound_variables;i++)
@@ -284,7 +299,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             for(;;)
             {
                // output the transition for the current set of bound variables
-               for(unsigned int i=0;i<this->neighbourhood_size;i++) // collect the inputs
+               for(unsigned int i=0;i<n_inputs;i++) // collect the inputs
                {
                   if(!bound_variables.empty() && find(bound_variables.begin(),bound_variables.end(),tokens[i])!=bound_variables.end())
                     inputs[i] = vector<state>(1,variables[tokens[i]][bound_variable_indices[tokens[i]]]); // this input is a bound variable
@@ -300,12 +315,12 @@ string ruletable_algo::LoadRuleTable(string rule)
                }
                // collect the output
                if(!bound_variables.empty() && 
-                  find(bound_variables.begin(),bound_variables.end(),tokens[this->neighbourhood_size])!=bound_variables.end())
-                     output = variables[tokens[this->neighbourhood_size]][bound_variable_indices[tokens[this->neighbourhood_size]]];
+                  find(bound_variables.begin(),bound_variables.end(),tokens[n_inputs])!=bound_variables.end())
+                     output = variables[tokens[n_inputs]][bound_variable_indices[tokens[n_inputs]]];
                else 
                {
                   int s;
-                  if(sscanf(tokens[this->neighbourhood_size].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
+                  if(sscanf(tokens[n_inputs].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
                     return "Error reading line: "+line;
                   output = s;
                }
@@ -337,7 +352,7 @@ string ruletable_algo::LoadRuleTable(string rule)
       unsigned int n_bits = sizeof(TBits)*8;
       int n_rotations,rotation_skip,n_reflections;
       vector<int> reflect_remap[2];
-      if(this->neighbourhood_size==5)
+      if(this->neighborhood==vonNeumann)
       {
          reflect_remap[0].resize(5);
          reflect_remap[0][0]=0;
@@ -352,7 +367,7 @@ string ruletable_algo::LoadRuleTable(string rule)
          reflect_remap[1][3]=3;
          reflect_remap[1][4]=2;  // we swap E and W
       }
-      else // this->neighbourhood_size==9
+      else // this->neighborhood==Moore
       {
          reflect_remap[0].resize(9);
          reflect_remap[0][0]=0;
@@ -381,9 +396,9 @@ string ruletable_algo::LoadRuleTable(string rule)
          case none: n_rotations=1; rotation_skip=1; n_reflections=1; 
             break;
          case rotate4: n_rotations=4; n_reflections=1; 
-            if(this->neighbourhood_size==5)
+            if(this->neighborhood==vonNeumann)
                rotation_skip=1;
-            else // neighbourhood_size==9
+            else // neighborhood==Moore
                rotation_skip=2;
             break;
          case rotate8: n_rotations=8; rotation_skip=1; n_reflections=1; 
@@ -391,9 +406,9 @@ string ruletable_algo::LoadRuleTable(string rule)
          case reflect: n_rotations=1; rotation_skip=1; n_reflections=2; 
             break;
          case rotate4reflect: n_rotations=4; n_reflections=2; 
-            if(this->neighbourhood_size==5)
+            if(this->neighborhood==vonNeumann)
                rotation_skip=1;
-            else // neighbourhood_size==9
+            else // neighborhood==Moore
                rotation_skip=2;
             break;
          case rotate8reflect: n_rotations=8; rotation_skip=1; n_reflections=2; 
@@ -402,7 +417,7 @@ string ruletable_algo::LoadRuleTable(string rule)
       unsigned int M = transition_table.size() * n_rotations * n_reflections; // (we need to expand out symmetry)
       this->MC = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
       // initialize lookup table to all bits turned off 
-      this->lut.assign(neighbourhood_size,vector< vector<TBits> >(this->n_states,vector<TBits>(MC,0))); 
+      this->lut.assign(n_inputs,vector< vector<TBits> >(this->n_states,vector<TBits>(MC,0))); 
       this->output.resize(M);
       // work through the rules, filling the bit masks
       unsigned int iRule=0,iRuleC,iBit,iNbor,iExpandedNbor;
@@ -419,14 +434,14 @@ string ruletable_algo::LoadRuleTable(string rule)
                iBit = iRule % n_bits;
                iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
                mask = (TBits)1 << iBit; // (cast needed to ensure this is a 64-bit shift, not a 32-bit shift)
-               for(iNbor=0;iNbor<this->neighbourhood_size;iNbor++)
+               for(iNbor=0;iNbor<n_inputs;iNbor++)
                {
                   const vector<state>& possibles = rule_inputs[iNbor];
                   for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
                   {
                      // apply the necessary rotation to the non-centre cells
                      if(iNbor>0)
-                        iExpandedNbor = 1+((iNbor-1+iRot*rotation_skip)%(this->neighbourhood_size-1));
+                        iExpandedNbor = 1+((iNbor-1+iRot*rotation_skip)%(n_inputs-1));
                      else
                         iExpandedNbor = iNbor;
                      // apply any reflection
@@ -470,10 +485,10 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
    {
       // is there a match for any of the (e.g.) 64 rules within iRule?
       // (we don't have to worry about symmetries here since they were expanded out in LoadRuleTable)
-      if(this->neighbourhood_size==5)
+      if(this->neighborhood==vonNeumann)
          is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
             this->lut[3][s][iRule] & this->lut[4][w][iRule];
-      else // this->neighbourhood_size==9
+      else // this->neighborhood==Moore
          is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][ne][iRule] & 
          this->lut[3][e][iRule] & this->lut[4][se][iRule] & this->lut[5][s][iRule] & this->lut[6][sw][iRule] & 
             this->lut[7][w][iRule] & this->lut[8][nw][iRule];

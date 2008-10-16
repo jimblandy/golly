@@ -647,7 +647,7 @@ int main()
 {
    // parameters for use:
    const int N_STATES = 4;
-   const TSymm symmetry = rotate8reflect;
+   const TSymm symmetry = rotate8;
    const int nhood_size = 9;
    const string output_filename = "wireworld.table";
    const bool remove_stasis_transitions = true;
@@ -669,13 +669,13 @@ int main()
       else
          out << "N,NE,E,SE,S,SW,W,NW";
       out << ",C'";
-      out << "\n# N.B. Where the same variable appears multiple times,\n# it can take different values each time.\n#";
+      out << "\n# N.B. Where the same variable appears multiple times in a transition,\n# it takes the same value each time.\n#";
       if(remove_stasis_transitions)
          out << "\n# Default for transitions not listed: no change\n#";
       else
          out << "\n# All transitions should be included below, including no-change ones.\n#";
       out << "\nn_states:" << N_STATES;
-      out << "\nneighborhood_size:" << nhood_size;
+      out << "\nneighborhood:" << ((nhood_size==5)?("vonNeumann"):("Moore"));
       out << "\nsymmetries:" << symmetry_strings[symmetry] << "\n";
       print_rules(rules,out);
    }

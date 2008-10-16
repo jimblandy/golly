@@ -24,7 +24,7 @@
 # two transitions: 4,1,0->1 and 4,2,0->2
 #
 n_states:9
-neighborhood_size:5
+neighborhood:vonNeumann
 symmetries:rotate4
 var a={0,1,2}
 var b={0,1}
