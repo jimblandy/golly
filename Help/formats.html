@@ -239,7 +239,9 @@ Required descriptors: (must appear before other content)<br>
 <p>
 The rest of the file contains variables and transitions. Variable names should only use the letters a-z,A-Z (case-sensitive). Each variable line should follow the form above to list the states. Variables should appear before the first transition that uses them.</p>
 
-<p>Transition lines should have states or variables separated by commas. If there are no variables and n_states&lt;11 then no comma should be used. Only one transition (or variable) should appear on a line. Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighbourhood, and C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighbourhood. Where the same variable appears more than once in a transition, it stands for the same state each time.</p>
+<p>Transition lines should have states or variables separated by commas. If there are no variables and n_states&lt;11 then no comma should be used. Only one transition (or variable) should appear on a line. Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighborhood, and C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighbourhood. Where the same variable appears more than once in a transition, it stands for the same state each time.</p>
+
+<p>Rule tables usually don't specify every possible set of inputs. For those not listed, the central cell remains unchanged.</p>
 
 <p><a name="tree">&nbsp;<br>
 <font size=+1><b>Rule trees</b></font>
