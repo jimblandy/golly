@@ -216,8 +216,30 @@ is that there is no need for a .icons extension.
 <font size=+1><b>Rule tables</b></font>
 
 <p>
-!!!
+Example file:
+<tt><pre>
+      # A signal (2/3) passes alongside a wire (1):
+      n_states:4
+      neighborhood:vonNeumann
+      symmetries:rotate4
+      var a={2,3}
+      var b={2,3}
+      var c={2,3}
+      a,0,b,1,c,b
+</pre></tt></p>
 
+<p>Any line containing just whitespace, or beginning with the hash symbol "#" is ignored.</p>
+
+<p>
+Required descriptors: (must appear before other content)<br>
+<ul><li><b><tt>n_states:</tt></b> specifies the number of states in the CA (from 0 to n_states-1 inclusive).</li>
+<li><b><tt>neighborhood:</tt></b> specifies the cell neighborhood for the CA update step. Must be one of: "vonNeumann", "Moore".</li>
+<li><b><tt>symmetries:</tt></b> can be one of the following: none, rotate4, rotate8, reflect, rotate4reflect, rotate8reflect. Hopefully these are self-explanatory.</li></ul>
+
+<p>
+The rest of the file contains variables and transitions. Variable names should only use the letters a-z,A-Z (case-sensitive). Each variable line should follow the form above to list the states. Variables should appear before the first transition that uses them.</p>
+
+<p>Transition lines should have states or variables separated by commas. If there are no variables and n_states&lt;11 then no comma should be used. Only one transition (or variable) should appear on a line. Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighbourhood, and C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighbourhood. Where the same variable appears more than once in a transition, it stands for the same state each time.</p>
 
 <p><a name="tree">&nbsp;<br>
 <font size=+1><b>Rule trees</b></font>
