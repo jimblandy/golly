@@ -215,35 +215,42 @@ is that there is no need for a .icons extension.
 <p><a name="table">&nbsp;<br>
 <font size=+1><b>Rule tables</b></font>
 
+<p>Golly allows you to add new rules by creating transition tables stored in external files.  Given the rule string "foo", the RuleTable algorithm will look inside the Rules folder for a file called foo.table.</p>
+ 
 <p>
 Example file:
-<tt><pre>
-      # A signal (2/3) passes alongside a wire (1):
-      n_states:4
-      neighborhood:vonNeumann
-      symmetries:rotate4
-      var a={2,3}
-      var b={2,3}
-      var c={2,3}
-      a,0,b,1,c,b
-</pre></tt></p>
+<pre><tt>        # Signals (2/3) pass alongside a wire (1):
+        n_states:4
+        neighborhood:vonNeumann
+        symmetries:rotate4
+        var a={2,3}
+        var b={2,3}
+        var c={2,3}
+        a,0,b,1,c,b
+</tt></pre></p>
 
-<p>Any line containing just whitespace, or beginning with the hash symbol "#" is ignored.</p>
+<p>(See the <tt>.table</tt> files in the Rules folder for more examples.)</p>
+
+<p>Empty lines and those beginning with the hash symbol "#" are ignored.</p>
 
 <p>
 Required descriptors: (must appear before other content)<br>
 <ul><li><b><tt>n_states:</tt></b> specifies the number of states in the CA (from 0 to n_states-1 inclusive).</li>
-<li><b><tt>neighborhood:</tt></b> specifies the cell neighborhood for the CA update step. Must be one of: "vonNeumann", "Moore".</li>
-<li><b><tt>symmetries:</tt></b> can be one of the following: none, rotate4, rotate8, reflect, rotate4reflect, rotate8reflect. Hopefully these are self-explanatory.</li></ul>
+<li><b><tt>neighborhood:</tt></b> specifies the cell neighborhood for the CA update step. Must be one of: <tt>vonNeumann</tt>, <tt>Moore</tt>.</li>
+<li><b><tt>symmetries:</tt></b> can be one of the following: <tt>none</tt>, <tt>rotate4</tt>, <tt>rotate8</tt>, <tt>reflect</tt>, <tt>rotate4reflect</tt>, <tt>rotate8reflect</tt>. Hopefully these are self-explanatory.</li></ul></p>
 
 <p>
 The rest of the file contains variables and transitions. Variable names should only use the letters a-z,A-Z (case-sensitive). Each variable line should follow the form above to list the states. Variables should appear before the first transition that uses them.</p>
 
-<p>Transition lines should have states or variables separated by commas. If there are no variables and n_states&lt;11 then no comma should be used. Only one transition (or variable) should appear on a line. Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighborhood, and C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighbourhood. Where the same variable appears more than once in a transition, it stands for the same state each time.</p>
+<p>Transition lines should have states or variables separated by commas. If there are no variables and <tt>n_states</tt>&lt;11 then no comma should be used. Only one transition (or variable) should appear on each line. Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighborhood, and C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighborhood.</p>
+
+<p>Where the same variable appears more than once in a transition, it stands for the same state each time. A transition can have a variable as its output (C') but only where that variable appears more than once, so that it has a definite value. The transition in the example above expands to the following: <tt>20212->2</tt>, <tt>20213->2</tt>, <tt>20312->3</tt>, <tt>20313->3</tt>, <tt>30212->2</tt>, <tt>30213->2</tt>, <tt>30312->3</tt>, <tt>30313->3</tt>, and all 90-degree rotations of those (because of the <tt>rotate4</tt> symmetry).</p>
 
 <p>Rule tables usually don't specify every possible set of inputs. For those not listed, the central cell remains unchanged.</p>
 
 <p>(This form of CA rule table representation comes from Gianluca Tempesti's PhD thesis: <a href="http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html">http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html</a>.)</p>
+
+<p>If you have a C/C++ implementation of a transition function, there is a way to automatically produce a rule table file. See <tt>Rules/TableGenerators/make-ruletable.cpp</tt> for instructions.</p> 
 
 <p><a name="tree">&nbsp;<br>
 <font size=+1><b>Rule trees</b></font>
