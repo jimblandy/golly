@@ -447,6 +447,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
          wxString temp = item->GetText();
          temp.Replace(wxT("__"), wxT("_"));
+         temp.Replace(wxT("&"), wxT("&&"));
          if (temp == path) {
             id = ID_OPEN_RECENT + 1 + i;
             break;
@@ -478,6 +479,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
          #ifdef __WXGTK__
             // remove duplicate underscores
             prevpath.Replace(wxT("__"), wxT("_"));
+            prevpath.Replace(wxT("&"), wxT("&&"));
          #endif
          item = patternSubMenu->FindItem(id);
          item->SetText(prevpath);
@@ -510,6 +512,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
          wxString temp = item->GetText();
          temp.Replace(wxT("__"), wxT("_"));
+         temp.Replace(wxT("&"), wxT("&&"));
          if (temp == path) {
             id = ID_RUN_RECENT + 1 + i;
             break;
@@ -541,6 +544,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
          #ifdef __WXGTK__
             // remove duplicate underscores
             prevpath.Replace(wxT("__"), wxT("_"));
+            prevpath.Replace(wxT("&"), wxT("&&"));
          #endif
          item = scriptSubMenu->FindItem(id);
          item->SetText(prevpath);
@@ -991,6 +995,7 @@ void MainFrame::ClearMissingPatterns()
                // avoid wxGTK bug if item contains underscore
                wxString temp = nextitem->GetText();
                temp.Replace(wxT("__"), wxT("_"));
+               temp.Replace(wxT("&"), wxT("&&"));
                item->SetText( temp );
             #else
                item->SetText( nextitem->GetText() );
@@ -1038,6 +1043,7 @@ void MainFrame::ClearMissingScripts()
                // avoid wxGTK bug if item contains underscore
                wxString temp = nextitem->GetText();
                temp.Replace(wxT("__"), wxT("_"));
+               temp.Replace(wxT("&"), wxT("&&"));
                item->SetText( temp );
             #else
                item->SetText( nextitem->GetText() );
