@@ -142,12 +142,12 @@ color information stored in the file.
 A rule string can contain characters not allowed in file names
 ("/", "\" and ":"), so Golly will substitute those characters with hyphens.
 For example, if you wanted to change the colors associated with the rule
-B3/S23 then you'd need to create a file called B3-S23.colors.
+12/34/6 then you'd need to create a file called 12-34-6.colors.
 
 <p>
 A .colors file is an ordinary text file.
 Any blank lines or lines starting with "#" are ignored.
-To specify the rgb colors for states 1, 2 and 3 you could use
+To specify the rgb colors for states 1, 2 and 3 you can use
 lines like these:
 
 <p>
@@ -158,7 +158,7 @@ lines like these:
 
 <p>
 Any text after the final number on each line is ignored.
-To specify a color gradient you could use a line like this:
+To specify a color gradient you can use a line like this:
 
 <p>
 <dd><tt>gradient = 0 0 255 &nbsp;255 0 0 &nbsp; (blue to red)</tt></dd>
@@ -181,8 +181,8 @@ for a matching <i>rule</i>.icons file and, if it exists, loads the
 icon bitmaps stored in the file.
 Note that a rule string can contain characters not allowed in file names
 ("/", "\" and ":"), so Golly will substitute those characters with hyphens.
-For example, if you wanted to change the icon associated with the rule
-B3/S23 then you'd need to create a file called B3-S23.icons.
+For example, if you wanted to change the icons associated with the rule
+12/34/6 then you'd need to create a file called 12-34-6.icons.
 
 <p>
 Golly can load the bitmaps from BMP, GIF, PNG or TIFF files.
@@ -193,7 +193,7 @@ The following picture shows how the bitmaps must be arranged:
 <p>
 The top row contains one or more icons of size 15x15, so the total width
 must be a multiple of 15.
-The bottom row contains icons of size 7x7, with each icon under the
+The bottom row contains icons of size 7x7, where each icon is under the
 bottom left corner of its corresponding 15x15 icon.
 The 7x7 icons are optional; if not supplied (i.e., the total height is 15
 rather than 22) then Golly will create them by scaling down the 15x15 icons.

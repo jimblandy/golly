@@ -1556,13 +1556,17 @@ void SavePrefs()
       int i;
       for (i = 0; i < numpatterns; i++) {
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
-         if (item) fprintf(f, "recent_pattern=%s\n",
-                           #ifdef __WXGTK__
-                              // avoid wxGTK bug if item contains underscore
-                              (const char*)item->GetLabel().mb_str(wxConvLocal));
-                           #else
-                              (const char*)item->GetText().mb_str(wxConvLocal));
-                           #endif
+         if (item) {
+            #ifdef __WXGTK__
+               // avoid wxGTK bug if item contains underscore
+               wxString path = item->GetLabel();
+            #else
+               wxString path = item->GetText();
+            #endif
+            // remove duplicate ampersands
+            path.Replace(wxT("&&"), wxT("&"));
+            fprintf(f, "recent_pattern=%s\n", (const char*)path.mb_str(wxConvLocal));
+         }
       }
    }
 
@@ -1571,13 +1575,17 @@ void SavePrefs()
       int i;
       for (i = 0; i < numscripts; i++) {
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
-         if (item) fprintf(f, "recent_script=%s\n",
-                           #ifdef __WXGTK__
-                              // avoid wxGTK bug if item contains underscore
-                              (const char*)item->GetLabel().mb_str(wxConvLocal));
-                           #else
-                              (const char*)item->GetText().mb_str(wxConvLocal));
-                           #endif
+         if (item) {
+            #ifdef __WXGTK__
+               // avoid wxGTK bug if item contains underscore
+               wxString path = item->GetLabel();
+            #else
+               wxString path = item->GetText();
+            #endif
+            // remove duplicate ampersands
+            path.Replace(wxT("&&"), wxT("&"));
+            fprintf(f, "recent_script=%s\n", (const char*)path.mb_str(wxConvLocal));
+         }
       }
    }
    
@@ -2135,6 +2143,8 @@ void GetPrefs()
                // remove gollydir from start of path
                path.erase(0, gollydir.length());
             }
+            // duplicate ampersands so they appear in menu
+            path.Replace(wxT("&"), wxT("&&"));
             patternSubMenu->Insert(numpatterns - 1, ID_OPEN_RECENT + numpatterns, path);
          }
 
@@ -2147,6 +2157,8 @@ void GetPrefs()
                // remove gollydir from start of path
                path.erase(0, gollydir.length());
             }
+            // duplicate ampersands so they appear in menu
+            path.Replace(wxT("&"), wxT("&&"));
             scriptSubMenu->Insert(numscripts - 1, ID_RUN_RECENT + numscripts, path);
          }
       }

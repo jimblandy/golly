@@ -436,6 +436,9 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       path.erase(0, gollydir.length());
    }
 
+   // duplicate ampersands so they appear in menu
+   path.Replace(wxT("&"), wxT("&&"));
+
    // put given path at start of patternSubMenu
    #ifdef __WXGTK__
       // avoid wxGTK bug in FindItem if path contains underscores
@@ -494,6 +497,9 @@ void MainFrame::AddRecentScript(const wxString& inpath)
       // remove gollydir from start of path
       path.erase(0, gollydir.length());
    }
+
+   // duplicate ampersands so they appear in menu
+   path.Replace(wxT("&"), wxT("&&"));
 
    // put given path at start of scriptSubMenu
    #ifdef __WXGTK__
@@ -909,6 +915,8 @@ void MainFrame::OpenRecentPattern(int id)
       #else
          wxString path = item->GetText();
       #endif
+      // remove duplicate ampersands
+      path.Replace(wxT("&&"), wxT("&"));
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -940,6 +948,8 @@ void MainFrame::OpenRecentScript(int id)
       #else
          wxString path = item->GetText();
       #endif
+      // remove duplicate ampersands
+      path.Replace(wxT("&&"), wxT("&"));
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -963,6 +973,8 @@ void MainFrame::ClearMissingPatterns()
       #else
          wxString path = item->GetText();
       #endif
+      // remove duplicate ampersands
+      path.Replace(wxT("&&"), wxT("&"));
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);
@@ -1007,6 +1019,8 @@ void MainFrame::ClearMissingScripts()
       #else
          wxString path = item->GetText();
       #endif
+      // remove duplicate ampersands
+      path.Replace(wxT("&&"), wxT("&"));
 
       // if path isn't absolute then prepend Golly directory
       wxFileName fname(path);

@@ -8,9 +8,6 @@ Andrew's list:
   Is there any point doing this given that there are non-symmetric rules
   like LifeOnTheEdge where the above approach won't work?
 
-- Fix missing &s in recent file paths (replace each & with &&) and
-  fix underscore bug in Linux app by trying wxGTK 2.8.8.
-
 - Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
   - On Win we want to be able to press-select-release.
