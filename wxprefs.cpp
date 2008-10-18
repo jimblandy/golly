@@ -1557,11 +1557,10 @@ void SavePrefs()
       for (i = 0; i < numpatterns; i++) {
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
          if (item) {
+            wxString path = item->GetText();
             #ifdef __WXGTK__
-               // avoid wxGTK bug if item contains underscore
-               wxString path = item->GetLabel();
-            #else
-               wxString path = item->GetText();
+               // remove duplicate underscores
+               path.Replace(wxT("__"), wxT("_"));
             #endif
             // remove duplicate ampersands
             path.Replace(wxT("&&"), wxT("&"));
@@ -1576,11 +1575,10 @@ void SavePrefs()
       for (i = 0; i < numscripts; i++) {
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
          if (item) {
+            wxString path = item->GetText();
             #ifdef __WXGTK__
-               // avoid wxGTK bug if item contains underscore
-               wxString path = item->GetLabel();
-            #else
-               wxString path = item->GetText();
+               // remove duplicate underscores
+               path.Replace(wxT("__"), wxT("_"));
             #endif
             // remove duplicate ampersands
             path.Replace(wxT("&&"), wxT("&"));

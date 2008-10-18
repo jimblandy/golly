@@ -445,7 +445,9 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       int id = wxNOT_FOUND;
       for (int i = 0; i < numpatterns; i++) {
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
-         if (item->GetLabel() == path) {
+         wxString temp = item->GetText();
+         temp.Replace(wxT("__"), wxT("_"));
+         if (temp == path) {
             id = ID_OPEN_RECENT + 1 + i;
             break;
          }
@@ -472,11 +474,10 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       wxMenuItem* item;
       while ( id > ID_OPEN_RECENT + 1 ) {
          wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
+         wxString prevpath = previtem->GetText();
          #ifdef __WXGTK__
-            // avoid wxGTK bug if item contains underscore
-            wxString prevpath = previtem->GetLabel();
-         #else
-            wxString prevpath = previtem->GetText();
+            // remove duplicate underscores
+            prevpath.Replace(wxT("__"), wxT("_"));
          #endif
          item = patternSubMenu->FindItem(id);
          item->SetText(prevpath);
@@ -507,7 +508,9 @@ void MainFrame::AddRecentScript(const wxString& inpath)
       int id = wxNOT_FOUND;
       for (int i = 0; i < numscripts; i++) {
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
-         if (item->GetLabel() == path) {
+         wxString temp = item->GetText();
+         temp.Replace(wxT("__"), wxT("_"));
+         if (temp == path) {
             id = ID_RUN_RECENT + 1 + i;
             break;
          }
@@ -534,11 +537,10 @@ void MainFrame::AddRecentScript(const wxString& inpath)
       wxMenuItem* item;
       while ( id > ID_RUN_RECENT + 1 ) {
          wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
+         wxString prevpath = previtem->GetText();
          #ifdef __WXGTK__
-            // avoid wxGTK bug if item contains underscore
-            wxString prevpath = previtem->GetLabel();
-         #else
-            wxString prevpath = previtem->GetText();
+            // remove duplicate underscores
+            prevpath.Replace(wxT("__"), wxT("_"));
          #endif
          item = scriptSubMenu->FindItem(id);
          item->SetText(prevpath);
@@ -909,11 +911,10 @@ void MainFrame::OpenRecentPattern(int id)
 
    wxMenuItem* item = patternSubMenu->FindItem(id);
    if (item) {
+      wxString path = item->GetText();
       #ifdef __WXGTK__
-         // avoid wxGTK bug if item contains underscore
-         wxString path = item->GetLabel();
-      #else
-         wxString path = item->GetText();
+         // remove duplicate underscores
+         path.Replace(wxT("__"), wxT("_"));
       #endif
       // remove duplicate ampersands
       path.Replace(wxT("&&"), wxT("&"));
@@ -942,11 +943,10 @@ void MainFrame::OpenRecentScript(int id)
 
    wxMenuItem* item = scriptSubMenu->FindItem(id);
    if (item) {
+      wxString path = item->GetText();
       #ifdef __WXGTK__
-         // avoid wxGTK bug if item contains underscore
-         wxString path = item->GetLabel();
-      #else
-         wxString path = item->GetText();
+         // remove duplicate underscores
+         path.Replace(wxT("__"), wxT("_"));
       #endif
       // remove duplicate ampersands
       path.Replace(wxT("&&"), wxT("&"));
@@ -967,11 +967,10 @@ void MainFrame::ClearMissingPatterns()
    int pos = 0;
    while (pos < numpatterns) {
       wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
+      wxString path = item->GetText();
       #ifdef __WXGTK__
-         // avoid wxGTK bug if item contains underscore
-         wxString path = item->GetLabel();
-      #else
-         wxString path = item->GetText();
+         // remove duplicate underscores
+         path.Replace(wxT("__"), wxT("_"));
       #endif
       // remove duplicate ampersands
       path.Replace(wxT("&&"), wxT("&"));
@@ -990,7 +989,9 @@ void MainFrame::ClearMissingPatterns()
             wxMenuItem* nextitem = patternSubMenu->FindItemByPosition(nextpos);
             #ifdef __WXGTK__
                // avoid wxGTK bug if item contains underscore
-               item->SetText( nextitem->GetLabel() );
+               wxString temp = nextitem->GetText();
+               temp.Replace(wxT("__"), wxT("_"));
+               item->SetText( temp );
             #else
                item->SetText( nextitem->GetText() );
             #endif
@@ -1013,11 +1014,10 @@ void MainFrame::ClearMissingScripts()
    int pos = 0;
    while (pos < numscripts) {
       wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
+      wxString path = item->GetText();
       #ifdef __WXGTK__
-         // avoid wxGTK bug if item contains underscore
-         wxString path = item->GetLabel();
-      #else
-         wxString path = item->GetText();
+         // remove duplicate underscores
+         path.Replace(wxT("__"), wxT("_"));
       #endif
       // remove duplicate ampersands
       path.Replace(wxT("&&"), wxT("&"));
@@ -1036,7 +1036,9 @@ void MainFrame::ClearMissingScripts()
             wxMenuItem* nextitem = scriptSubMenu->FindItemByPosition(nextpos);
             #ifdef __WXGTK__
                // avoid wxGTK bug if item contains underscore
-               item->SetText( nextitem->GetLabel() );
+               wxString temp = nextitem->GetText();
+               temp.Replace(wxT("__"), wxT("_"));
+               item->SetText( temp );
             #else
                item->SetText( nextitem->GetText() );
             #endif
