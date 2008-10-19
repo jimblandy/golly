@@ -1,0 +1,20 @@
+#MCell 2.0
+#GAME Generations
+#RULE 012478/36/18
+#BOARD 300x300
+#SPEED 10
+#WRAP 0
+#CCOLORS 18
+#D Ebb&Flow
+#D 
+#D A slow exploding rule with interesting internal dynamics
+#D within the growth boundaries.  Different types of symmetries will
+#D often determine whether a pattern grows indefinitely or dies out.
+#D Presents challenging engineering problems.
+#D 
+#D Best viewed with MCell standard/default color palette
+#D at speeds of 10 or slower.
+#D 
+#D Michael Sweney, October 1999
+#L 12A$A..6A..A$A.8A.A$3A.4A.3A$3A.4A.3A$A.8A.A$A.3A..3A.A$A.3A..3A.A$A.
+#L 3A..3A.A$A.8A.A$3A.4A.3A$3A.4A.3A$A.8A.A$A..6A..A$12A

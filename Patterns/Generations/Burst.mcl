@@ -1,0 +1,18 @@
+#MCell 4.00
+#GAME Generations
+#RULE 0235678/3468/9
+#BOARD 400x400
+#SPEED 0
+#WRAP 1
+#CCOLORS 9
+#D Burst, a generations rule related to Nova, Prairie Fire and others
+#D which features large areas of cells that slowly die out or decay
+#D into oscillators.
+#D 
+#D Named after a characteristic exploding oscillator. Similar to Day&Night
+#D in that constructions can be built both with inside and outside
+#D oscillations and growth/decay. Has still lifes similar to Life.
+#D 
+#D Michael Sweney, March 2000
+#L 12.A$12.A$12.A$12.A$12.A$12.A$12.A$11.3A$11.3A$9.7A$9.7A$7.11A$25A$7.
+#L 11A$9.7A$9.7A$11.3A$11.3A$12.A$12.A$12.A$12.A$12.A$12.A$12.A

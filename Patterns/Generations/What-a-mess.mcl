@@ -1,0 +1,13 @@
+#MCell 2.0
+#GAME Generations
+#RULE /2/3
+#BOARD 800x300
+#SPEED 10
+#WRAP 0
+#CCOLORS 3
+#D Interesting puffer causing a lot of mess...
+#D 
+#D Mirek Wojtowicz, June 1999
+#L ..AB7.BA$.B.A4.BA.BA$..AAB..AA.BA$3.B.A.AB$..BB.B..BA$BB6.AA$3A.BB..BA
+#L $3.BB..AB$4.A5.BA$ABBA7.BA$ABBA7.BA$4.A5.BA$3.BB..AB$3A.BB..BA$BB6.AA$
+#L ..BB.B..BA$3.B.A.AB$..AAB..AA.BA$.B.A4.BA.BA$..AB7.BA

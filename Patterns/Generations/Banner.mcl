@@ -1,0 +1,14 @@
+#MCell 2.0
+#GAME Generations
+#RULE 2367/3457/5
+#BOARD 800x800
+#SPEED 0
+#WRAP 1
+#D "Banners" rule collection
+#D 
+#D The banner.
+#D 
+#D Mirek Wojtowicz, June 1999
+#L 19.AA$19.ADAA$20.DBA$17.D.ABBA$16.C..3A$15.BDDAA$14.ACCA$11.D.ABBA$6.D
+#L 3.C..3A$4.CC3.BDDAA$4.DD..ACCA$3.CDD.ABBA$..AAD..3A$.ABBDDAA$.ABCCA$.
+#L BBCA$ADBA$3A

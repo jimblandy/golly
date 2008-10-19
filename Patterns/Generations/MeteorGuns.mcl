@@ -1,0 +1,18 @@
+#MCell 4.00
+#GAME Generations
+#RULE 01245678/3/8
+#BOARD 180x180
+#WRAP 0
+#D MeteorGuns
+#D 
+#D Almost any design above a certain level of complexity results in
+#D a slowly exploding ball of fire which then spits fairly large numbers
+#D of generational gliders "meteors".
+#D 
+#D There are easily discovered stable oscillators and static patterns.
+#D A truly satisfying environment (if only finding a limited growth meteor
+#D gun were as easy...).
+#D 
+#D Discovered by Charles A. Rockafellor, March 2000
+#L 8.A$8.A$9.A$10.A7.5A$10.A6.A$11.A3.AA$12.A.A$12.AA$11.A..A$10.A4.A$9.A
+#L 6.A$8.A7.A$6.AA9.A$5.A12.A$3.AA14.A$..A16.A$.A17.A$.A$AA
