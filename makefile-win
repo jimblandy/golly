@@ -24,8 +24,9 @@ SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
    Scripts Scripts\Perl Scripts\Python Scripts\Python\glife \
    Patterns Patterns\Breeders Patterns\Guns Patterns\HashLife Patterns\JvN \
    Patterns\Loops Patterns\Methuselahs Patterns\Miscellaneous Patterns\Oscillators \
-   Patterns\Other-Rules Patterns\Other-Rules\Banks Patterns\Other-Rules\Morley \
-   Patterns\Other-Rules\WireWorld Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry \
+   Patterns\Other-Rules Patterns\Other-Rules\Banks Patterns\Other-Rules\Codd \
+   Patterns\Other-Rules\Morley Patterns\Other-Rules\WireWorld \
+   Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry \
    Patterns\Spaceships Patterns\Still-Lifes Patterns\Syntheses \
    Rules
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
