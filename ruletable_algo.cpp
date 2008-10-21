@@ -167,10 +167,13 @@ string ruletable_algo::LoadRuleTable(string rule)
    this->symmetries = rotate4; // default
    this->n_states = 8;  // default
 
-   unsigned int n_inputs=-1;
-
    map< string, vector<state> > variables;
    map< vector< vector<state> >, state > transition_table;
+
+   unsigned int n_inputs=0;
+
+   // these line must have been read before the rest of the file
+   bool n_states_parsed=false,neighborhood_parsed=false,symmetries_parsed=false;
 
    for (;;) 
    {
@@ -197,6 +200,7 @@ string ruletable_algo::LoadRuleTable(string rule)
          // parse the rest of the line
          if(sscanf(line.c_str()+n_states_keyword.length(),"%d",&this->n_states)!=1)
             return "Error reading file: "+line;
+         n_states_parsed = true;
       }
       else if(starts_with(line,symmetries_keyword))
       {
@@ -210,6 +214,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             }
          if(!found_symmetry)
             return "Error reading file: "+line;
+         symmetries_parsed = true;
       }
       else if(starts_with(line,neighborhood_keyword))
       {
@@ -229,9 +234,12 @@ string ruletable_algo::LoadRuleTable(string rule)
             case vonNeumann: n_inputs=5; break;
             case Moore: n_inputs=9; break;
          }
+         neighborhood_parsed=true;
       }
       else if(starts_with(line,variable_keyword))
       {
+         if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
+            return "Error reading line: "+line+" - one or more descriptors not yet found.";
          // parse the rest of the line for the variable
          vector<string> tokens = tokenize(line,"= {,}");
          string variable_name = tokens[1];
@@ -240,9 +248,11 @@ string ruletable_algo::LoadRuleTable(string rule)
             return "Error reading file: "+line;
          for(unsigned int i=2;i<tokens.size();i++)
          {
-            int s;
+            unsigned int s;
             if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
                return "Error reading file: "+line;
+            if(s<0 || s>=this->n_states)
+               return "Error reading file: "+line+" - state out of range!";
             states.push_back((state)s);
          }
          variables[variable_name] = states;
@@ -250,8 +260,8 @@ string ruletable_algo::LoadRuleTable(string rule)
       else
       {
          // must be a transitions line
-         if(n_inputs<0)
-            return "Error reading line: "+line+" - neighborhood not yet specified!";
+         if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
+            return "Error reading line: "+line+" - one or more descriptors not yet found.";
          if(this->n_states<=10 && variables.empty())
          {
             vector< vector<state> > inputs;
@@ -286,9 +296,8 @@ string ruletable_algo::LoadRuleTable(string rule)
             // first pass: which variables appear more than once? these are "bound" (must take the same value each time they appear in this transition)
             vector<string> bound_variables;
             for(map< string, vector<state> >::const_iterator var_it=variables.begin();var_it!=variables.end();var_it++)
-               if(find(bound_variables.begin(),bound_variables.end(),var_it->first)==bound_variables.end()
-                  && count(tokens.begin(),tokens.begin()+n_inputs+1,var_it->first)>1)
-                     bound_variables.push_back(var_it->first);
+               if(count(tokens.begin(),tokens.begin()+n_inputs+1,var_it->first)>1)
+                  bound_variables.push_back(var_it->first);
             unsigned int n_bound_variables = bound_variables.size();
             // second pass: iterate through the possible states for the bound variables, adding a transition for each combination
             vector< vector<state> > inputs(n_inputs);
@@ -307,9 +316,11 @@ string ruletable_algo::LoadRuleTable(string rule)
                      inputs[i] = variables[tokens[i]]; // this input is an unbound variable
                   else 
                   {
-                     int s;
+                     unsigned int s;
                      if(sscanf(tokens[i].c_str(),"%d",&s)!=1) // this input is a state
                         return "Error reading line: "+line;
+                     if(s<0 || s>=this->n_states)
+                        return "Error reading file: "+line+" - state out of range!";
                      inputs[i] = vector<state>(1,s);
                   }
                }
@@ -319,9 +330,11 @@ string ruletable_algo::LoadRuleTable(string rule)
                      output = variables[tokens[n_inputs]][bound_variable_indices[tokens[n_inputs]]];
                else 
                {
-                  int s;
+                  unsigned int s;
                   if(sscanf(tokens[n_inputs].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
                     return "Error reading line: "+line;
+                  if(s<0 || s>=this->n_states)
+                     return "Error reading file: "+line+" - state out of range!";
                   output = s;
                }
                transition_table[inputs]=output;
@@ -347,6 +360,8 @@ string ruletable_algo::LoadRuleTable(string rule)
          }
       }
    }
+   if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
+      return "Error reading file - one or more descriptors not yet found.";
    // now convert transition table to bitmask lookup
    {
       unsigned int n_bits = sizeof(TBits)*8;
