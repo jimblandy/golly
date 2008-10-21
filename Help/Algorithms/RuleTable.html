@@ -6,43 +6,51 @@
 The RuleTable algorithm allows rules to be specified by transition tables
 stored in external files.  Given the rule string "foo", the RuleTable
 algorithm will look inside the Rules folder for a file called foo.table.
-The currently supported rules are:
+The rules distributed with Golly are:
+
+<p><b><a href="rule#Banks-I">Banks-I</a>, <a href="rule#Banks-II">Banks-II</a>, <a href="rule#Banks-III">Banks-III</a> and <a href="rule#Banks-IV">Banks-IV</a></b><br>
+In 1971, Edwin Roger Banks (a student of Ed Fredkin) made simpler versions of Codd's 1968 CA, using only two states in some cases. These four rules are found in his PhD thesis. To see the rules in action, open
+<a href="open#Patterns/Other-Rules/Banks/Banks-I-demo.rle">Other-Rules/Banks/Banks-I-demo.rle</a> and the other examples in that folder.</p>
 
 <p><b><a href="rule#Byl-Loop">Byl-Loop</a></b><br>
 A six state 5-neighborhood CA that supports small self-replicating loops.
 To see the rule in action, open
-<a href="open#Patterns/Loops/Byl-Loop.rle">Byl-Loop.rle</a>.</p>
+<a href="open#Patterns/Loops/Byl-Loop.rle">Loops/Byl-Loop.rle</a>.</p>
 
 <p><b><a href="rule#Chou-Reggia-1">Chou-Reggia-1</a></b><br>
 An eight state 5-neighborhood CA that supports tiny self-replicating loops.
 To see the rule in action, open
-<a href="open#Patterns/Loops/Chou-Reggia-Loop-1.rle">Chou-Reggia-Loop-1.rle</a>.</p>
+<a href="open#Patterns/Loops/Chou-Reggia-Loop-1.rle">Loops/Chou-Reggia-Loop-1.rle</a>.</p>
 
 <p><b><a href="rule#Chou-Reggia-2">Chou-Reggia-2</a></b><br>
 Similar to the above rule but supporting an even smaller self-replicating loop of only five cells.
 To see the rule in action, open
-<a href="open#Patterns/Loops/Chou-Reggia-Loop-2.rle">Chou-Reggia-Loop-2.rle</a>.</p>
+<a href="open#Patterns/Loops/Chou-Reggia-Loop-2.rle">Loops/Chou-Reggia-Loop-2.rle</a>.</p>
+
+<p><b><a href="rule#Codd">Codd</a></b><br>
+In 1968, Edgar F. Codd (who would later invent the relational database) made a simpler version of von Neumann's 29-state CA, using just 8 states. To see the rule in action, open
+<a href="open#Patterns/Other-Rules/Codd/repeater-emitter-demo.rle">Other-Rules/Codd/repeater-emitter-demo.rle</a> and the other examples in that folder.</p>
 
 <p><b><a href="rule#Evoloop">Evoloop</a></b><br>
 An extension of the SDSR Loop, designed to allow evolution through collisions.
 To see the rule in action, open
-<a href="open#Patterns/Loops/Evoloop.rle">Evoloop.rle</a>.</p>
+<a href="open#Patterns/Loops/Evoloop.rle">Loops/Evoloop.rle</a>.</p>
 
 <p><b><a href="rule#Langtons-Loops">Langtons-Loops</a></b><br>
 The original loop. Chris Langton adapted Codd's 1968 CA to support a simple form of
 self-replication based on a circulating loop of instructions.
 To see the rule in action, open
-<a href="open#Patterns/Loops/Langtons-Loops.rle">Langtons-Loops.rle</a>.</p>
+<a href="open#Patterns/Loops/Langtons-Loops.rle">Loops/Langtons-Loops.rle</a>.</p>
 
 <p><b><a href="rule#SDSR-Loop">SDSR-Loop</a></b><br>
 An extension of Langton's Loops, designed to cause dead loops to disappear, allowing other loops to replicate further.
 To see the rule in action, open
-<a href="open#Patterns/Loops/SDSR-Loop.rle">SDSR-Loop.rle</a>.</p>
+<a href="open#Patterns/Loops/SDSR-Loop.rle">Loops/SDSR-Loop.rle</a>.</p>
 
 <p><b><a href="rule#Tempesti">Tempesti</a></b><br>
 A programmable loop that can construct shapes inside itself after replication.
 To see the rule in action, open
-<a href="open#Patterns/Loops/Tempesti-Loop.rle">Tempesti-Loop.rle</a>.
+<a href="open#Patterns/Loops/Tempesti-Loop.rle">Loops/Tempesti-Loop.rle</a>.
 This loop prints the letters 'LSL' inside each copy - the initials of Tempesti's university group.</p>
 
 <p><b><a href="rule#WireWorld">WireWorld</a></b><br>
@@ -50,39 +58,45 @@ A 4-state CA created by Brian Silverman.
 WireWorld models the flow of currents in wires and makes it relatively
 easy to build logic gates and other digital circuits.
 For an impressive example, open
-<a href="open#Patterns/Other-Rules/wireworld-primes.mc">wireworld-primes.mc</a>.</p>
+<a href="open#Patterns/Other-Rules/wireworld-primes.mc">Other-Rules/wireworld-primes.mc</a>.</p>
 
 <p>
-<font size=+1><b>References:</b></font>
+<font size=+1><b>References:</b></font></p>
+
+<p><b>Banks-I, Banks-II, Banks-III, Banks-IV</b> (1971)<br>
+<i>E. R. Banks. "Information Processing and Transmission in Cellular Automata" PhD Thesis, MIT, 1971.</i></p>
 
 <p><b>Byl-Loop</b> (1989)<br>
-<i>J. Byl. "Self-Reproduction in small cellular automata." Physica D, Vol. 34, pages 295-299, 1989.</i>
+<i>J. Byl. "Self-Reproduction in small cellular automata." Physica D, Vol. 34, pages 295-299, 1989.</i></p>
 
 <p><b>Chou-Reggia-1</b> and <b>Chou-Reggia-2</b> (1993)<br>
 <i>J. A. Reggia, S.L.Armentrout, H.-H. Chou, and Y. Peng.
 "Simple systems that exhibit self-directed replication."
-Science, Vol. 259, pages 1282-1287, February 1993.</i>
+Science, Vol. 259, pages 1282-1287, February 1993.</i></p>
+
+<p><b>Codd</b> (1968)<br>
+<i>E. F. Codd, "Cellular Automata" Academic Press, New York, 1968.</i></p>
 
 <p><b>Evoloop</b> (1999)<br>
 <i>Hiroki Sayama "Toward the Realization of an Evolving Ecosystem on Cellular Automata",
 Proceedings of the Fourth International Symposium on Artificial Life and Robotics (AROB 4th '99),
-M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.</i>
+M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.</i></p>
 
 <p><b>Langtons-Loops</b> (1984)<br>
-<i>C.G.Langton. "Self-reproduction in cellular automata." Physica D, Vol. 10, pages 135-144, 1984.</i>
+<i>C.G.Langton. "Self-reproduction in cellular automata." Physica D, Vol. 10, pages 135-144, 1984.</i></p>
 
 <p><b>SDSR-Loop</b> (1998)<br>
 <i>Hiroki Sayama.  "Introduction of Structural Dissolution into Langton's Self-Reproducing Loop."
 Artificial Life VI: Proceedings of the Sixth International Conference on Artificial Life,
-C. Adami, R. K. Belew, H. Kitano, and C. E. Taylor, eds., pp.114-122, Los Angeles, California, 1998, MIT Press.</i>
+C. Adami, R. K. Belew, H. Kitano, and C. E. Taylor, eds., pp.114-122, Los Angeles, California, 1998, MIT Press.</i></p>
 
 <p><b>Tempesti</b> (1995)<br>
 <i>G. Tempesti. "A New Self-Reproducing Cellular Automaton Capable of Construction and Computation".
 Advances in Artificial Life, Proc. 3rd European Conference on Artificial Life, Granada, Spain, June 4-6, 1995,
-Lecture Notes in Artificial Intelligence, 929, Springer Verlag, Berlin, 1995, pp. 555-563.</i>
+Lecture Notes in Artificial Intelligence, 929, Springer Verlag, Berlin, 1995, pp. 555-563.</i></p>
 
 <p><b>WireWorld</b> (1987)<br>
-<i>Dewdney, A. K. Computer Recreations. Scientific American 282:136-139, 1990.</i>
+<i>Dewdney, A. K. Computer Recreations. Scientific American 282:136-139, 1990.</i></p>
 
 </body>
 </html>
