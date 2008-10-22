@@ -168,7 +168,7 @@ string ruletable_algo::LoadRuleTable(string rule)
    this->n_states = 8;  // default
 
    map< string, vector<state> > variables;
-   map< vector< vector<state> >, state > transition_table;
+   vector< pair<vector< vector<state> >, state > > transition_table;
 
    unsigned int n_inputs=0;
 
@@ -281,7 +281,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             if(c<'0' || c>'9')
                return "Error reading line: "+line;
             output = c-'0';
-            transition_table[inputs]=output;
+            transition_table.push_back(make_pair(inputs,output));
          }
          else 
          {  
@@ -337,7 +337,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                      return "Error reading file: "+line+" - state out of range!";
                   output = s;
                }
-               transition_table[inputs]=output;
+               transition_table.push_back(make_pair(inputs,output));
                // move on to the next value of bound variables
                {
                   unsigned int iChanging=0;
@@ -438,7 +438,7 @@ string ruletable_algo::LoadRuleTable(string rule)
       unsigned int iRule=0,iRuleC,iBit,iNbor,iExpandedNbor;
       TBits mask;
       // (each transition rule looks like, e.g. 1,[2,3,5],4,[0,1],3 -> 0 )
-      for(map<vector< vector<state> >,state>::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
+      for(vector<pair<vector< vector<state> >,state> >::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
       {
          const vector< vector<state> >& rule_inputs = rule_it->first;
          for(int iRot=0;iRot<n_rotations;iRot++)
