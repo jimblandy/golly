@@ -44,11 +44,24 @@ int ruletable_algo::NumCellStates()
    return this->n_states;
 }
 
+bool starts_with(const string& line,const string& keyword)
+{
+   return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
+}
+
 const char* ruletable_algo::setrule(const char* s) 
 {
    string ret = LoadRuleTable(s) ;
    if(!ret.empty())
+   {
+      // warning message not yet activated, until we work out how best to inform the user
+
+      // if the file exists and we've got an error then it must be a file format issue
+      //if(!starts_with(ret,"Failed to open file: "))
+      //   lifewarning(ret.c_str());
+
       return "error";
+   }
 
    this->current_rule = s;
    maxCellStates = this->n_states;
@@ -79,11 +92,6 @@ vector<string> tokenize(const string& str,const string& delimiters)
    }
 
    return tokens;
-}
-
-bool starts_with(const string& line,const string& keyword)
-{
-   return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
 }
 
 const char *defaultRuleData[] = {
@@ -146,11 +154,12 @@ string ruletable_algo::LoadRuleTable(string rule)
    ifstream *in = 0 ;
    freeme freeme(0) ;
    int lineno = 0 ;
+   string full_filename;
    if (!isDefaultRule) 
    {
       // AKT: we need to prepend the full path to the rules dir because when Golly
       // runs a script it temporarily changes the cwd to the location of the script
-      string full_filename = lifegetrulesdir() ;
+      full_filename = lifegetrulesdir() ;
       int istart = full_filename.size() ;
       full_filename += rule + ".table" ;
       for (unsigned int i=istart; i<full_filename.size(); i++)
@@ -199,7 +208,11 @@ string ruletable_algo::LoadRuleTable(string rule)
       {
          // parse the rest of the line
          if(sscanf(line.c_str()+n_states_keyword.length(),"%d",&this->n_states)!=1)
-            return "Error reading file: "+line;
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+            return oss.str();
+         }
          n_states_parsed = true;
       }
       else if(starts_with(line,symmetries_keyword))
@@ -213,7 +226,11 @@ string ruletable_algo::LoadRuleTable(string rule)
                found_symmetry = true;
             }
          if(!found_symmetry)
-            return "Error reading file: "+line;
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+            return oss.str();
+         }
          symmetries_parsed = true;
       }
       else if(starts_with(line,neighborhood_keyword))
@@ -228,7 +245,11 @@ string ruletable_algo::LoadRuleTable(string rule)
                found_neighborhood = true;
             }
          if(!found_neighborhood)
-            return "Error reading file: "+line;
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+            return oss.str();
+         }
          switch(this->neighborhood) {
             default:
             case vonNeumann: n_inputs=5; break;
@@ -239,20 +260,36 @@ string ruletable_algo::LoadRuleTable(string rule)
       else if(starts_with(line,variable_keyword))
       {
          if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
-            return "Error reading line: "+line+" - one or more descriptors not yet found.";
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing\nbefore first variable";
+            return oss.str();
+         }
          // parse the rest of the line for the variable
          vector<string> tokens = tokenize(line,"= {,}");
          string variable_name = tokens[1];
          vector<state> states;
          if(tokens.size()<4)
-            return "Error reading file: "+line;
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+            return oss.str();
+         }  
          for(unsigned int i=2;i<tokens.size();i++)
          {
             unsigned int s;
             if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
-               return "Error reading file: "+line;
+            {
+               ostringstream oss;
+               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+               return oss.str();
+            }
             if(s<0 || s>=this->n_states)
-               return "Error reading file: "+line+" - state out of range!";
+            {
+               ostringstream oss;
+               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state value out of range";
+               return oss.str();
+            }
             states.push_back((state)s);
          }
          variables[variable_name] = states;
@@ -261,7 +298,11 @@ string ruletable_algo::LoadRuleTable(string rule)
       {
          // must be a transitions line
          if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
-            return "Error reading line: "+line+" - one or more descriptors not yet found.";
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing\nbefore first transition";
+            return oss.str();
+         }
          if(this->n_states<=10 && variables.empty())
          {
             vector< vector<state> > inputs;
@@ -269,17 +310,29 @@ string ruletable_algo::LoadRuleTable(string rule)
             // if there are single-digit states and no variables then use compressed form
             // e.g. 012345 for 0,1,2,3,4 -> 5
             if(line.length() < n_inputs+1) // we allow for comments after the rule
-               return "Error reading line: "+line;
+            {
+               ostringstream oss;
+               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - too few entries";
+               return oss.str();
+            }
             for(unsigned int i=0;i<n_inputs;i++)
             {
                char c = line[i];
                if(c<'0' || c>'9')
-                  return "Error reading line: "+line;
+               {
+                  ostringstream oss;
+                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+                  return oss.str();
+               }
                inputs.push_back(vector<state>(1,c-'0'));
             }
             unsigned char c = line[n_inputs];
             if(c<'0' || c>'9')
-               return "Error reading line: "+line;
+            {
+               ostringstream oss;
+               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+               return oss.str();
+            }
             output = c-'0';
             transition_table.push_back(make_pair(inputs,output));
          }
@@ -289,8 +342,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             if(tokens.size() < n_inputs+1)
             {
                ostringstream oss;
-               oss << "Error reading transition line, too few entries (" << tokens.size() << ", expected " <<
-                  (n_inputs+1) << ") on line: " << line;
+               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - too few entries";
                return oss.str();
             }
             // first pass: which variables appear more than once? these are "bound" (must take the same value each time they appear in this transition)
@@ -318,9 +370,17 @@ string ruletable_algo::LoadRuleTable(string rule)
                   {
                      unsigned int s;
                      if(sscanf(tokens[i].c_str(),"%d",&s)!=1) // this input is a state
-                        return "Error reading line: "+line;
+                     {
+                        ostringstream oss;
+                        oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+                        return oss.str();
+                     }
                      if(s<0 || s>=this->n_states)
-                        return "Error reading file: "+line+" - state out of range!";
+                     {
+                        ostringstream oss;
+                        oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
+                        return oss.str();
+                     }
                      inputs[i] = vector<state>(1,s);
                   }
                }
@@ -332,9 +392,17 @@ string ruletable_algo::LoadRuleTable(string rule)
                {
                   unsigned int s;
                   if(sscanf(tokens[n_inputs].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
-                    return "Error reading line: "+line;
+                  {
+                     ostringstream oss;
+                     oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+                     return oss.str();
+                  }
                   if(s<0 || s>=this->n_states)
-                     return "Error reading file: "+line+" - state out of range!";
+                  {
+                     ostringstream oss;
+                     oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
+                     return oss.str();
+                  }
                   output = s;
                }
                transition_table.push_back(make_pair(inputs,output));
@@ -361,7 +429,11 @@ string ruletable_algo::LoadRuleTable(string rule)
       }
    }
    if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
-      return "Error reading file - one or more descriptors not yet found.";
+   {
+      ostringstream oss;
+      oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing";
+      return oss.str();
+   }
    // now convert transition table to bitmask lookup
    {
       unsigned int n_bits = sizeof(TBits)*8;
