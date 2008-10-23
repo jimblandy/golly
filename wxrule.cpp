@@ -75,7 +75,7 @@ bool ValidRule(wxString& rule)
 bool MatchingRules(const wxString& rule1, const wxString& rule2)
 {
    // return true if given strings are equivalent rules
-   if (rule1 == rule2) {
+   if (rule1.IsSameAs(rule2,false)) {
       return true;
    } else {
       /* avoid calling ValidRule -- all the setrule calls cause problems
