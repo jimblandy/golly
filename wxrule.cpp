@@ -46,9 +46,12 @@ bool ValidRule(wxString& rule)
    // return true if given rule is valid in at least one algorithm
    // and convert rule to canonical form
    
-   // qlife and hlife share global_liferules, so we need to save
-   // and restore the current rule -- yuk
-   wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
+   wxString oldrule = wxEmptyString;
+   if (currlayer->algtype == QLIFE_ALGO || currlayer->algtype == HLIFE_ALGO) {
+      // qlife and hlife share global_liferules, so we need to save
+      // and restore the current rule -- yuk
+      oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
+   }
    
    for (int i = 0; i < NumAlgos(); i++) {
       lifealgo* tempalgo = CreateNewUniverse(i);
@@ -57,12 +60,13 @@ bool ValidRule(wxString& rule)
          // convert rule to canonical form
          rule = wxString(tempalgo->getrule(),wxConvLocal);
          delete tempalgo;
-         currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+         if (!oldrule.IsEmpty()) currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
          return true;
       }
       delete tempalgo;
    }
-   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+   
+   if (!oldrule.IsEmpty()) currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
    return false;
 }
 
@@ -74,11 +78,18 @@ bool MatchingRules(const wxString& rule1, const wxString& rule2)
    if (rule1 == rule2) {
       return true;
    } else {
+      /* avoid calling ValidRule -- all the setrule calls cause problems
+         for algos like RuleTable and RuleTree that load files;
+         or maybe we could pass an extra arg into setrule saying not to try
+         and load a file but just check for its existence???
+         
       // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules
       // to canonical form (if valid) and then compare
       wxString canon1 = rule1;
       wxString canon2 = rule2;
       return ValidRule(canon1) && ValidRule(canon2) && canon1 == canon2;
+      */
+      return false;
    }
 }
 
@@ -127,9 +138,6 @@ public:
 private:
    void OnKeyUp(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
-   void OnMouseDown(wxMouseEvent& event);
-   void OnSetFocus(wxFocusEvent& event);
-   void OnKillFocus(wxFocusEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
@@ -145,13 +153,6 @@ BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
    // on the Mac OnKeyUp is also called on a key-down event because the
    // key-up handler gets a key code of 400 if cmd-C is pressed quickly
    EVT_KEY_DOWN      (AlgoHelp::OnKeyUp)
-   //!!! try to fix wxMac bug losing focus after scroll bar clicked
-   /* this failed
-   EVT_LEFT_DOWN     (AlgoHelp::OnMouseDown)
-   EVT_LEFT_DCLICK   (AlgoHelp::OnMouseDown)
-   EVT_SET_FOCUS     (AlgoHelp::OnSetFocus)
-   EVT_KILL_FOCUS    (AlgoHelp::OnKillFocus)
-   */
 #endif
    EVT_SIZE          (AlgoHelp::OnSize)
 END_EVENT_TABLE()
@@ -294,48 +295,6 @@ void AlgoHelp::OnSize(wxSizeEvent& event)
    
    // prevent wxHtmlWindow::OnSize being called again
    event.Skip(false);
-}
-
-// -----------------------------------------------------------------------------
-
-void AlgoHelp::OnMouseDown(wxMouseEvent& event)
-{
-   // this failed to fix wxMac bug
-   // SetFocus();
-   
-   // this also failed
-   wxWindow* former = FindFocus();
-   if (former == this) {
-      //!!!printf("html win has focus\n");
-   } else {
-      //!!!printf("html win does NOT have focus\n");
-
-      wxFocusEvent killevt(wxEVT_KILL_FOCUS, this->GetId());
-      killevt.SetEventObject(this);
-      this->GetEventHandler()->ProcessEvent(killevt);
-
-      wxFocusEvent setevt(wxEVT_SET_FOCUS, this->GetId());
-      setevt.SetEventObject(this);
-      this->GetEventHandler()->ProcessEvent(setevt);
-   }
-
-   event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
-void AlgoHelp::OnSetFocus(wxFocusEvent& event)
-{
-   //!!!printf("set focus\n");
-   event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
-void AlgoHelp::OnKillFocus(wxFocusEvent& event)
-{
-   //!!!printf("kill focus\n");
-   event.Skip();
 }
 
 // -----------------------------------------------------------------------------

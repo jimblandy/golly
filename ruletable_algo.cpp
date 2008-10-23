@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "ruletable_algo.h"
 
-#include "util.h"      // AKT: for lifegetrulesdir()
+#include "util.h"      // for lifegetrulesdir, lifewarning
 
 // for case-insensitive string comparison
 #include <string.h>
@@ -49,16 +49,14 @@ bool starts_with(const string& line,const string& keyword)
    return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
 }
 
-const char* ruletable_algo::setrule(const char* s) 
+const char* ruletable_algo::setrule(const char* s)
 {
    string ret = LoadRuleTable(s) ;
    if(!ret.empty())
    {
-      // warning message not yet activated, until we work out how best to inform the user
-
       // if the file exists and we've got an error then it must be a file format issue
-      //if(!starts_with(ret,"Failed to open file: "))
-      //   lifewarning(ret.c_str());
+      if(!starts_with(ret,"Failed to open file: "))
+         lifewarning(ret.c_str());
 
       return "error";
    }
@@ -135,7 +133,7 @@ const char *defaultRuleData[] = {
  */
 struct freeme {
    freeme(ifstream *pp) : p(pp) {}
-   ~freeme() { if (p) delete p ; }   // AKT: why was this commented out?
+   ~freeme() { if (p) delete p ; }
    ifstream *p ;
 } ;
 
@@ -157,8 +155,8 @@ string ruletable_algo::LoadRuleTable(string rule)
    string full_filename;
    if (!isDefaultRule) 
    {
-      // AKT: we need to prepend the full path to the rules dir because when Golly
-      // runs a script it temporarily changes the cwd to the location of the script
+      // we need to prepend the full path to the rules dir because when Golly runs
+      // a script it temporarily changes the cwd to the location of the script
       full_filename = lifegetrulesdir() ;
       int istart = full_filename.size() ;
       full_filename += rule + ".table" ;
