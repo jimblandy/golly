@@ -36,11 +36,11 @@ a,c,d,e,f,0   # leaving a black square
 b,c,d,e,f,1   # leaving a white square
 
 # the ant arrives:
-0,g,c,d,e,8   # ant arrives on a black square from the north, now on a white square facing west
-1,g,c,d,e,2   # ant arrives on a white square from the north, now on a black square facing east
-0,c,h,d,e,7   # ant arrives on a black square from the east, now on a white square facing north
-1,c,h,d,e,5   # ant arrives on a white square from the east, now on a black square facing south
-0,c,d,i,e,6   # ant arrives on a black square from the south, now on a white square facing east
-1,c,d,i,e,4   # ant arrives on a white square from the south, now on a black square facing west
-0,c,d,e,j,9   # ant arrives on a black square from the west, now on a white square facing south
-1,c,d,e,j,3   # ant arrives on a white square from the west, now on a black square facing north
+1,g,c,d,e,4   # ant arrives on a white square from the north, now on a black square facing west
+0,g,c,d,e,6   # ant arrives on a black square from the north, now on a white square facing east
+1,c,h,d,e,3   # ant arrives on a white square from the east, now on a black square facing north
+0,c,h,d,e,9   # ant arrives on a black square from the east, now on a white square facing south
+1,c,d,i,e,2   # ant arrives on a white square from the south, now on a black square facing east
+0,c,d,i,e,8   # ant arrives on a black square from the south, now on a white square facing west
+1,c,d,e,j,5   # ant arrives on a white square from the west, now on a black square facing south
+0,c,d,e,j,7   # ant arrives on a black square from the west, now on a white square facing north
