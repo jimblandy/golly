@@ -41,6 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "lifealgo.h"
 #include "viewport.h"      // for MAX_MAG
+#include "util.h"          // for linereader
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for ID_*, mainptr->...
@@ -1618,16 +1619,18 @@ void AddDefaultRules()
 
 // -----------------------------------------------------------------------------
 
-bool GetKeyVal(FILE* f, char* line, char** keyword, char** value)
+bool GetKeywordAndValue(linereader& lr, char* line, char** keyword, char** value)
 {
-   while ( fgets(line, PREF_LINE_SIZE, f) != 0 ) {
-      if ( line[0] == '#' || line[0] == '\n' ) {
+   // the linereader class handles all line endings (CR, CR+LF, LF)
+   // and terminates line buffer with \0
+   while ( lr.fgets(line, PREF_LINE_SIZE) != 0 ) {
+      if ( line[0] == '#' || line[0] == 0 ) {
          // skip comment line or empty line
       } else {
          // line should have format keyword=value
          *keyword = line;
          *value = line;
-         while ( **value != '=' && **value != '\n' ) *value += 1;
+         while ( **value != '=' && **value != 0 ) *value += 1;
          **value = 0;   // terminate keyword
          *value += 1;
          return true;
@@ -1767,15 +1770,11 @@ void GetPrefs()
       return;
    }
 
+   linereader reader(f);
    char line[PREF_LINE_SIZE];
    char* keyword;
    char* value;
-   while ( GetKeyVal(f, line, &keyword, &value) ) {
-      // remove \n from end of value
-      int len = strlen(value);
-      if ( len > 0 && value[len-1] == '\n' ) {
-         value[len-1] = 0;
-      }
+   while ( GetKeywordAndValue(reader, line, &keyword, &value) ) {
 
       if (strcmp(keyword, "prefs_version") == 0) {
          sscanf(value, "%d", &currversion);
@@ -2161,7 +2160,8 @@ void GetPrefs()
          }
       }
    }
-   fclose(f);
+   
+   reader.close();
 
    // colors for brushes and pens may have changed
    SetBrushesAndPens();

@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "viewport.h"
+#include "util.h"          // for linereader
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, bigview, statusptr
 #include "wxmain.h"        // for mainptr->...
@@ -1609,10 +1610,14 @@ static void LoadRuleColors(const wxString& rule, int maxstate)
    path += _(".colors");
    FILE* f = fopen(path.mb_str(wxConvLocal), "r");
    if (f) {
+      // the linereader class handles all line endings (CR, CR+LF, LF)
+      linereader reader(f);
+      // not needed here, but useful if we ever return early due to error
+      // reader.setcloseonfree();
       const int MAXLINELEN = 512;
       char buf[MAXLINELEN + 1];
-      while (fgets(buf, MAXLINELEN, f) != 0) {
-         if (buf[0] == '#' || buf[0] == '\n') {
+      while (reader.fgets(buf, MAXLINELEN) != 0) {
+         if (buf[0] == '#' || buf[0] == 0) {
             // skip comment or empty line
          } else {
             // look for "color" or "gradient" keyword at start of line
@@ -1641,7 +1646,7 @@ static void LoadRuleColors(const wxString& rule, int maxstate)
             }
          }
       }
-      fclose(f);
+      reader.close();
    }
 }
 
