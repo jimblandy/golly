@@ -192,6 +192,8 @@ string ruletable_algo::LoadRuleTable(string rule)
          if (!in->good())
             break ;
          getline(*in, line) ;
+         if (line.size() && line[line.size()-1] < ' ')
+           line.erase(line.begin()+(line.size()-1)) ;
       }
       lineno++ ;
       int allws = 1 ;
