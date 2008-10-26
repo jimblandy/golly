@@ -129,8 +129,83 @@ displayed.
 <font size=+1><b>Macrocell format</b></font>
 
 <p>
-!!!
+The size of an Extended RLE file is frequently proportional to the
+number of cells it contains, yet Golly supports universes that can
+contain trillions of cells or more, using hashlife-based algorithms.
+The storage of these huge universes, for which Extended RLE is not
+feasible, is done by essentially dumping the in-memory compressed
+representation of the universe in "Macrocell format".  Since little
+translation need be done between external and internal representation,
+this format is also used to store backups of universes at certain
+points in Golly's operation when using one of the hashlife-based
+algorithms.
 
+<p>
+The macrocell format has two parts: the header, and the tree.  The
+first portion of the file is the header; this contains the format
+identifier, the rule, the generation count (if non-zero), and any
+comments associated with this file.  The format identifier is a
+line that starts with "[M2]" and contains the name and version of
+the program used to write it:
+
+<p>
+<dd><tt>[M2] (golly 2.0b)</tt></dd>
+
+<p>
+Following this is any comment lines, which are lines that begin with
+'#'.  If the first two characters of a line are '#R', then the
+remainder of the line (after intervening whitespace) is the rule for
+the pattern.  If the first two characters are '#G', then the remainder
+of the line is the current generation count.  Any other line starting
+with a '#' is treated as an ordinary comment line.
+
+<p>
+Following the header is is a child-first textual representation of a
+canonicalized quadtree.  Each line is either a leaf node, or a
+non-leaf node.  For two-state algorithms, the leaf nodes contain an
+8x8 pixel array in a simplified raster format, left-to-right, then
+top-down, with "." representing an empty cell, "*" representing a live
+cell, and "$" representing the end of line; empty cells at the end of
+each row are suppressed.  No whitespace is permitted; lines
+representing leaf nodes for two-state algorithms are recognized
+because they start with ".", "*", or "$".  A sample leaf node
+containing a glider is:
+
+<p>
+<dd><tt>$$..*$...*$.***$$$$</tt></dd>
+
+<p>
+For algorithms with more than two states, leaf nodes represent a
+two-by-two square of the universe.  They contain five integers
+separated by single spaces; the first integer is 1, and the next
+four are the state values for the northwest, northeast,
+southwest, and southeast values of the square.
+
+<p>
+Nodes with children are represented by lines with five integers.  The
+first integer is the logarithm base 2 of the size of the square this
+node representes; for two-state patterns, this must be 4 or larger;
+for multi-state patterns, this must be 2 or larger.  The next four
+values are the node numbers of the northwest, northeast, southwest,
+and southeast child nodes.  Each of these child nodes must be the
+appropriate size; that is, a square one fourth the area of the current
+node.
+
+<p>
+All nodes, both leaf and non-leaf, are numbered in the order they
+occur in the file, starting with 1.  No node number can point to a
+node that has yet been defined.  The special node number "0" is
+used to represent all squares that have no live cells.
+
+<p>
+The total universe represented by a macrocell file is that of the last
+node in the file (the root node), which also must be the single node
+with the largest size.  By convention, the upper left cell of the
+southeast child of the root node is at coordinate position (x=0,y=1).
+
+<p>
+Macrocell files saved from binary algorithms and from multistate
+algorithms are not compatible.
 
 <p><a name="colors">&nbsp;<br>
 <font size=+1><b>Rule colors</b></font>
@@ -256,7 +331,73 @@ The rest of the file contains variables and transitions. Variable names should o
 <font size=+1><b>Rule trees</b></font>
 
 <p>
-!!!
+Golly permits the loading of rules from external files, where those
+files are in RuleTree format.  If a rule named Foo is requested, and
+the file Rules/Foo.tree exists, Golly will load the algorithm from
+that file.  Golly includes programs that permit you to transform a
+given transition function in C++, Perl, or Java into a RuleTree file
+(see Rules/TreeGenerators) if the number of states is sufficiently
+small (approximately 10 states for eight-neighbor rules, and 32 states
+for four-neighbor rules).  Essentially, the RuleTree format allows you
+to add your own rules to Golly without needing to know how to
+recompile Golly and without dealing with the intricacies of external
+libraries; it generates relatively compact files, and the data
+structure is defined for very fast execution.
+
+<p>
+A rule tree is nothing more than a complete transition table for a
+rule, expressed in a compressed, canonicalized tree format.  For an n
+state rule, each tree node has n children; each child is either
+another tree node or a next state value.  To look up a function of m
+variables, each of which is a state value, you start at the root node
+and select the child node corresponding to the value of the first
+variable.  From that node, you select the child node corresponding to
+the value of the second variable, and so on.  When you finally look up
+the value of the final variable in the last node, the result value is
+the actual next state value, rather than another node.
+
+<p>
+The RuleTree format has fixed the order of variables used for these
+lookups.  For a four-neighbor rule, the order is always north, west,
+east, south, center; for an eight-neighbor rule, the order is always
+northwest, northeast, southwest, southeast, north, west, east, south,
+center.
+
+<p>
+Without compression, for an n-state rule, there would be a total of
+1+n+n^2+n^3+n^4 nodes for a four-neighbor rule, and 1+n+...+n^8 for an
+eight-neighbor rule; this could quickly get unmanageable.  Almost all
+rules show significant redundancy, with identical rows in the
+transition table, and identical nodes in the rule tree.  To compress
+this tree, all we do is merge identical nodes, from the bottom up.
+This can be done explicitly as we construct the tree from a transition
+function (see Rules/TreeGenerators/RuleTreeGen.java) or symbolically
+as we evaluate a more expressive format.
+
+<p>
+The RuleTree format itself is simple, and has similarities to the
+macrocell format.  It is not intended for human authorship or
+consumption.  The RuleTree format has two parts: a header, and the
+rule tree itself.  The header consists of comments (lines starting
+with a "#") that are ignored, and three required parameter values
+that must be defined before the first tree node.  These values are
+defined, one per line, starting with the parameter name, then an
+equals sign, and finally an integer value.  The three parameters
+are num_states, which must be in the range 2..256 inclusive,
+num_neighbors, which must be 4 or 8, and num_nodes, which must
+match the number of node lines in the file.
+
+<p>
+The tree is represented by a sequence of node lines.  Each node line
+consists of exactly num_states integers separated by single spaces.
+The first integer of each node line is the depth of that node, which
+must range from 1..num_neighbors+1.  The remaining integers for nodes
+of depth one are state values.  The remaining integers for nodes of
+depth greater than one are node numbers.  Nodes are numbered in the
+order they appear in the file, starting with zero; each node must be
+defined before its node number is used.  The root node, which must
+be the single node at depth num_neighbors+1, must be the last node
+defined in the file.
 
 </body>
 </html>
