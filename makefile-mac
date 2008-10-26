@@ -112,7 +112,7 @@ __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
-all: $(OBJDIR) app.bin app_bundle bgolly
+all: $(OBJDIR) app.bin app_bundle bgolly RuleTableToTree
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
@@ -121,14 +121,20 @@ $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 clean:
-	rm -f $(OBJDIR)/*.o bgolly
+	rm -f $(OBJDIR)/*.o bgolly RuleTableToTree
 	rm -rf $(APP_NAME).app
 
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXBASE) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDBASE)
 
+RuleTableToTree: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
+	$(CXXC) $(CXXBASE) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDBASE)
+
 $(OBJDIR)/bgolly.o: bgolly.cpp
 	$(CXXC) $(CXXBASE) -c -o $@ bgolly.cpp
+
+$(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
+	$(CXXC) $(CXXBASE) -c -o $@ RuleTableToTree.cpp
 
 app.bin: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
@@ -279,7 +285,7 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-mac
 	mkdir $(RELEASENAME)-mac
-	cp -rp $(APP_NAME).app bgolly $(SHAREDFILES) $(RELEASENAME)-mac
+	cp -rp $(APP_NAME).app bgolly RuleTableToTree $(SHAREDFILES) $(RELEASENAME)-mac
 	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/README
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/LICENSE

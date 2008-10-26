@@ -16,7 +16,7 @@ RELEASENAME = golly-$(VERSION)
 SHAREDFILES = Help Patterns Scripts Rules README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
-BINFILES = golly bgolly
+BINFILES = golly bgolly RuleTableToTree
 
 CXXC = g++
 CXXFLAGS = `wx-config --cxxflags` -O5 -DZLIB -DVERSION=$(VERSION) \
@@ -57,7 +57,7 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxundo.o \
    $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
-all: $(OBJDIR) golly bgolly
+all: $(OBJDIR) golly bgolly RuleTableToTree
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
@@ -67,7 +67,7 @@ $(OBJDIR):
 
 clean: 
 	rm -f $(OBJDIR)/*.o
-	rm -f golly bgolly
+	rm -f golly bgolly RuleTableToTree
 
 golly: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
@@ -75,8 +75,14 @@ golly: $(BASEOBJ) $(WXOBJ)
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS)
 
+RuleTableToTree: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
+	$(CXXC) $(CXXFLAGS) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDFLAGS)
+
 $(OBJDIR)/bgolly.o: bgolly.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ bgolly.cpp
+
+$(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ RuleTableToTree.cpp
 
 $(OBJDIR)/bigint.o: bigint.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ bigint.cpp

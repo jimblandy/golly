@@ -80,7 +80,7 @@ int setdefaults(int nddr, int off, int at) {
    if (it != cache.end())
       return it->second ;
    ndd n = seq[nddr] ;
-   for (unsigned int i=0; i<n_states; i++)
+   for (int i=0; i<n_states; i++)
       n.vals[i] = setdefaults(n.vals[i], i, at-1) ;
    int r = getnode(n) ;
    cache[nddr] = r ;
@@ -163,7 +163,6 @@ public:
 } ;
 void my_ruletable_algo::buildndd() {
    unsigned int iRule;
-   TBits is_match;
    ::n_states = n_states ;
    ::neighborhood_size = (neighborhood==vonNeumann ? 5 : 9) ;
    initndd() ;
@@ -171,13 +170,12 @@ void my_ruletable_algo::buildndd() {
      for (int bitno=0; bitno<sizeof(TBits)*8; bitno++) {
        TBits bit = ((TBits)1)<<bitno ;
        vector<vector<state> > in ;
-       state out ;
        int ok = 1 ;
        for (int i=0; i<neighborhood_size; i++) {
          vector<state> nv ;
-         for (int j=0; j<n_states; j++)
+         for (unsigned int j=0; j<n_states; j++)
            if (lut[i][j][iRule] & bit)
-             nv.push_back(j) ;
+             nv.push_back((state)j) ;
          if (nv.size() == 0) {
            ok = 0 ;
            break ;

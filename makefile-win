@@ -32,7 +32,7 @@ SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 SRCDIRS = bitmaps
-BINFILES = Golly.exe bgolly.exe
+BINFILES = Golly.exe bgolly.exe RuleTableToTree.exe
 
 LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
 SETUPHDIR = $(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
@@ -275,7 +275,7 @@ __LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
 
 ### Targets: ###
 
-all: $(OBJDIR) Golly.exe bgolly.exe
+all: $(OBJDIR) Golly.exe bgolly.exe RuleTableToTree.exe
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
@@ -287,6 +287,8 @@ clean:
 	-if exist $(OBJDIR)\*.obj del $(OBJDIR)\*.obj
 	-if exist *.res del *.res
 	-if exist Golly.exe del Golly.exe
+	-if exist bgolly.exe del bgolly.exe
+	-if exist RuleTableToTree.exe del RuleTableToTree.exe
 	-if exist golly.pdb del golly.pdb
 
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
@@ -309,8 +311,15 @@ bgolly.exe: $(BASEOBJ) $(OBJDIR)/bgolly.obj
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
 	$(OBJDIR)/bgolly.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
 
+RuleTableToTree.exe: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.obj
+	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
+	$(OBJDIR)/RuleTableToTree.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
+
 $(OBJDIR)/bgolly.obj: bgolly.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bgolly.cpp
+
+$(OBJDIR)/RuleTableToTree.obj: RuleTableToTree.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) RuleTableToTree.cpp
 
 $(OBJDIR)/bigint.obj: bigint.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bigint.cpp
