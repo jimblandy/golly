@@ -51,6 +51,7 @@ const char* ruletreealgo::setrule(const char* s) {
                         strcmp(s, "23/3") == 0) ;
    char strbuf[MAXFILELEN+1] ;
    FILE *f = 0 ;
+   linereader lr(0) ;
    if (!isDefaultRule) {
       if (strlen(s) >= (unsigned int)MAXRULESIZE)
          return "Rule length too long" ;
@@ -62,9 +63,12 @@ const char* ruletreealgo::setrule(const char* s) {
       for (char *p=strbuf + strlen(rulefolder); *p; p++)
         if (*p == '/' || *p == '\\' || *p == ':')
           *p = '-' ;
+      printf("Trying to open %s\n", strbuf) ;
       f = fopen(strbuf, "r") ;
       if (f == 0)
          return "File not found" ;
+      lr.setfile(f) ;
+      lr.setcloseonfree() ;
    }
    int lineno = 0 ;
    int mnum_states=-1, mnum_neighbors=-1, mnum_nodes=-1 ;
@@ -78,12 +82,10 @@ const char* ruletreealgo::setrule(const char* s) {
             break ;
          strcpy(strbuf, defaultRuleData[lineno]) ;
       } else {
-         if (fgets(strbuf, MAXFILELEN, f) == 0)
+         if (lr.fgets(strbuf, MAXFILELEN) == 0)
             break ;
       }
       lineno++ ;
-      while (strbuf[0] && strbuf[strlen(strbuf)-1] <= ' ')
-         strbuf[strlen(strbuf)-1] = 0 ;
       if (strbuf[0] != '#' && strbuf[0] != 0 &&
           sscanf(strbuf, " num_states = %d", &mnum_states) != 1 &&
           sscanf(strbuf, " num_neighbors = %d", &mnum_neighbors) != 1 &&
@@ -91,11 +93,9 @@ const char* ruletreealgo::setrule(const char* s) {
          if (mnum_states < 2 || mnum_states > 256 ||
              (mnum_neighbors != 4 && mnum_neighbors != 8) ||
              mnum_nodes < mnum_neighbors || mnum_nodes > 100000000) {
-            if (!isDefaultRule) fclose(f) ; // AKT
             return "Bad basic values" ;
          }
          if (strbuf[0] < '1' || strbuf[0] > '0' + 1 + mnum_neighbors) {
-            if (!isDefaultRule) fclose(f) ; // AKT
             return "Bad line in ruletree file 1" ;
          }
          lev = strbuf[0] - '0' ;
@@ -111,20 +111,17 @@ const char* ruletreealgo::setrule(const char* s) {
             int v = 0 ;
             while (*p > ' ') {
                if (*p < '0' || *p > '9') {
-                  if (!isDefaultRule) fclose(f) ; // AKT
                   return "Bad line in ruletree file 2" ;
                }
                v = v * 10 + *p++ - '0' ;
             }
             if (lev == 1) {
                if (v < 0 || v >= mnum_states) {
-                  if (!isDefaultRule) fclose(f) ; // AKT
                   return "Bad state value in ruletree file" ;
                }
                datb.push_back((state)v) ;
             } else {
                if (v < 0 || ((unsigned int)v) >= noff.size()) {
-                  if (!isDefaultRule) fclose(f) ; // AKT
                   return "Bad node value in ruletree file" ;
                }
                dat.push_back(noff[v]) ;
@@ -132,13 +129,11 @@ const char* ruletreealgo::setrule(const char* s) {
             vcnt++ ;
          }
          if (vcnt != mnum_states) {
-            if (!isDefaultRule) fclose(f) ; // AKT
             return "Bad number of values on ruletree line" ;
          }
       }
    }
-   if (!isDefaultRule)
-      fclose(f) ;
+   lr.close() ;
    if (dat.size() + datb.size() != (unsigned int)(mnum_nodes * mnum_states))
       return "Bad count of values in ruletree file" ;
    if (lev != mnum_neighbors + 1)

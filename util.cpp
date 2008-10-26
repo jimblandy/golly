@@ -103,3 +103,63 @@ FILE *getdebugfile() {
     f = fopen("trace.txt", "w") ;
   return f ;
 }
+/**
+ *   Manage reading lines from a FILE* without worrying about
+ *   line terminates.  Note that the fgets() routine does not
+ *   insert any line termination characters at all.
+ */
+linereader::linereader(FILE *f) {
+   setfile(f) ;
+}
+void linereader::setfile(FILE *f) {
+   fp = f ;
+   lastchar = 0 ;
+}
+void linereader::setcloseonfree() {
+   closeonfree = 1 ;
+}
+int linereader::close() {
+   if (fp) {
+      return fclose(fp) ;
+      fp = 0 ;
+   }
+   return 0 ;
+}
+linereader::~linereader() {
+   if (closeonfree)
+      close() ;
+}
+const int LF = 10 ;
+const int CR = 13 ;
+char *linereader::fgets(char *buf, int maxlen) {
+   int i = 0 ;
+   for (;;) {
+      if (i+1 >= maxlen) {
+         buf[i] = 0 ;
+         return buf ;
+      }
+      int c = getc(fp) ;
+      switch (c) {
+      case EOF:
+         if (i == 0)
+            return 0 ;
+         buf[i] = 0 ;
+         return buf ;
+      case LF:
+         if (lastchar != CR) {
+            lastchar = LF ;
+            buf[i] = 0 ;
+            return buf ;
+         }
+         break ;
+      case CR:
+         lastchar = CR ;
+         buf[i] = 0 ;
+         return buf ;
+      default:
+         lastchar = c ;
+         buf[i++] = (char)c ;
+         break ;
+      }
+   }
+}

@@ -37,7 +37,22 @@ void lifeendprogress() ;
 const char *lifegetrulesdir() ;
 bool isaborted() ;
 FILE *getdebugfile() ;
-
+/**
+ *   Sick of line ending woes.  This class takes care of this for us.
+ */
+class linereader {
+public:
+   linereader(FILE *f) ;
+   char *fgets(char *buf, int maxlen) ;
+   void setfile(FILE *f) ;
+   void setcloseonfree() ;
+   int close() ;
+   ~linereader() ;
+private:
+   int lastchar ;
+   int closeonfree ;
+   FILE *fp ;
+} ;
 /**
  *   To substitute your own routines, use the following class.
  */
