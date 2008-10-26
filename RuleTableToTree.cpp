@@ -193,7 +193,7 @@ void my_ruletable_algo::buildndd() {
 }
 int main(int argc, char *argv[]) {
    if (argc < 2) {
-      cerr << "Usage: rwt rule >rule.tree" << endl ;
+      cerr << "Usage: RuleTableToTree rule >Rules/rule.tree" << endl ;
       exit(0) ;
    }
    lifeerrors::seterrorhandler(&mylifeerrors) ;
