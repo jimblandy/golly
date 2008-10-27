@@ -20,15 +20,7 @@
 VERSION = 2.0b
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
-SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
-   Scripts Scripts\Perl Scripts\Python Scripts\Python\glife Scripts\Python\Margolus \
-   Patterns Patterns\Breeders Patterns\Generations Patterns\Guns Patterns\HashLife Patterns\JvN \
-   Patterns\Loops Patterns\Methuselahs Patterns\Miscellaneous Patterns\Oscillators \
-   Patterns\Other-Rules Patterns\Other-Rules\Banks Patterns\Other-Rules\Codd \
-   Patterns\Other-Rules\Margolus Patterns\Other-Rules\Morley Patterns\Other-Rules\WireWorld \
-   Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry \
-   Patterns\Spaceships Patterns\Still-Lifes Patterns\Syntheses \
-   Rules Rules\TableGenerators Rules\TreeGenerators
+SHAREDDIRS = Help Scripts Patterns Rules
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 SRCDIRS = bitmaps
@@ -446,7 +438,7 @@ srcdist:
 	mkdir $(RELEASENAME)-src\Patterns
 	mkdir $(RELEASENAME)-src\Scripts
 	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-src
-	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-src\%F
+	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\%F
 	ren $(RELEASENAME)-src\README README.txt
 	ren $(RELEASENAME)-src\LICENSE LICENSE.txt
 	ren $(RELEASENAME)-src\BUILD BUILD.txt
@@ -461,7 +453,7 @@ bindist: all
 	mkdir $(RELEASENAME)-win\Patterns
 	mkdir $(RELEASENAME)-win\Scripts
 	for %%F IN ($(BINFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-win
-	for %%F IN ($(SHAREDDIRS)) do xcopy /I %F $(RELEASENAME)-win\%F
+	for %%F IN ($(SHAREDDIRS)) do xcopy /S /I %F $(RELEASENAME)-win\%F
 	ren $(RELEASENAME)-win\README README.txt
 	ren $(RELEASENAME)-win\LICENSE LICENSE.txt
 	echo Now zip $(RELEASENAME)-win into $(RELEASENAME)-win.zip
