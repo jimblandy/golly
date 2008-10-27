@@ -120,7 +120,7 @@ void write_ndd() {
    shrink() ;
    printf("num_states=%d\n", n_states) ;
    printf("num_neighbors=%d\n", neighborhood_size-1) ;
-   printf("num_nodes=%d\n", seq.size()) ;
+   printf("num_nodes=%d\n", (int)seq.size()) ;
    for (unsigned int i=0; i<seq.size(); i++) {
       printf("%d", seq[i].level) ;
       for (unsigned int j=0; j<seq[i].vals.size(); j++)
@@ -167,7 +167,7 @@ void my_ruletable_algo::buildndd() {
    ::neighborhood_size = (neighborhood==vonNeumann ? 5 : 9) ;
    initndd() ;
    for(iRule=0;iRule<MC;iRule++) {
-     for (int bitno=0; bitno<sizeof(TBits)*8; bitno++) {
+     for (unsigned int bitno=0; bitno<sizeof(TBits)*8; bitno++) {
        TBits bit = ((TBits)1)<<bitno ;
        vector<vector<state> > in ;
        int ok = 1 ;

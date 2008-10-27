@@ -164,6 +164,8 @@ private:
 //
    void resize() ;
    ghnode *find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) ;
+   ghnode *find_ghnode2(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se,
+                        g_uintptr_t h, ghnode *p) ;
    void unhash_ghnode(ghnode *n) ;
    void rehash_ghnode(ghnode *n) ;
    ghleaf *find_ghleaf(state nw, state ne, state sw, state se) ;
