@@ -28,7 +28,7 @@ SHAREDDIRS = Help Help\Algorithms Help\Lexicon \
    Patterns\Other-Rules\Margolus Patterns\Other-Rules\Morley Patterns\Other-Rules\WireWorld \
    Patterns\Puffers Patterns\Rakes Patterns\Signal-Circuitry \
    Patterns\Spaceships Patterns\Still-Lifes Patterns\Syntheses \
-   Rules
+   Rules Rules\TableGenerators Rules\TreeGenerators
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 SRCDIRS = bitmaps
