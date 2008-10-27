@@ -399,5 +399,22 @@ defined before its node number is used.  The root node, which must
 be the single node at depth num_neighbors+1, must be the last node
 defined in the file.
 
+<p>
+For comparison purposes, the program "RuleTableToTree" is supplied
+with Golly; this executable will convert a rule table file into a rule
+tree file.  It operates symbolically (it does not enumerate all the
+possibilities) so it should be fast on any rule table.  To use it,
+change to the main golly directory (the directory that contains the
+Rules directory); this is probably where the executable is installed.
+Type
+
+<p>
+<dd><tt>RuleTableToTree Codd &gt;Rules/Codd.tree</tt></dd>
+
+<p>
+to convert the Codd rule table file (as an example) to a rule
+tree file.  Now you can load a Codd universe into either the
+RuleTable or the RuleTree algorithm.
+
 </body>
 </html>
