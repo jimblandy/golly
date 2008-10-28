@@ -114,6 +114,7 @@ linereader::linereader(FILE *f) {
 void linereader::setfile(FILE *f) {
    fp = f ;
    lastchar = 0 ;
+   closeonfree = 0 ;    // AKT: avoid crash on Linux
 }
 void linereader::setcloseonfree() {
    closeonfree = 1 ;
