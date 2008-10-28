@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef RULETABLE_ALGO_H
 #define RULETABLE_ALGO_H
 #include "ghashbase.h"
-#include <map>
 #include <string>
 #include <vector>
 /**
@@ -58,7 +57,7 @@ protected:
    // we use a lookup table to match inputs to outputs:
    typedef unsigned long long int TBits; // we can use unsigned int if we hit portability issues (not much slower)
    std::vector< std::vector< std::vector<TBits> > > lut; // TBits lut[neighbourhood_size][n_states][n_compressed_rules];
-   unsigned int MC; // how many rules are there after compression?
+   unsigned int n_compressed_rules;
    std::vector<state> output; // state output[n_rules];
 
 };

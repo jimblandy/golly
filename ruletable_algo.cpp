@@ -32,10 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #define strnicmp strncasecmp
 #endif
 
-#include <algorithm>
-#include <iterator>
-#include <functional>
-#include <fstream>
+#include <map>
 #include <sstream>
 using namespace std ;
 
@@ -127,16 +124,6 @@ const char *defaultRuleData[] = {
    "701120", "701220", "701250", "702120", "702221", "702251", "702321",
    "702525", "702720", 0 } ;
 
-/*
- *   Make sure ifstream goes away even if we return, despite using a
- *   pointer variable.  Probably a cleaner way to do this.
- */
-struct freeme {
-   freeme(ifstream *pp) : p(pp) {}
-   ~freeme() { if (p) delete p ; }
-   ifstream *p ;
-} ;
-
 string ruletable_algo::LoadRuleTable(string rule)
 {
    const string comment_keyword = "#";
@@ -149,8 +136,10 @@ string ruletable_algo::LoadRuleTable(string rule)
 
    int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0) ;
    string line ;
-   ifstream *in = 0 ;
-   freeme freeme(0) ;
+   const int MAX_LINE_LEN=1000;
+   char line_buffer[MAX_LINE_LEN];
+   FILE *in = 0 ;
+   linereader line_reader(0) ;
    int lineno = 0 ;
    string full_filename;
    if (!isDefaultRule) 
@@ -164,10 +153,11 @@ string ruletable_algo::LoadRuleTable(string rule)
          if (full_filename[i] == '/' || full_filename[i] == '\\' ||
             full_filename[i] == ':')
          full_filename[i] = '-' ;
-      in = new ifstream(full_filename.c_str());
-      freeme.p = in ; // make sure it goes away if we return with an error
-      if (in == 0 || !in->good()) 
+      in = fopen(full_filename.c_str(),"rt");
+      if (!in) 
          return "Failed to open file: "+full_filename;
+      line_reader.setfile(in) ;
+      line_reader.setcloseonfree() ; // make sure it goes away if we return with an error
    }
    else {   }
 
@@ -189,11 +179,9 @@ string ruletable_algo::LoadRuleTable(string rule)
             break ;
          line = defaultRuleData[lineno] ;
       } else {
-         if (!in->good())
+         if(!line_reader.fgets(line_buffer,MAX_LINE_LEN))
             break ;
-         getline(*in, line) ;
-         if (line.size() && line[line.size()-1] < ' ')
-           line.erase(line.begin()+(line.size()-1)) ;
+         line = line_buffer;
       }
       lineno++ ;
       int allws = 1 ;
@@ -502,9 +490,9 @@ string ruletable_algo::LoadRuleTable(string rule)
             break;
       }
       unsigned int M = transition_table.size() * n_rotations * n_reflections; // (we need to expand out symmetry)
-      this->MC = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
+      this->n_compressed_rules = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
       // initialize lookup table to all bits turned off 
-      this->lut.assign(n_inputs,vector< vector<TBits> >(this->n_states,vector<TBits>(MC,0))); 
+      this->lut.assign(n_inputs,vector< vector<TBits> >(this->n_states,vector<TBits>(this->n_compressed_rules,0))); 
       this->output.resize(M);
       // work through the rules, filling the bit masks
       unsigned int iRule=0,iRuleC,iBit,iNbor,iExpandedNbor;
@@ -568,16 +556,16 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
    unsigned int iRule;
    TBits is_match;
 
-   for(iRule=0;iRule<this->MC;iRule++)
+   for(iRule=0;iRule<this->n_compressed_rules;iRule++)
    {
       // is there a match for any of the (e.g.) 64 rules within iRule?
       // (we don't have to worry about symmetries here since they were expanded out in LoadRuleTable)
       if(this->neighborhood==vonNeumann)
-         is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
+         is_match = this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
             this->lut[3][s][iRule] & this->lut[4][w][iRule];
       else // this->neighborhood==Moore
-         is_match = (TBits)-1 & this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][ne][iRule] & 
-         this->lut[3][e][iRule] & this->lut[4][se][iRule] & this->lut[5][s][iRule] & this->lut[6][sw][iRule] & 
+         is_match = this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][ne][iRule] & 
+            this->lut[3][e][iRule] & this->lut[4][se][iRule] & this->lut[5][s][iRule] & this->lut[6][sw][iRule] & 
             this->lut[7][w][iRule] & this->lut[8][nw][iRule];
       // if any of them matched, return the output of the first
       if(is_match)
