@@ -134,8 +134,8 @@ const char* ruletreealgo::setrule(const char* s) {
          }
       }
    }
-   if (!isDefaultRule)     // AKT: need this test to avoid crash on Linux
-      lr.close() ;
+   // AKT: disabled to avoid crash on Linux
+   // lr.close() ;
    if (dat.size() + datb.size() != (unsigned int)(mnum_nodes * mnum_states))
       return "Bad count of values in ruletree file" ;
    if (lev != mnum_neighbors + 1)
