@@ -916,8 +916,7 @@ void MainFrame::ShowRuleDialog()
    if (ChangeRule()) {
       // if ChangeAlgorithm was called then we're done
       if (currlayer->algtype != oldalgo) {
-         // except we have to call UpdateEverything here now that the
-         // main window is active
+         // except we have to call UpdateEverything here now that the main window is active
          UpdateEverything();
          return;
       }
@@ -1113,11 +1112,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
          statusptr->ErrorMessage(_("Pattern has changed (new algorithm has fewer states)."));
       }
       
-      // only call UpdateEverything here if we're not inside ChangeRule,
-      // otherwise a wxMac bug will cause menu items to remain disabled
-      // after the modal rule dialog closes
-      //!!! didn't avoid bug
-      if (newrule.IsEmpty() && !inscript) {
+      if (!inscript) {
          UpdateEverything();
       }
    }

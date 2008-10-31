@@ -636,8 +636,17 @@ void MainFrame::UpdateMenuItems(bool active)
       // safe to allow prefs dialog while script is running???
       // mbar->Enable(wxID_PREFERENCES,   !inscript);
 
-      mbar->Enable(wxID_UNDO,          active && currlayer->undoredo->CanUndo());
-      mbar->Enable(wxID_REDO,          active && currlayer->undoredo->CanRedo());
+      bool can_undo = active && currlayer->undoredo->CanUndo();
+      bool can_redo = active && currlayer->undoredo->CanRedo();
+      #ifdef __WXMAC__
+         // need this stupidity to avoid wxMac bug after modal dialog closes (eg. Set Rule)
+         // and force items to appear correctly enabled/disabled
+         mbar->Enable(wxID_UNDO, !can_undo);
+         mbar->Enable(wxID_REDO, !can_redo);
+      #endif
+
+      mbar->Enable(wxID_UNDO,          can_undo);
+      mbar->Enable(wxID_REDO,          can_redo);
       mbar->Enable(ID_NO_UNDO,         active && !inscript);
       mbar->Enable(ID_CUT,             active && !inscript && selexists);
       mbar->Enable(ID_COPY,            active && !inscript && selexists);
@@ -1444,7 +1453,6 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 
 void MainFrame::OnActivate(wxActivateEvent& event)
 {
-   // this is never called in X11 app;
    // note that IsActive() doesn't always match event.GetActive()
 
    #ifdef __WXMAC__

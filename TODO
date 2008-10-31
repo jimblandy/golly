@@ -12,9 +12,6 @@ Andrew's list:
   - On Mac we want button to look selected before menu appears.
   - On Win we want to be able to press-select-release.
 
-- Fix wxMac bug: Undo Algo Change item is disabled after Set Rule
-  results in an algo change.  May have to fix in next OnIdle?
-
 - Fix wxMac bug: Set Rule's help win can't regain focus after clicking
   in scroll bar (and thus we can't copy text).
 

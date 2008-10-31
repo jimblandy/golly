@@ -138,10 +138,9 @@ public:
    bool generating;           // currently generating pattern?
    bool fullscreen;           // in full screen mode?
    bool showbanner;           // showing banner message?
-   
+   bool keepmessage;          // don't clear message created by script?
    bool command_pending;      // user selected a command while generating?
    bool draw_pending;         // user wants to draw while generating?
-   bool keepmessage;          // don't clear message created by script?
    wxCommandEvent cmdevent;   // the pending command
    wxMouseEvent mouseevent;   // the pending draw
 
