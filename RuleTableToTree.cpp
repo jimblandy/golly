@@ -1,7 +1,9 @@
 #include <set>
+#include <map>
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <stdlib.h>
 #include "util.h"
 #include "ruletable_algo.h"
 using namespace std ;
@@ -166,7 +168,7 @@ void my_ruletable_algo::buildndd() {
    ::n_states = n_states ;
    ::neighborhood_size = (neighborhood==vonNeumann ? 5 : 9) ;
    initndd() ;
-   for(iRule=0;iRule<MC;iRule++) {
+   for(iRule=0;iRule<this->n_compressed_rules;iRule++) {
      for (unsigned int bitno=0; bitno<sizeof(TBits)*8; bitno++) {
        TBits bit = ((TBits)1)<<bitno ;
        vector<vector<state> > in ;

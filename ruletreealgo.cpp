@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "ruletreealgo.h"
 #include "util.h"      // AKT: for lifegetrulesdir()
+#include <stdlib.h>
 // for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
