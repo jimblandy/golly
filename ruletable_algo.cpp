@@ -258,7 +258,7 @@ string ruletable_algo::LoadRuleTable(string rule)
          vector<string> tokens = tokenize(line,"= {,}");
          string variable_name = tokens[1];
          vector<state> states;
-         if(tokens.size()<4)
+         if(tokens.size()<3)
          {
             ostringstream oss;
             oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
