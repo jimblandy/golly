@@ -22,7 +22,6 @@
 #
 # See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
 #
-#CXRLE Pos=-48,-11
 x = 75, y = 123, rule = Banks-I
 o18bo$5ob14o$4ob15o$20o6b5o2b5o2b5o2b5o$o18bo7b3o4b3o4b3o4b3o$27b3o4b
 3o4b3o4b3o$27b3o4b3o4b3o4b3o$o18bo7b3o4bobo4b3o4bobo$15ob4o7b3o5b2o4b

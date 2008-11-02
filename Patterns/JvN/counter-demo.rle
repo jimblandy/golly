@@ -25,7 +25,6 @@
 # Originally distributed as: SIMPLE_COUNTERS.EVN
 # Redistributed with permission.
 #
-#CXRLE Pos=8,3 Gen=395
 x = 60, y = 26, rule = JvN29
 5.2pA.pA.pA3.pA.2pA2.pA3.3pA4.2pA2.2pA2.pA2.pA.pA2.pA.3pA.3pA.2pA$4.pA
 3.pA.2pA.2pA.pA.pA.pA3.pA5.pA3.pA2.pA.pA2.pA.2pA.pA2.pA2.pA3.pA.pA$5.

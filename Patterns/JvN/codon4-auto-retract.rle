@@ -59,8 +59,6 @@
 #    1110   CN          Confluent                         Construct
 #    1111   TM          Tape Mark                         Meta
 #
-#
-#CXRLE Pos=1,1
 x = 37888, y = 59, rule = Nobili32
 22.2IL14IpA13IpAIpA3IL8.13IL$14.5IpA2IJ.pAJ5IL.J3.2IpA13IpAIpA2IL9IJ
 2IL2IL2IL.I2pA$12.2IJ4IpA2ILRpAKpA2KQ.pAIpAL2IpAIpA13IpAL.IL11IpA.pAJ

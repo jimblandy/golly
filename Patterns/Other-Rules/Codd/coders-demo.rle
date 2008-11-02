@@ -11,7 +11,6 @@
 #
 # Signals 4, 5 and 6 can get transformed back into 7 - see gates-demo.rle.
 #
-#CXRLE Pos=-25,-15
 x = 44, y = 10, rule = Codd
 .5B$B5AB$BA3BAB$BAB.BAB5.3B7.3B7.3B$BAB.BAB4.B3AB5.B3AB5.B3AB$BA3BA6B
 ABA7BABA7BABA9B$B2A.G8AB9AB9AB9AB$.11BABA7BABA7BABA9B$11.B3AB5.B3AB5.

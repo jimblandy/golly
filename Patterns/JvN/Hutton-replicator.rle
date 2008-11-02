@@ -115,7 +115,6 @@
 # 6) after the tape is copied across, it separates itself from its
 #    old tape to prevent infection spreading from multiple copies.
 #
-#CXRLE Pos=20,16
 x = 3129, y = 4, rule = Hutton32
 2.J$2.J$2KpAOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
 5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO3KOKO5KO5KO5KO5KO

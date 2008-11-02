@@ -4,8 +4,8 @@
 #C Most additional patterns are from 2004-2006, and were selected
 #C (somewhat at random) from Koenig's Life News weblog.  For details
 #C on individual patterns, see http://pentadecathlon.com/lifeNews .
-#C Press 'm' in Golly 1.1 to center the view on the column of
-#C spaceships of different speeds.  A new speed (c/6) has been added.
+#C Press 'm' in Golly to center the view on the column of spaceships
+#C of different speeds.  A new speed (c/6) has been added.
 #C To the NE are diagonal spaceships with some new speeds (c/5, c/6).
 x = 1028, y = 672, rule = B3/S23
 781b3o9b3o$491b3o15b3o269bo2bo7bo2bo$490bo3bo13bo3bo268bo13bo$489b2o4b

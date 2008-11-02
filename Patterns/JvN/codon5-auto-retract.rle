@@ -54,8 +54,6 @@
 #   11110   CN          Confluent                         Construct
 #   11111   --          not used
 #
-#
-#CXRLE Pos=0,0
 x = 44266, y = 50, rule = Nobili32
 8.IK3IpA10IL14IpA13IpAIpA3IL8.13IL$7.IpAIJ2IpA7IL2.pAJ5IL.J3.2IpA13IpA
 IpA2IL9IJ2IL2IL2IL.I2pA$6.pA2JRSpAKpA7KL.RpAKpA2KQ.pAIpAL2IpAIpA13IpA

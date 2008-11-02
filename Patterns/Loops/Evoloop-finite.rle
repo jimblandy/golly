@@ -6,7 +6,6 @@
 # only the most successful loops can survive the overcrowding. Smaller
 # loops rapidly outcompete the larger ones.
 #
-#CXRLE Pos=-260,-230
 x = 628, y = 533, rule = Evoloop-finite
 628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I
 $628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$628I$

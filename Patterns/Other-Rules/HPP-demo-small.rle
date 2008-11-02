@@ -27,6 +27,5 @@
 # Source boundary: (haven't really worked out how to use this well yet)
 # 33
 # 
-#CXRLE Pos=-15,-7
 x = 14, y = 10, rule = HPP
 14P$P12.P$P12.P$P8.A3.P$P12.P$P12.P$P3.M8.P$P12.P$P12.P$14P!

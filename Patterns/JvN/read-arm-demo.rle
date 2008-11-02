@@ -25,7 +25,6 @@
 # Originally distributed as: RW-ARM_ADV.JVN
 # Redistributed with permission.
 #
-#CXRLE Pos=2,2
 x = 124, y = 88, rule = JvN29
 13.2pA6.pA2.2pA2.pA3.pA4.pA3.pA2.2pA2.pA.pA.pA.pA2.pA2.2pA4.3pA2.2pA
 2.2pA2.pA3.pA2.pA2.2pA2.2pA3.2pA$13.pA.pA4.pA.pA.pA.pA.2pA.2pA4.2pA.

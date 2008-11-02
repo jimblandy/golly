@@ -44,7 +44,6 @@
 # Originally distributed as: C-ARM_CONTROLS.EVN
 # Redistributed with permission.
 #
-#CXRLE Pos=15,2
 x = 96, y = 110, rule = Nobili32
 21.2pA6.2pA2.3pA2.pA3.pA7.2pA2.2pA2.pA2.pA.3pA.3pA3.2pA2.pA4.3pA$20.pA
 7.pA2.pA.pA2.pA.2pA.2pA6.pA3.pA2.pA.2pA.pA2.pA2.pA2.pA.pA2.pA.pA3.pA$

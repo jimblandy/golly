@@ -14,7 +14,6 @@
 # diverted to gate the wire. Only one 7-0 signal ever makes it to the
 # dead end, the others are blocked.
 #
-#CXRLE Pos=-32,-5
 x = 50, y = 27, rule = Codd
 25BC24B$BA.D2A.E2A.F2A.G33AB$36BC13B4$30BC19B$BA.D2A.E2A.F2A.G33AB$
 30BC19B6$7.17B$6.B17AB$6.BA15BAB$6.BGB13.BAB$6.B.B13.BAB$6.BA15BA20B$

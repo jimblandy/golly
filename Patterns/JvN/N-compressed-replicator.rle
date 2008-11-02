@@ -37,7 +37,6 @@
 # Similar other optimisations are possible.
 # Tape written by Tim Hutton <tim.hutton@gmail.com>
 #
-#CXRLE Pos=5,19
 x = 56422, y = 100, rule = Nobili32
 5.21IpAI4.pAL44.2IL.IpA2IpALIpAL$5IpA17IL2IpA.4R2L44.J.pAIpA.L2KIJ.pA
 IpA$J4.J16I2LJLK.pA2RpAKL39.5IpA5IpA8IL$J.3IpAJL14KpAIpA2ILJ3K.pA2IpA
