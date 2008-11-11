@@ -36,10 +36,9 @@ static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
 // AKT: 256x256 pixmap where each pixel is 3 rgb bytes
 static unsigned char pixbuf[bmsize*bmsize*3];
 
-// AKT: rgb colors for each cell state (set by getcolors call)
-static unsigned char* cellred;
-static unsigned char* cellgreen;
-static unsigned char* cellblue;
+// AKT: rgb colors for cell states (see getcolors call)
+static unsigned char deadr, deadg, deadb;
+static unsigned char liver, liveg, liveb;
 
 void qlifealgo::renderbm(int x, int y) {
    renderbm(x, y, bmsize, bmsize) ;
@@ -59,8 +58,7 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
    }
    ry = uviewh - ry - rh ;
 
-   // AKT: call pixblit instead of blit -- this is just a temporary fix;
-   //      eventually we'll draw directly into pixbuf rather than bigbuf!!!
+   // AKT: eventually we'll draw directly into pixbuf rather than bigbuf!!!
    if (pmag > 1) {
       // convert each bigbuf byte into 8 bytes of state data
       int j = 0;
@@ -77,19 +75,18 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
          int byte = bigbuf[i];
          for (int bit = 128; bit > 0; bit >>= 1) {
             if (byte & bit) {
-               pixbuf[j++] = cellred[1];
-               pixbuf[j++] = cellgreen[1];
-               pixbuf[j++] = cellblue[1];
+               pixbuf[j++] = liver;
+               pixbuf[j++] = liveg;
+               pixbuf[j++] = liveb;
             } else {
-               pixbuf[j++] = cellred[0];
-               pixbuf[j++] = cellgreen[0];
-               pixbuf[j++] = cellblue[0];
+               pixbuf[j++] = deadr;
+               pixbuf[j++] = deadg;
+               pixbuf[j++] = deadb;
             }
          }
       }
    }
    renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
-   // renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
 
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
 }
@@ -477,8 +474,15 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
    renderer = &renderarg ;
 
-   // AKT: set cellred/green/blue ptrs
-   renderer->getcolors(&cellred, &cellgreen, &cellblue);
+   // AKT: get cell colors
+   unsigned char *r, *g, *b;
+   renderer->getcolors(&r, &g, &b);
+   deadr = r[0];
+   deadg = g[0];
+   deadb = b[0];
+   liver = r[1];
+   liveg = g[1];
+   liveb = b[1];
 
    view = &viewarg ;
    uvieww = view->getwidth() ;

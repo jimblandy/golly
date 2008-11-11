@@ -46,12 +46,14 @@ DrawView() does the following tasks:
 
 - Calls currlayer->algo->draw() to draw the current pattern.  It passes
   in renderer, an instance of wx_render (derived from liferender) which
-  has 2 methods: killrect() draws a rectangular area of dead cells,
-  and blit() draws a monochrome bitmap with at least one live cell.
+  has these methods:
+  - killrect() draws a rectangular area of dead cells.
+  - pixblit() draws a pixmap containing at least one live cell.
+  - getcolors() provides access to the current layer's color arrays.
   
   Note that currlayer->algo->draw() does all the hard work of figuring
-  out which parts of the viewport are dead and building all the bitmaps
-  for the live parts.  The bitmaps contain suitably shrunken images
+  out which parts of the viewport are dead and building all the pixmaps
+  for the live parts.  The pixmaps contain suitably shrunken images
   when the scale is < 1:1 (ie. mag < 0).
   
   Each lifealgo needs to implement its own draw() method; for example,
@@ -67,7 +69,7 @@ DrawView() does the following tasks:
 
 - If the user is doing a paste, CheckPasteImage() creates a temporary
   viewport (tempview) and draws the paste pattern (stored in pastealgo)
-  into a masked bitmap which is then used by DrawPasteImage().
+  into a masked pixmap which is then used by DrawPasteImage().
 
 Potential optimizations:
 
@@ -553,7 +555,6 @@ public:
    wx_render() {}
    virtual ~wx_render() {}
    virtual void killrect(int x, int y, int w, int h);
-   virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1) {}   //!!! remove eventually
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b);
 };

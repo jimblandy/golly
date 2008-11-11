@@ -35,8 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *   have zeros for all pixels to the left and right of those
  *   requested to be rendered (just for simplicity).
  *
- *   Bitmap width is in 32-bit *words*.  Assumes 32-bit ints.
- *
  *   If clipping is needed, it's the responsibility of these
  *   routines, *not* the caller (although the caller should make
  *   every effort to not call these routines with out of bound
@@ -49,17 +47,10 @@ public:
    liferender() {}
    virtual ~liferender() ;
 
-   // killrect is only ever used to draw background (ie. dead cells)
+   // killrect is used to draw background (ie. dead cells)
    virtual void killrect(int x, int y, int w, int h) = 0 ;
 
-   /*
-    *   If bmscale > 1 it must be a power of two, and the x/y/w/h
-    *   values are still in terms of the viewport (that is, they
-    *   are already multiplied appropriately).
-    */
-   virtual void blit(int x, int y, int w, int h, int *bm, int bmscale=1) = 0 ;
-
-   // AKT: pixblit is used to draw a pixel map by passing data in two formats:
+   // pixblit is used to draw a pixel map by passing data in two formats:
    // If pmscale == 1 then pm data contains 3*w*h bytes where each
    // byte triplet contains the rgb values for the corresponding pixel.
    // If pmscale > 1 then pm data contains (w/pmscale)*(h/pmscale) bytes
@@ -67,7 +58,7 @@ public:
    // code to display either icons or colors.
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale) = 0 ;
 
-   // AKT: Drawing code needs access to current layer's cellr/g/b arrays.
+   // drawing code needs access to current layer's colors
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) = 0;
 } ;
 #endif

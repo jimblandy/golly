@@ -47,7 +47,6 @@ public:
    nullrender() {}
    virtual ~nullrender() {}
    virtual void killrect(int, int, int, int) {}
-   virtual void blit(int, int, int, int, int*, int=1) {}
    virtual void pixblit(int, int, int, int, char*, int) {}
    virtual void getcolors(unsigned char**, unsigned char**, unsigned char**) {}
 } ;
