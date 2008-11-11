@@ -30,11 +30,21 @@ const int logbmsize = 8 ;                 // *must* be 8 in this code
 const int bmsize = (1<<logbmsize) ;
 const int byteoff = (bmsize/8) ;
 const int ibufsize = (bmsize*bmsize/32) ;
-static unsigned int ibigbuf[ibufsize] ;   // shared buffer for up to 256x256 pixels
+static unsigned int ibigbuf[ibufsize] ;   // shared buffer for 256x256 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
+
+// AKT: 256x256 pixmap where each pixel is 3 rgb bytes
+static unsigned char pixbuf[bmsize*bmsize*3];
+
+// AKT: rgb colors for each cell state (set by getcolors call)
+static unsigned char* cellred;
+static unsigned char* cellgreen;
+static unsigned char* cellblue;
+
 void qlifealgo::renderbm(int x, int y) {
    renderbm(x, y, bmsize, bmsize) ;
 }
+
 void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
    // x,y is lower left corner
    int rx = x ;
@@ -48,21 +58,42 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
       rh *= pmag ;
    }
    ry = uviewh - ry - rh ;
-   renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
+
+   // AKT: call pixblit instead of blit -- this is just a temporary fix;
+   //      eventually we'll draw directly into pixbuf rather than bigbuf!!!
+   if (pmag > 1) {
+      // convert each bigbuf byte into 8 bytes of state data
+      int j = 0;
+      for (int i = 0; i < ibufsize * 4; i++) {
+         int byte = bigbuf[i];
+         for (int bit = 128; bit > 0; bit >>= 1) {
+            pixbuf[j++] = (byte & bit) ? 1 : 0;
+         }
+      }
+   } else {
+      // convert each bigbuf byte into 24 bytes of pixel data (8 * rgb)
+      int j = 0;
+      for (int i = 0; i < ibufsize * 4; i++) {
+         int byte = bigbuf[i];
+         for (int bit = 128; bit > 0; bit >>= 1) {
+            if (byte & bit) {
+               pixbuf[j++] = cellred[1];
+               pixbuf[j++] = cellgreen[1];
+               pixbuf[j++] = cellblue[1];
+            } else {
+               pixbuf[j++] = cellred[0];
+               pixbuf[j++] = cellgreen[0];
+               pixbuf[j++] = cellblue[0];
+            }
+         }
+      }
+   }
+   renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
+   // renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
+
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
 }
-static unsigned char rev8[256] ;
-static void init_rev8() {
-   int i;
-   for (i=0; i<8; i++) {
-      rev8[1<<i] = (unsigned char)(1<<(7-i)) ;
-   }
-   for (i=0; i<256; i++)
-      if (i & (i-1)) {
-         rev8[i] = rev8[i & (i-1)] + rev8[i & -i] ;
-      }
-}
-int minlevel;
+
 void qlifealgo::clearrect(int minx, int miny, int w, int h) {
    // minx,miny is lower left corner
    if (w <= 0 || h <= 0)
@@ -76,6 +107,8 @@ void qlifealgo::clearrect(int minx, int miny, int w, int h) {
    miny = uviewh - miny - h ;
    renderer->killrect(minx, miny, w, h) ;
 }
+
+static int minlevel;
 /*
  *   We cheat for now; we assume we can use 32-bit ints.  We can below
  *   a certain level; we'll deal with higher levels later.
@@ -142,14 +175,14 @@ void qlifealgo::BlitCells(supertile *p,
                            unsigned int v3 = (((v1 & 0x0f0f0f0f) << 4) |
                                                (v2 & 0x0f0f0f0f));
                            v2 = ((v1 & 0xf0f0f0f0) | ((v2 >> 4) & 0x0f0f0f0f));
-                           *p     = rev8[(unsigned char)v3];
-                           p[32]  = rev8[(unsigned char)v2];
-                           p[64]  = rev8[(unsigned char)(v3 >> 8)];
-                           p[96]  = rev8[(unsigned char)(v2 >> 8)];
-                           p[128] = rev8[(unsigned char)(v3 >> 16)];
-                           p[160] = rev8[(unsigned char)(v2 >> 16)];
-                           p[192] = rev8[(unsigned char)(v3 >> 24)];
-                           p[224] = rev8[(unsigned char)(v2 >> 24)];
+                           *p     = (unsigned char)v3;
+                           p[32]  = (unsigned char)v2;
+                           p[64]  = (unsigned char)(v3 >> 8);
+                           p[96]  = (unsigned char)(v2 >> 8);
+                           p[128] = (unsigned char)(v3 >> 16);
+                           p[160] = (unsigned char)(v2 >> 16);
+                           p[192] = (unsigned char)(v3 >> 24);
+                           p[224] = (unsigned char)(v2 >> 24);
                            
                            liveseen |= (1 << yy) ;
                         }
@@ -175,8 +208,7 @@ void qlifealgo::BlitCells(supertile *p,
    // to only render those portions that need to be rendered
    // (using this information).   -tom
    //
-   // draw the non-empty bitmap, scaling up if pmag > 1;
-   // note that bigbuf data must be in XBM format
+   // draw the non-empty bitmap, scaling up if pmag > 1
    renderbm(xoff, yoff) ;
 }
 
@@ -209,7 +241,7 @@ void qlifealgo::ShrinkCells(supertile *p,
    int bminc = -1 << (logshbmsize-3) ;
    unsigned char *bm = bigbuf + (((shbmsize-1)-yoff+bmtop) << (logshbmsize-3)) +
                                   ((xoff-bmleft) >> 3) ;
-   int bit = 1 << ((xoff-bmleft) & 7) ;
+   int bit = 128 >> ((xoff-bmleft) & 7) ;
    // do recursion until we get to minimum level (which depends on mag)
    if (lev > minlevel) {
       int xinc = 0, yinc = 0 ;
@@ -258,7 +290,7 @@ void qlifealgo::ShrinkCells(supertile *p,
                      }
                   }
                   if ((j ^ (j + 1)) >> sh)
-                     bbit <<= 1 ;
+                     bbit >>= 1 ;
                }
             }
             if ((i ^ (i + 1)) >> sh)
@@ -303,7 +335,7 @@ void qlifealgo::ShrinkCells(supertile *p,
             if ( bt->d[kadd+4] | bt->d[kadd+5] | bt->d[kadd+6] | bt->d[kadd+7] |
                  bb->d[kadd+4] | bb->d[kadd+5] | bb->d[kadd+6] | bb->d[kadd+7] )
                // shrink 16x16 cells to 1 pixel
-               *bm |= bit << 1 ;
+               *bm |= bit >> 1 ;
          }
          bm += bminc ;
          if (t->b[2] != emptybrick || t->b[3] != emptybrick) {
@@ -318,7 +350,7 @@ void qlifealgo::ShrinkCells(supertile *p,
             if ( bt->d[kadd+4] | bt->d[kadd+5] | bt->d[kadd+6] | bt->d[kadd+7] |
                  bb->d[kadd+4] | bb->d[kadd+5] | bb->d[kadd+6] | bb->d[kadd+7] )
                // shrink 16x16 cells to 1 pixel
-               *bm |= bit << 1 ;
+               *bm |= bit >> 1 ;
          }
       }
       break;
@@ -333,11 +365,11 @@ void qlifealgo::ShrinkCells(supertile *p,
                brick *b = t->b[j];
                int k ;
                // examine the 8 slices (2 at a time) in the appropriate half-brick
+               int bbit = bit;
                for (k=0; k<8; k += 2) {
-                  if ( (b->d[k+kadd] | b->d[k+kadd+1]) ) *bm |= bit ;
-                  bit <<= 1 ;
+                  if ( (b->d[k+kadd] | b->d[k+kadd+1]) ) *bm |= bbit ;
+                  bbit >>= 1 ;
                }
-               bit >>= 4 ;
             }
             bm += bminc ;
          }
@@ -353,7 +385,7 @@ void qlifealgo::ShrinkCells(supertile *p,
             if (t->b[j] != emptybrick) {
                brick *b = t->b[j];
                int k ;
-               bit = 1 ;
+               bit = 128 ;
                // examine the 8 slices in the appropriate half-brick
                for (k=0; k<8; k++) {
                   unsigned int s = b->d[k+kadd];
@@ -362,7 +394,7 @@ void qlifealgo::ShrinkCells(supertile *p,
                      if (s & 0xFFFF0000) *bm |= bit ;
                      if (s & 0x0000FFFF) bm[bminc] |= bit ;
                   }
-                  bit <<= 1 ;
+                  bit >>= 1 ;
                }
             }
             bm += 2 * bminc ;
@@ -380,7 +412,7 @@ void qlifealgo::ShrinkCells(supertile *p,
             if (t->b[j] != emptybrick) {
                brick *b = t->b[j];
                int k ;
-               bit = 1 ;
+               bit = 128 ;
                // examine the 8 slices in the appropriate half-brick
                for (k=0; k<8; k++) {
                   unsigned int s = b->d[k+kadd];
@@ -390,18 +422,18 @@ void qlifealgo::ShrinkCells(supertile *p,
                      if (s & 0x00CC0000) bmm[bminc] |= bit ;
                      if (s & 0x0000CC00) bmm[bminc+bminc] |= bit ;
                      if (s & 0x000000CC) bmm[bminc+bminc+bminc] |= bit ;
-                     bit <<= 1 ;
+                     bit >>= 1 ;
                      if (s & 0x33000000) *bmm |= bit ;
                      if (s & 0x00330000) bmm[bminc] |= bit ;
                      if (s & 0x00003300) bmm[bminc+bminc] |= bit ;
                      if (s & 0x00000033) bmm[bminc+bminc+bminc] |= bit ;
-                     bit <<= 1 ;
+                     bit >>= 1 ;
                   } else {
-                     bit <<= 2 ;
+                     bit >>= 2 ;
                   }
-                  if (bit >= 256) {
+                  if (bit < 1) {
                      bmm++ ;
-                     bit = 1 ;
+                     bit = 128 ;
                   }
                }
                bmm -= 2 ;
@@ -442,10 +474,12 @@ void qlifealgo::fill_ll(int d) {
    coor.second.tochararr(llyb, llbits) ;
 }
 void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
-   if (rev8[255] == 0)
-      init_rev8() ;
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
    renderer = &renderarg ;
+
+   // AKT: set cellred/green/blue ptrs
+   renderer->getcolors(&cellred, &cellgreen, &cellblue);
+
    view = &viewarg ;
    uvieww = view->getwidth() ;
    uviewh = view->getheight() ;

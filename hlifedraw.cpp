@@ -36,37 +36,48 @@ const int logbmsize = 7 ;                 // 6=64x64  7=128x128  8=256x256
 const int bmsize = (1<<logbmsize) ;
 const int byteoff = (bmsize/8) ;
 const int ibufsize = (bmsize*bmsize/32) ;
-static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for up to 256x256 pixels
+static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for 128x128 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
 
-// this version draws in XBM bitmap format
+// AKT: 128x128 pixmap where each pixel is 3 rgb bytes
+static unsigned char pixbuf[bmsize*bmsize*3];
+
+// AKT: rgb colors for each cell state (set by getcolors call)
+static unsigned char* cellred;
+static unsigned char* cellgreen;
+static unsigned char* cellblue;
+
 static void drawpixel(int x, int y) {
-  bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (1 << (x & 7)) ;
+  bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (128 >> (x & 7)) ;
 }
+
 /*
  *   Draw a 4x4 area yielding 1x1, 2x2, or 4x4 pixels.
  */
 void draw4x4_1(unsigned short sw, unsigned short se,
                unsigned short nw, unsigned short ne, int llx, int lly) {
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   int bit = 1 << ((-llx) & 0x7) ;
+   int bit = 128 >> ((-llx) & 0x7) ;
    if (sw) *p |= bit ;
-   if (se) *p |= (bit << 1) ;
+   if (se) *p |= (bit >> 1) ;
    p -= byteoff ;
    if (nw) *p |= bit ;
-   if (ne) *p |= (bit << 1) ;
+   if (ne) *p |= (bit >> 1) ;
 }
+
 void draw4x4_1(node *n, node *z, int llx, int lly) {
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   int bit = 1 << ((-llx) & 0x7) ;
+   int bit = 128 >> ((-llx) & 0x7) ;
    if (n->sw != z) *p |= bit ;
-   if (n->se != z) *p |= (bit << 1) ;
+   if (n->se != z) *p |= (bit >> 1) ;
    p -= byteoff ;
    if (n->nw != z) *p |= bit ;
-   if (n->ne != z) *p |= (bit << 1) ;
+   if (n->ne != z) *p |= (bit >> 1) ;
 }
+
 static unsigned char compress4x4[256] ;
-static unsigned char rev8[256] ;
+static bool inited = false;
+
 void draw4x4_2(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
    int mask = (((-llx) & 0x4) ? 0xf0 : 0x0f) ;
@@ -75,13 +86,15 @@ void draw4x4_2(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    p[0] |= mask & compress4x4[db & 255] ;
    p[-byteoff] |= mask & compress4x4[db >> 8] ;
 }
+
 void draw4x4_4(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   p[0] = rev8[((bits1 << 4) & 0xf0) + (bits2 & 0xf)] ;
-   p[-byteoff] = rev8[(bits1 & 0xf0) + ((bits2 >> 4) & 0xf)] ;
-   p[-2*byteoff] = rev8[((bits1 >> 4) & 0xf0) + ((bits2 >> 8) & 0xf)] ;
-   p[-3*byteoff] = rev8[((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf)] ;
+   p[0] = ((bits1 << 4) & 0xf0) + (bits2 & 0xf) ;
+   p[-byteoff] = (bits1 & 0xf0) + ((bits2 >> 4) & 0xf) ;
+   p[-2*byteoff] = ((bits1 >> 4) & 0xf0) + ((bits2 >> 8) & 0xf) ;
+   p[-3*byteoff] = ((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf) ;
 }
+
 void hlifealgo::clearrect(int minx, int miny, int w, int h) {
    // minx,miny is lower left corner
    if (w <= 0 || h <= 0)
@@ -109,9 +122,42 @@ void hlifealgo::renderbm(int x, int y) {
       rh *= pmag ;
    }
    ry = uviewh - ry - rh ;
-   renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
+   
+   // AKT: call pixblit instead of blit -- this is just a temporary fix;
+   //      eventually we'll draw directly into pixbuf rather than bigbuf!!!
+   if (pmag > 1) {
+      // convert each bigbuf byte into 8 bytes of state data
+      int j = 0;
+      for (int i = 0; i < ibufsize * 4; i++) {
+         int byte = bigbuf[i];
+         for (int bit = 128; bit > 0; bit >>= 1) {
+            pixbuf[j++] = (byte & bit) ? 1 : 0;
+         }
+      }
+   } else {
+      // convert each bigbuf byte into 24 bytes of pixel data (8 * rgb)
+      int j = 0;
+      for (int i = 0; i < ibufsize * 4; i++) {
+         int byte = bigbuf[i];
+         for (int bit = 128; bit > 0; bit >>= 1) {
+            if (byte & bit) {
+               pixbuf[j++] = cellred[1];
+               pixbuf[j++] = cellgreen[1];
+               pixbuf[j++] = cellblue[1];
+            } else {
+               pixbuf[j++] = cellred[0];
+               pixbuf[j++] = cellgreen[0];
+               pixbuf[j++] = cellblue[0];
+            }
+         }
+      }
+   }
+   renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
+   // renderer->blit(rx, ry, rw, rh, (int *)ibigbuf, pmag) ;
+   
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
 }
+
 /*
  *   Here, llx and lly are coordinates in screen pixels describing
  *   where the lower left pixel of the screen is.  Draw one node.
@@ -159,6 +205,7 @@ void hlifealgo::drawnode(node *n, int llx, int lly, int depth, node *z) {
       }
    }
 }
+
 /*
  *   Fill in the llxb and llyb bits from the viewport information.
  *   Allocate if necessary.  This arithmetic should be done carefully.
@@ -175,7 +222,7 @@ void hlifealgo::fill_ll(int d) {
    if (bitsreq2 > bitsreq)
       bitsreq = bitsreq2 ;
    if (bitsreq <= d)
-     bitsreq = d + 1 ; // need to access llxyb[d]
+      bitsreq = d + 1 ; // need to access llxyb[d]
    if (bitsreq > llsize) {
       if (llsize) {
          delete [] llxb ;
@@ -189,18 +236,21 @@ void hlifealgo::fill_ll(int d) {
    coor.first.tochararr(llxb, llbits) ;
    coor.second.tochararr(llyb, llbits) ;
 }
-static void init_rev8() {
+
+static void init_compress4x4() {
    int i;
    for (i=0; i<8; i++) {
-      rev8[1<<i] = (unsigned char)(1<<(7-i)) ;
-      compress4x4[1<<i] = (unsigned char)(0x11 << ((7 - i) >> 1)) ;
+      // old XBM code:
+      // compress4x4[1<<i] = (unsigned char)(0x11 << ((7 - i) >> 1)) ;
+      // new code (no bit reversal):
+      compress4x4[1<<i] = (unsigned char)(0x88 >> (i >> 1)) ;   //fix!!!
    }
    for (i=0; i<256; i++)
       if (i & (i-1)) {
-         rev8[i] = rev8[i & (i-1)] + rev8[i & -i] ;
          compress4x4[i] = compress4x4[i & (i-1)] | compress4x4[i & -i] ;
       }
 }
+
 /*
  *   This is the top-level draw routine that takes the root node.
  *   It maintains four nodes onto which the screen fits and uses the
@@ -211,11 +261,17 @@ static void init_rev8() {
  *   display an image.
  */
 void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
-   if (rev8[255] == 0)
-      init_rev8() ;
+   if (!inited) {
+      init_compress4x4() ;
+      inited = true;
+   }
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
    ensure_hashed() ;
    renderer = &rendererarg ;
+
+   // AKT: set cellred/green/blue ptrs
+   renderer->getcolors(&cellred, &cellgreen, &cellblue);
+
    view = &viewarg ;
    uvieww = view->getwidth() ;
    uviewh = view->getheight() ;

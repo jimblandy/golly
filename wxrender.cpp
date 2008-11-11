@@ -52,8 +52,7 @@ DrawView() does the following tasks:
   Note that currlayer->algo->draw() does all the hard work of figuring
   out which parts of the viewport are dead and building all the bitmaps
   for the live parts.  The bitmaps contain suitably shrunken images
-  when the scale is < 1:1 (ie. mag < 0).  At scales 1:2 and above,
-  DrawStretchedBitmap() is called from wx_render::blit().
+  when the scale is < 1:1 (ie. mag < 0).
   
   Each lifealgo needs to implement its own draw() method; for example,
   hlifealgo::draw() in hlifedraw.cpp.
@@ -78,13 +77,6 @@ Potential optimizations:
   and only draw new rects when necessary (the list would need to be
   emptied after various UI changes).  Other more complicated schemes
   that only do incremental drawing might also be worth trying.
-
-- The bitmap data passed into wx_render::blit() is an XBM image where
-  the bit order in each byte is reversed.  This is required by the
-  wxBitmap constructor when creating monochrome bitmaps.  Presumably
-  the bit order needs to be reversed back before it can be used with
-  the Mac's native blitter (and Windows?) so it would probably be good
-  to avoid the bit reversal and call the native blitter directly.
 
 Other points of interest:
 
@@ -130,30 +122,13 @@ Other points of interest:
 
 // -----------------------------------------------------------------------------
 
-// bitmap memory for drawing magnified cells (see DrawStretchedBitmap)
-const int MAGSIZE = 256;
-wxUint16 magarray[MAGSIZE * MAGSIZE / 16];
-unsigned char* magbuf = (unsigned char*)magarray;
-
-// this lookup table magnifies bits in a given byte by a factor of 2;
-// it assumes input and output are in XBM format (bits in each byte are reversed)
-// because that's what wxWidgets requires when creating a monochrome bitmap
-wxUint16 Magnify2[256];
-
 // globals used in wx_render routines
 wxDC* currdc;                 // current device context for viewport
 int currwd, currht;           // current width and height of viewport
-wxBrush* killbrush;           // brush used to draw dead cells
-wxBrush* cellbrush = NULL;    // brush used to draw live cells in blit calls
 wxBitmap* pixmap = NULL;      // 32-bit deep bitmap used in pixblit calls
 int pixmapwd = -1;            // width of pixmap
 int pixmapht = -1;            // height of pixmap
 wxBitmap** iconmaps;          // array of icon bitmaps
-
-// for drawing multiple layers
-wxBitmap* layerbitmap = NULL;    // layer bitmap
-int layerwd = -1;                // width of layer bitmap
-int layerht = -1;                // height of layer bitmap
 
 // for drawing translucent selection (initialized in InitDrawingData)
 int selwd;                    // width of selection bitmap
@@ -162,41 +137,27 @@ wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is use
 wxBitmap* graybitmap = NULL;  // for inactive selections when drawing multiple layers
 
 // for drawing paste pattern (initialized in CreatePasteImage)
-wxBitmap* pastebitmap;     // paste bitmap
-int pimagewd;              // width of paste image
-int pimageht;              // height of paste image
-int prectwd;               // must match viewptr->pasterect.width
-int prectht;               // must match viewptr->pasterect.height
-int pastemag;              // must match current viewport's scale
-int cvwd, cvht;            // must match current viewport's width and height
-paste_location pasteloc;   // must match plocation
-bool pasteicons;           // must match showicons
-lifealgo* pastealgo;       // universe containing paste pattern
-wxRect pastebbox;          // bounding box in cell coords (not necessarily minimal)
+wxBitmap* pastebitmap;        // paste bitmap
+int pimagewd;                 // width of paste image
+int pimageht;                 // height of paste image
+int prectwd;                  // must match viewptr->pasterect.width
+int prectht;                  // must match viewptr->pasterect.height
+int pastemag;                 // must match current viewport's scale
+int cvwd, cvht;               // must match current viewport's width and height
+paste_location pasteloc;      // must match plocation
+bool pasteicons;              // must match showicons
+lifealgo* pastealgo;          // universe containing paste pattern
+wxRect pastebbox;             // bounding box in cell coords (not necessarily minimal)
+
+// for drawing multiple layers
+wxBitmap* layerbitmap = NULL;    // layer bitmap
+int layerwd = -1;                // width of layer bitmap
+int layerht = -1;                // height of layer bitmap
 
 // for drawing tile borders
 const wxColor dkgray(96, 96, 96);
 const wxColor ltgray(224, 224, 224);
 const wxColor brightgreen(0, 255, 0);
-
-// -----------------------------------------------------------------------------
-
-// initialize Magnify2 table; note that it swaps byte order if running on
-// a little-endian processor
-void InitMagnifyTable()
-{
-   int inttest = 1;
-   unsigned char* p = (unsigned char*) &inttest;
-   int i;
-   for (i=0; i<8; i++)
-      if (*p)
-         Magnify2[1<<i] = 3 << (2 * i);
-      else
-         Magnify2[1<<i] = 3 << (2 * (i ^ 4));
-   for (i=0; i<256; i++)
-      if (i & (i-1))
-         Magnify2[i] = Magnify2[i & (i-1)] + Magnify2[i & - i];
-}
 
 // -----------------------------------------------------------------------------
 
@@ -239,11 +200,6 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
 
 void InitDrawingData()
 {
-   InitMagnifyTable();
-
-   cellbrush = new wxBrush(*wxBLACK_BRUSH);
-   if (cellbrush == NULL) Fatal(_("Failed to create cell brush!"));
-   
    // create translucent selection bitmap
    viewptr->GetClientSize(&selwd, &selht);
    // selwd or selht might be < 1 on Windows
@@ -271,115 +227,9 @@ void InitDrawingData()
 
 void DestroyDrawingData()
 {
-   delete cellbrush;
    delete layerbitmap;
    delete selbitmap;
    delete graybitmap;
-}
-
-// -----------------------------------------------------------------------------
-
-// called from wx_render::blit to magnify given bitmap by pmag (2, 4, ... 2^MAX_MAG)
-void DrawStretchedBitmap(int* bmdata, int xoff, int yoff, int bmsize, int pmag)
-{
-   int blocksize, magsize, rowshorts, numblocks, numshorts, numbytes;
-   int rowbytes = bmsize / 8;
-   int row, col;                    // current block
-   int xw, yw;                      // window pos of scaled block's top left corner
-
-   // try to process bmdata in square blocks of size MAGSIZE/pmag so each
-   // magnified block is MAGSIZE x MAGSIZE
-   blocksize = MAGSIZE / pmag;
-   magsize = MAGSIZE;
-   if (blocksize > bmsize) {
-      blocksize = bmsize;
-      magsize = bmsize * pmag;      // only use portion of magarray
-   }
-   rowshorts = magsize / 16;
-   numbytes = rowshorts * 2;
-
-   // pmag must be <= numbytes so numshorts (see below) will be > 0
-   if (pmag > numbytes) {
-      // this should never happen if max pmag is 16 (MAX_MAG = 4) and min bmsize is 64
-      Fatal(_("DrawStretchedBitmap cannot magnify by this amount!"));
-   }
-   
-   // nicer to have gaps between cells at scales > 1:2
-   wxUint16 gapmask = 0;
-   if ( (pmag > 2 && pmag < (1 << mingridmag)) ||
-        (pmag >= (1 << mingridmag) && !showgridlines) ) {
-      // we use 7/7F rather than E/FE because of XBM bit reversal
-      if (pmag == 4) {
-         gapmask = 0x7777;
-      } else if (pmag == 8) {
-         gapmask = 0x7F7F;
-      } else if (pmag == 16) {
-         unsigned char* p = (unsigned char*) &gapmask;
-         gapmask = 0xFF7F;
-         // swap byte order if little-endian processor
-         if (*p != 0xFF) gapmask = 0x7FFF;
-      }
-   }
-
-   yw = yoff;
-   numblocks = bmsize / blocksize;
-   for ( row = 0; row < numblocks; row++ ) {
-      xw = xoff;
-      for ( col = 0; col < numblocks; col++ ) {
-         if ( xw < currwd && xw + magsize >= 0 &&
-              yw < currht && yw + magsize >= 0 ) {
-            // some part of magnified block will be visible;
-            // set bptr to address of byte at top left corner of current block
-            unsigned char* bptr = (unsigned char*) bmdata + (row * blocksize * rowbytes) +
-                                                            (col * blocksize / 8);
-            
-            int rowindex = 0;       // first row in magbuf
-            int i, j;
-            for ( i = 0; i < blocksize; i++ ) {
-               // use lookup table to convert bytes in bmdata to 16-bit ints in magbuf
-               numshorts = numbytes / pmag;
-               for ( j = 0; j < numshorts; j++ ) {
-                  magarray[rowindex + j] = Magnify2[ bptr[j] ];
-               }
-               while (numshorts < rowshorts) {
-                  // stretch completed bytes in current row starting from right end
-                  unsigned char* p = (unsigned char*) &magarray[rowindex + numshorts];
-                  for ( j = numshorts * 2 - 1; j >= 0; j-- ) {
-                     p--;
-                     magarray[rowindex + j] = Magnify2[ *p ];
-                  }
-                  numshorts *= 2;
-               }
-               if (gapmask > 0) {
-                  // erase pixel at right edge of each cell
-                  for ( j = 0; j < rowshorts; j++ )
-                     magarray[rowindex + j] &= gapmask;
-                  // duplicate current magbuf row pmag-2 times
-                  for ( j = 2; j < pmag; j++ ) {
-                     memcpy(&magarray[rowindex + rowshorts], &magarray[rowindex], rowshorts*2);
-                     rowindex += rowshorts;
-                  }
-                  rowindex += rowshorts;
-                  // erase pixel at bottom edge of each cell
-                  memset(&magarray[rowindex], 0, rowshorts*2);
-               } else {
-                  // duplicate current magbuf row pmag-1 times
-                  for ( j = 1; j < pmag; j++ ) {
-                     memcpy(&magarray[rowindex + rowshorts], &magarray[rowindex], rowshorts*2);
-                     rowindex += rowshorts;
-                  }
-               }
-               rowindex += rowshorts;     // start of next row in magbuf
-               bptr += rowbytes;          // start of next row in current block
-            }
-            
-            wxBitmap magmap((const char*)magbuf, magsize, magsize, 1);
-            currdc->DrawBitmap(magmap, xw, yw);
-         }
-         xw += magsize;     // across to next block
-      }
-      yw += magsize;     // down to next block
-   }
 }
 
 // -----------------------------------------------------------------------------
@@ -624,162 +474,6 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 
 // -----------------------------------------------------------------------------
 
-void DrawXBMIcons(unsigned char* byteptr, int x, int y, int w, int h, int bmscale)
-{
-   // called from wx_render::blit to draw an icon for each live cell;
-   // assume bmscale > 2 (should be 8 or 16)
-   int cellsize = bmscale - 1;
-   bool drawgap = (bmscale < (1 << mingridmag)) ||
-                  (bmscale >= (1 << mingridmag) && !showgridlines);
-   unsigned char deadred   = currlayer->cellr[0];
-   unsigned char deadgreen = currlayer->cellg[0];
-   unsigned char deadblue  = currlayer->cellb[0];
-
-   // note that bitmap data is in XBM format (bits in each byte are reversed)
-   // so we start at bit 1 and work up to bit 8
-   int bit = 1;
-
-   wxAlphaPixelData pxldata(*pixmap);
-   if (pxldata) {
-      #ifdef __WXGTK__
-         pxldata.UseAlpha();
-      #endif
-      wxAlphaPixelData::Iterator p(pxldata);
-      for ( int row = 0; row < h; row++ ) {
-         wxAlphaPixelData::Iterator rowstart = p;
-         for ( int col = 0; col < w; col++ ) {
-
-            wxAlphaPixelData::Iterator topleft = p;
-            int newx = x + col * bmscale;
-            int newy = y + row * bmscale;
-            if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
-               // clip cell outside viewport
-
-            } else if ((*byteptr & bit) && iconmaps[1]) {
-               // draw icon by copying cellsize*cellsize pixels from iconmaps[1]
-               #ifdef __WXMSW__
-                  // must use wxNativePixelData for bitmaps with no alpha channel
-                  wxNativePixelData icondata(*iconmaps[1]);
-               #else
-                  wxAlphaPixelData icondata(*iconmaps[1]);
-               #endif
-               if (icondata) {
-                  #ifdef __WXMSW__
-                     wxNativePixelData::Iterator iconpxl(icondata);
-                  #else
-                     wxAlphaPixelData::Iterator iconpxl(icondata);
-                  #endif
-                  for (int i = 0; i < cellsize; i++) {
-                     wxAlphaPixelData::Iterator colstart = p;
-                     #ifdef __WXMSW__
-                        wxNativePixelData::Iterator iconrow = iconpxl;
-                     #else
-                        wxAlphaPixelData::Iterator iconrow = iconpxl;
-                     #endif
-                     for (int j = 0; j < cellsize; j++) {
-                        if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                           // replace non-black pixel with state 1 color
-                           p.Red()   = currlayer->cellr[1];
-                           p.Green() = currlayer->cellg[1];
-                           p.Blue()  = currlayer->cellb[1];
-                        } else {
-                           // replace black pixel with dead cell color
-                           p.Red()   = deadred;
-                           p.Green() = deadgreen;
-                           p.Blue()  = deadblue;
-                        }
-                        #ifdef __WXGTK__
-                           p.Alpha() = 255;
-                        #endif
-                        p++;
-                        iconpxl++;
-                     }
-                     if (drawgap) {
-                        // draw dead pixels at right edge of cell
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
-                        #ifdef __WXGTK__
-                           p.Alpha() = 255;
-                        #endif
-                     }
-                     p = colstart;
-                     p.OffsetY(pxldata, 1);
-                     // move to next row of icon bitmap
-                     iconpxl = iconrow;
-                     iconpxl.OffsetY(icondata, 1);
-                  }
-                  if (drawgap) {
-                     // draw dead pixels at bottom edge of cell
-                     for (int j = 0; j <= cellsize; j++) {
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
-                        #ifdef __WXGTK__
-                           p.Alpha() = 255;
-                        #endif
-                        p++;
-                     }
-                  }
-               }
-               
-            } else {
-               // draw dead cell
-               for (int i = 0; i < cellsize; i++) {
-                  wxAlphaPixelData::Iterator colstart = p;
-                  for (int j = 0; j < cellsize; j++) {
-                     p.Red()   = deadred;
-                     p.Green() = deadgreen;
-                     p.Blue()  = deadblue;
-                     #ifdef __WXGTK__
-                        p.Alpha() = 255;
-                     #endif
-                     p++;
-                  }
-                  if (drawgap) {
-                     // draw dead pixels at right edge of cell
-                     p.Red()   = deadred;
-                     p.Green() = deadgreen;
-                     p.Blue()  = deadblue;
-                     #ifdef __WXGTK__
-                        p.Alpha() = 255;
-                     #endif
-                  }
-                  p = colstart;
-                  p.OffsetY(pxldata, 1);
-               }
-               if (drawgap) {
-                  // draw dead pixels at bottom edge of cell
-                  for (int j = 0; j <= cellsize; j++) {
-                     p.Red()   = deadred;
-                     p.Green() = deadgreen;
-                     p.Blue()  = deadblue;
-                     #ifdef __WXGTK__
-                        p.Alpha() = 255;
-                     #endif
-                     p++;
-                  }
-               }
-            }
-            
-            if (bit < 128) {
-               bit *= 2;
-            } else {
-               bit = 1;
-               byteptr++;        // move to next byte of bitmap data
-            }
-            p = topleft;
-            p.OffsetX(pxldata, bmscale);
-         }
-         p = rowstart;
-         p.OffsetY(pxldata, bmscale);
-      }
-   }
-   currdc->DrawBitmap(*pixmap, x, y);   
-}
-
-// -----------------------------------------------------------------------------
-
 void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                  unsigned char r, unsigned char g, unsigned char b)
 {
@@ -859,7 +553,7 @@ public:
    wx_render() {}
    virtual ~wx_render() {}
    virtual void killrect(int x, int y, int w, int h);
-   virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1);
+   virtual void blit(int x, int y, int w, int h, int* bm, int bmscale=1) {}   //!!! remove eventually
    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b);
 };
@@ -892,82 +586,8 @@ void wx_render::killrect(int x, int y, int w, int h)
                                 (rand()&127)+128));
       FillRect(*currdc, r, randbrush);
    #else
-      FillRect(*currdc, r, *killbrush);
+      FillRect(*currdc, r, *deadbrush);
    #endif
-}
-
-// -----------------------------------------------------------------------------
-
-void wx_render::blit(int x, int y, int w, int h, int* bmdata, int bmscale)
-{
-   //!!! is Tom's hashdraw code doing unnecessary work???
-   if (x >= currwd || y >= currht) return;
-   if (x + w <= 0 || y + h <= 0) return;
-      
-   if (bmscale == 1) {
-      wxBitmap bmap((const char*)bmdata, w, h, 1);
-      currdc->DrawBitmap(bmap, x, y);
-
-   } else if (showicons && bmscale > 4 && iconmaps) {
-      // draw icons only at scales 1:8 or 1:16;
-      // create new pixmap only if size has changed
-      if (pixmapwd != w || pixmapht != h) {
-         delete pixmap;
-         pixmap = new wxBitmap(w, h, 32);
-         pixmapwd = w;
-         pixmapht = h;
-      }
-      DrawXBMIcons((unsigned char*) bmdata, x, y, w/bmscale, h/bmscale, bmscale);
-
-#ifdef __WXMSW__
-   // on Windows it's almost never faster to draw rectangles
-   } else {
-      // stretch bitmap by bmscale
-      DrawStretchedBitmap(bmdata, x, y, w / bmscale, bmscale);
-   }
-#else
-   // on Mac and Linux it's faster to draw rectangles when bmscale > 2
-   } else if (bmscale == 2) {
-      // stretch bitmap by bmscale
-      DrawStretchedBitmap(bmdata, x, y, w / bmscale, bmscale);
-   } else {
-      // bmscale > 2
-      wxRect r(x, y, w, h);
-      FillRect(*currdc, r, *killbrush);
-      w = w / bmscale;
-      h = h / bmscale;
-      int cellsize = bmscale - 1;
-      char* byteptr = (char*) bmdata;
-      // note that bmdata is in XBM format (bits in each byte are reversed)
-      // so we start at bit 1 and work up to bit 8
-      int bit = 1;
-      currdc->SetPen(*wxTRANSPARENT_PEN);
-      currdc->SetBrush(*cellbrush);
-      for ( int row = 0; row < h; row++ ) {
-         for ( int col = 0; col < w; col++ ) {
-            if (*byteptr & bit) {
-               int newx = x + col * bmscale;
-               int newy = y + row * bmscale;
-               if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
-                  // clip cell outside viewport
-               } else {
-                  // draw live cell
-                  wxRect r(newx, newy, cellsize, cellsize);
-                  currdc->DrawRectangle(r);
-               }
-            }
-            if (bit < 128) {
-               bit *= 2;
-            } else {
-               bit = 1;
-               byteptr++;                 // move to next byte
-            }
-         }
-      }
-      currdc->SetBrush(wxNullBrush);      // restore brush
-      currdc->SetPen(wxNullPen);          // restore pen
-   }
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1341,34 +961,13 @@ void CheckPasteImage()
          
          wxMemoryDC pattdc;
          pattdc.SelectObject(*pastebitmap);
-         
-         // set foreground and background colors for drawing monochrome bitmaps
-         #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
-             (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
-            // use opposite meaning
-            pattdc.SetTextForeground(*deadrgb);
-            pattdc.SetTextBackground(wxColour(currlayer->cellr[1],
-                                              currlayer->cellg[1],
-                                              currlayer->cellb[1]));
-         #else
-            pattdc.SetTextForeground(wxColour(currlayer->cellr[1],
-                                              currlayer->cellg[1],
-                                              currlayer->cellb[1]));
-            pattdc.SetTextBackground(*deadrgb);
-         #endif
-
-         // set brush colors used in killrect and blit
-         killbrush = deadbrush;
-         cellbrush->SetColour(currlayer->cellr[1],
-                              currlayer->cellg[1],
-                              currlayer->cellb[1]);
 
          // set rgb values for dead cells in pixblit calls
          currlayer->cellr[0] = deadrgb->Red();
          currlayer->cellg[0] = deadrgb->Green();
          currlayer->cellb[0] = deadrgb->Blue();
          
-         // temporarily turn off grid lines for DrawStretchedBitmap
+         // temporarily turn off grid lines
          bool saveshow = showgridlines;
          showgridlines = false;
          
@@ -1542,27 +1141,6 @@ void DrawOneLayer(wxDC& dc)
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
    
-   // set foreground and background colors for drawing monochrome bitmaps
-   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
-       (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
-      // use opposite meaning
-      layerdc.SetTextForeground(*deadrgb);
-      layerdc.SetTextBackground(wxColour(currlayer->cellr[1],
-                                         currlayer->cellg[1],
-                                         currlayer->cellb[1]));
-      
-   #else
-      layerdc.SetTextForeground(wxColour(currlayer->cellr[1],
-                                         currlayer->cellg[1],
-                                         currlayer->cellb[1]));
-      layerdc.SetTextBackground(*deadrgb);
-   #endif
-   
-   // set brush color used in blit
-   cellbrush->SetColour(currlayer->cellr[1],
-                        currlayer->cellg[1],
-                        currlayer->cellb[1]);
-   
    currdc = &layerdc;
    currlayer->algo->draw(*currlayer->view, renderer);
    
@@ -1591,22 +1169,14 @@ void DrawStackedLayers(wxDC& dc)
       }
    }
 
-   // temporarily turn off grid lines for DrawStretchedBitmap
+   // temporarily turn off grid lines
    bool saveshow = showgridlines;
    showgridlines = false;
-
-   // set brush color used in killrect
-   killbrush = deadbrush;
    
    // draw patterns in layers 1..numlayers-1
    for ( int i = 1; i < numlayers; i++ ) {
       Layer* savelayer = currlayer;
       currlayer = GetLayer(i);
-
-      // set brush color used in blit
-      cellbrush->SetColour(currlayer->cellr[1],
-                           currlayer->cellg[1],
-                           currlayer->cellb[1]);
    
       // set rgb values for dead cells in pixblit calls
       currlayer->cellr[0] = deadrgb->Red();
@@ -1742,27 +1312,6 @@ void DrawView(wxDC& dc, int tileindex)
       // just draw the current layer
       colorindex = currindex;
    }
-
-   // set foreground and background colors for drawing monochrome bitmaps
-   #if (defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)) || \
-       (defined(__WXMSW__) && !wxCHECK_VERSION(2,8,0))
-      // use opposite meaning
-      dc.SetTextForeground(*deadrgb);
-      dc.SetTextBackground(wxColour(currlayer->cellr[1],
-                                    currlayer->cellg[1],
-                                    currlayer->cellb[1]));
-   #else
-      dc.SetTextForeground(wxColour(currlayer->cellr[1],
-                                    currlayer->cellg[1],
-                                    currlayer->cellb[1]));
-      dc.SetTextBackground(*deadrgb);
-   #endif
-
-   // set brush colors used in killrect and blit
-   killbrush = deadbrush;
-   cellbrush->SetColour(currlayer->cellr[1],
-                        currlayer->cellg[1],
-                        currlayer->cellb[1]);
    
    // set rgb values for dead cells in pixblit calls
    currlayer->cellr[0] = deadrgb->Red();
@@ -1778,7 +1327,7 @@ void DrawView(wxDC& dc, int tileindex)
       }
    }
 
-   // draw pattern using a sequence of blit/pixblit and killrect calls
+   // draw pattern using a sequence of pixblit and killrect calls
    currdc = &dc;
    currwd = currlayer->view->getwidth();
    currht = currlayer->view->getheight();

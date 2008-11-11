@@ -33,12 +33,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 using namespace std ;
 
-const int logbmsize = 7 ;                 // 6=64x64  7=128x128  8=256x256
-const int bmsize = (1<<logbmsize) ;
-const int rowoff = (bmsize*3) ;           // row offset
-const int ibufsize = (bmsize*bmsize*3) ;  // each pixel has 3 r,g,b values
-static unsigned char ibigbuf[ibufsize] ;  // a shared buffer for up to 256x256 pixels
-static unsigned char *bigbuf = ibigbuf ;
+const int logpmsize = 7 ;                    // 6=64x64  7=128x128  8=256x256
+const int pmsize = (1<<logpmsize) ;          // pixmap wd and ht, in pixels
+const int bpp = 3 ;                          // bytes per pixel (rgb)
+const int rowoff = (pmsize*bpp) ;            // row offset, in bytes
+const int ibufsize = (pmsize*pmsize*bpp) ;   // buffer size, in bytes
+static unsigned char ipixbuf[ibufsize] ;     // a shared buffer for 128x128 pixels
+static unsigned char *pixbuf = ipixbuf ;
 
 // AKT: arrays of rgb colors for each cell state (set by getcolors call)
 static unsigned char* cellred;
@@ -48,10 +49,10 @@ static unsigned char* cellblue;
 void ghashbase::drawpixel(int x, int y) {
    // AKT: draw all live cells using state 1 color -- nicer to use an average color???
    // pmag == 1, so store rgb info
-   int i = (bmsize-1-y) * rowoff + x*3;
-   bigbuf[i]   = cellred[1];
-   bigbuf[i+1] = cellgreen[1];
-   bigbuf[i+2] = cellblue[1];
+   int i = (pmsize-1-y) * rowoff + x*bpp;
+   pixbuf[i]   = cellred[1];
+   pixbuf[i+1] = cellgreen[1];
+   pixbuf[i+2] = cellblue[1];
 }
 
 /*
@@ -62,37 +63,37 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
    // sw,se,nw,ne contain cell states (0..255)
    if (pmag > 1) {
       // store state info
-      int i = (bmsize-1+lly) * bmsize - llx;
-      if (sw) bigbuf[i] = sw;
-      if (se) bigbuf[i+1] = se;
-      i -= bmsize;
-      if (nw) bigbuf[i] = nw;
-      if (ne) bigbuf[i+1] = ne;
+      int i = (pmsize-1+lly) * pmsize - llx;
+      if (sw) pixbuf[i] = sw;
+      if (se) pixbuf[i+1] = se;
+      i -= pmsize;
+      if (nw) pixbuf[i] = nw;
+      if (ne) pixbuf[i+1] = ne;
    } else {
       // store rgb info
-      int i = (bmsize-1+lly) * rowoff - (llx*3);
+      int i = (pmsize-1+lly) * rowoff - (llx*bpp);
       if (sw) {
-         bigbuf[i]   = cellred[sw] ;
-         bigbuf[i+1] = cellgreen[sw] ;
-         bigbuf[i+2] = cellblue[sw] ;
+         pixbuf[i]   = cellred[sw] ;
+         pixbuf[i+1] = cellgreen[sw] ;
+         pixbuf[i+2] = cellblue[sw] ;
       }
-      i += 3 ;
+      i += bpp ;
       if (se) {
-         bigbuf[i]   = cellred[se] ;
-         bigbuf[i+1] = cellgreen[se] ;
-         bigbuf[i+2] = cellblue[se] ;
+         pixbuf[i]   = cellred[se] ;
+         pixbuf[i+1] = cellgreen[se] ;
+         pixbuf[i+2] = cellblue[se] ;
       }
       i -= rowoff ;
       if (ne) {
-         bigbuf[i]   = cellred[ne] ;
-         bigbuf[i+1] = cellgreen[ne] ;
-         bigbuf[i+2] = cellblue[ne] ;
+         pixbuf[i]   = cellred[ne] ;
+         pixbuf[i+1] = cellgreen[ne] ;
+         pixbuf[i+2] = cellblue[ne] ;
       }
-      i -= 3 ;
+      i -= bpp ;
       if (nw) {
-         bigbuf[i]   = cellred[nw] ;
-         bigbuf[i+1] = cellgreen[nw] ;
-         bigbuf[i+2] = cellblue[nw] ;
+         pixbuf[i]   = cellred[nw] ;
+         pixbuf[i+1] = cellgreen[nw] ;
+         pixbuf[i+2] = cellblue[nw] ;
       }
    }
 }
@@ -100,50 +101,50 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
 void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
    // AKT: draw all live cells using state 1 color -- nicer to use an average color???
    // pmag == 1, so store rgb info
-   int i = (bmsize-1+lly) * rowoff - (llx*3);
+   int i = (pmsize-1+lly) * rowoff - (llx*bpp);
    if (n->sw != z) {
-      bigbuf[i]   = cellred[1];
-      bigbuf[i+1] = cellgreen[1];
-      bigbuf[i+2] = cellblue[1];
+      pixbuf[i]   = cellred[1];
+      pixbuf[i+1] = cellgreen[1];
+      pixbuf[i+2] = cellblue[1];
    }
-   i += 3;
+   i += bpp;
    if (n->se != z) {
-      bigbuf[i]   = cellred[1];
-      bigbuf[i+1] = cellgreen[1];
-      bigbuf[i+2] = cellblue[1];
+      pixbuf[i]   = cellred[1];
+      pixbuf[i+1] = cellgreen[1];
+      pixbuf[i+2] = cellblue[1];
    }
    i -= rowoff;
    if (n->ne != z) {
-      bigbuf[i]   = cellred[1] ;
-      bigbuf[i+1] = cellgreen[1] ;
-      bigbuf[i+2] = cellblue[1] ;
+      pixbuf[i]   = cellred[1] ;
+      pixbuf[i+1] = cellgreen[1] ;
+      pixbuf[i+2] = cellblue[1] ;
    }
-   i -= 3;
+   i -= bpp;
    if (n->nw != z) {
-      bigbuf[i]   = cellred[1] ;
-      bigbuf[i+1] = cellgreen[1] ;
-      bigbuf[i+2] = cellblue[1] ;
+      pixbuf[i]   = cellred[1] ;
+      pixbuf[i+1] = cellgreen[1] ;
+      pixbuf[i+2] = cellblue[1] ;
    }
 }
 
-// AKT: kill all cells in bigbuf
+// AKT: kill all cells in pixbuf
 void ghashbase::killpixels() {
    if (pmag > 1) {
-      // pixblit assumes bigbuf contains bmsize*bmsize bytes where each byte
+      // pixblit assumes pixbuf contains pmsize*pmsize bytes where each byte
       // is a cell state, so it's easy to kill all cells
-      memset(bigbuf, 0, bmsize*bmsize);   // AKT: no need to multiply by 3
+      memset(pixbuf, 0, pmsize*pmsize);
    } else {
-      // pixblit assumes bigbuf contains 3 bytes (r,g,b) for each pixel
+      // pixblit assumes pixbuf contains 3 bytes (r,g,b) for each pixel
       if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
          // use fast method
-         memset(bigbuf, cellred[0], sizeof(ibigbuf));
+         memset(pixbuf, cellred[0], sizeof(ipixbuf));
       } else {
          // use slow method
          // or create a single killed row at start of draw() and use memcpy here???
-         for (int i = 0; i < ibufsize; i += 3) {
-            bigbuf[i]   = cellred[0];
-            bigbuf[i+1] = cellgreen[0];
-            bigbuf[i+2] = cellblue[0];
+         for (int i = 0; i < ibufsize; i += bpp) {
+            pixbuf[i]   = cellred[0];
+            pixbuf[i+1] = cellgreen[0];
+            pixbuf[i+2] = cellblue[0];
          }
       }
    }
@@ -167,8 +168,8 @@ void ghashbase::renderbm(int x, int y) {
    // x,y is lower left corner
    int rx = x ;
    int ry = y ;
-   int rw = bmsize ;
-   int rh = bmsize ;
+   int rw = pmsize ;
+   int rh = pmsize ;
    if (pmag > 1) {
       rx *= pmag ;
       ry *= pmag ;
@@ -176,9 +177,10 @@ void ghashbase::renderbm(int x, int y) {
       rh *= pmag ;
    }
    ry = uviewh - ry - rh ;
-   renderer->pixblit(rx, ry, rw, rh, (char *)bigbuf, pmag);
+   renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
    killpixels();
 }
+
 /*
  *   Here, llx and lly are coordinates in screen pixels describing
  *   where the lower left pixel of the screen is.  Draw one ghnode.
@@ -186,21 +188,21 @@ void ghashbase::renderbm(int x, int y) {
  */
 void ghashbase::drawghnode(ghnode *n, int llx, int lly, int depth, ghnode *z) {
    int sw = 1 << (depth - mag + 1) ;
-   if (sw >= bmsize &&
+   if (sw >= pmsize &&
        (llx + vieww <= 0 || lly + viewh <= 0 || llx >= sw || lly >= sw))
       return ;
    if (n == z) {
-      if (sw >= bmsize)
+      if (sw >= pmsize)
          clearrect(-llx, -lly, sw, sw) ;
    } else if (depth > 0 && sw > 2) {
       z = z->nw ;
       sw >>= 1 ;
       depth-- ;
-      if (sw == (bmsize >> 1)) {
+      if (sw == (pmsize >> 1)) {
          drawghnode(n->sw, 0, 0, depth, z) ;
-         drawghnode(n->se, -(bmsize/2), 0, depth, z) ;
-         drawghnode(n->nw, 0, -(bmsize/2), depth, z) ;
-         drawghnode(n->ne, -(bmsize/2), -(bmsize/2), depth, z) ;
+         drawghnode(n->se, -(pmsize/2), 0, depth, z) ;
+         drawghnode(n->nw, 0, -(pmsize/2), depth, z) ;
+         drawghnode(n->ne, -(pmsize/2), -(pmsize/2), depth, z) ;
          renderbm(-llx, -lly) ;
       } else {
          drawghnode(n->sw, llx, lly, depth, z) ;
@@ -263,7 +265,7 @@ void ghashbase::fill_ll(int d) {
  */
 void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    /* AKT: call killpixels below
-   memset(bigbuf, 0, sizeof(ibigbuf)) ;
+   memset(pixbuf, 0, sizeof(ipixbuf)) ;
    */
    
    ensure_hashed() ;
@@ -374,7 +376,7 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
       clearrect(0, 0, vieww, -lly) ;
       clearrect(0, -lly, -llx, maxd) ;
       clearrect(maxd-llx, -lly, vieww-maxd+llx, maxd) ;
-      if (maxd <= bmsize) {
+      if (maxd <= pmsize) {
          maxd >>= 1 ;
          drawghnode(sw, 0, 0, d, z) ;
          drawghnode(se, -maxd, 0, d, z) ;

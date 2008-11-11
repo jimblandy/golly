@@ -205,10 +205,10 @@ private:
    g_uintptr_t writecell(FILE *f, ghnode *root, int depth) ;
    g_uintptr_t writecell_2p1(ghnode *root, int depth) ;
    g_uintptr_t writecell_2p2(FILE *f, ghnode *root, int depth) ;
-   // AKT: set all pixels to background color
-   void killpixels();
    void drawpixel(int x, int y);
    void draw4x4_1(state sw, state se, state nw, state ne, int llx, int lly) ;
    void draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) ;
+   // AKT: set all pixels to background color
+   void killpixels();
 } ;
 #endif
