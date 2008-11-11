@@ -80,7 +80,7 @@ static bool inited = false;
 
 void draw4x4_2(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   int mask = (((-llx) & 0x4) ? 0xf0 : 0x0f) ;
+   int mask = (((-llx) & 0x4) ? 0x0f : 0xf0) ;
    int db = ((bits1 | (bits1 << 4)) & 0xf0f0) +
             ((bits2 | (bits2 >> 4)) & 0x0f0f) ;
    p[0] |= mask & compress4x4[db & 255] ;
@@ -239,16 +239,11 @@ void hlifealgo::fill_ll(int d) {
 
 static void init_compress4x4() {
    int i;
-   for (i=0; i<8; i++) {
-      // old XBM code:
-      // compress4x4[1<<i] = (unsigned char)(0x11 << ((7 - i) >> 1)) ;
-      // new code (no bit reversal):
-      compress4x4[1<<i] = (unsigned char)(0x88 >> (i >> 1)) ;   //fix!!!
-   }
+   for (i=0; i<8; i++)
+      compress4x4[1<<i] = (unsigned char)(0x11 << (i >> 1)) ;
    for (i=0; i<256; i++)
-      if (i & (i-1)) {
+      if (i & (i-1))
          compress4x4[i] = compress4x4[i & (i-1)] | compress4x4[i & -i] ;
-      }
 }
 
 /*
