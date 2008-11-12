@@ -1,8 +1,29 @@
-# Famous Billiard Ball Machine - from Cellular Automata Machines.
+# Billiard Ball Machine - from Cellular Automata Machines.
 #
-# A rule by Edward Fredkin.
+# A rule by Edward Fredkin. Signals and logic gates are simulated by
+# 'billiard balls' that bounce off walls and each other. 
+#
+# E. Fredkin, T. Toffoli, "Conservative logic", International Journal of 
+# Theoretical Physics, 21:3-4, 219-253 (1982)
 #
 # MCell Margolus specification: MS,D0;8;4;3;2;5;9;7;1;6;10;11;12;13;14;15
+# (see: http://psoup.math.wisc.edu/mcell/rullex_marg.html )
+#
+# Rule table produced by Scripts/Python/Margolus/make-Margolus.py, which
+# can convert any MCell Margolus specification into a rule table.
+#
+# At the time of writing, Golly does not support the Margolus neighborhood,
+# so we are emulating it by using some extra states. Configurations must
+# have the correct pattern of states to work correctly - you can use the
+# scripts import.py and export.py in Scripts/Python/Margolus for easier
+# drawing.
+#
+# cell states:
+# 0 : background (never changes)
+# 1 :  o  (a cell is present, this isn't a top-left)
+# 2 :  .  (a cell isn't present, this isn't a top-left)
+# 3 : [o] (a cell is present, this is a top-left)
+# 4 : [.] (a cell isn't present, this is a top-left)
 #
 x = 88, y = 74, rule = BBM
 88A$CACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAC
