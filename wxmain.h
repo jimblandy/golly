@@ -251,6 +251,7 @@ enum {
    ID_SELECTALL,
    ID_REMOVE,
    ID_SHRINK,
+   ID_SHRINKFIT,  // there's currently no menu item for "Shrink and Fit"
    ID_RANDOM,
    ID_FLIPTB,
    ID_FLIPLR,

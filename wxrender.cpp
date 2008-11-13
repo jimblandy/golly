@@ -959,9 +959,6 @@ void CheckPasteImage()
             midy = cellbox.y + (cellbox.height - 1) / 2;
          }
          tempview.setpositionmag(midx, midy, pastemag);
-         
-         wxMemoryDC pattdc;
-         pattdc.SelectObject(*pastebitmap);
 
          // set rgb values for dead cells in pixblit calls
          currlayer->cellr[0] = deadrgb->Red();
@@ -972,9 +969,13 @@ void CheckPasteImage()
          bool saveshow = showgridlines;
          showgridlines = false;
          
+         wxMemoryDC pattdc;
+         pattdc.SelectObject(*pastebitmap);
+         
          currdc = &pattdc;
          currwd = tempview.getwidth();
          currht = tempview.getheight();
+         
          pastealgo->draw(tempview, renderer);
          
          showgridlines = saveshow;

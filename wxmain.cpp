@@ -1305,6 +1305,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SELECTALL:      viewptr->SelectAll(); break;
       case ID_REMOVE:         viewptr->RemoveSelection(); break;
       case ID_SHRINK:         viewptr->ShrinkSelection(false); break;
+      case ID_SHRINKFIT:      viewptr->ShrinkSelection(true); break;
       case ID_RANDOM:         viewptr->RandomFill(); break;
       case ID_FLIPTB:         viewptr->FlipSelection(true); break;
       case ID_FLIPLR:         viewptr->FlipSelection(false); break;

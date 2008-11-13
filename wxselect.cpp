@@ -748,6 +748,14 @@ void Selection::Fit()
 void Selection::Shrink(bool fit)
 {
    if (!exists) return;
+
+   if (mainptr->generating) {
+      // terminate generating loop and set command_pending flag
+      mainptr->Stop();
+      mainptr->command_pending = true;
+      mainptr->cmdevent.SetId(fit ? ID_SHRINKFIT : ID_SHRINK);
+      return;
+   }
    
    // check if there is no pattern
    if (currlayer->algo->isEmpty()) {
