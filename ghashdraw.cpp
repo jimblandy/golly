@@ -139,8 +139,7 @@ void ghashbase::killpixels() {
          // use fast method
          memset(pixbuf, cellred[0], sizeof(ipixbuf));
       } else {
-         // use slow method
-         // or create a single killed row at start of draw() and use memcpy here???
+         // use slow method (or kill the 1st row and memcpy into the other rows???)
          for (int i = 0; i < ibufsize; i += bpp) {
             pixbuf[i]   = cellred[0];
             pixbuf[i+1] = cellgreen[0];

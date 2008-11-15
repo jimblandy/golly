@@ -1700,12 +1700,12 @@ void UpdateCurrentColors()
    rule.Replace(wxT("/"), wxT("-"));
    rule.Replace(wxT(":"), wxT("-"));
    
-   // check if rule.colors file exists and override default colors
+   // if rule.colors file exists then override default colors
    LoadRuleColors(rule, maxstate);
    
-   // update icons
+   // if rule.icons file exists then use those icons
    if ( !LoadRuleIcons(rule, maxstate) ) {
-      // copy default icons from current algo
+      // otherwise copy default icons from current algo
       currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
       currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
    }
@@ -1804,6 +1804,12 @@ Layer::Layer()
    originy = 0;                  // no Y origin offset
    icons15x15 = NULL;            // no 15x15 icons
    icons7x7 = NULL;              // no 7x7 icons
+   
+   pixelbuff = NULL;             // pixel buffer not yet allocated
+   statebuff = NULL;             // state buffer not yet allocated
+   changedmap = NULL;            // wxBitmap not yet allocated
+   pbwd = -1;                    // force initial allocation of pixelbuff and changedmap
+   sbwd = -1;                    // force initial allocation of statebuff
 
    if (numlayers == 0) {
       // creating very first layer
@@ -1982,7 +1988,13 @@ Layer::Layer()
 
 Layer::~Layer()
 {
-   delete view;   // delete viewport
+   // delete this layer's viewport
+   delete view;
+   
+   // delete buffers used for rendering this layer
+   if (pixelbuff) free(pixelbuff);
+   if (statebuff) free(statebuff);
+   delete changedmap;
 
    if (cloneid > 0) {
       // count how many layers have the same cloneid

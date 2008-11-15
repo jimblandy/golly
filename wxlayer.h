@@ -62,46 +62,69 @@ public:
    // time, use currlayer->algo->getrule()
    wxString rule;
    
-   Selection currsel;         // current selection
-   Selection savesel;         // for saving/restoring selection
+   Selection currsel;            // current selection
+   Selection savesel;            // for saving/restoring selection
 
-   bigint originx;            // X origin offset
-   bigint originy;            // Y origin offset
+   bigint originx;               // X origin offset
+   bigint originy;               // Y origin offset
    
-   wxString currfile;         // full path of current pattern file
-   wxString currname;         // name seen in window title and Layer menu
+   wxString currfile;            // full path of current pattern file
+   wxString currname;            // name seen in window title and Layer menu
 
    // for saving and restoring starting pattern
-   algo_type startalgo;       // starting algorithm
-   bool savestart;            // need to save starting pattern?
-   bool startdirty;           // starting state of dirty flag
-   wxString startfile;        // file for saving starting pattern
-   wxString startname;        // starting currname
-   wxString startrule;        // starting rule
-   bigint startgen;           // starting generation (>= 0)
-   bigint startx, starty;     // starting location
-   int startwarp;             // starting speed
-   int startmag;              // starting scale
-   Selection startsel;        // starting selection
+   algo_type startalgo;          // starting algorithm
+   bool savestart;               // need to save starting pattern?
+   bool startdirty;              // starting state of dirty flag
+   wxString startfile;           // file for saving starting pattern
+   wxString startname;           // starting currname
+   wxString startrule;           // starting rule
+   bigint startgen;              // starting generation (>= 0)
+   bigint startx, starty;        // starting location
+   int startwarp;                // starting speed
+   int startmag;                 // starting scale
+   Selection startsel;           // starting selection
    
    // temporary file used to restore starting pattern or to show comments;
    // each non-cloned layer uses a different temporary file
    wxString tempstart;
    
    // used when tilelayers is true
-   PatternView* tilewin;      // tile window
-   wxRect tilerect;           // tile window's size and position
+   PatternView* tilewin;         // tile window
+   wxRect tilerect;              // tile window's size and position
 
    // color scheme for this layer
-   wxColor fromrgb;           // start of gradient
-   wxColor torgb;             // end of gradient
+   wxColor fromrgb;              // start of gradient
+   wxColor torgb;                // end of gradient
    unsigned char cellr[256];
    unsigned char cellg[256];
    unsigned char cellb[256];
+   
+   // To render this layer we use 2 buffers:
+   // 1. A pixel buffer is used when the viewport magnification is <= 0;
+   //    this buffer stores a pixmap image of the viewport, and is a stream of
+   //    3-byte pixels (rgb,rgb,...) starting at the top left corner.
+   // 2. A state buffer is used when the viewport magnification is > 0;
+   //    this buffer stores the state of each visible cell in the viewport,
+   //    including any partially visible cells at the bottom and right edges.
+   // Note that each buffer stores data for 2 viewports: the current view
+   // and the previous view.  This allows us to compare views and only draw
+   // the minimal rectangular area that has changed.  The final stage of the
+   // rendering process copies the changed pixel/state buffer data to a wxBitmap
+   // which is then used to update the viewport window.
+   unsigned char* pixelbuff;     // pixel buffer used when mag <= 0
+   unsigned char* statebuff;     // state buffer used when mag > 0
+   int pbwd, pbht;               // width and height of viewport, in pixels
+   int sbwd, sbht;               // width and height of viewport, in cells
+   int pbsize;                   // pixel buffer size = pbwd * pbht * 3 * 2
+   int sbsize;                   // state buffer size = sbwd * sbht * 2
+   unsigned char* pixelstart;    // ping-pongs from pixelbuff to pixelbuff + pbsize/2
+   unsigned char* statestart;    // ping-pongs from statebuff to statebuff + sbsize/2
+   wxBitmap* changedmap;         // for displaying the changed area
+   bool fullupdate;              // update the entire viewport?
 
    // icons for this layer
-   wxBitmap** icons7x7;       // icon bitmaps for scale 1:8
-   wxBitmap** icons15x15;     // icon bitmaps for scale 1:16
+   wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
+   wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
 
    // if this is a cloned layer then cloneid is > 0 and all the
    // other clones have the same cloneid
