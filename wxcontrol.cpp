@@ -424,13 +424,13 @@ void MainFrame::DisplayPattern()
    if (!IsIconized()) {
       if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
          // only update the current tile
-         #ifdef __WXMSW__
-            viewptr->Refresh(false);
-            viewptr->Update();
-         #else
-            // avoid background being erased on Mac/Linux!!!???
+         #ifdef __WXMAC__
+            // avoid background being erased on Mac!!!???
             wxClientDC dc(viewptr);
             DrawView(dc, viewptr->tileindex);
+         #else
+            viewptr->Refresh(false);
+            viewptr->Update();
          #endif
       } else {
          // update main viewport window, possibly including all tile windows
@@ -439,13 +439,13 @@ void MainFrame::DisplayPattern()
             bigview->Refresh(false);
             bigview->Update();
          } else {
-            #ifdef __WXMSW__
-               viewptr->Refresh(false);
-               viewptr->Update();
-            #else
+            #ifdef __WXMAC__
                // avoid background being erased on Mac/Linux!!!???
                wxClientDC dc(viewptr);
                DrawView(dc, viewptr->tileindex);
+            #else
+               viewptr->Refresh(false);
+               viewptr->Update();
             #endif
          }
       }
