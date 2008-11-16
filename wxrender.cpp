@@ -124,7 +124,7 @@ Other points of interest:
 
 // -----------------------------------------------------------------------------
 
-bool new_rendering = false;   // use new rendering code? (remove or replace with debug val!!!???)
+bool new_rendering = false;   // use new rendering code? (remove!!!???)
 const int bpp = 3;            // 3 bytes per pixel (rgb)
 
 // globals used in wx_render routines

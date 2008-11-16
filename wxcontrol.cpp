@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxundo.h"        // for undoredo->...
 #include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, etc
+#include "wxrender.h"      // for DrawView
 
 // This module implements Control menu functions.
 
@@ -423,13 +424,30 @@ void MainFrame::DisplayPattern()
    if (!IsIconized()) {
       if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
          // only update the current tile
-         viewptr->Refresh(false);
-         viewptr->Update();
+         #ifdef __WXMSW__
+            viewptr->Refresh(false);
+            viewptr->Update();
+         #else
+            // avoid background being erased on Mac/Linux!!!???
+            wxClientDC dc(viewptr);
+            DrawView(dc, viewptr->tileindex);
+         #endif
       } else {
          // update main viewport window, possibly including all tile windows
          // (tile windows are children of bigview)
-         bigview->Refresh(false);
-         bigview->Update();
+         if (numlayers > 1 && (stacklayers || tilelayers)) {
+            bigview->Refresh(false);
+            bigview->Update();
+         } else {
+            #ifdef __WXMSW__
+               viewptr->Refresh(false);
+               viewptr->Update();
+            #else
+               // avoid background being erased on Mac/Linux!!!???
+               wxClientDC dc(viewptr);
+               DrawView(dc, viewptr->tileindex);
+            #endif
+         }
       }
       if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());

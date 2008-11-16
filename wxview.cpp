@@ -2624,10 +2624,8 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
    // do nothing because we'll be painting the entire viewport
    
    //!!! why does this get called even though we always call Refresh(false)???
-   // and why does bg still get erased (only on Mac???}
-   // event.Skip(false);  // doesn't fix prob
-   // soln: avoid erase event sent in wxWindowMac::MacDoRedraw in window.cpp???
-   // or create a wxApp::FilterEvent handler???
+   // and why does bg still get erased (on Mac and GTK, but not Windows)???
+   // note that eraseBack flag in wxWindowMac::Refresh in window.cpp is never used!
 }
 
 // -----------------------------------------------------------------------------
@@ -2642,7 +2640,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
    cellbrush = new wxBrush(*wxBLACK_BRUSH);
    if (cellbrush == NULL) Fatal(_("Failed to create cell brush!"));
    
-   // avoid erasing background on GTK+
+   // avoid erasing background on GTK+ -- doesn't work!!!
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
    
    // call this to prevent unwanted flickering on GTK+???!!!
