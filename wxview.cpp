@@ -2625,7 +2625,7 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
    
    //!!! why does this get called even though we always call Refresh(false)???
    // and why does bg still get erased (on Mac and GTK, but not Windows)???
-   // note that eraseBack flag in wxWindowMac::Refresh in window.cpp is never used!
+   // note that eraseBack parameter in wxWindowMac::Refresh in window.cpp is never used!
 }
 
 // -----------------------------------------------------------------------------

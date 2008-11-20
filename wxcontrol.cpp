@@ -425,7 +425,7 @@ void MainFrame::DisplayPattern()
       if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
          // only update the current tile
          #ifdef __WXMAC__
-            // avoid background being erased on Mac!!!???
+            // Refresh + Update is too slow on Mac
             wxClientDC dc(viewptr);
             DrawView(dc, viewptr->tileindex);
          #else
@@ -440,7 +440,7 @@ void MainFrame::DisplayPattern()
             bigview->Update();
          } else {
             #ifdef __WXMAC__
-               // avoid background being erased on Mac/Linux!!!???
+               // Refresh + Update is too slow on Mac
                wxClientDC dc(viewptr);
                DrawView(dc, viewptr->tileindex);
             #else

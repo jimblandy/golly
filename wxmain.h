@@ -167,6 +167,8 @@ private:
    void OnDirTreeSelection(wxTreeEvent& event);
    void OnSashDblClick(wxSplitterEvent& event);
    void OnOneTimer(wxTimerEvent& event);
+   void OnErase(wxEraseEvent& event);
+   void OnPaint(wxPaintEvent& event);
    void OnClose(wxCloseEvent& event);
 
    // file functions

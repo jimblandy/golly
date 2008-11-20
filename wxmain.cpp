@@ -1252,6 +1252,13 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
    EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
    EVT_TIMER               (wxID_ANY,        MainFrame::OnOneTimer)
+#if defined(__WXMAC__) || defined(__WXGTK__)
+   //!!! these handlers avoid the viewport window being erased on Mac and Linux
+   /* but unfortunately the split-window sash won't be drawn correctly
+   EVT_ERASE_BACKGROUND    (                 MainFrame::OnErase)
+   EVT_PAINT               (                 MainFrame::OnPaint)
+   */
+#endif
    EVT_CLOSE               (                 MainFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -1841,6 +1848,21 @@ bool MainFrame::SaveCurrentLayer()
       case 1:  return true;   // don't save changes
       default: return false;  // answer == 0 (ie. user selected Cancel)
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::OnErase(wxEraseEvent& WXUNUSED(event))
+{
+   // do nothing
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::OnPaint(wxPaintEvent& WXUNUSED(event))
+{
+    wxPaintDC dc(this);
+    // paint nothing (on Mac this avoids drawing the gray horizontal stripes)
 }
 
 // -----------------------------------------------------------------------------

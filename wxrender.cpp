@@ -124,9 +124,6 @@ Other points of interest:
 
 // -----------------------------------------------------------------------------
 
-bool new_rendering = false;   // use new rendering code? (remove!!!???)
-const int bpp = 3;            // 3 bytes per pixel (rgb)
-
 // globals used in wx_render routines
 wxDC* currdc;                 // current device context for viewport
 int currwd, currht;           // current width and height of viewport
@@ -205,30 +202,26 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
 
 void InitDrawingData()
 {
-   if (new_rendering) {
-      // no need to do anything???!!!
+   // create translucent selection bitmap
+   viewptr->GetClientSize(&selwd, &selht);
+   // selwd or selht might be < 1 on Windows
+   if (selwd < 1) selwd = 1;
+   if (selht < 1) selht = 1;
+
+   // use depth 32 so bitmap has an alpha channel
+   selbitmap = new wxBitmap(selwd, selht, 32);
+   if (selbitmap == NULL) {
+      Warning(_("Not enough memory for selection bitmap!"));
    } else {
-      // create translucent selection bitmap
-      viewptr->GetClientSize(&selwd, &selht);
-      // selwd or selht might be < 1 on Windows
-      if (selwd < 1) selwd = 1;
-      if (selht < 1) selht = 1;
+      SetSelectionPixels(selbitmap, selectrgb);
+   }
    
-      // use depth 32 so bitmap has an alpha channel
-      selbitmap = new wxBitmap(selwd, selht, 32);
-      if (selbitmap == NULL) {
-         Warning(_("Not enough memory for selection bitmap!"));
-      } else {
-         SetSelectionPixels(selbitmap, selectrgb);
-      }
-      
-      // create translucent gray bitmap for inactive selections
-      graybitmap = new wxBitmap(selwd, selht, 32);
-      if (graybitmap == NULL) {
-         Warning(_("Not enough memory for gray bitmap!"));
-      } else {
-         SetSelectionPixels(graybitmap, wxLIGHT_GREY);
-      }
+   // create translucent gray bitmap for inactive selections
+   graybitmap = new wxBitmap(selwd, selht, 32);
+   if (graybitmap == NULL) {
+      Warning(_("Not enough memory for gray bitmap!"));
+   } else {
+      SetSelectionPixels(graybitmap, wxLIGHT_GREY);
    }
 }
 
@@ -251,8 +244,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                   #ifdef __WXMAC__
                      // wxMac seems to draw lines with semi-transparent pixels at the
                      // top/left ends, so we have to draw gaps even if showing grid lines
-                     // otherwise we see annoying dots at the top/left edge of the viewport;
-                     // yet another reason to do our own rendering!!!
+                     // otherwise we see annoying dots at the top/left edge of the viewport
                      (pmscale >= (1 << mingridmag));
                   #else
                      (pmscale >= (1 << mingridmag) && !showgridlines);
@@ -587,56 +579,17 @@ void wx_render::killrect(int x, int y, int w, int h)
    if (clipb > currht) clipb = currht;
    int clipwd = clipr - clipx;
    int clipht = clipb - clipy;
+   wxRect rect(clipx, clipy, clipwd, clipht);
 
-   if (new_rendering) {
-      // or use ClearCurrentBuffer() if faster!!!??? if so we can remove killrect
-      // it is slightly faster on Mac running spacefiller.rle at 1:1
-      
-      if (currlayer->view->getmag() > 0) {
-         // kill appropriate cells in state buffer
-         //!!!
-      } else {
-         // kill appropriate pixels in pixel buffer
-         unsigned char deadr = currlayer->cellr[0];
-         unsigned char deadg = currlayer->cellg[0];
-         unsigned char deadb = currlayer->cellb[0];
-         int rowbytes = currlayer->pbwd * bpp;
-         unsigned char* row1 = currlayer->pixelstart + clipy*rowbytes + clipx*bpp;
-         int numbytes = clipwd * bpp;
-         
-         // kill 1st row
-         if (deadr == deadg && deadg == deadb) {
-            // dead cell color is shade of gray
-            memset(row1, deadr, numbytes);
-         } else {
-            unsigned char* byte = row1;
-            for (int i = 0; i < clipwd; i += bpp) {
-               byte[i]   = deadr;
-               byte[i+1] = deadg;
-               byte[i+2] = deadb;
-            }
-         }
-         
-         // copy 1st row to other rows
-         unsigned char* nextrow = row1;
-         for (int row = 1; row < clipht; row++) {
-            nextrow += rowbytes;
-            memcpy(nextrow, row1, numbytes);
-         }
-      }
-      
-   } else {
-      wxRect rect(clipx, clipy, clipwd, clipht);
-      #if 0
-         // use a different pale color each time to see any probs
-         wxBrush randbrush(wxColor((rand()&127)+128,
-                                   (rand()&127)+128,
-                                   (rand()&127)+128));
-         FillRect(*currdc, rect, randbrush);
-      #else
-         FillRect(*currdc, rect, *deadbrush);
-      #endif
-   }
+   #if 0
+      // use a different pale color each time to see any probs
+      wxBrush randbrush(wxColor((rand()&127)+128,
+                                (rand()&127)+128,
+                                (rand()&127)+128));
+      FillRect(*currdc, rect, randbrush);
+   #else
+      FillRect(*currdc, rect, *deadbrush);
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -647,80 +600,48 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
    if (x >= currwd || y >= currht) return;
    if (x + w <= 0 || y + h <= 0) return;
 
-   if (new_rendering) {
-      if (pmscale == 1) {
-         // clip given rect so it's within viewport
-         int clipx = x < 0 ? 0 : x;
-         int clipy = y < 0 ? 0 : y;
-         int clipr = x + w;
-         int clipb = y + h;
-         if (clipr > currwd) clipr = currwd;
-         if (clipb > currht) clipb = currht;
-         int clipwd = clipr - clipx;
-         int clipht = clipb - clipy;
+   // faster to create new pixmap only when size changes
+   if (pixmapwd != w || pixmapht != h) {
+      delete pixmap;
+      pixmap = new wxBitmap(w, h, 32);
+      pixmapwd = w;
+      pixmapht = h;
+   }
 
-         // copy pmdata's pixel data to correct position in pixel buffer
-         int srcrowbytes = w * bpp;
-         int destrowbytes = currlayer->pbwd * bpp;
-         unsigned char* srcptr = (unsigned char*) pmdata + (clipy-y)*srcrowbytes + (clipx-x)*bpp;
-         unsigned char* destptr = currlayer->pixelstart + clipy*destrowbytes + clipx*bpp;
-         
-         int numbytes = clipwd * bpp;
-         for (int row = 0; row < clipht; row++) {
-            memcpy(destptr, srcptr, numbytes);
-            destptr += destrowbytes;
-            srcptr += srcrowbytes;
+   if (pmscale == 1) {
+      // pmdata contains 3 bytes (the rgb values) for each pixel
+      wxAlphaPixelData pxldata(*pixmap);
+      if (pxldata) {
+         #ifdef __WXGTK__
+            pxldata.UseAlpha();
+         #endif
+         wxAlphaPixelData::Iterator p(pxldata);
+         unsigned char* byteptr = (unsigned char*) pmdata;
+         for ( int row = 0; row < h; row++ ) {
+            wxAlphaPixelData::Iterator rowstart = p;
+            for ( int col = 0; col < w; col++ ) {
+               p.Red()   = *byteptr++;
+               p.Green() = *byteptr++;
+               p.Blue()  = *byteptr++;
+               #ifdef __WXGTK__
+                  p.Alpha() = 255;
+               #endif
+               p++;
+            }
+            p = rowstart;
+            p.OffsetY(pxldata, 1);
          }
-
-      } else {
-         // copy pmdata's state data to correct position in state buffer
-         //!!!
       }
+      currdc->DrawBitmap(*pixmap, x, y);
+
+   } else if (showicons && pmscale > 4 && iconmaps) {
+      // draw icons only at scales 1:8 or 1:16
+      DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
 
    } else {
-      // faster to create new pixmap only when size changes
-      if (pixmapwd != w || pixmapht != h) {
-         delete pixmap;
-         pixmap = new wxBitmap(w, h, 32);
-         pixmapwd = w;
-         pixmapht = h;
-      }
-   
-      if (pmscale == 1) {
-         // pmdata contains 3 bytes (the rgb values) for each pixel
-         wxAlphaPixelData pxldata(*pixmap);
-         if (pxldata) {
-            #ifdef __WXGTK__
-               pxldata.UseAlpha();
-            #endif
-            wxAlphaPixelData::Iterator p(pxldata);
-            unsigned char* byteptr = (unsigned char*) pmdata;
-            for ( int row = 0; row < h; row++ ) {
-               wxAlphaPixelData::Iterator rowstart = p;
-               for ( int col = 0; col < w; col++ ) {
-                  p.Red()   = *byteptr++;
-                  p.Green() = *byteptr++;
-                  p.Blue()  = *byteptr++;
-                  #ifdef __WXGTK__
-                     p.Alpha() = 255;
-                  #endif
-                  p++;
-               }
-               p = rowstart;
-               p.OffsetY(pxldata, 1);
-            }
-         }
-         currdc->DrawBitmap(*pixmap, x, y);
-   
-      } else if (showicons && pmscale > 4 && iconmaps) {
-         // draw icons only at scales 1:8 or 1:16
-         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
-   
-      } else {
-         // stretch pixmap by pmscale, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
-         // where each byte contains a cell state
-         DrawStretchedPixmap((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
-      }
+      // stretch pixmap by pmscale, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
+      // where each byte contains a cell state
+      DrawStretchedPixmap((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
    }
 }
 
@@ -735,338 +656,19 @@ void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** 
 
 // -----------------------------------------------------------------------------
 
-static void CheckBufferSizes(int wd, int ht)
-{
-   // current layer's viewport size is wd x ht pixels
-   // so allocate new buffers if necessary
-   if (currlayer->pbwd != wd || currlayer->pbht != ht) {
-      currlayer->pbwd = wd;
-      currlayer->pbht = ht;
-
-      // allocate a new pixel buffer (for 2 viewports)
-      if (currlayer->pixelbuff) free(currlayer->pixelbuff);
-      currlayer->pbsize = wd * ht * bpp;
-      currlayer->pixelbuff = (unsigned char*) malloc(currlayer->pbsize * 2);
-      if (currlayer->pixelbuff == NULL) {
-         Fatal(_("Not enough memory for pixel buffer!"));
-         return;
-      }
-      // point to 1st viewport
-      currlayer->pixelstart = currlayer->pixelbuff;
-      
-      delete currlayer->changedmap;
-      currlayer->changedmap = new wxBitmap(wd, ht, 32);
-      if (currlayer->changedmap == NULL) {
-         Fatal(_("Not enough memory for changedmap!"));
-         return;
-      }
-      
-      currlayer->fullupdate = true;    // entire viewport must be updated
-      //!!!wxBell();
-   }
-   
-   int mag = currlayer->view->getmag();
-   if (mag > 0) {
-      // check viewport size in cells
-      int cellsize = 1 << mag;
-      int cellwd = (wd + cellsize - 1) / cellsize;
-      int cellht = (ht + cellsize - 1) / cellsize;
-      if (currlayer->sbwd != cellwd || currlayer->sbht != cellht) {
-         currlayer->sbwd = cellwd;
-         currlayer->sbht = cellht;
-
-         // allocate a new state buffer (for 2 viewports)
-         if (currlayer->statebuff) free(currlayer->statebuff);
-         currlayer->sbsize = cellwd * cellht;
-         currlayer->statebuff = (unsigned char*) malloc(currlayer->sbsize * 2);
-         if (currlayer->statebuff == NULL) {
-            Fatal(_("Not enough memory for state buffer!"));
-            return;
-         }
-         // point to 1st viewport
-         currlayer->statestart = currlayer->statebuff;
-         
-         currlayer->fullupdate = true;    // entire viewport must be updated
-         //!!!wxBell();
-      }
-   } else {
-      // mag <= 0 so force state buffer to be reallocated when mag > 0
-      currlayer->sbwd = -1;
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-static void ClearCurrentBuffer()
-{
-   /* too slow???!!!
-   if (currlayer->view->getmag() > 0) {
-      // kill all cells in viewport state buffer
-      memset(currlayer->statestart, 0, currlayer->sbsize);
-   } else {
-      // kill all pixels in viewport pixel buffer
-      unsigned char deadr = currlayer->cellr[0];
-      unsigned char deadg = currlayer->cellg[0];
-      unsigned char deadb = currlayer->cellb[0];
-      if (deadr == deadg && deadg == deadb) {
-         // dead cell color is shade of gray so use fast method
-         memset(currlayer->pixelstart, deadr, currlayer->pbsize);
-      } else {
-         // clear 1st row then copy that to other rows
-         unsigned char* byte = currlayer->pixelstart;
-         for (int i = 0; i < currlayer->pbwd; i += bpp) {
-            byte[i]   = deadr;
-            byte[i+1] = deadg;
-            byte[i+2] = deadb;
-         }
-         unsigned char* row1 = currlayer->pixelstart;
-         unsigned char* nextrow = row1;
-         int rowbytes = currlayer->pbwd * bpp;
-         for (int j = 1; j < currlayer->pbht; j++) {
-            nextrow += rowbytes;
-            memcpy(nextrow, row1, rowbytes);
-         }
-      }
-   }
-   */
-}
-
-// -----------------------------------------------------------------------------
-
-static void CompareStates(int& x, int& y, int& wd, int& ht)
-{
-   // compare viewports in state buffer and set rect if they differ
-   //!!!
-   
-   // debug!!!
-   x = y = 0;
-   wd = currlayer->sbwd;
-   ht = currlayer->sbht;
-}
-
-// -----------------------------------------------------------------------------
-
-static void ComparePixels(int& x, int& y, int& wd, int& ht)
-{
-   // compare viewports in pixel buffer and set rect if they differ
-   int top, left, bottom, right, row, col;
-   int rowbytes = currlayer->pbwd * bpp;
-   int tworows = rowbytes * 2;
-   unsigned char* byte1 = currlayer->pixelbuff;
-   unsigned char* byte2 = byte1 + currlayer->pbsize;
-   
-   // first find top edge
-   top = -1;
-   for (row = 0; row < currlayer->pbht; row++) {
-      for (col = 0; col < rowbytes; col++) {
-         if (*byte1 != *byte2) {
-            top = row;
-            left = col;
-            right = col;
-            goto foundtop;
-         }
-         byte1++;
-         byte2++;
-      }
-   }
-   foundtop:
-   if (top < 0) return;    // viewports are identical
-   
-   // find bottom edge
-   bottom = currlayer->pbht - 1;
-   if (bottom > top) {
-      byte1 = currlayer->pixelbuff + currlayer->pbsize - rowbytes;
-      byte2 = byte1 + currlayer->pbsize;
-      while (bottom > top) {
-         for (col = 0; col < rowbytes; col++) {
-            if (*byte1 != *byte2) {
-               if (col < left) left = col;
-               if (col > right) right = col;
-               goto foundbottom;
-            }
-            byte1++;
-            byte2++;
-         }
-         byte1 -= tworows;
-         byte2 -= tworows;
-         bottom--;
-      }
-   }
-   foundbottom:
-   
-   // find left edge
-   for (col = 0; col < left; col++) {
-      byte1 = currlayer->pixelbuff + top * rowbytes + col;
-      byte2 = byte1 + currlayer->pbsize;
-      for (row = top; row <= bottom; row++) {
-         if (*byte1 != *byte2) {
-            left = col;
-            goto foundleft;
-         }
-         byte1 += rowbytes;
-         byte2 += rowbytes;
-      }
-   }
-   foundleft:
-   
-   // find right edge
-   for (col = rowbytes - 1; col > right; col--) {
-      byte1 = currlayer->pixelbuff + top * rowbytes + col;
-      byte2 = byte1 + currlayer->pbsize;
-      for (row = top; row <= bottom; row++) {
-         if (*byte1 != *byte2) {
-            right = col;
-            goto foundright;
-         }
-         byte1 += rowbytes;
-         byte2 += rowbytes;
-      }
-   }
-   foundright:
-   
-   left = left / bpp;
-   right = right / bpp;
-   x = left;
-   y = top;
-   wd = right - left + 1;
-   ht = bottom - top + 1;
-   
-   /* force full update!!!
-   x = y = 0;
-   wd = currlayer->pbwd;
-   ht = currlayer->pbht;
-   */
-}
-
-// -----------------------------------------------------------------------------
-
-static void DisplayStateBuffer(int x, int y, int wd, int ht, int mag)
-{
-   // display given rect in state buffer, scaling by given mag (> 0)
-   // int cellsize = 1 << mag;
-   //!!!
-}
-
-// -----------------------------------------------------------------------------
-
-static void DisplayPixelBuffer(int x, int y, int wd, int ht)
-{
-   // display given rect in pixel buffer
-   wxAlphaPixelData pxldata(*currlayer->changedmap);
-   
-   if (pxldata) {
-      #ifdef __WXGTK__
-         pxldata.UseAlpha();
-      #endif
-      wxAlphaPixelData::Iterator p(pxldata);
-      
-      int rowbytes = currlayer->pbwd * bpp;
-      unsigned char* startbyte = currlayer->pixelstart + y*rowbytes + x*bpp;
-      
-      for ( int row = 0; row < ht; row++ ) {
-         unsigned char* byteptr = startbyte;
-         wxAlphaPixelData::Iterator rowstart = p;
-         for ( int col = 0; col < wd; col++ ) {
-            p.Red()   = *byteptr++;
-            p.Green() = *byteptr++;
-            p.Blue()  = *byteptr++;
-            #ifdef __WXGTK__
-               p.Alpha() = 255;
-            #endif
-            p++;
-         }
-         startbyte += rowbytes;
-         p = rowstart;
-         p.OffsetY(pxldata, 1);
-      }
-   }
-   
-   if (wd == currlayer->pbwd && ht == currlayer->pbht) {
-      // x = y = 0
-      currdc->DrawBitmap(*currlayer->changedmap, 0, 0);
-   } else {
-      // using GetSubBitmap is 50% faster on Mac -- test on Win/Linux!!!
-      wxRect rect(0, 0, wd, ht);
-      currdc->DrawBitmap(currlayer->changedmap->GetSubBitmap(rect), x, y);
-      /*
-      // note that Blit only works on Mac if we enable UseAlpha() above
-      wxMemoryDC memdc;
-      memdc.SelectObject(*currlayer->changedmap);
-      currdc->Blit(x, y, wd, ht, &memdc, 0, 0, wxCOPY, true);
-      */
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-static void DisplayViewport()
-{
-   int x, y, wd, ht;    // display rect
-   int mag = currlayer->view->getmag();
-   
-   if (currlayer->fullupdate) {
-      currlayer->fullupdate = false;
-      // set display rect to entire viewport
-      x = y = 0;
-      if (mag > 0) {
-         wd = currlayer->sbwd;
-         ht = currlayer->sbht;
-      } else {
-         wd = currlayer->pbwd;
-         ht = currlayer->pbht;
-      }
-   } else {
-      // compare current viewport with previous viewport and, if they differ,
-      // set display rect to area that has changed
-      wd = ht = 0;
-      if (mag > 0) {
-         CompareStates(x, y, wd, ht);
-      } else {
-         ComparePixels(x, y, wd, ht);
-      }
-   }
-   
-   if (wd > 0 && ht > 0) {
-      // display the changed area
-      if (mag > 0) {
-         DisplayStateBuffer(x, y, wd, ht, mag);
-      } else {
-         DisplayPixelBuffer(x, y, wd, ht);
-      }
-      
-      // ping-pong the viewport pointers
-      if (currlayer->pixelstart == currlayer->pixelbuff) {
-         currlayer->pixelstart += currlayer->pbsize;
-      } else {
-         currlayer->pixelstart = currlayer->pixelbuff;
-      }
-      if (currlayer->statestart == currlayer->statebuff) {
-         currlayer->statestart += currlayer->sbsize;
-      } else {
-         currlayer->statestart = currlayer->statebuff;
-      }
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 void CheckSelectionSize(int viewwd, int viewht)
 {
-   if (new_rendering) {
-      // no need to do anything???!!!
-   } else {
-      if (viewwd != selwd || viewht != selht) {
-         // resize selbitmap and graybitmap
-         selwd = viewwd;
-         selht = viewht;
-         delete selbitmap;
-         delete graybitmap;
-         // use depth 32 so bitmaps have an alpha channel
-         selbitmap = new wxBitmap(selwd, selht, 32);
-         graybitmap = new wxBitmap(selwd, selht, 32);
-         if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
-         if (graybitmap) SetSelectionPixels(graybitmap, wxLIGHT_GREY);
-      }
+   if (viewwd != selwd || viewht != selht) {
+      // resize selbitmap and graybitmap
+      selwd = viewwd;
+      selht = viewht;
+      delete selbitmap;
+      delete graybitmap;
+      // use depth 32 so bitmaps have an alpha channel
+      selbitmap = new wxBitmap(selwd, selht, 32);
+      graybitmap = new wxBitmap(selwd, selht, 32);
+      if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
+      if (graybitmap) SetSelectionPixels(graybitmap, wxLIGHT_GREY);
    }
 }
 
@@ -1074,40 +676,32 @@ void CheckSelectionSize(int viewwd, int viewht)
 
 void SetSelectionColor()
 {
-   if (new_rendering) {
-      // no need to do anything???!!!
-   } else {
-      // selectrgb has changed
-      if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
-   }
+   // selectrgb has changed
+   if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
 }
 
 // -----------------------------------------------------------------------------
 
 void DrawSelection(wxDC& dc, wxRect& rect)
 {
-   if (new_rendering) {
-      //!!!
+   if (selbitmap) {
+      #ifdef __WXGTK__
+         // wxGTK Blit doesn't support alpha channel
+         if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
+            // use inversion for speed
+            dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+         } else {
+            dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+         }
+      #else
+         // Blit seems to be about 10% faster (on Mac at least)
+         wxMemoryDC memdc;
+         memdc.SelectObject(*selbitmap);
+         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      #endif
    } else {
-      if (selbitmap) {
-         #ifdef __WXGTK__
-            // wxGTK Blit doesn't support alpha channel
-            if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
-               // use inversion for speed
-               dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-            } else {
-               dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-            }
-         #else
-            // Blit seems to be about 10% faster (on Mac at least)
-            wxMemoryDC memdc;
-            memdc.SelectObject(*selbitmap);
-            dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-         #endif
-      } else {
-         // no alpha channel so just invert rect
-         dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-      }
+      // no alpha channel so just invert rect
+      dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
    }
 }
 
@@ -1115,28 +709,24 @@ void DrawSelection(wxDC& dc, wxRect& rect)
 
 void DrawInactiveSelection(wxDC& dc, wxRect& rect)
 {
-   if (new_rendering) {
-      //!!!
+   if (graybitmap) {
+      #ifdef __WXGTK__
+         // wxGTK Blit doesn't support alpha channel
+         if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
+            // use inversion for speed
+            dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+         } else {
+            dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
+         }
+      #else
+         // Blit seems to be about 10% faster (on Mac at least)
+         wxMemoryDC memdc;
+         memdc.SelectObject(*graybitmap);
+         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      #endif
    } else {
-      if (graybitmap) {
-         #ifdef __WXGTK__
-            // wxGTK Blit doesn't support alpha channel
-            if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
-               // use inversion for speed
-               dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-            } else {
-               dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-            }
-         #else
-            // Blit seems to be about 10% faster (on Mac at least)
-            wxMemoryDC memdc;
-            memdc.SelectObject(*graybitmap);
-            dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-         #endif
-      } else {
-         // no alpha channel so just invert rect
-         dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-      }
+      // no alpha channel so just invert rect
+      dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
    }
 }
 
@@ -1382,12 +972,6 @@ void CheckPasteImage()
          currdc = &pattdc;
          currwd = tempview.getwidth();
          currht = tempview.getheight();
-         
-         if (new_rendering) {
-            //!!! create temporary layer and change currlayer???
-            CheckBufferSizes(currwd, currht);
-            ClearCurrentBuffer();
-         }
          pastealgo->draw(tempview, renderer);
          
          showgridlines = saveshow;
@@ -1500,56 +1084,52 @@ void DrawGridLines(wxDC& dc, wxRect& r)
       topbold = leftbold = 0;
    }
 
-   if (new_rendering) {
-      //!!!
-   } else {
-      // draw all plain lines first
-      dc.SetPen(*gridpen);
-      
-      i = showboldlines ? topbold : 1;
+   // draw all plain lines first
+   dc.SetPen(*gridpen);
+   
+   i = showboldlines ? topbold : 1;
+   v = -1;
+   while (true) {
+      v += cellsize;
+      if (v >= r.height) break;
+      if (showboldlines) i++;
+      if (i % boldspacing != 0 && v >= r.y && v < r.y + r.height)
+         dc.DrawLine(r.x, v, r.GetRight() + 1, v);
+   }
+   i = showboldlines ? leftbold : 1;
+   h = -1;
+   while (true) {
+      h += cellsize;
+      if (h >= r.width) break;
+      if (showboldlines) i++;
+      if (i % boldspacing != 0 && h >= r.x && h < r.x + r.width)
+         dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+   }
+
+   if (showboldlines) {
+      // overlay bold lines
+      dc.SetPen(*boldpen);
+      i = topbold;
       v = -1;
       while (true) {
          v += cellsize;
          if (v >= r.height) break;
-         if (showboldlines) i++;
-         if (i % boldspacing != 0 && v >= r.y && v < r.y + r.height)
+         i++;
+         if (i % boldspacing == 0 && v >= r.y && v < r.y + r.height)
             dc.DrawLine(r.x, v, r.GetRight() + 1, v);
       }
-      i = showboldlines ? leftbold : 1;
+      i = leftbold;
       h = -1;
       while (true) {
          h += cellsize;
          if (h >= r.width) break;
-         if (showboldlines) i++;
-         if (i % boldspacing != 0 && h >= r.x && h < r.x + r.width)
+         i++;
+         if (i % boldspacing == 0 && h >= r.x && h < r.x + r.width)
             dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
       }
-   
-      if (showboldlines) {
-         // overlay bold lines
-         dc.SetPen(*boldpen);
-         i = topbold;
-         v = -1;
-         while (true) {
-            v += cellsize;
-            if (v >= r.height) break;
-            i++;
-            if (i % boldspacing == 0 && v >= r.y && v < r.y + r.height)
-               dc.DrawLine(r.x, v, r.GetRight() + 1, v);
-         }
-         i = leftbold;
-         h = -1;
-         while (true) {
-            h += cellsize;
-            if (h >= r.width) break;
-            i++;
-            if (i % boldspacing == 0 && h >= r.x && h < r.x + r.width)
-               dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
-         }
-      }
-      
-      dc.SetPen(wxNullPen);
    }
+   
+   dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------
@@ -1560,10 +1140,6 @@ void DrawOneLayer(wxDC& dc)
    layerdc.SelectObject(*layerbitmap);
    
    currdc = &layerdc;
-   if (new_rendering) {
-      CheckBufferSizes(currwd, currht);
-      ClearCurrentBuffer();
-   }
    currlayer->algo->draw(*currlayer->view, renderer);
    
    // make dead pixels 100% transparent; live pixels use opacity setting
@@ -1696,15 +1272,11 @@ void DrawView(wxDC& dc, int tileindex)
    int colorindex;
    
    if ( viewptr->nopattupdate ) {
-      if (new_rendering) {
-         // do nothing???!!!
-      } else {
-         // don't draw incomplete pattern, just fill background
-         r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-         FillRect(dc, r, *deadbrush);
-         // might as well draw grid lines
-         if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
-      }
+      // don't draw incomplete pattern, just fill background
+      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
+      FillRect(dc, r, *deadbrush);
+      // might as well draw grid lines
+      if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
       return;
    }
 
@@ -1757,10 +1329,6 @@ void DrawView(wxDC& dc, int tileindex)
    currdc = &dc;
    currwd = currlayer->view->getwidth();
    currht = currlayer->view->getheight();
-   if (new_rendering) {
-      CheckBufferSizes(currwd, currht);
-      ClearCurrentBuffer();
-   }
    currlayer->algo->draw(*currlayer->view, renderer);
 
    if ( viewptr->GridVisible() ) {
@@ -1798,10 +1366,6 @@ void DrawView(wxDC& dc, int tileindex)
          CheckPasteImage();
          DrawPasteImage(dc);
       }
-   }
-
-   if (new_rendering) {
-      DisplayViewport();
    }
 
    if ( numlayers > 1 && tilelayers ) {

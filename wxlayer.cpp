@@ -1804,12 +1804,6 @@ Layer::Layer()
    originy = 0;                  // no Y origin offset
    icons15x15 = NULL;            // no 15x15 icons
    icons7x7 = NULL;              // no 7x7 icons
-   
-   pixelbuff = NULL;             // pixel buffer not yet allocated
-   statebuff = NULL;             // state buffer not yet allocated
-   changedmap = NULL;            // wxBitmap not yet allocated
-   pbwd = -1;                    // force initial allocation of pixelbuff and changedmap
-   sbwd = -1;                    // force initial allocation of statebuff
 
    if (numlayers == 0) {
       // creating very first layer
@@ -1990,11 +1984,6 @@ Layer::~Layer()
 {
    // delete this layer's viewport
    delete view;
-   
-   // delete buffers used for rendering this layer
-   if (pixelbuff) free(pixelbuff);
-   if (statebuff) free(statebuff);
-   delete changedmap;
 
    if (cloneid > 0) {
       // count how many layers have the same cloneid
