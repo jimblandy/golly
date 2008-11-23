@@ -13,7 +13,7 @@ the appropriate source archive for your platform:
 
    wxMSW   - for Windows (get the installer)
    wxMac   - for Mac OS X
-   wxGTK   - for Linux/Unix with GTK+
+   wxGTK   - for Linux with GTK+
 
 Golly should compile with wxWidgets 2.7.0 or later, but it's best to
 use the latest stable version.
@@ -56,8 +56,8 @@ and type these commands (using the correct version number):
    make
 
 
-Building wxWidgets on Linux/Unix with GTK+
-------------------------------------------
+Building wxWidgets on Linux with GTK+
+-------------------------------------
 
 Unpack the wxGTK source archive wherever you like, start up a terminal
 session and type these commands (using the correct version number):
@@ -85,7 +85,9 @@ because Perl and Python are already installed.
 
 If you are running Linux, you probably have Perl installed.
 Type "perl -v" at the command line to print out the version.
-Golly's code should compile happily with Perl 5.8.x or later.
+Golly's code should compile happily with Perl 5.10 or later.
+If you have an older version of Perl then see the NOTES below.
+
 Windows users are advised to download the ActivePerl installer
 from http://www.activestate.com/Products/ActivePerl/.
 
@@ -101,7 +103,7 @@ be easy.  Just use the appropriate makefile for your platform:
 
    nmake -f makefile-win   - on Windows 2000 or later
    make -f makefile-mac    - on Mac OS X 10.3.9 or later
-   make -f makefile-gtk    - on Linux/Unix with GTK+
+   make -f makefile-gtk    - on Linux with GTK+
 
 NOTES:
 
@@ -117,6 +119,10 @@ NOTES:
 
 - In makefile-win you need to include the headers for Perl and Python
   so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
+
+- On Linux, if your Perl version is older than 5.10 then you need to
+  use "make -f makefile-gtk LINKPERL=1".  The comments in makefile-gtk
+  explain why this is necessary.
 
 
 How to build bgolly (the batch mode version)
