@@ -9,8 +9,9 @@ JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 TJH = Tim Hutton <tim.hutton@gmail.com>
 
-Changes in version 2.0 (released !!! 2008)
+Changes in version 2.0 (released November 2008)
 
+AKT: Improved rendering speed in Mac app.
 AKT: Look for rule-specific colors and icons in Rules folder.
 TGR: Implemented the RuleTree algo (no need for separate WireWorld algo).
 TJH: Implemented the RuleTable algo.

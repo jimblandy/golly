@@ -1718,7 +1718,7 @@ void GetPrefs()
       texteditor = wxT("Notepad");
    #elif defined(__WXMAC__)
       texteditor = wxT("/Applications/TextEdit.app");
-   #else // assume Unix
+   #else // assume Linux
       // don't attempt to guess which editor might be available;
       // set the string empty so the user is asked to choose their
       // preferred editor the first time texteditor is used
@@ -1733,8 +1733,8 @@ void GetPrefs()
       // not used (Perl & Python are loaded at link time)
       perllib = wxEmptyString;
       pythonlib = wxEmptyString;
-   #else // assume Unix
-      perllib = wxT("libperl.so");
+   #else // assume Linux
+      perllib = wxT("libperl.so.5.10");
       pythonlib = wxT("libpython2.5.so");
    #endif
 
@@ -2978,7 +2978,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
    #define LRGAP (5)
    #define SPINGAP (6)
    #define CHOICEGAP (6)
-#else // assume Unix
+#else // assume Linux
    #define GROUPGAP (10)
    #define SBTOPGAP (12)
    #define SBBOTGAP (7)
@@ -3962,7 +3962,7 @@ void ChooseTextEditor(wxWindow* parent, wxString& result)
       wxString filetypes = _("Applications (*.exe)|*.exe");
    #elif defined(__WXMAC__)
       wxString filetypes = _("Applications (*.app)|*.app");
-   #else // assume Unix
+   #else // assume Linux
       wxString filetypes = _("All files (*)|*");
    #endif
    
@@ -3974,7 +3974,7 @@ void ChooseTextEditor(wxWindow* parent, wxString& result)
       opendlg.SetDirectory(_("C:\\Program Files"));
    #elif defined(__WXMAC__)
       opendlg.SetDirectory(_("/Applications"));
-   #else // assume Unix
+   #else // assume Linux
       opendlg.SetDirectory(_("/usr/bin"));
    #endif
    

@@ -114,14 +114,14 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
 // =============================================================================
 
-// On Windows we try to load the Perl library at runtime
-// so Golly will start up even if Perl isn't installed.
+// On Windows and Linux we try to load the Perl library at runtime so Golly
+// will start up even if Perl isn't installed.
 
-// On Linux we can't load libperl.so dynamically because DynaLoader.a
-// has to be statically linked (for boot_DynaLoader) but it uses calls
-// in libperl.so -- sheesh.
+// On Linux we can only load libperl dynamically if using Perl 5.10 or later.
+// In older Perl versions boot_DynaLoader is in DynaLoader.a and so libperl
+// has to be statically linked.
 
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || (defined(__WXGTK__) && defined(PERL510_OR_LATER))
    // load Perl lib at runtime
    #define USE_PERL_DYNAMIC
 #endif
@@ -170,9 +170,7 @@ extern "C"
    SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
 #endif
-#ifdef __WXMSW__
    void(*G_boot_DynaLoader)(pTHX_ CV*);
-#endif
 }
 
 // redefine Perl functions to their equivalent G_* wrappers
@@ -215,9 +213,7 @@ extern "C"
    #define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
    #define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
 #endif
-#ifdef __WXMSW__
-   #define boot_DynaLoader          G_boot_DynaLoader
-#endif
+#define boot_DynaLoader          G_boot_DynaLoader
 
 #ifdef __WXMSW__
    #define PERL_PROC FARPROC
@@ -273,9 +269,7 @@ static struct PerlFunc
    PERL_FUNC(Perl_Tstack_max_ptr)
    PERL_FUNC(Perl_Tstack_sp_ptr)
 #endif
-#ifdef __WXMSW__
    PERL_FUNC(boot_DynaLoader)
-#endif
    { _T(""), NULL }
 };
 
@@ -302,14 +296,14 @@ static bool LoadPerlLib()
    // is needed to avoid an ImportError when importing some modules (eg. time)
    while ( !dynlib.Load(perllib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
       // prompt user for a different Perl library;
-      // on Windows perllib should be something like "perl58.dll"
-      // and on Linux it should be something like "libperl.so"
+      // on Windows perllib should be something like "perl510.dll"
+      // and on Linux it should be something like "libperl.so.5.10"
       wxBell();
       wxString str = _("If Perl isn't installed then you'll have to Cancel,");
       str +=         _("\notherwise change the version numbers and try again.");
       #ifdef __WXMSW__
          str +=      _("\nDepending on where you installed Perl you might have");
-         str +=      _("\nto enter a full path like C:\\Perl\\bin\\perl58.dll.");
+         str +=      _("\nto enter a full path like C:\\Perl\\bin\\perl510.dll.");
       #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Perl library"),

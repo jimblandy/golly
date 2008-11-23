@@ -20,15 +20,17 @@
 <p>
 Before you can run a .pl script, Perl needs to be installed on your system.
 Mac OS X users don't need to do anything because Perl is already installed.
-If you are running Linux then you probably have Perl installed; if not,
-visit <a href="http://www.perl.org/">www.perl.org</a> and download a
-suitable installer.  Windows users are advised to download the
+Windows and Linux users need to have Perl 5.10 or later.
+If you are using Linux then you might already have Perl 5.10 installed;
+if not, visit <a href="http://www.perl.org/">www.perl.org</a> and download
+a suitable installer.  Windows users are advised to download the
 <a href="http://www.activestate.com/Products/ActivePerl/">ActivePerl</a> installer.
 
 <p>
-On Windows, the Perl library is loaded at runtime (the first time you
-try to run a .pl script).  Golly initially attempts to load perl510.dll
-where the numbers correspond to Perl version 5.10.x.
+On Windows and Linux, the Perl library is loaded at runtime (the first time
+you try to run a .pl script).  Golly initially attempts to load a particular
+version of the Perl library: perl510.dll on Windows or libperl.so.5.10
+on Linux.  The numbers correspond to Perl version 5.10.x.
 If that library can't be found then you'll be
 prompted to enter a different library name matching the version of Perl
 installed on your system.  A successfully loaded library is remembered

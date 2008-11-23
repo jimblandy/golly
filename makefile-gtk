@@ -25,9 +25,15 @@ LDFLAGS = `wx-config --libs` -lz
 
 # for Perl script support
 PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
-PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
-#!!! dynamically load Perl lib (yuk: still have to link DynaLoader.a for boot_DynaLoader)
-#!!! PERL_LINK = --unresolved-symbols=ignore-all /usr/lib/perl/5.8/auto/DynaLoader/DynaLoader.a
+ifdef LINKPERL
+	# link Perl library if using 5.8.x or older
+	# (this is necessary because boot_DynaLoader is in DynaLoader.a)
+	PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
+else
+	# don't link Perl library if using 5.10 or later
+	# (we can dynamically load Perl lib because it contains boot_DynaLoader)
+	PERL_LINK = 
+endif
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`

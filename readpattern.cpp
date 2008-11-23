@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 bool getedges = false;              // find pattern edges?
 bigint top, left, bottom, right;    // the pattern edges
 
-#ifdef __WXMAC__
+#ifdef __APPLE__
 #define BUFFSIZE 4096      // 4K is best for Mac OS X
 #else
 #define BUFFSIZE 8192      // 8K is best for Windows and other platforms???

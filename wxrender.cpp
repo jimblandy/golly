@@ -26,21 +26,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 The rectangular area used to display patterns is called the viewport.
 It's represented by a window of class PatternView defined in wxview.h.
-The global viewptr points to a PatternView window which is created near
-the bottom of MainFrame::MainFrame() in wxmain.cpp.
+The global viewptr points to a PatternView window which is created in
+MainFrame::MainFrame() in wxmain.cpp.
 
 Nearly all drawing in the viewport is done in this module.  The only other
-places are in wxview.cpp: PatternView::StartDrawingCells() is called when
-the pencil cursor is used to click a cell, and PatternView::DrawCells() is
-called while the user drags the pencil cursor around to draw many cells.
-These exceptions were done for performance reasons -- using update events
-to do the drawing was just too slow.
+place is in wxview.cpp where PatternView::DrawOneCell() is used to draw
+cells with the pencil cursor.  This is done for performance reasons --
+using Refresh + Update to do the drawing is too slow.
 
 The main rendering routine is DrawView() -- see the end of this module.
 DrawView() is called from PatternView::OnPaint(), the update event handler
-for the viewport window.  Update events are generated automatically by the
-wxWidgets event dispatcher, or they can be generated manually by calling
-MainFrame::UpdateEverything() or MainFrame::UpdatePatternAndStatus().
+for the viewport window.  Update events are created automatically by the
+wxWidgets event dispatcher, or they can be created manually by calling
+Refresh() and Update().
 
 DrawView() does the following tasks:
 
@@ -74,11 +72,19 @@ DrawView() does the following tasks:
 Potential optimizations:
 
 - Every time DrawView() is called it draws the entire viewport, so
-  there's plenty of room for improvement!  One fairly simple change
-  would be to maintain a list of rects seen by wx_render::killrect()
-  and only draw new rects when necessary (the list would need to be
-  emptied after various UI changes).  Other more complicated schemes
-  that only do incremental drawing might also be worth trying.
+  one improvement would be to try incremental drawing.  Unfortunately
+  this is complicated by the fact that wxMac and wxGTK ignore the
+  "erase background" parameter in Refresh(false) calls; ie. they
+  *always* paint the viewport background on every update event.
+  It should be possible to get around this problem by splitting the
+  rendering code into 2 phases: the 1st phase would calculate the
+  viewport area that has changed and pass that rectangle into Refresh.
+  The 2nd phase (done in OnPaint) would call GetUpdateRegion and only
+  render that area.
+  
+  Another idea worth exploring would be to use OpenGL rather than call
+  wxDC::DrawBitmap() which seems to be the main reason rendering is slow
+  in the Mac and Linux apps (about 3 times slower than the Win app).
 
 Other points of interest:
 
@@ -92,14 +98,12 @@ Other points of interest:
   - multiple layers are being displayed.
 
 - Change the "#if 0" to "#if 1" in wx_render::killrect() to see randomly
-  colored rects.  Gives an insight into how lifealgo::draw() works.
+  colored rects.  This gives an insight into how lifealgo::draw() works.
 
 - The viewport window is actually the right-hand pane of a wxSplitWindow.
   The left-hand pane is a directory control (wxGenericDirCtrl) that
   displays the user's preferred pattern or script folder.  This is all
   handled in wxmain.cpp.
-
-!!! update above notes
 
 ----------------------------------------------------------------------------- */
 
