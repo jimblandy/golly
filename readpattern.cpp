@@ -451,7 +451,7 @@ const char *readmcell(lifealgo &imp, char *line) {
          } else if (line[1] == 'R' && line[2] == 'U' &&
                     line[3] == 'L' && line[4] == 'E' && !sawrule) {
             char *ruleptr = line;
-            ruleptr += 5;
+            ruleptr += 5;           // skip "RULE "
             while (*ruleptr && *ruleptr <= ' ') ruleptr++;
             p = ruleptr;
             while (*p > ' ') p++;
@@ -694,7 +694,7 @@ const char *readcomments(const char *filename, char **commptr)
       while (getline(line, LINESIZE)) {
          if (line[0] != '#') break;
          if (line[1] == 'L' && line[2] == ' ') break;
-         if (line[1] == 'D' && line[2] == ' ') {
+         if (line[1] == 'D' && (line[2] == ' ' || line[2] == 0)) {
             int linelen = strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
             strncpy(cptr + commlen, line, linelen);
