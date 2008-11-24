@@ -218,6 +218,13 @@ void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+   // convert path to decomposed UTF8 so fopen will work
+   #define FILEPATH filepath.fn_str()
+#else
+   #define FILEPATH filepath.mb_str(wxConvLocal)
+#endif
+
 void ShowInfo(const wxString& filepath)
 {
    if (infoptr) {
@@ -233,7 +240,7 @@ void ShowInfo(const wxString& filepath)
    char *commptr = NULL;
 
    // read and display comments in current pattern file
-   const char *err = readcomments(filepath.mb_str(wxConvLocal), &commptr);
+   const char *err = readcomments(FILEPATH, &commptr);
    if (err) {
       Warning(wxString(err,wxConvLocal));
    } else {

@@ -315,7 +315,7 @@ static bool LoadPythonLib()
       PYTHON_ERROR(msg);                                             \
    }
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+#ifdef __WXMAC__
    // use decomposed UTF8 so fopen will work
    #define FILENAME wxString(filename,wxConvLocal).fn_str()
 #else

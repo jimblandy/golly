@@ -257,11 +257,17 @@ bool MainFrame::LoadImage(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+   // convert path to decomposed UTF8 so fopen will work
+   #define FILEPATH path.fn_str()
+#else
+   #define FILEPATH path.mb_str(wxConvLocal)
+#endif
+
 void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool updatestatus)
 {
    if ( !wxFileName::FileExists(path) ) {
-      wxString err = _("The pattern file does not exist:\n") + path;
-      Warning(err);
+      Warning(_("The pattern file does not exist:\n") + path);
       return;
    }
 
@@ -320,7 +326,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
    if (LoadImage(path)) {
       viewptr->nopattupdate = false;
    } else {
-      const char* err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
+      const char* err = readpattern(FILEPATH, *currlayer->algo);
       if (err) {
          // cycle thru all other algos until readpattern succeeds
          for (int i = 0; i < NumAlgos(); i++) {
@@ -329,7 +335,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
                delete currlayer->algo;
                currlayer->algo = CreateNewUniverse(currlayer->algtype);
                // readpattern will call setrule
-               err = readpattern(path.mb_str(wxConvLocal), *currlayer->algo);
+               err = readpattern(FILEPATH, *currlayer->algo);
                if (!err) break;
             }
          }
@@ -380,23 +386,6 @@ wxString MainFrame::GetBaseName(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SetCurrentFile(const wxString& path)
-{
-   #ifdef __WXMAC__
-      // copy given path to currfile but as decomposed UTF8 so fopen will work
-      #if wxCHECK_VERSION(2, 7, 0)
-         currlayer->currfile = wxString(path.fn_str(), wxConvLocal);
-      #else
-         // wxMac 2.6.x or older (but conversion doesn't always work on OS 10.4)
-         currlayer->currfile = wxString(path.wc_str(wxConvLocal), wxConvUTF8);
-      #endif
-   #else
-      currlayer->currfile = path;
-   #endif
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::OpenFile(const wxString& path, bool remember)
 {
    if (generating) {
@@ -421,7 +410,7 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
    } else {
       // load pattern
       if (remember) AddRecentPattern(path);
-      SetCurrentFile(path);
+      currlayer->currfile = path;
       LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
@@ -598,7 +587,7 @@ void MainFrame::OpenPattern()
          RunScript( opendlg.GetPath() );
       } else {
          AddRecentPattern( opendlg.GetPath() );
-         SetCurrentFile( opendlg.GetPath() );
+         currlayer->currfile = opendlg.GetPath();
          LoadPattern(currlayer->currfile, opendlg.GetFilename());
       }
    }
@@ -929,7 +918,7 @@ void MainFrame::OpenRecentPattern(int id)
       if (!fname.IsAbsolute()) path = gollydir + path;
 
       AddRecentPattern(path);
-      SetCurrentFile(path);
+      currlayer->currfile = path;
       LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
@@ -1091,7 +1080,7 @@ const char* MainFrame::WritePattern(const wxString& path,
                                     pattern_format format,
                                     int top, int left, int bottom, int right)
 {
-   #if defined(__WXMAC__) && wxCHECK_VERSION(2, 7, 0)
+   #ifdef __WXMAC__
       // use decomposed UTF8 so fopen will work
       const char* err = writepattern(path.fn_str(),
                                      *currlayer->algo, format,
@@ -1288,7 +1277,7 @@ void MainFrame::SaveSucceeded(const wxString& path)
 
    if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
       // no need to save starting pattern (ResetPattern can load currfile)
-      SetCurrentFile(path);
+      currlayer->currfile = path;
       currlayer->savestart = false;
    }
 

@@ -380,12 +380,7 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
                              wxFocusEventHandler(ToolBar::OnKillFocus));
    viewptr->SetFocus();
 
-#if wxCHECK_VERSION(2,7,0)
-// Inside is deprecated
-if ( r.Contains(pt) ) {
-#else
-if ( r.Inside(pt) ) {
-#endif
+   if ( r.Contains(pt) ) {
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(tbbutt[id]);

@@ -903,8 +903,7 @@ void RunScript(const wxString& filename)
    if ( inscript ) return;    // play safe and avoid re-entrancy
 
    if ( !wxFileName::FileExists(filename) ) {
-      wxString err = _("The script file does not exist:\n") + filename;
-      Warning(err);
+      Warning(_("The script file does not exist:\n") + filename);
       return;
    }
 
@@ -930,12 +929,7 @@ void RunScript(const wxString& filename)
    wxString fpath = fullname.GetFullPath();
    #ifdef __WXMAC__
       // use decomposed UTF8 so interpreter can open names with non-ASCII chars
-      #if wxCHECK_VERSION(2, 7, 0)
-         fpath = wxString(fpath.fn_str(),wxConvLocal);
-      #else
-         // wxMac 2.6.x or older
-         fpath = wxString(fpath.wc_str(wxConvLocal), wxConvUTF8);
-      #endif
+      fpath = wxString(fpath.fn_str(),wxConvLocal);
    #endif
 
    if (allowundo) {
