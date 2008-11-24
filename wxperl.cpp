@@ -2934,7 +2934,7 @@ void RunPerlScript(const wxString &filepath)
    */
 
    static const char* embedding[] = { "", "-e", "" };
-   perl_parse(my_perl, xs_init, 3, embedding, NULL);
+   perl_parse(my_perl, xs_init, 3, (char**)embedding, NULL);
    perl_run(my_perl);
 
    // convert any \ to \\ and then convert any ' to \'

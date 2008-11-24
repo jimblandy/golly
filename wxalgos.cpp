@@ -150,7 +150,7 @@ static const char* default15x15[] = {
 
 // -----------------------------------------------------------------------------
 
-static wxBitmap** CreateIconBitmaps(char** xpmdata, int maxstates)
+static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
 {
    if (xpmdata == NULL) return NULL;
    
