@@ -222,9 +222,8 @@ bool MainFrame::LoadImage(const wxString& path)
         ext.IsSameAs(wxT("tiff"),false) ) {
       wxImage image;
       if ( image.LoadFile(path) ) {
-         // best not to change the current rule -- that way image can
+         // don't change the current rule here -- that way the image can
          // be loaded into any algo
-         // currlayer->algo->setrule("B3/S23");
          unsigned char maskr, maskg, maskb;
          bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
          int wd = image.GetWidth();
@@ -305,7 +304,9 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
    // delete old universe and create new one of same type
    delete currlayer->algo;
    currlayer->algo = CreateNewUniverse(currlayer->algtype);
-   // don't call setrule here -- readpattern will do it
+
+   // ensure new universe uses same rule in case LoadImage succeeds
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
    // set increment using current warp value
    SetGenIncrement();
