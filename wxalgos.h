@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // The order of the rest do not matter and indeed should soon
 // be capable of being dynamic.
 
-typedef enum {
+enum {
    QLIFE_ALGO,    // QuickLife
    HLIFE_ALGO     // HashLife
 };
