@@ -1943,6 +1943,11 @@ void MainFrame::OnClose(wxCloseEvent& event)
    if (callexit) exit(0);
    
    Destroy();
+   
+   #ifdef __WXGTK__
+      // avoid seg fault on Linux (only happens if ctrl-Q is used to quit)
+      exit(0);
+   #endif
 }
 
 // -----------------------------------------------------------------------------
