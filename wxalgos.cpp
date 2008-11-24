@@ -107,7 +107,7 @@ static unsigned char default_colors[] = {
 // -----------------------------------------------------------------------------
 
 // XPM data for default 7x7 icon
-static char* default7x7[] = {
+static const char* default7x7[] = {
 // width height ncolors chars_per_pixel
 "7 7 2 1",
 // colors
@@ -124,7 +124,7 @@ static char* default7x7[] = {
 };
 
 // XPM data for default 15x15 icon
-static char *default15x15[] = {
+static const char* default15x15[] = {
 // width height ncolors chars_per_pixel
 "15 15 2 1",
 // colors

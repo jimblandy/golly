@@ -2906,7 +2906,7 @@ void RunPerlScript(const wxString &filepath)
    #ifdef PERL510_OR_LATER
       if (!inited) {
          int argc = 3;
-         static char *argv[] = { "", "-e", "" };
+         static const char* argv[] = { "", "-e", "" };
          Perl_sys_init3(&argc, (char***)&argv, NULL);
          inited = true;
       }
@@ -2933,7 +2933,7 @@ void RunPerlScript(const wxString &filepath)
    perl_run(my_perl);
    */
 
-   static char* embedding[] = { "", "-e", "" };
+   static const char* embedding[] = { "", "-e", "" };
    perl_parse(my_perl, xs_init, 3, embedding, NULL);
    perl_run(my_perl);
 

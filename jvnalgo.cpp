@@ -233,7 +233,7 @@ state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
 }
 
 // XPM data for the 31 7x7 icons used in JvN algo
-static char* jvn7x7[] = {
+static const char* jvn7x7[] = {
 // width height ncolors chars_per_pixel
 "7 217 2 1",
 // colors
@@ -459,7 +459,7 @@ static char* jvn7x7[] = {
 "BBBABBB"};
 
 // XPM data for the 31 15x15 icons used in JvN algo
-static char *jvn15x15[] = {
+static const char* jvn15x15[] = {
 // width height ncolors chars_per_pixel
 "15 465 2 1",
 // colors

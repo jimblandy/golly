@@ -1,5 +1,5 @@
 /* XPM */
-static char *allstates_xpm[] = {
+static const char *allstates_xpm[] = {
 /* width height ncolors chars_per_pixel */
 "16 16 5 1",
 /* colors */

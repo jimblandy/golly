@@ -20,7 +20,7 @@ BINFILES = golly bgolly RuleTableToTree
 
 CXXC = g++
 CXXFLAGS = `wx-config --cxxflags` -O5 -DZLIB -DVERSION=$(VERSION) \
-   -Wall -Wno-non-virtual-dtor -Wno-deprecated -fno-strict-aliasing
+   -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
 LDFLAGS = `wx-config --libs` -lz
 
 # for Perl script support

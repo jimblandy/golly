@@ -1,5 +1,5 @@
 /* XPM */
-static char *algo_xpm[] = {
+static const char *algo_xpm[] = {
 /* width height ncolors chars_per_pixel */
 "16 16 6 1",
 /* colors */
