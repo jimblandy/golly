@@ -448,10 +448,12 @@ const char *readmcell(lifealgo &imp, char *line) {
                }
             }
 
-         } else if (line[1] == 'R' && line[2] == 'U' &&
-                    line[3] == 'L' && line[4] == 'E' && !sawrule) {
+         // we allow lines like "#GOLLY WireWorld"
+         } else if (!sawrule && (strncmp(line, "#GOLLY", 6) == 0 ||
+                                 strncmp(line, "#RULE", 5) == 0) ) {
             char *ruleptr = line;
-            ruleptr += 5;           // skip "RULE "
+            // skip "#GOLLY" or "#RULE"
+            ruleptr += line[1] == 'G' ? 6 : 5;
             while (*ruleptr && *ruleptr <= ' ') ruleptr++;
             p = ruleptr;
             while (*p > ' ') p++;
