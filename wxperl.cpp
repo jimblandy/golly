@@ -1111,7 +1111,7 @@ XS(pl_putcells)
    // for a one-state array 'copy' mode currently has the same effect as 'or' mode
    // because there is no bounding box to set dead cells, but a multi-state array can
    // have dead cells so in that case 'copy' mode is not the same as 'or' mode
-   char* mode = "or";
+   const char* mode = "or";
    
    STRLEN n_a;
    if (items > 1) x0  = SvIV(ST(1));
@@ -2555,9 +2555,9 @@ XS(pl_getstring)
       PERL_ERROR("Usage: $string = g_getstring($prompt,$default='',$title='').");
 
    STRLEN n_a;
-   char* prompt = SvPV(ST(0), n_a);
-   char* initial = "";
-   char* title = "";
+   const char* prompt = SvPV(ST(0), n_a);
+   const char* initial = "";
+   const char* title = "";
    if (items > 1) initial = SvPV(ST(1),n_a);
    if (items > 2) title = SvPV(ST(2),n_a);
    
@@ -2782,110 +2782,110 @@ EXTERN_C void xs_init(pTHX)
    #ifdef __WXMSW__
       wxUnusedVar(my_perl);
    #endif
-   char* file = __FILE__;
+   const char* file = __FILE__;
    dXSUB_SYS;
 
    // DynaLoader allows dynamic loading of other Perl extensions
-   newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+   newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, (char*)file);
 
    /* for this approach to work we presumably need to create a golly.pm file
       in Scripts/Perl and add that path to @INC!!!
       "use golly" causes error: Can't locate golly.pm in @INC
-      newXS("golly::boot_golly", boot_golly, file);
+      newXS("golly::boot_golly", boot_golly, (char*)file);
    */
 
    // filing
-   newXS("g_open",         pl_open,         file);
-   newXS("g_save",         pl_save,         file);
-   newXS("g_load",         pl_load,         file);
-   newXS("g_store",        pl_store,        file);
-   newXS("g_appdir",       pl_appdir,       file);
-   newXS("g_datadir",      pl_datadir,      file);
+   newXS("g_open",         pl_open,         (char*)file);
+   newXS("g_save",         pl_save,         (char*)file);
+   newXS("g_load",         pl_load,         (char*)file);
+   newXS("g_store",        pl_store,        (char*)file);
+   newXS("g_appdir",       pl_appdir,       (char*)file);
+   newXS("g_datadir",      pl_datadir,      (char*)file);
    // editing
-   newXS("g_new",          pl_new,          file);
-   newXS("g_cut",          pl_cut,          file);
-   newXS("g_copy",         pl_copy,         file);
-   newXS("g_clear",        pl_clear,        file);
-   newXS("g_paste",        pl_paste,        file);
-   newXS("g_shrink",       pl_shrink,       file);
-   newXS("g_randfill",     pl_randfill,     file);
-   newXS("g_flip",         pl_flip,         file);
-   newXS("g_rotate",       pl_rotate,       file);
-   newXS("g_parse",        pl_parse,        file);
-   newXS("g_transform",    pl_transform,    file);
-   newXS("g_evolve",       pl_evolve,       file);
-   newXS("g_putcells",     pl_putcells,     file);
-   newXS("g_getcells",     pl_getcells,     file);
-   newXS("g_join",         pl_join,         file);
-   newXS("g_hash",         pl_hash,         file);
-   newXS("g_getclip",      pl_getclip,      file);
-   newXS("g_select",       pl_select,       file);
-   newXS("g_getrect",      pl_getrect,      file);
-   newXS("g_getselrect",   pl_getselrect,   file);
-   newXS("g_setcell",      pl_setcell,      file);
-   newXS("g_getcell",      pl_getcell,      file);
-   newXS("g_setcursor",    pl_setcursor,    file);
-   newXS("g_getcursor",    pl_getcursor,    file);
+   newXS("g_new",          pl_new,          (char*)file);
+   newXS("g_cut",          pl_cut,          (char*)file);
+   newXS("g_copy",         pl_copy,         (char*)file);
+   newXS("g_clear",        pl_clear,        (char*)file);
+   newXS("g_paste",        pl_paste,        (char*)file);
+   newXS("g_shrink",       pl_shrink,       (char*)file);
+   newXS("g_randfill",     pl_randfill,     (char*)file);
+   newXS("g_flip",         pl_flip,         (char*)file);
+   newXS("g_rotate",       pl_rotate,       (char*)file);
+   newXS("g_parse",        pl_parse,        (char*)file);
+   newXS("g_transform",    pl_transform,    (char*)file);
+   newXS("g_evolve",       pl_evolve,       (char*)file);
+   newXS("g_putcells",     pl_putcells,     (char*)file);
+   newXS("g_getcells",     pl_getcells,     (char*)file);
+   newXS("g_join",         pl_join,         (char*)file);
+   newXS("g_hash",         pl_hash,         (char*)file);
+   newXS("g_getclip",      pl_getclip,      (char*)file);
+   newXS("g_select",       pl_select,       (char*)file);
+   newXS("g_getrect",      pl_getrect,      (char*)file);
+   newXS("g_getselrect",   pl_getselrect,   (char*)file);
+   newXS("g_setcell",      pl_setcell,      (char*)file);
+   newXS("g_getcell",      pl_getcell,      (char*)file);
+   newXS("g_setcursor",    pl_setcursor,    (char*)file);
+   newXS("g_getcursor",    pl_getcursor,    (char*)file);
    // control
-   newXS("g_empty",        pl_empty,        file);
-   newXS("g_run",          pl_run,          file);
-   newXS("g_step",         pl_step,         file);
-   newXS("g_setstep",      pl_setstep,      file);
-   newXS("g_getstep",      pl_getstep,      file);
-   newXS("g_setbase",      pl_setbase,      file);
-   newXS("g_getbase",      pl_getbase,      file);
-   newXS("g_advance",      pl_advance,      file);
-   newXS("g_reset",        pl_reset,        file);
-   newXS("g_setgen",       pl_setgen,       file);
-   newXS("g_getgen",       pl_getgen,       file);
-   newXS("g_getpop",       pl_getpop,       file);
-   newXS("g_numstates",    pl_numstates,    file);
-   newXS("g_numalgos",     pl_numalgos,     file);
-   newXS("g_setalgo",      pl_setalgo,      file);
-   newXS("g_getalgo",      pl_getalgo,      file);
-   newXS("g_setrule",      pl_setrule,      file);
-   newXS("g_getrule",      pl_getrule,      file);
+   newXS("g_empty",        pl_empty,        (char*)file);
+   newXS("g_run",          pl_run,          (char*)file);
+   newXS("g_step",         pl_step,         (char*)file);
+   newXS("g_setstep",      pl_setstep,      (char*)file);
+   newXS("g_getstep",      pl_getstep,      (char*)file);
+   newXS("g_setbase",      pl_setbase,      (char*)file);
+   newXS("g_getbase",      pl_getbase,      (char*)file);
+   newXS("g_advance",      pl_advance,      (char*)file);
+   newXS("g_reset",        pl_reset,        (char*)file);
+   newXS("g_setgen",       pl_setgen,       (char*)file);
+   newXS("g_getgen",       pl_getgen,       (char*)file);
+   newXS("g_getpop",       pl_getpop,       (char*)file);
+   newXS("g_numstates",    pl_numstates,    (char*)file);
+   newXS("g_numalgos",     pl_numalgos,     (char*)file);
+   newXS("g_setalgo",      pl_setalgo,      (char*)file);
+   newXS("g_getalgo",      pl_getalgo,      (char*)file);
+   newXS("g_setrule",      pl_setrule,      (char*)file);
+   newXS("g_getrule",      pl_getrule,      (char*)file);
    // viewing
-   newXS("g_setpos",       pl_setpos,       file);
-   newXS("g_getpos",       pl_getpos,       file);
-   newXS("g_setmag",       pl_setmag,       file);
-   newXS("g_getmag",       pl_getmag,       file);
-   newXS("g_fit",          pl_fit,          file);
-   newXS("g_fitsel",       pl_fitsel,       file);
-   newXS("g_visrect",      pl_visrect,      file);
-   newXS("g_update",       pl_update,       file);
-   newXS("g_autoupdate",   pl_autoupdate,   file);
+   newXS("g_setpos",       pl_setpos,       (char*)file);
+   newXS("g_getpos",       pl_getpos,       (char*)file);
+   newXS("g_setmag",       pl_setmag,       (char*)file);
+   newXS("g_getmag",       pl_getmag,       (char*)file);
+   newXS("g_fit",          pl_fit,          (char*)file);
+   newXS("g_fitsel",       pl_fitsel,       (char*)file);
+   newXS("g_visrect",      pl_visrect,      (char*)file);
+   newXS("g_update",       pl_update,       (char*)file);
+   newXS("g_autoupdate",   pl_autoupdate,   (char*)file);
    // layers
-   newXS("g_addlayer",     pl_addlayer,     file);
-   newXS("g_clone",        pl_clone,        file);
-   newXS("g_duplicate",    pl_duplicate,    file);
-   newXS("g_dellayer",     pl_dellayer,     file);
-   newXS("g_movelayer",    pl_movelayer,    file);
-   newXS("g_setlayer",     pl_setlayer,     file);
-   newXS("g_getlayer",     pl_getlayer,     file);
-   newXS("g_numlayers",    pl_numlayers,    file);
-   newXS("g_maxlayers",    pl_maxlayers,    file);
-   newXS("g_setname",      pl_setname,      file);
-   newXS("g_getname",      pl_getname,      file);
-   newXS("g_setcolors",    pl_setcolors,    file);
-   newXS("g_getcolors",    pl_getcolors,    file);
+   newXS("g_addlayer",     pl_addlayer,     (char*)file);
+   newXS("g_clone",        pl_clone,        (char*)file);
+   newXS("g_duplicate",    pl_duplicate,    (char*)file);
+   newXS("g_dellayer",     pl_dellayer,     (char*)file);
+   newXS("g_movelayer",    pl_movelayer,    (char*)file);
+   newXS("g_setlayer",     pl_setlayer,     (char*)file);
+   newXS("g_getlayer",     pl_getlayer,     (char*)file);
+   newXS("g_numlayers",    pl_numlayers,    (char*)file);
+   newXS("g_maxlayers",    pl_maxlayers,    (char*)file);
+   newXS("g_setname",      pl_setname,      (char*)file);
+   newXS("g_getname",      pl_getname,      (char*)file);
+   newXS("g_setcolors",    pl_setcolors,    (char*)file);
+   newXS("g_getcolors",    pl_getcolors,    (char*)file);
    // miscellaneous
-   newXS("g_setoption",    pl_setoption,    file);
-   newXS("g_getoption",    pl_getoption,    file);
-   newXS("g_setcolor",     pl_setcolor,     file);
-   newXS("g_getcolor",     pl_getcolor,     file);
-   newXS("g_getstring",    pl_getstring,    file);
-   newXS("g_getkey",       pl_getkey,       file);
-   newXS("g_dokey",        pl_dokey,        file);
-   newXS("g_show",         pl_show,         file);
-   newXS("g_error",        pl_error,        file);
-   newXS("g_warn",         pl_warn,         file);
-   newXS("g_note",         pl_note,         file);
-   newXS("g_help",         pl_help,         file);
-   newXS("g_check",        pl_check,        file);
-   newXS("g_exit",         pl_exit,         file);
+   newXS("g_setoption",    pl_setoption,    (char*)file);
+   newXS("g_getoption",    pl_getoption,    (char*)file);
+   newXS("g_setcolor",     pl_setcolor,     (char*)file);
+   newXS("g_getcolor",     pl_getcolor,     (char*)file);
+   newXS("g_getstring",    pl_getstring,    (char*)file);
+   newXS("g_getkey",       pl_getkey,       (char*)file);
+   newXS("g_dokey",        pl_dokey,        (char*)file);
+   newXS("g_show",         pl_show,         (char*)file);
+   newXS("g_error",        pl_error,        (char*)file);
+   newXS("g_warn",         pl_warn,         (char*)file);
+   newXS("g_note",         pl_note,         (char*)file);
+   newXS("g_help",         pl_help,         (char*)file);
+   newXS("g_check",        pl_check,        (char*)file);
+   newXS("g_exit",         pl_exit,         (char*)file);
    // internal use only (don't document)
-   newXS("g_fatal",        pl_fatal,        file);
+   newXS("g_fatal",        pl_fatal,        (char*)file);
 }
 
 // =============================================================================
