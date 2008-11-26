@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C Forward-shooting switchengine interacts with a dirty Schickoidal
 #C backrake to produce complex long-term behavior.
 #C Bill Gosper, 26 February 2006

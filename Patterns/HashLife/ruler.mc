@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C This produces groups of LWSSs headed west, with gaps of fixed size
 #C between them.  The lengths of the groups form the 'ruler' sequence,
 #C 1 2 1 3 1 2 1 4 1 2 1 3 1 2 1 5 ... (Sloane's A001511).  The first

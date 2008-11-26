@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C At 2.3e12 (www.tweedledum.com/rwg/gottspuzz.png) this pattern seems 
 #C to have regularized: the last twelve bursts from the left formed
 #C a geometric progression of trapezoids. But the top two corners

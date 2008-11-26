@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C Broken lines pattern - does it work forever?
 #C Dean Hickerson, 7 May 2005
 #C See also http://yucs.org/~gnivasch/life/broken_lines/

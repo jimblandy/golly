@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C Patterns whose population grows logarithmically have
 #C long been known, but this is believed to be the first pattern
 #C whose *diameter* grows logarithmically. It is based on a

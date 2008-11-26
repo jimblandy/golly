@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C A variant of the jagged line pattern in which some of the gliders
 #C from the LWSS collision undergo 3 kickback reactions.
 #C 

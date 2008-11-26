@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #R WireWorld
 #C This WireWorld pattern simulates Langton's Ant in a grid of 60x50 ant cells.
 #C See http://www.heise.ws/langton.html for details on how it works and

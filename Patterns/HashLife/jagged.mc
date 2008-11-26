@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C Jagged lines of gliders, formed by a drifting collision of two
 #C LWSS streams, crash to form an approximately vertical jagged line
 #C of pairs of blocks. I don't know if the line stays within a

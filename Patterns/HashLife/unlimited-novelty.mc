@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C nick-gotts-n type rake interaction with apparently unlimited novelty
 #C (screenshot at 4.9e8: www.tweedledum.com/rwg/nick-gotts-g.png).
 #C The interaction of the downward puffer's trail with the first

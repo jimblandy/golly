@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C Slight variation on hashlife-oddity1
 #C emits an unprecedented glider burst at 5e10.
 #C Bill Gosper, 26 February 2006

@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C Without the block, this is Gosper's "total aperiodic"
 #C pattern (Nov '97), in which every cell in the universe
 #C eventually becomes aperiodic.

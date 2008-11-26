@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C 'Gotts Dots': sprouts its nth switchengine at t ~ 2^(24n-6) --
 #C 41 ON cells, growth rate O(t ln t): Bill Gosper, 11 March 2006
 $$$$$$$*$

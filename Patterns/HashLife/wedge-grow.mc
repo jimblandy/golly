@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C 26-cell quadratic growth pattern: a forward-glider-producing switch
 #C engine repeatedly overtakes a crystal formed by collision with
 #C sideways gliders produced by a c/12 rake assembly.  When the

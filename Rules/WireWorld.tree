@@ -1,4 +1,3 @@
-# This is bgolly 2.0b Copyright 2008 The Golly Gang.
 num_states=4
 num_neighbors=8
 num_nodes=28

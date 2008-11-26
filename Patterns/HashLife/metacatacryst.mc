@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C metacatacryst -- a 52-cell pattern exhibiting quadratic growth.
 #C Found by Nick Gotts, December 2000.
 $$$$$$$......*$

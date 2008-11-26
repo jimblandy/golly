@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C mosquito5 -- a 71-cell pattern with a quadratic growth rate.
 #C Nick Gotts, 21 Oct 1998
 $$$$$$$......*$

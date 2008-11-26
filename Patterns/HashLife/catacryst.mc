@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C catacryst -- a 58-cell quadratic growth pattern
 #C
 #C This was at one time the smallest pattern known pattern

@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C nikk-nikkm1r90-w4s164
 #C by Nick Gotts (see http://nickgotts-eventful.blogspot.com/)
 $$$$$$$......*$

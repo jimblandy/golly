@@ -1,4 +1,4 @@
-[M2] (golly 2.0b)
+[M2] (golly 2.0)
 #C gosblor4c2-gosblor4c2f-s17sw51
 #C by Nick Gotts (see http://nickgotts-eventful.blogspot.com/)
 $$$$$$$..****$
