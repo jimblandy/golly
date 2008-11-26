@@ -1598,12 +1598,34 @@ void UpdateCloneColors()
 
 // -----------------------------------------------------------------------------
 
+static FILE* FindColorFile(const wxString& rule)
+{
+   // first look for rule.colors in rulesdir
+   const wxString extn = wxT(".colors");
+   wxString path = rulesdir + rule;
+   path += extn;
+   FILE* f = fopen(path.mb_str(wxConvLocal), "r");
+   if (f) return f;
+   
+   // if rule has the form foo-* then look for foo.colors in rulesdir;
+   // this allows related rules to share a single .colors file
+   wxString prefix = rule.BeforeLast('-');
+   if (!prefix.IsEmpty()) {
+      path = rulesdir + prefix;
+      path += extn;
+      f = fopen(path.mb_str(wxConvLocal), "r");
+      if (f) return f;
+   }
+   
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 static void LoadRuleColors(const wxString& rule, int maxstate)
 {
-   // if rule.colors exists in rulesdir then change colors according to info in file
-   wxString path = rulesdir + rule;
-   path += _(".colors");
-   FILE* f = fopen(path.mb_str(wxConvLocal), "r");
+   // if matching .colors file exists then change colors according to info in file
+   FILE* f = FindColorFile(rule);
    if (f) {
       // the linereader class handles all line endings (CR, CR+LF, LF)
       linereader reader(f);
@@ -1647,6 +1669,28 @@ static void LoadRuleColors(const wxString& rule, int maxstate)
 
 // -----------------------------------------------------------------------------
 
+static bool FindIconFile(const wxString& rule, wxString& path)
+{
+   // first look for rule.icons in rulesdir
+   const wxString extn = wxT(".icons");
+   path = rulesdir + rule;
+   path += extn;
+   if (wxFileName::FileExists(path)) return true;
+   
+   // if rule has the form foo-* then look for foo.icons in rulesdir;
+   // this allows related rules to share a single .icons file
+   wxString prefix = rule.BeforeLast('-');
+   if (!prefix.IsEmpty()) {
+      path = rulesdir + prefix;
+      path += extn;
+      if (wxFileName::FileExists(path)) return true;
+   }
+   
+   return false;
+}
+
+// -----------------------------------------------------------------------------
+
 static bool LoadRuleIcons(const wxString& rule, int maxstate)
 {
    // deallocate current layer's old icons if they exist
@@ -1661,10 +1705,9 @@ static bool LoadRuleIcons(const wxString& rule, int maxstate)
       currlayer->icons7x7 = NULL;
    }
 
-   // if rule.icons exists in rulesdir then load icons for current layer
-   wxString path = rulesdir + rule;
-   path += _(".icons");
-   return wxFileName::FileExists(path) &&
+   // if matching .icons file exists then load icons for current layer
+   wxString path;
+   return FindIconFile(rule, path) &&
           LoadIconFile(path, maxstate, &currlayer->icons15x15, &currlayer->icons7x7);
 }
 

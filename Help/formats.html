@@ -207,6 +207,7 @@ southeast child of the root node is at coordinate position (x=0,y=1).
 Macrocell files saved from two-state algorithms and from multi-state
 algorithms are not compatible.
 
+
 <p><a name="colors">&nbsp;<br>
 <font size=+1><b>Rule colors</b></font>
 
@@ -214,7 +215,13 @@ algorithms are not compatible.
 Whenever Golly switches to a new rule it looks inside the Rules folder
 for a matching <i>rule</i>.colors file and, if it exists, loads the
 color information stored in the file.
-A rule string can contain characters not allowed in file names
+If <i>rule</i>.colors is not found but <i>rule</i> contains one or more
+hyphens then Golly will look for <i>prefix</i>.colors, where <i>prefix</i>
+consists of all the characters before the final hyphen.  This allows
+related rules to share a single .colors file.
+
+<p>
+Note that a rule string can contain characters not allowed in file names
 ("/", "\" and ":"), so Golly will substitute those characters with hyphens.
 For example, if you wanted to change the colors associated with the rule
 12/34/6 then you'd need to create a file called 12-34-6.colors.
@@ -232,6 +239,7 @@ lines like these:
 </p>
 
 <p>
+Golly silently ignores any states that are invalid for the new rule.
 Any text after the final number on each line is ignored.
 To specify a color gradient you can use a line like this:
 
@@ -254,6 +262,12 @@ colors for each algorithm.
 Whenever Golly switches to a new rule it looks inside the Rules folder
 for a matching <i>rule</i>.icons file and, if it exists, loads the
 icon bitmaps stored in the file.
+If <i>rule</i>.icons is not found but <i>rule</i> contains one or more
+hyphens then Golly will look for <i>prefix</i>.icons, where <i>prefix</i>
+consists of all the characters before the final hyphen.  This allows
+related rules to share a single .icons file.
+
+<p>
 Note that a rule string can contain characters not allowed in file names
 ("/", "\" and ":"), so Golly will substitute those characters with hyphens.
 For example, if you wanted to change the icons associated with the rule
