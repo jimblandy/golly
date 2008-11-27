@@ -33,12 +33,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 using namespace std ;
 
-const int logpmsize = 7 ;                    // 6=64x64  7=128x128  8=256x256
+// 64x64 is slightly faster on Mac (< 1%) and Win (1 to 2%)
+// and much faster on Linux/GTK (5 to 40%)
+const int logpmsize = 6 ;                    // 6=64x64  7=128x128  8=256x256
 const int pmsize = (1<<logpmsize) ;          // pixmap wd and ht, in pixels
 const int bpp = 3 ;                          // bytes per pixel (rgb)
 const int rowoff = (pmsize*bpp) ;            // row offset, in bytes
 const int ibufsize = (pmsize*pmsize*bpp) ;   // buffer size, in bytes
-static unsigned char ipixbuf[ibufsize] ;     // a shared buffer for 128x128 pixels
+static unsigned char ipixbuf[ibufsize] ;     // shared buffer for pixels
 static unsigned char *pixbuf = ipixbuf ;
 
 // AKT: arrays of rgb colors for each cell state (set by getcolors call)
