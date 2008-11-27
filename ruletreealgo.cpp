@@ -60,10 +60,10 @@ const char* ruletreealgo::setrule(const char* s) {
       if (strlen(rulefolder) + strlen(s) + 15 > (unsigned int)MAXFILELEN)
          return "Path too long" ;
       sprintf(strbuf, "%s%s.tree", rulefolder, s) ;
-      /* change "dangerous" characters to hyphens */
+      /* change "dangerous" characters to underscores */
       for (char *p=strbuf + strlen(rulefolder); *p; p++)
         if (*p == '/' || *p == '\\' || *p == ':')
-          *p = '-' ;
+          *p = '_' ;
       // AKT: removed printf
       // printf("Trying to open %s\n", strbuf) ;
       f = fopen(strbuf, "r") ;

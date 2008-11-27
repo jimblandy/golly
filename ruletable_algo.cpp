@@ -145,15 +145,12 @@ string ruletable_algo::LoadRuleTable(string rule)
    string full_filename;
    if (!isDefaultRule) 
    {
-      // we need to prepend the full path to the rules dir because when Golly runs
-      // a script it temporarily changes the cwd to the location of the script
       full_filename = lifegetrulesdir() ;
       int istart = full_filename.size() ;
       full_filename += rule + ".table" ;
       for (unsigned int i=istart; i<full_filename.size(); i++)
-         if (full_filename[i] == '/' || full_filename[i] == '\\' ||
-            full_filename[i] == ':')
-         full_filename[i] = '-' ;
+         if (full_filename[i] == '/' || full_filename[i] == '\\' || full_filename[i] == ':')
+            full_filename[i] = '_' ;
       in = fopen(full_filename.c_str(),"rt");
       if (!in) 
          return "Failed to open file: "+full_filename;

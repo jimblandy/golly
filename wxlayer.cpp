@@ -1733,10 +1733,11 @@ void UpdateCurrentColors()
    }
    
    wxString rule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   // replace any '\' and '/' and ':' chars with '-'
-   rule.Replace(wxT("\\"), wxT("-"));
-   rule.Replace(wxT("/"), wxT("-"));
-   rule.Replace(wxT(":"), wxT("-"));
+   // replace any '\' and '/' and ':' chars with underscores;
+   // ie. given 12/34/6 we look for 12_34_6.{colors|icons}
+   rule.Replace(wxT("\\"), wxT("_"));
+   rule.Replace(wxT("/"), wxT("_"));
+   rule.Replace(wxT(":"), wxT("_"));
    
    // if rule.colors file exists then override default colors
    LoadRuleColors(rule, maxstate);
