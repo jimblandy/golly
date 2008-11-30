@@ -1,7 +1,8 @@
 # Oscar is an OSCillation AnalyzeR for use with Golly.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2007.
+# Modified to use Math::BigInt, December 2008.
 
-# It uses Gabriel Nivasch's "keep minima" algorithm:
+# We use Gabriel Nivasch's "keep minima" algorithm:
 #
 # For each generation, calculate a hash value for the pattern.  Keep all of
 # the record-breaking minimal hashes in a list, with the oldest first.
@@ -23,13 +24,15 @@
 use strict;
 use Time::HiRes qw ( time );
 
+use Math::BigInt;          # use arbitrarily big integers
+
 # --------------------------------------------------------------------
 
 # initialize lists
-my @hashlist = ();        # for pattern hash values
-my @genlist = ();         # corresponding generation counts
-my @poplist = ();         # corresponding population counts
-my @boxlist = ();         # corresponding bounding boxes
+my @hashlist = ();         # for pattern hash values
+my @genlist = ();          # corresponding generation counts
+my @poplist = ();          # corresponding population counts
+my @boxlist = ();          # corresponding bounding boxes
 
 # --------------------------------------------------------------------
 
@@ -103,10 +106,13 @@ sub oscillating {
          # h == hashlist[pos] so pattern is probably oscillating, but just in
          # case this is a hash collision we also compare pop count and box size
          my @rect = @{$boxlist[$pos]};
-         if ( int(g_getpop()) == $poplist[$pos] and
-                  $pbox[2] == $rect[2] and
-                  $pbox[3] == $rect[3] ) {
-            my $period = int(g_getgen()) - $genlist[$pos];
+         my $currpop = Math::BigInt->new(g_getpop());
+         if ( $currpop->bcmp($poplist[$pos]) == 0 and
+              $pbox[2] == $rect[2] and
+              $pbox[3] == $rect[3] ) {
+            my $currgen = Math::BigInt->new(g_getgen());
+            my $bigp = $currgen->bsub($genlist[$pos]);
+            my $period = $bigp->numify();
             if ($period == 1) {
                if ($pbox[0] == $rect[0] and $pbox[1] == $rect[1] and
                    $pbox[2] == $rect[2] and $pbox[3] == $rect[3]) {
@@ -132,8 +138,8 @@ sub oscillating {
    
    # store hash/gen/pop/box info at same position in various lists
    splice(@hashlist, $pos, 0, $h);
-   splice(@genlist, $pos, 0, int(g_getgen()));
-   splice(@poplist, $pos, 0, int(g_getpop()));
+   splice(@genlist, $pos, 0, Math::BigInt->new(g_getgen()));
+   splice(@poplist, $pos, 0, Math::BigInt->new(g_getpop()));
    splice(@boxlist, $pos, 0, \@pbox);
 
    return 0;
