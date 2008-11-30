@@ -1,42 +1,9 @@
-# Paterson's worms
-# (by Dean Hickerson, 11/19/2008)
-#     Pattern #055
-#     Sven Kahrkling's notation 1040512
-#     Gardner's notation 1a2c3cbaa4b
-#     Finishes after 569804 steps, almost filling a regular hexagon.
-# Points and lines of hexagonal grid are mapped to points of square grid as
-# below.  "*" is a point of the hex grid, "-", "/", and # "\" are lines
-# of the hex grid.
-#
-# +--+--+--+--+
-# |- |* |- |* |
-# +--+--+--+--+
-# | /| \| /| \|
-# +--+--+--+--+
-# |* |- |* |- |
-# +--+--+--+--+
-#
-# Each step of the worm is simulated by 2 gens in the rule.  In even gens,
-# there's an arrow at one point of the hex grid showing which way the worm
-# will move next.  In odd gens, there's an arrow on one line of the hex
-# grid.  The transitions from even to odd gens are the same for all worms.
-# Those from odd to even depend on the specific type of worm: If a point
-# (state 0 or 1) has a line with an arrow pointing at it, it becomes a
-# 'point with arrow'; the direction depends on the 6 neighboring lines,
-# which are the NW, N, E, S, SW, and W neighbors in the square grid.
-#
-# Gen 0 consists of a single point in state 11, a 'point with arrow'
-# pointing east.  (Starting with a point in state 12, 13, ..., or 16
-# would also work, rotating the whole pattern.)
-#
-# States are:
-#
-# 0            empty (unvisited point or line)
-# 1            point that's been visited
-# 2,3,4        edge -  (2=line; 3=E arrow; 4=W arrow)
-# 5,6,7        edge /  (5=line; 6=NE arrow; 7=SW arrow)
-# 8,9,10       edge \  (8=line; 9=SE arrow; 10=NW arrow)
-# 11-16        'point with arrow', showing direction of next movement
-#              (11=E; 12=SE; 13=SW; 14=W; 15=NW; 16=NE)
+#C One of Paterson's worms 
+#C Implemented in Golly by Dean Hickerson, 11/30/2008
+#C Pattern #055
+#C Sven Kahrkling's notation 1040512
+#C Gardner's notation 1a2c3cbaa4b
+#C Finishes after 569804 steps (1139608 gens in Golly), almost filling
+#C a regular hexagon.
 x = 1, y = 1, rule = Worm-1040512
-K!
+A!
