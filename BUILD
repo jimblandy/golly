@@ -85,8 +85,7 @@ because Perl and Python are already installed.
 
 If you are running Linux, you probably have Perl installed.
 Type "perl -v" at the command line to print out the version.
-Golly's code should compile happily with Perl 5.10 or later.
-If you have an older version of Perl then see the NOTES below.
+Golly's code should compile happily with Perl 5.8.x or later.
 
 Windows users are advised to download the ActivePerl installer
 from http://www.activestate.com/Products/ActivePerl/.
@@ -119,10 +118,6 @@ NOTES:
 
 - In makefile-win you need to include the headers for Perl and Python
   so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
-
-- On Linux, if your Perl version is older than 5.10 then you need to
-  use "make -f makefile-gtk LINKPERL=1".  The comments in makefile-gtk
-  explain why this is necessary.
 
 
 How to build bgolly (the batch mode version)
