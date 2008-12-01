@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 
 #include "ruletreealgo.h"
-#include "util.h"      // AKT: for lifegetrulesdir()
+#include "util.h"          // for lifegetuserrules, lifegetrulesdir, lifewarning
 #include <stdlib.h>
 // for case-insensitive string comparison
 #include <string.h>
@@ -33,10 +33,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <vector>
 #include <cstdio>
 using namespace std ;
+
 int ruletreealgo::NumCellStates() {
    return num_states ;
 }
+
 const int MAXFILELEN = 4096 ;
+
 /* provide the ability to load the default rule without requiring a file */
 static const char *defaultRuleData[] = {
   "num_states=2", "num_neighbors=8", "num_nodes=32",
@@ -45,8 +48,24 @@ static const char *defaultRuleData[] = {
   "5 11 14", "6 12 15", "3 1 1", "4 13 17", "5 14 18", "6 15 19",
   "7 16 20", "4 17 17", "5 18 22", "6 19 23", "7 20 24", "8 21 25",
   "5 22 22", "6 23 27", "7 24 28", "8 25 29", "9 26 30", 0 } ;
+
+static FILE *OpenTreeFile(const char *rule, const char *dir, char *path)
+{
+   // look for rule.tree in given dir and set path
+   if (strlen(dir) + strlen(rule) + 15 > (unsigned int)MAXFILELEN) {
+      lifewarning("Path too long") ;
+      return NULL ;
+   }
+   sprintf(path, "%s%s.tree", dir, rule) ;
+   // change "dangerous" characters to underscores
+   for (char *p=path + strlen(dir); *p; p++)
+      if (*p == '/' || *p == '\\' || *p == ':')
+         *p = '_' ;
+   return fopen(path, "r") ;
+}
+
 const char* ruletreealgo::setrule(const char* s) {
-   // AKT: nicer to check for different versions of default rule
+   // nicer to check for different versions of default rule
    int isDefaultRule = (stricmp(s, "B3/S23") == 0 ||
                         stricmp(s, "B3S23") == 0 ||
                         strcmp(s, "23/3") == 0) ;
@@ -56,17 +75,10 @@ const char* ruletreealgo::setrule(const char* s) {
    if (!isDefaultRule) {
       if (strlen(s) >= (unsigned int)MAXRULESIZE)
          return "Rule length too long" ;
-      const char *rulefolder = lifegetrulesdir() ;    // AKT: ends with dir separator
-      if (strlen(rulefolder) + strlen(s) + 15 > (unsigned int)MAXFILELEN)
-         return "Path too long" ;
-      sprintf(strbuf, "%s%s.tree", rulefolder, s) ;
-      /* change "dangerous" characters to underscores */
-      for (char *p=strbuf + strlen(rulefolder); *p; p++)
-        if (*p == '/' || *p == '\\' || *p == ':')
-          *p = '_' ;
-      // AKT: removed printf
-      // printf("Trying to open %s\n", strbuf) ;
-      f = fopen(strbuf, "r") ;
+      // look for rule.tree in user's rules dir then in Golly's rules dir
+      f = OpenTreeFile(s, lifegetuserrules(), strbuf);
+      if (f == 0)
+         f = OpenTreeFile(s, lifegetrulesdir(), strbuf);
       if (f == 0)
          return "File not found" ;
       lr.setfile(f) ;
@@ -135,7 +147,7 @@ const char* ruletreealgo::setrule(const char* s) {
          }
       }
    }
-   // AKT: disabled to avoid crash on Linux
+   // disabled to avoid crash on Linux
    // lr.close() ;
    if (dat.size() + datb.size() != (unsigned int)(mnum_nodes * mnum_states))
       return "Bad count of values in ruletree file" ;
@@ -164,6 +176,7 @@ const char* ruletreealgo::setrule(const char* s) {
    strcpy(rule, s) ;
    return 0 ;
 }
+
 const char* ruletreealgo::getrule() {
    return rule ;
 }

@@ -43,8 +43,9 @@ void ChooseTextEditor(wxWindow* parent, wxString& result);
 // Global preference data:
 
 extern wxString gollydir;        // path of directory containing app
-extern wxString rulesdir;        // path of directory containing rule data
 extern wxString datadir;         // path of directory containing user-specific data
+extern wxString rulesdir;        // path of directory containing app's rule data
+extern wxString userrules;       // path of directory containing user's rule data
 
 extern int debuglevel;           // for displaying debug info if > 0
 

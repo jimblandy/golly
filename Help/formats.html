@@ -212,11 +212,13 @@ algorithms are not compatible.
 <font size=+1><b>Rule colors</b></font>
 
 <p>
-Whenever Golly switches to a new rule it looks inside the Rules folder
-for a matching <i>rule</i>.colors file and, if it exists, loads the
-color information stored in the file.
+Whenever Golly switches to a new rule it searches for a matching 
+<i>rule</i>.colors file and, if found, loads the color information
+stored in the file.
+Golly looks for the file in <a href="prefs#control">your rules folder</a>
+first, then it looks in the supplied Rules folder.
 If <i>rule</i>.colors is not found but <i>rule</i> contains one or more
-hyphens then Golly will look for <i>prefix</i>.colors, where <i>prefix</i>
+hyphens then Golly searches for <i>prefix</i>.colors, where <i>prefix</i>
 consists of all the characters before the final hyphen.  This allows
 related rules to share a single .colors file.
 
@@ -259,9 +261,11 @@ colors for each algorithm.
 <font size=+1><b>Rule icons</b></font>
 
 <p>
-Whenever Golly switches to a new rule it looks inside the Rules folder
-for a matching <i>rule</i>.icons file and, if it exists, loads the
-icon bitmaps stored in the file.
+Whenever Golly switches to a new rule it searches for a matching 
+<i>rule</i>.icons file and, if found, loads the icon bitmaps
+stored in the file.
+Golly looks for the file in <a href="prefs#control">your rules folder</a>
+first, then it looks in the supplied Rules folder.
 If <i>rule</i>.icons is not found but <i>rule</i> contains one or more
 hyphens then Golly will look for <i>prefix</i>.icons, where <i>prefix</i>
 consists of all the characters before the final hyphen.  This allows
@@ -307,7 +311,9 @@ is that there is no need for a .icons extension.
 <p>
 Golly allows you to add new rules by creating transition tables stored in
 external files.  Given the rule string "foo", the RuleTable algorithm will
-look inside the Rules folder for a file called foo.table.
+search for a file called foo.table.
+It looks for the file in <a href="prefs#control">your rules folder</a>
+first, then it looks in the supplied Rules folder.
 Here's a simple example file:
 
 <p>
@@ -368,7 +374,10 @@ all 90-degree rotations of those (because of the <tt>rotate4</tt> symmetry).
 Rule tables usually don't specify every possible set of inputs. For those
 not listed, the central cell remains unchanged.
 
-<p>Rules are checked in the order given in the file - the first rule that matches is applied. If you want, you can write rules in the form of general cases and exceptions, as long as the exceptions appear first in the file.
+<p>
+Rules are checked in the order given in the file - the first rule that
+matches is applied. If you want, you can write rules in the form of general
+cases and exceptions, as long as the exceptions appear first in the file.
 
 <p>
 (This form of CA rule table representation comes from Gianluca Tempesti's
@@ -380,7 +389,9 @@ If you have a C/C++ implementation of a transition function, there is a
 way to automatically produce a rule table file.
 See <tt>Rules/TableGenerators/make-ruletable.cpp</tt> for instructions. 
 
-<p>To share your rule tables with others, you can archive them at the public <a href="http://code.google.com/p/ruletablerepository/">Rule Table Repository</a>.
+<p>
+To share your rule tables with others, you can archive them at the public
+<a href="http://code.google.com/p/ruletablerepository/">Rule Table Repository</a>.
 
 
 <p><a name="tree">&nbsp;<br>
@@ -388,9 +399,13 @@ See <tt>Rules/TableGenerators/make-ruletable.cpp</tt> for instructions.
 
 <p>
 Golly permits the loading of rules from external files, where those
-files are in RuleTree format.  If a rule named Foo is requested, and
-the file Rules/Foo.tree exists, Golly will load the rule from
-that file.  Golly includes programs that permit you to transform a
+files are in RuleTree format.  If a rule named Foo is requested,
+Golly will search for Foo.tree and, if found, load the rule from that file.
+It looks for the file in <a href="prefs#control">your rules folder</a>
+first, then it looks in the supplied Rules folder.
+
+<p>
+Golly includes programs that permit you to transform a
 given transition function in C++, Perl, or Java into a RuleTree file
 (see Rules/TreeGenerators) if the number of states is sufficiently
 small (approximately 10 states for eight-neighbor rules, and 32 states

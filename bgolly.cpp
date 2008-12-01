@@ -65,6 +65,7 @@ public:
    virtual void beginprogress(const char *s) { abortprogress(0, s) ; }
    virtual bool abortprogress(double, const char *) ;
    virtual void endprogress() { abortprogress(1, "") ; }
+   virtual const char* getuserrules() { return "" ; }
    virtual const char* getrulesdir() { return "Rules/" ; }
 } ;
 nullerrors nullerror ;
@@ -82,6 +83,7 @@ public:
    virtual void beginprogress(const char *) {}
    virtual bool abortprogress(double, const char *) { return 0 ; }
    virtual void endprogress() {}
+   virtual const char* getuserrules() { return "" ; }
    virtual const char* getrulesdir() { return "Rules/" ; }
 } ;
 verbosestatus verbosestatus_instance ;

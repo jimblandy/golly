@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, FillRect, CreatePaleBitmap, etc
 #include "wxrender.h"      // for DrawOneIcon
-#include "wxprefs.h"       // for initrule, swapcolors, rulesdir, etc
+#include "wxprefs.h"       // for initrule, swapcolors, userrules, rulesdir, etc
 #include "wxscript.h"      // for inscript
 #include "wxundo.h"        // for UndoRedo, etc
 #include "wxalgos.h"       // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
@@ -1598,20 +1598,22 @@ void UpdateCloneColors()
 
 // -----------------------------------------------------------------------------
 
-static FILE* FindColorFile(const wxString& rule)
+static FILE* FindColorFile(const wxString& rule, const wxString& dir)
 {
-   // first look for rule.colors in rulesdir
    const wxString extn = wxT(".colors");
-   wxString path = rulesdir + rule;
+   wxString path;
+   
+   // first look for rule.colors in given directory
+   path = dir + rule;
    path += extn;
    FILE* f = fopen(path.mb_str(wxConvLocal), "r");
    if (f) return f;
    
-   // if rule has the form foo-* then look for foo.colors in rulesdir;
+   // if rule has the form foo-* then look for foo.colors in dir;
    // this allows related rules to share a single .colors file
    wxString prefix = rule.BeforeLast('-');
    if (!prefix.IsEmpty()) {
-      path = rulesdir + prefix;
+      path = dir + prefix;
       path += extn;
       f = fopen(path.mb_str(wxConvLocal), "r");
       if (f) return f;
@@ -1624,8 +1626,10 @@ static FILE* FindColorFile(const wxString& rule)
 
 static void LoadRuleColors(const wxString& rule, int maxstate)
 {
-   // if matching .colors file exists then change colors according to info in file
-   FILE* f = FindColorFile(rule);
+   // if rule.colors file exists in userrules or rulesdir then
+   // change colors according to info in file
+   FILE* f = FindColorFile(rule, userrules);
+   if (!f) f = FindColorFile(rule, rulesdir);
    if (f) {
       // the linereader class handles all line endings (CR, CR+LF, LF)
       linereader reader(f);
@@ -1669,19 +1673,20 @@ static void LoadRuleColors(const wxString& rule, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-static bool FindIconFile(const wxString& rule, wxString& path)
+static bool FindIconFile(const wxString& rule, const wxString& dir, wxString& path)
 {
-   // first look for rule.icons in rulesdir
    const wxString extn = wxT(".icons");
-   path = rulesdir + rule;
+
+   // first look for rule.icons in given directory
+   path = dir + rule;
    path += extn;
    if (wxFileName::FileExists(path)) return true;
    
-   // if rule has the form foo-* then look for foo.icons in rulesdir;
+   // if rule has the form foo-* then look for foo.icons in dir;
    // this allows related rules to share a single .icons file
    wxString prefix = rule.BeforeLast('-');
    if (!prefix.IsEmpty()) {
-      path = rulesdir + prefix;
+      path = dir + prefix;
       path += extn;
       if (wxFileName::FileExists(path)) return true;
    }
@@ -1705,9 +1710,11 @@ static bool LoadRuleIcons(const wxString& rule, int maxstate)
       currlayer->icons7x7 = NULL;
    }
 
-   // if matching .icons file exists then load icons for current layer
+   // if rule.icons file exists in userrules or rulesdir then
+   // load icons for current layer
    wxString path;
-   return FindIconFile(rule, path) &&
+   return (FindIconFile(rule, userrules, path) ||
+           FindIconFile(rule, rulesdir, path)) &&
           LoadIconFile(path, maxstate, &currlayer->icons15x15, &currlayer->icons7x7);
 }
 

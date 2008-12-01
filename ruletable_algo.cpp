@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "ruletable_algo.h"
 
-#include "util.h"      // for lifegetrulesdir, lifewarning
+#include "util.h"      // for lifegetuserrules, lifegetrulesdir, lifewarning
 
 // for case-insensitive string comparison
 #include <string.h>
@@ -125,6 +125,19 @@ const char *defaultRuleData[] = {
    "701120", "701220", "701250", "702120", "702221", "702251", "702321",
    "702525", "702720", 0 } ;
 
+static FILE *OpenTableFile(string &rule, const char *dir, string &path)
+{
+   // look for rule.table in given dir and set path
+   path = dir;
+   int istart = path.size();
+   path += rule + ".table";
+   // change "dangerous" characters to underscores
+   for (unsigned int i=istart; i<path.size(); i++)
+      if (path[i] == '/' || path[i] == '\\' || path[i] == ':')
+         path[i] = '_';
+   return fopen(path.c_str(), "rt");
+}
+
 string ruletable_algo::LoadRuleTable(string rule)
 {
    const string comment_keyword = "#";
@@ -145,13 +158,10 @@ string ruletable_algo::LoadRuleTable(string rule)
    string full_filename;
    if (!isDefaultRule) 
    {
-      full_filename = lifegetrulesdir() ;
-      int istart = full_filename.size() ;
-      full_filename += rule + ".table" ;
-      for (unsigned int i=istart; i<full_filename.size(); i++)
-         if (full_filename[i] == '/' || full_filename[i] == '\\' || full_filename[i] == ':')
-            full_filename[i] = '_' ;
-      in = fopen(full_filename.c_str(),"rt");
+      // look for rule.table in user's rules dir then in Golly's rules dir
+      in = OpenTableFile(rule, lifegetuserrules(), full_filename);
+      if (!in)
+         in = OpenTableFile(rule, lifegetrulesdir(), full_filename);
       if (!in) 
          return "Failed to open file: "+full_filename;
       line_reader.setfile(in) ;

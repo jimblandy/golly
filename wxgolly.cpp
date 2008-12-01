@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxstatus.h"      // defines StatusBar class
 #include "wxview.h"        // defines PatternView class
 #include "wxutils.h"       // for Warning, Fatal, BeginProgress, etc
-#include "wxprefs.h"       // for GetPrefs, gollydir, rulesdir
+#include "wxprefs.h"       // for GetPrefs, gollydir, rulesdir, userrules
 
 #ifdef __WXMSW__
    // app icons are loaded via .rc file
@@ -105,6 +105,12 @@ public:
 
    virtual void endprogress() {
       EndProgress();
+   }
+
+   virtual const char* getuserrules() {
+      // need to be careful converting Unicode wxString to char*
+      dirbuff = userrules.mb_str(wxConvLocal);
+      return (const char*) dirbuff;
    }
 
    virtual const char* getrulesdir() {

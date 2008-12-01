@@ -49,6 +49,9 @@ public:
    virtual void endprogress() {
       // do nothing
    }
+   virtual const char *getuserrules() {
+      return "" ;
+   }
    virtual const char *getrulesdir() {
       return "" ;
    }
@@ -91,6 +94,10 @@ bool isaborted() {
 
 void lifeendprogress() {
    errorhandler->endprogress() ;
+}
+
+const char *lifegetuserrules() {
+   return errorhandler->getuserrules() ;
 }
 
 const char *lifegetrulesdir() {

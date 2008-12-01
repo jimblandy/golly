@@ -91,8 +91,9 @@ const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 // initialize exported preferences:
 
 wxString gollydir;               // path of directory containing app
-wxString rulesdir;               // path of directory containing rule data
 wxString datadir;                // path of directory containing user-specific data
+wxString rulesdir;               // path of directory containing app's rule data
+wxString userrules;              // path of directory containing user's rule data
 
 int debuglevel = 0;              // for displaying debug info if > 0
 
@@ -1540,6 +1541,7 @@ void SavePrefs()
    SaveRelPath(f, "choose_dir", choosedir);
    SaveRelPath(f, "pattern_dir", patterndir);
    SaveRelPath(f, "script_dir", scriptdir);
+   SaveRelPath(f, "user_rules", userrules);
    
    fputs("\n", f);
 
@@ -1705,6 +1707,9 @@ void GetPrefs()
 
    rulesdir = gollydir + wxT("Rules");
    rulesdir += wxFILE_SEP_PATH;
+
+   userrules = datadir + wxT("Rules");
+   userrules += wxFILE_SEP_PATH;
    
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
@@ -2101,6 +2106,7 @@ void GetPrefs()
       } else if (strcmp(keyword, "choose_dir") == 0)    { GetRelPath(value, choosedir);
       } else if (strcmp(keyword, "pattern_dir") == 0)   { GetRelPath(value, patterndir, PATT_DIR);
       } else if (strcmp(keyword, "script_dir") == 0)    { GetRelPath(value, scriptdir, SCRIPT_DIR);
+      } else if (strcmp(keyword, "user_rules") == 0)    { GetRelPath(value, userrules);
 
       } else if (strcmp(keyword, "text_editor") == 0) {
          texteditor = wxString(value,wxConvLocal);
@@ -2526,6 +2532,8 @@ enum {
    PREF_STEP_NOTE,
    PREF_MIN_DELAY,
    PREF_MAX_DELAY,
+   PREF_USER_RULES,
+   PREF_RULES_BOX,
    // View prefs
    PREF_SHOW_TIPS,
    PREF_RESTORE,
@@ -2623,6 +2631,7 @@ private:
    wxScrollBar* scrollbar;             // for changing number of gradient states
 
    wxString neweditor;                 // new text editor
+   wxString newuserrules;              // new directory for user's rules
 
    DECLARE_EVENT_TABLE()
 };
@@ -3316,18 +3325,22 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
               0, wxALIGN_CENTER_VERTICAL, 0);
 
-   /* !!! weird wxMac bug (due to spin ctrls in wxStaticBox?) stops us doing this:
-   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Settings for each algorithm:"));
-   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
-   ssizer1->AddSpacer(SBTOPGAP);
-   ssizer1->Add(algomenu, 0, wxALIGN_CENTER, 0);
-   ssizer1->AddSpacer(10);
-   ssizer1->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
-   ssizer1->AddSpacer(S2VGAP);
-   ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
-   ssizer1->AddSpacer(SBBOTGAP);
-   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
-   */
+   // user_rules
+
+   wxButton* rulesbutt = new wxButton(panel, PREF_USER_RULES, _("Your Rules..."));
+   wxStaticText* rulesbox = new wxStaticText(panel, PREF_RULES_BOX, userrules);
+   newuserrules = userrules;
+
+   wxBoxSizer* hrbox = new wxBoxSizer(wxHORIZONTAL);
+   hrbox->Add(rulesbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
+   hrbox->Add(rulesbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
+
+   wxString note = _("Note that Golly looks for .colors/icons/table/tree files\n");
+   note +=         _("in the above folder before looking in the Rules folder.");
+   wxBoxSizer* notebox = new wxBoxSizer(wxHORIZONTAL);
+   notebox->Add(new wxStaticText(panel, wxID_STATIC, note));
+
+   // position controls
    vbox->AddSpacer(5);
    vbox->Add(menubox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
@@ -3340,6 +3353,12 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(S2VGAP);
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
+   
+   vbox->AddSpacer(15);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->Add(hrbox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(15);
+   vbox->Add(notebox, 0, wxALIGN_CENTER, LRGAP);
    
    // init control values;
    // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying
@@ -4020,9 +4039,8 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
       }
       
       UpdateChosenFile();
-   }
 
-   if ( event.GetId() == PREF_TEXT_EDITOR ) {
+   } else if ( event.GetId() == PREF_TEXT_EDITOR ) {
       // ask user to choose a text editor
       wxString result;
       ChooseTextEditor(this, result);
@@ -4033,9 +4051,24 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
             editorbox->SetLabel(neweditor);
          }
       }
-   }
 
-   if ( event.GetId() == PREF_ICON_BUTT ) {
+   } else if ( event.GetId() == PREF_USER_RULES ) {
+      // ask user to choose folder for their rules
+      wxDirDialog dirdlg(this, _("Choose a folder for your rules"),
+                         newuserrules, wxDD_NEW_DIR_BUTTON);
+      if ( dirdlg.ShowModal() == wxID_OK ) {
+         wxString newdir = dirdlg.GetPath();
+         if (newdir.Last() != wxFILE_SEP_PATH) newdir += wxFILE_SEP_PATH;
+         if (newuserrules != newdir) {
+            newuserrules = newdir;
+            wxStaticText* rulesbox = (wxStaticText*) FindWindowById(PREF_RULES_BOX);
+            if (rulesbox) {
+               rulesbox->SetLabel(newuserrules);
+            }
+         }
+      }
+
+   } else if ( event.GetId() == PREF_ICON_BUTT ) {
       ChangeIcons(coloralgo);
       cellboxes->Refresh(false);
    }
@@ -4399,6 +4432,7 @@ bool PrefsDialog::TransferDataFromWindow()
    }
    mindelay = GetSpinVal(PREF_MIN_DELAY);
    maxdelay = GetSpinVal(PREF_MAX_DELAY);
+   userrules = newuserrules;
 
    // VIEW_PAGE
 #if wxUSE_TOOLTIPS

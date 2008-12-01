@@ -34,6 +34,7 @@ void lifestatus(const char *s) ;
 void lifebeginprogress(const char *dlgtitle) ;
 bool lifeabortprogress(double fracdone, const char *newmsg) ;
 void lifeendprogress() ;
+const char *lifegetuserrules() ;
 const char *lifegetrulesdir() ;
 bool isaborted() ;
 FILE *getdebugfile() ;
@@ -64,6 +65,7 @@ public:
    virtual void beginprogress(const char *dlgtitle) = 0 ;
    virtual bool abortprogress(double fracdone, const char *newmsg) = 0 ;
    virtual void endprogress() = 0 ;
+   virtual const char *getuserrules() = 0 ;
    virtual const char *getrulesdir() = 0 ;
    static void seterrorhandler(lifeerrors *obj) ;
    bool aborted ;

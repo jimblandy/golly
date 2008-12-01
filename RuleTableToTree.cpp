@@ -151,6 +151,9 @@ public:
    virtual void endprogress() {
       // do nothing
    }
+   virtual const char *getuserrules() {
+      return "" ;
+   }
    virtual const char *getrulesdir() {
       return "Rules/" ;
    }
