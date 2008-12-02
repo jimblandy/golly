@@ -31,7 +31,7 @@ PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServic
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
-SHAREDFILES = Help Patterns Scripts README LICENSE
+SHAREDFILES = Help Patterns Scripts Rules README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
    bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 
@@ -69,11 +69,11 @@ LDBASE = -arch ppc \
 
 OBJDIR = ObjMacPPC
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
-   liferender.h liferules.h platform.h qlifealgo.h readpattern.h slifealgo.h \
-   util.h viewport.h writepattern.h wwalgo.h generationsalgo.h ruletable_algo.h
+   liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
+   util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h ruletable_algo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o \
-   $(OBJDIR)/jvnalgo.o $(OBJDIR)/slifealgo.o $(OBJDIR)/wwalgo.o \
+   $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o \
    $(OBJDIR)/ruletable_algo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
@@ -92,7 +92,7 @@ LIBDIRNAME = $(WX_DIR)/src/build/Deployment
 
 # Targets:
 
-all: $(OBJDIR) app.bin app_bundle bgolly
+all: $(OBJDIR) app.bin app_bundle bgolly RuleTableToTree
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
@@ -101,14 +101,20 @@ $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 clean: 
-	rm -f $(OBJDIR)/*.o bgolly
+	rm -f $(OBJDIR)/*.o bgolly RuleTableToTree
 	rm -rf $(APP_NAME).app
 
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXBASE) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDBASE)
 
+RuleTableToTree: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
+	$(CXXC) $(CXXBASE) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDBASE)
+
 $(OBJDIR)/bgolly.o: bgolly.cpp
 	$(CXXC) $(CXXBASE) -c -o $@ bgolly.cpp
+
+$(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
+	$(CXXC) $(CXXBASE) -c -o $@ RuleTableToTree.cpp
 
 # Note that -headerpad_max_install_names is used so we can run
 # install_name_tool below to change Perl lib path to a longer path.
@@ -170,14 +176,11 @@ $(OBJDIR)/jvnalgo.o: jvnalgo.cpp
 $(OBJDIR)/ruletable_algo.o: ruletable_algo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ruletable_algo.cpp
 
-$(OBJDIR)/wwalgo.o: wwalgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wwalgo.cpp
+$(OBJDIR)/ruletreealgo.o: ruletreealgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ ruletreealgo.cpp
 
 $(OBJDIR)/generationsalgo.o: generationsalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ generationsalgo.cpp
-
-$(OBJDIR)/slifealgo.o: slifealgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ slifealgo.cpp
 
 $(OBJDIR)/ghashbase.o: ghashbase.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ghashbase.cpp
@@ -276,7 +279,7 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-mac1039
 	mkdir $(RELEASENAME)-mac1039
-	cp -rp $(APP_NAME).app bgolly $(SHAREDFILES) $(RELEASENAME)-mac1039
+	cp -rp $(APP_NAME).app bgolly RuleTableToTree $(SHAREDFILES) $(RELEASENAME)-mac1039
 	find $(RELEASENAME)-mac1039 -name CVS | xargs rm -rf
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac1039/README
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac1039/LICENSE
