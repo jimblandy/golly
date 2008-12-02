@@ -1,5 +1,5 @@
-For version 2.0:
-----------------
+Post 2.0:
+---------
 
 Andrew's list:
 
@@ -17,10 +17,6 @@ Andrew's list:
 
 - Avoid any remaining algo assumptions (search *_ALGO):
   - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
-
-- Check all !!!/FIXME comments in code and try to remove.
-
-- At this point release a beta version of Golly 2.0.
 
 Tom's list:
 
@@ -64,9 +60,7 @@ For future versions:
 - Optimize rendering by eliminating lots of DrawRectangle/DrawBitmap calls.
   Instead, each layer has a viewport-sized buffer into which we "draw"
   and then convert that to a wxBitmap and call DrawBitmap *once*.
-  If we use a double-size buffer we could ping-pong and check which parts
-  of the viewport have changed and only call DrawBitmap on the area that
-  has changed (possibly not at all).  Other advantages:
+  Other advantages:
   1. We could expose the buffer to scripting commands (setpixel/getpixel)
      so that scripts could do fancy stuff like overlay images/text.
   2. It should make it easier further down the track if we wanted to avoid
