@@ -1745,6 +1745,7 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
       // write given comment line(s)
       fputs(comments, f) ;
    }
+   inGC = 1 ;
    /* this is the old way:
    cellcounter = 0 ;
    writecell(f, root, depth) ;
@@ -1757,6 +1758,7 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    writecell_2p2(f, root, depth) ;
    /* end new two-pass way */
    aftercalcpop2(root, depth, 0) ;
+   inGC = 0 ;
    return 0 ;
 }
 char hlifealgo::statusline[120] ;
