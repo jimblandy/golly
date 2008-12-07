@@ -9,6 +9,10 @@ JES = Jason Summers <jason1@pobox.com>
 DMG = Dave Greene <david.m.greene@gmail.com>
 TJH = Tim Hutton <tim.hutton@gmail.com>
 
+Changes in version 2.1 (released !!! 2008)
+
+TGR: Fixed crash on Mac if script saved pattern and progress dialog appeared.
+
 Changes in version 2.0 (released December 2008)
 
 AKT: Modified oscar.pl to use arbitrarily big integers.

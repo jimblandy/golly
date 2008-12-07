@@ -22,7 +22,7 @@ WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-unicode-release-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 2.0
+APP_VERSION = 2.1b1
 
 # for Perl script support
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`

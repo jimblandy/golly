@@ -296,7 +296,13 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += wxString(currlayer->algo->getPopulation().tostring(), wxConvLocal);
+            bigint popcount = currlayer->algo->getPopulation();
+            if (popcount.sign() < 0) {
+               // getPopulation returns -1 if it can't be calculated
+               strbuf += _("?");
+            } else {
+               strbuf += wxString(popcount.tostring(), wxConvLocal);
+            }
          }
          DisplayText(dc, strbuf, h_gen, POPLINE);
          
@@ -354,7 +360,13 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
          if (viewptr->nopattupdate) {
             strbuf += _("0");
          } else {
-            strbuf += Stringify(currlayer->algo->getPopulation());
+            bigint popcount = currlayer->algo->getPopulation();
+            if (popcount.sign() < 0) {
+               // getPopulation returns -1 if it can't be calculated
+               strbuf += _("?");
+            } else {
+               strbuf += Stringify(popcount);
+            }
          }
          DisplayText(dc, strbuf, h_pop, BASELINE1);
       
