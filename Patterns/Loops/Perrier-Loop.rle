@@ -1,0 +1,57 @@
+# Perrier loop
+#
+# J.-Y. Perrier, M. Sipper, and J. Zahnd 
+# "Toward a viable, self-reproducing universal computer"
+# Physica D, vol. 97, pp. 335-352, 1996
+#
+# state    in the paper    description
+# -----    ------------    ---------------------------
+#   2            2         sheath
+#   1            1         empty wire
+#   0            0         background and tail-end of a signal
+#  14            7         advance
+#  15            4         turn left
+#   3            A         the start of the program
+#   4            P         program instruction: print 0
+#   5            P         program instruction: print 1
+#   6            P         program instruction: move data head down
+#   7            P         program instruction: move data head up
+#   8            P         program instruction: if
+#   9            P         program instruction: stop
+#  10           P,J        program instruction: jump (after 'if' statements)
+# 11,12          D         0,1 data (initial sequence in this example: 1011001)
+#  18            5         left-moving marker to initiate program copy
+#  16            6         right-moving marker for data top
+#  20            8         program top marker
+#  22            9         program top marker
+#  21            Z         blocker signal at top of mother data
+# 33-38          T         "travelling" program states
+#  23            $         end of travelling program states
+#  24            %         read head
+# 39,40                    travelling data states
+#  13                      end of travelling data states
+#  25            H         data head, program head
+#  26                      used in creation of data head
+# 29-31,41       C         commands in transit
+#  42            W         program head is waiting
+#  47            R         requested data is being returned: 0
+#  48            R         requested data is being returned: 1
+#  49                      program head is skipping over jump instructions
+#  55            M         receiving-advancement-signals mode
+#  54           down       advancement signals?
+#  57            M?        program head with one advancement signal?
+#  56            M?        ?
+#  58            M?        ?
+#  43                      command about to turn right?
+#  50                      add '1' to end of data tape?
+#  51                      extend data tape?
+#  53                      tape is being shuffled down, to write at the top
+#  52            B         commands are blocked, waiting for shuffle down
+#
+# Thanks to Gianluca Tempesti for the transition table and the pattern.
+#
+#
+x = 15, y = 27, rule = Perrier
+.8B$BAN.AO.AOB$B.6B.B$BNB4.BAB$BAB4.BAB$B.B4.BAB$BNB4.BAB$BA6BA5B$B.N
+A.NA.N5AB$BC12B$BFB4.BLB$BEB4.BKB$BFB4.BLB$BEB4.BLB$BFB4.BKB$BHB4.BKB
+$BJB4.BLB$BJB5.B$BGB$BGB$BGB$BFB$BFB$BFB$BFB$BFB$.B!
