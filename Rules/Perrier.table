@@ -1,10 +1,17 @@
 # J.-Y. Perrier, M. Sipper, and J. Zahnd 
 # "Toward a viable, self-reproducing universal computer"
 # Physica D, vol. 97, pp. 335-352, 1996
-
+#
 # Thanks to Gianluca Tempesti for the transition table and the pattern.
-
+#
 # rules: 637
+#
+# Two small changes have been made. Firstly a conflicting rule has been removed. 
+# This only causes a problem in some packages, where the first applicable rule 
+# is used - other packages used the last applicable rule. Secondly a rule has 
+# been added to correct what appears to be a rare bug that shows up when trying 
+# to write to the first entry on the data tape. Other such cases might exist.
+# Contact: tim.hutton@gmail.com
 
 n_states:64
 neighborhood:vonNeumann
@@ -604,7 +611,7 @@ p,2,b,2,0,2
 2,59,0,60,c,60
 2,60,0,60,c,60
 61,2,0,2,c,2
-2,2,0,61,c,59
+#2,2,0,61,c,59 - this rule is overwritten by later rules
 59,2,0,2,l,2
 2,61,0,60,c,60
 59,2,0,2,k,62
@@ -664,3 +671,4 @@ b,m,2,2,44,11
 2,28,b,0,25,44
 44,2,12,0,25,2
 2,e,2,52,41,41
+2,e,2,46,i,i    # rule added by TJH to correct an apparent bug
