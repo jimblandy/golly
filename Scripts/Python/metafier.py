@@ -413,7 +413,7 @@ else:
     # slide 25: decode --------------------
     
     # sync buffer:
-    all += pattern("""x = 11, y = 29, rule = B3/S23
+    all += pattern("""
     b2o5b2o$b2o5b2o7$2bo5bo$b3o3b3o$o2b2ob2o2bo$3o5b3o9$b3o$o3bo$2ob2o$bob
     o2$bobo$2ob2o$o3bo3b2o$b3o4b2o!""", 150, 958) # P46OscAlt3 really
     
@@ -431,7 +431,6 @@ else:
     
     # P46 to P40 converter:
     all += pattern("""
-    x = 77, y = 260, rule = B3/S23
     14bo$14b3o$17bo$16b2o50bo$10b2o54b3o$11bo53bo$11bobo51b2o$12b2o57b2o$
     48b2o21bo$48bo20bobo$33bo12bobo20b2o$33b3o10b2o$36bo$35b2o2$6b2o$7bo
     22bo$7bobo19b2o$8b2o10bo4bo49b2o$19b2o3b2o30bo18bo$18b2o3b2o29b4o15bob
@@ -548,7 +547,6 @@ else:
     # slide 27: boat logic --------------------
     
     all += pattern("""
-    x = 72, y = 33, rule = B3/S23
     32b4o$31b2o2bo$30b2o2bo$26bo4bo2bo25b2o$24b3o5b2o25b2ob2o$23bo36bo2bo$
     24b3o5b2o26bo2bo4bo$26bo4bo2bo26b2o5b3o$30b2o2bo36bo$31b2o2bo25b2o5b3o
     $32b4o7bo16bo2bo4bo$41b2o17bo2bo$42b2o15b2ob2o$60b2o3$b2o$b2o2$14b4o$
@@ -645,7 +643,6 @@ else:
     46bo2bo$38b2o5b2o2bo15b2o$38b2o6b2o2bo14b2o$47b4o!""", 120, 232) # four P46osc really
     
     BoatLatchSW = pattern("""
-    x = 263, y = 119, rule = B3/S23
     76bo$75bo2bo$74b5o10b2o$73b2ob3o10b2o$74bob2o$75b2o72b2o5b2o$145b2o3bo
     5bo3b2o$75b2o68bo15bo$74bob2o68bo13bo$62b2o9b2ob3o10b2o$62b2o10b5o10b
     2o$75bo2bo$76bo2$149b2o5b2o$149b2obobob2o$73b2o74bo2bobo2bo$73b2o74b3o
@@ -716,7 +713,6 @@ else:
     # slide 30: HWSS control --------------------
     
     HWSSGun = pattern("""
-    x = 102, y = 206, rule = B3/S23
     21b2o23b2o$22bo22bobo$22bobo$23b2o$36b4o8bo$36bob2o7b2o$36bo$37b2o2$
     37b2o$36bo$7b2o2bobo22bob2o7b2o$2o4b3obo3bo21b4o8bo$2o3b2o6bo$6bob5o$
     7b3o35bobo$46b2o$7b3o$6bob5o14b2o$2o3b2o6bo8bo5bo$2o4b3obo3bo7bo4bo4b
