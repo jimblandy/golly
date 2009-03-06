@@ -2392,7 +2392,8 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
          currlayer->view->zoom();
       } else {
          wxBell();
-         break;      // best not to beep lots of times
+         wheelpos = 0;
+         break;         // best not to beep lots of times
       }
    }
 
