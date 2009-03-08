@@ -189,6 +189,7 @@ private:
    // control functions
    bool SaveStartingPattern();
    void DisplayPattern();
+   bool StepPattern();
 
    // miscellaneous functions
    void CreateMenus();

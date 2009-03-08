@@ -416,9 +416,8 @@ void MainFrame::GoSlower()
 
 void MainFrame::DisplayPattern()
 {
-   // this routine is only used by GeneratePattern();
-   // it's similar to UpdatePatternAndStatus() but if tiled windows exist
-   // it only updates the current tile if possible; ie. it's not a clone
+   // this routine is similar to UpdatePatternAndStatus() but if tiled windows
+   // exist it only updates the current tile if possible; ie. it's not a clone
    // and tile views aren't synchronized
    
    if (!IsIconized()) {
@@ -459,6 +458,39 @@ void MainFrame::DisplayPattern()
 
 // -----------------------------------------------------------------------------
 
+bool MainFrame::StepPattern()
+{
+   if (wxGetApp().Poller()->checkevents()) return false;
+   
+   currlayer->algo->step();
+   if (currlayer->autofit) viewptr->FitInView(0);
+   DisplayPattern();
+   
+   /*!!!
+   if (autostop) {
+      int period = currlayer->algo->isPeriodic();
+      if (period > 0) {
+         if (period == 1) {
+            if (currlayer->algo->isEmpty()) {
+               statusptr->DisplayMessage(_("Pattern is empty."));
+            } else {
+               statusptr->DisplayMessage(_("Pattern is stable."));
+            }
+         } else {
+            wxString s;
+            s.Printf(_("Pattern is oscillating (period = %d)."), period);
+            statusptr->DisplayMessage(s);
+         }
+         return false;
+      }
+   }
+   */
+   
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::GeneratePattern()
 {
    if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
@@ -466,8 +498,7 @@ void MainFrame::GeneratePattern()
       return;
    }
 
-   lifealgo* curralgo = currlayer->algo;
-   if (curralgo->isEmpty()) {
+   if (currlayer->algo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
       return;
    }
@@ -482,7 +513,7 @@ void MainFrame::GeneratePattern()
 
    // for DisplayTimingInfo
    begintime = stopwatch->Time();
-   begingen = curralgo->getGeneration().todouble();
+   begingen = currlayer->algo->getGeneration().todouble();
 
    // for hyperspeed
    int hypdown = 64;
@@ -504,25 +535,19 @@ void MainFrame::GeneratePattern()
          // slow down by only doing one gen every GetCurrentDelay() millisecs
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
-            if (wxGetApp().Poller()->checkevents()) break;
-            curralgo->step();
-            if (currlayer->autofit) viewptr->FitInView(0);
-            DisplayPattern();
+            if (!StepPattern()) break;
             // add delay to current time rather than currmsec
             whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
             // process events while we wait
             if (wxGetApp().Poller()->checkevents()) break;
-            // don't hog CPU
-            wxMilliSleep(1);     // keep small (ie. <= mindelay)
+            // don't hog CPU but keep sleep duration short (ie. <= mindelay)
+            wxMilliSleep(1);
          }
       } else {
-         // warp >= 0 so only show results every curralgo->getIncrement() gens
-         if (wxGetApp().Poller()->checkevents()) break;
-         curralgo->step();
-         if (currlayer->autofit) viewptr->FitInView(0);
-         DisplayPattern();
-         if (currlayer->hyperspeed && curralgo->hyperCapable()) {
+         // warp >= 0 so advance pattern by currlayer->algo->getIncrement() gens
+         if (!StepPattern()) break;
+         if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;
@@ -538,7 +563,7 @@ void MainFrame::GeneratePattern()
 
    // for DisplayTimingInfo
    endtime = stopwatch->Time();
-   endgen = curralgo->getGeneration().todouble();
+   endgen = currlayer->algo->getGeneration().todouble();
    
    // display the final pattern
    if (currlayer->autofit) viewptr->FitInView(0);
@@ -709,7 +734,7 @@ void MainFrame::DisplayTimingInfo()
       double secs = (double)(endtime - begintime) / 1000.0;
       double gens = endgen - begingen;
       wxString s;
-      s.Printf(_("%g gens in %g secs (%g gens/sec)"), gens, secs, gens / secs);
+      s.Printf(_("%g gens in %g secs (%g gens/sec)."), gens, secs, gens / secs);
       statusptr->DisplayMessage(s);
    }
 }
