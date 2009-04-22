@@ -2182,7 +2182,12 @@ void PatternView::OnChar(wxKeyEvent& event)
          if ( key < 0 || key > 255 ) return;
       #endif
       // let script decide what to do with the key
-      PassKeyToScript(key);
+      if (mods == wxMOD_SHIFT && key >= 'a' && key <= 'z') {
+         // let script see A..Z
+         PassKeyToScript(key - 32);
+      } else {
+         PassKeyToScript(key);
+      }
       return;
    }
 
