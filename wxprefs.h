@@ -313,7 +313,7 @@ typedef enum {
 } paste_location;
 
 typedef enum {
-   Copy, Or, Xor
+   And, Copy, Or, Xor
 } paste_mode;
 
 extern paste_location plocation; // location of cursor in paste rectangle

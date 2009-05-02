@@ -504,28 +504,31 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
    }
    
-   if ( usenextcell ) {
-      int v = 0;
+   if ( usenextcell && pmode == And ) {
+      // current universe is empty or paste rect is outside current pattern edges
+      // so don't change any cells
+   } else if ( usenextcell ) {
+      int newstate = 0;
       cy = pastey;
       for ( ty=itop; ty<=ibottom; ty++ ) {
          cx = pastex;
          for ( tx=ileft; tx<=iright; tx++ ) {
-            int skip = tempalgo->nextcell(tx, ty, v);
+            int skip = tempalgo->nextcell(tx, ty, newstate);
             if (skip + tx > iright)
                skip = -1;           // pretend we found no more live cells
             if (skip >= 0) {
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               int oldstate = curralgo->getcell(cx, cy);
-               if (oldstate != v) {
-                  if (v > maxstate) {
-                     v = maxstate;
+               int currstate = curralgo->getcell(cx, cy);
+               if (currstate != newstate) {
+                  if (newstate > maxstate) {
+                     newstate = maxstate;
                      reduced = true;
                   }
-                  curralgo->setcell(cx, cy, v);
+                  curralgo->setcell(cx, cy, newstate);
                   pattchanged = true;
-                  if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, oldstate, v);
+                  if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
                }
                cx++;
             } else {
@@ -553,6 +556,13 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
             tempstate = tempalgo->getcell(tx, ty);
             currstate = curralgo->getcell(cx, cy);
             switch (pmode) {
+               case And:
+                  if (tempstate != currstate && currstate > 0) {
+                     curralgo->setcell(cx, cy, 0);
+                     pattchanged = true;
+                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
+                  }
+                  break;
                case Copy:
                   if (tempstate != currstate) {
                      if (tempstate > maxstate) {
@@ -561,8 +571,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                      }
                      curralgo->setcell(cx, cy, tempstate);
                      pattchanged = true;
-                     if (savecells)
-                        currlayer->undoredo->SaveCellChange(cx, cy, currstate, tempstate);
+                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, tempstate);
                   }
                   break;
                case Or:
@@ -574,8 +583,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                      if (currstate != 0) {
                         curralgo->setcell(cx, cy, 0);
                         pattchanged = true;
-                        if (savecells)
-                           currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
+                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
                      }
                   } else {
                      // tempstate != currstate
@@ -585,8 +593,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                      if (currstate != newstate) {
                         curralgo->setcell(cx, cy, newstate);
                         pattchanged = true;
-                        if (savecells)
-                           currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
+                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
                      }
                   }
                   break;
@@ -614,9 +621,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       mainptr->UpdatePatternAndStatus();
    }
    
-   if (reduced) {
-      statusptr->ErrorMessage(_("Some cell states were reduced."));
-   }
+   if (reduced) statusptr->ErrorMessage(_("Some cell states were reduced."));
 }
 
 // -----------------------------------------------------------------------------
@@ -754,15 +759,18 @@ void PatternView::CyclePasteLocation()
 
 void PatternView::CyclePasteMode()
 {
-   if (pmode == Copy) {
+   if (pmode == And) {
+      pmode = Copy;
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Copy."));
+   } else if (pmode == Copy) {
       pmode = Or;
       if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Or."));
    } else if (pmode == Or) {
       pmode = Xor;
       if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Xor."));
    } else {
-      pmode = Copy;
-      if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is Copy."));
+      pmode = And;
+      if (!waitingforclick) statusptr->DisplayMessage(_("Paste mode is And."));
    }
    if (waitingforclick) {
       // force redraw of paste rectangle if mouse is inside viewport

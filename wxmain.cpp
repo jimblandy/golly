@@ -756,6 +756,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_PL_BR,      plocation == BottomRight);
       mbar->Check(ID_PL_BL,      plocation == BottomLeft);
       mbar->Check(ID_PL_MID,     plocation == Middle);
+      mbar->Check(ID_PM_AND,     pmode == And);
       mbar->Check(ID_PM_COPY,    pmode == Copy);
       mbar->Check(ID_PM_OR,      pmode == Or);
       mbar->Check(ID_PM_XOR,     pmode == Xor);
@@ -1301,6 +1302,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_PL_BR:          SetPasteLocation("BottomRight"); break;
       case ID_PL_BL:          SetPasteLocation("BottomLeft"); break;
       case ID_PL_MID:         SetPasteLocation("Middle"); break;
+      case ID_PM_AND:         SetPasteMode("And"); break;
       case ID_PM_COPY:        SetPasteMode("Copy"); break;
       case ID_PM_OR:          SetPasteMode("Or"); break;
       case ID_PM_XOR:         SetPasteMode("Xor"); break;
@@ -2095,6 +2097,7 @@ void MainFrame::CreateMenus()
    plocSubMenu->AppendCheckItem(ID_PL_BL,       _("Bottom Left"));
    plocSubMenu->AppendCheckItem(ID_PL_MID,      _("Middle"));
 
+   pmodeSubMenu->AppendCheckItem(ID_PM_AND,     _("And"));
    pmodeSubMenu->AppendCheckItem(ID_PM_COPY,    _("Copy"));
    pmodeSubMenu->AppendCheckItem(ID_PM_OR,      _("Or"));
    pmodeSubMenu->AppendCheckItem(ID_PM_XOR,     _("Xor"));

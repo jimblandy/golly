@@ -269,6 +269,7 @@ enum {
    ID_PL_MID,
 
    // Paste Mode submenu
+   ID_PM_AND,
    ID_PM_COPY,
    ID_PM_OR,
    ID_PM_XOR,

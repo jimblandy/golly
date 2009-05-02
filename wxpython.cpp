@@ -718,7 +718,8 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
    const char* oldmode = GetPasteMode();
 
    wxString modestr = wxString(mode, wxConvLocal);
-   if      (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
+   if      (modestr.IsSameAs(wxT("and"), false))  SetPasteMode("And");
+   else if (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
    else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
    else {

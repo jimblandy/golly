@@ -313,7 +313,7 @@ bool GollyApp::OnInit()
 
    wxString banner = _("This is Golly version ");
    banner +=         _(STRINGIFY(VERSION));
-   banner +=         _(".  Copyright 2008 The Golly Gang.");
+   banner +=         _(".  Copyright 2009 The Golly Gang.");
    statusptr->SetMessage(banner);
    
    mainptr->NewPattern();

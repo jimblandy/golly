@@ -353,7 +353,7 @@ Clear inside (where = 0) or outside (where = 1) the current selection.
 
 <a name="paste"></a><p><dt><b>paste(<i>x, y, mode</i>)</b></dt>
 <dd>
-Paste the clipboard pattern at x,y using the given mode ("copy", "or" or "xor").
+Paste the clipboard pattern at x,y using the given mode ("and", "copy", "or", "xor").
 </dd>
 <dd> Example: <b>golly.paste(0, 0, "or")</b></dd>
 </p>
@@ -425,7 +425,7 @@ Parse an RLE or Life 1.05 string and return an optionally transformed cell list.
 <a name="putcells"></a><p><dt><b>putcells(<i>cell_list, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1, mode="or"</i>)</b></dt>
 <dd>
 Paste the given cell list into the current universe using an optional affine transformation
-and optional mode ("copy", "or", "xor", or "not").
+and optional mode ("copy", "or", "xor", "not").
 </dd>
 <dd> Example: <b>golly.putcells(currpatt, 6, -40, 1, 0, 0, 1, "xor")</b></dd>
 </p>

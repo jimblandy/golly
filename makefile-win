@@ -17,7 +17,7 @@
 !include local-win.mk
 
 ### Golly-related variables: ###
-VERSION = 2.1b1
+VERSION = 2.1b2
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Scripts Patterns Rules

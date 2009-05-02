@@ -329,7 +329,7 @@ Clear inside (where = 0) or outside (where = 1) the current selection.
 
 <a name="paste"></a><p><dt><b>g_paste(<i>$x, $y, $mode</i>)</b></dt>
 <dd>
-Paste the clipboard pattern at x,y using the given mode ("copy", "or" or "xor").
+Paste the clipboard pattern at x,y using the given mode ("and", "copy", "or", "xor").
 </dd>
 <dd> Example: <b>g_paste(0, 0, "or");</b></dd>
 </p>
@@ -403,7 +403,7 @@ an optionally transformed cell array.
 <a name="putcells"></a><p><dt><b>g_putcells(<i>$cellarray, $x0=0, $y0=0, $axx=1, $axy=0, $ayx=0, $ayy=1, $mode="or"</i>)</b></dt>
 <dd>
 Paste the pattern in the given cell array reference into the current universe
-using an optional affine transformation and optional mode ("copy", "or", "xor", or "not").
+using an optional affine transformation and optional mode ("copy", "or", "xor", "not").
 </dd>
 <dd> Example: <b>g_putcells($cells, 6, -40, 1, 0, 0, 1, "xor");</b></dd>
 </p>

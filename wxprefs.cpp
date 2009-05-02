@@ -1205,6 +1205,7 @@ void SetPasteLocation(const char* s)
 const char* GetPasteMode()
 {
    switch (pmode) {
+      case And:   return "And";
       case Copy:  return "Copy";
       case Or:    return "Or";
       case Xor:   return "Xor";
@@ -1216,7 +1217,9 @@ const char* GetPasteMode()
 
 void SetPasteMode(const char* s)
 {
-   if (strcmp(s, "Copy") == 0) {
+   if (strcmp(s, "And") == 0) {
+      pmode = And;
+   } else if (strcmp(s, "Copy") == 0) {
       pmode = Copy;
    } else if (strcmp(s, "Or") == 0) {
       pmode = Or;
