@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include <limits.h>        // for INT_MAX
+
 #include "wx/filename.h"   // for wxFileName
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
@@ -342,7 +344,38 @@ const char* GSF_setcell(int x, int y, int newstate)
       MarkLayerDirty();
       DoAutoUpdate();
    }
-   return 0;
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_paste(int x, int y, char* mode)
+{
+   if (!mainptr->ClipboardHasText())
+      return "paste error: no pattern in clipboard.";
+
+   // temporarily change selection and paste mode
+   Selection oldsel = currlayer->currsel;
+   const char* oldmode = GetPasteMode();
+
+   wxString modestr = wxString(mode, wxConvLocal);
+   if      (modestr.IsSameAs(wxT("and"), false))  SetPasteMode("And");
+   else if (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
+   else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
+   else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
+   else return "paste error: unknown mode.";
+
+   // create huge selection rect so no possibility of error message
+   currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
+
+   viewptr->PasteClipboard(true);      // true = paste to selection
+
+   // restore selection and paste mode
+   currlayer->currsel = oldsel;
+   SetPasteMode(oldmode);
+
+   DoAutoUpdate();
+   return NULL;
 }
 
 // -----------------------------------------------------------------------------

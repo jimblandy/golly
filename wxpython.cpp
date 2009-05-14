@@ -44,8 +44,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include <limits.h>        // for INT_MAX
-
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -709,33 +707,8 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, (char*)"iis", &x, &y, &mode)) return NULL;
 
-   if (!mainptr->ClipboardHasText()) {
-      PYTHON_ERROR("paste error: no pattern in clipboard.");
-   }
-
-   // temporarily change selection and paste mode
-   Selection oldsel = currlayer->currsel;
-   const char* oldmode = GetPasteMode();
-
-   wxString modestr = wxString(mode, wxConvLocal);
-   if      (modestr.IsSameAs(wxT("and"), false))  SetPasteMode("And");
-   else if (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
-   else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
-   else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
-   else {
-      PYTHON_ERROR("paste error: unknown mode.");
-   }
-
-   // create huge selection rect so no possibility of error message
-   currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
-
-   viewptr->PasteClipboard(true);      // true = paste to selection
-
-   // restore selection and paste mode
-   currlayer->currsel = oldsel;
-   SetPasteMode(oldmode);
-
-   DoAutoUpdate();
+   const char* err = GSF_paste(x, y, mode);
+   if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
 }
@@ -1056,10 +1029,11 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       return NULL;
 
    wxString modestr = wxString(mode, wxConvLocal);
-   if ( !(modestr.IsSameAs(wxT("or"), false)
-          || modestr.IsSameAs(wxT("xor"), false)
-          || modestr.IsSameAs(wxT("copy"), false)
-          || modestr.IsSameAs(wxT("not"), false)) ) {
+   if ( !(  modestr.IsSameAs(wxT("or"), false)
+         || modestr.IsSameAs(wxT("xor"), false)
+         || modestr.IsSameAs(wxT("copy"), false)
+         || modestr.IsSameAs(wxT("and"), false)
+         || modestr.IsSameAs(wxT("not"), false)) ) {
       PYTHON_ERROR("putcells error: unknown mode.");
    }
    
@@ -1079,7 +1053,32 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
    }
 
-   if (modestr.IsSameAs(wxT("xor"), false)) {
+   if (modestr.IsSameAs(wxT("and"), false)) {
+      if (!curralgo->isEmpty()) {
+         int newstate = 1;
+         for (int n = 0; n < num_cells; n++) {
+            int item = ints_per_cell * n;
+            long x = PyInt_AsLong( PyList_GetItem(list, item) );
+            long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
+            int newx = x0 + x * axx + y * axy;
+            int newy = y0 + x * ayx + y * ayy;
+            int oldstate = curralgo->getcell(newx, newy);
+            if (multistate) {
+               // multi-state lists can contain dead cells so newstate might be 0
+               newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
+            }
+            if (newstate != oldstate && oldstate > 0) {
+               curralgo->setcell(newx, newy, 0);
+               if (savecells) ChangeCell(newx, newy, oldstate, 0);
+               pattchanged = true;
+            }
+            if ((n % 4096) == 0 && PythonScriptAborted()) {
+               abort = true;
+               break;
+            }
+         }
+      }
+   } else if (modestr.IsSameAs(wxT("xor"), false)) {
       // loop code is duplicated here to allow 'or' case to execute faster
       int numstates = curralgo->NumCellStates();
       for (int n = 0; n < num_cells; n++) {

@@ -36,8 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include <limits.h>        // for INT_MAX
-
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -732,33 +730,8 @@ XS(pl_paste)
    STRLEN n_a;
    char* mode = SvPV(ST(2), n_a);
 
-   if (!mainptr->ClipboardHasText()) {
-      PERL_ERROR("g_paste error: no pattern in clipboard.");
-   }
-
-   // temporarily change selection and paste mode
-   Selection oldsel = currlayer->currsel;
-   const char* oldmode = GetPasteMode();
-   
-   wxString modestr = wxString(mode, wxConvLocal);
-   if      (modestr.IsSameAs(wxT("and"), false))  SetPasteMode("And");
-   else if (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
-   else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
-   else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
-   else {
-      PERL_ERROR("g_paste error: unknown mode.");
-   }
-
-   // create huge selection rect so no possibility of error message
-   currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
-
-   viewptr->PasteClipboard(true);      // true = paste to selection
-
-   // restore selection and paste mode
-   currlayer->currsel = oldsel;
-   SetPasteMode(oldmode);
-
-   DoAutoUpdate();
+   const char* err = GSF_paste(x, y, mode);
+   if (err) PERL_ERROR(err);
 
    XSRETURN(0);
 }
@@ -1124,10 +1097,11 @@ XS(pl_putcells)
    if (items > 7) mode = SvPV(ST(7), n_a);
 
    wxString modestr = wxString(mode, wxConvLocal);
-   if ( !(modestr.IsSameAs(wxT("or"), false)
-          || modestr.IsSameAs(wxT("xor"), false)
-          || modestr.IsSameAs(wxT("copy"), false)
-          || modestr.IsSameAs(wxT("not"), false)) ) {
+   if ( !(  modestr.IsSameAs(wxT("or"), false)
+         || modestr.IsSameAs(wxT("xor"), false)
+         || modestr.IsSameAs(wxT("copy"), false)
+         || modestr.IsSameAs(wxT("and"), false)
+         || modestr.IsSameAs(wxT("not"), false)) ) {
       PERL_ERROR("g_putcells error: unknown mode.");
    }
 
@@ -1148,7 +1122,29 @@ XS(pl_putcells)
       // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
    }
 
-   if (modestr.IsSameAs(wxT("xor"), false)) {
+   if (modestr.IsSameAs(wxT("and"), false)) {
+      if (!curralgo->isEmpty()) {
+         int newstate = 1;
+         for (int n = 0; n < num_cells; n++) {
+            int item = ints_per_cell * n;
+            int x = SvIV( *av_fetch(inarray, item, 0) );
+            int y = SvIV( *av_fetch(inarray, item + 1, 0) );
+            int newx = x0 + x * axx + y * axy;
+            int newy = y0 + x * ayx + y * ayy;
+            int oldstate = curralgo->getcell(newx, newy);
+            if (multistate) {
+               // multi-state lists can contain dead cells so newstate might be 0
+               newstate = SvIV( *av_fetch(inarray, item + 2, 0) );
+            }
+            if (newstate != oldstate && oldstate > 0) {
+               curralgo->setcell(newx, newy, 0);
+               if (savecells) ChangeCell(newx, newy, oldstate, 0);
+               pattchanged = true;
+            }
+            if ((n % 4096) == 0 && PerlScriptAborted()) break;
+         }
+      }
+   } else if (modestr.IsSameAs(wxT("xor"), false)) {
       // loop code is duplicated here to allow 'or' case to execute faster
       int numstates = curralgo->NumCellStates();
       for (int n = 0; n < num_cells; n++) {

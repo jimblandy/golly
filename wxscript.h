@@ -87,6 +87,7 @@ const char* GSF_setrule(char* rulestring);
 const char* GSF_setgen(char* genstring);
 const char* GSF_setpos(char* x, char* y);
 const char *GSF_setcell(int x, int y, int newstate);
+const char* GSF_paste(int x, int y, char* mode);
 bool GSF_setoption(char* optname, int newval, int* oldval);
 bool GSF_getoption(char* optname, int* optval);
 bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol);
