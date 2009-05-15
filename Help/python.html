@@ -218,6 +218,7 @@ or you can search for individual commands alphabetically:
 <a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
+<a href="#rulesdir"><b>rulesdir</b></a><br>
 <a href="#run"><b>run</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#select"><b>select</b></a><br>
@@ -303,7 +304,7 @@ Return the Golly application directory as a string.
 
 <a name="datadir"></a><p><dt><b>datadir()</b></dt>
 <dd>
-Return Golly's user-specific data directory as a string:
+Return the user-specific data directory as a string:
 </dd>
 <p>
 <dd>
@@ -318,6 +319,14 @@ Return Golly's user-specific data directory as a string:
 </dd>
 <p>
 <dd> Example: <b>golly.store(clist, golly.datadir() + "foo.rle")</b></dd>
+</p>
+
+<a name="rulesdir"></a><p><dt><b>rulesdir()</b></dt>
+<dd>
+Return the user-specific rules directory
+(set in <a href="prefs#control">Preferences > Control</a>) as a string:
+</dd>
+<dd> Example: <b>f = open(golly.rulesdir() + "test.table", "w")</b></dd>
 </p>
 
 <p><a name="editing">

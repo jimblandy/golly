@@ -621,6 +621,18 @@ static PyObject* py_datadir(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_rulesdir(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   return Py_BuildValue((char*)"s", (const char*)userrules.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_new(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2631,6 +2643,7 @@ static PyMethodDef py_methods[] = {
    { "store",        py_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
    { "appdir",       py_appdir,     METH_VARARGS, "return location of Golly app" },
    { "datadir",      py_datadir,    METH_VARARGS, "return location of user-specific data" },
+   { "rulesdir",     py_rulesdir,   METH_VARARGS, "return location of user-specific rules" },
    // editing
    { "new",          py_new,        METH_VARARGS, "create new universe and set window title" },
    { "cut",          py_cut,        METH_VARARGS, "cut selection to clipboard" },

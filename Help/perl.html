@@ -194,6 +194,7 @@ or you can search for individual commands alphabetically:
 <a href="#randfill"><b>g_randfill</b></a><br>
 <a href="#reset"><b>g_reset</b></a><br>
 <a href="#rotate"><b>g_rotate</b></a><br>
+<a href="#rulesdir"><b>g_rulesdir</b></a><br>
 <a href="#run"><b>g_run</b></a><br>
 <a href="#save"><b>g_save</b></a><br>
 <a href="#select"><b>g_select</b></a><br>
@@ -279,7 +280,7 @@ Return the Golly application directory as a string.
 
 <a name="datadir"></a><p><dt><b>g_datadir()</b></dt>
 <dd>
-Return Golly's user-specific data directory as a string:
+Return the user-specific data directory as a string:
 </dd>
 <p>
 <dd>
@@ -294,6 +295,14 @@ Return Golly's user-specific data directory as a string:
 </dd>
 <p>
 <dd> Example: <b>g_store($cellarray, g_datadir()."foo.rle");</b></dd>
+</p>
+
+<a name="rulesdir"></a><p><dt><b>g_rulesdir()</b></dt>
+<dd>
+Return the user-specific rules directory
+(set in <a href="prefs#control">Preferences > Control</a>) as a string:
+</dd>
+<dd> Example: <b>$file = g_rulesdir()."test.table";</b></dd>
 </p>
 
 <p><a name="editing">

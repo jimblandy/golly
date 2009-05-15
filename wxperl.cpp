@@ -637,6 +637,18 @@ XS(pl_datadir)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_rulesdir)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $dir = g_rulesdir().");
+
+   XSRETURN_PV((const char*) userrules.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_new)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2798,6 +2810,7 @@ EXTERN_C void xs_init(pTHX)
    newXS((char*)"g_store",        pl_store,        (char*)file);
    newXS((char*)"g_appdir",       pl_appdir,       (char*)file);
    newXS((char*)"g_datadir",      pl_datadir,      (char*)file);
+   newXS((char*)"g_rulesdir",     pl_rulesdir,     (char*)file);
    // editing
    newXS((char*)"g_new",          pl_new,          (char*)file);
    newXS((char*)"g_cut",          pl_cut,          (char*)file);
