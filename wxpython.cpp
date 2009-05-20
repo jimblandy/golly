@@ -462,7 +462,7 @@ static PyObject* py_open(PyObject* self, PyObject* args)
    int remember = 0;
 
    if (!PyArg_ParseTuple(args, (char*)"s|i", &filename, &remember)) return NULL;
-   
+
    const char* err = GSF_open(filename, remember);
    if (err) PYTHON_ERROR(err);
 
@@ -480,11 +480,81 @@ static PyObject* py_save(PyObject* self, PyObject* args)
    int remember = 0;
 
    if (!PyArg_ParseTuple(args, (char*)"ss|i", &filename, &format, &remember)) return NULL;
-   
+
    const char* err = GSF_save(filename, format, remember);
    if (err) PYTHON_ERROR(err);
 
    RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_opendialog(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* title = "Choose a file to open";
+   char* filetypes = "All files (*)|*";
+   char* initialdir = "";
+   char* initialfname = "";
+   int mustexist = 1;
+
+   if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
+                         &initialdir, &initialfname, &mustexist)) return NULL;
+
+   wxString wxs_title(title, wxConvLocal);
+   wxString wxs_filetypes(filetypes, wxConvLocal);
+   wxString wxs_initialdir(initialdir, wxConvLocal);
+   wxString wxs_initialfname(initialfname, wxConvLocal);
+
+   wxFileDialog opendlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                         wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
+
+   #ifdef __WXGTK__
+      // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
+      opendlg.SetDirectory(wxs_initialdir);
+   #endif
+
+   wxString wxs_openfname = wxEmptyString;
+   if ( opendlg.ShowModal() == wxID_OK ) {
+      wxs_openfname = opendlg.GetPath();
+   }
+
+   return Py_BuildValue((char*)"s", wxs_openfname.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_savedialog(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* title = "Choose a save location and filename";
+   char* filetypes = "All files (*)|*";
+   char* initialdir = "";
+   char* initialfname = "";
+   int suppressprompt = 0;
+
+   if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
+                         &initialdir, &initialfname, &suppressprompt)) return NULL;
+
+   wxString wxs_title(title, wxConvLocal);
+   wxString wxs_filetypes(filetypes, wxConvLocal);
+   wxString wxs_initialdir(initialdir, wxConvLocal);
+   wxString wxs_initialfname(initialfname, wxConvLocal);
+
+   wxFileDialog savedlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                          wxFD_SAVE | (suppressprompt == 0 ? wxFD_OVERWRITE_PROMPT : 0) );
+
+   #ifdef __WXGTK__
+      savedlg.SetDirectory(wxs_initialdir);
+   #endif
+
+   wxString wxs_savefname = wxEmptyString;
+   if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
+
+   // need to be careful converting Unicode wxString to char*
+   return Py_BuildValue((char*)"s", wxs_savefname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -1048,7 +1118,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          || modestr.IsSameAs(wxT("not"), false)) ) {
       PYTHON_ERROR("putcells error: unknown mode.");
    }
-   
+
    // save cell changes if undo/redo is enabled and script isn't constructing a pattern
    bool savecells = allowundo && !currlayer->stayclean;
    // use ChangeCell below and combine all changes due to consecutive setcell/putcells
@@ -1060,7 +1130,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    bool abort = false;
    bool pattchanged = false;
    lifealgo* curralgo = currlayer->algo;
-   
+
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell list and call ClearRect here (to be added to wxedit.cpp)
    }
@@ -1178,7 +1248,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       MarkLayerDirty();
       DoAutoUpdate();
    }
-   
+
    if (abort) return NULL;
 
    RETURN_NONE;
@@ -1310,7 +1380,7 @@ static PyObject* py_join(PyObject* self, PyObject* args)
    }
 
    if (multiout) AddPadding(outlist);
-   
+
    return outlist;
 }
 
@@ -1341,7 +1411,7 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    int cx, cy;
    int v = 0;
    int cntr = 0;
-   
+
    // calculate a hash value for pattern in given rect
    int hash = 31415962;
    lifealgo* curralgo = currlayer->algo;
@@ -2444,6 +2514,39 @@ static PyObject* py_getcolor(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_setclipstr(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* clipstr;
+
+   if (!PyArg_ParseTuple(args, (char*)"s", &clipstr)) return NULL;
+
+   wxString wxs_clip(clipstr, wxConvLocal);
+   mainptr->CopyTextToClipboard(wxs_clip);
+
+   RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_getclipstr(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   wxTextDataObject data;
+   if ( !mainptr->GetTextFromClipboard(&data) ) return NULL;
+
+   // need to be careful converting Unicode wxString to char*
+   wxString wxs_clipstr = data.GetText();
+   return Py_BuildValue((char*)"s", wxs_clipstr.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_getstring(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2639,6 +2742,8 @@ static PyMethodDef py_methods[] = {
    // filing
    { "open",         py_open,       METH_VARARGS, "open given pattern file" },
    { "save",         py_save,       METH_VARARGS, "save pattern in given file using given format" },
+   { "opendialog",   py_opendialog, METH_VARARGS, "return input path and filename chosen by user" },
+   { "savedialog",   py_savedialog, METH_VARARGS, "return output path and filename chosen by user" },
    { "load",         py_load,       METH_VARARGS, "read pattern file and return cell list" },
    { "store",        py_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
    { "appdir",       py_appdir,     METH_VARARGS, "return location of Golly app" },
@@ -2717,6 +2822,8 @@ static PyMethodDef py_methods[] = {
    { "getoption",    py_getoption,  METH_VARARGS, "return current value of given option" },
    { "setcolor",     py_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
    { "getcolor",     py_getcolor,   METH_VARARGS, "return r,g,b values of given color" },
+   { "setclipstr",   py_setclipstr, METH_VARARGS, "set the clipboard contents to a given string value" },
+   { "getclipstr",   py_getclipstr, METH_VARARGS, "retrieve the contents of the clipboard as a string" },
    { "getstring",    py_getstring,  METH_VARARGS, "display dialog box to get string from user" },
    { "getkey",       py_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
    { "dokey",        py_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },

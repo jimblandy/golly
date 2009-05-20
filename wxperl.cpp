@@ -335,7 +335,7 @@ static bool LoadPerlLib()
       }
       perldll = dynlib.Detach();
    }
-   
+
    if ( perldll == NULL ) {
       // should never happen
       Warning(_("Oh dear, the Perl library is not loaded!"));
@@ -468,7 +468,7 @@ XS(pl_open)
    char* filename = SvPV(ST(0), n_a);
    int remember = 0;
    if (items > 1) remember = SvIV(ST(1));
-   
+
    const char* err = GSF_open(filename, remember);
    if (err) PERL_ERROR(err);
 
@@ -489,11 +489,94 @@ XS(pl_save)
    char* format = SvPV(ST(1), n_a);
    int remember = 0;
    if (items > 2) remember = SvIV(ST(2));
-   
+
    const char* err = GSF_save(filename, format, remember);
    if (err) PERL_ERROR(err);
 
    XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+XS(pl_opendialog)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items > 5) PERL_ERROR("Usage: g_opendialog($title, $filetypes,"
+                             "$initialdir, $initialfname, $mustexist=1).");
+
+   STRLEN n_a;
+   char* title = "Choose a file to open";
+   if (items > 0) title = SvPV(ST(0), n_a);
+   char* filetypes = "All files (*)|*";
+   if (items > 1) filetypes = SvPV(ST(1), n_a);
+   char* initialdir = "";
+   if (items > 2) initialdir = SvPV(ST(2), n_a);
+   char* initialfname = "";
+   if (items > 3) initialfname = SvPV(ST(3), n_a);
+      int mustexist = 1;
+   if (items > 4) mustexist = SvIV(ST(4));
+
+   wxString wxs_title(title, wxConvLocal);
+   wxString wxs_filetypes(filetypes, wxConvLocal);
+   wxString wxs_initialdir(initialdir, wxConvLocal);
+   wxString wxs_initialfname(initialfname, wxConvLocal);
+
+   wxFileDialog opendlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                         wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
+
+   #ifdef __WXGTK__
+      // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
+      opendlg.SetDirectory(wxs_initialdir);
+   #endif
+
+   wxString openfname = wxEmptyString;
+   if ( opendlg.ShowModal() == wxID_OK ) {
+      openfname = opendlg.GetPath();
+   }
+
+   XSRETURN_PV(openfname.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_savedialog)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items > 5) PERL_ERROR("Usage: g_savedialog($title, $filetypes,"
+                             " $initialdir, $initialfname, $suppressprompt=0).");
+   STRLEN n_a;
+   char* title = "Choose a save location and filename";
+   if (items > 0) title = SvPV(ST(0), n_a);
+   char* filetypes = "All files (*)|*";
+   if (items > 1) filetypes = SvPV(ST(1), n_a);
+   char* initialdir = "";
+   if (items > 2) initialdir = SvPV(ST(2), n_a);
+   char* initialfname = "";
+   if (items > 3) initialfname = SvPV(ST(3), n_a);
+   int suppressprompt = 0;
+   if (items > 4) suppressprompt = SvIV(ST(4));
+
+   wxString wxs_title(title, wxConvLocal);
+   wxString wxs_filetypes(filetypes, wxConvLocal);
+   wxString wxs_initialdir(initialdir, wxConvLocal);
+   wxString wxs_initialfname(initialfname, wxConvLocal);
+
+   // suppress Overwrite? popup if user just wants to retrieve the string
+   wxFileDialog savedlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                          wxFD_SAVE | (suppressprompt == 0 ? wxFD_OVERWRITE_PROMPT : 0) );
+
+   #ifdef __WXGTK__
+      savedlg.SetDirectory(wxs_initialdir);
+   #endif
+
+
+   wxString wxs_savefname = wxEmptyString;
+   if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
+
+   XSRETURN_PV(wxs_savefname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -565,7 +648,7 @@ XS(pl_store)
       PERL_ERROR("g_store error: 1st parameter is not a valid array reference.");
    }
    AV* inarray = (AV*)SvRV(cells);
-   
+
    STRLEN n_a;
    char* filename = SvPV(ST(1), n_a);
 
@@ -1098,7 +1181,7 @@ XS(pl_putcells)
    // because there is no bounding box to set dead cells, but a multi-state array can
    // have dead cells so in that case 'copy' mode is not the same as 'or' mode
    const char* mode = "or";
-   
+
    STRLEN n_a;
    if (items > 1) x0  = SvIV(ST(1));
    if (items > 2) y0  = SvIV(ST(2));
@@ -1129,7 +1212,7 @@ XS(pl_putcells)
    const char* err = NULL;
    bool pattchanged = false;
    lifealgo* curralgo = currlayer->algo;
-   
+
    if (modestr.IsSameAs(wxT("copy"), false)) {
       // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
    }
@@ -1235,7 +1318,7 @@ XS(pl_putcells)
       MarkLayerDirty();
       DoAutoUpdate();
    }
-   
+
    if (err) PERL_ERROR(err);
 
    XSRETURN(0);
@@ -1368,7 +1451,7 @@ XS(pl_join)
    }
 
    if (multiout) AddPadding(outarray);
-   
+
    SP -= items;
    ST(0) = newRV( (SV*)outarray );
    sv_2mortal(ST(0));
@@ -1395,7 +1478,7 @@ XS(pl_hash)
    int cx, cy;
    int v = 0;
    int cntr = 0;
-   
+
    // calculate a hash value for pattern in given rect
    int hash = 31415962;
    lifealgo* curralgo = currlayer->algo;
@@ -1573,14 +1656,14 @@ XS(pl_getselrect)
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: @rect = g_getselrect().");
-   
+
    if (viewptr->SelectionExists()) {
       if (currlayer->currsel.TooBig()) {
          PERL_ERROR("g_getselrect error: selection is too big.");
       }
       int x, y, wd, ht;
       currlayer->currsel.GetRect(&x, &y, &wd, &ht);
-      
+
       // items == 0 so no need to reset stack pointer
       // SP -= items;
       XPUSHs(sv_2mortal(newSViv(x)));
@@ -1601,14 +1684,14 @@ XS(pl_setcell)
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items != 3) PERL_ERROR("Usage: g_setcell($x,$y,$state).");
-   
+
    int x = SvIV(ST(0));
    int y = SvIV(ST(1));
    int state = SvIV(ST(2));
 
    const char* err = GSF_setcell(x, y, state);
    if (err) PERL_ERROR(err);
-   
+
    XSRETURN(0);
 }
 
@@ -1622,7 +1705,7 @@ XS(pl_getcell)
    if (items != 2) PERL_ERROR("Usage: $state = g_getcell($x,$y).");
 
    int state = currlayer->algo->getcell(SvIV(ST(0)), SvIV(ST(1)));
-   
+
    XSRETURN_IV(state);
 }
 
@@ -2118,7 +2201,7 @@ XS(pl_update)
    if (items != 0) PERL_ERROR("Usage: g_update().");
 
    GSF_update();
-   
+
    XSRETURN(0);
 }
 
@@ -2322,7 +2405,7 @@ XS(pl_setname)
       sprintf(msg, "Bad g_setname index (%d).", index);
       PERL_ERROR(msg);
    }
-   
+
    GSF_setname(name, index);
 
    XSRETURN(0);
@@ -2429,7 +2512,7 @@ XS(pl_getcolors)
    RETURN_IF_ABORTED;
    dXSARGS;
    if (items > 1) PERL_ERROR("Usage: $colors = g_getcolors($state=-1).");
-   
+
    int state = -1;
    if (items > 0) state = SvIV(ST(0));
 
@@ -2453,7 +2536,7 @@ XS(pl_getcolors)
       sprintf(msg, "Bad g_getcolors state (%d).", state);
       PERL_ERROR(msg);
    }
-   
+
    SP -= items;
    ST(0) = newRV( (SV*)outarray );
    sv_2mortal(ST(0));
@@ -2555,6 +2638,41 @@ XS(pl_getcolor)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_setclipstr)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_setclipstr($string).");
+
+   STRLEN n_a;
+   char* clipstr = SvPV(ST(0), n_a);
+   wxString wxs_clip(clipstr, wxConvLocal);
+
+   mainptr->CopyTextToClipboard(wxs_clip);
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_getclipstr)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items > 0) PERL_ERROR("Usage: $string = g_getclipstr().");
+
+   wxTextDataObject data;
+   if ( !mainptr->GetTextFromClipboard(&data) ) PERL_ERROR("Could not get data from clipboard!");
+
+   // need to be careful converting Unicode wxString to char*
+   wxString wxs_clipstr = data.GetText();
+   XSRETURN_PV(wxs_clipstr.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_getstring)
 {
    IGNORE_UNUSED_PARAMS;
@@ -2569,7 +2687,7 @@ XS(pl_getstring)
    const char* title = "";
    if (items > 1) initial = SvPV(ST(1),n_a);
    if (items > 2) title = SvPV(ST(2),n_a);
-   
+
    wxString result;
    if ( !GetString(wxString(title,wxConvLocal), wxString(prompt,wxConvLocal),
                    wxString(initial,wxConvLocal), result) ) {
@@ -2630,7 +2748,7 @@ XS(pl_show)
    inscript = true;
    // make sure status bar is visible
    if (!showstatus) mainptr->ToggleStatusBar();
-   
+
    XSRETURN(0);
 }
 
@@ -2651,7 +2769,7 @@ XS(pl_error)
    inscript = true;
    // make sure status bar is visible
    if (!showstatus) mainptr->ToggleStatusBar();
-   
+
    XSRETURN(0);
 }
 
@@ -2668,7 +2786,7 @@ XS(pl_warn)
    char* s = SvPV(ST(0), n_a);
 
    Warning(wxString(s,wxConvLocal));
-   
+
    XSRETURN(0);
 }
 
@@ -2685,7 +2803,7 @@ XS(pl_note)
    char* s = SvPV(ST(0), n_a);
 
    Note(wxString(s,wxConvLocal));
-   
+
    XSRETURN(0);
 }
 
@@ -2702,7 +2820,7 @@ XS(pl_help)
    char* htmlfile = SvPV(ST(0), n_a);
 
    ShowHelp(wxString(htmlfile,wxConvLocal));
-   
+
    XSRETURN(0);
 }
 
@@ -2737,7 +2855,7 @@ XS(pl_exit)
 
    STRLEN n_a;
    char* err = (items == 1) ? SvPV(ST(0),n_a) : NULL;
-   
+
    GSF_exit(err);
    AbortPerlScript();
    Perl_croak(aTHX_ NULL);
@@ -2755,10 +2873,10 @@ XS(pl_fatal)
 
    STRLEN n_a;
    char* err = SvPV(ST(0),n_a);
-   
+
    // store message in global string (shown after script finishes)
    scripterr = wxString(err, wxConvLocal);
-   
+
    XSRETURN(0);
 }
 
@@ -2772,12 +2890,12 @@ XS(boot_golly)
    if (items != 1) {
       Warning(_("Possible problem in boot_golly!"));
    }
-   
+
    // declare routines in golly module
    newXS((char*)"golly::g_setcell",      pl_setcell,      (char*)"");
    newXS((char*)"golly::g_getcell",      pl_getcell,      (char*)"");
    // etc...
-   
+
    XSRETURN_YES;
 }
 */
@@ -2806,6 +2924,8 @@ EXTERN_C void xs_init(pTHX)
    // filing
    newXS((char*)"g_open",         pl_open,         (char*)file);
    newXS((char*)"g_save",         pl_save,         (char*)file);
+   newXS((char*)"g_opendialog",   pl_opendialog,   (char*)file);
+   newXS((char*)"g_savedialog",   pl_savedialog,   (char*)file);
    newXS((char*)"g_load",         pl_load,         (char*)file);
    newXS((char*)"g_store",        pl_store,        (char*)file);
    newXS((char*)"g_appdir",       pl_appdir,       (char*)file);
@@ -2884,6 +3004,8 @@ EXTERN_C void xs_init(pTHX)
    newXS((char*)"g_getoption",    pl_getoption,    (char*)file);
    newXS((char*)"g_setcolor",     pl_setcolor,     (char*)file);
    newXS((char*)"g_getcolor",     pl_getcolor,     (char*)file);
+   newXS((char*)"g_setclipstr",   pl_setclipstr,   (char*)file);
+   newXS((char*)"g_getclipstr",   pl_getclipstr,   (char*)file);
    newXS((char*)"g_getstring",    pl_getstring,    (char*)file);
    newXS((char*)"g_getkey",       pl_getkey,       (char*)file);
    newXS((char*)"g_dokey",        pl_dokey,        (char*)file);
@@ -2927,9 +3049,9 @@ void RunPerlScript(const wxString &filepath)
       Warning(_("Could not create Perl interpreter!"));
       return;
    }
-   
+
    perl_construct(my_perl);
-   
+
    // set PERL_EXIT_DESTRUCT_END flag so that perl_destruct will execute
    // any END blocks in given script (this flag requires Perl 5.7.2+)
    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
@@ -2964,7 +3086,7 @@ void RunPerlScript(const wxString &filepath)
    scripterr = wxEmptyString;
    perl_destruct(my_perl);
    scripterr = savestring;
-   
+
    perl_free(my_perl);
 }
 
