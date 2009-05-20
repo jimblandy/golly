@@ -149,14 +149,15 @@ or you can search for individual commands alphabetically:
 <a href="#fit"><b>g_fit</b></a><br>
 <a href="#fitsel"><b>g_fitsel</b></a><br>
 <a href="#flip"><b>g_flip</b></a><br>
-<a href="#getalgo"><b>g_getalgo</b></a>
+<a href="#getalgo"><b>g_getalgo</b></a><br>
+<a href="#getbase"><b>g_getbase</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getbase"><b>g_getbase</b></a><br>
 <a href="#getcell"><b>g_getcell</b></a><br>
 <a href="#getcells"><b>g_getcells</b></a><br>
 <a href="#getclip"><b>g_getclip</b></a><br>
+<a href="#getclipstr"><b>g_getclipstr</b></a><br>
 <a href="#getcolor"><b>g_getcolor</b></a><br>
 <a href="#getcolors"><b>g_getcolors</b></a><br>
 <a href="#getcursor"><b>g_getcursor</b></a><br>
@@ -173,11 +174,11 @@ or you can search for individual commands alphabetically:
 <a href="#getselrect"><b>g_getselrect</b></a><br>
 <a href="#getstep"><b>g_getstep</b></a><br>
 <a href="#getstring"><b>g_getstring</b></a><br>
-<a href="#hash"><b>g_hash</b></a>
+<a href="#hash"><b>g_hash</b></a><br>
+<a href="#help"><b>g_help</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#help"><b>g_help</b></a><br>
 <a href="#join"><b>g_join</b></a><br>
 <a href="#load"><b>g_load</b></a><br>
 <a href="#maxlayers"><b>g_maxlayers</b></a><br>
@@ -188,6 +189,7 @@ or you can search for individual commands alphabetically:
 <a href="#numlayers"><b>g_numlayers</b></a><br>
 <a href="#numstates"><b>g_numstates</b></a><br>
 <a href="#open"><b>g_open</b></a><br>
+<a href="#opendialog"><b>g_opendialog</b></a><br>
 <a href="#parse"><b>g_parse</b></a><br>
 <a href="#paste"><b>g_paste</b></a><br>
 <a href="#putcells"><b>g_putcells</b></a><br>
@@ -197,13 +199,15 @@ or you can search for individual commands alphabetically:
 <a href="#rulesdir"><b>g_rulesdir</b></a><br>
 <a href="#run"><b>g_run</b></a><br>
 <a href="#save"><b>g_save</b></a><br>
-<a href="#select"><b>g_select</b></a><br>
-<a href="#setalgo"><b>g_setalgo</b></a>
+<a href="#savedialog"><b>g_savedialog</b></a><br>
+<a href="#select"><b>g_select</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#setalgo"><b>g_setalgo</b></a><br>
 <a href="#setbase"><b>g_setbase</b></a><br>
 <a href="#setcell"><b>g_setcell</b></a><br>
+<a href="#setclipstr"><b>g_setclipstr</b></a><br>
 <a href="#setcolor"><b>g_setcolor</b></a><br>
 <a href="#setcolors"><b>g_setcolors</b></a><br>
 <a href="#setcursor"><b>g_setcursor</b></a><br>
@@ -253,6 +257,30 @@ If the <b>savexrle</b> option is 1 then extended RLE format is used
 (see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
 </dd>
 <dd> Example: <b>g_save("foo.rle", "rle", 1);</b></dd>
+</p>
+
+<a name="opendialog"></a><p><dt><b>g_opendialog(<i>$title, $filetypes, $initialdir, $initialfname, $mustexist=1</i>)</b></dt>
+<dd>
+Present a standard Open dialog to the user and return the chosen path in a string.
+All parameters are optional; the default is an Open dialog showing the current directory,
+with a title of "Choose a file to open" and a file type of "All files (*)|*".
+If the 5th parameter (default = 1) is set to 0, the user can specify a new filename
+instead of choosing an existing file.  If the user cancels the Open dialog, the return
+value will be an empty string.
+</dd>
+<dd> Example: <b>my $fname = g_opendialog('Open MCell File','MCell files (*.mcl)|*.mcl','C:\Temp','sample.mcl');</b></dd>
+</p>
+
+<a name="savedialog"></a><p><dt><b>g_savedialog(<i>$title, $filetypes, $initialdir, $initialfname, $suppressprompt=0</i>)</b></dt>
+<dd>
+Present a standard Save dialog to the user and return the chosen path in a string.
+All parameters are optional; the default is a Save dialog showing the current directory,
+with a title of  "Choose a save location and filename" and a file type of "All files (*)|*".
+If the 5th parameter is set to its default value (0) and a file already exists at the
+chosen location, an Overwrite? query will be displayed. If the user cancels the Save dialog,
+the return value will be an empty string.
+</dd>
+<dd> Example: <b>my $fname = g_savedialog('Choose an output location','Text files (*.txt;*.csv)|*.txt;*.csv','C:/Temp/','Params.txt',1);</b></dd>
 </p>
 
 <a name="load"></a><p><dt><b>g_load(<i>$filename</i>)</b></dt>
@@ -865,13 +893,13 @@ restores a layer's default colors if its algorithm or rule changes.
 </dd>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td>Example: <b>g_setcolors([1,0,0,0, 2,0,0,0]);</b></td><td width=20> 
+<tr><td>Example: <b>g_setcolors([1,0,0,0, 2,0,0,0]);</b></td><td width=20>
                         </td><td># set states 1 and 2 to black</td></tr>
-<tr><td>Example: <b>g_setcolors([-1,0,255,0]);</b></td><td width=20> 
+<tr><td>Example: <b>g_setcolors([-1,0,255,0]);</b></td><td width=20>
                         </td><td># set all states to green</td></tr>
-<tr><td>Example: <b>g_setcolors([255,0,0, 0,0,255]);</b></td><td width=20> 
+<tr><td>Example: <b>g_setcolors([255,0,0, 0,0,255]);</b></td><td width=20>
                         </td><td># gradient from red to blue</td></tr>
-<tr><td>Example: <b>g_setcolors([]);</b></td><td width=20> 
+<tr><td>Example: <b>g_setcolors([]);</b></td><td width=20>
                         </td><td># restore default colors</td></tr>
 </table>
 </dd>
@@ -977,6 +1005,18 @@ Return the current RGB values for the given color as an array of 3 integers.
 See above for a list of all the valid color names.
 </dd>
 <dd> Example: <b>my ($r, $g, $b) = g_getcolor("deadcells");</b></dd>
+</p>
+
+<a name="getclipstr"></a><p><dt><b>g_getclipstr()</b></dt>
+<dd>
+Return the current contents of the clipboard as an unmodified string.</dd>
+<dd> Example: <b>$illegalRLE = g_getclipstr();</b></dd>
+</p>
+
+<a name="setclipstr"></a><p><dt><b>g_setclipstr($string)</b></dt>
+<dd>
+Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.</dd>
+<dd> Example: <b>g_setclipstr($correctedRLE);</b></dd>
 </p>
 
 <a name="getstring"></a><p><dt><b>g_getstring(<i>$prompt, $initial="", $title=""</i>)</b></dt>
