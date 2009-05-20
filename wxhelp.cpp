@@ -27,12 +27,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
-#include "wx/wxhtml.h"     // for wxHtmlWindow
-#include "wx/file.h"       // for wxFile
+#include "wx/wxhtml.h"        // for wxHtmlWindow
+#include "wx/file.h"          // for wxFile
+#include "wx/protocol/http.h" // for wxHTTP
+#include "wx/wfstream.h"      // for wxFileOutputStream
+
+#include "lifealgo.h"      // for lifealgo class
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
-#include "wxutils.h"       // for Warning
+#include "wxutils.h"       // for Warning, BeginProgress, etc
 #include "wxprefs.h"       // for GetShortcutTable, helpfontsize, gollydir, etc
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for numlayers, GetLayer, etc
@@ -150,6 +154,11 @@ const wxString lexicon_name = _("lexicon");        // name of lexicon layer
 int lexlayer;                 // index of existing lexicon layer (-ve if not present)
 wxString lexpattern;          // lexicon pattern data
 
+// prefix of most recent full URL in a html get ("get:http://.../foo.html")
+// to allow later relative gets ("get:foo.rle")
+wxString urlprefix = wxEmptyString;
+const wxString HTML_PREFIX = _("GET---");          // prepended to html filename
+
 // -----------------------------------------------------------------------------
 
 wxFrame* GetHelpFrame() {
@@ -250,6 +259,19 @@ void UpdateHelpButtons()
    if ( !location.IsEmpty() ) {
       // set currhelp so user can close help window and then open same page
       currhelp = location;
+      
+      // if filename starts with HTML_PREFIX then set urlprefix to corresponding
+      // url so any later relative "get:foo.rle" links will work
+      wxString filename = location.AfterLast(wxFILE_SEP_PATH);
+      if (filename.StartsWith(HTML_PREFIX)) {
+         // replace HTML_PREFIX with "http://" and convert spaces to '/'
+         // (ie. reverse what we did in GetURL)
+         urlprefix = filename;
+         urlprefix.Replace(HTML_PREFIX, wxT("http://"), false);   // do once
+         urlprefix.Replace(wxT(" "), wxT("/"));
+         urlprefix = urlprefix.BeforeLast('/');
+         urlprefix += wxT('/');     // must end in slash
+      }
    }
    
    htmlwin->SetFocus();    // for keyboard shortcuts
@@ -295,7 +317,7 @@ void ShowHelp(const wxString& filepath)
          // don't call Yield -- doesn't work if we're generating
          while (wxGetApp().Pending()) wxGetApp().Dispatch();
          helpptr->Move(helpx, helpy);
-         // oh dear -- Move clobbers effect of SetMinSize!!!
+         // oh dear -- Move clobbers effect of SetMinSize
          helpptr->Raise();
          helpptr->SetFocus();
          htmlwin->SetFocus();
@@ -384,13 +406,233 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void ClickLexiconPattern(const wxHtmlCell* htmlcell)
+void LoadRule(const wxString& rulestring)
 {
-   if (inscript) {
-      Warning(_("Cannot load lexicon pattern while a script is running."));
+   // load recently installed rule.table/tree/colors/icons file
+   wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
+   int oldmaxstate = currlayer->algo->NumCellStates() - 1;
+   
+   const char* err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
+   if (err) {
+      // try to find another algorithm that supports the given rule
+      for (int i = 0; i < NumAlgos(); i++) {
+         if (i != currlayer->algtype) {
+            lifealgo* tempalgo = CreateNewUniverse(i);
+            err = tempalgo->setrule( rulestring.mb_str(wxConvLocal) );
+            delete tempalgo;
+            if (!err) {
+               // change the current algorithm and switch to the new rule
+               mainptr->ChangeAlgorithm(i, wxString(rulestring,wxConvLocal));
+               if (i != currlayer->algtype) {
+                  currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+                  Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
+                  return;
+               } else {
+                  mainptr->SetWindowTitle(wxEmptyString);
+                  mainptr->UpdateEverything();
+                  return;
+               }
+            }
+         }
+      }
+      // should only get here if table/tree file contains some sort of error
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      Warning(_("Rule is not valid in any algorithm: ") + rulestring);
       return;
    }
+
+   wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
+   if (oldrule != newrule) {
+      // show new rule in main window's title but don't change name
+      mainptr->SetWindowTitle(wxEmptyString);
+   }
    
+   // new table/tree might have changed the number of cell states;
+   // if there are fewer states then pattern might change
+   int newmaxstate = currlayer->algo->NumCellStates() - 1;
+   if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+      mainptr->ReduceCellStates(newmaxstate);
+   }
+
+   // set colors for new rule (loads any .color and/or .icons file)
+   UpdateLayerColors();
+
+   // pattern might have changed or colors might have changed
+   mainptr->UpdateEverything();
+   
+   if (oldrule != newrule) {
+      if (allowundo && !currlayer->stayclean) {
+         currlayer->undoredo->RememberRuleChange(oldrule);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool DownloadFile(const wxString& url, const wxString& filepath)
+{
+   bool result = false;
+
+   wxHTTP http;
+   http.SetTimeout(5); // secs
+   http.SetHeader(wxT("Accept") , wxT("*/*"));           // any file type
+   // this didn't fix fano bug!!!
+   // http.SetHeader(wxT("Accept"), wxT("application/x-life"));
+   http.SetHeader(wxT("User-Agent"), wxT("Golly"));
+   
+   // Connect() wants a server address (eg. "www.foo.com"), not a full URL
+   wxString temp = url.AfterFirst('/');
+   while (temp[0] == '/') temp = temp.Mid(1);
+   size_t slashpos = temp.Find('/');
+   wxString server = temp.Left(slashpos);
+   if (http.Connect(server, 80)) {
+      // GetInputStream() wants everything after the server address
+      wxString respath = temp.Right(temp.length() - slashpos);
+      wxInputStream* instream = http.GetInputStream(respath);
+      if (instream) {
+         
+         wxFileOutputStream outstream(filepath);
+         if (outstream.Ok()) {
+            // read and write in chunks so we can show a progress dialog
+            const int BUFFER_SIZE = 4000;             // seems ok (on Mac at least)
+            char buf[BUFFER_SIZE];
+            int incount = 0;
+            int outcount = 0;
+            int lastread, lastwrite;
+            double filesize = (double) instream->GetSize();
+            if (filesize <= 0.0) filesize = -1.0;     // show unknown progress???!!!
+            
+            BeginProgress(_("Downloading file"));
+            while (true) {
+               instream->Read(buf, BUFFER_SIZE);
+               lastread = instream->LastRead();
+               if (lastread == 0) break;
+               outstream.Write(buf, lastread);
+               lastwrite = outstream.LastWrite();
+               incount += lastread;
+               outcount += lastwrite;
+               if (incount != outcount) {
+                  Warning(_("Error occurred while writing file:\n") + filepath);
+                  break;
+               }
+               char msg[128];
+               sprintf(msg, "File size: %.2g MB", double(incount) / 1048576.0);
+               if (AbortProgress((double)incount / filesize, wxString(msg,wxConvLocal))) {
+                  // force false result
+                  outcount = 0;
+                  break;
+               }
+            }
+            EndProgress();
+            
+            result = (incount == outcount);
+            if (!result) {
+               // delete incomplete filepath
+               if (wxFileExists(filepath)) wxRemoveFile(filepath);
+            }
+         } else {
+            Warning(_("Could not open output stream for file:\n") + filepath);
+         }
+         delete instream;
+         
+      } else {
+         int err = http.GetError();
+         if (err == wxPROTO_NOFILE) {
+            Warning(_("Remote file does not exist:\n") + url);
+         } else {
+            // why do we get wxPROTO_NETERR (generic network error) with some hosts???!!!
+            // eg: http://fano.ics.uci.edu/ca/rules/b0135s014/g1.lif
+            Warning(wxString::Format(_("Could not download file (error %d):\n"),err) + url);
+         }
+      }
+   } else {
+      Warning(_("Could not connect to server:\n") + server);
+   }
+   
+   http.Close();
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+void GetURL(const wxString& url)
+{
+   wxString fullurl;
+   if (url.StartsWith(wxT("http:"))) {
+      fullurl = url;
+   } else {
+      // relative get, so prepend prefix set earlier in UpdateHelpButtons
+      fullurl = urlprefix + url;
+   }
+
+   wxString filename = fullurl.AfterLast('/');
+   wxString ext = filename.AfterLast('.');
+   // if filename has no extension then ext == filename
+   if (ext == filename) ext = wxEmptyString;
+   
+   // create download directory if it doesn't exist
+   if ( !wxFileName::DirExists(downloaddir) ) {
+      if ( !wxFileName::Mkdir(downloaddir, 0777, wxPATH_MKDIR_FULL) ) {
+         Warning(_("Could not create download directory:\n") + downloaddir);
+         return;
+      }
+   }
+
+   // create full path for downloaded file; first remove initial "http://"
+   wxString filepath = fullurl.AfterFirst('/');
+   while (filepath[0] == '/') filepath = filepath.Mid(1);
+   if ( ext.IsSameAs(wxT("htm"),false) ||
+        ext.IsSameAs(wxT("html"),false) ) {
+      // create special name for HTML file so UpdateHelpButtons can detect it
+      // and set urlprefix
+      filepath.Replace(wxT("/"), wxT(" "));  // safe to assume url has no spaces???!!!
+      filepath = HTML_PREFIX + filepath;
+   } else {
+      filepath.Replace(wxT("/"), wxT("-"));
+   }
+   filepath = downloaddir + filepath;
+
+   if ( ext.IsSameAs(wxT("htm"),false) ||
+        ext.IsSameAs(wxT("html"),false) ) {
+      // download and display HTML file in help window
+      if (DownloadFile(fullurl, filepath)) {
+         // search file for any simple img links and also download those files???
+         // maybe in version 3!
+         htmlwin->LoadPage(filepath);
+      }
+   }
+   else if ( ext.IsSameAs(wxT("table"),false) ||
+             ext.IsSameAs(wxT("tree"),false) ||
+             ext.IsSameAs(wxT("colors"),false) ||
+             ext.IsSameAs(wxT("icons"),false) ) {
+      // create file in the user's rules directory (rulesdir might be read-only)
+      filepath = userrules + filename;
+      if (DownloadFile(fullurl, filepath)) {
+         // load corresponding rule table/tree
+         wxString rule = filename.BeforeLast('.');
+         mainptr->Raise();
+         LoadRule(rule);
+      }
+   }
+   else if ( ext.IsEmpty() || ext.IsSameAs(wxT("txt"),false) ) {
+      // assume text file and open in user's text editor
+      if (DownloadFile(fullurl, filepath)) {
+         mainptr->EditFile(filepath);
+      }
+   }
+   else {
+      // assume pattern/script/zip file, so try to open/run/unzip it
+      if (DownloadFile(fullurl, filepath)) {
+         mainptr->Raise();
+         mainptr->OpenFile(filepath);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ClickLexiconPattern(const wxHtmlCell* htmlcell)
+{
    if (htmlcell) {
       wxHtmlContainerCell* parent = htmlcell->GetParent();
       if (parent) {
@@ -517,31 +759,50 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
             Warning(_("Could not launch browser!"));
       #endif
 
+   } else if ( url.StartsWith(wxT("get:")) ) {
+      if (inscript) {
+         Warning(_("Cannot download file while a script is running."));
+      } else {
+         // download clicked file
+         GetURL( url.AfterFirst(':') );
+         if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
+      }
+
    } else if ( url.StartsWith(wxT("lexpatt:")) ) {
-      // user clicked on pattern in Life Lexicon
-      ClickLexiconPattern( link.GetHtmlCell() );
+      if (inscript) {
+         Warning(_("Cannot load lexicon pattern while a script is running."));
+      } else {
+         // user clicked on pattern in Life Lexicon
+         ClickLexiconPattern( link.GetHtmlCell() );
+      }
 
    } else if ( url.StartsWith(wxT("prefs#")) ) {
-      // user clicked on link to Preferences dialog
-      mainptr->ShowPrefsDialog( link.GetHref().After('#') );
+      if (inscript) {
+         Warning(_("Cannot change preferences while a script is running."));
+      } else {
+         // user clicked on link to Preferences dialog
+         mainptr->ShowPrefsDialog( url.AfterFirst('#') );
+      }
 
    } else if ( url.StartsWith(wxT("open#")) ) {
-      // open clicked pattern/script
-      wxString path = link.GetHref().After('#');
-      #ifdef __WXMSW__
-         path.Replace(wxT("/"), wxT("\\"));
-      #endif
-      wxFileName fname(path);
-      if (!fname.IsAbsolute()) path = gollydir + path;
-      mainptr->Raise();
-      mainptr->OpenFile(path);
+      if (inscript) {
+         Warning(_("Cannot open file while a script is running."));
+      } else {
+         // open clicked pattern/script
+         wxString path = url.AfterFirst('#');
+         #ifdef __WXMSW__
+            path.Replace(wxT("/"), wxT("\\"));
+         #endif
+         wxFileName fname(path);
+         if (!fname.IsAbsolute()) path = gollydir + path;
+         mainptr->Raise();
+         mainptr->OpenFile(path);
+      }
 
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);
-      if ( helpptr && helpptr->IsActive() ) {
-         UpdateHelpButtons();
-      }
+      if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
    }
 }
 

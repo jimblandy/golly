@@ -257,6 +257,17 @@ bool MainFrame::LoadImage(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
+// eventually make this a MainFrame:: method???!!!
+void OpenZipFile(const wxString& path)
+{
+   Warning(_("Zip file handler is not yet implemented!!!"));
+   // unzip and handle each file according to its extension???
+   // if there are multiple patterns/scripts then build a dynamic page
+   // in help window with clickable links to each file???
+}
+
+// -----------------------------------------------------------------------------
+
 #ifdef __WXMAC__
    // convert path to decomposed UTF8 so fopen will work
    #define FILEPATH path.fn_str()
@@ -267,7 +278,13 @@ bool MainFrame::LoadImage(const wxString& path)
 void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool updatestatus)
 {
    if ( !wxFileName::FileExists(path) ) {
-      Warning(_("The pattern file does not exist:\n") + path);
+      Warning(_("The file does not exist:\n") + path);
+      return;
+   }
+
+   wxString ext = path.AfterLast('.');
+   if (ext.IsSameAs(wxT("zip"),false)) {
+      OpenZipFile(path);
       return;
    }
 
@@ -564,6 +581,7 @@ void MainFrame::OpenPattern()
    filetypes +=         _("|dblife (*.l)|*.l");
    filetypes +=         _("|MCell (*.mcl)|*.mcl");
    filetypes +=         _("|Gzip (*.gz)|*.gz");
+   filetypes +=         _("|Zip (*.zip)|*.zip");
    filetypes +=         _("|BMP (*.bmp)|*.bmp");
    filetypes +=         _("|GIF (*.gif)|*.gif");
    filetypes +=         _("|PNG (*.png)|*.png");

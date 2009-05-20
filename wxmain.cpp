@@ -1388,6 +1388,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_PERL:      ShowHelp(_("Help/perl.html")); break;
       case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
       case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
+      case ID_HELP_ARCHIVES:  ShowHelp(_("Help/archives.html")); break;
       case ID_HELP_FILE:      ShowHelp(_("Help/file.html")); break;
       case ID_HELP_EDIT:      ShowHelp(_("Help/edit.html")); break;
       case ID_HELP_CONTROL:   ShowHelp(_("Help/control.html")); break;
@@ -2234,6 +2235,7 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
    helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
    helpMenu->Append(ID_HELP_LEXICON,            _("Life Lexicon"));
+   helpMenu->Append(ID_HELP_ARCHIVES,           _("Online Archives"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_FILE,               _("File Menu"));
    helpMenu->Append(ID_HELP_EDIT,               _("Edit Menu"));

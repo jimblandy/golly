@@ -91,9 +91,10 @@ const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 // initialize exported preferences:
 
 wxString gollydir;               // path of directory containing app
-wxString datadir;                // path of directory containing user-specific data
-wxString rulesdir;               // path of directory containing app's rule data
-wxString userrules;              // path of directory containing user's rule data
+wxString datadir;                // path of directory for user-specific data
+wxString rulesdir;               // path of directory for app's rule data
+wxString userrules;              // path of directory for user's rule data
+wxString downloaddir;            // path of directory for downloaded data
 
 int debuglevel = 0;              // for displaying debug info if > 0
 
@@ -1545,6 +1546,7 @@ void SavePrefs()
    SaveRelPath(f, "pattern_dir", patterndir);
    SaveRelPath(f, "script_dir", scriptdir);
    SaveRelPath(f, "user_rules", userrules);
+   SaveRelPath(f, "download_dir", downloaddir);
    
    fputs("\n", f);
 
@@ -1713,6 +1715,9 @@ void GetPrefs()
 
    userrules = datadir + wxT("Rules");
    userrules += wxFILE_SEP_PATH;
+
+   downloaddir = datadir + wxT("Downloads");
+   downloaddir += wxFILE_SEP_PATH;
    
    opensavedir = gollydir + PATT_DIR;
    rundir = gollydir + SCRIPT_DIR;
@@ -2110,6 +2115,7 @@ void GetPrefs()
       } else if (strcmp(keyword, "pattern_dir") == 0)   { GetRelPath(value, patterndir, PATT_DIR);
       } else if (strcmp(keyword, "script_dir") == 0)    { GetRelPath(value, scriptdir, SCRIPT_DIR);
       } else if (strcmp(keyword, "user_rules") == 0)    { GetRelPath(value, userrules);
+      } else if (strcmp(keyword, "download_dir") == 0)  { GetRelPath(value, downloaddir);
 
       } else if (strcmp(keyword, "text_editor") == 0) {
          texteditor = wxString(value,wxConvLocal);

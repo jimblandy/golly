@@ -17,7 +17,7 @@
 !include local-win.mk
 
 ### Golly-related variables: ###
-VERSION = 2.1b2
+VERSION = 2.1b3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Scripts Patterns Rules
@@ -253,6 +253,10 @@ __WXLIB_CORE_p = \
 __WXLIB_BASE_p = \
 	wxbase$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
 !endif
+!if "$(MONOLITHIC)" == "0"
+__WXLIB_NET_p = \
+	wxbase$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_net.lib
+!endif
 !if "$(MONOLITHIC)" == "1"
 __WXLIB_MONO_p = \
 	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR).lib
@@ -286,7 +290,7 @@ clean:
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /LIBPATH:$(LIBDIRNAME) \
 	/SUBSYSTEM:WINDOWS $(BASEOBJ) $(WXOBJ) golly.res \
-	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) \
+	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) \
 	$(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib \
 	wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib \
 	$(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib \

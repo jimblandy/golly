@@ -22,7 +22,7 @@ WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-unicode-release-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 2.1b2
+APP_VERSION = 2.1b3
 
 # for Perl script support
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
@@ -105,6 +105,7 @@ __WXLIB_HTML_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_htm
 __WXLIB_ADV_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_adv-$(WX_RELEASE)
 __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_core-$(WX_RELEASE)
 __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)-$(WX_RELEASE)
+__WXLIB_NET_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_net-$(WX_RELEASE)
 __LIB_EXPAT_p = -lwxexpat$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
 ###__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
@@ -137,8 +138,8 @@ $(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
 	$(CXXC) $(CXXBASE) -c -o $@ RuleTableToTree.cpp
 
 app.bin: $(BASEOBJ) $(WXOBJ)
-	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
-   $(__WXLIB_BASE_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
+	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) \
+   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
 $(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \

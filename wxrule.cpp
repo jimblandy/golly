@@ -181,13 +181,13 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
 
    } else if ( url.StartsWith(wxT("rule#")) ) {
       // user clicked on special rule link, so copy rule into rule box
-      ruletext->SetValue( link.GetHref().After('#') );
+      ruletext->SetValue( url.After('#') );
       ruletext->SetFocus();
       ruletext->SetSelection(-1,-1);
 
    } else if ( url.StartsWith(wxT("open#")) ) {
       // open clicked pattern/script
-      wxString clickedfile = link.GetHref().After('#');
+      wxString clickedfile = url.After('#');
       #ifdef __WXMSW__
          clickedfile.Replace(wxT("/"), wxT("\\"));
       #endif

@@ -36,6 +36,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/stdpaths.h"   // for wxStandardPaths
 #include "wx/sysopt.h"     // for wxSystemOptions
 #include "wx/filename.h"   // for wxFileName
+#include "wx/fs_inet.h"    // for wxInternetFSHandler
+#include "wx/fs_zip.h"     // for wxZipFSHandler
 
 #include "lifepoll.h"
 #include "util.h"          // for lifeerrors
@@ -161,7 +163,7 @@ int wx_poll::checkevents()
       // on Mac/Linux it is much faster to avoid calling Yield too often
       long t = stopwatch->Time();
       if (t > nextcheck) {
-         nextcheck = t + 100;        // 10 times per sec
+         nextcheck = t + 100;        // call 10 times per sec
          CallYield();
       }
    #endif
@@ -299,7 +301,11 @@ bool GollyApp::OnInit()
    wxImage::AddHandler(new wxGIFHandler);
    wxImage::AddHandler(new wxPNGHandler);
    wxImage::AddHandler(new wxTIFFHandler);
-   
+
+   // wxInternetFSHandler is needed to allow downloading files
+   wxFileSystem::AddHandler(new wxInternetFSHandler);
+   wxFileSystem::AddHandler(new wxZipFSHandler);
+
    // get main window location and other user preferences
    GetPrefs();
    

@@ -11,7 +11,7 @@
 # make install
 # ldconfig
 
-VERSION = 2.1b2
+VERSION = 2.1b3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = Help Patterns Scripts Rules README LICENSE
 SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
