@@ -262,7 +262,7 @@ void UpdateHelpButtons()
       
       // if filename starts with HTML_PREFIX then set urlprefix to corresponding
       // url so any later relative "get:foo.rle" links will work
-      wxString filename = location.AfterLast(wxFILE_SEP_PATH);
+      wxString filename = location.AfterLast('/');
       if (filename.StartsWith(HTML_PREFIX)) {
          // replace HTML_PREFIX with "http://" and convert spaces to '/'
          // (ie. reverse what we did in GetURL)
@@ -578,18 +578,25 @@ void GetURL(const wxString& url)
       }
    }
 
-   // create full path for downloaded file; first remove initial "http://"
+   // create full path for downloaded file based on given url;
+   // first remove initial "http://"
    wxString filepath = fullurl.AfterFirst('/');
    while (filepath[0] == '/') filepath = filepath.Mid(1);
    if ( ext.IsSameAs(wxT("htm"),false) ||
         ext.IsSameAs(wxT("html"),false) ) {
       // create special name for HTML file so UpdateHelpButtons can detect it
       // and set urlprefix
-      filepath.Replace(wxT("/"), wxT(" "));  // safe to assume url has no spaces???!!!
+      filepath.Replace(wxT("/"), wxT(" "));     // we assume url has no spaces
       filepath = HTML_PREFIX + filepath;
    } else {
       filepath.Replace(wxT("/"), wxT("-"));
    }
+   #ifdef __WXMSW__
+      // we need to replace some chars that can appear in URLs but are
+      // not allowed in filenames on Windows
+      filepath.Replace(wxT("*"), wxT("_"));
+      filepath.Replace(wxT("?"), wxT("_"));
+   #endif
    filepath = downloaddir + filepath;
 
    if ( ext.IsSameAs(wxT("htm"),false) ||
