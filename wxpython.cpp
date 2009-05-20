@@ -520,7 +520,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
       wxs_openfname = opendlg.GetPath();
    }
 
-   return Py_BuildValue((char*)"s", wxs_openfname.mb_str(wxConvLocal));
+   return Py_BuildValue((char*)"s", (const char*)wxs_openfname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -554,7 +554,7 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
    if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
 
    // need to be careful converting Unicode wxString to char*
-   return Py_BuildValue((char*)"s", wxs_savefname.mb_str(wxConvLocal));
+   return Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2542,7 +2542,7 @@ static PyObject* py_getclipstr(PyObject* self, PyObject* args)
 
    // need to be careful converting Unicode wxString to char*
    wxString wxs_clipstr = data.GetText();
-   return Py_BuildValue((char*)"s", wxs_clipstr.mb_str(wxConvLocal));
+   return Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------

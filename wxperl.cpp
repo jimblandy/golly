@@ -535,7 +535,7 @@ XS(pl_opendialog)
       openfname = opendlg.GetPath();
    }
 
-   XSRETURN_PV(openfname.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*) openfname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -576,7 +576,7 @@ XS(pl_savedialog)
    wxString wxs_savefname = wxEmptyString;
    if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
 
-   XSRETURN_PV(wxs_savefname.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*) wxs_savefname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2668,7 +2668,7 @@ XS(pl_getclipstr)
 
    // need to be careful converting Unicode wxString to char*
    wxString wxs_clipstr = data.GetText();
-   XSRETURN_PV(wxs_clipstr.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*) wxs_clipstr.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2696,7 +2696,7 @@ XS(pl_getstring)
       Perl_croak(aTHX_ NULL);
    }
 
-   XSRETURN_PV(result.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*) result.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
