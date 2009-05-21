@@ -268,7 +268,7 @@ If the 5th parameter (default = 1) is set to 0, the user can specify a new filen
 instead of choosing an existing file.  If the user cancels the Open dialog, the return
 value will be an empty string.
 </dd>
-<dd> Example: <b>my $fname = g_opendialog('Open MCell File','MCell files (*.mcl)|*.mcl','C:\Temp','sample.mcl');</b></dd>
+<dd> Example: <b>my $fname = g_opendialog('Open MCell File','MCell files (*.mcl)|*.mcl','C:/Temp/','sample.mcl');</b></dd>
 </p>
 
 <a name="savedialog"></a><p><dt><b>g_savedialog(<i>$title, $filetypes, $initialdir, $initialfname, $suppressprompt=0</i>)</b></dt>
@@ -276,8 +276,8 @@ value will be an empty string.
 Present a standard Save dialog to the user and return the chosen path in a string.
 All parameters are optional; the default is a Save dialog showing the current directory,
 with a title of  "Choose a save location and filename" and a file type of "All files (*)|*".
-If the 5th parameter is set to its default value (0) and a file already exists at the
-chosen location, an Overwrite? query will be displayed. If the user cancels the Save dialog,
+If a file already exists at the chosen location, an Overwrite? query will be displayed
+unless the 5th parameter (default = 0) is set to 1. If the user cancels the Save dialog,
 the return value will be an empty string.
 </dd>
 <dd> Example: <b>my $fname = g_savedialog('Choose an output location','Text files (*.txt;*.csv)|*.txt;*.csv','C:/Temp/','Params.txt',1);</b></dd>
@@ -1013,7 +1013,7 @@ Return the current contents of the clipboard as an unmodified string.</dd>
 <dd> Example: <b>$illegalRLE = g_getclipstr();</b></dd>
 </p>
 
-<a name="setclipstr"></a><p><dt><b>g_setclipstr($string)</b></dt>
+<a name="setclipstr"></a><p><dt><b>g_setclipstr(<i>$string</i>)</b></dt>
 <dd>
 Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.</dd>
 <dd> Example: <b>g_setclipstr($correctedRLE);</b></dd>

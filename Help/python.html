@@ -223,12 +223,12 @@ or you can search for individual commands alphabetically:
 <a href="#rulesdir"><b>rulesdir</b></a><br>
 <a href="#run"><b>run</b></a><br>
 <a href="#save"><b>save</b></a><br>
-<a href="#savedialog"><b>g_savedialog</b></a><br>
+<a href="#savedialog"><b>savedialog</b></a><br>
 <a href="#select"><b>select</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#setalgo"><b>setalgo</b></a>
+<a href="#setalgo"><b>setalgo</b></a><br>
 <a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setclipstr"><b>setclipstr</b></a><br>
@@ -283,7 +283,7 @@ If the <b>savexrle</b> option is True then extended RLE format is used
 <dd> Example: <b>golly.save("foo.rle", "rle", True)</b></dd>
 </p>
 
-<a name="opendialog"></a><p><dt><b>opendialog(<i>title, filetypes, initialdir, initialfname, mustexist=1</i>)</b></dt>
+<a name="opendialog"></a><p><dt><b>opendialog(<i>title, filetypes, initialdir, initialfname, mustexist=True</i>)</b></dt>
 <dd>
 Present a standard Open dialog to the user and return the chosen path in a string.
 All parameters are optional; the default is an Open dialog showing the current directory,
@@ -292,19 +292,20 @@ If the 5th parameter (default = True) is set to False, the user can specify a ne
 instead of choosing an existing file. If the user cancels the Open dialog, the return
 value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.opendialog("Open MCell File","MCell files (*.mcl)|*.mcl","C:\Temp\","sample.mcl")</b></dd>
+<dd> Example: <b>fname = golly.opendialog("Open MCell File","MCell files (*.mcl)|*.mcl","C:/Temp/","sample.mcl")</b></dd>
 </p>
 
-<a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=0</i>)</b></dt>
+<a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=False</i>)</b></dt>
 <dd>
 Present a standard Save dialog to the user and return the chosen path in a string.
 All parameters are optional; the default is a Save dialog showing the current directory,
 with a title of  "Choose a save location and filename" and a file type of "All files (*)|*".
-If the 5th parameter is set to its default value (False) and a file already exists at the
-chosen location, an Overwrite? query will be displayed. If the user cancels the Save dialog,
-the return value will be an empty string.
+If a file already exists at the chosen location, an Overwrite? query will be displayed
+unless the 5th parameter (default = False) is set to True. If the user cancels the Save
+dialog, the return value will be an empty string.
+
 </dd>
-<dd> Example: <b>fname = savedialog("Choose an output location","Text files (*.txt;*.csv)|*.txt;*.csv","C:\Temp\","Params.txt",1)</b></dd>
+<dd> Example: <b>fname = savedialog("Choose an output location","Text files (*.txt;*.csv)|*.txt;*.csv","C:/Temp/","Params.txt",1)</b></dd>
 </p>
 
 <a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt>
@@ -1039,10 +1040,10 @@ Return the current contents of the clipboard as an unmodified string.</dd>
 <dd> Example: <b>illegalRLE = getclipstr()</b></dd>
 </p>
 
-<a name="setclipstr"></a><p><dt><b>setclipstr(string)</b></dt>
+<a name="setclipstr"></a><p><dt><b>setclipstr(<i>string</i>)</b></dt>
 <dd>
 Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.</dd>
-<dd> Example: <b>setclipstr(correctedRLE);</b></dd>
+<dd> Example: <b>setclipstr(correctedRLE)</b></dd>
 </p>
 
 <a name="getstring"></a><p><dt><b>getstring(<i>prompt, initial="", title=""</i>)</b></dt>
