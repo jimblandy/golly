@@ -830,7 +830,11 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
       wxT("<tr><td align=center>Key Combination</td><td align=center>Action</td></tr>");
       contents += GetShortcutTable();
       contents += wxT("</table></center></body></html>");
+      
+      // better to write contents to a temp file and call LoadPage
+      // so that back/forwards buttons work!!!
       SetPage(contents);
+      
       currhelp = SHOW_KEYBOARD_SHORTCUTS;
 
    } else if ( filepath.StartsWith(_("Help/")) ) {

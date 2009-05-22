@@ -618,9 +618,8 @@ static PyObject* py_store(PyObject* self, PyObject* args)
    wxUnusedVar(self);
    PyObject* inlist;
    char* filename;
-   char* desc = NULL;      // the description string is currently ignored!!!
 
-   if (!PyArg_ParseTuple(args, (char*)"O!s|s", &PyList_Type, &inlist, &filename, &desc))
+   if (!PyArg_ParseTuple(args, (char*)"O!s|s", &PyList_Type, &inlist, &filename))
       return NULL;
 
    // create temporary universe of same type as current universe

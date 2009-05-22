@@ -292,7 +292,7 @@ If the 5th parameter (default = True) is set to False, the user can specify a ne
 instead of choosing an existing file. If the user cancels the Open dialog, the return
 value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.opendialog("Open MCell File","MCell files (*.mcl)|*.mcl","C:/Temp/","sample.mcl")</b></dd>
+<dd> Example: <b>fname = golly.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\Temp\", "sample.mcl")</b></dd>
 </p>
 
 <a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=False</i>)</b></dt>
@@ -303,9 +303,8 @@ with a title of  "Choose a save location and filename" and a file type of "All f
 If a file already exists at the chosen location, an Overwrite? query will be displayed
 unless the 5th parameter (default = False) is set to True. If the user cancels the Save
 dialog, the return value will be an empty string.
-
 </dd>
-<dd> Example: <b>fname = savedialog("Choose an output location","Text files (*.txt;*.csv)|*.txt;*.csv","C:/Temp/","Params.txt",1)</b></dd>
+<dd> Example: <b>fname = golly.savedialog("Choose an output location", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\Temp\", "Params.txt", 1)</b></dd>
 </p>
 
 <a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt>
@@ -1036,14 +1035,16 @@ See above for a list of all the valid color names.
 
 <a name="getclipstr"></a><p><dt><b>getclipstr()</b></dt>
 <dd>
-Return the current contents of the clipboard as an unmodified string.</dd>
-<dd> Example: <b>illegalRLE = getclipstr()</b></dd>
+Return the current contents of the clipboard as an unmodified string.
+</dd>
+<dd> Example: <b>illegalRLE = golly.getclipstr()</b></dd>
 </p>
 
 <a name="setclipstr"></a><p><dt><b>setclipstr(<i>string</i>)</b></dt>
 <dd>
-Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.</dd>
-<dd> Example: <b>setclipstr(correctedRLE)</b></dd>
+Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.
+</dd>
+<dd> Example: <b>golly.setclipstr(correctedRLE)</b></dd>
 </p>
 
 <a name="getstring"></a><p><dt><b>getstring(<i>prompt, initial="", title=""</i>)</b></dt>
