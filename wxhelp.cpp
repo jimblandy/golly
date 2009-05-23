@@ -634,6 +634,8 @@ void GetURL(const wxString& url)
          mainptr->OpenFile(filepath);
       }
    }
+   
+   if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
 }
 
 // -----------------------------------------------------------------------------
@@ -767,12 +769,14 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       #endif
 
    } else if ( url.StartsWith(wxT("get:")) ) {
-      if (inscript) {
+      if (mainptr->generating) {
+         Warning(_("Cannot download file while generating a pattern."));
+         // or stop and create pending event??? see ID_LOAD_LEXICON
+      } else if (inscript) {
          Warning(_("Cannot download file while a script is running."));
       } else {
          // download clicked file
          GetURL( url.AfterFirst(':') );
-         if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
       }
 
    } else if ( url.StartsWith(wxT("lexpatt:")) ) {
@@ -831,8 +835,7 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
       contents += GetShortcutTable();
       contents += wxT("</table></center></body></html>");
       
-      // better to write contents to a temp file and call LoadPage
-      // so that back/forwards buttons work!!!
+      // write contents to temp file and call LoadPage so that back/forwards buttons work!!!
       SetPage(contents);
       
       currhelp = SHOW_KEYBOARD_SHORTCUTS;
