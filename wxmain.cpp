@@ -1951,6 +1951,7 @@ void MainFrame::OnClose(wxCloseEvent& event)
       wxRemoveFile(files[n]);
    }
    // can now delete (hopefully) empty tempdir
+   // why not working on Windows???!!!
    wxFileName::Rmdir(tempdir);
 
    // avoid possible error message or seg fault

@@ -376,6 +376,11 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    //   temporary html file with clickable links to each file and show it in the
    //   help window.
    
+   #ifdef __WXMSW__
+      const char SEPARATOR = '\\';
+   #else
+      const char SEPARATOR = '/';
+   #endif
    const wxString indent = wxT("&nbsp;&nbsp;&nbsp;&nbsp;");
    bool dirseen = false;
    bool diffdirs = (userrules != rulesdir);
@@ -411,26 +416,26 @@ void MainFrame::OpenZipFile(const wxString& zippath)
       if (name.StartsWith(wxT("__MACOSX")) || name.EndsWith(wxT(".DS_Store"))) {
          // ignore meta-data stuff in zip file created on Mac
       } else {
-         // indent depending on # of slashes in name
-         unsigned int slashes = 0;
+         // indent depending on # of separators in name
+         unsigned int sepcount = 0;
          unsigned int i = 0;
          unsigned int len = name.length();
          while (i < len) {
-            if (name[i] == '/') slashes++;
+            if (name[i] == SEPARATOR) sepcount++;
             i++;
          }
-         // check if 1st directory has multiple slashes (eg. in jslife.zip)
-         if (entry->IsDir() && !dirseen && slashes > 1) {
-            firstdir = name.BeforeFirst('/');
+         // check if 1st directory has multiple separators (eg. in jslife.zip)
+         if (entry->IsDir() && !dirseen && sepcount > 1) {
+            firstdir = name.BeforeFirst(SEPARATOR);
             contents += firstdir;
             contents += wxT("<br>\n");
          }
-         for (i = 1; i < slashes; i++) contents += indent;
+         for (i = 1; i < sepcount; i++) contents += indent;
          
          if (entry->IsDir()) {
-            // remove terminating slash from directory name
-            name = name.BeforeLast('/');
-            name = name.AfterLast('/');
+            // remove terminating separator from directory name
+            name = name.BeforeLast(SEPARATOR);
+            name = name.AfterLast(SEPARATOR);
             if (dirseen && name == firstdir) {
                // ignore dir already output earlier (eg. in jslife.zip)
             } else {
@@ -440,7 +445,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
             dirseen = true;
 
          } else {
-            wxString filename = name.AfterLast('/');
+            wxString filename = name.AfterLast(SEPARATOR);
             if ( IsRuleFile(filename) ) {
                // we have a .table/tree/colors/icons file
                wxString outfile = userrules + filename;
@@ -524,14 +529,14 @@ void MainFrame::OpenZipFile(const wxString& zippath)
       // this is a "simple" zip file, so load lastpattern (if present),
       // then run lastscript (if present)
       if (numpatterns == 1) {
-         wxString tempfile = tempdir + lastpattern.AfterLast('/');
+         wxString tempfile = tempdir + lastpattern.AfterLast(SEPARATOR);
          if (ExtractZipEntry(zippath, lastpattern, tempfile)) {
             Raise();
             OpenFile(tempfile, false);
          }
       }
       if (numscripts == 1) {
-         wxString tempfile = tempdir + lastscript.AfterLast('/');
+         wxString tempfile = tempdir + lastscript.AfterLast(SEPARATOR);
          if (ExtractZipEntry(zippath, lastscript, tempfile)) {
             // run script depending on safety setting
             CheckBeforeRunning(tempfile, false);

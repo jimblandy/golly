@@ -795,7 +795,11 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          wxString zippath = url.AfterFirst(':');
          wxString entry = url.AfterLast(':');
          zippath = zippath.BeforeLast(':');
-         wxString tempfile = tempdir + entry.AfterLast('/');
+         #ifdef __WXMSW__
+            wxString tempfile = tempdir + entry.AfterLast('\\');
+         #else
+            wxString tempfile = tempdir + entry.AfterLast('/');
+         #endif
          if ( mainptr->ExtractZipEntry(zippath, entry, tempfile) ) {
             if ( IsHTMLFile(tempfile) ) {
                LoadPage(tempfile);
