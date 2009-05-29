@@ -34,11 +34,6 @@ extern bool canswitch;
 extern bool stop_after_script;
 // Stop generating pattern after running script?
 
-bool IsScript(const wxString& filename);
-// Return true if the given file is a Perl or Python script.
-// It simply checks if the file's extension is ".pl" or ".py"
-// (ignoring case).
-
 void RunScript(const wxString& filename);
 // Run the given Perl or Python script.
 

@@ -44,6 +44,7 @@ void ChooseTextEditor(wxWindow* parent, wxString& result);
 
 extern wxString gollydir;        // path of directory containing app
 extern wxString datadir;         // path of directory for user-specific data
+extern wxString tempdir;         // path of directory for temporary data
 extern wxString rulesdir;        // path of directory for app's rule data
 extern wxString userrules;       // path of directory for user's rule data
 extern wxString downloaddir;     // path of directory for downloaded data

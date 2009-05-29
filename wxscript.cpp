@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning
+#include "wxutils.h"       // for Warning, IsScriptFile
 #include "wxprefs.h"       // for gollydir, allowundo, etc
 #include "wxundo.h"        // for undoredo->...
 #include "wxalgos.h"       // for *_ALGO, algoinfo
@@ -113,7 +113,7 @@ void ChangeWindowTitle(const wxString& name)
 
 const char* GSF_open(char* filename, int remember)
 {
-   if (IsScript(wxString(filename,wxConvLocal))) {
+   if (IsScriptFile(wxString(filename,wxConvLocal))) {
       // avoid re-entrancy
       return "Cannot open a script file while a script is running.";
    }
@@ -852,16 +852,6 @@ void GSF_exit(char* errmsg)
 
 // =============================================================================
 
-bool IsScript(const wxString& filename)
-{
-   // currently we support Perl or Python scripts, so return true if
-   // filename ends with ".pl" or ".py" (ignoring case)
-   wxString ext = filename.AfterLast(wxT('.'));
-   return ext.IsSameAs(wxT("pl"), false) || ext.IsSameAs(wxT("py"), false);
-}
-
-// -----------------------------------------------------------------------------
-
 void CheckScriptError(const wxString& ext)
 {
    if (scripterr.IsEmpty()) {
@@ -990,7 +980,7 @@ void RunScript(const wxString& filename)
       mainptr->UpdateMenuAccelerators();
    #endif
 
-   wxString ext = filename.AfterLast(wxT('.'));
+   wxString ext = filename.AfterLast('.');
    if (ext.IsSameAs(wxT("pl"), false)) {
       plscript = true;
       RunPerlScript(fpath);
@@ -999,8 +989,7 @@ void RunScript(const wxString& filename)
       RunPythonScript(fpath);
    } else {
       // should never happen
-      wxString err = _("Unexpected extension in script file:\n") + filename;
-      Warning(err);
+      Warning(_("Unexpected extension in script file:\n") + filename);
    }
 
    // tidy up the undo/redo history for each layer; note that some calls

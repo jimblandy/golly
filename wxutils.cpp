@@ -613,3 +613,65 @@ void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap)
 
    outmap = wxBitmap(newimg);
 }
+
+// -----------------------------------------------------------------------------
+
+bool IsScriptFile(const wxString& path)
+{
+   wxString ext = path.AfterLast('.');
+   // if path has no extension then ext == path
+   if (ext == path) return false;
+   // currently we support Perl or Python scripts
+   return ( ext.IsSameAs(wxT("pl"),false) ||
+            ext.IsSameAs(wxT("py"),false) );
+}
+
+// -----------------------------------------------------------------------------
+
+bool IsHTMLFile(const wxString& path)
+{
+   wxString ext = path.AfterLast('.');
+   // if path has no extension then ext == path
+   if (ext == path) return false;
+   return ( ext.IsSameAs(wxT("htm"),false) ||
+            ext.IsSameAs(wxT("html"),false) );
+}
+
+// -----------------------------------------------------------------------------
+
+bool IsTextFile(const wxString& path)
+{
+   if (!IsHTMLFile(path)) {
+      // if non-html file name contains "readme" then assume it's a text file
+      wxString name = path.AfterLast(wxFILE_SEP_PATH).MakeLower();
+      if (name.Contains(wxT("readme"))) return true;
+   }
+   wxString ext = path.AfterLast('.');
+   // if path has no extension then ext == path
+   if (ext == path) return false;
+   return ( ext.IsSameAs(wxT("txt"),false) ||
+            ext.IsSameAs(wxT("doc"),false) );
+}
+
+// -----------------------------------------------------------------------------
+
+bool IsZipFile(const wxString& path)
+{
+   wxString ext = path.AfterLast('.');
+   // if path has no extension then ext == path
+   if (ext == path) return false;
+   return ( ext.IsSameAs(wxT("zip"),false) );
+}
+
+// -----------------------------------------------------------------------------
+
+bool IsRuleFile(const wxString& path)
+{
+   wxString ext = path.AfterLast('.');
+   // if path has no extension then ext == path
+   if (ext == path) return false;
+   return ( ext.IsSameAs(wxT("table"),false) ||
+            ext.IsSameAs(wxT("tree"),false) ||
+            ext.IsSameAs(wxT("colors"),false) ||
+            ext.IsSameAs(wxT("icons"),false) );
+}

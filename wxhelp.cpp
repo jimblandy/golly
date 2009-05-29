@@ -30,7 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/wxhtml.h"        // for wxHtmlWindow
 #include "wx/file.h"          // for wxFile
 #include "wx/protocol/http.h" // for wxHTTP
-#include "wx/wfstream.h"      // for wxFileOutputStream
+#include "wx/wfstream.h"      // for wxFileOutputStream, wxFileInputStream
+#include "wx/zipstrm.h"       // for wxZipInputStream
 
 #include "lifealgo.h"      // for lifealgo class
 
@@ -270,7 +271,7 @@ void UpdateHelpButtons()
          urlprefix.Replace(HTML_PREFIX, wxT("http://"), false);   // do once
          urlprefix.Replace(wxT(" "), wxT("/"));
          urlprefix = urlprefix.BeforeLast('/');
-         urlprefix += wxT('/');     // must end in slash
+         urlprefix += wxT("/");     // must end in slash
       }
    }
    
@@ -566,53 +567,47 @@ void GetURL(const wxString& url)
    }
 
    wxString filename = fullurl.AfterLast('/');
-   wxString ext = filename.AfterLast('.');
-   // if filename has no extension then ext == filename
-   if (ext == filename) ext = wxEmptyString;
-   
-   // create download directory if it doesn't exist
-   if ( !wxFileName::DirExists(downloaddir) ) {
-      if ( !wxFileName::Mkdir(downloaddir, 0777, wxPATH_MKDIR_FULL) ) {
-         Warning(_("Could not create download directory:\n") + downloaddir);
-         return;
-      }
+   // remove ugly stuff at start of LifeWiki file names
+   if (filename.StartsWith(wxT("pattern.asp?p="))) {
+      filename = filename.AfterFirst('=');
    }
+   bool htmlfile = IsHTMLFile(filename);
 
    // create full path for downloaded file based on given url;
    // first remove initial "http://"
    wxString filepath = fullurl.AfterFirst('/');
    while (filepath[0] == '/') filepath = filepath.Mid(1);
-   if ( ext.IsSameAs(wxT("htm"),false) ||
-        ext.IsSameAs(wxT("html"),false) ) {
-      // create special name for HTML file so UpdateHelpButtons can detect it
+   if (htmlfile) {
+      // create special name for html file so UpdateHelpButtons can detect it
       // and set urlprefix
-      filepath.Replace(wxT("/"), wxT(" "));     // we assume url has no spaces
+      filepath.Replace(wxT("/"), wxT(" "));     // assume url has no spaces
       filepath = HTML_PREFIX + filepath;
    } else {
-      filepath.Replace(wxT("/"), wxT("-"));
+      // no need for url info in file name
+      filepath = filename;
    }
    #ifdef __WXMSW__
-      // we need to replace some chars that can appear in URLs but are
-      // not allowed in filenames on Windows
+      // replace chars that can appear in URLs but are not allowed in filenames on Windows
       filepath.Replace(wxT("*"), wxT("_"));
       filepath.Replace(wxT("?"), wxT("_"));
    #endif
-   filepath = downloaddir + filepath;
+   if (htmlfile) {
+      // nicer to store html files in temporary dir
+      filepath = tempdir + filepath;
+   } else {
+      filepath = downloaddir + filepath;
+   }
 
-   if ( ext.IsSameAs(wxT("htm"),false) ||
-        ext.IsSameAs(wxT("html"),false) ) {
-      // download and display HTML file in help window
+   if (htmlfile) {
+      // display html file in help window
       if (DownloadFile(fullurl, filepath)) {
          // search file for any simple img links and also download those files???
          // maybe in version 3!
          htmlwin->LoadPage(filepath);
       }
-   }
-   else if ( ext.IsSameAs(wxT("table"),false) ||
-             ext.IsSameAs(wxT("tree"),false) ||
-             ext.IsSameAs(wxT("colors"),false) ||
-             ext.IsSameAs(wxT("icons"),false) ) {
-      // create file in the user's rules directory (rulesdir might be read-only)
+   
+   } else if (IsRuleFile(filename)) {
+      // create file in user's rules directory (rulesdir might be read-only)
       filepath = userrules + filename;
       if (DownloadFile(fullurl, filepath)) {
          // load corresponding rule table/tree
@@ -620,15 +615,28 @@ void GetURL(const wxString& url)
          mainptr->Raise();
          LoadRule(rule);
       }
-   }
-   else if ( ext.IsEmpty() || ext.IsSameAs(wxT("txt"),false) ) {
-      // assume text file and open in user's text editor
+   
+   } else if (IsTextFile(filename)) {
+      // open text file in user's text editor
       if (DownloadFile(fullurl, filepath)) {
          mainptr->EditFile(filepath);
       }
-   }
-   else {
-      // assume pattern/script/zip file, so try to open/run/unzip it
+   
+   } else if (IsZipFile(filename)) {
+      // open zip file
+      if (DownloadFile(fullurl, filepath)) {
+         // don't raise main window
+         mainptr->OpenFile(filepath);
+      }
+   
+   } else if (IsScriptFile(filename)) {
+      // run script depending on safety setting
+      if (DownloadFile(fullurl, filepath)) {
+         mainptr->CheckBeforeRunning(filepath);
+      }
+   
+   } else {
+      // assume pattern file, so try to load it
       if (DownloadFile(fullurl, filepath)) {
          mainptr->Raise();
          mainptr->OpenFile(filepath);
@@ -779,6 +787,45 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          GetURL( url.AfterFirst(':') );
       }
 
+   } else if ( url.StartsWith(wxT("unzip:")) ) {
+      if (inscript) {
+         Warning(_("Cannot extract zip entry while a script is running."));
+      } else {
+         // extract clicked entry from zip file
+         wxString zippath = url.AfterFirst(':');
+         wxString entry = url.AfterLast(':');
+         zippath = zippath.BeforeLast(':');
+         wxString tempfile = tempdir + entry.AfterLast('/');
+         if ( mainptr->ExtractZipEntry(zippath, entry, tempfile) ) {
+            if ( IsHTMLFile(tempfile) ) {
+               LoadPage(tempfile);
+               if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
+            
+            } else if ( IsTextFile(tempfile) ) {
+               mainptr->EditFile(tempfile);
+            
+            } else if ( IsScriptFile(tempfile) ) {
+               // run script depending on safety setting
+               mainptr->CheckBeforeRunning(tempfile, false);
+            
+            } else {
+               // open pattern but don't remember in Open Recent menu
+               mainptr->Raise();
+               mainptr->OpenFile(tempfile, false);
+            }
+         }
+      }
+
+   } else if ( url.StartsWith(wxT("edit:")) ) {
+      // open clicked file in user's preferred text editor
+      wxString path = url.AfterFirst(':');
+      #ifdef __WXMSW__
+         path.Replace(wxT("/"), wxT("\\"));
+      #endif
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) path = gollydir + path;
+      mainptr->EditFile(path);
+
    } else if ( url.StartsWith(wxT("lexpatt:")) ) {
       if (inscript) {
          Warning(_("Cannot load lexicon pattern while a script is running."));
@@ -835,10 +882,19 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
       contents += GetShortcutTable();
       contents += wxT("</table></center></body></html>");
       
-      // write contents to temp file and call LoadPage so that back/forwards buttons work!!!
-      SetPage(contents);
-      
-      currhelp = SHOW_KEYBOARD_SHORTCUTS;
+      // write contents to file and call LoadPage so that back/forwards buttons work
+      wxString htmlfile = tempdir + wxT("keyboard_shortcuts.html");
+      wxFile outfile(htmlfile, wxFile::write);
+      if (outfile.IsOpened()) {
+         outfile.Write(contents);
+         outfile.Close();
+         LoadPage(htmlfile);
+      } else {
+         Warning(_("Could not create file:\n") + htmlfile);
+         // might as well show contents
+         SetPage(contents);
+         currhelp = SHOW_KEYBOARD_SHORTCUTS;
+      }
 
    } else if ( filepath.StartsWith(_("Help/")) ) {
       // prepend location of Golly so user can open help while running a script

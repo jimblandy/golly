@@ -79,6 +79,10 @@ public:
    const char* WritePattern(const wxString& path,
                             pattern_format format,
                             int top, int left, int bottom, int right);
+   void CheckBeforeRunning(const wxString& scriptpath, bool remember = true);
+   bool ExtractZipEntry(const wxString& zippath,
+                        const wxString& entryname,
+                        const wxString& outfile);
    #if wxUSE_DRAG_AND_DROP
       wxDropTarget* NewDropTarget();
    #endif
@@ -185,6 +189,7 @@ private:
    void ClearMissingScripts();
    void ClearAllScripts();
    wxString GetScriptFileName(const wxString& text);
+   void OpenZipFile(const wxString& path);
 
    // control functions
    bool SaveStartingPattern();

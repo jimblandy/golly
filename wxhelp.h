@@ -33,8 +33,8 @@ void ShowHelp(const wxString& filepath);
 // is displayed.
 
 const wxString SHOW_KEYBOARD_SHORTCUTS = wxT("keyboard_shortcuts");
-// If ShowHelp is called with this special string then a dynamic
-// HTML page is constructed to show the current keyboard shortcuts.
+// If ShowHelp is called with this special string then a temporary
+// HTML file is created to show the current keyboard shortcuts.
 
 void ShowAboutBox();
 // Open a modal dialog and display info about the app.

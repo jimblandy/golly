@@ -220,7 +220,7 @@ wxstatus.*
 wxhelp.*
 
    Implements a modeless help window.
-   ShowHelp() displays a given Help/*.html file.
+   ShowHelp() displays a given .html file.
 
 wxinfo.*
 

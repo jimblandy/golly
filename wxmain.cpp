@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wx/dnd.h"        // for wxFileDropTarget
 #include "wx/filename.h"   // for wxFileName
+#include "wx/dir.h"        // for wxDir
 #include "wx/clipbrd.h"    // for wxTheClipboard
 #if wxUSE_TOOLTIPS
    #include "wx/tooltip.h" // for wxToolTip
@@ -1772,7 +1773,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
                // terminate generating loop and set command_pending flag
                Stop();
                command_pending = true;
-               if ( IsScript(filepath) ) {
+               if ( IsScriptFile(filepath) ) {
                   AddRecentScript(filepath);
                   cmdevent.SetId(ID_RUN_RECENT + 1);
                } else {
@@ -1937,6 +1938,21 @@ void MainFrame::OnClose(wxCloseEvent& event)
       layer->undoredo->ClearUndoRedo();
    }
    
+   // delete all files in tempdir (assume no subdirs)
+   wxDir dir(tempdir);
+   wxArrayString files;
+   wxString filename;
+   bool more = dir.GetFirst(&filename);
+   while (more) {
+      files.Add(tempdir + filename);
+      more = dir.GetNext(&filename);
+   }
+   for (size_t n = 0; n < files.GetCount(); n++) {
+      wxRemoveFile(files[n]);
+   }
+   // can now delete (hopefully) empty tempdir
+   wxFileName::Rmdir(tempdir);
+
    // avoid possible error message or seg fault
    if (callexit) exit(0);
    
@@ -2029,12 +2045,12 @@ void MainFrame::UpdateLayerItem(int index)
       label.Printf(_("%d: "), index);
 
       // display asterisk if pattern has been modified
-      if (layer->dirty) label += wxT('*');
+      if (layer->dirty) label += wxT("*");
       
       int cid = layer->cloneid;
       while (cid > 0) {
          // display one or more "=" chars to indicate this is a cloned layer
-         label += wxT('=');
+         label += wxT("=");
          cid--;
       }
       

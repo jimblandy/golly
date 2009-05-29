@@ -92,6 +92,7 @@ const int PREF_LINE_SIZE = 5000; // must be quite long for storing file paths
 
 wxString gollydir;               // path of directory containing app
 wxString datadir;                // path of directory for user-specific data
+wxString tempdir;                // path of directory for temporary data
 wxString rulesdir;               // path of directory for app's rule data
 wxString userrules;              // path of directory for user's rule data
 wxString downloaddir;            // path of directory for downloaded data
@@ -1664,7 +1665,7 @@ void CheckVisibility(int* x, int* y, int* wd, int* ht)
 
 // -----------------------------------------------------------------------------
 
-void InitPrefsPath()
+void InitPaths()
 {
    #if defined(__WXGTK__) || defined(__WXX11__)
       // on Linux we want datadir to be "~/.golly" rather than "~/.Golly"
@@ -1685,6 +1686,29 @@ void InitPrefsPath()
    }
    if (datadir.Last() != wxFILE_SEP_PATH) datadir += wxFILE_SEP_PATH;
 
+   // init tempdir to a directory unique to this process
+   tempdir = wxFileName::CreateTempFileName(wxT("golly_"));
+   // on Linux the file is in /tmp;
+   // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems;
+   // on WinXP the file is in C:\Documents and Settings\Andy\Local Settings\Temp
+   // (or shorter equivalent C:\DOCUME~1\Andy\LOCALS~1\Temp) but the file name
+   // is gol*.tmp (ie. only 1st 3 chars of the prefix are used, and .tmp is added)
+   wxRemoveFile(tempdir);
+   #ifdef __WXMSW__
+      // best to remove .tmp???!!!
+      if (tempdir.EndsWith(wxT(".tmp"))) tempdir = tempdir.BeforeLast('.');
+   #endif
+   if ( !wxFileName::Mkdir(tempdir, 0777, wxPATH_MKDIR_FULL) ) {
+      Warning(_("Could not create temporary file directory:\n") + tempdir);
+      // use standard directory for temp files
+      tempdir = wxStandardPaths::Get().GetTempDir();
+      if ( !wxFileName::DirExists(tempdir) ) {
+         // should never happen, but play safe
+         Fatal(_("Temporary file directory does not exist:\n") + tempdir);
+      }
+   }
+   if (tempdir.Last() != wxFILE_SEP_PATH) tempdir += wxFILE_SEP_PATH;
+
    #if defined(__WXGTK__) || defined(__WXX11__)
       // "Golly" is nicer for warning dialogs etc
       wxGetApp().SetAppName(_("Golly"));
@@ -1704,11 +1728,8 @@ void GetPrefs()
    int algoindex = -1;                 // unknown algorithm
    bool sawkeyaction = false;          // saw at least one key_action entry?
    
-   // init datadir and prefspath
-   InitPrefsPath();
-
-   // init algoinfo data
-   InitAlgorithms();
+   InitPaths();                        // init datadir, tempdir and prefspath
+   InitAlgorithms();                   // init algoinfo data
 
    rulesdir = gollydir + wxT("Rules");
    rulesdir += wxFILE_SEP_PATH;
@@ -2195,6 +2216,19 @@ void GetPrefs()
 
    // initialize accelerator array
    UpdateAcceleratorStrings();
+
+   // create some important directories if they don't exist
+   // (these are the directories into which files are downloaded)
+   if ( !wxFileName::DirExists(userrules) ) {
+      if ( !wxFileName::Mkdir(userrules, 0777, wxPATH_MKDIR_FULL) ) {
+         Warning(_("Could not create your rules directory:\n") + userrules);
+      }
+   }
+   if ( !wxFileName::DirExists(downloaddir) ) {
+      if ( !wxFileName::Mkdir(downloaddir, 0777, wxPATH_MKDIR_FULL) ) {
+         Warning(_("Could not create your download directory:\n") + downloaddir);
+      }
+   }
 }
 
 // -----------------------------------------------------------------------------

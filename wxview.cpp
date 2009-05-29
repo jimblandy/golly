@@ -1332,7 +1332,9 @@ void PatternView::ProcessKey(int key, int modifiers)
          break;
 
       case DO_OPENFILE:
-         {  wxString ext = action.file.AfterLast(wxT('.'));
+         {  wxString ext = action.file.AfterLast('.');
+            // if action.file has no extension then ext == action.file
+            if (ext == action.file) ext = wxEmptyString;
             if ( ext.IsSameAs(wxT("html"),false) || ext.IsSameAs(wxT("htm"),false) ) {
                // show HTML file in help window
                if (!waitingforclick) ShowHelp(action.file);

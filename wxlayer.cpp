@@ -1833,7 +1833,7 @@ Layer::Layer()
 {
    if (!cloning) {
       // use a unique temporary file for saving starting patterns
-      tempstart = wxFileName::CreateTempFileName(_("golly_start_"));
+      tempstart = wxFileName::CreateTempFileName(tempdir + wxT("golly_start_"));
    }
 
    dirty = false;                // user has not modified pattern
