@@ -512,7 +512,7 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
       if ( (msecs > 1000 && fraction_done < 0.3) || msecs > 2500 ) {
          // task is probably going to take a while so create progress dialog
          progdlg = new wxProgressDialog(progtitle, wxEmptyString,
-                                        maxprogrange, mainptr,
+                                        maxprogrange, wxGetActiveWindow(),
                                         wxPD_AUTO_HIDE | wxPD_APP_MODAL |
                                         wxPD_CAN_ABORT | wxPD_SMOOTH |
                                         wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
