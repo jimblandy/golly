@@ -1686,7 +1686,7 @@ void InitPaths()
    }
    if (datadir.Last() != wxFILE_SEP_PATH) datadir += wxFILE_SEP_PATH;
 
-   // init tempdir to a directory unique to this process
+   // init tempdir to a temporary directory unique to this process
    tempdir = wxFileName::CreateTempFileName(wxT("golly_"));
    // on Linux the file is in /tmp;
    // on my Mac the file is in /private/var/tmp/folders.502/TemporaryItems;
@@ -1694,17 +1694,13 @@ void InitPaths()
    // (or shorter equivalent C:\DOCUME~1\Andy\LOCALS~1\Temp) but the file name
    // is gol*.tmp (ie. only 1st 3 chars of the prefix are used, and .tmp is added)
    wxRemoveFile(tempdir);
-   #ifdef __WXMSW__
-      // best to remove .tmp???!!!
-      if (tempdir.EndsWith(wxT(".tmp"))) tempdir = tempdir.BeforeLast('.');
-   #endif
    if ( !wxFileName::Mkdir(tempdir, 0777, wxPATH_MKDIR_FULL) ) {
-      Warning(_("Could not create temporary file directory:\n") + tempdir);
+      Warning(_("Could not create temporary directory:\n") + tempdir);
       // use standard directory for temp files
       tempdir = wxStandardPaths::Get().GetTempDir();
       if ( !wxFileName::DirExists(tempdir) ) {
          // should never happen, but play safe
-         Fatal(_("Temporary file directory does not exist:\n") + tempdir);
+         Fatal(_("Temporary directory does not exist:\n") + tempdir);
       }
    }
    if (tempdir.Last() != wxFILE_SEP_PATH) tempdir += wxFILE_SEP_PATH;

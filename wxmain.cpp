@@ -1938,21 +1938,24 @@ void MainFrame::OnClose(wxCloseEvent& event)
       layer->undoredo->ClearUndoRedo();
    }
    
-   // delete all files in tempdir (assume no subdirs)
-   wxDir dir(tempdir);
+   // delete all files in tempdir (we assume it has no subdirs)
+   wxDir* dir = new wxDir(tempdir);
    wxArrayString files;
    wxString filename;
-   bool more = dir.GetFirst(&filename);
+   bool more = dir->GetFirst(&filename);
    while (more) {
       files.Add(tempdir + filename);
-      more = dir.GetNext(&filename);
+      more = dir->GetNext(&filename);
    }
+   // delete wxDir object now otherwise Rmdir below will fail on Windows
+   delete dir;
    for (size_t n = 0; n < files.GetCount(); n++) {
       wxRemoveFile(files[n]);
    }
-   // can now delete (hopefully) empty tempdir
-   // why not working on Windows???!!!
-   wxFileName::Rmdir(tempdir);
+   // delete the (hopefully) empty tempdir
+   if (!wxFileName::Rmdir(tempdir)) {
+      Warning(_("Could not delete temporary directory:\n") + tempdir);
+   }
 
    // avoid possible error message or seg fault
    if (callexit) exit(0);
