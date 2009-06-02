@@ -876,7 +876,7 @@ void MainFrame::OpenPattern()
    filetypes +=         _("|dblife (*.l)|*.l");
    filetypes +=         _("|MCell (*.mcl)|*.mcl");
    filetypes +=         _("|Gzip (*.gz)|*.gz");
-   filetypes +=         _("|Zip (*.zip)|*.zip");
+   filetypes +=         _("|Zip (*.zip;*.gar)|*.zip;*.gar");
    filetypes +=         _("|BMP (*.bmp)|*.bmp");
    filetypes +=         _("|GIF (*.gif)|*.gif");
    filetypes +=         _("|PNG (*.png)|*.png");

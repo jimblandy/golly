@@ -616,11 +616,11 @@ void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap)
 
 // -----------------------------------------------------------------------------
 
-bool IsScriptFile(const wxString& path)
+bool IsScriptFile(const wxString& filename)
 {
-   wxString ext = path.AfterLast('.');
-   // if path has no extension then ext == path
-   if (ext == path) return false;
+   wxString ext = filename.AfterLast('.');
+   // if filename has no extension then ext == filename
+   if (ext == filename) return false;
    // currently we support Perl or Python scripts
    return ( ext.IsSameAs(wxT("pl"),false) ||
             ext.IsSameAs(wxT("py"),false) );
@@ -628,48 +628,49 @@ bool IsScriptFile(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
-bool IsHTMLFile(const wxString& path)
+bool IsHTMLFile(const wxString& filename)
 {
-   wxString ext = path.AfterLast('.');
-   // if path has no extension then ext == path
-   if (ext == path) return false;
+   wxString ext = filename.AfterLast('.');
+   // if filename has no extension then ext == filename
+   if (ext == filename) return false;
    return ( ext.IsSameAs(wxT("htm"),false) ||
             ext.IsSameAs(wxT("html"),false) );
 }
 
 // -----------------------------------------------------------------------------
 
-bool IsTextFile(const wxString& path)
+bool IsTextFile(const wxString& filename)
 {
-   if (!IsHTMLFile(path)) {
+   if (!IsHTMLFile(filename)) {
       // if non-html file name contains "readme" then assume it's a text file
-      wxString name = path.AfterLast(wxFILE_SEP_PATH).MakeLower();
+      wxString name = filename.AfterLast(wxFILE_SEP_PATH).MakeLower();
       if (name.Contains(wxT("readme"))) return true;
    }
-   wxString ext = path.AfterLast('.');
-   // if path has no extension then ext == path
-   if (ext == path) return false;
+   wxString ext = filename.AfterLast('.');
+   // if filename has no extension then ext == filename
+   if (ext == filename) return false;
    return ( ext.IsSameAs(wxT("txt"),false) ||
             ext.IsSameAs(wxT("doc"),false) );
 }
 
 // -----------------------------------------------------------------------------
 
-bool IsZipFile(const wxString& path)
+bool IsZipFile(const wxString& filename)
 {
-   wxString ext = path.AfterLast('.');
-   // if path has no extension then ext == path
-   if (ext == path) return false;
-   return ( ext.IsSameAs(wxT("zip"),false) );
+   wxString ext = filename.AfterLast('.');
+   // if filename has no extension then ext == filename
+   if (ext == filename) return false;
+   return ( ext.IsSameAs(wxT("zip"),false) ||
+            ext.IsSameAs(wxT("gar"),false) );
 }
 
 // -----------------------------------------------------------------------------
 
-bool IsRuleFile(const wxString& path)
+bool IsRuleFile(const wxString& filename)
 {
-   wxString ext = path.AfterLast('.');
-   // if path has no extension then ext == path
-   if (ext == path) return false;
+   wxString ext = filename.AfterLast('.');
+   // if filename has no extension then ext == filename
+   if (ext == filename) return false;
    return ( ext.IsSameAs(wxT("table"),false) ||
             ext.IsSameAs(wxT("tree"),false) ||
             ext.IsSameAs(wxT("colors"),false) ||

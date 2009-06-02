@@ -71,25 +71,25 @@ void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush);
 void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap);
 // Create a pale gray version of given bitmap.
 
-bool IsScriptFile(const wxString& path);
+bool IsScriptFile(const wxString& filename);
 // Return true if the given file is a Perl or Python script.
 // It simply checks if the file's extension is .pl or .py
 // (ignoring case).
 
-bool IsHTMLFile(const wxString& path);
+bool IsHTMLFile(const wxString& filename);
 // Return true if the given file's extension is .htm or .html
 // (ignoring case).
 
-bool IsTextFile(const wxString& path);
+bool IsTextFile(const wxString& filename);
 // Return true if the given file's extension is .txt or .doc,
 // or if it's not a HTML file and its name contains "readme"
 // (ignoring case).
 
-bool IsZipFile(const wxString& path);
-// Return true if the given file's extension is .zip
+bool IsZipFile(const wxString& filename);
+// Return true if the given file's extension is .zip or .gar
 // (ignoring case).
 
-bool IsRuleFile(const wxString& path);
+bool IsRuleFile(const wxString& filename);
 // Return true if the given file is a rule-related file with
 // an extension of .table or .tree or .colors or .icons
 // (ignoring case).
