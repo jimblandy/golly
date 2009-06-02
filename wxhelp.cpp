@@ -51,6 +51,10 @@ class HelpFrame : public wxFrame
 {
 public:
    HelpFrame();
+   
+   void SetStatus(const wxString& text) {
+      status->SetLabel(text);
+   }
 
 private:
    // ids for buttons in help window (see also wxID_CLOSE)
@@ -67,6 +71,8 @@ private:
    void OnContentsButton(wxCommandEvent& event);
    void OnCloseButton(wxCommandEvent& event);
    void OnClose(wxCloseEvent& event);
+   
+   wxStaticText* status;   // status line at bottom of help window
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -90,9 +96,14 @@ class HtmlView : public wxHtmlWindow
 public:
    HtmlView(wxWindow* parent, wxWindowID id, const wxPoint& pos,
             const wxSize& size, long style)
-      : wxHtmlWindow(parent, id, pos, size, style) { }
+      : wxHtmlWindow(parent, id, pos, size, style) {
+      linkrect = wxRect(0,0,0,0);
+   }
 
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
+   virtual void OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y);
+
+   void ClearStatus();  // clear status line
 
    void CheckAndLoad(const wxString& filepath);
 
@@ -117,9 +128,12 @@ private:
    
    void OnChar(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnMouseLeave(wxMouseEvent& event);
    void OnTimer(wxTimerEvent& event);
 
    wxTimer* htmltimer;
+   wxRect linkrect;
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -128,13 +142,16 @@ private:
 BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
 #ifdef __WXMSW__
    // see HtmlView::OnKeyUp for why we do this
-   EVT_KEY_UP     (HtmlView::OnKeyUp)
+   EVT_KEY_UP        (HtmlView::OnKeyUp)
 #else
-   EVT_KEY_DOWN   (HtmlView::OnKeyDown)
+   EVT_KEY_DOWN      (HtmlView::OnKeyDown)
 #endif
-   EVT_CHAR       (HtmlView::OnChar)
-   EVT_SIZE       (HtmlView::OnSize)
-   EVT_TIMER      (wxID_ANY, HtmlView::OnTimer)
+   EVT_CHAR          (HtmlView::OnChar)
+   EVT_SIZE          (HtmlView::OnSize)
+   EVT_MOTION        (HtmlView::OnMouseMotion)
+   EVT_ENTER_WINDOW  (HtmlView::OnMouseMotion)
+   EVT_LEAVE_WINDOW  (HtmlView::OnMouseLeave)
+   EVT_TIMER         (wxID_ANY, HtmlView::OnTimer)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -236,10 +253,15 @@ HelpFrame::HelpFrame()
 
    vbox->Add(hbox, 0, wxALL | wxEXPAND | wxALIGN_TOP, 0);
 
-   vbox->Add(htmlwin, 1, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND | wxALIGN_TOP, 10);
+   vbox->Add(htmlwin, 1, wxLEFT | wxRIGHT | wxEXPAND | wxALIGN_TOP, 10);
 
-   // allow for resize icon
-   vbox->AddSpacer(10);
+   status = new wxStaticText(this, wxID_STATIC, wxEmptyString);
+   status->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+   wxBoxSizer* statbox = new wxBoxSizer(wxHORIZONTAL);
+   statbox->Add(status);
+   vbox->AddSpacer(2);
+   vbox->Add(statbox, 0, wxLEFT | wxALIGN_LEFT, 10);
+   vbox->AddSpacer(4);
 
    SetMinSize(wxSize(minhelpwd, minhelpht));
    SetSizer(vbox);
@@ -254,7 +276,8 @@ void UpdateHelpButtons()
 {
    backbutt->Enable( htmlwin->HistoryCanBack() );
    forwbutt->Enable( htmlwin->HistoryCanForward() );
-   contbutt->Enable( !htmlwin->GetOpenedPageTitle().Contains(_("Contents")) );
+   // check for title used in Help/index.html
+   contbutt->Enable( htmlwin->GetOpenedPageTitle() != _("Golly Help: Contents") );
    
    wxString location = htmlwin->GetOpenedPage();
    if ( !location.IsEmpty() ) {
@@ -275,7 +298,8 @@ void UpdateHelpButtons()
       }
    }
    
-   htmlwin->SetFocus();    // for keyboard shortcuts
+   htmlwin->ClearStatus();
+   htmlwin->SetFocus();       // for keyboard shortcuts
 }
 
 // -----------------------------------------------------------------------------
@@ -290,16 +314,14 @@ void ShowHelp(const wxString& filepath)
          UpdateHelpButtons();
       }
       helpptr->Raise();
-      #ifdef __WXX11__
-         helpptr->SetFocus();    // activate window
-         htmlwin->SetFocus();    // for keyboard shortcuts
-      #endif
+
    } else {
       helpptr = new HelpFrame();
       if (helpptr == NULL) {
          Warning(_("Could not create help window!"));
          return;
       }
+      
       // assume our .html files contain a <title> tag
       htmlwin->SetRelatedFrame(helpptr, _("%s"));
       
@@ -310,20 +332,6 @@ void ShowHelp(const wxString& filepath)
       }
 
       helpptr->Show(true);
-
-      #ifdef __WXX11__
-         // avoid wxX11 bug (probably caused by earlier SetMinSize call);
-         // help window needs to be moved to helpx,helpy
-         helpptr->Lower();
-         // don't call Yield -- doesn't work if we're generating
-         while (wxGetApp().Pending()) wxGetApp().Dispatch();
-         helpptr->Move(helpx, helpy);
-         // oh dear -- Move clobbers effect of SetMinSize
-         helpptr->Raise();
-         helpptr->SetFocus();
-         htmlwin->SetFocus();
-      #endif
-      
       UpdateHelpButtons();    // must be after Show to avoid hbar appearing on Mac
    }
    whenactive = 0;
@@ -684,10 +692,6 @@ void ClickLexiconPattern(const wxHtmlCell* htmlcell)
             
             if (!lexpattern.IsEmpty()) {
                mainptr->Raise();
-               #ifdef __WXX11__
-                  mainptr->SetFocus();    // activate window
-               #endif
-               
                // look for existing lexicon layer
                lexlayer = -1;
                for (int i = 0; i < numlayers; i++) {
@@ -870,6 +874,54 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
 
 // -----------------------------------------------------------------------------
 
+void HtmlView::OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y)
+{
+   if (helpptr && helpptr->IsActive() && cell) {
+      wxHtmlLinkInfo* link = cell->GetLink(x,y);
+      if (link) {
+         helpptr->SetStatus(link->GetHref());
+         wxPoint pt = ScreenToClient( wxGetMousePosition() );
+         linkrect = wxRect(pt.x-x, pt.y-y, cell->GetWidth(), cell->GetHeight());
+      } else {
+         ClearStatus();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnMouseMotion(wxMouseEvent& event)
+{
+   if (helpptr && helpptr->IsActive() && !linkrect.IsEmpty()) {
+      int x = event.GetX();
+      int y = event.GetY();
+      if (!linkrect.Contains(x,y)) ClearStatus();
+   }
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnMouseLeave(wxMouseEvent& event)
+{
+   if (helpptr && helpptr->IsActive()) {
+      ClearStatus();
+   }
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::ClearStatus()
+{
+   if (helpptr) {
+      helpptr->SetStatus(wxEmptyString);
+      linkrect = wxRect(0,0,0,0);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void HtmlView::CheckAndLoad(const wxString& filepath)
 {
    if (filepath == SHOW_KEYBOARD_SHORTCUTS) {
@@ -1047,16 +1099,12 @@ void HtmlView::OnSize(wxSizeEvent& event)
 
 void HtmlView::OnTimer(wxTimerEvent& WXUNUSED(event))
 {
-   #ifdef __WXX11__
-      // no need to do anything
-   #else
-      if (helpptr && helpptr->IsActive()) {
-         // send idle event to html window so cursor gets updated
-         // even while app is busy doing something else (eg. generating)
-         wxIdleEvent idleevent;
-         wxGetApp().SendIdleEvents(this, idleevent);
-      }
-   #endif
+   if (helpptr && helpptr->IsActive()) {
+      // send idle event to html window so cursor gets updated
+      // even while app is busy doing something else (eg. generating)
+      wxIdleEvent idleevent;
+      wxGetApp().SendIdleEvents(this, idleevent);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1067,7 +1115,7 @@ void ShowAboutBox()
    wxDialog dlg(mainptr, wxID_ANY, title);
    
    HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
-                                 #if defined(__WXX11__) || defined(__WXGTK__)
+                                 #ifdef __WXGTK__
                                     wxSize(460, 220),
                                  #else
                                     wxSize(386, 220),

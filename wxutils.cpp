@@ -484,7 +484,7 @@ void BeginProgress(const wxString& dlgtitle)
    #ifdef __WXMAC__
       wxSetCursor(*wxHOURGLASS_CURSOR);
    #endif
-   viewptr->SetCursor(*wxHOURGLASS_CURSOR);
+   if (mainptr->IsActive()) viewptr->SetCursor(*wxHOURGLASS_CURSOR);
 }
 
 // -----------------------------------------------------------------------------

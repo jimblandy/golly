@@ -275,6 +275,7 @@ void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
    
    // create our own dialog with a View button???!!!
    wxString msg = scriptpath + _("\n\nClick No if you don't know what the script will do.");
+   wxSetCursor(*wxSTANDARD_CURSOR);
    int answer = wxMessageBox(msg, _("Do you want to run this script?"),
                              wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT,
                              wxGetActiveWindow());
