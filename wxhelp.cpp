@@ -256,7 +256,9 @@ HelpFrame::HelpFrame()
    vbox->Add(htmlwin, 1, wxLEFT | wxRIGHT | wxEXPAND | wxALIGN_TOP, 10);
 
    status = new wxStaticText(this, wxID_STATIC, wxEmptyString);
-   status->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+   #ifdef __WXMAC__
+      status->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+   #endif
    wxBoxSizer* statbox = new wxBoxSizer(wxHORIZONTAL);
    statbox->Add(status);
    vbox->AddSpacer(2);
