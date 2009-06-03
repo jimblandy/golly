@@ -658,6 +658,48 @@ void GetURL(const wxString& url)
 
 // -----------------------------------------------------------------------------
 
+void UnzipFile(const wxString& zippath, const wxString& entry)
+{
+   wxString filename = entry.AfterLast(wxFILE_SEP_PATH);
+   wxString tempfile = tempdir + filename;
+   
+   if ( IsRuleFile(filename) ) {
+      // rule-related file should have already been extracted and installed
+      // into userrules, so check that file exists and load rule
+      wxString rulefile = userrules + filename;
+      if (wxFileExists(rulefile)) {
+         // load corresponding rule table/tree
+         wxString rule = filename.BeforeLast('.');
+         mainptr->Raise();
+         LoadRule(rule);
+      } else {
+         Warning(_("Rule-related file was not installed:\n") + rulefile);
+      }
+   
+   } else if ( mainptr->ExtractZipEntry(zippath, entry, tempfile) ) {
+      if ( IsHTMLFile(filename) ) {
+         // display html file
+         htmlwin->LoadPage(tempfile);
+         if (helpptr && helpptr->IsActive()) UpdateHelpButtons();
+      
+      } else if ( IsTextFile(filename) ) {
+         // open text file in user's text editor
+         mainptr->EditFile(tempfile);
+      
+      } else if ( IsScriptFile(filename) ) {
+         // run script depending on safety setting
+         mainptr->CheckBeforeRunning(tempfile, false);
+      
+      } else {
+         // open pattern but don't remember in Open Recent menu
+         mainptr->Raise();
+         mainptr->OpenFile(tempfile, false);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void ClickLexiconPattern(const wxHtmlCell* htmlcell)
 {
    if (htmlcell) {
@@ -678,12 +720,12 @@ void ClickLexiconPattern(const wxHtmlCell* htmlcell)
                   } else {
                      lexpattern += celltext;
                      // append eol char(s)
-                     #ifdef __WXMAC__
+                     #if defined(__WXMAC__)
                         lexpattern += '\r';
                      #elif defined(__WXMSW__)
                         lexpattern += '\r';
                         lexpattern += '\n';
-                     #else // assume Unix
+                     #else // assume Linux
                         lexpattern += '\n';
                      #endif
                   }
@@ -767,14 +809,13 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
    wxString url = link.GetHref();
    if ( url.StartsWith(wxT("http:")) || url.StartsWith(wxT("mailto:")) ) {
       // pass http/mailto URL to user's preferred browser/emailer
-      #ifdef __WXMAC__
+      #if defined(__WXMAC__)
          // wxLaunchDefaultBrowser doesn't work on Mac with IE (get msg in console.log)
          // but it's easier just to use the Mac OS X open command
          if ( wxExecute(wxT("open ") + url, wxEXEC_ASYNC) == -1 )
             Warning(_("Could not open URL!"));
       #elif defined(__WXGTK__)
-         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open;
-         // unfortunately it does not bring browser to front if it's already running!!!
+         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open
          if ( wxExecute(wxT("gnome-open ") + url, wxEXEC_ASYNC) == -1 )
             Warning(_("Could not open URL!"));
       #else
@@ -801,29 +842,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          wxString zippath = url.AfterFirst(':');
          wxString entry = url.AfterLast(':');
          zippath = zippath.BeforeLast(':');
-         #ifdef __WXMSW__
-            wxString tempfile = tempdir + entry.AfterLast('\\');
-         #else
-            wxString tempfile = tempdir + entry.AfterLast('/');
-         #endif
-         if ( mainptr->ExtractZipEntry(zippath, entry, tempfile) ) {
-            if ( IsHTMLFile(tempfile) ) {
-               LoadPage(tempfile);
-               if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
-            
-            } else if ( IsTextFile(tempfile) ) {
-               mainptr->EditFile(tempfile);
-            
-            } else if ( IsScriptFile(tempfile) ) {
-               // run script depending on safety setting
-               mainptr->CheckBeforeRunning(tempfile, false);
-            
-            } else {
-               // open pattern but don't remember in Open Recent menu
-               mainptr->Raise();
-               mainptr->OpenFile(tempfile, false);
-            }
-         }
+         UnzipFile(zippath, entry);
       }
 
    } else if ( url.StartsWith(wxT("edit:")) ) {

@@ -367,31 +367,24 @@ bool MainFrame::ExtractZipEntry(const wxString& zippath,
 void MainFrame::OpenZipFile(const wxString& zippath)
 {
    // Process given zip file in the following manner:
-   // - If it contains any .table/tree/colors/icons files then extract and install
-   //   those files into the user's rules directory (userrules).
+   // - If it contains any rule files (.table/tree/colors/icons) then extract and
+   //   install those files into userrules (the user's rules directory).
+   // - If the zip file is "complex" (contains any rule files, or any text files,
+   //   or more than one pattern, or more than one script), build a temporary html
+   //   file with clickable links to each file entry and show it in the help window.
    // - If it's a "simple" zip file (at most one pattern and at most one script) then
-   //   we load the pattern (if present) and then run the script (if present).
-   // - If it's a "complex" zip file (more than one pattern or more than one script)
-   //   then none of those files are extracted just yet.
-   // - If any rule files were installed, or if the zip file is complex, we build a
-   //   temporary html file with clickable links to each file and show it in the
-   //   help window.
+   //   load the pattern (if present) and then ask to run the script (if present).
    
-   #ifdef __WXMSW__
-      const char SEPARATOR = '\\';
-   #else
-      const char SEPARATOR = '/';
-   #endif
    const wxString indent = wxT("&nbsp;&nbsp;&nbsp;&nbsp;");
    bool dirseen = false;
    bool diffdirs = (userrules != rulesdir);
    wxString firstdir = wxEmptyString;
    wxString lastscript = wxEmptyString;
    wxString lastpattern = wxEmptyString;
-   int numrules = 0;
-   int numscripts = 0;
-   int numpatterns = 0;
-   int numtexts = 0;
+   int rulefiles = 0;
+   int scriptfiles = 0;
+   int patternfiles = 0;
+   int textfiles = 0;      // includes html files
    
    wxString contents = wxT("<html><title>") + GetBaseName(zippath);
    contents += wxT("</title>\n");
@@ -422,12 +415,12 @@ void MainFrame::OpenZipFile(const wxString& zippath)
          unsigned int i = 0;
          unsigned int len = name.length();
          while (i < len) {
-            if (name[i] == SEPARATOR) sepcount++;
+            if (name[i] == wxFILE_SEP_PATH) sepcount++;
             i++;
          }
          // check if 1st directory has multiple separators (eg. in jslife.zip)
          if (entry->IsDir() && !dirseen && sepcount > 1) {
-            firstdir = name.BeforeFirst(SEPARATOR);
+            firstdir = name.BeforeFirst(wxFILE_SEP_PATH);
             contents += firstdir;
             contents += wxT("<br>\n");
          }
@@ -435,8 +428,8 @@ void MainFrame::OpenZipFile(const wxString& zippath)
          
          if (entry->IsDir()) {
             // remove terminating separator from directory name
-            name = name.BeforeLast(SEPARATOR);
-            name = name.AfterLast(SEPARATOR);
+            name = name.BeforeLast(wxFILE_SEP_PATH);
+            name = name.AfterLast(wxFILE_SEP_PATH);
             if (dirseen && name == firstdir) {
                // ignore dir already output earlier (eg. in jslife.zip)
             } else {
@@ -446,27 +439,22 @@ void MainFrame::OpenZipFile(const wxString& zippath)
             dirseen = true;
 
          } else {
-            wxString filename = name.AfterLast(SEPARATOR);
-            if ( IsRuleFile(filename) ) {
-               // we have a .table/tree/colors/icons file
-               wxString outfile = userrules + filename;
-               wxString ext = filename.AfterLast('.');
-               
-               if (dirseen) contents += indent;
-               if (ext.IsSameAs(wxT("icons"),false)) {
-                  // let user load image file
-                  contents += wxT("<a href=\"open#");
-               } else {
-                  // let user open text file in their editor
-                  contents += wxT("<a href=\"edit:");
-               }
-               contents += outfile;
-               contents += wxT("\">");
-               contents += filename;
-               contents += wxT("</a>");
-               contents += indent;
+            // entry is for some sort of file
+            wxString filename = name.AfterLast(wxFILE_SEP_PATH);
 
-               // extract and install file into userrules
+            // user can extract file via special "unzip:" link
+            if (dirseen) contents += indent;
+            contents += wxT("<a href=\"unzip:");
+            contents += zippath;
+            contents += wxT(":");
+            contents += name;
+            contents += wxT("\">");
+            contents += filename;
+            contents += wxT("</a>");
+            
+            if ( IsRuleFile(filename) ) {
+               // extract and install .table/tree/colors/icons file into userrules
+               wxString outfile = userrules + filename;
                wxFileOutputStream outstream(outfile);
                bool ok = outstream.Ok();
                if (ok) {
@@ -475,6 +463,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                }
                if (ok) {
                   // file successfully installed
+                  contents += indent;
                   contents += wxT("[installed]");
                   if (diffdirs) {
                      // check if this file overrides similarly named file in rulesdir
@@ -486,66 +475,38 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                   }
                } else {
                   // file could not be installed
+                  contents += indent;
                   contents += wxT("[NOT installed]");
                   // file is probably incomplete so best to delete it
                   if (wxFileExists(outfile)) wxRemoveFile(outfile);
                }
-               contents += wxT("<br>\n");
-               numrules++;
+               rulefiles++;
                
+            } else if ( IsHTMLFile(filename) || IsTextFile(filename) ) {
+               textfiles++;
+            
+            } else if ( IsScriptFile(filename) ) {
+               scriptfiles++;
+               lastscript = name;
+            
             } else {
-               // entry is for some sort of file
-               if (IsHTMLFile(name) || IsTextFile(name)) {
-                  numtexts++;
-               } else if (IsScriptFile(name)) {
-                  numscripts++;
-                  lastscript = name;
-               } else {
-                  numpatterns++;
-                  lastpattern = name;
-               }
-               // user can extract file via special "unzip:" link
-               if (dirseen) contents += indent;
-               contents += wxT("<a href=\"unzip:");
-               contents += zippath;
-               contents += wxT(":");
-               contents += name;
-               contents += wxT("\">");
-               contents += filename;
-               contents += wxT("</a><br>\n");
+               patternfiles++;
+               lastpattern = name;
             }
+            contents += wxT("<br>\n");
          }
       }
       delete entry;
    }  // end while
 
-   if (numrules > 0) {
+   if (rulefiles > 0) {
       contents += wxT("<p>Files marked as \"[installed]\" have been installed into your rules folder<br>\n(");
       contents += userrules;
       contents += wxT(").\n");
    }
    contents += wxT("\n</body></html>");
    
-   if (numpatterns <= 1 && numscripts <= 1) {
-      // this is a "simple" zip file, so load lastpattern (if present),
-      // then run lastscript (if present)
-      if (numpatterns == 1) {
-         wxString tempfile = tempdir + lastpattern.AfterLast(SEPARATOR);
-         if (ExtractZipEntry(zippath, lastpattern, tempfile)) {
-            Raise();
-            OpenFile(tempfile, false);
-         }
-      }
-      if (numscripts == 1) {
-         wxString tempfile = tempdir + lastscript.AfterLast(SEPARATOR);
-         if (ExtractZipEntry(zippath, lastscript, tempfile)) {
-            // run script depending on safety setting
-            CheckBeforeRunning(tempfile, false);
-         }
-      }
-   }
-   
-   if (numrules > 0 || numtexts > 0 || numpatterns > 1 || numscripts > 1) {
+   if (rulefiles > 0 || textfiles > 0 || patternfiles > 1 || scriptfiles > 1) {
       // write contents to a temporary html file and display it in help window;
       // use a unique file name so user can go back/forwards
       wxString htmlfile = wxFileName::CreateTempFileName(tempdir + wxT("zip_contents_"));
@@ -558,6 +519,26 @@ void MainFrame::OpenZipFile(const wxString& zippath)
          ShowHelp(htmlfile);
       } else {
          Warning(_("Could not create html file:\n") + htmlfile);
+      }
+   }
+   
+   if (patternfiles <= 1 && scriptfiles <= 1) {
+      // this is a "simple" zip file, so load lastpattern (if present), then run
+      // lastscript (if present); note that the script might be a long-running one that
+      // allows user interaction, so it's best to run script AFTER calling ShowHelp above
+      if (patternfiles == 1) {
+         wxString tempfile = tempdir + lastpattern.AfterLast(wxFILE_SEP_PATH);
+         if (ExtractZipEntry(zippath, lastpattern, tempfile)) {
+            Raise();
+            OpenFile(tempfile, false);
+         }
+      }
+      if (scriptfiles == 1) {
+         wxString tempfile = tempdir + lastscript.AfterLast(wxFILE_SEP_PATH);
+         if (ExtractZipEntry(zippath, lastscript, tempfile)) {
+            // run script depending on safety setting
+            CheckBeforeRunning(tempfile, false);
+         }
       }
    }
 }
