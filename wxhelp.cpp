@@ -98,6 +98,7 @@ public:
             const wxSize& size, long style)
       : wxHtmlWindow(parent, id, pos, size, style) {
       linkrect = wxRect(0,0,0,0);
+      editlink = false;
    }
 
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
@@ -117,6 +118,8 @@ public:
       htmltimer->Stop();
       delete htmltimer;
    }
+   
+   bool editlink;    // open clicked file in editor?
 
 private:
    #ifdef __WXMSW__
@@ -130,6 +133,7 @@ private:
    void OnSize(wxSizeEvent& event);
    void OnMouseMotion(wxMouseEvent& event);
    void OnMouseLeave(wxMouseEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
    void OnTimer(wxTimerEvent& event);
 
    wxTimer* htmltimer;
@@ -151,6 +155,8 @@ BEGIN_EVENT_TABLE(HtmlView, wxHtmlWindow)
    EVT_MOTION        (HtmlView::OnMouseMotion)
    EVT_ENTER_WINDOW  (HtmlView::OnMouseMotion)
    EVT_LEAVE_WINDOW  (HtmlView::OnMouseLeave)
+   EVT_LEFT_DOWN     (HtmlView::OnMouseDown)
+   EVT_RIGHT_DOWN    (HtmlView::OnMouseDown)
    EVT_TIMER         (wxID_ANY, HtmlView::OnTimer)
 END_EVENT_TABLE()
 
@@ -581,13 +587,12 @@ void GetURL(const wxString& url)
    if (filename.StartsWith(wxT("pattern.asp?p="))) {
       filename = filename.AfterFirst('=');
    }
-   bool htmlfile = IsHTMLFile(filename);
 
    // create full path for downloaded file based on given url;
    // first remove initial "http://"
    wxString filepath = fullurl.AfterFirst('/');
    while (filepath[0] == '/') filepath = filepath.Mid(1);
-   if (htmlfile) {
+   if (IsHTMLFile(filename)) {
       // create special name for html file so UpdateHelpButtons can detect it
       // and set urlprefix
       filepath.Replace(wxT("/"), wxT(" "));     // assume url has no spaces
@@ -601,56 +606,60 @@ void GetURL(const wxString& url)
       filepath.Replace(wxT("*"), wxT("_"));
       filepath.Replace(wxT("?"), wxT("_"));
    #endif
-   if (htmlfile) {
-      // nicer to store html files in temporary dir
-      filepath = tempdir + filepath;
-   } else {
-      filepath = downloaddir + filepath;
-   }
-
-   if (htmlfile) {
-      // display html file in help window
-      if (DownloadFile(fullurl, filepath)) {
-         // search file for any simple img links and also download those files???
-         // maybe in version 3!
-         htmlwin->LoadPage(filepath);
-      }
    
-   } else if (IsRuleFile(filename)) {
+   if (IsRuleFile(filename)) {
       // create file in user's rules directory (rulesdir might be read-only)
       filepath = userrules + filename;
-      if (DownloadFile(fullurl, filepath)) {
-         // load corresponding rule table/tree
-         wxString rule = filename.BeforeLast('.');
+   } else if (IsHTMLFile(filename)) {
+      // nicer to store html files in temporary directory
+      filepath = tempdir + filepath;
+   } else {
+      // all other files are stored in user's download directory
+      filepath = downloaddir + filepath;
+   }
+   
+   // try to download the file
+   if ( !DownloadFile(fullurl, filepath) ) return;
+   
+   if (htmlwin->editlink) {
+      if (IsRuleFile(filename) && filename.Lower().EndsWith(wxT(".icons"))) {
+         // let user see b&w image in .icons file
          mainptr->Raise();
-         LoadRule(rule);
+         mainptr->OpenFile(filepath);
+      } else {
+         mainptr->EditFile(filepath);
       }
+      return;
+   }
+
+   if (IsHTMLFile(filename)) {
+      // display html file in help window;
+      // search file for any simple img links and also download those files???
+      // maybe in version 3!
+      htmlwin->LoadPage(filepath);
+   
+   } else if (IsRuleFile(filename)) {
+      // load corresponding rule table/tree
+      wxString rule = filename.BeforeLast('.');
+      mainptr->Raise();
+      LoadRule(rule);
    
    } else if (IsTextFile(filename)) {
       // open text file in user's text editor
-      if (DownloadFile(fullurl, filepath)) {
-         mainptr->EditFile(filepath);
-      }
+      mainptr->EditFile(filepath);
    
    } else if (IsZipFile(filename)) {
-      // open zip file
-      if (DownloadFile(fullurl, filepath)) {
-         // don't raise main window
-         mainptr->OpenFile(filepath);
-      }
+      // open zip file (don't raise main window here)
+      mainptr->OpenFile(filepath);
    
    } else if (IsScriptFile(filename)) {
       // run script depending on safety setting
-      if (DownloadFile(fullurl, filepath)) {
-         mainptr->CheckBeforeRunning(filepath);
-      }
+      mainptr->CheckBeforeRunning(filepath);
    
    } else {
       // assume pattern file, so try to load it
-      if (DownloadFile(fullurl, filepath)) {
-         mainptr->Raise();
-         mainptr->OpenFile(filepath);
-      }
+      mainptr->Raise();
+      mainptr->OpenFile(filepath);
    }
    
    if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
@@ -668,16 +677,29 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
       // into userrules, so check that file exists and load rule
       wxString rulefile = userrules + filename;
       if (wxFileExists(rulefile)) {
-         // load corresponding rule table/tree
-         wxString rule = filename.BeforeLast('.');
-         mainptr->Raise();
-         LoadRule(rule);
+         if (htmlwin->editlink) {
+            if (filename.Lower().EndsWith(wxT(".icons"))) {
+               // let user see b&w image in .icons file
+               mainptr->Raise();
+               mainptr->OpenFile(rulefile);
+            } else {
+               mainptr->EditFile(rulefile);
+            }
+         } else {         
+            // load corresponding rule table/tree
+            wxString rule = filename.BeforeLast('.');
+            mainptr->Raise();
+            LoadRule(rule);
+         }
       } else {
          Warning(_("Rule-related file was not installed:\n") + rulefile);
       }
    
    } else if ( mainptr->ExtractZipEntry(zippath, entry, tempfile) ) {
-      if ( IsHTMLFile(filename) ) {
+      if (htmlwin->editlink) {
+         mainptr->EditFile(tempfile);
+      
+      } else if ( IsHTMLFile(filename) ) {
          // display html file
          htmlwin->LoadPage(tempfile);
          if (helpptr && helpptr->IsActive()) UpdateHelpButtons();
@@ -829,6 +851,8 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          // or stop and create pending event??? see ID_LOAD_LEXICON
       } else if (inscript) {
          Warning(_("Cannot download file while a script is running."));
+      } else if (editlink && IsZipFile(url)) {
+         Warning(_("Opening a zip file in a text editor is not a good idea."));
       } else {
          // download clicked file
          GetURL( url.AfterFirst(':') );
@@ -882,8 +906,12 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          #endif
          wxFileName fname(path);
          if (!fname.IsAbsolute()) path = gollydir + path;
-         mainptr->Raise();
-         mainptr->OpenFile(path);
+         if (editlink) {
+            mainptr->EditFile(path);
+         } else {
+            mainptr->Raise();
+            mainptr->OpenFile(path);
+         }
       }
 
    } else {
@@ -928,6 +956,16 @@ void HtmlView::OnMouseLeave(wxMouseEvent& event)
    if (helpptr && helpptr->IsActive()) {
       ClearStatus();
    }
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnMouseDown(wxMouseEvent& event)
+{
+   // set flag so ctrl/right-clicked file can be opened in editor
+   // (this is consistent with how we handle clicks in pattern/script pane)
+   editlink = event.ControlDown() || event.RightDown();
    event.Skip();
 }
 
