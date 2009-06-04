@@ -372,8 +372,9 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    // - If the zip file is "complex" (contains any rule files, or any text files,
    //   or more than one pattern, or more than one script), build a temporary html
    //   file with clickable links to each file entry and show it in the help window.
-   // - If it's a "simple" zip file (at most one pattern and at most one script) then
-   //   load the pattern (if present) and then ask to run the script (if present).
+   // - If the zip file contains at most one pattern and at most one script (both
+   //   at the root level) then load the pattern (if present) and then ask to
+   //   run the script (if present).
    
    const wxString indent = wxT("&nbsp;&nbsp;&nbsp;&nbsp;");
    bool dirseen = false;
@@ -381,6 +382,8 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    wxString firstdir = wxEmptyString;
    wxString lastscript = wxEmptyString;
    wxString lastpattern = wxEmptyString;
+   int scriptseps = 0;     // # of separators in lastscript
+   int patternseps = 0;    // # of separators in lastpattern
    int rulefiles = 0;
    int scriptfiles = 0;
    int patternfiles = 0;
@@ -488,10 +491,12 @@ void MainFrame::OpenZipFile(const wxString& zippath)
             } else if ( IsScriptFile(filename) ) {
                scriptfiles++;
                lastscript = name;
+               scriptseps = sepcount;
             
             } else {
                patternfiles++;
                lastpattern = name;
+               patternseps = sepcount;
             }
             contents += wxT("<br>\n");
          }
@@ -522,10 +527,10 @@ void MainFrame::OpenZipFile(const wxString& zippath)
       }
    }
    
-   if (patternfiles <= 1 && scriptfiles <= 1) {
-      // this is a "simple" zip file, so load lastpattern (if present), then run
-      // lastscript (if present); note that the script might be a long-running one that
-      // allows user interaction, so it's best to run script AFTER calling ShowHelp above
+   if (patternfiles <= 1 && scriptfiles <= 1 && patternseps == 0 && scriptseps == 0) {
+      // load lastpattern (if present), then run lastscript (if present);
+      // the script might be a long-running one that allows user interaction,
+      // so it's best to run it AFTER calling ShowHelp above
       if (patternfiles == 1) {
          wxString tempfile = tempdir + lastpattern.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastpattern, tempfile)) {
