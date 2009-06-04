@@ -129,15 +129,20 @@ class AlgoHelp : public wxHtmlWindow
 public:
    AlgoHelp(wxWindow* parent, wxWindowID id, const wxPoint& pos,
             const wxSize& size, long style)
-      : wxHtmlWindow(parent, id, pos, size, style) { }
+      : wxHtmlWindow(parent, id, pos, size, style) {
+      editlink = false;
+   }
 
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
 
    void DisplayFile(const wxString& filepath);
+   
+   bool editlink;    // open clicked file in editor?
 
 private:
    void OnKeyUp(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
+   void OnMouseDown(wxMouseEvent& event);
 
    DECLARE_EVENT_TABLE()
 };
@@ -154,6 +159,8 @@ BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
    // key-up handler gets a key code of 400 if cmd-C is pressed quickly
    EVT_KEY_DOWN      (AlgoHelp::OnKeyUp)
 #endif
+   EVT_LEFT_DOWN     (AlgoHelp::OnMouseDown)
+   EVT_RIGHT_DOWN    (AlgoHelp::OnMouseDown)
    EVT_SIZE          (AlgoHelp::OnSize)
 END_EVENT_TABLE()
 
@@ -165,13 +172,11 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
    if ( url.StartsWith(wxT("http:")) || url.StartsWith(wxT("mailto:")) ) {
       // pass http/mailto URL to user's preferred browser/emailer
       #ifdef __WXMAC__
-         // wxLaunchDefaultBrowser doesn't work on Mac with IE (get msg in console.log)
-         // but it's easier just to use the Mac OS X open command
+         // best to use the Mac OS X open command
          if ( wxExecute(wxT("open ") + url, wxEXEC_ASYNC) == -1 )
             Warning(_("Could not open URL!"));
       #elif defined(__WXGTK__)
-         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open;
-         // unfortunately it does not bring browser to front if it's already running
+         // wxLaunchDefaultBrowser is not reliable on Linux/GTK so we call gnome-open
          if ( wxExecute(wxT("gnome-open ") + url, wxEXEC_ASYNC) == -1 )
             Warning(_("Could not open URL!"));
       #else
@@ -179,27 +184,31 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
             Warning(_("Could not launch browser!"));
       #endif
 
-   } else if ( url.StartsWith(wxT("rule#")) ) {
-      // user clicked on special rule link, so copy rule into rule box
-      ruletext->SetValue( url.After('#') );
+   } else if ( url.StartsWith(wxT("rule:")) ) {
+      // copy clicked rule into rule box
+      ruletext->SetValue( url.AfterFirst(':') );
       ruletext->SetFocus();
       ruletext->SetSelection(-1,-1);
 
-   } else if ( url.StartsWith(wxT("open#")) ) {
+   } else if ( url.StartsWith(wxT("open:")) ) {
       // open clicked pattern/script
-      wxString clickedfile = url.After('#');
+      wxString clickedfile = url.AfterFirst(':');
       #ifdef __WXMSW__
          clickedfile.Replace(wxT("/"), wxT("\\"));
       #endif
       wxFileName fname(clickedfile);
       if (!fname.IsAbsolute()) clickedfile = gollydir + clickedfile;
-      mainptr->pendingfiles.Add(clickedfile);   // next OnIdle will call OpenFile
-      // send OK event to close dialog
-      wxCommandEvent okevent(wxEVT_COMMAND_BUTTON_CLICKED, wxID_OK);
-      wxWindow* buttwin = GetParent()->FindWindow(wxID_OK);
-      if (buttwin) {
-         okevent.SetEventObject(buttwin);
-         buttwin->ProcessEvent(okevent);
+      if (editlink) {
+         mainptr->EditFile(clickedfile);
+      } else {
+         mainptr->pendingfiles.Add(clickedfile);   // next OnIdle will call OpenFile
+         // send OK event to close dialog
+         wxCommandEvent okevent(wxEVT_COMMAND_BUTTON_CLICKED, wxID_OK);
+         wxWindow* buttwin = GetParent()->FindWindow(wxID_OK);
+         if (buttwin) {
+            okevent.SetEventObject(buttwin);
+            buttwin->ProcessEvent(okevent);
+         }
       }
 
    } else {
@@ -230,6 +239,16 @@ void AlgoHelp::DisplayFile(const wxString& filepath)
    } else {
       LoadPage(filepath);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnMouseDown(wxMouseEvent& event)
+{
+   // set flag so ctrl/right-clicked file can be opened in editor
+   // (this is consistent with how we handle clicks in pattern/script pane)
+   editlink = event.ControlDown() || event.RightDown();
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------

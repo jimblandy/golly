@@ -887,20 +887,20 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
          ClickLexiconPattern( link.GetHtmlCell() );
       }
 
-   } else if ( url.StartsWith(wxT("prefs#")) ) {
+   } else if ( url.StartsWith(wxT("prefs:")) ) {
       if (inscript) {
          Warning(_("Cannot change preferences while a script is running."));
       } else {
          // user clicked on link to Preferences dialog
-         mainptr->ShowPrefsDialog( url.AfterFirst('#') );
+         mainptr->ShowPrefsDialog( url.AfterFirst(':') );
       }
 
-   } else if ( url.StartsWith(wxT("open#")) ) {
+   } else if ( url.StartsWith(wxT("open:")) ) {
       if (inscript) {
          Warning(_("Cannot open file while a script is running."));
       } else {
          // open clicked pattern/script
-         wxString path = url.AfterFirst('#');
+         wxString path = url.AfterFirst(':');
          #ifdef __WXMSW__
             path.Replace(wxT("/"), wxT("\\"));
          #endif
@@ -989,7 +989,7 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
       wxT("<html><title>Golly Help: Keyboard Shortcuts</title>")
       wxT("<body bgcolor=\"#FFFFCE\">")
       wxT("<p><font size=+1><b>Keyboard shortcuts</b></font>")
-      wxT("<p>Use <a href=\"prefs#keyboard\">Preferences > Keyboard</a>")
+      wxT("<p>Use <a href=\"prefs:keyboard\">Preferences > Keyboard</a>")
       wxT(" to change the following keyboard shortcuts.")
       wxT("<p><center>")
       wxT("<table cellspacing=1 border=2 cols=2 width=\"90%\">")

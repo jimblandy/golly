@@ -216,7 +216,7 @@ algorithms are not compatible.
 Whenever Golly switches to a new rule it searches for a matching 
 <i>rule</i>.colors file and, if found, loads the color information
 stored in the file.
-Golly looks for the file in <a href="prefs#control">your rules folder</a>
+Golly looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
 If <i>rule</i>.colors is not found but <i>rule</i> contains one or more
 hyphens then Golly searches for <i>prefix</i>.colors, where <i>prefix</i>
@@ -254,7 +254,7 @@ To specify a color gradient you can use a line like this:
 Note that a .colors file is loaded <i>after</i> switching to the current
 algorithm's default color scheme.  So you have the choice of completely
 changing all the default colors, or replacing just a few of them.
-Use <a href="prefs#color">Preferences > Color</a> to change the default
+Use <a href="prefs:color">Preferences > Color</a> to change the default
 colors for each algorithm.
 
 
@@ -265,7 +265,7 @@ colors for each algorithm.
 Whenever Golly switches to a new rule it searches for a matching 
 <i>rule</i>.icons file and, if found, loads the icon bitmaps
 stored in the file.
-Golly looks for the file in <a href="prefs#control">your rules folder</a>
+Golly looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
 If <i>rule</i>.icons is not found but <i>rule</i> contains one or more
 hyphens then Golly will look for <i>prefix</i>.icons, where <i>prefix</i>
@@ -301,7 +301,7 @@ than required then the extra icons are simply ignored.
 <p>
 If Golly can't find any rule-specific icons it will use the default
 icons associated with each algorithm.  You can change these icons by using
-the "Load Icons" button in <a href="prefs#color">Preferences > Color</a>
+the "Load Icons" button in <a href="prefs:color">Preferences > Color</a>
 to load files with the same format described above.  The only difference
 is that there is no need for a .icons extension.
 
@@ -313,7 +313,7 @@ is that there is no need for a .icons extension.
 Golly allows you to add new rules by creating transition tables stored in
 external files.  Given the rule string "foo", the RuleTable algorithm will
 search for a file called foo.table.
-It looks for the file in <a href="prefs#control">your rules folder</a>
+It looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
 Here's a simple example file:
 
@@ -402,7 +402,7 @@ To share your rule tables with others, you can archive them at the public
 Golly permits the loading of rules from external files, where those
 files are in RuleTree format.  If a rule named Foo is requested,
 Golly will search for Foo.tree and, if found, load the rule from that file.
-It looks for the file in <a href="prefs#control">your rules folder</a>
+It looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
 
 <p>
