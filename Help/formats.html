@@ -497,7 +497,26 @@ Golly can open a standard zip file and process its contents in the
 following way:
 
 <p>
-!!!
+If the zip file contains any rule-related files (.colors/icons/table/tree)
+then those files will be extracted and automatically installed into
+<a href="prefs:control">your rules folder</a>.
+
+<p>
+If the zip file is "complex" then Golly builds a temporary HTML file with
+special links to each included file and shows the result in the help window.
+A complex zip file is one that contains multiple patterns, or multiple scripts,
+or any folders, or any rule-related files, or any HTML files, or any text files
+(files with a .txt/doc extension or a name containing "readme").
+
+<p>
+If the zip file contains at most one pattern and at most one script, Golly will
+load the pattern (if present) and then ask to run the script (if present).
+Both the pattern and the script must be at the root level of the zip file;
+ie. not inside a folder.
+
+<p>
+Various zip files can be downloaded from the
+<a href="archives.html">online archives</a>.
 
 </body>
 </html>

@@ -369,7 +369,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    // Process given zip file in the following manner:
    // - If it contains any rule files (.table/tree/colors/icons) then extract and
    //   install those files into userrules (the user's rules directory).
-   // - If the zip file is "complex" (contains any rule files, or any text files,
+   // - If the zip file is "complex" (contains any folders, rule files, text files,
    //   or more than one pattern, or more than one script), build a temporary html
    //   file with clickable links to each file entry and show it in the help window.
    // - If the zip file contains at most one pattern and at most one script (both
@@ -382,12 +382,12 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    wxString firstdir = wxEmptyString;
    wxString lastscript = wxEmptyString;
    wxString lastpattern = wxEmptyString;
-   int scriptseps = 0;     // # of separators in lastscript
-   int patternseps = 0;    // # of separators in lastpattern
+   int scriptseps = 0;                    // # of separators in lastscript
+   int patternseps = 0;                   // # of separators in lastpattern
    int rulefiles = 0;
    int scriptfiles = 0;
    int patternfiles = 0;
-   int textfiles = 0;      // includes html files
+   int textfiles = 0;                     // includes html files
    
    wxString contents = wxT("<html><title>") + GetBaseName(zippath);
    contents += wxT("</title>\n");
@@ -511,8 +511,8 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    }
    contents += wxT("\n</body></html>");
    
-   if (rulefiles > 0 || textfiles > 0 || patternfiles > 1 || scriptfiles > 1) {
-      // write contents to a temporary html file and display it in help window;
+   if (dirseen || rulefiles > 0 || textfiles > 0 || patternfiles > 1 || scriptfiles > 1) {
+      // complex zip, so write contents to a temporary html file and display it in help window;
       // use a unique file name so user can go back/forwards
       wxString htmlfile = wxFileName::CreateTempFileName(tempdir + wxT("zip_contents_"));
       wxRemoveFile(htmlfile);
