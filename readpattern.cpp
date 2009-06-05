@@ -283,7 +283,11 @@ const char *readrle(lifealgo &imp, char *line) {
                      if ('A' <= c && c <= 'X') {
                         state = state + c - 'A' + 1 ;
                      } else {
-                        return "Illegal multi-char state" ;
+                        // return "Illegal multi-char state" ;
+                        // be more forgiving so we can read non-standard rle files like
+                        // those at http://home.interserv.com/~mniemiec/lifepage.htm
+                        state = 1 ;
+                        p-- ;
                      }
                   }
                   while (n-- > 0) {
