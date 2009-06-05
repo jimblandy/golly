@@ -58,6 +58,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 void Note(const wxString& msg)
 {
    wxString title = wxGetApp().GetAppName() + _(" note:");
+   wxSetCursor(*wxSTANDARD_CURSOR);
    wxMessageBox(msg, title, wxOK | wxICON_INFORMATION, wxGetActiveWindow());
 }
 
@@ -67,6 +68,7 @@ void Warning(const wxString& msg)
 {
    wxBell();
    wxString title = wxGetApp().GetAppName() + _(" warning:");
+   wxSetCursor(*wxSTANDARD_CURSOR);
    wxMessageBox(msg, title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
 }
 
@@ -76,6 +78,7 @@ void Fatal(const wxString& msg)
 {
    wxBell();
    wxString title = wxGetApp().GetAppName() + _(" error:");
+   wxSetCursor(*wxSTANDARD_CURSOR);
    wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
    // calling wxExit() results in a bus error on X11
    exit(1);

@@ -2504,7 +2504,7 @@ void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
    // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
-   // only happens when a wxStaticText box is next to a wxChoice box
+   // eg. when a wxStaticText box is next to a wxChoice box
    #define FIX_ALIGN_BUG wxBOTTOM,4
 #else
    #define FIX_ALIGN_BUG wxALL,0
@@ -2553,8 +2553,10 @@ enum {
    PREF_OPEN_CURSOR,
    PREF_MAX_PATTERNS,
    PREF_MAX_SCRIPTS,
-   PREF_TEXT_EDITOR,
+   PREF_EDITOR_BUTT,
    PREF_EDITOR_BOX,
+   PREF_DOWNLOAD_BUTT,
+   PREF_DOWNLOAD_BOX,
    // Edit prefs
    PREF_RANDOM_FILL,
    PREF_PASTE_0,
@@ -2571,7 +2573,7 @@ enum {
    PREF_STEP_NOTE,
    PREF_MIN_DELAY,
    PREF_MAX_DELAY,
-   PREF_USER_RULES,
+   PREF_RULES_BUTT,
    PREF_RULES_BOX,
    // View prefs
    PREF_SHOW_TIPS,
@@ -2670,6 +2672,7 @@ private:
    wxScrollBar* scrollbar;             // for changing number of gradient states
 
    wxString neweditor;                 // new text editor
+   wxString newdownloaddir;            // new directory for downloaded files
    wxString newuserrules;              // new directory for user's rules
 
    DECLARE_EVENT_TABLE()
@@ -3071,6 +3074,8 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
 
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL, _("Remove selection"));
+   wxBoxSizer* check1box = new wxBoxSizer(wxHORIZONTAL);
+   check1box->Add(check1, 0, FIX_ALIGN_BUG);
 
    wxBoxSizer* setcurs1 = new wxBoxSizer(wxHORIZONTAL);
    setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
@@ -3090,18 +3095,21 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
                                     #endif
                                     newscaleChoices);
    
-   wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
-   hbox3->Add(setcurs1, 0, wxALIGN_CENTER_VERTICAL, 0);
-   hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   hbox3->AddStretchSpacer(20);
-   hbox3->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
-   hbox3->Add(choice1, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-   hbox3->AddStretchSpacer(20);
+   wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
+   hbox1->Add(check1box, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hbox1->AddStretchSpacer(20);
+   hbox1->Add(setcurs1, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hbox1->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+   hbox1->AddStretchSpacer(20);
+   
+   wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
+   hbox2->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hbox2->Add(choice1, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
 
    ssizer1->AddSpacer(SBTOPGAP);
-   ssizer1->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->Add(hbox1, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(CVGAP);
-   ssizer1->Add(hbox3, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
    
    // on opening pattern
@@ -3110,21 +3118,25 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
    
    wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL, _("Remove selection"));
+   wxBoxSizer* check2box = new wxBoxSizer(wxHORIZONTAL);
+   check2box->Add(check2, 0, FIX_ALIGN_BUG);
    
-   wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
    wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
                                     wxDefaultPosition, wxDefaultSize,
                                     opencursorChoices);
 
    wxBoxSizer* setcurs2 = new wxBoxSizer(wxHORIZONTAL);
    setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
+
+   wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
+   hbox4->Add(check2box, 0, wxALIGN_CENTER_VERTICAL, 0);
+   hbox4->AddStretchSpacer(20);
    hbox4->Add(setcurs2, 0, wxALIGN_CENTER_VERTICAL, 0);
    hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+   hbox4->AddStretchSpacer(20);
 
    ssizer2->AddSpacer(SBTOPGAP);
-   ssizer2->Add(check2, 0, wxLEFT | wxRIGHT, LRGAP);
-   ssizer2->AddSpacer(CVGAP);
-   ssizer2->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer2->Add(hbox4, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    ssizer2->AddSpacer(SBBOTGAP);
    
    // max_patterns and max_scripts
@@ -3154,13 +3166,21 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    hsbox->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
    hsbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
 
-   wxButton* editorbutt = new wxButton(panel, PREF_TEXT_EDITOR, _("Text Editor..."));
+   wxButton* editorbutt = new wxButton(panel, PREF_EDITOR_BUTT, _("Text Editor..."));
    wxStaticText* editorbox = new wxStaticText(panel, PREF_EDITOR_BOX, texteditor);
    neweditor = texteditor;
+
+   wxButton* downloadbutt = new wxButton(panel, PREF_DOWNLOAD_BUTT, _("Downloads..."));
+   wxStaticText* downloadbox = new wxStaticText(panel, PREF_DOWNLOAD_BOX, downloaddir);
+   newdownloaddir = downloaddir;
 
    wxBoxSizer* hebox = new wxBoxSizer(wxHORIZONTAL);
    hebox->Add(editorbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
    hebox->Add(editorbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
+
+   wxBoxSizer* hdbox = new wxBoxSizer(wxHORIZONTAL);
+   hdbox->Add(downloadbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
+   hdbox->Add(downloadbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
 
    vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
    vbox->AddSpacer(10);
@@ -3171,6 +3191,8 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    vbox->Add(hsbox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(10);
    vbox->Add(hebox, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(10);
+   vbox->Add(hdbox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(5);
 
    #ifdef __WXX11__
@@ -3366,7 +3388,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
 
    // user_rules
 
-   wxButton* rulesbutt = new wxButton(panel, PREF_USER_RULES, _("Your Rules..."));
+   wxButton* rulesbutt = new wxButton(panel, PREF_RULES_BUTT, _("Your Rules..."));
    wxStaticText* rulesbox = new wxStaticText(panel, PREF_RULES_BOX, userrules);
    newuserrules = userrules;
 
@@ -4047,7 +4069,9 @@ void ChooseTextEditor(wxWindow* parent, wxString& result)
 
 void PrefsDialog::OnButton(wxCommandEvent& event)
 {
-   if ( event.GetId() == PREF_CHOOSE ) {
+   int id = event.GetId();
+
+   if ( id == PREF_CHOOSE ) {
       // ask user to choose an appropriate file
       wxString filetypes = _("All files (*)|*");
       filetypes +=         _("|Pattern (*.rle;*.mc;*.lif)|*.rle;*.mc;*.lif");
@@ -4079,7 +4103,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
       
       UpdateChosenFile();
 
-   } else if ( event.GetId() == PREF_TEXT_EDITOR ) {
+   } else if ( id == PREF_EDITOR_BUTT ) {
       // ask user to choose a text editor
       wxString result;
       ChooseTextEditor(this, result);
@@ -4091,7 +4115,23 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
          }
       }
 
-   } else if ( event.GetId() == PREF_USER_RULES ) {
+   } else if ( id == PREF_DOWNLOAD_BUTT ) {
+      // ask user to choose folder for downloaded files
+      wxDirDialog dirdlg(this, _("Choose a folder for downloaded files"),
+                         newdownloaddir, wxDD_NEW_DIR_BUTTON);
+      if ( dirdlg.ShowModal() == wxID_OK ) {
+         wxString newdir = dirdlg.GetPath();
+         if (newdir.Last() != wxFILE_SEP_PATH) newdir += wxFILE_SEP_PATH;
+         if (newdownloaddir != newdir) {
+            newdownloaddir = newdir;
+            wxStaticText* dirbox = (wxStaticText*) FindWindowById(PREF_DOWNLOAD_BOX);
+            if (dirbox) {
+               dirbox->SetLabel(newdownloaddir);
+            }
+         }
+      }
+
+   } else if ( id == PREF_RULES_BUTT ) {
       // ask user to choose folder for their rules
       wxDirDialog dirdlg(this, _("Choose a folder for your rules"),
                          newuserrules, wxDD_NEW_DIR_BUTTON);
@@ -4100,14 +4140,14 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
          if (newdir.Last() != wxFILE_SEP_PATH) newdir += wxFILE_SEP_PATH;
          if (newuserrules != newdir) {
             newuserrules = newdir;
-            wxStaticText* rulesbox = (wxStaticText*) FindWindowById(PREF_RULES_BOX);
-            if (rulesbox) {
-               rulesbox->SetLabel(newuserrules);
+            wxStaticText* dirbox = (wxStaticText*) FindWindowById(PREF_RULES_BOX);
+            if (dirbox) {
+               dirbox->SetLabel(newuserrules);
             }
          }
       }
 
-   } else if ( event.GetId() == PREF_ICON_BUTT ) {
+   } else if ( id == PREF_ICON_BUTT ) {
       ChangeIcons(coloralgo);
       cellboxes->Refresh(false);
    }
@@ -4139,7 +4179,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
       tobutt->Enable(ad->gradient);
       cellboxes->Refresh(false);
 
-   } else if ( event.GetId() == PREF_ICON_CHECK ) {
+   } else if ( id == PREF_ICON_CHECK ) {
       seeicons = iconcheck->GetValue() == 1;
       cellboxes->Refresh(false);
    }
@@ -4454,6 +4494,7 @@ bool PrefsDialog::TransferDataFromWindow()
    maxpatterns   = GetSpinVal(PREF_MAX_PATTERNS);
    maxscripts    = GetSpinVal(PREF_MAX_SCRIPTS);
    texteditor    = neweditor;
+   downloaddir   = newdownloaddir;
 
    // EDIT_PAGE
    randomfill    = GetSpinVal(PREF_RANDOM_FILL);
