@@ -959,8 +959,11 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
                      if ('A' <= c && c <= 'X') {
                         state = state + c - 'A' + 1;
                      } else {
-                        Py_DECREF(outlist);
-                        PYTHON_ERROR("parse error: illegal multi-char state.");
+                        // Py_DECREF(outlist);
+                        // PYTHON_ERROR("parse error: illegal multi-char state.");
+                        // be more forgiving and treat 'p'..'y' like 'o'
+                        state = 1;
+                        s--;
                      }
                   }
                   for (int k = 0; k < prefix; k++, x++) {
