@@ -275,7 +275,9 @@ void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
    
    // create our own dialog with a View button???!!!
    wxString msg = scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source.");
-   wxSetCursor(*wxSTANDARD_CURSOR);
+   #ifdef __WXMAC__
+      wxSetCursor(*wxSTANDARD_CURSOR);
+   #endif
    int answer = wxMessageBox(msg, _("Do you want to run this script?"),
                              wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT,
                              wxGetActiveWindow());

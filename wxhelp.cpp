@@ -55,6 +55,8 @@ public:
    void SetStatus(const wxString& text) {
       status->SetLabel(text);
    }
+   
+   bool infront;     // help window is active?
 
 private:
    // ids for buttons in help window (see also wxID_CLOSE)
@@ -349,7 +351,9 @@ void ShowHelp(const wxString& filepath)
 
 void HelpFrame::OnActivate(wxActivateEvent& event)
 {
-   if ( event.GetActive() ) {
+   // note that helpptr->IsActive() is not always reliable so we set infront flag
+   infront = event.GetActive();
+   if (infront) {
       // help window is being activated
       whenactive = stopwatch->Time();
       
@@ -662,7 +666,7 @@ void GetURL(const wxString& url)
       mainptr->OpenFile(filepath);
    }
    
-   if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
+   if (helpptr && helpptr->infront) UpdateHelpButtons();
 }
 
 // -----------------------------------------------------------------------------
@@ -702,7 +706,7 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
       } else if ( IsHTMLFile(filename) ) {
          // display html file
          htmlwin->LoadPage(tempfile);
-         if (helpptr && helpptr->IsActive()) UpdateHelpButtons();
+         if (helpptr && helpptr->infront) UpdateHelpButtons();
       
       } else if ( IsTextFile(filename) ) {
          // open text file in user's text editor
@@ -917,7 +921,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);
-      if ( helpptr && helpptr->IsActive() ) UpdateHelpButtons();
+      if (helpptr && helpptr->infront) UpdateHelpButtons();
    }
 }
 
@@ -925,7 +929,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
 
 void HtmlView::OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y)
 {
-   if (helpptr && helpptr->IsActive() && cell) {
+   if (helpptr && helpptr->infront && cell) {
       wxHtmlLinkInfo* link = cell->GetLink(x,y);
       if (link) {
          helpptr->SetStatus(link->GetHref());
@@ -941,7 +945,7 @@ void HtmlView::OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y)
 
 void HtmlView::OnMouseMotion(wxMouseEvent& event)
 {
-   if (helpptr && helpptr->IsActive() && !linkrect.IsEmpty()) {
+   if (helpptr && helpptr->infront && !linkrect.IsEmpty()) {
       int x = event.GetX();
       int y = event.GetY();
       if (!linkrect.Contains(x,y)) ClearStatus();
@@ -953,7 +957,7 @@ void HtmlView::OnMouseMotion(wxMouseEvent& event)
 
 void HtmlView::OnMouseLeave(wxMouseEvent& event)
 {
-   if (helpptr && helpptr->IsActive()) {
+   if (helpptr && helpptr->infront) {
       ClearStatus();
    }
    event.Skip();
@@ -1054,7 +1058,7 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
          // copy any selected text to the clipboard
          wxString text = SelectionToText();
          if ( text.Length() > 0 ) {
-            if ( helpptr && helpptr->IsActive() &&
+            if ( helpptr && helpptr->infront &&
                  GetOpenedPageTitle().StartsWith(wxT("Life Lexicon")) ) {
                // avoid wxHTML bug when copying text inside <pre>...</pre>!!!
                // if there are at least 2 lines and the 1st line is twice
@@ -1081,7 +1085,7 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
       }
    } else {
       // this handler is also called from ShowAboutBox
-      if ( helpptr == NULL || !helpptr->IsActive() ) {
+      if ( helpptr == NULL || !helpptr->infront ) {
          if ( key == WXK_NUMPAD_ENTER ) {
             // fix wxMac problem: allow enter key to close about box
             GetParent()->Close(true);
@@ -1106,7 +1110,7 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
 void HtmlView::OnChar(wxKeyEvent& event)
 {
    // this handler is also called from ShowAboutBox
-   if ( helpptr == NULL || !helpptr->IsActive() ) {
+   if ( helpptr == NULL || !helpptr->infront ) {
       event.Skip();
       return;
    }
@@ -1158,7 +1162,7 @@ void HtmlView::OnSize(wxSizeEvent& event)
 
 void HtmlView::OnTimer(wxTimerEvent& WXUNUSED(event))
 {
-   if (helpptr && helpptr->IsActive()) {
+   if (helpptr && helpptr->infront) {
       // send idle event to html window so cursor gets updated
       // even while app is busy doing something else (eg. generating)
       wxIdleEvent idleevent;
