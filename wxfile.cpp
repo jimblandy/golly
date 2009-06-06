@@ -265,16 +265,16 @@ bool MainFrame::LoadImage(const wxString& path)
 
 void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
 {
-   // test script safety setting!!!
-   // OR nicer to do this:
+   // ???!!! nicer to do this:
    // - always run script if scriptpath starts with gollydir + Patterns
    //   (ie. the script is in one of our supplied .zip files)
+   //   but not in downloaddir
    // - if user answers Yes to dialog then save script info (download path or zip path + entry)
    //   in list of safe scripts (stored in prefs file) so we can search for this script
    //   and not ask again
    
    // create our own dialog with a View button???!!!
-   wxString msg = scriptpath + _("\n\nClick No if you don't know what the script will do.");
+   wxString msg = scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source.");
    wxSetCursor(*wxSTANDARD_CURSOR);
    int answer = wxMessageBox(msg, _("Do you want to run this script?"),
                              wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT,
