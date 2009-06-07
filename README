@@ -1,8 +1,9 @@
 Welcome to Golly, a sophisticated tool for exploring Conway's
-Game of Life and other cellular automata.
+Game of Life and many other cellular automata.
 
 Key features:
 
+- Free, open source and cross-platform (Windows, Mac, Linux).
 - Unbounded universes (limited only by memory).
 - Multi-state universes (up to 256 states).
 - Includes QuickLife, a fast, memory-efficient algorithm.
@@ -13,6 +14,8 @@ Key features:
 - Responsive even while generating or garbage collecting.
 - Reads RLE, macrocell, Life 1.05/1.06, dblife, and MCell files.
   Can also read common graphic formats: BMP, PNG, GIF, TIFF.
+- Can extract patterns, scripts and rules from zip files.
+- Can download files from online archives.
 - Includes a state-of-the-art pattern collection.
 - Fast loading of large patterns.
 - Paste in patterns from the clipboard.
@@ -24,12 +27,13 @@ Key features:
 - HTML-based help with an integrated Life Lexicon.
 - Scriptable via Perl or Python.
 - User-configurable keyboard shortcuts.
-- Free, open source and cross-platform (Windows, Mac, Linux).
-- We also provide bgolly, a GUI-less version.
 
 The Golly application can be installed anywhere you like, but make
 sure you move the whole folder because the various subfolders must
 be kept with the application.
+
+We also provide bgolly, a GUI-less version of Golly that can be
+run from the command line.
 
 The latest information is available at the Golly web site:
 
