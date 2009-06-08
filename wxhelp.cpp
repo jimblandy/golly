@@ -495,10 +495,8 @@ bool DownloadFile(const wxString& url, const wxString& filepath)
    bool result = false;
 
    wxHTTP http;
-   http.SetTimeout(5); // secs
-   http.SetHeader(wxT("Accept") , wxT("*/*"));           // any file type
-   // this didn't fix fano bug!!!
-   // http.SetHeader(wxT("Accept"), wxT("application/x-life"));
+   http.SetTimeout(5);                                // secs
+   http.SetHeader(wxT("Accept") , wxT("*/*"));        // any file type
    http.SetHeader(wxT("User-Agent"), wxT("Golly"));
    
    // Connect() wants a server address (eg. "www.foo.com"), not a full URL
@@ -521,7 +519,7 @@ bool DownloadFile(const wxString& url, const wxString& filepath)
             int outcount = 0;
             int lastread, lastwrite;
             double filesize = (double) instream->GetSize();
-            if (filesize <= 0.0) filesize = -1.0;     // show unknown progress???!!!
+            if (filesize <= 0.0) filesize = -1.0;     // show indeterminate progress
             
             BeginProgress(_("Downloading file"));
             while (true) {

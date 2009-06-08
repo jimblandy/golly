@@ -58,7 +58,8 @@ void BeginProgress(const wxString& dlgtitle);
 bool AbortProgress(double fraction_done, const wxString& newmsg);
 // Call frequently while the task is being carried out.  The progress
 // dialog only appears if the task is likely to take more than a few secs.
-// Pass in a fraction from 0.0 to 1.0 indicating how much has been done.
+// Pass in a fraction from 0.0 to 1.0 indicating how much has been done,
+// or any negative value to show an indeterminate progress gauge.
 // The given string can be used to display extra information.
 // The call returns true if the user cancels the progress dialog.
 

@@ -318,7 +318,7 @@ bool MainFrame::ExtractZipEntry(const wxString& zippath,
             int outcount = 0;
             int lastread, lastwrite;
             double filesize = (double) entry->GetSize();
-            if (filesize <= 0.0) filesize = -1.0;        // show unknown progress???!!!
+            if (filesize <= 0.0) filesize = -1.0;        // show indeterminate progress
             
             BeginProgress(_("Extracting file"));
             while (true) {

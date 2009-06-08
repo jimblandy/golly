@@ -504,11 +504,18 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
    if (progdlg) {
       if (msecs < prognext) return false;
       #ifdef __WXX11__
-         prognext = msecs + 1000;    // call Update about once per sec on X11
+         prognext = msecs + 1000;    // call Update/Pulse about once per sec on X11
       #else
-         prognext = msecs + 100;     // call Update about 10 times per sec
+         prognext = msecs + 100;     // call Update/Pulse about 10 times per sec
       #endif
-      if ( !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg) ) {
+      bool cancel;
+      if (fraction_done < 0.0) {
+         // show indeterminate progress gauge
+         cancel = !progdlg->Pulse(newmsg);
+      } else {
+         cancel = !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg);
+      }
+      if (cancel) {
          // user hit Cancel button
          if (inscript) PassKeyToScript(WXK_ESCAPE);     // abort script
          return true;
@@ -534,7 +541,7 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
             }
          #endif
       }
-      prognext = msecs + 10;     // short delay until 1st Update
+      prognext = msecs + 10;     // short delay until 1st Update/Pulse
       return false;              // don't abort
    }
 }
