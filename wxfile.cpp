@@ -688,6 +688,11 @@ wxString MainFrame::GetBaseName(const wxString& path)
 
 void MainFrame::OpenFile(const wxString& path, bool remember)
 {
+   if (IsHTMLFile(path)) {
+      ShowHelp(path);
+      return;
+   }
+
    if (generating) {
       // terminate generating loop and set command_pending flag
       Stop();
