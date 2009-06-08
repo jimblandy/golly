@@ -38,7 +38,7 @@ PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServic
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
 SHAREDFILES = Help Patterns Scripts Rules README LICENSE
-SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
+SRCFILES = BUILD TODO makefile-gtk makefile-x11 makefile-mac makefile-win \
    bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 
 # Variables:

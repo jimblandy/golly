@@ -21,7 +21,7 @@ VERSION = 2.1b4
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Scripts Patterns Rules
-SRCFILES = BUILD TODO CHANGES makefile-gtk makefile-x11 makefile-mac makefile-win \
+SRCFILES = BUILD TODO makefile-gtk makefile-x11 makefile-mac makefile-win \
    golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe RuleTableToTree.exe
@@ -447,7 +447,6 @@ srcdist:
 	ren $(RELEASENAME)-src\LICENSE LICENSE.txt
 	ren $(RELEASENAME)-src\BUILD BUILD.txt
 	ren $(RELEASENAME)-src\TODO TODO.txt
-	ren $(RELEASENAME)-src\CHANGES CHANGES.txt
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip
 
 bindist: all
