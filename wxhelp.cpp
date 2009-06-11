@@ -559,8 +559,10 @@ bool DownloadFile(const wxString& url, const wxString& filepath)
          if (err == wxPROTO_NOFILE) {
             Warning(_("Remote file does not exist:\n") + url);
          } else {
-            // why do we get wxPROTO_NETERR (generic network error) with some hosts???!!!
+            // we get wxPROTO_NETERR (generic network error) with some naughty servers
+            // that use LF rather than CRLF to terminate HTTP header messages
             // eg: http://fano.ics.uci.edu/ca/rules/b0135s014/g1.lif
+            // (wxProtocol::ReadLine needs to be made more tolerant)
             Warning(wxString::Format(_("Could not download file (error %d):\n"),err) + url);
          }
       }

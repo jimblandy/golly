@@ -265,20 +265,24 @@ bool MainFrame::LoadImage(const wxString& path)
 
 void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
 {
+   if (inscript) return;   // can't run script while another is running
+   
    // ???!!! nicer to do this:
-   // - always run script if scriptpath starts with gollydir + Patterns
-   //   (ie. the script is in one of our supplied .zip files)
-   //   but not in downloaddir
+   // - always run script if it's in gollydir + Patterns
+   //   (ie. the script is in a Golly-supplied .zip file) and/or patterndir???
+   //   but not in downloaddir and not in tempdir
    // - if user answers Yes to dialog then save script info (download path or zip path + entry)
    //   in list of safe scripts (stored in prefs file) so we can search for this script
    //   and not ask again
    
-   // create our own dialog with a View button???!!!
-   wxString msg = scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source.");
+   // create our own dialog with a View button???  probably no need now that
+   // user can ctrl/right-click on link to open script in their text editor
+   
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
    #endif
-   int answer = wxMessageBox(msg, _("Do you want to run this script?"),
+   int answer = wxMessageBox(scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source."),
+                             _("Do you want to run this script?"),
                              wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT,
                              wxGetActiveWindow());
    switch (answer) {
@@ -297,15 +301,15 @@ bool MainFrame::ExtractZipEntry(const wxString& zippath,
                                 const wxString& entryname,
                                 const wxString& outfile)
 {
-   wxFFileInputStream in(zippath);
-   if (!in.Ok()) {
+   wxFFileInputStream instream(zippath);
+   if (!instream.Ok()) {
       Warning(_("Could not create input stream for zip file:\n") + zippath);
       return false;
    }
-   wxZipInputStream zip(in);
+   wxZipInputStream zip(instream);
    
    wxZipEntry* entry;
-   while ((entry = zip.GetNextEntry())) {
+   while ((entry = zip.GetNextEntry()) != NULL) {
       wxString thisname = entry->GetName();
       if (thisname == entryname) {
          // we've found the desired entry so copy entry data to given output file
@@ -382,13 +386,13 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    bool dirseen = false;
    bool diffdirs = (userrules != rulesdir);
    wxString firstdir = wxEmptyString;
-   wxString lastscript = wxEmptyString;
    wxString lastpattern = wxEmptyString;
-   int scriptseps = 0;                    // # of separators in lastscript
+   wxString lastscript = wxEmptyString;
    int patternseps = 0;                   // # of separators in lastpattern
-   int rulefiles = 0;
-   int scriptfiles = 0;
+   int scriptseps = 0;                    // # of separators in lastscript
    int patternfiles = 0;
+   int scriptfiles = 0;
+   int rulefiles = 0;
    int textfiles = 0;                     // includes html files
    
    wxString contents = wxT("<html><title>") + GetBaseName(zippath);
@@ -400,17 +404,17 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    contents += wxT("<p>\n");
    contents += wxT("Contents:<br>\n");
    
-   wxFFileInputStream in(zippath);
-   if (!in.Ok()) {
+   wxFFileInputStream instream(zippath);
+   if (!instream.Ok()) {
       Warning(_("Could not create input stream for zip file:\n") + zippath);
       return;
    }
-   wxZipInputStream zip(in);
+   wxZipInputStream zip(instream);
    
    // examine each entry in zip file and build contents string;
    // also install any .table/tree/colors/icons files
    wxZipEntry* entry;
-   while ((entry = zip.GetNextEntry())) {
+   while ((entry = zip.GetNextEntry()) != NULL) {
       wxString name = entry->GetName();      
       if (name.StartsWith(wxT("__MACOSX")) || name.EndsWith(wxT(".DS_Store"))) {
          // ignore meta-data stuff in zip file created on Mac
@@ -543,7 +547,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
       if (scriptfiles == 1) {
          wxString tempfile = tempdir + lastscript.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastscript, tempfile)) {
-            // run script depending on safety setting
+            // run script, possibly
             CheckBeforeRunning(tempfile, false);
          }
       }
