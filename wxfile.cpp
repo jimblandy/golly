@@ -66,6 +66,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
+wxString MainFrame::GetBaseName(const wxString& path)
+{
+   // extract basename from given path
+   return path.AfterLast(wxFILE_SEP_PATH);
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::MySetTitle(const wxString& title)
 {
    #ifdef __WXMAC__
@@ -263,6 +271,127 @@ bool MainFrame::LoadImage(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+   // convert path to decomposed UTF8 so fopen will work
+   #define FILEPATH path.fn_str()
+#else
+   #define FILEPATH path.mb_str(wxConvLocal)
+#endif
+
+void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool updatestatus)
+{
+   if ( !wxFileName::FileExists(path) ) {
+      Warning(_("The file does not exist:\n") + path);
+      return;
+   }
+
+   // newtitle is empty if called from ResetPattern/RestorePattern
+   if (!newtitle.IsEmpty()) {
+      if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
+
+      if (inscript) stop_after_script = true;
+      currlayer->savestart = false;
+      currlayer->warp = 0;
+      if (GetInfoFrame()) {
+         // comments will no longer be relevant so close info window
+         GetInfoFrame()->Close(true);
+      }
+
+      // reset timing info used in DisplayTimingInfo
+      endtime = begintime = 0;
+
+      // clear all undo/redo history
+      currlayer->undoredo->ClearUndoRedo();
+   }
+
+   if (!showbanner) statusptr->ClearMessage();
+
+   // set nopattupdate BEFORE UpdateStatus() call so we see gen=0 and pop=0;
+   // in particular, it avoids getPopulation being called which would
+   // slow down hlife pattern loading
+   viewptr->nopattupdate = true;
+
+   if (updatestatus) {
+      // update all of status bar so we don't see different colored lines;
+      // on Mac, DrawView also gets called if there are pending updates
+      UpdateStatus();
+   }
+
+   // save current algo and rule
+   algo_type oldalgo = currlayer->algtype;
+   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   
+   // delete old universe and create new one of same type
+   delete currlayer->algo;
+   currlayer->algo = CreateNewUniverse(currlayer->algtype);
+
+   // ensure new universe uses same rule in case LoadImage succeeds
+   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+
+   // set increment using current warp value
+   SetGenIncrement();
+
+   if (!newtitle.IsEmpty()) {
+      // show new file name in window title but no rule (which readpattern can change);
+      // nicer if user can see file name while loading a very large pattern
+      MySetTitle(_("Loading ") + newtitle);
+   }
+
+   if (LoadImage(path)) {
+      viewptr->nopattupdate = false;
+   } else {
+      const char* err = readpattern(FILEPATH, *currlayer->algo);
+      if (err) {
+         // cycle thru all other algos until readpattern succeeds
+         for (int i = 0; i < NumAlgos(); i++) {
+            if (i != oldalgo) {
+               currlayer->algtype = i;
+               delete currlayer->algo;
+               currlayer->algo = CreateNewUniverse(currlayer->algtype);
+               // readpattern will call setrule
+               err = readpattern(FILEPATH, *currlayer->algo);
+               if (!err) break;
+            }
+         }
+         viewptr->nopattupdate = false;
+         if (err) {
+            // no algo could read pattern so restore original algo and rule
+            currlayer->algtype = oldalgo;
+            delete currlayer->algo;
+            currlayer->algo = CreateNewUniverse(currlayer->algtype);
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            // Warning( wxString(err,wxConvLocal) );
+            // current error and original error are not necessarily meaningful
+            // so report a more generic error
+            Warning(_("File could not be loaded by any algorithm\n(probably due to an unknown rule)."));
+         }
+      }
+      viewptr->nopattupdate = false;
+   }
+
+   if (!newtitle.IsEmpty()) {
+      MarkLayerClean(newtitle);     // calls SetWindowTitle
+   
+      // switch to default colors if algo/rule changed
+      wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+      if (oldalgo != currlayer->algtype || oldrule != newrule) {
+         UpdateLayerColors();
+      }
+
+      if (openremovesel) currlayer->currsel.Deselect();
+      if (opencurs) currlayer->curs = opencurs;
+
+      viewptr->FitInView(1);
+      currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
+      UpdateEverything();
+      showbanner = false;
+   } else {
+      // ResetPattern/RestorePattern does the update
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
 {
    if (inscript) return;   // can't run script while another is running
@@ -292,7 +421,8 @@ void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
    }
 
    Raise();
-   OpenFile(scriptpath, remember);
+   if (remember) AddRecentScript(scriptpath);
+   RunScript(scriptpath);
 }
 
 // -----------------------------------------------------------------------------
@@ -379,8 +509,8 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    //   or more than one pattern, or more than one script), build a temporary html
    //   file with clickable links to each file entry and show it in the help window.
    // - If the zip file contains at most one pattern and at most one script (both
-   //   at the root level) then load the pattern (if present) and then ask to
-   //   run the script (if present).
+   //   at the root level) then load the pattern (if present) and then run the script
+   //   (if present and if allowed).
    
    const wxString indent = wxT("&nbsp;&nbsp;&nbsp;&nbsp;");
    bool dirseen = false;
@@ -541,13 +671,15 @@ void MainFrame::OpenZipFile(const wxString& zippath)
          wxString tempfile = tempdir + lastpattern.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastpattern, tempfile)) {
             Raise();
-            OpenFile(tempfile, false);
+            // don't call AddRecentPattern(tempfile) -- OpenFile has added zippath to recent patterns
+            currlayer->currfile = tempfile;
+            LoadPattern(currlayer->currfile, GetBaseName(tempfile));
          }
       }
       if (scriptfiles == 1) {
          wxString tempfile = tempdir + lastscript.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastscript, tempfile)) {
-            // run script, possibly
+            // run script, depending on safety check
             CheckBeforeRunning(tempfile, false);
          }
       }
@@ -556,144 +688,17 @@ void MainFrame::OpenZipFile(const wxString& zippath)
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXMAC__
-   // convert path to decomposed UTF8 so fopen will work
-   #define FILEPATH path.fn_str()
-#else
-   #define FILEPATH path.mb_str(wxConvLocal)
-#endif
-
-void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool updatestatus)
-{
-   if ( !wxFileName::FileExists(path) ) {
-      Warning(_("The file does not exist:\n") + path);
-      return;
-   }
-
-   if (IsZipFile(path)) {
-      OpenZipFile(path);
-      return;
-   }
-
-   // newtitle is empty if called from ResetPattern/RestorePattern
-   if (!newtitle.IsEmpty()) {
-      if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
-
-      if (inscript) stop_after_script = true;
-      currlayer->savestart = false;
-      currlayer->warp = 0;
-      if (GetInfoFrame()) {
-         // comments will no longer be relevant so close info window
-         GetInfoFrame()->Close(true);
-      }
-
-      // reset timing info used in DisplayTimingInfo
-      endtime = begintime = 0;
-
-      // clear all undo/redo history
-      currlayer->undoredo->ClearUndoRedo();
-   }
-
-   if (!showbanner) statusptr->ClearMessage();
-
-   // set nopattupdate BEFORE UpdateStatus() call so we see gen=0 and pop=0;
-   // in particular, it avoids getPopulation being called which would
-   // slow down hlife pattern loading
-   viewptr->nopattupdate = true;
-
-   if (updatestatus) {
-      // update all of status bar so we don't see different colored lines;
-      // on Mac, DrawView also gets called if there are pending updates
-      UpdateStatus();
-   }
-
-   // save current algo and rule
-   algo_type oldalgo = currlayer->algtype;
-   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   
-   // delete old universe and create new one of same type
-   delete currlayer->algo;
-   currlayer->algo = CreateNewUniverse(currlayer->algtype);
-
-   // ensure new universe uses same rule in case LoadImage succeeds
-   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-
-   // set increment using current warp value
-   SetGenIncrement();
-
-   if (!newtitle.IsEmpty()) {
-      // show new file name in window title but no rule (which readpattern can change);
-      // nicer if user can see file name while loading a very large pattern
-      MySetTitle(_("Loading ") + newtitle);
-   }
-
-   if (LoadImage(path)) {
-      viewptr->nopattupdate = false;
-   } else {
-      const char* err = readpattern(FILEPATH, *currlayer->algo);
-      if (err) {
-         // cycle thru all other algos until readpattern succeeds
-         for (int i = 0; i < NumAlgos(); i++) {
-            if (i != oldalgo) {
-               currlayer->algtype = i;
-               delete currlayer->algo;
-               currlayer->algo = CreateNewUniverse(currlayer->algtype);
-               // readpattern will call setrule
-               err = readpattern(FILEPATH, *currlayer->algo);
-               if (!err) break;
-            }
-         }
-         viewptr->nopattupdate = false;
-         if (err) {
-            // no algo could read pattern so restore original algo and rule
-            currlayer->algtype = oldalgo;
-            delete currlayer->algo;
-            currlayer->algo = CreateNewUniverse(currlayer->algtype);
-            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-            // Warning( wxString(err,wxConvLocal) );
-            // current error and original error are not necessarily meaningful
-            // so report a more generic error
-            Warning(_("File could not be loaded by any algorithm\n(probably due to an unknown rule)."));
-         }
-      }
-      viewptr->nopattupdate = false;
-   }
-
-   if (!newtitle.IsEmpty()) {
-      MarkLayerClean(newtitle);     // calls SetWindowTitle
-   
-      // switch to default colors if algo/rule changed
-      wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-      if (oldalgo != currlayer->algtype || oldrule != newrule) {
-         UpdateLayerColors();
-      }
-
-      if (openremovesel) currlayer->currsel.Deselect();
-      if (opencurs) currlayer->curs = opencurs;
-
-      viewptr->FitInView(1);
-      currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
-      UpdateEverything();
-      showbanner = false;
-   } else {
-      // ResetPattern/RestorePattern does the update
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-wxString MainFrame::GetBaseName(const wxString& path)
-{
-   // extract basename from given path
-   return path.AfterLast(wxFILE_SEP_PATH);
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::OpenFile(const wxString& path, bool remember)
 {
    if (IsHTMLFile(path)) {
+      // show HTML file in help window
       ShowHelp(path);
+      return;
+   }
+   
+   if (IsTextFile(path)) {
+      // open text file in user's preferred text editor
+      EditFile(path);
       return;
    }
 
@@ -711,11 +716,17 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
       }
       return;
    }
-
-   if ( IsScriptFile(path) ) {
+   
+   if (IsScriptFile(path)) {
       // execute script
       if (remember) AddRecentScript(path);
       RunScript(path);
+
+   } else if (IsZipFile(path)) {
+      // process zip file
+      if (remember) AddRecentPattern(path);     // treat it like a pattern
+      OpenZipFile(path);
+   
    } else {
       // load pattern
       if (remember) AddRecentPattern(path);
@@ -891,15 +902,7 @@ void MainFrame::OpenPattern()
    if ( opendlg.ShowModal() == wxID_OK ) {
       wxFileName fullpath( opendlg.GetPath() );
       opensavedir = fullpath.GetPath();
-      if ( IsScriptFile( opendlg.GetPath() ) ) {
-         // assume user meant to run script
-         AddRecentScript( opendlg.GetPath() );
-         RunScript( opendlg.GetPath() );
-      } else {
-         AddRecentPattern( opendlg.GetPath() );
-         currlayer->currfile = opendlg.GetPath();
-         LoadPattern(currlayer->currfile, opendlg.GetFilename());
-      }
+      OpenFile( opendlg.GetPath() );
    }
 }
 
@@ -1227,9 +1230,13 @@ void MainFrame::OpenRecentPattern(int id)
       wxFileName fname(path);
       if (!fname.IsAbsolute()) path = gollydir + path;
 
+      // path might be a zip file so call OpenFile rather than LoadPattern
+      OpenFile(path);
+      /*
       AddRecentPattern(path);
       currlayer->currfile = path;
       LoadPattern(currlayer->currfile, GetBaseName(path));
+      */
    }
 }
 

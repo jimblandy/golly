@@ -903,7 +903,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       if (inscript) {
          Warning(_("Cannot open file while a script is running."));
       } else {
-         // open clicked pattern/script
+         // open clicked file
          wxString path = url.AfterFirst(':');
          #ifdef __WXMSW__
             path.Replace(wxT("/"), wxT("\\"));
