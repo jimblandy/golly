@@ -278,7 +278,8 @@ bool MainFrame::LoadImage(const wxString& path)
    #define FILEPATH path.mb_str(wxConvLocal)
 #endif
 
-void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool updatestatus)
+void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
+                            bool updatestatus, bool updateall)
 {
    if ( !wxFileName::FileExists(path) ) {
       Warning(_("The file does not exist:\n") + path);
@@ -383,7 +384,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
 
       viewptr->FitInView(1);
       currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
-      UpdateEverything();
+      if (updateall) UpdateEverything();
       showbanner = false;
    } else {
       // ResetPattern/RestorePattern does the update
@@ -392,33 +393,43 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle, bool
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember)
+void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember,
+                                   const wxString& zippath)
 {
-   if (inscript) return;   // can't run script while another is running
+   if (inscript) return;      // can't run script while another is running
    
-   // ???!!! nicer to do this:
-   // - always run script if it's in gollydir + Patterns
-   //   (ie. the script is in a Golly-supplied .zip file) and/or patterndir???
-   //   but not in downloaddir and not in tempdir
-   // - if user answers Yes to dialog then save script info (download path or zip path + entry)
-   //   in list of safe scripts (stored in prefs file) so we can search for this script
-   //   and not ask again
-   
-   // create our own dialog with a View button???  probably no need now that
-   // user can ctrl/right-click on link to open script in their text editor
-   
-   #ifdef __WXMAC__
-      wxSetCursor(*wxSTANDARD_CURSOR);
-   #endif
-   int answer = wxMessageBox(scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source."),
-                             _("Do you want to run this script?"),
-                             wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT,
-                             wxGetActiveWindow());
-   switch (answer) {
-      case wxYES: break;
-      case wxNO:  return;
-      default:    return;   // No
+   bool ask;
+   if (zippath.IsEmpty()) {
+      // script was downloaded via "get:" link (script is in downloaddir --
+      // see GetURL in wxhelp.cpp) so always ask user if it's okay to run
+      ask = true;
+   } else {
+      // script is included in zip file (scriptpath starts with tempdir) so only
+      // ask user if zip file was downloaded via "get:" link
+      ask = zippath.StartsWith(downloaddir);
    }
+   
+   if (ask) {
+      UpdateEverything();     // in case OpenZipFile called LoadPattern
+      #ifdef __WXMAC__
+         wxSetCursor(*wxSTANDARD_CURSOR);
+      #endif
+      // create our own dialog with a View button???  probably no need now that
+      // user can ctrl/right-click on link to open script in their text editor
+      wxString msg = scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source.");
+      int answer = wxMessageBox(msg, _("Do you want to run this script?"),
+                                wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT,
+                                wxGetActiveWindow());
+      switch (answer) {
+         case wxYES: break;
+         case wxNO:  return;
+         default:    return;  // No
+      }
+   }
+   
+   // also do this???
+   // save script info (download path or zip path + script entry) in list of safe scripts
+   // (stored in prefs file) so we can search for this script and not ask again
 
    Raise();
    if (remember) AddRecentScript(scriptpath);
@@ -671,16 +682,22 @@ void MainFrame::OpenZipFile(const wxString& zippath)
          wxString tempfile = tempdir + lastpattern.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastpattern, tempfile)) {
             Raise();
-            // don't call AddRecentPattern(tempfile) -- OpenFile has added zippath to recent patterns
+            // don't call AddRecentPattern(tempfile) here; OpenFile has added
+            // zippath to recent patterns
             currlayer->currfile = tempfile;
-            LoadPattern(currlayer->currfile, GetBaseName(tempfile));
+            LoadPattern(currlayer->currfile, GetBaseName(tempfile), true,
+                        // if a script is going to run then let it do the final update
+                        (scriptfiles == 0) || inscript);
          }
       }
-      if (scriptfiles == 1) {
+      if (scriptfiles == 1 && !inscript) {
          wxString tempfile = tempdir + lastscript.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastscript, tempfile)) {
-            // run script, depending on safety check
-            CheckBeforeRunning(tempfile, false);
+            // run script depending on safety check
+            CheckBeforeRunning(tempfile, false, zippath);
+         } else {
+            // should never happen but play safe
+            UpdateEverything();
          }
       }
    }

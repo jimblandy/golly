@@ -63,7 +63,7 @@ public:
    // file functions
    void OpenFile(const wxString& path, bool remember = true);
    void LoadPattern(const wxString& path, const wxString& newtitle,
-                    bool updatestatus = true);
+                    bool updatestatus = true, bool updateall = true);
    void NewPattern(const wxString& title = _("untitled"));
    void CreateUniverse();
    void SetWindowTitle(const wxString& filename);
@@ -76,10 +76,10 @@ public:
    void SavePattern();
    bool SaveCurrentLayer();
    const char* SaveFile(const wxString& path, const wxString& format, bool remember);
-   const char* WritePattern(const wxString& path,
-                            pattern_format format,
+   const char* WritePattern(const wxString& path, pattern_format format,
                             int top, int left, int bottom, int right);
-   void CheckBeforeRunning(const wxString& scriptpath, bool remember = true);
+   void CheckBeforeRunning(const wxString& scriptpath, bool remember,
+                           const wxString& zippath);
    bool ExtractZipEntry(const wxString& zippath,
                         const wxString& entryname,
                         const wxString& outfile);

@@ -657,8 +657,9 @@ void GetURL(const wxString& url)
       mainptr->OpenFile(filepath);
    
    } else if (IsScriptFile(filename)) {
-      // run script depending on safety setting
-      mainptr->CheckBeforeRunning(filepath);
+      // run script depending on safety check; if it is allowed to run
+      // then we remember script in the Run Recent submenu
+      mainptr->CheckBeforeRunning(filepath, true, wxEmptyString);
    
    } else {
       // assume pattern file, so try to load it
@@ -713,8 +714,9 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
          mainptr->EditFile(tempfile);
       
       } else if ( IsScriptFile(filename) ) {
-         // run script depending on safety setting
-         mainptr->CheckBeforeRunning(tempfile, false);
+         // run script depending on safety check; note that because the script is
+         // included in a zip file we don't remember it in the Run Recent submenu
+         mainptr->CheckBeforeRunning(tempfile, false, zippath);
       
       } else {
          // open pattern but don't remember in Open Recent menu
