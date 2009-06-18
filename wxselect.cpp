@@ -888,8 +888,9 @@ bool Selection::Visible(wxRect* visrect)
 
 void Selection::EmptyUniverse()
 {
-   // save current speed, scale, position and gen count
-   int savewarp = currlayer->warp;
+   // save current step, scale, position and gen count
+   int savebase = currlayer->currbase;
+   int saveexpo = currlayer->currexpo;
    int savemag = currlayer->view->getmag();
    bigint savex = currlayer->view->x;
    bigint savey = currlayer->view->y;
@@ -899,9 +900,10 @@ void Selection::EmptyUniverse()
    // new, empty universe which also uses the same rule
    mainptr->CreateUniverse();
    
-   // restore speed, scale, position and gen count
-   mainptr->SetWarp(savewarp);
-   mainptr->SetGenIncrement();
+   // restore step, scale, position and gen count
+   currlayer->currbase = savebase;
+   mainptr->SetStepExponent(saveexpo);
+   // SetStepExponent calls SetGenIncrement
    currlayer->view->setpositionmag(savex, savey, savemag);
    currlayer->algo->setGeneration(savegen);
    

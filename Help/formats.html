@@ -497,27 +497,39 @@ Golly can open a standard zip file and process its contents in the
 following way:
 
 <p>
-If the zip file contains any rule-related files (.colors/icons/table/tree)
-then those files will be extracted and automatically installed into
-<a href="prefs:control">your rules folder</a>.
-
-<p>
 If the zip file is "complex" then Golly builds a temporary HTML file with
 special <a href="help.html#links"><b>unzip</b></a> links to each included file
-and shows the result in the help window.
-A complex zip file is one that contains multiple patterns, or multiple scripts,
-or any folders, rule-related files, HTML files, or any text files
-(files with a .txt/doc extension or a name containing "readme").
+and shows the result in the help window.  A complex zip file is one that contains:
 
 <p>
-If the zip file contains at most one pattern and at most one script, Golly will
-load the pattern (if present) and then ask to run the script (if present).
+<ul>
+<li> Any folders.
+<li> Any rule-related files (.colors or .icons or .table or .tree extension).
+     All such files are automatically extracted and installed into
+     <a href="prefs:control">your rules folder</a>.
+<li> Any HTML files (.htm or .html extension).
+<li> Any text files (.txt or .doc extension, or a name containing "readme").
+<li> Multiple scripts (.pl or .py extension).
+<li> Multiple patterns.
+</ul>
+
+<p>
+If the zip file contains at most one pattern and at most one script, Golly
+will load the pattern (if present) and then run the script (if present).
+For security reasons, if the zip file was downloaded via a
+<a href="help.html#links"><b>get</b></a> link then Golly will ask
+if you really want to run the included script.
 Both the pattern and the script must be at the root level of the zip file;
 ie. not inside a folder.
+For an example of such a zip file, open
+<a href="open:Patterns/Other-Rules/WireWorld/Langtons-ant.zip">Langtons-ant.zip</a>
+from the Patterns/Other-Rules/WireWorld/ folder.  This zip file contains
+a pattern file and a simple Python script that sets up a nicer initial view
+and step size.
 
 <p>
-Various zip files can be downloaded from the
-<a href="archives.html">online archives</a>.
+A number of pattern collections in the form of zip files can be downloaded
+from the <a href="archives.html">online archives</a>.
 
 </body>
 </html>

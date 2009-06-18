@@ -685,7 +685,8 @@ void MainFrame::UpdateMenuItems(bool active)
                                     currlayer->algo->getGeneration() > currlayer->startgen));
       mbar->Enable(ID_SETGEN,       active && !inscript);
       mbar->Enable(ID_FASTER,       active);
-      mbar->Enable(ID_SLOWER,       active && currlayer->warp > minwarp);
+      mbar->Enable(ID_SLOWER,       active && currlayer->currexpo > minexpo);
+      mbar->Enable(ID_SETBASE,      active && !inscript);
       mbar->Enable(ID_AUTO,         active);
       mbar->Enable(ID_HYPER,        active);
       mbar->Enable(ID_HINFO,        active);
@@ -1336,6 +1337,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_SETGEN:         SetGeneration(); break;
       case ID_FASTER:         GoFaster(); break;
       case ID_SLOWER:         GoSlower(); break;
+      case ID_SETBASE:        SetBaseStep(); break;
       case ID_AUTO:           ToggleAutoFit(); break;
       case ID_HYPER:          ToggleHyperspeed(); break;
       case ID_HINFO:          ToggleHashInfo(); break;
@@ -2195,6 +2197,7 @@ void MainFrame::CreateMenus()
    controlMenu->AppendSeparator();
    controlMenu->Append(ID_FASTER,               _("Faster") + GetAccelerator(DO_FASTER));
    controlMenu->Append(ID_SLOWER,               _("Slower") + GetAccelerator(DO_SLOWER));
+   controlMenu->Append(ID_SETBASE,              _("Set Base Step...") + GetAccelerator(DO_SETBASE));
    controlMenu->AppendSeparator();
    controlMenu->AppendCheckItem(ID_AUTO,        _("Auto Fit") + GetAccelerator(DO_AUTOFIT));
    controlMenu->AppendCheckItem(ID_HYPER,       _("Hyperspeed") + GetAccelerator(DO_HYPER));
@@ -2364,6 +2367,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_SETGEN,          DO_SETGEN);
       SetAccelerator(mbar, ID_FASTER,          DO_FASTER);
       SetAccelerator(mbar, ID_SLOWER,          DO_SLOWER);
+      SetAccelerator(mbar, ID_SETBASE,         DO_SETBASE);
       SetAccelerator(mbar, ID_AUTO,            DO_AUTOFIT);
       SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
       SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);

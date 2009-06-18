@@ -90,12 +90,12 @@ public:
    // edit functions
    void ToggleAllowUndo();
    void RestorePattern(bigint& gen, const wxString& filename,
-                       bigint& x, bigint& y, int mag, int warp);
+                       bigint& x, bigint& y, int mag, int base, int expo);
 
    // prefs functions
    void SetRandomFillPercentage();
-   void SetMinimumWarp();
-   void UpdateWarp();
+   void SetMinimumStepExponent();
+   void UpdateStepExponent();
    void ShowPrefsDialog(const wxString& page = wxEmptyString);
 
    // control functions
@@ -108,11 +108,12 @@ public:
    void ToggleAutoFit();
    void ToggleHyperspeed();
    void ToggleHashInfo();
-   void SetWarp(int newwarp);
+   void SetStepExponent(int newexpo);
    void SetGenIncrement();
    void ResetPattern(bool resetundo = true);
    void SetGeneration();
    const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
+   void SetBaseStep();
    void ReduceCellStates(int newmaxstate);
    void ShowRuleDialog();
    void ChangeAlgorithm(algo_type newalgotype,
@@ -210,8 +211,8 @@ private:
    wxGenericDirCtrl* patternctrl;
    wxGenericDirCtrl* scriptctrl;
    
-   int minwarp;                  // warp value at maximum delay (must be <= 0)
-   long whentosee;               // when to do next gen (if warp < 0)
+   int minexpo;                  // currexpo at maximum delay (must be <= 0)
+   long whentosee;               // when to do next gen (if currexpo < 0)
    long begintime, endtime;      // for timing info
    double begingen, endgen;      // ditto
 };
@@ -295,6 +296,7 @@ enum {
    ID_SETGEN,
    ID_FASTER,
    ID_SLOWER,
+   ID_SETBASE,
    ID_AUTO,
    ID_HYPER,
    ID_HINFO,

@@ -1413,6 +1413,7 @@ void PatternView::ProcessKey(int key, int modifiers)
          break;
       case DO_RESET:       if (!inscript) mainptr->ResetPattern(); break;
       case DO_SETGEN:      if (!inscript) mainptr->SetGeneration(); break;
+      case DO_SETBASE:     if (!inscript) mainptr->SetBaseStep(); break;
       case DO_FASTER:      mainptr->GoFaster(); break;
       case DO_SLOWER:      mainptr->GoSlower(); break;
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;

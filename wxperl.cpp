@@ -53,7 +53,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, etc
 #include "wxlayer.h"       // for AddLayer, currlayer, currindex, etc
 #include "wxscript.h"      // for inscript, abortmsg, GSF_*, etc
 #include "wxperl.h"
@@ -1813,7 +1813,7 @@ XS(pl_setstep)
    dXSARGS;
    if (items != 1) PERL_ERROR("Usage: g_setstep($int).");
 
-   mainptr->SetWarp(SvIV(ST(0)));
+   mainptr->SetStepExponent(SvIV(ST(0)));
    DoAutoUpdate();
 
    XSRETURN(0);
@@ -1828,7 +1828,7 @@ XS(pl_getstep)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $int = g_getstep().");
 
-   XSRETURN_IV(currlayer->warp);
+   XSRETURN_IV(currlayer->currexpo);
 }
 
 // -----------------------------------------------------------------------------
@@ -1844,8 +1844,8 @@ XS(pl_setbase)
 
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-   algoinfo[currlayer->algtype]->algobase = base;
-   mainptr->UpdateWarp();
+   currlayer->currbase = base;
+   mainptr->SetGenIncrement();
    DoAutoUpdate();
 
    XSRETURN(0);
@@ -1860,7 +1860,7 @@ XS(pl_getbase)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $int = g_getbase().");
 
-   XSRETURN_IV(algoinfo[currlayer->algtype]->algobase);
+   XSRETURN_IV(currlayer->currbase);
 }
 
 // -----------------------------------------------------------------------------

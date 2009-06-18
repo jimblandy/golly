@@ -106,7 +106,8 @@ public:
    bigint oldgen, newgen;                 // old and new generation counts
    bigint oldx, oldy, newx, newy;         // old and new positions
    int oldmag, newmag;                    // old and new scales
-   int oldwarp, newwarp;                  // old and new speeds
+   int oldbase, newbase;                  // old and new base steps
+   int oldexpo, newexpo;                  // old and new step exponents
    bool scriptgen;                        // gen change was done by script?
    // also uses oldsel, newsel
    
@@ -121,7 +122,8 @@ public:
    // also uses oldgen, newgen
    // and oldrule, newrule
    // and oldx, oldy, newx, newy, oldmag, newmag
-   // and oldwarp, newwarp
+   // and oldbase, newbase
+   // and oldexpo, newexpo
    // and oldsel, newsel
    // and oldalgo, newalgo
    
@@ -258,10 +260,10 @@ bool ChangeNode::DoChange(bool undo)
       case genchange:
          if (undo) {
             currlayer->currsel = oldsel;
-            mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldwarp);
+            mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldbase, oldexpo);
          } else {
             currlayer->currsel = newsel;
-            mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newwarp);
+            mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newbase, newexpo);
          }
          break;
       
@@ -280,7 +282,8 @@ bool ChangeNode::DoChange(bool undo)
                currlayer->startx = oldx;
                currlayer->starty = oldy;
                currlayer->startmag = oldmag;
-               currlayer->startwarp = oldwarp;
+               currlayer->startbase = oldbase;
+               currlayer->startexpo = oldexpo;
                currlayer->startsel = oldsel;
                currlayer->startname = oldname;
                if (currlayer->cloneid > 0) {
@@ -306,7 +309,8 @@ bool ChangeNode::DoChange(bool undo)
                currlayer->startx = newx;
                currlayer->starty = newy;
                currlayer->startmag = newmag;
-               currlayer->startwarp = newwarp;
+               currlayer->startbase = newbase;
+               currlayer->startexpo = newexpo;
                currlayer->startsel = newsel;
                currlayer->startname = newname;
                if (currlayer->cloneid > 0) {
@@ -689,7 +693,8 @@ void UndoRedo::RememberGenStart()
    prevsel = currlayer->currsel;
    viewptr->GetPos(prevx, prevy);
    prevmag = viewptr->GetMag();
-   prevwarp = currlayer->warp;
+   prevbase = currlayer->currbase;
+   prevexpo = currlayer->currexpo;
    
    if (!inscript) {
       // make sure Undo and Redo items show correct actions while generating
@@ -716,7 +721,8 @@ void UndoRedo::RememberGenStart()
                change->newx = currlayer->startx;
                change->newy = currlayer->starty;
                change->newmag = currlayer->startmag;
-               change->newwarp = currlayer->startwarp;
+               change->newbase = currlayer->startbase;
+               change->newexpo = currlayer->startexpo;
                change->newsel = currlayer->startsel;
                change->newname = currlayer->startname;
                if (currlayer->cloneid > 0) {
@@ -816,8 +822,10 @@ void UndoRedo::RememberGenFinish()
    viewptr->GetPos(change->newx, change->newy);
    change->oldmag = prevmag;
    change->newmag = viewptr->GetMag();
-   change->oldwarp = prevwarp;
-   change->newwarp = currlayer->warp;
+   change->oldbase = prevbase;
+   change->newbase = currlayer->currbase;
+   change->oldexpo = prevexpo;
+   change->newexpo = currlayer->currexpo;
    change->oldsel = prevsel;
    change->newsel = currlayer->currsel;
 
@@ -844,7 +852,8 @@ void UndoRedo::AddGenChange()
    prevx = currlayer->startx;
    prevy = currlayer->starty;
    prevmag = currlayer->startmag;
-   prevwarp = currlayer->startwarp;
+   prevbase = currlayer->startbase;
+   prevexpo = currlayer->startexpo;
    prevfile = wxEmptyString;
 
    // play safe and pretend RememberGenStart was called
@@ -944,7 +953,8 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
       change->oldx = currlayer->startx;
       change->oldy = currlayer->starty;
       change->oldmag = currlayer->startmag;
-      change->oldwarp = currlayer->startwarp;
+      change->oldbase = currlayer->startbase;
+      change->oldexpo = currlayer->startexpo;
       change->oldsel = currlayer->startsel;
       change->oldname = currlayer->startname;
       if (currlayer->cloneid > 0) {
@@ -965,7 +975,8 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
       change->newx = currlayer->startx;
       change->newy = currlayer->starty;
       change->newmag = currlayer->startmag;
-      change->newwarp = currlayer->startwarp;
+      change->newbase = currlayer->startbase;
+      change->newexpo = currlayer->startexpo;
       change->newsel = currlayer->startsel;
       change->newname = currlayer->startname;
       if (currlayer->cloneid > 0) {
@@ -1532,7 +1543,8 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
    prevx = history->prevx;
    prevy = history->prevy;
    prevmag = history->prevmag;
-   prevwarp = history->prevwarp;
+   prevbase = history->prevbase;
+   prevexpo = history->prevexpo;
    prevsel = history->prevsel;
    startcount = history->startcount;
    fixsetgen = history->fixsetgen;

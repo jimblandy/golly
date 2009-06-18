@@ -232,7 +232,7 @@ static void CreateDefaultIcons(AlgoData* ad)
 // -----------------------------------------------------------------------------
 
 AlgoData::AlgoData() {
-   algomem = algobase = 0;
+   algomem = defbase = 0;
    statusbrush = NULL;
    icons7x7 = icons15x15 = NULL;
    iconfile = wxEmptyString;
@@ -272,7 +272,7 @@ void InitAlgorithms()
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
       
       // does algo use hashing?
-      ad->canhash = ad->algobase == 8;    //!!! safer method needed???
+      ad->canhash = ad->defbase == 8;    //!!! safer method needed???
       
       // set status bar background by cycling thru a few pale colors
       switch (i % 9) {

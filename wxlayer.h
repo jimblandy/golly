@@ -39,18 +39,19 @@ public:
    Layer();
    ~Layer();
 
-   lifealgo* algo;            // this layer's universe (shared by clones)
-   algo_type algtype;         // type of universe (index into algoinfo)
-   bool hyperspeed;           // use speed acceleration?
-   bool showhashinfo;         // show hashing info?
-   bool autofit;              // auto fit pattern while generating?
-   bool dirty;                // user has modified pattern?
-   bool savedirty;            // state of dirty flag before drawing/script change
-   bool stayclean;            // script has reset dirty flag?
-   int warp;                  // speed setting (ie. step exponent)
-   int drawingstate;          // current drawing state
-   wxCursor* curs;            // cursor mode
-   UndoRedo* undoredo;        // undo/redo history (shared by clones)
+   lifealgo* algo;               // this layer's universe (shared by clones)
+   algo_type algtype;            // type of universe (index into algoinfo)
+   bool hyperspeed;              // use speed acceleration?
+   bool showhashinfo;            // show hashing info?
+   bool autofit;                 // auto fit pattern while generating?
+   bool dirty;                   // user has modified pattern?
+   bool savedirty;               // state of dirty flag before drawing/script change
+   bool stayclean;               // script has reset dirty flag?
+   int currbase;                 // current base step
+   int currexpo;                 // current step exponent
+   int drawingstate;             // current drawing state
+   wxCursor* curs;               // current cursor
+   UndoRedo* undoredo;           // undo/redo history (shared by clones)
 
    // each layer (cloned or not) has its own viewport for displaying patterns;
    // note that we use a pointer to the viewport to allow temporary switching
@@ -80,7 +81,8 @@ public:
    wxString startrule;           // starting rule
    bigint startgen;              // starting generation (>= 0)
    bigint startx, starty;        // starting location
-   int startwarp;                // starting speed
+   int startbase;                // starting base step
+   int startexpo;                // starting step exponent
    int startmag;                 // starting scale
    Selection startsel;           // starting selection
    
@@ -119,7 +121,7 @@ void AddLayer();
 // The first call creates the initial layer.  Later calls insert the
 // new layer immediately after the old current layer.  The new layer
 // inherits the same type of universe, the same rule, the same scale
-// and location, and the same cursor mode.
+// and location, and the same cursor.
 
 void CloneLayer();
 // Like AddLayer but shares the same universe and undo/redo history
@@ -174,7 +176,7 @@ void ToggleSyncViews();
 
 void ToggleSyncCursors();
 // Toggle the synccursors flag.  When true, every layer uses the same
-// cursor mode as the current layer.
+// cursor as the current layer.
 
 void ToggleStackLayers();
 // Toggle the stacklayers flag.  When true, the rendering code displays
@@ -206,7 +208,7 @@ Layer* GetLayer(int index);
 // Return a pointer to the layer specified by the given index.
 
 
-//!!! move this color stuff into wxcolors.*???
+// move this color stuff into wxcolors.*???
 
 void CreateColorGradient();
 // Create a color gradient for the current layer using

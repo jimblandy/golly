@@ -45,7 +45,7 @@ typedef int algo_type;           // 0..MAX_ALGOS-1
 class AlgoData : public staticAlgoInfo {
 public:
    AlgoData();
-   virtual void setDefaultBaseStep(int v) { algobase = v; }
+   virtual void setDefaultBaseStep(int v) { defbase = v; }
    virtual void setDefaultMaxMem(int v) { algomem = v; }
 
    static AlgoData& tick();      // static allocator
@@ -53,7 +53,7 @@ public:
    // additional data
    bool canhash;                 // algo uses hashing?
    int algomem;                  // maximum memory (in MB)
-   int algobase;                 // base step
+   int defbase;                  // default base step
    wxColor statusrgb;            // status bar color
    wxBrush* statusbrush;         // corresponding brush
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8

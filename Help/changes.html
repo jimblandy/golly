@@ -22,11 +22,20 @@
      <a href="python.html#getclipstr">getclipstr</a>,
      <a href="python.html#setclipstr">setclipstr</a>,
      <a href="python.html#rulesdir">rulesdir</a>.
+<li> The base step can now be changed temporarily via the new Set Base Step dialog
+     in the Control menu.  Golly will restore the default base step
+     (set in <a href="prefs:control">Preferences > Control</a>) when you create
+     a new pattern, load a pattern file, or switch to a different algorithm.
+<li> The <a href="python.html#setbase">setbase</a> command also changes the base step
+     temporarily, so if you have any scripts that use setbase then you might need to
+     call it <em>after</em> calling new/open/setrule/setalgo.
 <li> Paste now supports "And" mode.
 <li> The RLE reader allows alphabetic characters other than "o" to represent live cells.
+<li> Fixed a bug with Random Fill.  Golly wasn't initializing the seed, so the internal
+     rand() calls were returning the same sequence of "random" integers each time!
 <li> Fixed a bug that prevented the <a href="python.html#getkey">getkey</a> command
      from returning uppercase letters.
-<li> Fixed crash in Mac app if script saved pattern and progress dialog appeared.
+<li> Fixed crash in Mac app if a script saved a pattern and the progress dialog appeared.
 </ul>
 
 <p>
@@ -166,7 +175,7 @@
 <li> Added a Clear Missing Files item to the Open/Run Recent submenus.
 <li> The Control menu's Go and Stop items have been replaced by a single Start/Stop
      item for consistency with the tool bar's start/stop button.
-<li> The Control menu has a Set Generation... item for changing the generation count,
+<li> The Control menu has a Set Generation item for changing the generation count,
      or you can click in the "Generation=..." text in the status bar.
      Scripts can use the new <a href="python.html#setgen">setgen</a> command.
 <li> Flip operations are much faster.

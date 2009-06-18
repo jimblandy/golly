@@ -64,7 +64,8 @@ bool MainFrame::SaveStartingPattern()
    currlayer->startdirty = currlayer->dirty;
    currlayer->startmag = viewptr->GetMag();
    viewptr->GetPos(currlayer->startx, currlayer->starty);
-   currlayer->startwarp = currlayer->warp;
+   currlayer->startbase = currlayer->currbase;
+   currlayer->startexpo = currlayer->currexpo;
    currlayer->startalgo = currlayer->algtype;
    
    // if this layer is a clone then save some settings in other clones
@@ -76,7 +77,8 @@ bool MainFrame::SaveStartingPattern()
             cloneptr->startx = cloneptr->view->x;
             cloneptr->starty = cloneptr->view->y;
             cloneptr->startmag = cloneptr->view->getmag();
-            cloneptr->startwarp = cloneptr->warp;
+            cloneptr->startbase = cloneptr->currbase;
+            cloneptr->startexpo = cloneptr->currexpo;
          }
       }
    }
@@ -172,10 +174,15 @@ void MainFrame::ResetPattern(bool resetundo)
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    
    // restore pattern and settings saved by SaveStartingPattern;
-   // first restore step size, algorithm and starting pattern
-   currlayer->warp = currlayer->startwarp;
+   // first restore algorithm
    currlayer->algtype = currlayer->startalgo;
 
+   // restore step size and set increment
+   currlayer->currbase = currlayer->startbase;
+   currlayer->currexpo = currlayer->startexpo;
+   SetGenIncrement();
+
+   // restore starting pattern
    if ( currlayer->startfile.IsEmpty() ) {
       // restore pattern from currfile
       LoadPattern(currlayer->currfile, wxEmptyString);
@@ -206,7 +213,8 @@ void MainFrame::ResetPattern(bool resetundo)
                cloneptr->view->setpositionmag(cloneptr->startx, cloneptr->starty,
                                               cloneptr->startmag);
             }
-            cloneptr->warp = cloneptr->startwarp;
+            cloneptr->currbase = cloneptr->startbase;
+            cloneptr->currexpo = cloneptr->startexpo;
             // also synchronize dirty flags and update items in Layer menu
             cloneptr->dirty = currlayer->dirty;
             mainptr->UpdateLayerItem(i);
@@ -242,16 +250,14 @@ void MainFrame::ResetPattern(bool resetundo)
 // -----------------------------------------------------------------------------
 
 void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
-                               bigint& x, bigint& y, int mag, int warp)
+                               bigint& x, bigint& y, int mag, int base, int expo)
 {
    // called to undo/redo a generating change
    if (gen == currlayer->startgen) {
       // restore starting pattern (false means don't call SyncUndoHistory)
       ResetPattern(false);
    } else {
-      // restore pattern in given filename
-      currlayer->warp = warp;
-
+      // restore pattern in given filename;
       // false means don't update status bar (algorithm should NOT change)
       LoadPattern(filename, wxEmptyString, false);
       
@@ -260,8 +266,15 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
          // for some reason, so best to set correct gen count
          currlayer->algo->setGeneration(gen);
       }
+
+      // restore step size and set increment
+      currlayer->currbase = base;
+      currlayer->currexpo = expo;
+      SetGenIncrement();
       
+      // restore position and scale, if allowed
       if (restoreview) viewptr->SetPosMag(x, y, mag);
+      
       UpdatePatternAndStatus();
    }
 }
@@ -381,11 +394,11 @@ void MainFrame::SetGeneration()
 
 void MainFrame::GoFaster()
 {
-   currlayer->warp++;
+   currlayer->currexpo++;
    SetGenIncrement();
    // only need to refresh status bar
    UpdateStatus();
-   if (generating && currlayer->warp < 0) {
+   if (generating && currlayer->currexpo < 0) {
       whentosee -= statusptr->GetCurrentDelay();
    }
 }
@@ -394,13 +407,13 @@ void MainFrame::GoFaster()
 
 void MainFrame::GoSlower()
 {
-   if (currlayer->warp > minwarp) {
-      currlayer->warp--;
+   if (currlayer->currexpo > minexpo) {
+      currlayer->currexpo--;
       SetGenIncrement();
       // only need to refresh status bar
       UpdateStatus();
-      if (generating && currlayer->warp < 0) {
-         if (currlayer->warp == -1) {
+      if (generating && currlayer->currexpo < 0) {
+         if (currlayer->currexpo == -1) {
             // need to initialize whentosee rather than increment it
             whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
          } else {
@@ -409,6 +422,20 @@ void MainFrame::GoSlower()
       }
    } else {
       wxBell();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetBaseStep()
+{
+   int i;
+   if ( GetInteger(_("Set Base Step"),
+                   _("Temporarily change the current base step:"),
+                   currlayer->currbase, 2, MAX_BASESTEP, &i) ) {
+      currlayer->currbase = i;
+      SetGenIncrement();
+      UpdateStatus();
    }
 }
 
@@ -527,11 +554,11 @@ void MainFrame::GeneratePattern()
    // then causes the viewport to be repainted for some inexplicable reason
    lifealgo::setVerbose( currlayer->showhashinfo );
 
-   if (currlayer->warp < 0)
+   if (currlayer->currexpo < 0)
       whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
    
    while (true) {
-      if (currlayer->warp < 0) {
+      if (currlayer->currexpo < 0) {
          // slow down by only doing one gen every GetCurrentDelay() millisecs
          long currmsec = stopwatch->Time();
          if (currmsec >= whentosee) {
@@ -545,7 +572,7 @@ void MainFrame::GeneratePattern()
             wxMilliSleep(1);
          }
       } else {
-         // warp >= 0 so advance pattern by currlayer->algo->getIncrement() gens
+         // currexpo >= 0 so advance pattern by currlayer->algo->getIncrement() gens
          if (!StepPattern()) break;
          if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
             hypdown--;
@@ -863,15 +890,6 @@ void MainFrame::ToggleHashInfo()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SetWarp(int newwarp)
-{
-   currlayer->warp = newwarp;
-   if (currlayer->warp < minwarp) currlayer->warp = minwarp;
-   SetGenIncrement();
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::ReduceCellStates(int newmaxstate)
 {
    // check current pattern and reduce any cell states > newmaxstate
@@ -1025,10 +1043,11 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    bool rulechanged = false;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
-   // change algorithm type and update status bar immediately
+   // change algorithm type, reset step size, and update status bar immediately
    algo_type oldalgo = currlayer->algtype;
    currlayer->algtype = newalgotype;
-   currlayer->warp = 0;
+   currlayer->currbase = algoinfo[newalgotype]->defbase;
+   currlayer->currexpo = 0;
    UpdateStatus();
 
    // create a new universe of the requested flavor

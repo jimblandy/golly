@@ -882,8 +882,9 @@ void SyncClones()
             cloneptr->savedirty = currlayer->savedirty;
             cloneptr->stayclean = currlayer->stayclean;
             
-            // sync speed
-            cloneptr->warp = currlayer->warp;
+            // sync step size
+            cloneptr->currbase = currlayer->currbase;
+            cloneptr->currexpo = currlayer->currexpo;
             
             // sync selection info
             cloneptr->currsel = currlayer->currsel;
@@ -898,12 +899,13 @@ void SyncClones()
             cloneptr->startgen = currlayer->startgen;
             cloneptr->currfile = currlayer->currfile;
             cloneptr->startsel = currlayer->startsel;
-            // clone can have different starting name, pos, scale, speed
+            // clone can have different starting name, pos, scale, step
             // cloneptr->startname = currlayer->startname;
             // cloneptr->startx = currlayer->startx;
             // cloneptr->starty = currlayer->starty;
             // cloneptr->startmag = currlayer->startmag;
-            // cloneptr->startwarp = currlayer->startwarp;
+            // cloneptr->startbase = currlayer->startbase;
+            // cloneptr->startexpo = currlayer->startexpo;
          }
       }
    }
@@ -969,7 +971,8 @@ void CurrentLayerChanged()
       currlayer->undoredo->ClearUndoRedo();
    }
 
-   mainptr->SetWarp(currlayer->warp);
+   mainptr->SetStepExponent(currlayer->currexpo);
+   // SetStepExponent calls SetGenIncrement
    mainptr->SetWindowTitle(currlayer->currname);
 
    mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -1845,7 +1848,6 @@ Layer::Layer()
    startgen = 0;                 // initial starting generation
    currname = _("untitled");     // initial window title
    currfile.Clear();             // no pattern file has been loaded
-   warp = 0;                     // initial speed setting
    originx = 0;                  // no X origin offset
    originy = 0;                  // no Y origin offset
    icons15x15 = NULL;            // no 15x15 icons
@@ -1859,6 +1861,10 @@ Layer::Layer()
       hyperspeed = inithyperspeed;
       showhashinfo = initshowhashinfo;
       autofit = initautofit;
+   
+      // initial base step and exponent
+      currbase = algoinfo[algtype]->defbase;
+      currexpo = 0;
       
       // create empty universe
       algo = CreateNewUniverse(algtype);
@@ -1901,6 +1907,10 @@ Layer::Layer()
       hyperspeed = currlayer->hyperspeed;
       showhashinfo = currlayer->showhashinfo;
       autofit = currlayer->autofit;
+   
+      // initial base step and exponent
+      currbase = algoinfo[algtype]->defbase;
+      currexpo = 0;
       
       if (cloning) {
          if (currlayer->cloneid == 0) {
@@ -1958,7 +1968,8 @@ Layer::Layer()
          dirty = currlayer->dirty;
          savedirty = currlayer->savedirty;
          stayclean = currlayer->stayclean;
-         warp = currlayer->warp;
+         currbase = currlayer->currbase;
+         currexpo = currlayer->currexpo;
          autofit = currlayer->autofit;
          hyperspeed = currlayer->hyperspeed;
          showhashinfo = currlayer->showhashinfo;
@@ -1977,7 +1988,8 @@ Layer::Layer()
          startrule = currlayer->startrule;
          startx = currlayer->startx;
          starty = currlayer->starty;
-         startwarp = currlayer->startwarp;
+         startbase = currlayer->startbase;
+         startexpo = currlayer->startexpo;
          startmag = currlayer->startmag;
          startfile = currlayer->startfile;
          startgen = currlayer->startgen;

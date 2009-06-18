@@ -132,12 +132,12 @@ void MainFrame::SetWindowTitle(const wxString& filename)
 
 void MainFrame::SetGenIncrement()
 {
-   if (currlayer->warp > 0) {
+   if (currlayer->currexpo > 0) {
       bigint inc = 1;
-      // set inc to base^warp
-      int i = currlayer->warp;
+      // set increment to currbase^currexpo
+      int i = currlayer->currexpo;
       while (i > 0) {
-         inc.mul_smallint(algoinfo[currlayer->algtype]->algobase);
+         inc.mul_smallint(currlayer->currbase);
          i--;
       }
       currlayer->algo->setIncrement(inc);
@@ -161,7 +161,7 @@ void MainFrame::CreateUniverse()
    currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
    // increment has been reset to 1 but that's probably not always desirable
-   // so set increment using current warp value
+   // so set increment using current step size
    SetGenIncrement();
 }
 
@@ -183,7 +183,10 @@ void MainFrame::NewPattern(const wxString& title)
    currlayer->savestart = false;
    currlayer->currfile.Clear();
    currlayer->startgen = 0;
-   currlayer->warp = 0;
+   
+   // reset step size before CreateUniverse calls SetGenIncrement
+   currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+   currlayer->currexpo = 0;
    
    // create new, empty universe of same type and using same rule
    CreateUniverse();
@@ -292,7 +295,11 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
       if (inscript) stop_after_script = true;
       currlayer->savestart = false;
-      currlayer->warp = 0;
+      
+      // reset step size now in case UpdateStatus is called below
+      currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+      currlayer->currexpo = 0;
+      
       if (GetInfoFrame()) {
          // comments will no longer be relevant so close info window
          GetInfoFrame()->Close(true);
@@ -328,9 +335,6 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
    // ensure new universe uses same rule in case LoadImage succeeds
    currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-
-   // set increment using current warp value
-   SetGenIncrement();
 
    if (!newtitle.IsEmpty()) {
       // show new file name in window title but no rule (which readpattern can change);
@@ -372,6 +376,11 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
+   
+      // update base step in case algo changed and then set increment;
+      // note that currlayer->currexpo was set to 0 above
+      currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+      SetGenIncrement();
    
       // switch to default colors if algo/rule changed
       wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -1725,31 +1734,36 @@ void MainFrame::ChangeScriptDir()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SetMinimumWarp()
+void MainFrame::SetStepExponent(int newexpo)
 {
-   // set minwarp depending on mindelay and maxdelay
-   minwarp = 0;
+   currlayer->currexpo = newexpo;
+   if (currlayer->currexpo < minexpo) currlayer->currexpo = minexpo;
+   SetGenIncrement();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetMinimumStepExponent()
+{
+   // set minexpo depending on mindelay and maxdelay
+   minexpo = 0;
    if (mindelay > 0) {
       int d = mindelay;
-      minwarp--;
+      minexpo--;
       while (d < maxdelay) {
          d *= 2;
-         minwarp--;
+         minexpo--;
       }
    }
 }
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::UpdateWarp()
+void MainFrame::UpdateStepExponent()
 {
-   SetMinimumWarp();
-   if (currlayer->warp < minwarp) {
-      currlayer->warp = minwarp;
-      currlayer->algo->setIncrement(1);   // warp is <= 0
-   } else if (currlayer->warp > 0) {
-      SetGenIncrement();                  // in case base step changed
-   }
+   SetMinimumStepExponent();
+   if (currlayer->currexpo < minexpo) currlayer->currexpo = minexpo;
+   SetGenIncrement();
 }
 
 // -----------------------------------------------------------------------------
@@ -1793,8 +1807,8 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       // randomfill might have changed
       SetRandomFillPercentage();
 
-      // if mindelay/maxdelay changed then may need to change minwarp and warp
-      UpdateWarp();
+      // if mindelay/maxdelay changed then may need to change minexpo and currexpo
+      UpdateStepExponent();
 
       // maximum memory might have changed
       for (int i = 0; i < numlayers; i++) {

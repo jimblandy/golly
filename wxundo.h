@@ -138,7 +138,8 @@ private:
    bigint prevgen;               // generation count at start of gen change
    bigint prevx, prevy;          // viewport position at start of gen change
    int prevmag;                  // scale at start of gen change
-   int prevwarp;                 // speed at start of gen change
+   int prevbase;                 // base step at start of gen change
+   int prevexpo;                 // step exponent at start of gen change
    Selection prevsel;            // selection at start of gen change
    int startcount;               // unfinished RememberGenStart calls
    bool fixsetgen;               // setgen node needs to be updated?

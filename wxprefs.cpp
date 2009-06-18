@@ -170,7 +170,7 @@ wxCursor* newcurs = NULL;        // cursor after creating new pattern (if not NU
 wxCursor* opencurs = NULL;       // cursor after opening pattern (if not NULL)
 int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
-int mindelay = 250;              // minimum millisec delay (when warp = -1)
+int mindelay = 250;              // minimum millisec delay
 int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
@@ -567,6 +567,7 @@ const char* GetActionName(action_id action)
       case DO_SETGEN:         return "Set Generation...";
       case DO_FASTER:         return "Faster";
       case DO_SLOWER:         return "Slower";
+      case DO_SETBASE:        return "Set Base Step...";
       case DO_AUTOFIT:        return "Auto Fit";
       case DO_HASHING:        return "Use Hashing";   //!!! deprecate???
       case DO_HYPER:          return "Hyperspeed";
@@ -1459,7 +1460,7 @@ void SavePrefs()
       fputs("\n", f);
       fprintf(f, "algorithm=%s\n", GetAlgoName(i));
       fprintf(f, "max_mem=%d\n", algoinfo[i]->algomem);
-      fprintf(f, "base_step=%d\n", algoinfo[i]->algobase);
+      fprintf(f, "base_step=%d\n", algoinfo[i]->defbase);
       SaveColor(f, "status_rgb", &algoinfo[i]->statusrgb);
       SaveColor(f, "from_rgb", &algoinfo[i]->fromrgb);
       SaveColor(f, "to_rgb", &algoinfo[i]->torgb);
@@ -1893,14 +1894,14 @@ void GetPrefs()
          sscanf(value, "%d", &base);
          if (base < 2) base = 2;
          if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-         algoinfo[QLIFE_ALGO]->algobase = base;
+         algoinfo[QLIFE_ALGO]->defbase = base;
 
       } else if (strcmp(keyword, "h_base_step") == 0) {     // deprecated
          int base;
          sscanf(value, "%d", &base);
          if (base < 2) base = 2;
          if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-         algoinfo[HLIFE_ALGO]->algobase = base;
+         algoinfo[HLIFE_ALGO]->defbase = base;
 
       } else if (strcmp(keyword, "algorithm") == 0) {
          algoindex = -1;
@@ -1926,7 +1927,7 @@ void GetPrefs()
             sscanf(value, "%d", &base);
             if (base < 2) base = 2;
             if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-            algoinfo[algoindex]->algobase = base;
+            algoinfo[algoindex]->defbase = base;
          }
 
       } else if (strcmp(keyword, "status_rgb") == 0) {
@@ -2662,7 +2663,7 @@ private:
    int algopos1;                       // selected algorithm in PREF_ALGO_MENU1
 
    int new_algomem[MAX_ALGOS];         // new max mem values for each algorithm
-   int new_algobase[MAX_ALGOS];        // new base step values for each algorithm
+   int new_defbase[MAX_ALGOS];         // new default base step values for each algorithm
 
    CellBoxes* cellboxes;               // for displaying cell colors/icons
    wxCheckBox* gradcheck;              // use gradient?
@@ -3333,7 +3334,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    membox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory:")), 0, wxALL, 0);
 
    wxBoxSizer* basebox = new wxBoxSizer(wxHORIZONTAL);
-   basebox->Add(new wxStaticText(panel, wxID_STATIC, _("Base step:")), 0, wxALL, 0);
+   basebox->Add(new wxStaticText(panel, wxID_STATIC, _("Default base step:")), 0, wxALL, 0);
 
    // align spin controls
    membox->SetMinSize( longbox->GetMinSize() );
@@ -3427,7 +3428,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    spin1->SetRange(MIN_MEM_MB, MAX_MEM_MB);
    spin1->SetValue(algoinfo[algopos1]->algomem);
    spin2->SetRange(2, MAX_BASESTEP);
-   spin2->SetValue(algoinfo[algopos1]->algobase);
+   spin2->SetValue(algoinfo[algopos1]->defbase);
    spin3->SetRange(0, MAX_DELAY);           spin3->SetValue(mindelay);
    spin4->SetRange(0, MAX_DELAY);           spin4->SetValue(maxdelay);
    spin1->SetFocus();
@@ -3436,7 +3437,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    
    for (int i = 0; i < NumAlgos(); i++) {
       new_algomem[i] = algoinfo[i]->algomem;
-      new_algobase[i] = algoinfo[i]->algobase;
+      new_defbase[i] = algoinfo[i]->defbase;
    }
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
@@ -3971,7 +3972,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
       if (i >= 0 && i < NumAlgos() && i != algopos1) {
          // first update values for previous selection
          new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
-         new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
+         new_defbase[algopos1] = GetSpinVal(PREF_BASE_STEP);
          algopos1 = i;
          
          // show values for new selection
@@ -3979,7 +3980,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
          wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_BASE_STEP);
          if (s1 && s2) {
             s1->SetValue(new_algomem[algopos1]);
-            s2->SetValue(new_algobase[algopos1]);
+            s2->SetValue(new_defbase[algopos1]);
             wxWindow* focus = FindFocus();
             #ifdef __WXMAC__
                // FindFocus returns pointer to text ctrl
@@ -4414,7 +4415,7 @@ bool PrefsDialog::ValidatePage()
    } else if (currpage == CONTROL_PAGE) {
       if ( BadSpinVal(PREF_MAX_MEM, MIN_MEM_MB, MAX_MEM_MB, _("Maximum memory")) )
          return false;
-      if ( BadSpinVal(PREF_BASE_STEP, 2, MAX_BASESTEP, _("Base step")) )
+      if ( BadSpinVal(PREF_BASE_STEP, 2, MAX_BASESTEP, _("Default base step")) )
          return false;
       if ( BadSpinVal(PREF_MIN_DELAY, 0, MAX_DELAY, _("Minimum delay")) )
          return false;
@@ -4504,11 +4505,11 @@ bool PrefsDialog::TransferDataFromWindow()
    scrollhand    = GetCheckVal(PREF_SCROLL_HAND);
 
    // CONTROL_PAGE
-   new_algomem[algopos1]  = GetSpinVal(PREF_MAX_MEM);
-   new_algobase[algopos1] = GetSpinVal(PREF_BASE_STEP);
+   new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
+   new_defbase[algopos1] = GetSpinVal(PREF_BASE_STEP);
    for (int i = 0; i < NumAlgos(); i++) {
       algoinfo[i]->algomem = new_algomem[i];
-      algoinfo[i]->algobase = new_algobase[i];
+      algoinfo[i]->defbase = new_defbase[i];
    }
    mindelay = GetSpinVal(PREF_MIN_DELAY);
    maxdelay = GetSpinVal(PREF_MAX_DELAY);

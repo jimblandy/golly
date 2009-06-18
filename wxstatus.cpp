@@ -238,7 +238,7 @@ wxString StatusBar::Stringify(const bigint& b)
 
 int StatusBar::GetCurrentDelay()
 {
-   int gendelay = mindelay * (1 << (-currlayer->warp - 1));
+   int gendelay = mindelay * (1 << (-currlayer->currexpo - 1));
    if (gendelay > maxdelay) gendelay = maxdelay;
    return gendelay;
 }
@@ -314,14 +314,12 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
          }
          DisplayText(dc, strbuf, h_gen, SCALELINE);
          
-         if (currlayer->warp < 0) {
+         if (currlayer->currexpo < 0) {
             // show delay in secs
             strbuf.Printf(_("Delay = %gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
             // no real need to show step as an exact number
-            strbuf.Printf(_("Step = %d^%d"),
-                          algoinfo[currlayer->algtype]->algobase,
-                          currlayer->warp);
+            strbuf.Printf(_("Step = %d^%d"), currlayer->currbase, currlayer->currexpo);
          }
          DisplayText(dc, strbuf, h_gen, STEPLINE);
       }
@@ -377,13 +375,11 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
          }
          DisplayText(dc, strbuf, h_scale, BASELINE1);
          
-         if (currlayer->warp < 0) {
+         if (currlayer->currexpo < 0) {
             // show delay in secs
             strbuf.Printf(_("Delay=%gs"), (double)GetCurrentDelay() / 1000.0);
          } else {
-            strbuf.Printf(_("Step=%d^%d"),
-                          algoinfo[currlayer->algtype]->algobase,
-                          currlayer->warp);
+            strbuf.Printf(_("Step=%d^%d"), currlayer->currbase, currlayer->currexpo);
          }
          DisplayText(dc, strbuf, h_step, BASELINE1);
       }
@@ -499,9 +495,11 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
       }
 
    } else if ( ClickInStepBox(event.GetX(), event.GetY()) ) {
-      if (currlayer->warp != 0) {
-         // reset step to 1 gen
-         mainptr->SetWarp(0);
+      if (currlayer->currbase != algoinfo[currlayer->algtype]->defbase ||
+          currlayer->currexpo != 0) {
+         // reset base step to default value and step exponent to 0
+         currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+         mainptr->SetStepExponent(0);
          // update status bar
          Refresh(false);
          Update();

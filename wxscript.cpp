@@ -431,7 +431,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
       if (newval > MAX_DELAY) newval = MAX_DELAY;
       if (*oldval != newval) {
          mindelay = newval;
-         mainptr->UpdateWarp();
+         mainptr->UpdateStepExponent();
          DoAutoUpdate();
       }
 
@@ -441,7 +441,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
       if (newval > MAX_DELAY) newval = MAX_DELAY;
       if (*oldval != newval) {
          maxdelay = newval;
-         mainptr->UpdateWarp();
+         mainptr->UpdateStepExponent();
          DoAutoUpdate();
       }
 

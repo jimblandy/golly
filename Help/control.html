@@ -14,7 +14,7 @@ much easier to hit escape or click the tool bar's stop button.
 <font size=+1><b>Next Generation</b></font>
 
 <p>
-Advances to the next generation.
+Advances the pattern to the next generation.
 Note that you can hit control-space to advance only the current selection,
 or shift-space to advance everything outside the selection (in both cases
 the generation count will not change).
@@ -23,8 +23,11 @@ the generation count will not change).
 <font size=+1><b>Next Step</b></font>
 
 <p>
-Advances to the next step.  The current step size is displayed in the status bar
-and can be changed by the Faster/Slower items (see below).
+Advances the pattern to the next step.  The current step size is displayed
+in the status bar as a number of the form "b^e" where b is the base step
+and e is the exponent.  The base step can be changed by the Set Base Step
+dialog (see below), and the exponent can be changed by the Faster/Slower
+items (see below).
 
 <p>
 <font size=+1><b>Reset</b></font>
@@ -41,31 +44,43 @@ loading an RLE/macrocell file that stores a non-zero generation count.
 
 <p>
 Opens a dialog to change the generation count.  You can enter
-readable numbers like "1,234,567".  Include a leading +/- sign
+readable numbers like "1,234,567", or include a leading +/- sign
 to specify a number relative to the current generation count.
 
 <p>
 <font size=+1><b>Faster</b></font>
 
 <p>
-Increases the speed by displaying fewer generations.
-The step size increases by a user-settable factor, initially 8 or 10
-depending on whether the algorithm uses hashing.  This factor can
-be changed in <a href="prefs:control">Preferences > Control</a>.
-Note that hashing algorithms are most efficient when step sizes
-are powers of 2.
+Increases the step exponent in the status bar by 1.
+This increases the speed by displaying fewer generations.
+The step exponent is reset to 0 when you create a new pattern,
+load a pattern file, or switch to a different algorithm.
 
 <p>
 <font size=+1><b>Slower</b></font>
 
 <p>
-Decreases the speed by displaying more generations.
-The step size decreases by a user-settable factor (see above).
-If the step size is 1 (n^0) when you select this item then a small delay
-will occur between each generation.  Further slowing will double the delay
-until a maximum value is reached.
+Decreases the step exponent in the status bar by 1.
+This decreases the speed by displaying more generations.
+The step exponent is reset to 0 when you create a new pattern,
+load a pattern file, or switch to a different algorithm.
+If the exponent is 0 when you select this item then a small delay
+will occur between each generation.
+Further slowing will double the delay until a maximum value is reached.
 Use <a href="prefs:control">Preferences > Control</a> to set the
 minimum and maximum delay times.
+
+<p>
+<font size=+1><b>Set Base Step...</b></font>
+
+<p>
+Opens a dialog to change the current base step, but only temporarily.
+Golly will restore the default base step
+(set in <a href="prefs:control">Preferences > Control</a>) when you create
+a new pattern, load a pattern file, or switch to a different algorithm.
+The base step can be any number from 2 to 10,000 (but be aware that
+Golly's hashing algorithms are most efficient when the base step is a
+power of 2).
 
 <p>
 <font size=+1><b>Auto Fit</b></font>
@@ -91,7 +106,7 @@ and hit "f" to manually fit the pattern inside the view whenever you like.
 
 <p>
 If ticked, and the current algorithm uses hashing, then Golly will
-automatically increase the step size at regular intervals (every 64 steps).
+automatically increase the step exponent at regular intervals (every 64 steps).
 Hyperspeed mode is a convenient way to run a complex pattern as far as possible.
 (For very chaotic patterns, using QuickLife may actually run it further.)
 For highly regular patterns, hyperspeed mode quickly "runs away", generating

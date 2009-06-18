@@ -118,7 +118,7 @@ extern wxCursor* newcurs;        // cursor after creating new pattern
 extern wxCursor* opencurs;       // cursor after opening pattern
 extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
-extern int mindelay;             // minimum millisec delay (when warp = -1)
+extern int mindelay;             // minimum millisec delay
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
@@ -216,6 +216,7 @@ typedef enum {
    DO_SE,                        // scroll SE
    DO_SW,                        // scroll SW
    DO_SELALL,                    // select all
+   DO_SETBASE,                   // set base step...
    DO_SETGEN,                    // set generation...
    DO_SETCOLORS,                 // set layer colors...
    DO_PATTDIR,                   // set pattern folder...

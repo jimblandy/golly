@@ -61,7 +61,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxundo.h"        // for currlayer->undoredo->...
-#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, algobase
+#include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, etc
 #include "wxlayer.h"       // for AddLayer, currlayer, currindex, etc
 #include "wxscript.h"      // for inscript, abortmsg, GSF_*, etc
 #include "wxpython.h"
@@ -1740,7 +1740,7 @@ static PyObject* py_setstep(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, (char*)"i", &exp)) return NULL;
 
-   mainptr->SetWarp(exp);
+   mainptr->SetStepExponent(exp);
    DoAutoUpdate();
 
    RETURN_NONE;
@@ -1755,7 +1755,7 @@ static PyObject* py_getstep(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
 
-   return Py_BuildValue((char*)"i", currlayer->warp);
+   return Py_BuildValue((char*)"i", currlayer->currexpo);
 }
 
 // -----------------------------------------------------------------------------
@@ -1770,8 +1770,8 @@ static PyObject* py_setbase(PyObject* self, PyObject* args)
 
    if (base < 2) base = 2;
    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
-   algoinfo[currlayer->algtype]->algobase = base;
-   mainptr->UpdateWarp();
+   currlayer->currbase = base;
+   mainptr->SetGenIncrement();
    DoAutoUpdate();
 
    RETURN_NONE;
@@ -1786,7 +1786,7 @@ static PyObject* py_getbase(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
 
-   return Py_BuildValue((char*)"i", algoinfo[currlayer->algtype]->algobase);
+   return Py_BuildValue((char*)"i", currlayer->currbase);
 }
 
 // -----------------------------------------------------------------------------
