@@ -272,6 +272,9 @@ bool GollyApp::OnInit()
 
    // create a stopwatch so we can use Time() to get elapsed millisecs
    stopwatch = new wxStopWatch();
+   
+   // set variable seed for later rand() calls
+   srand(time(0));
 
    #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
       // prevent rectangle animation when windows open/close
@@ -315,7 +318,7 @@ bool GollyApp::OnInit()
    
    // initialize some stuff before showing main window
    mainptr->SetRandomFillPercentage();
-   mainptr->SetMinimumWarp();
+   mainptr->SetMinimumStepExponent();
 
    wxString banner = _("This is Golly version ");
    banner +=         _(STRINGIFY(VERSION));
