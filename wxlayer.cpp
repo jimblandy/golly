@@ -1458,8 +1458,7 @@ void MarkLayerClean(const wxString& title)
             cloneptr->dirty = false;
             if (inscript) cloneptr->stayclean = true;
             
-            // also best if clone uses same name at this stage???
-            // NO -- always allow clones to have different names
+            // always allow clones to have different names
             // cloneptr->currname = currlayer->currname;
             
             // remove asterisk from layer item

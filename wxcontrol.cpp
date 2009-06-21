@@ -239,6 +239,7 @@ void MainFrame::ResetPattern(bool resetundo)
    if (allowundo && !currlayer->stayclean) {
       if (inscript) {
          // script called reset() so remember gen change
+         // (RememberGenStart was called above)
          currlayer->undoredo->RememberGenFinish();
       } else if (resetundo) {
          // wind back the undo history to the starting pattern
@@ -791,12 +792,18 @@ void MainFrame::NextGeneration(bool useinc)
 
    if (allowundo) {
       if (currlayer->stayclean) {
-         // script has called run/step after a command (eg. new)
-         // has set stayclean true by calling MarkLayerClean
+         // script has called run/step after a new/open command has set
+         // stayclean true by calling MarkLayerClean
          if (curralgo->getGeneration() == currlayer->startgen) {
             // starting pattern has just been saved so we need to remember
             // this gen change in case user does a Reset after script ends
             // (RememberGenFinish will be called at the end of RunScript)
+            if (currlayer->undoredo->savegenchanges) {
+               // script must have called reset command, so we need to call
+               // RememberGenFinish to match earlier RememberGenStart
+               currlayer->undoredo->savegenchanges = false;
+               currlayer->undoredo->RememberGenFinish();
+            }
             currlayer->undoredo->RememberGenStart();
          }
       } else {
@@ -853,7 +860,7 @@ void MainFrame::NextGeneration(bool useinc)
       currlayer->undoredo->RememberGenFinish();
    
    if (!inscript)
-      DoPendingAction(false);     // true means don't restart generating loop
+      DoPendingAction(false);     // false means don't restart generating loop
 }
 
 // -----------------------------------------------------------------------------

@@ -872,7 +872,8 @@ void UndoRedo::AddGenChange()
 void UndoRedo::SyncUndoHistory()
 {
    // synchronize undo history due to a ResetPattern call;
-   // wind back the undo list to just past the oldest genchange node
+   // wind back the undo list to just past the genchange node that
+   // matches the current layer's starting gen count
    wxList::compatibility_iterator node;
    ChangeNode* change;
    while (!undolist.IsEmpty()) {

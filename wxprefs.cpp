@@ -1681,7 +1681,7 @@ void InitPaths()
    datadir = wxStandardPaths::Get().GetUserDataDir();
    if ( !wxFileName::DirExists(datadir) ) {
       if ( !wxFileName::Mkdir(datadir, 0777, wxPATH_MKDIR_FULL) ) {
-         Warning(_("Could not create user-specific data directory!\nWill try to use application directory instead."));
+         Warning(_("Could not create a user-specific data directory!\nWill try to use the application directory instead."));
          datadir = gollydir;
       }
    }
@@ -1701,7 +1701,7 @@ void InitPaths()
       tempdir = wxStandardPaths::Get().GetTempDir();
       if ( !wxFileName::DirExists(tempdir) ) {
          // should never happen, but play safe
-         Fatal(_("Temporary directory does not exist:\n") + tempdir);
+         Fatal(_("Sorry, temporary directory does not exist:\n") + tempdir);
       }
    }
    if (tempdir.Last() != wxFILE_SEP_PATH) tempdir += wxFILE_SEP_PATH;
