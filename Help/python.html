@@ -291,7 +291,7 @@ If the 5th parameter (default = True) is set to False, the user can specify a ne
 instead of choosing an existing file. If the user cancels the Open dialog, the return
 value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\Temp\", "sample.mcl")</b></dd>
+<dd> Example: <b>fname = golly.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\\Temp", "sample.mcl")</b></dd>
 </p>
 
 <a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=False</i>)</b></dt>
@@ -303,7 +303,7 @@ If a file already exists at the chosen location, an Overwrite? query will be dis
 unless the 5th parameter (default = False) is set to True. If the user cancels the Save
 dialog, the return value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.savedialog("Choose an output location", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\Temp\", "Params.txt", 1)</b></dd>
+<dd> Example: <b>fname = golly.savedialog("Choose an output location", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd>
 </p>
 
 <a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt>
