@@ -15,7 +15,7 @@ def slideshow ():
    oldrule = g.getrule()
    
    g.show("Hit space to continue or escape to exit the slide show...")
-   for root, dirs, files in os.walk(g.appdir() + "Patterns"):
+   for root, dirs, files in os.walk(g.getdir("app") + "Patterns"):
       for name in files:
          if name.startswith("."):
             # ignore hidden files (like .DS_Store on Mac)

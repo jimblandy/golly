@@ -146,6 +146,72 @@ const char* GSF_save(char* filename, char* format, int remember)
 
 // -----------------------------------------------------------------------------
 
+const char* GSF_setdir(char* dirname, char* newdir)
+{
+   wxString dirpath = wxString(newdir,wxConvLocal);
+   if (dirpath.Last() != wxFILE_SEP_PATH) dirpath += wxFILE_SEP_PATH;
+   if (!wxFileName::DirExists(dirpath)) {
+      return "New directory does not exist.";
+   }
+
+   if (strcmp(dirname, "app") == 0) {
+      return "Application directory cannot be changed.";
+   
+   } else if (strcmp(dirname, "data") == 0) {
+      return "Data directory cannot be changed.";
+   
+   } else if (strcmp(dirname, "temp") == 0) {
+      return "Temporary directory cannot be changed.";
+   
+   } else if (strcmp(dirname, "rules") == 0) {
+      userrules = dirpath;
+   
+   } else if (strcmp(dirname, "patterns") == 0) {
+      // change patterndir and update panel if currently shown
+      mainptr->SetPatternDir(dirpath);
+   
+   } else if (strcmp(dirname, "scripts") == 0) {
+      // change scriptdir and update panel if currently shown
+      mainptr->SetScriptDir(dirpath);
+   
+   } else if (strcmp(dirname, "download") == 0) {
+      downloaddir = dirpath;
+   
+   } else {
+      return "Unknown directory name.";
+   }
+   
+   return NULL;   // success
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_getdir(char* dirname)
+{
+   wxString dirpath;
+
+   if      (strcmp(dirname, "app") == 0)        dirpath = gollydir;
+   else if (strcmp(dirname, "data") == 0)       dirpath = datadir;
+   else if (strcmp(dirname, "temp") == 0)       dirpath = tempdir;
+   else if (strcmp(dirname, "rules") == 0)      dirpath = userrules;
+   else if (strcmp(dirname, "patterns") == 0)   dirpath = patterndir;
+   else if (strcmp(dirname, "scripts") == 0)    dirpath = scriptdir;
+   else if (strcmp(dirname, "download") == 0)   dirpath = downloaddir;
+   else {
+      return NULL;   // unknown directory name
+   }
+   
+   // make sure directory path ends with separator
+   if (dirpath.Last() != wxFILE_SEP_PATH) dirpath += wxFILE_SEP_PATH;
+   
+   // need to be careful converting Unicode wxString to char*
+   static wxCharBuffer dirbuff;
+   dirbuff = dirpath.mb_str(wxConvLocal);
+   return (const char*) dirbuff;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* GSF_setalgo(char* algostring)
 {
    // find index for given algo name

@@ -96,8 +96,8 @@ for ch in Svalues:
 RuleBits = pattern(Brle, 148, 1404) + pattern(Srle, 162, 1406)
 
 # load or generate the OFFcell tile:
-OFFcellFileName = g.datadir() + "metapixel-OFF.rle"
-ONcellFileName = g.datadir() + "metapixel-ON.rle"
+OFFcellFileName = g.getdir("data") + "metapixel-OFF.rle"
+ONcellFileName = g.getdir("data") + "metapixel-ON.rle"
 if os.access(OFFcellFileName, os.R_OK) and os.access(ONcellFileName, os.R_OK):
     g.show("Opening metapixel-OFF and metapixel-ON from saved pattern file.")
     OFFcell = pattern(g.transform(g.load(OFFcellFileName),-5,-5,1,0,0,1))

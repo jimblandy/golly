@@ -11,8 +11,7 @@
      <a href="archives.html">online archives</a>.
      Set the location of downloaded files using the new button at the bottom of
      <a href="prefs:file">Preferences > File</a>.
-<li> Golly can open a zip file and process its contents as described
-     <a href="formats.html#zip">here</a>.
+<li> Zip files can be opened and processed as described <a href="formats.html#zip">here</a>.
 <li> If the mouse moves over a link in the help window then the link reference is
      displayed at the bottom of the window.
 <li> New rules: ed-rep, LifeHistory, Perrier.
@@ -21,7 +20,9 @@
      <a href="python.html#savedialog">savedialog</a>,
      <a href="python.html#getclipstr">getclipstr</a>,
      <a href="python.html#setclipstr">setclipstr</a>,
-     <a href="python.html#rulesdir">rulesdir</a>.
+     <a href="python.html#getdir">getdir</a>,
+     <a href="python.html#setdir">setdir</a>.
+<li> The appdir and datadir commands are deprecated; use the new getdir command.
 <li> The base step can now be changed temporarily via the new Set Base Step dialog
      in the Control menu.  Golly will restore the default base step
      (set in <a href="prefs:control">Preferences > Control</a>) when you create
@@ -130,8 +131,6 @@
 <li> Added Reset button to tool bar and Duplicate Layer button to layer bar.
 <li> A duplicated layer now gets a copy of the original layer's undo/redo history.
 <li> Improved the automatic detection of Perl/Python code used by Run Clipboard.
-<li> Added <a href="python.html#datadir">datadir</a> command so scripts can
-     save files in Golly's user-specific data directory.
 <li> Added <a href="python.html#help">help</a> command to open given HTML file
      in help window.
 <li> A warning is displayed if a bad rule string is detected while loading a pattern.

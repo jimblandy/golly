@@ -516,9 +516,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
    #endif
 
    wxString wxs_openfname = wxEmptyString;
-   if ( opendlg.ShowModal() == wxID_OK ) {
-      wxs_openfname = opendlg.GetPath();
-   }
+   if ( opendlg.ShowModal() == wxID_OK ) wxs_openfname = opendlg.GetPath();
 
    return Py_BuildValue((char*)"s", (const char*)wxs_openfname.mb_str(wxConvLocal));
 }
@@ -553,7 +551,6 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
    wxString wxs_savefname = wxEmptyString;
    if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
 
-   // need to be careful converting Unicode wxString to char*
    return Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(wxConvLocal));
 }
 
@@ -666,6 +663,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+// deprecated (use py_getdir)
 static PyObject* py_appdir(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -678,6 +676,7 @@ static PyObject* py_appdir(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+// deprecated (use py_getdir)
 static PyObject* py_datadir(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -690,14 +689,35 @@ static PyObject* py_datadir(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* py_rulesdir(PyObject* self, PyObject* args)
+static PyObject* py_setdir(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
+   char* dirname;
+   char* newdir;
 
-   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+   if (!PyArg_ParseTuple(args, (char*)"ss", &dirname, &newdir)) return NULL;
+   
+   const char* err = GSF_setdir(dirname, newdir);
+   if (err) PYTHON_ERROR(err);
 
-   return Py_BuildValue((char*)"s", (const char*)userrules.mb_str(wxConvLocal));
+   RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_getdir(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* dirname;
+
+   if (!PyArg_ParseTuple(args, (char*)"s", &dirname)) return NULL;
+   
+   const char* dirstring = GSF_getdir(dirname);
+   if (dirstring == NULL) PYTHON_ERROR("getdir error: unknown directory name.");
+
+   return Py_BuildValue((char*)"s", dirstring);
 }
 
 // -----------------------------------------------------------------------------
@@ -2326,9 +2346,7 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
       PYTHON_ERROR(msg);
    }
 
-   // need to be careful converting Unicode wxString to char*
-   wxCharBuffer name = GetLayer(index)->currname.mb_str(wxConvLocal);
-   return Py_BuildValue((char*)"s", (const char*)name);
+   return Py_BuildValue((char*)"s", (const char*)GetLayer(index)->currname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2542,7 +2560,6 @@ static PyObject* py_getclipstr(PyObject* self, PyObject* args)
    wxTextDataObject data;
    if ( !mainptr->GetTextFromClipboard(&data) ) return NULL;
 
-   // need to be careful converting Unicode wxString to char*
    wxString wxs_clipstr = data.GetText();
    return Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(wxConvLocal));
 }
@@ -2748,9 +2765,11 @@ static PyMethodDef py_methods[] = {
    { "savedialog",   py_savedialog, METH_VARARGS, "return output path and filename chosen by user" },
    { "load",         py_load,       METH_VARARGS, "read pattern file and return cell list" },
    { "store",        py_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
+   { "setdir",       py_setdir,     METH_VARARGS, "set location of specified directory" },
+   { "getdir",       py_getdir,     METH_VARARGS, "return location of specified directory" },
+   // next two are deprecated (use getdir)
    { "appdir",       py_appdir,     METH_VARARGS, "return location of Golly app" },
    { "datadir",      py_datadir,    METH_VARARGS, "return location of user-specific data" },
-   { "rulesdir",     py_rulesdir,   METH_VARARGS, "return location of user-specific rules" },
    // editing
    { "new",          py_new,        METH_VARARGS, "create new universe and set window title" },
    { "cut",          py_cut,        METH_VARARGS, "cut selection to clipboard" },

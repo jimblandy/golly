@@ -20,7 +20,7 @@ if n<2 or n>255:
 
 # write a suitable colors file
 golly.show('Working...')
-f=open(golly.rulesdir()+'Fredkin-mod-n.colors', 'w')
+f=open(golly.getdir('rules')+'Fredkin-mod-n.colors', 'w')
 for i in xrange(n):
    f.write('color='+str(i+1)+' '+str(random.randint(50,255))+' '+
                                  str(random.randint(50,255))+' '+
@@ -30,7 +30,7 @@ f.close()
 # write a rule table file in user's rules directory
 # (currently only for the von Neumann neighbourhood but works on many)
 # (could be reduced by using rotate or permutation symmetry)
-f=open(golly.rulesdir()+'Fredkin-mod-n.table', 'w')
+f=open(golly.getdir('rules')+'Fredkin-mod-n.table', 'w')
 f.write('''# Rule table written automatically by FredkinModN-gen.py
 #
 # Winograd's generalization of Fredkin's parity rule (B1357/S1357) to modulo-n:

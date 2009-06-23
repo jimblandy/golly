@@ -71,7 +71,7 @@ sub go_to {
 # --------------------------------------------------------------------
 
 # use same file name as in goto.py
-my $GotoINIFileName = g_datadir()."goto.ini";
+my $GotoINIFileName = g_getdir("data")."goto.ini";
 my $previousgen = "";
 
 if (open(INFILE, $GotoINIFileName)) {

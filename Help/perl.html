@@ -100,7 +100,7 @@ You can also select one of the <b>Run</b> items in the File menu.
 <p>
 When Golly starts up it looks for a script called <b>golly-start.pl</b>
 in the same directory as the Golly application and then in a user-specific
-data directory (see the <a href="#datadir"><b>datadir</b></a> command for
+data directory (see the <a href="#getdir"><b>g_getdir</b></a> command for
 the likely path on your system).
 If the script is found then it is automatically executed.
 
@@ -131,14 +131,12 @@ or you can search for individual commands alphabetically:
 <td valign=top>
 <a href="#addlayer"><b>g_addlayer</b></a><br>
 <a href="#advance"><b>g_advance</b></a><br>
-<a href="#appdir"><b>g_appdir</b></a><br>
 <a href="#autoupdate"><b>g_autoupdate</b></a><br>
 <a href="#check"><b>g_check</b></a><br>
 <a href="#clear"><b>g_clear</b></a><br>
 <a href="#clone"><b>g_clone</b></a><br>
 <a href="#copy"><b>g_copy</b></a><br>
 <a href="#cut"><b>g_cut</b></a><br>
-<a href="#datadir"><b>g_datadir</b></a><br>
 <a href="#dellayer"><b>g_dellayer</b></a><br>
 <a href="#dokey"><b>g_dokey</b></a><br>
 <a href="#duplicate"><b>g_duplicate</b></a><br>
@@ -150,17 +148,18 @@ or you can search for individual commands alphabetically:
 <a href="#fitsel"><b>g_fitsel</b></a><br>
 <a href="#flip"><b>g_flip</b></a><br>
 <a href="#getalgo"><b>g_getalgo</b></a><br>
-<a href="#getbase"><b>g_getbase</b></a>
+<a href="#getbase"><b>g_getbase</b></a><br>
+<a href="#getcell"><b>g_getcell</b></a><br>
+<a href="#getcells"><b>g_getcells</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getcell"><b>g_getcell</b></a><br>
-<a href="#getcells"><b>g_getcells</b></a><br>
 <a href="#getclip"><b>g_getclip</b></a><br>
 <a href="#getclipstr"><b>g_getclipstr</b></a><br>
 <a href="#getcolor"><b>g_getcolor</b></a><br>
 <a href="#getcolors"><b>g_getcolors</b></a><br>
 <a href="#getcursor"><b>g_getcursor</b></a><br>
+<a href="#getdir"><b>g_getdir</b></a><br>
 <a href="#getgen"><b>g_getgen</b></a><br>
 <a href="#getkey"><b>g_getkey</b></a><br>
 <a href="#getlayer"><b>g_getlayer</b></a><br>
@@ -175,11 +174,11 @@ or you can search for individual commands alphabetically:
 <a href="#getstep"><b>g_getstep</b></a><br>
 <a href="#getstring"><b>g_getstring</b></a><br>
 <a href="#hash"><b>g_hash</b></a><br>
-<a href="#help"><b>g_help</b></a>
+<a href="#help"><b>g_help</b></a><br>
+<a href="#join"><b>g_join</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#join"><b>g_join</b></a><br>
 <a href="#load"><b>g_load</b></a><br>
 <a href="#maxlayers"><b>g_maxlayers</b></a><br>
 <a href="#movelayer"><b>g_movelayer</b></a><br>
@@ -196,21 +195,21 @@ or you can search for individual commands alphabetically:
 <a href="#randfill"><b>g_randfill</b></a><br>
 <a href="#reset"><b>g_reset</b></a><br>
 <a href="#rotate"><b>g_rotate</b></a><br>
-<a href="#rulesdir"><b>g_rulesdir</b></a><br>
 <a href="#run"><b>g_run</b></a><br>
 <a href="#save"><b>g_save</b></a><br>
 <a href="#savedialog"><b>g_savedialog</b></a><br>
-<a href="#select"><b>g_select</b></a>
+<a href="#select"><b>g_select</b></a><br>
+<a href="#setalgo"><b>g_setalgo</b></a><br>
+<a href="#setbase"><b>g_setbase</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#setalgo"><b>g_setalgo</b></a><br>
-<a href="#setbase"><b>g_setbase</b></a><br>
 <a href="#setcell"><b>g_setcell</b></a><br>
 <a href="#setclipstr"><b>g_setclipstr</b></a><br>
 <a href="#setcolor"><b>g_setcolor</b></a><br>
 <a href="#setcolors"><b>g_setcolors</b></a><br>
 <a href="#setcursor"><b>g_setcursor</b></a><br>
+<a href="#setdir"><b>g_setdir</b></a><br>
 <a href="#setgen"><b>g_setgen</b></a><br>
 <a href="#setlayer"><b>g_setlayer</b></a><br>
 <a href="#setmag"><b>g_setmag</b></a><br>
@@ -299,38 +298,66 @@ If the <b>savexrle</b> option is 1 then extended RLE format is used
 <dd> Example: <b>g_store($cellarray, "foo.rle");</b></dd>
 </p>
 
-<a name="appdir"></a><p><dt><b>g_appdir()</b></dt>
+<a name="getdir"></a><p><dt><b>g_getdir(<i>dirname</i>)</b></dt>
 <dd>
-Return the Golly application directory as a string.
-</dd>
-<dd> Example: <b>g_open(g_appdir()."Patterns/Breeders/breeder.lif");</b></dd>
-</p>
-
-<a name="datadir"></a><p><dt><b>g_datadir()</b></dt>
-<dd>
-Return the user-specific data directory as a string:
+Return the path of the specified directory:
 </dd>
 <p>
 <dd>
+<b>"app"</b> &mdash; the directory containing the Golly application.
+</dd>
+<p>
+<dd>
+<b>"data"</b> &mdash; the user-specific data directory:
+</dd>
+<dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td>On Linux:</td><td width=20>
+<tr><td>On Linux:</td><td width=10>
     </td><td>~/.golly/</td></tr>
-<tr><td>On Mac OS X:</td><td width=20>
+<tr><td>On Mac OS X:</td><td width=10>
     </td><td>~/Library/Application Support/Golly/</td></tr>
-<tr><td>On Windows:</td><td width=20>
+<tr><td>On Windows:</td><td width=10>
     </td><td>C:\Documents and Settings\username\Application Data\Golly\</td></tr>
 </table>
 </dd>
+</td></tr>
 <p>
-<dd> Example: <b>g_store($cellarray, g_datadir()."foo.rle");</b></dd>
+<dd>
+<b>"temp"</b> &mdash; the directory Golly uses to store various temporary files.
+All these files are deleted when Golly quits.
+</dd>
+<p>
+<dd>
+<b>"rules"</b> &mdash; the user-specific rules directory
+set in <a href="prefs:control">Preferences > Control</a>.
+</dd>
+<p>
+<dd>
+<b>"patterns"</b> &mdash; the directory displayed by File > Show Patterns.
+</dd>
+<p>
+<dd>
+<b>"scripts"</b> &mdash; the directory displayed by File > Show Scripts.
+</dd>
+<p>
+<dd>
+<b>"download"</b> &mdash; the directory Golly uses to store downloaded files.
+</dd>
+<p>
+<dd>
+In each case a full path is returned, terminated by the appropriate path separator
+for the current platform.
+</dd>
+<dd> Example: <b>g_open(g_getdir("app")."Patterns/Breeders/breeder.lif");</b></dd>
 </p>
 
-<a name="rulesdir"></a><p><dt><b>g_rulesdir()</b></dt>
+<a name="setdir"></a><p><dt><b>g_setdir(<i>dirname, dirpath</i>)</b></dt>
 <dd>
-Return the user-specific rules directory
-(set in <a href="prefs:control">Preferences > Control</a>) as a string:
+Set the specified directory to the given path (which must be a full path to
+an existing directory).  All the directory names listed above are allowed,
+except for "app", "data" and "temp".
 </dd>
-<dd> Example: <b>$file = g_rulesdir()."test.table";</b></dd>
+<dd> Example: <b>g_setdir("patterns", "/path/to/my-patterns/");</b></dd>
 </p>
 
 <p><a name="editing">

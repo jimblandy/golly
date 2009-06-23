@@ -872,10 +872,14 @@ void MainFrame::UpdateStatus()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root)
+void MainFrame::SimplifyTree(wxString& indir, wxTreeCtrl* treectrl, wxTreeItemId root)
 {
    // delete old tree (except root)
    treectrl->DeleteChildren(root);
+   
+   // remove any terminating separator
+   wxString dir = indir;
+   if (dir.Last() == wxFILE_SEP_PATH) dir.Truncate(dir.Length()-1);
 
    // append dir as only child
    wxDirItemData* diritem = new wxDirItemData(dir, dir, true);

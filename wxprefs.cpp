@@ -1308,7 +1308,9 @@ void SaveColor(FILE* f, const char* name, const wxColor* rgb)
 
 // -----------------------------------------------------------------------------
 
-void GetRelPath(const char* value, wxString& path, const wxString& defdir = wxEmptyString)
+void GetRelPath(const char* value, wxString& path,
+                const wxString& defdir = wxEmptyString,
+                bool isdir = true)
 {
    path = wxString(value, wxConvLocal);
    wxFileName fname(path);
@@ -1319,6 +1321,8 @@ void GetRelPath(const char* value, wxString& path, const wxString& defdir = wxEm
       wxString suffix = wxFILE_SEP_PATH + defdir;
       if (path.EndsWith(suffix)) {
          path = gollydir + defdir;
+         // nicer if directory path ends with separator
+         if (isdir && path.Last() != wxFILE_SEP_PATH) path += wxFILE_SEP_PATH;
          return;
       }
    }
@@ -1330,6 +1334,9 @@ void GetRelPath(const char* value, wxString& path, const wxString& defdir = wxEm
       // if path doesn't exist then reset to default directory
       if (!wxFileName::DirExists(path)) path = gollydir + defdir;
    }
+   
+   // nicer if directory path ends with separator
+   if (isdir && path.Last() != wxFILE_SEP_PATH) path += wxFILE_SEP_PATH;
 }
 
 // -----------------------------------------------------------------------------
@@ -1964,7 +1971,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "icon_file") == 0) {
          if (algoindex >= 0 && algoindex < NumAlgos()) {
-            GetRelPath(value, algoinfo[algoindex]->iconfile);
+            GetRelPath(value, algoinfo[algoindex]->iconfile,
+                       // this is a file path, not a directory path
+                       wxEmptyString, false);
             LoadIcons(algoindex);
          }
 

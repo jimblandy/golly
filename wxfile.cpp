@@ -1700,34 +1700,42 @@ void MainFrame::ToggleShowScripts()
 
 void MainFrame::ChangePatternDir()
 {
-   wxDirDialog dirdlg(this, _("Choose a new pattern folder"),
-                      patterndir, wxDD_NEW_DIR_BUTTON);
-   if ( dirdlg.ShowModal() == wxID_OK ) {
-      wxString newdir = dirdlg.GetPath();
-      if ( patterndir != newdir ) {
-         patterndir = newdir;
-         if ( showpatterns ) {
-            // show new pattern directory
-            SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
-         }
-      }
-   }
+   wxDirDialog dirdlg(this, _("Choose a new pattern folder"), patterndir, wxDD_NEW_DIR_BUTTON);
+   if (dirdlg.ShowModal() == wxID_OK)
+      SetPatternDir(dirdlg.GetPath());
 }
 
 // -----------------------------------------------------------------------------
 
 void MainFrame::ChangeScriptDir()
 {
-   wxDirDialog dirdlg(this, _("Choose a new script folder"),
-                      scriptdir, wxDD_NEW_DIR_BUTTON);
-   if ( dirdlg.ShowModal() == wxID_OK ) {
-      wxString newdir = dirdlg.GetPath();
-      if ( scriptdir != newdir ) {
-         scriptdir = newdir;
-         if ( showscripts ) {
-            // show new script directory
-            SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
-         }
+   wxDirDialog dirdlg(this, _("Choose a new script folder"), scriptdir, wxDD_NEW_DIR_BUTTON);
+   if (dirdlg.ShowModal() == wxID_OK)
+      SetScriptDir(dirdlg.GetPath());
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetPatternDir(const wxString& newdir)
+{
+   if (patterndir != newdir) {
+      patterndir = newdir;
+      if (showpatterns) {
+         // show new pattern directory
+         SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetScriptDir(const wxString& newdir)
+{
+   if (scriptdir != newdir) {
+      scriptdir = newdir;
+      if (showscripts) {
+         // show new script directory
+         SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
       }
    }
 }

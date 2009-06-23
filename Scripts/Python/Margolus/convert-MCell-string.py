@@ -10,8 +10,9 @@ s = g.getstring("Enter a specification string.\n\nThis can either be an MCell fo
 # pull out the 16 numeric tokens that tell us what each partition becomes
 becomes = map(int,s.replace('M',' ').replace('S',' ').replace(',',' ').replace('D',' ').replace(';',' ').split())
 
-# we should be able to write straight into the Rules folder, so we can call setrule immediately
-folder = g.rulesdir()
+# we should be able to write straight into the user's rules folder,
+# so we can call setrule immediately
+folder = g.getdir('rules')
 
 # construct a rule_name from next case indices
 rule_name = 'Margolus-' + '-'.join(map(str,becomes))

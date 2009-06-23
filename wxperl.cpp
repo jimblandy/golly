@@ -531,11 +531,9 @@ XS(pl_opendialog)
    #endif
 
    wxString openfname = wxEmptyString;
-   if ( opendlg.ShowModal() == wxID_OK ) {
-      openfname = opendlg.GetPath();
-   }
+   if ( opendlg.ShowModal() == wxID_OK ) openfname = opendlg.GetPath();
 
-   XSRETURN_PV((const char*) openfname.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)openfname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -576,7 +574,7 @@ XS(pl_savedialog)
    wxString wxs_savefname = wxEmptyString;
    if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
 
-   XSRETURN_PV((const char*) wxs_savefname.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)wxs_savefname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -696,6 +694,7 @@ XS(pl_store)
 
 // -----------------------------------------------------------------------------
 
+// deprecated (use pl_getdir)
 XS(pl_appdir)
 {
    IGNORE_UNUSED_PARAMS;
@@ -703,11 +702,12 @@ XS(pl_appdir)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $dir = g_appdir().");
 
-   XSRETURN_PV((const char*) gollydir.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)gollydir.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
 
+// deprecated (use pl_getdir)
 XS(pl_datadir)
 {
    IGNORE_UNUSED_PARAMS;
@@ -715,19 +715,44 @@ XS(pl_datadir)
    dXSARGS;
    if (items != 0) PERL_ERROR("Usage: $dir = g_datadir().");
 
-   XSRETURN_PV((const char*) datadir.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)datadir.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
 
-XS(pl_rulesdir)
+XS(pl_setdir)
 {
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) PERL_ERROR("Usage: $dir = g_rulesdir().");
+   if (items != 2) PERL_ERROR("Usage: g_setdir($dirname,$newdir).");
+   
+   STRLEN n_a;
+   char* dirname = SvPV(ST(0), n_a);
+   char* newdir = SvPV(ST(1), n_a);
+   
+   const char* err = GSF_setdir(dirname, newdir);
+   if (err) PERL_ERROR(err);
 
-   XSRETURN_PV((const char*) userrules.mb_str(wxConvLocal));
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_getdir)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: $dir = g_getdir($dirname).");
+   
+   STRLEN n_a;
+   char* dirname = SvPV(ST(0), n_a);
+   
+   const char* dirstring = GSF_getdir(dirname);
+   if (dirstring == NULL) PERL_ERROR("g_getdir error: unknown directory name.");
+   
+   XSRETURN_PV(dirstring);
 }
 
 // -----------------------------------------------------------------------------
@@ -2432,9 +2457,7 @@ XS(pl_getname)
       PERL_ERROR(msg);
    }
 
-   // need to be careful converting Unicode wxString to char*
-   wxCharBuffer name = GetLayer(index)->currname.mb_str(wxConvLocal);
-   XSRETURN_PV((const char*)name);
+   XSRETURN_PV((const char*)GetLayer(index)->currname.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2669,9 +2692,8 @@ XS(pl_getclipstr)
    wxTextDataObject data;
    if ( !mainptr->GetTextFromClipboard(&data) ) PERL_ERROR("Could not get data from clipboard!");
 
-   // need to be careful converting Unicode wxString to char*
    wxString wxs_clipstr = data.GetText();
-   XSRETURN_PV((const char*) wxs_clipstr.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)wxs_clipstr.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2699,7 +2721,7 @@ XS(pl_getstring)
       Perl_croak(aTHX_ NULL);
    }
 
-   XSRETURN_PV((const char*) result.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)result.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -2931,9 +2953,11 @@ EXTERN_C void xs_init(pTHX)
    newXS((char*)"g_savedialog",   pl_savedialog,   (char*)file);
    newXS((char*)"g_load",         pl_load,         (char*)file);
    newXS((char*)"g_store",        pl_store,        (char*)file);
+   newXS((char*)"g_setdir",       pl_setdir,       (char*)file);
+   newXS((char*)"g_getdir",       pl_getdir,       (char*)file);
+   // next two are deprecated (use g_getdir)
    newXS((char*)"g_appdir",       pl_appdir,       (char*)file);
    newXS((char*)"g_datadir",      pl_datadir,      (char*)file);
-   newXS((char*)"g_rulesdir",     pl_rulesdir,     (char*)file);
    // editing
    newXS((char*)"g_new",          pl_new,          (char*)file);
    newXS((char*)"g_cut",          pl_cut,          (char*)file);

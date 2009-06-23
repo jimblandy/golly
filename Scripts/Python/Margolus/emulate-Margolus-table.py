@@ -3,26 +3,14 @@
 # emulates it.
 
 import golly
-
-try:
-    import Tkinter as tk
-    import tkFileDialog
-except:
-    golly.warn('Tkinter not available - cannot proceed.\n\n\
-Either install python-tk or edit the script to specify\n\
-the input filename directly.')
-    # If this happens to you, see below.
-    golly.exit()
 import os
 
-root = tk.Tk()
-root.withdraw()
+# ask user to select .table file
+fn = golly.opendialog('Open a Margolus table to emulate',
+                      'Rule tables (*.table)|*.table',
+                      golly.getdir('rules'))
 
-# If you don't have Tkinter replace this line with your own, e.g.: 
-# fn = '../../../Rules/BBM-Margolus.table'
-fn = tkFileDialog.askopenfilename(initialdir=golly.rulesdir(),\
-    filetypes=[('Rule tables','*.table')],\
-    title='Open a Margolus table to emulate:')
+if len(fn) == 0: golly.exit()    # user hit Cancel
 
 # state s becomes 1+2s and 2+2s, the first for when the cell is currently
 # the top-left square of the Margolus partition, the other for when it isn't.
@@ -46,7 +34,7 @@ symm = {
 
 rule_name = os.path.splitext(os.path.split(fn)[1])[0]
 f = open(fn,'r')
-g = open(golly.rulesdir()+rule_name+'-emulated.table','w')
+g = open(golly.getdir('rules')+rule_name+'-emulated.table','w')
 g.write('# Automatically produced by emulate-Margolus-table.py\n')
 g.write('# from '+rule_name+'.table\n\n')
 g.write('neighborhood:Moore\nsymmetries:none\n')

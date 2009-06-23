@@ -124,7 +124,7 @@ command will save the file in the same directory as the script.
 <p>
 When Golly starts up it looks for a script called <b>golly-start.py</b>
 in the same directory as the Golly application and then in a user-specific
-data directory (see the <a href="#datadir"><b>datadir</b></a> command for
+data directory (see the <a href="#getdir"><b>getdir</b></a> command for
 the likely path on your system).
 If the script is found then it is automatically executed.
 
@@ -155,14 +155,12 @@ or you can search for individual commands alphabetically:
 <td valign=top>
 <a href="#addlayer"><b>addlayer</b></a><br>
 <a href="#advance"><b>advance</b></a><br>
-<a href="#appdir"><b>appdir</b></a><br>
 <a href="#autoupdate"><b>autoupdate</b></a><br>
 <a href="#check"><b>check</b></a><br>
 <a href="#clear"><b>clear</b></a><br>
 <a href="#clone"><b>clone</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
-<a href="#datadir"><b>datadir</b></a><br>
 <a href="#dellayer"><b>dellayer</b></a><br>
 <a href="#dokey"><b>dokey</b></a><br>
 <a href="#duplicate"><b>duplicate</b></a><br>
@@ -174,17 +172,18 @@ or you can search for individual commands alphabetically:
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
 <a href="#getalgo"><b>getalgo</b></a><br>
-<a href="#getbase"><b>getbase</b></a>
+<a href="#getbase"><b>getbase</b></a><br>
+<a href="#getcell"><b>getcell</b></a><br>
+<a href="#getcells"><b>getcells</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getcell"><b>getcell</b></a><br>
-<a href="#getcells"><b>getcells</b></a><br>
 <a href="#getclip"><b>getclip</b></a><br>
 <a href="#getclipstr"><b>getclipstr</b></a><br>
 <a href="#getcolor"><b>getcolor</b></a><br>
 <a href="#getcolors"><b>getcolors</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
+<a href="#getdir"><b>getdir</b></a><br>
 <a href="#getgen"><b>getgen</b></a><br>
 <a href="#getkey"><b>getkey</b></a><br>
 <a href="#getlayer"><b>getlayer</b></a><br>
@@ -199,11 +198,11 @@ or you can search for individual commands alphabetically:
 <a href="#getstep"><b>getstep</b></a><br>
 <a href="#getstring"><b>getstring</b></a><br>
 <a href="#hash"><b>hash</b></a><br>
-<a href="#help"><b>help</b></a>
+<a href="#help"><b>help</b></a><br>
+<a href="#join"><b>join</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#join"><b>join</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
@@ -220,21 +219,21 @@ or you can search for individual commands alphabetically:
 <a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
-<a href="#rulesdir"><b>rulesdir</b></a><br>
 <a href="#run"><b>run</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#savedialog"><b>savedialog</b></a><br>
-<a href="#select"><b>select</b></a>
+<a href="#select"><b>select</b></a><br>
+<a href="#setalgo"><b>setalgo</b></a><br>
+<a href="#setbase"><b>setbase</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#setalgo"><b>setalgo</b></a><br>
-<a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setclipstr"><b>setclipstr</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
 <a href="#setcolors"><b>setcolors</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
+<a href="#setdir"><b>setdir</b></a><br>
 <a href="#setgen"><b>setgen</b></a><br>
 <a href="#setlayer"><b>setlayer</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
@@ -323,38 +322,66 @@ If the <b>savexrle</b> option is True then extended RLE format is used
 <dd> Example: <b>golly.store(clist, "foo.rle")</b></dd>
 </p>
 
-<a name="appdir"></a><p><dt><b>appdir()</b></dt>
+<a name="getdir"></a><p><dt><b>getdir(<i>dirname</i>)</b></dt>
 <dd>
-Return the Golly application directory as a string.
-</dd>
-<dd> Example: <b>golly.open(golly.appdir() + "Patterns/Breeders/breeder.lif")</b></dd>
-</p>
-
-<a name="datadir"></a><p><dt><b>datadir()</b></dt>
-<dd>
-Return the user-specific data directory as a string:
+Return the path of the specified directory:
 </dd>
 <p>
 <dd>
+<b>"app"</b> &mdash; the directory containing the Golly application.
+</dd>
+<p>
+<dd>
+<b>"data"</b> &mdash; the user-specific data directory:
+</dd>
+<dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td>On Linux:</td><td width=20>
+<tr><td>On Linux:</td><td width=10>
     </td><td>~/.golly/</td></tr>
-<tr><td>On Mac OS X:</td><td width=20>
+<tr><td>On Mac OS X:</td><td width=10>
     </td><td>~/Library/Application Support/Golly/</td></tr>
-<tr><td>On Windows:</td><td width=20>
+<tr><td>On Windows:</td><td width=10>
     </td><td>C:\Documents and Settings\username\Application Data\Golly\</td></tr>
 </table>
 </dd>
+</td></tr>
 <p>
-<dd> Example: <b>golly.store(clist, golly.datadir() + "foo.rle")</b></dd>
+<dd>
+<b>"temp"</b> &mdash; the directory Golly uses to store various temporary files.
+All these files are deleted when Golly quits.
+</dd>
+<p>
+<dd>
+<b>"rules"</b> &mdash; the user-specific rules directory
+set in <a href="prefs:control">Preferences > Control</a>.
+</dd>
+<p>
+<dd>
+<b>"patterns"</b> &mdash; the directory displayed by File > Show Patterns.
+</dd>
+<p>
+<dd>
+<b>"scripts"</b> &mdash; the directory displayed by File > Show Scripts.
+</dd>
+<p>
+<dd>
+<b>"download"</b> &mdash; the directory Golly uses to store downloaded files.
+</dd>
+<p>
+<dd>
+In each case a full path is returned, terminated by the appropriate path separator
+for the current platform.
+</dd>
+<dd> Example: <b>golly.open(golly.getdir("app") + "Patterns/Breeders/breeder.lif")</b></dd>
 </p>
 
-<a name="rulesdir"></a><p><dt><b>rulesdir()</b></dt>
+<a name="setdir"></a><p><dt><b>setdir(<i>dirname, dirpath</i>)</b></dt>
 <dd>
-Return the user-specific rules directory
-(set in <a href="prefs:control">Preferences > Control</a>) as a string:
+Set the specified directory to the given path (which must be a full path to
+an existing directory).  All the directory names listed above are allowed,
+except for "app", "data" and "temp".
 </dd>
-<dd> Example: <b>f = open(golly.rulesdir() + "test.table", "w")</b></dd>
+<dd> Example: <b>golly.setdir("patterns", "/path/to/my-patterns/")</b></dd>
 </p>
 
 <p><a name="editing">

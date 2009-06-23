@@ -15,7 +15,7 @@ Key features:
 - Reads RLE, macrocell, Life 1.05/1.06, dblife, and MCell files.
   Can also read common graphic formats: BMP, PNG, GIF, TIFF.
 - Can extract patterns, scripts and rules from zip files.
-- Can download files from online archives.
+- Download files from online archives.
 - Includes a state-of-the-art pattern collection.
 - Fast loading of large patterns.
 - Paste in patterns from the clipboard.
