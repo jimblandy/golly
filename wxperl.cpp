@@ -505,14 +505,14 @@ XS(pl_opendialog)
    if (items > 5) PERL_ERROR("Usage: g_opendialog($title, $filetypes,"
                              "$initialdir, $initialfname, $mustexist=1).");
 
+   const char* title = "Choose a file to open";
+   const char* filetypes = "All files (*)|*";
+   const char* initialdir = "";
+   const char* initialfname = "";
    STRLEN n_a;
-   char* title = "Choose a file to open";
    if (items > 0) title = SvPV(ST(0), n_a);
-   char* filetypes = "All files (*)|*";
    if (items > 1) filetypes = SvPV(ST(1), n_a);
-   char* initialdir = "";
    if (items > 2) initialdir = SvPV(ST(2), n_a);
-   char* initialfname = "";
    if (items > 3) initialfname = SvPV(ST(3), n_a);
       int mustexist = 1;
    if (items > 4) mustexist = SvIV(ST(4));
@@ -545,14 +545,15 @@ XS(pl_savedialog)
    dXSARGS;
    if (items > 5) PERL_ERROR("Usage: g_savedialog($title, $filetypes,"
                              " $initialdir, $initialfname, $suppressprompt=0).");
+
+   const char* title = "Choose a save location and filename";
+   const char* filetypes = "All files (*)|*";
+   const char* initialdir = "";
+   const char* initialfname = "";
    STRLEN n_a;
-   char* title = "Choose a save location and filename";
    if (items > 0) title = SvPV(ST(0), n_a);
-   char* filetypes = "All files (*)|*";
    if (items > 1) filetypes = SvPV(ST(1), n_a);
-   char* initialdir = "";
    if (items > 2) initialdir = SvPV(ST(2), n_a);
-   char* initialfname = "";
    if (items > 3) initialfname = SvPV(ST(3), n_a);
    int suppressprompt = 0;
    if (items > 4) suppressprompt = SvIV(ST(4));

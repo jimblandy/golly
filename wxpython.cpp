@@ -92,8 +92,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #ifdef USE_PYTHON_DYNAMIC
 
-#ifdef __WXMSW__
-   // avoid warning on Windows
+#ifndef __WXMAC__
+   // avoid warning on Windows/Linux
    #undef PyRun_SimpleString
 #endif
 
@@ -493,10 +493,10 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char* title = "Choose a file to open";
-   char* filetypes = "All files (*)|*";
-   char* initialdir = "";
-   char* initialfname = "";
+   const char* title = "Choose a file to open";
+   const char* filetypes = "All files (*)|*";
+   const char* initialdir = "";
+   const char* initialfname = "";
    int mustexist = 1;
 
    if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
@@ -527,10 +527,10 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char* title = "Choose a save location and filename";
-   char* filetypes = "All files (*)|*";
-   char* initialdir = "";
-   char* initialfname = "";
+   const char* title = "Choose a save location and filename";
+   const char* filetypes = "All files (*)|*";
+   const char* initialdir = "";
+   const char* initialfname = "";
    int suppressprompt = 0;
 
    if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
@@ -1126,7 +1126,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    // for a one-state list 'copy' mode currently has the same effect as 'or' mode
    // because there is no bounding box to set dead cells, but a multi-state list can
    // have dead cells so in that case 'copy' mode is not the same as 'or' mode
-   char* mode = "or";
+   const char* mode = "or";
 
    if (!PyArg_ParseTuple(args, (char*)"O!|lllllls", &PyList_Type, &list,
                          &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
@@ -2571,8 +2571,8 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
    char* prompt;
-   char* initial = "";
-   char* title = "";
+   const char* initial = "";
+   const char* title = "";
 
    if (!PyArg_ParseTuple(args, (char*)"s|ss", &prompt, &initial, &title))
       return NULL;
@@ -2881,7 +2881,7 @@ bool InitPython()
       #endif
 
       // allow Python to call the above py_* routines
-      Py_InitModule("golly", py_methods);
+      Py_InitModule((char*)"golly", py_methods);
 
       // catch Python messages sent to stderr and pass them to py_stderr
       if ( PyRun_SimpleString(
