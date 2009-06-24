@@ -919,7 +919,12 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
             mainptr->OpenFile(path);
          }
       }
-
+   } else if ( url.StartsWith(wxT("rule:")) ) {
+      if (inscript) {
+         Warning(_("Cannot change preferences while a script is running."));
+      } else {
+         LoadRule( url.AfterFirst(':') );
+      }
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);

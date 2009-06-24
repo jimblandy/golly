@@ -1409,6 +1409,14 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
       case ID_HELP_BUTT:      ShowHelp(wxEmptyString); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
+      
+      // Help Algorithm submenu
+      case ID_HELP_ALGO_QUICKLIFE:    ShowHelp(_("Help/Algorithms/QuickLife.html")); break;
+      case ID_HELP_ALGO_HASHLIFE:     ShowHelp(_("Help/Algorithms/HashLife.html")); break;
+      case ID_HELP_ALGO_GENERATIONS:  ShowHelp(_("Help/Algorithms/Generations.html")); break;
+      case ID_HELP_ALGO_JVN:          ShowHelp(_("Help/Algorithms/JvN.html")); break;
+      case ID_HELP_ALGO_RULETABLE:    ShowHelp(_("Help/Algorithms/RuleTable.html")); break;
+      case ID_HELP_ALGO_RULETREE:     ShowHelp(_("Help/Algorithms/RuleTree.html")); break;
 
       // Open/Run Recent submenus
       case ID_CLEAR_MISSING_PATTERNS:  ClearMissingPatterns(); break;
@@ -2117,6 +2125,7 @@ void MainFrame::CreateMenus()
    wxMenu* pmodeSubMenu = new wxMenu();
    wxMenu* cmodeSubMenu = new wxMenu();
    wxMenu* scaleSubMenu = new wxMenu();
+   wxMenu* helpAlgoSubMenu = new wxMenu();
 
    plocSubMenu->AppendCheckItem(ID_PL_TL,       _("Top Left"));
    plocSubMenu->AppendCheckItem(ID_PL_TR,       _("Top Right"));
@@ -2141,6 +2150,13 @@ void MainFrame::CreateMenus()
    scaleSubMenu->AppendCheckItem(ID_SCALE_4,    _("1:4") + GetAccelerator(DO_SCALE4));
    scaleSubMenu->AppendCheckItem(ID_SCALE_8,    _("1:8") + GetAccelerator(DO_SCALE8));
    scaleSubMenu->AppendCheckItem(ID_SCALE_16,   _("1:16") + GetAccelerator(DO_SCALE16));
+
+   helpAlgoSubMenu->Append(ID_HELP_ALGO_QUICKLIFE,   _("QuickLife"));
+   helpAlgoSubMenu->Append(ID_HELP_ALGO_HASHLIFE,    _("HashLife"));
+   helpAlgoSubMenu->Append(ID_HELP_ALGO_GENERATIONS, _("Generations"));
+   helpAlgoSubMenu->Append(ID_HELP_ALGO_JVN,         _("JvN"));
+   helpAlgoSubMenu->Append(ID_HELP_ALGO_RULETABLE,   _("RuleTable"));
+   helpAlgoSubMenu->Append(ID_HELP_ALGO_RULETREE,    _("RuleTree"));
 
    fileMenu->Append(wxID_NEW,                   _("New Pattern") + GetAccelerator(DO_NEWPATT));
    fileMenu->AppendSeparator();
@@ -2257,6 +2273,7 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_INDEX,              _("Contents"));
    helpMenu->Append(ID_HELP_INTRO,              _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS,               _("Hints and Tips"));
+   helpMenu->Append(ID_HELP_ALGORITHM,          _("Algorithms"),helpAlgoSubMenu);
    helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));
    helpMenu->Append(ID_HELP_MOUSE,              _("Mouse Shortcuts"));
    helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
@@ -2281,7 +2298,7 @@ void MainFrame::CreateMenus()
    #endif
    // on the Mac the wxID_ABOUT item gets moved to the app menu
    helpMenu->Append(wxID_ABOUT,                 _("About Golly") + GetAccelerator(DO_ABOUT));
-
+   
    // create the menu bar and append menus;
    // avoid using "&" in menu names because it prevents using keyboard shortcuts
    // like Alt+L on Linux
