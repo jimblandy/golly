@@ -357,7 +357,7 @@ enum {
    ID_HELP_INDEX,
    ID_HELP_INTRO,
    ID_HELP_TIPS,
-   ID_HELP_ALGORITHM,
+   ID_HELP_ALGOS,
    ID_HELP_KEYBOARD,
    ID_HELP_MOUSE,
    ID_HELP_PERL,
@@ -375,14 +375,6 @@ enum {
    ID_HELP_PROBLEMS,
    ID_HELP_CHANGES,
    ID_HELP_CREDITS,
-   
-   // Help Algorithm submenu
-   ID_HELP_ALGO_QUICKLIFE,
-   ID_HELP_ALGO_HASHLIFE,
-   ID_HELP_ALGO_GENERATIONS,
-   ID_HELP_ALGO_JVN,
-   ID_HELP_ALGO_RULETABLE,
-   ID_HELP_ALGO_RULETREE,
    
    // these ids aren't associated with any menu item
    ID_LOAD_LEXICON,     // load lexicon pattern

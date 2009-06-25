@@ -1390,12 +1390,13 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
       case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
       case ID_HELP_TIPS:      ShowHelp(_("Help/tips.html")); break;
-      case ID_HELP_KEYBOARD:  ShowHelp(SHOW_KEYBOARD_SHORTCUTS); break;
-      case ID_HELP_MOUSE:     ShowHelp(_("Help/mouse.html")); break;
-      case ID_HELP_PERL:      ShowHelp(_("Help/perl.html")); break;
-      case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
+      case ID_HELP_ALGOS:     ShowHelp(_("Help/algos.html")); break;
       case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
       case ID_HELP_ARCHIVES:  ShowHelp(_("Help/archives.html")); break;
+      case ID_HELP_PERL:      ShowHelp(_("Help/perl.html")); break;
+      case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
+      case ID_HELP_KEYBOARD:  ShowHelp(SHOW_KEYBOARD_SHORTCUTS); break;
+      case ID_HELP_MOUSE:     ShowHelp(_("Help/mouse.html")); break;
       case ID_HELP_FILE:      ShowHelp(_("Help/file.html")); break;
       case ID_HELP_EDIT:      ShowHelp(_("Help/edit.html")); break;
       case ID_HELP_CONTROL:   ShowHelp(_("Help/control.html")); break;
@@ -1409,14 +1410,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_HELP_CREDITS:   ShowHelp(_("Help/credits.html")); break;
       case ID_HELP_BUTT:      ShowHelp(wxEmptyString); break;
       case wxID_ABOUT:        ShowAboutBox(); break;
-      
-      // Help Algorithm submenu
-      case ID_HELP_ALGO_QUICKLIFE:    ShowHelp(_("Help/Algorithms/QuickLife.html")); break;
-      case ID_HELP_ALGO_HASHLIFE:     ShowHelp(_("Help/Algorithms/HashLife.html")); break;
-      case ID_HELP_ALGO_GENERATIONS:  ShowHelp(_("Help/Algorithms/Generations.html")); break;
-      case ID_HELP_ALGO_JVN:          ShowHelp(_("Help/Algorithms/JvN.html")); break;
-      case ID_HELP_ALGO_RULETABLE:    ShowHelp(_("Help/Algorithms/RuleTable.html")); break;
-      case ID_HELP_ALGO_RULETREE:     ShowHelp(_("Help/Algorithms/RuleTree.html")); break;
 
       // Open/Run Recent submenus
       case ID_CLEAR_MISSING_PATTERNS:  ClearMissingPatterns(); break;
@@ -2125,7 +2118,6 @@ void MainFrame::CreateMenus()
    wxMenu* pmodeSubMenu = new wxMenu();
    wxMenu* cmodeSubMenu = new wxMenu();
    wxMenu* scaleSubMenu = new wxMenu();
-   wxMenu* helpAlgoSubMenu = new wxMenu();
 
    plocSubMenu->AppendCheckItem(ID_PL_TL,       _("Top Left"));
    plocSubMenu->AppendCheckItem(ID_PL_TR,       _("Top Right"));
@@ -2150,13 +2142,6 @@ void MainFrame::CreateMenus()
    scaleSubMenu->AppendCheckItem(ID_SCALE_4,    _("1:4") + GetAccelerator(DO_SCALE4));
    scaleSubMenu->AppendCheckItem(ID_SCALE_8,    _("1:8") + GetAccelerator(DO_SCALE8));
    scaleSubMenu->AppendCheckItem(ID_SCALE_16,   _("1:16") + GetAccelerator(DO_SCALE16));
-
-   helpAlgoSubMenu->Append(ID_HELP_ALGO_QUICKLIFE,   _("QuickLife"));
-   helpAlgoSubMenu->Append(ID_HELP_ALGO_HASHLIFE,    _("HashLife"));
-   helpAlgoSubMenu->Append(ID_HELP_ALGO_GENERATIONS, _("Generations"));
-   helpAlgoSubMenu->Append(ID_HELP_ALGO_JVN,         _("JvN"));
-   helpAlgoSubMenu->Append(ID_HELP_ALGO_RULETABLE,   _("RuleTable"));
-   helpAlgoSubMenu->Append(ID_HELP_ALGO_RULETREE,    _("RuleTree"));
 
    fileMenu->Append(wxID_NEW,                   _("New Pattern") + GetAccelerator(DO_NEWPATT));
    fileMenu->AppendSeparator();
@@ -2273,14 +2258,15 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_INDEX,              _("Contents"));
    helpMenu->Append(ID_HELP_INTRO,              _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS,               _("Hints and Tips"));
-   // not seeing submenu on Mac!!! wxMac bug or Mac OS X limitation???
-   helpMenu->Append(ID_HELP_ALGORITHM,          _("Algorithms"), helpAlgoSubMenu);
-   helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));
-   helpMenu->Append(ID_HELP_MOUSE,              _("Mouse Shortcuts"));
-   helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
-   helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
+   helpMenu->Append(ID_HELP_ALGOS,              _("Algorithms"));
    helpMenu->Append(ID_HELP_LEXICON,            _("Life Lexicon"));
    helpMenu->Append(ID_HELP_ARCHIVES,           _("Online Archives"));
+   helpMenu->AppendSeparator();
+   helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
+   helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
+   helpMenu->AppendSeparator();
+   helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));
+   helpMenu->Append(ID_HELP_MOUSE,              _("Mouse Shortcuts"));
    helpMenu->AppendSeparator();
    helpMenu->Append(ID_HELP_FILE,               _("File Menu"));
    helpMenu->Append(ID_HELP_EDIT,               _("Edit Menu"));
