@@ -2273,7 +2273,8 @@ void MainFrame::CreateMenus()
    helpMenu->Append(ID_HELP_INDEX,              _("Contents"));
    helpMenu->Append(ID_HELP_INTRO,              _("Introduction"));
    helpMenu->Append(ID_HELP_TIPS,               _("Hints and Tips"));
-   helpMenu->Append(ID_HELP_ALGORITHM,          _("Algorithms"),helpAlgoSubMenu);
+   // not seeing submenu on Mac!!! wxMac bug or Mac OS X limitation???
+   helpMenu->Append(ID_HELP_ALGORITHM,          _("Algorithms"), helpAlgoSubMenu);
    helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));
    helpMenu->Append(ID_HELP_MOUSE,              _("Mouse Shortcuts"));
    helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));

@@ -433,6 +433,8 @@ void LoadRule(const wxString& rulestring)
    wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
    
+   mainptr->Raise();
+   
    const char* err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
    if (err) {
       // try to find another algorithm that supports the given rule
@@ -645,7 +647,6 @@ void GetURL(const wxString& url)
    } else if (IsRuleFile(filename)) {
       // load corresponding rule table/tree
       wxString rule = filename.BeforeLast('.');
-      mainptr->Raise();
       LoadRule(rule);
    
    } else if (IsTextFile(filename)) {
@@ -693,7 +694,6 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
          } else {         
             // load corresponding rule table/tree
             wxString rule = filename.BeforeLast('.');
-            mainptr->Raise();
             LoadRule(rule);
          }
       } else {
@@ -919,12 +919,14 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
             mainptr->OpenFile(path);
          }
       }
+   
    } else if ( url.StartsWith(wxT("rule:")) ) {
       if (inscript) {
-         Warning(_("Cannot change preferences while a script is running."));
+         Warning(_("Cannot change rule while a script is running."));
       } else {
          LoadRule( url.AfterFirst(':') );
       }
+   
    } else {
       // assume it's a link to a local target or another help file
       CheckAndLoad(url);
