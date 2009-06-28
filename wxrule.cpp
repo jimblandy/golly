@@ -116,9 +116,10 @@ wxString GetRuleName(const wxString& rulestring)
 
 // -----------------------------------------------------------------------------
 
-// global used in AlgoHelp and RuleDialog classes:
+// globals used in AlgoHelp and RuleDialog classes:
 
-static wxTextCtrl* ruletext;      // text box for user to type in rule
+static wxTextCtrl* ruletext;        // text box for user to type in rule
+static wxStaticText* statusline;    // status line at bottom of dialog
 
 // -----------------------------------------------------------------------------
 
@@ -131,18 +132,26 @@ public:
             const wxSize& size, long style)
       : wxHtmlWindow(parent, id, pos, size, style) {
       editlink = false;
+      linkrect = wxRect(0,0,0,0);
    }
 
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
+   virtual void OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y);
 
+   void ClearStatus();
    void DisplayFile(const wxString& filepath);
+   void SetFontSizes(int size);
    
-   bool editlink;    // open clicked file in editor?
+   bool editlink;       // open clicked file in editor?
 
 private:
    void OnKeyUp(wxKeyEvent& event);
    void OnSize(wxSizeEvent& event);
+   void OnMouseMotion(wxMouseEvent& event);
+   void OnMouseLeave(wxMouseEvent& event);
    void OnMouseDown(wxMouseEvent& event);
+
+   wxRect linkrect;     // rect for cell containing link
 
    DECLARE_EVENT_TABLE()
 };
@@ -159,6 +168,9 @@ BEGIN_EVENT_TABLE(AlgoHelp, wxHtmlWindow)
    // key-up handler gets a key code of 400 if cmd-C is pressed quickly
    EVT_KEY_DOWN      (AlgoHelp::OnKeyUp)
 #endif
+   EVT_MOTION        (AlgoHelp::OnMouseMotion)
+   EVT_ENTER_WINDOW  (AlgoHelp::OnMouseMotion)
+   EVT_LEAVE_WINDOW  (AlgoHelp::OnMouseLeave)
    EVT_LEFT_DOWN     (AlgoHelp::OnMouseDown)
    EVT_RIGHT_DOWN    (AlgoHelp::OnMouseDown)
    EVT_SIZE          (AlgoHelp::OnSize)
@@ -219,6 +231,60 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
 
 // -----------------------------------------------------------------------------
 
+void AlgoHelp::OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y)
+{
+   if (cell) {
+      wxHtmlLinkInfo* link = cell->GetLink(x,y);
+      if (link) {
+         statusline->SetLabel(link->GetHref());
+         wxPoint pt = ScreenToClient( wxGetMousePosition() );
+         linkrect = wxRect(pt.x-x, pt.y-y, cell->GetWidth(), cell->GetHeight());
+      } else {
+         ClearStatus();
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnMouseMotion(wxMouseEvent& event)
+{
+   if (!linkrect.IsEmpty()) {
+      int x = event.GetX();
+      int y = event.GetY();
+      if (!linkrect.Contains(x,y)) ClearStatus();
+   }
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnMouseLeave(wxMouseEvent& event)
+{
+   ClearStatus();
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::ClearStatus()
+{
+   statusline->SetLabel(wxEmptyString);
+   linkrect = wxRect(0,0,0,0);
+}
+
+// -----------------------------------------------------------------------------
+
+void AlgoHelp::OnMouseDown(wxMouseEvent& event)
+{
+   // set flag so ctrl/right-clicked file can be opened in editor
+   // (this is consistent with how we handle clicks in pattern/script pane)
+   editlink = event.ControlDown() || event.RightDown();
+   event.Skip();
+}
+
+// -----------------------------------------------------------------------------
+
 void AlgoHelp::DisplayFile(const wxString& filepath)
 {
    if ( filepath.IsEmpty() ) {
@@ -239,16 +305,6 @@ void AlgoHelp::DisplayFile(const wxString& filepath)
    } else {
       LoadPage(filepath);
    }
-}
-
-// -----------------------------------------------------------------------------
-
-void AlgoHelp::OnMouseDown(wxMouseEvent& event)
-{
-   // set flag so ctrl/right-clicked file can be opened in editor
-   // (this is consistent with how we handle clicks in pattern/script pane)
-   editlink = event.ControlDown() || event.RightDown();
-   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -318,6 +374,22 @@ void AlgoHelp::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
+void AlgoHelp::SetFontSizes(int size)
+{
+   // set font sizes for <FONT SIZE=-2> to <FONT SIZE=+4>
+   int f_sizes[7];
+   f_sizes[0] = int(size * 0.6);
+   f_sizes[1] = int(size * 0.8);
+   f_sizes[2] = size;
+   f_sizes[3] = int(size * 1.2);
+   f_sizes[4] = int(size * 1.4);
+   f_sizes[5] = int(size * 1.6);
+   f_sizes[6] = int(size * 1.8);
+   SetFonts(wxEmptyString, wxEmptyString, f_sizes);
+}
+
+// -----------------------------------------------------------------------------
+
 const wxString UNKNOWN = _("UNKNOWN");    // unknown algorithm
 const wxString UNNAMED = _("UNNAMED");    // unnamed rule
 
@@ -340,6 +412,11 @@ class RuleDialog : public wxDialog
 {
 public:
    RuleDialog(wxWindow* parent);
+   ~RuleDialog() {
+      delete ruletext;
+      delete statusline;
+   }
+   
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
 private:
@@ -414,6 +491,7 @@ RuleDialog::RuleDialog(wxWindow* parent)
                           wxHW_DEFAULT_STYLE | wxSUNKEN_BORDER);
    if (!htmlwin) Fatal(_("Could not create algo help window!"));
    htmlwin->SetBorders(4);
+   htmlwin->SetFontSizes(helpfontsize);
    htmlwin->Show(false);
 
    ignore_text_change = true;
@@ -476,6 +554,12 @@ void RuleDialog::CreateControls()
    int minwidth = 250;
    int algowd = hbox0->GetMinSize().GetWidth();
    if (algowd > minwidth) minwidth = algowd;
+
+   // create status line for showing link info
+   statusline = new wxStaticText(this, wxID_STATIC, wxEmptyString);
+   #ifdef __WXMAC__
+      statusline->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+   #endif
    
    // create text box for entering new rule
    ruletext = new wxTextCtrl(this, RULE_TEXT,
@@ -537,6 +621,7 @@ void RuleDialog::CreateControls()
    topSizer->Add(hbox2, 0, wxLEFT | wxRIGHT, HGAP);
    topSizer->AddSpacer(BIGVGAP);
    topSizer->Add(vbox, 0, wxTOP | wxBOTTOM, 10);
+   
    SetSizer(topSizer);
    topSizer->SetSizeHints(this);    // calls Fit
 }
@@ -846,7 +931,7 @@ void RuleDialog::OnHelpButton(wxCommandEvent& WXUNUSED(event))
    if (expanded) {
       int wd, ht;
       GetClientSize(&wd, &ht);
-      wxRect htmlrect(minrect.width, 10, ruleexwd - 10, ht + ruleexht - 20);
+      wxRect htmlrect(minrect.width, 10, ruleexwd - 10, ht + ruleexht - 30);
       htmlwin->SetSize(htmlrect);
       r.width = minrect.width + ruleexwd;
       r.height = minrect.height + ruleexht;
@@ -883,8 +968,10 @@ void RuleDialog::OnSize(wxSizeEvent& event)
       wxRect r = GetRect();
       ruleexwd = r.width - minrect.width;
       ruleexht = r.height - minrect.height;
-      wxRect htmlrect(minrect.width, 10, wd - minrect.width - 10, ht - 20);
+      wxRect htmlrect(minrect.width, 10, wd - minrect.width - 10, ht - 30);
       htmlwin->SetSize(htmlrect);
+      // position status line under bottom left corner
+      statusline->Move(htmlrect.GetLeft(), htmlrect.GetBottom() + 4);
    }
    event.Skip();
 }

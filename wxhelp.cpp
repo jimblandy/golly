@@ -99,14 +99,17 @@ public:
    HtmlView(wxWindow* parent, wxWindowID id, const wxPoint& pos,
             const wxSize& size, long style)
       : wxHtmlWindow(parent, id, pos, size, style) {
-      linkrect = wxRect(0,0,0,0);
       editlink = false;
+      linkrect = wxRect(0,0,0,0);
    }
 
    virtual void OnLinkClicked(const wxHtmlLinkInfo& link);
    virtual void OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y);
 
-   void ClearStatus();  // clear status line
+   void ClearStatus();  // clear help window's status line
+
+   void SetFontSizes(int size);
+   void ChangeFontSizes(int size);
 
    void CheckAndLoad(const wxString& filepath);
 
@@ -121,7 +124,7 @@ public:
       delete htmltimer;
    }
    
-   bool editlink;    // open clicked file in editor?
+   bool editlink;       // open clicked file in editor?
 
 private:
    #ifdef __WXMSW__
@@ -139,7 +142,7 @@ private:
    void OnTimer(wxTimerEvent& event);
 
    wxTimer* htmltimer;
-   wxRect linkrect;
+   wxRect linkrect;     // rect for cell containing link
 
    // any class wishing to process wxWidgets events must use this macro
    DECLARE_EVENT_TABLE()
@@ -193,33 +196,6 @@ wxFrame* GetHelpFrame() {
 
 // -----------------------------------------------------------------------------
 
-void SetFontSizes(int size)
-{
-   // set font sizes for <FONT SIZE=-2> to <FONT SIZE=+4>
-   int f_sizes[7];
-   f_sizes[0] = int(size * 0.6);
-   f_sizes[1] = int(size * 0.8);
-   f_sizes[2] = size;
-   f_sizes[3] = int(size * 1.2);
-   f_sizes[4] = int(size * 1.4);
-   f_sizes[5] = int(size * 1.6);
-   f_sizes[6] = int(size * 1.8);
-   htmlwin->SetFonts(wxEmptyString, wxEmptyString, f_sizes);
-}
-
-// -----------------------------------------------------------------------------
-
-void ChangeFontSizes(int size)
-{
-   // changing font sizes resets pos to top, so save and restore pos
-   int x, y;
-   htmlwin->GetViewStart(&x, &y);
-   SetFontSizes(size);
-   if (y > 0) htmlwin->Scroll(-1, y);
-}
-
-// -----------------------------------------------------------------------------
-
 // create the help window
 HelpFrame::HelpFrame()
    : wxFrame(NULL, wxID_ANY, _(""), wxPoint(helpx,helpy), wxSize(helpwd,helpht))
@@ -237,7 +213,7 @@ HelpFrame::HelpFrame()
                           wxHW_DEFAULT_STYLE | wxSUNKEN_BORDER);
    htmlwin->StartTimer();
    htmlwin->SetBorders(4);
-   SetFontSizes(helpfontsize);
+   htmlwin->SetFontSizes(helpfontsize);
 
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
@@ -434,6 +410,17 @@ void LoadRule(const wxString& rulestring)
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
    
    mainptr->Raise();
+   
+   if (rulestring == oldrule) return;
+
+   if (mainptr->generating) {
+      Warning(_("Cannot change rule while generating a pattern."));
+      // or stop and create pending event??? see ID_LOAD_LEXICON
+      return;
+   } else if (inscript) {
+      Warning(_("Cannot change rule while a script is running."));
+      return;
+   }
    
    const char* err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
    if (err) {
@@ -646,8 +633,7 @@ void GetURL(const wxString& url)
    
    } else if (IsRuleFile(filename)) {
       // load corresponding rule table/tree
-      wxString rule = filename.BeforeLast('.');
-      LoadRule(rule);
+      LoadRule(filename.BeforeLast('.'));
    
    } else if (IsTextFile(filename)) {
       // open text file in user's text editor
@@ -693,8 +679,7 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
             }
          } else {         
             // load corresponding rule table/tree
-            wxString rule = filename.BeforeLast('.');
-            LoadRule(rule);
+            LoadRule(filename.BeforeLast('.'));
          }
       } else {
          Warning(_("Rule-related file was not installed:\n") + rulefile);
@@ -921,11 +906,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
       }
    
    } else if ( url.StartsWith(wxT("rule:")) ) {
-      if (inscript) {
-         Warning(_("Cannot change rule while a script is running."));
-      } else {
-         LoadRule( url.AfterFirst(':') );
-      }
+      LoadRule( url.AfterFirst(':') );
    
    } else {
       // assume it's a link to a local target or another help file
@@ -974,22 +955,22 @@ void HtmlView::OnMouseLeave(wxMouseEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void HtmlView::OnMouseDown(wxMouseEvent& event)
-{
-   // set flag so ctrl/right-clicked file can be opened in editor
-   // (this is consistent with how we handle clicks in pattern/script pane)
-   editlink = event.ControlDown() || event.RightDown();
-   event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
 void HtmlView::ClearStatus()
 {
    if (helpptr) {
       helpptr->SetStatus(wxEmptyString);
       linkrect = wxRect(0,0,0,0);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::OnMouseDown(wxMouseEvent& event)
+{
+   // set flag so ctrl/right-clicked file can be opened in editor
+   // (this is consistent with how we handle clicks in pattern/script pane)
+   editlink = event.ControlDown() || event.RightDown();
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -1177,6 +1158,33 @@ void HtmlView::OnTimer(wxTimerEvent& WXUNUSED(event))
       wxIdleEvent idleevent;
       wxGetApp().SendIdleEvents(this, idleevent);
    }
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::SetFontSizes(int size)
+{
+   // set font sizes for <FONT SIZE=-2> to <FONT SIZE=+4>
+   int f_sizes[7];
+   f_sizes[0] = int(size * 0.6);
+   f_sizes[1] = int(size * 0.8);
+   f_sizes[2] = size;
+   f_sizes[3] = int(size * 1.2);
+   f_sizes[4] = int(size * 1.4);
+   f_sizes[5] = int(size * 1.6);
+   f_sizes[6] = int(size * 1.8);
+   SetFonts(wxEmptyString, wxEmptyString, f_sizes);
+}
+
+// -----------------------------------------------------------------------------
+
+void HtmlView::ChangeFontSizes(int size)
+{
+   // changing font sizes resets pos to top, so save and restore pos
+   int x, y;
+   GetViewStart(&x, &y);
+   SetFontSizes(size);
+   if (y > 0) Scroll(-1, y);
 }
 
 // -----------------------------------------------------------------------------
