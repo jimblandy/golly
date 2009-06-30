@@ -1611,6 +1611,7 @@ void SavePrefs()
 
 void AddDefaultRules()
 {
+   namedrules.Add(wxT("LifeHistory|LifeHistory"));
    namedrules.Add(wxT("3-4 Life|B34/S34"));
    namedrules.Add(wxT("HighLife|B36/S23"));
    namedrules.Add(wxT("AntiLife|B0123478/S01234678"));
