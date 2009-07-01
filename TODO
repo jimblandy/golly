@@ -1,7 +1,48 @@
-Post 2.0:
----------
-
 Andrew's list:
+==============
+
+- Optimize rendering by eliminating lots of DrawRectangle/DrawBitmap calls.
+  Instead, each layer has a viewport-sized buffer into which we "draw"
+  and then convert that to a wxBitmap and call DrawBitmap *once*.
+  Other advantages:
+  1. We could expose the buffer to scripting commands (setpixel/getpixel)
+     so that scripts could do fancy stuff like overlay images/text.
+  2. It should make it easier further down the track if we wanted to avoid
+     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or
+     SDL or SFML.  On Mac, use Quartz?
+
+- Revisit universal scripting idea, but use shared memory for IPC
+  rather than redirecting stdin/out.
+
+- Auto stop script if it creates too many temp files (for undo).
+  This can happen if a long-running script doesn't call new/open
+  when it probably should.  See my email to Nathaniel with subject
+  "Re: Golly methuselah search script".
+
+- Change all Python commands to g_* for consistency with Perl commands.
+  Unfortutely, we can't really keep the old commands in same module
+  because doing "from golly import *" exposes old and new commands and
+  so a script like goto.py that calls a non-Golly open command will fail.
+  We could put old commands in a separate module called "oldgolly".
+  Maybe best to leave this change for when the scripting API needs
+  significant changes due to multi-rect selections.
+
+- Avoid any remaining algo assumptions (search *_ALGO):
+  - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
+
+- Allow dragging zoom-in cursor to zoom into rect.
+
+- Support toroidal universes (see LifeLab).
+
+- Stop generating if pattern becomes empty, constant or p2 (qlife only)
+  and display suitable message in status bar.  Or maybe just add
+  Gabriel's oscillation detection as an option (see oscar.py).
+
+- Allow non-rectangular (and disjoint) selections.
+
+- Implement a history bar for hlife (and maybe other algos?).
+
+- Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
 
 - Fix rotation/reflection of JvN states.  Probably need Begin/EndTransform
   methods, and maybe GetTransformedState as well for use in transform().
@@ -15,10 +56,9 @@ Andrew's list:
 - Fix wxMac bug: Set Rule's help win can't regain focus after clicking
   in scroll bar (and thus we can't copy text).
 
-- Avoid any remaining algo assumptions (search *_ALGO):
-  - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
 
 Tom's list:
+===========
 
 File I/O
 
@@ -49,67 +89,28 @@ Fun
 - generational gc
 - 32-bit indexed hashlife on 64-bit platforms
 
-For future versions:
---------------------
+Other
 
 - Improve batchmode.
 
 - Fix qlifealgo::lowerRightPixel to prevent off-by-one error when
   selecting large pattern like caterpillar.
 
-- Optimize rendering by eliminating lots of DrawRectangle/DrawBitmap calls.
-  Instead, each layer has a viewport-sized buffer into which we "draw"
-  and then convert that to a wxBitmap and call DrawBitmap *once*.
-  Other advantages:
-  1. We could expose the buffer to scripting commands (setpixel/getpixel)
-     so that scripts could do fancy stuff like overlay images/text.
-  2. It should make it easier further down the track if we wanted to avoid
-     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or
-     SDL or SFML.  On Mac, use Quartz?
-
-- Change all Python commands to g_* for consistency with Perl commands.
-  Unfortutely, we can't really keep the old commands in same module
-  because doing "from golly import *" exposes old and new commands and
-  so a script like goto.py that calls a non-Golly open command will fail.
-  We could put old commands in a separate module called "oldgolly".
-  Maybe best to leave this change for when the scripting API needs
-  significant changes due to multi-rect selections.
-
-- Allow dragging zoom-in cursor to zoom into rect.
-
-- Support toroidal universes (see LifeLab).
-
-- Stop generating if pattern becomes empty, constant or p2 (qlife only)
-  and display suitable message in status bar.  Or maybe just add
-  Gabriel's oscillation detection as an option (see oscar.py).
-
-- Allow non-rectangular (and disjoint) selections.
-
-- Implement a history bar for hlife (and maybe other algos?).
-
-- Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
-
-- Revisit universal scripting idea, but use shared memory for IPC
-  rather than redirecting stdin/out.
-
-- May need check boxes in Prefs > Control (initially ticked):
-  * Warn me about rule/pattern changes when switching algorithms
-  * Warn me about pattern changes when switching rules
 
 User suggestions:
------------------
+=================
 
-[Nick Gotts]
+Nick Gotts:
 - Need a way to copy exact gen/pop counts to clipboard.
   [No longer necessary now that a script can get this info?]
 
-[Jason Summers]
+Jason Summers:
 - For better viewing of patterns that move, have a way to automatically
   move the view X cells horizontally and Y cells vertically every Z gens.
   [Could be done quite easily via a script that prompts for X,Y,Z.]
 - Allow diagonal selection rectangles.
 
-[Dave Greene]
+Dave Greene:
 - Provide a way to click-and-drag a selection to move it around.
 - Make page and arrow scrolling amounts configurable (in Prefs > View).
 - Add a getview() script command that returns current viewport rect
@@ -117,18 +118,18 @@ User suggestions:
 - Make info window a floating window and keep it open (but update
   its contents) when user loads another pattern.
 
-[H Koenig]
+H. Koenig:
 - Multiple windows.  [No real need now that we have multiple layers.]
 
-[Gabriel Nivasch]
+Gabriel Nivasch:
 - Make paste pattern semi-transparent.  [Tried it -- somewhat confusing.]
 - Add a Default button to each Preferences pane (at bottom left?).
 
-[Bill Gosper]
+Bill Gosper:
 - Modify info window so it can be used to edit and save comments.
 - For scales > 1:1 make the pixel color depend on lg(# of ones in it).
 
-[Brice Due]
+Brice Due:
 - Provide MCell-like editing capabilities.
 - Provide a thumbnail option as an alternative to tiled layers;
   ie. the current layer would be displayed in a large "focal" viewport.
@@ -136,12 +137,11 @@ User suggestions:
   or top edge of focal viewport, depending on aspect ratio?).
 - Allow mc files to set step base and/or exponent via comment line like
   #X stepbase=8 stepexp=3
+  [No need now that zip files can contain pattern + script?]
 
-[Tim Hutton]
-- Add a script command "filepath = getfile(...)"? to let user select a file
-  via std open dialog.  Also need filepath = putfile(...)?
+Tim Hutton:
 - Add a script command to save comments in a pattern file.  Add optional
   param to existing save() command?
 
-[William R. Buckley]
+William R. Buckley:
 - Provide an option to increase spacing between buttons.
