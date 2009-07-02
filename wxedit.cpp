@@ -245,11 +245,13 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    }
 
    // init position variables used by AddButton and AddSeparator
-   xpos = 4;
    #ifdef __WXGTK__
-      ypos = 3;
+      // buttons are a different size in wxGTK
+      xpos = 2;
+      ypos = 2;
       smallgap = 6;
    #else
+      xpos = 4;
       ypos = 4;
       smallgap = 4;
    #endif
@@ -301,13 +303,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    dc.GetTextExtent(_("State:"), &textwd, &textht);
    h_col2 = h_col1 + textwd + 4;
    dc.GetTextExtent(_("9"), &digitwd, &digitht);
-   #ifdef __WXMAC__
-      digitht -= 4;
-   #elif defined(__WXMSW__)
-      digitht -= 4;
-   #else // Linux
-      digitht -= 6;
-   #endif
+   digitht -= 4;
 
    editbitmap = NULL;
    editbitmapwd = -1;
@@ -320,11 +316,8 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #else
       int scrollbarht = BOXSIZE;
    #endif
-      int x = xpos + 3*digitwd + BOXGAP + 2*(BOXSIZE + BOXGAP);
-      int y = (SMALLHT - (scrollbarht + 1)) / 2;
-   #ifdef __WXGTK__
-      y++;
-   #endif
+   int x = xpos + 3*digitwd + BOXGAP + 2*(BOXSIZE + BOXGAP);
+   int y = (SMALLHT - (scrollbarht + 1)) / 2;
    drawbar = new wxScrollBar(this, SCROLL_BAR, wxPoint(x, y),
                              wxSize(scrollbarwd, scrollbarht),
                              wxSB_HORIZONTAL);
@@ -440,7 +433,11 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
    if (currlayer->drawingstate >= firststate &&
        currlayer->drawingstate <= firststate + visstates) {
       int x = 1 + h_col2 + (currlayer->drawingstate - firststate) * COLWD;
-      wxRect r(x, SMALLHT + 2, COLWD - 1, BIGHT - SMALLHT - 5);
+      #ifdef __WXGTK__
+         wxRect r(x, SMALLHT + 1, COLWD - 1, BIGHT - SMALLHT - 5);
+      #else
+         wxRect r(x, SMALLHT + 2, COLWD - 1, BIGHT - SMALLHT - 5);
+      #endif
       dc.SetBrush(*wxTRANSPARENT_BRUSH);
       dc.DrawRectangle(r);
       dc.SetBrush(wxNullBrush);

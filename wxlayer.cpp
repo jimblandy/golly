@@ -211,11 +211,13 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 
    // init position variables used by AddButton and AddSeparator
    biggap = 16;
-   xpos = 4;
    #ifdef __WXGTK__
-      ypos = 3;
+      // buttons are a different size in wxGTK
+      xpos = 2;
+      ypos = 2;
       smallgap = 6;
    #else
+      xpos = 4;
       ypos = 4;
       smallgap = 4;
    #endif
