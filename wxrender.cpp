@@ -156,14 +156,93 @@ lifealgo* pastealgo;          // universe containing paste pattern
 wxRect pastebbox;             // bounding box in cell coords (not necessarily minimal)
 
 // for drawing multiple layers
-wxBitmap* layerbitmap = NULL;    // layer bitmap
-int layerwd = -1;                // width of layer bitmap
-int layerht = -1;                // height of layer bitmap
+int layerwd = -1;             // width of layer bitmap
+int layerht = -1;             // height of layer bitmap
+wxBitmap* layerbitmap = NULL; // layer bitmap
 
 // for drawing tile borders
 const wxColor dkgray(96, 96, 96);
 const wxColor ltgray(224, 224, 224);
 const wxColor brightgreen(0, 255, 0);
+
+// for drawing translucent controls (initialized in CreateTranslucentControls)
+wxBitmap* ctrlsbitmap = NULL; // controls bitmap
+int controlswd;               // width of ctrlsbitmap
+int controlsht;               // height of ctrlsbitmap
+
+// include controls_xpm (XPM data for controls bitmap)
+#include "bitmaps/controls.xpm"
+
+// -----------------------------------------------------------------------------
+
+void CreateTranslucentControls()
+{
+   wxImage image(controls_xpm);
+   controlswd = image.GetWidth();
+   controlsht = image.GetHeight();
+   
+   // use depth 32 so bitmap has an alpha channel
+   ctrlsbitmap = new wxBitmap(controlswd, controlsht, 32);
+   if (ctrlsbitmap == NULL) {
+      Warning(_("Not enough memory for controls bitmap!"));
+   } else {
+      // set ctrlsbitmap pixels and their alpha values based on pixels in image
+      wxAlphaPixelData data(*ctrlsbitmap, wxPoint(0,0), wxSize(controlswd,controlsht));
+      if (data) {
+         data.UseAlpha();
+         wxAlphaPixelData::Iterator p(data);
+         for ( int y = 0; y < controlsht; y++ ) {
+            wxAlphaPixelData::Iterator rowstart = p;
+            for ( int x = 0; x < controlswd; x++ ) {
+               int r = image.GetRed(x,y);
+               int g = image.GetGreen(x,y);
+               int b = image.GetBlue(x,y);
+               if (r == 0 && g == 0 && b == 0) {
+                  // make black pixel fully transparent
+                  p.Red()   = 0;
+                  p.Green() = 0;
+                  p.Blue()  = 0;
+                  p.Alpha() = 0;
+               } else {
+                  // make all non-black pixels 50% opaque
+                  int alpha = 128;
+                  #ifdef __WXMSW__
+                     // premultiply the RGB values on Windows
+                     p.Red()   = r * alpha / 255;
+                     p.Green() = g * alpha / 255;
+                     p.Blue()  = b * alpha / 255;
+                  #else
+                     p.Red()   = r;
+                     p.Green() = g;
+                     p.Blue()  = b;
+                  #endif
+                  p.Alpha() = alpha;
+               }
+               p++;
+            }
+            p = rowstart;
+            p.OffsetY(data, 1);
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawControls(wxDC& dc, wxRect& rect)
+{
+   if (ctrlsbitmap) {
+      #ifdef __WXGTK__
+         // wxGTK Blit doesn't support alpha channel
+         dc.DrawBitmap(*ctrlsbitmap, rect.x, rect.y, true);
+      #else
+         // Blit is about 10% faster than DrawBitmap (on Mac at least)
+         wxMemoryDC memdc;
+         memdc.SelectObject(*ctrlsbitmap);
+         dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+      #endif
+   }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -236,6 +315,7 @@ void DestroyDrawingData()
    delete layerbitmap;
    delete selbitmap;
    delete graybitmap;
+   delete ctrlsbitmap;
 }
 
 // -----------------------------------------------------------------------------
@@ -1371,6 +1451,9 @@ void DrawView(wxDC& dc, int tileindex)
          DrawPasteImage(dc);
       }
    }
+   
+   if (viewptr->showcontrols)
+      DrawControls(dc, viewptr->controlsrect);
 
    if ( numlayers > 1 && tilelayers ) {
       // restore globals changed above

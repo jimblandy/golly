@@ -102,6 +102,7 @@ public:
    void ProcessKey(int key, int modifiers);
    void ProcessControlClick(int x, int y);
    void ProcessClick(int x, int y, bool shiftdown);
+   void ClickInControls(int x, int y);
 
    // data
    bool waitingforclick;         // waiting for paste click?
@@ -109,6 +110,8 @@ public:
    bool selectingcells;          // selecting cells due to dragging mouse?
    bool movingview;              // moving view due to dragging mouse?
    bool nopattupdate;            // disable pattern updates?
+   bool showcontrols;            // draw translucent controls?
+   wxRect controlsrect;          // location of translucent controls
    wxRect pasterect;             // area to be pasted
 
    int tileindex;

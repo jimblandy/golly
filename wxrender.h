@@ -28,9 +28,16 @@ class lifealgo;
 
 // Routines for rendering the viewport window:
 
+extern int controlswd;     // width of translucent controls bitmap
+extern int controlsht;     // height of translucent controls bitmap
+
+void CreateTranslucentControls();
+// Create the bitmap for translucent controls and set controlswd and
+// controlsht.  Must be called BEFORE the viewport window is created.
+
 void InitDrawingData();
 // Initialize drawing data (such as the image used to draw selections).
-// Must be done after the viewport window has been created.
+// Must be called AFTER the viewport window has been created.
 
 void DrawView(wxDC& dc, int tileindex);
 // Draw the current pattern, grid lines, selection, etc.

@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for ShowHelp, GetHelpFrame
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxrender.h"      // for InitDrawingData, DestroyDrawingData
+#include "wxrender.h"      // for InitDrawingData, DestroyDrawingData, etc
 #include "wxedit.h"        // for CreateEditBar, EditBarHeight, etc
 #include "wxscript.h"      // for inscript
 #include "wxalgos.h"       // for algo_type, algomenu
@@ -2575,6 +2575,8 @@ MainFrame::MainFrame()
       wxToolTip::SetDelay(1500);    // 1.5 secs
    #endif
    
+   CreateTranslucentControls();     // must be done BEFORE creating viewport
+   
    // create viewport at minimum size to avoid scroll bars being clipped on Mac
    int y = 0;
    if (showlayer) y += LayerBarHeight();
@@ -2620,7 +2622,7 @@ MainFrame::MainFrame()
    #endif
    */
 
-   InitDrawingData();         // do this after viewport size has been set
+   InitDrawingData();         // do this after viewptr has been set
 
    pendingfiles.Clear();      // no pending script/pattern files
    command_pending = false;   // no pending command

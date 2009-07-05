@@ -347,6 +347,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          wxSetCursor(*currlayer->curs);
       #endif
       SetCursor(*currlayer->curs);
+      showcontrols = false;
 
       // create image for drawing pattern to be pasted; note that given box
       // is not necessarily the minimal bounding box because clipboard pattern
@@ -1096,18 +1097,38 @@ void PatternView::CheckCursor(bool active)
                wxSetCursor(*wxSTANDARD_CURSOR);
             #endif
             SetCursor(*wxSTANDARD_CURSOR);
-         } else {
+            showcontrols = false;
+            RefreshRect(controlsrect, false);
+         
+         } else if (controlsrect.Contains(pt)) {
+            // cursor is over translucent controls
             #ifdef __WXMAC__
-               // wxMac bug??? need this to fix probs after toggling status/tool bar
+               wxSetCursor(*wxSTANDARD_CURSOR);
+            #endif
+            SetCursor(*wxSTANDARD_CURSOR);
+            showcontrols = true;
+            RefreshRect(controlsrect, false);
+         
+         } else {
+            // show current cursor mode
+            #ifdef __WXMAC__
                wxSetCursor(*currlayer->curs);
             #endif
             SetCursor(*currlayer->curs);
+            showcontrols = false;
+            RefreshRect(controlsrect, false);
          }
+      
       } else {
+         // cursor is not in viewport
          #ifdef __WXMAC__
             wxSetCursor(*wxSTANDARD_CURSOR);
          #endif
+         SetCursor(*wxSTANDARD_CURSOR);
+         showcontrols = false;
+         RefreshRect(controlsrect, false);
       }
+   
    } else {
       // main window is not active so don't change cursor
    }
@@ -1954,6 +1975,16 @@ void PatternView::SetViewSize(int wd, int ht)
       ResizeLayers(wd, ht);
    }
    
+   // update position of translucent controls
+   /* !!! unfinished
+   const int gap = 7;
+   //!!! top left corner
+   // controlsrect = wxRect(gap, gap, controlswd, controlsht);
+   // top right corner
+   controlsrect = wxRect(wd - controlswd - gap, gap, controlswd, controlsht);
+   */
+   controlsrect = wxRect(0,0,0,0);
+   
    // only autofit when generating
    if (currlayer->autofit && mainptr && mainptr->generating)
       currlayer->algo->fit(*currlayer->view, 0);
@@ -1998,7 +2029,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
       DrawView(dc, tileindex);
    #else
       if ( buffered || waitingforclick || GridVisible() || currlayer->currsel.Visible(NULL) ||
-           (numlayers > 1 && (stacklayers || tilelayers)) ) {
+           showcontrols || (numlayers > 1 && (stacklayers || tilelayers)) ) {
          // use wxWidgets buffering to avoid flicker
          if (wd != viewbitmapwd || ht != viewbitmapht) {
             // need to create a new bitmap for current viewport
@@ -2234,10 +2265,79 @@ void PatternView::ProcessControlClick(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+void PatternView::ClickInControls(int x, int y)
+{
+   // to determine which control was clicked we need to make some assumptions
+   // about the controls bitmap:
+   // - each button is 20x20 pixels
+   // - the bitmap is 3 buttons wide and 5 buttons high
+   int buttsize = 20;
+   int col = 1 + (x - controlsrect.x) / buttsize;
+   int row = 1 + (y - controlsrect.y) / buttsize;
+   
+   if (row == 1 && col == 1) {
+      if (currlayer->currexpo != 0) {
+         mainptr->SetStepExponent(0);
+         statusptr->Refresh(false);
+         statusptr->Update();
+      }
+      
+   } else if (row == 1 && col == 2) {
+      mainptr->GoSlower();
+      
+   } else if (row == 1 && col == 3) {
+      mainptr->GoFaster();
+      
+   } else if (row == 2 && col == 1) {
+      FitPattern();
+      
+   } else if (row == 2 && col == 2) {
+      ZoomOut();
+      
+   } else if (row == 2 && col == 3) {
+      ZoomIn();
+      
+   } else if (row == 3 && col == 1) {
+      PanNW();
+      
+   } else if (row == 3 && col == 2) {
+      PanUp( SmallScroll(currlayer->view->getheight()) );
+      
+   } else if (row == 3 && col == 3) {
+      PanNE();
+      
+   } else if (row == 4 && col == 1) {
+      PanLeft( SmallScroll(currlayer->view->getwidth()) );
+      
+   } else if (row == 4 && col == 2) {
+      ViewOrigin();
+      
+   } else if (row == 4 && col == 3) {
+      PanRight( SmallScroll(currlayer->view->getwidth()) );
+      
+   } else if (row == 5 && col == 1) {
+      PanSW();
+      
+   } else if (row == 5 && col == 2) {
+      PanDown( SmallScroll(currlayer->view->getheight()) );
+      
+   } else if (row == 5 && col == 3) {
+      PanSE();
+   }
+   
+   // allow zooming and panning to be repeated if mouse button is held down
+   //!!!
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
-   // user has clicked somewhere in viewport   
-   if (currlayer->curs == curs_pencil) {
+   // user has clicked somewhere in viewport
+   if (showcontrols) {
+      ClickInControls(x, y);
+   
+   } else if (currlayer->curs == curs_pencil) {
       if (inscript) {
          // statusptr->ErrorMessage does nothing if inscript is true
          Warning(_("Drawing is not allowed while a script is running."));
@@ -2422,9 +2522,21 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::OnMouseMotion(wxMouseEvent& WXUNUSED(event))
+void PatternView::OnMouseMotion(wxMouseEvent& event)
 {
    statusptr->CheckMouseLocation(mainptr->IsActive());
+   
+   // check if translucent controls need to be shown/hidden
+   if ( mainptr->IsActive() &&
+        !(drawingcells || selectingcells || movingview || waitingforclick) &&
+        !(numlayers > 1 && tilelayers && tileindex != currindex) ) {
+      wxPoint pt( event.GetX(), event.GetY() );
+      bool show = controlsrect.Contains(pt);
+      if (showcontrols != show) {
+         // let CheckCursor set showcontrols and call RefreshRect
+         CheckCursor(true);
+      }
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -2673,6 +2785,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
    movingview = false;        // not moving view
    waitingforclick = false;   // not waiting for user to click
    nopattupdate = false;      // enable pattern updates
+   showcontrols = false;      // not showing translucent controls
    oldcursor = NULL;          // for toggling cursor via shift key 
 }
 
