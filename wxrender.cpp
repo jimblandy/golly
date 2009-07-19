@@ -129,49 +129,59 @@ Other points of interest:
 // -----------------------------------------------------------------------------
 
 // globals used in wx_render routines
-wxDC* currdc;                 // current device context for viewport
-int currwd, currht;           // current width and height of viewport
-wxBitmap* pixmap = NULL;      // 32-bit deep bitmap used in pixblit calls
-int pixmapwd = -1;            // width of pixmap
-int pixmapht = -1;            // height of pixmap
-wxBitmap** iconmaps;          // array of icon bitmaps
+wxDC* currdc;                    // current device context for viewport
+int currwd, currht;              // current width and height of viewport
+wxBitmap* pixmap = NULL;         // 32-bit deep bitmap used in pixblit calls
+int pixmapwd = -1;               // width of pixmap
+int pixmapht = -1;               // height of pixmap
+wxBitmap** iconmaps;             // array of icon bitmaps
 
 // for drawing translucent selection (initialized in InitDrawingData)
-int selwd;                    // width of selection bitmap
-int selht;                    // height of selection bitmap
-wxBitmap* selbitmap = NULL;   // selection bitmap (if NULL then inversion is used)
-wxBitmap* graybitmap = NULL;  // for inactive selections when drawing multiple layers
+int selwd;                       // width of selection bitmap
+int selht;                       // height of selection bitmap
+wxBitmap* selbitmap = NULL;      // selection bitmap (if NULL then inversion is used)
+wxBitmap* graybitmap = NULL;     // for inactive selections when drawing multiple layers
 
 // for drawing paste pattern (initialized in CreatePasteImage)
-wxBitmap* pastebitmap;        // paste bitmap
-int pimagewd;                 // width of paste image
-int pimageht;                 // height of paste image
-int prectwd;                  // must match viewptr->pasterect.width
-int prectht;                  // must match viewptr->pasterect.height
-int pastemag;                 // must match current viewport's scale
-int cvwd, cvht;               // must match current viewport's width and height
-paste_location pasteloc;      // must match plocation
-bool pasteicons;              // must match showicons
-lifealgo* pastealgo;          // universe containing paste pattern
-wxRect pastebbox;             // bounding box in cell coords (not necessarily minimal)
+wxBitmap* pastebitmap;           // paste bitmap
+int pimagewd;                    // width of paste image
+int pimageht;                    // height of paste image
+int prectwd;                     // must match viewptr->pasterect.width
+int prectht;                     // must match viewptr->pasterect.height
+int pastemag;                    // must match current viewport's scale
+int cvwd, cvht;                  // must match current viewport's width and height
+paste_location pasteloc;         // must match plocation
+bool pasteicons;                 // must match showicons
+lifealgo* pastealgo;             // universe containing paste pattern
+wxRect pastebbox;                // bounding box in cell coords (not necessarily minimal)
 
 // for drawing multiple layers
-int layerwd = -1;             // width of layer bitmap
-int layerht = -1;             // height of layer bitmap
-wxBitmap* layerbitmap = NULL; // layer bitmap
+int layerwd = -1;                // width of layer bitmap
+int layerht = -1;                // height of layer bitmap
+wxBitmap* layerbitmap = NULL;    // layer bitmap
 
 // for drawing tile borders
 const wxColor dkgray(96, 96, 96);
 const wxColor ltgray(224, 224, 224);
 const wxColor brightgreen(0, 255, 0);
 
-// for drawing translucent controls (initialized in CreateTranslucentControls)
-wxBitmap* ctrlsbitmap = NULL; // controls bitmap
-int controlswd;               // width of ctrlsbitmap
-int controlsht;               // height of ctrlsbitmap
+// for drawing translucent controls
+wxBitmap* ctrlsbitmap = NULL;    // controls bitmap
+wxBitmap* darkctrls = NULL;      // for showing clicked control
+int controlswd;                  // width of ctrlsbitmap
+int controlsht;                  // height of ctrlsbitmap
+
+// these constants must match data in controls bitmap
+const int buttborder = 6;        // size of outer border
+const int buttsize = 22;         // size of each button
+const int buttsperrow = 3;       // # of buttons in each row
+const int numbutts = 15;         // # of buttons
 
 // include controls_xpm (XPM data for controls bitmap)
 #include "bitmaps/controls.xpm"
+
+// currently clicked control
+control_id currcontrol = NO_CONTROL;
 
 // -----------------------------------------------------------------------------
 
@@ -189,6 +199,7 @@ void CreateTranslucentControls()
       // set ctrlsbitmap pixels and their alpha values based on pixels in image
       wxAlphaPixelData data(*ctrlsbitmap, wxPoint(0,0), wxSize(controlswd,controlsht));
       if (data) {
+         int alpha = 192;     // 75% opaque
          data.UseAlpha();
          wxAlphaPixelData::Iterator p(data);
          for ( int y = 0; y < controlsht; y++ ) {
@@ -204,8 +215,7 @@ void CreateTranslucentControls()
                   p.Blue()  = 0;
                   p.Alpha() = 0;
                } else {
-                  // make all non-black pixels 50% opaque
-                  int alpha = 128;
+                  // make all non-black pixels translucent
                   #ifdef __WXMSW__
                      // premultiply the RGB values on Windows
                      p.Red()   = r * alpha / 255;
@@ -225,6 +235,68 @@ void CreateTranslucentControls()
          }
       }
    }
+
+   // create bitmap for showing clicked control
+   darkctrls = new wxBitmap(controlswd, controlsht, 32);
+   if (darkctrls == NULL) {
+      Warning(_("Not enough memory for dark controls bitmap!"));
+   } else {
+      // set darkctrls pixels and their alpha values based on pixels in image
+      wxAlphaPixelData data(*darkctrls, wxPoint(0,0), wxSize(controlswd,controlsht));
+      if (data) {
+         int alpha = 128;     // 50% opaque
+         int gray = 20;       // very dark gray
+         data.UseAlpha();
+         wxAlphaPixelData::Iterator p(data);
+         for ( int y = 0; y < controlsht; y++ ) {
+            wxAlphaPixelData::Iterator rowstart = p;
+            for ( int x = 0; x < controlswd; x++ ) {
+               int r = image.GetRed(x,y);
+               int g = image.GetGreen(x,y);
+               int b = image.GetBlue(x,y);
+               if (r == 0 && g == 0 && b == 0) {
+                  // make black pixel fully transparent
+                  p.Red()   = 0;
+                  p.Green() = 0;
+                  p.Blue()  = 0;
+                  p.Alpha() = 0;
+               } else {
+                  // make all non-black pixels translucent gray
+                  #ifdef __WXMSW__
+                     // premultiply the RGB values on Windows
+                     p.Red()   = gray * alpha / 255;
+                     p.Green() = gray * alpha / 255;
+                     p.Blue()  = gray * alpha / 255;
+                  #else
+                     p.Red()   = gray;
+                     p.Green() = gray;
+                     p.Blue()  = gray;
+                  #endif
+                  p.Alpha() = alpha;
+               }
+               p++;
+            }
+            p = rowstart;
+            p.OffsetY(data, 1);
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+control_id WhichControl(int x, int y)
+{
+   // determine which button is at x,y in controls bitmap
+   if (x < buttborder || y < buttborder) return NO_CONTROL;
+   int col = 1 + (x - buttborder) / buttsize;
+   int row = 1 + (y - buttborder) / buttsize;
+   
+   if (col < 1 || col > buttsperrow) return NO_CONTROL;
+   if (row < 1 || row > numbutts/buttsperrow) return NO_CONTROL;
+   
+   int control = (row - 1) * buttsperrow + col;
+   return (control_id) control;
 }
 
 // -----------------------------------------------------------------------------
@@ -241,6 +313,22 @@ void DrawControls(wxDC& dc, wxRect& rect)
          memdc.SelectObject(*ctrlsbitmap);
          dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
       #endif
+      
+      if (currcontrol > NO_CONTROL && darkctrls) {
+         // show clicked control
+         int i = (int)currcontrol - 1;
+         int x = buttborder + (i % buttsperrow) * buttsize;
+         int y = buttborder + (i / buttsperrow) * buttsize;
+         #ifdef __WXGTK__
+            // wxGTK Blit doesn't support alpha channel
+            wxRect r(x, y, buttsize, buttsize);
+            dc.DrawBitmap(darkctrls->GetSubBitmap(r), rect.x + x, rect.y + y, true);
+         #else
+            wxMemoryDC memdc;
+            memdc.SelectObject(*darkctrls);
+            dc.Blit(rect.x + x, rect.y + y, buttsize, buttsize, &memdc, x, y, wxCOPY, true);
+         #endif
+      }
    }
 }
 
@@ -316,6 +404,7 @@ void DestroyDrawingData()
    delete selbitmap;
    delete graybitmap;
    delete ctrlsbitmap;
+   delete darkctrls;
 }
 
 // -----------------------------------------------------------------------------
@@ -648,7 +737,7 @@ wx_render renderer;     // create instance
 
 void wx_render::killrect(int x, int y, int w, int h)
 {
-   //!!! is Tom's hashdraw code doing unnecessary work???
+   // is Tom's hashdraw code doing unnecessary work???
    if (x >= currwd || y >= currht) return;
    if (x + w <= 0 || y + h <= 0) return;
       
@@ -680,7 +769,7 @@ void wx_render::killrect(int x, int y, int w, int h)
 
 void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
-   //!!! is Tom's hashdraw code doing unnecessary work???
+   // is Tom's hashdraw code doing unnecessary work???
    if (x >= currwd || y >= currht) return;
    if (x + w <= 0 || y + h <= 0) return;
 

@@ -24,20 +24,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXRENDER_H_
 #define _WXRENDER_H_
 
-class lifealgo;
-
-// Routines for rendering the viewport window:
-
-extern int controlswd;     // width of translucent controls bitmap
-extern int controlsht;     // height of translucent controls bitmap
-
-void CreateTranslucentControls();
-// Create the bitmap for translucent controls and set controlswd and
-// controlsht.  Must be called BEFORE the viewport window is created.
+// Routines and data for rendering the viewport window:
 
 void InitDrawingData();
 // Initialize drawing data (such as the image used to draw selections).
 // Must be called AFTER the viewport window has been created.
+
+void DestroyDrawingData();
+// Call this when the main window is destroyed.
 
 void DrawView(wxDC& dc, int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
@@ -54,6 +48,8 @@ void DrawSelection(wxDC &dc, wxRect& rect);
 void SetSelectionColor();
 // Update the selection image's color.
 
+class lifealgo;
+
 void CreatePasteImage(lifealgo* pastealgo, wxRect& bbox);
 // Create an image used to draw the given paste pattern.
 // The given bounding box is not necessarily the *minimal* bounding box because
@@ -62,7 +58,36 @@ void CreatePasteImage(lifealgo* pastealgo, wxRect& bbox);
 void DestroyPasteImage();
 // Destroy the image created above (call when user clicks to end paste).
 
-void DestroyDrawingData();
-// Call this when the main window is destroyed.
+void CreateTranslucentControls();
+// Create the bitmap for translucent controls and set controlswd and
+// controlsht.  Must be called BEFORE the viewport window is created.
+
+extern int controlswd;           // width of translucent controls
+extern int controlsht;           // height of translucent controls
+
+// control ids must match button order in controls bitmap
+typedef enum {
+   NO_CONTROL = 0,               // no current control (must be first)
+   STEP1_CONTROL,                // set step exponent to zero (ie. step by 1)
+   SLOWER_CONTROL,               // decrease step exponent
+   FASTER_CONTROL,               // increase step exponent
+   FIT_CONTROL,                  // fit entire pattern in viewport
+   ZOOMIN_CONTROL,               // zoom in
+   ZOOMOUT_CONTROL,              // zoom out
+   NW_CONTROL,                   // pan north west
+   UP_CONTROL,                   // pan up
+   NE_CONTROL,                   // pan north east
+   LEFT_CONTROL,                 // pan left
+   MIDDLE_CONTROL,               // pan to 0,0
+   RIGHT_CONTROL,                // pan right
+   SW_CONTROL,                   // pan south west
+   DOWN_CONTROL,                 // pan down
+   SE_CONTROL                    // pan south east
+} control_id;
+
+extern control_id currcontrol;   // currently clicked control
+
+control_id WhichControl(int x, int y);
+// Return the control at the given location in the controls bitmap.
 
 #endif

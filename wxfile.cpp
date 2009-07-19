@@ -1793,6 +1793,9 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       // if so, maybe we need some sort of warning like this:
       // Warning(_("The currently running script might clobber any changes you make."));
    }
+   
+   int oldtileborder = tileborder;
+   int oldcontrolspos = controlspos;
 
    if (ChangePrefs(page)) {
       // user hit OK button
@@ -1827,13 +1830,27 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       }
 
       // tileborder might have changed
-      if (tilelayers && numlayers > 1) {
+      if (tilelayers && numlayers > 1 && tileborder != oldtileborder) {
          int wd, ht;
          bigview->GetClientSize(&wd, &ht);
          // wd or ht might be < 1 on Win/X11 platforms
          if (wd < 1) wd = 1;
          if (ht < 1) ht = 1;
          ResizeLayers(wd, ht);
+      }
+      
+      // position of translucent controls might have changed
+      if (controlspos != oldcontrolspos) {
+         int wd, ht;
+         if (tilelayers && numlayers > 1) {
+            for (int i = 0; i < numlayers; i++) {
+               Layer* layer = GetLayer(i);
+               layer->tilewin->GetClientSize(&wd, &ht);
+               layer->tilewin->SetViewSize(wd, ht);
+            }
+         }
+         bigview->GetClientSize(&wd, &ht);
+         bigview->SetViewSize(wd, ht);
       }
 
       SavePrefs();

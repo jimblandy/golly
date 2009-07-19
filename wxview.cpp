@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for ShowHelp
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection, DrawOneIcon
+#include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection, etc
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
@@ -70,6 +70,9 @@ static bool slowdraw = false;       // do slow cell drawing via UpdateView?
 static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
 static int newalgo;                 // new algo needed by readclipboard
+
+// remember which translucent button was clicked
+static control_id clickedcontrol = NO_CONTROL;
 
 // -----------------------------------------------------------------------------
 
@@ -1100,7 +1103,7 @@ void PatternView::CheckCursor(bool active)
             showcontrols = false;
             RefreshRect(controlsrect, false);
          
-         } else if (controlsrect.Contains(pt)) {
+         } else if (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) {
             // cursor is over translucent controls
             #ifdef __WXMAC__
                wxSetCursor(*wxSTANDARD_CURSOR);
@@ -1884,6 +1887,9 @@ void PatternView::MoveView(int x, int y)
 
 void PatternView::StopDraggingMouse()
 {
+   if ( HasCapture() ) ReleaseMouse();
+   if ( dragtimer->IsRunning() ) dragtimer->Stop();
+
    if (selectingcells) {
       if (allowundo) RememberNewSelection(_("Selection"));
       selectingcells = false;                // tested by CanUndo
@@ -1900,12 +1906,17 @@ void PatternView::StopDraggingMouse()
       UpdateEditBar(true);                   // update Undo/Redo buttons
    }
    
+   if (clickedcontrol > NO_CONTROL) {
+      if (currcontrol == clickedcontrol) ProcessClickedControl();
+      clickedcontrol = NO_CONTROL;
+      currcontrol = NO_CONTROL;
+   }
+   
    drawingcells = false;
    selectingcells = false;
    movingview = false;
-   
-   if ( HasCapture() ) ReleaseMouse();
-   if ( dragtimer->IsRunning() ) dragtimer->Stop();
+
+   CheckCursor(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
@@ -1970,24 +1981,41 @@ void PatternView::ZoomOutPos(int x, int y)
 
 void PatternView::SetViewSize(int wd, int ht)
 {
+   // wd or ht might be < 1 on Win/X11 platforms
+   if (wd < 1) wd = 1;
+   if (ht < 1) ht = 1;
+
    if (tileindex < 0) {
       // use main viewport window's size to reset viewport in each layer
       ResizeLayers(wd, ht);
    }
    
-   // update position of translucent controls
-   /* !!! unfinished
-   const int gap = 7;
-   //!!! top left corner
-   // controlsrect = wxRect(gap, gap, controlswd, controlsht);
-   // top right corner
-   controlsrect = wxRect(wd - controlswd - gap, gap, controlswd, controlsht);
-   */
-   controlsrect = wxRect(0,0,0,0);
-   
    // only autofit when generating
    if (currlayer->autofit && mainptr && mainptr->generating)
       currlayer->algo->fit(*currlayer->view, 0);
+   
+   // update position of translucent controls
+   switch (controlspos) {
+      case 1:
+         // top left corner
+         controlsrect = wxRect(0, 0, controlswd, controlsht);
+         break;
+      case 2:
+         // top right corner
+         controlsrect = wxRect(wd - controlswd, 0, controlswd, controlsht);
+         break;
+      case 3:
+         // bottom right corner
+         controlsrect = wxRect(wd - controlswd, ht - controlsht, controlswd, controlsht);
+         break;
+      case 4:
+         // bottom left corner
+         controlsrect = wxRect(0, ht - controlsht, controlswd, controlsht);
+         break;
+      default:
+         // controlspos should be 0 (controls are disabled)
+         controlsrect = wxRect(0, 0, 0, 0);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -2054,9 +2082,6 @@ void PatternView::OnSize(wxSizeEvent& event)
 {
    int wd, ht;
    GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
-   if (wd < 1) wd = 1;
-   if (ht < 1) ht = 1;
    
    // resize this viewport
    SetViewSize(wd, ht);
@@ -2254,79 +2279,76 @@ void PatternView::OnChar(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ProcessControlClick(int x, int y)
+void PatternView::ProcessClickedControl()
 {
-   if (currlayer->curs == curs_zoomin) {
-      ZoomOutPos(x, y);
-   } else if (currlayer->curs == curs_zoomout) {
-      ZoomInPos(x, y);
+   switch (clickedcontrol) {
+      case STEP1_CONTROL:
+         if (currlayer->currexpo != 0) {
+            mainptr->SetStepExponent(0);
+            statusptr->Refresh(false);
+            statusptr->Update();
+         }
+         break;
+      
+      case SLOWER_CONTROL:
+         mainptr->GoSlower();
+         break;
+         
+      case FASTER_CONTROL:
+         mainptr->GoFaster();
+         break;
+         
+      case FIT_CONTROL:
+         FitPattern();
+         break;
+         
+      case ZOOMIN_CONTROL:
+         ZoomIn();
+         break;
+         
+      case ZOOMOUT_CONTROL:
+         ZoomOut();
+         break;
+         
+      case NW_CONTROL:
+         PanNW();
+         break;
+         
+      case UP_CONTROL:
+         PanUp( SmallScroll(currlayer->view->getheight()) );
+         break;
+         
+      case NE_CONTROL:
+         PanNE();
+         break;
+         
+      case LEFT_CONTROL:
+         PanLeft( SmallScroll(currlayer->view->getwidth()) );
+         break;
+         
+      case MIDDLE_CONTROL:
+         ViewOrigin();
+         break;
+         
+      case RIGHT_CONTROL:
+         PanRight( SmallScroll(currlayer->view->getwidth()) );
+         break;
+         
+      case SW_CONTROL:
+         PanSW();
+         break;
+         
+      case DOWN_CONTROL:
+         PanDown( SmallScroll(currlayer->view->getheight()) );
+         break;
+         
+      case SE_CONTROL:
+         PanSE();
+         break;
+      
+      default:    // should never happen
+         break;
    }
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::ClickInControls(int x, int y)
-{
-   // to determine which control was clicked we need to make some assumptions
-   // about the controls bitmap:
-   // - each button is 20x20 pixels
-   // - the bitmap is 3 buttons wide and 5 buttons high
-   int buttsize = 20;
-   int col = 1 + (x - controlsrect.x) / buttsize;
-   int row = 1 + (y - controlsrect.y) / buttsize;
-   
-   if (row == 1 && col == 1) {
-      if (currlayer->currexpo != 0) {
-         mainptr->SetStepExponent(0);
-         statusptr->Refresh(false);
-         statusptr->Update();
-      }
-      
-   } else if (row == 1 && col == 2) {
-      mainptr->GoSlower();
-      
-   } else if (row == 1 && col == 3) {
-      mainptr->GoFaster();
-      
-   } else if (row == 2 && col == 1) {
-      FitPattern();
-      
-   } else if (row == 2 && col == 2) {
-      ZoomOut();
-      
-   } else if (row == 2 && col == 3) {
-      ZoomIn();
-      
-   } else if (row == 3 && col == 1) {
-      PanNW();
-      
-   } else if (row == 3 && col == 2) {
-      PanUp( SmallScroll(currlayer->view->getheight()) );
-      
-   } else if (row == 3 && col == 3) {
-      PanNE();
-      
-   } else if (row == 4 && col == 1) {
-      PanLeft( SmallScroll(currlayer->view->getwidth()) );
-      
-   } else if (row == 4 && col == 2) {
-      ViewOrigin();
-      
-   } else if (row == 4 && col == 3) {
-      PanRight( SmallScroll(currlayer->view->getwidth()) );
-      
-   } else if (row == 5 && col == 1) {
-      PanSW();
-      
-   } else if (row == 5 && col == 2) {
-      PanDown( SmallScroll(currlayer->view->getheight()) );
-      
-   } else if (row == 5 && col == 3) {
-      PanSE();
-   }
-   
-   // allow zooming and panning to be repeated if mouse button is held down
-   //!!!
 }
 
 // -----------------------------------------------------------------------------
@@ -2335,7 +2357,12 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked somewhere in viewport
    if (showcontrols) {
-      ClickInControls(x, y);
+      currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
+      if (currcontrol > NO_CONTROL) {
+         clickedcontrol = currcontrol;    // remember which control was clicked
+         CaptureMouse();                  // get mouse up event even if outside view
+         dragtimer->Start(DRAG_RATE);     // see OnDragTimer
+      }
    
    } else if (currlayer->curs == curs_pencil) {
       if (inscript) {
@@ -2410,14 +2437,6 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
          return;
       }
       
-      #ifdef __WXX11__
-         // control-click is detected here rather than in OnRMouseDown
-         if ( event.ControlDown() ) {
-            ProcessControlClick(event.GetX(), event.GetY());
-            return;
-         }
-      #endif
-      
       ProcessClick(event.GetX(), event.GetY(), event.ShiftDown());
       mainptr->UpdateUserInterface(mainptr->IsActive());
    }
@@ -2427,7 +2446,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
 
 void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
 {
-   if (drawingcells || selectingcells || movingview) {
+   if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
       StopDraggingMouse();
    } else if (mainptr->draw_pending) {
       // this can happen if user does a quick click while pattern is generating,
@@ -2443,7 +2462,7 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
 // mouse capture can be lost on Windows before mouse-up event
 void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 {
-   if (drawingcells || selectingcells || movingview) {
+   if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
       StopDraggingMouse();
    }
 }
@@ -2454,7 +2473,7 @@ void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 
 void PatternView::OnRMouseDown(wxMouseEvent& event)
 {
-   // this is equivalent to control-click in wxMac/wxMSW but not in wxX11 -- sigh
+   // this is equivalent to control-click
    statusptr->ClearMessage();
    mainptr->showbanner = false;
 
@@ -2469,7 +2488,11 @@ void PatternView::OnRMouseDown(wxMouseEvent& event)
       return;
    }
    
-   ProcessControlClick(event.GetX(), event.GetY());
+   if (currlayer->curs == curs_zoomin) {
+      ZoomOutPos(event.GetX(), event.GetY());
+   } else if (currlayer->curs == curs_zoomout) {
+      ZoomInPos(event.GetX(), event.GetY());
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -2531,7 +2554,7 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
         !(drawingcells || selectingcells || movingview || waitingforclick) &&
         !(numlayers > 1 && tilelayers && tileindex != currindex) ) {
       wxPoint pt( event.GetX(), event.GetY() );
-      bool show = controlsrect.Contains(pt);
+      bool show = controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL;
       if (showcontrols != show) {
          // let CheckCursor set showcontrols and call RefreshRect
          CheckCursor(true);
@@ -2566,9 +2589,27 @@ void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
 {
    // called periodically while drawing/selecting/moving
+   // or if user has clicked a translucent control and button is still down
    wxPoint pt = ScreenToClient( wxGetMousePosition() );
    int x = pt.x;
    int y = pt.y;
+   
+   if (clickedcontrol > NO_CONTROL) {
+      control_id oldcontrol = currcontrol;
+      currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
+      if (currcontrol == clickedcontrol) {
+         // allow panning to be repeated while button is pressed
+         if (clickedcontrol >= NW_CONTROL && clickedcontrol <= SE_CONTROL &&
+             clickedcontrol != MIDDLE_CONTROL) {
+            ProcessClickedControl();
+         }
+      } else {
+         currcontrol = NO_CONTROL;
+      }
+      if (currcontrol != oldcontrol) RefreshRect(controlsrect, false);
+      return;
+   }
+
    // don't test "!PointInView(x, y)" here -- we want to allow scrolling
    // in full screen mode when mouse is at outer edge of view
    if ( x <= 0 || x >= currlayer->view->getxmax() ||

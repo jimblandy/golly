@@ -147,6 +147,7 @@ bool scrollcross = true;         // scroll if cross cursor is dragged outside vi
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
 bool allowundo = true;           // allow undo/redo?
 bool restoreview = true;         // should reset/undo restore view?
+int controlspos = 1;             // position of translucent controls (1 is top left corner)
 int canchangerule = 0;           // if > 0 then paste can change rule
 int randomfill = 50;             // random fill percentage (1..100)
 int opacity = 80;                // percentage opacity of live cells in overlays (1..100)
@@ -1452,6 +1453,7 @@ void SavePrefs()
    fprintf(f, "scroll_pencil=%d\n", scrollpencil ? 1 : 0);
    fprintf(f, "scroll_cross=%d\n", scrollcross ? 1 : 0);
    fprintf(f, "scroll_hand=%d\n", scrollhand ? 1 : 0);
+   fprintf(f, "controls_pos=%d (0..4)\n", controlspos);
    fprintf(f, "can_change_rule=%d (0..2)\n", canchangerule);
    fprintf(f, "random_fill=%d (1..100)\n", randomfill);
    fprintf(f, "min_delay=%d (0..%d millisecs)\n", mindelay, MAX_DELAY);
@@ -1886,6 +1888,11 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "scroll_hand") == 0) {
          scrollhand = value[0] == '1';
+
+      } else if (strcmp(keyword, "controls_pos") == 0) {
+         sscanf(value, "%d", &controlspos);
+         if (controlspos < 0) controlspos = 0;
+         if (controlspos > 4) controlspos = 4;
 
       } else if (strcmp(keyword, "can_change_rule") == 0) {
          sscanf(value, "%d", &canchangerule);
@@ -2595,6 +2602,11 @@ enum {
    PREF_MIN_GRID_SCALE,
    PREF_MOUSE_WHEEL,
    PREF_THUMB_RANGE,
+   PREF_NO_CONTROLS,
+   PREF_TL_CONTROLS,
+   PREF_TR_CONTROLS,
+   PREF_BR_CONTROLS,
+   PREF_BL_CONTROLS,
    // Layer prefs
    PREF_OPACITY,
    PREF_TILE_BORDER,
@@ -3251,19 +3263,19 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("When pasting a clipboard pattern:"));
    wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
    
-   wxRadioButton* radio1 = new wxRadioButton(panel, PREF_PASTE_0, _("Never change rule"),
+   wxRadioButton* radio0 = new wxRadioButton(panel, PREF_PASTE_0, _("Never change rule"),
                                     wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-   wxRadioButton* radio2 = new wxRadioButton(panel, PREF_PASTE_1,
+   wxRadioButton* radio1 = new wxRadioButton(panel, PREF_PASTE_1,
                                     _("Only change rule if one is specified and universe is empty"));
-   wxRadioButton* radio3 = new wxRadioButton(panel, PREF_PASTE_2,
+   wxRadioButton* radio2 = new wxRadioButton(panel, PREF_PASTE_2,
                                     _("Always change rule if one is specified"));
 
    ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(radio0, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(CH2VGAP);
    ssizer1->Add(radio1, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(CH2VGAP);
    ssizer1->Add(radio2, 0, wxLEFT | wxRIGHT, LRGAP);
-   ssizer1->AddSpacer(CH2VGAP);
-   ssizer1->Add(radio3, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
    
    // scroll_pencil, scroll_cross, scroll_hand
@@ -3299,9 +3311,9 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    spin1->SetValue(randomfill);
    spin1->SetFocus();
    spin1->SetSelection(ALL_TEXT);
-   radio1->SetValue(canchangerule == 0);
-   radio2->SetValue(canchangerule == 1);
-   radio3->SetValue(canchangerule == 2);
+   radio0->SetValue(canchangerule == 0);
+   radio1->SetValue(canchangerule == 1);
+   radio2->SetValue(canchangerule == 2);
    check1->SetValue(scrollpencil);
    check2->SetValue(scrollcross);
    check3->SetValue(scrollhand);
@@ -3412,7 +3424,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
    wxBoxSizer* notebox = new wxBoxSizer(wxHORIZONTAL);
    notebox->Add(new wxStaticText(panel, wxID_STATIC, note));
 
-   // position controls
+   // position things
    vbox->AddSpacer(5);
    vbox->Add(menubox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
@@ -3542,7 +3554,6 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    thumblabel->Add(new wxStaticText(panel, wxID_STATIC, _("Thumb scroll range:")),
                    0, wxALIGN_CENTER_VERTICAL, 0);
 
-   // align controls
    thumblabel->SetMinSize( longbox->GetMinSize() );
 
    wxBoxSizer* hbox5 = new wxBoxSizer(wxHORIZONTAL);
@@ -3552,7 +3563,55 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("times view size")),
               0, wxALIGN_CENTER_VERTICAL, 0);
+   
+   // controls_pos
 
+   wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Position of translucent buttons:"));
+   wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+
+   wxRadioButton* radio0 = new wxRadioButton(panel, PREF_NO_CONTROLS, _("Disable"),
+                                             wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+   wxRadioButton* radio1 = new wxRadioButton(panel, PREF_TL_CONTROLS, _("Top left corner"));
+   wxRadioButton* radio2 = new wxRadioButton(panel, PREF_TR_CONTROLS, _("Top right corner"));
+   wxRadioButton* radio3 = new wxRadioButton(panel, PREF_BR_CONTROLS, _("Bottom right corner"));
+   wxRadioButton* radio4 = new wxRadioButton(panel, PREF_BL_CONTROLS, _("Bottom left corner"));
+
+   wxBoxSizer* b1 = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* b4 = new wxBoxSizer(wxHORIZONTAL);
+   b1->Add(radio1, 0, wxALL, 0);
+   b4->Add(radio4, 0, wxALL, 0);
+   wxSize wd1 = b1->GetMinSize();
+   wxSize wd4 = b4->GetMinSize();
+   if (wd1.GetWidth() > wd4.GetWidth())
+      b4->SetMinSize(wd1);
+   else
+      b1->SetMinSize(wd4);
+
+   wxBoxSizer* toprow = new wxBoxSizer(wxHORIZONTAL);
+   toprow->Add(b1, 0, wxLEFT | wxRIGHT, LRGAP);
+   // don't use AddSpacer(20) because that will also add 20 *vertical* units!
+   toprow->AddSpacer(10);
+   toprow->AddSpacer(10);
+   toprow->Add(radio2, 0, wxLEFT | wxRIGHT, LRGAP);
+   toprow->AddStretchSpacer(20);
+   toprow->Add(radio0, 0, wxLEFT | wxRIGHT, 0);
+   toprow->AddStretchSpacer(10);
+
+   wxBoxSizer* botrow = new wxBoxSizer(wxHORIZONTAL);
+   botrow->Add(b4, 0, wxLEFT | wxRIGHT, LRGAP);
+   // don't use AddSpacer(20) because that will also add 20 *vertical* units!
+   botrow->AddSpacer(10);
+   botrow->AddSpacer(10);
+   botrow->Add(radio3, 0, wxLEFT | wxRIGHT, LRGAP);
+   botrow->AddStretchSpacer(10);
+
+   ssizer1->AddSpacer(SBTOPGAP);
+   ssizer1->Add(toprow, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(CH2VGAP);
+   ssizer1->Add(botrow, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->AddSpacer(SBBOTGAP);
+
+   // position things
    vbox->AddSpacer(5);
 #if wxUSE_TOOLTIPS
    vbox->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -3572,6 +3631,8 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
 
    // init control values
 #if wxUSE_TOOLTIPS
@@ -3593,6 +3654,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    mingridindex = mingridmag - 2;
    choice3->SetSelection(mingridindex);
    choice4->SetSelection(mousewheelmode);
+   radio0->SetValue(controlspos == 0);
+   radio1->SetValue(controlspos == 1);
+   radio2->SetValue(controlspos == 2);
+   radio3->SetValue(controlspos == 3);
+   radio4->SetValue(controlspos == 4);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -3640,29 +3706,41 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
 
    wxBoxSizer* b1 = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* b2 = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* b3 = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* b4 = new wxBoxSizer(wxHORIZONTAL);
    b1->Add(check1, 0, wxALL, 0);
    b2->Add(check2, 0, wxALL, 0);
+   b3->Add(check3, 0, wxALL, 0);
+   b4->Add(check4, 0, wxALL, 0);
    wxSize wd1 = b1->GetMinSize();
    wxSize wd2 = b2->GetMinSize();
+   wxSize wd3 = b3->GetMinSize();
+   wxSize wd4 = b4->GetMinSize();
    if (wd1.GetWidth() > wd2.GetWidth())
       b2->SetMinSize(wd1);
    else
       b1->SetMinSize(wd2);
+   if (wd3.GetWidth() > wd4.GetWidth())
+      b4->SetMinSize(wd3);
+   else
+      b3->SetMinSize(wd4);
 
    wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
    hbox1->Add(b1, 0, wxLEFT | wxRIGHT, LRGAP);
-   hbox1->AddSpacer(20);
-   hbox1->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox1->AddStretchSpacer(20);
+   hbox1->Add(b3, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox1->AddStretchSpacer(20);
 
    wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
    hbox2->Add(b2, 0, wxLEFT | wxRIGHT, LRGAP);
-   hbox2->AddSpacer(20);
-   hbox2->Add(check4, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox2->AddStretchSpacer(20);
+   hbox2->Add(b4, 0, wxLEFT | wxRIGHT, LRGAP);
+   hbox2->AddStretchSpacer(20);
 
    ssizer1->AddSpacer(SBTOPGAP);
-   ssizer1->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->Add(hbox1, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(CH2VGAP);
-   ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
+   ssizer1->Add(hbox2, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
    ssizer1->AddSpacer(SBBOTGAP);
 
    // position things
@@ -4537,6 +4615,7 @@ bool PrefsDialog::TransferDataFromWindow()
    mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);
    mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
    thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
+   controlspos    = GetRadioVal(PREF_NO_CONTROLS, 5);
 
    // LAYER_PAGE
    opacity     = GetSpinVal(PREF_OPACITY);

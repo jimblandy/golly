@@ -100,9 +100,8 @@ public:
 
    // process keyboard and mouse events
    void ProcessKey(int key, int modifiers);
-   void ProcessControlClick(int x, int y);
    void ProcessClick(int x, int y, bool shiftdown);
-   void ClickInControls(int x, int y);
+   void ProcessClickedControl();
 
    // data
    bool waitingforclick;         // waiting for paste click?
