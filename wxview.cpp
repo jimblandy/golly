@@ -71,8 +71,14 @@ static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
 static int newalgo;                 // new algo needed by readclipboard
 
-// remember which translucent button was clicked
+// remember which translucent button was clicked, and when
 static control_id clickedcontrol = NO_CONTROL;
+static long clicktime;
+
+// panning buttons are treated differently
+#define PANNING_CONTROL (clickedcontrol >= NW_CONTROL && \
+                         clickedcontrol <= SE_CONTROL && \
+                         clickedcontrol != MIDDLE_CONTROL)
 
 // -----------------------------------------------------------------------------
 
@@ -1907,16 +1913,20 @@ void PatternView::StopDraggingMouse()
    }
    
    if (clickedcontrol > NO_CONTROL) {
-      if (currcontrol == clickedcontrol) ProcessClickedControl();
+      if (currcontrol == clickedcontrol && !PANNING_CONTROL) {
+         // only do non-panning function when button is released
+         ProcessClickedControl();
+      }
       clickedcontrol = NO_CONTROL;
       currcontrol = NO_CONTROL;
+      // CheckCursor below calls RefreshRect(controlsrect, false);
    }
    
    drawingcells = false;
    selectingcells = false;
    movingview = false;
 
-   CheckCursor(mainptr->IsActive());
+   CheckCursor(true);
 }
 
 // -----------------------------------------------------------------------------
@@ -2362,6 +2372,14 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          clickedcontrol = currcontrol;    // remember which control was clicked
          CaptureMouse();                  // get mouse up event even if outside view
          dragtimer->Start(DRAG_RATE);     // see OnDragTimer
+         clicktime = stopwatch->Time();   // in millisecs
+         if (PANNING_CONTROL) {
+            // scroll immediately
+            ProcessClickedControl();
+         } else {
+            // redraw clicked button
+            RefreshRect(controlsrect, false);
+         }
       }
    
    } else if (currlayer->curs == curs_pencil) {
@@ -2598,9 +2616,10 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
       control_id oldcontrol = currcontrol;
       currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
       if (currcontrol == clickedcontrol) {
-         // allow panning to be repeated while button is pressed
-         if (clickedcontrol >= NW_CONTROL && clickedcontrol <= SE_CONTROL &&
-             clickedcontrol != MIDDLE_CONTROL) {
+         if (PANNING_CONTROL && stopwatch->Time() - clicktime > 300) {
+            // panning can be repeated while button is pressed, but only after
+            // a short pause (0.3 secs) from the time the button was clicked
+            // (this matches the way scroll buttons work on Mac/Windows)
             ProcessClickedControl();
          }
       } else {
