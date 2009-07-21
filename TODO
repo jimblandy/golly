@@ -56,6 +56,9 @@ Andrew's list:
 - Fix wxMac bug: Set Rule's help win can't regain focus after clicking
   in scroll bar (and thus we can't copy text).
 
+- Add case studies to BUILD file: how to add a new menu item, how to add
+  a new algorithm, etc.
+
 
 Tom's list:
 ===========

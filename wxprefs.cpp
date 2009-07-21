@@ -967,27 +967,23 @@ void UpdateAcceleratorStrings()
          if (action != DO_NOTHING && accelerator[action].IsEmpty()) {
             
             // check if key can be used as an accelerator
-            bool validaccel = false;
-            if ( (key >= IK_F1 && key <= IK_F24) ||
-                 (key >= IK_LEFT && key <= IK_DOWN) ||
-                  key == ' ' ||
-                  key == IK_HOME ||
-                  key == IK_END ||
-                  key == IK_PAGEUP ||
-                  key == IK_PAGEDOWN ||
-                  key == IK_DELETE ||
-                  key == IK_TAB ||
-                  key == IK_RETURN ) {
-               validaccel = true;
-            } else if ( (modset & mk_META) && (key > ' ' && key <= '~') ) {
-               #ifdef __WXMSW__
-                  // Windows only allows Ctrl+alphanumeric
-                  if ( (key >= 'a' && key <= 'z') || (key >= '0' && key <= '9') )
-                     validaccel = true;
-               #else
-                  validaccel = true;
-               #endif
+            bool validaccel =
+               (key >= ' ' && key <= '~') ||
+               (key >= IK_F1 && key <= IK_F24) ||
+               (key >= IK_LEFT && key <= IK_DOWN) ||
+               key == IK_HOME ||
+               key == IK_END ||
+               key == IK_PAGEUP ||
+               key == IK_PAGEDOWN ||
+               key == IK_DELETE ||
+               key == IK_TAB ||
+               key == IK_RETURN;
+            #ifdef __WXMSW__
+            if (modset & mk_META) {
+               // Windows only allows Ctrl+alphanumeric
+               validaccel = (key >= 'a' && key <= 'z') || (key >= '0' && key <= '9');
             }
+            #endif
             
             if (validaccel) {
                accelerator[action] = wxT("\t");
@@ -1008,6 +1004,36 @@ void UpdateAcceleratorStrings()
          }
       }
    }
+
+   // go thru keyaction table again looking only for key combos containing Ctrl;
+   // we do this so that the Paste menu item will have the standard Ctrl+V
+   // shortcut rather than a plain V if both those shortcuts are assigned
+   for (int key = 0; key < MAX_KEYCODES; key++) {
+      for (int modset = 0; modset < MAX_MODS; modset++) {
+         action_info info = keyaction[key][modset];
+         action_id action = info.id;
+         if (action != DO_NOTHING && (modset & mk_META)
+               #ifdef __WXMSW__
+               // Windows only allows Ctrl+alphanumeric
+               && ((key >= 'a' && key <= 'z') || (key >= '0' && key <= '9'))
+               #endif
+            ) {
+            accelerator[action] = wxT("\tCtrl+");
+            if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
+            if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
+            #ifdef __WXMAC__
+               //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
+               // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
+            #endif
+            if (key >= 'a' && key <= 'z') {
+               // convert a..z to A..Z
+               accelerator[action] += wxChar(key - 32);
+            } else {
+               accelerator[action] += GetKeyName(key);
+            }
+         }
+      }
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1015,6 +1041,16 @@ void UpdateAcceleratorStrings()
 wxString GetAccelerator(action_id action)
 {
    return accelerator[action];
+}
+
+// -----------------------------------------------------------------------------
+
+void RemoveAccelerator(wxMenuBar* mbar, int item, action_id action)
+{
+   if (!accelerator[action].IsEmpty()) {
+      // remove accelerator from given menu item
+      mbar->SetLabel(item, wxMenuItem::GetLabelFromText(mbar->GetLabel(item)));
+   }
 }
 
 // -----------------------------------------------------------------------------

@@ -225,7 +225,12 @@ public:
 void IntegerDialog::OnSpinCtrlChar(wxKeyEvent& event)
 {
    int key = event.GetKeyCode();
-   if ( key == WXK_TAB ) {
+   
+   if (event.CmdDown()) {
+      // allow handling of cmd-x/v/etc
+      event.Skip();
+
+   } else if ( key == WXK_TAB ) {
       /* why does this crash???!!!
       spinctrl->SetFocus();
       spinctrl->SetSelection(0,999);
@@ -235,6 +240,7 @@ void IntegerDialog::OnSpinCtrlChar(wxKeyEvent& event)
          sc->SetFocus();
          sc->SetSelection(0,999);
       }
+
    } else if ( key >= ' ' && key <= '~' ) {
       if ( (key >= '0' && key <= '9') || key == '+' || key == '-' ) {
          // allow digits and + or -
@@ -243,6 +249,7 @@ void IntegerDialog::OnSpinCtrlChar(wxKeyEvent& event)
          // disallow any other displayable ascii char
          wxBell();
       }
+
    } else {
       event.Skip();
    }

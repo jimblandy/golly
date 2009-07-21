@@ -1353,6 +1353,7 @@ void PatternView::ProcessKey(int key, int modifiers)
    // WARNING: ProcessKey can be called while running a script or while
    // waiting for a paste click, so we must avoid doing any actions that
    // could cause havoc at such times.
+   bool waiting = waitingforclick || dragtimer->IsRunning();
 
    action_info action = FindAction(key, modifiers);
    switch (action.id) {
@@ -1362,32 +1363,28 @@ void PatternView::ProcessKey(int key, int modifiers)
          break;
 
       case DO_OPENFILE:
-         {  wxString ext = action.file.AfterLast('.');
-            // if action.file has no extension then ext == action.file
-            if (ext == action.file) ext = wxEmptyString;
-            if ( ext.IsSameAs(wxT("html"),false) || ext.IsSameAs(wxT("htm"),false) ) {
-               // show HTML file in help window
-               if (!waitingforclick) ShowHelp(action.file);
-            } else {
-               // load pattern or run script
-               if (!inscript) mainptr->OpenFile(action.file, true);
-            }
+         if (IsHTMLFile(action.file)) {
+            // show HTML file in help window
+            if (!waiting) ShowHelp(action.file);
+         } else {
+            // load pattern or run script
+            if (!inscript && !waiting) mainptr->OpenFile(action.file, true);
          }
          break;
 
       // File menu actions
-      case DO_NEWPATT:     if (!inscript) mainptr->NewPattern(); break;
-      case DO_OPENPATT:    if (!inscript) mainptr->OpenPattern(); break;
-      case DO_OPENCLIP:    if (!inscript) mainptr->OpenClipboard(); break;
-      case DO_SAVE:        if (!inscript) mainptr->SavePattern(); break;
+      case DO_NEWPATT:     if (!inscript && !waiting) mainptr->NewPattern(); break;
+      case DO_OPENPATT:    if (!inscript && !waiting) mainptr->OpenPattern(); break;
+      case DO_OPENCLIP:    if (!inscript && !waiting) mainptr->OpenClipboard(); break;
+      case DO_SAVE:        if (!inscript && !waiting) mainptr->SavePattern(); break;
       case DO_SAVEXRLE:    if (!inscript) savexrle = !savexrle; break;
-      case DO_RUNSCRIPT:   if (!inscript) mainptr->OpenScript(); break;
-      case DO_RUNCLIP:     if (!inscript) mainptr->RunClipboard(); break;
-      case DO_PREFS:       mainptr->ShowPrefsDialog(); break;
+      case DO_RUNSCRIPT:   if (!inscript && !waiting) mainptr->OpenScript(); break;
+      case DO_RUNCLIP:     if (!inscript && !waiting) mainptr->RunClipboard(); break;
+      case DO_PREFS:       if (!waiting) mainptr->ShowPrefsDialog(); break;
+      case DO_PATTDIR:     if (!waiting) mainptr->ChangePatternDir(); break;
+      case DO_SCRIPTDIR:   if (!waiting) mainptr->ChangeScriptDir(); break;
       case DO_PATTERNS:    mainptr->ToggleShowPatterns(); break;
-      case DO_PATTDIR:     mainptr->ChangePatternDir(); break;
       case DO_SCRIPTS:     mainptr->ToggleShowScripts(); break;
-      case DO_SCRIPTDIR:   mainptr->ChangeScriptDir(); break;
       case DO_QUIT:        mainptr->QuitApp(); break;
 
       // Edit menu actions
@@ -1398,8 +1395,8 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_COPY:        if (!inscript) CopySelection(); break;
       case DO_CLEAR:       if (!inscript) ClearSelection(); break;
       case DO_CLEAROUT:    if (!inscript) ClearOutsideSelection(); break;
-      case DO_PASTE:       if (!inscript) PasteClipboard(false); break;
-      case DO_PASTESEL:    if (!inscript) PasteClipboard(true); break;
+      case DO_PASTE:       if (!inscript && !waiting) PasteClipboard(false); break;
+      case DO_PASTESEL:    if (!inscript && !waiting) PasteClipboard(true); break;
       case DO_SELALL:      if (!inscript) SelectAll(); break;
       case DO_REMOVESEL:   if (!inscript) RemoveSelection(); break;
       case DO_SHRINK:      if (!inscript) ShrinkSelection(false); break;
@@ -1442,8 +1439,8 @@ void PatternView::ProcessKey(int key, int modifiers)
          }
          break;
       case DO_RESET:       if (!inscript) mainptr->ResetPattern(); break;
-      case DO_SETGEN:      if (!inscript) mainptr->SetGeneration(); break;
-      case DO_SETBASE:     if (!inscript) mainptr->SetBaseStep(); break;
+      case DO_SETGEN:      if (!inscript && !waiting) mainptr->SetGeneration(); break;
+      case DO_SETBASE:     if (!inscript && !waiting) mainptr->SetBaseStep(); break;
       case DO_FASTER:      mainptr->GoFaster(); break;
       case DO_SLOWER:      mainptr->GoSlower(); break;
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
@@ -1458,7 +1455,7 @@ void PatternView::ProcessKey(int key, int modifiers)
          break;
       case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
-      case DO_SETRULE:     if (!inscript) mainptr->ShowRuleDialog(); break;
+      case DO_SETRULE:     if (!inscript && !waiting) mainptr->ShowRuleDialog(); break;
       case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
 
       // View menu actions
@@ -1489,12 +1486,12 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SHOWSTATES:  ToggleAllStates(); break;
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
-      case DO_SETCOLORS:   if (!inscript) SetLayerColors(); break;
+      case DO_SETCOLORS:   if (!inscript && !waiting) SetLayerColors(); break;
       case DO_SHOWICONS:   ToggleCellIcons(); break;
       case DO_INVERT:      ToggleCellColors(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;
       case DO_BUFFERED:    ToggleBuffering(); break;
-      case DO_INFO:        mainptr->ShowPatternInfo(); break;
+      case DO_INFO:        if (!waiting) mainptr->ShowPatternInfo(); break;
 
       // Layer menu actions
       case DO_ADD:         if (!inscript) AddLayer(); break;
@@ -1502,8 +1499,8 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_DUPLICATE:   if (!inscript) DuplicateLayer(); break;
       case DO_DELETE:      if (!inscript) DeleteLayer(); break;
       case DO_DELOTHERS:   if (!inscript) DeleteOtherLayers(); break;
-      case DO_MOVELAYER:   if (!inscript) MoveLayerDialog(); break;
-      case DO_NAMELAYER:   if (!inscript) NameLayerDialog(); break;
+      case DO_MOVELAYER:   if (!inscript && !waiting) MoveLayerDialog(); break;
+      case DO_NAMELAYER:   if (!inscript && !waiting) NameLayerDialog(); break;
       case DO_SYNCVIEWS:   if (!inscript) ToggleSyncViews(); break;
       case DO_SYNCCURS:    if (!inscript) ToggleSyncCursors(); break;
       case DO_STACK:       if (!inscript) ToggleStackLayers(); break;
@@ -1511,13 +1508,13 @@ void PatternView::ProcessKey(int key, int modifiers)
 
       // Help menu actions
       case DO_HELP:
-         if (!waitingforclick) {
+         if (!waiting) {
             // if help window is open then bring it to the front,
             // otherwise open it and display most recent help file
             ShowHelp(wxEmptyString);
          }
          break;
-      case DO_ABOUT:       if (!inscript) ShowAboutBox(); break;
+      case DO_ABOUT:       if (!inscript && !waiting) ShowAboutBox(); break;
       
       default:             Warning(_("Bug detected in ProcessKey!"));
    }

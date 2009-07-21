@@ -268,6 +268,9 @@ wxString GetAccelerator(action_id action);
 // return a string, possibly empty, containing the menu item
 // accelerator(s) for the given action
 
+void RemoveAccelerator(wxMenuBar* mbar, int item, action_id action);
+// remove any accelerator from given menu item
+
 void SetAccelerator(wxMenuBar* mbar, int item, action_id action);
 // update accelerator for given menu item using given action
 
