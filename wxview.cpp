@@ -2366,16 +2366,14 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
    if (showcontrols) {
       currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
       if (currcontrol > NO_CONTROL) {
-         clickedcontrol = currcontrol;    // remember which control was clicked
-         CaptureMouse();                  // get mouse up event even if outside view
-         dragtimer->Start(DRAG_RATE);     // see OnDragTimer
-         clicktime = stopwatch->Time();   // in millisecs
+         clickedcontrol = currcontrol;       // remember which control was clicked
+         clicktime = stopwatch->Time();      // remember when clicked (in millisecs)
+         CaptureMouse();                     // get mouse up event even if outside view
+         dragtimer->Start(DRAG_RATE);        // see OnDragTimer
+         RefreshRect(controlsrect, false);   // redraw clicked button
          if (PANNING_CONTROL) {
             // scroll immediately
             ProcessClickedControl();
-         } else {
-            // redraw clicked button
-            RefreshRect(controlsrect, false);
          }
       }
    

@@ -687,7 +687,8 @@ void MainFrame::UpdateMenuItems(bool active)
                                     currlayer->algo->getGeneration() > currlayer->startgen));
       mbar->Enable(ID_SETGEN,       active && !inscript);
       mbar->Enable(ID_FASTER,       active);
-      mbar->Enable(ID_SLOWER,       active && currlayer->currexpo > minexpo);
+      mbar->Enable(ID_SLOWER,       active /* && currlayer->currexpo > minexpo */);
+                                           // don't do this test because Win users won't hear beep
       mbar->Enable(ID_SETBASE,      active && !inscript);
       mbar->Enable(ID_AUTO,         active);
       mbar->Enable(ID_HYPER,        active);
@@ -701,7 +702,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_MIDDLE,       active);
       mbar->Enable(ID_RESTORE00,    active && (currlayer->originx != bigint::zero ||
                                                currlayer->originy != bigint::zero));
-      mbar->Enable(wxID_ZOOM_IN,    active && viewptr->GetMag() < MAX_MAG);
+      mbar->Enable(wxID_ZOOM_IN,    active /* && viewptr->GetMag() < MAX_MAG */);
+                                           // don't do this test because Win users won't hear beep
       mbar->Enable(wxID_ZOOM_OUT,   active);
       mbar->Enable(ID_SET_SCALE,    active);
       mbar->Enable(ID_TOOL_BAR,     active);
