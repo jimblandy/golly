@@ -677,7 +677,7 @@ void UndoRedo::RememberGenStart()
    startcount++;
    if (startcount > 1) {
       // return immediately and ignore next RememberGenFinish call;
-      // this can happen in wxGTK app if user holds down space bar
+      // this can happen in Linux app if user holds down space bar
       return;
    }
 
@@ -783,7 +783,7 @@ void UndoRedo::RememberGenFinish()
 
    if (inscript && savegenchanges) return;   // ignore consecutive run/step command
 
-   // generation count might not have changed (can happen in wxGTK)
+   // generation count might not have changed (can happen in Linux app)
    if (prevgen == currlayer->algo->getGeneration()) {
       // delete prevfile created by RememberGenStart
       if (!prevfile.IsEmpty() && wxFileExists(prevfile)) {
