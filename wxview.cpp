@@ -1093,6 +1093,14 @@ bool PatternView::PointInView(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXGTK__
+   // nicer to redraw entire viewport on Linux
+   // otherwise we see partial drawing in some cases
+   #define RefreshControls() Refresh(false)
+#else
+   #define RefreshControls() RefreshRect(controlsrect,false)
+#endif
+
 void PatternView::CheckCursor(bool active)
 {
    if (active) {
@@ -1107,7 +1115,7 @@ void PatternView::CheckCursor(bool active)
             #endif
             SetCursor(*wxSTANDARD_CURSOR);
             showcontrols = false;
-            RefreshRect(controlsrect, false);
+            RefreshControls();
          
          } else if (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) {
             // cursor is over translucent controls
@@ -1116,7 +1124,7 @@ void PatternView::CheckCursor(bool active)
             #endif
             SetCursor(*wxSTANDARD_CURSOR);
             showcontrols = true;
-            RefreshRect(controlsrect, false);
+            RefreshControls();
          
          } else {
             // show current cursor mode
@@ -1125,7 +1133,7 @@ void PatternView::CheckCursor(bool active)
             #endif
             SetCursor(*currlayer->curs);
             showcontrols = false;
-            RefreshRect(controlsrect, false);
+            RefreshControls();
          }
       
       } else {
@@ -1135,7 +1143,7 @@ void PatternView::CheckCursor(bool active)
          #endif
          SetCursor(*wxSTANDARD_CURSOR);
          showcontrols = false;
-         RefreshRect(controlsrect, false);
+         RefreshControls();
       }
    
    } else {
@@ -2371,6 +2379,10 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          CaptureMouse();                     // get mouse up event even if outside view
          dragtimer->Start(DRAG_RATE);        // see OnDragTimer
          RefreshRect(controlsrect, false);   // redraw clicked button
+         #ifdef __WXGTK__
+            // nicer to do it immediately on Linux
+            Update();
+         #endif
          if (PANNING_CONTROL) {
             // scroll immediately
             ProcessClickedControl();
