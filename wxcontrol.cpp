@@ -177,11 +177,6 @@ void MainFrame::ResetPattern(bool resetundo)
    // first restore algorithm
    currlayer->algtype = currlayer->startalgo;
 
-   // restore step size and set increment
-   currlayer->currbase = currlayer->startbase;
-   currlayer->currexpo = currlayer->startexpo;
-   SetGenIncrement();
-
    // restore starting pattern
    if ( currlayer->startfile.IsEmpty() ) {
       // restore pattern from currfile
@@ -202,6 +197,11 @@ void MainFrame::ResetPattern(bool resetundo)
    if (restoreview) {
       viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
    }
+
+   // restore step size and set increment
+   currlayer->currbase = currlayer->startbase;
+   currlayer->currexpo = currlayer->startexpo;
+   SetGenIncrement();
 
    // if this layer is a clone then restore some settings in other clones
    if (currlayer->cloneid > 0) {
