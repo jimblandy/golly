@@ -546,7 +546,7 @@ void MainFrame::GeneratePattern()
    // for hyperspeed
    int hypdown = 64;
    
-   generating = true;               // avoid recursion
+   generating = true;               // avoid re-entry
    wxGetApp().PollerReset();
    
    #ifdef __WXMSW__
@@ -760,17 +760,6 @@ void MainFrame::DoPendingAction(bool restart)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::Stop()
-{
-   if (inscript) {
-      PassKeyToScript(WXK_ESCAPE);
-   } else if (generating) {
-      wxGetApp().PollerInterrupt();
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::DisplayTimingInfo()
 {
    if (viewptr->waitingforclick) return;
@@ -789,11 +778,36 @@ void MainFrame::DisplayTimingInfo()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::Stop()
+{
+   if (inscript) {
+      PassKeyToScript(WXK_ESCAPE);
+   } else if (generating) {
+      wxGetApp().PollerInterrupt();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+// this global flag is used to avoid re-entrancy in NextGeneration()
+// due to holding down the space/tab key
+static bool inNextGen = false;
+
 void MainFrame::NextGeneration(bool useinc)
 {
-   if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
-      // don't play sound here because it'll be heard if user holds down tab key
-      // wxBell();
+   if (inNextGen) return;
+   inNextGen = true;
+
+   if (!inscript && generating) {
+      // we must be in GeneratePattern() loop, so abort it
+      Stop();
+      inNextGen = false;
+      return;
+   }
+
+   if (viewptr->drawingcells || viewptr->waitingforclick) {
+      wxBell();
+      inNextGen = false;
       return;
    }
 
@@ -803,10 +817,12 @@ void MainFrame::NextGeneration(bool useinc)
    lifealgo* curralgo = currlayer->algo;
    if (curralgo->isEmpty()) {
       statusptr->ErrorMessage(empty_pattern);
+      inNextGen = false;
       return;
    }
    
    if (!SaveStartingPattern()) {
+      inNextGen = false;
       return;
    }
 
@@ -837,7 +853,7 @@ void MainFrame::NextGeneration(bool useinc)
       }
    }
 
-   // curralgo->step() calls checkevents so set generating flag to avoid recursion
+   // curralgo->step() calls checkevents() so set generating flag
    generating = true;
 
    // only show hashing info while generating
@@ -876,11 +892,15 @@ void MainFrame::NextGeneration(bool useinc)
       UpdateEverything();
    }
 
+   // we must call RememberGenFinish BEFORE processing any pending command
    if (allowundo && !currlayer->stayclean)
       currlayer->undoredo->RememberGenFinish();
    
+   // process any pending command seen via checkevents() in curralgo->step()
    if (!inscript)
       DoPendingAction(false);     // false means don't restart generating loop
+   
+   inNextGen = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -911,8 +931,7 @@ void MainFrame::ToggleHashInfo()
    currlayer->showhashinfo = !currlayer->showhashinfo;
    
    // only show hashing info while generating
-   if (generating)
-      lifealgo::setVerbose( currlayer->showhashinfo );
+   if (generating) lifealgo::setVerbose( currlayer->showhashinfo );
 }
 
 // -----------------------------------------------------------------------------

@@ -1365,20 +1365,18 @@ void PatternView::ProcessKey(int key, int modifiers)
 
    action_info action = FindAction(key, modifiers);
    switch (action.id) {
-      case DO_NOTHING:
-         // any unassigned key turns off full screen mode
-         if (mainptr->fullscreen) mainptr->ToggleFullScreen();
-         break;
+      case DO_NOTHING:     // any unassigned key turns off full screen mode
+                           if (mainptr->fullscreen) mainptr->ToggleFullScreen();
+                           break;
 
-      case DO_OPENFILE:
-         if (IsHTMLFile(action.file)) {
-            // show HTML file in help window
-            if (!busy) ShowHelp(action.file);
-         } else {
-            // load pattern or run script
-            if (!inscript && !busy) mainptr->OpenFile(action.file, true);
-         }
-         break;
+      case DO_OPENFILE:    if (IsHTMLFile(action.file)) {
+                              // show HTML file in help window
+                              if (!busy) ShowHelp(action.file);
+                           } else {
+                              // load pattern or run script
+                              if (!inscript && !busy) mainptr->OpenFile(action.file, true);
+                           }
+                           break;
 
       // File menu actions
       case DO_NEWPATT:     if (!inscript && !busy) mainptr->NewPattern(); break;
@@ -1427,44 +1425,34 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_PASTELOC:    CyclePasteLocation(); break;
 
       // Control menu actions
-      case DO_STARTSTOP:
-         if (!inscript) {
-            if (mainptr->generating) {
-               mainptr->Stop();
-            } else {
-               mainptr->GeneratePattern();
-            }
-         }
-         break;
-      case DO_NEXTGEN:
-      case DO_NEXTSTEP:
-         if (!inscript) {
-            if (mainptr->generating) {
-               mainptr->Stop();
-            } else {
-               mainptr->NextGeneration(action.id == DO_NEXTSTEP);
-            }
-         }
-         break;
-      case DO_RESET:       if (!inscript) mainptr->ResetPattern(); break;
+      case DO_STARTSTOP:   if (!inscript) {
+                              if (mainptr->generating) {
+                                 mainptr->Stop();
+                              } else {
+                                 mainptr->GeneratePattern();
+                              }
+                           }
+                           break;
+      case DO_NEXTGEN:     if (!inscript) mainptr->NextGeneration(false); break;
+      case DO_NEXTSTEP:    if (!inscript) mainptr->NextGeneration(true); break;
+      case DO_RESET:       if (!inscript && !busy) mainptr->ResetPattern(); break;
       case DO_SETGEN:      if (!inscript && !busy) mainptr->SetGeneration(); break;
       case DO_SETBASE:     if (!inscript && !busy) mainptr->SetBaseStep(); break;
       case DO_FASTER:      mainptr->GoFaster(); break;
       case DO_SLOWER:      mainptr->GoSlower(); break;
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
-      //!!! remove this action??? or change it to DO_ALGOCYCLE???
-      case DO_HASHING:
-         if (!inscript) {
-            if (currlayer->algtype != HLIFE_ALGO)
-               mainptr->ChangeAlgorithm(HLIFE_ALGO);
-            else
-               mainptr->ChangeAlgorithm(QLIFE_ALGO);
-         }
-         break;
       case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
       case DO_SETRULE:     if (!inscript && !busy) mainptr->ShowRuleDialog(); break;
       case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
+      //!!! remove next action??? or change it to DO_ALGOCYCLE???
+      case DO_HASHING:     if (!inscript && !busy) {
+                              if (currlayer->algtype != HLIFE_ALGO)
+                                 mainptr->ChangeAlgorithm(HLIFE_ALGO);
+                              else
+                                 mainptr->ChangeAlgorithm(QLIFE_ALGO);
+                           }
+                           break;
 
       // View menu actions
       case DO_LEFT:        PanLeft( SmallScroll(currlayer->view->getwidth()) ); break;
@@ -1515,13 +1503,12 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_TILE:        if (!inscript) ToggleTileLayers(); break;
 
       // Help menu actions
-      case DO_HELP:
-         if (!busy) {
-            // if help window is open then bring it to the front,
-            // otherwise open it and display most recent help file
-            ShowHelp(wxEmptyString);
-         }
-         break;
+      case DO_HELP:        if (!busy) {
+                              // if help window is open then bring it to the front,
+                              // otherwise open it and display most recent help file
+                              ShowHelp(wxEmptyString);
+                           }
+                           break;
       case DO_ABOUT:       if (!inscript && !busy) ShowAboutBox(); break;
       
       default:             Warning(_("Bug detected in ProcessKey!"));
