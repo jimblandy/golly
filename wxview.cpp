@@ -1122,8 +1122,10 @@ void PatternView::CheckCursor(bool active)
                RefreshControls();
             }
          
-         } else if (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) {
-            // cursor is over translucent controls
+         } else if ( (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
+                     !(drawingcells || selectingcells || movingview || waitingforclick) ) {
+            // cursor is over translucent controls, or user clicked in a control
+            // and hasn't released mouse button yet
             #ifdef __WXMAC__
                wxSetCursor(*wxSTANDARD_CURSOR);
             #endif
@@ -2379,7 +2381,7 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          dragtimer->Start(DRAG_RATE);        // see OnDragTimer
          RefreshRect(controlsrect, false);   // redraw clicked button
          #ifdef __WXGTK__
-            // nicer to do it immediately on Linux
+            // nicer to see change immediately on Linux
             Update();
          #endif
          if (PANNING_CONTROL) {
@@ -2574,11 +2576,11 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
    statusptr->CheckMouseLocation(mainptr->IsActive());
    
    // check if translucent controls need to be shown/hidden
-   if ( mainptr->IsActive() &&
-        !(drawingcells || selectingcells || movingview || waitingforclick) &&
-        !(numlayers > 1 && tilelayers && tileindex != currindex) ) {
+   if (mainptr->IsActive()) {
       wxPoint pt( event.GetX(), event.GetY() );
-      bool show = controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL;
+      bool show = (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
+                  !(drawingcells || selectingcells || movingview || waitingforclick) &&
+                  !(numlayers > 1 && tilelayers && tileindex != currindex);
       if (showcontrols != show) {
          // let CheckCursor set showcontrols and call RefreshRect
          CheckCursor(true);
