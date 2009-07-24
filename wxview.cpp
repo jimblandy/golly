@@ -356,7 +356,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          wxSetCursor(*currlayer->curs);
       #endif
       SetCursor(*currlayer->curs);
-      showcontrols = false;
+      if (showcontrols) {
+         showcontrols = false;
+         RefreshRect(controlsrect,false);
+      }
 
       // create image for drawing pattern to be pasted; note that given box
       // is not necessarily the minimal bounding box because clipboard pattern
@@ -1114,8 +1117,10 @@ void PatternView::CheckCursor(bool active)
                wxSetCursor(*wxSTANDARD_CURSOR);
             #endif
             SetCursor(*wxSTANDARD_CURSOR);
-            showcontrols = false;
-            RefreshControls();
+            if (showcontrols) {
+               showcontrols = false;
+               RefreshControls();
+            }
          
          } else if (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) {
             // cursor is over translucent controls
@@ -1123,8 +1128,10 @@ void PatternView::CheckCursor(bool active)
                wxSetCursor(*wxSTANDARD_CURSOR);
             #endif
             SetCursor(*wxSTANDARD_CURSOR);
-            showcontrols = true;
-            RefreshControls();
+            if (!showcontrols) {
+               showcontrols = true;
+               RefreshControls();
+            }
          
          } else {
             // show current cursor mode
@@ -1132,8 +1139,10 @@ void PatternView::CheckCursor(bool active)
                wxSetCursor(*currlayer->curs);
             #endif
             SetCursor(*currlayer->curs);
-            showcontrols = false;
-            RefreshControls();
+            if (showcontrols) {
+               showcontrols = false;
+               RefreshControls();
+            }
          }
       
       } else {
@@ -1142,8 +1151,10 @@ void PatternView::CheckCursor(bool active)
             wxSetCursor(*wxSTANDARD_CURSOR);
          #endif
          SetCursor(*wxSTANDARD_CURSOR);
-         showcontrols = false;
-         RefreshControls();
+         if (showcontrols) {
+            showcontrols = false;
+            RefreshControls();
+         }
       }
    
    } else {
@@ -1911,7 +1922,8 @@ void PatternView::StopDraggingMouse()
       }
       clickedcontrol = NO_CONTROL;
       currcontrol = NO_CONTROL;
-      // CheckCursor below calls RefreshRect(controlsrect, false);
+      RefreshRect(controlsrect, false);
+      Update();
    }
    
    drawingcells = false;
