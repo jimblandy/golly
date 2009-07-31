@@ -69,6 +69,8 @@ DrawView() does the following tasks:
   viewport (tempview) and draws the paste pattern (stored in pastealgo)
   into a masked pixmap which is then used by DrawPasteImage().
 
+- Calls DrawControls() if the translucent controls need to be drawn.
+
 Potential optimizations:
 
 - Every time DrawView() is called it draws the entire viewport, so
@@ -95,6 +97,7 @@ Other points of interest:
   - the user is doing a paste;
   - the grid lines are visible;
   - the selection is visible;
+  - the translucent controls are visible;
   - multiple layers are being displayed.
 
 - Change the "#if 0" to "#if 1" in wx_render::killrect() to see randomly
@@ -171,14 +174,15 @@ wxBitmap* darkctrls = NULL;      // for showing clicked control
 int controlswd;                  // width of ctrlsbitmap
 int controlsht;                  // height of ctrlsbitmap
 
-// these constants must match data in controls bitmap
+// include controls_xpm (XPM data for controls bitmap)
+#include "bitmaps/controls.xpm"
+
+// these constants must match image dimensions in bitmaps/controls.xpm
 const int buttborder = 6;        // size of outer border
 const int buttsize = 22;         // size of each button
 const int buttsperrow = 3;       // # of buttons in each row
 const int numbutts = 15;         // # of buttons
-
-// include controls_xpm (XPM data for controls bitmap)
-#include "bitmaps/controls.xpm"
+const int rowgap = 4;            // vertical gap after first 2 rows
 
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
@@ -288,10 +292,24 @@ void CreateTranslucentControls()
 control_id WhichControl(int x, int y)
 {
    // determine which button is at x,y in controls bitmap
-   if (x < buttborder || y < buttborder) return NO_CONTROL;
-   int col = 1 + (x - buttborder) / buttsize;
-   int row = 1 + (y - buttborder) / buttsize;
+   int col, row;
    
+   x -= buttborder;
+   y -= buttborder;
+   if (x < 0 || y < 0) return NO_CONTROL;
+   
+   // allow for vertical gap after first 2 rows
+   if (y < (buttsize + rowgap)) {
+      if (y > buttsize) return NO_CONTROL;               // in 1st gap
+      row = 1;
+   } else if (y < 2*(buttsize + rowgap)) {
+      if (y > 2*buttsize + rowgap) return NO_CONTROL;    // in 2nd gap
+      row = 2;
+   } else {
+      row = 3 + (y - 2*(buttsize + rowgap)) / buttsize;
+   }
+   
+   col = 1 + x / buttsize;
    if (col < 1 || col > buttsperrow) return NO_CONTROL;
    if (row < 1 || row > numbutts/buttsperrow) return NO_CONTROL;
    
@@ -319,6 +337,16 @@ void DrawControls(wxDC& dc, wxRect& rect)
          int i = (int)currcontrol - 1;
          int x = buttborder + (i % buttsperrow) * buttsize;
          int y = buttborder + (i / buttsperrow) * buttsize;
+         
+         // allow for vertical gap after first 2 rows
+         if (i < buttsperrow) {
+            // y is correct
+         } else if (i < 2*buttsperrow) {
+            y += rowgap;
+         } else {
+            y += 2*rowgap;
+         }
+         
          #ifdef __WXGTK__
             // wxGTK Blit doesn't support alpha channel
             wxRect r(x, y, buttsize, buttsize);
