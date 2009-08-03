@@ -6,7 +6,7 @@
 Golly supports up to ten layers.  Each layer is a separate universe
 (unless cloned; see the Clone Layer item below)
 with its own algorithm, rule, viewport, cursor mode, selection,
-step exponent, origin offset, color scheme and name.
+step size, origin offset, color scheme and name.
 The current layer's name is displayed in the main window's title bar.
 Most edit/control/view operations only apply to the current layer.
 
@@ -49,7 +49,7 @@ layer bar, or just hit the "\" key.
 Adds a new layer (with an empty universe) immediately after the
 current layer.  The new layer becomes the current layer and
 inherits the preceding layer's algorithm, rule, scale, location,
-and cursor mode.  The step exponent is set to 0, there is no selection,
+and cursor mode.  The step size is set to 1, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
 The new layer starts off using the default color scheme for the current
 algorithm.  If the layer's rule has a corresponding .colors file in

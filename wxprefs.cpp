@@ -3302,7 +3302,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    wxRadioButton* radio0 = new wxRadioButton(panel, PREF_PASTE_0, _("Never change rule"),
                                     wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
    wxRadioButton* radio1 = new wxRadioButton(panel, PREF_PASTE_1,
-                                    _("Only change rule if one is specified and universe is empty"));
+                                    _("Only change rule if one is specified and the universe is empty"));
    wxRadioButton* radio2 = new wxRadioButton(panel, PREF_PASTE_2,
                                     _("Always change rule if one is specified"));
 
@@ -3321,11 +3321,11 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
    
    wxCheckBox* check1 = new wxCheckBox(panel, PREF_SCROLL_PENCIL,
-                                       _("Scroll when drawing cells (using pencil cursor)"));
+                                       _("Scroll when drawing cells (using the pencil cursor)"));
    wxCheckBox* check2 = new wxCheckBox(panel, PREF_SCROLL_CROSS,
-                                       _("Scroll when selecting cells (using cross cursor)"));
+                                       _("Scroll when selecting cells (using the cross cursor)"));
    wxCheckBox* check3 = new wxCheckBox(panel, PREF_SCROLL_HAND,
-                                       _("Scroll when moving view (using hand cursor)"));
+                                       _("Scroll when moving view (using the hand cursor)"));
 
    ssizer2->AddSpacer(SBTOPGAP);
    ssizer2->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
