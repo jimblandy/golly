@@ -2056,8 +2056,10 @@ void MainFrame::UpdateLayerItem(int index)
    Layer* layer = GetLayer(index);
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
-      wxString label;
-      label.Printf(_("%d: "), index);
+      wxString label = wxEmptyString;
+      
+      // we no longer show index in front of name
+      // label.Printf(_("%d: "), index);
 
       // display asterisk if pattern has been modified
       if (layer->dirty) label += wxT("*");
@@ -2070,7 +2072,14 @@ void MainFrame::UpdateLayerItem(int index)
       }
       
       label += layer->currname;
+      
+      // duplicate any ampersands so they appear
+      label.Replace(wxT("&"), wxT("&&"));
+
       mbar->SetLabel(ID_LAYER0 + index, label);
+      
+      // also update name in corresponding layer button
+      UpdateLayerButton(index, label);
    }
 }
 

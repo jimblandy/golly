@@ -772,7 +772,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
       path.erase(0, gollydir.length());
    }
 
-   // duplicate ampersands so they appear in menu
+   // duplicate any ampersands so they appear in menu
    path.Replace(wxT("&"), wxT("&&"));
 
    // put given path at start of patternSubMenu

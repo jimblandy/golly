@@ -164,11 +164,11 @@ void NameLayerDialog();
 
 void MarkLayerDirty();
 // Set dirty flag in current layer and any of its clones.
-// Also prefix window title and layer item name(s) with an asterisk.
+// Also prefix window title and layer name(s) with an asterisk.
 
 void MarkLayerClean(const wxString& title);
 // Reset dirty flag in current layer and any of its clones.
-// Also set window title, removing asterisk from it and layer item name(s).
+// Also set window title, removing asterisk from it and layer name(s).
 
 void ToggleSyncViews();
 // Toggle the syncviews flag.  When true, every layer uses the same
@@ -208,6 +208,31 @@ Layer* GetLayer(int index);
 // Return a pointer to the layer specified by the given index.
 
 
+// Layer bar routines:
+
+void CreateLayerBar(wxWindow* parent);
+// Create layer bar window at top of given parent window.
+
+int LayerBarHeight();
+// Return height of layer bar.
+
+void ResizeLayerBar(int wd);
+// Change width of layer bar.
+
+void UpdateLayerBar(bool active);
+// Update state of buttons in layer bar.
+
+void UpdateLayerButton(int index, const wxString& name);
+// Update the name in the specified layer button.
+
+void RedrawLayerBar();
+// Redraw layer bar.  This is needed because UpdateLayerBar doesn't
+// refresh the layer bar (to avoid unwanted flashing).
+
+void ToggleLayerBar();
+// Show/hide the layer bar.
+
+
 // move this color stuff into wxcolors.*???
 
 void CreateColorGradient();
@@ -228,27 +253,5 @@ void InvertCellColors();
 
 void SetLayerColors();
 // Open a dialog to change the current layer's colors.
-
-
-// Layer bar routines:
-
-void CreateLayerBar(wxWindow* parent);
-// Create layer bar window at top of given parent window.
-
-int LayerBarHeight();
-// Return height of layer bar.
-
-void ResizeLayerBar(int wd);
-// Change width of layer bar.
-
-void UpdateLayerBar(bool active);
-// Update state of buttons in layer bar.
-
-void RedrawLayerBar();
-// Redraw layer bar.  This is needed because UpdateLayerBar doesn't
-// refresh the layer bar (to avoid unwanted flashing).
-
-void ToggleLayerBar();
-// Show/hide layer bar.
 
 #endif

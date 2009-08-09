@@ -76,6 +76,8 @@ void StatusBar::ClearMessage()
 {
    if (inscript) return;                     // let script control messages
    if (viewptr->waitingforclick) return;     // don't clobber message
+   if (statusmsg.IsEmpty()) return;          // no need to clear message
+   
    statusmsg.Clear();
    if (statusht > 0) {
       int wd, ht;
@@ -85,8 +87,8 @@ void StatusBar::ClearMessage()
          wxRect r = wxRect( wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
                             wxPoint(wd-1,ht-1) );
          Refresh(false, &r);
-         // don't call Update() otherwise Win/X11 users see different
-         // colored bands when changing algos
+         // nicer not to call Update() here otherwise users can see different
+         // colored bands in status bar when changing algos
       }
    }
 }
@@ -580,6 +582,8 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    statbitmap = NULL;
    statbitmapwd = -1;
    statbitmapht = -1;
+   
+   statusmsg.Clear();
 }
 
 // -----------------------------------------------------------------------------
