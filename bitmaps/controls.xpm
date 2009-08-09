@@ -1,5 +1,5 @@
 /* XPM */
-static char* controls_xpm[] = {
+static const char* controls_xpm[] = {
 /* width height ncolors chars_per_pixel */
 "78 130 4 1",
 /* colors */
