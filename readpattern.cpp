@@ -423,7 +423,7 @@ const char *readmcell(lifealgo &imp, char *line) {
                char c = *p;
                if ('0' <= c && c <= '9') {
                   n = n * 10 + c - '0';
-               } else {
+               } else if (c > ' ') {
                   if (n == 0)
                      n = 1;
                   if (c == '.') {
