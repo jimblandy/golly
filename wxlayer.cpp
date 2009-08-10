@@ -182,7 +182,11 @@ static wxToggleButton* togglebutt[MAX_LAYERS] = {NULL};
 
 const int MAX_TOGGLE_WD = 128;
 const int MIN_TOGGLE_WD = 48;
-const int TOGGLE_HT = 20;
+#ifdef __WXGTK__
+   const int TOGGLE_HT = 24;
+#else
+   const int TOGGLE_HT = 20;
+#endif
 
 const wxString SWITCH_LAYER = _("Switch to this layer");
 
@@ -488,12 +492,17 @@ void LayerBar::AddButton(int id, const wxString& tip)
       if (togglebutt[id] == NULL) {
          Fatal(_("Failed to create layer bar bitmap button!"));
       } else {
+         #ifdef __WXGTK__
+            // nicer to use smaller font on Linux
+            togglebutt[id]->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+         #endif
+
          // we need to create size using MIN_TOGGLE_WD above and resize now
          // using MAX_TOGGLE_WD, otherwise we can't shrink size later
          // (possibly only needed by wxMac)
          togglebutt[id]->SetSize(xpos, y, MAX_TOGGLE_WD, TOGGLE_HT);
          
-         xpos += MAX_TOGGLE_WD /* + smallgap */;
+         xpos += MAX_TOGGLE_WD;
          
          togglebutt[id]->SetToolTip(SWITCH_LAYER);
          
