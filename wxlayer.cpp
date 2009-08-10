@@ -182,7 +182,9 @@ static wxToggleButton* togglebutt[MAX_LAYERS] = {NULL};
 
 const int MAX_TOGGLE_WD = 128;
 const int MIN_TOGGLE_WD = 48;
-#ifdef __WXGTK__
+#if defined(__WXMSW__)
+   const int TOGGLE_HT = 22;
+#elif defined(__WXGTK__)
    const int TOGGLE_HT = 24;
 #else
    const int TOGGLE_HT = 20;
