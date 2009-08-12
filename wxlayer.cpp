@@ -2458,8 +2458,9 @@ void ColorDialog::CreateControls()
 {
    wxString note =
            _("NOTE:  Changes made here are temporary and only affect the current layer and ");
-   note += _("its clones.  Any algorithm or rule change will reset the colors to their ");
-   note += _("default values.  Use Preferences > Color to change the default colors.");
+   note += _("its clones.  The colors will be reset to their default values if you open ");
+   note += _("a pattern file or create a new pattern, or if you change the current algorithm ");
+   note += _("or rule.  If you want to change the default colors, use Preferences > Color.");
    wxStaticText* notebox = new wxStaticText(this, wxID_STATIC, note);
    notebox->Wrap(NUMCOLS * CELLSIZE + 1);
 

@@ -36,10 +36,14 @@
 <li> The base step can now be changed temporarily via the new Set Base Step dialog
      in the Control menu.  Golly will restore the default base step
      (set in <a href="prefs:control">Preferences > Control</a>) when you create
-     a new pattern, load a pattern file, or switch to a different algorithm.
+     a new pattern, open a pattern file, or switch to a different algorithm.
 <li> The <a href="python.html#setbase">setbase</a> command also changes the base step
-     temporarily, so if you have any scripts that use setbase then you might need to
-     call it <em>after</em> calling new/open/setrule/setalgo.
+     temporarily, so if you have any scripts that use setbase then make sure it is
+     called <em>after</em> calling new/open/setrule/setalgo.
+<li> Golly restores a layer's default colors whenever you create a new pattern
+     or open a pattern file (and not just if the algorithm or rule changes).
+     If you have any scripts that use <a href="python.html#setcolors">setcolors</a>
+     then make sure it is called <em>after</em> calling new/open.
 <li> Paste now supports "And" mode.
 <li> The RLE reader allows alphabetic characters other than "o" to represent live cells.
 <li> Menu items can show single-character keyboard shortcuts.

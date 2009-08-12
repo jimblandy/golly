@@ -62,6 +62,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
 #endif
 
+#ifdef __WXMAC__
+   // convert path to decomposed UTF8 so fopen will work
+   #define FILEPATH path.fn_str()
+#else
+   #define FILEPATH path.mb_str(wxConvLocal)
+#endif
+
 // File menu functions:
 
 // -----------------------------------------------------------------------------
@@ -209,6 +216,9 @@ void MainFrame::NewPattern(const wxString& title)
       currlayer->originy = 0;
       statusptr->SetMessage(origin_restored);
    }
+   
+   // restore default colors for current algo/rule
+   UpdateLayerColors();
 
    MarkLayerClean(title);     // calls SetWindowTitle
    UpdateEverything();
@@ -273,13 +283,6 @@ bool MainFrame::LoadImage(const wxString& path)
 }
 
 // -----------------------------------------------------------------------------
-
-#ifdef __WXMAC__
-   // convert path to decomposed UTF8 so fopen will work
-   #define FILEPATH path.fn_str()
-#else
-   #define FILEPATH path.mb_str(wxConvLocal)
-#endif
 
 void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
                             bool updatestatus, bool updateall)
@@ -377,16 +380,13 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
    
-      // update base step in case algo changed and then set increment;
-      // note that currlayer->currexpo was set to 0 above
+      // restore default base step for current algo
+      // (currlayer->currexpo was set to 0 above)
       currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
       SetGenIncrement();
    
-      // switch to default colors if algo/rule changed
-      wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-      if (oldalgo != currlayer->algtype || oldrule != newrule) {
-         UpdateLayerColors();
-      }
+      // restore default colors for current algo/rule
+      UpdateLayerColors();
 
       if (openremovesel) currlayer->currsel.Deselect();
       if (opencurs) currlayer->curs = opencurs;
@@ -1423,16 +1423,8 @@ const char* MainFrame::WritePattern(const wxString& path,
                                     pattern_format format,
                                     int top, int left, int bottom, int right)
 {
-   #ifdef __WXMAC__
-      // use decomposed UTF8 so fopen will work
-      const char* err = writepattern(path.fn_str(),
-                                     *currlayer->algo, format,
-                                     top, left, bottom, right);
-   #else
-      const char* err = writepattern(path.mb_str(wxConvLocal),
-                                     *currlayer->algo, format,
-                                     top, left, bottom, right);
-   #endif
+   const char* err = writepattern(FILEPATH, *currlayer->algo, format,
+                                  top, left, bottom, right);
 
    #ifdef __WXMAC__
       if (!err) {

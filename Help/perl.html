@@ -917,8 +917,10 @@ A state value of -1 can be used to set all live states to the same color.
 If the given array contains exactly 6 integers then they are interpreted
 as a color gradient from <i>r1, g1, b1</i> to <i>r2, g2, b2</i>.
 If the given array is empty then all states are reset to their default colors,
-depending on the current algorithm and rule.  Note that Golly automatically
-restores a layer's default colors if its algorithm or rule changes.
+depending on the current algorithm and rule.
+Note that the color changes made by this command are only temporary.
+Golly will restore the default colors if a new pattern is opened or created,
+or if the algorithm or rule changes.
 </dd>
 <dd>
 <table cellspacing=0 cellpadding=0>

@@ -52,8 +52,7 @@ inherits the preceding layer's algorithm, rule, scale, location,
 and cursor mode.  The step size is set to 1, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
 The new layer starts off using the default color scheme for the current
-algorithm.  If the layer's rule has a corresponding .colors file in
-the Rules folder then those colors will be loaded.
+algorithm and rule.
 
 <p>
 <font size=+1><b>Clone Layer</b></font>
@@ -112,13 +111,14 @@ Creating a new pattern resets the name to "untitled".
 <font size=+1><b>Set Layer Colors...</b></font>
 
 <p>
-Opens a dialog that lets you change the cell colors used by the
-current layer (and its clones).  Note that any changes you make are
-temporary and only remain in effect while the layer exists.  Also, an
-algorithm or rule change will reset the colors to their default values
-as specified in <a href="prefs:color">Preferences > Color</a>, and if
-the new rule has a corresponding .colors file in the Rules folder then
-those colors will be loaded.  The format of a .colors file is described
+Opens a dialog that lets you change any of the cell colors used by the
+current layer (and its clones).  Note that any changes you make here are
+temporary.  If you open a pattern file or create a new pattern, or if
+you change the current algorithm or rule, then the colors will be reset
+to their default values as specified in
+<a href="prefs:color">Preferences > Color</a>.
+If the new rule has a corresponding .colors file then those colors
+will also be loaded.  The format of a .colors file is described
 in <a href="formats.html#colors">Help > File Formats</a>.
 
 <p>
