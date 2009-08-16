@@ -66,13 +66,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 static wxTimer* onetimer;
 
 #ifdef __WXMSW__
-static bool call_unselect = false;         // OnIdle needs to call Unselect?
-static wxString editpath = wxEmptyString;  // OnIdle calls EditFile if this isn't empty
-static bool ignore_selection = false;      // ignore spurious selection?
+static bool call_unselect = false;        // OnIdle needs to call Unselect?
+static wxString editpath = wxEmptyString; // OnIdle calls EditFile if this isn't empty
+static bool ignore_selection = false;     // ignore spurious selection?
 #endif
 
-static bool call_close = false;            // OnIdle needs to call Close?
-static bool editfile = false;              // edit the clicked file?
+static bool call_close = false;           // OnIdle needs to call Close?
+static bool edit_file = false;            // edit the clicked file?
 
 // -----------------------------------------------------------------------------
 
@@ -1635,7 +1635,7 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 void MainFrame::OnTreeClick(wxMouseEvent& event)
 {
    // set global flag for testing in OnDirTreeSelection
-   editfile = event.ControlDown() || event.RightDown();
+   edit_file = event.ControlDown() || event.RightDown();
    
 #ifdef __WXMSW__
    // this handler gets called even if user clicks outside an item,
@@ -1737,7 +1737,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
          }
          */
 
-      } else if (editfile) {
+      } else if (edit_file) {
          // open file in text editor
          #ifdef __WXMSW__
             // call EditFile in later OnIdle to avoid right-click problem

@@ -2503,14 +2503,14 @@ XS(pl_setcolors)
          int b = SvIV( *av_fetch(inarray, i, 0) ); i++;
          CheckRGB(r, g, b, "g_setcolors");
          if (s == -1) {
-            // set all states to r,g,b
+            // set all LIVE states to r,g,b (best not to alter state 0)
             for (s = 1; s < currlayer->algo->NumCellStates(); s++) {
                currlayer->cellr[s] = r;
                currlayer->cellg[s] = g;
                currlayer->cellb[s] = b;
             }
          } else {
-            if (s < 1 || s >= currlayer->algo->NumCellStates()) {
+            if (s < 0 || s >= currlayer->algo->NumCellStates()) {
                char msg[64];
                sprintf(msg, "Bad state in g_setcolors (%d).", s);
                PERL_ERROR(msg);
@@ -2546,14 +2546,14 @@ XS(pl_getcolors)
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
 
    if (state == -1) {
-      // return colors for all live states
-      for (state = 1; state < currlayer->algo->NumCellStates(); state++) {
+      // return colors for ALL states, including state 0
+      for (state = 0; state < currlayer->algo->NumCellStates(); state++) {
          av_push(outarray, newSViv(state));
          av_push(outarray, newSViv(currlayer->cellr[state]));
          av_push(outarray, newSViv(currlayer->cellg[state]));
          av_push(outarray, newSViv(currlayer->cellb[state]));
       }
-   } else if (state > 0 && state < currlayer->algo->NumCellStates()) {
+   } else if (state >= 0 && state < currlayer->algo->NumCellStates()) {
       av_push(outarray, newSViv(state));
       av_push(outarray, newSViv(currlayer->cellr[state]));
       av_push(outarray, newSViv(currlayer->cellg[state]));

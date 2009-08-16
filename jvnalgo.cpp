@@ -934,7 +934,7 @@ static const char* jvn15x15[] = {
 
 // colors for each cell state (we try to match colors used in icons)
 static unsigned char jvncolors[] = {
-     0,   0,   0,    // 0  black
+    48,  48,  48,    // 0  dark gray
    255,   0,   0,    // 1  red
    255, 125,   0,    // 2  orange (to match red and yellow)
    255, 150,  25,    // 3   lighter

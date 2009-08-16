@@ -1137,11 +1137,14 @@ void AddLayer()
       // copy old layer's colors to new layer
       currlayer->fromrgb = oldlayer->fromrgb;
       currlayer->torgb = oldlayer->torgb;
-      for (int n = 1; n < currlayer->algo->NumCellStates(); n++) {
+      for (int n = 0; n < currlayer->algo->NumCellStates(); n++) {
          currlayer->cellr[n] = oldlayer->cellr[n];
          currlayer->cellg[n] = oldlayer->cellg[n];
          currlayer->cellb[n] = oldlayer->cellb[n];
       }
+      currlayer->deadbrush->SetColour( oldlayer->deadbrush->GetColour() );
+      currlayer->gridpen->SetColour( oldlayer->gridpen->GetColour() );
+      currlayer->boldpen->SetColour( oldlayer->boldpen->GetColour() );
       if (cloning) {
          // use same icon pointers
          currlayer->icons15x15 = oldlayer->icons15x15;
@@ -1674,8 +1677,43 @@ void CreateColorGradient()
 
 // -----------------------------------------------------------------------------
 
+void UpdateBrushAndPens(Layer* layerptr)
+{
+   // update deadbrush, gridpen, boldpen in given layer
+   int r = layerptr->cellr[0];
+   int g = layerptr->cellg[0];
+   int b = layerptr->cellb[0];
+   layerptr->deadbrush->SetColour(r, g, b);
+
+   // no need to use this standard grayscale conversion???
+   // gray = (int) (0.299*r + 0.587*g + 0.114*b);
+   int gray = (int) ((r + g + b) / 3.0);
+   if (gray > 127) {
+      // use darker grid
+      layerptr->gridpen->SetColour(r > 32 ? r - 32 : 0,
+                                   g > 32 ? g - 32 : 0,
+                                   b > 32 ? b - 32 : 0);
+      layerptr->boldpen->SetColour(r > 64 ? r - 64 : 0,
+                                   g > 64 ? g - 64 : 0,
+                                   b > 64 ? b - 64 : 0);
+   } else {
+      // use lighter grid
+      layerptr->gridpen->SetColour(r + 32 < 256 ? r + 32 : 255,
+                                   g + 32 < 256 ? g + 32 : 255,
+                                   b + 32 < 256 ? b + 32 : 255);
+      layerptr->boldpen->SetColour(r + 64 < 256 ? r + 64 : 255,
+                                   g + 64 < 256 ? g + 64 : 255,
+                                   b + 64 < 256 ? b + 64 : 255);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateCloneColors()
 {
+   // first update deadbrush, gridpen, boldpen
+   UpdateBrushAndPens(currlayer);
+
    if (currlayer->cloneid > 0) {
       int maxstate = currlayer->algo->NumCellStates() - 1;
       for (int i = 0; i < numlayers; i++) {
@@ -1683,14 +1721,20 @@ void UpdateCloneColors()
          if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
             cloneptr->fromrgb = currlayer->fromrgb;
             cloneptr->torgb = currlayer->torgb;
-            for (int n = 1; n <= maxstate; n++) {
+            for (int n = 0; n <= maxstate; n++) {
                cloneptr->cellr[n] = currlayer->cellr[n];
                cloneptr->cellg[n] = currlayer->cellg[n];
                cloneptr->cellb[n] = currlayer->cellb[n];
             }
+            
             // use same icon pointers
             cloneptr->icons15x15 = currlayer->icons15x15;
             cloneptr->icons7x7 = currlayer->icons7x7;
+            
+            // use same colors in deadbrush, gridpen and boldpen
+            cloneptr->deadbrush->SetColour( currlayer->deadbrush->GetColour() );
+            cloneptr->gridpen->SetColour( currlayer->gridpen->GetColour() );
+            cloneptr->boldpen->SetColour( currlayer->boldpen->GetColour() );
          }
       }
    }
@@ -1751,7 +1795,7 @@ static void LoadRuleColors(const wxString& rule, int maxstate)
             if (strncmp(keyword, "color", 5) == 0) {
                int state, r, g, b;
                if (sscanf(value, "%d%d%d%d", &state, &r, &g, &b) == 4) {
-                  if (state > 0 && state <= maxstate) {
+                  if (state >= 0 && state <= maxstate) {
                      currlayer->cellr[state] = r;
                      currlayer->cellg[state] = g;
                      currlayer->cellb[state] = b;
@@ -1831,8 +1875,12 @@ void UpdateCurrentColors()
    currlayer->torgb = ad->torgb;
    if (ad->gradient) {
       CreateColorGradient();
+      // state 0 is not part of the gradient
+      currlayer->cellr[0] = ad->algor[0];
+      currlayer->cellg[0] = ad->algog[0];
+      currlayer->cellb[0] = ad->algob[0];
    } else {
-      for (int n = 1; n <= maxstate; n++) {
+      for (int n = 0; n <= maxstate; n++) {
          currlayer->cellr[n] = ad->algor[n];
          currlayer->cellg[n] = ad->algog[n];
          currlayer->cellb[n] = ad->algob[n];
@@ -1858,7 +1906,7 @@ void UpdateCurrentColors()
    
    if (swapcolors) {
       // invert cell colors in current layer
-      for (int n = 1; n <= maxstate; n++) {
+      for (int n = 0; n <= maxstate; n++) {
          currlayer->cellr[n] = 255 - currlayer->cellr[n];
          currlayer->cellg[n] = 255 - currlayer->cellg[n];
          currlayer->cellb[n] = 255 - currlayer->cellb[n];
@@ -1885,18 +1933,13 @@ void InvertCellColors()
       Layer* layerptr = layer[i];
       // do NOT use layerptr->algo->... here -- it might not be correct
       // for a non-current layer (but we can use layerptr->algtype)
-      for (int n = 1; n < algoinfo[layerptr->algtype]->maxstates; n++) {
+      for (int n = 0; n < algoinfo[layerptr->algtype]->maxstates; n++) {
          layerptr->cellr[n] = 255 - layerptr->cellr[n];
          layerptr->cellg[n] = 255 - layerptr->cellg[n];
          layerptr->cellb[n] = 255 - layerptr->cellb[n];
       }
+      UpdateBrushAndPens(layerptr);
    }
-   
-   // invert deadrgb and update deadbrush, gridpen and boldpen
-   deadrgb->Set(255 - deadrgb->Red(),
-                255 - deadrgb->Green(),
-                255 - deadrgb->Blue());
-   SetBrushesAndPens();
 }
 
 // -----------------------------------------------------------------------------
@@ -1950,6 +1993,17 @@ Layer::Layer()
    icons15x15 = NULL;            // no 15x15 icons
    icons7x7 = NULL;              // no 7x7 icons
 
+   deadbrush = new wxBrush(*wxBLACK);
+   gridpen = new wxPen(*wxBLACK);
+   boldpen = new wxPen(*wxBLACK);
+   if (deadbrush == NULL) Fatal(_("Failed to create deadbrush!"));
+   if (gridpen == NULL) Fatal(_("Failed to create gridpen!"));
+   if (boldpen == NULL) Fatal(_("Failed to create boldpen!"));
+   
+   // create viewport; the initial size is not important because it will soon change
+   view = new viewport(100,100);
+   if (view == NULL) Fatal(_("Failed to create viewport!"));
+
    if (numlayers == 0) {
       // creating very first layer
       
@@ -1979,11 +2033,6 @@ Layer::Layer()
       // initialize undo/redo history
       undoredo = new UndoRedo();
       if (undoredo == NULL) Fatal(_("Failed to create new undo/redo object!"));
-      
-      // create viewport; the initial size is not important because
-      // ResizeLayers will soon be called
-      view = new viewport(100,100);
-      if (view == NULL) Fatal(_("Failed to create new viewport!"));
       
       // set cursor in case newcurs/opencurs are set to "No Change"
       curs = curs_pencil;
@@ -2048,10 +2097,7 @@ Layer::Layer()
       rule = wxString(currlayer->algo->getrule(), wxConvLocal);
       
       // inherit current viewport's size, scale and location
-      view = new viewport(100,100);
-      if (view == NULL) Fatal(_("Failed to create new viewport!"));
-      view->resize( currlayer->view->getwidth(),
-                    currlayer->view->getheight() );
+      view->resize( currlayer->view->getwidth(), currlayer->view->getheight() );
       view->setpositionmag( currlayer->view->x, currlayer->view->y,
                             currlayer->view->getmag() );
       
@@ -2137,11 +2183,14 @@ Layer::Layer()
 
 Layer::~Layer()
 {
-   // delete this layer's viewport
+   // delete stuff allocated in ctor
    delete view;
+   delete deadbrush;
+   delete gridpen;
+   delete boldpen;
 
    if (cloneid > 0) {
-      // count how many layers have the same cloneid
+      // this layer is a clone, so count how many layers have the same cloneid
       int clonecount = 0;
       for (int i = 0; i < numlayers; i++) {
          if (layer[i]->cloneid == cloneid) clonecount++;
@@ -2165,7 +2214,7 @@ Layer::~Layer()
       }
       
    } else {
-      // not a clone so delete universe and undo/redo history
+      // this layer is not a clone, so delete universe and undo/redo history
       delete algo;
       delete undoredo;
       
@@ -2201,7 +2250,6 @@ public:
 
    wxStaticText* statebox;    // for showing state of cell under cursor
    wxStaticText* rgbbox;      // for showing color of cell under cursor
-   bool seeicons;             // show icons?
    
 private:
    void OnEraseBackground(wxEraseEvent& event);
@@ -2249,31 +2297,19 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
    wxRect r = wxRect(0, 0, CELLSIZE+1, CELLSIZE+1);
    int col = 0;
    for (int state = 0; state < 256; state++) {
-      if (state == 0) {
-         if (seeicons) {
-            dc.SetBrush(bgbrush);
-         } else {
-            dc.SetBrush(*deadbrush);
-         }
-         dc.DrawRectangle(r);
-         dc.SetBrush(wxNullBrush);
-
-      } else if (state < currlayer->algo->NumCellStates()) {
-         if (seeicons) {
-            wxBitmap** iconmaps = currlayer->icons15x15;
-            if (iconmaps && iconmaps[state]) {
-               dc.SetBrush(*wxTRANSPARENT_BRUSH);
-               dc.DrawRectangle(r);
-               dc.SetBrush(wxNullBrush);               
-               DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
-                           currlayer->cellr[state],
-                           currlayer->cellg[state],
-                           currlayer->cellb[state]);
-            } else {
-               dc.SetBrush(bgbrush);
-               dc.DrawRectangle(r);
-               dc.SetBrush(wxNullBrush);
-            }
+      if (state < currlayer->algo->NumCellStates()) {
+         wxBitmap** iconmaps = currlayer->icons15x15;
+         if (showicons && iconmaps && iconmaps[state]) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);               
+            DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                        currlayer->cellr[0],
+                        currlayer->cellg[0],
+                        currlayer->cellb[0],
+                        currlayer->cellr[state],
+                        currlayer->cellg[state],
+                        currlayer->cellb[state]);
          } else {
             wxColor color(currlayer->cellr[state],
                           currlayer->cellg[state],
@@ -2311,28 +2347,24 @@ void CellPanel::OnMouseDown(wxMouseEvent& event)
    int row = event.GetY() / CELLSIZE;
    int state = row * NUMCOLS + col;
    if (state >= 0 && state < currlayer->algo->NumCellStates()) {
-      if (state == 0) {
-         Warning(_("Use Preferences > Color to change the color of dead cells."));
-      } else {
-         // let user change color of this cell state
-         wxColour rgb(currlayer->cellr[state],
-                      currlayer->cellg[state],
-                      currlayer->cellb[state]);
-         wxColourData data;
-         data.SetChooseFull(true);    // for Windows
-         data.SetColour(rgb);
-         
-         wxColourDialog dialog(this, &data);
-         if ( dialog.ShowModal() == wxID_OK ) {
-            wxColourData retData = dialog.GetColourData();
-            wxColour c = retData.GetColour();
-            if (rgb != c) {
-               // change color
-               currlayer->cellr[state] = c.Red();
-               currlayer->cellg[state] = c.Green();
-               currlayer->cellb[state] = c.Blue();
-               Refresh(false);
-            }
+      // let user change color of this cell state
+      wxColour rgb(currlayer->cellr[state],
+                   currlayer->cellg[state],
+                   currlayer->cellb[state]);
+      wxColourData data;
+      data.SetChooseFull(true);    // for Windows
+      data.SetColour(rgb);
+      
+      wxColourDialog dialog(this, &data);
+      if ( dialog.ShowModal() == wxID_OK ) {
+         wxColourData retData = dialog.GetColourData();
+         wxColour c = retData.GetColour();
+         if (rgb != c) {
+            // change color
+            currlayer->cellr[state] = c.Red();
+            currlayer->cellg[state] = c.Green();
+            currlayer->cellb[state] = c.Blue();
+            Refresh(false);
          }
       }
    } 
@@ -2351,10 +2383,7 @@ void CellPanel::OnMouseMotion(wxMouseEvent& event)
       rgbbox->SetLabel(_(" "));
    } else {
       statebox->SetLabel(wxString::Format(_("%d"),state));
-      if (state == 0) {
-         rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
-                          deadrgb->Red(), deadrgb->Green(), deadrgb->Blue()));
-      } else if (state < currlayer->algo->NumCellStates()) {
+      if (state < currlayer->algo->NumCellStates()) {
          rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
                           currlayer->cellr[state],
                           currlayer->cellg[state],
@@ -2486,8 +2515,7 @@ void ColorDialog::CreateControls()
    cellpanel = new CellPanel(this, CELL_PANEL);
 
    iconcheck = new wxCheckBox(this, ICON_CHECK, _("Show icons"));
-   cellpanel->seeicons = false;
-   iconcheck->SetValue(cellpanel->seeicons);
+   iconcheck->SetValue(showicons);
 
    wxStaticText* statebox = new wxStaticText(this, STATE_BOX, _("999"));
    cellpanel->statebox = statebox;
@@ -2543,7 +2571,7 @@ void ColorDialog::CreateControls()
 void ColorDialog::OnCheckBoxClicked(wxCommandEvent& event)
 {
    if ( event.GetId() == ICON_CHECK ) {
-      cellpanel->seeicons = iconcheck->GetValue() == 1;
+      showicons = iconcheck->GetValue() == 1;
       cellpanel->Refresh(false);
    }
 }
@@ -2644,7 +2672,9 @@ void ColorDialog::OnButton(wxCommandEvent& event)
 
 bool ColorDialog::TransferDataFromWindow()
 {
-   // no need to do any validation
+   // if current layer has clones then update their colors
+   UpdateCloneColors();
+
    return true;
 }
 
@@ -2661,6 +2691,10 @@ public:
          cellg[i] = currlayer->cellg[i];
          cellb[i] = currlayer->cellb[i];
       }
+      deadbrushrgb = currlayer->deadbrush->GetColour();
+      gridpenrgb = currlayer->gridpen->GetColour();
+      boldpenrgb = currlayer->boldpen->GetColour();
+      saveshowicons = showicons;
    }
 
    void RestoreData() {
@@ -2671,6 +2705,10 @@ public:
          currlayer->cellg[i] = cellg[i];
          currlayer->cellb[i] = cellb[i];
       }
+      currlayer->deadbrush->SetColour(deadbrushrgb);
+      currlayer->gridpen->SetColour(gridpenrgb);
+      currlayer->boldpen->SetColour(boldpenrgb);
+      showicons = saveshowicons;
    }
    
    // this must match color info in Layer class
@@ -2679,6 +2717,12 @@ public:
    unsigned char cellr[256];
    unsigned char cellg[256];
    unsigned char cellb[256];
+   wxColor deadbrushrgb;
+   wxColor gridpenrgb;
+   wxColor boldpenrgb;
+   
+   // we also save/restore showicons option
+   bool saveshowicons;
 };
 
 // -----------------------------------------------------------------------------
@@ -2702,10 +2746,7 @@ void SetLayerColors()
    SaveData* save_info = new SaveData();
 
    ColorDialog dialog( wxGetApp().GetTopWindow() );
-   if ( dialog.ShowModal() == wxID_OK ) {
-      // copy (possibly) new color info to clones
-      UpdateCloneColors();
-   } else {
+   if ( dialog.ShowModal() != wxID_OK ) {
       // user hit Cancel so restore color info saved above
       save_info->RestoreData();
    }

@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for DrawOneIcon
-#include "wxlayer.h"       // for currlayer, LayerBarHeight
+#include "wxlayer.h"       // for currlayer, LayerBarHeight, SetLayerColors
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxedit.h"
 
@@ -363,11 +363,6 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
 
    wxBitmap** iconmaps = currlayer->icons7x7;
 
-   // set rgb values for dead state
-   currlayer->cellr[0] = deadrgb->Red();
-   currlayer->cellg[0] = deadrgb->Green();
-   currlayer->cellb[0] = deadrgb->Blue();
-
    dc.SetPen(*wxBLACK_PEN);
 
    // calculate number of (completely) visible states
@@ -419,11 +414,10 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
          DrawOneIcon(dc, x + 1, BASELINE3 - BOXWD + 1, iconmaps[i],
-                     currlayer->cellr[i],
-                     currlayer->cellg[i],
-                     currlayer->cellb[i]);
+                     currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0],
+                     currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i]);
       } else {
-         dc.SetBrush(*wxTRANSPARENT_BRUSH);
+         dc.SetBrush(wxBrush(color));
          dc.DrawRectangle(r);
          dc.SetBrush(wxNullBrush);
       }
@@ -495,18 +489,13 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
    if (state < 100) x += digitwd;
    strbuf.Printf(_("%d"), state);
    DisplayText(dc, strbuf, x, y - (BOXSIZE - digitht)/2);
-
-   // set rgb values for dead state
-   currlayer->cellr[0] = deadrgb->Red();
-   currlayer->cellg[0] = deadrgb->Green();
-   currlayer->cellb[0] = deadrgb->Blue();
    
-   wxColor livecolor(currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
+   wxColor cellcolor(currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
    
    // draw color box
    x = xpos + 3*digitwd + BOXGAP;
    colorbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
-   dc.SetBrush(wxBrush(livecolor));
+   dc.SetBrush(wxBrush(cellcolor));
    dc.DrawRectangle(colorbox);
    dc.SetBrush(wxNullBrush);
    
@@ -519,11 +508,10 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
       dc.DrawRectangle(iconbox);
       dc.SetBrush(wxNullBrush);
       DrawOneIcon(dc, x + 1, y - BOXSIZE + 1, iconmaps[state],
-                  currlayer->cellr[state],
-                  currlayer->cellg[state],
-                  currlayer->cellb[state]);
+                  currlayer->cellr[0],     currlayer->cellg[0],     currlayer->cellb[0],
+                  currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
    } else {
-      dc.SetBrush(*wxTRANSPARENT_BRUSH);
+      dc.SetBrush(wxBrush(cellcolor));
       dc.DrawRectangle(iconbox);
       dc.SetBrush(wxNullBrush);
    }
@@ -609,11 +597,18 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
       }
    }
    
-   // user can change color/icon mode by clicking in color/icon box
-   if (colorbox.Contains(x,y) && showicons) {
-      viewptr->ToggleCellIcons();
-   } else if (iconbox.Contains(x,y) && !showicons) {
-      viewptr->ToggleCellIcons();
+   if (event.LeftDClick()) {
+      // open Set Layer Colors dialog if user double-clicks in color/icon box
+      if (colorbox.Contains(x,y) || iconbox.Contains(x,y)) {
+         SetLayerColors();
+      }
+   } else {
+      // user can change color/icon mode by clicking in color/icon box
+      if (colorbox.Contains(x,y) && showicons) {
+         viewptr->ToggleCellIcons();
+      } else if (iconbox.Contains(x,y) && !showicons) {
+         viewptr->ToggleCellIcons();
+      }
    }
 }
 

@@ -741,10 +741,13 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
       }
 
    } else if (strcmp(colname, "deadcells") == 0) {
-      oldcol = *deadrgb;
+      // deprecated; can now use setcolors([0,r,g,b])
+      oldcol.Set(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
       if (oldcol != newcol) {
-         *deadrgb = newcol;
-         SetBrushesAndPens();
+         currlayer->cellr[0] = newcol.Red();
+         currlayer->cellg[0] = newcol.Green();
+         currlayer->cellb[0] = newcol.Blue();
+         UpdateCloneColors();
          DoAutoUpdate();
       }
 
@@ -808,7 +811,10 @@ bool GSF_getcolor(char* colname, wxColor& color)
       // livecells0..livecells9 are deprecated; return color of state 1
       color.Set(currlayer->cellr[1], currlayer->cellg[1], currlayer->cellb[1]);
    }
-   else if (strcmp(colname, "deadcells") == 0)  color = *deadrgb;
+   else if (strcmp(colname, "deadcells") == 0) {
+      // deprecated; can now use getcolors(0)
+      color.Set(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
+   }
    else if (strcmp(colname, "paste") == 0)      color = *pastergb;
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
    // next two are deprecated

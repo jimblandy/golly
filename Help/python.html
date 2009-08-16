@@ -929,26 +929,30 @@ if no index is supplied.
 
 <a name="setcolors"></a><p><dt><b>setcolors(<i>color_list</i>)</b></dt>
 <dd>
-Set the color(s) of one or more live states in the current layer (and its clones, if any).
+Set the color(s) of one or more states in the current layer and its clones (if any).
 If the given list contains a multiple of 4 integers then they are interpreted
 as <i>state, red, green, blue</i> values.
-A state value of -1 can be used to set all live states to the same color.
+A state value of -1 can be used to set all live states to the same color
+(state 0 is <i>not</i> changed).
 If the given list contains exactly 6 integers then they are interpreted
-as a color gradient from <i>r1, g1, b1</i> to <i>r2, g2, b2</i>.
-If the given list is empty then all states are reset to their default colors,
-depending on the current algorithm and rule.
+as a color gradient from <i>r1, g1, b1</i> to <i>r2, g2, b2</i>
+for all the live states (state 0 is <i>not</i> changed).
+If the given list is empty then all states (including state 0) are reset
+to their default colors, depending on the current algorithm and rule.
 Note that the color changes made by this command are only temporary.
 Golly will restore the default colors if a new pattern is opened or created,
-or if the algorithm or rule changes.
+or if the algorithm or rule changes,
+or if <a href="prefs:color">Preferences > Color</a> is used to change any
+of the default colors/icons for the current layer's algorithm.
 </dd>
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr><td>Example: <b>golly.setcolors([1,0,0,0, 2,0,0,0])</b></td><td width=20>
                         </td><td># set states 1 and 2 to black</td></tr>
 <tr><td>Example: <b>golly.setcolors([-1,0,255,0])</b></td><td width=20>
-                        </td><td># set all states to green</td></tr>
+                        </td><td># set all live states to green</td></tr>
 <tr><td>Example: <b>golly.setcolors([255,0,0, 0,0,255])</b></td><td width=20>
-                        </td><td># gradient from red to blue</td></tr>
+                        </td><td># live states vary from red to blue</td></tr>
 <tr><td>Example: <b>golly.setcolors([])</b></td><td width=20>
                         </td><td># restore default colors</td></tr>
 </table>
@@ -957,7 +961,7 @@ or if the algorithm or rule changes.
 
 <a name="getcolors"></a><p><dt><b>getcolors(<i>state=-1</i>)</b></dt>
 <dd>
-Return the color of a given live state in the current layer as a list of the form
+Return the color of a given state in the current layer as a list of the form
 </dd>
 <p>
 <dd><b>[ state, red, green, blue ]</b></dd>
@@ -966,7 +970,7 @@ Return the color of a given live state in the current layer as a list of the for
 or if the given state is -1 (or not supplied) then return all colors as
 </dd>
 <p>
-<dd><b>[ state1, r1, g1, b1, . . . stateN, rN, gN, bN ]</b></dd>
+<dd><b>[ 0, r0, g0, b0, . . . N, rN, gN, bN ]</b></dd>
 <p>
 <dd>
 where N equals <b>numstates()</b> - 1.
@@ -974,7 +978,7 @@ Note that the list returned by <b>getcolors</b> can be passed into <b>setcolors<
 this makes it easy to save and restore colors.
 </dd>
 <dd> Example: <b>allcolors = golly.getcolors()</b></dd>
-<dd> Example: <b>color1 = golly.getcolors(1)</b></dd>
+<dd> Example: <b>deadcolor = golly.getcolors(0)</b></dd>
 </p>
 
 <p><a name="miscellaneous"></a>&nbsp;<br>
@@ -1037,9 +1041,8 @@ Here is a list of all the valid color names and how they are used:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>"deadcells"</b></td><td width=20>   </td><td>for displaying dead cells</td></tr>
-<tr><td><b>"paste"</b></td><td width=20>       </td><td>for pasting patterns</td></tr>
-<tr><td><b>"select"</b></td><td width=20>      </td><td>for selections (will be 50% transparent)</td></tr>
+<tr><td><b>"paste"</b></td><td width=20>       </td><td>color for pasting patterns</td></tr>
+<tr><td><b>"select"</b></td><td width=20>      </td><td>color for selections (will be 50% transparent)</td></tr>
 <tr><td><b><i>algoname</i></b></td><td width=20> </td><td>status bar background for given algorithm</td></tr>
 </table>
 </dd>
@@ -1052,7 +1055,7 @@ Here is a list of all the valid color names and how they are used:
 Return the current RGB values for the given color as a 3-tuple.
 See above for a list of all the valid color names.
 </dd>
-<dd> Example: <b>r, g, b = golly.getcolor("deadcells")</b></dd>
+<dd> Example: <b>selr, selg, selb = golly.getcolor("select")</b></dd>
 </p>
 
 <a name="getclipstr"></a><p><dt><b>getclipstr()</b></dt>

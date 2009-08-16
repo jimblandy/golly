@@ -1774,6 +1774,6 @@ void hlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defgradient = false;
    ai.defr1 = ai.defg1 = ai.defb1 = 255;        // start color = white
    ai.defr2 = ai.defg2 = ai.defb2 = 255;        // end color = white
-   ai.defr[0] = ai.defg[0] = ai.defb[0] = 0;    // 0 state = black
+   ai.defr[0] = ai.defg[0] = ai.defb[0] = 48;   // 0 state = dark gray
    ai.defr[1] = ai.defg[1] = ai.defb[1] = 255;  // 1 state = white
 }

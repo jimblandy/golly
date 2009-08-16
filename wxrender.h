@@ -38,8 +38,9 @@ void DrawView(wxDC& dc, int tileindex);
 // The given tile index is only used when drawing tiled layers.
 
 void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
-                 unsigned char r, unsigned char g, unsigned char b);
-// Draw the given icon using the given rgb color.
+                 unsigned char deadr, unsigned char deadg, unsigned char deadb,
+                 unsigned char liver, unsigned char liveg, unsigned char liveb);
+// Draw the given icon using the given dead cell and live cell colors.
 
 void DrawSelection(wxDC &dc, wxRect& rect);
 // Draw the translucent selection image in the given rectangle.

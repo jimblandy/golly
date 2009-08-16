@@ -97,9 +97,13 @@ public:
    // color scheme for this layer
    wxColor fromrgb;              // start of gradient
    wxColor torgb;                // end of gradient
-   unsigned char cellr[256];
-   unsigned char cellg[256];
-   unsigned char cellb[256];
+   unsigned char cellr[256];     // red components for states 0..255
+   unsigned char cellg[256];     // green components for states 0..255
+   unsigned char cellb[256];     // blue components for states 0..255
+
+   wxBrush* deadbrush;           // brush for drawing dead cells
+   wxPen* gridpen;               // pen for drawing plain grid
+   wxPen* boldpen;               // pen for drawing bold grid
 
    // icons for this layer
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8

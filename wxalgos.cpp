@@ -59,7 +59,8 @@ AlgoData* algoinfo[MAX_ALGOS];      // static info for each algorithm
 // color furthest in rgb space from the closest of the already selected
 // colors, black, and white.
 static unsigned char default_colors[] = {
-255,127,0,0,255,127,127,0,255,148,148,148,128,255,0,255,0,128,
+48,48,48, // better if state 0 is dark gray (was 255,127,0)
+0,255,127,127,0,255,148,148,148,128,255,0,255,0,128,
 0,128,255,1,159,0,159,0,1,255,254,96,0,1,159,96,255,254,
 254,96,255,126,125,21,21,126,125,125,21,126,255,116,116,116,255,116,
 116,116,255,228,227,0,28,255,27,255,27,28,0,228,227,227,0,228,
@@ -575,9 +576,15 @@ void IconPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
                unsigned char red, green, blue;
                GetGradientColor(state, &red, &green, &blue);
                DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                           algoinfo[algoindex]->algor[0],
+                           algoinfo[algoindex]->algog[0],
+                           algoinfo[algoindex]->algob[0],
                            red, green, blue);
             } else {
                DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                           algoinfo[algoindex]->algor[0],
+                           algoinfo[algoindex]->algog[0],
+                           algoinfo[algoindex]->algob[0],
                            algoinfo[algoindex]->algor[state],
                            algoinfo[algoindex]->algog[state],
                            algoinfo[algoindex]->algob[state]);

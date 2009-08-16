@@ -193,14 +193,9 @@ int maxpatterns = 20;            // maximum number of recent pattern files (1..M
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
-wxColor* deadrgb;                // color for dead cells
-wxColor* pastergb;               // color for pasted pattern
 wxColor* selectrgb;              // color for selected cells
-
-wxBrush* deadbrush;              // for drawing dead cells
+wxColor* pastergb;               // color for pasted pattern
 wxPen* pastepen;                 // for drawing paste rect
-wxPen* gridpen;                  // for drawing plain grid
-wxPen* boldpen;                  // for drawing bold grid
 
 // these settings must be global -- they are changed by GetPrefs *before* the
 // view window is created
@@ -1270,58 +1265,22 @@ void SetPasteMode(const char* s)
 
 // -----------------------------------------------------------------------------
 
-void SetGridPens(wxColor* c, wxPen* ppen, wxPen* bpen)
-{
-   int r = c->Red();
-   int g = c->Green();
-   int b = c->Blue();
-   // no need to use this standard grayscale conversion???
-   // gray = (int) (0.299*r + 0.587*g + 0.114*b);
-   int gray = (int) ((r + g + b) / 3.0);
-   if (gray > 127) {
-      // use darker grid
-      ppen->SetColour(r > 32 ? r - 32 : 0,
-                      g > 32 ? g - 32 : 0,
-                      b > 32 ? b - 32 : 0);
-      bpen->SetColour(r > 64 ? r - 64 : 0,
-                      g > 64 ? g - 64 : 0,
-                      b > 64 ? b - 64 : 0);
-   } else {
-      // use lighter grid
-      ppen->SetColour(r + 32 < 256 ? r + 32 : 255,
-                      g + 32 < 256 ? g + 32 : 255,
-                      b + 32 < 256 ? b + 32 : 255);
-      bpen->SetColour(r + 64 < 256 ? r + 64 : 255,
-                      g + 64 < 256 ? g + 64 : 255,
-                      b + 64 < 256 ? b + 64 : 255);
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 void SetBrushesAndPens()
 {
    for (int i = 0; i < NumAlgos(); i++) {
       algoinfo[i]->statusbrush->SetColour(algoinfo[i]->statusrgb);
    }
-   deadbrush->SetColour(*deadrgb);
    pastepen->SetColour(*pastergb);
-   SetGridPens(deadrgb, gridpen, boldpen);
 }
 
 // -----------------------------------------------------------------------------
 
 void CreateDefaultColors()
 {
-   deadrgb    = new wxColor( 48,  48,  48);  // dark gray
-   pastergb   = new wxColor(255,   0,   0);  // red
    selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
+   pastergb   = new wxColor(255,   0,   0);  // red
 
-   // create brushes and pens
-   deadbrush = new wxBrush(*wxBLACK);
    pastepen = new wxPen(*wxBLACK);
-   gridpen = new wxPen(*wxBLACK);
-   boldpen = new wxPen(*wxBLACK);
    
    // set their default colors (in case prefs file doesn't exist)
    SetBrushesAndPens();
@@ -1511,7 +1470,7 @@ void SavePrefs()
       SaveColor(f, "to_rgb", &algoinfo[i]->torgb);
       fprintf(f, "use_gradient=%d\n", algoinfo[i]->gradient ? 1 : 0);
       fputs("colors=", f);
-      for (int state = 1; state < algoinfo[i]->maxstates; state++) {
+      for (int state = 0; state < algoinfo[i]->maxstates; state++) {
          // only write out state,r,g,b tuple if color is different to default
          if (algoinfo[i]->algor[state] != algoinfo[i]->defr[state] ||
              algoinfo[i]->algog[state] != algoinfo[i]->defg[state] ||
@@ -1568,7 +1527,6 @@ void SavePrefs()
    fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    fprintf(f, "opacity=%d (1..100)\n", opacity);
-   SaveColor(f, "dead_rgb", deadrgb);
    SaveColor(f, "paste_rgb", pastergb);
    SaveColor(f, "select_rgb", selectrgb);
    
@@ -2001,7 +1959,7 @@ void GetPrefs()
          if (algoindex >= 0 && algoindex < NumAlgos()) {
             int state, r, g, b;
             while (sscanf(value, "%d,%d,%d,%d,", &state, &r, &g, &b) == 4) {
-               if (state > 0 && state < algoinfo[algoindex]->maxstates) {
+               if (state >= 0 && state < algoinfo[algoindex]->maxstates) {
                   algoinfo[algoindex]->algor[state] = r;
                   algoinfo[algoindex]->algog[state] = g;
                   algoinfo[algoindex]->algob[state] = b;
@@ -2135,10 +2093,20 @@ void GetPrefs()
          sscanf(value, "%d", &opacity);
          if (opacity < 1) opacity = 1;
          if (opacity > 100) opacity = 100;
-
-      } else if (strcmp(keyword, "dead_rgb") == 0) { GetColor(value, deadrgb);
+      
       } else if (strcmp(keyword, "paste_rgb") == 0) { GetColor(value, pastergb);
       } else if (strcmp(keyword, "select_rgb") == 0) { GetColor(value, selectrgb);
+
+      } else if (strcmp(keyword, "dead_rgb") == 0) {
+         // use deprecated value to set color of state 0 in all algos
+         // (only done once because dead_rgb is no longer saved in prefs file)
+         wxColor color;
+         GetColor(value, &color);
+         for (int i = 0; i < NumAlgos(); i++) {
+            algoinfo[i]->algor[0] = color.Red();
+            algoinfo[i]->algog[0] = color.Green();
+            algoinfo[i]->algob[0] = color.Blue();
+         }
 
       } else if (strcmp(keyword, "qlife_rgb") == 0) {       // deprecated
          GetColor(value, &algoinfo[QLIFE_ALGO]->statusrgb);
@@ -2287,7 +2255,6 @@ void GetPrefs()
 
 static int coloralgo;         // currently selected algorithm in Color pane
 static int gradstates;        // current number of gradient states
-static bool seeicons;         // show icons?
 
 const int CELLSIZE = 16;      // wd and ht of each cell in CellBoxes
 const int NUMCOLS = 32;       // number of columns in CellBoxes
@@ -2389,27 +2356,28 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
    wxRect r = wxRect(0, 0, CELLSIZE+1, CELLSIZE+1);
    int col = 0;
    for (int state = 0; state < 256; state++) {
-      if (state == 0) {
-         if (seeicons) {
-            dc.SetBrush(bgbrush);
-         } else {
-            dc.SetBrush(*deadbrush);
-         }
-         dc.DrawRectangle(r);
-         dc.SetBrush(wxNullBrush);
-
-      } else if (state < algoinfo[coloralgo]->maxstates) {
-         if (seeicons) {
+      if (state < algoinfo[coloralgo]->maxstates) {
+         if (state == 0) {
+            wxColor color(algoinfo[coloralgo]->algor[0],
+                          algoinfo[coloralgo]->algog[0],
+                          algoinfo[coloralgo]->algob[0]);
+            dc.SetBrush(wxBrush(color));
+            dc.DrawRectangle(r);
+            dc.SetBrush(wxNullBrush);
+         } else if (showicons) {
             wxBitmap** iconmaps = algoinfo[coloralgo]->icons15x15;
             if (iconmaps && iconmaps[state]) {
                dc.SetBrush(*wxTRANSPARENT_BRUSH);
                dc.DrawRectangle(r);
                dc.SetBrush(wxNullBrush);
                if (algoinfo[coloralgo]->gradient) {
-                  if (state < gradstates) {
+                  if (state > 0 && state < gradstates) {
                      unsigned char red, green, blue;
                      GetGradientColor(state, &red, &green, &blue);
                      DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                                 algoinfo[coloralgo]->algor[0],
+                                 algoinfo[coloralgo]->algog[0],
+                                 algoinfo[coloralgo]->algob[0],
                                  red, green, blue);
                   } else {
                      dc.SetBrush(bgbrush);
@@ -2418,6 +2386,9 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                   }
                } else {
                   DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
+                              algoinfo[coloralgo]->algor[0],
+                              algoinfo[coloralgo]->algog[0],
+                              algoinfo[coloralgo]->algob[0],
                               algoinfo[coloralgo]->algor[state],
                               algoinfo[coloralgo]->algog[state],
                               algoinfo[coloralgo]->algob[state]);
@@ -2428,7 +2399,7 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                dc.SetBrush(wxNullBrush);
             }
          } else if (algoinfo[coloralgo]->gradient) {
-            if (state < gradstates) {
+            if (state > 0 && state < gradstates) {
                unsigned char red, green, blue;
                GetGradientColor(state, &red, &green, &blue);
                wxColor color(red, green, blue);
@@ -2477,7 +2448,7 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
    int row = event.GetY() / CELLSIZE;
    int state = row * NUMCOLS + col;
    if (state >= 0 && state < algoinfo[coloralgo]->maxstates) {
-      if (algoinfo[coloralgo]->gradient || state == 0) {
+      if (algoinfo[coloralgo]->gradient && state > 0) {
          wxBell();
       } else {
          // let user change color of this cell state
@@ -2518,12 +2489,9 @@ void CellBoxes::OnMouseMotion(wxMouseEvent& event)
       rgbbox->SetLabel(_(" "));
    } else {
       statebox->SetLabel(wxString::Format(_("%d"),state));
-      if (state == 0) {
-         rgbbox->SetLabel(wxString::Format(_("%d,%d,%d"),
-                          deadrgb->Red(), deadrgb->Green(), deadrgb->Blue()));
-      } else if (state < algoinfo[coloralgo]->maxstates) {
+      if (state < algoinfo[coloralgo]->maxstates) {
          unsigned char r, g, b;
-         if (algoinfo[coloralgo]->gradient) {
+         if (algoinfo[coloralgo]->gradient && state > 0) {
             GetGradientColor(state, &r, &g, &b);
          } else {
             r = algoinfo[coloralgo]->algor[state];
@@ -2662,7 +2630,6 @@ enum {
    PREF_FROM_BUTT,
    PREF_TO_BUTT,
    PREF_ICON_BUTT,
-   PREF_DEAD_BUTT,
    PREF_SELECT_BUTT,
    PREF_PASTE_BUTT,
    // Keyboard prefs
@@ -3851,16 +3818,16 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    wxBoxSizer* statusbox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* frombox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* tobox = new wxBoxSizer(wxHORIZONTAL);
-   wxBoxSizer* deadbox = new wxBoxSizer(wxHORIZONTAL);
+   wxBoxSizer* colorbox = new wxBoxSizer(wxHORIZONTAL);
    AddColorButton(panel, statusbox, PREF_STATUS_BUTT,
                          &algoinfo[coloralgo]->statusrgb, _("Status bar: "));
    frombutt = AddColorButton(panel, frombox, PREF_FROM_BUTT, &algoinfo[coloralgo]->fromrgb, _(""));
    tobutt = AddColorButton(panel, tobox, PREF_TO_BUTT, &algoinfo[coloralgo]->torgb, _(" to "));
-   AddColorButton(panel, deadbox, PREF_DEAD_BUTT, deadrgb, _("Dead cells: "));
-   deadbox->AddStretchSpacer();
-   AddColorButton(panel, deadbox, PREF_SELECT_BUTT, selectrgb, _("Selection: "));
-   deadbox->AddStretchSpacer();
-   AddColorButton(panel, deadbox, PREF_PASTE_BUTT, pastergb, _("Paste: "));
+   AddColorButton(panel, colorbox, PREF_SELECT_BUTT, selectrgb, _("Selection: "));
+   // don't use AddSpacer(20) because that will also add 20 *vertical* units!
+   colorbox->AddSpacer(10);
+   colorbox->AddSpacer(10);
+   AddColorButton(panel, colorbox, PREF_PASTE_BUTT, pastergb, _("Paste: "));
 
    wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
@@ -3869,6 +3836,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    algobox->Add(algomenu, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 6);
    algobox->AddStretchSpacer();
    algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | FIX_ALIGN_BUG);
+   algobox->AddStretchSpacer();
 
    gradcheck = new wxCheckBox(panel, PREF_GRADIENT_CHECK, _("Use gradient from "));
    gradcheck->SetValue(algoinfo[coloralgo]->gradient);
@@ -3903,8 +3871,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
                              wxSize(NUMCOLS*CELLSIZE+1,NUMROWS*CELLSIZE+1));
 
    iconcheck = new wxCheckBox(panel, PREF_ICON_CHECK, _("Show icons"));
-   seeicons = false;
-   iconcheck->SetValue(seeicons);
+   iconcheck->SetValue(showicons);
 
    wxButton* iconbutt = new wxButton(panel, PREF_ICON_BUTT, _("Load Icons..."));
 
@@ -3951,7 +3918,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    
    ssizer2->Add(sbox2, 0, 0, 0);
    ssizer2->AddSpacer(10);
-   ssizer2->Add(deadbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
+   ssizer2->Add(colorbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
 
    vbox->AddSpacer(5);
    vbox->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
@@ -4305,7 +4272,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
       cellboxes->Refresh(false);
 
    } else if ( id == PREF_ICON_CHECK ) {
-      seeicons = iconcheck->GetValue() == 1;
+      showicons = iconcheck->GetValue() == 1;
       cellboxes->Refresh(false);
    }
 }
@@ -4349,11 +4316,7 @@ void PrefsDialog::ChangeButtonColor(int id, wxColor& rgb)
          // also change color of bitmap in corresponding button
          UpdateButtonColor(id, rgb);
          
-         if (id == PREF_DEAD_BUTT) {
-            // update deadbrush used in CellBoxes::OnPaint
-            SetBrushesAndPens();
-         }
-         if (id == PREF_FROM_BUTT || id == PREF_TO_BUTT || id == PREF_DEAD_BUTT) {
+         if (id == PREF_FROM_BUTT || id == PREF_TO_BUTT) {
             cellboxes->Refresh(false);
          }
       }
@@ -4374,9 +4337,6 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
    
    } else if ( id == PREF_TO_BUTT ) {
       ChangeButtonColor(id, algoinfo[coloralgo]->torgb);
-
-   } else if ( id == PREF_DEAD_BUTT ) {
-      ChangeButtonColor(id, *deadrgb);
 
    } else if ( id == PREF_PASTE_BUTT ) {
       ChangeButtonColor(id, *pastergb);
@@ -4746,13 +4706,15 @@ bool ChangePrefs(const wxString& page)
    }
    
    // save current color info so we can restore it if user cancels changes
-   wxColor save_deadrgb = *deadrgb;
    wxColor save_pastergb = *pastergb;
    wxColor save_selectrgb = *selectrgb;
    SaveColorInfo* save_info[MAX_ALGOS];
    for (int i = 0; i < NumAlgos(); i++) {
       save_info[i] = new SaveColorInfo(i);
    }
+
+   // save showicons option in case user cancels dialog
+   bool saveshowicons = showicons;
 
    PrefsDialog dialog(mainptr, page);
 
@@ -4777,17 +4739,18 @@ bool ChangePrefs(const wxString& page)
             keyaction[key][modset] = savekeyaction[key][modset];
 
       // restore color info saved above
-      *deadrgb = save_deadrgb;
       *pastergb = save_pastergb;
       *selectrgb = save_selectrgb;
       for (int i = 0; i < NumAlgos(); i++) {
          save_info[i]->RestoreColorInfo(i);
       }
-
+      
+      // restore showicons option
+      showicons = saveshowicons;
       result = false;
    }
 
-   // update colors for brushes and pens
+   // update colors for global brushes and pens
    SetBrushesAndPens();
 
    for (int i = 0; i < NumAlgos(); i++) {

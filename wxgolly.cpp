@@ -141,14 +141,10 @@ public:
 
 void CallYield()
 {
-   #ifdef __WXX11__
-      // don't change focus here as it causes menu problems in X11 app
-   #else
-      if (mainptr->IsActive()) {
-         // make sure viewport window keeps keyboard focus
-         viewptr->SetFocus();
-      }
-   #endif
+   if (mainptr->IsActive()) {
+      // make sure viewport window keeps keyboard focus
+      viewptr->SetFocus();
+   }
    insideYield = true;
    wxGetApp().Yield(true);
    insideYield = false;
@@ -324,7 +320,7 @@ bool GollyApp::OnInit()
    banner +=         _(STRINGIFY(VERSION));
    banner +=         _(".  Copyright 2009 The Golly Gang.");
    statusptr->SetMessage(banner);
-   
+
    mainptr->NewPattern();
 
    // script/pattern files are stored in the pendingfiles array for later processing
@@ -367,13 +363,6 @@ bool GollyApp::OnInit()
    if (maximize) mainptr->Maximize(true);
    mainptr->Show(true);
    SetTopWindow(mainptr);
-
-   #ifdef __WXX11__
-      // prevent main window being resized very small to avoid nasty errors
-      // mainptr->SetMinSize(wxSize(minmainwd, minmainht));
-      // above works but moves window to default pos!!!
-      // and calling Move(mainx, mainy) clobbers effect of SetMinSize!!! sigh
-   #endif
 
    // true means call wxApp::OnRun() which will enter the main event loop;
    // false means exit immediately

@@ -1495,7 +1495,6 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_SHOWSTATES:  ToggleAllStates(); break;
       case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
       case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
-      case DO_SETCOLORS:   if (!inscript && !busy) SetLayerColors(); break;
       case DO_SHOWICONS:   ToggleCellIcons(); break;
       case DO_INVERT:      ToggleCellColors(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;
@@ -1510,6 +1509,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_DELOTHERS:   if (!inscript) DeleteOtherLayers(); break;
       case DO_MOVELAYER:   if (!inscript && !busy) MoveLayerDialog(); break;
       case DO_NAMELAYER:   if (!inscript && !busy) NameLayerDialog(); break;
+      case DO_SETCOLORS:   if (!inscript && !busy) SetLayerColors(); break;
       case DO_SYNCVIEWS:   if (!inscript) ToggleSyncViews(); break;
       case DO_SYNCCURS:    if (!inscript) ToggleSyncCursors(); break;
       case DO_STACK:       if (!inscript) ToggleStackLayers(); break;
@@ -1584,6 +1584,9 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
        iconmaps && iconmaps[drawstate]) {
       DrawOneIcon(dc, x, y, iconmaps[drawstate],
+                  currlayer->cellr[0],
+                  currlayer->cellg[0],
+                  currlayer->cellb[0],
                   currlayer->cellr[drawstate],
                   currlayer->cellg[drawstate],
                   currlayer->cellb[drawstate]);
@@ -1633,13 +1636,9 @@ void PatternView::StartDrawingCells(int x, int y)
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
 
-      if (drawstate == 0) {
-         cellbrush->SetColour(*deadrgb);
-      } else {
-         cellbrush->SetColour(currlayer->cellr[drawstate],
-                              currlayer->cellg[drawstate],
-                              currlayer->cellb[drawstate]);
-      }
+      cellbrush->SetColour(currlayer->cellr[drawstate],
+                           currlayer->cellg[drawstate],
+                           currlayer->cellb[drawstate]);
       dc.SetBrush(*cellbrush);
 
       DrawOneCell(dc, cellx, celly, currstate, drawstate);
@@ -1677,13 +1676,9 @@ void PatternView::DrawCells(int x, int y)
       wxClientDC dc(this);
       dc.SetPen(*wxTRANSPARENT_PEN);
 
-      if (drawstate == 0) {
-         cellbrush->SetColour(*deadrgb);
-      } else {
-         cellbrush->SetColour(currlayer->cellr[drawstate],
-                              currlayer->cellg[drawstate],
-                              currlayer->cellb[drawstate]);
-      }
+      cellbrush->SetColour(currlayer->cellr[drawstate],
+                           currlayer->cellg[drawstate],
+                           currlayer->cellb[drawstate]);
       dc.SetBrush(*cellbrush);
 
       int numchanged = 0;
@@ -2839,9 +2834,6 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
    
    // avoid erasing background on GTK+ -- doesn't work!!!
    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-   
-   // call this to prevent unwanted flickering on GTK+???!!!
-   // SetBackgroundColour(*deadrgb);
 
    // force viewbitmap to be created in first OnPaint call
    viewbitmap = NULL;

@@ -163,11 +163,6 @@ int layerwd = -1;                // width of layer bitmap
 int layerht = -1;                // height of layer bitmap
 wxBitmap* layerbitmap = NULL;    // layer bitmap
 
-// for drawing tile borders
-const wxColor dkgray(96, 96, 96);
-const wxColor ltgray(224, 224, 224);
-const wxColor brightgreen(0, 255, 0);
-
 // for drawing translucent controls
 wxBitmap* ctrlsbitmap = NULL;    // controls bitmap
 wxBitmap* darkctrls = NULL;      // for showing clicked control
@@ -532,7 +527,14 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
    // assume pmscale > 2 (should be 8 or 16)
    int cellsize = pmscale - 1;
    bool drawgap = (pmscale < (1 << mingridmag)) ||
-                  (pmscale >= (1 << mingridmag) && !showgridlines);
+                  #ifdef __WXMAC__
+                     // wxMac seems to draw lines with semi-transparent pixels at the
+                     // top/left ends, so we have to draw gaps even if showing grid lines
+                     // otherwise we see annoying dots at the top/left edge of the viewport
+                     (pmscale >= (1 << mingridmag));
+                  #else
+                     (pmscale >= (1 << mingridmag) && !showgridlines);
+                  #endif
    unsigned char deadred   = currlayer->cellr[0];
    unsigned char deadgreen = currlayer->cellg[0];
    unsigned char deadblue  = currlayer->cellb[0];
@@ -677,9 +679,10 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 // -----------------------------------------------------------------------------
 
 void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
-                 unsigned char r, unsigned char g, unsigned char b)
+                 unsigned char deadr, unsigned char deadg, unsigned char deadb,
+                 unsigned char liver, unsigned char liveg, unsigned char liveb)
 {
-   // copy pixels from icon but convert black pixels to dead cell color
+   // copy pixels from icon but convert black pixels to given dead cell color
    // and convert non-black pixels to given live cell color
    int wd = icon->GetWidth();
    int ht = icon->GetHeight();
@@ -706,10 +709,6 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
             wxAlphaPixelData::Iterator iconpxl(icondata);
          #endif
 
-         unsigned char deadred   = deadrgb->Red();
-         unsigned char deadgreen = deadrgb->Green();
-         unsigned char deadblue  = deadrgb->Blue();
-
          for (int i = 0; i < ht; i++) {
             wxAlphaPixelData::Iterator pixmaprow = p;
             #ifdef __WXMSW__
@@ -719,15 +718,15 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
             #endif
             for (int j = 0; j < wd; j++) {
                if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                  // replace non-black pixel with given cell color
-                  p.Red()   = r;
-                  p.Green() = g;
-                  p.Blue()  = b;
+                  // replace non-black pixel with live cell color
+                  p.Red()   = liver;
+                  p.Green() = liveg;
+                  p.Blue()  = liveb;
                } else {
                   // replace black pixel with dead cell color
-                  p.Red()   = deadred;
-                  p.Green() = deadgreen;
-                  p.Blue()  = deadblue;
+                  p.Red()   = deadr;
+                  p.Green() = deadg;
+                  p.Blue()  = deadb;
                }
                #ifdef __WXGTK__
                   p.Alpha() = 255;
@@ -789,7 +788,7 @@ void wx_render::killrect(int x, int y, int w, int h)
                                 (rand()&127)+128));
       FillRect(*currdc, rect, randbrush);
    #else
-      FillRect(*currdc, rect, *deadbrush);
+      FillRect(*currdc, rect, *currlayer->deadbrush);
    #endif
 }
 
@@ -964,9 +963,9 @@ void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
    // and use given alpha value for all live pixels
    wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(wd,ht));
    if (data) {
-      int deadr = deadrgb->Red();
-      int deadg = deadrgb->Green();
-      int deadb = deadrgb->Blue();
+      int deadr = currlayer->cellr[0];
+      int deadg = currlayer->cellg[0];
+      int deadb = currlayer->cellb[0];
 
       data.UseAlpha();
       wxAlphaPixelData::Iterator p(data);
@@ -1157,11 +1156,6 @@ void CheckPasteImage()
             midy = cellbox.y + (cellbox.height - 1) / 2;
          }
          tempview.setpositionmag(midx, midy, pastemag);
-
-         // set rgb values for dead cells in pixblit calls
-         currlayer->cellr[0] = deadrgb->Red();
-         currlayer->cellg[0] = deadrgb->Green();
-         currlayer->cellb[0] = deadrgb->Blue();
          
          // temporarily turn off grid lines
          bool saveshow = showgridlines;
@@ -1286,7 +1280,7 @@ void DrawGridLines(wxDC& dc, wxRect& r)
    }
 
    // draw all plain lines first
-   dc.SetPen(*gridpen);
+   dc.SetPen(*currlayer->gridpen);
    
    i = showboldlines ? topbold : 1;
    v = -1;
@@ -1309,7 +1303,7 @@ void DrawGridLines(wxDC& dc, wxRect& r)
 
    if (showboldlines) {
       // overlay bold lines
-      dc.SetPen(*boldpen);
+      dc.SetPen(*currlayer->boldpen);
       i = topbold;
       v = -1;
       while (true) {
@@ -1376,11 +1370,6 @@ void DrawStackedLayers(wxDC& dc)
    for ( int i = 1; i < numlayers; i++ ) {
       Layer* savelayer = currlayer;
       currlayer = GetLayer(i);
-   
-      // set rgb values for dead cells in pixblit calls
-      currlayer->cellr[0] = deadrgb->Red();
-      currlayer->cellg[0] = deadrgb->Green();
-      currlayer->cellb[0] = deadrgb->Blue();
       
       // use real current layer's viewport
       viewport* saveview = currlayer->view;
@@ -1443,23 +1432,30 @@ void DrawTileBorders(wxDC& dc)
    if (wd < 1 || ht < 1) return;
    
    wxBrush brush;
-   int gray = (int) ((deadrgb->Red() + deadrgb->Green() + deadrgb->Blue()) / 3.0);
+   /* this is not so nice now that different layers can have different dead cell colors
+   int gray = (int) ((currlayer->cellr[0] + currlayer->cellg[0] + currlayer->cellb[0]) / 3.0);
    if (gray > 127) {
-      // deadrgb is light
-      brush.SetColour(dkgray);
+      // dead cells are a light color so use dark gray
+      brush.SetColour(96, 96, 96);
    } else {
-      // deadrgb is dark
-      brush.SetColour(ltgray);
+      // dead cells are a dark color so use light gray
+      brush.SetColour(224, 224, 224);
    }
+   */
+   // most people will choose either a very light or very dark color for dead cells,
+   // so draw mid gray border around non-current tiles
+   brush.SetColour(144, 144, 144);
    wxRect trect;
    for ( int i = 0; i < numlayers; i++ ) {
-      trect = GetLayer(i)->tilerect;
-      DrawTileFrame(dc, trect, brush, tileborder);
+      if (i != currindex) {
+         trect = GetLayer(i)->tilerect;
+         DrawTileFrame(dc, trect, brush, tileborder);
+      }
    }
 
-   // draw different colored border to indicate tile for current layer
+   // draw green border around current tile
    trect = GetLayer(currindex)->tilerect;
-   brush.SetColour(brightgreen);
+   brush.SetColour(0, 255, 0);
    DrawTileFrame(dc, trect, brush, tileborder);
 }
 
@@ -1475,7 +1471,7 @@ void DrawView(wxDC& dc, int tileindex)
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
       r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-      FillRect(dc, r, *deadbrush);
+      FillRect(dc, r, *currlayer->deadbrush);
       // might as well draw grid lines
       if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
       return;
@@ -1511,11 +1507,6 @@ void DrawView(wxDC& dc, int tileindex)
       // just draw the current layer
       colorindex = currindex;
    }
-   
-   // set rgb values for dead cells in pixblit calls
-   currlayer->cellr[0] = deadrgb->Red();
-   currlayer->cellg[0] = deadrgb->Green();
-   currlayer->cellb[0] = deadrgb->Blue();
 
    // only show icons at scales 1:8 and 1:16
    if (showicons && currlayer->view->getmag() > 2) {
