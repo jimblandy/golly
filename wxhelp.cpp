@@ -41,6 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for GetShortcutTable, helpfontsize, gollydir, etc
 #include "wxscript.h"      // for inscript
 #include "wxlayer.h"       // for numlayers, GetLayer, etc
+#include "wxalgos.h"       // for QLIFE_ALGO
 #include "wxhelp.h"
 
 // -----------------------------------------------------------------------------
@@ -795,8 +796,16 @@ void LoadLexiconPattern()
    if ( outfile.IsOpened() ) {
       outfile.Write(lexpattern);
       outfile.Close();
-      currlayer->currfile = currlayer->tempstart;
+      
+      // all Life Lexicon patterns assume we're using Conway's Life so
+      // try switching to B3/S23; if that fails then switch to QuickLife
+      const char* err = currlayer->algo->setrule("B3/S23");
+      if (err) {
+         mainptr->ChangeAlgorithm(QLIFE_ALGO, wxString("B3/S23",wxConvLocal));
+      }
+      
       // load lexicon pattern into current layer
+      currlayer->currfile = currlayer->tempstart;
       mainptr->LoadPattern(currlayer->currfile, lexicon_name);
    } else {
       Warning(_("Could not create tempstart file!"));

@@ -33,6 +33,15 @@
      <a href="python.html#getdir">getdir</a>,
      <a href="python.html#setdir">setdir</a>.
 <li> The appdir and datadir commands are deprecated; use the new getdir command.
+<li> The color of dead cells (state 0) is now handled like all other states, so
+     it's possible for each algorithm/rule to have a different background color.
+<li> The <a href="python.html#setcolors">setcolors</a> and
+     <a href="python.html#getcolors">getcolors</a> commands can be used to
+     set/get the color of state 0.
+<li> Golly restores a layer's default colors whenever you create a new pattern
+     or open a pattern file (and not just if the algorithm or rule changes).
+     If you have any scripts that use <a href="python.html#setcolors">setcolors</a>
+     then make sure it is called <em>after</em> calling new/open.
 <li> The base step can now be changed temporarily via the new Set Base Step dialog
      in the Control menu.  Golly will restore the default base step
      (set in <a href="prefs:control">Preferences > Control</a>) when you create
@@ -40,13 +49,11 @@
 <li> The <a href="python.html#setbase">setbase</a> command also changes the base step
      temporarily, so if you have any scripts that use setbase then make sure it is
      called <em>after</em> calling new/open/setrule/setalgo.
-<li> Golly restores a layer's default colors whenever you create a new pattern
-     or open a pattern file (and not just if the algorithm or rule changes).
-     If you have any scripts that use <a href="python.html#setcolors">setcolors</a>
-     then make sure it is called <em>after</em> calling new/open.
 <li> Paste now supports "And" mode.
 <li> The RLE reader allows alphabetic characters other than "o" to represent live cells.
 <li> Menu items can show single-character keyboard shortcuts.
+<li> When a lexicon pattern is loaded, Golly automatically switches the current rule
+     to B3/S23 (and changes the algorithm to QuickLife, if necessary).
 <li> Fixed a bug with Random Fill.  Golly wasn't initializing the seed, so the internal
      rand() calls were returning the same sequence of "random" integers each time!
 <li> Fixed a bug that prevented the <a href="python.html#getkey">getkey</a> command

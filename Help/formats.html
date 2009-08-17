@@ -232,19 +232,20 @@ For example, if you wanted to change the colors associated with the rule
 <p>
 A .colors file is an ordinary text file.
 Any blank lines or lines starting with "#" are ignored.
-To specify the rgb colors for states 1, 2 and 3 you can use
-lines like these:
+You can specify the RGB colors for one or more states using lines like these:
 
 <p>
-<dd><tt>color = 1 &nbsp; 0 128 255 &nbsp; (light blue)</tt></dd>
-<dd><tt>color = 2 255 255 255      &nbsp; (white)</tt></dd>
-<dd><tt>color = 3 255 128 &nbsp; 0 &nbsp; (orange)</tt></dd>
+<dd><tt>color = 0      &nbsp;48 &nbsp;48      &nbsp;48 &nbsp; (dark gray)</tt></dd>
+<dd><tt>color = 1 &nbsp;&nbsp;0      128           255 &nbsp; (light blue)</tt></dd>
+<dd><tt>color = 2           255      255           255 &nbsp; (white)</tt></dd>
+<dd><tt>color = 3           255      128 &nbsp;&nbsp;0 &nbsp; (orange)</tt></dd>
 </p>
 
 <p>
-Golly silently ignores any states that are invalid for the new rule.
+Golly silently ignores any states that are invalid for the matching rule.
 Any text after the final number on each line is ignored.
-To specify a color gradient you can use a line like this:
+To specify a color gradient for all live states (all states except 0)
+you can use a line like this:
 
 <p>
 <dd><tt>gradient = 0 0 255 &nbsp;255 0 0 &nbsp; (blue to red)</tt></dd>
@@ -252,8 +253,8 @@ To specify a color gradient you can use a line like this:
 
 <p>
 Note that a .colors file is loaded <i>after</i> switching to the current
-algorithm's default color scheme.  So you have the choice of completely
-changing all the default colors, or replacing just a few of them.
+algorithm's default color scheme, so you have the choice of completely
+changing all the default colors, or only changing some of them.
 Use <a href="prefs:color">Preferences > Color</a> to change the default
 colors for each algorithm.
 
