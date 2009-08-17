@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxalgos.h"       // for InitAlgorithms, NumAlgos, algoinfo, etc
 #include "wxrender.h"      // for DrawOneIcon
-#include "wxlayer.h"       // for currlayer
+#include "wxlayer.h"       // for currlayer, UpdateLayerColors
 #include "wxscript.h"      // for inscript
 #include "wxprefs.h"
 
@@ -4671,10 +4671,26 @@ public:
          ad->algog[i] = algog[i];
          ad->algob[i] = algob[i];
       }
-      if (iconfile != ad->iconfile) {
+      if (ad->iconfile != iconfile) {
          ad->iconfile = iconfile;
          LoadIcons(algo);
       }
+   }
+
+   bool ColorInfoChanged(int algo) {
+      AlgoData* ad = algoinfo[algo];
+      // ignore ad->statusrgb
+      if (ad->gradient != gradient) return true;
+      if (gradient && ad->fromrgb != fromrgb) return true;
+      if (gradient && ad->torgb != torgb) return true;
+      for (int i = 0; i < ad->maxstates; i++) {
+         if (ad->algor[i] != algor[i]) return true;
+         if (ad->algog[i] != algog[i]) return true;
+         if (ad->algob[i] != algob[i]) return true;
+      }
+      if (ad->iconfile != iconfile) return true;
+      // get here if there was no change
+      return false;
    }
    
    // this must match color info in AlgoData
@@ -4716,6 +4732,9 @@ bool ChangePrefs(const wxString& page)
    // save showicons option in case user cancels dialog
    bool saveshowicons = showicons;
 
+   // save the default base step for the current layer's algo so we can detect a change
+   int old_defbase = algoinfo[currlayer->algtype]->defbase;
+
    PrefsDialog dialog(mainptr, page);
 
    bool result;
@@ -4731,6 +4750,20 @@ bool ChangePrefs(const wxString& page)
                goto done;
             }
       done:
+      
+      // if the default base step for the current layer's algo changed
+      // then reset the current base step (this should result in less confusion)
+      if (old_defbase != algoinfo[currlayer->algtype]->defbase) {
+         currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+         mainptr->SetGenIncrement();
+      }
+       
+      // if the default colors/icons for the current layer's algo changed
+      // then reset the current layer's colors (and any clones)
+      if (save_info[currlayer->algtype]->ColorInfoChanged(currlayer->algtype)) {
+         UpdateLayerColors();
+      }
+     
       result = true;
    } else {
       // user hit Cancel, so restore keyaction array in case it was changed
@@ -4747,6 +4780,7 @@ bool ChangePrefs(const wxString& page)
       
       // restore showicons option
       showicons = saveshowicons;
+      
       result = false;
    }
 
