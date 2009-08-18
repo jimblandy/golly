@@ -100,7 +100,7 @@ bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
 int hyper, render, autofit, quiet, popcount, progress ;
 int hashlife ;
-char *algoName = "QuickLife" ;
+char *algoName = (char *)"QuickLife" ;
 int verbose ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
@@ -391,11 +391,12 @@ struct showcutcmd : public cmdbase {
    }
 } showcut_inst ;
 lifealgo *createUniverse() {
-   if (algoName == 0)
+   if (algoName == 0) {
      if (hashlife)
-       algoName = "HashLife" ;
+       algoName = (char *)"HashLife" ;
      else
-       algoName = "QuickLife" ;
+       algoName = (char *)"QuickLife" ;
+   }
    staticAlgoInfo *ai = staticAlgoInfo::byName(algoName) ;
    if (ai == 0)
       lifefatal("No such algorithm") ;
