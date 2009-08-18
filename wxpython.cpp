@@ -2979,8 +2979,11 @@ void RunPythonScript(const wxString& filepath)
    fpath.Replace(wxT("\\"), wxT("\\\\"));
    fpath.Replace(wxT("'"), wxT("\\'"));
 
-   // execute the given script
-   wxString command = wxT("execfile('") + fpath + wxT("')");
+   // execute the given script; note that we pass an empty dictionary
+   // for the global namespace so that this script cannot change the
+   // globals of a caller script (which is possible now that RunScript
+   // is re-entrant)
+   wxString command = wxT("execfile('") + fpath + wxT("',{})");
    PyRun_SimpleString(command.mb_str(wxConvLocal));
 
    // note that PyRun_SimpleString returns -1 if an exception occurred;
