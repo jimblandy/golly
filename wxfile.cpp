@@ -405,8 +405,6 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember,
                                    const wxString& zippath)
 {
-   if (inscript) return;      // can't run script while another is running
-   
    bool ask;
    if (zippath.IsEmpty()) {
       // script was downloaded via "get:" link (script is in downloaddir --
@@ -694,12 +692,10 @@ void MainFrame::OpenZipFile(const wxString& zippath)
             // don't call AddRecentPattern(tempfile) here; OpenFile has added
             // zippath to recent patterns
             currlayer->currfile = tempfile;
-            LoadPattern(currlayer->currfile, GetBaseName(tempfile), true,
-                        // if a script is going to run then let it do the final update
-                        (scriptfiles == 0) || inscript);
+            LoadPattern(currlayer->currfile, GetBaseName(tempfile), true, scriptfiles == 0);
          }
       }
-      if (scriptfiles == 1 && !inscript) {
+      if (scriptfiles == 1) {
          wxString tempfile = tempdir + lastscript.AfterLast(wxFILE_SEP_PATH);
          if (ExtractZipEntry(zippath, lastscript, tempfile)) {
             // run script depending on safety check

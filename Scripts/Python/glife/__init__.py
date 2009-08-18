@@ -1,9 +1,9 @@
-# Initialization script executed by using "from glife import *".
+# Initialization script executed by using "import glife".
 # Based on python/life/__init__.py in Eugene Langvagen's PLife.
 
 import golly
-from sys import maxint
-from time import time, sleep
+import sys
+import time
 
 __doc__ = """High-level scripting aids for Golly.""";
 
@@ -213,10 +213,10 @@ def getminbox(patt):
    # return a rect which is the minimal bounding box of given pattern;
    # note that if the pattern is a multi-state list then any dead cells
    # are included in the bounding box
-   minx =  maxint
-   maxx = -maxint
-   miny =  maxint
-   maxy = -maxint
+   minx =  sys.maxint
+   maxx = -sys.maxint
+   miny =  sys.maxint
+   maxy = -sys.maxint
    clist = list(patt)
    clen = len(clist)
    inc = 2
@@ -245,16 +245,16 @@ def getstring(prompt):
 
    golly.show(prompt + " " + cursor1)
    inp = ""
-   oldsecs = time()
+   oldsecs = time.time()
    
    while True:
-      newsecs = time()
+      newsecs = time.time()
       if newsecs - oldsecs >= 0.5:   # blink cursor each sec
          oldsecs = newsecs
          cursor1, cursor2 = cursor2, cursor1
          golly.show(prompt + " " + inp + cursor1)
 
-      sleep(0.05)             # avoid hogging cpu
+      time.sleep(0.05)        # avoid hogging cpu
       ch = golly.getkey()
       if len(ch) > 0:
          if ch == chr(13):    # return

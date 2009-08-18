@@ -234,10 +234,25 @@ FILING COMMANDS
 
 <a name="open"></a><p><dt><b>g_open(<i>$filename, $remember=0</i>)</b></dt>
 <dd>
-Open the given pattern file.
+Open the given file and process it according to its type:
+</dd>
+<p><dd>
+<ul>
+<li>A HTML file (.htm or .html extension) is displayed in the help window.
+<li>A text file (.txt or .doc extension, or a name containing "readme")
+    is opened in your text editor.
+<li>A script file (.pl or .py extension) is executed.
+<li>A zip file (.zip extension) is processed as described
+    <a href="formats.html#zip">here</a>.
+<li>Any other type of file is assumed to be a pattern file and is loaded
+    into the current layer.
+</ul>
+</dd>
+<p><dd>
 A non-absolute path is relative to the location of the script.
-The 2nd parameter is optional (default = 0) and specifies if the file
-should be remembered in the Open Recent submenu.
+The 2nd parameter is optional (default = 0) and specifies if the given
+pattern or zip file should be remembered in the Open Recent submenu,
+or in the Run Recent submenu if the file is a script.
 </dd>
 <dd> Example: <b>g_open("my-patterns/foo.rle");</b></dd>
 </p>

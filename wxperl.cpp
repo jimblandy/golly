@@ -106,7 +106,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #undef _
 #define _(s) wxGetTranslation(_T(s))
 
-static PerlInterpreter* my_perl;
+static PerlInterpreter* my_perl = NULL;
 
 EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 
@@ -3056,46 +3056,42 @@ EXTERN_C void xs_init(pTHX)
 
 void RunPerlScript(const wxString &filepath)
 {
-   #ifdef USE_PERL_DYNAMIC
-      if (perldll == NULL) {
-         // try to load Perl library
-         if ( !LoadPerlLib() ) return;
-      }
-   #endif
+   // allow re-entrancy
+   bool already_in_perl = (my_perl != NULL);
 
-   #ifdef PERL510_OR_LATER
-      if (!inited) {
-         int argc = 3;
-         static const char* argv[] = { "", "-e", "" };
-         Perl_sys_init3(&argc, (char***)&argv, NULL);
-         inited = true;
+   if (!already_in_perl) {
+      #ifdef USE_PERL_DYNAMIC
+         if (perldll == NULL) {
+            // try to load Perl library
+            if ( !LoadPerlLib() ) return;
+         }
+      #endif
+   
+      #ifdef PERL510_OR_LATER
+         if (!inited) {
+            int argc = 3;
+            static const char* argv[] = { "", "-e", "" };
+            Perl_sys_init3(&argc, (char***)&argv, NULL);
+            inited = true;
+         }
+      #endif
+   
+      my_perl = perl_alloc();
+      if (!my_perl) {
+         Warning(_("Could not create Perl interpreter!"));
+         return;
       }
-   #endif
-
-   my_perl = perl_alloc();
-   if (!my_perl) {
-      Warning(_("Could not create Perl interpreter!"));
-      return;
+   
+      perl_construct(my_perl);
+   
+      // set PERL_EXIT_DESTRUCT_END flag so that perl_destruct will execute
+      // any END blocks in given script (this flag requires Perl 5.7.2+)
+      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+   
+      static const char* embedding[] = { "", "-e", "" };
+      perl_parse(my_perl, xs_init, 3, (char**)embedding, NULL);
+      perl_run(my_perl);
    }
-
-   perl_construct(my_perl);
-
-   // set PERL_EXIT_DESTRUCT_END flag so that perl_destruct will execute
-   // any END blocks in given script (this flag requires Perl 5.7.2+)
-   PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-
-   /* this code works but doesn't let us capture error messages
-   wxCharBuffer buff = filepath.mb_str(wxConvLocal);
-   char* my_argv[2];
-   my_argv[0] = "";
-   my_argv[1] = (char*) buff;
-   perl_parse(my_perl, xs_init, 2, my_argv, NULL);
-   perl_run(my_perl);
-   */
-
-   static const char* embedding[] = { "", "-e", "" };
-   perl_parse(my_perl, xs_init, 3, (char**)embedding, NULL);
-   perl_run(my_perl);
 
    // convert any \ to \\ and then convert any ' to \'
    wxString fpath = filepath;
@@ -3106,16 +3102,19 @@ void RunPerlScript(const wxString &filepath)
    wxString command = wxT("do '") + fpath + wxT("'; g_fatal($@) if $@;");
    perl_eval_pv(command.mb_str(wxConvLocal), TRUE);
 
-   // any END blocks will now be executed by perl_destruct, so we temporarily
-   // clear scripterr so that RETURN_IF_ABORTED won't call Perl_croak;
-   // this allows g_* commands in END blocks to work after user hits escape
-   // or if g_exit has been called
-   wxString savestring = scripterr;
-   scripterr = wxEmptyString;
-   perl_destruct(my_perl);
-   scripterr = savestring;
+   if (!already_in_perl) {
+      // any END blocks will now be executed by perl_destruct, so we temporarily
+      // clear scripterr so that RETURN_IF_ABORTED won't call Perl_croak;
+      // this allows g_* commands in END blocks to work after user hits escape
+      // or if g_exit has been called
+      wxString savestring = scripterr;
+      scripterr = wxEmptyString;
+      perl_destruct(my_perl);
+      scripterr = savestring;
 
-   perl_free(my_perl);
+      perl_free(my_perl);
+      my_perl = NULL;
+   }
 }
 
 // -----------------------------------------------------------------------------

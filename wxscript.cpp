@@ -113,18 +113,19 @@ void ChangeWindowTitle(const wxString& name)
 
 const char* GSF_open(char* filename, int remember)
 {
-   if (IsScriptFile(wxString(filename,wxConvLocal))) {
-      // avoid re-entrancy
-      return "Cannot open a script file while a script is running.";
-   }
-
    // convert non-absolute filename to absolute path relative to scriptloc
    wxString fname = wxString(filename,wxConvLocal);
    wxFileName fullname(fname);
    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
+   
+   // return error message here if file doesn't exist
+   wxString fullpath = fullname.GetFullPath();
+   if (!wxFileName::FileExists(fullpath)) {
+      return "Given file does not exist.";
+   }
 
    // only add file to Open Recent submenu if remember flag is non-zero
-   mainptr->OpenFile(fullname.GetFullPath(), remember != 0);
+   mainptr->OpenFile(fullpath, remember != 0);
    DoAutoUpdate();
    
    return NULL;
@@ -926,9 +927,9 @@ void GSF_exit(char* errmsg)
 
 void CheckScriptError(const wxString& ext)
 {
-   if (scripterr.IsEmpty()) {
-      return;
-   } else if (scripterr.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
+   if (scripterr.IsEmpty()) return;    // no error
+   
+   if (scripterr.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
       // error was caused by AbortPerlScript/AbortPythonScript
       // so don't display scripterr
    } else {
@@ -946,6 +947,7 @@ void CheckScriptError(const wxString& ext)
       #endif
       wxMessageBox(scripterr, errtype, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
    }
+   
    // don't change status message if GSF_exit was used to stop script
    if (!exitcalled) statusptr->DisplayMessage(_("Script aborted."));
 }
@@ -995,24 +997,33 @@ void SavePendingChanges(bool checkgenchanges)
 
 void RunScript(const wxString& filename)
 {
-   if ( inscript ) return;    // play safe and avoid re-entrancy
+   // use these flags to allow re-entrancy
+   bool already_inscript = inscript;
+   bool in_plscript = plscript;
+   bool in_pyscript = pyscript;
+   wxString savecwd;
 
    if ( !wxFileName::FileExists(filename) ) {
       Warning(_("The script file does not exist:\n") + filename);
       return;
    }
-
-   mainptr->showbanner = false;
-   statusptr->ClearMessage();
-   scripterr.Clear();
-   scriptchars.Clear();
-   canswitch = false;
-   stop_after_script = false;
-   autoupdate = false;
-   exitcalled = false;
-   allowcheck = true;
-   showtitle = false;
-   wxGetApp().PollerReset();
+   
+   if (already_inscript) {
+      // save current directory so we can restore it below
+      savecwd = scriptloc;
+   } else {
+      mainptr->showbanner = false;
+      statusptr->ClearMessage();
+      scripterr.Clear();
+      scriptchars.Clear();
+      canswitch = false;
+      stop_after_script = false;
+      autoupdate = false;
+      exitcalled = false;
+      allowcheck = true;
+      showtitle = false;
+      wxGetApp().PollerReset();
+   }
 
    // temporarily change current directory to location of script
    wxFileName fullname(filename);
@@ -1027,30 +1038,33 @@ void RunScript(const wxString& filename)
       fpath = wxString(fpath.fn_str(),wxConvLocal);
    #endif
 
-   if (allowundo) {
-      // save each layer's dirty state for use by next RememberCellChanges call
-      for ( int i = 0; i < numlayers; i++ ) {
-         Layer* layer = GetLayer(i);
-         layer->savedirty = layer->dirty;
-         // at start of script there are no pending cell/gen changes
-         layer->undoredo->savecellchanges = false;
-         layer->undoredo->savegenchanges = false;
-         // add a special node to indicate that the script is about to start so
-         // that all changes made by the script can be undone/redone in one go;
-         // note that the UndoRedo ctor calls RememberScriptStart if the script
-         // creates a new non-cloned layer, and we let RememberScriptStart handle
-         // multiple calls if this layer is a clone
-         layer->undoredo->RememberScriptStart();
+   if (!already_inscript) {
+      if (allowundo) {
+         // save each layer's dirty state for use by next RememberCellChanges call
+         for ( int i = 0; i < numlayers; i++ ) {
+            Layer* layer = GetLayer(i);
+            layer->savedirty = layer->dirty;
+            // at start of script there are no pending cell/gen changes
+            layer->undoredo->savecellchanges = false;
+            layer->undoredo->savegenchanges = false;
+            // add a special node to indicate that the script is about to start so
+            // that all changes made by the script can be undone/redone in one go;
+            // note that the UndoRedo ctor calls RememberScriptStart if the script
+            // creates a new non-cloned layer, and we let RememberScriptStart handle
+            // multiple calls if this layer is a clone
+            layer->undoredo->RememberScriptStart();
+         }
       }
+   
+      inscript = true;
+   
+      mainptr->UpdateUserInterface(mainptr->IsActive());
+      #ifdef __WXMSW__
+         // temporarily clear non-ctrl and non-func key accelerators from
+         // menu items so keys like tab/enter/space can be passed to script
+         mainptr->UpdateMenuAccelerators();
+      #endif
    }
-
-   inscript = true;
-   mainptr->UpdateUserInterface(mainptr->IsActive());
-   #ifdef __WXMSW__
-      // temporarily clear non-ctrl and non-func key accelerators from
-      // menu items so keys like tab/enter/space can be passed to script
-      mainptr->UpdateMenuAccelerators();
-   #endif
 
    wxString ext = filename.AfterLast('.');
    if (ext.IsSameAs(wxT("pl"), false)) {
@@ -1061,66 +1075,93 @@ void RunScript(const wxString& filename)
       RunPythonScript(fpath);
    } else {
       // should never happen
+      plscript = false;
+      pyscript = false;
       Warning(_("Unexpected extension in script file:\n") + filename);
    }
 
-   // tidy up the undo/redo history for each layer; note that some calls
-   // use currlayer (eg. RememberGenFinish) so we temporarily set currlayer
-   // to each layer -- this is a bit yukky but should be safe as long as we
-   // synchronize clone info, especially currlayer->algo ptrs because they
-   // can change if the script called new()
-   SyncClones();
-   Layer* savelayer = currlayer;
-   for ( int i = 0; i < numlayers; i++ ) {
-      currlayer = GetLayer(i);
-      if (allowundo) {
-         if (currlayer->undoredo->savecellchanges) {
-            currlayer->undoredo->savecellchanges = false;
-            // remember pending cell change(s)
-            if (currlayer->stayclean)
-               currlayer->undoredo->ForgetCellChanges();
-            else
-               currlayer->undoredo->RememberCellChanges(_("bug2"), currlayer->savedirty);
-               // action string should never be seen
+   if (already_inscript) {
+      // restore current directory saved above
+      scriptloc = savecwd;
+      wxSetWorkingDirectory(scriptloc);
+      
+      // display any Perl/Python error message
+      CheckScriptError(ext);
+      if (!scripterr.IsEmpty()) {
+         if (in_pyscript) {
+            // abort the calling Python script
+            AbortPythonScript();
+         } else if (in_plscript) {
+            // abort the calling Perl script
+            AbortPerlScript();
          }
-         if (currlayer->undoredo->savegenchanges) {
-            currlayer->undoredo->savegenchanges = false;
-            // remember pending gen change(s); no need to test stayclean flag
-            // (if it's true then NextGeneration called RememberGenStart)
-            currlayer->undoredo->RememberGenFinish();
-         }
-         // add special node to indicate that the script has finished;
-         // we let RememberScriptFinish handle multiple calls if this
-         // layer is a clone
-         currlayer->undoredo->RememberScriptFinish();
       }
-      // reset the stayclean flag in case it was set by MarkLayerClean
-      currlayer->stayclean = false;
+      
+      plscript = in_plscript;
+      pyscript = in_pyscript;
+      
+   } else {
+      // already_inscript is false
+      
+      // tidy up the undo/redo history for each layer; note that some calls
+      // use currlayer (eg. RememberGenFinish) so we temporarily set currlayer
+      // to each layer -- this is a bit yukky but should be safe as long as we
+      // synchronize clone info, especially currlayer->algo ptrs because they
+      // can change if the script called new()
+      SyncClones();
+      Layer* savelayer = currlayer;
+      for ( int i = 0; i < numlayers; i++ ) {
+         currlayer = GetLayer(i);
+         if (allowundo) {
+            if (currlayer->undoredo->savecellchanges) {
+               currlayer->undoredo->savecellchanges = false;
+               // remember pending cell change(s)
+               if (currlayer->stayclean)
+                  currlayer->undoredo->ForgetCellChanges();
+               else
+                  currlayer->undoredo->RememberCellChanges(_("bug2"), currlayer->savedirty);
+                  // action string should never be seen
+            }
+            if (currlayer->undoredo->savegenchanges) {
+               currlayer->undoredo->savegenchanges = false;
+               // remember pending gen change(s); no need to test stayclean flag
+               // (if it's true then NextGeneration called RememberGenStart)
+               currlayer->undoredo->RememberGenFinish();
+            }
+            // add special node to indicate that the script has finished;
+            // we let RememberScriptFinish handle multiple calls if this
+            // layer is a clone
+            currlayer->undoredo->RememberScriptFinish();
+         }
+         // reset the stayclean flag in case it was set by MarkLayerClean
+         currlayer->stayclean = false;
+      }
+      currlayer = savelayer;
+      
+      // must reset inscript AFTER RememberGenFinish
+      inscript = false;
+      
+      // restore current directory to location of Golly app
+      wxSetWorkingDirectory(gollydir);
+      
+      plscript = false;
+      pyscript = false;
+      
+      // update Undo/Redo items based on current layer's history
+      if (allowundo) currlayer->undoredo->UpdateUndoRedoItems();
+      
+      // display any Perl/Python error message
+      CheckScriptError(ext);
+      
+      // update title, menu bar, cursor, viewport, status bar, tool bar, etc
+      if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
+      mainptr->UpdateEverything();
+      
+      #ifdef __WXMSW__
+         // restore accelerators that were cleared above
+         mainptr->UpdateMenuAccelerators();
+      #endif
    }
-   currlayer = savelayer;
-   
-   // must reset inscript AFTER RememberGenFinish
-   inscript = false;
-   plscript = false;
-   pyscript = false;
-
-   // restore current directory to location of Golly app
-   wxSetWorkingDirectory(gollydir);
-   
-   // update Undo/Redo items based on current layer's history
-   if (allowundo) currlayer->undoredo->UpdateUndoRedoItems();
-
-   // display any Perl/Python error message
-   CheckScriptError(ext);
-
-   // update title, menu bar, cursor, viewport, status bar, tool bar, etc
-   if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
-   mainptr->UpdateEverything();
-   
-   #ifdef __WXMSW__
-      // restore accelerators that were cleared above
-      mainptr->UpdateMenuAccelerators();
-   #endif
 }
 
 // -----------------------------------------------------------------------------

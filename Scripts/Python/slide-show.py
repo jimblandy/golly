@@ -1,12 +1,13 @@
 # Display all patterns in Golly's Patterns folder.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
 
-from glife import *
 import golly as g
-
 import os
-from os.path import join
-from time import sleep
+# from os.path import join
+# NOTE: We must not do the above import because an opened script might
+# do "from golly import *" and from then on join(root, name) will call
+# golly's join command, with very odd results!
+import time
 
 # ------------------------------------------------------------------------------
 
@@ -14,25 +15,26 @@ def slideshow ():
    oldalgo = g.getalgo()
    oldrule = g.getrule()
    
-   g.show("Hit space to continue or escape to exit the slide show...")
+   message = "Hit space to continue or escape to exit the slide show..."
+   g.show(message)
    for root, dirs, files in os.walk(g.getdir("app") + "Patterns"):
       for name in files:
          if name.startswith("."):
             # ignore hidden files (like .DS_Store on Mac)
             pass
-         elif name.endswith(".pl") or name.endswith(".py"):
-            # ignore Perl/Python scripts (Golly's RunScript is not re-entrant)
-            pass
          else:
-            fullname = join(root, name)
-            g.open(fullname, False)       # don't add file to Open Recent submenu
+            fullname = os.path.join(root, name)
+            g.open(fullname, False)       # don't add file to Open/Run Recent submenu
             g.update()
+            if name.endswith(".pl") or name.endswith(".py"):
+               # reshow message in case it was changed by script
+               g.show(message)
             
             while True:
                ch = g.getkey()
                if ch == " ": break
                g.dokey(ch)                # allow keyboard interaction
-               sleep(0.01)                # avoid hogging cpu
+               time.sleep(0.01)           # avoid hogging cpu
       
       if "CVS" in dirs:
          dirs.remove("CVS")  # don't visit CVS directories
