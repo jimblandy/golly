@@ -472,10 +472,6 @@ void ToolBar::SetStartStopButton()
       tbbutt[START_TOOL]->SetToolTip(_("Start generating"));
    }
 
-   #ifdef __WXX11__
-      tbbutt[START_TOOL]->ClearBackground();    // fix wxX11 problem
-   #endif
-
    tbbutt[START_TOOL]->Refresh(false);
 }
 
@@ -492,10 +488,6 @@ void ToolBar::SelectButton(int id, bool select)
       buttstate[id] = -1;
       tbbutt[id]->SetBitmapLabel(normtool[id]);
    }
-
-   #ifdef __WXX11__
-      tbbutt[id]->ClearBackground();    // fix wxX11 problem
-   #endif
 
    tbbutt[id]->Refresh(false);
 }
@@ -568,20 +560,16 @@ void MainFrame::UpdateToolBar(bool active)
 
 bool MainFrame::ClipboardHasText()
 {
-   #ifdef __WXX11__
-      return wxFileExists(clipfile);
-   #else
-      bool hastext = false;
-      if ( wxTheClipboard->Open() ) {
-         hastext = wxTheClipboard->IsSupported( wxDF_TEXT );
-         if (!hastext) {
-            // we'll try to convert bitmap data to text pattern
-            hastext = wxTheClipboard->IsSupported( wxDF_BITMAP );
-         }
-         wxTheClipboard->Close();
+   bool hastext = false;
+   if ( wxTheClipboard->Open() ) {
+      hastext = wxTheClipboard->IsSupported( wxDF_TEXT );
+      if (!hastext) {
+         // we'll try to convert bitmap data to text pattern
+         hastext = wxTheClipboard->IsSupported( wxDF_BITMAP );
       }
-      return hastext;
-   #endif
+      wxTheClipboard->Close();
+   }
+   return hastext;
 }
 
 // -----------------------------------------------------------------------------
@@ -1040,10 +1028,6 @@ void MainFrame::ToggleStatusBar()
    } else {
       statusptr->statusht = 0;
       statusptr->SetSize(0, 0, 0, 0);
-      #ifdef __WXX11__
-         // move so we don't see small portion
-         statusptr->Move(-100, -100);
-      #endif
    }
    ResizeSplitWindow(wd, ht);
    UpdateEverything();
@@ -1090,120 +1074,115 @@ void MainFrame::ToggleToolBar()
 
 void MainFrame::ToggleFullScreen()
 {
-   #ifdef __WXX11__
-      // ShowFullScreen(true) does nothing
-      statusptr->ErrorMessage(_("Sorry, full screen mode is not implemented for X11."));
-   #else
-      static bool restorestatusbar; // restore status bar at end of full screen mode?
-      static bool restorelayerbar;  // restore layer bar?
-      static bool restoreeditbar;   // restore edit bar?
-      static bool restoretoolbar;   // restore tool bar?
-      static bool restorepattdir;   // restore pattern directory?
-      static bool restorescrdir;    // restore script directory?
+   static bool restorestatusbar; // restore status bar at end of full screen mode?
+   static bool restorelayerbar;  // restore layer bar?
+   static bool restoreeditbar;   // restore edit bar?
+   static bool restoretoolbar;   // restore tool bar?
+   static bool restorepattdir;   // restore pattern directory?
+   static bool restorescrdir;    // restore script directory?
 
-      if (!fullscreen) {
-         // save current location and size for use in SavePrefs
-         wxRect r = GetRect();
-         mainx = r.x;
-         mainy = r.y;
-         mainwd = r.width;
-         mainht = r.height;
-      }
+   if (!fullscreen) {
+      // save current location and size for use in SavePrefs
+      wxRect r = GetRect();
+      mainx = r.x;
+      mainy = r.y;
+      mainwd = r.width;
+      mainht = r.height;
+   }
 
-      fullscreen = !fullscreen;
-      ShowFullScreen(fullscreen,
-         wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
+   fullscreen = !fullscreen;
+   ShowFullScreen(fullscreen,
+      wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
 
-      if (fullscreen) {
-         // hide scroll bars
-         bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-         bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-         
-         // hide status bar if necessary
-         restorestatusbar = showstatus;
-         if (restorestatusbar) {
-            showstatus = false;
-            statusptr->statusht = 0;
-            statusptr->SetSize(0, 0, 0, 0);
-         }
-         
-         // hide layer bar if necessary
-         restorelayerbar = showlayer;
-         if (restorelayerbar) {
-            ToggleLayerBar();
-         }
-         
-         // hide edit bar if necessary
-         restoreeditbar = showedit;
-         if (restoreeditbar) {
-            ToggleEditBar();
-         }
-         
-         // hide tool bar if necessary
-         restoretoolbar = showtool;
-         if (restoretoolbar) {
-            ToggleToolBar();
-         }
-         
-         // hide pattern/script directory if necessary
-         restorepattdir = showpatterns;
-         restorescrdir = showscripts;
-         if (restorepattdir) {
-            dirwinwd = splitwin->GetSashPosition();
-            splitwin->Unsplit(patternctrl);
-            showpatterns = false;
-         } else if (restorescrdir) {
-            dirwinwd = splitwin->GetSashPosition();
-            splitwin->Unsplit(scriptctrl);
-            showscripts = false;
-         }
-
-      } else {
-         // first show tool bar if necessary
-         if (restoretoolbar && !showtool) {
-            ToggleToolBar();
-            if (showstatus) {
-               // reduce width of status bar below
-               restorestatusbar = true;
-            }
-         }
-         
-         // show status bar if necessary;
-         // note that even if it's visible we may have to resize width
-         if (restorestatusbar) {
-            showstatus = true;
-            int wd, ht;
-            GetClientSize(&wd, &ht);
-            ResizeStatusBar(wd, ht);
-         }
-
-         // show layer bar if necessary
-         if (restorelayerbar && !showlayer) ToggleLayerBar();
-
-         // show edit bar if necessary
-         if (restoreeditbar && !showedit) ToggleEditBar();
-
-         // restore pattern/script directory if necessary
-         if ( restorepattdir && !splitwin->IsSplit() ) {
-            splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
-            showpatterns = true;
-         } else if ( restorescrdir && !splitwin->IsSplit() ) {
-            splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
-            showscripts = true;
-         }
-      }
-
-      if (!fullscreen) {
-         // restore scroll bars BEFORE setting viewport size
-         bigview->UpdateScrollBars();
+   if (fullscreen) {
+      // hide scroll bars
+      bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+      bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+      
+      // hide status bar if necessary
+      restorestatusbar = showstatus;
+      if (restorestatusbar) {
+         showstatus = false;
+         statusptr->statusht = 0;
+         statusptr->SetSize(0, 0, 0, 0);
       }
       
-      // adjust size of viewport (and pattern/script directory if visible)
-      int wd, ht;
-      GetClientSize(&wd, &ht);
-      ResizeSplitWindow(wd, ht);
-      UpdateEverything();
-   #endif
+      // hide layer bar if necessary
+      restorelayerbar = showlayer;
+      if (restorelayerbar) {
+         ToggleLayerBar();
+      }
+      
+      // hide edit bar if necessary
+      restoreeditbar = showedit;
+      if (restoreeditbar) {
+         ToggleEditBar();
+      }
+      
+      // hide tool bar if necessary
+      restoretoolbar = showtool;
+      if (restoretoolbar) {
+         ToggleToolBar();
+      }
+      
+      // hide pattern/script directory if necessary
+      restorepattdir = showpatterns;
+      restorescrdir = showscripts;
+      if (restorepattdir) {
+         dirwinwd = splitwin->GetSashPosition();
+         splitwin->Unsplit(patternctrl);
+         showpatterns = false;
+      } else if (restorescrdir) {
+         dirwinwd = splitwin->GetSashPosition();
+         splitwin->Unsplit(scriptctrl);
+         showscripts = false;
+      }
+
+   } else {
+      // first show tool bar if necessary
+      if (restoretoolbar && !showtool) {
+         ToggleToolBar();
+         if (showstatus) {
+            // reduce width of status bar below
+            restorestatusbar = true;
+         }
+      }
+      
+      // show status bar if necessary;
+      // note that even if it's visible we may have to resize width
+      if (restorestatusbar) {
+         showstatus = true;
+         int wd, ht;
+         GetClientSize(&wd, &ht);
+         ResizeStatusBar(wd, ht);
+      }
+
+      // show layer bar if necessary
+      if (restorelayerbar && !showlayer) ToggleLayerBar();
+
+      // show edit bar if necessary
+      if (restoreeditbar && !showedit) ToggleEditBar();
+
+      // restore pattern/script directory if necessary
+      if ( restorepattdir && !splitwin->IsSplit() ) {
+         splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
+         showpatterns = true;
+      } else if ( restorescrdir && !splitwin->IsSplit() ) {
+         splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
+         showscripts = true;
+      }
+   }
+
+   if (!fullscreen) {
+      // restore scroll bars BEFORE setting viewport size
+      bigview->UpdateScrollBars();
+   }
+   
+   // adjust size of viewport (and pattern/script directory if visible)
+   int wd, ht;
+   GetClientSize(&wd, &ht);
+   ResizeSplitWindow(wd, ht);
+   UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -1458,13 +1437,6 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
       // fix wxMSW problem: don't let main window get focus after being minimized
       if (viewptr) viewptr->SetFocus();
    #endif
-
-   #ifdef __WXX11__
-      // make sure viewport keeps keyboard focus whenever main window is active
-      if (viewptr && IsActive()) viewptr->SetFocus();
-      // fix problems after modal dialog or help window is closed
-      UpdateUserInterface(IsActive());
-   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1529,7 +1501,7 @@ void MainFrame::OnSize(wxSizeEvent& event)
       }
    }
    
-   #if defined(__WXX11__) || defined(__WXGTK__)
+   #ifdef __WXGTK__
       // need to do default processing for menu bar and tool bar
       event.Skip();
    #else
@@ -1539,18 +1511,16 @@ void MainFrame::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
-#if defined(__WXX11__) || defined(__WXGTK__)
-   // handle recursive OnIdle call (probably via Yield call in checkevents)
-   bool inidle = false;
-#endif
+// avoid recursive call of OpenFile in OnIdle;
+// this can happen if user clicks a script which then opens some sort of dialog
+// (idle events are sent to the main window while the dialog is open)
+static bool inidle = false;
 
 void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 {
-   #if defined(__WXX11__) || defined(__WXGTK__)
-      if (inidle) return;
-   #endif
+   if (inidle) return;
    
-   #if defined(__WXMSW__)
+   #ifdef __WXMSW__
       if ( call_unselect ) {
          // deselect file/folder so user can click the same item
          if (showpatterns) patternctrl->GetTreeCtrl()->Unselect();
@@ -1565,8 +1535,6 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
          EditFile(editpath);
          editpath.Clear();
       }
-   #elif defined(__WXX11__)
-      // don't change focus here because it prevents menus staying open
    #else
       // ensure viewport window has keyboard focus if main window is active;
       // note that we can't do this on Windows because it stuffs up clicks
@@ -1576,15 +1544,11 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
 
    // process any pending script/pattern files
    if ( pendingfiles.GetCount() > 0 ) {
-      #if defined(__WXX11__) || defined(__WXGTK__)
-         inidle = true;
-      #endif
+      inidle = true;
       for ( size_t n = 0; n < pendingfiles.GetCount(); n++ ) {
          OpenFile(pendingfiles[n]);
       }
-      #if defined(__WXX11__) || defined(__WXGTK__)
-         inidle = false;
-      #endif
+      inidle = false;
       pendingfiles.Clear();
    }
   
@@ -1750,10 +1714,10 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
          // user clicked on a file name
          if ( inscript ) {
             // use Warning because statusptr->ErrorMessage does nothing if inscript
-            if ( showpatterns )
-               Warning(_("Cannot load pattern while a script is running."));
-            else
+            if ( IsScriptFile(filepath) )
                Warning(_("Cannot run script while another script is running."));
+            else
+               Warning(_("Cannot open file while a script is running."));
          } else {
             // reset background of previously selected file by traversing entire tree;
             // we can't just remember previously selected id because ids don't persist
@@ -1762,11 +1726,6 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 
             // indicate the selected file
             treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
-            
-            #ifdef __WXX11__
-               // needed for scripts which prompt user to enter a string
-               viewptr->SetFocus();
-            #endif
 
             #ifdef __WXMAC__
                if ( !wxFileName::FileExists(filepath) ) {
