@@ -1112,11 +1112,12 @@ void ghashbase::gc_mark(ghnode *root, int invalidate) {
          gc_mark(root->ne, invalidate) ;
          gc_mark(root->sw, invalidate) ;
          gc_mark(root->se, invalidate) ;
-         if (root->res)
+         if (root->res) {
             if (invalidate)
               root->res = 0 ;
             else
               gc_mark(root->res, invalidate) ;
+         }
       }
    }
 }

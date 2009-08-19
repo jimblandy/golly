@@ -29,19 +29,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstring>
 
 #ifdef __APPLE__
-#define BUFFSIZE 4096      // 4K is best for Mac OS X
+#define BUFFSIZE 4096   // 4K is best for Mac OS X
 #else
-#define BUFFSIZE 8192      // 8K is best for Windows and other platforms???
+#define BUFFSIZE 8192   // 8K is best for Windows and other platforms???
 #endif
 
-char outbuff[BUFFSIZE];
-int outpos;
-unsigned int currsize;     // current file size (for showing in progress dialog)
+// globals for writing RLE files
+static char outbuff[BUFFSIZE];
+static size_t outpos;            // current write position in outbuff
+static unsigned int currsize;    // current file size (for showing in progress dialog)
+static bool badwrite;            // fwrite failed?
 
 // using buffered putchar instead of fputc is about 20% faster on Mac OS X
 void putchar(char ch, FILE *f) {
+   if (badwrite) return;
    if (outpos == BUFFSIZE) {
-      fwrite(outbuff, 1, BUFFSIZE, f);
+      if (fwrite(outbuff, 1, outpos, f) != outpos) badwrite = true;
       outpos = 0;
       currsize += BUFFSIZE;
    }
@@ -102,6 +105,7 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
                      int top, int left, int bottom, int right,
                      bool xrle)
 {
+   badwrite = false;
    if (xrle) {
       // write out #CXRLE line; note that the XRLE indicator is prefixed
       // with #C so apps like Life32 and MCell will ignore the line
@@ -222,12 +226,16 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
       putchar('\n', f);
       
       // flush outbuff
-      fwrite(outbuff, 1, outpos, f);
+      if (outpos > 0 && !badwrite && fwrite(outbuff, 1, outpos, f) != outpos)
+         badwrite = true;
    }
    
    if (endcomms) fputs(endcomms, f);
    
-   return 0;
+   if (badwrite)
+      return "Failed to write output buffer!";
+   else
+      return 0;
 }
 
 const char *writelife105(FILE *f, char *comments, lifealgo &imp)
@@ -238,7 +246,7 @@ const char *writelife105(FILE *f, char *comments, lifealgo &imp)
       // write given comment line(s)
       fputs(comments, f);
    }
-   return "Not yet implemented!!!";
+   return "Not yet implemented.";
 }
 
 const char *writemacrocell(FILE *f, char *comments, lifealgo &imp)
@@ -284,7 +292,7 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
    currsize = 0;
    lifebeginprogress("Writing pattern file");
 
-   const char *errmsg;
+   const char *errmsg = NULL;
    switch (format) {
       case RLE_format:
          errmsg = writerle(f, comments, imp, top, left, bottom, right, false);
@@ -308,7 +316,7 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
          errmsg = "Unsupported pattern format!";
    }
    
-   if (ferror(f))
+   if (errmsg == NULL && ferror(f))
       errmsg = "Error occurred writing file; maybe disk is full?";
    
    lifeendprogress();
