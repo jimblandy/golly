@@ -2019,7 +2019,24 @@ void GetPrefs()
          strncpy(initrule, value, sizeof(initrule));
 
       } else if (strcmp(keyword, "named_rule") == 0) {
-         namedrules.Add(wxString(value,wxConvLocal));
+         // value must have format "name|rule" with name and rule non-empty
+         wxString str(value,wxConvLocal);
+         int barcount = str.Freq('|');
+         if (barcount == 0) {
+            Fatal(_("Missing \"|\" separator in named_rule entry: ") + str);
+         } else if (barcount > 1) {
+            Fatal(_("Too many \"|\" separators in named_rule entry: ") + str);
+         } else {
+            wxString name = str.BeforeFirst('|');
+            wxString rule = str.AfterFirst('|');
+            if (name.IsEmpty()) {
+               Fatal(_("Empty name in named_rule entry: ") + str);
+            } else if (rule.IsEmpty()) {
+               Fatal(_("Empty rule in named_rule entry: ") + str);
+            } else {
+               namedrules.Add(str);
+            }
+         }
 
       } else if (strcmp(keyword, "show_tips") == 0) {
          showtips = value[0] == '1';
