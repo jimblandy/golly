@@ -26,6 +26,11 @@
      Other-Rules/Margolus/, Loops/.
 <li> New scripts: FredkinModN-gen.py, make-Devore-tape.py,
      Margolus/emulate-Margolus-table.py, Margolus/convert-MCell-string.py.
+<li> All Python scripts now need to explicitly import the golly module.
+     This wasn't strictly necessary in previous versions, but only because it was
+     an undesirable side-effect of the way Golly ran scripts.
+<li> The <a href="python.html#open">open</a> command can now be used to run a given
+     Perl/Python script.
 <li> New scripting commands: <a href="python.html#opendialog">opendialog</a>,
      <a href="python.html#savedialog">savedialog</a>,
      <a href="python.html#getclipstr">getclipstr</a>,
@@ -33,8 +38,6 @@
      <a href="python.html#getdir">getdir</a>,
      <a href="python.html#setdir">setdir</a>.
 <li> The appdir and datadir commands are deprecated; use the new getdir command.
-<li> The <a href="python.html#open">open</a> command can now be used to run a given
-     Perl/Python script.
 <li> The color of dead cells (state 0) is now handled like all other states, so
      it's possible for each algorithm/rule to have a different background color.
 <li> The <a href="python.html#setcolors">setcolors</a> and
