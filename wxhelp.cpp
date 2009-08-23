@@ -797,9 +797,14 @@ void LoadLexiconPattern()
       outfile.Write(lexpattern);
       outfile.Close();
       
-      // all Life Lexicon patterns assume we're using Conway's Life so
-      // try switching to B3/S23; if that fails then switch to QuickLife
+      // all Life Lexicon patterns assume we're using Conway's Life so try
+      // switching to B3/S23 or Life; if that fails then switch to QuickLife
       const char* err = currlayer->algo->setrule("B3/S23");
+      if (err) {
+         // try "Life" in case current algo is RuleTable/RuleTree and Life.table/tree exists
+         // (also had to make a similar change to the loadpattern code in readpattern.cpp)
+         err = currlayer->algo->setrule("Life");
+      }
       if (err) {
          mainptr->ChangeAlgorithm(QLIFE_ALGO, wxString("B3/S23",wxConvLocal));
       }

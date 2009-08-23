@@ -499,8 +499,13 @@ const char *loadpattern(lifealgo &imp) {
    } else {
       // reset rule to Conway's Life (default if explicit rule isn't supplied)
       const char *err = imp.setrule("B3/S23") ;
-      // if given algo doesn't support B3/S23 then probably safer to use
-      // the algo's default rule
+      if (err) {
+         // try "Life" in case given algo is RuleTable/RuleTree and a
+         // Life.table/tree file exists (nicer for loading lexicon patterns)
+         err = imp.setrule("Life");
+      }
+      // if given algo doesn't support B3/S23 or Life then the only sensible
+      // choice left is to use the algo's default rule
       if (err) imp.setrule( imp.DefaultRule() ) ;
    }
 
