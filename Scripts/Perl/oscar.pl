@@ -1,9 +1,9 @@
 # Oscar is an OSCillation AnalyzeR for use with Golly.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2007.
 # Modified to use Math::BigInt, December 2008.
+# Modified to handle B0-and-not-S8 rules, August 2009.
 
-# We use Gabriel Nivasch's "keep minima" algorithm:
-#
+# This script uses Gabriel Nivasch's "keep minima" algorithm.
 # For each generation, calculate a hash value for the pattern.  Keep all of
 # the record-breaking minimal hashes in a list, with the oldest first.
 # For example, after 5 generations the saved hash values might be:
@@ -116,6 +116,14 @@ sub oscillating {
             if ($period == 1) {
                if ($pbox[0] == $rect[0] and $pbox[1] == $rect[1] and
                    $pbox[2] == $rect[2] and $pbox[3] == $rect[3]) {
+                  my $rule = g_getrule();
+                  if ($rule =~ m/^B0/ and $rule !~ m/8$/) {
+                     # ignore this hash value because B0-and-not-S8 rules are
+                     # emulated by using different rules for odd and even gens,
+                     # so it's possible for a spaceship to have the same pattern
+                     # in consecutive gens
+                     return 0;
+                  }
                   g_show("The pattern is stable.");
                } else {
                   show_spaceship_speed(1, 0, 0);

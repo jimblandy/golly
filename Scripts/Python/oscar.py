@@ -1,8 +1,8 @@
 # Oscar is an OSCillation AnalyzeR for use with Golly.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), March 2006.
+# Modified to handle B0-and-not-S8 rules, August 2009.
 
-# It uses Gabriel Nivasch's "keep minima" algorithm:
-#
+# This script uses Gabriel Nivasch's "keep minima" algorithm.
 # For each generation, calculate a hash value for the pattern.  Keep all of
 # the record-breaking minimal hashes in a list, with the oldest first.
 # For example, after 5 generations the saved hash values might be:
@@ -20,9 +20,9 @@
 # oscillator detection due to hash collisions.  The bounding box info also
 # allows us to detect moving oscillators (spaceships/knightships).
 
+import golly as g
 from glife import rect, pattern
 from time import time
-import golly as g
 
 # --------------------------------------------------------------------
 
@@ -96,6 +96,13 @@ def oscillating():
             period = int(g.getgen()) - genlist[pos]
             if period == 1:
                if pbox == boxlist[pos]:
+                  rule = g.getrule()
+                  if rule.startswith("B0") and not rule.endswith("8"):
+                     # ignore this hash value because B0-and-not-S8 rules are
+                     # emulated by using different rules for odd and even gens,
+                     # so it's possible for a spaceship to have the same pattern
+                     # in consecutive gens
+                     return False
                   g.show("The pattern is stable.")
                else:
                   show_spaceship_speed(1, 0, 0)
