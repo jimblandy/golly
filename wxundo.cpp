@@ -1022,9 +1022,8 @@ void UndoRedo::RememberNameChange(const wxString& oldname, const wxString& oldcu
    change->olddirty = olddirty;
    change->newdirty = currlayer->dirty;
    
-   // cloned layers share the same undo/redo history but each clone
-   // can have a different name, so we need to remember which layer
-   // was changed
+   // cloned layers share the same undo/redo history but each clone can have
+   // a different name, so we need to remember which layer was changed
    change->whichlayer = currlayer;
    
    undolist.Insert(change);
@@ -1527,10 +1526,15 @@ bool CopyTempFiles(ChangeNode* srcnode, ChangeNode* destnode, const wxString& te
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
+void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
 {
-   // clear any current history
-   ClearUndoRedo();
+   UndoRedo* history = oldlayer->undoredo;
+   
+   // clear the undo/redo lists; note that UndoRedo::UndoRedo has added
+   // a scriptstart node to undolist if inscript is true, but we don't
+   // want that here because the old layer's history will already have one
+   WX_CLEAR_LIST(wxList, undolist);
+   WX_CLEAR_LIST(wxList, redolist);
    
    // safer to do our own shallow copy (avoids setting undolist/redolist)
    savecellchanges = history->savecellchanges;
@@ -1601,10 +1605,15 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
       }
       
       // copy any existing temporary files to new names
-      if (!CopyTempFiles(change, newchange, tempstart)) {
+      if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
          Warning(_("Failed to copy temporary file in undolist!"));
          WX_CLEAR_LIST(wxList, undolist);
          return;
+      }
+      
+      // if node is a name change then update whichlayer to point to new layer
+      if (newchange->changeid == namechange) {
+         newchange->whichlayer = newlayer;
       }
       
       undolist.Append(newchange);
@@ -1639,10 +1648,15 @@ void UndoRedo::Duplicate(UndoRedo* history, const wxString& tempstart)
       }
       
       // copy any existing temporary files to new names
-      if (!CopyTempFiles(change, newchange, tempstart)) {
+      if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
          Warning(_("Failed to copy temporary file in redolist!"));
          WX_CLEAR_LIST(wxList, redolist);
          return;
+      }
+      
+      // if node is a name change then update whichlayer to point to new layer
+      if (newchange->changeid == namechange) {
+         newchange->whichlayer = newlayer;
       }
       
       redolist.Append(newchange);

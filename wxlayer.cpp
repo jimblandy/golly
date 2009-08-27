@@ -2172,8 +2172,8 @@ Layer::Layer()
          }
          
          if (allowundo) {
-            // duplicate undo/redo history
-            undoredo->Duplicate(currlayer->undoredo, tempstart);
+            // duplicate current undo/redo history in new layer
+            undoredo->DuplicateHistory(currlayer, this);
          }
       }
    }

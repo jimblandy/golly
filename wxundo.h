@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bigint.h"     // for bigint class
 #include "wxselect.h"   // for Selection class
+class Layer;            // need this because wxlayer.h includes wxundo.h
+#include "wxlayer.h"    // for Layer class
 #include "wxalgos.h"    // for algo_type
 
 // This module implements unlimited undo/redo:
@@ -109,8 +111,8 @@ public:
    void RememberScriptFinish();
    // remember that script has ended
    
-   void Duplicate(UndoRedo* history, const wxString& tempstart);
-   // duplicate given undo/redo history
+   void DuplicateHistory(Layer* oldlayer, Layer* newlayer);
+   // duplicate old layer's undo/redo history in new layer
    
    bool savecellchanges;         // script's cell changes need to be remembered?
    bool savegenchanges;          // script's gen changes need to be remembered?
