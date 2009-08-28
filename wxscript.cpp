@@ -28,13 +28,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 #include <limits.h>        // for INT_MAX
-
 #include "wx/filename.h"   // for wxFileName
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr, statusptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxselect.h"      // for Selection
-#include "wxedit.h"        // for ToggleEditBar, ToggleAllStates
+#include "wxedit.h"        // for ToggleEditBar, ToggleAllStates, UpdateEditBar
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
@@ -49,20 +48,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // =============================================================================
 
-// globals
-
+// exported globals:
 bool inscript = false;     // a script is running?
-bool plscript = false;     // a Perl script is running?
-bool pyscript = false;     // a Python script is running?
 bool canswitch;            // can user switch layers while script is running?
 bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
 bool allowcheck;           // allow event checking?
-bool showtitle;            // need to update window title?
-bool exitcalled;           // GSF_exit was called?
 wxString scripterr;        // Perl/Python error message
-wxString scriptchars;      // non-escape chars saved by PassKeyToScript
-wxString scriptloc;        // location of script file
+
+// local globals:
+static bool plscript = false;     // a Perl script is running?
+static bool pyscript = false;     // a Python script is running?
+static bool showtitle;            // need to update window title?
+static bool updateedit;           // need to update edit bar?
+static bool exitcalled;           // GSF_exit was called?
+static wxString scriptchars;      // non-escape chars saved by PassKeyToScript
+static wxString scriptloc;        // location of script file
 
 // -----------------------------------------------------------------------------
 
@@ -474,6 +475,31 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
+   } else if (strcmp(optname, "boldspacing") == 0) {
+      *oldval = boldspacing;
+      if (newval < 2) newval = 2;
+      if (newval > MAX_SPACING) newval = MAX_SPACING;
+      if (*oldval != newval) {
+         boldspacing = newval;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "drawingstate") == 0) {
+      *oldval = currlayer->drawingstate;
+      if (newval < 0) newval = 0;
+      if (newval >= currlayer->algo->NumCellStates())
+         newval = currlayer->algo->NumCellStates() - 1;
+      if (*oldval != newval) {
+         currlayer->drawingstate = newval;
+         if (autoupdate) {
+            UpdateEditBar(mainptr->IsActive());
+            updateedit = false;
+         } else {
+            // update edit bar in next GSF_update call
+            updateedit = true;
+         }
+      }
+
    } else if (strcmp(optname, "fullscreen") == 0) {
       *oldval = mainptr->fullscreen ? 1 : 0;
       if (*oldval != newval) {
@@ -486,11 +512,6 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
       *oldval = currlayer->hyperspeed ? 1 : 0;
       if (*oldval != newval)
          mainptr->ToggleHyperspeed();
-
-   } else if (strcmp(optname, "showhashinfo") == 0) {
-      *oldval = currlayer->showhashinfo ? 1 : 0;
-      if (*oldval != newval)
-         mainptr->ToggleHashInfo();
 
    } else if (strcmp(optname, "mindelay") == 0) {
       *oldval = mindelay;
@@ -521,12 +542,33 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          DoAutoUpdate();
       }
 
-   } else if (strcmp(optname, "showlayerbar") == 0) {
-      *oldval = showlayer ? 1 : 0;
+   } else if (strcmp(optname, "restoreview") == 0) {
+      *oldval = restoreview ? 1 : 0;
       if (*oldval != newval) {
-         ToggleLayerBar();
+         restoreview = !restoreview;
+         // no need for DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "savexrle") == 0) {
+      *oldval = savexrle ? 1 : 0;
+      if (*oldval != newval) {
+         savexrle = !savexrle;
+         // no need for DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showallstates") == 0) {
+      *oldval = showallstates ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleAllStates();
          // above always does an update (due to resizing viewport window)
          // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showboldlines") == 0) {
+      *oldval = showboldlines ? 1 : 0;
+      if (*oldval != newval) {
+         showboldlines = !showboldlines;
+         DoAutoUpdate();
       }
 
    } else if (strcmp(optname, "showeditbar") == 0) {
@@ -537,10 +579,37 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
-   } else if (strcmp(optname, "showallstates") == 0) {
-      *oldval = showallstates ? 1 : 0;
+   } else if (strcmp(optname, "showexact") == 0) {
+      *oldval = showexact ? 1 : 0;
       if (*oldval != newval) {
-         ToggleAllStates();
+         mainptr->ToggleExactNumbers();
+         // above always does an update (due to resizing viewport window)
+         // DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showgrid") == 0) {
+      *oldval = showgridlines ? 1 : 0;
+      if (*oldval != newval) {
+         showgridlines = !showgridlines;
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showhashinfo") == 0) {
+      *oldval = currlayer->showhashinfo ? 1 : 0;
+      if (*oldval != newval)
+         mainptr->ToggleHashInfo();
+
+   } else if (strcmp(optname, "showicons") == 0) {
+      *oldval = showicons ? 1 : 0;
+      if (*oldval != newval) {
+         viewptr->ToggleCellIcons();
+         DoAutoUpdate();
+      }
+
+   } else if (strcmp(optname, "showlayerbar") == 0) {
+      *oldval = showlayer ? 1 : 0;
+      if (*oldval != newval) {
+         ToggleLayerBar();
          // above always does an update (due to resizing viewport window)
          // DoAutoUpdate();
       }
@@ -577,21 +646,6 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          // DoAutoUpdate();
       }
 
-   } else if (strcmp(optname, "showexact") == 0) {
-      *oldval = showexact ? 1 : 0;
-      if (*oldval != newval) {
-         mainptr->ToggleExactNumbers();
-         // above always does an update (due to resizing viewport window)
-         // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showicons") == 0) {
-      *oldval = showicons ? 1 : 0;
-      if (*oldval != newval) {
-         viewptr->ToggleCellIcons();
-         DoAutoUpdate();
-      }
-
    } else if (strcmp(optname, "swapcolors") == 0) {
       *oldval = swapcolors ? 1 : 0;
       if (*oldval != newval) {
@@ -599,17 +653,10 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          DoAutoUpdate();
       }
 
-   } else if (strcmp(optname, "showgrid") == 0) {
-      *oldval = showgridlines ? 1 : 0;
+   } else if (strcmp(optname, "synccursors") == 0) {
+      *oldval = synccursors ? 1 : 0;
       if (*oldval != newval) {
-         showgridlines = !showgridlines;
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "showboldlines") == 0) {
-      *oldval = showboldlines ? 1 : 0;
-      if (*oldval != newval) {
-         showboldlines = !showboldlines;
+         ToggleSyncCursors();
          DoAutoUpdate();
       }
 
@@ -617,13 +664,6 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
       *oldval = syncviews ? 1 : 0;
       if (*oldval != newval) {
          ToggleSyncViews();
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "synccursors") == 0) {
-      *oldval = synccursors ? 1 : 0;
-      if (*oldval != newval) {
-         ToggleSyncCursors();
          DoAutoUpdate();
       }
 
@@ -648,22 +688,6 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
          ToggleTileLayers();
          // above always does an update
          // DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "boldspacing") == 0) {
-      *oldval = boldspacing;
-      if (newval < 2) newval = 2;
-      if (newval > MAX_SPACING) newval = MAX_SPACING;
-      if (*oldval != newval) {
-         boldspacing = newval;
-         DoAutoUpdate();
-      }
-
-   } else if (strcmp(optname, "savexrle") == 0) {
-      *oldval = savexrle ? 1 : 0;
-      if (*oldval != newval) {
-         savexrle = !savexrle;
-         // no need for DoAutoUpdate();
       }
 
    // this option is deprecated (use setalgo command)
@@ -692,11 +716,13 @@ bool GSF_getoption(char* optname, int* optval)
 {
    if      (strcmp(optname, "autofit") == 0)       *optval = currlayer->autofit ? 1 : 0;
    else if (strcmp(optname, "boldspacing") == 0)   *optval = boldspacing;
+   else if (strcmp(optname, "drawingstate") == 0)  *optval = currlayer->drawingstate;
    else if (strcmp(optname, "fullscreen") == 0)    *optval = mainptr->fullscreen ? 1 : 0;
    else if (strcmp(optname, "hyperspeed") == 0)    *optval = currlayer->hyperspeed ? 1 : 0;
    else if (strcmp(optname, "mindelay") == 0)      *optval = mindelay;
    else if (strcmp(optname, "maxdelay") == 0)      *optval = maxdelay;
    else if (strcmp(optname, "opacity") == 0)       *optval = opacity;
+   else if (strcmp(optname, "restoreview") == 0)   *optval = restoreview ? 1 : 0;
    else if (strcmp(optname, "savexrle") == 0)      *optval = savexrle ? 1 : 0;
    else if (strcmp(optname, "showallstates") == 0) *optval = showallstates ? 1 : 0;
    else if (strcmp(optname, "showboldlines") == 0) *optval = showboldlines ? 1 : 0;
@@ -897,12 +923,16 @@ void GSF_dokey(char* ascii)
 
 void GSF_update()
 {
-   // update viewport, status bar and possibly title bar
+   // update viewport, status bar, and possibly other bars
    inscript = false;
    mainptr->UpdatePatternAndStatus();
    if (showtitle) {
       mainptr->SetWindowTitle(wxEmptyString);
       showtitle = false;
+   }
+   if (updateedit) {
+      UpdateEditBar(mainptr->IsActive());
+      updateedit = false;
    }
    inscript = true;
 }
@@ -1022,6 +1052,7 @@ void RunScript(const wxString& filename)
       exitcalled = false;
       allowcheck = true;
       showtitle = false;
+      updateedit = false;
       wxGetApp().PollerReset();
    }
 
