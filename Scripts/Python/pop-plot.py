@@ -2,9 +2,9 @@
 # step size) and create a plot of population vs time in separate layer.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), May 2007.
 
+import golly as g
 from glife import getminbox, rect, rccw
 from glife.text import make_text
-import golly as g
 from time import time
 
 # --------------------------------------------------------------------
@@ -108,6 +108,7 @@ pattname = g.getname()
 # create population plot in separate layer
 g.setoption("stacklayers", 0)
 g.setoption("tilelayers", 0)
+g.setoption("showlayerbar", 1)
 if poplayer == -1:
    poplayer = g.addlayer()
 else:

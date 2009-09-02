@@ -258,6 +258,7 @@ my $pattname = g_getname();
 # create population plot in separate layer
 g_setoption("stacklayers", 0);
 g_setoption("tilelayers", 0);
+g_setoption("showlayerbar", 1);
 if ($poplayer == -1) {
    $poplayer = g_addlayer();
 } else {

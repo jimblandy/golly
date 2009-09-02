@@ -577,8 +577,9 @@ void GetURL(const wxString& url)
    }
 
    wxString filename = fullurl.AfterLast('/');
-   // remove ugly stuff at start of LifeWiki file names
-   if (filename.StartsWith(wxT("pattern.asp?p="))) {
+   // remove ugly stuff at start of file names downloaded from ConwayLife.com
+   if (filename.StartsWith(wxT("pattern.asp?p=")) ||
+       filename.StartsWith(wxT("script.asp?s="))) {
       filename = filename.AfterFirst('=');
    }
 
@@ -936,7 +937,9 @@ void HtmlView::OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y)
    if (helpptr && helpptr->infront && cell) {
       wxHtmlLinkInfo* link = cell->GetLink(x,y);
       if (link) {
-         helpptr->SetStatus(link->GetHref());
+         wxString href = link->GetHref();
+         href.Replace(wxT("&"), wxT("&&"));
+         helpptr->SetStatus(href);
          wxPoint pt = ScreenToClient( wxGetMousePosition() );
          linkrect = wxRect(pt.x-x, pt.y-y, cell->GetWidth(), cell->GetHeight());
       } else {

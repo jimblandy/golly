@@ -236,7 +236,9 @@ void AlgoHelp::OnCellMouseHover(wxHtmlCell* cell, wxCoord x, wxCoord y)
    if (cell) {
       wxHtmlLinkInfo* link = cell->GetLink(x,y);
       if (link) {
-         statusline->SetLabel(link->GetHref());
+         wxString href = link->GetHref();
+         href.Replace(wxT("&"), wxT("&&"));
+         statusline->SetLabel(href);
          wxPoint pt = ScreenToClient( wxGetMousePosition() );
          linkrect = wxRect(pt.x-x, pt.y-y, cell->GetWidth(), cell->GetHeight());
       } else {
