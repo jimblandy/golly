@@ -36,6 +36,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/filename.h"   // for wxFileName
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -505,35 +507,45 @@ XS(pl_opendialog)
    if (items > 5) PERL_ERROR("Usage: g_opendialog($title, $filetypes,"
                              "$initialdir, $initialfname, $mustexist=1).");
 
-   const char* title = "Choose a file to open";
+   const char* title = "Choose a file";
    const char* filetypes = "All files (*)|*";
    const char* initialdir = "";
    const char* initialfname = "";
+   int mustexist = 1;
    STRLEN n_a;
    if (items > 0) title = SvPV(ST(0), n_a);
    if (items > 1) filetypes = SvPV(ST(1), n_a);
    if (items > 2) initialdir = SvPV(ST(2), n_a);
    if (items > 3) initialfname = SvPV(ST(3), n_a);
-      int mustexist = 1;
    if (items > 4) mustexist = SvIV(ST(4));
 
    wxString wxs_title(title, wxConvLocal);
    wxString wxs_filetypes(filetypes, wxConvLocal);
    wxString wxs_initialdir(initialdir, wxConvLocal);
    wxString wxs_initialfname(initialfname, wxConvLocal);
+   wxString wxs_result = wxEmptyString;
+   
+   if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
+   
+   if (wxs_filetypes == wxT("dir")) {
+      // let user choose a directory
+      wxDirDialog dirdlg(NULL, wxs_title, wxs_initialdir, wxDD_NEW_DIR_BUTTON);
+      if (dirdlg.ShowModal() == wxID_OK) {
+         wxs_result = dirdlg.GetPath();
+         if (wxs_result.Last() != wxFILE_SEP_PATH) wxs_result += wxFILE_SEP_PATH;
+      }
+   } else {
+      // let user choose a file
+      wxFileDialog opendlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                           wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
+      #ifdef __WXGTK__
+         // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
+         opendlg.SetDirectory(wxs_initialdir);
+      #endif
+      if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
+   }
 
-   wxFileDialog opendlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
-                         wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
-
-   #ifdef __WXGTK__
-      // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
-      opendlg.SetDirectory(wxs_initialdir);
-   #endif
-
-   wxString openfname = wxEmptyString;
-   if ( opendlg.ShowModal() == wxID_OK ) openfname = opendlg.GetPath();
-
-   XSRETURN_PV((const char*)openfname.mb_str(wxConvLocal));
+   XSRETURN_PV((const char*)wxs_result.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -562,6 +574,8 @@ XS(pl_savedialog)
    wxString wxs_filetypes(filetypes, wxConvLocal);
    wxString wxs_initialdir(initialdir, wxConvLocal);
    wxString wxs_initialfname(initialfname, wxConvLocal);
+   
+   if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
 
    // suppress Overwrite? popup if user just wants to retrieve the string
    wxFileDialog savedlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,

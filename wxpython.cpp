@@ -44,6 +44,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/filename.h"   // for wxFileName
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
@@ -493,7 +495,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   const char* title = "Choose a file to open";
+   const char* title = "Choose a file";
    const char* filetypes = "All files (*)|*";
    const char* initialdir = "";
    const char* initialfname = "";
@@ -506,19 +508,29 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
    wxString wxs_filetypes(filetypes, wxConvLocal);
    wxString wxs_initialdir(initialdir, wxConvLocal);
    wxString wxs_initialfname(initialfname, wxConvLocal);
+   wxString wxs_result = wxEmptyString;
+   
+   if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
+   
+   if (wxs_filetypes == wxT("dir")) {
+      // let user choose a directory
+      wxDirDialog dirdlg(NULL, wxs_title, wxs_initialdir, wxDD_NEW_DIR_BUTTON);
+      if (dirdlg.ShowModal() == wxID_OK) {
+         wxs_result = dirdlg.GetPath();
+         if (wxs_result.Last() != wxFILE_SEP_PATH) wxs_result += wxFILE_SEP_PATH;
+      }
+   } else {
+      // let user choose a file
+      wxFileDialog opendlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                           wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
+      #ifdef __WXGTK__
+         // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
+         opendlg.SetDirectory(wxs_initialdir);
+      #endif
+      if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
+   }
 
-   wxFileDialog opendlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
-                         wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
-
-   #ifdef __WXGTK__
-      // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
-      opendlg.SetDirectory(wxs_initialdir);
-   #endif
-
-   wxString wxs_openfname = wxEmptyString;
-   if ( opendlg.ShowModal() == wxID_OK ) wxs_openfname = opendlg.GetPath();
-
-   return Py_BuildValue((char*)"s", (const char*)wxs_openfname.mb_str(wxConvLocal));
+   return Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(wxConvLocal));
 }
 
 // -----------------------------------------------------------------------------
@@ -540,6 +552,8 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
    wxString wxs_filetypes(filetypes, wxConvLocal);
    wxString wxs_initialdir(initialdir, wxConvLocal);
    wxString wxs_initialfname(initialfname, wxConvLocal);
+   
+   if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
 
    wxFileDialog savedlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
                           wxFD_SAVE | (suppressprompt == 0 ? wxFD_OVERWRITE_PROMPT : 0) );

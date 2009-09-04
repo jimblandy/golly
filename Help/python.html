@@ -297,24 +297,27 @@ If the <b>savexrle</b> option is True then extended RLE format is used
 <dd>
 Present a standard Open dialog to the user and return the chosen path in a string.
 All parameters are optional; the default is an Open dialog showing the current directory,
-with a title of "Choose a file to open" and a file type of "All files (*)|*".
+with a title of "Choose a file" and a file type of "All files (*)|*".
 If the 5th parameter (default = True) is set to False, the user can specify a new filename
-instead of choosing an existing file. If the user cancels the Open dialog, the return
-value will be an empty string.
+instead of choosing an existing file.
+If the given file type is "dir" then the dialog lets the user choose a directory
+rather than a file.
+If the user cancels the dialog, the return value will be an empty string.
 </dd>
 <dd> Example: <b>fname = golly.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\\Temp", "sample.mcl")</b></dd>
+<dd> Example: <b>dirname = golly.opendialog("Choose a folder", "dir");</b></dd>
 </p>
 
 <a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=False</i>)</b></dt>
 <dd>
 Present a standard Save dialog to the user and return the chosen path in a string.
 All parameters are optional; the default is a Save dialog showing the current directory,
-with a title of  "Choose a save location and filename" and a file type of "All files (*)|*".
+with a title of "Choose a save location and filename" and a file type of "All files (*)|*".
 If a file already exists at the chosen location, an Overwrite? query will be displayed
-unless the 5th parameter (default = False) is set to True. If the user cancels the Save
-dialog, the return value will be an empty string.
+unless the 5th parameter (default = False) is set to True.
+If the user cancels the dialog, the return value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.savedialog("Choose an output location", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd>
+<dd> Example: <b>fname = golly.savedialog("Save text file", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd>
 </p>
 
 <a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt>
