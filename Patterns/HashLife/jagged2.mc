@@ -116,8 +116,7 @@
 #C The open question here is what happens to the collision point C.  Does it
 #C drift infinitely far west?  Infinitely far east?  Both?
 #C 
-#C Dean Hickerson, 7 May 2005
-#C dean@math.ucdavis.edu
+#C Dean Hickerson (dean.hickerson@yahoo.com) 7 May 2005
 $$$$$$$.....***$
 4 0 0 0 1
 $$$$$$$...***$
