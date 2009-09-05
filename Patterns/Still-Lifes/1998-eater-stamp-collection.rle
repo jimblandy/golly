@@ -4,7 +4,7 @@
 #C 5.0 is 'eater2'; 6.0 and 6.1 are variations of 'eater3'.
 #C 10.0 and 11.3 produce a 1-bit spark, which can be useful.
 #C Dean Hickerson, ~ December 1998
-#C http://www.math.ucdavis.edu/~dean/RLE/glider.eaters.html
+#C http://www.radicaleye.com/DRH/glider.eaters.html
 x = 241, y = 350, rule = B3/S23
 9b2o4b2o$10bo5bo$9bo5bo$9b2o4b2o6bo11bo$11bob2o9bo11bo2b2o$11b2obo7b3o
 9b3obobo$15b2o22bo$16bo8b2o$15bo9bo11b5o$15b2o9b3o9bo2bo$28bo7bo$36b2o

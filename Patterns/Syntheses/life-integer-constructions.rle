@@ -1,7 +1,7 @@
 #C Collection of small objects generated from integers written
 #C in a five-cell-high 'font' suggested by Eric Angelini.
 #C For a more complex construction, see Scripts/life-integer-gun30.py.
-#C See http://www.math.ucdavis.edu/~dean/RLE/digits.html for details.
+#C See http://www.radicaleye.com/DRH/digits.html for details.
 #C
 #C This pattern contains numeric predecessors of various still-lifes,
 #C oscillators, the "familiar fours" (and some less familiar ones),

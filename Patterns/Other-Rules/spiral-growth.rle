@@ -1,5 +1,5 @@
 #C Spiral growth with 1, 2, 3, 4, 5, 6, 8, and 12 plows; for details,
-#C see http://www.math.ucdavis.edu/~dean/RLE/B34568S15678.html .
+#C see http://www.radicaleye.com/DRH/B34568S15678.html .
 #C The spirals crash in generation 2005 and eventually stabilize
 #C into a large irregular p2 octagon.  Dean Hickerson, 2 June 2006.
 x = 217, y = 240, rule = B34568/S15678
