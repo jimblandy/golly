@@ -13,7 +13,7 @@
 #C Galaxy, while the two 'L's are derived from another phase --
 #C divided and rotated. The memory loop technology is borrowed from
 #C Alan Hensel's Decimal Counter, listed on Dean Hickerson's webpage:
-#C http://www.math.ucdavis.edu/~dean/life.html
+#C  http://www.radicaleye.com/DRH/dec.counter.html .
 #C
 #C P.S. In hash mode at step 8^6, the tape appears to run in reverse!
 #C And if you are new to Life, you will gain some insight by pondering
