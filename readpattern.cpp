@@ -148,13 +148,13 @@ void ParseXRLELine(char *line, int *xoff, int *yoff, bigint &gen) {
       while (*key && *key != ' ') key++;
       while (*key == ' ') key++;
       if (*key == 0) return;
-      
+
       // set value to pos of char after next '='
       char *value = key;
       while (*value && *value != '=') value++;
       if (*value == 0) return;
       value++;
-   
+
       if (strncmp(key, "Pos", 3) == 0) {
          // extract Pos=int,int
          sscanf(value, "%d,%d", xoff, yoff);
@@ -194,7 +194,7 @@ const char *readrle(lifealgo &imp, char *line) {
       xrle = true;
       if (getline(line, LINESIZE) == NULL) return 0;
    }
-   
+
    do {
       if (line[0] == '#') {
          if (line[1] == 'r') {
@@ -219,7 +219,7 @@ const char *readrle(lifealgo &imp, char *line) {
          sscanf(p, "%d", &wd);
          while (*p && *p != '=') p++; p++;
          sscanf(p, "%d", &ht);
-         
+
          /* we no longer center RLE pattern around 0,0
          if (!xrle) {
             xoff = -(wd / 2);
@@ -233,7 +233,7 @@ const char *readrle(lifealgo &imp, char *line) {
             bottom = yoff + ht - 1;
             right = xoff + wd - 1;
          }
-         
+
          while (*p && *p != 'r') p++;
          if (strncmp(p, "rule", 4) == 0) {
             p += 4;
@@ -247,7 +247,7 @@ const char *readrle(lifealgo &imp, char *line) {
             if (errmsg) return errmsg;
             sawrule = true;
          }
-         
+
          if (!sawrule) {
             // if no rule given then try Conway's Life; if it fails then
             // return error so Golly will look for matching algo
@@ -300,7 +300,7 @@ const char *readrle(lifealgo &imp, char *line) {
          }
       }
    } while (getline(line, LINESIZE));
-   
+
    return 0;
 }
 
@@ -359,7 +359,7 @@ const char *readpclife(lifealgo &imp, char *line) {
          y++ ;
       }
    } while (getline(line, LINESIZE));
-   
+
    return 0;
 }
 
@@ -406,6 +406,7 @@ const char *readmcell(lifealgo &imp, char *line) {
    char *p;
    const char *errmsg;
    bool sawrule = false;            // saw explicit rule?
+   bool extendedHL = false;         // special-case rule translation for extended HistoricalLife rules
 
    while (getline(line, LINESIZE)) {
       if (line[0] == '#') {
@@ -440,6 +441,12 @@ const char *readmcell(lifealgo &imp, char *line) {
                      }
                      if ('A' <= c && c <= 'X') {
                         state = state + c - 'A' + 1;
+						if (extendedHL) {
+						   // adjust marked states for LifeHistory
+						   if (state == 8) state = 4;
+						   else if (state == 3) state = 5;
+						   else if (state == 5) state = 3;
+					    }
                      } else {
                         return "Illegal multi-char state";
                      }
@@ -455,16 +462,34 @@ const char *readmcell(lifealgo &imp, char *line) {
          // we allow lines like "#GOLLY WireWorld"
          } else if (!sawrule && (strncmp(line, "#GOLLY", 6) == 0 ||
                                  strncmp(line, "#RULE", 5) == 0) ) {
-            char *ruleptr = line;
-            // skip "#GOLLY" or "#RULE"
-            ruleptr += line[1] == 'G' ? 6 : 5;
-            while (*ruleptr && *ruleptr <= ' ') ruleptr++;
-            p = ruleptr;
-            while (*p > ' ') p++;
-            *p = 0;
-            errmsg = imp.setrule(ruleptr);
-            if (errmsg) return errmsg;
-            sawrule = true;
+			 if (strncmp(line, "#RULE 1,0,1,0,0,0,1,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,0,2,2,2,1,2,2,2,2,2", 69) == 0) {
+				// standard HistoricalLife rule -- all states transfer directly to LifeHistory
+				if (strncmp(line, "#RULE 1,0,1,0,0,0,1,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,0,2,2,2,1,2,2,2,2,2,", 70) == 0) {
+				   // special case:  Brice Due's extended HistoricalLife rules have
+				   // non-contiguous states (State 8 but no State 4, 6, or 7)
+				   // that need translating to work in LifeHistory)
+				   extendedHL = true;
+				}
+				errmsg = imp.setrule("LifeHistory");
+				if (errmsg) return errmsg;
+                sawrule = true;
+			 } else if (strncmp(line, "#RULE 1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1", 40) == 0) {
+			    errmsg = imp.setrule("B3/S23");
+                if (errmsg) errmsg = imp.setrule("Life");
+			    if (errmsg) return errmsg;
+			    sawrule = true;
+             } else {
+               char *ruleptr = line;
+               // skip "#GOLLY" or "#RULE"
+               ruleptr += line[1] == 'G' ? 6 : 5;
+               while (*ruleptr && *ruleptr <= ' ') ruleptr++;
+               p = ruleptr;
+               while (*p > ' ') p++;
+               *p = 0;
+               errmsg = imp.setrule(ruleptr);
+               if (errmsg) return errmsg;
+               sawrule = true;
+            }
          }
       }
    }
@@ -571,7 +596,7 @@ const char *loadpattern(lifealgo &imp) {
       imp.endofpattern() ;
       // if getedges is true then readtextpattern has set top,left,bottom,right
    }
-   
+
    lifeendprogress();
    return errmsg ;
 }
@@ -714,7 +739,7 @@ const char *readcomments(const char *filename, char **commptr)
             commlen++;
          }
       }
-      
+
    } else if (line[0] == '#' || line[0] == 'x') {
       // extract comment lines from RLE file
       while (line[0] == '#') {
@@ -774,7 +799,7 @@ const char *readcomments(const char *filename, char **commptr)
    } else {
       // no comments in text pattern file???
    }
-   
+
    lifeendprogress();
    if (commlen == maxcommlen) commlen--;
    cptr[commlen] = 0;
