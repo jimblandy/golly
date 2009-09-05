@@ -12,9 +12,9 @@
 #C Since this collection was built, many new oscillators have been found.
 #C Most notably, in 1996 David Buckingham showed how to create tracks
 #C built from still-lifes through which Herschels can move.  (See
-#C  http://www.cs.jhu.edu/~callahan/patterns/bhept/bhept.html 
+#C  http://www.radicaleye.com/lifepage/patterns/bhept/bhept.html
 #C for Buckingham's description of this, and
-#C  http://www.cs.jhu.edu/~callahan/patterns/p1/p1.html 
+#C  http://www.radicaleye.com/lifepage/patterns/p1/p1.html
 #C for Paul Callahan's discussion of using such conduits to build a stable
 #C glider reflector.)  Using Herschel tracks, Buckingham obtained glider
 #C guns of all periods >= 62 and oscillators of all periods >= 61.  Further
@@ -23,25 +23,24 @@
 #C >=54, and guns of periods 54, 55, and 56.
 #C
 #C In addition, oscillators of several new smaller periods have been found,
-#C namely 17 (by me), 22 (by Noam Elkies, me, and Jason Summers), 33 (by
-#C Elkies and Jason Summers), 39 (by Elkies), and 49 (by Elkies).  (See
-#C  http://www.math.ucdavis.edu/~dean/RLE/nbt.html 
+#C namely 17 (by me), 22 (by Noam Elkies, me, and Jason Summers), 27 (by
+#C Elkies), 33 (by Elkies and Jason Summers), 37 (by Nicolay Beluchenko),
+#C 39 (by Elkies), 49 (by Elkies), and 51 (by Beluchenko).  (See
+#C  http://www.radicaleye.com/DRH/nbt.html
 #C for many oscillators of small periods, including the only known p17s
-#C and the smallest known p22s.)  There are now only 12 periods for which
-#C oscillators are still unknown: 19, 23, 27, 31, 34, 37, 38, 41, 43, 51,
-#C and 53.  (For period 34, we could use a noninteracting combination of p2
-#C and p17 oscillators, but that's considered trivial.  Similarly for
-#C periods 39 and 51.)
+#C and the smallest known p22s.)  There are 8 periods for which oscillators
+#C are still unknown as of early 2009: 19, 23, 31, 34, 38, 41, 43, and 53.
+#C (For period 34, we could use a noninteracting combination of p2 and p17
+#C oscillators, but that's considered trivial.)
 #C
 #C Some new guns of smaller periods have also been found, namely 22 (by
 #C David Eppstein, based on Jason Summers's p22 oscillator), 24 and 48 (by
 #C Elkies) and 50 (by me, based on a p44 gun by Buckingham and a p50
 #C oscillator by Elkies).  These are shown (among others) at
-#C  http://home.mieweb.com/jason/life/guns/ 
-#C Also see
-#C  http://www.cs.jhu.edu/~callahan/patterns/p24gun/p24gun.html 
+#C  http://home.mieweb.com/jason/life/guns/ .
+#C Also see http://www.radicaleye.com/lifepage/patterns/p24gun/p24gun.html
 #C for discussion of the p24 gun, and
-#C  http://www.math.ucdavis.edu/~dean/RLE/gun44.50.html 
+#C  <a href="gun.44.50.html">http://www.radicaleye.com/DRH/gun44.50.html</a>
 #C for the p50 gun and Buckingham's p44 gun.
 #C
 #C Building this collection would have been impossible without the help
@@ -49,10 +48,12 @@
 #C like to thank Alan Hensel, Bill Gosper, Robert Wainwright,
 #C Rich Schroeppel, and Jonathan Cooley for helpful suggestions, and
 #C Andrew Trevorrow for writing LifeLab, an excellent Macintosh program
-#C for building and running Life patterns.  LifeLab is available as
-#C shareware at  http://www.kagi.com./authors/akt/lifelab.html 
+#C for building and running Life patterns.  LifeLab's cross-platform
+#C successor, Golly, is available as freeware at http://golly.sf.net .
 #C
-#O Dean Hickerson, dean@math.ucdavis.edu (2/2/2000; last updated 9/16/2000)
+#O Dean Hickerson, dean.hickerson@yahoo.com
+#C 2/2/2000; last updated 9/16/2000. URLs corrected
+#C  and list of missing periods updated on 5/8/2009.
 #C
 #C ----------------------------------------------------------------------
 #C
