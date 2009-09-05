@@ -1,0 +1,8 @@
+#C Glider Flyby with glider Out of the Blue:
+#C p92 Conway-Space Natural Heisenburp Duplicator
+#C Brice Due, 8 January 2005
+x = 46, y = 51, rule = B3/S23
+8b6o5b4o$8b4o7b2obo$11b2obo7bo$13b2o5b2o2$13b2o5b2o$11b2obo7bo$8b4o7b
+2obo12b2o$8b6o5b4o12b2o2$39bo$39bo4$41bo8$36b2o5b2o$35bo2bo3bo2bo$23b
+2o11bo2bobo2bo$24b2o13bobo$23bo13b3ob3o$35b3o5b3o$35b2o7b2o$35b2o7b2o$
+36bob2ob2obo$36b3o3b3o$37bo5bo3$36b2o5b2o$36b2o5b2o11$2o$b2o$o!
