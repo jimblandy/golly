@@ -441,12 +441,12 @@ const char *readmcell(lifealgo &imp, char *line) {
                      }
                      if ('A' <= c && c <= 'X') {
                         state = state + c - 'A' + 1;
-						if (extendedHL) {
-						   // adjust marked states for LifeHistory
-						   if (state == 8) state = 4;
-						   else if (state == 3) state = 5;
-						   else if (state == 5) state = 3;
-					    }
+                        if (extendedHL) {
+                           // adjust marked states for LifeHistory
+                           if (state == 8) state = 4;
+                           else if (state == 3) state = 5;
+                           else if (state == 5) state = 3;
+                        }
                      } else {
                         return "Illegal multi-char state";
                      }
@@ -462,22 +462,22 @@ const char *readmcell(lifealgo &imp, char *line) {
          // we allow lines like "#GOLLY WireWorld"
          } else if (!sawrule && (strncmp(line, "#GOLLY", 6) == 0 ||
                                  strncmp(line, "#RULE", 5) == 0) ) {
-			 if (strncmp(line, "#RULE 1,0,1,0,0,0,1,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,0,2,2,2,1,2,2,2,2,2", 69) == 0) {
-				// standard HistoricalLife rule -- all states transfer directly to LifeHistory
-				if (strncmp(line, "#RULE 1,0,1,0,0,0,1,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,0,2,2,2,1,2,2,2,2,2,", 70) == 0) {
-				   // special case:  Brice Due's extended HistoricalLife rules have
-				   // non-contiguous states (State 8 but no State 4, 6, or 7)
-				   // that need translating to work in LifeHistory)
-				   extendedHL = true;
-				}
-				errmsg = imp.setrule("LifeHistory");
-				if (errmsg) return errmsg;
+             if (strncmp(line, "#RULE 1,0,1,0,0,0,1,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,0,2,2,2,1,2,2,2,2,2", 69) == 0) {
+                // standard HistoricalLife rule -- all states transfer directly to LifeHistory
+                if (strncmp(line, "#RULE 1,0,1,0,0,0,1,0,0,0,0,0,0,2,2,1,1,2,2,2,2,2,0,2,2,2,1,2,2,2,2,2,", 70) == 0) {
+                   // special case:  Brice Due's extended HistoricalLife rules have
+                   // non-contiguous states (State 8 but no State 4, 6, or 7)
+                   // that need translating to work in LifeHistory)
+                   extendedHL = true;
+                }
+                errmsg = imp.setrule("LifeHistory");
+                if (errmsg) return errmsg;
                 sawrule = true;
-			 } else if (strncmp(line, "#RULE 1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1", 40) == 0) {
-			    errmsg = imp.setrule("B3/S23");
+             } else if (strncmp(line, "#RULE 1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1", 40) == 0) {
+                errmsg = imp.setrule("B3/S23");
                 if (errmsg) errmsg = imp.setrule("Life");
-			    if (errmsg) return errmsg;
-			    sawrule = true;
+                if (errmsg) return errmsg;
+                sawrule = true;
              } else {
                char *ruleptr = line;
                // skip "#GOLLY" or "#RULE"
