@@ -1,7 +1,8 @@
 # Makefile for building Mac OS 10.3.9 PPC version of Golly using wxWidgets.
 # 
 # WARNING: It assumes you've built wxWidgets using these steps:
-# - Edit include/wx/mac/setup.h and set wxUSE_UNICODE to 1.
+# - Edit include/wx/mac/setup.h, set wxUSE_UNICODE to 1, and comment out
+#   the lines near the end that redefine wxUSE_TOGGLEBTN to 0.
 # - Open src/wxWindows.xcodeproj.
 # - Select Project > Set Active Target > static.
 # - Select Project > Set Active Build Configuration > Deployment.
