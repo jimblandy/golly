@@ -449,25 +449,6 @@ ghashbase::ghashbase() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
-   /* AKT: can't do this here (it would clobber user's preferred colors
-      if/when we let people override the default colors)
-   for (int i=0; i<256; i++)
-     cellred[i] = cellgreen[i] = cellblue[i] = 0 ;
-   cellred[1] |= 0x92 ;
-   cellblue[2] |= 0x92 ;
-   cellgreen[4] |= 0x92 ;
-   cellred[8] |= 0x49 ;
-   cellblue[16] |= 0x49 ;
-   cellgreen[32] |= 0x49 ;
-   cellred[64] |= 0x24 ;
-   cellgreen[128] |= 0x24 ;
-   for (int i=1; i<256; i++) {
-     cellred[i] = cellred[i&-i] | cellred[i&(i-1)] ;
-     cellgreen[i] = cellgreen[i&-i] | cellgreen[i&(i-1)] ;
-     cellblue[i] = cellblue[i&-i] | cellblue[i&(i-1)] ;
-   }
-   cellred[0] = cellgreen[0] = cellblue[0] = 255 ;
-   */
 }
 /**
  *   Destructor frees memory.
