@@ -106,7 +106,11 @@ extern "C"
 {
    // startup/shutdown
    void(*G_Py_Initialize)(void) = NULL;
+#ifdef __LP64__
+   PyObject*(*G_Py_InitModule4_64)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
+#else
    PyObject*(*G_Py_InitModule4)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
+#endif
    void(*G_Py_Finalize)(void) = NULL;
 
    // errors
@@ -145,7 +149,11 @@ extern "C"
 
 // redefine the Py* functions to their equivalent G_* wrappers
 #define Py_Initialize         G_Py_Initialize
-#define Py_InitModule4        G_Py_InitModule4
+#ifdef __LP64__
+   #define Py_InitModule4_64  G_Py_InitModule4_64
+#else
+   #define Py_InitModule4     G_Py_InitModule4
+#endif
 #define Py_Finalize           G_Py_Finalize
 #define PyErr_Occurred        G_PyErr_Occurred
 #define PyErr_SetString       G_PyErr_SetString
@@ -185,7 +193,11 @@ static struct PythonFunc
 } pythonFuncs[] =
 {
    PYTHON_FUNC(Py_Initialize)
+#ifdef __LP64__
+   PYTHON_FUNC(Py_InitModule4_64)
+#else
    PYTHON_FUNC(Py_InitModule4)
+#endif
    PYTHON_FUNC(Py_Finalize)
    PYTHON_FUNC(PyErr_Occurred)
    PYTHON_FUNC(PyErr_SetString)
