@@ -209,6 +209,12 @@ string ruletable_algo::LoadRuleTable(string rule)
             oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
             return oss.str();
          }
+         if(n_states<2 || n_states>256)
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": n_states out of range (min 2, max 256)";
+            return oss.str();
+         }
          n_states_parsed = true;
       }
       else if(starts_with(line,symmetries_keyword))
@@ -317,7 +323,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                if(c<'0' || c>'9')
                {
                   ostringstream oss;
-                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - non-digit character (don't use commas if n_states<11 and no variables)";
                   return oss.str();
                }
                inputs.push_back(vector<state>(1,c-'0'));
