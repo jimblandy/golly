@@ -42,13 +42,13 @@ class GenerateRuleTree:
 
 # define your own transition function here:
 def my_transition_function(a):
-	# B3/S23
-	n = a[0] + a[1] + a[2] + a[3] + a[4] + a[5] + a[6] + a[7]
-	if n == 2 and not a[8] == 0:
-		return 1
-	if n == 3:
-		return 1
-	return 0
+   # B3/S23
+   n = a[0] + a[1] + a[2] + a[3] + a[4] + a[5] + a[6] + a[7]
+   if n == 2 and not a[8] == 0:
+      return 1
+   if n == 3:
+      return 1
+   return 0
 
 # call the rule tree generator with your chosen parameters
 n_states = 2
