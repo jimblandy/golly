@@ -1351,7 +1351,7 @@ void SaveRelPath(FILE* f, const char* name, wxString path)
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char* GOLLY_VERSION = STRINGIFY(VERSION);
+const char* GOLLY_VERSION = STRINGIFY(VERSION); 
 
 void SavePrefs()
 {
