@@ -153,3 +153,10 @@ Tim Hutton:
 
 William R. Buckley:
 - Provide an option to increase spacing between buttons.
+
+Dean Hickerson:
+- Make Duplicate Layer faster by writing current pattern to temp file
+  and reading it into new layer.
+- The Save Pattern dialog should use .mc as the default format if the
+  current algo is hash-based (ie. all except QuickLife).
+- List unassigned actions at end of Help > Keyboard Shortcuts.
