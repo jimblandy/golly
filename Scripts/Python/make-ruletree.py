@@ -17,14 +17,18 @@ def transition_function(a):
     return 0
 '''
 
-import golly
-### no need??? import time
+# Another example:
+'''
+name = "parity-wse"
+n_states = 5
+n_neighbors = 4
+# order for 8 neighbors is NW, NE, SW, SE, N, W, E, S, C
+# order for 4 neighbors is N, W, E, S, C
+def transition_function ( s ) : 
+      return ( s[0] + s[1] + s[2] ) % 5
+'''
 
-# exec() only works if all lines end with LF, so we need to convert
-# any Win line endings (CR+LF) or Mac line endings (CR) to LF
-CR = chr(13)
-LF = chr(10)
-exec(golly.getclipstr().replace(CR+LF,LF).replace(CR,LF))
+import golly
 
 class GenerateRuleTree:
 
@@ -54,8 +58,14 @@ class GenerateRuleTree:
             return self.transFunc(self.params)
         n = str(at)
         for i in xrange(self.numStates):
-            self.params[self.numParams-at] = i
-            n += " " + str(self.recur(at-1))
+           # report progress
+           if at == self.numParams:
+              golly.show('Generating rule tree: '+str(int(100*i/self.numStates))+'%...')
+           # allow golly to update
+           if at == self.numParams-1:
+              golly.update()
+           self.params[self.numParams-at] = i
+           n += " " + str(self.recur(at-1))
         return self.getNode(n)
 
     def writeRuleTree(self,name):
@@ -74,5 +84,35 @@ class GenerateRuleTree:
         golly.setrule(name)
         golly.show("Created "+name+".tree in "+golly.getdir("rules"))
 
-gen = GenerateRuleTree(n_states, n_neighbors, transition_function)
-gen.writeRuleTree(name)
+# exec() only works if all lines end with LF, so we need to convert
+# any Win line endings (CR+LF) or Mac line endings (CR) to LF
+CR = chr(13)
+LF = chr(10)
+try:
+   
+   exec(golly.getclipstr().replace(CR+LF,LF).replace(CR,LF))
+   gen = GenerateRuleTree(n_states, n_neighbors, transition_function)
+   gen.writeRuleTree(name)
+   
+except:
+   import sys
+   import traceback
+   exception, msg, tb = sys.exc_info()
+   golly.warn(\
+'''To use this script, copy a Python format rule definition into the clipboard, e.g.:
+
+name = "parity-wse"
+n_states = 5
+n_neighbors = 4
+# order for 8 neighbors is NW, NE, SW, SE, N, W, E, S, C
+# order for 4 neighbors is N, W, E, S, C
+def transition_function ( s ) : 
+      return ( s[0] + s[1] + s[2] ) % 5
+
+For more examples, see the script file (right-click on it).
+____________________________________________________
+
+A problem was encountered with the supplied rule:
+
+'''+ '\n'.join(traceback.format_exception(exception, msg, tb)))
+   golly.exit()
