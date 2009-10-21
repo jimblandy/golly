@@ -1,13 +1,16 @@
-# Generates a rule tree using a given Python transition function passed
-# in via the clipboard.  Here's an example function for Conway's Life
+# Generates a rule tree using a given Python transition function
+# passed in via the clipboard.  Requires Golly 2.1 or later.
+# Author: Tim Hutton (tim.hutton@gmail.com), based on Tom Rokicki's
+# RuleTreeGen code in the Rules/TreeGenerators directory.
+
+# Here's an example function for Conway's Life
 # (copy all the lines between the triple quotes):
 '''
 # B3/S23:
 name = "LifeTest"
 n_states = 2
 n_neighbors = 8
-# order for eight neighbors is NW, NE, SW, SE, N, W, E, S, C
-# order for four neighbors is N, W, E, S, C
+# order for 8 neighbors is NW, NE, SW, SE, N, W, E, S, C
 def transition_function(a):
     n = a[0]+a[1]+a[2]+a[3]+a[4]+a[5]+a[6]+a[7]
     if n==2 and a[8]==1:
@@ -17,15 +20,14 @@ def transition_function(a):
     return 0
 '''
 
-# Another example:
+# Another example, but using the vonNeumann neighborhood:
 '''
-name = "parity-wse"
+name = "ParityNWE"
 n_states = 5
 n_neighbors = 4
-# order for 8 neighbors is NW, NE, SW, SE, N, W, E, S, C
 # order for 4 neighbors is N, W, E, S, C
 def transition_function ( s ) : 
-      return ( s[0] + s[1] + s[2] ) % 5
+    return ( s[0] + s[1] + s[2] ) % 5
 '''
 
 import golly
@@ -79,7 +81,6 @@ class GenerateRuleTree:
             f.write(rule+"\n")
         f.flush()                   # ensure file is complete (only on Windows?)
         f.close()
-        ### time.sleep(0.5)         # avoid opening partially complete file?
         golly.setalgo("RuleTree")   # in case name.table exists
         golly.setrule(name)
         golly.show("Created "+name+".tree in "+golly.getdir("rules"))
@@ -101,7 +102,7 @@ except:
    golly.warn(\
 '''To use this script, copy a Python format rule definition into the clipboard, e.g.:
 
-name = "parity-wse"
+name = "ParityNWE"
 n_states = 5
 n_neighbors = 4
 # order for 8 neighbors is NW, NE, SW, SE, N, W, E, S, C
