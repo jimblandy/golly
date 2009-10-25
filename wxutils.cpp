@@ -121,6 +121,8 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    SetSizer(topSizer);
 
    textbox = new wxTextCtrl(this, wxID_ANY, instring);
+                            // add wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE
+                            // as an option to allow multi-line input???!!!
    wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
