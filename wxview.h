@@ -112,6 +112,7 @@ public:
    bool showcontrols;            // draw translucent controls?
    wxRect controlsrect;          // location of translucent controls
    wxRect pasterect;             // area to be pasted
+   wxCursor* oldcursor;          // non-NULL if shift key has toggled cursor
 
    int tileindex;
    // if the tileindex is >= 0 then this is a tiled window (such windows
@@ -187,7 +188,6 @@ private:
    int drawstate;                // new cell state (0..255)
    wxBrush* cellbrush;           // brush used to draw live cells
    int pastex, pastey;           // where user wants to paste clipboard pattern
-   wxCursor* oldcursor;          // non-NULL if shift key has toggled cursor
    int hthumb, vthumb;           // current thumb box positions
    int realkey;                  // key code set by OnKeyDown
    wxString debugkey;            // display debug info for OnKeyDown and OnChar

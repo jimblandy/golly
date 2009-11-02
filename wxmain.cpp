@@ -1445,6 +1445,14 @@ void MainFrame::OnActivate(wxActivateEvent& event)
 {
    // note that IsActive() doesn't always match event.GetActive()
 
+   if (viewptr->oldcursor != NULL && !event.GetActive()) {
+      // this can happen if the shift key is used in a keyboard shortcut that
+      // opens a dialog or window, which means PatternView::OnKeyUp isn't called
+      viewptr->SetCursorMode(viewptr->oldcursor);
+      viewptr->oldcursor = NULL;
+      UpdateEditBar(false);
+   }
+
    #ifdef __WXMAC__
       // to avoid disabled menu items after a modal dialog closes
       // don't call UpdateMenuItems on deactivation
