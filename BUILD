@@ -118,6 +118,11 @@ NOTES:
 
 - In makefile-win you need to include the headers for Perl and Python
   so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
+  
+- On Linux you may need to add some development packages. For example, 
+  from a default Ubuntu install (at the time of writing) you will need
+  to install the following packages: libgtk2.0-dev, python2.6-dev (for 
+  GTK and Python respectively).
 
 
 How to build bgolly (the batch mode version)
