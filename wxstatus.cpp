@@ -568,7 +568,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
    h_scale = h_pop + textwd + mingap;
    dc.GetTextExtent(_("Scale=2^9999:1"), &textwd, &textht);
    h_step = h_scale + textwd + mingap;
-   dc.GetTextExtent(_("Step=10^9999"), &textwd, &textht);
+   dc.GetTextExtent(_("Step=1000000000^9"), &textwd, &textht);
    h_xy = h_step + textwd + mingap;
    // when showexact is true:
    dc.GetTextExtent(_("X = "), &textwd, &textht);
