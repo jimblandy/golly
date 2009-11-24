@@ -11,9 +11,6 @@ Andrew's list:
      wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or
      SDL or SFML.  On Mac, use Quartz?
 
-- Revisit universal scripting idea, but use shared memory for IPC
-  rather than redirecting stdin/out.
-
 - Auto stop script if it creates too many temp files (for undo).
   This can happen if a long-running script doesn't call new/open
   when it probably should.  See my email to Nathaniel with subject
