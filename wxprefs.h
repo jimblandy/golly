@@ -190,6 +190,8 @@ typedef enum {
    DO_NEWPATT,                   // new pattern
    DO_NEXTGEN,                   // next generation
    DO_NEXTSTEP,                  // next step
+   DO_NEXTHIGHER,                // next higher state
+   DO_NEXTLOWER,                 // next lower state
    DO_OPENCLIP,                  // open clipboard
    DO_OPENPATT,                  // open pattern...
    DO_PASTE,                     // paste

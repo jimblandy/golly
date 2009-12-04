@@ -1436,6 +1436,8 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_CURSCYCLE:   CycleCursorMode(); break;
       case DO_PASTEMODE:   CyclePasteMode(); break;
       case DO_PASTELOC:    CyclePasteLocation(); break;
+      case DO_NEXTHIGHER:  CycleDrawingState(true); break;
+      case DO_NEXTLOWER:   CycleDrawingState(false); break;
 
       // Control menu actions
       case DO_STARTSTOP:   if (!inscript) {

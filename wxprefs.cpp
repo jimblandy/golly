@@ -559,6 +559,8 @@ const char* GetActionName(action_id action)
       case DO_STARTSTOP:      return "Start/Stop Generating";
       case DO_NEXTGEN:        return "Next Generation";
       case DO_NEXTSTEP:       return "Next Step";
+      case DO_NEXTHIGHER:     return "Next Higher State";
+      case DO_NEXTLOWER:      return "Next Lower State";
       case DO_RESET:          return "Reset";
       case DO_SETGEN:         return "Set Generation...";
       case DO_FASTER:         return "Faster";

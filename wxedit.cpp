@@ -958,3 +958,31 @@ void ShiftEditBar(int yamount)
    editbarptr->GetPosition(&x, &y);
    editbarptr->Move(x, y + yamount);
 }
+
+// -----------------------------------------------------------------------------
+
+void CycleDrawingState(bool higher)
+{
+   if (viewptr->drawingcells) return;
+   
+   int maxstate = currlayer->algo->NumCellStates() - 1;
+   
+   if (higher) {
+      if (currlayer->drawingstate == maxstate)
+         currlayer->drawingstate = 0;
+      else
+         currlayer->drawingstate++;
+   } else {
+      if (currlayer->drawingstate == 0)
+         currlayer->drawingstate = maxstate;
+      else
+         currlayer->drawingstate--;
+   }
+   
+   if (showedit) {
+      editbarptr->Refresh(false);
+      editbarptr->Update();
+      editbarptr->UpdateScrollBar();
+   }
+}
+

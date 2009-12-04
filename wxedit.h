@@ -48,4 +48,7 @@ void ToggleAllStates();
 void ShiftEditBar(int yamount);
 // Shift edit bar up/down by given amount.
 
+void CycleDrawingState(bool higher);
+// Cycle current drawing state to next higher/lower state.
+
 #endif
