@@ -156,4 +156,3 @@ Dean Hickerson:
   and reading it into new layer.
 - The Save Pattern dialog should use .mc as the default format if the
   current algo is hash-based (ie. all except QuickLife).
-- List unassigned actions at end of Help > Keyboard Shortcuts.

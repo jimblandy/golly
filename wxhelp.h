@@ -32,9 +32,9 @@ void ShowHelp(const wxString& filepath);
 // front if it's open, or it is opened and the most recent html file
 // is displayed.
 
-const wxString SHOW_KEYBOARD_SHORTCUTS = wxT("keyboard_shortcuts");
-// If ShowHelp is called with this special string then a temporary
-// HTML file is created to show the current keyboard shortcuts.
+const wxString SHOW_KEYBOARD_SHORTCUTS = wxT("keyboard.html");
+// If ShowHelp is called with this string then a temporary HTML file
+// is created to show the user's current keyboard shortcuts.
 
 void ShowAboutBox();
 // Open a modal dialog and display info about the app.

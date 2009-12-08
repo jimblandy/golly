@@ -832,29 +832,52 @@ wxString GetKeyCombo(int key, int modset)
 wxString GetShortcutTable()
 {
    // return HTML data to display current keyboard shortcuts in help window
-   wxString result = wxEmptyString;
+   wxString result;
+   result += _("<html><title>Golly Help: Keyboard Shortcuts</title>");
+   result += _("<body bgcolor=\"#FFFFCE\">");
+   result += _("<p><font size=+1><b>Keyboard shortcuts</b></font>");
+   result += _("<p>Use <a href=\"prefs:keyboard\">Preferences > Keyboard</a>");
+   result += _(" to change the following keyboard shortcuts:");
+   result += _("<p><center>");
+   result += _("<table cellspacing=1 border=2 cols=2 width=\"90%\">");
+   result += _("<tr><td align=center>Key Combination</td><td align=center>Action</td></tr>");
 
+   bool assigned[MAX_ACTIONS] = {false};
+   
    for (int key = 0; key < MAX_KEYCODES; key++) {
       for (int modset = 0; modset < MAX_MODS; modset++) {
          action_info action = keyaction[key][modset];
          if ( action.id != DO_NOTHING ) {
+            assigned[action.id] = true;
             wxString keystring = GetKeyCombo(key, modset);
             if (key == '<') {
-               keystring.Replace(wxT("<"), wxT("&lt;"));
+               keystring.Replace(_("<"), _("&lt;"));
             }
-            result += wxT("<tr><td align=right>");
+            result += _("<tr><td align=right>");
             result += keystring;
-            result += wxT("&nbsp;</td><td>&nbsp;");
+            result += _("&nbsp;</td><td>&nbsp;");
             result += wxString(GetActionName(action.id), wxConvLocal);
             if (action.id == DO_OPENFILE) {
-               result += wxT("&nbsp;");
+               result += _("&nbsp;");
                result += action.file;
             }
-            result += wxT("</td></tr>");
+            result += _("</td></tr>");
          }
       }
    }
+   
+   result += _("</table></center>");
+   
+   // also list unassigned actions
+   result += _("<p>The following actions currently have no keyboard shortcuts:<p>");
+   for (int i = 1; i < MAX_ACTIONS; i++) {
+      if (!assigned[i]) {
+         wxString name = wxString(GetActionName((action_id) i),wxConvLocal);
+         result += wxString::Format(_("<dd>%s</dd>"), name.c_str());
+      }
+   }
 
+   result += _("</body></html>");
    return result;
 }
 

@@ -996,20 +996,10 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
 {
    if (filepath == SHOW_KEYBOARD_SHORTCUTS) {
       // build HTML string to display current keyboard shortcuts
-      wxString contents =
-      wxT("<html><title>Golly Help: Keyboard Shortcuts</title>")
-      wxT("<body bgcolor=\"#FFFFCE\">")
-      wxT("<p><font size=+1><b>Keyboard shortcuts</b></font>")
-      wxT("<p>Use <a href=\"prefs:keyboard\">Preferences > Keyboard</a>")
-      wxT(" to change the following keyboard shortcuts.")
-      wxT("<p><center>")
-      wxT("<table cellspacing=1 border=2 cols=2 width=\"90%\">")
-      wxT("<tr><td align=center>Key Combination</td><td align=center>Action</td></tr>");
-      contents += GetShortcutTable();
-      contents += wxT("</table></center></body></html>");
+      wxString contents = GetShortcutTable();
       
       // write contents to file and call LoadPage so that back/forwards buttons work
-      wxString htmlfile = tempdir + wxT("keyboard_shortcuts.html");
+      wxString htmlfile = tempdir + SHOW_KEYBOARD_SHORTCUTS;
       wxFile outfile(htmlfile, wxFile::write);
       if (outfile.IsOpened()) {
          outfile.Write(contents);
