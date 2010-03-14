@@ -594,11 +594,6 @@ case 's':
          else
            cout << endl ;
       }
-      if (timeline) {
-	int framecount = imp->getframecount() ;
-	if ((framecount & (framecount - 1)) == 0)
-	   cout << "Frame count is " << framecount << " at " << imp->getGeneration().tostring() << endl ;
-      }
       if (popcount)
          imp->getPopulation() ;
       if (autofit)
