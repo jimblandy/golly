@@ -230,7 +230,7 @@ void qlifealgo::clearall() {
       memused = nu ;
    }
    generation = 0 ;
-   stepsize = 1 ;
+   increment = 1 ;
    tilelist = 0 ;
    supertilelist = 0 ;
    bricklist = 0 ;
@@ -1105,7 +1105,7 @@ void qlifealgo::dogen() {
  */
 void qlifealgo::step() {
    poller->bailIfCalculating() ;
-   bigint t = stepsize ;
+   bigint t = increment ;
    while (t != 0) {
       // AKT: emulate B0-not-S8 rule by changing rule table depending on gen parity
       if (global_liferules.hasB0notS8) {
@@ -1120,8 +1120,8 @@ void qlifealgo::step() {
       if (poller->isInterrupted())
          break ;
       t -= 1 ;
-      if (t > stepsize) // might change; make it happen now
-         t = stepsize ;
+      if (t > increment) // might change; make it happen now
+         t = increment ;
    }
 }
 /**

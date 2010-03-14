@@ -624,6 +624,14 @@ void hlifealgo::step() {
       root = newroot ;
    }
    depth = node_depth(root) ;
+   extendTimeline() ;
+}
+void hlifealgo::setcurrentstate(void *n) {
+   if (root != (node *)n) {
+      root = (node *)n ;
+      depth = node_depth(root) ;
+      popValid = 0 ;
+   }
 }
 /*
  *   Set the max memory
@@ -1264,6 +1272,8 @@ void hlifealgo::do_gc(int invalidate) {
       poller->poll() ;
       gc_mark(stack[i], invalidate) ;
    }
+   for (int i=0; i<timeline.framecount; i++)
+      gc_mark((node *)timeline.frames[i], invalidate) ;
    hashpop = 0 ;
    memset(hashtab, 0, sizeof(node *) * hashprime) ;
    freenodes = 0 ;
@@ -1293,7 +1303,8 @@ void hlifealgo::do_gc(int invalidate) {
    inGC = 0 ;
    if (verbose) {
      int perc = freed_nodes / (totalthings / 100) ;
-     sprintf(statusline+strlen(statusline), " freed %d percent.", perc) ;
+     sprintf(statusline+strlen(statusline), " freed %d percent (%d).",
+                                                   perc, (int)freed_nodes) ;
      lifestatus(statusline) ;
    }
    if (needPop) {
@@ -1519,6 +1530,52 @@ default:       return "Illegal character in readmacrocell." ;
             *pp = 0 ;
             generation = bigint(p) ;
             break ;
+	    // either:
+	    //   #FRAMES count base inc
+	    // or
+	    //   #FRAME index node
+	 case 'F':
+	    if (strncmp(line, "#FRAMES ", 8) == 0) {
+	       p = line + 8 ;
+	       while (*p && *p <= ' ')
+		 p++ ;
+	       int cnt = atol(p) ;
+	       if (cnt < 0 || cnt > MAX_FRAME_COUNT)
+		  return "Bad FRAMES line" ;
+	       destroytimeline() ;
+	       while ('0' <= *p && *p <= '9')
+		 p++ ;
+	       while (*p && *p <= ' ')
+		 p++ ;
+	       pp = p ;
+	       while (*pp >= '0' && *pp <= '9') pp++ ;
+	       if (*pp == 0)
+		  return "Bad FRAMES line" ;
+	       *pp = 0 ;
+	       timeline.start = bigint(p) ;
+	       timeline.end = timeline.start ;
+	       timeline.next = timeline.end ;
+	       p = pp + 1 ;
+	       while (*p && *p <= ' ')
+		 p++ ;
+	       pp = p ;
+	       while (*pp >= '0' && *pp <= '9') pp++ ;
+	       *pp = 0 ;
+	       timeline.inc = bigint(p) ;
+	    } else if (strncmp(line, "#FRAME ", 7) == 0) {
+	       int frameind = 0 ;
+	       g_uintptr_t nodeind = 0 ;
+	       n = sscanf(line+7, "%d %" PRIuPTR, &frameind, &nodeind) ;
+	       if (n != 2 || frameind > MAX_FRAME_COUNT || frameind < 0 ||
+		   nodeind < 0 || nodeind > i ||
+		   timeline.framecount != frameind)
+		  return "Bad FRAME line" ;
+	       timeline.frames.push_back(ind[nodeind]) ;
+	       timeline.framecount++ ;
+	       timeline.end = timeline.next ;
+	       timeline.next += timeline.inc ;
+	    }
+	    break ;
          }
       } else {
          n = sscanf(line, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %d", &d, &nw, &ne, &sw, &se, &r) ;
@@ -1731,7 +1788,6 @@ g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
-   int depth = node_depth(root) ;
    fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
    fputs("\n", f) ;
    if (!global_liferules.isRegularLife()) {
@@ -1753,11 +1809,39 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    */
    /* this is the new two-pass way */
    cellcounter = 0 ;
+   int depth = node_depth(root) ;
+   vector<int> depths(timeline.framecount) ;
+   if (timeline.framecount) {
+     for (int i=0; i<timeline.framecount; i++) {
+       node *frame = (node*)timeline.frames[i] ;
+       depths[i] = node_depth(frame) ;
+     }
+     for (int i=0; i<timeline.framecount; i++) {
+       node *frame = (node*)timeline.frames[i] ;
+       writecell_2p1(frame, depths[i]) ;
+     }
+   }
    writecell_2p1(root, depth) ;
    writecells = cellcounter ;
    cellcounter = 0 ;
+   if (timeline.framecount) {
+     fprintf(f, "#FRAMES %d ", timeline.framecount) ;
+     fprintf(f, "%s ", timeline.start.tostring()) ;
+     fprintf(f, "%s\n", timeline.inc.tostring()) ;
+     for (int i=0; i<timeline.framecount; i++) {
+       node *frame = (node*)timeline.frames[i] ;
+       writecell_2p2(f, frame, depths[i]) ;
+       fprintf(f, "#FRAME %d %" PRIuPTR "\n", i, (g_uintptr_t)(frame->next)) ;
+     }
+   }
    writecell_2p2(f, root, depth) ;
    /* end new two-pass way */
+   if (timeline.framecount) {
+     for (int i=0; i<timeline.framecount; i++) {
+       node *frame = (node*)timeline.frames[i] ;
+       aftercalcpop2(frame, depths[i], 0) ;
+     }
+   }
    aftercalcpop2(root, depth, 0) ;
    inGC = 0 ;
    return 0 ;

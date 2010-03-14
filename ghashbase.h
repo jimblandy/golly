@@ -81,9 +81,7 @@ public:
    virtual void setIncrement(bigint inc) ;
    virtual void setIncrement(int inc) { setIncrement(bigint(inc)) ; }
    virtual void setGeneration(bigint gen) { generation = gen ; }
-   virtual const bigint &getIncrement() { return increment ; }
    virtual const bigint &getPopulation() ;
-   virtual const bigint &getGeneration() { return generation ; }
    virtual int isEmpty() ;
    virtual int hyperCapable() { return 1 ; }
    virtual void setMaxMemory(int m) ;
@@ -91,6 +89,8 @@ public:
    virtual const char *setrule(const char *) ;
    virtual const char *getrule() { return "" ; }
    virtual void step() ;
+   virtual void* getcurrentstate() { return root ; }
+   virtual void setcurrentstate(void *n) ;
    /*
     *   The contract of draw() is that it render every pixel in the
     *   viewport precisely once.  This allows us to eliminate all
@@ -137,9 +137,7 @@ private:
    int okaytogc ;
    g_uintptr_t totalthings ;
    ghnode *ghnodeblocks ;
-   bigint generation ;
    bigint population ;
-   bigint increment ;
    bigint setincrement ;
    bigint pow2step ; // greatest power of two in increment
    int nonpow2 ; // increment / pow2step

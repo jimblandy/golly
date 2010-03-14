@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstdio>
 #include <string.h>
 #include <cstdlib>
+#include <sys/time.h>
 using namespace std ;
 viewport viewport(1000, 1000) ;
 /*
@@ -69,6 +70,15 @@ public:
    virtual const char* getrulesdir() { return "Rules/" ; }
 } ;
 nullerrors nullerror ;
+double start ;
+double timestamp() {
+   struct timeval tv ;
+   gettimeofday(&tv, 0) ;
+   double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
+   double r = now - start ;
+   start = now ;
+   return r ;
+}
 /*
  *   This is a "lifeerrors" that we can use to test some edge
  *   conditions.  In this case the only real thing we use
@@ -79,7 +89,7 @@ public:
    verbosestatus() {}
    virtual void fatal(const char *) {}
    virtual void warning(const char *) {}
-   virtual void status(const char *s) { cout << s << endl ; }
+   virtual void status(const char *s) { cout << timestamp() << " " << s << endl ; }
    virtual void beginprogress(const char *) {}
    virtual bool abortprogress(double, const char *) { return 0 ; }
    virtual void endprogress() {}
@@ -102,6 +112,7 @@ int hyper, render, autofit, quiet, popcount, progress ;
 int hashlife ;
 char *algoName = (char *)"QuickLife" ;
 int verbose ;
+int timeline ;
 int stepthresh, stepfactor ;
 char *liferule = 0 ;
 char *outfilename = 0 ;
@@ -121,6 +132,7 @@ options options[] = {
   { "-o", "--output", "Output file (*.rle, *.mc, *.rle.gz, *.mc.gz)", 's',
                                                                &outfilename },
   { "-v", "--verbose", "Verbose", 'b', &verbose },
+  { "-t", "--timeline", "Use timeline", 'b', &timeline },
   { "",   "--render", "Render (benchmarking)", 'b', &render },
   { "",   "--progress", "Render during progress dialog (debugging)", 'b', &progress },
   { "",   "--popcount", "Popcount (benchmarking)", 'b', &popcount },
@@ -542,6 +554,8 @@ case 's':
       if (strlen(outfilename) > 200)
          lifefatal("Output filename too long") ;
    }
+   if (timeline && hyper)
+      lifefatal("Cannot use both timeline and hyperthreading") ;
    imp = createUniverse() ;
    if (progress)
      lifeerrors::seterrorhandler(&nullerror) ;
@@ -550,6 +564,7 @@ case 's':
      hlifealgo::setVerbose(1) ;
    }
    imp->setMaxMemory(maxmem) ;
+   timestamp() ;
    if (testscript) {
      if (argc > 1) {
        filename = argv[1] ;
@@ -567,6 +582,9 @@ case 's':
       imp->setrule(liferule) ;
    if (inc != 0)
       imp->setIncrement(inc) ;
+   if (timeline) {
+      imp->startrecording(1, 1) ;
+   }
    int fc = 0 ;
    for (;;) {
       if (quiet < 2) {
@@ -575,6 +593,11 @@ case 's':
            cout << ": " << imp->getPopulation().tostring() << endl ;
          else
            cout << endl ;
+      }
+      if (timeline) {
+	int framecount = imp->getframecount() ;
+	if ((framecount & (framecount - 1)) == 0)
+	   cout << "Frame count is " << framecount << " at " << imp->getGeneration().tostring() << endl ;
       }
       if (popcount)
          imp->getPopulation() ;

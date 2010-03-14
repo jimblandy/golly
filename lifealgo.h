@@ -35,10 +35,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifepoll.h"
 #include "readpattern.h"
 #include "platform.h"
+// moving the include vector *before* platform.h breaks compilation
+#include <vector>
+// this must not be increased beyond 32767, because we use a bigint
+// multiply that only supports multiplicands up to that size.
+const int MAX_FRAME_COUNT = 32000 ;
+
+/**
+ *   Timeline support is pretty generic.
+ */
+class timeline_t {
+public:
+   timeline_t() : recording(0), framecount(0), start(0), inc(0), next(0),
+                  end(0), frames() {}
+   int recording, framecount, savedbase, savedexpo ;
+   bigint start, inc, next, end ;
+   vector<void *> frames ;
+} ;
 
 class lifealgo {
 public:
-   lifealgo() { poller = &default_poller ; }
+   lifealgo() : generation(0), increment(0), timeline()
+      { poller = &default_poller ; }
    virtual void clearall() = 0 ;
    // returns <0 if error
    virtual int setcell(int x, int y, int newstate) = 0 ;
@@ -49,9 +67,9 @@ public:
    virtual void setIncrement(bigint inc) = 0 ;
    virtual void setIncrement(int inc) = 0 ;
    virtual void setGeneration(bigint gen) = 0 ;
-   virtual const bigint &getIncrement() = 0 ;
+   const bigint &getIncrement() { return increment ; }
+   const bigint &getGeneration() { return generation ; }
    virtual const bigint &getPopulation() = 0 ;
-   virtual const bigint &getGeneration() = 0 ;
    virtual int isEmpty() = 0 ;
    // can we do the gen count doubling? only hashlife
    virtual int hyperCapable() = 0 ;
@@ -76,10 +94,26 @@ public:
    virtual const char* DefaultRule() { return "B3/S23"; }
    // return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
+   // timeline support
+   virtual void* getcurrentstate() = 0 ;
+   virtual void setcurrentstate(void *) = 0 ;
+   int startrecording(int base, int expo) ;
+   pair<int, int> stoprecording() ;
+   void extendTimeline() ;
+   const bigint &gettimelinestart() { return timeline.start ; }
+   const bigint &gettimelineend() { return timeline.end ; }
+   const bigint &gettimelineinc() { return timeline.inc ; }
+   const int getframecount() { return timeline.framecount ; }
+   const int isrecording() { return timeline.recording ; }
+   int gotoframe(int i) ;
+   void destroytimeline() ;
 protected:
    lifepoll *poller ;
    static int verbose ;
    int maxCellStates ; // keep up to date; setcell depends on it
+   bigint generation ;
+   bigint increment ;
+   timeline_t timeline ;
 } ;
 
 /**

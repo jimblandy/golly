@@ -220,12 +220,10 @@ public:
      // poller->bailIfCalculating() ;
      popValid = 0 ;
    }
-   virtual void setIncrement(bigint inc) { stepsize = inc ; }
-   virtual void setIncrement(int inc) { stepsize = inc ; }
+   virtual void setIncrement(bigint inc) { increment = inc ; }
+   virtual void setIncrement(int inc) { increment = inc ; }
    virtual void setGeneration(bigint gen) { generation = gen ; }
-   virtual const bigint &getIncrement() { return stepsize ; }
    virtual const bigint &getPopulation() ;
-   virtual const bigint &getGeneration() { return generation ; }
    virtual int isEmpty() ;
    // can we do the gen count doubling? only hashlife
    virtual int hyperCapable() { return 0 ; }
@@ -234,6 +232,8 @@ public:
    virtual const char *setrule(const char *s) ;
    virtual const char *getrule() { return global_liferules.getrule() ; }
    virtual void step() ;
+   virtual void* getcurrentstate() { return 0 ; }
+   virtual void setcurrentstate(void *) {}
    virtual void draw(viewport &view, liferender &renderer) ;
    virtual void fit(viewport &view, int force) ;
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) ;
@@ -279,8 +279,6 @@ private:
    int min, max, rootlev ;
    int minlow32 ;
    bigint bmin, bmax ;
-   bigint generation ;
-   bigint stepsize ;
    bigint population ;
    int popValid ;
    linkedmem *tilelist, *supertilelist, *bricklist ;
