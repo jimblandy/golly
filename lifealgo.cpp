@@ -29,14 +29,18 @@ lifealgo::~lifealgo() {
    maxCellStates = 2 ;
 }
 int lifealgo::verbose ;
-int lifealgo::startrecording(int base, int expo) {
+/*
+ *   Right now, the base/expo should match the current increment.
+ *   We do not check this.
+ */
+int lifealgo::startrecording(int basearg, int expoarg) {
   if (timeline.framecount)
     destroytimeline() ;
   void *now = getcurrentstate() ;
   if (now == 0)
     return 0 ;
-  timeline.savedbase = base ;
-  timeline.savedexpo = expo ;
+  timeline.base = basearg ;
+  timeline.expo = expoarg ;
   timeline.frames.push_back(now) ;
   timeline.recording = 1 ;
   timeline.framecount = 1 ;
@@ -48,26 +52,42 @@ int lifealgo::startrecording(int base, int expo) {
 pair<int, int> lifealgo::stoprecording() {
   timeline.recording = 0 ;
   timeline.next = 0 ;
-  return make_pair(timeline.savedbase, timeline.savedexpo) ;
+  return make_pair(timeline.base, timeline.expo) ;
 }
-void lifealgo::extendTimeline() {
+void lifealgo::extendtimeline() {
   if (timeline.recording && generation == timeline.next) {
     void *now = getcurrentstate() ;
-    if (now) {
-      if ((timeline.framecount & 1) == 0
-	  && timeline.framecount + 1 >= MAX_FRAME_COUNT) {
-	 for (int i=2; i<timeline.framecount; i += 2)
-	   timeline.frames[i >> 1]  = timeline.frames[i] ;
-         timeline.framecount >>= 1 ;
-	 timeline.frames.resize(timeline.framecount) ;
-	 timeline.inc += timeline.inc ;
-      }
+    if (now && timeline.framecount < MAX_FRAME_COUNT) {
       timeline.frames.push_back(now) ;
       timeline.framecount++ ;
       timeline.end = timeline.next ;
       timeline.next += timeline.inc ;
     }
   }
+}
+/*
+ *   Note that this *also* changes inc, so don't call unless this is
+ *   what you want to do.  It does not update or change the base or
+ *   expo if the base != 2, so they can get out of sync.
+ *
+ *   Currently this is only used by bgolly, and it will only work
+ *   properly if the increment argument is a power of two.
+ */
+void lifealgo::pruneframes() {
+   if (timeline.framecount > 1) {
+      for (int i=2; i<timeline.framecount; i += 2)
+         timeline.frames[i >> 1]  = timeline.frames[i] ;
+      timeline.framecount = (timeline.framecount + 1) >> 1 ;
+      timeline.frames.resize(timeline.framecount) ;
+      timeline.inc += timeline.inc ;
+      timeline.end = timeline.inc ;
+      timeline.end.mul_smallint(timeline.framecount-1) ;
+      timeline.end += timeline.start ;
+      timeline.next = timeline.end ;
+      timeline.next += timeline.inc ;
+      if (timeline.base == 2)
+         timeline.expo++ ;
+   }
 }
 int lifealgo::gotoframe(int i) {
   if (i < 0 || i >= timeline.framecount)
@@ -87,8 +107,6 @@ void lifealgo::destroytimeline() {
   timeline.inc = 0 ;
   timeline.next = 0 ;
 }
-
-
 int staticAlgoInfo::nextAlgoId = 0 ;
 staticAlgoInfo *staticAlgoInfo::head = 0 ;
 staticAlgoInfo::staticAlgoInfo() {

@@ -624,7 +624,7 @@ void hlifealgo::step() {
       root = newroot ;
    }
    depth = node_depth(root) ;
-   extendTimeline() ;
+   extendtimeline() ;
 }
 void hlifealgo::setcurrentstate(void *n) {
    if (root != (node *)n) {
@@ -1554,14 +1554,37 @@ default:       return "Illegal character in readmacrocell." ;
 	       *pp = 0 ;
 	       timeline.start = bigint(p) ;
 	       timeline.end = timeline.start ;
-	       timeline.next = timeline.end ;
+               timeline.next = timeline.start ;
 	       p = pp + 1 ;
 	       while (*p && *p <= ' ')
 		 p++ ;
 	       pp = p ;
-	       while (*pp >= '0' && *pp <= '9') pp++ ;
+	       while (*pp > ' ')
+                  pp++ ;
 	       *pp = 0 ;
-	       timeline.inc = bigint(p) ;
+               if (index(p, '^')) {
+                  int tbase=0, texpo=0 ;
+                  if (sscanf(p, "%d^%d", &tbase, &texpo) != 2 ||
+                      tbase < 2 || texpo < 0)
+                     return "Bad FRAMES line" ;
+                  timeline.base = tbase ;
+                  timeline.expo = texpo ;
+                  timeline.inc = 1 ;
+                  while (texpo--)
+                     timeline.inc.mul_smallint(tbase) ;
+               } else {
+	          timeline.inc = bigint(p) ;
+                  // if it's a power of two, we're good
+                  int texpo = timeline.inc.lowbitset() ;
+                  int tbase = 2 ;
+                  bigint test = 1 ;
+                  for (int i=0; i<texpo; i++)
+                     test += test ;
+                  if (test != timeline.inc)
+                     return "Bad increment (missing ^) in FRAMES" ;
+                  timeline.base = tbase ;
+                  timeline.expo = texpo ;
+               }
 	    } else if (strncmp(line, "#FRAME ", 7) == 0) {
 	       int frameind = 0 ;
 	       g_uintptr_t nodeind = 0 ;
@@ -1827,7 +1850,7 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    if (timeline.framecount) {
      fprintf(f, "#FRAMES %d ", timeline.framecount) ;
      fprintf(f, "%s ", timeline.start.tostring()) ;
-     fprintf(f, "%s\n", timeline.inc.tostring()) ;
+     fprintf(f, "%d^%d\n", timeline.base, timeline.expo) ;
      for (int i=0; i<timeline.framecount; i++) {
        node *frame = (node*)timeline.frames[i] ;
        writecell_2p2(f, frame, depths[i]) ;

@@ -583,7 +583,13 @@ case 's':
    if (inc != 0)
       imp->setIncrement(inc) ;
    if (timeline) {
-      imp->startrecording(1, 1) ;
+      int lowbit = inc.lowbitset() ;
+      bigint t = 1 ;
+      for (int i=0; i<lowbit; i++)
+         t.mul_smallint(2) ;
+      if (t != inc)
+         lifefatal("Bad increment for timeline") ;
+      imp->startrecording(2, lowbit) ;
    }
    int fc = 0 ;
    for (;;) {
@@ -613,6 +619,8 @@ case 's':
       imp->step() ;
       if (maxgen < 0 && outfilename != 0)
          writepat(fc++) ;
+      if (timeline && imp->getframecount() + 2 > MAX_FRAME_COUNT)
+         imp->pruneframes() ;
       if (hyper)
          imp->setIncrement(imp->getGeneration()) ;
    }

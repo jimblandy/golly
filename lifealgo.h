@@ -48,7 +48,7 @@ class timeline_t {
 public:
    timeline_t() : recording(0), framecount(0), start(0), inc(0), next(0),
                   end(0), frames() {}
-   int recording, framecount, savedbase, savedexpo ;
+   int recording, framecount, base, expo ;
    bigint start, inc, next, end ;
    vector<void *> frames ;
 } ;
@@ -99,7 +99,10 @@ public:
    virtual void setcurrentstate(void *) = 0 ;
    int startrecording(int base, int expo) ;
    pair<int, int> stoprecording() ;
-   void extendTimeline() ;
+   pair<int, int> getbaseexpo()
+                       { return make_pair(timeline.base, timeline.expo) ; }
+   void extendtimeline() ;
+   void pruneframes() ;
    const bigint &gettimelinestart() { return timeline.start ; }
    const bigint &gettimelineend() { return timeline.end ; }
    const bigint &gettimelineinc() { return timeline.inc ; }
