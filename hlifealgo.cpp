@@ -1562,7 +1562,7 @@ default:       return "Illegal character in readmacrocell." ;
 	       while (*pp > ' ')
                   pp++ ;
 	       *pp = 0 ;
-               if (index(p, '^')) {
+               if (strchr(p, '^')) {
                   int tbase=0, texpo=0 ;
                   if (sscanf(p, "%d^%d", &tbase, &texpo) != 2 ||
                       tbase < 2 || texpo < 0)

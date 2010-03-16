@@ -37,7 +37,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstdio>
 #include <string.h>
 #include <cstdlib>
+#ifdef TIMING
 #include <sys/time.h>
+#endif
 using namespace std ;
 viewport viewport(1000, 1000) ;
 /*
@@ -70,6 +72,7 @@ public:
    virtual const char* getrulesdir() { return "Rules/" ; }
 } ;
 nullerrors nullerror ;
+#ifdef TIMING
 double start ;
 double timestamp() {
    struct timeval tv ;
@@ -79,6 +82,7 @@ double timestamp() {
    start = now ;
    return r ;
 }
+#endif
 /*
  *   This is a "lifeerrors" that we can use to test some edge
  *   conditions.  In this case the only real thing we use
@@ -89,7 +93,11 @@ public:
    verbosestatus() {}
    virtual void fatal(const char *) {}
    virtual void warning(const char *) {}
-   virtual void status(const char *s) { cout << timestamp() << " " << s << endl ; }
+   virtual void status(const char *s) {
+#ifdef TIMING
+      cout << timestamp() << " " << s << endl ;
+#endif
+   }
    virtual void beginprogress(const char *) {}
    virtual bool abortprogress(double, const char *) { return 0 ; }
    virtual void endprogress() {}
@@ -564,7 +572,9 @@ case 's':
      hlifealgo::setVerbose(1) ;
    }
    imp->setMaxMemory(maxmem) ;
+#ifdef TIMING
    timestamp() ;
+#endif
    if (testscript) {
      if (argc > 1) {
        filename = argv[1] ;
