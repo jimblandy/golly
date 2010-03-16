@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -86,6 +86,7 @@ extern bool showedit;            // show edit bar?
 extern bool showallstates;       // show all cell states in edit bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
+extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
 extern bool showicons;           // display icons for cell states?
 extern bool swapcolors;          // swap colors used for cell states?
@@ -174,6 +175,7 @@ typedef enum {
    DO_PASTEMODE,                 // cycle paste mode
    DO_DELETE,                    // delete layer
    DO_DELOTHERS,                 // delete other layers
+   DO_DELTIME,                   // delete timeline
    DO_DISABLE,                   // disable undo/redo
    DO_DUPLICATE,                 // duplicate layer
    DO_FASTER,                    // faster
@@ -241,6 +243,7 @@ typedef enum {
    DO_PATTERNS,                  // show patterns
    DO_SCRIPTS,                   // show scripts
    DO_SHOWSTATUS,                // show status bar
+   DO_SHOWTIME,                  // show timeline
    DO_TIMING,                    // show timing
    DO_SHOWTOOL,                  // show tool bar
    DO_SHRINKFIT,                 // shrink and fit
@@ -248,6 +251,7 @@ typedef enum {
    DO_SLOWER,                    // slower
    DO_STACK,                     // stack layers
    DO_STARTSTOP,                 // start/stop generating
+   DO_RECORD,                    // start/stop recording
    DO_SYNCCURS,                  // synchronize cursors
    DO_SYNCVIEWS,                 // synchronize views
    DO_TILE,                      // tile layers

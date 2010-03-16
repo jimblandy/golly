@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -174,7 +174,7 @@ END_EVENT_TABLE()
 
 static LayerBar* layerbarptr = NULL;      // global pointer to layer bar
 
-// layer bar buttons must be global to use Connect/Disconect on Windows;
+// layer bar buttons must be global to use Connect/Disconnect on Windows;
 // note that bitmapbutt[0..MAX_LAYERS-1] are not used, but it simplifies
 // our logic to have those dummy indices
 static wxBitmapButton* bitmapbutt[NUM_BUTTONS] = {NULL};

@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -138,6 +138,7 @@ bool showedit = true;            // show edit bar?
 bool showallstates = false;      // show all cell states in edit bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
+bool showtimeline = false;       // show timeline bar?
 bool showgridlines = true;       // display grid lines?
 bool showicons = false;          // display icons for cell states?
 bool swapcolors = false;         // swap colors used for cell states?
@@ -570,6 +571,8 @@ const char* GetActionName(action_id action)
       case DO_HASHING:        return "Use Hashing";   //!!! deprecate???
       case DO_HYPER:          return "Hyperspeed";
       case DO_HASHINFO:       return "Show Hash Info";
+      case DO_RECORD:         return "Start/Stop Recording";
+      case DO_DELTIME:        return "Delete Timeline";
       case DO_SETRULE:        return "Set Rule...";
       case DO_ADVANCE:        return "Advance Selection";
       case DO_ADVANCEOUT:     return "Advance Outside";
@@ -607,6 +610,7 @@ const char* GetActionName(action_id action)
       case DO_INVERT:         return "Invert Colors";
       case DO_SHOWGRID:       return "Show Grid Lines";
       case DO_BUFFERED:       return "Buffered";
+      case DO_SHOWTIME:       return "Show Timeline";
       case DO_INFO:           return "Pattern Info";
       // Layer menu
       case DO_ADD:            return "Add Layer";
@@ -1376,7 +1380,7 @@ void SaveRelPath(FILE* f, const char* name, wxString path)
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char* GOLLY_VERSION = STRINGIFY(VERSION); 
+const char* GOLLY_VERSION = STRINGIFY(VERSION);
 
 void SavePrefs()
 {
@@ -1529,6 +1533,7 @@ void SavePrefs()
    fprintf(f, "show_states=%d\n", showallstates ? 1 : 0);
    fprintf(f, "show_status=%d\n", showstatus ? 1 : 0);
    fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
+   fprintf(f, "show_timeline=%d\n", showtimeline ? 1 : 0);
    fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
    fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
    fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
@@ -2083,6 +2088,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "show_exact") == 0) {
          showexact = value[0] == '1';
+
+      } else if (strcmp(keyword, "show_timeline") == 0) {
+         showtimeline = value[0] == '1';
 
       } else if (strcmp(keyword, "grid_lines") == 0) {
          showgridlines = value[0] == '1';

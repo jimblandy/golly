@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -112,6 +112,7 @@ public:
    void ToggleHashInfo();
    void SetStepExponent(int newexpo);
    void SetGenIncrement();
+   bool SaveStartingPattern();
    void ResetPattern(bool resetundo = true);
    void SetGeneration();
    const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
@@ -195,7 +196,6 @@ private:
    void OpenZipFile(const wxString& path);
 
    // control functions
-   bool SaveStartingPattern();
    void DisplayPattern();
    bool StepPattern();
 
@@ -302,6 +302,8 @@ enum {
    ID_AUTO,
    ID_HYPER,
    ID_HINFO,
+   ID_RECORD,
+   ID_DELTIME,
    ID_SETALGO,
    ID_SETRULE,
 
@@ -328,6 +330,7 @@ enum {
    ID_ICONS,
    ID_INVERT,
    ID_BUFF,
+   ID_TIMELINE,
    ID_INFO,
 
    // Set Scale submenu

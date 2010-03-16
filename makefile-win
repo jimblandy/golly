@@ -17,7 +17,7 @@
 !include local-win.mk
 
 ### Golly-related variables: ###
-VERSION = 2.2b2
+VERSION = 2.2b3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Scripts Patterns Rules
@@ -54,14 +54,14 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/generationsalgo.obj
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
    wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
-   wxundo.h wxutils.h wxview.h
+   wxtimeline.h wxundo.h wxutils.h wxview.h
 WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
    $(OBJDIR)/wxrule.obj $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj \
    $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj $(OBJDIR)/wxrender.obj \
    $(OBJDIR)/wxscript.obj $(OBJDIR)/wxperl.obj $(OBJDIR)/wxpython.obj \
    $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
-   $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj $(OBJDIR)/wxmain.obj \
-   $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
+   $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
+   $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
 
 ### Conditionally set variables: ###
 
@@ -421,6 +421,9 @@ $(OBJDIR)/wxselect.obj: wxselect.cpp
 
 $(OBJDIR)/wxcontrol.obj: wxcontrol.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxcontrol.cpp
+
+$(OBJDIR)/wxtimeline.obj: wxtimeline.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxtimeline.cpp
 
 $(OBJDIR)/wxundo.obj: wxundo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxundo.cpp

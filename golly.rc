@@ -54,6 +54,10 @@ tile           BITMAP "bitmaps/tile.bmp"
 stack_down     BITMAP "bitmaps/stack_down.bmp"
 tile_down      BITMAP "bitmaps/tile_down.bmp"
 
+// timeline bar buttons
+record         BITMAP "bitmaps/record.bmp"
+deltime        BITMAP "bitmaps/deltime.bmp"
+
 // cursors
 pick_curs      BITMAP "bitmaps/pick_curs.bmp"
 hand_curs      BITMAP "bitmaps/hand_curs.bmp"

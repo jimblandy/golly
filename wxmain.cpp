@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -53,6 +53,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxalgos.h"       // for algo_type, algomenu
 #include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
 #include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxtimeline.h"    // for CreateTimelineBar, TimelineExists, etc
 #include "wxmain.h"
 
 #ifdef __WXMAC__
@@ -185,7 +186,7 @@ END_EVENT_TABLE()
 ToolBar* toolbarptr = NULL;      // global pointer to tool bar
 const int toolbarwd = 32;        // width of (vertical) tool bar
 
-// tool bar buttons (must be global to use Connect/Disconect on Windows)
+// tool bar buttons (must be global to use Connect/Disconnect on Windows)
 wxBitmapButton* tbbutt[NUM_BUTTONS];
 
 // -----------------------------------------------------------------------------
@@ -667,6 +668,12 @@ void MainFrame::UpdateMenuItems(bool active)
       } else {
          mbar->SetLabel(ID_START, _("Start Generating") + GetAccelerator(DO_STARTSTOP));
       }
+      
+      if (currlayer->algo->isrecording()) {
+         mbar->SetLabel(ID_RECORD, _("Stop Recording") + GetAccelerator(DO_RECORD));
+      } else {
+         mbar->SetLabel(ID_RECORD, _("Start Recording") + GetAccelerator(DO_RECORD));
+      }
 
       mbar->Enable(ID_START,        active);
       mbar->Enable(ID_NEXT,         active && !generating && !inscript);
@@ -681,6 +688,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_AUTO,         active);
       mbar->Enable(ID_HYPER,        active);
       mbar->Enable(ID_HINFO,        active);
+      mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
+      mbar->Enable(ID_DELTIME,      active && !inscript && currlayer->algo->getframecount() > 0);
       mbar->Enable(ID_SETRULE,      active && !inscript);
       mbar->Enable(ID_SETALGO,      active && !inscript);
 
@@ -711,6 +720,7 @@ void MainFrame::UpdateMenuItems(bool active)
          mbar->Enable(ID_BUFF,      active);
          mbar->Check(ID_BUFF,       buffered);
       #endif
+      mbar->Enable(ID_TIMELINE,     active);
       mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
 
       mbar->Enable(ID_ADD_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
@@ -745,6 +755,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_GRID,       showgridlines);
       mbar->Check(ID_ICONS,      showicons);
       mbar->Check(ID_INVERT,     swapcolors);
+      mbar->Check(ID_TIMELINE,   showtimeline);
       mbar->Check(ID_PL_TL,      plocation == TopLeft);
       mbar->Check(ID_PL_TR,      plocation == TopRight);
       mbar->Check(ID_PL_BR,      plocation == BottomRight);
@@ -785,6 +796,7 @@ void MainFrame::UpdateUserInterface(bool active)
    UpdateToolBar(active);
    UpdateLayerBar(active);
    UpdateEditBar(active);
+   UpdateTimelineBar(active);
    UpdateMenuItems(active);
    viewptr->CheckCursor(active);
    statusptr->CheckMouseLocation(active);
@@ -806,7 +818,7 @@ void MainFrame::UpdateEverything()
       return;
    }
 
-   // update tool bar, layer bar, menu bar and cursor
+   // update all bars, menus and cursor
    UpdateUserInterface(IsActive());
 
    if (inscript) {
@@ -932,7 +944,7 @@ public:
    RightWindow(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
                  wxNO_BORDER |
-                 // need this to avoid layer bar buttons flashing on Windows
+                 // need this to avoid layer/edit/timeline bar buttons flashing on Windows
                  wxNO_FULL_REPAINT_ON_RESIZE)
    {
       // avoid erasing background on GTK+
@@ -959,7 +971,7 @@ void RightWindow::OnSize(wxSizeEvent& event)
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0 && bigview) {
-      // resize layer bar, edit bar and main viewport window
+      // resize layer/edit/timeline bars and main viewport window
       ResizeLayerBar(wd);
       ResizeEditBar(wd);
       int y = 0;
@@ -971,6 +983,11 @@ void RightWindow::OnSize(wxSizeEvent& event)
          y += EditBarHeight();
          ht -= EditBarHeight();
       }
+      if (showtimeline) {
+         ht -= TimelineBarHeight();
+      }
+      // timeline bar goes underneath viewport
+      ResizeTimelineBar(y + ht, wd);
       bigview->SetSize(0, y, wd, ht);
    }
    event.Skip();
@@ -980,7 +997,7 @@ void RightWindow::OnSize(wxSizeEvent& event)
 
 void RightWindow::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 {
-   // do nothing because layer bar and viewport cover all of right pane
+   // do nothing because layer/edit/timeline bars and viewport cover all of right pane
 }
 
 // -----------------------------------------------------------------------------
@@ -1074,12 +1091,13 @@ void MainFrame::ToggleToolBar()
 
 void MainFrame::ToggleFullScreen()
 {
-   static bool restorestatusbar; // restore status bar at end of full screen mode?
-   static bool restorelayerbar;  // restore layer bar?
-   static bool restoreeditbar;   // restore edit bar?
-   static bool restoretoolbar;   // restore tool bar?
-   static bool restorepattdir;   // restore pattern directory?
-   static bool restorescrdir;    // restore script directory?
+   static bool restorestatusbar;    // restore status bar at end of full screen mode?
+   static bool restorelayerbar;     // restore layer bar?
+   static bool restoreeditbar;      // restore edit bar?
+   static bool restoretimelinebar;  // restore timeline bar?
+   static bool restoretoolbar;      // restore tool bar?
+   static bool restorepattdir;      // restore pattern directory?
+   static bool restorescrdir;       // restore script directory?
 
    if (!fullscreen) {
       // save current location and size for use in SavePrefs
@@ -1117,6 +1135,12 @@ void MainFrame::ToggleFullScreen()
       restoreeditbar = showedit;
       if (restoreeditbar) {
          ToggleEditBar();
+      }
+      
+      // hide timeline bar if necessary
+      restoretimelinebar = showtimeline;
+      if (restoretimelinebar) {
+         ToggleTimelineBar();
       }
       
       // hide tool bar if necessary
@@ -1162,6 +1186,9 @@ void MainFrame::ToggleFullScreen()
 
       // show edit bar if necessary
       if (restoreeditbar && !showedit) ToggleEditBar();
+
+      // show timeline bar if necessary
+      if (restoretimelinebar && !showtimeline) ToggleTimelineBar();
 
       // restore pattern/script directory if necessary
       if ( restorepattdir && !splitwin->IsSplit() ) {
@@ -1314,6 +1341,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       // Control menu
       case ID_START:          if (inscript || generating) {
                                  Stop();
+                              } else if (TimelineExists()) {
+                                 PlayTimeline(1);
                               } else {
                                  GeneratePattern();
                               }
@@ -1328,6 +1357,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_AUTO:           ToggleAutoFit(); break;
       case ID_HYPER:          ToggleHyperspeed(); break;
       case ID_HINFO:          ToggleHashInfo(); break;
+      case ID_RECORD:         StartStopRecording(); break;
+      case ID_DELTIME:        DeleteTimeline(); break;
       case ID_SETRULE:        ShowRuleDialog(); break;
 
       // View menu
@@ -1353,6 +1384,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case ID_ICONS:          viewptr->ToggleCellIcons(); break;
       case ID_INVERT:         viewptr->ToggleCellColors(); break;
       case ID_BUFF:           viewptr->ToggleBuffering(); break;
+      case ID_TIMELINE:       ToggleTimelineBar(); break;
       case ID_INFO:           ShowPatternInfo(); break;
 
       // Layer menu
@@ -1524,7 +1556,7 @@ void MainFrame::OnSize(wxSizeEvent& event)
 // (idle events are sent to the main window while the dialog is open)
 static bool inidle = false;
 
-void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
+void MainFrame::OnIdle(wxIdleEvent& event)
 {
    if (inidle) return;
    
@@ -1564,6 +1596,14 @@ void MainFrame::OnIdle(wxIdleEvent& WXUNUSED(event))
       call_close = false;
       Close(false);        // false allows OnClose handler to veto close
    }
+   
+   if (TimelineExists()) {
+      DoIdleTimeline();
+      // no need for this if DoIdleTimeline calls wxWakeUpIdle
+      // event.RequestMore();
+   }
+   
+   event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -2188,6 +2228,9 @@ void MainFrame::CreateMenus()
    controlMenu->AppendCheckItem(ID_HYPER,       _("Hyperspeed") + GetAccelerator(DO_HYPER));
    controlMenu->AppendCheckItem(ID_HINFO,       _("Show Hash Info") + GetAccelerator(DO_HASHINFO));
    controlMenu->AppendSeparator();
+   controlMenu->Append(ID_RECORD,               _("Start Recording") + GetAccelerator(DO_RECORD));
+   controlMenu->Append(ID_DELTIME,              _("Delete Timeline") + GetAccelerator(DO_DELTIME));
+   controlMenu->AppendSeparator();
    controlMenu->Append(ID_SETALGO,              _("Set Algorithm"), algomenu);
    controlMenu->Append(ID_SETRULE,              _("Set Rule...") + GetAccelerator(DO_SETRULE));
 
@@ -2212,6 +2255,7 @@ void MainFrame::CreateMenus()
    viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
    viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
    viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
+   viewMenu->AppendCheckItem(ID_TIMELINE,       _("Show Timeline") + GetAccelerator(DO_SHOWTIME));
    viewMenu->AppendSeparator();
    viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
 
@@ -2359,6 +2403,8 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_AUTO,            DO_AUTOFIT);
       SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
       SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);
+      SetAccelerator(mbar, ID_RECORD,          DO_RECORD);
+      SetAccelerator(mbar, ID_DELTIME,         DO_DELTIME);
       SetAccelerator(mbar, ID_SETRULE,         DO_SETRULE);
       
       SetAccelerator(mbar, ID_FULL,            DO_FULLSCREEN);
@@ -2378,6 +2424,7 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
       SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
       SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
+      SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
       SetAccelerator(mbar, ID_INFO,            DO_INFO);
       
       SetAccelerator(mbar, ID_ADD_LAYER,       DO_ADD);
@@ -2523,7 +2570,7 @@ MainFrame::MainFrame()
    if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
    
    // create a split window with pattern/script directory in left pane
-   // and layer bar plus pattern viewport in right pane
+   // and layer/edit/timeline bars and pattern viewport in right pane
    splitwin = new wxSplitterWindow(this, wxID_ANY,
                                    wxPoint(toolwd, statht),
                                    wxSize(wd - toolwd, ht - statht),
@@ -2536,7 +2583,8 @@ MainFrame::MainFrame()
    // create patternctrl and scriptctrl in left pane
    CreateDirControls();
    
-   // create a window for right pane which contains layer bar and pattern viewport
+   // create a window for right pane which contains layer/edit/timeline bars
+   // and pattern viewport
    rightpane = new RightWindow(splitwin, 0, 0, wd - toolwd, ht - statht);
    if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
    
@@ -2546,6 +2594,9 @@ MainFrame::MainFrame()
    
    // create edit bar
    CreateEditBar(rightpane);
+   
+   // create timeline bar
+   CreateTimelineBar(rightpane);
 
    // enable/disable tool tips after creating bars with buttons
    #if wxUSE_TOOLTIPS

@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -52,6 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
+#include "wxtimeline.h"    // for StartStopRecording, DeleteTimeline, etc
 #include "wxview.h"
 
 #ifdef __WXMAC__
@@ -1443,6 +1444,8 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_STARTSTOP:   if (!inscript) {
                               if (mainptr->generating) {
                                  mainptr->Stop();
+                              } else if (TimelineExists()) {
+                                 PlayTimeline(1);
                               } else {
                                  mainptr->GeneratePattern();
                               }
@@ -1458,9 +1461,10 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
       case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
+      case DO_RECORD:      StartStopRecording(); break;
+      case DO_DELTIME:     DeleteTimeline(); break;
       case DO_SETRULE:     if (!inscript && !busy) mainptr->ShowRuleDialog(); break;
       case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
-      //!!! remove next action??? or change it to DO_ALGOCYCLE???
       case DO_HASHING:     if (!inscript && !busy) {
                               if (currlayer->algtype != HLIFE_ALGO)
                                  mainptr->ChangeAlgorithm(HLIFE_ALGO);
@@ -1501,6 +1505,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_INVERT:      ToggleCellColors(); break;
       case DO_SHOWGRID:    ToggleGridLines(); break;
       case DO_BUFFERED:    ToggleBuffering(); break;
+      case DO_SHOWTIME:    ToggleTimelineBar(); break;
       case DO_INFO:        if (!busy) mainptr->ShowPatternInfo(); break;
 
       // Layer menu actions

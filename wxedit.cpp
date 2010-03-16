@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // -----------------------------------------------------------------------------
 
 enum {
-   // ids for bitmap buttons
+   // ids for bitmap buttons in edit bar
    UNDO_BUTT = 0,
    REDO_BUTT,
    DRAW_BUTT,
@@ -61,7 +61,7 @@ enum {
    ZOOMOUT_BUTT,
    ALLSTATES_BUTT,
    NUM_BUTTONS,      // must be after all buttons
-   SCROLL_BAR
+   STATE_BAR
 };
 
 #ifdef __WXMSW__
@@ -173,7 +173,7 @@ BEGIN_EVENT_TABLE(EditBar, wxPanel)
    EVT_LEFT_DOWN        (              EditBar::OnMouseDown)
    EVT_LEFT_DCLICK      (              EditBar::OnMouseDown)
    EVT_BUTTON           (wxID_ANY,     EditBar::OnButton)
-   EVT_COMMAND_SCROLL   (SCROLL_BAR,   EditBar::OnScroll)
+   EVT_COMMAND_SCROLL   (STATE_BAR,    EditBar::OnScroll)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -193,7 +193,7 @@ const int BOXSIZE = 17;             // width and height of colorbox and iconbox
 const int BOXGAP = 8;               // gap between colorbox and iconbox
 const int PAGESIZE = 10;            // scroll amount when paging
 
-// edit bar buttons (must be global to use Connect/Disconect on Windows)
+// edit bar buttons (must be global to use Connect/Disconnect on Windows)
 wxBitmapButton* ebbutt[NUM_BUTTONS];
 
 // -----------------------------------------------------------------------------
@@ -318,7 +318,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
    #endif
    int x = xpos + 3*digitwd + BOXGAP + 2*(BOXSIZE + BOXGAP);
    int y = (SMALLHT - (scrollbarht + 1)) / 2;
-   drawbar = new wxScrollBar(this, SCROLL_BAR, wxPoint(x, y),
+   drawbar = new wxScrollBar(this, STATE_BAR, wxPoint(x, y),
                              wxSize(scrollbarwd, scrollbarht),
                              wxSB_HORIZONTAL);
    if (drawbar == NULL) Fatal(_("Failed to create scroll bar!"));
@@ -985,4 +985,3 @@ void CycleDrawingState(bool higher)
       editbarptr->UpdateScrollBar();
    }
 }
-

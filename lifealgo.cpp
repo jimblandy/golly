@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -93,8 +93,13 @@ int lifealgo::gotoframe(int i) {
   if (i < 0 || i >= timeline.framecount)
     return 0 ;
   setcurrentstate(timeline.frames[i]) ;
-  generation = timeline.inc ;
-  generation.mul_smallint(i) ;
+  // AKT: avoid mul_smallint(i) crashing with divide-by-zero if i is 0
+  if (i > 0) {
+    generation = timeline.inc ;
+    generation.mul_smallint(i) ;
+  } else {
+    generation = 0;
+  }
   generation += timeline.start ;
   return timeline.framecount ;
 }

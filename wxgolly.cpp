@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -317,8 +317,8 @@ bool GollyApp::OnInit()
    mainptr->SetMinimumStepExponent();
 
    wxString banner = _("This is Golly version ");
-   banner +=         _(STRINGIFY(VERSION)); 
-   banner +=         _(".  Copyright 2009 The Golly Gang.");
+   banner +=         _(STRINGIFY(VERSION));
+   banner +=         _(".  Copyright 2010 The Golly Gang.");
    statusptr->SetMessage(banner);
 
    mainptr->NewPattern();

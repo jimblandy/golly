@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2009 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2010 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -56,6 +56,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo, etc
 #include "wxlayer.h"       // for currlayer, etc
 #include "wxhelp.h"        // for ShowHelp
+#include "wxtimeline.h"    // for InitTimelineFrame, ToggleTimelineBar, etc
 
 #ifdef __WXMAC__
    #include <Carbon/Carbon.h>                      // for OpaqueWindowPtr, etc
@@ -379,10 +380,20 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
    if (!newtitle.IsEmpty()) {
       MarkLayerClean(newtitle);     // calls SetWindowTitle
-   
-      // restore default base step for current algo
-      // (currlayer->currexpo was set to 0 above)
-      currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+      
+      if (TimelineExists()) {
+         // we've loaded a .mc file with a timeline so go to 1st frame
+         InitTimelineFrame();
+         if (!showtimeline) ToggleTimelineBar();
+         // switch to the base step and exponent used to record the timeline
+         pair<int, int> be = currlayer->algo->getbaseexpo();
+         currlayer->currbase = be.first;
+         currlayer->currexpo = be.second;
+      } else {
+         // restore default base step for current algo
+         // (currlayer->currexpo was set to 0 above)
+         currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
+      }
       SetGenIncrement();
    
       // restore default colors for current algo/rule
