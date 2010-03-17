@@ -56,6 +56,9 @@ tile_down      BITMAP "bitmaps/tile_down.bmp"
 
 // timeline bar buttons
 record         BITMAP "bitmaps/record.bmp"
+backwards      BITMAP "bitmaps/backwards.bmp"
+forwards       BITMAP "bitmaps/forwards.bmp"
+stopplay       BITMAP "bitmaps/stopplay.bmp"
 deltime        BITMAP "bitmaps/deltime.bmp"
 
 // cursors
