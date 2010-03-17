@@ -372,6 +372,10 @@ void bigint::ensurework(int sz) const {
 }
 void bigint::mul_smallint(int a) {
    int c ;
+   if (a == 0) {
+      *this = 0 ;
+      return ;
+   }
    if (v.i & 1) {
       c = (v.i >> 1) * a ;
       if (c / a == (v.i >> 1)) {
