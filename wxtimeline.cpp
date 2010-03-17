@@ -253,7 +253,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    int x, y;
    int sliderwd = 80;
    #ifdef __WXMAC__
-      int sliderht = 15;   // probably ignored on Mac???
+      int sliderht = 15;
    #else
       int sliderht = 24;   // best for Windows (and wxGTK???)
    #endif
@@ -265,6 +265,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    if (slider == NULL) Fatal(_("Failed to create timeline slider!"));
    #ifdef __WXMAC__
       slider->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+      slider->Move(x, y+1);
    #endif
    #ifdef __WXMSW__
       slider->SetTick(0);     // doesn't seem to do anything!
@@ -354,19 +355,19 @@ void TimelineBar::DrawTimelineBar(wxDC& dc, int wd, int ht)
    dc.SetPen(wxNullPen);
 
    if (currlayer->algo->hyperCapable()) {
+      tlbutt[RECORD_BUTT]->Show(true);
+      tlbutt[BACKWARDS_BUTT]->Show(TimelineExists());
+      tlbutt[FORWARDS_BUTT]->Show(TimelineExists());
+      tlbutt[DELETE_BUTT]->Show(TimelineExists());
       slider->Show(TimelineExists());
       framebar->Show(TimelineExists());
-      tlbutt[RECORD_BUTT]->Show(true);
-      tlbutt[BACKWARDS_BUTT]->Show(true);
-      tlbutt[FORWARDS_BUTT]->Show(true);
-      tlbutt[DELETE_BUTT]->Show(true);
    } else {
-      slider->Show(false);
-      framebar->Show(false);
       tlbutt[RECORD_BUTT]->Show(false);
       tlbutt[BACKWARDS_BUTT]->Show(false);
       tlbutt[FORWARDS_BUTT]->Show(false);
       tlbutt[DELETE_BUTT]->Show(false);
+      slider->Show(false);
+      framebar->Show(false);
       
       SetTimelineFont(dc);
       dc.SetPen(*wxBLACK_PEN);
@@ -502,8 +503,10 @@ void TimelineBar::OnScroll(wxScrollEvent& event)
    WXTYPE type = event.GetEventType();
    
    // best to stop autoplay if scroll bar is used
-   autoplay = 0;
-   tbarptr->UpdateButtons();
+   if (autoplay != 0) {
+      autoplay = 0;
+      tbarptr->UpdateButtons();
+   }
 
    if (type == wxEVT_SCROLL_LINEUP) {
       currframe--;
