@@ -199,6 +199,7 @@ typedef enum {
    DO_PASTE,                     // paste
    DO_PASTESEL,                  // paste to selection
    DO_INFO,                      // pattern info
+   DO_PLAYBACK,                  // play timeline backwards
    DO_PREFS,                     // preferences...
    DO_QUIT,                      // quit Golly
    DO_RANDFILL,                  // random fill

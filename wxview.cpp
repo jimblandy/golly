@@ -1463,6 +1463,7 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
       case DO_RECORD:      StartStopRecording(); break;
       case DO_DELTIME:     DeleteTimeline(); break;
+      case DO_PLAYBACK:    if (!inscript && TimelineExists()) PlayTimeline(-1); break;
       case DO_SETRULE:     if (!inscript && !busy) mainptr->ShowRuleDialog(); break;
       case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
       case DO_HASHING:     if (!inscript && !busy) {
@@ -2290,6 +2291,11 @@ void PatternView::OnChar(wxKeyEvent& event)
       mainptr->Stop();
       return;
    }
+   
+   if ( TimelineExists() && key == WXK_ESCAPE ) {
+      PlayTimeline(0);
+      return;
+   }
 
    ProcessKey(key, mods);
    mainptr->UpdateUserInterface(mainptr->IsActive());
@@ -2301,7 +2307,10 @@ void PatternView::ProcessClickedControl()
 {
    switch (clickedcontrol) {
       case STEP1_CONTROL:
-         if (currlayer->currexpo != 0) {
+         if (TimelineExists()) {
+            // reset autoplay speed to 0 (no delay, no frame skipping)
+            ResetTimelineSpeed();
+         } else if (currlayer->currexpo != 0) {
             mainptr->SetStepExponent(0);
             statusptr->Refresh(false);
             statusptr->Update();

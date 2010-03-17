@@ -50,25 +50,40 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #else
    // bitmaps for timeline bar buttons
    #include "bitmaps/record.xpm"
+   #include "bitmaps/backwards.xpm"
+   #include "bitmaps/forwards.xpm"
+   #include "bitmaps/stopplay.xpm"
    #include "bitmaps/deltime.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
 
-enum {
-   // ids for bitmap buttons in timeline bar
-   RECORD_BUTT = 0,
-   DELETE_BUTT,
-   NUM_BUTTONS,   // must be after all buttons
-   GEN_BAR
-};
+// these need to be per layer rather than here???!!!
+// note also that New Pattern doesn't update play buttons!!!
 
-static int currframe;      // current frame in timeline
-static int autoplay;       // +ve = play forwards, -ve = play backwards, 0 = stop
+static int currframe;         // current frame in timeline
+static int autoplay;          // +ve = play forwards, -ve = play backwards, 0 = stop
+static long lastframe = 0;    // time when last frame was displayed
+static int speed;             // controls speed at which frames are played
+
+const int MINSPEED = -10;     // delay 2^10 msecs between each frame
+const int MAXSPEED = 10;      // skip 2^10 frames
 
 // -----------------------------------------------------------------------------
 
 // Define timeline bar window:
+
+enum {
+   // ids for bitmap buttons in timeline bar
+   RECORD_BUTT = 0,
+   BACKWARDS_BUTT,
+   FORWARDS_BUTT,
+   STOPPLAY_BUTT,
+   DELETE_BUTT,
+   NUM_BUTTONS,      // must be after all buttons
+   ID_SLIDER,        // for slider
+   ID_SCROLL         // for scroll bar
+};
 
 // derive from wxPanel so we get current theme's background color on Windows
 class TimelineBar : public wxPanel
@@ -80,15 +95,18 @@ public:
    void AddButton(int id, const wxString& tip);
    void AddSeparator();
    void EnableButton(int id, bool enable);
+   void UpdateButtons();
+   void UpdateSlider();
    void UpdateScrollBar();
+   void DisplayCurrentFrame();
 
    // detect press and release of a bitmap button
    void OnButtonDown(wxMouseEvent& event);
    void OnButtonUp(wxMouseEvent& event);
    void OnKillFocus(wxFocusEvent& event);
 
-   wxScrollBar* genbar;          // scroll bar for displaying timeline frames
-   void DisplayCurrentFrame();
+   wxSlider* slider;             // slider for controlling autoplay speed
+   wxScrollBar* framebar;        // scroll bar for displaying timeline frames
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -98,6 +116,7 @@ private:
    void OnPaint(wxPaintEvent& event);
    void OnMouseDown(wxMouseEvent& event);
    void OnButton(wxCommandEvent& event);
+   void OnSlider(wxScrollEvent& event);
    void OnScroll(wxScrollEvent& event);
 
    void SetTimelineFont(wxDC& dc);
@@ -111,6 +130,9 @@ private:
       // on Windows we need bitmaps for disabled buttons
       wxBitmap disnormbutt[NUM_BUTTONS];
    #endif
+   
+   // remember state of buttons to avoid unnecessary updates
+   int buttstate[NUM_BUTTONS];
    
    // positioning data used by AddButton and AddSeparator
    int ypos, xpos, smallgap, biggap;
@@ -129,13 +151,15 @@ BEGIN_EVENT_TABLE(TimelineBar, wxPanel)
    EVT_PAINT            (           TimelineBar::OnPaint)
    EVT_LEFT_DOWN        (           TimelineBar::OnMouseDown)
    EVT_BUTTON           (wxID_ANY,  TimelineBar::OnButton)
-   EVT_COMMAND_SCROLL   (GEN_BAR,   TimelineBar::OnScroll)
+   EVT_COMMAND_SCROLL   (ID_SLIDER, TimelineBar::OnSlider)
+   EVT_COMMAND_SCROLL   (ID_SCROLL, TimelineBar::OnScroll)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-TimelineBar* timelinebarptr = NULL;    // global pointer to timeline bar
-const int timelinebarht = 32;          // height of timeline bar
+static TimelineBar* tbarptr = NULL;    // global pointer to timeline bar
+const int tbarht = 32;                 // height of timeline bar
+static int mindelpos;                  // minimum x position of DELETE_BUTT
 
 const int SCROLLHT = 17;               // height of scroll bar
 const int PAGESIZE = 10;               // scroll amount when paging
@@ -156,14 +180,21 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    #endif
 
    // init bitmaps for normal state
-   normbutt[RECORD_BUTT] = wxBITMAP(record);
-   normbutt[DELETE_BUTT] = wxBITMAP(deltime);
+   normbutt[RECORD_BUTT] =    wxBITMAP(record);
+   normbutt[BACKWARDS_BUTT] = wxBITMAP(backwards);
+   normbutt[FORWARDS_BUTT] =  wxBITMAP(forwards);
+   normbutt[STOPPLAY_BUTT] =  wxBITMAP(stopplay);
+   normbutt[DELETE_BUTT] =    wxBITMAP(deltime);
 
    #ifdef __WXMSW__
       for (int i = 0; i < NUM_BUTTONS; i++) {
          CreatePaleBitmap(normbutt[i], disnormbutt[i]);
       }
    #endif
+
+   for (int i = 0; i < NUM_BUTTONS; i++) {
+      buttstate[i] = 0;
+   }
 
    // init position variables used by AddButton and AddSeparator
    #ifdef __WXGTK__
@@ -180,7 +211,9 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 
    // add buttons
    AddButton(RECORD_BUTT, _("Start recording"));
-   // AddSeparator();
+   AddSeparator();
+   AddButton(BACKWARDS_BUTT, _("Play backwards"));
+   AddButton(FORWARDS_BUTT, _("Play forwards"));
 
    // create font for text in timeline bar and set textascent for use in DisplayText
    #ifdef __WXMSW__
@@ -216,6 +249,28 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    timelinebitmapwd = -1;
    timelinebitmapht = -1;
    
+   // add slider
+   int x, y;
+   int sliderwd = 80;
+   #ifdef __WXMAC__
+      int sliderht = 15;   // must be this height on Mac???
+   #else
+      int sliderht = SCROLLHT;
+   #endif
+   x = xpos + 20 - smallgap;
+   y = (tbarht - (sliderht + 1)) / 2;
+   slider = new wxSlider(this, ID_SLIDER, 0, MINSPEED, MAXSPEED, wxPoint(x, y),
+                         wxSize(sliderwd, sliderht),
+                         wxSL_HORIZONTAL /*!!! only if WXMSW??? | wxSL_AUTOTICKS */);
+   if (slider == NULL) Fatal(_("Failed to create timeline slider!"));
+   #ifdef __WXMAC__
+      slider->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
+   #endif
+   #ifdef __WXMSW__
+      slider->SetTick(0);
+   #endif
+   xpos = x + sliderwd;
+   
    // add scroll bar
    int scrollbarwd = 60;      // minimum width (ResizeTimelineBar will alter it)
    #ifdef __WXMAC__
@@ -223,19 +278,21 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    #else
       int scrollbarht = SCROLLHT;
    #endif
-   int x = xpos + 20 - smallgap;
-   int y = (timelinebarht - (scrollbarht + 1)) / 2;
-   genbar = new wxScrollBar(this, GEN_BAR, wxPoint(x, y),
-                            wxSize(scrollbarwd, scrollbarht),
-                            wxSB_HORIZONTAL);
-   if (genbar == NULL) Fatal(_("Failed to create scroll bar!"));
+   x = xpos + 20;
+   y = (tbarht - (scrollbarht + 1)) / 2;
+   framebar = new wxScrollBar(this, ID_SCROLL, wxPoint(x, y),
+                              wxSize(scrollbarwd, scrollbarht),
+                              wxSB_HORIZONTAL);
+   if (framebar == NULL) Fatal(_("Failed to create timeline scroll bar!"));
 
    xpos = x + scrollbarwd + 4;
+   mindelpos = xpos;
    AddButton(DELETE_BUTT, _("Delete timeline"));
    // ResizeTimelineBar will move this button to right end of scroll bar
    
    currframe = 0;
    autoplay = 0;
+   speed = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -244,7 +301,8 @@ TimelineBar::~TimelineBar()
 {
    delete timelinefont;
    delete timelinebitmap;
-   delete genbar;
+   delete slider;
+   delete framebar;
 }
 
 // -----------------------------------------------------------------------------
@@ -296,18 +354,24 @@ void TimelineBar::DrawTimelineBar(wxDC& dc, int wd, int ht)
    dc.SetPen(wxNullPen);
 
    if (currlayer->algo->hyperCapable()) {
+      slider->Show(TimelineExists());
+      framebar->Show(TimelineExists());
       tlbutt[RECORD_BUTT]->Show(true);
+      tlbutt[BACKWARDS_BUTT]->Show(true);
+      tlbutt[FORWARDS_BUTT]->Show(true);
       tlbutt[DELETE_BUTT]->Show(true);
-      genbar->Show(true);
    } else {
+      slider->Show(false);
+      framebar->Show(false);
       tlbutt[RECORD_BUTT]->Show(false);
+      tlbutt[BACKWARDS_BUTT]->Show(false);
+      tlbutt[FORWARDS_BUTT]->Show(false);
       tlbutt[DELETE_BUTT]->Show(false);
-      genbar->Show(false);
       
       SetTimelineFont(dc);
       dc.SetPen(*wxBLACK_PEN);
       int x = 6;
-      int y = timelinebarht - 8;
+      int y = tbarht - 8;
       DisplayText(dc, _("The current algorithm does not support timelines."),
                   x, y - (SCROLLHT - digitht)/2);
       dc.SetPen(wxNullPen);
@@ -373,6 +437,8 @@ void TimelineBar::OnButton(wxCommandEvent& event)
    int cmdid;
    switch (id) {
       case RECORD_BUTT:    cmdid = ID_RECORD; break;
+      case BACKWARDS_BUTT: PlayTimeline(-1); return;
+      case FORWARDS_BUTT:  PlayTimeline(1); return;
       case DELETE_BUTT:    cmdid = ID_DELTIME; break;
       default:             Warning(_("Unexpected button id!")); return;
    }
@@ -384,12 +450,48 @@ void TimelineBar::OnButton(wxCommandEvent& event)
 
 // -----------------------------------------------------------------------------
 
+void TimelineBar::OnSlider(wxScrollEvent& event)
+{
+   WXTYPE type = event.GetEventType();
+
+   if (type == wxEVT_SCROLL_LINEUP) {
+      speed--;
+      if (speed < MINSPEED) speed = MINSPEED;
+
+   } else if (type == wxEVT_SCROLL_LINEDOWN) {
+      speed++;
+      if (speed > MAXSPEED) speed = MAXSPEED;
+
+   } else if (type == wxEVT_SCROLL_PAGEUP) {
+      speed -= PAGESIZE;
+      if (speed < MINSPEED) speed = MINSPEED;
+
+   } else if (type == wxEVT_SCROLL_PAGEDOWN) {
+      speed += PAGESIZE;
+      if (speed > MAXSPEED) speed = MAXSPEED;
+
+   } else if (type == wxEVT_SCROLL_THUMBTRACK) {
+      speed = event.GetPosition();
+      if (speed < MINSPEED) speed = MINSPEED;
+      if (speed > MAXSPEED) speed = MAXSPEED;
+
+   } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
+      UpdateSlider();
+   }
+
+   #ifndef __WXMAC__
+      viewptr->SetFocus();    // need on Win/Linux
+   #endif
+}
+
+// -----------------------------------------------------------------------------
+
 void TimelineBar::DisplayCurrentFrame()
 {
    currlayer->algo->gotoframe(currframe);
-   // may need Refresh on Win/Linux???!!!
-   // if (showtimeline) Refresh(false);
-   if (currlayer->autofit) viewptr->FitInView(1);  // use 0??? less jerky
+   // should we use FitInView(0)??? less jerky but has the disadvantage
+   // that pattern won't fill view if it shrinks when going backwards
+   if (currlayer->autofit) viewptr->FitInView(1);
    mainptr->UpdatePatternAndStatus();
 }
 
@@ -398,6 +500,10 @@ void TimelineBar::DisplayCurrentFrame()
 void TimelineBar::OnScroll(wxScrollEvent& event)
 {
    WXTYPE type = event.GetEventType();
+   
+   // best to stop autoplay if scroll bar is used
+   autoplay = 0;
+   tbarptr->UpdateButtons();
 
    if (type == wxEVT_SCROLL_LINEUP) {
       currframe--;
@@ -525,10 +631,62 @@ void TimelineBar::EnableButton(int id, bool enable)
 
 // -----------------------------------------------------------------------------
 
+void TimelineBar::UpdateButtons()
+{
+   if (autoplay == 0) {
+      if (buttstate[BACKWARDS_BUTT] != 1) {
+         buttstate[BACKWARDS_BUTT] = 1;
+         tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
+         tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
+      }
+      if (buttstate[FORWARDS_BUTT] != 1) {
+         buttstate[FORWARDS_BUTT] = 1;
+         tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
+         tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
+      }
+   } else if (autoplay > 0) {
+      if (buttstate[BACKWARDS_BUTT] != 1) {
+         buttstate[BACKWARDS_BUTT] = 1;
+         tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
+         tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
+      }
+      if (buttstate[FORWARDS_BUTT] != -1) {
+         buttstate[FORWARDS_BUTT] = -1;
+         tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
+         tlbutt[FORWARDS_BUTT]->SetToolTip(_("Stop playing"));
+      }
+   } else { // autoplay < 0
+      if (buttstate[BACKWARDS_BUTT] != -1) {
+         buttstate[BACKWARDS_BUTT] = -1;
+         tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
+         tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Stop playing"));
+      }
+      if (buttstate[FORWARDS_BUTT] != 1) {
+         buttstate[FORWARDS_BUTT] = 1;
+         tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
+         tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
+      }
+   }
+   
+   if (showtimeline) {
+      tlbutt[BACKWARDS_BUTT]->Refresh(false);
+      tlbutt[FORWARDS_BUTT]->Refresh(false);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void TimelineBar::UpdateSlider()
+{
+   slider->SetValue(speed);
+}
+
+// -----------------------------------------------------------------------------
+
 void TimelineBar::UpdateScrollBar()
 {
-   genbar->SetScrollbar(currframe, 1,
-                        currlayer->algo->getframecount(), PAGESIZE, true);
+   framebar->SetScrollbar(currframe, 1,
+                          currlayer->algo->getframecount(), PAGESIZE, true);
 }
 
 // -----------------------------------------------------------------------------
@@ -539,34 +697,38 @@ void CreateTimelineBar(wxWindow* parent)
    int wd, ht;
    parent->GetClientSize(&wd, &ht);
 
-   timelinebarptr = new TimelineBar(parent, 0, ht - timelinebarht, wd, timelinebarht);
-   if (timelinebarptr == NULL) Fatal(_("Failed to create timeline bar!"));
+   tbarptr = new TimelineBar(parent, 0, ht - tbarht, wd, tbarht);
+   if (tbarptr == NULL) Fatal(_("Failed to create timeline bar!"));
       
-   timelinebarptr->Show(showtimeline);
+   tbarptr->Show(showtimeline);
 }
 
 // -----------------------------------------------------------------------------
 
 int TimelineBarHeight() {
-   return (showtimeline ? timelinebarht : 0);
+   return (showtimeline ? tbarht : 0);
 }
 
 // -----------------------------------------------------------------------------
 
 void UpdateTimelineBar(bool active)
 {
-   if (timelinebarptr && showtimeline) {
-      if (viewptr->waitingforclick) active = false;
+   if (tbarptr && showtimeline) {
+      if (viewptr->waitingforclick || inscript) active = false;
+      
+      // may need to change bitmap in backwards/forwards button
+      tbarptr->UpdateButtons();
 
-      timelinebarptr->EnableButton(RECORD_BUTT, active && !inscript &&
-                                                currlayer->algo->hyperCapable());
-      timelinebarptr->EnableButton(DELETE_BUTT, active && !inscript &&
-                                                currlayer->algo->getframecount() > 0);
+      tbarptr->EnableButton(RECORD_BUTT, active && currlayer->algo->hyperCapable());
+      tbarptr->EnableButton(BACKWARDS_BUTT, active && TimelineExists());
+      tbarptr->EnableButton(FORWARDS_BUTT, active && TimelineExists());
+      tbarptr->EnableButton(DELETE_BUTT, active && TimelineExists());
       
-      timelinebarptr->Refresh(false);
-      timelinebarptr->Update();
+      tbarptr->UpdateSlider();
+      tbarptr->UpdateScrollBar();
       
-      timelinebarptr->UpdateScrollBar();
+      tbarptr->Refresh(false);
+      tbarptr->Update();
    }
 }
 
@@ -574,16 +736,17 @@ void UpdateTimelineBar(bool active)
 
 void ResizeTimelineBar(int y, int wd)
 {
-   if (timelinebarptr) {
-      timelinebarptr->SetSize(0, y, wd, timelinebarht);
+   if (tbarptr) {
+      tbarptr->SetSize(0, y, wd, tbarht);
       // change width of scroll bar to nearly fill timeline bar
-      wxRect r = timelinebarptr->genbar->GetRect();
+      wxRect r = tbarptr->framebar->GetRect();
       r.width = wd - r.x - 20 - BUTTON_WD - 20;
-      timelinebarptr->genbar->SetSize(r);
+      tbarptr->framebar->SetSize(r);
       
       // move DELETE_BUTT to right edge of timeline bar
       r = tlbutt[DELETE_BUTT]->GetRect();
       r.x = wd - 20 - BUTTON_WD;
+      if (r.x < mindelpos && TimelineExists()) r.x = mindelpos;
       tlbutt[DELETE_BUTT]->SetSize(r);
    }
 }
@@ -597,14 +760,14 @@ void ToggleTimelineBar()
    
    if (showtimeline) {
       // show timeline bar underneath viewport window
-      r.height -= timelinebarht;
+      r.height -= tbarht;
       ResizeTimelineBar(r.y + r.height, r.width);
    } else {
       // hide timeline bar
-      r.height += timelinebarht;
+      r.height += tbarht;
    }
    bigview->SetSize(r);
-   timelinebarptr->Show(showtimeline);    // needed on Windows
+   tbarptr->Show(showtimeline);    // needed on Windows
    
    mainptr->UpdateEverything();
 }
@@ -648,6 +811,10 @@ void DeleteTimeline()
    if (!inscript && TimelineExists()) {
       // stop any recording
       if (currlayer->algo->isrecording()) currlayer->algo->stoprecording();
+
+      currframe = 0;
+      autoplay = 0;
+      speed = 0;
       
       // prevent user selecting Reset/Undo by making current frame
       // the new starting pattern
@@ -657,8 +824,8 @@ void DeleteTimeline()
       
       /* PROBLEM: SaveStartingPattern writes a .mc file with timeline!!!
          ditto for temp .mc files written by RememberGenStart/Finish!!!
-         SOLN: pass option to writeNativeFormat so it only writes current frame???
-         or add call to temporarily disable/enable timeline without deleting it???
+         SOLN: set flag that tells writeNativeFormat to only write current frame???
+         or add writetimeline(bool) call to temporarily disable/enable writing timeline???
       if (currframe > 0) {
          // do stuff so user can select Reset/Undo to go back to 1st frame
          currlayer->algo->gotoframe(0);
@@ -687,6 +854,7 @@ void InitTimelineFrame()
    currlayer->algo->gotoframe(0);
    currframe = 0;
    autoplay = 0;
+   speed = 0;
 
    // first frame is starting gen (need this for DeleteTimeline)
    currlayer->startgen = currlayer->algo->getGeneration();
@@ -705,27 +873,42 @@ bool TimelineExists()
 void DoIdleTimeline()
 {
    // assume currlayer->algo->getframecount() > 0
+   if (autoplay == 0) return;
+   
+   int frameinc = 1;
+   long delay = 0;
+   // if speed is > 0 then we skip 2^speed frames
+   if (speed > 0) frameinc = 1 << speed;
+   // if speed is < 0 then we delay 2^(-speed) msecs between each frame
+   if (speed < 0) {
+      delay = 1 << (-speed);
+      if (stopwatch->Time() - lastframe < delay) return;
+   }
+   
    if (autoplay > 0) {
-      // play next frame
-      if (currframe + 1 < currlayer->algo->getframecount()) {
-         currframe++;
-         timelinebarptr->DisplayCurrentFrame();
-         timelinebarptr->UpdateScrollBar();
-         wxWakeUpIdle();      // send another idle event
-      } else {
-         autoplay = 0;        // stop when we hit last frame???
+      // play timeline forwards
+      currframe += frameinc;
+      if (currframe >= currlayer->algo->getframecount() - 1) {
+         currframe = currlayer->algo->getframecount() - 1;
+         // autoplay = 0;           // stop when we hit last frame???
+         autoplay = -1;             // reverse direction when we hit last frame
+         tbarptr->UpdateButtons();
       }
-   } else if (autoplay < 0) {
-      // play previous frame
-      if (currframe > 0) {
-         currframe--;
-         timelinebarptr->DisplayCurrentFrame();
-         timelinebarptr->UpdateScrollBar();
-         wxWakeUpIdle();      // send another idle event
-      } else {
-         autoplay = 0;        // stop when we hit first frame???
+   } else {
+      // autoplay < 0 so play timeline backwards
+      currframe -= frameinc;
+      if (currframe <= 0) {
+         currframe = 0;
+         // autoplay = 0;           // stop when we hit first frame???
+         autoplay = 1;              // reverse direction when we hit first frame
+         tbarptr->UpdateButtons();
       }
    }
+   
+   tbarptr->DisplayCurrentFrame();
+   tbarptr->UpdateScrollBar();
+   lastframe = stopwatch->Time();
+   wxWakeUpIdle();                  // send another idle event
 }
 
 // -----------------------------------------------------------------------------
@@ -739,4 +922,33 @@ void PlayTimeline(int direction)
    } else {
       autoplay = direction;
    }
+   if (showtimeline) tbarptr->UpdateButtons();
+}
+
+// -----------------------------------------------------------------------------
+
+void PlayTimelineFaster()
+{
+   if (speed < MAXSPEED) {
+      speed++;
+      if (showtimeline) tbarptr->UpdateSlider();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PlayTimelineSlower()
+{
+   if (speed > MINSPEED) {
+      speed--;
+      if (showtimeline) tbarptr->UpdateSlider();
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void ResetTimelineSpeed()
+{
+   speed = 0;
+   if (showtimeline) tbarptr->UpdateSlider();
 }

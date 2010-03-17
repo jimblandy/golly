@@ -46,6 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, etc
 #include "wxrender.h"      // for DrawView
+#include "wxtimeline.h"    // for TimelineExists, etc
 
 // This module implements Control menu functions.
 
@@ -395,12 +396,16 @@ void MainFrame::SetGeneration()
 
 void MainFrame::GoFaster()
 {
-   currlayer->currexpo++;
-   SetGenIncrement();
-   // only need to refresh status bar
-   UpdateStatus();
-   if (generating && currlayer->currexpo < 0) {
-      whentosee -= statusptr->GetCurrentDelay();
+   if (TimelineExists()) {
+      PlayTimelineFaster();
+   } else {
+      currlayer->currexpo++;
+      SetGenIncrement();
+      // only need to refresh status bar
+      UpdateStatus();
+      if (generating && currlayer->currexpo < 0) {
+         whentosee -= statusptr->GetCurrentDelay();
+      }
    }
 }
 
@@ -408,21 +413,25 @@ void MainFrame::GoFaster()
 
 void MainFrame::GoSlower()
 {
-   if (currlayer->currexpo > minexpo) {
-      currlayer->currexpo--;
-      SetGenIncrement();
-      // only need to refresh status bar
-      UpdateStatus();
-      if (generating && currlayer->currexpo < 0) {
-         if (currlayer->currexpo == -1) {
-            // need to initialize whentosee rather than increment it
-            whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-         } else {
-            whentosee += statusptr->GetCurrentDelay();
-         }
-      }
+   if (TimelineExists()) {
+      PlayTimelineSlower();
    } else {
-      wxBell();
+      if (currlayer->currexpo > minexpo) {
+         currlayer->currexpo--;
+         SetGenIncrement();
+         // only need to refresh status bar
+         UpdateStatus();
+         if (generating && currlayer->currexpo < 0) {
+            if (currlayer->currexpo == -1) {
+               // need to initialize whentosee rather than increment it
+               whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
+            } else {
+               whentosee += statusptr->GetCurrentDelay();
+            }
+         }
+      } else {
+         wxBell();
+      }
    }
 }
 

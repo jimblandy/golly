@@ -568,11 +568,12 @@ const char* GetActionName(action_id action)
       case DO_SLOWER:         return "Slower";
       case DO_SETBASE:        return "Set Base Step...";
       case DO_AUTOFIT:        return "Auto Fit";
-      case DO_HASHING:        return "Use Hashing";   //!!! deprecate???
+      case DO_HASHING:        return "Use Hashing";
       case DO_HYPER:          return "Hyperspeed";
       case DO_HASHINFO:       return "Show Hash Info";
       case DO_RECORD:         return "Start/Stop Recording";
       case DO_DELTIME:        return "Delete Timeline";
+      case DO_PLAYBACK:       return "Play Timeline Backwards";
       case DO_SETRULE:        return "Set Rule...";
       case DO_ADVANCE:        return "Advance Selection";
       case DO_ADVANCEOUT:     return "Advance Outside";

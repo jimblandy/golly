@@ -1472,6 +1472,8 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
             cx += skip;
             if (cx <= right) {
                //note that v is 1 in a two-state universe
+               //!!! fix problem with multi-state patterns like Langtons-Ant.rle;
+               // using (cx - x + 1) improves things but still see too many collisions
                hash = (hash * 33 + yshift) ^ ((cx - x) * v);
             }
          } else {

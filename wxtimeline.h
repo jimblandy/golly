@@ -62,4 +62,13 @@ void PlayTimeline(int direction);
 // Play timeline forwards if given direction is +ve, or backwards
 // if direction is -ve, or stop if direction is 0.
 
+void PlayTimelineFaster();
+// Increase the rate at which timeline frames are displayed.
+
+void PlayTimelineSlower();
+// Decrease the rate at which timeline frames are displayed.
+
+void ResetTimelineSpeed();
+// Reset autoplay speed to 0 (no delay, no frame skipping).
+
 #endif
