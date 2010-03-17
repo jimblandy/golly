@@ -887,8 +887,8 @@ void DoIdleTimeline()
    if (speed < 0) {
       delay = 1 << (-speed);
       if (stopwatch->Time() - lastframe < delay) {
-         #ifdef __WXMSW__
-            // need to send another idle event on Windows
+         #ifndef __WXMAC__
+            // need to send another idle event on Windows and Linux
             wxWakeUpIdle();
             wxMilliSleep(1);
          #endif
