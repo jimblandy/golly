@@ -868,7 +868,8 @@ void InitTimelineFrame()
 
 bool TimelineExists()
 {
-   return currlayer->algo->getframecount() > 0;
+   // on Linux MainFrame::OnIdle is called before CreateTimelineBar sets tbarptr
+   return tbarptr && currlayer->algo->getframecount() > 0;
 }
 
 // -----------------------------------------------------------------------------
