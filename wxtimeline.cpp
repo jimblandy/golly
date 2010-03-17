@@ -253,21 +253,21 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    int x, y;
    int sliderwd = 80;
    #ifdef __WXMAC__
-      int sliderht = 15;   // must be this height on Mac???
+      int sliderht = 15;   // probably ignored on Mac???
    #else
-      int sliderht = SCROLLHT;
+      int sliderht = 24;   // best for Windows (and wxGTK???)
    #endif
    x = xpos + 20 - smallgap;
    y = (tbarht - (sliderht + 1)) / 2;
    slider = new wxSlider(this, ID_SLIDER, 0, MINSPEED, MAXSPEED, wxPoint(x, y),
                          wxSize(sliderwd, sliderht),
-                         wxSL_HORIZONTAL /*!!! only if WXMSW??? | wxSL_AUTOTICKS */);
+                         wxSL_HORIZONTAL);
    if (slider == NULL) Fatal(_("Failed to create timeline slider!"));
    #ifdef __WXMAC__
       slider->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
    #endif
    #ifdef __WXMSW__
-      slider->SetTick(0);
+      slider->SetTick(0);     // doesn't seem to do anything!
    #endif
    xpos = x + sliderwd;
    
@@ -882,8 +882,20 @@ void DoIdleTimeline()
    // if speed is < 0 then we delay 2^(-speed) msecs between each frame
    if (speed < 0) {
       delay = 1 << (-speed);
-      if (stopwatch->Time() - lastframe < delay) return;
+      if (stopwatch->Time() - lastframe < delay) {
+         #ifdef __WXMSW__
+            // need to send another idle event on Windows
+            wxWakeUpIdle();
+            wxMilliSleep(1);
+         #endif
+         return;
+      }
    }
+   
+   #ifdef __WXMSW__
+      // need to slow things down on Windows!
+      wxMilliSleep(20);
+   #endif
    
    if (autoplay > 0) {
       // play timeline forwards
