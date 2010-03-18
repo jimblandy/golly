@@ -874,10 +874,10 @@ bool TimelineExists()
 
 // -----------------------------------------------------------------------------
 
-void DoIdleTimeline()
+bool AutoPlay()
 {
    // assume currlayer->algo->getframecount() > 0
-   if (autoplay == 0) return;
+   if (autoplay == 0) return false;
    
    int frameinc = 1;
    long delay = 0;
@@ -887,12 +887,8 @@ void DoIdleTimeline()
    if (speed < 0) {
       delay = 1 << (-speed);
       if (stopwatch->Time() - lastframe < delay) {
-         #ifndef __WXMAC__
-            // need to send another idle event on Windows and Linux
-            wxWakeUpIdle();
-            wxMilliSleep(1);
-         #endif
-         return;
+         // wxMilliSleep(1);  // avoid hogging CPU???
+         return true;         // request another idle event
       }
    }
    
@@ -924,7 +920,7 @@ void DoIdleTimeline()
    tbarptr->DisplayCurrentFrame();
    tbarptr->UpdateScrollBar();
    lastframe = stopwatch->Time();
-   wxWakeUpIdle();                  // send another idle event
+   return true;                     // request another idle event
 }
 
 // -----------------------------------------------------------------------------

@@ -1597,10 +1597,10 @@ void MainFrame::OnIdle(wxIdleEvent& event)
       Close(false);        // false allows OnClose handler to veto close
    }
    
-   if (TimelineExists()) {
-      DoIdleTimeline();
-      // no need for this if DoIdleTimeline calls wxWakeUpIdle
-      // event.RequestMore();
+   if (TimelineExists() && AutoPlay()) {
+      // in autoplay mode so we need another idle event
+      // (this works much better than calling wxWakeUpIdle)
+      event.RequestMore();
    }
    
    event.Skip();
