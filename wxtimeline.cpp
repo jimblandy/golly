@@ -58,19 +58,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // -----------------------------------------------------------------------------
 
-// these need to be per layer rather than here???!!!
-// note also that New Pattern doesn't update play buttons!!!
-
-static int currframe;         // current frame in timeline
-static int autoplay;          // +ve = play forwards, -ve = play backwards, 0 = stop
-static long lastframe = 0;    // time when last frame was displayed
-static int speed;             // controls speed at which frames are played
-
-const int MINSPEED = -10;     // delay 2^10 msecs between each frame
-const int MAXSPEED = 10;      // skip 2^10 frames
-
-// -----------------------------------------------------------------------------
-
 // Define timeline bar window:
 
 enum {
@@ -167,6 +154,9 @@ const int BUTTON_WD = 24;              // nominal width of bitmap buttons
 
 // timeline bar buttons (must be global to use Connect/Disconnect on Windows)
 wxBitmapButton* tlbutt[NUM_BUTTONS];
+
+const int MINSPEED = -10;     // delay 2^10 msecs between each frame
+const int MAXSPEED = 10;      // skip 2^10 frames
 
 // -----------------------------------------------------------------------------
 
@@ -290,10 +280,6 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    mindelpos = xpos;
    AddButton(DELETE_BUTT, _("Delete timeline"));
    // ResizeTimelineBar will move this button to right end of scroll bar
-   
-   currframe = 0;
-   autoplay = 0;
-   speed = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -456,25 +442,25 @@ void TimelineBar::OnSlider(wxScrollEvent& event)
    WXTYPE type = event.GetEventType();
 
    if (type == wxEVT_SCROLL_LINEUP) {
-      speed--;
-      if (speed < MINSPEED) speed = MINSPEED;
+      currlayer->tlspeed--;
+      if (currlayer->tlspeed < MINSPEED) currlayer->tlspeed = MINSPEED;
 
    } else if (type == wxEVT_SCROLL_LINEDOWN) {
-      speed++;
-      if (speed > MAXSPEED) speed = MAXSPEED;
+      currlayer->tlspeed++;
+      if (currlayer->tlspeed > MAXSPEED) currlayer->tlspeed = MAXSPEED;
 
    } else if (type == wxEVT_SCROLL_PAGEUP) {
-      speed -= PAGESIZE;
-      if (speed < MINSPEED) speed = MINSPEED;
+      currlayer->tlspeed -= PAGESIZE;
+      if (currlayer->tlspeed < MINSPEED) currlayer->tlspeed = MINSPEED;
 
    } else if (type == wxEVT_SCROLL_PAGEDOWN) {
-      speed += PAGESIZE;
-      if (speed > MAXSPEED) speed = MAXSPEED;
+      currlayer->tlspeed += PAGESIZE;
+      if (currlayer->tlspeed > MAXSPEED) currlayer->tlspeed = MAXSPEED;
 
    } else if (type == wxEVT_SCROLL_THUMBTRACK) {
-      speed = event.GetPosition();
-      if (speed < MINSPEED) speed = MINSPEED;
-      if (speed > MAXSPEED) speed = MAXSPEED;
+      currlayer->tlspeed = event.GetPosition();
+      if (currlayer->tlspeed < MINSPEED) currlayer->tlspeed = MINSPEED;
+      if (currlayer->tlspeed > MAXSPEED) currlayer->tlspeed = MAXSPEED;
 
    } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
       UpdateSlider();
@@ -489,10 +475,12 @@ void TimelineBar::OnSlider(wxScrollEvent& event)
 
 void TimelineBar::DisplayCurrentFrame()
 {
-   currlayer->algo->gotoframe(currframe);
+   currlayer->algo->gotoframe(currlayer->currframe);
+   
    // should we use FitInView(0)??? less jerky but has the disadvantage
    // that pattern won't fill view if it shrinks when going backwards
    if (currlayer->autofit) viewptr->FitInView(1);
+   
    mainptr->UpdatePatternAndStatus();
 }
 
@@ -503,39 +491,39 @@ void TimelineBar::OnScroll(wxScrollEvent& event)
    WXTYPE type = event.GetEventType();
    
    // best to stop autoplay if scroll bar is used
-   if (autoplay != 0) {
-      autoplay = 0;
+   if (currlayer->autoplay != 0) {
+      currlayer->autoplay = 0;
       tbarptr->UpdateButtons();
    }
 
    if (type == wxEVT_SCROLL_LINEUP) {
-      currframe--;
-      if (currframe < 0) currframe = 0;
+      currlayer->currframe--;
+      if (currlayer->currframe < 0) currlayer->currframe = 0;
       DisplayCurrentFrame();
 
    } else if (type == wxEVT_SCROLL_LINEDOWN) {
-      currframe++;
-      if (currframe >= currlayer->algo->getframecount())
-         currframe = currlayer->algo->getframecount() - 1;
+      currlayer->currframe++;
+      if (currlayer->currframe >= currlayer->algo->getframecount())
+         currlayer->currframe = currlayer->algo->getframecount() - 1;
       DisplayCurrentFrame();
 
    } else if (type == wxEVT_SCROLL_PAGEUP) {
-      currframe -= PAGESIZE;
-      if (currframe < 0) currframe = 0;
+      currlayer->currframe -= PAGESIZE;
+      if (currlayer->currframe < 0) currlayer->currframe = 0;
       DisplayCurrentFrame();
 
    } else if (type == wxEVT_SCROLL_PAGEDOWN) {
-      currframe += PAGESIZE;
-      if (currframe >= currlayer->algo->getframecount())
-         currframe = currlayer->algo->getframecount() - 1;
+      currlayer->currframe += PAGESIZE;
+      if (currlayer->currframe >= currlayer->algo->getframecount())
+         currlayer->currframe = currlayer->algo->getframecount() - 1;
       DisplayCurrentFrame();
 
    } else if (type == wxEVT_SCROLL_THUMBTRACK) {
-      currframe = event.GetPosition();
-      if (currframe < 0)
-         currframe = 0;
-      if (currframe >= currlayer->algo->getframecount())
-         currframe = currlayer->algo->getframecount() - 1;
+      currlayer->currframe = event.GetPosition();
+      if (currlayer->currframe < 0)
+         currlayer->currframe = 0;
+      if (currlayer->currframe >= currlayer->algo->getframecount())
+         currlayer->currframe = currlayer->algo->getframecount() - 1;
       DisplayCurrentFrame();
 
    } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
@@ -636,7 +624,7 @@ void TimelineBar::EnableButton(int id, bool enable)
 
 void TimelineBar::UpdateButtons()
 {
-   if (autoplay == 0) {
+   if (currlayer->autoplay == 0) {
       if (buttstate[BACKWARDS_BUTT] != 1) {
          buttstate[BACKWARDS_BUTT] = 1;
          tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
@@ -647,7 +635,7 @@ void TimelineBar::UpdateButtons()
          tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
          tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
       }
-   } else if (autoplay > 0) {
+   } else if (currlayer->autoplay > 0) {
       if (buttstate[BACKWARDS_BUTT] != 1) {
          buttstate[BACKWARDS_BUTT] = 1;
          tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
@@ -658,7 +646,7 @@ void TimelineBar::UpdateButtons()
          tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
          tlbutt[FORWARDS_BUTT]->SetToolTip(_("Stop playing"));
       }
-   } else { // autoplay < 0
+   } else { // currlayer->autoplay < 0
       if (buttstate[BACKWARDS_BUTT] != -1) {
          buttstate[BACKWARDS_BUTT] = -1;
          tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
@@ -681,14 +669,14 @@ void TimelineBar::UpdateButtons()
 
 void TimelineBar::UpdateSlider()
 {
-   slider->SetValue(speed);
+   slider->SetValue(currlayer->tlspeed);
 }
 
 // -----------------------------------------------------------------------------
 
 void TimelineBar::UpdateScrollBar()
 {
-   framebar->SetScrollbar(currframe, 1,
+   framebar->SetScrollbar(currlayer->currframe, 1,
                           currlayer->algo->getframecount(), PAGESIZE, true);
 }
 
@@ -815,9 +803,9 @@ void DeleteTimeline()
       // stop any recording
       if (currlayer->algo->isrecording()) currlayer->algo->stoprecording();
 
-      currframe = 0;
-      autoplay = 0;
-      speed = 0;
+      currlayer->currframe = 0;
+      currlayer->autoplay = 0;
+      currlayer->tlspeed = 0;
       
       // prevent user selecting Reset/Undo by making current frame
       // the new starting pattern
@@ -829,7 +817,7 @@ void DeleteTimeline()
          ditto for temp .mc files written by RememberGenStart/Finish!!!
          SOLN: set flag that tells writeNativeFormat to only write current frame???
          or add writetimeline(bool) call to temporarily disable/enable writing timeline???
-      if (currframe > 0) {
+      if (currlayer->currframe > 0) {
          // do stuff so user can select Reset/Undo to go back to 1st frame
          currlayer->algo->gotoframe(0);
          if (currlayer->algo->getGeneration() == currlayer->startgen) {
@@ -838,7 +826,7 @@ void DeleteTimeline()
          if (allowundo) currlayer->undoredo->RememberGenStart();
          
          // return to the current frame
-         currlayer->algo->gotoframe(currframe);
+         currlayer->algo->gotoframe(currlayer->currframe);
          if (allowundo) currlayer->undoredo->RememberGenFinish();
       }
       */
@@ -855,9 +843,9 @@ void InitTimelineFrame()
    // the user has just loaded a .mc file with a timeline,
    // so prepare to display the first frame
    currlayer->algo->gotoframe(0);
-   currframe = 0;
-   autoplay = 0;
-   speed = 0;
+   currlayer->currframe = 0;
+   currlayer->autoplay = 0;
+   currlayer->tlspeed = 0;
 
    // first frame is starting gen (need this for DeleteTimeline)
    currlayer->startgen = currlayer->algo->getGeneration();
@@ -877,18 +865,19 @@ bool TimelineExists()
 bool AutoPlay()
 {
    // assume currlayer->algo->getframecount() > 0
-   if (autoplay == 0) return false;
+   if (currlayer->autoplay == 0) return false;
    
    int frameinc = 1;
    long delay = 0;
-   // if speed is > 0 then we skip 2^speed frames
-   if (speed > 0) frameinc = 1 << speed;
-   // if speed is < 0 then we delay 2^(-speed) msecs between each frame
-   if (speed < 0) {
-      delay = 1 << (-speed);
-      if (stopwatch->Time() - lastframe < delay) {
-         // wxMilliSleep(1);  // avoid hogging CPU???
-         return true;         // request another idle event
+   if (currlayer->tlspeed > 0) {
+      // skip 2^tlspeed frames
+      frameinc = 1 << currlayer->tlspeed;
+   }
+   if (currlayer->tlspeed < 0) {
+      // delay 2^(-tlspeed) msecs between each frame
+      delay = 1 << (-currlayer->tlspeed);
+      if (stopwatch->Time() - currlayer->lastframe < delay) {
+         return true;   // request another idle event
       }
    }
    
@@ -897,42 +886,43 @@ bool AutoPlay()
       wxMilliSleep(20);
    #endif
    
-   if (autoplay > 0) {
+   if (currlayer->autoplay > 0) {
       // play timeline forwards
-      currframe += frameinc;
-      if (currframe >= currlayer->algo->getframecount() - 1) {
-         currframe = currlayer->algo->getframecount() - 1;
-         // autoplay = 0;           // stop when we hit last frame???
-         autoplay = -1;             // reverse direction when we hit last frame
+      currlayer->currframe += frameinc;
+      if (currlayer->currframe >= currlayer->algo->getframecount() - 1) {
+         currlayer->currframe = currlayer->algo->getframecount() - 1;
+         // currlayer->autoplay = 0;   // stop when we hit last frame???
+         currlayer->autoplay = -1;     // reverse direction when we hit last frame
          tbarptr->UpdateButtons();
       }
    } else {
-      // autoplay < 0 so play timeline backwards
-      currframe -= frameinc;
-      if (currframe <= 0) {
-         currframe = 0;
-         // autoplay = 0;           // stop when we hit first frame???
-         autoplay = 1;              // reverse direction when we hit first frame
+      // currlayer->autoplay < 0 so play timeline backwards
+      currlayer->currframe -= frameinc;
+      if (currlayer->currframe <= 0) {
+         currlayer->currframe = 0;
+         // currlayer->autoplay = 0;   // stop when we hit first frame???
+         currlayer->autoplay = 1;      // reverse direction when we hit first frame
          tbarptr->UpdateButtons();
       }
    }
    
    tbarptr->DisplayCurrentFrame();
    tbarptr->UpdateScrollBar();
-   lastframe = stopwatch->Time();
-   return true;                     // request another idle event
+   currlayer->lastframe = stopwatch->Time();
+   
+   return true;   // request another idle event
 }
 
 // -----------------------------------------------------------------------------
 
 void PlayTimeline(int direction)
 {
-   if (direction > 0 && autoplay > 0) {
-      autoplay = 0;
-   } else if (direction < 0 && autoplay < 0) {
-      autoplay = 0;
+   if (direction > 0 && currlayer->autoplay > 0) {
+      currlayer->autoplay = 0;
+   } else if (direction < 0 && currlayer->autoplay < 0) {
+      currlayer->autoplay = 0;
    } else {
-      autoplay = direction;
+      currlayer->autoplay = direction;
    }
    if (showtimeline) tbarptr->UpdateButtons();
 }
@@ -941,8 +931,8 @@ void PlayTimeline(int direction)
 
 void PlayTimelineFaster()
 {
-   if (speed < MAXSPEED) {
-      speed++;
+   if (currlayer->tlspeed < MAXSPEED) {
+      currlayer->tlspeed++;
       if (showtimeline) tbarptr->UpdateSlider();
    }
 }
@@ -951,8 +941,8 @@ void PlayTimelineFaster()
 
 void PlayTimelineSlower()
 {
-   if (speed > MINSPEED) {
-      speed--;
+   if (currlayer->tlspeed > MINSPEED) {
+      currlayer->tlspeed--;
       if (showtimeline) tbarptr->UpdateSlider();
    }
 }
@@ -961,6 +951,6 @@ void PlayTimelineSlower()
 
 void ResetTimelineSpeed()
 {
-   speed = 0;
+   currlayer->tlspeed = 0;
    if (showtimeline) tbarptr->UpdateSlider();
 }

@@ -39,9 +39,13 @@ public:
    Layer();
    ~Layer();
 
+   // if this is a cloned layer then cloneid is > 0 and all the other clones
+   // have the same cloneid
+   int cloneid;
+
    lifealgo* algo;               // this layer's universe (shared by clones)
    algo_type algtype;            // type of universe (index into algoinfo)
-   bool hyperspeed;              // use speed acceleration?
+   bool hyperspeed;              // use acceleration while generating?
    bool showhashinfo;            // show hashing info?
    bool autofit;                 // auto fit pattern while generating?
    bool dirty;                   // user has modified pattern?
@@ -109,16 +113,18 @@ public:
    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
 
-   // if this is a cloned layer then cloneid is > 0 and all the
-   // other clones have the same cloneid
-   int cloneid;
+   // used if the layer has a timeline (see wxtimeline.cpp)
+   int currframe;                // current frame in timeline
+   int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop
+   int tlspeed;                  // controls speed at which frames are played
+   long lastframe;               // time (in msecs) when last frame was displayed
 };
 
-const int MAX_LAYERS = 10;    // maximum number of layers
-extern int numlayers;         // number of existing layers
-extern int numclones;         // number of cloned layers
-extern int currindex;         // index of current layer (0..numlayers-1)
-extern Layer* currlayer;      // pointer to current layer
+const int MAX_LAYERS = 10;       // maximum number of layers
+extern int numlayers;            // number of existing layers
+extern int numclones;            // number of cloned layers
+extern int currindex;            // index of current layer (0..numlayers-1)
+extern Layer* currlayer;         // pointer to current layer
 
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.

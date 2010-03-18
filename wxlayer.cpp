@@ -64,7 +64,7 @@ int numlayers = 0;               // number of existing layers
 int numclones = 0;               // number of cloned layers
 int currindex = -1;              // index of current layer
 
-Layer* currlayer;                // pointer to current layer
+Layer* currlayer = NULL;         // pointer to current layer
 Layer* layer[MAX_LAYERS];        // array of layers
 
 bool cloneavail[MAX_LAYERS];     // for setting unique cloneid
@@ -1002,6 +1002,12 @@ void SyncClones()
             // cloneptr->startmag = currlayer->startmag;
             // cloneptr->startbase = currlayer->startbase;
             // cloneptr->startexpo = currlayer->startexpo;
+
+            // sync timeline settings
+            cloneptr->currframe = currlayer->currframe;
+            cloneptr->autoplay = currlayer->autoplay;
+            cloneptr->tlspeed = currlayer->tlspeed;
+            cloneptr->lastframe = currlayer->lastframe;
          }
       }
    }
@@ -2000,6 +2006,11 @@ Layer::Layer()
    icons15x15 = NULL;            // no 15x15 icons
    icons7x7 = NULL;              // no 7x7 icons
 
+   currframe = 0;                // first frame in timeline
+   autoplay = 0;                 // not playing
+   tlspeed = 0;                  // default speed for autoplay
+   lastframe = 0;                // no frame displayed
+
    deadbrush = new wxBrush(*wxBLACK);
    gridpen = new wxPen(*wxBLACK);
    boldpen = new wxPen(*wxBLACK);
@@ -2012,8 +2023,13 @@ Layer::Layer()
    if (view == NULL) Fatal(_("Failed to create viewport!"));
 
    if (numlayers == 0) {
-      // creating very first layer
+      // creating very first layer (can't be a clone)
+      cloneid = 0;
       
+      // initialize cloneavail array (cloneavail[0] is never used)
+      cloneavail[0] = false;
+      for (int i = 1; i < MAX_LAYERS; i++) cloneavail[i] = true;
+
       // set some options using initial values stored in prefs file
       algtype = initalgo;
       hyperspeed = inithyperspeed;
@@ -2045,13 +2061,6 @@ Layer::Layer()
       curs = curs_pencil;
       drawingstate = 1;
       
-      // first layer can't be a clone
-      cloneid = 0;
-      
-      // initialize cloneavail array (cloneavail[0] is never used)
-      cloneavail[0] = false;
-      for (int i = 1; i < MAX_LAYERS; i++) cloneavail[i] = true;
-
    } else {
       // adding a new layer after currlayer (see AddLayer)
 
@@ -2080,6 +2089,12 @@ Layer::Layer()
          // clones share the same universe and undo/redo history
          algo = currlayer->algo;
          undoredo = currlayer->undoredo;
+
+         // clones also share the same timeline
+         currframe = currlayer->currframe;
+         autoplay = currlayer->autoplay;
+         tlspeed = currlayer->tlspeed;
+         lastframe = currlayer->lastframe;
 
          // clones use same name for starting file
          tempstart = currlayer->tempstart;
