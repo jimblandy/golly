@@ -42,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxundo.h"        // for undoredo->...
 #include "wxalgos.h"       // for *_ALGO, algoinfo
 #include "wxlayer.h"       // for currlayer, SyncClones
+#include "wxtimeline.h"    // for TimelineExists
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
 #include "wxscript.h"
@@ -1027,13 +1028,18 @@ void SavePendingChanges(bool checkgenchanges)
 
 void RunScript(const wxString& filename)
 {
+   if (TimelineExists()) {
+      statusptr->ErrorMessage(_("You can't run a script if there is a timeline."));
+      return;
+   }
+   
    // use these flags to allow re-entrancy
    bool already_inscript = inscript;
    bool in_plscript = plscript;
    bool in_pyscript = pyscript;
    wxString savecwd;
 
-   if ( !wxFileName::FileExists(filename) ) {
+   if (!wxFileName::FileExists(filename)) {
       Warning(_("The script file does not exist:\n") + filename);
       return;
    }

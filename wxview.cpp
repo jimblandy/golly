@@ -815,6 +815,11 @@ void PatternView::SaveCurrentSelection()
 
 void PatternView::RememberNewSelection(const wxString& action)
 {
+   if (TimelineExists()) {
+      // we allow selections while a timeline exists but we can't
+      // remember them in the undo/redo history
+      return;
+   }
    if (allowundo && !currlayer->stayclean) {
       if (inscript) SavePendingChanges();
       currlayer->undoredo->RememberSelection(action);
@@ -1376,6 +1381,7 @@ void PatternView::ProcessKey(int key, int modifiers)
    // a large pattern file, or waiting for a paste click etc, so we must avoid
    // doing any actions that could cause havoc at such times.
    bool busy = nopattupdate || waitingforclick || dragtimer->IsRunning();
+   bool timeline = TimelineExists();
 
    action_info action = FindAction(key, modifiers);
    switch (action.id) {
@@ -1398,8 +1404,8 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_OPENCLIP:    if (!inscript && !busy) mainptr->OpenClipboard(); break;
       case DO_SAVE:        if (!inscript && !busy) mainptr->SavePattern(); break;
       case DO_SAVEXRLE:    if (!inscript) savexrle = !savexrle; break;
-      case DO_RUNSCRIPT:   if (!inscript && !busy) mainptr->OpenScript(); break;
-      case DO_RUNCLIP:     if (!inscript && !busy) mainptr->RunClipboard(); break;
+      case DO_RUNSCRIPT:   if (!inscript && !timeline && !busy) mainptr->OpenScript(); break;
+      case DO_RUNCLIP:     if (!inscript && !timeline && !busy) mainptr->RunClipboard(); break;
       case DO_PREFS:       if (!busy) mainptr->ShowPrefsDialog(); break;
       case DO_PATTDIR:     if (!busy) mainptr->ChangePatternDir(); break;
       case DO_SCRIPTDIR:   if (!busy) mainptr->ChangeScriptDir(); break;
@@ -1408,26 +1414,26 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_QUIT:        mainptr->QuitApp(); break;
 
       // Edit menu actions
-      case DO_UNDO:        if (!inscript && !busy) currlayer->undoredo->UndoChange(); break;
-      case DO_REDO:        if (!inscript && !busy) currlayer->undoredo->RedoChange(); break;
+      case DO_UNDO:        if (!inscript && !timeline && !busy) currlayer->undoredo->UndoChange(); break;
+      case DO_REDO:        if (!inscript && !timeline && !busy) currlayer->undoredo->RedoChange(); break;
       case DO_DISABLE:     if (!inscript) mainptr->ToggleAllowUndo(); break;
-      case DO_CUT:         if (!inscript) CutSelection(); break;
+      case DO_CUT:         if (!inscript && !timeline) CutSelection(); break;
       case DO_COPY:        if (!inscript) CopySelection(); break;
-      case DO_CLEAR:       if (!inscript) ClearSelection(); break;
-      case DO_CLEAROUT:    if (!inscript) ClearOutsideSelection(); break;
-      case DO_PASTE:       if (!inscript && !busy) PasteClipboard(false); break;
-      case DO_PASTESEL:    if (!inscript && !busy) PasteClipboard(true); break;
+      case DO_CLEAR:       if (!inscript && !timeline) ClearSelection(); break;
+      case DO_CLEAROUT:    if (!inscript && !timeline) ClearOutsideSelection(); break;
+      case DO_PASTE:       if (!inscript && !timeline && !busy) PasteClipboard(false); break;
+      case DO_PASTESEL:    if (!inscript && !timeline && !busy) PasteClipboard(true); break;
       case DO_SELALL:      if (!inscript) SelectAll(); break;
       case DO_REMOVESEL:   if (!inscript) RemoveSelection(); break;
       case DO_SHRINK:      if (!inscript) ShrinkSelection(false); break;
       case DO_SHRINKFIT:   if (!inscript) ShrinkSelection(true); break;
-      case DO_RANDFILL:    if (!inscript) RandomFill(); break;
-      case DO_FLIPTB:      if (!inscript) FlipSelection(true); break;
-      case DO_FLIPLR:      if (!inscript) FlipSelection(false); break;
-      case DO_ROTATECW:    if (!inscript) RotateSelection(true); break;
-      case DO_ROTATEACW:   if (!inscript) RotateSelection(false); break;
-      case DO_ADVANCE:     if (!inscript) currlayer->currsel.Advance(); break;
-      case DO_ADVANCEOUT:  if (!inscript) currlayer->currsel.AdvanceOutside(); break;
+      case DO_RANDFILL:    if (!inscript && !timeline) RandomFill(); break;
+      case DO_FLIPTB:      if (!inscript && !timeline) FlipSelection(true); break;
+      case DO_FLIPLR:      if (!inscript && !timeline) FlipSelection(false); break;
+      case DO_ROTATECW:    if (!inscript && !timeline) RotateSelection(true); break;
+      case DO_ROTATEACW:   if (!inscript && !timeline) RotateSelection(false); break;
+      case DO_ADVANCE:     if (!inscript && !timeline) currlayer->currsel.Advance(); break;
+      case DO_ADVANCEOUT:  if (!inscript && !timeline) currlayer->currsel.AdvanceOutside(); break;
       case DO_CURSDRAW:    SetCursorMode(curs_pencil); break;
       case DO_CURSPICK:    SetCursorMode(curs_pick); break;
       case DO_CURSSEL:     SetCursorMode(curs_cross); break;
@@ -1444,29 +1450,29 @@ void PatternView::ProcessKey(int key, int modifiers)
       case DO_STARTSTOP:   if (!inscript) {
                               if (mainptr->generating) {
                                  mainptr->Stop();
-                              } else if (TimelineExists()) {
+                              } else if (timeline) {
                                  PlayTimeline(1);
                               } else {
                                  mainptr->GeneratePattern();
                               }
                            }
                            break;
-      case DO_NEXTGEN:     if (!inscript) mainptr->NextGeneration(false); break;
-      case DO_NEXTSTEP:    if (!inscript) mainptr->NextGeneration(true); break;
-      case DO_RESET:       if (!inscript && !busy) mainptr->ResetPattern(); break;
-      case DO_SETGEN:      if (!inscript && !busy) mainptr->SetGeneration(); break;
-      case DO_SETBASE:     if (!inscript && !busy) mainptr->SetBaseStep(); break;
+      case DO_NEXTGEN:     if (!inscript && !timeline) mainptr->NextGeneration(false); break;
+      case DO_NEXTSTEP:    if (!inscript && !timeline) mainptr->NextGeneration(true); break;
+      case DO_RESET:       if (!inscript && !timeline && !busy) mainptr->ResetPattern(); break;
+      case DO_SETGEN:      if (!inscript && !timeline && !busy) mainptr->SetGeneration(); break;
+      case DO_SETBASE:     if (!inscript && !timeline && !busy) mainptr->SetBaseStep(); break;
       case DO_FASTER:      mainptr->GoFaster(); break;
       case DO_SLOWER:      mainptr->GoSlower(); break;
       case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
-      case DO_HYPER:       mainptr->ToggleHyperspeed(); break;
+      case DO_HYPER:       if (!timeline) mainptr->ToggleHyperspeed(); break;
       case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
       case DO_RECORD:      StartStopRecording(); break;
       case DO_DELTIME:     DeleteTimeline(); break;
-      case DO_PLAYBACK:    if (!inscript && TimelineExists()) PlayTimeline(-1); break;
-      case DO_SETRULE:     if (!inscript && !busy) mainptr->ShowRuleDialog(); break;
-      case DO_TIMING:      if (!inscript) mainptr->DisplayTimingInfo(); break;
-      case DO_HASHING:     if (!inscript && !busy) {
+      case DO_PLAYBACK:    if (!inscript && timeline) PlayTimeline(-1); break;
+      case DO_SETRULE:     if (!inscript && !timeline && !busy) mainptr->ShowRuleDialog(); break;
+      case DO_TIMING:      if (!inscript && !timeline) mainptr->DisplayTimingInfo(); break;
+      case DO_HASHING:     if (!inscript && !timeline && !busy) {
                               if (currlayer->algtype != HLIFE_ALGO)
                                  mainptr->ChangeAlgorithm(HLIFE_ALGO);
                               else
@@ -2293,7 +2299,7 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
    
    if ( TimelineExists() && key == WXK_ESCAPE ) {
-      PlayTimeline(0);
+      PlayTimeline(0);  // stop autoplay
       return;
    }
 
@@ -2404,7 +2410,13 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
    } else if (currlayer->curs == curs_pencil) {
       if (inscript) {
          // statusptr->ErrorMessage does nothing if inscript is true
-         Warning(_("Drawing is not allowed while a script is running."));
+         inscript = false;
+         statusptr->ErrorMessage(_("Drawing is not allowed while a script is running."));
+         inscript = true;
+         return;
+      }
+      if (TimelineExists()) {
+         statusptr->ErrorMessage(_("Drawing is not allowed if there is a timeline."));
          return;
       }
       if (currlayer->view->getmag() < 0) {
@@ -2412,8 +2424,7 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          return;
       }
       if (mainptr->generating) {
-         // we now allow drawing while generating
-         // statusptr->ErrorMessage(_("Drawing is not allowed while a pattern is generating."));
+         // we allow drawing while generating
          mainptr->Stop();
          mainptr->draw_pending = true;
          mainptr->mouseevent.m_x = x;

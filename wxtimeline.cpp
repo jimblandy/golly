@@ -50,6 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #else
    // bitmaps for timeline bar buttons
    #include "bitmaps/record.xpm"
+   #include "bitmaps/stop.xpm"      // stoprec!!!
    #include "bitmaps/backwards.xpm"
    #include "bitmaps/forwards.xpm"
    #include "bitmaps/stopplay.xpm"
@@ -63,6 +64,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 enum {
    // ids for bitmap buttons in timeline bar
    RECORD_BUTT = 0,
+   STOPREC_BUTT,
    BACKWARDS_BUTT,
    FORWARDS_BUTT,
    STOPPLAY_BUTT,
@@ -171,6 +173,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 
    // init bitmaps for normal state
    normbutt[RECORD_BUTT] =    wxBITMAP(record);
+   normbutt[STOPREC_BUTT] =   wxBITMAP(stop);      // stoprec!!!
    normbutt[BACKWARDS_BUTT] = wxBITMAP(backwards);
    normbutt[FORWARDS_BUTT] =  wxBITMAP(forwards);
    normbutt[STOPPLAY_BUTT] =  wxBITMAP(stopplay);
@@ -341,12 +344,13 @@ void TimelineBar::DrawTimelineBar(wxDC& dc, int wd, int ht)
    dc.SetPen(wxNullPen);
 
    if (currlayer->algo->hyperCapable()) {
+      bool canplay = TimelineExists() && !currlayer->algo->isrecording();
       tlbutt[RECORD_BUTT]->Show(true);
-      tlbutt[BACKWARDS_BUTT]->Show(TimelineExists());
-      tlbutt[FORWARDS_BUTT]->Show(TimelineExists());
+      tlbutt[BACKWARDS_BUTT]->Show(canplay);
+      tlbutt[FORWARDS_BUTT]->Show(canplay);
       tlbutt[DELETE_BUTT]->Show(TimelineExists());
-      slider->Show(TimelineExists());
-      framebar->Show(TimelineExists());
+      slider->Show(canplay);
+      framebar->Show(canplay);
    } else {
       tlbutt[RECORD_BUTT]->Show(false);
       tlbutt[BACKWARDS_BUTT]->Show(false);
@@ -391,9 +395,7 @@ void TimelineBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       wxBufferedPaintDC dc(this, *timelinebitmap);
    #endif
    
-   if (!showtimeline) return;
-   
-   DrawTimelineBar(dc, wd, ht);
+   if (showtimeline) DrawTimelineBar(dc, wd, ht);
 }
 
 // -----------------------------------------------------------------------------
@@ -493,7 +495,7 @@ void TimelineBar::OnScroll(wxScrollEvent& event)
    // best to stop autoplay if scroll bar is used
    if (currlayer->autoplay != 0) {
       currlayer->autoplay = 0;
-      tbarptr->UpdateButtons();
+      mainptr->UpdateUserInterface(true);
    }
 
    if (type == wxEVT_SCROLL_LINEUP) {
@@ -624,6 +626,20 @@ void TimelineBar::EnableButton(int id, bool enable)
 
 void TimelineBar::UpdateButtons()
 {
+   if (currlayer->algo->isrecording()) {
+      if (buttstate[RECORD_BUTT] != -1) {
+         buttstate[RECORD_BUTT] = -1;
+         tlbutt[RECORD_BUTT]->SetBitmapLabel(normbutt[STOPREC_BUTT]);
+         tlbutt[RECORD_BUTT]->SetToolTip(_("Stop recording"));
+      }
+   } else {
+      if (buttstate[RECORD_BUTT] != 1) {
+         buttstate[RECORD_BUTT] = 1;
+         tlbutt[RECORD_BUTT]->SetBitmapLabel(normbutt[RECORD_BUTT]);
+         tlbutt[RECORD_BUTT]->SetToolTip(_("Start recording"));
+      }
+   }
+   
    if (currlayer->autoplay == 0) {
       if (buttstate[BACKWARDS_BUTT] != 1) {
          buttstate[BACKWARDS_BUTT] = 1;
@@ -660,6 +676,7 @@ void TimelineBar::UpdateButtons()
    }
    
    if (showtimeline) {
+      tlbutt[RECORD_BUTT]->Refresh(false);
       tlbutt[BACKWARDS_BUTT]->Refresh(false);
       tlbutt[FORWARDS_BUTT]->Refresh(false);
    }
@@ -768,15 +785,10 @@ void ToggleTimelineBar()
 void StartStopRecording()
 {
    if (!inscript && currlayer->algo->hyperCapable()) {
-      Warning(_("Recording isn't implemented yet!"));//!!!
-      /* !!! do something like this:
       if (!showtimeline) ToggleTimelineBar();
       if (currlayer->algo->isrecording()) {
-         // stop the current recording
-         currlayer->algo->stoprecording();
+         // terminate GeneratePattern()
          mainptr->Stop();
-         //!!!??? sync undo/redo history
-         mainptr->UpdateUserInterface(true);
       } else {
          if (currlayer->algo->isEmpty()) {   
             statusptr->ErrorMessage(_("There is no pattern to record."));
@@ -784,14 +796,34 @@ void StartStopRecording()
          }
          if (TimelineExists()) {
             // extend the existing timeline
+            // report error if currlayer->algo->getframecount() == MAX_FRAME_COUNT !!!
+            // also need check for that in GeneratePattern()???!!!
+            
+            // not working!!! call INSTEAD of startrecording()???
             currlayer->algo->extendtimeline();
          }
          // start recording a new timeline
          if (currlayer->algo->startrecording(currlayer->currbase, currlayer->currexpo) > 0) {
+            // temporarily disable hyperspeed
+            // and allowundo!!!??? or call writecurrentframe(true)???
+            bool savehyper = currlayer->hyperspeed;
+            currlayer->hyperspeed = false;
             mainptr->GeneratePattern();
+            currlayer->hyperspeed = savehyper;
+            
+            // stop recording
+            currlayer->algo->stoprecording();
+            if (currlayer->algo->getframecount() > 0) {
+               //!!!??? sync undo/redo history
+               // go to last frame???
+               currlayer->currframe = currlayer->algo->getframecount() - 1;
+               currlayer->autoplay = 0;
+               currlayer->tlspeed = 0;
+               currlayer->algo->gotoframe(currlayer->currframe);
+            }
+            mainptr->UpdateUserInterface(true);
          }
       }
-      !!! */
    }
 }
 
@@ -802,10 +834,6 @@ void DeleteTimeline()
    if (!inscript && TimelineExists()) {
       // stop any recording
       if (currlayer->algo->isrecording()) currlayer->algo->stoprecording();
-
-      currlayer->currframe = 0;
-      currlayer->autoplay = 0;
-      currlayer->tlspeed = 0;
       
       // prevent user selecting Reset/Undo by making current frame
       // the new starting pattern
@@ -816,7 +844,7 @@ void DeleteTimeline()
       /* PROBLEM: SaveStartingPattern writes a .mc file with timeline!!!
          ditto for temp .mc files written by RememberGenStart/Finish!!!
          SOLN: set flag that tells writeNativeFormat to only write current frame???
-         or add writetimeline(bool) call to temporarily disable/enable writing timeline???
+         ie. add writecurrentframe(bool) call to temporarily disable/enable writing timeline???
       if (currlayer->currframe > 0) {
          // do stuff so user can select Reset/Undo to go back to 1st frame
          currlayer->algo->gotoframe(0);
@@ -866,6 +894,7 @@ bool AutoPlay()
 {
    // assume currlayer->algo->getframecount() > 0
    if (currlayer->autoplay == 0) return false;
+   if (currlayer->algo->isrecording()) return false;
    
    int frameinc = 1;
    long delay = 0;
@@ -891,7 +920,6 @@ bool AutoPlay()
       currlayer->currframe += frameinc;
       if (currlayer->currframe >= currlayer->algo->getframecount() - 1) {
          currlayer->currframe = currlayer->algo->getframecount() - 1;
-         // currlayer->autoplay = 0;   // stop when we hit last frame???
          currlayer->autoplay = -1;     // reverse direction when we hit last frame
          tbarptr->UpdateButtons();
       }
@@ -900,7 +928,6 @@ bool AutoPlay()
       currlayer->currframe -= frameinc;
       if (currlayer->currframe <= 0) {
          currlayer->currframe = 0;
-         // currlayer->autoplay = 0;   // stop when we hit first frame???
          currlayer->autoplay = 1;      // reverse direction when we hit first frame
          tbarptr->UpdateButtons();
       }
@@ -917,6 +944,7 @@ bool AutoPlay()
 
 void PlayTimeline(int direction)
 {
+   if (currlayer->algo->isrecording()) return;
    if (direction > 0 && currlayer->autoplay > 0) {
       currlayer->autoplay = 0;
    } else if (direction < 0 && currlayer->autoplay < 0) {
@@ -924,13 +952,14 @@ void PlayTimeline(int direction)
    } else {
       currlayer->autoplay = direction;
    }
-   if (showtimeline) tbarptr->UpdateButtons();
+   mainptr->UpdateUserInterface(true);
 }
 
 // -----------------------------------------------------------------------------
 
 void PlayTimelineFaster()
 {
+   if (currlayer->algo->isrecording()) return;
    if (currlayer->tlspeed < MAXSPEED) {
       currlayer->tlspeed++;
       if (showtimeline) tbarptr->UpdateSlider();
@@ -941,6 +970,7 @@ void PlayTimelineFaster()
 
 void PlayTimelineSlower()
 {
+   if (currlayer->algo->isrecording()) return;
    if (currlayer->tlspeed > MINSPEED) {
       currlayer->tlspeed--;
       if (showtimeline) tbarptr->UpdateSlider();
@@ -951,6 +981,14 @@ void PlayTimelineSlower()
 
 void ResetTimelineSpeed()
 {
+   if (currlayer->algo->isrecording()) return;
    currlayer->tlspeed = 0;
    if (showtimeline) tbarptr->UpdateSlider();
+}
+
+// -----------------------------------------------------------------------------
+
+bool TimelineIsPlaying()
+{
+   return currlayer->autoplay != 0;
 }

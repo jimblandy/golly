@@ -531,6 +531,7 @@ void MainFrame::UpdateToolBar(bool active)
    // update tool bar buttons according to the current state
    if (toolbarptr && showtool) {
       if (viewptr->waitingforclick) active = false;
+      bool timeline = TimelineExists();
 
       // set state of start/stop button
       toolbarptr->SetStartStopButton();
@@ -541,12 +542,12 @@ void MainFrame::UpdateToolBar(bool active)
       toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
       toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
       
-      toolbarptr->EnableButton(START_TOOL,      active);
-      toolbarptr->EnableButton(RESET_TOOL,      active && !inscript && (generating ||
+      toolbarptr->EnableButton(START_TOOL,      active && !timeline);
+      toolbarptr->EnableButton(RESET_TOOL,      active && !timeline && !inscript && (generating ||
                                                 currlayer->algo->getGeneration() > currlayer->startgen));
-      toolbarptr->EnableButton(ALGO_TOOL,       active && !inscript);
+      toolbarptr->EnableButton(ALGO_TOOL,       active && !timeline && !inscript);
       toolbarptr->EnableButton(AUTOFIT_TOOL,    active);
-      toolbarptr->EnableButton(HYPER_TOOL,      active);
+      toolbarptr->EnableButton(HYPER_TOOL,      active && !timeline);
       toolbarptr->EnableButton(NEW_TOOL,        active && !inscript);
       toolbarptr->EnableButton(OPEN_TOOL,       active && !inscript);
       toolbarptr->EnableButton(SAVE_TOOL,       active && !inscript);
@@ -597,13 +598,14 @@ void MainFrame::EnableAllMenus(bool enable)
 
 // -----------------------------------------------------------------------------
 
-// update menu bar items according to the given state
 void MainFrame::UpdateMenuItems(bool active)
 {
+   // update menu bar items according to the given state
    wxMenuBar* mbar = GetMenuBar();
    if (mbar) {
       bool textinclip = ClipboardHasText();
       bool selexists = viewptr->SelectionExists();
+      bool timeline = TimelineExists();
 
       if (viewptr->waitingforclick) active = false;
       
@@ -615,16 +617,16 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_PATTERN_DIR,     active);
       mbar->Enable(wxID_SAVE,          active && !inscript);
       mbar->Enable(ID_SAVE_XRLE,       active);
-      mbar->Enable(ID_RUN_SCRIPT,      active && !inscript);
-      mbar->Enable(ID_RUN_CLIP,        active && !inscript && textinclip);
-      mbar->Enable(ID_RUN_RECENT,      active && !inscript && numscripts > 0);
+      mbar->Enable(ID_RUN_SCRIPT,      active && !timeline && !inscript);
+      mbar->Enable(ID_RUN_CLIP,        active && !timeline && !inscript && textinclip);
+      mbar->Enable(ID_RUN_RECENT,      active && !timeline && !inscript && numscripts > 0);
       mbar->Enable(ID_SHOW_SCRIPTS,    active);
       mbar->Enable(ID_SCRIPT_DIR,      active);
       // safe to allow prefs dialog while script is running???
       // mbar->Enable(wxID_PREFERENCES,   !inscript);
 
-      bool can_undo = active && currlayer->undoredo->CanUndo();
-      bool can_redo = active && currlayer->undoredo->CanRedo();
+      bool can_undo = active && !timeline && currlayer->undoredo->CanUndo();
+      bool can_redo = active && !timeline && currlayer->undoredo->CanRedo();
       #ifdef __WXMAC__
          // need this stupidity to avoid wxMac bug after modal dialog closes (eg. Set Rule)
          // and force items to appear correctly enabled/disabled
@@ -635,22 +637,22 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(wxID_UNDO,          can_undo);
       mbar->Enable(wxID_REDO,          can_redo);
       mbar->Enable(ID_NO_UNDO,         active && !inscript);
-      mbar->Enable(ID_CUT,             active && !inscript && selexists);
+      mbar->Enable(ID_CUT,             active && !timeline && !inscript && selexists);
       mbar->Enable(ID_COPY,            active && !inscript && selexists);
-      mbar->Enable(ID_CLEAR,           active && !inscript && selexists);
-      mbar->Enable(ID_OUTSIDE,         active && !inscript && selexists);
-      mbar->Enable(ID_PASTE,           active && !inscript && textinclip);
-      mbar->Enable(ID_PASTE_SEL,       active && !inscript && textinclip && selexists);
+      mbar->Enable(ID_CLEAR,           active && !timeline && !inscript && selexists);
+      mbar->Enable(ID_OUTSIDE,         active && !timeline && !inscript && selexists);
+      mbar->Enable(ID_PASTE,           active && !timeline && !inscript && textinclip);
+      mbar->Enable(ID_PASTE_SEL,       active && !timeline && !inscript && textinclip && selexists);
       mbar->Enable(ID_PLOCATION,       active);
       mbar->Enable(ID_PMODE,           active);
       mbar->Enable(ID_SELECTALL,       active && !inscript);
       mbar->Enable(ID_REMOVE,          active && !inscript && selexists);
       mbar->Enable(ID_SHRINK,          active && !inscript && selexists);
-      mbar->Enable(ID_RANDOM,          active && !inscript && selexists);
-      mbar->Enable(ID_FLIPTB,          active && !inscript && selexists);
-      mbar->Enable(ID_FLIPLR,          active && !inscript && selexists);
-      mbar->Enable(ID_ROTATEC,         active && !inscript && selexists);
-      mbar->Enable(ID_ROTATEA,         active && !inscript && selexists);
+      mbar->Enable(ID_RANDOM,          active && !timeline && !inscript && selexists);
+      mbar->Enable(ID_FLIPTB,          active && !timeline && !inscript && selexists);
+      mbar->Enable(ID_FLIPLR,          active && !timeline && !inscript && selexists);
+      mbar->Enable(ID_ROTATEC,         active && !timeline && !inscript && selexists);
+      mbar->Enable(ID_ROTATEA,         active && !timeline && !inscript && selexists);
       mbar->Enable(ID_CMODE,           active);
 
       if (inscript) {
@@ -665,6 +667,11 @@ void MainFrame::UpdateMenuItems(bool active)
          mbar->SetLabel(ID_START, _("Stop Script\tEscape"));
       } else if (generating) {
          mbar->SetLabel(ID_START, _("Stop Generating") + GetAccelerator(DO_STARTSTOP));
+      } else if (timeline && !currlayer->algo->isrecording()) {
+         if (TimelineIsPlaying())
+            mbar->SetLabel(ID_START, _("Stop Playing Timeline") + GetAccelerator(DO_STARTSTOP));
+         else
+            mbar->SetLabel(ID_START, _("Start Playing Timeline") + GetAccelerator(DO_STARTSTOP));
       } else {
          mbar->SetLabel(ID_START, _("Start Generating") + GetAccelerator(DO_STARTSTOP));
       }
@@ -675,23 +682,23 @@ void MainFrame::UpdateMenuItems(bool active)
          mbar->SetLabel(ID_RECORD, _("Start Recording") + GetAccelerator(DO_RECORD));
       }
 
-      mbar->Enable(ID_START,        active);
-      mbar->Enable(ID_NEXT,         active && !generating && !inscript);
-      mbar->Enable(ID_STEP,         active && !generating && !inscript);
-      mbar->Enable(ID_RESET,        active && !inscript && (generating ||
+      mbar->Enable(ID_START,        active && !currlayer->algo->isrecording());
+      mbar->Enable(ID_NEXT,         active && !timeline && !generating && !inscript);
+      mbar->Enable(ID_STEP,         active && !timeline && !generating && !inscript);
+      mbar->Enable(ID_RESET,        active && !timeline && !inscript && (generating ||
                                     currlayer->algo->getGeneration() > currlayer->startgen));
-      mbar->Enable(ID_SETGEN,       active && !inscript);
+      mbar->Enable(ID_SETGEN,       active && !timeline && !inscript);
       mbar->Enable(ID_FASTER,       active);
       mbar->Enable(ID_SLOWER,       active /* && currlayer->currexpo > minexpo */);
                                            // don't do this test because Win users won't hear beep
-      mbar->Enable(ID_SETBASE,      active && !inscript);
+      mbar->Enable(ID_SETBASE,      active && !timeline && !inscript);
       mbar->Enable(ID_AUTO,         active);
-      mbar->Enable(ID_HYPER,        active);
+      mbar->Enable(ID_HYPER,        active && !timeline);
       mbar->Enable(ID_HINFO,        active);
       mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
       mbar->Enable(ID_DELTIME,      active && !inscript && currlayer->algo->getframecount() > 0);
-      mbar->Enable(ID_SETRULE,      active && !inscript);
-      mbar->Enable(ID_SETALGO,      active && !inscript);
+      mbar->Enable(ID_SETRULE,      active && !timeline && !inscript);
+      mbar->Enable(ID_SETALGO,      active && !timeline && !inscript);
 
       mbar->Enable(ID_FULL,         active);
       mbar->Enable(ID_FIT,          active);

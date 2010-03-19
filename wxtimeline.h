@@ -72,4 +72,7 @@ void PlayTimelineSlower();
 void ResetTimelineSpeed();
 // Reset autoplay speed to 0 (no delay, no frame skipping).
 
+bool TimelineIsPlaying();
+// Return true if timeline is in autoplay mode.
+
 #endif

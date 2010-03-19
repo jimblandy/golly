@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for DrawOneIcon
 #include "wxlayer.h"       // for currlayer, LayerBarHeight, SetLayerColors
 #include "wxundo.h"        // for currlayer->undoredo->...
+#include "wxtimeline.h"    // for TimelineExists
 #include "wxedit.h"
 
 // -----------------------------------------------------------------------------
@@ -866,6 +867,7 @@ void UpdateEditBar(bool active)
 {
    if (editbarptr && showedit) {
       if (viewptr->waitingforclick) active = false;
+      bool timeline = TimelineExists();
 
       // set state of toggle buttons
       editbarptr->SelectButton(DRAW_BUTT,       currlayer->curs == curs_pencil);
@@ -881,8 +883,9 @@ void UpdateEditBar(bool active)
       // appear to be active
       bool canundo = (allowundo && (viewptr->drawingcells || viewptr->selectingcells))
                      || currlayer->undoredo->CanUndo();
-      editbarptr->EnableButton(UNDO_BUTT,       active && canundo);
-      editbarptr->EnableButton(REDO_BUTT,       active && currlayer->undoredo->CanRedo());
+      editbarptr->EnableButton(UNDO_BUTT,       active && !timeline && canundo);
+      editbarptr->EnableButton(REDO_BUTT,       active && !timeline &&
+                                                          currlayer->undoredo->CanRedo());
       editbarptr->EnableButton(DRAW_BUTT,       active);
       editbarptr->EnableButton(PICK_BUTT,       active);
       editbarptr->EnableButton(SELECT_BUTT,     active);
