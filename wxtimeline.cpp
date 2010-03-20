@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #else
    // bitmaps for timeline bar buttons
    #include "bitmaps/record.xpm"
-   #include "bitmaps/stop.xpm"      // stoprec!!!
+   #include "bitmaps/stop.xpm"
    #include "bitmaps/backwards.xpm"
    #include "bitmaps/forwards.xpm"
    #include "bitmaps/stopplay.xpm"
@@ -147,18 +147,18 @@ END_EVENT_TABLE()
 // -----------------------------------------------------------------------------
 
 static TimelineBar* tbarptr = NULL;    // global pointer to timeline bar
-const int tbarht = 32;                 // height of timeline bar
 static int mindelpos;                  // minimum x position of DELETE_BUTT
 
+const int TBARHT = 32;                 // height of timeline bar
 const int SCROLLHT = 17;               // height of scroll bar
 const int PAGESIZE = 10;               // scroll amount when paging
 const int BUTTON_WD = 24;              // nominal width of bitmap buttons
 
-// timeline bar buttons (must be global to use Connect/Disconnect on Windows)
-wxBitmapButton* tlbutt[NUM_BUTTONS];
+const int MINSPEED = -10;              // delay 2^10 msecs between each frame
+const int MAXSPEED = 10;               // skip 2^10 frames
 
-const int MINSPEED = -10;     // delay 2^10 msecs between each frame
-const int MAXSPEED = 10;      // skip 2^10 frames
+// timeline bar buttons (must be global to use Connect/Disconnect on Windows)
+static wxBitmapButton* tlbutt[NUM_BUTTONS];
 
 // -----------------------------------------------------------------------------
 
@@ -173,7 +173,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 
    // init bitmaps for normal state
    normbutt[RECORD_BUTT] =    wxBITMAP(record);
-   normbutt[STOPREC_BUTT] =   wxBITMAP(stop);      // stoprec!!!
+   normbutt[STOPREC_BUTT] =   wxBITMAP(stop);
    normbutt[BACKWARDS_BUTT] = wxBITMAP(backwards);
    normbutt[FORWARDS_BUTT] =  wxBITMAP(forwards);
    normbutt[STOPPLAY_BUTT] =  wxBITMAP(stopplay);
@@ -251,7 +251,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
       int sliderht = 24;   // best for Windows (and wxGTK???)
    #endif
    x = xpos + 20 - smallgap;
-   y = (tbarht - (sliderht + 1)) / 2;
+   y = (TBARHT - (sliderht + 1)) / 2;
    slider = new wxSlider(this, ID_SLIDER, 0, MINSPEED, MAXSPEED, wxPoint(x, y),
                          wxSize(sliderwd, sliderht),
                          wxSL_HORIZONTAL);
@@ -273,7 +273,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
       int scrollbarht = SCROLLHT;
    #endif
    x = xpos + 20;
-   y = (tbarht - (scrollbarht + 1)) / 2;
+   y = (TBARHT - (scrollbarht + 1)) / 2;
    framebar = new wxScrollBar(this, ID_SCROLL, wxPoint(x, y),
                               wxSize(scrollbarwd, scrollbarht),
                               wxSB_HORIZONTAL);
@@ -362,7 +362,7 @@ void TimelineBar::DrawTimelineBar(wxDC& dc, int wd, int ht)
       SetTimelineFont(dc);
       dc.SetPen(*wxBLACK_PEN);
       int x = 6;
-      int y = tbarht - 8;
+      int y = TBARHT - 8;
       DisplayText(dc, _("The current algorithm does not support timelines."),
                   x, y - (SCROLLHT - digitht)/2);
       dc.SetPen(wxNullPen);
@@ -705,7 +705,7 @@ void CreateTimelineBar(wxWindow* parent)
    int wd, ht;
    parent->GetClientSize(&wd, &ht);
 
-   tbarptr = new TimelineBar(parent, 0, ht - tbarht, wd, tbarht);
+   tbarptr = new TimelineBar(parent, 0, ht - TBARHT, wd, TBARHT);
    if (tbarptr == NULL) Fatal(_("Failed to create timeline bar!"));
       
    tbarptr->Show(showtimeline);
@@ -714,7 +714,7 @@ void CreateTimelineBar(wxWindow* parent)
 // -----------------------------------------------------------------------------
 
 int TimelineBarHeight() {
-   return (showtimeline ? tbarht : 0);
+   return (showtimeline ? TBARHT : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -745,7 +745,7 @@ void UpdateTimelineBar(bool active)
 void ResizeTimelineBar(int y, int wd)
 {
    if (tbarptr) {
-      tbarptr->SetSize(0, y, wd, tbarht);
+      tbarptr->SetSize(0, y, wd, TBARHT);
       // change width of scroll bar to nearly fill timeline bar
       wxRect r = tbarptr->framebar->GetRect();
       r.width = wd - r.x - 20 - BUTTON_WD - 20;
@@ -768,11 +768,11 @@ void ToggleTimelineBar()
    
    if (showtimeline) {
       // show timeline bar underneath viewport window
-      r.height -= tbarht;
+      r.height -= TBARHT;
       ResizeTimelineBar(r.y + r.height, r.width);
    } else {
       // hide timeline bar
-      r.height += tbarht;
+      r.height += TBARHT;
    }
    bigview->SetSize(r);
    tbarptr->Show(showtimeline);    // needed on Windows
