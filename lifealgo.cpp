@@ -34,19 +34,24 @@ int lifealgo::verbose ;
  *   We do not check this.
  */
 int lifealgo::startrecording(int basearg, int expoarg) {
-  if (timeline.framecount)
-    destroytimeline() ;
-  void *now = getcurrentstate() ;
-  if (now == 0)
-    return 0 ;
-  timeline.base = basearg ;
-  timeline.expo = expoarg ;
-  timeline.frames.push_back(now) ;
+  if (timeline.framecount) {
+    // already have a timeline; skip to its end
+    gotoframe(timeline.framecount-1) ;
+  } else {
+    // use the current frame and increment to start a new timeline
+    void *now = getcurrentstate() ;
+    if (now == 0)
+      return 0 ;
+    timeline.base = basearg ;
+    timeline.expo = expoarg ;
+    timeline.frames.push_back(now) ;
+    timeline.framecount = 1 ;
+    timeline.end = timeline.start = generation ;
+    timeline.inc = increment ;
+  }
+  timeline.next = timeline.end ;
+  timeline.next += timeline.inc ;
   timeline.recording = 1 ;
-  timeline.framecount = 1 ;
-  timeline.next = timeline.end = timeline.start = generation ;
-  timeline.inc = increment ;
-  timeline.next += increment ;
   return timeline.framecount ;
 }
 pair<int, int> lifealgo::stoprecording() {
