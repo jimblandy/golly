@@ -46,8 +46,8 @@ const int MAX_FRAME_COUNT = 32000 ;
  */
 class timeline_t {
 public:
-   timeline_t() : recording(0), framecount(0), start(0), inc(0), next(0),
-                                      end(0), frames(), savetimeline(1) {}
+   timeline_t() : recording(0), framecount(0), savetimeline(1),
+                  start(0), inc(0), next(0), end(0), frames() {}
    int recording, framecount, base, expo, savetimeline ;
    bigint start, inc, next, end ;
    vector<void *> frames ;
