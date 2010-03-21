@@ -1834,7 +1834,10 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    cellcounter = 0 ;
    int depth = node_depth(root) ;
    vector<int> depths(timeline.framecount) ;
-   if (timeline.framecount) {
+   int framestosave = timeline.framecount ;
+   if (timeline.savetimeline == 0)
+     framestosave = 0 ;
+   if (framestosave) {
      for (int i=0; i<timeline.framecount; i++) {
        node *frame = (node*)timeline.frames[i] ;
        depths[i] = node_depth(frame) ;
@@ -1847,7 +1850,7 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    writecell_2p1(root, depth) ;
    writecells = cellcounter ;
    cellcounter = 0 ;
-   if (timeline.framecount) {
+   if (framestosave) {
      fprintf(f, "#FRAMES %d ", timeline.framecount) ;
      fprintf(f, "%s ", timeline.start.tostring()) ;
      fprintf(f, "%d^%d\n", timeline.base, timeline.expo) ;
@@ -1859,7 +1862,7 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    }
    writecell_2p2(f, root, depth) ;
    /* end new two-pass way */
-   if (timeline.framecount) {
+   if (framestosave) {
      for (int i=0; i<timeline.framecount; i++) {
        node *frame = (node*)timeline.frames[i] ;
        aftercalcpop2(frame, depths[i], 0) ;
