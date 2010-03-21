@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, etc
 #include "wxrender.h"      // for DrawView
-#include "wxtimeline.h"    // for TimelineExists, etc
+#include "wxtimeline.h"    // for TimelineExists, UpdateTimelineBar, etc
 
 // This module implements Control menu functions.
 
@@ -503,7 +503,7 @@ bool MainFrame::StepPattern()
    if (currlayer->autofit) viewptr->FitInView(0);
    DisplayPattern();
    
-   /*!!!
+   /*!!! enable this code if we ever implement isPeriodic()
    if (autostop) {
       int period = currlayer->algo->isPeriodic();
       if (period > 0) {
@@ -540,7 +540,9 @@ void MainFrame::GeneratePattern()
       return;
    }
    
-   if (!SaveStartingPattern()) {
+   if (currlayer->algo->isrecording()) {
+      // don't attempt to save starting pattern here (let DeleteTimeline do it)
+   } else if (!SaveStartingPattern()) {
       return;
    }
       
@@ -596,7 +598,15 @@ void MainFrame::GeneratePattern()
       } else {
          // currexpo >= 0 so advance pattern by currlayer->algo->getIncrement() gens
          if (!StepPattern()) break;
-         if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
+         if (currlayer->algo->isrecording()) {
+            if (showtimeline) UpdateTimelineBar(IsActive());
+            if (currlayer->algo->getframecount() == MAX_FRAME_COUNT) {
+               wxString msg;
+               msg.Printf(_("No more frames can be recorded (maximum = %d)."), MAX_FRAME_COUNT);
+               Warning(msg);
+               break;
+            }
+         } else if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
             hypdown--;
             if (hypdown == 0) {
                hypdown = 64;

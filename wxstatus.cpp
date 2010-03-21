@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxscript.h"      // for inscript
 #include "wxalgos.h"       // for algoinfo
 #include "wxlayer.h"       // for currlayer
+#include "wxtimeline.h"    // for TimelineExists
 #include "wxstatus.h"
 
 // -----------------------------------------------------------------------------
@@ -488,7 +489,11 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
    ClearMessage();
 
    if ( ClickInGenBox(event.GetX(), event.GetY()) && !mainptr->generating ) {
-      mainptr->SetGeneration();
+      if (TimelineExists()) {
+         ErrorMessage(_("You can't change the generation count if there is a timeline."));
+      } else {
+         mainptr->SetGeneration();
+      }
 
    } else if ( ClickInScaleBox(event.GetX(), event.GetY()) ) {
       if (viewptr->GetMag() != 0) {
@@ -497,8 +502,10 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
       }
 
    } else if ( ClickInStepBox(event.GetX(), event.GetY()) ) {
-      if (currlayer->currbase != algoinfo[currlayer->algtype]->defbase ||
-          currlayer->currexpo != 0) {
+      if (TimelineExists()) {
+         ErrorMessage(_("You can't change the step size if there is a timeline."));
+      } else if (currlayer->currbase != algoinfo[currlayer->algtype]->defbase ||
+                 currlayer->currexpo != 0) {
          // reset base step to default value and step exponent to 0
          currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
          mainptr->SetStepExponent(0);

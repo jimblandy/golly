@@ -696,7 +696,7 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_HYPER,        active && !timeline);
       mbar->Enable(ID_HINFO,        active);
       mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
-      mbar->Enable(ID_DELTIME,      active && !inscript && currlayer->algo->getframecount() > 0);
+      mbar->Enable(ID_DELTIME,      active && !inscript && timeline && !currlayer->algo->isrecording());
       mbar->Enable(ID_SETRULE,      active && !timeline && !inscript);
       mbar->Enable(ID_SETALGO,      active && !timeline && !inscript);
 

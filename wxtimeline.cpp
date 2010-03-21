@@ -248,7 +248,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    #ifdef __WXMAC__
       int sliderht = 15;
    #else
-      int sliderht = 24;   // best for Windows (and wxGTK???)
+      int sliderht = 24;   // for Windows and wxGTK
    #endif
    x = xpos + 20 - smallgap;
    y = (TBARHT - (sliderht + 1)) / 2;
@@ -348,9 +348,22 @@ void TimelineBar::DrawTimelineBar(wxDC& dc, int wd, int ht)
       tlbutt[RECORD_BUTT]->Show(true);
       tlbutt[BACKWARDS_BUTT]->Show(canplay);
       tlbutt[FORWARDS_BUTT]->Show(canplay);
-      tlbutt[DELETE_BUTT]->Show(TimelineExists());
+      tlbutt[DELETE_BUTT]->Show(canplay);
       slider->Show(canplay);
       framebar->Show(canplay);
+      
+      if (currlayer->algo->isrecording()) {
+         // show number of frames recorded so far
+         SetTimelineFont(dc);
+         dc.SetPen(*wxBLACK_PEN);
+         int x = smallgap + BUTTON_WD + 10;
+         int y = TBARHT - 8;
+         wxString str;
+         str.Printf(_("Frames recorded: %d"), currlayer->algo->getframecount());
+         DisplayText(dc, str, x, y - (SCROLLHT - digitht)/2);
+         dc.SetPen(wxNullPen);
+      }
+      
    } else {
       tlbutt[RECORD_BUTT]->Show(false);
       tlbutt[BACKWARDS_BUTT]->Show(false);
@@ -479,8 +492,8 @@ void TimelineBar::DisplayCurrentFrame()
 {
    currlayer->algo->gotoframe(currlayer->currframe);
    
-   // should we use FitInView(0)??? less jerky but has the disadvantage
-   // that pattern won't fill view if it shrinks when going backwards
+   // FitInView(0) would be less jerky but has the disadvantage that
+   // scale won't change if a pattern shrinks when going backwards
    if (currlayer->autofit) viewptr->FitInView(1);
    
    mainptr->UpdatePatternAndStatus();
@@ -639,46 +652,51 @@ void TimelineBar::UpdateButtons()
          tlbutt[RECORD_BUTT]->SetToolTip(_("Start recording"));
       }
    }
-   
-   if (currlayer->autoplay == 0) {
-      if (buttstate[BACKWARDS_BUTT] != 1) {
-         buttstate[BACKWARDS_BUTT] = 1;
-         tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
-         tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
-      }
-      if (buttstate[FORWARDS_BUTT] != 1) {
-         buttstate[FORWARDS_BUTT] = 1;
-         tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
-         tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
-      }
-   } else if (currlayer->autoplay > 0) {
-      if (buttstate[BACKWARDS_BUTT] != 1) {
-         buttstate[BACKWARDS_BUTT] = 1;
-         tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
-         tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
-      }
-      if (buttstate[FORWARDS_BUTT] != -1) {
-         buttstate[FORWARDS_BUTT] = -1;
-         tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
-         tlbutt[FORWARDS_BUTT]->SetToolTip(_("Stop playing"));
-      }
-   } else { // currlayer->autoplay < 0
-      if (buttstate[BACKWARDS_BUTT] != -1) {
-         buttstate[BACKWARDS_BUTT] = -1;
-         tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
-         tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Stop playing"));
-      }
-      if (buttstate[FORWARDS_BUTT] != 1) {
-         buttstate[FORWARDS_BUTT] = 1;
-         tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
-         tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
-      }
-   }
-   
    if (showtimeline) {
       tlbutt[RECORD_BUTT]->Refresh(false);
-      tlbutt[BACKWARDS_BUTT]->Refresh(false);
-      tlbutt[FORWARDS_BUTT]->Refresh(false);
+   }
+   
+   // these buttons are only shown if there is a timeline and we're not recording
+   // (see DrawTimelineBar)
+   if (TimelineExists() && !currlayer->algo->isrecording()) {
+      if (currlayer->autoplay == 0) {
+         if (buttstate[BACKWARDS_BUTT] != 1) {
+            buttstate[BACKWARDS_BUTT] = 1;
+            tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
+            tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
+         }
+         if (buttstate[FORWARDS_BUTT] != 1) {
+            buttstate[FORWARDS_BUTT] = 1;
+            tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
+            tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
+         }
+      } else if (currlayer->autoplay > 0) {
+         if (buttstate[BACKWARDS_BUTT] != 1) {
+            buttstate[BACKWARDS_BUTT] = 1;
+            tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
+            tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
+         }
+         if (buttstate[FORWARDS_BUTT] != -1) {
+            buttstate[FORWARDS_BUTT] = -1;
+            tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
+            tlbutt[FORWARDS_BUTT]->SetToolTip(_("Stop playing"));
+         }
+      } else { // currlayer->autoplay < 0
+         if (buttstate[BACKWARDS_BUTT] != -1) {
+            buttstate[BACKWARDS_BUTT] = -1;
+            tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
+            tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Stop playing"));
+         }
+         if (buttstate[FORWARDS_BUTT] != 1) {
+            buttstate[FORWARDS_BUTT] = 1;
+            tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
+            tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
+         }
+      }
+      if (showtimeline) {
+         tlbutt[BACKWARDS_BUTT]->Refresh(false);
+         tlbutt[FORWARDS_BUTT]->Refresh(false);
+      }
    }
 }
 
@@ -721,19 +739,23 @@ int TimelineBarHeight() {
 
 void UpdateTimelineBar(bool active)
 {
-   if (tbarptr && showtimeline) {
-      if (viewptr->waitingforclick || inscript) active = false;
+   if (tbarptr && showtimeline && !mainptr->IsIconized()) {
+      if (inscript) active = false;
       
-      // may need to change bitmap in backwards/forwards button
+      // may need to change bitmaps in some buttons
       tbarptr->UpdateButtons();
 
       tbarptr->EnableButton(RECORD_BUTT, active && currlayer->algo->hyperCapable());
-      tbarptr->EnableButton(BACKWARDS_BUTT, active && TimelineExists());
-      tbarptr->EnableButton(FORWARDS_BUTT, active && TimelineExists());
-      tbarptr->EnableButton(DELETE_BUTT, active && TimelineExists());
       
-      tbarptr->UpdateSlider();
-      tbarptr->UpdateScrollBar();
+      // note that slider, scroll bar and some buttons are only shown if there is
+      // a timeline and we're not recording (see DrawTimelineBar)
+      if (TimelineExists() && !currlayer->algo->isrecording()) {
+         tbarptr->EnableButton(BACKWARDS_BUTT, active);
+         tbarptr->EnableButton(FORWARDS_BUTT, active);
+         tbarptr->EnableButton(DELETE_BUTT, active);
+         tbarptr->UpdateSlider();
+         tbarptr->UpdateScrollBar();
+      }
       
       tbarptr->Refresh(false);
       tbarptr->Update();
@@ -785,7 +807,9 @@ void ToggleTimelineBar()
 void StartStopRecording()
 {
    if (!inscript && currlayer->algo->hyperCapable()) {
-      if (!showtimeline) ToggleTimelineBar();
+      if (!showtimeline)
+         ToggleTimelineBar();
+      
       if (currlayer->algo->isrecording()) {
          // terminate GeneratePattern()
          mainptr->Stop();
@@ -794,33 +818,37 @@ void StartStopRecording()
             statusptr->ErrorMessage(_("There is no pattern to record."));
             return;
          }
-         if (TimelineExists()) {
-            // extend the existing timeline
-            // report error if currlayer->algo->getframecount() == MAX_FRAME_COUNT !!!
-            // also need check for that in GeneratePattern()???!!!
-            
-            // not working!!! call INSTEAD of startrecording()???
-            currlayer->algo->extendtimeline();
+         if (currlayer->algo->getframecount() == MAX_FRAME_COUNT) {
+            statusptr->ErrorMessage(_("This timeline can't be extended any further."));
+            return;
          }
-         // start recording a new timeline
+         
+         // record a new timeline, or extend the existing one
          if (currlayer->algo->startrecording(currlayer->currbase, currlayer->currexpo) > 0) {
-            // temporarily disable hyperspeed
-            // and allowundo!!!??? or call writecurrentframe(true)???
-            bool savehyper = currlayer->hyperspeed;
-            currlayer->hyperspeed = false;
+            if (currlayer->algo->getGeneration() == currlayer->startgen) {
+               // ensure SaveStartingPattern call in DeleteTimeline will create
+               // a new temporary .mc file with one frame
+               currlayer->savestart = true;
+            }
+            
+            // temporarily disable allowundo so that GeneratePattern won't
+            // try to save any temporary files
+            bool saveundo = allowundo;
+            allowundo = false;
             mainptr->GeneratePattern();
-            currlayer->hyperspeed = savehyper;
+            allowundo = saveundo;
             
             // stop recording
             currlayer->algo->stoprecording();
             if (currlayer->algo->getframecount() > 0) {
-               //!!!??? sync undo/redo history
-               // go to last frame???
+               // probably best to go to last frame
                currlayer->currframe = currlayer->algo->getframecount() - 1;
                currlayer->autoplay = 0;
                currlayer->tlspeed = 0;
                currlayer->algo->gotoframe(currlayer->currframe);
+               if (currlayer->autofit) viewptr->FitInView(1);
             }
+            
             mainptr->UpdateUserInterface(true);
          }
       }
@@ -831,23 +859,16 @@ void StartStopRecording()
 
 void DeleteTimeline()
 {
-   if (!inscript && TimelineExists()) {
-      // stop any recording
-      if (currlayer->algo->isrecording()) currlayer->algo->stoprecording();
-      
-      // prevent user selecting Reset/Undo by making current frame
-      // the new starting pattern
-      //!!! remove these 2 lines if we solve PROBLEM below!!!
-      currlayer->startgen = currlayer->algo->getGeneration();
-      currlayer->savestart = true;     // do NOT reload .mc file
-      
-      /* PROBLEM: SaveStartingPattern writes a .mc file with timeline!!!
-         ditto for temp .mc files written by RememberGenStart/Finish!!!
-         SOLN: set flag that tells writeNativeFormat to only write current frame???
-         ie. add writecurrentframe(bool) call to temporarily disable/enable writing timeline???
+   if (!inscript && TimelineExists() && !currlayer->algo->isrecording()) {
       if (currlayer->currframe > 0) {
+         // tell writeNativeFormat to only save the current frame
+         // so that the temporary .mc files created by SaveStartingPattern and
+         // RememberGenStart/Finish won't store the entire timeline
+         currlayer->algo->savetimelinewithframe(0);
+         
          // do stuff so user can select Reset/Undo to go back to 1st frame
          currlayer->algo->gotoframe(0);
+         if (currlayer->autofit) viewptr->FitInView(1);
          if (currlayer->algo->getGeneration() == currlayer->startgen) {
             mainptr->SaveStartingPattern();
          }
@@ -855,9 +876,12 @@ void DeleteTimeline()
          
          // return to the current frame
          currlayer->algo->gotoframe(currlayer->currframe);
+         if (currlayer->autofit) viewptr->FitInView(1);
          if (allowundo) currlayer->undoredo->RememberGenFinish();
+         
+         // restore flag that tells writeNativeFormat to save entire timeline
+         currlayer->algo->savetimelinewithframe(1);
       }
-      */
 
       currlayer->algo->destroytimeline();
       mainptr->UpdateUserInterface(true);
@@ -875,9 +899,12 @@ void InitTimelineFrame()
    currlayer->autoplay = 0;
    currlayer->tlspeed = 0;
 
-   // first frame is starting gen (need this for DeleteTimeline)
+   // first frame is starting gen (needed for DeleteTimeline)
    currlayer->startgen = currlayer->algo->getGeneration();
-   currlayer->savestart = true;     // do NOT reload .mc file
+
+   // ensure SaveStartingPattern call in DeleteTimeline will create
+   // a new temporary .mc file with one frame
+   currlayer->savestart = true;
 }
 
 // -----------------------------------------------------------------------------
