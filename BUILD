@@ -1,5 +1,5 @@
-Welcome to Golly, a Game of Life simulator.  For the latest information
-please visit the Golly web site:
+Welcome to Golly, a simulator for Conway's Game of Life and other
+cellular automata.  For the latest news please visit our web site:
 
    http://golly.sourceforge.net/
 
@@ -166,14 +166,21 @@ wxcontrol.cpp
    MainFrame::GeneratePattern() runs the current pattern.
    MainFrame::ChangeAlgorithm() switches to a new algorithm.
 
+wxtimeline.*
+
+   Users can record/play a sequence of steps called a "timeline".
+   CreateTimelineBar() creates timeline bar below the viewport window.
+   StartStopRecording() starts or stops recording a timeline.
+   DeleteTimeline() deletes an existing timeline.
+
 wxrule.*
 
-   Lets user change the current rule.
+   Users can change the current rule.
    ChangeRule() opens the Set Rule dialog.
 
 wxedit.*
 
-   Implements Edit bar functions.
+   Implements edit bar functions.
    CreateEditBar() creates the edit bar above the viewport window.
    ToggleEditBar() shows/hides the edit bar.
 

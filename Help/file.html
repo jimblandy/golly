@@ -19,7 +19,8 @@ Golly can read all the common pattern formats:
 RLE, PC Life 1.05/1.06, dblife, some MCell files, and text patterns like "ooo...ooo".
 It can also read patterns in a "macrocell" format which allows huge,
 highly repetitive patterns to be stored in a very compact way.
-Such files usually have a .mc extension.
+Such files usually have a .mc extension.  If a .mc file contains timeline data
+then Golly will load all the frames and automatically show the timeline bar.
 
 <p>
 All the above formats are text based and can have DOS/Mac/Unix line endings,
@@ -74,9 +75,10 @@ Lets you change the pattern folder displayed by Show Patterns (see above).
 
 <p>
 Opens the standard file saving dialog so you can save the current pattern
-in RLE format (but only if all live cells are within coordinates of +/- 1 billion).
-If the current algorithm supports hashing then you can also save the pattern
-in macrocell format.
+in RLE format (but only if all live cells are within coordinates of +/- 1 billion),
+or in macrocell format if the current algorithm supports hashing (all algorithms
+except QuickLife).  Note that if a timeline exists when you save a .mc file then
+<em>all</em> the frames will be stored in the file.
 
 <a name="xrle"></a>
 <p>

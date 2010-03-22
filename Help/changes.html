@@ -7,6 +7,15 @@
 
 <p>
 <ul>
+<li> Golly can record and play back a pattern's "timeline", a sequence of steps saved by the new
+     <a href="control.html#record">Start Recording</a> item in the Control menu.
+     Use the <a href="control.html#deltime">Delete Timeline</a> item to delete a timeline.
+     Timelines are supported by all the hashlife-based algorithms (ie. all except QuickLife).
+<li> <a href="view.html#timeline">Show Timeline</a> in the View menu toggles the new
+     timeline bar below the viewport window.
+<li> If a timeline exists when you save a .mc file then <em>all</em> the steps will be stored
+     in the file.  On opening such a file, Golly will re-create the timeline and automatically
+     show the timeline bar.
 <li> Added a new Python script, <a href="open:Scripts/Python/make-ruletree.py">make-ruletree.py</a>,
      that allows you to write rules in Python and have them installed in the form of .tree files.
      See the comments at the top of the script.
