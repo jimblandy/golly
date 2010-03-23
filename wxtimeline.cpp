@@ -807,9 +807,6 @@ void ToggleTimelineBar()
 void StartStopRecording()
 {
    if (!inscript && currlayer->algo->hyperCapable()) {
-      if (!showtimeline)
-         ToggleTimelineBar();
-      
       if (currlayer->algo->isrecording()) {
          // terminate GeneratePattern()
          mainptr->Stop();
@@ -818,16 +815,21 @@ void StartStopRecording()
             statusptr->ErrorMessage(_("There is no pattern to record."));
             return;
          }
+         
+         if (!showtimeline) ToggleTimelineBar();
          if (currlayer->algo->getframecount() == MAX_FRAME_COUNT) {
-            statusptr->ErrorMessage(_("This timeline can't be extended any further."));
+            wxString msg;
+            msg.Printf(_("The timeline can't be extended any further (max frames = %d)."),
+                       MAX_FRAME_COUNT);
+            statusptr->ErrorMessage(msg);
             return;
          }
          
          // record a new timeline, or extend the existing one
          if (currlayer->algo->startrecording(currlayer->currbase, currlayer->currexpo) > 0) {
             if (currlayer->algo->getGeneration() == currlayer->startgen) {
-               // ensure SaveStartingPattern call in DeleteTimeline will create
-               // a new temporary .mc file with one frame
+               // ensure the SaveStartingPattern call in DeleteTimeline will
+               // create a new temporary .mc file (with only one frame)
                currlayer->savestart = true;
             }
             
@@ -848,7 +850,8 @@ void StartStopRecording()
                currlayer->algo->gotoframe(currlayer->currframe);
                if (currlayer->autofit) viewptr->FitInView(1);
             }
-            
+
+            if (!showtimeline) ToggleTimelineBar();
             mainptr->UpdateUserInterface(true);
          }
       }

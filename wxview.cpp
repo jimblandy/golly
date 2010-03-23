@@ -1448,10 +1448,14 @@ void PatternView::ProcessKey(int key, int modifiers)
 
       // Control menu actions
       case DO_STARTSTOP:   if (!inscript) {
-                              if (mainptr->generating) {
+                              if (timeline) {
+                                 if (currlayer->algo->isrecording()) {
+                                    StartStopRecording();   // stop recording
+                                 } else {
+                                    PlayTimeline(1);        // play forwards or stop if already playing
+                                 }
+                              } else if (mainptr->generating) {
                                  mainptr->Stop();
-                              } else if (timeline) {
-                                 PlayTimeline(1);
                               } else {
                                  mainptr->GeneratePattern();
                               }
@@ -2293,13 +2297,17 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
    
-   if ( mainptr->generating && key == WXK_ESCAPE ) {
-      mainptr->Stop();
+   if ( TimelineExists() && key == WXK_ESCAPE ) {
+      if (currlayer->algo->isrecording()) {
+         StartStopRecording();   // stop recording
+      } else {
+         PlayTimeline(0);        // stop autoplay
+      }
       return;
    }
    
-   if ( TimelineExists() && key == WXK_ESCAPE ) {
-      PlayTimeline(0);  // stop autoplay
+   if ( mainptr->generating && key == WXK_ESCAPE ) {
+      mainptr->Stop();
       return;
    }
 
