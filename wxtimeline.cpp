@@ -154,8 +154,8 @@ const int SCROLLHT = 17;               // height of scroll bar
 const int PAGESIZE = 10;               // scroll amount when paging
 const int BUTTON_WD = 24;              // nominal width of bitmap buttons
 
-const int MINSPEED = -10;              // delay 2^10 msecs between each frame
-const int MAXSPEED = 10;               // skip 2^10 frames
+const int MINSPEED = -10;              // minimum autoplay speed
+const int MAXSPEED = 10;               // maximum autoplay speed
 
 // timeline bar buttons (must be global to use Connect/Disconnect on Windows)
 static wxBitmapButton* tlbutt[NUM_BUTTONS];
@@ -259,9 +259,6 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
    #ifdef __WXMAC__
       slider->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
       slider->Move(x, y+1);
-   #endif
-   #ifdef __WXMSW__
-      slider->SetTick(0);     // doesn't seem to do anything!
    #endif
    xpos = x + sliderwd;
    
@@ -840,7 +837,7 @@ void StartStopRecording()
             mainptr->GeneratePattern();
             allowundo = saveundo;
             
-            // stop recording
+            // recording has stopped
             currlayer->algo->stoprecording();
             if (currlayer->algo->getframecount() > 0) {
                // probably best to go to last frame
@@ -853,6 +850,9 @@ void StartStopRecording()
 
             if (!showtimeline) ToggleTimelineBar();
             mainptr->UpdateUserInterface(true);
+         } else {
+            // can this ever happen???!!!
+            Warning(_("Could not start recording!"));
          }
       }
    }
@@ -933,8 +933,8 @@ bool AutoPlay()
       frameinc = 1 << currlayer->tlspeed;
    }
    if (currlayer->tlspeed < 0) {
-      // delay 2^(-tlspeed) msecs between each frame
-      delay = 1 << (-currlayer->tlspeed);
+      // set delay between each frame
+      delay = 100 * (-currlayer->tlspeed);
       if (stopwatch->Time() - currlayer->lastframe < delay) {
          return true;   // request another idle event
       }
