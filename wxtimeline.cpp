@@ -641,16 +641,15 @@ void TimelineBar::UpdateButtons()
          buttstate[RECORD_BUTT] = -1;
          tlbutt[RECORD_BUTT]->SetBitmapLabel(normbutt[STOPREC_BUTT]);
          tlbutt[RECORD_BUTT]->SetToolTip(_("Stop recording"));
+         if (showtimeline) tlbutt[RECORD_BUTT]->Refresh(false);
       }
    } else {
       if (buttstate[RECORD_BUTT] != 1) {
          buttstate[RECORD_BUTT] = 1;
          tlbutt[RECORD_BUTT]->SetBitmapLabel(normbutt[RECORD_BUTT]);
          tlbutt[RECORD_BUTT]->SetToolTip(_("Start recording"));
+         if (showtimeline) tlbutt[RECORD_BUTT]->Refresh(false);
       }
-   }
-   if (showtimeline) {
-      tlbutt[RECORD_BUTT]->Refresh(false);
    }
    
    // these buttons are only shown if there is a timeline and we're not recording
@@ -661,38 +660,40 @@ void TimelineBar::UpdateButtons()
             buttstate[BACKWARDS_BUTT] = 1;
             tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
             tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
+            if (showtimeline) tlbutt[BACKWARDS_BUTT]->Refresh(false);
          }
          if (buttstate[FORWARDS_BUTT] != 1) {
             buttstate[FORWARDS_BUTT] = 1;
             tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
             tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
+            if (showtimeline) tlbutt[FORWARDS_BUTT]->Refresh(false);
          }
       } else if (currlayer->autoplay > 0) {
          if (buttstate[BACKWARDS_BUTT] != 1) {
             buttstate[BACKWARDS_BUTT] = 1;
             tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[BACKWARDS_BUTT]);
             tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Play backwards"));
+            if (showtimeline) tlbutt[BACKWARDS_BUTT]->Refresh(false);
          }
          if (buttstate[FORWARDS_BUTT] != -1) {
             buttstate[FORWARDS_BUTT] = -1;
             tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
             tlbutt[FORWARDS_BUTT]->SetToolTip(_("Stop playing"));
+            if (showtimeline) tlbutt[FORWARDS_BUTT]->Refresh(false);
          }
       } else { // currlayer->autoplay < 0
          if (buttstate[BACKWARDS_BUTT] != -1) {
             buttstate[BACKWARDS_BUTT] = -1;
             tlbutt[BACKWARDS_BUTT]->SetBitmapLabel(normbutt[STOPPLAY_BUTT]);
             tlbutt[BACKWARDS_BUTT]->SetToolTip(_("Stop playing"));
+            if (showtimeline) tlbutt[BACKWARDS_BUTT]->Refresh(false);
          }
          if (buttstate[FORWARDS_BUTT] != 1) {
             buttstate[FORWARDS_BUTT] = 1;
             tlbutt[FORWARDS_BUTT]->SetBitmapLabel(normbutt[FORWARDS_BUTT]);
             tlbutt[FORWARDS_BUTT]->SetToolTip(_("Play forwards"));
+            if (showtimeline) tlbutt[FORWARDS_BUTT]->Refresh(false);
          }
-      }
-      if (showtimeline) {
-         tlbutt[BACKWARDS_BUTT]->Refresh(false);
-         tlbutt[FORWARDS_BUTT]->Refresh(false);
       }
    }
 }
