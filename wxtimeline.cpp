@@ -96,6 +96,9 @@ public:
 
    wxSlider* slider;             // slider for controlling autoplay speed
    wxScrollBar* framebar;        // scroll bar for displaying timeline frames
+   
+   // positioning data used by AddButton and AddSeparator
+   int ypos, xpos, smallgap, biggap;
 
 private:
    // any class wishing to process wxWidgets events must use this macro
@@ -122,9 +125,6 @@ private:
    
    // remember state of buttons to avoid unnecessary updates
    int buttstate[NUM_BUTTONS];
-   
-   // positioning data used by AddButton and AddSeparator
-   int ypos, xpos, smallgap, biggap;
 
    wxBitmap* timelinebitmap;     // timeline bar bitmap
    int timelinebitmapwd;         // width of timeline bar bitmap
@@ -755,6 +755,15 @@ void UpdateTimelineBar(bool active)
          tbarptr->UpdateScrollBar();
       }
       
+      if (currlayer->algo->isrecording()) {
+         // don't refresh RECORD_BUTT (otherwise button flickers on Windows)
+         int wd, ht;
+         tbarptr->GetClientSize(&wd, &ht);
+         wxRect r(BUTTON_WD + tbarptr->smallgap * 2, 0, wd, ht);
+         tbarptr->RefreshRect(r, false);
+      } else {
+         tbarptr->Refresh(false);
+      }
       tbarptr->Refresh(false);
       tbarptr->Update();
    }

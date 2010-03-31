@@ -559,9 +559,7 @@ void EditBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       wxBufferedPaintDC dc(this, *editbitmap);
    #endif
    
-   if (!showedit) return;
-   
-   DrawEditBar(dc, wd, ht);
+   if (showedit) DrawEditBar(dc, wd, ht);
 }
 
 // -----------------------------------------------------------------------------
