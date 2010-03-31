@@ -764,7 +764,6 @@ void UpdateTimelineBar(bool active)
       } else {
          tbarptr->Refresh(false);
       }
-      tbarptr->Refresh(false);
       tbarptr->Update();
    }
 }
