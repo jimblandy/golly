@@ -764,6 +764,13 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
       // load pattern
       if (remember) AddRecentPattern(path);
       currlayer->currfile = path;
+      
+      // we need to ensure currlayer->currfile is a full path because
+      // a script might want to reset() to that path (in which case the
+      // cwd is the script's directory, not gollydir)
+      wxFileName fname(path);
+      if (!fname.IsAbsolute()) currlayer->currfile = gollydir + path;
+      
       LoadPattern(currlayer->currfile, GetBaseName(path));
    }
 }
