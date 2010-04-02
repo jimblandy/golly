@@ -1206,6 +1206,10 @@ void RunScript(const wxString& filename)
 void PassKeyToScript(int key)
 {
    if (key == WXK_ESCAPE) {
+      if (mainptr->generating) {
+         // interrupt a run() or step() command
+         wxGetApp().PollerInterrupt();
+      }
       if (plscript) AbortPerlScript();
       if (pyscript) AbortPythonScript();
    } else {
@@ -1251,6 +1255,10 @@ void FinishScripting()
 {
    // called when main window is closing (ie. app is quitting)
    if (inscript) {
+      if (mainptr->generating) {
+         // interrupt a run() or step() command
+         wxGetApp().PollerInterrupt();
+      }
       if (plscript) AbortPerlScript();
       if (pyscript) AbortPythonScript();
       wxSetWorkingDirectory(gollydir);
