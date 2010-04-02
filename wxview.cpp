@@ -2417,10 +2417,8 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
    
    } else if (currlayer->curs == curs_pencil) {
       if (inscript) {
-         // statusptr->ErrorMessage does nothing if inscript is true
-         inscript = false;
-         statusptr->ErrorMessage(_("Drawing is not allowed while a script is running."));
-         inscript = true;
+         // best not to clobber any status bar message displayed by script
+         Warning(_("Drawing is not allowed while a script is running."));
          return;
       }
       if (TimelineExists()) {
@@ -2443,7 +2441,7 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 
    } else if (currlayer->curs == curs_pick) {
       if (inscript) {
-         // statusptr->ErrorMessage does nothing if inscript is true
+         // best not to clobber any status bar message displayed by script
          Warning(_("Picking is not allowed while a script is running."));
          return;
       }
