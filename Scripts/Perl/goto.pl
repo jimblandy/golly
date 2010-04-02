@@ -70,6 +70,18 @@ sub go_to {
 
 # --------------------------------------------------------------------
 
+sub savegen {
+   my ($filename, $gen) = @_;
+   if (not open(OUTFILE, ">".$filename)) {
+      g_warn("Can't save gen in $filename:\n$!");
+   } else {
+      print OUTFILE $gen;
+      close OUTFILE;
+   }
+}
+
+# --------------------------------------------------------------------
+
 # use same file name as in goto.py
 my $GotoINIFileName = g_getdir("data")."goto.ini";
 my $previousgen = "";
@@ -86,18 +98,12 @@ if ($gen eq "") {
    g_exit();
 } elsif ($gen eq '+' or $gen eq '-') {
    # clear the default
-   $previousgen = "";
+   savegen($GotoINIFileName, "");
 } elsif ($gen !~ /^[+-]?\d[\d,]*$/) {
    g_exit("Sorry, but \"$gen\" is not a valid integer.");
 } else {
-   $previousgen = $gen;
+   # best to save given gen now in case user aborts script
+   savegen($GotoINIFileName, $gen);
    $gen =~ s/,//g;
    go_to($gen);
-}
-
-if (not open(OUTFILE, ">".$GotoINIFileName)) {
-   g_warn("Can't save gen in $GotoINIFileName:\n$!");
-} else {
-   print OUTFILE $previousgen;
-   close OUTFILE;
 }

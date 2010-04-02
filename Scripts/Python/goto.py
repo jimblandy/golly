@@ -5,16 +5,26 @@
 # to the starting generation (normally 0) and advance to the target.
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 # Updated Sept-Oct 2006 -- XRLE support and reusable default value.
+# Updated April 2010 -- much faster, thanks to PM 2Ring.
 
 from glife import validint
 from time import time
-import os
-import golly
+import golly as g
+
+# --------------------------------------------------------------------
+
+def intbase(n, b):
+   # convert integer n >= 0 to a base b digit list (thanks to PM 2Ring)
+   digits = []
+   while n > 0:
+      digits += [n % b]
+      n //= b
+   return digits or [0]
 
 # --------------------------------------------------------------------
 
 def goto(gen):
-   currgen = int(golly.getgen())
+   currgen = int(g.getgen())
    if gen[0] == '+':
       n = int(gen[1:])
       newgen = currgen + n
@@ -27,73 +37,95 @@ def goto(gen):
    else:
       newgen = int(gen)
    
+   if newgen == currgen: return
    if newgen < currgen:
       # try to go back to starting gen (not necessarily 0) and
       # then forwards to newgen; note that reset() also restores
       # algorithm and/or rule, so too bad if user changed those
       # after the starting info was saved;
       # first save current location and scale
-      midx, midy = golly.getpos()
-      mag = golly.getmag()
-      golly.reset()
+      midx, midy = g.getpos()
+      mag = g.getmag()
+      g.reset()
       # restore location and scale
-      golly.setpos(midx, midy)
-      golly.setmag(mag)
+      g.setpos(midx, midy)
+      g.setmag(mag)
       # current gen might be > 0 if user loaded a pattern file
       # that set the gen count
-      currgen = int(golly.getgen())
+      currgen = int(g.getgen())
       if newgen < currgen:
-         golly.error("Can't go back any further; pattern was saved "\
-                     + "at generation " + str(currgen) + ".")
+         g.error("Can't go back any further; pattern was saved " +
+                 "at generation " + str(currgen) + ".")
          return
    
-   golly.show("Hit escape to abort...")
+   g.show("Hit escape to abort...")
    oldsecs = time()
-   while currgen < newgen:
-      if golly.empty():
-         golly.show("Pattern is empty.")
-         return
-      # using golly.step() as a faster method for getting to newgen
-      # is left as an exercise for the reader :)
-      golly.run(1)
-      currgen += 1
-      golly.dokey( golly.getkey() )    # allow keyboard interaction
-      newsecs = time()
-      if newsecs - oldsecs >= 1.0:     # do an update every sec
-         oldsecs = newsecs
-         golly.update()
-   golly.show("")
+   
+   # before stepping we advance by 1 generation, for two reasons:
+   # 1. if we're at the starting gen then the *current* step size
+   #    will be saved (and restored upon Reset/Undo) rather than a
+   #    possibly very large step size
+   # 2. it increases the chances the user will see updates and so
+   #    get some idea of how long the script will take to finish
+   #    (otherwise if the base is 10 and a gen like 1,000,000,000
+   #    is given then only a single step() of 10^9 would be done)
+   g.run(1)
+   currgen += 1
+   
+   # use fast stepping (thanks to PM 2Ring)
+   for i, d in enumerate(intbase(newgen - currgen, g.getbase())):
+      if d > 0:
+         g.setstep(i)
+         for j in xrange(d):
+            if g.empty():
+               g.show("Pattern is empty.")
+               return
+            g.step()
+            g.dokey( g.getkey() )         # allow keyboard interaction
+            newsecs = time()
+            if newsecs - oldsecs >= 1.0:  # do an update every sec
+               oldsecs = newsecs
+               g.update()
+   g.show("")
+
+# --------------------------------------------------------------------
+
+def savegen(filename, gen):
+   try:
+      f = open(filename, 'w')
+      f.write(gen)
+      f.close()
+   except:
+      g.warn("Unable to save given gen in file:\n" + filename)
 
 # --------------------------------------------------------------------
 
 # use same file name as in goto.pl
-GotoINIFileName = golly.getdir("data") + "goto.ini"
+GotoINIFileName = g.getdir("data") + "goto.ini"
 previousgen = ""
-if os.access(GotoINIFileName, os.R_OK):
+try:
    f = open(GotoINIFileName, 'r')
    previousgen = f.readline()
    f.close()
    if not validint(previousgen):
       previousgen = ""
+except:
+   # should only happen 1st time (GotoINIFileName doesn't exist)
+   pass
 
-gen = golly.getstring("Enter the desired generation number,\n" +
-                      "or -n/+n to go back/forwards by n:",
-                      previousgen, "Go to generation")
+gen = g.getstring("Enter the desired generation number,\n" +
+                  "or -n/+n to go back/forwards by n:",
+                  previousgen, "Go to generation")
 if len(gen) == 0:
-   golly.exit()
+   g.exit()
 elif gen == "+" or gen == "-":
    # clear the default
-   previousgen = ""
+   savegen(GotoINIFileName, "")
 elif not validint(gen):
-   golly.exit('Sorry, but "' + gen + '" is not a valid integer.')
+   g.exit('Sorry, but "' + gen + '" is not a valid integer.')
 else:
-   previousgen = gen
+   # best to save given gen now in case user aborts script
+   savegen(GotoINIFileName, gen)
+   oldstep = g.getstep()
    goto(gen.replace(",",""))
-
-if os.access(GotoINIFileName, os.W_OK) or not os.access(GotoINIFileName, os.F_OK):
-   try:
-      f = open(GotoINIFileName, 'w')
-      f.write(previousgen)
-      f.close()
-   except:
-      golly.show("Unable to save defaults to " + GotoINIFileName)
+   g.setstep(oldstep)
