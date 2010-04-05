@@ -267,6 +267,9 @@ string ruletable_algo::LoadRuleTable(string rule)
             oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing\nbefore first variable";
             return oss.str();
          }
+         // snip off any trailing comment
+         if(line.find('#')!=string::npos)
+            line.assign(line.begin(),line.begin()+line.find('#'));
          // parse the rest of the line for the variable
          vector<string> tokens = tokenize(line,"= {,}");
          string variable_name = tokens[1];
@@ -279,20 +282,28 @@ string ruletable_algo::LoadRuleTable(string rule)
          }  
          for(unsigned int i=2;i<tokens.size();i++)
          {
-            unsigned int s;
-            if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
+            if(variables.find(tokens[i])!=variables.end())
             {
-               ostringstream oss;
-               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
-               return oss.str();
+               // variables permitted inside later variables
+               states.insert(states.end(),variables[tokens[i]].begin(),variables[tokens[i]].end());
             }
-            if(s<0 || s>=this->n_states)
+            else
             {
-               ostringstream oss;
-               oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state value out of range";
-               return oss.str();
+               unsigned int s;
+               if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
+               {
+                  ostringstream oss;
+                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+                  return oss.str();
+               }
+               if(s<0 || s>=this->n_states)
+               {
+                  ostringstream oss;
+                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state value out of range";
+                  return oss.str();
+               }
+               states.push_back((state)s);
             }
-            states.push_back((state)s);
          }
          variables[variable_name] = states;
       }
@@ -338,7 +349,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             output = c-'0';
             transition_table.push_back(make_pair(inputs,output));
          }
-         else 
+         else // transition line with commas
          {  
             vector<string> tokens = tokenize(line,", #\t");
             if(tokens.size() < n_inputs+1)
@@ -393,10 +404,17 @@ string ruletable_algo::LoadRuleTable(string rule)
                else 
                {
                   unsigned int s;
-                  if(sscanf(tokens[n_inputs].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
+                  if(variables.find(tokens[n_inputs])!=variables.end() &&
+                    variables[tokens[n_inputs]].size()==1)
+                  {
+                     // single-state variables are permitted as the output
+                     s = variables[tokens[n_inputs]][0];
+                  }
+                  else if(sscanf(tokens[n_inputs].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
                   {
                      ostringstream oss;
-                     oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+                     oss << "Error reading " << full_filename << " on line " << lineno << ": " << line
+                        << " - output must be state, single-state variable or bound variable";
                      return oss.str();
                   }
                   if(s<0 || s>=this->n_states)
