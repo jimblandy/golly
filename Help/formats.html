@@ -331,7 +331,7 @@ Here's a simple example file:
 
 <p>
 See the <tt>.table</tt> files in the Rules folder for more examples.
-Empty lines and those beginning with the hash symbol "#" are ignored.
+Empty lines and anything following the hash symbol "#" are ignored.
 
 <p>
 Required descriptors (must appear before other content):
@@ -351,10 +351,10 @@ Hopefully these are self-explanatory.</li>
 </ul>
 
 <p>
-The rest of the file contains variables and transitions. Variable names
-should only use the letters a-z,A-Z (case-sensitive). Each variable line
+The rest of the file contains variables and transitions. Each variable line
 should follow the form above to list the states. Variables should appear
-before the first transition that uses them.
+before the first transition that uses them. Variables can be used inside later
+variables.
 
 <p>
 Transition lines should have states or variables separated by commas.
@@ -365,12 +365,14 @@ and C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighborhood.
 
 <p>
 Where the same variable appears more than once in a transition, it stands
-for the same state each time. A transition can have a variable as its output
-(C') but only where that variable appears more than once, so that it has a
-definite value. The transition in the example above expands to the following:
+for the same state each time. For example, the transition in the example above expands to the following:
 <tt>20212->2</tt>, <tt>20213->2</tt>, <tt>20312->3</tt>, <tt>20313->3</tt>,
 <tt>30212->2</tt>, <tt>30213->2</tt>, <tt>30312->3</tt>, <tt>30313->3</tt>, and
 all 90-degree rotations of those (because of the <tt>rotate4</tt> symmetry).
+
+<p>A transition can have a variable as its output
+(C') if that variable appears more than once in the transition (as in the example above), so that it has a
+definite value. 
 
 <p>
 Rule tables usually don't specify every possible set of inputs. For those
@@ -382,7 +384,7 @@ matches is applied. If you want, you can write rules in the form of general
 cases and exceptions, as long as the exceptions appear first in the file.
 
 <p>
-(This form of CA rule table representation comes from Gianluca Tempesti's
+(This form of CA rule table representation was inspired by that in Gianluca Tempesti's
 PhD thesis:
 <a href="http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html">http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html</a>.)
 
