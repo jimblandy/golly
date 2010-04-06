@@ -558,7 +558,8 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                wxAlphaPixelData::Iterator topleft = p;
                if (state && iconmaps[state]) {
                   // copy cellsize*cellsize pixels from iconmaps[state]
-                  // but convert black pixels to dead cell color;
+                  // but convert black pixels to dead cell color
+                  bool monochrome = iconmaps[1]->GetDepth() == 1;
                   #ifdef __WXMSW__
                      // must use wxNativePixelData for bitmaps with no alpha channel
                      wxNativePixelData icondata(*iconmaps[state]);
@@ -580,10 +581,17 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                         #endif
                         for (int j = 0; j < cellsize; j++) {
                            if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                              // replace non-black pixel with current cell color
-                              p.Red()   = currlayer->cellr[state];
-                              p.Green() = currlayer->cellg[state];
-                              p.Blue()  = currlayer->cellb[state];
+                              if (monochrome) {
+                                 // replace non-black pixel with current cell color
+                                 p.Red()   = currlayer->cellr[state];
+                                 p.Green() = currlayer->cellg[state];
+                                 p.Blue()  = currlayer->cellb[state];
+                              } else {
+                                 // use color in icon
+                                 p.Red()   = iconpxl.Red();
+                                 p.Green() = iconpxl.Green();
+                                 p.Blue()  = iconpxl.Blue();
+                              }
                            } else {
                               // replace black pixel with dead cell color
                               p.Red()   = deadred;
@@ -686,6 +694,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
    // and convert non-black pixels to given live cell color
    int wd = icon->GetWidth();
    int ht = icon->GetHeight();
+   bool monochrome = icon->GetDepth() == 1;
    wxBitmap pixmap(wd, ht, 32);
 
    wxAlphaPixelData pxldata(pixmap);
@@ -718,10 +727,17 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
             #endif
             for (int j = 0; j < wd; j++) {
                if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                  // replace non-black pixel with live cell color
-                  p.Red()   = liver;
-                  p.Green() = liveg;
-                  p.Blue()  = liveb;
+                  if (monochrome) {
+                     // replace non-black pixel with live cell color
+                     p.Red()   = liver;
+                     p.Green() = liveg;
+                     p.Blue()  = liveb;
+                  } else {
+                     // use color in icon
+                     p.Red()   = iconpxl.Red();
+                     p.Green() = iconpxl.Green();
+                     p.Blue()  = iconpxl.Blue();
+                  }
                } else {
                   // replace black pixel with dead cell color
                   p.Red()   = deadr;

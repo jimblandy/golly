@@ -157,7 +157,7 @@ static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
    
    wxImage image(xpmdata);
    image.SetMaskColour(0, 0, 0);    // make black transparent
-   wxBitmap allicons(image);
+   wxBitmap allicons(image, 1);     // assume default icons are monochrome
 
    int wd = allicons.GetWidth();
    int numicons = allicons.GetHeight() / wd;
@@ -361,7 +361,11 @@ bool LoadIconFile(const wxString& path, int maxstate,
       image.SetMaskColour(0, 0, 0);    // make black transparent
    #endif
    
-   wxBitmap allicons(image);
+   // is image monochrome?
+   int depth = -1;
+   if (image.CountColours(2) <= 2) depth = 1;
+   
+   wxBitmap allicons(image, depth);
    int wd = allicons.GetWidth();
    int ht = allicons.GetHeight();
 
