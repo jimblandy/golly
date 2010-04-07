@@ -123,7 +123,7 @@ Other points of interest:
 
 #include "wxgolly.h"       // for viewptr, bigview, statusptr
 #include "wxutils.h"       // for Warning, Fatal, FillRect
-#include "wxprefs.h"       // for swapcolors, showgridlines, mingridmag, etc
+#include "wxprefs.h"       // for showgridlines, mingridmag, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxlayer.h"       // currlayer, GetLayer, etc
@@ -559,7 +559,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                if (state && iconmaps[state]) {
                   // copy cellsize*cellsize pixels from iconmaps[state]
                   // but convert black pixels to dead cell color
-                  bool monochrome = iconmaps[1]->GetDepth() == 1;
+                  bool multicolor = iconmaps[1]->GetDepth() > 1;
                   #ifdef __WXMSW__
                      // must use wxNativePixelData for bitmaps with no alpha channel
                      wxNativePixelData icondata(*iconmaps[state]);
@@ -581,16 +581,22 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                         #endif
                         for (int j = 0; j < cellsize; j++) {
                            if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                              if (monochrome) {
+                              if (multicolor) {
+                                 // use non-black pixel in multi-colored icon
+                                 if (swapcolors) {
+                                    p.Red()   = 255 - iconpxl.Red();
+                                    p.Green() = 255 - iconpxl.Green();
+                                    p.Blue()  = 255 - iconpxl.Blue();
+                                 } else {
+                                    p.Red()   = iconpxl.Red();
+                                    p.Green() = iconpxl.Green();
+                                    p.Blue()  = iconpxl.Blue();
+                                 }
+                              } else {
                                  // replace non-black pixel with current cell color
                                  p.Red()   = currlayer->cellr[state];
                                  p.Green() = currlayer->cellg[state];
                                  p.Blue()  = currlayer->cellb[state];
-                              } else {
-                                 // use color in icon
-                                 p.Red()   = iconpxl.Red();
-                                 p.Green() = iconpxl.Green();
-                                 p.Blue()  = iconpxl.Blue();
                               }
                            } else {
                               // replace black pixel with dead cell color
@@ -694,7 +700,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
    // and convert non-black pixels to given live cell color
    int wd = icon->GetWidth();
    int ht = icon->GetHeight();
-   bool monochrome = icon->GetDepth() == 1;
+   bool multicolor = icon->GetDepth() > 1;
    wxBitmap pixmap(wd, ht, 32);
 
    wxAlphaPixelData pxldata(pixmap);
@@ -727,16 +733,22 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
             #endif
             for (int j = 0; j < wd; j++) {
                if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                  if (monochrome) {
+                  if (multicolor) {
+                     // use non-black pixel in multi-colored icon
+                     if (swapcolors) {
+                        p.Red()   = 255 - iconpxl.Red();
+                        p.Green() = 255 - iconpxl.Green();
+                        p.Blue()  = 255 - iconpxl.Blue();
+                     } else {
+                        p.Red()   = iconpxl.Red();
+                        p.Green() = iconpxl.Green();
+                        p.Blue()  = iconpxl.Blue();
+                     }
+                  } else {
                      // replace non-black pixel with live cell color
                      p.Red()   = liver;
                      p.Green() = liveg;
                      p.Blue()  = liveb;
-                  } else {
-                     // use color in icon
-                     p.Red()   = iconpxl.Red();
-                     p.Green() = iconpxl.Green();
-                     p.Blue()  = iconpxl.Blue();
                   }
                } else {
                   // replace black pixel with dead cell color

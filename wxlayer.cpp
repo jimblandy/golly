@@ -1781,7 +1781,7 @@ static FILE* FindColorFile(const wxString& rule, const wxString& dir)
 
 // -----------------------------------------------------------------------------
 
-static void LoadRuleColors(const wxString& rule, int maxstate)
+static bool LoadRuleColors(const wxString& rule, int maxstate)
 {
    // if rule.colors file exists in userrules or rulesdir then
    // change colors according to info in file
@@ -1825,7 +1825,9 @@ static void LoadRuleColors(const wxString& rule, int maxstate)
          }
       }
       reader.close();
+      return true;
    }
+   return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -1877,6 +1879,62 @@ static bool LoadRuleIcons(const wxString& rule, int maxstate)
 
 // -----------------------------------------------------------------------------
 
+void SetAverageColor(int state, wxBitmap* icon)
+{
+   // set non-icon color to average color of non-black pixels in given icon
+   if (icon) {
+      int wd = icon->GetWidth();
+      int ht = icon->GetHeight();
+      
+      #ifdef __WXMSW__
+         // must use wxNativePixelData for bitmaps with no alpha channel
+         wxNativePixelData icondata(*icon);
+      #else
+         wxAlphaPixelData icondata(*icon);
+      #endif
+
+      if (icondata) {
+         #ifdef __WXMSW__
+            wxNativePixelData::Iterator iconpxl(icondata);
+         #else
+            wxAlphaPixelData::Iterator iconpxl(icondata);
+         #endif
+         
+         int nbcount = 0;  // # of non-black pixels
+         int totalr = 0;
+         int totalg = 0;
+         int totalb = 0;
+
+         for (int i = 0; i < ht; i++) {
+            #ifdef __WXMSW__
+               wxNativePixelData::Iterator iconrow = iconpxl;
+            #else
+               wxAlphaPixelData::Iterator iconrow = iconpxl;
+            #endif
+            for (int j = 0; j < wd; j++) {
+               if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
+                  // non-black pixel
+                  totalr += iconpxl.Red();
+                  totalg += iconpxl.Green();
+                  totalb += iconpxl.Blue();
+                  nbcount++;
+               }
+               iconpxl++;
+            }
+            // move to next row of icon bitmap
+            iconpxl = iconrow;
+            iconpxl.OffsetY(icondata, 1);
+         }
+         
+         currlayer->cellr[state] = int(totalr / nbcount);
+         currlayer->cellg[state] = int(totalg / nbcount);
+         currlayer->cellb[state] = int(totalb / nbcount);
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateCurrentColors()
 {
    // set current layer's colors and icons according to current algo and rule
@@ -1908,13 +1966,23 @@ void UpdateCurrentColors()
    rule.Replace(wxT(":"), wxT("_"));
    
    // if rule.colors file exists then override default colors
-   LoadRuleColors(rule, maxstate);
+   bool loadedcolors = LoadRuleColors(rule, maxstate);
    
    // if rule.icons file exists then use those icons
    if ( !LoadRuleIcons(rule, maxstate) ) {
       // otherwise copy default icons from current algo
       currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
       currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
+   }
+   
+   // if rule.colors file wasn't loaded and icons are multi-color then we
+   // set non-icon colors to the average of the non-black pixels in each icon
+   // (note that we use the 7x7 icons because they are faster to scan)
+   wxBitmap** iconmaps = currlayer->icons7x7;
+   if (!loadedcolors && iconmaps && iconmaps[1] && iconmaps[1]->GetDepth() > 1) {
+      for (int n = 1; n <= maxstate; n++) {
+         SetAverageColor(n, iconmaps[n]);
+      }
    }
    
    if (swapcolors) {
@@ -2316,11 +2384,11 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
    #endif
 
    // draw cell boxes
+   wxBitmap** iconmaps = currlayer->icons15x15;
    wxRect r = wxRect(0, 0, CELLSIZE+1, CELLSIZE+1);
    int col = 0;
    for (int state = 0; state < 256; state++) {
       if (state < currlayer->algo->NumCellStates()) {
-         wxBitmap** iconmaps = currlayer->icons15x15;
          if (showicons && iconmaps && iconmaps[state]) {
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
             dc.DrawRectangle(r);
