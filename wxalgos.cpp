@@ -402,7 +402,7 @@ bool LoadIconFile(const wxString& path, int maxstate,
       // if there is an extra icon at the right end of the multi-color icons then
       // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
       // to set the color of state 0
-      if (depth != 1 && numicons > maxstate) {
+      if (depth != 1 && (wd / 15) > maxstate) {
          wxRect rect(maxstate*15, 0, 15, 15);
          iconptr[0] = new wxBitmap(allicons.GetSubBitmap(rect));
       }
