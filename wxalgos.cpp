@@ -157,7 +157,7 @@ static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
    
    wxImage image(xpmdata);
    image.SetMaskColour(0, 0, 0);    // make black transparent
-   wxBitmap allicons(image, 1);     // assume default icons are monochrome
+   wxBitmap allicons(image, 1);     // default icons are monochrome
 
    int wd = allicons.GetWidth();
    int numicons = allicons.GetHeight() / wd;
@@ -170,7 +170,7 @@ static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
       
       for (int i = 0; i < numicons; i++) {
          wxRect rect(0, i*wd, wd, wd);
-         // add 1 because iconptr[0] must be NULL (ie. dead state)
+         // add 1 to skip iconptr[0] (ie. dead state)
          iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
       }
       
@@ -361,9 +361,9 @@ bool LoadIconFile(const wxString& path, int maxstate,
       image.SetMaskColour(0, 0, 0);    // make black transparent
    #endif
    
-   // is image monochrome?
+   // check for multi-color icons
    int depth = -1;
-   if (image.CountColours(2) <= 2) depth = 1;
+   if (image.CountColours(2) <= 2) depth = 1;   // monochrome
    
    wxBitmap allicons(image, depth);
    int wd = allicons.GetWidth();
@@ -388,7 +388,7 @@ bool LoadIconFile(const wxString& path, int maxstate,
       for (int i = 0; i < 256; i++) iconptr[i] = NULL;
       for (int i = 0; i < numicons; i++) {
          wxRect rect(i*15, 0, 15, 15);
-         // add 1 because iconptr[0] must be NULL (ie. dead state)
+         // add 1 to skip iconptr[0] (ie. dead state)
          iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
       }
       if (numicons < maxstate && iconptr[numicons]) {
@@ -397,6 +397,14 @@ bool LoadIconFile(const wxString& path, int maxstate,
          for (int i = numicons; i < maxstate; i++) {
             iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
          }
+      }
+      
+      // if there is an extra icon at the right end of the multi-color icons then
+      // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
+      // to set the color of state 0
+      if (depth != 1 && numicons > maxstate) {
+         wxRect rect(maxstate*15, 0, 15, 15);
+         iconptr[0] = new wxBitmap(allicons.GetSubBitmap(rect));
       }
    }
    *out15x15 = iconptr;
@@ -408,7 +416,7 @@ bool LoadIconFile(const wxString& path, int maxstate,
          for (int i = 0; i < 256; i++) iconptr[i] = NULL;
          for (int i = 0; i < numicons; i++) {
             wxRect rect(i*15, 15, 7, 7);
-            // add 1 because iconptr[0] must be NULL (ie. dead state)
+            // add 1 to skip iconptr[0] (ie. dead state)
             iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
          }
          if (numicons < maxstate && iconptr[numicons]) {

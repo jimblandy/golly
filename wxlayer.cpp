@@ -1983,6 +1983,27 @@ void UpdateCurrentColors()
       for (int n = 1; n <= maxstate; n++) {
          SetAverageColor(n, iconmaps[n]);
       }
+      // if extra 15x15 icon was supplied then use it to set state 0 color
+      iconmaps = currlayer->icons15x15;
+      if (iconmaps && iconmaps[0]) {
+         #ifdef __WXMSW__
+            // must use wxNativePixelData for bitmaps with no alpha channel
+            wxNativePixelData icondata(*iconmaps[0]);
+         #else
+            wxAlphaPixelData icondata(*iconmaps[0]);
+         #endif
+         if (icondata) {
+            #ifdef __WXMSW__
+               wxNativePixelData::Iterator iconpxl(icondata);
+            #else
+               wxAlphaPixelData::Iterator iconpxl(icondata);
+            #endif
+            // iconpxl is the top left pixel
+            currlayer->cellr[0] = iconpxl.Red();
+            currlayer->cellg[0] = iconpxl.Green();
+            currlayer->cellb[0] = iconpxl.Blue();
+         }
+      }
    }
    
    if (swapcolors) {
