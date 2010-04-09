@@ -300,11 +300,40 @@ then the last icon is automatically duplicated.  If there are more icons
 than required then the extra icons are simply ignored.
 
 <p>
+Starting with Golly 2.2, multi-colored icons are supported.
+If the entire image uses more than two colors then Golly will display the
+icons using the given colors and without doing any substitutions (except for
+black areas of course &mdash; they are still converted to the state 0 color).
+Even better, if there is no corresponding .colors file then Golly will use
+the icon colors to automatically create the colors used in non-icon displays.
+It does this by averaging the non-black colors in each icon.
+This means you can store both icon and color information in the one file.
+Consider this example:
+
+<p><center><img src="multicolor.bmp"></center></p>
+
+<p>
+This set of icons could be used for a 7-state rule.  The first 6 icons
+are for states 1 to 6 (as in a black-and-white .icons file).
+The 7th icon is optional and is used to specify the color for state 0.
+If no .colors file exists for this rule then Golly will set the non-icon
+colors for each state like so:
+
+<p><center>
+1 = blue, 2 = red, 3 = blue, 4 = red, 5 = purple, 6 = purple, 0 = gray.
+</center></p>
+
+<p>
+If the 7th icon was not supplied then Golly would use the current
+algorithm's default color for state 0 (this is equivalent to having
+a .colors file that doesn't set the color of state 0).
+
+<p>
 If Golly can't find any rule-specific icons it will use the default
 icons associated with each algorithm.  You can change these icons by using
 the "Load Icons" button in <a href="prefs:color">Preferences > Color</a>
 to load files with the same format described above.  The only difference
-is that there is no need for a .icons extension.
+is that these files don't require a .icons extension.
 
 
 <p><a name="table"></a>&nbsp;<br>
@@ -312,8 +341,8 @@ is that there is no need for a .icons extension.
 
 <p>
 Golly allows you to add new rules by creating transition tables stored in
-external files.  Given the rule string "foo", the RuleTable algorithm will
-search for a file called foo.table.
+external files.  Given the rule string "Foo", the RuleTable algorithm will
+search for a file called Foo.table.
 It looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
 Here's a simple example file:
@@ -403,7 +432,7 @@ To share your rule tables with others, you can archive them at the public
 
 <p>
 Golly permits the loading of rules from external files, where those
-files are in RuleTree format.  If a rule named Foo is requested,
+files are in RuleTree format.  If a rule named "Foo" is requested,
 Golly will search for Foo.tree and, if found, load the rule from that file.
 It looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
@@ -417,7 +446,7 @@ for four-neighbor rules).  Essentially, the RuleTree format allows you
 to add your own rules to Golly without needing to know how to
 recompile Golly and without dealing with the intricacies of external
 libraries; it generates relatively compact files, and the data
-structure is defined for very fast execution.
+structure is designed for very fast execution.
 
 <p>
 A rule tree is nothing more than a complete transition table for a
