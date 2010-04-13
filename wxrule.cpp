@@ -760,6 +760,15 @@ void RuleDialog::OnRuleTextChanged(wxCommandEvent& WXUNUSED(event))
    if (ignore_text_change) return;
    UpdateName();
    UpdateAlgo();
+   
+   // check for spaces
+   wxString newrule = ruletext->GetValue();
+   if (newrule.Contains(wxT(" "))) {
+      Warning(_("Spaces are not allowed in rule strings."));
+      newrule.Replace(wxT(" "), wxEmptyString);
+      ruletext->SetValue(newrule);
+      ruletext->SetFocus();
+   }
 }
 
 // -----------------------------------------------------------------------------

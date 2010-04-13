@@ -12,6 +12,7 @@ Here are the important file formats used by Golly:
 <dd><a href="#icons"><b>Rule icons (.icons)</b></a></dd>
 <dd><a href="#table"><b>Rule tables (.table)</b></a></dd>
 <dd><a href="#tree"><b>Rule trees (.tree)</b></a></dd>
+<dd><a href="#naming"><b>Rule naming conventions</b></a></dd>
 <dd><a href="#zip"><b>Zip files (.zip)</b></a></dd>
 </p>
 
@@ -306,7 +307,7 @@ icons using the given colors and without doing any substitutions (except for
 black areas of course &mdash; they are still converted to the state 0 color).
 Even better, if there is no corresponding .colors file then Golly will use
 the icon colors to automatically create the colors used in non-icon displays.
-It does this by averaging the non-black colors in each icon.
+It does this by averaging the non-black pixels in each icon.
 This means you can store both icon and color information in the one file.
 Consider this example:
 
@@ -519,6 +520,37 @@ Type
 to convert the Codd rule table file (as an example) to a rule
 tree file.  Now you can load a Codd universe into either the
 RuleTable or the RuleTree algorithm.
+
+
+<p><a name="naming"></a>&nbsp;<br>
+<font size=+1><b>Rule naming conventions</b></font>
+
+<p>
+When naming a .table or .tree file it's best to stick to the following
+conventions, especially if you'd like to share the file with other Golly users:
+
+<p>
+<ul>
+<li>
+Please capitalize all rule names and create files like Foo.table rather
+than foo.table.  This helps to emphasize that rule names are important,
+especially on case-sensitive file systems.  If the rule "foo" is
+specified inside a .rle or .mc file then Golly won't be able to find
+Foo.table on a case-sensitive system like Linux.
+
+<li>
+To allow for possible future extensions in the way Golly handles rule names,
+it's best to use only letters and digits (and possibly hyphens &mdash; see
+the next item).  Note in particular that spaces must not be used.
+
+<li>
+If you have a number of closely related rules then you might want to start
+each name with the same prefix followed by a hyphen and a unique suffix.
+All such rules can then share a single .colors and/or .icons file that
+uses the same prefix.  For example, Foo-1.table and Foo-2.table can
+share Foo.colors and Foo.icons (but if Foo-1.colors also exists then that
+file takes precedence for the Foo-1 rule).
+</ul>
 
 
 <p><a name="zip"></a>&nbsp;<br>
