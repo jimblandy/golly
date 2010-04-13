@@ -293,12 +293,13 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       return;
    }
 
-   // newtitle is empty if called from ResetPattern/RestorePattern
+   // newtitle is only empty if called from ResetPattern/RestorePattern
    if (!newtitle.IsEmpty()) {
       if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
 
       if (inscript) stop_after_script = true;
       currlayer->savestart = false;
+      currlayer->currfile = path;
       
       // reset step size now in case UpdateStatus is called below
       currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
@@ -702,8 +703,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
             Raise();
             // don't call AddRecentPattern(tempfile) here; OpenFile has added
             // zippath to recent patterns
-            currlayer->currfile = tempfile;
-            LoadPattern(currlayer->currfile, GetBaseName(tempfile), true, scriptfiles == 0);
+            LoadPattern(tempfile, GetBaseName(tempfile), true, scriptfiles == 0);
          }
       }
       if (scriptfiles == 1) {
@@ -763,15 +763,14 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
    } else {
       // load pattern
       if (remember) AddRecentPattern(path);
-      currlayer->currfile = path;
       
-      // we need to ensure currlayer->currfile is a full path because
-      // a script might want to reset() to that path (in which case the
-      // cwd is the script's directory, not gollydir)
-      wxFileName fname(path);
-      if (!fname.IsAbsolute()) currlayer->currfile = gollydir + path;
+      // ensure path is a full path because a script might want to reset() to it
+      // (in which case the cwd is the script's directory, not gollydir)
+      wxString newpath = path;
+      wxFileName fname(newpath);
+      if (!fname.IsAbsolute()) newpath = gollydir + path;
       
-      LoadPattern(currlayer->currfile, GetBaseName(path));
+      LoadPattern(newpath, GetBaseName(path));
    }
 }
 
@@ -1100,8 +1099,7 @@ void MainFrame::OpenClipboard()
       // on X11 the clipboard data is in non-temporary clipfile, so copy
       // clipfile to tempstart (for use by ResetPattern and ShowPatternInfo)
       if ( wxCopyFile(clipfile, currlayer->tempstart, true) ) {
-         currlayer->currfile = currlayer->tempstart;
-         LoadPattern(currlayer->currfile, _("clipboard"));
+         LoadPattern(currlayer->tempstart, _("clipboard"));
       } else {
          statusptr->ErrorMessage(_("Could not copy clipfile!"));
       }
@@ -1114,8 +1112,7 @@ void MainFrame::OpenClipboard()
          if ( outfile.IsOpened() ) {
             outfile.Write( data.GetText() );
             outfile.Close();
-            currlayer->currfile = currlayer->tempstart;
-            LoadPattern(currlayer->currfile, _("clipboard"));
+            LoadPattern(currlayer->tempstart, _("clipboard"));
             // do NOT delete tempstart -- it can be reloaded by ResetPattern
             // or used by ShowPatternInfo
          } else {
@@ -1274,8 +1271,7 @@ void MainFrame::OpenRecentPattern(int id)
       OpenFile(path);
       /*
       AddRecentPattern(path);
-      currlayer->currfile = path;
-      LoadPattern(currlayer->currfile, GetBaseName(path));
+      LoadPattern(path, GetBaseName(path));
       */
    }
 }
@@ -1460,14 +1456,14 @@ const char* MainFrame::WritePattern(const wxString& path,
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SavePattern()
+bool MainFrame::SavePattern()
 {
    if (generating) {
       // terminate generating loop and set command_pending flag
       Stop();
       command_pending = true;
       cmdevent.SetId(wxID_SAVE);
-      return;
+      return false;
    }
 
    wxString filetypes;
@@ -1508,7 +1504,7 @@ void MainFrame::SavePattern()
       // allow saving file only if pattern is small enough
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
-         return;
+         return false;
       }
       itop = top.toint();
       ileft = left.toint();
@@ -1554,7 +1550,7 @@ void MainFrame::SavePattern()
          format = MC_format;
       } else {
          statusptr->ErrorMessage(_("Bug in SavePattern!"));
-         return;
+         return false;
       }
 
       const char* err = WritePattern(savedlg.GetPath(), format,
@@ -1565,8 +1561,10 @@ void MainFrame::SavePattern()
          statusptr->DisplayMessage(_("Pattern saved in file: ") + savedlg.GetPath());
          AddRecentPattern(savedlg.GetPath());
          SaveSucceeded(savedlg.GetPath());
+         return true;
       }
    }
+   return false;
 }
 
 // -----------------------------------------------------------------------------

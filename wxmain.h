@@ -75,7 +75,7 @@ public:
    void ChangeScriptDir();
    void SetPatternDir(const wxString& newdir);
    void SetScriptDir(const wxString& newdir);
-   void SavePattern();
+   bool SavePattern();
    bool SaveCurrentLayer();
    const char* SaveFile(const wxString& path, const wxString& format, bool remember);
    const char* WritePattern(const wxString& path, pattern_format format,

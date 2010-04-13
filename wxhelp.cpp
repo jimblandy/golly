@@ -811,8 +811,7 @@ void LoadLexiconPattern()
       }
       
       // load lexicon pattern into current layer
-      currlayer->currfile = currlayer->tempstart;
-      mainptr->LoadPattern(currlayer->currfile, lexicon_name);
+      mainptr->LoadPattern(currlayer->tempstart, lexicon_name);
    } else {
       Warning(_("Could not create tempstart file!"));
    }

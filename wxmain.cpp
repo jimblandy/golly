@@ -1868,9 +1868,9 @@ bool MainFrame::SaveCurrentLayer()
    }
    int answer = SaveChanges(query, _("If you don't save, your changes will be lost."));
    switch (answer) {
-      case 2:  SavePattern(); return true;
-      case 1:  return true;   // don't save changes
-      default: return false;  // answer == 0 (ie. user selected Cancel)
+      case 2:  return SavePattern();   // true only if pattern was saved
+      case 1:  return true;            // don't save changes
+      default: return false;           // answer == 0 (ie. user selected Cancel)
    }
 }
 
