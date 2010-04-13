@@ -186,7 +186,14 @@ void MainFrame::ResetPattern(bool resetundo)
       // restore pattern from startfile
       LoadPattern(currlayer->startfile, wxEmptyString);
    }
-   // gen count has been reset to startgen
+   
+   if (currlayer->algo->getGeneration() != currlayer->startgen) {
+      // LoadPattern failed to reset the gen count to startgen
+      // (probably because the user deleted the starting pattern)
+      // so best to clear the pattern and reset the gen count
+      CreateUniverse();
+      currlayer->algo->setGeneration(currlayer->startgen);
+   }
    
    // ensure savestart flag is correct
    currlayer->savestart = !currlayer->startfile.IsEmpty();
@@ -263,9 +270,10 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
       // false means don't update status bar (algorithm should NOT change)
       LoadPattern(filename, wxEmptyString, false);
       
-      if (gen != currlayer->algo->getGeneration()) {
-         // current gen will be 0 if filename could not be loaded
-         // for some reason, so best to set correct gen count
+      if (currlayer->algo->getGeneration() != gen) {
+         // filename could not be loaded for some reason,
+         // so best to clear the pattern and set the expected gen count
+         CreateUniverse();
          currlayer->algo->setGeneration(gen);
       }
 
