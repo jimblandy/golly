@@ -7,12 +7,12 @@
 # 1) RuleTree Usage example:
 #
 # tree = RuleTree(14,4) # 14 states, 4 neighbors = von Neumann neighborhood
-# tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], ouput
-# tree.write("test.tree")
+# tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], output
+# tree.write("Test.tree")
 #
 # 2) MakeRuleTreeFromTransitionFunction usage example:
 #
-# MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'parity.tree' )
+# MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'Parity.tree' )
 #
 
 import golly
@@ -22,8 +22,8 @@ class RuleTree:
     Usage example:
     
     tree = RuleTree(14,4) # 14 states, 4 neighbors = von Neumann neighborhood
-    tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], ouput
-    tree.write("test.tree")
+    tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], output
+    tree.write("Test.tree")
     '''
 
     def __init__(self,numStates,numNeighbors):
@@ -149,7 +149,7 @@ class MakeRuleTreeFromTransitionFunction:
     '''
     Usage example:
 
-    MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'parity.tree' )
+    MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'Parity.tree' )
     '''
         
     def __init__(self,numStates,numNeighbors,f,filename):
