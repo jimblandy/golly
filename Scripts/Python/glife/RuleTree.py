@@ -1,16 +1,21 @@
-import golly
-
+# Only the neighborhoods supported by ruletree_algo are supported:
+# a) vonNeumann: 4 neighbors: C,S,E,W,N,
+# b) Moore: 8 neighbors: C,S,E,W,N,SE,SW,NE,NW
+#
 # This file contains two ways of building rule trees:
 #
-# 1) Usage example:
+# 1) RuleTree Usage example:
 #
 # tree = RuleTree(14,4) # 14 states, 4 neighbors = von Neumann neighborhood
 # tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], ouput
 # tree.write("test.tree")
 #
-# 2) Usage example:
+# 2) MakeRuleTreeFromTransitionFunction usage example:
 #
 # MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'parity.tree' )
+#
+
+import golly
 
 class RuleTree:
     '''
