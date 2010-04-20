@@ -1,10 +1,13 @@
-# Just to save the user having to install PIL
+# Just to save the user having to install PIL.
 # BMP code from: http://pseentertainmentcorp.com/smf/index.php?topic=2034.0
 
 import struct
 
 def WriteBMP(pixels,filename):
-    '''Write a BMP to filename from the (r,g,b) triples in pixels[x][y].'''
+    '''
+    Write a BMP to filename from the (r,g,b) triples in pixels[x][y]
+    where pixels[0][0] is at the bottom left corner.
+    '''
     # Here is a minimal dictionary with header values.
     d = {
         'mn1':66,
