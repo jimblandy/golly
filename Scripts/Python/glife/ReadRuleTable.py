@@ -6,13 +6,6 @@ except NameError:
   
 import golly
 
-NumParams = {
-"vonNeumann":6,
-"Moore":10,
-"Margolus":8,
-"triangularVonNeumann":5
-}
-
 SupportedSymmetries = {
 "vonNeumann":
 {
@@ -49,6 +42,39 @@ SupportedSymmetries = {
     [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
     [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]]
 },
+"square4_figure8v": # same symmetries as Margolus
+{
+'none':[[0,1,2,3,4,5,6,7]],
+'reflect_horizontal':[[0,1,2,3,4,5,6,7],[1,0,3,2,5,4,7,6]],
+'reflect_vertical':[[0,1,2,3,4,5,6,7],[2,3,0,1,6,7,4,5]],
+'rotate4':
+    [[0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6]],
+'rotate4reflect':[
+    [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
+    [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]]
+},
+"square4_figure8h": # same symmetries as Margolus
+{
+'none':[[0,1,2,3,4,5,6,7]],
+'reflect_horizontal':[[0,1,2,3,4,5,6,7],[1,0,3,2,5,4,7,6]],
+'reflect_vertical':[[0,1,2,3,4,5,6,7],[2,3,0,1,6,7,4,5]],
+'rotate4':
+    [[0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6]],
+'rotate4reflect':[
+    [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
+    [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]]
+},
+"square4_cyclic": # same symmetries as Margolus
+{
+'none':[[0,1,2,3,4,5,6,7]],
+'reflect_horizontal':[[0,1,2,3,4,5,6,7],[1,0,3,2,5,4,7,6]],
+'reflect_vertical':[[0,1,2,3,4,5,6,7],[2,3,0,1,6,7,4,5]],
+'rotate4':
+    [[0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6]],
+'rotate4reflect':[
+    [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
+    [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]]
+},
 "triangularVonNeumann":
 {
 'rotate':[[0,1,2,3,4],[0,3,1,2,4],[0,2,3,1,4]],
@@ -56,6 +82,7 @@ SupportedSymmetries = {
 }
 }
 
+# TODO: detect bad input
 def ReadRuleTable(filename):
     '''
     Return n_states, neighborhood, transitions
@@ -68,6 +95,7 @@ def ReadRuleTable(filename):
     n_states = 0
     neighborhood = ''
     transitions = []
+    numParams = 0
     for line in f:
         if line[0]=='#' or line.strip()=='':
             pass
@@ -75,7 +103,7 @@ def ReadRuleTable(filename):
             line = line[4:line.find('#')] # strip var keyword and any trailing comment
             # read each variable into a dictionary mapping string to list of ints
             entries = line.replace('=',' ').replace('{',' ').replace(',',' ').\
-                replace(':',' ').replace('}',' ').replace('\n',' ').split()
+                replace(':',' ').replace('}',' ').replace('\n','').split()
             vars[entries[0]] = []
             for entry in entries[1:]:
                 if entry in vars:
@@ -93,15 +121,16 @@ def ReadRuleTable(filename):
             if not neighborhood in SupportedSymmetries:
                 golly.warn('Unknown neighborhood: '+neighborhood)
                 golly.exit()
+            numParams = len(SupportedSymmetries[neighborhood].items()[0][1][0])
         elif line[0:11]=='symmetries:':
-            if not line[11:].strip() in SupportedSymmetries[neighborhood]:
-                golly.warn('Unknown symmetry: '+line[11:])
+            symmetry_string = line[11:].strip()
+            if not symmetry_string in SupportedSymmetries[neighborhood]:
+                golly.warn('Unknown symmetry: '+symmetry_string)
                 golly.exit()
-            symmetry = SupportedSymmetries[neighborhood][line[11:].strip()]
+            symmetry = SupportedSymmetries[neighborhood][symmetry_string]
         else:
             # assume line is a transition
-            entries = [s for s in line.replace('\n',' ').replace(',',' ').\
-                replace(':',' ').split()][:NumParams[neighborhood]]
+            entries = line.replace('\n','').replace(',',' ').replace(':',' ').split()[:numParams]
             # we need to expand the variables
             vars_used = list(set(entries)) # (removes duplicates)
             var_val_indices = dict(zip(vars_used,[0]*len(vars_used)))
