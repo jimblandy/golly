@@ -24,6 +24,9 @@ class RuleTree:
     tree = RuleTree(14,4) # 14 states, 4 neighbors = von Neumann neighborhood
     tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], output
     tree.write("Test.tree")
+    
+    For vonNeumann neighborhood, inputs are: C,S,E,W,N
+    For Moore neighborhood, inputs are: C,S,E,W,N,SE,SW,NE,NW
     '''
 
     def __init__(self,numStates,numNeighbors):
@@ -72,9 +75,9 @@ class RuleTree:
         node = map(int,self.seq[nddr].split()[1:]) # convert node string to list, skip depth
         inset = inputs[at-1] # inset is a list of the permissable values for this input
         for value in inset:
-            if value<0 or value>=self.numStates:
-                golly.warn("Input out of range for: "+str(inputs))
-                golly.exit()
+            #if value<0 or value>=self.numStates:
+            #    golly.warn("Input out of range for: "+str(inputs))
+            #    golly.exit()
             node[value] = self._add(inputs, output, node[value], at-1)
         node_string = str(at) + " " + " ".join(map(str,node))
         r = self._getNode(node_string)
@@ -150,6 +153,9 @@ class MakeRuleTreeFromTransitionFunction:
     Usage example:
 
     MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'Parity.tree' )
+    
+    For vonNeumann neighborhood, inputs are: N,W,E,S,C
+    For Moore neighborhood, inputs are NW,NE,SW,SE,N,W,E,S,C
     '''
         
     def __init__(self,numStates,numNeighbors,f,filename):
@@ -192,4 +198,18 @@ class MakeRuleTreeFromTransitionFunction:
             out.write(rule+'\n')
         out.flush()
         out.close()
-        
+
+def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename,rule_name):
+    '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
+    NumNeighbors = { "vonNeumann":4, "Moore":8 }
+    Remap = {
+        "vonNeumann":[0,3,2,4,1], # CNESW->CSEWN
+        "Moore":[0,5,3,7,1,4,6,2,8] # C,N,NE,E,SE,S,SW,W,NW -> C,S,E,W,N,SE,SW,NE,NW
+    }
+    tree = RuleTree(n_states,NumNeighbors[neighborhood])
+    for i,t in enumerate(transitions):
+        golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
+        tran = [t[Remap[neighborhood][j]] for j in range(NumNeighbors[neighborhood]+1)]
+        tree.add_rule(tran,t[-1:][0][0]) # last of transition should be a single value, the output
+    tree.write(golly.getdir('rules')+rule_name+".tree" )
+
