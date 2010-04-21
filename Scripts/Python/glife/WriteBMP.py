@@ -5,8 +5,11 @@ import struct
 
 def WriteBMP(pixels,filename):
     '''
-    Write a BMP to filename from the (r,g,b) triples in pixels[x][y]
-    where pixels[0][0] is at the bottom left corner.
+    Write a BMP to filename from the (r,g,b) triples in pixels[row][column].
+    
+    Usage example:
+    
+    WriteBMP( [[(255,0,0),(0,255,0),(255,255,0)],[(0,0,255),(0,0,0),(0,255,255)]], "test.bmp" )
     '''
     # Here is a minimal dictionary with header values.
     d = {
@@ -17,8 +20,8 @@ def WriteBMP(pixels,filename):
         'undef2':0,
         'offset':54,
         'headerlength':40,
-        'width':len(pixels),
-        'height':len(pixels[0]),
+        'width':len(pixels[0]),
+        'height':len(pixels),
         'colorplanes':1,
         'colordepth':24,
         'compression':0,
@@ -34,9 +37,9 @@ def WriteBMP(pixels,filename):
     # stuff is necessary to ensure that the byte count for each
     # row is divisible by 4.  This is part of the specification.
     bytes = ''
-    for row in range(d['height']):
+    for row in range(d['height']-1,-1,-1): # (BMPs are encoded left-to-right from the bottom-left)
         for column in range(d['width']):
-            r,g,b = pixels[column][row]
+            r,g,b = pixels[row][column]
             pixel = struct.pack('<BBB',b,g,r)
             bytes += pixel
         row_mod = (d['width']*d['colordepth']/8) % 4
@@ -77,4 +80,4 @@ def WriteBMP(pixels,filename):
                   palette+importantcolors+bytes)
     outfile.flush()
     outfile.close()
-    
+
