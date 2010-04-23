@@ -16,6 +16,7 @@
 #
 
 import golly
+import os
 
 class RuleTree:
     '''
@@ -199,17 +200,20 @@ class MakeRuleTreeFromTransitionFunction:
         out.flush()
         out.close()
 
-def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename,rule_name):
+def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
     '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
     NumNeighbors = { "vonNeumann":4, "Moore":8 }
     Remap = {
         "vonNeumann":[0,3,2,4,1], # CNESW->CSEWN
         "Moore":[0,5,3,7,1,4,6,2,8] # C,N,NE,E,SE,S,SW,W,NW -> C,S,E,W,N,SE,SW,NE,NW
     }
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
+    # (we use no special suffix so that we pick up any existing .colors or .icons)
     tree = RuleTree(n_states,NumNeighbors[neighborhood])
     for i,t in enumerate(transitions):
         golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
         tran = [t[Remap[neighborhood][j]] for j in range(NumNeighbors[neighborhood]+1)]
-        tree.add_rule(tran,t[-1:][0][0]) # last of transition should be a single value, the output
+        tree.add_rule(tran,t[-1][0]) # last of transition should be a single value, the output
     tree.write(golly.getdir('rules')+rule_name+".tree" )
+    return rule_name
 

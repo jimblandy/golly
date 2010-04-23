@@ -4,6 +4,8 @@ from glife.ReadRuleTable import *
 from glife.RuleTree import *
 from glife.EmulateTriangularVonNeumann import *
 from glife.EmulateMargolus import *
+from glife.EmulateOneDimensional import *
+from glife.EmulateHexagonal import *
 
 # ask user to select .table file
 filename = golly.opendialog('Open a rule table to convert:',
@@ -13,7 +15,7 @@ filename = golly.opendialog('Open a rule table to convert:',
 if len(filename) == 0: golly.exit()    # user hit Cancel
 
 # add new converters here as they become available:
-# (TODO: triangularMoore, hexagonal, etc.)
+# (TODO: triangularMoore, etc.)
 Converters = {
     "vonNeumann":ConvertRuleTableTransitionsToRuleTree,
     "Moore":ConvertRuleTableTransitionsToRuleTree,
@@ -22,6 +24,8 @@ Converters = {
     "square4_figure8v":EmulateMargolus,
     "square4_figure8h":EmulateMargolus,
     "square4_cyclic":EmulateMargolus,
+    "oneDimensional":EmulateOneDimensional,
+    "hexagonal":EmulateHexagonal,
 }
 
 golly.show("Reading from rule table file...")
@@ -32,16 +36,13 @@ if not neighborhood in Converters:
     golly.show('')
     golly.exit()
     
-rule_name = os.path.splitext(os.path.split(filename)[1])[0] + "_tree"
-# (without suffix get confusion between original .colors/.icons and new ones)
-
 golly.show("Building rule tree...")
-Converters[neighborhood]( neighborhood, 
-                          n_states, 
-                          transitions, 
-                          filename, 
-                          rule_name )
+rule_name = Converters[neighborhood]( neighborhood, 
+                                      n_states, 
+                                      transitions, 
+                                      filename )
                           
 golly.setalgo('RuleTree')
 golly.setrule(rule_name)
 golly.show('Created '+rule_name+'.tree and selected that rule.')
+

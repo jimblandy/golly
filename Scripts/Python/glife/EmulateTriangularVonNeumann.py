@@ -11,8 +11,14 @@ from glife.WriteBMP import *
 def encode(lower,upper,N): 
     return upper*N+lower
     
-def EmulateTriangularVonNeumann(neighborhood,n_states,tri_transitions,input_filename,rule_name):
-    transitions = [[e[0] for e in t] for t in tri_transitions]
+def EmulateTriangularVonNeumann(neighborhood,n_states,transitions,input_filename):
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_tree'
+    # (we use a special suffix to avoid picking up any existing .colors or .icons)
+    transitions = [[[a,b,c,d,t[4][0]] for a in t[0] for b in t[1] for c in t[2] for d in t[3]] \
+        for t in transitions]
+    # (TODO: check that t4 has only one entry)
+    transitions = [t for sublist in transitions for t in sublist] # flatten
+    # (we have to expand our transitions completely)
     tree = RuleTree(n_states*n_states,4)
     # now work through the transitions, taking them in pairs
     for i,t1 in enumerate(transitions): # lower
@@ -117,4 +123,6 @@ def EmulateTriangularVonNeumann(neighborhood,n_states,tri_transitions,input_file
                     pixels[row][column] = 0,0,0
                     
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    return rule_name
+
 

@@ -31,13 +31,19 @@ Locale = [
     [3,-1,-1,2,1,-1,-1,-1,0]  # (0,1,2,3 = index of Margolus input)
 ]
 
-def EmulateMargolus(neighborhood,n_states,rt_transitions,input_filename,rule_name):
-    m_transitions = [[e[0] for e in t] for t in rt_transitions]
+def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_tree'
+    # (we use a special suffix to avoid picking up any existing .colors or .icons)
+    transitions = [[[a,b,c,d,t[4][0],t[5][0],t[6][0],t[7][0]] 
+        for a in t[0] for b in t[1] for c in t[2] for d in t[3]] \
+        for t in transitions]
+    # (TODO: check that t4-t7 have only one entry)
+    transitions = [t for sublist in transitions for t in sublist] # flatten
+    # (we have to expand our transitions completely)
     total_states = 1+2*n_states
     tree = RuleTree(total_states,8)
-    any_state = range(total_states)
     # now work through the Margolus transitions
-    for mt in m_transitions:
+    for mt in transitions:
         for iOutput,background_output in enumerate(TransitionOutputs[neighborhood]):
             bg_inputs = TransitionInputs[iOutput]
             iEntry = iOutput % 4
@@ -94,4 +100,6 @@ def EmulateMargolus(neighborhood,n_states,rt_transitions,input_filename,rule_nam
         # (we don't support gradients in .colors)
 
     # TODO: output a suitable .colors file
+
+    return rule_name
 
