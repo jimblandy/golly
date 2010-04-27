@@ -11,64 +11,79 @@ import os
 from glife.RuleTree import *
 from glife.WriteBMP import *
 
-# for N states:
-# we get N*N Golly states: each j*N+i where i is the lower triangle, j is the upper triangle
-# each i,j in (0,N]
-# (lower and upper are lists)
-def encode(lower,upper,N): 
-    return [ up*N+low for up in upper for low in lower ]
-    
 #      lower         upper 
-#       +--+          +--+        
-#       |\ |          |\ |        
-#       | \|          |2\|          (any rotation would work too)
+#    +--+--+--+    +--+--+--+       
+#    |\B|\ |\ |    |\6|\7|\ |       where A=10, B=11, C=12
+#    |A\|C\| \|    |5\|2\|8\|       (any rotation for upper would work too)
 #    +--+--+--+    +--+--+--+
-#    |\3|\1|\ |    |\ |\0|\ |
-#    | \|0\| \|    | \|1\|3\|
+#    |\3|\1|\ |    |\4|\0|\9|
+#    |9\|0\|4\|    | \|1\|3\|
 #    +--+--+--+    +--+--+--+
-#       |\2|          |\ |
-#       | \|          | \|
-#       +--+          +--+
+#    |\8|\2|\5|    |\ |\C|\A|
+#    | \|7\|6\|    | \| \|B\|
+#    +--+--+--+    +--+--+--+
 
-# what neighbors of the lower triangle overlap neighbors of the upper triangle?
-lower2upper = { 0:1, 1:0 }
+def EmulateTriangularMoore(neighborhood,n_states,list_transitions,input_filename):
+    '''Emulate a triangularMoore neighborhood rule table with a Moore neighborhood rule tree.'''
+    
+    # each square cell is j*N+i where i is the lower triangle, j is the upper triangle
+    # each i,j in (0,N]
+    # (lower and upper are lists)
+    def encode(lower,upper): 
+        return [ up*n_states+low for up in upper for low in lower ]
 
-def EmulateTriangularVonNeumann(neighborhood,n_states,transitions_list,input_filename):
-    '''Emulate a triangularVonNeumann neighborhood rule table with a vonNeumann neighborhood rule tree.'''
+    # what neighbors of the lower triangle overlap neighbors of the upper triangle?
+    lower2upper = { 0:1, 1:0, 2:12, 3:4, 4:3, 5:10, 6:11, 10:5, 11:6, 12:2 }
+    
     rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_emulated'
-    tree = RuleTree(n_states*n_states,4)
-    # convert the transitions to list of list of sets, for speed
-    transitions = [[set(e) for e in t] for t in transitions_list]
-    # now work through the transitions, taking them in pairs
-    for i,t1 in enumerate(transitions): # lower
-        golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)") 
-        for t2 in transitions: # upper
+    # (we use a special suffix to avoid picking up any existing .colors or .icons)
+    tree = RuleTree(n_states*n_states,8)
+    # convert transitions to list of list of sets for speed
+    transitions = [[set(e) for e in t] for t in list_transitions]
+    # for each transition pair, see if we can apply them both at once to a square
+    for i,t1 in enumerate(transitions): # as lower
+        golly.show("Building rule tree... (pass 1 of 2: "+str(100*i/len(transitions))+"%)") 
+        for t2 in transitions: # as upper
             # we can only apply both rules at once if they overlap to some extent
             if any( t1[j].isdisjoint(t2[k]) for j,k in lower2upper.items() ):
                 continue
             # take the intersection of their inputs
-            tree.add_rule( [ encode(t1[0]&t2[1],t1[1]&t2[0],n_states), # C
-                             encode(range(n_states),t1[2],n_states), # S
-                             encode(t2[3],range(n_states),n_states), # E
-                             encode(range(n_states),t1[3],n_states), # W
-                             encode(t2[2],range(n_states),n_states) ], # N
-                             encode(t1[4],t2[4],n_states)[0] ) # C'
-    # finally apply each transition to an individual triangle, leaving the other unchanged
-    for t in transitions:
-        # as lower triangle:
-        tree.add_rule( [ encode(t[0],t[1],n_states), # C
-                         encode(range(n_states),t[2],n_states), # S
-                         range(n_states*n_states), # E
-                         encode(range(n_states),t[3],n_states), # W
-                         range(n_states*n_states) ], # N
-                         encode(t[4],t[1],n_states)[0] ) # C'
-        # as upper triangle:
-        tree.add_rule( [ encode(t[1],t[0],n_states), # C
-                         range(n_states*n_states), # S
-                         encode(t[3],range(n_states),n_states), # E
-                         range(n_states*n_states), # W
-                         encode(t[2],range(n_states),n_states) ], # N
-                         encode(t[1],t[4],n_states)[0] ) # C'
+            tree.add_rule( [ encode(t1[0]&t2[1],t1[1]&t2[0]), # C
+                             encode(t1[7],t1[2]&t2[12]), # S
+                             encode(t1[4]&t2[3],t2[9]), # E
+                             encode(t1[9],t1[3]&t2[4]), # W
+                             encode(t1[12]&t2[2],t2[7]), # N
+                             encode(t1[6]&t2[11],t1[5]&t2[10]), # SE
+                             encode(range(n_states),t1[8]), # SW
+                             encode(t2[8],range(n_states)), # NE
+                             encode(t1[10]&t2[5],t1[11]&t2[6]) ], # NW
+                           encode(t1[13],t2[13])[0] ) # C'
+    # apply each transition to an individual triangle, leaving the other unchanged
+    for i,t in enumerate(transitions):
+        golly.show("Building rule tree... (pass 2 of 2: "+str(100*i/len(transitions))+"%)") 
+        for t_1 in t[1]:
+            # as lower triangle:
+            tree.add_rule( [encode(t[0],[t_1]), # C
+                encode(t[7],t[2]), # S
+                encode(t[4],range(n_states)), # E
+                encode(t[9],t[3]), # W
+                encode(t[12],range(n_states)), # N
+                encode(t[6],t[5]), # SE
+                encode(range(n_states),t[8]), # SW
+                range(n_states*n_states), # NE
+                encode(t[10],t[11]) ], # NW
+                encode(t[13],[t_1])[0] ) # C'
+            # as upper triangle:
+            tree.add_rule( [encode([t_1],t[0]),
+                encode(range(n_states),t[12]), # S
+                encode(t[3],t[9]), # E
+                encode(range(n_states),t[4]), # W
+                encode(t[2],t[7]), # N
+                encode(t[11],t[10]), # SE
+                range(n_states*n_states), # SW
+                encode(t[8],range(n_states)), # NE
+                encode(t[5],t[6]) ], # NW
+                encode([t_1],t[13])[0] ) # C'
         
     # output the rule tree
     golly.show("Compressing rule tree and saving to file...")
@@ -145,5 +160,4 @@ def EmulateTriangularVonNeumann(neighborhood,n_states,transitions_list,input_fil
                     
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
     return rule_name
-
 

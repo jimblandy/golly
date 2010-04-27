@@ -33,9 +33,12 @@ class RuleTree:
     def __init__(self,numStates,numNeighbors):
     
         self.numParams = numNeighbors + 1 ;
-        self.world = {} # dictionary mapping node string to node index
-        # (nodes would be better stored as an int list but these aren't hashable)
-        self.seq = [] # same node strings but stored in a list
+        
+        self.world = {} # dictionary mapping node tuples to node index (for speedy access by value)
+        self.seq = [] # same node tuples but stored in a list (for access by index)
+        # each node tuple is ( depth, index0, index1, .. index(numStates-1) )
+        # where each index is an index into self.seq
+        
         self.params = {}
         self.nodeSeq = 0
         self.curndd = -1
@@ -50,20 +53,18 @@ class RuleTree:
     def _init_tree(self):
         self.curndd = -1
         for i in range(self.numParams):
-          node = str(i+1)
-          for j in range(self.numStates):
-             node += " " + str(self.curndd)
+          node = tuple( [i+1] + [self.curndd]*self.numStates )
           self.curndd = self._getNode(node)
 
-    def _getNode(self,node_string):
-        if node_string in self.world:
-            return self.world[node_string]
+    def _getNode(self,node):
+        if node in self.world:
+            return self.world[node]
         else:
-            new_node = self.nodeSeq
+            iNewNode = self.nodeSeq
             self.nodeSeq += 1
-            self.seq.append(node_string)
-            self.world[node_string] = new_node
-            return new_node
+            self.seq.append(node)
+            self.world[node] = iNewNode
+            return iNewNode
             
     def _add(self,inputs,output,nddr,at):
         if at == 0: # this is a leaf node
@@ -73,15 +74,10 @@ class RuleTree:
                 return nddr # return the node index
         if nddr in self.cache:
             return self.cache[nddr]
-        node = map(int,self.seq[nddr].split()[1:]) # convert node string to list, skip depth
-        inset = inputs[at-1] # inset is a list of the permissable values for this input
-        for value in inset:
-            #if value<0 or value>=self.numStates:
-            #    golly.warn("Input out of range for: "+str(inputs))
-            #    golly.exit()
-            node[value] = self._add(inputs, output, node[value], at-1)
-        node_string = str(at) + " " + " ".join(map(str,node))
-        r = self._getNode(node_string)
+        # replace the node entry at each input with the index of the node from a recursive call to the next level down
+        node = tuple( [at] + [ self._add(inputs,output,self.seq[nddr][i+1],at-1) if i in inputs[at-1] \
+                               else self.seq[nddr][i+1] for i in range(self.numStates) ] )
+        r = self._getNode(node)
         self.cache[nddr] = r
         return r
             
@@ -90,11 +86,9 @@ class RuleTree:
             return nddr
         if nddr in self.cache:
             return self.cache[nddr]
-        node = map(int,oseq[nddr].split()[1:]) # convert node string to list, skip depth
-        for i,value in enumerate(node):
-            node[i] = self._recreate(oseq, value, lev-1)
-        node_string = str(lev) + " " + " ".join(map(str,node))
-        r = self._getNode(node_string)
+        # each node entry is the node index retrieved from a recursive call to the next level down
+        node = tuple( [lev] + [ self._recreate(oseq,oseq[nddr][i+1],lev-1) for i in range(self.numStates) ] )
+        r = self._getNode(node)
         self.cache[nddr] = r
         return r
 
@@ -105,13 +99,9 @@ class RuleTree:
         self.cache = {}
         self.nodeSeq = 0 ;
         self.curndd = self._recreate(oseq, self.curndd, self.numParams)
-        #golly.show("Shrunk from " + str(len(oseq)) + " to " + str(len(self.seq)) + "\n")
         self.shrinksize = len(self.seq) * 2
 
     def add_rule(self,inputs,output):
-        if not len(inputs)==self.numParams:
-            golly.warn("Input length mismatch: "+str(inputs))
-            golly.exit()
         self.cache = {}
         self.curndd = self._add(inputs,output,self.curndd,self.numParams)
         if self.nodeSeq > self.shrinksize:
@@ -125,11 +115,9 @@ class RuleTree:
                 return nddr
         if nddr in self.cache:
             return self.cache[nddr]
-        node = map(int,self.seq[nddr].split()[1:]) # convert node string to list, skip depth
-        for i,value in enumerate(node):
-            node[i] = self._setdefaults(value, i, at-1)
-        node_string = str(at) + " " + " ".join(map(str,node))
-        node_index = self._getNode(node_string)
+        # each node entry is the node index retrieved from a recursive call to the next level down
+        node = tuple( [at] + [ self._setdefaults(self.seq[nddr][i+1],i,at-1) for i in range(self.numStates) ] )
+        node_index = self._getNode(node)
         self.cache[nddr] = node_index
         return node_index
 
@@ -145,7 +133,7 @@ class RuleTree:
         out.write("num_neighbors=" + str(self.numNeighbors)+'\n')
         out.write("num_nodes=" + str(len(self.seq))+'\n')
         for rule in self.seq:
-            out.write(rule+'\n')
+            out.write(' '.join(map(str,rule))+'\n')
         out.flush()
         out.close()
 
@@ -171,24 +159,24 @@ class MakeRuleTreeFromTransitionFunction:
         self._recur(self.numParams)
         self._write(filename)
 
-    def _getNode(self,node_string):
-        if node_string in self.world:
-            return self.world[node_string]
+    def _getNode(self,node):
+        if node in self.world:
+            return self.world[node]
         else:
-            new_node = self.nodeSeq
+            iNewNode = self.nodeSeq
             self.nodeSeq += 1
-            self.seq.append(node_string)
-            self.world[node_string] = new_node
-            return new_node
+            self.seq.append(node)
+            self.world[node] = iNewNode
+            return iNewNode
             
     def _recur(self,at):
         if at == 0:
             return self.f(self.params)
-        n = str(at)
+        node = tuple([at])
         for i in range(self.numStates):
             self.params[self.numParams-at] = i
-            n += " " + str(self._recur(at-1))
-        return self._getNode(n)
+            node += tuple( [self._recur(at-1)] )
+        return self._getNode(node)
 
     def _write(self,filename):
         out = open(filename,'w')
@@ -196,24 +184,22 @@ class MakeRuleTreeFromTransitionFunction:
         out.write("num_neighbors=" + str(self.numNeighbors)+'\n')
         out.write("num_nodes=" + str(len(self.seq))+'\n')
         for rule in self.seq:
-            out.write(rule+'\n')
+            out.write(' '.join(map(str,rule))+'\n')
         out.flush()
         out.close()
 
 def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
     '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
-    NumNeighbors = { "vonNeumann":4, "Moore":8 }
-    Remap = {
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
+    remap = {
         "vonNeumann":[0,3,2,4,1], # CNESW->CSEWN
         "Moore":[0,5,3,7,1,4,6,2,8] # C,N,NE,E,SE,S,SW,W,NW -> C,S,E,W,N,SE,SW,NE,NW
     }
-    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
-    # (we use no special suffix so that we pick up any existing .colors or .icons)
-    tree = RuleTree(n_states,NumNeighbors[neighborhood])
+    numNeighbors = len(remap[neighborhood])-1
+    tree = RuleTree(n_states,numNeighbors)
     for i,t in enumerate(transitions):
         golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
-        tran = [t[Remap[neighborhood][j]] for j in range(NumNeighbors[neighborhood]+1)]
-        tree.add_rule(tran,t[-1][0]) # last of transition should be a single value, the output
+        tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
     tree.write(golly.getdir('rules')+rule_name+".tree" )
     return rule_name
 

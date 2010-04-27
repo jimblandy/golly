@@ -25,7 +25,8 @@ def permu2(xs):
 # creating lots of copies of the same rule. The others are permuted explicitly
 # because we haven't worked out how to permute the Margolus neighborhood while
 # allowing for duplicates.
-PermuteLater = ['vonNeumann','Moore','hexagonal','triangularVonNeumann']
+PermuteLater = ['vonNeumann','Moore','hexagonal','triangularVonNeumann',
+    'triangularMoore','oneDimensional']
 
 SupportedSymmetries = {
 "vonNeumann":
@@ -108,10 +109,24 @@ SupportedSymmetries = {
 'rotate_reflect':[[0,1,2,3,4],[0,3,1,2,4],[0,2,3,1,4],[0,3,2,1,4],[0,1,3,2,4],[0,2,1,3,4]],
 'permute':[[0,1,2,3,4]] # (gets done later)
 },
+"triangularMoore":
+{
+'rotate':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13],
+          [0,2,3,1,7,8,9,10,11,12,4,5,6,13],
+          [0,3,1,2,10,11,12,4,5,6,7,8,9,13]], 
+'rotate_reflect':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13],
+                  [0,2,3,1,7,8,9,10,11,12,4,5,6,13],
+                  [0,3,1,2,10,11,12,4,5,6,7,8,9,13],
+                  [0,3,2,1,9,8,7,6,5,4,12,11,10,13],
+                  [0,2,1,3,6,5,4,12,11,10,9,8,7,13],
+                  [0,1,3,2,12,11,10,9,8,7,6,5,4,13]], 
+'permute':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13]], # (gets done later)
+},
 "oneDimensional":
 {
 'none':[[0,1,2,3]],
-'reflect':[[0,1,2,3],[0,2,1,3]]
+'reflect':[[0,1,2,3],[0,2,1,3]],
+'permute':[[0,1,2,3]], # (gets done later)
 },
 "hexagonal":
 {
@@ -182,6 +197,7 @@ def ReadRuleTable(filename):
             if not len(entries)==numParams:
                 golly.warn('Wrong number of entries on line: '+line+' (expected '+str(numParams)+')')
                 golly.exit()
+            # retrieve the variables that repeat within the transition, these are 'bound'
             bound_vars = [ e for e in set(entries) if entries.count(e)>1 and e in vars ]
             # iterate through all the possible values of each bound variable
             var_val_indices = dict(zip(bound_vars,[0]*len(bound_vars)))

@@ -3,6 +3,7 @@ import os
 from glife.ReadRuleTable import *
 from glife.RuleTree import *
 from glife.EmulateTriangularVonNeumann import *
+from glife.EmulateTriangularMoore import *
 from glife.EmulateMargolus import *
 from glife.EmulateOneDimensional import *
 from glife.EmulateHexagonal import *
@@ -15,11 +16,11 @@ filename = golly.opendialog('Open a rule table to convert:',
 if len(filename) == 0: golly.exit()    # user hit Cancel
 
 # add new converters here as they become available:
-# (TODO: triangularMoore, etc.)
 Converters = {
     "vonNeumann":ConvertRuleTableTransitionsToRuleTree,
     "Moore":ConvertRuleTableTransitionsToRuleTree,
     "triangularVonNeumann":EmulateTriangularVonNeumann,
+    "triangularMoore":EmulateTriangularMoore,
     "Margolus":EmulateMargolus,
     "square4_figure8v":EmulateMargolus,
     "square4_figure8h":EmulateMargolus,
