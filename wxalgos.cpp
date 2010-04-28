@@ -151,12 +151,54 @@ static const char* default15x15[] = {
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXGTK__
+// this routine is used to fix a wxGTK bug which reverses colors when
+// converting a monochrome wxImage to a wxBitmap with depth 1
+static void ReverseImageColors(wxImage& image)
+{
+   // get image data as an array of 3 bytes per pixel (RGBRGBRGB...)
+   int numpixels = image.GetWidth() * image.GetHeight();
+   unsigned char* newdata = (unsigned char*) malloc(numpixels * 3);
+   if (newdata) {
+      unsigned char* p = image.GetData();
+      unsigned char* n = newdata;
+      for (int i = 0; i < numpixels; i++) {
+         unsigned char r = *p++;
+         unsigned char g = *p++;
+         unsigned char b = *p++;
+         if (r == 0 && g == 0 && b == 0) {
+            // change black to white
+            *n++ = 255;
+            *n++ = 255;
+            *n++ = 255;
+         } else {
+            // change non-black to black
+            *n++ = 0;
+            *n++ = 0;
+            *n++ = 0;
+         }
+      }
+      image.SetData(newdata);    // image now owns pointer
+   } else {
+      Fatal(_("Malloc failed in ReverseImageColors!"));
+   }
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
 static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
 {
    if (xpmdata == NULL) return NULL;
    
    wxImage image(xpmdata);
    image.SetMaskColour(0, 0, 0);    // make black transparent
+
+   #ifdef __WXGTK__
+      // fix wxGTK bug
+      ReverseImageColors(image);
+   #endif
+
    wxBitmap allicons(image, 1);     // default icons are monochrome
 
    int wd = allicons.GetWidth();
@@ -364,6 +406,11 @@ bool LoadIconFile(const wxString& path, int maxstate,
    // check for multi-color icons
    int depth = -1;
    if (image.CountColours(2) <= 2) depth = 1;   // monochrome
+
+   #ifdef __WXGTK__
+      // fix wxGTK bug
+      if (depth == 1) ReverseImageColors(image);
+   #endif
    
    wxBitmap allicons(image, depth);
    int wd = allicons.GetWidth();
