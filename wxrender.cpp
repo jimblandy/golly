@@ -1361,6 +1361,15 @@ void DrawOneLayer(wxDC& dc)
 {
    wxMemoryDC layerdc;
    layerdc.SelectObject(*layerbitmap);
+
+   // only show icons at scales 1:8 and 1:16
+   if (showicons && currlayer->view->getmag() > 2) {
+      if (currlayer->view->getmag() == 3) {
+         iconmaps = currlayer->icons7x7;
+      } else {
+         iconmaps = currlayer->icons15x15;
+      }
+   }
    
    currdc = &layerdc;
    currlayer->algo->draw(*currlayer->view, renderer);
