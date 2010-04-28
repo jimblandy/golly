@@ -2,8 +2,7 @@ import golly
 import os
 from glife.ReadRuleTable import *
 from glife.RuleTree import *
-from glife.EmulateTriangularVonNeumann import *
-from glife.EmulateTriangularMoore import *
+from glife.EmulateTriangular import *
 from glife.EmulateMargolus import *
 from glife.EmulateOneDimensional import *
 from glife.EmulateHexagonal import *
@@ -19,8 +18,8 @@ if len(filename) == 0: golly.exit()    # user hit Cancel
 Converters = {
     "vonNeumann":ConvertRuleTableTransitionsToRuleTree,
     "Moore":ConvertRuleTableTransitionsToRuleTree,
-    "triangularVonNeumann":EmulateTriangularVonNeumann,
-    "triangularMoore":EmulateTriangularMoore,
+    "triangularVonNeumann":EmulateTriangular,
+    "triangularMoore":EmulateTriangular,
     "Margolus":EmulateMargolus,
     "square4_figure8v":EmulateMargolus,
     "square4_figure8h":EmulateMargolus,
@@ -42,7 +41,7 @@ rule_name = Converters[neighborhood]( neighborhood,
                                       n_states, 
                                       transitions, 
                                       filename )
-                          
+
 golly.setalgo('RuleTree')
 golly.setrule(rule_name)
 golly.show('Created '+rule_name+'.tree and selected that rule.')

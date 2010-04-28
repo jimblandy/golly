@@ -11,10 +11,26 @@ import os
 from glife.RuleTree import *
 from glife.WriteBMP import *
 
+#  triangularVonNeumann -> vonNeumann:
+#
+#      lower         upper 
+#       +--+          +--+        
+#       |\ |          |\ |        
+#       | \|          |2\|          (any rotation would work too)
+#    +--+--+--+    +--+--+--+
+#    |\3|\1|\ |    |\ |\0|\ |
+#    | \|0\| \|    | \|1\|3\|
+#    +--+--+--+    +--+--+--+
+#       |\2|          |\ |
+#       | \|          | \|
+#       +--+          +--+
+#
+# triangularMoore -> Moore:
+#
 #      lower         upper 
 #    +--+--+--+    +--+--+--+       
 #    |\B|\ |\ |    |\6|\7|\ |       where A=10, B=11, C=12
-#    |A\|C\| \|    |5\|2\|8\|       (any rotation for upper would work too)
+#    |A\|C\| \|    |5\|2\|8\|       
 #    +--+--+--+    +--+--+--+
 #    |\3|\1|\ |    |\4|\0|\9|
 #    |9\|0\|4\|    | \|1\|3\|
@@ -23,8 +39,8 @@ from glife.WriteBMP import *
 #    | \|7\|6\|    | \| \|B\|
 #    +--+--+--+    +--+--+--+
 
-def EmulateTriangularMoore(neighborhood,n_states,list_transitions,input_filename):
-    '''Emulate a triangularMoore neighborhood rule table with a Moore neighborhood rule tree.'''
+def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
+    '''Emulate a triangularVonNeumann or triangularMoore neighborhood rule table with a rule tree.'''
     
     # each square cell is j*N+i where i is the lower triangle, j is the upper triangle
     # each i,j in (0,N]
@@ -33,22 +49,34 @@ def EmulateTriangularMoore(neighborhood,n_states,list_transitions,input_filename
         return [ up*n_states+low for up in upper for low in lower ]
 
     # what neighbors of the lower triangle overlap neighbors of the upper triangle?
-    lower2upper = { 0:1, 1:0, 2:12, 3:4, 4:3, 5:10, 6:11, 10:5, 11:6, 12:2 }
-    
+    lower2upper = { 
+        "triangularVonNeumann": [(0,1),(1,0)],
+        "triangularMoore": [(0,1),(1,0),(2,12),(3,4),(4,3),(5,10),(6,11),(10,5),(11,6),(12,2)],
+    }
+    numNeighbors = { "triangularVonNeumann":4, "triangularMoore":8 }
+
     rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_emulated'
     # (we use a special suffix to avoid picking up any existing .colors or .icons)
-    tree = RuleTree(n_states*n_states,8)
     # convert transitions to list of list of sets for speed
-    transitions = [[set(e) for e in t] for t in list_transitions]
+    transitions = [[set(e) for e in t] for t in transitions_list]
+    tree = RuleTree(n_states*n_states,numNeighbors[neighborhood])
     # for each transition pair, see if we can apply them both at once to a square
     for i,t1 in enumerate(transitions): # as lower
         golly.show("Building rule tree... (pass 1 of 2: "+str(100*i/len(transitions))+"%)") 
         for t2 in transitions: # as upper
             # we can only apply both rules at once if they overlap to some extent
-            if any( t1[j].isdisjoint(t2[k]) for j,k in lower2upper.items() ):
+            if any( t1[j].isdisjoint(t2[k]) for j,k in lower2upper[neighborhood] ):
                 continue
             # take the intersection of their inputs
-            tree.add_rule( [ encode(t1[0]&t2[1],t1[1]&t2[0]), # C
+            if neighborhood=="triangularVonNeumann":
+                tree.add_rule( [ encode(t1[0]&t2[1],t1[1]&t2[0]), # C
+                     encode(range(n_states),t1[2]), # S
+                     encode(t2[3],range(n_states)), # E
+                     encode(range(n_states),t1[3]), # W
+                     encode(t2[2],range(n_states)) ], # N
+                     encode(t1[4],t2[4])[0] ) # C'
+            elif neighborhood=="triangularMoore":
+                tree.add_rule( [ encode(t1[0]&t2[1],t1[1]&t2[0]), # C
                              encode(t1[7],t1[2]&t2[12]), # S
                              encode(t1[4]&t2[3],t2[9]), # E
                              encode(t1[9],t1[3]&t2[4]), # W
@@ -62,28 +90,44 @@ def EmulateTriangularMoore(neighborhood,n_states,list_transitions,input_filename
     for i,t in enumerate(transitions):
         golly.show("Building rule tree... (pass 2 of 2: "+str(100*i/len(transitions))+"%)") 
         for t_1 in t[1]:
-            # as lower triangle:
-            tree.add_rule( [encode(t[0],[t_1]), # C
-                encode(t[7],t[2]), # S
-                encode(t[4],range(n_states)), # E
-                encode(t[9],t[3]), # W
-                encode(t[12],range(n_states)), # N
-                encode(t[6],t[5]), # SE
-                encode(range(n_states),t[8]), # SW
-                range(n_states*n_states), # NE
-                encode(t[10],t[11]) ], # NW
-                encode(t[13],[t_1])[0] ) # C'
-            # as upper triangle:
-            tree.add_rule( [encode([t_1],t[0]),
-                encode(range(n_states),t[12]), # S
-                encode(t[3],t[9]), # E
-                encode(range(n_states),t[4]), # W
-                encode(t[2],t[7]), # N
-                encode(t[11],t[10]), # SE
-                range(n_states*n_states), # SW
-                encode(t[8],range(n_states)), # NE
-                encode(t[5],t[6]) ], # NW
-                encode([t_1],t[13])[0] ) # C'
+            if neighborhood=="triangularVonNeumann":
+                # as lower triangle:
+                tree.add_rule( [ encode(t[0],[t_1]), # C
+                                 encode(range(n_states),t[2]), # S
+                                 range(n_states*n_states), # E
+                                 encode(range(n_states),t[3]), # W
+                                 range(n_states*n_states) ], # N
+                                 encode(t[4],[t_1])[0] ) # C'
+                # as upper triangle:
+                tree.add_rule( [ encode([t_1],t[0]), # C
+                                 range(n_states*n_states), # S
+                                 encode(t[3],range(n_states)), # E
+                                 range(n_states*n_states), # W
+                                 encode(t[2],range(n_states)) ], # N
+                                 encode([t_1],t[4])[0] ) # C'
+            elif neighborhood=="triangularMoore":
+                # as lower triangle:
+                tree.add_rule( [encode(t[0],[t_1]), # C
+                    encode(t[7],t[2]), # S
+                    encode(t[4],range(n_states)), # E
+                    encode(t[9],t[3]), # W
+                    encode(t[12],range(n_states)), # N
+                    encode(t[6],t[5]), # SE
+                    encode(range(n_states),t[8]), # SW
+                    range(n_states*n_states), # NE
+                    encode(t[10],t[11]) ], # NW
+                    encode(t[13],[t_1])[0] ) # C'
+                # as upper triangle:
+                tree.add_rule( [encode([t_1],t[0]),
+                    encode(range(n_states),t[12]), # S
+                    encode(t[3],t[9]), # E
+                    encode(range(n_states),t[4]), # W
+                    encode(t[2],t[7]), # N
+                    encode(t[11],t[10]), # SE
+                    range(n_states*n_states), # SW
+                    encode(t[8],range(n_states)), # NE
+                    encode(t[5],t[6]) ], # NW
+                    encode([t_1],t[13])[0] ) # C'
         
     # output the rule tree
     golly.show("Compressing rule tree and saving to file...")
@@ -124,14 +168,14 @@ def EmulateTriangularMoore(neighborhood,n_states,list_transitions,input_filename
         # (we don't support gradients in .colors)
 
     width = 15*(n_states*n_states-1)
-    if force_background:
+    if force_background and n_states>2:
         width+=15
     height = 22
     pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
 
     for row in range(height):
         for column in range(width):
-            if force_background and column>=width-15:
+            if force_background and n_states>2 and column>=width-15:
                 # add extra 'icon' filled with the intended background color
                 pixels[row][column] = background_color
             else:
@@ -159,5 +203,17 @@ def EmulateTriangularMoore(neighborhood,n_states,list_transitions,input_filename
                     pixels[row][column] = 0,0,0
                     
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+
+    if n_states==2:    
+        # the icons we wrote are monochrome, so we need a .colors file to avoid
+        # them all having different colors or similar from Golly's preferences
+        c = open(golly.getdir('rules')+rule_name+".colors",'w')
+        if force_background:
+            c.write('color = 0 '+' '.join(map(str,background_color))+'\n')
+        for i in range(1,n_states*n_states):
+            c.write('color = '+str(i)+' '+' '.join(map(str,colors[1]))+'\n')
+        c.flush()
+        c.close()
+    
     return rule_name
 
