@@ -1,5 +1,6 @@
 # Just to save the user having to install PIL.
 # BMP code from: http://pseentertainmentcorp.com/smf/index.php?topic=2034.0
+# Distributed with kind permission from James Main <jdmain@comcast.net>
 
 import struct
 
