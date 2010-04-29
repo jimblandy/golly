@@ -303,17 +303,18 @@ const char* GSF_setrule(char* rulestring)
       if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
          mainptr->ReduceCellStates(newmaxstate);
       }
-
-      // switch to default colors for new rule
-      UpdateLayerColors();
-
-      // pattern might have changed or colors might have changed
-      DoAutoUpdate();
       
       if (allowundo && !currlayer->stayclean) {
          currlayer->undoredo->RememberRuleChange(oldrule);
       }
    }
+
+   // switch to default colors and icons for new rule (we need to do this even if
+   // oldrule == newrule in case there's a new/changed .colors or .icons file)
+   UpdateLayerColors();
+
+   // pattern or colors or icons might have changed
+   DoAutoUpdate();
    
    return NULL;
 }
