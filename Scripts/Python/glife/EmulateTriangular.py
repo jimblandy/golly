@@ -39,9 +39,8 @@ from glife.WriteBMP import *
 #    | \|7\|6\|    | \| \|B\|
 #    +--+--+--+    +--+--+--+
 
-def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
-    '''Emulate a triangularVonNeumann or triangularMoore neighborhood rule table with a rule tree.'''
-    
+def TriangularTransitionsToRuleTree(neighborhood,n_states,transitions_list,rule_name):
+
     # each square cell is j*N+i where i is the lower triangle, j is the upper triangle
     # each i,j in (0,N]
     # (lower and upper are lists)
@@ -55,8 +54,6 @@ def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
     }
     numNeighbors = { "triangularVonNeumann":4, "triangularMoore":8 }
 
-    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_emulated'
-    # (we use a special suffix to avoid picking up any existing .colors or .icons)
     # convert transitions to list of list of sets for speed
     transitions = [[set(e) for e in t] for t in transitions_list]
     tree = RuleTree(n_states*n_states,numNeighbors[neighborhood])
@@ -133,39 +130,7 @@ def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
     golly.show("Compressing rule tree and saving to file...")
     tree.write(golly.getdir('rules') + rule_name + '.tree')
     
-    # also save a color .icons file
-    golly.show("Generating icons...")
-
-    # read rule_name+'.colors' file if it exists
-    force_background = False
-    background_color = [0,0,0]
-    cfn = os.path.split(input_filename)[0]+"/"+os.path.splitext(os.path.split(input_filename)[1])[0]+".colors"
-    try:
-        cf = open(cfn,'r')
-    except IOError:
-        # use Golly's default random colours
-        random_colors=[[0,0,0],[0,255,127],[127,0,255],[148,148,148],[128,255,0],[255,0,128],[0,128,255],[1,159,0],
-            [159,0,1],[255,254,96],[0,1,159],[96,255,254],[254,96,255],[126,125,21],[21,126,125],[125,21,126],
-            [255,116,116],[116,255,116],[116,116,255],[228,227,0],[28,255,27],[255,27,28],[0,228,227],
-            [227,0,228],[27,28,255],[59,59,59],[234,195,176],[175,196,255],[171,194,68],[194,68,171],
-            [68,171,194],[72,184,71],[184,71,72],[71,72,184],[169,255,188],[252,179,63],[63,252,179],
-            [179,63,252],[80,9,0],[0,80,9],[9,0,80],[255,175,250],[199,134,213],[115,100,95],[188,163,0],
-            [0,188,163],[163,0,188],[203,73,0],[0,203,73],[73,0,203],[94,189,0],[189,0,94]]
-        colors = dict(zip(range(len(random_colors)),random_colors))
-    else:
-        # read from the .colors file
-        colors = {0:[0,0,0]} # background is black
-        for line in cf:
-            if line[0:6]=='color ':
-                entries = map(int,line[6:].replace('=',' ').replace('\n',' ').split())
-                if len(entries)<4:
-                    continue # too few entries, ignore
-                if entries[0]==0:
-                    force_background = True
-                    background_color = [entries[1],entries[2],entries[3]]
-                else:
-                    colors.update({entries[0]:[entries[1],entries[2],entries[3]]})
-        # (we don't support gradients in .colors)
+def MakeTriangularIcons(n_states,colors,force_background,rule_name):
 
     width = 15*(n_states*n_states-1)
     if force_background and n_states>2:
@@ -203,6 +168,52 @@ def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
                     pixels[row][column] = 0,0,0
                     
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+
+
+def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
+    '''Emulate a triangularVonNeumann or triangularMoore neighborhood rule table with a rule tree.'''
+    
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_emulated'
+    # (we use a special suffix to avoid picking up any existing .colors or .icons)
+    
+    # make a rule tree
+    TriangularTransitionsToRuleTree(neighborhood,n_states,transitions_list,rule_name)
+
+    # also save a color .icons file
+    golly.show("Generating icons...")
+
+    # read rule_name+'.colors' file if it exists
+    force_background = False
+    background_color = [0,0,0]
+    cfn = os.path.split(input_filename)[0]+"/"+os.path.splitext(os.path.split(input_filename)[1])[0]+".colors"
+    try:
+        cf = open(cfn,'r')
+    except IOError:
+        # use Golly's default random colours
+        random_colors=[[0,0,0],[0,255,127],[127,0,255],[148,148,148],[128,255,0],[255,0,128],[0,128,255],[1,159,0],
+            [159,0,1],[255,254,96],[0,1,159],[96,255,254],[254,96,255],[126,125,21],[21,126,125],[125,21,126],
+            [255,116,116],[116,255,116],[116,116,255],[228,227,0],[28,255,27],[255,27,28],[0,228,227],
+            [227,0,228],[27,28,255],[59,59,59],[234,195,176],[175,196,255],[171,194,68],[194,68,171],
+            [68,171,194],[72,184,71],[184,71,72],[71,72,184],[169,255,188],[252,179,63],[63,252,179],
+            [179,63,252],[80,9,0],[0,80,9],[9,0,80],[255,175,250],[199,134,213],[115,100,95],[188,163,0],
+            [0,188,163],[163,0,188],[203,73,0],[0,203,73],[73,0,203],[94,189,0],[189,0,94]]
+        colors = dict(zip(range(len(random_colors)),random_colors))
+    else:
+        # read from the .colors file
+        colors = {0:[0,0,0]} # background is black
+        for line in cf:
+            if line[0:6]=='color ':
+                entries = map(int,line[6:].replace('=',' ').replace('\n',' ').split())
+                if len(entries)<4:
+                    continue # too few entries, ignore
+                if entries[0]==0:
+                    force_background = True
+                    background_color = [entries[1],entries[2],entries[3]]
+                else:
+                    colors.update({entries[0]:[entries[1],entries[2],entries[3]]})
+        # (we don't support gradients in .colors)
+        
+    MakeTriangularIcons(n_states,colors,force_background,rule_name)
 
     if n_states==2:    
         # the icons we wrote are monochrome, so we need a .colors file to avoid
