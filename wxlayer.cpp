@@ -1926,9 +1926,16 @@ void SetAverageColor(int state, wxBitmap* icon)
             iconpxl.OffsetY(icondata, 1);
          }
          
-         currlayer->cellr[state] = int(totalr / nbcount);
-         currlayer->cellg[state] = int(totalg / nbcount);
-         currlayer->cellb[state] = int(totalb / nbcount);
+         if (nbcount>0) {
+            currlayer->cellr[state] = int(totalr / nbcount);
+            currlayer->cellg[state] = int(totalg / nbcount);
+            currlayer->cellb[state] = int(totalb / nbcount);
+         }
+         else { // avoid div0
+            currlayer->cellr[state] = 0;
+            currlayer->cellg[state] = 0;
+            currlayer->cellb[state] = 0;
+         }
       }
    }
 }
