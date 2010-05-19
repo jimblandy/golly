@@ -18,7 +18,7 @@ get_subsets = lambda items: [[x for (pos,x) in zip(range(len(items)), items) if 
 example_spec = '{{{1, 2, 0}, {0, 1, 0}}}'
 import random
 ns = 2
-nc = 2
+nc = 3
 while True: # (we break out if ok)
     example_spec = '{'
     for state in range(ns):
@@ -101,6 +101,14 @@ This is the equivalent of Langton's Ant.
 Enter string:
 ''', example_spec, 'Enter TriTurmite specification:')
 
+'''Some interesting rule found with this script:
+{{{2,4,0},{2,4,0},{1,2,1}},{{1,2,1},{2,1,0},{1,4,1}}} - lightning cloud
+{{{1,1,1},{1,2,0},{2,1,1}},{{2,2,1},{2,2,1},{1,4,0}}} - makes a highway (seems to be rarer in tri grids compared to square grids?)
+{{{2,2,1},{1,2,0},{1,1,1}},{{1,2,0},{2,1,0},{1,4,1}}} - data pyramid
+{{{2,1,0},{1,4,1},{1,1,0}},{{2,4,0},{2,2,1},{1,1,1}}} - a filled version of the tri-grid Langton's ant
+{{{1,1,0},{2,2,1},{1,1,0}},{{1,4,0},{2,2,0},{2,2,0}}} - hypnodisc
+'''
+
 # convert the specification string into action_table[state][color]
 # (convert Mathematica code to Python and run eval)
 action_table = eval(string.replace(string.replace(spec,'}',']'),'{','['))
@@ -118,7 +126,7 @@ n_dirs = 3
 total_states = n_colors+n_colors*n_states*3
 
 # problem if we try to export more than 255 states
-if total_states > 255:
+if total_states > 128: # max allowed using checkerboard emulation (see EmulateTriangular)
     golly.warn("Number of states required exceeds Golly's limit of 255.")
     golly.exit()
 
@@ -204,8 +212,6 @@ for output_color,inputs in leaving_color_behind.items():
 
 rule_name = prefix+'_'+spec_string
 
-TriangularTransitionsToRuleTree("triangularVonNeumann",total_states,transitions,rule_name)
-
 # To see the intermediate output as a rule table (can use RuleTableToTree.py to load it):
 #WriteRuleTable("triangularVonNeumann",total_states,transitions,golly.getdir('rules')+rule_name+'_asTable.table')
 
@@ -219,181 +225,311 @@ palette=[[0,0,0],[0,155,67],[127,0,255],[128,128,128],[185,184,96],[0,100,255],[
     [255,175,250],[199,134,213],[115,100,95],[188,163,0],[0,188,163],[163,0,188],[203,73,0],
     [0,203,73],[73,0,203],[94,189,0],[189,0,94]]
 
-width = 15*(total_states*total_states-1) + 15 # we set the background color
-height = 22
-pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
+if total_states<=16:
 
-# turmite icons: 0=black, 1=background color, 2=turmite color
-turmite_big =  [[[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                 [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                 [1,1,0,1,1,1,1,1,1,2,2,2,2,1,1],
-                 [1,1,1,0,1,1,1,1,1,1,1,2,2,1,1],
-                 [1,1,1,1,0,1,1,1,1,1,2,1,2,1,1],
-                 [1,1,1,1,1,0,1,1,1,2,1,1,2,1,1],
-                 [1,1,1,1,1,1,0,1,2,1,1,1,1,1,1],
-                 [1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
-                 [1,1,1,1,1,1,2,1,0,1,1,1,1,1,1],
-                 [1,1,2,1,1,2,1,1,1,0,1,1,1,1,1],
-                 [1,1,2,1,2,1,1,1,1,1,0,1,1,1,1],
-                 [1,1,2,2,1,1,1,1,1,1,1,0,1,1,1],
-                 [1,1,2,2,2,2,1,1,1,1,1,1,0,1,1],
-                 [1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]],
-                [[0,1,1,1,1,1,1,1,2,1,1,1,1,1,1],
-                 [1,0,1,1,1,1,1,1,2,1,1,1,1,1,1],
-                 [1,1,0,1,1,1,1,1,1,2,1,1,1,1,1],
-                 [1,1,1,0,1,1,1,1,1,2,1,1,1,1,1],
-                 [1,1,1,1,0,1,1,1,1,1,2,1,1,1,1],
-                 [1,1,2,1,1,0,1,1,1,1,2,1,2,1,1],
-                 [1,1,2,2,1,1,0,1,1,1,1,2,2,1,1],
-                 [1,1,2,2,2,1,1,0,1,1,2,2,2,1,1],
-                 [1,1,2,2,1,1,1,1,0,1,1,2,2,1,1],
-                 [1,1,2,1,2,1,1,1,1,0,1,1,2,1,1],
-                 [1,1,1,1,2,1,1,1,1,1,0,1,1,1,1],
-                 [1,1,1,1,1,2,1,1,1,1,1,0,1,1,1],
-                 [1,1,1,1,1,2,1,1,1,1,1,1,0,1,1],
-                 [1,1,1,1,1,1,2,1,1,1,1,1,1,0,1],
-                 [1,1,1,1,1,1,2,1,1,1,1,1,1,1,0]],
-                [[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                 [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                 [1,1,0,1,1,2,2,2,2,2,1,1,1,1,1],
-                 [1,1,1,0,1,1,2,2,2,1,1,1,1,1,1],
-                 [1,1,1,1,0,1,1,2,1,2,2,1,1,1,1],
-                 [1,1,1,1,1,0,1,1,1,1,1,2,2,1,1],
-                 [1,1,1,1,1,1,0,1,1,1,1,1,1,2,2],
-                 [1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
-                 [2,2,1,1,1,1,1,1,0,1,1,1,1,1,1],
-                 [1,1,2,2,1,1,1,1,1,0,1,1,1,1,1],
-                 [1,1,1,1,2,2,1,2,1,1,0,1,1,1,1],
-                 [1,1,1,1,1,1,2,2,2,1,1,0,1,1,1],
-                 [1,1,1,1,1,2,2,2,2,2,1,1,0,1,1],
-                 [1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]]]
-turmite_small = [[[0,1,1,1,1,1,1],
-                  [1,0,1,2,2,2,1],
-                  [1,1,0,1,1,2,1],
-                  [1,2,1,0,1,2,1],
-                  [1,2,1,1,0,1,1],
-                  [1,2,2,2,1,0,1],
-                  [1,1,1,1,1,1,0]],
-                 [[0,1,1,1,1,1,1],
-                  [1,0,1,1,1,2,1],
-                  [1,1,0,1,2,2,1],
-                  [1,2,1,0,1,2,1],
-                  [1,2,2,1,0,1,1],
-                  [1,2,1,1,1,0,1],
-                  [1,1,1,1,1,1,0]],
-                 [[0,1,1,1,1,1,1],
-                  [1,0,1,2,2,2,1],
-                  [1,1,0,1,2,1,1],
-                  [1,1,1,0,1,1,1],
-                  [1,1,2,1,0,1,1],
-                  [1,2,2,2,1,0,1],
-                  [1,1,1,1,1,1,0]]]
+    TriangularTransitionsToRuleTree_SplittingMethod("triangularVonNeumann",total_states,transitions,rule_name)
 
-# TODO: do something about this horrible code
-for lc in range(n_colors):
-    for uc in range(n_colors):
-        '''draw the cells with no turmites'''
-        golly_state = uc * total_states + lc
+    width = 15*(total_states*total_states-1) + 15 # we set the background color
+    height = 22
+    pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
+
+    # turmite icons: 0=black, 1=background color, 2=turmite color
+    turmite_big =  [[[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                     [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                     [1,1,0,1,1,1,1,1,1,2,2,2,2,1,1],
+                     [1,1,1,0,1,1,1,1,1,1,1,2,2,1,1],
+                     [1,1,1,1,0,1,1,1,1,1,2,1,2,1,1],
+                     [1,1,1,1,1,0,1,1,1,2,1,1,2,1,1],
+                     [1,1,1,1,1,1,0,1,2,1,1,1,1,1,1],
+                     [1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
+                     [1,1,1,1,1,1,2,1,0,1,1,1,1,1,1],
+                     [1,1,2,1,1,2,1,1,1,0,1,1,1,1,1],
+                     [1,1,2,1,2,1,1,1,1,1,0,1,1,1,1],
+                     [1,1,2,2,1,1,1,1,1,1,1,0,1,1,1],
+                     [1,1,2,2,2,2,1,1,1,1,1,1,0,1,1],
+                     [1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]],
+                    [[0,1,1,1,1,1,1,1,2,1,1,1,1,1,1],
+                     [1,0,1,1,1,1,1,1,2,1,1,1,1,1,1],
+                     [1,1,0,1,1,1,1,1,1,2,1,1,1,1,1],
+                     [1,1,1,0,1,1,1,1,1,2,1,1,1,1,1],
+                     [1,1,1,1,0,1,1,1,1,1,2,1,1,1,1],
+                     [1,1,2,1,1,0,1,1,1,1,2,1,2,1,1],
+                     [1,1,2,2,1,1,0,1,1,1,1,2,2,1,1],
+                     [1,1,2,2,2,1,1,0,1,1,2,2,2,1,1],
+                     [1,1,2,2,1,1,1,1,0,1,1,2,2,1,1],
+                     [1,1,2,1,2,1,1,1,1,0,1,1,2,1,1],
+                     [1,1,1,1,2,1,1,1,1,1,0,1,1,1,1],
+                     [1,1,1,1,1,2,1,1,1,1,1,0,1,1,1],
+                     [1,1,1,1,1,2,1,1,1,1,1,1,0,1,1],
+                     [1,1,1,1,1,1,2,1,1,1,1,1,1,0,1],
+                     [1,1,1,1,1,1,2,1,1,1,1,1,1,1,0]],
+                    [[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                     [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                     [1,1,0,1,1,2,2,2,2,2,1,1,1,1,1],
+                     [1,1,1,0,1,1,2,2,2,1,1,1,1,1,1],
+                     [1,1,1,1,0,1,1,2,1,2,2,1,1,1,1],
+                     [1,1,1,1,1,0,1,1,1,1,1,2,2,1,1],
+                     [1,1,1,1,1,1,0,1,1,1,1,1,1,2,2],
+                     [1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
+                     [2,2,1,1,1,1,1,1,0,1,1,1,1,1,1],
+                     [1,1,2,2,1,1,1,1,1,0,1,1,1,1,1],
+                     [1,1,1,1,2,2,1,2,1,1,0,1,1,1,1],
+                     [1,1,1,1,1,1,2,2,2,1,1,0,1,1,1],
+                     [1,1,1,1,1,2,2,2,2,2,1,1,0,1,1],
+                     [1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]]]
+    turmite_small = [[[0,1,1,1,1,1,1],
+                      [1,0,1,2,2,2,1],
+                      [1,1,0,1,1,2,1],
+                      [1,2,1,0,1,2,1],
+                      [1,2,1,1,0,1,1],
+                      [1,2,2,2,1,0,1],
+                      [1,1,1,1,1,1,0]],
+                     [[0,1,1,1,1,1,1],
+                      [1,0,1,1,1,2,1],
+                      [1,1,0,1,2,2,1],
+                      [1,2,1,0,1,2,1],
+                      [1,2,2,1,0,1,1],
+                      [1,2,1,1,1,0,1],
+                      [1,1,1,1,1,1,0]],
+                     [[0,1,1,1,1,1,1],
+                      [1,0,1,2,2,2,1],
+                      [1,1,0,1,2,1,1],
+                      [1,1,1,0,1,1,1],
+                      [1,1,2,1,0,1,1],
+                      [1,2,2,2,1,0,1],
+                      [1,1,1,1,1,1,0]]]
+
+    # TODO: do something about this horrible code
+    for lc in range(n_colors):
+        for uc in range(n_colors):
+            '''draw the cells with no turmites'''
+            golly_state = uc * total_states + lc
+            for row in range(15):
+                for column in range(15):
+                    if column>row:
+                        # upper
+                        pixels[row][(golly_state-1)*15+column] = palette[uc]
+                    elif column<row:
+                        # lower
+                        pixels[row][(golly_state-1)*15+column] = palette[lc]
+            for row in range(7):
+                for column in range(7):
+                    if column>row:
+                        # upper
+                        pixels[15+row][(golly_state-1)*15+column] = palette[uc]
+                    elif column<row:
+                        # lower
+                        pixels[15+row][(golly_state-1)*15+column] = palette[lc]
+            '''draw the cells with a turmite in the upper half'''
+            for us in range(n_states):
+                for ud in range(n_dirs):
+                    upper = encode(uc,us,ud)
+                    golly_state = upper * total_states + lc
+                    for row in range(15):
+                        for column in range(15):
+                            if column>row:
+                                # upper
+                                bg_col = palette[uc]
+                                fg_col = palette[n_colors+us]
+                                pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ud][row][column]]
+                            elif column<row:
+                                # lower
+                                pixels[row][(golly_state-1)*15+column] = palette[lc]
+                    for row in range(7):
+                        for column in range(7):
+                            if column>row:
+                                # upper
+                                bg_col = palette[uc]
+                                fg_col = palette[n_colors+us]
+                                pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ud][row][column]]
+                            elif column<row:
+                                # lower
+                                pixels[15+row][(golly_state-1)*15+column] = palette[lc]
+        for ls in range(n_states):
+            for ld in range(n_dirs):
+                lower = encode(lc,ls,ld)
+                for uc in range(n_colors):
+                    '''draw the cells with a turmite in the lower half'''
+                    golly_state = uc * total_states + lower
+                    for row in range(15):
+                        for column in range(15):
+                            if row>column:
+                                # lower
+                                bg_col = palette[lc]
+                                fg_col = palette[n_colors+ls]
+                                pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ld][row][column]]
+                            elif column>row:
+                                # upper
+                                pixels[row][(golly_state-1)*15+column] = palette[uc]
+                    for row in range(7):
+                        for column in range(7):
+                            if row>column:
+                                # lower
+                                bg_col = palette[lc]
+                                fg_col = palette[n_colors+ls]
+                                pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ld][row][column]]
+                            elif column>row:
+                                # upper
+                                pixels[15+row][(golly_state-1)*15+column] = palette[uc]
+                    '''draw the cells with a turmite in both halves'''
+                    for us in range(n_states):
+                        for ud in range(n_dirs):
+                            upper = encode(uc,us,ud)
+                            golly_state = upper * total_states + lower
+                            for row in range(15):
+                                for column in range(15):
+                                    if row>column:
+                                        # lower
+                                        bg_col = palette[lc]
+                                        fg_col = palette[n_colors+ls]
+                                        pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ld][row][column]]
+                                    elif column>row:
+                                        # upper
+                                        bg_col = palette[uc]
+                                        fg_col = palette[n_colors+us]
+                                        pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ud][row][column]]
+                            for row in range(7):
+                                for column in range(7):
+                                    if row>column:
+                                        # lower
+                                        bg_col = palette[lc]
+                                        fg_col = palette[n_colors+ls]
+                                        pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ld][row][column]]
+                                    elif column>row:
+                                        # upper
+                                        bg_col = palette[uc]
+                                        fg_col = palette[n_colors+us]
+                                        pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ud][row][column]]
+
+    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    
+elif total_states<=128:
+
+    TriangularTransitionsToRuleTree_CheckerboardMethod("triangularVonNeumann",total_states,transitions,rule_name)
+    
+    width = 15*(total_states*2-2) + 15 # we set the background color
+    height = 22
+    pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
+
+    # turmite icons: 0=black, 1=background color, 2=turmite color
+    lower = [[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+              [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+              [0,0,0,0,1,1,1,1,1,1,2,0,0,0,0],
+              [0,0,0,1,1,1,1,1,2,2,1,1,0,0,0],
+              [0,0,1,1,2,1,2,2,1,1,1,1,1,0,0],
+              [0,1,1,2,2,2,1,1,1,1,1,1,1,1,0],
+              [1,1,2,2,2,2,2,1,1,1,1,1,1,1,1],
+              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+             [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+              [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+              [0,0,0,0,1,1,1,2,1,1,1,0,0,0,0],
+              [0,0,0,1,1,1,2,2,2,1,1,1,0,0,0],
+              [0,0,1,1,1,2,2,2,2,2,1,1,1,0,0],
+              [0,1,1,1,1,1,1,2,1,1,1,1,1,1,0],
+              [1,1,1,1,1,1,1,2,1,1,1,1,1,1,1],
+              [1,1,1,1,1,1,1,2,1,1,1,1,1,1,1],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+             [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+              [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+              [0,0,0,0,2,1,1,1,1,1,1,0,0,0,0],
+              [0,0,0,1,1,2,2,1,1,1,1,1,0,0,0],
+              [0,0,1,1,1,1,1,2,2,1,2,1,1,0,0],
+              [0,1,1,1,1,1,1,1,1,2,2,2,1,1,0],
+              [1,1,1,1,1,1,1,1,2,2,2,2,2,1,1],
+              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]]
+    lower7x7 = [[[0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0],
+                 [0,0,0,1,0,0,0],
+                 [0,0,1,1,1,0,0],
+                 [0,1,2,2,1,1,0],
+                 [1,1,1,1,1,1,1],
+                 [0,0,0,0,0,0,0]],
+                [[0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0],
+                 [0,0,0,1,0,0,0],
+                 [0,0,1,2,1,0,0],
+                 [0,1,2,1,2,1,0],
+                 [1,1,1,1,1,1,1],
+                 [0,0,0,0,0,0,0]],
+                [[0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0],
+                 [0,0,0,1,0,0,0],
+                 [0,0,1,1,1,0,0],
+                 [0,1,1,2,2,1,0],
+                 [1,1,1,1,1,1,1],
+                 [0,0,0,0,0,0,0]]]
+    # (we invert the lower triangle to get the upper triangle)
+
+    for color in range(n_colors):
+        bg_color = palette[color]
+        # draw the 15x15 icon
         for row in range(15):
             for column in range(15):
-                if column>row:
-                    # upper
-                    pixels[row][(golly_state-1)*15+column] = palette[uc]
-                elif column<row:
-                    # lower
-                    pixels[row][(golly_state-1)*15+column] = palette[lc]
+                # lower triangle
+                pixels[row][(color-1)*15+column] = \
+                    [palette[0],bg_color,bg_color][lower[0][row][column]]
+                # upper triangle
+                pixels[row][(color+total_states-2)*15+column] = \
+                    [palette[0],bg_color,bg_color][lower[0][13-row][column]]
+        # draw the 7x7 icon
         for row in range(7):
             for column in range(7):
-                if column>row:
-                    # upper
-                    pixels[15+row][(golly_state-1)*15+column] = palette[uc]
-                elif column<row:
-                    # lower
-                    pixels[15+row][(golly_state-1)*15+column] = palette[lc]
-        '''draw the cells with a turmite in the upper half'''
-        for us in range(n_states):
-            for ud in range(n_dirs):
-                upper = encode(uc,us,ud)
-                golly_state = upper * total_states + lc
+                # lower triangle
+                pixels[15+row][(color-1)*15+column] = \
+                    [palette[0],bg_color,bg_color][lower7x7[0][row][column]]
+                # upper triangle
+                pixels[15+row][(color+total_states-2)*15+column] = \
+                    [palette[0],bg_color,bg_color][lower7x7[0][6-row][column]]
+        for state in range(n_states):
+            fg_color = palette[n_colors+state]
+            for dir in range(n_dirs):
+                # draw the 15x15 icon
                 for row in range(15):
                     for column in range(15):
-                        if column>row:
-                            # upper
-                            bg_col = palette[uc]
-                            fg_col = palette[n_colors+us]
-                            pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ud][row][column]]
-                        elif column<row:
-                            # lower
-                            pixels[row][(golly_state-1)*15+column] = palette[lc]
+                        # lower triangle
+                        pixels[row][(encode(color,state,dir)-1)*15+column] = \
+                            [palette[0],bg_color,fg_color][lower[dir][row][column]]
+                        # upper triangle
+                        pixels[row][(encode(color,state,dir)+total_states-2)*15+column] = \
+                            [palette[0],bg_color,fg_color][lower[2-dir][13-row][column]]
+                # draw the 7x7 icon
                 for row in range(7):
                     for column in range(7):
-                        if column>row:
-                            # upper
-                            bg_col = palette[uc]
-                            fg_col = palette[n_colors+us]
-                            pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ud][row][column]]
-                        elif column<row:
-                            # lower
-                            pixels[15+row][(golly_state-1)*15+column] = palette[lc]
-    for ls in range(n_states):
-        for ld in range(n_dirs):
-            lower = encode(lc,ls,ld)
-            for uc in range(n_colors):
-                '''draw the cells with a turmite in the lower half'''
-                golly_state = uc * total_states + lower
-                for row in range(15):
-                    for column in range(15):
-                        if row>column:
-                            # lower
-                            bg_col = palette[lc]
-                            fg_col = palette[n_colors+ls]
-                            pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ld][row][column]]
-                        elif column>row:
-                            # upper
-                            pixels[row][(golly_state-1)*15+column] = palette[uc]
-                for row in range(7):
-                    for column in range(7):
-                        if row>column:
-                            # lower
-                            bg_col = palette[lc]
-                            fg_col = palette[n_colors+ls]
-                            pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ld][row][column]]
-                        elif column>row:
-                            # upper
-                            pixels[15+row][(golly_state-1)*15+column] = palette[uc]
-                '''draw the cells with a turmite in both halves'''
-                for us in range(n_states):
-                    for ud in range(n_dirs):
-                        upper = encode(uc,us,ud)
-                        golly_state = upper * total_states + lower
-                        for row in range(15):
-                            for column in range(15):
-                                if row>column:
-                                    # lower
-                                    bg_col = palette[lc]
-                                    fg_col = palette[n_colors+ls]
-                                    pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ld][row][column]]
-                                elif column>row:
-                                    # upper
-                                    bg_col = palette[uc]
-                                    fg_col = palette[n_colors+us]
-                                    pixels[row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_big[ud][row][column]]
-                        for row in range(7):
-                            for column in range(7):
-                                if row>column:
-                                    # lower
-                                    bg_col = palette[lc]
-                                    fg_col = palette[n_colors+ls]
-                                    pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ld][row][column]]
-                                elif column>row:
-                                    # upper
-                                    bg_col = palette[uc]
-                                    fg_col = palette[n_colors+us]
-                                    pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ud][row][column]]
+                        # lower triangle
+                        pixels[15+row][(encode(color,state,dir)-1)*15+column] = \
+                            [palette[0],bg_color,fg_color][lower7x7[dir][row][column]]
+                        # upper triangle
+                        pixels[15+row][(encode(color,state,dir)+total_states-2)*15+column] = \
+                            [palette[0],bg_color,fg_color][lower7x7[2-dir][6-row][column]]
 
-WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    
+else:
+
+    golly.warn('Too many states!')
+    golly.exit()
 
 # -- select the rule --
 
@@ -403,6 +539,6 @@ golly.setrule(rule_name)
 golly.new(rule_name+'-demo.rle')
 golly.setcell(0,0,encode(0,0,0)) # start with a single turmite
 
-golly.show('Created '+rule_name+'.tree and selected that rule.')
+golly.show('Created '+rule_name+'.tree and '+rule_name+'.icons and selected that rule.')
 
 

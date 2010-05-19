@@ -11,6 +11,17 @@ import os
 from glife.RuleTree import *
 from glife.WriteBMP import *
 
+# We support two emulation methods: 
+# 1) square-splitting: each square holds two triangles: one up, one down
+# 2) checkerboard: each square holds one triangle, either up or down
+#
+# The first method has better appearance but requires N*N states. The second requires only 2N
+# states but user must respect the checkerboard when drawing. For triangularMoore emulation, only
+# the first is possible (since Golly only natively supports vonNeumann and Moore). Thus we choose 
+# the first where possible, only using the second for triangularVonNeumann when N>16.
+#
+# 1) Square-splitting emulation: (following Andrew Trevorrow's TriLife.py)
+# 
 #  triangularVonNeumann -> vonNeumann:
 #
 #      lower         upper 
@@ -38,8 +49,17 @@ from glife.WriteBMP import *
 #    |\8|\2|\5|    |\ |\C|\A|
 #    | \|7\|6\|    | \| \|B\|
 #    +--+--+--+    +--+--+--+
+#
+# 2) Checkerboard emulation: (drawn using A and V to represent triangles in two orientations)
+#
+#    A V A V A V A V       where each A has 3 V neighbors:      V A V
+#    V A V A V A V A                                              V 
+#    A V A V A V A V 
+#    V A V A V A V A       and each V has 3 A neighbors:        A
+#    A V A V A V A V                                          A V A
+#    V A V A V A V A
 
-def TriangularTransitionsToRuleTree(neighborhood,n_states,transitions_list,rule_name):
+def TriangularTransitionsToRuleTree_SplittingMethod(neighborhood,n_states,transitions_list,rule_name):
 
     # each square cell is j*N+i where i is the lower triangle, j is the upper triangle
     # each i,j in (0,N]
@@ -130,7 +150,41 @@ def TriangularTransitionsToRuleTree(neighborhood,n_states,transitions_list,rule_
     golly.show("Compressing rule tree and saving to file...")
     tree.write(golly.getdir('rules') + rule_name + '.tree')
     
-def MakeTriangularIcons(n_states,colors,force_background,rule_name):
+def TriangularTransitionsToRuleTree_CheckerboardMethod(neighborhood,n_states,transitions,rule_name):
+
+    # Background state 0 has no checkerboard, we infer it from its neighboring cells.
+    def encode_lower(s):
+        return s
+    def encode_upper(s):
+        return [0 if se==0 else n_states+se-1 for se in s]
+
+    total_states = n_states*2 - 1
+    if total_states>256:
+        golly.warn("Number of states exceeds Golly's limit of 256!")
+        golly.exit()
+    
+    tree = RuleTree(total_states,4)
+    for t in transitions:
+        # as lower
+        tree.add_rule([encode_lower(t[0]),   # C
+                       encode_upper(t[2]),   # S
+                       encode_upper(t[1]),   # E
+                       encode_upper(t[3]),   # W
+                       range(total_states)],   # N
+                      encode_lower(t[4])[0]) # C'
+        # as upper
+        tree.add_rule([encode_upper(t[0]),   # C
+                       range(total_states),    # S
+                       encode_lower(t[3]),   # E
+                       encode_lower(t[1]),   # W
+                       encode_lower(t[2])],  # N
+                      encode_upper(t[4])[0]) # C'
+        
+    # output the rule tree
+    golly.show("Compressing rule tree and saving to file...")
+    tree.write(golly.getdir('rules') + rule_name + '.tree')
+
+def MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_name):
 
     width = 15*(n_states*n_states-1)
     if force_background and n_states>2:
@@ -169,23 +223,69 @@ def MakeTriangularIcons(n_states,colors,force_background,rule_name):
                     
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
 
+def MakeTriangularIcons_CheckerboardMethod(n_states,colors,force_background,rule_name):
+
+    width = 15*(n_states*2-1)
+    if force_background and n_states>2:
+        width+=15
+    height = 22
+    pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
+
+    lower =  [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+              [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+              [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+              [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+              [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0],
+              [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+    lower7x7 = [[0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0],
+                [0,0,0,1,0,0,0],
+                [0,0,1,1,1,0,0],
+                [0,1,1,1,1,1,0],
+                [1,1,1,1,1,1,1],
+                [0,0,0,0,0,0,0]]
+  
+    if force_background:
+        bg_color = colors[0]
+    else:
+        bg_color = (0,0,0)
+    for i in range(1,n_states):
+        fg_color = colors[i]
+        # draw 15x15 icons
+        for row in range(15):
+            for column in range(15):
+                # draw lower triangle icons
+                pixels[row][15*(i-1) + column] = [bg_color,fg_color][lower[row][column]]
+                # draw upper triangle icons
+                pixels[row][15*(n_states+i-2) + column] = [bg_color,fg_color][lower[13-row][column]]
+        # draw 7x7 icons
+        for row in range(7):
+            for column in range(7):
+                # draw lower triangle icons
+                pixels[15+row][15*(i-1) + column] = [bg_color,fg_color][lower7x7[row][column]]
+                # draw upper triangle icons
+                pixels[15+row][15*(n_states+i-2) + column] = [bg_color,fg_color][lower7x7[6-row][column]]
+                    
+    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
 
 def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
     '''Emulate a triangularVonNeumann or triangularMoore neighborhood rule table with a rule tree.'''
-    
-    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_emulated'
-    # (we use a special suffix to avoid picking up any existing .colors or .icons)
-    
-    # make a rule tree
-    TriangularTransitionsToRuleTree(neighborhood,n_states,transitions_list,rule_name)
 
-    # also save a color .icons file
-    golly.show("Generating icons...")
-
+    input_rulename = os.path.splitext(os.path.split(input_filename)[1])[0]
+    
     # read rule_name+'.colors' file if it exists
     force_background = False
     background_color = [0,0,0]
-    cfn = os.path.split(input_filename)[0]+"/"+os.path.splitext(os.path.split(input_filename)[1])[0]+".colors"
+    cfn = os.path.split(input_filename)[0] + "/" + input_rulename + ".colors"
     try:
         cf = open(cfn,'r')
     except IOError:
@@ -212,19 +312,34 @@ def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
                 else:
                     colors.update({entries[0]:[entries[1],entries[2],entries[3]]})
         # (we don't support gradients in .colors)
-        
-    MakeTriangularIcons(n_states,colors,force_background,rule_name)
 
+    rule_name = input_rulename + '_emulated'
+    # (we use a special suffix to avoid picking up any existing .colors or .icons)
+    
+    # make a rule tree and some icons
+    if n_states <= 16:
+        TriangularTransitionsToRuleTree_SplittingMethod(neighborhood,n_states,transitions_list,rule_name)
+        MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_name)
+        total_states = n_states * n_states
+    elif neighborhood=='triangularVonNeumann' and n_states <= 128:
+        TriangularTransitionsToRuleTree_CheckerboardMethod(neighborhood,n_states,transitions_list,rule_name)
+        MakeTriangularIcons_CheckerboardMethod(n_states,colors,force_background,rule_name)
+        total_states = n_states * 2 - 1
+    else:
+        golly.warn('Only support triangularMoore with 16 states or fewer, and triangularVonNeumann\n'+\
+                   'with 128 states or fewer.')
+        golly.exit()
+    
     if n_states==2:    
         # the icons we wrote are monochrome, so we need a .colors file to avoid
         # them all having different colors or similar from Golly's preferences
         c = open(golly.getdir('rules')+rule_name+".colors",'w')
         if force_background:
             c.write('color = 0 '+' '.join(map(str,background_color))+'\n')
-        for i in range(1,n_states*n_states):
+        for i in range(1,total_states):
             c.write('color = '+str(i)+' '+' '.join(map(str,colors[1]))+'\n')
         c.flush()
         c.close()
-    
+
     return rule_name
 
