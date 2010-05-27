@@ -218,10 +218,6 @@ string ruletable_algo::LoadRuleTable(string rule)
    const string n_states_keyword = "n_states:";
    const string variable_keyword = "var ";
    
-   // TODO: replace rotate6_reflect with reflect6rotate in Python scripts
-   // TODO: deprecate reflect in favour of reflect_horizontal in docs and elsewhere
-   // TODO: correct Moore:rotate4reflect table in ReadRuleTable.py
-
    map< string, vector<string> > available_symmetries;
    {
        const string vonNeumann_available_symmetries[5] = {"none","rotate4","rotate4reflect","reflect_horizontal","permute"};
