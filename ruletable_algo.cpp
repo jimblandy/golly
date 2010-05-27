@@ -37,6 +37,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <sstream>
 using namespace std ;
 
+const string ruletable_algo::neighborhood_value_keywords[N_SUPPORTED_NEIGHBORHOODS] = 
+                    {"vonNeumann","Moore","hexagonal","oneDimensional"};
+// (keep in sync with TNeighborhood)
+
 int ruletable_algo::NumCellStates()
 {
    return this->n_states;
@@ -90,6 +94,28 @@ vector<string> tokenize(const string& str,const string& delimiters)
    return tokens;
 }
 
+string trim_right(const string & s, const string & t = " \t\r\n")
+{ 
+   string d (s); 
+   string::size_type i (d.find_last_not_of (t));
+   if (i == string::npos)
+      return "";
+   else
+      return d.erase (d.find_last_not_of (t) + 1) ; 
+}
+
+string trim_left(const string & s, const string & t = " \t\r\n") 
+{ 
+   string d (s); 
+   return d.erase (0, s.find_first_not_of (t)) ; 
+}
+
+string trim(const string & s, const string & t = " \t\r\n")
+{ 
+   string d (s); 
+   return trim_left (trim_right (d, t), t) ; 
+}
+
 const char *defaultRuleData[] = {
    "n_states:8", "neighborhood:vonNeumann", "symmetries:rotate4",
    "000000", "000012", "000020", "000030", "000050", "000063", "000071",
@@ -124,6 +150,52 @@ const char *defaultRuleData[] = {
    "600011", "600021", "602120", "612125", "612131", "612225", "700077",
    "701120", "701220", "701250", "702120", "702221", "702251", "702321",
    "702525", "702720", 0 } ;
+   
+/*
+   
+// XPM data for the 7x7 icon used for hexagonal CA
+static const char* hex7x7[] = {
+// width height ncolors chars_per_pixel
+"7 7 2 1",
+// colors
+"A c #FFFFFFFFFFFF",
+"B c #000000000000",    // black will be transparent
+// pixels
+"BBBBAAB",
+"BBAAAAA",
+"BAAAAAA",
+"BAAAAAB",
+"AAAAAAB",
+"AAAAABB",
+"BAABBBB"};
+
+// XPM data for the 15x15 icon used for hexagonal CA
+static const char* hex15x15[] = {
+// width height ncolors chars_per_pixel
+"15 15 2 1",
+// colors
+"A c #FFFFFFFFFFFF",
+"B c #000000000000",    // black will be transparent
+// pixels
+"BBBBBBBBBBAABBB",
+"BBBBBBBBAAAAABB",
+"BBBBBBAAAAAAAAB",
+"BBBBAAAAAAAAAAA",
+"BBBAAAAAAAAAAAA",
+"BBBAAAAAAAAAAAB",
+"BBAAAAAAAAAAAAB",
+"BBAAAAAAAAAAABB",
+"BAAAAAAAAAAAABB",
+"BAAAAAAAAAAABBB",
+"AAAAAAAAAAAABBB",
+"AAAAAAAAAAABBBB",
+"BAAAAAAAABBBBBB",
+"BBAAAAABBBBBBBB",
+"BBBAABBBBBBBBBB"};
+
+// TODO: work out how to cause these icons to be loaded at the right time
+
+*/
 
 static FILE *OpenTableFile(string &rule, const char *dir, string &path)
 {
@@ -143,11 +215,25 @@ string ruletable_algo::LoadRuleTable(string rule)
    const string comment_keyword = "#";
    const string symmetries_keyword = "symmetries:";
    const string neighborhood_keyword = "neighborhood:";
-   const string neighborhood_value_keywords[2]={"vonNeumann","Moore"};
    const string n_states_keyword = "n_states:";
    const string variable_keyword = "var ";
-   const string symmetry_keywords[6] = {"none","rotate4","rotate8","reflect","rotate4reflect","rotate8reflect"};
+   
+   // TODO: replace rotate6_reflect with reflect6rotate in Python scripts
+   // TODO: deprecate reflect in favour of reflect_horizontal in docs and elsewhere
+   // TODO: correct Moore:rotate4reflect table in ReadRuleTable.py
 
+   map< string, vector<string> > available_symmetries;
+   {
+       const string vonNeumann_available_symmetries[5] = {"none","rotate4","rotate4reflect","reflect_horizontal","permute"};
+       available_symmetries["vonNeumann"].assign(vonNeumann_available_symmetries,vonNeumann_available_symmetries+5);
+       const string Moore_available_symmetries[7] = {"none","rotate4","rotate8","rotate4reflect","rotate8reflect","reflect_horizontal","permute"};
+       available_symmetries["Moore"].assign(Moore_available_symmetries,Moore_available_symmetries+7);
+       const string hexagonal_available_symmetries[6] = {"none","rotate2","rotate3","rotate6","rotate6reflect","permute"};
+       available_symmetries["hexagonal"].assign(hexagonal_available_symmetries,hexagonal_available_symmetries+6);
+       const string oneDimensional_available_symmetries[3] = {"none","reflect","permute"};
+       available_symmetries["oneDimensional"].assign(oneDimensional_available_symmetries,oneDimensional_available_symmetries+3);
+   }
+   
    int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0) ;
    string line ;
    const int MAX_LINE_LEN=1000;
@@ -167,14 +253,11 @@ string ruletable_algo::LoadRuleTable(string rule)
       line_reader.setfile(in) ;
       line_reader.setcloseonfree() ; // make sure it goes away if we return with an error
    }
-   else {   }
 
-   this->symmetries = rotate4; // default
+   string symmetries = "rotate4"; // default
    this->n_states = 8;  // default
-
    map< string, vector<state> > variables;
-   vector< pair<vector< vector<state> >, state > > transition_table;
-
+   vector< pair< vector< vector<state> >, state > > transition_table;
    unsigned int n_inputs=0;
 
    // these line must have been read before the rest of the file
@@ -192,14 +275,14 @@ string ruletable_algo::LoadRuleTable(string rule)
          line = line_buffer;
       }
       lineno++ ;
-      int allws = 1 ;
-      for (unsigned int i=0; i<line.size(); i++)
-         if (line[i] > ' ') {
-            allws = 0 ;
-            break ;
-         }
-      if(starts_with(line,comment_keyword) || allws)
-         continue; // comment line
+      // snip off any trailing comment
+      if(line.find('#')!=string::npos)
+         line.assign(line.begin(),line.begin()+line.find('#'));
+      // trim any leading/trailing whitespace
+      line = trim(line); 
+      // try each of the allowed forms for this line:
+      if(line.empty())
+         continue; // line was blank or just had a comment
       else if(starts_with(line,n_states_keyword))
       {
          // parse the rest of the line
@@ -217,47 +300,51 @@ string ruletable_algo::LoadRuleTable(string rule)
          }
          n_states_parsed = true;
       }
-      else if(starts_with(line,symmetries_keyword))
-      {
-         string remaining(line.begin()+symmetries_keyword.length(),line.end());
-         bool found_symmetry=false;
-         for(int iS=0;iS<6;iS++)
-            if(starts_with(remaining,symmetry_keywords[iS]))
-            {
-               this->symmetries = (TSymmetry)iS;
-               found_symmetry = true;
-            }
-         if(!found_symmetry)
-         {
-            ostringstream oss;
-            oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
-            return oss.str();
-         }
-         symmetries_parsed = true;
-      }
       else if(starts_with(line,neighborhood_keyword))
       {
          // parse the rest of the line
          string remaining(line.begin()+neighborhood_keyword.length(),line.end());
-         bool found_neighborhood=false;
-         for(int iN=0;iN<2;iN++)
-            if(starts_with(remaining,neighborhood_value_keywords[iN]))
-            {
-               this->neighborhood = (TNeighborhood)iN;
-               found_neighborhood = true;
-            }
-         if(!found_neighborhood)
+         remaining = trim(remaining); // (allow for space between : and value)
+         const string* found = find(this->neighborhood_value_keywords,
+            this->neighborhood_value_keywords+N_SUPPORTED_NEIGHBORHOODS,remaining);
+         if(found == this->neighborhood_value_keywords+N_SUPPORTED_NEIGHBORHOODS)
          {
             ostringstream oss;
-            oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": unsupported neighborhood";
             return oss.str();
          }
+         this->neighborhood = (TNeighborhood)(found - this->neighborhood_value_keywords);
          switch(this->neighborhood) {
             default:
             case vonNeumann: n_inputs=5; break;
             case Moore: n_inputs=9; break;
+            case hexagonal: n_inputs=7; break;
+            case oneDimensional: n_inputs=3; break;
          }
-         neighborhood_parsed=true;
+         neighborhood_parsed = true;
+      }
+      else if(starts_with(line,symmetries_keyword))
+      {
+         if(!neighborhood_parsed)
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << ": neighborhood must be declared before symmetries";
+            return oss.str();
+         }
+         string remaining(line.begin()+symmetries_keyword.length(),line.end());
+         remaining = trim(remaining); // (allow for space between : and value)
+         string neighborhood_as_string = this->neighborhood_value_keywords[this->neighborhood];
+         vector<string>::const_iterator found = find(
+            available_symmetries[neighborhood_as_string].begin(),
+            available_symmetries[neighborhood_as_string].end(), remaining );
+         if(found == available_symmetries[neighborhood_as_string].end())
+         {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno << ": unsupported symmetries";
+            return oss.str();
+         }
+         symmetries = remaining;
+         symmetries_parsed = true;
       }
       else if(starts_with(line,variable_keyword))
       {
@@ -267,9 +354,6 @@ string ruletable_algo::LoadRuleTable(string rule)
             oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing\nbefore first variable";
             return oss.str();
          }
-         // snip off any trailing comment
-         if(line.find('#')!=string::npos)
-            line.assign(line.begin(),line.begin()+line.find('#'));
          // parse the rest of the line for the variable
          vector<string> tokens = tokenize(line,"= {,}");
          string variable_name = tokens[1];
@@ -316,13 +400,13 @@ string ruletable_algo::LoadRuleTable(string rule)
             oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing\nbefore first transition";
             return oss.str();
          }
-         if(this->n_states<=10 && variables.empty())
+         if(this->n_states<=10 && variables.empty() && line.find(',')==string::npos)
          {
+            // if there are only single-digit states and no variables then can use comma-free form:
+            // e.g. 012345 for 0,1,2,3,4 -> 5
             vector< vector<state> > inputs;
             state output;
-            // if there are single-digit states and no variables then use compressed form
-            // e.g. 012345 for 0,1,2,3,4 -> 5
-            if(line.length() < n_inputs+1) // we allow for comments after the rule
+            if(line.length() < n_inputs+1)
             {
                ostringstream oss;
                oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - too few entries";
@@ -334,7 +418,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                if(c<'0' || c>'9')
                {
                   ostringstream oss;
-                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - non-digit character (don't use commas if n_states<11 and no variables)";
+                  oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
                   return oss.str();
                }
                inputs.push_back(vector<state>(1,c-'0'));
@@ -447,122 +531,146 @@ string ruletable_algo::LoadRuleTable(string rule)
             }
          }
       }
-   }
+   } // (finished reading lines from the file)
+
    if(!n_states_parsed || !neighborhood_parsed || !symmetries_parsed)
    {
       ostringstream oss;
       oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing";
       return oss.str();
    }
-   // now convert transition table to bitmask lookup
+   
+   PackTransitions(symmetries,n_inputs,transition_table);
+
+   return string(""); // success
+}
+
+// convert transition table to bitmask lookup
+void ruletable_algo::PackTransitions(const string& symmetries, int n_inputs,
+                            const vector< pair< vector< vector<state> >, state > >& transition_table)
+{
+    // cumbersome initialization of a remap array for the different symmetries
+    map< string, vector< vector<int> > > symmetry_remap[N_SUPPORTED_NEIGHBORHOODS];
+    {
+       int vn_rotate4[4][6] = {{0,1,2,3,4,5},{0,2,3,4,1,5},{0,3,4,1,2,5},{0,4,1,2,3,5}};
+       for(int i=0;i<4;i++)
+          symmetry_remap[vonNeumann]["rotate4"].push_back(vector<int>(vn_rotate4[i],vn_rotate4[i]+6));
+       int vn_rotate4reflect[8][6] = {{0,1,2,3,4,5},{0,2,3,4,1,5},{0,3,4,1,2,5},{0,4,1,2,3,5},
+          {0,4,3,2,1,5},{0,3,2,1,4,5},{0,2,1,4,3,5},{0,1,4,3,2,5}};
+       for(int i=0;i<8;i++)
+          symmetry_remap[vonNeumann]["rotate4reflect"].push_back(vector<int>(vn_rotate4reflect[i],vn_rotate4reflect[i]+6));
+       int vn_reflect_horizontal[2][6] = {{0,1,2,3,4,5},{0,1,4,3,2,5}};
+       for(int i=0;i<2;i++)
+          symmetry_remap[vonNeumann]["reflect_horizontal"].push_back(vector<int>(vn_reflect_horizontal[i],vn_reflect_horizontal[i]+6));
+       int moore_rotate4[4][10] = {{0,1,2,3,4,5,6,7,8,9},{0,3,4,5,6,7,8,1,2,9},{0,5,6,7,8,1,2,3,4,9},{0,7,8,1,2,3,4,5,6,9}};
+       for(int i=0;i<4;i++)
+          symmetry_remap[Moore]["rotate4"].push_back(vector<int>(moore_rotate4[i],moore_rotate4[i]+10));
+       int moore_rotate8[8][10] = {{0,1,2,3,4,5,6,7,8,9},{0,2,3,4,5,6,7,8,1,9},{0,3,4,5,6,7,8,1,2,9},{0,4,5,6,7,8,1,2,3,9},
+          {0,5,6,7,8,1,2,3,4,9},{0,6,7,8,1,2,3,4,5,9},{0,7,8,1,2,3,4,5,6,9},{0,8,1,2,3,4,5,6,7,9}};
+       for(int i=0;i<8;i++)
+          symmetry_remap[Moore]["rotate8"].push_back(vector<int>(moore_rotate8[i],moore_rotate8[i]+10));
+       int moore_rotate4reflect[8][10] = {{0,1,2,3,4,5,6,7,8,9},{0,3,4,5,6,7,8,1,2,9},{0,5,6,7,8,1,2,3,4,9},{0,7,8,1,2,3,4,5,6,9},
+          {0,1,8,7,6,5,4,3,2,9},{0,7,6,5,4,3,2,1,8,9},{0,5,4,3,2,1,8,7,6,9},{0,3,2,1,8,7,6,5,4,9}};
+       for(int i=0;i<8;i++)
+          symmetry_remap[Moore]["rotate4reflect"].push_back(vector<int>(moore_rotate4reflect[i],moore_rotate4reflect[i]+10));
+       int moore_rotate8reflect[16][10] = {{0,1,2,3,4,5,6,7,8,9},{0,2,3,4,5,6,7,8,1,9},{0,3,4,5,6,7,8,1,2,9},{0,4,5,6,7,8,1,2,3,9},
+          {0,5,6,7,8,1,2,3,4,9},{0,6,7,8,1,2,3,4,5,9},{0,7,8,1,2,3,4,5,6,9},{0,8,1,2,3,4,5,6,7,9},
+          {0,8,7,6,5,4,3,2,1,9},{0,7,6,5,4,3,2,1,8,9},{0,6,5,4,3,2,1,8,7,9},{0,5,4,3,2,1,8,7,6,9},
+          {0,4,3,2,1,8,7,6,5,9},{0,3,2,1,8,7,6,5,4,9},{0,2,1,8,7,6,5,4,3,9},{0,1,8,7,6,5,4,3,2,9}};
+       for(int i=0;i<16;i++)
+          symmetry_remap[Moore]["rotate8reflect"].push_back(vector<int>(moore_rotate8reflect[i],moore_rotate8reflect[i]+10));
+       int moore_reflect_horizontal[2][10] = {{0,1,2,3,4,5,6,7,8,9},{0,1,8,7,6,5,4,3,2,9}};
+       for(int i=0;i<2;i++)
+          symmetry_remap[Moore]["reflect_horizontal"].push_back(vector<int>(moore_reflect_horizontal[i],moore_reflect_horizontal[i]+10));
+       int oneDimensional_reflect[2][4] = {{0,1,2,3},{0,2,1,3}};
+       for(int i=0;i<2;i++)
+          symmetry_remap[oneDimensional]["reflect"].push_back(vector<int>(oneDimensional_reflect[i],oneDimensional_reflect[i]+4));
+       int hex_rotate2[2][8] = {{0,1,2,3,4,5,6,7},{0,4,5,6,1,2,3,7}};
+       for(int i=0;i<2;i++)
+          symmetry_remap[hexagonal]["rotate2"].push_back(vector<int>(hex_rotate2[i],hex_rotate2[i]+8));
+       int hex_rotate3[3][8] = {{0,1,2,3,4,5,6,7},{0,3,4,5,6,1,2,7},{0,5,6,1,2,3,4,7}};
+       for(int i=0;i<3;i++)
+          symmetry_remap[hexagonal]["rotate3"].push_back(vector<int>(hex_rotate3[i],hex_rotate3[i]+8));
+       int hex_rotate6[6][8] = {{0,1,2,3,4,5,6,7},{0,2,3,4,5,6,1,7},{0,3,4,5,6,1,2,7},
+          {0,4,5,6,1,2,3,7},{0,5,6,1,2,3,4,7},{0,6,1,2,3,4,5,7}};
+       for(int i=0;i<6;i++)
+          symmetry_remap[hexagonal]["rotate6"].push_back(vector<int>(hex_rotate6[i],hex_rotate6[i]+8));
+       int hex_rotate6reflect[12][8] = {{0,1,2,3,4,5,6,7},{0,2,3,4,5,6,1,7},{0,3,4,5,6,1,2,7},
+                           {0,4,5,6,1,2,3,7},{0,5,6,1,2,3,4,7},{0,6,1,2,3,4,5,7},
+                           {0,6,5,4,3,2,1,7},{0,5,4,3,2,1,6,7},{0,4,3,2,1,6,5,7},
+                           {0,3,2,1,6,5,4,7},{0,2,1,6,5,4,3,7},{0,1,6,5,4,3,2,7}};
+       for(int i=0;i<12;i++)
+          symmetry_remap[hexagonal]["rotate6reflect"].push_back(vector<int>(hex_rotate6reflect[i],hex_rotate6reflect[i]+8));
+   }
+
+   // initialize the packed transition table
+   this->lut.assign(n_inputs,vector< vector<TBits> >(this->n_states));
+   this->output.clear();
+   this->n_compressed_rules = 0;
+   // each transition rule looks like: e.g. 1,[2,3,5],4,[0,1],3 -> 0
+   vector< vector<state> > permuted_inputs(n_inputs);
+   for(vector< pair< vector< vector<state> >, state> >::const_iterator rule_it = transition_table.begin();
+       rule_it!=transition_table.end();
+       rule_it++)
    {
-      unsigned int n_bits = sizeof(TBits)*8;
-      int n_rotations,rotation_skip,n_reflections;
-      vector<int> reflect_remap[2];
-      if(this->neighborhood==vonNeumann)
+      const vector< vector<state> > & inputs = rule_it->first;
+      state output = rule_it->second;
+      if(symmetries=="none")
       {
-         reflect_remap[0].resize(5);
-         reflect_remap[0][0]=0;
-         reflect_remap[0][1]=1;
-         reflect_remap[0][2]=2;
-         reflect_remap[0][3]=3;
-         reflect_remap[0][4]=4;
-         reflect_remap[1].resize(5);
-         reflect_remap[1][0]=0;
-         reflect_remap[1][1]=1;
-         reflect_remap[1][2]=4;
-         reflect_remap[1][3]=3;
-         reflect_remap[1][4]=2;  // we swap E and W
+         PackTransition(inputs,output);
       }
-      else // this->neighborhood==Moore
+      else if(symmetries=="permute")
       {
-         reflect_remap[0].resize(9);
-         reflect_remap[0][0]=0;
-         reflect_remap[0][1]=1;
-         reflect_remap[0][2]=2;
-         reflect_remap[0][3]=3;
-         reflect_remap[0][4]=4;
-         reflect_remap[0][5]=5;
-         reflect_remap[0][6]=6;
-         reflect_remap[0][7]=7;
-         reflect_remap[0][8]=8;
-         reflect_remap[1].resize(9);
-         reflect_remap[1][0]=0;
-         reflect_remap[1][1]=1;
-         reflect_remap[1][2]=8;
-         reflect_remap[1][3]=7;
-         reflect_remap[1][4]=6;
-         reflect_remap[1][5]=5;
-         reflect_remap[1][6]=4;
-         reflect_remap[1][7]=3;
-         reflect_remap[1][8]=2; // all E and W swapped
+         // work through the permutations of all but the centre cell
+         permuted_inputs = inputs;
+         sort(permuted_inputs.begin()+1,permuted_inputs.end()); // (must sort before permuting)
+         do {
+            PackTransition(permuted_inputs,output);
+         } while(next_permutation(permuted_inputs.begin()+1,permuted_inputs.end())); // (skips duplicates)
       }
-      switch(this->symmetries)
+      else
       {
-         default:
-         case none: n_rotations=1; rotation_skip=1; n_reflections=1; 
-            break;
-         case rotate4: n_rotations=4; n_reflections=1; 
-            if(this->neighborhood==vonNeumann)
-               rotation_skip=1;
-            else // neighborhood==Moore
-               rotation_skip=2;
-            break;
-         case rotate8: n_rotations=8; rotation_skip=1; n_reflections=1; 
-            break;
-         case reflect: n_rotations=1; rotation_skip=1; n_reflections=2; 
-            break;
-         case rotate4reflect: n_rotations=4; n_reflections=2; 
-            if(this->neighborhood==vonNeumann)
-               rotation_skip=1;
-            else // neighborhood==Moore
-               rotation_skip=2;
-            break;
-         case rotate8reflect: n_rotations=8; rotation_skip=1; n_reflections=2; 
-            break;
-      }
-      unsigned int M = transition_table.size() * n_rotations * n_reflections; // (we need to expand out symmetry)
-      this->n_compressed_rules = (M+n_bits-1) / n_bits; // the rule table is compressed down to 1 bit each
-      // initialize lookup table to all bits turned off 
-      this->lut.assign(n_inputs,vector< vector<TBits> >(this->n_states,vector<TBits>(this->n_compressed_rules,0))); 
-      this->output.resize(M);
-      // work through the rules, filling the bit masks
-      unsigned int iRule=0,iRuleC,iBit,iNbor,iExpandedNbor;
-      TBits mask;
-      // (each transition rule looks like, e.g. 1,[2,3,5],4,[0,1],3 -> 0 )
-      for(vector<pair<vector< vector<state> >,state> >::const_iterator rule_it = transition_table.begin();rule_it!=transition_table.end();rule_it++)
-      {
-         const vector< vector<state> >& rule_inputs = rule_it->first;
-         for(int iRot=0;iRot<n_rotations;iRot++)
+         const vector< vector<int> > & remap = symmetry_remap[this->neighborhood][symmetries];
+         for(int iSymm=0;iSymm<(int)remap.size();iSymm++)
          {
-            for(int iRef=0;iRef<n_reflections;iRef++)
-            {
-               this->output[iRule] = rule_it->second;
-               iBit = iRule % n_bits;
-               iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
-               mask = (TBits)1 << iBit; // (cast needed to ensure this is a 64-bit shift, not a 32-bit shift)
-               for(iNbor=0;iNbor<n_inputs;iNbor++)
-               {
-                  const vector<state>& possibles = rule_inputs[iNbor];
-                  for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
-                  {
-                     // apply the necessary rotation to the non-centre cells
-                     if(iNbor>0)
-                        iExpandedNbor = 1+((iNbor-1+iRot*rotation_skip)%(n_inputs-1));
-                     else
-                        iExpandedNbor = iNbor;
-                     // apply any reflection
-                     iExpandedNbor = reflect_remap[iRef][iExpandedNbor];
-                     // apply the resulting bit mask
-                     this->lut[iExpandedNbor][*poss_it][iRuleC] |= mask;
-                  }
-               }
-               iRule++; // this is the index of the rule after expansion for symmetry
-            }
+            for(int i=0;i<n_inputs;i++)
+                permuted_inputs[i] = inputs[remap[iSymm][i]];
+            PackTransition(permuted_inputs,output);
          }
       }
    }
-   return string(""); // success
+}
+
+void ruletable_algo::PackTransition(const vector< vector<state> > & inputs,
+                                    state output)
+{
+    int n_inputs = inputs.size();
+    const unsigned int n_bits = sizeof(TBits)*8;
+    
+    this->output.push_back(output);
+    int iRule = this->output.size()-1;
+    int iBit = iRule % n_bits;
+    unsigned int iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
+    
+    // add a new compressed rule if required
+    if(iRuleC >= this->n_compressed_rules)
+    {
+        for(int iInput=0;iInput<n_inputs;iInput++)
+            for(int iState=0;iState<(int)n_states;iState++)
+                this->lut[iInput][iState].push_back(0);
+        this->n_compressed_rules++;
+    }
+    
+    TBits mask = (TBits)1 << iBit; // (cast needed to ensure this is a 64-bit shift, not a 32-bit shift)
+    for(int iNbor=0;iNbor<n_inputs;iNbor++)
+    {
+        const vector<state> & possibles = inputs[iNbor];
+        for(vector<state>::const_iterator poss_it=possibles.begin();poss_it!=possibles.end();poss_it++)
+        {
+           // add the bits
+           this->lut[iNbor][*poss_it][iRuleC] |= mask;
+        }
+    }
 }
 
 const char* ruletable_algo::getrule() {
@@ -585,20 +693,32 @@ ruletable_algo::~ruletable_algo()
 state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, state e,
                         state sw, state s, state se) 
 {
-   unsigned int iRule;
    TBits is_match;
 
-   for(iRule=0;iRule<this->n_compressed_rules;iRule++)
+   for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
    {
-      // is there a match for any of the (e.g.) 64 rules within iRule?
-      // (we don't have to worry about symmetries here since they were expanded out in LoadRuleTable)
-      if(this->neighborhood==vonNeumann)
-         is_match = this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][e][iRule] & 
-            this->lut[3][s][iRule] & this->lut[4][w][iRule];
-      else // this->neighborhood==Moore
-         is_match = this->lut[0][c][iRule] & this->lut[1][n][iRule] & this->lut[2][ne][iRule] & 
-            this->lut[3][e][iRule] & this->lut[4][se][iRule] & this->lut[5][s][iRule] & this->lut[6][sw][iRule] & 
-            this->lut[7][w][iRule] & this->lut[8][nw][iRule];
+      // is there a match for any of the (e.g.) 64 rules within iRuleC?
+      // (we don't have to worry about symmetries here since they were expanded out in PackTransitions)
+      switch(this->neighborhood)
+      {
+         case vonNeumann: // c,n,e,s,w
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][e][iRuleC] & 
+               this->lut[3][s][iRuleC] & this->lut[4][w][iRuleC];
+            break;
+         case Moore: // c,n,ne,e,se,s,sw,w,nw
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][ne][iRuleC] & 
+               this->lut[3][e][iRuleC] & this->lut[4][se][iRuleC] & this->lut[5][s][iRuleC] & 
+               this->lut[6][sw][iRuleC] & this->lut[7][w][iRuleC] & this->lut[8][nw][iRuleC];
+            break;
+         case hexagonal: // c,n,ne,e,s,sw,w
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][ne][iRuleC] & 
+               this->lut[3][e][iRuleC] & this->lut[4][s][iRuleC] & this->lut[5][sw][iRuleC] & 
+               this->lut[6][w][iRuleC];
+            break;
+         case oneDimensional: // c,w,e
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][w][iRuleC] & this->lut[2][e][iRuleC];
+            break;
+      }
       // if any of them matched, return the output of the first
       if(is_match)
       {
@@ -610,7 +730,7 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
             ++iBit;
             mask <<= 1;
          }
-         return this->output[ iRule*sizeof(TBits)*8 + iBit ];
+         return this->output[ iRuleC*sizeof(TBits)*8 + iBit ]; // find the uncompressed rule index
       }
    }
    return c; // default: no change
