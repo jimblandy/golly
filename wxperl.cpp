@@ -96,12 +96,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #define PERL589_OR_LATER
 #endif
 
-// check if we're building with Perl 5.10
+// check if we're building with Perl 5.10 or later
 #if (ACTIVEPERL_VERSION >= 1000)
    #define PERL510_OR_LATER
 #endif
 #if (PERL_REVISION == 5) && (PERL_VERSION >= 10)
    #define PERL510_OR_LATER
+#endif
+
+// check if we're building with Perl 5.10.1 or later
+#if (PERL_REVISION == 5) && (PERL_VERSION >= 10) && (PERL_SUBVERSION >= 1)
+   #define PERL5101_OR_LATER
 #endif
 
 // restore wxWidgets definition for _ (from include/wx/intl.h)
@@ -155,7 +160,7 @@ extern "C"
    int(*G_perl_run)(PerlInterpreter*);
    SV*(*G_Perl_eval_pv)(pTHX_ const char*, I32);
 #ifdef PERL589_OR_LATER
-   IV (*G_Perl_sv_2iv_flags)(pTHX_ SV* sv, I32 flags);
+   IV(*G_Perl_sv_2iv_flags)(pTHX_ SV* sv, I32 flags);
 #endif
 #ifdef PERL510_OR_LATER
    void(*G_Perl_sys_init3)(int*, char***, char***);
@@ -169,6 +174,9 @@ extern "C"
    SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
    SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
+#endif
+#ifdef PERL5101_OR_LATER
+   SV*(*G_Perl_newSV_type)(pTHX_ svtype type);
 #endif
    void(*G_boot_DynaLoader)(pTHX_ CV*);
 }
@@ -212,6 +220,9 @@ extern "C"
    #define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
    #define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
    #define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
+#endif
+#ifdef PERL5101_OR_LATER
+   #define Perl_newSV_type          G_Perl_newSV_type
 #endif
 #define boot_DynaLoader          G_boot_DynaLoader
 
@@ -268,6 +279,9 @@ static struct PerlFunc
    PERL_FUNC(Perl_Tstack_base_ptr)
    PERL_FUNC(Perl_Tstack_max_ptr)
    PERL_FUNC(Perl_Tstack_sp_ptr)
+#endif
+#ifdef PERL5101_OR_LATER
+   PERL_FUNC(Perl_newSV_type)
 #endif
    PERL_FUNC(boot_DynaLoader)
    { _T(""), NULL }
