@@ -39,16 +39,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *   need to make some changes here.
  */
 #include <limits.h>
-#ifdef __LP64__
-#define __STDC_FORMAT_MACROS
-#define __STDC_LIMIT_MACROS
-#include <inttypes.h>
-#include <stdint.h>
-typedef uintptr_t g_uintptr_t ;
-#define G_MAX SIZE_MAX
+#if defined(__LP64__) || defined(__amd64__)
+   #define __STDC_FORMAT_MACROS
+   #define __STDC_LIMIT_MACROS
+   #include <inttypes.h>
+   #include <stdint.h>
+   typedef uintptr_t g_uintptr_t ;
+   #define G_MAX SIZE_MAX
 #else
-#include <limits.h>
-#define PRIuPTR "u"
-typedef unsigned int g_uintptr_t ;
-#define G_MAX UINT_MAX
+   #define PRIuPTR "u"
+   typedef unsigned int g_uintptr_t ;
+   #define G_MAX UINT_MAX
 #endif
