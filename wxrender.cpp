@@ -93,7 +93,7 @@ Other points of interest:
 - The decision to use buffered drawing is made in PatternView::OnPaint().
   It's never used on Mac OS X or GTK+ 2.0 because windows on those systems
   are automatically buffered.  To avoid flicker on Windows, buffering is
-  always used if:
+  always used if any of these conditions are true:
   - the user is doing a paste;
   - the grid lines are visible;
   - the selection is visible;
@@ -123,7 +123,7 @@ Other points of interest:
 
 #include "wxgolly.h"       // for viewptr, bigview, statusptr
 #include "wxutils.h"       // for Warning, Fatal, FillRect
-#include "wxprefs.h"       // for showgridlines, mingridmag, etc
+#include "wxprefs.h"       // for showgridlines, mingridmag, swapcolors, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxlayer.h"       // currlayer, GetLayer, etc
@@ -155,6 +155,7 @@ int pastemag;                    // must match current viewport's scale
 int cvwd, cvht;                  // must match current viewport's width and height
 paste_location pasteloc;         // must match plocation
 bool pasteicons;                 // must match showicons
+bool pastecolors;                // must match swapcolors
 lifealgo* pastealgo;             // universe containing paste pattern
 wxRect pastebbox;                // bounding box in cell coords (not necessarily minimal)
 
@@ -971,6 +972,7 @@ void CreatePasteImage(lifealgo* palgo, wxRect& bbox)
    pimageht = -1;
    pastemag = currlayer->view->getmag();
    pasteicons = showicons;
+   pastecolors = swapcolors;
 }
 
 // -----------------------------------------------------------------------------
@@ -1053,14 +1055,15 @@ int PixelsToCells(int pixels) {
 
 void CheckPasteImage()
 {
-   // paste image needs to be updated if pasterect size changed
-   // or viewport size changed or plocation changed or showicons changed
+   // paste image needs to be updated if any of these changed:
+   // pasterect size, viewport size, plocation, showicons, swapcolors
    if ( prectwd != viewptr->pasterect.width ||
         prectht != viewptr->pasterect.height ||
         cvwd != currlayer->view->getwidth() ||
         cvht != currlayer->view->getheight() ||
         pasteloc != plocation ||
-        pasteicons != showicons
+        pasteicons != showicons ||
+        pastecolors != swapcolors
       ) {
       prectwd = viewptr->pasterect.width;
       prectht = viewptr->pasterect.height;
@@ -1069,6 +1072,7 @@ void CheckPasteImage()
       cvht = currlayer->view->getheight();
       pasteloc = plocation;
       pasteicons = showicons;
+      pastecolors = swapcolors;
 
       // calculate size of paste image; we could just set it to pasterect size
       // but that would be slow and wasteful for large pasterects, so we use
