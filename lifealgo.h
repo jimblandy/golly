@@ -55,7 +55,7 @@ public:
 
 class lifealgo {
 public:
-   lifealgo() : generation(0), increment(0), timeline()
+   lifealgo() : generation(0), increment(0), timeline(), grid_type(SQUARE_GRID)
       { poller = &default_poller ; }
    virtual void clearall() = 0 ;
    // returns <0 if error
@@ -111,6 +111,8 @@ public:
    int gotoframe(int i) ;
    void destroytimeline() ;
    void savetimelinewithframe(int yesno) { timeline.savetimeline = yesno ; }
+   enum TGridType { SQUARE_GRID, TRI_GRID, HEX_GRID } ;
+   TGridType getgridtype() const { return grid_type ; }
 protected:
    lifepoll *poller ;
    static int verbose ;
@@ -118,6 +120,7 @@ protected:
    bigint generation ;
    bigint increment ;
    timeline_t timeline ;
+   TGridType grid_type ;
 } ;
 
 /**

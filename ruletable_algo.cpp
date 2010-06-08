@@ -151,52 +151,6 @@ const char *defaultRuleData[] = {
    "701120", "701220", "701250", "702120", "702221", "702251", "702321",
    "702525", "702720", 0 } ;
    
-/*
-   
-// XPM data for the 7x7 icon used for hexagonal CA
-static const char* hex7x7[] = {
-// width height ncolors chars_per_pixel
-"7 7 2 1",
-// colors
-"A c #FFFFFFFFFFFF",
-"B c #000000000000",    // black will be transparent
-// pixels
-"BBBBAAB",
-"BBAAAAA",
-"BAAAAAA",
-"BAAAAAB",
-"AAAAAAB",
-"AAAAABB",
-"BAABBBB"};
-
-// XPM data for the 15x15 icon used for hexagonal CA
-static const char* hex15x15[] = {
-// width height ncolors chars_per_pixel
-"15 15 2 1",
-// colors
-"A c #FFFFFFFFFFFF",
-"B c #000000000000",    // black will be transparent
-// pixels
-"BBBBBBBBBBAABBB",
-"BBBBBBBBAAAAABB",
-"BBBBBBAAAAAAAAB",
-"BBBBAAAAAAAAAAA",
-"BBBAAAAAAAAAAAA",
-"BBBAAAAAAAAAAAB",
-"BBAAAAAAAAAAAAB",
-"BBAAAAAAAAAAABB",
-"BAAAAAAAAAAAABB",
-"BAAAAAAAAAAABBB",
-"AAAAAAAAAAAABBB",
-"AAAAAAAAAAABBBB",
-"BAAAAAAAABBBBBB",
-"BBAAAAABBBBBBBB",
-"BBBAABBBBBBBBBB"};
-
-// TODO: work out how to cause these icons to be loaded at the right time
-
-*/
-
 static FILE *OpenTableFile(string &rule, const char *dir, string &path)
 {
    // look for rule.table in given dir and set path
@@ -312,10 +266,10 @@ string ruletable_algo::LoadRuleTable(string rule)
          this->neighborhood = (TNeighborhood)(found - this->neighborhood_value_keywords);
          switch(this->neighborhood) {
             default:
-            case vonNeumann: n_inputs=5; break;
-            case Moore: n_inputs=9; break;
-            case hexagonal: n_inputs=7; break;
-            case oneDimensional: n_inputs=3; break;
+            case vonNeumann: n_inputs=5; grid_type=SQUARE_GRID; break;
+            case Moore: n_inputs=9; grid_type=SQUARE_GRID; break;
+            case hexagonal: n_inputs=7; grid_type=HEX_GRID; break;
+            case oneDimensional: n_inputs=3; grid_type=SQUARE_GRID; break;
          }
          neighborhood_parsed = true;
       }
@@ -417,6 +371,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                   oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
                   return oss.str();
                }
+
                inputs.push_back(vector<state>(1,c-'0'));
             }
             unsigned char c = line[n_inputs];

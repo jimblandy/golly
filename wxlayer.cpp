@@ -1977,11 +1977,16 @@ void UpdateCurrentColors()
    
    // if rule.icons file exists then use those icons
    if ( !LoadRuleIcons(rule, maxstate) ) {
-      // otherwise copy default icons from current algo
-      currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
-      currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
-   }
-   
+      if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
+         // use hexagonal icons
+         currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
+         currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
+      } else {
+         // otherwise copy default icons from current algo
+         currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
+         currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
+      }
+   }   
    // if rule.colors file wasn't loaded and icons are multi-color then we
    // set non-icon colors to the average of the non-black pixels in each icon
    // (note that we use the 7x7 icons because they are faster to scan)

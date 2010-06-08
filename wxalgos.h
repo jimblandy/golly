@@ -74,6 +74,9 @@ extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
 extern wxMenu* algomenu;                  // menu of algorithm names
 extern algo_type initalgo;                // initial algorithm
 
+extern wxBitmap** hexicons7x7;          // hexagonal icon bitmaps for scale 1:8
+extern wxBitmap** hexicons15x15;        // hexagonal icon bitmaps for scale 1:16
+
 void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.
 
