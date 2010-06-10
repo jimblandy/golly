@@ -1653,7 +1653,12 @@ const char *hlifealgo::setrule(const char *s) {
       return err;
    if (global_liferules.hasB0notS8)
       return "B0-not-S8 rules are not allowed in HashLife.";
-   
+      
+   if (global_liferules.isHexagonal())
+      grid_type = HEX_GRID;
+   else
+      grid_type = SQUARE_GRID;
+      
    return 0 ;
 }
 void hlifealgo::unpack8x8(unsigned short nw, unsigned short ne,

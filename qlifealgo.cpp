@@ -1158,6 +1158,11 @@ const char *qlifealgo::setrule(const char *s) {
    } else {
       // ruletable will be set in step() depending on gen parity
    }
+   if (global_liferules.isHexagonal())
+      grid_type = HEX_GRID;
+   else
+      grid_type = SQUARE_GRID;
+   
    return p;
 }
 

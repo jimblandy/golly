@@ -54,6 +54,7 @@ public:
    char rule1[65536];      // rule table for odd gens if rule has B0 but not S8
    bool hasB0notS8;        // set by setrule; true if rule has B0 but not S8
    bool isRegularLife() ;  // is this B3/S23?
+   bool isHexagonal() const { return hexmask == 0x376 ; } // is the rule hexagonal?
 private:
    void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) ;
    // canonical version of valid rule passed into setrule

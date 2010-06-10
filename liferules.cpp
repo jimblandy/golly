@@ -84,7 +84,7 @@ const char *liferules::setrule(const char *rulestring) {
 
    for (i=0; rulestring[i]; i++) {
       if (rulestring[i] == 'h' || rulestring[i] == 'H') {
-         hexmask = 0x673 ;
+         hexmask = 0x376 ;
       } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
          if (rulestring[i]== '/' && slashcount++ > 0)
             return "Only one slash permitted in life rule" ;
