@@ -58,13 +58,22 @@ const char* generationsalgo::setrule(const char *s) {
    }
    if (tnumstates < 2)
       return "Number of states too low in Generations rule" ;
-   if (*p)
-      return "Extra stuff at end of Generations rule" ;
+   
+   if (*p == ':') {
+      // check for suffix like ":T200,100" to specify a bounded universe
+      const char* err = setgridsize(p) ;
+      if (err) return err ;
+   } else {
+      if (*p) return "Unexpected stuff at end of Generations rule" ;
+      gridwd = 0 ;
+      gridht = 0 ;
+   }
+   
    staybits = tstaybits ;
    bornbits = tbornbits ;
    maxCellStates = tnumstates ;
    
-   // AKT: store rule in canonical format for getrule()
+   // store rule in canonical format for getrule()
    int i, j = 0 ;
    char states[4] ;        // room for "2".."256" and null
    for (i=0; i<=8; i++) {
@@ -79,6 +88,13 @@ const char* generationsalgo::setrule(const char *s) {
    i = 0 ;
    while (states[i]) {
       canonrule[j++] = states[i++] ;
+   }
+   if (gridwd > 0 || gridht > 0) {
+      const char* bounds = canonicalsuffix() ;
+      i = 0 ;
+      while (bounds[i]) {
+         canonrule[j++] = bounds[i++] ;
+      }
    }
    canonrule[j] = 0 ;
    

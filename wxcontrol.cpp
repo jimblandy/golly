@@ -94,7 +94,7 @@ bool MainFrame::SaveStartingPattern()
    }
 
    // save starting pattern in tempstart file
-   //!!! use CanWriteFormat(MC_format)???
+   // use CanWriteFormat(MC_format)???
    if ( currlayer->algo->hyperCapable() ) {
       // much faster to save pattern in a macrocell file
       const char* err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
@@ -321,7 +321,7 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       SavePendingChanges();
    }
 
-   //!!! need IsParityShifted() method???
+   // need IsParityShifted() method???
    if (currlayer->algtype == QLIFE_ALGO && newgen.odd() != oldgen.odd()) {
       // qlife stores pattern in different bits depending on gen parity,
       // so we need to create a new qlife universe, set its gen, copy the
@@ -503,20 +503,228 @@ void MainFrame::DisplayPattern()
 
 // -----------------------------------------------------------------------------
 
+static bool CreateBorderCells()
+{
+   lifealgo* curralgo = currlayer->algo;
+
+   // no need to do anything if there is no pattern
+   if (curralgo->isEmpty()) return true;
+
+   int wd = curralgo->gridwd;
+   int ht = curralgo->gridht;
+   
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   
+   // no need to do anything if pattern is completely inside grid edges
+   if ( (wd == 0 || (curralgo->gridleft < left && curralgo->gridright > right)) &&
+        (ht == 0 || (curralgo->gridtop < top && curralgo->gridbottom > bottom)) ) {
+      return true;
+   }
+
+   // if grid has infinite width or height then pattern might be too big to use setcell/getcell
+   if ( (wd == 0 || ht == 0) && viewptr->OutsideLimits(top, left, bottom, right) ) {
+      statusptr->ErrorMessage(_("Pattern is too big!"));
+      // return false so caller can exit step() loop
+      return false;
+   }
+      
+   // set pattern edges
+   int pl = left.toint();
+   int pt = top.toint();
+   int pr = right.toint();      
+   int pb = bottom.toint();
+   
+   // set grid edges
+   int gl = curralgo->gridleft.toint();
+   int gt = curralgo->gridtop.toint();
+   int gr = curralgo->gridright.toint();
+   int gb = curralgo->gridbottom.toint();
+   
+   // border edges are 1 cell outside grid edges
+   int bl = gl - 1;
+   int bt = gt - 1;
+   int br = gr + 1;
+   int bb = gb + 1;
+   
+   if (ht > 0) {
+      // copy live cells in top edge to bottom border
+      for (int x = pl; x <= pr; x++) {
+         // can use nextcell()!!!???
+         int state = curralgo->getcell(x, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+      }
+      // copy live cells in bottom edge to top border
+      for (int x = pl; x <= pr; x++) {
+         // can use nextcell()!!!???
+         int state = curralgo->getcell(x, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+      }
+   }
+   
+   if (wd > 0) {
+      // copy live cells in left edge to right border
+      for (int y = pt; y <= pb; y++) {
+         int state = curralgo->getcell(gl, y);
+         if (state > 0) curralgo->setcell(br, y, state);
+      }
+      // copy live cells in right edge to left border
+      for (int y = pt; y <= pb; y++) {
+         int state = curralgo->getcell(gr, y);
+         if (state > 0) curralgo->setcell(bl, y, state);
+      }
+   }
+   
+   if (wd > 0 && ht > 0) {
+      // copy grid's corner cells to opposite corners in border
+      curralgo->setcell(bl, bt, curralgo->getcell(gr, gb));
+      curralgo->setcell(br, bt, curralgo->getcell(gl, gb));
+      curralgo->setcell(br, bb, curralgo->getcell(gl, gt));
+      curralgo->setcell(bl, bb, curralgo->getcell(gr, gt));
+   }
+   
+   curralgo->endofpattern();
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+static void ClearRect(lifealgo* curralgo, int left, int top, int right, int bottom)
+{
+   int cx, cy, v;
+   for ( cy = top; cy <= bottom; cy++ ) {
+      for ( cx = left; cx <= right; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy, v);
+         if (skip + cx > right)
+            skip = -1;           // pretend we found no more live cells
+         if (skip >= 0) {
+            // found next live cell so delete it
+            cx += skip;
+            curralgo->setcell(cx, cy, 0);
+         } else {
+            cx = right + 1;     // done this row
+         }
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static bool DeleteBorderCells()
+{
+   lifealgo* curralgo = currlayer->algo;
+
+   // no need to do anything if there is no pattern
+   if (curralgo->isEmpty()) return true;
+
+   int wd = curralgo->gridwd;
+   int ht = curralgo->gridht;
+   
+   // need to find pattern edges because pattern may have expanded
+   // (typically by 2 cells, but could be more if rule allows births in empty space)
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   
+   // no need to do anything if grid encloses entire pattern
+   if ( (wd == 0 || (curralgo->gridleft <= left && curralgo->gridright >= right)) &&
+        (ht == 0 || (curralgo->gridtop <= top && curralgo->gridbottom >= bottom)) ) {
+      return true;
+   }
+   
+   if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+      statusptr->ErrorMessage(_("Pattern is too big!"));
+      // return false so caller can exit step() loop
+      return false;
+   }
+   
+   // set pattern edges
+   int pl = left.toint();
+   int pt = top.toint();
+   int pr = right.toint();      
+   int pb = bottom.toint();
+   
+   // set grid edges
+   int gl = curralgo->gridleft.toint();
+   int gt = curralgo->gridtop.toint();
+   int gr = curralgo->gridright.toint();
+   int gb = curralgo->gridbottom.toint();
+   
+   if (ht > 0 && pt < gt) {
+      // delete live cells above grid
+      ClearRect(curralgo, pl, pt, pr, gt-1);
+      pt = gt; // reduce size of rect below
+   }
+   
+   if (ht > 0 && pb > gb) {
+      // delete live cells below grid
+      ClearRect(curralgo, pl, gb+1, pr, pb);
+      pb = gb; // reduce size of rect below
+   }
+   
+   if (wd > 0 && pl < gl) {
+      // delete live cells left of grid
+      ClearRect(curralgo, pl, pt, gl-1, pb);
+   }
+   
+   if (wd > 0 && pr > gr) {
+      // delete live cells right of grid
+      ClearRect(curralgo, gr+1, pt, pr, pb);
+   }
+      
+   curralgo->endofpattern();
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
 bool MainFrame::StepPattern()
 {
-   if (wxGetApp().Poller()->checkevents()) return false;
+   lifealgo* curralgo = currlayer->algo;
+   bool boundedgrid = (curralgo->gridwd > 0 || curralgo->gridht > 0);
    
-   currlayer->algo->step();
+   if (boundedgrid) {
+      // temporarily set the increment to 1 so we can call CreateBorderCells()
+      // and DeleteBorderCells() around each step()
+      int savebase = currlayer->currbase;
+      int saveexpo = currlayer->currexpo;
+      bigint inc = curralgo->getIncrement();
+      curralgo->setIncrement(1);
+      while (inc > 0) {
+         if (wxGetApp().Poller()->checkevents()) {
+            SetGenIncrement();         // restore correct increment
+            return false;
+         }
+         if (savebase != currlayer->currbase || saveexpo != currlayer->currexpo) {
+            // user changed step base/exponent, so best to simply exit loop
+            break;
+         }
+         if (!CreateBorderCells()) {
+            SetGenIncrement();         // restore correct increment
+            return false;
+         }
+         curralgo->step();
+         if (!DeleteBorderCells()) {
+            SetGenIncrement();         // restore correct increment
+            return false;
+         }
+         inc -= 1;
+      }
+      // safe way to restore correct increment in case user altered step base/exponent
+      SetGenIncrement();
+   } else {
+      if (wxGetApp().Poller()->checkevents()) return false;
+      curralgo->step();
+   }
+   
    if (currlayer->autofit) viewptr->FitInView(0);
    DisplayPattern();
    
    /*!!! enable this code if we ever implement isPeriodic()
    if (autostop) {
-      int period = currlayer->algo->isPeriodic();
+      int period = curralgo->isPeriodic();
       if (period > 0) {
          if (period == 1) {
-            if (currlayer->algo->isEmpty()) {
+            if (curralgo->isEmpty()) {
                statusptr->DisplayMessage(_("Pattern is empty."));
             } else {
                statusptr->DisplayMessage(_("Pattern is stable."));
@@ -892,6 +1100,8 @@ void MainFrame::NextGeneration(bool useinc)
       wxGetApp().PollerReset();
       viewptr->CheckCursor(IsActive());
    }
+   
+   bool boundedgrid = (curralgo->gridwd > 0 || curralgo->gridht > 0);
 
    if (useinc) {
       // step by current increment
@@ -899,12 +1109,37 @@ void MainFrame::NextGeneration(bool useinc)
          UpdateToolBar(IsActive());
          UpdateMenuItems(IsActive());
       }
-      curralgo->step();
+      if (boundedgrid) {
+         // temporarily set the increment to 1 so we can call CreateBorderCells()
+         // and DeleteBorderCells() around each step()
+         int savebase = currlayer->currbase;
+         int saveexpo = currlayer->currexpo;
+         bigint inc = curralgo->getIncrement();
+         curralgo->setIncrement(1);
+         while (inc > 0) {
+            if (wxGetApp().Poller()->checkevents()) break;
+            if (savebase != currlayer->currbase || saveexpo != currlayer->currexpo) {
+               // user changed step base/exponent, so reset increment to 1
+               inc = curralgo->getIncrement();
+               curralgo->setIncrement(1);
+            }
+            if (!CreateBorderCells()) break;
+            curralgo->step();
+            if (!DeleteBorderCells()) break;
+            inc -= 1;
+         }
+         // safe way to restore correct increment in case user altered base/expo in above loop
+         SetGenIncrement();
+      } else {
+         curralgo->step();
+      }
    } else {
-      // make sure we only step by one gen
+      // step by 1 gen
       bigint saveinc = curralgo->getIncrement();
       curralgo->setIncrement(1);
+      if (boundedgrid) CreateBorderCells();
       curralgo->step();
+      if (boundedgrid) DeleteBorderCells();
       curralgo->setIncrement(saveinc);
    }
 

@@ -256,6 +256,39 @@ void PatternView::CopySelection()
 
 // -----------------------------------------------------------------------------
 
+// make PatternView:: method???
+static bool CellInGrid(const bigint xpos, const bigint ypos)
+{
+   // return true if cell at xpos,ypos is within bounded grid
+   if (currlayer->algo->gridwd > 0 &&
+         (xpos < currlayer->algo->gridleft ||
+          xpos > currlayer->algo->gridright)) return false;
+   
+   if (currlayer->algo->gridht > 0 &&
+         (ypos < currlayer->algo->gridtop ||
+          ypos > currlayer->algo->gridbottom)) return false;
+   
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+// make PatternView:: method???
+static bool PointInGrid(int x, int y)
+{
+   // is given viewport location also in grid?
+   if (currlayer->algo->gridwd == 0 && currlayer->algo->gridht == 0) {
+      // unbounded grid
+      return true;
+   }
+   pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+   bigint xpos = cellpos.first;
+   bigint ypos = cellpos.second;
+   return CellInGrid(xpos, ypos);
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::SetPasteRect(wxRect& rect, bigint& wd, bigint& ht)
 {
    int x, y, pastewd, pasteht;
@@ -352,15 +385,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       // temporarily change cursor to cross
       wxCursor* savecurs = currlayer->curs;
       currlayer->curs = curs_cross;
-      // CheckCursor(true);            // probs on Mac if Paste menu item selected
-      #ifdef __WXMAC__
-         wxSetCursor(*currlayer->curs);
-      #endif
-      SetCursor(*currlayer->curs);
-      if (showcontrols) {
-         showcontrols = false;
-         RefreshRect(controlsrect,false);
-      }
+      CheckCursor(true);
 
       // create image for drawing pattern to be pasted; note that given box
       // is not necessarily the minimal bounding box because clipboard pattern
@@ -380,7 +405,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          wxPoint pt = ScreenToClient( wxGetMousePosition() );
          pastex = pt.x;
          pastey = pt.y;
-         if (PointInView(pt.x, pt.y)) {
+         if (PointInView(pt.x, pt.y) && PointInGrid(pt.x, pt.y)) {
             // determine new paste rectangle
             wxRect newrect;
             SetPasteRect(newrect, wd, ht);
@@ -432,8 +457,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          // Update();
       }
       
-      if ( pastex < 0 || pastex > currlayer->view->getxmax() ||
-           pastey < 0 || pastey > currlayer->view->getymax() ) {
+      if ( !PointInView(pastex, pastey) || !PointInGrid(pastex, pastey) ) {
          statusptr->DisplayMessage(_("Paste aborted."));
          return;
       }
@@ -1085,6 +1109,10 @@ bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
       pair<bigint, bigint> cellpos = currlayer->view->at(pt.x, pt.y);
       xpos = cellpos.first;
       ypos = cellpos.second;
+      
+      // check if xpos,ypos is outside bounded grid
+      if (!CellInGrid(xpos, ypos)) return false;
+      
       return true;
    } else {
       // mouse not in viewport
@@ -1096,8 +1124,8 @@ bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
 
 bool PatternView::PointInView(int x, int y)
 {
-   return (x >= 0) && (x <= currlayer->view->getxmax()) &&
-          (y >= 0) && (y <= currlayer->view->getymax());
+   return ( x >= 0 && x <= currlayer->view->getxmax() &&
+            y >= 0 && y <= currlayer->view->getymax() );
 }
 
 // -----------------------------------------------------------------------------
@@ -1115,7 +1143,7 @@ void PatternView::CheckCursor(bool active)
    if (active) {
       // make sure cursor is up to date
       wxPoint pt = ScreenToClient( wxGetMousePosition() );
-      if (PointInView(pt.x, pt.y)) {
+      if (PointInView(pt.x, pt.y)) {         
          if (numlayers > 1 && tilelayers && tileindex != currindex) {
             // show arrow cursor if over tile border (ie. bigview) or non-current tile
             #ifdef __WXMAC__
@@ -1138,6 +1166,17 @@ void PatternView::CheckCursor(bool active)
             SetCursor(*wxSTANDARD_CURSOR);
             if (!showcontrols) {
                showcontrols = true;
+               RefreshControls();
+            }
+         
+         } else if (!PointInGrid(pt.x, pt.y)) {
+            // cursor is outside bounded grid
+            #ifdef __WXMAC__
+               wxSetCursor(*wxSTANDARD_CURSOR);
+            #endif
+            SetCursor(*wxSTANDARD_CURSOR);
+            if (showcontrols) {
+               showcontrols = false;
                RefreshControls();
             }
          
@@ -2602,6 +2641,12 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
 void PatternView::OnMouseMotion(wxMouseEvent& event)
 {
    statusptr->CheckMouseLocation(mainptr->IsActive());
+   
+   if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+      // call CheckCursor in case cursor moves in/out of bounded grid
+      CheckCursor(mainptr->IsActive());
+      return;
+   }
    
    // check if translucent controls need to be shown/hidden
    if (mainptr->IsActive()) {

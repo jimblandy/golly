@@ -1129,8 +1129,10 @@ void qlifealgo::step() {
  */
 const char *qlifealgo::setrule(const char *s) {
    markglobalchange() ;
-   const char *p = global_liferules.setrule(s) ;
-   // AKT: hasB0notS8 flag has been set
+   
+   const char* err = global_liferules.setrule(s);
+   if (err) return err;
+
    if (!global_liferules.hasB0notS8) {
       // current rule doesn't have B0, or it has both B0 and S8
       ruletable = global_liferules.rule0 ;
@@ -1158,12 +1160,13 @@ const char *qlifealgo::setrule(const char *s) {
    } else {
       // ruletable will be set in step() depending on gen parity
    }
+   
    if (global_liferules.isHexagonal())
       grid_type = HEX_GRID;
    else
       grid_type = SQUARE_GRID;
    
-   return p;
+   return 0;
 }
 
 static lifealgo *creator() { return new qlifealgo() ; }

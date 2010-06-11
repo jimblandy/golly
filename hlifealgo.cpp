@@ -1647,10 +1647,9 @@ const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
    clearcache() ;
    
-   // AKT: need to check for B0-not-S8 rule
    const char* err = global_liferules.setrule(s);
-   if (err)
-      return err;
+   if (err) return err;
+   
    if (global_liferules.hasB0notS8)
       return "B0-not-S8 rules are not allowed in HashLife.";
       

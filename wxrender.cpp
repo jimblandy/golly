@@ -59,6 +59,8 @@ DrawView() does the following tasks:
 
 - Calls DrawGridLines() to overlay grid lines if they are visible.
 
+- Calls DrawGridBorder() to draw border around a bounded universe.
+
 - Calls DrawSelection() to overlay a translucent selection rectangle
   if a selection exists and any part of it is visible.
 
@@ -1288,7 +1290,7 @@ void DrawPasteImage(wxDC& dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC& dc, wxRect& r)
+void DrawGridLines(wxDC& dc)
 {
    int cellsize = 1 << currlayer->view->getmag();
    int h, v, i, topbold, leftbold;
@@ -1307,7 +1309,7 @@ void DrawGridLines(wxDC& dc, wxRect& r)
       }
       if (mathcoords) topbold--;   // show origin cell above bold line
    } else {
-      // avoid spurious gcc warning
+      // avoid gcc warning
       topbold = leftbold = 0;
    }
 
@@ -1318,19 +1320,19 @@ void DrawGridLines(wxDC& dc, wxRect& r)
    v = -1;
    while (true) {
       v += cellsize;
-      if (v >= r.height) break;
+      if (v >= currht) break;
       if (showboldlines) i++;
-      if (i % boldspacing != 0 && v >= r.y && v < r.y + r.height)
-         dc.DrawLine(r.x, v, r.GetRight() + 1, v);
+      if (i % boldspacing != 0 && v >= 0 && v < currht)
+         dc.DrawLine(0, v, currwd, v);
    }
    i = showboldlines ? leftbold : 1;
    h = -1;
    while (true) {
       h += cellsize;
-      if (h >= r.width) break;
+      if (h >= currwd) break;
       if (showboldlines) i++;
-      if (i % boldspacing != 0 && h >= r.x && h < r.x + r.width)
-         dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+      if (i % boldspacing != 0 && h >= 0 && h < currwd)
+         dc.DrawLine(h, 0, h, currht);
    }
 
    if (showboldlines) {
@@ -1340,23 +1342,104 @@ void DrawGridLines(wxDC& dc, wxRect& r)
       v = -1;
       while (true) {
          v += cellsize;
-         if (v >= r.height) break;
+         if (v >= currht) break;
          i++;
-         if (i % boldspacing == 0 && v >= r.y && v < r.y + r.height)
-            dc.DrawLine(r.x, v, r.GetRight() + 1, v);
+         if (i % boldspacing == 0 && v >= 0 && v < currht)
+            dc.DrawLine(0, v, currwd, v);
       }
       i = leftbold;
       h = -1;
       while (true) {
          h += cellsize;
-         if (h >= r.width) break;
+         if (h >= currwd) break;
          i++;
-         if (i % boldspacing == 0 && h >= r.x && h < r.x + r.width)
-            dc.DrawLine(h, r.y, h, r.GetBottom() + 1);
+         if (i % boldspacing == 0 && h >= 0 && h < currwd)
+            dc.DrawLine(h, 0, h, currht);
       }
    }
    
    dc.SetPen(wxNullPen);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawGridBorder(wxDC& dc)
+{
+   // universe is bounded so draw any visible border regions
+   wxBrush borderbrush( wxColor(128, 128, 128) ); // make static global or a user pref???!!!
+   
+   pair<int,int> ltpxl = currlayer->view->screenPosOf(currlayer->algo->gridleft,
+                                                      currlayer->algo->gridtop,
+                                                      currlayer->algo);
+   pair<int,int> rbpxl = currlayer->view->screenPosOf(currlayer->algo->gridright,
+                                                      currlayer->algo->gridbottom,
+                                                      currlayer->algo);
+   int left = ltpxl.first;
+   int top = ltpxl.second;
+   int right = rbpxl.first;
+   int bottom = rbpxl.second;
+   if (currlayer->algo->gridwd == 0) {
+      left = 0;
+      right = currwd-1;
+   }
+   if (currlayer->algo->gridht == 0) {
+      top = 0;
+      bottom = currht-1;
+   }
+
+   if (currlayer->view->getmag() > 0) {
+      // move to bottom right pixel of cell at gridright,gridbottom
+      right += (1 << currlayer->view->getmag()) - 1;
+      bottom += (1 << currlayer->view->getmag()) - 1;
+      if (currlayer->view->getmag() == 1) {
+         // there are no gaps at scale 1:2
+         right++;
+         bottom++;
+      }
+   } else {
+      right++;
+      bottom++;
+   }
+
+   if (left < 0 && right >= currwd && top < 0 && bottom >= currht) {
+      // border isn't visible (ie. grid fills viewport)
+      return;
+   }
+
+   if (left >= currwd || right < 0 || top >= currht || bottom < 0) {
+      // no part of grid is visible so fill viewport with border
+      wxRect r(0, 0, currwd, currht);
+      FillRect(dc, r, borderbrush);
+      return;
+   }
+   
+   // avoid drawing overlapping rects???!!!
+
+   if (currlayer->algo->gridwd > 0) {
+      if (left > 0) {
+         // left border is visible
+         wxRect r(0, 0, left, currht);
+         FillRect(dc, r, borderbrush);
+      }
+      if (right < currwd) {
+         // right border is visible
+         wxRect r(right, 0, currwd - right, currht);
+         FillRect(dc, r, borderbrush);
+      }
+   }
+   
+   if (currlayer->algo->gridht > 0) {
+      if (top > 0) {
+         // top border is visible
+         wxRect r(0, 0, currwd, top);
+         FillRect(dc, r, borderbrush);
+      }
+      if (bottom < currht) {
+         // bottom border is visible
+         wxRect r(0, bottom, currwd, currht - bottom);
+         FillRect(dc, r, borderbrush);
+      }
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1511,10 +1594,12 @@ void DrawView(wxDC& dc, int tileindex)
    
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
-      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
+      currwd = currlayer->view->getwidth();
+      currht = currlayer->view->getheight();
+      r = wxRect(0, 0, currwd, currht);
       FillRect(dc, r, *currlayer->deadbrush);
       // might as well draw grid lines
-      if ( viewptr->GridVisible() ) DrawGridLines(dc, r);
+      if ( viewptr->GridVisible() ) DrawGridLines(dc); // uses currwd and currht
       return;
    }
 
@@ -1565,12 +1650,16 @@ void DrawView(wxDC& dc, int tileindex)
    currlayer->algo->draw(*currlayer->view, renderer);
 
    if ( viewptr->GridVisible() ) {
-      r = wxRect(0, 0, currlayer->view->getwidth(), currlayer->view->getheight());
-      DrawGridLines(dc, r);
+      DrawGridLines(dc);      // uses currwd and currht
+   }
+
+   // if universe is bounded then draw border regions (if visible)
+   if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 ) {
+      DrawGridBorder(dc);     // uses currwd and currht
    }
    
    if ( currlayer->currsel.Visible(&r) ) {
-      CheckSelectionSize(currlayer->view->getwidth(), currlayer->view->getheight());
+      CheckSelectionSize(currwd, currht);
       if (colorindex == currindex)
          DrawSelection(dc, r);
       else

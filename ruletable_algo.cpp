@@ -644,7 +644,7 @@ ruletable_algo::~ruletable_algo()
 state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, state e,
                         state sw, state s, state se) 
 {
-   TBits is_match;
+   TBits is_match = 0;  // AKT: explicitly initialized to avoid gcc warning
 
    for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
    {

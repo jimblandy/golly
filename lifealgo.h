@@ -56,7 +56,9 @@ public:
 class lifealgo {
 public:
    lifealgo() : generation(0), increment(0), timeline(), grid_type(SQUARE_GRID)
-      { poller = &default_poller ; }
+      {  poller = &default_poller ;
+         gridwd = gridht = 0 ;         // default is an unbounded universe
+      }
    virtual void clearall() = 0 ;
    // returns <0 if error
    virtual int setcell(int x, int y, int newstate) = 0 ;
@@ -91,9 +93,11 @@ public:
    // into some global shared thing or something rather than use static.
    static void setVerbose(int v) { verbose = v ; }
    static int getVerbose() { return verbose ; }
+
    virtual const char* DefaultRule() { return "B3/S23"; }
    // return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
+
    // timeline support
    virtual void* getcurrentstate() = 0 ;
    virtual void setcurrentstate(void *) = 0 ;
@@ -111,8 +115,23 @@ public:
    int gotoframe(int i) ;
    void destroytimeline() ;
    void savetimelinewithframe(int yesno) { timeline.savetimeline = yesno ; }
+
+   // support for a bounded universe (currently only torus, but eventually
+   // we'll add extra stuff to allow bounded plane, Klein bottle, etc.)
+   unsigned int gridwd ;         // bounded if > 0
+   unsigned int gridht ;         // ditto
+   bigint gridleft, gridright ;  // undefined if gridwd is 0
+   bigint gridtop, gridbottom ;  // undefined if gridht is 0
+   const char* setgridsize(const char* suffix) ;
+   // use in setrule() to parse a suffix like ":T100,200" and set
+   // the above grid dimensions
+   const char* canonicalsuffix() ;
+   // use in setrule() to return the canonical version of suffix;
+   // eg. ":t0020" would be converted to ":T20,0"
+   
    enum TGridType { SQUARE_GRID, TRI_GRID, HEX_GRID } ;
    TGridType getgridtype() const { return grid_type ; }
+
 protected:
    lifepoll *poller ;
    static int verbose ;
