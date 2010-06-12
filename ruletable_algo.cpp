@@ -661,10 +661,10 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
                this->lut[3][e][iRuleC] & this->lut[4][se][iRuleC] & this->lut[5][s][iRuleC] & 
                this->lut[6][sw][iRuleC] & this->lut[7][w][iRuleC] & this->lut[8][nw][iRuleC];
             break;
-         case hexagonal: // c,n,ne,e,s,sw,w
-            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][ne][iRuleC] & 
-               this->lut[3][e][iRuleC] & this->lut[4][s][iRuleC] & this->lut[5][sw][iRuleC] & 
-               this->lut[6][w][iRuleC];
+         case hexagonal: // c,n,e,se,s,w,nw
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][e][iRuleC] & 
+               this->lut[3][se][iRuleC] & this->lut[4][s][iRuleC] & this->lut[5][w][iRuleC] & 
+               this->lut[6][nw][iRuleC];
             break;
          case oneDimensional: // c,w,e
             is_match = this->lut[0][c][iRuleC] & this->lut[1][w][iRuleC] & this->lut[2][e][iRuleC];
