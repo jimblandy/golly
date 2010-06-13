@@ -2621,7 +2621,7 @@ MainFrame::MainFrame()
                              wxNO_BORDER |
                              wxWANTS_CHARS |              // receive all keyboard events
                              wxFULL_REPAINT_ON_RESIZE |
-                             wxVSCROLL | wxHSCROLL);
+                             wxVSCROLL | wxHSCROLL | wxALWAYS_SHOW_SB);
    if (viewptr == NULL) Fatal(_("Failed to create viewport window!"));
    
    // this is the main viewport window (tile windows have a tileindex >= 0)

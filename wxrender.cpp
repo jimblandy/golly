@@ -1592,14 +1592,39 @@ void DrawView(wxDC& dc, int tileindex)
    viewport* saveview0 = NULL;
    int colorindex;
    
+   // if grid is bounded then ensure viewport's central cell is not outside grid edges
+   if ( currlayer->algo->gridwd > 0) {
+      if ( currlayer->view->x < currlayer->algo->gridleft )
+         currlayer->view->setpositionmag(currlayer->algo->gridleft,
+                                         currlayer->view->y,
+                                         currlayer->view->getmag());
+      else if ( currlayer->view->x > currlayer->algo->gridright )
+         currlayer->view->setpositionmag(currlayer->algo->gridright,
+                                         currlayer->view->y,
+                                         currlayer->view->getmag());
+   }
+   if ( currlayer->algo->gridht > 0) {
+      if ( currlayer->view->y < currlayer->algo->gridtop )
+         currlayer->view->setpositionmag(currlayer->view->x,
+                                         currlayer->algo->gridtop,
+                                         currlayer->view->getmag());
+      else if ( currlayer->view->y > currlayer->algo->gridbottom )
+         currlayer->view->setpositionmag(currlayer->view->x,
+                                         currlayer->algo->gridbottom,
+                                         currlayer->view->getmag());
+   }
+   
    if ( viewptr->nopattupdate ) {
       // don't draw incomplete pattern, just fill background
       currwd = currlayer->view->getwidth();
       currht = currlayer->view->getheight();
       r = wxRect(0, 0, currwd, currht);
       FillRect(dc, r, *currlayer->deadbrush);
-      // might as well draw grid lines
-      if ( viewptr->GridVisible() ) DrawGridLines(dc); // uses currwd and currht
+      // might as well draw grid lines and border
+      if ( viewptr->GridVisible() )
+         DrawGridLines(dc);         // uses currwd and currht
+      if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 )
+         DrawGridBorder(dc);        // uses currwd and currht
       return;
    }
 

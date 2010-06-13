@@ -121,21 +121,23 @@ void lifealgo::destroytimeline() {
 // AKT: the next 2 routines provide support for a bounded universe
 const char* lifealgo::setgridsize(const char* suffix) {
    // parse a rule suffix like ":T100,200" and set the grid dimensions;
-   // note that we allow any legal partial suffix -- this allows people to
-   // type a suffix into the Set Rule dialog without the algorithm changing
-   // to UNKNOWN
+   // note that we allow any legal partial suffix -- this lets people type a
+   // suffix into the Set Rule dialog without the algorithm changing to UNKNOWN
    const char *p = suffix ;
    gridwd = 0;
    gridht = 0;
    p++;
-   if (*p == 0) return 0;           // treat ":" like ":T0,0"
+   if (*p == 0) return 0;                    // treat ":" like ":T0,0"
    if (*p == 't' || *p == 'T') {
       p++;
-      if (*p == 0) return 0;        // treat ":T" like ":T0,0"
+      if (*p == 0) return 0;                 // treat ":T" like ":T0,0"
       while ('0' <= *p && *p <= '9') {
-         gridwd = 10 * gridwd + *p - '0';
+         if (gridwd >= 200000000) {
+            gridwd = 2000000000;             // keep within editable limits
+         } else {
+            gridwd = 10 * gridwd + *p - '0';
+         }
          p++;
-         if (gridwd > 1000000000) return "Grid width is too large";
       }
       if (*p == ',') {
          p++;
@@ -143,9 +145,12 @@ const char* lifealgo::setgridsize(const char* suffix) {
             // treat ":Tddd," like ":Tddd,0" and continue below
          } else {
             while ('0' <= *p && *p <= '9') {
-               gridht = 10 * gridht + *p - '0';
+               if (gridht >= 200000000) {
+                  gridht = 2000000000;       // keep within editable limits
+               } else {
+                  gridht = 10 * gridht + *p - '0';
+               }
                p++;
-               if (gridht > 1000000000) return "Grid height is too large";
             }
             if (*p) return "Unexpected stuff after grid height";
          }

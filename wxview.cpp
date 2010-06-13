@@ -405,7 +405,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          wxPoint pt = ScreenToClient( wxGetMousePosition() );
          pastex = pt.x;
          pastey = pt.y;
-         if (PointInView(pt.x, pt.y) && PointInGrid(pt.x, pt.y)) {
+         if (PointInView(pt.x, pt.y) /* ??? && PointInGrid(pt.x, pt.y) */) {
             // determine new paste rectangle
             wxRect newrect;
             SetPasteRect(newrect, wd, ht);
@@ -1169,6 +1169,7 @@ void PatternView::CheckCursor(bool active)
                RefreshControls();
             }
          
+         /* best not to do this??? (if we do, enable CheckCursor call in OnMouseMotion)
          } else if (!PointInGrid(pt.x, pt.y)) {
             // cursor is outside bounded grid
             #ifdef __WXMAC__
@@ -1179,6 +1180,7 @@ void PatternView::CheckCursor(bool active)
                showcontrols = false;
                RefreshControls();
             }
+         */
          
          } else {
             // show current cursor mode
@@ -1393,21 +1395,46 @@ void PatternView::UpdateScrollBars()
    int viewwd, viewht;
    int mag = currlayer->view->getmag();
    if (mag > 0) {
-      // scroll by integral number of cells to avoid rounding probs
+      // scroll by cells, so determine number of cells visible in viewport
       viewwd = currlayer->view->getwidth() >> mag;
       viewht = currlayer->view->getheight() >> mag;
    } else {
+      // scroll by pixels, so get pixel dimensions of viewport
       viewwd = currlayer->view->getwidth();
       viewht = currlayer->view->getheight();
    }
-   
-   // keep thumb boxes in middle of scroll bars
-   hthumb = (thumbrange - 1) * viewwd / 2;
-   vthumb = (thumbrange - 1) * viewht / 2;
-   
-   // only big viewport window has scroll bars
-   bigview->SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
-   bigview->SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
+   if (viewwd < 1) viewwd = 1;
+   if (viewht < 1) viewht = 1;
+
+   if (currlayer->algo->gridwd > 0) {
+      // restrict scrolling to left/right edges of grid if its width is finite
+      int range = currlayer->algo->gridwd;
+      #if defined(__WXMAC__) && !wxCHECK_VERSION(2,8,5)
+         // wxALWAYS_SHOW_SB is not implemented in wxMac 2.8.4 or older
+         if (range == 1) range = 3;
+      #endif
+      hthumb = currlayer->view->x.toint() + range / 2;
+      bigview->SetScrollbar(wxHORIZONTAL, hthumb, 1, range, true);
+   } else {
+      // keep thumb box in middle of scroll bar if grid width is infinite
+      hthumb = (thumbrange - 1) * viewwd / 2;
+      bigview->SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
+   }
+
+   if (currlayer->algo->gridht > 0) {
+      // restrict scrolling to top/bottom edges of grid if its height is finite
+      int range = currlayer->algo->gridht;
+      #if defined(__WXMAC__) && !wxCHECK_VERSION(2,8,5)
+         // wxALWAYS_SHOW_SB is not implemented in wxMac 2.8.4 or older
+         if (range == 1) range = 3;
+      #endif
+      vthumb = currlayer->view->y.toint() + range / 2;
+      bigview->SetScrollbar(wxVERTICAL, vthumb, 1, range, true);
+   } else {
+      // keep thumb box in middle of scroll bar if grid height is infinite
+      vthumb = (thumbrange - 1) * viewht / 2;
+      bigview->SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -2642,11 +2669,13 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
 {
    statusptr->CheckMouseLocation(mainptr->IsActive());
    
+   /* only need this code if CheckCursor calls PointInGrid
    if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
       // call CheckCursor in case cursor moves in/out of bounded grid
       CheckCursor(mainptr->IsActive());
       return;
    }
+   */
    
    // check if translucent controls need to be shown/hidden
    if (mainptr->IsActive()) {

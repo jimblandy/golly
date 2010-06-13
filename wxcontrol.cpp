@@ -550,14 +550,18 @@ static bool CreateBorderCells()
    if (ht > 0) {
       // copy live cells in top edge to bottom border
       for (int x = pl; x <= pr; x++) {
-         // can use nextcell()!!!???
-         int state = curralgo->getcell(x, gt);
+         int state;
+         int skip = curralgo->nextcell(x, gt, state);
+         if (skip < 0) break;
+         x += skip;
          if (state > 0) curralgo->setcell(x, bb, state);
       }
       // copy live cells in bottom edge to top border
       for (int x = pl; x <= pr; x++) {
-         // can use nextcell()!!!???
-         int state = curralgo->getcell(x, gb);
+         int state;
+         int skip = curralgo->nextcell(x, gb, state);
+         if (skip < 0) break;
+         x += skip;
          if (state > 0) curralgo->setcell(x, bt, state);
       }
    }
@@ -565,11 +569,13 @@ static bool CreateBorderCells()
    if (wd > 0) {
       // copy live cells in left edge to right border
       for (int y = pt; y <= pb; y++) {
+         // no point using nextcell() here -- edge is only 1 cell wide
          int state = curralgo->getcell(gl, y);
          if (state > 0) curralgo->setcell(br, y, state);
       }
       // copy live cells in right edge to left border
       for (int y = pt; y <= pb; y++) {
+         // no point using nextcell() here -- edge is only 1 cell wide
          int state = curralgo->getcell(gr, y);
          if (state > 0) curralgo->setcell(bl, y, state);
       }
