@@ -282,9 +282,7 @@ static bool PointInGrid(int x, int y)
       return true;
    }
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
-   bigint xpos = cellpos.first;
-   bigint ypos = cellpos.second;
-   return CellInGrid(xpos, ypos);
+   return CellInGrid(cellpos.first, cellpos.second);
 }
 
 // -----------------------------------------------------------------------------
@@ -405,7 +403,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          wxPoint pt = ScreenToClient( wxGetMousePosition() );
          pastex = pt.x;
          pastey = pt.y;
-         if (PointInView(pt.x, pt.y) /* ??? && PointInGrid(pt.x, pt.y) */) {
+         if (PointInView(pt.x, pt.y)) {
             // determine new paste rectangle
             wxRect newrect;
             SetPasteRect(newrect, wd, ht);
@@ -1169,19 +1167,6 @@ void PatternView::CheckCursor(bool active)
                RefreshControls();
             }
          
-         /* best not to do this??? (if we do, enable CheckCursor call in OnMouseMotion)
-         } else if (!PointInGrid(pt.x, pt.y)) {
-            // cursor is outside bounded grid
-            #ifdef __WXMAC__
-               wxSetCursor(*wxSTANDARD_CURSOR);
-            #endif
-            SetCursor(*wxSTANDARD_CURSOR);
-            if (showcontrols) {
-               showcontrols = false;
-               RefreshControls();
-            }
-         */
-         
          } else {
             // show current cursor mode
             #ifdef __WXMAC__
@@ -1747,7 +1732,23 @@ void PatternView::StartDrawingCells(int x, int y)
 
 void PatternView::DrawCells(int x, int y)
 {
+   // make sure x,y is within viewport
+   if (x < 0) x = 0;
+   if (y < 0) y = 0;
+   if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+   if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
+   
+   // make sure x,y is within bounded grid
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+   if (currlayer->algo->gridwd > 0) {
+      if (cellpos.first < currlayer->algo->gridleft) cellpos.first = currlayer->algo->gridleft;
+      if (cellpos.first > currlayer->algo->gridright) cellpos.first = currlayer->algo->gridright;
+   }
+   if (currlayer->algo->gridht > 0) {
+      if (cellpos.second < currlayer->algo->gridtop) cellpos.second = currlayer->algo->gridtop;
+      if (cellpos.second > currlayer->algo->gridbottom) cellpos.second = currlayer->algo->gridbottom;
+   }
+   
    if ( currlayer->view->getmag() < 0 ||
         OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
       return;
@@ -1970,6 +1971,11 @@ void PatternView::MoveView(int x, int y)
       cellpos = currlayer->view->at(x, y);
       bigcellx = cellpos.first;
       bigcelly = cellpos.second;
+   }
+   
+   // only update scroll bars if grid is bounded
+   if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+      UpdateScrollBars();
    }
 }
 
@@ -2462,7 +2468,7 @@ void PatternView::ProcessClickedControl()
 
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
-   // user has clicked somewhere in viewport
+   // user has clicked x,y pixel in viewport
    if (showcontrols) {
       currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
       if (currcontrol > NO_CONTROL) {
@@ -2487,6 +2493,10 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
          Warning(_("Drawing is not allowed while a script is running."));
          return;
       }
+      if (!PointInGrid(x, y)) {
+         statusptr->ErrorMessage(_("Drawing is not allowed outside grid."));
+         return;
+      }
       if (TimelineExists()) {
          statusptr->ErrorMessage(_("Drawing is not allowed if there is a timeline."));
          return;
@@ -2509,6 +2519,10 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
       if (inscript) {
          // best not to clobber any status bar message displayed by script
          Warning(_("Picking is not allowed while a script is running."));
+         return;
+      }
+      if (!PointInGrid(x, y)) {
+         statusptr->ErrorMessage(_("Picking is not allowed outside grid."));
          return;
       }
       if (currlayer->view->getmag() < 0) {
@@ -2669,14 +2683,6 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
 {
    statusptr->CheckMouseLocation(mainptr->IsActive());
    
-   /* only need this code if CheckCursor calls PointInGrid
-   if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
-      // call CheckCursor in case cursor moves in/out of bounded grid
-      CheckCursor(mainptr->IsActive());
-      return;
-   }
-   */
-   
    // check if translucent controls need to be shown/hidden
    if (mainptr->IsActive()) {
       wxPoint pt( event.GetX(), event.GetY() );
@@ -2746,10 +2752,6 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
       
       // user can disable scrolling
       if ( drawingcells && !scrollpencil ) {
-         if (x < 0) x = 0;
-         if (y < 0) y = 0;
-         if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
-         if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
          DrawCells(x, y);
          return;
       }
@@ -2827,11 +2829,6 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
    }
 
    if ( drawingcells ) {
-      // only draw cells within view
-      if (x < 0) x = 0;
-      if (y < 0) y = 0;
-      if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
-      if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
       DrawCells(x, y);
 
    } else if ( selectingcells ) {

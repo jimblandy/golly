@@ -1192,8 +1192,25 @@ XS(pl_evolve)
 
    // advance pattern by ngens
    mainptr->generating = true;
-   tempalgo->setIncrement(ngens);
-   tempalgo->step();
+   if (tempalgo->gridwd > 0 || tempalgo->gridht > 0) {
+      // a bounded grid must use an increment of 1 so we can call
+      // CreateBorderCells and DeleteBorderCells around each step()
+      tempalgo->setIncrement(1);
+      while (ngens > 0) {
+         if (PerlScriptAborted()) {
+            mainptr->generating = false;
+            delete tempalgo;
+            Perl_croak(aTHX_ NULL);
+         }
+         if (!mainptr->CreateBorderCells(tempalgo)) break;
+         tempalgo->step();
+         if (!mainptr->DeleteBorderCells(tempalgo)) break;
+         ngens--;
+      }
+   } else {
+      tempalgo->setIncrement(ngens);
+      tempalgo->step();
+   }
    mainptr->generating = false;
 
    // convert new pattern into a new cell array

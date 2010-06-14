@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wx/dataobj.h"    // for wxTextDataObject
 
 #include "bigint.h"        // for bigint
+#include "lifealgo.h"      // for lifealgo
 #include "writepattern.h"  // for pattern_format
 #include "wxprefs.h"       // for MAX_RECENT
 #include "wxalgos.h"       // for MAX_ALGOS, algo_type
@@ -122,6 +123,9 @@ public:
    void ChangeAlgorithm(algo_type newalgotype,
                         const wxString& newrule = wxEmptyString,
                         bool inundoredo = false);
+   bool CreateBorderCells(lifealgo* curralgo);
+   bool DeleteBorderCells(lifealgo* curralgo);
+   void ClearRect(lifealgo* curralgo, int top, int left, int bottom, int right);
 
    // view functions
    void ToggleStatusBar();

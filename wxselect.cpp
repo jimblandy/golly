@@ -256,6 +256,8 @@ void Selection::Advance()
    bool savecells = allowundo && !currlayer->stayclean;
    if (savecells && inscript) SavePendingChanges();
 
+   bool boundedgrid = (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
+
    // check if selection encloses entire pattern;
    // can't do this if qlife because it uses gen parity to decide which bits to draw;
    // also avoid this if undo/redo is enabled (too messy to remember cell changes)
@@ -267,7 +269,9 @@ void Selection::Advance()
       bigint savegen = currlayer->algo->getGeneration();
       bigint saveinc = currlayer->algo->getIncrement();
       currlayer->algo->setIncrement(1);
+      if (boundedgrid) mainptr->CreateBorderCells(currlayer->algo);
       currlayer->algo->step();
+      if (boundedgrid) mainptr->DeleteBorderCells(currlayer->algo);
       currlayer->algo->setIncrement(saveinc);
       currlayer->algo->setGeneration(savegen);
    
@@ -313,7 +317,9 @@ void Selection::Advance()
    mainptr->generating = true;
    wxGetApp().PollerReset();
    tempalgo->setIncrement(1);
+   if (boundedgrid) mainptr->CreateBorderCells(tempalgo);
    tempalgo->step();
+   if (boundedgrid) mainptr->DeleteBorderCells(tempalgo);
    mainptr->generating = false;
    
    if ( !tempalgo->isEmpty() ) {
@@ -387,6 +393,8 @@ void Selection::AdvanceOutside()
    bool savecells = allowundo && !currlayer->stayclean;
    if (savecells && inscript) SavePendingChanges();
 
+   bool boundedgrid = (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
+
    // check if selection is completely outside pattern edges;
    // can't do this if qlife because it uses gen parity to decide which bits to draw;
    // also avoid this if undo/redo is enabled (too messy to remember cell changes)
@@ -398,13 +406,15 @@ void Selection::AdvanceOutside()
       bigint savegen = currlayer->algo->getGeneration();
       bigint saveinc = currlayer->algo->getIncrement();
       currlayer->algo->setIncrement(1);
+      if (boundedgrid) mainptr->CreateBorderCells(currlayer->algo);
       currlayer->algo->step();
+      if (boundedgrid) mainptr->DeleteBorderCells(currlayer->algo);
       currlayer->algo->setIncrement(saveinc);
       currlayer->algo->setGeneration(savegen);
    
       mainptr->generating = false;
       
-      // if pattern expanded then may need to clear ONE edge of selection
+      // clear selection in case pattern expanded into it
       Clear();
       MarkLayerDirty();
       mainptr->UpdateEverything();
@@ -461,7 +471,9 @@ void Selection::AdvanceOutside()
    mainptr->generating = true;
    wxGetApp().PollerReset();
    currlayer->algo->setIncrement(1);
+   if (boundedgrid) mainptr->CreateBorderCells(currlayer->algo);
    currlayer->algo->step();
+   if (boundedgrid) mainptr->DeleteBorderCells(currlayer->algo);
    mainptr->generating = false;
    
    if ( !currlayer->algo->isEmpty() ) {
@@ -536,11 +548,24 @@ void Selection::AdvanceOutside()
    
    if (savecells) {
       // compare patterns in oldalgo and currlayer->algo and call SaveCellChange
-      // for each cell that has a different state; note that we expand the
-      // original pattern rect by 1 in case generating caused expansion
-      if ( SaveDifferences(oldalgo, currlayer->algo,
-                           top.toint() - 1, left.toint() - 1,
-                           bottom.toint() + 1, right.toint() + 1) ) {
+      // for each cell that has a different state; note that we need to compare
+      // the union of the original pattern's rect and the new pattern's rect
+      int otop = top.toint();
+      int oleft = left.toint();
+      int obottom = bottom.toint();
+      int oright = right.toint();
+      if (!currlayer->algo->isEmpty()) {
+         currlayer->algo->findedges(&top, &left, &bottom, &right);
+         int ntop = top.toint();
+         int nleft = left.toint();
+         int nbottom = bottom.toint();
+         int nright = right.toint();
+         if (ntop < otop) otop = ntop;
+         if (nleft < oleft) oleft = nleft;
+         if (nbottom > obottom) obottom = nbottom;
+         if (nright > oright) oright = nright;
+      }
+      if ( SaveDifferences(oldalgo, currlayer->algo, otop, oleft, obottom, oright) ) {
          delete oldalgo;
          if ( !currlayer->undoredo->RememberCellChanges(_("Advance Outside"), currlayer->dirty) ) {
             // pattern outside selection didn't change

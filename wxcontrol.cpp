@@ -503,10 +503,8 @@ void MainFrame::DisplayPattern()
 
 // -----------------------------------------------------------------------------
 
-static bool CreateBorderCells()
+bool MainFrame::CreateBorderCells(lifealgo* curralgo)
 {
-   lifealgo* curralgo = currlayer->algo;
-
    // no need to do anything if there is no pattern
    if (curralgo->isEmpty()) return true;
 
@@ -595,7 +593,7 @@ static bool CreateBorderCells()
 
 // -----------------------------------------------------------------------------
 
-static void ClearRect(lifealgo* curralgo, int left, int top, int right, int bottom)
+void MainFrame::ClearRect(lifealgo* curralgo, int top, int left, int bottom, int right)
 {
    int cx, cy, v;
    for ( cy = top; cy <= bottom; cy++ ) {
@@ -616,10 +614,8 @@ static void ClearRect(lifealgo* curralgo, int left, int top, int right, int bott
 
 // -----------------------------------------------------------------------------
 
-static bool DeleteBorderCells()
+bool MainFrame::DeleteBorderCells(lifealgo* curralgo)
 {
-   lifealgo* curralgo = currlayer->algo;
-
    // no need to do anything if there is no pattern
    if (curralgo->isEmpty()) return true;
 
@@ -657,24 +653,24 @@ static bool DeleteBorderCells()
    
    if (ht > 0 && pt < gt) {
       // delete live cells above grid
-      ClearRect(curralgo, pl, pt, pr, gt-1);
+      ClearRect(curralgo, pt, pl, gt-1, pr);
       pt = gt; // reduce size of rect below
    }
    
    if (ht > 0 && pb > gb) {
       // delete live cells below grid
-      ClearRect(curralgo, pl, gb+1, pr, pb);
+      ClearRect(curralgo, gb+1, pl, pb, pr);
       pb = gb; // reduce size of rect below
    }
    
    if (wd > 0 && pl < gl) {
       // delete live cells left of grid
-      ClearRect(curralgo, pl, pt, gl-1, pb);
+      ClearRect(curralgo, pt, pl, pb, gl-1);
    }
    
    if (wd > 0 && pr > gr) {
       // delete live cells right of grid
-      ClearRect(curralgo, gr+1, pt, pr, pb);
+      ClearRect(curralgo, pt, gr+1, pb, pr);
    }
       
    curralgo->endofpattern();
@@ -704,12 +700,12 @@ bool MainFrame::StepPattern()
             // user changed step base/exponent, so best to simply exit loop
             break;
          }
-         if (!CreateBorderCells()) {
+         if (!CreateBorderCells(curralgo)) {
             SetGenIncrement();         // restore correct increment
             return false;
          }
          curralgo->step();
-         if (!DeleteBorderCells()) {
+         if (!DeleteBorderCells(curralgo)) {
             SetGenIncrement();         // restore correct increment
             return false;
          }
@@ -1129,9 +1125,9 @@ void MainFrame::NextGeneration(bool useinc)
                inc = curralgo->getIncrement();
                curralgo->setIncrement(1);
             }
-            if (!CreateBorderCells()) break;
+            if (!CreateBorderCells(curralgo)) break;
             curralgo->step();
-            if (!DeleteBorderCells()) break;
+            if (!DeleteBorderCells(curralgo)) break;
             inc -= 1;
          }
          // safe way to restore correct increment in case user altered base/expo in above loop
@@ -1143,9 +1139,9 @@ void MainFrame::NextGeneration(bool useinc)
       // step by 1 gen
       bigint saveinc = curralgo->getIncrement();
       curralgo->setIncrement(1);
-      if (boundedgrid) CreateBorderCells();
+      if (boundedgrid) CreateBorderCells(curralgo);
       curralgo->step();
-      if (boundedgrid) DeleteBorderCells();
+      if (boundedgrid) DeleteBorderCells(curralgo);
       curralgo->setIncrement(saveinc);
    }
 

@@ -29,27 +29,13 @@ Andrew's list:
 
 - Allow dragging zoom-in cursor to zoom into rect.
 
-- Support toroidal universes (see LifeLab).
-
 - Stop generating if pattern becomes empty, constant or p2 (qlife only)
   and display suitable message in status bar.  Or maybe just add
   Gabriel's oscillation detection as an option (see oscar.py).
 
 - Allow non-rectangular (and disjoint) selections.
 
-- Implement a history bar for hlife (and maybe other algos?).
-
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
-
-- Fix rotation/reflection of JvN states.  Probably need Begin/EndTransform
-  methods, and maybe GetTransformedState as well for use in transform().
-  Is there any point doing this given that there are non-symmetric rules
-  like LifeOnTheEdge where the above approach won't work?
-  For example:
-x = 9, y = 8, rule = LifeOnTheEdge
-.CA$BAC$7.A$6.2BA$6.BC$.2A$BAC$.B!
-  How could we rotate/reflect the spaceship at the top
-  to get the equivalent spaceships at the right and bottom?
 
 - Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
