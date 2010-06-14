@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 def WriteRuleTable(neighborhood,n_states,transitions,output_filename):
     '''Write a rule table format file for the given rule.'''
     
@@ -16,7 +18,8 @@ def WriteRuleTable(neighborhood,n_states,transitions,output_filename):
     iNextName = 0
     
     # pass 1: collect and output the variables, replacing inputs with strings
-    for t in transitions:
+    transitions_with_strings = deepcopy(transitions) # don't want to change our input list
+    for t in transitions_with_strings:
         for i,inputs in enumerate(t):
             if len(inputs)==1:
                 t[i]=str(inputs[0])
@@ -42,7 +45,7 @@ def WriteRuleTable(neighborhood,n_states,transitions,output_filename):
 
     # pass 2: output the transitions
     f.write('\n')
-    for t in transitions:
+    for t in transitions_with_strings:
         f.write(','.join(t)+'\n')
         
     f.flush()
