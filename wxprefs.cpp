@@ -194,8 +194,10 @@ int maxpatterns = 20;            // maximum number of recent pattern files (1..M
 int maxscripts = 20;             // maximum number of recent script files (1..MAX_RECENT)
 wxArrayString namedrules;        // initialized in GetPrefs
 
+wxColor* borderrgb;              // color for border around bounded grid
 wxColor* selectrgb;              // color for selected cells
 wxColor* pastergb;               // color for pasted pattern
+wxBrush* borderbrush;            // brush for filling grid border
 wxPen* pastepen;                 // for drawing paste rect
 
 // these settings must be global -- they are changed by GetPrefs *before* the
@@ -1300,6 +1302,7 @@ void SetBrushesAndPens()
    for (int i = 0; i < NumAlgos(); i++) {
       algoinfo[i]->statusbrush->SetColour(algoinfo[i]->statusrgb);
    }
+   borderbrush->SetColour(*borderrgb);
    pastepen->SetColour(*pastergb);
 }
 
@@ -1307,9 +1310,11 @@ void SetBrushesAndPens()
 
 void CreateDefaultColors()
 {
+   borderrgb  = new wxColor(128, 128, 128);  // 50% gray
    selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
    pastergb   = new wxColor(255,   0,   0);  // red
 
+   borderbrush = new wxBrush(*wxBLACK);
    pastepen = new wxPen(*wxBLACK);
    
    // set their default colors (in case prefs file doesn't exist)
@@ -1558,8 +1563,9 @@ void SavePrefs()
    fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
    fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
    fprintf(f, "opacity=%d (1..100)\n", opacity);
-   SaveColor(f, "paste_rgb", pastergb);
+   SaveColor(f, "border_rgb", borderrgb);
    SaveColor(f, "select_rgb", selectrgb);
+   SaveColor(f, "paste_rgb", pastergb);
    
    fputs("\n", f);
    
@@ -2145,8 +2151,9 @@ void GetPrefs()
          if (opacity < 1) opacity = 1;
          if (opacity > 100) opacity = 100;
       
-      } else if (strcmp(keyword, "paste_rgb") == 0) { GetColor(value, pastergb);
+      } else if (strcmp(keyword, "border_rgb") == 0) { GetColor(value, borderrgb);
       } else if (strcmp(keyword, "select_rgb") == 0) { GetColor(value, selectrgb);
+      } else if (strcmp(keyword, "paste_rgb") == 0)  { GetColor(value, pastergb);
 
       } else if (strcmp(keyword, "dead_rgb") == 0) {
          // use deprecated value to set color of state 0 in all algos
@@ -2683,6 +2690,7 @@ enum {
    PREF_ICON_BUTT,
    PREF_SELECT_BUTT,
    PREF_PASTE_BUTT,
+   PREF_BORDER_BUTT,
    // Keyboard prefs
    PREF_KEYCOMBO,
    PREF_ACTION,
@@ -3879,6 +3887,10 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
    colorbox->AddSpacer(10);
    colorbox->AddSpacer(10);
    AddColorButton(panel, colorbox, PREF_PASTE_BUTT, pastergb, _("Paste: "));
+   // don't use AddSpacer(20) because that will also add 20 *vertical* units!
+   colorbox->AddSpacer(10);
+   colorbox->AddSpacer(10);
+   AddColorButton(panel, colorbox, PREF_BORDER_BUTT, borderrgb, _("Grid border: "));
 
    wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
    wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
@@ -4389,11 +4401,14 @@ void PrefsDialog::OnColorButton(wxCommandEvent& event)
    } else if ( id == PREF_TO_BUTT ) {
       ChangeButtonColor(id, algoinfo[coloralgo]->torgb);
 
+   } else if ( id == PREF_SELECT_BUTT ) {
+      ChangeButtonColor(id, *selectrgb);
+
    } else if ( id == PREF_PASTE_BUTT ) {
       ChangeButtonColor(id, *pastergb);
 
-   } else if ( id == PREF_SELECT_BUTT ) {
-      ChangeButtonColor(id, *selectrgb);
+   } else if ( id == PREF_BORDER_BUTT ) {
+      ChangeButtonColor(id, *borderrgb);
    
    } else {
       // process other buttons like Cancel and OK
@@ -4773,8 +4788,9 @@ bool ChangePrefs(const wxString& page)
    }
    
    // save current color info so we can restore it if user cancels changes
-   wxColor save_pastergb = *pastergb;
    wxColor save_selectrgb = *selectrgb;
+   wxColor save_pastergb = *pastergb;
+   wxColor save_borderrgb = *borderrgb;
    SaveColorInfo* save_info[MAX_ALGOS];
    for (int i = 0; i < NumAlgos(); i++) {
       save_info[i] = new SaveColorInfo(i);
@@ -4823,8 +4839,9 @@ bool ChangePrefs(const wxString& page)
             keyaction[key][modset] = savekeyaction[key][modset];
 
       // restore color info saved above
-      *pastergb = save_pastergb;
       *selectrgb = save_selectrgb;
+      *pastergb = save_pastergb;
+      *borderrgb = save_borderrgb;
       for (int i = 0; i < NumAlgos(); i++) {
          save_info[i]->RestoreColorInfo(i);
       }

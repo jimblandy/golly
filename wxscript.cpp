@@ -780,6 +780,14 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
          DoAutoUpdate();
       }
 
+   } else if (strcmp(colname, "border") == 0) {
+      oldcol = *borderrgb;
+      if (oldcol != newcol) {
+         *borderrgb = newcol;
+         SetBrushesAndPens();
+         DoAutoUpdate();
+      }
+
    } else if (strcmp(colname, "paste") == 0) {
       oldcol = *pastergb;
       if (oldcol != newcol) {
@@ -844,6 +852,7 @@ bool GSF_getcolor(char* colname, wxColor& color)
       // deprecated; can now use getcolors(0)
       color.Set(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
    }
+   else if (strcmp(colname, "border") == 0)     color = *borderrgb;
    else if (strcmp(colname, "paste") == 0)      color = *pastergb;
    else if (strcmp(colname, "select") == 0)     color = *selectrgb;
    // next two are deprecated

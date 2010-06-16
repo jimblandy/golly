@@ -1366,8 +1366,6 @@ void DrawGridLines(wxDC& dc)
 void DrawGridBorder(wxDC& dc)
 {
    // universe is bounded so draw any visible border regions
-   wxBrush borderbrush( wxColor(128, 128, 128) ); // make static global or a user pref???!!!
-   
    pair<int,int> ltpxl = currlayer->view->screenPosOf(currlayer->algo->gridleft,
                                                       currlayer->algo->gridtop,
                                                       currlayer->algo);
@@ -1409,35 +1407,42 @@ void DrawGridBorder(wxDC& dc)
    if (left >= currwd || right < 0 || top >= currht || bottom < 0) {
       // no part of grid is visible so fill viewport with border
       wxRect r(0, 0, currwd, currht);
-      FillRect(dc, r, borderbrush);
+      FillRect(dc, r, *borderbrush);
       return;
    }
    
-   // avoid drawing overlapping rects???!!!
-
-   if (currlayer->algo->gridwd > 0) {
-      if (left > 0) {
-         // left border is visible
-         wxRect r(0, 0, left, currht);
-         FillRect(dc, r, borderbrush);
-      }
-      if (right < currwd) {
-         // right border is visible
-         wxRect r(right, 0, currwd - right, currht);
-         FillRect(dc, r, borderbrush);
-      }
-   }
+   // avoid drawing overlapping rects below
+   int rtop = 0;
+   int rheight = currht;
    
    if (currlayer->algo->gridht > 0) {
       if (top > 0) {
          // top border is visible
          wxRect r(0, 0, currwd, top);
-         FillRect(dc, r, borderbrush);
+         FillRect(dc, r, *borderbrush);
+         // reduce size of rect below
+         rtop = top;
+         rheight -= top;
       }
       if (bottom < currht) {
          // bottom border is visible
          wxRect r(0, bottom, currwd, currht - bottom);
-         FillRect(dc, r, borderbrush);
+         FillRect(dc, r, *borderbrush);
+         // reduce size of rect below
+         rheight -= currht - bottom;
+      }
+   }
+
+   if (currlayer->algo->gridwd > 0) {
+      if (left > 0) {
+         // left border is visible
+         wxRect r(0, rtop, left, rheight);
+         FillRect(dc, r, *borderbrush);
+      }
+      if (right < currwd) {
+         // right border is visible
+         wxRect r(right, rtop, currwd - right, rheight);
+         FillRect(dc, r, *borderbrush);
       }
    }
 }

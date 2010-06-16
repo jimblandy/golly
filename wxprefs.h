@@ -286,8 +286,10 @@ wxString GetShortcutTable();
 
 // Colors:
 
+extern wxColor* borderrgb;       // color for border around bounded grid
 extern wxColor* selectrgb;       // color for selected cells
 extern wxColor* pastergb;        // color for pasted pattern
+extern wxBrush* borderbrush;     // brush for filling grid border
 extern wxPen* pastepen;          // pen for drawing paste rect
 
 void SetBrushesAndPens();        // update colors in above brushes and pens
