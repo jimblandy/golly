@@ -116,15 +116,18 @@ public:
    void destroytimeline() ;
    void savetimelinewithframe(int yesno) { timeline.savetimeline = yesno ; }
 
-   // support for a bounded universe (currently only torus, but eventually
-   // we'll add extra stuff to allow bounded plane, Klein bottle, etc.)
-   unsigned int gridwd ;         // bounded if > 0
-   unsigned int gridht ;         // ditto
-   bigint gridleft, gridright ;  // undefined if gridwd is 0
-   bigint gridtop, gridbottom ;  // undefined if gridht is 0
+   // support for a bounded universe with various topologies:
+   // plane, cylinder, torus, Klein bottle, cross-surface
+   unsigned int gridwd, gridht ;    // bounded universe if either is > 0
+   bigint gridleft, gridright ;     // undefined if gridwd is 0
+   bigint gridtop, gridbottom ;     // undefined if gridht is 0
+   bool boundedplane ;              // bounded plane if true
+   bool htwist, vtwist ;            // Klein bottle if either is true,
+                                    // or cross-surface if both are true
+   int hshift, vshift ;             // torus with horizontal or vertical shift
    const char* setgridsize(const char* suffix) ;
    // use in setrule() to parse a suffix like ":T100,200" and set
-   // the above grid dimensions
+   // the above parameters
    const char* canonicalsuffix() ;
    // use in setrule() to return the canonical version of suffix;
    // eg. ":t0020" would be converted to ":T20,0"

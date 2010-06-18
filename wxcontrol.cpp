@@ -503,36 +503,120 @@ void MainFrame::DisplayPattern()
 
 // -----------------------------------------------------------------------------
 
-bool MainFrame::CreateBorderCells(lifealgo* curralgo)
+static void JoinTwistedEdges(lifealgo* curralgo)
 {
-   // no need to do anything if there is no pattern
-   if (curralgo->isEmpty()) return true;
-
-   int wd = curralgo->gridwd;
-   int ht = curralgo->gridht;
+   // set grid edges
+   int gl = curralgo->gridleft.toint();
+   int gt = curralgo->gridtop.toint();
+   int gr = curralgo->gridright.toint();
+   int gb = curralgo->gridbottom.toint();
    
-   bigint top, left, bottom, right;
-   curralgo->findedges(&top, &left, &bottom, &right);
-   
-   // no need to do anything if pattern is completely inside grid edges
-   if ( (wd == 0 || (curralgo->gridleft < left && curralgo->gridright > right)) &&
-        (ht == 0 || (curralgo->gridtop < top && curralgo->gridbottom > bottom)) ) {
-      return true;
-   }
+   // border edges are 1 cell outside grid edges
+   int bl = gl - 1;
+   int bt = gt - 1;
+   int br = gr + 1;
+   int bb = gb + 1;
 
-   // if grid has infinite width or height then pattern might be too big to use setcell/getcell
-   if ( (wd == 0 || ht == 0) && viewptr->OutsideLimits(top, left, bottom, right) ) {
-      statusptr->ErrorMessage(_("Pattern is too big!"));
-      // return false so caller can exit step() loop
-      return false;
-   }
+   if (curralgo->htwist && curralgo->vtwist) {
+      // cross-surface
+      //  eg. :C4,3
+      //  a l k j i d
+      //  l A B C D i
+      //  h E F G H e
+      //  d I J K L a
+      //  i d c b a l
       
-   // set pattern edges
-   int pl = left.toint();
-   int pt = top.toint();
-   int pr = right.toint();      
-   int pb = bottom.toint();
+      for (int x = gl; x <= gr; x++) {
+         int twistedx = gr - x + gl;
+         int state = curralgo->getcell(twistedx, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+         state = curralgo->getcell(twistedx, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         int twistedy = gb - y + gt;
+         int state = curralgo->getcell(gl, twistedy);
+         if (state > 0) curralgo->setcell(br, y, state);
+         state = curralgo->getcell(gr, twistedy);
+         if (state > 0) curralgo->setcell(bl, y, state);
+      }
+      
+      // copy grid's corner cells to SAME corners in border
+      // (these cells are topologically different to non-corner cells)
+      curralgo->setcell(bl, bt, curralgo->getcell(gl, gt));
+      curralgo->setcell(br, bt, curralgo->getcell(gr, gt));
+      curralgo->setcell(br, bb, curralgo->getcell(gr, gb));
+      curralgo->setcell(bl, bb, curralgo->getcell(gl, gb));
    
+   } else if (curralgo->htwist) {
+      // Klein bottle with top and bottom edges twisted 180 degrees
+      //  eg. K4*,3
+      //  i l k j i l
+      //  d A B C D a
+      //  h E F G H e
+      //  l I J K L i
+      //  a d c b a d
+      
+      for (int x = gl; x <= gr; x++) {
+         int twistedx = gr - x + gl;
+         int state = curralgo->getcell(twistedx, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+         state = curralgo->getcell(twistedx, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         // join left and right edges with no twist
+         int state = curralgo->getcell(gl, y);
+         if (state > 0) curralgo->setcell(br, y, state);
+         state = curralgo->getcell(gr, y);
+         if (state > 0) curralgo->setcell(bl, y, state);
+      }
+      
+      // do corner cells
+      curralgo->setcell(bl, bt, curralgo->getcell(gl, gb));
+      curralgo->setcell(br, bt, curralgo->getcell(gr, gb));
+      curralgo->setcell(bl, bb, curralgo->getcell(gl, gt));
+      curralgo->setcell(br, bb, curralgo->getcell(gr, gt));
+   
+   } else { // curralgo->vtwist
+      // Klein bottle with left and right edges twisted 180 degrees
+      //  eg. K4,3*
+      //  d i j k l a
+      //  l A B C D i
+      //  h E F G H e
+      //  d I J K L a
+      //  l a b c d i
+      
+      for (int x = gl; x <= gr; x++) {
+         // join top and bottom edges with no twist
+         int state = curralgo->getcell(x, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+         state = curralgo->getcell(x, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         int twistedy = gb - y + gt;
+         int state = curralgo->getcell(gl, twistedy);
+         if (state > 0) curralgo->setcell(br, y, state);
+         state = curralgo->getcell(gr, twistedy);
+         if (state > 0) curralgo->setcell(bl, y, state);
+      }
+      
+      // do corner cells
+      curralgo->setcell(bl, bt, curralgo->getcell(gr, gt));
+      curralgo->setcell(br, bt, curralgo->getcell(gl, gt));
+      curralgo->setcell(bl, bb, curralgo->getcell(gr, gb));
+      curralgo->setcell(br, bb, curralgo->getcell(gl, gb));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
+{
    // set grid edges
    int gl = curralgo->gridleft.toint();
    int gt = curralgo->gridtop.toint();
@@ -545,7 +629,226 @@ bool MainFrame::CreateBorderCells(lifealgo* curralgo)
    int br = gr + 1;
    int bb = gb + 1;
    
-   if (ht > 0) {
+   // fix!!! ask Gabriel???
+
+   if (curralgo->hshift != 0) {
+      // Klein bottle with shift by 1 on twisted horizontal edge (gwd is even)
+      //  eg. :K4*+1,3
+      //  j i l k j i
+      //  d A B C D a
+      //  h E F G H e
+      //  l I J K L i
+      //  d c b a d c
+      
+      int state, twistedx, shiftedx;
+      
+      for (int x = gl; x <= gr; x++) {
+         // join top and bottom edges with a twist and then shift by 1
+         twistedx = gr - x + gl;
+         shiftedx = twistedx - 1; if (shiftedx < gl) shiftedx = gr;
+         state = curralgo->getcell(shiftedx, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+         
+         shiftedx = twistedx + 1; if (shiftedx > gr) shiftedx = gl;
+         state = curralgo->getcell(shiftedx, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         // join left and right edges with no twist or shift
+         state = curralgo->getcell(gl, y);
+         if (state > 0) curralgo->setcell(br, y, state);
+         state = curralgo->getcell(gr, y);
+         if (state > 0) curralgo->setcell(bl, y, state);
+      }
+      
+      // do corner cells
+      shiftedx = gl - 1; if (shiftedx < gl) shiftedx = gr;
+      curralgo->setcell(bl, bt, curralgo->getcell(shiftedx, gb));
+      shiftedx = gr - 1; if (shiftedx < gl) shiftedx = gr;
+      curralgo->setcell(br, bt, curralgo->getcell(shiftedx, gb));
+      shiftedx = gl + 1; if (shiftedx > gr) shiftedx = gl;
+      curralgo->setcell(bl, bb, curralgo->getcell(shiftedx, gt));
+      shiftedx = gr + 1; if (shiftedx > gr) shiftedx = gl;
+      curralgo->setcell(br, bb, curralgo->getcell(shiftedx, gt));
+   
+   } else { // curralgo->vshift != 0
+      // Klein bottle with shift by 1 on twisted vertical edge (ght is even)
+      //  eg. K3,4*+1
+      //  f j k l j
+      //  c A B C g
+      //  l D E F d
+      //  i G H I a
+      //  f J K L j
+      //  c a b c g
+      
+      int state, twistedy, shiftedy;
+      
+      for (int x = gl; x <= gr; x++) {
+         // join top and bottom edges with no twist or shift
+         state = curralgo->getcell(x, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+         state = curralgo->getcell(x, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         // join left and right edges with a twist and then shift by 1
+         twistedy = gb - y + gt;
+         shiftedy = twistedy - 1; if (shiftedy < gt) shiftedy = gb;
+         state = curralgo->getcell(gr, shiftedy);
+         if (state > 0) curralgo->setcell(bl, y, state);
+         
+         shiftedy = twistedy + 1; if (shiftedy > gb) shiftedy = gt;
+         state = curralgo->getcell(gl, shiftedy);
+         if (state > 0) curralgo->setcell(br, y, state);
+      }
+      
+      // do corner cells
+      shiftedy = gt - 1; if (shiftedy < gt) shiftedy = gb;
+      curralgo->setcell(bl, bt, curralgo->getcell(gr, shiftedy));
+      shiftedy = gt + 1; if (shiftedy > gb) shiftedy = gt;
+      curralgo->setcell(br, bt, curralgo->getcell(gl, shiftedy));
+      shiftedy = gb - 1; if (shiftedy < gt) shiftedy = gb;
+      curralgo->setcell(bl, bb, curralgo->getcell(gr, shiftedy));
+      shiftedy = gb + 1; if (shiftedy > gb) shiftedy = gt;
+      curralgo->setcell(br, bb, curralgo->getcell(gl, shiftedy));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static void JoinShiftedEdges(lifealgo* curralgo,
+                             int gwd, int ght,        // grid wd and ht
+                             int hshift, int vshift)  // horizontal and vertical shifts
+{
+   // set grid edges
+   int gl = curralgo->gridleft.toint();
+   int gt = curralgo->gridtop.toint();
+   int gr = curralgo->gridright.toint();
+   int gb = curralgo->gridbottom.toint();
+   
+   // border edges are 1 cell outside grid edges
+   int bl = gl - 1;
+   int bt = gt - 1;
+   int br = gr + 1;
+   int bb = gb + 1;
+
+   if (hshift != 0) {
+      // torus with horizontal shift
+      //  eg. T:4+1,3
+      //  k l i j k l
+      //  d A B C D a
+      //  h E F G H e
+      //  l I J K L i
+      //  a b c d a b
+      
+      int state, shiftedx;
+      
+      for (int x = gl; x <= gr; x++) {
+         // join top and bottom edges with a horizontal shift
+         shiftedx = x - hshift;
+         if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
+         state = curralgo->getcell(shiftedx, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+         
+         shiftedx = x + hshift;
+         if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
+         state = curralgo->getcell(shiftedx, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         // join left and right edges with no shift
+         state = curralgo->getcell(gl, y);
+         if (state > 0) curralgo->setcell(br, y, state);
+         
+         state = curralgo->getcell(gr, y);
+         if (state > 0) curralgo->setcell(bl, y, state);
+      }
+      
+      // do corner cells
+      shiftedx = gr - hshift;
+      if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
+      curralgo->setcell(bl, bt, curralgo->getcell(shiftedx, gb));
+      shiftedx = gl - hshift;
+      if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
+      curralgo->setcell(br, bt, curralgo->getcell(shiftedx, gb));
+      shiftedx = gr + hshift;
+      if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
+      curralgo->setcell(bl, bb, curralgo->getcell(shiftedx, gt));
+      shiftedx = gl + hshift;
+      if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
+      curralgo->setcell(br, bb, curralgo->getcell(shiftedx, gt));
+   
+   } else { // vshift != 0
+      // torus with vertical shift
+      //  eg. T:4,3+1
+      //  h i j k l a
+      //  l A B C D e
+      //  d E F G H i
+      //  h I J K L a
+      //  l a b c d e
+      
+      int state, shiftedy;
+
+      for (int x = gl; x <= gr; x++) {
+         // join top and bottom edges with no shift
+         state = curralgo->getcell(x, gt);
+         if (state > 0) curralgo->setcell(x, bb, state);
+         
+         state = curralgo->getcell(x, gb);
+         if (state > 0) curralgo->setcell(x, bt, state);
+      }
+
+      for (int y = gt; y <= gb; y++) {
+         // join left and right edges with a vertical shift
+         shiftedy = y - vshift;
+         if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
+         state = curralgo->getcell(gr, shiftedy);
+         if (state > 0) curralgo->setcell(bl, y, state);
+         
+         shiftedy = y + vshift;
+         if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
+         state = curralgo->getcell(gl, shiftedy);
+         if (state > 0) curralgo->setcell(br, y, state);
+      }
+      
+      // do corner cells
+      shiftedy = gb - vshift;
+      if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
+      curralgo->setcell(bl, bt, curralgo->getcell(gr, shiftedy));
+      shiftedy = gb + vshift;
+      if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
+      curralgo->setcell(br, bt, curralgo->getcell(gl, shiftedy));
+      shiftedy = gt - vshift;
+      if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
+      curralgo->setcell(bl, bb, curralgo->getcell(gr, shiftedy));
+      shiftedy = gt + vshift;
+      if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
+      curralgo->setcell(br, bb, curralgo->getcell(gl, shiftedy));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static void JoinEdges(lifealgo* curralgo,
+                      int gwd, int ght,                  // grid wd and ht
+                      int pt, int pl, int pb, int pr)    // pattern edges
+{
+   // set grid edges
+   int gl = curralgo->gridleft.toint();
+   int gt = curralgo->gridtop.toint();
+   int gr = curralgo->gridright.toint();
+   int gb = curralgo->gridbottom.toint();
+   
+   // border edges are 1 cell outside grid edges
+   int bl = gl - 1;
+   int bt = gt - 1;
+   int br = gr + 1;
+   int bb = gb + 1;
+   
+   if (ght > 0) {
       // copy live cells in top edge to bottom border
       for (int x = pl; x <= pr; x++) {
          int state;
@@ -564,7 +867,7 @@ bool MainFrame::CreateBorderCells(lifealgo* curralgo)
       }
    }
    
-   if (wd > 0) {
+   if (gwd > 0) {
       // copy live cells in left edge to right border
       for (int y = pt; y <= pb; y++) {
          // no point using nextcell() here -- edge is only 1 cell wide
@@ -579,12 +882,63 @@ bool MainFrame::CreateBorderCells(lifealgo* curralgo)
       }
    }
    
-   if (wd > 0 && ht > 0) {
+   if (gwd > 0 && ght > 0) {
       // copy grid's corner cells to opposite corners in border
       curralgo->setcell(bl, bt, curralgo->getcell(gr, gb));
       curralgo->setcell(br, bt, curralgo->getcell(gl, gb));
       curralgo->setcell(br, bb, curralgo->getcell(gl, gt));
       curralgo->setcell(bl, bb, curralgo->getcell(gr, gt));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool MainFrame::CreateBorderCells(lifealgo* curralgo)
+{
+   // no need to do anything if there is no pattern or if the grid is a bounded plane
+   if (curralgo->isEmpty() || curralgo->boundedplane) return true;
+
+   int gwd = curralgo->gridwd;
+   int ght = curralgo->gridht;
+   
+   bigint top, left, bottom, right;
+   curralgo->findedges(&top, &left, &bottom, &right);
+   
+   // no need to do anything if pattern is completely inside grid edges
+   if ( (gwd == 0 || (curralgo->gridleft < left && curralgo->gridright > right)) &&
+        (ght == 0 || (curralgo->gridtop < top && curralgo->gridbottom > bottom)) ) {
+      return true;
+   }
+
+   // if grid has infinite width or height then pattern might be too big to use setcell/getcell
+   if ( (gwd == 0 || ght == 0) && viewptr->OutsideLimits(top, left, bottom, right) ) {
+      statusptr->ErrorMessage(_("Pattern is too big!"));
+      // return false so caller can exit step() loop
+      return false;
+   }
+   
+   if (curralgo->htwist || curralgo->vtwist) {
+      if ( (curralgo->htwist && curralgo->hshift != 0 && (gwd & 1) == 0) ||
+           (curralgo->vtwist && curralgo->vshift != 0 && (ght & 1) == 0) ) {
+         // Klein bottle with shift is only possible if the shift is on the
+         // twisted edge and that edge has an even number of cells
+         JoinTwistedAndShiftedEdges(curralgo, gwd, ght);
+      } else {
+         // Klein bottle or cross-surface
+         JoinTwistedEdges(curralgo);
+      }
+   
+   } else if (curralgo->hshift != 0 || curralgo->vshift != 0) {
+      // torus with horizontal or vertical shift
+      JoinShiftedEdges(curralgo, gwd, ght, curralgo->hshift, curralgo->vshift);
+   
+   } else {
+      // unshifted torus or infinite tube
+      int pl = left.toint();
+      int pt = top.toint();
+      int pr = right.toint();      
+      int pb = bottom.toint();
+      JoinEdges(curralgo, gwd, ght, pt, pl, pb, pr);
    }
    
    curralgo->endofpattern();
@@ -619,17 +973,17 @@ bool MainFrame::DeleteBorderCells(lifealgo* curralgo)
    // no need to do anything if there is no pattern
    if (curralgo->isEmpty()) return true;
 
-   int wd = curralgo->gridwd;
-   int ht = curralgo->gridht;
+   int gwd = curralgo->gridwd;
+   int ght = curralgo->gridht;
    
-   // need to find pattern edges because pattern may have expanded
+   // need to find pattern edges because pattern may have expanded beyond grid
    // (typically by 2 cells, but could be more if rule allows births in empty space)
    bigint top, left, bottom, right;
    curralgo->findedges(&top, &left, &bottom, &right);
    
    // no need to do anything if grid encloses entire pattern
-   if ( (wd == 0 || (curralgo->gridleft <= left && curralgo->gridright >= right)) &&
-        (ht == 0 || (curralgo->gridtop <= top && curralgo->gridbottom >= bottom)) ) {
+   if ( (gwd == 0 || (curralgo->gridleft <= left && curralgo->gridright >= right)) &&
+        (ght == 0 || (curralgo->gridtop <= top && curralgo->gridbottom >= bottom)) ) {
       return true;
    }
    
@@ -651,24 +1005,24 @@ bool MainFrame::DeleteBorderCells(lifealgo* curralgo)
    int gr = curralgo->gridright.toint();
    int gb = curralgo->gridbottom.toint();
    
-   if (ht > 0 && pt < gt) {
+   if (ght > 0 && pt < gt) {
       // delete live cells above grid
       ClearRect(curralgo, pt, pl, gt-1, pr);
       pt = gt; // reduce size of rect below
    }
    
-   if (ht > 0 && pb > gb) {
+   if (ght > 0 && pb > gb) {
       // delete live cells below grid
       ClearRect(curralgo, gb+1, pl, pb, pr);
       pb = gb; // reduce size of rect below
    }
    
-   if (wd > 0 && pl < gl) {
+   if (gwd > 0 && pl < gl) {
       // delete live cells left of grid
       ClearRect(curralgo, pt, pl, pb, gl-1);
    }
    
-   if (wd > 0 && pr > gr) {
+   if (gwd > 0 && pr > gr) {
       // delete live cells right of grid
       ClearRect(curralgo, pt, gr+1, pb, pr);
    }

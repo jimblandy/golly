@@ -119,48 +119,99 @@ void lifealgo::destroytimeline() {
 }
 
 // AKT: the next 2 routines provide support for a bounded universe
+
 const char* lifealgo::setgridsize(const char* suffix) {
-   // parse a rule suffix like ":T100,200" and set the grid dimensions;
+   // parse a rule suffix like ":T100,200" and set the various grid parameters;
    // note that we allow any legal partial suffix -- this lets people type a
    // suffix into the Set Rule dialog without the algorithm changing to UNKNOWN
    const char *p = suffix ;
-   gridwd = 0;
-   gridht = 0;
+   gridwd = gridht = 0;
+   hshift = vshift = 0;
+   htwist = vtwist = false;
+   boundedplane = false;
    p++;
-   if (*p == 0) return 0;                    // treat ":" like ":T0,0"
+   if (*p == 0) return 0;                 // treat ":" like ":T0,0"
    if (*p == 't' || *p == 'T') {
-      p++;
-      if (*p == 0) return 0;                 // treat ":T" like ":T0,0"
-      while ('0' <= *p && *p <= '9') {
-         if (gridwd >= 200000000) {
-            gridwd = 2000000000;             // keep within editable limits
-         } else {
-            gridwd = 10 * gridwd + *p - '0';
-         }
-         p++;
-      }
-      if (*p == ',') {
-         p++;
-         if (*p == 0) {
-            // treat ":Tddd," like ":Tddd,0" and continue below
-         } else {
-            while ('0' <= *p && *p <= '9') {
-               if (gridht >= 200000000) {
-                  gridht = 2000000000;       // keep within editable limits
-               } else {
-                  gridht = 10 * gridht + *p - '0';
-               }
-               p++;
-            }
-            if (*p) return "Unexpected stuff after grid height";
-         }
-      } else if (*p) {
-         return "Comma expected after grid width";
-      }
+      // torus or infinite tube
+   } else if (*p == 'p' || *p == 'P') {
+      // bounded plane
+      boundedplane = true;
+   } else if (*p == 'c' || *p == 'C') {
+      // cross-surface
+      htwist = vtwist = true;
+   } else if (*p == 'k' || *p == 'K') {
+      // Klein bottle (assume htwist or vtwist will become true)
    } else {
       return "Unknown grid topology";
    }
-   // now set grid edges
+   
+   p++;
+   if (*p == 0) return 0;                 // treat ":[T/P/C/K]" like ":T0,0"
+   
+   while ('0' <= *p && *p <= '9') {
+      if (gridwd >= 200000000) {
+         gridwd = 2000000000;             // keep width within editable limits
+      } else {
+         gridwd = 10 * gridwd + *p - '0';
+      }
+      p++;
+   }
+   if (*p == '*') {
+      htwist = true;
+      p++;
+   }
+   if (*p == '+' || *p == '-') {
+      int sign = *p == '+' ? 1 : -1;
+      p++;
+      while ('0' <= *p && *p <= '9') {
+         hshift = 10 * hshift + *p - '0';
+         if (hshift >= (int)gridwd) return "Horizontal shift is too big";
+         p++;
+      }
+      hshift *= sign;
+   }
+   if (*p == ',') {
+      p++;
+   } else if (*p) {
+      return "Unexpected stuff after grid width";
+   }
+   
+   while ('0' <= *p && *p <= '9') {
+      if (gridht >= 200000000) {
+         gridht = 2000000000;       // keep height within editable limits
+      } else {
+         gridht = 10 * gridht + *p - '0';
+      }
+      p++;
+   }
+   if (*p == '*') {
+      vtwist = true;
+      p++;
+   }
+   if (*p == '+' || *p == '-') {
+      int sign = *p == '+' ? 1 : -1;
+      p++;
+      while ('0' <= *p && *p <= '9') {
+         vshift = 10 * vshift + *p - '0';
+         if (vshift >= (int)gridht) return "Vertical shift is too big";
+         p++;
+      }
+      vshift *= sign;
+   }
+   if (*p) return "Unexpected stuff after grid height";
+   
+   // check for certain semantic errors
+   if (htwist || vtwist) {
+      // Klein bottle or cross-surface cannot have infinite width or height
+      if (gridwd == 0 && gridht > 0)
+         gridwd = gridht;
+      else if (gridht == 0 && gridwd > 0)
+         gridht = gridwd;
+   }
+   if (hshift != 0 && vshift != 0)
+      return "Can't have both horizontal and vertical shifts";
+   
+   // now ok to set grid edges
    if (gridwd > 0) {
       gridleft = int(gridwd) / -2;
       gridright = int(gridwd) - 1;
@@ -181,12 +232,50 @@ const char* lifealgo::setgridsize(const char* suffix) {
    }
    return 0;
 }
+
 const char* lifealgo::canonicalsuffix() {
    if (gridwd > 0 || gridht > 0) {
-      static char bounds[32];
-      sprintf(bounds, ":T%u,%u", gridwd, gridht);
+      static char bounds[64];
+      if (boundedplane) {
+         sprintf(bounds, ":P%u,%u", gridwd, gridht);
+      } else if (htwist && vtwist) {
+         // cross-surface if both horizontal and vertical edges are twisted
+         sprintf(bounds, ":C%u,%u", gridwd, gridht);
+      } else if (htwist) {
+         // Klein bottle if only horizontal edges are twisted
+         if (hshift != 0 && (gridwd & 1) == 0) {
+            // twist and shift is only possible if gridwd is even and hshift is 1
+            sprintf(bounds, ":K%u*+1,%u", gridwd, gridht);
+         } else {
+            sprintf(bounds, ":K%u*,%u", gridwd, gridht);
+         }
+      } else if (vtwist) {
+         // Klein bottle if only vertical edges are twisted
+         if (vshift != 0 && (gridht & 1) == 0) {
+            // twist and shift is only possible if gridht is even and vshift is 1
+            sprintf(bounds, ":K%u,%u*+1", gridwd, gridht);
+         } else {
+            sprintf(bounds, ":K%u,%u*", gridwd, gridht);
+         }
+      } else if (hshift < 0) {
+         // torus with -ve horizontal shift
+         sprintf(bounds, ":T%u%d,%u", gridwd, hshift, gridht);
+      } else if (hshift > 0) {
+         // torus with +ve horizontal shift
+         sprintf(bounds, ":T%u+%d,%u", gridwd, hshift, gridht);
+      } else if (vshift < 0) {
+         // torus with -ve vertical shift
+         sprintf(bounds, ":T%u,%u%d", gridwd, gridht, vshift);
+      } else if (vshift > 0) {
+         // torus with +ve vertical shift
+         sprintf(bounds, ":T%u,%u+%d", gridwd, gridht, vshift);
+      } else {
+         // unshifted torus, or an infinite tube
+         sprintf(bounds, ":T%u,%u", gridwd, gridht);
+      }
       return bounds;
    } else {
+      // unbounded universe
       return 0;
    }
 }
