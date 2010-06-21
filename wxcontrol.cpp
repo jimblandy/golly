@@ -615,7 +615,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
 
 // -----------------------------------------------------------------------------
 
-static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
+static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
 {
    // set grid edges
    int gl = curralgo->gridleft.toint();
@@ -628,17 +628,15 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
    int bt = gt - 1;
    int br = gr + 1;
    int bb = gb + 1;
-   
-   // fix!!! ask Gabriel???
 
    if (curralgo->hshift != 0) {
-      // Klein bottle with shift by 1 on twisted horizontal edge (gwd is even)
+      // Klein bottle with shift by 1 on twisted horizontal edge (with even number of cells)
       //  eg. :K4*+1,3
       //  j i l k j i
       //  d A B C D a
       //  h E F G H e
       //  l I J K L i
-      //  d c b a d c
+      //  b a d c b a
       
       int state, twistedx, shiftedx;
       
@@ -649,7 +647,6 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
          state = curralgo->getcell(shiftedx, gb);
          if (state > 0) curralgo->setcell(x, bt, state);
          
-         shiftedx = twistedx + 1; if (shiftedx > gr) shiftedx = gl;
          state = curralgo->getcell(shiftedx, gt);
          if (state > 0) curralgo->setcell(x, bb, state);
       }
@@ -665,22 +662,20 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
       // do corner cells
       shiftedx = gl - 1; if (shiftedx < gl) shiftedx = gr;
       curralgo->setcell(bl, bt, curralgo->getcell(shiftedx, gb));
+      curralgo->setcell(bl, bb, curralgo->getcell(shiftedx, gt));
       shiftedx = gr - 1; if (shiftedx < gl) shiftedx = gr;
       curralgo->setcell(br, bt, curralgo->getcell(shiftedx, gb));
-      shiftedx = gl + 1; if (shiftedx > gr) shiftedx = gl;
-      curralgo->setcell(bl, bb, curralgo->getcell(shiftedx, gt));
-      shiftedx = gr + 1; if (shiftedx > gr) shiftedx = gl;
       curralgo->setcell(br, bb, curralgo->getcell(shiftedx, gt));
    
    } else { // curralgo->vshift != 0
-      // Klein bottle with shift by 1 on twisted vertical edge (ght is even)
+      // Klein bottle with shift by 1 on twisted vertical edge (with even number of cells)
       //  eg. K3,4*+1
-      //  f j k l j
-      //  c A B C g
-      //  l D E F d
-      //  i G H I a
-      //  f J K L j
-      //  c a b c g
+      //  f j k l d
+      //  c A B C a
+      //  l D E F j
+      //  i G H I g
+      //  f J K L d
+      //  c a b c a
       
       int state, twistedy, shiftedy;
       
@@ -699,7 +694,6 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
          state = curralgo->getcell(gr, shiftedy);
          if (state > 0) curralgo->setcell(bl, y, state);
          
-         shiftedy = twistedy + 1; if (shiftedy > gb) shiftedy = gt;
          state = curralgo->getcell(gl, shiftedy);
          if (state > 0) curralgo->setcell(br, y, state);
       }
@@ -707,11 +701,9 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo, int gwd, int ght)
       // do corner cells
       shiftedy = gt - 1; if (shiftedy < gt) shiftedy = gb;
       curralgo->setcell(bl, bt, curralgo->getcell(gr, shiftedy));
-      shiftedy = gt + 1; if (shiftedy > gb) shiftedy = gt;
       curralgo->setcell(br, bt, curralgo->getcell(gl, shiftedy));
       shiftedy = gb - 1; if (shiftedy < gt) shiftedy = gb;
       curralgo->setcell(bl, bb, curralgo->getcell(gr, shiftedy));
-      shiftedy = gb + 1; if (shiftedy > gb) shiftedy = gt;
       curralgo->setcell(br, bb, curralgo->getcell(gl, shiftedy));
    }
 }
@@ -922,7 +914,7 @@ bool MainFrame::CreateBorderCells(lifealgo* curralgo)
            (curralgo->vtwist && curralgo->vshift != 0 && (ght & 1) == 0) ) {
          // Klein bottle with shift is only possible if the shift is on the
          // twisted edge and that edge has an even number of cells
-         JoinTwistedAndShiftedEdges(curralgo, gwd, ght);
+         JoinTwistedAndShiftedEdges(curralgo);
       } else {
          // Klein bottle or cross-surface
          JoinTwistedEdges(curralgo);
