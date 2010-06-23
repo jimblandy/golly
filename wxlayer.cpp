@@ -1966,11 +1966,13 @@ void UpdateCurrentColors()
    }
    
    wxString rule = wxString(currlayer->algo->getrule(), wxConvLocal);
-   // replace any '\' and '/' and ':' chars with underscores;
+   // replace any '\' and '/' chars with underscores;
    // ie. given 12/34/6 we look for 12_34_6.{colors|icons}
    rule.Replace(wxT("\\"), wxT("_"));
    rule.Replace(wxT("/"), wxT("_"));
-   rule.Replace(wxT(":"), wxT("_"));
+   
+   // strip off any suffix like ":T100,200" used to specify a bounded grid
+   if (rule.Freq(':') > 0) rule = rule.BeforeFirst(':');
    
    // if rule.colors file exists then override default colors
    bool loadedcolors = LoadRuleColors(rule, maxstate);

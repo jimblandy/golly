@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 #include <map>
 #include <sstream>
-using namespace std ;
+using namespace std;
 
 const string ruletable_algo::neighborhood_value_keywords[N_SUPPORTED_NEIGHBORHOODS] = 
                     {"vonNeumann","Moore","hexagonal","oneDimensional"};
@@ -53,17 +53,41 @@ bool starts_with(const string& line,const string& keyword)
 
 const char* ruletable_algo::setrule(const char* s)
 {
-   string ret = LoadRuleTable(s) ;
+   char *colonptr = strchr(s, ':');
+   if (colonptr) *colonptr = 0; // temporarily remove suffix
+
+   string ret = LoadRuleTable(s);
    if(!ret.empty())
    {
       // if the file exists and we've got an error then it must be a file format issue
       if(!starts_with(ret,"Failed to open file: "))
          lifewarning(ret.c_str());
 
+      if (colonptr) *colonptr = ':'; // restore s
       return "error";
    }
+   
+   // check for rule suffix like ":T200,100" to specify a bounded universe
+   if (colonptr) {
+      *colonptr = ':'; // restore s
+      const char* err = setgridsize(colonptr);
+      if (err) return err;
+   } else {
+      // universe is unbounded
+      gridwd = 0;
+      gridht = 0;
+   }
 
+   // set canonical rule string returned by getrule()
+   if (colonptr) *colonptr = 0; // remove suffix from s
    this->current_rule = s;
+   if (gridwd > 0 || gridht > 0) {
+      // setgridsize() was successfully called above, so append suffix
+      string bounds = canonicalsuffix();
+      this->current_rule += bounds;
+   }
+   if (colonptr) *colonptr = ':'; // restore s
+   
    maxCellStates = this->n_states;
    ghashbase::setrule(s);
    return NULL;
@@ -101,19 +125,19 @@ string trim_right(const string & s, const string & t = " \t\r\n")
    if (i == string::npos)
       return "";
    else
-      return d.erase (d.find_last_not_of (t) + 1) ; 
+      return d.erase (d.find_last_not_of (t) + 1); 
 }
 
 string trim_left(const string & s, const string & t = " \t\r\n") 
 { 
    string d (s); 
-   return d.erase (0, s.find_first_not_of (t)) ; 
+   return d.erase (0, s.find_first_not_of (t)); 
 }
 
 string trim(const string & s, const string & t = " \t\r\n")
 { 
    string d (s); 
-   return trim_left (trim_right (d, t), t) ; 
+   return trim_left (trim_right (d, t), t); 
 }
 
 const char *defaultRuleData[] = {
@@ -149,7 +173,7 @@ const char *defaultRuleData[] = {
    "502220", "502244", "502722", "512122", "512220", "512422", "512722",
    "600011", "600021", "602120", "612125", "612131", "612225", "700077",
    "701120", "701220", "701250", "702120", "702221", "702251", "702321",
-   "702525", "702720", 0 } ;
+   "702525", "702720", 0 };
    
 static FILE *OpenTableFile(string &rule, const char *dir, string &path)
 {
@@ -159,8 +183,7 @@ static FILE *OpenTableFile(string &rule, const char *dir, string &path)
    path += rule + ".table";
    // change "dangerous" characters to underscores
    for (unsigned int i=istart; i<path.size(); i++)
-      if (path[i] == '/' || path[i] == '\\' || path[i] == ':')
-         path[i] = '_';
+      if (path[i] == '/' || path[i] == '\\') path[i] = '_';
    return fopen(path.c_str(), "rt");
 }
 
@@ -184,13 +207,13 @@ string ruletable_algo::LoadRuleTable(string rule)
        available_symmetries["oneDimensional"].assign(oneDimensional_available_symmetries,oneDimensional_available_symmetries+3);
    }
    
-   int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0) ;
-   string line ;
+   int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0);
+   string line;
    const int MAX_LINE_LEN=1000;
    char line_buffer[MAX_LINE_LEN];
-   FILE *in = 0 ;
-   linereader line_reader(0) ;
-   int lineno = 0 ;
+   FILE *in = 0;
+   linereader line_reader(0);
+   int lineno = 0;
    string full_filename;
    if (!isDefaultRule) 
    {
@@ -200,8 +223,8 @@ string ruletable_algo::LoadRuleTable(string rule)
          in = OpenTableFile(rule, lifegetrulesdir(), full_filename);
       if (!in) 
          return "Failed to open file: "+full_filename;
-      line_reader.setfile(in) ;
-      line_reader.setcloseonfree() ; // make sure it goes away if we return with an error
+      line_reader.setfile(in);
+      line_reader.setcloseonfree(); // make sure it goes away if we return with an error
    }
 
    string symmetries = "rotate4"; // default
@@ -217,14 +240,14 @@ string ruletable_algo::LoadRuleTable(string rule)
    {
       if (isDefaultRule) {
          if (defaultRuleData[lineno] == 0)
-            break ;
-         line = defaultRuleData[lineno] ;
+            break;
+         line = defaultRuleData[lineno];
       } else {
          if(!line_reader.fgets(line_buffer,MAX_LINE_LEN))
-            break ;
+            break;
          line = line_buffer;
       }
-      lineno++ ;
+      lineno++;
       // snip off any trailing comment
       if(line.find('#')!=string::npos)
          line.assign(line.begin(),line.begin()+line.find('#'));
@@ -687,15 +710,15 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
    return c; // default: no change
 }
 
-static lifealgo *creator() { return new ruletable_algo() ; }
+static lifealgo *creator() { return new ruletable_algo(); }
 
 void ruletable_algo::doInitializeAlgoInfo(staticAlgoInfo &ai) 
 {
-   ghashbase::doInitializeAlgoInfo(ai) ;
-   ai.setAlgorithmName("RuleTable") ;
-   ai.setAlgorithmCreator(&creator) ;
-   ai.minstates = 2 ;
-   ai.maxstates = 256 ;
+   ghashbase::doInitializeAlgoInfo(ai);
+   ai.setAlgorithmName("RuleTable");
+   ai.setAlgorithmCreator(&creator);
+   ai.minstates = 2;
+   ai.maxstates = 256;
    // init default color scheme
    ai.defgradient = true;              // use gradient
    ai.defr1 = 255;                     // start color = red

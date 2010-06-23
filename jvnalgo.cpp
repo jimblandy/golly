@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "jvnalgo.h"
 
-// AKT: for case-insensitive string comparison
+// for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
    #define stricmp strcasecmp
@@ -39,8 +39,11 @@ int jvnalgo::NumCellStates() {
    return N_STATES[current_rule];
 }
 
-const char* jvnalgo::setrule(const char *s) 
+const char* jvnalgo::setrule(const char *s)
 {
+   char *colonptr = strchr(s, ':');
+   if (colonptr) *colonptr = 0; // temporarily remove suffix
+
    // check the requested string against the named rules, and deprecated versions
    if (stricmp(s, RULE_STRINGS[JvN29]) == 0 || stricmp(s, "JvN-29") == 0)
       current_rule = JvN29;
@@ -48,14 +51,40 @@ const char* jvnalgo::setrule(const char *s)
       current_rule = Nobili32;
    else if (stricmp(s, RULE_STRINGS[Hutton32]) == 0 || stricmp(s, "modJvN-32") == 0)
       current_rule = Hutton32;
-   else return "This algorithm only supports these rules: JvN29, Nobili32, Hutton32.";
+   else {
+      if (colonptr) *colonptr = ':'; // restore s
+      return "This algorithm only supports these rules: JvN29, Nobili32, Hutton32.";
+   }
+   
+   // check for rule suffix like ":T200,100" to specify a bounded universe
+   if (colonptr) {
+      *colonptr = ':'; // restore s
+      const char* err = setgridsize(colonptr);
+      if (err) return err;
+   } else {
+      // universe is unbounded
+      gridwd = 0;
+      gridht = 0;
+   }
+
    maxCellStates = N_STATES[current_rule];
-   ghashbase::setrule(RULE_STRINGS[current_rule]) ;
+   ghashbase::setrule(RULE_STRINGS[current_rule]);
    return NULL;
 }
 
 const char* jvnalgo::getrule() {
-   return RULE_STRINGS[current_rule];
+   // return canonical rule string
+   static char canonrule[MAXRULESIZE];
+   sprintf(canonrule, "%s", RULE_STRINGS[current_rule]);
+   if (gridwd > 0 || gridht > 0) {
+      // setgridsize() was successfully called above, so append suffix
+      int len = strlen(canonrule);
+      const char* bounds = canonicalsuffix();
+      int i = 0;
+      while (bounds[i]) canonrule[len++] = bounds[i++];
+      canonrule[len] = 0;
+   }
+   return canonrule;
 }
 
 const char* jvnalgo::DefaultRule() {

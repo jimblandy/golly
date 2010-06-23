@@ -1609,8 +1609,7 @@ const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
    fputs("\n", f) ;
    
-   // AKT: always write out explicit rule, and avoid global_liferules
-   // because not all algos use it
+   // AKT: always write out explicit rule
    fprintf(f, "#R %s\n", getrule()) ;
    
    if (generation > bigint::zero) {

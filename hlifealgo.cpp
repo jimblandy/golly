@@ -1515,7 +1515,7 @@ default:       return "Illegal character in readmacrocell." ;
             *pp = 0 ;
             
             // AKT: need to check for B0-not-S8 rule
-            err = global_liferules.setrule(p);
+            err = global_liferules.setrule(p, this);
             if (err)
                return err;
             if (global_liferules.hasB0notS8)
@@ -1647,7 +1647,7 @@ const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
    clearcache() ;
    
-   const char* err = global_liferules.setrule(s);
+   const char* err = global_liferules.setrule(s, this);
    if (err) return err;
    
    if (global_liferules.hasB0notS8)

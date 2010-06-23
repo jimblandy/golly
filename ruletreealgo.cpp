@@ -59,12 +59,14 @@ static FILE *OpenTreeFile(const char *rule, const char *dir, char *path)
    sprintf(path, "%s%s.tree", dir, rule) ;
    // change "dangerous" characters to underscores
    for (char *p=path + strlen(dir); *p; p++)
-      if (*p == '/' || *p == '\\' || *p == ':')
-         *p = '_' ;
+      if (*p == '/' || *p == '\\') *p = '_' ;
    return fopen(path, "r") ;
 }
 
 const char* ruletreealgo::setrule(const char* s) {
+   char *colonptr = strchr(s, ':');
+   if (colonptr) *colonptr = 0; // temporarily remove suffix
+
    // nicer to check for different versions of default rule
    int isDefaultRule = (stricmp(s, "B3/S23") == 0 ||
                         stricmp(s, "B3S23") == 0 ||
@@ -73,17 +75,33 @@ const char* ruletreealgo::setrule(const char* s) {
    FILE *f = 0 ;
    linereader lr(0) ;
    if (!isDefaultRule) {
-      if (strlen(s) >= (unsigned int)MAXRULESIZE)
+      if (strlen(s) >= (unsigned int)MAXRULESIZE) {
+         if (colonptr) *colonptr = ':'; // restore s
          return "Rule length too long" ;
+      }
       // look for rule.tree in user's rules dir then in Golly's rules dir
       f = OpenTreeFile(s, lifegetuserrules(), strbuf);
       if (f == 0)
          f = OpenTreeFile(s, lifegetrulesdir(), strbuf);
-      if (f == 0)
+      if (f == 0) {
+         if (colonptr) *colonptr = ':'; // restore s
          return "File not found" ;
+      }
       lr.setfile(f) ;
       lr.setcloseonfree() ;
    }
+   
+   // check for rule suffix like ":T200,100" to specify a bounded universe
+   if (colonptr) {
+      *colonptr = ':'; // restore s
+      const char* err = setgridsize(colonptr);
+      if (err) return err;
+   } else {
+      // universe is unbounded
+      gridwd = 0;
+      gridht = 0;
+   }
+   
    int lineno = 0 ;
    int mnum_states=-1, mnum_neighbors=-1, mnum_nodes=-1 ;
    vector<int> dat ;
@@ -172,8 +190,21 @@ const char* ruletreealgo::setrule(const char* s) {
    b = nb ;
    base = noff[noff.size()-1] ;
    maxCellStates = num_states ;
-   ghashbase::setrule(s);
+   ghashbase::setrule(s) ;
+   
+   // set canonical rule string returned by getrule()
+   if (colonptr) *colonptr = 0 ; // remove suffix from s
    strcpy(rule, s) ;
+   if (gridwd > 0 || gridht > 0) {
+      // setgridsize() was successfully called above, so append suffix
+      int len = strlen(rule) ;
+      const char* bounds = canonicalsuffix() ;
+      int i = 0 ;
+      while (bounds[i]) rule[len++] = bounds[i++] ;
+      rule[len] = 0 ;
+   }
+   if (colonptr) *colonptr = ':' ; // restore s
+   
    return 0 ;
 }
 

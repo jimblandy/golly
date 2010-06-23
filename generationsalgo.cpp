@@ -90,6 +90,7 @@ const char* generationsalgo::setrule(const char *s) {
       canonrule[j++] = states[i++] ;
    }
    if (gridwd > 0 || gridht > 0) {
+      // setgridsize() was successfully called above
       const char* bounds = canonicalsuffix() ;
       i = 0 ;
       while (bounds[i]) {

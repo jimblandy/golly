@@ -1130,7 +1130,7 @@ void qlifealgo::step() {
 const char *qlifealgo::setrule(const char *s) {
    markglobalchange() ;
    
-   const char* err = global_liferules.setrule(s);
+   const char* err = global_liferules.setrule(s, this);
    if (err) return err;
 
    if (!global_liferules.hasB0notS8) {

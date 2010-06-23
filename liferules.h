@@ -22,10 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 /**
- *   This class implements the life rules; parses them, validates them,
- *   builds the 65K entry table for them.  Normally this is statically
- *   instantiated and shared by all algorithms, but there is no absolute
- *   requirement for this.
+ *   This class implements the rules supported by QuickLife and HashLife.
+ *   Currently this is statically instantiated and shared by those two
+ *   algorithms, but there is no absolute requirement for this.
  *
  *   A rule lookup table is used for computing a new 2x2 grid from
  *   a provided 4x4 grid (two tables are used to emulate B0-not-S8 rules).
@@ -37,13 +36,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #ifndef LIFERULES_H
 #define LIFERULES_H
+#include "lifealgo.h"
 const int MAXRULESIZE = 200 ;
 class liferules {
 public:
    liferules() ;
    ~liferules() ;
    // string returned by setrule is any error
-   const char *setrule(const char *s) ;
+   const char *setrule(const char *s, lifealgo *algo) ;
    const char *getrule() ;
    bool vertically_symmetrical() const { return !wolfram ; }
    bool already_flipped() const { return !!flipped ; }

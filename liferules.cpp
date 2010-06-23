@@ -29,7 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 liferules::liferules() {
    flipped = 0 ;
-   setrule("B3/S23") ;
+   // AKT: no need??? if we do need it then pass NULL for 2nd arg and check algo in setrule
+   // setrule("B3/S23") ;
 }
 
 liferules::~liferules() {
@@ -66,10 +67,11 @@ void liferules::initruletable(char *rptr, int rulebits,
       rptr[i] = rptr[i & 0xfff] + (rptr[(i >> 4) & 0xfff] << 4) ;
 }
 
-const char *liferules::setrule(const char *rulestring) {
+const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    wolfram = -1 ;
    rulebits = 0 ;
    int slashcount = 0 ;
+   int colonpos = 0 ;
    hexmask = 0x777 ;
    int addend = 17 ;
    int i ;
@@ -82,31 +84,52 @@ const char *liferules::setrule(const char *rulestring) {
    // need to emulate B0-not-S8 rule?
    hasB0notS8 = false;
 
-   for (i=0; rulestring[i]; i++) {
-      if (rulestring[i] == 'h' || rulestring[i] == 'H') {
-         hexmask = 0x673 ;
-      } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
-         if (rulestring[i]== '/' && slashcount++ > 0)
-            return "Only one slash permitted in life rule" ;
-         addend = 0 ;
-      } else if (rulestring[i] == 's' || rulestring[i] == 'S') {
-         addend = 17 ;
-      } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
-         rulebits |= 1 << (addend + rulestring[i] - '0') ;
-      } else if (rulestring[i] == 'w' || rulestring[i] == 'W') {
-         // AKT: check for digit after W otherwise rule like "WireWorld" is accepted
-         if (rulestring[i+1] < '0' || rulestring[i+1] > '9') {
-            return "Digit expected after W." ;
-         }
-         wolfram = atol(rulestring+i+1) ;
-         if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
-            // when we support toroidal universe we can allow all numbers from 0..255!!!
-            return "Wolfram rule must be an even number from 0 to 254." ;
-         }
-         break ;
-      } else {
-         return "Bad character in rule string." ;
+   if (rulestring[0] == 'w' || rulestring[0] == 'W') {
+      // parse Wolfram 1D rule
+      wolfram = 0;
+      i = 1;
+      while (rulestring[i] >= '0' && rulestring[i] <= '9') {
+         wolfram = 10 * wolfram + rulestring[i] - '0' ;
+         i++ ;
       }
+      if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
+         // when we support toroidal universe we can allow all numbers from 0..255!!!
+         return "Wolfram rule must be an even number from 0 to 254." ;
+      }
+      if (rulestring[i] == ':') {
+         colonpos = i ;
+      } else if (rulestring[i]) {
+         return "Bad character in Wolfram rule." ;
+      }
+   } else {
+      for (i=0; rulestring[i]; i++) {
+         if (rulestring[i] == 'h' || rulestring[i] == 'H') {
+            hexmask = 0x673 ;
+         } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
+            if (rulestring[i]== '/' && slashcount++ > 0)
+               return "Only one slash permitted in life rule." ;
+            addend = 0 ;
+         } else if (rulestring[i] == 's' || rulestring[i] == 'S') {
+            addend = 17 ;
+         } else if (rulestring[i] >= '0' && rulestring[i] <= '8') {
+            rulebits |= 1 << (addend + rulestring[i] - '0') ;
+         } else if (rulestring[i] == ':' && i > 0) {
+            colonpos = i ;
+            break ;
+         } else {
+            return "Bad character in rule string." ;
+         }
+      }
+   }
+   
+   // AKT: check for rule suffix like ":T200,100" to specify a bounded universe
+   if (colonpos > 0) {
+      const char* err = algo->setgridsize(rulestring + colonpos) ;
+      if (err) return err ;
+   } else {
+      // universe is unbounded
+      algo->gridwd = 0 ;
+      algo->gridht = 0 ;
    }
 
    // check if rule contains B0
@@ -162,10 +185,11 @@ const char *liferules::setrule(const char *rulestring) {
    }
    
    // AKT: store valid rule in canonical format for getrule()
+   int p = 0 ;
    if (wolfram >= 0) {
       sprintf(canonrule, "W%d", wolfram) ;
+      while (canonrule[p]) p++ ;
    } else {
-      int p = 0 ;
       canonrule[p++] = 'B' ;
       for (i=0; i<=8; i++) {
          if (rulebits & (1 << i)) canonrule[p++] = '0' + i ;
@@ -176,8 +200,14 @@ const char *liferules::setrule(const char *rulestring) {
          if (rulebits & (1 << (17+i))) canonrule[p++] = '0' + i ;
       }
       if (hexmask != 0x777) canonrule[p++] = 'H' ;
-      canonrule[p] = 0 ;
    }
+   if (algo->gridwd > 0 || algo->gridht > 0) {
+      // algo->setgridsize() was successfully called above, so append suffix
+      const char* bounds = algo->canonicalsuffix() ;
+      int i = 0 ;
+      while (bounds[i]) canonrule[p++] = bounds[i++] ;
+   }
+   canonrule[p] = 0 ;
 
    return 0 ;
 }

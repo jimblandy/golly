@@ -142,7 +142,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
    } else if (*p == 'k' || *p == 'K') {
       // Klein bottle (assume htwist or vtwist will become true)
    } else {
-      return "Unknown grid topology";
+      return "Unknown grid topology.";
    }
    
    p++;
@@ -157,15 +157,18 @@ const char* lifealgo::setgridsize(const char* suffix) {
       p++;
    }
    if (*p == '*') {
+      if (boundedplane) return "Planar grid can't have a twist.";
       htwist = true;
       p++;
    }
    if (*p == '+' || *p == '-') {
+      if (boundedplane) return "Planar grid can't have a shift.";
+      if (htwist && vtwist) return "Cross-surface can't have a shift.";
       int sign = *p == '+' ? 1 : -1;
       p++;
       while ('0' <= *p && *p <= '9') {
          hshift = 10 * hshift + *p - '0';
-         if (hshift >= (int)gridwd) return "Horizontal shift is too big";
+         if (hshift >= (int)gridwd) return "Horizontal shift is too big.";
          p++;
       }
       hshift *= sign;
@@ -173,43 +176,50 @@ const char* lifealgo::setgridsize(const char* suffix) {
    if (*p == ',') {
       p++;
    } else if (*p) {
-      return "Unexpected stuff after grid width";
+      return "Unexpected stuff after grid width.";
    }
    
-   while ('0' <= *p && *p <= '9') {
-      if (gridht >= 200000000) {
-         gridht = 2000000000;       // keep height within editable limits
-      } else {
-         gridht = 10 * gridht + *p - '0';
-      }
-      p++;
-   }
-   if (*p == '*') {
-      vtwist = true;
-      p++;
-   }
-   if (*p == '+' || *p == '-') {
-      int sign = *p == '+' ? 1 : -1;
-      p++;
+   if (*p == 0) {
+      // grid height is not specified so set it to grid width;
+      // ie. treat ":T100" like ":T100,100"
+      gridht = gridwd;
+   } else {
       while ('0' <= *p && *p <= '9') {
-         vshift = 10 * vshift + *p - '0';
-         if (vshift >= (int)gridht) return "Vertical shift is too big";
+         if (gridht >= 200000000) {
+            gridht = 2000000000;       // keep height within editable limits
+         } else {
+            gridht = 10 * gridht + *p - '0';
+         }
          p++;
       }
-      vshift *= sign;
+      if (*p == '*') {
+         if (boundedplane) return "Planar grid can't have a twist.";
+         vtwist = true;
+         p++;
+      }
+      if (*p == '+' || *p == '-') {
+         if (boundedplane) return "Planar grid can't have a shift.";
+         if (htwist && vtwist) return "Cross-surface can't have a shift.";
+         int sign = *p == '+' ? 1 : -1;
+         p++;
+         while ('0' <= *p && *p <= '9') {
+            vshift = 10 * vshift + *p - '0';
+            if (vshift >= (int)gridht) return "Vertical shift is too big.";
+            p++;
+         }
+         vshift *= sign;
+      }
+      if (*p) return "Unexpected stuff after grid height.";
    }
-   if (*p) return "Unexpected stuff after grid height";
    
    // check for certain semantic errors
-   if (htwist || vtwist) {
-      // Klein bottle or cross-surface cannot have infinite width or height
-      if (gridwd == 0 && gridht > 0)
-         gridwd = gridht;
-      else if (gridht == 0 && gridwd > 0)
-         gridht = gridwd;
+   if (hshift != 0 && vshift != 0) {
+      return "Can't have both horizontal and vertical shifts.";
    }
-   if (hshift != 0 && vshift != 0)
-      return "Can't have both horizontal and vertical shifts";
+   if ((htwist || vtwist) && ((gridwd == 0 && gridht > 0) ||
+                              (gridht == 0 && gridwd > 0))) {
+      return "Klein bottle or cross-surface can't have infinite width or height.";
+   }
    
    // now ok to set grid edges
    if (gridwd > 0) {
