@@ -28,9 +28,9 @@ PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 
 # use --inplace to force wxX11 build in case wxGTK is installed
-CXXFLAGS = `$(WX_DIR)/wx-config --cxxflags --inplace` -O5 -DZLIB -DVERSION=$(VERSION) \
-   -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
-LDFLAGS = `$(WX_DIR)/wx-config --libs --inplace` -lz
+CXXFLAGS := `$(WX_DIR)/wx-config --cxxflags --inplace` -O5 -DZLIB -DVERSION=$(VERSION) \
+   -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+LDFLAGS := `$(WX_DIR)/wx-config --libs --inplace` -lz $(LDLFLAGS)
 # we don't want to link against a specific library: PYTHON_LINK = -lpython2.3
 # following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
 # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`

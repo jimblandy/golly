@@ -84,8 +84,9 @@ sure both are installed.  Mac OS X users don't have to do anything
 because Perl and Python are already installed.
 
 If you are running Linux, you probably have Perl installed.
-Type "perl -v" at the command line to print out the version.
-Golly's code should compile happily with Perl 5.8.x or later.
+Type "perl -v" at the command line to print out the version.
+Golly's code should compile happily with Perl 5.8.x or later, but
+support for interpreter threads is required.
 
 Windows users are advised to download the ActivePerl installer
 from http://www.activestate.com/Products/ActivePerl/.
@@ -124,6 +125,8 @@ NOTES:
   to install the following packages: libgtk2.0-dev, python2.6-dev (for 
   GTK and Python respectively).
 
+- On Linux the CXXFLAGS and LDFLAGS environmental variables may be
+  used to append to (and override) the package default flags.
 
 How to build bgolly (the batch mode version)
 --------------------------------------------
