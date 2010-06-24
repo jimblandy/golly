@@ -278,6 +278,8 @@ srcdist:
 	mkdir $(RELEASENAME)-src
 	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
 	find $(RELEASENAME)-src -name CVS | xargs rm -rf
+	find $(RELEASENAME)-src -name '.[^.]*' -delete
+	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
 bindist: all
@@ -285,6 +287,8 @@ bindist: all
 	mkdir $(RELEASENAME)-mac1039
 	cp -rp $(APP_NAME).app bgolly RuleTableToTree $(SHAREDFILES) $(RELEASENAME)-mac1039
 	find $(RELEASENAME)-mac1039 -name CVS | xargs rm -rf
+	find $(RELEASENAME)-mac1039 -name '.[^.]*' -delete
+	find $(RELEASENAME)-mac1039/Scripts/Python -name '*.pyc' -delete
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac1039/README
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac1039/LICENSE
 	echo Now create zip archive of $(RELEASENAME)-mac1039

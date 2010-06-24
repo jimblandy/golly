@@ -210,6 +210,8 @@ srcdist:
 	mkdir $(RELEASENAME)-src
 	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
 	find $(RELEASENAME)-src -name CVS | xargs rm -rf
+	find $(RELEASENAME)-src -name '.[^.]*' -delete
+	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
 bindist: all
@@ -217,4 +219,6 @@ bindist: all
 	mkdir $(RELEASENAME)-x11
 	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-x11
 	find $(RELEASENAME)-x11 -name CVS | xargs rm -rf
+	find $(RELEASENAME)-x11 -name '.[^.]*' -delete
+	find $(RELEASENAME)-x11/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-x11 | gzip > $(RELEASENAME)-x11.tar.gz
