@@ -1807,7 +1807,7 @@ void GetPrefs()
       pythonlib = wxEmptyString;
    #else // assume Linux
       perllib = wxT("libperl.so.5.10");
-      pythonlib = wxT("libpython2.5.so");
+      pythonlib = wxT(STRINGIFY(PYTHON_SHLIB));
    #endif
 
    // create curs_* and initialize newcurs and opencurs

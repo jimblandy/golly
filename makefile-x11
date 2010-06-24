@@ -35,6 +35,9 @@ LDFLAGS = `$(WX_DIR)/wx-config --libs --inplace` -lz
 # following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
 # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK = 
+# the following determines the filename for the python dynamic library (e.g. libpython2.5.so)
+PYTHON_SHLIB = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LDLIBRARY')"`
+PYTHON_PREFS = -DPYTHON_SHLIB="$(PYTHON_SHLIB)"
 
 ### put .o files in an X11-specific subdir to avoid conflict with .o files created by GTK build
 OBJDIR = ObjX11
@@ -146,7 +149,7 @@ $(OBJDIR)/wxutils.o: wxutils.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxprefs.cpp
+	$(CXXC) $(CXXFLAGS) $(PYTHON_PREFS) -c -o $@ wxprefs.cpp
 
 $(OBJDIR)/wxalgos.o: wxalgos.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxalgos.cpp
