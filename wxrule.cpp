@@ -72,43 +72,46 @@ bool ValidRule(wxString& rule)
 
 // -----------------------------------------------------------------------------
 
-bool MatchingRules(const wxString& rule1, const wxString& rule2)
-{
-   // return true if given strings are equivalent rules
-   if (rule1.IsSameAs(rule2,false)) {
-      return true;
-   } else {
-      /* avoid calling ValidRule -- all the setrule calls cause problems
-         for algos like RuleTable and RuleTree that load files;
-         or maybe we could pass an extra arg into setrule saying not to try
-         and load a file but just check for its existence???
-         
-      // we want "s23b3" or "23/3" to match "B3/S23" so convert given rules
-      // to canonical form (if valid) and then compare
-      wxString canon1 = rule1;
-      wxString canon2 = rule2;
-      return ValidRule(canon1) && ValidRule(canon2) && canon1 == canon2;
-      */
-      return false;
-   }
-}
-
-// -----------------------------------------------------------------------------
-
 wxString GetRuleName(const wxString& rulestring)
 {
    // search namedrules array for matching rule
    wxString rulename;
-   size_t i;
-   for (i = 0; i < namedrules.GetCount(); i++) {
-      // extract rule after '|'
-      wxString thisrule = namedrules[i].AfterFirst('|');
-      if ( MatchingRules(rulestring, thisrule) ) {
-         // extract name before '|'
-         rulename = namedrules[i].BeforeFirst('|');
+   
+   // check for a suffix like ":T100,200"
+   wxString ruleprefix = rulestring;
+   wxString rulesuffix = wxEmptyString;
+   if ( ruleprefix.Find(':') >= 0 ) {
+      ruleprefix = ruleprefix.BeforeFirst(':');
+      rulesuffix = wxT(":") + rulestring.AfterFirst(':');
+   }
+
+   // first look for given rulestring in namedrules; if user has created a name like
+   // "Life on torus" for "B3/S23:T100,200" then this will find that name
+   for (size_t i = 0; i < namedrules.GetCount(); i++) {
+      wxString thisrule = namedrules[i].AfterFirst('|');       // rule is after '|'
+      if ( rulestring.IsSameAs(thisrule,false) ) {
+         rulename = namedrules[i].BeforeFirst('|');            // name is before '|'
+         if ( rulesuffix.Length() > 0 ) {
+            // still append suffix so user sees "Life on torus:T100,200"
+            rulename += rulesuffix;
+         }
          return rulename;
       }
    }
+
+   if ( rulesuffix.Length() > 0 ) {
+      // look for ruleprefix in namedrules; if there is no explicit name for
+      // "B3/S23:T100,200" then this will find "Life" and user will see "Life:T100,200"
+      for (size_t i = 0; i < namedrules.GetCount(); i++) {
+         wxString thisrule = namedrules[i].AfterFirst('|');    // rule is after '|'
+         if ( ruleprefix.IsSameAs(thisrule,false) ) {
+            rulename = namedrules[i].BeforeFirst('|');         // name is before '|'
+            rulename += rulesuffix;
+            return rulename;
+         }
+      }
+   }
+   
    // given rulestring has not been named
    rulename = rulestring;
    return rulename;
@@ -715,18 +718,17 @@ void RuleDialog::UpdateName()
 {
    // may need to change named rule depending on current rule text
    int newindex;
-   wxString newrule = ruletext->GetValue();
+   wxString newrule = ruletext->GetValue();   
    if ( newrule.IsEmpty() ) {
       // empty string is a quick way to restore normal Life
       newindex = 0;
    } else {
       // search namedrules array for matching rule
-      size_t i;
       newindex = -1;
-      for (i=0; i<namedrules.GetCount(); i++) {
+      for (size_t i=0; i<namedrules.GetCount(); i++) {
          // extract rule after '|'
          wxString thisrule = namedrules[i].AfterFirst('|');
-         if ( MatchingRules(newrule, thisrule) ) {
+         if ( newrule.IsSameAs(thisrule,false) ) {
             newindex = i;
             break;
          }

@@ -164,13 +164,14 @@ const char* lifealgo::setgridsize(const char* suffix) {
    if (*p == '+' || *p == '-') {
       if (boundedplane) return "Planar grid can't have a shift.";
       if (htwist && vtwist) return "Cross-surface can't have a shift.";
+      if (gridwd == 0) return "Can't shift infinite width.";
       int sign = *p == '+' ? 1 : -1;
       p++;
       while ('0' <= *p && *p <= '9') {
          hshift = 10 * hshift + *p - '0';
-         if (hshift >= (int)gridwd) return "Horizontal shift is too big.";
          p++;
       }
+      if (hshift >= (int)gridwd) hshift = hshift % (int)gridwd;
       hshift *= sign;
    }
    if (*p == ',') {
@@ -200,13 +201,14 @@ const char* lifealgo::setgridsize(const char* suffix) {
       if (*p == '+' || *p == '-') {
          if (boundedplane) return "Planar grid can't have a shift.";
          if (htwist && vtwist) return "Cross-surface can't have a shift.";
+         if (gridht == 0) return "Can't shift infinite height.";
          int sign = *p == '+' ? 1 : -1;
          p++;
          while ('0' <= *p && *p <= '9') {
             vshift = 10 * vshift + *p - '0';
-            if (vshift >= (int)gridht) return "Vertical shift is too big.";
             p++;
          }
+         if (vshift >= (int)gridht) vshift = vshift % (int)gridht;
          vshift *= sign;
       }
       if (*p) return "Unexpected stuff after grid height.";

@@ -1972,7 +1972,7 @@ void UpdateCurrentColors()
    rule.Replace(wxT("/"), wxT("_"));
    
    // strip off any suffix like ":T100,200" used to specify a bounded grid
-   if (rule.Freq(':') > 0) rule = rule.BeforeFirst(':');
+   if (rule.Find(':') >= 0) rule = rule.BeforeFirst(':');
    
    // if rule.colors file exists then override default colors
    bool loadedcolors = LoadRuleColors(rule, maxstate);
