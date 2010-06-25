@@ -19,8 +19,8 @@ SRCFILES = BUILD TODO makefile-gtk makefile-x11 makefile-mac makefile-win \
 BINFILES = golly bgolly RuleTableToTree
 
 CXXC = g++
-CXXFLAGS := `wx-config --cxxflags` -O5 -DZLIB -DVERSION=$(VERSION) \
-   -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+CXXFLAGS := `wx-config --cxxflags` -DVERSION=$(VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
+   -DZLIB -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
 LDFLAGS := `wx-config --libs` -lz $(LDFLAGS)
 
 # for Perl script support

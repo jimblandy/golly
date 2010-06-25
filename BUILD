@@ -127,6 +127,11 @@ NOTES:
 
 - On Linux the CXXFLAGS and LDFLAGS environmental variables may be
   used to append to (and override) the package default flags.
+  Additionally, GOLLYDIR specifies an absolute directory path to look
+  for the application data files.  For system-wide installation, it
+  probably makes sense to set GOLLYDIR to /usr/share/golly and install
+  the Help, Patterns, Scripts and Rules there.
+
 
 How to build bgolly (the batch mode version)
 --------------------------------------------

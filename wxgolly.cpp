@@ -211,6 +211,12 @@ void SetAppDirectory(const char* argv0)
       // wxMac has set current directory to location of .app bundle so no need
       // to do anything
    #else // assume Unix
+      // first, try to switch to GOLLYDIR if that is set to a sensible value:
+      static const char *gd = STRINGIFY(GOLLYDIR);
+      if ( *gd == '/' && wxSetWorkingDirectory(wxString(gd,wxConvLocal)) ) {
+         return;
+      }
+      // otherwise, use the executable directory as the application directory.
       // user might have started app from a different directory so find
       // last "/" in argv0 and change cwd if "/" isn't part of "./" prefix
       unsigned int pos = strlen(argv0);
