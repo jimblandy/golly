@@ -118,7 +118,7 @@ bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
 int hyper, render, autofit, quiet, popcount, progress ;
 int hashlife ;
-char *algoName = (char *)"QuickLife" ;
+char *algoName = 0 ;
 int verbose ;
 int timeline ;
 int stepthresh, stepfactor ;
