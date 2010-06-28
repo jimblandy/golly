@@ -17,6 +17,9 @@ SRCFILES = BUILD TODO makefile-gtk makefile-x11 makefile-mac makefile-win \
 BINFILES = golly bgolly RuleTableToTree
 
 CXXC = g++
+CXXFLAGS := -DVERSION=$(VERSION) -DGOLLYDIR="$(GOLLYDIR)" -O5 -Wall \
+   -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+LDFLAGS := $(LDFLAGS)
 
 # for Perl script support
 PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
@@ -26,18 +29,22 @@ PERL_LINK = `perl -MExtUtils::Embed -e ldopts`
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
-
-# use --inplace to force wxX11 build in case wxGTK is installed
-CXXFLAGS := `$(WX_DIR)/wx-config --cxxflags --inplace` -DVERSION=$(VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
-   -DZLIB -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
-LDFLAGS := `$(WX_DIR)/wx-config --libs --inplace` -lz $(LDLFLAGS)
 # we don't want to link against a specific library: PYTHON_LINK = -lpython2.3
 # following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
 # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
-PYTHON_LINK = 
+PYTHON_LINK =
 # the following determines the filename for the python dynamic library (e.g. libpython2.5.so)
 PYTHON_SHLIB = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LDLIBRARY')"`
 PYTHON_PREFS = -DPYTHON_SHLIB="$(PYTHON_SHLIB)"
+
+# default settings to zlib support. clear this to build without zlib.
+ZLIB_CXXFLAGS = -DZLIB
+ZLIB_LDFLAGS = -lz
+
+# for wxGTK support (required for GUI)
+# use --inplace to force wxX11 build in case wxGTK is installed
+WX_CXXFLAGS = `$(WX_DIR)/wx-config --cxxflags --inplace`
+WX_LDFLAGS = `$(WX_DIR)/wx-config --libs --inplace`
 
 ### put .o files in an X11-specific subdir to avoid conflict with .o files created by GTK build
 OBJDIR = ObjX11
@@ -61,10 +68,10 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
-all: $(OBJDIR) golly bgolly RuleTableToTree
+all: golly bgolly RuleTableToTree
 
-$(BASEOBJ): $(BASEH)
-$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
+$(BASEOBJ): $(OBJDIR) $(BASEH)
+$(WXOBJ): $(OBJDIR) $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
@@ -74,16 +81,16 @@ clean:
 	rm -f golly bgolly RuleTableToTree
 
 golly: $(BASEOBJ) $(WXOBJ)
-	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
+	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
 
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
-	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS)
+	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
 
 RuleTableToTree: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
 	$(CXXC) $(CXXFLAGS) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDFLAGS)
 
 $(OBJDIR)/bgolly.o: bgolly.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ bgolly.cpp
+	$(CXXC) $(CXXFLAGS) $(ZLIB_CXXFLAGS) -c -o $@ bgolly.cpp
 
 $(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ RuleTableToTree.cpp
@@ -131,7 +138,7 @@ $(OBJDIR)/liferender.o: liferender.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ liferender.cpp
 
 $(OBJDIR)/readpattern.o: readpattern.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ readpattern.cpp
+	$(CXXC) $(CXXFLAGS) $(ZLIB_CXXFLAGS) -c -o $@ readpattern.cpp
 
 $(OBJDIR)/writepattern.o: writepattern.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ writepattern.cpp
@@ -146,67 +153,67 @@ $(OBJDIR)/lifepoll.o: lifepoll.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ lifepoll.cpp
 
 $(OBJDIR)/wxutils.o: wxutils.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxutils.cpp
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp
-	$(CXXC) $(CXXFLAGS) $(PYTHON_PREFS) -c -o $@ wxprefs.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PYTHON_PREFS) -c -o $@ wxprefs.cpp
 
 $(OBJDIR)/wxalgos.o: wxalgos.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxalgos.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxalgos.cpp
 
 $(OBJDIR)/wxrule.o: wxrule.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxrule.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxrule.cpp
 
 $(OBJDIR)/wxinfo.o: wxinfo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxinfo.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxinfo.cpp
 
 $(OBJDIR)/wxhelp.o: wxhelp.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxhelp.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS-c -o $@ wxhelp.cpp
 
 $(OBJDIR)/wxstatus.o: wxstatus.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxstatus.cpp
 
 $(OBJDIR)/wxview.o: wxview.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxview.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxview.cpp
 
 $(OBJDIR)/wxrender.o: wxrender.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxperl.o: wxperl.cpp
-	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
 
 $(OBJDIR)/wxpython.o: wxpython.cpp
-	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxfile.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxfile.cpp
 
 $(OBJDIR)/wxedit.o: wxedit.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxedit.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxedit.cpp
 
 $(OBJDIR)/wxselect.o: wxselect.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxselect.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxselect.cpp
 
 $(OBJDIR)/wxcontrol.o: wxcontrol.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxcontrol.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxcontrol.cpp
 
 $(OBJDIR)/wxtimeline.o: wxtimeline.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxtimeline.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxtimeline.cpp
 
 $(OBJDIR)/wxundo.o: wxundo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxundo.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxundo.cpp
 
 $(OBJDIR)/wxlayer.o: wxlayer.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxgolly.cpp
 
 srcdist:
 	-rm -rf $(RELEASENAME)-src
