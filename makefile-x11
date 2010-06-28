@@ -68,10 +68,10 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
-all: golly bgolly RuleTableToTree
+all: $(OBJDIR) golly bgolly RuleTableToTree
 
-$(BASEOBJ): $(OBJDIR) $(BASEH)
-$(WXOBJ): $(OBJDIR) $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
+$(BASEOBJ): $(BASEH)
+$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
@@ -87,7 +87,7 @@ bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
 
 RuleTableToTree: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
-	$(CXXC) $(CXXFLAGS) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDFLAGS)
+	$(CXXC) $(CXXFLAGS) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDFLAGS) $(ZLIB_LDFLAGS)
 
 $(OBJDIR)/bgolly.o: bgolly.cpp
 	$(CXXC) $(CXXFLAGS) $(ZLIB_CXXFLAGS) -c -o $@ bgolly.cpp
@@ -168,7 +168,7 @@ $(OBJDIR)/wxinfo.o: wxinfo.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxinfo.cpp
 
 $(OBJDIR)/wxhelp.o: wxhelp.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS-c -o $@ wxhelp.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxhelp.cpp
 
 $(OBJDIR)/wxstatus.o: wxstatus.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxstatus.cpp
