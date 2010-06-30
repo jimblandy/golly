@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 #include <vector>
 #include <cstdio>
+#include <string>
 using namespace std ;
 
 int ruletreealgo::NumCellStates() {
@@ -64,27 +65,28 @@ static FILE *OpenTreeFile(const char *rule, const char *dir, char *path)
 }
 
 const char* ruletreealgo::setrule(const char* s) {
-   char *colonptr = strchr(s, ':');
-   if (colonptr) *colonptr = 0; // temporarily remove suffix
+
+   const char *colonptr = strchr(s, ':');
+   string rule_name(s);
+   if (colonptr)
+      rule_name.assign(s,colonptr);
 
    // nicer to check for different versions of default rule
-   int isDefaultRule = (stricmp(s, "B3/S23") == 0 ||
-                        stricmp(s, "B3S23") == 0 ||
-                        strcmp(s, "23/3") == 0) ;
+   int isDefaultRule = (stricmp(rule_name.c_str(), "B3/S23") == 0 ||
+                        stricmp(rule_name.c_str(), "B3S23") == 0 ||
+                        strcmp(rule_name.c_str(), "23/3") == 0) ;
    char strbuf[MAXFILELEN+1] ;
    FILE *f = 0 ;
    linereader lr(0) ;
    if (!isDefaultRule) {
-      if (strlen(s) >= (unsigned int)MAXRULESIZE) {
-         if (colonptr) *colonptr = ':'; // restore s
+      if (strlen(rule_name.c_str()) >= (unsigned int)MAXRULESIZE) {
          return "Rule length too long" ;
       }
       // look for rule.tree in user's rules dir then in Golly's rules dir
-      f = OpenTreeFile(s, lifegetuserrules(), strbuf);
+      f = OpenTreeFile(rule_name.c_str(), lifegetuserrules(), strbuf);
       if (f == 0)
-         f = OpenTreeFile(s, lifegetrulesdir(), strbuf);
+         f = OpenTreeFile(rule_name.c_str(), lifegetrulesdir(), strbuf);
       if (f == 0) {
-         if (colonptr) *colonptr = ':'; // restore s
          return "File not found" ;
       }
       lr.setfile(f) ;
@@ -93,7 +95,6 @@ const char* ruletreealgo::setrule(const char* s) {
    
    // check for rule suffix like ":T200,100" to specify a bounded universe
    if (colonptr) {
-      *colonptr = ':'; // restore s
       const char* err = setgridsize(colonptr);
       if (err) return err;
    } else {
@@ -190,11 +191,10 @@ const char* ruletreealgo::setrule(const char* s) {
    b = nb ;
    base = noff[noff.size()-1] ;
    maxCellStates = num_states ;
-   ghashbase::setrule(s) ;
+   ghashbase::setrule(rule_name.c_str()) ;
    
    // set canonical rule string returned by getrule()
-   if (colonptr) *colonptr = 0 ; // remove suffix from s
-   strcpy(rule, s) ;
+   strcpy(rule,rule_name.c_str()) ;
    if (gridwd > 0 || gridht > 0) {
       // setgridsize() was successfully called above, so append suffix
       int len = strlen(rule) ;
@@ -203,7 +203,6 @@ const char* ruletreealgo::setrule(const char* s) {
       while (bounds[i]) rule[len++] = bounds[i++] ;
       rule[len] = 0 ;
    }
-   if (colonptr) *colonptr = ':' ; // restore s
    
    return 0 ;
 }

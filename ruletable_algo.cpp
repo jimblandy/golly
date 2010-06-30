@@ -53,23 +53,23 @@ bool starts_with(const string& line,const string& keyword)
 
 const char* ruletable_algo::setrule(const char* s)
 {
-   char *colonptr = strchr(s, ':');
-   if (colonptr) *colonptr = 0; // temporarily remove suffix
+   const char *colonptr = strchr(s, ':');
+   string rule_name(s);
+   if (colonptr) 
+      rule_name.assign(s,colonptr);
 
-   string ret = LoadRuleTable(s);
+   string ret = LoadRuleTable(rule_name.c_str());
    if(!ret.empty())
    {
       // if the file exists and we've got an error then it must be a file format issue
       if(!starts_with(ret,"Failed to open file: "))
          lifewarning(ret.c_str());
 
-      if (colonptr) *colonptr = ':'; // restore s
       return "error";
    }
    
    // check for rule suffix like ":T200,100" to specify a bounded universe
    if (colonptr) {
-      *colonptr = ':'; // restore s
       const char* err = setgridsize(colonptr);
       if (err) return err;
    } else {
@@ -79,17 +79,15 @@ const char* ruletable_algo::setrule(const char* s)
    }
 
    // set canonical rule string returned by getrule()
-   if (colonptr) *colonptr = 0; // remove suffix from s
-   this->current_rule = s;
+   this->current_rule = rule_name.c_str();
    if (gridwd > 0 || gridht > 0) {
       // setgridsize() was successfully called above, so append suffix
       string bounds = canonicalsuffix();
       this->current_rule += bounds;
    }
-   if (colonptr) *colonptr = ':'; // restore s
    
    maxCellStates = this->n_states;
-   ghashbase::setrule(s);
+   ghashbase::setrule(rule_name.c_str());
    return NULL;
 }
 
