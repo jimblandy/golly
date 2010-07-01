@@ -301,14 +301,20 @@ bool GollyApp::OnInit()
    // let non-wx modules call Fatal, Warning, BeginProgress, etc
    lifeerrors::seterrorhandler(&wxerrhandler);
 
-   // allow our .html files to include common graphic formats;
+   // allow .html files to include common graphic formats,
+   // and .icons files to be in any of these formats;
    // note that wxBMPHandler is always installed
+   /* this dynamic loading method didn't work (on Mac/Win at least)!!!
    static const wxChar *handlerClassNames[] = {
       wxT("wxGIFHandler"), wxT("wxPNGHandler"), wxT("wxTIFFHandler"), 0 };
    for (const wxChar **name = handlerClassNames; *name != 0; ++name) {
       wxImageHandler *handler = (wxImageHandler*)wxCreateDynamicObject(*name);
       if (handler != 0) wxImage::AddHandler(handler);
    }
+   */
+   wxImage::AddHandler(new wxGIFHandler);
+   wxImage::AddHandler(new wxPNGHandler);
+   wxImage::AddHandler(new wxTIFFHandler);
 
    // wxInternetFSHandler is needed to allow downloading files
    wxFileSystem::AddHandler(new wxInternetFSHandler);
