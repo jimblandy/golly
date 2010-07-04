@@ -1,58 +1,62 @@
 import golly
 import random
 import time
+from itertools import product
+from glife.EmulateHexagonal import *
+from glife.EmulateTriangular import *
+from glife.RuleTree import *
 
-n = int(golly.getstring(
+
+spec = golly.getstring(
 '''This script will write and select the rule "Fredkin-mod-n", for a given N.
 
 This rule is the Winograd extension of the Fredkin Replicator rule (the parity rule):
   c,{s} -> sum(s)%N    (where N=2 for the original parity rule)
 
 If N is prime, this will result in any pattern being replicated at N^m timesteps
-(if the pattern is small enough).
+(if the pattern is small enough that it doesn't overlap its copies).
 
-(N must lie within 2 and 255. Values above 13 or so result in very large .table
-files...)
+Specify the neighborhood (N = von Neumann, M = Moore, T = triangular von Neumann,
+H = hexagonal, TM = triangular Moore) and the value of N (2-255). e.g. H2, N7
 
-Enter N:''', '3', 'Enter N:'))
+(Larger values of N can take a long time.)
+''', 'N3', 'Enter specification:')
+
+# work out what the string meant
+nhood = ''
+nhoods = {'N':'vonNeumann','TM':'triangularMoore','M':'Moore',
+          'T':'triangularVonNeumann','H':'hexagonal'}
+for nh in nhoods.keys():
+    if nh in spec:
+        nhood = nhoods[nh]
+        n = int(spec.replace(nh,''))
+        break
+if nhood=='':
+    golly.exit('Unsupported string: '+spec)
 if n<2 or n>255:
-   golly.exit('Values must lie between 2 and 255.')
+   golly.exit('Value of N must lie between 2 and 255.')
+   
+# assemble the transitions
+nbors = {'vonNeumann':4,'Moore':8,'hexagonal':6,'triangularVonNeumann':3,
+         'triangularMoore':12}
+transitions = []
+for sl in product(range(n),repeat=nbors[nhood]):
+    transitions += [ [range(n)] + [[s] for s in sl] + [[sum(sl)%n]] ]
+rule_name = 'Fredkin_mod'+str(n)+'_'+nhood
 
-# write a suitable colors file
-golly.show('Working...')
-f=open(golly.getdir('rules')+'Fredkin-mod-n.colors', 'w')
-for i in xrange(n):
-   f.write('color='+str(i+1)+' '+str(random.randint(50,255))+' '+
-                                 str(random.randint(50,255))+' '+
-                                 str(random.randint(50,255))+'\n')
-f.close()
+Converters = {
+    "vonNeumann":ConvertRuleTableTransitionsToRuleTree,
+    "Moore":ConvertRuleTableTransitionsToRuleTree,
+    "triangularVonNeumann":EmulateTriangular,
+    "triangularMoore":EmulateTriangular,
+    "hexagonal":EmulateHexagonal,
+}
 
-# write a rule table file in user's rules directory
-# (currently only for the von Neumann neighbourhood but works on many)
-# (could be reduced by using rotate or permutation symmetry)
-f=open(golly.getdir('rules')+'Fredkin-mod-n.table', 'w')
-f.write('''# Rule table written automatically by FredkinModN-gen.py
-#
-# Winograd's generalization of Fredkin's parity rule (B1357/S1357) to modulo-n:
-#   c,{s} -> sum(s)%n, where n=2 for original rule.
-#
-# Winograd, T. (1970) A simple algorithm for self-replication
-# A. I. Memo 197, Project MAC. MIT. http://hdl.handle.net/1721.1/5843
+golly.show("Building rule tree...")
+rule_name = Converters[nhood]( nhood, 
+                               n, 
+                               transitions, 
+                               rule_name+'.tree' )
 
-''')
-f.write('n_states:'+str(n)+'\nneighborhood:vonNeumann\nsymmetries:none\n')
-f.write('var a={'+','.join(str(s) for s in xrange(n))+'}\n')
-for a in xrange(n):
-   for b in xrange(n):
-       for c in xrange(n):
-           for d in xrange(n):
-               f.write('a,'+','.join(str(s) for s in [a,b,c,d])+
-                       ','+str((a+b+c+d)%n)+'\n')
-f.close()
-
-# now we can switch to the new rule
-# problem: sometimes the file is still writing when we try to read it
-time.sleep(0.1)            # perhaps this will avoid the problem?
-golly.setrule('b1/s1')     # force a rule change
-golly.setrule('Fredkin-mod-n')
-golly.show('Created Fredkin-mod-n.table and .colors, and selected this rule.')
+golly.setrule(rule_name)
+golly.show('Created '+rule_name+'.tree and .colors, and selected this rule.')

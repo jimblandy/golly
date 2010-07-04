@@ -10,8 +10,7 @@
 # neighborhoods, such as Moore, von Neumann, hexagonal, even in 3D. Here 
 # we're using the von Neumann neighborhood so there are four copies made. 
 # The script FredkinModN-gen.py in Scripts/Python enables you to explore
-# the rules for different N and can be modified to explore different
-# neighborhoods.
+# the rules for different N and different neighborhoods.
 #
 # In this demo we've used N=7 and imported a 6-color photo of Ed
 # Fredkin to use as an example pattern. At 49 generations four copies are
