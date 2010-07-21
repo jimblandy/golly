@@ -1815,12 +1815,13 @@ g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
+   int depth = node_depth(root) ;
    fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
    fputs("\n", f) ;
-   if (!global_liferules.isRegularLife()) {
-      // write non-Life rule
-      fprintf(f, "#R %s\n", global_liferules.getrule()) ;
-   }
+
+   // AKT: always write out explicit rule
+   fprintf(f, "#R %s\n", global_liferules.getrule()) ;
+   
    if (generation > bigint::zero) {
       // write non-zero gen count
       fprintf(f, "#G %s\n", generation.tostring('\0')) ;
@@ -1836,7 +1837,6 @@ const char *hlifealgo::writeNativeFormat(FILE *f, char *comments) {
    */
    /* this is the new two-pass way */
    cellcounter = 0 ;
-   int depth = node_depth(root) ;
    vector<int> depths(timeline.framecount) ;
    int framestosave = timeline.framecount ;
    if (timeline.savetimeline == 0)
