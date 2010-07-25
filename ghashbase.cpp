@@ -659,7 +659,14 @@ ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
           l->ne = (state)newstate ;
       return (ghnode *)l ;
    } else {
-      int w = 1 << depth ;
+      unsigned int w = 0, wh = 0 ;
+      if (depth >= 31) {
+         if (depth == this->depth)
+            wh = 0x80000000 ;
+      } else {
+         w = 1 << depth ;
+         wh = 1 << (depth - 1) ;
+      }
       if (depth > 31)
          w = 0 ;
       depth-- ;
@@ -681,8 +688,8 @@ ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
          else
             *nptr = newclearedghnode() ;
       }
-      ghnode *s = setbit(*nptr, (x & (w - 1)) - (w >> 1),
-                         (y & (w - 1)) - (w >> 1), newstate, depth) ;
+      ghnode *s = setbit(*nptr, (x & (w - 1)) - wh,
+                         (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
          ghnode *nw = n->nw ;
          ghnode *sw = n->sw ;
@@ -725,9 +732,14 @@ int ghashbase::getbit(ghnode *n, int x, int y, int depth) {
          else
            return l->ne ;
    } else {
-      int w = 1 << depth ;
-      if (depth > 31)
-         w = 0 ;
+      unsigned int w = 0, wh = 0 ;
+      if (depth >= 31) {
+         if (depth == this->depth)
+            wh = 0x80000000 ;
+      } else {
+         w = 1 << depth ;
+         wh = 1 << (depth - 1) ;
+      }
       ghnode *nptr ;
       depth-- ;
       if (x < 0) {
@@ -743,7 +755,7 @@ int ghashbase::getbit(ghnode *n, int x, int y, int depth) {
       }
       if (nptr == 0 || nptr == zeroghnode(depth))
          return 0 ;
-      return getbit(nptr, (x & (w - 1)) - (w >> 1), (y & (w - 1)) - (w >> 1),
+      return getbit(nptr, (x & (w - 1)) - wh, (y & (w - 1)) - wh,
                     depth) ;
    }
 }
@@ -778,8 +790,8 @@ int ghashbase::nextbit(ghnode *n, int x, int y, int depth, int &v) {
       }
       return -1 ; // none found
    } else {
-      int w = 1 << depth ;
-      int wh = 1 << (depth - 1) ;
+      unsigned int w = 1 << depth ;
+      unsigned int wh = w >> 1 ;
       ghnode *lft, *rght ;
       depth-- ;
       if (y < 0) {

@@ -792,9 +792,14 @@ node *hlifealgo::setbit(node *n, int x, int y, int newstate, int depth) {
       }
       return (node *)l ;
    } else {
-      int w = 1 << depth ;
-      if (depth > 31)
-         w = 0 ;
+      unsigned int w = 0, wh = 0 ;
+      if (depth >= 31) {
+         if (depth == this->depth)
+            wh = 0x80000000 ;
+      } else {
+         w = 1 << depth ;
+         wh = 1 << (depth - 1) ;
+      }
       depth-- ;
       node **nptr ;
       if (x < 0) {
@@ -814,8 +819,8 @@ node *hlifealgo::setbit(node *n, int x, int y, int newstate, int depth) {
          else
             *nptr = newclearednode() ;
       }
-      node *s = setbit(*nptr, (x & (w - 1)) - (w >> 1),
-                              (y & (w - 1)) - (w >> 1), newstate, depth) ;
+      node *s = setbit(*nptr, (x & (w - 1)) - wh,
+                              (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
          node *nw = n->nw ;
          node *sw = n->sw ;
@@ -862,11 +867,16 @@ int hlifealgo::getbit(node *n, int x, int y, int depth) {
          return 1 ;
       return 0 ;
    } else {
-      int w = 1 << depth ;
-      if (depth > 31)
-         w = 0 ;
-      node *nptr ;
+      unsigned int w = 0, wh = 0 ;
+      if (depth >= 31) {
+         if (depth == this->depth)
+            wh = 0x80000000 ;
+      } else {
+         w = 1 << depth ;
+         wh = 1 << (depth - 1) ;
+      }
       depth-- ;
+      node *nptr ;
       if (x < 0) {
          if (y < 0)
             nptr = n->sw ;
@@ -880,8 +890,7 @@ int hlifealgo::getbit(node *n, int x, int y, int depth) {
       }
       if (nptr == 0 || nptr == zeronode(depth))
          return 0 ;
-      return getbit(nptr, (x & (w - 1)) - (w >> 1), (y & (w - 1)) - (w >> 1),
-                    depth) ;
+      return getbit(nptr, (x & (w - 1)) - wh, (y & (w - 1)) - wh, depth) ;
    }
 }
 /*
@@ -913,8 +922,9 @@ int hlifealgo::nextbit(node *n, int x, int y, int depth) {
       }
       return -1 ; // none found
    } else {
-      int w = 1 << depth ;
-      int wh = 1 << (depth - 1) ;
+      unsigned int w = 0, wh = 0 ;
+      w = 1 << depth ;
+      wh = 1 << (depth - 1) ;
       node *lft, *rght ;
       depth-- ;
       if (y < 0) {
