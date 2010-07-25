@@ -299,5 +299,6 @@ private:
    int quickb, deltaforward ;
    int llbits, llsize ;
    char *llxb, *llyb ;
+   int serial ; // last serial value from global_rules
 } ;
 #endif

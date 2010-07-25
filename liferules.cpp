@@ -29,6 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 liferules::liferules() {
    flipped = 0 ;
+   serial = 1001 ;
+   canonrule[0] = 0 ;
    // AKT: no need??? if we do need it then pass NULL for 2nd arg and check algo in setrule
    // setrule("B3/S23") ;
 }
@@ -80,6 +82,10 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    if (rulestring[0] == 0) {
       return "Rule cannot be empty string." ;
    }
+   if (strcmp(rulestring, canonrule) == 0) // already set
+      return 0 ;
+
+   serial++ ; // allow consumers to notice change in global rule table
 
    // need to emulate B0-not-S8 rule?
    hasB0notS8 = false;

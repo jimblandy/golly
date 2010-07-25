@@ -555,6 +555,7 @@ hlifealgo::hlifealgo() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
+   serial = 0 ;
 }
 /**
  *   Destructor frees memory.
@@ -1645,10 +1646,14 @@ default:       return "Illegal character in readmacrocell." ;
 }
 const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
-   clearcache() ;
-   
    const char* err = global_liferules.setrule(s, this);
    if (err) return err;
+   if (serial == global_liferules.getSerial())
+      return 0 ;
+
+   serial = global_liferules.getSerial() ;
+   clearcache() ;
+   
    
    if (global_liferules.hasB0notS8)
       return "B0-not-S8 rules are not allowed in HashLife.";

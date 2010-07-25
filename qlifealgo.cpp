@@ -188,6 +188,8 @@ void qlifealgo::uproot() {
    bmax <<= 3 ;
    bmax -= 121 ;
    minlow32 = 8 * minlow32 - 4 ;
+   if (rootlev >= 38)
+     lifefatal("internal:  push too deep for qlifealgo") ;
    for (int i=0; i<2; i++) {
      supertile *oroot = root ;
      rootlev++ ;
@@ -229,6 +231,7 @@ void qlifealgo::clearall() {
       free(memused) ;
       memused = nu ;
    }
+   serial = 0 ;
    generation = 0 ;
    increment = 1 ;
    tilelist = 0 ;
@@ -1128,10 +1131,13 @@ void qlifealgo::step() {
  *   If we change the rule we need to mark everything dirty.
  */
 const char *qlifealgo::setrule(const char *s) {
-   markglobalchange() ;
    
    const char* err = global_liferules.setrule(s, this);
    if (err) return err;
+   if (serial == global_liferules.getSerial())
+      return 0 ;
+   serial = global_liferules.getSerial() ;
+   markglobalchange() ;
 
    if (!global_liferules.hasB0notS8) {
       // current rule doesn't have B0, or it has both B0 and S8

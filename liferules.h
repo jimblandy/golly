@@ -48,6 +48,7 @@ public:
    bool vertically_symmetrical() const { return !wolfram ; }
    bool already_flipped() const { return !!flipped ; }
    void set_flipped() { flipped = 1 ; }
+   int getSerial() { return serial ; }
    // AKT: we need 2 tables to support B0-not-S8 rule emulation
    char rule0[65536];      // rule table for even gens if rule has B0 but not S8,
                            // or for all gens if rule has no B0, or it has B0 *and* S8
@@ -63,6 +64,7 @@ private:
    int rulebits ;
    int wolfram ;
    int flipped ;           // has it been flipped already?
+   int serial ;            // serial count to detect changes
 } ;
 extern liferules global_liferules ;
 #endif
