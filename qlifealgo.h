@@ -273,7 +273,7 @@ private:
    void allsub(vector<supertile*> &src, vector<supertile*> &dst, int lev) ;
    int gethbitsfromleaves(vector<supertile *> v) ;
    int getvbitsfromleaves(vector<supertile *> v) ;
-   void markglobalchange(supertile *, int) ;
+   int markglobalchange(supertile *, int) ;
    void markglobalchange() ; // call if the rule changes
    /* data elements */
    int min, max, rootlev ;

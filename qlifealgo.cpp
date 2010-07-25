@@ -654,22 +654,38 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
       return i ? ((i & 0x100) >> 7) | 1 : 0 ;
 }
 /**
- *   Mark a node and its subnodes as needing recomputation.
+ *   Mark a node and its subnodes as changed.  We really
+ *   only mark those nodes that have any cells set at all.
  */
-void qlifealgo::markglobalchange(supertile *p, int lev) {
+int qlifealgo::markglobalchange(supertile *p, int lev) {
    int i ;
    if (lev == 0) {
       tile *pp = (tile *)p ;
       if (pp != emptytile) {
-         pp->c[0] = pp->c[5] = 0x1ff ;
-         pp->c[1] = pp->c[2] = pp->c[3] = pp->c[4] = 0x3ff ;
+        int s = 0 ;
+        for (int i=0; i<4; i++)
+          for (int j=0; j<16; j++)
+            s |= pp->b[i]->d[j] ;
+        if (s) {
+          pp->c[0] = pp->c[5] = 0x1ff ;
+          pp->c[1] = pp->c[2] = pp->c[3] = pp->c[4] = 0x3ff ;
+          return 0x603 ;
+        }
       }
+      return 0 ;
    } else {
       if (p != nullroots[lev]) {
-         p->flags |= 0xfffffff ;
-         for (i=0; i<8; i++)
-            markglobalchange(p->d[i], lev-1) ;
+         int nchanging = 0 ;
+         if (generation.odd())
+           for (i=0; i<8; i++)
+              nchanging |= (markglobalchange(p->d[i], lev-1)) << i ;
+         else
+           for (i=0; i<8; i++)
+             nchanging |= (markglobalchange(p->d[i], lev-1)) << (7 - i) ;
+         p->flags |= nchanging | 0xf0000000 ;
+         return upchanging(nchanging) ;
       }
+      return 0 ;
    }
 }
 void qlifealgo::markglobalchange() {
