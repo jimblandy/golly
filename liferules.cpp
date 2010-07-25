@@ -70,11 +70,8 @@ void liferules::initruletable(char *rptr, int rulebits,
 }
 
 const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
-   wolfram = -1 ;
-   rulebits = 0 ;
    int slashcount = 0 ;
    int colonpos = 0 ;
-   hexmask = 0x777 ;
    int addend = 17 ;
    int i ;
    
@@ -84,6 +81,10 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    }
    if (strcmp(rulestring, canonrule) == 0) // already set
       return 0 ;
+
+   wolfram = -1 ;
+   rulebits = 0 ;
+   hexmask = 0x777 ;
 
    serial++ ; // allow consumers to notice change in global rule table
 
