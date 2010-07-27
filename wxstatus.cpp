@@ -190,7 +190,7 @@ void StatusBar::SetStatusFont(wxDC& dc)
 {
    dc.SetFont(*statusfont);
    dc.SetTextForeground(*wxBLACK);
-   dc.SetBrush(*wxBLACK_BRUSH);           // avoids problem on Linux/X11
+   dc.SetBrush(*wxBLACK_BRUSH);
    dc.SetBackgroundMode(wxTRANSPARENT);
 }
 
@@ -433,7 +433,7 @@ void StatusBar::OnPaint(wxPaintEvent& WXUNUSED(event))
       // use wxWidgets buffering to avoid flicker
       int wd, ht;
       GetClientSize(&wd, &ht);
-      // wd or ht might be < 1 on Win/X11 platforms
+      // wd or ht might be < 1 on Windows
       if (wd < 1) wd = 1;
       if (ht < 1) ht = 1;
       if (wd != statbitmapwd || ht != statbitmapht) {
@@ -514,11 +514,6 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
          Update();
       }
    }
-
-   #ifdef __WXX11__
-      // make sure viewport keeps keyboard focus
-      viewptr->SetFocus();
-   #endif
 }
 
 // -----------------------------------------------------------------------------

@@ -1532,8 +1532,7 @@ void MainFrame::OnSize(wxSizeEvent& event)
    int wd, ht;
    GetClientSize(&wd, &ht);
    if (wd > 0 && ht > 0) {
-      // note that toolbarptr/statusptr/viewptr might be NULL if OnSize is
-      // called from MainFrame::MainFrame (true if X11)
+      // toolbarptr/statusptr/viewptr might be NULL if OnSize is called from MainFrame ctor
       if (toolbarptr && showtool) {
          // adjust size of tool bar
          toolbarptr->SetSize(0, 0, toolbarwd, ht);
@@ -1820,7 +1819,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
          call_unselect = true;
       #endif
 
-      // changing focus here works on X11 but not on Mac or Windows
+      // changing focus here doesn't work in Mac or Win apps
       // (presumably because they set focus to treectrl after this call)
       viewptr->SetFocus();
    }
@@ -2001,8 +2000,6 @@ void MainFrame::QuitApp()
 }
 
 // -----------------------------------------------------------------------------
-
-// note that drag and drop is not supported by wxX11
 
 #if wxUSE_DRAG_AND_DROP
 
@@ -2564,7 +2561,7 @@ MainFrame::MainFrame()
 
    int wd, ht;
    GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
+   // wd or ht might be < 1 on Windows
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
 

@@ -86,8 +86,8 @@ void Fatal(const wxString& msg)
       wxSetCursor(*wxSTANDARD_CURSOR);
    #endif
    wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
-   // calling wxExit() results in a bus error on X11
-   exit(1);
+
+   exit(1);    // safer than calling wxExit()
 }
 
 // =============================================================================
@@ -442,11 +442,7 @@ int SaveChanges(const wxString& query, const wxString& msg)
 // globals for showing progress
 
 wxProgressDialog* progdlg = NULL;         // progress dialog
-#ifdef __WXX11__
-   const int maxprogrange = 10000;        // maximum range must be < 32K on X11?
-#else
-   const int maxprogrange = 1000000000;   // maximum range (best if very large)
-#endif
+const int maxprogrange = 1000000000;      // maximum range (best if very large)
 wxStopWatch* progwatch = NULL;            // stopwatch for progress dialog
 long prognext;                            // when to update progress dialog
 wxString progtitle;                       // title for progress dialog
@@ -512,11 +508,7 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
    long msecs = progwatch->Time();
    if (progdlg) {
       if (msecs < prognext) return false;
-      #ifdef __WXX11__
-         prognext = msecs + 1000;    // call Update/Pulse about once per sec on X11
-      #else
-         prognext = msecs + 100;     // call Update/Pulse about 10 times per sec
-      #endif
+      prognext = msecs + 100;    // call Update/Pulse about 10 times per sec
       bool cancel;
       if (fraction_done < 0.0) {
          // show indeterminate progress gauge
@@ -567,10 +559,6 @@ void EndProgress()
       #endif
       delete progdlg;
       progdlg = NULL;
-      #ifdef __WXX11__
-         // fix activate problem on X11 if user hit Cancel button
-         mainptr->SetFocus();
-      #endif
    }
    if (progwatch) {
       delete progwatch;

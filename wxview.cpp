@@ -665,26 +665,22 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
 bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
                                       bigint* t, bigint* l, bigint* b, bigint* r)
 {
-   #ifdef __WXX11__
-      if ( !wxFileExists(mainptr->clipfile) ) return false;
-   #else
-      wxTextDataObject data;
-      if ( !mainptr->GetTextFromClipboard(&data) ) return false;
-   
-      // copy clipboard data to temporary file so we can handle all formats
-      // supported by readclipboard
-      wxFile tmpfile(mainptr->clipfile, wxFile::write);
-      if ( !tmpfile.IsOpened() ) {
-         Warning(_("Could not create temporary file for clipboard data!"));
-         return false;
-      }
-      if ( !tmpfile.Write(data.GetText()) ) {
-         Warning(_("Could not write clipboard data to temporary file!  Maybe disk is full?"));
-         tmpfile.Close();
-         return false;
-      }
+   wxTextDataObject data;
+   if ( !mainptr->GetTextFromClipboard(&data) ) return false;
+
+   // copy clipboard data to temporary file so we can handle all formats
+   // supported by readclipboard
+   wxFile tmpfile(mainptr->clipfile, wxFile::write);
+   if ( !tmpfile.IsOpened() ) {
+      Warning(_("Could not create temporary file for clipboard data!"));
+      return false;
+   }
+   if ( !tmpfile.Write(data.GetText()) ) {
+      Warning(_("Could not write clipboard data to temporary file!  Maybe disk is full?"));
       tmpfile.Close();
-   #endif         
+      return false;
+   }
+   tmpfile.Close();
 
    // remember current rule
    oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -720,11 +716,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    // (only needed because qlife and hlife share a global rule table)
    currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
-   #ifdef __WXX11__
-      // don't delete clipboard file
-   #else
-      wxRemoveFile(mainptr->clipfile);
-   #endif
+   wxRemoveFile(mainptr->clipfile);
 
    if (err) {
       // error probably due to bad rule string in clipboard data
@@ -2082,7 +2074,7 @@ void PatternView::ZoomOutPos(int x, int y)
 
 void PatternView::SetViewSize(int wd, int ht)
 {
-   // wd or ht might be < 1 on Win/X11 platforms
+   // wd or ht might be < 1 on Windows
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
 
@@ -2133,7 +2125,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 
    int wd, ht;
    GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
+   // wd or ht might be < 1 on Windows
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
 
@@ -2344,11 +2336,6 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
 
    if (inscript) {
-      #ifdef __WXX11__
-         // sigh... pressing shift key by itself causes key = 306, control key = 308
-         // and other keys like caps lock and option = -1
-         if ( key < 0 || key > 255 ) return;
-      #endif
       // let script decide what to do with the key
       if (mods == wxMOD_SHIFT && key >= 'a' && key <= 'z') {
          // let script see A..Z
@@ -2712,10 +2699,6 @@ void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
    // Win bug??? we don't get this event if CaptureMouse has been called
    CheckCursor(mainptr->IsActive());
    statusptr->CheckMouseLocation(mainptr->IsActive());
-   #ifdef __WXX11__
-      // make sure viewport keeps keyboard focus
-      if ( mainptr->IsActive() ) SetFocus();
-   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -2889,13 +2872,13 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
             currlayer->view->move(amount, 0);
             // don't call UpdateEverything here because it calls UpdateScrollBars
             RefreshView();
-            // don't Update() immediately -- more responsive, especially on X11
+            // don't Update() immediately -- more responsive
          } else {
             vthumb = newpos;
             currlayer->view->move(0, amount);
             // don't call UpdateEverything here because it calls UpdateScrollBars
             RefreshView();
-            // don't Update() immediately -- more responsive, especially on X11
+            // don't Update() immediately -- more responsive
          }
       }
 

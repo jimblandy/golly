@@ -57,14 +57,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifdef __WXMSW__
    // cursor bitmaps are loaded via .rc file
 #else
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursors from a bitmap file
-   #else
-      #include "bitmaps/pick_curs.xpm"
-      #include "bitmaps/hand_curs.xpm"
-      #include "bitmaps/zoomin_curs.xpm"
-      #include "bitmaps/zoomout_curs.xpm"
-   #endif
+   #include "bitmaps/pick_curs.xpm"
+   #include "bitmaps/hand_curs.xpm"
+   #include "bitmaps/zoomin_curs.xpm"
+   #include "bitmaps/zoomout_curs.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -1114,16 +1110,11 @@ void CreateCursors()
    curs_pencil = new wxCursor(wxCURSOR_PENCIL);
    if (curs_pencil == NULL) Fatal(_("Failed to create pencil cursor!"));
 
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or bits
-      curs_pick = new wxCursor(wxCURSOR_PICKER); //!!!???
-   #else
-      wxBitmap bitmap_pick = wxBITMAP(pick_curs);
-      wxImage image_pick = bitmap_pick.ConvertToImage();
-      image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 0);
-      image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 15);
-      curs_pick = new wxCursor(image_pick);
-   #endif
+   wxBitmap bitmap_pick = wxBITMAP(pick_curs);
+   wxImage image_pick = bitmap_pick.ConvertToImage();
+   image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 0);
+   image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 15);
+   curs_pick = new wxCursor(image_pick);
    if (curs_pick == NULL) Fatal(_("Failed to create pick cursor!"));
 
    #ifdef __WXMSW__
@@ -1138,42 +1129,25 @@ void CreateCursors()
    #endif
    if (curs_cross == NULL) Fatal(_("Failed to create cross cursor!"));
 
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or bits
-      curs_hand = new wxCursor(wxCURSOR_HAND);
-   #else
-      wxBitmap bitmap_hand = wxBITMAP(hand_curs);
-      wxImage image_hand = bitmap_hand.ConvertToImage();
-      image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
-      image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
-      curs_hand = new wxCursor(image_hand);
-   #endif
+   wxBitmap bitmap_hand = wxBITMAP(hand_curs);
+   wxImage image_hand = bitmap_hand.ConvertToImage();
+   image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
+   image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
+   curs_hand = new wxCursor(image_hand);
    if (curs_hand == NULL) Fatal(_("Failed to create hand cursor!"));
 
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or from bits;
-      // don't use plus sign -- confusing with cross, and no minus sign for zoom out
-      // curs_zoomin = new wxCursor(wxCURSOR_MAGNIFIER);
-      curs_zoomin = new wxCursor(wxCURSOR_POINT_RIGHT);
-   #else
-      wxBitmap bitmap_zoomin = wxBITMAP(zoomin_curs);
-      wxImage image_zoomin = bitmap_zoomin.ConvertToImage();
-      image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
-      image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
-      curs_zoomin = new wxCursor(image_zoomin);
-   #endif
+   wxBitmap bitmap_zoomin = wxBITMAP(zoomin_curs);
+   wxImage image_zoomin = bitmap_zoomin.ConvertToImage();
+   image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
+   image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
+   curs_zoomin = new wxCursor(image_zoomin);
    if (curs_zoomin == NULL) Fatal(_("Failed to create zoomin cursor!"));
 
-   #ifdef __WXX11__
-      // wxX11 doesn't support creating cursor from wxImage or bits
-      curs_zoomout = new wxCursor(wxCURSOR_POINT_LEFT);
-   #else
-      wxBitmap bitmap_zoomout = wxBITMAP(zoomout_curs);
-      wxImage image_zoomout = bitmap_zoomout.ConvertToImage();
-      image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
-      image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
-      curs_zoomout = new wxCursor(image_zoomout);
-   #endif
+   wxBitmap bitmap_zoomout = wxBITMAP(zoomout_curs);
+   wxImage image_zoomout = bitmap_zoomout.ConvertToImage();
+   image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
+   image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
+   curs_zoomout = new wxCursor(image_zoomout);
    if (curs_zoomout == NULL) Fatal(_("Failed to create zoomout cursor!"));
    
    // default cursors for new pattern or after opening pattern
@@ -1411,10 +1385,8 @@ void SavePrefs()
       fprintf(f, "platform=Mac\n");
    #elif defined(__WXMSW__)
       fprintf(f, "platform=Windows\n");
-   #elif defined(__WXX11__)
-      fprintf(f, "platform=Linux/X11\n");
    #elif defined(__WXGTK__)
-      fprintf(f, "platform=Linux/GTK\n");
+      fprintf(f, "platform=Linux\n");
    #else
       fprintf(f, "platform=unknown\n");
    #endif
@@ -1439,13 +1411,7 @@ void SavePrefs()
       mainht = r.height;
    }
    fprintf(f, "main_window=%d,%d,%d,%d\n", mainx, mainy, mainwd, mainht);
-
-   #ifdef __WXX11__
-      // mainptr->IsMaximized() is always true on X11 so avoid it
-      fprintf(f, "maximize=%d\n", 0);
-   #else
-      fprintf(f, "maximize=%d\n", mainptr->IsMaximized() ? 1 : 0);
-   #endif
+   fprintf(f, "maximize=%d\n", mainptr->IsMaximized() ? 1 : 0);
 
    #ifdef __WXMSW__
    if (GetHelpFrame() && !GetHelpFrame()->IsIconized()) {
@@ -1709,7 +1675,7 @@ void CheckVisibility(int* x, int* y, int* wd, int* ht)
 
 void InitPaths()
 {
-   #if defined(__WXGTK__) || defined(__WXX11__)
+   #ifdef __WXGTK__
       // on Linux we want datadir to be "~/.golly" rather than "~/.Golly"
       wxGetApp().SetAppName(_("golly"));
    #endif
@@ -1747,7 +1713,7 @@ void InitPaths()
    }
    if (tempdir.Last() != wxFILE_SEP_PATH) tempdir += wxFILE_SEP_PATH;
 
-   #if defined(__WXGTK__) || defined(__WXX11__)
+   #ifdef __WXGTK__
       // "Golly" is nicer for warning dialogs etc
       wxGetApp().SetAppName(_("Golly"));
    #endif
@@ -1865,7 +1831,7 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "main_window") == 0) {
          sscanf(value, "%d,%d,%d,%d", &mainx, &mainy, &mainwd, &mainht);
-         // avoid very small window -- can cause nasty probs on X11
+         // avoid very small window
          if (mainwd < minmainwd) mainwd = minmainwd;
          if (mainht < minmainht) mainht = minmainht;
          CheckVisibility(&mainx, &mainy, &mainwd, &mainht);
@@ -2576,8 +2542,6 @@ void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,7,2)
    // fix wxMac 2.7.2+ bug in wxTextCtrl::SetSelection
    #define ALL_TEXT 0,999
-#elif defined(__WXX11__)
-   #define ALL_TEXT 0,999
 #else
    #define ALL_TEXT -1,-1
 #endif
@@ -2849,8 +2813,8 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
       }
    #endif
    
-   /* //!!! didn't work -- OnKeyDown is not getting called
-   #if defined(__WXGTK__) || defined(__WXX11__)
+   /* this didn't work!!! -- OnKeyDown is not getting called
+   #ifdef __WXGTK__
       // on Linux we need to avoid alt-C/O selecting Cancel/OK button
       if ((realkey == 'C' || realkey == 'O') && mods == wxMOD_ALT) {
          OnChar(event);
@@ -3173,11 +3137,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
                                     newcursorChoices);
 
    wxChoice* choice1 = new wxChoice(panel, PREF_NEW_SCALE,
-                                    #ifdef __WXX11__
-                                    wxDefaultPosition, wxSize(60, wxDefaultCoord),
-                                    #else
                                     wxDefaultPosition, wxDefaultSize,
-                                    #endif
                                     newscaleChoices);
    
    wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
@@ -3279,10 +3239,6 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    vbox->AddSpacer(10);
    vbox->Add(hdbox, 0, wxLEFT | wxRIGHT, LRGAP);
    vbox->AddSpacer(5);
-
-   #ifdef __WXX11__
-      vbox->AddSpacer(15);
-   #endif
      
    // init control values
    check1->SetValue(newremovesel);
@@ -3574,11 +3530,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    mingridChoices.Add(wxT("1:8"));
    mingridChoices.Add(wxT("1:16"));
    wxChoice* choice3 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
-                                    #ifdef __WXX11__
-                                    wxDefaultPosition, wxSize(60, wxDefaultCoord),
-                                    #else
                                     wxDefaultPosition, wxDefaultSize,
-                                    #endif
                                     mingridChoices);
 
    wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);

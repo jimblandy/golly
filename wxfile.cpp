@@ -671,9 +671,9 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    }  // end while
 
    if (rulefiles > 0) {
-      contents += wxT("<p>Files marked as \"[installed]\" have been installed into your rules folder<br>\n(");
+      contents += wxT("<p>Files marked as \"[installed]\" have been stored in your rules folder:<br>\n");
       contents += userrules;
-      contents += wxT(").\n");
+      contents += wxT("\n");
    }
    contents += wxT("\n</body></html>");
    
@@ -983,32 +983,16 @@ void MainFrame::OpenScript()
 bool MainFrame::CopyTextToClipboard(const wxString& text)
 {
    bool result = true;
-   #ifdef __WXX11__
-      // no global clipboard support on X11 so we save data in a file
-      wxFile tmpfile(clipfile, wxFile::write);
-      if ( tmpfile.IsOpened() ) {
-         size_t textlen = text.Length();
-         if ( tmpfile.Write( text.c_str(), textlen ) < textlen ) {
-            Warning(_("Could not write all data to clipboard file!"));
-            result = false;
-         }
-         tmpfile.Close();
-      } else {
-         Warning(_("Could not create clipboard file!"));
+   if (wxTheClipboard->Open()) {
+      if ( !wxTheClipboard->SetData(new wxTextDataObject(text)) ) {
+         Warning(_("Could not copy text to clipboard!"));
          result = false;
       }
-   #else
-      if (wxTheClipboard->Open()) {
-         if ( !wxTheClipboard->SetData(new wxTextDataObject(text)) ) {
-            Warning(_("Could not copy text to clipboard!"));
-            result = false;
-         }
-         wxTheClipboard->Close();
-      } else {
-         Warning(_("Could not open clipboard!"));
-         result = false;
-      }
-   #endif
+      wxTheClipboard->Close();
+   } else {
+      Warning(_("Could not open clipboard!"));
+      result = false;
+   }
    return result;
 }
 
@@ -1066,12 +1050,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
          }
 
       } else {
-         #ifdef __WXX11__
-            statusptr->ErrorMessage(_("Sorry, but there is no clipboard support for X11."));
-            // do X11 apps like xlife or fontforge have clipboard support???
-         #else
-            statusptr->ErrorMessage(_("No data in clipboard."));
-         #endif
+         statusptr->ErrorMessage(_("No data in clipboard."));
       }
       wxTheClipboard->Close();
 
@@ -1095,31 +1074,21 @@ void MainFrame::OpenClipboard()
    }
 
    // load and view pattern data stored in clipboard
-   #ifdef __WXX11__
-      // on X11 the clipboard data is in non-temporary clipfile, so copy
-      // clipfile to tempstart (for use by ResetPattern and ShowPatternInfo)
-      if ( wxCopyFile(clipfile, currlayer->tempstart, true) ) {
+   wxTextDataObject data;
+   if (GetTextFromClipboard(&data)) {
+      // copy clipboard data to tempstart so we can handle all formats
+      // supported by readpattern
+      wxFile outfile(currlayer->tempstart, wxFile::write);
+      if ( outfile.IsOpened() ) {
+         outfile.Write( data.GetText() );
+         outfile.Close();
          LoadPattern(currlayer->tempstart, _("clipboard"));
+         // do NOT delete tempstart -- it can be reloaded by ResetPattern
+         // or used by ShowPatternInfo
       } else {
-         statusptr->ErrorMessage(_("Could not copy clipfile!"));
+         statusptr->ErrorMessage(_("Could not create tempstart file!"));
       }
-   #else
-      wxTextDataObject data;
-      if (GetTextFromClipboard(&data)) {
-         // copy clipboard data to tempstart so we can handle all formats
-         // supported by readpattern
-         wxFile outfile(currlayer->tempstart, wxFile::write);
-         if ( outfile.IsOpened() ) {
-            outfile.Write( data.GetText() );
-            outfile.Close();
-            LoadPattern(currlayer->tempstart, _("clipboard"));
-            // do NOT delete tempstart -- it can be reloaded by ResetPattern
-            // or used by ShowPatternInfo
-         } else {
-            statusptr->ErrorMessage(_("Could not create tempstart file!"));
-         }
-      }
-   #endif
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -1837,7 +1806,7 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
       if (tilelayers && numlayers > 1 && tileborder != oldtileborder) {
          int wd, ht;
          bigview->GetClientSize(&wd, &ht);
-         // wd or ht might be < 1 on Win/X11 platforms
+         // wd or ht might be < 1 on Windows
          if (wd < 1) wd = 1;
          if (ht < 1) ht = 1;
          ResizeLayers(wd, ht);

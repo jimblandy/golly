@@ -842,7 +842,7 @@ void ResizeTiles(int bigwd, int bight)
    for ( int i = 0; i < numlayers; i++ ) {
       int wd, ht;
       layer[i]->tilewin->GetClientSize(&wd, &ht);
-      // wd or ht might be < 1 on Win/X11 platforms
+      // wd or ht might be < 1 on Windows
       if (wd < 1) wd = 1;
       if (ht < 1) ht = 1;
       layer[i]->view->resize(wd, ht);
@@ -893,7 +893,7 @@ void CreateTiles()
    // init tilerects, tile window sizes and their viewport sizes
    int wd, ht;
    bigview->GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
+   // wd or ht might be < 1 on Windows
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
    ResizeTiles(wd, ht);
@@ -918,7 +918,7 @@ void DestroyTiles()
    // resize viewport in each layer to bigview's client area
    int wd, ht;
    bigview->GetClientSize(&wd, &ht);
-   // wd or ht might be < 1 on Win/X11 platforms
+   // wd or ht might be < 1 on Windows
    if (wd < 1) wd = 1;
    if (ht < 1) ht = 1;
    for ( int i = 0; i < numlayers; i++ )

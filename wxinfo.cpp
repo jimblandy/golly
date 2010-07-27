@@ -148,14 +148,14 @@ InfoFrame::InfoFrame(char *comments)
                                  #else
                                     wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
                                  #endif
-   textctrl->SetDefaultStyle(textattr);   // doesn't change font on X11!!!
+   textctrl->SetDefaultStyle(textattr);
    if (comments[0] == 0) {
       textctrl->WriteText(_("No comments found."));
    } else {
       textctrl->WriteText(wxString(comments,wxConvLocal));
    }
    textctrl->ShowPosition(0);
-   textctrl->SetInsertionPoint(0);        // needed to change pos on X11
+   textctrl->SetInsertionPoint(0);
 
    wxButton *closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
    closebutt->SetDefault();
@@ -230,9 +230,6 @@ void ShowInfo(const wxString& filepath)
    if (infoptr) {
       // info window exists so just bring it to front
       infoptr->Raise();
-      #ifdef __WXX11__
-         infoptr->SetFocus();    // activate window
-      #endif
       return;
    }
 
@@ -249,16 +246,6 @@ void ShowInfo(const wxString& filepath)
          Warning(_("Could not create info window!"));
       } else {
          infoptr->Show(true);
-         #ifdef __WXX11__
-            // avoid wxX11 bug (probably caused by earlier SetMinSize call);
-            // info window needs to be moved to infox,infoy
-            infoptr->Lower();
-            // don't call Yield -- doesn't work if we're generating
-            while (wxGetApp().Pending()) wxGetApp().Dispatch();
-            infoptr->Move(infox, infoy);
-            // note that Move clobbers effect of SetMinSize!!!
-            infoptr->Raise();
-         #endif
       }
    }
    

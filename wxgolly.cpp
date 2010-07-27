@@ -339,9 +339,9 @@ bool GollyApp::OnInit()
    mainptr->NewPattern();
 
    // script/pattern files are stored in the pendingfiles array for later processing
-   // in OnIdle; this avoids a crash in Win/X11 app if a script is run before
-   // showing the main window, and also avoids event problems in Win app with
-   // a long-running script (eg. user can't hit escape to abort script)
+   // in OnIdle; this avoids a crash in Win app if a script is run before showing
+   // the main window, and also avoids event problems in Win app with a long-running
+   // script (eg. user can't hit escape to abort script)
    const wxString START_PERL = wxT("golly-start.pl");
    const wxString START_PYTHON = wxT("golly-start.py");
    wxString startscript = gollydir + START_PERL;
