@@ -17,7 +17,7 @@ WX_DIR = /HD/wxWidgets/wxMac-2.8.4
 WXINC_DIR = $(WX_DIR)/src/build/include
 
 APP_NAME = Golly
-APP_VERSION = 2.2b3
+APP_VERSION = 2.2b4
 
 # for Perl script support
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`

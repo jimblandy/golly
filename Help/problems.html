@@ -16,24 +16,19 @@ or Tom Rokicki
 <p>
 <ul>
 <li>
-Golly is a work in progress and we hope to add more features,
-including support for non-rectangular selections
-and more sophisticated editing capabilities.
-<li>
 All editing operations are restricted to cells whose coordinates
-are within +/- 1 billion.  There is also a bug in the HashLife
-algorithm that prevents you from editing any cell states if the
-pattern is very large (outside the +/- 1 billion limits).
+are within +/- 1 billion.
 <li>
 The QuickLife algorithm has a minor bug that can cause selecting
 a large pattern to appear to be incorrect.  The selection is actually
 correct but the rectangle is slightly offset (by one pixel).
 <li>
 Pattern rendering needs to be optimized, especially in the Mac and Linux apps.
+The solution will probably require using OpenGL rather than wxDC calls.
 </ul>
 
 <p>
-<font size=+1><b>Mac OS X problems</b></font>
+<font size=+1><b>Mac problems</b></font>
 
 <p>
 <ul>
