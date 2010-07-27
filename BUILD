@@ -102,7 +102,7 @@ Once wxWidgets, Perl and Python are installed, building Golly should
 be easy.  Just use the appropriate makefile for your platform:
 
    nmake -f makefile-win   - on Windows 2000 or later
-   make -f makefile-mac    - on Mac OS X 10.3.9 or later
+   make -f makefile-mac    - on Mac OS 10.4 or later
    make -f makefile-gtk    - on Linux with GTK+
 
 NOTES:

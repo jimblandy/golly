@@ -1614,17 +1614,11 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
    // remember this cell change for later undo/redo
    if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy, oldstate, newstate);
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
-   // use UpdateView to avoid wxMac bug on Mac OS 10.3.9
-   slowdraw = true;
-   return;
-#else
    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
       // drawing must be done via UpdateView in ShowDrawing
       slowdraw = true;
       return;
    }
-#endif
 
    int cellsize = 1 << currlayer->view->getmag();
 
