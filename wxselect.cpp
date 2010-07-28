@@ -887,8 +887,12 @@ bool Selection::Visible(wxRect* visrect)
    // all or some of selection is visible in viewport;
    // only set visible rectangle if requested
    if (visrect) {
+      // first we must clip coords to viewport
       if (lt.first < 0) lt.first = 0;
       if (lt.second < 0) lt.second = 0;
+      if (rb.first > currlayer->view->getxmax()) rb.first = currlayer->view->getxmax();
+      if (rb.second > currlayer->view->getymax()) rb.second = currlayer->view->getymax();
+      
       if (currlayer->view->getmag() > 0) {
          // move rb to pixel at bottom right corner of cell
          rb.first += (1 << currlayer->view->getmag()) - 1;
@@ -898,9 +902,11 @@ bool Selection::Visible(wxRect* visrect)
             rb.first--;
             rb.second--;
          }
+         // clip to viewport again
+         if (rb.first > currlayer->view->getxmax()) rb.first = currlayer->view->getxmax();
+         if (rb.second > currlayer->view->getymax()) rb.second = currlayer->view->getymax();
       }
-      if (rb.first > currlayer->view->getxmax()) rb.first = currlayer->view->getxmax();
-      if (rb.second > currlayer->view->getymax()) rb.second = currlayer->view->getymax();
+
       visrect->SetX(lt.first);
       visrect->SetY(lt.second);
       visrect->SetWidth(rb.first - lt.first + 1);
