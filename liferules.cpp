@@ -79,8 +79,13 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    if (rulestring[0] == 0) {
       return "Rule cannot be empty string." ;
    }
+   
+   /* AKT: this causes problem: if rule is set to "B3/S23:T10,10" and then Golly is
+           quit and restarted the grid is displayed as unbounded rather than 10x10;
+           perhaps this problem will go away when global_liferules is removed???
    if (strcmp(rulestring, canonrule) == 0) // already set
       return 0 ;
+   */
 
    wolfram = -1 ;
    rulebits = 0 ;
