@@ -303,18 +303,18 @@ bool GollyApp::OnInit()
 
    // allow .html files to include common graphic formats,
    // and .icons files to be in any of these formats;
-   // note that wxBMPHandler is always installed
-   /* this dynamic loading method didn't work (on Mac/Win at least)!!!
-   static const wxChar *handlerClassNames[] = {
-      wxT("wxGIFHandler"), wxT("wxPNGHandler"), wxT("wxTIFFHandler"), 0 };
-   for (const wxChar **name = handlerClassNames; *name != 0; ++name) {
-      wxImageHandler *handler = (wxImageHandler*)wxCreateDynamicObject(*name);
-      if (handler != 0) wxImage::AddHandler(handler);
-   }
-   */
+   // note that wxBMPHandler is always installed, so it needs not be added,
+   // and we can assume that if HAVE_WX_BMP_HANDLER is not defined, then
+   // the handlers have not been auto-detected (and we just install them all).
+#if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_GIF_HANDLER)
    wxImage::AddHandler(new wxGIFHandler);
+#endif
+#if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_PNG_HANDLER)
    wxImage::AddHandler(new wxPNGHandler);
+#endif
+#if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_TIFF_HANDLER)
    wxImage::AddHandler(new wxTIFFHandler);
+#endif
 
    // wxInternetFSHandler is needed to allow downloading files
    wxFileSystem::AddHandler(new wxInternetFSHandler);

@@ -1772,7 +1772,7 @@ void GetPrefs()
       perllib = wxEmptyString;
       pythonlib = wxEmptyString;
    #else // assume Linux
-      perllib = wxT("libperl.so.5.10");
+      perllib = wxT(STRINGIFY(PERL_SHLIB));
       pythonlib = wxT(STRINGIFY(PYTHON_SHLIB));
    #endif
 

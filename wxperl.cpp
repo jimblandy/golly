@@ -72,6 +72,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // avoid warning about _ being redefined
 #undef _
 
+// on Windows, wxWidgets redefines uid_t/gid_t which breaks Perl's typedefs:
+#undef uid_t
+#undef gid_t
+
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
