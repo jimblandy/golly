@@ -51,8 +51,14 @@ public:
    virtual ~nullrender() {}
    virtual void killrect(int, int, int, int) {}
    virtual void pixblit(int, int, int, int, char*, int) {}
-   virtual void getcolors(unsigned char**, unsigned char**, unsigned char**) {}
+   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) {
+      static unsigned char dummyr[256], dummyg[256], dummyb[256];
+      *r = dummyr;
+      *g = dummyg;
+      *b = dummyb;
+   }
 } ;
+
 nullrender renderer ;
 /*
  *   This is a "lifeerrors" that we can use to test some edge
