@@ -105,6 +105,29 @@ be easy.  Just use the appropriate makefile for your platform:
    make -f makefile-mac    - on Mac OS 10.4 or later
    make -f makefile-gtk    - on Linux with GTK+
 
+Alternatively, Golly can be built using the GNU build system, by first
+running the configure script to create an appropriate Makefile for
+your operating system and then running make to build Golly. For
+example, for a system-wide installation, you might run:
+
+   ./configure
+   make
+   make install
+
+The configure script offers various options to customize building and
+installation. For an overview of the available options, run:
+
+  ./configure --help
+
+If you obtained the Golly source code from the CVS repository instead
+of a source release, you need to generate the configure script first,
+by running:
+
+  ./autogen.sh
+
+Note that this requires autoconf, automake and Perl 5 are installed.
+
+
 NOTES:
 
 - On Windows, if you decided not to edit config.vc as recommended
