@@ -52,10 +52,8 @@ public:
    virtual void killrect(int, int, int, int) {}
    virtual void pixblit(int, int, int, int, char*, int) {}
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) {
-      static unsigned char dummyr[256], dummyg[256], dummyb[256];
-      *r = dummyr;
-      *g = dummyg;
-      *b = dummyb;
+      static unsigned char dummy[256];
+      *r = *g = *b = dummy;
    }
 } ;
 
