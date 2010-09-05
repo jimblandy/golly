@@ -450,6 +450,60 @@ const char* GSF_paste(int x, int y, char* mode)
 
 // -----------------------------------------------------------------------------
 
+int GSF_hash(int x, int y, int wd, int ht)
+{
+   // calculate a hash value for pattern in given rect
+   int hash = 31415962;
+   int right = x + wd - 1;
+   int bottom = y + ht - 1;
+   int cx, cy;
+   int v = 0;
+
+   lifealgo* curralgo = currlayer->algo;
+   if (curralgo->NumCellStates() > 2) {
+      // multi-state universe
+      for ( cy=y; cy<=bottom; cy++ ) {
+         int yshift = cy - y;
+         for ( cx=x; cx<=right; cx++ ) {
+            int skip = curralgo->nextcell(cx, cy, v);
+            if (skip >= 0) {
+               // found next live cell in this row (v is >= 1)
+               cx += skip;
+               if (cx <= right) {
+                  // need to use a good hash function for patterns like AlienCounter.rle
+                  hash = (hash * 1000003) ^ yshift;
+                  hash = (hash * 1000003) ^ (cx - x);
+                  hash = (hash * 1000003) ^ v;
+               }
+            } else {
+               cx = right;  // done this row
+            }
+         }
+      }
+   } else {
+      // two-state universe
+      for ( cy=y; cy<=bottom; cy++ ) {
+         int yshift = cy - y;
+         for ( cx=x; cx<=right; cx++ ) {
+            int skip = curralgo->nextcell(cx, cy, v);
+            if (skip >= 0) {
+               // found next live cell in this row (v is 1)
+               cx += skip;
+               if (cx <= right) {
+                  hash = (hash * 33 + yshift) ^ (cx - x);
+               }
+            } else {
+               cx = right;  // done this row
+            }
+         }
+      }
+   }
+
+   return hash;
+}
+
+// -----------------------------------------------------------------------------
+
 void GSF_select(int x, int y, int wd, int ht)
 {
    if (wd < 1 || ht < 1) {

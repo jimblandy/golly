@@ -1549,35 +1549,11 @@ XS(pl_hash)
    int y  = SvIV(ST(1));
    int wd = SvIV(ST(2));
    int ht = SvIV(ST(3));
+   // check that wd & ht are > 0
    if (wd <= 0) PERL_ERROR("g_hash error: width must be > 0.");
    if (ht <= 0) PERL_ERROR("g_hash error: height must be > 0.");
-   int right = x + wd - 1;
-   int bottom = y + ht - 1;
-   int cx, cy;
-   int v = 0;
-   int cntr = 0;
 
-   // calculate a hash value for pattern in given rect
-   int hash = 31415962;
-   lifealgo* curralgo = currlayer->algo;
-   for ( cy=y; cy<=bottom; cy++ ) {
-      int yshift = cy - y;
-      for ( cx=x; cx<=right; cx++ ) {
-         int skip = curralgo->nextcell(cx, cy, v);
-         if (skip >= 0) {
-            // found next live cell in this row
-            cx += skip;
-            if (cx <= right) {
-               //note that v is 1 in a two-state universe
-               hash = (hash * 33 + yshift) ^ ((cx - x) * v);
-            }
-         } else {
-            cx = right;  // done this row
-         }
-         cntr++;
-         if ((cntr % 4096) == 0) RETURN_IF_ABORTED;
-      }
-   }
+   int hash = GSF_hash(x, y, wd, ht);
 
    XSRETURN_IV(hash);
 }

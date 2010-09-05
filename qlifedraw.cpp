@@ -1052,7 +1052,7 @@ void qlifealgo::lowerRightPixel(bigint &x, bigint &y, int mag) {
    x += bmin ;
    x >>= -mag ;
    x <<= -mag ;
-   x -= bmin ;
+   x -= bmin ;   
    y -= 1 ;
    y += bmin ;
    y >>= -mag ;

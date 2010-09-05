@@ -142,3 +142,12 @@ Dean Hickerson:
   and reading it into new layer.
 - The Save Pattern dialog should use .mc as the default format if the
   current algo is hash-based (ie. all except QuickLife).
+
+ssaamm:
+- Provide an option to disable all beeps.
+
+tod222:
+- Provide a way to cleanly shut down Golly from within a script.
+  Maybe just use special exit() string like exit("QUIT GOLLY")?
+- Allow a command line argument (-minimize?) to start up with the
+  main window in minimized state.  Shoule be possible in OnInit.
