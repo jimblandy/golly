@@ -39,7 +39,6 @@ class RuleTree:
         # each node tuple is ( depth, index0, index1, .. index(numStates-1) )
         # where each index is an index into self.seq
         
-        self.params = {}
         self.nodeSeq = 0
         self.curndd = -1
         self.numStates = numStates
@@ -153,7 +152,7 @@ class MakeRuleTreeFromTransitionFunction:
         self.numNeighbors = numNeighbors
         self.world = {}
         self.seq = []
-        self.params = {}
+        self.params = [0]*self.numParams
         self.nodeSeq = 0
         self.f = f
         self._recur(self.numParams)

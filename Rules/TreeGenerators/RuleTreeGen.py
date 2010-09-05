@@ -5,7 +5,7 @@ class GenerateRuleTree:
         self.numParams = numNeighbors + 1 ;
         self.world = {}
         self.r = []
-        self.params = {}
+        self.params = [0]*self.numParams
         self.nodeSeq = 0
         self.numStates = numStates
         self.numNeighbors = numNeighbors
