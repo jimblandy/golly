@@ -74,8 +74,16 @@ class RuleTree:
         if nddr in self.cache:
             return self.cache[nddr]
         # replace the node entry at each input with the index of the node from a recursive call to the next level down
-        node = tuple( [at] + [ self._add(inputs,output,self.seq[nddr][i+1],at-1) if i in inputs[at-1] \
-                               else self.seq[nddr][i+1] for i in range(self.numStates) ] )
+        ### AKT: this code causes syntax error in Python 2.3:
+        ### node = tuple( [at] + [ self._add(inputs,output,self.seq[nddr][i+1],at-1) if i in inputs[at-1] \
+        ###                        else self.seq[nddr][i+1] for i in range(self.numStates) ] )
+        temp = []
+        for i in range(self.numStates):
+            if i in inputs[at-1]:
+                temp.append( self._add(inputs,output,self.seq[nddr][i+1],at-1) )
+            else:
+                temp.append( self.seq[nddr][i+1] )
+        node = tuple( [at] + temp )
         r = self._getNode(node)
         self.cache[nddr] = r
         return r
