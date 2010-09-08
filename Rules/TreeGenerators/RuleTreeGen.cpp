@@ -1,3 +1,4 @@
+#include <string.h>     // for strlen
 #include <vector>
 #include <map>
 #include <string>
