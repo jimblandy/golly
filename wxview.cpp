@@ -1839,7 +1839,16 @@ void PatternView::PickCell(int x, int y)
 
 void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 {
+   // make sure anchor cell is within bounded grid (x,y can be outside grid)
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+   if (currlayer->algo->gridwd > 0) {
+      if (cellpos.first < currlayer->algo->gridleft) cellpos.first = currlayer->algo->gridleft;
+      if (cellpos.first > currlayer->algo->gridright) cellpos.first = currlayer->algo->gridright;
+   }
+   if (currlayer->algo->gridht > 0) {
+      if (cellpos.second < currlayer->algo->gridtop) cellpos.second = currlayer->algo->gridtop;
+      if (cellpos.second > currlayer->algo->gridbottom) cellpos.second = currlayer->algo->gridbottom;
+   }
    anchorx = cellpos.first;
    anchory = cellpos.second;
 
@@ -1884,26 +1893,41 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 
 void PatternView::SelectCells(int x, int y)
 {
+   // only select cells within view
+   if (x < 0) x = 0;
+   if (y < 0) y = 0;
+   if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
+   if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
+
    if ( abs(initselx - x) < 2 && abs(initsely - y) < 2 && !SelectionExists() ) {
       // avoid 1x1 selection if mouse hasn't moved much
       return;
    }
 
+   // make sure x,y is within bounded grid
    pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+   if (currlayer->algo->gridwd > 0) {
+      if (cellpos.first < currlayer->algo->gridleft) cellpos.first = currlayer->algo->gridleft;
+      if (cellpos.first > currlayer->algo->gridright) cellpos.first = currlayer->algo->gridright;
+   }
+   if (currlayer->algo->gridht > 0) {
+      if (cellpos.second < currlayer->algo->gridtop) cellpos.second = currlayer->algo->gridtop;
+      if (cellpos.second > currlayer->algo->gridbottom) cellpos.second = currlayer->algo->gridbottom;
+   }
+
    if (!forcev) currlayer->currsel.SetLeftRight(cellpos.first, anchorx);
    if (!forceh) currlayer->currsel.SetTopBottom(cellpos.second, anchory);
 
    if (currlayer->currsel != prevsel) {
       // selection has changed
       DisplaySelectionSize();
+      prevsel = currlayer->currsel;
       
       // allow mouse interaction if script is running
       bool saveinscript = inscript;
       inscript = false;
       mainptr->UpdatePatternAndStatus();
       inscript = saveinscript;
-      
-      prevsel = currlayer->currsel;
    }
 }
 
@@ -1959,7 +1983,7 @@ void PatternView::MoveView(int x, int y)
       bigcelly = cellpos.second;
    }
    
-   // only update scroll bars if grid is bounded
+   // need to update scroll bars if grid is bounded
    if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
       UpdateScrollBars();
    }
@@ -2733,14 +2757,11 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          return;
       }
       if ( selectingcells && !scrollcross ) {
-         if (x < 0) x = 0;
-         if (y < 0) y = 0;
-         if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
-         if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
          SelectCells(x, y);
          return;
       }
       if ( movingview && !scrollhand ) {
+         // make sure x,y is within viewport
          if (x < 0) x = 0;
          if (y < 0) y = 0;
          if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
@@ -2767,7 +2788,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          currlayer->view->move(xamount, yamount);
          // no need to call UpdatePatternAndStatus() here because
          // it will be called soon in SelectCells, except in this case:
-         if (forceh || forcev) {
+         if (forceh || forcev || currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             // selection might not change so must update pattern
             RefreshView();
             // need to update now if script is running
@@ -2803,17 +2824,17 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
          bigcellx = cellpos.first;
          bigcelly = cellpos.second;
       }
+
+      // need to update scroll bars if grid is bounded
+      if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+         UpdateScrollBars();
+      }
    }
 
    if ( drawingcells ) {
       DrawCells(x, y);
 
    } else if ( selectingcells ) {
-      // only select cells within view
-      if (x < 0) x = 0;
-      if (y < 0) y = 0;
-      if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
-      if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
       SelectCells(x, y);
 
    } else if ( movingview ) {

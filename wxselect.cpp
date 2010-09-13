@@ -1926,6 +1926,15 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
    bigint newleft   = midx;   newleft   += seltop;      newleft   -= midy;
    bigint newright  = midx;   newright  += selbottom;   newright  -= midy;
    
+   // check if rotated selection edges are outside bounded grid
+   if ( (currlayer->algo->gridwd > 0 &&
+            (newleft < currlayer->algo->gridleft || newright > currlayer->algo->gridright)) ||
+        (currlayer->algo->gridht > 0 &&
+            (newtop < currlayer->algo->gridtop || newbottom > currlayer->algo->gridbottom)) ) {
+      statusptr->ErrorMessage(_("New selection would be outside grid boundary."));
+      return false;
+   }
+   
    // if there is no pattern then just rotate the selection edges
    if (currlayer->algo->isEmpty()) {
       viewptr->SaveCurrentSelection();
