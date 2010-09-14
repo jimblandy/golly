@@ -35,8 +35,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "lifealgo.h"      // for lifealgo class
 
-#include "wxgolly.h"       // for wxGetApp, mainptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, BeginProgress, etc
 #include "wxprefs.h"       // for GetShortcutTable, helpfontsize, gollydir, etc
 #include "wxscript.h"      // for inscript
@@ -409,6 +410,10 @@ void LoadRule(const wxString& rulestring)
    // load recently installed rule.table/tree/colors/icons file
    wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
+
+   // selection might change if grid becomes smaller,
+   // so save current selection for RememberRuleChange/RememberAlgoChange
+   viewptr->SaveCurrentSelection();
    
    mainptr->Raise();
    
@@ -456,6 +461,11 @@ void LoadRule(const wxString& rulestring)
    if (oldrule != newrule) {
       // show new rule in main window's title but don't change name
       mainptr->SetWindowTitle(wxEmptyString);
+
+      // if grid is bounded then remove any live cells outside grid edges
+      if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+         mainptr->ClearOutsideGrid();
+      }
    }
    
    // new table/tree might have changed the number of cell states;

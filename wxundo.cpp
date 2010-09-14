@@ -135,10 +135,12 @@ public:
 
    // rulechange info
    wxString oldrule, newrule;             // old and new rules
+   // also uses oldsel, newsel
    
    // algochange info
    algo_type oldalgo, newalgo;            // old and new algorithm types
    // also uses oldrule, newrule
+   // and oldsel, newsel
 };
 
 // -----------------------------------------------------------------------------
@@ -355,20 +357,20 @@ bool ChangeNode::DoChange(bool undo)
          break;
 
       case rulechange:
-         {
-            if (undo) {
-               currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-            } else {
-               currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-            }
-            // show new rule in window title (file name doesn't change)
-            mainptr->SetWindowTitle(wxEmptyString);
-            if (cellcount > 0) {
-               ChangeCells(undo);
-            }
-            // switch to default colors for new rule
-            UpdateLayerColors();
+         if (undo) {
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            currlayer->currsel = oldsel;
+         } else {
+            currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+            currlayer->currsel = newsel;
          }
+         // show new rule in window title (file name doesn't change)
+         mainptr->SetWindowTitle(wxEmptyString);
+         if (cellcount > 0) {
+            ChangeCells(undo);
+         }
+         // switch to default colors for new rule
+         UpdateLayerColors();
          mainptr->UpdateEverything();
          break;
 
@@ -376,14 +378,17 @@ bool ChangeNode::DoChange(bool undo)
          // pass in true so ChangeAlgorithm won't call RememberAlgoChange
          if (undo) {
             mainptr->ChangeAlgorithm(oldalgo, oldrule, true);
+            currlayer->currsel = oldsel;
          } else {
             mainptr->ChangeAlgorithm(newalgo, newrule, true);
+            currlayer->currsel = newsel;
          }
          // show new rule in window title (file name doesn't change)
          mainptr->SetWindowTitle(wxEmptyString);
          if (cellcount > 0) {
             ChangeCells(undo);
          }
+         // ChangeAlgorithm has called UpdateLayerColors()
          mainptr->UpdateEverything();
          break;
       
@@ -1081,6 +1086,10 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
    change->oldrule = oldrule;
    change->newrule = newrule;
    
+   // selection might have changed if grid became smaller
+   change->oldsel = currlayer->savesel;
+   change->newsel = currlayer->currsel;
+   
    // SaveCellChange may have been called
    if (numchanges > 0) {
       if (numchanges < maxchanges) {
@@ -1124,6 +1133,10 @@ void UndoRedo::RememberAlgoChange(algo_type oldalgo, const wxString& oldrule)
    change->newalgo = currlayer->algtype;
    change->oldrule = oldrule;
    change->newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
+   
+   // selection might have changed if grid became smaller
+   change->oldsel = currlayer->savesel;
+   change->newsel = currlayer->currsel;
    
    // SaveCellChange may have been called
    if (numchanges > 0) {

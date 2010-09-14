@@ -256,7 +256,6 @@ void PatternView::CopySelection()
 
 // -----------------------------------------------------------------------------
 
-// make PatternView:: method???
 static bool CellInGrid(const bigint xpos, const bigint ypos)
 {
    // return true if cell at xpos,ypos is within bounded grid
@@ -273,7 +272,6 @@ static bool CellInGrid(const bigint xpos, const bigint ypos)
 
 // -----------------------------------------------------------------------------
 
-// make PatternView:: method???
 static bool PointInGrid(int x, int y)
 {
    // is given viewport location also in grid?
@@ -455,7 +453,12 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          // Update();
       }
       
-      if ( !PointInView(pastex, pastey) || !PointInGrid(pastex, pastey) ) {
+      if ( !PointInView(pastex, pastey) ||
+           // allow paste if any corner of pasterect is within grid
+           !( PointInGrid(pastex, pastey) ||
+              PointInGrid(pastex+pasterect.width-1, pastey) ||
+              PointInGrid(pastex, pastey+pasterect.height-1) ||
+              PointInGrid(pastex+pasterect.width-1, pastey+pasterect.height-1) ) ) {
          statusptr->DisplayMessage(_("Paste aborted."));
          return;
       }
@@ -488,8 +491,13 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       statusptr->ErrorMessage(_("Pasting is not allowed outside +/- 10^9 boundary."));
       return;
    }
+
+   // selection might change if grid becomes smaller,
+   // so save current selection for RememberRuleChange/RememberAlgoChange
+   SaveCurrentSelection();
    
    // pasting clipboard pattern can cause a rule change
+   int oldmaxstate = currlayer->algo->NumCellStates() - 1;
    if (canchangerule > 0 && oldrule != newrule) {
       const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
       // setrule can fail if readclipboard loaded clipboard pattern into
@@ -498,10 +506,20 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          // allow rule change to cause algo change
          mainptr->ChangeAlgorithm(newalgo, newrule);
       } else {
-         // switch to default colors for new rule
-         UpdateLayerColors();
          // show new rule in title bar
          mainptr->SetWindowTitle(wxEmptyString);
+         // if grid is bounded then remove any live cells outside grid edges
+         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+            mainptr->ClearOutsideGrid();
+         }
+         // rule change might have changed the number of cell states;
+         // if there are fewer states then pattern might change
+         int newmaxstate = currlayer->algo->NumCellStates() - 1;
+         if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+            mainptr->ReduceCellStates(newmaxstate);
+         }
+         // switch to default colors for new rule
+         UpdateLayerColors();
          if (allowundo && !currlayer->stayclean)
             currlayer->undoredo->RememberRuleChange(oldrule);
       }
@@ -514,6 +532,22 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    // save cell changes if undo/redo is enabled and script isn't constructing a pattern
    bool savecells = allowundo && !currlayer->stayclean;
    if (savecells && inscript) SavePendingChanges();
+
+   // don't paste cells outside bounded grid
+   int gtop = currlayer->algo->gridtop.toint();
+   int gleft = currlayer->algo->gridleft.toint();
+   int gbottom = currlayer->algo->gridbottom.toint();
+   int gright = currlayer->algo->gridright.toint();
+   if (currlayer->algo->gridwd == 0) {
+      // grid has infinite width
+      gleft = INT_MIN;
+      gright = INT_MAX;
+   }
+   if (currlayer->algo->gridht == 0) {
+      // grid has infinite height
+      gtop = INT_MIN;
+      gbottom = INT_MAX;
+   }
 
    // copy pattern from temporary universe to current universe
    int tx, ty, cx, cy;
@@ -556,15 +590,17 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
                // found next live cell so paste it into current universe
                tx += skip;
                cx += skip;
-               int currstate = curralgo->getcell(cx, cy);
-               if (currstate != newstate) {
-                  if (newstate > maxstate) {
-                     newstate = maxstate;
-                     reduced = true;
+               if (cx >= gleft && cx <= gright && cy >= gtop && cy <= gbottom) {
+                  int currstate = curralgo->getcell(cx, cy);
+                  if (currstate != newstate) {
+                     if (newstate > maxstate) {
+                        newstate = maxstate;
+                        reduced = true;
+                     }
+                     curralgo->setcell(cx, cy, newstate);
+                     pattchanged = true;
+                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
                   }
-                  curralgo->setcell(cx, cy, newstate);
-                  pattchanged = true;
-                  if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
                }
                cx++;
             } else {
@@ -591,48 +627,50 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          for ( tx=ileft; tx<=iright; tx++ ) {
             tempstate = tempalgo->getcell(tx, ty);
             currstate = curralgo->getcell(cx, cy);
-            switch (pmode) {
-               case And:
-                  if (tempstate != currstate && currstate > 0) {
-                     curralgo->setcell(cx, cy, 0);
-                     pattchanged = true;
-                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
-                  }
-                  break;
-               case Copy:
-                  if (tempstate != currstate) {
-                     if (tempstate > maxstate) {
-                        tempstate = maxstate;
-                        reduced = true;
-                     }
-                     curralgo->setcell(cx, cy, tempstate);
-                     pattchanged = true;
-                     if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, tempstate);
-                  }
-                  break;
-               case Or:
-                  // Or mode is done using above nextcell loop;
-                  // we only include this case to avoid compiler warning
-                  break;
-               case Xor:
-                  if (tempstate == currstate) {
-                     if (currstate != 0) {
+            if (cx >= gleft && cx <= gright && cy >= gtop && cy <= gbottom) {
+               switch (pmode) {
+                  case And:
+                     if (tempstate != currstate && currstate > 0) {
                         curralgo->setcell(cx, cy, 0);
                         pattchanged = true;
                         if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
                      }
-                  } else {
-                     // tempstate != currstate
-                     int newstate = tempstate ^ currstate;
-                     // if xor overflows then don't change current state
-                     if (newstate >= numstates) newstate = currstate;
-                     if (currstate != newstate) {
-                        curralgo->setcell(cx, cy, newstate);
+                     break;
+                  case Copy:
+                     if (tempstate != currstate) {
+                        if (tempstate > maxstate) {
+                           tempstate = maxstate;
+                           reduced = true;
+                        }
+                        curralgo->setcell(cx, cy, tempstate);
                         pattchanged = true;
-                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
+                        if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, tempstate);
                      }
-                  }
-                  break;
+                     break;
+                  case Or:
+                     // Or mode is done using above nextcell loop;
+                     // we only include this case to avoid compiler warning
+                     break;
+                  case Xor:
+                     if (tempstate == currstate) {
+                        if (currstate != 0) {
+                           curralgo->setcell(cx, cy, 0);
+                           pattchanged = true;
+                           if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, 0);
+                        }
+                     } else {
+                        // tempstate != currstate
+                        int newstate = tempstate ^ currstate;
+                        // if xor overflows then don't change current state
+                        if (newstate >= numstates) newstate = currstate;
+                        if (currstate != newstate) {
+                           curralgo->setcell(cx, cy, newstate);
+                           pattchanged = true;
+                           if (savecells) currlayer->undoredo->SaveCellChange(cx, cy, currstate, newstate);
+                        }
+                     }
+                     break;
+               }
             }
             cx++;
             cntr++;

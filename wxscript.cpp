@@ -253,6 +253,10 @@ const char* GSF_setrule(char* rulestring)
    wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
+   // selection might change if grid becomes smaller,
+   // so save current selection for RememberRuleChange/RememberAlgoChange
+   viewptr->SaveCurrentSelection();
+
    // inscript should be true but play safe
    if (allowundo && !currlayer->stayclean && inscript) {
       // note that we must save pending gen changes BEFORE changing rule
@@ -296,6 +300,11 @@ const char* GSF_setrule(char* rulestring)
    if (oldrule != newrule) {
       // show new rule in main window's title but don't change name
       ChangeWindowTitle(wxEmptyString);
+
+      // if grid is bounded then remove any live cells outside grid edges
+      if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+         mainptr->ClearOutsideGrid();
+      }
 
       // rule change might have changed the number of cell states;
       // if there are fewer states then pattern might change

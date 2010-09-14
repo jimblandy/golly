@@ -172,6 +172,31 @@ void Selection::SetEdges(bigint& t, bigint& l, bigint& b, bigint& r)
 
 // -----------------------------------------------------------------------------
 
+void Selection::CheckGridEdges()
+{
+   if (exists) {
+      // change selection edges to ensure they are inside a bounded grid
+      if (currlayer->algo->gridwd > 0) {
+         if (selleft > currlayer->algo->gridright || selright < currlayer->algo->gridleft) {
+            exists = false;   // selection is outside grid
+            return;
+         }
+         if (selleft < currlayer->algo->gridleft) selleft = currlayer->algo->gridleft;
+         if (selright > currlayer->algo->gridright) selright = currlayer->algo->gridright;
+      }
+      if (currlayer->algo->gridht > 0) {
+         if (seltop > currlayer->algo->gridbottom || selbottom < currlayer->algo->gridtop) {
+            exists = false;   // selection is outside grid
+            return;
+         }
+         if (seltop < currlayer->algo->gridtop) seltop = currlayer->algo->gridtop;
+         if (selbottom > currlayer->algo->gridbottom) selbottom = currlayer->algo->gridbottom;
+      }
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 bool Selection::Contains(bigint& t, bigint& l, bigint& b, bigint& r)
 {
    return ( seltop <= t && selleft <= l && selbottom >= b && selright >= r );

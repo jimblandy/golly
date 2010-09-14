@@ -1546,6 +1546,99 @@ void MainFrame::ToggleHashInfo()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ClearOutsideGrid()
+{
+   // check current pattern and clear any live cells outside bounded grid
+   bool patternchanged = false;
+   bool savechanges = allowundo && !currlayer->stayclean;
+
+   // might also need to truncate selection
+   currlayer->currsel.CheckGridEdges();
+
+   if (currlayer->algo->isEmpty()) return;
+   
+   // check if current pattern is too big to use nextcell/setcell
+   bigint top, left, bottom, right;
+   currlayer->algo->findedges(&top, &left, &bottom, &right);
+   if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+      statusptr->ErrorMessage(_("Pattern too big to check (outside +/- 10^9 boundary)."));
+      return;
+   }
+   
+   int itop = top.toint();
+   int ileft = left.toint();
+   int ibottom = bottom.toint();
+   int iright = right.toint();
+
+   // no need to do anything if pattern is entirely within grid
+   int gtop = currlayer->algo->gridtop.toint();
+   int gleft = currlayer->algo->gridleft.toint();
+   int gbottom = currlayer->algo->gridbottom.toint();
+   int gright = currlayer->algo->gridright.toint();
+   if (currlayer->algo->gridwd == 0) {
+      // grid has infinite width
+      gleft = INT_MIN;
+      gright = INT_MAX;
+   }
+   if (currlayer->algo->gridht == 0) {
+      // grid has infinite height
+      gtop = INT_MIN;
+      gbottom = INT_MAX;
+   }
+   if (itop >= gtop && ileft >= gleft && ibottom <= gbottom && iright <= gright) {
+      return;
+   }
+
+   int ht = ibottom - itop + 1;
+   int cx, cy;
+
+   // for showing accurate progress we need to add pattern height to pop count
+   // in case this is a huge pattern with many blank rows
+   double maxcount = currlayer->algo->getPopulation().todouble() + ht;
+   double accumcount = 0;
+   int currcount = 0;
+   bool abort = false;
+   int v = 0;
+   BeginProgress(_("Checking cells outside grid"));
+   
+   lifealgo* curralgo = currlayer->algo;
+   for ( cy=itop; cy<=ibottom; cy++ ) {
+      currcount++;
+      for ( cx=ileft; cx<=iright; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy, v);
+         if (skip >= 0) {
+            // found next live cell in this row
+            cx += skip;
+            if (cx < gleft || cx > gright || cy < gtop || cy > gbottom) {
+               // clear cell outside grid
+               if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
+               curralgo->setcell(cx, cy, 0);
+               patternchanged = true;
+            }
+            currcount++;
+         } else {
+            cx = iright;  // done this row
+         }
+         if (currcount > 1024) {
+            accumcount += currcount;
+            currcount = 0;
+            abort = AbortProgress(accumcount / maxcount, wxEmptyString);
+            if (abort) break;
+         }
+      }
+      if (abort) break;
+   }
+   
+   curralgo->endofpattern();
+   EndProgress();
+
+   if (patternchanged) {
+      statusptr->ErrorMessage(_("Pattern was truncated (live cells were outside grid)."));
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ReduceCellStates(int newmaxstate)
 {
    // check current pattern and reduce any cell states > newmaxstate
@@ -1630,6 +1723,10 @@ void MainFrame::ShowRuleDialog()
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
+   // selection might change if grid becomes smaller,
+   // so save current selection for RememberRuleChange/RememberAlgoChange
+   viewptr->SaveCurrentSelection();
+
    if (ChangeRule()) {
       // if ChangeAlgorithm was called then we're done
       if (currlayer->algtype != oldalgo) {
@@ -1646,6 +1743,11 @@ void MainFrame::ShowRuleDialog()
       // check if rule actually changed
       wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
       if (oldrule != newrule) {
+         // if grid is bounded then remove any live cells outside grid edges
+         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+            ClearOutsideGrid();
+         }
+         
          // rule change might have changed the number of cell states;
          // if there are fewer states then pattern might change
          int newmaxstate = currlayer->algo->NumCellStates() - 1;
@@ -1695,6 +1797,10 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       // otherwise temporary files won't be the correct type (mc or rle)
       SavePendingChanges();
    }
+
+   // selection might change if grid becomes smaller,
+   // so save current selection for RememberAlgoChange
+   if (savechanges) viewptr->SaveCurrentSelection();
    
    bool rulechanged = false;
    wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
@@ -1719,7 +1825,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
          // try to use same rule
          err = newalgo->setrule( currlayer->algo->getrule() );
       } else {
-         // switch to newrule (ChangeRule has called ChangeAlgorithm)
+         // switch to newrule
          err = newalgo->setrule( newrule.mb_str(wxConvLocal) );
          rulechanged = true;
       }
@@ -1752,11 +1858,26 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
       int v = 0;
       BeginProgress(_("Converting pattern"));
       
-      lifealgo* curralgo = currlayer->algo;
+      // set newalgo's grid edges so we can save cells that are outside grid
+      int gtop = newalgo->gridtop.toint();
+      int gleft = newalgo->gridleft.toint();
+      int gbottom = newalgo->gridbottom.toint();
+      int gright = newalgo->gridright.toint();
+      if (newalgo->gridwd == 0) {
+         // grid has infinite width
+         gleft = INT_MIN;
+         gright = INT_MAX;
+      }
+      if (newalgo->gridht == 0) {
+         // grid has infinite height
+         gtop = INT_MIN;
+         gbottom = INT_MAX;
+      }
       
       // need to check for state change if new algo has fewer states than old algo
       int newmaxstate = newalgo->NumCellStates() - 1;
    
+      lifealgo* curralgo = currlayer->algo;
       for ( cy=itop; cy<=ibottom; cy++ ) {
          currcount++;
          for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1764,13 +1885,20 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
             if (skip >= 0) {
                // found next live cell in this row
                cx += skip;
-               if (v > newmaxstate) {
-                  // reduce v to largest state in new algo
-                  if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, newmaxstate);
-                  v = newmaxstate;
+               if (cx < gleft || cx > gright || cy < gtop || cy > gbottom) {
+                  // cx,cy is outside grid
+                  if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
+                  // no need to clear cell from curralgo (that universe will soon be deleted)
                   patternchanged = true;
+               } else {
+                  if (v > newmaxstate) {
+                     // reduce v to largest state in new algo
+                     if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, newmaxstate);
+                     v = newmaxstate;
+                     patternchanged = true;
+                  }
+                  newalgo->setcell(cx, cy, v);
                }
-               newalgo->setcell(cx, cy, v);
                currcount++;
             } else {
                cx = iright;  // done this row
@@ -1793,6 +1921,11 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    delete currlayer->algo;
    currlayer->algo = newalgo;   
    SetGenIncrement();
+
+   // if new grid is bounded then we might need to truncate the selection
+   if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+      currlayer->currsel.CheckGridEdges();
+   }
    
    // switch to default colors for new algo+rule
    UpdateLayerColors();
@@ -1812,22 +1945,21 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
          
          if (newrule.IsEmpty()) {
             if (patternchanged) {
-               statusptr->ErrorMessage(_("Rule has changed and pattern has changed (new algorithm has fewer states)."));
+               statusptr->ErrorMessage(_("Rule has changed and pattern has changed."));
             } else {
                // don't beep
                statusptr->DisplayMessage(_("Rule has changed."));
             }
          } else {
-            // ChangeRule called ChangeAlgorithm
             if (patternchanged) {
-               statusptr->ErrorMessage(_("Algorithm has changed and pattern has changed (new algorithm has fewer states)."));
+               statusptr->ErrorMessage(_("Algorithm has changed and pattern has changed."));
             } else {
                // don't beep
                statusptr->DisplayMessage(_("Algorithm has changed."));
             }
          }
       } else if (patternchanged) {
-         statusptr->ErrorMessage(_("Pattern has changed (new algorithm has fewer states)."));
+         statusptr->ErrorMessage(_("Pattern has changed."));
       }
       
       if (!inscript) {

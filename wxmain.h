@@ -118,6 +118,7 @@ public:
    void SetGeneration();
    const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
    void SetBaseStep();
+   void ClearOutsideGrid();
    void ReduceCellStates(int newmaxstate);
    void ShowRuleDialog();
    void ChangeAlgorithm(algo_type newalgotype,

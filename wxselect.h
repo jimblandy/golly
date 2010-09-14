@@ -60,6 +60,9 @@ public:
    void SetEdges(bigint& t, bigint& l, bigint& b, bigint& r);
    // set the selection using the given rectangle edges
    
+   void CheckGridEdges();
+   // change selection edges if necessary to ensure they are inside a bounded grid
+   
    bool Contains(bigint& t, bigint& l, bigint& b, bigint& r);
    // return true if the selection encloses the given rectangle
    
