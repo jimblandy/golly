@@ -356,6 +356,15 @@ const char* GSF_setpos(char* x, char* y)
 
    bigint bigx(x);
    bigint bigy(y);
+   
+   // check if x,y is outside bounded grid
+   if ( (currlayer->algo->gridwd > 0 &&
+            (bigx < currlayer->algo->gridleft || bigx > currlayer->algo->gridright)) ||
+        (currlayer->algo->gridht > 0 &&
+            (bigy < currlayer->algo->gridtop || bigy > currlayer->algo->gridbottom)) ) {
+      return "Given position is outside grid boundary.";
+   }
+   
    viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
    DoAutoUpdate();
 
@@ -411,10 +420,20 @@ void GSF_setname(char* name, int index)
 
 const char* GSF_setcell(int x, int y, int newstate)
 {
+   // check if x,y is outside bounded grid
+   if ( (currlayer->algo->gridwd > 0 &&
+            (x < currlayer->algo->gridleft.toint() ||
+             x > currlayer->algo->gridright.toint())) ||
+        (currlayer->algo->gridht > 0 &&
+            (y < currlayer->algo->gridtop.toint() ||
+             y > currlayer->algo->gridbottom.toint())) ) {
+      return "Given cell is outside grid boundary.";
+   }
+
    int oldstate = currlayer->algo->getcell(x, y);
    if (newstate != oldstate) {
       if (currlayer->algo->setcell(x, y, newstate) < 0) {
-         return "setcell error: state value is out of range.";
+         return "State value is out of range.";
       }
       currlayer->algo->endofpattern();
       if (allowundo && !currlayer->stayclean) {
@@ -430,8 +449,18 @@ const char* GSF_setcell(int x, int y, int newstate)
 
 const char* GSF_paste(int x, int y, char* mode)
 {
+   // check if x,y is outside bounded grid
+   if ( (currlayer->algo->gridwd > 0 &&
+            (x < currlayer->algo->gridleft.toint() ||
+             x > currlayer->algo->gridright.toint())) ||
+        (currlayer->algo->gridht > 0 &&
+            (y < currlayer->algo->gridtop.toint() ||
+             y > currlayer->algo->gridbottom.toint())) ) {
+      return "Given cell is outside grid boundary.";
+   }
+
    if (!mainptr->ClipboardHasText())
-      return "paste error: no pattern in clipboard.";
+      return "No pattern in clipboard.";
 
    // temporarily change selection and paste mode
    Selection oldsel = currlayer->currsel;
@@ -442,7 +471,7 @@ const char* GSF_paste(int x, int y, char* mode)
    else if (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
    else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
    else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
-   else return "paste error: unknown mode.";
+   else return "Unknown mode.";
 
    // create huge selection rect so no possibility of error message
    currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
@@ -454,6 +483,43 @@ const char* GSF_paste(int x, int y, char* mode)
    SetPasteMode(oldmode);
 
    DoAutoUpdate();
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_checkpos(lifealgo* algo, int x, int y)
+{
+   // check that x,y is within bounded grid
+   if ( (algo->gridwd > 0 &&
+            (x < algo->gridleft.toint() || x > algo->gridright.toint())) ||
+        (algo->gridht > 0 &&
+            (y < algo->gridtop.toint() || y > algo->gridbottom.toint())) ) {
+      return "Cell is outside grid boundary.";
+   }
+   return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_checkrect(int x, int y, int wd, int ht)
+{
+   if (wd <= 0) return "Rectangle width must be > 0.";
+   if (ht <= 0) return "Rectangle height must be > 0.";
+
+   // check that rect is completely within bounded grid
+   if ( (currlayer->algo->gridwd > 0 &&
+            (x < currlayer->algo->gridleft.toint() ||
+             x > currlayer->algo->gridright.toint() ||
+             x+wd-1 < currlayer->algo->gridleft.toint() ||
+             x+wd-1 > currlayer->algo->gridright.toint())) ||
+        (currlayer->algo->gridht > 0 &&
+            (y < currlayer->algo->gridtop.toint() ||
+             y > currlayer->algo->gridbottom.toint() ||
+             y+ht-1 < currlayer->algo->gridtop.toint() ||
+             y+ht-1 > currlayer->algo->gridbottom.toint())) ) {
+      return "Rectangle is outside grid boundary.";
+   }
    return NULL;
 }
 

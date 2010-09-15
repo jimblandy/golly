@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _WXSCRIPT_H_
 #define _WXSCRIPT_H_
 
+#include "lifealgo.h"   // for lifealgo class
+
 extern bool inscript;
 // Is a script currently running?  We allow access to this flag
 // so clients can temporarily save and restore its setting.
@@ -85,6 +87,8 @@ const char* GSF_setgen(char* genstring);
 const char* GSF_setpos(char* x, char* y);
 const char* GSF_setcell(int x, int y, int newstate);
 const char* GSF_paste(int x, int y, char* mode);
+const char* GSF_checkpos(lifealgo* algo, int x, int y);
+const char* GSF_checkrect(int x, int y, int wd, int ht);
 int GSF_hash(int x, int y, int wd, int ht);
 bool GSF_setoption(char* optname, int newval, int* oldval);
 bool GSF_getoption(char* optname, int* optval);

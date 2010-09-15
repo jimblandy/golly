@@ -695,6 +695,9 @@ XS(pl_store)
       int item = ints_per_cell * n;
       int x = SvIV( *av_fetch(inarray, item, 0) );
       int y = SvIV( *av_fetch(inarray, item + 1, 0) );
+      // check if x,y is outside bounded grid
+      const char* err = GSF_checkpos(tempalgo, x, y);
+      if (err) { delete tempalgo; PERL_ERROR(err); }
       if (multistate) {
          int state = SvIV( *av_fetch(inarray, item + 2, 0) );
          if (tempalgo->setcell(x, y, state) < 0) {
@@ -1176,6 +1179,9 @@ XS(pl_evolve)
       int item = ints_per_cell * n;
       int x = SvIV( *av_fetch(inarray, item, 0) );
       int y = SvIV( *av_fetch(inarray, item + 1, 0) );
+      // check if x,y is outside bounded grid
+      const char* err = GSF_checkpos(tempalgo, x, y);
+      if (err) { delete tempalgo; PERL_ERROR(err); }
       if (multistate) {
          int state = SvIV( *av_fetch(inarray, item + 2, 0) );
          if (tempalgo->setcell(x, y, state) < 0) {
@@ -1304,6 +1310,9 @@ XS(pl_putcells)
             int y = SvIV( *av_fetch(inarray, item + 1, 0) );
             int newx = x0 + x * axx + y * axy;
             int newy = y0 + x * ayx + y * ayy;
+            // check if newx,newy is outside bounded grid
+            err = GSF_checkpos(curralgo, newx, newy);
+            if (err) break;
             int oldstate = curralgo->getcell(newx, newy);
             if (multistate) {
                // multi-state lists can contain dead cells so newstate might be 0
@@ -1326,6 +1335,9 @@ XS(pl_putcells)
          int y = SvIV( *av_fetch(inarray, item + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
+         // check if newx,newy is outside bounded grid
+         err = GSF_checkpos(curralgo, newx, newy);
+         if (err) break;
          int oldstate = curralgo->getcell(newx, newy);
          int newstate;
          if (multistate) {
@@ -1371,6 +1383,9 @@ XS(pl_putcells)
          int y = SvIV( *av_fetch(inarray, item + 1, 0) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
+         // check if newx,newy is outside bounded grid
+         err = GSF_checkpos(curralgo, newx, newy);
+         if (err) break;
          int oldstate = curralgo->getcell(newx, newy);
          if (multistate) {
             // multi-state arrays can contain dead cells so newstate might be 0
@@ -1422,9 +1437,8 @@ XS(pl_getcells)
       int y  = SvIV(ST(1));
       int wd = SvIV(ST(2));
       int ht = SvIV(ST(3));
-      // first check that wd & ht are > 0
-      if (wd <= 0) PERL_ERROR("g_getcells error: width must be > 0.");
-      if (ht <= 0) PERL_ERROR("g_getcells error: height must be > 0.");
+      const char* err = GSF_checkrect(x, y, wd, ht);
+      if (err) PERL_ERROR(err);
       int right = x + wd - 1;
       int bottom = y + ht - 1;
       int cx, cy;
@@ -1549,9 +1563,8 @@ XS(pl_hash)
    int y  = SvIV(ST(1));
    int wd = SvIV(ST(2));
    int ht = SvIV(ST(3));
-   // check that wd & ht are > 0
-   if (wd <= 0) PERL_ERROR("g_hash error: width must be > 0.");
-   if (ht <= 0) PERL_ERROR("g_hash error: height must be > 0.");
+   const char* err = GSF_checkrect(x, y, wd, ht);
+   if (err) PERL_ERROR(err);
 
    int hash = GSF_hash(x, y, wd, ht);
 
@@ -1659,9 +1672,8 @@ XS(pl_select)
       int y  = SvIV(ST(1));
       int wd = SvIV(ST(2));
       int ht = SvIV(ST(3));
-      // first check that wd & ht are > 0
-      if (wd <= 0) PERL_ERROR("g_select error: width must be > 0.");
-      if (ht <= 0) PERL_ERROR("g_select error: height must be > 0.");
+      const char* err = GSF_checkrect(x, y, wd, ht);
+      if (err) PERL_ERROR(err);
       // set selection rect
       GSF_select(x, y, wd, ht);
    }
@@ -1758,7 +1770,14 @@ XS(pl_getcell)
    dXSARGS;
    if (items != 2) PERL_ERROR("Usage: $state = g_getcell($x,$y).");
 
-   int state = currlayer->algo->getcell(SvIV(ST(0)), SvIV(ST(1)));
+   int x = SvIV(ST(0));
+   int y = SvIV(ST(1));
+
+   // check if x,y is outside bounded grid
+   const char* err = GSF_checkpos(currlayer->algo, x, y);
+   if (err) PERL_ERROR(err);
+
+   int state = currlayer->algo->getcell(x, y);
 
    XSRETURN_IV(state);
 }
@@ -2231,9 +2250,8 @@ XS(pl_visrect)
    int y = SvIV(ST(1));
    int wd = SvIV(ST(2));
    int ht = SvIV(ST(3));
-   // check that wd & ht are > 0
-   if (wd <= 0) PERL_ERROR("g_visrect error: width must be > 0.");
-   if (ht <= 0) PERL_ERROR("g_visrect error: height must be > 0.");
+   const char* err = GSF_checkrect(x, y, wd, ht);
+   if (err) PERL_ERROR(err);
 
    bigint left = x;
    bigint top = y;

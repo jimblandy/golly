@@ -657,6 +657,9 @@ static PyObject* py_store(PyObject* self, PyObject* args)
       int item = ints_per_cell * n;
       long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
       long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+      // check if x,y is outside bounded grid
+      const char* err = GSF_checkpos(tempalgo, x, y);
+      if (err) { delete tempalgo; PYTHON_ERROR(err); }
       if (multistate) {
          long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
          if (tempalgo->setcell(x, y, state) < 0) {
@@ -1095,6 +1098,9 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
       int item = ints_per_cell * n;
       long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
       long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+      // check if x,y is outside bounded grid
+      const char* err = GSF_checkpos(tempalgo, x, y);
+      if (err) { delete tempalgo; PYTHON_ERROR(err); }
       if (multistate) {
          long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
          if (tempalgo->setcell(x, y, state) < 0) {
@@ -1193,6 +1199,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
    int ints_per_cell = multistate ? 3 : 2;
    int num_cells = PyList_Size(list) / ints_per_cell;
    bool abort = false;
+   const char* err = NULL;
    bool pattchanged = false;
    lifealgo* curralgo = currlayer->algo;
 
@@ -1209,6 +1216,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
             int newx = x0 + x * axx + y * axy;
             int newy = y0 + x * ayx + y * ayy;
+            // check if newx,newy is outside bounded grid
+            err = GSF_checkpos(curralgo, newx, newy);
+            if (err) break;
             int oldstate = curralgo->getcell(newx, newy);
             if (multistate) {
                // multi-state lists can contain dead cells so newstate might be 0
@@ -1234,6 +1244,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
+         // check if newx,newy is outside bounded grid
+         err = GSF_checkpos(curralgo, newx, newy);
+         if (err) break;
          int oldstate = curralgo->getcell(newx, newy);
          int newstate;
          if (multistate) {
@@ -1284,6 +1297,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
          long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
          int newx = x0 + x * axx + y * axy;
          int newy = y0 + x * ayx + y * ayy;
+         // check if newx,newy is outside bounded grid
+         err = GSF_checkpos(curralgo, newx, newy);
+         if (err) break;
          int oldstate = curralgo->getcell(newx, newy);
          if (multistate) {
             // multi-state lists can contain dead cells so newstate might be 0
@@ -1314,6 +1330,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
       DoAutoUpdate();
    }
 
+   if (err) PYTHON_ERROR(err);
    if (abort) return NULL;
 
    RETURN_NONE;
@@ -1340,14 +1357,10 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
       int itop = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
       int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
-      // first check that wd & ht are > 0
-      if (wd <= 0) {
+      const char* err = GSF_checkrect(ileft, itop, wd, ht);
+      if (err) {
          Py_DECREF(outlist);
-         PYTHON_ERROR("getcells error: width must be > 0.");
-      }
-      if (ht <= 0) {
-         Py_DECREF(outlist);
-         PYTHON_ERROR("getcells error: height must be > 0.");
+         PYTHON_ERROR(err);
       }
       int iright = ileft + wd - 1;
       int ibottom = itop + ht - 1;
@@ -1468,9 +1481,8 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
    int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
    int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
-   // check that wd & ht are > 0
-   if (wd <= 0) PYTHON_ERROR("hash error: width must be > 0.");
-   if (ht <= 0) PYTHON_ERROR("hash error: height must be > 0.");
+   const char* err = GSF_checkrect(x, y, wd, ht);
+   if (err) PYTHON_ERROR(err);
 
    int hash = GSF_hash(x, y, wd, ht);
 
@@ -1577,9 +1589,8 @@ static PyObject* py_select(PyObject* self, PyObject* args)
       int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
       int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
       int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
-      // first check that wd & ht are > 0
-      if (wd <= 0) PYTHON_ERROR("select error: width must be > 0.");
-      if (ht <= 0) PYTHON_ERROR("select error: height must be > 0.");
+      const char* err = GSF_checkrect(x, y, wd, ht);
+      if (err) PYTHON_ERROR(err);
       // set selection rect
       GSF_select(x, y, wd, ht);
    } else {
@@ -1672,6 +1683,10 @@ static PyObject* py_getcell(PyObject* self, PyObject* args)
    int x, y;
 
    if (!PyArg_ParseTuple(args, (char*)"ii", &x, &y)) return NULL;
+
+   // check if x,y is outside bounded grid
+   const char* err = GSF_checkpos(currlayer->algo, x, y);
+   if (err) PYTHON_ERROR(err);
 
    return Py_BuildValue((char*)"i", currlayer->algo->getcell(x, y));
 }
@@ -2117,9 +2132,8 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
    int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
    int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
-   // check that wd & ht are > 0
-   if (wd <= 0) PYTHON_ERROR("visrect error: width must be > 0.");
-   if (ht <= 0) PYTHON_ERROR("visrect error: height must be > 0.");
+   const char* err = GSF_checkrect(x, y, wd, ht);
+   if (err) PYTHON_ERROR(err);
 
    bigint left = x;
    bigint top = y;
