@@ -1402,6 +1402,10 @@ const char* MainFrame::WritePattern(const wxString& path,
                                     pattern_format format,
                                     int top, int left, int bottom, int right)
 {
+   // if the format is RLE_format and the grid is bounded then force XRLE_format so that
+   // position info is recorded (this position will be used when the file is read)
+   if (format == RLE_format && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0))
+      format = XRLE_format;
    const char* err = writepattern(FILEPATH, *currlayer->algo, format,
                                   top, left, bottom, right);
 
