@@ -117,7 +117,8 @@ sub oscillating {
                if ($pbox[0] == $rect[0] and $pbox[1] == $rect[1] and
                    $pbox[2] == $rect[2] and $pbox[3] == $rect[3]) {
                   my $rule = g_getrule();
-                  if ($rule =~ m/^B0/ and $rule !~ m/8$/) {
+                  my ($prefix, $suffix) = split(':', $rule, 2);
+                  if ($prefix =~ m/^B0/ and $prefix !~ m/8$/) {
                      # ignore this hash value because B0-and-not-S8 rules are
                      # emulated by using different rules for odd and even gens,
                      # so it's possible for a spaceship to have the same pattern

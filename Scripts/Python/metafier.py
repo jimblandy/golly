@@ -53,7 +53,7 @@ if metalayer < 0 and g.numlayers() == g.maxlayers():
    g.exit("You need to delete a layer.")
 
 # note that getrule returns canonical rule string
-rulestr = g.getrule()
+rulestr = g.getrule().split(":")[0]
 if (not rulestr.startswith("B")) or (rulestr.find("/S") == -1):
    g.exit("This script only works with B*/S* rules.")
 

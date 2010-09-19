@@ -96,7 +96,7 @@ def oscillating():
             period = int(g.getgen()) - genlist[pos]
             if period == 1:
                if pbox == boxlist[pos]:
-                  rule = g.getrule()
+                  rule = g.getrule().split(":")[0]
                   if rule.startswith("B0") and not rule.endswith("8"):
                      # ignore this hash value because B0-and-not-S8 rules are
                      # emulated by using different rules for odd and even gens,

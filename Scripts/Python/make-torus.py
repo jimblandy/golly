@@ -17,7 +17,7 @@ if not g.empty():
    g.clear(outside)
 
 # get current rule, remove any existing suffix, then add new suffix
-rule = g.getrule().split(":",1)[0]
+rule = g.getrule().split(":")[0]
 rule = rule + ":T" + str(wd) + "," + str(ht)
 g.setrule(rule)
 
