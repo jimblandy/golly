@@ -109,7 +109,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 // check if we're building with Perl 5.10.1 or later
-#if (PERL_REVISION == 5) && (PERL_VERSION >= 10) && (PERL_SUBVERSION >= 1)
+#if (PERL_REVISION == 5) && (PERL_VERSION == 10) && (PERL_SUBVERSION >= 1)
+   #define PERL5101_OR_LATER
+#endif
+#if (PERL_REVISION == 5) && (PERL_VERSION >= 11)
    #define PERL5101_OR_LATER
 #endif
 
@@ -140,8 +143,9 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 // declare G_* wrappers for the functions we want to use from Perl lib
 extern "C"
 {
+#ifdef USE_ITHREADS
    perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*);
-   U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*);
+#endif
    SV**(*G_Perl_av_fetch)(pTHX_ AV*, I32, I32);
    I32(*G_Perl_av_len)(pTHX_ AV*);
    void(*G_Perl_av_push)(pTHX_ AV*, SV*);
@@ -169,25 +173,38 @@ extern "C"
 #ifdef PERL510_OR_LATER
    void(*G_Perl_sys_init3)(int*, char***, char***);
    void(*G_Perl_sys_term)(void);
-   I32**(*G_Perl_Imarkstack_ptr_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Istack_base_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Istack_max_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Istack_sp_ptr)(register PerlInterpreter*);
-#else
-   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
 #endif
 #ifdef PERL5101_OR_LATER
    SV*(*G_Perl_newSV_type)(pTHX_ svtype type);
 #endif
    void(*G_boot_DynaLoader)(pTHX_ CV*);
+
+#ifdef MULTIPLICITY
+#ifdef PERL510_OR_LATER
+   SV***(*G_Perl_Istack_sp_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Istack_base_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Istack_max_ptr)(register PerlInterpreter*);
+   I32**(*G_Perl_Imarkstack_ptr_ptr)(register PerlInterpreter*);
+#else
+   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
+   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
+   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
+#endif
+   U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*);
+   signed char *(*G_Perl_Iperl_destruct_level_ptr)(register PerlInterpreter*);
+#else
+   SV ***G_PL_stack_sp;
+   SV ***G_PL_stack_base;
+   SV ***G_PL_stack_max;
+   I32 **G_PL_markstack_ptr;
+   U8 *G_PL_exit_flags;
+   signed char *G_PL_perl_destruct_level;
+#endif
 }
 
 // redefine Perl functions to their equivalent G_* wrappers
 #define Perl_Gthr_key_ptr        G_Perl_Gthr_key_ptr
-#define Perl_Iexit_flags_ptr     G_Perl_Iexit_flags_ptr
 #define Perl_av_fetch            G_Perl_av_fetch
 #define Perl_av_len              G_Perl_av_len
 #define Perl_av_push             G_Perl_av_push
@@ -215,15 +232,28 @@ extern "C"
 #ifdef PERL510_OR_LATER
    #define Perl_sys_init3           G_Perl_sys_init3
    #define Perl_sys_term            G_Perl_sys_term
-   #define Perl_Imarkstack_ptr_ptr  G_Perl_Imarkstack_ptr_ptr
-   #define Perl_Istack_base_ptr     G_Perl_Istack_base_ptr
-   #define Perl_Istack_max_ptr      G_Perl_Istack_max_ptr
-   #define Perl_Istack_sp_ptr       G_Perl_Istack_sp_ptr
-#else
-   #define Perl_Tmarkstack_ptr_ptr  G_Perl_Tmarkstack_ptr_ptr
-   #define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
-   #define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
-   #define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
+#endif
+#ifdef MULTIPLICITY
+   #ifdef PERL510_OR_LATER
+      #define Perl_Imarkstack_ptr_ptr  G_Perl_Imarkstack_ptr_ptr
+      #define Perl_Istack_base_ptr     G_Perl_Istack_base_ptr
+      #define Perl_Istack_max_ptr      G_Perl_Istack_max_ptr
+      #define Perl_Istack_sp_ptr       G_Perl_Istack_sp_ptr
+   #else
+      #define Perl_Tmarkstack_ptr_ptr  G_Perl_Tmarkstack_ptr_ptr
+      #define Perl_Tstack_base_ptr     G_Perl_Tstack_base_ptr
+      #define Perl_Tstack_max_ptr      G_Perl_Tstack_max_ptr
+      #define Perl_Tstack_sp_ptr       G_Perl_Tstack_sp_ptr
+   #endif
+   #define Perl_Iexit_flags_ptr          G_Perl_Iexit_flags_ptr
+   #define Perl_Iperl_destruct_level_ptr G_Perl_Iperl_destruct_level_ptr
+#else  /* no MULTIPLICITY */
+   #define PL_stack_sp               (*G_PL_stack_sp)
+   #define PL_stack_base             (*G_PL_stack_base)
+   #define PL_stack_max              (*G_PL_stack_max)
+   #define PL_markstack_ptr          (*G_PL_markstack_ptr)
+   #define PL_exit_flags             (*G_PL_exit_flags)
+   #define PL_perl_destruct_level    (*G_PL_perl_destruct_level)
 #endif
 #ifdef PERL5101_OR_LATER
    #define Perl_newSV_type          G_Perl_newSV_type
@@ -245,8 +275,9 @@ static struct PerlFunc
    PERL_PROC* ptr;         // function pointer
 } perlFuncs[] =
 {
+#ifdef USE_ITHREADS
    PERL_FUNC(Perl_Gthr_key_ptr)
-   PERL_FUNC(Perl_Iexit_flags_ptr)
+#endif
    PERL_FUNC(Perl_av_fetch)
    PERL_FUNC(Perl_av_len)
    PERL_FUNC(Perl_av_push)
@@ -274,15 +305,30 @@ static struct PerlFunc
 #ifdef PERL510_OR_LATER
    PERL_FUNC(Perl_sys_init3)
    PERL_FUNC(Perl_sys_term)
-   PERL_FUNC(Perl_Imarkstack_ptr_ptr)
-   PERL_FUNC(Perl_Istack_base_ptr)
-   PERL_FUNC(Perl_Istack_max_ptr)
-   PERL_FUNC(Perl_Istack_sp_ptr)
-#else
-   PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
-   PERL_FUNC(Perl_Tstack_base_ptr)
-   PERL_FUNC(Perl_Tstack_max_ptr)
-   PERL_FUNC(Perl_Tstack_sp_ptr)
+#endif
+#ifdef MULTIPLICITY
+   #ifdef PERL510_OR_LATER
+      PERL_FUNC(Perl_Imarkstack_ptr_ptr)
+      PERL_FUNC(Perl_Istack_base_ptr)
+      PERL_FUNC(Perl_Istack_max_ptr)
+      PERL_FUNC(Perl_Istack_sp_ptr)
+   #else
+      PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
+      PERL_FUNC(Perl_Tstack_base_ptr)
+      PERL_FUNC(Perl_Tstack_max_ptr)
+      PERL_FUNC(Perl_Tstack_sp_ptr)
+   #endif
+   PERL_FUNC(Perl_Iexit_flags_ptr)
+   PERL_FUNC(Perl_Iperl_destruct_level_ptr)
+#else  /* no MULTIPLICITY */
+   /* N.B. these are actually variables, not functions, but the distinction does
+      not matter for symbol resolution: */
+   PERL_FUNC(PL_stack_sp)
+   PERL_FUNC(PL_stack_base)
+   PERL_FUNC(PL_stack_max)
+   PERL_FUNC(PL_markstack_ptr)
+   PERL_FUNC(PL_exit_flags)
+   PERL_FUNC(PL_perl_destruct_level)
 #endif
 #ifdef PERL5101_OR_LATER
    PERL_FUNC(Perl_newSV_type)
@@ -372,7 +418,7 @@ static bool LoadPerlLib()
 
 #define RETURN_IF_ABORTED if (PerlScriptAborted()) Perl_croak(aTHX_ NULL)
 
-#define PERL_ERROR(msg) { Perl_croak(aTHX_ msg); }
+#define PERL_ERROR(msg) { Perl_croak(aTHX_ "%s", msg); }
 
 #define CheckRGB(r,g,b,cmd)                                          \
    if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {   \
@@ -3111,12 +3157,16 @@ void RunPerlScript(const wxString &filepath)
             if ( !LoadPerlLib() ) return;
          }
       #endif
-   
+
+      // create a dummy environment for initialize the embedded interpreter:
+      static int argc = 3;
+      static char arg1[] = "-e", arg2[] = "0";
+      static char *args[] = { NULL, arg1, arg2, NULL }, **argv = &args[0];
+      static char *ens[] = { NULL }, **env = &ens[0];
+
       #ifdef PERL510_OR_LATER
          if (!inited) {
-            int argc = 3;
-            static const char* argv[] = { "", "-e", "" };
-            Perl_sys_init3(&argc, (char***)&argv, NULL);
+            PERL_SYS_INIT3(&argc, &argv, &env);
             inited = true;
          }
       #endif
@@ -3127,14 +3177,14 @@ void RunPerlScript(const wxString &filepath)
          return;
       }
    
+      PL_perl_destruct_level = 1;
       perl_construct(my_perl);
    
       // set PERL_EXIT_DESTRUCT_END flag so that perl_destruct will execute
       // any END blocks in given script (this flag requires Perl 5.7.2+)
       PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
    
-      static const char* embedding[] = { "", "-e", "" };
-      perl_parse(my_perl, xs_init, 3, (char**)embedding, NULL);
+      perl_parse(my_perl, xs_init, argc, argv, NULL);
       perl_run(my_perl);
    }
 
@@ -3154,6 +3204,7 @@ void RunPerlScript(const wxString &filepath)
       // or if g_exit has been called
       wxString savestring = scripterr;
       scripterr = wxEmptyString;
+      PL_perl_destruct_level = 1;
       perl_destruct(my_perl);
       scripterr = savestring;
 
@@ -3167,7 +3218,9 @@ void RunPerlScript(const wxString &filepath)
 void FinishPerlScripting()
 {
    #ifdef PERL510_OR_LATER
-      if (inited) Perl_sys_term();
+      if (inited) {
+         PERL_SYS_TERM();
+      }
    #endif
 
    #ifdef USE_PERL_DYNAMIC
