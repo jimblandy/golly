@@ -180,17 +180,17 @@ extern "C"
    void(*G_boot_DynaLoader)(pTHX_ CV*);
 
 #ifdef MULTIPLICITY
-#ifdef PERL510_OR_LATER
-   SV***(*G_Perl_Istack_sp_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Istack_base_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Istack_max_ptr)(register PerlInterpreter*);
-   I32**(*G_Perl_Imarkstack_ptr_ptr)(register PerlInterpreter*);
-#else
-   SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
-   SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
-   I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
-#endif
+   #ifdef PERL510_OR_LATER
+      SV***(*G_Perl_Istack_sp_ptr)(register PerlInterpreter*);
+      SV***(*G_Perl_Istack_base_ptr)(register PerlInterpreter*);
+      SV***(*G_Perl_Istack_max_ptr)(register PerlInterpreter*);
+      I32**(*G_Perl_Imarkstack_ptr_ptr)(register PerlInterpreter*);
+   #else
+      SV***(*G_Perl_Tstack_sp_ptr)(register PerlInterpreter*);
+      SV***(*G_Perl_Tstack_base_ptr)(register PerlInterpreter*);
+      SV***(*G_Perl_Tstack_max_ptr)(register PerlInterpreter*);
+      I32**(*G_Perl_Tmarkstack_ptr_ptr)(register PerlInterpreter*);
+   #endif
    U8*(*G_Perl_Iexit_flags_ptr)(register PerlInterpreter*);
    signed char *(*G_Perl_Iperl_destruct_level_ptr)(register PerlInterpreter*);
 #else
