@@ -3158,13 +3158,13 @@ void RunPerlScript(const wxString &filepath)
          }
       #endif
 
-      // create a dummy environment for initialize the embedded interpreter:
+      // create a dummy environment for initializing the embedded interpreter
       static int argc = 3;
       static char arg1[] = "-e", arg2[] = "0";
       static char *args[] = { NULL, arg1, arg2, NULL }, **argv = &args[0];
-      static char *ens[] = { NULL }, **env = &ens[0];
 
       #ifdef PERL510_OR_LATER
+         static char *ens[] = { NULL }, **env = &ens[0];
          if (!inited) {
             PERL_SYS_INIT3(&argc, &argv, &env);
             inited = true;
