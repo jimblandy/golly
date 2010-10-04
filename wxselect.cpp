@@ -168,6 +168,7 @@ void Selection::SetEdges(bigint& t, bigint& l, bigint& b, bigint& r)
    selleft = l;
    selbottom = b;
    selright = r;
+   CheckGridEdges();
 }
 
 // -----------------------------------------------------------------------------
@@ -175,7 +176,7 @@ void Selection::SetEdges(bigint& t, bigint& l, bigint& b, bigint& r)
 void Selection::CheckGridEdges()
 {
    if (exists) {
-      // change selection edges to ensure they are inside a bounded grid
+      // change selection edges if necessary to ensure they are inside a bounded grid
       if (currlayer->algo->gridwd > 0) {
          if (selleft > currlayer->algo->gridright || selright < currlayer->algo->gridleft) {
             exists = false;   // selection is outside grid
