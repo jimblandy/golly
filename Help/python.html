@@ -182,6 +182,7 @@ or you can search for individual commands alphabetically:
 <a href="#getcursor"><b>getcursor</b></a><br>
 <a href="#getdir"><b>getdir</b></a><br>
 <a href="#getgen"><b>getgen</b></a><br>
+<a href="#getheight"><b>getheight</b></a><br>
 <a href="#getkey"><b>getkey</b></a><br>
 <a href="#getlayer"><b>getlayer</b></a><br>
 <a href="#getmag"><b>getmag</b></a><br>
@@ -194,12 +195,13 @@ or you can search for individual commands alphabetically:
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
 <a href="#getstring"><b>getstring</b></a><br>
+<a href="#getwidth"><b>getwidth</b></a><br>
 <a href="#hash"><b>hash</b></a><br>
-<a href="#help"><b>help</b></a><br>
-<a href="#join"><b>join</b></a>
+<a href="#help"><b>help</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#join"><b>join</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
@@ -758,6 +760,22 @@ an error message and the script will be aborted.
 Return the current rule as a string in canonical format.
 </dd>
 <dd> Example: <b>oldrule = golly.getrule()</b></dd>
+</dd>
+</p>
+
+<a name="getwidth"></a><p><dt><b>getwidth()</b></dt>
+<dd>
+Return the width of the current universe (0 if unbounded).
+</dd>
+<dd> Example: <b>wd = golly.getwidth()</b></dd>
+</dd>
+</p>
+
+<a name="getheight"></a><p><dt><b>getheight()</b></dt>
+<dd>
+Return the height of the current universe (0 if unbounded).
+</dd>
+<dd> Example: <b>ht = golly.getheight()</b></dd>
 </dd>
 </p>
 

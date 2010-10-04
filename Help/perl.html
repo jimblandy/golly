@@ -158,6 +158,7 @@ or you can search for individual commands alphabetically:
 <a href="#getcursor"><b>g_getcursor</b></a><br>
 <a href="#getdir"><b>g_getdir</b></a><br>
 <a href="#getgen"><b>g_getgen</b></a><br>
+<a href="#getheight"><b>g_getheight</b></a><br>
 <a href="#getkey"><b>g_getkey</b></a><br>
 <a href="#getlayer"><b>g_getlayer</b></a><br>
 <a href="#getmag"><b>g_getmag</b></a><br>
@@ -170,12 +171,13 @@ or you can search for individual commands alphabetically:
 <a href="#getselrect"><b>g_getselrect</b></a><br>
 <a href="#getstep"><b>g_getstep</b></a><br>
 <a href="#getstring"><b>g_getstring</b></a><br>
+<a href="#getwidth"><b>g_getwidth</b></a><br>
 <a href="#hash"><b>g_hash</b></a><br>
-<a href="#help"><b>g_help</b></a><br>
-<a href="#join"><b>g_join</b></a>
+<a href="#help"><b>g_help</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#join"><b>g_join</b></a><br>
 <a href="#load"><b>g_load</b></a><br>
 <a href="#maxlayers"><b>g_maxlayers</b></a><br>
 <a href="#movelayer"><b>g_movelayer</b></a><br>
@@ -733,6 +735,22 @@ an error message and the script will be aborted.
 Return the current rule as a string in canonical format.
 </dd>
 <dd> Example: <b>$oldrule = g_getrule();</b></dd>
+</dd>
+</p>
+
+<a name="getwidth"></a><p><dt><b>g_getwidth()</b></dt>
+<dd>
+Return the width of the current universe (0 if unbounded).
+</dd>
+<dd> Example: <b>$wd = g_getwidth();</b></dd>
+</dd>
+</p>
+
+<a name="getheight"></a><p><dt><b>g_getheight()</b></dt>
+<dd>
+Return the height of the current universe (0 if unbounded).
+</dd>
+<dd> Example: <b>$ht = g_getheight();</b></dd>
 </dd>
 </p>
 

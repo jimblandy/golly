@@ -2155,6 +2155,30 @@ XS(pl_getrule)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_getwidth)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $int = g_getwidth().");
+
+   XSRETURN_IV(currlayer->algo->gridwd);
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_getheight)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $int = g_getheight().");
+
+   XSRETURN_IV(currlayer->algo->gridht);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_numstates)
 {
    IGNORE_UNUSED_PARAMS;
@@ -3094,6 +3118,8 @@ EXTERN_C void xs_init(pTHX)
    newXS((char*)"g_getalgo",      pl_getalgo,      (char*)file);
    newXS((char*)"g_setrule",      pl_setrule,      (char*)file);
    newXS((char*)"g_getrule",      pl_getrule,      (char*)file);
+   newXS((char*)"g_getwidth",     pl_getwidth,     (char*)file);
+   newXS((char*)"g_getheight",    pl_getheight,    (char*)file);
    // viewing
    newXS((char*)"g_setpos",       pl_setpos,       (char*)file);
    newXS((char*)"g_getpos",       pl_getpos,       (char*)file);

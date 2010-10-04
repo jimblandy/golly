@@ -1994,6 +1994,30 @@ static PyObject* py_getrule(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_getwidth(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   return Py_BuildValue((char*)"i", currlayer->algo->gridwd);
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_getheight(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   return Py_BuildValue((char*)"i", currlayer->algo->gridht);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_numstates(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2846,6 +2870,8 @@ static PyMethodDef py_methods[] = {
    { "getalgo",      py_getalgo,    METH_VARARGS, "return name of given or current algorithm" },
    { "setrule",      py_setrule,    METH_VARARGS, "set current rule using given string" },
    { "getrule",      py_getrule,    METH_VARARGS, "return current rule" },
+   { "getwidth",     py_getwidth,   METH_VARARGS, "return width of universe (0 if unbounded)" },
+   { "getheight",    py_getheight,  METH_VARARGS, "return height of universe (0 if unbounded)" },
    // viewing
    { "setpos",       py_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       py_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
