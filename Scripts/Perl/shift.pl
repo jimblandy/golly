@@ -1,5 +1,6 @@
 # Shift current selection by given x y amounts using optional mode.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2007.
+# Updated to check for bounded grid, Oct 2010.
 
 use strict;
 
@@ -31,8 +32,28 @@ if ($mode eq "") {
    }
 }
 
-# this method cuts the current selection and pastes it into the
-# new position (without changing the current clipboard pattern)
+# abort shift if the new selection would be outside a bounded grid
+if (g_getwidth() > 0) {
+   my $gridl = -int(g_getwidth()/2);
+   my $gridr = $gridl + g_getwidth() - 1;
+   my $newl = $selrect[0] + $x;
+   my $newr = $newl + $selrect[2] - 1;
+   if ($newl < $gridl or $newr > $gridr) {
+      g_exit("New selection would be outside grid.");
+   }
+}
+if (g_getheight() > 0) {
+   my $gridt = -int(g_getheight()/2);
+   my $gridb = $gridt + g_getheight() - 1;
+   my $newt = $selrect[1] + $y;
+   my $newb = $newt + $selrect[3] - 1;
+   if ($newt < $gridt or $newb > $gridb) {
+      g_exit("New selection would be outside grid.");
+   }
+}
+
+# do the shift by cutting the current selection and pasting it into
+# the new position without changing the current clipboard pattern
 my $selcells = g_getcells(@selrect);
 g_clear(0);
 $selrect[0] += $x;

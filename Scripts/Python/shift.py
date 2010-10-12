@@ -1,6 +1,7 @@
 # Shift current selection by given x y amounts using optional mode.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), June 2006.
 # Updated to use exit command, Nov 2006.
+# Updated to check for bounded grid, Oct 2010.
 
 from glife import validint, inside
 from string import lower
@@ -34,8 +35,24 @@ if len(xym) > 2:
 else:
    mode = "or"
 
-# this method cuts the current selection and pastes it into the
-# new position (without changing the current clipboard pattern)
+# abort shift if the new selection would be outside a bounded grid
+if g.getwidth() > 0:
+   gridl = -int(g.getwidth()/2)
+   gridr = gridl + g.getwidth() - 1
+   newl = selrect[0] + x
+   newr = newl + selrect[2] - 1
+   if newl < gridl or newr > gridr:
+      g.exit("New selection would be outside grid.")
+if g.getheight() > 0:
+   gridt = -int(g.getheight()/2)
+   gridb = gridt + g.getheight() - 1
+   newt = selrect[1] + y
+   newb = newt + selrect[3] - 1
+   if newt < gridt or newb > gridb:
+      g.exit("New selection would be outside grid.")
+
+# do the shift by cutting the current selection and pasting it into
+# the new position without changing the current clipboard pattern
 selcells = g.getcells(selrect)
 g.clear(inside)
 selrect[0] += x

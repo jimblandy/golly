@@ -10,9 +10,11 @@
 <li> Golly supports bounded grids with various topologies (plane, torus, Klein bottle, etc.).
      Such grids are created by adding a special suffix to the usual rule string.
      For example, "B3/S23:T80,50" specifies a toroidal Life universe 80 cells wide and 50 cells
-     high.  The suffix syntax is described <a href="!!!.html">here</a>.
+     high.  The suffix syntax is described <a href="bounded!!!.html">here</a>.
 <li> Two new script commands, <a href="python.html#getwidth">getwidth</a> and
      <a href="python.html#getheight">getheight</a>, return the size of the current grid.
+<li> A new script, <a href="open:Scripts/Python/make-torus.py">make-torus.py</a>,
+     converts the current selection into a toroidal universe.
 <li> Golly can record and play back a pattern's "timeline", a sequence of steps saved by the new
      <a href="control.html#record">Start Recording</a> item in the Control menu.
      Use the <a href="control.html#deltime">Delete Timeline</a> item to delete a timeline.
