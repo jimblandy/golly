@@ -115,6 +115,9 @@ else:
    g.setlayer(poplayer)
 g.new(layername)
 
+# use same rule but without any suffix (we don't want a bounded grid)
+g.setrule(g.getrule().split(":")[0])
+
 deadr, deadg, deadb = g.getcolor("deadcells")
 if (deadr + deadg + deadb) / 3 > 128:
    # use black if light background
