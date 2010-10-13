@@ -1,11 +1,22 @@
 import golly
 import random
 import time
-from itertools import product
 from glife.EmulateHexagonal import *
 from glife.EmulateTriangular import *
 from glife.RuleTree import *
 
+# AKT: itertools.product is new in Python 2.6
+try:
+   from itertools import product
+except ImportError:
+   # see http://docs.python.org/library/itertools.html#itertools.product
+   def product(*args, **kwds):
+      pools = map(tuple, args) * kwds.get('repeat', 1)
+      result = [[]]
+      for pool in pools:
+         result = [x+[y] for x in result for y in pool]
+      for prod in result:
+         yield tuple(prod)
 
 spec = golly.getstring(
 '''This script will write and select the rule "Fredkin-mod-n", for a given N.

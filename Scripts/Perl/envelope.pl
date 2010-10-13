@@ -50,7 +50,7 @@ else {
    my $startpatt = g_getcells(g_getrect());
    
    $envindex = g_addlayer();        # create layer for remembering all live cells
-   g_setcolors([-1,128,128,128]);   # set all states to gray
+   g_setcolors([-1,100,100,100]);   # set all states to darkish gray
    g_putcells($startpatt);          # copy starting pattern into this layer
    
    $startindex = g_addlayer();      # create layer for starting pattern

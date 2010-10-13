@@ -49,7 +49,7 @@ else:
    startpatt = g.getcells(g.getrect())
    
    envindex = g.addlayer()       # create layer for remembering all live cells
-   g.setcolors([-1,128,128,128]) # set all states to gray
+   g.setcolors([-1,100,100,100]) # set all states to darkish gray
    g.putcells(startpatt)         # copy starting pattern into this layer
 
    startindex = g.addlayer()     # create layer for starting pattern

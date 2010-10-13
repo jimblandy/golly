@@ -1,10 +1,10 @@
 # Inspired by Andrew Trevorrow's work on TriLife.py
 
 try:
-  set
+   set
 except NameError:
-  # use sets module if Python version is < 2.4
-  from sets import Set as set
+   # use sets module if Python version is < 2.4
+   from sets import Set as set
 
 import golly
 import os
@@ -82,8 +82,15 @@ def TriangularTransitionsToRuleTree_SplittingMethod(neighborhood,n_states,transi
         golly.show("Building rule tree... (pass 1 of 2: "+str(100*i/len(transitions))+"%)") 
         for t2 in transitions: # as upper
             # we can only apply both rules at once if they overlap to some extent
-            if any( t1[j].isdisjoint(t2[k]) for j,k in lower2upper[neighborhood] ):
-                continue
+            ### AKT: any() and isdisjoint() are not available in Python 2.3:
+            ### if any( t1[j].isdisjoint(t2[k]) for j,k in lower2upper[neighborhood] ):
+            ###     continue
+            any_disjoint = False
+            for j,k in lower2upper[neighborhood]:
+                if len(t1[j] & t2[k]) == 0:
+                    any_disjoint = True
+                    break
+            if any_disjoint: continue
             # take the intersection of their inputs
             if neighborhood=="triangularVonNeumann":
                 tree.add_rule( [ encode(t1[0]&t2[1],t1[1]&t2[0]), # C
@@ -156,7 +163,15 @@ def TriangularTransitionsToRuleTree_CheckerboardMethod(neighborhood,n_states,tra
     def encode_lower(s):
         return s
     def encode_upper(s):
-        return [0 if se==0 else n_states+se-1 for se in s]
+        ### AKT: this code causes syntax error in Python 2.3:
+        ### return [0 if se==0 else n_states+se-1 for se in s]
+        temp = []
+        for se in s:
+            if se==0:
+                temp.append(0)
+            else:
+                temp.append(n_states+se-1)
+        return temp
 
     total_states = n_states*2 - 1
     if total_states>256:

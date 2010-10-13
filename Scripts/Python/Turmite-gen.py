@@ -382,8 +382,15 @@ for s in range(n_states):
             continue
         for central_color in range(n_colors):
             # output the required transition
-            transition_inputs = [leaving_color_behind[central_color]] + \
-                [ inputs if i==dir else not_arriving_from_here[i] for i in remap ]
+            ### AKT: this code causes syntax error in Python 2.3:
+            ### transition_inputs = [leaving_color_behind[central_color]] + \
+            ###     [ inputs if i==dir else not_arriving_from_here[i] for i in remap ]
+            transition_inputs = [leaving_color_behind[central_color]]
+            for i in remap:
+                if i==dir:
+                    transition_inputs.append(inputs)
+                else:
+                    transition_inputs.append(not_arriving_from_here[i])
             transition_output = encode(central_color,s,opposite_dirs[dir])
             tree.add_rule( transition_inputs, transition_output )
 

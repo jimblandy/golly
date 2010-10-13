@@ -202,10 +202,19 @@ def ReadRuleTable(filename):
             # iterate through all the possible values of each bound variable
             var_val_indices = dict(zip(bound_vars,[0]*len(bound_vars)))
             while True:
-                transition = [ [vars[e][var_val_indices[e]]] if e in bound_vars \
-                               else vars[e] if e in vars \
-                               else [int(e)] \
-                               for e in entries ]
+                ### AKT: this code causes syntax error in Python 2.3:
+                ### transition = [ [vars[e][var_val_indices[e]]] if e in bound_vars \
+                ###                else vars[e] if e in vars \
+                ###                else [int(e)] \
+                ###                for e in entries ]
+                transition = []
+                for e in entries:
+                    if e in bound_vars:
+                        transition.append([vars[e][var_val_indices[e]]])
+                    elif e in vars:
+                        transition.append(vars[e])
+                    else:
+                        transition.append([int(e)])
                 if symmetry_string=='permute' and neighborhood in PermuteLater:
                     # permute all but C,C' (first and last entries)
                     for permuted_section in permu2(transition[1:-1]):

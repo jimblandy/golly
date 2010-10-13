@@ -54,11 +54,19 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
         for iOutput,background_output in enumerate(BackgroundOutputs[neighborhood]):
             bg_inputs = BackgroundInputs[iOutput]
             iEntry = iOutput % 4
-            tree.add_rule( [ encode( range(n_states), bg_inputs[i] ) + [0] \
-                             if ForegroundInputs[iEntry][i]==-1 \
-                             else encode( t[ForegroundInputs[iEntry][i]], bg_inputs[i] ) \
-                             for i in range(9) ],
-                           encode( t[iEntry+4], background_output )[0] )
+            ### AKT: this code causes syntax error in Python 2.3:
+            ### tree.add_rule( [ encode( range(n_states), bg_inputs[i] ) + [0] \
+            ###                  if ForegroundInputs[iEntry][i]==-1 \
+            ###                  else encode( t[ForegroundInputs[iEntry][i]], bg_inputs[i] ) \
+            ###                  for i in range(9) ],
+            ###                encode( t[iEntry+4], background_output )[0] )
+            temp = []
+            for i in range(9):
+                if ForegroundInputs[iEntry][i]==-1:
+                    temp.append(encode( range(n_states), bg_inputs[i] ) + [0])
+                else:
+                    temp.append(encode( t[ForegroundInputs[iEntry][i]], bg_inputs[i] ))
+            tree.add_rule( temp, encode( t[iEntry+4], background_output )[0] )
     # supply default behaviour: background still changes even if state doesn't
     for iState in range(n_states):
         for iOutput,background_output in enumerate(BackgroundOutputs[neighborhood]):

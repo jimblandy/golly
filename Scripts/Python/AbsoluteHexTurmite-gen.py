@@ -5,6 +5,12 @@ import random
 from glife.EmulateHexagonal import *
 from glife.WriteRuleTable import *
 
+# AKT: Python 2.3 doesn't have "set" built-in
+try:
+   set
+except NameError:
+   from sets import Set as set
+
 prefix = 'AbsoluteHexTurmite' 
 
 dirs = ['A','B','C','D','E','F']
@@ -165,9 +171,17 @@ for s in range(n_states):
         if len(inputs)>0:
             for central_color in range(n_colors):
                 # output the required transition
-                transition = [leaving_color_behind[central_color]] + \
-                    [ inputs if i==dir else not_arriving_from_here[i] for i in range(n_dirs) ] + \
-                    [ [encode(central_color,s)] ]
+                ### AKT: this code causes syntax error in Python 2.3:
+                ### transition = [leaving_color_behind[central_color]] + \
+                ###     [ inputs if i==dir else not_arriving_from_here[i] for i in range(n_dirs) ] + \
+                ###     [ [encode(central_color,s)] ]
+                transition = [leaving_color_behind[central_color]]
+                for i in range(n_dirs):
+                    if i==dir:
+                        transition.append(inputs)
+                    else:
+                        transition.append(not_arriving_from_here[i])
+                transition += [ [encode(central_color,s)] ]
                 transitions += [transition]
 
 # default: square is left with no turmite present
