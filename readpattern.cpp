@@ -23,7 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "readpattern.h"
 #include "lifealgo.h"
-#include "util.h"          // for *progress calls
+#include "liferules.h"     // for MAXRULESIZE
+#include "util.h"          // for lifewarning and *progress calls
 #include <cstdio>
 #ifdef ZLIB
 #include <zlib.h>
@@ -402,7 +403,9 @@ const char *readdblife(lifealgo &imp, char *line) {
 // See http://psoup.math.wisc.edu/mcell/ca_files_formats.html for details.
 //
 const char *readmcell(lifealgo &imp, char *line) {
-   int x=0, y=0;
+   int x = 0, y = 0;
+   int wd = 0, ht = 0;              // bounded if > 0
+   int wrapped = 0;                 // plane if 0, torus if 1
    char *p;
    const char *errmsg;
    bool sawrule = false;            // saw explicit rule?
@@ -430,7 +433,7 @@ const char *readmcell(lifealgo &imp, char *line) {
                   if (c == '.') {
                      x += n;
                   } else if (c == '$') {
-                     x = 0;
+                     x = -(wd/2);
                      y += n;
                   } else {
                      int state = 0;
@@ -458,6 +461,18 @@ const char *readmcell(lifealgo &imp, char *line) {
                   n = 0;
                }
             }
+
+         // look for bounded universe
+         } else if (strncmp(line, "#BOARD ", 7) == 0) {
+            sscanf(line + 7, "%dx%d", &wd, &ht);
+            // write pattern in top left corner initially
+            // (pattern will be shifted to middle of grid below)
+            x = -(wd/2);
+            y = -(ht/2);
+
+         // look for topology
+         } else if (strncmp(line, "#WRAP ", 6) == 0) {
+            sscanf(line + 6, "%d", &wrapped);
 
          // we allow lines like "#GOLLY WireWorld"
          } else if (!sawrule && (strncmp(line, "#GOLLY", 6) == 0 ||
@@ -493,6 +508,42 @@ const char *readmcell(lifealgo &imp, char *line) {
          }
       }
    }
+   
+   if (wd > 0 || ht > 0) {
+      // grid is bounded, so append suitable suffix to rule
+      char rule[MAXRULESIZE];
+      if (wrapped)
+         sprintf(rule, "%s:T%d,%d", imp.getrule(), wd, ht);
+      else
+         sprintf(rule, "%s:P%d,%d", imp.getrule(), wd, ht);
+      errmsg = imp.setrule(rule);
+      if (errmsg) {
+         // should never happen
+         lifewarning("Bug in readmcell code!");
+         return errmsg;
+      }
+      // shift pattern to middle of bounded grid
+      imp.endofpattern();
+      if (!imp.isEmpty()) {
+         imp.findedges(&top, &left, &bottom, &right);
+         // pattern is currently in top left corner so shift down and right
+         // (note that we add 1 to wd and ht to get same position as MCell)
+         int shiftx = (wd + 1 - (right.toint() - left.toint() + 1)) / 2;
+         int shifty = (ht + 1 - (bottom.toint() - top.toint() + 1)) / 2;
+         if (shiftx > 0 || shifty > 0) {
+            for (y = bottom.toint(); y >= top.toint(); y--) {
+               for (x = right.toint(); x >= left.toint(); x--) {
+                  int state = imp.getcell(x, y);
+                  if (state > 0) {
+                     imp.setcell(x, y, 0);
+                     imp.setcell(x+shiftx, y+shifty, state);
+                  }
+               }
+            }
+         }
+      }
+   }
+   
    return 0;
 }
 
