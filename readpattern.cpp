@@ -142,7 +142,7 @@ const char *readtextpattern(lifealgo &imp, char *line) {
 /*
  *   Parse "#CXRLE key=value key=value ..." line and extract values.
  */
-void ParseXRLELine(char *line, int *xoff, int *yoff, bigint &gen) {
+void ParseXRLELine(char *line, int *xoff, int *yoff, bool *sawpos, bigint &gen) {
    char *key = line;
    while (key) {
       // set key to start of next key word
@@ -159,6 +159,7 @@ void ParseXRLELine(char *line, int *xoff, int *yoff, bigint &gen) {
       if (strncmp(key, "Pos", 3) == 0) {
          // extract Pos=int,int
          sscanf(value, "%d,%d", xoff, yoff);
+         *sawpos = true;
 
       } else if (strncmp(key, "Gen", 3) == 0) {
          // extract Gen=bigint
@@ -185,14 +186,13 @@ const char *readrle(lifealgo &imp, char *line) {
    const char *errmsg;
    int wd=0, ht=0, xoff=0, yoff=0;
    bigint gen = bigint::zero;
-   bool xrle = false;               // extended RLE format?
+   bool sawpos = false;             // xoff and yoff set in ParseXRLELine?
    bool sawrule = false;            // saw explicit rule?
 
    // parse any #CXRLE line(s) at start
    while (strncmp(line, "#CXRLE", 6) == 0) {
-      ParseXRLELine(line, &xoff, &yoff, gen);
+      ParseXRLELine(line, &xoff, &yoff, &sawpos, gen);
       imp.setGeneration(gen);
-      xrle = true;
       if (getline(line, LINESIZE) == NULL) return 0;
    }
 
@@ -221,20 +221,6 @@ const char *readrle(lifealgo &imp, char *line) {
          while (*p && *p != '=') p++; p++;
          sscanf(p, "%d", &ht);
 
-         /* we no longer center RLE pattern around 0,0
-         if (!xrle) {
-            xoff = -(wd / 2);
-            yoff = -(ht / 2);
-         }
-         */
-
-         if (getedges) {
-            top = yoff;
-            left = xoff;
-            bottom = yoff + ht - 1;
-            right = xoff + wd - 1;
-         }
-
          while (*p && *p != 'r') p++;
          if (strncmp(p, "rule", 4) == 0) {
             p += 4;
@@ -254,6 +240,20 @@ const char *readrle(lifealgo &imp, char *line) {
             // return error so Golly will look for matching algo
             errmsg = imp.setrule("B3/S23");
             if (errmsg) return errmsg;
+         }
+
+         // imp.setrule() has set imp.gridwd and imp.gridht
+         if (!sawpos && (imp.gridwd > 0 || imp.gridht > 0)) {
+            // position pattern at top left corner of bounded grid
+            xoff = -(imp.gridwd / 2);
+            yoff = -(imp.gridht / 2);
+         }
+
+         if (getedges) {
+            top = yoff;
+            left = xoff;
+            bottom = yoff + ht - 1;
+            right = xoff + wd - 1;
          }
       } else {
          n = 0 ;
