@@ -1,0 +1,91 @@
+<html>
+<title>Golly Help: Bounded Grids</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+Bounded grids with various topologies (plane, torus, Klein bottle, cross-surface)
+can be created by adding a special suffix to the usual rule string.
+For example, <b><a href="rule:B3/S23:T80,50">B3/S23:T80,50</a></b>
+creates a toroidal Life universe 80 cells wide and 50 cells high.
+The suffix syntax is best illustrated by these examples:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td><b>:P40,30</b></td><td width=10> </td>
+   <td> &mdash; plane 40 cells wide and 30 cells high</td>
+</tr>
+<tr>
+   <td><b>:P40,0</b></td><td width=10> </td>
+   <td> &mdash; plane with finite width but infinite height</td>
+</tr>
+<tr>
+   <td><b>:T0,30</b></td><td width=10> </td>
+   <td> &mdash; tube with infinite width and height 30</td>
+</tr>
+<tr>
+   <td><b>:T40,30</b></td><td width=10> </td>
+   <td> &mdash; torus with width 40 and height 30</td>
+</tr>
+<tr>
+   <td><b>:T40+5,30</b></td><td width=10> </td>
+   <td> &mdash; torus with a shift of +5 on the horizontal edges</td>
+</tr>
+<tr>
+   <td><b>:T40,30-2</b></td><td width=10> </td>
+   <td> &mdash; torus with a shift of -2 on the vertical edges</td>
+</tr>
+<tr>
+   <td><b>:K40*,30</b></td><td width=10> </td>
+   <td> &mdash; Klein bottle with the horizontal edges twisted</td>
+</tr>
+<tr>
+   <td><b>:K40,30*</b></td><td width=10> </td>
+   <td> &mdash; Klein bottle with the vertical edges twisted</td>
+</tr>
+<tr>
+   <td><b>:K40*+1,30</b></td><td width=10> </td>
+   <td> &mdash; Klein bottle with a shift on the horizontal edges</td>
+</tr>
+<tr>
+   <td><b>:C40,30</b></td><td width=10> </td>
+   <td> &mdash; cross-surface (horizontal and vertical edges are twisted)</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+Note that if a bounded grid has width <i>w</i> and height <i>h</i> then
+the cell in the top left corner has coordinates -<i>w</i>/2,-<i>h</i>/2.
+The different topologies are described in the following sections.
+
+<p>
+<font size=+1><b>Plane</b></font>
+
+<p>
+!!!
+For the cells at the edges of a bounded plane, their neighboring cells that are outside
+the plane are permanently in state 0.
+
+<p>
+<font size=+1><b>Torus</b></font>
+
+<p>
+!!!
+
+<p>
+<font size=+1><b>Klein bottle</b></font>
+
+<p>
+!!!
+
+<p>
+<font size=+1><b>Cross-surface</b></font>
+
+<p>
+!!!
+
+</body>
+</html>
