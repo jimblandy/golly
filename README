@@ -1,11 +1,12 @@
 Welcome to Golly, a sophisticated tool for exploring Conway's
-Game of Life and many other cellular automata.
+Game of Life and many other types of cellular automata.
 
 Key features:
 
 - Free, open source and cross-platform (Windows, Mac, Linux).
-- Unbounded universes (limited only by memory).
-- Multi-state universes (up to 256 states).
+- Supports both bounded and unbounded universes.
+- Supports various topologies (plane, torus, Klein bottle, etc.).
+- Supports multi-state universes (cells have up to 256 states).
 - Includes QuickLife, a fast, memory-efficient algorithm.
 - Use HashLife to see large patterns evolve at huge time scales.
 - Supports many different rules, including Wolfram's 1D rules,

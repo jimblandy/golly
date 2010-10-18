@@ -1385,18 +1385,19 @@ void DrawGridBorder(wxDC& dc)
       bottom = currht-1;
    }
 
+   // note that right and/or bottom might be INT_MAX so avoid adding to cause overflow
    if (currlayer->view->getmag() > 0) {
       // move to bottom right pixel of cell at gridright,gridbottom
-      right += (1 << currlayer->view->getmag()) - 1;
-      bottom += (1 << currlayer->view->getmag()) - 1;
+      if (right < currwd) right += (1 << currlayer->view->getmag()) - 1;
+      if (bottom < currht) bottom += (1 << currlayer->view->getmag()) - 1;
       if (currlayer->view->getmag() == 1) {
          // there are no gaps at scale 1:2
-         right++;
-         bottom++;
+         if (right < currwd) right++;
+         if (bottom < currht) bottom++;
       }
    } else {
-      right++;
-      bottom++;
+      if (right < currwd) right++;
+      if (bottom < currht) bottom++;
    }
 
    if (left < 0 && right >= currwd && top < 0 && bottom >= currht) {

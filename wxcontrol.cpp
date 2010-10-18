@@ -551,7 +551,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
    
    } else if (curralgo->htwist) {
       // Klein bottle with top and bottom edges twisted 180 degrees
-      //  eg. K4*,3
+      //  eg. :K4*,3
       //  i l k j i l
       //  d A B C D a
       //  h E F G H e
@@ -582,7 +582,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
    
    } else { // curralgo->vtwist
       // Klein bottle with left and right edges twisted 180 degrees
-      //  eg. K4,3*
+      //  eg. :K4,3*
       //  d i j k l a
       //  l A B C D i
       //  h E F G H e
@@ -669,7 +669,7 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
    
    } else { // curralgo->vshift != 0
       // Klein bottle with shift by 1 on twisted vertical edge (with even number of cells)
-      //  eg. K3,4*+1
+      //  eg. :K3,4*+1
       //  f j k l d
       //  c A B C a
       //  l D E F j
@@ -728,7 +728,7 @@ static void JoinShiftedEdges(lifealgo* curralgo,
 
    if (hshift != 0) {
       // torus with horizontal shift
-      //  eg. T:4+1,3
+      //  eg. :T4+1,3
       //  k l i j k l
       //  d A B C D a
       //  h E F G H e
@@ -775,7 +775,7 @@ static void JoinShiftedEdges(lifealgo* curralgo,
    
    } else { // vshift != 0
       // torus with vertical shift
-      //  eg. T:4,3+1
+      //  eg. :T4,3+1
       //  h i j k l a
       //  l A B C D e
       //  d E F G H i

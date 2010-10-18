@@ -5,51 +5,51 @@
 <p>
 Bounded grids with various topologies (plane, torus, Klein bottle, cross-surface)
 can be created by adding a special suffix to the usual rule string.
-For example, <b><a href="rule:B3/S23:T80,50">B3/S23:T80,50</a></b>
-creates a toroidal Life universe 80 cells wide and 50 cells high.
+For example, <b><a href="rule:B3/S23:T30,20">B3/S23:T30,20</a></b>
+creates a toroidal Life universe 30 cells wide and 20 cells high.
 The suffix syntax is best illustrated by these examples:
 
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr>
-   <td><b>:P40,30</b></td><td width=10> </td>
-   <td> &mdash; plane 40 cells wide and 30 cells high</td>
+   <td><b>:P30,20</b></td><td width=10> </td>
+   <td> &mdash; plane with width 30 and height 20</td>
 </tr>
 <tr>
-   <td><b>:P40,0</b></td><td width=10> </td>
-   <td> &mdash; plane with finite width but infinite height</td>
+   <td><b>:P30,0</b></td><td width=10> </td>
+   <td> &mdash; plane with width 30 and infinite height</td>
 </tr>
 <tr>
-   <td><b>:T0,30</b></td><td width=10> </td>
-   <td> &mdash; tube with infinite width and height 30</td>
+   <td><b>:T0,20</b></td><td width=10> </td>
+   <td> &mdash; tube with infinite width and height 20</td>
 </tr>
 <tr>
-   <td><b>:T40,30</b></td><td width=10> </td>
-   <td> &mdash; torus with width 40 and height 30</td>
+   <td><b>:T30,20</b></td><td width=10> </td>
+   <td> &mdash; torus with width 30 and height 20</td>
 </tr>
 <tr>
-   <td><b>:T40+5,30</b></td><td width=10> </td>
+   <td><b>:T30+5,20</b></td><td width=10> </td>
    <td> &mdash; torus with a shift of +5 on the horizontal edges</td>
 </tr>
 <tr>
-   <td><b>:T40,30-2</b></td><td width=10> </td>
+   <td><b>:T30,20-2</b></td><td width=10> </td>
    <td> &mdash; torus with a shift of -2 on the vertical edges</td>
 </tr>
 <tr>
-   <td><b>:K40*,30</b></td><td width=10> </td>
+   <td><b>:K30*,20</b></td><td width=10> </td>
    <td> &mdash; Klein bottle with the horizontal edges twisted</td>
 </tr>
 <tr>
-   <td><b>:K40,30*</b></td><td width=10> </td>
+   <td><b>:K30,20*</b></td><td width=10> </td>
    <td> &mdash; Klein bottle with the vertical edges twisted</td>
 </tr>
 <tr>
-   <td><b>:K40*+1,30</b></td><td width=10> </td>
+   <td><b>:K30*+1,20</b></td><td width=10> </td>
    <td> &mdash; Klein bottle with a shift on the horizontal edges</td>
 </tr>
 <tr>
-   <td><b>:C40,30</b></td><td width=10> </td>
+   <td><b>:C30,20</b></td><td width=10> </td>
    <td> &mdash; cross-surface (horizontal and vertical edges are twisted)</td>
 </tr>
 </table>
@@ -57,35 +57,166 @@ The suffix syntax is best illustrated by these examples:
 </p>
 
 <p>
-Note that if a bounded grid has width <i>w</i> and height <i>h</i> then
-the cell in the top left corner has coordinates -<i>w</i>/2,-<i>h</i>/2.
+Some notes:
+
+<p>
+<ul>
+<li>
+The first letter indicating the topology can be entered in lowercase but is
+always uppercase in the canonical string returned by the getrule() script command.
+<li>
+If a bounded grid has width <i>w</i> and height <i>h</i> then the cell in
+the top left corner has coordinates -int(<i>w</i>/2),-int(<i>h</i>/2).
+<li>
+The maximum width or height of a bounded grid is 2000000000 (2 billion).
+<li>
+Use 0 for an infinite width or height (but not possible for a Klein bottle
+or cross-surface).
+<li>
+Pattern generation in a bounded grid is slower than in an unbounded grid.
+This is because all the current algorithms have been designed to work with
+unbounded grids, so Golly has to do extra work to create the illusion
+of a bounded grid.
+</ul>
+
+<p>
 The different topologies are described in the following sections.
 
 <p>
 <font size=+1><b>Plane</b></font>
 
 <p>
-!!!
-For the cells at the edges of a bounded plane, their neighboring cells that are outside
-the plane are permanently in state 0.
+A bounded plane is a simple, flat surface with no curvature.
+For the cells at the edges, neighboring cells outside the plane are always in state 0.
 
 <p>
 <font size=+1><b>Torus</b></font>
 
 <p>
-!!!
+If the opposite edges of a bounded plane are joined then the result is a
+doughnut-shaped surface called a torus.
+The following diagram of a 4 by 3 torus shows how the edges are joined.
+The uppercase letters are the states of cells inside the grid, while the lowercase
+letters are the corresponding states of neighboring cells outside the grid:
+
+<p>
+<dd><tt>l i j k l i</tt></dd>
+<dd><tt>d A B C D a</tt></dd>
+<dd><tt>h E F G H e</tt> &nbsp;&nbsp;&nbsp;rule suffix is <b>:T4,3</b></dd>
+<dd><tt>l I J K L i</tt></dd>
+<dd><tt>d a b c d a</tt></dd>
+</p>
+
+<p>
+A torus can have a shift on the horizontal edges or the vertical edges, but not both.
+These two examples show how shifted edges are joined:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td>
+   <tt>k l i j k l</tt><br>
+   <tt>d A B C D a</tt><br>
+   <tt>h E F G H e</tt> &nbsp;&nbsp;&nbsp;<b>:T4+1,3</b><br>
+   <tt>l I J K L i</tt><br>
+   <tt>a b c d a b</tt><br>
+   </td>
+   <td width=50> </td>
+   <td>
+   <tt>h i j k l a</tt><br>
+   <tt>l A B C D e</tt><br>
+   <tt>d E F G H i</tt> &nbsp;&nbsp;&nbsp;<b>:T4,3+1</b><br>
+   <tt>h I J K L a</tt><br>
+   <tt>l a b c d e</tt><br>
+   </td>
+</tr>
+</table>
+</dd>
+</p>
 
 <p>
 <font size=+1><b>Klein bottle</b></font>
 
 <p>
-!!!
+If one pair of opposite edges are twisted 180 degrees (ie. reversed) before being
+joined then the result is a Klein bottle.
+Using the same letter conventions as above, here are two examples:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td>
+   <tt>i l k j i l</tt><br>
+   <tt>d A B C D a</tt><br>
+   <tt>h E F G H e</tt> &nbsp;&nbsp;&nbsp;<b>:K4*,3</b><br>
+   <tt>l I J K L i</tt><br>
+   <tt>a d c b a d</tt><br>
+   </td>
+   <td width=50> </td>
+   <td>
+   <tt>d i j k l a</tt><br>
+   <tt>l A B C D i</tt><br>
+   <tt>h E F G H e</tt> &nbsp;&nbsp;&nbsp;<b>:K4,3*</b><br>
+   <tt>d I J K L a</tt><br>
+   <tt>l a b c d i</tt><br>
+   </td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+A Klein bottle can only have a shift on the twisted edges and only if that dimension
+has an even number of cells.  Also, there is only one unique shift: 1.
+Here are two examples:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td>
+   <tt>j i l k j i</tt><br>
+   <tt>d A B C D a</tt><br>
+   <tt>h E F G H e</tt> &nbsp;&nbsp;&nbsp;<b>:K4*+1,3</b><br>
+   <tt>l I J K L i</tt><br>
+   <tt>b a d c b a</tt><br>
+   <tt> </tt><br>
+   </td>
+   <td width=50> </td>
+   <td>
+   <tt>f j k l d</tt><br>
+   <tt>c A B C a</tt><br>
+   <tt>l D E F j</tt> &nbsp;&nbsp;&nbsp;<b>:K3,4*+1</b><br>
+   <tt>i G H I g</tt><br>
+   <tt>f J K L d</tt><br>
+   <tt>c a b c a</tt><br>
+   </td>
+</tr>
+</table>
+</dd>
+</p>
 
 <p>
 <font size=+1><b>Cross-surface</b></font>
 
 <p>
-!!!
+If both pairs of opposite edges are twisted and joined then the result is a cross-surface
+(also known as a real projective plane, but Conway prefers the term cross-surface).
+Using the conventions described above, here's an example showing how the edges are joined:
+
+<p>
+<dd><tt>a l k j i d</tt></dd>
+<dd><tt>l A B C D i</tt></dd>
+<dd><tt>h E F G H e</tt> &nbsp;&nbsp;&nbsp;<b>:C4,3</b></dd>
+<dd><tt>d I J K L a</tt></dd>
+<dd><tt>i d c b a l</tt></dd>
+</p>
+
+<p>
+Note that the corner cells have themselves as one of their neighbors.
+Shifting is not possible.
 
 </body>
 </html>

@@ -150,7 +150,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
    
    while ('0' <= *p && *p <= '9') {
       if (gridwd >= 200000000) {
-         gridwd = 2000000000;             // keep width within editable limits
+         gridwd =   2000000000;           // keep width within editable limits
       } else {
          gridwd = 10 * gridwd + *p - '0';
       }
@@ -187,7 +187,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
    } else {
       while ('0' <= *p && *p <= '9') {
          if (gridht >= 200000000) {
-            gridht = 2000000000;       // keep height within editable limits
+            gridht =   2000000000;     // keep height within editable limits
          } else {
             gridht = 10 * gridht + *p - '0';
          }
