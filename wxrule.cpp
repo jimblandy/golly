@@ -293,10 +293,16 @@ void AlgoHelp::OnMouseDown(wxMouseEvent& event)
 void AlgoHelp::DisplayFile(const wxString& filepath)
 {
    if ( filepath.IsEmpty() ) {
+      wxString newrule = ruletext->GetValue();
       wxString contents =
       wxT("<html><body bgcolor=\"#FFFFCE\">")
-      wxT("<p>The given rule is not valid in any algorithm.")
-      wxT("</body></html>");
+      wxT("<p>The given rule is not valid in any algorithm.");
+      if (newrule.Contains(wxT(":"))) {
+         // assume user is trying to specify a bounded grid
+         contents += wxT("<p>The syntax for a bounded grid is described ");
+         contents += wxT("<a href=\"Help/bounded.html\">here</a>.");
+      }
+      contents += wxT("</body></html>");
       SetPage(contents);
 
    } else if ( filepath.StartsWith(gollydir) &&
@@ -718,7 +724,7 @@ void RuleDialog::UpdateName()
 {
    // may need to change named rule depending on current rule text
    int newindex;
-   wxString newrule = ruletext->GetValue();   
+   wxString newrule = ruletext->GetValue();
    if ( newrule.IsEmpty() ) {
       // empty string is a quick way to restore normal Life
       newindex = 0;
