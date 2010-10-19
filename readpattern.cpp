@@ -245,8 +245,8 @@ const char *readrle(lifealgo &imp, char *line) {
          // imp.setrule() has set imp.gridwd and imp.gridht
          if (!sawpos && (imp.gridwd > 0 || imp.gridht > 0)) {
             // position pattern at top left corner of bounded grid
-            xoff = -(imp.gridwd / 2);
-            yoff = -(imp.gridht / 2);
+            xoff = -int(imp.gridwd / 2);
+            yoff = -int(imp.gridht / 2);
          }
 
          if (getedges) {
