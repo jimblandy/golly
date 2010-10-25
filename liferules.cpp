@@ -136,12 +136,12 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    
    // AKT: check for rule suffix like ":T200,100" to specify a bounded universe
    if (colonpos > 0) {
-      const char* err = algo->setgridsize(rulestring + colonpos) ;
-      if (err) return err ;
+      const char* err = algo->setgridsize(rulestring + colonpos);
+      if (err) return err;
    } else {
       // universe is unbounded
-      algo->gridwd = 0 ;
-      algo->gridht = 0 ;
+      algo->gridwd = 0;
+      algo->gridht = 0;
    }
 
    // check if rule contains B0
@@ -192,7 +192,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          initruletable(rule1, newrulebits, hexmask, wolfram);
       }
    } else {
-      // rule doesn't have B0 so we'll use rule0 for all gens
+      // not doing B0 emulation so use rule0 for all gens
       initruletable(rule0, rulebits, hexmask, wolfram);
    }
    

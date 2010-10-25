@@ -1028,11 +1028,9 @@ bool MainFrame::DeleteBorderCells(lifealgo* curralgo)
 bool MainFrame::StepPattern()
 {
    lifealgo* curralgo = currlayer->algo;
-   bool boundedgrid = (curralgo->gridwd > 0 || curralgo->gridht > 0);
-   
-   if (boundedgrid) {
-      // temporarily set the increment to 1 so we can call CreateBorderCells()
-      // and DeleteBorderCells() around each step()
+   if (curralgo->gridwd > 0 || curralgo->gridht > 0) {
+      // bounded grid, so temporarily set the increment to 1 so we can call
+      // CreateBorderCells() and DeleteBorderCells() around each step()
       int savebase = currlayer->currbase;
       int saveexpo = currlayer->currexpo;
       bigint inc = curralgo->getIncrement();

@@ -227,60 +227,67 @@ void MainFrame::NewPattern(const wxString& title)
 
 // -----------------------------------------------------------------------------
 
-bool MainFrame::LoadImage(const wxString& path)
+static bool IsImageFile(const wxString& path)
 {
    wxString ext = path.AfterLast('.');
    // if path has no extension then ext == path
    if (ext == path) return false;
-   
+
+   // supported extensions match image handlers added in GollyApp::OnInit()
+   return   ext.IsSameAs(wxT("bmp"),false) ||
+            ext.IsSameAs(wxT("gif"),false) ||
+            ext.IsSameAs(wxT("png"),false) ||
+            ext.IsSameAs(wxT("tif"),false) ||
+            ext.IsSameAs(wxT("tiff"),false) ||
+            ext.IsSameAs(wxT("icons"),false) ||
+            // we don't actually support JPEG files but let LoadImage handle them
+            ext.IsSameAs(wxT("jpg"),false) ||
+            ext.IsSameAs(wxT("jpeg"),false);
+}
+
+// -----------------------------------------------------------------------------
+
+bool MainFrame::LoadImage(const wxString& path)
+{
    // don't try to load JPEG file
+   wxString ext = path.AfterLast('.');
    if ( ext.IsSameAs(wxT("jpg"),false) ||
         ext.IsSameAs(wxT("jpeg"),false) ) {
       Warning(_("Golly cannot import JPEG data, only BMP/GIF/PNG/TIFF."));
-      // return true so pattern will be empty
+      // pattern will be empty
       return true;
    }
 
-   // supported extensions match image handlers added in GollyApp::OnInit()
-   if ( ext.IsSameAs(wxT("bmp"),false) ||
-        ext.IsSameAs(wxT("gif"),false) ||
-        ext.IsSameAs(wxT("png"),false) ||
-        ext.IsSameAs(wxT("tif"),false) ||
-        ext.IsSameAs(wxT("tiff"),false) ||
-        ext.IsSameAs(wxT("icons"),false) ) {
-      wxImage image;
-      if ( image.LoadFile(path) ) {
-         // don't change the current rule here -- that way the image can
-         // be loaded into any algo
-         unsigned char maskr, maskg, maskb;
-         bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
-         int wd = image.GetWidth();
-         int ht = image.GetHeight();
-         unsigned char* idata = image.GetData();
-         int x, y;
-         lifealgo* curralgo = currlayer->algo;
-         for (y = 0; y < ht; y++) {
-            for (x = 0; x < wd; x++) {
-               long pos = (y * wd + x) * 3;
-               unsigned char r = idata[pos];
-               unsigned char g = idata[pos+1];
-               unsigned char b = idata[pos+2];
-               if ( hasmask && r == maskr && g == maskg && b == maskb ) {
-                  // treat transparent pixel as a dead cell
-               } else if ( r < 255 || g < 255 || b < 255 ) {
-                  // treat non-white pixel as a live cell
-                  curralgo->setcell(x, y, 1);
-               }
+   wxImage image;
+   if ( image.LoadFile(path) ) {
+      // don't change the current rule here -- that way the image can
+      // be loaded into any algo
+      unsigned char maskr, maskg, maskb;
+      bool hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
+      int wd = image.GetWidth();
+      int ht = image.GetHeight();
+      unsigned char* idata = image.GetData();
+      int x, y;
+      lifealgo* curralgo = currlayer->algo;
+      for (y = 0; y < ht; y++) {
+         for (x = 0; x < wd; x++) {
+            long pos = (y * wd + x) * 3;
+            unsigned char r = idata[pos];
+            unsigned char g = idata[pos+1];
+            unsigned char b = idata[pos+2];
+            if ( hasmask && r == maskr && g == maskg && b == maskb ) {
+               // treat transparent pixel as a dead cell
+            } else if ( r < 255 || g < 255 || b < 255 ) {
+               // treat non-white pixel as a live cell
+               curralgo->setcell(x, y, 1);
             }
          }
-         curralgo->endofpattern();
-      } else {
-         Warning(_("Could not load image from file!"));
       }
-      return true;
+      curralgo->endofpattern();
    } else {
-      return false;
+      Warning(_("Could not load image from file!"));
    }
+   return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -338,16 +345,16 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    delete currlayer->algo;
    currlayer->algo = CreateNewUniverse(currlayer->algtype);
 
-   // ensure new universe uses same rule in case LoadImage succeeds
-   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
-
    if (!newtitle.IsEmpty()) {
       // show new file name in window title but no rule (which readpattern can change);
       // nicer if user can see file name while loading a very large pattern
       MySetTitle(_("Loading ") + newtitle);
    }
 
-   if (LoadImage(path)) {
+   if (IsImageFile(path)) {
+      // ensure new universe uses same rule
+      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      LoadImage(path);
       viewptr->nopattupdate = false;
    } else {
       const char* err = readpattern(FILEPATH, *currlayer->algo);

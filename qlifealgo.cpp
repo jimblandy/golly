@@ -1102,8 +1102,12 @@ void qlifealgo::dogen() {
 #ifdef STATS
    ds = 0 ; dq = 0 ; rcc = 0 ;
 #endif
-   while (uproot_needed())
-      uproot() ;
+   // AKT: if grid is bounded then we should never need to call uproot() here
+   // because setrule() has already expanded the universe to enclose the grid
+   if (gridwd == 0 || gridht == 0) {
+      while (uproot_needed())
+         uproot() ;
+   }
    if (generation.odd())
       doquad10(root, nullroot, nullroot, nullroot, rootlev) ;
    else
@@ -1187,6 +1191,29 @@ const char *qlifealgo::setrule(const char *s) {
       grid_type = HEX_GRID;
    else
       grid_type = SQUARE_GRID;
+
+   // AKT: if the grid is bounded then call uproot() if necessary so that
+   // dogen() never needs to call it
+   if (gridwd > 0 && gridht > 0) {
+      // use the top left and bottom right corners of the grid, but expanded by 2
+      // to allow for growth in the borders when the grid edges are joined
+      int xmin = -int(gridwd/2) - 2;
+      int ymin = -int(gridht/2) - 2;
+      int xmax = xmin + gridwd + 3;
+      int ymax = ymin + gridht + 3;
+      // duplicate the expansion code in setcell()
+      ymin = -ymin;
+      ymax = -ymax;
+      if (generation.odd()) {
+         xmin--;
+         ymin--;
+         xmax--;
+         ymax--;
+      }
+      // min is -ve, max is +ve, xmin is -ve, xmax is +ve, ymin is +ve, ymax is -ve
+      while (xmin < min || xmax > max || ymin > max || ymax < min)
+         uproot();
+   }
    
    return 0;
 }
