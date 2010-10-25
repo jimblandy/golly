@@ -214,8 +214,8 @@ const char* lifealgo::setgridsize(const char* suffix) {
          if (topology == 'P') return "Planar grid can't have a shift.";
          if (topology == 'C') return "Cross-surface can't have a shift.";
          if (topology == 'K' && !vtwist) return "Shift must be on twisted edges.";
-         if (gridht == 0) return "Can't shift infinite height.";
          if (hshift != 0) return "Can't have both horizontal and vertical shifts.";
+         if (gridht == 0) return "Can't shift infinite height.";
          int sign = *p == '+' ? 1 : -1;
          p++;
          while ('0' <= *p && *p <= '9') {
@@ -236,6 +236,10 @@ const char* lifealgo::setgridsize(const char* suffix) {
    if (topology == 'K' && !(htwist || vtwist)) {
       // treat ":K10,20" like ":K10,20*"
       vtwist = true;
+   }
+   
+   if ((hshift != 0 || vshift != 0) && (gridwd == 0 || gridht == 0)) {
+      return "Shifting is not allowed if either grid dimension is unbounded.";
    }
    
    // now ok to set grid edges
