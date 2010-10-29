@@ -1560,8 +1560,13 @@ void MarkLayerClean(const wxString& title)
    // is equivalent to loading a pattern file)
    if (inscript) currlayer->stayclean = true;
    
-   // set currlayer->currname and call UpdateLayerItem(currindex)
-   mainptr->SetWindowTitle(title);
+   if (title.IsEmpty()) {
+      // pass in currname so UpdateLayerItem(currindex) gets called
+      mainptr->SetWindowTitle(currlayer->currname);
+   } else {
+      // set currlayer->currname to title and call UpdateLayerItem(currindex)
+      mainptr->SetWindowTitle(title);
+   }
    
    if (currlayer->cloneid > 0) {
       // synchronize other clones
