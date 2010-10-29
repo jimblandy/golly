@@ -1235,7 +1235,7 @@ void RunScript(const wxString& filename)
       inscript = true;
    
       mainptr->UpdateUserInterface(mainptr->IsActive());
-      #ifdef __WXMSW__
+      #if defined(__WXMSW__) || defined(__WXGTK__)
          // temporarily clear non-ctrl and non-func key accelerators from
          // menu items so keys like tab/enter/space can be passed to script
          mainptr->UpdateMenuAccelerators();
@@ -1333,7 +1333,7 @@ void RunScript(const wxString& filename)
       if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
       mainptr->UpdateEverything();
       
-      #ifdef __WXMSW__
+      #if defined(__WXMSW__) || defined(__WXGTK__)
          // restore accelerators that were cleared above
          mainptr->UpdateMenuAccelerators();
       #endif

@@ -1083,7 +1083,7 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
    wxString accel = accelerator[action];
    
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || defined(__WXGTK__)
    if (inscript) {
       // RunScript has called mainptr->UpdateMenuAccelerators();
       // remove non-ctrl/non-func key accelerator from menu item
