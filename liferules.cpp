@@ -204,12 +204,12 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    } else {
       canonrule[p++] = 'B' ;
       for (i=0; i<=8; i++) {
-         if (rulebits & (1 << i)) canonrule[p++] = '0' + i ;
+         if (rulebits & (1 << i)) canonrule[p++] = '0' + (char)i ;
       }
       canonrule[p++] = '/' ;
       canonrule[p++] = 'S' ;
       for (i=0; i<=8; i++) {
-         if (rulebits & (1 << (17+i))) canonrule[p++] = '0' + i ;
+         if (rulebits & (1 << (17+i))) canonrule[p++] = '0' + (char)i ;
       }
       if (hexmask != 0x777) canonrule[p++] = 'H' ;
    }
