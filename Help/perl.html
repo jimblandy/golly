@@ -1272,6 +1272,27 @@ by each Golly scripting command.  This means that very long Perl computations
 should call an occasional "no-op" command like <b>g_run(0)</b> to allow the
 script to be aborted in a timely manner.
 
+<p>
+3.
+When writing a script that creates a pattern, make sure the script starts
+with a <b>g_new</b> command (or, less useful, a <b>g_open</b> command) otherwise
+the script might create lots of temporary files or use lots of memory.
+From the undo history's point of view there are two types of scripts:
+<p>
+<ul>
+<li>
+A script that calls <b>g_new</b> or <b>g_open</b> is assumed to be creating some
+sort of pattern, so when Golly sees these commands it clears any undo history and
+sets an internal flag that says "don't mark this layer as dirty and don't bother
+recording any further changes".
+<li>
+A script that doesn't call <b>g_new</b> or <b>g_open</b> is assumed to modify the
+current pattern. Golly must record <em>all</em> the script's changes so that
+when it finishes you can select "Undo Script Changes" from the Edit menu.
+Generating changes (due to <b>g_run</b> calls) are stored in temporary files,
+while other changes are stored in memory.
+</ul>
+
 
 <p><a name="copyright"></a>&nbsp;<br>
 <font size=+1><b>Perl copyright notice</b></font>

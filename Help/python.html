@@ -1349,7 +1349,7 @@ The first time you run a script that imports a particular module,
 the Python interpreter caches the results so it won't need to reload that
 module the next time it is imported.  This is good for efficiency, but it's
 a problem if you've modified an imported module and you want to test your changes.
-One solution is to quit Golly and restart.  A better solution is to force the
+One solution is to quit Golly and restart.  Another solution is to force the
 module to be reloaded by inserting a line like
 <p>
 <dd><b>import mymodule ; reload(mymodule)</b></dd>
@@ -1364,6 +1364,27 @@ The escape key check to abort a running script is not done by Python but
 by each Golly scripting command.  This means that very long Python computations
 should call an occasional "no-op" command like <b>run(0)</b> to allow the
 script to be aborted in a timely manner.
+
+<p>
+4.
+When writing a script that creates a pattern, make sure the script starts
+with a <b>new</b> command (or, less useful, an <b>open</b> command) otherwise
+the script might create lots of temporary files or use lots of memory.
+From the undo history's point of view there are two types of scripts:
+<p>
+<ul>
+<li>
+A script that calls <b>new</b> or <b>open</b> is assumed to be creating some
+sort of pattern, so when Golly sees these commands it clears any undo history and
+sets an internal flag that says "don't mark this layer as dirty and don't bother
+recording any further changes".
+<li>
+A script that doesn't call <b>new</b> or <b>open</b> is assumed to modify the
+current pattern. Golly must record <em>all</em> the script's changes so that
+when it finishes you can select "Undo Script Changes" from the Edit menu.
+Generating changes (due to <b>run</b> calls) are stored in temporary files,
+while other changes are stored in memory.
+</ul>
 
 
 <p><a name="macpython"></a>&nbsp;<br>
