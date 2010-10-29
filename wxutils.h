@@ -35,6 +35,9 @@ void Warning(const wxString& msg);
 void Fatal(const wxString& msg);
 // Beep, display message in a modal dialog, then exit app.
 
+void Beep();
+// Play beep sound, depending on preference setting.
+
 bool GetString(const wxString& title, const wxString& prompt,
                const wxString& instring, wxString& outstring);
 // Display a dialog box to get a string from the user.

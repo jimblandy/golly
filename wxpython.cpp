@@ -268,7 +268,7 @@ static bool LoadPythonLib()
       // prompt user for a different Python library;
       // on Windows pythonlib should be something like "python25.dll"
       // and on Linux it should be something like "libpython2.5.so"
-      wxBell();
+      Beep();
       wxString str = _("If Python isn't installed then you'll have to Cancel,");
       str +=         _("\notherwise change the version numbers and try again.");
       #ifdef __WXMSW__

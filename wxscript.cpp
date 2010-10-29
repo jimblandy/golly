@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
-#include "wxutils.h"       // for Warning, IsScriptFile
+#include "wxutils.h"       // for Warning, Beep, IsScriptFile
 #include "wxprefs.h"       // for gollydir, allowundo, etc
 #include "wxundo.h"        // for undoredo->...
 #include "wxalgos.h"       // for *_ALGO, algoinfo
@@ -1111,7 +1111,7 @@ void CheckScriptError(const wxString& ext)
          errtype = _("Python error:");
          scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
       }
-      wxBell();
+      Beep();
       #ifdef __WXMAC__
          wxSetCursor(*wxSTANDARD_CURSOR);
       #endif

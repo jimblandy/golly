@@ -349,7 +349,7 @@ void HelpFrame::OnBackButton(wxCommandEvent& WXUNUSED(event))
    if ( htmlwin->HistoryBack() ) {
       UpdateHelpButtons();
    } else {
-      wxBell();
+      Beep();
    }
 }
 
@@ -360,7 +360,7 @@ void HelpFrame::OnForwardButton(wxCommandEvent& WXUNUSED(event))
    if ( htmlwin->HistoryForward() ) {
       UpdateHelpButtons();
    } else {
-      wxBell();
+      Beep();
    }
 }
 

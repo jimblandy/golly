@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"
 
 #include "wxgolly.h"       // for mainptr, statusptr
-#include "wxutils.h"       // for Warning, Fatal
+#include "wxutils.h"       // for Warning, Fatal, Beep
 #include "wxprefs.h"       // for showgridlines, canchangerule, etc
 #include "wxhelp.h"        // for ShowHelp
 #include "wxmain.h"        // for mainptr->...
@@ -989,7 +989,7 @@ void PatternView::ZoomIn()
       currlayer->view->zoom();
       mainptr->UpdateEverything();
    } else {
-      wxBell();
+      Beep();
    }
 }
 
@@ -2108,7 +2108,7 @@ void PatternView::ZoomInPos(int x, int y)
       mainptr->UpdateEverything();
       inscript = saveinscript;
    } else {
-      wxBell();   // can't zoom in any further
+      Beep();   // can't zoom in any further
    }
 }
 
@@ -2707,7 +2707,7 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
       if (currlayer->view->getmag() < MAX_MAG) {
          currlayer->view->zoom();
       } else {
-         wxBell();
+         Beep();
          wheelpos = 0;
          break;         // best not to beep lots of times
       }

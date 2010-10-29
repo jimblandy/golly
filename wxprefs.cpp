@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for ID_*, mainptr->...
-#include "wxutils.h"       // for Warning, Fatal, FillRect
+#include "wxutils.h"       // for Warning, Fatal, Beep, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxalgos.h"       // for InitAlgorithms, NumAlgos, algoinfo, etc
@@ -143,6 +143,7 @@ bool scrollpencil = true;        // scroll if pencil cursor is dragged outside v
 bool scrollcross = true;         // scroll if cross cursor is dragged outside view?
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
 bool allowundo = true;           // allow undo/redo?
+bool allowbeep = true;           // okay to play beep sound?
 bool restoreview = true;         // should reset/undo restore view?
 int controlspos = 1;             // position of translucent controls (1 is top left corner)
 int canchangerule = 0;           // if > 0 then paste can change rule
@@ -1443,6 +1444,7 @@ void SavePrefs()
    fprintf(f, "show_algo_help=%d\n", showalgohelp ? 1 : 0);
 
    fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
+   fprintf(f, "allow_beep=%d\n", allowbeep ? 1 : 0);
    fprintf(f, "restore_view=%d\n", restoreview ? 1 : 0);
    fprintf(f, "paste_location=%s\n", GetPasteLocation());
    fprintf(f, "paste_mode=%s\n", GetPasteMode());
@@ -1867,6 +1869,9 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "allow_undo") == 0) {
          allowundo = value[0] == '1';
+
+      } else if (strcmp(keyword, "allow_beep") == 0) {
+         allowbeep = value[0] == '1';
 
       } else if (strcmp(keyword, "restore_view") == 0) {
          restoreview = value[0] == '1';
@@ -2473,7 +2478,7 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
    int state = row * NUMCOLS + col;
    if (state >= 0 && state < algoinfo[coloralgo]->maxstates) {
       if (algoinfo[coloralgo]->gradient && state > 0) {
-         wxBell();
+         Beep();
       } else {
          // let user change color of this cell state
          wxColour rgb(algoinfo[coloralgo]->algor[state],
@@ -2609,6 +2614,7 @@ enum {
    PREF_SCROLL_PENCIL,
    PREF_SCROLL_CROSS,
    PREF_SCROLL_HAND,
+   PREF_BEEP,
    // Control prefs
    PREF_ALGO_MENU1,
    PREF_MAX_MEM,
@@ -2780,7 +2786,7 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
    
    if (realkey == WXK_ESCAPE) {
       // escape key is reserved for other uses
-      wxBell();
+      Beep();
       return;
    }
 
@@ -2886,7 +2892,7 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
       }
    } else {
       // unsupported key combo
-      wxBell();
+      Beep();
    }
 
    // do NOT pass event on to next handler
@@ -2966,7 +2972,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
                if ( s2 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
             }
          } else {
-            wxBell();
+            Beep();
          }
       } else if ( currpage == LAYER_PAGE ) {
          wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_OPACITY);
@@ -2988,7 +2994,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
          event.Skip();
       } else {
          // disallow any other displayable ascii char
-         wxBell();
+         Beep();
       }
 
    } else {
@@ -3316,6 +3322,10 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    ssizer2->AddSpacer(CH2VGAP);
    ssizer2->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
    ssizer2->AddSpacer(SBBOTGAP);
+   
+   // allow_beep
+   
+   wxCheckBox* check4 = new wxCheckBox(panel, PREF_BEEP, _("Allow beep sound"));
 
    vbox->AddSpacer(SVGAP);
    vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -3323,6 +3333,8 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
    vbox->AddSpacer(GROUPGAP);
    vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
+   vbox->AddSpacer(GROUPGAP);
+   vbox->Add(check4, 0, wxLEFT | wxRIGHT, LRGAP);
    
    // init control values
    spin1->SetRange(1, 100);
@@ -3335,6 +3347,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    check1->SetValue(scrollpencil);
    check2->SetValue(scrollcross);
    check3->SetValue(scrollhand);
+   check4->SetValue(allowbeep);
    
    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
    panel->SetSizer(topSizer);
@@ -4575,7 +4588,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
          keycombo->SetFocus();
          keycombo->SetSelection(ALL_TEXT);
       } else {
-         wxBell();
+         Beep();
       }
    }
 }
@@ -4605,6 +4618,7 @@ bool PrefsDialog::TransferDataFromWindow()
    scrollpencil  = GetCheckVal(PREF_SCROLL_PENCIL);
    scrollcross   = GetCheckVal(PREF_SCROLL_CROSS);
    scrollhand    = GetCheckVal(PREF_SCROLL_HAND);
+   allowbeep     = GetCheckVal(PREF_BEEP);
 
    // CONTROL_PAGE
    new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);

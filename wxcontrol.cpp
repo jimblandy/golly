@@ -438,7 +438,7 @@ void MainFrame::GoSlower()
             }
          }
       } else {
-         wxBell();
+         Beep();
       }
    }
 }
@@ -1093,7 +1093,7 @@ bool MainFrame::StepPattern()
 void MainFrame::GeneratePattern()
 {
    if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
-      wxBell();
+      Beep();
       return;
    }
 
@@ -1387,7 +1387,7 @@ void MainFrame::NextGeneration(bool useinc)
    }
 
    if (viewptr->drawingcells || viewptr->waitingforclick) {
-      wxBell();
+      Beep();
       inNextGen = false;
       return;
    }

@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
 #include "wxscript.h"      // for inscript, PassKeyToScript
+#include "wxprefs.h"       // for allowbeep
 #include "wxutils.h"
 
 #ifdef __WXMAC__
@@ -68,7 +69,7 @@ void Note(const wxString& msg)
 
 void Warning(const wxString& msg)
 {
-   wxBell();
+   Beep();
    wxString title = wxGetApp().GetAppName() + _(" warning:");
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
@@ -80,7 +81,7 @@ void Warning(const wxString& msg)
 
 void Fatal(const wxString& msg)
 {
-   wxBell();
+   Beep();
    wxString title = wxGetApp().GetAppName() + _(" error:");
    #ifdef __WXMAC__
       wxSetCursor(*wxSTANDARD_CURSOR);
@@ -88,6 +89,13 @@ void Fatal(const wxString& msg)
    wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
 
    exit(1);    // safer than calling wxExit()
+}
+
+// -----------------------------------------------------------------------------
+
+void Beep()
+{
+   if (allowbeep) wxBell();
 }
 
 // =============================================================================
@@ -249,7 +257,7 @@ void IntegerDialog::OnSpinCtrlChar(wxKeyEvent& event)
          event.Skip();
       } else {
          // disallow any other displayable ascii char
-         wxBell();
+         Beep();
       }
 
    } else {

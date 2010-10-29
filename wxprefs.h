@@ -96,6 +96,7 @@ extern bool scrollcross;         // scroll if cross cursor is dragged outside vi
 extern bool scrollhand;          // scroll if hand cursor is dragged outside view?
 extern bool allowundo;           // allow undo/redo?
 extern bool restoreview;         // should reset/undo restore view?
+extern bool allowbeep;           // okay to play beep sound?
 extern int controlspos;          // position of translucent controls
 extern int canchangerule;        // if > 0 then paste can change rule
 extern int randomfill;           // random fill percentage

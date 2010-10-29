@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "lifealgo.h"
 
 #include "wxgolly.h"       // for wxGetApp, etc
-#include "wxutils.h"       // for Fatal, FillRect
+#include "wxutils.h"       // for Fatal, Beep, FillRect
 #include "wxprefs.h"       // for mindelay, maxdelay, etc
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
@@ -119,7 +119,7 @@ void StatusBar::DisplayMessage(const wxString& s)
 void StatusBar::ErrorMessage(const wxString& s)
 {
    if (inscript) return;                     // let script control messages
-   wxBell();
+   Beep();
    DisplayMessage(s);
 }
 

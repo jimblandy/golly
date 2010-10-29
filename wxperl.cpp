@@ -362,7 +362,7 @@ static bool LoadPerlLib()
       // prompt user for a different Perl library;
       // on Windows perllib should be something like "perl510.dll"
       // and on Linux it should be something like "libperl.so.5.10"
-      wxBell();
+      Beep();
       wxString str = _("If Perl isn't installed then you'll have to Cancel,");
       str +=         _("\notherwise change the version numbers and try again.");
       #ifdef __WXMSW__

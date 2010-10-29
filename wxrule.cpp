@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
 #include "wxprefs.h"       // for namedrules, gollydir, showalgohelp, etc
-#include "wxutils.h"       // for Warning, Fatal
+#include "wxutils.h"       // for Warning, Fatal, Beep
 #include "wxlayer.h"       // for currlayer
 #include "wxalgos.h"       // for NumAlgos, CreateNewUniverse, etc
 #include "wxrule.h"
@@ -855,7 +855,7 @@ void RuleDialog::OnAddName(wxCommandEvent& WXUNUSED(event))
 {
    if ( nameindex < (int) namedrules.GetCount() ) {
       // OnUpdateAdd should prevent this but play safe
-      wxBell();
+      Beep();
       return;
    }
    
@@ -911,7 +911,7 @@ void RuleDialog::OnDeleteName(wxCommandEvent& WXUNUSED(event))
 {
    if ( nameindex <= 0 || nameindex >= (int) namedrules.GetCount() ) {
       // OnUpdateDelete should prevent this but play safe
-      wxBell();
+      Beep();
       return;
    }
    
