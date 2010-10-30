@@ -1083,11 +1083,11 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
    wxString accel = accelerator[action];
    
-#if defined(__WXMSW__) || defined(__WXGTK__)
    if (inscript) {
       // RunScript has called mainptr->UpdateMenuAccelerators();
       // remove non-ctrl/non-func key accelerator from menu item
       // so keys like tab/enter/space can be passed to script
+      // even if menu item is disabled
       if (accel.IsEmpty()) return;
       int Fpos = accel.Find('F');
       if ( accel.Find(wxT("Ctrl")) != wxNOT_FOUND ||
@@ -1098,7 +1098,6 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
          accel = wxEmptyString;
       }
    }
-#endif
 
    // we need to remove old accelerator string from GetLabel text
    mbar->SetLabel(item, wxMenuItem::GetLabelFromText(mbar->GetLabel(item)) + accel);

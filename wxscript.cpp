@@ -1019,7 +1019,9 @@ void GSF_getkey(char* s)
 // -----------------------------------------------------------------------------
 
 // also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
-// getclick returns [] or [x,y,button,modifiers]
+// getclick returns [] or [x,y,button,modifiers];
+// or maybe it would be better to implement Perl/Python callback routines
+// like OnKey and OnClick that a script can override???
 
 void GSF_dokey(char* ascii)
 {
@@ -1235,11 +1237,11 @@ void RunScript(const wxString& filename)
       inscript = true;
    
       mainptr->UpdateUserInterface(mainptr->IsActive());
-      #if defined(__WXMSW__) || defined(__WXGTK__)
-         // temporarily clear non-ctrl and non-func key accelerators from
-         // menu items so keys like tab/enter/space can be passed to script
-         mainptr->UpdateMenuAccelerators();
-      #endif
+
+      // temporarily clear non-ctrl and non-func key accelerators from
+      // menu items so keys like tab/enter/space can be passed to script
+      // even if menu item is disabled
+      mainptr->UpdateMenuAccelerators();
    }
 
    wxString ext = filename.AfterLast('.');
@@ -1333,10 +1335,8 @@ void RunScript(const wxString& filename)
       if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
       mainptr->UpdateEverything();
       
-      #if defined(__WXMSW__) || defined(__WXGTK__)
-         // restore accelerators that were cleared above
-         mainptr->UpdateMenuAccelerators();
-      #endif
+      // restore accelerators that were cleared above
+      mainptr->UpdateMenuAccelerators();
    }
 }
 

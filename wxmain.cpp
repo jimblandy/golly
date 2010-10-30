@@ -1452,17 +1452,19 @@ void MainFrame::OnMenu(wxCommandEvent& event)
 
          } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
             SetLayer(id - ID_LAYER0);
-            if (inscript) {
-               // update window title, viewport and status bar
-               inscript = false;
-               SetWindowTitle(wxEmptyString);
-               UpdatePatternAndStatus();
-               inscript = true;
-            }
          }
    }
    
    UpdateUserInterface(IsActive());
+
+   if (inscript) {
+      // update viewport, status bar, scroll bars, window title
+      inscript = false;
+      UpdatePatternAndStatus();
+      bigview->UpdateScrollBars();
+      SetWindowTitle(wxEmptyString);
+      inscript = true;
+   }
 }
 
 // -----------------------------------------------------------------------------
