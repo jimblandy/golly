@@ -3,8 +3,8 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-Bounded grids with various topologies (plane, torus, Klein bottle, cross-surface)
-can be created by adding a special suffix to the usual rule string.
+Bounded grids with various topologies can be created by adding a
+special suffix to the usual rule string.
 For example, <b><a href="rule:B3/S23:T30,20">B3/S23:T30,20</a></b>
 creates a toroidal Life universe 30 cells wide and 20 cells high.
 The suffix syntax is best illustrated by these examples:
@@ -68,9 +68,9 @@ always uppercase in the canonical string returned by the getrule() script comman
 If a bounded grid has width <i>w</i> and height <i>h</i> then the cell in
 the top left corner has coordinates -int(<i>w</i>/2),-int(<i>h</i>/2).
 <li>
-The maximum width or height of a bounded grid is 2000000000 (2 billion).
+The maximum width or height of a bounded grid is 2,000,000,000.
 <li>
-Use 0 for an infinite width or height (but not possible for a Klein bottle
+Use 0 to specify an infinite width or height (but not possible for a Klein bottle
 or cross-surface).  Shifting is not allowed if either dimension is infinite.
 <li>
 Pattern generation in a bounded grid is slower than in an unbounded grid.
