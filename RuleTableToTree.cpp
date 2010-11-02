@@ -209,6 +209,7 @@ int main(int argc, char *argv[]) {
       exit(0) ;
    }
    rta->buildndd() ;
-   write_ndd() ;
    delete rta ;
+   // AKT: for some unknown reason we need to delete rta before writing the ndd
+   write_ndd() ;
 }
