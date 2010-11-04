@@ -117,11 +117,12 @@ public:
    void savetimelinewithframe(int yesno) { timeline.savetimeline = yesno ; }
 
    // support for a bounded universe with various topologies:
-   // plane, cylinder, torus, Klein bottle, cross-surface
+   // plane, cylinder, torus, Klein bottle, cross-surface, sphere
    unsigned int gridwd, gridht ;    // bounded universe if either is > 0
    bigint gridleft, gridright ;     // undefined if gridwd is 0
    bigint gridtop, gridbottom ;     // undefined if gridht is 0
-   bool boundedplane ;              // bounded plane if true
+   bool boundedplane ;              // topology is a bounded plane?
+   bool sphere ;                    // topology is a sphere?
    bool htwist, vtwist ;            // Klein bottle if either is true,
                                     // or cross-surface if both are true
    int hshift, vshift ;             // torus with horizontal or vertical shift

@@ -3595,7 +3595,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
    wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Position of translucent buttons:"));
    wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
 
-   wxRadioButton* radio0 = new wxRadioButton(panel, PREF_NO_CONTROLS, _("Disable"),
+   wxRadioButton* radio0 = new wxRadioButton(panel, PREF_NO_CONTROLS, _("Disabled"),
                                              wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
    wxRadioButton* radio1 = new wxRadioButton(panel, PREF_TL_CONTROLS, _("Top left corner"));
    wxRadioButton* radio2 = new wxRadioButton(panel, PREF_TR_CONTROLS, _("Top right corner"));

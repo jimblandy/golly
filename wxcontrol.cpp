@@ -824,6 +824,70 @@ static void JoinShiftedEdges(lifealgo* curralgo,
 
 // -----------------------------------------------------------------------------
 
+static void JoinAdjacentEdges(lifealgo* curralgo,
+                              int pt, int pl, int pb, int pr)    // pattern edges
+{
+   // set grid edges
+   int gl = curralgo->gridleft.toint();
+   int gt = curralgo->gridtop.toint();
+   int gr = curralgo->gridright.toint();
+   int gb = curralgo->gridbottom.toint();
+   
+   // border edges are 1 cell outside grid edges
+   int bl = gl - 1;
+   int bt = gt - 1;
+   int br = gr + 1;
+   int bb = gb + 1;
+
+   // sphere
+   //  eg. :S3
+   //  a a d g c
+   //  a A B C g
+   //  b D E F h
+   //  c G H I i
+   //  g c f i i
+   
+   // copy live cells in top edge to left border
+   for (int x = pl; x <= pr; x++) {
+      int state;
+      int skip = curralgo->nextcell(x, gt, state);
+      if (skip < 0) break;
+      x += skip;
+      if (state > 0) curralgo->setcell(bl, gt + (x - gl), state);
+   }
+   
+   // copy live cells in left edge to top border
+   for (int y = pt; y <= pb; y++) {
+      // no point using nextcell() here -- edge is only 1 cell wide
+      int state = curralgo->getcell(gl, y);
+      if (state > 0) curralgo->setcell(gl + (y - gt), bt, state);
+   }
+   
+   // copy live cells in bottom edge to right border
+   for (int x = pl; x <= pr; x++) {
+      int state;
+      int skip = curralgo->nextcell(x, gb, state);
+      if (skip < 0) break;
+      x += skip;
+      if (state > 0) curralgo->setcell(br, gt + (x - gl), state);
+   }
+   
+   // copy live cells in right edge to bottom border
+   for (int y = pt; y <= pb; y++) {
+      // no point using nextcell() here -- edge is only 1 cell wide
+      int state = curralgo->getcell(gr, y);
+      if (state > 0) curralgo->setcell(gl + (y - gt), bb, state);
+   }
+
+   // copy grid's corner cells to SAME corners in border
+   curralgo->setcell(bl, bt, curralgo->getcell(gl, gt));
+   curralgo->setcell(br, bt, curralgo->getcell(gr, gt));
+   curralgo->setcell(br, bb, curralgo->getcell(gr, gb));
+   curralgo->setcell(bl, bb, curralgo->getcell(gl, gb));
+}
+
+// -----------------------------------------------------------------------------
+
 static void JoinEdges(lifealgo* curralgo,
                       int gwd, int ght,                  // grid wd and ht
                       int pt, int pl, int pb, int pr)    // pattern edges
@@ -909,14 +973,23 @@ bool MainFrame::CreateBorderCells(lifealgo* curralgo)
       return false;
    }
    
-   if (curralgo->htwist || curralgo->vtwist) {
+   if (curralgo->sphere) {
+      // to get a sphere we join top edge with left edge, and right edge with bottom edge;
+      // note that grid must be square (gwd == ght)
+      int pl = left.toint();
+      int pt = top.toint();
+      int pr = right.toint();      
+      int pb = bottom.toint();
+      JoinAdjacentEdges(curralgo, pt, pl, pb, pr);
+   
+   } else if (curralgo->htwist || curralgo->vtwist) {
+      // Klein bottle or cross-surface
       if ( (curralgo->htwist && curralgo->hshift != 0 && (gwd & 1) == 0) ||
            (curralgo->vtwist && curralgo->vshift != 0 && (ght & 1) == 0) ) {
          // Klein bottle with shift is only possible if the shift is on the
          // twisted edge and that edge has an even number of cells
          JoinTwistedAndShiftedEdges(curralgo);
       } else {
-         // Klein bottle or cross-surface
          JoinTwistedEdges(curralgo);
       }
    

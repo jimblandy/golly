@@ -52,6 +52,10 @@ The suffix syntax is best illustrated by these examples:
    <td><b>:C30,20</b></td><td width=10> </td>
    <td> &mdash; cross-surface (horizontal and vertical edges are twisted)</td>
 </tr>
+<tr>
+   <td><b>:S30</b></td><td width=10> </td>
+   <td> &mdash; sphere with width 30 and height 30 (must be equal)</td>
+</tr>
 </table>
 </dd>
 </p>
@@ -70,8 +74,8 @@ the top left corner has coordinates -int(<i>w</i>/2),-int(<i>h</i>/2).
 <li>
 The maximum width or height of a bounded grid is 2,000,000,000.
 <li>
-Use 0 to specify an infinite width or height (but not possible for a Klein bottle
-or cross-surface).  Shifting is not allowed if either dimension is infinite.
+Use 0 to specify an infinite width or height (but not possible for a Klein bottle,
+cross-surface or sphere).  Shifting is not allowed if either dimension is infinite.
 <li>
 Pattern generation in a bounded grid is slower than in an unbounded grid.
 This is because all the current algorithms have been designed to work with
@@ -217,6 +221,28 @@ Using the conventions described above, here's an example showing how the edges a
 
 <p>
 Note that the corner cells have themselves as one of their neighbors.
+Shifting is not possible.
+
+<p>
+<font size=+1><b>Sphere</b></font>
+
+<p>
+If adjacent edges are joined rather than opposite edges then the result is a sphere.
+By convention we join the top edge to the left edge and the right edge to the
+bottom edge, as shown in this example:
+
+<p>
+<dd><tt>a a d g c</tt></dd>
+<dd><tt>a A B C g</tt></dd>
+<dd><tt>b D E F h</tt> &nbsp;&nbsp;&nbsp;<b>:S3</b></dd>
+<dd><tt>c G H I i</tt></dd>
+<dd><tt>g c f i i</tt></dd>
+</p>
+
+<p>
+As in the cross-surface, the corner cells have themselves as one of their neighbors,
+but note that the cells in the top left and bottom right corners (the "poles") have
+different neighborhoods to the cells in the top right and bottom left corners.
 Shifting is not possible.
 
 </body>

@@ -130,6 +130,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
    hshift = vshift = 0;
    htwist = vtwist = false;
    boundedplane = false;
+   sphere = false;
    
    p++;
    if (*p == 0) return 0;                 // treat ":" like ":T0,0"
@@ -139,6 +140,9 @@ const char* lifealgo::setgridsize(const char* suffix) {
    } else if (*p == 'p' || *p == 'P') {
       boundedplane = true;
       topology = 'P';
+   } else if (*p == 's' || *p == 'S') {
+      sphere = true;
+      topology = 'S';
    } else if (*p == 'k' || *p == 'K') {
       // Klein bottle (either htwist or vtwist should become true)
       topology = 'K';
@@ -151,7 +155,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
    }
    
    p++;
-   if (*p == 0) return 0;                 // treat ":[T/P/C/K]" like ":T0,0"
+   if (*p == 0) return 0;                 // treat ":<char>" like ":T0,0"
    
    while ('0' <= *p && *p <= '9') {
       if (gridwd >= 200000000) {
@@ -167,7 +171,8 @@ const char* lifealgo::setgridsize(const char* suffix) {
       p++;
    }
    if (*p == '+' || *p == '-') {
-      if (topology == 'P') return "Planar grid can't have a shift.";
+      if (topology == 'P') return "Plane can't have a shift.";
+      if (topology == 'S') return "Sphere can't have a shift.";
       if (topology == 'C') return "Cross-surface can't have a shift.";
       if (topology == 'K' && !htwist) return "Shift must be on twisted edges.";
       if (gridwd == 0) return "Can't shift infinite width.";
@@ -180,20 +185,21 @@ const char* lifealgo::setgridsize(const char* suffix) {
       if (hshift >= (int)gridwd) hshift = hshift % (int)gridwd;
       hshift *= sign;
    }
-   if (*p == ',') {
+   if (*p == ',' && topology != 'S') {
       p++;
    } else if (*p) {
       return "Unexpected stuff after grid width.";
    }
 
    // gridwd has been set
-   if ((topology == 'K' || topology == 'C') && gridwd == 0) {
-      return "Klein bottle or cross-surface can't have infinite width.";
+   if ((topology == 'K' || topology == 'C' || topology == 'S') && gridwd == 0) {
+      return "Given topology can't have an infinite width.";
    }
    
    if (*p == 0) {
       // grid height is not specified so set it to grid width;
-      // ie. treat ":T100" like ":T100,100"
+      // ie. treat ":T100" like ":T100,100";
+      // this also allows us to have ":S100" rather than ":S100,100"
       gridht = gridwd;
    } else {
       while ('0' <= *p && *p <= '9') {
@@ -211,7 +217,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
          p++;
       }
       if (*p == '+' || *p == '-') {
-         if (topology == 'P') return "Planar grid can't have a shift.";
+         if (topology == 'P') return "Plane can't have a shift.";
          if (topology == 'C') return "Cross-surface can't have a shift.";
          if (topology == 'K' && !vtwist) return "Shift must be on twisted edges.";
          if (hshift != 0) return "Can't have both horizontal and vertical shifts.";
@@ -230,7 +236,7 @@ const char* lifealgo::setgridsize(const char* suffix) {
 
    // gridht has been set
    if ((topology == 'K' || topology == 'C') && gridht == 0) {
-      return "Klein bottle or cross-surface can't have infinite height.";
+      return "Klein bottle or cross-surface can't have an infinite height.";
    }
    
    if (topology == 'K' && !(htwist || vtwist)) {
@@ -269,6 +275,9 @@ const char* lifealgo::canonicalsuffix() {
       static char bounds[64];
       if (boundedplane) {
          sprintf(bounds, ":P%u,%u", gridwd, gridht);
+      } else if (sphere) {
+         // sphere requires a square grid (gridwd == gridht)
+         sprintf(bounds, ":S%u", gridwd);
       } else if (htwist && vtwist) {
          // cross-surface if both horizontal and vertical edges are twisted
          sprintf(bounds, ":C%u,%u", gridwd, gridht);
