@@ -1,0 +1,6 @@
+#C "Coral":  this rule produces patterns with a surprisingly slow
+#C rate of expansion and an interesting coral-like texture.
+#C From MCell 4.20 by Mirek Wojtowicz-- rule author unknown.
+x = 17, y = 17, rule = B3/S45678
+bb13o$b15o$bo13boo$oo13boo$oo13boo$oo13boo$oo13boo$oo13boo$oo13boo$oo
+13boo$oo13boo$oo13boo$oo13boo$oo13boo$oo13boo$b15o$3b11o!

@@ -1,0 +1,64 @@
+#C This is a period 256 rocket gun which demonstrates the symmetry of
+#C the Day/Night rules, and how a signal can be sent across the border
+#C between day and night regions.  Here a period 256 anti-gun destroys
+#C every other rocket from a normal period 128 rocket gun.  Based on a
+#C reaction by Dean Hickerson.  David I. Bell, May 1997
+x = 240, y = 224, rule = B3678/S34678
+7boo25boo$7boo25boo$6b4o23b4o$6b3obo21bob3o$5b4obo21bob4o$5b5o23b5o$4b
+6o23b6o$4b5obo21bob5o$3b6obo21bob6o$3b7o23b7o$bb8o23b8o$bb7obo21bob7o$
+b9o23b9o$b9o23b9o$bb8o23b8o$bb8o23b8o$3b7o23b7o$3b7o23b7o$b8obo21bob8o
+$b8obo21bob8o$10o23b10o$b3obobobobobobo11bobobobobobob4o$b3obobobobobo
+bo11bobobobobobob3o28bobbo$bb8o23b9o26b8o$bb7obo21bob10o24b8o$4b5obo
+21bob12o20b12o$4b5obo21bob12o20b12o$6b3obo21bob14o16b5o6b5o$6b4o23b15o
+16b16o$7boo25b16o16b3o6b3o$7boo12bo11b17o19b6o$20b3o10boobbo4bo4bo$19b
+5o14b4ob4o22b6o$18bob3obo$20b3o$18b7o$20b3o32bobo$21bo119booboo$13bobo
+4b3o4bobo31b3ob3o54bo11bo6b6o$12bobbo3b5o3bobbo29boob4o54boboboo5b5o3b
+ob4obo$11b6ob7ob6o28bob7obo50b8o3b7obb8o$10b23o25boob9o52b28o$11b6ob7o
+b6o26boboob5o53b8o3b7obb8o$12bobbo3b5o3bobbo28bob7o53boboboo5b5o3bob4o
+bo$13bobo4b3o4bobo28b3ob5o55bo11bo6b6o$21bo36boob5obo73booboo$20b3o36b
+oobboobobo$18b7o37b3o$20b3o$18bob3obo$19b5o14b4ob4o137bobbobbobboo$20b
+3o10boobbo4bo4bo134b15o$7boo12bo11b17o132b17o$7boo25b16o131b20o$6b4o
+23b15o134b21o9boo$6b3obo21bob14o134b23o7boo$4b5obo21bob12o135b26o4b4o$
+4b5obo21bob12o136b27obboboo$bb7obo21bob10o138b29o$bb8o23b9o139b22obb6o
+b5o$b3obobobobobobo11bobobobobobob3o140b21o4boobobooboo$b3obobobobobob
+o11bobobobobobob4o139b22o7bo$10o23b10o138b23o3booboo$b8obo21bob8o140b
+23obboobo$b8obo21bob8o140b22o6boo$3b7o23b7o141b23o6boo$3b7o23b7o142b
+24o$bb8o23b8o141b26o$bb8o23b8o140b29o$b9o23b9o140b30o$b9o23b9o140b32o$
+bb7obo21bob7o140b35o$bb8o23b8o141b36o$3b7o23b7o142b36o$3b6obo21bob6o
+141b38o$4b5obo21bob5o143b36o$4b6o23b6o143b36o$5b5o23b5o143b27obb9o$5b
+4obo21bob4o144b26obb8o$6b3obo21bob3o145b25o4b7o$6b4o23b4o144b25obo3b8o
+$7boo25boo146b24obo5b5o$7boo25boo146b24obo7b3o$181b25obo7b4o$182b24obo
+6b4o$182b24obo6b4o$181b25obo5b6o$182b24obo5b5o$182b24obo3b7o$181b26o4b
+8o$182b26obb8o$182b26obb8o$181b38o$182b36o$182b36o$181b38o$182b36o$
+182b36o$181b38o$182b36o$182b36o$181b38o$182b36o$182b36o$181b38o$182b
+36o$182b36o$181b38o$182b36o$182b36o$181b38o$182b36o$182b36o$181b38o$
+182b36o$182b36o$181b38o$182b36o$182b36o$181b38o$182b36o$182b36o$181b
+38o$182b36o$182b36o$181b38o$182b36o$182b36o$181b38o$182b36o$182b36o$
+181b38o$182b36o$182b36o$181b38o$182b36o$182b36o$181b38o$182b36o$182b
+36o$181b38o$182b10obbobb21o$182b9obo3bob20o$181b11o5b22o$182b9o7b20o$
+182b8obo5bob19o$181b10o7b21o$182b8o9b19o$182b8o9b19o$181b11ob3ob22o$
+182b36o$182b36o$181b38o$182b36o$152bobbobbobbobbobbobbobbobbobbobb36o
+bbobbobbobbobbobboo$150b89o$150b89o$149b91o$150b44ob44o$150b43o3b43o$
+149b33obb8o5b8obb33o$150b32obb7o7b7obb32o$150b30o5b5o9b5o5b30o$149b31o
+4bob6o5b6obo4b31o$150b28o6bob4obo5bob4obo6b28o$150b28o7b5obo5bob5o7b
+28o$149b28o4bobobob3o9b3obobobo4b28o$150b23obboo4bobobob4o7b4obobobo4b
+oobb23o$150b15obb4o10boboboboobo7boboobobobo10b4obb15o$149b14o6boo14b
+8obob8o14boo6b14o$150b11o23bob4obbooboobb4obo23b11o$150b9o25bob17obo
+25b9o$149b8o28b6o7b6o28b8o$150b5o29b9o3b9o29b5o$150b3o31b6obo5bob6o31b
+3o$149b4o32b8o3b8o32b4o$150b5ob6ob4obb10o3bobb5obbo3bobb5obbo3b10obb4o
+b6ob5o$150b6o6bo4boo10b12o7b12o10boo4bo6b6o$149b42o7b42o$150b89o$150b
+43obob43o$149b31ob27ob31o$150b28obbob25obobb28o$150b27obbobb25obbobb
+27o$149b22ob9ob25ob9ob22o$150b18obb11obb11ob11obb11obb18o$150b18obobbo
+b9obb7o5b7obb9obobbob18o$149b19o5b7o5bob5o5b5obo5b7o5b19o$150b20ob10o
+3bob5o7b5obo3b10ob20o$150b18o5b7o5bob5o5b5obo5b7o5b18o$149b19obobbob9o
+bb7o5b7obb9obobbob19o$150b18obb11obb11ob11obb11obb18o$150b21ob9ob25ob
+9ob21o$149b28obbobb25obbobb28o$150b28obbob25obobb28o$150b30ob27ob30o$
+149b44obob44o$150b89o$150b41o7b41o$149b7o6bo4boo10b12o7b12o10boo4bo6b
+7o$150b5ob6ob4obb10o3b8obbo3bobb8o3b10obb4ob6ob5o$150b3o31b9o3b9o31b3o
+$149b4o31b6obo5bob6o31b4o$150b5o27b11o3b11o27b5o$150b7o23b11obbobobb
+11o23b7o$149b10o21b14ob14o21b10o$150b11o17b15o3b15o17b11o$150b13o6boo
+7b33o7boo6b13o$149b16obb4o5b37o5b4obb16o$150b23ob41ob23o$150b43o3b43o$
+149b91o$150b41o7b41o$150b41o7b41o$149b45ob45o$150b42o5b42o$150b44ob44o
+$149b44o3b44o$150b44ob44o$150b89o$149b91o$150b89o$150b89o$152bobbobbo
+bbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbo
+bbobbobbo!
