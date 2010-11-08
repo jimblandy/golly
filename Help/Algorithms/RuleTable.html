@@ -15,13 +15,13 @@ A number of examples can be found in the Rules folder:
 In 1971, Edwin Roger Banks (a student of Ed Fredkin) made simpler versions of Codd's 1968 CA,
 using only two states in some cases.  These four rules are found in his PhD thesis.
 To see the rules in action, open
-<a href="open:Patterns/Other-Rules/Banks/Banks-I-demo.rle">Banks-I-demo.rle</a>
-and the other examples in Patterns/Other-Rules/Banks/.
+<a href="open:Patterns/Banks/Banks-I-demo.rle">Banks-I-demo.rle</a>
+and the other examples in Patterns/Banks/.
 
 <p><b><a href="rule:BBM-Margolus-emulated">BBM-Margolus-emulated</a></b><br>
 Ed Fredkin's Billiard Ball Model, using the Margolus neighborhood to implement a simple reversible physics of bouncing balls.
 In this implementation we are emulating the system using a Moore-neighborhood CA with extra states.
-Open <a href="open:Patterns/Other-Rules/Margolus/BBM.rle">BBM.rle</a> to see the rule in action.
+Open <a href="open:Patterns/Margolus/BBM.rle">BBM.rle</a> to see the rule in action.
 
 <p><b><a href="rule:Byl-Loop">Byl-Loop</a></b><br>
 A six state 5-neighborhood CA that supports small self-replicating loops.
@@ -30,32 +30,32 @@ To see the rule in action, open
 
 <p><b><a href="rule:Chou-Reggia-1">Chou-Reggia-1</a></b> and
    <b><a href="rule:Chou-Reggia-2">Chou-Reggia-2</a></b><br>
-Two 5-neighborhood CA that supports tiny self-replicating loops. 
+Two 5-neighborhood CA that supports tiny self-replicating loops.
 To see the rules in action, open
-<a href="open:Patterns/Loops/Chou-Reggia-Loop-1.rle">Chou-Reggia-Loop-1.rle</a> and 
+<a href="open:Patterns/Loops/Chou-Reggia-Loop-1.rle">Chou-Reggia-Loop-1.rle</a> and
 <a href="open:Patterns/Loops/Chou-Reggia-Loop-2.rle">Chou-Reggia-Loop-2.rle</a>.
 
 <p><b><a href="rule:Codd">Codd</a></b><br>
 In 1968, Edgar F. Codd (who would later invent the relational database) made a simpler version
 of von Neumann's 29-state CA, using just 8 states. To see the rule in action, open
-<a href="open:Patterns/Other-Rules/Codd/repeater-emitter-demo.rle">repeater-emitter-demo.rle</a>
-and the other examples in Patterns/Other-Rules/Codd/.
+<a href="open:Patterns/Codd/repeater-emitter-demo.rle">repeater-emitter-demo.rle</a>
+and the other examples in Patterns/Codd/.
 
 <p><b><a href="rule:Codd2">Codd2</a></b><br>
 A very minor extension of Codd's transition table, to allow for some sheathing cases that were found with large
-patterns. See <a href="open:Patterns/Other-Rules/Codd/sheathing-problems.rle">sheathing-problems.rle</a>
+patterns. See <a href="open:Patterns/Codd/sheathing-problems.rle">sheathing-problems.rle</a>
 for a demonstration of the problem cases.
 
 <p><b><a href="rule:Devore">Devore</a></b><br>
 In 1973, John Devore altered Codd's transition table to allow for simple diodes and triodes,
 enabling him to make a much smaller replicator than Codd's.
-See <a href="open:Patterns/Other-Rules/Codd/Devore/Devore-rep.rle">Devore-rep.rle</a>
-and the other examples in Patterns/Other-Rules/Codd/Devore/.
+See <a href="open:Patterns/Devore/Devore-rep.rle">Devore-rep.rle</a>
+and the other examples in Patterns/Devore/.
 
 <p><b><a href="rule:DLA-Margolus-emulated">DLA-Margolus-emulated</a></b><br>
 <a href="http://en.wikipedia.org/wiki/Diffusion-limited_aggregation">Diffusion-limited aggregation</a>
 (DLA) is where moving particles can become stuck, forming a distinctive fractal pattern seen in several
-different natural physical systems. See <a href="open:Patterns/Other-Rules/Margolus/DLA.rle">DLA.rle</a>.
+different natural physical systems. See <a href="open:Patterns/Margolus/DLA.rle">DLA.rle</a>.
 
 <p><b><a href="rule:Evoloop">Evoloop</a></b> and
    <b><a href="rule:Evoloop-finite">Evoloop-finite</a></b><br>
@@ -80,7 +80,12 @@ To see the rule in action, open
 <a href="open:Patterns/Loops/Langtons-Loops.rle">Langtons-Loops.rle</a>.
 
 <p><b><a href="rule:LifeHistory">LifeHistory</a></b><br>
-A 5-state extension of Brice Due's Historical Life rule, allowing for on and off marked cells as well as the history.
+A 7-state extension of Brice Due's Historical Life rule, allowing for on and off marked cells (states 3 and 4) as
+well as the history envelope (state 2).  State 3 is useful for labels and other identifying marks, since an active
+pattern can touch or even cross it without being affected.  State 5 is an alternate marked ON state most often
+used to mark a 'starting' location; once a cell changes to state 2, it can not return to this start state.
+State 6 cells kill any adjacent live cells; they are intended to be used as boundaries between subpatterns, e.g.
+in an active stamp collection where flying debris from one subpattern might adversely affect another subpattern.
 
 <p><b><a href="rule:Perrier">Perrier</a></b><br>
 Perrier extended Langton's Loops to allow for universal computation.
@@ -139,12 +144,12 @@ Science, Vol. 259, pages 1282-1287, February 1993.</i>
 
 <p><b>Devore</b> (1973)<br>
 <i>Devore, J. and Hightower, R. (1992) "The Devore variation of the Codd self-replicating computer"
-Third Workshop on Artificial Life, Santa Fe, New Mexico, 
+Third Workshop on Artificial Life, Santa Fe, New Mexico,
 Original work carried out in the 1970s though apparently never published.
-Reported by John R. Koza, "Artificial life: spontaneous emergence of 
-self-replicating and evolutionary self-improving computer programs," 
-in Christopher G. Langton, Artificial Life III, Proc. Volume XVII 
-Santa Fe Institute Studies in the Sciences of Complexity, 
+Reported by John R. Koza, "Artificial life: spontaneous emergence of
+self-replicating and evolutionary self-improving computer programs,"
+in Christopher G. Langton, Artificial Life III, Proc. Volume XVII
+Santa Fe Institute Studies in the Sciences of Complexity,
 Addison-Wesley Publishing Company, New York, 1994, p. 260.</i>
 
 <p><b>Evoloop</b> (1999)<br>
@@ -156,7 +161,7 @@ M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.</i>
 <i>J. Hardy, O. de Pazzis, and Y. Pomeau. J. Math. Phys. 14, 470, 1973.</i>
 
 <p><b>Langtons-Ant</b> (1986)<br>
-<i>C. G. Langton. "Studying artificial life with cellular automata" Physica D 2(1-3):120-149, 1986.</i>  
+<i>C. G. Langton. "Studying artificial life with cellular automata" Physica D 2(1-3):120-149, 1986.</i>
 
 <p><b>Langtons-Loops</b> (1984)<br>
 <i>C. G. Langton. "Self-reproduction in cellular automata." Physica D, Vol. 10, pages 135-144, 1984.</i>
