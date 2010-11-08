@@ -4,7 +4,7 @@
 #
 # The machine will attempt to activate the pattern by injecting 
 # a signal at a special trigger point. 
-# See: Patterns/Other-Rules/Banks/Banks-IV-constructor.rle.gz
+# See: Patterns/Banks/Banks-IV-constructor.rle.gz
 #
 # You may need to change trigger_row for your pattern, or disable
 # triggering.

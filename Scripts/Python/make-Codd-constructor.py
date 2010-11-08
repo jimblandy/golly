@@ -4,7 +4,7 @@
 # to inject sheathing and triggering signals to a point one
 # up from the pattern's bottom-left corner.
 #
-# See example: Patterns/Other-Rules/Codd/golly-constructor.rle
+# See example: Patterns/Codd/golly-constructor.rle
 #
 # Tim Hutton <tim.hutton@gmail.com>
 
