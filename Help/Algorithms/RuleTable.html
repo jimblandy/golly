@@ -80,12 +80,14 @@ To see the rule in action, open
 <a href="open:Patterns/Loops/Langtons-Loops.rle">Langtons-Loops.rle</a>.
 
 <p><b><a href="rule:LifeHistory">LifeHistory</a></b><br>
-A 7-state extension of Brice Due's Historical Life rule, allowing for on and off marked cells (states 3 and 4) as
+A 7-state extension of the HistoricalLife rule from MCell, allowing for on and off marked cells (states 3 and 4) as
 well as the history envelope (state 2).  State 3 is useful for labels and other identifying marks, since an active
 pattern can touch or even cross it without being affected.  State 5 is an alternate marked ON state most often
 used to mark a 'starting' location; once a cell changes to state 2, it can not return to this start state.
 State 6 cells kill any adjacent live cells; they are intended to be used as boundaries between subpatterns, e.g.
 in an active stamp collection where flying debris from one subpattern might adversely affect another subpattern.
+See <a href="open:Patterns/Life/Signal-Circuitry/Herschel-conduit-stamp-collection.rle">Herschel-conduit-stamp-collection.rle</a>
+for an example using all of LifeHistory's extra states.
 
 <p><b><a href="rule:Perrier">Perrier</a></b><br>
 Perrier extended Langton's Loops to allow for universal computation.
