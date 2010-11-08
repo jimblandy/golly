@@ -1,0 +1,48 @@
+#C Superstable line puffer of width 76.
+#C A line puffer is the best linear generator of chaos in Life.
+#C  It works by pulling a solid line forward at speed c/2.  It is
+#C  amazing that this line isn't destroyed by its own debris.
+#C Furthermore, this kind of puffer can be widened indefinitely,
+#C  making it exponentially more chaotic, without affecting its
+#C  stability. Some methods of stabilizing the edges are known
+#C  to be slightly unstable, giving the puffer a half-life
+#C  independent of its width, but the edge shown here is believed
+#C  to be completely stable.
+#C Increasing a line puffer's width linearly tends to increase its
+#C  period exponentially. You will not see this width-76 puffer 
+#C  repeat for tens of millions of generations.
+#C One interesting thing you can do with a line puffer is put some
+#C  asymmetrical debris in its plume. Sometimes the asymmetry is 
+#C  temporary, but more often in wide puffers such as this one,
+#C  it turns out to be permanent.
+#C Tim Coe, May 1996. From Alan Hensel's "lifebc" pattern collection.
+x = 32, y = 156, rule = B3/S23
+18bo$18b4o$5bobo12boo$5bobbo14bo$8boo10b4o$10bo13bo$8b4o8bobb3o$7bo4bo
+9b3o$9bobbo10bo$9bobbo5bob3o$11bo6boobbo$5bob4o8b3o$5bo3bo9bo$8bo12bo$
+6bobo10bobo$22bo$7b3o9bobo$8boo11bo$7b3o9bo$19b3o$6bobo9boobbo$8bo9bob
+3o$5bo3bo13bo$5bob4o11b3o$11bo8bobb3o$9bobbo11bo$9bobbo7b4o$7bo4bo10bo
+$8b4o8boo$10bo7b4obbobo$8boo8bo5bobbo$5bobbo7bobo8boo$5bobo8bo12bo$14b
+obboo8b4o$bboobo9b3o8bo4bo$5bo7bobo12bobbo$bboboo7bo14bobbo$bbo9boo16b
+o$o7bob3o11bob4o$bo5boboo13bo3bo$bo5boo18bo$bobobboo17bobo$boboboo$bo
+24b3o$boboboo20boo$bobobboo5bobo4bobo4boo$bo5booboobobbobbobbob5o$bo5b
+oo7boo3bo4bo$bobobboo5bo6bo7bo$boboboo6bob5o6bobo$bo8boo17bo$boboboo6b
+ob5o6bobo$bobobboo5bo6bo7bo$bo5boo7boo3bo4bo$bo5booboobobbobbobbob5o$b
+obobboo5bobo4bobo4boo$boboboo20boo$bo24b3o$boboboo$bobobboo17bobo$bo5b
+oo18bo$bobobboboo14bo3bo$bobob3obbo13bob4o$bo8bo19bo$bobob3obbo17bobbo
+$bobobboboo18bobbo$bo5boo17bo4bo$bobobboo19b4o$boboboo22bo$bo25boo$bob
+oboo17bobbo$bobobboo16bobo$bo5boo$bobobboboo$bobob3obbo$bo8bo13bobo$bo
+bob3obbo13bobbo$bobobboboo17boo$bo5boo20bo$bobobboo19b4o$boboboo19bo4b
+o$bo26bobbo$boboboo21bobbo$bobobboo22bo$bo5boo15bob4o$bobobboboo14bo3b
+o$bobob3obbo16bo$bo8bo14bobo$bobob3obbo$bobobboboo16b3o$bo5boo18boo$bo
+bobboo5bobo4bobo4boo$boboboo3boobobbobbobbob5o$bo14boo3bo4bo$boboboo6b
+o6bo7bo$bobobboo5bob5o6bobo$bo5booboo17bo$bo5boo4bob5o6bobo$bobobboo5b
+o6bo7bo$boboboo9boo3bo4bo$bo8boobobbobbobbob5o$boboboo6bobo4bobo4boo$b
+obobboo19boo$bo5boo17b3o$bobobboboo$bobob3obbo14bobo$bo8bo16bo$bobob3o
+bbo13bo3bo$bobobboboo14bob4o$bo5boo21bo$bobobboo20bobbo$boboboo21bobbo
+$bo24bo4bo$boboboo20b4o$bobobboo21bo$bo5boo18boo$bo5boboo13bobbo$o7bob
+3o11bobo$bbo9boo$bboboo7bo$5bo7bobo$bboobo9b3o$14bobboo$5bobo8bo$5bobb
+o7bobo$8boo8bo$10bo7b4o$8b4o8boo$7bo4bo10bo$9bobbo7b4o$9bobbo11bo$11bo
+8bobb3o$5bob4o11b3o$5bo3bo13bo$8bo9bob3o$6bobo9boobbo$19b3o$7b3o9bo$8b
+oo11bo$7b3o9bobo$22bo$6bobo10bobo$8bo12bo$5bo3bo9bo$5bob4o8b3o$11bo6b
+oobbo$9bobbo5bob3o$9bobbo10bo$7bo4bo9b3o$8b4o8bobb3o$10bo13bo$8boo10b
+4o$5bobbo14bo$5bobo12boo$18b4o$18bo!

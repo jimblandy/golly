@@ -1,0 +1,32 @@
+#C p30 Heisenburp, a pattern which can detect the passage of a glider
+#C  without affecting the glider's path or timing. 
+#C This pattern "photocopies" three gliders. The original three pass
+#C  through unaffected.
+#C The name is a reference to the Heisenberg Uncertainty Principle,
+#C  a principle in quantum physics which states that it is physically
+#C  impossible to detect a particle without affecting it in some way.
+#C  Clearly this is not the case in the Life universe!
+#C By David Bell.  From Alan Hensel's "lifebc" pattern collection.
+x = 139, y = 157, rule = B3/S23
+48boo$47bobo$46b3o$46boo$46boo$47bobo$48bo3$45boo3boo$45boo3boo$$47b3o
+$47b3o$48bo6boo23boo$56bo22bobo$56bobo5bobo11bo6boo$57boo5bobbo10bobbo
+bbobbo6boo$67boo9bo6boo6b3o$65bo3boo8bobo8boboo15bo$50bo16boo11boo8bo
+bbo8b3o4bobo$51boo11bobbo8bo13boboo16bobo$50boo12bobo10boo14b3obboobbo
+7bobbo3boo$76boo16boobbo3bo7bobo4boo$45b3o51bobbo6bobo$44bo3bo50boo8bo
+$43bo5bo$43bo5bo$46bo10bobo14boo$43bo4bo9boo14boo7bobo5bo46bo$47bo10bo
+25boo5bobo42b3o$46bo37bo6boo42bo$42bo92boo$42bobo$43bo$133bo$77boo5bo
+46booboo$78bo4bo$50boo23b3o5b3o44bo5bo$49bobo23bo29boo$40boo3boo4bo10b
+oo41bo24booboboo$42b3o17bobo29bobo6bobo$41bo3bo18bo28bobbo6boo$42bobo
+9boo8boo26boo41bo$43bo10boo28boo4boo3bo36bobbo$84boo6boo41bo$44b3o18bo
+27bobbo34boo$44b3o18b3o26bobo34bo$68bo54boo6bobo$67boo19boo23boo8boo7b
+oo$80bo7boo24bo$42boo3boo32boo31bobo$43b5o32boo33boo15boo3boo$44b3o63b
+oo20bo5bo$45bo24bo38boo14bo$69b3o39bo8bo4bobo5bo3bo$69b3o47b3o3boo7b3o
+$107bo10boobbo$67boo3boo31b3o10booboo$67boo3boo30bo16b3o$82bo3bo17boo
+13boboo$83boobobo29bobbo$45boo23bo11boobboo33bo$45boo22bobo46bobo$71b
+oo46bo$71boo$70b3o26boo3boo$69bobo27boo3boo23boo3boo$69boo54boo3b5o$
+101b3o20boo4booboo$101b3o22bo3booboo$102bo28b3o5$129b3o$129b3o$128bo3b
+o$127bo5bo$128bo3bo$99b3o27b3o$98bo3bo$97bo5bo$97bo5bo$100bo$97bo4bo$
+68b3o30bo$70bo29bo$69bo26bo$96bobo$97bo31boo$129boo3$104boo$103bobo3b
+oo$94boo3boo4bo3boo5boo$96b3o17bobo$95bo3bo18bo$96bobo9boo8boo$97bo10b
+oo$$98b3o$98b3o4$96boo3boo$46boo49b5o$45bobo50b3o$47bo51bo8$99boo$99b
+oo34$boo$obo$bbo!

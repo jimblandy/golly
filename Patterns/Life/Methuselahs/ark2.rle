@@ -1,0 +1,4 @@
+# ark2 -- 19 cells, stabilizes somewhere between 2^22 and 2^23 gens,
+# found by Nick Gotts.
+x = 53, y = 44, rule = B3/S23
+50b3o28$12bo$12bo$13boo$15bo$15bo$15bo$15bo6$oo$bbo$bbo$3b4o!

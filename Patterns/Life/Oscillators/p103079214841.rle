@@ -1,0 +1,79 @@
+#C p103079214841 (prime: 4^13*1536-263) oscillator/gun --
+#C  p1536 base loop, 13 quadruplers, and a 263-step glider advancer.
+#C  Based on previous p97307852711 and p97307852687 oscillators;
+#C  original design by Gabriel Nivasch, 7 August 2003.
+#C The first three quadruplers are set (an L112 quadrupler, a Fx70
+#C  quadrupler plus a required F166 dependent conduit to suppress the
+#C  following Herschel's first glider, and another L112 after that),
+#C  so the circuit counts down from 64. Use an 8^2 or 10^2 step size.
+#C When all circuits are empty, a signal gets through to activate
+#C the 263-step glider advancer -- after which the circuit counts down
+#C again, this time from 4^13.
+#C Dave Greene, 31 Mar 2006; checked and corrected by Tomas Rokicki.
+x = 297, y = 227, rule = B3/S23
+193b2o72b2o$193bo73bo$194bo73bo$182bo10b2o61bo10b2o$182b3o71b3o$185bo
+73bo$172bo11b2o60bo11b2o$170b3o71b3o$169bo40bo32bo40bo$169b2o19b2o16b
+3o32b2o37b3o$155b2o33b2o15bo21b2o50bo$156bo50b2o21bo50b2o$156bobo71bob
+o$157b2o72b2o2$176b2o72b2o$176b2o72b2o6$173b2o36b2o34b2o36b2o$77b2o94b
+o19b2o16bobo33bo19b2o16bobo$77b2o5b2o88b3o15bobo18bo34b3o15bobo18bo$
+84b2o90bo15bo20b2o35bo15bo20b2o$48b2o97bob2o19b2o19b2o4b2o22bob2o19b2o
+19b2o4b2o$49bo97b2obo19bo25bobo22b2obo19bo25bobo$36bo11bo14b2o17b2o87b
+3o22bo48b3o22bo$36b3o9b2o14bo17b2o89bo21b2o7b2o41bo21b2o7b2o$39bo24bob
+o21b2o114b2o72b2o$26b2o10b2o25b2o21b2o$27bo$27bobo$13b2o13b2o$13b2o36b
+2o$51b2o$195bo18b2o53bo18b2o$7b2o140b2o43bobo17bo8b2o43bobo17bo$7b2o
+139bobo44bo16bobo7bobo44bo16bobo$11b2o135bo63b2o8bo63b2o$11b2o134b2o
+44b5o23b2o44b5o$192bo4bo68bo4bo$61b2o99b2o27bo2bo41b2o27bo2bo$42b2o18b
+o28b2o69b2o24bo2bob2o41b2o24bo2bob2o$6b2o34bo16b3o29bo95bobobo5bo63bob
+obo5bo$6b2o35b3o13bo29bobo77bob2o15bo2bo4bobo44bob2o15bo2bo4bobo$45bo
+43b2o78b2obo18b2o2bo2bo44b2obo18b2o2bo2bo$26bo3b2o120b2o42b2o28b2o42b
+2o$25bobo3bo120b2o72b2o$25b2o3bo111b2o72b2o$29bo113bo73bo$25b5obo111bo
+bo71bobo$25bo4b2o112b2o72b2o$26b3o$9bo18bob2o$7b3o19bobo$6bo$6b2o186b
+2o16b2o54b2o16b2o$9b2o77b2o104b2o16b2o54b2o16b2o$4b5obo61b2o14b2o$4bo
+21b2o45bo22b2o$6bob2o16bobo41b3o23bo51b2o72b2o$5b2ob2o18bo41bo23bobo
+50bobo39b2o30bobo39b2o$28b2o64b2o51bo42bo30bo42bo$20b2o124b2o42bobo27b
+2o42bobo$20b2o169b2o72b2o$200b2o72b2o$4b2o70bo123b2o72b2o$4b2o70b3o$
+79bo$78b2o83b2o72b2o$163b2o72b2o$154b2o72b2o$153bobo27b2o42bobo27b2o$
+153bo30bo42bo30bo$152b2o30bobo39b2o30bobo$96b2o87b2o72b2o$21b2o73bo$
+21bobo70bobo$23bo70b2o61b2o16b2o54b2o16b2o$23b2o132b2o16b2o54b2o16b2o
+2$77b2o$77b2o15b2o$94bobo$5b2o89bo84b2o72b2o$4bobo23bo65b2o82bobo71bob
+o$4bo23b3o149bo73bo$3b2o22bo151b2o72b2o$11b2o14b2o160b2o72b2o$11b2o64b
+2o80b2o28b2o42b2o28b2o$77bo76b2o2bo2bo7bo36b2obo18b2o2bo2bo44b2obo$75b
+obo73bo2bo4bobo6bobo35bob2o15bo2bo4bobo44bob2o$75b2o73bobobo5bo6b2ob2o
+52bobobo5bo$151bo2bob2o9bo2bo28b2o24bo2bob2o41b2o$154bo2bo8bo3bo28b2o
+27bo2bo41b2o$155bo4bo9bo58bo4bo$92b2obo60b5o23b2o44b5o$92bob2o79b2o8bo
+63b2o$158bo16bobo7bobo44bo16bobo$85b2o70bobo17bo8b2o43bobo17bo$85b2o
+71bo18b2o53bo18b2o$10b2o13b2o236b2o18bo$9bobo13b2o237bo17bobo$9bo254bo
+bo16bo$8b2o255b2o$27bo253b5o$26bobo252bo4bo$27bo47b2o91bo72b2o41bo2bo$
+28b3o45bo81b2o7b2o41bo21b2o7b2o41b2obo2bo$30bo45bobo80bo48b3o22bo47bo
+5bobobo$77b2o80bobo22b2obo19bo25bobo44bobo4bo2bo$154b2o4b2o22bob2o19b
+2o19b2o4b2o44bo2bo2b2o$136b2o17bo20b2o35bo15bo20b2o29b2o$20b2o115bo17b
+obo18bo34b3o15bobo18bo$20b2o74bo27bo11bo19b2o16bobo33bo19b2o16bobo$94b
+3o27b3o9b2o36b2o34b2o36b2o$93bo33bo$11b2o80b2o19b2o10b2o$11b2o84b2o16b
+o$46b2o50bo16bobo$46b2o48bo19b2o$96b2o41b2o72b2o$139b2o72b2o50b2o16b2o
+$12b2o152b2o97b2o16b2o$13bo152b2o26b2o$10b3o3b2o175bobo$10bo4bobo152b
+2o21bo50b2o43b2o$15bo83b2o69bo21b2o50bo44bo$14b2o64b2o17b2o70b3o32b2o
+37b3o39bobo$13bo66b2o91bo32bo40bo39b2o$13b3o25b2o87b2o75b3o$16bo24bo
+88bo16b2o60bo11b2o14b2o38b2o$15b2o25b3o34b2o50b3o14bo73bo15bo38b2o$44b
+o35bo52bo11b3o71b3o15bo$77b3o12b2o51bo10b2o61bo10b2o5b2o10bo$16b2o19b
+2o38bo14bo64bo73bo15b3o$16b2o19b2o54b3o60bo73bo15bo$89b2o4bo60b2o72b2o
+14b2o13b2o$89bobo170bo$91b3o127bo39bo31bo$90bo3bob2o123b3o37b2o28b3o$
+90b2o2b2obo126bo65bo$223b2o65b2o4$254b2o$29b2o223b2o$29bo$30b3o260b2o$
+32bo260bobo$295bo$295b2o$162b2o55b2o36b2o$8b2o3b2o103b2o42b2o54bobo16b
+2o19bo$9bo2bobo103bo99bo18bobo15b3o25b2o3b2o$8bo3bo106bo97b2o20bo15bo
+6bo11b2o7b2o3b2o$8b5o105b2o48b2o63b2o4b2o19b3o11bo$168b2o63bobo23bo15b
+3o$6b5o153b2o69bo23b2o16bo$5bo4bo153b2o60b2o7b2o$4bo2bo218b2o$bo2bob2o
+135b2o$obobo5bo63b2o39b2o26b2o$bo2bo4bobo9b2o51b2o39b2o52b2o$4b2o2bo2b
+o9b2o146b2o$9b2o19b2o37b2o$28bo2bo37b2o$28b2o186b2o$33b2o182bo$33bo
+111b2o70bobo$31bobo71b2o38bobo70b2o$30bobo72bo41bo$26b2o3bo20bo53b3o
+11b2o25b2o$26b2o23bobo54bo11b2o$50bo2bo$8b2o41b2o183b2o$8b2o56bo67b2o
+100bo$62b2o2bobo65bo99bobo$62b2o2b2o67b3o96b2o$137bo11b2o$124b2o22bobo
+23bo$125bo22bo23b3o$122b3o22b2o22bo$122bo32b2o14b2o$155b2o$75b2o$9b2o
+64b2o$8bobo60b2o$8bo62bobo$7b2o64bo$73b2o158b2o$60b2o155b2o14b2o$60b2o
+156bo22b2o$215b3o23bo$12b2o3b2obo194bo23bobo$13bo3b2ob3o35b2o109b2o2b
+2ob2o61b2o$10b3o10bo34b2o94b2o13bobo2bobo$10bo6b2ob3o130bobo16b2o3bo7b
+o$18bobo132bo19bob2o6b3o$18bobo131b2o16bo2bobo6bo38bo$19bo149bobobobo
+6b2o37b3o$170b2ob2o49bo$202bo20b2o$200b3o16b2o$199bo19bo$186b2o11b2o
+20bo$186b2o32b2o6$155b2o60b2o$155b2o60b2o17b2o$161b2o73b2o$161b2o$180b
+2o$176b2o2bo2b2o52b2o$159b2o16bo3bob2o52bo$159b2o5b2o9bobobo42b2o12b3o
+$166b2o10b2obob2o22b2o16bo14bo$181bo2bo4b2o16bo14b3o$181b2o6b2o17b3o
+11bo$210bo!

@@ -1,0 +1,7 @@
+#C Rabbits relative.
+#C Runs for 17465 gens.  Initial pop = 11.  Final pop = 1749.
+#C May be the longest-lived 11-cell pattern within a 11x11 square.
+#C Found by Tomas G. Rokicki, some time before Feb 21, 2005.
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+x = 6, y = 4, rule = B3/S23
+ob3o$o4bo$obobo$bo2bo!

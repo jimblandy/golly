@@ -1,0 +1,30 @@
+#C A puffer train that creates switch engines.
+#C This is another type of pattern which grows quadratically.
+#C Half of a quadrant of the space is filled with blocks.
+#C Every 80 generations a new block-laying switch engine is created.
+#C By Helmut Postl, 1997.
+#C "SwitchEnginePuffer" from Alan Hensel's "lifebc" pattern collection
+x = 85, y = 164, rule = B3/S23
+58boo5b4o$56booboo3bo3bo$56b4o8bo$57boo5bobbo$$52boo9bo$50b5o8b3o$50b
+oo4bo5bo3bo$50boo5b5o4bo$52boo4b4oboboo$55b3oboo3bo$61bobo$24boo$22boo
+boo14bo$22b4o13boo24b4o$23boo15boo22bo3bo$18bo28b4o17bo$11boo6boo25bo
+3bo13bobbo$7b4oboo12bo23bo$7b6o11boo20bobbo9boo$8b4o13boobboo24b4oboo$
+29bobo23b6o$29bo26b4o5b4o$11bo52bo3bo$9boo30boo25bo$10boo29bobo11bobo
+9bo$41bo22boo$54boo$54boo6boo3boo$54bo7bob3oboo$54boo7b6o$64b4o3$54b6o
+$53bo5bo$59bo$6bo46bo4bo$4bobo48boo$5boo4$58boo$49b4o4b4o$48bo3bo4boob
+oo$52bo6boo$48bobbo3$56boo$56bobo$56boboo$57boo$57bo$$15b4o$14bo3bo39b
+oo$18bo38b4o$14bobbo22boo15booboo$39b4o16boo$39booboo$41boo$48b6o$47bo
+5bo$53bo4boo$47bo4bo4b4o$49boo6booboo$59boo$17boo$16b4o32bo$16booboo
+30b6o$18boo30bo3b8o$51boo8bo$52b3o6bo$53boo5bo$57boo$47b4o$46b6o$46b4o
+boo$50boo5$26boo$24booboo$24b4o$25boo3$70b4o$69b6o$69b4oboo$73boo$27bo
+$27boo$26bobo$79b6o$75b4o5bo$63bobo9boobo5bo$63boo10boobbo3bo$64bo16bo
+$81boo$80b4o$80booboo$82boo$71b6o$70bo5bo$63boo11bo$62b4o4bo4bo$62boob
+oo5boo7boo$64boo14b4o$80booboo$38b4o17boo21boo$37bo3bo16boo$41bo$37bo
+bbo16boo$79boo$73b3o3bobo$70b3o6boboo$70bo9boo$70b3o7bo3$48b4o29boo$
+47b6o19b4o4b4o$47b4oboo17bo3bo4booboo$51boo22bo6boo$71bobbo$$53bo$8bo
+42bo3bob6o$8boo40b3o3bo5bo$7bobo40bo5bo5bo$38bobo9boboo3bo3bo$38boo11b
+3o5bo$39bo19boo$58b4o$26bobo29booboo$26boo32boo$27bo21b6o$48bo5bo$b6o
+34boo11bo$o5bo33b4o4bo4bo$6bo33booboo5boo7boo$o4bo25boo9boo14b4o$bboo
+27bobo24booboo$16b4o11bo28boo$15bo3bo$19bo$15bobbo29boo$47bobbo$42b3o
+13boo$41bobbo8bo5boo$41booboo3bo3bo4boo$49bo4bo3bo$51bo$$59boo$50b4o4b
+4o$49bo3bo4booboo$53bo6boo$49bobbo!

@@ -1,0 +1,8 @@
+#C Runs for 21035 gens.  Initial pop = 32.  Final pop = 2570.
+#C Final census includes a 'big S' (a 14-cell still-life), which forms
+#C in gen 20040 from a collision between a pi-heptomino and a boat.
+#C The pattern also produces 2 temporary pulsars, one in gens 10105 to 10153,
+#C the other in gens 10338 to 10735.  Found by Paul Callahan, 1997.
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+x = 8, y = 8, rule = B3/S23
+obo3b2o$3ob2o$obobobo$3bo3bo$o2bob2o$obo4bo$3o2b3o$2o3bobo!

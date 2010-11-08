@@ -1,0 +1,17 @@
+#C 2c/5 dirty puffer
+#C Period 10150 (glide-reflective)
+#C Jason Summers, 26 Feb 1999
+x = 112, y = 75, rule = B3/S23
+15bo13bo52bo13bo$14bobo11bobo50bobo11bobo$13booboo9booboo48booboo9boob
+oo$13boo3bo7bo3boo48boo3bo7bo3boo$14bob4o5b4obo50bob4o5b4obo$14boo3bo
+5bo3boo50boo3bo5bo3boo$18b3o3b3o58b3o3b3o$15boobbo5bobboo52boobbo5bobb
+oo$15b4obb3obb4o52b4obb3obb4o$15bobo3b3o3bobo52bobo3b3o3bobo$13b3obbo
+7bobb3o48b3obbo7bobb3o$18bobbobobbo58bobbobobbo$20bo3bo62bo3bo$13boo
+15boo48boo15boo$18boobbobboo58boobbobboo$21b3o64b3o6$87bo$86b3o$86bob
+oo$87b3o$87boo4$4bo5bo90bo5bo$3b3o3b3o88b3o3b3o$bbobbo3bobbo86bobbo3bo
+bbo$b3o7b3o84b3o7b3o$bbobo5bobo86bobo5bobo$4boo3boo90boo3boo$o4bo3bo4b
+o82bo4bo3bo4bo$5bo3bo92bo3bo$oo3bo3bo3boo82boo3bo3bo3boo$bbobbo3bobbo
+86bobbo3bobbo$4bo5bo90bo5bo25$43bo5bo12bo5bo$42bobo3bobo10bobo3bobo$
+41booboobooboo8booboobooboo$41bobbo3bobbo8bobbo3bobbo$39booboo5booboo
+4booboo5booboo$40boo9boo6boo9boo$41boo7boo8boo7boo$42bo7bo10bo7bo$39b
+oo11boo4boo11boo$40b3o7b3o6b3o7b3o$43bobobobo12bobobobo!

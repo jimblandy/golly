@@ -1,0 +1,18 @@
+#C p30 glider advancer #6, advances gliders by 60 generations.
+#C The device uses six copies of David Bell's p30 in-line NOT gate.
+#C Speed of information transmission within the device: 13/36 = 0.361c
+#C Dieter Leithner, 27 Dec 1993; from Jason Summers' jslife collection.
+x = 135, y = 144, rule = B3/S23
+38bo$36bobo$37boo14$22bo$20bobo$21boo12$68bo$66bobo$67boo4$bbo$obo$boo
+8$52bo$50bobo$51boo18$32bo$30bobo$31boo11$88bo$86bobo$77bo7bobo$76boo
+6bobbo11boo$65boo8boo4boobbobo11boo$65boo7b3o4boo3bobo$75boo4boo5bo$
+76boo$77bo10bo$89bo$86boo5boo$86b3o4b3o$79bo7bo7boobo$77bobo15bobbo5b
+oo$70boo4bobo9b3o4boobo5boo$70boo3bobbo8boobobb3o$76bobo7bo3bobboo$77b
+obo6bobbo$79bo8boo19boo$109bo6bo$101bo5bobo4b3o$100boo5boo4bo$84boo13b
+oo12boo$84b3o11b3o$75boo9boobo9boo3boo14boo$75bo5bo4bobbo10boo18boo$
+80bo5boobo11bo$76bo3bo3b3o10bo$78bo5boo9bobo13bo$96boo12b3o8bo8boo$
+109b5o6bobo7bobbo$108boo3boo4bo3bo$120b3o11bo$118boo3boo$104bo27boo$
+105bo4b3o18bo$103b3o4b3o$$109bo9bo8boo3boo$108bobo8bo8boo3boo$107bo3bo
+7bob3o5b5o$108b3o19bobo$106boo3boo11bo$121boboo5b3o$121boo3$116boo3boo
+8bo$116boo3boo7bobo$117b5o$118bobo$$118b3o8bo$109boo17b3o$109boo16b5o$
+126boo3boo3$119boo$119boo7b3o$128b3o3$129boo$129boo!

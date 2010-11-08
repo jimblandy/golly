@@ -1,0 +1,39 @@
+#C Small Orthogonal Spaceships, speeds c/2, 2c/5, c/3, 2c/7, c/4,
+#C  c/5, and c/6.
+#C c/2: LWSS, MWSS, HWSS (lightweight spaceship, middleweight 
+#C  spaceship, heavyweight spaceship), Shick engine, and unnamed p2 
+#C  spaceship which is used in line puffers.
+#C 2c/5: smallest example, by Paul Tooke.
+#C c/3: smallest c/3, turtle by Dean Hickerson, and dart by David Bell.
+#C 2c/7: weekender, found Jan. 12, 2000 by David Eppstein.
+#C c/4: smallest orthogonal c/4, by Tim Coe.
+#C c/5: Spiders by David Bell, pushing pre-pulsars in various forms.
+#C c/6: "Dragon", by Paul Tooke, April 2000.
+#C From Alan Hensel's "lifebc" pattern collection.
+x = 194, y = 76, rule = B3/S23
+126boo$122boobobboboo24bo12bo$85bo36boo6boo11bo12bo12bo8bo11bo$84b3o
+35bobo4bobo10bobo10bobo10bobo7bo11bo$30b3o3b3o9b3o15b3o14booboo36boobb
+oo11bo3bo10bo12bo7bobo9bobo$19b3o8bobbobobbo8bo3bo13bo3bo53boobooboo
+11b3o11bo12bo$10b3o5bobbo8bo7bo7boo4bo11bo4boo11bobobobobbo33bobbo28bo
+3b4o3bo7bo3bo7bo3bo$b3o5bobbo8bo8bo7bo6bobobooboo3b3o3booboobobo9boo3b
+o3b3o17bo12bo6bo9boo3boo14b4o11bob6ob6obo$obbo8bo4bo3bo9bobobobo6boobo
+4boboob3oboobo4boboo8boo3bo6bo9boob3ob3o10bo6bo7bo3bobo3bo8b4o4b4o6bo
+7bobo7bo$3bo4bo3bo4bo3bo21bo4bo3bo4bobo4bo3bo4bo17bobo9boo4bobbooboo
+20boo3bobo3boo25bo7bobo7bo$3bo8bo8bo12bo20bo5bo27bobo10bobboboo3bobboo
+6b8o5bo5bobo5bo8bo6bo8bo17bo$obo6bobo6bobo12b3o7boo7boo9boo7boo16bobbo
+20bobbo4boo6boo5bobooboboboobo10boobboo10bobooboo3booboobo$33b3o57bo
+12$99bo35bo5bo$98b3o33b3o3b3o$51bo5bo35bo$50b3o3b3o33b3o$$9bo3b3o90boo
+5boo5boo5boo19boo5boo5boo5boo6b3o3bo$6boob5oboo87bo3bo3bobbo3bobbo3bo
+3bo15bo3bo3bobbo3bobbo3bo3bo3boob5oboo$4boboobo5bobo4boo5boo5boo5boo
+19boo5boo5boo5boo17bo3bobob3o5b3obobo3bo15bo3bobob3o5b3obobo3bobbobo5b
+oboobo$3bo3bobo3b5obbo3bo3bobbo3bobbo3bo3bo15bo3bo3bobbo3bobbo3bo3bo
+15bo5boobb3ob3obboo5bo15bo5boobb3ob3obboo5bobb5o3bobo3bo$7b3o5boo3bo3b
+obob3o5b3obobo3bo3b3o9bo3bobob3o5b3obobo3bo15boob3o15b3oboo15boob3o15b
+3oboo3boo5b3o$4bobbob3o8bo5boobb3ob3obboo5bo4bo10bo5boobb3ob3obboo5bo
+15bo25bo15bo25bo8b3obobbo$6bo13boob3o15b3oboo15boob3o15b3oboo16bo3bo
+15bo3bo17bo3bo15bo3bo14bo$20bo25bo15bo25bo17bobbo15bobbo19bobbo15bobbo
+$21bo3bo15bo3bo17bo3bo15bo3bo$22bobbo15bobbo19bobbo15bobbo9$93bo6bo$
+92bobo4bobo$92bobo4bobo$93bo6bo$$92b3o4b3o$92b4obb4o$95bobbo$92b3oboob
+3o$92boo6boo$91boo8boo$$90bo12bo$88bobbo10bobbo$88bobbo10bobbo$$91b3o
+6b3o$91bo10bo$93bo6bo$91b3o6b3o$$94boboobo$95bobbo$91boboobooboobo$91b
+3o6b3o$$91bobo6bobo$91bobo6bobo$89b3ob3obb3ob3o!

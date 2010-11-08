@@ -1,0 +1,21 @@
+#C Pi fuse burning puffer
+#C A line puffer with puff suppressors correctly aligned to produce
+#C just two rows of blocks with exactly the right period to be eaten
+#C by a pi-heptomino repeatedly. But the pi-heptomino can never catch
+#C up. This is an example of a spaceship that grows while traveling.
+#C By Dean Hickerson and Al Hensel, May 1994.
+#C From Alan Hensel's "lifebc" pattern collection.
+x = 21, y = 87, rule = B3/S23
+4bobo$4bobbo5bo$7boo4b4o$9bo5boo$7b4o7bo$6bo4bo3b4o$8bobbo7bo$8bobbo3b
+obb3o$10bo6b3o$4bob4o8bo$4bo3bo4bob3o$7bo5boobbo$5bobo6b3o$14bo$6b3o7b
+o$7boo5bobo$6b3o8bo$14bobo$5bobo8bo$5bobbo5bo$8bo5b3o$6bobbo5b3o$8boo
+5boo$9bobobboo$9boboboo$9bo$6bobboboboo$8boobobboo$6bobbo5boo$9bobobbo
+boo$6bobbobob3obbo$oo4bobbo8bo$oo4bobbobob3obbo$6bobbobobboboo$9bo5boo
+$6bobbobobboo$8booboboo$6bobbo$9boboboo$6bobbobobboo$6bobbo5boo$9bobo
+bboboo$3o3bobbobob3obbo$bbo5boo8bo$3o3bobbobob3obbo$9bobobboboo$6bobbo
+5boo$6bobbobobboo$9boboboo$6bobbo$8booboboo$6bobbobobboo$9bo5boo$6bobb
+obobboboo$oo4bobbobob3obbo$oo4bobbo8bo$6bobbobob3obbo$9bobobboboo$6bo
+bbo5boo$8boobobboo$6bobboboboo$9bo$9boboboo$9bobobboo$8boo5boo$6bobbo
+5b3o$8bo5b3o$5bobbo5bo$5bobo8bo$14bobo$6b3o8bo$7boo5bobo$6b3o7bo$14bo$
+5bobo6b3o$7bo5boobbo$4bo3bo4bob3o$4bob4o8bo$10bo6b3o$8bobbo3bobb3o$8bo
+bbo7bo$6bo4bo3b4o$7b4o7bo$9bo5boo$7boo4b4o$4bobbo5bo$4bobo!

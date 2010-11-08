@@ -1,0 +1,57 @@
+#C original Infinite Glider Hotel
+#C David Bell, 9 October 1992
+#C "InfinityHotel_old" from Alan Hensel's "lifebc" pattern collection.
+x = 566, y = 572, rule = B3/S23
+13boo$13boo6$13b3o$$13bobo$12b5o$11boo3boo$11boo3boo4$bbo6bo$boo6boo$
+3o6b3o$boo6boo$bbo6bo165$301bo$$297bo7bo$291b3obbo8bo$291b3obbo3boo4bo
+$289bobboobbo6bobo$289bobo10boobo$289b3o$280boo18bo$280boo$316bo$314b
+ooboo$$314boo$314bo$316bo3bo$272boo38bo3bo$272boo$306bo$305bobo10bo$
+305bobo7bobo$304bobbo6bo$304bobo8boo$303bo11bobo$264boo37boo10bobo$
+264boo38bo9boboo$313booboo9bo$316b3o$323bo7bo$306bo15bo8bo$272b3o30bob
+o14bo3boo4bo$305bo16bo6bobo$270bo34bo22boobo$269boo3bo30bo$270bobo53bo
+22boo$273b3o28bo$273bo29b3oboo38bo3bo$301boob3o39bo$273boo28bo41bo7bo$
+272boo75bo4bo$273bo70bo4bobobo$272boo32bo37bo8bo$273boo30boboo35boboo
+4bo$283bo20booboboo33b3oboobo$276bo3bobbobobbo19bo36boob3o$276b5oboo4b
+o21boboo4boo12boo$277bobo4bo3bo25boboo8boo4boo$311b4obob3o5boo$284b3o
+28bo$285bo$$370bo$368boobo$324boo41bo$318boo4boo40bobbo3bo$318boo45bo
+9bo$240boo56b3o64boobboo4bo$239boo124boo$241bo21boo31bo70bo5bo$262bobo
+30boo3bo64b3o4bo$252boo7bo13bobo18bobo66boo4bo3boo$252boo7bobbo6boobbo
+bbo20b3o14boo48b4o$261bo8bobo5boo19bo10boo4boo39bobo13bo3bo$262bobo3bo
+3bo3bo3boo4boo22boo45b3o12bo$263boobboob3o5boo6boo11boo57boo11bo7bo$
+270boo3bobbo19boo75bo4bo$275bobo21bo70bo4bobobo$298boo56bo13bo8bo$299b
+oo55bobo11boboo4bo$261bo94b3o11b3oboobo$261bobo38boo51bo15boob3o$238bo
+22boo39boo21bobo27b5o$236bobo85booboo12bo$227bo7bobo86boobo12bobo$226b
+oo6bobbo11boo72bo17bo$225boo4boobbobo11boo73bo18bo$215boo7b3o4boo3bobo
+15bo69bo18boo$215boo8boo4boo5bo14bo87bobbo$226boo25b3o85b3o$227bo107bo
+6bo$239bo94b3o$234b4obbo9b4o26b4o84boo$236bob3o8bo3bo25bo3bo50b3o29boo
+bbo5bo$237bo15bo29bo5b3o39booboo30bobb3o4bo$234bo14bobbo26bobbo6bo43bo
+32bo4bo4bo$237bo52bo76b5o$234bo134boo$$227bo$227boo$226bobo$370boo$
+214boo27bo126boo$213bobo26boo$203boo7bo6boo4bo16bobo$203boo7bobbobbobb
+obbobo26bo$212bo6b3oboboo25bobo$213bobo6booboo14bo8boo3bo9boo84bobo$
+214boo7boboo14b4o5boo3bo9boo83booboo$224bobo15b4o4boo3bo94boobo8boo$
+225bo16bobbo6bobo94bo12boo$242b4o7bo72boo22bo$241b4o80bobo22bo$241bo
+82b3o$324boo$324boo$325bobo$326bo27boo$354boo$$323boo3boo$323boo3boo$$
+319b3o3b3o$319bo5b3o$203boo115bo5bo$203boo113bo$318boo$317bobo3$208bo
+114b3o$208bo114b3o$195boo12bo112bo3bo$195boo8boboo101boo$204booboo102b
+oo8boo3boo$205bobo102bo5$187boo114bo$187boo114boo$302bobo$$290boo31boo
+$289bobo31boo$188boo89boo7bo6boo4bo$187b5o87boo7bobbobbobbobbobo$182bo
+4bo4bo32bo62bo6b3oboboo$182bo4b3obbo30booboo61bobo6booboo10boo$182bo5b
+obboo29b3o65boo7boboo10boo$189boo109bobo$222b3o76bo$216bo6bo$215b3o$
+214bobbo$214boo18bo$215bo18bo$217bo17bo$216bobo12boboo$217bo12booboo$
+199b5o27bobo21boo$182b3oboo15bo51boo$181boboob3o11b3o$180bo4boobo11bob
+o55boo$179bo8bo13bo56boo$179bobobo4bo70bo$178bo4bo75boo$179bo7bo11boo
+57boo$186bo12b3o45boo$181bo3bo13bobo39boo4boo10bo$189b4o48boo14b3o$
+182boo3bo4boo66bobo$186bo4b3o64bo3boo83bo$185bo5bo70bo85bo$192boo152b
+3o$183bo4boobboo64b3o$183bo9bo45boo$185bo3bobbo40boo4boo$191bo41boo$
+187boboo$188bo$$273bo$243bo28b3o$231boo5b3obob4o$225boo4boo8boobo25bo
+3bo4bobo$225boo12boo4boobo21bo4boob5o$208b3oboo36bo19bobbobobbo3bo$
+207boboob3o33booboboo20bo$206bo4boobo35boobo30boo$205bo8bo37bo32boo$
+205bobobo4bo70bo$204bo4bo75boo$205bo7bo41bo28boo$212bo39b3oboo$207bo3b
+o38boob3o29bo$254bo28b3o$208boo22bo53bobo$253bo30bo3boo$227boboo22bo
+34bo$227bobo6bo16bo$226bo4boo3bo14bobo30b3o$227bo8bo15bo$227bo7bo$240b
+3o$231bo9booboo$241boobo9bo38boo$241bobo10boo37boo$241bobo11bo$242boo
+8bobo$244bo6bobbo$241bobo7bobo$240bo10bobo$252bo$285boo$242bo3bo38boo$
+238bo3bo$244bo$243boo$$240booboo$242bo$277boo$258bo18boo$267b3o$253bob
+oo10bobo$253bobo6bobboobbo$252bo4boo3bobb3o$253bo8bobb3o$253bo7bo$$
+257bo144$558bo4bo$556boob4oboo$552bo5bo4bo$551bo$551bo3$549boo3boo$
+550b5o$551b3o$552bo8$552boo$552boo!

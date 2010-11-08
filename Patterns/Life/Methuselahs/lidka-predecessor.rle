@@ -1,0 +1,7 @@
+#C 2-gen predecessor of Lidka. Runs for 29055 gens.
+#C Initial pop = 13. Final pop = 1625/1623. Gliders = 28.
+#C Found by David Bell, 15 July 2005
+#C Lidka found by Andrzej Okrasinski, 13 July 2005
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+x = 9, y = 15, rule = B3/S23
+bo$obo$bo8$8bo$6bobo$5boobo$$4b3o!

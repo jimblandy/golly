@@ -1,0 +1,27 @@
+#C p165 MWSS gun based on a three-gliders -> MWSS+glider+LoM reaction
+#C  by Dietrich Leithner.  David Bell and Jason Summers, 5/2002.
+#C From Jason Summers' "jslife" pattern collection.
+x = 178, y = 218, rule = B3/S23
+125b3o$125bobo$125b3o6bo$125b3o5b3o$125b3o$125b3o$125bobo5b3o$125b3o$
+133bobo$133bobo$$133b3o$111boo6boo$110bobbo4bobbo$110bobbo4bobbo11b3o$
+110bobbo4bobbo12bo$111boo6boo$$137bobboo4boobbo$136bo3b3obb3o3bo$137bo
+bboo4boobbo7$139bo$139b3o4bobobbobo$138bob4obobbobbobboboo$120bobo23bo
+bobbobo$120boo$121bo$139b3o$139b3o$44b3o93bo$45bo94bo$45bo94bo$44b3o
+92bobo$$44b3o$44b3o92bobo$140bo$44b3o93bo$45bo94bo$45bo93b3o$44b3o92b
+3o$$51boo6boo$49bo4bobbo4bo$49bo4bobbo4bo$49bo4bobbo4bo4bo$51boo6boo5b
+3o8bo$65bobobo6b3o$65bobobo5bobobo$66b3o6bobobo$67bo8b3o$77bo$$67bo$
+66b3o8bo$17bo47bobobo6b3o$16b3o46bobobo5bobobo$15bobobo46b3o6bobobo$
+15bobobo47bo8b3o$16b3o12bo45bo$17bo11boo$30boo$$17bo79b3o$16b3o80bo$
+15bobobo59bo18bo$15bobobo59bobo$16b3o49bo10boo$17bo49boo$67bobo$78b3o$
+bbobbo4bobbo64bo$3obb6obb3o63bo$bbobbo4bobbo$$81boo$82boo$81bo$$48bo$
+46boo$47boo$58bobobbobo$54boobobbobbobboboo$58bobobbobo$$22b3o52b3o$$
+21bo3bo50bo3bo$21bo3bo50bo3bo$$22b3o52b3o$88b3o$88b3o$22b3o52b3o9bo$
+89bo$21bo3bo50bo3bo8bo$21bo3bo17bobo30bo3bo7bobo$44boo$22b3o19bo32b3o$
+88bobo$89bo$8bobboboobobbo69bo$8b4oboob4o69bo$8bobboboobobbo68b3o$37b
+oo6boo41b3o$35bo4bobbo4bo$35bo4bobbo4bo$35bo4bobbo4bo$37boo6boo$$51b3o
+66boo$52bo66boo$52bo68bo$51b3o$$51b3o$38bobo10b3o$39boo$39bo11b3o$52bo
+$52bo$51b3o26$159bo$159b3o4bobobbobo$158bob4obobbobbobboboo$166bobobbo
+bo3$159b3o$159b3o$160bo$160bo$81bo78bo$79bobo77bobo$80boo$$159bobo$
+160bo$160bo$160bo$159b3o$159b3o23$117b3o$119bo$118bo$100boo6boo$99bobb
+o4bobbo$99bobbo4bobbo$99bobbo4bobbo$100boo6boo$114b3o$$113bo3bo$113bo
+3bo$$114b3o3$114b3o$$113bo3bo$113bo3bo$$114b3o!

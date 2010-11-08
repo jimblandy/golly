@@ -1,0 +1,12 @@
+#Life 1.05
+#D Rabbits
+#D Another small but vigorously growing population --
+#D 9 cells in a 7x3 rectangle; runs for 17331 generations.
+#D (If you look closely you can see a male and female rabbit!)
+#D Gens 4760-5165 include a rather rare 16-bit still-life
+#D called a "scorpion". Andrew Trevorrow discovered Rabbits 
+#D in 1986 using a Methuselah search program.
+#P
+*...***
+***..*
+.*

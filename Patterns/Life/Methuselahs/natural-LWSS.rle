@@ -1,0 +1,7 @@
+#C Runs for 23334 gens.  Initial pop = 12.  Final pops = 2898/2895
+#C May be the longest-lived 12-cell pattern within a 12x12 square.
+#C Emits a LWSS in gen 13811.
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+#C Found by Tomas G. Rokicki, some time before Feb 21, 2005.
+x = 8, y = 5, rule = B3/S23
+4b3o$3bo$o5bo$b2o2bobo$bobo!

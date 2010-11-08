@@ -1,0 +1,27 @@
+#C "Achim's p11" oscillator synthesized from 96 gliders
+#C Mark Niemiec, 2/2000; pattern from Jason Summers' "jslife" archive
+x = 266, y = 266, rule = B3/S23
+245bobo$8bo236boo$9boo235bo$8boo$233bo$231boo$232boo15bo$14bo232boo$
+15boo231boo12bobo$14boo246boo$230bo32bo$229bo6bo$13bo13bo201b3o4bobo$
+14boo12boo206boo13bobo$13boo12boo222boo3bobo$252bo3boo$6bobo248bo$7boo
+$o6bo$boo$oo41bo$41bobo$42boo$48bo$49bo$47b3o$$12bo238bobo$13bo237boo$
+11b3o238bo3$4bobo$5boo$5bo6bo215bo$10bobo193bo19boo$11boo191boo21boo$
+34bobo168boo$35boo$35bo$45bo$43bobo198bo$44boo197bo$224bo18b3o$59bo
+163bo$60boo161b3o$59boo$240bo$240bobo$240boo10$35bobo181bobo$36boo181b
+oo$36bo183bo$183bobo$183boo$50bo9bo123bo$48bobo10boo$49boo9boo16$72bo$
+73boo4bo$72boo6bo$78b3o13$182bo$182bobo$182boo10$93bo$91bobo$92boo3$
+179bo$179bobo$179boo$154bo$125bobo25bo6bo$126boo25b3obboo$119bo6bo32b
+oo$120bo$118b3obbo$124boo$123boo6$137boo$137bobo$137bo$$129boo$128bobo
+$130bo4$150b3o$126boo22bo$127boo22bo$126bo4$123bo$123boo$122bobo$152b
+oo$152bobo$152bo4$112b3o$114bo33bo$113bo33boo6boo$147bobo5bobo$155bo4$
+109b3o$111bo$110bo35boo$146bobo35bo$146bo36boo$183bobo$$70bo59bo$70boo
+58boo$69bobo22b3o32bobo$77bo18bo$77boo16bo$76bobo$168boo$168bobo$168bo
+3$76boo$75bobo$77bo16boo$95boo$94bo78boo$172boo$174bo8$56bo$56boo$55bo
+bo5$45bo183bo$45boo181boo$44bobo181bobo$$64boo$65boo$64bo$$178boo$178b
+obo$178bo$$24boo$23bobo$25bo$205boo$40b3o161boo$42bo163bo$20b3o18bo$
+22bo197boo$21bo198bobo$220bo$230bo$229boo$59boo168bobo$37boo21boo191b
+oo$38boo19bo193bobo$37bo215bo6bo$259boo$259bobo3$13bo238b3o$13boo237bo
+$12bobo238bo$$216b3o$216bo$217bo$222boo$222bobo$222bo41boo$263boo$258b
+o6bo$257boo$8bo248bobo$8boo3bo$7bobo3boo222boo12boo$12bobo13boo206boo
+12boo$27bobo4b3o201bo13bo$29bo6bo$bbo32bo$bboo246boo$bobo12boo231boo$
+17boo232bo$16bo15boo$33boo$32bo$256boo$19bo235boo$19boo236bo$18bobo!

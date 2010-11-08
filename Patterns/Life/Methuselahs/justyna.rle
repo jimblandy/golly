@@ -1,0 +1,6 @@
+#C Justyna.
+#C Runs for 26458 gens. Initial pop = 20. Final pop = 3548/3546.
+#C Gliders = 43. Found by Andrew Okrasinski, 30 May 2004
+#C See also http://www.math.ucdavis.edu/~dean/RLE/methuselahs.html
+x = 22, y = 17, rule = B3/S23
+17bo$16bo2bo$17b3o$17bo2bo2$2o16bo$bo16bo$18bo8$19b3o$11b3o!

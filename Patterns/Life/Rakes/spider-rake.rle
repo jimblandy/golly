@@ -1,0 +1,57 @@
+#C p360 Spider Rake
+#C Nine gliders travel in a figure-8 loop, trapped by c/5 spiders,
+#C  liberating one glider each time. The gliders in the loop collide
+#C  with the prepulsar part of a c/5 spider combo to form a Herschel
+#C  traveling downwards. The Herschel is guided by other spiders,
+#C  producing a glider with the correct parity to form a large period
+#C  spaceship - in this case, p3240, which can be divided by 9 to form
+#C  a p360 spaceship. The Herschel on the left side is then killed,
+#C  but the Herschel on the right side is pushed a little further to
+#C  liberate one more glider before it is killed.
+#C On the far right side, another c/5 spider-prepulsar spaceship
+#C  reflects the forward gliders, making this a backward rake.
+#C By David Bell, June 3, 1998
+#C From Alan Hensel's "lifebc" pattern collection.
+x = 500, y = 127, rule = B3/S23
+34bo5bo346bo5bo$33bobo3bobo344bobo3bobo$32bo3bobo3bo342bo3bobo3bo$33bo
+bo3bobo344bobo3bobo$34bo5bo346bo5bo$5boo5boo5boo5boo19boo5boo5boo5boo
+288boo5boo5boo5boo19boo5boo5boo5boo$3bo3bo3bobbo3bobbo3bo3bo15bo3bo3bo
+bbo3bobbo3bo3bo284bo3bo3bobbo3bobbo3bo3bo15bo3bo3bobbo3bobbo3bo3bo$3bo
+3bobob3o5b3obobo3bo9boo4bo3bobob3o5b3obobo3bo284bo3bobob3o5b3obobo3bo
+4boo9bo3bobob3o5b3obobo3bo$3bo5boobb3ob3obboo5bo8bobbo3bo5boobb3ob3obb
+oo5bo284bo5boobb3ob3obboo5bo3bobbo8bo5boobb3ob3obboo5bo$3boob3o15b3ob
+oo9boo4boob3o15b3oboo284boob3o15b3oboo4boo9boob3o15b3oboo$3bo25bo15bo
+25bo284bo25bo15bo25bo$4bo3bo15bo3bo17bo3bo15bo3bo286bo3bo15bo3bo17bo3b
+o15bo3bo$5bobbo15bobbo19bobbo15bobbo288bobbo15bobbo19bobbo15bobbo3$47b
+oo$47bobo$47bo7$334boo$333bobo$335bo4$55bo7bo300bo7bo$4bo5boo5boo5bo
+24booboboboo3booboboboo288booboboboo3booboboboo24bo5boo5boo5bo$bbobboo
+boobbo3bobbooboobbo19b3obob3o9b3obob3o282b3obob3o9b3obob3o19bobbooboo
+bbo3bobbooboobbo$3o4bobo3bobo3bobo4b3o17bo3bobo5bobo5bobo3bo64boo216bo
+3bobo5bobo5bobo3bo17b3o4bobo3bobo3bobo4b3o$oobbobb3oboo3boob3obbobboo
+21boo6bobo6boo68bobo219boo6bobo6boo21boobbobb3oboo3boob3obbobboo$3obb
+3o4bo3bo4b3obb3o18boo9bobo9boo65bo218boo9bobo9boo18b3obb3o4bo3bo4b3obb
+3o$bobobbo15bobbobo19booboo15booboo284booboo15booboo19bobobbo15bobbobo
+$bbo23bo24bo15bo292bo15bo24bo23bo5$244boo$243bobo$245bo6$389bo$47bo5b
+oo5boo5bo159boo131bo5boo5boo5bo8bobo$45bobbooboobbo3bobbooboobbo157bob
+o128bobbooboobbo3bobbooboobbo6b3o$43b3o4bobo3bobo3bobo4b3o155bo128b3o
+4bobo3bobo3bobo4b3o$43boobbobb3oboo3boob3obbobboo284boobbobb3oboo3boob
+3obbobboo$43b3obb3o4bo3bo4b3obb3o284b3obb3o4bo3bo4b3obb3o$44bobobbo15b
+obbobo286bobobbo15bobbobo$45bo23bo288bo23bo3$154boo$153bobo$155bo7$
+317boo$317bobo$317bo7$64boo$63bobo394bo$65bo393bobo$466bo$459b3o3bobo
+$$11boo5boo445b3o$3b4obobobo5bobobob4o405bo3b3o5b3o3bo$bb3oboboboobo3b
+oboobobob3o401boob5oboo3boob5oboo$bbo3bobo13bobo3bo17bo5boo5boo5bo361b
+oboobo5bobobobo5boboobo18bo3b3o5b3o3bo$3bob3o5booboo5b3obo16bobbooboo
+bbo3bobbooboobbo358bo3bobo3b5ob5o3bobo3bo14boob5oboo3boob5oboo$3boo21b
+oo14b3o4bobo3bobo3bobo4b3o360b3o5boo3boo5b3o16boboobo5bobobobo5boboobo
+$3b5o15b5o14boobbobb3oboo3boob3obbobboo357bobbob3o13b3obobbo12bo3bobo
+3b5ob5o3bobo3bo$6boo15boo17b3obb3o4bo3bo4b3obb3o339bo7bo11bo23bo18b3o
+5boo3boo5b3o$43bobobbo15bobbobo334booboboboo3booboboboo45bobbob3o13b3o
+bobbo$44bo23bo332b3obob3o9b3obob3o44bo23bo$356boo5boo5boo5boo22bo3bobo
+5bobo5bobo3bo$354bo3bo3bobbo3bobbo3bo3bo24boo6bobo6boo$354bo3bobob3o5b
+3obobo3bo21boo9bobo9boo$354bo5boobb3ob3obboo5bo21booboo15booboo$354boo
+b3o15b3oboo25bo15bo$354bo25bo$355bo3bo15bo3bo$356bobbo15bobbo11$360boo
+5boo5boo5boo$358bo3bo3bobbo3bobbo3bo3bo$358bo3bobob3o5b3obobo3bo$358bo
+5boobb3ob3obboo5bo$358boob3o15b3oboo$358bo25bo$359bo3bo15bo3bo$360bobb
+o15bobbo28bo7bo$405booboboboo3booboboboo$402b3obob3o9b3obob3o$402bo3bo
+bo5bobo5bobo3bo$406boo6bobo6boo$403boo9bobo9boo$403booboo15booboo$407b
+o15bo!

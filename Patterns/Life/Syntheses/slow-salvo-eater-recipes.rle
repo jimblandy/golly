@@ -1,0 +1,26 @@
+#C Four results from Paul Chapman's 'Glue' search program:
+#C asynchronous slow-salvo glider constructions of four orientations
+#C of a fishhook eater. [A mirror image provides recipes for the other
+#C four orientations.] Salvos contain 13, 13, 15 and 18 gliders.
+#C Paul Chapman, 30 December 2003
+x = 1361, y = 1434, rule = B3/S23
+150bo$151bo$149b3o11$189bo$190bo$188b3o53$234bo$235bo$233b3o19$1359bo$
+1358bo$1358b3o20$1320bo$277bo1041bo$278bo1040b3o$276b3o37$1279bo$1278b
+o$1278b3o$319bo$317bobo$318boo43$373bo$371bobo$372boo9$1238bo$1237bo$
+1237b3o21$1197bo$1196bo$1196b3o7$418bo$416bobo$417boo41$458bo$456bobo$
+457boo696bo$1154bo$1154b3o37$499bo$497bobo$498boo$1112bo$1111bo$1111b
+3o38$534bo$532bobo$533boo4$1073bo$1072bo$1072b3o26$1034bo$1034bobo$
+1034boo8$572bo$570bobo$571boo34$979bo$979bobo$979boo9$632bo$630bobo$
+631boo35$928bo$928bobo$928boo9$676bo$674bobo$675boo30$892bo$892bobo$
+892boo9$712bo$710bobo$711boo35$846bo$846bobo$846boo9$758bo$756bobo$
+757boo24$814boo$814boo10$789boo$789boo9$809boo$809boo$786boo$786boo31$
+749b3o$751bo$750bo90boo$841bobo$841bo42$701b3o$703bo$702bo$$882boo$
+882bobo$882bo30$658b3o$660bo$659bo12$925boo$925bobo$925bo35$610b3o$
+612bo$611bo7$980boo$980bobo$980bo27$564b3o455b3o$566bo455bo$565bo457bo
+37$1050boo$1050bobo$1050bo14$516b3o$518bo$517bo27$1089b3o$1089bo$1090b
+o11$483boo$482bobo$484bo25$1129b3o$1129bo$1130bo16$434boo$433bobo$435b
+o13$1169b3o$1169bo$1170bo27$390boo$389bobo$391bo25$1213b3o$1213bo$
+1214bo15$336boo$335bobo$337bo6$1254b3o$1254bo$1255bo30$1299b3o$1299bo$
+1300bo$$310boo$309bobo$311bo43$272boo$271bobo$273bo$1338b3o$1338bo$
+1339bo40$228boo$227bobo$229bo43$163boo$162bobo$164bo42$118boo$117bobo$
+119bo41$74boo$73bobo$75bo40$47boo$46bobo$48bo40$boo$obo$bbo!

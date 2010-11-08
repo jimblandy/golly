@@ -1,0 +1,91 @@
+#C A period p spaceship which displaces itself (m,n) during its
+#C  period, where m >= n, is said to be of type (m,n)/p.  It can be
+#C  shown that p >= 2m+2n. The number of possible types of spaceship
+#C  of period p is therefore [k(k+4)/4], where k = [p/2].
+#C  (Here, [x] denotes the floor of x, i.e., the greatest integer
+#C  not exceeding x.) Note, however, that no-one has ever proved
+#C  that all these "possible" types really are possible, so the
+#C  above formula may only be an upper bound.
+#C The following table shows the mininum number of cells for
+#C  spaceships of all types with period < 9.  Those marked [*] are
+#C  known to be best possible.
+#C
+#C  (1,0)/2  64 cells                Dean Hickerson       28 Jul 1989
+#C  (1,0)/3  25 cells [*]            Dean Hickerson          Aug 1989
+#C  (1,0)/4  46 cells                Tim Coe                 May 1996
+#C  (1,1)/4  5 cells [*]             Richard Guy                 1970
+#C  (2,0)/4  9 cells [*]             John Conway                 1970
+#C  (1,0)/5  58 cells                David Bell           14 Apr 1997
+#C  (1,1)/5  67 cells                Nicolay Beluchenko   11 Jul 2006
+#C  (2,0)/5  30 cells                Paul Tooke            7 Dec 2000
+#C  (1,0)/6  102 cells               Paul Tooke           23 Apr 2000
+#C  (1,1)/6  170 cells               Nicolay Beluchenko   18 Sep 2005
+#C  (2,0)/6  72 cells                Jason Summers        22 Oct 2000
+#C  (2,1)/6  (no known example)
+#C  (3,0)/6  97 cells                Hartmut Holzwart            1995
+#C  (1,0)/7  (no known example)
+#C  (1,1)/7  (no known example)
+#C  (2,0)/7  36 cells                David Eppstein       12 Jan 2000
+#C  (2,1)/7  (no known example)
+#C  (3,0)/7  (no known example)
+#C  (1,0)/8  (no known example)
+#C  (1,1)/8  (no known example)
+#C  (2,0)/8  466 cells               Jason Summers         4 Oct 2000
+#C  (2,1)/8  (no known example)
+#C  (2,2)/8  117 cells               Jason Summers         2 Dec 2000
+#C  (3,0)/8  (no known example)
+#C  (3,1)/8  (no known example)
+#C  (4,0)/8  31 cells                Jason Summers        29 Oct 2000
+#C
+#C Updated from types.rle in Stephen Silver's 12 Jan 2004 'ships.zip'.
+x = 312, y = 222, rule = B3/S23
+242b5o$242bo4bo$242bo$243bo4bo$245bo$246b2o2bo$244bo2bo3bo$242bo7bo$
+241bo5bo2bo$241bo3b2o$241b4o2b2o31$139bobo$138bo2bo$137b2o$136bo4bo$
+135b5obo$132b2o$131bo3b3o$130bo3bo$130bo5bo$130b3o3bo$136b2obo$130b3o
+6bo$129bo$128bo3bo$128bo5bo$127bob6o$126b3o$127bob6o$128bo5bo$128bo3bo
+$129bo$130b3o6bo$136b2obo$130b3o3bo$130bo5bo$130bo3bo$131bo3b3o$132b2o
+$135b5obo$136bo4bo$137b2o$138bo2bo$139bobo21$252bo$131bo118b2ob2obo$
+130bobo111bobobobobo3bo6b3o$129b2o110b2obobo2b2obo5bo4b2o15bo18b2o$
+130bo110bo3bo8b3obo2bo4bo3bo9bo4b2o11bo$129bobo38bo59bobo7bobob3o9bobo
+2bo2bobobo2bo7bo4bo12b2o3bo$129bo38b2ob2o45bo5b2o5bo9b2o3bo9bo2bo3bo2b
+obo2bo4b2o2b2o2bobo3bob2o3b2o$92bo35bo41bo2bobo32bobo6bo2b2o2bob3obobo
+8b2obob2o8bo2bo10bo2b2o2b5o3b5o4b2o2bo4bob2o$89b2ob2o34bobo2b2o40bo32b
+o4bo4bo3bobob2o3b2o7bobo2bo12bo11bobobobo4bobo3bobo5bo6bobo$88bobobo
+35bo3bo7b2o33bobo30bob8o6bo4b2obo8bo2b2o25bo6b3obobo6b2ob2o3b3ob3obo2b
+2o$87b2o3bo36b3o4b2o2bo34bo2bo32bo5bo3b2o2bo4bobo8b2o29b6o2bo3bo2bo13b
+o2b2ob2obo$88bobo2bo37b2obobobo2bo31b2o3bo27b2o14bob3o5b2o44b3o6bo2bo
+9bo7b2o$89b2obo39b2o3b4o32b2o28bo2b2o7b2o16bo7b2o29b6o2bo3bo2bo13bo2b
+2ob2obo$58bo2bo111b2o28bo2bo16b5o2bo2bo7bo2b2o25bo6b3obobo6b2ob2o3b3ob
+3obo2b2o$57bo35b2o37b2o3b4o32b2o3bo23bo20bo6bo2bo6bobo2bo12bo11bobobob
+o4bobo3bobo5bo6bobo$57bo3bo30bob3o34b2obobobo2bo33bo2bo24bo2bo16b5o2bo
+2bo7b2obob2o8bo2bo10bo2b2o2b5o3b5o4b2o2bo4bob2o$57b4o30bo3b3o31b3o4b2o
+2bo34bobo25bo2b2o7b2o16bo7b2o3bo9bo2bo3bo2bobo2bo4b2o2b2o2bobo3bob2o3b
+2o$92bobo33bo3bo7b2o33bo30b2o14bob3o5b2o6bobob3o9bobo2bo2bobobo2bo7bo
+4bo12b2o3bo$93bo34bobo2b2o35bo2bobo35bo5bo3b2o2bo4bobo8bo3bo8b3obo2bo
+4bo3bo9bo4b2o11bo$128bo39b2ob2o35bob8o6bo4b2obo8b2obobo2b2obo5bo4b2o
+15bo18b2o$129bo40bo37bo4bo4bo3bobob2o3b2o11bobobobobo3bo6b3o$129bobo
+76bobo6bo2b2o2bob3obobo17b2ob2obo$130bo87bo5b2o5bo20bo$129b2o99bobo$
+130bobo$131bo15$5bobo$4bo2bo$3b2o86b2o$2bo88bo2b2o$b4o86bo2b2o$o4bo84b
+o$o2bo55b3o28b4obo38bo$o2bo53b2o3bo30bob2o37b2o14bo$bo28bo24bo34b3o39b
+ob2o5bobo4b2o$2b4obo21bobo21b2o3bo3bo28bo35bo3bo3b3o2bo4bo$3bo3bo21bob
+o23bo2bo3bo27b2o30b2o3bo2bo6bobo5b3o2bo$4bo24bo27b2o30bo32b2o3bob2o6bo
+3bobobo$4bobo51bo3bo27bo31b2o3bo10bobo7b2o$28b2o28bo3bo27bo36b2o14bo6b
+o$3b3o23bobo26b3o31b3o34bo12bobo$3b2o23bobo98bo12bobo$3b3o22b3o27b3o
+31b3o32b2o14bo6bo$58bo3bo27bo31b2o3bo10bobo7b2o$4bobo22bobo26bo3bo27bo
+31b2o3bob2o6bo3bobobo$4bo24b2o26b2o30bo32b2o3bo2bo6bobo5b3o2bo$3bo3bo
+22bo24bo2bo3bo27b2o35bo3bo3b3o2bo4bo$2b4obo22bobo20b2o3bo3bo28bo40bob
+2o5bobo4b2o$bo28bobo22bo34b3o41b2o14bo$o2bo27bo25b2o3bo30bob2o37bo$o2b
+o55b3o28b4obo$o4bo84bo$b4o86bo2b2o$2bo88bo2b2o$3b2o86b2o$4bo2bo$5bobo
+24$143bobo$143bobo$142bo2bo$143bo$143b2o$145bo97bo$243b2o$103b2o38b2o$
+102bo36bo3b2ob2o96b3o$103bo34b2o2bo101b3o$103b3o33bo2b5o4b2o108bo$108b
+o28bob2ob2o3bo3b2o107bo$96bo2bo2bo5bo27b2ob2o5bo4b2ob3o88b3o14bo$97b5o
+5bo28b2obo4bo3bo5b2o90b2o8b3o3bo$96bo3bobo2bo28b2o2bo7bo2bo91bob3o2bo
+5bo6bo$96bob2o2bob2o30bo5b3o3bo92bo3bob2o9b2o$59bo33bo2b3o2b2o34b2o2bo
+b4o94b2ob2ob2o7bo$57b2o33b5o33b2o3bobobo3bob2o99b3o5bo3bo$58b2o31bo37b
+o2bo2bo7bo2bo100b2o6bo2bo$90b2ob2o39b2obobo3bo104bo6b3o$90b2o2bo33bo4b
+2o2bo2b3o104b2o$87b2o2bo6bo26b5o3bo2bo108bobo$88bob2o4b2o28bo3b3o3b2o
+105bo$89bo5bo29b2ob3o3bob2o104bo2bo$90b2o3bo30b2o2bo3b3o2bo101bo2bo$
+91bo3b2o27bo11b2obo104bo8b7o$92b3o28b5o2bobo2bobo103bo10b2ob4ob2o$123b
+o3b2obo4b2o104b3o12bo3b2o2b2o$123bo4bobo119bobo4b3obo2b2o$125bo4bobo3b
+o111b2o7bobo4b2obo$122b4o4bo5bo109bo4bo7bo7b2o$122b2o8b2obo110bo3bo6bo
+$123bobo3bob2o113b2obo7b3o$125b2ob3o!
