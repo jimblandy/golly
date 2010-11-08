@@ -1,0 +1,30 @@
+#MCell 4.00
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 60x60
+#SPEED 100
+#WRAP 0
+#CCOLORS 4
+#PALETTE 8 colors
+#D The following is a negative going edge-triggered flip flop.
+#D 
+#D Using this circuit, you can construct counters, dividers and
+#D things- though the Transit time does pose a bit of a problem...
+#D 
+#D Transit: 21 (measured from entry of entry of a 'missing' electron)
+#D IBI: 5
+#D Size: 16x13
+#D 
+#D The right pattern is a flip flop that toggles with every electron sent in.
+#D 
+#D Transit: 14
+#D IBI: 5
+#D Size: 11x13
+#D 
+#D Ian Woollard, March 1990
+#L ..C18.C$..C18.C$..C18.C$..C18.C$..C3.3C12.C3.3C$..C.3C.CC11.C.3C.CC$3.
+#L C..C.C.C11.C..C.C.C$..3C.3C.C10.3C.3C.C$..C.C..C..C10.C.C..C..C$.CC.3C
+#L ..C10.CC.3C..C$C.3C3.C10.C.3C3.C$C6.C11.C6.C$.6C13.6C$6.C.C16.A$7.3C$
+#L 4.3C.C.C$3.C6.C$4.7C$10.A

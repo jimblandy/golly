@@ -1,0 +1,9 @@
+#C One of Paterson's worms 
+#C Implemented in Golly by Dean Hickerson, 11/30/2008
+#C Pattern #055
+#C Sven Kahrkling's notation 1040512
+#C Gardner's notation 1a2c3cbaa4b
+#C Finishes after 569804 steps (1139608 gens in Golly), almost filling
+#C a regular hexagon.
+x = 1, y = 1, rule = Worm-1040512
+A!

@@ -1,0 +1,20 @@
+# Gates in Codd's CA
+#
+# Signals can be stopped by the use of cells in state 3 embedded in 
+# the sheath to the right of a signal (relative to its direction of
+# travel). A gate to the signal's left allows the signal through.
+#
+# The wire below shows two gate cells on either side of the same point
+# on a wire. This configuration has the effect of transforming signals
+# into 7-0, whatever their initial state. See coders-demo.rle for coders
+# that work the other way round.
+#
+# Gates can be constructed by injection of a 7-0 signal into the side
+# of the wire to be gated. In the pattern at the bottom, a 7-0 signal is
+# diverted to gate the wire. Only one 7-0 signal ever makes it to the
+# dead end, the others are blocked.
+#
+x = 50, y = 27, rule = Codd
+25BC24B$BA.D2A.E2A.F2A.G33AB$36BC13B4$30BC19B$BA.D2A.E2A.F2A.G33AB$
+30BC19B6$7.17B$6.B17AB$6.BA15BAB$6.BGB13.BAB$6.B.B13.BAB$6.BA15BA20B$
+6.B36AB$7.26BA10B$28.B3.BAB$27.BAB2.BAB$27.BA4BAB$27.B6AB$28.6B!

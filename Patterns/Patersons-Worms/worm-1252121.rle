@@ -1,0 +1,54 @@
+#C One of Paterson's worms
+#C Implemented in Golly by Dean Hickerson, 11/30/2008
+#C Pattern #155
+#C Sven Kahrkling's notation 1252121
+#C Gardner's notation 1a2d3cbcc4b
+#C
+#C This almost certainly runs forever, repeatedly forming almost solid
+#C hexagons at certain times, as described below.  (Here all times and
+#C distances are in terms of the Golly implementation.  Divide by 2 to get
+#C measurements in terms of the original worm.)
+#C
+#C The worm forms a hexagon, whose horizontal sides have length 2^(3n+2)-2,
+#C completing the boundary at a point P in the middle of one side, in
+#C generation a(n).  Then it wanders around inside for a while and leaves at
+#C the corner that's 210 degrees clockwise from P, in generation b(n).
+#C
+#C Next it builds a new hexagon, whose horizontal sides have length
+#C 2^(3n+3)-2, completing the boundary in the middle of the side that's 120
+#C degrees clockwise from P, in generation c(n).  Again it wanders inside,
+#C this time emerging in the middle of the side that's 60 degrees clockwise
+#C from P, in generation d(n).
+#C
+#C Next it builds a hexagon, with horizontal sides of length 2^(3n+5)-2,
+#C completing the boundary in the middle of the side that's 60 degrees
+#C clockwise from P, in generation a(n+1).  Then the process repeats.
+#C
+#C The uneaten parts of the hexagons have a fractal structure, which can
+#C be viewed by changing the rule to "worm-complement" and running for
+#C one generation.
+#C
+#C Here are the formulas for a(n), ..., d(n) (for n>=1):
+#C
+#C a(n) = 9 2^(6n+3) - 261 n 2^(3n-1) - (197 2^(3n+1) + 5)/7
+#C 
+#C b(n) = a(n) + (45n + 13) 2^(3n-1)
+#C      = 9 2^(6n+3) - 27 n 2^(3n+2) - (697 2^(3n-1) + 5)/7
+#C 
+#C c(n) = 9 2^(6n+5) - 9 n 2^(3n+5) - (2769 2^(3n-1) + 5)/7
+#C 
+#C d(n) = c(n) + (27n - 2) 2^(3n+1) + 12
+#C      = 9 2^(6n+5) - 117 n 2^(3n+1) - (2825 2^(3n-1) - 79)/7
+#C
+#C (The hexagon at time a(1) doesn't quite fit the pattern.)
+#C
+#C Here are the first few values:
+#C
+#C n       a(n)       b(n)      c(n)        d(n)
+#C 1       3113       3345     14545       14957
+#C 2     274605     277901   1130125     1136793
+#C 3   18645101   18682989  74953837    75034745
+#C 4 1205590893 1205986157 4826309485 4827177849
+#C
+x = 1, y = 1, rule = Worm-1252121
+A!

@@ -1,0 +1,27 @@
+#CXRLE Pos=-284,-2
+# 
+# Construction arm demo
+#
+# In this demo, a construction arm moves into position and writes a cell
+# before retracting back to its starting position. Hit 'm8' to see the 
+# target area more closely, and set the demo running at a slow speed.
+#
+# Three 'advance' signals (76) arrive first, moving the construction arm
+# forwards three cells. The next signal (4456) turns the construction 
+# arm left. It then advances three more cells before turning right (5546)
+# and advancing three more cells. A 'mark' signal is sent (764576) to
+# write a cell (state 1) and the construction arm then retracts. The 
+# correct sequence of retract (4566), retract-left (5666) and 
+# retract-right (4666) is needed to retrace the path of the arm.
+#
+# By scanning across an empty area, the construction arm can write any 
+# pattern of cells in state 1. The pattern can then be sheathed and 
+# triggered, to bring it to life. See sheathing-demo.rle and 
+# golly-constructor.rle.gz for examples.
+#
+x = 289, y = 3, rule = Codd
+288B$A.F2A.F2A.E2A.D2A.F2A.F2A.E2A.D2A.F2A.F2A.E2A.D2A.F2A.F2A.F2A.E
+2A.F2A.F2A.E2A.D2A.F2A.F2A.E2A.D2A.F2A.F2A.E2A.D2A.F2A.F2A.F2A.D2A.F
+2A.F2A.E2A.D2A.F2A.F2A.E2A.D2A.F2A.F2A.E2A.D2A.F2A.G2A.E2A.D2A.F2A.G
+2A.FA.G2A.FA.G2A.FA.G2A.FA.D2A.E2A.E2A.F2A.G2A.FA.G2A.FA.GA.FA.EA.DA.
+DA.FA.GA.FA.GA.FA.GAB$288B!

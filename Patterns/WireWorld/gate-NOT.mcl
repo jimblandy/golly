@@ -1,0 +1,18 @@
+#MCell 4.00
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 60x60
+#SPEED 100
+#WRAP 0
+#CCOLORS 4
+#PALETTE 8 colors
+#D NOT  (clocked, has to be)
+#D 
+#D A correctly timed signal from left (shown) will cancel the signal that
+#D would otherwise leave at right.
+#D 
+#D Harold V. McIntosh
+#L 3CBACCBACCBACCBAC$18.C$17.3C$18.C$17.C.11C$16.C$15.B.C$16.A7$6CBA6CBA
+#L CC$18.C$17.3C$18.C$17.C.11C$15.CC$14.C..C$14.C..C$15.BA

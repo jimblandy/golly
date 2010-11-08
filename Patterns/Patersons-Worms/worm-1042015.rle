@@ -1,0 +1,10 @@
+#C One of Paterson's worms 
+#C Implemented in Golly by Dean Hickerson, 11/30/2008
+#C Pattern #061
+#C Sven Kahrkling's notation 1042015
+#C Gardner's notation 1a2c3caca4a
+#C Final outcome unknown.  According to Tomas Rokicki, it doesn't finish
+#C within 1.3*10^18 steps.
+#C Very chaotic.
+x = 1, y = 1, rule = Worm-1042015
+A!

@@ -1,0 +1,82 @@
+#MCell 4.20
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 400x200
+#WRAP 0
+#CCOLORS 4
+#D Design by Nyles Heise (nylesheise@yahoo.com).  Previous multipliers
+#D by Nick Gardner and Karl Scherer.
+#D
+#D This is 32-bit by 32-bit binary muliplier producing a 64 bit product.
+#D Two versions are given.  The compact version is crammed into the
+#D minimum area I could get to (you may be able to do better).  The
+#D expanded version has the component separated and labeled, to give a
+#D better view of what's going on.
+#D
+#D A is the multiplicand, 252 cells.  B is the multiplier, 124 cells.
+#D C is the product, 256 cells in the expanded version.  FA is a single
+#D full adder.  Gate is used to gate the bits of A into FA when the
+#D corresponding bit of B was on.  Also turns off the B bit after it
+#D has been used.  Clock tells Gate when to look at B. It's a fill-empty
+#D ring counter, 128 cells and a period of 252 cycles.
+#D The first partial result appears in the expanded verion in C after
+#D 205 cycles, next in another 256, and so on.  Final product in a total
+#D of 8141 cycles.  8116 is the compact verion, some bits always in the FA.
+#D
+#D The design uses 4-tick logic elements.  6-tick takes 50% more space for
+#D the loops and 50% more overall time.  All the normal logic elements
+#D are available in 4-tick (OR, XOR, AND, INVERT, R-S LATCH, T LATCH).
+#D The 4-tick INVERTER is shown bottom left.  Note it takes less area than
+#D 6-tick.
+#D
+#L .C3.C..C3.C.CC3.C3.C..3C$C.C.C.C.CC.CC.C.C.C.C.C.C..C$C3.C.C.C.C.C.CC
+#L ..C.C.C4.C$C.C.C.C.C3.C.C3.3C.C.C..C$.C3.C..C3.C.C3.C.C..C3.C4$4.23C.C
+#L .C3.C.4C.10C.42C$3.C23.3C.A4C4.C10.C42.C$4.21C3.C.B3.C.C..3C..C3.3C..
+#L 41C$25.C.C5.C3.C..C..A.C.C4.C$4.21C..C4.C..CC..4CAB3.3C..32CBACCBACCB$
+#L 3.C23.C3.C..C3.C.C4.A5.C42.A$4.17C3.C..C..C3.C3.C3.CC..CC.A..ABCCABCCA
+#L BCCABCCABCCABCCABCCABCCABCCABCC..C$21.C.C.C.3C4.C4.C.C..C3.CAB41.A.C$
+#L 4.17C..C.C..C3.C..C4.3C.C.C..A.CAB.CABCCABCCABCCABCCABCCABCCABCCABCCAB
+#L ..B.B$3.C19.C.C..7C4.C.A3.4C5.C35.C.C.A$4.17C..C.C.C4.C3.A3.B5.C6.B..A
+#L CCBACCBACCBACCBACCBACCBACCBACCBAC..C.C$21.C.C.C.C.C.CC.CB.C.3C..CC7.A.
+#L B36.A.C$4.17C..C..5C..CC.C3.C..B.C.BC..B.C..CCABCCABCCABCCABCCABCC4.CB
+#L ACCBACCB..B$3.C19.C3.A.C.C..3C4.CA3.A..ABBC25.A..C12.A$4.16C3.C3.B4.C
+#L ..C13.B.B.BACCBACCBACCBACCBACCBACCB4.ABCCABCCAB..C$20.C..C..C.A4.C.C5.
+#L ACCBA3C43.C.C$4.16C..CC3.C..3C..C4.B9.BACCBA3CBACCBACCBACCBACCBAC3.C3.
+#L BACCBAC..B$3.C17.C.CC4.C5.C3.C4.CCBACC28.C.C.A.C9.A$4.15C..C3.C..3C.C.
+#L 3C.C..CAA7.CABCCABCCABCCABCCABCCABCC..4B3.CABCCAB..C$19.C.C..3C..C.3C.
+#L C..A.C..B6.C25.A..C..A9.C.C$4.15C..C.C.C.CC.C.C..B.CACC.C.C6.BACCBACCB
+#L ACCBACCBACCBACC..B3C.C..BACCBAC..B$3.C17.C.C10.A.C.A.CC3.C29.B3.C..C.C
+#L 9.A$4.17C3.10C.C6.ABC.ABCCABCCABCCABCCABCCABCCABCCA5.AB3.CABCCABCC10$
+#L 85.23C$84.C23.C$84.C..21C$84.C.C$84.C..31C$3C.C3.C.CC3.C..C3.C.CC..3C.
+#L CC50.C33.C$C4.C.C..C.C.C.C.CC..C.C.C.C3.C.C49.C..31C$CC4.C3.CC..C.C.C.
+#L C.C.C.C.CC..C.C49.C.C$C4.C.C..C3.3C.C..CC.C.C.C3.C.C49.C..BACCBACCBACC
+#L BACCBACCBACCBACCBAC$3C.C3.C.C3.C.C.C3.C.CC..3C.CC50.C33.C$84.C..CABCCA
+#L BCCABCCABCCABCCABCCABCCAB$84.C.C$84.C..BACCBACCBACCBACCBACCBACCBACCBAC
+#L $84.C33.C$85.3CABCCABCCABCCABCCABCCABCCABCCAB$87.C$87.C5.C3.C5.3C..C$
+#L 87.C4.C.C.C.C6.C..C$55.3C..C10.CC3.C..3C.3C.C4.C.C.C.C.CC..CC..C$55.C
+#L 3.C.C8.C4.C.C..C..C3.C4.3C.C.C6.C..C$18.C3.C5.C3.3C20.CC..C.C8.C.CC.C.
+#L C..C..CC..C4.C.C..C5.3C.3C$17.C.C.C.C4.C5.C20.C3.3C8.C.C..3C..C..C3.C$
+#L 17.C3.C.C.CC.3C..CC20.C3.C.C9.CC..C.C..C..3C.C$17.C.C.C.C4.C.C3.C52.C$
+#L 18.C3.C5.3C.3C21.C.C3.C.12C.10C$52.6C.A4C12.C$4.31C16.C4.C.B3.C.C10.3C
+#L ..C11.CC..3C..C6.C$3.C47.C3.C5.C3.C10.C..A.C10.C.C3.C..C5.C.C$4.31C16.
+#L C3.C4.C..CC10.4CAB11.CC3.CC..C..CC.C.C$35.16C4.C3.C..C11.C.C4.A10.C.C
+#L 3.C..C5.C.C$4.31C17.C..C..C3.C11.C3.CC..CC.A6.CC..3C.3C5.C$3.C47.C.C.
+#L 3C4.C12.C.C..C3.CAB$4.31C16.C.C..C3.C..C12.3C.C.C..A.CAB.CABCCABCCABCC
+#L ABCCABCCABCCABCC$35.C15.C.C..7C12.C.A3.4C5.C29.A$4.31C16.C.C.C4.C3.A
+#L 11.B5.C6.B3.CCBACCBACCBACCBACCBACCBACCB$3.C47.C.C.C.C.CC.CB.C9.3C..CC
+#L 7.A..A$4.31C16.C..5C..CC.C11.C..B.C.BC..B.C3.BCCABCCABCCABCCABCCABCCAB
+#L CC$35.C15.C3.A.C.C..3C12.CA3.A..ABBC31.A$4.31C16.C3.B4.C..C21.B.B.B3.
+#L CCBACCBACCBACCBACCBACCBACCB$3.C47.C..C.A4.C.C13.ACCBA3C4.A..A$4.48C3.C
+#L ..3C..C12.B12.C.B$51.CC4.C5.C11.C14.C$53.C..3C.C.3C9.C$52.3C..C.3C.C
+#L 10.A$51.C.C.CC.C.C..B.BACCBA3CAC$51.C10.A.C9.A.C$52.10C.C12.C$76.C16.C
+#L ..C4.C3.C..C..C$76.C15.C.C.C3.C.C.C.C.C.C$.C..C3.C4.3C.C3.C.C.C.3C.CC
+#L ..3C.3C.CC31.C15.C3.C3.C.C.C3.CC$C.C.CC..C5.C..CC..C.C.C.C3.C.C..C..C
+#L 3.C.C30.C15.C.C.C3.C.C.C.C.C.C$C.C.C.C.C5.C..C.C.C.C.C.CC..CC3.C..CC..
+#L CC31.C16.C..3C..C3.C..C..C$3C.C..CC5.C..C..CC.C.C.C3.C.C..C..C3.C.C30.
+#L C$C.C.C3.C4.3C.C3.C..C..3C.C.C..C..3C.C.C30.C11.CBACCBACCBACCBACCBA3CB
+#L ACCBA3.A$76.C5.ACCBAC28.C.C.B$10.C65.C..ABB7.ABCCABCCABCCABCCABCCABCCA
+#L ..4C$9.A.C64.C.C..C6.C25.B..C..B$9.B.B8.A56.CC.C.C6.CBACCBACCBACCBACCB
+#L ACCBAC..4C.A$9.C.A6.CB.C56.CA3.A29.C3.A..C$9.C..7C.C59.BCC.BCCABCCABCC
+#L ABCCABCCABCCABCCAB5.BC$9.C.C6.3C$9.C.C7.C$9.C.C8.12C$10.C

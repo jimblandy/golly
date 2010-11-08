@@ -1,0 +1,33 @@
+#MCell 4.00
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 60x60
+#SPEED 100
+#WRAP 0
+#CCOLORS 4
+#PALETTE 8 colors
+#D Clocks
+#D 
+#D To establish a clock it is only necessary to set up a ring whose
+#D circumference has the desired period, draw the signal off at some
+#D point, and insert an electron. Diodes can be used to protect the clock,
+#D and to ensure a particular direction of circulation. More elaborate
+#D clocks can be constructed by spacing out several electrons within
+#D the same circumference.
+#D 
+#D WireWorld inherits the basic three-cell loop from the Zhabotinsky reactions,
+#D yielding all kinds of period-3 clocks. That is also the closest spacing that
+#D two electrons can have, but it is entirely too fast and dense for most applications.
+#D 
+#D Loops yielding period six or even longer lead to more conservative constructions.
+#D Period six allows the inclusion of ultrafast period three subassemblies. 
+#D 
+#D A clock seems to be the only way to create the boolean constant TRUE;
+#D once again it is worth emphasizing that the constant only appears at intervals
+#D and propagates with a finite velocity.
+#D 
+#D Harold V. McIntosh
+#L 7.A13C$7.B6$7.C$6.B.13C$7.A5$5.3C$4.C3.C$4.C3.13C$4.C3.C$5.CBA5$4.4C$
+#L 3.C4.C$3.C4.13C$3.C4.C$4.CCBA5$.7C$C7.C$C7.13C$C7.C$.5CBA

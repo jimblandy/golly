@@ -1,0 +1,25 @@
+#MCell 4.00
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 60x60
+#SPEED 100
+#WRAP 0
+#CCOLORS 4
+#PALETTE 8 colors
+#D AND
+#D 
+#D A little ingenuity produces the following AND gate;
+#D the signals enter at the top corners, their AND exits
+#D at the bottom right hand corner. 
+#D 
+#D This literal construction shows too many cells; the circuit
+#D can be rearranged into other forms. 
+#D 
+#D Harold V. McIntosh
+#L 14.A5C$20.C$10.A5C5.3C$16.C.C.C3.C$17.3C4.C$18.C.C.C.C$21.3C$22.C.10C
+#L 11$4.A5C19.6C$10.C24.C$6C5.3C11.A5C5.3C$6.C.C.C3.C16.C.C.C3.C$7.3C4.C
+#L 17.3C4.C$8.C.C.C.C18.C.C.C.C$11.3C22.3C$12.C.10C13.C.10C6$4.CA4C19.A5C
+#L $10.C24.C$A5C5.3C11.CA4C5.3C$6.C.C.C3.C16.C.C.C3.C$7.3C4.C17.3C4.C$8.C
+#L .C.C.C18.C.C.C.C$11.3C22.3C$12.C.10C13.C.10C

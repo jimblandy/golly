@@ -1,0 +1,306 @@
+#MCell 4.20
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 200x200
+#WRAP 0
+#CCOLORS 4
+#PALETTE 2_2_1
+#D 
+#D A Unary Multiplier Wrapped in a Turing Machine Inside WireWorld
+#D  by Nyles Heise, March 12, 2004
+#D  nylesheise@yahoo.com
+#D 
+#D First of all, my thanks to
+#D 
+#D 	A.K.Dewdney	for introducing me to WireWorld with his Scientific American
+#D 			article in 1990 and for writing "The New Turing Omnibus",
+#D 			from which I took many ideas for the design.
+#D 
+#D	Karl Scherer	for his great work in WireWorld design. Karl's web site
+#D			(http://karl.kiwi.gen.nz) has a voluminous amount of devices 
+#D			from basic elements to complex multipliers.  Some of these 
+#D			devices have been used here.  Karl and I have also recently 
+#D			cooperated is coming up with some more-compact versions of 
+#D			the 4-cycle logic I devised in 1990.  The free game page,
+#D			(http://www.zillions-of-games.com/games/index.html), to the
+#D			Zillions of Games (http://www.zillions-of-games.com/)
+#D			contains a downloadable, operational file that allows you 
+#D			to watch WireWorld in aciton.
+#D 
+#D This is a WireWorld implementation of a Turing Machine, M, that multiplies two
+#D unary numbers.  I set out to do the exact multipler found in Mr. Dewdney's
+#D "The New Turing Omnibus", however, backed off to a design the requirs less
+#D logic.  The design I came up with takes 9 States, plus halt, but only
+#D 2 Symbols.  It is basically a nested pair of move loops, as found in the
+#D Turing_Machine download to Zillions. 
+#D (http://www.zillions-of-games.com/games/index.html)
+#D 
+#D The logic is set up to do the multiply 5 * 4 = 20.  The Turing 
+#D algorithm that's implemented starts with the first number, a "Blank", the second 
+#D number and finally another "Blank".  The blanks extend to infinity in both 
+#D directions.
+#D 
+#D 	... B B 1 1 1 1 1 B 1 1 1 1 B B ...
+#D 
+#D After the machine halts, the tape contains the product along with the initial
+#D numbers and blanks for demarcation.
+#D 
+#D 	... B B 1 1 1 1 1 B 1 1 1 1 B 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 B B ...
+#D 
+#D Strictly speaking, the output of M should be only the number 20, however, I've 
+#D chosen to leave the input numbers as well since this eased the design of the 
+#D control mechanism logic.
+#D 
+#D 
+#D -----Quintuple notation
+#D 
+#D I'm using the quintuple notation to describe the Turing Machine program as
+#D found on page 207 and following in "The New Turing Omnibus" by A. K. Dewdney.  Each
+#D quintuple gives the next state, new symbol to be written, and tape direction
+#D as a function of the present state and the symbol on the tape at the location
+#D of the Read/Write Head.  Let Q be the state and S be the symbol.  Then each 
+#D quintile is of the form
+#D 
+#D 	{present Q, present S, next Q, next S, direction}
+#D 
+#D The state comes from the following set
+#D 
+#D 	PO	Pick up the UIT, outer loop     
+#D 	PI	Pick up the UIT, inner loop
+#D 	CO	Carry the UIT, outer loop
+#D 	CI	Carry the UIT, inner loop
+#D 	CIT	Carry the UIT, inner loop, about to write a 1
+#D 	LO	Move to the left, outer loop
+#D 	LOT	Move to the left, outer loop, about to go right
+#D 	LI	Move to the left, inner loop
+#D 	LIT	Move to the left, inner loop, about to go right
+#D 
+#D The symbol comes from the alphabet
+#D 
+#D 	B	Blank
+#D   	1	A UIT
+#D 
+#D The tape motion comes from the set
+#D 
+#D 	Left
+#D 	Right
+#D 	Stop
+#D 
+#D 
+#D -----Unary Multiplier Quintuple Specification
+#D 
+#D Only quintuples that change state or write to the tape are listed.
+#D 
+#D 	PO	1	C0	B	Right
+#D 	CO	B	PI	B	Right
+#D 	PI	1	CI	B	Right
+#D 	CI	B	CIT	B	Right
+#D	CIT	B	LI	1	Left
+#D 	LI	B	LIT	B	Left
+#D	LIT	B	PI	1	Right
+#D 	PI	B	LO	B	Left
+#D 	LO	B	LOT	B	Left
+#D	LOT	B	PO	1	Right
+#D 	PO	B 	Halt
+#D 
+#D 
+#D -----Description of the Control Mechanism
+#D 
+#D The control mechanism contains the random logic to generate the next state for 
+#D Q and  S.  It is essentially a clocked, sequential state machine with 5 latches, 
+#D 4 for Q and 1 for S.  The latches for Q and S are found within the control 
+#D mechanism.  There are 9 states (plus halt), that are represented by 4 latches, 
+#D L, I, T, and P.  
+#D 
+#D 	PO	L=0	I=0	T=0	P=1
+#D 	CO	L=0	I=0	T=0	P=0
+#D 	PI	L=0	I=1	T=0	P=1
+#D 	CI	L=0	I=1	T=0	P=0
+#D	CIT	L=0	I=1	T=1	P=0
+#D 	LO	L=1	I=0	T=0	P=0
+#D	LOT	L=1	I=0	T=1	P=0
+#D 	LI	L=1	I=1	T=0	P=0
+#D	LIT	L=1	I=1	T=1	P=0
+#D
+#D There are 2 symbols that are represented by a single latch, S.
+#D
+#D 	B	S=0
+#D 	1	S=1
+#D 
+#D 
+#D -----Random Logic Equations
+#D 
+#D Triggered latches are used for Q.  A triggered latch has one input.  The latch 
+#D keeps its value if the input is 0.  It is flipped if the input is 1.
+#D 
+#D 	L_trigger = 	(~S) ^ (P + T)
+#D 	I_trigger = 	(~S) ^ ( P + ~(L + I) )
+#D 	T_trigger = 	(~S) ^ ( (P ^ ~I) + ~( P + ~(L + I) )
+#D	P_trigger =	P + (~S) ^ ( (L ^ T) + ~(L + I) )
+#D
+#D A clocked D latch is used for S.
+#D
+#D 	S_next    =	T + S ^ ~P
+#D 
+#D 
+#D -----Machine Advancement
+#D 
+#D The tape is simulated as a loop with electrons passing around the control 
+#D mechanism.  This is basically the concept developed by Karl Scherer which he
+#D used to design his very ingenious binary multiplier.
+#D There are only two symbols, B and 1, so each symbol on the tape
+#D requires only one WireWorld bit, however, the location of the R/W head must 
+#D be maintained.  This is accomplished by having a clock position for each 
+#D tape location. A second WireWorld bit is used for this purpose.  Since the 
+#D implementation uses 4-tick logic, each tape location can be represented with 
+#D 8 WireWorld cells.  Identically one clock is present on the tape when it 
+#D leaves the control mechanism.
+#D
+#D As the tape passes the control mechanism the clock and symbol under the R/W 
+#D head are removed and a new clock inserted in anticipation for a right move.  
+#D The new values for Q are clocked into the latches.  If a left move is indicated 
+#D the clock is inserted onto the tape and the previously inserted clock removed.  
+#D The new symbol in written on the tape.  And finally the symbol under the moved 
+#d R/W head is written.
+#D 
+#D 
+#D -----Description of the WireWorld Layout
+#D 
+#D The control mechanism contains the State Q latches, the S latch, and the random 
+#D logic to generate the next states for Q and S.  It modifies the clock and data at 
+#D the appropriate places on the tape.
+#D 
+#D The tape is simulated as a loop that continually moves around the control 
+#D mechanism.  The Turing tape extends to infinity in both, but it is truncated 
+#D here to 320 cells.  This is the minimum length possible with the present 
+#D implementation.  This equates to 40 tape locations.
+#D  
+#D The minimum length required to do a multiply is 8 times the sum of the two numbers 
+#D + the product + 3.  5 times 4 could be done with 256 WireWorld cells.  Larger 
+#D multiplies can be done by merely extending the loop after it leaves the control 
+#D mechanism by 8 cells per tape location.
+#D
+#D The portion of the logic at the very bottom is not actually required to do the
+#D multiply, but included to aid in viewing.  The two numbers and the clock are
+#D loaded into the multiplier from this extension during the first few cycles of
+#D operation.  After 640 ticks the tape returns with the first Turing step taken.
+#D The viewing data is then blocked from reentering the machine.
+#D
+#D The entire multiply takes 606 advancements of the tape.  Including the first 320 
+#D ticks for loading, this is a total of 194240 ticks.  
+#D
+#D The control logic detects when the operation is complete and simply removes the 
+#D clock from the tape.  With no clock, the tape continues to move without future 
+#D modification.
+#D 
+#D 
+#D -----Description of the WireWorld devices
+#D 
+#D The design uses 4-tick devices - ORs, ANDs, LATCHES, etc.  4-tick logic was my 
+#D invention in 1990, at which time I devised the method that allows data to be 
+#D spaced at a distance of 4 cells.  Recently several better configurations of some 
+#D of these devices have been laid out by myself and Karl Scherer.
+#D 
+#D I use a clocked, vectored approach for storing and moving data.  The 4 Q latches 
+#D are contained in one 16-cell latch.  The data leaving the latches have 4 phases,
+#D repeating every 16 ticks.  The Q latch contains L, I, T, and P.
+#D 
+#D 	Q = {L: I: T: P}.
+#D 
+#D The S latch contain only one bit and is 4 cells in length.
+#D 
+#D 	S = {S}
+#D 
+#D The tape contains a symbol and a clock, 8 cells per tape location.  The symbol 
+#D comes first.
+#D
+#D 	Tape = {S: Clock}
+#D
+#D The vectored approach enables the logic to be implemented more easily than the 
+#D one-bit-per-latch method.  Normal crossing of wires in not required.  As a matter 
+#D of fact, there are no 3-XOR cross devices in the design.
+#D 
+#D 
+#D -----Viewing tips
+#D 
+#D Non-functional extensions have been appended to the shift register latches for 
+#D easier viewing.  The period of the machine is 320.  I believe the following 
+#D settings provide best viewing
+#D 
+#D 	CTRL g		Grid off
+#D 	ALT CTRL c	Black background (color 0), white electron head (color 1),
+#D 			dark blue electron tail and wire (colors 2 and 3)
+#D 			The .mcl file sets the 2_2_1 Palette, the closest I could find.
+#D 	ALT CTRL n	Run for 194240 cycles
+#D 			Redraw the universe every 320 cycles
+#D 	n		Runs to completion
+#D 
+#D
+#D -----Enjoy
+#D  
+#L 31.C.C.C..C..C..CC..C.C3.C3.C.C.C.C3.3C.3C.CC..C3.3C.3C.CC$31.C.C.CC.C
+#L .C.C.C.C.C.C3.CC.CC.C.C.C4.C3.C..C.C.C4.C..C3.C.C$31.C.C.C.CC.3C.CC3.C
+#L 4.C.C.C.C.C.C4.C3.C..CC..C4.C..CC..CC$31.C.C.C..C.C.C.C.C..C4.C3.C.C.C
+#L .C4.C3.C..C3.C4.C..C3.C.C$32.C..C..C.C.C.C.C..C4.C3.C..C..3C..C..3C.C
+#L 3.3C.3C.3C.C.C5$..11C3.92C3.3C.3C3.6C$.C11.C.C92.C.C3.C3.C.C6.C$C6.3C.
+#L C.4C16.C5.59C7.CC..3C.3C..C.C6.C$C..B..A3.BCC..C..CC.C.C5.C..A.C.A.C
+#L 59.C5.C..C..C3.C3.C.C6.C$C.C.A..BCA.C.C..CC..3C.C3.C.C..B.BAC3.3C.7C.
+#L 3C.12C.4C.CC.10C5.BC3.C.C.4C.C3.3C5.C7.C$C..C9.CC4.C.C..C..C..C..A..A
+#L 3.C3.C7.C3.C12.C4.C..C10.C3.A..A3.3C..C..C6.C3.3C..CC..C$C..C.C..5C..C
+#L .CC4.3C.C..C.5C..C5.C6.C.C.C5.A6.C.C..C..C4.CC.B..C.C.C..B..C.C..4C8.C
+#L 3.C..C..B.C$C3.4C8.C..C3.C.4C.C..C.C..C3.C..C7.3C5.C.B..C3.6C.C3.CC.A.
+#L C..3C3.C.C4.CC.A.C8.C3.CCA..A.C$C4.C.C.4C..3C.C..C.BC.C..C..C.C.C3.A.C
+#L .C8.C6.C.C.C.C.C.C..A3.3C.4C..C.C.C..C.C3.C.CC.B..7C7.BC..C$C3.C3.C4.C
+#L ..C..C3.A4.CC3.C.C.C3.B.B.C.C5.3C5.B.C.C.C.C3.C.B.C5.C3.C4.B..A.C3.C6.
+#L C8.5C..B..C$C..C7.C..CC..C10.C.CC3.CC.C.C.A..CCA.A..C.CC4.A.C.C.C.C3.B
+#L .C.C.C3.C..3C3.A..B.C..3C5.3C.CC.CC5.C..A.C$C.3C..C..C.C4.3C..ABCCA3.C
+#L ..C.C..CCA..C.C.C.B.C..AC.C.C.C.A.C.C.C3.A.C..7C..C.C3.CC..C.C.C.C3.C
+#L 3.C..C3.C3.C..C.C$C..C..C.C.C.C.C.CA.A.C5.B.3C.C.C.C.C.B.C.C3.C.C.B.C
+#L ..3C..B.A.C.C3.C.A.C.C3.B..C..C7.C.C4.C..C.C.C.3C.C.A3.C.C.C$C.C.C.C.C
+#L .C..3C.AB..B5.C..A..C.B.C3.C.C.C3.C.B..C..C.C.B.C.B.C.C3.C.B.C4.C.A.C
+#L 3.7C..C3.C.C..3C3.C3.BA.C.C.C.C$C.C.C.C.C.C.C.C..A.C.A5.CCB4.A3.C..C.B
+#L .C3.A.A5.C4.A..C.C.C3.C.C.C4.C.C.C12.C3.C.C3.C..CC3.A.A3C..C.C$C.C.C.C
+#L .C.C.C5.C3.3CBA4.3C5.C..A3.C.B..C4.C9.C..C3.B.C.C4.C.C.C..A10.3C3.3C..
+#L C5.3C.C.C.C.C$.C..C.C.C.C.C..CC3.C5.A3.C..C.C.B..C5.C.C.B..CC.C10.C.C
+#L 4.A..C4.A.B.C.C.B19.C7.C4.C.C.C$3.C..C.C.C.C.C..C.C.CC..3C3.C..CCA.C..
+#L C..C.C.C.A.C..C9.C.C.C7.C4.B.A.C..CC..C..BCCABCC4.3C7.C.C..C..C.C$..C
+#L 3.C..C..C..C.C.C3.C..C3.3C..C.C4.4C3.C..C.5C5.3C3.4C3.C4.C.C.C.C.5CA7.
+#L C..C4.C4.3C..C3.C.C$..C.C.C6.C.C.C.C..4C.3C.C3.C8.C7.C..C3.C3.C.C.C6.C
+#L ..C4.A.C.C.3C..C..CCBACBA..C4.C.A4.C..C4.C.C$3.3C..CCB..C.C.C.C.C.C.C
+#L 6.C.4C7.CC6.CC4.C3.C3.C.C.3C4.C4.B..C..C..3C10.C5.B..C.C3.C.C.C..C$4.C
+#L ..C3.A..C3.C..C4.C3.CC3.C..C8.C10.3C..C..5C6.3C6.C3.C..C3.CC6.C4.6C5.
+#L 3C3.C$..CC..C.ABC5.C5.4C3.C4.C4.A..B5.C10.C.C.C3.C.C8.C.C.CC..C..C.CC.
+#L C.C..C5.C5.C..C.CC..C.C4.C$.C3.C6.6C12.4C4.3BC.A5.10C3.C.3C3.8C3.C..C.
+#L C.C6.3C..C4.C3.4C3.C.C.C6.C$.C..3C..C.C4.B.6C13.C.C..C37.3C..C.C6.C.C.
+#L C..4C3.C.A.CC..C.C.7C$..C..C..C.C6.A6.C12.C.C41.C12.C3.C10.B.CC.CC3.C$
+#L 3.CC.CC..C5.3C6.12C3.41C14.3C18.C$..C7.C.CC3.C..C94.C$..C8.C..6C.B20.
+#L 73C$..C7.3C4.C..A20.C$3.6C..C29.C$..C6.CC30.C$..C8.106C.5C.CC$..C38.C
+#L 75.C5.C..C$..C107.CBA.C.C..C..3C.C$..C106.A3.3C..3C..C..C$..C107.BCC.C
+#L .CC.C.C..C.C$..C117.C.CC..C$..C..3C.C.C.3C3.3C..C..CC..3C12.C..C3.CC..
+#L C.C..C..CC..3C.3C5.CC12.C30.C$..C3.C..C.C.C6.C..C.C.C.C.C13.C.C.C3.C.C
+#L .C.C.C.C.C.C.C4.C6.C.C.CC8.C3.CC..C22.C$..C3.C..3C.CC5.C..3C.CC..CC12.
+#L 3C.C3.CC..3C.3C.CC..CC3.C6.CC6.C5.C7.C22.C$..C3.C..C.C.C6.C..C.C.C3.C
+#L 13.C.C.C3.C3.C.C.C.C.C.C.C4.C6.C.C.CC8.C3.CC..C22.C$..C3.C..C.C.3C4.C
+#L ..C.C.C3.3C11.C.C.3C.C3.C.C.C.C.CC..3C..C6.CC11.3C29.C$..C123.C$..C3.A
+#L 3.A3.A3.A3.A3.C3.A3.A3.A3.A3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C
+#L 3.C3.C3.C3.C3.C3.C3.C$3.C.B.C.B.C.B.C.B.C.B.C.C.C.B.C.B.C.B.C.B.C.C.C.
+#L C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.
+#L C.C.C.C$3.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.
+#L C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C$3.B.C.
+#L C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.
+#L C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C.C$4.A3.C3.C3.C3.C3.C3.
+#L C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C
+#L 3.C5$.C..3C4.3C7.C$C.C..C6.C3.CC..C.C$3C..C6.C7.C.C$C.C..C6.C3.CC..C.C
+#L $C.C..C6.C8.C3$6.C3.C3.C3.C3.C7.C3.C3.C3.C$..C3.C3.C3.C3.C3.C3.C3.C3.C
+#L 3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C
+#L 3.C$6.C3.C3.C3.C3.C7.C3.C3.C3.C3$.C..3C4.3C7.C..3C.C3.CC..C3.3C6.CC..
+#L CC..3C..C3.C..3C.3C.3C$C.C..C6.C3.CC3.C..C.C.C5.C.C3.C.C..CC4.C3.C.C.C
+#L 3.C.C3.C3.C.C3.C$3C..C6.C8.C..3C.3C..C..3C.C.C7.C3.C..C.C4.C4.3C.C.C3.
+#L C$C.C..C6.C3.CC3.C4.C..C..C4.C..C.C..CC4.C.C3.C.C3.C.C3.C.C.C.C3.C$C.C
+#L ..C6.C7.3C.3C..C..3C..C..3C6.CC..3C.3C..C3.C..3C.3C3.C3$6.C3.C3.C3.C3.
+#L C7.C3.C3.C3.C7.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C
+#L 3.C$..C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C
+#L 3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C$6.C3.C3.C3.C3.C7.C3.C3.C3.C7.C3.C3.C
+#L 3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C3.C
