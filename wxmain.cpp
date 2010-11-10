@@ -1120,7 +1120,10 @@ void MainFrame::ToggleFullScreen()
       wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
 
    if (fullscreen) {
-      // hide scroll bars
+      // hide scroll bars;
+      // first we must remove wxALWAYS_SHOW_SB style from viewport window
+      long style = bigview->GetWindowStyle();
+      bigview->SetWindowStyleFlag(style & ~wxALWAYS_SHOW_SB);
       bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
       bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
       
@@ -1208,7 +1211,10 @@ void MainFrame::ToggleFullScreen()
    }
 
    if (!fullscreen) {
-      // restore scroll bars BEFORE setting viewport size
+      // restore scroll bars BEFORE setting viewport size;
+      // first restore wxALWAYS_SHOW_SB style removed earlier
+      long style = bigview->GetWindowStyle();
+      bigview->SetWindowStyleFlag(style | wxALWAYS_SHOW_SB);
       bigview->UpdateScrollBars();
    }
    
