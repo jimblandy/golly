@@ -1,0 +1,14 @@
+#CXRLE Pos=-1,-34
+#C
+#C Life in a Tube investigated intermittently by Tony Smith since 1985.
+#C
+#C Circumference 17 tube shown rolled out 4 times for aesthetic reasons.
+#C
+#C Pulsars was discovered almost immediately after the general principle
+#C of Life in a Tube was revealed when applying Full Paint's command-L
+#C Easter Egg to a screen dump which included a MacDraw ruler. This 
+#C particular discovery helped keep the project motivated.
+x = 2, y = 68, rule = B3/S23:T0,68
+bo$bo$bo$bo$bo$bo$bo$bo$2o$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$b
+o$bo$2o$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$2o$bo$bo$bo$bo
+$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$bo$2o$bo$bo$bo$bo$bo$bo$bo$bo!

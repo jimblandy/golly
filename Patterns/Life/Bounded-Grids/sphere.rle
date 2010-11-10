@@ -1,0 +1,9 @@
+#CXRLE Pos=-10,-10
+#C
+#C If the adjacent edges of a bounded grid are joined then the
+#C result is a sphere.  Note how the gliders behave differently
+#C as they pass through the corner cells at a "pole" or "equator".
+#C For more details see Help > Bounded Grids.
+#C
+x = 20, y = 20, rule = LifeHistory:S30
+2A16.2A$A.A14.A.A$A18.A13$12.3A$12.A2.A$12.A$12.A$13.A.A!

@@ -1,0 +1,25 @@
+#CXRLE Pos=-24,-24
+#C
+#C A period 14 agar with herringbone symmetry in a toroidal grid.
+#C Discovered by Gabriel Nivasch's Random Agar program.
+#C
+x = 48, y = 48, rule = B3/S23:T48,48
+2b3o3b2o2bo13b3o3b2o2bo$2b2o3b4o5bo6bo2b2o3b4o5bo6bo$2bo13b3o3b2o2bo
+13b3o3b2o$o5bo6bo2b2o3b4o5bo6bo2b2o3b3o$6b3o3b2o2bo13b3o3b2o2bo$3bo2b
+2o3b4o5bo6bo2b2o3b4o5bo$2b2o2bo13b3o3b2o2bo13b3o$b4o5bo6bo2b2o3b4o5bo
+6bo2b2o$10b3o3b2o2bo13b3o3b2o2bo$o6bo2b2o3b4o5bo6bo2b2o3b4o$3o3b2o2bo
+13b3o3b2o2bo$2o3b4o5bo6bo2b2o3b4o5bo6bo$o13b3o3b2o2bo13b3o3b2o$4bo6bo
+2b2o3b4o5bo6bo2b2o3b4o$4b3o3b2o2bo13b3o3b2o2bo$bo2b2o3b4o5bo6bo2b2o3b
+4o5bo$2o2bo13b3o3b2o2bo13b3o$3o5bo6bo2b2o3b4o5bo6bo2b2o3bo$8b3o3b2o2bo
+13b3o3b2o2bo$5bo2b2o3b4o5bo6bo2b2o3b4o5bo$o3b2o2bo13b3o3b2o2bo13b2o$3b
+4o5bo6bo2b2o3b4o5bo6bo2b2o$12b3o3b2o2bo13b3o3b2o2bo$2bo6bo2b2o3b4o5bo
+6bo2b2o3b4o$2b3o3b2o2bo13b3o3b2o2bo$2b2o3b4o5bo6bo2b2o3b4o5bo6bo$2bo
+13b3o3b2o2bo13b3o3b2o$o5bo6bo2b2o3b4o5bo6bo2b2o3b3o$6b3o3b2o2bo13b3o3b
+2o2bo$3bo2b2o3b4o5bo6bo2b2o3b4o5bo$2b2o2bo13b3o3b2o2bo13b3o$b4o5bo6bo
+2b2o3b4o5bo6bo2b2o$10b3o3b2o2bo13b3o3b2o2bo$o6bo2b2o3b4o5bo6bo2b2o3b4o
+$3o3b2o2bo13b3o3b2o2bo$2o3b4o5bo6bo2b2o3b4o5bo6bo$o13b3o3b2o2bo13b3o3b
+2o$4bo6bo2b2o3b4o5bo6bo2b2o3b4o$4b3o3b2o2bo13b3o3b2o2bo$bo2b2o3b4o5bo
+6bo2b2o3b4o5bo$2o2bo13b3o3b2o2bo13b3o$3o5bo6bo2b2o3b4o5bo6bo2b2o3bo$8b
+3o3b2o2bo13b3o3b2o2bo$5bo2b2o3b4o5bo6bo2b2o3b4o5bo$o3b2o2bo13b3o3b2o2b
+o13b2o$3b4o5bo6bo2b2o3b4o5bo6bo2b2o$12b3o3b2o2bo13b3o3b2o2bo$2bo6bo2b
+2o3b4o5bo6bo2b2o3b4o!

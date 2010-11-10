@@ -1,0 +1,9 @@
+#CXRLE Pos=-2,-2
+#C
+#C If the opposite edges of a bounded grid are joined then the result
+#C is a torus.  If the edge lengths are relatively prime, as in this
+#C example, then a glider will eventually visit every cell.
+#C For more details see Help > Bounded Grids.
+#C
+x = 3, y = 3, rule = LifeHistory:T31,20
+.A$2.A$3A!
