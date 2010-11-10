@@ -1424,10 +1424,8 @@ void PatternView::UpdateScrollBars()
    if (currlayer->algo->gridwd > 0) {
       // restrict scrolling to left/right edges of grid if its width is finite
       int range = currlayer->algo->gridwd;
-      #if defined(__WXMAC__) && !wxCHECK_VERSION(2,8,5)
-         // wxALWAYS_SHOW_SB is not implemented in wxMac 2.8.4 or older
-         if (range == 1) range = 3;
-      #endif
+      // avoid scroll bar disappearing
+      if (range < 3) range = 3;
       hthumb = currlayer->view->x.toint() + range / 2;
       bigview->SetScrollbar(wxHORIZONTAL, hthumb, 1, range, true);
    } else {
@@ -1439,10 +1437,8 @@ void PatternView::UpdateScrollBars()
    if (currlayer->algo->gridht > 0) {
       // restrict scrolling to top/bottom edges of grid if its height is finite
       int range = currlayer->algo->gridht;
-      #if defined(__WXMAC__) && !wxCHECK_VERSION(2,8,5)
-         // wxALWAYS_SHOW_SB is not implemented in wxMac 2.8.4 or older
-         if (range == 1) range = 3;
-      #endif
+      // avoid scroll bar disappearing
+      if (range < 3) range = 3;
       vthumb = currlayer->view->y.toint() + range / 2;
       bigview->SetScrollbar(wxVERTICAL, vthumb, 1, range, true);
    } else {
