@@ -1901,8 +1901,21 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
          rulechanged = true;
       }
       if (err) {
-         // switch to new algo's default rule
-         newalgo->setrule( newalgo->DefaultRule() );
+         wxString defrule = wxString(newalgo->DefaultRule(), wxConvLocal);
+         if (newrule.IsEmpty() && oldrule.Find(':') >= 0) {
+            // switch to new algo's default rule, but preserve the topology in oldrule
+            // so we can do things like switch from "LifeHistory:T30,20" in RuleTable
+            // to "B3/S23:T30,20" in QuickLife
+            if (defrule.Find(':') >= 0) {
+               // default rule shouldn't have a suffix but play safe and remove it
+               defrule = defrule.BeforeFirst(':');
+            }
+            defrule += wxT(":");
+            defrule += oldrule.AfterFirst(':');
+         }
+         err = newalgo->setrule( defrule.mb_str(wxConvLocal) );
+         // shouldn't ever fail but play safe
+         if (err) newalgo->setrule( newalgo->DefaultRule() );
          rulechanged = true;
       }
    }
