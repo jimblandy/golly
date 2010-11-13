@@ -33,8 +33,7 @@ PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 # on 10.6 (Snow Leopard).  The solution is to create a special version for 10.6
 # by enabling the following PERL_LINK line which removes DynaLoader.a from the
 # link command (the "-undefined dynamic_lookup" is needed to avoid _boot_DynaLoader
-# being flagged as an undefined symbol).  Sigh... yet another reason to forget the
-# embedding approach and try switching to Golly-to-script IPC via shared memory.
+# being flagged as an undefined symbol).
 # PERL_LINK = -undefined dynamic_lookup -L/usr/local/lib -L/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lc
 
 # for Python script support
