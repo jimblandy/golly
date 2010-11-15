@@ -1,0 +1,10 @@
+#C The most spectacular of several naturally occuring puffer engines
+#C found by Tony Smith during the first day of running Generations
+#C 3458/37/4, a previously neglected rule with several other
+#C surprises. While moving laterally at c/2, the sawfish puffer engine
+#C alternates left-right with period 40*2, forming 5 blocks and a
+#C period 250 switch engine which moves away diagonally 2 cells per
+#C half cycle, each switch engine phase being repeated 1016 cells back
+#C and 16 cells further away from the stable core axis.
+x = 8, y = 10, rule = 3458/37/4
+4.CA$4.B3A$.B3.C2A$C7A$.2ACA$4.A$3.C4A$3.B.C2A$4.B3A$4.CA!
