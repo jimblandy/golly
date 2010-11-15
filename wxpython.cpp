@@ -273,8 +273,8 @@ static bool LoadPythonLib()
       str +=         _("\notherwise change the version numbers to match the");
       str +=         _("\nversion installed on your system and try again.");
       #ifdef __WXMSW__
-         str +=      _("\n\nDepending on where you installed Python you might have to");
-         str +=      _("\nenter a full path to the location of your pythonNN.dll file.");
+         str +=      _("\n\nIf that fails, search your system for a python*.dll");
+         str +=      _("\nfile and enter the full path to that file.");
       #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Python library"),

@@ -356,18 +356,18 @@ static bool LoadPerlLib()
    // don't log errors in here
    wxLogNull noLog;
 
-   // wxDL_GLOBAL corresponds to RTLD_GLOBAL on Linux (ignored on Windows) and
-   // is needed to avoid an ImportError when importing some modules (eg. time)
+   // wxDL_GLOBAL corresponds to RTLD_GLOBAL on Linux (ignored on Windows)
    while ( !dynlib.Load(perllib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
       // prompt user for a different Perl library;
       // on Windows perllib should be something like "perl510.dll"
       // and on Linux it should be something like "libperl.so.5.10"
       Beep();
       wxString str = _("If Perl isn't installed then you'll have to Cancel,");
-      str +=         _("\notherwise change the version numbers and try again.");
+      str +=         _("\notherwise change the version numbers to match the");
+      str +=         _("\nversion installed on your system and try again.");
       #ifdef __WXMSW__
-         str +=      _("\nDepending on where you installed Perl you might have");
-         str +=      _("\nto enter a full path like C:\\Perl\\bin\\perl510.dll.");
+         str +=      _("\n\nIf that fails, search your system for a perl*.dll");
+         str +=      _("\nfile and enter the full path to that file.");
       #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Perl library"),
