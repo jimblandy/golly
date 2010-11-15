@@ -796,8 +796,19 @@ void RuleDialog::OnChooseAlgo(wxCommandEvent& event)
       const char* err = tempalgo->setrule( thisrule.mb_str(wxConvLocal) );
       if (err) {
          // rule is not valid so change rule text to selected algo's default rule
+         wxString defrule = wxString(tempalgo->DefaultRule(), wxConvLocal);
+         if (oldindex < NumAlgos() && thisrule.Find(':') >= 0) {
+            // preserve valid topology so we can do things like switch from
+            // "LifeHistory:T30,20" in RuleTable to "B3/S23:T30,20" in QuickLife
+            if (defrule.Find(':') >= 0) {
+               // default rule shouldn't have a suffix but play safe and remove it
+               defrule = defrule.BeforeFirst(':');
+            }
+            defrule += wxT(":");
+            defrule += thisrule.AfterFirst(':');
+         }
          ignore_text_change = true;
-         ruletext->SetValue( wxString(tempalgo->DefaultRule(),wxConvLocal) );
+         ruletext->SetValue(defrule);
          ruletext->SetFocus();
          ruletext->SetSelection(-1,-1);
          ignore_text_change = false;
