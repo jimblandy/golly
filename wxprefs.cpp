@@ -1767,7 +1767,7 @@ void GetPrefs()
    // init names of Perl and Python libraries
    #ifdef __WXMSW__
       perllib = wxT("perl510.dll");
-      pythonlib = wxT("python25.dll");
+      pythonlib = wxT("python27.dll");
    #elif defined(__WXMAC__)
       // not used (Perl & Python are loaded at link time)
       perllib = wxEmptyString;

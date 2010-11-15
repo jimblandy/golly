@@ -266,14 +266,15 @@ static bool LoadPythonLib()
    // is needed to avoid an ImportError when importing some modules (eg. time)
    while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
       // prompt user for a different Python library;
-      // on Windows pythonlib should be something like "python25.dll"
-      // and on Linux it should be something like "libpython2.5.so"
+      // on Windows pythonlib should be something like "python27.dll"
+      // and on Linux it should be something like "libpython2.7.so"
       Beep();
       wxString str = _("If Python isn't installed then you'll have to Cancel,");
-      str +=         _("\notherwise change the version numbers and try again.");
+      str +=         _("\notherwise change the version numbers to match the");
+      str +=         _("\nversion installed on your system and try again.");
       #ifdef __WXMSW__
-         str +=      _("\nDepending on where you installed Python you might have");
-         str +=      _("\nto enter a full path like C:\\Python25\\python25.dll.");
+         str +=      _("\n\nDepending on where you installed Python you might have to");
+         str +=      _("\nenter a full path to the location of your pythonNN.dll file.");
       #endif
       wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                 _("Could not load the Python library"),
