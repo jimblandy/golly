@@ -37,7 +37,6 @@ def goto(gen):
    else:
       newgen = int(gen)
    
-   if newgen == currgen: return
    if newgen < currgen:
       # try to go back to starting gen (not necessarily 0) and
       # then forwards to newgen; note that reset() also restores
@@ -57,6 +56,7 @@ def goto(gen):
          g.error("Can't go back any further; pattern was saved " +
                  "at generation " + str(currgen) + ".")
          return
+   if newgen == currgen: return
    
    g.show("Hit escape to abort...")
    oldsecs = time()

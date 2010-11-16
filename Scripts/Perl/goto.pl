@@ -46,23 +46,34 @@ sub go_to {
          return;
       }
    }
-   
+   return if $newgen == $currgen;
+
    g_show("Hit escape to abort...");
    my $oldsecs = time;
-   while ($currgen < $newgen) {
-      if (g_empty()) {
-         g_show("Pattern is empty.");
-         return;
-      }
-      # using g_step() as a faster method for getting to newgen
-      # is left as an exercise for the reader :)
-      g_run(1);
-      $currgen += 1;
-      g_dokey( g_getkey() );              # allow keyboard interaction
-      my $newsecs = time;
-      if ($newsecs - $oldsecs >= 1.0) {   # do an update every sec
-         $oldsecs = $newsecs;
-         g_update();
+
+   # do 1 step first, to ensure a reasonable value is saved for the step size:
+   g_run(1);
+   ++$currgen;
+
+   my $base = g_getbase();
+   my $todo = $newgen - $currgen;
+   my $exp = 0;
+   while ($todo > 0) {
+      my $num_steps = $todo % $base;
+      g_setstep($exp++);
+      $todo = ($todo - $num_steps)/$base;
+      while ($num_steps-- > 0) {
+         if (g_empty()) {
+            g_show("Pattern is empty.");
+            return;
+         }
+         g_step();
+         g_dokey( g_getkey() );              # allow keyboard interaction
+         my $newsecs = time;
+         if ($newsecs - $oldsecs >= 1.0) {   # do an update every sec
+            $oldsecs = $newsecs;
+            g_update();
+         }
       }
    }
    g_show("");
@@ -105,5 +116,7 @@ if ($gen eq "") {
    # best to save given gen now in case user aborts script
    savegen($GotoINIFileName, $gen);
    $gen =~ s/,//g;
+   my $oldstep = g_getstep();
    go_to($gen);
+   g_setstep($oldstep);
 }
