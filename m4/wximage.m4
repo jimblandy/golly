@@ -10,9 +10,9 @@ AC_DEFUN([WX_CHECK_IMAGE_HANDLER], [
 	CXXFLAGS="$CXXFLAGS $WX_CXXFLAGS"
 	LIBS="$LIBS $WX_LIBS"
 	AC_MSG_CHECKING([for ]$1[ image handler])
-	AC_LINK_IFELSE([
+	AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <wx/wx.h>
-int main() { new wx]$1[Handler(); } ],
+int main() { new wx]$1[Handler(); } ])],
 		[AC_MSG_RESULT([yes]); AC_DEFINE([HAVE_WX_]$1[_HANDLER])],
 		[AC_MSG_RESULT([no])] )
 	CXXFLAGS=$save_CXXFLAGS

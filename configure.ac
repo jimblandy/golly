@@ -39,6 +39,9 @@ AC_CHECK_HEADERS([inttypes.h limits.h stdint.h stdlib.h string.h sys/time.h])
 # Check for compiler characteristics:
 AC_TYPE_SIZE_T
 
+# Check for large file support (enabled by default)
+AC_SYS_LARGEFILE
+
 # Check for library functions
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
