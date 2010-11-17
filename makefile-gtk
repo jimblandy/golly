@@ -19,8 +19,9 @@ SRCFILES = BUILD TODO makefile-gtk makefile-mac makefile-win \
 BINFILES = golly bgolly RuleTableToTree
 
 CXXC = g++
-CXXFLAGS := -DVERSION=$(VERSION) -DGOLLYDIR="$(GOLLYDIR)" -O5 -Wall \
-   -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+CXXFLAGS := -DVERSION=$(VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
+   -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
+   -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
 LDFLAGS := $(LDFLAGS)
 
 # for Perl script support
@@ -43,9 +44,12 @@ PYTHON_LINK =
 PYTHON_SHLIB = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LDLIBRARY')"`
 PYTHON_PREFS = -DPYTHON_SHLIB="$(PYTHON_SHLIB)"
 
-# default settings to zlib support. clear this to build without zlib.
+# default settings for zlib support, so clear these to build without zlib
 ZLIB_CXXFLAGS = -DZLIB
-ZLIB_LDFLAGS = -lz
+### ZLIB_LDFLAGS = -lz
+### we statically link zlib because some Linux systems (eg. Ubuntu) have
+### a non-standard zlib shared library that contains gzopen64
+ZLIB_LDFLAGS = /usr/lib/libz.a
 
 # for wxGTK support (required for GUI)
 WX_CXXFLAGS = `wx-config --cxxflags`
