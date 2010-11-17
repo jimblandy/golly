@@ -1,5 +1,5 @@
 AC_PREREQ(2.64)
-AC_INIT([golly], [2.2b4])
+AC_INIT([golly], [2.2])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall -Werror foreign no-define])
 AC_CONFIG_SRCDIR([bgolly.cpp])
