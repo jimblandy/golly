@@ -85,7 +85,7 @@ clean:
 	rm -f golly bgolly RuleTableToTree
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ)
-	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
+	$(CXXC) $(CXXFLAGS) -o golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(ZLIB_LDFLAGS) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
