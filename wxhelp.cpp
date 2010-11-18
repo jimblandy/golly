@@ -438,7 +438,7 @@ void LoadRule(const wxString& rulestring)
             delete tempalgo;
             if (!err) {
                // change the current algorithm and switch to the new rule
-               mainptr->ChangeAlgorithm(i, wxString(rulestring,wxConvLocal));
+               mainptr->ChangeAlgorithm(i, rulestring);
                if (i != currlayer->algtype) {
                   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
                   Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
@@ -515,9 +515,9 @@ bool DownloadFile(const wxString& url, const wxString& filepath)
             // read and write in chunks so we can show a progress dialog
             const int BUFFER_SIZE = 4000;             // seems ok (on Mac at least)
             char buf[BUFFER_SIZE];
-            int incount = 0;
-            int outcount = 0;
-            int lastread, lastwrite;
+            size_t incount = 0;
+            size_t outcount = 0;
+            size_t lastread, lastwrite;
             double filesize = (double) instream->GetSize();
             if (filesize <= 0.0) filesize = -1.0;     // show indeterminate progress
             
@@ -535,7 +535,7 @@ bool DownloadFile(const wxString& url, const wxString& filepath)
                   break;
                }
                char msg[128];
-               sprintf(msg, "File size: %.2g MB", double(incount) / 1048576.0);
+               sprintf(msg, "File size: %.2f MB", double(incount) / 1048576.0);
                if (AbortProgress((double)incount / filesize, wxString(msg,wxConvLocal))) {
                   // force false result
                   outcount = 0;

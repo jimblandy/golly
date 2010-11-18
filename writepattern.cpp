@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // globals for writing RLE files
 static char outbuff[BUFFSIZE];
 static size_t outpos;            // current write position in outbuff
-static unsigned int currsize;    // current file size (for showing in progress dialog)
+static double currsize;          // current file size (for showing in progress dialog)
 static bool badwrite;            // fwrite failed?
 
 // using buffered putchar instead of fputc is about 20% faster on Mac OS X
@@ -205,7 +205,7 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
                char msg[128];
                accumcount += currcount;
                currcount = 0;
-               sprintf(msg, "File size: %.2g MB", double(currsize) / 1048576.0);
+               sprintf(msg, "File size: %.2f MB", currsize / 1048576.0);
                if (lifeabortprogress(accumcount / maxcount, msg)) break;
             }
          }
@@ -289,7 +289,7 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
       }
    }
 
-   currsize = 0;
+   currsize = 0.0;
    lifebeginprogress("Writing pattern file");
 
    const char *errmsg = NULL;

@@ -1784,7 +1784,7 @@ g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
          unsigned long siz = ftell(f) ;
-         sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
+         sprintf(progressmsg, "File size: %.2f MB", double(siz) / 1048576.0) ;
          lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       int i, j ;
@@ -1819,7 +1819,7 @@ g_uintptr_t hlifealgo::writecell_2p2(FILE *f, node *root, int depth) {
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
          unsigned long siz = ftell(f) ;
-         sprintf(progressmsg, "File size: %.2g MB", double((siz >> 20))) ;
+         sprintf(progressmsg, "File size: %.2f MB", double(siz) / 1048576.0) ;
          lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       root->next = (node *)thiscell ;
