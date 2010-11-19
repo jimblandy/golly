@@ -1,4 +1,4 @@
-AC_PREREQ(2.64)
+AC_PREREQ(2.61)
 AC_INIT([golly], [2.2])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall -Werror foreign no-define])
@@ -31,7 +31,7 @@ AC_PROG_SED
 AC_PROG_RANLIB
 AC_PROG_CXX
 AC_CHECK_TOOL([OBJDUMP], [objdump])
-AS_VAR_IF([OBJDUMP], , [AC_MSG_ERROR([missing objdump])])
+AS_IF([test "x$OBJDUMP" = x], [AC_MSG_ERROR([missing objdump])])
 
 # Check for standard header files:
 AC_CHECK_HEADERS([inttypes.h limits.h stdint.h stdlib.h string.h sys/time.h])
@@ -63,26 +63,26 @@ WX_CHECK_IMAGE_HANDLER([TIFF])
 
 # Find Perl
 AC_PATH_PROGS([PERL], [perl5 perl])
-AS_VAR_IF([PERL], , [AC_MSG_ERROR([missing Perl])])
+AS_IF([test "x$PERL" = x], [AC_MSG_ERROR([missing Perl])])
 AC_SUBST([PERL_INCLUDE], [`$PERL -MExtUtils::Embed -e ccopts`])
-AS_VAR_IF([with_perl_shlib], [check],
+AS_IF([test "x$with_perl_shlib" = xcheck],
 	[CHECK_SHLIB_USED([shlib], [$PERL], [perl])], [shlib=$with_perl_shlib] )
-AS_VAR_IF([shlib], , AC_MSG_ERROR([could not determine Perl shared library name]))
+AS_IF([test "x$shlib" = x], AC_MSG_ERROR([could not determine Perl shared library name]))
 AC_DEFINE_UNQUOTED([PERL_SHLIB], [$shlib])
 
 # Find Python
 AC_PATH_PROGS(PYTHON, [python2 python])
-AS_VAR_IF([PYTHON], , [AC_MSG_ERROR([missing Python])])
+AS_IF([test "x$PYTHON" = x], [AC_MSG_ERROR([missing Python])])
 AC_SUBST([PYTHON_INCLUDE], [-I"'`$PYTHON -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`'"])
-AS_VAR_IF([with_python_shlib], [check],
+AS_IF([test "x$with_python_shlib" = xcheck],
 	[	[shlib=`python -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_var('LDLIBRARY') or '')"`]
-		AS_VAR_IF([shlib], , [CHECK_SHLIB_USED([shlib], [$PYTHON], [python])]) ],
+		AS_IF([test "x$shlib" = x], [CHECK_SHLIB_USED([shlib], [$PYTHON], [python])]) ],
 	[	shlib=$with_python_shlib ] )
-AS_VAR_IF([shlib], , AC_MSG_ERROR([could not determine Python shared library name]))
+AS_IF([test "x$shlib" = x], AC_MSG_ERROR([could not determine Python shared library name]))
 AC_DEFINE_UNQUOTED([PYTHON_SHLIB], [$shlib])
 
 # Find zlib (unless explicitly disabled)
-AS_VAR_IF([with_zlib], [no], ,
+AS_IF([test "x$with_zlib" != xno],
 	[	AC_CHECK_HEADER([zlib.h], , [AC_MSG_ERROR([missing zlib])])
 		AC_SEARCH_LIBS([gzopen], [z], , [AC_MSG_ERROR([missing zlib])])
 		AC_DEFINE(ZLIB) ] )
