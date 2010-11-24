@@ -75,7 +75,7 @@ AC_PATH_PROGS(PYTHON, [python2 python])
 AS_IF([test "x$PYTHON" = x], [AC_MSG_ERROR([missing Python])])
 AC_SUBST([PYTHON_INCLUDE], [-I"'`$PYTHON -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`'"])
 AS_IF([test "x$with_python_shlib" = xcheck],
-	[	[shlib=`python -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_var('LDLIBRARY') or '')"`]
+	[	[shlib=`$PYTHON -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_var('LDLIBRARY') or '')"`]
 		AS_IF([test "x$shlib" = x], [CHECK_SHLIB_USED([shlib], [$PYTHON], [python])]) ],
 	[	shlib=$with_python_shlib ] )
 AS_IF([test "x$shlib" = x], AC_MSG_ERROR([could not determine Python shared library name]))
