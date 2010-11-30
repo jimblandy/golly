@@ -1984,7 +1984,8 @@ void MainFrame::OnClose(wxCloseEvent& event)
       Warning(_("Could not delete temporary directory:\n") + tempdir);
    }
    
-   // allow clipboard data to persist after app exits (only needed for Windows and Linux)
+   // allow clipboard data to persist after app exits
+   // (needed on Windows, not needed on Mac, doesn't work on Linux -- sheesh!)
    if (wxTheClipboard->Open()) {
       wxTheClipboard->Flush();
       wxTheClipboard->Close();
