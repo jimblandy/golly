@@ -563,11 +563,11 @@ void MainFrame::UpdateToolBar(bool active)
 bool MainFrame::ClipboardHasText()
 {
    bool hastext = false;
-   if ( wxTheClipboard->Open() ) {
-      hastext = wxTheClipboard->IsSupported( wxDF_TEXT );
+   if (wxTheClipboard->Open()) {
+      hastext = wxTheClipboard->IsSupported(wxDF_TEXT);
       if (!hastext) {
          // we'll try to convert bitmap data to text pattern
-         hastext = wxTheClipboard->IsSupported( wxDF_BITMAP );
+         hastext = wxTheClipboard->IsSupported(wxDF_BITMAP);
       }
       wxTheClipboard->Close();
    }
@@ -1982,6 +1982,12 @@ void MainFrame::OnClose(wxCloseEvent& event)
    // delete the (hopefully) empty tempdir
    if (!wxFileName::Rmdir(tempdir)) {
       Warning(_("Could not delete temporary directory:\n") + tempdir);
+   }
+   
+   // allow clipboard data to persist after app exits (only needed for Windows and Linux)
+   if (wxTheClipboard->Open()) {
+      wxTheClipboard->Flush();
+      wxTheClipboard->Close();
    }
 
    // avoid possible error message or seg fault
