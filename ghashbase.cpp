@@ -1618,7 +1618,7 @@ g_uintptr_t ghashbase::writecell_2p2(FILE *f, ghnode *root, int depth) {
 #define STR2(arg) #arg
 const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    int depth = ghnode_depth(root) ;
-   fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ;
+   fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ; 
    fputs("\n", f) ;
    
    // AKT: always write out explicit rule

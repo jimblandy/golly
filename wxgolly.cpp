@@ -332,7 +332,7 @@ bool GollyApp::OnInit()
    mainptr->SetMinimumStepExponent();
 
    wxString banner = _("This is Golly version ");
-   banner +=         _(STRINGIFY(VERSION));
+   banner +=         _(STRINGIFY(VERSION)); 
    banner +=         _(".  Copyright 2010 The Golly Gang.");
    statusptr->SetMessage(banner);
 
