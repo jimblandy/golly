@@ -390,11 +390,12 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       CreatePasteImage(tempalgo, bbox);
 
       waitingforclick = true;
-      mainptr->EnableAllMenus(false);  // disable all menu items
-      mainptr->UpdateToolBar(false);   // disable all tool bar buttons
-      UpdateLayerBar(false);           // disable all layer bar buttons
-      UpdateEditBar(false);            // disable all edit bar buttons
-      CaptureMouse();                  // get mouse down event even if outside view
+      mainptr->UpdateMenuAccelerators();  // remove all accelerators so keyboard shortcuts can be used
+      mainptr->EnableAllMenus(false);     // disable all menu items
+      mainptr->UpdateToolBar(false);      // disable all tool bar buttons
+      UpdateLayerBar(false);              // disable all layer bar buttons
+      UpdateEditBar(false);               // disable all edit bar buttons
+      CaptureMouse();                     // get mouse down event even if outside view
       pasterect = wxRect(-1,-1,0,0);
 
       while (waitingforclick) {
@@ -440,6 +441,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
 
       if ( HasCapture() ) ReleaseMouse();
       mainptr->EnableAllMenus(true);
+      mainptr->UpdateMenuAccelerators();  // restore accelerators
       DestroyPasteImage();
    
       // restore cursor

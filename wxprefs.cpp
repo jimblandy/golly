@@ -43,8 +43,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"      // for MAX_MAG
 #include "util.h"          // for linereader
 
-#include "wxgolly.h"       // for wxGetApp, mainptr
+#include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for ID_*, mainptr->...
+#include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, Fatal, Beep, FillRect
 #include "wxhelp.h"        // for GetHelpFrame
 #include "wxinfo.h"        // for GetInfoFrame
@@ -1084,9 +1085,9 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
    wxString accel = accelerator[action];
    
    if (inscript) {
-      // RunScript has called mainptr->UpdateMenuAccelerators();
-      // remove non-ctrl/non-func key accelerator from menu item
-      // so keys like tab/enter/space can be passed to script
+      // RunScript has called mainptr->UpdateMenuAccelerators()
+      // so remove non-ctrl/non-func key accelerator from menu item
+      // to allow keys like tab/enter/space to be passed to script
       // even if menu item is disabled
       if (accel.IsEmpty()) return;
       int Fpos = accel.Find('F');
@@ -1097,6 +1098,10 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
       } else {
          accel = wxEmptyString;
       }
+   } else if (viewptr->waitingforclick) {
+      // PatternView::PasteTemporaryToCurrent has called mainptr->UpdateMenuAccelerators()
+      // so remove accelerator to allow keyboard shortcuts while waiting for paste click
+      accel = wxEmptyString;
    }
 
    // we need to remove old accelerator string from GetLabel text
