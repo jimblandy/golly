@@ -158,8 +158,10 @@ private:
    void ZoomInPos(int x, int y);
    void ZoomOutPos(int x, int y);
    void SetPasteRect(wxRect& rect, bigint& wd, bigint& ht);
-   void PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
+   void PasteTemporaryToCurrent(bool toselection,
                                 bigint top, bigint left, bigint bottom, bigint right);
+   bool FlipPastePattern(bool topbottom);
+   bool RotatePastePattern(bool clockwise);
 
    // scroll functions
    void PanUp(int amount);

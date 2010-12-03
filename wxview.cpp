@@ -70,7 +70,9 @@ static bool slowdraw = false;       // do slow cell drawing via UpdateView?
 
 static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
-static int newalgo;                 // new algo needed by readclipboard
+static int newalgotype;             // new algo type created by readclipboard
+static lifealgo* pastealgo;         // temporary universe with pattern to be pasted
+static wxRect pastebox;             // bounding box for paste pattern
 
 // remember which translucent button was clicked, and when
 static control_id clickedcontrol = NO_CONTROL;
@@ -352,7 +354,7 @@ void PatternView::SetPasteRect(wxRect& rect, bigint& wd, bigint& ht)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
+void PatternView::PasteTemporaryToCurrent(bool toselection,
                                           bigint top, bigint left, bigint bottom, bigint right)
 {
    // make sure given edges are within getcell/setcell limits
@@ -383,11 +385,11 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       currlayer->curs = curs_cross;
       CheckCursor(true);
 
-      // create image for drawing pattern to be pasted; note that given box
+      // create image for drawing pattern to be pasted; note that pastebox
       // is not necessarily the minimal bounding box because clipboard pattern
       // might have blank borders (in fact it could be empty)
-      wxRect bbox = wxRect(ileft, itop, wd.toint(), ht.toint());
-      CreatePasteImage(tempalgo, bbox);
+      pastebox = wxRect(ileft, itop, wd.toint(), ht.toint());
+      CreatePasteImage(pastealgo, pastebox);
 
       waitingforclick = true;
       mainptr->UpdateMenuAccelerators();  // remove all accelerators so keyboard shortcuts can be used
@@ -405,6 +407,15 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
          if (PointInView(pt.x, pt.y)) {
             // determine new paste rectangle
             wxRect newrect;
+            if (wd.toint() != pastebox.width || ht.toint() != pastebox.height) {
+               // RotatePastePattern was called
+               itop = pastebox.y;
+               ileft = pastebox.x;
+               ibottom = itop + pastebox.height - 1;
+               iright = ileft + pastebox.width - 1;
+               wd = pastebox.width;
+               ht = pastebox.height;
+            }
             SetPasteRect(newrect, wd, ht);
             if (newrect != pasterect) {
                // draw new pasterect
@@ -503,10 +514,10 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
    if (canchangerule > 0 && oldrule != newrule) {
       const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
       // setrule can fail if readclipboard loaded clipboard pattern into
-      // a different type of algo (newalgo)
+      // a different type of algo (newalgotype)
       if (err) {
          // allow rule change to cause algo change
-         mainptr->ChangeAlgorithm(newalgo, newrule);
+         mainptr->ChangeAlgorithm(newalgotype, newrule);
       } else {
          // show new rule in title bar
          mainptr->SetWindowTitle(wxEmptyString);
@@ -585,7 +596,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       for ( ty=itop; ty<=ibottom; ty++ ) {
          cx = pastex;
          for ( tx=ileft; tx<=iright; tx++ ) {
-            int skip = tempalgo->nextcell(tx, ty, newstate);
+            int skip = pastealgo->nextcell(tx, ty, newstate);
             if (skip + tx > iright)
                skip = -1;           // pretend we found no more live cells
             if (skip >= 0) {
@@ -627,7 +638,7 @@ void PatternView::PasteTemporaryToCurrent(lifealgo* tempalgo, bool toselection,
       for ( ty=itop; ty<=ibottom; ty++ ) {
          cx = pastex;
          for ( tx=ileft; tx<=iright; tx++ ) {
-            tempstate = tempalgo->getcell(tx, ty);
+            tempstate = pastealgo->getcell(tx, ty);
             currstate = curralgo->getcell(cx, cy);
             if (cx >= gleft && cx <= gright && cy >= gtop && cy <= gbottom) {
                switch (pmode) {
@@ -734,7 +745,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
             *tempalgo = CreateNewUniverse(i);
             err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
             if (!err) {
-               newalgo = i;   // remember new algo for later use in PasteTemporaryToCurrent
+               newalgotype = i;   // remember new algo for later use in PasteTemporaryToCurrent
                break;
             }
          }
@@ -782,19 +793,19 @@ void PatternView::PasteClipboard(bool toselection)
       return;
    }
 
-   // create a temporary universe for storing clipboard pattern;
+   // create a temporary universe for storing the clipboard pattern;
    // GetClipboardPattern assumes it is same type as current universe
-   lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
+   pastealgo = CreateNewUniverse(currlayer->algtype);
    // no need to call setrule here -- readclipboard will do it
 
    // read clipboard pattern into temporary universe
    bigint top, left, bottom, right;
-   if ( GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
-      // tempalgo might have been deleted and re-created as a different type of universe
-      PasteTemporaryToCurrent(tempalgo, toselection, top, left, bottom, right);
+   if ( GetClipboardPattern(&pastealgo, &top, &left, &bottom, &right) ) {
+      // pastealgo might have been deleted and re-created as a different type of universe
+      PasteTemporaryToCurrent(toselection, top, left, bottom, right);
    }
 
-   delete tempalgo;
+   delete pastealgo;
 }
 
 // -----------------------------------------------------------------------------
@@ -933,16 +944,88 @@ void PatternView::RandomFill()
 
 // -----------------------------------------------------------------------------
 
+bool PatternView::FlipPastePattern(bool topbottom)
+{
+   bool result;
+   Selection pastesel(pastebox.GetTop(), pastebox.GetLeft(),
+                      pastebox.GetBottom(), pastebox.GetRight());
+   
+   // flip the pattern in pastealgo
+   lifealgo* savealgo = currlayer->algo;
+   currlayer->algo = pastealgo;
+   // pass in true for inundoredo parameter so flip won't be remembered
+   // and layer won't be marked as dirty; also set inscript temporarily
+   // so that viewport won't be updated
+   inscript = true;
+   result = pastesel.Flip(topbottom, true);
+   // currlayer->algo might point to a *different* universe
+   pastealgo = currlayer->algo;
+   currlayer->algo = savealgo;
+   inscript = false;
+   
+   if (result) {
+      CreatePasteImage(pastealgo, pastebox);
+      UpdateView();
+   }
+   
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
+bool PatternView::RotatePastePattern(bool clockwise)
+{
+   bool result;
+   Selection pastesel(pastebox.GetTop(), pastebox.GetLeft(),
+                      pastebox.GetBottom(), pastebox.GetRight());
+   
+   // rotate the pattern in pastealgo
+   lifealgo* savealgo = currlayer->algo;
+   currlayer->algo = pastealgo;
+   // pass in true for inundoredo parameter so rotate won't be remembered
+   // and layer won't be marked as dirty; also set inscript temporarily
+   // so that viewport won't be updated
+   inscript = true;
+   result = pastesel.Rotate(clockwise, true);
+   // currlayer->algo might point to a *different* universe
+   pastealgo = currlayer->algo;
+   currlayer->algo = savealgo;
+   inscript = false;
+   
+   if (result) {
+      // get rotated selection and update pastebox
+      int x, y, wd, ht;
+      pastesel.GetRect(&x, &y, &wd, &ht);
+      pastebox = wxRect(x, y, wd, ht);
+      CreatePasteImage(pastealgo, pastebox);
+      UpdateView();
+   }
+   
+   return result;
+}
+
+// -----------------------------------------------------------------------------
+
 bool PatternView::FlipSelection(bool topbottom, bool inundoredo)
 {
-   return currlayer->currsel.Flip(topbottom, inundoredo);
+   if (waitingforclick) {
+      // more useful to flip the pattern about to be pasted
+      return FlipPastePattern(topbottom);
+   } else {
+      return currlayer->currsel.Flip(topbottom, inundoredo);
+   }
 }
 
 // -----------------------------------------------------------------------------
 
 bool PatternView::RotateSelection(bool clockwise, bool inundoredo)
 {
-   return currlayer->currsel.Rotate(clockwise, inundoredo);
+   if (waitingforclick) {
+      // more useful to rotate the pattern about to be pasted
+      return RotatePastePattern(clockwise);
+   } else {
+      return currlayer->currsel.Rotate(clockwise, inundoredo);
+   }
 }
 
 // -----------------------------------------------------------------------------
