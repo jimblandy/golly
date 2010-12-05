@@ -625,7 +625,18 @@ const char *loadpattern(lifealgo &imp) {
    } else if (line[0] == '#' || line[0] == 'x') {
       errmsg = readrle(imp, line) ;
       imp.endofpattern() ;
-      // if getedges is true then readrle has set top,left,bottom,right
+      if (getedges && !imp.isEmpty()) {
+         // readrle has set top,left,bottom,right based on the info given in
+         // the header line and possibly a "#CXRLE Pos=..." line, but in case
+         // that info is incorrect we find the true pattern edges and expand
+         // top/left/bottom/right if necessary to avoid truncating the pattern
+         bigint t, l, b, r ;
+         imp.findedges(&t, &l, &b, &r) ;
+         if (t < top) top = t ;
+         if (l < left) left = l ;
+         if (b > bottom) bottom = b ;
+         if (r > right) right = r ;
+      }
 
    } else if (line[0] == '!') {
       errmsg = readdblife(imp, line) ;
