@@ -502,11 +502,15 @@ void BeginProgress(const wxString& dlgtitle)
    }
    progwatch = new wxStopWatch();
    progtitle = dlgtitle;
-   // let user know they'll have to wait
-   #ifdef __WXMAC__
-      wxSetCursor(*wxHOURGLASS_CURSOR);
-   #endif
-   if (mainptr->IsActive()) viewptr->SetCursor(*wxHOURGLASS_CURSOR);
+   
+   // avoid cursor flickering if this is called during a script
+   if (!inscript) {
+      // let user know they'll have to wait
+      #ifdef __WXMAC__
+         wxSetCursor(*wxHOURGLASS_CURSOR);
+      #endif
+      if (mainptr->IsActive()) viewptr->SetCursor(*wxHOURGLASS_CURSOR);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -572,8 +576,11 @@ void EndProgress()
       delete progwatch;
       progwatch = NULL;
    }
-   // BeginProgress changed cursor so reset it
-   viewptr->CheckCursor(mainptr->IsActive());
+   
+   if (!inscript) {
+      // BeginProgress changed cursor so reset it
+      viewptr->CheckCursor(mainptr->IsActive());
+   }
 }
 
 // =============================================================================
