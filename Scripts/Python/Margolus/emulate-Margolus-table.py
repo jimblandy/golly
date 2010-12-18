@@ -5,6 +5,12 @@
 import golly
 import os
 
+try:
+   set
+except NameError:
+   # Python 2.3 doesn't have "set" built-in
+   from sets import Set as set
+
 # ask user to select .table file
 fn = golly.opendialog('Open a Margolus table to emulate',
                       'Rule tables (*.table)|*.table',
@@ -57,34 +63,24 @@ for line in f:
         for i in range(n_states):
             vars[str(i)] = [i]
         g.write('n_states:'+str(1+n_states*2)+'\n')
-        g.write('# variables standing for any state that is currently \
-in the top-left of a partition (or off-grid):\n')
-        g.write('var _a1={0,'+
-            ','.join(str(as_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _a2={0,'+
-            ','.join(str(as_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _a3={0,'+
-            ','.join(str(as_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _a4={0,'+
-            ','.join(str(as_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('# variables standing for any state that is currently \
-not in the top-left of a partition:\n')
-        g.write('var _b1={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b2={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b3={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b4={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b5={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b6={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b7={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
-        g.write('var _b8={0,'+
-            ','.join(str(as_not_top_left(s)) for s in range(n_states))+'}\n')
+        g.write('# variables standing for any state that is currently '+
+                'in the top-left of a partition (or off-grid):\n')
+        tlvars = ','.join([ str(as_top_left(s)) for s in range(n_states) ])
+        g.write('var _a1={0,'+tlvars+'}\n')
+        g.write('var _a2={0,'+tlvars+'}\n')
+        g.write('var _a3={0,'+tlvars+'}\n')
+        g.write('var _a4={0,'+tlvars+'}\n')
+        g.write('# variables standing for any state that is currently '+
+                'not in the top-left of a partition:\n')
+        nottlvars = ','.join([ str(as_not_top_left(s)) for s in range(n_states) ])
+        g.write('var _b1={0,'+nottlvars+'}\n')
+        g.write('var _b2={0,'+nottlvars+'}\n')
+        g.write('var _b3={0,'+nottlvars+'}\n')
+        g.write('var _b4={0,'+nottlvars+'}\n')
+        g.write('var _b5={0,'+nottlvars+'}\n')
+        g.write('var _b6={0,'+nottlvars+'}\n')
+        g.write('var _b7={0,'+nottlvars+'}\n')
+        g.write('var _b8={0,'+nottlvars+'}\n')
     elif line[0:13]=='neighborhood:':
         if not line[13:].strip()=='Margolus':
             golly.exit('Unknown neighborhood: '+line[13:-1])
