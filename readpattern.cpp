@@ -565,6 +565,44 @@ long getfilesize(const char *filename) {
    return flen;
 }
 
+// This function guesses whether `line' is the start of a headerless Life RLE
+// pattern.  It is used to distinguish headerless RLE from plain text patterns.
+static bool isplainrle(const char *line) {
+
+   // Find end of line, or terminating '!' character, whichever comes first:
+   const char *end = line;
+   while (*end && *end != '!') ++end;
+
+   // Verify that '!' (if present) is the final printable character:
+   if (*end == '!') {
+      for (const char *p = end + 1; *p; ++p) {
+         if ((unsigned)*p > ' ') {
+            return false;
+         }
+      }
+   }
+
+   // Ensure line consists of valid tokens:
+   bool prev_digit = false, have_digit = false;
+   for (const char *p = line; p != end; ++p) {
+      if ((unsigned)*p <= ' ') {
+         if (prev_digit) return false;  // space inside token!
+      } else if (*p >= '0' && *p <= '9') {
+         prev_digit = have_digit = true;
+      } else if (*p == 'b' || *p == 'o' || *p == '$') {
+         prev_digit = false;
+      } else {
+         return false;  // unsupported printable character encountered!
+      }
+   }
+   if (prev_digit) return false;  // end of line inside token!
+
+   // Everything seems parseable; assume this is RLE if either we saw some
+   // digits, or the pattern ends with a '!', both of which are unlikely to
+   // occur in plain text patterns:
+   return have_digit || *end == '!';
+}
+
 const char *loadpattern(lifealgo &imp) {
    char line[LINESIZE + 1] ;
    const char *errmsg = 0;
@@ -647,6 +685,14 @@ const char *loadpattern(lifealgo &imp) {
 
    } else if (line[0] == '[') {
       errmsg = imp.readmacrocell(line) ;
+      imp.endofpattern() ;
+      if (getedges && !imp.isEmpty()) {
+         imp.findedges(&top, &left, &bottom, &right) ;
+      }
+
+   } else if (isplainrle(line)) {
+      imp.setrule("B3/S23") ;
+      errmsg = readrle(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
          imp.findedges(&top, &left, &bottom, &right) ;
