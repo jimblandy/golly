@@ -691,7 +691,6 @@ const char *loadpattern(lifealgo &imp) {
       }
 
    } else if (isplainrle(line)) {
-      imp.setrule("B3/S23") ;
       errmsg = readrle(imp, line) ;
       imp.endofpattern() ;
       if (getedges && !imp.isEmpty()) {
