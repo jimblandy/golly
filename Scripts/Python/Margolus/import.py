@@ -1,4 +1,4 @@
-# Change the selected area from N states to simulated-Margolus states:
+# Change the selected area from N states to emulated-Margolus states:
 # s -> 1+2s (if in the top-left of the partition)
 # s -> 2+2s (if not)
 
@@ -14,5 +14,3 @@ for row in xrange(r.top, r.top + r.height):
          g.setcell(col, row, 1+g.getcell(col,row)*2)
       else:
          g.setcell(col, row, 2+g.getcell(col,row)*2)
-
-

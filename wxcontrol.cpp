@@ -225,7 +225,7 @@ void MainFrame::ResetPattern(bool resetundo)
             cloneptr->currexpo = cloneptr->startexpo;
             // also synchronize dirty flags and update items in Layer menu
             cloneptr->dirty = currlayer->dirty;
-            mainptr->UpdateLayerItem(i);
+            UpdateLayerItem(i);
          }
       }
    }
@@ -1279,8 +1279,23 @@ void MainFrame::GeneratePattern()
    // to test inscript or currlayer->stayclean; note that we must call
    // RememberGenFinish BEFORE processing any pending command
    if (allowundo) currlayer->undoredo->RememberGenFinish();
+
+   // stop recording any timeline before processing any pending command
+   if (currlayer->algo->isrecording()) {
+      currlayer->algo->stoprecording();
+      if (currlayer->algo->getframecount() > 0) {
+         // probably best to go to last frame
+         currlayer->currframe = currlayer->algo->getframecount() - 1;
+         currlayer->autoplay = 0;
+         currlayer->tlspeed = 0;
+         currlayer->algo->gotoframe(currlayer->currframe);
+         if (currlayer->autofit) viewptr->FitInView(1);
+      }
+      if (!showtimeline) ToggleTimelineBar();
+      UpdateUserInterface(true);
+   }
    
-   DoPendingAction(true);     // true means can restart generating loop
+   DoPendingAction(true);     // true means we can restart generating loop
 }
 
 // -----------------------------------------------------------------------------

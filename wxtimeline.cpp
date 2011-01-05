@@ -814,10 +814,10 @@ void StartStopRecording()
 {
    if (!inscript && currlayer->algo->hyperCapable()) {
       if (currlayer->algo->isrecording()) {
-         // terminate GeneratePattern()
+         // terminate GeneratePattern
          mainptr->Stop();
       } else {
-         if (currlayer->algo->isEmpty()) {   
+         if (currlayer->algo->isEmpty()) {
             statusptr->ErrorMessage(_("There is no pattern to record."));
             return;
          }
@@ -846,19 +846,7 @@ void StartStopRecording()
             mainptr->GeneratePattern();
             allowundo = saveundo;
             
-            // recording has stopped
-            currlayer->algo->stoprecording();
-            if (currlayer->algo->getframecount() > 0) {
-               // probably best to go to last frame
-               currlayer->currframe = currlayer->algo->getframecount() - 1;
-               currlayer->autoplay = 0;
-               currlayer->tlspeed = 0;
-               currlayer->algo->gotoframe(currlayer->currframe);
-               if (currlayer->autofit) viewptr->FitInView(1);
-            }
-
-            if (!showtimeline) ToggleTimelineBar();
-            mainptr->UpdateUserInterface(true);
+            // GeneratePattern has called currlayer->algo->stoprecording()
          } else {
             // can this ever happen???!!!
             Warning(_("Could not start recording!"));
