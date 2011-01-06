@@ -24,6 +24,9 @@ If you are using Linux then you might already have Perl 5.10 installed;
 if not, visit <a href="http://www.perl.org/">www.perl.org</a> and download
 a suitable installer.  Windows users are advised to download the
 <a href="http://www.activestate.com/Products/ActivePerl/">ActivePerl</a> installer.
+Note that the current binary distributions of Golly are 32-bit builds,
+so they require a 32-bit version of Perl.  If you've built a 64-bit Golly
+from source then it will require a 64-bit version of Perl.
 
 <p>
 On Windows and Linux, the Perl library is loaded at runtime (the first time
@@ -95,9 +98,11 @@ The Scripts folder supplied with Golly contains a number of example Perl scripts
 </p>
 
 <p>
-The easiest way to run one of these scripts is to tick the <b>Show Scripts</b>
-item in the File menu and then simply click on the script you wish to run.
+To run one of these scripts, tick the <b>Show Scripts</b>
+item in the File menu and then simply click on the script's name.
 You can also select one of the <b>Run</b> items in the File menu.
+For a frequently used script you might like to assign a keyboard shortcut
+to run it (see <a href="prefs:keyboard">Preferences > Keyboard</a>).
 
 <p>
 When Golly starts up it looks for a script called <b>golly-start.pl</b>
