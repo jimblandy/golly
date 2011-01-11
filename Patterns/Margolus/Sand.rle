@@ -1,3 +1,5 @@
+#CXRLE Pos=0,1
+#
 # A simple simulation of sand particles - inspired by MCell's version.
 #
 # Rule table produced by emulate-Margolus-table.py from

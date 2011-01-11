@@ -1,3 +1,5 @@
+#CXRLE Pos=1,0
+#
 # Diffusion Limited Aggregation
 #
 # Particles move around at random until they encounter a stuck particle,
