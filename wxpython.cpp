@@ -2972,55 +2972,12 @@ bool InitPython()
       if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
          Warning(_("Failed to append Scripts path!"));
 
-      // nicer to reload all modules in case changes were made by user;
-      // code comes from http://pyunit.sourceforge.net/notes/reloading.html
-      /* unfortunately it causes an AttributeError
-      if ( PyRun_SimpleString(
-            "import __builtin__\n"
-            "class RollbackImporter:\n"
-            "   def __init__(self):\n"
-            "      self.previousModules = sys.modules.copy()\n"
-            "      self.realImport = __builtin__.__import__\n"
-            "      __builtin__.__import__ = self._import\n"
-            "      self.newModules = {}\n"
-            "   def _import(self, name, globals=None, locals=None, fromlist=[]):\n"
-            "      result = apply(self.realImport, (name, globals, locals, fromlist))\n"
-            "      self.newModules[name] = 1\n"
-            "      return result\n"
-            "   def uninstall(self):\n"
-            "      for modname in self.newModules.keys():\n"
-            "         if not self.previousModules.has_key(modname):\n"
-            "            del(sys.modules[modname])\n"
-            "      __builtin__.__import__ = self.realImport\n"
-            "rollbackImporter = RollbackImporter()\n"
-            ) < 0
-         ) Warning(_("RollbackImporter code failed!"));
-      */
-
       pyinited = true;
    } else {
-      // Py_Initialize has already been successfully called
-      if ( PyRun_SimpleString(
-            // Py_Finalize is not used to close stderr so reset it here
-            "sys.stderr.data = ''\n"
-
-            // reload all modules in case changes were made by user
-            /* this almost works except for strange error the 2nd time we run gun-demo.py
-            "import sys\n"
-            "for m in sys.modules.keys():\n"
-            "   t = str(type(sys.modules[m]))\n"
-            "   if t.find('module') < 0 or m == 'golly' or m == 'sys' or m[0] == '_':\n"
-            "      pass\n"
-            "   else:\n"
-            "      reload(sys.modules[m])\n"
-            */
-
-            /* RollbackImporter code causes an error
-            "if rollbackImporter: rollbackImporter.uninstall()\n"
-            "rollbackImporter = RollbackImporter()\n"
-            */
-            ) < 0
-         ) Warning(_("PyRun_SimpleString failed!"));
+      // Py_Initialize has already been successfully called;
+      // Py_Finalize is not used to close stderr so reset it here
+      if ( PyRun_SimpleString("sys.stderr.data = ''\n") < 0 )
+         Warning(_("PyRun_SimpleString failed!"));
    }
 
    return true;

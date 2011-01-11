@@ -7,6 +7,7 @@
 
 <p>
 <ul>
+<li> Moved scripts that create table/tree files into Scripts/Python/Rule-Generators.
 <li> While waiting for a paste click, the keyboard shortcuts for flipping or rotating
      a selection now modify the paste pattern instead.
 <li> Fixed a bug in Win and Linux apps that prevented keyboard shortcuts being used
@@ -45,14 +46,14 @@
      in the one file (more details <a href="formats.html#icons">here</a>).
 <li> Rule tables now support hexagonal and oneDimensional neighborhoods and the permute symmetry.
 <li> Added a section on <a href="formats.html#naming">naming conventions</a> for .table and .tree files.
-<li> Added a new Python script, <a href="open:Scripts/Python/make-ruletree.py">make-ruletree.py</a>,
+<li> Added a new Python script, <a href="edit:Scripts/Python/Rule-Generators/make-ruletree.py">make-ruletree.py</a>,
      that allows you to write rules in Python and have them installed in the form of .tree files.
      See the comments at the top of the script.
-<li> New script: <a href="open:Scripts/Python/RuleTableToTree.py">RuleTableToTree.py</a>, that converts
+<li> Added <a href="open:Scripts/Python/Rule-Generators/RuleTableToTree.py">RuleTableToTree.py</a> for converting
      rule tables to trees. It provides emulation for several neighborhoods not natively supported by
      Golly: triangularVonNeumann, triangularMoore, Margolus, etc.
      More details <a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">here</a>.
-<li> New Turmite scripts, e.g. <a href="open:Scripts/Python/Turmite-gen.py">Turmite-gen.py</a>, for
+<li> New Turmite scripts, e.g. <a href="open:Scripts/Python/Rule-Generators/Turmite-gen.py">Turmite-gen.py</a>, for
      generating rule trees and icons for relative- and absolute-movement turmites on square,
      hexagonal and triangular grids.
 <li> The goto.py script is much faster (thanks to PM 2Ring).

@@ -374,11 +374,14 @@ Required descriptors (must appear before other content):
 <li><b><tt>neighborhood:</tt></b> specifies the cell neighborhood for
 the CA update step. Must be one of: <tt>vonNeumann</tt>, <tt>Moore</tt>,
 <tt>hexagonal</tt>, <tt>oneDimensional</tt>.</li> Other neighborhoods are
-supported through emulation, using <a href="open:Scripts/Python/RuleTableToTree.py">RuleTableToTree.py</a>,
-see the <a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">RoadMap</a> for a full list.
+supported through emulation, using
+<a href="open:Scripts/Python/Rule-Generators/RuleTableToTree.py">RuleTableToTree.py</a>,
+see the <a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">RoadMap</a>
+for a full list.
 
 <li><b><tt>symmetries:</tt></b> can be <tt>none</tt>, <tt>permute</tt> or one of the symmetries
-supported for the neighborhood you have chosen. For a full list, see the <a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">RoadMap</a>.
+supported for the neighborhood you have chosen. For a full list, see the
+<a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">RoadMap</a>.
 </ul>
 
 <p>
@@ -392,19 +395,20 @@ Transition lines should have states or variables separated by commas.
 If there are no variables and <tt>n_states</tt>&lt;11 then the commas can be
 omitted. Only one transition (or variable) should appear on each line.
 Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighborhood,
-C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighborhood, C,N,NE,E,S,SW,W,C' for the hexagonal
-neighborhood, and C,W,E,C' for the oneDimensional neighborhood.
+C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighborhood, C,N,NE,E,S,SW,W,C' for the
+hexagonal neighborhood, and C,W,E,C' for the oneDimensional neighborhood.
 
 <p>
 Where the same variable appears more than once in a transition, it stands
-for the same state each time. For example, the transition in the example above expands to the following:
+for the same state each time. For example, the transition in the example above
+expands to the following:
 <tt>20212->2</tt>, <tt>20213->2</tt>, <tt>20312->3</tt>, <tt>20313->3</tt>,
 <tt>30212->2</tt>, <tt>30213->2</tt>, <tt>30312->3</tt>, <tt>30313->3</tt>, and
 all 90-degree rotations of those (because of the <tt>rotate4</tt> symmetry).
 
 <p>A transition can have a variable as its output
-(C') if that variable appears more than once in the transition (as in the example above), so that it has a
-definite value.
+(C') if that variable appears more than once in the transition (as in the example above),
+so that it has a definite value.
 
 <p>
 Rule tables usually don't specify every possible set of inputs. For those
