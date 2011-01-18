@@ -56,6 +56,7 @@ bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
 bool allowcheck;           // allow event checking?
 wxString scripterr;        // Perl/Python error message
+wxString mousepos;         // current mouse position
 
 // local globals:
 static bool plscript = false;     // a Perl script is running?

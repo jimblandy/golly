@@ -154,13 +154,13 @@ void StatusBar::UpdateXYLocation()
 
 void StatusBar::CheckMouseLocation(bool active)
 {
-   if (statusht == 0)
-      return;
+   if (statusht == 0 && !inscript) return;
 
    if ( !active ) {
       // main window is not in front so clear XY location
       showxy = false;
-      UpdateXYLocation();
+      if (statusht > 0) UpdateXYLocation();
+      if (inscript) mousepos = wxEmptyString;
       return;
    }
 
@@ -172,15 +172,21 @@ void StatusBar::CheckMouseLocation(bool active)
          currx = xpos;
          curry = ypos;
          showxy = true;
-         UpdateXYLocation();
+         if (statusht > 0) UpdateXYLocation();
       } else if (!showxy) {
          showxy = true;
-         UpdateXYLocation();
+         if (statusht > 0) UpdateXYLocation();
+      }
+      if (inscript) {
+         mousepos = wxString(xpos.tostring('\0'), wxConvLocal);
+         mousepos += wxT(" ");
+         mousepos += wxString(ypos.tostring('\0'), wxConvLocal);
       }
    } else {
       // outside viewport so clear XY location
       showxy = false;
-      UpdateXYLocation();
+      if (statusht > 0) UpdateXYLocation();
+      if (inscript) mousepos = wxEmptyString;
    }
 }
 
@@ -399,7 +405,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             ypos = temp;
          }
          strbuf += Stringify(xpos);
-         strbuf += _(" ");
+         strbuf += wxT(" ");
          strbuf += Stringify(ypos);
       }
       DisplayText(dc, strbuf, h_xy, BASELINE1);

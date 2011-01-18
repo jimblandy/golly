@@ -2043,6 +2043,20 @@ static PyObject* py_numalgos(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_getxy(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   statusptr->CheckMouseLocation(mainptr->IsActive());   // sets mousepos
+   
+   return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2874,6 +2888,7 @@ static PyMethodDef py_methods[] = {
    { "getwidth",     py_getwidth,   METH_VARARGS, "return width of universe (0 if unbounded)" },
    { "getheight",    py_getheight,  METH_VARARGS, "return height of universe (0 if unbounded)" },
    // viewing
+   { "getxy",        py_getxy,      METH_VARARGS, "return current cell location of mouse" },
    { "setpos",       py_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       py_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
    { "setmag",       py_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },

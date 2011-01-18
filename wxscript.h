@@ -67,6 +67,7 @@ void FinishScripting();
 extern bool autoupdate;       // update display after changing current universe?
 extern bool allowcheck;       // allow event checking?
 extern wxString scripterr;    // Perl/Python error message
+extern wxString mousepos;     // current mouse position
 
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 // special message used to indicate that the script was aborted
