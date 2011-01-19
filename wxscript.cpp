@@ -59,13 +59,14 @@ wxString scripterr;        // Perl/Python error message
 wxString mousepos;         // current mouse position
 
 // local globals:
-static bool plscript = false;     // a Perl script is running?
-static bool pyscript = false;     // a Python script is running?
-static bool showtitle;            // need to update window title?
-static bool updateedit;           // need to update edit bar?
-static bool exitcalled;           // GSF_exit was called?
-static wxString scriptchars;      // non-escape chars saved by PassKeyToScript
-static wxString scriptloc;        // location of script file
+static bool plscript = false;       // a Perl script is running?
+static bool pyscript = false;       // a Python script is running?
+static bool showtitle;              // need to update window title?
+static bool updateedit;             // need to update edit bar?
+static bool exitcalled;             // GSF_exit was called?
+static wxString scriptchars;        // non-escape chars saved by PassKeyToScript
+static wxString scriptloc;          // location of script file
+static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events 
 
 // -----------------------------------------------------------------------------
 
@@ -1004,9 +1005,100 @@ bool GSF_getcolor(char* colname, wxColor& color)
 
 // -----------------------------------------------------------------------------
 
+void GSF_getevent(wxString& event)
+{
+   if (eventqueue.IsEmpty()) {
+      event = wxEmptyString;
+   } else {
+      // get event at start of queue, then remove it
+      event = eventqueue[0];
+      eventqueue.RemoveAt(0);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+bool GSF_doevent(const wxString& event)
+{
+   if (event.length() > 0) {
+      if (event.StartsWith(wxT("key"))) {
+         // parse event string like "key x altctrlshift"
+         int key = event[4];
+         if (event[5] != ' ') {
+            // parse special char name like space, tab, etc
+            // must match reverse conversion in PassKeyToScript
+            if (event.Contains(wxT("space")))      key = ' '; else
+            if (event.Contains(wxT("home")))       key = WXK_HOME; else
+            if (event.Contains(wxT("end")))        key = WXK_END; else
+            if (event.Contains(wxT("pageup")))     key = WXK_PAGEUP; else
+            if (event.Contains(wxT("pagedown")))   key = WXK_PAGEDOWN; else
+            if (event.Contains(wxT("help")))       key = WXK_HELP; else
+            if (event.Contains(wxT("insert")))     key = WXK_INSERT; else
+            if (event.Contains(wxT("delete")))     key = WXK_DELETE; else
+            if (event.Contains(wxT("tab")))        key = WXK_TAB; else
+            if (event.Contains(wxT("enter")))      key = WXK_RETURN; else
+            if (event.Contains(wxT("return")))     key = WXK_RETURN; else
+            if (event.Contains(wxT("left")))       key = WXK_LEFT; else
+            if (event.Contains(wxT("right")))      key = WXK_RIGHT; else
+            if (event.Contains(wxT("up")))         key = WXK_UP; else
+            if (event.Contains(wxT("down")))       key = WXK_DOWN; else
+            return false;  // unknown key code
+         }
+         
+         int modifiers = wxMOD_NONE;
+         if (!event.EndsWith(wxT("none"))) {
+            if (event.Contains(wxT("alt"))) modifiers |= wxMOD_ALT;
+            if (event.Contains(wxT("ctrl"))) modifiers |= wxMOD_CONTROL;
+            if (event.Contains(wxT("shift"))) modifiers |= wxMOD_SHIFT;
+            if (event.Contains(wxT("meta"))) modifiers |= wxMOD_META;
+         }
+
+         viewptr->ProcessKey(key, modifiers);
+         mainptr->UpdateUserInterface(mainptr->IsActive());
+   
+         // update viewport, status bar, scroll bars, etc
+         inscript = false;
+         mainptr->UpdatePatternAndStatus();
+         bigview->UpdateScrollBars();
+         if (showtitle) {
+            mainptr->SetWindowTitle(wxEmptyString);
+            showtitle = false;
+         }
+         inscript = true;
+         
+      } else if (event.StartsWith(wxT("click"))) {
+         // parse event string like "click 10 20 left altctrlshiftmeta"
+         // !!!
+         
+         // PROBLEM: x,y below are pixel coords, NOT cell coords!!!
+         // viewptr->ProcessClick(x, y, event.Contains(wxT("shift")));
+         mainptr->UpdateUserInterface(mainptr->IsActive());
+   
+         // update viewport, status bar, scroll bars, etc
+         inscript = false;
+         mainptr->UpdatePatternAndStatus();
+         bigview->UpdateScrollBars();
+         if (showtitle) {
+            mainptr->SetWindowTitle(wxEmptyString);
+            showtitle = false;
+         }
+         inscript = true;
+         
+      } else {
+         // unknown event
+         return false;
+      }
+   }
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+// the following is deprecated (use GSF_getevent)
+
 void GSF_getkey(char* s)
 {
-   if (scriptchars.Length() == 0) {
+   if (scriptchars.length() == 0) {
       // return empty string
       s[0] = '\0';
    } else {
@@ -1019,10 +1111,7 @@ void GSF_getkey(char* s)
 
 // -----------------------------------------------------------------------------
 
-// also allow mouse interaction??? ie. g.doclick( g.getclick() ) where
-// getclick returns [] or [x,y,button,modifiers];
-// or maybe it would be better to implement Perl/Python callback routines
-// like OnKey and OnClick that a script can override???
+// the following is deprecated (use GSF_doevent)
 
 void GSF_dokey(char* ascii)
 {
@@ -1043,8 +1132,7 @@ void GSF_dokey(char* ascii)
          default:    key = *ascii;
       }
 
-      // can we handle modifiers and be backward compatible???
-      // or do we need new getmodkey & domodkey commands???
+      // we can't handle modifiers here
       viewptr->ProcessKey(key, wxMOD_NONE);
 
       // see any cursor change, including in edit bar
@@ -1194,6 +1282,7 @@ void RunScript(const wxString& filename)
       statusptr->ClearMessage();
       scripterr.Clear();
       scriptchars.Clear();
+      eventqueue.Clear();
       canswitch = false;
       stop_after_script = false;
       autoupdate = false;
@@ -1343,7 +1432,38 @@ void RunScript(const wxString& filename)
 
 // -----------------------------------------------------------------------------
 
-void PassKeyToScript(int key)
+static void AppendModifiers(int modifiers, wxString& eventinfo)
+{
+   if (modifiers == wxMOD_NONE) {
+      eventinfo += wxT("none");
+   } else {
+      if (modifiers & wxMOD_ALT) eventinfo += wxT("alt");
+      if (modifiers & wxMOD_CONTROL) eventinfo += wxT("ctrl");
+      if (modifiers & wxMOD_SHIFT) eventinfo += wxT("shift");
+      if (modifiers & wxMOD_META) eventinfo += wxT("meta");
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+void PassClickToScript(const bigint& x, const bigint& y, int button, int modifiers)
+{
+   // build a string like "click 10 20 left altctrlshift" and add to event queue
+   // for possible consumption by GSF_getevent
+   wxString clickinfo = wxT("click ");
+   clickinfo += wxString(x.tostring('\0'),wxConvLocal);
+   clickinfo += wxT(" ");
+   clickinfo += wxString(y.tostring('\0'),wxConvLocal);
+   if (button == wxMOUSE_BTN_LEFT) clickinfo += wxT(" left ");
+   if (button == wxMOUSE_BTN_MIDDLE) clickinfo += wxT(" middle ");
+   if (button == wxMOUSE_BTN_RIGHT) clickinfo += wxT(" right ");
+   AppendModifiers(modifiers, clickinfo);
+   eventqueue.Add(clickinfo);
+}
+
+// -----------------------------------------------------------------------------
+
+void PassKeyToScript(int key, int modifiers)
 {
    if (key == WXK_ESCAPE) {
       if (mainptr->generating) {
@@ -1353,6 +1473,45 @@ void PassKeyToScript(int key)
       if (plscript) AbortPerlScript();
       if (pyscript) AbortPythonScript();
    } else {
+      // build a string like "key x altctrlshift" and add to event queue
+      // for possible consumption by GSF_getevent
+      wxString keyinfo = wxT("key ");
+      if (key > ' ' && key <= '~') {
+         // displayable ASCII
+         keyinfo += wxChar(key);
+      } else {
+         // convert some special key codes to names like space, tab, delete, etc
+         // (must match reverse conversion in GSF_doevent)
+         switch (key) {
+            case ' ':               keyinfo += wxT("space");      break;
+            case WXK_HOME:          keyinfo += wxT("home");       break;
+            case WXK_END:           keyinfo += wxT("end");        break;
+            case WXK_PAGEUP:        keyinfo += wxT("pageup");     break;
+            case WXK_PAGEDOWN:      keyinfo += wxT("pagedown");   break;
+            case WXK_HELP:          keyinfo += wxT("help");       break;
+            case WXK_INSERT:        keyinfo += wxT("insert");     break;
+            case WXK_BACK:          // treat backspace like delete
+            case WXK_DELETE:        keyinfo += wxT("delete");     break;
+            case WXK_TAB:           keyinfo += wxT("tab");        break;
+            case WXK_NUMPAD_ENTER:  // treat enter like return
+            case WXK_RETURN:        keyinfo += wxT("return");     break;
+            case WXK_LEFT:          keyinfo += wxT("left");       break;
+            case WXK_RIGHT:         keyinfo += wxT("right");      break;
+            case WXK_UP:            keyinfo += wxT("up");         break;
+            case WXK_DOWN:          keyinfo += wxT("down");       break;
+            case WXK_ADD:           keyinfo += wxT("+");          break;
+            case WXK_SUBTRACT:      keyinfo += wxT("-");          break;
+            case WXK_DIVIDE:        keyinfo += wxT("/");          break;
+            case WXK_MULTIPLY:      keyinfo += wxT("*");          break;
+            default:                return;  // ignore all other key codes
+         }
+      }
+      keyinfo += wxT(" ");
+      AppendModifiers(modifiers, keyinfo);
+      eventqueue.Add(keyinfo);
+   
+      // NOTE: following code is for deprecated getkey() command
+      
       // convert wx key code to corresponding ascii char (if possible)
       // so that scripts can be platform-independent;
       // note that GSF_dokey does the reverse conversion
@@ -1360,29 +1519,30 @@ void PassKeyToScript(int key)
       Warning(wxString::Format(_("key=%d ch=%c"), key, (char)key));
       */
       char ascii;
-      switch (key) {
-         case WXK_DELETE:     // treat delete like backspace
-         case WXK_BACK:       ascii = 8;     break;
-         case WXK_TAB:        ascii = 9;     break;
-         case WXK_NUMPAD_ENTER: // treat enter like return
-         case WXK_RETURN:     ascii = 13;    break;
-         case WXK_LEFT:       ascii = 28;    break;
-         case WXK_RIGHT:      ascii = 29;    break;
-         case WXK_UP:         ascii = 30;    break;
-         case WXK_DOWN:       ascii = 31;    break;
-         case WXK_ADD:        ascii = '+';   break;
-         case WXK_SUBTRACT:   ascii = '-';   break;
-         case WXK_DIVIDE:     ascii = '/';   break;
-         case WXK_MULTIPLY:   ascii = '*';   break;
-         // map F1..F12 to ascii 14..25???
-         default:
-            if (key >= ' ' && key <= '~') {
-               ascii = key;
-            } else {
-               // ignore all other key codes???
-               // or maybe allow codes < ' ' but ignore > '~'???
-               return;
-            }
+      if (key >= ' ' && key <= '~') {
+         if (modifiers == wxMOD_SHIFT && key >= 'a' && key <= 'z') {
+            // let script see A..Z
+            ascii = key - 32;
+         } else {
+            ascii = key;
+         }
+      } else {
+         switch (key) {
+            case WXK_DELETE:     // treat delete like backspace
+            case WXK_BACK:       ascii = 8;     break;
+            case WXK_TAB:        ascii = 9;     break;
+            case WXK_NUMPAD_ENTER: // treat enter like return
+            case WXK_RETURN:     ascii = 13;    break;
+            case WXK_LEFT:       ascii = 28;    break;
+            case WXK_RIGHT:      ascii = 29;    break;
+            case WXK_UP:         ascii = 30;    break;
+            case WXK_DOWN:       ascii = 31;    break;
+            case WXK_ADD:        ascii = '+';   break;
+            case WXK_SUBTRACT:   ascii = '-';   break;
+            case WXK_DIVIDE:     ascii = '/';   break;
+            case WXK_MULTIPLY:   ascii = '*';   break;
+            default:             return;  // ignore all other key codes
+         }
       }
       // save ascii char for possible consumption by GSF_getkey
       scriptchars += ascii;

@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection, etc
-#include "wxscript.h"      // for inscript, PassKeyToScript
+#include "wxscript.h"      // for inscript, PassKeyToScript, PassClickToScript
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
@@ -2474,12 +2474,7 @@ void PatternView::OnChar(wxKeyEvent& event)
 
    if (inscript) {
       // let script decide what to do with the key
-      if (mods == wxMOD_SHIFT && key >= 'a' && key <= 'z') {
-         // let script see A..Z
-         PassKeyToScript(key - 32);
-      } else {
-         PassKeyToScript(key);
-      }
+      PassKeyToScript(key, mods);
       return;
    }
 
@@ -2675,6 +2670,18 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 
 void PatternView::OnMouseDown(wxMouseEvent& event)
 {
+   if (inscript && PointInGrid(event.GetX(), event.GetY())) {
+      // let script decide what to do with the click
+      pair<bigint, bigint> cellpos = currlayer->view->at(event.GetX(), event.GetY());
+      int mods = wxMOD_NONE;
+      if (event.AltDown()) mods |= wxMOD_ALT;
+      if (event.ControlDown()) mods |= wxMOD_CONTROL;
+      if (event.ShiftDown()) mods |= wxMOD_SHIFT;
+      if (event.MetaDown()) mods |= wxMOD_META;
+      PassClickToScript(cellpos.first, cellpos.second, event.GetButton(), mods);
+      return;
+   }
+
    if (waitingforclick) {
       // save paste location
       pastex = event.GetX();

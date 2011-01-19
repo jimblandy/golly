@@ -2661,6 +2661,38 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_getevent(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   wxString event;
+   GSF_getevent(event);
+
+   return Py_BuildValue((char*)"s", (const char*)event.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_doevent(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+   char* event;
+
+   if (!PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
+
+   if (event[0] && !GSF_doevent(wxString(event,wxConvLocal))) {
+      PYTHON_ERROR("doevent error: unknown event.");
+   }
+
+   RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_getkey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2680,7 +2712,7 @@ static PyObject* py_dokey(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
-   char* ascii = 0;
+   char* ascii;
 
    if (!PyArg_ParseTuple(args, (char*)"s", &ascii)) return NULL;
 
@@ -2920,6 +2952,9 @@ static PyMethodDef py_methods[] = {
    { "setclipstr",   py_setclipstr, METH_VARARGS, "set the clipboard contents to a given string value" },
    { "getclipstr",   py_getclipstr, METH_VARARGS, "retrieve the contents of the clipboard as a string" },
    { "getstring",    py_getstring,  METH_VARARGS, "display dialog box to get string from user" },
+   { "getevent",     py_getevent,   METH_VARARGS, "return keyboard/mouse event or empty string if none" },
+   { "doevent",      py_doevent,    METH_VARARGS, "pass given keyboard/mouse event to Golly to handle" },
+   // next two are deprecated (use getevent and doevent)
    { "getkey",       py_getkey,     METH_VARARGS, "return key hit by user or empty string if none" },
    { "dokey",        py_dokey,      METH_VARARGS, "pass given key to Golly's standard key handler" },
    { "show",         py_show,       METH_VARARGS, "show given string in status bar" },

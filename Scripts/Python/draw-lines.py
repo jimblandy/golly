@@ -65,12 +65,11 @@ def drawlines():
    started = False
    oldmouse = ""
    while True:
-      # replace next line with event = g.getevent()!!!
-      key = g.getkey()
-      mousepos = g.getxy()
-      if key == 'l' and len(mousepos) > 0:
-         oldmouse = mousepos
-         x, y = mousepos.split()
+      event = g.getevent()
+      if event.startswith("click"):
+         # event is a string like "click 10 20 left altctrlshift"
+         evt, x, y, butt, mods = event.split()
+         oldmouse = x + ' ' + y
          if started:
             # draw permanent line from start pos to end pos
             endx = int(x)
@@ -91,8 +90,9 @@ def drawlines():
             started = True
             g.show("Click where to end this line (and start another line)...")
       else:
-         # replace next line with g.doevent(event)!!!
-         if len(key) > 0: g.dokey(key)
+         # event might be "" or "key m none"
+         if len(event) > 0: g.doevent(event)
+         mousepos = g.getxy()
          if started and len(mousepos) > 0 and mousepos != oldmouse:
             # mouse has moved, so erase old line (if any) and draw new line
             if len(oldline) > 0: eraseline(oldline)

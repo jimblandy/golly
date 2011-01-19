@@ -39,7 +39,10 @@ extern bool stop_after_script;
 void RunScript(const wxString& filename);
 // Run the given Perl or Python script.
 
-void PassKeyToScript(int key);
+void PassClickToScript(const bigint& x, const bigint& y, int button, int modifiers);
+// Called if a script is running and user clicks mouse.
+
+void PassKeyToScript(int key, int modifiers = 0);
 // Called if a script is running and user hits a key.
 // Can also be used to abort a script by passing WXK_ESCAPE.
 
@@ -97,6 +100,8 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol);
 bool GSF_getcolor(char* colname, wxColor& color);
 void GSF_setname(char* name, int index);
 void GSF_select(int x, int y, int wd, int ht);
+void GSF_getevent(wxString& event);
+bool GSF_doevent(const wxString& event);
 void GSF_getkey(char* s);
 void GSF_dokey(char* ascii);
 void GSF_update();
