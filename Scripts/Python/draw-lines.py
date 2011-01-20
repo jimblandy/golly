@@ -93,7 +93,13 @@ def drawlines():
          # event might be "" or "key m none"
          if len(event) > 0: g.doevent(event)
          mousepos = g.getxy()
-         if started and len(mousepos) > 0 and mousepos != oldmouse:
+         if started and len(mousepos) == 0:
+            # erase old line if mouse is not over grid
+            if len(oldline) > 0:
+               eraseline(oldline)
+               oldline = []
+               g.update()
+         elif started and len(mousepos) > 0 and mousepos != oldmouse:
             # mouse has moved, so erase old line (if any) and draw new line
             if len(oldline) > 0: eraseline(oldline)
             x, y = mousepos.split()

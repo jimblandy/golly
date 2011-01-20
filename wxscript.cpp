@@ -1022,7 +1022,7 @@ bool GSF_doevent(const wxString& event)
 {
    if (event.length() > 0) {
       if (event.StartsWith(wxT("key"))) {
-         // parse event string like "key x altctrlshift"
+         // parse event string like "key x altshift"
          int key = event[4];
          if (event[5] != ' ') {
             // parse special char name like space, tab, etc
@@ -1067,7 +1067,7 @@ bool GSF_doevent(const wxString& event)
          inscript = true;
          
       } else if (event.StartsWith(wxT("click"))) {
-         // parse event string like "click 10 20 left altctrlshiftmeta"
+         // parse event string like "click 10 20 left altshiftmeta"
          // !!!
          
          // PROBLEM: x,y below are pixel coords, NOT cell coords!!!
@@ -1448,7 +1448,7 @@ static void AppendModifiers(int modifiers, wxString& eventinfo)
 
 void PassClickToScript(const bigint& x, const bigint& y, int button, int modifiers)
 {
-   // build a string like "click 10 20 left altctrlshift" and add to event queue
+   // build a string like "click 10 20 left altshift" and add to event queue
    // for possible consumption by GSF_getevent
    wxString clickinfo = wxT("click ");
    clickinfo += wxString(x.tostring('\0'),wxConvLocal);
@@ -1473,7 +1473,7 @@ void PassKeyToScript(int key, int modifiers)
       if (plscript) AbortPerlScript();
       if (pyscript) AbortPythonScript();
    } else {
-      // build a string like "key x altctrlshift" and add to event queue
+      // build a string like "key x altshift" and add to event queue
       // for possible consumption by GSF_getevent
       wxString keyinfo = wxT("key ");
       if (key > ' ' && key <= '~') {

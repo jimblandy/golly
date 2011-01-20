@@ -2043,20 +2043,6 @@ static PyObject* py_numalgos(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
-static PyObject* py_getxy(PyObject* self, PyObject* args)
-{
-   if (PythonScriptAborted()) return NULL;
-   wxUnusedVar(self);
-
-   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
-
-   statusptr->CheckMouseLocation(mainptr->IsActive());   // sets mousepos
-   
-   return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(wxConvLocal));
-}
-
-// -----------------------------------------------------------------------------
-
 static PyObject* py_setpos(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2661,6 +2647,21 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_getxy(PyObject* self, PyObject* args)
+{
+   if (PythonScriptAborted()) return NULL;
+   wxUnusedVar(self);
+
+   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+   statusptr->CheckMouseLocation(mainptr->IsActive());   // sets mousepos
+   if (viewptr->showcontrols) mousepos = wxEmptyString;
+   
+   return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_getevent(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
@@ -2920,7 +2921,6 @@ static PyMethodDef py_methods[] = {
    { "getwidth",     py_getwidth,   METH_VARARGS, "return width of universe (0 if unbounded)" },
    { "getheight",    py_getheight,  METH_VARARGS, "return height of universe (0 if unbounded)" },
    // viewing
-   { "getxy",        py_getxy,      METH_VARARGS, "return current cell location of mouse" },
    { "setpos",       py_setpos,     METH_VARARGS, "move given cell to middle of viewport" },
    { "getpos",       py_getpos,     METH_VARARGS, "return x,y position of cell in middle of viewport" },
    { "setmag",       py_setmag,     METH_VARARGS, "set magnification (0=1:1, 1=1:2, -1=2:1, etc)" },
@@ -2952,6 +2952,7 @@ static PyMethodDef py_methods[] = {
    { "setclipstr",   py_setclipstr, METH_VARARGS, "set the clipboard contents to a given string value" },
    { "getclipstr",   py_getclipstr, METH_VARARGS, "retrieve the contents of the clipboard as a string" },
    { "getstring",    py_getstring,  METH_VARARGS, "display dialog box to get string from user" },
+   { "getxy",        py_getxy,      METH_VARARGS, "return current grid location of mouse" },
    { "getevent",     py_getevent,   METH_VARARGS, "return keyboard/mouse event or empty string if none" },
    { "doevent",      py_doevent,    METH_VARARGS, "pass given keyboard/mouse event to Golly to handle" },
    // next two are deprecated (use getevent and doevent)

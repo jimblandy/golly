@@ -2578,8 +2578,16 @@ void PatternView::ProcessClickedControl()
          PanSE();
          break;
       
-      default:    // should never happen
-         break;
+      default:
+         // should never happen
+         Warning(_("Bug detected in ProcessClickedControl!"));
+   }
+   
+   // need to update viewport and status bar if script is running
+   if (inscript) {
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      inscript = true;
    }
 }
 
@@ -2588,25 +2596,7 @@ void PatternView::ProcessClickedControl()
 void PatternView::ProcessClick(int x, int y, bool shiftdown)
 {
    // user has clicked x,y pixel in viewport
-   if (showcontrols) {
-      currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
-      if (currcontrol > NO_CONTROL) {
-         clickedcontrol = currcontrol;       // remember which control was clicked
-         clicktime = stopwatch->Time();      // remember when clicked (in millisecs)
-         CaptureMouse();                     // get mouse up event even if outside view
-         dragtimer->Start(DRAG_RATE);        // see OnDragTimer
-         RefreshRect(controlsrect, false);   // redraw clicked button
-         #ifdef __WXGTK__
-            // nicer to see change immediately on Linux
-            Update();
-         #endif
-         if (PANNING_CONTROL) {
-            // scroll immediately
-            ProcessClickedControl();
-         }
-      }
-   
-   } else if (currlayer->curs == curs_pencil) {
+   if (currlayer->curs == curs_pencil) {
       if (inscript) {
          // best not to clobber any status bar message displayed by script
          Warning(_("Drawing is not allowed while a script is running."));
@@ -2670,22 +2660,13 @@ void PatternView::ProcessClick(int x, int y, bool shiftdown)
 
 void PatternView::OnMouseDown(wxMouseEvent& event)
 {
-   if (inscript && PointInGrid(event.GetX(), event.GetY())) {
-      // let script decide what to do with the click
-      pair<bigint, bigint> cellpos = currlayer->view->at(event.GetX(), event.GetY());
-      int mods = wxMOD_NONE;
-      if (event.AltDown()) mods |= wxMOD_ALT;
-      if (event.ControlDown()) mods |= wxMOD_CONTROL;
-      if (event.ShiftDown()) mods |= wxMOD_SHIFT;
-      if (event.MetaDown()) mods |= wxMOD_META;
-      PassClickToScript(cellpos.first, cellpos.second, event.GetButton(), mods);
-      return;
-   }
+   int x = event.GetX();
+   int y = event.GetY();
 
    if (waitingforclick) {
       // save paste location
-      pastex = event.GetX();
-      pastey = event.GetY();
+      pastex = x;
+      pastey = y;
       waitingforclick = false;
    } else {
       statusptr->ClearMessage();
@@ -2701,8 +2682,42 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
          SwitchToClickedTile(tileindex);
          return;
       }
+
+      if (showcontrols) {
+         currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
+         if (currcontrol > NO_CONTROL) {
+            clickedcontrol = currcontrol;       // remember which control was clicked
+            clicktime = stopwatch->Time();      // remember when clicked (in millisecs)
+            CaptureMouse();                     // get mouse up event even if outside view
+            dragtimer->Start(DRAG_RATE);        // see OnDragTimer
+            RefreshRect(controlsrect, false);   // redraw clicked button
+            #ifdef __WXGTK__
+               // nicer to see change immediately on Linux
+               Update();
+            #endif
+            if (PANNING_CONTROL) {
+               // scroll immediately
+               ProcessClickedControl();
+            }
+         }
+         return;
+      }
+
+      if (inscript) {
+         if (PointInGrid(x, y)) {
+            // let script decide what to do with the click
+            pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+            int mods = wxMOD_NONE;
+            if (event.AltDown()) mods |= wxMOD_ALT;
+            if (event.ControlDown()) mods |= wxMOD_CONTROL;
+            if (event.ShiftDown()) mods |= wxMOD_SHIFT;
+            if (event.MetaDown()) mods |= wxMOD_META;
+            PassClickToScript(cellpos.first, cellpos.second, event.GetButton(), mods);
+         }
+         return;
+      }
       
-      ProcessClick(event.GetX(), event.GetY(), event.ShiftDown());
+      ProcessClick(x, y, event.ShiftDown());
       mainptr->UpdateUserInterface(mainptr->IsActive());
    }
 }

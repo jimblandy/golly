@@ -2842,6 +2842,55 @@ XS(pl_getstring)
 
 // -----------------------------------------------------------------------------
 
+XS(pl_getxy)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $string = g_getxy().");
+
+   statusptr->CheckMouseLocation(mainptr->IsActive());   // sets mousepos
+   if (viewptr->showcontrols) mousepos = wxEmptyString;
+
+   XSRETURN_PV((const char*)mousepos.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_getevent)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 0) PERL_ERROR("Usage: $string = g_getevent().");
+
+   wxString event;
+   GSF_getevent(event);
+
+   XSRETURN_PV((const char*)event.mb_str(wxConvLocal));
+}
+
+// -----------------------------------------------------------------------------
+
+XS(pl_doevent)
+{
+   IGNORE_UNUSED_PARAMS;
+   RETURN_IF_ABORTED;
+   dXSARGS;
+   if (items != 1) PERL_ERROR("Usage: g_doevent($string).");
+
+   STRLEN n_a;
+   char* event = SvPV(ST(0), n_a);
+
+   if (event[0] && !GSF_doevent(wxString(event,wxConvLocal))) {
+      PERL_ERROR("g_doevent error: unknown event.");
+   }
+
+   XSRETURN(0);
+}
+
+// -----------------------------------------------------------------------------
+
 XS(pl_getkey)
 {
    IGNORE_UNUSED_PARAMS;
@@ -3152,6 +3201,10 @@ EXTERN_C void xs_init(pTHX)
    newXS((char*)"g_setclipstr",   pl_setclipstr,   (char*)file);
    newXS((char*)"g_getclipstr",   pl_getclipstr,   (char*)file);
    newXS((char*)"g_getstring",    pl_getstring,    (char*)file);
+   newXS((char*)"g_getxy",        pl_getxy,        (char*)file);
+   newXS((char*)"g_getevent",     pl_getevent,     (char*)file);
+   newXS((char*)"g_doevent",      pl_doevent,      (char*)file);
+   // next two are deprecated (use g_getevent and g_doevent)
    newXS((char*)"g_getkey",       pl_getkey,       (char*)file);
    newXS((char*)"g_dokey",        pl_dokey,        (char*)file);
    newXS((char*)"g_show",         pl_show,         (char*)file);
