@@ -1021,10 +1021,22 @@ void GSF_getevent(wxString& event)
 bool GSF_doevent(const wxString& event)
 {
    if (event.length() > 0) {
-      if (event.StartsWith(wxT("key"))) {
+      if (event.StartsWith(wxT("key")) && event.length() > 7) {
          // parse event string like "key x altshift"
          int key = event[4];
-         if (event[5] != ' ') {
+         if (event[4] == 'f' && event[5] >= '1' && event[5] <= '9') {
+            // parse function key (f1 to f24)
+            if (event[6] == ' ') {
+               // f1 to f9
+               key = WXK_F1 + (event[5] - '1');
+            } else if (event[6] >= '0' && event[6] <= '9') {
+               // f10 to f24
+               key = WXK_F1 + 10 * (event[5] - '0') + (event[6] - '0') - 1;
+               if (key > WXK_F24) return false; // bad function key
+            } else {
+               return false; // bad function key
+            }
+         } else if (event[5] != ' ') {
             // parse special char name like space, tab, etc
             // must match reverse conversion in PassKeyToScript
             if (event.Contains(wxT("space")))      key = ' '; else
@@ -1047,10 +1059,12 @@ bool GSF_doevent(const wxString& event)
          
          int modifiers = wxMOD_NONE;
          if (!event.EndsWith(wxT("none"))) {
-            if (event.Contains(wxT("alt"))) modifiers |= wxMOD_ALT;
-            if (event.Contains(wxT("ctrl"))) modifiers |= wxMOD_CONTROL;
-            if (event.Contains(wxT("shift"))) modifiers |= wxMOD_SHIFT;
-            if (event.Contains(wxT("meta"))) modifiers |= wxMOD_META;
+            if (event.Contains(wxT("alt")))     modifiers |= wxMOD_ALT;
+            // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
+            if (event.Contains(wxT("cmd")))     modifiers |= wxMOD_CMD;
+            if (event.Contains(wxT("ctrl")))    modifiers |= wxMOD_CONTROL;
+            if (event.Contains(wxT("meta")))    modifiers |= wxMOD_META;
+            if (event.Contains(wxT("shift")))   modifiers |= wxMOD_SHIFT;
          }
 
          viewptr->ProcessKey(key, modifiers);
@@ -1067,7 +1081,7 @@ bool GSF_doevent(const wxString& event)
          inscript = true;
          
       } else if (event.StartsWith(wxT("click"))) {
-         // parse event string like "click 10 20 left altshiftmeta"
+         // parse event string like "click 10 20 left altshift"
          // !!!
          
          // PROBLEM: x,y below are pixel coords, NOT cell coords!!!
@@ -1437,10 +1451,16 @@ static void AppendModifiers(int modifiers, wxString& eventinfo)
    if (modifiers == wxMOD_NONE) {
       eventinfo += wxT("none");
    } else {
-      if (modifiers & wxMOD_ALT) eventinfo += wxT("alt");
-      if (modifiers & wxMOD_CONTROL) eventinfo += wxT("ctrl");
-      if (modifiers & wxMOD_SHIFT) eventinfo += wxT("shift");
-      if (modifiers & wxMOD_META) eventinfo += wxT("meta");
+      if (modifiers & wxMOD_ALT)       eventinfo += wxT("alt");
+      // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
+      #ifdef __WXMAC__
+         if (modifiers & wxMOD_CMD)       eventinfo += wxT("cmd");
+         if (modifiers & wxMOD_CONTROL)   eventinfo += wxT("ctrl");
+      #else
+         if (modifiers & wxMOD_CMD)       eventinfo += wxT("ctrl");
+         if (modifiers & wxMOD_META)      eventinfo += wxT("meta");
+      #endif
+      if (modifiers & wxMOD_SHIFT)     eventinfo += wxT("shift");
    }
 }
 
@@ -1454,9 +1474,9 @@ void PassClickToScript(const bigint& x, const bigint& y, int button, int modifie
    clickinfo += wxString(x.tostring('\0'),wxConvLocal);
    clickinfo += wxT(" ");
    clickinfo += wxString(y.tostring('\0'),wxConvLocal);
-   if (button == wxMOUSE_BTN_LEFT) clickinfo += wxT(" left ");
-   if (button == wxMOUSE_BTN_MIDDLE) clickinfo += wxT(" middle ");
-   if (button == wxMOUSE_BTN_RIGHT) clickinfo += wxT(" right ");
+   if (button == wxMOUSE_BTN_LEFT)     clickinfo += wxT(" left ");
+   if (button == wxMOUSE_BTN_MIDDLE)   clickinfo += wxT(" middle ");
+   if (button == wxMOUSE_BTN_RIGHT)    clickinfo += wxT(" right ");
    AppendModifiers(modifiers, clickinfo);
    eventqueue.Add(clickinfo);
 }
@@ -1479,6 +1499,9 @@ void PassKeyToScript(int key, int modifiers)
       if (key > ' ' && key <= '~') {
          // displayable ASCII
          keyinfo += wxChar(key);
+      } else if (key >= WXK_F1 && key <= WXK_F24) {
+         // function key
+         keyinfo += wxString::Format(wxT("f%d"), key - WXK_F1 + 1);
       } else {
          // convert some special key codes to names like space, tab, delete, etc
          // (must match reverse conversion in GSF_doevent)

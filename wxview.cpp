@@ -2708,10 +2708,11 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
             // let script decide what to do with the click
             pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
             int mods = wxMOD_NONE;
-            if (event.AltDown()) mods |= wxMOD_ALT;
-            if (event.ControlDown()) mods |= wxMOD_CONTROL;
-            if (event.ShiftDown()) mods |= wxMOD_SHIFT;
-            if (event.MetaDown()) mods |= wxMOD_META;
+            if (event.AltDown())       mods |= wxMOD_ALT;
+            if (event.CmdDown())       mods |= wxMOD_CMD;      // wxMOD_META on Mac, wxMOD_CONTROL on Win/Linux
+            if (event.ControlDown())   mods |= wxMOD_CONTROL;
+            if (event.MetaDown())      mods |= wxMOD_META;
+            if (event.ShiftDown())     mods |= wxMOD_SHIFT;
             PassClickToScript(cellpos.first, cellpos.second, event.GetButton(), mods);
          }
          return;
