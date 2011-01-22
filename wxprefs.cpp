@@ -218,7 +218,7 @@ int newcursindex;
 int opencursindex;
 
 // set of modifier keys (note that MSVC didn't like MK_*)
-const int mk_META    = 1;        // command key on Mac, control key on Win/Linux
+const int mk_CMD     = 1;        // command key on Mac, control key on Win/Linux
 const int mk_ALT     = 2;        // option key on Mac
 const int mk_SHIFT   = 4;
 #ifdef __WXMAC__
@@ -286,7 +286,7 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
    // first convert given wx modifiers (set by wxKeyEvent::GetModifiers)
    // to a corresponding set of mk_* values
    int ourmods = 0;
-   if (wxmods & wxMOD_CMD)       ourmods |= mk_META;
+   if (wxmods & wxMOD_CMD)       ourmods |= mk_CMD;
    if (wxmods & wxMOD_ALT)       ourmods |= mk_ALT;
    if (wxmods & wxMOD_SHIFT)     ourmods |= mk_SHIFT;
 #ifdef __WXMAC__
@@ -368,41 +368,41 @@ void AddDefaultKeyActions()
    keyaction[(int)'l'][mk_ALT].file =     wxT("Help/Lexicon/lex.htm");
 
    // File menu
-   keyaction[(int)'n'][mk_META].id =   DO_NEWPATT;
-   keyaction[(int)'o'][mk_META].id =   DO_OPENPATT;
-   keyaction[(int)'o'][mk_SHIFT+mk_META].id = DO_OPENCLIP;
-   keyaction[(int)'s'][mk_META].id =   DO_SAVE;
+   keyaction[(int)'n'][mk_CMD].id =    DO_NEWPATT;
+   keyaction[(int)'o'][mk_CMD].id =    DO_OPENPATT;
+   keyaction[(int)'o'][mk_SHIFT+mk_CMD].id = DO_OPENCLIP;
+   keyaction[(int)'s'][mk_CMD].id =    DO_SAVE;
    keyaction[(int)'p'][0].id =         DO_PATTERNS;
-   keyaction[(int)'p'][mk_META].id =   DO_PATTERNS;
+   keyaction[(int)'p'][mk_CMD].id =    DO_PATTERNS;
    keyaction[(int)'p'][mk_SHIFT].id =  DO_SCRIPTS;
-   keyaction[(int)'p'][mk_SHIFT+mk_META].id = DO_SCRIPTS;
+   keyaction[(int)'p'][mk_SHIFT+mk_CMD].id = DO_SCRIPTS;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
-   keyaction[(int)','][mk_META].id =   DO_PREFS;
+   keyaction[(int)','][mk_CMD].id =    DO_PREFS;
 #endif
    keyaction[(int)','][0].id =         DO_PREFS;
-   keyaction[(int)'q'][mk_META].id =   DO_QUIT;
+   keyaction[(int)'q'][mk_CMD].id =    DO_QUIT;
 
    // Edit menu
    keyaction[(int)'z'][0].id =         DO_UNDO;
-   keyaction[(int)'z'][mk_META].id =   DO_UNDO;
+   keyaction[(int)'z'][mk_CMD].id =    DO_UNDO;
    keyaction[(int)'z'][mk_SHIFT].id =  DO_REDO;
-   keyaction[(int)'z'][mk_SHIFT+mk_META].id = DO_REDO;
-   keyaction[(int)'x'][mk_META].id =   DO_CUT;
-   keyaction[(int)'c'][mk_META].id =   DO_COPY;
+   keyaction[(int)'z'][mk_SHIFT+mk_CMD].id = DO_REDO;
+   keyaction[(int)'x'][mk_CMD].id =    DO_CUT;
+   keyaction[(int)'c'][mk_CMD].id =    DO_COPY;
    keyaction[IK_DELETE][0].id =        DO_CLEAR;
    keyaction[IK_DELETE][mk_SHIFT].id = DO_CLEAROUT;
    keyaction[(int)'v'][0].id =         DO_PASTE;
-   keyaction[(int)'v'][mk_META].id =   DO_PASTE;
+   keyaction[(int)'v'][mk_CMD].id =    DO_PASTE;
    keyaction[(int)'m'][mk_SHIFT].id =  DO_PASTEMODE;
    keyaction[(int)'l'][mk_SHIFT].id =  DO_PASTELOC;
    keyaction[(int)'a'][0].id =         DO_SELALL;
-   keyaction[(int)'a'][mk_META].id =   DO_SELALL;
+   keyaction[(int)'a'][mk_CMD].id =    DO_SELALL;
    keyaction[(int)'k'][0].id =         DO_REMOVESEL;
-   keyaction[(int)'k'][mk_META].id =   DO_REMOVESEL;
+   keyaction[(int)'k'][mk_CMD].id =    DO_REMOVESEL;
    keyaction[(int)'s'][0].id =         DO_SHRINKFIT;
-   keyaction[(int)'5'][mk_META].id =   DO_RANDFILL;
+   keyaction[(int)'5'][mk_CMD].id =    DO_RANDFILL;
    keyaction[(int)'y'][0].id =         DO_FLIPTB;
    keyaction[(int)'x'][0].id =         DO_FLIPLR;
    keyaction[(int)'>'][0].id =         DO_ROTATECW;
@@ -419,7 +419,7 @@ void AddDefaultKeyActions()
    keyaction[IK_RETURN][0].id =        DO_STARTSTOP;
    keyaction[(int)' '][0].id =         DO_NEXTGEN;
    keyaction[IK_TAB][0].id =           DO_NEXTSTEP;
-   keyaction[(int)'r'][mk_META].id =   DO_RESET;
+   keyaction[(int)'r'][mk_CMD].id =    DO_RESET;
    keyaction[(int)'+'][0].id =         DO_FASTER;
    keyaction[(int)'+'][mk_SHIFT].id =  DO_FASTER;
    keyaction[(int)'='][0].id =         DO_FASTER;
@@ -427,13 +427,13 @@ void AddDefaultKeyActions()
    keyaction[(int)'_'][mk_SHIFT].id =  DO_SLOWER;
    keyaction[(int)'-'][0].id =         DO_SLOWER;
    keyaction[(int)'t'][0].id =         DO_AUTOFIT;
-   keyaction[(int)'t'][mk_META].id =   DO_AUTOFIT;
-   keyaction[(int)'u'][mk_META].id =   DO_HASHING;
+   keyaction[(int)'t'][mk_CMD].id =    DO_AUTOFIT;
+   keyaction[(int)'u'][mk_CMD].id =    DO_HASHING;
 #ifdef __WXMAC__
    keyaction[(int)' '][mk_CTRL].id =   DO_ADVANCE;
 #else
-   // on Windows/Linux mk_META is control key
-   keyaction[(int)' '][mk_META].id =   DO_ADVANCE;
+   // on Windows/Linux mk_CMD is control key
+   keyaction[(int)' '][mk_CMD].id =    DO_ADVANCE;
 #endif
    keyaction[(int)' '][mk_SHIFT].id =  DO_ADVANCEOUT;
    keyaction[(int)'t'][mk_SHIFT].id =  DO_TIMING;
@@ -445,21 +445,21 @@ void AddDefaultKeyActions()
    keyaction[IK_DOWN][0].id =          DO_DOWN;
    keyaction[IK_F1+10][0].id =         DO_FULLSCREEN;
    keyaction[(int)'f'][0].id =         DO_FIT;
-   keyaction[(int)'f'][mk_META].id =   DO_FIT;
+   keyaction[(int)'f'][mk_CMD].id =    DO_FIT;
    keyaction[(int)'f'][mk_SHIFT].id =  DO_FITSEL;
-   keyaction[(int)'f'][mk_SHIFT+mk_META].id = DO_FITSEL;
+   keyaction[(int)'f'][mk_SHIFT+mk_CMD].id = DO_FITSEL;
    keyaction[(int)'m'][0].id =         DO_MIDDLE;
-   keyaction[(int)'m'][mk_META].id =   DO_MIDDLE;
+   keyaction[(int)'m'][mk_CMD].id =    DO_MIDDLE;
    keyaction[(int)'0'][0].id =         DO_CHANGE00;
    keyaction[(int)'9'][0].id =         DO_RESTORE00;
-   keyaction[(int)'9'][mk_META].id =   DO_RESTORE00;
+   keyaction[(int)'9'][mk_CMD].id =    DO_RESTORE00;
    keyaction[(int)']'][0].id =         DO_ZOOMIN;
    keyaction[(int)'['][0].id =         DO_ZOOMOUT;
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
-   keyaction[(int)']'][mk_META].id =   DO_ZOOMIN;
-   keyaction[(int)'['][mk_META].id =   DO_ZOOMOUT;
+   keyaction[(int)']'][mk_CMD].id =    DO_ZOOMIN;
+   keyaction[(int)'['][mk_CMD].id =    DO_ZOOMOUT;
 #endif
    keyaction[(int)'1'][0].id =         DO_SCALE1;
    keyaction[(int)'2'][0].id =         DO_SCALE2;
@@ -474,20 +474,20 @@ void AddDefaultKeyActions()
 #ifdef __WXMSW__
    // Windows does not support ctrl+non-alphanumeric
 #else
-   keyaction[(int)'\''][mk_META].id =  DO_SHOWTOOL;
-   keyaction[(int)'\\'][mk_META].id =  DO_SHOWLAYER;
-   keyaction[(int)'/'][mk_META].id =   DO_SHOWEDIT;
-   keyaction[(int)'.'][mk_META].id =   DO_SHOWSTATES;
-   keyaction[(int)';'][mk_META].id =   DO_SHOWSTATUS;
+   keyaction[(int)'\''][mk_CMD].id =   DO_SHOWTOOL;
+   keyaction[(int)'\\'][mk_CMD].id =   DO_SHOWLAYER;
+   keyaction[(int)'/'][mk_CMD].id =    DO_SHOWEDIT;
+   keyaction[(int)'.'][mk_CMD].id =    DO_SHOWSTATES;
+   keyaction[(int)';'][mk_CMD].id =    DO_SHOWSTATUS;
 #endif
    keyaction[(int)'e'][0].id =         DO_SHOWEXACT;
-   keyaction[(int)'e'][mk_META].id =   DO_SHOWEXACT;
+   keyaction[(int)'e'][mk_CMD].id =    DO_SHOWEXACT;
    keyaction[(int)'l'][0].id =         DO_SHOWGRID;
-   keyaction[(int)'l'][mk_META].id =   DO_SHOWGRID;
+   keyaction[(int)'l'][mk_CMD].id =    DO_SHOWGRID;
    keyaction[(int)'b'][0].id =         DO_INVERT;
-   keyaction[(int)'b'][mk_META].id =   DO_INVERT;
+   keyaction[(int)'b'][mk_CMD].id =    DO_INVERT;
    keyaction[(int)'i'][0].id =         DO_INFO;
-   keyaction[(int)'i'][mk_META].id =   DO_INFO;
+   keyaction[(int)'i'][mk_CMD].id =    DO_INFO;
 
    // Layer menu
    // none
@@ -498,9 +498,9 @@ void AddDefaultKeyActions()
    keyaction[IK_HELP][0].id =          DO_HELP;
 #ifdef __WXMAC__
    // cmd-? is the usual shortcut in Mac apps
-   keyaction[(int)'?'][mk_META].id =   DO_HELP;
+   keyaction[(int)'?'][mk_CMD].id =    DO_HELP;
    //!!! but wxMac can only detect shift+cmd+/ so we have to assume '?' is above '/' -- yuk
-   keyaction[(int)'/'][mk_SHIFT+mk_META].id = DO_HELP;
+   keyaction[(int)'/'][mk_SHIFT+mk_CMD].id = DO_HELP;
 #else
    // F1 is the usual shortcut in Win/Linux apps
    keyaction[IK_F1][0].id =            DO_HELP;
@@ -722,11 +722,11 @@ void GetKeyAction(char* value)
          char oldp = *p;
          *p = 0;
          #ifdef __WXMAC__
-            if      (ISTRCMP(start, "cmd") == 0)   modset |= mk_META;
+            if      (ISTRCMP(start, "cmd") == 0)   modset |= mk_CMD;
             else if (ISTRCMP(start, "opt") == 0)   modset |= mk_ALT;
             else if (ISTRCMP(start, "ctrl") == 0)  modset |= mk_CTRL;
          #else
-            if      (ISTRCMP(start, "ctrl") == 0)  modset |= mk_META;
+            if      (ISTRCMP(start, "ctrl") == 0)  modset |= mk_CMD;
             else if (ISTRCMP(start, "alt") == 0)   modset |= mk_ALT;
          #endif
          else if    (ISTRCMP(start, "shift") == 0) modset |= mk_SHIFT;
@@ -784,11 +784,11 @@ wxString GetKeyCombo(int key, int modset)
    if (mk_ALT & modset)    result += wxT("Option-");
    if (mk_SHIFT & modset)  result += wxT("Shift-");
    if (mk_CTRL & modset)   result += wxT("Control-");
-   if (mk_META & modset)   result += wxT("Command-");
+   if (mk_CMD & modset)    result += wxT("Command-");
 #else
    if (mk_ALT & modset)    result += wxT("Alt+");
    if (mk_SHIFT & modset)  result += wxT("Shift+");
-   if (mk_META & modset)   result += wxT("Control+");
+   if (mk_CMD & modset)    result += wxT("Control+");
 #endif
 
    if (key >= IK_F1 && key <= IK_F24) {
@@ -895,11 +895,11 @@ wxString GetModifiers(int modset)
    if (mk_ALT & modset)    modkeys += wxT("+opt");
    if (mk_SHIFT & modset)  modkeys += wxT("+shift");
    if (mk_CTRL & modset)   modkeys += wxT("+ctrl");
-   if (mk_META & modset)   modkeys += wxT("+cmd");
+   if (mk_CMD & modset)    modkeys += wxT("+cmd");
 #else
    if (mk_ALT & modset)    modkeys += wxT("+alt");
    if (mk_SHIFT & modset)  modkeys += wxT("+shift");
-   if (mk_META & modset)   modkeys += wxT("+ctrl");
+   if (mk_CMD & modset)    modkeys += wxT("+ctrl");
 #endif
    return modkeys;
 }
@@ -1004,7 +1004,7 @@ void UpdateAcceleratorStrings()
                key == IK_TAB ||
                key == IK_RETURN;
             #ifdef __WXMSW__
-            if (modset & mk_META) {
+            if (modset & mk_CMD) {
                // Windows only allows Ctrl+alphanumeric
                validaccel = (key >= 'a' && key <= 'z') || (key >= '0' && key <= '9');
             }
@@ -1012,7 +1012,7 @@ void UpdateAcceleratorStrings()
             
             if (validaccel) {
                accelerator[action] = wxT("\t");
-               if (modset & mk_META) accelerator[action] += wxT("Ctrl+");
+               if (modset & mk_CMD) accelerator[action] += wxT("Ctrl+");
                if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
                if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
                #ifdef __WXMAC__
@@ -1037,7 +1037,7 @@ void UpdateAcceleratorStrings()
       for (int modset = 0; modset < MAX_MODS; modset++) {
          action_info info = keyaction[key][modset];
          action_id action = info.id;
-         if (action != DO_NOTHING && (modset & mk_META)
+         if (action != DO_NOTHING && (modset & mk_CMD)
                #ifdef __WXMSW__
                // Windows only allows Ctrl+alphanumeric
                && ((key >= 'a' && key <= 'z') || (key >= '0' && key <= '9'))
@@ -1086,14 +1086,11 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
    
    if (inscript) {
       // RunScript has called mainptr->UpdateMenuAccelerators()
-      // so remove non-ctrl/non-func key accelerator from menu item
-      // to allow keys like tab/enter/space to be passed to script
-      // even if menu item is disabled
+      // so remove accelerator from menu item to allow keyboard shortcuts
+      // to be passed to script
       if (accel.IsEmpty()) return;
-      int Fpos = accel.Find('F');
-      if ( accel.Find(wxT("Ctrl")) != wxNOT_FOUND ||
-           (Fpos != wxNOT_FOUND && accel[Fpos+1] >= '1' && accel[Fpos+1] <= '9') ) {
-         // no need to change accelerator
+      if (action == DO_STARTSTOP) {
+         // don't remove Escape from "Stop Script" menu item
          return;
       } else {
          accel = wxEmptyString;
@@ -1101,6 +1098,7 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
    } else if (viewptr->waitingforclick) {
       // PatternView::PasteTemporaryToCurrent has called mainptr->UpdateMenuAccelerators()
       // so remove accelerator to allow keyboard shortcuts while waiting for paste click
+      if (accel.IsEmpty()) return;
       accel = wxEmptyString;
    }
 
@@ -2582,7 +2580,7 @@ static size_t currpage = 0;      // current page in PrefsDialog
 
 // these are global so we can remember current key combination
 static int currkey = ' ';
-static int currmods = mk_ALT + mk_SHIFT + mk_META;
+static int currmods = mk_ALT + mk_SHIFT + mk_CMD;
 
 // -----------------------------------------------------------------------------
 

@@ -1386,9 +1386,8 @@ void RunScript(const wxString& filename)
    
       mainptr->UpdateUserInterface(mainptr->IsActive());
 
-      // temporarily clear non-ctrl and non-func key accelerators from
-      // menu items so keys like tab/enter/space can be passed to script
-      // even if menu item is disabled
+      // temporarily remove accelerators from all menu items
+      // so keyboard shortcuts can be passed to script
       mainptr->UpdateMenuAccelerators();
    }
 
