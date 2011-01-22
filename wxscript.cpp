@@ -227,11 +227,7 @@ const char* GSF_setalgo(char* algostring)
          break;
       }
    }
-   if (algoindex < 0) {
-      static char err[256];
-      sprintf(err, "Unknown algorithm: %s", algostring);
-      return err;
-   }
+   if (algoindex < 0) return "Unknown algorithm.";
    
    if (algoindex != currlayer->algtype) {
       mainptr->ChangeAlgorithm(algoindex);
@@ -1018,10 +1014,48 @@ void GSF_getevent(wxString& event)
 
 // -----------------------------------------------------------------------------
 
-bool GSF_doevent(const wxString& event)
+static void AppendModifiers(int modifiers, wxString& event)
+{
+   // reverse of GetModifiers
+   if (modifiers == wxMOD_NONE) {
+      event += wxT("none");
+   } else {
+      if (modifiers & wxMOD_ALT)       event += wxT("alt");
+      // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
+      #ifdef __WXMAC__
+         if (modifiers & wxMOD_CMD)       event += wxT("cmd");
+         if (modifiers & wxMOD_CONTROL)   event += wxT("ctrl");
+      #else
+         if (modifiers & wxMOD_CMD)       event += wxT("ctrl");
+         if (modifiers & wxMOD_META)      event += wxT("meta");
+      #endif
+      if (modifiers & wxMOD_SHIFT)     event += wxT("shift");
+   }
+}
+
+// -----------------------------------------------------------------------------
+
+static int GetModifiers(const wxString& modstring)
+{
+   // reverse of AppendModifiers
+   int modifiers = wxMOD_NONE;
+   if (modstring != wxT("none")) {
+      if (modstring.Contains(wxT("alt")))     modifiers |= wxMOD_ALT;
+      // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
+      if (modstring.Contains(wxT("cmd")))     modifiers |= wxMOD_CMD;
+      if (modstring.Contains(wxT("ctrl")))    modifiers |= wxMOD_CONTROL;
+      if (modstring.Contains(wxT("meta")))    modifiers |= wxMOD_META;
+      if (modstring.Contains(wxT("shift")))   modifiers |= wxMOD_SHIFT;
+   }
+   return modifiers;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_doevent(const wxString& event)
 {
    if (event.length() > 0) {
-      if (event.StartsWith(wxT("key")) && event.length() > 7) {
+      if (event.StartsWith(wxT("key ")) && event.length() > 7) {
          // parse event string like "key x altshift"
          int key = event[4];
          if (event[4] == 'f' && event[5] >= '1' && event[5] <= '9') {
@@ -1032,9 +1066,10 @@ bool GSF_doevent(const wxString& event)
             } else if (event[6] >= '0' && event[6] <= '9') {
                // f10 to f24
                key = WXK_F1 + 10 * (event[5] - '0') + (event[6] - '0') - 1;
-               if (key > WXK_F24) return false; // bad function key
+               if (key > WXK_F24)
+                  return "Bad function key (must be f1 to f24).";
             } else {
-               return false; // bad function key
+               return "Bad function key (must be f1 to f24).";
             }
          } else if (event[5] != ' ') {
             // parse special char name like space, tab, etc
@@ -1054,20 +1089,10 @@ bool GSF_doevent(const wxString& event)
             if (event.Contains(wxT("right")))      key = WXK_RIGHT; else
             if (event.Contains(wxT("up")))         key = WXK_UP; else
             if (event.Contains(wxT("down")))       key = WXK_DOWN; else
-            return false;  // unknown key code
-         }
-         
-         int modifiers = wxMOD_NONE;
-         if (!event.EndsWith(wxT("none"))) {
-            if (event.Contains(wxT("alt")))     modifiers |= wxMOD_ALT;
-            // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
-            if (event.Contains(wxT("cmd")))     modifiers |= wxMOD_CMD;
-            if (event.Contains(wxT("ctrl")))    modifiers |= wxMOD_CONTROL;
-            if (event.Contains(wxT("meta")))    modifiers |= wxMOD_META;
-            if (event.Contains(wxT("shift")))   modifiers |= wxMOD_SHIFT;
+            return "Unknown key.";
          }
 
-         viewptr->ProcessKey(key, modifiers);
+         viewptr->ProcessKey(key, GetModifiers(event.AfterLast(' ')));
          mainptr->UpdateUserInterface(mainptr->IsActive());
    
          // update viewport, status bar, scroll bars, etc
@@ -1080,13 +1105,33 @@ bool GSF_doevent(const wxString& event)
          }
          inscript = true;
          
-      } else if (event.StartsWith(wxT("click"))) {
+      } else if (event.StartsWith(wxT("click "))) {
          // parse event string like "click 10 20 left altshift"
-         // !!!
+         wxString xstr = event.AfterFirst(' ');
+         wxString ystr = xstr.AfterFirst(' ');
+         xstr = xstr.BeforeFirst(' ');
+         ystr = ystr.BeforeFirst(' ');
+         if (!xstr.IsNumber()) return "Bad x value.";
+         if (!ystr.IsNumber()) return "Bad y value.";
+         bigint x(xstr.mb_str(wxConvLocal));
+         bigint y(ystr.mb_str(wxConvLocal));
          
-         // PROBLEM: x,y below are pixel coords, NOT cell coords!!!
-         // viewptr->ProcessClick(x, y, event.Contains(wxT("shift")));
-         mainptr->UpdateUserInterface(mainptr->IsActive());
+         int button;
+         if (event.Contains(wxT(" left "))) button = wxMOUSE_BTN_LEFT; else
+         if (event.Contains(wxT(" middle "))) button = wxMOUSE_BTN_MIDDLE; else
+         if (event.Contains(wxT(" right "))) button = wxMOUSE_BTN_RIGHT; else
+         return "Unknown button.";
+
+         if (viewptr->CellVisible(x, y) && viewptr->CellInGrid(x, y)) {
+            // convert x,y cell position to pixel position in viewport
+            pair<int,int> xy = currlayer->view->screenPosOf(x, y, currlayer->algo);
+            int mods = GetModifiers(event.AfterLast(' '));
+            viewptr->ProcessClick(xy.first, xy.second, button, mods);
+            mainptr->UpdateUserInterface(mainptr->IsActive());
+         } else {
+            // ignore click if x,y is outside viewport or grid
+            return NULL;
+         }
    
          // update viewport, status bar, scroll bars, etc
          inscript = false;
@@ -1099,11 +1144,10 @@ bool GSF_doevent(const wxString& event)
          inscript = true;
          
       } else {
-         // unknown event
-         return false;
+         return "Unknown event.";
       }
    }
-   return true;
+   return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -1441,26 +1485,6 @@ void RunScript(const wxString& filename)
       
       // restore accelerators that were cleared above
       mainptr->UpdateMenuAccelerators();
-   }
-}
-
-// -----------------------------------------------------------------------------
-
-static void AppendModifiers(int modifiers, wxString& eventinfo)
-{
-   if (modifiers == wxMOD_NONE) {
-      eventinfo += wxT("none");
-   } else {
-      if (modifiers & wxMOD_ALT)       eventinfo += wxT("alt");
-      // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
-      #ifdef __WXMAC__
-         if (modifiers & wxMOD_CMD)       eventinfo += wxT("cmd");
-         if (modifiers & wxMOD_CONTROL)   eventinfo += wxT("ctrl");
-      #else
-         if (modifiers & wxMOD_CMD)       eventinfo += wxT("ctrl");
-         if (modifiers & wxMOD_META)      eventinfo += wxT("meta");
-      #endif
-      if (modifiers & wxMOD_SHIFT)     eventinfo += wxT("shift");
    }
 }
 

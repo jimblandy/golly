@@ -95,12 +95,16 @@ BEGIN_EVENT_TABLE(PatternView, wxWindow)
    EVT_CHAR             (           PatternView::OnChar)
    EVT_LEFT_DOWN        (           PatternView::OnMouseDown)
    EVT_LEFT_DCLICK      (           PatternView::OnMouseDown)
+   EVT_RIGHT_DOWN       (           PatternView::OnMouseDown)
+   EVT_RIGHT_DCLICK     (           PatternView::OnMouseDown)
+   EVT_MIDDLE_DOWN      (           PatternView::OnMouseDown)
+   EVT_MIDDLE_DCLICK    (           PatternView::OnMouseDown)
    EVT_LEFT_UP          (           PatternView::OnMouseUp)
+   EVT_RIGHT_UP         (           PatternView::OnMouseUp)
+   EVT_MIDDLE_UP        (           PatternView::OnMouseUp)
 #if wxCHECK_VERSION(2, 8, 0)
    EVT_MOUSE_CAPTURE_LOST (         PatternView::OnMouseCaptureLost)
 #endif
-   EVT_RIGHT_DOWN       (           PatternView::OnRMouseDown)
-   EVT_RIGHT_DCLICK     (           PatternView::OnRMouseDown)
    EVT_MOTION           (           PatternView::OnMouseMotion)
    EVT_ENTER_WINDOW     (           PatternView::OnMouseEnter)
    EVT_LEAVE_WINDOW     (           PatternView::OnMouseExit)
@@ -258,23 +262,23 @@ void PatternView::CopySelection()
 
 // -----------------------------------------------------------------------------
 
-static bool CellInGrid(const bigint xpos, const bigint ypos)
+bool PatternView::CellInGrid(const bigint& x, const bigint& y)
 {
-   // return true if cell at xpos,ypos is within bounded grid
+   // return true if cell at x,y is within bounded grid
    if (currlayer->algo->gridwd > 0 &&
-         (xpos < currlayer->algo->gridleft ||
-          xpos > currlayer->algo->gridright)) return false;
+         (x < currlayer->algo->gridleft ||
+          x > currlayer->algo->gridright)) return false;
    
    if (currlayer->algo->gridht > 0 &&
-         (ypos < currlayer->algo->gridtop ||
-          ypos > currlayer->algo->gridbottom)) return false;
+         (y < currlayer->algo->gridtop ||
+          y > currlayer->algo->gridbottom)) return false;
    
    return true;
 }
 
 // -----------------------------------------------------------------------------
 
-static bool PointInGrid(int x, int y)
+bool PatternView::PointInGrid(int x, int y)
 {
    // is given viewport location also in grid?
    if (currlayer->algo->gridwd == 0 && currlayer->algo->gridht == 0) {
@@ -1352,7 +1356,7 @@ void PatternView::FitInView(int force)
 
 // -----------------------------------------------------------------------------
 
-int PatternView::CellVisible(const bigint& x, const bigint& y)
+bool PatternView::CellVisible(const bigint& x, const bigint& y)
 {
    return currlayer->view->contains(x, y);
 }
@@ -2186,7 +2190,8 @@ void PatternView::ZoomInPos(int x, int y)
       // allow mouse interaction if script is running
       bool saveinscript = inscript;
       inscript = false;
-      mainptr->UpdateEverything();
+      mainptr->UpdatePatternAndStatus();
+      bigview->UpdateScrollBars();
       inscript = saveinscript;
    } else {
       Beep();   // can't zoom in any further
@@ -2203,7 +2208,8 @@ void PatternView::ZoomOutPos(int x, int y)
    // allow mouse interaction if script is running
    bool saveinscript = inscript;
    inscript = false;
-   mainptr->UpdateEverything();
+   mainptr->UpdatePatternAndStatus();
+   bigview->UpdateScrollBars();
    inscript = saveinscript;
 }
 
@@ -2593,67 +2599,94 @@ void PatternView::ProcessClickedControl()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ProcessClick(int x, int y, bool shiftdown)
+void PatternView::ProcessClick(int x, int y, int button, int modifiers)
 {
    // user has clicked x,y pixel in viewport
-   if (currlayer->curs == curs_pencil) {
-      if (inscript) {
-         // best not to clobber any status bar message displayed by script
-         Warning(_("Drawing is not allowed while a script is running."));
-         return;
+   if (button == wxMOUSE_BTN_LEFT) {
+      if (currlayer->curs == curs_pencil) {
+         if (inscript) {
+            // best not to clobber any status bar message displayed by script
+            Warning(_("Drawing is not allowed while a script is running."));
+            return;
+         }
+         if (!PointInGrid(x, y)) {
+            statusptr->ErrorMessage(_("Drawing is not allowed outside grid."));
+            return;
+         }
+         if (TimelineExists()) {
+            statusptr->ErrorMessage(_("Drawing is not allowed if there is a timeline."));
+            return;
+         }
+         if (currlayer->view->getmag() < 0) {
+            statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
+            return;
+         }
+         if (mainptr->generating) {
+            // we allow drawing while generating
+            mainptr->Stop();
+            mainptr->draw_pending = true;
+            mainptr->mouseevent.m_x = x;
+            mainptr->mouseevent.m_y = y;
+            return;
+         }
+         StartDrawingCells(x, y);
+   
+      } else if (currlayer->curs == curs_pick) {
+         if (inscript) {
+            // best not to clobber any status bar message displayed by script
+            Warning(_("Picking is not allowed while a script is running."));
+            return;
+         }
+         if (!PointInGrid(x, y)) {
+            statusptr->ErrorMessage(_("Picking is not allowed outside grid."));
+            return;
+         }
+         if (currlayer->view->getmag() < 0) {
+            statusptr->ErrorMessage(_("Picking is not allowed at scales greater than 1 cell per pixel."));
+            return;
+         }
+         PickCell(x, y);
+   
+      } else if (currlayer->curs == curs_cross) {
+         TestAutoFit();
+         StartSelectingCells(x, y, modifiers & wxMOD_SHIFT);
+   
+      } else if (currlayer->curs == curs_hand) {
+         TestAutoFit();
+         StartMovingView(x, y);
+   
+      } else if (currlayer->curs == curs_zoomin) {
+         ZoomInPos(x, y);
+   
+      } else if (currlayer->curs == curs_zoomout) {
+         ZoomOutPos(x, y);
       }
-      if (!PointInGrid(x, y)) {
-         statusptr->ErrorMessage(_("Drawing is not allowed outside grid."));
-         return;
+   
+   } else if (button == wxMOUSE_BTN_RIGHT) {
+      // reverse the usual zoom direction
+      if (currlayer->curs == curs_zoomin) {
+         ZoomOutPos(x, y);
+      } else if (currlayer->curs == curs_zoomout) {
+         ZoomInPos(x, y);
       }
-      if (TimelineExists()) {
-         statusptr->ErrorMessage(_("Drawing is not allowed if there is a timeline."));
-         return;
-      }
-      if (currlayer->view->getmag() < 0) {
-         statusptr->ErrorMessage(_("Drawing is not allowed at scales greater than 1 cell per pixel."));
-         return;
-      }
-      if (mainptr->generating) {
-         // we allow drawing while generating
-         mainptr->Stop();
-         mainptr->draw_pending = true;
-         mainptr->mouseevent.m_x = x;
-         mainptr->mouseevent.m_y = y;
-         return;
-      }
-      StartDrawingCells(x, y);
-
-   } else if (currlayer->curs == curs_pick) {
-      if (inscript) {
-         // best not to clobber any status bar message displayed by script
-         Warning(_("Picking is not allowed while a script is running."));
-         return;
-      }
-      if (!PointInGrid(x, y)) {
-         statusptr->ErrorMessage(_("Picking is not allowed outside grid."));
-         return;
-      }
-      if (currlayer->view->getmag() < 0) {
-         statusptr->ErrorMessage(_("Picking is not allowed at scales greater than 1 cell per pixel."));
-         return;
-      }
-      PickCell(x, y);
-
-   } else if (currlayer->curs == curs_cross) {
-      TestAutoFit();
-      StartSelectingCells(x, y, shiftdown);
-
-   } else if (currlayer->curs == curs_hand) {
-      TestAutoFit();
-      StartMovingView(x, y);
-
-   } else if (currlayer->curs == curs_zoomin) {
-      ZoomInPos(x, y);
-
-   } else if (currlayer->curs == curs_zoomout) {
-      ZoomOutPos(x, y);
+   
+   } else if (button == wxMOUSE_BTN_MIDDLE) {
+      // do nothing -- Golly currently doesn't use the middle button
    }
+}
+
+// -----------------------------------------------------------------------------
+
+static int GetMouseModifiers(wxMouseEvent& event)
+{
+   int modbits = wxMOD_NONE;
+   if (event.AltDown())       modbits |= wxMOD_ALT;
+   // wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
+   if (event.CmdDown())       modbits |= wxMOD_CMD;
+   if (event.ControlDown())   modbits |= wxMOD_CONTROL;
+   if (event.MetaDown())      modbits |= wxMOD_META;
+   if (event.ShiftDown())     modbits |= wxMOD_SHIFT;
+   return modbits;
 }
 
 // -----------------------------------------------------------------------------
@@ -2662,65 +2695,62 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
 {
    int x = event.GetX();
    int y = event.GetY();
+   int button = event.GetButton();
+   int modifiers = GetMouseModifiers(event);
 
-   if (waitingforclick) {
+   if (waitingforclick && button == wxMOUSE_BTN_LEFT) {
       // save paste location
       pastex = x;
       pastey = y;
       waitingforclick = false;
-   } else {
-      statusptr->ClearMessage();
-      mainptr->showbanner = false;
-
-      if (numlayers > 1 && tilelayers && tileindex < 0) {
-         // ignore click in tile border
-         return;
-      }
-   
-      if (tileindex >= 0 && tileindex != currindex) {
-         // switch current layer to clicked tile
-         SwitchToClickedTile(tileindex);
-         return;
-      }
-
-      if (showcontrols) {
-         currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
-         if (currcontrol > NO_CONTROL) {
-            clickedcontrol = currcontrol;       // remember which control was clicked
-            clicktime = stopwatch->Time();      // remember when clicked (in millisecs)
-            CaptureMouse();                     // get mouse up event even if outside view
-            dragtimer->Start(DRAG_RATE);        // see OnDragTimer
-            RefreshRect(controlsrect, false);   // redraw clicked button
-            #ifdef __WXGTK__
-               // nicer to see change immediately on Linux
-               Update();
-            #endif
-            if (PANNING_CONTROL) {
-               // scroll immediately
-               ProcessClickedControl();
-            }
-         }
-         return;
-      }
-
-      if (inscript) {
-         if (PointInGrid(x, y)) {
-            // let script decide what to do with the click
-            pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
-            int mods = wxMOD_NONE;
-            if (event.AltDown())       mods |= wxMOD_ALT;
-            if (event.CmdDown())       mods |= wxMOD_CMD;      // wxMOD_META on Mac, wxMOD_CONTROL on Win/Linux
-            if (event.ControlDown())   mods |= wxMOD_CONTROL;
-            if (event.MetaDown())      mods |= wxMOD_META;
-            if (event.ShiftDown())     mods |= wxMOD_SHIFT;
-            PassClickToScript(cellpos.first, cellpos.second, event.GetButton(), mods);
-         }
-         return;
-      }
-      
-      ProcessClick(x, y, event.ShiftDown());
-      mainptr->UpdateUserInterface(mainptr->IsActive());
+      return;
    }
+   
+   statusptr->ClearMessage();
+   mainptr->showbanner = false;
+
+   if (numlayers > 1 && tilelayers && tileindex < 0) {
+      // ignore click in tile border
+      return;
+   }
+
+   if (tileindex >= 0 && tileindex != currindex) {
+      // switch current layer to clicked tile
+      SwitchToClickedTile(tileindex);
+      return;
+   }
+
+   if (showcontrols) {
+      currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
+      if (currcontrol > NO_CONTROL) {
+         clickedcontrol = currcontrol;       // remember which control was clicked
+         clicktime = stopwatch->Time();      // remember when clicked (in millisecs)
+         CaptureMouse();                     // get mouse up event even if outside view
+         dragtimer->Start(DRAG_RATE);        // see OnDragTimer
+         RefreshRect(controlsrect, false);   // redraw clicked button
+         #ifdef __WXGTK__
+            // nicer to see change immediately on Linux
+            Update();
+         #endif
+         if (PANNING_CONTROL) {
+            // scroll immediately
+            ProcessClickedControl();
+         }
+      }
+      return;
+   }
+
+   if (inscript) {
+      if (PointInGrid(x, y)) {
+         // let script decide what to do with the click
+         pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+         PassClickToScript(cellpos.first, cellpos.second, button, modifiers);
+      }
+      return;
+   }
+   
+   ProcessClick(x, y, button, modifiers);
+   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
@@ -2749,32 +2779,6 @@ void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 }
 
 #endif
-
-// -----------------------------------------------------------------------------
-
-void PatternView::OnRMouseDown(wxMouseEvent& event)
-{
-   // this is equivalent to control-click
-   statusptr->ClearMessage();
-   mainptr->showbanner = false;
-
-   if (numlayers > 1 && tilelayers && tileindex < 0) {
-      // ignore click in tile border
-      return;
-   }
-   
-   if (tileindex >= 0 && tileindex != currindex) {
-      // switch current layer to clicked tile
-      SwitchToClickedTile(tileindex);
-      return;
-   }
-   
-   if (currlayer->curs == curs_zoomin) {
-      ZoomOutPos(event.GetX(), event.GetY());
-   } else if (currlayer->curs == curs_zoomout) {
-      ZoomInPos(event.GetX(), event.GetY());
-   }
-}
 
 // -----------------------------------------------------------------------------
 
@@ -2820,8 +2824,11 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
    // allow mouse interaction if script is running
    bool saveinscript = inscript;
    inscript = false;
-   mainptr->UpdateEverything();
+   mainptr->UpdatePatternAndStatus();
+   bigview->UpdateScrollBars();
    inscript = saveinscript;
+   // do following after restoring inscript so we don't change stop button if inscript
+   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------

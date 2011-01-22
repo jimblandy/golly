@@ -2685,8 +2685,9 @@ static PyObject* py_doevent(PyObject* self, PyObject* args)
 
    if (!PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
 
-   if (event[0] && !GSF_doevent(wxString(event,wxConvLocal))) {
-      PYTHON_ERROR("doevent error: unknown event.");
+   if (event[0]) {
+      const char* err = GSF_doevent(wxString(event,wxConvLocal));
+      if (err) PYTHON_ERROR(err);
    }
 
    RETURN_NONE;

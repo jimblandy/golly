@@ -2882,8 +2882,9 @@ XS(pl_doevent)
    STRLEN n_a;
    char* event = SvPV(ST(0), n_a);
 
-   if (event[0] && !GSF_doevent(wxString(event,wxConvLocal))) {
-      PERL_ERROR("g_doevent error: unknown event.");
+   if (event[0]) {
+      const char* err = GSF_doevent(wxString(event,wxConvLocal));
+      if (err) PERL_ERROR(err);
    }
 
    XSRETURN(0);

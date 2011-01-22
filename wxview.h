@@ -95,12 +95,14 @@ public:
    void SetPosMag(const bigint& x, const bigint& y, int mag);
    void GetPos(bigint& x, bigint& y);
    void FitInView(int force);
-   int CellVisible(const bigint& x, const bigint& y);
+   bool CellVisible(const bigint& x, const bigint& y);
+   bool CellInGrid(const bigint& x, const bigint& y);
+   bool PointInGrid(int x, int y);
    void TestAutoFit();
 
    // process keyboard and mouse events
    void ProcessKey(int key, int modifiers);
-   void ProcessClick(int x, int y, bool shiftdown);
+   void ProcessClick(int x, int y, int button, int modifiers);
    void ProcessClickedControl();
 
    // data
@@ -134,7 +136,6 @@ private:
    #if wxCHECK_VERSION(2, 8, 0)
       void OnMouseCaptureLost(wxMouseCaptureLostEvent& event);
    #endif
-   void OnRMouseDown(wxMouseEvent& event);
    void OnMouseWheel(wxMouseEvent& event);
    void OnMouseMotion(wxMouseEvent& event);
    void OnMouseEnter(wxMouseEvent& event);

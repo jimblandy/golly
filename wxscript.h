@@ -101,7 +101,7 @@ bool GSF_getcolor(char* colname, wxColor& color);
 void GSF_setname(char* name, int index);
 void GSF_select(int x, int y, int wd, int ht);
 void GSF_getevent(wxString& event);
-bool GSF_doevent(const wxString& event);
+const char* GSF_doevent(const wxString& event);
 void GSF_getkey(char* s);
 void GSF_dokey(char* ascii);
 void GSF_update();
