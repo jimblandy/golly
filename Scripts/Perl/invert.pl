@@ -23,8 +23,7 @@ for (my $row = $y; $row < $y + $ht; $row++) {
       g_update();
    }
 
-   # also allow keyboard interaction
-   g_dokey( g_getkey() );
+   g_doevent(g_getevent());   # allow keyboard/mouse interaction
 
    for (my $col = $x; $col < $x + $wd; $col++) {
       g_setcell($col, $row, $maxstate - g_getcell($col, $row));

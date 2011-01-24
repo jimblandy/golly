@@ -238,38 +238,6 @@ def getminbox(patt):
 
 # --------------------------------------------------------------------
 
-def getstring(prompt):
-   # prompt user and return entered string
-   cursor1 = "_"
-   cursor2 = ""
-
-   golly.show(prompt + " " + cursor1)
-   inp = ""
-   oldsecs = time.time()
-   
-   while True:
-      newsecs = time.time()
-      if newsecs - oldsecs >= 0.5:   # blink cursor each sec
-         oldsecs = newsecs
-         cursor1, cursor2 = cursor2, cursor1
-         golly.show(prompt + " " + inp + cursor1)
-
-      time.sleep(0.05)        # avoid hogging cpu
-      ch = golly.getkey()
-      if len(ch) > 0:
-         if ch == chr(13):    # return
-         	golly.show("")
-         	return inp
-         if ch == chr(8):     # backspace
-            inp = inp[:-1]
-            ch = ""
-         elif ch < ' ':
-            ch = ""           # ignore tab, arrow keys, etc
-         inp += ch
-         golly.show(prompt + " " + inp + cursor1)
-
-# --------------------------------------------------------------------
-
 def validint(s):
    # return True if given string represents a valid integer
    if len(s) == 0: return False
@@ -289,3 +257,11 @@ def getposint():
 def setposint(x,y):
    # convert integer coords to strings and set viewport position
    golly.setpos(str(x), str(y))
+
+# --------------------------------------------------------------------
+
+def getstring(prompt):
+   # this routine is deprecated
+   golly.warn("Change the script to use the getstring() command\n"+
+              "from golly rather than from glife.")
+   golly.exit("")

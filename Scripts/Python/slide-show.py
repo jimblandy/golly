@@ -28,9 +28,9 @@ def slideshow ():
                g.show(message)
             
             while True:
-               ch = g.getkey()
-               if ch == " ": break
-               g.dokey(ch)                # allow keyboard interaction
+               event = g.getevent()
+               if event == "key space none": break
+               g.doevent(event)           # allow keyboard/mouse interaction
                sleep(0.01)                # avoid hogging cpu
       
       if "CVS" in dirs:

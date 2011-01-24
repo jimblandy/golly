@@ -20,8 +20,8 @@ for row in xrange(r.top, r.top + r.height):
       oldsecs = newsecs
       g.update()
 
-   # also allow keyboard interaction
-   g.dokey( g.getkey() )
+   # also allow keyboard/mouse interaction
+   g.doevent( g.getevent() )
 
    for col in xrange(r.left, r.left + r.width):
       g.setcell(col, row, maxstate - g.getcell(col, row))

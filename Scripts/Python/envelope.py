@@ -76,7 +76,7 @@ def envelope ():
    
    g.show("Hit escape key to stop script...")
    while True:
-      g.dokey( g.getkey() )
+      g.doevent(g.getevent())
       g.run(1)
       if g.empty():
          g.show("Pattern died out.")

@@ -2604,13 +2604,14 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
    // user has clicked x,y pixel in viewport
    if (button == wxMOUSE_BTN_LEFT) {
       if (currlayer->curs == curs_pencil) {
+         if (!PointInGrid(x, y)) {
+            // best not to clobber any status bar message displayed by script
+            Warning(_("Drawing is not allowed outside grid."));
+            return;
+         }
          if (inscript) {
             // best not to clobber any status bar message displayed by script
             Warning(_("Drawing is not allowed while a script is running."));
-            return;
-         }
-         if (!PointInGrid(x, y)) {
-            statusptr->ErrorMessage(_("Drawing is not allowed outside grid."));
             return;
          }
          if (TimelineExists()) {
@@ -2632,13 +2633,14 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
          StartDrawingCells(x, y);
    
       } else if (currlayer->curs == curs_pick) {
+         if (!PointInGrid(x, y)) {
+            // best not to clobber any status bar message displayed by script
+            Warning(_("Picking is not allowed outside grid."));
+            return;
+         }
          if (inscript) {
             // best not to clobber any status bar message displayed by script
             Warning(_("Picking is not allowed while a script is running."));
-            return;
-         }
-         if (!PointInGrid(x, y)) {
-            statusptr->ErrorMessage(_("Picking is not allowed outside grid."));
             return;
          }
          if (currlayer->view->getmag() < 0) {
@@ -2740,12 +2742,10 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
       return;
    }
 
-   if (inscript) {
-      if (PointInGrid(x, y)) {
-         // let script decide what to do with the click
-         pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
-         PassClickToScript(cellpos.first, cellpos.second, button, modifiers);
-      }
+   if (inscript && PointInGrid(x, y)) {
+      // let script decide what to do with click in grid
+      pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+      PassClickToScript(cellpos.first, cellpos.second, button, modifiers);
       return;
    }
    

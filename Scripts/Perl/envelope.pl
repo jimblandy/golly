@@ -78,7 +78,7 @@ sub envelope {
    
    g_show("Hit escape key to stop script...");
    while (1) {
-      g_dokey( g_getkey() );
+      g_doevent(g_getevent());   # allow keyboard/mouse interaction
       g_run(1);
       if (g_empty()) {
          g_show("Pattern died out.");

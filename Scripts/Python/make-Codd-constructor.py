@@ -46,8 +46,7 @@ for row in xrange(r.top, r.top + r.height):
       oldsecs = newsecs
       g.update()
 
-   # also allow keyboard interaction
-   g.dokey( g.getkey() )
+   g.doevent(g.getevent())       # allow keyboard/mouse interaction
 
    for col in xrange(r.left, r.left + r.width):
       if g.getcell(col, row)==1:

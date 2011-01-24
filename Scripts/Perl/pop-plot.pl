@@ -239,7 +239,7 @@ for my $i (0..$numsteps-1) {
    push(@poplist, int(g_getpop()));
    push(@genlist, int(g_getgen()));
    
-   g_dokey( g_getkey() );
+   g_doevent(g_getevent());
    my $newsecs = time;
    if ($newsecs - $oldsecs >= 1.0) {     # show pattern every second
       $oldsecs = $newsecs;
@@ -339,7 +339,7 @@ for my $i (0..$numsteps-1) {
    draw_line($x, -$y, $newx, -$newy);
    $x = $newx;
    $y = $newy;
-   g_dokey( g_getkey() );
+   g_doevent(g_getevent());
    my $newsecs = time;
    if ($newsecs - $oldsecs >= 1.0) {     # show pattern every second
       $oldsecs = $newsecs;

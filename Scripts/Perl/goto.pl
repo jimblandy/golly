@@ -68,7 +68,7 @@ sub go_to {
             return;
          }
          g_step();
-         g_dokey( g_getkey() );              # allow keyboard interaction
+         g_doevent(g_getevent());   # allow keyboard/mouse interaction
          my $newsecs = time;
          if ($newsecs - $oldsecs >= 1.0) {   # do an update every sec
             $oldsecs = $newsecs;

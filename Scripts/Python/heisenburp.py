@@ -51,7 +51,7 @@ Q quits out of the script and restores original settings."""
    g.select([selx,sely,50,50])
    
    # keyboard handling
-   while lower(ch)<>"q":
+   while ch<>"q":
       if place_signal>0:
          if ticks-last_signal>1846:
             test_signal.put(-150,60)
@@ -64,8 +64,12 @@ Q quits out of the script and restores original settings."""
       else:
          show_status_text(instr,delay,tickstep)
 
-      ch = g.getkey()
-      if lower(ch)=="r":
+      event = g.getevent()
+      if event.startswith("key"):
+         evt, ch, mods = event.split()
+      else:
+         ch = ""
+      if ch=="r":
          prepare_burp()
          ticks=0
          last_signal=-99999
@@ -77,9 +81,9 @@ Q quits out of the script and restores original settings."""
          place_signal=3
          g.select([selx,sely,50,50])
       
-      elif lower(ch)=="h":
+      elif ch=="h":
          g.note(helpstring)
-      elif lower(ch)=="t":
+      elif ch=="t":
          g.setoption("tilelayers",1-g.getoption("tilelayers"))
          
       elif ch=="=" or ch=="+":
@@ -105,18 +109,18 @@ Q quits out of the script and restores original settings."""
             if delay<1:
                delay*=2
 
-      elif ch==" ":
+      elif ch=="space":
          run_flag=False
-      elif ch==chr(13):
+      elif ch=="return":
          run_flag=not run_flag
-      elif lower(ch)=="s":
+      elif ch=="s":
          place_signal+=1
       else:
-         g.dokey(ch) # just pass any other keypresses through to Golly
-      # end of keyboard handling
+         # just pass any other keyboard/mouse event through to Golly
+         g.doevent(event)
       
       # generation and selection speed handling
-      if ch==" " or run_flag==True:
+      if ch=="space" or run_flag==True:
          g.run(tickstep)
          
          currlayer = g.getlayer()
