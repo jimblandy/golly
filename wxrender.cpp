@@ -328,6 +328,7 @@ void DrawControls(wxDC& dc, wxRect& rect)
          wxMemoryDC memdc;
          memdc.SelectObject(*ctrlsbitmap);
          dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+         memdc.SelectObject(wxNullBitmap);
       #endif
       
       if (currcontrol > NO_CONTROL && darkctrls) {
@@ -353,6 +354,7 @@ void DrawControls(wxDC& dc, wxRect& rect)
             wxMemoryDC memdc;
             memdc.SelectObject(*darkctrls);
             dc.Blit(rect.x + x, rect.y + y, buttsize, buttsize, &memdc, x, y, wxCOPY, true);
+            memdc.SelectObject(wxNullBitmap);
          #endif
       }
    }
@@ -929,6 +931,7 @@ void DrawSelection(wxDC& dc, wxRect& rect)
          wxMemoryDC memdc;
          memdc.SelectObject(*selbitmap);
          dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+         memdc.SelectObject(wxNullBitmap);
       #endif
    } else {
       // no alpha channel so just invert rect
@@ -954,6 +957,7 @@ void DrawInactiveSelection(wxDC& dc, wxRect& rect)
          wxMemoryDC memdc;
          memdc.SelectObject(*graybitmap);
          dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
+         memdc.SelectObject(wxNullBitmap);
       #endif
    } else {
       // no alpha channel so just invert rect
@@ -1197,11 +1201,11 @@ void CheckPasteImage()
          
          wxMemoryDC pattdc;
          pattdc.SelectObject(*pastebitmap);
-         
          currdc = &pattdc;
          currwd = tempview.getwidth();
          currht = tempview.getheight();
          pastealgo->draw(tempview, renderer);
+         pattdc.SelectObject(wxNullBitmap);
          
          showgridlines = saveshow;
          
@@ -1254,6 +1258,7 @@ void DrawPasteImage(wxDC& dc)
          wxMemoryDC memdc;
          memdc.SelectObject(*pastebitmap);
          dc.Blit(r.x, r.y, pimagewd, pimageht, &memdc, 0, 0, wxCOPY, true);
+         memdc.SelectObject(wxNullBitmap);
       #endif
    }
 
@@ -1466,6 +1471,7 @@ void DrawOneLayer(wxDC& dc)
    
    currdc = &layerdc;
    currlayer->algo->draw(*currlayer->view, renderer);
+   layerdc.SelectObject(wxNullBitmap);
    
    // make dead pixels 100% transparent; live pixels use opacity setting
    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
