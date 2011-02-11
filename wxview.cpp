@@ -1358,7 +1358,7 @@ void PatternView::FitInView(int force)
 
 bool PatternView::CellVisible(const bigint& x, const bigint& y)
 {
-   return currlayer->view->contains(x, y);
+   return currlayer->view->contains(x, y) != 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -2651,7 +2651,7 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
    
       } else if (currlayer->curs == curs_cross) {
          TestAutoFit();
-         StartSelectingCells(x, y, modifiers & wxMOD_SHIFT);
+         StartSelectingCells(x, y, (modifiers & wxMOD_SHIFT) != 0);
    
       } else if (currlayer->curs == curs_hand) {
          TestAutoFit();
