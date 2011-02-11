@@ -3,6 +3,38 @@
 
 import golly as g
 
+# set edges of bounded grid for later use
+if g.getwidth() > 0:
+   gridl = -int(g.getwidth()/2)
+   gridr = gridl + g.getwidth() - 1
+if g.getheight() > 0:
+   gridt = -int(g.getheight()/2)
+   gridb = gridt + g.getheight() - 1
+
+helpmsg = " (hit 'h' for help)"
+
+# --------------------------------------------------------------------
+
+def showhelp1():
+   g.note(
+"""Hit the escape key to abort the script.
+
+Note that alt-clicking in the selection allows you to COPY it
+to another location (the original selection is not deleted).""")
+
+# --------------------------------------------------------------------
+
+def showhelp2():
+   g.note(
+"""While moving the selection the following keys can be used:
+
+x -- flip selection left-right
+y -- flip selection top-bottom
+> -- rotate selection clockwise
+< -- rotate selection anticlockwise
+h -- show this help
+escape -- abort and restore the selection""")
+
 # ------------------------------------------------------------------------------
 
 def cellinrect(x, y, r):
@@ -15,16 +47,8 @@ def cellinrect(x, y, r):
 
 def rectingrid(r):
    # return True if all of given rectangle is inside grid
-   if g.getwidth() > 0:
-      # check if r is outside left/right edge of grid
-      gridl = -int(g.getwidth()/2)
-      gridr = gridl + g.getwidth() - 1
-      if r[0] < gridl or r[0] + r[2] - 1 > gridr: return False
-   if g.getheight() > 0:
-      # check if r is outside top/bottom edge of grid
-      gridt = -int(g.getheight()/2)
-      gridb = gridt + g.getheight() - 1
-      if r[1] < gridt or r[1] + r[3] - 1 > gridb: return False
+   if g.getwidth() > 0 and (r[0] < gridl or r[0] + r[2] - 1 > gridr): return False
+   if g.getheight() > 0 and (r[1] < gridt or r[1] + r[3] - 1 > gridb): return False
    return True
 
 # ------------------------------------------------------------------------------
@@ -51,9 +75,11 @@ def lookforkeys(event, deltax, deltay):
       return
    
    if event == "key > none" or event == "key < none":
-      # rotate floating selection clockwise or anticlockwise
-      midx = selrect[0] + int(selrect[2]/2)
-      midy = selrect[1] + int(selrect[3]/2)
+      # rotate floating selection clockwise or anticlockwise;
+      # because we use g.rotate below we have to use the exact same
+      # calculation (see Selection::Rotate in wxselect.cpp) for rotrect:
+      midx = selrect[0] + int((selrect[2]-1)/2)
+      midy = selrect[1] + int((selrect[3]-1)/2)
       newleft = midx + selrect[1] - midy
       newtop = midy + selrect[0] - midx
       rotrect = [ newleft, newtop, selrect[3], selrect[2] ]
@@ -62,7 +88,7 @@ def lookforkeys(event, deltax, deltay):
          return
       g.clear(0)
       if len(oldcells) > 0: g.putcells(oldcells)
-      oldcells = oldcells + g.getcells(rotrect)
+      oldcells = g.join(oldcells, g.getcells(rotrect))
       g.clear(0)
       g.select(rotrect)
       g.clear(0)
@@ -73,12 +99,17 @@ def lookforkeys(event, deltax, deltay):
       else:
          g.rotate(1)
       selrect = g.getselrect()
+      if selrect != rotrect: g.warn("Bug: selrect != rotrect")
       selpatt = g.transform(g.getcells(selrect), -deltax, -deltay)
       if len(oldcells) > 0:
          g.clear(0)
          g.putcells(oldcells)
          g.putcells(selpatt, deltax, deltay)
       g.update()
+      return
+
+   if event == "key h none":
+      showhelp2()
       return
    
    g.doevent(event)
@@ -106,11 +137,13 @@ def moveselection():
                # don't delete pattern in selection
                oldcells = g.getcells(selrect)
             break
+      elif event == "key h none":
+         showhelp1()
       else:
-         if len(event) > 0: g.doevent(event)
+         g.doevent(event)
    
    # wait for 2nd click while moving selection
-   g.show("Move mouse and click again...")
+   g.show("Move mouse and click again..." + helpmsg)
    gotclick = False
    while not gotclick:
       event = g.getevent()
@@ -137,8 +170,6 @@ def moveselection():
          
          if g.getwidth() > 0:
             # ensure selrect doesn't move beyond left/right edge of grid
-            gridl = -int(g.getwidth()/2)
-            gridr = gridl + g.getwidth() - 1
             if selrect[0] < gridl:
                selrect[0] = gridl
                x = selrect[0] + xoffset
@@ -147,8 +178,6 @@ def moveselection():
                x = selrect[0] + xoffset
          if g.getheight() > 0:
             # ensure selrect doesn't move beyond top/bottom edge of grid
-            gridt = -int(g.getheight()/2)
-            gridb = gridt + g.getheight() - 1
             if selrect[1] < gridt:
                selrect[1] = gridt
                y = selrect[1] + yoffset
@@ -172,7 +201,7 @@ selpatt = g.getcells(selrect)
 firstrect = g.getselrect()
 firstpatt = g.getcells(selrect)
 
-g.show("Click anywhere in selection, move mouse and click again...")
+g.show("Click anywhere in selection, move mouse and click again..." + helpmsg)
 oldcursor = g.getcursor()
 g.setcursor("Move")
 oldcells = []

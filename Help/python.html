@@ -55,8 +55,16 @@ The Scripts folder supplied with Golly contains a number of example Python scrip
    <td> &mdash; calculates the density of the current pattern</td>
 </tr>
 <tr>
+   <td><b>draw-lines.py</b></td><td width=10> </td>
+   <td> &mdash; lets you draw one or more straight lines</td>
+</tr>
+<tr>
    <td><b>envelope.py</b></td><td width=10> </td>
    <td> &mdash; uses multiple layers to remember a pattern's live cells</td>
+</tr>
+<tr>
+   <td><b>flood-fill.py</b></td><td width=10> </td>
+   <td> &mdash; fills a clicked region with the current drawing state</td>
 </tr>
 <tr>
    <td><b>goto.py</b></td><td width=10> </td>
@@ -81,6 +89,14 @@ The Scripts folder supplied with Golly contains a number of example Python scrip
 <tr>
    <td><b>metafier.py</b></td><td width=10> </td>
    <td> &mdash; converts the current selection into a meta pattern</td>
+</tr>
+<tr>
+   <td><b>move-object.py</b></td><td width=10> </td>
+   <td> &mdash; lets you move a connected group of live cells</td>
+</tr>
+<tr>
+   <td><b>move-selection.py</b></td><td width=10> </td>
+   <td> &mdash; lets you move the current selection</td>
 </tr>
 <tr>
    <td><b>oscar.py</b></td><td width=10> </td>
@@ -168,7 +184,7 @@ or you can search for individual commands alphabetically:
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
 <a href="#dellayer"><b>dellayer</b></a><br>
-<a href="#dokey"><b>dokey</b></a><br>
+<a href="#doevent"><b>doevent</b></a><br>
 <a href="#duplicate"><b>duplicate</b></a><br>
 <a href="#empty"><b>empty</b></a><br>
 <a href="#error"><b>error</b></a><br>
@@ -180,19 +196,19 @@ or you can search for individual commands alphabetically:
 <a href="#getalgo"><b>getalgo</b></a><br>
 <a href="#getbase"><b>getbase</b></a><br>
 <a href="#getcell"><b>getcell</b></a><br>
-<a href="#getcells"><b>getcells</b></a>
+<a href="#getcells"><b>getcells</b></a><br>
+<a href="#getclip"><b>getclip</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getclip"><b>getclip</b></a><br>
 <a href="#getclipstr"><b>getclipstr</b></a><br>
 <a href="#getcolor"><b>getcolor</b></a><br>
 <a href="#getcolors"><b>getcolors</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
 <a href="#getdir"><b>getdir</b></a><br>
+<a href="#getevent"><b>getevent</b></a><br>
 <a href="#getgen"><b>getgen</b></a><br>
 <a href="#getheight"><b>getheight</b></a><br>
-<a href="#getkey"><b>getkey</b></a><br>
 <a href="#getlayer"><b>getlayer</b></a><br>
 <a href="#getmag"><b>getmag</b></a><br>
 <a href="#getname"><b>getname</b></a><br>
@@ -205,6 +221,7 @@ or you can search for individual commands alphabetically:
 <a href="#getstep"><b>getstep</b></a><br>
 <a href="#getstring"><b>getstring</b></a><br>
 <a href="#getwidth"><b>getwidth</b></a><br>
+<a href="#getxy"><b>getxy</b></a><br>
 <a href="#hash"><b>hash</b></a><br>
 <a href="#help"><b>help</b></a>
 </td>
@@ -1131,33 +1148,71 @@ The script will be aborted if the user hits the dialog's Cancel button.
 <dd> Example: <b>i = int( golly.getstring("Enter a number:", "100") )</b></dd>
 </p>
 
-<a name="getkey"></a><p><dt><b>getkey()</b></dt>
+<a name="getevent"></a><p><dt><b>getevent()</b></dt>
 <dd>
-Return a key hit by the user as a single character,
-or an empty string if no key was hit.
-The characters returned by this command are a subset of ASCII:
+Return a keyboard or mouse event as a string.
+If there are no such events pending then the string is empty.
+</dd>
+<p>
+<dd>
+Keyboard events are strings of the form "key <i>charname</i> <i>modifiers</i>"
+where <i>charname</i> can be any displayable ASCII character from '!' to '~'
+or one of the following names: space, home, end, pageup, pagedown, help,
+insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
+<i>modifiers</i> is none if no modifier key was pressed, otherwise it is
+some combination of alt, cmd, ctrl, meta, shift.  Note that cmd corresponds
+to the command key on a Mac and the control key on Windows/Linux (this lets
+you write portable scripts that work on any platform).
+</dd>
+<p>
+<dd>
+Mouse events are strings of the form "click <i>x</i> <i>y</i> <i>button</i> <i>modifiers</i>"
+where <i>x</i> and <i>y</i> are integers giving the cell position of the click,
+<i>button</i> is one of left, middle or right, and <i>modifiers</i> is the same as above.
+The following examples show the strings returned after various user events:
 </dd>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>' '</b> to <b>'~'</b></td><td width=20> </td><td>all displayable characters (space to tilde)</td></tr>
-<tr><td><b>chr(8)</b></td><td width=20>            </td><td>backspace or delete</td></tr>
-<tr><td><b>chr(9)</b></td><td width=20>            </td><td>tab</td></tr>
-<tr><td><b>chr(13)</b></td><td width=20>           </td><td>return or enter</td></tr>
-<tr><td><b>chr(28)</b> to <b>chr(31)</b></td><td width=20> </td><td>left, right, up, down arrows</td></tr>
+<tr><td>"key m none"</td><td width=15>
+        </td><td>user pressed M key</td></tr>
+<tr><td>"key space shift"</td><td width=15>
+        </td><td>user pressed space bar and shift key</td></tr>
+<tr><td>"key , altctrlshift"</td><td width=15>
+        </td><td>user pressed comma and 3 modifier keys</td></tr>
+<tr><td>"click 100 20 left none"</td><td width=15>
+        </td><td>user clicked cell at 100,20 with left button</td></tr>
+<tr><td>"click -10 9 middle alt"</td><td width=15>
+        </td><td>user clicked cell with middle button and pressed alt key</td></tr>
+<tr><td>"click 0 1 right altshift"</td><td width=15>
+        </td><td>user clicked cell with right button and pressed 2 modifiers</td></tr>
 </table>
 </dd>
 <p>
-<dd> Example: <b>ch = golly.getkey()</b></dd>
+<dd> Example: <b>evt = golly.getevent()</b></dd>
 </p>
 
-<a name="dokey"></a><p><dt><b>dokey(char)</b></dt>
+<a name="doevent"></a><p><dt><b>doevent(<i>event</i>)</b></dt>
 <dd>
-This command allows limited keyboard interaction while a script is running.
-The given character is passed to Golly's keyboard event handler, but all
-keyboard shortcuts that can change the current pattern will be ignored.
+Pass the given event to Golly to handle in the usual manner
+(but events that can change the current pattern will be ignored).
+The given event must be a string with the exact same format as returned
+by the <b>getevent</b> command (see above).  If the string is empty then
+Golly does nothing.
 </dd>
-<dd> Example: <b>golly.dokey( golly.getkey() )</b></dd>
+<dd> Example: <b>golly.doevent( golly.getevent() )</b></dd>
+</p>
+
+<a name="getxy"></a><p><dt><b>getxy()</b></dt>
+<dd>
+Return the mouse's current grid position as a string.
+The string is empty if the mouse is outside the viewport or outside a bounded grid
+or over the translucent buttons, otherwise the string contains x and y grid
+coordinates separated by a space; eg. "-999 12345".
+See <a href="edit:Scripts/Python/draw-lines.py">draw-lines.py</a> for a good
+example of how to use this command.
+</dd>
+<dd> Example: <b>mousepos = golly.getxy()</b></dd>
 </p>
 
 <a name="show"></a><p><dt><b>show(<i>message</i>)</b></dt>
@@ -1285,14 +1340,15 @@ The width and height must be greater than zero.
 <font size=+1><b>Using the glife package</b></font>
 
 <p>
-The glife folder included in the Scripts folder is a Python package that
-provides a high-level interface to some of Golly's scripting commands
+The glife folder included in the Scripts/Python folder is a Python package
+that provides a high-level interface to some of Golly's scripting commands
 (it's based on Eugene Langvagen's <b>life</b> package included in
 <a href="http://plife.sourceforge.net/">PLife</a>).
 When a script imports <b>glife</b> or any of its submodules, Python
-automatically executes the <b>__init__.py</b> module.  This module defines
-the <b>pattern</b> and <b>rect</b> classes as well as a number of
-useful synonyms and helper functions.  For example, consider this script:
+automatically executes the
+<a href="edit:Scripts/Python/glife/__init__.py">__init__.py</a> module.
+This module defines the <b>pattern</b> and <b>rect</b> classes as well as a number
+of useful synonyms and helper functions.  For example, consider this script:
 <p>
 <dd><b>from glife import *</b></dd>
 <dd><b>blinker = pattern("3o!")</b></dd>
@@ -1368,7 +1424,7 @@ When the module is stable you can remove or comment out the above line.
 3.
 The escape key check to abort a running script is not done by Python but
 by each Golly scripting command.  This means that very long Python computations
-should call an occasional "no-op" command like <b>run(0)</b> to allow the
+should call an occasional "no-op" command like <b>doevent("")</b> to allow the
 script to be aborted in a timely manner.
 
 <p>

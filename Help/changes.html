@@ -3,13 +3,22 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-<font size=+1><b>Changes in version 2.3b1 (released !!! 2010)</b></font>
+<font size=+1><b>Changes in version 2.3b1 (released !!! 2011)</b></font>
 
 <p>
 <ul>
-<li> Moved scripts that create table/tree files into Scripts/Python/Rule-Generators.
+<li> A number of new script commands have been added to allow mouse interaction
+     and better keyboard interaction: <a href="python.html#getevent">getevent</a>,
+     <a href="python.html#doevent">doevent</a> and <a href="python.html#getxy">getxy</a>.
+     The getkey and dokey commands still work but are deprecated.
+<li> Some scripts have been added to take advantage of the new commands:
+     <a href="open:Scripts/Python/draw-lines.py">draw-lines.py</a>,
+     <a href="open:Scripts/Python/flood-fill.py">flood-fill.py</a>,
+     <a href="open:Scripts/Python/move-object.py">move-object.py</a> and
+     <a href="open:Scripts/Python/move-selection.py">move-selection.py</a>.
+<li> Scripts that create table/tree files have been moved into Scripts/Python/Rule-Generators.
 <li> While waiting for a paste click, the keyboard shortcuts for flipping or rotating
-     a selection now modify the paste pattern instead.
+     a selection now modify the paste pattern rather than the current selection.
 <li> Fixed a bug in Win and Linux apps that prevented keyboard shortcuts being used
      while waiting for paste click.
 <li> Pasted patterns are no longer truncated if the RLE header info is incorrect.

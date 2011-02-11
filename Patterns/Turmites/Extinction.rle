@@ -24,7 +24,8 @@
 # - turn left (8) *and* right (2) (8+2=10)
 # - adopt state 0 and move forward one square
 #
-# To generate Turmites like this one, use Scripts/Python/Turmite-gen.py
+# To generate Turmites like this one, run this script:
+# Scripts/Python/Rule-Generators/Turmite-gen.py
 #
 x = 1, y = 1, rule = Turmite_1202822111121111812a0281282
 C!

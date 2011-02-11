@@ -144,7 +144,7 @@ or you can search for individual commands alphabetically:
 <a href="#copy"><b>g_copy</b></a><br>
 <a href="#cut"><b>g_cut</b></a><br>
 <a href="#dellayer"><b>g_dellayer</b></a><br>
-<a href="#dokey"><b>g_dokey</b></a><br>
+<a href="#doevent"><b>g_doevent</b></a><br>
 <a href="#duplicate"><b>g_duplicate</b></a><br>
 <a href="#empty"><b>g_empty</b></a><br>
 <a href="#error"><b>g_error</b></a><br>
@@ -156,19 +156,19 @@ or you can search for individual commands alphabetically:
 <a href="#getalgo"><b>g_getalgo</b></a><br>
 <a href="#getbase"><b>g_getbase</b></a><br>
 <a href="#getcell"><b>g_getcell</b></a><br>
-<a href="#getcells"><b>g_getcells</b></a>
+<a href="#getcells"><b>g_getcells</b></a><br>
+<a href="#getclip"><b>g_getclip</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getclip"><b>g_getclip</b></a><br>
 <a href="#getclipstr"><b>g_getclipstr</b></a><br>
 <a href="#getcolor"><b>g_getcolor</b></a><br>
 <a href="#getcolors"><b>g_getcolors</b></a><br>
 <a href="#getcursor"><b>g_getcursor</b></a><br>
 <a href="#getdir"><b>g_getdir</b></a><br>
+<a href="#getevent"><b>g_getevent</b></a><br>
 <a href="#getgen"><b>g_getgen</b></a><br>
 <a href="#getheight"><b>g_getheight</b></a><br>
-<a href="#getkey"><b>g_getkey</b></a><br>
 <a href="#getlayer"><b>g_getlayer</b></a><br>
 <a href="#getmag"><b>g_getmag</b></a><br>
 <a href="#getname"><b>g_getname</b></a><br>
@@ -181,6 +181,7 @@ or you can search for individual commands alphabetically:
 <a href="#getstep"><b>g_getstep</b></a><br>
 <a href="#getstring"><b>g_getstring</b></a><br>
 <a href="#getwidth"><b>g_getwidth</b></a><br>
+<a href="#getxy"><b>g_getxy</b></a><br>
 <a href="#hash"><b>g_hash</b></a><br>
 <a href="#help"><b>g_help</b></a>
 </td>
@@ -1103,33 +1104,69 @@ The script will be aborted if the user hits the dialog's Cancel button.
 <dd> Example: <b>$i = g_getstring("Enter a number:", "100");</b></dd>
 </p>
 
-<a name="getkey"></a><p><dt><b>g_getkey()</b></dt>
+<a name="getevent"></a><p><dt><b>g_getevent()</b></dt>
 <dd>
-Return a key hit by the user as a single character,
-or an empty string if no key was hit.
-The characters returned by this command are a subset of ASCII:
+Return a keyboard or mouse event as a string.
+If there are no such events pending then the string is empty.
+</dd>
+<p>
+<dd>
+Keyboard events are strings of the form "key <i>charname</i> <i>modifiers</i>"
+where <i>charname</i> can be any displayable ASCII character from '!' to '~'
+or one of the following names: space, home, end, pageup, pagedown, help,
+insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
+<i>modifiers</i> is none if no modifier key was pressed, otherwise it is
+some combination of alt, cmd, ctrl, meta, shift.  Note that cmd corresponds
+to the command key on a Mac and the control key on Windows/Linux (this lets
+you write portable scripts that work on any platform).
+</dd>
+<p>
+<dd>
+Mouse events are strings of the form "click <i>x</i> <i>y</i> <i>button</i> <i>modifiers</i>"
+where <i>x</i> and <i>y</i> are integers giving the cell position of the click,
+<i>button</i> is one of left, middle or right, and <i>modifiers</i> is the same as above.
+The following examples show the strings returned after various user events:
 </dd>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>' '</b> to <b>'~'</b></td><td width=20> </td><td>all displayable characters (space to tilde)</td></tr>
-<tr><td><b>chr(8)</b></td><td width=20>            </td><td>backspace or delete</td></tr>
-<tr><td><b>chr(9)</b></td><td width=20>            </td><td>tab</td></tr>
-<tr><td><b>chr(13)</b></td><td width=20>           </td><td>return or enter</td></tr>
-<tr><td><b>chr(28)</b> to <b>chr(31)</b></td><td width=20> </td><td>left, right, up, down arrows</td></tr>
+<tr><td>"key m none"</td><td width=15>
+        </td><td>user pressed M key</td></tr>
+<tr><td>"key space shift"</td><td width=15>
+        </td><td>user pressed space bar and shift key</td></tr>
+<tr><td>"key , altctrlshift"</td><td width=15>
+        </td><td>user pressed comma and 3 modifier keys</td></tr>
+<tr><td>"click 100 20 left none"</td><td width=15>
+        </td><td>user clicked cell at 100,20 with left button</td></tr>
+<tr><td>"click -10 9 middle alt"</td><td width=15>
+        </td><td>user clicked cell with middle button and pressed alt key</td></tr>
+<tr><td>"click 0 1 right altshift"</td><td width=15>
+        </td><td>user clicked cell with right button and pressed 2 modifiers</td></tr>
 </table>
 </dd>
 <p>
-<dd> Example: <b>$ch = g_getkey();</b></dd>
+<dd> Example: <b>$evt = g_getevent();</b></dd>
 </p>
 
-<a name="dokey"></a><p><dt><b>g_dokey($char)</b></dt>
+<a name="doevent"></a><p><dt><b>g_doevent(<i>$string</i>)</b></dt>
 <dd>
-This command allows limited keyboard interaction while a script is running.
-The given character is passed to Golly's keyboard event handler, but all
-keyboard shortcuts that can change the current pattern will be ignored.
+Pass the given event to Golly to handle in the usual manner
+(but events that can change the current pattern will be ignored).
+The given event must be a string with the exact same format as returned
+by the <b>g_getevent</b> command (see above).  If the string is empty then
+Golly does nothing.
 </dd>
-<dd> Example: <b>g_dokey( g_getkey() );</b></dd>
+<dd> Example: <b>g_doevent( g_getevent() );</b></dd>
+</p>
+
+<a name="getxy"></a><p><dt><b>g_getxy()</b></dt>
+<dd>
+Return the mouse's current grid position as a string.
+The string is empty if the mouse is outside the viewport or outside a bounded grid
+or over the translucent buttons, otherwise the string contains x and y grid
+coordinates separated by a space; eg. "-999 12345".
+</dd>
+<dd> Example: <b>$mousepos = g_getxy();</b></dd>
 </p>
 
 <a name="show"></a><p><dt><b>g_show(<i>$message</i>)</b></dt>
@@ -1275,7 +1312,7 @@ and nothing will happen when the script is executed.
 2.
 The escape key check to abort a running script is not done by Perl but
 by each Golly scripting command.  This means that very long Perl computations
-should call an occasional "no-op" command like <b>g_run(0)</b> to allow the
+should call an occasional "no-op" command like <b>g_doevent("")</b> to allow the
 script to be aborted in a timely manner.
 
 <p>

@@ -109,6 +109,7 @@ def drawlines():
 # ------------------------------------------------------------------------------
 
 g.show("Click where to start line...")
+oldcursor = g.getcursor()
 g.setcursor("Draw")
 drawstate = g.getoption("drawingstate")
 oldline = []
@@ -117,6 +118,7 @@ firstcell = []    # pos and state of the 1st cell clicked
 try:
    drawlines()
 finally:
+   g.setcursor(oldcursor)
    if len(oldline) > 0: eraseline(oldline)
    if len(firstcell) > 0:
       x, y, s = firstcell

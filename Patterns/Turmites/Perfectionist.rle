@@ -22,7 +22,8 @@
 # - move South
 # - adopt state 1 and move forward one square
 #
-# To generate Turmites like this one, use Scripts/Python/AbsoluteTurmite-gen.py
+# To generate Turmites like this one, run this script:
+# Scripts/Python/Rule-Generators/AbsoluteTurmite-gen.py
 #
 x = 1, y = 1, rule = AbsoluteTurmite_0S11W11E21S21W00N0
 B!
