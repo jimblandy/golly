@@ -26,11 +26,13 @@ The string specifies which way to turn when standing on a square of each state.
 
 Examples: RL (Langton's Ant), RLR (Chaos), LLRR (Cardioid), LRRL (structure)
 
+Permitted moves: 'L':Left, 'R':Right, 'U':U-turn, 'N':No turn
+
 Enter string:''', 'RL', 'Enter string:')
 
 n_colors = len(spec)
 
-d={'R':'2','L':'8'} # 1=noturn, 2=right, 4=u-turn, 8=left
+d={'R':'2','L':'8','U':'4','N':'1'} # 1=noturn, 2=right, 4=u-turn, 8=left
 turmite_spec = "{{"+','.join(['{'+str((i+1)%n_colors)+','+d[spec[i]]+',0}' for i in range(n_colors)])+"}}"
 rule_name = prefix+'_'+spec
 action_table = eval(turmite_spec.replace('}',']').replace('{','['))
