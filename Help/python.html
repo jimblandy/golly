@@ -1159,10 +1159,11 @@ Keyboard events are strings of the form "key <i>charname</i> <i>modifiers</i>"
 where <i>charname</i> can be any displayable ASCII character from '!' to '~'
 or one of the following names: space, home, end, pageup, pagedown, help,
 insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
-<i>modifiers</i> is none if no modifier key was pressed, otherwise it is
+If no modifier key was pressed then <i>modifiers</i> is none, otherwise it is
 some combination of alt, cmd, ctrl, meta, shift.  Note that cmd corresponds
 to the command key on a Mac and the control key on Windows/Linux (this lets
-you write portable scripts that work on any platform).
+you write portable scripts that work on any platform).  The alt modifier
+corresponds to the option key on a Mac.
 </dd>
 <p>
 <dd>
@@ -1207,7 +1208,7 @@ Golly does nothing.
 <dd>
 Return the mouse's current grid position as a string.
 The string is empty if the mouse is outside the viewport or outside a bounded grid
-or over the translucent buttons, otherwise the string contains x and y grid
+or over the translucent buttons, otherwise the string contains x and y cell
 coordinates separated by a space; eg. "-999 12345".
 See <a href="edit:Scripts/Python/draw-lines.py">draw-lines.py</a> for a good
 example of how to use this command.
