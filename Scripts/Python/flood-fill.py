@@ -4,20 +4,33 @@
 import golly as g
 from time import time
 
-# set edges of bounded grid for later use
+# avoid an unbounded fill
+if g.empty():
+   if g.getwidth() == 0 or g.getheight() == 0:
+      g.exit("You cannot fill an empty universe that is unbounded!")
+else:
+   # set fill limits to the pattern's bounding box
+   # (these will be extended below if the grid is bounded)
+   r = g.getrect()
+   minx = r[0]
+   miny = r[1]
+   maxx = minx + r[2] - 1
+   maxy = miny + r[3] - 1
+
+# allow filling to extend to the edges of bounded grid
 if g.getwidth() > 0:
-   gridl = -int(g.getwidth()/2)
-   gridr = gridl + g.getwidth() - 1
+   minx = -int(g.getwidth()/2)
+   maxx = minx + g.getwidth() - 1
 if g.getheight() > 0:
-   gridt = -int(g.getheight()/2)
-   gridb = gridt + g.getheight() - 1
+   miny = -int(g.getheight()/2)
+   maxy = miny + g.getheight() - 1
 
 # ------------------------------------------------------------------------------
 
 def checkneighbor(x, y, oldstate):
-   # first check if x,y is outside bounded grid
-   if g.getwidth() > 0 and (x < gridl or x > gridr): return False
-   if g.getheight() > 0 and (y < gridt or y > gridb): return False
+   # first check if x,y is outside fill limits
+   if x < minx or x > maxx: return False
+   if y < miny or y > maxy: return False
    return g.getcell(x, y) == oldstate
 
 # ------------------------------------------------------------------------------
@@ -35,12 +48,17 @@ def floodfill():
          evt, xstr, ystr, butt, mods = event.split()
          x = int(xstr)
          y = int(ystr)
-         # user might have changed drawing state
-         newstate = g.getoption("drawingstate")
-         oldstate = g.getcell(x, y)
-         if oldstate == newstate:
-            g.warn("The clicked cell must have a different state\n"+
-                   "to the current drawing state.")
+         if x < minx or x > maxx or y < miny or y > maxy:
+            # click is outside pattern's bounding box in unbounded universe
+            g.warn("Click within the pattern's bounding box\n"+
+                   "otherwise the fill will be unbounded.")
+         else:
+            # note that user might have changed drawing state
+            newstate = g.getoption("drawingstate")
+            oldstate = g.getcell(x, y)
+            if oldstate == newstate:
+               g.warn("The clicked cell must have a different state\n"+
+                      "to the current drawing state.")
       else:
          g.doevent(event)
 
