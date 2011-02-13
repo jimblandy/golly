@@ -1,27 +1,39 @@
 #CXRLE Pos=1,0
+# Billiard Ball Machine
 #
-# Billiard Ball Machine - from Cellular Automata Machines.
-#
-# A rule by Edward Fredkin. Signals and logic gates are simulated by
-# 'billiard balls' that bounce off walls and each other. 
+# A Margolus-neighborhood implementation of a rule by Edward Fredkin. 
+# Signals and logic gates are simulated by 'billiard balls' that bounce 
+# off walls and each other. 
 #
 # E. Fredkin, T. Toffoli, "Conservative logic", International Journal of 
 # Theoretical Physics, 21:3-4, 219-253 (1982)
 #
-# MCell Margolus specification: MS,D0;8;4;3;2;5;9;7;1;6;10;11;12;13;14;15
-# (see: http://psoup.math.wisc.edu/mcell/rullex_marg.html )
-#
-# Rule table produced by emulate-Margolus-table.py from
-# BBM-Margolus.table
+# T. Toffoli, N. Margolus "Cellular Automata Machines: A New 
+# Environment for Modeling", MIT Press (1987)
 #
 # At the time of writing, Golly does not support the Margolus neighborhood,
-# so we are emulating it by using some extra states. Configurations must
-# have the correct pattern of states to work correctly - you can't just 
-# scribble on the pattern! First run export.py in Scripts/Python/Margolus.
-# Then draw, using state 1. Next select-all and run import.py. You can now
-# continue running the CA.
+# so we are emulating it by using some extra states. The odd-numbered cells
+# are those in the top-left corner of the 2x2 block to be updated. 
+# Configurations must have the correct pattern of states to work correctly 
+# - you can't just scribble on the pattern! First run export.py in 
+# Scripts/Python/Margolus. Then draw, using state 1. Next select-all and 
+# run import.py. You can now continue running the CA.
 #
-x = 88, y = 74, rule = BBM-Margolus-emulated
+# Rule tree produced by RuleTableToTree.py from the Margolus rule table:
+#
+# neighborhood:Margolus
+# n_states:2
+# symmetries:rotate4
+# 
+# # The Margolus transition a,b,c,d : e,f,g,h means:
+# #
+# #      a  b   becomes    e  f
+# #      c  d              g  h
+#
+# 1,0,0,0 : 0,0,0,1  # balls travel 
+# 0,1,1,0 : 1,0,0,1  # balls collide head-on
+#
+x = 88, y = 74, rule = BBM-Margolus_emulated
 88D$CDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDC
 DCDCDCDCDCDCDCDCDCDCDCD$2D84B2D$CDABABABABABABABABABABABABABABABABABA
 BABABABABABABABABABABABABABABABABABABABABABABABABCD$2D84B2D$CDABABABA
