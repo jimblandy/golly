@@ -1,18 +1,38 @@
-#CXRLE Pos=0,1
-#
-# A simple simulation of sand particles - inspired by MCell's version.
-#
-# Rule table produced by emulate-Margolus-table.py from
-# Sand-Margolus.table
+# A simple simulation of sand particles using the Margolus neighborhood
+# - inspired by MCell's version.
 #
 # At the time of writing, Golly does not support the Margolus neighborhood,
-# so we are emulating it by using some extra states. Configurations must
-# have the correct pattern of states to work correctly - you can't just 
-# scribble on the pattern! First run export.py in Scripts/Python/Margolus.
-# Then draw, using states 1, 2 and 3. Next select-all and run import.py. 
-# You can now continue running the CA.
+# so we are emulating it by using some extra states. The odd-numbered cells
+# are those in the top-left corner of the 2x2 block to be updated. 
+# Configurations must have the correct pattern of states to work correctly 
+# - you can't just scribble on the pattern! First run export.py in 
+# Scripts/Python/Margolus. Then draw, using states 1, 2 and 3. Next 
+# select-all and run import.py. You can now continue running the CA.
 #
-x = 204, y = 273, rule = Sand-Margolus-emulated
+# Rule tree produced by RuleTableToTree.py from the Margolus rule table:
+#
+# n_states:4
+# neighborhood:Margolus
+# symmetries:reflect_horizontal
+# 
+# # The Margolus transition a,b,c,d : e,f,g,h means:
+# #  a  b     -->    e  f
+# #  c  d            g  h
+# 
+# # 0 : air
+# # 1 : sand
+# # 2 : wood
+# # 3 : magical source of sand
+# 
+# var a={0,1,2,3}
+# var b={0,1,2,3}
+# 
+# 1,1,0,0 : 0,0,1,1  # a pair of sand particles falls
+# 1,a,0,b : 0,a,1,b  # otherwise, sand falls next to a static column
+# 1,0,a,0 : 0,0,a,1  # otherwise, it can topple
+# 3,a,0,b : 3,a,1,b  # sand can appear from the magical source
+# 
+x = 204, y = 273, rule = Sand-Margolus_emulated
 BABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB
 ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABA
 BABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABA$
