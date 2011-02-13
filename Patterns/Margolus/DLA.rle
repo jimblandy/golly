@@ -1,22 +1,46 @@
 #CXRLE Pos=1,0
-#
 # Diffusion Limited Aggregation
 #
 # Particles move around at random until they encounter a stuck particle,
 # when they themselves become stuck. A familiar fractal growth pattern
 # emerges, as seen in many natural processes.
 #
-# Rule table produced by emulate-Margolus-table.py from
-# DLA-Margolus.table
-#
 # At the time of writing, Golly does not support the Margolus neighborhood,
-# so we are emulating it by using some extra states. Configurations must
-# have the correct pattern of states to work correctly - you can't just 
-# scribble on the pattern! First run export.py in Scripts/Python/Margolus.
-# Then draw, using states 1 and 2. Next select-all and run import.py. You can 
-# now continue running the CA.
+# so we are emulating it by using some extra states. The odd-numbered cells
+# are those in the top-left corner of the 2x2 block to be updated. 
+# Configurations must have the correct pattern of states to work correctly 
+# - you can't just scribble on the pattern! First run export.py in 
+# Scripts/Python/Margolus. Then draw, using states 1 and 2. Next select-all 
+# and run import.py. You can now continue running the CA.
 #
-x = 313, y = 236, rule = DLA-Margolus-emulated
+# Rule tree produced by RuleTableToTree.py from the Margolus rule table:
+#
+# # Diffusion Limited Aggregation, in a Margolus neighborhood CA
+# 
+# n_states:3
+# neighborhood:Margolus
+# symmetries:rotate4reflect
+# 
+# # The Margolus transition a,b,c,d : e,f,g,h means:
+# #
+# #      a  b   becomes    e  f
+# #      c  d              g  h
+# 
+# # 0: vacuum
+# # 1: gas particle
+# # 2: stuck particle
+# 
+# # random gas-like rules:
+# 1,0,0,0 : 0,0,0,1 # a diagonally-travelling particle keeps going
+# 1,1,0,0 : 1,1,0,0 # two particles collide
+# 0,1,1,0 : 1,0,0,1 # two particles collide head-on
+# 1,1,1,0 : 1,1,0,1 # three particles pass through each other
+# 
+# # plus aggregation rules: (these seem to suffice)
+# 1,0,2,0 : 2,0,2,0
+# 1,0,2,2 : 2,0,2,2
+# 
+x = 313, y = 236, rule = DLA-Margolus_emulated
 D4BD15BD2BD2BD3B2D9BD5BD2BD2B4D3BD3BD16B2D12BD12BD4BD11BD24BD28BD2BD
 2B2D12BD8BD9BD5BD4B2D3BD3B2DBD6B2D2B3D2BD2BDBD4BDBD6BD15BD4BD2BD3BD7B
 $ABCBABABABABABABABABABABABABABCBABABCBABABABABABABABABABABABABABABAB
