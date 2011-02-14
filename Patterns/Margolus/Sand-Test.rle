@@ -24,7 +24,7 @@
 # Rule tree produced by RuleTableToTree.py from the Margolus rule table:
 #
 # n_states:4
-# neighborhood:Margolus
+# neighborhood:Margolus  # (or square4_cyclic)
 # symmetries:reflect_horizontal
 # 
 # # The Margolus transition a,b,c,d : e,f,g,h means:
