@@ -28,13 +28,16 @@ APP_VERSION = 2.3b1
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
 PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 
-#!!! NOTE: If Golly is built on 10.4 (Tiger) the above command causes DynaLoader.a
+# WARNING: If Golly is built on 10.4 (Tiger) the above command causes DynaLoader.a
 # to be statically linked, but this results in a crash if the app runs a Perl script
 # on 10.6 (Snow Leopard).  The solution is to create a special version for 10.6
-# by enabling the following PERL_LINK line which removes DynaLoader.a from the
-# link command (the "-undefined dynamic_lookup" is needed to avoid _boot_DynaLoader
-# being flagged as an undefined symbol).
-# PERL_LINK = -undefined dynamic_lookup -L/usr/local/lib -L/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lc
+# by running "make mac106=1".  This activates the following PERL_LINK line which
+# removes DynaLoader.a from the link command (the "-undefined dynamic_lookup" is
+# needed to avoid _boot_DynaLoader being flagged as an undefined symbol).
+ifeq ($(mac106),1)
+   PERL_LINK = -undefined dynamic_lookup -L/usr/local/lib -L/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE \
+               -lperl -ldl -lm -lc
+endif
 
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
