@@ -11,6 +11,11 @@ A number of examples are stored in the Rules folder:
 <p><b><a href="rule:B3/S23">B3/S23</a></b> or <b><a href="rule:Life">Life</a></b><br>
 Conway's Life.  This is the default rule for the RuleTree algorithm.
 
+<p><b><a href="rule:BBM-Margolus_emulated">BBM-Margolus_emulated</a></b><br>
+Ed Fredkin's Billiard Ball Model, using the Margolus neighborhood to implement a simple reversible physics of bouncing balls.
+In this implementation we are emulating the system using a Moore-neighborhood CA with extra states.
+Open <a href="open:Patterns/Margolus/BBM.rle">BBM.rle</a> to see the rule in action.
+
 <p><b><a href="rule:BriansBrain">BriansBrain</a></b><br>
 An alternative implementation of the Generations rule /2/3.
 
@@ -32,6 +37,14 @@ Similar to the above rule but supporting an even smaller self-replicating loop o
 To see the rule in action, open
 <a href="open:Patterns/Loops/Chou-Reggia-Loop-2.rle">Chou-Reggia-Loop-2.rle</a>.
 
+<p><b><a href="rule:CrittersMargolus_emulated">CrittersMargolus_emulated</a></b><br>
+The Critters rule is reversible and has Life-like gliders. See <a href="open:Patterns/Margolus/CrittersCircle.rle">CrittersCircle.rle</a>.
+
+<p><b><a href="rule:DLA-Margolus_emulated">DLA-Margolus_emulated</a></b><br>
+<a href="http://en.wikipedia.org/wiki/Diffusion-limited_aggregation">Diffusion-limited aggregation</a>
+(DLA) is where moving particles can become stuck, forming a distinctive fractal pattern seen in several
+different natural physical systems. See <a href="open:Patterns/Margolus/DLA.rle">DLA.rle</a>.
+
 <p><b><a href="rule:Ed-rep">Ed-rep</a></b><br>
 A version of Fredkin's parity rule, for 7 states.
 See <a href="open:Patterns/Other-Rules/Ed-rep.rle">Ed-rep.rle</a> for an image of Ed Fredkin
@@ -41,6 +54,10 @@ that photocopies itself.
 An extension of the SDSR Loop, designed to allow evolution through collisions.
 To see the rule in action, open
 <a href="open:Patterns/Loops/Evoloop.rle">Evoloop.rle</a>.
+
+<p><b><a href="rule:Langtons-Ant">Langtons-Ant</a></b><br>
+Chris Langton's other famous CA. An ant walks around on a binary landscape, collecting and depositing pheremones.
+See <a href="open:Patterns/Other-Rules/Langtons-Ant.rle">Langtons-Ant.rle</a>.
 
 <p><b><a href="rule:Langtons-Loops">Langtons-Loops</a></b><br>
 The original loop. Chris Langton adapted Codd's 1968 CA to support a simple form of
@@ -63,6 +80,10 @@ This implementation has only 2 live states (with icons \ and /), so it's a lot e
 to enter patterns and they run faster.
 Open <a href="open:Patterns/Other-Rules/life-on-the-slope.rle">life-on-the-slope.rle</a>.
 
+<p><b><a href="rule:Sand-Margolus_emulated">Sand-Margolus_emulated</a></b><br>
+MCell's Sand rule is a simple simulation of falling sand particles.
+See <a href="open:Patterns/Margolus/Sand.rle">Sand.rle</a>.
+
 <p><b><a href="rule:SDSR-Loop">SDSR-Loop</a></b><br>
 An extension of Langton's Loops, designed to cause dead loops to disappear,
 allowing other loops to replicate further.
@@ -71,6 +92,13 @@ To see the rule in action, open
 
 <p><b><a href="rule:StarWars">StarWars</a></b><br>
 An alternative implementation of the Generations rule 345/2/4.
+
+<p><b><a href="rule:TMGasMargolus_emulated">TMGasMargolus_emulated</a></b><br>
+A different version of the HPP gas, implemented in the Margolus neighborhood, see 
+<a href="open:Patterns/Margolus/TMGas.rle">TMGas.rle</a>.
+
+<p><b><a href="rule:TripATronMargolus_emulated">TripATronMargolus_emulated</a></b><br>
+The Trip-A-Tron rule in the Margolus neighborhood, see <a href="open:Patterns/Margolus/TripATron.rle">TripATron.rle</a>.
 
 <p><b><a href="rule:WireWorld">WireWorld</a></b><br>
 A 4-state CA created by Brian Silverman.
