@@ -50,5 +50,5 @@ f.close()
 
 # tell the user what we wrote, and what to do next
 g.note('Wrote file: '+folder+rule_name+'.table\n\n\
-You can now use emulate-Margolus-table.py to emulate the rule table.')
+You can now use RuleTableToTree.py to emulate the rule table.')
 
