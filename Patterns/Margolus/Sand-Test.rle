@@ -2,7 +2,7 @@
 # A simple simulation of sand particles using the Margolus neighborhood
 # - inspired by MCell's version.
 #
-# Note that with the Sand-Margolus_emulated rule, only two of the blocks
+# Note that with the Sand-Margolus-emulated rule, only two of the blocks
 # of sand collapse. Now change rule (Control | Set Rule...) to
 # Sand-square4cyclic_emulated, and note that all four blocks of sand
 # collapse.
@@ -43,7 +43,7 @@
 # 1,a,0,b : 0,a,1,b  # otherwise, sand falls next to a static column
 # 1,0,a,0 : 0,0,a,1  # otherwise, it can topple
 # 3,a,0,b : 3,a,1,b  # sand can appear from the magical source
-x = 15, y = 14, rule = Sand-Margolus_emulated
+x = 15, y = 14, rule = Sand-Margolus-emulated
 15B$BABABABABABABAB$15B$BABADCBABCDABAB$4B2D3B2D4B$BAFEFEFEFEFEFAB$
 15B$BABABABABABABAB$4B2D3B2D4B$BABADCBABCDABAB$2B11F2B$BABABABABABABA
 B$15B$BABABABABABABAB!
