@@ -45,9 +45,6 @@ for row in xrange(r.top, r.top + r.height):
    if newsecs - oldsecs >= 1.0:
       oldsecs = newsecs
       g.update()
-
-   g.doevent(g.getevent())       # allow keyboard/mouse interaction
-
    for col in xrange(r.left, r.left + r.width):
       if g.getcell(col, row)==1:
          tape += extend*(4+col-r.left) + extend_left + extend*(r.top+r.height-row)

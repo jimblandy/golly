@@ -81,7 +81,6 @@ def goto(gen):
                g.show("Pattern is empty.")
                return
             g.step()
-            g.doevent(g.getevent())       # allow keyboard/mouse interaction
             newsecs = time()
             if newsecs - oldsecs >= 1.0:  # do an update every sec
                oldsecs = newsecs

@@ -90,8 +90,6 @@ for i in xrange(numsteps):
    g.step()
    poplist.append( int(g.getpop()) )
    genlist.append( int(g.getgen()) )
-   
-   g.doevent(g.getevent())          # allow keyboard/mouse interaction
    newsecs = time()
    if newsecs - oldsecs >= 1.0:     # show pattern every second
       oldsecs = newsecs
@@ -185,7 +183,6 @@ for i in xrange(numsteps):
    draw_line(x, -y, newx, -newy)
    x = newx
    y = newy
-   g.doevent(g.getevent())          # allow keyboard/mouse interaction
    newsecs = time()
    if newsecs - oldsecs >= 1.0:     # update plot every second
       oldsecs = newsecs

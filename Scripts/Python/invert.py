@@ -19,10 +19,6 @@ for row in xrange(r.top, r.top + r.height):
    if newsecs - oldsecs >= 1.0:
       oldsecs = newsecs
       g.update()
-
-   # also allow keyboard/mouse interaction
-   g.doevent( g.getevent() )
-
    for col in xrange(r.left, r.left + r.width):
       g.setcell(col, row, maxstate - g.getcell(col, row))
 

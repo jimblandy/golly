@@ -169,7 +169,6 @@ g_show("Checking for oscillation... (hit escape to abort)");
 my $oldsecs = time;
 while ( not oscillating() ) {
    g_run(1);
-   g_doevent(g_getevent());            # allow keyboard/mouse interaction
    my $newsecs = time;
    if ($newsecs - $oldsecs >= 1.0) {   # show pattern every second
       $oldsecs = $newsecs;

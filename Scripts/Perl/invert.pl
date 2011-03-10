@@ -22,9 +22,6 @@ for (my $row = $y; $row < $y + $ht; $row++) {
       $oldsecs = $newsecs;
       g_update();
    }
-
-   g_doevent(g_getevent());   # allow keyboard/mouse interaction
-
    for (my $col = $x; $col < $x + $wd; $col++) {
       g_setcell($col, $row, $maxstate - g_getcell($col, $row));
    }

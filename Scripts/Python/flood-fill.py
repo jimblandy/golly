@@ -108,6 +108,8 @@ def floodfill():
          clist.append( (x-1, y-1) )
          g.setcell(     x-1, y-1, newstate)
       
+      # we called getevent() above so we need to do the following
+      # to allow keyboard/mouse interaction
       g.doevent(g.getevent())
 
 # ------------------------------------------------------------------------------

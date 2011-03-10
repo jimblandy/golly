@@ -1710,6 +1710,16 @@ void PatternView::ProcessKey(int key, int modifiers)
       
       default:             Warning(_("Bug detected in ProcessKey!"));
    }
+   
+   if (inscript && action.id != DO_NOTHING) {
+      // update viewport, status bar, scroll bars
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      bigview->UpdateScrollBars();
+      inscript = true;
+   }
+   
+   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
@@ -2478,7 +2488,7 @@ void PatternView::OnChar(wxKeyEvent& event)
       return;
    }
 
-   if (inscript) {
+   if ( inscript && (passkeys || key == WXK_ESCAPE) ) {
       // let script decide what to do with the key
       PassKeyToScript(key, mods);
       return;
@@ -2509,7 +2519,6 @@ void PatternView::OnChar(wxKeyEvent& event)
    }
 
    ProcessKey(key, mods);
-   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
@@ -2675,6 +2684,18 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
    } else if (button == wxMOUSE_BTN_MIDDLE) {
       // do nothing -- Golly currently doesn't use the middle button
    }
+   
+   /* following not needed here -- updates are done in routines called above
+   if (inscript) {
+      // update viewport, status bar, scroll bars
+      inscript = false;
+      mainptr->UpdatePatternAndStatus();
+      bigview->UpdateScrollBars();
+      inscript = true;
+   }
+   */
+
+   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
@@ -2742,7 +2763,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
       return;
    }
 
-   if (inscript && PointInGrid(x, y)) {
+   if (inscript && passclicks && PointInGrid(x, y)) {
       // let script decide what to do with click in grid
       pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
       PassClickToScript(cellpos.first, cellpos.second, button, modifiers);
@@ -2750,7 +2771,6 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
    }
    
    ProcessClick(x, y, button, modifiers);
-   mainptr->UpdateUserInterface(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------

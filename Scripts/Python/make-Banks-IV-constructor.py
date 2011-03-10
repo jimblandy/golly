@@ -57,9 +57,6 @@ for col in xrange(r.left + r.width-1, r.left-1,-1):
    if newsecs - oldsecs >= 1.0:
       oldsecs = newsecs
       g.update()
-
-   g.doevent(g.getevent())       # allow keyboard/mouse interaction
-
    for row in xrange(r.top, r.top + r.height):
       if g.getcell(col,row)==3:
          write_cell(H_OFFSET + col-r.left,row - r.top - half_height)

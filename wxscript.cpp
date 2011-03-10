@@ -51,6 +51,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // exported globals:
 bool inscript = false;     // a script is running?
+bool passkeys;             // pass keyboard events to script?
+bool passclicks;           // pass mouse events to script?
 bool canswitch;            // can user switch layers while script is running?
 bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
@@ -1003,6 +1005,9 @@ bool GSF_getcolor(char* colname, wxColor& color)
 
 void GSF_getevent(wxString& event)
 {
+   passkeys = true;     // future keyboard events will call PassKeyToScript
+   passclicks = true;   // future mouse events will call PassClickToScript
+   
    if (eventqueue.IsEmpty()) {
       event = wxEmptyString;
    } else {
@@ -1093,17 +1098,14 @@ const char* GSF_doevent(const wxString& event)
          }
 
          viewptr->ProcessKey(key, GetModifiers(event.AfterLast(' ')));
-         mainptr->UpdateUserInterface(mainptr->IsActive());
    
-         // update viewport, status bar, scroll bars, etc
-         inscript = false;
-         mainptr->UpdatePatternAndStatus();
-         bigview->UpdateScrollBars();
          if (showtitle) {
+            // update window title
+            inscript = false;
             mainptr->SetWindowTitle(wxEmptyString);
+            inscript = true;
             showtitle = false;
          }
-         inscript = true;
          
       } else if (event.StartsWith(wxT("click "))) {
          // parse event string like "click 10 20 left altshift"
@@ -1126,22 +1128,20 @@ const char* GSF_doevent(const wxString& event)
             // convert x,y cell position to pixel position in viewport
             pair<int,int> xy = currlayer->view->screenPosOf(x, y, currlayer->algo);
             int mods = GetModifiers(event.AfterLast(' '));
+            
             viewptr->ProcessClick(xy.first, xy.second, button, mods);
-            mainptr->UpdateUserInterface(mainptr->IsActive());
+      
+            if (showtitle) {
+               // update window title
+               inscript = false;
+               mainptr->SetWindowTitle(wxEmptyString);
+               inscript = true;
+               showtitle = false;
+            }
          } else {
             // ignore click if x,y is outside viewport or grid
             return NULL;
          }
-   
-         // update viewport, status bar, scroll bars, etc
-         inscript = false;
-         mainptr->UpdatePatternAndStatus();
-         bigview->UpdateScrollBars();
-         if (showtitle) {
-            mainptr->SetWindowTitle(wxEmptyString);
-            showtitle = false;
-         }
-         inscript = true;
          
       } else {
          return "Unknown event.";
@@ -1156,6 +1156,8 @@ const char* GSF_doevent(const wxString& event)
 
 void GSF_getkey(char* s)
 {
+   passkeys = true;   // future keyboard events will call PassKeyToScript
+   
    if (scriptchars.length() == 0) {
       // return empty string
       s[0] = '\0';
@@ -1193,18 +1195,13 @@ void GSF_dokey(char* ascii)
       // we can't handle modifiers here
       viewptr->ProcessKey(key, wxMOD_NONE);
 
-      // see any cursor change, including in edit bar
-      mainptr->UpdateUserInterface(mainptr->IsActive());
-
-      // update viewport, status bar, scroll bars, etc
-      inscript = false;
-      mainptr->UpdatePatternAndStatus();
-      bigview->UpdateScrollBars();
       if (showtitle) {
+         // update window title
+         inscript = false;
          mainptr->SetWindowTitle(wxEmptyString);
+         inscript = true;
          showtitle = false;
       }
-      inscript = true;
    }
 }
 
@@ -1348,6 +1345,8 @@ void RunScript(const wxString& filename)
       allowcheck = true;
       showtitle = false;
       updateedit = false;
+      passkeys = false;
+      passclicks = false;
       wxGetApp().PollerReset();
    }
 

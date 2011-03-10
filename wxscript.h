@@ -30,6 +30,12 @@ extern bool inscript;
 // Is a script currently running?  We allow access to this flag
 // so clients can temporarily save and restore its setting.
 
+extern bool passkeys;
+extern bool passclicks;
+// Pass keyboard and/or mouse events to script?  Both flags are initially false
+// at the start of a script; both become true if the script calls getevent.
+// If the script calls getkey (deprecated) then only passkeys becomes true.
+
 extern bool canswitch;
 // Can user switch layers while a script is running?
 
