@@ -1148,10 +1148,18 @@ The script will be aborted if the user hits the dialog's Cancel button.
 <dd> Example: <b>i = int( golly.getstring("Enter a number:", "100") )</b></dd>
 </p>
 
-<a name="getevent"></a><p><dt><b>getevent()</b></dt>
+<a name="getevent"></a><p><dt><b>getevent(<i>get=True</i>)</b></dt>
 <dd>
-Return a keyboard or mouse event as a string.
-If there are no such events pending then the string is empty.
+When Golly runs a script it initially handles all keyboard and mouse events, but
+if the script calls <b>getevent()</b> then future events are put into a queue
+for retrieval via later calls.  These events are returned in
+the form of strings (see below for the syntax).  If there are no events in the queue
+then the returned string is empty.  Note that the very first <b>getevent()</b>
+call will always return an empty string, but this isn't likely to be a problem
+because it normally occurs very soon after the script starts running.
+A script can call <b>getevent(False)</b> if it wants Golly to resume handling any
+further events.  See <a href="edit:Scripts/Python/flood-fill.py">flood-fill.py</a>
+for a good example.
 </dd>
 <p>
 <dd>
@@ -1201,7 +1209,7 @@ The given event must be a string with the exact same format as returned
 by the <b>getevent</b> command (see above).  If the string is empty then
 Golly does nothing.
 </dd>
-<dd> Example: <b>golly.doevent( golly.getevent() )</b></dd>
+<dd> Example: <b>golly.doevent("key q cmd")</b> # quit Golly</dd>
 </p>
 
 <a name="getxy"></a><p><dt><b>getxy()</b></dt>

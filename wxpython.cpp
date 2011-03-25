@@ -2666,11 +2666,12 @@ static PyObject* py_getevent(PyObject* self, PyObject* args)
 {
    if (PythonScriptAborted()) return NULL;
    wxUnusedVar(self);
+   int get = 1;
 
-   if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+   if (!PyArg_ParseTuple(args, (char*)"|i", &get)) return NULL;
 
    wxString event;
-   GSF_getevent(event);
+   GSF_getevent(event, get);
 
    return Py_BuildValue((char*)"s", (const char*)event.mb_str(wxConvLocal));
 }

@@ -2862,10 +2862,13 @@ XS(pl_getevent)
    IGNORE_UNUSED_PARAMS;
    RETURN_IF_ABORTED;
    dXSARGS;
-   if (items != 0) PERL_ERROR("Usage: $string = g_getevent().");
+   if (items > 1) PERL_ERROR("Usage: $string = g_getevent($get=1).");
+
+   int get = 1;
+   if (items > 0) get = SvIV(ST(0));
 
    wxString event;
-   GSF_getevent(event);
+   GSF_getevent(event, get);
 
    XSRETURN_PV((const char*)event.mb_str(wxConvLocal));
 }

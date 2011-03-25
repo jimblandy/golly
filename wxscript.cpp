@@ -1003,10 +1003,18 @@ bool GSF_getcolor(char* colname, wxColor& color)
 
 // -----------------------------------------------------------------------------
 
-void GSF_getevent(wxString& event)
+void GSF_getevent(wxString& event, int get)
 {
-   passkeys = true;     // future keyboard events will call PassKeyToScript
-   passclicks = true;   // future mouse events will call PassClickToScript
+   if (get) {
+      passkeys = true;     // future keyboard events will call PassKeyToScript
+      passclicks = true;   // future mouse events will call PassClickToScript
+   } else {
+      // tell Golly to handle future keyboard and mouse events
+      passkeys = false;
+      passclicks = false;
+      // clear any pending events so event is set to empty string below
+      eventqueue.Clear();
+   }
    
    if (eventqueue.IsEmpty()) {
       event = wxEmptyString;

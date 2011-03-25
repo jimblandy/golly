@@ -39,7 +39,7 @@ def floodfill():
    newstate = g.getoption("drawingstate")
    oldstate = newstate
    
-   # wait for click
+   # wait for user to click a cell
    g.show("Click the region you wish to fill... (hit escape to abort)")
    while oldstate == newstate:
       event = g.getevent()
@@ -61,7 +61,10 @@ def floodfill():
                       "to the current drawing state.")
       else:
          g.doevent(event)
-
+   
+   # tell Golly to handle all further keyboard/mouse events
+   g.getevent(False)
+   
    # do flood fill starting with clicked cell
    g.show("Filling clicked region... (hit escape to stop)")
    clist = [ (x,y) ]
@@ -107,10 +110,6 @@ def floodfill():
                                                  g.getcell(x-1, y) == 0):
          clist.append( (x-1, y-1) )
          g.setcell(     x-1, y-1, newstate)
-      
-      # we called getevent() above so we need to do the following
-      # to allow keyboard/mouse interaction
-      g.doevent(g.getevent())
 
 # ------------------------------------------------------------------------------
 

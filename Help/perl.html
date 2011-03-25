@@ -1104,10 +1104,17 @@ The script will be aborted if the user hits the dialog's Cancel button.
 <dd> Example: <b>$i = g_getstring("Enter a number:", "100");</b></dd>
 </p>
 
-<a name="getevent"></a><p><dt><b>g_getevent()</b></dt>
+<a name="getevent"></a><p><dt><b>g_getevent(<i>$get=1</i>)</b></dt>
 <dd>
-Return a keyboard or mouse event as a string.
-If there are no such events pending then the string is empty.
+When Golly runs a script it initially handles all keyboard and mouse events, but
+if the script calls <b>g_getevent()</b> then future events are put into a queue
+for retrieval via later calls.  These events are returned in
+the form of strings (see below for the syntax).  If there are no events in the queue
+then the returned string is empty.  Note that the very first <b>g_getevent()</b>
+call will always return an empty string, but this isn't likely to be a problem
+because it normally occurs very soon after the script starts running.
+A script can call <b>g_getevent(0)</b> if it wants Golly to resume handling any
+further events.
 </dd>
 <p>
 <dd>
@@ -1157,7 +1164,7 @@ The given event must be a string with the exact same format as returned
 by the <b>g_getevent</b> command (see above).  If the string is empty then
 Golly does nothing.
 </dd>
-<dd> Example: <b>g_doevent( g_getevent() );</b></dd>
+<dd> Example: <b>g_doevent("key q cmd");</b> # quit Golly</dd>
 </p>
 
 <a name="getxy"></a><p><dt><b>g_getxy()</b></dt>

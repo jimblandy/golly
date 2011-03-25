@@ -10,7 +10,9 @@
 <li> A number of new script commands have been added to allow mouse interaction
      and better keyboard interaction: <a href="python.html#getevent">getevent</a>,
      <a href="python.html#doevent">doevent</a> and <a href="python.html#getxy">getxy</a>.
-     The getkey and dokey commands still work but are deprecated.
+     The getkey and dokey commands still work but are deprecated.  In particular, there
+     is no longer any need for scripts to call dokey(getkey()).
+     See the description of <a href="python.html#getevent">getevent</a> for more details.
 <li> Some scripts have been added to take advantage of the new commands:
      <a href="open:Scripts/Python/draw-lines.py">draw-lines.py</a>,
      <a href="open:Scripts/Python/flood-fill.py">flood-fill.py</a>,
@@ -38,7 +40,7 @@
 <li> Fixed unwanted cursor changes while running a script.
 <li> Fixed bug if layer was changed while recording a timeline.
 <li> Fixed bug in EmulateMargolus.py when using square4_* neighborhoods.
-<li> emulate-Margolus-table.py script now removed, use RuleTableToTree.py instead.
+<li> Removed emulate-Margolus-table.py script (use RuleTableToTree.py instead).
 </ul>
 
 <p>
