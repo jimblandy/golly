@@ -533,47 +533,28 @@ int GSF_hash(int x, int y, int wd, int ht)
    int bottom = y + ht - 1;
    int cx, cy;
    int v = 0;
-
    lifealgo* curralgo = currlayer->algo;
-   if (curralgo->NumCellStates() > 2) {
-      // multi-state universe
-      for ( cy=y; cy<=bottom; cy++ ) {
-         int yshift = cy - y;
-         for ( cx=x; cx<=right; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy, v);
-            if (skip >= 0) {
-               // found next live cell in this row (v is >= 1)
-               cx += skip;
-               if (cx <= right) {
-                  // need to use a good hash function for patterns like AlienCounter.rle
-                  hash = (hash * 1000003) ^ yshift;
-                  hash = (hash * 1000003) ^ (cx - x);
-                  hash = (hash * 1000003) ^ v;
-               }
-            } else {
-               cx = right;  // done this row
+   bool multistate = curralgo->NumCellStates() > 2;
+   
+   for ( cy=y; cy<=bottom; cy++ ) {
+      int yshift = cy - y;
+      for ( cx=x; cx<=right; cx++ ) {
+         int skip = curralgo->nextcell(cx, cy, v);
+         if (skip >= 0) {
+            // found next live cell in this row (v is >= 1 if multistate)
+            cx += skip;
+            if (cx <= right) {
+               // need to use a good hash function for patterns like AlienCounter.rle
+               hash = (hash * 1000003) ^ yshift;
+               hash = (hash * 1000003) ^ (cx - x);
+               if (multistate) hash = (hash * 1000003) ^ v;
             }
-         }
-      }
-   } else {
-      // two-state universe
-      for ( cy=y; cy<=bottom; cy++ ) {
-         int yshift = cy - y;
-         for ( cx=x; cx<=right; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy, v);
-            if (skip >= 0) {
-               // found next live cell in this row (v is 1)
-               cx += skip;
-               if (cx <= right) {
-                  hash = (hash * 33 + yshift) ^ (cx - x);
-               }
-            } else {
-               cx = right;  // done this row
-            }
+         } else {
+            cx = right;  // done this row
          }
       }
    }
-
+   
    return hash;
 }
 
