@@ -642,6 +642,9 @@ void EditBar::OnButton(wxCommandEvent& event)
    // call MainFrame::OnMenu after OnButton finishes
    wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
    wxPostEvent(mainptr->GetEventHandler(), cmdevt);
+
+   // avoid possible problems
+   viewptr->SetFocus();
 }
 
 // -----------------------------------------------------------------------------

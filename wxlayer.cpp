@@ -392,12 +392,10 @@ void LayerBar::OnButton(wxCommandEvent& event)
          }
    }
 
-   #ifdef __WXMAC__
-      // avoid weird bug on Mac where viewport can lose keyboard focus after
-      // the user hits DELETE_LAYER button *and* the "All controls" option
-      // is ticked in System Prefs > Keyboard & Mouse > Keyboard Shortcuts
-      viewptr->SetFocus();
-   #endif
+   // avoid weird bug on Mac where viewport can lose keyboard focus after
+   // the user hits DELETE_LAYER button *and* the "All controls" option
+   // is ticked in System Prefs > Keyboard & Mouse > Keyboard Shortcuts
+   viewptr->SetFocus();
 }
 
 // -----------------------------------------------------------------------------

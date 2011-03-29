@@ -317,6 +317,12 @@ void ToolBar::OnButton(wxCommandEvent& event)
    // this avoids start/stop button problem in GTK app
    wxCommandEvent cmdevt(wxEVT_COMMAND_MENU_SELECTED, cmdid);
    wxPostEvent(mainptr->GetEventHandler(), cmdevt);
+
+   // avoid weird bug on Mac where all buttons can be disabled after hitting
+   // RESET_TOOL button *and* the "All controls" option is ticked in
+   // System Prefs > Keyboard & Mouse > Keyboard Shortcuts
+   // (might also fix similar problem on Windows)
+   viewptr->SetFocus();
 }
 
 // -----------------------------------------------------------------------------
