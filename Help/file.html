@@ -30,7 +30,8 @@ or they can be compressed in a .gz file.
 Golly can also read graphic files in a number of popular formats:
 BMP, GIF, PNG and TIFF.  The file name must end with an appropriate extension:
 .bmp, .gif, .png, .tif or .tiff.
-All non-white pixels will be treated as live cells.
+All the pure white pixels (RGB = 255,255,255) are treated as cells of state 0.
+All other pixels are treated as cells of state 1.
 This can be handy if you prefer to use a sophisticated drawing program
 to create your patterns.
 
