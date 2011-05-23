@@ -218,8 +218,8 @@ void CreateTranslucentControls()
                   p.Alpha() = 0;
                } else {
                   // make all non-black pixels translucent
-                  #ifdef __WXMSW__
-                     // premultiply the RGB values on Windows
+                  #if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
+                     // premultiply the RGB values
                      p.Red()   = r * alpha / 255;
                      p.Green() = g * alpha / 255;
                      p.Blue()  = b * alpha / 255;
@@ -264,8 +264,8 @@ void CreateTranslucentControls()
                   p.Alpha() = 0;
                } else {
                   // make all non-black pixels translucent gray
-                  #ifdef __WXMSW__
-                     // premultiply the RGB values on Windows
+                  #if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
+                     // premultiply the RGB values
                      p.Red()   = gray * alpha / 255;
                      p.Green() = gray * alpha / 255;
                      p.Blue()  = gray * alpha / 255;
@@ -369,8 +369,8 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
    if (data) {
       int alpha = 128;     // 50% opaque
       
-      #ifdef __WXMSW__
-         // premultiply the RGB values on Windows
+      #if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
+         // premultiply the RGB values
          int r = color->Red() * alpha / 255;
          int g = color->Green() * alpha / 255;
          int b = color->Blue() * alpha / 255;
@@ -1022,8 +1022,8 @@ void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
                p.Alpha() = 0;
             } else {
                // live pixel
-               #ifdef __WXMSW__
-                  // premultiply the RGB values on Windows
+               #if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
+                  // premultiply the RGB values
                   p.Red()   = r * livealpha / 255;
                   p.Green() = g * livealpha / 255;
                   p.Blue()  = b * livealpha / 255;
