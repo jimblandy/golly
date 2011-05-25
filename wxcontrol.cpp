@@ -1378,7 +1378,11 @@ void MainFrame::DoPendingAction(bool restart)
                // process the pending command
                cmdevent.SetEventType(wxEVT_COMMAND_MENU_SELECTED);
                cmdevent.SetEventObject(mainptr);
-               mainptr->ProcessEvent(cmdevent);
+               #if wxCHECK_VERSION(2,9,0)
+                  mainptr->ProcessWindowEvent(cmdevent);
+               #else
+                  mainptr->ProcessEvent(cmdevent);
+               #endif
                
                // restore tool/layer/edit bar flags
                showtool = saveshowtool;
@@ -1408,7 +1412,11 @@ void MainFrame::DoPendingAction(bool restart)
       // do the drawing
       mouseevent.SetEventType(wxEVT_LEFT_DOWN);
       mouseevent.SetEventObject(viewptr);
-      viewptr->ProcessEvent(mouseevent);
+      #if wxCHECK_VERSION(2,9,0)
+         viewptr->ProcessWindowEvent(mouseevent);
+      #else
+         viewptr->ProcessEvent(mouseevent);
+      #endif
       while (viewptr->drawingcells) {
          wxGetApp().Yield(true);
          wxMilliSleep(5);             // don't hog CPU

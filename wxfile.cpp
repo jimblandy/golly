@@ -58,7 +58,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxhelp.h"        // for ShowHelp
 #include "wxtimeline.h"    // for InitTimelineFrame, ToggleTimelineBar, etc
 
-#ifdef __WXMAC__
+#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
    #include <Carbon/Carbon.h>                      // for OpaqueWindowPtr, etc
    #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
 #endif
@@ -84,7 +84,8 @@ wxString MainFrame::GetBaseName(const wxString& path)
 
 void MainFrame::MySetTitle(const wxString& title)
 {
-   #ifdef __WXMAC__
+   // fix if SetTitle still causes window refresh in Cocoa version!!!
+   #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
       // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
       SetWindowTitleWithCFString((OpaqueWindowPtr*)this->MacGetWindowRef(),
                                  wxMacCFStringHolder(title, wxFONTENCODING_DEFAULT));
@@ -1427,7 +1428,9 @@ const char* MainFrame::WritePattern(const wxString& path,
          } else if (format == L105_format) {
             type = 'GoLL';
          }
-         filename.MacSetTypeAndCreator(type, creator);
+         #if !defined(__WXOSX_COCOA__)          // fix this???!!!
+            filename.MacSetTypeAndCreator(type, creator);
+         #endif
       }
    #endif
 

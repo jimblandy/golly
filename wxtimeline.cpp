@@ -592,7 +592,11 @@ void TimelineBar::OnButtonUp(wxMouseEvent& event)
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(tlbutt[id]);
-      tlbutt[id]->ProcessEvent(buttevt);
+      #if wxCHECK_VERSION(2,9,0)
+         tlbutt[id]->ProcessWindowEvent(buttevt);
+      #else
+         tlbutt[id]->ProcessEvent(buttevt);
+      #endif
    }
 }
 

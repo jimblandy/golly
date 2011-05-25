@@ -394,7 +394,11 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(tbbutt[id]);
-      tbbutt[id]->ProcessEvent(buttevt);
+      #if wxCHECK_VERSION(2,9,0)
+         tbbutt[id]->ProcessWindowEvent(buttevt);
+      #else
+         tbbutt[id]->ProcessEvent(buttevt);
+      #endif
    }
 }
 
@@ -584,7 +588,8 @@ bool MainFrame::ClipboardHasText()
 
 void MainFrame::EnableAllMenus(bool enable)
 {
-   #ifdef __WXMAC__
+   // fix this???!!!
+   #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
       // enable/disable all menus, including Help menu and items in app menu
       if (enable)
          EndAppModalStateForWindow( (OpaqueWindowPtr*)this->MacGetWindowRef() );
@@ -1628,8 +1633,12 @@ void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
    #ifdef __WXMAC__
       if ((generating || inscript) && (showpatterns || showscripts)) {
          // send idle event so directory tree gets updated
-         wxIdleEvent idleevent;
-         wxGetApp().SendIdleEvents(this, idleevent);
+         #if wxCHECK_VERSION(2,9,2)
+            // SendIdleEvents is no lnger a member of wxApp -- need to fix???!!!
+         #else
+            wxIdleEvent idleevent;
+            wxGetApp().SendIdleEvents(this, idleevent);
+         #endif
       }
    #endif
    #ifdef __WXMSW__
@@ -1646,8 +1655,12 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
    #ifdef __WXMAC__
       if ((generating || inscript) && (showpatterns || showscripts)) {
          // send idle event so directory tree gets updated
-         wxIdleEvent idleevent;
-         wxGetApp().SendIdleEvents(this, idleevent);
+         #if wxCHECK_VERSION(2,9,2)
+            // SendIdleEvents is no lnger a member of wxApp -- need to fix???!!!
+         #else
+            wxIdleEvent idleevent;
+            wxGetApp().SendIdleEvents(this, idleevent);
+         #endif
       }
    #endif
    #ifdef __WXMSW__

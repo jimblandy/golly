@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for allowbeep
 #include "wxutils.h"
 
-#ifdef __WXMAC__
+#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
    #include <Carbon/Carbon.h>
    #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
 #endif
@@ -363,7 +363,7 @@ bool GetInteger(const wxString& title, const wxString& prompt,
 
 // =============================================================================
 
-#ifdef __WXMAC__
+#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
 
 // this filter is used to detect cmd-D in SaveChanges dialog
 
@@ -389,13 +389,13 @@ Boolean SaveChangesFilter(DialogRef dlg, EventRecord* event, DialogItemIndex* it
    return StdFilterProc(dlg, event, item);
 }
 
-#endif // __WXMAC__
+#endif
 
 // -----------------------------------------------------------------------------
 
 int SaveChanges(const wxString& query, const wxString& msg)
 {
-#ifdef __WXMAC__
+#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
    // need a more standard dialog on Mac; ie. Save/Don't Save buttons
    // instead of Yes/No, and cmd-D is a shortcut for Don't Save
 
@@ -442,7 +442,7 @@ int SaveChanges(const wxString& query, const wxString& msg)
       case wxNO:  return 1;
       default:    return 0;   // answer == wxCANCEL
    }
-#endif // __WXMAC__
+#endif
 }
 
 // =============================================================================
@@ -479,14 +479,18 @@ void ProgressHandler::OnKeyDown(wxKeyEvent& event)
       wxWindow* buttwin = progdlg->FindWindow(wxID_CANCEL);
       if (buttwin) {
          cancel.SetEventObject(buttwin);
-         buttwin->ProcessEvent(cancel);
+         #if wxCHECK_VERSION(2,9,0)
+            buttwin->ProcessWindowEvent(cancel);
+         #else
+            buttwin->ProcessEvent(cancel);
+         #endif
       }
    } else {
       event.Skip();
    }
 }
 
-#endif // __WXMAC__
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -545,7 +549,8 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
                                         wxPD_AUTO_HIDE | wxPD_APP_MODAL |
                                         wxPD_CAN_ABORT | wxPD_SMOOTH |
                                         wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
-         #ifdef __WXMAC__
+         
+         #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)   // fix???!!!
             if (progdlg) {
                // avoid user selecting Quit or bringing another window to front
                BeginAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
@@ -564,7 +569,7 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
 void EndProgress()
 {
    if (progdlg) {
-      #ifdef __WXMAC__
+      #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)   // fix???!!!
          EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
          // remove and delete ProgressHandler
          progdlg->PopEventHandler(true);

@@ -1,50 +1,36 @@
-# Makefile for building Mac OS X version of Golly using wxWidgets.
-# It assumes you've installed wxWidgets with commands like these:
+# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 2.9.x on Mac OS 10.6.
+# It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd WX_DIR
-# mkdir BUILD_DIR
-# cd BUILD_DIR
-# ../configure --with-mac --enable-universal_binary --disable-shared --enable-unicode
+# cd /HD/wxWidgets/wxWidgets-2.9.1
+# mkdir build-osx
+# cd build-osx
+# ../configure --enable-unicode --disable-shared --with-osx_cocoa
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
 # change BUILD_DIR to where you built the wx libraries, and change
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
-WX_RELEASE = 2.8
-WX_DIR = /HD/wxWidgets/wxMac-2.8.4
-#!!! 2.8.8 causes problems with selection color (pre-multiply alpha change?)
-#!!! WX_DIR = /HD/wxWidgets/wxMac-2.8.8
-
-# we assume you built a Unicode version of wxWidgets:
+WX_RELEASE = 2.9
+#!!! WX_DIR = /HD/wxWidgets/wxWidgets-2.9.1
+WX_DIR = /HD/wxWidgets/wxWidgets-trunk
 BUILD_DIR = $(WX_DIR)/build-osx
-WXINC_DIR = $(BUILD_DIR)/lib/wx/include/mac-unicode-release-static-$(WX_RELEASE)
+
+WXINC_DIR = $(BUILD_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 2.3b1
+APP_VERSION = 2.3b2
 
 # for Perl script support
 PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
-PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
-
-# WARNING: If Golly is built on 10.4 (Tiger) the above command causes DynaLoader.a
-# to be statically linked, but this results in a crash if the app runs a Perl script
-# on 10.6 (Snow Leopard).  The solution is to create a special version for 10.6
-# by running "make mac106=1".  This activates the following PERL_LINK line which
-# removes DynaLoader.a from the link command (the "-undefined dynamic_lookup" is
-# needed to avoid _boot_DynaLoader being flagged as an undefined symbol).
-ifeq ($(mac106),1)
-   PERL_LINK = -undefined dynamic_lookup -L/usr/local/lib -L/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE \
-               -lperl -ldl -lm -lc
-endif
+# PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
+# above generates unwanted stuff (-arch i386 and -arch ppc)
+PERL_LINK = -arch x86_64 -L/usr/local/lib  -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc
 
 # for Python script support
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
-# following python command doesn't generate correct info on OS 10.4
-### PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
-PYTHON_LINK = -u __dummy -u _PyMac_Error -framework System -framework CoreServices \
-   -framework Foundation -F/System/Library/Frameworks -framework Python
+PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
@@ -55,40 +41,37 @@ SRCFILES = BUILD TODO makefile-gtk makefile-x11 makefile-mac makefile-win \
 # Variables:
 
 LIBDIRNAME = $(BUILD_DIR)/lib
-TOOLKIT = MAC
-TOOLKIT_LOWERCASE = mac
+TOOLKIT = OSX_COCOA
+TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
-CXXC = g++
+CXXC = g++ -mmacosx-version-min=10.5
 ### bk-deps script can be used to create *.d files containing all dependencies
-### CXXC = $(BUILD_DIR)/bk-deps g++
+### CXXC = $(BUILD_DIR)/bk-deps g++ -mmacosx-version-min=10.5
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA \
    -I${WXINC_DIR} \
-   -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -fpascal-strings \
-   -I${WX_DIR}/src/mac/carbon/morefilex -I/Developer/Headers/FlatCarbon
+   -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES
 
-CXXFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
-   -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
-   $(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) $(__DLLFLAG_p) $(CPPFLAGS) \
-   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+CXXFLAGS = -arch x86_64 \
+   -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
+   -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
 
-LDFLAGS = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
+LDFLAGS = -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
-   -framework QuickTime -framework IOKit -framework Carbon -framework Cocoa -framework System 
+   -framework IOKit -framework Carbon -framework Cocoa -framework System 
 
 # for bgolly
-CXXBASE = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 \
+CXXBASE = -arch x86_64 \
    -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
-LDBASE = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386 -lz
+LDBASE = -arch x86_64 -lz
 
 EXTRALIBS = -lz -lpthread -liconv
-#!!! OpenGL is required for wxMac-2.8.8
-EXTRALIBS_GUI = -framework WebKit #!!! -framework OpenGL
+EXTRALIBS_GUI = -framework WebKit -framework OpenGL -framework AGL -framework AudioToolbox
 
-OBJDIR = ObjMac
+OBJDIR = ObjOSX
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
    util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h ruletable_algo.h
@@ -110,17 +93,16 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 PORTNAME = $(TOOLKIT_LOWERCASE)$(TOOLKIT_VERSION)
-WXBASEPORT = _carbon
+###WXBASEPORT = _carbon
 ###WXDEBUGFLAG = d
 __WXLIB_HTML_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_html-$(WX_RELEASE)
 __WXLIB_ADV_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_adv-$(WX_RELEASE)
 __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_core-$(WX_RELEASE)
 __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)-$(WX_RELEASE)
 __WXLIB_NET_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_net-$(WX_RELEASE)
-__LIB_EXPAT_p = -lwxexpat$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
-###__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
+###__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
@@ -150,7 +132,7 @@ $(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
 
 app.bin: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) \
-   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_EXPAT_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
+   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
 $(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \

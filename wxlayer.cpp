@@ -467,10 +467,18 @@ void LayerBar::OnButtonUp(wxMouseEvent& event)
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       if (id < MAX_LAYERS) {
          buttevt.SetEventObject(togglebutt[id]);
-         togglebutt[id]->ProcessEvent(buttevt);
+         #if wxCHECK_VERSION(2,9,0)
+            togglebutt[id]->ProcessWindowEvent(buttevt);
+         #else
+            togglebutt[id]->ProcessEvent(buttevt);
+         #endif
       } else {
          buttevt.SetEventObject(bitmapbutt[id]);
-         bitmapbutt[id]->ProcessEvent(buttevt);
+         #if wxCHECK_VERSION(2,9,0)
+            bitmapbutt[id]->ProcessWindowEvent(buttevt);
+         #else
+            bitmapbutt[id]->ProcessEvent(buttevt);
+         #endif
       }
    }
 }

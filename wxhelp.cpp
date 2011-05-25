@@ -1168,12 +1168,16 @@ void HtmlView::OnSize(wxSizeEvent& event)
 
 void HtmlView::OnTimer(wxTimerEvent& WXUNUSED(event))
 {
+#if wxCHECK_VERSION(2,9,2)
+   // SendIdleEvents is no lnger a member of wxApp -- need to fix???!!!
+#else
    if (helpptr && helpptr->infront) {
       // send idle event to html window so cursor gets updated
       // even while app is busy doing something else (eg. generating)
       wxIdleEvent idleevent;
       wxGetApp().SendIdleEvents(this, idleevent);
    }
+#endif
 }
 
 // -----------------------------------------------------------------------------

@@ -736,7 +736,11 @@ void EditBar::OnButtonUp(wxMouseEvent& event)
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(ebbutt[id]);
-      ebbutt[id]->ProcessEvent(buttevt);
+      #if wxCHECK_VERSION(2,9,0)
+         ebbutt[id]->ProcessWindowEvent(buttevt);
+      #else
+         ebbutt[id]->ProcessEvent(buttevt);
+      #endif
    }
 }
 
