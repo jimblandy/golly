@@ -488,7 +488,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                      p.Red()   = r;
                      p.Green() = g;
                      p.Blue()  = b;
-                     #ifdef __WXGTK__
+                     #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                         p.Alpha() = 255;
                      #endif
                      p++;
@@ -498,7 +498,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                      p.Red()   = deadred;
                      p.Green() = deadgreen;
                      p.Blue()  = deadblue;
-                     #ifdef __WXGTK__
+                     #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                         p.Alpha() = 255;
                      #endif
                   }
@@ -511,7 +511,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                      p.Red()   = deadred;
                      p.Green() = deadgreen;
                      p.Blue()  = deadblue;
-                     #ifdef __WXGTK__
+                     #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                         p.Alpha() = 255;
                      #endif
                      p++;
@@ -615,7 +615,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                               p.Green() = deadgreen;
                               p.Blue()  = deadblue;
                            }
-                           #ifdef __WXGTK__
+                           #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                               p.Alpha() = 255;
                            #endif
                            p++;
@@ -626,7 +626,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                            p.Red()   = deadred;
                            p.Green() = deadgreen;
                            p.Blue()  = deadblue;
-                           #ifdef __WXGTK__
+                           #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                               p.Alpha() = 255;
                            #endif
                         }
@@ -642,7 +642,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                            p.Red()   = deadred;
                            p.Green() = deadgreen;
                            p.Blue()  = deadblue;
-                           #ifdef __WXGTK__
+                           #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                               p.Alpha() = 255;
                            #endif
                            p++;
@@ -657,7 +657,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                         p.Red()   = deadred;
                         p.Green() = deadgreen;
                         p.Blue()  = deadblue;
-                        #ifdef __WXGTK__
+                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                            p.Alpha() = 255;
                         #endif
                         p++;
@@ -667,7 +667,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                         p.Red()   = deadred;
                         p.Green() = deadgreen;
                         p.Blue()  = deadblue;
-                        #ifdef __WXGTK__
+                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                            p.Alpha() = 255;
                         #endif
                      }
@@ -680,7 +680,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
                         p.Red()   = deadred;
                         p.Green() = deadgreen;
                         p.Blue()  = deadblue;
-                        #ifdef __WXGTK__
+                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                            p.Alpha() = 255;
                         #endif
                         p++;
@@ -767,7 +767,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                   p.Green() = deadg;
                   p.Blue()  = deadb;
                }
-               #ifdef __WXGTK__
+               #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                   p.Alpha() = 255;
                #endif
                p++;
@@ -862,7 +862,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
                p.Red()   = *byteptr++;
                p.Green() = *byteptr++;
                p.Blue()  = *byteptr++;
-               #ifdef __WXGTK__
+               #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                   p.Alpha() = 255;
                #endif
                p++;

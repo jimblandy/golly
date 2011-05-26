@@ -468,8 +468,8 @@ void MainFrame::DisplayPattern()
    if (!IsIconized()) {
       if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
          // only update the current tile
-         #if defined(__WXMAC__)
-            // Refresh + Update is too slow on Mac
+         #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
+            // Refresh + Update is too slow
             wxClientDC dc(viewptr);
             DrawView(dc, viewptr->tileindex);
          #else
@@ -483,8 +483,8 @@ void MainFrame::DisplayPattern()
             bigview->Refresh(false);
             bigview->Update();
          } else {
-            #if defined(__WXMAC__)
-               // Refresh + Update is too slow on Mac
+            #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
+               // Refresh + Update is too slow
                wxClientDC dc(viewptr);
                DrawView(dc, viewptr->tileindex);
             #else
