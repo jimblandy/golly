@@ -1070,6 +1070,11 @@ wxString GetAccelerator(action_id action)
 
 // -----------------------------------------------------------------------------
 
+// some method names have changed in wx 2.9
+#if wxCHECK_VERSION(2,9,0)
+   #define GetLabelFromText GetLabelText
+#endif
+
 void RemoveAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
    if (!accelerator[action].IsEmpty()) {
@@ -1577,7 +1582,11 @@ void SavePrefs()
       for (i = 0; i < numpatterns; i++) {
          wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
          if (item) {
-            wxString path = item->GetText();
+            #if wxCHECK_VERSION(2,9,0)
+               wxString path = item->GetItemLabel();
+            #else
+               wxString path = item->GetText();
+            #endif
             #ifdef __WXGTK__
                // remove duplicate underscores
                path.Replace(wxT("__"), wxT("_"));
@@ -1595,7 +1604,11 @@ void SavePrefs()
       for (i = 0; i < numscripts; i++) {
          wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
          if (item) {
-            wxString path = item->GetText();
+            #if wxCHECK_VERSION(2,9,0)
+               wxString path = item->GetItemLabel();
+            #else
+               wxString path = item->GetText();
+            #endif
             #ifdef __WXGTK__
                // remove duplicate underscores
                path.Replace(wxT("__"), wxT("_"));

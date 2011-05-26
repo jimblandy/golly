@@ -2500,7 +2500,12 @@ void MainFrame::CreateDirControls()
                                      #else
                                         wxNO_BORDER,
                                      #endif
-                                     _T("Perl/Python scripts|*.pl;*.py")
+                                     #if wxCHECK_VERSION(2,9,0)
+                                         // avoid seeing the wxChoice control
+                                         wxEmptyString
+                                     #else
+                                        _T("Perl/Python scripts|*.pl;*.py")
+                                     #endif
                                     );
    if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
    

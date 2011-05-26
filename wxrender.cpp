@@ -202,7 +202,9 @@ void CreateTranslucentControls()
       wxAlphaPixelData data(*ctrlsbitmap, wxPoint(0,0), wxSize(controlswd,controlsht));
       if (data) {
          int alpha = 192;     // 75% opaque
-         data.UseAlpha();
+         #if !wxCHECK_VERSION(2,9,0)
+            data.UseAlpha();
+         #endif
          wxAlphaPixelData::Iterator p(data);
          for ( int y = 0; y < controlsht; y++ ) {
             wxAlphaPixelData::Iterator rowstart = p;
@@ -248,7 +250,9 @@ void CreateTranslucentControls()
       if (data) {
          int alpha = 128;     // 50% opaque
          int gray = 20;       // very dark gray
-         data.UseAlpha();
+         #if !wxCHECK_VERSION(2,9,0)
+            data.UseAlpha();
+         #endif
          wxAlphaPixelData::Iterator p(data);
          for ( int y = 0; y < controlsht; y++ ) {
             wxAlphaPixelData::Iterator rowstart = p;
@@ -380,7 +384,9 @@ void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
          int b = color->Blue();
       #endif
       
-      data.UseAlpha();
+      #if !wxCHECK_VERSION(2,9,0)
+         data.UseAlpha();
+      #endif
       wxAlphaPixelData::Iterator p(data);
       for ( int y = 0; y < selht; y++ ) {
          wxAlphaPixelData::Iterator rowstart = p;
@@ -457,7 +463,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
    // might be faster to draw rectangles above certain scales???
    wxAlphaPixelData pxldata(*pixmap);
    if (pxldata) {
-      #ifdef __WXGTK__
+      #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
          pxldata.UseAlpha();
       #endif
       wxAlphaPixelData::Iterator p(pxldata);
@@ -546,7 +552,7 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
 
    wxAlphaPixelData pxldata(*pixmap);
    if (pxldata) {
-      #ifdef __WXGTK__
+      #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
          pxldata.UseAlpha();
       #endif
       wxAlphaPixelData::Iterator p(pxldata);
@@ -710,7 +716,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 
    wxAlphaPixelData pxldata(pixmap);
    if (pxldata) {
-      #ifdef __WXGTK__
+      #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
          pxldata.UseAlpha();
       #endif
       wxAlphaPixelData::Iterator p(pxldata);
@@ -845,7 +851,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
       // pmdata contains 3 bytes (the rgb values) for each pixel
       wxAlphaPixelData pxldata(*pixmap);
       if (pxldata) {
-         #ifdef __WXGTK__
+         #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
             pxldata.UseAlpha();
          #endif
          wxAlphaPixelData::Iterator p(pxldata);
@@ -1003,7 +1009,9 @@ void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
       int deadg = currlayer->cellg[0];
       int deadb = currlayer->cellb[0];
 
-      data.UseAlpha();
+      #if !wxCHECK_VERSION(2,9,0)
+         data.UseAlpha();
+      #endif
       wxAlphaPixelData::Iterator p(data);
       for ( int y = 0; y < ht; y++ ) {
          wxAlphaPixelData::Iterator rowstart = p;
