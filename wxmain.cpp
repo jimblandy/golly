@@ -633,12 +633,12 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Enable(ID_RUN_RECENT,      active && !timeline && !inscript && numscripts > 0);
       mbar->Enable(ID_SHOW_SCRIPTS,    active);
       mbar->Enable(ID_SCRIPT_DIR,      active);
-      // safe to allow prefs dialog while script is running???
+      // safer not to allow prefs dialog while script is running???
       // mbar->Enable(wxID_PREFERENCES,   !inscript);
 
       bool can_undo = active && !timeline && currlayer->undoredo->CanUndo();
       bool can_redo = active && !timeline && currlayer->undoredo->CanRedo();
-      #ifdef __WXMAC__
+      #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
          // need this stupidity to avoid wxMac bug after modal dialog closes (eg. Set Rule)
          // and force items to appear correctly enabled/disabled
          mbar->Enable(wxID_UNDO, !can_undo);
@@ -2214,10 +2214,15 @@ void MainFrame::CreateMenus()
    fileMenu->AppendSeparator();
    fileMenu->AppendCheckItem(ID_SHOW_SCRIPTS,   _("Show Scripts") + GetAccelerator(DO_SCRIPTS));
    fileMenu->Append(ID_SCRIPT_DIR,              _("Set Script Folder...") + GetAccelerator(DO_SCRIPTDIR));
+#if !defined(__WXOSX_COCOA__)
    fileMenu->AppendSeparator();
+#endif
+   // on the Mac the wxID_PREFERENCES item is moved to the app menu
    fileMenu->Append(wxID_PREFERENCES,           _("Preferences...") + GetAccelerator(DO_PREFS));
+#if !defined(__WXOSX_COCOA__)
    fileMenu->AppendSeparator();
-   // on the Mac the item is moved to the app menu and the app name is appended to "Quit "
+#endif
+   // on the Mac the wxID_EXIT item is moved to the app menu and the app name is appended to "Quit "
    fileMenu->Append(wxID_EXIT,                  _("Quit") + GetAccelerator(DO_QUIT));
 
    editMenu->Append(wxID_UNDO,                  _("Undo") + GetAccelerator(DO_UNDO));

@@ -507,8 +507,8 @@ void LayerBar::AddButton(int id, const wxString& tip)
       if (togglebutt[id] == NULL) {
          Fatal(_("Failed to create layer bar bitmap button!"));
       } else {
-         #ifdef __WXGTK__
-            // nicer to use smaller font on Linux
+         #if defined(__WXGTK__) || defined(__WXOSX_COCOA__)
+            // use smaller font on Linux and OS X Cocoa
             togglebutt[id]->SetWindowVariant(wxWINDOW_VARIANT_SMALL);
          #endif
 

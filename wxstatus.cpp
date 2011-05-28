@@ -548,7 +548,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
       int major, minor;
       wxGetOsVersion(&major, &minor);
       if ( major > 5 || (major == 5 && minor >= 1) ) {
-         // 5.1+ means XP or later (Vista if major >= 6)
+         // 5.1+ means XP or later (Vista or later if major >= 6)
          textascent = 11;
       } else {
          textascent = 10;
@@ -557,7 +557,12 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
       // use smaller font on GTK
       statusfont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 11;
+   #elif defined(__WXOSX_COCOA__)
+      // we need to specify facename to get Monaco instead of Courier
+      statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
+      textascent = 10;
    #else
+      // __WXMAC__
       statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 10;
    #endif

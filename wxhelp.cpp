@@ -1193,7 +1193,11 @@ void HtmlView::SetFontSizes(int size)
    f_sizes[4] = int(size * 1.4);
    f_sizes[5] = int(size * 1.6);
    f_sizes[6] = int(size * 1.8);
-   SetFonts(wxEmptyString, wxEmptyString, f_sizes);
+   #ifdef __WXOSX_COCOA__
+      SetFonts(wxT("Lucida Grande"), wxT("Monaco"), f_sizes);
+   #else
+      SetFonts(wxEmptyString, wxEmptyString, f_sizes);
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1215,14 +1219,22 @@ void ShowAboutBox()
    wxDialog dlg(mainptr, wxID_ANY, title);
    
    HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
-                                 #ifdef __WXGTK__
+                                 #if defined(__WXOSX_COCOA__)
+                                    // work around SetSize bug below!!!
+                                    wxSize(400, 320),
+                                 #elif defined(__WXGTK__)
                                     wxSize(460, 220),
                                  #else
                                     wxSize(386, 220),
                                  #endif
                                  wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
    html->SetBorders(0);
+   #ifdef __WXOSX_COCOA__
+      html->SetFontSizes(helpfontsize);
+   #endif
    html->CheckAndLoad(_("Help/about.html"));
+   
+   // this call seems to be ignored if __WXOSX_COCOA__!!!
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                  html->GetInternalRepresentation()->GetHeight());
    
