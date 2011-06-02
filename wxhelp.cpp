@@ -1219,7 +1219,7 @@ void ShowAboutBox()
    wxDialog dlg(mainptr, wxID_ANY, title);
    
    HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
-                                 #if defined(__WXOSX_COCOA__)
+                                 #if wxCHECK_VERSION(2,9,0)
                                     // work around SetSize bug below!!!
                                     wxSize(400, 320),
                                  #elif defined(__WXGTK__)
