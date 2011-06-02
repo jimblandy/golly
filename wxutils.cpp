@@ -550,10 +550,12 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
                                         wxPD_CAN_ABORT | wxPD_SMOOTH |
                                         wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
          
-         #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)   // fix???!!!
+         #if defined(__WXMAC__)
             if (progdlg) {
-               // avoid user selecting Quit or bringing another window to front
-               BeginAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
+               #if !defined(__WXOSX_COCOA__)
+                  // avoid user selecting Quit or bringing another window to front
+                  BeginAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
+               #endif
                // install key event handler
                progdlg->PushEventHandler(new ProgressHandler());
             }
@@ -569,8 +571,10 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
 void EndProgress()
 {
    if (progdlg) {
-      #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)   // fix???!!!
-         EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
+      #if defined(__WXMAC__)
+         #if !defined(__WXOSX_COCOA__)
+            EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
+         #endif
          // remove and delete ProgressHandler
          progdlg->PopEventHandler(true);
       #endif

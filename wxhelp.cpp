@@ -1234,7 +1234,7 @@ void ShowAboutBox()
    #endif
    html->CheckAndLoad(_("Help/about.html"));
    
-   // this call seems to be ignored if __WXOSX_COCOA__!!!
+   // this call seems to be ignored in __WXOSX_COCOA__!!!
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                  html->GetInternalRepresentation()->GetHeight());
    

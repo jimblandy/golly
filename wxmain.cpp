@@ -588,7 +588,6 @@ bool MainFrame::ClipboardHasText()
 
 void MainFrame::EnableAllMenus(bool enable)
 {
-   // fix this???!!!
    #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
       // enable/disable all menus, including Help menu and items in app menu
       if (enable)
@@ -2521,9 +2520,11 @@ void MainFrame::CreateDirControls()
    #endif
 
    #if defined(__WXGTK__)
-      // make sure background is white when using KDE's GTK theme
-      patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
-      scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+      #if !wxCHECK_VERSION(2,9,0)
+         // make sure background is white when using KDE's GTK theme
+         patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+         scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+      #endif
       patternctrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
       scriptctrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
       // reduce indent a bit

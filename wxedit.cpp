@@ -287,6 +287,10 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       // use smaller font on GTK
       editfont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 11;
+   #elif defined(__WXOSX_COCOA__)
+      // we need to specify facename to get Monaco instead of Courier
+      editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
+      textascent = 10;
    #elif defined(__WXMAC__)
       editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 10;

@@ -73,6 +73,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #if wxCHECK_VERSION(2,9,0)
 // some wxMenuItem method names have changed in wx 2.9
    #define GetText GetItemLabel
+   #define SetText SetItemLabel
 #endif
 
 // File menu functions:
@@ -1011,6 +1012,12 @@ bool MainFrame::CopyTextToClipboard(const wxString& text)
 
 // -----------------------------------------------------------------------------
 
+#if wxCHECK_VERSION(2,9,0)
+   // wxTextDataObject also has GetText and SetText methods so don't change them
+   #undef GetText
+   #undef SetText
+#endif
+
 bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 {
    bool gotdata = false;
@@ -1075,11 +1082,6 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 }
 
 // -----------------------------------------------------------------------------
-
-#if wxCHECK_VERSION(2,9,0)
-   // wxTextDataObject also has GetText method so don't change it
-   #undef GetText
-#endif
 
 void MainFrame::OpenClipboard()
 {
@@ -1229,8 +1231,9 @@ void MainFrame::RunClipboard()
 }
 
 #if wxCHECK_VERSION(2,9,0)
-   // restore new wxMenuItem method name in wx 2.9
+   // restore new wxMenuItem method names in wx 2.9
    #define GetText GetItemLabel
+   #define SetText SetItemLabel
 #endif
 
 // -----------------------------------------------------------------------------
@@ -1444,7 +1447,7 @@ const char* MainFrame::WritePattern(const wxString& path,
             type = 'GoLL';
          }
          #if defined(__WXOSX_COCOA__)
-            // is there a Cocoa call to set file's type and creator???!!!
+            // there is no Cocoa call to set file type and creator
             creator = 'GoLy';          // avoid compiler warning
          #else
             filename.MacSetTypeAndCreator(type, creator);
