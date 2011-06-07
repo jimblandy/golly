@@ -24,9 +24,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "writepattern.h"
 #include "lifealgo.h"
 #include "util.h"          // for *progress calls
-#include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstring>
+#ifdef ZLIB
+#include <zlib.h>
+#endif
 
 #ifdef __APPLE__
 #define BUFFSIZE 4096   // 4K is best for Mac OS X
@@ -41,10 +45,10 @@ static double currsize;          // current file size (for showing in progress d
 static bool badwrite;            // fwrite failed?
 
 // using buffered putchar instead of fputc is about 20% faster on Mac OS X
-void putchar(char ch, FILE *f) {
+static void putchar(char ch, std::ostream &os) {
    if (badwrite) return;
    if (outpos == BUFFSIZE) {
-      if (fwrite(outbuff, 1, outpos, f) != outpos) badwrite = true;
+      if (!os.write(outbuff, outpos)) badwrite = true;
       outpos = 0;
       currsize += BUFFSIZE;
    }
@@ -58,7 +62,7 @@ const int WRLE_NEWLINE = -1 ;
 
 // output of RLE pattern data is channelled thru here to make it easier to
 // ensure all lines have <= 70 characters
-void AddRun(FILE *f,
+void AddRun(std::ostream &f,
             int state,                // in: state of cell to write
             int multistate,           // true if #cell states > 2
             unsigned int &run,        // in and out
@@ -101,7 +105,7 @@ void AddRun(FILE *f,
 }
 
 // write current pattern to file using extended RLE format
-const char *writerle(FILE *f, char *comments, lifealgo &imp,
+const char *writerle(std::ostream &os, char *comments, lifealgo &imp,
                      int top, int left, int bottom, int right,
                      bool xrle)
 {
@@ -109,10 +113,10 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
    if (xrle) {
       // write out #CXRLE line; note that the XRLE indicator is prefixed
       // with #C so apps like Life32 and MCell will ignore the line
-      fprintf(f, "#CXRLE Pos=%d,%d", left, top);
+      os << "#CXRLE Pos=" << left << ',' << top;
       if (imp.getGeneration() > bigint::zero)
-         fprintf(f, " Gen=%s", imp.getGeneration().tostring('\0'));
-      fputs("\n", f);
+         os << " Gen=" << imp.getGeneration().tostring('\0');
+      os << '\n';
    }
 
    char *endcomms = NULL;
@@ -127,7 +131,7 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
       if (p != comments) {
          char savech = *p;
          *p = '\0';
-         fputs(comments, f);
+         os << comments;
          *p = savech;
       }
       // any comment lines not starting with # will be written after "!"
@@ -136,7 +140,7 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
 
    if ( imp.isEmpty() || top > bottom || left > right ) {
       // empty pattern
-      fprintf(f, "x = 0, y = 0, rule = %s\n!\n", imp.getrule());
+      os << "x = 0, y = 0, rule = " << imp.getrule() << "\n!\n";
    } else {
       // do header line
       unsigned int wd = right - left + 1;
@@ -174,7 +178,7 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
                } else {
                   if (orun > 0) {
                      // output current run of live cells
-                     AddRun(f, laststate, multistate, orun, linelen);
+                     AddRun(os, laststate, multistate, orun, linelen);
                   }
                   laststate = 0 ;
                   brun = skip;
@@ -188,12 +192,12 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
                } else {
                   if (dollrun > 0)
                      // output current run of $ chars
-                     AddRun(f, WRLE_NEWLINE, multistate, dollrun, linelen);
+                     AddRun(os, WRLE_NEWLINE, multistate, dollrun, linelen);
                   if (brun > 0)
                      // output current run of dead cells
-                     AddRun(f, 0, multistate, brun, linelen);
+                     AddRun(os, 0, multistate, brun, linelen);
                   if (orun > 0)
-                     AddRun(f, laststate, multistate, orun, linelen) ;
+                     AddRun(os, laststate, multistate, orun, linelen) ;
                   laststate = v ;
                   orun = 1;
                }
@@ -216,68 +220,99 @@ const char *writerle(FILE *f, char *comments, lifealgo &imp,
             brun = 0;
          else if (laststate >= 0)
             // output current run of live cells
-            AddRun(f, laststate, multistate, orun, linelen);
+            AddRun(os, laststate, multistate, orun, linelen);
          dollrun++;
       }
       
       // terminate RLE data
       dollrun = 1;
-      AddRun(f, WRLE_EOP, multistate, dollrun, linelen);
-      putchar('\n', f);
-      
+      AddRun(os, WRLE_EOP, multistate, dollrun, linelen);
+      putchar('\n', os);
+
       // flush outbuff
-      if (outpos > 0 && !badwrite && fwrite(outbuff, 1, outpos, f) != outpos)
+      if (outpos > 0 && !badwrite && !os.write(outbuff, outpos))
          badwrite = true;
    }
-   
-   if (endcomms) fputs(endcomms, f);
-   
+
+   if (endcomms) os << endcomms;
+
    if (badwrite)
       return "Failed to write output buffer!";
    else
       return 0;
 }
 
-const char *writelife105(FILE *f, char *comments, lifealgo &imp)
+const char *writelife105(std::ostream &os, char *comments, lifealgo &imp)
 {
-   fputs("#Life 1.05\n", f);
-   fprintf(f, "#R %s\n", imp.getrule());
+   os << "#Life 1.05\n";
+   os << "#R " << imp.getrule() << '\n';
    if (comments && comments[0]) {
       // write given comment line(s)
-      fputs(comments, f);
+      os << comments;
    }
    return "Not yet implemented.";
 }
 
-const char *writemacrocell(FILE *f, char *comments, lifealgo &imp)
+const char *writemacrocell(std::ostream &os, char *comments, lifealgo &imp)
 {
    if (imp.hyperCapable())
-      return imp.writeNativeFormat(f, comments);
+      return imp.writeNativeFormat(os, comments);
    else
       return "Not yet implemented.";
 }
 
-const char *writepattern(const char *filename, lifealgo &imp, pattern_format format,
+#ifdef ZLIB
+class gzbuf : public std::streambuf
+{
+public:
+   gzbuf() : file(NULL) { }
+   gzbuf(const char *path) : file(NULL) { open(path); }
+   ~gzbuf() { close(); }
+
+   gzbuf *open(const char *path)
+   {
+      if (file) return NULL;
+      file = gzopen(path, "wb");
+      return file ? this : NULL;
+   }
+
+   gzbuf *close()
+   {
+      if (!file) return NULL;
+      int res = gzclose(file);
+      file = NULL;
+      return res == Z_OK ? this : NULL;
+   }
+
+   bool is_open() const { return file; }
+
+   std::streamsize xsputn(const char_type *s, std::streamsize n)
+   {
+      return gzwrite(file, s, n);
+   }
+
+   int sync()
+   {
+      return gzflush(file, Z_SYNC_FLUSH) == Z_OK ? 0 : -1;
+   }
+
+private:
+   gzFile file;
+};
+#endif
+
+const char *writepattern(const char *filename, lifealgo &imp,
+                         pattern_format format, output_compression compression,
                          int top, int left, int bottom, int right)
 {
-   FILE *f;
-   
    // extract any comments if file exists so we can copy them to new file
    char *commptr = NULL;
-   f = fopen(filename, "r");
-   if (f) {
-      fclose(f);
+   if (std::ifstream(filename)) {
       const char *err = readcomments(filename, &commptr);
       if (err) {
          if (commptr) free(commptr);
          return err;
       }
-   }
-   
-   f = fopen(filename, "w");
-   if (f == 0) {
-      if (commptr) free(commptr);
-      return "Can't create pattern file!";
    }
 
    // skip past any old #CXRLE lines at start of existing XRLE file
@@ -289,39 +324,66 @@ const char *writepattern(const char *filename, lifealgo &imp, pattern_format for
       }
    }
 
+   // open output stream
+   std::streambuf *streambuf = NULL;
+   std::filebuf filebuf;
+#ifdef ZLIB
+   gzbuf gzbuf;
+#endif
+
+   switch (compression)
+   {
+   default:  /* no output compression */
+      streambuf = filebuf.open(filename, std::ios_base::out);
+      break;
+
+   case gzip_compression:
+#ifdef ZLIB
+      streambuf = gzbuf.open(filename);
+      break;
+#else
+      free(commptr);
+      return "GZIP compression not supported";
+#endif
+   }
+   if (!streambuf) {
+      free(commptr);
+      return "Can't create pattern file!";
+   }
+   std::ostream os(streambuf);
+
    currsize = 0.0;
    lifebeginprogress("Writing pattern file");
 
    const char *errmsg = NULL;
    switch (format) {
       case RLE_format:
-         errmsg = writerle(f, comments, imp, top, left, bottom, right, false);
+         errmsg = writerle(os, comments, imp, top, left, bottom, right, false);
          break;
 
       case XRLE_format:
-         errmsg = writerle(f, comments, imp, top, left, bottom, right, true);
+         errmsg = writerle(os, comments, imp, top, left, bottom, right, true);
          break;
 
       case L105_format:
          // Life 1.05 format ignores given edges
-         errmsg = writelife105(f, comments, imp);
+         errmsg = writelife105(os, comments, imp);
          break;
 
       case MC_format:
          // macrocell format ignores given edges
-         errmsg = writemacrocell(f, comments, imp);
+         errmsg = writemacrocell(os, comments, imp);
          break;
 
       default:
          errmsg = "Unsupported pattern format!";
    }
-   
-   if (errmsg == NULL && ferror(f))
+
+   if (errmsg == NULL && !os.flush())
       errmsg = "Error occurred writing file; maybe disk is full?";
-   
+
    lifeendprogress();
-   fclose(f);
-   
+
    if (commptr) free(commptr);
    
    if (isaborted())

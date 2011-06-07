@@ -101,7 +101,7 @@ public:
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) ;
    virtual const char *readmacrocell(char *line) ;
-   virtual const char *writeNativeFormat(FILE *f, char *comments) ;
+   virtual const char *writeNativeFormat(std::ostream &os, char *comments) ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
    
 private:
@@ -200,9 +200,9 @@ private:
    void fill_ll(int d) ;
    void drawghnode(ghnode *n, int llx, int lly, int depth, ghnode *z) ;
    void ensure_hashed() ;
-   g_uintptr_t writecell(FILE *f, ghnode *root, int depth) ;
+   g_uintptr_t writecell(std::ostream &os, ghnode *root, int depth) ;
    g_uintptr_t writecell_2p1(ghnode *root, int depth) ;
-   g_uintptr_t writecell_2p2(FILE *f, ghnode *root, int depth) ;
+   g_uintptr_t writecell_2p2(std::ostream &os, ghnode *root, int depth) ;
    void drawpixel(int x, int y);
    void draw4x4_1(state sw, state se, state nw, state ne, int llx, int lly) ;
    void draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) ;

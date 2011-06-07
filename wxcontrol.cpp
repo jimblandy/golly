@@ -97,7 +97,8 @@ bool MainFrame::SaveStartingPattern()
    // use CanWriteFormat(MC_format)???
    if ( currlayer->algo->hyperCapable() ) {
       // much faster to save pattern in a macrocell file
-      const char* err = WritePattern(currlayer->tempstart, MC_format, 0, 0, 0, 0);
+      const char* err = WritePattern(currlayer->tempstart, MC_format,
+                                     no_compression, 0, 0, 0, 0);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
          // don't allow user to continue generating
@@ -119,6 +120,7 @@ bool MainFrame::SaveStartingPattern()
       // use XRLE format so the pattern's top left location and the current
       // generation count are stored in the file
       const char* err = WritePattern(currlayer->tempstart, XRLE_format,
+                                     no_compression,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));

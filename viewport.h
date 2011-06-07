@@ -25,7 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define VIEWPORT_H
 #include "bigint.h"
 #include <utility>
-using namespace std ;
+using std::pair;
+using std::make_pair;
+
 class lifealgo ;
 /**
  *   This class holds information on where in space the user's window is.

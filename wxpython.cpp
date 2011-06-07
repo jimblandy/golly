@@ -685,7 +685,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
    pattern_format format = savexrle ? XRLE_format : RLE_format;
    // if grid is bounded then force XRLE_format so that position info is recorded
    if (tempalgo->gridwd > 0 || tempalgo->gridht > 0) format = XRLE_format;
-   const char* err = writepattern(FILENAME, *tempalgo, format,
+   const char* err = writepattern(FILENAME, *tempalgo, format, no_compression,
                         top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
    if (err) PYTHON_ERROR(err);

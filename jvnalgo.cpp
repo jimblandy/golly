@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "jvnalgo.h"
 
 // for case-insensitive string comparison
-#include <string.h>
+#include <cstring>
 #ifndef WIN32
    #define stricmp strcasecmp
 #endif

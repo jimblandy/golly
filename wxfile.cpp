@@ -1426,6 +1426,7 @@ void MainFrame::ClearAllScripts()
 
 const char* MainFrame::WritePattern(const wxString& path,
                                     pattern_format format,
+                                    output_compression compression,
                                     int top, int left, int bottom, int right)
 {
    // if the format is RLE_format and the grid is bounded then force XRLE_format so that
@@ -1433,7 +1434,7 @@ const char* MainFrame::WritePattern(const wxString& path,
    if (format == RLE_format && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0))
       format = XRLE_format;
    const char* err = writepattern(FILEPATH, *currlayer->algo, format,
-                                  top, left, bottom, right);
+                                  compression, top, left, bottom, right);
 
    #ifdef __WXMAC__
       if (!err) {
@@ -1481,10 +1482,13 @@ bool MainFrame::SavePattern()
    currlayer->algo->findedges(&top, &left, &bottom, &right);
 
    wxString RLEstring;
-   if (savexrle)
+   if (savexrle) {
       RLEstring = _("Extended RLE (*.rle)|*.rle");
-   else
+      RLEstring += _("|Compressed Extended RLE (*.rle.gz)|*.rle.gz");
+   } else {
       RLEstring = _("RLE (*.rle)|*.rle");
+      RLEstring += _("|Compressed RLE (*.rle.gz)|*.rle.gz");
+   }
 
    //!!! need currlayer->algo->CanWriteMC()???
    if (currlayer->algo->hyperCapable()) {
@@ -1492,6 +1496,7 @@ bool MainFrame::SavePattern()
          // too big so only allow saving as MC file
          itop = ileft = ibottom = iright = 0;
          filetypes = _("Macrocell (*.mc)|*.mc");
+         filetypes += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz");
          MCindex = 0;
       } else {
          // allow saving as RLE/MC file
@@ -1502,6 +1507,7 @@ bool MainFrame::SavePattern()
          filetypes = RLEstring;
          RLEindex = 0;
          filetypes += _("|Macrocell (*.mc)|*.mc");
+         filetypes += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz");
          MCindex = 1;
       }
    } else {
@@ -1536,6 +1542,12 @@ bool MainFrame::SavePattern()
       opensavedir = fullpath.GetPath();
       wxString ext = fullpath.GetExt();
       pattern_format format;
+      output_compression compression = no_compression;
+      // detect user-upplied a compression suffix (.gz)
+      if ( ext.IsSameAs(wxT("gz"),false) ) {
+         compression = gzip_compression;
+         ext = wxFileName(fullpath.GetName()).GetExt();
+      }
       // if user supplied a known extension then use that format if it is
       // allowed, otherwise use current format specified in filter menu
       if ( ext.IsSameAs(wxT("rle"),false) && RLEindex >= 0 ) {
@@ -1546,18 +1558,22 @@ bool MainFrame::SavePattern()
       */
       } else if ( ext.IsSameAs(wxT("mc"),false) && MCindex >= 0 ) {
          format = MC_format;
-      } else if ( savedlg.GetFilterIndex() == RLEindex ) {
+      } else if ( savedlg.GetFilterIndex()/2 == RLEindex ) {
          format = savexrle ? XRLE_format : RLE_format;
-      } else if ( savedlg.GetFilterIndex() == L105index ) {
+         if (savedlg.GetFilterIndex()%2) compression = gzip_compression;
+      /* Life 1.05 format not yet implemented!!!
+      } else if ( savedlg.GetFilterIndex()/2 == L105index ) {
          format = L105_format;
-      } else if ( savedlg.GetFilterIndex() == MCindex ) {
+      */
+      } else if ( savedlg.GetFilterIndex()/2 == MCindex ) {
          format = MC_format;
+         if (savedlg.GetFilterIndex()%2) compression = gzip_compression;
       } else {
          statusptr->ErrorMessage(_("Bug in SavePattern!"));
          return false;
       }
 
-      const char* err = WritePattern(savedlg.GetPath(), format,
+      const char* err = WritePattern(savedlg.GetPath(), format, compression,
                                      itop, ileft, ibottom, iright);
       if (err) {
          statusptr->ErrorMessage(wxString(err,wxConvLocal));
@@ -1603,7 +1619,8 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
       return "Unknown pattern format.";
    }
 
-   const char* err = WritePattern(path, pattfmt, itop, ileft, ibottom, iright);
+   const char* err = WritePattern(path, pattfmt, no_compression,
+                                  itop, ileft, ibottom, iright);
    if (!err) {
       if (remember) AddRecentPattern(path);
       SaveSucceeded(path);

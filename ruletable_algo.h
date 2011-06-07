@@ -53,7 +53,7 @@ protected:
                         
 protected:
 
-   string current_rule;
+   std::string current_rule;
    unsigned int n_states;
    enum TNeighborhood { vonNeumann, Moore, hexagonal, oneDimensional } neighborhood; 
    static const int N_SUPPORTED_NEIGHBORHOODS = 4;

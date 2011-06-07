@@ -193,21 +193,14 @@ void writepat(int fc) {
       thisfilename = tmpfilename ;
    }
    cerr << "(->" << thisfilename << flush ;
-   const char *err ;
-   if (outputismc) {
-      FILE *f = fopen(thisfilename, "w") ;
-      if (f == 0)
-         lifefatal("Cannot open file for writing") ;
-      err = imp->writeNativeFormat(f, NULL) ;   // NULL means no comments
-      fclose(f) ;
-   } else {
-      bigint t, l, b, r ;
-      imp->findedges(&t, &l, &b, &r) ;
-      if (t < -MAXRLE || l < -MAXRLE || b > MAXRLE || r > MAXRLE)
-         lifefatal("Pattern too large to write in RLE format") ;
-      err = writepattern(thisfilename, *imp, RLE_format,
-                         t.toint(), l.toint(), b.toint(), r.toint()) ;
-   }
+   bigint t, l, b, r ;
+   imp->findedges(&t, &l, &b, &r) ;
+   if (!outputismc && (t < -MAXRLE || l < -MAXRLE || b > MAXRLE || r > MAXRLE))
+      lifefatal("Pattern too large to write in RLE format") ;
+   const char *err = writepattern(thisfilename, *imp,
+                                  outputismc ? MC_format : RLE_format,
+                                  outputgzip ? gzip_compression : no_compression,
+                                  t.toint(), l.toint(), b.toint(), r.toint()) ;
    if (err != 0)
       lifewarning(err) ;
    cerr << ")" << flush ;
@@ -561,8 +554,6 @@ case 's':
       } else {
          lifefatal("Output filename must end with .rle or .mc.") ;
       }
-      if (outputgzip)
-         lifefatal("Gzipped output files not supported yet") ;
       if (strlen(outfilename) > 200)
          lifefatal("Output filename too long") ;
    }

@@ -32,6 +32,11 @@ typedef enum {
    MC_format         // macrocell (native hlife format)
 } pattern_format;
 
+typedef enum {
+   no_compression,   // write uncompressed data
+   gzip_compression  // write gzip compressed data
+} output_compression;
+
 /*
  *   Save current pattern to a file.  The given edges are ignored
  *   for L105_format and MC_format.
@@ -39,6 +44,7 @@ typedef enum {
 const char *writepattern(const char *filename,
                          lifealgo &imp,
                          pattern_format format,
+                         output_compression compression,
                          int top, int left, int bottom, int right);
 
 #endif

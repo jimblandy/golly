@@ -1505,7 +1505,7 @@ const char *ghashbase::setrule(const char *) {
  *   Write out the native macrocell format.  This is the one we use when
  *   we're not interactive and displaying a progress dialog.
  */
-g_uintptr_t ghashbase::writecell(FILE *f, ghnode *root, int depth) {
+g_uintptr_t ghashbase::writecell(std::ostream &os, ghnode *root, int depth) {
    g_uintptr_t thiscell = 0 ;
    if (root == zeroghnode(depth))
       return 0 ;
@@ -1522,14 +1522,16 @@ g_uintptr_t ghashbase::writecell(FILE *f, ghnode *root, int depth) {
    if (depth == 0) {
       ghleaf *n = (ghleaf *)root ;
       root->nw = (ghnode *)thiscell ;
-      fprintf(f, "1 %d %d %d %d\n", n->nw, n->ne, n->sw, n->se) ;
+      os << 1 << ' ' << int(n->nw) << ' ' << int(n->ne)
+              << ' ' << int(n->sw) << ' ' << int(n->se) << '\n' ;
    } else {
-      g_uintptr_t nw = writecell(f, root->nw, depth-1) ;
-      g_uintptr_t ne = writecell(f, root->ne, depth-1) ;
-      g_uintptr_t sw = writecell(f, root->sw, depth-1) ;
-      g_uintptr_t se = writecell(f, root->se, depth-1) ;
+      g_uintptr_t nw = writecell(os, root->nw, depth-1) ;
+      g_uintptr_t ne = writecell(os, root->ne, depth-1) ;
+      g_uintptr_t sw = writecell(os, root->sw, depth-1) ;
+      g_uintptr_t se = writecell(os, root->se, depth-1) ;
       root->next = (ghnode *)thiscell ;
-      fprintf(f, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR "\n", depth+1, nw, ne, sw, se) ;
+      os << depth+1 << ' ' << nw << ' ' << ne
+                    << ' ' << sw << ' ' << se << '\n' ;
    }
    return thiscell ;
 }
@@ -1575,7 +1577,7 @@ g_uintptr_t ghashbase::writecell_2p1(ghnode *root, int depth) {
  *   numbered, and displaying a progress dialog.
  */
 static char progressmsg[80] ;
-g_uintptr_t ghashbase::writecell_2p2(FILE *f, ghnode *root, int depth) {
+g_uintptr_t ghashbase::writecell_2p2(std::ostream &os, ghnode *root, int depth) {
    g_uintptr_t thiscell = 0 ;
    if (root == zeroghnode(depth))
       return 0 ;
@@ -1584,20 +1586,21 @@ g_uintptr_t ghashbase::writecell_2p2(FILE *f, ghnode *root, int depth) {
          return (g_uintptr_t)(root->nw) ;
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
-         unsigned long siz = ftell(f) ;
+         std::streampos siz = os.tellp() ;
          sprintf(progressmsg, "File size: %.2f MB", double(siz) / 1048576.0) ;
          lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       ghleaf *n = (ghleaf *)root ;
       root->nw = (ghnode *)thiscell ;
-      fprintf(f, "1 %d %d %d %d\n", n->nw, n->ne, n->sw, n->se) ;
+      os << 1 << ' ' << int(n->nw) << ' ' << int(n->ne)
+              << ' ' << int(n->sw) << ' ' << int(n->se) << '\n';
    } else {
       if (cellcounter + 1 > (g_uintptr_t)(root->next) || isaborted())
          return (g_uintptr_t)(root->next) ;
-      g_uintptr_t nw = writecell_2p2(f, root->nw, depth-1) ;
-      g_uintptr_t ne = writecell_2p2(f, root->ne, depth-1) ;
-      g_uintptr_t sw = writecell_2p2(f, root->sw, depth-1) ;
-      g_uintptr_t se = writecell_2p2(f, root->se, depth-1) ;
+      g_uintptr_t nw = writecell_2p2(os, root->nw, depth-1) ;
+      g_uintptr_t ne = writecell_2p2(os, root->ne, depth-1) ;
+      g_uintptr_t sw = writecell_2p2(os, root->sw, depth-1) ;
+      g_uintptr_t se = writecell_2p2(os, root->se, depth-1) ;
       if (!isaborted() &&
           cellcounter + 1 != (g_uintptr_t)(root->next)) { // this should never happen
          lifefatal("Internal in writecell_2p2") ;
@@ -1605,37 +1608,37 @@ g_uintptr_t ghashbase::writecell_2p2(FILE *f, ghnode *root, int depth) {
       }
       thiscell = ++cellcounter ;
       if ((cellcounter & 4095) == 0) {
-         unsigned long siz = ftell(f) ;
+         std::streampos siz = os.tellp() ;
          sprintf(progressmsg, "File size: %.2f MB", double(siz) / 1048576.0) ;
          lifeabortprogress(thiscell/(double)writecells, progressmsg) ;
       }
       root->next = (ghnode *)thiscell ;
-      fprintf(f, "%d %" PRIuPTR " %" PRIuPTR " %" PRIuPTR " %" PRIuPTR "\n", depth+1, nw, ne, sw, se) ;
+      os << depth+1 << ' ' << nw << ' ' << ne
+                    << ' ' << sw << ' ' << se << '\n' ;
    }
    return thiscell ;
 }
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
+const char *ghashbase::writeNativeFormat(std::ostream &os, char *comments) {
    int depth = ghnode_depth(root) ;
-   fputs("[M2] (golly " STRINGIFY(VERSION) ")", f) ; 
-   fputs("\n", f) ;
+   os << "[M2] (golly " STRINGIFY(VERSION) ")\n" ;
    
    // AKT: always write out explicit rule
-   fprintf(f, "#R %s\n", getrule()) ;
-   
+   os << "#R " << getrule() << '\n' ;
+
    if (generation > bigint::zero) {
       // write non-zero gen count
-      fprintf(f, "#G %s\n", generation.tostring('\0')) ;
+      os << "#G " << generation.tostring('\0') << '\n' ;
    }
    if (comments && comments[0]) {
       // write given comment line(s)
-      fputs(comments, f) ;
+      os << comments;
    }
    inGC = 1 ;
    /* this is the old way:
    cellcounter = 0 ;
-   writecell(f, root, depth) ;
+   writecell(os, root, depth) ;
    */
    /* this is the new two-pass way */
    cellcounter = 0 ;
@@ -1657,16 +1660,17 @@ const char *ghashbase::writeNativeFormat(FILE *f, char *comments) {
    writecells = cellcounter ;
    cellcounter = 0 ;
    if (framestosave) {
-     fprintf(f, "#FRAMES %d ", timeline.framecount) ;
-     fprintf(f, "%s ", timeline.start.tostring()) ;
-     fprintf(f, "%d^%d\n", timeline.base, timeline.expo) ;
-     for (int i=0; i<timeline.framecount; i++) {
-       ghnode *frame = (ghnode*)timeline.frames[i] ;
-       writecell_2p2(f, frame, depths[i]) ;
-       fprintf(f, "#FRAME %d %" PRIuPTR "\n", i, (g_uintptr_t)(frame->next)) ;
-     }
+      os << "#FRAMES"
+         << ' ' << timeline.framecount
+         << ' ' << timeline.start.tostring()
+         << ' ' << timeline.base << '^' << timeline.expo << '\n' ;
+      for (int i=0; i<timeline.framecount; i++) {
+         ghnode *frame = (ghnode*)timeline.frames[i] ;
+         writecell_2p2(os, frame, depths[i]) ;
+         os << "#FRAME " << i << ' ' << (g_uintptr_t)frame->next << '\n' ;
+      }
    }
-   writecell_2p2(f, root, depth) ;
+   writecell_2p2(os, root, depth) ;
    /* end new two-pass way */
    if (framestosave) {
      for (int i=0; i<timeline.framecount; i++) {

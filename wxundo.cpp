@@ -657,7 +657,8 @@ void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
    //!!! need lifealgo::CanWriteFormat(MC_format) method???
    if ( currlayer->algo->hyperCapable() ) {
       // save hlife pattern in a macrocell file
-      err = mainptr->WritePattern(tempfile, MC_format, 0, 0, 0, 0);
+      err = mainptr->WritePattern(tempfile, MC_format, no_compression,
+                                  0, 0, 0, 0);
    } else {
       // can only save RLE file if edges are within getcell/setcell limits
       bigint top, left, bottom, right;
@@ -667,7 +668,7 @@ void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
       } else {
          // use XRLE format so the pattern's top left location and the current
          // generation count are stored in the file
-         err = mainptr->WritePattern(tempfile, XRLE_format,
+         err = mainptr->WritePattern(tempfile, XRLE_format, no_compression,
                                      top.toint(), left.toint(),
                                      bottom.toint(), right.toint());
       }

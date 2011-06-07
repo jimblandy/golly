@@ -28,15 +28,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #ifndef LIFEALGO_H
 #define LIFEALGO_H
-#include <cstdio>
 #include "bigint.h"
 #include "viewport.h"
 #include "liferender.h"
 #include "lifepoll.h"
 #include "readpattern.h"
 #include "platform.h"
+#include <cstdio>
 // moving the include vector *before* platform.h breaks compilation
 #include <vector>
+using std::vector;
+#include <iostream>
+
 // this must not be increased beyond 32767, because we use a bigint
 // multiply that only supports multiplicands up to that size.
 const int MAX_FRAME_COUNT = 32000 ;
@@ -85,7 +88,7 @@ public:
    virtual void fit(viewport &view, int force) = 0 ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) = 0 ;
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) = 0 ;
-   virtual const char *writeNativeFormat(FILE *f, char *comments) = 0 ;
+   virtual const char *writeNativeFormat(std::ostream &os, char *comments) = 0 ;
    void setpoll(lifepoll *pollerarg) { poller = pollerarg ; }
    virtual const char *readmacrocell(char *) { return "cannot read hash" ; }
    
