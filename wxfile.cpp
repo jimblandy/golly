@@ -1490,7 +1490,6 @@ bool MainFrame::SavePattern()
       RLEstring += _("|Compressed RLE (*.rle.gz)|*.rle.gz");
    }
 
-   //!!! need currlayer->algo->CanWriteMC()???
    if (currlayer->algo->hyperCapable()) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          // too big so only allow saving as MC file
@@ -1543,7 +1542,7 @@ bool MainFrame::SavePattern()
       wxString ext = fullpath.GetExt();
       pattern_format format;
       output_compression compression = no_compression;
-      // detect user-upplied a compression suffix (.gz)
+      // detect if user supplied a compression suffix (.gz)
       if ( ext.IsSameAs(wxT("gz"),false) ) {
          compression = gzip_compression;
          ext = wxFileName(fullpath.GetName()).GetExt();
@@ -1590,15 +1589,21 @@ bool MainFrame::SavePattern()
 // -----------------------------------------------------------------------------
 
 // called by script command to save current pattern to given file
-const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bool remember)
+const char* MainFrame::SaveFile(const wxString& path, const wxString& fileformat, bool remember)
 {
-   // check that given format is valid and allowed
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    currlayer->algo->findedges(&top, &left, &bottom, &right);
 
+   wxString format = fileformat.Lower();
+   output_compression compression = no_compression;
+   if (format.EndsWith(wxT(".gz"))) {
+      compression = gzip_compression;
+   }
+   
+   // check that given file format is valid
    pattern_format pattfmt;
-   if ( format.IsSameAs(wxT("rle"),false) ) {
+   if (format.StartsWith(wxT("rle"))) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          return "Pattern is too big to save as RLE.";
       }
@@ -1607,8 +1612,7 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
       ileft = left.toint();
       ibottom = bottom.toint();
       iright = right.toint();
-   } else if ( format.IsSameAs(wxT("mc"),false) ) {
-      //!!! need currlayer->algo->CanWriteMC()???
+   } else if (format.StartsWith(wxT("mc"))) {
       if (!currlayer->algo->hyperCapable()) {
          return "Macrocell format is not supported by the current algorithm.";
       }
@@ -1619,7 +1623,7 @@ const char* MainFrame::SaveFile(const wxString& path, const wxString& format, bo
       return "Unknown pattern format.";
    }
 
-   const char* err = WritePattern(path, pattfmt, no_compression,
+   const char* err = WritePattern(path, pattfmt, compression,
                                   itop, ileft, ibottom, iright);
    if (!err) {
       if (remember) AddRecentPattern(path);

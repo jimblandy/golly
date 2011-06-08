@@ -271,7 +271,19 @@ or in the Run Recent submenu if the file is a script.
 
 <a name="save"></a><p><dt><b>g_save(<i>$filename, $format, $remember=0</i>)</b></dt>
 <dd>
-Save the current pattern in a given file using the specified format ("rle" or "mc").
+Save the current pattern in a given file using the specified format:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>"rle"</b></td><td width=20>     </td><td>run length encoded (RLE)</td></tr>
+<tr><td><b>"rle.gz"</b></td><td width=20>  </td><td>compressed RLE</td></tr>
+<tr><td><b>"mc"</b></td><td width=20>      </td><td>macrocell</td></tr>
+<tr><td><b>"mc.gz"</b></td><td width=20>   </td><td>compressed macrocell</td></tr>
+</table>
+</dd>
+<p>
+<dd>
 A non-absolute path is relative to the location of the script.
 The 3rd parameter is optional (default = 0) and specifies if the file
 should be remembered in the Open Recent submenu.
