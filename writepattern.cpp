@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstring>
 #ifdef ZLIB
 #include <zlib.h>
+#include <streambuf>
 #endif
 
 #ifdef __APPLE__
@@ -41,7 +42,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // globals for writing RLE files
 static char outbuff[BUFFSIZE];
 static size_t outpos;            // current write position in outbuff
-static double currsize;          // current file size (for showing in progress dialog)
 static bool badwrite;            // fwrite failed?
 
 // using buffered putchar instead of fputc is about 20% faster on Mac OS X
@@ -50,7 +50,6 @@ static void putchar(char ch, std::ostream &os) {
    if (outpos == BUFFSIZE) {
       if (!os.write(outbuff, outpos)) badwrite = true;
       outpos = 0;
-      currsize += BUFFSIZE;
    }
    outbuff[outpos] = ch;
    outpos++;
@@ -209,7 +208,7 @@ const char *writerle(std::ostream &os, char *comments, lifealgo &imp,
                char msg[128];
                accumcount += currcount;
                currcount = 0;
-               sprintf(msg, "File size: %.2f MB", currsize / 1048576.0);
+               sprintf(msg, "File size: %.2f MB", os.tellp() / 1048576.0);
                if (lifeabortprogress(accumcount / maxcount, msg)) break;
             }
          }
@@ -296,6 +295,13 @@ public:
       return gzflush(file, Z_SYNC_FLUSH) == Z_OK ? 0 : -1;
    }
 
+   pos_type seekoff(off_type off, std::ios_base::seekdir way, std::ios_base::openmode which)
+   {
+      if (file && off == 0 && way == std::ios_base::cur && which == std::ios_base::out)
+         return pos_type(gzoffset(file));
+      else
+         return pos_type(off_type(-1));
+   }
 private:
    gzFile file;
 };
@@ -352,7 +358,6 @@ const char *writepattern(const char *filename, lifealgo &imp,
    }
    std::ostream os(streambuf);
 
-   currsize = 0.0;
    lifebeginprogress("Writing pattern file");
 
    const char *errmsg = NULL;
