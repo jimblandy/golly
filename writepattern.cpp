@@ -298,15 +298,18 @@ public:
    pos_type seekoff(off_type off, std::ios_base::seekdir way, std::ios_base::openmode which)
    {
       if (file && off == 0 && way == std::ios_base::cur && which == std::ios_base::out)
+      {
          #if ZLIB_VERNUM >= 0x1240
             // gzoffset is only available in zlib 1.2.4 or later
             return pos_type(gzoffset(file));
          #else
             // return an approximation of file size (only used in progress dialog)
-            return pos_type(gztell(file) / 4);
+            z_off_t offset = gztell(file);
+            if (offset > 0) offset /= 4;
+            return pos_type(offset);
          #endif
-      else
-         return pos_type(off_type(-1));
+      }
+      return pos_type(off_type(-1));
    }
 private:
    gzFile file;

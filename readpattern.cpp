@@ -55,21 +55,28 @@ char filebuff[BUFFSIZE];
 int buffpos, bytesread, prevchar;
 
 long filesize;             // length of file in bytes
-double maxbuffs;           // length of file in buffers
-unsigned int buffcount;    // buffers read so far (for showing in progress dialog)
 
 // use buffered getchar instead of slow fgetc
 // don't override the "getchar" name which is likely to be a macro
 int mgetchar() {
    if (buffpos == BUFFSIZE) {
-#ifdef ZLIB
-      bytesread = gzread(zinstream, filebuff, BUFFSIZE);
-#else
-      bytesread = fread(filebuff, 1, BUFFSIZE, pattfile);
-#endif
+      double filepos;
+      #ifdef ZLIB
+         bytesread = gzread(zinstream, filebuff, BUFFSIZE);
+         #if ZLIB_VERNUM >= 0x1240
+            // gzoffset is only available in zlib 1.2.4 or later
+            filepos = gzoffset(zinstream);
+         #else
+            // use an approximation of file position
+            filepos = gztell(zinstream);
+            if (filepos > 0) filepos /= 4;
+         #endif
+      #else
+         bytesread = fread(filebuff, 1, BUFFSIZE, pattfile);
+         filepos = ftell(filebuff);
+      #endif
       buffpos = 0;
-      buffcount++;
-      lifeabortprogress((double)buffcount / maxbuffs, "");
+      lifeabortprogress(filepos / filesize, "");
    }
    if (buffpos >= bytesread) return EOF;
    return filebuff[buffpos++];
@@ -556,12 +563,6 @@ long getfilesize(const char *filename) {
       flen = ftell(f);
       fclose(f);
    }
-   const char *p = strrchr(filename, '.');
-   if ( p != NULL && p[1] == 'g' && p[2] == 'z' ) {
-      // is there a fast way to get uncompressed size of a .gz file???!!!
-      // for now we just multiply flen by a fudge factor -- yuk!
-      flen = long( (double)flen * 4.0 );
-   }
    return flen;
 }
 
@@ -623,9 +624,6 @@ const char *loadpattern(lifealgo &imp) {
       if (err) imp.setrule( imp.DefaultRule() ) ;
    }
 
-   buffcount = 0;
-   maxbuffs = (double)filesize / (double)BUFFSIZE;
-   if (maxbuffs < 1.0) maxbuffs = 1.0;
    if (getedges)
       lifebeginprogress("Reading from clipboard");
    else
@@ -803,9 +801,6 @@ const char *readcomments(const char *filename, char **commptr)
    // loading comments is likely to be quite fast so no real need to
    // display the progress dialog, but getchar calls lifeabortprogress
    // so safer just to assume the progress dialog might appear
-   buffcount = 0;
-   maxbuffs = (double)filesize / (double)BUFFSIZE;
-   if (maxbuffs < 1.0) maxbuffs = 1.0;
    lifebeginprogress("Loading comments");
 
    // skip any blank lines at start to avoid problem when copying pattern
