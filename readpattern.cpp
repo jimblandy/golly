@@ -67,9 +67,9 @@ int mgetchar() {
             // gzoffset is only available in zlib 1.2.4 or later
             filepos = gzoffset(zinstream);
          #else
-            // use an approximation of file position
+            // use an approximation of file position if file is compressed
             filepos = gztell(zinstream);
-            if (filepos > 0) filepos /= 4;
+            if (filepos > 0 && gzdirect(zinstream) == 0) filepos /= 4;
          #endif
       #else
          bytesread = fread(filebuff, 1, BUFFSIZE, pattfile);
@@ -555,7 +555,6 @@ const char *readmcell(lifealgo &imp, char *line) {
 }
 
 long getfilesize(const char *filename) {
-   // following method is only accurate for uncompressed file
    long flen = 0;
    FILE *f = fopen(filename, "r");
    if (f != 0) {
