@@ -241,17 +241,6 @@ const char *writerle(std::ostream &os, char *comments, lifealgo &imp,
       return 0;
 }
 
-const char *writelife105(std::ostream &os, char *comments, lifealgo &imp)
-{
-   os << "#Life 1.05\n";
-   os << "#R " << imp.getrule() << '\n';
-   if (comments && comments[0]) {
-      // write given comment line(s)
-      os << comments;
-   }
-   return "Not yet implemented.";
-}
-
 const char *writemacrocell(std::ostream &os, char *comments, lifealgo &imp)
 {
    if (imp.hyperCapable())
@@ -377,11 +366,6 @@ const char *writepattern(const char *filename, lifealgo &imp,
 
       case XRLE_format:
          errmsg = writerle(os, comments, imp, top, left, bottom, right, true);
-         break;
-
-      case L105_format:
-         // Life 1.05 format ignores given edges
-         errmsg = writelife105(os, comments, imp);
          break;
 
       case MC_format:

@@ -32,7 +32,10 @@
 <li> <a href="open:Scripts/Python/Rule-Generators/Langtons-Ant-gen.py">Langtons-Ant-gen.py</a> 
      now accepts turns 'U' and 'N' (U-turn and no-turn) as well as 'L' and 'R'.
 <li> The hash() command uses a better hash function in a two-state universe.
-<li> Patterns can be saved as gzipped files (.rle.gz or .mc.gz).
+<li> Patterns can be saved as gzipped files (*.rle.gz or *.mc.gz).
+<li> If an algorithm can save patterns in macrocell format (currently all except QuickLife)
+     then the Save Pattern dialog now prefers that format over RLE; ie. the file type order
+     is *.mc, *.mc.gz, *.rle, *.rle.gz.
 <li> While waiting for a paste click, the keyboard shortcuts for flipping or rotating
      a selection now modify the paste pattern rather than the current selection.
 <li> Fixed a bug in Win and Linux apps that prevented keyboard shortcuts being used

@@ -933,10 +933,10 @@ void MainFrame::OpenPattern()
    wxString filetypes = _("All files (*)|*");
    filetypes +=         _("|RLE (*.rle)|*.rle");
    filetypes +=         _("|Macrocell (*.mc)|*.mc");
+   filetypes +=         _("|Gzip (*.gz)|*.gz");
    filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
    filetypes +=         _("|dblife (*.l)|*.l");
    filetypes +=         _("|MCell (*.mcl)|*.mcl");
-   filetypes +=         _("|Gzip (*.gz)|*.gz");
    filetypes +=         _("|Zip (*.zip;*.gar)|*.zip;*.gar");
    filetypes +=         _("|BMP (*.bmp)|*.bmp");
    filetypes +=         _("|GIF (*.gif)|*.gif");
@@ -1444,8 +1444,6 @@ const char* MainFrame::WritePattern(const wxString& path,
          wxUint32 type = 'GoLR';       // RLE or XRLE
          if (format == MC_format) {
             type = 'GoLM';
-         } else if (format == L105_format) {
-            type = 'GoLL';
          }
          #if defined(__WXOSX_COCOA__)
             // there is no Cocoa call to set file type and creator
@@ -1472,42 +1470,44 @@ bool MainFrame::SavePattern()
    }
 
    wxString filetypes;
-   int RLEindex, L105index, MCindex;
+   int MCindex, RLEindex;
 
    // initially all formats are not allowed (use any -ve number)
-   RLEindex = L105index = MCindex = -1;
+   MCindex = RLEindex = -1;
+
+   wxString MCfiles, RLEfiles;
+   MCfiles = _("Macrocell (*.mc)|*.mc");
+   MCfiles += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz");
+   if (savexrle) {
+      RLEfiles = _("Extended RLE (*.rle)|*.rle");
+      RLEfiles += _("|Compressed Extended RLE (*.rle.gz)|*.rle.gz");
+   } else {
+      RLEfiles = _("RLE (*.rle)|*.rle");
+      RLEfiles += _("|Compressed RLE (*.rle.gz)|*.rle.gz");
+   }
 
    bigint top, left, bottom, right;
    int itop, ileft, ibottom, iright;
    currlayer->algo->findedges(&top, &left, &bottom, &right);
 
-   wxString RLEstring;
-   if (savexrle) {
-      RLEstring = _("Extended RLE (*.rle)|*.rle");
-      RLEstring += _("|Compressed Extended RLE (*.rle.gz)|*.rle.gz");
-   } else {
-      RLEstring = _("RLE (*.rle)|*.rle");
-      RLEstring += _("|Compressed RLE (*.rle.gz)|*.rle.gz");
-   }
-
    if (currlayer->algo->hyperCapable()) {
+      // algorithm uses hashlife
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
          // too big so only allow saving as MC file
          itop = ileft = ibottom = iright = 0;
-         filetypes = _("Macrocell (*.mc)|*.mc");
-         filetypes += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz");
+         filetypes = MCfiles;
          MCindex = 0;
       } else {
-         // allow saving as RLE/MC file
+         // allow saving as MC or RLE file
          itop = top.toint();
          ileft = left.toint();
          ibottom = bottom.toint();
          iright = right.toint();
-         filetypes = RLEstring;
-         RLEindex = 0;
-         filetypes += _("|Macrocell (*.mc)|*.mc");
-         filetypes += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz");
-         MCindex = 1;
+         filetypes = MCfiles;
+         filetypes += _("|");
+         filetypes += RLEfiles;
+         MCindex = 0;
+         RLEindex = 1;
       }
    } else {
       // allow saving file only if pattern is small enough
@@ -1519,12 +1519,8 @@ bool MainFrame::SavePattern()
       ileft = left.toint();
       ibottom = bottom.toint();
       iright = right.toint();
-      filetypes = RLEstring;
+      filetypes = RLEfiles;
       RLEindex = 0;
-      /* Life 1.05 format not yet implemented!!!
-      filetypes += _("|Life 1.05 (*.lif)|*.lif");
-      L105index = 1;
-      */
    }
 
    wxFileDialog savedlg( this, _("Save pattern"),
@@ -1551,21 +1547,13 @@ bool MainFrame::SavePattern()
       // allowed, otherwise use current format specified in filter menu
       if ( ext.IsSameAs(wxT("rle"),false) && RLEindex >= 0 ) {
          format = savexrle ? XRLE_format : RLE_format;
-      /* Life 1.05 format not yet implemented!!!
-      } else if ( ext.IsSameAs("lif",false) && L105index >= 0 ) {
-         format = L105_format;
-      */
       } else if ( ext.IsSameAs(wxT("mc"),false) && MCindex >= 0 ) {
          format = MC_format;
-      } else if ( savedlg.GetFilterIndex()/2 == RLEindex ) {
-         format = savexrle ? XRLE_format : RLE_format;
-         if (savedlg.GetFilterIndex()%2) compression = gzip_compression;
-      /* Life 1.05 format not yet implemented!!!
-      } else if ( savedlg.GetFilterIndex()/2 == L105index ) {
-         format = L105_format;
-      */
       } else if ( savedlg.GetFilterIndex()/2 == MCindex ) {
          format = MC_format;
+         if (savedlg.GetFilterIndex()%2) compression = gzip_compression;
+      } else if ( savedlg.GetFilterIndex()/2 == RLEindex ) {
+         format = savexrle ? XRLE_format : RLE_format;
          if (savedlg.GetFilterIndex()%2) compression = gzip_compression;
       } else {
          statusptr->ErrorMessage(_("Bug in SavePattern!"));

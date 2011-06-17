@@ -26,20 +26,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class lifealgo;
 
 typedef enum {
-   RLE_format,       // run length encoded
-   XRLE_format,      // extended RLE
-   L105_format,      // Life 1.05 (not yet implemented!!!)
-   MC_format         // macrocell (native hlife format)
+   RLE_format,          // run length encoded
+   XRLE_format,         // extended RLE
+   MC_format            // macrocell (native hashlife format)
 } pattern_format;
 
 typedef enum {
-   no_compression,   // write uncompressed data
-   gzip_compression  // write gzip compressed data
+   no_compression,      // write uncompressed data
+   gzip_compression     // write gzip compressed data
 } output_compression;
 
 /*
- *   Save current pattern to a file.  The given edges are ignored
- *   for L105_format and MC_format.
+ *   Save current pattern to a file.
  */
 const char *writepattern(const char *filename,
                          lifealgo &imp,
