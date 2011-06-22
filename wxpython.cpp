@@ -86,6 +86,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       #undef _POSIX_C_SOURCE
    #endif
 
+   #ifdef __WXMSW__
+      // avoid warning on Windows
+      #undef HAVE_SSIZE_T
+   #endif
+
    // prevent Python.h from adding Python library to link settings
    #define USE_DL_EXPORT
 #endif

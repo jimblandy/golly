@@ -72,13 +72,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // avoid warning about _ being redefined
 #undef _
 
-// on Windows, wxWidgets redefines uid_t/gid_t which breaks Perl's typedefs:
-#undef uid_t
-#undef gid_t
+#ifdef __WXMSW__
+   // on Windows, wxWidgets defines uid_t/gid_t which breaks Perl's typedefs:
+   #undef uid_t
+   #undef gid_t
+   // can't do "#undef mode_t" for a typedef so use this hack:
+   typedef unsigned short MODE1;  // from C:\Perl\lib\CORE\win32.h
+   typedef int MODE2;             // from C:\wxWidgets\include\wx\filefn.h
+   #define mode_t MODE1
+#endif
 
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
+
+#ifdef __WXMSW__
+   #undef mode_t
+   #define mode_t MODE2
+#endif
+
+// restore wxWidgets definition for _ (from include/wx/intl.h)
+#undef _
+#define _(s) wxGetTranslation(_T(s))
 
 /*
  * Quoting Jan Dubois of Active State:
@@ -115,10 +130,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #if (PERL_REVISION == 5) && (PERL_VERSION >= 11)
    #define PERL5101_OR_LATER
 #endif
-
-// restore wxWidgets definition for _ (from include/wx/intl.h)
-#undef _
-#define _(s) wxGetTranslation(_T(s))
 
 static PerlInterpreter* my_perl = NULL;
 

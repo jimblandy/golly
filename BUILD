@@ -29,7 +29,7 @@ this creates a C:\wxWidgets directory.  Open up a command window and
 type these commands:
 
    cd \wxWidgets\build\msw
-   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1
+   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
 
 This assumes you have the MS Visual C++ compiler and linker installed.
 It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
@@ -37,6 +37,8 @@ It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
    BUILD=release
    RUNTIME_LIBS=static
    UNICODE=1
+   DEBUG_INFO=0
+   DEBUG_FLAG=0
 
 so you won't have to specify those settings each time you run nmake
 to build Golly or wxWidgets.
