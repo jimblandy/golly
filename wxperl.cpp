@@ -131,6 +131,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #define PERL5101_OR_LATER
 #endif
 
+// check if we're building with Perl 5.14 or later
+#if (PERL_REVISION == 5) && (PERL_VERSION >= 14)
+   #define PERL514_OR_LATER
+#endif
+
+// Check if PL_thr_key is a real variable or instead a macro which calls
+// Perl_Gthr_key_ptr(NULL), which was the default before Perl 5.14:
+#ifdef PL_thr_key
+   #define PERL_THR_KEY_FUNC 1
+#endif
+
 static PerlInterpreter* my_perl = NULL;
 
 EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
@@ -155,7 +166,11 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
 extern "C"
 {
 #ifdef USE_ITHREADS
-   perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*);
+   #ifdef PERL_THR_KEY_FUNC
+      perl_key*(*G_Perl_Gthr_key_ptr)(register PerlInterpreter*);
+   #else
+      perl_key *G_PL_thr_key;
+   #endif
 #endif
    SV**(*G_Perl_av_fetch)(pTHX_ AV*, I32, I32);
    I32(*G_Perl_av_len)(pTHX_ AV*);
@@ -215,7 +230,13 @@ extern "C"
 }
 
 // redefine Perl functions to their equivalent G_* wrappers
-#define Perl_Gthr_key_ptr        G_Perl_Gthr_key_ptr
+#ifdef USE_ITHREADS
+   #ifdef PERL_THR_KEY_FUNC
+      #define Perl_Gthr_key_ptr        G_Perl_Gthr_key_ptr
+   #else
+      #define PL_thr_key               (*G_PL_thr_key)
+   #endif
+#endif
 #define Perl_av_fetch            G_Perl_av_fetch
 #define Perl_av_len              G_Perl_av_len
 #define Perl_av_push             G_Perl_av_push
@@ -287,7 +308,11 @@ static struct PerlFunc
 } perlFuncs[] =
 {
 #ifdef USE_ITHREADS
-   PERL_FUNC(Perl_Gthr_key_ptr)
+   #ifdef PERL_THR_KEY_FUNC
+      PERL_FUNC(Perl_Gthr_key_ptr)
+   #else
+      PERL_FUNC(PL_thr_key)
+   #endif
 #endif
    PERL_FUNC(Perl_av_fetch)
    PERL_FUNC(Perl_av_len)
@@ -318,19 +343,24 @@ static struct PerlFunc
    PERL_FUNC(Perl_sys_term)
 #endif
 #ifdef MULTIPLICITY
-   #ifdef PERL510_OR_LATER
-      PERL_FUNC(Perl_Imarkstack_ptr_ptr)
-      PERL_FUNC(Perl_Istack_base_ptr)
-      PERL_FUNC(Perl_Istack_max_ptr)
-      PERL_FUNC(Perl_Istack_sp_ptr)
-   #else
-      PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
-      PERL_FUNC(Perl_Tstack_base_ptr)
-      PERL_FUNC(Perl_Tstack_max_ptr)
-      PERL_FUNC(Perl_Tstack_sp_ptr)
+   #ifndef PERL514_OR_LATER
+      // before Perl 5.14:
+      PERL_FUNC(Perl_Iexit_flags_ptr)
+      PERL_FUNC(Perl_Iperl_destruct_level_ptr)
+      #ifdef PERL510_OR_LATER
+         // Perl 5.10/5.12 only:
+         PERL_FUNC(Perl_Imarkstack_ptr_ptr)
+         PERL_FUNC(Perl_Istack_base_ptr)
+         PERL_FUNC(Perl_Istack_max_ptr)
+         PERL_FUNC(Perl_Istack_sp_ptr)
+      #else
+         // before Perl 5.10:
+         PERL_FUNC(Perl_Tmarkstack_ptr_ptr)
+         PERL_FUNC(Perl_Tstack_base_ptr)
+         PERL_FUNC(Perl_Tstack_max_ptr)
+         PERL_FUNC(Perl_Tstack_sp_ptr)
+      #endif
    #endif
-   PERL_FUNC(Perl_Iexit_flags_ptr)
-   PERL_FUNC(Perl_Iperl_destruct_level_ptr)
 #else  /* no MULTIPLICITY */
    /* N.B. these are actually variables, not functions, but the distinction does
       not matter for symbol resolution: */
