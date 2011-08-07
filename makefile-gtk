@@ -59,14 +59,14 @@ WX_LDFLAGS = `wx-config --libs`
 OBJDIR = ObjGTK
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h ruletable_algo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
-   util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h
+   util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h rd_algo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o $(OBJDIR)/hlifedraw.o \
    $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/jvnalgo.o \
    $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o \
    $(OBJDIR)/readpattern.o $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
-   $(OBJDIR)/generationsalgo.o
+   $(OBJDIR)/generationsalgo.o ${OBJDIR}/rd_algo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
    wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
    wxtimeline.h wxundo.h wxutils.h wxview.h
@@ -123,6 +123,9 @@ $(OBJDIR)/qlifedraw.o: qlifedraw.cpp
 
 $(OBJDIR)/jvnalgo.o: jvnalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ jvnalgo.cpp
+
+$(OBJDIR)/rd_algo.o: rd_algo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ rd_algo.cpp
 
 $(OBJDIR)/ruletable_algo.o: ruletable_algo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ ruletable_algo.cpp
