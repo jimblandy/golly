@@ -74,7 +74,7 @@ EXTRALIBS_GUI = -framework WebKit -framework OpenGL -framework AGL -framework Au
 OBJDIR = ObjOSX
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
-   util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h ruletable_algo.h
+   util.h viewport.h writepattern.h ruletreealgo.h generationsalgo.h ruletable_algo.h \
    rd_algo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o \
