@@ -196,8 +196,8 @@ static const char* hex15x15[] = {
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXGTK__
-// this routine is used to fix a wxGTK bug which reverses colors when
+#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
+// this routine is used to fix a wxGTK bug (pre 2.9) which reverses colors when
 // converting a monochrome wxImage to a wxBitmap with depth 1
 static void ReverseImageColors(wxImage& image)
 {
@@ -239,7 +239,7 @@ static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
    wxImage image(xpmdata);
    image.SetMaskColour(0, 0, 0);    // make black transparent
 
-   #ifdef __WXGTK__
+   #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
       // fix wxGTK bug
       ReverseImageColors(image);
    #endif
@@ -456,7 +456,7 @@ bool LoadIconFile(const wxString& path, int maxstate,
    int depth = -1;
    if (image.CountColours(2) <= 2) depth = 1;   // monochrome
 
-   #ifdef __WXGTK__
+   #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
       // fix wxGTK bug
       if (depth == 1) ReverseImageColors(image);
    #endif
