@@ -152,10 +152,18 @@ static int mindelpos;                  // minimum x position of DELETE_BUTT
 const int TBARHT = 32;                 // height of timeline bar
 const int SCROLLHT = 17;               // height of scroll bar
 const int PAGESIZE = 10;               // scroll amount when paging
-const int BUTTON_WD = 24;              // nominal width of bitmap buttons
 
 const int MINSPEED = -10;              // minimum autoplay speed
 const int MAXSPEED = 10;               // maximum autoplay speed
+
+// width and height of bitmap buttons
+#if wxCHECK_VERSION(2,9,0)
+   const int BUTTON_WD = 28;
+   const int BUTTON_HT = 28;
+#else
+   const int BUTTON_WD = 24;
+   const int BUTTON_HT = 24;
+#endif
 
 // timeline bar buttons (must be global to use Connect/Disconnect on Windows)
 static wxBitmapButton* tlbutt[NUM_BUTTONS];
@@ -197,7 +205,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
       smallgap = 6;
    #else
       xpos = 4;
-      ypos = 4;
+      ypos = (32 - BUTTON_HT) / 2;
       smallgap = 4;
    #endif
    biggap = 16;
@@ -224,6 +232,10 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
       // use smaller font on GTK
       timelinefont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 11;
+   #elif defined(__WXOSX_COCOA__)
+      // we need to specify facename to get Monaco instead of Courier
+      timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
+      textascent = 10;
    #elif defined(__WXMAC__)
       timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
       textascent = 10;
@@ -604,7 +616,8 @@ void TimelineBar::OnButtonUp(wxMouseEvent& event)
 
 void TimelineBar::AddButton(int id, const wxString& tip)
 {
-   tlbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos));
+   tlbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos),
+                                   wxSize(BUTTON_WD, BUTTON_HT));
    if (tlbutt[id] == NULL) {
       Fatal(_("Failed to create timeline bar button!"));
    } else {

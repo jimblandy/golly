@@ -3827,7 +3827,12 @@ wxBitmapButton* PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
    FillRect(dc, rect, brush);
    dc.SelectObject(wxNullBitmap);
    
-   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0));
+   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0),
+                                           #if wxCHECK_VERSION(2,9,0)
+                                              wxSize(BITMAP_WD + 12, BITMAP_HT + 12));
+                                           #else
+                                              wxDefaultSize);
+                                           #endif
    if (bb) {
       hbox->Add(new wxStaticText(parent, wxID_STATIC, text), 0, wxALIGN_CENTER_VERTICAL, 0);
       hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);

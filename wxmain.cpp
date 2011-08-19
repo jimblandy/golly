@@ -189,6 +189,15 @@ const int toolbarwd = 32;        // width of (vertical) tool bar
 // tool bar buttons (must be global to use Connect/Disconnect on Windows)
 wxBitmapButton* tbbutt[NUM_BUTTONS];
 
+// width and height of bitmap buttons
+#if wxCHECK_VERSION(2,9,0)
+   const int BUTTON_WD = 28;
+   const int BUTTON_HT = 28;
+#else
+   const int BUTTON_WD = 24;
+   const int BUTTON_HT = 24;
+#endif
+
 // -----------------------------------------------------------------------------
 
 ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
@@ -242,8 +251,8 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       ypos = 2;
       smallgap = 6;
    #else
-      xpos = 4;
-      ypos = 4;
+      xpos = (32 - BUTTON_WD) / 2;
+      ypos = (32 - BUTTON_HT) / 2;
       smallgap = 4;
    #endif
    biggap = 16;
@@ -406,11 +415,10 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
 
 void ToolBar::AddButton(int id, const wxString& tip)
 {
-   tbbutt[id] = new wxBitmapButton(this, id, normtool[id], wxPoint(xpos,ypos));
+   tbbutt[id] = new wxBitmapButton(this, id, normtool[id], wxPoint(xpos,ypos), wxSize(BUTTON_WD, BUTTON_HT));
    if (tbbutt[id] == NULL) {
       Fatal(_("Failed to create tool bar button!"));
    } else {
-      const int BUTTON_HT = 24;        // nominal height of bitmap buttons
       ypos += BUTTON_HT + smallgap;
       tbbutt[id]->SetToolTip(tip);
       #ifdef __WXMSW__

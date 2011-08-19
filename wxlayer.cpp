@@ -180,6 +180,7 @@ static LayerBar* layerbarptr = NULL;      // global pointer to layer bar
 static wxBitmapButton* bitmapbutt[NUM_BUTTONS] = {NULL};
 static wxToggleButton* togglebutt[MAX_LAYERS] = {NULL};
 
+// width and height of toggle buttons
 const int MAX_TOGGLE_WD = 128;
 const int MIN_TOGGLE_WD = 48;
 #if defined(__WXMSW__)
@@ -190,6 +191,15 @@ const int MIN_TOGGLE_WD = 48;
    const int TOGGLE_HT = 24;
 #else
    const int TOGGLE_HT = 20;
+#endif
+
+// width and height of bitmap buttons
+#if wxCHECK_VERSION(2,9,0)
+   const int BUTTON_WD = 28;
+   const int BUTTON_HT = 28;
+#else
+   const int BUTTON_WD = 24;
+   const int BUTTON_HT = 24;
 #endif
 
 const wxString SWITCH_LAYER = _("Switch to this layer");
@@ -240,7 +250,7 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       smallgap = 6;
    #else
       xpos = 4;
-      ypos = 4;
+      ypos = (32 - BUTTON_HT) / 2;
       smallgap = 4;
    #endif
    
@@ -539,11 +549,11 @@ void LayerBar::AddButton(int id, const wxString& tip)
 
    } else {
       // create bitmap button
-      bitmapbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos));
+      bitmapbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos),
+                                          wxSize(BUTTON_WD, BUTTON_HT));
       if (bitmapbutt[id] == NULL) {
          Fatal(_("Failed to create layer bar bitmap button!"));
       } else {
-         const int BUTTON_WD = 24;        // nominal width of bitmap buttons
          xpos += BUTTON_WD + smallgap;
          
          bitmapbutt[id]->SetToolTip(tip);
@@ -2726,7 +2736,12 @@ void ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox, int id, wxC
    FillRect(dc, rect, brush);
    dc.SelectObject(wxNullBitmap);
    
-   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0));
+   wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0),
+                                           #if wxCHECK_VERSION(2,9,0)
+                                              wxSize(BITMAP_WD + 12, BITMAP_HT + 12));
+                                           #else
+                                              wxDefaultSize);
+                                           #endif
    if (bb) hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
 }
 

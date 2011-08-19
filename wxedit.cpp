@@ -88,6 +88,15 @@ enum {
    #include "bitmaps/allstates_down.xpm"
 #endif
 
+// width and height of bitmap buttons
+#if wxCHECK_VERSION(2,9,0)
+   const int BUTTON_WD = 28;
+   const int BUTTON_HT = 28;
+#else
+   const int BUTTON_WD = 24;
+   const int BUTTON_HT = 24;
+#endif
+
 // -----------------------------------------------------------------------------
 
 // Define edit bar window:
@@ -253,7 +262,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
       smallgap = 6;
    #else
       xpos = 4;
-      ypos = 4;
+      ypos = (32 - BUTTON_HT) / 2;
       smallgap = 4;
    #endif
    biggap = 16;
@@ -752,11 +761,11 @@ void EditBar::OnButtonUp(wxMouseEvent& event)
 
 void EditBar::AddButton(int id, const wxString& tip)
 {
-   ebbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos));
+   ebbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos),
+                                   wxSize(BUTTON_WD, BUTTON_HT));
    if (ebbutt[id] == NULL) {
       Fatal(_("Failed to create edit bar button!"));
    } else {
-      const int BUTTON_WD = 24;        // nominal width of bitmap buttons
       xpos += BUTTON_WD + smallgap;
       ebbutt[id]->SetToolTip(tip);
       #ifdef __WXMSW__
