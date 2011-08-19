@@ -186,6 +186,8 @@ const int MIN_TOGGLE_WD = 48;
    const int TOGGLE_HT = 22;
 #elif defined(__WXGTK__)
    const int TOGGLE_HT = 24;
+#elif defined(__WXOSX_COCOA__)
+   const int TOGGLE_HT = 24;
 #else
    const int TOGGLE_HT = 20;
 #endif
