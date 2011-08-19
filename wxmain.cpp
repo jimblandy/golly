@@ -190,7 +190,7 @@ const int toolbarwd = 32;        // width of (vertical) tool bar
 wxBitmapButton* tbbutt[NUM_BUTTONS];
 
 // width and height of bitmap buttons
-#if defined(__WXOSX_COCOA__)
+#if defined(__WXOSX_COCOA__) || defined(__WXGTK__)
    const int BUTTON_WD = 28;
    const int BUTTON_HT = 28;
 #else
