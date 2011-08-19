@@ -1,12 +1,12 @@
 # Change the next 2 lines to specify where you installed wxWidgets:
-!include </wxWidgets-2.8.7-32/build/msw/config.vc>
-WX_DIR = c:\wxWidgets-2.8.7-32
+!include <C:/wxWidgets/build/msw/config.vc>
+WX_DIR = C:\wxWidgets
 
 # Change the next line to match your wxWidgets version (first two digits):
-WX_RELEASE = 28
+WX_RELEASE = 29
 
 # Change the next line depending on where you installed Python:
-PYTHON_INCLUDE = -I"C:\Python25-32\include"
+PYTHON_INCLUDE = -I"C:\Python27\include"
 
 # Simplified output from "perl -MExtUtils::Embed -e ccopts":
 PERL_INCLUDE = \

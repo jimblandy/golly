@@ -157,7 +157,7 @@ const int MINSPEED = -10;              // minimum autoplay speed
 const int MAXSPEED = 10;               // maximum autoplay speed
 
 // width and height of bitmap buttons
-#if wxCHECK_VERSION(2,9,0)
+#if defined(__WXOSX_COCOA__)
    const int BUTTON_WD = 28;
    const int BUTTON_HT = 28;
 #else

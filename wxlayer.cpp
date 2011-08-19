@@ -194,7 +194,7 @@ const int MIN_TOGGLE_WD = 48;
 #endif
 
 // width and height of bitmap buttons
-#if wxCHECK_VERSION(2,9,0)
+#if defined(__WXOSX_COCOA__)
    const int BUTTON_WD = 28;
    const int BUTTON_HT = 28;
 #else
@@ -2737,7 +2737,7 @@ void ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox, int id, wxC
    dc.SelectObject(wxNullBitmap);
    
    wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0),
-                                           #if wxCHECK_VERSION(2,9,0)
+                                           #if defined(__WXOSX_COCOA__)
                                               wxSize(BITMAP_WD + 12, BITMAP_HT + 12));
                                            #else
                                               wxDefaultSize);
