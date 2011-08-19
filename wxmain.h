@@ -250,10 +250,11 @@ enum {
    // wxID_EXIT,
    
    // Edit menu
-   // wxID_UNDO,
-   // wxID_REDO,
-   // due to wxMac bug we don't use wxID_CUT/COPY/CLEAR/PASTE/SELECTALL
-   // (problems occur when info window or a modal dialog is active)
+   // due to wxMac bugs we don't use wxID_UNDO/REDO/CUT/COPY/CLEAR/PASTE/SELECTALL
+   // (problems occur when info window or a modal dialog is active, and we can't
+   // change the Undo/Redo menu labels)
+   ID_UNDO,
+   ID_REDO,
    ID_CUT,
    ID_COPY,
    ID_NO_UNDO,

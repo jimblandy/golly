@@ -640,12 +640,12 @@ void MainFrame::UpdateMenuItems(bool active)
       #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
          // need this stupidity to avoid wxMac bug after modal dialog closes (eg. Set Rule)
          // and force items to appear correctly enabled/disabled
-         mbar->Enable(wxID_UNDO, !can_undo);
-         mbar->Enable(wxID_REDO, !can_redo);
+         mbar->Enable(ID_UNDO, !can_undo);
+         mbar->Enable(ID_REDO, !can_redo);
       #endif
 
-      mbar->Enable(wxID_UNDO,          can_undo);
-      mbar->Enable(wxID_REDO,          can_redo);
+      mbar->Enable(ID_UNDO,            can_undo);
+      mbar->Enable(ID_REDO,            can_redo);
       mbar->Enable(ID_NO_UNDO,         active && !inscript);
       mbar->Enable(ID_CUT,             active && !timeline && !inscript && selexists);
       mbar->Enable(ID_COPY,            active && !inscript && selexists);
@@ -1321,8 +1321,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
       case wxID_EXIT:         QuitApp(); break;
 
       // Edit menu
-      case wxID_UNDO:         currlayer->undoredo->UndoChange(); break;
-      case wxID_REDO:         currlayer->undoredo->RedoChange(); break;
+      case ID_UNDO:           currlayer->undoredo->UndoChange(); break;
+      case ID_REDO:           currlayer->undoredo->RedoChange(); break;
       case ID_NO_UNDO:        ToggleAllowUndo(); break;
       case ID_CUT:            viewptr->CutSelection(); break;
       case ID_COPY:           viewptr->CopySelection(); break;
@@ -2224,8 +2224,8 @@ void MainFrame::CreateMenus()
    // on the Mac the wxID_EXIT item is moved to the app menu and the app name is appended to "Quit "
    fileMenu->Append(wxID_EXIT,                  _("Quit") + GetAccelerator(DO_QUIT));
 
-   editMenu->Append(wxID_UNDO,                  _("Undo") + GetAccelerator(DO_UNDO));
-   editMenu->Append(wxID_REDO,                  _("Redo") + GetAccelerator(DO_REDO));
+   editMenu->Append(ID_UNDO,                    _("Undo") + GetAccelerator(DO_UNDO));
+   editMenu->Append(ID_REDO,                    _("Redo") + GetAccelerator(DO_REDO));
    editMenu->AppendCheckItem(ID_NO_UNDO,        _("Disable Undo/Redo") + GetAccelerator(DO_DISABLE));
    editMenu->AppendSeparator();
    editMenu->Append(ID_CUT,                     _("Cut") + GetAccelerator(DO_CUT));
@@ -2412,8 +2412,8 @@ void MainFrame::UpdateMenuAccelerators()
       SetAccelerator(mbar, ID_SHOW_SCRIPTS,    DO_SCRIPTS);
       SetAccelerator(mbar, ID_SCRIPT_DIR,      DO_SCRIPTDIR);
       
-      SetAccelerator(mbar, wxID_UNDO,          DO_UNDO);
-      SetAccelerator(mbar, wxID_REDO,          DO_REDO);
+      SetAccelerator(mbar, ID_UNDO,            DO_UNDO);
+      SetAccelerator(mbar, ID_REDO,            DO_REDO);
       SetAccelerator(mbar, ID_NO_UNDO,         DO_DISABLE);
       SetAccelerator(mbar, ID_CUT,             DO_CUT);
       SetAccelerator(mbar, ID_COPY,            DO_COPY);

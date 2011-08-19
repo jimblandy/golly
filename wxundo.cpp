@@ -1266,7 +1266,7 @@ void UndoRedo::UndoChange()
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(wxID_UNDO);
+      mainptr->cmdevent.SetId(ID_UNDO);
       return;
    }
    
@@ -1332,7 +1332,7 @@ void UndoRedo::RedoChange()
       // terminate generating loop and set command_pending flag
       mainptr->Stop();
       mainptr->command_pending = true;
-      mainptr->cmdevent.SetId(wxID_REDO);
+      mainptr->cmdevent.SetId(ID_REDO);
       return;
    }
    */
@@ -1430,7 +1430,7 @@ void UndoRedo::UpdateUndoItem(const wxString& action)
       wxString label = _("Undo ");
       label += action;
       label += GetAccelerator(DO_UNDO);
-      mbar->SetLabel(wxID_UNDO, label);
+      mbar->SetLabel(ID_UNDO, label);
    }
 }
 
@@ -1445,7 +1445,7 @@ void UndoRedo::UpdateRedoItem(const wxString& action)
       wxString label = _("Redo ");
       label += action;
       label += GetAccelerator(DO_REDO);
-      mbar->SetLabel(wxID_REDO, label);
+      mbar->SetLabel(ID_REDO, label);
    }
 }
 

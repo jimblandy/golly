@@ -631,8 +631,8 @@ void EditBar::OnButton(wxCommandEvent& event)
 
    int cmdid;
    switch (id) {
-      case UNDO_BUTT:      cmdid = wxID_UNDO; break;
-      case REDO_BUTT:      cmdid = wxID_REDO; break;
+      case UNDO_BUTT:      cmdid = ID_UNDO; break;
+      case REDO_BUTT:      cmdid = ID_REDO; break;
       case DRAW_BUTT:      cmdid = ID_DRAW; break;
       case PICK_BUTT:      cmdid = ID_PICK; break;
       case SELECT_BUTT:    cmdid = ID_SELECT; break;

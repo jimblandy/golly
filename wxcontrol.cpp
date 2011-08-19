@@ -1315,7 +1315,7 @@ void MainFrame::DoPendingAction(bool restart)
          case ID_OPEN_CLIP:      OpenClipboard(); break;
          case ID_RESET:          ResetPattern(); break;
          case ID_SETGEN:         SetGeneration(); break;
-         case wxID_UNDO:         currlayer->undoredo->UndoChange(); break;
+         case ID_UNDO:           currlayer->undoredo->UndoChange(); break;
          case ID_ADD_LAYER:      AddLayer(); break;
          case ID_DUPLICATE:      DuplicateLayer(); break;
          case ID_LOAD_LEXICON:   LoadLexiconPattern(); break;
