@@ -51,6 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // exported data:
 
 wxMenu* algomenu;                   // menu of algorithm names
+wxMenu* algomenupop;                // copy of algomenu for PopupMenu calls
 algo_type initalgo = QLIFE_ALGO;    // initial layer's algorithm
 AlgoData* algoinfo[MAX_ALGOS];      // static info for each algorithm
 
@@ -348,8 +349,12 @@ void InitAlgorithms()
    ruletable_algo::doInitializeAlgoInfo(AlgoData::tick());
    ruletreealgo::doInitializeAlgoInfo(AlgoData::tick()) ;
 
-   // algomenu is used when algo button is pressed and for Set Algo submenu
+   // algomenu is used for the Control > Set Algorithm submenu;
+   // algomenupop is used when the tool bar's algo button is pressed
+   // (we can't share a single menu for both purposes because we get
+   // assert messages with wxOSX and wxGTK 2.9+)
    algomenu = new wxMenu();
+   algomenupop = new wxMenu();
 
    // init algoinfo array
    for (int i = 0; i < NumAlgos(); i++) {
@@ -359,6 +364,7 @@ void InitAlgorithms()
       
       wxString name = wxString(ad->algoName, wxConvLocal);
       algomenu->AppendCheckItem(ID_ALGO0 + i, name);
+      algomenupop->AppendCheckItem(ID_ALGO0 + i, name);
       
       // does algo use hashing?
       ad->canhash = ad->defbase == 8;    //!!! safer method needed???

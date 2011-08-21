@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData, etc
 #include "wxedit.h"        // for CreateEditBar, EditBarHeight, etc
 #include "wxscript.h"      // for inscript
-#include "wxalgos.h"       // for algo_type, algomenu
+#include "wxalgos.h"       // for algo_type, algomenu, algomenupop
 #include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxtimeline.h"    // for CreateTimelineBar, TimelineExists, etc
@@ -364,16 +364,20 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
    // we want pop-up menu to appear as soon as ALGO_TOOL button is pressed
    //!!! doesn't work 100% correctly on Windows
    if (id == ALGO_TOOL) {
-      //!!! how can we force button to appear selected???
-      // maybe use one-shot timer to delay calling PopupMenu???
-      
+      // we use algomenupop here rather than algomenu to avoid assert messages in wx 2.9+
       #ifdef __WXMSW__
-         tbbutt[id]->PopupMenu(algomenu, 0, 25);
+         tbbutt[id]->PopupMenu(algomenupop, 0, 25);
          // fix prob on Win (almost -- button-up doesn't always close menu)
          viewptr->SetFocus();
          return;
       #else
-         tbbutt[id]->PopupMenu(algomenu, 0, 30);
+         tbbutt[id]->PopupMenu(algomenupop, 0, 30);
+      #endif
+      
+      #ifdef __WXOSX_COCOA__
+         viewptr->SetFocus();
+         // don't call event.Skip() otherwise algo button will remain selected
+         return;
       #endif
    }
 
@@ -384,7 +388,7 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
 
 void ToolBar::OnButtonUp(wxMouseEvent& event)
 {
-   // a tool bar button has been released
+   // a tool bar button has been released (only called in wxMSW)
    int id = event.GetId();
 
    wxPoint pt = tbbutt[id]->ScreenToClient( wxGetMousePosition() );
@@ -807,6 +811,8 @@ void MainFrame::UpdateMenuItems(bool active)
       mbar->Check(ID_TILE,       tilelayers);
       for (int i = 0; i < NumAlgos(); i++) {
          mbar->Check(ID_ALGO0 + i, currlayer->algtype == i);
+         // keep algomenupop in sync with algomenu
+         algomenupop->Check(ID_ALGO0 + i, currlayer->algtype == i);
       }
       for (int i = 0; i < numlayers; i++) {
          mbar->Check(ID_LAYER0 + i, currindex == i);

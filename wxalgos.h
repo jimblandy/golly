@@ -72,6 +72,7 @@ public:
 
 extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
 extern wxMenu* algomenu;                  // menu of algorithm names
+extern wxMenu* algomenupop;               // copy of algomenu for PopupMenu calls
 extern algo_type initalgo;                // initial algorithm
 
 extern wxBitmap** hexicons7x7;          // hexagonal icon bitmaps for scale 1:8
