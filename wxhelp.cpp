@@ -991,6 +991,12 @@ void HtmlView::ClearStatus()
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
+
 void HtmlView::OnMouseDown(wxMouseEvent& event)
 {
    // set flag so ctrl/right-clicked file can be opened in editor
@@ -1168,16 +1174,17 @@ void HtmlView::OnSize(wxSizeEvent& event)
 
 void HtmlView::OnTimer(wxTimerEvent& WXUNUSED(event))
 {
-#if wxCHECK_VERSION(2,9,2)
-   // SendIdleEvents is no lnger a member of wxApp -- need to fix???!!!
-#else
    if (helpptr && helpptr->infront) {
       // send idle event to html window so cursor gets updated
       // even while app is busy doing something else (eg. generating)
       wxIdleEvent idleevent;
-      wxGetApp().SendIdleEvents(this, idleevent);
+      #if wxCHECK_VERSION(2,9,2)
+         // SendIdleEvents is now in wxWindow
+         SendIdleEvents(idleevent);
+      #else
+         wxGetApp().SendIdleEvents(this, idleevent);
+      #endif
    }
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1215,8 +1222,8 @@ void HtmlView::ChangeFontSizes(int size)
 
 void ShowAboutBox()
 {
-   const wxString title = _("About Golly");
-   wxDialog dlg(mainptr, wxID_ANY, title);
+   wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
+   wxDialog dlg(mainptr, wxID_ANY, wxString(_("About Golly")));
    
    HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
                                  #if wxCHECK_VERSION(2,9,0)
@@ -1238,7 +1245,6 @@ void ShowAboutBox()
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                  html->GetInternalRepresentation()->GetHeight());
    
-   wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
    topsizer->Add(html, 1, wxALL, 10);
 
    wxButton* okbutt = new wxButton(&dlg, wxID_OK, _("OK"));
@@ -1247,6 +1253,6 @@ void ShowAboutBox()
    
    dlg.SetSizer(topsizer);
    topsizer->Fit(&dlg);
-   dlg.Centre();   
+   dlg.Centre();
    dlg.ShowModal();
 }

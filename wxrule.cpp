@@ -284,6 +284,12 @@ void AlgoHelp::ClearStatus()
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
+
 void AlgoHelp::OnMouseDown(wxMouseEvent& event)
 {
    // set flag so ctrl/right-clicked file can be opened in editor

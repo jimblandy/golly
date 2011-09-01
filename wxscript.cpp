@@ -1008,6 +1008,12 @@ void GSF_getevent(wxString& event, int get)
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
+
 static void AppendModifiers(int modifiers, wxString& event)
 {
    // reverse of GetModifiers
@@ -1015,7 +1021,6 @@ static void AppendModifiers(int modifiers, wxString& event)
       event += wxT("none");
    } else {
       if (modifiers & wxMOD_ALT)       event += wxT("alt");
-      // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
       #ifdef __WXMAC__
          if (modifiers & wxMOD_CMD)       event += wxT("cmd");
          if (modifiers & wxMOD_CONTROL)   event += wxT("ctrl");
@@ -1035,7 +1040,6 @@ static int GetModifiers(const wxString& modstring)
    int modifiers = wxMOD_NONE;
    if (modstring != wxT("none")) {
       if (modstring.Contains(wxT("alt")))     modifiers |= wxMOD_ALT;
-      // note that wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
       if (modstring.Contains(wxT("cmd")))     modifiers |= wxMOD_CMD;
       if (modstring.Contains(wxT("ctrl")))    modifiers |= wxMOD_CONTROL;
       if (modstring.Contains(wxT("meta")))    modifiers |= wxMOD_META;

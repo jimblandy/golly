@@ -1285,8 +1285,8 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
    EVT_MENU                (wxID_ANY,        MainFrame::OnMenu)
    EVT_SET_FOCUS           (                 MainFrame::OnSetFocus)
    EVT_ACTIVATE            (                 MainFrame::OnActivate)
-   EVT_SIZE                (                 MainFrame::OnSize)
    EVT_IDLE                (                 MainFrame::OnIdle)
+   EVT_SIZE                (                 MainFrame::OnSize)
 #if defined(__WXMAC__) || defined(__WXMSW__)
    EVT_TREE_ITEM_EXPANDED   (wxID_TREECTRL,  MainFrame::OnDirTreeExpand)
    EVT_TREE_ITEM_COLLAPSING (wxID_TREECTRL,  MainFrame::OnDirTreeCollapse)
@@ -1519,7 +1519,7 @@ void MainFrame::OnActivate(wxActivateEvent& event)
       UpdateEditBar(false);
    }
 
-   #ifdef __WXMAC__
+   #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
       // to avoid disabled menu items after a modal dialog closes
       // don't call UpdateMenuItems on deactivation
       if (event.GetActive()) {
@@ -1684,6 +1684,12 @@ void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
 }
 
 // -----------------------------------------------------------------------------
+
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
 
 void MainFrame::OnTreeClick(wxMouseEvent& event)
 {

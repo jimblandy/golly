@@ -2700,11 +2700,16 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
+
 static int GetMouseModifiers(wxMouseEvent& event)
 {
    int modbits = wxMOD_NONE;
    if (event.AltDown())       modbits |= wxMOD_ALT;
-   // wxMOD_CMD = wxMOD_META on Mac or wxMOD_CONTROL on Win/Linux
    if (event.CmdDown())       modbits |= wxMOD_CMD;
    if (event.ControlDown())   modbits |= wxMOD_CONTROL;
    if (event.MetaDown())      modbits |= wxMOD_META;

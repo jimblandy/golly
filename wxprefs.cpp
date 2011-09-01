@@ -217,6 +217,12 @@ int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
 
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
+
 // set of modifier keys (note that MSVC didn't like MK_*)
 const int mk_CMD     = 1;        // command key on Mac, control key on Win/Linux
 const int mk_ALT     = 2;        // option key on Mac
@@ -977,6 +983,31 @@ void SaveKeyActions(FILE* f)
 
 // -----------------------------------------------------------------------------
 
+void CreateAccelerator(action_id action, int modset, int key)
+{
+   accelerator[action] = wxT("\t");
+   if (modset & mk_CMD) accelerator[action] += wxT("Ctrl+");
+   if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
+   if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
+#ifdef __WXMAC__
+   //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
+   // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
+#endif
+   if (key >= 'a' && key <= 'z') {
+      // convert a..z to A..Z
+      accelerator[action] += wxChar(key - 32);
+#ifdef __WXMAC__
+   } else if (key == IK_DELETE) {
+      // must use "Back" to get correct symbol (<+ rather than +>)
+      accelerator[action] += wxT("Back");
+#endif
+   } else {
+      accelerator[action] += GetKeyName(key);
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateAcceleratorStrings()
 {
    for (int i = 0; i < MAX_ACTIONS; i++)
@@ -1009,22 +1040,8 @@ void UpdateAcceleratorStrings()
                validaccel = (key >= 'a' && key <= 'z') || (key >= '0' && key <= '9');
             }
             #endif
-            
             if (validaccel) {
-               accelerator[action] = wxT("\t");
-               if (modset & mk_CMD) accelerator[action] += wxT("Ctrl+");
-               if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
-               if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
-               #ifdef __WXMAC__
-                  //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
-                  // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
-               #endif
-               if (key >= 'a' && key <= 'z') {
-                  // convert a..z to A..Z
-                  accelerator[action] += wxChar(key - 32);
-               } else {
-                  accelerator[action] += GetKeyName(key);
-               }
+               CreateAccelerator(action, modset, key);
             }
          }
       }
@@ -1043,19 +1060,7 @@ void UpdateAcceleratorStrings()
                && ((key >= 'a' && key <= 'z') || (key >= '0' && key <= '9'))
                #endif
             ) {
-            accelerator[action] = wxT("\tCtrl+");
-            if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
-            if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
-            #ifdef __WXMAC__
-               //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
-               // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
-            #endif
-            if (key >= 'a' && key <= 'z') {
-               // convert a..z to A..Z
-               accelerator[action] += wxChar(key - 32);
-            } else {
-               accelerator[action] += GetKeyName(key);
-            }
+            CreateAccelerator(action, modset, key);
          }
       }
    }
@@ -2623,6 +2628,7 @@ enum {
    PREF_DOWNLOAD_BOX,
    // Edit prefs
    PREF_RANDOM_FILL,
+   PREF_HIDDEN,
    PREF_PASTE_0,
    PREF_PASTE_1,
    PREF_PASTE_2,
@@ -2689,7 +2695,7 @@ class PrefsDialog : public wxPropertySheetDialog
 {
 public:
    PrefsDialog(wxWindow* parent, const wxString& page);
-   ~PrefsDialog() {}
+   ~PrefsDialog() { delete onetimer; }
 
    wxPanel* CreateFilePrefs(wxWindow* parent);
    wxPanel* CreateEditPrefs(wxWindow* parent);
@@ -2727,6 +2733,7 @@ private:
    void OnChoice(wxCommandEvent& event);
    void OnButton(wxCommandEvent& event);
    void OnScroll(wxScrollEvent& event);
+   void OnOneTimer(wxTimerEvent& event);
 
    bool ignore_page_event;             // used to prevent currpage being changed
    int algopos1;                       // selected algorithm in PREF_ALGO_MENU1
@@ -2745,6 +2752,8 @@ private:
    wxString newdownloaddir;            // new directory for downloaded files
    wxString newuserrules;              // new directory for user's rules
 
+   wxTimer* onetimer;                  // one shot timer (see OnOneTimer)
+
    DECLARE_EVENT_TABLE()
 };
 
@@ -2756,6 +2765,7 @@ BEGIN_EVENT_TABLE(PrefsDialog, wxPropertySheetDialog)
    EVT_CHOICE                 (wxID_ANY,        PrefsDialog::OnChoice)
    EVT_BUTTON                 (wxID_ANY,        PrefsDialog::OnButton)
    EVT_COMMAND_SCROLL         (PREF_SCROLL_BAR, PrefsDialog::OnScroll)
+   EVT_TIMER                  (wxID_ANY,        PrefsDialog::OnOneTimer)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -2771,8 +2781,13 @@ public:
    ~KeyComboCtrl() {}
 
    // handlers to intercept keyboard events
+#ifdef __WXOSX__
+   void OnMacKeyDown(wxKeyEvent& event);
+   // no need for OnChar handler!!!???
+#else
    void OnKeyDown(wxKeyEvent& event);
    void OnChar(wxKeyEvent& event);
+#endif
 
 private:
    int realkey;            // key code set by OnKeyDown
@@ -2782,9 +2797,81 @@ private:
 };
 
 BEGIN_EVENT_TABLE(KeyComboCtrl, wxTextCtrl)
+#ifdef __WXOSX__
+   EVT_KEY_DOWN  (KeyComboCtrl::OnMacKeyDown)
+#else
    EVT_KEY_DOWN  (KeyComboCtrl::OnKeyDown)
    EVT_CHAR      (KeyComboCtrl::OnChar)
+#endif
 END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXOSX__
+
+void KeyComboCtrl::OnMacKeyDown(wxKeyEvent& event)
+{
+   int key = event.GetKeyCode();
+   int mods = event.GetModifiers();
+   int rawkey = event.GetRawKeyCode();
+   
+   if (debuglevel == 1 || (debuglevel == 2 && key < 128)) {
+      Warning( wxString::Format(_("OnMacKeyDown: key=%d (%c) raw=%d (%c) mods=%d"),
+                                key, key < 128 ? wxChar(key) : wxChar('?'),
+                                rawkey, rawkey < 128 ? wxChar(rawkey) : wxChar('?'),
+                                mods) );
+   }
+   
+   if (key == WXK_ESCAPE) {
+      // escape key is reserved for other uses
+      Beep();
+      return;
+   }
+   
+   if (key > 127) {
+      // ignore keys like WXK_SHIFT, etc
+   } else {
+      if (mods == wxMOD_SHIFT && key != rawkey) {
+         // use given key code but remove shift modifier;
+         // eg. we want shift-'[' to be seen as '{'
+         // this only works in wxOSX!!! (in wxMSW/wxGTK key is '[')
+         mods = wxMOD_NONE;
+      } else if (key >= 'A' && key <= 'Z') {
+         // convert A..Z to a..z
+         key += 32;
+      }
+   
+      // convert key and mods to our internal key code and modifiers
+      // and, if they are valid, display the key combo and update the action
+      if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
+         wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
+         if (actionmenu) {
+            wxString keystring = GetKeyCombo(currkey, currmods);
+            if (!keystring.IsEmpty()) {
+               ChangeValue(keystring);
+            } else {
+               currkey = 0;
+               currmods = 0;
+               ChangeValue(_("UNKNOWN KEY"));
+            }
+            actionmenu->SetSelection(keyaction[currkey][currmods].id);
+            PrefsDialog::UpdateChosenFile();
+            SetFocus();
+            SetSelection(ALL_TEXT);
+            return;                    // don't process event any further
+         } else {
+            Warning(_("Failed to find wxChoice control!"));
+         }
+      } else {
+         // unsupported key combo
+         Beep();
+      }
+   }
+   
+   event.Skip();
+}
+
+#else
 
 // -----------------------------------------------------------------------------
 
@@ -2810,7 +2897,7 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
       // tell OnChar handler to ignore realkey
       realkey = 0;
    }
-   
+
    #ifdef __WXMSW__
       // on Windows, OnChar is NOT called for some ctrl-key combos like
       // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
@@ -2913,6 +3000,8 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
    // do NOT pass event on to next handler
    // event.Skip();
 }
+
+#endif // !__WXOSX__
 
 // -----------------------------------------------------------------------------
 
@@ -3021,7 +3110,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
 
 #define MySpinCtrl wxSpinCtrl
 
-#endif // __WXMAC__
+#endif // !__WXMAC__
 
 // -----------------------------------------------------------------------------
 
@@ -3067,10 +3156,64 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
 
    // show the desired page
    notebook->SetSelection(currpage);
-
+   
    ignore_page_event = false;
    
    LayoutDialog();
+
+   // ensure top text box has focus and text is selected by creating
+   // a one-shot timer which will call OnOneTimer after short delay
+   onetimer = new wxTimer(this, wxID_ANY);
+   if (onetimer) onetimer->Start(10, wxTIMER_ONE_SHOT);
+}
+
+// -----------------------------------------------------------------------------
+
+void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
+{
+   MySpinCtrl* s1 = NULL;
+   MySpinCtrl* s2 = NULL;
+   
+   if (currpage == FILE_PAGE) {
+      s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_PATTERNS);
+      s2 = (MySpinCtrl*) FindWindowById(PREF_MAX_SCRIPTS);
+
+   } else if (currpage == EDIT_PAGE) {
+      s1 = (MySpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
+      s2 = (MySpinCtrl*) FindWindowById(PREF_HIDDEN);
+   
+   } else if (currpage == CONTROL_PAGE) {
+      s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_MEM);
+      s2 = (MySpinCtrl*) FindWindowById(PREF_BASE_STEP);
+   
+   } else if (currpage == VIEW_PAGE) {
+      s1 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_BOLD_SPACING : PREF_THUMB_RANGE);
+      s2 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_THUMB_RANGE : PREF_BOLD_SPACING);
+   
+   } else if (currpage == LAYER_PAGE) {
+      s1 = (MySpinCtrl*) FindWindowById(PREF_OPACITY);
+      s2 = (MySpinCtrl*) FindWindowById(PREF_TILE_BORDER);
+   
+   } else if (currpage == COLOR_PAGE) {
+      // no spin ctrls on this page
+      return;
+   
+   } else if (currpage == KEYBOARD_PAGE) {
+      KeyComboCtrl* k = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
+      if (k) {
+         // don't need to change focus to some other control
+         k->SetFocus();
+         k->SetSelection(ALL_TEXT);
+      }
+      return;
+   }
+   
+   if (s1 && s2) {
+      // first need to change focus to some other control (only on wxOSX???)
+      s2->SetFocus();
+      s1->SetFocus();
+      s1->SetSelection(ALL_TEXT);
+   }
 }
 
 // -----------------------------------------------------------------------------
@@ -3296,6 +3439,11 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
    wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
+   
+   // create hidden spin ctrl for use in OnOneTimer
+   wxSpinCtrl* hidden = new MySpinCtrl(panel, PREF_HIDDEN, wxEmptyString,
+                                       wxPoint(-1000,-1000), wxSize(70, wxDefaultCoord));
+   hidden->SetValue(666);
    
    // can_change_rule
 
@@ -4000,10 +4148,15 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    KeyComboCtrl* keycombo =
       new KeyComboCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                        wxDefaultPosition, wxSize(230, wxDefaultCoord),
-                       wxTE_CENTER |
-                       wxTE_PROCESS_TAB |
-                       wxTE_PROCESS_ENTER |  // so enter key won't select OK on Windows
-                       wxTE_RICH2 );         // also better for Windows???
+                       wxTE_CENTER
+                       | wxTE_PROCESS_TAB
+                       | wxTE_PROCESS_ENTER     // so enter key won't select OK on Windows
+                       #ifdef __WXOSX__
+                          // avoid wxTE_RICH2 otherwise we see scroll bar
+                          );
+                       #else
+                          | wxTE_RICH2 );       // better for Windows
+                       #endif
    
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    hbox0->Add(new wxStaticText(panel, wxID_STATIC,
@@ -4601,7 +4754,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    
    // better for Windows
    //!!! but why doesn't it work in wxGTK???
-   //!!! try using pending event to set focus???
+   //!!! try changing focus to other control as in OnOneTimer???
    if (currpage == KEYBOARD_PAGE) {
       KeyComboCtrl* keycombo = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (keycombo) {
