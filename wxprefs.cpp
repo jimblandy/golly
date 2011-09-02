@@ -4764,17 +4764,16 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    if (ignore_page_event) return;
    currpage = event.GetSelection();
    
-   /* need for Windows???!!!
+#ifdef __WXMSW__
+   // ensure key combo box has focus
    if (currpage == KEYBOARD_PAGE) {
       KeyComboCtrl* keycombo = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (keycombo) {
          keycombo->SetFocus();
          keycombo->SetSelection(ALL_TEXT);
-      } else {
-         Beep();
       }
    }
-   */
+#endif
 }
 
 // -----------------------------------------------------------------------------
