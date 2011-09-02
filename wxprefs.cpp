@@ -2628,7 +2628,9 @@ enum {
    PREF_DOWNLOAD_BOX,
    // Edit prefs
    PREF_RANDOM_FILL,
-   PREF_HIDDEN,
+#ifdef __WXOSX__
+   PREF_HIDDEN,      // needed to fix wxOSX bug
+#endif
    PREF_PASTE_0,
    PREF_PASTE_1,
    PREF_PASTE_2,
@@ -3180,7 +3182,12 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 
    } else if (currpage == EDIT_PAGE) {
       s1 = (MySpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
-      s2 = (MySpinCtrl*) FindWindowById(PREF_HIDDEN);
+      #ifdef __WXOSX__
+         // have to set s2 to hidden spin ctrl... sigh
+         s2 = (MySpinCtrl*) FindWindowById(PREF_HIDDEN);
+      #else
+         s2 = s1;
+      #endif
    
    } else if (currpage == CONTROL_PAGE) {
       s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_MEM);
@@ -3201,7 +3208,7 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
    } else if (currpage == KEYBOARD_PAGE) {
       KeyComboCtrl* k = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (k) {
-         // don't need to change focus to some other control
+         // don't need to change focus to some other control if wxOSX
          k->SetFocus();
          k->SetSelection(ALL_TEXT);
       }
@@ -3209,8 +3216,10 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
    }
    
    if (s1 && s2) {
-      // first need to change focus to some other control (only on wxOSX???)
-      s2->SetFocus();
+      #ifdef __WXOSX__
+         // first need to change focus to some other control
+         s2->SetFocus();
+      #endif
       s1->SetFocus();
       s1->SetSelection(ALL_TEXT);
    }
@@ -3440,11 +3449,13 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
    hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
    
+#ifdef __WXOSX__
    // create hidden spin ctrl for use in OnOneTimer
    wxSpinCtrl* hidden = new MySpinCtrl(panel, PREF_HIDDEN, wxEmptyString,
                                        wxPoint(-1000,-1000), wxSize(70, wxDefaultCoord));
    hidden->SetValue(666);
-   
+#endif
+
    // can_change_rule
 
    wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("When pasting a clipboard pattern:"));
@@ -4136,15 +4147,8 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    wxPanel* panel = new wxPanel(parent, wxID_ANY);
    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
    wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-   
-   wxArrayString actionChoices;
-   for (int i = 0; i < MAX_ACTIONS; i++) {
-      actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
-   }
-   actionChoices[DO_OPENFILE] = _("Open Chosen File");
-   wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
-                                       wxDefaultPosition, wxDefaultSize, actionChoices);
 
+   // make sure this is the first control added so it gets focus on a page change
    KeyComboCtrl* keycombo =
       new KeyComboCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
                        wxDefaultPosition, wxSize(230, wxDefaultCoord),
@@ -4157,6 +4161,14 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
                        #else
                           | wxTE_RICH2 );       // better for Windows
                        #endif
+   
+   wxArrayString actionChoices;
+   for (int i = 0; i < MAX_ACTIONS; i++) {
+      actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
+   }
+   actionChoices[DO_OPENFILE] = _("Open Chosen File");
+   wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
+                                       wxDefaultPosition, wxDefaultSize, actionChoices);
    
    wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
    hbox0->Add(new wxStaticText(panel, wxID_STATIC,
@@ -4752,9 +4764,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
    if (ignore_page_event) return;
    currpage = event.GetSelection();
    
-   // better for Windows
-   //!!! but why doesn't it work in wxGTK???
-   //!!! try changing focus to other control as in OnOneTimer???
+   /* need for Windows???!!!
    if (currpage == KEYBOARD_PAGE) {
       KeyComboCtrl* keycombo = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
       if (keycombo) {
@@ -4764,6 +4774,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
          Beep();
       }
    }
+   */
 }
 
 // -----------------------------------------------------------------------------
