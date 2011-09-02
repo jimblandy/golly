@@ -986,13 +986,18 @@ void SaveKeyActions(FILE* f)
 void CreateAccelerator(action_id action, int modset, int key)
 {
    accelerator[action] = wxT("\t");
+#ifdef __WXMAC__
+   //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
+   // if (modset & mk_CTRL) accelerator[action] += wxT("RawCtrl+"); //???
+   // so for now we don't put anything in menu
+   if (modset & mk_CTRL) {
+      accelerator[action] = wxEmptyString;
+      return;
+   }
+#endif
    if (modset & mk_CMD) accelerator[action] += wxT("Ctrl+");
    if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
    if (modset & mk_SHIFT) accelerator[action] += wxT("Shift+");
-#ifdef __WXMAC__
-   //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
-   // if (modset & mk_CTRL) accelerator[action] += wxT("???+");
-#endif
    if (key >= 'a' && key <= 'z') {
       // convert a..z to A..Z
       accelerator[action] += wxChar(key - 32);
@@ -2783,13 +2788,8 @@ public:
    ~KeyComboCtrl() {}
 
    // handlers to intercept keyboard events
-#ifdef __WXOSX__
-   void OnMacKeyDown(wxKeyEvent& event);
-   // no need for OnChar handler!!!???
-#else
    void OnKeyDown(wxKeyEvent& event);
    void OnChar(wxKeyEvent& event);
-#endif
 
 private:
    int realkey;            // key code set by OnKeyDown
@@ -2799,81 +2799,9 @@ private:
 };
 
 BEGIN_EVENT_TABLE(KeyComboCtrl, wxTextCtrl)
-#ifdef __WXOSX__
-   EVT_KEY_DOWN  (KeyComboCtrl::OnMacKeyDown)
-#else
    EVT_KEY_DOWN  (KeyComboCtrl::OnKeyDown)
    EVT_CHAR      (KeyComboCtrl::OnChar)
-#endif
 END_EVENT_TABLE()
-
-// -----------------------------------------------------------------------------
-
-#ifdef __WXOSX__
-
-void KeyComboCtrl::OnMacKeyDown(wxKeyEvent& event)
-{
-   int key = event.GetKeyCode();
-   int mods = event.GetModifiers();
-   int rawkey = event.GetRawKeyCode();
-   
-   if (debuglevel == 1 || (debuglevel == 2 && key < 128)) {
-      Warning( wxString::Format(_("OnMacKeyDown: key=%d (%c) raw=%d (%c) mods=%d"),
-                                key, key < 128 ? wxChar(key) : wxChar('?'),
-                                rawkey, rawkey < 128 ? wxChar(rawkey) : wxChar('?'),
-                                mods) );
-   }
-   
-   if (key == WXK_ESCAPE) {
-      // escape key is reserved for other uses
-      Beep();
-      return;
-   }
-   
-   if (key > 127) {
-      // ignore keys like WXK_SHIFT, etc
-   } else {
-      if (mods == wxMOD_SHIFT && key != rawkey) {
-         // use given key code but remove shift modifier;
-         // eg. we want shift-'[' to be seen as '{'
-         // this only works in wxOSX!!! (in wxMSW/wxGTK key is '[')
-         mods = wxMOD_NONE;
-      } else if (key >= 'A' && key <= 'Z') {
-         // convert A..Z to a..z
-         key += 32;
-      }
-   
-      // convert key and mods to our internal key code and modifiers
-      // and, if they are valid, display the key combo and update the action
-      if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
-         wxChoice* actionmenu = (wxChoice*) FindWindowById(PREF_ACTION);
-         if (actionmenu) {
-            wxString keystring = GetKeyCombo(currkey, currmods);
-            if (!keystring.IsEmpty()) {
-               ChangeValue(keystring);
-            } else {
-               currkey = 0;
-               currmods = 0;
-               ChangeValue(_("UNKNOWN KEY"));
-            }
-            actionmenu->SetSelection(keyaction[currkey][currmods].id);
-            PrefsDialog::UpdateChosenFile();
-            SetFocus();
-            SetSelection(ALL_TEXT);
-            return;                    // don't process event any further
-         } else {
-            Warning(_("Failed to find wxChoice control!"));
-         }
-      } else {
-         // unsupported key combo
-         Beep();
-      }
-   }
-   
-   event.Skip();
-}
-
-#else
 
 // -----------------------------------------------------------------------------
 
@@ -2900,10 +2828,9 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
       realkey = 0;
    }
 
-   #ifdef __WXMSW__
-      // on Windows, OnChar is NOT called for some ctrl-key combos like
-      // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
-      if (realkey > 0 && (mods & wxMOD_CONTROL)) {
+   #ifdef __WXOSX__
+      // pass ctrl/cmd-key combos directly to OnChar
+      if (realkey > 0 && ((mods & wxMOD_CONTROL) || (mods & wxMOD_CMD))) {
          OnChar(event);
          return;
       }
@@ -2918,6 +2845,15 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
       // avoid translating option-E/I/N/U/`
       if (mods == wxMOD_ALT && (realkey == 'E' || realkey == 'I' || realkey == 'N' ||
                                 realkey == 'U' || realkey == '`')) {
+         OnChar(event);
+         return;
+      }
+   #endif
+
+   #ifdef __WXMSW__
+      // on Windows, OnChar is NOT called for some ctrl-key combos like
+      // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
+      if (realkey > 0 && (mods & wxMOD_CONTROL)) {
          OnChar(event);
          return;
       }
@@ -2938,8 +2874,18 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXOSX__
+   static bool inonchar = false;
+#endif
+
 void KeyComboCtrl::OnChar(wxKeyEvent& event)
 {
+   #ifdef __WXOSX__
+      // avoid infinite recursion in wxOSX due to ChangeValue call below
+      if (inonchar) { event.Skip(); return; }
+      inonchar = true;
+   #endif
+
    int key = event.GetKeyCode();
    int mods = event.GetModifiers();
    
@@ -3001,9 +2947,11 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
 
    // do NOT pass event on to next handler
    // event.Skip();
+   
+   #ifdef __WXOSX__
+      inonchar = false;
+   #endif
 }
-
-#endif // !__WXOSX__
 
 // -----------------------------------------------------------------------------
 

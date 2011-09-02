@@ -2337,6 +2337,12 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXOSX__) || defined(__WXCOCOA__)
+   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+   #define ControlDown RawControlDown
+#endif
+
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
    #ifdef __WXMAC__
@@ -2383,11 +2389,10 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
       // tell OnChar handler to ignore realkey
       realkey = 0;
    }
-   
-   #ifdef __WXMSW__
-      // on Windows, OnChar is NOT called for some ctrl-key combos like
-      // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
-      if (realkey > 0 && (mods & wxMOD_CONTROL)) {
+
+   #ifdef __WXOSX__
+      // pass ctrl/cmd-key combos directly to OnChar
+      if (realkey > 0 && ((mods & wxMOD_CONTROL) || (mods & wxMOD_CMD))) {
          OnChar(event);
          return;
       }
@@ -2398,6 +2403,15 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
       // although the prefs dialog KeyComboCtrl::OnChar *is* called)
       if (mods == wxMOD_ALT && (realkey == 'E' || realkey == 'I' || realkey == 'N' ||
                                 realkey == 'U' || realkey == '`')) {
+         OnChar(event);
+         return;
+      }
+   #endif
+   
+   #ifdef __WXMSW__
+      // on Windows, OnChar is NOT called for some ctrl-key combos like
+      // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
+      if (realkey > 0 && (mods & wxMOD_CONTROL)) {
          OnChar(event);
          return;
       }
@@ -2699,12 +2713,6 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
 }
 
 // -----------------------------------------------------------------------------
-
-#if defined(__WXOSX__) || defined(__WXCOCOA__)
-   // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
-   #define wxMOD_CONTROL wxMOD_RAW_CONTROL
-   #define ControlDown RawControlDown
-#endif
 
 static int GetMouseModifiers(wxMouseEvent& event)
 {
