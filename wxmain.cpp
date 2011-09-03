@@ -1044,13 +1044,19 @@ wxWindow* MainFrame::RightPane()
 
 void MainFrame::ResizeSplitWindow(int wd, int ht)
 {
-   splitwin->SetSize(showtool ? toolbarwd : 0,
-                     statusptr->statusht,
-                     showtool ? wd - toolbarwd : wd,
-                     ht > statusptr->statusht ? ht - statusptr->statusht : 0);
+   int x = showtool ? toolbarwd : 0;
+   int y = statusptr->statusht;
+   int w = showtool ? wd - toolbarwd : wd;
+   int h = ht > statusptr->statusht ? ht - statusptr->statusht : 0;
+   splitwin->SetSize(x, y, w, h);
 
+#ifdef __WXOSX__
+   // need this call to resize left and right panes
+   splitwin->UpdateSize();
+#else
    // wxSplitterWindow automatically resizes left and right panes;
    // note that RightWindow::OnSize has now been called
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -2706,15 +2712,6 @@ MainFrame::MainFrame()
 
    if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
    if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
-
-   // no need for this fix now that OnActivate calls viewptr->SetFocus()
-   /*
-   #ifdef __WXMAC__
-      // avoid wxMac bug: can't use keyboard shortcuts if pattern dir and
-      // script dir are both disabled
-      if (!showpatterns && !showscripts) viewptr->SetFocus();
-   #endif
-   */
 
    InitDrawingData();         // do this after viewptr has been set
 
