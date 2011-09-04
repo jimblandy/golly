@@ -127,6 +127,7 @@ public:
    }
    
    bool editlink;       // open clicked file in editor?
+   bool canreload;      // can OnSize call CheckAndLoad?
 
 private:
    #ifdef __WXMSW__
@@ -318,9 +319,15 @@ void ShowHelp(const wxString& filepath)
       } else {
          htmlwin->CheckAndLoad(currhelp);
       }
+         
+      // prevent HtmlView::OnSize calling CheckAndLoad twice
+      htmlwin->canreload = false;
 
       helpptr->Show(true);
       UpdateHelpButtons();    // must be after Show to avoid hbar appearing on Mac
+         
+      // allow HtmlView::OnSize to call CheckAndLoad if window is resized
+      htmlwin->canreload = true;
    }
    whenactive = 0;
 }
@@ -1161,7 +1168,7 @@ void HtmlView::OnSize(wxSizeEvent& event)
    wxHtmlWindow::OnSize(event);
 
    wxString currpage = GetOpenedPage();
-   if ( !currpage.IsEmpty() ) {
+   if ( !currpage.IsEmpty() && canreload ) {
       CheckAndLoad(currpage);    // reload page
       Scroll(x, y);              // scroll to old position
    }
@@ -1240,6 +1247,9 @@ void ShowAboutBox()
       html->SetFontSizes(helpfontsize);
    #endif
    html->CheckAndLoad(_("Help/about.html"));
+   
+   // avoid HtmlView::OnSize calling CheckAndLoad again
+   html->canreload = false;
    
    // this call seems to be ignored in __WXOSX_COCOA__!!!
    html->SetSize(html->GetInternalRepresentation()->GetWidth(),
