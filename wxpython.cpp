@@ -95,7 +95,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #define USE_DL_EXPORT
 #endif
 
+// workaround for hard-linking to missing python<ver>_d.lib
+#ifdef _DEBUG
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
 
 #ifdef USE_PYTHON_DYNAMIC
 
