@@ -53,8 +53,8 @@ link_libraries(
   ${ZLIB_LIBRARIES} 
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DZLIB -DVERSION=2.3")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}) # put the executables into the src folder
+add_definitions(-DZLIB -DVERSION=2.3b1)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}) # put the executables in the src folder
 
 add_executable( golly 
   WIN32 
@@ -73,10 +73,9 @@ add_executable( RuleTableToTree
   ${SOURCES}
 ) 
 
+# hack to get around the "Debug" and "Release" folders Visual Studio adds on Windows
 # http://stackoverflow.com/questions/543203/cmake-runtime-output-directory-on-windows
-if (MSVC_IDE)
-    # hack to get around the "Debug" and "Release" directories cmake tries to add on Windows
-    set_target_properties (golly PROPERTIES PREFIX "../")
-    set_target_properties (bgolly PROPERTIES PREFIX "../")
-    set_target_properties (RuleTableToTree PROPERTIES PREFIX "../")
+if(MSVC_IDE)
+  set_target_properties( golly bgolly RuleTableToTree PROPERTIES PREFIX "../" )
 endif()
+
