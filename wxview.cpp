@@ -55,7 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxtimeline.h"    // for StartStopRecording, DeleteTimeline, etc
 #include "wxview.h"
 
-#ifdef __WXMAC__
+#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
    #include <Carbon/Carbon.h>       // for Button
 #endif
 
@@ -440,7 +440,7 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
          // make sure viewport retains focus so we can use keyboard shortcuts
          SetFocus();
          // waitingforclick becomes false if OnMouseDown is called
-         #ifdef __WXMAC__
+         #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
             // need to check for click here because OnMouseDown does not
             // get called if click is in menu bar or in another window;
             // is this a CaptureMouse bug in wxMac???

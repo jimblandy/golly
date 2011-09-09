@@ -1229,6 +1229,8 @@ void HtmlView::ChangeFontSizes(int size)
 
 void ShowAboutBox()
 {
+   if (viewptr->waitingforclick) return;
+
    wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
    wxDialog dlg(mainptr, wxID_ANY, wxString(_("About Golly")));
    

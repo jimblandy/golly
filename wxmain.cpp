@@ -614,6 +614,13 @@ void MainFrame::EnableAllMenus(bool enable)
          for (i = 0; i < count; i++) {
             mbar->EnableTop(i, enable);
          }
+         #ifdef __WXOSX_COCOA__
+            // enable/disable items in app menu
+            //!!! these fail to disable -- wxOSX bug???
+            mbar->Enable(wxID_ABOUT, enable);
+            mbar->Enable(wxID_PREFERENCES, enable);
+            mbar->Enable(wxID_EXIT, enable);
+         #endif
       }
    #endif
 }
@@ -2050,6 +2057,8 @@ void MainFrame::OnClose(wxCloseEvent& event)
 
 void MainFrame::QuitApp()
 {
+   if (viewptr->waitingforclick) return;
+
    Close(false);   // false allows OnClose handler to veto close
 }
 

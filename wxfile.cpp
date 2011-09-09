@@ -577,14 +577,14 @@ void MainFrame::OpenZipFile(const wxString& zippath)
    contents += zippath;
    contents += wxT("<p>\n");
    contents += wxT("Contents:<br>\n");
-   
+      
    wxFFileInputStream instream(zippath);
    if (!instream.Ok()) {
       Warning(_("Could not create input stream for zip file:\n") + zippath);
       return;
    }
    wxZipInputStream zip(instream);
-   
+      
    // examine each entry in zip file and build contents string;
    // also install any .table/tree/colors/icons files
    wxZipEntry* entry;
@@ -690,7 +690,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
       contents += wxT("\n");
    }
    contents += wxT("\n</body></html>");
-   
+      
    if (dirseen || rulefiles > 0 || textfiles > 0 || patternfiles > 1 || scriptfiles > 1) {
       // complex zip, so write contents to a temporary html file and display it in help window;
       // use a unique file name so user can go back/forwards
