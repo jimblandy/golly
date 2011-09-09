@@ -74,10 +74,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // so Golly will start up even if Python isn't installed.
 // Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
 
-// wxMac bug??? why does dynlib.Load fail if given
-// "/System/Library/Frameworks/Python.framework/Versions/2.3/Python"???
-// #if 1
-#ifndef __WXMAC__
+#ifdef __WXMAC__
+   // avoid warnings (only if using CMake, for some unknown reason)
+   #undef SIZEOF_LONG
+   #undef SIZEOF_SIZE_T
+   #undef SIZEOF_VOID_P
+#else
    // load Python lib at runtime
    #define USE_PYTHON_DYNAMIC
 
