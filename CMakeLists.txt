@@ -2,6 +2,16 @@ cmake_minimum_required(VERSION 2.6)
 
 project( golly )
 
+set( APP_VERSION 2.3b2 )
+
+if(APPLE OR WIN32)
+   # app names are usually capitalized on Mac OS X and Windows
+   set( APP_NAME Golly )
+else()
+   # Linux binaries are usually all lowercase
+   set( APP_NAME golly )
+endif()
+
 set(SOURCES
    bigint.cpp generationsalgo.cpp ghashbase.cpp
    ghashdraw.cpp hlifealgo.cpp hlifedraw.cpp jvnalgo.cpp lifealgo.cpp
@@ -28,19 +38,19 @@ set(WX_SOURCES
 )
 
 set(RESOURCES
-   golly.rc 
-   appicon.ico appicon16.ico appicon32.ico appicon48.ico appicon.xpm 
-   Info.plist.in 
+   golly.rc
+   appicon.ico appicon16.ico appicon32.ico appicon48.ico appicon.xpm
+   Info.plist.in
    app.icns file-mc.icns file-rle.icns
 )
 
 # on Mac OS X it's better to use locally installed wxWidgets headers and libs
-# (the pre-installed wx stuff tends to be out of date; eg. 10.6 has wxMac 2.8.8 and it's a 32-bit debug build)
+# (the pre-installed stuff tends to be out of date; eg. 10.6 has wxMac 2.8.8 and it's a 32-bit debug build)
 if(APPLE)
    set( wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config )
-   # Golly doesn't use wxrc but no harm in leaving this in
+   # we don't use wxrc but no harm in leaving this in
    set( wxWidgets_wxrc_EXECUTABLE /usr/local/bin/wxrc )
-endif(APPLE)
+endif()
 
 find_package( PerlLibs REQUIRED )
 find_package( PythonLibs REQUIRED )
@@ -62,14 +72,18 @@ link_libraries(
 )
 
 # pass extra settings to the compiler
-add_definitions(-DZLIB -DVERSION=2.3b2)
+add_definitions(-DZLIB -DVERSION=${APP_VERSION})
+if(APPLE)
+   # support Mac OS 10.5 or later
+   add_definitions(-mmacosx-version-min=10.5)
+endif()
 
 # put the executables in the src folder
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-add_executable( golly 
+add_executable( ${APP_NAME}
    WIN32
-   MACOSX_BUNDLE   # need this to build a properly bundled Mac app
+   MACOSX_BUNDLE   # build a properly bundled Mac app
    ${SOURCES}
    ${WX_SOURCES}
    ${RESOURCES} 
@@ -80,19 +94,27 @@ add_executable( bgolly
    ${SOURCES}
 )
 
-### AKT: need to fix up VERSION info in Info.plist.in file, and add the various *.icns files!!!
-### Or maybe it is better/easier to create Info.plist on the fly???
-if(APPLE)
-   set_target_properties( golly PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/Info.plist.in )
-endif(APPLE)
-
-add_executable( RuleTableToTree 
+add_executable( RuleTableToTree
    RuleTableToTree.cpp 
    ${SOURCES}
 ) 
 
+if(APPLE)
+   # create Info.plist (using Info.plist.in) and PkgInfo files inside bundle
+   add_custom_target( app_bundle
+      COMMAND sed -e "s/VERSION/${APP_VERSION}/" ${CMAKE_SOURCE_DIR}/Info.plist.in >${CMAKE_SOURCE_DIR}/Golly.app/Contents/Info.plist
+      COMMAND echo -n "APPLGoLy" >${CMAKE_SOURCE_DIR}/Golly.app/Contents/PkgInfo
+   )
+   add_dependencies( ${APP_NAME} app_bundle )
+   
+   # copy *.icns files into Resources dir inside bundle
+   set_source_files_properties( ${CMAKE_SOURCE_DIR}/app.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+   set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-mc.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+   set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-rle.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+endif()
+
 # hack to get around the "Debug" and "Release" folders Visual Studio adds on Windows
 # http://stackoverflow.com/questions/543203/cmake-runtime-output-directory-on-windows
 if(MSVC_IDE)
-   set_target_properties( golly bgolly RuleTableToTree PROPERTIES PREFIX "../" )
-endif(MSVC_IDE)
+   set_target_properties( ${APP_NAME} bgolly RuleTableToTree PROPERTIES PREFIX "../" )
+endif()
