@@ -12,7 +12,7 @@ else()
    set( APP_NAME golly )
 endif()
 
-set(SOURCES
+set(BASE_SOURCES
    bigint.cpp generationsalgo.cpp ghashbase.cpp
    ghashdraw.cpp hlifealgo.cpp hlifedraw.cpp jvnalgo.cpp lifealgo.cpp
    lifepoll.cpp liferender.cpp liferules.cpp qlifealgo.cpp qlifedraw.cpp
@@ -25,7 +25,7 @@ set(SOURCES
    writepattern.h
 )
 
-set(WX_SOURCES
+set(GUI_SOURCES
    wxalgos.cpp wxcontrol.cpp
    wxedit.cpp wxfile.cpp wxgolly.cpp wxhelp.cpp wxinfo.cpp wxlayer.cpp
    wxmain.cpp wxperl.cpp wxprefs.cpp wxpython.cpp wxrender.cpp wxrule.cpp
@@ -44,32 +44,30 @@ set(RESOURCES
    app.icns file-mc.icns file-rle.icns
 )
 
-# on Mac OS X it's better to use locally installed wxWidgets headers and libs
-# (the pre-installed stuff tends to be out of date; eg. 10.6 has wxMac 2.8.8 and it's a 32-bit debug build)
 if(APPLE)
+   # on Mac OS X it's better to use locally installed wxWidgets headers and libs
+   # (the pre-installed stuff tends to be out of date; eg. 10.6 has wxMac 2.8.8 and it's a 32-bit debug build)
    set( wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config )
-   # we don't use wxrc but no harm in leaving this in
-   set( wxWidgets_wxrc_EXECUTABLE /usr/local/bin/wxrc )
+   set( wxWidgets_wxrc_EXECUTABLE /usr/local/bin/wxrc )         # not used, but no harm leaving it in
+   
+   # to avoid statically linking the Perl library into the app we do these 2 steps:
+   # 1. override PERL_INCLUDE_PATH to simplified output from "/usr/bin/perl -MExtUtils::Embed -e ccopts"
+   # 2. override PERL_LIBRARY to simplified output from "/usr/bin/perl -MExtUtils::Embed -e ldopts"
+   set( PERL_INCLUDE_PATH /System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE )
+   set( PERL_LIBRARY "-arch x86_64 -L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc" )
 endif()
 
-find_package( PerlLibs REQUIRED )
-find_package( PythonLibs REQUIRED )
 find_package( wxWidgets REQUIRED html net adv core base )
 find_package( ZLIB REQUIRED )
+find_package( PerlLibs REQUIRED )
+find_package( PythonLibs REQUIRED )
 
 include_directories( 
+   ${ZLIB_INCLUDE_DIR}
    ${PERL_INCLUDE_PATH}
    ${PYTHON_INCLUDE_PATH}
-   ${ZLIB_INCLUDE_DIR}
 )
 include( ${wxWidgets_USE_FILE} )
-
-link_libraries( 
-   ${PERL_LIBRARY}
-   ${PYTHON_LIBRARIES}
-   ${wxWidgets_LIBRARIES} 
-   ${ZLIB_LIBRARIES} 
-)
 
 # pass extra settings to the compiler
 add_definitions(-DZLIB -DVERSION=${APP_VERSION})
@@ -77,27 +75,51 @@ if(APPLE)
    # support Mac OS 10.5 or later
    add_definitions(-mmacosx-version-min=10.5)
 endif()
+if(APPLE OR UNIX)
+   # best to use same settings as in makefiles
+   add_definitions(-D_LARGE_FILES -O5)
+endif()
 
 # put the executables in the src folder
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+# create base library used by all 3 executables
+add_library( gollybase STATIC
+   ${BASE_SOURCES}
+)
+
 add_executable( ${APP_NAME}
    WIN32
-   MACOSX_BUNDLE   # build a properly bundled Mac app
-   ${SOURCES}
-   ${WX_SOURCES}
+   MACOSX_BUNDLE      # build a properly bundled Mac app
+   ${GUI_SOURCES}
    ${RESOURCES} 
 )
 
 add_executable( bgolly
    bgolly.cpp
-   ${SOURCES}
 )
 
 add_executable( RuleTableToTree
    RuleTableToTree.cpp 
-   ${SOURCES}
 ) 
+
+target_link_libraries( ${APP_NAME}
+   gollybase
+   ${wxWidgets_LIBRARIES}
+   ${PERL_LIBRARY}
+   ${PYTHON_LIBRARIES}
+   ${ZLIB_LIBRARIES}
+)
+
+target_link_libraries( bgolly
+   gollybase
+   ${ZLIB_LIBRARIES}
+)
+
+target_link_libraries( RuleTableToTree
+   gollybase
+   ${ZLIB_LIBRARIES}
+)
 
 if(APPLE)
    # create Info.plist (using Info.plist.in) and PkgInfo files inside bundle
@@ -111,6 +133,9 @@ if(APPLE)
    set_source_files_properties( ${CMAKE_SOURCE_DIR}/app.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
    set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-mc.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
    set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-rle.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+   
+   # strip out debug info (reduces app size by 1.6MB)
+   target_link_libraries( ${APP_NAME} -Wl,-dead_strip -Wl,-S )
 endif()
 
 # hack to get around the "Debug" and "Release" folders Visual Studio adds on Windows

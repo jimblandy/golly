@@ -69,7 +69,7 @@ CXXBASE = -arch x86_64 \
 LDBASE = -arch x86_64 -lz
 
 EXTRALIBS = -lz -lpthread -liconv
-EXTRALIBS_GUI = -framework WebKit -framework OpenGL -framework AGL -framework AudioToolbox
+EXTRALIBS_GUI = -framework WebKit -framework OpenGL -framework AudioToolbox
 
 OBJDIR = ObjOSX
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
