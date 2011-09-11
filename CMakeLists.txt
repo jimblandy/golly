@@ -54,7 +54,7 @@ if(APPLE)
    # 1. override PERL_INCLUDE_PATH to simplified output from "/usr/bin/perl -MExtUtils::Embed -e ccopts"
    # 2. override PERL_LIBRARY to simplified output from "/usr/bin/perl -MExtUtils::Embed -e ldopts"
    set( PERL_INCLUDE_PATH /System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE )
-   set( PERL_LIBRARY "-arch x86_64 -L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc" )
+   set( PERL_LIBRARY "-L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc" )
 endif()
 
 find_package( wxWidgets REQUIRED html net adv core base )
