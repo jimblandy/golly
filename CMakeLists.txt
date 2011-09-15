@@ -12,6 +12,7 @@ else()
    set( APP_NAME golly )
 endif()
 
+# low-level code used in all executables
 set(BASE_SOURCES
    bigint.cpp generationsalgo.cpp ghashbase.cpp
    ghashdraw.cpp hlifealgo.cpp hlifedraw.cpp jvnalgo.cpp lifealgo.cpp
@@ -25,6 +26,7 @@ set(BASE_SOURCES
    writepattern.h
 )
 
+# high-level GUI code only used in Golly
 set(GUI_SOURCES
    wxalgos.cpp wxcontrol.cpp
    wxedit.cpp wxfile.cpp wxgolly.cpp wxhelp.cpp wxinfo.cpp wxlayer.cpp
@@ -55,6 +57,9 @@ if(APPLE)
    # 2. override PERL_LIBRARY to simplified output from "/usr/bin/perl -MExtUtils::Embed -e ldopts"
    set( PERL_INCLUDE_PATH /System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE )
    set( PERL_LIBRARY "-L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc" )
+elseif(UNIX)
+   # remove -rdynamic from link options on Linux
+   set( CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "" )
 endif()
 
 find_package( wxWidgets REQUIRED html net adv core base )
@@ -76,7 +81,7 @@ if(APPLE)
    add_definitions(-mmacosx-version-min=10.5)
 endif()
 if(APPLE OR UNIX)
-   # best to use same settings as in makefiles
+   # use same settings as in makefiles
    add_definitions(-D_LARGE_FILES -O5)
 endif()
 
@@ -84,9 +89,7 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # create base library used by all 3 executables
-add_library( gollybase STATIC
-   ${BASE_SOURCES}
-)
+add_library( gollybase STATIC ${BASE_SOURCES} )
 
 add_executable( ${APP_NAME}
    WIN32
@@ -101,41 +104,41 @@ add_executable( bgolly
 
 add_executable( RuleTableToTree
    RuleTableToTree.cpp 
-) 
-
-target_link_libraries( ${APP_NAME}
-   gollybase
-   ${wxWidgets_LIBRARIES}
-   ${PERL_LIBRARY}
-   ${PYTHON_LIBRARIES}
-   ${ZLIB_LIBRARIES}
 )
 
-target_link_libraries( bgolly
-   gollybase
-   ${ZLIB_LIBRARIES}
-)
-
-target_link_libraries( RuleTableToTree
-   gollybase
-   ${ZLIB_LIBRARIES}
-)
+if(APPLE OR WIN32)
+   target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} ${ZLIB_LIBRARIES} )
+   target_link_libraries( bgolly gollybase ${ZLIB_LIBRARIES} )
+   target_link_libraries( RuleTableToTree gollybase ${ZLIB_LIBRARIES} )
+else()
+   # on Linux we statically link zlib because some systems (eg. Ubuntu) have a non-standard
+   # zlib shared library that contains gzopen64
+   add_library( static_zlib STATIC IMPORTED )
+   set_property( TARGET static_zlib PROPERTY IMPORTED_LOCATION /usr/lib/libz.a )
+   target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} static_zlib )
+   target_link_libraries( bgolly gollybase static_zlib )
+   target_link_libraries( RuleTableToTree gollybase static_zlib )
+endif()
 
 if(APPLE)
-   # create Info.plist (using Info.plist.in) and PkgInfo files inside bundle
+   # create Info.plist (using Info.plist.in) and PkgInfo files inside .app bundle
    add_custom_target( app_bundle
       COMMAND sed -e "s/VERSION/${APP_VERSION}/" ${CMAKE_SOURCE_DIR}/Info.plist.in >${CMAKE_SOURCE_DIR}/Golly.app/Contents/Info.plist
       COMMAND echo -n "APPLGoLy" >${CMAKE_SOURCE_DIR}/Golly.app/Contents/PkgInfo
    )
    add_dependencies( ${APP_NAME} app_bundle )
    
-   # copy *.icns files into Resources dir inside bundle
+   # copy *.icns files into Resources directory inside .app bundle
    set_source_files_properties( ${CMAKE_SOURCE_DIR}/app.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
    set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-mc.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
    set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-rle.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
    
    # strip out debug info (reduces app size by 1.6MB)
    target_link_libraries( ${APP_NAME} -Wl,-dead_strip -Wl,-S )
+   
+   # only the Mac app needs to be linked against the Perl and Python libs
+   # (on Windows and Linux those libs are dynamically loaded the first time a script is run)
+   target_link_libraries( ${APP_NAME} ${PERL_LIBRARY} ${PYTHON_LIBRARIES} )
 endif()
 
 # hack to get around the "Debug" and "Release" folders Visual Studio adds on Windows
