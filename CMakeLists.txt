@@ -58,11 +58,21 @@ if(APPLE)
    set( PERL_INCLUDE_PATH /System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE )
    set( PERL_LIBRARY "-L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc" )
 elseif(UNIX)
-   # remove -rdynamic from link options on Linux
+   # remove -rdynamic from link options on Linux to reduce golly size by about 1.2MB
    set( CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "" )
 endif()
 
 find_package( wxWidgets REQUIRED html net adv core base )
+
+if(WIN32)
+   # use zlib library included in wxWidgets
+   set( ZLIB_INCLUDE_DIR ${wxWidgets_ROOT_DIR}/src/zlib )
+   set( ZLIB_LIBRARY ${wxWidgets_LIB_DIR}/wxzlib.lib )
+   
+   # PERL_LIBARY is not used in our Windows build but cmake needs a setting
+   set( PERL_LIBRARY lib_not_used )
+endif()
+
 find_package( ZLIB REQUIRED )
 find_package( PerlLibs REQUIRED )
 find_package( PythonLibs REQUIRED )
@@ -111,8 +121,7 @@ if(APPLE OR WIN32)
    target_link_libraries( bgolly gollybase ${ZLIB_LIBRARIES} )
    target_link_libraries( RuleTableToTree gollybase ${ZLIB_LIBRARIES} )
 else()
-   # on Linux we statically link zlib because some systems (eg. Ubuntu) have a non-standard
-   # zlib shared library that contains gzopen64
+   # on Linux we statically link zlib because some systems (eg. Ubuntu) have a non-standard zlib that contains gzopen64
    add_library( static_zlib STATIC IMPORTED )
    set_property( TARGET static_zlib PROPERTY IMPORTED_LOCATION /usr/lib/libz.a )
    target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} static_zlib )
