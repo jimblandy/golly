@@ -1,5 +1,6 @@
-Welcome to Golly, a simulator for Conway's Game of Life and other
-cellular automata.  For the latest news please visit our web site:
+This file contains instructions for how to build Golly, a simulator
+for Conway's Game of Life and other cellular automata.  For the latest
+news please visit our web site:
 
    http://golly.sourceforge.net/
 
@@ -107,43 +108,15 @@ be easy.  Just use the appropriate makefile for your platform:
    make -f makefile-mac    - on Mac OS 10.4 or later
    make -f makefile-gtk    - on Linux with GTK+
 
-Alternatively, Golly can be built using the GNU build system, by first
-running the configure script to create an appropriate Makefile for
-your operating system and then running make to build Golly. For
-example, for a system-wide installation, you might run:
+Important notes:
 
-   ./configure
-   make
-   make install
-
-The configure script offers various options to customize building and
-installation. For an overview of the available options, run:
-
-  ./configure --help
-
-If you obtained the Golly source code from the CVS repository instead
-of a source release, you need to generate the configure script first,
-by running:
-
-  ./autogen.sh
-
-Note that this requires autoconf, automake and Perl 5 are installed.
-
-
-NOTES:
-
-- On Windows, if you decided not to edit config.vc as recommended
-  above then you'll need to specify extra options to nmake:
-  
-  nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1
-
-- You need to edit makefile-win and makefile-mac to specify where
+- You first need to edit local-win.mk and makefile-mac to specify where
   wxWidgets is installed.  Change the WX_DIR path near the start of
   the file.  Also make sure WX_RELEASE specifies the first two digits
   of your wxWidgets version.
 
-- In makefile-win you need to include the headers for Perl and Python
-  so change the paths in PERL_INCLUDE and PYTHON_INCLUDE if necessary.
+- In local-win.mk you need to include the headers for Perl and Python,
+  so change the paths for PERL_INCLUDE and PYTHON_INCLUDE if necessary.
   
 - On Linux you may need to add some development packages. For example, 
   from a default Ubuntu install (at the time of writing) you will need
@@ -155,7 +128,70 @@ NOTES:
   Additionally, GOLLYDIR specifies an absolute directory path to look
   for the application data files.  For system-wide installation, it
   probably makes sense to set GOLLYDIR to /usr/share/golly and install
-  the Help, Patterns, Scripts and Rules there.
+  the Help, Patterns, Scripts and Rules directories in there.
+
+Aternative methods for building Golly are also available, as discussed
+in the following two sections.
+
+
+Building Golly using configure
+------------------------------
+
+Golly can be built using the GNU build system by first running the
+configure script to create an appropriate Makefile for your operating
+system and then running make to build Golly.  For example, for a
+system-wide installation, you might run:
+
+   ./configure
+   make
+   make install
+
+The configure script offers various options to customize building and
+installation. For an overview of the available options, run:
+
+   ./configure --help
+
+If you obtained the Golly source code from the CVS repository instead
+of a source release, you need to generate the configure script first,
+by running:
+
+   ./autogen.sh
+
+Note that this requires autoconf, automake and Perl 5 are installed.
+
+
+Building Golly using CMake
+--------------------------
+
+The CMakeLists.txt file included in the source distribution allows
+Golly to be built using CMake.  Visit http://www.cmake.org/ to
+download a suitable installer for your operating system.
+
+Once CMake is installed, you can build Golly using these commands:
+
+   cd /path/to/CMakeLists.txt
+   mkdir cmakedir                (use any name for the directory)
+   cd cmakedir
+   cmake ..
+   make                          (or nmake on Windows)
+
+CMake also comes with a GUI application if you'd prefer not to
+use the command line.
+
+Notes:
+
+- Although wxWidgets comes pre-installed on Mac OS X, it tends to be
+  out-of-date and inappropriate for building Golly, so CMakeLists.txt
+  sets wxWidgets_CONFIG_EXECUTABLE to /usr/local/bin/wx-config
+  where /usr/local/bin is the default location for wx-config if you
+  do "sudo make install" after building the wxWidgets libraries.
+
+- Also on Mac OS X, PERL_INCLUDE_PATH and PERL_LIBRARY are overridden
+  to avoid statically linking the Perl library.  Their settings assume
+  Perl 5.10 so you might need to change the version numbers.
+
+- On Linux, the zlib library is statically linked and its location is
+  set to /usr/lib/libz.a, so you might need to change that path.
 
 
 How to build bgolly (the batch mode version)

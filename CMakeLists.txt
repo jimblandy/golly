@@ -26,7 +26,7 @@ set(BASE_SOURCES
    writepattern.h
 )
 
-# high-level GUI code only used in Golly
+# high-level GUI code used only in Golly
 set(GUI_SOURCES
    wxalgos.cpp wxcontrol.cpp
    wxedit.cpp wxfile.cpp wxgolly.cpp wxhelp.cpp wxinfo.cpp wxlayer.cpp
