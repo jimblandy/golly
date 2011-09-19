@@ -2822,6 +2822,14 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
       return;
    }
 
+   #ifdef __WXOSX__
+      // pass arrow or function key directly to OnChar
+      if ((realkey >=  WXK_LEFT && realkey <= WXK_DOWN) || (realkey >= WXK_F1 && realkey <= WXK_F24)) {
+         OnChar(event);
+         return;
+      }
+   #endif
+
    // WARNING: logic must match that in PatternView::OnKeyDown
    if (mods == wxMOD_NONE || realkey > 127) {
       // tell OnChar handler to ignore realkey
