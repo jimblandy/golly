@@ -1475,15 +1475,16 @@ bool MainFrame::SavePattern()
    // initially all formats are not allowed (use any -ve number)
    MCindex = RLEindex = -1;
 
+   // adding "*.gz" to the file types avoids a duplication bug in the wxOSX app
    wxString MCfiles, RLEfiles;
    MCfiles = _("Macrocell (*.mc)|*.mc");
-   MCfiles += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz");
+   MCfiles += _("|Compressed Macrocell (*.mc.gz)|*.mc.gz;*.gz");
    if (savexrle) {
       RLEfiles = _("Extended RLE (*.rle)|*.rle");
-      RLEfiles += _("|Compressed Extended RLE (*.rle.gz)|*.rle.gz");
+      RLEfiles += _("|Compressed Extended RLE (*.rle.gz)|*.rle.gz;*.gz");
    } else {
       RLEfiles = _("RLE (*.rle)|*.rle");
-      RLEfiles += _("|Compressed RLE (*.rle.gz)|*.rle.gz");
+      RLEfiles += _("|Compressed RLE (*.rle.gz)|*.rle.gz;*.gz");
    }
 
    bigint top, left, bottom, right;

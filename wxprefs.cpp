@@ -2823,8 +2823,9 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
    }
 
    #ifdef __WXOSX__
-      // pass arrow or function key directly to OnChar
-      if ((realkey >=  WXK_LEFT && realkey <= WXK_DOWN) || (realkey >= WXK_F1 && realkey <= WXK_F24)) {
+      // pass arrow key or function key or delete key directly to OnChar
+      if ( (realkey >=  WXK_LEFT && realkey <= WXK_DOWN) ||
+           (realkey >= WXK_F1 && realkey <= WXK_F24) || realkey == WXK_BACK ) {
          OnChar(event);
          return;
       }
