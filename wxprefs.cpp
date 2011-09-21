@@ -505,7 +505,7 @@ void AddDefaultKeyActions()
 #ifdef __WXMAC__
    // cmd-? is the usual shortcut in Mac apps
    keyaction[(int)'?'][mk_CMD].id =    DO_HELP;
-   //!!! but wxMac can only detect shift+cmd+/ so we have to assume '?' is above '/' -- yuk
+   // we can only detect shift+cmd+/ so we have to assume '?' is above '/' -- yuk
    keyaction[(int)'/'][mk_SHIFT+mk_CMD].id = DO_HELP;
 #else
    // F1 is the usual shortcut in Win/Linux apps
@@ -987,13 +987,7 @@ void CreateAccelerator(action_id action, int modset, int key)
 {
    accelerator[action] = wxT("\t");
 #ifdef __WXMAC__
-   //!!! wxMac bug: can't create accelerator like Ctrl+Cmd+K
-   // if (modset & mk_CTRL) accelerator[action] += wxT("RawCtrl+"); //???
-   // so for now we don't put anything in menu
-   if (modset & mk_CTRL) {
-      accelerator[action] = wxEmptyString;
-      return;
-   }
+   if (modset & mk_CTRL) accelerator[action] += wxT("RawCtrl+");
 #endif
    if (modset & mk_CMD) accelerator[action] += wxT("Ctrl+");
    if (modset & mk_ALT) accelerator[action] += wxT("Alt+");
