@@ -129,8 +129,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
    SetSizer(topSizer);
 
    textbox = new wxTextCtrl(this, wxID_ANY, instring);
-                            // add wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE
-                            // as an option to allow multi-line input???!!!
+
    wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
 
    wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
@@ -157,7 +156,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
 
    // select initial string (must do this last on Windows)
    textbox->SetFocus();
-   textbox->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
+   textbox->SetSelection(-1,-1);
 }
 
 // -----------------------------------------------------------------------------
@@ -195,6 +194,11 @@ public:
                  const wxString& prompt,
                  int inval, int minval, int maxval);
 
+   #ifdef __WXOSX__
+      ~IntegerDialog() { delete onetimer; }
+      void OnOneTimer(wxTimerEvent& event);
+   #endif
+   
    virtual bool TransferDataFromWindow();    // called when user hits OK
 
    #ifdef __WXMAC__
@@ -211,7 +215,34 @@ private:
    int minint;             // minimum value
    int maxint;             // maximum value
    int result;             // the resulting integer
+
+   #ifdef __WXOSX__
+      wxTimer* onetimer;      // one shot timer (see OnOneTimer)
+      DECLARE_EVENT_TABLE()
+   #endif
 };
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXOSX__
+
+BEGIN_EVENT_TABLE(IntegerDialog, wxDialog)
+   EVT_TIMER (wxID_ANY, IntegerDialog::OnOneTimer)
+END_EVENT_TABLE()
+
+void IntegerDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
+{
+   wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(ID_SPIN_CTRL);
+   wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(ID_SPIN_CTRL+1);
+   if (s1 && s2) {
+      // first need to change focus to hidden control
+      s2->SetFocus();
+      s1->SetFocus();
+      s1->SetSelection(-1,-1);
+   }
+}
+
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -241,14 +272,10 @@ void IntegerDialog::OnSpinCtrlChar(wxKeyEvent& event)
       event.Skip();
 
    } else if ( key == WXK_TAB ) {
-      /* why does this crash???!!!
-      spinctrl->SetFocus();
-      spinctrl->SetSelection(0,999);
-      */
       wxSpinCtrl* sc = (wxSpinCtrl*) FindWindowById(ID_SPIN_CTRL);
       if ( sc ) {
          sc->SetFocus();
-         sc->SetSelection(0,999);
+         sc->SetSelection(-1,-1);
       }
 
    } else if ( key >= ' ' && key <= '~' ) {
@@ -290,6 +317,13 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    spinctrl = new MySpinCtrl(this, ID_SPIN_CTRL);
    spinctrl->SetRange(minval, maxval);
    spinctrl->SetValue(inval);
+
+   #ifdef __WXOSX__
+      // create hidden spin ctrl so we can SetFocus below
+      wxSpinCtrl* hidden = new wxSpinCtrl(this, ID_SPIN_CTRL+1, wxEmptyString,
+                                          wxPoint(-1000,-1000), wxDefaultSize);
+      hidden->SetValue(666);
+   #endif
    
    wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
 
@@ -315,9 +349,15 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
    GetSizer()->SetSizeHints(this);
    Centre();
 
-   // select initial value (must do this last on Windows)
-   spinctrl->SetFocus();
-   spinctrl->SetSelection(0,999);    // wxMac bug: -1,-1 doesn't work here
+   #ifdef __WXOSX__
+      // due to wxOSX bug we have to set focus after dialog creation
+      onetimer = new wxTimer(this, wxID_ANY);
+      if (onetimer) onetimer->Start(10, wxTIMER_ONE_SHOT);
+   #else
+      // select initial value (must do this last on Windows)
+      spinctrl->SetFocus();
+      spinctrl->SetSelection(-1,-1);
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -326,7 +366,7 @@ bool IntegerDialog::TransferDataFromWindow()
 {
 #if defined(__WXMSW__) || defined(__WXGTK__)
    // spinctrl->GetValue() always returns a value within range even if
-   // the text ctrl doesn't contain a valid number -- yuk!!!
+   // the text ctrl doesn't contain a valid number -- yuk!
    result = spinctrl->GetValue();
    if (result < minint || result > maxint) {
 #else
@@ -338,7 +378,7 @@ bool IntegerDialog::TransferDataFromWindow()
       msg.Printf(_("Value must be from %d to %d."), minint, maxint);
       Warning(msg);
       spinctrl->SetFocus();
-      spinctrl->SetSelection(0,999);   // wxMac bug: -1,-1 doesn't work here
+      spinctrl->SetSelection(-1,-1);
       return false;
    } else {
       return true;
@@ -395,10 +435,24 @@ Boolean SaveChangesFilter(DialogRef dlg, EventRecord* event, DialogItemIndex* it
 
 int SaveChanges(const wxString& query, const wxString& msg)
 {
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-   // need a more standard dialog on Mac; ie. Save/Don't Save buttons
-   // instead of Yes/No, and cmd-D is a shortcut for Don't Save
+#if defined(__WXOSX_COCOA__)
+   // use a standard looking modal dialog on wxOSX;
+   // sadly, positioning over center of parent window is not supported by NSAlert
+   wxMessageDialog dialog(wxGetActiveWindow(), msg, query,
+                          wxCENTER | wxNO_DEFAULT | wxYES_NO | wxCANCEL |
+                          wxICON_INFORMATION);
 
+   dialog.SetYesNoCancelLabels("Cancel", "Save", "Don't Save");
+   
+   switch ( dialog.ShowModal() ) {
+      case wxID_YES:    return 0;    // Cancel
+      case wxID_NO:     return 2;    // Save
+      case wxID_CANCEL: return 1;    // Don't Save
+      default:          return 0;    // should never happen
+   }
+
+#elif defined(__WXMAC__)
+   // use a standard looking modal dialog on wxMac
    short result;
    AlertStdCFStringAlertParamRec param;
 
@@ -433,7 +487,9 @@ int SaveChanges(const wxString& query, const wxString& msg)
       case 3:  return 1;    // Don't Save
       default: return 0;
    }
+
 #else
+   // Windows/Linux
    int answer = wxMessageBox(msg, query,
                              wxICON_QUESTION | wxYES_NO | wxCANCEL,
                              wxGetActiveWindow());
