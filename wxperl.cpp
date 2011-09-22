@@ -3109,8 +3109,13 @@ XS(pl_fatal)
    STRLEN n_a;
    char* err = SvPV(ST(0),n_a);
 
-   // store message in global string (shown after script finishes)
-   scripterr = wxString(err, wxConvLocal);
+   if (scripterr == wxString(abortmsg,wxConvLocal)) {
+      // this can happen in Perl 5.14 so don't change scripterr
+      // otherwise a message box will appear
+   } else {
+      // store message in global string (shown after script finishes)
+      scripterr = wxString(err, wxConvLocal);
+   }
 
    XSRETURN(0);
 }
