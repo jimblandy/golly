@@ -2820,7 +2820,7 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
    // wheelpos should be persistent, because in theory we should keep track of
    // the remainder if the amount scrolled was not an even number of deltas.
    static int wheelpos = 0;
-   int delta;
+   int delta, x, y;
 
    if (mousewheelmode == 0) {
       // ignore wheel, according to user preference
@@ -2830,6 +2830,8 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
 
    // delta is the amount that represents one "step" of rotation. Normally 120.
    delta = event.GetWheelDelta();
+   x = event.GetX();
+   y = event.GetY();
 
    if (mousewheelmode == 2)
       wheelpos -= event.GetWheelRotation();
@@ -2839,14 +2841,14 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
    while (wheelpos >= delta) {
       wheelpos -= delta;
       TestAutoFit();
-      currlayer->view->unzoom();
+      currlayer->view->unzoom(x, y);
    }
 
    while (wheelpos <= -delta) {
       wheelpos += delta;
       TestAutoFit();
       if (currlayer->view->getmag() < MAX_MAG) {
-         currlayer->view->zoom();
+         currlayer->view->zoom(x, y);
       } else {
          Beep();
          wheelpos = 0;

@@ -168,7 +168,7 @@ bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
 wxCursor* newcurs = NULL;        // cursor after creating new pattern (if not NULL)
 wxCursor* opencurs = NULL;       // cursor after opening pattern (if not NULL)
-int mousewheelmode = 1;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
+int mousewheelmode = 2;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
 int mindelay = 250;              // minimum millisec delay
 int maxdelay = 2000;             // maximum millisec delay
