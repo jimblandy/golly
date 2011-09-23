@@ -443,8 +443,35 @@ void DestroyDrawingData()
 
 // -----------------------------------------------------------------------------
 
+// called from wx_render::pixblit to draw a bitmap at 1:1 scale
+void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
+{
+   wxAlphaPixelData pxldata(*pixmap);
+   if (pxldata) {
+      #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
+         pxldata.UseAlpha();
+      #endif
+      wxAlphaPixelData::Iterator p(pxldata);
+      for ( int row = 0; row < h; row++ ) {
+         wxAlphaPixelData::Iterator rowstart = p;
+         for ( int col = 0; col < w; col++ ) {
+            p.Red()   = byteptr[(row*stride + col)*3 + 0];
+            p.Green() = byteptr[(row*stride + col)*3 + 1];
+            p.Blue()  = byteptr[(row*stride + col)*3 + 2];
+            #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+               p.Alpha() = 255;
+            #endif
+            p++;
+         }
+         p = rowstart;
+         p.OffsetY(pxldata, 1);
+      }
+   }
+   currdc->DrawBitmap(*pixmap, x, y);
+}
+
 // called from wx_render::pixblit to magnify given pixmap by pmscale (2, 4, ... 2^MAX_MAG)
-void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
+void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
 {
    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
    bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
@@ -470,24 +497,180 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
       for ( int row = 0; row < h; row++ ) {
          wxAlphaPixelData::Iterator rowstart = p;
          for ( int col = 0; col < w; col++ ) {
-            int newx = x + col * pmscale;
-            int newy = y + row * pmscale;
-            if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
-               // clip cell outside viewport
+            unsigned char state = byteptr[row*stride + col];
+            unsigned char r = currlayer->cellr[state];
+            unsigned char g = currlayer->cellg[state];
+            unsigned char b = currlayer->cellb[state];
+
+            // expand byte into cellsize*cellsize pixels
+            wxAlphaPixelData::Iterator topleft = p;
+            for (int i = 0; i < cellsize; i++) {
+               wxAlphaPixelData::Iterator colstart = p;
+               for (int j = 0; j < cellsize; j++) {
+                  p.Red()   = r;
+                  p.Green() = g;
+                  p.Blue()  = b;
+                  #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+                     p.Alpha() = 255;
+                  #endif
+                  p++;
+               }
+               if (drawgap) {
+                  // draw dead pixels at right edge of cell
+                  p.Red()   = deadred;
+                  p.Green() = deadgreen;
+                  p.Blue()  = deadblue;
+                  #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+                     p.Alpha() = 255;
+                  #endif
+               }
+               p = colstart;
+               p.OffsetY(pxldata, 1);
+            }
+            if (drawgap) {
+               // draw dead pixels at bottom edge of cell
+               for (int j = 0; j <= cellsize; j++) {
+                  p.Red()   = deadred;
+                  p.Green() = deadgreen;
+                  p.Blue()  = deadblue;
+                  #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+                     p.Alpha() = 255;
+                  #endif
+                  p++;
+               }
+            }
+            p = topleft;
+            p.OffsetX(pxldata, pmscale);
+         }
+         p = rowstart;
+         p.OffsetY(pxldata, pmscale);
+      }
+   }
+   currdc->DrawBitmap(*pixmap, x, y);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
+{
+   // called from wx_render::pixblit to draw icons for each live cell;
+   // assume pmscale > 2 (should be 8 or 16)
+   int cellsize = pmscale - 1;
+   bool drawgap = (pmscale < (1 << mingridmag)) ||
+                  #ifdef __WXMAC__
+                     // wxMac seems to draw lines with semi-transparent pixels at the
+                     // top/left ends, so we have to draw gaps even if showing grid lines
+                     // otherwise we see annoying dots at the top/left edge of the viewport
+                     (pmscale >= (1 << mingridmag));
+                  #else
+                     (pmscale >= (1 << mingridmag) && !showgridlines);
+                  #endif
+   unsigned char deadred   = currlayer->cellr[0];
+   unsigned char deadgreen = currlayer->cellg[0];
+   unsigned char deadblue  = currlayer->cellb[0];
+
+   wxAlphaPixelData pxldata(*pixmap);
+   if (pxldata) {
+      #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
+         pxldata.UseAlpha();
+      #endif
+      wxAlphaPixelData::Iterator p(pxldata);
+      for ( int row = 0; row < h; row++ ) {
+         wxAlphaPixelData::Iterator rowstart = p;
+         for ( int col = 0; col < w; col++ ) {
+            unsigned char state = byteptr[row*stride + col];
+
+            wxAlphaPixelData::Iterator topleft = p;
+            if (state && iconmaps[state]) {
+               // copy cellsize*cellsize pixels from iconmaps[state]
+               // but convert black pixels to dead cell color
+               bool multicolor = iconmaps[1]->GetDepth() > 1;
+               #ifdef __WXMSW__
+                  // must use wxNativePixelData for bitmaps with no alpha channel
+                  wxNativePixelData icondata(*iconmaps[state]);
+               #else
+                  wxAlphaPixelData icondata(*iconmaps[state]);
+               #endif
+               if (icondata) {
+                  #ifdef __WXMSW__
+                     wxNativePixelData::Iterator iconpxl(icondata);
+                  #else
+                     wxAlphaPixelData::Iterator iconpxl(icondata);
+                  #endif
+                  for (int i = 0; i < cellsize; i++) {
+                     wxAlphaPixelData::Iterator colstart = p;
+                     #ifdef __WXMSW__
+                        wxNativePixelData::Iterator iconrow = iconpxl;
+                     #else
+                        wxAlphaPixelData::Iterator iconrow = iconpxl;
+                     #endif
+                     for (int j = 0; j < cellsize; j++) {
+                        if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
+                           if (multicolor) {
+                              // use non-black pixel in multi-colored icon
+                              if (swapcolors) {
+                                 p.Red()   = 255 - iconpxl.Red();
+                                 p.Green() = 255 - iconpxl.Green();
+                                 p.Blue()  = 255 - iconpxl.Blue();
+                              } else {
+                                 p.Red()   = iconpxl.Red();
+                                 p.Green() = iconpxl.Green();
+                                 p.Blue()  = iconpxl.Blue();
+                              }
+                           } else {
+                              // replace non-black pixel with current cell color
+                              p.Red()   = currlayer->cellr[state];
+                              p.Green() = currlayer->cellg[state];
+                              p.Blue()  = currlayer->cellb[state];
+                           }
+                        } else {
+                           // replace black pixel with dead cell color
+                           p.Red()   = deadred;
+                           p.Green() = deadgreen;
+                           p.Blue()  = deadblue;
+                        }
+                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+                           p.Alpha() = 255;
+                        #endif
+                        p++;
+                        iconpxl++;
+                     }
+                     if (drawgap) {
+                        // draw dead pixels at right edge of cell
+                        p.Red()   = deadred;
+                        p.Green() = deadgreen;
+                        p.Blue()  = deadblue;
+                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+                           p.Alpha() = 255;
+                        #endif
+                     }
+                     p = colstart;
+                     p.OffsetY(pxldata, 1);
+                     // move to next row of icon bitmap
+                     iconpxl = iconrow;
+                     iconpxl.OffsetY(icondata, 1);
+                  }
+                  if (drawgap) {
+                     // draw dead pixels at bottom edge of cell
+                     for (int j = 0; j <= cellsize; j++) {
+                        p.Red()   = deadred;
+                        p.Green() = deadgreen;
+                        p.Blue()  = deadblue;
+                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
+                           p.Alpha() = 255;
+                        #endif
+                        p++;
+                     }
+                  }
+               }
             } else {
-               unsigned char state = *byteptr;
-               unsigned char r = currlayer->cellr[state];
-               unsigned char g = currlayer->cellg[state];
-               unsigned char b = currlayer->cellb[state];
-               
-               // expand byte into cellsize*cellsize pixels
-               wxAlphaPixelData::Iterator topleft = p;
+               // draw dead cell
                for (int i = 0; i < cellsize; i++) {
                   wxAlphaPixelData::Iterator colstart = p;
                   for (int j = 0; j < cellsize; j++) {
-                     p.Red()   = r;
-                     p.Green() = g;
-                     p.Blue()  = b;
+                     p.Red()   = deadred;
+                     p.Green() = deadgreen;
+                     p.Blue()  = deadblue;
                      #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                         p.Alpha() = 255;
                      #endif
@@ -517,182 +700,9 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                      p++;
                   }
                }
-               p = topleft;
             }
+            p = topleft;
             p.OffsetX(pxldata, pmscale);
-            
-            byteptr++;        // move to next byte in pmdata
-         }
-         p = rowstart;
-         p.OffsetY(pxldata, pmscale);
-      }
-   }
-   currdc->DrawBitmap(*pixmap, x, y);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale)
-{
-   // called from wx_render::pixblit to draw icons for each live cell;
-   // assume pmscale > 2 (should be 8 or 16)
-   int cellsize = pmscale - 1;
-   bool drawgap = (pmscale < (1 << mingridmag)) ||
-                  #ifdef __WXMAC__
-                     // wxMac seems to draw lines with semi-transparent pixels at the
-                     // top/left ends, so we have to draw gaps even if showing grid lines
-                     // otherwise we see annoying dots at the top/left edge of the viewport
-                     (pmscale >= (1 << mingridmag));
-                  #else
-                     (pmscale >= (1 << mingridmag) && !showgridlines);
-                  #endif
-   unsigned char deadred   = currlayer->cellr[0];
-   unsigned char deadgreen = currlayer->cellg[0];
-   unsigned char deadblue  = currlayer->cellb[0];
-
-   wxAlphaPixelData pxldata(*pixmap);
-   if (pxldata) {
-      #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-         pxldata.UseAlpha();
-      #endif
-      wxAlphaPixelData::Iterator p(pxldata);
-      for ( int row = 0; row < h; row++ ) {
-         wxAlphaPixelData::Iterator rowstart = p;
-         for ( int col = 0; col < w; col++ ) {
-            int newx = x + col * pmscale;
-            int newy = y + row * pmscale;
-            if (newx < 0 || newy < 0 || newx >= currwd || newy >= currht) {
-               // clip cell outside viewport
-            } else {
-               unsigned char state = *byteptr;
-               
-               wxAlphaPixelData::Iterator topleft = p;
-               if (state && iconmaps[state]) {
-                  // copy cellsize*cellsize pixels from iconmaps[state]
-                  // but convert black pixels to dead cell color
-                  bool multicolor = iconmaps[1]->GetDepth() > 1;
-                  #ifdef __WXMSW__
-                     // must use wxNativePixelData for bitmaps with no alpha channel
-                     wxNativePixelData icondata(*iconmaps[state]);
-                  #else
-                     wxAlphaPixelData icondata(*iconmaps[state]);
-                  #endif
-                  if (icondata) {
-                     #ifdef __WXMSW__
-                        wxNativePixelData::Iterator iconpxl(icondata);
-                     #else
-                        wxAlphaPixelData::Iterator iconpxl(icondata);
-                     #endif
-                     for (int i = 0; i < cellsize; i++) {
-                        wxAlphaPixelData::Iterator colstart = p;
-                        #ifdef __WXMSW__
-                           wxNativePixelData::Iterator iconrow = iconpxl;
-                        #else
-                           wxAlphaPixelData::Iterator iconrow = iconpxl;
-                        #endif
-                        for (int j = 0; j < cellsize; j++) {
-                           if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                              if (multicolor) {
-                                 // use non-black pixel in multi-colored icon
-                                 if (swapcolors) {
-                                    p.Red()   = 255 - iconpxl.Red();
-                                    p.Green() = 255 - iconpxl.Green();
-                                    p.Blue()  = 255 - iconpxl.Blue();
-                                 } else {
-                                    p.Red()   = iconpxl.Red();
-                                    p.Green() = iconpxl.Green();
-                                    p.Blue()  = iconpxl.Blue();
-                                 }
-                              } else {
-                                 // replace non-black pixel with current cell color
-                                 p.Red()   = currlayer->cellr[state];
-                                 p.Green() = currlayer->cellg[state];
-                                 p.Blue()  = currlayer->cellb[state];
-                              }
-                           } else {
-                              // replace black pixel with dead cell color
-                              p.Red()   = deadred;
-                              p.Green() = deadgreen;
-                              p.Blue()  = deadblue;
-                           }
-                           #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                              p.Alpha() = 255;
-                           #endif
-                           p++;
-                           iconpxl++;
-                        }
-                        if (drawgap) {
-                           // draw dead pixels at right edge of cell
-                           p.Red()   = deadred;
-                           p.Green() = deadgreen;
-                           p.Blue()  = deadblue;
-                           #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                              p.Alpha() = 255;
-                           #endif
-                        }
-                        p = colstart;
-                        p.OffsetY(pxldata, 1);
-                        // move to next row of icon bitmap
-                        iconpxl = iconrow;
-                        iconpxl.OffsetY(icondata, 1);
-                     }
-                     if (drawgap) {
-                        // draw dead pixels at bottom edge of cell
-                        for (int j = 0; j <= cellsize; j++) {
-                           p.Red()   = deadred;
-                           p.Green() = deadgreen;
-                           p.Blue()  = deadblue;
-                           #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                              p.Alpha() = 255;
-                           #endif
-                           p++;
-                        }
-                     }
-                  }
-               } else {
-                  // draw dead cell
-                  for (int i = 0; i < cellsize; i++) {
-                     wxAlphaPixelData::Iterator colstart = p;
-                     for (int j = 0; j < cellsize; j++) {
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
-                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                           p.Alpha() = 255;
-                        #endif
-                        p++;
-                     }
-                     if (drawgap) {
-                        // draw dead pixels at right edge of cell
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
-                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                           p.Alpha() = 255;
-                        #endif
-                     }
-                     p = colstart;
-                     p.OffsetY(pxldata, 1);
-                  }
-                  if (drawgap) {
-                     // draw dead pixels at bottom edge of cell
-                     for (int j = 0; j <= cellsize; j++) {
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
-                        #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                           p.Alpha() = 255;
-                        #endif
-                        p++;
-                     }
-                  }
-               }
-               p = topleft;
-               
-            }
-            p.OffsetX(pxldata, pmscale);
-            
-            byteptr++;        // move to next byte in pmdata
          }
          p = rowstart;
          p.OffsetY(pxldata, pmscale);
@@ -839,6 +849,46 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
    if (x >= currwd || y >= currht) return;
    if (x + w <= 0 || y + h <= 0) return;
 
+   // stride is the horizontal pixel width of the image data
+   int stride = (pmscale == 1) ? w : w/pmscale;
+
+   // clip pixmap to be drawn against viewport:
+   if (pmscale == 1)
+   {
+      // pmdata contains 3 bytes per pixel
+      if (x < 0) {
+         pmdata -= 3*x;
+         w += x;
+         x = 0;
+      }
+      if (y < 0) {
+         pmdata -= 3*y*stride;
+         h += y;
+         y = 0;
+      }
+      if (w > currwd) w = currwd;
+      if (h > currht) h = currht;
+   }
+   else
+   {
+      // pmdata contains 1 byte per `pmscale' pixels, so we must be careful
+      // and adjust x, y, w and h by multiples of `pmscale' only.
+      if (x < 0) {
+         int dx = -x/pmscale*pmscale;
+         pmdata += dx/pmscale;
+         w -= dx;
+         x += dx;
+      }
+      if (y < 0) {
+         int dy = -y/pmscale*pmscale;
+         pmdata += dy/pmscale*stride;
+         h -= dy;
+         y += dy;
+      }
+      if (x + w >= currwd + pmscale) w = (currwd - x + pmscale - 1)/pmscale*pmscale;
+      if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
+   }
+
    // faster to create new pixmap only when size changes
    if (pixmapwd != w || pixmapht != h) {
       delete pixmap;
@@ -848,39 +898,17 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
    }
 
    if (pmscale == 1) {
-      // pmdata contains 3 bytes (the rgb values) for each pixel
-      wxAlphaPixelData pxldata(*pixmap);
-      if (pxldata) {
-         #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-            pxldata.UseAlpha();
-         #endif
-         wxAlphaPixelData::Iterator p(pxldata);
-         unsigned char* byteptr = (unsigned char*) pmdata;
-         for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int col = 0; col < w; col++ ) {
-               p.Red()   = *byteptr++;
-               p.Green() = *byteptr++;
-               p.Blue()  = *byteptr++;
-               #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                  p.Alpha() = 255;
-               #endif
-               p++;
-            }
-            p = rowstart;
-            p.OffsetY(pxldata, 1);
-         }
-      }
-      currdc->DrawBitmap(*pixmap, x, y);
+      // draw rgb pixel data
+      DrawPixmap((unsigned char*) pmdata, x, y, w, h, stride);
 
    } else if (showicons && pmscale > 4 && iconmaps) {
       // draw icons only at scales 1:8 or 1:16
-      DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
+      DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
 
    } else {
       // stretch pixmap by pmscale, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
       // where each byte contains a cell state
-      DrawStretchedPixmap((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale);
+      DrawStretchedPixmap((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
    }
 }
 
