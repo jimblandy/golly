@@ -7,6 +7,7 @@
 
 <p>
 <ul>
+<li> A new algorithm has been added: Reaction-Diffusion.
 <li> A number of new script commands have been added to allow mouse interaction
      and better keyboard interaction: <a href="python.html#getevent">getevent</a>,
      <a href="python.html#doevent">doevent</a> and <a href="python.html#getxy">getxy</a>.
@@ -18,7 +19,6 @@
      <a href="open:Scripts/Python/flood-fill.py">flood-fill.py</a>,
      <a href="open:Scripts/Python/move-object.py">move-object.py</a> and
      <a href="open:Scripts/Python/move-selection.py">move-selection.py</a>.
-<li> A new algorithm has been added: Reaction-Diffusion.
 <li> New patterns: <a href="open:Patterns/Turmites/ComputerArt.rle">ComputerArt.rle</a>, 
      <a href="open:Patterns/Margolus/CrittersCircle.rle">CrittersCircle.rle</a>,
      <a href="open:Patterns/Margolus/CrittersOscillators.rle">CrittersOscillators.rle</a>,
@@ -34,6 +34,9 @@
 <li> <a href="open:Scripts/Python/Rule-Generators/Langtons-Ant-gen.py">Langtons-Ant-gen.py</a> 
      now accepts turns 'U' and 'N' (U-turn and no-turn) as well as 'L' and 'R'.
 <li> The hash() command uses a better hash function in a two-state universe.
+<li> Pattern rendering is faster at scales 1:16 and 1:8, especially in the Linux app.
+<li> The mouse wheel now zooms in/out from the current cursor location rather than the
+     middle of the viewport.
 <li> Patterns can be saved as gzipped files (*.rle.gz or *.mc.gz).
 <li> If an algorithm can save patterns in macrocell format (currently all except QuickLife)
      then the Save Pattern dialog now prefers that format over RLE; ie. the file type order
