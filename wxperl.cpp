@@ -3116,7 +3116,7 @@ XS(pl_fatal)
       // store message in global string (shown after script finishes)
       scripterr = wxString(err, wxConvLocal);
    }
-
+   
    XSRETURN(0);
 }
 

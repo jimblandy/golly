@@ -2235,7 +2235,7 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "recent_pattern") == 0) {
          // append path to Open Recent submenu
-         if (numpatterns < maxpatterns) {
+         if (numpatterns < maxpatterns && value[0]) {
             numpatterns++;
             wxString path(value, wxConvLocal);
             if (currversion < 2 && path.StartsWith(gollydir)) {
@@ -2249,7 +2249,7 @@ void GetPrefs()
 
       } else if (strcmp(keyword, "recent_script") == 0) {
          // append path to Run Recent submenu
-         if (numscripts < maxscripts) {
+         if (numscripts < maxscripts && value[0]) {
             numscripts++;
             wxString path(value, wxConvLocal);
             if (currversion < 2 && path.StartsWith(gollydir)) {

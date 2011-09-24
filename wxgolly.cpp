@@ -156,7 +156,7 @@ int wx_poll::checkevents()
       // on Windows it seems that Time has a higher overhead than Yield
       CallYield();
    #else
-      // on Mac/Linux it is much faster to avoid calling Yield too often
+      // on Mac/Linux it is faster to avoid calling Yield too often
       long t = stopwatch->Time();
       if (t > nextcheck) {
          nextcheck = t + 100;        // call 10 times per sec
@@ -255,13 +255,14 @@ void GollyApp::SetFrameIcon(wxFrame* frame)
 
 #ifdef __WXMAC__
 
-// handle odoc event
+// open file double-clicked or dropped onto Golly icon
 
 void GollyApp::MacOpenFile(const wxString& fullPath)
 {
    mainptr->Raise();
    mainptr->OpenFile(fullPath);
 }
+
 #endif
 
 // -----------------------------------------------------------------------------
