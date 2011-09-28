@@ -1490,6 +1490,10 @@ void MainFrame::OnMenu(wxCommandEvent& event)
 
          } else if ( id >= ID_LAYER0 && id <= ID_LAYERMAX ) {
             SetLayer(id - ID_LAYER0);
+
+         } else {
+            // wxOSX app needs this to handle app menu items like "Hide Golly"
+            event.Skip();
          }
    }
    
