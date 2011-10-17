@@ -595,7 +595,8 @@ void GetURL(const wxString& url)
 
    wxString filename = fullurl.AfterLast('/');
    // remove ugly stuff at start of file names downloaded from ConwayLife.com
-   if (filename.StartsWith(wxT("pattern.asp?p=")) ||
+   if (filename.StartsWith(wxT("download.php?f=")) ||
+       filename.StartsWith(wxT("pattern.asp?p=")) ||
        filename.StartsWith(wxT("script.asp?s="))) {
       filename = filename.AfterFirst('=');
    }
