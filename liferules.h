@@ -45,7 +45,7 @@ public:
    // string returned by setrule is any error
    const char *setrule(const char *s, lifealgo *algo) ;
    const char *getrule() ;
-   bool vertically_symmetrical() const { return !wolfram ; }
+   bool vertically_symmetrical() const { return wolfram < 0 ; }  // AKT: was !wolfram
    bool already_flipped() const { return !!flipped ; }
    void set_flipped() { flipped = 1 ; }
    int getSerial() { return serial ; }
@@ -62,7 +62,7 @@ private:
    char canonrule[MAXRULESIZE] ;
    int hexmask ;           // really neighbormask
    int rulebits ;
-   int wolfram ;
+   int wolfram ;           // >= 0 if Wn rule (n is even and <= 254)
    int flipped ;           // has it been flipped already?
    int serial ;            // serial count to detect changes
 } ;

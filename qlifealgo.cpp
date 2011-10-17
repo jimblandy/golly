@@ -1147,6 +1147,23 @@ void qlifealgo::step() {
          t = increment ;
    }
 }
+
+// AKT: flip bits upside down in given rule table
+static void fliprule(char *rptr) {
+   for (int i=0; i<65536; i++) {
+      int j = ((i & 0xf) << 12) +
+               ((i & 0xf0) << 4) + ((i & 0xf00) >> 4) + ((i & 0xf000) >> 12) ;
+      if (i <= j) {
+         char fi = rptr[i] ;
+         char fj = rptr[j] ;
+         fi = ((fi & 0x30) >> 4) + ((fi & 0x3) << 4) ;
+         fj = ((fj & 0x30) >> 4) + ((fj & 0x3) << 4) ;
+         rptr[i] = fj ;
+         rptr[j] = fi ;
+      }
+   }
+}
+
 /**
  *   If we change the rule we need to mark everything dirty.
  */
@@ -1158,6 +1175,17 @@ const char *qlifealgo::setrule(const char *s) {
       return 0 ;
    serial = global_liferules.getSerial() ;
    markglobalchange() ;
+   
+   // AKT: hex rules are not vertically symmetrical
+   if (global_liferules.isHexagonal() && !global_liferules.already_flipped()) {
+      if (global_liferules.hasB0notS8) {
+         // hex rule has B0 but not S6 so we'll be using rule1 for odd gens
+         fliprule(global_liferules.rule1);
+      }
+      fliprule(global_liferules.rule0);
+      ruletable = global_liferules.rule0;
+      global_liferules.set_flipped();
+   }
 
    if (!global_liferules.hasB0notS8) {
       // current rule doesn't have B0, or it has both B0 and S8
@@ -1169,18 +1197,7 @@ const char *qlifealgo::setrule(const char *s) {
          // rules, this doesn't matter.  This is a tad tricky because
          // we want to turn both the input and the output of this function
          // upside down.
-         for (int i=0; i<65536; i++) {
-            int j = ((i & 0xf) << 12) +
-                     ((i & 0xf0) << 4) + ((i & 0xf00) >> 4) + ((i & 0xf000) >> 12) ;
-            if (i <= j) {
-               char fi = ruletable[i] ;
-               char fj = ruletable[j] ;
-               fi = ((fi & 0x30) >> 4) + ((fi & 0x3) << 4) ;
-               fj = ((fj & 0x30) >> 4) + ((fj & 0x3) << 4) ;
-               ruletable[i] = fj ;
-               ruletable[j] = fi ;
-            }
-         }
+         fliprule(ruletable) ;
          global_liferules.set_flipped() ;
       }
    } else {

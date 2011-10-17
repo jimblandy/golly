@@ -169,11 +169,11 @@ download a suitable installer for your operating system.
 
 Once CMake is installed, you can build Golly using these commands:
 
-   cd /path/to/CMakeLists.txt
-   mkdir cmakedir                (use any name for the directory)
+   cd /path/to/golly/src     (location of CMakeLists.txt)
+   mkdir cmakedir            (use any name for the directory)
    cd cmakedir
    cmake ..
-   make                          (or nmake on Windows)
+   make                      (or nmake on Windows)
 
 CMake also comes with a GUI application if you'd prefer not to
 use the command line.

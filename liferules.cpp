@@ -164,30 +164,34 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          The trick is to do both changes: invert the bits, and swap Bx for S(8-x).
          eg. B03/S238 => B123478/S0123467 (for ALL gens).
       */
-      if (rulebits & (1 << (17+8))) {
-         // B0-and-S8 rule
+      
+      // maximum number of neighbors is 6 if using hexagonal neighborhood
+      int maxn = (hexmask == 0x777) ? 8 : 6;
+      
+      if (rulebits & (1 << (17+maxn))) {
+         // B0-and-Smaxn rule
          // change rule for all gens; eg. B03/S238 => B123478/S0123467
          int newrulebits = 0;
-         for (i=0; i<9; i++) {
-            if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << (17+8-i);
-            if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (8-i);
+         for (i=0; i<=maxn; i++) {
+            if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << (17+maxn-i);
+            if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (maxn-i);
          }
          initruletable(rule0, newrulebits, hexmask, wolfram);
       } else {
-         // B0-not-S8 rule
+         // B0-not-Smaxn rule
          hasB0notS8 = true;
          // change rule for even gens; eg. B03/S23 => B1245678/S0145678
          int newrulebits = 0;
-         for (i=0; i<9; i++) {
+         for (i=0; i<=maxn; i++) {
             if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << i;
             if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (17+i);
          }
          initruletable(rule0, newrulebits, hexmask, wolfram);
          // change rule for odd gens; eg. B03/S23 => B56/S58
          newrulebits = 0;
-         for (i=0; i<9; i++) {
-            if ( rulebits & (1 << (17+8-i)) ) newrulebits |= 1 << i;
-            if ( rulebits & (1 << (   8-i)) ) newrulebits |= 1 << (17+i);
+         for (i=0; i<=maxn; i++) {
+            if ( rulebits & (1 << (17+maxn-i)) ) newrulebits |= 1 << i;
+            if ( rulebits & (1 << (   maxn-i)) ) newrulebits |= 1 << (17+i);
          }
          initruletable(rule1, newrulebits, hexmask, wolfram);
       }
