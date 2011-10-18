@@ -1525,12 +1525,12 @@ default:       return "Illegal character in readmacrocell." ;
             while (*pp > ' ') pp++ ;
             *pp = 0 ;
             
-            // AKT: need to check for B0-not-S8 rule
+            // AKT: need to check for B0-not-Smax rule
             err = global_liferules.setrule(p, this);
             if (err)
                return err;
-            if (global_liferules.hasB0notS8)
-               return "B0-not-S8 rules are not allowed in HashLife.";
+            if (global_liferules.alternate_rules)
+               return "B0-not-Smax rules are not allowed in HashLife.";
             
             break ;
          case 'G':
@@ -1664,9 +1664,8 @@ const char *hlifealgo::setrule(const char *s) {
    serial = global_liferules.getSerial() ;
    clearcache() ;
    
-   
-   if (global_liferules.hasB0notS8)
-      return "B0-not-S8 rules are not allowed in HashLife.";
+   if (global_liferules.alternate_rules)
+      return "B0-not-Smax rules are not allowed in HashLife.";
       
    if (global_liferules.isHexagonal())
       grid_type = HEX_GRID;

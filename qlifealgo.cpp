@@ -205,7 +205,7 @@ void qlifealgo::uproot() {
      }
    }
    // Need to clear this because we don't have valid population values
-   // in the new root.  This bug and its fix was found by AKT.
+   // in the new root.
    popValid = 0 ;
 }
 /*
@@ -250,8 +250,6 @@ void qlifealgo::clearall() {
    emptybrick = newbrick() ;
    nullroots[0] = nullroot = root = (supertile *)(emptytile = newtile()) ;
    uproot() ;
-   // AKT: best to set ruletable after setrule call
-   // ruletable = global_liferules.rule0 ;
    popValid = 0 ;
    llxb = 0 ;
    llyb = 0 ;
@@ -1130,8 +1128,8 @@ void qlifealgo::step() {
    poller->bailIfCalculating() ;
    bigint t = increment ;
    while (t != 0) {
-      // AKT: emulate B0-not-S8 rule by changing rule table depending on gen parity
-      if (global_liferules.hasB0notS8) {
+      if (global_liferules.alternate_rules) {
+         // emulate B0-not-Smax rule by changing rule table depending on gen parity
          if (generation.odd())
             ruletable = global_liferules.rule1 ;
          else
@@ -1148,7 +1146,9 @@ void qlifealgo::step() {
    }
 }
 
-// AKT: flip bits upside down in given rule table
+// Flip bits in given rule table.
+// This is a tad tricky because we want to turn both the input
+// and the output of this table upside down.
 static void fliprule(char *rptr) {
    for (int i=0; i<65536; i++) {
       int j = ((i & 0xf) << 12) +
@@ -1176,33 +1176,22 @@ const char *qlifealgo::setrule(const char *s) {
    serial = global_liferules.getSerial() ;
    markglobalchange() ;
    
-   // AKT: hex rules are not vertically symmetrical
-   if (global_liferules.isHexagonal() && !global_liferules.already_flipped()) {
-      if (global_liferules.hasB0notS8) {
+   // AKT: qlifealgo has an opposite interpretation of the orientation
+   // of ruletable than hlifealgo.  For vertically symmetrical rules
+   // this doesn't matter, but for hexagonal rules and Wolfram rules
+   // we need to flip the rule table(s) upside down.
+   if ( (global_liferules.isHexagonal() || global_liferules.isWolfram()) &&
+        !global_liferules.already_flipped()) {
+      if (global_liferules.alternate_rules) {
          // hex rule has B0 but not S6 so we'll be using rule1 for odd gens
          fliprule(global_liferules.rule1);
       }
       fliprule(global_liferules.rule0);
-      ruletable = global_liferules.rule0;
       global_liferules.set_flipped();
    }
-
-   if (!global_liferules.hasB0notS8) {
-      // current rule doesn't have B0, or it has both B0 and S8
-      ruletable = global_liferules.rule0 ;
-      if (!global_liferules.vertically_symmetrical() &&
-          !global_liferules.already_flipped()) {
-         // qlifealgo has an opposite interpretation of the orientation
-         // of ruletable than hlifealgo.  For vertically symmetrical
-         // rules, this doesn't matter.  This is a tad tricky because
-         // we want to turn both the input and the output of this function
-         // upside down.
-         fliprule(ruletable) ;
-         global_liferules.set_flipped() ;
-      }
-   } else {
-      // ruletable will be set in step() depending on gen parity
-   }
+   
+   // ruletable is set in step(), but play safe
+   ruletable = global_liferules.rule0 ;
    
    if (global_liferules.isHexagonal())
       grid_type = HEX_GRID;

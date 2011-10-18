@@ -45,25 +45,35 @@ public:
    // string returned by setrule is any error
    const char *setrule(const char *s, lifealgo *algo) ;
    const char *getrule() ;
-   bool vertically_symmetrical() const { return wolfram < 0 ; }  // AKT: was !wolfram
-   bool already_flipped() const { return !!flipped ; }
-   void set_flipped() { flipped = 1 ; }
+   bool already_flipped() const { return flipped ; }
+   void set_flipped() { flipped = true ; }
    int getSerial() { return serial ; }
+   
    // AKT: we need 2 tables to support B0-not-S8 rule emulation
    char rule0[65536];      // rule table for even gens if rule has B0 but not S8,
                            // or for all gens if rule has no B0, or it has B0 *and* S8
    char rule1[65536];      // rule table for odd gens if rule has B0 but not S8
-   bool hasB0notS8;        // set by setrule; true if rule has B0 but not S8
+   bool alternate_rules;   // set by setrule; true if rule has B0 but not Smax
+   
+   // AKT: support for various neighborhoods
+   enum neighborhood_masks {
+      MOORE = 0x777,       // all 8 neighbors
+      HEXAGONAL = 0x673,   // ignore NE and SW neighbors
+      VON_NEUMANN = 0x272  // 4 orthogonal neighbors
+   } ;
+
    bool isRegularLife() ;  // is this B3/S23?
-   bool isHexagonal() const { return hexmask == 0x673 ; } // is the rule hexagonal?
+   bool isHexagonal() const { return neighbormask == HEXAGONAL ; }
+   bool isWolfram() const { return wolfram >= 0 ; }
+
 private:
-   void initruletable(char *rptr, int rulebits, int hexmask, int wolfram) ;
+   void initruletable(char *rptr, int rulebits, int nmask, int wolfram) ;
    // canonical version of valid rule passed into setrule
    char canonrule[MAXRULESIZE] ;
-   int hexmask ;           // really neighbormask
+   neighborhood_masks neighbormask ;
    int rulebits ;
    int wolfram ;           // >= 0 if Wn rule (n is even and <= 254)
-   int flipped ;           // has it been flipped already?
+   bool flipped ;          // has rule table been flipped already?
    int serial ;            // serial count to detect changes
 } ;
 extern liferules global_liferules ;

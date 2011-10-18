@@ -11,7 +11,8 @@ that have a lot of regularity in time and/or space.
 <p>
 HashLife supports the same set of rules as
 <a href="QuickLife.html">QuickLife</a>, but with one exception:
-it cannot handle any rule that contains B0 but not S8.
+if a rule contains B0 it must also contain S8
+(or S6 if the rule ends with H, or S4 if it ends with V).
 
 <p>
 Note that HashLife performs very poorly on highly chaotic patterns,

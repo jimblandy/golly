@@ -28,11 +28,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 
 liferules::liferules() {
-   flipped = 0 ;
+   flipped = false ;
    serial = 1001 ;
    canonrule[0] = 0 ;
-   // AKT: no need??? if we do need it then pass NULL for 2nd arg and check algo in setrule
-   // setrule("B3/S23") ;
 }
 
 liferules::~liferules() {
@@ -50,15 +48,15 @@ static int bc(int v) {
 
 // initialize current rule table (rptr points to rule0 or rule1)
 void liferules::initruletable(char *rptr, int rulebits,
-                              int hexmask, int wolfram) {
-   int i;
-   flipped = 0 ;
+                              int nmask, int wolfram) {
+   int i ;
+   flipped = false ;
    if (wolfram >= 0) {
       for (i=0; i<0x1000; i = ((i | 0x888) + 1) & 0x1777)
          rptr[i] = (char)(1 & ((i >> 5) | (wolfram >> (i >> 8)))) ;
    } else {
       for (i=0; i<=0x777; i = (((i | 0x888) + 1) & 0x1777))
-         if (rulebits & (1 << (((i & 0x20) >> 1) + bc(i & hexmask))))
+         if (rulebits & (1 << (((i & 0x20) >> 1) + bc(i & nmask))))
             rptr[i] = 1 ;
          else
             rptr[i] = 0 ;
@@ -89,12 +87,12 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
 
    wolfram = -1 ;
    rulebits = 0 ;
-   hexmask = 0x777 ;
+   neighbormask = MOORE ;
 
    serial++ ; // allow consumers to notice change in global rule table
 
-   // need to emulate B0-not-S8 rule?
-   hasB0notS8 = false;
+   // we might need to emulate B0 rule by using two different rules for odd/even gens
+   alternate_rules = false;
 
    if (rulestring[0] == 'w' || rulestring[0] == 'W') {
       // parse Wolfram 1D rule
@@ -105,7 +103,6 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          i++ ;
       }
       if ( wolfram < 0 || wolfram > 254 || wolfram & 1 ) {
-         // when we support toroidal universe we can allow all numbers from 0..255!!!
          return "Wolfram rule must be an even number from 0 to 254." ;
       }
       if (rulestring[i] == ':') {
@@ -116,7 +113,9 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    } else {
       for (i=0; rulestring[i]; i++) {
          if (rulestring[i] == 'h' || rulestring[i] == 'H') {
-            hexmask = 0x673 ;
+            neighbormask = HEXAGONAL ;
+         } else if (rulestring[i] == 'v' || rulestring[i] == 'V') {
+            neighbormask = VON_NEUMANN ;
          } else if (rulestring[i] == 'b' || rulestring[i] == 'B' || rulestring[i] == '/') {
             if (rulestring[i]== '/' && slashcount++ > 0)
                return "Only one slash permitted in life rule." ;
@@ -143,6 +142,11 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       algo->gridwd = 0;
       algo->gridht = 0;
    }
+   
+   // set maximum number of neighbors
+   int maxneighbors = 8;
+   if (neighbormask == HEXAGONAL) maxneighbors = 6;
+   if (neighbormask == VON_NEUMANN) maxneighbors = 4;
 
    // check if rule contains B0
    if (rulebits & 1) {
@@ -164,40 +168,36 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          The trick is to do both changes: invert the bits, and swap Bx for S(8-x).
          eg. B03/S238 => B123478/S0123467 (for ALL gens).
       */
-      
-      // maximum number of neighbors is 6 if using hexagonal neighborhood
-      int maxn = (hexmask == 0x777) ? 8 : 6;
-      
-      if (rulebits & (1 << (17+maxn))) {
-         // B0-and-Smaxn rule
+      if (rulebits & (1 << (17+maxneighbors))) {
+         // B0-and-Smax rule
          // change rule for all gens; eg. B03/S238 => B123478/S0123467
          int newrulebits = 0;
-         for (i=0; i<=maxn; i++) {
-            if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << (17+maxn-i);
-            if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (maxn-i);
+         for (i=0; i<=maxneighbors; i++) {
+            if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << (17+maxneighbors-i);
+            if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (maxneighbors-i);
          }
-         initruletable(rule0, newrulebits, hexmask, wolfram);
+         initruletable(rule0, newrulebits, neighbormask, wolfram);
       } else {
-         // B0-not-Smaxn rule
-         hasB0notS8 = true;
+         // B0-not-Smax rule
+         alternate_rules = true;
          // change rule for even gens; eg. B03/S23 => B1245678/S0145678
          int newrulebits = 0;
-         for (i=0; i<=maxn; i++) {
+         for (i=0; i<=maxneighbors; i++) {
             if ( (rulebits & (1 << i     )) == 0 ) newrulebits |= 1 << i;
             if ( (rulebits & (1 << (17+i))) == 0 ) newrulebits |= 1 << (17+i);
          }
-         initruletable(rule0, newrulebits, hexmask, wolfram);
+         initruletable(rule0, newrulebits, neighbormask, wolfram);
          // change rule for odd gens; eg. B03/S23 => B56/S58
          newrulebits = 0;
-         for (i=0; i<=maxn; i++) {
-            if ( rulebits & (1 << (17+maxn-i)) ) newrulebits |= 1 << i;
-            if ( rulebits & (1 << (   maxn-i)) ) newrulebits |= 1 << (17+i);
+         for (i=0; i<=maxneighbors; i++) {
+            if ( rulebits & (1 << (17+maxneighbors-i)) ) newrulebits |= 1 << i;
+            if ( rulebits & (1 << (   maxneighbors-i)) ) newrulebits |= 1 << (17+i);
          }
-         initruletable(rule1, newrulebits, hexmask, wolfram);
+         initruletable(rule1, newrulebits, neighbormask, wolfram);
       }
    } else {
       // not doing B0 emulation so use rule0 for all gens
-      initruletable(rule0, rulebits, hexmask, wolfram);
+      initruletable(rule0, rulebits, neighbormask, wolfram);
    }
    
    // AKT: store valid rule in canonical format for getrule()
@@ -207,15 +207,16 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       while (canonrule[p]) p++ ;
    } else {
       canonrule[p++] = 'B' ;
-      for (i=0; i<=8; i++) {
+      for (i=0; i<=maxneighbors; i++) {
          if (rulebits & (1 << i)) canonrule[p++] = '0' + (char)i ;
       }
       canonrule[p++] = '/' ;
       canonrule[p++] = 'S' ;
-      for (i=0; i<=8; i++) {
+      for (i=0; i<=maxneighbors; i++) {
          if (rulebits & (1 << (17+i))) canonrule[p++] = '0' + (char)i ;
       }
-      if (hexmask != 0x777) canonrule[p++] = 'H' ;
+      if (neighbormask == HEXAGONAL) canonrule[p++] = 'H' ;
+      if (neighbormask == VON_NEUMANN) canonrule[p++] = 'V' ;
    }
    if (algo->gridwd > 0 || algo->gridht > 0) {
       // algo->setgridsize() was successfully called above, so append suffix
@@ -234,7 +235,7 @@ const char* liferules::getrule() {
 
 // B3/S23 -> (1 << 3) + (1 << (17 + 2)) + (1 << (17 + 3)) = 0x180008
 bool liferules::isRegularLife() {
-  return (hexmask == 0x777 && rulebits == 0x180008 && wolfram < 0) ;
+  return (neighbormask == MOORE && rulebits == 0x180008 && wolfram < 0) ;
 }
 
 liferules global_liferules ;
