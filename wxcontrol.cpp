@@ -1454,7 +1454,7 @@ void MainFrame::DisplayTimingInfo()
       double secs = (double)(endtime - begintime) / 1000.0;
       double gens = endgen - begingen;
       wxString s;
-      s.Printf(_("%g gens in %g secs (%g gens/sec)."), gens, secs, gens / secs);
+      s.Printf(_("%g gens in %g secs (%g gens/sec)."), gens, secs, gens/secs);
       statusptr->DisplayMessage(s);
    }
 }
@@ -1545,6 +1545,11 @@ void MainFrame::NextGeneration(bool useinc)
    // avoid doing some things if NextGeneration is called from a script;
    // ie. by a run/step command
    if (!inscript) {
+      if (useinc) {
+         // for DisplayTimingInfo
+         begintime = stopwatch->Time();
+         begingen = currlayer->algo->getGeneration().todouble();
+      }
       wxGetApp().PollerReset();
       viewptr->CheckCursor(IsActive());
    }
@@ -1596,6 +1601,11 @@ void MainFrame::NextGeneration(bool useinc)
    lifealgo::setVerbose(0);
    
    if (!inscript) {
+      if (useinc) {
+         // for DisplayTimingInfo
+         endtime = stopwatch->Time();
+         endgen = currlayer->algo->getGeneration().todouble();
+      }
       // autofit is only used when doing many gens
       if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)
          viewptr->FitInView(0);
