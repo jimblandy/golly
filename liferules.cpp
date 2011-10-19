@@ -37,7 +37,7 @@ liferules::~liferules() {
 }
 
 // returns a count of the number of bits set in given int
-static int bc(int v) {
+static int bitcount(int v) {
    int r = 0 ;
    while (v) {
       r++ ;
@@ -47,8 +47,7 @@ static int bc(int v) {
 }
 
 // initialize current rule table (rptr points to rule0 or rule1)
-void liferules::initruletable(char *rptr, int rulebits,
-                              int nmask, int wolfram) {
+void liferules::initruletable(char *rptr, int rulebits, int nmask, int wolfram) {
    int i ;
    flipped = false ;
    if (wolfram >= 0) {
@@ -56,7 +55,7 @@ void liferules::initruletable(char *rptr, int rulebits,
          rptr[i] = (char)(1 & ((i >> 5) | (wolfram >> (i >> 8)))) ;
    } else {
       for (i=0; i<=0x777; i = (((i | 0x888) + 1) & 0x1777))
-         if (rulebits & (1 << (((i & 0x20) >> 1) + bc(i & nmask))))
+         if (rulebits & (1 << (((i & 0x20) >> 1) + bitcount(i & nmask))))
             rptr[i] = 1 ;
          else
             rptr[i] = 0 ;
@@ -143,10 +142,8 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       algo->gridht = 0;
    }
    
-   // set maximum number of neighbors
-   int maxneighbors = 8;
-   if (neighbormask == HEXAGONAL) maxneighbors = 6;
-   if (neighbormask == VON_NEUMANN) maxneighbors = 4;
+   // maximum # of neighbors is the # of 1 bits in neighbormask, minus the central cell
+   int maxneighbors = bitcount(neighbormask) - 1;
 
    // check if rule contains B0
    if (rulebits & 1) {
