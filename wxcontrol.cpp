@@ -1548,7 +1548,7 @@ void MainFrame::NextGeneration(bool useinc)
       if (useinc) {
          // for DisplayTimingInfo
          begintime = stopwatch->Time();
-         begingen = currlayer->algo->getGeneration().todouble();
+         begingen = curralgo->getGeneration().todouble();
       }
       wxGetApp().PollerReset();
       viewptr->CheckCursor(IsActive());
@@ -1602,9 +1602,9 @@ void MainFrame::NextGeneration(bool useinc)
    
    if (!inscript) {
       if (useinc) {
-         // for DisplayTimingInfo
-         endtime = stopwatch->Time();
-         endgen = currlayer->algo->getGeneration().todouble();
+         // for DisplayTimingInfo (we add 1 millisec here in case it took < 1 millisec)
+         endtime = stopwatch->Time() + 1;
+         endgen = curralgo->getGeneration().todouble();
       }
       // autofit is only used when doing many gens
       if (currlayer->autofit && useinc && curralgo->getIncrement() > bigint::one)

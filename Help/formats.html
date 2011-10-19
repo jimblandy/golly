@@ -360,26 +360,28 @@ Here's a simple example file:
 </p>
 
 <p>
-See the <tt>.table</tt> files in the Rules folder for more examples.
-Empty lines and anything following the hash symbol "#" are ignored.
+See the .table files in the Rules folder for more examples.
+A detailed specification is available
+<a href="http://code.google.com/p/ruletablerepository/wiki/TheFormat">here</a>.
 
 <p>
-Required descriptors (must appear before other content):
+Empty lines and anything following the hash symbol "#" are ignored.
+These descriptors must appear before other content:
 
 <p>
 <ul>
-<li><b><tt>n_states:</tt></b> specifies the number of states in the CA
+<li><b>n_states:</b> specifies the number of states in the CA
 (from 0 to n_states-1 inclusive).</li>
 
-<li><b><tt>neighborhood:</tt></b> specifies the cell neighborhood for
-the CA update step. Must be one of: <tt>vonNeumann</tt>, <tt>Moore</tt>,
-<tt>hexagonal</tt>, <tt>oneDimensional</tt>.</li> Other neighborhoods are
+<li><b>neighborhood:</b> specifies the cell neighborhood for
+the CA update step. Must be one of: <b>vonNeumann</b>, <b>Moore</b>,
+<b>hexagonal</b>, <b>oneDimensional</b>.</li> Other neighborhoods are
 supported through emulation, using
 <a href="open:Scripts/Python/Rule-Generators/RuleTableToTree.py">RuleTableToTree.py</a>,
 see the <a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">RoadMap</a>
 for a full list.
 
-<li><b><tt>symmetries:</tt></b> can be <tt>none</tt>, <tt>permute</tt> or one of the symmetries
+<li><b>symmetries:</b> can be <b>none</b>, <b>permute</b> or one of the symmetries
 supported for the neighborhood you have chosen. For a full list, see the
 <a href="http://code.google.com/p/ruletablerepository/wiki/RoadMap">RoadMap</a>.
 </ul>
@@ -392,19 +394,19 @@ variables.
 
 <p>
 Transition lines should have states or variables separated by commas.
-If there are no variables and <tt>n_states</tt>&lt;11 then the commas can be
-omitted. Only one transition (or variable) should appear on each line.
+If there are no variables and <b>n_states</b> is less than 11 then the commas
+can be omitted. Only one transition (or variable) should appear on each line.
 Inputs are listed in the order C,N,E,S,W,C' for the von Neumann neighborhood,
-C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighborhood, C,N,NE,E,S,SW,W,C' for the
+C,N,NE,E,SE,S,SW,W,NW,C' for the Moore neighborhood, C,N,E,SE,S,W,NW,C' for the
 hexagonal neighborhood, and C,W,E,C' for the oneDimensional neighborhood.
 
 <p>
 Where the same variable appears more than once in a transition, it stands
 for the same state each time. For example, the transition in the example above
 expands to the following:
-<tt>20212->2</tt>, <tt>20213->2</tt>, <tt>20312->3</tt>, <tt>20313->3</tt>,
-<tt>30212->2</tt>, <tt>30213->2</tt>, <tt>30312->3</tt>, <tt>30313->3</tt>, and
-all 90-degree rotations of those (because of the <tt>rotate4</tt> symmetry).
+20212->2, 20213->2, 20312->3, 20313->3,
+30212->2, 30213->2, 30312->3, 30313->3, and
+all 90-degree rotations of those (because of the <b>rotate4</b> symmetry).
 
 <p>A transition can have a variable as its output
 (C') if that variable appears more than once in the transition (as in the example above),
@@ -427,7 +429,7 @@ PhD thesis:
 <p>
 If you have a C/C++ implementation of a transition function, there is a
 way to automatically produce a rule table file.
-See <tt>Rules/TableGenerators/make-ruletable.cpp</tt> for instructions.
+See <a href="edit:Rules/TableGenerators/make-ruletable.cpp">Rules/TableGenerators/make-ruletable.cpp</a> for instructions.
 
 <p>
 To share your rule tables with others, you can archive them at the public
