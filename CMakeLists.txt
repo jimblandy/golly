@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 project( golly )
 
-set( APP_VERSION 2.3b2 )
+set( APP_VERSION 2.3b3 )
 
 if(APPLE OR WIN32)
    # app names are usually capitalized on Mac OS X and Windows
@@ -17,13 +17,13 @@ set(BASE_SOURCES
    bigint.cpp generationsalgo.cpp ghashbase.cpp
    ghashdraw.cpp hlifealgo.cpp hlifedraw.cpp jvnalgo.cpp lifealgo.cpp
    lifepoll.cpp liferender.cpp liferules.cpp qlifealgo.cpp qlifedraw.cpp
-   rd_algo.cpp readpattern.cpp ruletable_algo.cpp ruletreealgo.cpp
+   readpattern.cpp ruletable_algo.cpp ruletreealgo.cpp
    util.cpp viewport.cpp writepattern.cpp
    
    bigint.h generationsalgo.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h
-   lifepoll.h liferender.h liferules.h platform.h qlifealgo.h rd_algo.h
-   readpattern.h ruletable_algo.h ruletreealgo.h util.h viewport.h
-   writepattern.h
+   lifepoll.h liferender.h liferules.h platform.h qlifealgo.h
+   readpattern.h ruletable_algo.h ruletreealgo.h
+   util.h viewport.h writepattern.h
 )
 
 # high-level GUI code used only in Golly

@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "hlifealgo.h"
 #include "jvnalgo.h"
 #include "generationsalgo.h"
-#include "rd_algo.h"
 #include "ruletable_algo.h"
 #include "ruletreealgo.h"
 
@@ -345,7 +344,6 @@ void InitAlgorithms()
    // nicer if the rest are in alphabetical order
    generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
    jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
-   rd_algo::doInitializeAlgoInfo(AlgoData::tick());
    ruletable_algo::doInitializeAlgoInfo(AlgoData::tick());
    ruletreealgo::doInitializeAlgoInfo(AlgoData::tick()) ;
 

@@ -19,7 +19,7 @@
 !include local-win.mk
 
 ### Golly-related variables: ###
-VERSION = 2.3b2
+VERSION = 2.3b3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Scripts Patterns Rules
@@ -47,7 +47,7 @@ OBJDIR = ObjWin
 BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
    liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
    ruletreealgo.h ruletable_algo.h util.h viewport.h writepattern.h \
-   generationsalgo.h rd_algo.h
+   generationsalgo.h
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
@@ -55,7 +55,7 @@ BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
-   $(OBJDIR)/generationsalgo.obj $(OBJDIR)/rd_algo.obj
+   $(OBJDIR)/generationsalgo.obj
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
    wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
    wxtimeline.h wxundo.h wxutils.h wxview.h
@@ -366,9 +366,6 @@ $(OBJDIR)/qlifedraw.obj: qlifedraw.cpp
 
 $(OBJDIR)/jvnalgo.obj: jvnalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) jvnalgo.cpp
-
-$(OBJDIR)/rd_algo.obj: rd_algo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) rd_algo.cpp
 
 $(OBJDIR)/ruletable_algo.obj: ruletable_algo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ruletable_algo.cpp
