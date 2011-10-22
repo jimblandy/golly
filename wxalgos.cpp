@@ -289,7 +289,13 @@ static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
       ReverseImageColors(image);
    #endif
 
-   wxBitmap allicons(image, 1);     // default icons are monochrome
+   // Note that all the default icons are monochrome.
+   // This is done because these icons are used for lots of different
+   // rules with different numbers of states, and at rendering time
+   // we want to replace the non-black color in each icon with the
+   // cell's state color to avoid "color shock" when switching
+   // between icon and non-icon view.
+   wxBitmap allicons(image, 1);
 
    int wd = allicons.GetWidth();
    int numicons = allicons.GetHeight() / wd;
