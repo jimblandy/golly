@@ -12,7 +12,22 @@
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
 WX_RELEASE = 2.9
-WX_DIR = /HD/wxWidgets/wxWidgets-trunk
+
+# Set WX_DIR to where your wxWidgets source files were placed by your package
+# downloader, CVS or Subversion, etc. This directory contains about 40 items
+# including a directory "art" containing .xpm files, a "wxBase.spec", etc.
+# For example, if you have a file at
+# /home/fred/wx-trunk/docs/doxygen/images/wxmac/gauge.png
+# then set WX_DIR to /home/fred/wx-trunk
+WX_DIR = /Users/munafo/devt/wx-trunk
+
+# Set BUILD_DIR to where your wxWidgets libraries and executables were
+# placed during the build process (PRIOR to doing a "make install", MacPorts
+# "activating wxWidgets" step, or equivalent) This directory should contain
+# about 800 ".o" files, and directories called demos, lib, samples, src,
+# tests and utils. For example, if you have a file at
+# /home/fred/wx-trunk/build-osx/lib/libwx_osx_cocoau_core-2.9.a then
+# set BUILD_DIR to /home/fred/wx-trunk/build-osx
 BUILD_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(BUILD_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)

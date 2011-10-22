@@ -287,7 +287,7 @@ string ruletable_algo::LoadRuleTable(string rule)
          this->neighborhood = (TNeighborhood)(found - this->neighborhood_value_keywords);
          switch(this->neighborhood) {
             default:
-            case vonNeumann: n_inputs=5; grid_type=SQUARE_GRID; break;
+            case vonNeumann: n_inputs=5; grid_type=VN_GRID; break;
             case Moore: n_inputs=9; grid_type=SQUARE_GRID; break;
             case hexagonal: n_inputs=7; grid_type=HEX_GRID; break;
             case oneDimensional: n_inputs=3; grid_type=SQUARE_GRID; break;

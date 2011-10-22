@@ -1669,6 +1669,8 @@ const char *hlifealgo::setrule(const char *s) {
       
    if (global_liferules.isHexagonal())
       grid_type = HEX_GRID;
+   else if (global_liferules.isVonNeumann())
+      grid_type = VN_GRID;
    else
       grid_type = SQUARE_GRID;
       

@@ -136,7 +136,7 @@ public:
    // use in setrule() to return the canonical version of suffix;
    // eg. ":t0020" would be converted to ":T20,0"
    
-   enum TGridType { SQUARE_GRID, TRI_GRID, HEX_GRID } ;
+   enum TGridType { SQUARE_GRID, TRI_GRID, HEX_GRID, VN_GRID } ;
    TGridType getgridtype() const { return grid_type ; }
 
 protected:

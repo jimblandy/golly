@@ -65,6 +65,7 @@ public:
 
    bool isRegularLife() ;  // is this B3/S23?
    bool isHexagonal() const { return neighbormask == HEXAGONAL ; }
+   bool isVonNeumann() const { return neighbormask == VON_NEUMANN ; }
    bool isWolfram() const { return wolfram >= 0 ; }
 
 private:

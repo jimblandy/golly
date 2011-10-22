@@ -2006,6 +2006,10 @@ void UpdateCurrentColors()
          // use hexagonal icons
          currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
          currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
+      } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
+         // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
+         currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
+         currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
       } else {
          // otherwise copy default icons from current algo
          currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);

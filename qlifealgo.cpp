@@ -1178,6 +1178,7 @@ const char *qlifealgo::setrule(const char *s) {
    
    // AKT: qlifealgo has an opposite interpretation of the orientation
    // of ruletable than hlifealgo.  For vertically symmetrical rules
+   // (such as von Neumann neighborhood -RPM)
    // this doesn't matter, but for hexagonal rules and Wolfram rules
    // we need to flip the rule table(s) upside down.
    if ( (global_liferules.isHexagonal() || global_liferules.isWolfram()) &&
@@ -1195,6 +1196,8 @@ const char *qlifealgo::setrule(const char *s) {
    
    if (global_liferules.isHexagonal())
       grid_type = HEX_GRID;
+   else if (global_liferules.isVonNeumann())
+      grid_type = VN_GRID;
    else
       grid_type = SQUARE_GRID;
 
