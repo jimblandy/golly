@@ -10,7 +10,7 @@
 <dd><a href="#rectlists"><b>Rectangle lists</b></a></dd>
 <dd><a href="#glife"><b>Using the glife package</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
-<dd><a href="#macpython"><b>Universal Python on Mac OS X</b></a></dd>
+<dd><a href="#macpython"><b>Python on Mac OS X</b></a></dd>
 <dd><a href="#copyright"><b>Python copyright notice</b></a></dd>
 </p>
 
@@ -1471,26 +1471,21 @@ while other changes are stored in memory.
 
 
 <p><a name="macpython"></a>&nbsp;<br>
-<font size=+1><b>Universal Python on Mac OS X</b></font>
+<font size=+1><b>Python on Mac OS X</b></font>
 
 <p>
 Even though Apple supply Python with OS X, it is usually not the latest version.
-If you have an Intel Mac then it's a good idea to download and install
-Universal Python 2.4 from
-<a href="http://pythonmac.org/packages/">pythonmac.org</a>.
-This will install Python 2.4 in /Library/Frameworks.
-However, Golly is linked against the Python 2.3 framework stored in
-/System/Library/Frameworks and won't use the newer Python.
-Fortunately there is a simple solution that forces Golly to load the Python 2.4
-framework.  Quit Golly, open Terminal and enter this command (on one line):
+Golly is linked against the Python 2.6 framework stored in /System/Library/Frameworks.
+If you have Python 2.7 installed in your system you can tell Golly to use it by
+quitting Golly, opening Terminal.app and entering this command (on one line):
 <p>
 <dd><b>install_name_tool -change \</b></dd>
-<dd><b>/System/Library/Frameworks/Python.framework/Versions/2.3/Python \</b></dd>
-<dd><b>/Library/Frameworks/Python.framework/Versions/2.4/Python \</b></dd>
+<dd><b>/System/Library/Frameworks/Python.framework/Versions/2.6/Python \</b></dd>
+<dd><b>/Library/Frameworks/Python.framework/Versions/2.7/Python \</b></dd>
 <dd><b>/path/to/Golly/folder/Golly.app/Contents/MacOS/Golly</b></dd>
 </p>
 <p>
-If you ever need to switch back to the system-supplied Python then just
+If you ever need to switch back to the older Python then just
 run the command again with the framework paths swapped.
 To verify which version of Python Golly is using, copy the following code,
 start up Golly and select <b>Run Clipboard</b> from the File menu:
@@ -1498,9 +1493,6 @@ start up Golly and select <b>Run Clipboard</b> from the File menu:
 <dd><b>import golly, sys</b></dd>
 <dd><b>golly.note(sys.version)</b></dd>
 </p>
-<p>
-On an Intel Mac your scripts will run significantly faster when using
-Universal Python.
 
 
 <p><a name="copyright"></a>&nbsp;<br>
