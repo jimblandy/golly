@@ -1898,7 +1898,7 @@ void hlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setAlgorithmName("HashLife") ;
    ai.setAlgorithmCreator(&creator) ;
    ai.setDefaultBaseStep(8) ;
-   ai.setDefaultMaxMem(300) ;
+   ai.setDefaultMaxMem(500) ; // MB
    ai.minstates = 2 ;
    ai.maxstates = 2 ;
    // init default color scheme

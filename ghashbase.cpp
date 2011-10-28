@@ -1685,5 +1685,5 @@ const char *ghashbase::writeNativeFormat(std::ostream &os, char *comments) {
 char ghashbase::statusline[120] ;
 void ghashbase::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.setDefaultBaseStep(8) ;
-   ai.setDefaultMaxMem(300) ;
+   ai.setDefaultMaxMem(500) ; // MB
 }
