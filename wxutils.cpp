@@ -535,11 +535,7 @@ void ProgressHandler::OnKeyDown(wxKeyEvent& event)
       wxWindow* buttwin = progdlg->FindWindow(wxID_CANCEL);
       if (buttwin) {
          cancel.SetEventObject(buttwin);
-         #if wxCHECK_VERSION(2,9,0)
-            buttwin->ProcessWindowEvent(cancel);
-         #else
-            buttwin->ProcessEvent(cancel);
-         #endif
+         buttwin->GetEventHandler()->ProcessEvent(cancel);
       }
    } else {
       event.Skip();

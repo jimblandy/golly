@@ -70,9 +70,8 @@ session and type these commands (using the correct version number):
    cd build-gtk
    ../configure --with-gtk --disable-shared --enable-unicode
    make
-   su
-   make install
-   ldconfig
+   sudo make install
+   sudo ldconfig
 
 This installs the wx libraries in a suitable directory.  It also
 installs the wx-config program which will be called by makefile-gtk

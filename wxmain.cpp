@@ -1553,10 +1553,11 @@ void MainFrame::OnActivate(wxActivateEvent& event)
 
    #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
       /* wxGTK 2.8 requires this hack to re-enable menu items after a modal
-         dialog closes.  With wxGTK 2.9 is causes deadlocks due to concurrent
+         dialog closes.  With wxGTK 2.9 it causes deadlocks due to concurrent
          calls to UpdateMenuItems() (which calls ClipboardHasText() which is
          non-reentrant).  Maybe caused by timer events not being dispatched
-         from the GUI thread?  */
+         from the GUI thread?
+      */
       if (event.GetActive()) onetimer->Start(20, wxTIMER_ONE_SHOT);
       // OnOneTimer will be called after delay of 0.02 secs
    #endif
@@ -2548,13 +2549,19 @@ void MainFrame::CreateDirControls()
                                      #else
                                         wxNO_BORDER,
                                      #endif
-                                     wxEmptyString
+                                     #if wxCHECK_VERSION(2,9,0)
+                                         // avoid seeing the wxChoice control (ugly and buggy)
+                                         wxEmptyString
+                                     #else
+                                        _T("Perl/Python scripts|*.pl;*.py")
+                                     #endif
                                     );
    if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
 
+   // AKT: above check for 2.9 should make the following unnecessary!!!???
    // With wxGTK 2.9, setting the filter in the wxGenericDirCtrl constructor
    // causes a crash, but setting it afterwards seems to work fine.
-   scriptctrl->SetFilter(_T("Perl/Python scripts|*.pl;*.py"));
+   // scriptctrl->SetFilter(_T("Perl/Python scripts|*.pl;*.py"));
    
    #ifdef __WXMSW__
       // now remove wxDIRCTRL_DIR_ONLY so we see files

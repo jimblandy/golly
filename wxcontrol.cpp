@@ -1383,12 +1383,8 @@ void MainFrame::DoPendingAction(bool restart)
                
                // process the pending command
                cmdevent.SetEventType(wxEVT_COMMAND_MENU_SELECTED);
-               cmdevent.SetEventObject(mainptr);
-               #if wxCHECK_VERSION(2,9,0)
-                  mainptr->ProcessWindowEvent(cmdevent);
-               #else
-                  mainptr->ProcessEvent(cmdevent);
-               #endif
+               cmdevent.SetEventObject(this);
+               this->GetEventHandler()->ProcessEvent(cmdevent);
                
                // restore tool/layer/edit bar flags
                showtool = saveshowtool;
