@@ -222,11 +222,7 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
          wxWindow* buttwin = GetParent()->FindWindow(wxID_OK);
          if (buttwin) {
             okevent.SetEventObject(buttwin);
-            #if wxCHECK_VERSION(2,9,0)
-               buttwin->ProcessWindowEvent(okevent);
-            #else
-               buttwin->ProcessEvent(okevent);
-            #endif
+            buttwin->GetEventHandler()->ProcessEvent(okevent);
          }
       }
 
@@ -540,11 +536,7 @@ RuleDialog::RuleDialog(wxWindow* parent)
       wxWindow* buttwin = FindWindow(wxID_HELP);
       if (buttwin) {
          buttevent.SetEventObject(buttwin);
-         #if wxCHECK_VERSION(2,9,0)
-            buttwin->ProcessWindowEvent(buttevent);
-         #else
-            buttwin->ProcessEvent(buttevent);
-         #endif
+         buttwin->GetEventHandler()->ProcessEvent(buttevent);
       }
    }
 }

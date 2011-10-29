@@ -1418,11 +1418,7 @@ void MainFrame::DoPendingAction(bool restart)
       // do the drawing
       mouseevent.SetEventType(wxEVT_LEFT_DOWN);
       mouseevent.SetEventObject(viewptr);
-      #if wxCHECK_VERSION(2,9,0)
-         viewptr->ProcessWindowEvent(mouseevent);
-      #else
-         viewptr->ProcessEvent(mouseevent);
-      #endif
+      viewptr->GetEventHandler()->ProcessEvent(mouseevent);
       while (viewptr->drawingcells) {
          wxGetApp().Yield(true);
          wxMilliSleep(5);             // don't hog CPU

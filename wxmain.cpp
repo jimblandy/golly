@@ -407,11 +407,7 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
       // call OnButton
       wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, id);
       buttevt.SetEventObject(tbbutt[id]);
-      #if wxCHECK_VERSION(2,9,0)
-         tbbutt[id]->ProcessWindowEvent(buttevt);
-      #else
-         tbbutt[id]->ProcessEvent(buttevt);
-      #endif
+      tbbutt[id]->GetEventHandler()->ProcessEvent(buttevt);
    }
 }
 
@@ -1554,8 +1550,13 @@ void MainFrame::OnActivate(wxActivateEvent& event)
    #else
       UpdateUserInterface(event.GetActive());
    #endif
-   
-   #ifdef __WXGTK__
+
+   #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
+      /* wxGTK 2.8 requires this hack to re-enable menu items after a modal
+         dialog closes.  With wxGTK 2.9 is causes deadlocks due to concurrent
+         calls to UpdateMenuItems() (which calls ClipboardHasText() which is
+         non-reentrant).  Maybe caused by timer events not being dispatched
+         from the GUI thread?  */
       if (event.GetActive()) onetimer->Start(20, wxTIMER_ONE_SHOT);
       // OnOneTimer will be called after delay of 0.02 secs
    #endif
@@ -2547,14 +2548,13 @@ void MainFrame::CreateDirControls()
                                      #else
                                         wxNO_BORDER,
                                      #endif
-                                     #if wxCHECK_VERSION(2,9,0)
-                                         // avoid seeing the wxChoice control
-                                         wxEmptyString
-                                     #else
-                                        _T("Perl/Python scripts|*.pl;*.py")
-                                     #endif
+                                     wxEmptyString
                                     );
    if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
+
+   // With wxGTK 2.9, setting the filter in the wxGenericDirCtrl constructor
+   // causes a crash, but setting it afterwards seems to work fine.
+   scriptctrl->SetFilter(_T("Perl/Python scripts|*.pl;*.py"));
    
    #ifdef __WXMSW__
       // now remove wxDIRCTRL_DIR_ONLY so we see files
@@ -2563,8 +2563,11 @@ void MainFrame::CreateDirControls()
    #endif
 
    #if defined(__WXGTK__)
-      #if !wxCHECK_VERSION(2,9,0)
-         // make sure background is white when using KDE's GTK theme
+      // make sure background is white when using KDE's GTK theme
+      #if wxCHECK_VERSION(2, 9, 0)
+         patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
+         scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
+      #else
          patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
          scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
       #endif
@@ -2708,7 +2711,7 @@ MainFrame::MainFrame()
    // this is the main viewport window (tile windows have a tileindex >= 0)
    viewptr->tileindex = -1;
    bigview = viewptr;
-   
+
    #if wxUSE_DRAG_AND_DROP
       // let users drop files onto viewport
       viewptr->SetDropTarget(new DnDFile());
