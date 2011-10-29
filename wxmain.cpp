@@ -585,6 +585,10 @@ void MainFrame::UpdateToolBar(bool active)
 bool MainFrame::ClipboardHasText()
 {
    bool hastext = false;
+   #ifdef __WXGTK__
+      // avoid re-entrancy bug in wxGTK 2.9.x
+      if (wxTheClipboard->IsOpened()) return false;
+   #endif
    if (wxTheClipboard->Open()) {
       hastext = wxTheClipboard->IsSupported(wxDF_TEXT);
       if (!hastext) {
