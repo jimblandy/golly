@@ -205,12 +205,6 @@ bool CanSwitchLayer(int index);
 void SwitchToClickedTile(int index);
 // If allowed, change current layer to clicked tile.
 
-void UpdateView();
-// Update main viewport window or all tile windows.
-
-void RefreshView();
-// Refresh main viewport window or all tile windows.
-
 void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.
 

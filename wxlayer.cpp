@@ -937,25 +937,6 @@ void DestroyTiles()
 
 // -----------------------------------------------------------------------------
 
-void UpdateView()
-{
-   // update main viewport window, including all tile windows if they exist
-   // (tile windows are children of bigview)
-   bigview->Refresh(false);
-   bigview->Update();
-}
-
-// -----------------------------------------------------------------------------
-
-void RefreshView()
-{
-   // refresh main viewport window, including all tile windows if they exist
-   // (tile windows are children of bigview)
-   bigview->Refresh(false);
-}
-
-// -----------------------------------------------------------------------------
-
 void SyncClones()
 {
    if (numclones == 0) return;

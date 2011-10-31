@@ -869,7 +869,14 @@ void MainFrame::UpdateEverything()
    GetClientSize(&wd, &ht);      // includes status bar and viewport
 
    if (wd > 0 && ht > statusptr->statusht) {
-      UpdateView();
+      bigview->Refresh(false);
+      #ifdef __WXMAC__
+         // avoid updating viewport twice if status bar is visible
+         // (statusptr->Update() also causes viewport to be updated!)
+         if (!showstatus) bigview->Update();
+      #else
+         bigview->Update();
+      #endif
       bigview->UpdateScrollBars();
    }
    
@@ -887,7 +894,14 @@ void MainFrame::UpdatePatternAndStatus()
    if (inscript || currlayer->undoredo->doingscriptchanges) return;
 
    if (!IsIconized()) {
-      UpdateView();
+      bigview->Refresh(false);
+      #ifdef __WXMAC__
+         // avoid updating viewport twice if status bar is visible
+         // (statusptr->Update() also causes viewport to be updated!)
+         if (!showstatus) bigview->Update();
+      #else
+         bigview->Update();
+      #endif
       if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
@@ -1907,7 +1921,7 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
    // fix drag and drop problem on Mac -- see DnDFile::OnDropFiles
    #ifdef __WXMAC__
       // remove colored frame
-      if (viewptr) RefreshView();
+      if (bigview) bigview->Refresh(false);
    #endif
    
    // fix menu item problem on Linux after modal dialog has closed
@@ -2571,7 +2585,7 @@ void MainFrame::CreateDirControls()
 
    #if defined(__WXGTK__)
       // make sure background is white when using KDE's GTK theme
-      #if wxCHECK_VERSION(2, 9, 0)
+      #if wxCHECK_VERSION(2,9,0)
          patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
          scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
       #else
@@ -2588,7 +2602,7 @@ void MainFrame::CreateDirControls()
       patternctrl->GetTreeCtrl()->SetIndent(6);
       scriptctrl->GetTreeCtrl()->SetIndent(6);
    #else
-      // reduce indent a lot
+      // reduce indent a lot on Windows
       patternctrl->GetTreeCtrl()->SetIndent(4);
       scriptctrl->GetTreeCtrl()->SetIndent(4);
    #endif

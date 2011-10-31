@@ -470,14 +470,11 @@ void MainFrame::DisplayPattern()
    if (!IsIconized()) {
       if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
          // only update the current tile
-         #ifdef __WXOSX__
-            viewptr->Refresh(false);
-         #elif __WXMAC__
-            // Refresh + Update is too slow
-            wxClientDC dc(viewptr);
-            DrawView(dc, viewptr->tileindex);
+         viewptr->Refresh(false);
+         #ifdef __WXMAC__
+            if (!showstatus) viewptr->Update();
+            // else let statusptr->Update() update viewport
          #else
-            viewptr->Refresh(false);
             viewptr->Update();
          #endif
       } else {
@@ -485,16 +482,18 @@ void MainFrame::DisplayPattern()
          // (tile windows are children of bigview)
          if (numlayers > 1 && (stacklayers || tilelayers)) {
             bigview->Refresh(false);
-            bigview->Update();
-         } else {
-            #ifdef __WXOSX__
-               viewptr->Refresh(false);
-            #elif __WXMAC__
-               // Refresh + Update is too slow
-               wxClientDC dc(viewptr);
-               DrawView(dc, viewptr->tileindex);
+            #ifdef __WXMAC__
+               if (!showstatus) bigview->Update();
+               // else let statusptr->Update() update viewport
             #else
-               viewptr->Refresh(false);
+               bigview->Update();
+            #endif
+         } else {
+            viewptr->Refresh(false);
+            #ifdef __WXMAC__
+               if (!showstatus) viewptr->Update();
+               // else let statusptr->Update() update viewport
+            #else
                viewptr->Update();
             #endif
          }

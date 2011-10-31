@@ -116,6 +116,25 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
+static void UpdateView()
+{
+   // update main viewport window, including all tile windows if they exist
+   // (tile windows are children of bigview)
+   bigview->Refresh(false);
+   bigview->Update();
+}
+
+// -----------------------------------------------------------------------------
+
+static void RefreshView()
+{
+   // refresh main viewport window, including all tile windows if they exist
+   // (tile windows are children of bigview)
+   bigview->Refresh(false);
+}
+
+// -----------------------------------------------------------------------------
+
 // most editing operations are limited to absolute coordinates <= 10^9 because
 // getcell and setcell only take int parameters (the limits must be smaller
 // than INT_MIN and INT_MAX to avoid boundary conditions)
