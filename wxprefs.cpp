@@ -217,7 +217,7 @@ int mingridindex;                // mingridmag - 2
 int newcursindex;
 int opencursindex;
 
-#if defined(__WXOSX__) || defined(__WXCOCOA__)
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,9,0)
    // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
    #define wxMOD_CONTROL wxMOD_RAW_CONTROL
    #define ControlDown RawControlDown
