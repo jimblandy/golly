@@ -2374,9 +2374,9 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
    realkey = event.GetKeyCode();
    int mods = event.GetModifiers();
 
-   if (realkey == WXK_SHIFT) {
-      // pressing shift key temporarily toggles the draw/pick cursors or the
-      // zoom in/out cursors; note that Windows sends multiple key-down events
+   if (realkey == WXK_SHIFT && mods == wxMOD_SHIFT) {
+      // pressing unmodified shift key temporarily toggles the draw/pick cursors or
+      // the zoom in/out cursors; note that Windows sends multiple key-down events
       // while shift key is pressed so we must be careful to toggle only once
       if (currlayer->curs == curs_pencil && oldcursor == NULL) {
          oldcursor = curs_pencil;
@@ -2395,6 +2395,14 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
          SetCursorMode(curs_zoomin);
          mainptr->UpdateUserInterface(mainptr->IsActive());
       }
+   } else if (oldcursor) {
+      // for any other key combo we restore the cursor immediately rather than
+      // wait for the shift key to be released; this avoids problems with OnKeyUp
+      // not being called if the shift key is used in a keyboard shortcut that
+      // adds a new layer or opens another window
+      SetCursorMode(oldcursor);
+      oldcursor = NULL;
+      mainptr->UpdateUserInterface(mainptr->IsActive());
    }
    
    if (debuglevel == 1) {
