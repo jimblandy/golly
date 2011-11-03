@@ -1730,7 +1730,10 @@ void PatternView::ProcessKey(int key, int modifiers)
       default:             Warning(_("Bug detected in ProcessKey!"));
    }
    
-   if (inscript && action.id != DO_NOTHING) {
+   // note that we avoid updating viewport if inscript and action.id is DO_OPENFILE
+   // otherwise problem can occur when rapidly repeating a keyboard shortcut that
+   // runs a script
+   if (inscript && action.id != DO_NOTHING && action.id != DO_OPENFILE) {
       // update viewport, status bar, scroll bars
       inscript = false;
       mainptr->UpdatePatternAndStatus();
@@ -2373,7 +2376,7 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
 
    realkey = event.GetKeyCode();
    int mods = event.GetModifiers();
-
+   
    if (realkey == WXK_SHIFT && mods == wxMOD_SHIFT) {
       // pressing unmodified shift key temporarily toggles the draw/pick cursors or
       // the zoom in/out cursors; note that Windows sends multiple key-down events
@@ -3128,7 +3131,7 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 {
    // do nothing because we'll be painting the entire viewport
    
-   //!!! why does this get called even though we always call Refresh(false)???
+   // why does this get called even though we always call Refresh(false)???
    // and why does bg still get erased (on Mac and GTK, but not Windows)???
    // note that eraseBack parameter in wxWindowMac::Refresh in window.cpp is never used!
 }
