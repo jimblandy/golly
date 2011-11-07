@@ -226,7 +226,8 @@ string ruletable_algo::LoadRuleTable(string rule)
    }
 
    string symmetries = "rotate4"; // default
-   this->n_states = 8;  // default
+   TNeighborhood neighborhood = vonNeumann;  // default
+   unsigned int n_states = 8;  // default
    map< string, vector<state> > variables;
    vector< pair< vector< vector<state> >, state > > transition_table;
    unsigned int n_inputs=0;
@@ -257,7 +258,7 @@ string ruletable_algo::LoadRuleTable(string rule)
       else if(starts_with(line,n_states_keyword))
       {
          // parse the rest of the line
-         if(sscanf(line.c_str()+n_states_keyword.length(),"%d",&this->n_states)!=1)
+         if(sscanf(line.c_str()+n_states_keyword.length(),"%d",&n_states)!=1)
          {
             ostringstream oss;
             oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
@@ -284,8 +285,8 @@ string ruletable_algo::LoadRuleTable(string rule)
             oss << "Error reading " << full_filename << " on line " << lineno << ": unsupported neighborhood";
             return oss.str();
          }
-         this->neighborhood = (TNeighborhood)(found - this->neighborhood_value_keywords);
-         switch(this->neighborhood) {
+         neighborhood = (TNeighborhood)(found - this->neighborhood_value_keywords);
+         switch(neighborhood) {
             default:
             case vonNeumann: n_inputs=5; grid_type=VN_GRID; break;
             case Moore: n_inputs=9; grid_type=SQUARE_GRID; break;
@@ -304,7 +305,7 @@ string ruletable_algo::LoadRuleTable(string rule)
          }
          string remaining(line.begin()+symmetries_keyword.length(),line.end());
          remaining = trim(remaining); // (allow for space between : and value)
-         string neighborhood_as_string = this->neighborhood_value_keywords[this->neighborhood];
+         string neighborhood_as_string = this->neighborhood_value_keywords[neighborhood];
          vector<string>::const_iterator found = find(
             available_symmetries[neighborhood_as_string].begin(),
             available_symmetries[neighborhood_as_string].end(), remaining );
@@ -351,7 +352,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                   oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
                   return oss.str();
                }
-               if(s<0 || s>=this->n_states)
+               if(s<0 || s>=n_states)
                {
                   ostringstream oss;
                   oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state value out of range";
@@ -371,7 +372,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing\nbefore first transition";
             return oss.str();
          }
-         if(this->n_states<=10 && variables.empty() && line.find(',')==string::npos)
+         if(n_states<=10 && variables.empty() && line.find(',')==string::npos)
          {
             // if there are only single-digit states and no variables then can use comma-free form:
             // e.g. 012345 for 0,1,2,3,4 -> 5
@@ -444,7 +445,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                         oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
                         return oss.str();
                      }
-                     if(s<0 || s>=this->n_states)
+                     if(s<0 || s>=n_states)
                      {
                         ostringstream oss;
                         oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
@@ -473,7 +474,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                         << " - output must be state, single-state variable or bound variable";
                      return oss.str();
                   }
-                  if(s<0 || s>=this->n_states)
+                  if(s<0 || s>=n_states)
                   {
                      ostringstream oss;
                      oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
@@ -511,7 +512,9 @@ string ruletable_algo::LoadRuleTable(string rule)
       oss << "Error reading " << full_filename << ": one or more of n_states, neighborhood or symmetries missing";
       return oss.str();
    }
-   
+
+   this->neighborhood = neighborhood;
+   this->n_states = n_states;
    PackTransitions(symmetries,n_inputs,transition_table);
 
    return string(""); // success
@@ -654,7 +657,9 @@ const char* ruletable_algo::DefaultRule() {
 }
 
 ruletable_algo::ruletable_algo()
+   : n_states(8), neighborhood(vonNeumann), n_compressed_rules(0)
 {
+   maxCellStates = n_states;
 }
 
 ruletable_algo::~ruletable_algo()

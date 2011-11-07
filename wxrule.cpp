@@ -598,6 +598,7 @@ void RuleDialog::CreateControls()
                              wxDefaultPosition, wxSize(160,wxDefaultCoord), namearray);
    nameindex = -1;
    UpdateName();        // careful -- this uses ruletext
+   UpdateAlgo();
 
    addtext = new wxTextCtrl(this, RULE_ADD_TEXT, wxEmptyString,
                             wxDefaultPosition, wxSize(160,wxDefaultCoord));
