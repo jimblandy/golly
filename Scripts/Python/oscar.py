@@ -73,6 +73,10 @@ def oscillating():
 
    # use Golly's hash command (3 times faster than above code)
    h = g.hash(prect)
+
+   # check if outer-totalistic rule has B0 but not S8
+   rule = g.getrule().split(":")[0]
+   hasB0notS8 = rule.startswith("B0") and (rule.find("/") > 1) and not rule.endswith("8")
    
    # determine where to insert h into hashlist
    pos = 0
@@ -94,15 +98,16 @@ def oscillating():
             (pbox.wd == boxlist[pos].wd) and \
             (pbox.ht == boxlist[pos].ht):
             period = int(g.getgen()) - genlist[pos]
+            
+            if hasB0notS8 and (period % 2 > 0) and (pbox == boxlist[pos]):
+               # ignore this hash value because B0-and-not-S8 rules are
+               # emulated by using different rules for odd and even gens,
+               # so it's possible to have identical patterns at gen G and
+               # gen G+p if p is odd
+               return False
+            
             if period == 1:
                if pbox == boxlist[pos]:
-                  rule = g.getrule().split(":")[0]
-                  if rule.startswith("B0") and not rule.endswith("8"):
-                     # ignore this hash value because B0-and-not-S8 rules are
-                     # emulated by using different rules for odd and even gens,
-                     # so it's possible for a spaceship to have the same pattern
-                     # in consecutive gens
-                     return False
                   g.show("The pattern is stable.")
                else:
                   show_spaceship_speed(1, 0, 0)

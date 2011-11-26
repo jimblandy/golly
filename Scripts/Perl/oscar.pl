@@ -87,6 +87,11 @@ sub oscillating {
 
    # use g_hash command (5 times faster than above code)
    my $h = g_hash(@pbox);
+
+   # check if outer-totalistic rule has B0 but not S8
+   my $rule = g_getrule();
+   my ($prefix, $suffix) = split(':', $rule, 2);
+   my $hasB0notS8 = ($prefix =~ m/^B0/ and $prefix =~ m|/| and $prefix !~ m/8$/);
    
    # determine where to insert h into hashlist
    my $pos = 0;
@@ -113,18 +118,20 @@ sub oscillating {
             my $currgen = Math::BigInt->new(g_getgen());
             my $bigp = $currgen->bsub($genlist[$pos]);
             my $period = $bigp->numify();
+            
+            if ($hasB0notS8 and ($period % 2) and
+                $pbox[0] == $rect[0] and $pbox[1] == $rect[1] and
+                $pbox[2] == $rect[2] and $pbox[3] == $rect[3]) {
+               # ignore this hash value because B0-and-not-S8 rules are
+               # emulated by using different rules for odd and even gens,
+               # so it's possible to have identical patterns at gen G and
+               # gen G+p if p is odd
+               return 0;
+            }
+            
             if ($period == 1) {
                if ($pbox[0] == $rect[0] and $pbox[1] == $rect[1] and
                    $pbox[2] == $rect[2] and $pbox[3] == $rect[3]) {
-                  my $rule = g_getrule();
-                  my ($prefix, $suffix) = split(':', $rule, 2);
-                  if ($prefix =~ m/^B0/ and $prefix !~ m/8$/) {
-                     # ignore this hash value because B0-and-not-S8 rules are
-                     # emulated by using different rules for odd and even gens,
-                     # so it's possible for a spaceship to have the same pattern
-                     # in consecutive gens
-                     return 0;
-                  }
                   g_show("The pattern is stable.");
                } else {
                   show_spaceship_speed(1, 0, 0);
