@@ -408,8 +408,8 @@ const wxString UNNAMED = _("UNNAMED");    // unnamed rule
 const int HGAP = 12;
 const int BIGVGAP = 12;
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
-   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.x;
    // only happens when a wxStaticText/wxButton box is next to a wxChoice box
    #define FIX_ALIGN_BUG wxBOTTOM,4
 #else

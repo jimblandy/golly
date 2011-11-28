@@ -2570,8 +2570,8 @@ void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
    #define ALL_TEXT -1,-1
 #endif
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
-   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
+   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.x;
    // eg. when a wxStaticText box is next to a wxChoice box
    #define FIX_ALIGN_BUG wxBOTTOM,4
 #else
@@ -4131,7 +4131,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
    keybox->Add(keycombo, 0, wxALIGN_CENTER, 0);
 
    wxBoxSizer* actbox = new wxBoxSizer(wxVERTICAL);
-#ifdef __WXMAC__
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
    actbox->AddSpacer(2);
 #endif
    actbox->Add(new wxStaticText(panel, wxID_STATIC, _("Action")), 0, wxALIGN_CENTER, 0);

@@ -2606,14 +2606,6 @@ const int HGAP = 12;    // space left and right of vertically stacked boxes
    const int STDHGAP = 10;
 #endif
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0)
-   // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.0+;
-   // only happens when a wxStaticText/wxButton box is next to a wxChoice box
-   #define FIX_ALIGN_BUG wxBOTTOM,4
-#else
-   #define FIX_ALIGN_BUG wxALL,0
-#endif
-
 const int BITMAP_WD = 60;     // width of bitmap in color buttons
 const int BITMAP_HT = 20;     // height of bitmap in color buttons
 
