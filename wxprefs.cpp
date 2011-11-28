@@ -3283,7 +3283,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
    
    // on opening pattern
    
-   wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening a pattern file:"));
+   wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening a pattern file or the clipboard:"));
    wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
    
    wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL, _("Remove selection"));

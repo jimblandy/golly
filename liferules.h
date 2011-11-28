@@ -23,9 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 /**
  *   This class implements the rules supported by QuickLife and HashLife.
- *   Currently this is statically instantiated and shared by those two
- *   algorithms, but there is no absolute requirement for this.
- *
  *   A rule lookup table is used for computing a new 2x2 grid from
  *   a provided 4x4 grid (two tables are used to emulate B0-not-Smax rules).
  *   The input is a 16-bit integer, with the most significant bit the
@@ -45,9 +42,6 @@ public:
    // string returned by setrule is any error
    const char *setrule(const char *s, lifealgo *algo) ;
    const char *getrule() ;
-   bool already_flipped() const { return flipped ; }
-   void set_flipped() { flipped = true ; }
-   int getSerial() { return serial ; }
    
    // AKT: we need 2 tables to support B0-not-Smax rule emulation
    // where max is 8, 6 or 4 depending on the neighborhood
@@ -75,8 +69,5 @@ private:
    neighborhood_masks neighbormask ;
    int rulebits ;
    int wolfram ;           // >= 0 if Wn rule (n is even and <= 254)
-   bool flipped ;          // has rule table been flipped already?
-   int serial ;            // serial count to detect changes
 } ;
-extern liferules global_liferules ;
 #endif

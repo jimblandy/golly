@@ -46,13 +46,6 @@ bool ValidRule(wxString& rule)
    // return true if given rule is valid in at least one algorithm
    // and convert rule to canonical form
    
-   wxString oldrule = wxEmptyString;
-   if (currlayer->algtype == QLIFE_ALGO || currlayer->algtype == HLIFE_ALGO) {
-      // qlife and hlife share global_liferules, so we need to save
-      // and restore the current rule -- yuk
-      oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
-   }
-   
    for (int i = 0; i < NumAlgos(); i++) {
       lifealgo* tempalgo = CreateNewUniverse(i);
       const char* err = tempalgo->setrule( rule.mb_str(wxConvLocal) );
@@ -60,13 +53,11 @@ bool ValidRule(wxString& rule)
          // convert rule to canonical form
          rule = wxString(tempalgo->getrule(),wxConvLocal);
          delete tempalgo;
-         if (!oldrule.IsEmpty()) currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
          return true;
       }
       delete tempalgo;
    }
    
-   if (!oldrule.IsEmpty()) currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
    return false;
 }
 
@@ -598,7 +589,6 @@ void RuleDialog::CreateControls()
                              wxDefaultPosition, wxSize(160,wxDefaultCoord), namearray);
    nameindex = -1;
    UpdateName();        // careful -- this uses ruletext
-   UpdateAlgo();
 
    addtext = new wxTextCtrl(this, RULE_ADD_TEXT, wxEmptyString,
                             wxDefaultPosition, wxSize(160,wxDefaultCoord));
@@ -1050,17 +1040,21 @@ bool RuleDialog::TransferDataFromWindow()
    }
    
    if (algoindex == currlayer->algtype) {
-      // new rule should be valid in current algorithm
+      // check if new rule is still valid in current algorithm
       const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
-      if (!err) {
-         // switch to default colors for new rule
-         UpdateLayerColors();
+      if (err) {
+         // this can happen if the rule's table/tree file was deleted,
+         // or was edited and some sort of error introduced
+         Warning(_("This rule is no longer valid!"));
+         ruletext->SetFocus();
+         ruletext->SetSelection(-1,-1);
+         return false;
+      } else {
          return true;
       }
-      Warning(_("Bug detected in TransferDataFromWindow!"));
-      return false;
    } else {
       // change the current algorithm and switch to the new rule
+      // (if the new rule is invalid then the algo's default rule will be used)
       mainptr->ChangeAlgorithm(algoindex, newrule);
       return true;
    }
@@ -1079,10 +1073,11 @@ bool ChangeRule()
       // and possibly the current algorithm as well
       return true;
    } else {
-      // user hit Cancel so restore rule and name array
-      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      // user hit Cancel so restore name array and rule
       namedrules.Clear();
       namedrules = oldnames;
-      return false;
+      return !RestoreRule(oldrule);
+      // note that we return true if RestoreRule failed and had to
+      // switch to the current algorithm's default rule
    }
 }

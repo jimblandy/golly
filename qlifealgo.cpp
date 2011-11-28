@@ -231,7 +231,6 @@ void qlifealgo::clearall() {
       free(memused) ;
       memused = nu ;
    }
-   serial = 0 ;
    generation = 0 ;
    increment = 1 ;
    tilelist = 0 ;
@@ -1128,14 +1127,14 @@ void qlifealgo::step() {
    poller->bailIfCalculating() ;
    bigint t = increment ;
    while (t != 0) {
-      if (global_liferules.alternate_rules) {
+      if (qliferules.alternate_rules) {
          // emulate B0-not-Smax rule by changing rule table depending on gen parity
          if (generation.odd())
-            ruletable = global_liferules.rule1 ;
+            ruletable = qliferules.rule1 ;
          else
-            ruletable = global_liferules.rule0 ;
+            ruletable = qliferules.rule0 ;
       } else {
-         ruletable = global_liferules.rule0 ;
+         ruletable = qliferules.rule0 ;
       }
       dogen() ;
       if (poller->isInterrupted())
@@ -1168,35 +1167,30 @@ static void fliprule(char *rptr) {
  *   If we change the rule we need to mark everything dirty.
  */
 const char *qlifealgo::setrule(const char *s) {
-   
-   const char* err = global_liferules.setrule(s, this);
+   const char* err = qliferules.setrule(s, this);
    if (err) return err;
-   if (serial == global_liferules.getSerial())
-      return 0 ;
-   serial = global_liferules.getSerial() ;
+
    markglobalchange() ;
    
-   // AKT: qlifealgo has an opposite interpretation of the orientation
-   // of ruletable than hlifealgo.  For vertically symmetrical rules
-   // (such as von Neumann neighborhood -RPM)
-   // this doesn't matter, but for hexagonal rules and Wolfram rules
-   // we need to flip the rule table(s) upside down.
-   if ( (global_liferules.isHexagonal() || global_liferules.isWolfram()) &&
-        !global_liferules.already_flipped()) {
-      if (global_liferules.alternate_rules) {
+   // AKT: qlifealgo has an opposite interpretation of the orientation of
+   // a rule table assumed by qliferules.setrule.  For vertically symmetrical
+   // rules such as the Moore or von Neumann neighborhoods this doesn't matter,
+   // but for hexagonal rules and Wolfram rules we need to flip the rule table(s)
+   // upside down.
+   if ( qliferules.isHexagonal() || qliferules.isWolfram() ) {
+      if (qliferules.alternate_rules) {
          // hex rule has B0 but not S6 so we'll be using rule1 for odd gens
-         fliprule(global_liferules.rule1);
+         fliprule(qliferules.rule1);
       }
-      fliprule(global_liferules.rule0);
-      global_liferules.set_flipped();
+      fliprule(qliferules.rule0);
    }
    
    // ruletable is set in step(), but play safe
-   ruletable = global_liferules.rule0 ;
+   ruletable = qliferules.rule0 ;
    
-   if (global_liferules.isHexagonal())
+   if (qliferules.isHexagonal())
       grid_type = HEX_GRID;
-   else if (global_liferules.isVonNeumann())
+   else if (qliferules.isVonNeumann())
       grid_type = VN_GRID;
    else
       grid_type = SQUARE_GRID;

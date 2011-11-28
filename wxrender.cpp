@@ -470,6 +470,8 @@ void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
    currdc->DrawBitmap(*pixmap, x, y);
 }
 
+// -----------------------------------------------------------------------------
+
 // called from wx_render::pixblit to magnify given pixmap by pmscale (2, 4, ... 2^MAX_MAG)
 void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
 {

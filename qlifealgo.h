@@ -230,7 +230,7 @@ public:
    virtual void setMaxMemory(int m) ;
    virtual int getMaxMemory() { return maxmemory >> 20 ; }
    virtual const char *setrule(const char *s) ;
-   virtual const char *getrule() { return global_liferules.getrule() ; }
+   virtual const char *getrule() { return qliferules.getrule() ; }
    virtual void step() ;
    virtual void* getcurrentstate() { return 0 ; }
    virtual void setcurrentstate(void *) {}
@@ -299,6 +299,6 @@ private:
    int quickb, deltaforward ;
    int llbits, llsize ;
    char *llxb, *llyb ;
-   int serial ; // last serial value from global_rules
+   liferules qliferules ;
 } ;
 #endif

@@ -324,7 +324,8 @@ void Selection::Advance()
    
    // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
-   tempalgo->setrule(currlayer->algo->getrule());
+   if (tempalgo->setrule(currlayer->algo->getrule()))
+      tempalgo->setrule(tempalgo->DefaultRule());
    
    // copy live cells in selection to temporary universe
    if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -458,7 +459,8 @@ void Selection::AdvanceOutside()
       // copy current pattern to oldalgo, using same type and gen count
       // so we can switch to oldalgo if user decides to abort below
       oldalgo = CreateNewUniverse(currlayer->algtype);
-      oldalgo->setrule(currlayer->algo->getrule());
+      if (oldalgo->setrule(currlayer->algo->getrule()))
+         oldalgo->setrule(oldalgo->DefaultRule());
       oldalgo->setGeneration( currlayer->algo->getGeneration() );
       if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                               currlayer->algo, oldalgo, false, _("Saving pattern")) ) {
@@ -469,7 +471,8 @@ void Selection::AdvanceOutside()
    
    // create a new universe of same type
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
-   newalgo->setrule(currlayer->algo->getrule());
+   if (newalgo->setrule(currlayer->algo->getrule()))
+      newalgo->setrule(newalgo->DefaultRule());
    newalgo->setGeneration( currlayer->algo->getGeneration() );
    
    // copy (and kill) live cells in selection to new universe
@@ -875,7 +878,8 @@ void Selection::Shrink(bool fit)
                                           QLIFE_ALGO);
    // make sure temporary universe has same # of cell states
    if (currlayer->algo->NumCellStates() > 2)
-      tempalgo->setrule(currlayer->algo->getrule());
+      if (tempalgo->setrule(currlayer->algo->getrule()))
+         tempalgo->setrule(tempalgo->DefaultRule());
    
    // copy live cells in selection to temporary universe
    if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -1189,7 +1193,8 @@ void Selection::ClearOutside()
    
    // create a new universe of same type
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
-   newalgo->setrule(currlayer->algo->getrule());
+   if (newalgo->setrule(currlayer->algo->getrule()))
+      newalgo->setrule(newalgo->DefaultRule());
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -1712,7 +1717,8 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
       // selection encloses all of pattern so we can flip into new universe
       // (must be same type) without killing live cells in selection
       lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
-      newalgo->setrule(currlayer->algo->getrule());
+      if (newalgo->setrule(currlayer->algo->getrule()))
+         newalgo->setrule(newalgo->DefaultRule());
       newalgo->setGeneration( currlayer->algo->getGeneration() );
 
       if ( FlipRect(topbottom, currlayer->algo, newalgo, false, itop, ileft, ibottom, iright) ) {
@@ -1733,7 +1739,8 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
                                              QLIFE_ALGO);
       // make sure temporary universe has same # of cell states
       if (currlayer->algo->NumCellStates() > 2)
-         tempalgo->setrule(currlayer->algo->getrule());
+         if (tempalgo->setrule(currlayer->algo->getrule()))
+            tempalgo->setrule(tempalgo->DefaultRule());
 
       if ( FlipRect(topbottom, currlayer->algo, tempalgo, true, itop, ileft, ibottom, iright) ) {
          // find pattern edges in temporary universe (could be much smaller)
@@ -1836,7 +1843,8 @@ bool Selection::RotatePattern(bool clockwise,
 {
    // create new universe of same type as current universe
    lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
-   newalgo->setrule(currlayer->algo->getrule());
+   if (newalgo->setrule(currlayer->algo->getrule()))
+      newalgo->setrule(newalgo->DefaultRule());
 
    // set same gen count
    newalgo->setGeneration( currlayer->algo->getGeneration() );
@@ -2042,7 +2050,8 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
                                   QLIFE_ALGO);
       // make sure universe has same # of cell states
       if (currlayer->algo->NumCellStates() > 2)
-         oldalgo->setrule(currlayer->algo->getrule());
+         if (oldalgo->setrule(currlayer->algo->getrule()))
+            oldalgo->setrule(oldalgo->DefaultRule());
       if ( !viewptr->CopyRect(otop, oleft, obottom, oright, currlayer->algo, oldalgo,
                               false, _("Saving part of pattern")) ) {
          delete oldalgo;
@@ -2057,7 +2066,8 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
                                           QLIFE_ALGO);
    // make sure temporary universe has same # of cell states
    if (currlayer->algo->NumCellStates() > 2)
-      tempalgo->setrule(currlayer->algo->getrule());
+      if (tempalgo->setrule(currlayer->algo->getrule()))
+         tempalgo->setrule(tempalgo->DefaultRule());
    
    // copy (and kill) live cells in selection to temporary universe,
    // rotating the new coords by +/- 90 degrees

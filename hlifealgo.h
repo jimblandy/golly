@@ -175,7 +175,7 @@ public:
    virtual void setMaxMemory(int m) ;
    virtual int getMaxMemory() { return maxmem >> 20 ; }
    virtual const char *setrule(const char *s) ;
-   virtual const char *getrule() { return global_liferules.getrule() ; }
+   virtual const char *getrule() { return hliferules.getrule() ; }
    virtual void step() ;
    virtual void* getcurrentstate() { return root ; }
    virtual void setcurrentstate(void *n) ;
@@ -247,7 +247,6 @@ private:
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
    static char statusline[] ;
-   int serial ; // serialization from global liferules
 //
    void leafres(leaf *n) ;
    void resize() ;
@@ -299,5 +298,6 @@ private:
    void unpack8x8(unsigned short nw, unsigned short ne,
                   unsigned short sw, unsigned short se,
                   unsigned int *top, unsigned int *bot) ;
+   liferules hliferules ;
 } ;
 #endif

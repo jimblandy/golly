@@ -467,8 +467,7 @@ void InitAlgorithms()
 
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck)
 {
-   lifealgo* newalgo = NULL;
-   newalgo = algoinfo[algotype]->creator();
+   lifealgo* newalgo = algoinfo[algotype]->creator();
 
    if (newalgo == NULL) Fatal(_("Failed to create new universe!"));
 

@@ -173,7 +173,7 @@ void MainFrame::CreateUniverse()
    currlayer->algo = CreateNewUniverse(currlayer->algtype);
    
    // ensure new universe uses same rule (and thus same # of cell states)
-   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+   RestoreRule(oldrule);
 
    // increment has been reset to 1 but that's probably not always desirable
    // so set increment using current step size
@@ -211,8 +211,6 @@ void MainFrame::NewPattern(const wxString& title)
 
    // clear all undo/redo history
    currlayer->undoredo->ClearUndoRedo();
-
-   // rule doesn't change so no need to call setrule
 
    if (newremovesel) currlayer->currsel.Deselect();
    if (newcurs) currlayer->curs = newcurs;
@@ -360,7 +358,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
 
    if (IsImageFile(path)) {
       // ensure new universe uses same rule
-      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      RestoreRule(oldrule);
       LoadImage(path);
       viewptr->nopattupdate = false;
    } else {
@@ -383,7 +381,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
             currlayer->algtype = oldalgo;
             delete currlayer->algo;
             currlayer->algo = CreateNewUniverse(currlayer->algtype);
-            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            RestoreRule(oldrule);
             // Warning( wxString(err,wxConvLocal) );
             // current error and original error are not necessarily meaningful
             // so report a more generic error

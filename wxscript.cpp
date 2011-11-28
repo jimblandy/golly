@@ -282,7 +282,7 @@ const char* GSF_setrule(char* rulestring)
                // change the current algorithm and switch to the new rule
                mainptr->ChangeAlgorithm(i, wxString(rulestring,wxConvLocal));
                if (i != currlayer->algtype) {
-                  currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+                  RestoreRule(oldrule);
                   return "Algorithm could not be changed (pattern is too big to convert).";
                } else {
                   ChangeWindowTitle(wxEmptyString);
@@ -292,12 +292,15 @@ const char* GSF_setrule(char* rulestring)
             }
          }
       }
-      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      RestoreRule(oldrule);
       return "Given rule is not valid in any algorithm.";
    }
 
+   // check if the rule string changed, or the number of states changed
+   // (the latter might happen if user edited a table/tree file)
    wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
-   if (oldrule != newrule) {
+   int newmaxstate = currlayer->algo->NumCellStates() - 1;
+   if (oldrule != newrule || oldmaxstate != newmaxstate) {
       // show new rule in main window's title but don't change name
       ChangeWindowTitle(wxEmptyString);
 
@@ -308,7 +311,6 @@ const char* GSF_setrule(char* rulestring)
 
       // rule change might have changed the number of cell states;
       // if there are fewer states then pattern might change
-      int newmaxstate = currlayer->algo->NumCellStates() - 1;
       if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
          mainptr->ReduceCellStates(newmaxstate);
       }

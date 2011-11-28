@@ -201,8 +201,8 @@ void MainFrame::ResetPattern(bool resetundo)
    currlayer->savestart = !currlayer->startfile.IsEmpty();
    
    // restore settings saved by SaveStartingPattern
+   RestoreRule(currlayer->startrule);
    currlayer->currname = currlayer->startname;
-   currlayer->algo->setrule(currlayer->startrule.mb_str(wxConvLocal));
    currlayer->dirty = currlayer->startdirty;
    if (restoreview) {
       viewptr->SetPosMag(currlayer->startx, currlayer->starty, currlayer->startmag);
@@ -335,7 +335,11 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
       }
       // create a new universe of same type and same rule
       lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
-      newalgo->setrule(currlayer->algo->getrule());
+      const char* err = newalgo->setrule(currlayer->algo->getrule());
+      if (err) {
+         delete newalgo;
+         return "Current rule is no longer valid!";
+      }
       newalgo->setGeneration(newgen);
       // copy pattern
       if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
@@ -1841,9 +1845,11 @@ void MainFrame::ShowRuleDialog()
       // the user might have simply added/deleted a named rule
       SetWindowTitle(wxEmptyString);
       
-      // check if rule actually changed
+      // check if the rule string changed, or the number of states changed
+      // (the latter might happen if user edited a table/tree file)
       wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
-      if (oldrule != newrule) {
+      int newmaxstate = currlayer->algo->NumCellStates() - 1;
+      if (oldrule != newrule || oldmaxstate != newmaxstate) {
          // if grid is bounded then remove any live cells outside grid edges
          if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             ClearOutsideGrid();
@@ -1851,18 +1857,21 @@ void MainFrame::ShowRuleDialog()
          
          // rule change might have changed the number of cell states;
          // if there are fewer states then pattern might change
-         int newmaxstate = currlayer->algo->NumCellStates() - 1;
          if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
             ReduceCellStates(newmaxstate);
          }
-         
-         // pattern might have changed or new rule might have changed colors
-         UpdateEverything();
          
          if (allowundo) {
             currlayer->undoredo->RememberRuleChange(oldrule);
          }
       }
+
+      // switch to default colors and icons for new rule (we need to do this even if
+      // oldrule == newrule in case there's a new/changed .colors or .icons file)
+      UpdateLayerColors();
+      
+      // pattern or colors or icons might have changed
+      UpdateEverything();
    }
 }
 
@@ -1917,9 +1926,9 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
    lifealgo* newalgo = CreateNewUniverse(newalgotype);
    
    if (inundoredo) {
-      // switch to given newrule (no error should occur)
+      // switch to given newrule
       const char* err = newalgo->setrule( newrule.mb_str(wxConvLocal) );
-      if (err) Warning(_("Bug detected in ChangeAlgorithm!"));
+      if (err) newalgo->setrule( newalgo->DefaultRule() );
    } else {
       const char* err;
       if (newrule.IsEmpty()) {

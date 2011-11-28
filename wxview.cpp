@@ -787,8 +787,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
    }
    
    // restore rule now in case error occurred
-   // (only needed because qlife and hlife share a global rule table)
-   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+   RestoreRule(oldrule);
 
    wxRemoveFile(mainptr->clipfile);
 

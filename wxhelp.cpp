@@ -447,7 +447,7 @@ void LoadRule(const wxString& rulestring)
                // change the current algorithm and switch to the new rule
                mainptr->ChangeAlgorithm(i, rulestring);
                if (i != currlayer->algtype) {
-                  currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+                  RestoreRule(oldrule);
                   Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
                   return;
                } else {
@@ -459,7 +459,7 @@ void LoadRule(const wxString& rulestring)
          }
       }
       // should only get here if table/tree file contains some sort of error
-      currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+      RestoreRule(oldrule);
       Warning(_("Rule is not valid in any algorithm: ") + rulestring);
       return;
    }

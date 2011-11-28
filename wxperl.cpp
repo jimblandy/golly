@@ -712,10 +712,6 @@ XS(pl_load)
    // create temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
    // readpattern will call setrule
-   // tempalgo->setrule(currlayer->algo->getrule());
-
-   // readpattern might change rule
-   wxString oldrule = wxString(currlayer->algo->getrule(), wxConvLocal);
 
    // read pattern into temporary universe
    const char* err = readpattern(FILENAME, *tempalgo);
@@ -730,9 +726,6 @@ XS(pl_load)
          }
       }
    }
-
-   // restore rule
-   currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
 
    if (err) {
       delete tempalgo;
@@ -772,7 +765,8 @@ XS(pl_store)
 
    // create temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
-   tempalgo->setrule(currlayer->algo->getrule());
+   const char* err = tempalgo->setrule(currlayer->algo->getrule());
+   if (err) tempalgo->setrule(tempalgo->DefaultRule());
 
    // copy cell array into temporary universe
    bool multistate = ((av_len(inarray) + 1) & 1) == 1;
@@ -809,7 +803,7 @@ XS(pl_store)
    pattern_format format = savexrle ? XRLE_format : RLE_format;
    // if grid is bounded then force XRLE_format so that position info is recorded
    if (tempalgo->gridwd > 0 || tempalgo->gridht > 0) format = XRLE_format;
-   const char* err = writepattern(FILENAME, *tempalgo, format, no_compression,
+   err = writepattern(FILENAME, *tempalgo, format, no_compression,
                         top.toint(), left.toint(), bottom.toint(), right.toint());
    delete tempalgo;
    if (err) PERL_ERROR(err);
@@ -1258,7 +1252,8 @@ XS(pl_evolve)
 
    // create a temporary universe of same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
-   tempalgo->setrule(currlayer->algo->getrule());
+   const char* err = tempalgo->setrule(currlayer->algo->getrule());
+   if (err) tempalgo->setrule(tempalgo->DefaultRule());
 
    // copy cell array into temporary universe
    bool multistate = ((av_len(inarray) + 1) & 1) == 1;
@@ -1314,7 +1309,7 @@ XS(pl_evolve)
 
    // convert new pattern into a new cell array
    AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
-   const char* err = ExtractCellArray(outarray, tempalgo);
+   err = ExtractCellArray(outarray, tempalgo);
    delete tempalgo;
    if (err) PERL_ERROR(err);
 
@@ -1681,13 +1676,15 @@ XS(pl_getclip)
    // create a temporary universe for storing clipboard pattern;
    // GetClipboardPattern assumes it is same type as current universe
    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
-   tempalgo->setrule(currlayer->algo->getrule());
+   const char* err = tempalgo->setrule(currlayer->algo->getrule());
+   if (err) tempalgo->setrule(tempalgo->DefaultRule());
 
    // read clipboard pattern into temporary universe and set edges
    // (not a minimal bounding box if pattern is empty or has empty borders)
    bigint top, left, bottom, right;
    if ( viewptr->GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
       if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+         delete tempalgo;
          PERL_ERROR("g_getclip error: pattern is too big.");
       }
       int itop = top.toint();

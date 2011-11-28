@@ -534,7 +534,7 @@ hlifealgo::hlifealgo() {
    totalthings = 0 ;
    nodeblocks = 0 ;
    zeronodea = 0 ;
-   ruletable = global_liferules.rule0 ;
+   ruletable = hliferules.rule0 ;
 /*
  *   We initialize our universe to be a 16-square.  We are in drawing
  *   mode at this point.
@@ -555,7 +555,6 @@ hlifealgo::hlifealgo() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
-   serial = 0 ;
 }
 /**
  *   Destructor frees memory.
@@ -1526,10 +1525,10 @@ default:       return "Illegal character in readmacrocell." ;
             *pp = 0 ;
             
             // AKT: need to check for B0-not-Smax rule
-            err = global_liferules.setrule(p, this);
+            err = hliferules.setrule(p, this);
             if (err)
                return err;
-            if (global_liferules.alternate_rules)
+            if (hliferules.alternate_rules)
                return "B0-not-Smax rules are not allowed in HashLife.";
             
             break ;
@@ -1656,20 +1655,17 @@ default:       return "Illegal character in readmacrocell." ;
 }
 const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
-   const char* err = global_liferules.setrule(s, this);
+   const char* err = hliferules.setrule(s, this);
    if (err) return err;
-   if (serial == global_liferules.getSerial())
-      return 0 ;
 
-   serial = global_liferules.getSerial() ;
    clearcache() ;
    
-   if (global_liferules.alternate_rules)
+   if (hliferules.alternate_rules)
       return "B0-not-Smax rules are not allowed in HashLife.";
       
-   if (global_liferules.isHexagonal())
+   if (hliferules.isHexagonal())
       grid_type = HEX_GRID;
-   else if (global_liferules.isVonNeumann())
+   else if (hliferules.isVonNeumann())
       grid_type = VN_GRID;
    else
       grid_type = SQUARE_GRID;
@@ -1835,7 +1831,7 @@ const char *hlifealgo::writeNativeFormat(std::ostream &os, char *comments) {
    os << "[M2] (golly " STRINGIFY(VERSION) ")\n" ;
 
    // AKT: always write out explicit rule
-   os << "#R " << global_liferules.getrule() << '\n' ;
+   os << "#R " << hliferules.getrule() << '\n' ;
 
    if (generation > bigint::zero) {
       // write non-zero gen count

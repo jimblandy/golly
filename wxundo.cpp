@@ -358,10 +358,10 @@ bool ChangeNode::DoChange(bool undo)
 
       case rulechange:
          if (undo) {
-            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
+            RestoreRule(oldrule);
             currlayer->currsel = oldsel;
          } else {
-            currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
+            RestoreRule(newrule);
             currlayer->currsel = newsel;
          }
          // show new rule in window title (file name doesn't change)

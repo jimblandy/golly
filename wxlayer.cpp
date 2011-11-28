@@ -1034,13 +1034,30 @@ void SaveLayerSettings()
 
 // -----------------------------------------------------------------------------
 
+bool RestoreRule(const wxString& rule)
+{
+   const char* err = currlayer->algo->setrule( rule.mb_str(wxConvLocal) );
+   if (err) {
+      // this can happen if the given rule's table/tree file was deleted
+      // or it was edited and some sort of error introduced, so best to
+      // use algo's default rule (which should never fail)
+      currlayer->algo->setrule( currlayer->algo->DefaultRule() );
+      wxString msg = _("The rule \"") + rule;
+      msg += _("\" is no longer valid!\nUsing the default rule instead.");
+      Warning(msg);
+      return false;
+   }
+   return true;
+}
+
+// -----------------------------------------------------------------------------
+
 void CurrentLayerChanged()
 {
    // currlayer has changed since SaveLayerSettings was called;
    // update rule if the new currlayer uses a different algorithm or rule
    if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
-      currlayer->algo->setrule( currlayer->rule.mb_str(wxConvLocal) );
-      // error should never occur here
+      RestoreRule(currlayer->rule);
    }
    
    if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
@@ -2149,7 +2166,7 @@ Layer::Layer()
       // set rule using initrule stored in prefs file
       const char* err = algo->setrule(initrule);
       if (err) {
-         // switch to algo's default rule (user probably edited rule in prefs file)
+         // user might have edited rule in prefs file, or deleted table/tree file
          algo->setrule( algo->DefaultRule() );
       }
    
@@ -2210,8 +2227,11 @@ Layer::Layer()
          algo = CreateNewUniverse(algtype);
          
          // use current rule
-         algo->setrule(currlayer->algo->getrule());
-         // error should never occur here
+         const char* err = algo->setrule(currlayer->algo->getrule());
+         if (err) {
+            // table/tree file might have been deleted
+            algo->setrule( algo->DefaultRule() );
+         }
          
          // initialize undo/redo history
          undoredo = new UndoRedo();

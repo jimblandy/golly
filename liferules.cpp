@@ -28,8 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 
 liferules::liferules() {
-   flipped = false ;
-   serial = 1001 ;
    canonrule[0] = 0 ;
 }
 
@@ -49,7 +47,6 @@ static int bitcount(int v) {
 // initialize current rule table (rptr points to rule0 or rule1)
 void liferules::initruletable(char *rptr, int rulebits, int nmask, int wolfram) {
    int i ;
-   flipped = false ;
    if (wolfram >= 0) {
       for (i=0; i<0x1000; i = ((i | 0x888) + 1) & 0x1777)
          rptr[i] = (char)(1 & ((i >> 5) | (wolfram >> (i >> 8)))) ;
@@ -76,19 +73,10 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    if (rulestring[0] == 0) {
       return "Rule cannot be empty string." ;
    }
-   
-   /* AKT: this causes problem: if rule is set to "B3/S23:T10,10" and then Golly is
-           quit and restarted the grid is displayed as unbounded rather than 10x10;
-           perhaps this problem will go away when global_liferules is removed???
-   if (strcmp(rulestring, canonrule) == 0) // already set
-      return 0 ;
-   */
 
    wolfram = -1 ;
    rulebits = 0 ;
    neighbormask = MOORE ;
-
-   serial++ ; // allow consumers to notice change in global rule table
 
    // we might need to emulate B0 rule by using two different rules for odd/even gens
    alternate_rules = false;
@@ -234,5 +222,3 @@ const char* liferules::getrule() {
 bool liferules::isRegularLife() {
   return (neighbormask == MOORE && rulebits == 0x180008 && wolfram < 0) ;
 }
-
-liferules global_liferules ;
