@@ -23,7 +23,7 @@ VERSION = 2.3
 RELEASENAME = golly-$(VERSION)
 SHAREDFILES = README LICENSE
 SHAREDDIRS = Help Scripts Patterns Rules
-SRCFILES = BUILD TODO makefile-gtk makefile-x11 makefile-mac makefile-win \
+SRCFILES = BUILD TODO makefile-gtk makefile-mac makefile-win \
    golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe RuleTableToTree.exe
