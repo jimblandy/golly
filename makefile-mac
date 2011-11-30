@@ -49,7 +49,7 @@ PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.s
 # for building source and binary distributions:
 RELEASENAME = golly-$(APP_VERSION)
 SHAREDFILES = Help Patterns Scripts Rules README LICENSE
-SRCFILES = BUILD TODO makefile-gtk makefile-mac makefile-win \
+SRCFILES = BUILD TODO CMakeLists.txt makefile-gtk makefile-mac makefile-win \
    bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
 
 # Variables:
