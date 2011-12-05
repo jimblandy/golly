@@ -120,7 +120,7 @@ extern "C"
 {
    // startup/shutdown
    void(*G_Py_Initialize)(void) = NULL;
-#if defined(__LP64__) || defined(__amd64__)
+#if defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
    PyObject*(*G_Py_InitModule4_64)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
 #else
    PyObject*(*G_Py_InitModule4)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
@@ -163,7 +163,7 @@ extern "C"
 
 // redefine the Py* functions to their equivalent G_* wrappers
 #define Py_Initialize         G_Py_Initialize
-#if defined(__LP64__) || defined(__amd64__)
+#if defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
    #define Py_InitModule4_64  G_Py_InitModule4_64
 #else
    #define Py_InitModule4     G_Py_InitModule4
@@ -207,7 +207,7 @@ static struct PythonFunc
 } pythonFuncs[] =
 {
    PYTHON_FUNC(Py_Initialize)
-#if defined(__LP64__) || defined(__amd64__)
+#if defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
    PYTHON_FUNC(Py_InitModule4_64)
 #else
    PYTHON_FUNC(Py_InitModule4)
