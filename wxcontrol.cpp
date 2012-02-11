@@ -471,9 +471,34 @@ void MainFrame::DisplayPattern()
    // exist it only updates the current tile if possible; ie. it's not a clone
    // and tile views aren't synchronized
    
-   if (!IsIconized()) {
-      if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
-         // only update the current tile
+   #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,4)
+      // Update() has been changed to do a screen update no more than 30 times per sec
+      // so we might need to delay calling Update() to see old behavior
+      static long lastupdate = 0;
+      while (stopwatch->Time() - lastupdate < 34) wxMilliSleep(1);
+   #endif
+   
+   if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
+      // only update the current tile
+      viewptr->Refresh(false);
+      #ifdef __WXMAC__
+         if (!showstatus) viewptr->Update();
+         // else let statusptr->Update() update viewport
+      #else
+         viewptr->Update();
+      #endif
+   } else {
+      // update main viewport window, possibly including all tile windows
+      // (tile windows are children of bigview)
+      if (numlayers > 1 && (stacklayers || tilelayers)) {
+         bigview->Refresh(false);
+         #ifdef __WXMAC__
+            if (!showstatus) bigview->Update();
+            // else let statusptr->Update() update viewport
+         #else
+            bigview->Update();
+         #endif
+      } else {
          viewptr->Refresh(false);
          #ifdef __WXMAC__
             if (!showstatus) viewptr->Update();
@@ -481,33 +506,18 @@ void MainFrame::DisplayPattern()
          #else
             viewptr->Update();
          #endif
-      } else {
-         // update main viewport window, possibly including all tile windows
-         // (tile windows are children of bigview)
-         if (numlayers > 1 && (stacklayers || tilelayers)) {
-            bigview->Refresh(false);
-            #ifdef __WXMAC__
-               if (!showstatus) bigview->Update();
-               // else let statusptr->Update() update viewport
-            #else
-               bigview->Update();
-            #endif
-         } else {
-            viewptr->Refresh(false);
-            #ifdef __WXMAC__
-               if (!showstatus) viewptr->Update();
-               // else let statusptr->Update() update viewport
-            #else
-               viewptr->Update();
-            #endif
-         }
-      }
-      if (showstatus) {
-         statusptr->CheckMouseLocation(IsActive());
-         statusptr->Refresh(false);
-         statusptr->Update();
       }
    }
+   
+   if (showstatus) {
+      statusptr->CheckMouseLocation(IsActive());
+      statusptr->Refresh(false);
+      statusptr->Update();
+   }
+
+   #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,4)
+      lastupdate = stopwatch->Time();
+   #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1145,7 +1155,8 @@ bool MainFrame::StepPattern()
    }
    
    if (currlayer->autofit) viewptr->FitInView(0);
-   DisplayPattern();
+   
+   if (!IsIconized()) DisplayPattern();
    
    /*!!! enable this code if we ever implement isPeriodic()
    if (autostop) {

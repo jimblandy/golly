@@ -1206,15 +1206,30 @@ void GSF_update()
 {
    // update viewport, status bar, and possibly other bars
    inscript = false;
+
+   #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,4)
+      // Update() has been changed to do a screen update no more than 30 times per sec
+      // so we might need to delay calling Update() to see old behavior
+      static long lastupdate = 0;
+      while (stopwatch->Time() - lastupdate < 34) wxMilliSleep(1);
+   #endif
+   
    mainptr->UpdatePatternAndStatus();
+
+   #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,4)
+      lastupdate = stopwatch->Time();
+   #endif
+   
    if (showtitle) {
       mainptr->SetWindowTitle(wxEmptyString);
       showtitle = false;
    }
+   
    if (updateedit) {
       UpdateEditBar(mainptr->IsActive());
       updateedit = false;
    }
+   
    inscript = true;
 }
 

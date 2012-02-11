@@ -116,7 +116,7 @@ __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)-$(WX_RELEA
 __WXLIB_NET_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_net-$(WX_RELEASE)
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
-###__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
+__LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
@@ -146,7 +146,7 @@ $(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
 
 app.bin: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) \
-   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) \
+   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
 $(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \

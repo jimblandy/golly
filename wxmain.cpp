@@ -1812,18 +1812,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
       #endif
 
       if ( filepath.IsEmpty() ) {
-         // user clicked on a folder name so expand or collapse it???
-         // unfortunately, using Collapse/Expand causes this handler to be
-         // called again and there's no easy way to distinguish between
-         // a click in the folder name or a dbl-click (or a click in the
-         // +/-/arrow image)
-         /*
-         if ( treectrl->IsExpanded(id) ) {
-            treectrl->Collapse(id);
-         } else {
-            treectrl->Expand(id);
-         }
-         */
+         // user clicked on a folder name
 
       } else if (edit_file) {
          // open file in text editor
