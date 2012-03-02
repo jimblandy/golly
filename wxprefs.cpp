@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2011 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -673,7 +673,11 @@ void GetKeyAction(char* value)
          if (len == 1) {
             key = start[0];
             if (key < ' ' || key > '~') {
-               Fatal(wxString::Format(_("Non-displayable key in key_action: code = %d"), key));
+               // this can happen if the user's language setting is not English,
+               // so change key and continue rather than call Fatal
+               Warning(wxString::Format(_("Non-displayable key in key_action: %s"),
+                                        wxString(start,wxConvLocal).c_str()));
+               key = '!';
             }
             if (key >= 'A' && key <= 'Z') {
                // convert A..Z to shift+a..shift+z so we can use A..X
@@ -767,14 +771,6 @@ void GetKeyAction(char* value)
    if (action.id == DO_NOTHING) {
       if (strcmp(p, "Swap Cell Colors") == 0) action.id = DO_INVERT;
    }
-   
-   // probably best to silently ignore an unknown action
-   // (friendlier if old Golly is reading newer prefs)
-   /*
-   if (action.id == DO_NOTHING)
-      Warning(wxString::Format(_("Unknown action in key_action: %s"),
-                               wxString(p,wxConvLocal).c_str()));
-   */
    
    keyaction[key][modset] = action;
 }
