@@ -377,9 +377,9 @@ void bigint::mul_smallint(int a) {
       return ;
    }
    if (v.i & 1) {
-      c = (v.i >> 1) * a ;
-      if (c / a == (v.i >> 1)) {
-         fromint(c) ;
+      if ((v.i >> 1) <= MAX_SIMPLE / a) {
+         c = (v.i >> 1) * a ;
+         fromint((v.i >> 1) * a) ;
          return ;
       }
       vectorize(v.i >> 1) ;
