@@ -87,8 +87,8 @@ include( ${wxWidgets_USE_FILE} )
 # pass extra settings to the compiler
 add_definitions(-DZLIB -DVERSION=${APP_VERSION})
 if(APPLE)
-   # support Mac OS 10.5 or later
-   add_definitions(-mmacosx-version-min=10.5)
+   # support Mac OS 10.6 or later
+   add_definitions(-mmacosx-version-min=10.6)
 endif()
 if(APPLE OR UNIX)
    # use same settings as in makefiles

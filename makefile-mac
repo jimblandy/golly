@@ -1,7 +1,7 @@
 # Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 2.9.x on Mac OS 10.6.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-2.9.1
+# cd /HD/wxWidgets/wxWidgets-2.9.3
 # mkdir build-osx
 # cd build-osx
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa
@@ -12,22 +12,7 @@
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
 WX_RELEASE = 2.9
-
-# Set WX_DIR to where your wxWidgets source files were placed by your package
-# downloader, CVS or Subversion, etc. This directory contains about 40 items
-# including a directory "art" containing .xpm files, a "wxBase.spec", etc.
-# For example, if you have a file at
-# /home/fred/wx-trunk/docs/doxygen/images/wxmac/gauge.png
-# then set WX_DIR to /home/fred/wx-trunk
-WX_DIR = /Users/munafo/devt/wx-trunk
-
-# Set BUILD_DIR to where your wxWidgets libraries and executables were
-# placed during the build process (PRIOR to doing a "make install", MacPorts
-# "activating wxWidgets" step, or equivalent) This directory should contain
-# about 800 ".o" files, and directories called demos, lib, samples, src,
-# tests and utils. For example, if you have a file at
-# /home/fred/wx-trunk/build-osx/lib/libwx_osx_cocoau_core-2.9.a then
-# set BUILD_DIR to /home/fred/wx-trunk/build-osx
+WX_DIR = /HD/wxWidgets/wxWidgets-trunk
 BUILD_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(BUILD_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -37,9 +22,10 @@ APP_NAME = Golly
 APP_VERSION = 2.4b1
 
 # for Perl script support
-PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
+# PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
 # PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
-# above generates unwanted stuff (-arch i386 and -arch ppc)
+# above commands generate unwanted stuff (-arch i386 and -arch ppc)
+PERL_INCLUDE = -arch x86_64 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include  -I/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE
 PERL_LINK = -arch x86_64 -L/usr/local/lib  -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc
 
 # for Python script support
@@ -59,9 +45,7 @@ TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
-CXXC = g++ -mmacosx-version-min=10.5
-### bk-deps script can be used to create *.d files containing all dependencies
-### CXXC = $(BUILD_DIR)/bk-deps g++ -mmacosx-version-min=10.5
+CXXC = g++ -mmacosx-version-min=10.6
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA \
    -I${WXINC_DIR} \
