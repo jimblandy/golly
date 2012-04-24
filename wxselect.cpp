@@ -1220,15 +1220,14 @@ void Selection::ClearOutside()
 
 void Selection::AddEOL(char* &chptr)
 {
-   #if defined(__WXMAC__)
-      *chptr = '\r';      // nicer for stupid apps like LifeLab :)
-      chptr += 1;
-   #elif defined(__WXMSW__)
+   #ifdef __WXMSW__
+      // use DOS line ending (CR+LF) on Windows
       *chptr = '\r';
       chptr += 1;
       *chptr = '\n';
       chptr += 1;
-   #else // assume Unix
+   #else
+      // use LF on Linux or Mac
       *chptr = '\n';
       chptr += 1;
    #endif

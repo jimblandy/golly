@@ -753,12 +753,12 @@ void ClickLexiconPattern(const wxHtmlCell* htmlcell)
                   } else {
                      lexpattern += celltext;
                      // append eol char(s)
-                     #if defined(__WXMAC__)
-                        lexpattern += '\r';
-                     #elif defined(__WXMSW__)
+                     #ifdef __WXMSW__
+                        // use DOS line ending (CR+LF) on Windows
                         lexpattern += '\r';
                         lexpattern += '\n';
-                     #else // assume Linux
+                     #else
+                        // use LF on Linux or Mac
                         lexpattern += '\n';
                      #endif
                   }
