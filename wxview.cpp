@@ -832,6 +832,15 @@ void PatternView::PasteClipboard(bool toselection)
 
 // -----------------------------------------------------------------------------
 
+void PatternView::AbortPaste()
+{
+   pastex = -1;
+   pastey = -1;
+   waitingforclick = false;
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::CyclePasteLocation()
 {
    if (plocation == TopLeft) {
@@ -2540,10 +2549,7 @@ void PatternView::OnChar(wxKeyEvent& event)
    // test waitingforclick before mainptr->generating so user can cancel
    // a paste operation while generating
    if ( waitingforclick && key == WXK_ESCAPE ) {
-      // cancel paste
-      pastex = -1;
-      pastey = -1;
-      waitingforclick = false;
+      AbortPaste();
       return;
    }
    

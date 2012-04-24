@@ -1541,6 +1541,11 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 void MainFrame::OnActivate(wxActivateEvent& event)
 {
    // note that IsActive() doesn't always match event.GetActive()
+   
+   if (viewptr->waitingforclick && !event.GetActive()) {
+      // cancel paste if main window is no longer in front
+      viewptr->AbortPaste();
+   }
 
    #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
       // to avoid disabled menu items after a modal dialog closes
