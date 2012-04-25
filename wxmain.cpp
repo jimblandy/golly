@@ -1959,6 +1959,11 @@ void MainFrame::OnClose(wxCloseEvent& event)
 {
    if (event.CanVeto()) {
       // we can cancel the close event if necessary
+      if (viewptr->waitingforclick) {
+         event.Veto();
+         return;
+      }
+
       if (inscript || generating) {
          Stop();
          /* using wxPostEvent doesn't work if we've been called from Yield:
@@ -2068,8 +2073,6 @@ void MainFrame::OnClose(wxCloseEvent& event)
 
 void MainFrame::QuitApp()
 {
-   if (viewptr->waitingforclick) return;
-
    Close(false);   // false allows OnClose handler to veto close
 }
 
