@@ -10,7 +10,8 @@
 <li> Fixed bug in Langtons-Ant.tree that had ants colliding incorrectly.
 <li> Fixed Mac app crashing if user's language setting is non-English.
 <li> Clipboard data on the Mac now uses LF as the end-of-line character rather than CR.
-<li> Paste is aborted if main window becomes inactive.
+<li> Mac Carbon app (for 10.4 or 10.5) aborts a paste operation if the main window becomes inactive.
+     This avoids an accidental paste when clicking in a non-Golly window.
 </ul>
 
 <p>
@@ -69,7 +70,7 @@
      the tool bar's Reset button.
 <li> Fixed cursor problems if shift key is used in a keyboard shortcut.
 <li> The Mac app now runs on Lion (10.7).  There are two Mac apps: a 64-bit version for
-     10.6 and 10.7 (based on Cocoa), and a 32-bit version for 10.4 and 10.5 (based on Carbon).
+     10.6 and later (based on Cocoa), and a 32-bit version for 10.4 and 10.5 (based on Carbon).
 </ul>
 
 <p>
