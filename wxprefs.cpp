@@ -4452,7 +4452,6 @@ void PrefsDialog::UpdateButtonColor(int id, wxColor& rgb)
       dc.SelectObject(wxNullBitmap);
       bb->SetBitmapLabel(bitmap);
       bb->Refresh();
-      bb->Update();
    }
 }
 

@@ -170,7 +170,6 @@ void wx_poll::updatePop()
 {
    if (showstatus) {
       statusptr->Refresh(false);
-      statusptr->Update();
    }
 }
 

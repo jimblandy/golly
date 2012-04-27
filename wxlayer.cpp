@@ -702,7 +702,6 @@ void UpdateLayerBar(bool active)
 
       // no need to redraw entire bar here if it only contains buttons
       // layerbarptr->Refresh(false);
-      // layerbarptr->Update();
    }
 }
 
@@ -719,7 +718,6 @@ void UpdateLayerButton(int index, const wxString& name)
 void RedrawLayerBar()
 {
    layerbarptr->Refresh(false);
-   layerbarptr->Update();
 }
 
 // -----------------------------------------------------------------------------
@@ -2749,7 +2747,6 @@ void ColorDialog::UpdateButtonColor(int id, wxColor* rgb)
       dc.SelectObject(wxNullBitmap);
       bb->SetBitmapLabel(bitmap);
       bb->Refresh();
-      bb->Update();
    }
 }
 

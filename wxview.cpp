@@ -2582,7 +2582,6 @@ void PatternView::ProcessClickedControl()
          } else if (currlayer->currexpo != 0) {
             mainptr->SetStepExponent(0);
             statusptr->Refresh(false);
-            statusptr->Update();
          }
          break;
       

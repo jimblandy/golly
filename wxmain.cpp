@@ -856,7 +856,7 @@ void MainFrame::UpdateEverything()
       return;
    }
 
-   // update all bars, menus and cursor
+   // update all tool bars, menus and cursor
    UpdateUserInterface(IsActive());
 
    if (inscript) {
@@ -870,19 +870,11 @@ void MainFrame::UpdateEverything()
 
    if (wd > 0 && ht > statusptr->statusht) {
       bigview->Refresh(false);
-      #ifdef __WXMAC__
-         // avoid updating viewport twice if status bar is visible
-         // (statusptr->Update() also causes viewport to be updated!)
-         if (!showstatus) bigview->Update();
-      #else
-         bigview->Update();
-      #endif
       bigview->UpdateScrollBars();
    }
    
    if (wd > 0 && ht > 0 && showstatus) {
       statusptr->Refresh(false);
-      statusptr->Update();
    }
 }
 
@@ -895,17 +887,9 @@ void MainFrame::UpdatePatternAndStatus()
 
    if (!IsIconized()) {
       bigview->Refresh(false);
-      #ifdef __WXMAC__
-         // avoid updating viewport twice if status bar is visible
-         // (statusptr->Update() also causes viewport to be updated!)
-         if (!showstatus) bigview->Update();
-      #else
-         bigview->Update();
-      #endif
       if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
-         statusptr->Update();
       }
    }
 }
@@ -921,7 +905,6 @@ void MainFrame::UpdateStatus()
       if (showstatus) {
          statusptr->CheckMouseLocation(IsActive());
          statusptr->Refresh(false);
-         statusptr->Update();
       }
    }
 }

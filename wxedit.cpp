@@ -603,7 +603,6 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
           currlayer->drawingstate != box) {
          currlayer->drawingstate = box;
          Refresh(false);
-         Update();
          UpdateScrollBar();
          return;
       }
@@ -905,7 +904,6 @@ void UpdateEditBar(bool active)
       editbarptr->EnableButton(ALLSTATES_BUTT,  active);
       
       editbarptr->Refresh(false);
-      editbarptr->Update();
       
       // drawing state might have changed
       editbarptr->UpdateScrollBar();
@@ -994,7 +992,6 @@ void CycleDrawingState(bool higher)
    
    if (showedit) {
       editbarptr->Refresh(false);
-      editbarptr->Update();
       editbarptr->UpdateScrollBar();
    }
 }
