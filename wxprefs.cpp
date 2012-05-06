@@ -1016,26 +1016,17 @@ void UpdateAcceleratorStrings()
          action_info info = keyaction[key][modset];
          action_id action = info.id;
          if (action != DO_NOTHING && accelerator[action].IsEmpty()) {
-            
             // check if key can be used as an accelerator
-            bool validaccel =
-               (key >= ' ' && key <= '~') ||
-               (key >= IK_F1 && key <= IK_F24) ||
-               (key >= IK_LEFT && key <= IK_DOWN) ||
-               key == IK_HOME ||
-               key == IK_END ||
-               key == IK_PAGEUP ||
-               key == IK_PAGEDOWN ||
-               key == IK_DELETE ||
-               key == IK_TAB ||
-               key == IK_RETURN;
-            #ifdef __WXMSW__
-            if (modset & mk_CMD) {
-               // Windows only allows Ctrl+alphanumeric
-               validaccel = (key >= 'a' && key <= 'z') || (key >= '0' && key <= '9');
-            }
-            #endif
-            if (validaccel) {
+            if ( (key >= ' ' && key <= '~') ||
+                 (key >= IK_F1 && key <= IK_F24) ||
+                 (key >= IK_LEFT && key <= IK_DOWN) ||
+                 key == IK_HOME ||
+                 key == IK_END ||
+                 key == IK_PAGEUP ||
+                 key == IK_PAGEDOWN ||
+                 key == IK_DELETE ||
+                 key == IK_TAB ||
+                 key == IK_RETURN ) {
                CreateAccelerator(action, modset, key);
             }
          }
@@ -1049,12 +1040,7 @@ void UpdateAcceleratorStrings()
       for (int modset = 0; modset < MAX_MODS; modset++) {
          action_info info = keyaction[key][modset];
          action_id action = info.id;
-         if (action != DO_NOTHING && (modset & mk_CMD)
-               #ifdef __WXMSW__
-               // Windows only allows Ctrl+alphanumeric
-               && ((key >= 'a' && key <= 'z') || (key >= '0' && key <= '9'))
-               #endif
-            ) {
+         if (action != DO_NOTHING && (modset & mk_CMD)) {
             CreateAccelerator(action, modset, key);
          }
       }
