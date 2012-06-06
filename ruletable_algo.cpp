@@ -177,7 +177,7 @@ static FILE *OpenTableFile(string &rule, const char *dir, string &path)
 {
    // look for rule.table in given dir and set path
    path = dir;
-   int istart = path.size();
+   int istart = (int)path.size();
    path += rule + ".table";
    // change "dangerous" characters to underscores
    for (unsigned int i=istart; i<path.size(); i++)
@@ -420,7 +420,7 @@ string ruletable_algo::LoadRuleTable(string rule)
             for(map< string, vector<state> >::const_iterator var_it=variables.begin();var_it!=variables.end();var_it++)
                if(count(tokens.begin(),tokens.begin()+n_inputs+1,var_it->first)>1)
                   bound_variables.push_back(var_it->first);
-            unsigned int n_bound_variables = bound_variables.size();
+            unsigned int n_bound_variables = (unsigned int)bound_variables.size();
             // second pass: iterate through the possible states for the bound variables, adding a transition for each combination
             vector< vector<state> > inputs(n_inputs);
             state output;
@@ -451,7 +451,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                         oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
                         return oss.str();
                      }
-                     inputs[i] = vector<state>(1,s);
+                     inputs[i] = vector<state>(1,(state)s);
                   }
                }
                // collect the output
@@ -480,7 +480,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                      oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
                      return oss.str();
                   }
-                  output = s;
+                  output = (state)s;
                }
                transition_table.push_back(make_pair(inputs,output));
                // move on to the next value of bound variables
@@ -619,11 +619,11 @@ void ruletable_algo::PackTransitions(const string& symmetries, int n_inputs,
 void ruletable_algo::PackTransition(const vector< vector<state> > & inputs,
                                     state output)
 {
-    int n_inputs = inputs.size();
-    const unsigned int n_bits = sizeof(TBits)*8;
+    int n_inputs = (int)inputs.size();
+    const unsigned int n_bits = (unsigned int)(sizeof(TBits)*8);
     
     this->output.push_back(output);
-    int iRule = this->output.size()-1;
+    int iRule = (int)(this->output.size()-1);
     int iBit = iRule % n_bits;
     unsigned int iRuleC = (iRule-iBit)/n_bits; // the compressed index of the rule
     

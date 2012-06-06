@@ -158,7 +158,7 @@ options options[] = {
   { 0, 0, 0, 0, 0 }
 } ;
 int endswith(const char *s, const char *suff) {
-   int off = strlen(s) - strlen(suff) ;
+   int off = (int)(strlen(s) - strlen(suff)) ;
    if (off <= 0)
       return 0 ;
    s += off ;

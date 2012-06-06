@@ -135,9 +135,9 @@ const char* ruletreealgo::setrule(const char* s) {
          int vcnt = 0 ;
          char *p = strbuf + 1 ;
          if (lev == 1)
-            noff.push_back(datb.size()) ;
+            noff.push_back((int)(datb.size())) ;
          else
-            noff.push_back(dat.size()) ;
+            noff.push_back((int)(dat.size())) ;
          while (*p) {
             while (*p && *p <= ' ')
                p++ ;
@@ -197,7 +197,7 @@ const char* ruletreealgo::setrule(const char* s) {
    strcpy(rule,rule_name.c_str()) ;
    if (gridwd > 0 || gridht > 0) {
       // setgridsize() was successfully called above, so append suffix
-      int len = strlen(rule) ;
+      int len = (int)strlen(rule) ;
       const char* bounds = canonicalsuffix() ;
       int i = 0 ;
       while (bounds[i]) rule[len++] = bounds[i++] ;

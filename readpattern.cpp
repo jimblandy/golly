@@ -815,7 +815,7 @@ const char *readcomments(const char *filename, char **commptr)
          if (line[0] == '#' &&
                !(line[1] == 'P' && line[2] == ' ') &&
                !(line[1] == 'N' && line[2] == 0)) {
-            int linelen = strlen(line);
+            int linelen = (int)strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
             strncpy(cptr + commlen, line, linelen);
             commlen += linelen;
@@ -832,7 +832,7 @@ const char *readcomments(const char *filename, char **commptr)
          if (line[0] != '#') break;
          if (line[1] == 'L' && line[2] == ' ') break;
          if (line[1] == 'D' && (line[2] == ' ' || line[2] == 0)) {
-            int linelen = strlen(line);
+            int linelen = (int)strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
             strncpy(cptr + commlen, line, linelen);
             commlen += linelen;
@@ -844,7 +844,7 @@ const char *readcomments(const char *filename, char **commptr)
    } else if (line[0] == '#' || line[0] == 'x') {
       // extract comment lines from RLE file
       while (line[0] == '#') {
-         int linelen = strlen(line);
+         int linelen = (int)strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
          strncpy(cptr + commlen, line, linelen);
          commlen += linelen;
@@ -861,7 +861,7 @@ const char *readcomments(const char *filename, char **commptr)
          }
          if (foundexcl) {
             while (getline(line, LINESIZE)) {
-               int linelen = strlen(line);
+               int linelen = (int)strlen(line);
                if (commlen + linelen + 1 > maxcommlen) break;
                strncpy(cptr + commlen, line, linelen);
                commlen += linelen;
@@ -874,7 +874,7 @@ const char *readcomments(const char *filename, char **commptr)
    } else if (line[0] == '!') {
       // extract "!..." lines from dblife file
       while (line[0] == '!') {
-         int linelen = strlen(line);
+         int linelen = (int)strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
          strncpy(cptr + commlen, line, linelen);
          commlen += linelen;
@@ -888,7 +888,7 @@ const char *readcomments(const char *filename, char **commptr)
       while (getline(line, LINESIZE)) {
          if (line[0] != '#') break;
          if (line[1] == 'C') {
-            int linelen = strlen(line);
+            int linelen = (int)strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
             strncpy(cptr + commlen, line, linelen);
             commlen += linelen;

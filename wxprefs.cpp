@@ -669,7 +669,7 @@ void GetKeyAction(char* value)
          // we found end of key
          char oldp = *p;
          *p = 0;
-         int len = strlen(start);
+         int len = (int)strlen(start);
          if (len == 1) {
             key = start[0];
             if (key < ' ' || key > '~') {

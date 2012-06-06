@@ -237,7 +237,7 @@ void hlifealgo::fill_ll(int d) {
 static void init_compress4x4() {
    int i;
    for (i=0; i<8; i++)
-      compress4x4[1<<i] = (unsigned char)(0x11 << (i >> 1)) ;
+      compress4x4[((size_t)1)<<i] = (unsigned char)(0x11 << (i >> 1)) ;
    for (i=0; i<256; i++)
       if (i & (i-1))
          compress4x4[i] = compress4x4[i & (i-1)] | compress4x4[i & -i] ;

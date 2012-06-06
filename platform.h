@@ -41,8 +41,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <limits.h>
 #if defined(_WIN64)
    #define PRIuPTR "u"
-   typedef unsigned int g_uintptr_t ;
+   typedef uintptr_t g_uintptr_t ;
    #define G_MAX SIZE_MAX
+   #define GOLLY64BIT (1)
 #elif defined(__LP64__) || defined(__amd64__)
    #define __STDC_FORMAT_MACROS
    #define __STDC_LIMIT_MACROS
@@ -50,8 +51,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include <stdint.h>
    typedef uintptr_t g_uintptr_t ;
    #define G_MAX SIZE_MAX
+   #define GOLLY64BIT (1)
 #else
    #define PRIuPTR "u"
    typedef unsigned int g_uintptr_t ;
    #define G_MAX UINT_MAX
+   #undef GOLLY64BIT
 #endif

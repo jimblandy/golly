@@ -1253,7 +1253,7 @@ void Selection::AddRun(int state,                // in: state of cell to write
    
    if ( run > 1 ) {
       sprintf(numstr, "%u", run);
-      numlen = strlen(numstr);
+      numlen = (unsigned int)strlen(numstr);
    } else {
       numlen = 0;                      // no run count shown if 1
    }

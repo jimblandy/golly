@@ -72,7 +72,7 @@ void AddRun(std::ostream &f,
 
    if ( run > 1 ) {
       sprintf(numstr, "%u", run);
-      numlen = strlen(numstr);
+      numlen = (int)strlen(numstr);
    } else {
       numlen = 0;                      // no run count shown if 1
    }
@@ -272,11 +272,11 @@ public:
       return res == Z_OK ? this : NULL;
    }
 
-   bool is_open() const { return file; }
+   bool is_open() const { return file!=NULL; }
 
    std::streamsize xsputn(const char_type *s, std::streamsize n)
    {
-      return gzwrite(file, s, n);
+      return gzwrite(file, s, (unsigned int)n);
    }
 
    int sync()

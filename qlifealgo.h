@@ -228,7 +228,7 @@ public:
    // can we do the gen count doubling? only hashlife
    virtual int hyperCapable() { return 0 ; }
    virtual void setMaxMemory(int m) ;
-   virtual int getMaxMemory() { return maxmemory >> 20 ; }
+   virtual int getMaxMemory() { return (int)(maxmemory >> 20) ; }
    virtual const char *setrule(const char *s) ;
    virtual const char *getrule() { return qliferules.getrule() ; }
    virtual void step() ;
@@ -287,8 +287,7 @@ private:
    tile *emptytile ;
    supertile *root, *nullroot, *nullroots[40] ;
    int cleandowncounter ;
-   unsigned int maxmemory ;
-   unsigned int usedmemory ;
+   g_uintptr_t maxmemory, usedmemory ;
    char *ruletable ;
    // when drawing, these are used
    liferender *renderer ;

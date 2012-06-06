@@ -128,8 +128,9 @@ void linereader::setcloseonfree() {
 }
 int linereader::close() {
    if (fp) {
-      return fclose(fp) ;
+      int r = fclose(fp) ;
       fp = 0 ;
+      return r ;
    }
    return 0 ;
 }

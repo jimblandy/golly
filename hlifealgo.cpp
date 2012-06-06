@@ -639,8 +639,10 @@ void hlifealgo::setcurrentstate(void *n) {
 void hlifealgo::setMaxMemory(int newmemlimit) {
    if (newmemlimit < 10)
      newmemlimit = 10 ;
-   else if (sizeof(maxmem) <= 4 && newmemlimit > 4000)
+#ifndef GOLLY64BIT
+   else if (newmemlimit > 4000)
      newmemlimit = 4000 ;
+#endif
    g_uintptr_t newlimit = ((g_uintptr_t)newmemlimit) << 20 ;
    if (alloced > newlimit) {
       lifewarning("Sorry, more memory currently used than allowed.") ;
@@ -1291,7 +1293,7 @@ void hlifealgo::do_gc(int invalidate) {
       poller->poll() ;
       for (pp=p+1, i=1; i<1001; i++, pp++) {
          if (marked(pp)) {
-            int h = 0 ;
+            g_uintptr_t h = 0 ;
             if (pp->nw) { /* yes, it's a node */
                h = node_hash(pp->nw, pp->ne, pp->sw, pp->se) % hashprime ;
             } else {
@@ -1312,7 +1314,7 @@ void hlifealgo::do_gc(int invalidate) {
    }
    inGC = 0 ;
    if (verbose) {
-     int perc = freed_nodes / (totalthings / 100) ;
+     int perc = (int)(freed_nodes / (totalthings / 100)) ;
      sprintf(statusline+strlen(statusline), " freed %d percent (%d).",
                                                    perc, (int)freed_nodes) ;
      lifestatus(statusline) ;

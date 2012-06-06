@@ -327,7 +327,7 @@ Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 ### these libs no longer needed if wininet.lib is used??? oleacc.lib odbc32.lib
 
 golly.res: golly.rc
-	rc /fo$@  /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
+	rc /fo$@ /d WX_CPU_$(CPU) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
 	$(__DEBUG_DEFINE_p_1) $(__NDEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) \
 	$(__UNICODE_DEFINE_p_1) /i $(WX_DIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS \
 	/i $(WX_DIR)\samples /d NOPCH golly.rc

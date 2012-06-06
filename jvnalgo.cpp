@@ -82,7 +82,7 @@ const char* jvnalgo::getrule() {
    sprintf(canonrule, "%s", RULE_STRINGS[current_rule]);
    if (gridwd > 0 || gridht > 0) {
       // setgridsize() was successfully called above, so append suffix
-      int len = strlen(canonrule);
+      int len = (int)strlen(canonrule);
       const char* bounds = canonicalsuffix();
       int i = 0;
       while (bounds[i]) canonrule[len++] = bounds[i++];

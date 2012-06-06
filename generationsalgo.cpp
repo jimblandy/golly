@@ -77,11 +77,11 @@ const char* generationsalgo::setrule(const char *s) {
    int i, j = 0 ;
    char states[4] ;        // room for "2".."256" and null
    for (i=0; i<=8; i++) {
-      if (staybits & (1 << i)) canonrule[j++] = '0' + i ;
+      if (staybits & (1 << i)) canonrule[j++] = (char)('0' + i) ;
    }
    canonrule[j++] = '/' ;
    for (i=1; i<=8; i++) {
-      if (bornbits & (1 << i)) canonrule[j++] = '0' + i ;
+      if (bornbits & (1 << i)) canonrule[j++] = (char)('0' + i) ;
    }
    canonrule[j++] = '/' ;
    sprintf(states, "%d", tnumstates) ;

@@ -609,7 +609,7 @@ void MainFrame::EnableAllMenus(bool enable)
    #else
       wxMenuBar* mbar = GetMenuBar();
       if (mbar) {
-         int count = mbar->GetMenuCount();
+         int count = (int)(mbar->GetMenuCount());
          int i;
          for (i = 0; i < count; i++) {
             mbar->EnableTop(i, enable);

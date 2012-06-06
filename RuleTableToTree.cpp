@@ -116,7 +116,7 @@ void shrink() {
    nodeseq = 0 ;
    curndd = recreate(oseq, curndd, neighborhood_size) ;
    cerr << "Shrunk from " << oseq.size() << " to " << seq.size() << endl ;
-   shrinksize = seq.size() * 2 ;
+   shrinksize = (int)(seq.size() * 2) ;
 }
 void write_ndd() {
    shrink() ;

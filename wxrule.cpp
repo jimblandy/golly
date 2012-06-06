@@ -726,7 +726,7 @@ void RuleDialog::UpdateName()
          // extract rule after '|'
          wxString thisrule = namedrules[i].AfterFirst('|');
          if ( newrule.IsSameAs(thisrule,false) ) {
-            newindex = i;
+            newindex = (int)i;
             break;
          }
       }

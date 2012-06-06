@@ -346,12 +346,12 @@ const char* GSF_setpos(char* x, char* y)
 {
    // disallow alphabetic chars in x,y
    int i;
-   int xlen = strlen(x);
+   int xlen = (int)strlen(x);
    for (i = 0; i < xlen; i++)
       if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') )
          return "Illegal character in x value.";
 
-   int ylen = strlen(y);
+   int ylen = (int)strlen(y);
    for (i = 0; i < ylen; i++)
       if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') )
          return "Illegal character in y value.";

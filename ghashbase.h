@@ -85,7 +85,7 @@ public:
    virtual int isEmpty() ;
    virtual int hyperCapable() { return 1 ; }
    virtual void setMaxMemory(int m) ;
-   virtual int getMaxMemory() { return maxmem >> 20 ; }
+   virtual int getMaxMemory() { return (int)(maxmem >> 20) ; }
    virtual const char *setrule(const char *) ;
    virtual const char *getrule() { return "" ; }
    virtual void step() ;

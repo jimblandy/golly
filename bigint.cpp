@@ -201,7 +201,7 @@ const char *bigint::tostring(char sep) const {
    char *r = p ;
    if (neg)
       *r++ = '-' ;
-   for (int i=p-printbuf-1; i>=0; i--) {
+   for (int i=(int)(p-printbuf-1); i>=0; i--) {
       *r++ = printbuf[i] ;
       if (i && sep && (i % sepcount == 0))
          *r++ = sep ;

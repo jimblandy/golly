@@ -226,7 +226,7 @@ wxString StatusBar::Stringify(const bigint& b)
          *p++ = '-';
       }
       sprintf(p, "%.f", d);
-      int len = strlen(p);
+      int len = (int)strlen(p);
       int commas = ((len + 2) / 3) - 1;
       int dest = len + commas;
       int src = len;

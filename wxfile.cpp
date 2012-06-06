@@ -594,7 +594,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
          // indent depending on # of separators in name
          unsigned int sepcount = 0;
          unsigned int i = 0;
-         unsigned int len = name.length();
+         unsigned int len = (unsigned int)name.length();
          while (i < len) {
             if (name[i] == wxFILE_SEP_PATH) sepcount++;
             i++;

@@ -278,9 +278,11 @@ void qlifealgo::setMaxMemory(int newmemlimit) {
       return;
    }
    if (newmemlimit < 10)
-     newmemlimit = 10 ;
-   else if (sizeof(maxmemory) <= 4 && newmemlimit > 4000)
-     newmemlimit = 4000 ;
+      newmemlimit = 10 ;
+#ifndef GOLLY64BIT
+   else if (newmemlimit > 4000)
+      newmemlimit = 4000 ;
+#endif
    g_uintptr_t newlimit = ((g_uintptr_t)newmemlimit) << 20 ;
    if (usedmemory > newlimit) {
       lifewarning("Sorry, more memory currently used than allowed.") ;

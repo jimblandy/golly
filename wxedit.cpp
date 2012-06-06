@@ -410,7 +410,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
       
       // draw state value
       strbuf.Printf(_("%d"), i);
-      x = h_col2 + (i - firststate) * COLWD + (COLWD - strbuf.length() * digitwd) / 2;
+      x = (int)(h_col2 + (i - firststate) * COLWD + (COLWD - strbuf.length() * digitwd) / 2);
       DisplayText(dc, strbuf, x, BASELINE1);
       
       // draw color box
