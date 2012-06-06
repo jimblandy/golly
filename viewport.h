@@ -41,7 +41,6 @@ class lifealgo ;
  *   cases where mag>0 and precisely what will be displayed in this case
  *   and precisely how the coordinate transformations will occur.
  */
-const int MAX_MAG = 4 ;
 class viewport {
 public:
    viewport(int width, int height) {
@@ -76,4 +75,9 @@ private:
    double x0f, y0f ;
    double xymf ;           // always = 2**-mag
 } ;
+
+extern int MAX_MAG;
+// maximum cell size is 2^MAX_MAG (default is 2^4, but mobile devices
+// will probably want a bigger cell size)
+
 #endif

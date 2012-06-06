@@ -26,7 +26,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cmath>
 #include <iostream>
 #include <cstdio>
+
+int MAX_MAG = 4 ;   // default maximum cell size is 2^4
+
 using namespace std ;
+
 void viewport::init() {
    x = 0 ;
    y = 0 ;
