@@ -1602,8 +1602,7 @@ default:       return "Illegal character in readmacrocell." ;
 	       g_uintptr_t nodeind = 0 ;
 	       n = sscanf(line+7, "%d %" PRIuPTR, &frameind, &nodeind) ;
 	       if (n != 2 || frameind > MAX_FRAME_COUNT || frameind < 0 ||
-		   nodeind < 0 || nodeind > i ||
-		   timeline.framecount != frameind)
+		   nodeind > i || timeline.framecount != frameind)
 		  return "Bad FRAME line" ;
 	       timeline.frames.push_back(ind[nodeind]) ;
 	       timeline.framecount++ ;
@@ -1633,10 +1632,8 @@ default:       return "Illegal character in readmacrocell." ;
          if (d < 4)
             return "Oops; bad depth in readmacrocell." ;
          ind[0] = zeronode(d-2) ; /* allow zeros to work right */
-         if (nw < 0 || nw >= i || ind[nw] == 0 ||
-             ne < 0 || ne >= i || ind[ne] == 0 ||
-             sw < 0 || sw >= i || ind[sw] == 0 ||
-             se < 0 || se >= i || ind[se] == 0) {
+         if (nw >= i || ind[nw] == 0 || ne >= i || ind[ne] == 0 ||
+             sw >= i || ind[sw] == 0 || se >= i || ind[se] == 0) {
             return "Node out of range in readmacrocell." ;
          }
          clearstack() ;

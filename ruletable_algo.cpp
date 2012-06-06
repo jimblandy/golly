@@ -345,14 +345,14 @@ string ruletable_algo::LoadRuleTable(string rule)
             }
             else
             {
-               unsigned int s;
-               if(sscanf(tokens[i].c_str(),"%d",&s)!=1)
+               unsigned int s=0;
+               if(sscanf(tokens[i].c_str(),"%u",&s)!=1)
                {
                   ostringstream oss;
                   oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
                   return oss.str();
                }
-               if(s<0 || s>=n_states)
+               if( s>=n_states)
                {
                   ostringstream oss;
                   oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state value out of range";
@@ -438,14 +438,14 @@ string ruletable_algo::LoadRuleTable(string rule)
                      inputs[i] = variables[tokens[i]]; // this input is an unbound variable
                   else 
                   {
-                     unsigned int s;
-                     if(sscanf(tokens[i].c_str(),"%d",&s)!=1) // this input is a state
+                     unsigned int s=0;
+                     if(sscanf(tokens[i].c_str(),"%u",&s)!=1) // this input is a state
                      {
                         ostringstream oss;
                         oss << "Error reading " << full_filename << " on line " << lineno << ": " << line;
                         return oss.str();
                      }
-                     if(s<0 || s>=n_states)
+                     if(s>=n_states)
                      {
                         ostringstream oss;
                         oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
@@ -467,14 +467,14 @@ string ruletable_algo::LoadRuleTable(string rule)
                      // single-state variables are permitted as the output
                      s = variables[tokens[n_inputs]][0];
                   }
-                  else if(sscanf(tokens[n_inputs].c_str(),"%d",&s)!=1) // if not a bound variable, output must be a state
+                  else if(sscanf(tokens[n_inputs].c_str(),"%u",&s)!=1) // if not a bound variable, output must be a state
                   {
                      ostringstream oss;
                      oss << "Error reading " << full_filename << " on line " << lineno << ": " << line
                         << " - output must be state, single-state variable or bound variable";
                      return oss.str();
                   }
-                  if(s<0 || s>=n_states)
+                  if(s>=n_states)
                   {
                      ostringstream oss;
                      oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";

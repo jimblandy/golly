@@ -1434,8 +1434,7 @@ const char *ghashbase::readmacrocell(char *line) {
 	       g_uintptr_t nodeind = 0 ;
 	       n = sscanf(line+7, "%d %" PRIuPTR, &frameind, &nodeind) ;
 	       if (n != 2 || frameind > MAX_FRAME_COUNT || frameind < 0 ||
-		   nodeind < 0 || nodeind > i ||
-		   timeline.framecount != frameind)
+		   nodeind > i || timeline.framecount != frameind)
 		  return "Bad FRAME line" ;
 	       timeline.frames.push_back(ind[nodeind]) ;
 	       timeline.framecount++ ;
@@ -1465,8 +1464,6 @@ const char *ghashbase::readmacrocell(char *line) {
          if (d < 1)
             return "Oops; bad depth in readmacrocell." ;
          if (d == 1) {
-           if (nw < 0 || ne < 0 || sw < 0 || se < 0)
-              return "Illegal negative cell state values" ;
            if (nw >= (g_uintptr_t)maxCellStates || ne >= (g_uintptr_t)maxCellStates ||
                sw >= (g_uintptr_t)maxCellStates || se >= (g_uintptr_t)maxCellStates)
               return "Cell state values too high for this algorithm." ;
@@ -1475,10 +1472,8 @@ const char *ghashbase::readmacrocell(char *line) {
            depth = d - 1 ;
          } else {
            ind[0] = zeroghnode(d-2) ; /* allow zeros to work right */
-           if (nw < 0 || nw >= i || ind[nw] == 0 ||
-               ne < 0 || ne >= i || ind[ne] == 0 ||
-               sw < 0 || sw >= i || ind[sw] == 0 ||
-               se < 0 || se >= i || ind[se] == 0) {
+           if (nw >= i || ind[nw] == 0 || ne >= i || ind[ne] == 0 ||
+               sw >= i || ind[sw] == 0 || se >= i || ind[se] == 0) {
              return "Node out of range in readmacrocell." ;
            }
            clearstack() ;
