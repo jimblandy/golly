@@ -67,6 +67,8 @@ WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
    $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
    $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
 
+XCOPY = xcopy /exclude:excludecvs.txt
+
 ### Conditionally set variables: ###
 
 PORTNAME = msw
@@ -473,8 +475,8 @@ srcdist:
 	mkdir $(RELEASENAME)-src\Help
 	mkdir $(RELEASENAME)-src\Patterns
 	mkdir $(RELEASENAME)-src\Scripts
-	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-src
-	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\%F
+	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do $(XCOPY) %F $(RELEASENAME)-src
+	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do $(XCOPY) /S /I %F $(RELEASENAME)-src\%F
 	ren $(RELEASENAME)-src\README README.txt
 	ren $(RELEASENAME)-src\LICENSE LICENSE.txt
 	ren $(RELEASENAME)-src\BUILD BUILD.txt
@@ -487,8 +489,8 @@ bindist: all
 	mkdir $(RELEASENAME)-win\Help
 	mkdir $(RELEASENAME)-win\Patterns
 	mkdir $(RELEASENAME)-win\Scripts
-	for %%F IN ($(BINFILES) $(SHAREDFILES)) do xcopy %F $(RELEASENAME)-win
-	for %%F IN ($(SHAREDDIRS)) do xcopy /S /I %F $(RELEASENAME)-win\%F
+	for %%F IN ($(BINFILES) $(SHAREDFILES)) do $(XCOPY) %F $(RELEASENAME)-win
+	for %%F IN ($(SHAREDDIRS)) do $(XCOPY) /S /I %F $(RELEASENAME)-win\%F
 	ren $(RELEASENAME)-win\README README.txt
 	ren $(RELEASENAME)-win\LICENSE LICENSE.txt
 	echo Now zip $(RELEASENAME)-win into $(RELEASENAME)-win.zip
