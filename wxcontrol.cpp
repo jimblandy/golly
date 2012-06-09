@@ -471,13 +471,6 @@ void MainFrame::DisplayPattern()
    // exist it only updates the current tile if possible; ie. it's not a clone
    // and tile views aren't synchronized
    
-   #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,4)
-      // Update() has been changed to do a screen update no more than 30 times per sec
-      // so we might need to delay calling Update() to see old behavior
-      static long lastupdate = 0;
-      while (stopwatch->Time() - lastupdate < 34) wxMilliSleep(1);
-   #endif
-   
    if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
       // only update the current tile
       viewptr->Refresh(false);
@@ -514,10 +507,6 @@ void MainFrame::DisplayPattern()
       statusptr->Refresh(false);
       statusptr->Update();
    }
-
-   #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,4)
-      lastupdate = stopwatch->Time();
-   #endif
 }
 
 // -----------------------------------------------------------------------------
