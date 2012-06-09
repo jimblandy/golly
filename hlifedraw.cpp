@@ -88,10 +88,10 @@ void draw4x4_2(unsigned short bits1, unsigned short bits2, int llx, int lly) {
 
 void draw4x4_4(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    unsigned char *p = bigbuf + ((bmsize-1+lly) << (logbmsize-3)) + ((-llx) >> 3) ;
-   p[0] = ((bits1 << 4) & 0xf0) + (bits2 & 0xf) ;
-   p[-byteoff] = (bits1 & 0xf0) + ((bits2 >> 4) & 0xf) ;
-   p[-2*byteoff] = ((bits1 >> 4) & 0xf0) + ((bits2 >> 8) & 0xf) ;
-   p[-3*byteoff] = ((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf) ;
+   p[0] = (unsigned char)(((bits1 << 4) & 0xf0) + (bits2 & 0xf)) ;
+   p[-byteoff] = (unsigned char)((bits1 & 0xf0) + ((bits2 >> 4) & 0xf)) ;
+   p[-2*byteoff] = (unsigned char)(((bits1 >> 4) & 0xf0) + ((bits2 >> 8) & 0xf)) ;
+   p[-3*byteoff] = (unsigned char)(((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf)) ;
 }
 
 void hlifealgo::clearrect(int minx, int miny, int w, int h) {

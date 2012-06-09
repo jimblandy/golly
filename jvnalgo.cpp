@@ -236,7 +236,7 @@ state jvnalgo::slowcalc(state, state n, state, state w, state c, state e,
 		 c = 0 ;
 	      else if (current_rule == Nobili32 && (mbits & BIT_CROSS) == BIT_CROSS) {
 		 if (mbits & BIT_OEXC)
-		    c = (mbits & BIT_OEXC) + CONF + 0x80 ;
+		    c = (state)((mbits & BIT_OEXC) + CONF + 0x80) ;
 		 else
 		    c = CONF ;
 	      } else {

@@ -1151,7 +1151,7 @@ void ghashbase::do_gc(int invalidate) {
       poller->poll() ;
       gc_mark((ghnode *)stack[i], invalidate) ;
    }
-   for (int i=0; i<timeline.framecount; i++)
+   for (i=0; i<timeline.framecount; i++)
       gc_mark((ghnode *)timeline.frames[i], invalidate) ;
    hashpop = 0 ;
    memset(hashtab, 0, sizeof(ghnode *) * hashprime) ;
