@@ -1872,7 +1872,7 @@ const char *hlifealgo::writeNativeFormat(std::ostream &os, char *comments) {
      for (int i=0; i<timeline.framecount; i++) {
        node *frame = (node*)timeline.frames[i] ;
        writecell_2p2(os, frame, depths[i]) ;
-       os << "#FRAME " << i << ' ' << (g_uintptr_t)frame->next ;
+       os << "#FRAME " << i << ' ' << (g_uintptr_t)frame->next << '\n' ;
      }
    }
    writecell_2p2(os, root, depth) ;
