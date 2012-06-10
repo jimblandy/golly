@@ -365,8 +365,8 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
       const char* err = readpattern(FILEPATH, *currlayer->algo);
       if (err) {
          wxString bigerr = _("File could not be loaded by any algorithm.");
-         bigerr += wxString::Format(_("\n\nError from %s:\n"),
-                                    wxString(GetAlgoName(currlayer->algtype),wxConvLocal));
+         wxString algoname = wxString(GetAlgoName(currlayer->algtype), wxConvLocal);
+         bigerr += wxString::Format(_("\n\nError from %s:\n"), algoname.c_str());
          bigerr += wxString(err, wxConvLocal);
       
          // cycle thru all other algos until readpattern succeeds
@@ -378,8 +378,8 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
                // readpattern will call setrule
                err = readpattern(FILEPATH, *currlayer->algo);
                if (err) {
-                   bigerr += wxString::Format(_("\n\nError from %s:\n"),
-                                              wxString(GetAlgoName(currlayer->algtype),wxConvLocal));
+                   algoname = wxString(GetAlgoName(currlayer->algtype), wxConvLocal);
+                   bigerr += wxString::Format(_("\n\nError from %s:\n"), algoname.c_str());
                    bigerr += wxString(err, wxConvLocal);
                } else {
                   break;
