@@ -36,7 +36,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "platform.h"
 #include <cstdio>
 // moving the include vector *before* platform.h breaks compilation
+#ifdef _MSC_VER
+   #pragma warning(disable:4702)   // disable "unreachable code" warnings from MSVC
+#endif
 #include <vector>
+#ifdef _MSC_VER
+   #pragma warning(default:4702)   // enable "unreachable code" warnings
+#endif
 using std::vector;
 #include <iostream>
 

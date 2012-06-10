@@ -1,12 +1,20 @@
+#ifdef _MSC_VER
+   #pragma warning(disable:4702)   // disable "unreachable code" warnings from MSVC
+#endif
 #include <set>
+#ifdef _MSC_VER
+   #pragma warning(default:4702)   // enable "unreachable code" warnings
+#endif
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <cstdio>
 #include <stdlib.h>
+
 #include "util.h"
 #include "ruletable_algo.h"
 using namespace std ;
+
 const int MAXPARAMS = 9 ;
 const int MAXSTATES = 256 ;
 struct ndd {
