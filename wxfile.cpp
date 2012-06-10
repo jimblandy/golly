@@ -364,6 +364,10 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
    } else {
       const char* err = readpattern(FILEPATH, *currlayer->algo);
       if (err) {
+         wxString bigerr = _("File could not be loaded by any algorithm.");
+         bigerr += wxString::Format(_("\n\nError from %s:\n"), GetAlgoName(currlayer->algtype));
+         bigerr += wxString(err, wxConvLocal);
+      
          // cycle thru all other algos until readpattern succeeds
          for (int i = 0; i < NumAlgos(); i++) {
             if (i != oldalgo) {
@@ -372,7 +376,12 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
                currlayer->algo = CreateNewUniverse(currlayer->algtype);
                // readpattern will call setrule
                err = readpattern(FILEPATH, *currlayer->algo);
-               if (!err) break;
+               if (err) {
+                   bigerr += wxString::Format(_("\n\nError from %s:\n"), GetAlgoName(currlayer->algtype));
+                   bigerr += wxString(err, wxConvLocal);
+               } else {
+                  break;
+               }
             }
          }
          viewptr->nopattupdate = false;
@@ -382,10 +391,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
             delete currlayer->algo;
             currlayer->algo = CreateNewUniverse(currlayer->algtype);
             RestoreRule(oldrule);
-            // Warning( wxString(err,wxConvLocal) );
-            // current error and original error are not necessarily meaningful
-            // so report a more generic error
-            Warning(_("File could not be loaded by any algorithm\n(probably due to an unknown rule)."));
+            Warning(bigerr);
          }
       }
       viewptr->nopattupdate = false;

@@ -90,7 +90,7 @@ public:
    virtual void lowerRightPixel(bigint &x, bigint &y, int mag) = 0 ;
    virtual const char *writeNativeFormat(std::ostream &os, char *comments) = 0 ;
    void setpoll(lifepoll *pollerarg) { poller = pollerarg ; }
-   virtual const char *readmacrocell(char *) { return "cannot read hash" ; }
+   virtual const char *readmacrocell(char *) { return "Cannot read macrocell format." ; }
    
    // Verbosity crosses algorithms.  We need to embed this sort of option
    // into some global shared thing or something rather than use static.

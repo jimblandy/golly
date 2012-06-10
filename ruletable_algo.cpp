@@ -58,14 +58,14 @@ const char* ruletable_algo::setrule(const char* s)
    if (colonptr) 
       rule_name.assign(s,colonptr);
 
-   string ret = LoadRuleTable(rule_name.c_str());
+   static string ret = LoadRuleTable(rule_name.c_str());
    if(!ret.empty())
    {
       // if the file exists and we've got an error then it must be a file format issue
       if(!starts_with(ret,"Failed to open file: "))
          lifewarning(ret.c_str());
 
-      return "error";
+      return ret.c_str();
    }
    
    // check for rule suffix like ":T200,100" to specify a bounded universe
