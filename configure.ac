@@ -8,15 +8,9 @@ AC_CONFIG_SRCDIR([bgolly.cpp])
 AC_ARG_WITH([zlib], [AS_HELP_STRING([--with-zlib],
 	[support reading compressed pattern files with zlib])],
 	, [with_zlib=yes])
-AC_ARG_WITH([perl], [AS_HELP_STRING([--with-perl=PATH],
-	[path to Perl interpreter to use [default=check]])],
-	, [with_perl=check] )
 AC_ARG_WITH([perl-shlib], [AS_HELP_STRING([--with-perl-shlib=ARG],
 	[name of the Perl library when loaded dynamically (e.g. libperl.so.5.12)])],
 	, [with_perl_shlib=check])
-AC_ARG_WITH([python], [AS_HELP_STRING([--with-python=PATH],
-	[path to Python interpreter to use [default=check]])],
-	, [with_python=check] )
 AC_ARG_WITH([python-shlib], [AS_HELP_STRING([--with-python-shlib=ARG],
 	[name of the Python library when loaded dynamically (e.g. libpython2.6.so)])],
 	, [with_python_shlib=check])
