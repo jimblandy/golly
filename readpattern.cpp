@@ -617,10 +617,12 @@ const char *loadpattern(lifealgo &imp) {
          // try "Life" in case given algo is RuleTable/RuleTree and a
          // Life.table/tree file exists (nicer for loading lexicon patterns)
          err = imp.setrule("Life");
+         if (err) {
+            // if given algo doesn't support B3/S23 or Life then the only sensible
+            // choice left is to use the algo's default rule
+            err = imp.setrule( imp.DefaultRule() ) ;
+         }
       }
-      // if given algo doesn't support B3/S23 or Life then the only sensible
-      // choice left is to use the algo's default rule
-      if (err) imp.setrule( imp.DefaultRule() ) ;
    }
 
    if (getedges)

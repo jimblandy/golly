@@ -58,7 +58,8 @@ const char* ruletable_algo::setrule(const char* s)
    if (colonptr) 
       rule_name.assign(s,colonptr);
 
-   static string ret = LoadRuleTable(rule_name.c_str());
+   static string ret;  // NOTE: don't initialize this statically!
+   ret = LoadRuleTable(rule_name.c_str());
    if(!ret.empty())
    {
       // if the file exists and we've got an error then it must be a file format issue
