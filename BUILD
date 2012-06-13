@@ -32,6 +32,10 @@ type these commands:
    cd \wxWidgets\build\msw
    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
 
+or, on 64-bit Windows:
+
+   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
+
 This assumes you have the MS Visual C++ compiler and linker installed.
 It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
 
@@ -40,6 +44,10 @@ It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
    UNICODE=1
    DEBUG_INFO=0
    DEBUG_FLAG=0
+   
+and, on 64-bit Windows:
+
+   TARGET_CPU=AMD64
 
 so you won't have to specify those settings each time you run nmake
 to build Golly or wxWidgets.
