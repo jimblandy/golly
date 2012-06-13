@@ -94,6 +94,8 @@ if(APPLE OR UNIX)
    # use same settings as in makefiles
    add_definitions(-D_LARGE_FILES -O5)
 endif()
+# workaround for wx2.9.3 wxAssert link errors, see http://trac.wxwidgets.org/ticket/12626
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DwxDEBUG_LEVEL=0")
 
 # put the executables in the src folder
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
