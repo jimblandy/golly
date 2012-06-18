@@ -23,36 +23,17 @@ use the latest stable version.
 Building wxWidgets on Windows
 -----------------------------
 
-If you have an older version of wxWidgets already installed then make
-sure you uninstall that version before installing a newer version.
-Run the wxWidgets installer and follow the instructions.  We'll assume
-this creates a C:\wxWidgets directory.  Open up a command window and
-type these commands:
+If you've installed wxWidgets to (say) C:\wxWidgets 
+then, from a Visual Studio command prompt:
 
    cd \wxWidgets\build\msw
    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
 
-or, on 64-bit Windows:
+or, on 64-bit Windows:  (from a Visual Studio 64-bit command prompt)
 
    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
 
-This assumes you have the MS Visual C++ compiler and linker installed.
-It's also a good idea to edit \wxWidgets\build\msw\config.vc and set
-
-   BUILD=release
-   RUNTIME_LIBS=static
-   UNICODE=1
-   DEBUG_INFO=0
-   DEBUG_FLAG=0
    
-and, on 64-bit Windows:
-
-   TARGET_CPU=AMD64
-
-so you won't have to specify those settings each time you run nmake
-to build Golly or wxWidgets.
-
-
 Building wxWidgets on Mac OS X
 ------------------------------
 
@@ -109,11 +90,23 @@ How to build Golly
 ------------------
 
 Once wxWidgets, Perl and Python are installed, building Golly should
-be easy.  Just use the appropriate makefile for your platform:
+be easy:
 
-   nmake -f makefile-win   - on Windows 2000 or later
-   make -f makefile-mac    - on Mac OS 10.4 or later
-   make -f makefile-gtk    - on Linux with GTK+
+On 32-bit Windows: (from a Visual Studio command prompt)
+
+   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
+
+On 64-bit Windows: (from a Visual Studio 64-bit command prompt)
+
+   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
+   
+On Mac OS 10.4 or later:
+
+   make -f makefile-mac
+   
+On Linux with GTK+:
+   
+   make -f makefile-gtk
 
 Important notes:
 

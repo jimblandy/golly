@@ -1,19 +1,37 @@
 # Makefile for Windows version of Golly using wxWidgets.
-# To compile the wxWidgets libraries on Windows:
-# 
+#
+# Edit local-win.mk with paths to your installed libraries.
+#
+# Compile wxWidgets and Golly as below:
+#
+# On 32-bit Windows: (from a Visual Studio command prompt)
+#
+#   Build wxWidgets:
 #    cd \wxWidgets\build\msw
 #    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
+#   Build Golly:
+#    cd \golly\src
+#    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
+#
+# On 64-bit Windows: (from a Visual Studio 64-bit command prompt)
+#
+#   Build wxWidgets:
+#    cd \wxWidgets\build\msw
+#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
+#   Build Golly:
+#    cd \golly\src
+#    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
 # 
-# It's a good idea to edit \wxWidgets\build\msw\config.vc and set:
-# 
-#    BUILD = release
-#    RUNTIME_LIBS = static
-#    UNICODE = 1
-#    DEBUG_INFO = 0
-#    DEBUG_FLAG = 0
-# 
-# Then you don't have to specify those settings to nmake when you
-# build wxWidgets or Golly.
+# If you only build one wxWidgets configuration (e.g. 32-bit release) then you can edit
+# \wxWidgets\build\msw\config.vc with those options. Then you can build wxWidgets and Golly
+# simply with:
+#
+#   Build wxWidgets:
+#    cd \wxWidgets\build\msw
+#    nmake -f makefile.vc
+#   Build Golly:
+#    cd \golly\src
+#    nmake -f makefile-win
 
 #   All system-dependent changes belong in local-win.mk
 !include local-win.mk
@@ -28,7 +46,14 @@ SRCFILES = BUILD TODO CMakeLists.txt makefile-gtk makefile-mac makefile-win \
 SRCDIRS = bitmaps
 BINFILES = Golly.exe bgolly.exe RuleTableToTree.exe
 
+!if "$(TARGET_CPU)" == "AMD64"
+LIBDIRNAME = $(WX_DIR)\lib\vc_amd64_$(LIBTYPE_SUFFIX)$(CFG)
+WX_CPU_DEF = WX_CPU_AMD64
+!else
 LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
+WX_CPU_DEF = WX_CPU_X86
+!endif
+
 SETUPHDIR = $(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
 
 ### note that /wd4100 turns off annoying warnings about "unreferenced formal parameter"
@@ -329,7 +354,7 @@ Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 ### these libs no longer needed if wininet.lib is used??? oleacc.lib odbc32.lib
 
 golly.res: golly.rc
-	rc /fo$@ /d WX_CPU_$(CPU) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
+	rc /fo$@ /d $(WX_CPU_DEF) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
 	$(__DEBUG_DEFINE_p_1) $(__NDEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) \
 	$(__UNICODE_DEFINE_p_1) /i $(WX_DIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS \
 	/i $(WX_DIR)\samples /d NOPCH golly.rc
