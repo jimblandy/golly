@@ -439,6 +439,7 @@ void DestroyDrawingData()
    delete graybitmap;
    delete ctrlsbitmap;
    delete darkctrls;
+   delete pixmap;
 }
 
 // -----------------------------------------------------------------------------
