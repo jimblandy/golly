@@ -96,6 +96,18 @@ if(APPLE OR UNIX)
 endif()
 # workaround for wx2.9.3 wxAssert link errors, see http://trac.wxwidgets.org/ticket/12626
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DwxDEBUG_LEVEL=0")
+# avoid security warnings
+if(MSVC)
+  add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS)
+endif()
+
+# set this to true if using Visual Leak Detector to find memory leaks
+set(USING_VISUAL_LEAK_DETECTOR FALSE)
+if(USING_VISUAL_LEAK_DETECTOR)
+  set(VLD_INCLUDE_DIR "C:\Program Files\Visual Leak Detector\include")
+  set(VLD_LIBRARIES "C:\Program Files\Visual Leak Detector\lib\Win32\vld.lib")
+  add_definitions(/DUSING_VISUAL_LEAK_DETECTOR)
+endif()
 
 # put the executables in the src folder
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -156,4 +168,11 @@ endif()
 # http://stackoverflow.com/questions/543203/cmake-runtime-output-directory-on-windows
 if(MSVC_IDE)
    set_target_properties( ${APP_NAME} bgolly RuleTableToTree PROPERTIES PREFIX "../" )
+endif()
+
+if(USING_VISUAL_LEAK_DETECTOR)
+   include_directories( ${VLD_INCLUDE_DIR} )
+   target_link_libraries( ${APP_NAME} ${VLD_LIBRARIES} )
+   target_link_libraries( bgolly ${VLD_LIBRARIES} )
+   target_link_libraries( RuleTableToTree ${VLD_LIBRARIES} )
 endif()

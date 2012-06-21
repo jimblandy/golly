@@ -294,6 +294,7 @@ extern wxBrush* borderbrush;     // brush for filling grid border
 extern wxPen* pastepen;          // pen for drawing paste rect
 
 void SetBrushesAndPens();        // update colors in above brushes and pens
+void FreeDefaultColors();        // deallocate memory allocated by CreateDefaultColors()
 
 // Various constants:
 
@@ -348,6 +349,9 @@ extern wxCursor* curs_cross;     // for selecting cells
 extern wxCursor* curs_hand;      // for moving view by dragging
 extern wxCursor* curs_zoomin;    // for zooming in to a clicked cell
 extern wxCursor* curs_zoomout;   // for zooming out from a clicked cell
+
+void FreeCursors();
+// deallocate memory allocated by CreateCursors()
 
 const char* CursorToString(wxCursor* curs);
 // convert given cursor to corresponding string in Cursor Mode submenu

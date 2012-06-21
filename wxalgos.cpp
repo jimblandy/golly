@@ -325,6 +325,15 @@ static wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
 
 // -----------------------------------------------------------------------------
 
+void FreeIconBitmaps(wxBitmap** bitmap)
+{
+    for (int i = 0; i < 256; i++)
+        delete bitmap[i];
+    free(bitmap);
+}
+
+// -----------------------------------------------------------------------------
+
 static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
 {
    if (srcicons == NULL) return NULL;
@@ -375,6 +384,15 @@ AlgoData::AlgoData() {
    statusbrush = NULL;
    icons7x7 = icons15x15 = NULL;
    iconfile = wxEmptyString;
+}
+
+// -----------------------------------------------------------------------------
+
+AlgoData::~AlgoData() 
+{
+    FreeIconBitmaps(icons7x7);
+    FreeIconBitmaps(icons15x15);
+    delete statusbrush;
 }
 
 // -----------------------------------------------------------------------------
@@ -461,6 +479,19 @@ void InitAlgorithms()
 
    vnicons7x7 = CreateIconBitmaps(vn7x7,256);
    vnicons15x15 = CreateIconBitmaps(vn15x15,256);
+}
+
+// -----------------------------------------------------------------------------
+
+void DeleteAlgorithms()
+{
+   for (int i = 0; i < NumAlgos(); i++)
+      delete algoinfo[i];
+   FreeIconBitmaps(hexicons7x7);
+   FreeIconBitmaps(hexicons15x15);
+   FreeIconBitmaps(vnicons7x7);
+   FreeIconBitmaps(vnicons15x15);
+   delete algomenupop;
 }
 
 // -----------------------------------------------------------------------------

@@ -60,6 +60,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
    #include <Carbon/Carbon.h>    // for GetCurrentProcess, etc
 #endif
 
+#ifdef USING_VISUAL_LEAK_DETECTOR
+   #include <vld.h>
+#endif
+
 // -----------------------------------------------------------------------------
 
 // one-shot timer to fix problems in wxMac and wxGTK -- see OnOneTimer;
@@ -2060,6 +2064,17 @@ void MainFrame::OnClose(wxCloseEvent& event)
       // avoid seg fault on Linux (only happens if ctrl-Q is used to quit)
       exit(0);
    #endif
+
+   // deallocate things (usually no need) to help find any real memory leaks
+   if (debuglevel == 666) {
+      wxGetApp().Yield(); // (because Destroy() doesn't act immediately)
+      if (numlayers > 1) DeleteOtherLayers();
+      delete currlayer;
+      delete stopwatch;
+      DeleteAlgorithms();
+      FreeCursors();
+      FreeDefaultColors();
+   }
 }
 
 // -----------------------------------------------------------------------------

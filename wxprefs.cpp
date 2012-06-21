@@ -1151,6 +1151,18 @@ void CreateCursors()
 
 // -----------------------------------------------------------------------------
 
+void FreeCursors()
+{
+    delete curs_pencil;
+    delete curs_pick;
+    delete curs_cross;
+    delete curs_hand;
+    delete curs_zoomin;
+    delete curs_zoomout;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* CursorToString(wxCursor* curs)
 {
    if (curs == curs_pencil)   return "Draw";
@@ -1287,6 +1299,17 @@ void CreateDefaultColors()
    
    // set their default colors (in case prefs file doesn't exist)
    SetBrushesAndPens();
+}
+
+// -----------------------------------------------------------------------------
+
+void FreeDefaultColors()
+{
+    delete borderrgb;
+    delete selectrgb;
+    delete pastergb;
+    delete borderbrush;
+    delete pastepen;
 }
 
 // -----------------------------------------------------------------------------

@@ -45,6 +45,7 @@ typedef int algo_type;           // 0..MAX_ALGOS-1
 class AlgoData : public staticAlgoInfo {
 public:
    AlgoData();
+   ~AlgoData();
    virtual void setDefaultBaseStep(int v) { defbase = v; }
    virtual void setDefaultMaxMem(int v) { algomem = v; }
 
@@ -83,6 +84,9 @@ extern wxBitmap** vnicons15x15;        // diamond icon bitmaps for scale 1:16
 
 void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.
+
+void DeleteAlgorithms();
+// Deallocate memory allocated in InitAlgorithms()
 
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck = true);
 // Create a new universe of given type.  If allowcheck is true then
