@@ -73,7 +73,7 @@ int mgetchar() {
          #endif
       #else
          bytesread = fread(filebuff, 1, BUFFSIZE, pattfile);
-         filepos = ftell(filebuff);
+         filepos = ftell(pattfile);
       #endif
       buffpos = 0;
       lifeabortprogress(filepos / filesize, "");
