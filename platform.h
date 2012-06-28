@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include <limits.h>
 #if defined(_WIN64)
-   #define PRIuPTR "u"
+   #define PRIuPTR "I64u"
    typedef uintptr_t g_uintptr_t ;
    #define G_MAX SIZE_MAX
    #define GOLLY64BIT (1)
