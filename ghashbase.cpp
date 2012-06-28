@@ -1337,7 +1337,7 @@ ghnode *ghashbase::runpattern() {
 }
 const char *ghashbase::readmacrocell(char *line) {
    int n=0 ;
-   g_uintptr_t i=1, nw, ne, sw, se, indlen=0 ;
+   g_uintptr_t i=1, nw=0, ne=0, sw=0, se=0, indlen=0 ;
    int r, d ;
    ghnode **ind = 0 ;
    root = 0 ;

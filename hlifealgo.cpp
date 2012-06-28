@@ -1473,7 +1473,7 @@ node *hlifealgo::runpattern() {
 }
 const char *hlifealgo::readmacrocell(char *line) {
    int n=0 ;
-   g_uintptr_t i=1, nw, ne, sw, se, indlen=0 ;
+   g_uintptr_t i=1, nw=0, ne=0, sw=0, se=0, indlen=0 ;
    int r, d ;
    node **ind = 0 ;
    root = 0 ;

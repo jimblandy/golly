@@ -1,6 +1,6 @@
 # Change the next 2 lines to specify where you installed wxWidgets:
-!include <C:/wxWidgets-2.8.7-64/build/msw/config.vc>
-WX_DIR = C:\wxWidgets-2.8.7-64
+!include <C:/wxWidgets-2.8.12-64/build/msw/config.vc>
+WX_DIR = C:\wxWidgets-2.8.12-64
 
 # Change the next line to match your wxWidgets version (first two digits):
 WX_RELEASE = 28
