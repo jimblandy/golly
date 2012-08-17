@@ -1,0 +1,13 @@
+# Signal-trains in Codd's CA
+#
+# Six signal-trains are shown, travelling along a wire. Their functions
+# are listed here:
+#
+# 4456 : turn left
+# 5546 : turn right
+# 76   : advance
+# 
+x = 27, y = 15, rule = Codd
+.24B$B5A.F2A.E2A.D2A.D5AB$BA23B$BAB$BA24B$B2AG.2AF.6AG.2AF.5AB$.24BAB
+$24.BAB$.24BAB$B4A.F2A.D2A.E2A.E7AB$BA24B$BAB$BA23B$B2AG.2AF.6AG.2AF.
+4AB$.24B!

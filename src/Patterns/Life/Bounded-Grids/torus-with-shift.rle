@@ -1,0 +1,8 @@
+#CXRLE Pos=-2,-2
+#C
+#C A torus can have a shift on the horizontal edges (as in this example)
+#C or on the vertical edges, but not both.
+#C For more details see Help > Bounded Grids.
+#C
+x = 4, y = 5, rule = LifeHistory:T30+7,20
+A.A$3.A$3.A$A2.A$.3A!

@@ -1,0 +1,111 @@
+#I :breeder.startup -300 0 0 1 0
+
+#B breeder.startup
+#I :breeder.flotilla -287 -280 0 1 0
+#C gliders to fix up initial configuration
+#I :ss.glider 256 76 2 -1 947
+#I :ss.glider 252 -198 1 -1 946
+#I :ss.glider 177 -120 2 1 947
+#I :ss.glider 167 -4 2 -1 947
+#E
+
+#B breeder.flotilla
+#I :./breederrake.00 473 371 0 1 946
+#I :./breederrake.10 428 336 0 1 714
+#I :./breederrake.01 349 273 0 1 573
+#I :./breederrake.00 368 286 0 1 105
+#I :./breederrake.11 314 242 0 1 0
+#I :./breederrake.11 312 201 0 -1 4
+#I :./breederrake.10 359 158 0 -1 138
+#I :./breederrake.10 406 137 0 -1 444
+#I :./breederrake.10 426 107 0 -1 714
+#I :./breederrake.00 472 71 0 -1 947
+#E
+
+#B ./breederrake.11
+#I :breederpuffer 71 37 0 1 0
+#I :ss.s 75 14 0 1 18
+#I :ss.m 60 6 0 1 18
+#I :ss.m 60 -8 0 -1 18
+#E
+
+#B breederpuffer
+#I :gen.breeder 15 -45 0 1 0
+#I :ss.l 16 -30 0 1 0
+#I :ss.l 16 -46 0 -1 0
+#I :ss.l 5 -54 0 1 0
+#I :ss.l 5 -22 0 -1 0
+#E
+
+#B gen.breeder
+#P 0 1
+..*.....
+.*......
+**...**.
+*.*...**
+.*...**.
+.....*..
+........
+.....*..
+.*...**.
+*.*...**
+**...**.
+.*......
+..*.....
+#E
+
+#B ss.l
+#P
+..**...
+*....*.
+......*
+*.....*
+.******
+#E
+
+#B ss.s
+#P 0 1
+*..*.
+....*
+*...*
+.****
+#E
+
+#B ss.m
+#P
+..*...
+*...*.
+.....*
+*....*
+.*****
+#E
+
+#B ./breederrake.01
+#I :./breederrake.11 0 0 0 1 0
+#I :ss.m 0 -6 0 -1 18
+#E
+
+#B ./breederrake.11
+#I :breederpuffer 71 37 0 1 0
+#I :ss.s 75 14 0 1 18
+#I :ss.m 60 6 0 1 18
+#I :ss.m 60 -8 0 -1 18
+#E
+
+#B ./breederrake.10
+#I :./breederrake.11 0 0 0 1 0
+#I :ss.m 0 4 0 1 18
+#E
+
+#B ./breederrake.00
+#I :./breederrake.11 0 0 0 1 0
+#I :ss.m 0 4 0 1 18
+#I :ss.m 0 -6 0 -1 18
+#E
+
+#B ss.glider
+#P 0 1
+.**
+*.*
+..*
+#E

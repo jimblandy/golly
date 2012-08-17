@@ -1,0 +1,45 @@
+<html>
+<title>Golly Help: JvN</title>
+<body bgcolor="#FFFFCE">
+
+<p>John von Neumann created the very first cellular automata in the 1940's,
+together with fellow mathematician Stanislaw Ulam.</p>
+
+<p>The JvN algorithm supports 3 rules:</p>
+
+<p><b><a href="rule:JvN29">JvN29</a></b><br>
+The original 29-state CA as created by von Neumann. To see how his rules work,
+load the simpler examples first:
+<a href="open:Patterns/JvN/counter-demo.rle">counter-demo.rle</a> and
+<a href="open:Patterns/JvN/cell-coders-demo.rle">cell-coders-demo.rle</a> and
+read their pattern info (hit the 'i' button). For a more complex example, see
+<a href="open:Patterns/JvN/read-arm-demo.rle">read-arm-demo.rle</a>
+which shows one component of von Neumann's original design, the tape reader.
+For a complete self-replicating machine within von Neumann's CA, open
+<a href="open:Patterns/JvN/sphinx.mc.gz">sphinx.mc.gz</a>.</p>
+
+<p><b><a href="rule:Nobili32">Nobili32</a></b><br>
+An extension of JvN29 created by Renato Nobili in 1994. This rule adds three new states
+to allow signal crossing, allowing self-replicating machines to be greatly reduced in size.
+The example pattern <a href="open:Patterns/JvN/construction-arm-demo.rle">construction-arm-demo.rle</a>
+shows some of the crossing cells in action under this rule.
+The pattern <a href="open:Patterns/JvN/NP-replicator.rle.gz">NP-replicator.rle.gz</a>
+shows the 1994 design that was the first implementation of von Neumann's vision of a self-reproducing universal
+constructor in a CA.</p>
+
+<p><b><a href="rule:Hutton32">Hutton32</a></b><br>
+Created by Tim Hutton in 2008, this rule uses the same states as Nobili32 but has a slightly modified rule table.
+Examples <a href="open:Patterns/JvN/golly-constructor.rle">golly-constructor.rle</a> and
+<a href="open:Patterns/JvN/Hutton-replicator.rle">Hutton-replicator.rle</a> show what it can do.</p>
+
+<p><font size=+1><b>References:</b></font></p>
+
+<p>
+<a href="http://en.wikipedia.org/wiki/Von_Neumann_universal_constructor">http://en.wikipedia.org/wiki/Von_Neumann_universal_constructor</a><br>
+<a href="http://en.wikipedia.org/wiki/Von_Neumann_cellular_automata">http://en.wikipedia.org/wiki/Von_Neumann_cellular_automata</a><br>
+<a href="http://www.pd.infn.it/~rnobili/wjvn/index.htm">http://www.pd.infn.it/~rnobili/wjvn/index.htm</a><br>
+<a href="http://www.pd.infn.it/~rnobili/au_cell/">http://www.pd.infn.it/~rnobili/au_cell/</a><br>
+<a href="http://www.sq3.org.uk/Evolution/JvN/">http://www.sq3.org.uk/Evolution/JvN/</a></p>
+
+</body>
+</html>

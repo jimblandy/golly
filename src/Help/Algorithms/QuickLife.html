@@ -1,0 +1,139 @@
+<html>
+<title>Golly Help: QuickLife</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+QuickLife is a fast, conventional (non-hashing) algorithm for
+exploring Life and other 2D outer-totalistic rules.
+Such rules are defined using "B0...8/S0...8" notation, where
+the digits after B specify the counts of live neighbors necessary
+for a cell to be born in the next generation, and the digits
+after S specify the counts of live neighbors necessary for a
+cell to survive to the next generation.
+Here are some example rules:
+
+<p><b><a href="rule:B3/S23">B3/S23</a></b> [Life]<br>
+John Conway's rule is by far the best known and most explored CA.
+
+<p><b><a href="rule:B36/S23">B36/S23</a></b> [HighLife]<br>
+Very similar to Conway's Life but with an interesting replicator.
+
+<p><b><a href="rule:B3678/S34678">B3678/S34678</a></b> [Day & Night]<br>
+Dead cells in a sea of live cells behave the same as live cells
+in a sea of dead cells.
+
+<p><b><a href="rule:B35678/S5678">B35678/S5678</a></b> [Diamoeba]<br>
+Creates diamond-shaped blobs with unpredictable behavior.
+
+<p><b><a href="rule:B2">B2</a></b> [Seeds]<br>
+Every living cell dies every generation, but most patterns still explode.
+
+<p><b><a href="rule:B234">B234</a></b> [Serviettes or Persian Rug]<br>
+A single 2x2 block turns into a set of Persian rugs.
+
+<p><b><a href="rule:B345/S5">B345/S5</a></b> [LongLife]<br>
+Oscillators with extremely long periods can occur quite naturally.
+
+
+<p><a name="b0emulation"></a>&nbsp;<br>
+<font size=+1><b>Emulating B0 rules</b></font>
+
+<p>
+Rules containing B0 are tricky to handle in an unbounded universe because every
+dead cell becomes alive in the next generation.  If the rule doesn't contain S8
+then the "background" cells alternate from all-alive to all-dead, creating a
+nasty strobing effect.  To avoid these problems, Golly emulates rules with B0
+in the following way:
+
+<p>
+A rule containing B0 and S8 is converted into an equivalent rule (without B0)
+by inverting the neighbor counts, then using S(8-x) for the B counts
+and B(8-x) for the S counts.
+For example, B0123478/S01234678 (AntiLife) is changed to B3/S23 (Life)
+via these steps: B0123478/S01234678 -> B56/S5 -> B3/S23.
+
+<p>
+A rule containing B0 but not S8 is converted into a pair of rules (both without B0):
+one is used for the even generations and the other for the odd generations.
+The rule for even generations uses inverted neighbor counts.
+The rule for odd generations uses S(8-x) for the B counts and B(8-x) for the S counts.
+For example, B03/S23 becomes B1245678/S0145678 (even) and B56/S58 (odd).
+
+<p>
+In both cases, the replacement rule(s) generate patterns that are equivalent
+to the requested rule.  However, you need to be careful when editing an
+emulated pattern in a rule that contains B0 but not S8.  If you do a cut
+or copy then you should only paste into a generation with the same parity.
+
+
+<p><a name="vonNeumann"></a>&nbsp;<br>
+<font size=+1><b>Von Neumann neighborhood</b></font>
+
+<p>
+The above rules use the Moore neighborhood, where each cell has 8 neighbors.
+In the von Neumann neighborhood each cell has only the 4 orthogonal neighbors.
+To specify this neighborhood just append "V" to the usual "B.../S..." notation
+and use neighbor counts ranging from 0 to 4 (counts above 4 are silently ignored).
+For example, try <b><a href="rule:B13/S012V">B13/S012V</a></b> or
+<b><a href="rule:B2/S013V">B2/S013V</a></b>.
+
+<p>
+Note that when viewing patterns at scales 1:8 and 1:16, Golly displays
+diamond-shaped icons for rules using the von Neumann neighborhood
+and circular dots for rules using the Moore neighborhood.
+
+<p><a name="hex"></a>&nbsp;<br>
+<font size=+1><b>Hexagonal neighborhood</b></font>
+
+<p>
+QuickLife can emulate a hexagonal neighborhood on a square grid by ignoring the
+NE and SW corners of the Moore neighborhood so that every cell has 6 neighbors:
+<pre>
+   NW N NE         NW  N
+   W  C  E   ->   W  C  E
+   SW S SE         S  SE
+</pre>
+To specify a hexagonal neighborhood just append "H" to the usual "B.../S..." notation
+and use neighbor counts ranging from 0 to 6 (counts above 6 are silently ignored).
+Here's an example:
+<pre>
+x = 7, y = 6, rule = B245/S3H
+obo$4bo$2bo$bo2bobo$3bo$5bo!
+</pre>
+Editing hexagonal patterns in a square grid can be somewhat confusing,
+so to help make things a bit easier Golly displays slanted hexagons
+(in icon mode) at scales 1:8 and 1:16.
+
+
+<p><a name="wolfram"></a>&nbsp;<br>
+<font size=+1><b>Wolfram's elementary rules</b></font>
+
+<p>
+QuickLife supports Stephen Wolfram's elementary 1D rules.
+These rules are specified as "Wn" where n is an even number from 0 to 254.
+For example:
+
+<p><b><a href="rule:W22">W22</a></b><br>
+A single live cell creates a beautiful fractal pattern.
+
+<p><b><a href="rule:W30">W30</a></b><br>
+Highly chaotic and an excellent random number generator.
+
+<p><b><a href="rule:W110">W110</a></b><br>
+Matthew Cook proved that this rule is capable of universal computation.
+
+<p>
+The binary representation of a particular number specifies the cell
+states resulting from each of the 8 possible combinations of a cell and
+its left and right neighbors, where 1 is a live cell and 0 is a dead cell.
+Here are the state transitions for W30:
+<pre>
+   111  110  101  100  011  010  001  000
+    |    |    |    |    |    |    |    | 
+    0    0    0    1    1    1    1    0  = 30 (2^4 + 2^3 + 2^2 + 2^1)
+</pre>
+Note that odd-numbered rules have the same problem as B0 rules, but Golly
+currently makes no attempt to emulate such rules.
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Worm Trails - a 2-state 2-color Turmite discovered by Ed Pegg, Jr.
+#
+# After building happily for 4 million timesteps the turmite gets stuck in 
+# a short cycle.
+#
+# http://en.wikipedia.org/wiki/Turmite
+# http://demonstrations.wolfram.com/Turmites/
+# http://www.mathpuzzle.com/26Mar03.html
+#
+# Specification string: {{{1, 2, 1}, {1, 8, 1}}, {{1, 2, 1}, {0, 2, 0}}}
+#
+# This string is a curly-bracketed table of n_states rows and n_colors columns, 
+# where each entry is a triple of integers. The elements of each triple are:
+# - new color of the square
+# - direction(s) for the turmite to turn: 1=noturn, 2=right, 4=u-turn, 8=left
+# - new internal state of the turmite
+# 
+# For example, the triple {1,2,1} says: 
+# - set the color of the square to 1
+# - turn right (2)
+# - adopt state 1 and move forward one square
+#
+# To generate Turmites like this one, run this script:
+# Scripts/Python/Rule-Generators/Turmite-gen.py
+#
+x = 1, y = 1, rule = Turmite_121181121020
+B!

@@ -1,0 +1,41 @@
+# Edwin Roger Banks, PhD Thesis 1971
+#
+# Three-state, five-neighbor CA for a universal computer.
+# (Appendix II)
+#
+# While Banks's Appendix I rule (Banks-I) required an infinite extent
+# to be computation universal, his Appendix II rule seen here allows
+# a construction to grow its memory space as required.
+# 
+# At the top are shown various wires and signals. Two signals that
+# collide head-on either annihilate each other or pass through each
+# other, depending on their initial separation.
+# 
+# Below, junctions can be used to fan-out the signals, and for making
+# turns. Where two signals meet at right angles they pass through each
+# other (crossover). Where three signals meet they annihilate each other.
+#
+# If a wire ends with a single cell as shown, a signal causes it to
+# extend by two cells. An echo signal is generated, though this can
+# easily be destroyed by a second signal if required.
+#
+# A wire can be extended at each end by a bouncing signal, for a bit 
+# of fun.
+#
+# In the lower-right is shown a repeater-emitter reminiscent of
+# Langton's Loops. Two signals are sent around a loop and down an
+# extender wire.
+#
+# See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+#
+x = 59, y = 85, rule = Banks-II
+17.25B$17.2B.A17BA.2B$17.25B2$17.25B$17.2B.A16BA.3B$17.25B5$14.3B$14.
+3B$14.3B$14.3B$14.3B27.3B$14.3B27.3B$14.3B27.B.B$14.3B5.3B19.BAB$14.
+3B5.3B19.3B$25B19.3B$2B.A21B19.3B$25B19.3B$14.3B5.3B11.19B$14.3B5.3B
+11.2B.A15B$14.3B5.3B11.19B$14.3B5.3B19.3B$14.3B5.3B19.3B$12.19B13.3B$
+12.19B13.3B$12.19B13.BAB$22.3B19.B.B$22.3B19.3B$22.3B19.3B$22.3B$22.
+3B$22.3B$22.3B4$18.22B$18.16B.A5B$18.22B3$18.22B$18.B.A13B.A5B$18.22B
+4$26.7B$25.2B.A5B$26.7B3$28.3B$28.3B$28.3B$28.3B$28.3B$28.3B$25.9B$
+24.2B.A7B$25.9B$28.BAB$28.B.B$28.3B$29.B9.3B3.3B$39.3B3.3B$39.3B3.3B$
+36.15B$36.15B$36.15B$39.3B3.3B$39.BAB3.B.B$39.B.B3.BAB$39.3B3.3B$36.
+22B$36.23B$36.22B$39.3B3.3B$39.3B3.3B$39.3B3.3B!

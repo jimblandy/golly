@@ -1,0 +1,25 @@
+#C 5 beehives and 75 blocks produce a quadratically expanding
+#C population when hit by a single trigger glider.
+#C This is a nonstandard "Blockish" construction of Mitchell Riley's
+#C switch-engine breeder from July 2006, which in its minimal form
+#C contains just 38 ON cells:
+#C x = 135, y = 41, rule = B3/S23
+#C 131b4o$130bo3bo$134bo$133bo3$130boo$130bobo$132bo$130b3o5$131b4o$
+#C 130bo3bo$134bo$133bo9$94b4o$93bo3bo$97bo$96bo8$b4o$o3bo$4bo$3bo!
+x = 221, y = 173, rule = B3/S23
+148boo$148boo3$143boo$143boo3$159boo$159boo$177bo$154boo20bo$154boo9b
+oo9b3o$165boo$$153boo5boo$153boo5boo$$167boo$159boo6boo$159boo3$171boo
+4boo$171boo4boo4$174boo$170boobboo5boo$170boo9boo4$178boo$174boobboo5b
+oo$174boo9boo$$109boo$109boo$113boo67boo$113boobboo59boobboo$117boo59b
+oo4$174boo$174boo4$178boo$178boo9$149boo$149boo4$153boo$153boo9$124boo
+$124boo$$193boo24boo$193boo24boo$128boo$128boo$$184boo$87boo95boo33boo
+$87boo130boo$$210boo$185boo23boo$91boo92boo$91boo$206boo$206boo5$219b
+oo$161boo56boo$161boo10boo$173boo35boo$210boo$$161boo41boo$141boo18boo
+41boo$141boo4$132boo70boo$132boo70boo$$127boo66boo$127boo66boo$133boo$
+133boo57boo$192boo$$127boo$101boo24boo$101boo$118boo54boo29boo$118boo
+54boo29boo$96boo72boo$96boo68boobboo24boo$166boo28boo$114boo31boo13boo
+$114boo31boo13boo3$151boo$139bo11boo$138bobo$138bobo$129boo8bo$117boo
+4boo4boo34boo4boo$117boo4boo40boo4boo$$133boo$121bo11boo$107boo11bobo$
+107boo11bobo$121bo$$111boo$99bo11boo$98bobo$98bobo$99bo4$78boo$78boo3$
+82boo$70bo11boo$69bobo$69bobo$70bo3$9boo$9boo3$13boo$bo11boo$obo$obo$b
+o!

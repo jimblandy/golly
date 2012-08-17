@@ -1,0 +1,10 @@
+#C p30 Heisenblinker device: Mike Playle, 26 September 2006
+x = 68, y = 74, rule = B3/S23
+47bo$45b3o$44bo$44boo5bo$51b3o$54bo$53boo4$39boo3boo$40b5o$40booboo11b 
+o$40booboo10b3o$41b3o10b5o$53boo3boo$o$3o$3bo$bboo51b3o$55b3o$46bo$40b 
+o3bobo11bo$39b3o3boo10bobo$38b5o13bo3bo$37bobobobo13b3o$37boo3boo11boo 
+3boo$50boo$3b5o3bobo36boo$bbob3obobbo3bo$3bo3bo5boobo$4b3o7bobo$5bo9bo 
+21boo$6boo4b3o23bo4bo$6bobo3boo21b3o4bo$6bobo3bo22bo6b3o10boo$7bo48bo$ 
+53b3o$53bo$4booboboo$4bo5bo$5bo3bo25boo$6b3o26bobo$27bo7bo$26boo$26bob 
+o$21boo$21bobo$16boo4b3o$12b4obbo4b3o$7boo3b3oboo4b3o$7boo12bobo7boo$ 
+21boo8bobo$33bo$33boo17$65boo$65bobo$65bo!

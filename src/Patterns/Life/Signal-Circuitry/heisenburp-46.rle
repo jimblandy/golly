@@ -1,0 +1,33 @@
+#C Period 46 pure Heisenburp device
+#C Detects and duplicates a stream of gliders without influencing it,
+#C even temporarily. The reaction used works for any period >= 35.
+#C Jason Summers, 29 Jun 1999; from "jslife" collection.
+x = 213, y = 209, rule = B3/S23
+187boo$186booboo$187bobbo$160boo25bobbo4bo$150boo7bobo26boo5b3o$150boo
+6boobo36bo$159boo27boo5b3o$160bo26bobbo4bo$187bobbo$160bo25booboo$159b
+oo18bo7boo$150boo6boobo15bobo$150boo7bobo16boo$160boo8$190bo$191bo$
+189b3o5$186bo$186boo$185bobo10$174boo$175boo$174bo$183boo$184bo$184bob
+o$185boo12boo$197boobbo$197b6o$197b4o4bo3bo$205b7o$163bo48bo$163boo40b
+7o$162bobo32b4o4bo3bo$169b3o3bo21b6o$167b5obbobo20boobbo$171boo3bo22b
+oo$165boboo3bobbo$163b3oboo3b3o$162bo$163b3oboo3b3o$165boboo3bobbo13b
+oo$171boo3bo13bo$151boo14b5obbobo$152boo15b3o3bo10b3oboo$151bo34boobb
+oo$188b4o$184bobboboo$184bo3b3o$188boo$186bobo$186b3o3bo$193bo3bo$188b
+oo8bo12boo$140bo47bo5boobbo12boo$140boo46bobo5boo$139bobo38bo8boo3b3o$
+179bobo$179boo8boo3b3o$188bobo5boo$188bo5boobbo12boo$165b4o19boo8bo12b
+oo$141boo21b6o23bo3bo$140boob4o16boob4o22bo$141b6o17boo$142b4o$$131bo
+47bo$130b3o45boboobo14bo$129boobo45bo4bo13boo$129b3o47bobo14b3obo9boo$
+129b3o51boo10boo13boo$130boo5b3o43boo11boo$137bo46bo12bo$138bo$197bo$
+196boo$195boo13boo$161boo14b3o16b3obo9boo$161boo12bo3bo17boo$115bo58bo
+4bo18bo$114bobo57bo3bo$114bobo$113booboo31boo23bo3bo$149bobo22bo4bo$
+149bo11boo12bo3bo$161boo14b3o$187boo$187bobo$189bo$131bo5boo5boo43boo$
+130b3o4boo5boo$130boboo$113booboo13b3o$93bo18bo5bo12b3o$93boo36boo27b
+3o$92bobo16bo7bo40bo$111bobbobobbo41bo$111b3o3b3o$137b3o3b3o$136bobbo
+3bobbo$136boobo3boboo4$188boo9boo$172boo15boo8boo$172bobo10b5o$152boo
+8b3o7bo12b4o$109bo5bo36boo8bo3bo$108b3o3b3o45bo4bo17b4o$107boobo3boboo
+45bo3bo17b5o$123bo65boo8boo$124bo6bo31bo3bo20boo9boo$110bo3bo7b3o5b3o
+29bo4bo$110bo3bo14boobo19boo8bo3bo$129b3o20boo8b3o$70bo58b3o7bo$70boo
+58boo5boo$69bobo66boo8$119b3o7boo8b3o5b3o$118bo4bo4bobbo7bobbooboobbo$
+58boo57bo5bo4bobbo8b3o3b3o$59boo57bo8bo3bo9bo5bo$58bo60boo$127boboo$
+119boo6bobo$118bo8boo$105boo10bo5bo$105boo11bo4bo$119b3o8boobo6boo5boo
+$130boob3o4boo5boo$136bo$130boob3o$128bobbobo$128boo21$24bo$24boo$23bo
+bo10$12boo$13boo$12bo9$bo$boo$obo!

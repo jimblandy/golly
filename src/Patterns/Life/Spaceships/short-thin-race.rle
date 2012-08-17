@@ -1,0 +1,96 @@
+#C From thin,rle (left side of pattern):
+#C This table shows the minimum possible width of those types of
+#C  orthogonal spaceship for which this has been determined.
+#C  The width is measured over all time, so that, for example,
+#C  the width of a LWSS is counted as 5 even though each individual
+#C  phase has width 4.
+#C For each type I also give the minimum length for a spaceship of
+#C  minimal width.  The length here is defined as the length of the
+#C  union of n successive generations (where n is the period), the
+#C  starting generation being chosen to minimise this figure.
+#C  (For the p5 c/5 case, note that 89 is the shortest known, but
+#C  may possibly not be the shortest possible.  Also note that a
+#C  variant can be obtained by reversing the front 5 rows.)
+#C
+#C          | minimum |
+#C    type  |  width  | minimum length for this width
+#C  --------+---------+------------------------------------
+#C  p2 c/2  |   21    | 12 (Hartmut Holzwart, 1992 Jul 3)
+#C  p3 c/3  |   12    | 13 (turtle, Dean Hickerson, c.1990)
+#C  p4 c/2  |    5    |  6 (LWSS, John Conway, 1970)
+#C  p4 c/4  |   10    | 44 (Stephen Silver, 1999 Mar 2)
+#C  p5 2c/5 |   10    | 31 (Stephen Silver, 1999 Mar 2)
+#C  p5 c/5  |   11    | 89 (Paul Tooke, 2001 Mar 12)
+#C
+#C From short.rle (center of pattern):
+#C This table shows the minimum possible length of those types
+#C  of orthogonal spaceship for which this has been determined.
+#C  For each type I also give the minimum width for a spaceship
+#C  of minimal length.
+#C
+#C          | minimum |
+#C    type  |  length | minimum width for this length
+#C  --------+---------+-------------------------------------
+#C  p2 c/2  |    8    | 31 (Dean Hickerson, 1989 Jul 28)
+#C  p3 c/3  |    5    | 16 (Dean Hickerson, 1989 Aug)
+#C  p4 c/4  |    8    | 26 (Tim Coe, 1995 Aug 6)
+#C  p4 c/2  |    6    |  5 (LWSS, John Conway, 1970)
+#C  p5 c/5  |    8    | 31 (spider, David Bell, 1997 Apr 14)
+#C
+#C From race.rle (right side of pattern):
+#C This shows the smallest known spaceships moving at the seven
+#C  orthogonal speeds so far achieved -- not counting the 17c/45
+#C  Caterpillar, which is far too big to include in the lineup.
+#C
+#C Minimum populations:
+#C   c/2          9   (LWSS - John Conway, 1970)
+#C  2c/5         30   (Paul Tooke, 7 Dec 2000)
+#C   c/3         25   (Dean Hickerson, Aug 1989)
+#C  2c/7         36   (weekender - David Eppstein, 12 Jan 2000)
+#C   c/4         46   (Tim Coe, May 1996)
+#C   c/5         58   (spider - David Bell, 14 Apr 1997)
+#C   c/6        102   (dragon - Paul Tooke, 23 Apr 2000)
+#C 17c/45  11880063   (Caterpillar - Gabriel Nivasch, 31 Dec 2004;
+#C                     contributions by David Bell and Jason Summers.
+#C                     It would be fairly straightforward to produce
+#C                     versions of the Caterpillar with slightly
+#C                     smaller minimum populations, but significant
+#C                     reductions would require a lot of redesigning.)
+#C
+#C Patterns and comments from Stephen Silver's 12 Jan 2004 'ships.zip'
+x = 404, y = 90, rule = B3/S23
+95bo$4boboo23b3o30boo27booboo29bo3bo38bo17bo$3booboo24bo27b3oboob3o26b
+oo28b3ob3o36b3o15b3o$bbo5bo50bo10bo22boo30booboboboo33boob3o13b3oboo$
+bbobobobo25bo25boboobboobo25b5o24boo7boo33bobboboo4bo4boobobbo$33boobo
+27boo30bo3bo24bo7bo31boobo4bobobooboobobo4boboo$3booboo25boob4o21bobb
+oobbo25b5oboo22boo7boo30boobobobbobo7bobobboboboo$34bo3boo21bob4obo26b
+oo4bo20boobobo3boboboo28bo8b3obobob3o8bo$3b4o26b3o3bo22bo4bo27booboo
+23bobobooboobobo28boo7boo9boo7boo$bbo3bobbo22bobo3bo57boobbo19boobobbo
+bobobobboboo$bb3o3bobo20bo3bobbo22bob4obo31bo19booboboobobobooboboo$4b
+3o25boboboboo20b10o28boobo18bobbo4bobo4bobbo$6booboo24boobo21boob4oboo
+30boo17boobbobooboboboobobboo$35booboo57bo$6b3o27boboo57boo$7boo26boo
+bbo58boo$5bobobbo87boo79bo$4bo5bo24b4o56b3o74boob3ob3o$3bo30bobboo59b
+oo72boo4bobbooboo$3bobb4o24bobobbo55b3o73bobboboo3bobboo$bb3o29bobbo
+61bo83bobbo$bbo4b3o24b3oboo59bo$boo4b3o23boobo63bo$3b3oboobo21bo4bo60b
+o$3bobo3bo23b3o62bo$bbo30b3o62bobo$6bo27bob3o59bo$bbobobobo24bo61b3obo
+$3b3obbo23boob3o59bo$bboobo27bobo59boo$5boobo23bobbo$3o3bobo23bobbo
+131bo41bo20bo33boobo18bo12bo16bo11bo26bo7bo26b3o4b3o$oobo31bo131bo7b3o
+11b3o16b3o18b3o29booboboob3o14bo12bo16bo11bo20booboboboo3booboboboo20b
+3o4b3o$bobbo27bo133bobo4boo5b3o24boobo17bo3bo25b4obboo6bo12bobo10bobo
+14bobo9bobo16b3obob3o9b3obob3o$o5boo25b3o137b5ob5o4bobbo15b3o18booboo
+24bo4bo3bo3boo14bo12bo46bo3bobo5bobo5bobo3bo$oobobo29bo135bobobbobbo3b
+o5bo18boo26bo21boo26bo12bo14bo3bo7bo3bo19boo6bobo6boo$3b3obbo28bo129b
+6o3bobboo4b6o36b4obobbobo49bo3b4o3bo15bob6ob6obo16boo9bobo9boo17b5obb
+5o$5bobo27bo132boo6bobobboo3bo41bobbobbo3bo52b4o18bo7bobo7bo15booboo
+15booboo21bobbo$5bo31bo140bo6bo48boobo49b4o4b4o14bo7bobo7bo19bo15bo23b
+obboobbo$3bobo28b3o198boo76bo17bo58boo6boo$bboboo28boo199boo52bo6bo17b
+obooboo3booboobo58bo10bo$bbobo29boo200bo53boobboo92bo12bo$bbo3bo28bo$
+6boo27bo350b3o12b3o$8boo377b3o10b3o$4b6o379bo10bo$6boo167bo7bo205b3o6b
+3o$4bobo162booboboboo3booboboboo202bo4bo$4bo3bo157b3obob3o9b3obob3o
+197bo8bo$8bo157bo3bobo5bobo5bobo3bo196bobbo4bobbo$5boo163boo6bobo6boo
+199bobbo6bobbo$3b3obo159boo9bobo9boo202boo$bbobbo161booboo15booboo196b
+obbobobbobobbo$3boo166bo15bo206boo$389b3o6b3o$5bo384bo8bo$4bobo383bo8b
+o$7bo380bo3bo4bo3bo$7bo380bo3bo4bo3bo$7bo379bobbobbobbobbobbo$3boobbo$
+bbobboboboo$bboobbooboo$3bobboo$6b3o$3boobboo$4booboo$5b3o4$b7o$oobobo
+boo$ooboboboo$bobobobo$bobobobo$bo5bo$3bobo$3bobo$5b3o$bboobo$9bo$bb5o
+bbo$8boo$$3oboobboo$oo4b4o$bo5boo$bo$bbo!

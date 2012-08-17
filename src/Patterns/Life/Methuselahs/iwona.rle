@@ -1,0 +1,6 @@
+#C Iwona.
+#C Runs for 28786 gens. Initial pop = 19. Final pop = 3091.
+#C Gliders = 47. Found by Andrew Okrasinski, 20 August 2004
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+x = 20, y = 21, rule = B3/S23
+14b3o6$2bo$3b2o$3bo14bo$18bo$18bo$19bo$18b2o$7b2o$8bo5$2o$bo!

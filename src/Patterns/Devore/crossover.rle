@@ -1,0 +1,33 @@
+# A demo of one-way units (diodes) and three-way funnelling units (triodes) in
+# the Devore variant of Codd's CA. With two diodes and two triodes arranged as
+# shown, a crossover can be made, for signals of any type (4, 5, 6 or 7).
+#
+# John Devore writes: (part I)
+#   "I did the original work as a masters report back in 1973. The text of that
+# report may be completely lost, but I have a file of notes I have used in 
+# presentations so could reconstruct all the important information again. I was 
+# working full time while I worked on my masters degree and I never did follow 
+# up appropriately on publishing results. I did all my simulations at that time
+# on an IBM 360/50 computer. The component I call a diode was suggested by Rod 
+# Bates who was working on his PhD in EE at the time. It takes advantage of the
+# fact that the Codd space must include triplicate collision rules for signals 
+# colliding at a T junction. A straight-on, a left-hand, and a right-hand 
+# collision. Codd had treated these all the same and had to make diodes out of
+# extremely elaborate race conditions driving his "gates". By suggesting that 
+# either the right or left collision annihilate the colliding signals Rod could 
+# create a diode from "wires" arranged in a square with leads at two opposite 
+# corners where one lead forms a right-hand T connection with two sides of the 
+# square and the other lead forms a left-hand T connection. I discovered that
+# the square needed NO sheathing (with no additional rules) -- just a 2x2 array
+# of cells with values of 1's -- so the diode was extremely small. Further I 
+# found one could add a third lead in the correct configuration to make what I 
+# called the "triode" with the terrifically useful property of "funneling" 
+# signals from either of two of the leads into the third while being blocked
+# from going out the other input lead. Again, this required no rule changes
+# beyond the basic diode rule change."
+# 
+x = 25, y = 16, rule = Devore
+18.6B$.8B8.B6AB$B8AB7.BA4BAB$BA5B2AB7.BAB2.BAB$BAB4.BAB7.BAB2.BAB$BAB
+4.BAB3.4B2AB2.BAB$BGB4.BAB2.B6AB2.BAB$B.B4.BAB2.BA5B3.BAB$BAB3.B2A4BA
+B7.BAB$BAB3.B7AB7.BAB$BAB3.BA4B2AB7.BAB$BA5BAB2.BAB8.BAB$B7AB2.BAB8.B
+AB$.7B3.BA10BAB$11.B12AB$12.12B!

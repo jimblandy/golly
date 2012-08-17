@@ -1,0 +1,3 @@
+# ark1 -- 16 cells, stabilizes at 736692 gens, found by Nick Gotts.
+x = 32, y = 29, rule = B3/S23
+27bo$28bo$29bo$28bo$27bo$29b3o20$oo$bbo$bbo$3b4o!

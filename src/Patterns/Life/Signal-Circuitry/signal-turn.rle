@@ -1,0 +1,38 @@
+#C Signal turning/transforming reactions
+#C Unfortunately, none of these is sufficent to form a closed loop.
+#C Dean Hickerson
+#C 1 (top): 24 Aug 1997
+#C 2: 29 Jul 1997
+#C 3: 24 Jul 1997
+#C From Jason Summers' "jslife" pattern collection.
+x = 68, y = 179, rule = B3/S23
+15bobbo37boo$13b6o38bo6bo$9boobo42bo7bobo$9boobobob5o34boo4b3obbo$12bo
+bo6bo31boobbobbo3bobo$12bobobb5o32bobobbobooboboo$13boobo7bo29bob4obo
+bbobbo$16bobb6o26boobo6bobobbo$16bobo29boobbobob4obobboo$15boobobb6o
+21bo3bobbo3bobo$18bobo6bo22bobo4bobobb4o$18bobobb5o18b4obob5ob3o3bo$
+19boobo7bo14bo3bobo6bo3bo$22bobb6o14boo4b4oboobboobbo$22bobo18boobbobb
+o3bobo4boboo$21boobobb6o11bobobboboobobobobbo$24bobo6bo10bob4obobboboo
+bobo$24bobobb5o7boobo6bobo5boo$25boobo7bo5bobob4obobb5o$28bobb6o5bobbo
+3bobo6bo$28bobo8boobo4bobobb4o$27boobobb4obbobob5ob3o3bo$30bobo4bobobo
+6bo3bo$30bobobboobobb4oboobboobbo$29boobobo3bobo3bobo4boboo$32boboboob
+oboobobobobbo$32boobobobobobboboobobo$35bobobobboo5boo$35bobobo3bob4o$
+32boobobobb3obbobbo$33bobobo7bo$33bobobb7o$34boo$40b3o$40bobbo$42boo
+22$13bobbo$11b6o$7boobo$7boobobob5o$10bobo6bo$10bobobb5o$11boobo7bo$
+14bobb6o$14bobo$13boobobb6o$16bobo6bo$16bobobb5o$17boobo7bo$20bobob5o$
+20bobo$19boobobb6o$22bobo6bo3boo$22bobobb5obbobbo$23boobo7b3obo$26bobb
+5o3boboboo$26bobo6bo3bobo$25boobobb6obbobo$28bobo6bobobobo$28bobobb4ob
+obboobo$29boobo3bobobo3bo$32bobo3bobobooboo$29b3obob4obobbobo$29bo3bo
+7bobobbo$33b8obb3o$40bobo$31b7obboboo$30bo7boboobbo$30b6obbo4boo$36bob
+o$28b6obboboo$27bo6bobo$27b5obbobo$24bo7boboo$24b6obbo$30bobo$22b6obbo
+boo$21bo6bobo$21b5obbobo$18bo7boboo$18b6obbo$24bobo$16b6obboboo$15bo6b
+obo$15b5obbobo$20boboo$15b3obbo$15bobbobo$16boboboo$17bo22$6bobbo$4b6o
+$oobo$oobobob5o$3bobo6bo$3bobobb5o$4boobo7bo$7bobb6o$7bobo8bo3boo$6boo
+bobb7obbobbo$9bobo7b3obobo$9bobobb5o3boboboboo$10boobo6bo3bobobobo$13b
+obb6obbobobboo$13bobo6bobobo$12boobobb4obobb5o$15bobo3bobobo4bo$15bobo
+bo3boboboo$16bobob4obobboo$18bo7bo3bo$18bob6ob3o3bo$17boobo4bobobb4o$
+20bobbo3bobo6bo$20bobob4obobb5o$19boobo6bobo5boo$22bob4obobboboobobo$
+22bobobboboobobobobbo$21boobbobbo3bobo4boboo$23boo4b4oboobboobbo$23bo
+3bobo6bo3bo$24b4obob5ob3o3bo$28bobo4bobobb4o$26bo3bobbo3bobo6bo$26boo
+bbobob4obobb5o$29boobo6bobo5boo$32bob4obobboboobobbo$32bobobboboobobob
+obboo$31boobbobbo3bobo$33boo4b4oboo$33bo3bobo6bo$34b4obob5obo$38bobo4b
+obo$36bo3bobbo3boo$36boobbobob3obbo$39boobo5bo$43bob3o$44boo!

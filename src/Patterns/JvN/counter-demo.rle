@@ -1,0 +1,38 @@
+# Counter demo.
+# Author: Renato Nobili <renato.nobili@pd.infn.it>
+#
+# After 10 input pulses are seen on the input line (IN), a single output 
+# pulse is sent (OUT) and the counter resets. Set the machine running at 
+# a slow speed to see it working.
+#
+# Note that this counter only works for well-separated pulses. If pulses
+# arrive with less than 32 quiescent cells between them then the counter 
+# may break or miscount.
+#
+# After ten pulses, the output pulse is duplicated and sent to the special
+# transmission states (STS) under the wire. These annihilate the section 
+# of OTS wire above, causing the gap to be restored and the counter to be 
+# reset to zero.
+#
+# Counters for other values can be made in a similar fashion. Counters for
+# large values can be made by chaining counters together. 
+#
+# http://www.pd.infn.it/~rnobili/wjvn/index.htm
+# http://www.pd.infn.it/~rnobili/au_cell/
+# http://en.wikipedia.org/wiki/Von_Neumann_universal_constructor
+# http://en.wikipedia.org/wiki/Von_Neumann_cellular_automata
+#
+# Originally distributed as: SIMPLE_COUNTERS.EVN
+# Redistributed with permission.
+#
+x = 60, y = 26, rule = JvN29
+5.2pA.pA.pA3.pA.2pA2.pA3.3pA4.2pA2.2pA2.pA2.pA.pA2.pA.3pA.3pA.2pA$4.pA
+3.pA.2pA.2pA.pA.pA.pA3.pA5.pA3.pA2.pA.pA2.pA.2pA.pA2.pA2.pA3.pA.pA$5.
+pA2.pA.pA.pA.pA.pA.pA.pA3.2pA4.pA3.pA2.pA.pA2.pA.pA.2pA2.pA2.2pA2.pA.
+pA$6.pA.pA.pA3.pA.2pA2.pA3.pA5.pA3.pA2.pA.pA2.pA.pA2.pA2.pA2.pA3.2pA$
+4.2pA2.pA.pA3.pA.pA3.3pA.3pA4.2pA2.2pA3.2pA2.pA2.pA2.pA2.3pA.pA.pA7$
+17.pA.pA2.pA25.2pA2.pA2.pA.3pA$17.pA.2pA.pA24.pA2.pA.pA2.pA2.pA$17.pA
+.pA.2pA24.pA2.pA.pA2.pA2.pA$17.pA.pA2.pA25.2pA3.2pA3.pA3$10IpA22I9.IpA
+14I$J9.L22.9R.L$J9.L22.RpA2RpA2RpAR.L$J9.L23.J2.J2.J2.L$J9.L23.J2KpA
+2KpA3K10.pA2.pA$J9.L42.2pA.pA.pA$N9.L43.pA.pA.pA$J9.L43.pA.pA.pA$J10K
+43.pA2.pA!

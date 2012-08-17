@@ -1,0 +1,52 @@
+# Echo discriminator 
+# from:
+# Cellular Automata, Edgar F. Codd (Fig. 5.13, page 78)
+#
+# The 'sense' operation is used to read the 0/1 state of the cell
+# at the end of an arm in Codd's CA. It returns an 'echo' signal
+# 60/70 respectively. The configuration shown here can be used to
+# discriminate between these two echo signals.
+#
+# Set the machine running. A periodic emitter in the lower-right 
+# activates the machine by turning on some gates. Later signals are 
+# blocked, as the machine is now waiting for an echo signal.
+#
+# The first echo *must* be 70 else the machine doesn't work. Stop the
+# demo and manually add the 70 signal to the input line at the top-
+# right. Both the lower two output lines on the left emit a signal,
+# indicating that '70' was detected. The machine then resets itself.
+#
+# Now manually add a 60 signal to the input line. Notice that now
+# the output signals are seen on the top and bottom output lines,
+# indicating that indeed a '60' signal was detected.
+#
+# The input signals must be well separated, else the machine fails.
+#
+# See sensing-demo.rle for a demonstration of how sensing works.
+#
+# Adapted from a pattern originally distributed with XLife:
+# esr "Eric S. Raymond"@snark.thyrsus.com Thu May 11 07:41:55 1995
+#
+x = 119, y = 57, rule = Codd
+69.30B$68.B29AB$68.BA27BAB$43.26BAB25.BAB$42.B27AB19.7BA5B$42.BA21BA
+3BAB.6B11.B13A$42.BAB19.BAB.BA2B6AB10.BA12B$42.BAB16.2B.BAB.BAB.BA3BA
+B10.BAB2.B$42.BA11B5.B2A2BAB.BAB.BAB.BAB10.BAB.BAB$42.B12AB4.BAB.BAB.
+BAB.BAB.BAB10.BAB.BAB$43.11BAB4.BAB.BAB.BAB.BA2B2AB10.BAB.BA5B$53.BAB
+4.BA3BAB.BAB.BAB.2B11.BAB.B6AB$43.11BAB4.B5AB.BA3BAB14.BAB.BA4BAB$42.
+B12AB5.4BAB.B5AB14.BAB.BAB2.BAB$42.BA11B9.BAB.BA4B15.BAB.BAB.2BAB$42.
+BAB19.BAB.BAB18.BAB.BA2B3AB$42.BAB20.B2.BAB18.BAB.BAB.3B$42.BA25BAB
+18.BAB.BAB$42.B27AB18.BA3BAB$43.26BAB18.B5AB$68.BAB19.4BAB$69.B23.BAB
+$81B5.5B2.BAB$B80AB3.B5AB.BAB$59BA11BA3BA4BAB3.BA3BAB.BAB$58.BAB9.BAB
+.BAB2.BAB3.BAB.BAB.BAB$43.16BAB9.BAB.BAB2.BAB3.BAB2.B2.BAB$42.B17AB9.
+BAB.BAB2.BAB.3BA7BAB$42.BA11BA3BAB.6B2.BAB.BAB2.BA2B12AB$42.BAB9.BAB.
+BA2B6AB.BAB.BAB2.BAB.11BAB$42.BAB6.2B.BAB.BAB.BA3BAB.BAB.BAB2.BAB11.B
+AB$42.BAB5.B2A2BAB.BAB.BAB.BAB.BAB.BAB.2BA13BAB$42.BAB5.BAB.BAB.BAB.B
+AB.BAB.BAB.BA2B17AB$42.BAB5.BAB.BAB.BAB.BA2B2AB.BAB.BAB.16BAB$42.BAB
+5.BA3BAB.BAB.BAB.2B2.BAB.BAB16.BAB$42.BAB5.B5AB.BA3BAB5.BAB.BAB13.2B.
+BAB$42.BAB6.4BAB.B5AB5.BAB.BAB12.B2A2BAB$42.BAB9.BAB.BA4B6.BAB.BAB12.
+BAB.BA4B$42.BAB9.BAB.BAB9.BAB.BAB12.BAB.B5AB$42.BAB10.B2.BAB9.BAB.BAB
+12.BA3BA3BAB$42.BA15BAB9.BAB.BAB12.B5AB.BAB$42.B17AB9.BAB.BAB13.4BAB.
+BAB$43.16BAB9.BAB.BAB16.BA2B2AB$58.BAB4.6BAB.BAB16.BAB.2B$59.B4.B7AB.
+BA18BAB$65BA5BAB.B20AB$B65AB3.BAB.20BAB$67B3.BAB20.BAB$70.BAB20.BAB$
+71BAB20.BAB$B71AB20.BA23B$72B21.B24AB$93.BG22BAB$93.B.B20.BAB$93.BA
+22BAB$93.B24AB$94.24B!

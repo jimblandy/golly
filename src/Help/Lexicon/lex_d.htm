@@ -1,0 +1,377 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en">
+<head>
+<title>Life Lexicon (D)</title>
+<meta name="author" content="Stephen A. Silver">
+<meta name="description" content="Part of Stephen Silver's Life Lexicon.">
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
+<link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
+<base target="_top">
+</head>
+<body bgcolor="#FFFFCE">
+
+<center><A HREF="lex.htm">Introduction</A> | <A HREF="lex_bib.htm">Bibliography</A></center></center>
+<hr>
+<center>
+<font size=-1><b>
+<A HREF="lex_1.htm">1-9</A> |
+<A HREF="lex_a.htm">A</A> |
+<A HREF="lex_b.htm">B</A> |
+<A HREF="lex_c.htm">C</A> |
+<A HREF="lex_d.htm">D</A> |
+<A HREF="lex_e.htm">E</A> |
+<A HREF="lex_f.htm">F</A> |
+<A HREF="lex_g.htm">G</A> |
+<A HREF="lex_h.htm">H</A> |
+<A HREF="lex_i.htm">I</A> |
+<A HREF="lex_j.htm">J</A> |
+<A HREF="lex_k.htm">K</A> |
+<A HREF="lex_l.htm">L</A> |
+<A HREF="lex_m.htm">M</A> |
+<A HREF="lex_n.htm">N</A> |
+<A HREF="lex_o.htm">O</A> |
+<A HREF="lex_p.htm">P</A> |
+<A HREF="lex_q.htm">Q</A> |
+<A HREF="lex_r.htm">R</A> |
+<A HREF="lex_s.htm">S</A> |
+<A HREF="lex_t.htm">T</A> |
+<A HREF="lex_u.htm">U</A> |
+<A HREF="lex_v.htm">V</A> |
+<A HREF="lex_w.htm">W</A> |
+<A HREF="lex_x.htm">X</A> |
+<A HREF="lex_y.htm">Y</A> |
+<A href="lex_z.htm">Z</A></b></font>
+
+</center>
+<hr>
+<p><a name=dart>:</a><b>dart</b> (<i>c</i>/3 orthogonally, p3) Found by David Bell, May 1992.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.......O.......
+......O.O......
+.....O...O.....
+......OOO......
+...............
+....OO...OO....
+..O...O.O...O..
+.OO...O.O...OO.
+O.....O.O.....O
+.O.OO.O.O.OO.O.
+</a></pre></td></tr></table></center>
+<p><a name=deadsparkcoil>:</a><b>dead spark coil</b> (p1) Compare <a href="lex_s.htm#sparkcoil">spark coil</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO...OO
+O.O.O.O
+..O.O..
+O.O.O.O
+OO...OO
+</a></pre></td></tr></table></center>
+<p><a name=debruijndiagram>:</a><b>de Bruijn diagram</b> = <a href="#debruijngraph">de Bruijn graph</a>
+<p><a name=debruijngraph>:</a><b>de Bruijn graph</b> As applied to Life, a de Bruijn graph is a
+graph showing which pieces can be linked to which other pieces
+to form a valid part of a Life pattern of a particular kind.
+<p>For example, if we are interested in <a href="lex_s.htm#stilllife">still lifes</a>, then we could
+consider 2x3 rectangular pieces and the de Bruijn graph would show
+which pairs of these can be overlapped to form 3x3 squares in which
+the centre cell remains unchanged in the next generation.
+<p>David Eppstein's search program <a href="lex_g.htm#gfind">gfind</a> is based on de Bruijn
+graphs.
+<p><a name=deepcell>:</a><b>Deep Cell</b> A pattern by Jared James Prince, based on David Bell's
+<a href="lex_u.htm#unitlifecell">unit Life cell</a>, in which each unit cell simulates two Life cells,
+in such a way that a Life universe filled with Deep Cells simulates
+two independent Life universes running in parallel.
+<p>In fact, a Life universe filled with Deep Cells can simulate
+infinitely many Life universes, as follows. Let <i>P</i><sub>1</sub>, <i>P</i><sub>2</sub>, <i>P</i><sub>3</sub>, ...
+be a sequence of Life patterns. Set the Deep Cells to run a
+simulation of <i>P</i><sub>1</sub> in parallel with a simulation of a universe filled
+with Deep Cells, with these simulated Deep Cells running a simulation
+of <i>P</i><sub>2</sub> in parallel with another simulation of a universe filled with
+Deep Cells, with these doubly simulated Deep Cells simulating <i>P</i><sub>3</sub> in
+parallel with yet another universe of Deep Cells, and so on.
+<p>Deep Cell is available from <a href="http://psychoticdeath.com/life.htm">http://psychoticdeath.com/life.htm</a>.
+<p><a name=density>:</a><b>density</b> The density of a pattern is the limit of the proportion of
+live cells in a (2<i>n</i>+1)x(2<i>n</i>+1) square centred on a particular cell as
+<i>n</i> tends to infinity, when this limit exists. (Note that it does not
+make any difference what cell is chosen as the centre cell. Also
+note that if the pattern is finite then the density is zero.) There
+are other definitions of density, but this one will do here.
+<p>In 1994 Noam Elkies proved that the maximum density of a stable
+pattern is 1/2, which had been the conjectured value. See the paper
+listed in the bibliography. Marcus Moore provided a simpler proof
+in 1995, and in fact proves that a <a href="lex_s.htm#stilllife">still life</a> with an <i>m</i> x <i>n</i>
+<a href="lex_b.htm#boundingbox">bounding box</a> has at most (<i>mn</i>+<i>m</i>+<i>n</i>)/2 cells.
+<p>But what is the maximum average density of an oscillating pattern?
+The answer is conjectured to be 1/2 again, but this remains unproved.
+The best upper bound so far obtained is 8/13 (Hartmut Holzwart,
+September 1992).
+<p>The maximum possible density for a <a href="lex_p.htm#phase">phase</a> of an oscillating
+pattern is also unknown. An example with a density of 3/4 is known
+(see <a href="lex_a.htm#agar">agar</a>), but densities arbitrarily close to 1 may perhaps be
+possible.
+<p><a name=dheptomino>:</a><b>D-heptomino</b> = <a href="lex_h.htm#herschel">Herschel</a>
+<p><a name=diamond>:</a><b>diamond</b> = <a href="lex_t.htm#tub">tub</a>
+<p><a name=diamondring>:</a><b>diamond ring</b> (p3) Found by Dave Buckingham in 1972.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+......O......
+.....O.O.....
+....O.O.O....
+....O...O....
+..OO..O..OO..
+.O....O....O.
+O.O.OO.OO.O.O
+.O....O....O.
+..OO..O..OO..
+....O...O....
+....O.O.O....
+.....O.O.....
+......O......
+</a></pre></td></tr></table></center>
+<p><a name=diehard>:</a><b>diehard</b> Any pattern that vanishes, but only after a long time. The
+following example vanishes in 130 generations, which is probably the
+limit for patterns of 7 or fewer cells. Note that there is no limit
+for higher numbers of cells - e.g., for 8 cells we could have a
+glider heading towards an arbitrarily distant blinker.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+......O.
+OO......
+.O...OOO
+</a></pre></td></tr></table></center>
+<p><a name=dinnertable>:</a><b>dinner table</b> (p12) Found by Robert Wainwright in 1972.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O...........
+.OOO.......OO
+....O......O.
+...OO....O.O.
+.........OO..
+.............
+.....OOO.....
+.....OOO.....
+..OO.........
+.O.O....OO...
+.O......O....
+OO.......OOO.
+...........O.
+</a></pre></td></tr></table></center>
+<p><a name=dirty>:</a><b>dirty</b> Opposite of <a href="lex_c.htm#clean">clean</a>. A reaction which produces a large amount
+of complicated junk which is difficult to control or use is said
+to be dirty. Many basic <a href="lex_p.htm#pufferengine">puffer engines</a> are dirty and need to
+be <a href="lex_t.htm#tame">tamed</a> by accompanying <a href="lex_s.htm#spaceship">spaceships</a> in order to produce clean
+output.
+<p><a name=diuresis>:</a><b>diuresis</b> (p90) Found by David Eppstein in October 1998. His original
+stabilization used <a href="lex_p.htm#pentadecathlon">pentadecathlons</a>. The stabilization with
+complicated <a href="lex_s.htm#stilllife">still lifes</a> shown here (in two slightly different
+forms) was found by Dean Hickerson the following day. The name is
+due to Bill Gosper (see <a href="lex_k.htm#kidney">kidney</a>).
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.....OO................OO....
+......O................O.....
+......O.O............O.O.....
+.......OO............OO......
+.............................
+....OO..................OO...
+....O.O..........OO....O.O...
+.....O..........O.O.....O....
+..O.............OO.........O.
+..OOOOOO........O.....OOOOOO.
+.......O..............O......
+....OO..................OO...
+....O....................O...
+.....O..................O....
+..OOO..O..............O..OOO.
+..O..OOO........O.....OOO...O
+...O............OO.......OOO.
+....OO..........O.O.....O....
+......O..........OO....O..OO.
+....OO..................OO.O.
+.O..O....................O...
+O.O.O..OO............OO..O...
+.O..O.O.O............O.O.OO..
+....O.O................O..O..
+.....OO................OO....
+</a></pre></td></tr></table></center>
+<p><a name=dock>:</a><b>dock</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OOOO.
+O....O
+OO..OO
+</a></pre></td></tr></table></center>
+<p><a name=domino>:</a><b>domino</b> The 2-cell <a href="lex_p.htm#polyomino">polyomino</a>. A number of objects, such as the
+<a href="lex_h.htm#hwss">HWSS</a> and <a href="lex_p.htm#pentadecathlon">pentadecathlon</a>, produce domino <a href="lex_s.htm#spark">sparks</a>.
+<p><a name=doseedo>:</a><b>do-see-do</b> The following reaction, found by David Bell in 1996, in
+which two <a href="lex_g.htm#glider">gliders</a> appear to circle around each other as they are
+reflected 90 degrees by a <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a>. Four copies of the
+reaction can be used to create a p92 glider loop which repeats the
+do-see-do reaction forever.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.....................................................O.O
+.....................................................OO.
+......................................................O.
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+........................................................
+................................................OO......
+................................................O.......
+..............................................O.O.......
+..............................................OO........
+..............................O.O.......................
+..............................OO........................
+...............................O........................
+........................................................
+.......................OOO..............................
+OO........OOO........OO.O.OO............................
+OO........O...O.....O.....OO............................
+..........O....O.....OO.O.OO............................
+...........O...O.......OOO..............................
+........................................................
+...........O...O........................................
+..........O....O........................................
+OO........O...O............OO...........................
+OO........OOO..............OO...........................
+</a></pre></td></tr></table></center>
+<p><a name=doublebarrelled>:</a><b>double-barrelled</b> Of a <a href="lex_g.htm#gun">gun</a>, emitting two streams of <a href="lex_s.htm#spaceship">spaceships</a>
+(or <a href="lex_r.htm#rake">rakes</a>). See <a href="lex_b.htm#b52bomber">B-52 bomber</a> for an example.
+<p><a name=doubleblockreaction>:</a><b>double block reaction</b> A certain reaction that can be used to
+stabilize the <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> (qv). This was discovered by
+David Bell in October 1996.
+<p>The same reaction sometimes works in other situations, as shown in
+the following diagram where a pair of blocks eats an <a href="lex_r.htm#rpentomino">R-pentomino</a>
+and a <a href="lex_l.htm#lwss">LWSS</a>. (The LWSS version was known at least as early 1994,
+when Paul Callahan saw it form spontaneously as a result of firing
+a LWSS stream at some random junk.)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OOOO.....OO....
+O...O......OO.OO
+....O......O..OO
+O..O............
+................
+.............OO.
+.............OO.
+</a></pre></td></tr></table></center>
+<p><a name=doublecaterer>:</a><b>double caterer</b> (p3) Found by Dean Hickerson, October 1989. Compare
+<a href="lex_c.htm#caterer">caterer</a> and <a href="lex_t.htm#triplecaterer">triple caterer</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.....OO...O........
+....O..O..OOO......
+....OO.O.....O.....
+......O.OOOO.O.....
+..OOO.O.O...O.OO...
+.O..O..O...O..O.O..
+O.O..O...O.OO....O.
+.O..........OO.OOO.
+..OO.OO.OO...O.....
+...O...O.....O.OOO.
+...O...O......OO..O
+.................OO
+</a></pre></td></tr></table></center>
+<p><a name=doubleewe>:</a><b>double ewe</b> (p3) Found by Robert Wainwright before September 1971.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+......OO............
+.......O............
+......O.............
+......OO............
+.........OO.........
+......OOO.O.........
+O.OO.O..............
+OO.O.O..............
+.....O...O..........
+....O...OO....OO....
+....OO....OO...O....
+..........O...O.....
+..............O.O.OO
+..............O.OO.O
+.........O.OOO......
+.........OO.........
+............OO......
+.............O......
+............O.......
+............OO......
+</a></pre></td></tr></table></center>
+<p><a name=doublewing>:</a><b>double wing</b> = <a href="lex_m.htm#mooseantlers">moose antlers</a>
+<p><a name=dove>:</a><b>dove</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OO..
+O..O.
+.O..O
+..OOO
+</a></pre></td></tr></table></center>
+<p><a name=downboatwithtail>:</a><b>down boat with tail</b> = <a href="lex_c.htm#cisboatwithtail">cis-boat with tail</a>
+<p><a name=dragon>:</a><b>dragon</b> (<i>c</i>/6 orthogonally, p6) This <a href="lex_s.htm#spaceship">spaceship</a>, discovered by
+Paul Tooke in April 2000, was the first known <i>c</i>/6 spaceship.
+All other known orthogonal <i>c</i>/6 spaceships are <a href="lex_f.htm#flotilla">flotillas</a> involving
+at least two dragons.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.............O..OO......O..OOO
+.....O...OOOO.OOOOOO....O..OOO
+.OOOOO....O....O....OOO.......
+O......OO.O......OO.OOO..O.OOO
+.OOOOO.OOO........OOOO...O.OOO
+.....O..O..............O......
+........OO..........OO.OO.....
+........OO..........OO.OO.....
+.....O..O..............O......
+.OOOOO.OOO........OOOO...O.OOO
+O......OO.O......OO.OOO..O.OOO
+.OOOOO....O....O....OOO.......
+.....O...OOOO.OOOOOO....O..OOO
+.............O..OO......O..OOO
+</a></pre></td></tr></table></center>
+<p><a name=draintrap>:</a><b>drain trap</b> = <a href="lex_p.htm#paperclip">paperclip</a>
+<p><a name=drifter>:</a><b>drifter</b> A perturbation moving within a stable pattern. Dean
+Hickerson has written a program to search for drifters, with the
+hope of finding one which could be moved around a track. Because
+drifters can be very small, they could be packed more tightly than
+<a href="lex_h.htm#herschel">Herschels</a>, and so allow the creation of <a href="lex_o.htm#oscillator">oscillators</a> of periods
+not yet attained, and possibly prove that Life is <a href="lex_o.htm#omniperiodic">omniperiodic</a>.
+Hickerson has found a number of components towards this end, but
+it has proved difficult to change the direction of movement of a
+drifter, and so far no complete track has been found. However,
+Hickerson has had success using the same search program to find
+<a href="lex_e.htm#eater">eaters</a> with novel properties, such as that used in <a href="#diuresis">diuresis</a>.
+<p><a name=dual1234>:</a><b>dual 1-2-3-4</b> = <a href="lex_a.htm#achimsp4">Achim's p4</a>
+<hr>
+<center>
+<font size=-1><b>
+<a href="lex_1.htm">1-9</a> |
+<a href="lex_a.htm">A</a> |
+<a href="lex_b.htm">B</a> |
+<a href="lex_c.htm">C</a> |
+<a href="lex_d.htm">D</a> |
+<a href="lex_e.htm">E</a> |
+<a href="lex_f.htm">F</a> |
+<a href="lex_g.htm">G</a> |
+<a href="lex_h.htm">H</a> |
+<a href="lex_i.htm">I</a> |
+<a href="lex_j.htm">J</a> |
+<a href="lex_k.htm">K</a> |
+<a href="lex_l.htm">L</a> |
+<a href="lex_m.htm">M</a> |
+<a href="lex_n.htm">N</a> |
+<a href="lex_o.htm">O</a> |
+<a href="lex_p.htm">P</a> |
+<a href="lex_q.htm">Q</a> |
+<a href="lex_r.htm">R</a> |
+<a href="lex_s.htm">S</a> |
+<a href="lex_t.htm">T</a> |
+<a href="lex_u.htm">U</a> |
+<a href="lex_v.htm">V</a> |
+<a href="lex_w.htm">W</a> |
+<a href="lex_x.htm">X</a> |
+<a href="lex_y.htm">Y</a> |
+<A href="lex_z.htm">Z</A></b></font>
+
+</center>
+<hr>
+</body>

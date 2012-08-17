@@ -1,0 +1,9 @@
+#C Puffer train
+#C This was created simply by perturbing the sides of a B-heptomino
+#C with two LWSS's. A B-heptomino is a naturally occurring object,
+#C a precursor to the Herschel pattern, which lurches forward at the
+#C speed c/2 before its own debris usually destroys it.
+#C -- Not in this case!  The LWSS escorts keep the B-heptomino alive.
+#C From Alan Hensel's "lifebc" pattern collection.
+x = 5, y = 18, rule = B3/S23
+3bo$4bo$o3bo$b4o4$o$boo$bbo$bbo$bo3$3bo$4bo$o3bo$b4o!

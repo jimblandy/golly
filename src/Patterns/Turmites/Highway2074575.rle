@@ -1,0 +1,31 @@
+# A 4-state 2-color absolute-movement turmite (2D Turing machine) discovered by 
+# Stephen Wolfram
+#
+# Wolfram devotes a page to this 2D Turing machine and describes it as: "one 
+# example where the behavior seems in many respects completely random." If you
+# let it run for long enough, you can see that the pattern is periodic, with 
+# period 2,074,575 and dx=3953, dy=1912. 
+#
+# http://www.wolframscience.com/nksonline/page-185
+# http://www.wolframscience.com/nksonline/page-186
+# http://code.google.com/p/ruletablerepository/wiki/TwoDimensionalTuringMachines
+# http://en.wikipedia.org/wiki/Turmite
+#
+# Specification string: {{{1,'N',1},{0,'S',1}},{{1,'S',3},{0,'N',2}},
+#                        {{1,'W',0},{1,'N',1}},{{1,'S',2},{0,'E',1}}}
+#
+# This string is a curly-bracketed table of n_states rows and n_colors columns, 
+# where each entry is a triple. The elements of each triple are:
+# - new color of the square
+# - direction(s) for the turmite to move: 'N' = North, etc.
+# - new internal state of the turmite
+# 
+# For example, the triple {1,'N',1} says: 
+# - set the color of the square to 1
+# - move North
+# - adopt state 1 and move forward one square
+#
+# To generate Turmites like this one, run this script:
+# Scripts/Python/Rule-Generators/AbsoluteTurmite-gen.py
+x = 1, y = 1, rule = AbsoluteTurmite_1N10S11S30N21W01N11S20E1
+B!

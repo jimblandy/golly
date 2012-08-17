@@ -1,0 +1,539 @@
+<html>
+<title>Golly Help: Bounded Grids</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+Bounded grids with various topologies can be created by adding a
+special suffix to the usual rule string.
+For example, <b><a href="rule:B3/S23:T30,20">B3/S23:T30,20</a></b>
+creates a toroidal Life universe 30 cells wide and 20 cells high.
+The suffix syntax is best illustrated by these examples:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td><b>:P30,20</b></td><td width=10> </td>
+   <td> &mdash; plane with width 30 and height 20</td>
+</tr>
+<tr>
+   <td><b>:P30,0</b></td><td width=10> </td>
+   <td> &mdash; plane with width 30 and infinite height</td>
+</tr>
+<tr>
+   <td><b>:T0,20</b></td><td width=10> </td>
+   <td> &mdash; tube with infinite width and height 20</td>
+</tr>
+<tr>
+   <td><b>:T30,20</b></td><td width=10> </td>
+   <td> &mdash; torus with width 30 and height 20</td>
+</tr>
+<tr>
+   <td><b>:T30+5,20</b></td><td width=10> </td>
+   <td> &mdash; torus with a shift of +5 on the horizontal edges</td>
+</tr>
+<tr>
+   <td><b>:T30,20-2</b></td><td width=10> </td>
+   <td> &mdash; torus with a shift of -2 on the vertical edges</td>
+</tr>
+<tr>
+   <td><b>:K30*,20</b></td><td width=10> </td>
+   <td> &mdash; Klein bottle with the horizontal edges twisted</td>
+</tr>
+<tr>
+   <td><b>:K30,20*</b></td><td width=10> </td>
+   <td> &mdash; Klein bottle with the vertical edges twisted</td>
+</tr>
+<tr>
+   <td><b>:K30*+1,20</b></td><td width=10> </td>
+   <td> &mdash; Klein bottle with a shift on the horizontal edges</td>
+</tr>
+<tr>
+   <td><b>:C30,20</b></td><td width=10> </td>
+   <td> &mdash; cross-surface (horizontal and vertical edges are twisted)</td>
+</tr>
+<tr>
+   <td><b>:S30</b></td><td width=10> </td>
+   <td> &mdash; sphere with width 30 and height 30 (must be equal)</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+Some notes:
+
+<p>
+<ul>
+<li>
+The first letter indicating the topology can be entered in lowercase but is
+always uppercase in the canonical string returned by the getrule() script command.
+<li>
+If a bounded grid has width <i>w</i> and height <i>h</i> then the cell in
+the top left corner has coordinates -int(<i>w</i>/2),-int(<i>h</i>/2).
+<li>
+The maximum width or height of a bounded grid is 2,000,000,000.
+<li>
+Use 0 to specify an infinite width or height (but not possible for a Klein bottle,
+cross-surface or sphere).  Shifting is not allowed if either dimension is infinite.
+<li>
+Pattern generation in a bounded grid is slower than in an unbounded grid.
+This is because all the current algorithms have been designed to work with
+unbounded grids, so Golly has to do extra work to create the illusion
+of a bounded grid.
+</ul>
+
+<p>
+The different topologies are described in the following sections.
+
+<p>
+<font size=+1><b>Plane</b></font>
+
+<p>
+A bounded plane is a simple, flat surface with no curvature.
+When generating patterns in a plane, Golly ensures that all the cells neighboring the edges
+are set to state 0 before applying the transition rules, as in this example of a 4 by 3 plane:
+
+<p>
+<dd><table cellspacing=0 cellpadding=0 cols=2><tr><td>
+<table cellspacing=0 border=1 cols=6><tr
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td
+><td align=center><tt>&nbsp;0&nbsp;</tt></td></tr
+></table>
+</td><td> &nbsp;&nbsp;&nbsp;rule suffix is <b>:P4,3</b></td></tr></table></dd>
+
+<p>
+<font size=+1><b>Torus</b></font>
+
+<p>
+If the opposite edges of a bounded plane are joined then the result is a
+donut-shaped surface called a torus.
+Before applying the transition rules at each generation, Golly copies the
+states of edge cells into appropriate neighboring cells outside the grid.
+The following diagram of a 4 by 3 torus shows how the edges are joined:
+
+<p>
+<dd><table cellspacing=0 cellpadding=0 cols=2><tr><td>
+<table cellspacing=0 border=1 cols=6><tr
+><td align=center><tt>&nbsp;L&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td
+><td align=center><tt>&nbsp;J&nbsp;</tt></td
+><td align=center><tt>&nbsp;K&nbsp;</tt></td
+><td align=center><tt>&nbsp;L&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;D&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;H&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;L&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;A&nbsp;</tt></td
+><td align=center><tt>&nbsp;B&nbsp;</tt></td
+><td align=center><tt>&nbsp;C&nbsp;</tt></td
+><td align=center><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr
+></table>
+</td><td> &nbsp;&nbsp;&nbsp;rule suffix is <b>:T4,3</b></td></tr></table></dd>
+
+<p>
+A torus can have a shift on the horizontal edges or the vertical edges, but not both.
+These two examples show how shifted edges are joined:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td>
+   <table cellspacing=0 cellpadding=0 cols=2><tr><td>
+   <table cellspacing=0 border=1 cols=6><tr
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td></tr
+   ></table>
+   </td><td> &nbsp;&nbsp;&nbsp;<b>:T4+1,3</b></td></tr></table>
+   </td>
+   <td width=50> </td>
+   <td>
+   <table cellspacing=0 cellpadding=0 cols=2><tr><td>
+   <table cellspacing=0 border=1 cols=6><tr
+   ><td align=center><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr
+   ></table>
+   </td><td> &nbsp;&nbsp;&nbsp;<b>:T4,3+1</b></td></tr></table>
+   </td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+<font size=+1><b>Klein bottle</b></font>
+
+<p>
+If one pair of opposite edges are twisted 180 degrees (ie. reversed) before being
+joined then the result is a Klein bottle.
+Here are examples of a horizontal twist and a vertical twist:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td>
+   <table cellspacing=0 cellpadding=0 cols=2><tr><td>
+   <table cellspacing=0 border=1 cols=6><tr
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td></tr
+   ></table>
+   </td><td> &nbsp;&nbsp;&nbsp;<b>:K4*,3&nbsp;&nbsp;&nbsp;</b></td></tr></table>
+   </td>
+   <td width=50> </td>
+   <td>
+   <table cellspacing=0 cellpadding=0 cols=2><tr><td>
+   <table cellspacing=0 border=1 cols=6><tr
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr
+   ></table>
+   </td><td> &nbsp;&nbsp;&nbsp;<b>:K4,3*</b></td></tr></table>
+   </td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+A Klein bottle can only have a shift on the twisted edges and only if that dimension
+has an even number of cells.  Also, all shift amounts are equivalent to a shift of 1.
+Here are two examples:
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td valign=top>
+   <table cellspacing=0 cellpadding=0 cols=2><tr><td>
+   <table cellspacing=0 border=1 cols=6><tr
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr
+   ></table>
+   </td><td> &nbsp;&nbsp;&nbsp;<b>:K4*+1,3</b></td></tr></table>
+   </td>
+   <td width=45> </td>
+   <td valign=top>
+   <table cellspacing=0 cellpadding=0 cols=2><tr><td>
+   <table cellspacing=0 border=1 cols=5><tr
+   ><td align=center><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;J&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;G&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;F&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+   ><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;D&nbsp;</tt></td></tr><tr
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;B&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;C&nbsp;</tt></td
+   ><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr
+   ></table>
+   </td><td> &nbsp;&nbsp;&nbsp;<b>:K3,4*+1</b></td></tr></table>
+   </td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+<font size=+1><b>Cross-surface</b></font>
+
+<p>
+If both pairs of opposite edges are twisted and joined then the result is a cross-surface
+(also known as a real projective plane, but Conway prefers the term cross-surface).
+Here's an example showing how the edges are joined:
+
+<p>
+<dd><table cellspacing=0 cellpadding=0 cols=2><tr><td>
+<table cellspacing=0 border=1 cols=6><tr
+><td align=center><tt>&nbsp;A&nbsp;</tt></td
+><td align=center><tt>&nbsp;L&nbsp;</tt></td
+><td align=center><tt>&nbsp;K&nbsp;</tt></td
+><td align=center><tt>&nbsp;J&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td
+><td align=center><tt>&nbsp;D&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;L&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;H&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+><td align=center><tt>&nbsp;E&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;D&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;J&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;K&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;L&nbsp;</tt></td
+><td align=center><tt>&nbsp;A&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;I&nbsp;</tt></td
+><td align=center><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;C&nbsp;</tt></td
+><td align=center><tt>&nbsp;B&nbsp;</tt></td
+><td align=center><tt>&nbsp;A&nbsp;</tt></td
+><td align=center><tt>&nbsp;L&nbsp;</tt></td></tr
+></table>
+</td><td> &nbsp;&nbsp;&nbsp;<b>:C4,3</b></td></tr></table></dd>
+
+<p>
+Note that the corner cells have themselves as one of their neighbors.
+Shifting is not possible.
+
+<p>
+<font size=+1><b>Sphere</b></font>
+
+<p>
+If adjacent edges are joined rather than opposite edges then the result is a sphere.
+By convention we join the top edge to the left edge and the right edge to the
+bottom edge, as shown in this 3 by 3 example:
+
+<p>
+<dd><table cellspacing=0 cellpadding=0 cols=2><tr><td>
+<table cellspacing=0 border=1 cols=5><tr
+><td align=center><tt>&nbsp;A&nbsp;</tt></td
+><td align=center><tt>&nbsp;A&nbsp;</tt></td
+><td align=center><tt>&nbsp;D&nbsp;</tt></td
+><td align=center><tt>&nbsp;G&nbsp;</tt></td
+><td align=center><tt>&nbsp;C&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;A&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;A&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;B&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;C&nbsp;</tt></td
+><td align=center><tt>&nbsp;G&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;B&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;D&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;E&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;F&nbsp;</tt></td
+><td align=center><tt>&nbsp;H&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;C&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;G&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;H&nbsp;</tt></td
+><td align=center bgcolor="#CBCBCB"><tt>&nbsp;I&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr><tr
+><td align=center><tt>&nbsp;G&nbsp;</tt></td
+><td align=center><tt>&nbsp;C&nbsp;</tt></td
+><td align=center><tt>&nbsp;F&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td
+><td align=center><tt>&nbsp;I&nbsp;</tt></td></tr
+></table>
+</td><td> &nbsp;&nbsp;&nbsp;<b>:S3</b></td></tr></table></dd>
+
+<p>
+Note that the cells in the top left and bottom right corners (the "poles") have
+different neighborhoods to the cells in the top right and bottom left corners.
+Shifting is not possible.
+
+<p>
+Example patterns using the above topologies can be found in Patterns/Generations
+and Patterns/Life/Bounded-Grids.
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Edwin Roger Banks, PhD Thesis 1971
+#
+# Three-state, five-neighbor CA for a universal computer
+# (Appendix II)
+#
+# http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+# 
+# Format: C,N,E,S,W,C'
+#
+n_states:3
+neighborhood:vonNeumann
+symmetries:rotate4reflect
+010002
+011122
+011202
+012002
+012022
+012222
+022201
+022222
+021012
+110002
+112220
+122200
+122000
+200001
+211120
+211221
+212221

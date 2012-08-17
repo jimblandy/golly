@@ -1,0 +1,24 @@
+#MCell 4.00
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 60x60
+#SPEED 100
+#WRAP 0
+#CCOLORS 4
+#PALETTE 8 colors
+#D OR
+#D 
+#D A 'T'' can be used as an OR gate for a pair of signals;
+#D the main concern is that one signal should not encroach
+#D upon the territory of the other when the second is absent.
+#D 
+#D The signals arrive along the arms of the 'T',' the composite
+#D departs along the stem. It is essential that the stem rise one
+#D cell above the crossbar, thereby isolating the incoming signals;
+#D a barrier lurks beneath it all. 
+#D 
+#D Harold V. McIntosh
+#L .A$.C$.C$.C$.C$12C$.C$.C$.C$.C$.C3$.C$.C$.C$.C$.C$12C$.C$.C$.C$.C$.A3$
+#L .A$.C$.C$.C$.C$12C$.C$.C$.C$.C$.A

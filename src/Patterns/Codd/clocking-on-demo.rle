@@ -1,0 +1,17 @@
+# "Clocking-on" - a method for initializing a periodic pulser in Codd's CA
+#
+# From a starting point of quiescent cells (those in states 0,1,2) it is
+# slighty tricky to cause a periodic pulser to start emitting. For example,
+# if you just send a signal into a loop then it will collide with itself.
+#
+# One method is presented here. Three gates are created. One in the body of
+# the loop itself prevents the newly-injected signal from colliding with 
+# itself by only allowing signals to go around the loop in one direction. 
+# Another prevents signals from the loop returning back up the injection
+# wire. A third prevents later signals from disrupting the system.
+#
+x = 39, y = 20, rule = Codd
+23B$BA.G19AB$15BA6BAB$10.B3.BAB4.BAB$9.BAB2.BAB4.BA5B$9.BAB2.BAB4.B6A
+B$9.BA4BAB4.BA4BAB$9.B6AB4.BAB2.BAB$10.5BAB4.BAB2.BAB$14.BAB4.BAB.2BA
+B$15.B5.BA2B3AB$13.9BAB.3B$12.B10AB$12.BA5BA3B$12.BAB3.BAB$12.BAB3.BA
+B$12.BAB3.BAB$12.BA5BA19B$12.B25AB$13.26B!

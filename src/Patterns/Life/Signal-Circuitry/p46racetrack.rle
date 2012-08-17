@@ -1,0 +1,161 @@
+#C P46 based glider racetrack -- in reality a P6072 oscillator.
+#C
+#C *THE* glider starts about in the center, heading NE. Two 90-degree
+#C rotations get it going SW, where it enters a "dual kickback" delay.
+#C This uses two kickbacks with a p92 stream and a p46 stream to
+#C delay the glider a bit. I had to use a p92 for the second stream,
+#C since the escaping glider couldn't get out past a p46 stream.
+#C I guess this is my own invention, since I don't remember seeing
+#C this idea used anywhere else. The delay can be made as large as you
+#C want by shifting one of the guns and its corresponding eater. Just
+#C be careful to keep it in sync.
+#C
+#C After another 90 degree turn, it slips through a p46 stream and is
+#C reflected by a reaction due to Bill Gosper and Dean Hickerson.
+#C It's the reflection that leaves a pond behind, except a p8 blocker
+#C deletes the pond. Note that since 8 divides 6072 exactly, this p8
+#C has no effect on the total period of the oscillator.
+#C
+#C Now it hits the stream, killing a glider, and when the hole gets
+#C down to a second stream, it allows a single glider to escape. This
+#C one then falls down a ladder of three 90 degree turns, and enters
+#C a glider-to-MWSS converter, found by I don't know whom. This seems
+#C to be based on two guns, one p23 and one p46 gun.
+#C
+#C The MWSS makes a long eastward trek, and hits a MWSS-to-glider
+#C reverse conversion, found by either David Buckingham or Dean
+#C Hickerson. I plagarised it from the p15 gun from Dean Hickerson,
+#C but in the comments he attributes part of it to David Buckingham.
+#C So I don't know who originally came up with this. This has to use
+#C a P92 gun to seed it, since the reaction takes so long that a p46
+#C gun would send another glider in before the reaction was complete,
+#C causing all sorts of havoc.
+#C
+#C After another 90-degree turn, it enters a reaction that converts
+#C the single glider to a pair. I don't know who found this one. One
+#C glider hits a p46 stream, creating a hole, while the other passes
+#C through and does a 90-degree turn. The "hole" hits another stream,
+#C letting one escape, and now we're back to a pair of gliders, one
+#C going NW, the other NE.
+#C
+#C The next reaction is my own discovery; it's a P23 switchable LWSS
+#C gun, inspired by David Bell's P30 switchable gun. The NW glider
+#C turns it on, the NE one turns it off. You can delay these as needed
+#C to let as many LWSS escape as you want: in this instance it's only
+#C turned on long enough to allow a single LWSS to escape.
+#C
+#C The LWSS gets turned south by another p46 shuttle, and eventually
+#C gets converted back to a NW glider by yet another p46. The glider
+#C enters a reaction that reflects by converting to a block, and then
+#C converting the block. Dean Hickerson found this one. Lastly, it
+#C gets turned 90 degrees, and is back where it started from.
+#C
+#C David Goodenough, February 1995
+x = 571, y = 383, rule = B3/S23
+490boo12boobbo4boo$490boo12boboo6boobbo$505bo6bo6bo3bo$505b3o4bo11bo
+12boo$520boobbo12boo$505b3o4bo9boo$505bo6bo3bo3b3o$490boo12boboo5boo$
+490boo12boobbo4bobbo3b3o$513bo8boo$520boobbo12boo$514boo8bo12boo$478bo
+40bo3bo$474boobbo39bo$466boo5bo5bo13boo$466boo4boobbobo14boo$473boo3bo
+$474b3o24bo$487boo3boo7bobo$474b3o9bobbobobbo6boo$473boo3bo6bo9bo$355b
+oo5boo102boo4boobbobo5boo9boo$355boo5boo102boo5bo5bo5bo9bo$474boobbo7b
+obbobobbo$478bo8boo3boo$$496b3o$496bo$490bo6bo$489bo$489b3o$$156bo$
+157bo3bo194bo5bo157bo$148boobboo8bo192bobo3bobo121bo34boo$148boobbo5b
+oobbo191bo3bobo3bo118boo33bob3o11boo$152bobo5boo21bo3b3o164bo3bobo3bo
+119boo15boo19boo10boo$153boo3b3o21bobobb5o3boo157bo9bo135bo7boo11boo$
+182bo3boo3boobboo290boo10bobboo4bobo10bo$153boo3b3o22bobbo3boo163boo5b
+oo123boo10bobbo5bo$152bobo5boo22b3o3bo106bobbo177bo20bobo19bo$148boobb
+o5boobbo124b3o7bo180bobo19boo19boo$148boobboo8bo21b3o3bo82boo11bo4bo9b
+o176boo42boo10boo$157bo3bo21bobbo3boo81boo10bo5bo8boo55bo3bo138boo16bo
+b3o11boo$156bo25bo3boo3boobboo89bo8bo66boo135bobo18boo$165bo16bobobb5o
+3boo90boo8boo54boo3bobo3bo122boo10bobbo17bo$165bobo15bo3b3o168bobo3bo
+107bobo12boo10bobboo$165boo120boo8boo62b3o108boo26bo$286bo8bo57bobbo
+116bo27boo$273boo10bo5bo8boo53boo$273boo11bo4bo9bo$287b3o7bo169bo9bo$
+297bobbo165bo11boo$466b3o$$464boo11bobo$154bo310bo4b3o$153bo308b3o7bo
+10bo$153b3o306bo8bo10boo$51boo429bobo$51boo$77bobobboo381bo$62boo12bo
+3bob3o4boo374boo$50boo10boo13bo6boo3boo373bobo21boo$50boobo24b5obo403b
+obo$53bo27b3o404bo$53bo8bobo3bobo$50bobbo10bo3bo12b3o375boo$51boo7bo
+11bo5b5obo57bo315bobo$59bo3bo5bo3bo3bo6boo3boo51bobo315bo33boo$60bo11b
+o3bo3bob3o4boo51boo280b4o65boo$64bo3bo8bobobboo339boobbo14boo51bo$62bo
+bo3bobo351boobbo15boo$412boo9bobbo26boo$395boo14booboo8boo28boo$395boo
+15bobbo37bo45b3o$412bobbo8boo73bo$413boo8bobbo73bo32bo$240boo180boobbo
+15boo89bobboo$131bo109bo171boo8boobbo14boo3b3o67boo13bo5bo$130bo110bob
+o168bobbo8b4o21bo56bo10boo14bobobboo7boo$130b3o109boo151boo15bobbo32bo
+56boo26bo3boo6b5o$395boo14booboo89bobo27b3o6bo4bo14boo$412boo130bobb3o
+14boo$442bo92b3o6boobbo$442boo89bo3boo7boo$430bo10bobo67boo4boo14bobo
+bboo$428bobo80bobo3boo13bo5bo7boo$202boo48bo176boo80bo21bobboo6boobbo$
+202bo48boo280bo10bobb3o14boo$200bobo48bobo182boo106bo4bo14boo$119bo80b
+oo233bobo107b5o$119bobo69boo244bo79boo28boo$119boo71boo322boo$167bo3bo
+16b5o246boo7boo68bo11bo$155boo9bo5bo15b4o247boo6bobboo11boo64bo$155boo
+9bo38b3o14boo214bobbo4b6o11boo64b3o$166boo3bo16b4o13bo3bo12boo215boobo
+5b4o$168b3o17b5o12bo4bo228boobo79b3o$192boo12bo3bo311bo$168b3o10bobo7b
+oo70boo92boo80boobo80bo$166boo3bo10boo22bo3bo51boo86b3o4boo80boobo5b4o
+59bo$108bo46boo9bo15bo22bo4bo53bo85b3o71b3o9boob3o4b6o11boo45boo8boo$
+107bo47boo9bo5bo32bo3bo12boo125bo3bo72bo9bobobo6bobboo11boo31boo11b3ob
+o5bobbo$107b3o57bo3bo33b3o14boo125booboo71bo11b4o7boo46boo10boo8boob3o
+$349bo3bo50bo3bo29boo69boo8boobo$193bo156bobo39boo9bo5bo100bo10bo$192b
+3o155bobo39boo15bo$191bobo157bo52bo3boo100bo$188boo10boo203b3o15boo14b
+oo68boo23boo$190boboo6bobo89boo128boo15boo55boo10boo13boo9bobo$192b3o
+7bo72bo16bobo7boo101b3o15b5o68boo11b3obo9boo9bo$192b3o7boo70boo18bo7b
+oo100bo3boo14b4o82boo$265boo7bobo15b3o57booboo35boo15bo101bo$96bo115b
+oo41boo7bobo84bo5bo34boo9bo5bo14b4o122b3o14boo$96bobo113boo41boo6boobo
+137bo3bo14b5o122bo3bo12boo$96boo166boo84bo7bo63boo15boo96bo12bo4bo$
+265bo26b3o55bobbobobbo64boo14boo79boo15boo12bo3bo$294bo7boo46b3o3b3o
+161boo16boo$265bo26bobo7boo229boobboo12bo3bo$264boo26boo256bo4bo$36bo
+218boo6boobo283bo3bo12boo$35boo218boo7bobo283b3o14boo$34b3obo9boo154bo
+bo58boo266boobboo$bbobbo27boo13boo155boo313boo16boo$5bo7b3o18boo49bo
+119bo314boo15boo$bo9bo4bo18bo48bo452bo$boo8bo5bo66b3o263boo5boo$7bo8bo
+18bo314boo5boo$4boo8boo18boo$33boo13boo$4boo8boo18b3obo9boo$7bo8bo18b
+oo$boo8bo5bo18bo$bo9bo4bo$5bo7b3o17bo$bbobbo28bo$32b3o38bo$73bobo439b
+oo$73boo146boo188boo5boo95bobo$221bobo187boo5boo84b3o8bo$223bo282bo$
+223boo280bo3$412bo5bo$411b3o3b3o$45bo364bobbooboobbo$43bobo16bo347bo3b
+obo3bo$44boo15bo350bobobobo$61b3o164bo297b3o$229bo3bo175booboo3booboo
+71boo31bo$220boobboo8bo176bo7bo72bobo32bo$220boobbo5boobbo259bo$224bob
+o5boo$225boo3b3o$$225boo3b3o185bo$224bobo5boo183b3o$220boobbo5boobbo
+12boo167bo3bo$220boobboo8bo12boo166bo5bo$229bo3bo181bo5bo116boo$228bo
+187bo3bo117bobo$481b3o54bo18boo7b4o$416bo3bo62bo72bobbo6bo3bo$415bo5bo
+60bo41boo29boobbo10bo$411boobbo5bo101b4o7boo20bobbo4boboobo$411boo3bo
+3bo101bobobo6bobboo19bo6b3o$417b3o102boob3o4b6o$286bo131bo106boobo5b4o
+19bo6b3o$286boo237boobo27bobbo4boboobo$285bobo267boobbo10bo$525boobo
+27bobbo6bo3bo$525boobo5b4o19boo7b4o$470boo50boob3o4b6o$469bobo50bobobo
+6bobboo$471bo51b4o7boo$166bo357boo$149boo15boo8boo$149boo16boo7boo89b
+oo$162boobboo99boo4b3o$273b3o$272bo3bo$272booboo$162boobboo104bo3bo$
+149boo16boo7boo95bobo$149boo15boo8boo95bobo182b3o$166bo107bo185bo$459b
+o4$269booboo$268bo5bo$$267bo7bo$267bobbobobbo$267b3o3b3o171boo$446bobo
+$448bo32boo5boo$481boo5boo4$129bo$124bo3bo$109boo12bo8boobboo129boo5b
+oo$109boo12bobboo5bobboo129boo5boo$124boo5bobo$125b3o3boo302b3o$405bo
+bbo28bo$125b3o3boo275bo7b3o17bo$124boo5bobo270bo9bo4bo$123bobboo5bobb
+oo266boo8bo5bo18bo41bo7bo$123bo8boobboo272bo8bo18boo40bobo5bobo$124bo
+3bo278boo8boo18b3obo9boo30bo3bo$129bo306boo13boo27bobbo3bobbo$407boo8b
+oo18boo42bobo3bobo$410bo8bo18bo44booboo$404boo8bo5bo59booboobooboo$
+404bo9bo4bo18bo41boobbobobboo$408bo7b3o18boo42b3o3b3o$405bobbo27boo13b
+oo29bo5bo$437b3obo9boo$438boo$439bo50bo5bo$489b3o3b3o$488boobbobobboo$
+488booboobooboo$491booboo$489bobo3bobo$488bobbo3bobbo$491bo3bo$488bobo
+5bobo$489bo7bo9$62bo$57bo3bo359boo5boo$42boo12bo8boobboo350boo5boo$42b
+oo12bobboo5bobboo$57boo5bobo422boo5boo$58b3o3boo423boo5boo$$58b3o3boo
+356bo5bo$57boo5bobo354b3o3b3o$42boo12bobboo5bo353bobbooboobbo$42boo12b
+o8boo353bo3bobo3bo$57bo3bo360bobobobo$62bo$419booboo3booboo$421bo7bo5$
+428bo$427b3o$426bo3bo$425bo5bo$425bo5bo$426bo3bo$$426bo3bo$425bo5bo$
+361boo58boobbo5bo$361boo58boo3bo3bo$427b3o$428bo8$129bo$124bo3bo$109b
+oo12bo8boobboo$109boo12bobboo5bobboo223boo5boo$124boo5bobo227bobooboob
+o$27b3o3bo91b3o3boo229bobobobo$25b5obbobo12boo313bobobobo$24boo3boo3bo
+12boo76b3o3boo228bo7bo$19boobobboo3bobbo90boo5bobo$oo12b3obboobbobbo3b
+3o90bobboo5bobboo$oo13boo6bo99bo8boobboo$16b3o3boobbo3b3o91bo3bo234boo
+boo$17bo3bo3boo3bobbo95bo231bobbobobbo$24boo3boo3bo12boo312b3o3b3o$17b
+o3bo3b5obbobo12boo313bo5bo$16b3o3boo3b3o3bo$oo13boo6bo337boo5boo$oo12b
+3obboobbo337boo5boo$19boobo$60b4o$44boo14bobboo6boo$44boo15bobboo5boo$
+36bo24bobbo$37bo24boo$35b3o8bo3bo$45bobobobo10boo$43boobbobobboo7bobbo
+$43boo7boo7bobboo5boo$43boobbobobboo6bobboo6boo$45bobobobo8b4o$46bo3bo
+$$40boo$39bobo468boo$41bo6bo461bo$46bobo459bobo$47boo459boo4$18boo32bo
+bo$16boobbo32boo446boo$16b6o31bo446bobo$16b4o15b3o464bo$28b3obbo4bo11b
+oo$30bobbo5bo10boo7bo$29bo8bo21bo$16b4o16boo20b3o$3boo11b6o$3boo11boo
+bbo15boo$18boo18bo$33bo5bo10boo$26boo5bo4bo11boo$35b3o3$55b3o$57bo11b
+oo$56bo12bo$70b3o$72bo$$39boobo$20boo12b3obboobbo$20boo13boo6bo434boo$
+36b3o3boo3b3o3bo423bobo$37bo3bo3b5obbobo12boo410bo$44boo3boo3bo12boo$
+37bo3bo3boo3bobbo$36b3o3boobbo3b3o$20boo13boo6bo$20boo12b3obboobbobbo
+3b3o$39boobobboo3bobbo$44boo3boo3bo12boo417boo$45b5obbobo12boo417boo$
+47b3o3bo$476boo$464booboo7bo$463bo3bobo4bobo$463b3obo6boo$466boo$467b
+oo$483bo$444bo37bobbo$443boo36b5o10boo$429boo11b3obo33boob3o10boo$429b
+oo10boo19boo17boboo$442boo11boo7bo17boo$443bo10bobo4boobbo$456bo5bobbo
+16boo$443bo19bobo15boboo$442boo19boo15boob3o10boo$429boo10boo38b5o10b
+oo$429boo11b3obo16boo17bobbo$443boo18bobo17bo$444bo17bobbo$461boobbo$
+464bo9boo$462boo10bobo$476bo$476boo!

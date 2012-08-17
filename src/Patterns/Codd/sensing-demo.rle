@@ -1,0 +1,19 @@
+# Sensing demo - Codd's CA
+#
+# Two wires are shown, one with a state 1 cell just beyond the end, the
+# other without. Using the 'sense' command 70-70, the wire can detect which
+# case it is without disturbing the cell.
+#
+# The sense command first exposes the end of the wire, then generates one of
+# two 'echo signals' based on the state detected - '60' for a 0 cell, '70' for
+# a 1 cell.
+#
+# In our examples, these signals are then removed with the gate (state 3).
+#
+# The end of the wire is then repaired using the sequence '40-60'.
+#
+# See echo-discriminator.rle for an example that shows how these echo signals
+# can be used.
+#
+x = 41, y = 8, rule = Codd
+29BC9B$A.F2A.D24A.G2A.G2AB$39B3$29BC9B$A.F2A.D24A.G2A.G2ABA$39B!

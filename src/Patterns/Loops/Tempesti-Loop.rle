@@ -1,0 +1,61 @@
+# Tempesti's self-replicating loops.
+#
+# G. Tempesti.
+#
+# "A New Self-Reproducing Cellular Automaton Capable of Construction and 
+# Computation". Advances in Artificial Life, Proc. 3rd European Conference on 
+# Artificial Life, Granada, Spain, June 4-6, 1995, Lecture Notes in Artificial 
+# Intelligence, 929, Springer Verlag, Berlin, 1995, pp. 555-563.
+#
+# Implemented from Tempesti's thesis:
+# http://lslwww.epfl.ch/pages/embryonics/thesis/
+#
+# This loop first constructs a skeleton of the right size, before
+# allowing the loop instructions to flow into the new copy. The loop
+# then opens a gate into its interior and writes the letters "LSL"
+# using a constructing arm, in a similar way to von Neumann's CA.
+# LSL are the initials of the Logic Systems Laboratory.
+#
+# The rules are not rotationally symmetric, so the letters are always
+# written the right way up, even though the loops are created in
+# different orientations.
+#
+# State    Function
+# ------------------------loop function------
+#   0      background
+#   1      sheath
+#   2      control
+#   3      construction
+#   4      destruction
+# ----------------------------programmable---
+#   5      NOP (no operation)
+#   6      advance
+#   7      turn left
+#   8      turn right
+#   9      write an empty space
+# -------------------------------------------
+#
+# In the initial configuration, the control states (2) are found in each
+# corner. These determine that size of the loop that is to be written. States
+# 5-9 contain the program that is to be executed by the construction arm, these
+# are not used for the loop replication. To see this, overwrite them all with
+# state 5 - the loop will replicate but won't write anything.
+#
+# The program contained in the loop is the following:
+# (read clockwise from the bottom-right corner)
+# 7275 - initiation sequence, opens a gate in the top-left of the loop
+# Advance 11,turn left,advance 2,write an empty space,advance 4 (the control
+# state gets converted to an advance), turn left, advance 2, turn left, 
+# advance 2, turn right, advance 4, turn right, advance 3, write an empty
+# space, advance 2, turn right, advance 7, turn left, advance 2.
+# 55 - close the gate
+#
+# Loops history at a glance:
+# Langton (1984), Byl (1989), Chou-Reggia (1993), Tempesti (1995), SDSR (1998), 
+# Evoloop (1999) ... there are more...
+# Ancestors: JvN29 (1948), Codd (1968)
+#
+x = 22, y = 22, rule = Tempesti
+19.A$.BFH7FG2F6EB$AI18AE$.FA16.AE$.FA16.AE$.FA16.AE$.HA16.AE$.FA16.AE
+$.FA16.AE$.FA16.AE$.FA16.AE$.HA16.AE$.FA16.AE$.FA16.AE$.GA16.AE$.FA
+16.AE$.FA16.AE$.GA16.AE$.FA16.AE$.F18AGA$.BFI2FG11FEGB$2.A!

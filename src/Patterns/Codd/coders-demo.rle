@@ -1,0 +1,17 @@
+# Coders in Codd's CA
+#
+# When two signals collide head-on, the result is a change in state. Here
+# three coders are used to successively transform a 7-0 signal:
+#
+#    7-0  ->  4-0  ->  5-0  ->  6-0
+#
+# In Codd's CA, 7-0 signals are the main carriers of binary information,
+# for logical operations and computation. For construction, they can get
+# transformed into states 4, 5 and 6 using one or more coders.
+#
+# Signals 4, 5 and 6 can get transformed back into 7 - see gates-demo.rle.
+#
+x = 44, y = 10, rule = Codd
+.5B$B5AB$BA3BAB$BAB.BAB5.3B7.3B7.3B$BAB.BAB4.B3AB5.B3AB5.B3AB$BA3BA6B
+ABA7BABA7BABA9B$B2A.G8AB9AB9AB9AB$.11BABA7BABA7BABA9B$11.B3AB5.B3AB5.
+B3AB$12.3B7.3B7.3B!

@@ -1,0 +1,6 @@
+# match colors used at http://www.quinapalus.com/wi-index.html
+
+color=0  48  48  48     dark gray
+color=1   0 128 255     light blue
+color=2 255 255 255     white
+color=3 255 128   0     orange

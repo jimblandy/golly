@@ -1,0 +1,14 @@
+#C Synthesis of Light Bulb from 11 gliders (cheapest
+#C  stabilization), or 16 gliders (stabilized by bookend)
+#C Mark D. Niemiec, 17 December 2004
+#C Based on a naturally occuring Light Bulb discovered in ash by
+#C Andrzej Okrasinski, and with predecessors refined by H. Koenig,
+#C Dave Greene, and Karel Suhajda circa 31 August 2004.
+#C Pattern from Jason Summers' "jslife" archive.
+x = 71, y = 30, rule = B3/S23
+17bobo35bobo7bo$17boo36boo8bobo$18bo37bo8boo$6bo37bo24bo$4bobo35bobo
+23bo$5boo36boo16bobo4b3o$61boo$62bo$18bobo35bobo$18boo36boo$19bo37bo$$
+6bobo35bobo$6boo9bo26boo9bo$7bo9bobo25bo9bobo$o16boo19bo16boo$boo36boo
+$oo36boo$65b3o$65bo$13bo37bo14bo$6bo6boo29bo6boo$6boo4bobo29boo4bobo$
+5bobo35bobo$67b3o$67bo$15bobo35bobo12bo$6bo3b3obboo27bo3b3obboo$6boo4b
+o3bo27boo4bo3bo$5bobo3bo31bobo3bo!

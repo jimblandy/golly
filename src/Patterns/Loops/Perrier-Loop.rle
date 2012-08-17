@@ -1,0 +1,39 @@
+#CXRLE Pos=0,0
+# Perrier loop
+#
+# J.-Y. Perrier, M. Sipper, and J. Zahnd 
+# "Toward a viable, self-reproducing universal computer"
+# Physica D, vol. 97, pp. 335-352, 1996
+#
+# After replicating the loop and the program and data stacks, Perrier's loop
+# then executes its program, sending commands and data along the sheath between
+# the two stacks.
+#
+# Here are the important states:
+#
+# state    in the paper    description
+# -----    ------------    ---------------------------
+#  14            7         advance (used inside the loop)
+#  15            4         turn left (used inside the loop)
+#   3            A         the start of the program
+#   4            P         program instruction: print 0
+#   5            P         program instruction: print 1
+#   6            P         program instruction: move data head down
+#   7            P         program instruction: move data head up
+#   8            P         program instruction: if (see paper for details)
+#   9           P,J        program instruction: jump (sign 0)
+#  10           P,J        program instruction: jump (sign 1)
+# 11,12          D         0,1 data (initial sequence in this example: 1001000)
+#
+# Thanks to Gianluca Tempesti for the transition table and the pattern.
+#
+# The program in this example is just a demo of some of the commands. Firstly it
+# does: move down, print 1, move down, print 1, move down. Then it checks the 
+# value of the data tape at the current point. If 1 then it repeats from the 
+# start. If false it moves the data head up 8 places. The last two of these
+# require the tape to be extended, shuffling all the entries down in turn.
+#
+x = 15, y = 31, rule = Perrier
+.8B$BAN.AO.AOB$B.6B.B$BNB4.BAB$BAB4.BAB$B.B4.BAB$BNB4.BAB$BA6BA5B$B.N
+A.NA.N5AB$BC12B$BFB4.BLB$BEB4.BKB$BFB4.BKB$BEB4.BLB$BFB4.BKB$BHB4.BKB
+$BIB4.BKB$BJB5.B$BJB$BJB$BJB$BJB$BGB$BGB$BGB$BGB$BGB$BGB$BGB$BGB$.B!

@@ -1,0 +1,168 @@
+<html>
+<title>Golly Help: Layer Menu</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+Golly supports up to ten layers.  Each layer is a separate universe
+(unless cloned; see the Clone Layer item below)
+with its own algorithm, rule, viewport, cursor mode, selection,
+step size, origin offset, color scheme and name.
+The current layer's name is displayed in the main window's title bar.
+Most edit/control/view operations only apply to the current layer.
+
+<p>
+Note that most of Golly's options apply globally to all layers.
+This is true for all of the options set in the Preferences dialog.
+It's also true for many of the options set via menu items, like
+Save Extended RLE, Paste Mode, Paste Location, Show Grid Lines, etc.,
+but not for any of the Control menu options (Auto Fit, Hyperspeed,
+and Show Hash Info).
+
+<p>
+The items at the bottom of the Layer menu show the current names of
+all the existing layers.
+The names of cloned layers are prefixed by one or more "=" signs;
+all layers with the same number of "=" signs share the same universe.
+The current layer is indicated by a tick.
+To switch to another layer just select the corresponding item.
+If a script is running then you can only switch to another layer if the
+script has called <b>golly.setoption("switchlayers",True)</b>.
+
+<p>
+A layer containing a modified pattern is indicated by a "*"
+at the start of the layer's name.  To avoid losing your changes,
+a "save changes" dialog will appear before creating a new pattern,
+opening a pattern file, deleting the layer, or quitting Golly.
+If you'd rather not see this dialog then untick the appropriate
+check boxes in <a href="prefs:layer">Preferences > Layer</a>.
+
+<p>
+Common layer functions are also available via buttons in the layer bar
+located underneath the status bar.
+Use the Show Layer Bar item in the View menu to show/hide the
+layer bar, or just hit the "\" key.
+
+<p>
+<font size=+1><b>Add Layer</b></font>
+
+<p>
+Adds a new layer (with an empty universe) immediately after the
+current layer.  The new layer becomes the current layer and
+inherits the preceding layer's algorithm, rule, scale, location,
+and cursor mode.  The step size is set to 1, there is no selection,
+no origin offset, and the layer's initial name is "untitled".
+The new layer starts off using the default color scheme for the current
+algorithm and rule.
+
+<p>
+<font size=+1><b>Clone Layer</b></font>
+
+<p>
+Adds a new layer that shares the same universe, undo/redo history,
+and color scheme as the current layer.
+All of the current layer's settings are duplicated and most will be
+kept synchronized so that a change to one clone automatically changes
+all the others.  Each cloned layer does however have a separate viewport,
+so the same pattern can be viewed at different scales and locations
+(at the same time if layers are tiled).
+Cloned layers can also have different names, cursor modes, or
+control options (Auto Fit, Hyperspeed, and Show Hash Info).
+
+<p>
+<font size=+1><b>Duplicate Layer</b></font>
+
+<p>
+Adds a new layer with a copy of the current layer's pattern.
+Also duplicates all the current settings but, unlike a cloned layer,
+the settings are not kept synchronized.
+A duplicated layer starts with the same undo/redo history as the
+original layer but their histories will diverge if changes
+are made to either layer.
+
+<p>
+<font size=+1><b>Delete Layer</b></font>
+
+<p>
+Deletes the current layer.  The current layer changes to the preceding
+layer (unless the first layer was deleted).
+
+<p>
+<font size=+1><b>Delete Other Layers</b></font>
+
+<p>
+Deletes all layers except the current layer.
+
+<p>
+<font size=+1><b>Move Layer...</b></font>
+
+<p>
+Opens a dialog that lets you move the current layer to a new position
+in the layer sequence, where 0 is the position of the first layer.
+
+<p>
+<font size=+1><b>Name Layer...</b></font>
+
+<p>
+Opens a dialog that lets you change the name of the current layer.
+Note that loading a pattern file also changes the layer's name.
+Creating a new pattern resets the name to "untitled".
+
+<p>
+<font size=+1><b>Set Layer Colors...</b></font>
+
+<p>
+Opens a dialog that lets you change any of the cell colors used by the
+current layer and its clones (if any).  Note that any changes you make here
+are temporary.  If you open a pattern file or create a new pattern, or if
+you change the current algorithm or rule, then the colors will be reset
+to their default values as specified in
+<a href="prefs:color">Preferences > Color</a>.
+If the new rule has a corresponding .colors file then those colors
+will also be loaded.  The format of a .colors file is described
+in <a href="formats.html#colors">Help > File Formats</a>.
+
+<p>
+<font size=+1><b>Synchronize Views</b></font>
+
+<p>
+If ticked, then when you switch to another layer Golly will automatically
+switch to the same scale and location as the old layer.
+Most of the time you'll probably prefer to keep this option turned off
+so that each layer has a different scale and location.
+
+<p>
+<font size=+1><b>Synchronize Cursors</b></font>
+
+<p>
+If ticked, then when you switch to another layer Golly will automatically
+switch to the same cursor mode as the old layer.
+You'll probably find it less confusing if this option is kept turned on,
+but it can be useful in some situations for different layers to use
+different cursors.  For example, you might want to make selections in
+one layer but draw cells in another layer.
+
+<p>
+<font size=+1><b>Stack Layers</b></font>
+
+<p>
+If ticked then all layers are displayed on top of one another,
+temporarily using the same scale and location as the current layer.
+The pattern in layer 0 is drawn first (100% opaque), then the
+patterns in other layers are drawn on top as translucent overlays.
+The opacity percentage of the pattern overlays can be set in
+<a href="prefs:layer">Preferences > Layer</a>.
+For an example of how stacked layers can be useful, load in a pattern
+and run the <b>envelope.py</b> script.
+
+<p>
+<font size=+1><b>Tile Layers</b></font>
+
+<p>
+If ticked then the viewport window is tiled into sub-windows and
+each layer is displayed in a separate tile.  Clicking in the window
+of a non-current layer will change the current layer.
+Tiling is very handy with cloned layers as it allows you to view
+the same pattern at different scales and/or locations.
+
+</body>
+</html>

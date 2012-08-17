@@ -1,0 +1,11 @@
+#C Spiral growth with 1, 2, 3, 4, 5, 6, 8, and 12 plows; for details,
+#C see http://www.radicaleye.com/DRH/B34568S15678.html .
+#C The spirals crash in generation 2005 and eventually stabilize
+#C into a large irregular p2 octagon.  Dean Hickerson, 2 June 2006.
+x = 217, y = 240, rule = B34568/S15678
+213bobo$213bo2bo$211bo2bo$212bobo2$129bo$128bo2bo$131bo$129b3o$128bo3b
+o5$56bo2b2o$57bobo$57b3o$60bo7$2bobo$obobo$2o$b2o70$28b6o$28b4o$28bo3b
+2o$28bo2bo$30b2obo100b4o$137b3o$134b2o2b2o$134b3o$136b4o104$15b2obo2b
+2o$15b2obob3o$16b2o2bo$21b2o$15b2o$17bo2b2o$15b3obob2o$15b2o2bob2o16$
+156b4obobo$159bo3bo$156bo3bo2bo$158bo3b2o$156b2o3bo$156bo2bo3bo$156bo
+3bo$156bobob4o!

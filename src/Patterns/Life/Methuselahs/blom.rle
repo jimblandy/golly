@@ -1,0 +1,5 @@
+#C Blom.  Runs for 23314 gens. Initial pop = 13. Final pop = 2740.
+#C Found by Dean Hickerson, 7 July 2002
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+x = 12, y = 5, rule = B3/S23
+o10bo$b4o6bo$2b2o7bo$10bo$8bobo!

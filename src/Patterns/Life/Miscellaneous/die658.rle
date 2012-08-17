@@ -1,0 +1,9 @@
+#C Creator: Lifestat application
+#C Author : Andrew Okrasinski
+#C Dies out completely after 658 gens
+x = 20, y = 20, rule = B3/S23
+6bo3bo4bo3bo$bo3bobob3o2bo$obo8bobo$2bo3bo2bo6bo$b2o2bo7bo4b2o
+$b2o5b2o2bo2b2ob2o$b2o6bo2bo3b2o$2bo2bob2o5bobo$3b2o2b2obo6bo
+$bo4b2o2bobo5bo$2bo3bobo$bobo3b2ob3o3bo$3bo3bo2b2o2bo$2bo4bo3b
+o2bo$3bo2bo2bobobob2o2bo$o2bo15bo$b2o4b2obo2bo3b3o$4bo4bo2b4o
+2bo$bo4bobo2bo5b2o$o2bo6bo2bo!

@@ -1,0 +1,15 @@
+#C May be the smallest known sawtooth pattern by population.
+#C The minimum population is 278 (at generation 0, 768, ...)
+#C David Bell, 5/04; from Jason Summers' "jslife" pattern collection.
+x = 140, y = 90, rule = B3/S23
+122boo$122boo5boo$129boo3$98boo8boo17boo$98boo9bo17boo$109bobo21boo$
+110boo21boo$92boo22b3o$92boo20bo4bo$96boo18boboo$96boo15b3o$112bo3$91b
+oo$91boo41bo$132b3o$131bo$131boo11$138boo$13boo123boo$13boo3$133boo$
+133boo$26bo110boo$25boo110boo$5boo5bo12bobo68boo21boo$5boo6bobbo79boo
+21bobo$17bo3boboo77boo17bo9boo$15boo4bo3bo76boo17boo8boo$25bo$21b3oboo
+$24boo74boo$21boo77boo5boo$107boo5$16boo$bb3o10bobo$18bo$o3bo5bo3bobbo
+$4o5bobobbo$o9bo3b3o$14boo$26bo53bo$26bo$27bo50b3obo$23boboo12bo37bob
+oo$22booboo11boo37boobo$23bobo11boobo34bob3o$38boo$39b3o35bo$48boo23bo
+$46boboboo20bobo$35boo8bo4boo20boo$35boo9boobbo25boo$53boo21bobo$52b3o
+16boo5bo$55boboo4boo6boo5boo$55bobbo4boo$56boo$56boo5$55boo$46boo7boo$
+32b3o10bobo$48bo$30bo3bo5bo3bobbo$30b4o5bobobbo$30bo9bo3b3o$44boo!

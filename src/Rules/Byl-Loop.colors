@@ -1,0 +1,9 @@
+# colors from
+# http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+# Color.black,Color.blue,Color.red,Color.green,
+# Color.yellow,Color.magenta,Color.white,Color.cyan,Color.orange
+color=1    0    0  255
+color=2  255    0    0
+color=3    0  255    0
+color=4  255  255    0
+color=5  255    0  255

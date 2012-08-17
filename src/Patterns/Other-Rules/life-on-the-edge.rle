@@ -1,0 +1,17 @@
+# In 2007 Franklin T. Adams-Watters described a CA in which all the action
+# occurs on the edges of a square grid.  Each edge can be on or off and has
+# six neighbors, three at each end.  An edge is on in the next generation
+# iff exactly two of the edges in its seven edge neighborhood (including
+# the edge itself) are on.
+#
+# The LifeOnTheEdge rule has 3 live states with suitable icons that allow
+# any pattern of edges to be created.
+#
+# This pattern shows a still life, some oscillators, a few spaceships and
+# a couple of puffers.
+#
+x = 53, y = 23, rule = LifeOnTheEdge
+12.2A15.CA17.A$28.BAC17.B$47.A.A$47.CABA$48.BC4$2.A10.A$.3A8.2C14.C3B
+A$B2.B7.BC14.BA2B.C$.B2AC$3.A4$48.B$48.CA$12.2CA16.CA15.CA$11.C2.BA
+13.AB.C15.B$11.C2.BA12.B2.A12.B2ABAC.AC$11.B2AC15.2B15.BAC$12.2B14.B.
+B17.B!

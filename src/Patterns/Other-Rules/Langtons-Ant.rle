@@ -1,0 +1,22 @@
+# Emulation of Langton's Ant using a von Neumann CA
+#
+# http://en.wikipedia.org/wiki/Langton's_ant
+#
+# extra states are used to code the ant's current direction:
+#
+# -----------------------------empty squares---------------------
+# 0 : white
+# 1 : black
+# ----------------------------------------------ant is here------
+# 2 : ant is facing north on a white square
+# 3 : east, white
+# 4 : south, white
+# 5 : west, white
+# 6 : north, black
+# 7 : east, black
+# 8 : south, black
+# 9 : west, black
+# ---------------------------------------------------------------
+#
+x = 1, y = 1, rule = Langtons-Ant
+E!

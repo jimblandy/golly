@@ -1,0 +1,56 @@
+#C This is a mechanism that could be used for lightspeed
+#C communication (note the lone glider in the pattern on the
+#C left). The only catch is that we need a way to create long
+#C waves of closely spaced gliders. This can be done by using
+#C many edge-shooting glider guns, but it requires a lot of
+#C space. The completed device would be shaped like a very
+#C elongated diamond, with lightspeed communication occurring
+#C across the short diagonal.
+#C Jason Summers, 29 Oct 1999; from "jslife" pattern collection.
+x = 781, y = 364, rule = B3/S23
+204boo423boo$203b3o422b3o$203boobo421boobo$204b3o422b3o$205bo424bo78$
+154bo424bo$155boo423boo$154boo423boo3$151bo424bo$152boo423boo$151boo
+423boo3$148bo424bo$149boo423boo$148boo423boo3$145bo424bo$146boo423boo$
+145boo423boo3$142bo424bo$143boo423boo$142boo423boo3$139bo424bo$140boo
+423boo$139boo423boo3$136bo424bo$137boo423boo$136boo423boo3$133bo424bo$
+134boo423boo$133boo423boo3$130bo424bo$131boo423boo$130boo423boo3$127bo
+424bo$128boo423boo$127boo423boo3$124bo424bo$125boo423boo$124boo423boo
+3$121bo424bo$122boo423boo$121boo423boo3$118bo424bo$119boo423boo$118boo
+423boo3$115bo424bo$116boo423boo$115boo423boo$353boo423boo$352b4o421b4o
+$112bo238booboo181bo238booboo$113boo237boo184boo237boo$112boo423boo3$
+109bo424bo$110boo423boo$109boo423boo3$106bo424bo$107boo423boo$106boo
+423boo3$103bo424bo$104boo423boo$103boo423boo3$100bo424bo$101boo423boo$
+100boo423boo3$97bo424bo$98boo423boo$97boo423boo3$94bo424bo$95boo423boo
+$94boo423boo3$91bo424bo$92boo423boo$91boo423boo3$88bo424bo$89boo423boo
+$88boo423boo3$85bo424bo$86boo423boo$85boo423boo3$82bo424bo$83boo423boo
+$82boo423boo3$79bo424bo$80boo423boo$79boo196b3o224boo196b3o$277bo424bo
+$278bo424bo$76bo195b3o226bo195b3o$77boo193bo229boo193bo$76boo195bo227b
+oo195bo$267b3o422b3o$267bo424bo$73bo194bo229bo194bo$74boo186b3o234boo
+186b3o$73boo187bo235boo187bo$263bo424bo$257b3o422b3o$70bo186bo237bo
+186bo$71boo185bo237boo185bo$70boo180b3o240boo180b3o$252bo424bo$253bo
+424bo$67bo179b3o242bo179b3o$68boo177bo245boo177bo$67boo179bo243boo179b
+o$242b3o422b3o$242bo424bo$64bo178bo245bo178bo$65boo170b3o250boo170b3o$
+64boo171bo251boo171bo$238bo424bo$232b3o422b3o$61bo170bo253bo170bo$62b
+oo169bo253boo169bo$61boo164b3o256boo164b3o$227bo424bo$228bo424bo$58bo
+163b3o258bo163b3o$59boo161bo261boo161bo$58boo163bo259boo163bo$217b3o
+422b3o$217bo424bo$55bo162bo261bo162bo$56boo154b3o266boo154b3o$55boo
+155bo267boo155bo$213bo424bo$207b3o422b3o$52bo154bo269bo154bo$53boo153b
+o269boo153bo$52boo148b3o272boo148b3o$202bo424bo$203bo424bo$49bo147b3o
+274bo147b3o$50boo145bo277boo145bo$49boo147bo275boo147bo$192b3o422b3o$
+192bo424bo$46bo146bo277bo146bo$47boo138b3o282boo138b3o$46boo139bo283b
+oo139bo$188bo424bo$182b3o422b3o$43bo138bo285bo138bo$44boo137bo285boo
+137bo$43boo132b3o288boo132b3o$177bo424bo$178bo424bo$40bo131b3o290bo
+131b3o$41boo129bo293boo129bo$40boo131bo291boo131bo$167b3o422b3o$167bo
+424bo$37bo130bo293bo130bo$38boo122b3o298boo122b3o$37boo123bo299boo123b
+o$163bo424bo$157b3o422b3o$34bo122bo301bo122bo$35boo121bo301boo121bo$
+34boo116b3o304boo116b3o$152bo424bo$153bo424bo$31bo115b3o306bo115b3o$
+32boo113bo309boo113bo$31boo115bo307boo115bo$142b3o422b3o$142bo424bo$
+28bo114bo309bo114bo$29boo106b3o314boo106b3o$28boo107bo315boo107bo$138b
+o424bo$132b3o422b3o$132bo424bo$133bo424bo$127b3o422b3o$127bo424bo$128b
+o424bo$122b3o422b3o$122bo424bo$123bo424bo$117b3o422b3o$117bo424bo$118b
+o424bo$112b3o422b3o$112bo424bo$113bo424bo$107b3o422b3o$107bo424bo$108b
+o424bo$102b3o422b3o$102bo424bo$103bo424bo$97b3o422b3o$97bo424bo$98bo
+424bo$92b3o422b3o$92bo424bo$93bo424bo$87b3o422b3o$87bo424bo$88bo424bo$
+82b3o422b3o$82bo424bo$83bo424bo$77b3o422b3o$77bo424bo$78bo424bo$72b3o
+422b3o$30b3o39bo424bo$32bo40bo424bo$31bo20$8b3o422b3o$10bo424bo$9bo
+424bo3$6b3o422b3o$3o5bo416b3o5bo$bbo4bo419bo4bo$bo424bo!

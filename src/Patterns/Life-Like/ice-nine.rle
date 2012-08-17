@@ -1,0 +1,8 @@
+#CXRLE Pos=-2,-9
+#C
+#C A 3-cell pattern runs chaotically, with average density about 25%,
+#C until about gen 435175.  Then an iceball forms, which slowly grows,
+#C filling the torus completely in gen 435374.
+#C
+x = 3, y = 2, rule = B25678/S5678:T20,20
+2o$2bo!

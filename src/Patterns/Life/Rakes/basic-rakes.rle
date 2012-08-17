@@ -1,0 +1,21 @@
+#C Some common and typical c/2 rakes.
+#C A rake is any puffer whose debris consists entirely of spaceships.
+#C Front row: p20 forward and backward rakes, the original kind of
+#C  rake created by perturbing the output of a small puffer with
+#C  light-weight spaceships.
+#C Next row: p16 forward and backward rakes by Tim Coe, 1996.
+#C Back row: a p240 forward rake, to show one alternative rake.
+#C "Rakes.lif" from Alan Hensel's "lifebc" pattern collection.
+x = 263, y = 79, rule = B3/S23
+18boo$16bo4bo$22bo$16bo5bo$17b6o3$33boo$31bo4bo$37bo$31bo5bo213boo8bo$
+32b6o132b6o74b4o8bo$169bo5bo74booboo3bo3bo$159b6o10bo76boo5b4o$107b5o
+46bo5bo9bo$106bo4bo52bo$41b6o64bo5b4o42bo$40bo5bo59bo3bo5b6o61boo73bo$
+46bo61bo7b4oboo56b4oboo73boo$40bo4bo74boo58b5o75bo$42boo137b3o76bo$89b
+o169bo$87booboo28bo$89bo14bo3bo3bo3bo5bo58b4o$104bo3bo3bo3bo6bo56bo3bo
+76bo$89bo14bo3bo3bo3bo6bo36bo23bo77bo$87booboo27b5o37bo13boo6bo74bo3bo
+$89bo65bo5bo9b4oboo64b4o13b4o$156b6o9b6o64bo3bo$bboo116b3o49b4o69bo$o
+4bo15b4o24boo57bo10b5o120bo$6bo13bo3bo21b3oboo54bo3bo8b3oboo$o5bo17bo
+21b5o60bo10boo$b6o13bobbo23b3o56bo4bo$107b5o25$251boo8bo$169b6o75b4o8b
+o$168bo5bo75booboo3bo3bo$174bo77boo5b4o$173bo3$182boo74bo$178b4oboo74b
+oo$179b5o76bo$180b3o77bo$259bo$$180b4o$179bo3bo77bo$183bo78bo$174boo6b
+o60bo14bo3bo$170b4oboo67bo14b4o$170b6o64bo3bo$171b4o66b4o!

@@ -1,0 +1,31 @@
+# HPP Lattice gas
+#
+# J. Hardy, O. de Pazzis, and Y. Pomeau (1973) J. Math. Phys. 14, 470.
+# 
+# The earliest lattice gas model. Later made obsolete by the FHP gas on
+# a hexagonal lattice, which has better physical properties.
+# 
+# In this simple demo, four gas particles bounce around inside a box.
+# They pass through each other unless meeting head-on, in which case they
+# collide and the particles leave at right angles to their initial 
+# directions. Although it seems trivial, this is sufficient to simulate
+# fluid dynamics - see HPP-demo.rle.
+#
+# States following http://pages.cs.wisc.edu/~wylie/doc/PhD_thesis.pdf
+# 
+# Each cell can contain up to 4 particles, each moving in one of the four directions.
+# Outgoing directions SENW map onto 4 bits, so W=0001=1, SEW=1101=13, etc.
+# Next state is simply the collected inputs, in most cases.
+# The exceptions are 5 (EW) and 10 (NS) which get swapped (bounce on collision).
+# 
+# To make the gas useful in Golly's infinite area, I've added reflecting boundary
+# states, 16-31. These work in the same way as gas particles (collecting inputs)
+# but reverse their direction. Contact: Tim Hutton <tim.hutton@gmail.com>
+#
+# Sink boundary: (or you can vent to the outside but this way is neater)
+# 32
+# Source boundary: (haven't really worked out how to use this well yet)
+# 33
+# 
+x = 14, y = 10, rule = HPP
+14P$P12.P$P12.P$P8.A3.P$P12.P$P12.P$P3.M8.P$P12.P$P12.P$14P!

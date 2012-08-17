@@ -1,0 +1,55 @@
+<html>
+<title>Golly Help: Known Problems</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+This section lists all known bugs and limitations.
+If you come across any problems not mentioned below then please
+report them to Andrew Trevorrow
+(<a href="mailto:andrew@trevorrow.com">andrew@trevorrow.com</a>)
+or Tom Rokicki
+(<a href="mailto:rokicki@gmail.com">rokicki@gmail.com</a>).
+
+<p>
+<font size=+1><b>Problems on all platforms</b></font>
+
+<p>
+<ul>
+<li>
+All editing operations are restricted to cells whose coordinates
+are within +/- 1 billion.
+<li>
+The QuickLife algorithm has a minor bug that can cause selecting
+a large pattern to appear to be incorrect.  The selection is actually
+correct but the rectangle is slightly offset (by one pixel).
+<li>
+Pattern rendering needs to be optimized, especially in the Mac and Linux apps.
+The solution will probably require using OpenGL rather than wxDC calls.
+</ul>
+
+<p>
+<font size=+1><b>Mac problems</b></font>
+
+<p>
+<ul>
+<li> None.
+</ul>
+
+<p>
+<font size=+1><b>Windows problems</b></font>
+
+<p>
+<ul>
+<li> None.
+</ul>
+
+<p>
+<font size=+1><b>Linux problems</b></font>
+
+<p>
+<ul>
+<li> None.
+</ul>
+
+</body>
+</html>

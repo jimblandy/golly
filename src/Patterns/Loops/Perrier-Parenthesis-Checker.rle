@@ -1,0 +1,92 @@
+#CXRLE Pos=-11,-2
+#
+# Parenthesis Checker - in Perrier's self-reproducing loop
+#
+# See Perrier-Loop.rle for a simpler example, and for an explanation
+# of the states used in the program.
+#
+# This is an implementation of the 64 instruction program listed in
+# the appendix of Perrier's paper. The numbers on the left
+# correspond to the program instructions in the paper. The program
+# checks that a string has matching parentheses. In this example
+# the string "(()())" is encoded in the data tape. After many
+# timesteps the program halts (the program head drops off the end)
+# and the value under the data head is '1', indicating that the 
+# expression is well-formed, and the parentheses do indeed match.
+# 
+# (Here we've disabled the self-reproduction part of the loop's
+#  function simply to avoid distracting us from the computation part.
+#  To re-enable, set (19,6) to state 1, (10,8) to state 2, and
+#  (14,8) to state 0.)
+#
+# The data tape is encoded with '(' = 10 and ')'=11. The rest of the 
+# tape should contain zeros. (In Perrier's loop, the tape can be 
+# expanded as required, and contains zeros by default, so here we 
+# don't have to worry about the trailing zeros for example but you 
+# can put them in if you want.)
+#
+# In our example, "(()())" = 101011101111
+#
+# Caveat: the data head must be positioned just before (above) the 
+# first parenthesis, else the result may be incorrect. In Perrier's
+# loop, the data head always starts at the top of the tape provided,
+# so our tape contains an initial '0': 0101011101111
+#
+# There's a slight error in the paper, where it says that the final
+# result will be written in the uppermost data slot. This is not
+# always the case. The final position of the data head indicates
+# where the final result is stored.
+#
+# Enter your own sequence of brackets for checking. 
+#
+# Contact: tim.hutton@gmail.com
+#
+x = 34, y = 376, rule = Perrier
+20.8B$19.BAN.AO.AOB$19.B.6B.B$19.BNB4.BAB$19.BAB4.BAB$19.B.B4.BAB$19.
+BNB4.BAB$19.BA6BA5B$6.B12.B.NA.NA.N2AB2AB$5.B.B11.BC12B$5.B.B4.3B4.BD
+pA3.pABKB$5.B.B11.BFB4.BLB$6.B12.BHB4.BKB$19.BJB4.BLB$19.BJB4.BKB$19.
+BJB4.BLB$19.BJB4.BLB$19.BJB4.BLB$19.BJB4.BKB$19.BJB4.BLB$5.2B12.BJB4.
+BLB$7.B11.BJB4.BLB$6.B5.3B4.BFB4.BLB$7.B11.BHB5.B$5.2B12.BIB$19.BJB$
+5.3B11.BJB$5.B13.BJB$6.B5.3B4.BGB$7.B11.BGB$5.2B12.BGB$19.BGB$19.BHB$
+19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.B
+JB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.
+BJB$19.BEB$19.BHB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$
+19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$2.B2.2B12.B
+JB$.2B4.B11.BJB$2.B3.B5.3B4.BFB$2.B2.B13.BHB$2.B2.3B11.BJB$19.BJB$12.
+3B4.BEB$19.BHB$19.BIB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$.B2.2B13.BJB$2B.B15.BJB$.
+B.3B6.3B4.BGB$.B.B.B13.BDB$.B.3B13.BGB$19.BGB$19.BGB$19.BHB$19.BJB$2B
+2.2B13.BJB$2.B3.B12.BEB$.B3.B6.3B4.BDB$B5.B12.BFB$3B.2B13.BHB$19.BJB$
+19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB
+$19.BFB$19.BHB$2B4.2B11.BJB$2.B2.B2.B10.BJB$.B4.2B5.3B3.BEB$B4.B2.B
+10.BHB$3B3.2B11.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$
+19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$19.BJB$19.BJB$2.2B3.B11.BJB$4.B.B.B10.BJB$3.B2.B.B4.3B3.BGB$
+4.B.B.B10.BGB$2.2B3.B11.BGB$19.BGB$19.BHB$19.BIB$19.BJB$19.BJB$19.BJB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BEB$19.BHB$19.BI
+B$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.B
+JB$19.BJB$3.2B3.3B8.BJB$5.B4.B8.BJB$4.B4.B3.3B3.BFB$5.B2.B10.BHB$3.2B
+3.B10.BJB$19.BJB$19.BJB$3.2B4.2B8.BJB$5.B2.B.B8.BJB$4.B3.3B2.3B3.BGB$
+5.B4.B8.BDB$3.2B5.B8.BFB$19.BEB$19.BHB$19.BIB$19.BJB$19.BJB$19.BJB$
+19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.B
+JB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$6.B4.B7.BJB$4.B.B
+2.B.B7.BJB$4.3B2.3B2.3B2.BGB$6.B4.B7.BGB$6.B4.B7.BGB$19.BGB$19.BHB$
+19.BIB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$19.BJB$19.BJB$5.B3.2B8.BJB$3.B.B2.B.B8.BJB$3.3B2.3B3.3B2.BDB
+$5.B4.B8.BFB$5.B4.B8.BHB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$
+19.BJB$19.BJB$19.BJB$3.3B.2B10.BJB$3.B5.B9.BJB$3.2B3.B4.4B2.BFB$5.B.B
+11.BHB$3.2B2.3B9.BJB$19.BJB$13.4B2.BEB$19.BHB$19.BJB$19.BJB$19.BJB$
+19.BJB$19.BJB$19.BJB$3.3B3.2B8.BJB$3.B4.B10.BJB$3.2B3.3B2.4B2.BGB$5.B
+2.B.B8.BGB$3.3B2.3B8.BGB$19.BGB$19.BHB$19.BIB$19.BJB$19.BJB$19.BJB$
+19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BEB$19.BHB$19.BIB
+$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJB$19.BJ
+B$19.BJB$3.2B2.2B10.BJB$2.B6.B9.BJB$2.3B3.B4.3B3.BDB$2.B.B4.B10.B$2.
+3B2.2B!

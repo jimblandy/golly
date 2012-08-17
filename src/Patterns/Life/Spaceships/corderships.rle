@@ -1,0 +1,63 @@
+#C Five small Corderships.
+#C Corderships are c/12 diagonal spaceships built from switch engines.
+#C The trick in constructing a Cordership is to arrange the switch
+#C engines in such a way that they clean up each others' debris.
+#C Front: A single-row, 7-engine Cordership.
+#C Middle: Two 6-engine constructions and a symmetric 8-engine.
+#C Back: The classic 7-engine Cordership, shown with classic 
+#C  rear-end glider collisions.
+#C All five of these Corderships were constructed by Dean Hickerson,
+#C  who named them after the discoverer of the switch engine,
+#C Charles Corderman.
+#C From Alan Hensel's "lifebc" pattern collection.
+x = 244, y = 255, rule = B3/S23
+95bo$78b3o8bo5bo$77bo3bo6bo7bo$78boo9b4obboo$80booboo9b3o$82boo11bobo$
+96bo7boo$96bo7boo3$88bo$87bobo$87bobo$74b3o11bo$75bo36boo$75bobbo33boo
+$75bobbo$76bobo$96bo$95bobo$95bobo$96bo$$75boo129bo$53bobo18boo116bobo
+6bobb4o$52bo19b3o116bo9bob4o$53bobbo135bobbo6b3o3boo$55bobo14boo120b3o
+9bobboo$58bo148boboo$57b3o148bo8boo$57bo159boo$39bo15boo$39bo5b3o9bo
+13b3o$38bobo3boobbo6bobbo12b3o$39bo3bo5bo5bobo13boo117bo$39bo3bo11bo
+14bo21b3o94b3o$44bobboo19boobbo21bo93boobbo$45boo22bo3bo19bo93boobboo
+32boo$69bobbo115boo35boo$70b3o116b5o$193boo5bo$191bobbo5bo$192boo6bo3b
+o$203bobo$55boo147bo$55boo$42boo$42boo138bo$41boobo123bobo6bobb4o$28bo
+bo13bo122bo9bob4o33booboo$27bo16boob3o118bobbo6b3o3boo30boo$28bobbo12b
+oboobo120b3o9bobboo29boobobo$30bobo9boo3boo14boo118boboo32bobo$33bo8b
+oo19boo119bo4boo29boo$32b3o4bob3o9boo134boo$32bo6bo13boo$30boo$32bo$
+30bobbo175bo$30bobo176bo7bo$30bo178bo5b3o$208boo3bobo11bo$54bobo157bo
+bbo8bo$54bobbo131b3o21bobboo10bo$183bo3bobboo$22b3o30bobo115boo9bobob
+oo$23bo31b3o115boo5b5o9boo27boo4bo$23bobbo29bobo122boobb3o6boo26bobo$
+23bobbo30boobo161bobboobbo$24bobo31b3o160bo7bo$221bobb3o3bo$48bo172bob
+o3bobo$48bobo157b3o11bobbobbo$48boo131boo9booboo6boboobboo13b3o$181boo
+9boo8bob7o$23boo167boobobo5bo32boo$195bobo38boo$196boo$b3o8boo$o3bo6bo
+bbo$boo9boo$3booboo181boo$5boo182boo$$131bo87boo$126bobbobobbo3bo80boo
+$20boo104bo4boob5o$19bobbo103bo3bo4bobo$20boo$128b3o$129bo18boo$148boo
+3$26boo$7boo15bo3boboo$7boo15bo3boboo$24bo3boo106bo$25b3o107bobo18boo$
+25b3o88bo18bobbo17boo$116bo19boo$116bo$120bo11boo$15boo15bo83b3obbo10b
+oo$15boo15bobo80bo4bo$32boo81bo3bo$116b3o$125boo$122booboo$115bobo$
+115bobo30bobo6bobo$23boo90bobo29bo9bobo$23boo90bobo30bobbo6bo$116boo
+32b3o$105boo3b4o$100b3obobbo6bo$104bobbobb5o$104bobbo$106bo$103bobo33b
+o$104bo33bobo$109bo$109bo28bobbo$140boo$108boo31bo$86b3o19boo$$90bo75b
+o$86bo3boo74boo$88bobo47boo27bo$85b3o52bo25bo$87bo15boo33boo$103boo$
+86boo$87boo10boo$87bo10bobbo$87boo10bobo$86boo12bo20bobo6bobo$120bo9bo
+bo22boobo$121bobbo6bo24boo$123b3o6$112bo$91boo18bobo$91boo$111bobbo$
+113boo$114bo3$139bo$99boo38boo$99boo10boo27bo$113bo25bo$111boo6$49b3o$
+48bo3bo75boobo$47bo3boo76boo$48bo$49b4o$51boboo138bobo$51bobbo137bo$
+52boo12boo125bobbo$66boo127bobo$198bo11b3o$197b3o$50bo146bo$49bobo143b
+oo$49bobo145bo13b3o$50bo129bo14bobbo12b3o5boo$74boo103bobo13bobo13boo
+6boo$74boo119bo14bo$179bobbo3bob3o17boobbo$181bo4bo22bo3bo26bo$58bo
+123boboobobo19bobbo27bobo$57bobo123boo3bo21b3o27boo$57bobo124bo$35b3o
+20bo168boo$34bo3bo43boo143boo$35boo45boo$24b3o10booboo26bobbo119bo$23b
+o3bo11boo27bobbo119bo5b3o$22bo3boo39bo122bobo3boobbo$23bo46bo120bo3bo
+5bo$24b4o37boo124bo3bo$26boboo35booboo126bobboo25bo8boo$26bobbo36boo5b
+obo91bobo27boo26bobo7boo$27boo43bo93bo58bobo$73bobbo90bobbo54bobbo$75b
+obo91bobo54bobo$34boo42bo93bo56bo$26bo6bobbo40b3o91b3o54boo$26bo7boo
+41bo93bo56bo$25bobo47boo92boo$26bo50bo93bo$26boo36bo10bobbo90bobbo31bo
+$26b3o34bobo9bobo91bobo31boboo$75bo93bo36boo$24bo4boo11boo19bobbo134bo
+6bo$24bo5bo10bobbo20boo133bo3b4o$24bo5bo11boo22bo134bo4bo$29bo3$207b3o
+$63boo141bo3bo$65bo13bo17b3o107boo$29boo32boo14bo17b3obbo70boo34booboo
+$29boo48bo16boo3boo70boo36boo$101bo$94bo$48bobo13boo27b4o103bo$47bo16b
+oo26bo4bo101bobo$48bobbo41b4obo100bobo$50bobo34bo10bo100bobbo$37boo14b
+o10bo22bo9boo82boo17bobo$37boo13b3o8boo22bo93boo20bo$52bo12bo29bobbo
+103boo37b3o$50boo43bobbo103bo38bo$52bo13b3o26b3o144bo$50bobbo12b3o4b3o
+$50bobo13boo$50bo14bo29bo$45boo16boobbo27bo93boo29boo$45boo17bo3bo26bo
+93boo28boo$64bobbo153bo$65b3o$$81b3o15$218bo$217boo$217bobo!

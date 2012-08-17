@@ -1,0 +1,9 @@
+#CXRLE Pos=-13,-4
+#C
+#C If both pairs of opposite edges of a bounded grid are reversed and then
+#C joined, the result is a cross-surface (or real projective plane).  
+#C Note that gliders cannot pass through the corner cells.
+#C For more details see Help > Bounded Grids.
+#C
+x = 26, y = 12, rule = LifeHistory:C40,20
+15.A$2A12.A9.2A$A.A11.3A6.A.A$A24.A4$9.A.A$8.A$8.A$8.A2.A$8.3A!

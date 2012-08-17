@@ -1,0 +1,178 @@
+# Hutton-replicator - a self-reproducing machine in a modified version 
+#                     of von Neumann's cellular automaton.
+# Author: Tim Hutton <tim.hutton@gmail.com>
+#
+# Having modified the von Neumann CA transition rules, a new form of
+# self-replicator becomes possible, one that replicates much faster
+# and exhibits exponential growth in the initial stages.
+#
+# Motivation: In the original von Neumann transition rules, lines of 
+# transmission states can extend themselves by writing out binary 
+# signal trains, e.g. 10000 for extend with a right-directed ordinary 
+# transmission state (OTS). But for construction, a dual-stranded 
+# construction arm (c-arm) is needed, simply because the arm must be 
+# retracted after each write. I noticed that there was room to add the
+# needed write-and-retract operation by modifying the transition rules 
+# slightly. This allows the machine to be greatly reduced in size and 
+# speed of replication.
+#
+# Another modification was made when it was noticed that the 
+# construction could be made rotationally invariant simply by basing 
+# the orientation of the written cell on the orientation of the one 
+# writing it. Instead of "write an up arrow" we have "turn left". This 
+# allows us to spawn offspring in different directions and to fill up 
+# the space with more and more copies in a manner inspired by
+# Langton's Loops. 
+#
+# A single OTS line can now act as a c-arm in any direction. Below are 
+# the signal trains:
+#
+# 100000 : move forward (write an OTS arrow in the same direction)
+# 100010 : turn left
+# 10100  : turn right
+# 100001 : write a forward-directed OTS and retract
+# 100011 : write a left-directed OTS and retract
+# 10011  : write a reverse-directed OTS and retract
+# 10101  : write a right-directed OTS and retract
+# 101101 : write a forward-directed STS and retract
+# 110001 : write a left-directed STS and retract
+# 110101 : write a reverse-directed STS and retract
+# 111001 : write a right-directed STS and retract
+# 1111   : write a confluent state and retract
+# 101111 : retract
+#
+# Achieving these features without adding new states required making 
+# some slight changes elsewhere, though hopefully these don't affect 
+# the computation- or construction-universality of the CA. The most 
+# important effects are listed here:
+#
+# 1) OTS's cannot destroy special transmission states (STS's). This 
+#    functionality was used in von Neumann's construction and read-
+#    write arms but isn't needed for the logic organs, as far as I 
+#    know. The opposite operation is still enabled.
+# 2) STS lines can only construct one cell type: an OTS in the forward 
+#    direction. Some logic organs will need to be redesigned.
+#
+# Under this modified JvN rule, a self-replicator can be much smaller, 
+# consisting only of a tape contained within a repeater-emitter loop. 
+# One early example consisted of 5521 cells in total, and replicates 
+# in 44,201 timesteps, compared with 8 billion timesteps for the 
+# smallest known JvN-32 replicator. This became possible because the 
+# construction process runs at the same speed as a moving signal, 
+# allowing the tape to be simply stored in a repeater-emitter loop. 
+# The machine simply creates a loop of the right size (by counting 
+# tape circuits) before allowing the tape contents to fill up their 
+# new home.
+#
+# The rotational invariance allows the machine to make multiple copies 
+# oriented in different directions. The population growth starts off 
+# as exponential but soons slows down as the long tapes obstruct the 
+# new copies.
+#
+# Some context for these modifications to von Neumann's rule table:
+# Codd simplified vN's CA to a rotationally-invariant 8 states. 
+# Langton modified this to make a self-replicating repeater-emitter, 
+# his 'loops'. Other loops were made by Sayama, Perrier, Tempesti, 
+# Byl, Chou-Reggia, and others. So there are other CA derived from 
+# vN's that support faster replication than that achieveable here, and 
+# some of them retain the computation- and construction-universality
+# that von Neumann was considering. Our modifications are mostly a 
+# historical exploration of the possibility space around vN's CA, to 
+# explore the questions of why he made the design decisions he did.
+# In particular, why didn't von Neumann design for a tape loop stored 
+# within a repeater-emitter? It would have made his machine much 
+# simpler from the beginning. Why didn't he consider write-and-
+# retraction instead of designing a complicated c-arm procedure? Of 
+# course this is far from criticism of vN - his untimely death 
+# interrupted his work in this area. 
+#
+# Some details of the modifications are given below:
+#
+# The transition rules are as in Nobili32 (or JvN29), except the 
+# following:
+# 1) The end of an OTS wire, when writing a new cell, adopts one of 
+#    two states: excited OTS and excited STS, standing for bits 1 and 
+#    0 respectively. After writing the cell reverts to being an OTS.
+# 2) A sensitized cell that is about to revert to an arrow bases its 
+#     direction upon that of the excited arrow that is pointing to it. 
+# 3) A TS 'c', with a sensitized state 's' on its output that will 
+#    become an OTS next (based on the state of 'c'), reverts to the 
+#    ground state if any of 'c's input is 1, else it quiesces. 
+# 4) A TS 'c', with a sensitized state 's' on its output that will 
+#    become a confluent state next (based on the state of 'c'), 
+#    reverts to the first sensitized state S is any of 'c's input is 
+#    one, else it reverts to the ground state.
+# 5) A TS 'c', with an STS on its output, reverts to the ground state 
+#    if any of 'c's input is 1.
+#
+# The body of the machine looks fiddly but it only does these things:
+# 1) detect a unique mark on the tape as it goes round
+# 2) starts and stops a 6-period pulser
+# 3) codes for: extend, turn left, turn left, extend some more
+# 4) counts when 3 tape marks have gone past, and switches coder
+# 5) when finished writing an empty tape of the right length,
+#    divert the tape to copy itself into the new holder
+# 6) after the tape is copied across, it separates itself from its
+#    old tape to prevent infection spreading from multiple copies.
+#
+x = 3129, y = 4, rule = Hutton32
+2.J$2.J$2KpAOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
+5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO3KOKO5KO5KO5KO5KO
+5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKO2KO5KO
+5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKOKOKO4KOK4OKO
+4KOKO4KOKO4KOKO4KOKO4KOKO4KOKO4KOKO4KOKOK4OKOK4OK2OKOKOK3O2KOKOK4OKOK
+4OKOK4OKOK4OKOK4OKOK4OKOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
+5KO5KO5KO5KO5KO5KOKOKOKOK4OKOKOKOKOK4OKOK4OKOK4OKO3K2OKOK4OKO2K2OKO2K
+2OKO3K2OKOKOKOKO4KOK4OK3O2KOKOK4OKOK4OKOK4OKOK4OKOK4OKOK4OKOKO2KO5KO
+5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5K4OKO4KOKOK4OK
+4OKOK4OKOKOKOKO4KOKO3K2OKOK4OKO3K2OKO4KOKO4KOKO4KOKO2K2OKO3K2OKOK2OKO
+KOK4OKOK4OKOK4OKOK4OKOK4OKOK4OKOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5K
+O5KO5KO5KO5KO5KO5KO5KO5KO5KO2K2OK4OKO4KOKOK2OKOK4OKO4KOKO3K2OK4OKO4KO
+KO4KOKOK4OKOK4OKOK4OKOK4OKO3K2OKOK4OKOK4OKOK4OKOK4OKOK4OKOK4OKOK4OKOK
+O2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKOKOKOK
+4OKOK4OKOKOKOKOK4OKOK4OKO3K2OKOK4OK4OKOK4OKOK4OKOK4OKO4KOK4OKO4KOK4OK
+O4KOKO4KOKO4KOK4OKOK4OKOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
+5KO5KO5KO5KO5KO5KOKOKOKOK4OKOKOKOKOKOKOKOK2OKOKOK2OKOK4OKOK4OKOKOKOK
+2O3KOK2O3KOK2O3KOKO3K2OKOKOKOKOK4OKO3K2OKOK4OKOK4OKOK4OKO3K2OKOK4OKOK
+O2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKOKOKOK
+4OKOKOKOKOKOKOKOK4OK2O3KOKO3K2OKOK4OKOKOKOK2O3KOK4OK2O3KOKO3K2OKOKOKO
+KOK4OK4OKO4KOK4OKO4KOK4OKOK4OKOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
+5KO5KO5KO5KO5KO5KO5KO5KOKOKOKOK4OKO2K2OK4OKOKOKOK2O3KOK4OKOKOKOKO2K2O
+KO2K2OKO3K2OKO2K2OKO3K2OKOKOKOKOK4OKO3K2OKOK4OKOK4OKOK4OKO3K2OKOK4OKO
+KO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKOKOKOK
+4OKOK4OKOKOKOKOKOKOKOK4OKO3K2OKO2K2OKO2K2OKO2K2OKO2K2OKO3K2OKOKOKOKO
+4KOKOK4OK4OKO4KOKO4KOKOKOKOK4OKOK4OKOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
+5KO5KO5KO5KO5KO5KO5KO5KO5KO5KOKOKOKOKOKOKO4KOKO4KOKOKOKOKOK4OKO3K2OKO
+K4OKOK4OKOK4OKOK4OKOKOKOKO3K2OKOK2OKOKOK4OKO3K2OKOK4OKO3K2OKO4KOKO3K
+2OKOK4OKOKO2KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO5KO
+5KOKOKOKO2K2OKO2K2OKOKOKOKO2K2OKO2K2OK4OKO2K$2.94I5M2IMIMIM4IMIM4IMIM
+4IMI2M3IM5IM5IM5IM2IMIMI4MIMI4MIMI4MIMI4MIMI2M3IM5IM5IM5IM2IMIMI4MIMI
+M3I2MI4MI2M2IMI4MI2M2IMI2M2IMI2M2IMI2M2IMI2M2IM5IM5IM5IM5IM5IM5IM5IM
+5IM2IMIMI4MIMIMI2MIMIMI2MIMI2M3IMI2M2IMI4MIMI4MIMI4MIMI4MIMIMIMIM5IM
+5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI4MIMI2M3IMI4MI2M2IMI2M2IMI2M2IMI2M2IM
+I2M2IMI4MI2M2IMI2M2IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMIM3I2MI
+4MI2M3IMI4MIMI4MIMI4MIMI4MIMI4MIMIMIMIMI4MIMIMIMIMI4MIMIM4IMIM4IMIM4I
+MIM4IMIM4IMIM4IMIM4IMIM4IMIM4IMIM4IMIM4IM5IM5IM5IM5IM5IM5IM5IM5IM5IM
+5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMIMI2MIMIMI2MIMI2M3IM
+I4MIM4IMIM4IMIM4IMIM4IMI4MIM4IMI4MIM4IMIMIMIMI4MIMI4MIMI4MIMI4MIMI4MI
+MI4MIMIMIMIMI4MIMI4MIMI4MIMI4MI2M2IMI2M2IMI2M2IMI2M2IMI2M2IMI2M2IMI2M
+2IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM
+5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI2M3IMI2M2IMI2M2IMI2M2IMI4MIMI4MIMI
+4MIMI4MIMIMIMIMI4MIMIMIMIMI4MIMI4MIMIM4IMIM4IMIM4IMIM4IMIM4IMI4MIMIMI
+MI4MIMI4MIMI4MIMI2M3IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5I
+M5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI2M3IMI4MIMI4MIMIM4IMIM4IMI2M3IMI4MIM
+I4MIMIMIMIMI2M2IMIMIMIMI2M3IMI2M2IMI4MI2M2IMI2M2IMI4MI4MIMI2M3IMIMIMI
+MI4MIMI4MIMI4MIMI4MIM4IMI2M3IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM
+5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI4MIM4IMI4MIMIMIMI2M3IM
+I2M2IMIM3I2MI4MI4MIMIMIMIMIMIMIMI2M3IMI4MIMI4MIMI4MIMI4MIMIMIMIMI4MIM
+IM4IMIMIMIMI4MIMI4MIMI4MIMI2M3IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM
+5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI2M3IMIM4IMI4MIM4IMI4MI4MI
+MIM3I2MIMIMIMI4MIMIMIMIMIMIMIMI2M3IMIM4IMIM4IMIM4IMIM4IMIMIMIMI4MIMI
+4MIMIMIMIMI4MIMI4MIMI4MIMI2M2IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5I
+M5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI4MIMIMIMI4MIMI4MIMI2M3IMI4M
+IMIM3I2MI4MI4MIMIMIMIMIMIMIMI2M3IMIMIMIMI2M2IMI2M2IMI2M2IMI2M2IMI4MIM
+I4MIMIMIMIM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM
+2IMIMI4MIMI2M3IMIM4IMI4MI4MIMI2M3IMI4MIMIM3I2MIMIMIMIM4IMIMIMIMIMIMIM
+IM4IMIM4IMI2M3IMI4MIMI4MIMIMIMIMI4MIMI4MIMIMIMIM5IM5IM5IM5IM5IM5IM5IM
+5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM5IM2IMIMI4MIMI4MIMIMIMIM4IMIM4IMI4MI
+4MIMIM3I2MIMIMIMI4MI2M2IMI4MI2M2IMIMN!

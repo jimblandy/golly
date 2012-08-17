@@ -1,0 +1,31 @@
+# A 3-state 3-color Turmite discovered by Ed Pegg, Jr.
+# 
+# Ed Pegg, Jr. suggested two extensions of the turmite idea: that turmites
+# can turn in more than one direction, thus multiplying, and that when two or
+# more turmites land on the same square they annihilate each other. In certain 
+# rare cases, such as this one, a population of turmites grows and then goes 
+# extinct.
+#
+# http://en.wikipedia.org/wiki/Turmite
+# http://demonstrations.wolfram.com/Turmites/
+# http://www.mathpuzzle.com/26Mar03.html
+#
+# Specification string: {{{1, 2, 0}, {2, 8, 2}, {2, 1, 1}}, 
+#   {{1, 1, 2}, {1, 1, 1}, {1, 8, 1}}, {{2, 10, 0}, {2, 8, 1}, {2, 8, 2}}}
+#
+# This string is a curly-bracketed table of n_states rows and n_colors columns, 
+# where each entry is a triple of integers. The elements of each triple are:
+# - new color of the square
+# - direction(s) for the turmite to turn: 1=noturn, 2=right, 4=u-turn, 8=left
+# - new internal state of the turmite
+# 
+# For example, the triple {2,10,0} says: 
+# - set the color of the square to 2
+# - turn left (8) *and* right (2) (8+2=10)
+# - adopt state 0 and move forward one square
+#
+# To generate Turmites like this one, run this script:
+# Scripts/Python/Rule-Generators/Turmite-gen.py
+#
+x = 1, y = 1, rule = Turmite_1202822111121111812a0281282
+C!

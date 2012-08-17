@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en">
+<head>
+<title>Life Lexicon (U)</title>
+<meta name="author" content="Stephen A. Silver">
+<meta name="description" content="Part of Stephen Silver's Life Lexicon.">
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
+<link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
+<base target="_top">
+</head>
+<body bgcolor="#FFFFCE">
+
+<center><A HREF="lex.htm">Introduction</A> | <A HREF="lex_bib.htm">Bibliography</A></center></center>
+<hr>
+<center>
+<font size=-1><b>
+<A HREF="lex_1.htm">1-9</A> |
+<A HREF="lex_a.htm">A</A> |
+<A HREF="lex_b.htm">B</A> |
+<A HREF="lex_c.htm">C</A> |
+<A HREF="lex_d.htm">D</A> |
+<A HREF="lex_e.htm">E</A> |
+<A HREF="lex_f.htm">F</A> |
+<A HREF="lex_g.htm">G</A> |
+<A HREF="lex_h.htm">H</A> |
+<A HREF="lex_i.htm">I</A> |
+<A HREF="lex_j.htm">J</A> |
+<A HREF="lex_k.htm">K</A> |
+<A HREF="lex_l.htm">L</A> |
+<A HREF="lex_m.htm">M</A> |
+<A HREF="lex_n.htm">N</A> |
+<A HREF="lex_o.htm">O</A> |
+<A HREF="lex_p.htm">P</A> |
+<A HREF="lex_q.htm">Q</A> |
+<A HREF="lex_r.htm">R</A> |
+<A HREF="lex_s.htm">S</A> |
+<A HREF="lex_t.htm">T</A> |
+<A HREF="lex_u.htm">U</A> |
+<A HREF="lex_v.htm">V</A> |
+<A HREF="lex_w.htm">W</A> |
+<A HREF="lex_x.htm">X</A> |
+<A HREF="lex_y.htm">Y</A> |
+<A href="lex_z.htm">Z</A></b></font>
+
+</center>
+<hr>
+<p><a name=underpopulation>:</a><b>underpopulation</b> Death of a cell caused by it having fewer than two
+<a href="lex_n.htm#neighbour">neighbours</a>. See also <a href="lex_o.htm#overpopulation">overpopulation</a>.
+<p><a name=unitlifecell>:</a><b>unit Life cell</b> A rectangular pattern, of size greater than 1x1,
+that can simulate Life in the following sense. The pattern
+by itself represents a dead Life cell, and some other pattern
+represents a live Life cell. When the plane is tiled by these
+two patterns (which then represent the state of a whole Life
+universe) they evolve, after a fixed amount of time, into another
+tiling of the plane by the same two patterns which correctly
+represents the Life generation following the one they initially
+represented. It is usual to use capital letters for the simulated
+things, so, for example, for the first known unit Life cell
+(constructed by David Bell in January 1996), one Generation is
+5760 generations, and one Cell is 500x500 cells.
+<p>In December 2005, Jason Summers constructed an analogous unit
+cell for Wolfram's Rule 100, a one-dimensional <a href="lex_c.htm#cellularautomaton">cellular automaton</a>
+that is know be universal.
+<p><a name=universalcomputer>:</a><b>universal computer</b> A computer that can compute anything that is
+computable. (The concept of computability can be defined in terms
+of Turing machines, or by Church's lambda calculus, or by a number
+of other methods, all of which can be shown to lead to equivalent
+definitions.) The relevance of this to Life is that both Bill
+Gosper and John Conway proved early on that it is possible to
+construct a universal computer in the Life universe. (To prove
+the universality of a <a href="lex_c.htm#cellularautomaton">cellular automaton</a> with simple rules was
+in fact Conway's aim in Life right from the start.) Conway's proof
+is outlined in <a href="lex_w.htm#winningways">Winning Ways</a>, and also in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>.
+<p>Until recently, no universal Life computer had ever been built in
+practice, because it would be enormous, even with the improvements
+that have been devised since those early proofs. In April 2000,
+Paul Rendell completed a Turing machine construction (described
+in <a href="http://www.cs.ualberta.ca/~bulitko/F02/papers/tm_words.pdf">http://www.cs.ualberta.ca/~bulitko/F02/papers/tm_words.pdf</a>).
+This, however, has a finite tape, as opposed to the infinite tape of
+a true Turing machine, and is therefore not a universal computer.
+But in November 2002, Paul Chapman announced the construction
+of a universal computer, details of which can be found at
+<a href="http://www.igblan.free-online.co.uk/igblan/ca/">http://www.igblan.free-online.co.uk/igblan/ca/</a>. This is
+a universal register machine based around Dean Hickerson's
+<a href="lex_s.htm#slidingblockmemory">sliding block memory</a>.
+<p>See also <a href="#universalconstructor">universal constructor</a>.
+<p><a name=universalconstructor>:</a><b>universal constructor</b> A pattern that is capable of constructing
+almost any pattern that has a <a href="lex_g.htm#glidersynthesis">glider synthesis</a>. This definition is
+a bit vague. A precise definition seems impossible because it has
+not been proved that all possible glider fleets are constructible.
+In any case, a universal constructor ought to be able to construct
+itself in order to qualify as such. An outline of Conway's proof
+that such a pattern exists can be found in <a href="lex_w.htm#winningways">Winning Ways</a>, and also
+in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>. The key mechanism for the production
+of gliders with any given path and timing is known as side-tracking,
+and is based on the <a href="lex_k.htm#kickbackreaction">kickback reaction</a>. A universal constructor
+designed in this way can also function as a universal destructor
+- it can delete almost any pattern that can be deleted by gliders.
+<p>In May 2004, Paul Chapman and Dave Greene produced a prototype
+programmable universal constructor. This is able to construct
+objects by means of <a href="lex_s.htm#slowgliderconstruction">slow glider constructions</a>. It likely that
+it could be programmed to be construct itself, but the necessary
+program would be very large; moreover an additional mechanism would
+be needed in order to copy the program.
+<p>A universal constructor is most useful when attached to a
+<a href="#universalcomputer">universal computer</a>, which can be programmed to control the
+constructor to produce the desired pattern of gliders. In what
+follows I will assume that a universal constructor always includes
+this computer.
+<p>The existence of a universal constructor/destructor has a number of
+theoretical consequences.
+<p>For example, the constructor could be programmed to make copies of
+itself. This is a <a href="lex_r.htm#replicator">replicator</a>.
+<p>The constructor could even be programmed to make just one copy
+of itself translated by a certain amount and then delete itself.
+This would be a (very large, very high period) <a href="lex_s.htm#spaceship">spaceship</a>. Any
+translation is possible (except that it must not be too small), so
+that the spaceship could travel in any direction. It could also
+travel slower than any given speed, since we could program it to
+perform some time-wasting task (such as repeatedly constructing and
+deleting a block) before copying itself. Of course, we could also
+choose for it to leave some debris behind, thus making a <a href="lex_p.htm#puffer">puffer</a>.
+<p>It is also possible to show that the existence of a universal
+constructor implies the existence of a <a href="lex_s.htm#stable">stable</a> <a href="lex_r.htm#reflector">reflector</a>. This
+proof is not so easy, however, and is no longer of much significance
+now that explicit examples of such reflectors are known.
+<p><a name=universaldestructor>:</a><b>universal destructor</b> See <a href="#universalconstructor">universal constructor</a>.
+<p><a name=universalregistermachine>:</a><b>universal register machine</b> = <a href="#urm">URM</a>
+<p><a name=universalregulator>:</a><b>universal regulator</b> A <a href="lex_r.htm#regulator">regulator</a> in which the incoming gliders are
+aligned to period 1, that is, they have arbitrary timing (subject
+to some minimum time required for the regulator to recover from the
+previous glider).
+<p>Paul Chapman constructed the first universal regulator in March
+2003. It is adjustable, so that the output can be aligned to any
+desired period.
+<p><a name=unix>:</a><b>unix</b> (p6) Two <a href="lex_b.htm#block">blocks</a> eating a <a href="lex_l.htm#longbarge">long barge</a>. This is a useful
+<a href="lex_s.htm#sparker">sparker</a>, found by Dave Buckingham in February 1976. The name
+derives from the fact that it was for some time the mascot of the
+Unix lab of the mathematics faculty at the University of Waterloo.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OO.....
+.OO.....
+........
+.O......
+O.O.....
+O..O..OO
+....O.OO
+..OO....
+</a></pre></td></tr></table></center>
+<p><a name=upboatwithtail>:</a><b>up boat with tail</b> = <a href="lex_t.htm#transboatwithtail">trans-boat with tail</a>
+<p><a name=upentomino>:</a><b>U-pentomino</b> Conway's name for the following <a href="lex_p.htm#pentomino">pentomino</a>, which
+rapidly dies.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+O.O
+OOO
+</a></pre></td></tr></table></center>
+<p><a name=urm>:</a><b>URM</b> A universal register machine, particularly Paul Chapman's
+Life implementation of such a machine. See <a href="#universalcomputer">universal computer</a>
+for more information.
+<hr>
+<center>
+<font size=-1><b>
+<a href="lex_1.htm">1-9</a> |
+<a href="lex_a.htm">A</a> |
+<a href="lex_b.htm">B</a> |
+<a href="lex_c.htm">C</a> |
+<a href="lex_d.htm">D</a> |
+<a href="lex_e.htm">E</a> |
+<a href="lex_f.htm">F</a> |
+<a href="lex_g.htm">G</a> |
+<a href="lex_h.htm">H</a> |
+<a href="lex_i.htm">I</a> |
+<a href="lex_j.htm">J</a> |
+<a href="lex_k.htm">K</a> |
+<a href="lex_l.htm">L</a> |
+<a href="lex_m.htm">M</a> |
+<a href="lex_n.htm">N</a> |
+<a href="lex_o.htm">O</a> |
+<a href="lex_p.htm">P</a> |
+<a href="lex_q.htm">Q</a> |
+<a href="lex_r.htm">R</a> |
+<a href="lex_s.htm">S</a> |
+<a href="lex_t.htm">T</a> |
+<a href="lex_u.htm">U</a> |
+<a href="lex_v.htm">V</a> |
+<a href="lex_w.htm">W</a> |
+<a href="lex_x.htm">X</a> |
+<a href="lex_y.htm">Y</a> |
+<A href="lex_z.htm">Z</A></b></font>
+
+</center>
+<hr>
+</body>

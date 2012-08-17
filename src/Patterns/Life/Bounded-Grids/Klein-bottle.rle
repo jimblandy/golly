@@ -1,0 +1,9 @@
+#CXRLE Pos=-10,-3
+#C
+#C If one pair of opposite edges of a bounded grid are twisted 180 degrees
+#C (ie. reversed) before being joined then the result is a Klein bottle.
+#C In this example the twist is on the horizontal edges.  
+#C For more details see Help > Bounded Grids.
+#C
+x = 20, y = 6, rule = LifeHistory:K40*,20
+16.3A$16.A2.A$16.A$3A13.A$A16.A.A$.A!

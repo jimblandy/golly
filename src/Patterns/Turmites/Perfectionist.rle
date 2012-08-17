@@ -1,0 +1,29 @@
+# A 3-state 2-color absolute-movement turmite (2D Turing machine) discovered by 
+# Tim J. Hutton
+#
+# Seemingly random for 15.5 million timesteps before making a highway. One of
+# the very few 3-state 2-color 2D Turing machines to exhibit interesting 
+# behavior.
+#
+# http://code.google.com/p/ruletablerepository/wiki/TwoDimensionalTuringMachines
+# http://en.wikipedia.org/wiki/Turmite
+#
+# Specification string:
+# {{{0,'S',1},{1,'W',1}},{{1,'E',2},{1,'S',2}},{{1,'W',0},{0,'N',0}}}
+#
+# This string is a curly-bracketed table of n_states rows and n_colors columns, 
+# where each entry is a triple. The elements of each triple are:
+# - new color of the square
+# - direction(s) for the turmite to move: 'N' = North, etc.
+# - new internal state of the turmite
+# 
+# For example, the triple {0,'S',1} says: 
+# - set the color of the square to 0
+# - move South
+# - adopt state 1 and move forward one square
+#
+# To generate Turmites like this one, run this script:
+# Scripts/Python/Rule-Generators/AbsoluteTurmite-gen.py
+#
+x = 1, y = 1, rule = AbsoluteTurmite_0S11W11E21S21W00N0
+B!

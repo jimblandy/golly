@@ -1,0 +1,49 @@
+#CXRLE Pos=-6,-12
+# A simple simulation of sand particles using the Margolus neighborhood
+# - inspired by MCell's version.
+#
+# Note that with the Sand-Margolus-emulated rule, only two of the blocks
+# of sand collapse. Now change rule (Control | Set Rule...) to
+# Sand-square4cyclic_emulated, and note that all four blocks of sand
+# collapse.
+#
+# At the time of writing, Golly does not support the Margolus neighborhood,
+# so we are emulating it by using some extra states. In the Margolus nhood,
+# odd-numbered cells are those in the top-left corner of each 2x2 block.
+# In the square4_cyclic neighborhood (if you've changed the rule to
+# Sand-square4cyclic_emulated), on odd-numbered generations it is the even-
+# numbered cells that are in the top-left corner of each block. On even
+# generations the pattern is the same as in the Margolus neighborhood.
+# 
+# These background states means that you can't just scribble on the pattern.
+# Either carefully maintain the appropriate odd-and-even pattern, or use the
+# helper scripts provided: a) First run export.py in Scripts/Python/Margolus.
+# b) Draw, using states 1, 2 and 3. c) Select-all and run import.py. You can 
+# now continue running the CA.
+#
+# Rule tree produced by RuleTableToTree.py from the Margolus rule table:
+#
+# n_states:4
+# neighborhood:Margolus  # (or square4_cyclic)
+# symmetries:reflect_horizontal
+# 
+# # The Margolus transition a,b,c,d : e,f,g,h means:
+# #  a  b     -->    e  f
+# #  c  d            g  h
+# 
+# # 0 : air
+# # 1 : sand
+# # 2 : wood
+# # 3 : magical source of sand
+# 
+# var a={0,1,2,3}
+# var b={0,1,2,3}
+# 
+# 1,1,0,0 : 0,0,1,1  # a pair of sand particles falls
+# 1,a,0,b : 0,a,1,b  # otherwise, sand falls next to a static column
+# 1,0,a,0 : 0,0,a,1  # otherwise, it can topple
+# 3,a,0,b : 3,a,1,b  # sand can appear from the magical source
+x = 15, y = 14, rule = Sand-Margolus-emulated
+15B$BABABABABABABAB$15B$BABADCBABCDABAB$4B2D3B2D4B$BAFEFEFEFEFEFAB$
+15B$BABABABABABABAB$4B2D3B2D4B$BABADCBABCDABAB$2B11F2B$BABABABABABABA
+B$15B$BABABABABABABAB!

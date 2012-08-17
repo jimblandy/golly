@@ -1,0 +1,15 @@
+#C Glider synthesis of p18 oscillator.
+#C Mark Niemiec, 10/2002; pattern from Jason Summers' "jslife" archive
+x = 229, y = 229, rule = B3/S23
+207bo$207bobo$207boo$9bo$10boo$9boo4$3bobo$4boo$4bo8$227bo$226bo$226b
+3o28$36bo$37boo$36boo$$39bo$40boo$39boo3$53bo$54boo$53boo5$142bo$45bo
+95bo$43bobo95b3o$44boo4$52bo$53boo$52boo16$104bobo$105boo$105bo$96bobo
+$97boo$92bo4bo$93bo$91b3o17$102b3o$104bo$103bo6$137boo$136boo$113boo
+23bo$112bobo$114bo3$96boo$95bobo$97bo5$140boo$91b3o45boo$93bo47bo$92bo
+$$137boo$137bobo$68b3o66bo$70bo$69bo$$146bo$145boo$145bobo$150boo$150b
+obo$150bo$87boo$86bobo68b3o$88bo68bo$81b3o74bo$83bo$82bo$$147bo$146boo
+$45bo100bobo$45boo$44bobo7$165boo$46b3o115boo$48bo117bo$47bo$$162boo$
+162bobo$27b3o132bo$29bo$28bo$$176boo$45b3o127boo$47bo129bo$46bo$$173b
+oo$173bobo$173bo11$196bo$182bo12boo$181boo12bobo$181bobo4$3o36boo$bbo
+37boo143b3o$bo37bo145bo$186bo11bo$197boo$197bobo5$224bo$223boo$29boo
+192bobo$28bobo$30bo$$218boo$217boo$219bo$20boo$19bobo$21bo!

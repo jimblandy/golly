@@ -1,0 +1,48 @@
+# Edwin Roger Banks, PhD Thesis 1971
+#
+# Four-state, five-neighbor CA for universal computation and construction.
+# (Appendix IV)
+#
+# At the top are shown some wires, signals and junctions. These operate
+# in a similar fashion to Banks' first three CA. Junctions can act as
+# fan-outs and logic gates.
+#
+# Another type of action is possible here, however. A 'compute' signal
+# can be converted to a 'construct' signal which passes down a single-
+# cell wire.
+#
+# Where two construct signals meet, a new arm is constructed to the 
+# side. Further construct signal pairs extend the arm further.
+#
+# Each time an arm is extended further, an echo signal returns. If the
+# timing of this echo and the next construct signal pair is correct,
+# they trigger the creation of an erasing wing. This travels up the
+# arm, deleting it and then depositing a new cell at the end.
+#
+# Below are shown four examples of erasing wings travelling up
+# construction arms and writing new cells at the end. These show that
+# any pattern consisting of cells in state 3 ('x') can be constructed.
+#
+# To activate the new construction, a method is provided to convert
+# an erasing wing to a compute signal. It leaves behind some stray cells
+# (garbage) but this can be cleaned up if required by writing some new
+# cells and then sending a new erasing wing (bottom-most example).
+#
+# See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+# 
+x = 93, y = 112, rule = Banks-IV
+37.3C$37.C.C$37.C.C$37.C.C$37.C.C3.3C$37.C.C3.C.C22.C.C$28.10C.5C.3C
+20.C.C$30.BA6.C5.C2.C20.C.C$28.10C.5C.3C20.CBC$37.C.C3.C.C22.CAC$37.C
+.C3.C.C22.C.C$37.C.C3.C.C22.C.C$37.C.C3.C.C22.C.C$35.3C.5C.3C12.9C.
+10C$35.C2.C5.C2.C15.BA4.C4.AB$35.3C.5C.3C12.9C.10C$37.C.C3.C.C22.C.C$
+37.3C3.C.C22.C.C$43.C.C22.C.C$37.3C3.C.C3.3C16.C.C$37.C.C3.C.C3.C.C
+16.C.C$35.3C.5C.5C.3C14.C.C$35.C2.C5.C5.C2.C14.C.C$35.3C.5C.5C.3C14.C
+.C$37.C.C3.C.C3.C.C16.C.C$37.C.C3.3C3.C.C$37.C.C9.C.C$37.C.C9.C.C$37.
+C.C9.C.C$37.C.C3.3C3.C.C$37.C.C3.C.C3.C.C$35.3C.5C.5C.3C$35.C2.C5.C5.
+C2.C$35.3C.5C.5C.3C21.C$37.C.C3.C.C3.C.C10.15C$37.3C3.C.C3.3C11.BA12.
+16C$43.C.C16.15C$43.C.C30.C$43.C.C$43.3C7$4CA8CA9CA12CA15CA12CA9CA8CA
+6C$3.A8.A9.A12.A17.A12.A9.A8.A10$16.7CA12CA15CA12CA7C$22.A12.A8.C8.A
+12.A$44.C$44.C$44.C$44.C$44.C$44.C$44.C8$35.A$36.A10C$35.A3$35.A$36.A
+10C.C$35.A3$35.A11.C$36.A10C$35.A3$35.A11.C$36.A10C.C$35.A5$47.C$46.
+3C$36.A11.15C$37.A10C14.C$36.A11.15C$46.3C$47.C4$47.C$47.2C$43.2C3.
+15C$40.A21.C$41.A3C3.15C$40.A3.C2.2C$47.C!

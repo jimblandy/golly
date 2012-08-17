@@ -1,0 +1,84 @@
+#CXRLE Pos=-18,-14 Gen=0
+# Toffoli-Margolus gas, from:
+#
+# T. Toffoli, N. Margolus "Cellular Automata Machines: A New 
+# Environment for Modeling", MIT Press (1987)
+#
+# At the time of writing, Golly does not support the Margolus neighborhood,
+# so we are emulating it by using some extra states. The odd-numbered cells
+# are those in the top-left corner of the 2x2 block to be updated. 
+# Configurations must have the correct pattern of states to work correctly 
+# - you can't just scribble on the pattern! First run export.py in 
+# Scripts/Python/Margolus. Then draw, using states 1, 2 and 3. Next 
+# select-all and run import.py. You can now continue running the CA.
+#
+# Rule tree produced by RuleTableToTree.py from the Margolus rule table:
+# 
+# # original Margolus states:
+# # 0 : background
+# # 1 : wall
+# # 2 : gas particle in an even step of the simulation
+# # 3 : gas particle in an odd step of the simulation
+#
+# neighborhood:Margolus
+# n_states:4
+# symmetries:rotate4
+# 
+# # The Margolus transition a,b,c,d : e,f,g,h means:
+# #
+# #      a  b   becomes    e  f
+# #      c  d              g  h
+#
+# 0,0,0,2 : 0,0,3,0  # even step: rotate clockwise
+# 0,0,0,3 : 0,2,0,0  # odd step: rotate anti-clockwise
+# 0,0,1,2 : 0,0,1,3  # contains a wall: no movement
+# 0,0,1,3 : 0,0,1,2  # contains a wall: no movement
+# 0,0,2,1 : 0,0,3,1  # contains a wall: no movement
+# 0,0,2,2 : 3,0,3,0  # even step: rotate clockwise
+# 0,0,3,1 : 0,0,2,1  # contains a wall: no movement
+# 0,0,3,3 : 0,2,0,2  # odd step: rotate anti-clockwise
+# 0,1,1,2 : 0,1,1,3  # contains a wall: no movement
+# 0,1,1,3 : 0,1,1,2  # contains a wall: no movement
+# 0,1,2,0 : 0,1,3,0  # contains a wall: no movement
+# 0,1,2,1 : 0,1,3,1  # contains a wall: no movement
+# 0,1,2,2 : 0,1,3,3  # contains a wall: no movement
+# 0,1,3,0 : 0,1,2,0  # contains a wall: no movement
+# 0,1,3,1 : 0,1,2,1  # contains a wall: no movement
+# 0,1,3,3 : 0,1,2,2  # contains a wall: no movement
+# 0,2,1,1 : 0,3,1,1  # contains a wall: no movement
+# 0,2,1,2 : 0,3,1,3  # contains a wall: no movement
+# 0,2,2,0 : 0,3,3,0  # two or four particles collide: no movement
+# 0,2,2,1 : 0,3,3,1  # contains a wall: no movement
+# 0,2,2,2 : 3,0,3,3  # even step: rotate clockwise
+# 0,3,1,1 : 0,2,1,1  # contains a wall: no movement
+# 0,3,1,3 : 0,2,1,2  # contains a wall: no movement
+# 0,3,3,0 : 0,2,2,0  # two or four particles collide: no movement
+# 0,3,3,1 : 0,2,2,1  # contains a wall: no movement
+# 0,3,3,3 : 2,2,0,2  # odd step: rotate anti-clockwise
+# 1,1,1,2 : 1,1,1,3  # contains a wall: no movement
+# 1,1,1,3 : 1,1,1,2  # contains a wall: no movement
+# 1,1,2,2 : 1,1,3,3  # contains a wall: no movement
+# 1,1,3,3 : 1,1,2,2  # contains a wall: no movement
+# 1,2,2,1 : 1,3,3,1  # contains a wall: no movement
+# 1,2,2,2 : 1,3,3,3  # contains a wall: no movement
+# 1,3,3,1 : 1,2,2,1  # contains a wall: no movement
+# 1,3,3,3 : 1,2,2,2  # contains a wall: no movement
+# 2,2,2,2 : 3,3,3,3  # two or four particles collide: no movement
+# 3,3,3,3 : 2,2,2,2  # two or four particles collide: no movement
+#
+x = 40, y = 38, rule = TMGasMargolus_emulated
+40B$BABABABABABABABABABABABABABABABABABABABA$40B$BABABCDCDCDCDCDCDCDC
+DCDCDCDCDCDCDCDABABA$5BD28BD5B$BABABCBABABABABABABABABABABABABABADABA
+BA$5BD28BD5B$BABABCBABABABABABABABABABABABABABADABABA$5BD28BD5B$BABAB
+CBABABABABABABABABABABABABABADABABA$5BD28BD5B$BABABCBABABABABABABABAB
+ABABABABABADABABA$5BD28BD5B$BABABCBABABABABABABABABABABABABABADABABA$
+5BD6BF3B2F3B3F10BD5B$BABABCBABABABEBABABEBEBEBABABABABADABABA$5BD5B2F
+BF2B2F2BF12BD5B$BABABCBABAFAFEFABAFEFABABABABABABADABABA$5BD4B2FBF2BF
+2BF3BF10BD5B$BABABCBABABABEBEFEBABEBEBABABABABADABABA$5BD3BF4BFB3F4BF
+10BD5B$BABABCBABABEFEBABABABAFABABABABABADABABA$5BD3BFB2F5BFB2F12BD5B
+$BABABCBABEBAFABEBABEBEBEBABABABABADABABA$5BD7BF2BF5BF11BD5B$BABABCBA
+BEBEBABABABABEFABABABABABADABABA$5BD5BFB2F4B2F13BD5B$BABABCBABABABABA
+FABABABEBABABABABADABABA$5BD28BD5B$BABABCBABABABABABABABABABABABABABA
+DABABA$5BD28BD5B$BABABCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDABABA$40B$BABABAB
+ABABABABABABABABABABABABABABABABA$40B$BABABABABABABABABABABABABABABAB
+ABABABABA$40B$BABABABABABABABABABABABABABABABABABABABA!

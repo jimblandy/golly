@@ -1,0 +1,21 @@
+# Edwin Roger Banks, PhD Thesis 1971
+#
+# Two-state, nine-neighbor CA for a universal computer.
+# (Appendix III)
+#
+# Here Banks shows that his previous 3-state CA can be implemented
+# in a 2-state version, using nine neighbors instead of four. Wires
+# and signals operate in a similar fashion to Banks-II.
+#
+# See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+#
+x = 89, y = 54, rule = Banks-III
+30bo35bo$52bo$6b2ob26o14b4ob30o$5b4ob23o16b5ob30o$6b2ob23o17b4ob30o$
+31bo$31bo34bo5$6b2ob23o$5b4ob23o$6b2ob23o6$6b3ob22o$5b5ob22o$6b3ob22o
+4$14b3o$14b3o34b3o23b3o$14b3o34b3o23b3o$15bo36bo25bo$14bobo34bobo23bob
+o$14b3o34b3o23b3o$14b3o34b3o23b3o$14b3o34b3o23b3o$3bo8bob3obo8bo21bob
+3obo19bob3obo$3bo10b3o10bo23b3o23b3o$3b25o14b2ob18o5b2ob18o$2b27o13b3o
+b17o5b3ob17o$31o11b2ob18o5b2ob18o$14b3o34b3o23b3o$4bo7bob3obo7bo22bob
+3obo19bob3obo$14b3o34b3o23b3o$14b3o34b3o23b3o$14b3o34b3o23b3o$14b3o34b
+3o23bobo$14b3o34b3o24bo$14b3o34b3o23b3o$14b3o34b3o23b3o$14b3o$14b3o$
+14b3obo$12b5o$15b2o$16bo$16bo!

@@ -1,0 +1,50 @@
+# Edwin Roger Banks, PhD Thesis 1971
+#
+# Two-state, nine-neighbor CA for a universal computer
+# (Appendix III)
+# N.B The rules listed in the thesis start at the corner, not 
+# at N,S,E or W. We have converted them to Golly's format.
+#
+# http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+# 
+# Format: C,N,NE,E,SE,S,SW,W,NW,C'
+#
+n_states:2
+neighborhood:Moore
+symmetries:rotate4reflect
+
+# transitions for signal propagation:
+1111111010
+1011000010
+0111010111
+0101000111
+# transitions for echo:
+0010000011
+0111010011
+0111110011
+1101010100
+1011000010
+1010000010
+0101010111
+1100000010
+0111110001
+1110100010
+0101000001
+0101010001
+1011010010
+0101010011
+# transitions for junction properties:
+0111111111
+0111111101
+1010011010
+1011001010
+0101010111
+1110110010
+1111101011
+0101010111
+1100011010
+1101101010
+1010100010
+0110110111
+0111011011
+0110111011

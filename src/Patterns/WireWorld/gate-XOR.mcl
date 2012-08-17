@@ -1,0 +1,23 @@
+#MCell 4.00
+#GAME Rules table
+#GOLLY WireWorld
+#RULE 1,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,0,3,3,3,3,3,3,3,3,3,
+#RULE 0,3,1,1,3,3,3,3,3,3
+#BOARD 60x60
+#SPEED 100
+#WRAP 0
+#CCOLORS 4
+#PALETTE 8 colors
+#D XOR (EXCLUSIVE OR)
+#D 
+#D A signal from top or bottom (not both) will cause a signal to leave at right.
+#D No signal will pass through from top to bottom or vice versa.
+#D 
+#D As a circuit element it is not much used in design, but it has a theoretical
+#D importance with respect to minimal collections of gates from which all
+#D others can be derived. For example, NANDs by themselves are sufficient
+#D for the purpose. 
+#D 
+#D Harold V. McIntosh
+#L .A$.C$.C$.C$4C$C.10C$4C$.C$.C$.C$.C3$.C$.C$.C$.C$4C$C.10C$4C$.C$.C$.C$
+#L .A3$.A$.C$.C$.C$4C$C.10C$4C$.C$.C$.C$.A

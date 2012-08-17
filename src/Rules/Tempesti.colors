@@ -1,0 +1,11 @@
+# colors from
+# http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html
+color=1  255  255  255
+color=2  255    0    0
+color=3    0  255  255
+color=4    0  255    0
+color=5  255    0  255
+color=6    0    0  255
+color=7  255  255    0
+color=8   85   85   85
+color=9  170  170  170

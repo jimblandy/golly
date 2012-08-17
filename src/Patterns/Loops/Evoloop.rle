@@ -1,0 +1,19 @@
+# Evoloop
+#
+# Hiroki Sayama "Toward the Realization of an Evolving Ecosystem on 
+# Cellular Automata", Proceedings of the Fourth International 
+# Symposium on Artificial Life and Robotics (AROB 4th '99), 
+# M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.
+#
+# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+#
+# Loops history at a glance:
+# Langton (1984), Byl (1989), Chou-Reggia (1993), SDSR (1998), 
+# Tempesti (1999), Evoloop (1999) ... there are more...
+# Ancestors: JvN29 (1948), Codd (1968)
+#
+x = 17, y = 17, rule = Evoloop
+.15B$BG.AG.AG.AG.4AB$BA13BAB$B.B11.BAB$BGB11.BAB$BAB11.BAB$B.B11.BAB$
+BGB11.BAB$BAB11.BAB$B.B11.BAB$BGB11.BGB$BAB11.B.B$B.B11.BAB$BGB11.BGB
+$BA13B.B$B.GA.GA.GA.DA.DAB$.14BE!

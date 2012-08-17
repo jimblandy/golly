@@ -1,0 +1,7 @@
+#C Rabbits relative.
+#C Runs for 17423 gens.  Initial pop = 10.  Final pop = 1749.
+#C May be the longest-lived 10-cell pattern within a 10x10 square.
+#C Found by Tomas G. Rokicki, some time before Feb 21, 2005.
+#C See also http://www.radicaleye.com/DRH/methuselahs.html
+x = 6, y = 6, rule = B3/S23
+bo$2obo$4b2o$o2bo$o$o!

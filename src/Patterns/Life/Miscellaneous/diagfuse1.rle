@@ -1,0 +1,29 @@
+#C Jason Summers, 25 Aug 1999 (minor optimizations made later).
+#C From "jslife" pattern collection.
+x = 127, y = 133, rule = B3/S23
+56boo$52b4oboo$25b3o24b6o$53b4o$25bo37b4o$62bo3bo$57boo7bo$46bo9b4obbo
+bbo$28b3o13boo9bo3boo$45boo9b4obbobbo$28b6o8bobbo4boo5boo7bo$33b3o6bob
+o4bobbo9bo3bo$35bo8bo5b3o10b4o$33bobo7bobo4boo$33boo8bobo$bb3o29boo9b
+oo7b6o$3boo4bo25bo17bo5bo$bb3o3bobo48bo$8bobo42bo4bo$9bo45boo3$16bo10b
+obbo$15bobo13bo$14bobbo9bo3bo$15boo11b4o$24bo$23bobo$22bobbo$23boo5$
+28bo60boo$27bobo55b4oboo$26bobbo55b6o$bbobo22boo57b4o$bbo33bo59b4o$bbo
+19bobo10bobo57bo3bo$8bobo14bo8bobbo61bo$8bobo14bo9boo29boo15bo7boobbo
+bbo$8bobo11bobbo39booboo12boo7b3o$10bo12b3o38bo3boo13bobo5boobbobbo$
+10bo52boo4bo15bo13bo$10booboo47b3obbobo7b3o5b3o7bo3bo$11bobboo27bo19bo
+bboobo7bo4bo13b4o$11b3oboo26bobo18boo11bo5bo$43boo33boo3bo$38b3o40boo
+4b6o$40bo7bo37bo5bo$39bo7bobo42bo$46bobbo36bo4bo$47boo39boo$10boo$13b
+oo$8bobboo47bobbo$8b3obb3o48bo$7bobo5bo44bo3bo$61b4o$$11bo$10boboo46bo
+$10boboo45bobo54boo$boo8boo45bobbo50b4oboo$b3o12bobo40boo51b6o$b3o11bo
+32bobo62b4o$b3o4bo6bo3bo31bo71b4o$oboo3bobo5bo3bo17bo13bo70bo3bo$3o3b
+ooboo4bo20b3o9bobbo61boo3bo7bo$bo4booboo4bobbo16b3obo9b3o60bo3b4obbobb
+o$7b3o5b3o16bo4bo56bo15bobb3oboo$8bo24boo3bo56b3o15b7obbobbo$33bo3boo
+55b4o11bo8bo7bo$5bobobobo22boo37bo19boo13bobo11bo3bo$4bo7bo21b5o34bobo
+18boobboo7bo15b4o$4bo7bo60boo20b5o8boboo$4bobbobobbo83b3o10boo$4b3o3b
+3o101b6o$70b3o40bo5bo$72bo46bo$71bo41bo4bo$115boo$37b3o$37bobbo$37bobb
+o46bobbo$91bo$41bo45bo3bo$34bo3bobbo46b4o$33b3o3boo$$27boo6b3o$27b3o7b
+o4bobo$27b3o7bo3bo39bobo$27b3o11bo3bo38bo$26boboo11bo3bo38bo$26b3o12bo
+39bobbo$27bo5b3o5bobbo37b3o$33b3o5b3o$34bo35bo$69b3o$31bobobobo30boob
+oo$30bo7bo28b3obboo$30bo7bo29boobboo$30bobbobobbo32b3o$30b3o3b3o32boo
+8$71bo$70bobo$69bo3bo$70boboo$72bo$60boo4boo$60b3obbobbo6bobo$60b3obbo
+bbo5bo$60b3o4boo5bo3bo$59boboo3b3o5bo3bo$59b3o4b3o5bo$60bo4booboo4bobb
+o$66b3o5b3o$67bo$$64bobobobo$63bo7bo$63bo7bo$63bobbobobbo$63b3o3b3o!

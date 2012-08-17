@@ -1,0 +1,33 @@
+# Paterson's worms - Erase solid regions, leaving only points with at least
+# one uneaten edge, and the single point or line with an arrow.  Use this
+# with rules like 1252121 and 1525115, which fill regions with density
+# near 100%, to see the uneaten paths within the regions:  After running
+# such a rule for a while, switch to this rule and run for 1 generation.
+# (by Dean Hickerson, 11/20/2008)
+# 0            empty (unvisited point or line)
+# 1-6          'point with arrow', showing direction of next movement
+#              (1=E; 2=SE; 3=SW; 4=W; 5=NW; 6=NE)
+# 7            point that's been visited
+# 8,9,10       edge -  (8=line; 9=E arrow; 10=W arrow)
+# 11,12,13     edge /  (11=line; 12=NE arrow; 13=SW arrow)
+# 14,15,16     edge \  (14=line; 15=SE arrow; 16=NW arrow)
+
+n_states:17
+neighborhood:Moore
+symmetries:none
+
+var a0={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a1={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a2={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a3={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a4={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a5={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a6={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var a7={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var line={8,11,14}
+
+# visited point dies if it has 6 lines out from it
+7,11,a0,8,a1,14,11,8,14,0
+
+# undirected lines die
+line,a0,a1,a2,a3,a4,a5,a6,a7,0

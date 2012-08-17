@@ -1,0 +1,24 @@
+#CXRLE Pos=-45,-8
+#
+# Sheathing demo
+#
+# In this demo a construction arm is shown approaching a written pattern. 
+# In Codd's CA, only cells in state 1 can be written, so a method is provided 
+# to sheath these wires to get them ready to receive signals.
+#
+# The construction arm first approaches (76) the injection point ('+' shape) and 
+# then sends the 'inject_sheath' signal 756. This causes a 6 signal to travel
+# around the bare wires, sheathing them as it goes.
+#
+# In this example the construction arm then retracts (4566), leaving the new 
+# pattern sheathed but inactive. An 'inject_trigger' signal (67766) could instead 
+# be sent, which would activate the pattern by causing a 7 signal to start 
+# travelling through it. This latter method is designed to be used in 
+# self-reproducing machines to cause the daughter copy to come alive.
+#
+# See construction-arm-demo.rle for an example of writing a pattern.
+# See golly-constructor.rle.gz for an example of writing, sheathing and triggering.
+#
+x = 55, y = 9, rule = Codd
+41.7A$41.A5.A$41.A5.A3.A$41.A5.A3.A$41.7A3.A$44.A6.A$35B3.A5.A6.A$2A.
+FA.FA.EA.D4A.FA.EA.G4A.FA.GAB.18A$35B3.A!

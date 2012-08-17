@@ -1,0 +1,15 @@
+# Byl Loop
+#
+# J. Byl. "Self-Reproduction in small cellular automata." 
+# Physica D, Vol. 34, pages 295-299, 1989.
+#
+# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+#
+# Loops history at a glance:
+# Langton (1984), Byl (1989), Chou-Reggia (1993), Tempesti (1995), SDSR (1998), 
+# Evoloop (1999) ... there are more...
+# Ancestors: JvN29 (1948), Codd (1968)
+#
+x = 4, y = 4, rule = Byl-Loop
+.2B$BCAB$BCDB$.BE!

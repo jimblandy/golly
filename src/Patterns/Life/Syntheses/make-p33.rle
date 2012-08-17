@@ -1,0 +1,20 @@
+#C Synthesis of p33 oscillator from 68 gliders.
+#C By Jason Summers and Mark Niemiec, February 2001.
+#C Pattern from Jason Summers' "jslife" archive.
+x = 149, y = 149, rule = B3/S23
+32bo$33boo79bo$32boo78boo$113boo$$41bo$42bo$40b3o$$30bobo60bobo$31boo
+11bobo46boo19bobo$31bo13boo47bo13bo5boo$45bo60boo7bo$107boo4$29bo$30b
+oo85bo$29boo84boo$116boo3$30bo$31bo84bo$29b3o83bo$115b3o3$123bo5bobo$
+34bo88bobo3boo8bo$18bobo5bo8boo86boo5bo6boo$10bo8boo3bobo7boo102boo6bo
+bo$11boo6bo5boo119boo$bobo6boo104bobo28bo$bboo112boo$bbo114bo4$11bobo
+127bo$12boo127bobo$12bo128boo$$64bo73bo$65boo24bo44boo$64boo25bobo43b
+oo$91boo3$77bo$78boo$77boo$9bo$10boo$9boo35bo36bo$47bo34bo$45b3o34b3o
+7$57bo44bobo$55bobo44boo$56boo45bo3$51bo$51boo$50bobo6$96bobo$96boo$
+97bo3$45bo45boo$45boo44bobo$44bobo44bo7$64b3o34b3o$66bo34bo$65bo36bo
+35boo$137boo$139bo$70boo$69boo$71bo3$56boo$10boo43bobo25boo$11boo44bo
+24boo$10bo73bo$$6boo128bo$5bobo127boo$7bo127bobo4$31bo114bo$31boo112b
+oo$bo28bobo104boo6bobo$boo119boo5bo6boo$obo6boo102boo7bobo3boo8bo$10b
+oo6bo5boo86boo8bo5bobo$9bo8boo3bobo88bo$17bobo5bo3$31b3o$33bo83b3o$32b
+o84bo$118bo3$31boo$32boo84boo$31bo85boo$119bo4$40boo$33bo7boo60bo$33b
+oo5bo13bo47boo13bo$32bobo19boo46bobo11boo$53bobo60bobo$$106b3o$106bo$
+107bo$$34boo$35boo78boo$34bo79boo$116bo!

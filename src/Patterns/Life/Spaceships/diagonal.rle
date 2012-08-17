@@ -1,0 +1,46 @@
+#C Sample c/4, c/5 and c/6 diagonal spaceships
+#C Tiny one in front: the glider.
+#C Top right: Hartmut Holzwart's 'Orion', simplified by Jason Summers,
+#C followed by 'Canada goose' by Jason Summers.
+#C Middle: sample c/4 grammar by Hartmut Holzwart.
+#C Bottom left: 'Swan' by Tim Coe.
+#C Bottom, left to right:
+#C an asymmetrical c/5 spaceship by Nicolay Beluchenko, 11 Jul 2006;
+#C a symmetrical c/5 spaceship found by Jason Summers, 9 Jan 2005;
+#C and the original large c/5 found by Jason Summers.
+#C Far right: 'Seal', found by Nicolay Beluchenko, 18 Sep 2005.
+#C From Alan Hensel's "lifebc" pattern collection.
+x = 114, y = 92, rule = B3/S23
+67b2o17b3o$66b2o18bo9b2o$68bo18bo6b3obo$70bo4b3o11b2o2b2o$70b3o4b2o11b
+o$71b3obobo16bo$78bo11b2o3bo$71bobo15bobob2o$70b2obo15bobo2bob2o$71bo
+16bo4b2o$69b2obo15b2o$21b2o49bo15b2o$21bobo46b2o$21bo4$49b2o$48b2o$50b
+o$46bo6bo28b2o$45b2o4b2o7bo20b3ob3o$45bobo7bo3b4o20bo3b2o$49bo4b2o2bo
+2b2o17b2ob2o2bo2bobo$49bo7b2o4b2obo13bo6bob4o$41b2o5bo7bob2o4bobo19b2o
+bo2bo$40b2o9bo3b3o6bo2bo12bo4b2o3bob2o$42bo7b2o2bo2bo22b2o8bobo2bo$38b
+o6bo7b2o8b2o15bo2b5ob3o4bo$37b2o4b2o7bob2o9bo15bo9bo4bo$37bobo7bo3b3o
+27b2obo2bo3bo3bo$41bo4b2o2bo2bo28bo9b2o$41bo7b2o38b2o2b2o4bo$33b2o5bo
+7bob2o30bo3b2obo4b3o2bo$32b2o9bo3b3o33b2obob5o5bob2o$34bo7b2o2bo2bo37b
+2ob2ob2ob2o2b3o$30bo6bo7b2o50bobo4bo$29b2o4b2o7bob2o40b2o4bobo3b6o$29b
+obo7bo3b3o47bo7b2o$33bo4b2o2bo2bo47bo3bo$33bo7b2o32b2o16bo4bo3b3o6bo$
+25b2o5bo7bob2o23b2o4b2obobo15b5o3b2ob2o2b2ob2o$24b2o9bo3b3o24b3o4b4o
+20b2obo2bob2o2bo$26bo7b2o2bo2bo23b2o6b2o5bo15b2o5bo4bo2b3o$22bo6bo7b2o
+25b2o2b2o3bo2bo2bo15b3obobobobo$21b2o4b2o7bob2o23b2o5bo7bo2b2o19bo2bo$
+21bobo7bo3b3o25b2obo3b4o24bobo$25bo4b2o2bo2bo28bo3b2o2b2obo21bo$25bo7b
+2o32b3o4bobo$24bo7bob2o32b2o3b2o2bo23b3o$27bo3b3o34bo5bo26b3o$26b2o2bo
+2bo29b4obo2bo2bo3bo$29b2o32b3o3b5o2b7obo15b2o$28bob2o30bobo4bo10bo2b2o
+15b2o$27b3o32b3obo3bo3bo5b3o18bo$26bo2bo22b2o15bobo2bo7b2o$25b2o24bo2b
+o8bo3bo5b2o8b2o2bobo$26b2o23bobo12bo7bo8b3obob3o$26b2o23bo13bo8b3o6bo
+4bo$28bo3bo19b2obo11bo6bobo5bobo$28b3obo22b2obo8bo6bob2o3bo4bo$33bo19b
+o2bo2bobo13bob4o3bo5bo2bo$28b2o25b2ob2o2bo11b2o2b2obobo3bob3o$30bo22bo
+3b3o2bo16bo6bo2b3o3b3o$43b3o7bo4bo23bo2bo6b2o$2obo7b3o28bo3bo8bo3bo18b
+2o4bo2bo10b2o$o3bo6bo30bobobobob2o4bo23bo13bo3bo$o4bo7bo7b2o20bo11bo2b
+5o15b2o4b2o8bo$2b2o7bobo4b2obo24b2obo2bobo7bo16bo3b3o8bobobobo$4bobo4b
+3obo2b2o27b3o3bo6bo2b2o14bo4b2o8bo5b2o$10bo3b2o2b2o18bo11bo35bo8bo2b3o
+$6b2ob4ob2o21b2o8bob3o2bo5b3o20bo2bo8bo8bo$7b7o22bo11b3obobo33b4o8b2o
+3bo$35bobob2o13bobobo26bo6b2o6b2o3bo$34b2ob5o6bo5bo3bo26bo4bo12bo$33bo
+8bo6b2o3b2o2bo26bo15bo$33bo6bob2o12bo30b2obobo7bo2bo$33bo5b2obo13bo30b
+o4bo9b3o$34b3o5bo47b3ob2o2bo3bo3bob2o$34bo2bo4b4obo43bo2b2obo5bo3bo2bo
+$37bo5bo2bo52b2o2bo3bo$38bo4b2obo49bob2ob2obo2b2o3bo$44bob2o45bo5bo3bo
+7bobo$45b2o47b2o12b2o3bo$43bo2bo53bo7b2o$43b3obo3bo49b3o3b2o2bo$49b2ob
+o47bo2bob3o$44bo4bo2bo47bo4b2o$44b2o3bo51bo$104bo2bo$46bo56bo$47b2o55b
+2o!

@@ -1,0 +1,3 @@
+#C p168 knightship found by David Eppstein
+x = 7, y = 4, rule = B013568/S01
+bo4bo$b2ob3o$2o3bo$2bobo!

@@ -1,0 +1,85 @@
+# LifeHistory
+# a variant of HistoricalLife with two extra ON states
+# and two extra OFF states, for annotation purposes:
+# state 0:  OFF
+# state 1:  ON
+# state 2:  history/envelope (state=2 if cell was ever ON)
+# state 3:  marked ON (may change to OFF but will always remain marked)
+# state 4:  marked OFF (may change to ON but will always remain marked)
+# state 5:  start ON (becomes a normal marked OFF cell when it dies)
+# state 6:  boundary OFF (can never turn on -- can keep subpatterns in a
+#                    stamp collection from interfering with each other)
+n_states:7
+neighborhood:Moore
+symmetries:rotate8
+
+var a={0,2,4,6}
+var b={0,2,4,6}
+var c={0,2,4,6}
+var d={0,2,4,6}
+var e={0,2,4,6}
+var f={0,2,4,6}
+var g={3,5}
+var h={0,1,2}
+var i={0,1,2,3,4,5,6}
+var j={0,1,2,3,4,5,6}
+var k={0,1,2,3,4,5,6}
+var l={0,1,2,3,4,5,6}
+var m={0,1,2,3,4,5,6}
+var n={0,1,2,3,4,5,6}
+var o={0,1,2,3,4,5,6}
+var p={0,1,2,3,4,5,6}
+var q={1,3,5}
+var R={1,3,5}
+var S={1,3,5}
+var T={1,3,5}
+var u={3,4,5}
+
+# boundary cell always stays a boundary cell
+6,i,j,k,l,m,n,o,p,6
+
+# anything else that touches a boundary cell dies
+# (using 'u' instead of 'g' below lets gliders survive as blocks)
+g,6,i,j,k,l,m,n,o,4
+1,6,i,j,k,l,m,n,o,2
+
+# marked 3-neighbour birth
+#  (has to be separate from the next section
+#   only to handle the extra 'start' state 5)
+4,R,S,T,a,b,c,d,e,3
+4,R,S,a,T,b,c,d,e,3
+4,R,S,a,b,T,c,d,e,3
+4,R,S,a,b,c,T,d,e,3
+4,R,S,a,b,c,d,T,e,3
+4,R,a,S,b,T,c,d,e,3
+4,R,a,S,b,c,T,d,e,3
+
+# marked 3-neighbour survival
+g,R,S,T,a,b,c,d,e,g
+g,R,S,a,T,b,c,d,e,g
+g,R,S,a,b,T,c,d,e,g
+g,R,S,a,b,c,T,d,e,g
+g,R,S,a,b,c,d,T,e,g
+g,R,a,S,b,T,c,d,e,g
+g,R,a,S,b,c,T,d,e,g
+
+# normal 3-neighbour birth
+h,R,S,T,a,b,c,d,e,1
+h,R,S,a,T,b,c,d,e,1
+h,R,S,a,b,T,c,d,e,1
+h,R,S,a,b,c,T,d,e,1
+h,R,S,a,b,c,d,T,e,1
+h,R,a,S,b,T,c,d,e,1
+h,R,a,S,b,c,T,d,e,1
+
+# 2-neighbour survival
+q,R,S,a,b,c,d,e,f,q
+q,R,a,S,b,c,d,e,f,q
+q,R,a,b,S,c,d,e,f,q
+q,R,a,b,c,S,d,e,f,q
+
+# ON states 3 and 5 go to history state 4 if they don't survive
+g,i,j,k,l,m,n,o,p,4
+
+# Otherwise ON states die and become the history state
+q,i,j,k,l,m,n,o,p,2

@@ -1,0 +1,12 @@
+#C Synthesis of p5 oscillator from 34 gliders.
+#C Jason Summers, 30 Nov 2004; pattern from Summers' "jslife" archive.
+x = 209, y = 209, rule = B3/S23
+35bo$36bo$34b3o16$46bo$44bobo$45boo3$53bo$54boo$53boo9$206bo$206bobo$
+206boo8$189bo$188bo$188b3o5$74bo$72bobo$73boo108bobo$183boo$184bo17$
+156bo$155bo$155b3o4$56bo$54bobo54bo$55boo52boo$110boo3$89bo$87bobo4bob
+o$88boo5boo$95bo4$71bo$69bobo32bo$70boo33boo$104boo$116bo$114boo$115b
+oo$$106bo$104bobo$105boo$114bo$114bobo$114boo$97bo13bo$98bo11bo$96b3o
+11b3o$$92bo$85boo5boo$84bobo4bobo$86bo3$93b3o17b3o$95bo17bo$67bo26bo
+19bo$67boo6boo$66bobo5bobo$76bo3$74boo$75boo$74bo9$51b3o$53bo$52bo17$
+24bo$24boo$23bobo108boo$134bobo$134bo5$18b3o$20bo$19bo8$boo$obo$bbo9$
+154boo$153boo$155bo3$162boo$162bobo$162bo16$172b3o$172bo$173bo!

@@ -1,0 +1,12 @@
+#MCell 2.0
+#GAME Generations
+#RULE 2/234/5
+#BOARD 200x200
+#SPEED 50
+#WRAP 0
+#D "Spirals" rule collection
+#D 
+#D Perfect spiral construction
+#D 
+#D Discovered by Mirek Wojtowicz, June 1999
+#L .D$.AAD$.3A$DAAD

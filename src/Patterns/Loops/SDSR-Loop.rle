@@ -1,0 +1,19 @@
+# SDSR Loop
+# 
+# Hiroki Sayama.  "Introduction of Structural Dissolution into 
+# Langton's Self-Reproducing Loop."  Artificial Life VI: Proceedings 
+# of the Sixth International Conference on Artificial Life, C. Adami, 
+# R. K. Belew, H. Kitano, and C. E. Taylor, eds., pp.114-122, 
+# Los Angeles, California, 1998, MIT Press.
+#
+# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+#
+# Loops history at a glance:
+# Langton (1984), Byl (1989), Chou-Reggia (1993), Tempesti (1995), SDSR (1998), 
+# Evoloop (1999) ... there are more...
+# Ancestors: JvN29 (1948), Codd (1968)
+#
+x = 15, y = 10, rule = SDSR-Loop
+.8B$BAG.AD.ADB$B.6B.B$BGB4.BAB$BAB4.BAB$B.B4.BAB$BGB4.BAB$BA6BA5B$B.G
+A.GA.G5AB$.13B!

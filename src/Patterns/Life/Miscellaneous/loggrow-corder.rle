@@ -1,0 +1,32 @@
+#C A Cordership-based object whose population grows logarithmically.
+#C David Bell, 10 July 2004; from Jason Summers' "jslife" collection.
+x = 158, y = 168, rule = B3/S23
+94bo$86b3o3b4o$86bobo3booboo$86b3obbo$91boo3bo$92b4o$93b3o10boo$106boo
+7$114boo$101bo12boo$90boo9b3o$89bobobo7b3o$89bo3boo5bo3bo$90boo8b4o$
+90b3o7boboo3$80bo6boo$79bobo3bo3bo$78bo3bobo3boo$79bobobboboboo$80bo3b
+obboo$84bo4bo$85bobbo$64bo22bo$56b3o3b4o$56bobo3booboo$56b3obbo$61boo
+3bo$62b4o$63b3o10boo$76boo3$78boobo$78bo4bo$78bo5bo$81bobbo$80bobboo$
+71bo7bobbo$60boo9b3o6bobo$59bobobo7b3o$59bo3boo5bo3bo$60boo8b4o6boo$
+60b3o7boboo4boobbo$79boboo$76booboo$76b3o$76bo67boo$76boobbo63boo$32b
+5o7bo19boo11b3o$30boo5boo4bobo18boo11boo$30bo7bo4bo$30boo7bo3bobbo28bo
+$32boo6bo3b3o26b3o$35bo36bobbo$35bo4bo13boo17bobbo53boo9boobbo6boo$36b
+oobo14boo18bobo54boo8bobob3o4boo$74b3o53bo14bobo$136b3o$134boboo$134bo
+bboo$134boobo$135boo$51bo3bo6boo71bo$49bobbob3o5boo$52bobobo$40bobo7bo
+81bo$34boo4b3obobooboo79bobbo14boboo$34boo6bobboo3bobo3bo90bo4bo$50bob
+o76bo22bo$38boo91boo8b3o3bo6boo$26b3o8b4o100bobbo3bo7boo$24b7o5boobbo
+103bo4bo7bo$23b9o3bob3o102bobo4boo5boo$22bo7b3o3boobo88bo14bo7b5o$23b
+3o6bo54b3o39bo$24boo43bo17bo42bo$27bo42bo17bo43boo$28bo39b3o54bo6b3o$
+bb5o7bo14bo88boboo3b3o7bo$oo5boo4bobo102b3obo3b9o$o7bo4bo103bobboo5b7o
+$oo7bo3bobbo100b4o8b3o$bboo6bo3b3o8boo91boo$5bo22bo76bobo$5bo4bo90bo3b
+obo3boobbo6boo$6boobo14bobbo79booboobob3o4boo$25bo81bo7bobo$101bobobo$
+94boo5b3obobbo$22bo71boo6bo3bo$21boo$20boboo$19boobbo$20boobo$19b3o$
+10bobo14bo53b3o$4boo4b3obobo8boo54bobo18boo14boboo$4boo6bobboo9boo53bo
+bbo17boo13bo4bo$82bobbo36bo$82b3o26b3o3bo6boo$82bo28bobbo3bo7boo$114bo
+4bo7bo$79boo11boo18bobo4boo5boo$78b3o11boo19bo7b5o$12boo63bobboo$12boo
+67bo$79b3o$77booboo$75boobo$75bobboo4boobo7b3o$76boo6b4o8boo$83bo3bo5b
+oo3bo$84b3o7bobobo$75bobo6b3o9boo$75bobbo7bo$73boobbo$73bobbo$73bo5bo$
+74bo4bo$76boboo3$80boo$80boo10b3o$92b4o$91bo3boo$96bobb3o$91booboo3bob
+o$92b4o3b3o$70bo22bo$69bobbo$68bo4bo$69boobbo3bo$68boobobobbobo$68boo
+3bobo3bo$68bo3bo3bobo$69boo6bo3$54boobo7b3o$54b4o8boo$53bo3bo5boo3bo$
+54b3o7bobobo$54b3o9boo$42boo12bo$42boo7$50boo$50boo10b3o$62b4o$61bo3b
+oo$66bobb3o$61booboo3bobo$62b4o3b3o$63bo!

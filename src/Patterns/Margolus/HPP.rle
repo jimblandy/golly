@@ -1,0 +1,35 @@
+#CXRLE Pos=-10,-10
+# HPP Gas implemented in the Margolus neighborhood, as described in:
+#
+# T. Toffoli, N. Margolus "Cellular Automata Machines: A New 
+# Environment for Modeling", MIT Press (1987)
+#
+# At the time of writing, Golly does not support the Margolus neighborhood,
+# so we are emulating it by using some extra states. The odd-numbered cells
+# are those in the top-left corner of the 2x2 block to be updated. 
+# Configurations must have the correct pattern of states to work correctly 
+# - you can't just scribble on the pattern! First run export.py in 
+# Scripts/Python/Margolus. Then draw, using state 1. Next select-all and 
+# run import.py. You can now continue running the CA.
+#
+# Rule tree produced by RuleTableToTree.py from the Margolus rule table:
+#
+# n_states:2
+# neighborhood:Margolus
+# symmetries:rotate4
+# 
+# # The Margolus transition a,b,c,d : e,f,g,h means:
+# #
+# #      a  b   becomes    e  f
+# #      c  d              g  h
+#
+# 1,0,0,0 : 0,0,0,1   # one particle moves to the opposite corner
+# 1,1,0,0 : 0,0,1,1   # two particles pass through each other
+# 1,0,0,1 : 0,1,1,0   # two particles collide head-on
+# 1,1,1,0 : 0,1,1,1   # three particles pass through each other
+# 
+x = 20, y = 20, rule = HPPMargolus_emulated:T20,20
+20B$BABABABABABABABABABA$20B$BABABABABABABABABABA$12BD7B$BABABABABABA
+BCBABABA$20B$BABABABABABABABABABA$20B$BABABABABABABABABABA$20B$BABABA
+BABABABABABABA$20B$BABABABABABABABABABA$20B$BABABABABABABABABABA$20B$
+BABABABABABABABABABA$20B$BABABABABABABABABABA!

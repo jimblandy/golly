@@ -1,0 +1,831 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en">
+<head>
+<title>Life Lexicon (C)</title>
+<meta name="author" content="Stephen A. Silver">
+<meta name="description" content="Part of Stephen Silver's Life Lexicon.">
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
+<link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
+<base target="_top">
+</head>
+<body bgcolor="#FFFFCE">
+
+<center><A HREF="lex.htm">Introduction</A> | <A HREF="lex_bib.htm">Bibliography</A></center></center>
+<hr>
+<center>
+<font size=-1><b>
+<A HREF="lex_1.htm">1-9</A> |
+<A HREF="lex_a.htm">A</A> |
+<A HREF="lex_b.htm">B</A> |
+<A HREF="lex_c.htm">C</A> |
+<A HREF="lex_d.htm">D</A> |
+<A HREF="lex_e.htm">E</A> |
+<A HREF="lex_f.htm">F</A> |
+<A HREF="lex_g.htm">G</A> |
+<A HREF="lex_h.htm">H</A> |
+<A HREF="lex_i.htm">I</A> |
+<A HREF="lex_j.htm">J</A> |
+<A HREF="lex_k.htm">K</A> |
+<A HREF="lex_l.htm">L</A> |
+<A HREF="lex_m.htm">M</A> |
+<A HREF="lex_n.htm">N</A> |
+<A HREF="lex_o.htm">O</A> |
+<A HREF="lex_p.htm">P</A> |
+<A HREF="lex_q.htm">Q</A> |
+<A HREF="lex_r.htm">R</A> |
+<A HREF="lex_s.htm">S</A> |
+<A HREF="lex_t.htm">T</A> |
+<A HREF="lex_u.htm">U</A> |
+<A HREF="lex_v.htm">V</A> |
+<A HREF="lex_w.htm">W</A> |
+<A HREF="lex_x.htm">X</A> |
+<A HREF="lex_y.htm">Y</A> |
+<A href="lex_z.htm">Z</A></b></font>
+
+</center>
+<hr>
+<p><a name=c>:</a><b>c</b> = <a href="lex_s.htm#speedoflight">speed of light</a>
+<p><a name=ca>:</a><b>CA</b> = <a href="#cellularautomaton">cellular automaton</a>
+<p><a name=cabertosser>:</a><b>caber tosser</b> Any pattern whose <a href="lex_p.htm#population">population</a> is asymptotic to <i>c</i>.log(<i>t</i>)
+for some constant <i>c</i>, and which contains a <a href="lex_g.htm#glider">glider</a> (or other
+<a href="lex_s.htm#spaceship">spaceship</a>) bouncing between a slower receding spaceship and a
+fixed <a href="lex_r.htm#reflector">reflector</a> which emits a spaceship (in addition to the
+reflected one) whenever the bouncing spaceship hits it.
+<p>As the receding spaceship gets further away the bouncing spaceship
+takes longer to complete each cycle, and so the extra spaceships
+emitted by the reflector are produced at increasingly large
+intervals. More precisely, if <i>v</i> is the speed of the bouncing
+spaceship and <i>u</i> the speed of the receding spaceship, then each
+interval is (<i>v</i>+<i>u</i>)/(<i>v</i>-<i>u</i>) times as long as the previous one. The
+population at time <i>t</i> is therefore <i>n</i>.log(<i>t</i>)/log((<i>v</i>+<i>u</i>)/(<i>v</i>-<i>u</i>)) + O(1),
+where <i>n</i> is the population of one of the extra spaceships (assumed
+constant).
+<p>The first caber tosser was built by Dean Hickerson in May 1991.
+<p><a name=cambridgepulsarcp485672>:</a><b>Cambridge pulsar CP 48-56-72</b> = <a href="lex_p.htm#pulsar">pulsar</a> (The numbers refer to
+the populations of the three <a href="lex_p.htm#phase">phases</a>. The Life pulsar was indeed
+discovered at Cambridge, like the first real pulsar a few years
+earlier.)
+<p><a name=canadagoose>:</a><b>Canada goose</b> (<i>c</i>/4 diagonally, p4) Found by Jason Summers, January
+1999. It consists of a <a href="lex_g.htm#glider">glider</a> plus a <a href="lex_t.htm#tagalong">tagalong</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OOO..........
+O.........OO.
+.O......OOO.O
+...OO..OO....
+....O........
+........O....
+....OO...O...
+...O.O.OO....
+...O.O..O.OO.
+..O....OO....
+..OO.........
+..OO.........
+</a></pre></td></tr></table></center>
+At the time of its discovery the Canada goose was the smallest known
+diagonal <a href="lex_s.htm#spaceship">spaceship</a> other than the glider, but this record has since
+been beaten, first by the second spaceship shown under <a href="lex_o.htm#orion">Orion</a>, and
+more recently by <a href="lex_q.htm#quarter">quarter</a>.
+<p><a name=candelabra>:</a><b>candelabra</b> (p3) By Charles Trawick. See also the note under <a href="#cap">cap</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....OO....OO....
+.O..O......O..O.
+O.O.O......O.O.O
+.O..O.OOOO.O..O.
+....O.O..O.O....
+.....O....O.....
+</a></pre></td></tr></table></center>
+<p><a name=candlefrobra>:</a><b>candlefrobra</b> (p3) Found by Robert Wainwright in November 1984.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.....O....
+.O.OO.O.OO
+O.O...O.OO
+.O....O...
+.....OO...
+</a></pre></td></tr></table></center>
+The following diagram shows that a pair of these can act in some ways
+like <a href="lex_k.htm#killertoads">killer toads</a>. See also <a href="lex_s.htm#snacker">snacker</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....O...........O....
+OO.O.OO.O...O.OO.O.OO
+OO.O...O.O.O.O...O.OO
+...O....O...O....O...
+...OO...........OO...
+.....................
+.....................
+.........OOO.........
+.........O..O........
+.........O...........
+.........O...O.......
+.........O...O.......
+.........O...........
+..........O.O........
+</a></pre></td></tr></table></center>
+<p><a name=canoe>:</a><b>canoe</b> (p1)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...OO
+....O
+...O.
+O.O..
+OO...
+</a></pre></td></tr></table></center>
+<p><a name=cap>:</a><b>cap</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>. It can also be easily be
+stabilized to form a p3 oscillator - see <a href="#candelabra">candelabra</a> for a slight
+variation on this.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OO.
+O..O
+OOOO
+</a></pre></td></tr></table></center>
+<p><a name=carnivalshuttle>:</a><b>carnival shuttle</b> (p12) Found by Robert Wainwright in September 1984
+(using <a href="lex_m.htm#mwemulator">MW emulators</a> at the end, instead of the <a href="lex_m.htm#monogram">monograms</a> shown
+here).
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.................................O...O
+OO...OO..........................OOOOO
+.O.O.O...O..O......OO...O..O.......O..
+.OO.OO..OO...OO....OO..OO...OO....O.O.
+.O.O.O...O..O......OO...O..O.......O..
+OO...OO..........................OOOOO
+.................................O...O
+</a></pre></td></tr></table></center>
+<p><a name=carrier>:</a><b>carrier</b> = <a href="lex_a.htm#aircraftcarrier">aircraft carrier</a>
+<p><a name=casing>:</a><b>casing</b> That part of the <a href="lex_s.htm#stator">stator</a> of an <a href="lex_o.htm#oscillator">oscillator</a> which is not
+adjacent to the <a href="lex_r.htm#rotor">rotor</a>. Compare <a href="lex_b.htm#bushing">bushing</a>.
+<p><a name=catacryst>:</a><b>catacryst</b> A 58-cell quadratic growth pattern found by Nick Gotts
+in April 2000. This was formerly the smallest known pattern with
+superlinear growth, but has since been superseded by the related
+<a href="lex_m.htm#metacatacryst">metacatacryst</a>. The catacryst consists of three <a href="lex_a.htm#ark">arks</a> plus a
+glider-producing <a href="lex_s.htm#switchengine">switch engine</a>. It produces a block-laying switch
+engine every 47616 generations. Each block-laying switch engine has
+only a finite life, but the length of this life increases linearly
+with each new switch engine, so that the pattern overall grows
+quadratically, as an unusual type of MMS <a href="lex_b.htm#breeder">breeder</a>.
+<p><a name=catalyst>:</a><b>catalyst</b> An object that participates in a reaction but emerges from
+it unharmed. The term is mostly applied to <a href="lex_s.htm#stilllife">still lifes</a>, but can
+also be used of <a href="lex_o.htm#oscillator">oscillators</a>, <a href="lex_s.htm#spaceship">spaceships</a>, etc. The still lifes
+and oscillators which form a <a href="#conduit">conduit</a> are examples of catalysts.
+<p><a name=caterer>:</a><b>caterer</b> (p3) Found by Dean Hickerson, August 1989. Compare
+with <a href="lex_j.htm#jam">jam</a>. In terms of its minimum <a href="lex_p.htm#population">population</a> of 12 this is
+the smallest p3 <a href="lex_o.htm#oscillator">oscillator</a>. See also <a href="lex_d.htm#doublecaterer">double caterer</a> and
+<a href="lex_t.htm#triplecaterer">triple caterer</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..O.....
+O...OOOO
+O...O...
+O.......
+...O....
+.OO.....
+</a></pre></td></tr></table></center>
+More generally, any oscillator which serves up a <a href="lex_b.htm#bit">bit</a> in the
+same manner may be referred to as a caterer.
+<p><a name=caterpillar>:</a><b>Caterpillar</b> A <a href="lex_s.htm#spaceship">spaceship</a> that works by laying tracks at its
+front end. The only example constructed to date is a p270 17<i>c</i>/45
+spaceship built by Gabriel Nivasch in December 2004, based on work
+by himself, Jason Summers and David Bell. This Caterpillar has
+a population of about 12 million in each generation and was put
+together by a computer program that Nivasch wrote. It is by far
+the largest and most complex Life object ever constructed.
+<p>The 17<i>c</i>/45 Caterpillar is based on the following reaction between
+a <a href="lex_p.htm#piheptomino">pi-heptomino</a> and a <a href="lex_b.htm#blinker">blinker</a>:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...............O
+O.............OO
+O............OO.
+O.............OO
+...............O
+</a></pre></td></tr></table></center>
+In this reaction, the pi moves forward 17 cells in the course of 45
+generations, while the blinker moves back 6 cells and is rephased.
+This reaction has been known for many years, but it was only in
+September 2002 that David Bell suggested that it could be used to
+build a 17<i>c</i>/45 spaceship, based on a reaction he had found in which
+pis crawling along two rows of blinkers interact to emit a glider
+every 45 generations. Similar glider-emitting interactions were
+later found by Gabriel Nivasch and Jason Summers. The basic idea of
+the spaceship design is that streams of gliders created in this way
+can be used to construct fleets of <a href="lex_s.htm#standardspaceship">standard spaceships</a> which convey
+gliders to the front of the blinker tracks, where they can be used to
+build more blinkers.
+<p>A different Caterpillar may be possible based on the following
+reaction, in which the pattern at top left reappears after 31
+generations displaced by (13,1), having produced a new NW-travelling
+glider. In this case the tracks would be waves of backward-moving
+gliders.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OO.....................
+...O....................
+...O.OO.................
+OOO....O................
+.......O................
+.....OOO................
+........................
+........................
+........................
+........................
+........................
+........................
+.....................OOO
+.....................O..
+......................O.
+</a></pre></td></tr></table></center>
+<p><a name=catherinewheel>:</a><b>Catherine wheel</b> = <a href="lex_p.htm#pinwheel">pinwheel</a>
+<p><a name=cauldron>:</a><b>cauldron</b> (p8) Found in 1971 independently by Don Woods and Robert
+Wainwright. Compare with <a href="lex_h.htm#hertzoscillator">Hertz oscillator</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.....O.....
+....O.O....
+.....O.....
+...........
+...OOOOO...
+O.O.....O.O
+OO.O...O.OO
+...O...O...
+...O...O...
+....OOO....
+...........
+....OO.O...
+....O.OO...
+</a></pre></td></tr></table></center>
+<p><a name=cavity>:</a><b>cavity</b> = <a href="lex_e.htm#eaterplug">eater plug</a>
+<p><a name=cell>:</a><b>cell</b> The fundamental unit of space in the Life universe. The term is
+often used to mean a live cell - the sense is usually clear from the
+context.
+<p><a name=cellularautomaton>:</a><b>cellular automaton</b> A certain class of mathematical objects of which
+<a href="lex_l.htm#life">Life</a> is an example. A cellular automaton consists of a number of
+things. First there is a positive integer <i>n</i> which is the dimension
+of the cellular automaton. Then there is a finite set of states <i>S</i>,
+with at least two members. A state for the whole cellular automaton
+is obtained by assigning an element of <i>S</i> to each point of the
+<i>n</i>-dimensional lattice <span class="b">Z</span><sup><i>n</i></sup> (where <span class="b">Z</span> is the set of all integers).
+The points of <span class="b">Z</span><sup><i>n</i></sup> are usually called cells. The cellular automaton
+also has the concept of a neighbourhood. The neighbourhood <i>N</i> of the
+origin is some finite (nonempty) subset of <span class="b">Z</span><sup><i>n</i></sup>. The neighbourhood
+of any other cell is obtained in the obvious way by translating that
+of the origin. Finally there is a transition rule, which is a
+function from <i>S</i><sup><i>N</i></sup> to <i>S</i> (that is to say, for each possible state of
+the neighbourhood the transition rule specifies some cell state).
+The state of the cellular automaton evolves in discrete time, with
+the state of each cell at time <i>t</i>+1 being determined by the state
+of its neighbourhood at time <i>t</i>, in accordance with the transition
+rule.
+<p>There are some variations on the above definition. It is common
+to require that there be a quiescent state, that is, a state such
+that if the whole universe is in that state at generation 0 then it
+will remain so in generation 1. (In Life the OFF state is quiescent,
+but the ON state is not.) Other variations allow spaces other than
+<span class="b">Z</span><sup><i>n</i></sup>, neighbourhoods that vary over space and/or time, probabilistic
+or other non-deterministic transition rules, etc.
+<p>It is common for the neighbourhood of a cell to be the 3x...x3
+(hyper)cube centred on that cell. (This includes those cases where
+the neighbourhood might more naturally be thought of as a proper
+subset of this cube.) This is known as the Moore neighbourhood.
+<p><a name=centinal>:</a><b>centinal</b> (p100) Found by Bill Gosper. This combines the mechanisms
+of the p46 and p54 shuttles (see <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> and
+<a href="lex_p.htm#p54shuttle">p54 shuttle</a>).
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO................................................OO
+.O................................................O.
+.O.O.....................OO.....................O.O.
+..OO........O............OO............OO.......OO..
+...........OO..........................O.O..........
+..........OO.............................O..........
+...........OO..OO......................OOO..........
+....................................................
+....................................................
+....................................................
+...........OO..OO......................OOO..........
+..........OO.............................O..........
+...........OO..........................O.O..........
+..OO........O............OO............OO.......OO..
+.O.O.....................OO.....................O.O.
+.O................................................O.
+OO................................................OO
+</a></pre></td></tr></table></center>
+<p><a name=century>:</a><b>century</b> (stabilizes at time 103) This is a common pattern which
+evolves into three <a href="lex_b.htm#block">blocks</a> and a <a href="lex_b.htm#blinker">blinker</a>. In June 1996 Dave
+Buckingham built a neat p246 glider <a href="lex_g.htm#gun">gun</a> using a century as the
+engine. See also <a href="lex_b.htm#bookend">bookend</a> and <a href="lex_d.htm#diuresis">diuresis</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..OO
+OOO.
+.O..
+</a></pre></td></tr></table></center>
+<p><a name=chemist>:</a><b>chemist</b> (p5)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.......O.......
+.......OOO.....
+..........O....
+.....OOO..O..OO
+....O.O.O.O.O.O
+....O...O.O.O..
+.OO.O.....O.OO.
+..O.O.O...O....
+O.O.O.O.O.O....
+OO..O..OOO.....
+....O..........
+.....OOO.......
+.......O.......
+</a></pre></td></tr></table></center>
+<p><a name=cheptomino>:</a><b>C-heptomino</b> Name given by Conway to the following <a href="lex_h.htm#heptomino">heptomino</a>, a less
+common variant of the <a href="lex_b.htm#bheptomino">B-heptomino</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OOO
+OOO.
+.O..
+</a></pre></td></tr></table></center>
+<p><a name=cheshirecat>:</a><b>Cheshire cat</b> A block <a href="lex_p.htm#predecessor">predecessor</a> by C. R. Tompkins that
+unaccountably appeared both in Scientific American and in
+<a href="lex_w.htm#winningways">Winning Ways</a>. See also <a href="lex_g.htm#grin">grin</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O..O.
+.OOOO.
+O....O
+O.OO.O
+O....O
+.OOOO.
+</a></pre></td></tr></table></center>
+<p><a name=chickenwire>:</a><b>chicken wire</b> A type of <a href="lex_s.htm#stable">stable</a> <a href="lex_a.htm#agar">agar</a> of <a href="lex_d.htm#density">density</a> 1/2. The
+simplest version is formed from the tile:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO..
+..OO
+</a></pre></td></tr></table></center>
+But the "wires" can have length greater than two and need not
+all be the same. For example:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO...OOOO.....
+..OOO....OOOOO
+</a></pre></td></tr></table></center>
+<p><a name=cigar>:</a><b>cigar</b> = <a href="lex_m.htm#mango">mango</a>
+<p><a name=cisbeacononanvil>:</a><b>cis-beacon on anvil</b> (p2)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...OO.
+....O.
+.O....
+.OO...
+......
+.OOOO.
+O....O
+.OOO.O
+...O.OO
+</a></pre></td></tr></table></center>
+<p><a name=cisbeaconontable>:</a><b>cis-beacon on table</b> (p2)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..OO
+...O
+O...
+OO..
+....
+OOOO
+O..O
+</a></pre></td></tr></table></center>
+<p><a name=cisboatwithtail>:</a><b>cis-boat with tail</b> (p1)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O...
+O.O..
+OO.O.
+...O.
+...OO
+</a></pre></td></tr></table></center>
+<p><a name=cisfusewithtwotails>:</a><b>cis fuse with two tails</b> (p1) See also <a href="lex_p.htm#pulsarquadrant">pulsar quadrant</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...O..
+.OOO..
+O...OO
+.O..O.
+..O.O.
+...O..
+</a></pre></td></tr></table></center>
+<p><a name=cismirroredrbee>:</a><b>cis-mirrored R-bee</b> (p1)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OO.OO.
+O.O.O.O
+O.O.O.O
+.O...O.
+</a></pre></td></tr></table></center>
+<p><a name=cissnake>:</a><b>cis snake</b> = <a href="#canoe">canoe</a>
+<p><a name=clean>:</a><b>clean</b> Opposite of <a href="lex_d.htm#dirty">dirty</a>. A reaction which produces a small number
+of different products which are desired or which are easily deleted
+is said to be clean. For example, a <a href="lex_p.htm#puffer">puffer</a> which produces just one
+object per period is clean. Clean reactions are useful because they
+can be used as building blocks in larger constructions.
+<p>When a <a href="lex_f.htm#fuse">fuse</a> is said to be clean, or to burn cleanly, this usually
+means that no debris at all is left behind.
+<p><a name=clock>:</a><b>clock</b> (p2) Found by Simon Norton, May 1970. This is the fifth or
+sixth most common <a href="lex_o.htm#oscillator">oscillator</a>, being about as frequent as the
+<a href="lex_p.htm#pentadecathlon">pentadecathlon</a>, but much less frequent than the <a href="lex_b.htm#blinker">blinker</a>, <a href="lex_t.htm#toad">toad</a>,
+<a href="lex_b.htm#beacon">beacon</a> or <a href="lex_p.htm#pulsar">pulsar</a>. But it's surprisingly rare considering its
+small size.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..O.
+O.O.
+.O.O
+.O..
+</a></pre></td></tr></table></center>
+<p><a name=clockii>:</a><b>clock II</b> (p4) Compare with <a href="lex_p.htm#pinwheel">pinwheel</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+......OO....
+......OO....
+............
+....OOOO....
+OO.O....O...
+OO.O..O.O...
+...O..O.O.OO
+...O.O..O.OO
+....OOOO....
+............
+....OO......
+....OO......
+</a></pre></td></tr></table></center>
+<p><a name=cloudofsmoke>:</a><b>cloud of smoke</b> = <a href="lex_s.htm#smoke">smoke</a>
+<p><a name=cloverleaf>:</a><b>cloverleaf</b> This name was given by Robert Wainwright to his p2
+oscillator <a href="lex_w.htm#washingmachine">washing machine</a>. But Achim Flammenkamp also gave this
+name to <a href="lex_a.htm#achimsp4">Achim's p4</a>.
+<p><a name=cluster>:</a><b>cluster</b> Any pattern in which each live cell is connected to every
+other live cell by a path that does not pass through two consecutive
+dead cells. This sense is due to Nick Gotts, but the term has also
+been used in other senses, often imprecise.
+<p><a name=cnwh>:</a><b>CNWH</b> Conweh, creator of the Life universe.
+<p><a name=coeship>:</a><b>Coe ship</b> (<i>c</i>/2 orthogonally, p16) A <a href="lex_p.htm#pufferengine">puffer engine</a> discovered by Tim
+Coe in October 1995.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....OOOOOO
+..OO.....O
+OO.O.....O
+....O...O.
+......O...
+......OO..
+.....OOOO.
+.....OO.OO
+.......OO.
+</a></pre></td></tr></table></center>
+<p><a name=coesp8>:</a><b>Coe's p8</b> (p8) Found by Tim Coe in August 1997.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO..........
+OO..OO......
+.....OO.....
+....O..O....
+.......O..OO
+.....O.O..OO
+</a></pre></td></tr></table></center>
+<p><a name=colorizedlife>:</a><b>colorized Life</b> A <a href="#cellularautomaton">cellular automaton</a> which is the same as Life
+except for the use of a number of different ON states ("colours").
+All ON states behave the same for the purpose of applying the Life
+rule, but additional rules are used to specify the colour of the
+resulting ON cells. Examples are <a href="lex_i.htm#immigration">Immigration</a> and <a href="lex_q.htm#quadlife">QuadLife</a>.
+<p><a name=colourofaglider>:</a><b>colour of a glider</b> The colour of a <a href="lex_g.htm#glider">glider</a> is a property of the
+glider which remains constant while the glider is moving along a
+straight path, but which can be changed when the glider bounces off
+a <a href="lex_r.htm#reflector">reflector</a>. It is an important consideration when building
+something using reflectors.
+<p>The colour of a glider can be defined as follows. First
+choose some cell to be the origin. This cell is then considered
+to be white, and all other cells to be black or white in a
+checkerboard pattern. (So the cell with coordinates (<i>m</i>,<i>n</i>) is
+white if <i>m</i>+<i>n</i> is even, and black otherwise.) Then the colour of
+a glider is the colour of its leading cell when it is in a phase
+which can be rotated to look like this:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OOO
+..O
+.O.
+</a></pre></td></tr></table></center>
+<p>A reflector which does not change the colour of gliders obviously
+cannot be used to move a glider onto a path of different colour than
+it started on. But a 90-degree reflector which does change the
+colour of gliders is similarly limited, as the colour of the
+resulting glider will depend only on the direction of the glider,
+no matter how many reflectors are used. For maximum flexibility,
+therefore, both types of reflector are required.
+<p><a name=complementaryblinker>:</a><b>complementary blinker</b> = <a href="lex_f.htm#foreandback">fore and back</a>
+<p><a name=compression>:</a><b>compression</b> = <a href="lex_r.htm#repeattime">repeat time</a>
+<p><a name=conduit>:</a><b>conduit</b> Any arrangement of <a href="lex_s.htm#stilllife">still lifes</a> and/or <a href="lex_o.htm#oscillator">oscillators</a> which
+move an active object to another location, perhaps also transforming
+it into a different active object at the same time, but without
+leaving any permanent debris (except perhaps gliders, or other
+spaceships) and without any of the still lifes or oscillators being
+permanently damaged. Probably the most important conduit is the
+following remarkable one (Dave Buckingham, July 1996) in which a
+<a href="lex_b.htm#bheptomino">B-heptomino</a> is transformed into a <a href="lex_h.htm#herschel">Herschel</a> in 59 generations.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.........OO.O
+O.OO......OOO
+OO.O.......O.
+.............
+.........OO..
+.........OO..
+</a></pre></td></tr></table></center>
+<p><a name=confusedeaters>:</a><b>confused eaters</b> (p4) Found by Dave Buckingham before 1973.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+O..........
+OOO........
+...O.......
+..O........
+..O..O.....
+.....O.....
+...O.O.....
+...OO..OO..
+.......O.O.
+.........O.
+.........OO
+</a></pre></td></tr></table></center>
+<p><a name=converter>:</a><b>converter</b> A <a href="#conduit">conduit</a> in which the input object is not of the same
+type as the output object. This term tends to be preferred when
+either the input object or the output object is a <a href="lex_s.htm#spaceship">spaceship</a>.
+<p>The following diagram shows a p8 <a href="lex_p.htm#piheptomino">pi-heptomino</a>-to-<a href="lex_h.htm#hwss">HWSS</a>
+converter. This was originally found by Dave Buckingham in a
+larger form (using a <a href="lex_f.htm#figure8">figure-8</a> instead of the <a href="lex_b.htm#boat">boat</a>). The
+improvement shown here is by Bill Gosper (August 1996). Dieter
+Leithner has since found (much larger) <a href="lex_o.htm#oscillator">oscillators</a> of periods 44,
+46 and 60 to replace the <a href="lex_k.htm#koksgalaxy">Kok's galaxy</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O.O..O........
+.OOO.O.OO......
+O......O.....O.
+.O.....OO...O.O
+.............OO
+OO.....O.......
+.O......O......
+OO.O.OOO.......
+..O..O.O.......
+............OOO
+............O.O
+............O.O
+</a></pre></td></tr></table></center>
+<p><a name=convoy>:</a><b>convoy</b> A collection of <a href="lex_s.htm#spaceship">spaceships</a> all moving in the same direction
+at the same speed.
+<p><a name=corder>:</a><b>Corder-</b> Prefix used for things involving <a href="lex_s.htm#switchengine">switch engines</a>, after
+Charles Corderman.
+<p><a name=corderengine>:</a><b>Corder engine</b> = <a href="lex_s.htm#switchengine">switch engine</a>
+<p><a name=cordergun>:</a><b>Cordergun</b> A <a href="lex_g.htm#gun">gun</a> firing <a href="#cordership">Corderships</a>. The first was built by Jason
+Summers in July 1999, using a <a href="lex_g.htm#glidersynthesis">glider synthesis</a> by Stephen Silver.
+<p><a name=cordership>:</a><b>Cordership</b> Any <a href="lex_s.htm#spaceship">spaceship</a> based on <a href="lex_s.htm#switchengine">switch engines</a>. These
+necessarily move at a speed of <i>c</i>/12 diagonally with a period of 96
+(or a multiple thereof). The first was found by Dean Hickerson
+in April 1991. Corderships are the slowest spaceships so far
+constructed, although arbitrarily slow spaceships are known to exist
+(see <a href="lex_u.htm#universalconstructor">universal constructor</a>). Hickerson's original Cordership used
+13 switch engines. He soon reduced this to 10, and in August 1993
+to 7. In July 1998 he reduced it to 6. In January 2004, Paul Tooke
+found the 3-engine Cordership shown below.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+................................OO.O...........................
+...............................OOO.O......O.O..................
+..............................O....O.O....O....................
+...............................OO......O.O...O.................
+................................O...O..O..OO...................
+...................................O.OO...O....................
+..................................O.O................OO........
+..................................O.O................OO........
+...............................................................
+...............................................................
+...............................................................
+...............................................................
+...............................................................
+...............................................................
+.............................................................OO
+....................................................OO.......OO
+.......................................O.........O.OOOO........
+..................................O...OOOOO.....OO.O...OO......
+.................................O.O.......OO....O..OO.OO......
+.................................O.......O.OO.....OOOOOO.......
+..................................O........OO......O...........
+...................................O...OOOO....................
+........................................OOO....................
+........................O.O.........OO.........................
+........................O.O.O......O.O.........................
+.......................O..OO.O....OO...........................
+........................OO...O.O.OO.O..........................
+........................OO...OO.OOOOO..........................
+............................O.OO...OO..........................
+...........................O.O.................................
+..OO.O.........................................................
+.OOO.O......O.O................................................
+O....O.O....O..................................................
+.OO......O.O...O...............................................
+..O...O..O..OO...........O.....................................
+.....O.OO...O...........OOO....................................
+....O.O.................O..O...................................
+....O.O................O....O..................................
+........................O......................................
+...............................................................
+........................O..O...................................
+.........................O.O...................................
+...............................................................
+.....................O.........................................
+....................OOO........................................
+...................OO.OO.......................................
+.........O........OO.O.....O...................................
+....O...OOOOO....OO......OO....................................
+...O.O.......OO..OO.......OO...................................
+...O.......O.OO................................................
+....O........OO................................................
+.....O...OOOO..................................................
+..........OOO..................................................
+...............................................................
+...............................................................
+...............................................................
+...........OO..................................................
+...........OO..................................................
+</a></pre></td></tr></table></center>
+<p><a name=cousins>:</a><b>cousins</b> (p3) This contains two copies of the <a href="lex_s.htm#stillater">stillater</a> <a href="lex_r.htm#rotor">rotor</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.....O.OO....
+...OOO.O.O...
+O.O......O...
+OO.OO.OO.O.OO
+...O.O....O.O
+...O.O.OOO...
+....OO.O.....
+</a></pre></td></tr></table></center>
+<p><a name=cover>:</a><b>cover</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>. See <a href="lex_s.htm#scrubber">scrubber</a> for an example
+of its use.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....O
+..OOO
+.O...
+.O...
+OO...
+</a></pre></td></tr></table></center>
+<p><a name=coveredtable>:</a><b>covered table</b> = <a href="#cap">cap</a>
+<p><a name=cow>:</a><b>cow</b> (<i>c</i> p8 fuse)
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO.......OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.....
+OO....O.OOO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO...OO
+....OO.O.................................................O.O
+....OO...OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO..
+....OO.O..................................................O.
+OO....O.OOO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.
+OO.......OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.....
+</a></pre></td></tr></table></center>
+<p><a name=cppulsar>:</a><b>CP pulsar</b> = <a href="lex_p.htm#pulsar">pulsar</a>
+<p><a name=crane>:</a><b>crane</b> (<i>c</i>/4 diagonally, p4) The following <a href="lex_s.htm#spaceship">spaceship</a> found by Nicolay
+Beluchenko in September 2005, a minor modification of a <a href="lex_t.htm#tubeater">tubeater</a>
+found earlier by Hartmut Holzwart. The wing is of the same form as
+in the <a href="lex_s.htm#swan">swan</a> and <a href="#canadagoose">Canada goose</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.OO.................
+OO..................
+..O.................
+....OO...O..........
+....OO..O.O.........
+.......OO.O.........
+.......OO...........
+.......OO...........
+.................OO.
+.........O....OO.O..
+.........OOO..OO....
+.........OOO..OO....
+..........OO........
+....................
+............O.......
+...........OO.......
+...........O........
+............O.......
+....................
+.............OO.....
+..............O.OO..
+..................O.
+...............OO...
+...............OO...
+.................O..
+..................OO
+</a></pre></td></tr></table></center>
+<p><a name=cross>:</a><b>cross</b> (p3) Found by Robert Wainwright in October 1989.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..OOOO..
+..O..O..
+OOO..OOO
+O......O
+O......O
+OOO..OOO
+..O..O..
+..OOOO..
+</a></pre></td></tr></table></center>
+In February 1993, Hartmut Holzwart noticed that this is merely the
+smallest of an infinite family of p3 oscillators. The next smallest
+member is shown below.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..OOOO.OOOO..
+..O..O.O..O..
+OOO..OOO..OOO
+O...........O
+O...........O
+OOO.......OOO
+..O.......O..
+OOO.......OOO
+O...........O
+O...........O
+OOO..OOO..OOO
+..O..O.O..O..
+..OOOO.OOOO..
+</a></pre></td></tr></table></center>
+<p><a name=crowd>:</a><b>crowd</b> (p3) Found by Dave Buckingham in January 1973.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...........O..
+.........OOO..
+.....OO.O.....
+.....O...O....
+.......OO.O...
+...OOOO...O...
+O.O.....O.O.OO
+OO.O.O.....O.O
+...O...OOOO...
+...O.OO.......
+....O...O.....
+.....O.OO.....
+..OOO.........
+..O...........
+</a></pre></td></tr></table></center>
+<p><a name=crown>:</a><b>crown</b> The p12 part of the following p12 <a href="lex_o.htm#oscillator">oscillator</a>, where it is
+<a href="lex_h.htm#hassle">hassled</a> by <a href="#caterer">caterer</a>, a <a href="lex_j.htm#jam">jam</a> and a <a href="lex_h.htm#hwemulator">HW emulator</a>. This oscillator
+was found by Noam Elkies in January 1995.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..........O...........
+..........O......O....
+...O....O...O...OO....
+...OO....OOO..........
+.........OOO..OOO..O.O
+.O..OOO.........O.OOOO
+O.O.O...............OO
+O..O..................
+.OO........OO.........
+......OO.O....O.OO....
+......O..........O....
+.......OO......OO.....
+....OOO..OOOOOO..OOO..
+....O..O........O..O..
+.....OO..........OO...
+</a></pre></td></tr></table></center>
+<p><a name=crucible>:</a><b>crucible</b> = <a href="#cauldron">cauldron</a>
+<p><a name=crystal>:</a><b>crystal</b> A regular growth that is sometimes formed when a stream of
+<a href="lex_g.htm#glider">gliders</a>, or other <a href="lex_s.htm#spaceship">spaceships</a>, is fired into some junk.
+<p>The most common example is initiated by the following collision
+of a glider with a <a href="lex_b.htm#block">block</a>. With a glider stream of even <a href="lex_p.htm#period">period</a>
+at least 82, this gives a crystal which forms a pair <a href="lex_b.htm#beehive">beehives</a> for
+every 11 gliders which hit it.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O......
+..O...OO
+OOO...OO
+</a></pre></td></tr></table></center>
+<p><a name=cuphook>:</a><b>cuphook</b> (p3) Found by Rich Schroeppel, October 1970. This is one of
+only three essentially different p3 <a href="lex_o.htm#oscillator">oscillators</a> with only three
+cells in the <a href="lex_r.htm#rotor">rotor</a>. The others are <a href="lex_1.htm#a123">1-2-3</a> and <a href="lex_s.htm#stillater">stillater</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....OO...
+OO.O.O...
+OO.O.....
+...O.....
+...O..O..
+....OO.O.
+.......O.
+.......OO
+</a></pre></td></tr></table></center>
+The above is the original form, but it can be made more compact:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....OO.
+...O.O.
+...O...
+OO.O...
+OO.O..O
+...O.OO
+...O...
+..OO...
+</a></pre></td></tr></table></center>
+<p><a name=curl>:</a><b>curl</b> = <a href="lex_l.htm#loop">loop</a>
+<hr>
+<center>
+<font size=-1><b>
+<a href="lex_1.htm">1-9</a> |
+<a href="lex_a.htm">A</a> |
+<a href="lex_b.htm">B</a> |
+<a href="lex_c.htm">C</a> |
+<a href="lex_d.htm">D</a> |
+<a href="lex_e.htm">E</a> |
+<a href="lex_f.htm">F</a> |
+<a href="lex_g.htm">G</a> |
+<a href="lex_h.htm">H</a> |
+<a href="lex_i.htm">I</a> |
+<a href="lex_j.htm">J</a> |
+<a href="lex_k.htm">K</a> |
+<a href="lex_l.htm">L</a> |
+<a href="lex_m.htm">M</a> |
+<a href="lex_n.htm">N</a> |
+<a href="lex_o.htm">O</a> |
+<a href="lex_p.htm">P</a> |
+<a href="lex_q.htm">Q</a> |
+<a href="lex_r.htm">R</a> |
+<a href="lex_s.htm">S</a> |
+<a href="lex_t.htm">T</a> |
+<a href="lex_u.htm">U</a> |
+<a href="lex_v.htm">V</a> |
+<a href="lex_w.htm">W</a> |
+<a href="lex_x.htm">X</a> |
+<a href="lex_y.htm">Y</a> |
+<A href="lex_z.htm">Z</A></b></font>
+
+</center>
+<hr>
+</body>

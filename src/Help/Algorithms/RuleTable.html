@@ -1,0 +1,179 @@
+<html>
+<title>Golly Help: RuleTable</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+The RuleTable algorithm allows rules to be specified by transition tables
+stored in external files.  Given the rule string "Foo", the RuleTable
+algorithm will search for a file called Foo.table.
+The format of a .table file is described <a href="../formats.html#table">here</a>.
+A number of examples can be found in the Rules folder:
+
+<p><b><a href="rule:Banks-I">Banks-I</a>,
+      <a href="rule:Banks-II">Banks-II</a>,
+      <a href="rule:Banks-III">Banks-III</a>,
+      <a href="rule:Banks-IV">Banks-IV</a></b><br>
+In 1971, Edwin Roger Banks (a student of Ed Fredkin) made simpler versions of Codd's 1968 CA,
+using only two states in some cases.  These four rules are found in his PhD thesis.
+To see the rules in action, open
+<a href="open:Patterns/Banks/Banks-I-demo.rle">Banks-I-demo.rle</a>
+and the other examples in Patterns/Banks/.
+
+<p><b><a href="rule:Byl-Loop">Byl-Loop</a></b><br>
+A six state 5-neighborhood CA that supports small self-replicating loops.
+To see the rule in action, open
+<a href="open:Patterns/Loops/Byl-Loop.rle">Byl-Loop.rle</a>.
+
+<p><b><a href="rule:Chou-Reggia-1">Chou-Reggia-1</a></b> and
+   <b><a href="rule:Chou-Reggia-2">Chou-Reggia-2</a></b><br>
+Two 5-neighborhood CA that supports tiny self-replicating loops.
+To see the rules in action, open
+<a href="open:Patterns/Loops/Chou-Reggia-Loop-1.rle">Chou-Reggia-Loop-1.rle</a> and
+<a href="open:Patterns/Loops/Chou-Reggia-Loop-2.rle">Chou-Reggia-Loop-2.rle</a>.
+
+<p><b><a href="rule:Codd">Codd</a></b><br>
+In 1968, Edgar F. Codd (who would later invent the relational database) made a simpler version
+of von Neumann's 29-state CA, using just 8 states. To see the rule in action, open
+<a href="open:Patterns/Codd/repeater-emitter-demo.rle">repeater-emitter-demo.rle</a>
+and the other examples in Patterns/Codd/.
+
+<p><b><a href="rule:Codd2">Codd2</a></b><br>
+A very minor extension of Codd's transition table, to allow for some sheathing cases that were found with large
+patterns. See <a href="open:Patterns/Codd/sheathing-problems.rle">sheathing-problems.rle</a>
+for a demonstration of the problem cases.
+
+<p><b><a href="rule:Devore">Devore</a></b><br>
+In 1973, John Devore altered Codd's transition table to allow for simple diodes and triodes,
+enabling him to make a much smaller replicator than Codd's.
+See <a href="open:Patterns/Devore/Devore-rep.rle">Devore-rep.rle</a>
+and the other examples in Patterns/Devore/.
+
+<p><b><a href="rule:Evoloop">Evoloop</a></b> and
+   <b><a href="rule:Evoloop-finite">Evoloop-finite</a></b><br>
+An extension of the SDSR Loop, designed to allow evolution through collisions.
+To see the rule in action, open
+<a href="open:Patterns/Loops/Evoloop-finite.rle">Evoloop-finite.rle</a>.
+
+<p><b><a href="rule:HPP">HPP</a></b><br>
+The HPP lattice gas. A simple model of gas particles moving at right angles at a fixed speed turns out to give an
+accurate model of fluid dynamics on a larger scale. Though the later FHP gas improved on the HPP gas by using a
+hexagonal lattice for more realistic results, the HPP gas is where things began.
+Open <a href="open:Patterns/Other-Rules/HPP-demo.rle">HPP-demo.rle</a>.
+
+<p><b><a href="rule:Langtons-Loops">Langtons-Loops</a></b><br>
+The original loop. Chris Langton adapted Codd's 1968 CA to support a simple form of
+self-replication based on a circulating loop of instructions.
+To see the rule in action, open
+<a href="open:Patterns/Loops/Langtons-Loops.rle">Langtons-Loops.rle</a>.
+
+<p><b><a href="rule:LifeHistory">LifeHistory</a></b><br>
+A 7-state extension of the HistoricalLife rule from MCell, allowing for on and off marked cells (states 3 and 4) as
+well as the history envelope (state 2).  State 3 is useful for labels and other identifying marks, since an active
+pattern can touch or even cross it without being affected.  State 5 is an alternate marked ON state most often
+used to mark a 'starting' location; once a cell changes to state 2, it can not return to this start state.
+State 6 cells kill any adjacent live cells; they are intended to be used as boundaries between subpatterns, e.g.
+in an active stamp collection where flying debris from one subpattern might adversely affect another subpattern.
+See <a href="open:Patterns/Life/Signal-Circuitry/Herschel-conduit-stamp-collection.rle">Herschel-conduit-stamp-collection.rle</a>
+for an example using all of LifeHistory's extra states.
+
+<p><b><a href="rule:Perrier">Perrier</a></b><br>
+Perrier extended Langton's Loops to allow for universal computation.
+See <a href="open:Patterns/Loops/Perrier-Loop.rle">Perrier-Loop.rle</a>.
+
+<p><b><a href="rule:SDSR-Loop">SDSR-Loop</a></b><br>
+An extension of Langton's Loops, designed to cause dead loops to disappear, allowing other loops to replicate further.
+To see the rule in action, open
+<a href="open:Patterns/Loops/SDSR-Loop.rle">SDSR-Loop.rle</a>.
+
+<p><b><a href="rule:Tempesti">Tempesti</a></b><br>
+A programmable loop that can construct shapes inside itself after replication.
+To see the rule in action, open
+<a href="open:Patterns/Loops/Tempesti-Loop.rle">Tempesti-Loop.rle</a>.
+This loop prints the letters 'LSL' inside each copy &mdash; the initials of Tempesti's university group.
+
+<p><b><a href="rule:WireWorld">WireWorld</a></b><br>
+A 4-state CA created by Brian Silverman.
+WireWorld models the flow of currents in wires and makes it relatively
+easy to build logic gates and other digital circuits.
+Open <a href="open:Patterns/WireWorld/primes.mc">primes.mc</a>
+and the other examples in Patterns/WireWorld/.
+
+<p><b><a href="rule:Worm-1040512">Worm-1040512</a>,
+      <a href="rule:Worm-1042015">Worm-1042015</a>,
+      <a href="rule:Worm-1042020">Worm-1042020</a>,
+      <a href="rule:Worm-1252121">Worm-1252121</a>,
+      <a href="rule:Worm-1525115">Worm-1525115</a></b><br>
+Examples of Paterson's Worms, a simulation created by Mike Paterson in which a
+worm travels around a triangular grid according to certain rules.
+There's also a rule called <b><a href="rule:Worm-complement">Worm-complement</a></b>
+which can be used to show the uneaten edges within a solid region.
+Open <a href="open:Patterns/Patersons-Worms/worm-1040512.rle">worm-1040512.rle</a>
+and the other examples in Patterns/Patersons-Worms/.
+
+<p>
+<font size=+1><b>References:</b></font>
+
+<p><b>Banks-I, Banks-II, Banks-III, Banks-IV</b> (1971)<br>
+<i>E. R. Banks. "Information Processing and Transmission in Cellular Automata" PhD Thesis, MIT, 1971.</i>
+
+<p><b>Byl-Loop</b> (1989)<br>
+<i>J. Byl. "Self-Reproduction in small cellular automata." Physica D, Vol. 34, pages 295-299, 1989.</i>
+
+<p><b>Chou-Reggia-1</b> and <b>Chou-Reggia-2</b> (1993)<br>
+<i>J. A. Reggia, S. L. Armentrout, H.-H. Chou, and Y. Peng.
+"Simple systems that exhibit self-directed replication."
+Science, Vol. 259, pages 1282-1287, February 1993.</i>
+
+<p><b>Codd</b> (1968)<br>
+<i>E. F. Codd, "Cellular Automata" Academic Press, New York, 1968.</i>
+
+<p><b>Devore</b> (1973)<br>
+<i>Devore, J. and Hightower, R. (1992) "The Devore variation of the Codd self-replicating computer"
+Third Workshop on Artificial Life, Santa Fe, New Mexico,
+Original work carried out in the 1970s though apparently never published.
+Reported by John R. Koza, "Artificial life: spontaneous emergence of
+self-replicating and evolutionary self-improving computer programs,"
+in Christopher G. Langton, Artificial Life III, Proc. Volume XVII
+Santa Fe Institute Studies in the Sciences of Complexity,
+Addison-Wesley Publishing Company, New York, 1994, p. 260.</i>
+
+<p><b>Evoloop</b> (1999)<br>
+<i>Hiroki Sayama "Toward the Realization of an Evolving Ecosystem on Cellular Automata",
+Proceedings of the Fourth International Symposium on Artificial Life and Robotics (AROB 4th '99),
+M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.</i>
+
+<p><b>HPP</b> (1973)<br>
+<i>J. Hardy, O. de Pazzis, and Y. Pomeau. J. Math. Phys. 14, 470, 1973.</i>
+
+<p><b>Langtons-Ant</b> (1986)<br>
+<i>C. G. Langton. "Studying artificial life with cellular automata" Physica D 2(1-3):120-149, 1986.</i>
+
+<p><b>Langtons-Loops</b> (1984)<br>
+<i>C. G. Langton. "Self-reproduction in cellular automata." Physica D, Vol. 10, pages 135-144, 1984.</i>
+
+<p><b>Paterson's Worms</b> (1973)<br>
+See these sites for a good description and the latest results:</a><br>
+<a href="http://www.maa.org/editorial/mathgames/mathgames_10_24_03.html">http://www.maa.org/editorial/mathgames/mathgames_10_24_03.html</a><br>
+<a href="http://wso.williams.edu/%7Ebchaffin/patersons_worms/">http://wso.williams.edu/~Ebchaffin/patersons_worms/</a><br>
+<a href="http://tomas.rokicki.com/worms.html">http://tomas.rokicki.com/worms.html</a>
+
+<p><b>Perrier</b> (1996)<br>
+<i>J.-Y. Perrier, M. Sipper, and J. Zahnd.
+<a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.21.3200">"Toward a viable, self-reproducing universal computer"</a>
+Physica D 97: 335-352. 1996</i>
+
+<p><b>SDSR-Loop</b> (1998)<br>
+<i>Hiroki Sayama.  "Introduction of Structural Dissolution into Langton's Self-Reproducing Loop."
+Artificial Life VI: Proceedings of the Sixth International Conference on Artificial Life,
+C. Adami, R. K. Belew, H. Kitano, and C. E. Taylor, eds., pp.114-122, Los Angeles, California, 1998, MIT Press.</i>
+
+<p><b>Tempesti</b> (1995)<br>
+<i>G. Tempesti. "A New Self-Reproducing Cellular Automaton Capable of Construction and Computation".
+Advances in Artificial Life, Proc. 3rd European Conference on Artificial Life, Granada, Spain, June 4-6, 1995,
+Lecture Notes in Artificial Intelligence, 929, Springer Verlag, Berlin, 1995, pp. 555-563.</i>
+
+<p><b>WireWorld</b> (1987)<br>
+<i>A. K. Dewdney, Computer Recreations. Scientific American 282:136-139, 1990.</i>
+
+</body>
+</html>
