@@ -49,7 +49,9 @@ ZLIB_CXXFLAGS = -DZLIB
 ### ZLIB_LDFLAGS = -lz
 ### we statically link zlib because some Linux systems (eg. Ubuntu) have
 ### a non-standard zlib shared library that contains gzopen64
-ZLIB_LDFLAGS = /usr/lib/libz.a
+### On Fedora, you must install zlib-static to get /usr/lib/libz.a
+### (or /usr/lib64/libz.a).
+ZLIB_LDFLAGS = $(firstword $(wildcard /usr/lib/libz.a /usr/lib64/libz.a))
 
 # for wxGTK support (required for GUI)
 WX_CXXFLAGS = `wx-config --cxxflags`
