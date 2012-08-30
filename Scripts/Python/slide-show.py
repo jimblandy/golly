@@ -32,9 +32,6 @@ def slideshow ():
                if event == "key space none": break
                g.doevent(event)           # allow keyboard/mouse interaction
                sleep(0.01)                # avoid hogging cpu
-      
-      if "CVS" in dirs:
-         dirs.remove("CVS")  # don't visit CVS directories
    
    # if all patterns have been displayed then restore original algo and rule
    # (don't do this if user hits escape in case they want to explore pattern)

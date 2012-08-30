@@ -1,3 +1,6 @@
+# makefile-win includes local-win.mk, so create a copy of this file
+# and call it local-win.mk, then make any desired changes.
+
 # Change the next 2 lines to specify where you installed wxWidgets:
 !include <C:/wxWidgets-2.8.12-64/build/msw/config.vc>
 WX_DIR = C:\wxWidgets-2.8.12-64

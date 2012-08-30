@@ -1,55 +1,63 @@
-# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 2.9.x on Mac OS 10.6.
+# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 2.9.x on Mac OS 10.6+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-2.9.3
+# cd /HD/wxWidgets/wxWidgets-2.9.4
 # mkdir build-osx
 # cd build-osx
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
-# change BUILD_DIR to where you built the wx libraries, and change
+# change WXLIB_DIR to where you built the wx libraries, and change
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
 WX_RELEASE = 2.9
 WX_DIR = /HD/wxWidgets/wxWidgets-trunk
-BUILD_DIR = $(WX_DIR)/build-osx
+WXLIB_DIR = $(WX_DIR)/build-osx
 
-WXINC_DIR = $(BUILD_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
+WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
 APP_VERSION = 2.4
 
-# for Perl script support
+# these directory paths are relative to the location of this makefile:
+EXEDIR = ..
+DOCSDIR = ../docs
+BASEDIR = ../gollybase
+CMDDIR = ../cmdline
+
+# for building binary and source distributions:
+RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
+SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
+BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree $(DOCSDIR)/README $(DOCSDIR)/LICENSE
+SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
+GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
+   golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
+
+# for Perl script support:
 # PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
 # PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 # above commands generate unwanted stuff (-arch i386 and -arch ppc)
 PERL_INCLUDE = -arch x86_64 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include  -I/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE
 PERL_LINK = -arch x86_64 -L/usr/local/lib  -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc
 
-# for Python script support
+# for Python script support:
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
 PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 
-# for building source and binary distributions:
-RELEASENAME = golly-$(APP_VERSION)
-SHAREDFILES = Help Patterns Scripts Rules README LICENSE
-SRCFILES = BUILD TODO CMakeLists.txt makefile-gtk makefile-mac makefile-win \
-   bitmaps golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
-
 # Variables:
 
-LIBDIRNAME = $(BUILD_DIR)/lib
+LIBDIRNAME = $(WXLIB_DIR)/lib
 TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
 CXXC = g++ -mmacosx-version-min=10.6
 
-CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA \
-   -I${WXINC_DIR} \
-   -I${WX_DIR}/include -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES
+CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
+   -I${WXINC_DIR} -I${WX_DIR}/include \
+   -I$(BASEDIR)
 
 CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
@@ -60,23 +68,23 @@ LDFLAGS = -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
    -framework IOKit -framework Carbon -framework Cocoa -framework System 
 
-# for bgolly
+# for bgolly and RuleTableToTree:
 CXXBASE = -arch x86_64 \
    -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
-   -fno-strict-aliasing -fno-common
+   -fno-strict-aliasing -fno-common -I$(BASEDIR)
 LDBASE = -arch x86_64 -lz
 
 EXTRALIBS = -lz -lpthread -liconv
 EXTRALIBS_GUI = -framework WebKit -framework OpenGL -framework AudioToolbox
 
 OBJDIR = ObjOSX
-BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
-   liferender.h liferules.h platform.h qlifealgo.h readpattern.h util.h viewport.h \
-   writepattern.h ruletreealgo.h generationsalgo.h ruletable_algo.h
+BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
+   $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+   $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o \
-   $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o \
-   $(OBJDIR)/ruletable_algo.o \
+   $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
@@ -107,105 +115,105 @@ __LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
 all: $(OBJDIR) app.bin app_bundle bgolly RuleTableToTree
 
 $(BASEOBJ): $(BASEH)
-$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
+$(WXOBJ): $(BASEH) $(WXH) icons/appicon.xpm bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 clean:
-	rm -f $(OBJDIR)/*.o bgolly RuleTableToTree
-	rm -rf $(APP_NAME).app
+	rm -f $(OBJDIR)/*.o $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
+	rm -rf $(EXEDIR)/$(APP_NAME).app
 
 bgolly: $(BASEOBJ) $(OBJDIR)/bgolly.o
-	$(CXXC) $(CXXBASE) -o bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDBASE)
+	$(CXXC) $(CXXBASE) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDBASE)
 
 RuleTableToTree: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
-	$(CXXC) $(CXXBASE) -o RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDBASE)
+	$(CXXC) $(CXXBASE) -o $(EXEDIR)/RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDBASE)
 
-$(OBJDIR)/bgolly.o: bgolly.cpp
-	$(CXXC) $(CXXBASE) -c -o $@ bgolly.cpp
+$(OBJDIR)/bgolly.o: $(CMDDIR)/bgolly.cpp
+	$(CXXC) $(CXXBASE) -c -o $@ $(CMDDIR)/bgolly.cpp
 
-$(OBJDIR)/RuleTableToTree.o: RuleTableToTree.cpp
-	$(CXXC) $(CXXBASE) -c -o $@ RuleTableToTree.cpp
+$(OBJDIR)/RuleTableToTree.o: $(CMDDIR)/RuleTableToTree.cpp
+	$(CXXC) $(CXXBASE) -c -o $@ $(CMDDIR)/RuleTableToTree.cpp
 
 app.bin: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) \
    $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
-$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
-app.icns file-mc.icns file-rle.icns
-	mkdir -p $(APP_NAME).app/Contents
-	mkdir -p $(APP_NAME).app/Contents/MacOS
-	mkdir -p $(APP_NAME).app/Contents/Resources
+$(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
+icons/app.icns icons/file-mc.icns icons/file-rle.icns
+	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents
+	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/MacOS
+	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/Resources
 	
 	sed -e "s/VERSION/$(APP_VERSION)/" \
-	Info.plist.in >$(APP_NAME).app/Contents/Info.plist
+	Info.plist.in >$(EXEDIR)/$(APP_NAME).app/Contents/Info.plist
 	
-	echo -n "APPLGoLy" >$(APP_NAME).app/Contents/PkgInfo
+	echo -n "APPLGoLy" >$(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo
 	
-	mv -f app.bin $(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+	mv -f app.bin $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	
-	cp -f *.icns $(APP_NAME).app/Contents/Resources
+	cp -f icons/*.icns $(EXEDIR)/$(APP_NAME).app/Contents/Resources
 
-app_bundle: $(APP_NAME).app/Contents/PkgInfo
+app_bundle: $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo
 
-$(OBJDIR)/bigint.o: bigint.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ bigint.cpp
+$(OBJDIR)/bigint.o: $(BASEDIR)/bigint.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/bigint.cpp
 
-$(OBJDIR)/lifealgo.o: lifealgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ lifealgo.cpp
+$(OBJDIR)/lifealgo.o: $(BASEDIR)/lifealgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/lifealgo.cpp
 
-$(OBJDIR)/hlifealgo.o: hlifealgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ hlifealgo.cpp
+$(OBJDIR)/hlifealgo.o: $(BASEDIR)/hlifealgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/hlifealgo.cpp
 
-$(OBJDIR)/hlifedraw.o: hlifedraw.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ hlifedraw.cpp
+$(OBJDIR)/hlifedraw.o: $(BASEDIR)/hlifedraw.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/hlifedraw.cpp
 
-$(OBJDIR)/qlifealgo.o: qlifealgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ qlifealgo.cpp
+$(OBJDIR)/qlifealgo.o: $(BASEDIR)/qlifealgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/qlifealgo.cpp
 
-$(OBJDIR)/qlifedraw.o: qlifedraw.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ qlifedraw.cpp
+$(OBJDIR)/qlifedraw.o: $(BASEDIR)/qlifedraw.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/qlifedraw.cpp
 
-$(OBJDIR)/jvnalgo.o: jvnalgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ jvnalgo.cpp
+$(OBJDIR)/jvnalgo.o: $(BASEDIR)/jvnalgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/jvnalgo.cpp
 
-$(OBJDIR)/ruletable_algo.o: ruletable_algo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ ruletable_algo.cpp
+$(OBJDIR)/ruletable_algo.o: $(BASEDIR)/ruletable_algo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ruletable_algo.cpp
 
-$(OBJDIR)/ruletreealgo.o: ruletreealgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ ruletreealgo.cpp
+$(OBJDIR)/ruletreealgo.o: $(BASEDIR)/ruletreealgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ruletreealgo.cpp
 
-$(OBJDIR)/generationsalgo.o: generationsalgo.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ generationsalgo.cpp
+$(OBJDIR)/generationsalgo.o: $(BASEDIR)/generationsalgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/generationsalgo.cpp
 
-$(OBJDIR)/ghashbase.o: ghashbase.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ ghashbase.cpp
+$(OBJDIR)/ghashbase.o: $(BASEDIR)/ghashbase.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ghashbase.cpp
 
-$(OBJDIR)/ghashdraw.o: ghashdraw.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ ghashdraw.cpp
+$(OBJDIR)/ghashdraw.o: $(BASEDIR)/ghashdraw.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ghashdraw.cpp
 
-$(OBJDIR)/liferules.o: liferules.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ liferules.cpp
+$(OBJDIR)/liferules.o: $(BASEDIR)/liferules.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/liferules.cpp
 
-$(OBJDIR)/liferender.o: liferender.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ liferender.cpp
+$(OBJDIR)/liferender.o: $(BASEDIR)/liferender.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/liferender.cpp
 
-$(OBJDIR)/readpattern.o: readpattern.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ readpattern.cpp
+$(OBJDIR)/readpattern.o: $(BASEDIR)/readpattern.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/readpattern.cpp
 
-$(OBJDIR)/writepattern.o: writepattern.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ writepattern.cpp
+$(OBJDIR)/writepattern.o: $(BASEDIR)/writepattern.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/writepattern.cpp
 
-$(OBJDIR)/util.o: util.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ util.cpp
+$(OBJDIR)/util.o: $(BASEDIR)/util.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/util.cpp
 
-$(OBJDIR)/viewport.o: viewport.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ viewport.cpp
+$(OBJDIR)/viewport.o: $(BASEDIR)/viewport.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/viewport.cpp
 
-$(OBJDIR)/lifepoll.o: lifepoll.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ lifepoll.cpp
+$(OBJDIR)/lifepoll.o: $(BASEDIR)/lifepoll.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/lifepoll.cpp
 
 $(OBJDIR)/wxutils.o: wxutils.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxutils.cpp
@@ -273,8 +281,9 @@ $(OBJDIR)/wxgolly.o: wxgolly.cpp
 srcdist:
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
+	mkdir $(RELEASENAME)-src/gui-wx
 	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
-	find $(RELEASENAME)-src -name CVS | xargs rm -rf
+	cp -rp $(GUIFILES) $(RELEASENAME)-src/gui-wx
 	find $(RELEASENAME)-src -name '.[^.]*' -delete
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
@@ -282,11 +291,9 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-mac
 	mkdir $(RELEASENAME)-mac
-	cp -rp $(APP_NAME).app bgolly RuleTableToTree $(SHAREDFILES) $(RELEASENAME)-mac
-	find $(RELEASENAME)-mac -name CVS | xargs rm -rf
+	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-mac
 	find $(RELEASENAME)-mac -name '.[^.]*' -delete
 	find $(RELEASENAME)-mac/Scripts/Python -name '*.pyc' -delete
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/README
 	/Developer/Tools/SetFile -c ttxt -t TEXT $(RELEASENAME)-mac/LICENSE
 	echo Now create zip archive of $(RELEASENAME)-mac
-###tar -cf - ./$(RELEASENAME)-mac | gzip > $(RELEASENAME)-mac.tar.gz

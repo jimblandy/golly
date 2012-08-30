@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifdef __WXMSW__
    // app icons are loaded via .rc file
 #else
-   #include "appicon.xpm"
+   #include "icons/appicon.xpm"
 #endif
 
 // -----------------------------------------------------------------------------

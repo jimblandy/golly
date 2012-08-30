@@ -14,36 +14,59 @@ endif()
 
 # low-level code used in all executables
 set(BASE_SOURCES
-   bigint.cpp generationsalgo.cpp ghashbase.cpp
-   ghashdraw.cpp hlifealgo.cpp hlifedraw.cpp jvnalgo.cpp lifealgo.cpp
-   lifepoll.cpp liferender.cpp liferules.cpp qlifealgo.cpp qlifedraw.cpp
-   readpattern.cpp ruletable_algo.cpp ruletreealgo.cpp
-   util.cpp viewport.cpp writepattern.cpp
-   
-   bigint.h generationsalgo.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h
-   lifepoll.h liferender.h liferules.h platform.h qlifealgo.h
-   readpattern.h ruletable_algo.h ruletreealgo.h
-   util.h viewport.h writepattern.h
+   ../gollybase/bigint.h            ../gollybase/bigint.cpp
+   ../gollybase/generationsalgo.h   ../gollybase/generationsalgo.cpp
+   ../gollybase/ghashbase.h         ../gollybase/ghashbase.cpp
+                                    ../gollybase/ghashdraw.cpp
+   ../gollybase/hlifealgo.h         ../gollybase/hlifealgo.cpp
+                                    ../gollybase/hlifedraw.cpp
+   ../gollybase/jvnalgo.h           ../gollybase/jvnalgo.cpp
+   ../gollybase/lifealgo.h          ../gollybase/lifealgo.cpp
+   ../gollybase/lifepoll.h          ../gollybase/lifepoll.cpp
+   ../gollybase/liferender.h        ../gollybase/liferender.cpp
+   ../gollybase/liferules.h         ../gollybase/liferules.cpp
+   ../gollybase/platform.h
+   ../gollybase/qlifealgo.h         ../gollybase/qlifealgo.cpp
+                                    ../gollybase/qlifedraw.cpp
+   ../gollybase/readpattern.h       ../gollybase/readpattern.cpp
+   ../gollybase/ruletable_algo.h    ../gollybase/ruletable_algo.cpp
+   ../gollybase/ruletreealgo.h      ../gollybase/ruletreealgo.cpp
+   ../gollybase/util.h              ../gollybase/util.cpp
+   ../gollybase/viewport.h          ../gollybase/viewport.cpp
+   ../gollybase/writepattern.h      ../gollybase/writepattern.cpp
 )
+include_directories( ../gollybase )
 
-# high-level GUI code used only in Golly
+# high-level GUI code used in desktop Golly
 set(GUI_SOURCES
-   wxalgos.cpp wxcontrol.cpp
-   wxedit.cpp wxfile.cpp wxgolly.cpp wxhelp.cpp wxinfo.cpp wxlayer.cpp
-   wxmain.cpp wxperl.cpp wxprefs.cpp wxpython.cpp wxrender.cpp wxrule.cpp
-   wxscript.cpp wxselect.cpp wxstatus.cpp wxtimeline.cpp wxundo.cpp
-   wxutils.cpp wxview.cpp
-   
-   wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h
-   wxmain.h wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h
-   wxselect.h wxstatus.h wxtimeline.h wxundo.h wxutils.h wxview.h
+   wxalgos.h        wxalgos.cpp
+                    wxcontrol.cpp
+   wxedit.h         wxedit.cpp
+                    wxfile.cpp
+   wxgolly.h        wxgolly.cpp
+   wxhelp.h         wxhelp.cpp
+   wxinfo.h         wxinfo.cpp
+   wxlayer.h        wxlayer.cpp
+   wxmain.h         wxmain.cpp
+   wxperl.h         wxperl.cpp
+   wxprefs.h        wxprefs.cpp
+   wxpython.h       wxpython.cpp
+   wxrender.h       wxrender.cpp
+   wxrule.h         wxrule.cpp
+   wxscript.h       wxscript.cpp
+   wxselect.h       wxselect.cpp
+   wxstatus.h       wxstatus.cpp
+   wxtimeline.h     wxtimeline.cpp
+   wxundo.h         wxundo.cpp
+   wxutils.h        wxutils.cpp
+   wxview.h         wxview.cpp
 )
 
 set(RESOURCES
    golly.rc
-   appicon.ico appicon16.ico appicon32.ico appicon48.ico appicon.xpm
    Info.plist.in
-   app.icns file-mc.icns file-rle.icns
+   icons/appicon.ico icons/appicon16.ico icons/appicon32.ico icons/appicon48.ico icons/appicon.xpm
+   icons/app.icns icons/file-mc.icns icons/file-rle.icns
 )
 
 if(APPLE)
@@ -109,8 +132,8 @@ if(USING_VISUAL_LEAK_DETECTOR)
   add_definitions(/DUSING_VISUAL_LEAK_DETECTOR)
 endif()
 
-# put the executables in the src folder
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+# put the executables in parent directory
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/..)
 
 # create base library used by all 3 executables
 add_library( gollybase STATIC ${BASE_SOURCES} )
@@ -123,11 +146,11 @@ add_executable( ${APP_NAME}
 )
 
 add_executable( bgolly
-   bgolly.cpp
+   ../cmdline/bgolly.cpp
 )
 
 add_executable( RuleTableToTree
-   RuleTableToTree.cpp 
+   ../cmdline/RuleTableToTree.cpp
 )
 
 if(APPLE OR WIN32)
@@ -146,15 +169,15 @@ endif()
 if(APPLE)
    # create Info.plist (using Info.plist.in) and PkgInfo files inside .app bundle
    add_custom_target( app_bundle
-      COMMAND sed -e "s/VERSION/${APP_VERSION}/" ${CMAKE_SOURCE_DIR}/Info.plist.in >${CMAKE_SOURCE_DIR}/Golly.app/Contents/Info.plist
-      COMMAND echo -n "APPLGoLy" >${CMAKE_SOURCE_DIR}/Golly.app/Contents/PkgInfo
+      COMMAND sed -e "s/VERSION/${APP_VERSION}/" ${CMAKE_SOURCE_DIR}/Info.plist.in >${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Golly.app/Contents/Info.plist
+      COMMAND echo -n "APPLGoLy" >${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Golly.app/Contents/PkgInfo
    )
    add_dependencies( ${APP_NAME} app_bundle )
    
    # copy *.icns files into Resources directory inside .app bundle
-   set_source_files_properties( ${CMAKE_SOURCE_DIR}/app.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
-   set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-mc.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
-   set_source_files_properties( ${CMAKE_SOURCE_DIR}/file-rle.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+   set_source_files_properties( ${CMAKE_SOURCE_DIR}/icons/app.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+   set_source_files_properties( ${CMAKE_SOURCE_DIR}/icons/file-mc.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+   set_source_files_properties( ${CMAKE_SOURCE_DIR}/icons/file-rle.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
    
    # strip out debug info (reduces app size by 1.6MB)
    target_link_libraries( ${APP_NAME} -Wl,-dead_strip -Wl,-S )

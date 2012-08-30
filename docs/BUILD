@@ -151,7 +151,7 @@ installation. For an overview of the available options, run:
 
    ./configure --help
 
-If you obtained the Golly source code from the CVS repository instead
+If you obtained the Golly source code from the git repository instead
 of a source release, you need to generate the configure script first,
 by running:
 

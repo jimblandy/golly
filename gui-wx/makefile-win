@@ -1,6 +1,6 @@
 # Makefile for Windows version of Golly using wxWidgets.
 #
-# Edit local-win.mk with paths to your installed libraries.
+# Use local-win-template.mk to create local-win.mk with paths to your installed libraries.
 #
 # Compile wxWidgets and Golly as below:
 #
@@ -37,14 +37,24 @@
 !include local-win.mk
 
 ### Golly-related variables: ###
-VERSION = 2.4
-RELEASENAME = golly-$(VERSION)
-SHAREDFILES = README LICENSE
-SHAREDDIRS = Help Scripts Patterns Rules
-SRCFILES = BUILD TODO CMakeLists.txt makefile-gtk makefile-mac makefile-win \
-   golly.rc *.ico appicon.xpm Info.plist.in *.icns *.h *.cpp
-SRCDIRS = bitmaps
-BINFILES = Golly.exe bgolly.exe RuleTableToTree.exe
+
+APP_VERSION = 2.4
+
+# these directory paths are relative to the location of this makefile:
+EXEDIR = ..
+DOCSDIR = ../docs
+BASEDIR = ../gollybase
+CMDDIR = ../cmdline
+
+# for building binary and source distributions:
+RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
+SHAREDDIRS = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
+SRCDIRS = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
+GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
+   golly.rc Info.plist.in wx*.h wx*.cpp
+GUIDIRS = configure bitmaps icons
+BINFILES = $(EXEDIR)/Golly.exe $(EXEDIR)/bgolly.exe $(EXEDIR)/RuleTableToTree.exe \
+   $(DOCSDIR)/README $(DOCSDIR)/LICENSE
 
 !if "$(TARGET_CPU)" == "AMD64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_amd64_$(LIBTYPE_SUFFIX)$(CFG)
@@ -66,13 +76,13 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 	/W4 /wd4100 /I. $(__DLLFLAG_p) /D_WINDOWS /I$(WX_DIR)\samples /DNOPCH $(__RTTIFLAG_9) \
 	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) \
 	/D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS \
-	/EHsc /DVERSION=$(VERSION) /DZLIB /I$(WX_DIR)\src\zlib
+	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR)
 
 OBJDIR = ObjWin
-BASEH = bigint.h ghashbase.h hlifealgo.h jvnalgo.h lifealgo.h lifepoll.h \
-   liferender.h liferules.h platform.h qlifealgo.h readpattern.h \
-   ruletreealgo.h ruletable_algo.h util.h viewport.h writepattern.h \
-   generationsalgo.h
+BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
+   $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+   $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
@@ -91,8 +101,6 @@ WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
    $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
    $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
    $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
-
-XCOPY = xcopy /exclude:excludecvs.txt
 
 ### Conditionally set variables: ###
 
@@ -328,7 +336,7 @@ __LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
 all: $(OBJDIR) Golly.exe bgolly.exe RuleTableToTree.exe
 
 $(BASEOBJ): $(BASEH)
-$(WXOBJ): $(BASEH) $(WXH) *.xpm bitmaps/*.xpm
+$(WXOBJ): $(BASEH) $(WXH) icons/*.ico bitmaps/*.xpm
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
@@ -336,13 +344,13 @@ $(OBJDIR):
 clean: 
 	-if exist $(OBJDIR)\*.obj del $(OBJDIR)\*.obj
 	-if exist *.res del *.res
-	-if exist Golly.exe del Golly.exe
-	-if exist bgolly.exe del bgolly.exe
-	-if exist RuleTableToTree.exe del RuleTableToTree.exe
+	-if exist $(EXEDIR)/Golly.exe del $(EXEDIR)/Golly.exe
+	-if exist $(EXEDIR)/bgolly.exe del $(EXEDIR)/bgolly.exe
+	-if exist $(EXEDIR)/RuleTableToTree.exe del $(EXEDIR)/RuleTableToTree.exe
 	-if exist golly.pdb del golly.pdb
 
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
-	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) $(__DEBUGINFO_1) /pdb:"golly.pdb" \
+	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)/Golly.exe $(LDFLAGS) $(__DEBUGINFO_1) /pdb:"golly.pdb" \
 	/LIBPATH:$(LIBDIRNAME) /SUBSYSTEM:WINDOWS $(BASEOBJ) $(WXOBJ) golly.res \
 	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) \
 	$(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib \
@@ -351,8 +359,6 @@ Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
 	winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib \
 	rpcrt4.lib advapi32.lib wsock32.lib wininet.lib
 
-### these libs no longer needed if wininet.lib is used??? oleacc.lib odbc32.lib
-
 golly.res: golly.rc
 	rc /fo$@ /d $(WX_CPU_DEF) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
 	$(__DEBUG_DEFINE_p_1) $(__NDEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) \
@@ -360,75 +366,75 @@ golly.res: golly.rc
 	/i $(WX_DIR)\samples /d NOPCH golly.rc
 
 bgolly.exe: $(BASEOBJ) $(OBJDIR)/bgolly.obj
-	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
+	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)/bgolly.exe $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
 	$(OBJDIR)/bgolly.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
 
 RuleTableToTree.exe: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.obj
-	link /LARGEADDRESSAWARE /NOLOGO /OUT:$@ $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
+	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)/RuleTableToTree.exe $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
 	$(OBJDIR)/RuleTableToTree.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
 
-$(OBJDIR)/bgolly.obj: bgolly.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bgolly.cpp
+$(OBJDIR)/bgolly.obj: $(CMDDIR)/bgolly.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(CMDDIR)/bgolly.cpp
 
-$(OBJDIR)/RuleTableToTree.obj: RuleTableToTree.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) RuleTableToTree.cpp
+$(OBJDIR)/RuleTableToTree.obj: $(CMDDIR)/RuleTableToTree.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(CMDDIR)/RuleTableToTree.cpp
 
-$(OBJDIR)/bigint.obj: bigint.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) bigint.cpp
+$(OBJDIR)/bigint.obj: $(BASEDIR)/bigint.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/bigint.cpp
 
-$(OBJDIR)/lifealgo.obj: lifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) lifealgo.cpp
+$(OBJDIR)/lifealgo.obj: $(BASEDIR)/lifealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/lifealgo.cpp
 
-$(OBJDIR)/hlifealgo.obj: hlifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) hlifealgo.cpp
+$(OBJDIR)/hlifealgo.obj: $(BASEDIR)/hlifealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/hlifealgo.cpp
 
-$(OBJDIR)/hlifedraw.obj: hlifedraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) hlifedraw.cpp
+$(OBJDIR)/hlifedraw.obj: $(BASEDIR)/hlifedraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/hlifedraw.cpp
 
-$(OBJDIR)/qlifealgo.obj: qlifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) qlifealgo.cpp
+$(OBJDIR)/qlifealgo.obj: $(BASEDIR)/qlifealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/qlifealgo.cpp
 
-$(OBJDIR)/qlifedraw.obj: qlifedraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) qlifedraw.cpp
+$(OBJDIR)/qlifedraw.obj: $(BASEDIR)/qlifedraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/qlifedraw.cpp
 
-$(OBJDIR)/jvnalgo.obj: jvnalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) jvnalgo.cpp
+$(OBJDIR)/jvnalgo.obj: $(BASEDIR)/jvnalgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/jvnalgo.cpp
 
-$(OBJDIR)/ruletable_algo.obj: ruletable_algo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ruletable_algo.cpp
+$(OBJDIR)/ruletable_algo.obj: $(BASEDIR)/ruletable_algo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruletable_algo.cpp
 
-$(OBJDIR)/ruletreealgo.obj: ruletreealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ruletreealgo.cpp
+$(OBJDIR)/ruletreealgo.obj: $(BASEDIR)/ruletreealgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruletreealgo.cpp
 
-$(OBJDIR)/generationsalgo.obj: generationsalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) generationsalgo.cpp
+$(OBJDIR)/generationsalgo.obj: $(BASEDIR)/generationsalgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/generationsalgo.cpp
 
-$(OBJDIR)/ghashbase.obj: ghashbase.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashbase.cpp
+$(OBJDIR)/ghashbase.obj: $(BASEDIR)/ghashbase.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ghashbase.cpp
 
-$(OBJDIR)/ghashdraw.obj: ghashdraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) ghashdraw.cpp
+$(OBJDIR)/ghashdraw.obj: $(BASEDIR)/ghashdraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ghashdraw.cpp
 
-$(OBJDIR)/liferules.obj: liferules.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) liferules.cpp
+$(OBJDIR)/liferules.obj: $(BASEDIR)/liferules.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/liferules.cpp
 
-$(OBJDIR)/liferender.obj: liferender.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) liferender.cpp
+$(OBJDIR)/liferender.obj: $(BASEDIR)/liferender.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/liferender.cpp
 
-$(OBJDIR)/readpattern.obj: readpattern.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) readpattern.cpp
+$(OBJDIR)/readpattern.obj: $(BASEDIR)/readpattern.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/readpattern.cpp
 
-$(OBJDIR)/writepattern.obj: writepattern.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) writepattern.cpp
+$(OBJDIR)/writepattern.obj: $(BASEDIR)/writepattern.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/writepattern.cpp
 
-$(OBJDIR)/util.obj: util.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) util.cpp
+$(OBJDIR)/util.obj: $(BASEDIR)/util.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/util.cpp
 
-$(OBJDIR)/viewport.obj: viewport.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) viewport.cpp
+$(OBJDIR)/viewport.obj: $(BASEDIR)/viewport.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/viewport.cpp
 
-$(OBJDIR)/lifepoll.obj: lifepoll.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) lifepoll.cpp
+$(OBJDIR)/lifepoll.obj: $(BASEDIR)/lifepoll.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/lifepoll.cpp
 
 $(OBJDIR)/wxutils.obj: wxutils.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxutils.cpp
@@ -496,16 +502,20 @@ $(OBJDIR)/wxgolly.obj: wxgolly.cpp
 srcdist:
 	-rmdir /s /q $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
-	mkdir $(RELEASENAME)-src\bitmaps
 	mkdir $(RELEASENAME)-src\Help
 	mkdir $(RELEASENAME)-src\Patterns
 	mkdir $(RELEASENAME)-src\Scripts
-	for %%F IN ($(SRCFILES) $(SHAREDFILES)) do $(XCOPY) %F $(RELEASENAME)-src
-	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do $(XCOPY) /S /I %F $(RELEASENAME)-src\%F
-	ren $(RELEASENAME)-src\README README.txt
-	ren $(RELEASENAME)-src\LICENSE LICENSE.txt
-	ren $(RELEASENAME)-src\BUILD BUILD.txt
-	ren $(RELEASENAME)-src\TODO TODO.txt
+	mkdir $(RELEASENAME)-src\gui-wx
+	mkdir $(RELEASENAME)-src\gui-wx\configure
+	mkdir $(RELEASENAME)-src\gui-wx\bitmaps
+	mkdir $(RELEASENAME)-src\gui-wx\icons
+	for %%F IN ($(GUIFILES)) do xcopy %F $(RELEASENAME)-src\gui-wx
+	for %%F IN ($(GUIDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\gui-wx\%F
+	for %%F IN ($(SRCDIRS) $(SHAREDDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\%F
+	ren $(RELEASENAME)-src\docs\README README.txt
+	ren $(RELEASENAME)-src\docs\LICENSE LICENSE.txt
+	ren $(RELEASENAME)-src\docs\BUILD BUILD.txt
+	ren $(RELEASENAME)-src\docs\TODO TODO.txt
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip
 
 bindist: all
@@ -514,8 +524,8 @@ bindist: all
 	mkdir $(RELEASENAME)-win\Help
 	mkdir $(RELEASENAME)-win\Patterns
 	mkdir $(RELEASENAME)-win\Scripts
-	for %%F IN ($(BINFILES) $(SHAREDFILES)) do $(XCOPY) %F $(RELEASENAME)-win
-	for %%F IN ($(SHAREDDIRS)) do $(XCOPY) /S /I %F $(RELEASENAME)-win\%F
+	for %%F IN ($(BINFILES)) do xcopy %F $(RELEASENAME)-win
+	for %%F IN ($(SHAREDDIRS)) do xcopy /S /I %F $(RELEASENAME)-win\%F
 	ren $(RELEASENAME)-win\README README.txt
 	ren $(RELEASENAME)-win\LICENSE LICENSE.txt
 	echo Now zip $(RELEASENAME)-win into $(RELEASENAME)-win.zip
