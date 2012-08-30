@@ -42,19 +42,19 @@ APP_VERSION = 2.4
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
-DOCSDIR = ../docs
-BASEDIR = ../gollybase
-CMDDIR = ../cmdline
+DOCSDIR = ..\docs
+BASEDIR = ..\gollybase
+CMDDIR = ..\cmdline
 
 # for building binary and source distributions:
-RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
-SHAREDDIRS = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
+RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
+SHAREDDIRS = $(EXEDIR)\Help $(EXEDIR)\Patterns $(EXEDIR)\Scripts $(EXEDIR)\Rules
 SRCDIRS = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
-BINFILES = $(EXEDIR)/Golly.exe $(EXEDIR)/bgolly.exe $(EXEDIR)/RuleTableToTree.exe \
-   $(DOCSDIR)/README $(DOCSDIR)/LICENSE
+BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(EXEDIR)\RuleTableToTree.exe \
+   $(DOCSDIR)\README $(DOCSDIR)\LICENSE
 
 !if "$(TARGET_CPU)" == "AMD64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_amd64_$(LIBTYPE_SUFFIX)$(CFG)
@@ -344,9 +344,9 @@ $(OBJDIR):
 clean: 
 	-if exist $(OBJDIR)\*.obj del $(OBJDIR)\*.obj
 	-if exist *.res del *.res
-	-if exist $(EXEDIR)/Golly.exe del $(EXEDIR)/Golly.exe
-	-if exist $(EXEDIR)/bgolly.exe del $(EXEDIR)/bgolly.exe
-	-if exist $(EXEDIR)/RuleTableToTree.exe del $(EXEDIR)/RuleTableToTree.exe
+	-if exist $(EXEDIR)\Golly.exe del $(EXEDIR)\Golly.exe
+	-if exist $(EXEDIR)\bgolly.exe del $(EXEDIR)\bgolly.exe
+	-if exist $(EXEDIR)\RuleTableToTree.exe del $(EXEDIR)\RuleTableToTree.exe
 	-if exist golly.pdb del golly.pdb
 
 Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
