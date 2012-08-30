@@ -48,7 +48,6 @@ CMDDIR = ..\cmdline
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
-SRCDIRS = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
@@ -505,17 +504,22 @@ srcdist:
 	mkdir $(RELEASENAME)-src\Patterns
 	mkdir $(RELEASENAME)-src\Rules
 	mkdir $(RELEASENAME)-src\Scripts
+	mkdir $(RELEASENAME)-src\docs
+	mkdir $(RELEASENAME)-src\gollybase
+	mkdir $(RELEASENAME)-src\cmdline
 	xcopy /S /I $(EXEDIR)\Help $(RELEASENAME)-src\Help
 	xcopy /S /I $(EXEDIR)\Patterns $(RELEASENAME)-src\Patterns
 	xcopy /S /I $(EXEDIR)\Rules $(RELEASENAME)-src\Rules
-	xcopy /S /I $(EXEDIR)\Scripts $(RELEASENAME)-src\Scripts	
+	xcopy /S /I $(EXEDIR)\Scripts $(RELEASENAME)-src\Scripts
+	xcopy /S /I $(EXEDIR)\docs $(RELEASENAME)-src\docs
+	xcopy /S /I $(EXEDIR)\gollybase $(RELEASENAME)-src\gollybase
+	xcopy /S /I $(EXEDIR)\cmdline $(RELEASENAME)-src\cmdline	
 	mkdir $(RELEASENAME)-src\gui-wx
 	mkdir $(RELEASENAME)-src\gui-wx\configure
 	mkdir $(RELEASENAME)-src\gui-wx\bitmaps
 	mkdir $(RELEASENAME)-src\gui-wx\icons
 	for %%F IN ($(GUIFILES)) do xcopy %F $(RELEASENAME)-src\gui-wx
 	for %%F IN ($(GUIDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\gui-wx\%F
-	for %%F IN ($(SRCDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\%F
 	ren $(RELEASENAME)-src\docs\README README.txt
 	ren $(RELEASENAME)-src\docs\LICENSE LICENSE.txt
 	ren $(RELEASENAME)-src\docs\BUILD BUILD.txt
