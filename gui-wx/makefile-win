@@ -52,7 +52,7 @@ GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-templ
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
 BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(EXEDIR)\RuleTableToTree.exe \
-   $(DOCSDIR)\README $(DOCSDIR)\LICENSE
+   $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
 
 !if "$(TARGET_CPU)" == "AMD64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_amd64_$(LIBTYPE_SUFFIX)$(CFG)
@@ -520,10 +520,6 @@ srcdist:
 	mkdir $(RELEASENAME)-src\gui-wx\icons
 	for %%F IN ($(GUIFILES)) do xcopy %F $(RELEASENAME)-src\gui-wx
 	for %%F IN ($(GUIDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\gui-wx\%F
-	ren $(RELEASENAME)-src\docs\README README.txt
-	ren $(RELEASENAME)-src\docs\LICENSE LICENSE.txt
-	ren $(RELEASENAME)-src\docs\BUILD BUILD.txt
-	ren $(RELEASENAME)-src\docs\TODO TODO.txt
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip
 
 bindist: all
@@ -538,6 +534,4 @@ bindist: all
 	xcopy /S /I $(EXEDIR)\Rules $(RELEASENAME)-win\Rules
 	xcopy /S /I $(EXEDIR)\Scripts $(RELEASENAME)-win\Scripts	
 	for %%F IN ($(BINFILES)) do xcopy %F $(RELEASENAME)-win
-	ren $(RELEASENAME)-win\README README.txt
-	ren $(RELEASENAME)-win\LICENSE LICENSE.txt
 	echo Now zip $(RELEASENAME)-win into $(RELEASENAME)-win.zip

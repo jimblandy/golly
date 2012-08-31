@@ -22,7 +22,8 @@ CMDDIR = ../cmdline
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
-BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree $(DOCSDIR)/README $(DOCSDIR)/LICENSE
+BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree \
+   $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
