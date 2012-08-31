@@ -1,0 +1,73 @@
+<html>
+<body bgcolor="#FFFFCE">
+
+<h2>Help Tab</h2>
+
+<p>
+The Help tab behaves like a simplified browser and is used to display
+HTML information on a variety of topics.
+
+<a name="links"></a>
+<p>
+<font size=+1><b>Special links</b></font>
+
+<p>
+A number of Golly-specific links are used for various purposes:
+
+<p>
+<ul>
+
+<li> <b>edit:</b><i>file</i><br>
+Display the given file in a modal view.
+
+<li> <b>get:</b><i>url</i><br>
+Download the specified file and process it according to its type:
+<ul>
+<li>
+A HTML file (.htm or .html) is displayed in the Help tab.
+Note that this HTML file can contain <b>get</b> links with partial URLs.
+For a good example of their use, see the
+<a href="get:http://www.conwaylife.com/golly.html">LifeWiki Pattern Archive</a>.
+<li>
+A text file (.txt or .doc or a name containing "readme") is displayed in
+a modal view.
+<li>
+A zip file's contents are displayed in the Help tab.
+<li>
+A rule-related file (.colors or .icons or .table or .tree) is installed
+into Documents/Rules/ and Golly then switches to the corresponding rule.
+<!---
+<li>
+A script file (.pl or .py) is run, but only if you answer "Yes" to the
+query dialog that appears.
+-->
+<li>
+A pattern file is loaded and displayed in the Pattern tab.
+</ul>
+
+<li> <b>lexpatt:</b><i>pattern</i><br>
+Load the given <a href="Lexicon/lex.htm">Life Lexicon</a> pattern
+and display it in the Pattern tab.
+
+<li> <b>open:</b><i>file</i><br>
+Load the given pattern and display it in the Pattern tab.
+
+<!---
+<li> <b>prefs:</b><i>pane</i><br>
+Open the Preferences dialog at the given pane.  The pane string must
+be lowercase and must match a known pane: file, edit, control, etc.
+-->
+
+<li> <b>rule:</b><i>rulename</i><br>
+Load the given rule and switch to the Pattern tab.
+
+<li> <b>unzip:</b><i>zip:file</i><br>
+Extract a file from the given zip file and process it in the
+same manner as a <b>get</b> link (see above).
+Golly creates <b>unzip</b> links when it opens a zip file and displays
+its contents in the Help tab.
+
+</ul>
+
+</body>
+</html>
