@@ -1,15 +1,12 @@
+<html>
+<title>To-do notes for Golly</title>
+<body bgcolor="#FFFFCE">
+<center><table border=0><tr><td>
+<pre>
 Andrew's list:
 ==============
 
-- Optimize rendering by eliminating lots of DrawRectangle/DrawBitmap calls.
-  Instead, each layer has a viewport-sized buffer into which we "draw"
-  and then convert that to a wxBitmap and call DrawBitmap *once*.
-  Other advantages:
-  1. We could expose the buffer to scripting commands (setpixel/getpixel)
-     so that scripts could do fancy stuff like overlay images/text.
-  2. It should make it easier further down the track if we wanted to avoid
-     wx's DrawBitmap (which I suspect is not optimal) and use OpenGL or
-     SDL or SFML.  On Mac, use Quartz?
+- Optimize rendering by using OpenGL (see iGolly code).
 
 - Auto stop script if it creates too many temp files (for undo).
   This can happen if a long-running script doesn't call new/open
@@ -40,9 +37,6 @@ Andrew's list:
 - Fix glitches in the way the algo button works:
   - On Mac we want button to look selected before menu appears.
   - On Win we want to be able to press-select-release.
-
-- Fix wxMac bug: Set Rule's help win can't regain focus after clicking
-  in scroll bar (and thus we can't copy text).
 
 - Add case studies to BUILD file: how to add a new menu item, how to add
   a new algorithm, etc.
@@ -147,3 +141,7 @@ tod222:
   [No need -- can now call doevent("key q cmd").]
 - Allow a command line argument (-minimize?) to start up with the
   main window in minimized state.  Shoule be possible in OnInit.
+</pre>
+</td></tr></table></center>
+</body>
+</html>
