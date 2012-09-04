@@ -1,26 +1,27 @@
-                        /*** /
-
-This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+/*** /
+ 
+ This file is part of Golly, a Game of Life Simulator.
+ Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
+ 
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
+ 
+ / ***/
 
-                        / ***/
 #ifndef _WXRENDER_H_
 #define _WXRENDER_H_
 
@@ -68,22 +69,22 @@ extern int controlsht;           // height of translucent controls
 
 // control ids must match button order in controls bitmap
 typedef enum {
-   NO_CONTROL = 0,               // no current control (must be first)
-   STEP1_CONTROL,                // set step exponent to zero (ie. step by 1)
-   SLOWER_CONTROL,               // decrease step exponent
-   FASTER_CONTROL,               // increase step exponent
-   FIT_CONTROL,                  // fit entire pattern in viewport
-   ZOOMIN_CONTROL,               // zoom in
-   ZOOMOUT_CONTROL,              // zoom out
-   NW_CONTROL,                   // pan north west
-   UP_CONTROL,                   // pan up
-   NE_CONTROL,                   // pan north east
-   LEFT_CONTROL,                 // pan left
-   MIDDLE_CONTROL,               // pan to 0,0
-   RIGHT_CONTROL,                // pan right
-   SW_CONTROL,                   // pan south west
-   DOWN_CONTROL,                 // pan down
-   SE_CONTROL                    // pan south east
+    NO_CONTROL = 0,               // no current control (must be first)
+    STEP1_CONTROL,                // set step exponent to zero (ie. step by 1)
+    SLOWER_CONTROL,               // decrease step exponent
+    FASTER_CONTROL,               // increase step exponent
+    FIT_CONTROL,                  // fit entire pattern in viewport
+    ZOOMIN_CONTROL,               // zoom in
+    ZOOMOUT_CONTROL,              // zoom out
+    NW_CONTROL,                   // pan north west
+    UP_CONTROL,                   // pan up
+    NE_CONTROL,                   // pan north east
+    LEFT_CONTROL,                 // pan left
+    MIDDLE_CONTROL,               // pan to 0,0
+    RIGHT_CONTROL,                // pan right
+    SW_CONTROL,                   // pan south west
+    DOWN_CONTROL,                 // pan down
+    SE_CONTROL                    // pan south east
 } control_id;
 
 extern control_id currcontrol;   // currently clicked control

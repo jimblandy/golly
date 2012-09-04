@@ -1,35 +1,34 @@
-                        /*** /
-
-This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+/*** /
+ 
+ This file is part of Golly, a Game of Life Simulator.
+ Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
+ 
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
+ 
+ / ***/
 
-                        / ***/
-
-/* A GUI for Golly, implemented in wxWidgets (www.wxwidgets.org).
-   Unfinished code is flagged by "!!!".
-   Uncertain code is flagged by "???".
-*/
+// A GUI for Golly, implemented in wxWidgets (www.wxwidgets.org).
+// Unfinished code is flagged by "!!!".
+// Uncertain code is flagged by "???".
 
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"      // for all others include the necessary headers
+    #include "wx/wx.h"     // for all others include the necessary headers
 #endif
 
 #include "wx/image.h"      // for wxImage
@@ -50,9 +49,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "wxprefs.h"       // for GetPrefs, gollydir, rulesdir, userrules
 
 #ifdef __WXMSW__
-   // app icons are loaded via .rc file
+    // app icons are loaded via .rc file
 #else
-   #include "icons/appicon.xpm"
+    #include "icons/appicon.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -83,46 +82,46 @@ bool insideYield = false;        // processing an event via Yield()?
 class wx_errors : public lifeerrors
 {
 public:
-   virtual void fatal(const char* s) {
-      Fatal(wxString(s,wxConvLocal));
-   }
-
-   virtual void warning(const char* s) {
-      Warning(wxString(s,wxConvLocal));
-   }
-
-   virtual void status(const char* s) {
-      statusptr->DisplayMessage(wxString(s,wxConvLocal));
-   }
-
-   virtual void beginprogress(const char* s) {
-      BeginProgress(wxString(s,wxConvLocal));
-      // init flag for isaborted() calls in non-wx modules
-      aborted = false;
-   }
-
-   virtual bool abortprogress(double f, const char* s) {
-      return AbortProgress(f, wxString(s,wxConvLocal));
-   }
-
-   virtual void endprogress() {
-      EndProgress();
-   }
-
-   virtual const char* getuserrules() {
-      // need to be careful converting Unicode wxString to char*
-      dirbuff = userrules.mb_str(wxConvLocal);
-      return (const char*) dirbuff;
-   }
-
-   virtual const char* getrulesdir() {
-      // need to be careful converting Unicode wxString to char*
-      dirbuff = rulesdir.mb_str(wxConvLocal);
-      return (const char*) dirbuff;
-   }
-
+    virtual void fatal(const char* s) {
+        Fatal(wxString(s,wxConvLocal));
+    }
+    
+    virtual void warning(const char* s) {
+        Warning(wxString(s,wxConvLocal));
+    }
+    
+    virtual void status(const char* s) {
+        statusptr->DisplayMessage(wxString(s,wxConvLocal));
+    }
+    
+    virtual void beginprogress(const char* s) {
+        BeginProgress(wxString(s,wxConvLocal));
+        // init flag for isaborted() calls in non-wx modules
+        aborted = false;
+    }
+    
+    virtual bool abortprogress(double f, const char* s) {
+        return AbortProgress(f, wxString(s,wxConvLocal));
+    }
+    
+    virtual void endprogress() {
+        EndProgress();
+    }
+    
+    virtual const char* getuserrules() {
+        // need to be careful converting Unicode wxString to char*
+        dirbuff = userrules.mb_str(wxConvLocal);
+        return (const char*) dirbuff;
+    }
+    
+    virtual const char* getrulesdir() {
+        // need to be careful converting Unicode wxString to char*
+        dirbuff = rulesdir.mb_str(wxConvLocal);
+        return (const char*) dirbuff;
+    }
+    
 private:
-   wxCharBuffer dirbuff;
+    wxCharBuffer dirbuff;
 };
 
 wx_errors wxerrhandler;    // create instance
@@ -134,120 +133,120 @@ wx_errors wxerrhandler;    // create instance
 class wx_poll : public lifepoll
 {
 public:
-   virtual int checkevents();
-   virtual void updatePop();
-   long nextcheck;
+    virtual int checkevents();
+    virtual void updatePop();
+    long nextcheck;
 };
 
 void CallYield()
 {
-   if (mainptr->IsActive()) {
-      // make sure viewport window keeps keyboard focus
-      viewptr->SetFocus();
-   }
-   insideYield = true;
-   wxGetApp().Yield(true);
-   insideYield = false;
+    if (mainptr->IsActive()) {
+        // make sure viewport window keeps keyboard focus
+        viewptr->SetFocus();
+    }
+    insideYield = true;
+    wxGetApp().Yield(true);
+    insideYield = false;
 }
 
 int wx_poll::checkevents()
 {
-   #ifdef __WXMSW__
-      // on Windows it seems that Time has a higher overhead than Yield
-      CallYield();
-   #else
-      // on Mac/Linux it is faster to avoid calling Yield too often
-      long t = stopwatch->Time();
-      if (t > nextcheck) {
-         nextcheck = t + 100;        // call 10 times per sec
-         CallYield();
-      }
-   #endif
-   return isInterrupted();
+#ifdef __WXMSW__
+    // on Windows it seems that Time has a higher overhead than Yield
+    CallYield();
+#else
+    // on Mac/Linux it is faster to avoid calling Yield too often
+    long t = stopwatch->Time();
+    if (t > nextcheck) {
+        nextcheck = t + 100;        // call 10 times per sec
+        CallYield();
+    }
+#endif
+    return isInterrupted();
 }
 
 void wx_poll::updatePop()
 {
-   if (showstatus) {
-      statusptr->Refresh(false);
-   }
+    if (showstatus) {
+        statusptr->Refresh(false);
+    }
 }
 
 wx_poll wxpoller;    // create instance
 
 lifepoll* GollyApp::Poller()
 {
-   return &wxpoller;
+    return &wxpoller;
 }
 
 void GollyApp::PollerReset()
 {
-   wxpoller.resetInterrupted();
-   wxpoller.nextcheck = 0;
+    wxpoller.resetInterrupted();
+    wxpoller.nextcheck = 0;
 }
 
 void GollyApp::PollerInterrupt()
 {
-   wxpoller.setInterrupted();
-   wxpoller.nextcheck = 0;
+    wxpoller.setInterrupted();
+    wxpoller.nextcheck = 0;
 }
 
 // -----------------------------------------------------------------------------
 
 void SetAppDirectory(const char* argv0)
 {
-   #ifdef __WXMSW__
-      // on Windows we need to reset current directory to app directory if user
-      // dropped file from somewhere else onto app to start it up (otherwise we
-      // can't find Help files)
-      wxString appdir = wxStandardPaths::Get().GetDataDir();
-      wxString currdir = wxGetCwd();
-      if ( currdir.CmpNoCase(appdir) != 0 )
-         wxSetWorkingDirectory(appdir);
-      // avoid VC++ warning
-      wxUnusedVar(argv0);
-   #elif defined(__WXMAC__)
-      // wxMac has set current directory to location of .app bundle so no need
-      // to do anything
-   #else // assume Unix
-      // first, try to switch to GOLLYDIR if that is set to a sensible value:
-      static const char *gd = STRINGIFY(GOLLYDIR);
-      if ( *gd == '/' && wxSetWorkingDirectory(wxString(gd,wxConvLocal)) ) {
-         return;
-      }
-      // otherwise, use the executable directory as the application directory.
-      // user might have started app from a different directory so find
-      // last "/" in argv0 and change cwd if "/" isn't part of "./" prefix
-      unsigned int pos = strlen(argv0);
-      while (pos > 0) {
-         pos--;
-         if (argv0[pos] == '/') break;
-      }
-      if ( pos > 0 && !(pos == 1 && argv0[0] == '.') ) {
-         char appdir[2048];
-         if (pos < sizeof(appdir)) {
+#ifdef __WXMSW__
+    // on Windows we need to reset current directory to app directory if user
+    // dropped file from somewhere else onto app to start it up (otherwise we
+    // can't find Help files)
+    wxString appdir = wxStandardPaths::Get().GetDataDir();
+    wxString currdir = wxGetCwd();
+    if ( currdir.CmpNoCase(appdir) != 0 )
+        wxSetWorkingDirectory(appdir);
+    // avoid VC++ warning
+    wxUnusedVar(argv0);
+#elif defined(__WXMAC__)
+    // wxMac has set current directory to location of .app bundle so no need
+    // to do anything
+#else // assume Unix
+    // first, try to switch to GOLLYDIR if that is set to a sensible value:
+    static const char *gd = STRINGIFY(GOLLYDIR);
+    if ( *gd == '/' && wxSetWorkingDirectory(wxString(gd,wxConvLocal)) ) {
+        return;
+    }
+    // otherwise, use the executable directory as the application directory.
+    // user might have started app from a different directory so find
+    // last "/" in argv0 and change cwd if "/" isn't part of "./" prefix
+    unsigned int pos = strlen(argv0);
+    while (pos > 0) {
+        pos--;
+        if (argv0[pos] == '/') break;
+    }
+    if ( pos > 0 && !(pos == 1 && argv0[0] == '.') ) {
+        char appdir[2048];
+        if (pos < sizeof(appdir)) {
             strncpy(appdir, argv0, pos);
             appdir[pos] = 0;
             wxSetWorkingDirectory(wxString(appdir,wxConvLocal));
-         }
-      }
-   #endif
+        }
+    }
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 void GollyApp::SetFrameIcon(wxFrame* frame)
 {
-   // set frame icon
-   #ifdef __WXMSW__
-      // create a bundle with 32x32 and 16x16 icons
-      wxIconBundle icb(wxICON(appicon0));
-      icb.AddIcon(wxICON(appicon1));
-      frame->SetIcons(icb);
-   #else
-      // use appicon.xpm on other platforms (ignored on Mac)
-      frame->SetIcon(wxICON(appicon));
-   #endif
+    // set frame icon
+#ifdef __WXMSW__
+    // create a bundle with 32x32 and 16x16 icons
+    wxIconBundle icb(wxICON(appicon0));
+    icb.AddIcon(wxICON(appicon1));
+    frame->SetIcons(icb);
+#else
+    // use appicon.xpm on other platforms (ignored on Mac)
+    frame->SetIcon(wxICON(appicon));
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -258,8 +257,8 @@ void GollyApp::SetFrameIcon(wxFrame* frame)
 
 void GollyApp::MacOpenFile(const wxString& fullPath)
 {
-   mainptr->Raise();
-   mainptr->OpenFile(fullPath);
+    mainptr->Raise();
+    mainptr->OpenFile(fullPath);
 }
 
 #endif
@@ -270,116 +269,116 @@ void GollyApp::MacOpenFile(const wxString& fullPath)
 
 bool GollyApp::OnInit()
 {
-   SetAppName(_("Golly"));    // for use in Warning/Fatal dialogs
-
-   // create a stopwatch so we can use Time() to get elapsed millisecs
-   stopwatch = new wxStopWatch();
-   
-   // set variable seed for later rand() calls
-   srand(time(0));
-
-   #if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
-      // prevent rectangle animation when windows open/close
-      wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
-      // prevent position problem in wxTextCtrl with wxTE_DONTWRAP style
-      // (but doesn't fix problem with I-beam cursor over scroll bars)
-      wxSystemOptions::SetOption(wxMAC_TEXTCONTROL_USE_MLTE, 1);
-   #endif
-
-   // get current working directory before calling SetAppDirectory
-   wxString initdir = wxFileName::GetCwd();
-   if (initdir.Last() != wxFILE_SEP_PATH) initdir += wxFILE_SEP_PATH;
-
-   // make sure current working directory contains application otherwise
-   // we can't open Help files
-   SetAppDirectory( wxString(argv[0]).mb_str(wxConvLocal) );
-
-   // now set global gollydir for use in GetPrefs and elsewhere
-   gollydir = wxFileName::GetCwd();
-   if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
-   
-   // let non-wx modules call Fatal, Warning, BeginProgress, etc
-   lifeerrors::seterrorhandler(&wxerrhandler);
-
-   // allow .html files to include common graphic formats,
-   // and .icons files to be in any of these formats;
-   // note that wxBMPHandler is always installed, so it needs not be added,
-   // and we can assume that if HAVE_WX_BMP_HANDLER is not defined, then
-   // the handlers have not been auto-detected (and we just install them all).
+    SetAppName(_("Golly"));    // for use in Warning/Fatal dialogs
+    
+    // create a stopwatch so we can use Time() to get elapsed millisecs
+    stopwatch = new wxStopWatch();
+    
+    // set variable seed for later rand() calls
+    srand(time(0));
+    
+#if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
+    // prevent rectangle animation when windows open/close
+    wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
+    // prevent position problem in wxTextCtrl with wxTE_DONTWRAP style
+    // (but doesn't fix problem with I-beam cursor over scroll bars)
+    wxSystemOptions::SetOption(wxMAC_TEXTCONTROL_USE_MLTE, 1);
+#endif
+    
+    // get current working directory before calling SetAppDirectory
+    wxString initdir = wxFileName::GetCwd();
+    if (initdir.Last() != wxFILE_SEP_PATH) initdir += wxFILE_SEP_PATH;
+    
+    // make sure current working directory contains application otherwise
+    // we can't open Help files
+    SetAppDirectory( wxString(argv[0]).mb_str(wxConvLocal) );
+    
+    // now set global gollydir for use in GetPrefs and elsewhere
+    gollydir = wxFileName::GetCwd();
+    if (gollydir.Last() != wxFILE_SEP_PATH) gollydir += wxFILE_SEP_PATH;
+    
+    // let non-wx modules call Fatal, Warning, BeginProgress, etc
+    lifeerrors::seterrorhandler(&wxerrhandler);
+    
+    // allow .html files to include common graphic formats,
+    // and .icons files to be in any of these formats;
+    // note that wxBMPHandler is always installed, so it needs not be added,
+    // and we can assume that if HAVE_WX_BMP_HANDLER is not defined, then
+    // the handlers have not been auto-detected (and we just install them all).
 #if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_GIF_HANDLER)
-   wxImage::AddHandler(new wxGIFHandler);
+    wxImage::AddHandler(new wxGIFHandler);
 #endif
 #if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_PNG_HANDLER)
-   wxImage::AddHandler(new wxPNGHandler);
+    wxImage::AddHandler(new wxPNGHandler);
 #endif
 #if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_TIFF_HANDLER)
-   wxImage::AddHandler(new wxTIFFHandler);
+    wxImage::AddHandler(new wxTIFFHandler);
 #endif
-
-   // wxInternetFSHandler is needed to allow downloading files
-   wxFileSystem::AddHandler(new wxInternetFSHandler);
-   wxFileSystem::AddHandler(new wxZipFSHandler);
-
-   // get main window location and other user preferences
-   GetPrefs();
-   
-   // create main window (also initializes viewptr, bigview, statusptr)
-   mainptr = new MainFrame();
-   if (mainptr == NULL) Fatal(_("Failed to create main window!"));
-   
-   // initialize some stuff before showing main window
-   mainptr->SetRandomFillPercentage();
-   mainptr->SetMinimumStepExponent();
-
-   wxString banner = _("This is Golly version ");
-   banner +=         _(STRINGIFY(VERSION)); 
-   banner +=         _(".  Copyright 2012 The Golly Gang.");
-   statusptr->SetMessage(banner);
-
-   mainptr->NewPattern();
-
-   // script/pattern files are stored in the pendingfiles array for later processing
-   // in OnIdle; this avoids a crash in Win app if a script is run before showing
-   // the main window, and also avoids event problems in Win app with a long-running
-   // script (eg. user can't hit escape to abort script)
-   const wxString START_PERL = wxT("golly-start.pl");
-   const wxString START_PYTHON = wxT("golly-start.py");
-   wxString startscript = gollydir + START_PERL;
-   if (wxFileExists(startscript)) {
-      mainptr->pendingfiles.Add(startscript);
-   } else {
-      // look in user-specific data directory
-      startscript = datadir + START_PERL;
-      if (wxFileExists(startscript)) {
-         mainptr->pendingfiles.Add(startscript);
-      }
-   }
-   startscript = gollydir + START_PYTHON;
-   if (wxFileExists(startscript)) {
-      mainptr->pendingfiles.Add(startscript);
-   } else {
-      // look in user-specific data directory
-      startscript = datadir + START_PYTHON;
-      if (wxFileExists(startscript)) {
-         mainptr->pendingfiles.Add(startscript);
-      }
-   }
-   
-   // argc is > 1 if command line has one or more script/pattern files
-   for (int n = 1; n < argc; n++) {
-      wxFileName filename(argv[n]);
-      // convert given path to a full path if not one already; this allows users
-      // to do things like "../golly bricklayer.py" from within Scripts folder
-      if (!filename.IsAbsolute()) filename = initdir + argv[n];
-      mainptr->pendingfiles.Add(filename.GetFullPath());
-   }
-
-   // show main window
-   if (maximize) mainptr->Maximize(true);
-   mainptr->Show(true);
-   SetTopWindow(mainptr);
-
-   // true means call wxApp::OnRun() which will enter the main event loop;
-   // false means exit immediately
-   return true;
+    
+    // wxInternetFSHandler is needed to allow downloading files
+    wxFileSystem::AddHandler(new wxInternetFSHandler);
+    wxFileSystem::AddHandler(new wxZipFSHandler);
+    
+    // get main window location and other user preferences
+    GetPrefs();
+    
+    // create main window (also initializes viewptr, bigview, statusptr)
+    mainptr = new MainFrame();
+    if (mainptr == NULL) Fatal(_("Failed to create main window!"));
+    
+    // initialize some stuff before showing main window
+    mainptr->SetRandomFillPercentage();
+    mainptr->SetMinimumStepExponent();
+    
+    wxString banner = _("This is Golly version ");
+    banner +=         _(STRINGIFY(VERSION)); 
+    banner +=         _(".  Copyright 2012 The Golly Gang.");
+    statusptr->SetMessage(banner);
+    
+    mainptr->NewPattern();
+    
+    // script/pattern files are stored in the pendingfiles array for later processing
+    // in OnIdle; this avoids a crash in Win app if a script is run before showing
+    // the main window, and also avoids event problems in Win app with a long-running
+    // script (eg. user can't hit escape to abort script)
+    const wxString START_PERL = wxT("golly-start.pl");
+    const wxString START_PYTHON = wxT("golly-start.py");
+    wxString startscript = gollydir + START_PERL;
+    if (wxFileExists(startscript)) {
+        mainptr->pendingfiles.Add(startscript);
+    } else {
+        // look in user-specific data directory
+        startscript = datadir + START_PERL;
+        if (wxFileExists(startscript)) {
+            mainptr->pendingfiles.Add(startscript);
+        }
+    }
+    startscript = gollydir + START_PYTHON;
+    if (wxFileExists(startscript)) {
+        mainptr->pendingfiles.Add(startscript);
+    } else {
+        // look in user-specific data directory
+        startscript = datadir + START_PYTHON;
+        if (wxFileExists(startscript)) {
+            mainptr->pendingfiles.Add(startscript);
+        }
+    }
+    
+    // argc is > 1 if command line has one or more script/pattern files
+    for (int n = 1; n < argc; n++) {
+        wxFileName filename(argv[n]);
+        // convert given path to a full path if not one already; this allows users
+        // to do things like "../golly bricklayer.py" from within Scripts folder
+        if (!filename.IsAbsolute()) filename = initdir + argv[n];
+        mainptr->pendingfiles.Add(filename.GetFullPath());
+    }
+    
+    // show main window
+    if (maximize) mainptr->Maximize(true);
+    mainptr->Show(true);
+    SetTopWindow(mainptr);
+    
+    // true means call wxApp::OnRun() which will enter the main event loop;
+    // false means exit immediately
+    return true;
 }

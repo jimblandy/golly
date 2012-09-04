@@ -1,30 +1,30 @@
-                        /*** /
-
-This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+/*** /
+ 
+ This file is part of Golly, a Game of Life Simulator.
+ Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
+ 
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
-
-                        / ***/
+ 
+ / ***/
 
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
-   #include "wx/wx.h"      // for all others include the necessary headers
+    #include "wx/wx.h"     // for all others include the necessary headers
 #endif
 
 #include "readpattern.h"   // for readcomments
@@ -42,22 +42,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class InfoFrame : public wxFrame
 {
 public:
-   InfoFrame(char *comments);
-
+    InfoFrame(char *comments);
+    
 private:
-   // event handlers
-   void OnActivate(wxActivateEvent& event);
-   void OnCloseButton(wxCommandEvent& event);
-   void OnClose(wxCloseEvent& event);
-
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
+    // event handlers
+    void OnActivate(wxActivateEvent& event);
+    void OnCloseButton(wxCommandEvent& event);
+    void OnClose(wxCloseEvent& event);
+    
+    // any class wishing to process wxWidgets events must use this macro
+    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(InfoFrame, wxFrame)
-   EVT_ACTIVATE   (              InfoFrame::OnActivate)
-   EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
-   EVT_CLOSE      (              InfoFrame::OnClose)
+EVT_ACTIVATE   (              InfoFrame::OnActivate)
+EVT_BUTTON     (wxID_CLOSE,   InfoFrame::OnCloseButton)
+EVT_CLOSE      (              InfoFrame::OnClose)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -66,7 +66,7 @@ InfoFrame *infoptr = NULL;    // pattern info window
 
 wxFrame* GetInfoFrame()
 {
-   return infoptr;
+    return infoptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -76,178 +76,178 @@ wxFrame* GetInfoFrame()
 class TextView : public wxTextCtrl
 {
 public:
-   TextView(wxWindow *parent, wxWindowID id, const wxString &value,
-            const wxPoint& pos, const wxSize& size, long style)
-      : wxTextCtrl(parent, id, value, pos, size, style) { }
-
+    TextView(wxWindow *parent, wxWindowID id, const wxString &value,
+             const wxPoint& pos, const wxSize& size, long style)
+    : wxTextCtrl(parent, id, value, pos, size, style) { }
+    
 private:
-   // event handlers
-   void OnKeyDown(wxKeyEvent& event);
-
-   // any class wishing to process wxWidgets events must use this macro
-   DECLARE_EVENT_TABLE()
+    // event handlers
+    void OnKeyDown(wxKeyEvent& event);
+    
+    // any class wishing to process wxWidgets events must use this macro
+    DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(TextView, wxTextCtrl)
-   EVT_KEY_DOWN   (TextView::OnKeyDown)
+EVT_KEY_DOWN   (TextView::OnKeyDown)
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
 void TextView::OnKeyDown(wxKeyEvent& event)
 {
-   int key = event.GetKeyCode();
-   #ifdef __WXMAC__
-      // let cmd-W close info window
-      if (event.CmdDown() && key == 'W') {
-         infoptr->Close(true);
-         return;
-      }
-      // let cmd-A select all text
-      if (event.CmdDown() && key == 'A') {
-         SetSelection(-1, -1);
-         return;
-      }
-   #endif
-   if ( event.CmdDown() || event.AltDown() ) {
-      // let default handler see things like cmd-C 
-      event.Skip();
-   } else {
-      // let escape/return/enter key close info window
-      if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ) {
-         infoptr->Close(true);
-      } else {
-         event.Skip();
-      }
-   }
+    int key = event.GetKeyCode();
+#ifdef __WXMAC__
+    // let cmd-W close info window
+    if (event.CmdDown() && key == 'W') {
+        infoptr->Close(true);
+        return;
+    }
+    // let cmd-A select all text
+    if (event.CmdDown() && key == 'A') {
+        SetSelection(-1, -1);
+        return;
+    }
+#endif
+    if ( event.CmdDown() || event.AltDown() ) {
+        // let default handler see things like cmd-C 
+        event.Skip();
+    } else {
+        // let escape/return/enter key close info window
+        if ( key == WXK_ESCAPE || key == WXK_RETURN || key == WXK_NUMPAD_ENTER ) {
+            infoptr->Close(true);
+        } else {
+            event.Skip();
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------
 
 // create the pattern info window
 InfoFrame::InfoFrame(char *comments)
-   : wxFrame(NULL, wxID_ANY, _("Pattern Info"),
-             wxPoint(infox,infoy), wxSize(infowd,infoht))
+: wxFrame(NULL, wxID_ANY, _("Pattern Info"),
+          wxPoint(infox,infoy), wxSize(infowd,infoht))
 {
-   wxGetApp().SetFrameIcon(this);
-
-   #ifdef __WXMSW__
-      // use current theme's background colour
-      SetBackgroundColour(wxNullColour);
-   #endif
-
-   TextView* textctrl = new TextView(this, wxID_ANY, wxEmptyString,
-                                 wxDefaultPosition, wxDefaultSize,
-                                 wxTE_RICH | // needed for font changing on Windows
-                                 wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
-
-   // use a fixed-width font
-   wxTextAttr textattr = wxTextAttr(wxNullColour, wxNullColour,
-                                 #ifdef __WXMAC__
-                                    wxFont(11, wxMODERN, wxNORMAL, wxNORMAL));
-                                 #else
-                                    wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
-                                 #endif
-   textctrl->SetDefaultStyle(textattr);
-   if (comments[0] == 0) {
-      textctrl->WriteText(_("No comments found."));
-   } else {
-      textctrl->WriteText(wxString(comments,wxConvLocal));
-   }
-   textctrl->ShowPosition(0);
-   textctrl->SetInsertionPoint(0);
-
-   wxButton *closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
-   closebutt->SetDefault();
-   
-   wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
-   vbox->Add(textctrl, 1, wxLEFT | wxRIGHT | wxTOP | wxEXPAND | wxALIGN_TOP, 10);
-   vbox->Add(closebutt, 0, wxALL | wxALIGN_CENTER, 10);
-
-   SetMinSize(wxSize(mininfowd, mininfoht));
-   SetSizer(vbox);
-
-   #ifdef __WXMAC__
-      // expand sizer now to avoid flicker
-      vbox->SetDimension(0, 0, infowd, infoht);
-   #endif
-   
-   // need this on Linux
-   textctrl->SetFocus();
+    wxGetApp().SetFrameIcon(this);
+    
+#ifdef __WXMSW__
+    // use current theme's background colour
+    SetBackgroundColour(wxNullColour);
+#endif
+    
+    TextView* textctrl = new TextView(this, wxID_ANY, wxEmptyString,
+                                      wxDefaultPosition, wxDefaultSize,
+                                      wxTE_RICH | // needed for font changing on Windows
+                                      wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
+    
+    // use a fixed-width font
+    wxTextAttr textattr = wxTextAttr(wxNullColour, wxNullColour,
+#ifdef __WXMAC__
+                                     wxFont(11, wxMODERN, wxNORMAL, wxNORMAL));
+#else
+    wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
+#endif
+    textctrl->SetDefaultStyle(textattr);
+    if (comments[0] == 0) {
+        textctrl->WriteText(_("No comments found."));
+    } else {
+        textctrl->WriteText(wxString(comments,wxConvLocal));
+    }
+    textctrl->ShowPosition(0);
+    textctrl->SetInsertionPoint(0);
+    
+    wxButton *closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
+    closebutt->SetDefault();
+    
+    wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
+    vbox->Add(textctrl, 1, wxLEFT | wxRIGHT | wxTOP | wxEXPAND | wxALIGN_TOP, 10);
+    vbox->Add(closebutt, 0, wxALL | wxALIGN_CENTER, 10);
+    
+    SetMinSize(wxSize(mininfowd, mininfoht));
+    SetSizer(vbox);
+    
+#ifdef __WXMAC__
+    // expand sizer now to avoid flicker
+    vbox->SetDimension(0, 0, infowd, infoht);
+#endif
+    
+    // need this on Linux
+    textctrl->SetFocus();
 }
 
 // -----------------------------------------------------------------------------
 
 void InfoFrame::OnActivate(wxActivateEvent& event)
 {
-   if ( event.GetActive() ) {
-      // ensure correct menu items, esp after info window
-      // is clicked while app is in background
-      mainptr->UpdateMenuItems(false);
-   }
-   event.Skip();
+    if ( event.GetActive() ) {
+        // ensure correct menu items, esp after info window
+        // is clicked while app is in background
+        mainptr->UpdateMenuItems(false);
+    }
+    event.Skip();
 }
 
 // -----------------------------------------------------------------------------
 
 void InfoFrame::OnCloseButton(wxCommandEvent& WXUNUSED(event))
 {
-   Close(true);
+    Close(true);
 }
 
 // -----------------------------------------------------------------------------
 
 void InfoFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
-   #ifdef __WXMSW__
-   if (!IsIconized()) {
-   #endif
-      // save current location and size for later use in SavePrefs
-      wxRect r = GetRect();
-      infox = r.x;
-      infoy = r.y;
-      infowd = r.width;
-      infoht = r.height;
-   #ifdef __WXMSW__
-   }
-   #endif
-   
-   Destroy();        // also deletes all child windows (buttons, etc)
-   infoptr = NULL;
+#ifdef __WXMSW__
+    if (!IsIconized()) {
+#endif
+        // save current location and size for later use in SavePrefs
+        wxRect r = GetRect();
+        infox = r.x;
+        infoy = r.y;
+        infowd = r.width;
+        infoht = r.height;
+#ifdef __WXMSW__
+    }
+#endif
+    
+    Destroy();        // also deletes all child windows (buttons, etc)
+    infoptr = NULL;
 }
 
 // -----------------------------------------------------------------------------
 
 #ifdef __WXMAC__
-   // convert path to decomposed UTF8 so fopen will work
-   #define FILEPATH filepath.fn_str()
+    // convert path to decomposed UTF8 so fopen will work
+    #define FILEPATH filepath.fn_str()
 #else
-   #define FILEPATH filepath.mb_str(wxConvLocal)
+    #define FILEPATH filepath.mb_str(wxConvLocal)
 #endif
 
 void ShowInfo(const wxString& filepath)
 {
-   if (infoptr) {
-      // info window exists so just bring it to front
-      infoptr->Raise();
-      return;
-   }
-
-   // buffer for receiving comment data (allocated by readcomments)
-   char *commptr = NULL;
-
-   // read and display comments in current pattern file
-   const char *err = readcomments(FILEPATH, &commptr);
-   if (err) {
-      Warning(wxString(err,wxConvLocal));
-   } else {
-      infoptr = new InfoFrame(commptr);
-      if (infoptr == NULL) {
-         Warning(_("Could not create info window!"));
-      } else {
-         infoptr->Show(true);
-      }
-   }
-   
-   if (commptr) free(commptr);
+    if (infoptr) {
+        // info window exists so just bring it to front
+        infoptr->Raise();
+        return;
+    }
+    
+    // buffer for receiving comment data (allocated by readcomments)
+    char *commptr = NULL;
+    
+    // read and display comments in current pattern file
+    const char *err = readcomments(FILEPATH, &commptr);
+    if (err) {
+        Warning(wxString(err,wxConvLocal));
+    } else {
+        infoptr = new InfoFrame(commptr);
+        if (infoptr == NULL) {
+            Warning(_("Could not create info window!"));
+        } else {
+            infoptr->Show(true);
+        }
+    }
+    
+    if (commptr) free(commptr);
 }

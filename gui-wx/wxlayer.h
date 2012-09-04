@@ -1,26 +1,27 @@
-                        /*** /
-
-This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+/*** /
+ 
+ This file is part of Golly, a Game of Life Simulator.
+ Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
+ 
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
+ 
+ / ***/
 
-                        / ***/
 #ifndef _WXLAYER_H_
 #define _WXLAYER_H_
 
@@ -36,95 +37,95 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class Layer {
 public:
-   Layer();
-   ~Layer();
-
-   // if this is a cloned layer then cloneid is > 0 and all the other clones
-   // have the same cloneid
-   int cloneid;
-
-   lifealgo* algo;               // this layer's universe (shared by clones)
-   algo_type algtype;            // type of universe (index into algoinfo)
-   bool hyperspeed;              // use acceleration while generating?
-   bool showhashinfo;            // show hashing info?
-   bool autofit;                 // auto fit pattern while generating?
-   bool dirty;                   // user has modified pattern?
-   bool savedirty;               // state of dirty flag before drawing/script change
-   bool stayclean;               // script has reset dirty flag?
-   int currbase;                 // current base step
-   int currexpo;                 // current step exponent
-   int drawingstate;             // current drawing state
-   wxCursor* curs;               // current cursor
-   UndoRedo* undoredo;           // undo/redo history (shared by clones)
-
-   // each layer (cloned or not) has its own viewport for displaying patterns;
-   // note that we use a pointer to the viewport to allow temporary switching
-   // in wxrender.cpp (eg. in DrawStackedLayers)
-   viewport* view;
-
-   // WARNING: this string is used to remember the current rule when
-   // switching to another layer; to determine the current rule at any
-   // time, use currlayer->algo->getrule()
-   wxString rule;
-   
-   Selection currsel;            // current selection
-   Selection savesel;            // for saving/restoring selection
-
-   bigint originx;               // X origin offset
-   bigint originy;               // Y origin offset
-   
-   wxString currfile;            // full path of current pattern file
-   wxString currname;            // name seen in window title and Layer menu
-
-   // for saving and restoring starting pattern
-   algo_type startalgo;          // starting algorithm
-   bool savestart;               // need to save starting pattern?
-   bool startdirty;              // starting state of dirty flag
-   wxString startfile;           // file for saving starting pattern
-   wxString startname;           // starting currname
-   wxString startrule;           // starting rule
-   bigint startgen;              // starting generation (>= 0)
-   bigint startx, starty;        // starting location
-   int startbase;                // starting base step
-   int startexpo;                // starting step exponent
-   int startmag;                 // starting scale
-   Selection startsel;           // starting selection
-   
-   // temporary file used to restore starting pattern or to show comments;
-   // each non-cloned layer uses a different temporary file
-   wxString tempstart;
-   
-   // used when tilelayers is true
-   PatternView* tilewin;         // tile window
-   wxRect tilerect;              // tile window's size and position
-
-   // color scheme for this layer
-   wxColor fromrgb;              // start of gradient
-   wxColor torgb;                // end of gradient
-   unsigned char cellr[256];     // red components for states 0..255
-   unsigned char cellg[256];     // green components for states 0..255
-   unsigned char cellb[256];     // blue components for states 0..255
-
-   wxBrush* deadbrush;           // brush for drawing dead cells
-   wxPen* gridpen;               // pen for drawing plain grid
-   wxPen* boldpen;               // pen for drawing bold grid
-
-   // icons for this layer
-   wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
-   wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
-
-   // used if the layer has a timeline (see wxtimeline.cpp)
-   int currframe;                // current frame in timeline
-   int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop
-   int tlspeed;                  // controls speed at which frames are played
-   long lastframe;               // time (in msecs) when last frame was displayed
+    Layer();
+    ~Layer();
+    
+    // if this is a cloned layer then cloneid is > 0 and all the other clones
+    // have the same cloneid
+    int cloneid;
+    
+    lifealgo* algo;               // this layer's universe (shared by clones)
+    algo_type algtype;            // type of universe (index into algoinfo)
+    bool hyperspeed;              // use acceleration while generating?
+    bool showhashinfo;            // show hashing info?
+    bool autofit;                 // auto fit pattern while generating?
+    bool dirty;                   // user has modified pattern?
+    bool savedirty;               // state of dirty flag before drawing/script change
+    bool stayclean;               // script has reset dirty flag?
+    int currbase;                 // current base step
+    int currexpo;                 // current step exponent
+    int drawingstate;             // current drawing state
+    wxCursor* curs;               // current cursor
+    UndoRedo* undoredo;           // undo/redo history (shared by clones)
+    
+    // each layer (cloned or not) has its own viewport for displaying patterns;
+    // note that we use a pointer to the viewport to allow temporary switching
+    // in wxrender.cpp (eg. in DrawStackedLayers)
+    viewport* view;
+    
+    // WARNING: this string is used to remember the current rule when
+    // switching to another layer; to determine the current rule at any
+    // time, use currlayer->algo->getrule()
+    wxString rule;
+    
+    Selection currsel;            // current selection
+    Selection savesel;            // for saving/restoring selection
+    
+    bigint originx;               // X origin offset
+    bigint originy;               // Y origin offset
+    
+    wxString currfile;            // full path of current pattern file
+    wxString currname;            // name seen in window title and Layer menu
+    
+    // for saving and restoring starting pattern
+    algo_type startalgo;          // starting algorithm
+    bool savestart;               // need to save starting pattern?
+    bool startdirty;              // starting state of dirty flag
+    wxString startfile;           // file for saving starting pattern
+    wxString startname;           // starting currname
+    wxString startrule;           // starting rule
+    bigint startgen;              // starting generation (>= 0)
+    bigint startx, starty;        // starting location
+    int startbase;                // starting base step
+    int startexpo;                // starting step exponent
+    int startmag;                 // starting scale
+    Selection startsel;           // starting selection
+    
+    // temporary file used to restore starting pattern or to show comments;
+    // each non-cloned layer uses a different temporary file
+    wxString tempstart;
+    
+    // used when tilelayers is true
+    PatternView* tilewin;         // tile window
+    wxRect tilerect;              // tile window's size and position
+    
+    // color scheme for this layer
+    wxColor fromrgb;              // start of gradient
+    wxColor torgb;                // end of gradient
+    unsigned char cellr[256];     // red components for states 0..255
+    unsigned char cellg[256];     // green components for states 0..255
+    unsigned char cellb[256];     // blue components for states 0..255
+    
+    wxBrush* deadbrush;           // brush for drawing dead cells
+    wxPen* gridpen;               // pen for drawing plain grid
+    wxPen* boldpen;               // pen for drawing bold grid
+    
+    // icons for this layer
+    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
+    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
+    
+    // used if the layer has a timeline (see wxtimeline.cpp)
+    int currframe;                // current frame in timeline
+    int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop
+    int tlspeed;                  // controls speed at which frames are played
+    long lastframe;               // time (in msecs) when last frame was displayed
 };
 
-const int MAX_LAYERS = 10;       // maximum number of layers
-extern int numlayers;            // number of existing layers
-extern int numclones;            // number of cloned layers
-extern int currindex;            // index of current layer (0..numlayers-1)
-extern Layer* currlayer;         // pointer to current layer
+const int MAX_LAYERS = 10;  // maximum number of layers
+extern int numlayers;       // number of existing layers
+extern int numclones;       // number of cloned layers
+extern int currindex;       // index of current layer (0..numlayers-1)
+extern Layer* currlayer;    // pointer to current layer
 
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.
