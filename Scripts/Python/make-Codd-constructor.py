@@ -40,33 +40,30 @@ inject_trigger = '60117011701160116011'
 # (still plenty of room for optimisation here)
 tape = '11'
 for row in xrange(r.top, r.top + r.height):
-   # if large selection then give some indication of progress
-   newsecs = time()
-   if newsecs - oldsecs >= 1.0:
-      oldsecs = newsecs
-      g.update()
-   for col in xrange(r.left, r.left + r.width):
-      if g.getcell(col, row)==1:
-         tape += extend*(4+col-r.left) + extend_left + extend*(r.top+r.height-row)
-         tape += mark
-         tape += retract*(r.top+r.height-row) + retract_left + retract*(4+col-r.left)
-      elif g.getcell(col,row)!=0:
-	     g.exit('Cells in the selected area must be in states 0 or 1 only.')
-	  
+    # if large selection then give some indication of progress
+    newsecs = time()
+    if newsecs - oldsecs >= 1.0:
+        oldsecs = newsecs
+        g.update()
+    for col in xrange(r.left, r.left + r.width):
+        if g.getcell(col, row)==1:
+            tape += extend*(4+col-r.left) + extend_left + extend*(r.top+r.height-row)
+            tape += mark
+            tape += retract*(r.top+r.height-row) + retract_left + retract*(4+col-r.left)
+        elif g.getcell(col,row)!=0:
+            g.exit('Cells in the selected area must be in states 0 or 1 only.')
+
 # finally we sheath and trigger and retract
 tape += extend_left + extend*4 + extend_right + extend
 tape += inject_sheath + '1'*50 + inject_trigger
 tape += retract*2 + retract_right + retract*4 + retract_left
-	
+
 # now write the tape out
 x = r.left+r.width+10
 y = r.top+r.height+10
 g.setcell(x+1,y,2)
 for i in tape:
-   g.setcell(x,y-1,2)
-   g.setcell(x,y,int(i))
-   g.setcell(x,y+1,2)
-   x-=1
-
-
-
+    g.setcell(x,y-1,2)
+    g.setcell(x,y,int(i))
+    g.setcell(x,y+1,2)
+    x-=1

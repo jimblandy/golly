@@ -9,13 +9,13 @@ from glife.WriteBMP import *
 
 opposite_dirs=[2,3,0,1] # index of opposite direction
 
-# encoding: 
+# encoding:
 # (0-n_colors: empty square)
 def encode(c,s,d):
     # turmite on color c in state s facing direction d
     return n_colors + n_dirs*(n_states*c+s) + d
 
-prefix = 'LangtonsAnt' 
+prefix = 'LangtonsAnt'
 # (We choose a different name to the inbuilt Langtons-Ant rule to avoid
 #  name collision between the rules we output and the existing icons.)
 
@@ -41,7 +41,7 @@ n_dirs=4
 # (N.B. The terminology 'state' here refers to the internal state of the finite
 #       state machine that each Turmite is using, not the contents of each Golly
 #       cell. We use the term 'color' to denote the symbol on the 2D 'tape'. The
-#       actual 'Golly state' in this emulation of Turmites is given by the 
+#       actual 'Golly state' in this emulation of Turmites is given by the
 #       "encoding" section below.)
 
 total_states = n_colors+n_colors*n_states*n_dirs
@@ -53,7 +53,7 @@ if total_states>255:
 
 # what direction would a turmite have been facing to end up here from direction
 # d if it turned t: would_have_been_facing[t][d]
-would_have_been_facing={ 
+would_have_been_facing={
 1:[2,3,0,1], # no turn
 2:[1,2,3,0], # right
 4:[0,1,2,3], # u-turn

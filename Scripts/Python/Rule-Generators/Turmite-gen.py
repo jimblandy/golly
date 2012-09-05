@@ -13,18 +13,18 @@ from glife.WriteBMP import *
 
 dirs=['N','E','S','W']
 opposite_dirs=[2,3,0,1] # index of opposite direction
-turn={ # index of new direction 
+turn={ # index of new direction
 1:[0,1,2,3], # no turn
 2:[1,2,3,0], # right
 4:[2,3,0,1], # u-turn
 8:[3,0,1,2], # left
 }
 
-prefix = 'Turmite' 
+prefix = 'Turmite'
 
 # N.B. Translating from Langtons-Ant-nColor to Turmite is easy:
 # e.g. LLRR is (1 state, 4 color) {{{1,8,0},{2,8,0},{3,2,0},{0,2,0}}}
-# but translating the other way is only possible if the Turmite has 
+# but translating the other way is only possible if the Turmite has
 # exactly 1 state and only moves left or right
 
 EdPeggJrTurmiteLibrary = [
@@ -74,14 +74,14 @@ EdPeggJrTurmiteLibrary = [
 "{{{1, 8, 1}, {0, 1, 0}}, {{0, 2, 2}, {1, 8, 0}}, {{1, 2, 1}, {1, 1, 0}}}", # 40: streak at approx. an 8.1 in 1 gradient
 "{{{1, 8, 1}, {0, 1, 2}}, {{0, 2, 2}, {1, 1, 1}}, {{1, 2, 1}, {1, 1, 0}}}", # 41: streak at approx. a 1.14 in 1 gradient
 "{{{1, 8, 1}, {1, 8, 1}}, {{1, 1, 0}, {0, 1, 2}}, {{0, 8, 1}, {1, 1, 1}}}", # 42: maze-like growth
-"{{{1, 8, 2}, {0, 2, 0}}, {{1, 8, 0}, {0, 2, 0}}, {{0, 8, 0}, {0, 8, 1}}}", # 43: growth by cornices 
+"{{{1, 8, 2}, {0, 2, 0}}, {{1, 8, 0}, {0, 2, 0}}, {{0, 8, 0}, {0, 8, 1}}}", # 43: growth by cornices
 "{{{1, 2, 0}, {0, 2, 2}}, {{0, 8, 0}, {0, 2, 0}}, {{0, 1, 1}, {1, 8, 0}}}", # 44: makes a 1 in 7 highway
 "{{{1, 2, 1}, {0, 8, 0}}, {{1, 2, 2}, {0, 1, 0}}, {{1, 8, 0}, {0, 8, 0}}}", # 45: makes a 4 in 1 highway
 # source: http://www.mathpuzzle.com/Turmite5.nb
 # via: http://www.mathpuzzle.com/26Mar03.html
-# "I wondered what would happen if a turmite could split as an action... say Left and Right.  
+# "I wondered what would happen if a turmite could split as an action... say Left and Right.
 #  In addition, I added the rule that when two turmites met, they annihilated each other.
-#  Some interesting patterns came out from my initial study. My main interest is finding 
+#  Some interesting patterns came out from my initial study. My main interest is finding
 #  turmites that will grow for a long time, then self-annihilate."
 "{{{1, 8, 0}, {1, 2, 1}}, {{0, 10, 0}, {0, 8, 1}}}",  # 46: stops at 11 gens
 "{{{1, 8, 0}, {1, 2, 1}}, {{1, 10, 0}, {1, 8, 1}}}",  # 47: stops at 12 gens
@@ -139,7 +139,7 @@ e.g. for the turmite:
 (Takes twice as long.)
 "{{{1,2,1},{0,1,1}},{{0,1,2},{0,0,0}},{{0,1,0},{0,0,0}}}",  # scale 3 binary counter, etc.
 (Takes three times as long.)
-Note that the state 1+ color 1+ transitions are never used if started on a zero background - 
+Note that the state 1+ color 1+ transitions are never used if started on a zero background -
 we set them to {0,0,0} (die) simply to make this clear. Or you can step these cells. Or redraw them.
 e.g. for Langton's ant:
 "{{{1, 2, 0}, {0, 8, 0}}}",  # normal Langton's ant
@@ -164,11 +164,11 @@ e.g. for Langton's ant:
 We can increase the number of straight-ahead steps to achieve any angle of highway we want, e.g.
 "{{{1,1,1},{0,4,1}},{{0,2,2},{0,0,0}},{{0,1,3},{0,0,0}},{{0,1,0},{0,0,0}}}", # long knight's move rotated
 We can rotate twice, for fun:
-"{{{1,8,1},{0,2,1}},{{0,2,2},{0,0,0}},{{0,1,3},{0,0,0}},{{0,2,0},{0,0,0}}}", # rotated twice (expanded version) 
+"{{{1,8,1},{0,2,1}},{{0,2,2},{0,0,0}},{{0,1,3},{0,0,0}},{{0,2,0},{0,0,0}}}", # rotated twice (expanded version)
 (same as scale 2 version)
 (These take four times as long.)
 "{{{1,8,1},{0,2,1}},{{0,2,2},{1,2,2}},{{0,2,0},{1,2,0}}}", # rotated twice (compact version)
-Note that with the compact version we have to walk over 'live' cells without changing them - we can't 
+Note that with the compact version we have to walk over 'live' cells without changing them - we can't
 set those transitions to 'die'.
 This makes exactly the same pattern as Langtons Ant but takes 3 times as long.
 
@@ -177,10 +177,10 @@ For turmites with more states, e.g.:
 "{{{1,4,2},{1,1,3}},{{0,1,2},{0,4,3}},{{0,2,0},{0,0,0}},{{0,2,1},{0,0,0}}}", # framed computer art rotated
 # 2 states become 4 states for 45 degree rotation
 # (sparse version, turning right on off-steps: hence turns N becomes L,L->U,R->N,U->R)
-# here the new states are used as off-step storage of the old states: state 2 says I will become state 0, 
+# here the new states are used as off-step storage of the old states: state 2 says I will become state 0,
 # state 3 says I will become state 1
 
-Can we detect when a smaller version of a turmite is possible - can we 
+Can we detect when a smaller version of a turmite is possible - can we
 apply it in reverse?
 
 1=noturn, 2=right, 4=u-turn, 8=left
@@ -254,7 +254,7 @@ while True: # (we break out if ok)
     # so was the rule acceptable, in the end?
     if is_rule_acceptable:
         break
-            
+
 spec = golly.getstring(
 '''This script will create a Turmite CA for a given specification.
 
@@ -262,7 +262,7 @@ Enter a number (1-59) for an example Turmite from Ed Pegg Jr.'s (extended) libra
 (see http://demonstrations.wolfram.com/Turmites/ or the code of this script)
 
 Otherwise enter a specification string: a curly-bracketed table of n_states rows
-and n_colors columns, where each entry is a triple of integers. 
+and n_colors columns, where each entry is a triple of integers.
 The elements of each triple are:
 a: the new color of the square
 b: the direction(s) for the Turmite to turn (1=noturn, 2=right, 4=u-turn, 8=left)
@@ -271,7 +271,7 @@ c: the new internal state of the Turmite
 Example:
 {{{1, 2, 0}, {0, 8, 0}}}
 (example pattern #1)
-Has 1 state and 2 colors. The triple {1,2,0} says: 
+Has 1 state and 2 colors. The triple {1,2,0} says:
 1. set the color of the square to 1
 2. turn right (2)
 3. adopt state 0 (no change) and move forward one square
@@ -291,7 +291,7 @@ n_colors = len(action_table[0])
 # (N.B. The terminology 'state' here refers to the internal state of the finite
 #       state machine that each Turmite is using, not the contents of each Golly
 #       cell. We use the term 'color' to denote the symbol on the 2D 'tape'. The
-#       actual 'Golly state' in this emulation of Turmites is given by the 
+#       actual 'Golly state' in this emulation of Turmites is given by the
 #       "encoding" section below.)
 n_dirs=4
 
@@ -304,7 +304,7 @@ if total_states > 255:
     golly.warn("Number of states required exceeds Golly's limit of 255.")
     golly.exit()
 
-# encoding: 
+# encoding:
 # (0-n_colors: empty square)
 def encode(c,s,d):
     # turmite on color c in state s facing direction d
@@ -325,14 +325,14 @@ def flatten(l, ltypes=(list, tuple)):
                 l[i:i + 1] = l[i]
         i += 1
     return ltype(l)
-    
+
 # convert the string to a form we can embed in a filename
-spec_string = ''.join(map(str,map(lambda x:hex(x)[2:],flatten(action_table)))) 
+spec_string = ''.join(map(str,map(lambda x:hex(x)[2:],flatten(action_table))))
 # (ambiguous but we have to try something)
 
 # what direction would a turmite have been facing to end up here from direction
 # d if it turned t: would_have_been_facing[t][d]
-would_have_been_facing={ 
+would_have_been_facing={
 1:[2,3,0,1], # no turn
 2:[1,2,3,0], # right
 4:[0,1,2,3], # u-turn
@@ -480,7 +480,7 @@ for x in range(-300,-100):
             golly.setcell(x,y,n_colors) # start with a turmite facing N
         else:
             golly.setcell(x,y,random.randint(0,n_colors-1))
-            
+
 # create a totally random area (many turmites)
 for x in range(-200,-100):
     for y in range(200,300):

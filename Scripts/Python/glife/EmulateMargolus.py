@@ -1,10 +1,10 @@
-# We emulate Margolus and related partitioning neighborhoods by making a 2-layer CA, with a 
+# We emulate Margolus and related partitioning neighborhoods by making a 2-layer CA, with a
 # background layer (0,1) that alternates a sort-of-checker pattern, and the normal states on top.
 #
 # For the Margolus neighborhood there is only one 'phase'; one background pattern, that alternates
 # between top-left and bottom-right of a 2x2 region.
 #
-# For the square4_* neighborhoods we need two phases since the background shifts in different 
+# For the square4_* neighborhoods we need two phases since the background shifts in different
 # directions to make a figure-8 or cyclic pattern.
 #
 # By looking at the nearby background states, each cell can work out where in the partition it is
@@ -18,7 +18,7 @@ from glife.RuleTree import *
 # state s (0,N-1) on background state b (0,1) becomes 1+b+2s with 0 = off-grid
 def encode(s,b): # (s is a list)
     return [ 1+b+2*se for se in s ]
-    
+
 # The BackgroundInputs array tells us where we are in the block:
 #
 # Phase 1:   0  1   (the lone 0 is the top-left of the block to be updated)
@@ -47,19 +47,19 @@ BackgroundInputs = [ # each C,S,E,W,N,SE,SW,NE,NW
 #
 # square4_figure8v:     0  1   becomes   0  0   (block moves diagonally)
 #                       1  1             0  1
-#                    
+#
 #                       1  0   becomes   1  0   (block moves horizontally)
 #                       0  0             1  1
 #
 # square4_figure8h:     0  1   becomes   0  0   (block moves diagonally)
 #                       1  1             0  1
-#                    
+#
 #                       1  0   becomes   1  1   (block moves vertically)
 #                       0  0             0  1
 #
 # square4_cyclic  :     0  1   becomes   0  0   (block moves vertically)
 #                       1  1             1  0
-#                    
+#
 #                       1  0   becomes   1  0   (block moves horizontally)
 #                       0  0             1  1
 #
@@ -68,13 +68,13 @@ BackgroundInputs = [ # each C,S,E,W,N,SE,SW,NE,NW
 BackgroundOutputs = { # (top-left, top-right, bottom-left, bottom-right)*2 (or *1 for Margolus)
     "Margolus":        [1,1,1,0], # phase 1 -> phase 1
     "square4_figure8v":[0,0,0,1,1,0,1,1], # phase 1 <--> phase 2
-    "square4_figure8h":[0,0,0,1,1,1,0,1], # phase 1 <--> phase 2 
+    "square4_figure8h":[0,0,0,1,1,1,0,1], # phase 1 <--> phase 2
     "square4_cyclic":  [0,0,1,0,1,0,1,1], # phase 1 <--> phase 2
 }
-    
+
 # The ForegroundInputs array tells us, for each of the 4 positions (0=top-left, 1=top-right,
 # 2=bottom-left, 3=bottom-right), where the other positions are found in our Moore neighborhood
-# e.g. if we're 0 (top-left) then the first row tells us that to our South is position 2 (bottom-left) 
+# e.g. if we're 0 (top-left) then the first row tells us that to our South is position 2 (bottom-left)
 #      and to our South-East is position 3 (bottom-right).
 # (N.B. these values don't depend on the phase or the background pattern)
 ForegroundInputs = [
@@ -108,11 +108,11 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
             tree.add_rule( [ encode( [iState], bg_inputs[0] ) ] +
                            [ encode( range(n_states), bg_inputs[i] )+[0] for i in range(1,9) ], # wildcard
                            encode( [iState], background_output )[0] )
-            
+
     # output the rule tree
     golly.show("Compressing rule tree and saving to file...")
     tree.write(golly.getdir('rules') + rule_name + '.tree')
-    
+
     # also save a .colors file
     golly.show("Generating colors...")
 
@@ -140,7 +140,7 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
                     continue # too few entries, ignore
                 colors.update({entries[0]:[entries[1],entries[2],entries[3]]})
         # (TODO: support gradients in .colors)
-        
+
     # provide a deep blue background if none provided
     if not 0 in colors:
         colors.update({0:[0,0,120]})
@@ -151,5 +151,5 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
         c.write('color='+str(col[0]*2+2)+' '+' '.join([ str(int(x*0.7)) for x in col[1] ])+'\n')  # (darken slightly)
     c.flush()
     c.close()
-    
+
     return rule_name

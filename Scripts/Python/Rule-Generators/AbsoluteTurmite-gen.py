@@ -10,9 +10,9 @@ from glife.WriteBMP import *
 dirs=['N','E','S','W']
 opposite_dirs = [ 2, 3, 0, 1 ]
 
-prefix = 'AbsoluteTurmite' 
+prefix = 'AbsoluteTurmite'
 
-# N.B. All 'relative' Turmites (including Langton's ant and the n-Color family) 
+# N.B. All 'relative' Turmites (including Langton's ant and the n-Color family)
 # can be expressed as Absolute Turmites but require 4n states instead of n.
 # e.g. {{{1,'E',1},{0,'W',3}},{{1,'S',2},{0,'N',0}},{{1,'W',3},{0,'E',1}},{{1,'N',0},{0,'S',2}}}
 #      is a 4-state 2-color Absolute Turmite that matches Langton's ant
@@ -20,7 +20,7 @@ prefix = 'AbsoluteTurmite'
 # straightforward fashion.
 # e.g. {{{1,'E',1},{1,'W',1}},{{1,'W',0},{1,'',0}}}
 #      is a 2-state 2-color busy beaver
-# In both cases the opposite transform is usually not possible. Thus Absolute Turmites 
+# In both cases the opposite transform is usually not possible. Thus Absolute Turmites
 # are a deeper generalization.
 
 # http://bytes.com/topic/python/answers/25176-list-subsets
@@ -70,7 +70,7 @@ while True: # (we break out if ok)
         if not leaves_subset:
             is_rule_acceptable = False
             break # (just an optimisation)
-    # 1-move lookahead: will turmite zip off when placed on 0? 
+    # 1-move lookahead: will turmite zip off when placed on 0?
     for state in range(ns):
         if action_table[state][0][2] == state:
             is_rule_acceptable = False
@@ -82,7 +82,7 @@ while True: # (we break out if ok)
     for dir in dirs:
         if not "'"+dir+"'" in example_spec:
             is_rule_acceptable = False
-            
+
     if is_rule_acceptable:
         break
 
@@ -90,7 +90,7 @@ spec = golly.getstring(
 '''This script will create an AbsoluteTurmite CA for a given specification.
 
 Enter a specification string: a curly-bracketed table of n_states rows
-and n_colors columns, where each entry is a triple of integers. 
+and n_colors columns, where each entry is a triple of integers.
 The elements of each triple are:
 a: the new color of the square
 b: the direction(s) for the turmite to move: 'NESW'
@@ -99,7 +99,7 @@ c: the new internal state of the turmite
 Example:
 {{{1,'E',1},{1,'W',1}},{{1,'W',0},{1,'',0}}}
 (example pattern #1)
-Has 2 states and 2 colors. The triple {1,'W',0} says: 
+Has 2 states and 2 colors. The triple {1,'W',0} says:
 1. set the color of the square to 1
 2. move West
 3. adopt state 0 and move forward one square
@@ -116,7 +116,7 @@ n_colors = len(action_table[0])
 # (N.B. The terminology 'state' here refers to the internal state of the finite
 #       state machine that each turmite is using, not the contents of each Golly
 #       cell. We use the term 'color' to denote the symbol on the 2D 'tape'. The
-#       actual 'Golly state' in this emulation of turmites is given by the 
+#       actual 'Golly state' in this emulation of turmites is given by the
 #       "encoding" section below.)
 n_dirs = 4
 
@@ -129,7 +129,7 @@ if total_states > 255:
     golly.warn("Number of states required exceeds Golly's limit of 255.")
     golly.exit()
 
-# encoding: 
+# encoding:
 # (0-n_colors: empty square)
 def encode(c,s):
     # turmite on color c in state s
@@ -150,9 +150,9 @@ def flatten(l, ltypes=(list, tuple)):
                 l[i:i + 1] = l[i]
         i += 1
     return ltype(l)
-    
+
 # convert the string to a form we can embed in a filename
-spec_string = ''.join(map(str,map(str,flatten(action_table)))) 
+spec_string = ''.join(map(str,map(str,flatten(action_table))))
 # (ambiguous but we have to try something)
 rule_name = prefix+'_'+spec_string
 
@@ -211,7 +211,7 @@ for s in range(n_states):
 # default: square is left with no turmite present
 for output_color,inputs in leaving_color_behind.items():
     tree.add_rule([inputs]+[range(total_states)]*4,output_color)
-    
+
 tree.write(golly.getdir('rules')+rule_name+'.tree')
 
 # Write some colour icons so we can see what the turmite is doing

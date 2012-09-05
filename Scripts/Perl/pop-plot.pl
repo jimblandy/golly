@@ -116,68 +116,68 @@ $mfont{'~'} = g_parse('2$bo$obobo$3bo!');
 
 # convert given string to a cell array using above mono-spaced font
 sub make_text {
-   my $string = shift;
-   my @p = ();
-   my $x = 0;
-   for my $ch (split(//,$string)) {
-      $ch = '?' if not exists $mfont{$ch};
-      my $symbol = g_transform($mfont{$ch}, $x, 0);
-      push(@p, @{$symbol});
-      $x += 6;
-   }
-   return \@p;
+    my $string = shift;
+    my @p = ();
+    my $x = 0;
+    for my $ch (split(//,$string)) {
+        $ch = '?' if not exists $mfont{$ch};
+        my $symbol = g_transform($mfont{$ch}, $x, 0);
+        push(@p, @{$symbol});
+        $x += 6;
+    }
+    return \@p;
 }
 
 # ------------------------------------------------------------------------------
 
 # draw a line of cells from x1,y1 to x2,y2 using Bresenham's algorithm
 sub draw_line {
-   my ($x1, $y1, $x2, $y2) = @_;
-   g_setcell($x1, $y1, 1);
-   return if $x1 == $x2 and $y1 == $y2;
-   
-   my $dx = $x2 - $x1;
-   my $ax = abs($dx) * 2;
-   my $sx = 1;
-   $sx = -1 if $dx < 0;
-   
-   my $dy = $y2 - $y1;
-   my $ay = abs($dy) * 2;
-   my $sy = 1;
-   $sy = -1 if $dy < 0;
-   
-   if ($ax > $ay) {
-      my $d = $ay - ($ax / 2);
-      while ($x1 != $x2) {
-         g_setcell($x1, $y1, 1);
-         if ($d >= 0) {
-            $y1 += $sy;
-            $d -= $ax;
-         }
-         $x1 += $sx;
-         $d += $ay;
-      }
-   } else {
-      my $d = $ax - ($ay / 2);
-      while ($y1 != $y2) {
-         g_setcell($x1, $y1, 1);
-         if ($d >= 0) {
+    my ($x1, $y1, $x2, $y2) = @_;
+    g_setcell($x1, $y1, 1);
+    return if $x1 == $x2 and $y1 == $y2;
+    
+    my $dx = $x2 - $x1;
+    my $ax = abs($dx) * 2;
+    my $sx = 1;
+    $sx = -1 if $dx < 0;
+    
+    my $dy = $y2 - $y1;
+    my $ay = abs($dy) * 2;
+    my $sy = 1;
+    $sy = -1 if $dy < 0;
+    
+    if ($ax > $ay) {
+        my $d = $ay - ($ax / 2);
+        while ($x1 != $x2) {
+            g_setcell($x1, $y1, 1);
+            if ($d >= 0) {
+                $y1 += $sy;
+                $d -= $ax;
+            }
             $x1 += $sx;
-            $d -= $ay;
-         }
-         $y1 += $sy;
-         $d += $ax;
-      }
-   }
-   g_setcell($x2, $y2, 1);
+            $d += $ay;
+        }
+    } else {
+        my $d = $ax - ($ay / 2);
+        while ($y1 != $y2) {
+            g_setcell($x1, $y1, 1);
+            if ($d >= 0) {
+                $x1 += $sx;
+                $d -= $ay;
+            }
+            $y1 += $sy;
+            $d += $ax;
+        }
+    }
+    g_setcell($x2, $y2, 1);
 }
 
 # ------------------------------------------------------------------------------
 
 # fit pattern in viewport if not empty and not completely visible
 sub fit_if_not_visible {
-   my @r = g_getrect();
-   if (@r > 0 and !g_visrect(@r)) { g_fit() }
+    my @r = g_getrect();
+    if (@r > 0 and !g_visrect(@r)) { g_fit() }
 }
 
 # ------------------------------------------------------------------------------
@@ -186,24 +186,24 @@ sub fit_if_not_visible {
 # note that the pattern is two-state so we don't have to worry about
 # getting a multi-state cell array here
 sub getminbox {
-   my $cells = shift;
-   my $len = @{$cells};
-   return () if $len < 2;
-   
-   my $minx = $cells->[0];
-   my $miny = $cells->[1];
-   my $maxx = $minx;
-   my $maxy = $miny;
-   for (my $x = 0; $x < $len; $x += 2) {
-      if ($cells->[$x] < $minx) { $minx = $cells->[$x] }
-      if ($cells->[$x] > $maxx) { $maxx = $cells->[$x] }
-   }
-   for (my $y = 1; $y < $len; $y += 2) {
-      if ($cells->[$y] < $miny) { $miny = $cells->[$y] }
-      if ($cells->[$y] > $maxy) { $maxy = $cells->[$y] }
-   }
-   
-   return ($minx, $miny, $maxx - $minx + 1, $maxy - $miny + 1);
+    my $cells = shift;
+    my $len = @{$cells};
+    return () if $len < 2;
+    
+    my $minx = $cells->[0];
+    my $miny = $cells->[1];
+    my $maxx = $minx;
+    my $maxy = $miny;
+    for (my $x = 0; $x < $len; $x += 2) {
+        if ($cells->[$x] < $minx) { $minx = $cells->[$x] }
+        if ($cells->[$x] > $maxx) { $maxx = $cells->[$x] }
+    }
+    for (my $y = 1; $y < $len; $y += 2) {
+        if ($cells->[$y] < $miny) { $miny = $cells->[$y] }
+        if ($cells->[$y] > $maxy) { $maxy = $cells->[$y] }
+    }
+    
+    return ($minx, $miny, $maxx - $minx + 1, $maxy - $miny + 1);
 }
 
 # ------------------------------------------------------------------------------
@@ -214,13 +214,13 @@ g_exit("There is no pattern.") if g_empty();
 my $layername = "population plot";
 my $poplayer = -1;
 for my $i (0..g_numlayers()-1) {
-   if (g_getname($i) eq $layername) {
-      $poplayer = $i;
-      last;
-   }
+    if (g_getname($i) eq $layername) {
+        $poplayer = $i;
+        last;
+    }
 }
 if ($poplayer == -1 and g_numlayers() == g_maxlayers()) {
-   g_exit("You need to delete a layer.");
+    g_exit("You need to delete a layer.");
 }
 
 # prompt user for number of steps
@@ -235,16 +235,16 @@ my @poplist = ( int(g_getpop()) );
 my @genlist = ( int(g_getgen()) );
 my $oldsecs = time;
 for my $i (0..$numsteps-1) {
-   g_step();
-   push(@poplist, int(g_getpop()));
-   push(@genlist, int(g_getgen()));
-   my $newsecs = time;
-   if ($newsecs - $oldsecs >= 1.0) {     # show pattern every second
-      $oldsecs = $newsecs;
-      fit_if_not_visible();
-      g_update();
-      g_show(sprintf("Step %d of %d", $i+1, $numsteps));
-   }
+    g_step();
+    push(@poplist, int(g_getpop()));
+    push(@genlist, int(g_getgen()));
+    my $newsecs = time;
+    if ($newsecs - $oldsecs >= 1.0) {     # show pattern every second
+        $oldsecs = $newsecs;
+        fit_if_not_visible();
+        g_update();
+        g_show(sprintf("Step %d of %d", $i+1, $numsteps));
+    }
 }
 
 fit_if_not_visible();
@@ -258,9 +258,9 @@ g_setoption("stacklayers", 0);
 g_setoption("tilelayers", 0);
 g_setoption("showlayerbar", 1);
 if ($poplayer == -1) {
-   $poplayer = g_addlayer();
+    $poplayer = g_addlayer();
 } else {
-   g_setlayer($poplayer);
+    g_setlayer($poplayer);
 }
 g_new($layername);
 
@@ -270,18 +270,18 @@ g_setrule($rule);
 
 my ($deadr, $deadg, $deadb) = g_getcolor("deadcells");
 if (($deadr + $deadg + $deadb) / 3 > 128) {
-   # use black if light background
-   g_setcolors([1,0,0,0]);
+    # use black if light background
+    g_setcolors([1,0,0,0]);
 } else {
-   # use white if dark background
-   g_setcolors([1,255,255,255]);
+    # use white if dark background
+    g_setcolors([1,255,255,255]);
 }
 
 my $minpop = min(@poplist);
 my $maxpop = max(@poplist);
 if ($minpop == $maxpop) {
-   # avoid division by zero
-   $minpop -= 1;
+    # avoid division by zero
+    $minpop -= 1;
 }
 my $popscale = ($maxpop - $minpop) / $ylen;
 
@@ -332,14 +332,14 @@ my $x = int(($genlist[0] - $mingen) / $genscale);
 my $y = int(($poplist[0] - $minpop) / $popscale);
 $oldsecs = time;
 for my $i (0..$numsteps-1) {
-   my $newx = int(($genlist[$i+1] - $mingen) / $genscale);
-   my $newy = int(($poplist[$i+1] - $minpop) / $popscale);
-   draw_line($x, -$y, $newx, -$newy);
-   $x = $newx;
-   $y = $newy;
-   my $newsecs = time;
-   if ($newsecs - $oldsecs >= 1.0) {     # show pattern every second
-      $oldsecs = $newsecs;
-      g_update();
-   }
+    my $newx = int(($genlist[$i+1] - $mingen) / $genscale);
+    my $newy = int(($poplist[$i+1] - $minpop) / $popscale);
+    draw_line($x, -$y, $newx, -$newy);
+    $x = $newx;
+    $y = $newy;
+    my $newsecs = time;
+    if ($newsecs - $oldsecs >= 1.0) {     # show pattern every second
+        $oldsecs = $newsecs;
+        g_update();
+    }
 }

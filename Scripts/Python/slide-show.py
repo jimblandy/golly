@@ -9,35 +9,35 @@ from time import sleep
 # ------------------------------------------------------------------------------
 
 def slideshow ():
-   oldalgo = g.getalgo()
-   oldrule = g.getrule()
-   
-   message = "Hit space to continue or escape to exit the slide show..."
-   g.show(message)
-   for root, dirs, files in os.walk(g.getdir("app") + "Patterns"):
-      for name in files:
-         if name.startswith("."):
-            # ignore hidden files (like .DS_Store on Mac)
-            pass
-         else:
-            fullname = join(root, name)
-            g.open(fullname, False)       # don't add file to Open/Run Recent submenu
-            g.update()
-            if name.endswith(".pl") or name.endswith(".py"):
-               # reshow message in case it was changed by script
-               g.show(message)
-            
-            while True:
-               event = g.getevent()
-               if event == "key space none": break
-               g.doevent(event)           # allow keyboard/mouse interaction
-               sleep(0.01)                # avoid hogging cpu
-   
-   # if all patterns have been displayed then restore original algo and rule
-   # (don't do this if user hits escape in case they want to explore pattern)
-   g.new("untitled")
-   g.setalgo(oldalgo)
-   g.setrule(oldrule)
+    oldalgo = g.getalgo()
+    oldrule = g.getrule()
+
+    message = "Hit space to continue or escape to exit the slide show..."
+    g.show(message)
+    for root, dirs, files in os.walk(g.getdir("app") + "Patterns"):
+        for name in files:
+            if name.startswith("."):
+                # ignore hidden files (like .DS_Store on Mac)
+                pass
+            else:
+                fullname = join(root, name)
+                g.open(fullname, False)       # don't add file to Open/Run Recent submenu
+                g.update()
+                if name.endswith(".pl") or name.endswith(".py"):
+                    # reshow message in case it was changed by script
+                    g.show(message)
+
+                while True:
+                    event = g.getevent()
+                    if event == "key space none": break
+                    g.doevent(event)           # allow keyboard/mouse interaction
+                    sleep(0.01)                # avoid hogging cpu
+
+    # if all patterns have been displayed then restore original algo and rule
+    # (don't do this if user hits escape in case they want to explore pattern)
+    g.new("untitled")
+    g.setalgo(oldalgo)
+    g.setrule(oldrule)
 
 # ------------------------------------------------------------------------------
 
@@ -50,15 +50,15 @@ oldscripts = g.setoption("showscripts", False)
 oldpatterns = g.setoption("showpatterns", False)
 
 try:
-   slideshow()
+    slideshow()
 finally:
-   # this code is always executed, even after escape/error;
-   # clear message line in case there was no escape/error
-   g.show("")
-   # restore original state
-   g.setoption("showstatusbar", oldstatus)
-   g.setoption("showtoolbar", oldtoolbar)
-   g.setoption("showlayerbar", oldlayerbar)
-   g.setoption("showeditbar", oldeditbar)
-   g.setoption("showscripts", oldscripts)
-   g.setoption("showpatterns", oldpatterns)
+    # this code is always executed, even after escape/error;
+    # clear message line in case there was no escape/error
+    g.show("")
+    # restore original state
+    g.setoption("showstatusbar", oldstatus)
+    g.setoption("showtoolbar", oldtoolbar)
+    g.setoption("showlayerbar", oldlayerbar)
+    g.setoption("showeditbar", oldeditbar)
+    g.setoption("showscripts", oldscripts)
+    g.setoption("showpatterns", oldpatterns)

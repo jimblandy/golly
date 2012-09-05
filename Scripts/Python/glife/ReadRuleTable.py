@@ -1,9 +1,9 @@
 try:
-  set
+    set
 except NameError:
-  # use sets module if Python version is < 2.4
-  from sets import Set as set
-  
+    # use sets module if Python version is < 2.4
+    from sets import Set as set
+
 import golly
 
 # generate permutations where the input list may have duplicates
@@ -20,7 +20,7 @@ def permu2(xs):
             ts = xs[:]; ts.remove(x)
             for ps in permu2(ts):
                 yield [x]+ps
-                
+
 # With some neighborhoods we permute after building each transition, to avoid
 # creating lots of copies of the same rule. The others are permuted explicitly
 # because we haven't worked out how to permute the Margolus neighborhood while
@@ -113,13 +113,13 @@ SupportedSymmetries = {
 'none':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13]],
 'rotate':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13],
           [0,2,3,1,7,8,9,10,11,12,4,5,6,13],
-          [0,3,1,2,10,11,12,4,5,6,7,8,9,13]], 
+          [0,3,1,2,10,11,12,4,5,6,7,8,9,13]],
 'rotate_reflect':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13],
                   [0,2,3,1,7,8,9,10,11,12,4,5,6,13],
                   [0,3,1,2,10,11,12,4,5,6,7,8,9,13],
                   [0,3,2,1,9,8,7,6,5,4,12,11,10,13],
                   [0,2,1,3,6,5,4,12,11,10,9,8,7,13],
-                  [0,1,3,2,12,11,10,9,8,7,6,5,4,13]], 
+                  [0,1,3,2,12,11,10,9,8,7,6,5,4,13]],
 'permute':[[0,1,2,3,4,5,6,7,8,9,10,11,12,13]], # (gets done later)
 },
 "oneDimensional":
@@ -225,7 +225,7 @@ def ReadRuleTable(filename):
                     # expand for symmetry using the explicit list
                     for s in symmetry:
                         tran = [transition[i] for i in s]
-                        if not tran in transitions: 
+                        if not tran in transitions:
                             transitions.append(tran)
                 # increment the variable values (or break out if done)
                 var_val_to_change = 0
@@ -241,4 +241,3 @@ def ReadRuleTable(filename):
                     break
     f.close()
     return n_states, neighborhood, transitions
-

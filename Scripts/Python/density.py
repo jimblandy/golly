@@ -10,6 +10,6 @@ if bbox.empty: g.exit("The pattern is empty.")
 
 d = float( g.getpop() ) / ( float(bbox.wd) * float(bbox.ht) )
 if d < 0.000001:
-   g.show("Density = %.1e" % d)
+    g.show("Density = %.1e" % d)
 else:
-   g.show("Density = %.6f" % d)
+    g.show("Density = %.6f" % d)

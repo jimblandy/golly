@@ -12,7 +12,7 @@ n_neighbors = 8
 def transition_function(a):
     n = a[0]+a[1]+a[2]+a[3]+a[4]+a[5]+a[6]+a[7]
     if n==2 and a[8]==1:
-        return 1 
+        return 1
     if n==3:
         return 1
     return 0
@@ -24,7 +24,7 @@ name = "ParityNWE"
 n_states = 5
 n_neighbors = 4
 # order for 4 neighbors is N, W, E, S, C
-def transition_function ( s ) : 
+def transition_function ( s ) :
     return ( s[0] + s[1] + s[2] ) % 5
 '''
 
@@ -36,33 +36,32 @@ from glife.RuleTree import *
 CR = chr(13)
 LF = chr(10)
 try:
-   
-   exec(golly.getclipstr().replace(CR+LF,LF).replace(CR,LF))
-   MakeRuleTreeFromTransitionFunction( n_states, n_neighbors, transition_function, 
-                                       golly.getdir("rules")+name+".tree" )
-   golly.setalgo("RuleTree")   # in case name.table exists
-   golly.setrule(name)
-   golly.show("Created "+name+".tree in "+golly.getdir("rules"))
-   
+
+    exec(golly.getclipstr().replace(CR+LF,LF).replace(CR,LF))
+    MakeRuleTreeFromTransitionFunction( n_states, n_neighbors, transition_function,
+                                        golly.getdir("rules")+name+".tree" )
+    golly.setalgo("RuleTree")   # in case name.table exists
+    golly.setrule(name)
+    golly.show("Created "+name+".tree in "+golly.getdir("rules"))
+
 except:
-   import sys
-   import traceback
-   exception, msg, tb = sys.exc_info()
-   golly.warn(\
-'''To use this script, copy a Python format rule definition into the clipboard, e.g.:
+    import sys
+    import traceback
+    exception, msg, tb = sys.exc_info()
+    golly.warn(\
+ '''To use this script, copy a Python format rule definition into the clipboard, e.g.:
 
-name = "ParityNWE"
-n_states = 5
-n_neighbors = 4
-# order for 4 neighbors is N, W, E, S, C
-def transition_function ( s ) : 
-      return ( s[0] + s[1] + s[2] ) % 5
+ name = "ParityNWE"
+ n_states = 5
+ n_neighbors = 4
+ # order for 4 neighbors is N, W, E, S, C
+ def transition_function ( s ) :
+       return ( s[0] + s[1] + s[2] ) % 5
 
-For more examples, see the script file (right-click on it).
-____________________________________________________
+ For more examples, see the script file (right-click on it).
+ ____________________________________________________
 
-A problem was encountered with the supplied rule:
+ A problem was encountered with the supplied rule:
 
-'''+ '\n'.join(traceback.format_exception(exception, msg, tb)))
-   golly.exit()
-
+ '''+ '\n'.join(traceback.format_exception(exception, msg, tb)))
+    golly.exit()

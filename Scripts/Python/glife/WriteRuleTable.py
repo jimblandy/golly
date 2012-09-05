@@ -2,7 +2,7 @@ from copy import deepcopy
 
 def WriteRuleTable(neighborhood,n_states,transitions,output_filename):
     '''Write a rule table format file for the given rule.'''
-    
+
     def toName(i,output=''):
         '''Convert [0,1,2,...,26,...] to ['a','b','c',...,'aa',...].'''
         output = chr(ord('a')+i%26) + output
@@ -13,10 +13,10 @@ def WriteRuleTable(neighborhood,n_states,transitions,output_filename):
     f.write('neighborhood:'+neighborhood+'\n')
     f.write('symmetries:none\n') # our transitions list is expanded for symmetries
     f.write('n_states:'+str(n_states)+'\n\n')
-    
+
     vars = {} # e.g. (0,1,2):['aa','bf'] (need multiple names to avoid binding)
     iNextName = 0
-    
+
     # pass 1: collect and output the variables, replacing inputs with strings
     transitions_with_strings = deepcopy(transitions) # don't want to change our input list
     for t in transitions_with_strings:
@@ -47,6 +47,6 @@ def WriteRuleTable(neighborhood,n_states,transitions,output_filename):
     f.write('\n')
     for t in transitions_with_strings:
         f.write(','.join(t)+'\n')
-        
+
     f.flush()
     f.close()

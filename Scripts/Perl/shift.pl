@@ -21,35 +21,35 @@ g_exit("Bad y value: $y") unless $y =~ /^[+-]?\d+$/;
 
 # check optional mode
 if ($mode eq "") {
-   $mode = "or";
+    $mode = "or";
 } else {
-   $mode = lc($mode);
-   $mode = "copy" if $mode eq "c";
-   $mode = "or"   if $mode eq "o";
-   $mode = "xor"  if $mode eq "x";
-   if (not ($mode eq "copy" or $mode eq "or" or $mode eq "xor")) {
-      g_exit("Unknown mode: $mode (must be copy/or/xor)");
-   }
+    $mode = lc($mode);
+    $mode = "copy" if $mode eq "c";
+    $mode = "or"   if $mode eq "o";
+    $mode = "xor"  if $mode eq "x";
+    if (not ($mode eq "copy" or $mode eq "or" or $mode eq "xor")) {
+        g_exit("Unknown mode: $mode (must be copy/or/xor)");
+    }
 }
 
 # abort shift if the new selection would be outside a bounded grid
 if (g_getwidth() > 0) {
-   my $gridl = -int(g_getwidth()/2);
-   my $gridr = $gridl + g_getwidth() - 1;
-   my $newl = $selrect[0] + $x;
-   my $newr = $newl + $selrect[2] - 1;
-   if ($newl < $gridl or $newr > $gridr) {
-      g_exit("New selection would be outside grid.");
-   }
+    my $gridl = -int(g_getwidth()/2);
+    my $gridr = $gridl + g_getwidth() - 1;
+    my $newl = $selrect[0] + $x;
+    my $newr = $newl + $selrect[2] - 1;
+    if ($newl < $gridl or $newr > $gridr) {
+        g_exit("New selection would be outside grid.");
+    }
 }
 if (g_getheight() > 0) {
-   my $gridt = -int(g_getheight()/2);
-   my $gridb = $gridt + g_getheight() - 1;
-   my $newt = $selrect[1] + $y;
-   my $newb = $newt + $selrect[3] - 1;
-   if ($newt < $gridt or $newb > $gridb) {
-      g_exit("New selection would be outside grid.");
-   }
+    my $gridt = -int(g_getheight()/2);
+    my $gridb = $gridt + g_getheight() - 1;
+    my $newt = $selrect[1] + $y;
+    my $newb = $newt + $selrect[3] - 1;
+    if ($newt < $gridt or $newb > $gridb) {
+        g_exit("New selection would be outside grid.");
+    }
 }
 
 # do the shift by cutting the current selection and pasting it into

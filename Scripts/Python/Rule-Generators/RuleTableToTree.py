@@ -35,14 +35,13 @@ if not neighborhood in Converters:
     golly.warn("Unsupported neighborhood: "+neighborhood)
     golly.show('')
     golly.exit()
-    
+
 golly.show("Building rule tree...")
-rule_name = Converters[neighborhood]( neighborhood, 
-                                      n_states, 
-                                      transitions, 
+rule_name = Converters[neighborhood]( neighborhood,
+                                      n_states,
+                                      transitions,
                                       filename )
 
 golly.setalgo('RuleTree')
 golly.setrule(rule_name)
 golly.show('Created '+rule_name+'.tree and selected that rule.')
-

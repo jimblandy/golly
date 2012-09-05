@@ -12,8 +12,8 @@ my $ht = $selrect[3];
 
 my $selcells = g_getcells(@selrect);
 if (!g_empty()) {
-   g_clear(0);
-   g_clear(1);
+    g_clear(0);
+    g_clear(1);
 }
 
 # get current rule, remove any existing suffix, then add new suffix

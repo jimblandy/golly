@@ -7,6 +7,6 @@ r = rect( g.getrect() )
 if r.empty: g.exit("There is no pattern.")
 
 for row in xrange(r.top, r.top + r.height):
-   for col in xrange(r.left, r.left + r.width):
-      s = g.getcell(col,row)
-      g.setcell(col, row, (s+s%2)/2-1)
+    for col in xrange(r.left, r.left + r.width):
+        s = g.getcell(col,row)
+        g.setcell(col, row, (s+s%2)/2-1)

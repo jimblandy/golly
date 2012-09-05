@@ -7,16 +7,16 @@ from glife.RuleTree import *
 
 # AKT: itertools.product is new in Python 2.6
 try:
-   from itertools import product
+    from itertools import product
 except ImportError:
-   # see http://docs.python.org/library/itertools.html#itertools.product
-   def product(*args, **kwds):
-      pools = map(tuple, args) * kwds.get('repeat', 1)
-      result = [[]]
-      for pool in pools:
-         result = [x+[y] for x in result for y in pool]
-      for prod in result:
-         yield tuple(prod)
+    # see http://docs.python.org/library/itertools.html#itertools.product
+    def product(*args, **kwds):
+        pools = map(tuple, args) * kwds.get('repeat', 1)
+        result = [[]]
+        for pool in pools:
+            result = [x+[y] for x in result for y in pool]
+        for prod in result:
+            yield tuple(prod)
 
 spec = golly.getstring(
 '''This script will write and select the rule "Fredkin-mod-n", for a given N.
@@ -45,8 +45,8 @@ for nh in nhoods.keys():
 if nhood=='':
     golly.exit('Unsupported string: '+spec)
 if n<2 or n>255:
-   golly.exit('Value of N must lie between 2 and 255.')
-   
+    golly.exit('Value of N must lie between 2 and 255.')
+
 # assemble the transitions
 nbors = {'vonNeumann':4,'Moore':8,'hexagonal':6,'triangularVonNeumann':3,
          'triangularMoore':12}
@@ -64,9 +64,9 @@ Converters = {
 }
 
 golly.show("Building rule tree...")
-rule_name = Converters[nhood]( nhood, 
-                               n, 
-                               transitions, 
+rule_name = Converters[nhood]( nhood,
+                               n,
+                               transitions,
                                rule_name+'.tree' )
 
 golly.setrule(rule_name)

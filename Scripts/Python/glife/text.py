@@ -130,7 +130,7 @@ __mfont['|'] = pattern("2bo$2bo$2bo$2bo$2bo$2bo$2bo!")
 __mfont['}'] = pattern("bo$2bo$2bo$3bo$2bo$2bo$bo!")
 __mfont['~'] = pattern("2$bo$obobo$3bo!")
 for key in __mfont:
-   __mfont[key].width = 6
+    __mfont[key].width = 6
 
 # Snakial font (all chars are stable Life patterns)
 
@@ -159,23 +159,23 @@ __sfont['-'] = pattern ("2obo$ob2o!", 0, -8)
 __sfont['-'].width = 6
 
 def make_text (string, font='Snakial'):
-   p = pattern ()
-   x = 0
-   
-   if lower(font[:2]) == "ea":
-      f = __eafont
-      unknown = '-'
-   elif lower(font) == "mono":
-      f = __mfont
-      unknown = '?'
-   else:
-      f = __sfont
-      unknown = '-'
-   
-   for c in string:
-      if not f.has_key (c): c = unknown
-      symbol = f[c]
-      p += symbol (x, 0)
-      x += symbol.width
-   
-   return p
+    p = pattern ()
+    x = 0
+
+    if lower(font[:2]) == "ea":
+        f = __eafont
+        unknown = '-'
+    elif lower(font) == "mono":
+        f = __mfont
+        unknown = '?'
+    else:
+        f = __sfont
+        unknown = '-'
+
+    for c in string:
+        if not f.has_key (c): c = unknown
+        symbol = f[c]
+        p += symbol (x, 0)
+        x += symbol.width
+
+    return p

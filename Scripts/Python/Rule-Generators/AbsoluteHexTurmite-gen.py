@@ -7,11 +7,11 @@ from glife.WriteRuleTable import *
 
 # AKT: Python 2.3 doesn't have "set" built-in
 try:
-   set
+    set
 except NameError:
-   from sets import Set as set
+    from sets import Set as set
 
-prefix = 'AbsoluteHexTurmite' 
+prefix = 'AbsoluteHexTurmite'
 
 dirs = ['A','B','C','D','E','F']
 opposite_dirs = [3,4,5,0,1,2]
@@ -72,12 +72,12 @@ while True: # (we break out if ok)
     # so was the rule acceptable, in the end?
     if is_rule_acceptable:
         break
-        
+
 spec = golly.getstring(
 '''This script will create an Absolute-movement HexTurmite CA for a given specification.
 
 Enter a specification string: a curly-bracketed table of n_states rows
-and n_colors columns, where each entry is a triple of integers. 
+and n_colors columns, where each entry is a triple of integers.
 The elements of each triple are:
 a: the new color of the square
 b: the direction(s) for the Turmite to move ('A', 'B', .. , 'F')
@@ -85,7 +85,7 @@ c: the new internal state of the Turmite
 
 Example:
 {{{1, 'A', 0}, {0, 'B', 0}}}
-Has 1 state and 2 colors. The triple {1,'A',0} says: 
+Has 1 state and 2 colors. The triple {1,'A',0} says:
 1. set the color of the square to 1
 2. move in direction 'A'
 3. adopt state 0
@@ -101,7 +101,7 @@ n_colors = len(action_table[0])
 # (N.B. The terminology 'state' here refers to the internal state of the finite
 #       state machine that each Turmite is using, not the contents of each Golly
 #       cell. We use the term 'color' to denote the symbol on the 2D 'tape'. The
-#       actual 'Golly state' in this emulation of Turmites is given by the 
+#       actual 'Golly state' in this emulation of Turmites is given by the
 #       "encoding" section below.)
 n_dirs = 6
 
@@ -112,7 +112,7 @@ if total_states > 256:
     golly.warn("Number of states required exceeds Golly's limit of 256.")
     golly.exit()
 
-# encoding: 
+# encoding:
 # (0-n_colors: empty square)
 def encode(c,s):
     # turmite on color c in state s
@@ -133,9 +133,9 @@ def flatten(l, ltypes=(list, tuple)):
                 l[i:i + 1] = l[i]
         i += 1
     return ltype(l)
-    
+
 # convert the string to a form we can embed in a filename
-spec_string = '_'.join(map(str,flatten(action_table))) 
+spec_string = '_'.join(map(str,flatten(action_table)))
 # (ambiguous but we have to try something)
 
 not_arriving_from_here = [range(n_colors) for i in range(n_dirs)] # (we're going to modify them)
@@ -145,7 +145,7 @@ for color in range(n_colors):
         for iMove,move in enumerate(dirs):
             if not move in moveset: # didn't turn this way
                 not_arriving_from_here[opposite_dirs[iMove]] += [encode(color,state)]
-                    
+
 # What states leave output_color behind?
 leaving_color_behind = {}
 for output_color in range(n_colors):
@@ -250,7 +250,7 @@ for color in range(n_colors):
         for row in range(7):
             for column in range(7):
                 pixels[15+row][(encode(color,state)-1)*15+column] = [palette[0],bg,fg][small[row][column]]
-            
+
 WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
 
 # -- select the new rule --
@@ -262,5 +262,3 @@ golly.new(rule_name+'-demo.rle')
 golly.setcell(0,0,encode(0,0)) # start with a single turmite
 
 golly.show('Created '+rule_name+'.tree and '+rule_name+'.icons and selected that rule.')
-
-

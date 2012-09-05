@@ -6,7 +6,7 @@ import string
 from glife.EmulateTriangular import *
 from glife.WriteRuleTable import *
 
-prefix = 'TriTurmite' 
+prefix = 'TriTurmite'
 
 # http://bytes.com/topic/python/answers/25176-list-subsets
 get_subsets = lambda items: [[x for (pos,x) in zip(range(len(items)), items) if (2**pos) & switches] for switches in range(2**len(items))]
@@ -84,7 +84,7 @@ spec = golly.getstring(
 '''This script will create a TriTurmite CA for a given specification.
 
 Enter a specification string: a curly-bracketed table of n_states rows
-and n_colors columns, where each entry is a triple of integers. 
+and n_colors columns, where each entry is a triple of integers.
 The elements of each triple are:
 a: the new color of the square
 b: the direction(s) for the Turmite to turn (1=Left, 2=Right, 4=U-turn)
@@ -92,7 +92,7 @@ c: the new internal state of the Turmite
 
 Example:
 {{{1, 2, 0}, {0, 1, 0}}}
-Has 1 state and 2 colors. The triple {1,2,0} says: 
+Has 1 state and 2 colors. The triple {1,2,0} says:
 1. set the color of the square to 1
 2. turn right (2)
 3. adopt state 0 (no change) and move forward one square
@@ -117,7 +117,7 @@ n_colors = len(action_table[0])
 # (N.B. The terminology 'state' here refers to the internal state of the finite
 #       state machine that each Turmite is using, not the contents of each Golly
 #       cell. We use the term 'color' to denote the symbol on the 2D 'tape'. The
-#       actual 'Golly state' in this emulation of Turmites is given by the 
+#       actual 'Golly state' in this emulation of Turmites is given by the
 #       "encoding" section below.)
 n_dirs = 3
 
@@ -130,7 +130,7 @@ if total_states > 128: # max allowed using checkerboard emulation (see EmulateTr
     golly.warn("Number of states required exceeds Golly's limit of 255.")
     golly.exit()
 
-# encoding: 
+# encoding:
 # (0-n_colors: empty square)
 def encode(c,s,d):
     # turmite on color c in state s facing away from direction d
@@ -151,14 +151,14 @@ def flatten(l, ltypes=(list, tuple)):
                 l[i:i + 1] = l[i]
         i += 1
     return ltype(l)
-    
+
 # convert the string to a form we can embed in a filename
-spec_string = ''.join(map(str,map(lambda x:hex(x)[2:],flatten(action_table)))) 
+spec_string = ''.join(map(str,map(lambda x:hex(x)[2:],flatten(action_table))))
 # (ambiguous but we have to try something)
 
 # what direction would a turmite have been facing to end up here from direction
 # d if it turned t: would_have_been_facing[t][d]
-would_have_been_facing={ 
+would_have_been_facing={
 1:[2,0,1], # left
 2:[1,2,0], # right
 4:[0,1,2], # u-turn
@@ -173,7 +173,7 @@ for color in range(n_colors):
                 for dir in range(n_dirs):
                     facing = would_have_been_facing[turn][dir]
                     not_arriving_from_here[dir] += [encode(color,state,facing)]
-                    
+
 # What states leave output_color behind?
 leaving_color_behind = {}
 for output_color in range(n_colors):
@@ -412,11 +412,11 @@ if total_states<=16:
                                         pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ud][row][column]]
 
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
-    
+
 elif total_states<=128:
 
     TriangularTransitionsToRuleTree_CheckerboardMethod("triangularVonNeumann",total_states,transitions,rule_name)
-    
+
     width = 15*(total_states*2-2) + 15 # we set the background color
     height = 22
     pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
@@ -533,7 +533,7 @@ elif total_states<=128:
                             [palette[0],bg_color,fg_color][lower7x7[2-dir][6-row][column]]
 
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
-    
+
 else:
 
     golly.warn('Too many states!')
@@ -548,5 +548,3 @@ golly.new(rule_name+'-demo.rle')
 golly.setcell(0,0,encode(0,0,0)) # start with a single turmite
 
 golly.show('Created '+rule_name+'.tree and '+rule_name+'.icons and selected that rule.')
-
-

@@ -7,9 +7,9 @@ import struct
 def WriteBMP(pixels,filename):
     '''
     Write a BMP to filename from the (r,g,b) triples in pixels[row][column].
-    
+
     Usage example:
-    
+
     WriteBMP( [[(255,0,0),(0,255,0),(255,255,0)],[(0,0,255),(0,0,0),(0,255,255)]], "test.bmp" )
     '''
     # Here is a minimal dictionary with header values.
@@ -81,4 +81,3 @@ def WriteBMP(pixels,filename):
                   palette+importantcolors+bytes)
     outfile.flush()
     outfile.close()
-

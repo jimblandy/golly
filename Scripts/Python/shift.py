@@ -26,30 +26,30 @@ y = int(xym[1])
 
 # extract optional mode
 if len(xym) > 2:
-   mode = lower(xym[2])
-   if mode=="c": mode="copy"
-   if mode=="o": mode="or"
-   if mode=="x": mode="xor"
-   if not (mode == "copy" or mode == "or" or mode == "xor"):
-      g.exit("Unknown mode: " + xym[2] + " (must be copy/or/xor)")
+    mode = lower(xym[2])
+    if mode=="c": mode="copy"
+    if mode=="o": mode="or"
+    if mode=="x": mode="xor"
+    if not (mode == "copy" or mode == "or" or mode == "xor"):
+        g.exit("Unknown mode: " + xym[2] + " (must be copy/or/xor)")
 else:
-   mode = "or"
+    mode = "or"
 
 # abort shift if the new selection would be outside a bounded grid
 if g.getwidth() > 0:
-   gridl = -int(g.getwidth()/2)
-   gridr = gridl + g.getwidth() - 1
-   newl = selrect[0] + x
-   newr = newl + selrect[2] - 1
-   if newl < gridl or newr > gridr:
-      g.exit("New selection would be outside grid.")
+    gridl = -int(g.getwidth()/2)
+    gridr = gridl + g.getwidth() - 1
+    newl = selrect[0] + x
+    newr = newl + selrect[2] - 1
+    if newl < gridl or newr > gridr:
+        g.exit("New selection would be outside grid.")
 if g.getheight() > 0:
-   gridt = -int(g.getheight()/2)
-   gridb = gridt + g.getheight() - 1
-   newt = selrect[1] + y
-   newb = newt + selrect[3] - 1
-   if newt < gridt or newb > gridb:
-      g.exit("New selection would be outside grid.")
+    gridt = -int(g.getheight()/2)
+    gridb = gridt + g.getheight() - 1
+    newt = selrect[1] + y
+    newb = newt + selrect[3] - 1
+    if newt < gridt or newb > gridb:
+        g.exit("New selection would be outside grid.")
 
 # do the shift by cutting the current selection and pasting it into
 # the new position without changing the current clipboard pattern
@@ -59,7 +59,7 @@ selrect[0] += x
 selrect[1] += y
 g.select(selrect)
 if mode == "copy":
-   g.clear(inside)
+    g.clear(inside)
 g.putcells(selcells, x, y, 1, 0, 0, 1, mode)
 
 if not g.visrect(selrect): g.fitsel()

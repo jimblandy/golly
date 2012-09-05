@@ -66,8 +66,8 @@ For injection, use the pattern:
 
          1  1
             1  1  1  1  1
-         1  1  
-         
+         1  1
+
 Approach from the left into the receiver, then retract. This injects the
 sheathing signal. Then call the inject_trigger command. You can then safely
 retract away. The inject_sheath command was used by Codd but is now
@@ -93,16 +93,16 @@ stop = '1111'
 def write_string(s):
     global program_tape_x, program_tape_y
     for c in s:
-       if c=='1':
-           g.setcell(program_tape_x,program_tape_y,1)
-       program_tape_x += 1
+        if c=='1':
+            g.setcell(program_tape_x,program_tape_y,1)
+        program_tape_x += 1
 
 def write_data_string(s):
     global data_tape_x, data_tape_y
     for c in s:
-       if c=='1':
-           g.setcell(data_tape_x,data_tape_y,1)
-       data_tape_x += 1
+        if c=='1':
+            g.setcell(data_tape_x,data_tape_y,1)
+        data_tape_x += 1
 
 def write_program(program):
     global program_tape_x, program_tape_y
@@ -369,13 +369,13 @@ program = [
 #
 # For retracting vertically after construction another temporary marker is used.
 #
-# Following Ron Hightower's work (thanks Ron!) we copy the data tape first and 
-# then read it from the far end. The data read head is made slightly prominent 
+# Following Ron Hightower's work (thanks Ron!) we copy the data tape first and
+# then read it from the far end. The data read head is made slightly prominent
 # to allow the 000 to be skipped (else it would be detected during tape-copy and
 # would cause it to end), but read correctly from the blank space at the end of
 # the data tape nearest the machine.
 #
-# The instruction set above was just one that I tried. I'm quite sure it is 
+# The instruction set above was just one that I tried. I'm quite sure it is
 # possible to do this more efficiently.
 
 n=3 # found through experiment to give the shortest data tape

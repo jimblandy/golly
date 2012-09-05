@@ -8,11 +8,11 @@ from glife.WriteRuleTable import *
 
 # AKT: Python 2.3 doesn't have "set" built-in
 try:
-   set
+    set
 except NameError:
-   from sets import Set as set
+    from sets import Set as set
 
-prefix = 'HexTurmite' 
+prefix = 'HexTurmite'
 
 turns = [1,2,4,8,16,32]
 
@@ -87,7 +87,7 @@ while True: # (we break out if ok)
     # so was the rule acceptable, in the end?
     if is_rule_acceptable:
         break
-        
+
 '''
 Some interesting rules, mostly discovered through random search:
 1-state 2-color:
@@ -115,7 +115,7 @@ spec = golly.getstring(
 '''This script will create a HexTurmite CA for a given specification.
 
 Enter a specification string: a curly-bracketed table of n_states rows
-and n_colors columns, where each entry is a triple of integers. 
+and n_colors columns, where each entry is a triple of integers.
 The elements of each triple are:
 a: the new color of the square
 b: the direction(s) for the Turmite to turn (1=Forward, 2=Left, 4=Right, 8=Back-left,
@@ -124,7 +124,7 @@ c: the new internal state of the Turmite
 
 Example:
 {{{1, 4, 0}, {0, 2, 0}}}
-Has 1 state and 2 colors. The triple {1,4,0} says: 
+Has 1 state and 2 colors. The triple {1,4,0} says:
 1. set the color of the square to 1
 2. turn right (4)
 3. adopt state 0 and move forward one square
@@ -141,7 +141,7 @@ n_colors = len(action_table[0])
 # (N.B. The terminology 'state' here refers to the internal state of the finite
 #       state machine that each Turmite is using, not the contents of each Golly
 #       cell. We use the term 'color' to denote the symbol on the 2D 'tape'. The
-#       actual 'Golly state' in this emulation of Turmites is given by the 
+#       actual 'Golly state' in this emulation of Turmites is given by the
 #       "encoding" section below.)
 n_dirs = 6
 
@@ -154,7 +154,7 @@ if total_states > 255:
     golly.warn("Number of states required exceeds Golly's limit of 255.")
     golly.exit()
 
-# encoding: 
+# encoding:
 # (0-n_colors: empty square)
 def encode(c,s,d):
     # turmite on color c in state s facing away from direction d
@@ -175,14 +175,14 @@ def flatten(l, ltypes=(list, tuple)):
                 l[i:i + 1] = l[i]
         i += 1
     return ltype(l)
-    
+
 # convert the string to a form we can embed in a filename
-spec_string = '_'.join(map(str,flatten(action_table))) 
+spec_string = '_'.join(map(str,flatten(action_table)))
 # (ambiguous but we have to try something)
 
 # what direction would a turmite have been facing to end up here from direction
 # d if it turned t: would_have_been_facing[t][d]
-would_have_been_facing={ 
+would_have_been_facing={
 1:[0,1,2,3,4,5], # forward
 2:[1,2,3,4,5,0], # left
 4:[5,0,1,2,3,4], # right
@@ -200,7 +200,7 @@ for color in range(n_colors):
                 for dir in range(n_dirs):
                     facing = would_have_been_facing[turn][dir]
                     not_arriving_from_here[dir] += [encode(color,state,facing)]
-                    
+
 # What states leave output_color behind?
 leaving_color_behind = {}
 for output_color in range(n_colors):
@@ -418,7 +418,7 @@ for color in range(n_colors):
             for row in range(7):
                 for column in range(7):
                     pixels[15+row][(encode(color,state,dir)-1)*15+column] = [palette[0],bg,fg][small[dir][row][column]]
-            
+
 WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
 
 # -- select the new rule --
@@ -430,5 +430,3 @@ golly.new(rule_name+'-demo.rle')
 golly.setcell(0,0,encode(0,0,0)) # start with a single turmite
 
 golly.show('Created '+rule_name+'.tree and '+rule_name+'.icons and selected that rule.')
-
-

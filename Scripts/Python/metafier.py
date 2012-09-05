@@ -46,16 +46,16 @@ if len(selrect) == 0: g.exit("There is no selection.")
 layername = "metafied"
 metalayer = -1
 for i in xrange(g.numlayers()):
-   if g.getname(i) == layername:
-      metalayer = i
-      break
+    if g.getname(i) == layername:
+        metalayer = i
+        break
 if metalayer < 0 and g.numlayers() == g.maxlayers():
-   g.exit("You need to delete a layer.")
+    g.exit("You need to delete a layer.")
 
 # note that getrule returns canonical rule string
 rulestr = g.getrule().split(":")[0]
 if (not rulestr.startswith("B")) or (rulestr.find("/S") == -1):
-   g.exit("This script only works with B*/S* rules.")
+    g.exit("This script only works with B*/S* rules.")
 
 # get the current selection
 slist = g.getcells(selrect)
@@ -65,7 +65,7 @@ selheight = selrect[3]
 # create a 2D list of 0s and 1s representing entire selection
 livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
 for i in xrange(0, len(slist), 2):
-   livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
+    livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
 
 # build a patch pattern based on the current rule
 #  that fixes the appropriate broken eaters in the rules table
@@ -79,9 +79,9 @@ else:
 
 # create metafied pattern in separate layer
 if metalayer >= 0:
-   g.setlayer(metalayer)         # switch to existing layer
+    g.setlayer(metalayer)         # switch to existing layer
 else:
-   metalayer = g.addlayer()      # create new layer
+    metalayer = g.addlayer()      # create new layer
 
 # set rule to Life
 rule()
@@ -106,24 +106,24 @@ if os.access(OFFcellFileName, os.R_OK) and os.access(ONcellFileName, os.R_OK):
 else:
     g.show("Building OFF metacell definition...")
     # slide #21: programmables --------------------
-    
+
     LWSS = pattern("b4o$o3bo$4bo$o2bo!", 8, 0)
-    
+
     DiagProximityFuse = pattern("""
     bo$obo$bo2$4b2o$4b2o$59b2o$59b2o3$58b2o2b2o$9b2o3bo5bo5bo5bo5bo5bo5bo
     7b2o2b2o$9bo3bobo3bobo3bobo3bobo3bobo3bobo3bobo$10bo2bo2bo2bo2bo2bo2bo
     2bo2bo2bo2bo2bo2bo2bo2bo$11bobo3bobo3bobo3bobo3bobo3bobo3bobo3bo5b2o$
     12bo5bo5bo5bo5bo5bo5bo5bo3bobo$55bo2bo$56bobo$57bo!
     """, -5, -5)
-    
+
     OrthoProximityFuse = pattern("2o41b2o$2o41bo$41bobo$41b2o!", 1001, 0)
-    
+
     ProximityFuses = LWSS + DiagProximityFuse + OrthoProximityFuse
-    
+
     AllFuses = pattern()
     for i in range(0,4): # place four sets of fuses around cell perimeter
         AllFuses = AllFuses(2047, 0, rcw) + ProximityFuses
-    
+
     temp = pattern("o$3o$3bo$2bo!") # broken eater
     temp += temp(0, 10) + temp(0, 20)
     temp += temp(0, 46) + temp(0, 92)
@@ -134,7 +134,7 @@ else:
     o$bo7$bo$obo$obo$bo23$bo$obo$obo$bo7$bo$obo$obo$bo7$bo$obo$obo$bo!
     """, 123, 1384)
     HoneyBitsS = HoneyBitsB(57, 34)
-    
+
     temp = pattern("2bobo2$obobo2$obo2$obo2$2bobo4$obo2$obobo2$2bobo!")
     S = temp + temp(10, 16, flip) # just practicing...
     B = S + pattern("o6$8bobo2$o2$obo6$o!") # ditto
@@ -159,17 +159,17 @@ else:
 
     TableLabels = VLine(18, 1440) + VLine(96, 1440) + Eater(77, 1446) \
       + HLine(20, 1440) + HLine(20, 1488) + O(39, 1444) + N(55, 1444) \
-      + O(23, 1468) + F(39, 1468) + F(55, 1468) + Eatr(77, 1470) 
+      + O(23, 1468) + F(39, 1468) + F(55, 1468) + Eatr(77, 1470)
     TableLabels += pattern("ob" * 29 + "8bobobo", 120, 1533) \
       + HLine(118, 1391) + VLine2(118, 1393) + VLine2(192, 1393) \
       + B(123, 1410) + B(123, 1456) + B(123, 1502) \
       + S(177, 1398) + S(177, 1444) + S(177, 1490) \
       + LabelDigits(138, 1396) + LabelDigits(168, 1401)
-    
+
     all = AllFuses + TableEaters + TableLabels + HoneyBitsB + HoneyBitsS
-    
+
     # slide 22: linear clock --------------------
-    
+
     LinearClockGun = pattern("""
     19bo$17b3o$16bo$16b2o$30bo$28b3o$27bo$27b2o$13b3o$12bo2b2o$11bo3b2o$
     12b3o$12b2o$15bo$13b2o$13b2o$2b2o5b2o2b2o$bobo9b2o8b2o$bo6b3o12b2o$2o
@@ -189,7 +189,7 @@ else:
     24bo41b2o10b2o26bo$25b3o14b3o20bo2bo9bo28b3o$27bo12bo3b2o20b2o11b3o27b
     o$40bobo2b2o4b2o28bo$39bo5bo5b2o$40bo2b2o$40bo!
     """, 46, 1924)
-    
+
     Gap = "3bo7bo7bo$b3o5b3o5b3o$o7bo7bo$2o6b2o6b2o21$" # string, not pattern!
     LinearClockEaters = pattern("3bo$b3o$o$2o5$" * 36 + Gap \
       + "3bo$b3o$o$2o5$" * 10 + "24$" + "3bo$b3o$o$2o5$" * 17 \
@@ -204,60 +204,60 @@ else:
     34bobo$34bobo$35bo!
     """, 83, 401)
     all += LinearClockGun[1840] + LinearClockEaters + LinearClockCap
-    
+
     # slide 23: MWSS track --------------------
-    
+
     MWSS = pattern("b5o$o4bo$5bo$o3bo$2bo!", 521, 1973)
-    
+
     P46Osc = pattern("""
     40bo$31b2o5b3o$10b3o14b2o3bo4bo$10bo3bo12b2o3bobo3bo$3bo6bo4bo17bobo3b
     o$b3o7bo3bo18bo3b2o$o$b3o7bo3bo7b3o$3bo6bo4bo5b2obob2o$10bo3bo5bo5b2o$
     10b3o8b2obob2o$23b3o!""")
-    
+
     P46Gun = pattern("""
     31b2o$30b2o$31b5o9bo$16b3o13b4o9b3o$14bo3bo29bo$3bo9bo4bo13b4o9b3o$b3o
     9bo3bo13b5o9bo$o29b2o$b3o9bo3bo13b2o$3bo9bo4bo$14bo3bo$16b3o!""")
-    
+
     GliderToMWSS = P46Osc(449, 1963) + P46Gun(474, 1981)
     # exact match would be P46Gun[46](474, 1981), but that glider is absorbed
-    
+
     StateBit = pattern("b2o$obo$bo!", 569, 1970)
     Snake = pattern("2o$o$bo$2o!", 570, 1965)
-    
+
     BitKeeper = pattern("""
     15bobo2b2o19b2o$14bo3bob3o19bo$15bo6b2o15b3o$3bo12b5obo16bo$b3o15b3o$o
     $b3o15b3o$3bo12b5obo$15bo6b2o3b2o$14bo3bob3o4b2o$15bobo2b2o!
     """, 524, 1982)
-    
+
     GliderFromTheBlue = pattern("""
     23b2o$23bo2bobo$25b2ob3o$31bo$25b2ob3o$12bo3bo8b2obo$11bo5bo$17bo$3bo
     8bo3b2o$b3o9b3o$o$b3o9b3o19bo$3bo8bo3b2o7bo7b3o$17bo4bo2bob2o3bo$11bo
     5bo10bo4bo$12bo3bo10bo4b2o2$23b5o$24b4o$26bo!""")
-    
+
     GliderToLWSS = pattern("""
     3bo$2bobo$bo3bo3b2o$b5o3b2o$obobobo$bo3bo2$bo3bo$obobobo$b5o$bo3bo$2bo
     bo$3bo6$b3o5b3o$2ob2o3b2ob2o$2obobobobob2o$bo3bobo3bo$bo2bo3bo2bo$2b3o
     3b3o4$4b2ob2o$5bobo$5bobo$6bo!""", 663, 1931) # P46Osc really
-    
+
     ReflectLWSS = pattern("""
     b2o$b2o8$b3o3b3o$o2bo3bo2bo$2obo3bob2o14$3b2ob2o$4bobo$4bobo$5bo!
     """, 589, 1940)
-    
+
     ReflectLWSS2 = pattern("""
     15b2o3bo$15b3obob2o4b2o$15b3o4bo4b2o$3bo14bo3bo$b3o15b3o$o$b3o15b3o$3b
     o14bo3bo$15b3o4bo$15b3obob2o$15b2o3bo!""", 573, 1884) # P46Osc really
-    
+
     LWSStoBoat = pattern("""
     2o14b2o9b2o$2o15b2o8b2o$13b5o$13b4o2$3b2o8b4o$2bobob2o5b5o$b2o3b2o9b2o
     8b2o$2bobob2o8b2o9b2o$3b2o!""", 821, 1883) # P46Osc really
-    
+
     ReflectMWSS = pattern("""
     22b2o5b2o$18b2o2b2o5b2o2b2o$18b2o2b2o5b2o2b2o$22b3o3b3o$21bo2bo3bo2bo$
     25bobo$21b2o7b2o$21b2o7b2o$24bo3bo$24b2ob2o$22b3o3b3o$22b2o5b2o$22bo7b
     o10$b2o27b2o$b2o25b2ob2o$26bo2bobo$6bo3b2o14bo$2o2b2obob3o14bo4bo$2o2b
     o4b3o15bo3bo$4bo3bo15b2o2b3o$5b3o16b2o2$5b3o$4bo3bo$2o2bo4b3o13b2o$2o
     2b2obob3o13b2o$6bo3b2o2$b2o$b2o!""")
-    
+
     HoneyBit = pattern("b2o$o2bo$b2o!")
     CornerSignalSystem = pattern()
     CornerSignalSystem += pattern("""
@@ -270,24 +270,24 @@ else:
     CornerSignalSystem += pattern("""
     11b2o$11b2o12$4b3o3b3o$4b3o3b3o$3bob2o3b2obo$3bob2o3b2obo$4b2o5b2o$5bo
     5bo6$2o13b2o$2o2b2o5b2o2b2o$4b2o5b2o!""", 159, 0) # P46OscAlt1 really
-    
+
     SignalSystem = pattern()
     for i in range(0,3): # place three sets of mechanisms to signal neighbors
         SignalSystem = SignalSystem[32](2047, 0, rcw) \
         + HoneyBit(42, 111, rcw) + ReflectMWSS(38, 46) + GliderFromTheBlue(73, 52) \
         + CornerSignalSystem + HoneyBit(964, 40) + GliderFromTheBlue[12](953, 52)
-    
+
     # need to add the fourth (west) side separately because signal stops there,
     #  so two-thirds of the pieces are customized or in slighly different locations
     #  (could have started in SW corner and used range(0,4) for some of it,
     #  but I happened to start in the NW corner and now I'm feeling lazy)
-    
+
     # west edge:
     SignalSystem += HoneyBit(48, 1086, rcw) + pattern("""
     11b2o$12bo$12bob2o$13bobo$3bo$2bobo$2bobo$b2ob2o$4bo$b2o2bo7bo$2bo2bo
     7bobo$o8b3o$2o9b3o2bo$9b2o4b2o$13b2o6$8bo3bo$8bo3bo3$5b2obo3bob2o$6b3o
     3b3o$7bo5bo6$8b2ob2o$9bobo$9bobo$10bo!""", 52, 1059) # GliderFromTheBlue really
-    
+
     # southwest corner:
     SignalSystem += pattern("""
     11b2o$12bo$12bob2o$13bobo$3bo$2bobo$2bobo$b2ob2o2$b2ob2o7b3o$2bob2o6bo
@@ -301,20 +301,20 @@ else:
     SignalSystem += pattern("2o$2o2b2o$4b2o3$4b2o$4b2o!", 1, 1955) + pattern("""
     24b2o$24b2o2$14b3o$13bo4bo6b2o$12bo5bo6b2o$13bo$14b2o2$14b2o$13bo$2o
     10bo5bo6b2o$2o11bo4bo6b2o$14b3o2$24b2o$24b2o!""", 9, 1961) # P46OscAlt1 really
-     
+
     all += SignalSystem + GliderToMWSS + MWSS + Snake + BitKeeper
     all += GliderFromTheBlue(607, 1953) + GliderToLWSS + ReflectLWSS \
            + ReflectLWSS2 + LWSStoBoat
-    
+
     # all += StateBit # do this later on, when defining OFFcell and ONcell
-    
+
     # slide 24: LWSS track --------------------
     # [phase adjusters and a bunch of honeybits]
-    
+
     PhaseAdjuster = P46Gun(2, 11, flip_y) + P46Gun[12](0, 32) \
                     + pattern("o$3o$3bo$2b2o!", 0, 13) \
                     + pattern("2b2o$bobo$bo$2o!", 2, 26) # eaters really
-    
+
     all += PhaseAdjuster[43](1772,10) + PhaseAdjuster[26](2037, 1772, rcw)
     all += PhaseAdjuster[43](269, 2037, flip) + PhaseAdjuster[9](58, 1203, swap_xy_flip)
     # the third adjuster was a different shape in the original metacell,
@@ -338,24 +338,24 @@ else:
     bo$10b2o9b2o5bobo2b2o18bo$11bo9bo6bo3b2o3bo15b2o$12bo2bobo2bo9b3o4b3o
     7b2o$13b2o3b2o20bo6bo$30b3o4b3o8b3o$28bo3b2o3bo12bo$12b2o14bobo2b2o$
     12b2o13bo5bo$28bo2b2o$28bo!""", 108, 710)
-    
+
     all += LWSSPacketGun + pattern("""
     b2o$b2o$7b3o$6bo3bo$6b2ob2o2$6b2ob2o$8bo4$bo7bo$o2bo3bo2bo$4bobo$4bobo
     $4bobo$o2bo3bo2bo$b3o3b3o8$3b2ob2o$4bobo$4bobo$5bo!""", 18, 725) # P46Osc really
-    
+
     P46OscAlt1 = pattern("""
     b2o$b2o2$6bo3b2o$2o2b2obob3o13b2o$2o2bo4b3o13b2o$4bo3bo$5b3o$19b2o3b2o
     $5b3o10b3o3b3o$4bo3bo7b3o7b3o$2o2bo4b3o4b3o7b3o$2o2b2obob3o4b3o7b3o$6b
     o3b2o6b3o3b3o$19b2o3b2o$b2o$b2o!""")
-    
+
     all += P46OscAlt1(4, 24) + P46OscAlt1[12](224, 67, swap_xy_flip)
-    
+
     P46OscAlt2 = pattern("""
     2o8b3o14b2o$2o8bo3bo12b2o$10bo4bo$11bo3bo2$11bo3bo7b3o$10bo4bo5b2obob
     2o$2o8bo3bo5bo5b2o$2o8b3o8b2obob2o$23b3o!""")
-    
+
     all += P46OscAlt2(179, 19) + P46OscAlt1[29](2023, 4, rcw)
-    
+
     # got impatient here, started throwing in placeholders instead of true definitions --
     # NE corner along E edge:
     all += pattern("""
@@ -363,14 +363,14 @@ else:
     o$8bo10b2o3b2o2$8bo$7b2o$2o4b2obo15b2o$2o5bobo15b2o$8b2o2$b2o$b2o!
     """, 1980, 208) + pattern("""
     2b2o5b2o$2b2o5b2o15$b3o5b3o$2ob2o3b2ob2o$2obobobobob2o$bo3bobo3bo$bo2b
-    o3bo2bo$2b3o3b3o6$9b2o$9b2o!""", 2018, 179) # both P46OscAlt really 
-    
+    o3bo2bo$2b3o3b3o6$9b2o$9b2o!""", 2018, 179) # both P46OscAlt really
+
     # SE corner:
     all += pattern("""
     24b2o$24b2o$14bo$13bo2bo$12b5o8b2o$11b2ob3o8b2o$12bob2o$13b2o2$13b2o$
     12bob2o$2o9b2ob3o8b2o$2o10b5o8b2o$13bo2bo$14bo$24b2o$24b2o!
-    """, 2017, 2007) # P46OscAlt really 
-    
+    """, 2017, 2007) # P46OscAlt really
+
     # SE corner along S edge:
     all += pattern("""
     4b2o5b2o$2o2b2o5b2o2b2o$2o13b2o10$4bo7bo$3bobo5bobo$6bo3bo$3bo2bo3bo2b
@@ -378,14 +378,14 @@ else:
     $4b2o!""", 1823, 1980) + pattern("""
     20bo$15bo3bo$14bo8b2o2b2o$14bo2b2o5bo2b2o$15b2o5bobo$16b3o3b2o2$16b3o
     3b2o$15b2o5bobo$2o12bo2b2o5bo2b2o$2o12bo8b2o2b2o$15bo3bo$20bo!
-    """, 1840, 2018) # both P46OscAlt really 
-    
+    """, 1840, 2018) # both P46OscAlt really
+
     # SW corner:
     all += pattern("""
     4b2o4b3o$4b2o3bo3bo$9b2ob2o$10bobo2$10bobo$9b2ob2o$9bo3bo$10b3o9$3b3o
     5b3o$3bo2b2ob2o2bo$4b3o3b3o$5bo5bo4$2o13b2o$2o2b2o5b2o2b2o$4b2o5b2o!
-    """, 24, 2017) # P46OscAlt really 
-    
+    """, 24, 2017) # P46OscAlt really
+
     # SW corner along W edge:
     all += pattern("""
     24b2o$24b2o3$2o14b2o7b2o$2o15b2o6b2o$13b5o$13b4o2$3b2o8b4o$2bobob2o5b
@@ -394,41 +394,41 @@ else:
     b2o5bo$b2o4bobo$6bo3bo$6bo3bo$5b3ob3o$6bo3bo$6b2ob2o$7bobo$8bo5$3bo3bo
     $3bo3bo3$2obo3bob2o$b3o3b3o$2bo5bo8$b2o5b2o$b2o5b2o!
     """, 6, 1786) # both P46OscAlt really
-    
-    
+
+
     # LWSS -> G -> LWSS timing adjustment, middle of W edge:
     all += pattern("""
     b2o5b2o$b2o5b2o16$3o5b3o$o2b2ob2o2bo$b3o3b3o$2bo5bo7$b2o$b2o!
     """, 10, 1217) + pattern("""
     4bo$2b5o10bo$bo2bob2o9b2o8b2o$o7bo9b2o7b2o$bo2bob2o5b2o2b2o$2b5o$4bo2$
     13b2o2b2o$2o16b2o7b2o$2o15b2o8b2o$17bo!
-    """, 35, 1269) # both P46OscAlt really 
-    
+    """, 35, 1269) # both P46OscAlt really
+
     # final LWSS reflector, middle of W edge:
     all += pattern("""
     15bo$14b2o$13b3obo9b2o$12b2o13b2o$3bo9b2o$b3o10bo$o$b3o10bo10bo$3bo9b
     2o8b2obo$12b2o8b2ob3o$13b3obo5bo2bo$14b2o8b2o$15bo!
-    """, 8, 973) # P46Osc really 
-    
+    """, 8, 973) # P46Osc really
+
     # slide 25: decode --------------------
-    
+
     # sync buffer:
     all += pattern("""
     b2o5b2o$b2o5b2o7$2bo5bo$b3o3b3o$o2b2ob2o2bo$3o5b3o9$b3o$o3bo$2ob2o$bob
     o2$bobo$2ob2o$o3bo3b2o$b3o4b2o!""", 150, 958) # P46OscAlt3 really
-    
+
     all += pattern("""
     10b2o$2o6b2ob2o14b2o$2o6bo2bo15b2o$8bo2bo$9b2o2$9b2o$8bo2bo$8bo2bo15b
     2o$8b2ob2o14b2o$10b2o!""", 155, 998) # P46OscAlt3 really
-    
+
     all += pattern("""
     15bobo2b2o$2o12bo3bob3o4b2o$2o13bo6b2o3b2o$16b5obo$19b3o2$19b3o$16b5ob
     o$2o13bo6b2o$2o12bo3bob3o$15bobo2b2o!""", 114, 1008) # P46OscAlt3 really
-    
+
     all += pattern("""
     b2o$b2o11$2bo5bo$bobo3bobo$o3bobo3bo$o3bobo3bo$o9bo2$b2o5b2o3$3b2ob2o$
     4bobo$3b2ob2o$4bobo$3b2ob2o$4bobo$4bobo$5bo!""", 141, 1024) # P46OscAlt3 really
-    
+
     # P46 to P40 converter:
     all += pattern("""
     14bo$14b3o$17bo$16b2o50bo$10b2o54b3o$11bo53bo$11bobo51b2o$12b2o57b2o$
@@ -474,42 +474,42 @@ else:
     7bo2$19b2o$19b2o4$2b2o$3bo$3bobo$4b2o4b4o$9b2o2bo5b2o$8b2o2bo4bobob2o$
     9bo2bo2b2o5bo$10b2o6bo3bo$15bo5bo11b2o$16b4o13bobo$18bo16bo$35b2o$29b
     2o$29bo$30b3o$32bo$18b2o$18bo$19b3o$21bo!""", 116, 1059) # really 14 p184 guns
-    
+
     # logic core latches:
     all += pattern("""
     24bo2bo$14b3o7bo$13bo4bo9bo$12bo5bo8b2o$3bo9bo8bo$b3o10b2o8b2o$o$b3o
     10b2o8b2o$3bo9bo8bo3bo$12bo5bo4bo2bo$13bo4bo4bo2bo$14b3o7b2o!
     """, 33, 1332) # P46Osc really
-    
+
     all += pattern("""
     4b2o5b2o$2o2b2o5b2o2b2o$2o13b2o2$4b3o3b3o$4bo2bobo2bo$3bo3bobo3bo$4bo
     2bobo2bo$6bo3bo$4b2o5b2o$3b3o5b3o$3b3o5b3o5$10b3o$10b3o$9b5o$8b2o3b2o$
     8b2o3b2o4$8b2o3b2o$4b2o2b2o3b2o$4b2o3b5o$10b3o$10b3o!""", 35, 1348) # P46OscAlt1 really
-    
+
     all += pattern("""
     b2o$b2o2$13bobo2b2o$2o10bo3bob3o$2o11bo6b2o$14b5obo$17b3o2$17b3o$14b5o
     bo$2o11bo6b2o3b2o$2o10bo3bob3o4b2o$13bobo2b2o2$b2o$b2o!
     """, 24, 1661) # P46OscAlt1 really
-    
+
     all += pattern("""
     b2o$b2o12$b3o3b3o$b3o3b3o$ob2o3b2obo$ob2o3b2obo$b2o5b2o$2bo5bo3$3b2ob
     2o$4bobo$4bobo$4bobo$3b2ob2o$4bobo$4bobo$5bo!""", 49, 1679) # P46Osc really
-    
+
     all += pattern("""
     b2o$o2bo$o7bo$o2bo3bobo$2ob2ob2ob2o$4bobo$3b2ob2o5$b3o3b3o$o9bo$o3bobo
     3bo$b3o3b3o$2bo5bo10$3b2ob2o$4bobo$4bobo$5bo!""", 140, 1546) # P46Osc really
-    
+
     all += pattern("""
     2b3o$2b3o4b2o$bo3bo3b2o$o5bo$b2ob2o2$b2ob2o$o5bo$bo3bo$2b3o$2b3o7$b2o
     7b2o$bob2o3b2obo$bo3bobo3bo$b2o2bobo2b2o$2b3o3b3o$3bo5bo6$2b2o5b2o$2b
     2o5b2o!""", 184, 1538) # P46OscAlt3 really
-    
+
     all += pattern("2o$o$b3o$3bo!", 159, 1537) # eater really
-    
+
     # slide 26: read B/S table --------------------
     # most of the B/S logic latches -- missing some reflectors off to the left (?)
     # TODO: take this apart and integrate with missing pieces
-    
+
     all += pattern("""
     34bo$33bobo$33bobo$32b2ob2o11$30bo7bo22b2o5b2o$29bobo5bobo21b2o5b2o$
     32bo3bo$29bo2bo3bo2bo$30bobo3bobo$32b2ob2o$29b2ob2ob2ob2o$29b2o2bobo2b
@@ -545,7 +545,7 @@ else:
     60b2o$60bo!""", 108, 1317)
 
     # slide 27: boat logic --------------------
-    
+
     all += pattern("""
     32b4o$31b2o2bo$30b2o2bo$26bo4bo2bo25b2o$24b3o5b2o25b2ob2o$23bo36bo2bo$
     24b3o5b2o26bo2bo4bo$26bo4bo2bo26b2o5b3o$30b2o2bo36bo$31b2o2bo25b2o5b3o
@@ -553,7 +553,7 @@ else:
     2o12bo2b2o$2o13bo2b2o$15bo2bo$16b2o2$16b2o15b2ob2o$15bo2bo12bobo3bo$2o
     13bo2b2o5b2o3bobo3bo$2o12bo2b2o6b2o3bo4bo$14b4o11b2o5b3o$38bo$b2o$b2o!
     """, 209, 1852) # P46Osc plus P46Gun plus custom eater really
-    
+
     # boat-logic:  need to add outlying pieces to west, break up into 12
     all += pattern("""
     119bo$35b2o81b2ob2o$34b5o11b2o54b2o10b2o2bo3b2o217b2o$34bo4bo11bo53bo
@@ -581,45 +581,45 @@ else:
     41b2o5b2o$75bo2bo44bo2bo90b2o5b2o$76b2o46b2o142b2o5b2o$217b2o5b2o41bo
     7bob2o$215b2obo7bo26b2o12bob2o7b4o$212b4o7b2obo12b2o12b2o12b4o5b6o$
     212b6o5b4o12b2o!""", 679, 1875) # P46Osc1-4 boat logic
-    
+
     # mystery stuff along bottom edge that needs a home in a slide:
-    
+
     all += pattern("""
     b2o5b2o$b2o5b2o14$3o5b3o$3o5b3o$b2o5b2o$3bo3bo$bo2bobo2bo$o3bobo3bo$bo
     2bobo2bo$b3o3b3o5$8b2o$8b2o!""", 514, 1887) # P46OscAlt3 really
-    
+
     all += pattern("""
     4bo7b2o$3b2o6bo2bo$2bo8bo2b2o$3b2obo4bo2bo10bo$4b3o6bo11b3o$28bo$4b3o
     6bo11b3o$bob2obo4bo2bo10bo$o10bo2b2o$o3bo6bo2bo$b4o7b2o!
     """, 791, 1929) # P46Osc really
-    
+
     all += pattern("""
     8bo$9bo3bo$2o2b2o8bo$2o2bo5b2o2bo$4bobo5b2o11bo$5b2o3b3o12b3o$28bo$5b
     2o3b3o12b3o$4bobo5b2o11bo$4bo5b2o2bo$4b2o8bo$9bo3bo$8bo!
     """, 845, 1905) # P46Osc really
-    
+
     all += pattern("""
     10b2o$2o6b2ob2o14b2o$2o6bo2bo15b2o$8bo2bo$9b2o2$9b2o10b3ob3o$8bo2bo8bo
     b2ob2obo$2o6bo2bo7b2o7b2o$2o6b2ob2o7bob2ob2obo$10b2o9b3ob3o!
     """, 1050, 1903) # P46OscAlt2 really
-    
+
     all += pattern("""
     9b2o$9b2o11$2b3o3b3o$bo3bobo3bo$o3b2ob2o3bo$ob2o5b2obo$2bo7bo11$2b2o5b
     2o$2b2o5b2o!""", 1088, 1920) # P46OscAlt2 really
-    
+
     all += pattern("""
     11bo$10b4o9bo$2b2o4b2o3bo9bo2b2o$2bo5b2o12bo5bo$3bo4b3o12bobo2b2o$3o
     20bo3b2o3bo$o24b3o4b3o$35bo$25b3o4b3o$23bo3b2o3bo$23bobo2b2o$22bo5bo$
     7bob2o12bo2b2o$5b3ob2o12bo$4bo$5b3ob2o$7bobo2bo$11b2o!
     """, 1106, 1875) # P46OscAlt4 (boat-bit catcher?) really [not defined yet]
-    
+
     all += pattern("""
     25bobo$26bo$17b2o13b2o$16b2ob2o12bo$17bo2bo11bo$3bo13bo2bo4b2o6b3o$b3o
     14b2o15bo$o$b3o14b2o$3bo13bo2bo$17bo2bo$16b2ob2o$17b2o6b2obo$25b2ob3o$
     31bo$25b2ob3o$23bo2bobo$23b2o!""", 1227, 1875) # P46OscAlt4 really
-    
+
     all += pattern("2o$obo$2bo$2b2o!", 1281, 1873) # eater
-    
+
     all += pattern("""
     4b2o5b2o$2o2b2o5b2o2b2o$2o13b2o4$4b3o3b3o$4bo2bobo2bo$3bo3bobo3bo$3b4o
     3b4o$4bo7bo7$5bo$4b3o$3bo3bo$3b2ob2o$3b2ob2o2$3b2ob2o$3b2ob2o$3bo3bo3b
@@ -630,7 +630,7 @@ else:
     4b2o5b2o$2obobo5bobob2o$2ob2o7b2ob2o$2b6ob6o$4bob2ob2obo2$2bo11bo$3bo
     9bo$5bobobobo$5bobobobo$6b2ob2o$3bo2bo3bo2bo$4b2o5b2o13$4b2o$4b2o!
     """, 443, 1980)
-    
+
     # slide 29: toggle dist [not sure what that means, actually] --------------------
     BoatLatchNE = pattern("""
     78b2o5b2o$78b2o5b2o15$77b2o7b2o$77bob2o3b2obo$77bo3bobo3bo$46b2o5b2o
@@ -641,7 +641,7 @@ else:
     10b2o$2o11bo2bo10b2o$14bobo$14b2o2$14b2o$14bobo$2o11bo2bo$2o10b2o2bo$
     15bo$13b2o12$47b4o$46b2o2bo14b2o$45b2o2bo15b2o$46bo2bo$47b2o2$47b2o$
     46bo2bo$38b2o5b2o2bo15b2o$38b2o6b2o2bo14b2o$47b4o!""", 120, 232) # four P46osc really
-    
+
     BoatLatchSW = pattern("""
     76bo$75bo2bo$74b5o10b2o$73b2ob3o10b2o$74bob2o$75b2o72b2o5b2o$145b2o3bo
     5bo3b2o$75b2o68bo15bo$74bob2o68bo13bo$62b2o9b2ob3o10b2o$62b2o10b5o10b
@@ -664,7 +664,7 @@ else:
     obo10b2o72b2o5b2o$27b2o77bobo10b2o$102bo2bo3bo2bo$103b3o3b3o7$99b2o13b
     2o73b2o13b2o$99b2o2b2o5b2o2b2o73b2o2b2o5b2o2b2o$103b2o5b2o81b2o5b2o!
     """, 1534, 1849) # really eleven P45OscAlt1 plus an eater
-    
+
     all += BoatLatchNE + BoatLatchSW + pattern("""
     273b2o$272bo2bo$140b2o130bobobo10b2o2bobo$140b2o131bo2bo3b2o4b3obo3bo
     12b2o$277bo2b2o3b2o6bo13b2o$274bobo9bob5o$287b3o2$287b3o$286bob5o$285b
@@ -695,23 +695,23 @@ else:
     73b2o5bo5bo123bo$10b2o98b2o2bo$114bo13$170b2o2b2o4bo2b2o12b2o$170b2ob
     2o6b2obo12b2o$174bobo6bo$175b2o4b3o2$175b2o4b3o$174bobo6bo$170b2ob2o6b
     2obo$170b2o2b2o4bo2b2o!""", 178, 1939) # really P46Guns and Oscs, etc.
-    
+
     all += pattern("""
     4b2o5b2o$2o2b2o5b2o2b2o$2o13b2o8$5bo5bo$4b3o3b3o$3b2ob2ob2ob2o$2b3o7b
     3o2$4bo7bo5$5bo$4b3o$3bo2bo$3bobobo$4b3o$5bo5b2o$11b2o!
     """, 557, 1931) # P46OscAlt1 really
-    # this particular one reflects a B signal from the above sync-buffer circuitry; 
+    # this particular one reflects a B signal from the above sync-buffer circuitry;
     # the resulting LWSS is converted to a glider which is stored as a boat-bit.
-    
+
     # a few more outlying LWSS reflectors:
     all += pattern("""
     12b3o$10bo4bo11b2o$10bo5bo10b2o$3bobobo7bo$b7o5b2o$o$b7o5b2o$3bobobo7b
     o$10bo5bo$10bo4bo$12b3o!""", 257,1840) + pattern("""
     15b2o$13b2o2bo$13b6o$13b4o4bo3bo$21b7o$28bo$21b7o$13b4o4bo3bo$2o11b6o$
     2o11b2o2bo$15b2o!""", 885, 2033) # both P46Osc really
-    
+
     # slide 30: HWSS control --------------------
-    
+
     HWSSGun = pattern("""
     21b2o23b2o$22bo22bobo$22bobo$23b2o$36b4o8bo$36bob2o7b2o$36bo$37b2o2$
     37b2o$36bo$7b2o2bobo22bob2o7b2o$2o4b3obo3bo21b4o8bo$2o3b2o6bo$6bob5o$
@@ -746,69 +746,69 @@ else:
     20b3o$22bo$34b2o7b2o$32b2o2bo6b2o$32b6o4bo2bo$22bo9b4o5bob2o$20b3o18bo
     b2o$19bo$20b3o18bob2o$22bo9b4o5bob2o14b2o$32b6o4b3ob2o11bo$32b2o2bo6bo
     bobo12b3o$34b2o7b4o15bo$44b2o!""") # TODO: take this apart further
-    
+
     LWSSFromTheBlue = pattern("""
     27b2o5b2o$23b2o2b2o5b2o2b2o$23b2o13b2o2$28bo5bo$27b3o3b3o$26bo2b2ob2o
     2bo$26bo3bobo3bo$28bobobobo2$25b2ob2o3b2ob2o$27bo7bo8$10b2o$8b2ob2o$8b
     o2bo$3bo4bo2bo$b3o5b2o15bo$o21b5o$b3o5b2o10bo2b3o7b2o$3bo4bo2bo10b2o
     10b2o$8bo2bo$8b2ob2o$10b2o$25bo$25bo!""") # P46Osc really
-    
+
     RowOfLWSSFTB = pattern("o$3o$3bo$2b2o!", 1737, 24)
     for i in range(43):
         RowOfLWSSFTB += LWSSFromTheBlue[(i*12) % 46](40*i, 0)
-    
+
     HWSSHalfControl = HWSSGun(106, 87) + RowOfLWSSFTB(188, 79)
-    
+
     CellCenter = HWSSHalfControl + HWSSHalfControl(2047, 2047, swap_xy_flip)
-    
+
     OFFcell = all + CellCenter + StateBit
-    
+
     # The metafier-OFF and -ON files technically should not exist (we just checked
     #  at the beginning of the script).  Shouldn't do any harm to check again, though:
     if os.access(OFFcellFileName, os.W_OK) or not os.access(OFFcellFileName, os.F_OK):
-       try:
-          OFFcell.save (OFFcellFileName, "Metapixel OFF cell: Brice Due, Spring 2006")
-       except:
-          # if tile can't be saved, it will be rebuilt next time --
-          # no need for an annoying error, just a note in the status bar
-          g.show("Failed to save file version of OFF cell: " + OFFcellFileName)
-          os.remove (OFFcellFileName)
+        try:
+            OFFcell.save (OFFcellFileName, "Metapixel OFF cell: Brice Due, Spring 2006")
+        except:
+            # if tile can't be saved, it will be rebuilt next time --
+            # no need for an annoying error, just a note in the status bar
+            g.show("Failed to save file version of OFF cell: " + OFFcellFileName)
+            os.remove (OFFcellFileName)
 
     # slide 31: display on --------------------
     g.show("Building ON metacell definition...")
 
     # switch on the HWSS guns:
     CellCenter += pattern("2o$2o!", 171, 124) + pattern("2o$2o!", 1922, 1875)
-    
+
     # now generate the ONcell HWSSs and LWSSs
     # add rest of pattern after the center area is filled in
     # and p184 HWSS guns are in the same phase (3680 = 184 * 40)
     ONcell = all + CellCenter[3680]
-    
+
     if os.access(ONcellFileName, os.W_OK) or not os.access(ONcellFileName, os.F_OK):
-       try:
-          ONcell.save (ONcellFileName, "Metapixel ON cell: Brice Due, Spring 2006")
-       except:
-          g.show("Failed to save file version of ON cell: " + ONcellFileName)
-          os.remove(ONcellFileName)
-          
+        try:
+            ONcell.save (ONcellFileName, "Metapixel ON cell: Brice Due, Spring 2006")
+        except:
+            g.show("Failed to save file version of ON cell: " + ONcellFileName)
+            os.remove(ONcellFileName)
+
 OFFcell += RuleBits
 ONcell += RuleBits
 
 g.autoupdate(True)
-g.new(layername)   
+g.new(layername)
 g.setalgo("QuickLife")              # qlife's setcell is faster
 
 for j in xrange(selheight):
-   for i in xrange(selwidth):
-      golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile" +
-                 " in a " + str(selwidth) + " by " + str(selheight) + " rectangle.")
-      if livecell[i][j]:
-         ONcell.put(2048 * i - 5, 2048 * j - 5)
-      else:
-         OFFcell.put(2048 * i - 5, 2048 * j - 5)
-      g.fit()
-   
+    for i in xrange(selwidth):
+        golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile" +
+                   " in a " + str(selwidth) + " by " + str(selheight) + " rectangle.")
+        if livecell[i][j]:
+            ONcell.put(2048 * i - 5, 2048 * j - 5)
+        else:
+            OFFcell.put(2048 * i - 5, 2048 * j - 5)
+        g.fit()
+
 g.show("")
 g.setalgo("HashLife")               # no point running a metapattern without hashing
 g.setoption("hyperspeed", False)    # avoid going too fast
@@ -819,7 +819,7 @@ g.step()                            # save start and populate hash tables
 # g.run(35328) # run one full cycle (can lock up Golly if construction has failed)
 #
 # Note that the first cycle is abnormal, since it does not advance the metapattern by
-# one metageneration:  the first set of communication signals to adjacent cells is 
+# one metageneration:  the first set of communication signals to adjacent cells is
 # generated during this first cycle.  Thus at the end of 35328 ticks, the pattern
 # is ready to start its first "normal" metageneration (where cell states may change).
 #

@@ -40,15 +40,15 @@ all += centinal[42](5782,690) + centinal[25](5793,897,rcw)
 
 # generate the MWSSes for the glider-fanout ladder
 for i in range(7):
-   g.show("Building rung " + str(i+1) + " of ladder...")
-   all = (all + MWSSrecipes)[1100]
+    g.show("Building rung " + str(i+1) + " of ladder...")
+    all = (all + MWSSrecipes)[1100]
 
 # add the actual glider-fanout ladder -- six rungs
 for i in range(6):
-   all += glider(6030,1706+550*i,swap_xy_flip) \
-      + centinal[15](6102,1585+550*i) \
-      + block(6029,1721+550*i) + centinal[34](5996,1725+550*i,rccw) \
-      + block(6087,1747+550*i) + centinal[87](6122,1745+550*i,rcw) \
+    all += glider(6030,1706+550*i,swap_xy_flip) \
+       + centinal[15](6102,1585+550*i) \
+       + block(6029,1721+550*i) + centinal[34](5996,1725+550*i,rccw) \
+       + block(6087,1747+550*i) + centinal[87](6122,1745+550*i,rcw) \
 
 # add the rest of the centinals to guide the ladder's output gliders
 g.show("Adding centinal reflectors...")
@@ -93,11 +93,11 @@ g.fit()
 # Different glider paths are different lengths, so incomplete
 # glider recipes must be overwritten for a while to prevent disaster.
 for i in range(46):
-   g.show("Filling glider tracks -- " \
-          + str(49500 - i*1100) + " ticks left.")
-   g.update()
-   g.putcells(MWSSrecipes)
-   g.run(1100)
+    g.show("Filling glider tracks -- " \
+           + str(49500 - i*1100) + " ticks left.")
+    g.update()
+    g.putcells(MWSSrecipes)
+    g.run(1100)
 g.show("")
 
 # reset gen count to 0

@@ -21,39 +21,39 @@ import os
 class RuleTree:
     '''
     Usage example:
-    
+
     tree = RuleTree(14,4) # 14 states, 4 neighbors = von Neumann neighborhood
     tree.add_rule([[1],[1,2,3],[3],[0,1],[2]],7) # inputs: [C,S,E,W,N], output
     tree.write("Test.tree")
-    
+
     For vonNeumann neighborhood, inputs are: C,S,E,W,N
     For Moore neighborhood, inputs are: C,S,E,W,N,SE,SW,NE,NW
     '''
 
     def __init__(self,numStates,numNeighbors):
-    
+
         self.numParams = numNeighbors + 1 ;
-        
+
         self.world = {} # dictionary mapping node tuples to node index (for speedy access by value)
         self.seq = [] # same node tuples but stored in a list (for access by index)
         # each node tuple is ( depth, index0, index1, .. index(numStates-1) )
         # where each index is an index into self.seq
-        
+
         self.nodeSeq = 0
         self.curndd = -1
         self.numStates = numStates
         self.numNeighbors = numNeighbors
-        
+
         self.cache = {}
         self.shrinksize = 100
-        
+
         self._init_tree()
-        
+
     def _init_tree(self):
         self.curndd = -1
         for i in range(self.numParams):
-          node = tuple( [i+1] + [self.curndd]*self.numStates )
-          self.curndd = self._getNode(node)
+            node = tuple( [i+1] + [self.curndd]*self.numStates )
+            self.curndd = self._getNode(node)
 
     def _getNode(self,node):
         if node in self.world:
@@ -64,7 +64,7 @@ class RuleTree:
             self.seq.append(node)
             self.world[node] = iNewNode
             return iNewNode
-            
+
     def _add(self,inputs,output,nddr,at):
         if at == 0: # this is a leaf node
             if nddr<0:
@@ -87,7 +87,7 @@ class RuleTree:
         r = self._getNode(node)
         self.cache[nddr] = r
         return r
-            
+
     def _recreate(self,oseq,nddr,lev):
         if lev == 0:
             return nddr
@@ -113,7 +113,7 @@ class RuleTree:
         self.curndd = self._add(inputs,output,self.curndd,self.numParams)
         if self.nodeSeq > self.shrinksize:
             self._shrink()
-            
+
     def _setdefaults(self,nddr,off,at):
         if at == 0:
             if nddr<0:
@@ -131,7 +131,7 @@ class RuleTree:
     def _setDefaults(self):
         self.cache = {}
         self.curndd = self._setdefaults(self.curndd, -1, self.numParams)
-      
+
     def write(self,filename):
         self._setDefaults()
         self._shrink()
@@ -149,11 +149,11 @@ class MakeRuleTreeFromTransitionFunction:
     Usage example:
 
     MakeRuleTreeFromTransitionFunction( 2, 4, lambda a:(a[0]+a[1]+a[2])%2, 'Parity.tree' )
-    
+
     For vonNeumann neighborhood, inputs are: N,W,E,S,C
     For Moore neighborhood, inputs are NW,NE,SW,SE,N,W,E,S,C
     '''
-        
+
     def __init__(self,numStates,numNeighbors,f,filename):
         self.numParams = numNeighbors + 1 ;
         self.numStates = numStates
@@ -175,7 +175,7 @@ class MakeRuleTreeFromTransitionFunction:
             self.seq.append(node)
             self.world[node] = iNewNode
             return iNewNode
-            
+
     def _recur(self,at):
         if at == 0:
             return self.f(self.params)
@@ -209,4 +209,3 @@ def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,inpu
         tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
     tree.write(golly.getdir('rules')+rule_name+".tree" )
     return rule_name
-

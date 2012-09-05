@@ -9,7 +9,7 @@ def HexagonalTransitionsToRuleTree(neighborhood,n_states,transitions,rule_name):
         # C,S,E,W,N,SE,(SW),(NE),NW
         tree.add_rule([t[0],t[4],t[2],t[5],t[1],t[3],range(n_states),range(n_states),t[6]],t[7][0])
     tree.write( golly.getdir('rules')+rule_name+".tree" )
-    
+
 def MakePlainHexagonalIcons(n_states,rule_name):
     '''Make some monochrome hexagonal icons.'''
 
@@ -48,7 +48,7 @@ def MakePlainHexagonalIcons(n_states,rule_name):
         for row in range(7):
             for column in range(7):
                 pixels[15+row][(s-1)*15+column] = [bg,fg][small[row][column]]
-                
+
     WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
 
 def EmulateHexagonal(neighborhood,n_states,transitions,input_filename):
@@ -57,5 +57,3 @@ def EmulateHexagonal(neighborhood,n_states,transitions,input_filename):
     HexagonalTransitionsToRuleTree(neighborhood,n_states,transitions,rule_name)
     MakePlainHexagonalIcons(n_states,rule_name)
     return rule_name
-
-    

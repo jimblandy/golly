@@ -41,7 +41,7 @@ dot = (0,0,0,0),(1,0,0,0),(0,1,0,0),(1,1,0,0),(0,0,1,0),(1,0,1,0),(0,1,1,0),(1,1
 # (see: http://psoup.math.wisc.edu/mcell/rullex_marg.html )
 
 for i in range(16):
-    if not i==becomes[i]: 
+    if not i==becomes[i]:
         # (we can skip no-change transitions)
         f.write(','.join(map(str,dot[i]))+' : '+\
             ','.join(map(str,dot[becomes[i]]))+\
@@ -51,4 +51,3 @@ f.close()
 # tell the user what we wrote, and what to do next
 g.note('Wrote file: '+folder+rule_name+'.table\n\n\
 You can now use RuleTableToTree.py to emulate the rule table.')
-

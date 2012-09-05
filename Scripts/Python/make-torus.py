@@ -13,8 +13,8 @@ ht = selrect[3]
 
 selcells = g.getcells(selrect)
 if not g.empty():
-   g.clear(inside)
-   g.clear(outside)
+    g.clear(inside)
+    g.clear(outside)
 
 # get current rule, remove any existing suffix, then add new suffix
 rule = g.getrule().split(":")[0]

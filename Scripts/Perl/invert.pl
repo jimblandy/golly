@@ -16,15 +16,15 @@ my $oldsecs = time;
 my $maxstate = g_numstates() - 1;
 
 for (my $row = $y; $row < $y + $ht; $row++) {
-   # if large selection then give some indication of progress
-   my $newsecs = time;
-   if ($newsecs - $oldsecs >= 1.0) {
-      $oldsecs = $newsecs;
-      g_update();
-   }
-   for (my $col = $x; $col < $x + $wd; $col++) {
-      g_setcell($col, $row, $maxstate - g_getcell($col, $row));
-   }
+    # if large selection then give some indication of progress
+    my $newsecs = time;
+    if ($newsecs - $oldsecs >= 1.0) {
+        $oldsecs = $newsecs;
+        g_update();
+    }
+    for (my $col = $x; $col < $x + $wd; $col++) {
+        g_setcell($col, $row, $maxstate - g_getcell($col, $row));
+    }
 }
 
 g_fitsel() if !g_visrect(@rect);

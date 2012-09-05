@@ -2,7 +2,7 @@
 
 # Universal* font described by Eric Angelini on SeqFan list
 # Construction universality* demonstrated by Dean Hickerson
-# 
+#
 # Integers can be written in this font that stabilize into
 # (almost*) any Life pattern known to be glider-constructible.
 #
@@ -10,7 +10,7 @@
 # (possibly zero percent!) of glider constructions -- in
 # particular, constructions that require large numbers
 # of very closely spaced gliders.  The existence of objects
-# whose constructions require non-integer-constructable 
+# whose constructions require non-integer-constructable
 # closely-packed fleets of gliders is an open question;
 # no such objects are currently known.
 
