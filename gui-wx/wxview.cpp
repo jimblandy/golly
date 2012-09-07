@@ -80,8 +80,8 @@ static long clicktime;
 
 // panning buttons are treated differently
 #define PANNING_CONTROL (clickedcontrol >= NW_CONTROL && \
-clickedcontrol <= SE_CONTROL && \
-clickedcontrol != MIDDLE_CONTROL)
+                         clickedcontrol <= SE_CONTROL && \
+                         clickedcontrol != MIDDLE_CONTROL)
 
 // -----------------------------------------------------------------------------
 
