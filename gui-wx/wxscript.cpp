@@ -1075,21 +1075,21 @@ const char* GSF_doevent(const wxString& event)
                 // parse special char name like space, tab, etc
                 // must match reverse conversion in PassKeyToScript
                 if (event.Contains(wxT("space")))      key = ' '; else
-                    if (event.Contains(wxT("home")))       key = WXK_HOME; else
-                        if (event.Contains(wxT("end")))        key = WXK_END; else
-                            if (event.Contains(wxT("pageup")))     key = WXK_PAGEUP; else
-                                if (event.Contains(wxT("pagedown")))   key = WXK_PAGEDOWN; else
-                                    if (event.Contains(wxT("help")))       key = WXK_HELP; else
-                                        if (event.Contains(wxT("insert")))     key = WXK_INSERT; else
-                                            if (event.Contains(wxT("delete")))     key = WXK_DELETE; else
-                                                if (event.Contains(wxT("tab")))        key = WXK_TAB; else
-                                                    if (event.Contains(wxT("enter")))      key = WXK_RETURN; else
-                                                        if (event.Contains(wxT("return")))     key = WXK_RETURN; else
-                                                            if (event.Contains(wxT("left")))       key = WXK_LEFT; else
-                                                                if (event.Contains(wxT("right")))      key = WXK_RIGHT; else
-                                                                    if (event.Contains(wxT("up")))         key = WXK_UP; else
-                                                                        if (event.Contains(wxT("down")))       key = WXK_DOWN; else
-                                                                            return "Unknown key.";
+                if (event.Contains(wxT("home")))       key = WXK_HOME; else
+                if (event.Contains(wxT("end")))        key = WXK_END; else
+                if (event.Contains(wxT("pageup")))     key = WXK_PAGEUP; else
+                if (event.Contains(wxT("pagedown")))   key = WXK_PAGEDOWN; else
+                if (event.Contains(wxT("help")))       key = WXK_HELP; else
+                if (event.Contains(wxT("insert")))     key = WXK_INSERT; else
+                if (event.Contains(wxT("delete")))     key = WXK_DELETE; else
+                if (event.Contains(wxT("tab")))        key = WXK_TAB; else
+                if (event.Contains(wxT("enter")))      key = WXK_RETURN; else
+                if (event.Contains(wxT("return")))     key = WXK_RETURN; else
+                if (event.Contains(wxT("left")))       key = WXK_LEFT; else
+                if (event.Contains(wxT("right")))      key = WXK_RIGHT; else
+                if (event.Contains(wxT("up")))         key = WXK_UP; else
+                if (event.Contains(wxT("down")))       key = WXK_DOWN; else
+                return "Unknown key.";
             }
             
             viewptr->ProcessKey(key, GetModifiers(event.AfterLast(' ')));
