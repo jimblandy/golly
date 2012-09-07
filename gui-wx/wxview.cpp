@@ -2377,7 +2377,9 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
     realkey = event.GetKeyCode();
     int mods = event.GetModifiers();
     
-    if (realkey == WXK_SHIFT && mods == wxMOD_SHIFT) {
+    // wxGTK 2.8.12 does not set modifier flag if shift key pressed by itself
+    // so best to play safe and test wxMOD_SHIFT or wxMOD_NONE
+    if (realkey == WXK_SHIFT && (mods == wxMOD_SHIFT || mods == wxMOD_NONE)) {
         // pressing unmodified shift key temporarily toggles the draw/pick cursors or
         // the zoom in/out cursors; note that Windows sends multiple key-down events
         // while shift key is pressed so we must be careful to toggle only once
