@@ -194,11 +194,6 @@ public:
                   const wxString& prompt,
                   int inval, int minval, int maxval);
     
-#ifdef __WXOSX__
-    ~IntegerDialog() { delete onetimer; }
-    void OnOneTimer(wxTimerEvent& event);
-#endif
-    
     virtual bool TransferDataFromWindow();    // called when user hits OK
     
 #ifdef __WXMAC__
@@ -215,34 +210,7 @@ private:
     int minint;             // minimum value
     int maxint;             // maximum value
     int result;             // the resulting integer
-    
-#ifdef __WXOSX__
-    wxTimer* onetimer;      // one shot timer (see OnOneTimer)
-    DECLARE_EVENT_TABLE()
-#endif
 };
-
-// -----------------------------------------------------------------------------
-
-#ifdef __WXOSX__
-
-BEGIN_EVENT_TABLE(IntegerDialog, wxDialog)
-EVT_TIMER (wxID_ANY, IntegerDialog::OnOneTimer)
-END_EVENT_TABLE()
-
-void IntegerDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
-{
-    wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(ID_SPIN_CTRL);
-    wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(ID_SPIN_CTRL+1);
-    if (s1 && s2) {
-        // first need to change focus to hidden control
-        s2->SetFocus();
-        s1->SetFocus();
-        s1->SetSelection(-1,-1);
-    }
-}
-
-#endif
 
 // -----------------------------------------------------------------------------
 
@@ -318,13 +286,6 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
     spinctrl->SetRange(minval, maxval);
     spinctrl->SetValue(inval);
     
-#ifdef __WXOSX__
-    // create hidden spin ctrl so we can SetFocus below
-    wxSpinCtrl* hidden = new wxSpinCtrl(this, ID_SPIN_CTRL+1, wxEmptyString,
-                                        wxPoint(-1000,-1000), wxDefaultSize);
-    hidden->SetValue(666);
-#endif
-    
     wxStaticText* promptlabel = new wxStaticText(this, wxID_STATIC, prompt);
     
     wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
@@ -349,15 +310,9 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
     GetSizer()->SetSizeHints(this);
     Centre();
     
-#ifdef __WXOSX__
-    // due to wxOSX bug we have to set focus after dialog creation
-    onetimer = new wxTimer(this, wxID_ANY);
-    if (onetimer) onetimer->Start(10, wxTIMER_ONE_SHOT);
-#else
     // select initial value (must do this last on Windows)
     spinctrl->SetFocus();
     spinctrl->SetSelection(-1,-1);
-#endif
 }
 
 // -----------------------------------------------------------------------------

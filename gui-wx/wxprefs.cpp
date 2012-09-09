@@ -2632,9 +2632,6 @@ enum {
     PREF_DOWNLOAD_BOX,
     // Edit prefs
     PREF_RANDOM_FILL,
-#ifdef __WXOSX__
-    PREF_HIDDEN,      // needed to fix wxOSX bug
-#endif
     PREF_PASTE_0,
     PREF_PASTE_1,
     PREF_PASTE_2,
@@ -3130,32 +3127,21 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
 void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 {
     MySpinCtrl* s1 = NULL;
-    MySpinCtrl* s2 = NULL;
     
     if (currpage == FILE_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_PATTERNS);
-        s2 = (MySpinCtrl*) FindWindowById(PREF_MAX_SCRIPTS);
         
     } else if (currpage == EDIT_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
-#ifdef __WXOSX__
-        // have to set s2 to hidden spin ctrl... sigh
-        s2 = (MySpinCtrl*) FindWindowById(PREF_HIDDEN);
-#else
-        s2 = s1;
-#endif
         
     } else if (currpage == CONTROL_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_MEM);
-        s2 = (MySpinCtrl*) FindWindowById(PREF_BASE_STEP);
         
     } else if (currpage == VIEW_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_BOLD_SPACING : PREF_THUMB_RANGE);
-        s2 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_THUMB_RANGE : PREF_BOLD_SPACING);
         
     } else if (currpage == LAYER_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_OPACITY);
-        s2 = (MySpinCtrl*) FindWindowById(PREF_TILE_BORDER);
         
     } else if (currpage == COLOR_PAGE) {
         // no spin ctrls on this page
@@ -3164,18 +3150,13 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
     } else if (currpage == KEYBOARD_PAGE) {
         KeyComboCtrl* k = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
         if (k) {
-            // don't need to change focus to some other control if wxOSX
             k->SetFocus();
             k->SetSelection(ALL_TEXT);
         }
         return;
     }
     
-    if (s1 && s2) {
-#ifdef __WXOSX__
-        // first need to change focus to some other control
-        s2->SetFocus();
-#endif
+    if (s1) {
         s1->SetFocus();
         s1->SetSelection(ALL_TEXT);
     }
@@ -3404,13 +3385,6 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
     hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
-#ifdef __WXOSX__
-    // create hidden spin ctrl for use in OnOneTimer
-    wxSpinCtrl* hidden = new MySpinCtrl(panel, PREF_HIDDEN, wxEmptyString,
-                                        wxPoint(-1000,-1000), wxSize(70, wxDefaultCoord));
-    hidden->SetValue(666);
-#endif
     
     // can_change_rule
     
