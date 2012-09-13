@@ -39,7 +39,7 @@
 // Golly's preferences file is a simple text file.  On iOS devices it's created
 // in Library/Preferences/ in the application directory (gollydir).
 
-const char* GOLLY_VERSION = "1.0";
+const char* GOLLY_VERSION = "1.1";
 
 std::string prefspath;              // full path to prefs file
 const int PREFS_VERSION = 1;        // increment if necessary due to changes in syntax/semantics
