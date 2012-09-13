@@ -34,8 +34,6 @@
 #include "view.h"        // for nopattupdate, SmallScroll
 #include "undo.h"        // for currlayer->undoredo->...
 
-#import <QuartzCore/QuartzCore.h>   // for CALayer and setZPosition
-
 #import "GollyAppDelegate.h"        // for EnableTabBar
 #import "InfoViewController.h"
 #import "SaveViewController.h"
@@ -405,15 +403,22 @@ static int pausecount = 0;              // if > 0 then genTimer needs to be rest
     if (generating) {
         [self stopGenTimer];
         StopGenerating();
-        // generating now false
+        // generating is now false
         [self toggleStartStopButton];
-        [self updateButtons];
+        // can't call [self updateButtons] here because if event_checker is > 0
+        // then StopGenerating hasn't called RememberGenFinish, and so CanUndo/CanRedo
+        // might not return correct results
+        bool canreset = currlayer->algo->getGeneration() > currlayer->startgen;
+        resetButton.enabled = canreset;
+        undoButton.enabled = allowundo && (canreset || currlayer->undoredo->CanUndo());
+        redoButton.enabled = NO;
     
     } else if (StartGenerating()) {
-        // generating now true
+        // generating is now true
         [self toggleStartStopButton];            
         [self startGenTimer];
-        // don't call [self updateButtons] here
+        // don't call [self updateButtons] here because we want user to
+        // be able to stop generating by tapping Reset/Undo buttons
         resetButton.enabled = YES;
         undoButton.enabled = allowundo;
         redoButton.enabled = NO;
