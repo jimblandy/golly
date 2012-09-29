@@ -759,7 +759,7 @@ static int pausecount = 0;              // if > 0 then genTimer needs to be rest
     double remsecs = fraction > 0.0 ? (elapsecs / fraction) - elapsecs : 999.0;
     [progressMessage setText:[NSString stringWithFormat:@"Estimated time remaining (in secs): %d", int(remsecs+0.5)]];
     
-    // need following line to see progress view and bar update
+    // need following to see progress view and bar update
     event_checker++;
     [[NSRunLoop currentRunLoop] runUntilDate:[NSDate date]];
     event_checker--;

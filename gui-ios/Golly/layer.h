@@ -116,8 +116,8 @@ public:
     CGColorRef colorref[256];     // color refs for states 0..255
     
     // icons for this layer
-    //!!! wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
-    //!!! wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
+    CGImageRef* icons7x7;         // icon bitmaps for scale 1:8
+    CGImageRef* icons15x15;       // icon bitmaps for scale 1:16
     
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline

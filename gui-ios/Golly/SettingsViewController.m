@@ -77,6 +77,7 @@
     timingSwitch = nil;
     beepSwitch = nil;
     colorsSwitch = nil;
+    iconsSwitch = nil;
     undoSwitch = nil;
     hashingSwitch = nil;
 }
@@ -111,6 +112,7 @@ static int oldhashmem;      // detect if user changed maxhashmem
     [timingSwitch setOn:showtiming animated:NO];
     [beepSwitch setOn:allowbeep animated:NO];
     [colorsSwitch setOn:swapcolors animated:NO];
+    [iconsSwitch setOn:showicons animated:NO];
     [undoSwitch setOn:allowundo animated:NO];
     [hashingSwitch setOn:currlayer->showhashinfo animated:NO];
     
@@ -238,6 +240,13 @@ static int oldhashmem;      // detect if user changed maxhashmem
 - (IBAction)toggleColors:(id)sender
 {
     swapcolors = !swapcolors;
+}
+
+// -----------------------------------------------------------------------------
+
+- (IBAction)toggleIcons:(id)sender
+{
+    showicons = !showicons;
 }
 
 // -----------------------------------------------------------------------------

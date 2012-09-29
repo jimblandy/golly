@@ -373,6 +373,7 @@ bool RestoreRule(const char* rule)
 // -----------------------------------------------------------------------------
 
 /*!!!
+
 void CurrentLayerChanged()
 {
     // currlayer has changed since SaveLayerSettings was called;
@@ -411,31 +412,23 @@ void CurrentLayerChanged()
     bigview->UpdateScrollBars();
 }
 
-// -----------------------------------------------------------------------------
-
-void UpdateLayerNames()
-{
-    // update names in all layer items at end of Layer menu
-    for (int i = 0; i < numlayers; i++)
-        mainptr->UpdateLayerItem(i);
-}
+!!!*/
 
 // -----------------------------------------------------------------------------
 
-static wxBitmap** CopyIcons(wxBitmap** srcicons, int size, int maxstate)
+static CGImageRef* CopyIcons(CGImageRef* srcicons, int size, int maxstate)
 {
-    wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
     if (iconptr) {
-        wxRect rect(0, 0, size, size);
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         for (int i = 1; i <= maxstate; i++) {
-            if (srcicons && srcicons[i])
-                iconptr[i] = new wxBitmap(srcicons[i]->GetSubBitmap(rect));
+            if (srcicons && srcicons[i]) {
+                iconptr[i] = CGImageCreateCopy(srcicons[i]);
+            }
         }
     }
     return iconptr;
 }
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -506,15 +499,13 @@ void AddLayer()
         UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
         if (cloning) {
             // use same icon pointers
-            //!!! currlayer->icons15x15 = oldlayer->icons15x15;
-            //!!! currlayer->icons7x7 = oldlayer->icons7x7;
+            currlayer->icons15x15 = oldlayer->icons15x15;
+            currlayer->icons7x7 = oldlayer->icons7x7;
         } else {
             // duplicate icons from old layer
-            /*!!!
             int maxstate = currlayer->algo->NumCellStates() - 1;
             currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, 7, maxstate);
-            */
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -524,10 +515,7 @@ void AddLayer()
     numlayers++;
     
     if (numlayers > 1) {
-        //!!! UpdateLayerNames();
-        
         //!!! if (tilelayers && numlayers > 1) CreateTiles();
-        
         //!!! CurrentLayerChanged();
     }
 }
@@ -594,8 +582,6 @@ void DeleteLayer()
     
     // remove item from end of Layer menu
     mainptr->RemoveLayerItem();
-    
-    UpdateLayerNames();
     
     if (tilelayers && numlayers > 1) CreateTiles();
     
@@ -672,8 +658,6 @@ void MoveLayer(int fromindex, int toindex)
     
     currindex = toindex;
     currlayer = layer[currindex];
-    
-    UpdateLayerNames();
     
     if (tilelayers && numlayers > 1) {
         DestroyTiles();
@@ -985,11 +969,13 @@ void UpdateCloneColors()
     }
 }
 
+!!!*/
+
 // -----------------------------------------------------------------------------
 
-static bool FindIconFile(const char* rule, const char* dir, char* path)
+static bool FindIconFile(const std::string& rule, const std::string& dir, std::string& path)
 {
-    const wxString extn = wxT(".icons");
+    const std::string extn = ".icons";
     
     // first look for rule.icons in given directory
     path = dir + rule;
@@ -998,8 +984,9 @@ static bool FindIconFile(const char* rule, const char* dir, char* path)
     
     // if rule has the form foo-* then look for foo.icons in dir;
     // this allows related rules to share a single .icons file
-    wxString prefix = rule.BeforeLast('-');
-    if (!prefix.IsEmpty()) {
+    size_t hyphenpos = rule.rfind('-');
+    if (hyphenpos != std::string::npos) {
+        std::string prefix = rule.substr(0, hyphenpos);
         path = dir + prefix;
         path += extn;
         if (FileExists(path)) return true;
@@ -1010,23 +997,22 @@ static bool FindIconFile(const char* rule, const char* dir, char* path)
 
 // -----------------------------------------------------------------------------
 
-static bool LoadRuleIcons(const wxString& rule, int maxstate)
+static bool LoadRuleIcons(const std::string& rule, int maxstate)
 {
     // deallocate current layer's old icons if they exist
     if (currlayer->icons15x15) {
-        for (int i = 0; i < 256; i++) delete currlayer->icons15x15[i];
+        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons15x15[i]);
         free(currlayer->icons15x15);
         currlayer->icons15x15 = NULL;
     }
     if (currlayer->icons7x7) {
-        for (int i = 0; i < 256; i++) delete currlayer->icons7x7[i];
+        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons7x7[i]);
         free(currlayer->icons7x7);
         currlayer->icons7x7 = NULL;
     }
     
-    // if rule.icons file exists in userrules or rulesdir then
-    // load icons for current layer
-    wxString path;
+    // if rule.icons file exists in userrules or rulesdir then load icons for current layer
+    std::string path;
     return (FindIconFile(rule, userrules, path) ||
             FindIconFile(rule, rulesdir, path)) &&
     LoadIconFile(path, maxstate, &currlayer->icons15x15, &currlayer->icons7x7);
@@ -1034,9 +1020,10 @@ static bool LoadRuleIcons(const wxString& rule, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-void SetAverageColor(int state, wxBitmap* icon)
+static void SetAverageColor(int state, CGImageRef icon)
 {
     // set non-icon color to average color of non-black pixels in given icon
+    /*!!!
     if (icon) {
         int wd = icon->GetWidth();
         int ht = icon->GetHeight();
@@ -1078,9 +1065,8 @@ void SetAverageColor(int state, wxBitmap* icon)
             }
         }
     }
+    !!!*/
 }
-
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -1231,9 +1217,8 @@ void UpdateCurrentColors()
     if (colonpos != std::string::npos) rule = rule.substr(0, colonpos);
     
     // if rule.colors file exists then override default colors
-    /*!!! bool loadedcolors = */ LoadRuleColors(rule, maxstate);
+    bool loadedcolors = LoadRuleColors(rule, maxstate);
     
-    /*!!!
     // if rule.icons file exists then use those icons
     if ( !LoadRuleIcons(rule, maxstate) ) {
         if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
@@ -1254,14 +1239,15 @@ void UpdateCurrentColors()
     // if rule.colors file wasn't loaded and icons are multi-color then we
     // set non-icon colors to the average of the non-black pixels in each icon
     // (note that we use the 7x7 icons because they are faster to scan)
-    wxBitmap** iconmaps = currlayer->icons7x7;
-    if (!loadedcolors && iconmaps && iconmaps[1] && iconmaps[1]->GetDepth() > 1) {
+    CGImageRef* iconmaps = currlayer->icons7x7;
+    if (!loadedcolors && iconmaps && iconmaps[1] && false/*!!! iconmaps[1]->GetDepth() > 1 */) {
         for (int n = 1; n <= maxstate; n++) {
             SetAverageColor(n, iconmaps[n]);
         }
         // if extra 15x15 icon was supplied then use it to set state 0 color
         iconmaps = currlayer->icons15x15;
         if (iconmaps && iconmaps[0]) {
+            /*!!!
             wxAlphaPixelData icondata(*iconmaps[0]);
             if (icondata) {
                 wxAlphaPixelData::Iterator iconpxl(icondata);
@@ -1270,9 +1256,9 @@ void UpdateCurrentColors()
                 currlayer->cellg[0] = iconpxl.Green();
                 currlayer->cellb[0] = iconpxl.Blue();
             }
+            !!!*/
         }
     }
-    !!!*/
     
     if (swapcolors) {
         // invert cell colors in current layer
@@ -1363,8 +1349,8 @@ Layer::Layer()
     originx = 0;                  // no X origin offset
     originy = 0;                  // no Y origin offset
     
-    //!!! icons15x15 = NULL;            // no 15x15 icons
-    //!!! icons7x7 = NULL;              // no 7x7 icons
+    icons15x15 = NULL;            // no 15x15 icons
+    icons7x7 = NULL;              // no 7x7 icons
     
     // init color references
     for (int n = 0; n < 256; n++) {
@@ -1601,20 +1587,16 @@ Layer::~Layer()
         if (FileExists(tempstart)) RemoveFile(tempstart);
 
         // release color references
-        for (int n = 0; n < 256; n++) {
-            CGColorRelease(colorref[n]);
-        }
+        for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
 
-        /*!!!
         // delete any icons
         if (icons15x15) {
-            for (int i = 0; i < 256; i++) delete icons15x15[i];
+            for (int i = 0; i < 256; i++) CGImageRelease(icons15x15[i]);
             free(icons15x15);
         }
         if (icons7x7) {
-            for (int i = 0; i < 256; i++) delete icons7x7[i];
+            for (int i = 0; i < 256; i++) CGImageRelease(icons7x7[i]);
             free(icons7x7);
         }
-        */
     }
 }

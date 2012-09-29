@@ -95,8 +95,8 @@ static EAGLContext* currdc;             // current drawing context -- no need???
 static int pixmapwd = -1;               // width of pixmap
 static int pixmapht = -1;               // height of pixmap
 static unsigned char* pixmap = NULL;    // bitmap of RGB data used in pixblit calls
-static wxBitmap** iconmaps;             // array of icon bitmaps
 */
+static CGImageRef* iconmaps;            // array of icon bitmaps
 
 // for drawing paste pattern
 static lifealgo* pastealgo;             // universe containing paste pattern
@@ -231,68 +231,6 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
         }
     }
     currdc->DrawBitmap(*pixmap, x, y);   
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawOneIcon(EAGLContext* dc, int x, int y, wxBitmap* icon,
-                 unsigned char deadr, unsigned char deadg, unsigned char deadb,
-                 unsigned char liver, unsigned char liveg, unsigned char liveb)
-{
-    // copy pixels from icon but convert black pixels to given dead cell color
-    // and convert non-black pixels to given live cell color
-    int wd = icon->GetWidth();
-    int ht = icon->GetHeight();
-    bool multicolor = icon->GetDepth() > 1;
-    wxBitmap pixmap(wd, ht, 32);
-    
-    wxAlphaPixelData pxldata(pixmap);
-    if (pxldata) {
-        wxAlphaPixelData::Iterator p(pxldata);
-        wxAlphaPixelData icondata(*icon);
-        if (icondata) {
-            wxAlphaPixelData::Iterator iconpxl(icondata);
-            for (int i = 0; i < ht; i++) {
-                wxAlphaPixelData::Iterator pixmaprow = p;
-                wxAlphaPixelData::Iterator iconrow = iconpxl;
-                for (int j = 0; j < wd; j++) {
-                    if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                        if (multicolor) {
-                            // use non-black pixel in multi-colored icon
-                            if (swapcolors) {
-                                p.Red()   = 255 - iconpxl.Red();
-                                p.Green() = 255 - iconpxl.Green();
-                                p.Blue()  = 255 - iconpxl.Blue();
-                            } else {
-                                p.Red()   = iconpxl.Red();
-                                p.Green() = iconpxl.Green();
-                                p.Blue()  = iconpxl.Blue();
-                            }
-                        } else {
-                            // replace non-black pixel with live cell color
-                            p.Red()   = liver;
-                            p.Green() = liveg;
-                            p.Blue()  = liveb;
-                        }
-                    } else {
-                        // replace black pixel with dead cell color
-                        p.Red()   = deadr;
-                        p.Green() = deadg;
-                        p.Blue()  = deadb;
-                    }
-                    p++;
-                    iconpxl++;
-                }
-                // move to next row of pixmap
-                p = pixmaprow;
-                p.OffsetY(pxldata, 1);
-                // move to next row of icon bitmap
-                iconpxl = iconrow;
-                iconpxl.OffsetY(icondata, 1);
-            }
-        }
-    }
-    dc.DrawBitmap(pixmap, x, y);
 }
 
 !!!*/
@@ -1191,6 +1129,7 @@ void DrawPattern(EAGLContext* context, int tileindex)
         }
         colorindex = 0;
     }
+    */
     
     // only show icons at scales 1:8 and 1:16
     if (showicons && currlayer->view->getmag() > 2) {
@@ -1200,7 +1139,6 @@ void DrawPattern(EAGLContext* context, int tileindex)
             iconmaps = currlayer->icons15x15;
         }
     }
-    */
     
     // draw pattern using a sequence of pixblit and killrect calls
     currdc = context;

@@ -22,6 +22,7 @@
  
  / ***/
 
+#include "prefs.h"      // for showicons
 #include "layer.h"      // for currlayer
 #include "status.h"     // for ClearMessage
 
@@ -52,14 +53,94 @@
 
 // -----------------------------------------------------------------------------
 
+void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
+                 unsigned char deadr, unsigned char deadg, unsigned char deadb,
+                 unsigned char liver, unsigned char liveg, unsigned char liveb)
+{
+    //!!! color is wrong (always white), and image is upside down
+    CGContextDrawImage(context, CGRectMake(x,y,31,31), icon);
+
+    // copy pixels from icon but convert black pixels to given dead cell color
+    // and convert non-black pixels to given live cell color
+    /*!!!
+    int wd = icon->GetWidth();
+    int ht = icon->GetHeight();
+    bool multicolor = icon->GetDepth() > 1;
+    wxBitmap pixmap(wd, ht, 32);
+    
+    wxAlphaPixelData pxldata(pixmap);
+    if (pxldata) {
+        wxAlphaPixelData::Iterator p(pxldata);
+        wxAlphaPixelData icondata(*icon);
+        if (icondata) {
+            wxAlphaPixelData::Iterator iconpxl(icondata);
+            for (int i = 0; i < ht; i++) {
+                wxAlphaPixelData::Iterator pixmaprow = p;
+                wxAlphaPixelData::Iterator iconrow = iconpxl;
+                for (int j = 0; j < wd; j++) {
+                    if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
+                        if (multicolor) {
+                            // use non-black pixel in multi-colored icon
+                            if (swapcolors) {
+                                p.Red()   = 255 - iconpxl.Red();
+                                p.Green() = 255 - iconpxl.Green();
+                                p.Blue()  = 255 - iconpxl.Blue();
+                            } else {
+                                p.Red()   = iconpxl.Red();
+                                p.Green() = iconpxl.Green();
+                                p.Blue()  = iconpxl.Blue();
+                            }
+                        } else {
+                            // replace non-black pixel with live cell color
+                            p.Red()   = liver;
+                            p.Green() = liveg;
+                            p.Blue()  = liveb;
+                        }
+                    } else {
+                        // replace black pixel with dead cell color
+                        p.Red()   = deadr;
+                        p.Green() = deadg;
+                        p.Blue()  = deadb;
+                    }
+                    p++;
+                    iconpxl++;
+                }
+                // move to next row of pixmap
+                p = pixmaprow;
+                p.OffsetY(pxldata, 1);
+                // move to next row of icon bitmap
+                iconpxl = iconrow;
+                iconpxl.OffsetY(icondata, 1);
+            }
+        }
+    }
+    dc.DrawBitmap(pixmap, x, y);
+    !!!*/
+}
+
+// -----------------------------------------------------------------------------
+
 - (void)drawRect:(CGRect)rect
 {
-    // fill box with color of current drawing state
     CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextSetFillColorWithColor(context, currlayer->colorref[currlayer->drawingstate]);
+    int state = currlayer->drawingstate;
+    CGImageRef* iconmaps = currlayer->icons15x15;  //!!! 31x31
+
+    // leave a 1 pixel border (color is set in xib)
+    CGRect box = CGRectMake(1, 1, self.bounds.size.width-2, self.bounds.size.height-2);
     
-    // use a 2 pixel border (color set in xib)
-    CGContextFillRect(context, CGRectMake(2, 2, self.bounds.size.width-4, self.bounds.size.height-4));
+    if (showicons && iconmaps && iconmaps[state]) {
+        // fill box with background color then draw icon
+        CGContextSetFillColorWithColor(context, currlayer->colorref[0]);
+        CGContextFillRect(context, box);
+        DrawOneIcon(context, 1, 1, iconmaps[state],
+                    currlayer->cellr[0],     currlayer->cellg[0],     currlayer->cellb[0],
+                    currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);        
+    } else {
+        // fill box with color of current drawing state
+        CGContextSetFillColorWithColor(context, currlayer->colorref[state]);
+        CGContextFillRect(context, box);
+    }
 }
 
 // -----------------------------------------------------------------------------

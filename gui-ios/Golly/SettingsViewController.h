@@ -35,6 +35,7 @@
     IBOutlet UISwitch *timingSwitch;
     IBOutlet UISwitch *beepSwitch;
     IBOutlet UISwitch *colorsSwitch;
+    IBOutlet UISwitch *iconsSwitch;
     IBOutlet UISwitch *undoSwitch;
     IBOutlet UISwitch *hashingSwitch;
 }
@@ -46,6 +47,7 @@
 - (IBAction)toggleTiming:(id)sender;
 - (IBAction)toggleBeep:(id)sender;
 - (IBAction)toggleColors:(id)sender;
+- (IBAction)toggleIcons:(id)sender;
 - (IBAction)toggleUndo:(id)sender;
 - (IBAction)toggleHashing:(id)sender;
 

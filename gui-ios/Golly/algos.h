@@ -58,10 +58,10 @@ public:
     int defbase;                  // default base step
     
     gColor statusrgb;             // status bar color
-    /*!!!
-    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
-    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
-     */
+
+    CGImageRef* icons7x7;         // icon bitmaps for scale 1:8
+    CGImageRef* icons15x15;       // icon bitmaps for scale 1:16
+
     std::string iconfile;         // path to file containing icons
     
     // default color scheme
@@ -78,13 +78,11 @@ public:
 extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
 extern algo_type initalgo;                // initial algorithm
 
-/*!!!
-extern wxBitmap** hexicons7x7;            // hexagonal icon bitmaps for scale 1:8
-extern wxBitmap** hexicons15x15;          // hexagonal icon bitmaps for scale 1:16
+extern CGImageRef* hexicons7x7;           // hexagonal icon bitmaps for scale 1:8
+extern CGImageRef* hexicons15x15;         // hexagonal icon bitmaps for scale 1:16
 
-extern wxBitmap** vnicons7x7;             // diamond icon bitmaps for scale 1:8
-extern wxBitmap** vnicons15x15;           // diamond icon bitmaps for scale 1:16
-*/
+extern CGImageRef* vnicons7x7;            // diamond icon bitmaps for scale 1:8
+extern CGImageRef* vnicons15x15;          // diamond icon bitmaps for scale 1:16
 
 void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.
@@ -100,17 +98,8 @@ const char* GetAlgoName(algo_type algotype);
 int NumAlgos();
 // Return current number of algorithms.
 
-/*!!!
-void ChangeIcons(algo_type algotype);
-// Let user change icons for the given algorithm by loading bitmap images
-// from a BMP/GIF/PNG/TIFF file.
-
-void LoadIcons(algo_type algotype);
-// Load icons for given algorithm using iconfile.
-
-bool LoadIconFile(const char* path, int maxstate,
-wxBitmap*** out15x15, wxBitmap*** out7x7);
+bool LoadIconFile(const std::string& path, int maxstate,
+                  CGImageRef** out15x15, CGImageRef** out7x7);
 // Return true if we can successfully load icon bitmaps from given file.
-*/
 
 #endif

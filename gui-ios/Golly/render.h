@@ -43,11 +43,4 @@ void CreatePasteImage(lifealgo* pastealgo, gRect& bbox);
 void DestroyPasteImage();
 // Destroy the image created above (call when user ends paste).
 
-/*!!!???
-void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
-                 unsigned char deadr, unsigned char deadg, unsigned char deadb,
-                 unsigned char liver, unsigned char liveg, unsigned char liveb);
-// Draw the given icon using the given dead cell and live cell colors.
-*/
-
 #endif
