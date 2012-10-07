@@ -22,9 +22,11 @@
  
  / ***/
 
+#include "prefs.h"      // for showicons
 #include "layer.h"      // for currlayer
 
 #import "PatternViewController.h"   // for UpdateEditBar, CloseStatePicker
+#import "StateView.h"               // for DrawOneIcon
 #import "StatePickerView.h"
 
 @implementation StatePickerView
@@ -53,36 +55,48 @@
 - (void)drawRect:(CGRect)rect
 {
     CGContextRef context = UIGraphicsGetCurrentContext();
+    CGImageRef* iconmaps = currlayer->icons31x31;
 
     // use white lines
     [[UIColor whiteColor] setStroke];
     CGContextSetLineWidth(context, 1.0);
 
     // font for drawing state numbers
-    UIFont *numfont = [UIFont systemFontOfSize:11];
+    UIFont *numfont = [UIFont systemFontOfSize:10];
     
-    // draw boxes showing colors of all states
+    // draw boxes showing colors or icons of all states
     int x = 0, y = 0;
     int dx, dy;
     for (int i = 0; i < currlayer->algo->NumCellStates(); i++) {
-        CGContextSetFillColorWithColor(context, currlayer->colorref[i]);
-        CGContextFillRect(context, CGRectMake(x+1, y+1, 31, 31));
+        CGRect box = CGRectMake(x+1, y+1, 31, 31);
+        if (showicons && iconmaps && iconmaps[i]) {
+            // fill box with background color then draw icon
+            CGContextSetFillColorWithColor(context, currlayer->colorref[0]);
+            CGContextFillRect(context, box);
+            DrawOneIcon(context, x+1, y+1, iconmaps[i],
+                        currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0],
+                        currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i]);
+        } else {
+            // fill box with color of current drawing state
+            CGContextSetFillColorWithColor(context, currlayer->colorref[i]);
+            CGContextFillRect(context, box);
+        }
 
         // anti-aliased text is much nicer
         CGContextSetShouldAntialias(context, true);
 
-        // text is black or white depending on gray level of state color
-        float gray = (currlayer->cellr[i] +
-                      currlayer->cellg[i] +
-                      currlayer->cellb[i]) / 3.0;
-        if (gray > 64.0)
-            [[UIColor blackColor] setFill];
-        else
-            [[UIColor whiteColor] setFill];
-
-        // show state number in box
+        // show state number in top left corner of box, as black text on white
         NSString *num = [NSString stringWithFormat:@"%d", i];
-        [num drawInRect:CGRectMake(x+4, y+18, 28, 14) withFont:numfont];
+        CGRect textrect;
+        textrect.size = [num sizeWithFont:numfont];
+        textrect.origin.x = x+1;
+        textrect.origin.y = y+1;
+        textrect.size.height -= 3;
+        [[UIColor whiteColor] setFill];
+        CGContextFillRect(context, textrect);
+        textrect.origin.y -= 2;
+        [[UIColor blackColor] setFill];
+        [num drawInRect:textrect withFont:numfont];
         
         // avoid fuzzy lines
         CGContextSetShouldAntialias(context, false);
@@ -110,6 +124,7 @@
         }
     }
 
+    /* no need to do this as current drawing state is shown in edit bar:
     // indicate the current drawing state with a black box
     [[UIColor blackColor] setStroke];
     x = dx;
@@ -120,6 +135,7 @@
     CGContextAddLineToPoint(context, x, y+33);
     CGContextAddLineToPoint(context, x, y+1);
     CGContextStrokePath(context);
+    */
 }
 
 // -----------------------------------------------------------------------------

@@ -61,6 +61,7 @@ public:
 
     CGImageRef* icons7x7;         // icon bitmaps for scale 1:8
     CGImageRef* icons15x15;       // icon bitmaps for scale 1:16
+    CGImageRef* icons31x31;       // icon bitmaps for scale 1:32
 
     std::string iconfile;         // path to file containing icons
     
@@ -80,9 +81,11 @@ extern algo_type initalgo;                // initial algorithm
 
 extern CGImageRef* hexicons7x7;           // hexagonal icon bitmaps for scale 1:8
 extern CGImageRef* hexicons15x15;         // hexagonal icon bitmaps for scale 1:16
+extern CGImageRef* hexicons31x31;         // hexagonal icon bitmaps for scale 1:32
 
 extern CGImageRef* vnicons7x7;            // diamond icon bitmaps for scale 1:8
 extern CGImageRef* vnicons15x15;          // diamond icon bitmaps for scale 1:16
+extern CGImageRef* vnicons31x31;          // diamond icon bitmaps for scale 1:32
 
 void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.
@@ -99,7 +102,7 @@ int NumAlgos();
 // Return current number of algorithms.
 
 bool LoadIconFile(const std::string& path, int maxstate,
-                  CGImageRef** out15x15, CGImageRef** out7x7);
+                  CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31);
 // Return true if we can successfully load icon bitmaps from given file.
 
 #endif

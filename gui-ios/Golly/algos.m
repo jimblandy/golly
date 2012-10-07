@@ -44,9 +44,11 @@ AlgoData* algoinfo[MAX_ALGOS];      // static info for each algorithm
 
 CGImageRef* hexicons7x7;            // hexagonal icon bitmaps for scale 1:8
 CGImageRef* hexicons15x15;          // hexagonal icon bitmaps for scale 1:16
+CGImageRef* hexicons31x31;          // hexagonal icon bitmaps for scale 1:32
 
 CGImageRef* vnicons7x7;             // diamond-shaped icon bitmaps for scale 1:8
 CGImageRef* vnicons15x15;           // diamond-shaped icon bitmaps for scale 1:16
+CGImageRef* vnicons31x31;           // diamond-shaped icon bitmaps for scale 1:32
 
 // -----------------------------------------------------------------------------
 
@@ -144,6 +146,47 @@ static const char* default15x15[] = {
 "..............."
 };
 
+// XPM data for default 31x31 icon
+static const char* default31x31[] = {
+// width height ncolors chars_per_pixel
+"31 31 2 1",
+// colors
+". c #000000000000",    // black will be transparent
+"W c #FFFFFFFFFFFF",    // white
+// pixels
+"...............................",
+"...............................",
+"............WWWWWWW............",
+"..........WWWWWWWWWWW..........",
+"........WWWWWWWWWWWWWWW........",
+".......WWWWWWWWWWWWWWWWW.......",
+"......WWWWWWWWWWWWWWWWWWW......",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"......WWWWWWWWWWWWWWWWWWW......",
+".......WWWWWWWWWWWWWWWWW.......",
+"........WWWWWWWWWWWWWWW........",
+"..........WWWWWWWWWWW..........",
+"............WWWWWWW............",
+"...............................",
+"..............................."
+};
+
 // XPM data for the 7x7 icon used for hexagonal CA
 static const char* hex7x7[] = {
 // width height ncolors chars_per_pixel
@@ -183,6 +226,47 @@ static const char* hex15x15[] = {
 "......WWWWWWWW.",
 "........WWWWW..",
 "..........WW..."};
+
+// XPM data for 31x31 icon used for hexagonal CA
+static const char* hex31x31[] = {
+// width height ncolors chars_per_pixel
+"31 31 2 1",
+// colors
+". c #000000000000",    // black will be transparent
+"W c #FFFFFFFFFFFF",    // white
+// pixels
+".....WW........................",
+"....WWWWW......................",
+"...WWWWWWWW....................",
+"..WWWWWWWWWWW..................",
+".WWWWWWWWWWWWWW................",
+"WWWWWWWWWWWWWWWWW..............",
+"WWWWWWWWWWWWWWWWWWW............",
+".WWWWWWWWWWWWWWWWWWWW..........",
+".WWWWWWWWWWWWWWWWWWWWWW........",
+"..WWWWWWWWWWWWWWWWWWWWW........",
+"..WWWWWWWWWWWWWWWWWWWWWW.......",
+"...WWWWWWWWWWWWWWWWWWWWW.......",
+"...WWWWWWWWWWWWWWWWWWWWWW......",
+"....WWWWWWWWWWWWWWWWWWWWW......",
+"....WWWWWWWWWWWWWWWWWWWWWW.....",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+".....WWWWWWWWWWWWWWWWWWWWWW....",
+"......WWWWWWWWWWWWWWWWWWWWW....",
+"......WWWWWWWWWWWWWWWWWWWWWW...",
+".......WWWWWWWWWWWWWWWWWWWWW...",
+".......WWWWWWWWWWWWWWWWWWWWWW..",
+"........WWWWWWWWWWWWWWWWWWWWW..",
+"........WWWWWWWWWWWWWWWWWWWWWW.",
+"..........WWWWWWWWWWWWWWWWWWWW.",
+"............WWWWWWWWWWWWWWWWWWW",
+"..............WWWWWWWWWWWWWWWWW",
+"................WWWWWWWWWWWWWW.",
+"..................WWWWWWWWWWW..",
+"....................WWWWWWWW...",
+"......................WWWWW....",
+"........................WW....."
+};
 
 // XPM data for the 7x7 icon used for von Neumann CA
 static const char* vn7x7[] = {
@@ -224,6 +308,47 @@ static const char* vn15x15[] = {
 "......WWW......",
 ".......W.......",
 "..............."
+};
+
+// XPM data for 31x31 icon used for von Neumann CA
+static const char* vn31x31[] = {
+// width height ncolors chars_per_pixel
+"31 31 2 1",
+// colors
+". c #000000000000",    // black will be transparent
+"W c #FFFFFFFFFFFF",    // white
+// pixels
+"...............................",
+"...............................",
+"...............W...............",
+"..............WWW..............",
+".............WWWWW.............",
+"............WWWWWWW............",
+"...........WWWWWWWWW...........",
+"..........WWWWWWWWWWW..........",
+".........WWWWWWWWWWWWW.........",
+"........WWWWWWWWWWWWWWW........",
+".......WWWWWWWWWWWWWWWWW.......",
+"......WWWWWWWWWWWWWWWWWWW......",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"......WWWWWWWWWWWWWWWWWWW......",
+".......WWWWWWWWWWWWWWWWW.......",
+"........WWWWWWWWWWWWWWW........",
+".........WWWWWWWWWWWWW.........",
+"..........WWWWWWWWWWW..........",
+"...........WWWWWWWWW...........",
+"............WWWWWWW............",
+".............WWWWW.............",
+"..............WWW..............",
+"...............W...............",
+"...............................",
+"..............................."
 };
 
 // -----------------------------------------------------------------------------
@@ -331,7 +456,6 @@ static CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size)
             } else {
                 CGImageRef srcimage = srcicons[i];
                 size_t bytesPerRow = CGImageGetBitsPerPixel(srcimage) / CGImageGetBitsPerComponent(srcimage) * size;
-                bytesPerRow = (bytesPerRow + 15) & ~15;
                 
                 CGContextRef context = CGBitmapContextCreate(NULL, size, size,
                     CGImageGetBitsPerComponent(srcimage),
@@ -367,10 +491,14 @@ static void CreateDefaultIcons(AlgoData* ad)
             // scale down 15x15 bitmaps (not too bad)
             ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
         }
+        
+        // scale up 15x15 bitmaps for 1:32
+        ad->icons31x31 = ScaleIconBitmaps(ad->icons15x15, 31);
     } else {
         // algo didn't supply any icons so use static XPM data defined above
         ad->icons7x7 = CreateIconBitmaps(default7x7, ad->maxstates);
         ad->icons15x15 = CreateIconBitmaps(default15x15, ad->maxstates);
+        ad->icons31x31 = CreateIconBitmaps(default31x31, ad->maxstates);
     }
 }
 
@@ -381,6 +509,7 @@ AlgoData::AlgoData() {
     iconfile = "";
     icons7x7 = NULL;
     icons15x15 = NULL;
+    icons31x31 = NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -453,9 +582,11 @@ void InitAlgorithms()
     
     hexicons7x7 = CreateIconBitmaps(hex7x7,256);
     hexicons15x15 = CreateIconBitmaps(hex15x15,256);
+    hexicons31x31 = CreateIconBitmaps(hex31x31,256);
      
     vnicons7x7 = CreateIconBitmaps(vn7x7,256);
     vnicons15x15 = CreateIconBitmaps(vn15x15,256);
+    vnicons31x31 = CreateIconBitmaps(vn31x31,256);
 }
 
 // -----------------------------------------------------------------------------
@@ -493,7 +624,7 @@ int NumAlgos()
 // -----------------------------------------------------------------------------
 
 bool LoadIconFile(const std::string& path, int maxstate,
-                  CGImageRef** out15x15, CGImageRef** out7x7)
+                  CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31)
 {
     /*!!!
     wxImage image;
@@ -508,6 +639,8 @@ bool LoadIconFile(const std::string& path, int maxstate,
     // check for multi-color icons
     int depth = -1;
     if (image.CountColours(2) <= 2) depth = 1;   // monochrome
+    
+    currlayer->multicoloricons = depth != 1;
     
     wxBitmap allicons(image, depth);
     int wd = allicons.GetWidth();

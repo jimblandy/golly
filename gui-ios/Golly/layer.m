@@ -499,13 +499,15 @@ void AddLayer()
         UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
         if (cloning) {
             // use same icon pointers
-            currlayer->icons15x15 = oldlayer->icons15x15;
             currlayer->icons7x7 = oldlayer->icons7x7;
+            currlayer->icons15x15 = oldlayer->icons15x15;
+            currlayer->icons31x31 = oldlayer->icons31x31;
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, 31, maxstate);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -962,8 +964,9 @@ void UpdateCloneColors()
                 }
                 
                 // use same icon pointers
-                cloneptr->icons15x15 = currlayer->icons15x15;
                 cloneptr->icons7x7 = currlayer->icons7x7;
+                cloneptr->icons15x15 = currlayer->icons15x15;
+                cloneptr->icons31x31 = currlayer->icons31x31;
             }
         }
     }
@@ -1000,22 +1003,31 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
 static bool LoadRuleIcons(const std::string& rule, int maxstate)
 {
     // deallocate current layer's old icons if they exist
-    if (currlayer->icons15x15) {
-        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons15x15[i]);
-        free(currlayer->icons15x15);
-        currlayer->icons15x15 = NULL;
-    }
     if (currlayer->icons7x7) {
         for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons7x7[i]);
         free(currlayer->icons7x7);
         currlayer->icons7x7 = NULL;
     }
+    if (currlayer->icons15x15) {
+        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons15x15[i]);
+        free(currlayer->icons15x15);
+        currlayer->icons15x15 = NULL;
+    }
+    if (currlayer->icons31x31) {
+        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons31x31[i]);
+        free(currlayer->icons31x31);
+        currlayer->icons31x31 = NULL;
+    }
+    
+    currlayer->multicoloricons = false;     // LoadIconFile might set this true
     
     // if rule.icons file exists in userrules or rulesdir then load icons for current layer
     std::string path;
     return (FindIconFile(rule, userrules, path) ||
             FindIconFile(rule, rulesdir, path)) &&
-    LoadIconFile(path, maxstate, &currlayer->icons15x15, &currlayer->icons7x7);
+                LoadIconFile(path, maxstate, &currlayer->icons7x7,
+                                             &currlayer->icons15x15,
+                                             &currlayer->icons31x31);
 }
 
 // -----------------------------------------------------------------------------
@@ -1223,16 +1235,19 @@ void UpdateCurrentColors()
     if ( !LoadRuleIcons(rule, maxstate) ) {
         if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
             // use hexagonal icons
-            currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(hexicons31x31, 31, maxstate);
         } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
             // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-            currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(vnicons31x31, 31, maxstate);
         } else {
             // otherwise copy default icons from current algo
-            currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
         }
     }
     
@@ -1240,7 +1255,7 @@ void UpdateCurrentColors()
     // set non-icon colors to the average of the non-black pixels in each icon
     // (note that we use the 7x7 icons because they are faster to scan)
     CGImageRef* iconmaps = currlayer->icons7x7;
-    if (!loadedcolors && iconmaps && iconmaps[1] && false/*!!! iconmaps[1]->GetDepth() > 1 */) {
+    if (!loadedcolors && iconmaps && iconmaps[1] && currlayer->multicoloricons) {
         for (int n = 1; n <= maxstate; n++) {
             SetAverageColor(n, iconmaps[n]);
         }
@@ -1349,8 +1364,9 @@ Layer::Layer()
     originx = 0;                  // no X origin offset
     originy = 0;                  // no Y origin offset
     
-    icons15x15 = NULL;            // no 15x15 icons
     icons7x7 = NULL;              // no 7x7 icons
+    icons15x15 = NULL;            // no 15x15 icons
+    icons31x31 = NULL;            // no 31x31 icons
     
     // init color references
     for (int n = 0; n < 256; n++) {
@@ -1590,13 +1606,17 @@ Layer::~Layer()
         for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
 
         // delete any icons
+        if (icons7x7) {
+            for (int i = 0; i < 256; i++) CGImageRelease(icons7x7[i]);
+            free(icons7x7);
+        }
         if (icons15x15) {
             for (int i = 0; i < 256; i++) CGImageRelease(icons15x15[i]);
             free(icons15x15);
         }
-        if (icons7x7) {
-            for (int i = 0; i < 256; i++) CGImageRelease(icons7x7[i]);
-            free(icons7x7);
+        if (icons31x31) {
+            for (int i = 0; i < 256; i++) CGImageRelease(icons31x31[i]);
+            free(icons31x31);
         }
     }
 }

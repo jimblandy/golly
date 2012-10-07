@@ -31,3 +31,7 @@
 - (void)dismissStatePopover;
 
 @end
+
+void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
+                 unsigned char deadr, unsigned char deadg, unsigned char deadb,
+                 unsigned char liver, unsigned char liveg, unsigned char liveb);

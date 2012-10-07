@@ -118,6 +118,9 @@ public:
     // icons for this layer
     CGImageRef* icons7x7;         // icon bitmaps for scale 1:8
     CGImageRef* icons15x15;       // icon bitmaps for scale 1:16
+    CGImageRef* icons31x31;       // icon bitmaps for scale 1:32
+    
+    bool multicoloricons;         // are icons multi-colored? (ie. not just black and white)
     
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline

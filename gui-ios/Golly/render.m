@@ -137,7 +137,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 if (state && iconmaps[state]) {
                     // copy cellsize*cellsize pixels from iconmaps[state]
                     // but convert black pixels to dead cell color
-                    bool multicolor = iconmaps[1]->GetDepth() > 1;
+                    bool multicolor = currlayer->multicoloricons;
                     wxAlphaPixelData icondata(*iconmaps[state]);
                     if (icondata) {
                         wxAlphaPixelData::Iterator iconpxl(icondata);
@@ -925,12 +925,14 @@ void DrawOneLayer(EAGLContext* dc)
     wxMemoryDC layerdc;
     layerdc.SelectObject(*layerbitmap);
     
-    // only show icons at scales 1:8 and 1:16
+    // only show icons at scales 1:8, 1:16 and 1:32
     if (showicons && currlayer->view->getmag() > 2) {
         if (currlayer->view->getmag() == 3) {
             iconmaps = currlayer->icons7x7;
-        } else {
+        } else if (currlayer->view->getmag() == 4) {
             iconmaps = currlayer->icons15x15;
+        } else {
+            iconmaps = currlayer->icons31x31;
         }
     }
     
@@ -1131,12 +1133,14 @@ void DrawPattern(EAGLContext* context, int tileindex)
     }
     */
     
-    // only show icons at scales 1:8 and 1:16
+    // only show icons at scales 1:8, 1:16 and 1:32
     if (showicons && currlayer->view->getmag() > 2) {
         if (currlayer->view->getmag() == 3) {
             iconmaps = currlayer->icons7x7;
-        } else {
+        } else if (currlayer->view->getmag() == 4) {
             iconmaps = currlayer->icons15x15;
+        } else {
+            iconmaps = currlayer->icons31x31;
         }
     }
     
