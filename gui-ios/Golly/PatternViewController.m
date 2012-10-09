@@ -142,7 +142,7 @@ static int pausecount = 0;              // if > 0 then genTimer needs to be rest
     
     // init touch mode
     [modeControl setSelectedSegmentIndex:currlayer->touchmode];
-    
+
     [self updateDrawingState];
 }
 

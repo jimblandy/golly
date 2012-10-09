@@ -416,18 +416,51 @@ void CurrentLayerChanged()
 
 // -----------------------------------------------------------------------------
 
-static CGImageRef* CopyIcons(CGImageRef* srcicons, int size, int maxstate)
+static CGImageRef* CopyIcons(CGImageRef* srcicons, int maxstate)
 {
     CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
     if (iconptr) {
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-        for (int i = 1; i <= maxstate; i++) {
+        for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
                 iconptr[i] = CGImageCreateCopy(srcicons[i]);
             }
         }
     }
     return iconptr;
+}
+
+// -----------------------------------------------------------------------------
+
+static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
+{
+    unsigned char** iconpixelsptr = (unsigned char**) malloc(256 * sizeof(unsigned char*));
+    if (iconpixelsptr) {
+        for (int i = 0; i < 256; i++) iconpixelsptr[i] = NULL;
+        for (int i = 0; i <= maxstate; i++) {
+            if (srcicons && srcicons[i]) {
+                int wd = CGImageGetWidth(srcicons[i]);
+                int ht = CGImageGetHeight(srcicons[i]);
+                int bytesPerPixel = 4;
+                int bytesPerRow = bytesPerPixel * wd;
+                int bitsPerComponent = 8;
+
+                // allocate enough memory to store icon's RGBA pixel data
+                iconpixelsptr[i] = (unsigned char*) calloc(wd * ht * 4, 1);
+                if (iconpixelsptr[i]) {
+                    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+                    CGContextRef ctx = CGBitmapContextCreate(iconpixelsptr[i], wd, ht,
+                        bitsPerComponent, bytesPerRow, colorspace,
+                        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+                    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), srcicons[i]);
+                    CGContextRelease(ctx);
+                    CGColorSpaceRelease(colorspace);
+                    // iconpixelsptr[i] now points to the icon's pixels in RGBA format
+                }
+            }
+        }
+    }
+    return iconpixelsptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -502,12 +535,20 @@ void AddLayer()
             currlayer->icons7x7 = oldlayer->icons7x7;
             currlayer->icons15x15 = oldlayer->icons15x15;
             currlayer->icons31x31 = oldlayer->icons31x31;
+            // use same pixel data
+            currlayer->iconpixels7x7 = oldlayer->iconpixels7x7;
+            currlayer->iconpixels15x15 = oldlayer->iconpixels15x15;
+            currlayer->iconpixels31x31 = oldlayer->iconpixels31x31;
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, 31, maxstate);
+            currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, maxstate);
+            // get icon pixel data
+            currlayer->iconpixels7x7 = GetIconPixels(oldlayer->icons7x7, maxstate);
+            currlayer->iconpixels15x15 = GetIconPixels(oldlayer->icons15x15, maxstate);
+            currlayer->iconpixels31x31 = GetIconPixels(oldlayer->icons31x31, maxstate);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -962,17 +1003,59 @@ void UpdateCloneColors()
                     cloneptr->cellb[n] = currlayer->cellb[n];
                     cloneptr->colorref[n] = currlayer->colorref[n];
                 }
-                
                 // use same icon pointers
                 cloneptr->icons7x7 = currlayer->icons7x7;
                 cloneptr->icons15x15 = currlayer->icons15x15;
                 cloneptr->icons31x31 = currlayer->icons31x31;
+                // use same pixel data
+                cloneptr->iconpixels7x7 = currlayer->iconpixels7x7;
+                cloneptr->iconpixels15x15 = currlayer->iconpixels15x15;
+                cloneptr->iconpixels31x31 = currlayer->iconpixels31x31;
             }
         }
     }
 }
 
 !!!*/
+
+// -----------------------------------------------------------------------------
+
+static void DeleteIcons(Layer* layer)
+{
+    // delete given layer's existing icons
+    if (layer->icons7x7) {
+        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons7x7[i]);
+        free(layer->icons7x7);
+        layer->icons7x7 = NULL;
+    }
+    if (layer->icons15x15) {
+        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons15x15[i]);
+        free(layer->icons15x15);
+        layer->icons15x15 = NULL;
+    }
+    if (layer->icons31x31) {
+        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons31x31[i]);
+        free(layer->icons31x31);
+        layer->icons31x31 = NULL;
+    }
+    
+    // also delete icon pixel data
+    if (layer->iconpixels7x7) {
+        for (int i = 0; i < 256; i++) if (layer->iconpixels7x7[i]) free(layer->iconpixels7x7[i]);
+        free(layer->iconpixels7x7);
+        layer->iconpixels7x7 = NULL;
+    }
+    if (layer->iconpixels15x15) {
+        for (int i = 0; i < 256; i++) if (layer->iconpixels15x15[i]) free(layer->iconpixels15x15[i]);
+        free(layer->iconpixels15x15);
+        layer->iconpixels15x15 = NULL;
+    }
+    if (layer->iconpixels31x31) {
+        for (int i = 0; i < 256; i++) if (layer->iconpixels31x31[i]) free(layer->iconpixels31x31[i]);
+        free(layer->iconpixels31x31);
+        layer->iconpixels31x31 = NULL;
+    }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -1002,24 +1085,12 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
 
 static bool LoadRuleIcons(const std::string& rule, int maxstate)
 {
-    // deallocate current layer's old icons if they exist
-    if (currlayer->icons7x7) {
-        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons7x7[i]);
-        free(currlayer->icons7x7);
-        currlayer->icons7x7 = NULL;
-    }
-    if (currlayer->icons15x15) {
-        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons15x15[i]);
-        free(currlayer->icons15x15);
-        currlayer->icons15x15 = NULL;
-    }
-    if (currlayer->icons31x31) {
-        for (int i = 0; i < 256; i++) CGImageRelease(currlayer->icons31x31[i]);
-        free(currlayer->icons31x31);
-        currlayer->icons31x31 = NULL;
-    }
+    // delete current layer's existing icons
+    DeleteIcons(currlayer);
     
-    currlayer->multicoloricons = false;     // LoadIconFile might set this true
+    // all of Golly's default icons are monochrome, but LoadIconFile might load
+    // a multi-colored icon and set this flag to true
+    currlayer->multicoloricons = false;
     
     // if rule.icons file exists in userrules or rulesdir then load icons for current layer
     std::string path;
@@ -1032,52 +1103,39 @@ static bool LoadRuleIcons(const std::string& rule, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-static void SetAverageColor(int state, CGImageRef icon)
+static void SetAverageColor(int state, int numpixels, unsigned char* pxldata)
 {
-    // set non-icon color to average color of non-black pixels in given icon
-    /*!!!
-    if (icon) {
-        int wd = icon->GetWidth();
-        int ht = icon->GetHeight();
-        
-        wxAlphaPixelData icondata(*icon);
-        if (icondata) {
-            wxAlphaPixelData::Iterator iconpxl(icondata);
-            int nbcount = 0;  // # of non-black pixels
-            int totalr = 0;
-            int totalg = 0;
-            int totalb = 0;
-            
-            for (int i = 0; i < ht; i++) {
-                wxAlphaPixelData::Iterator iconrow = iconpxl;
-                for (int j = 0; j < wd; j++) {
-                    if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                        // non-black pixel
-                        totalr += iconpxl.Red();
-                        totalg += iconpxl.Green();
-                        totalb += iconpxl.Blue();
-                        nbcount++;
-                    }
-                    iconpxl++;
-                }
-                // move to next row of icon bitmap
-                iconpxl = iconrow;
-                iconpxl.OffsetY(icondata, 1);
-            }
-            
-            if (nbcount>0) {
-                currlayer->cellr[state] = int(totalr / nbcount);
-                currlayer->cellg[state] = int(totalg / nbcount);
-                currlayer->cellb[state] = int(totalb / nbcount);
-            }
-            else { // avoid div0
-                currlayer->cellr[state] = 0;
-                currlayer->cellg[state] = 0;
-                currlayer->cellb[state] = 0;
-            }
+    // set non-icon color to average color of non-black pixels in given pixel data
+    // which contains the icon bitmap in RGBA pixel format
+    int byte = 0;
+    int nbcount = 0;  // # of non-black pixels
+    int totalr = 0;
+    int totalg = 0;
+    int totalb = 0;
+    for (int i = 0; i < numpixels; i++) {
+        unsigned char r = pxldata[byte];
+        unsigned char g = pxldata[byte+1];
+        unsigned char b = pxldata[byte+2];
+        if (r || g || b) {
+            // non-black pixel
+            totalr += r;
+            totalg += g;
+            totalb += b;
+            nbcount++;
         }
+        byte += 4;
     }
-    !!!*/
+    
+    if (nbcount > 0) {
+        currlayer->cellr[state] = int(totalr / nbcount);
+        currlayer->cellg[state] = int(totalg / nbcount);
+        currlayer->cellb[state] = int(totalb / nbcount);
+    } else {
+        // avoid div0
+        currlayer->cellr[state] = 0;
+        currlayer->cellg[state] = 0;
+        currlayer->cellb[state] = 0;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1235,43 +1293,44 @@ void UpdateCurrentColors()
     if ( !LoadRuleIcons(rule, maxstate) ) {
         if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
             // use hexagonal icons
-            currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(hexicons31x31, 31, maxstate);
+            currlayer->icons7x7 = CopyIcons(hexicons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(hexicons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(hexicons31x31, maxstate);
         } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
             // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-            currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(vnicons31x31, 31, maxstate);
+            currlayer->icons7x7 = CopyIcons(vnicons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(vnicons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(vnicons31x31, maxstate);
         } else {
             // otherwise copy default icons from current algo
-            currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
+            currlayer->icons7x7 = CopyIcons(ad->icons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(ad->icons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(ad->icons31x31, maxstate);
         }
     }
+
+    // get icon pixel data (mainly used for rendering, but also useful below)
+    currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
+    currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
+    currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
     
     // if rule.colors file wasn't loaded and icons are multi-color then we
     // set non-icon colors to the average of the non-black pixels in each icon
     // (note that we use the 7x7 icons because they are faster to scan)
-    CGImageRef* iconmaps = currlayer->icons7x7;
-    if (!loadedcolors && iconmaps && iconmaps[1] && currlayer->multicoloricons) {
+    unsigned char** iconpixels = currlayer->iconpixels7x7;
+    if (!loadedcolors && iconpixels && currlayer->multicoloricons) {
         for (int n = 1; n <= maxstate; n++) {
-            SetAverageColor(n, iconmaps[n]);
+            if (iconpixels[n]) SetAverageColor(n, 7*7, iconpixels[n]);
         }
-        // if extra 15x15 icon was supplied then use it to set state 0 color
-        iconmaps = currlayer->icons15x15;
-        if (iconmaps && iconmaps[0]) {
-            /*!!!
-            wxAlphaPixelData icondata(*iconmaps[0]);
-            if (icondata) {
-                wxAlphaPixelData::Iterator iconpxl(icondata);
-                // iconpxl is the top left pixel
-                currlayer->cellr[0] = iconpxl.Red();
-                currlayer->cellg[0] = iconpxl.Green();
-                currlayer->cellb[0] = iconpxl.Blue();
-            }
-            !!!*/
+        // if a 15x15 icon is supplied in the 0th position then use
+        // its top left pixel to set the state 0 color
+        iconpixels = currlayer->iconpixels15x15;
+        if (iconpixels && iconpixels[0]) {
+            unsigned char* pxldata = iconpixels[0];
+            // pxldata contains the icon bitmap in RGBA pixel format
+            currlayer->cellr[0] = pxldata[0];
+            currlayer->cellg[0] = pxldata[1];
+            currlayer->cellb[0] = pxldata[2];
         }
     }
     
@@ -1367,6 +1426,10 @@ Layer::Layer()
     icons7x7 = NULL;              // no 7x7 icons
     icons15x15 = NULL;            // no 15x15 icons
     icons31x31 = NULL;            // no 31x31 icons
+
+    iconpixels7x7 = NULL;         // no pixel data for 7x7 icons
+    iconpixels15x15 = NULL;       // no pixel data for 15x15 icons
+    iconpixels31x31 = NULL;       // no pixel data for 31x31 icons
     
     // init color references
     for (int n = 0; n < 256; n++) {
@@ -1606,17 +1669,6 @@ Layer::~Layer()
         for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
 
         // delete any icons
-        if (icons7x7) {
-            for (int i = 0; i < 256; i++) CGImageRelease(icons7x7[i]);
-            free(icons7x7);
-        }
-        if (icons15x15) {
-            for (int i = 0; i < 256; i++) CGImageRelease(icons15x15[i]);
-            free(icons15x15);
-        }
-        if (icons31x31) {
-            for (int i = 0; i < 256; i++) CGImageRelease(icons31x31[i]);
-            free(icons31x31);
-        }
+        DeleteIcons(this);
     }
 }

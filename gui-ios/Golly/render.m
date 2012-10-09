@@ -23,31 +23,23 @@
  / ***/
 
 /* -------------------- Some notes on Golly's display code ---------------------
-
- //!!! needs updating
  
  The rectangular area used to display patterns is called the viewport.
- It's represented by the class PatternView defined in PatternView.h.
- All drawing in the viewport is done in this module.
+ All drawing in the viewport is done in this module using OpenGL ES.
  
  The main rendering routine is DrawPattern() -- see the end of this module.
- DrawPattern() is called from PatternView's refreshPattern method and
-does the following tasks:
+ DrawPattern() does the following tasks:
  
  - Calls currlayer->algo->draw() to draw the current pattern.  It passes
    in renderer, an instance of ios_render (derived from liferender) which
    has these methods:
- - killrect() draws a rectangular area of dead cells.
- - pixblit() draws a pixmap containing at least one live cell.
- - getcolors() provides access to the current layer's color arrays.
+   - pixblit() draws a pixmap containing at least one live cell.
+   - getcolors() provides access to the current layer's color arrays.
  
- Note that currlayer->algo->draw() does all the hard work of figuring
- out which parts of the viewport are dead and building all the pixmaps
- for the live parts.  The pixmaps contain suitably shrunken images
- when the scale is < 1:1 (ie. mag < 0).
- 
- Each lifealgo needs to implement its own draw() method; for example,
- hlifealgo::draw() in hlifedraw.cpp.
+   Note that currlayer->algo->draw() does all the hard work of figuring
+   out which parts of the viewport are dead and building all the pixmaps
+   for the live parts.  The pixmaps contain suitably shrunken images
+   when the scale is < 1:1 (ie. mag < 0).
  
  - Calls DrawGridLines() to overlay grid lines if they are visible.
  
@@ -56,16 +48,8 @@ does the following tasks:
  - Calls DrawSelection() to overlay a translucent selection rectangle
    if a selection exists and any part of it is visible.
  
- - Calls DrawStackedLayers() to overlay multiple layers using the current
-   layer's scale and location.
- 
  - If the user is doing a paste, DrawPasteImage() draws the paste pattern
    stored in pastealgo.
- 
- Other points of interest:
- 
- - Change the "#if 0" to "#if 1" in ios_render::killrect() to see randomly
-   colored rects.  This gives an insight into how lifealgo::draw() works.
  
  ----------------------------------------------------------------------------- */
 
@@ -87,16 +71,9 @@ does the following tasks:
 
 // local data used in ios_render routines:
 
-static GLuint imageTexture = 0;         // texture name
 static int currwd, currht;              // current width and height of viewport
-static EAGLContext* currdc;             // current drawing context -- no need???!!!
-
-/*!!! no need??? (decide after icons are implemented)
-static int pixmapwd = -1;               // width of pixmap
-static int pixmapht = -1;               // height of pixmap
-static unsigned char* pixmap = NULL;    // bitmap of RGB data used in pixblit calls
-*/
-static CGImageRef* iconmaps;            // array of icon bitmaps
+static unsigned char** iconpixels;      // pointers to pixel data for each icon
+static GLuint imageTexture = 0;         // texture name
 
 // for drawing paste pattern
 static lifealgo* pastealgo;             // universe containing paste pattern
@@ -109,131 +86,6 @@ static int layerwd = -1;                // width of layer bitmap
 static int layerht = -1;                // height of layer bitmap
 static wxBitmap* layerbitmap = NULL;    // layer bitmap
 */
-
-// -----------------------------------------------------------------------------
-
-/*!!!
-
-void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
-{
-    // called from ios_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8 or 16)
-    int cellsize = pmscale - 1;
-    bool drawgap = (pmscale < (1 << mingridmag)) ||
-                   (pmscale >= (1 << mingridmag) && !showgridlines);
-    unsigned char deadred   = currlayer->cellr[0];
-    unsigned char deadgreen = currlayer->cellg[0];
-    unsigned char deadblue  = currlayer->cellb[0];
-    
-    wxAlphaPixelData pxldata(*pixmap);
-    if (pxldata) {
-        wxAlphaPixelData::Iterator p(pxldata);
-        for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int col = 0; col < w; col++ ) {
-                unsigned char state = statedata[row*stride + col];
-                
-                wxAlphaPixelData::Iterator topleft = p;
-                if (state && iconmaps[state]) {
-                    // copy cellsize*cellsize pixels from iconmaps[state]
-                    // but convert black pixels to dead cell color
-                    bool multicolor = currlayer->multicoloricons;
-                    wxAlphaPixelData icondata(*iconmaps[state]);
-                    if (icondata) {
-                        wxAlphaPixelData::Iterator iconpxl(icondata);
-                        for (int i = 0; i < cellsize; i++) {
-                            wxAlphaPixelData::Iterator colstart = p;
-                            wxAlphaPixelData::Iterator iconrow = iconpxl;
-                            for (int j = 0; j < cellsize; j++) {
-                                if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                                    if (multicolor) {
-                                        // use non-black pixel in multi-colored icon
-                                        if (swapcolors) {
-                                            p.Red()   = 255 - iconpxl.Red();
-                                            p.Green() = 255 - iconpxl.Green();
-                                            p.Blue()  = 255 - iconpxl.Blue();
-                                        } else {
-                                            p.Red()   = iconpxl.Red();
-                                            p.Green() = iconpxl.Green();
-                                            p.Blue()  = iconpxl.Blue();
-                                        }
-                                    } else {
-                                        // replace non-black pixel with current cell color
-                                        p.Red()   = currlayer->cellr[state];
-                                        p.Green() = currlayer->cellg[state];
-                                        p.Blue()  = currlayer->cellb[state];
-                                    }
-                                } else {
-                                    // replace black pixel with dead cell color
-                                    p.Red()   = deadred;
-                                    p.Green() = deadgreen;
-                                    p.Blue()  = deadblue;
-                                }
-                                p++;
-                                iconpxl++;
-                            }
-                            if (drawgap) {
-                                // draw dead pixels at right edge of cell
-                                p.Red()   = deadred;
-                                p.Green() = deadgreen;
-                                p.Blue()  = deadblue;
-                            }
-                            p = colstart;
-                            p.OffsetY(pxldata, 1);
-                            // move to next row of icon bitmap
-                            iconpxl = iconrow;
-                            iconpxl.OffsetY(icondata, 1);
-                        }
-                        if (drawgap) {
-                            // draw dead pixels at bottom edge of cell
-                            for (int j = 0; j <= cellsize; j++) {
-                                p.Red()   = deadred;
-                                p.Green() = deadgreen;
-                                p.Blue()  = deadblue;
-                                p++;
-                            }
-                        }
-                    }
-                } else {
-                    // draw dead cell
-                    for (int i = 0; i < cellsize; i++) {
-                        wxAlphaPixelData::Iterator colstart = p;
-                        for (int j = 0; j < cellsize; j++) {
-                            p.Red()   = deadred;
-                            p.Green() = deadgreen;
-                            p.Blue()  = deadblue;
-                            p++;
-                        }
-                        if (drawgap) {
-                            // draw dead pixels at right edge of cell
-                            p.Red()   = deadred;
-                            p.Green() = deadgreen;
-                            p.Blue()  = deadblue;
-                        }
-                        p = colstart;
-                        p.OffsetY(pxldata, 1);
-                    }
-                    if (drawgap) {
-                        // draw dead pixels at bottom edge of cell
-                        for (int j = 0; j <= cellsize; j++) {
-                            p.Red()   = deadred;
-                            p.Green() = deadgreen;
-                            p.Blue()  = deadblue;
-                            p++;
-                        }
-                    }
-                }
-                p = topleft;
-                p.OffsetX(pxldata, pmscale);
-            }
-            p = rowstart;
-            p.OffsetY(pxldata, pmscale);
-        }
-    }
-    currdc->DrawBitmap(*pixmap, x, y);   
-}
-
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -315,8 +167,8 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
     unsigned char r, g, b;
     bool changecolor;
     int i = 0;
-    for ( int row = 0; row < h; row++ ) {
-        for ( int col = 0; col < w; col++ ) {
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
             r = rgbdata[i++];
             g = rgbdata[i++];
             b = rgbdata[i++];
@@ -350,6 +202,87 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
+void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+{
+    // called from ios_render::pixblit to draw icons for each live cell;
+    // assume pmscale > 2 (should be 8 or 16 or 32)
+    int cellsize = pmscale - 1;
+    bool multicolor = currlayer->multicoloricons;
+    
+    const int maxcoords = 1024;     // must be multiple of 2
+    GLfloat points[maxcoords];
+    int numcoords = 0;
+    
+    glDisable(GL_TEXTURE_2D);
+    glPointSize(1);
+
+    unsigned char prevr = currlayer->cellr[0];
+    unsigned char prevg = currlayer->cellg[0];
+    unsigned char prevb = currlayer->cellb[0];
+    bool changecolor;
+
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            unsigned char state = statedata[row*stride + col];
+            if (state && iconpixels[state]) {
+                // draw non-black pixels in this icon
+                unsigned char liver = currlayer->cellr[state];
+                unsigned char liveg = currlayer->cellg[state];
+                unsigned char liveb = currlayer->cellb[state];
+                unsigned char* pxldata = iconpixels[state];
+                int byte = 0;
+                for (int i = 0; i < cellsize; i++) {
+                    for (int j = 0; j < cellsize; j++) {
+                        unsigned char r = pxldata[byte++];
+                        unsigned char g = pxldata[byte++];
+                        unsigned char b = pxldata[byte++];
+                        byte++; // skip alpha
+                        if (r || g || b) {
+                            if (multicolor) {
+                                // draw non-black pixel from multi-colored icon
+                                if (swapcolors) {
+                                    r = 255 - r;
+                                    g = 255 - g;
+                                    b = 255 - b;
+                                }
+                            } else {
+                                // replace non-black pixel with current cell color
+                                r = liver;
+                                g = liveg;
+                                b = liveb;
+                            }
+                            // draw r,g,b pixel
+                            changecolor = (r != prevr || g != prevg || b != prevb);
+                            if (changecolor || numcoords == maxcoords) {
+                                if (numcoords > 0) {
+                                    glVertexPointer(2, GL_FLOAT, 0, points);
+                                    glDrawArrays(GL_POINTS, 0, numcoords/2);
+                                    numcoords = 0;
+                                }
+                                if (changecolor) {
+                                    prevr = r;
+                                    prevg = g;
+                                    prevb = b;
+                                    glColor4ub(r, g, b, 255);
+                                }
+                            }
+                            points[numcoords++] = x + col*pmscale + j + 0.5;
+                            points[numcoords++] = y + row*pmscale + i + 0.5;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (numcoords > 0) {
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_POINTS, 0, numcoords/2);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from ios_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
@@ -368,8 +301,8 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
         glColor4ub(currlayer->cellr[1],
                    currlayer->cellg[1],
                    currlayer->cellb[1], 255);
-        for ( int row = 0; row < h; row++ ) {
-            for ( int col = 0; col < w; col++ ) {
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
                 unsigned char state = statedata[row*stride + col];
                 if (state > 0) {
                     // fill cellsize*cellsize pixels
@@ -389,8 +322,8 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     } else {
         // numstates > 2 so we need to change color when state changes
         unsigned char prevstate = 0;
-        for ( int row = 0; row < h; row++ ) {
-            for ( int col = 0; col < w; col++ ) {
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
                 unsigned char state = statedata[row*stride + col];
                 if (state > 0) {
                     if (state != prevstate || numcoords == maxcoords) {
@@ -477,7 +410,7 @@ void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
     // stride is the horizontal pixel width of the image data
     int stride = w/pmscale;
     
-    // clip pixmap to be drawn against viewport
+    // clip data outside viewport
     if (pmscale > 1) {
         // pmdata contains 1 byte per `pmscale' pixels, so we must be careful
         // and adjust x, y, w and h by multiples of `pmscale' only
@@ -496,16 +429,6 @@ void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
         if (x + w >= currwd + pmscale) w = (currwd - x + pmscale - 1)/pmscale*pmscale;
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
-
-/*!!! may not need pixmap (decide after icons are implemented)
-    // faster to create new pixmap only when size changes
-    if (pixmapwd != w || pixmapht != h) {
-        if (pixmap) free(pixmap);
-        pixmap = (unsigned char*) malloc(w * h * 3);
-        pixmapwd = w;
-        pixmapht = h;
-    }
-*/
     
     if (pmscale == 1) {
         // draw rgb pixel data
@@ -520,11 +443,9 @@ void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
             // should forget DrawTexture or make it optional via a "texture rendering" option???
             DrawPoints((unsigned char*) pmdata, x, y, w, h);
         }
-    /*!!!
-    } else if (showicons && pmscale > 4 && iconmaps) {
-        // draw icons at scales 1:8 or 1:16 or 1::32
+    } else if (showicons && pmscale > 4 && iconpixels) {
+        // draw icons at scales 1:8 or 1:16 or 1:32
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
-    */
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
@@ -925,18 +846,17 @@ void DrawOneLayer(EAGLContext* dc)
     wxMemoryDC layerdc;
     layerdc.SelectObject(*layerbitmap);
     
-    // only show icons at scales 1:8, 1:16 and 1:32
     if (showicons && currlayer->view->getmag() > 2) {
+        // only show icons at scales 1:8, 1:16 and 1:32
         if (currlayer->view->getmag() == 3) {
-            iconmaps = currlayer->icons7x7;
+            iconpixels = currlayer->iconpixels7x7;
         } else if (currlayer->view->getmag() == 4) {
-            iconmaps = currlayer->icons15x15;
+            iconpixels = currlayer->iconpixels15x15;
         } else {
-            iconmaps = currlayer->icons31x31;
+            iconpixels = currlayer->iconpixels31x31;
         }
     }
     
-    currdc = &layerdc;
     currlayer->algo->draw(*currlayer->view, renderer);
     layerdc.SelectObject(wxNullBitmap);
     
@@ -1052,6 +972,8 @@ void DrawTileBorders(EAGLContext* dc)
 
 // -----------------------------------------------------------------------------
 
+// we don't use context but might need it for drawing stacked/tiled layers!!!???
+
 void DrawPattern(EAGLContext* context, int tileindex)
 {
     gRect r;
@@ -1133,21 +1055,21 @@ void DrawPattern(EAGLContext* context, int tileindex)
     }
     */
     
-    // only show icons at scales 1:8, 1:16 and 1:32
     if (showicons && currlayer->view->getmag() > 2) {
+        // only show icons at scales 1:8, 1:16 and 1:32
         if (currlayer->view->getmag() == 3) {
-            iconmaps = currlayer->icons7x7;
+            iconpixels = currlayer->iconpixels7x7;
         } else if (currlayer->view->getmag() == 4) {
-            iconmaps = currlayer->icons15x15;
+            iconpixels = currlayer->iconpixels15x15;
         } else {
-            iconmaps = currlayer->icons31x31;
+            iconpixels = currlayer->iconpixels31x31;
         }
     }
     
-    // draw pattern using a sequence of pixblit and killrect calls
-    currdc = context;
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
+
+    // draw pattern using a sequence of pixblit calls
     currlayer->algo->draw(*currlayer->view, renderer);
     
     if ( showgridlines && currlayer->view->getmag() >= mingridmag ) {

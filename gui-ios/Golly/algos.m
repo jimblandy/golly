@@ -33,6 +33,8 @@
 
 #include "utils.h"      // for Fatal, Warning, SetColor, Poller
 #include "prefs.h"      // for maxhashmem
+#include "file.h"       // for GetBaseName
+#include "layer.h"      // for currlayer
 #include "algos.h"
 
 // -----------------------------------------------------------------------------
@@ -541,7 +543,7 @@ void InitAlgorithms()
             Fatal("Algorithm did not set name and/or creator");
         
         // does algo use hashing?
-        ad->canhash = ad->defbase == 8;    //!!! safer method needed???
+        ad->canhash = ad->defbase == 8;    // safer method needed???
          
         // set status bar background by cycling thru a few pale colors
         switch (i % 9) {
@@ -623,65 +625,106 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
+static bool MultiColorImage(CGImageRef image)
+{
+    // return true if given image contains more than 2 different colors
+    int wd = CGImageGetWidth(image);
+    int ht = CGImageGetHeight(image);
+    int bytesPerPixel = 4;
+    int bytesPerRow = bytesPerPixel * wd;
+    int bitsPerComponent = 8;
+
+    // allocate memory to store image's RGBA bitmap data
+    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
+    if (pxldata == NULL) return false;
+
+    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
+        bitsPerComponent, bytesPerRow, colorspace,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), image);
+    CGContextRelease(ctx);
+    CGColorSpaceRelease(colorspace);
+
+    // pxldata now contains the image bitmap in RGBA pixel format
+    int color1 = -1;
+    int color2 = -1;
+    int byte = 0;
+    for (int i = 0; i < wd*ht; i++) {
+        int color = (pxldata[byte] << 16) + (pxldata[byte+1] << 8) + pxldata[byte+2];
+        if (color == color1 || color == color2) {
+            // continue
+        } else {
+            // 1st time we've seen this color
+            if (color1 == -1) {
+                color1 = color;
+            } else if (color2 == -1) {
+                color2 = color;
+            } else {
+                // this is the 3rd different color
+                free(pxldata);
+                return true;
+            }
+        }
+        byte += 4;
+    }
+
+    free(pxldata);
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+
 bool LoadIconFile(const std::string& path, int maxstate,
                   CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31)
 {
-    /*!!!
-    wxImage image;
-    if (!image.LoadFile(path)) {
-        Warning(_("Could not load icon bitmaps from file:\n") + path);
+    CGImageRef allicons = [UIImage imageWithContentsOfFile:
+        [NSString stringWithCString:path.c_str() encoding:NSUTF8StringEncoding]].CGImage;
+    if (allicons == NULL) {
+        std::string msg = "Could not load icon bitmaps from file:\n";
+        msg += path;
+        NSLog(@"%s", msg.c_str());
+        Warning(msg.c_str());
         return false;
     }
     
-    // need alpha channel???!!!
-    image.SetMaskColour(0, 0, 0);    // make black transparent
-    
-    // check for multi-color icons
-    int depth = -1;
-    if (image.CountColours(2) <= 2) depth = 1;   // monochrome
-    
-    currlayer->multicoloricons = depth != 1;
-    
-    wxBitmap allicons(image, depth);
-    int wd = allicons.GetWidth();
-    int ht = allicons.GetHeight();
-    
     // check dimensions
+    int wd = CGImageGetWidth(allicons);
+    int ht = CGImageGetHeight(allicons);
     if (ht != 15 && ht != 22) {
-        Warning(_("Wrong bitmap height in icon file (must be 15 or 22):\n") + path);
+        Warning("Wrong bitmap height in icon file (must be 15 or 22)!");
         return false;
     }
     if (wd % 15 != 0) {
-        Warning(_("Wrong bitmap width in icon file (must be multiple of 15):\n") + path);
+        Warning("Wrong bitmap width in icon file (must be multiple of 15)!");
         return false;
     }
     
+    currlayer->multicoloricons = MultiColorImage(allicons);
+    
     // first extract 15x15 icons
     int numicons = wd / 15;
-    if (numicons > 255) numicons = 255;    // play safe
+    if (numicons > 255) numicons = 255;     // play safe
     
     CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
     if (iconptr) {
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         for (int i = 0; i < numicons; i++) {
-            wxRect rect(i*15, 0, 15, 15);
             // add 1 to skip iconptr[0] (ie. dead state)
-            iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+            iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 0, 15, 15));
         }
         if (numicons < maxstate && iconptr[numicons]) {
             // duplicate last icon
-            wxRect rect((numicons-1)*15, 0, 15, 15);
             for (int i = numicons; i < maxstate; i++) {
-                iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 0, 15, 15));
             }
         }
         
         // if there is an extra icon at the right end of the multi-color icons then
         // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
         // to set the color of state 0
-        if (depth != 1 && (wd / 15) > maxstate) {
-            wxRect rect(maxstate*15, 0, 15, 15);
-            iconptr[0] = new wxBitmap(allicons.GetSubBitmap(rect));
+        if (currlayer->multicoloricons && (wd / 15) > maxstate) {
+            iconptr[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*15, 0, 15, 15));
         }
     }
     *out15x15 = iconptr;
@@ -692,15 +735,13 @@ bool LoadIconFile(const std::string& path, int maxstate,
         if (iconptr) {
             for (int i = 0; i < 256; i++) iconptr[i] = NULL;
             for (int i = 0; i < numicons; i++) {
-                wxRect rect(i*15, 15, 7, 7);
                 // add 1 to skip iconptr[0] (ie. dead state)
-                iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 15, 7, 7));
             }
             if (numicons < maxstate && iconptr[numicons]) {
                 // duplicate last icon
-                wxRect rect((numicons-1)*15, 15, 7, 7);
                 for (int i = numicons; i < maxstate; i++) {
-                    iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 15, 7, 7));
                 }
             }
         }
@@ -709,8 +750,9 @@ bool LoadIconFile(const std::string& path, int maxstate,
         // create 7x7 icons by scaling down 15x15 icons
         *out7x7 = ScaleIconBitmaps(*out15x15, 7);
     }
+
+    // create 31x31 icons by scaling up 15x15 icons
+    *out31x31 = ScaleIconBitmaps(*out15x15, 31);
     
     return true;
-    !!!*/
-    return false;//!!!
 }

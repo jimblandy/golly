@@ -116,11 +116,15 @@ public:
     CGColorRef colorref[256];     // color refs for states 0..255
     
     // icons for this layer
-    CGImageRef* icons7x7;         // icon bitmaps for scale 1:8
-    CGImageRef* icons15x15;       // icon bitmaps for scale 1:16
-    CGImageRef* icons31x31;       // icon bitmaps for scale 1:32
+    CGImageRef* icons7x7;         // icons for scale 1:8
+    CGImageRef* icons15x15;       // icons for scale 1:16
+    CGImageRef* icons31x31;       // icons for scale 1:32
+
+    unsigned char** iconpixels7x7;      // pixel data for 7x7 icons
+    unsigned char** iconpixels15x15;    // pixel data for 15x15 icons
+    unsigned char** iconpixels31x31;    // pixel data for 31x31 icons
     
-    bool multicoloricons;         // are icons multi-colored? (ie. not just black and white)
+    bool multicoloricons;         // are icons multi-colored? (ie. more than 2 colors)
     
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline
