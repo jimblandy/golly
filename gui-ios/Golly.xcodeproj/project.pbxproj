@@ -90,6 +90,7 @@
 		0DC0F15115A1511000BC058D /* ZipWriteStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0F14C15A1511000BC058D /* ZipWriteStream.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		0DD5D56715A3083700CF2627 /* open.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DD5D56515A3083700CF2627 /* open.png */; };
 		0DD5D56815A3083700CF2627 /* open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DD5D56615A3083700CF2627 /* open@2x.png */; };
+		0DD820DA1632A321008DF0FD /* ruleloaderalgo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD820D91632A321008DF0FD /* ruleloaderalgo.cpp */; };
 		0DDC702E157EC50400B7F1C4 /* undo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DDC702D157EC50300B7F1C4 /* undo.m */; };
 		0DDC80FB156B005C004C5B29 /* utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DDC80F9156B005C004C5B29 /* utils.m */; };
 		0DE7EB0F157D93BD005967ED /* select.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7EB0E157D93BD005967ED /* select.m */; };
@@ -230,6 +231,8 @@
 		0DC0F14C15A1511000BC058D /* ZipWriteStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZipWriteStream.m; sourceTree = "<group>"; };
 		0DD5D56515A3083700CF2627 /* open.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = open.png; sourceTree = "<group>"; };
 		0DD5D56615A3083700CF2627 /* open@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "open@2x.png"; sourceTree = "<group>"; };
+		0DD820D71632A307008DF0FD /* ruleloaderalgo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ruleloaderalgo.h; sourceTree = "<group>"; };
+		0DD820D91632A321008DF0FD /* ruleloaderalgo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ruleloaderalgo.cpp; sourceTree = "<group>"; };
 		0DDC702C157EC50300B7F1C4 /* undo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = undo.h; sourceTree = "<group>"; };
 		0DDC702D157EC50300B7F1C4 /* undo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = undo.m; sourceTree = "<group>"; };
 		0DDC80F9156B005C004C5B29 /* utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = utils.m; sourceTree = "<group>"; };
@@ -430,6 +433,8 @@
 				0DA5B33A15F03654005EBBE8 /* qlifedraw.cpp */,
 				0DA5B33B15F03654005EBBE8 /* readpattern.cpp */,
 				0DA5B33C15F03654005EBBE8 /* readpattern.h */,
+				0DD820D91632A321008DF0FD /* ruleloaderalgo.cpp */,
+				0DD820D71632A307008DF0FD /* ruleloaderalgo.h */,
 				0DA5B33D15F03654005EBBE8 /* ruletable_algo.cpp */,
 				0DA5B33E15F03654005EBBE8 /* ruletable_algo.h */,
 				0DA5B33F15F03654005EBBE8 /* ruletreealgo.cpp */,
@@ -619,6 +624,7 @@
 				0DA5B35715F03654005EBBE8 /* util.cpp in Sources */,
 				0DA5B35815F03654005EBBE8 /* viewport.cpp in Sources */,
 				0DA5B35915F03654005EBBE8 /* writepattern.cpp in Sources */,
+				0DD820DA1632A321008DF0FD /* ruleloaderalgo.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

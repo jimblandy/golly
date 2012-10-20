@@ -28,8 +28,7 @@
 #include "hlifealgo.h"
 #include "jvnalgo.h"
 #include "generationsalgo.h"
-#include "ruletable_algo.h"
-#include "ruletreealgo.h"
+#include "ruleloaderalgo.h"
 
 #include "utils.h"      // for Fatal, Warning, SetColor, Poller
 #include "prefs.h"      // for maxhashmem
@@ -533,8 +532,7 @@ void InitAlgorithms()
     // nicer if the rest are in alphabetical order
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
-    ruletable_algo::doInitializeAlgoInfo(AlgoData::tick());
-    ruletreealgo::doInitializeAlgoInfo(AlgoData::tick()) ;
+    ruleloaderalgo::doInitializeAlgoInfo(AlgoData::tick());
     
     // init algoinfo array
     for (int i = 0; i < NumAlgos(); i++) {

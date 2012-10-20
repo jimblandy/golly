@@ -306,6 +306,19 @@ bool GetKeywordAndValue(linereader& lr, char* line, char** keyword, char** value
 
 // -----------------------------------------------------------------------------
 
+char* ReplaceDeprecatedAlgo(char* algoname)
+{
+    if (strcmp(algoname, "RuleTable") == 0 ||
+        strcmp(algoname, "RuleTree") == 0) {
+        // RuleTable and RuleTree algos have been replaced by RuleLoader
+        return (char*)"RuleLoader";
+    } else {
+        return algoname;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void CreateDocSubdir(NSString *subdirname)
 {
     // create given subdirectory inside Documents
@@ -478,6 +491,11 @@ void GetPrefs()
             if (randomfill > 100) randomfill = 100;
             
         } else if (strcmp(keyword, "algorithm") == 0) {
+            if (strcmp(value, "RuleTable") == 0) {
+                // use deprecated RuleTable settings for RuleLoader
+                // (deprecated RuleTree settings will simply be ignored)
+                value = (char*)"RuleLoader";
+            }
             algoindex = -1;
             for (int i = 0; i < NumAlgos(); i++) {
                 if (strcmp(value, GetAlgoName(i)) == 0) {
@@ -541,6 +559,7 @@ void GetPrefs()
             initautofit = value[0] == '1';
             
         } else if (strcmp(keyword, "init_algo") == 0) {
+            value = ReplaceDeprecatedAlgo(value);
             int i = staticAlgoInfo::nameToIndex(value);
             if (i >= 0 && i < NumAlgos())
                 initalgo = i;

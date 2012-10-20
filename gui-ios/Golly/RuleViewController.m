@@ -249,7 +249,7 @@ static int globalButton;
             size_t thispos = thisrule.find(':');
             if (thispos != std::string::npos) {
                 // preserve valid topology so we can do things like switch from
-                // "LifeHistory:T30,20" in RuleTable to "B3/S23:T30,20" in QuickLife
+                // "LifeHistory:T30,20" in RuleLoader to "B3/S23:T30,20" in QuickLife
                 size_t defpos = defrule.find(':');
                 if (defpos != std::string::npos) {
                     // default rule shouldn't have a suffix but play safe and remove it

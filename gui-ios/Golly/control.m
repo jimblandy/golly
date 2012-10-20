@@ -1437,7 +1437,7 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             size_t oldpos = oldrule.find(':');
             if (newrule[0] == 0 && oldpos != std::string::npos) {
                 // switch to new algo's default rule, but preserve the topology in oldrule
-                // so we can do things like switch from "LifeHistory:T30,20" in RuleTable
+                // so we can do things like switch from "LifeHistory:T30,20" in RuleLoader
                 // to "B3/S23:T30,20" in QuickLife
                 size_t defpos = defrule.find(':');
                 if (defpos != std::string::npos) {

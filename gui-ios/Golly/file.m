@@ -997,7 +997,7 @@ void LoadLexiconPattern(const std::string& lexpattern)
     // switching to B3/S23 or Life; if that fails then switch to QuickLife
     const char* err = currlayer->algo->setrule("B3/S23");
     if (err) {
-        // try "Life" in case current algo is RuleTable/RuleTree and Life.table/tree exists
+        // try "Life" in case current algo is RuleLoader and Life.table/tree exists
         err = currlayer->algo->setrule("Life");
     }
     if (err) {
