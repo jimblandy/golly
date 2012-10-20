@@ -342,7 +342,7 @@ is that these files don't require a .icons extension.
 
 <p>
 Golly allows you to add new rules by creating transition tables stored in
-external files.  Given the rule string "Foo", the RuleTable algorithm will
+external files.  Given the rule string "Foo", the RuleLoader algorithm will
 search for a file called Foo.table.
 It looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
@@ -440,18 +440,18 @@ To share your rule tables with others, you can archive them at the public
 <font size=+1><b>Rule trees</b></font>
 
 <p>
-Golly permits the loading of rules from external files, where those
-files are in RuleTree format.  If a rule named "Foo" is requested,
-Golly will search for Foo.tree and, if found, load the rule from that file.
+Another way to specify a rule is to create a .tree file.
+If the RuleLoader algorithm is given a rule named "Foo" and it can't
+find Foo.table then it will search for Foo.tree.
 It looks for the file in <a href="prefs:control">your rules folder</a>
 first, then it looks in the supplied Rules folder.
 
 <p>
 Golly includes programs that permit you to transform a
-given transition function in C++, Perl, or Java into a RuleTree file
+given transition function in C++, Perl, or Java into a .tree file
 (see Rules/TreeGenerators) if the number of states is sufficiently
 small (approximately 10 states for eight-neighbor rules, and 32 states
-for four-neighbor rules).  Essentially, the RuleTree format allows you
+for four-neighbor rules).  Essentially, the .tree format allows you
 to add your own rules to Golly without needing to know how to
 recompile Golly and without dealing with the intricacies of external
 libraries; it generates relatively compact files, and the data
@@ -470,7 +470,7 @@ the value of the final variable in the last node, the result value is
 the actual next state value, rather than another node.
 
 <p>
-The RuleTree format has fixed the order of variables used for these
+The .tree format has fixed the order of variables used for these
 lookups.  For a four-neighbor rule, the order is always north, west,
 east, south, center; for an eight-neighbor rule, the order is always
 northwest, northeast, southwest, southeast, north, west, east, south,
@@ -488,9 +488,9 @@ function (see Rules/TreeGenerators/RuleTreeGen.java) or symbolically
 as we evaluate a more expressive format.
 
 <p>
-The RuleTree format itself is simple, and has similarities to the
+The .tree format itself is simple, and has similarities to the
 macrocell format.  It is not intended for human authorship or
-consumption.  The RuleTree format has two parts: a header, and the
+consumption.  The .tree format has two parts: a header, and the
 rule tree itself.  The header consists of comments (lines starting
 with a "#") that are ignored, and three required parameter values
 that must be defined before the first tree node.  These values are
@@ -514,20 +514,20 @@ defined in the file.
 
 <p>
 For comparison purposes, the program "RuleTableToTree" is supplied
-with Golly; this executable will convert a rule table file into a rule
-tree file.  It operates symbolically (it does not enumerate all the
-possibilities) so it should be fast on any rule table.  To use it,
-change to the main golly directory (the directory that contains the
-Rules directory); this is probably where the executable is installed.
-Type
+with Golly; this executable will convert a .table file into a .tree file.
+It operates symbolically (it does not enumerate all the possibilities)
+so it should be fast on any rule table.
+To use it, change to the main golly directory (the directory that
+contains the Rules directory); this is probably where the executable
+is installed.  Type
 
 <p>
 <dd><tt>RuleTableToTree Codd &gt;Rules/Codd.tree</tt></dd>
 
 <p>
 to convert the Codd rule table file (as an example) to a rule
-tree file.  Now you can load a Codd universe into either the
-RuleTable or the RuleTree algorithm.
+tree file.  Now you can load a Codd universe into the RuleLoader
+algorithm.
 
 
 <p><a name="naming"></a>&nbsp;<br>

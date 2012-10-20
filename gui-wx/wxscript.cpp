@@ -222,9 +222,10 @@ const char* GSF_getdir(char* dirname)
 const char* GSF_setalgo(char* algostring)
 {
     // find index for given algo name
+    char* algoname = ReplaceDeprecatedAlgo(algostring);
     algo_type algoindex = -1;
     for (int i = 0; i < NumAlgos(); i++) {
-        if (strcmp(algostring, GetAlgoName(i)) == 0) {
+        if (strcmp(algoname, GetAlgoName(i)) == 0) {
             algoindex = i;
             break;
         }
@@ -935,8 +936,9 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         
     } else {
         // look for algo name
+        char* algoname = ReplaceDeprecatedAlgo(colname);
         for (int i = 0; i < NumAlgos(); i++) {
-            if (strcmp(colname, GetAlgoName(i)) == 0) {
+            if (strcmp(algoname, GetAlgoName(i)) == 0) {
                 oldcol = algoinfo[i]->statusrgb;
                 if (oldcol != newcol) {
                     algoinfo[i]->statusrgb = newcol;
@@ -972,8 +974,9 @@ bool GSF_getcolor(char* colname, wxColor& color)
     else if (strcmp(colname, "nothashing") == 0) color = algoinfo[QLIFE_ALGO]->statusrgb;
     else {
         // look for algo name
+        char* algoname = ReplaceDeprecatedAlgo(colname);
         for (int i = 0; i < NumAlgos(); i++) {
-            if (strcmp(colname, GetAlgoName(i)) == 0) {
+            if (strcmp(algoname, GetAlgoName(i)) == 0) {
                 color = algoinfo[i]->statusrgb;
                 return true;
             }

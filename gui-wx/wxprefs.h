@@ -41,6 +41,10 @@ void ChooseTextEditor(wxWindow* parent, wxString& result);
 // Let user select their preferred text editor.  The result is the
 // path to the application or empty if the user cancels the dialog.
 
+char* ReplaceDeprecatedAlgo(char* algoname);
+// If given algo name is deprecated then return replacement name,
+// otherwise return same name.
+
 // Global preference data:
 
 extern wxString gollydir;        // path of directory containing app

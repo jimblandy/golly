@@ -614,7 +614,7 @@ const char *loadpattern(lifealgo &imp) {
       // reset rule to Conway's Life (default if explicit rule isn't supplied)
       const char *err = imp.setrule("B3/S23") ;
       if (err) {
-         // try "Life" in case given algo is RuleTable/RuleTree and a
+         // try "Life" in case given algo is RuleLoader and a
          // Life.table/tree file exists (nicer for loading lexicon patterns)
          err = imp.setrule("Life");
          if (err) {

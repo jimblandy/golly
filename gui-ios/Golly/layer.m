@@ -1061,9 +1061,8 @@ static void DeleteIcons(Layer* layer)
 
 static bool FindIconFile(const std::string& rule, const std::string& dir, std::string& path)
 {
-    const std::string extn = ".icons";
-    
     // first look for rule.icons in given directory
+    std::string extn = ".icons";
     path = dir + rule;
     path += extn;
     if (FileExists(path)) return true;
@@ -1072,8 +1071,7 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
     // this allows related rules to share a single .icons file
     size_t hyphenpos = rule.rfind('-');
     if (hyphenpos != std::string::npos) {
-        std::string prefix = rule.substr(0, hyphenpos);
-        path = dir + prefix;
+        path = dir + rule.substr(0, hyphenpos);
         path += extn;
         if (FileExists(path)) return true;
     }
@@ -1155,8 +1153,7 @@ static FILE* FindColorFile(const std::string& rule, const std::string& dir)
     // this allows related rules to share a single .colors file
     size_t hyphenpos = rule.rfind('-');
     if (hyphenpos != std::string::npos) {
-        std::string prefix = rule.substr(0, hyphenpos);
-        path = dir + prefix;
+        path = dir + rule.substr(0, hyphenpos);
         path += extn;
         f = fopen(path.c_str(), "r");
         if (f) return f;

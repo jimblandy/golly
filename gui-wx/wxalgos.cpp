@@ -33,10 +33,9 @@
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 #include "generationsalgo.h"
-#include "ruletable_algo.h"
-#include "ruletreealgo.h"
+#include "jvnalgo.h"
+#include "ruleloaderalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp
 #include "wxmain.h"        // for ID_ALGO0
@@ -413,8 +412,7 @@ void InitAlgorithms()
     // nicer if the rest are in alphabetical order
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
-    ruletable_algo::doInitializeAlgoInfo(AlgoData::tick());
-    ruletreealgo::doInitializeAlgoInfo(AlgoData::tick()) ;
+    ruleloaderalgo::doInitializeAlgoInfo(AlgoData::tick());
     
     // algomenu is used for the Control > Set Algorithm submenu;
     // algomenupop is used when the tool bar's algo button is pressed

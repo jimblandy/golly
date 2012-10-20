@@ -23,10 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
-#include "ruletable_algo.h"
-#include "ruletreealgo.h"
 #include "generationsalgo.h"
+#include "jvnalgo.h"
+#include "ruleloaderalgo.h"
 #include "readpattern.h"
 #include "util.h"
 #include "viewport.h"
@@ -413,6 +412,10 @@ lifealgo *createUniverse() {
        algoName = (char *)"HashLife" ;
      else
        algoName = (char *)"QuickLife" ;
+   } else if (strcmp(algoName, "RuleTable") == 0 ||
+              strcmp(algoName, "RuleTree") == 0) {
+       // RuleTable and RuleTree algos have been replaced by RuleLoader
+       algoName = (char *)"RuleLoader" ;
    }
    staticAlgoInfo *ai = staticAlgoInfo::byName(algoName) ;
    if (ai == 0)
@@ -491,10 +494,9 @@ int main(int argc, char *argv[]) {
                                                             << endl << flush ;
    qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
-   jvnalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
-   ruletable_algo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
-   ruletreealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   jvnalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   ruleloaderalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    while (argc > 1 && argv[1][0] == '-') {
       argc-- ;
       argv++ ;

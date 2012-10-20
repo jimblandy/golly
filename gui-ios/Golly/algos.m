@@ -688,71 +688,129 @@ bool LoadIconFile(const std::string& path, int maxstate,
         return false;
     }
     
-    // check dimensions
     int wd = CGImageGetWidth(allicons);
     int ht = CGImageGetHeight(allicons);
-    if (ht != 15 && ht != 22) {
-        Warning("Wrong bitmap height in icon file (must be 15 or 22)!");
-        return false;
-    }
-    if (wd % 15 != 0) {
-        Warning("Wrong bitmap width in icon file (must be multiple of 15)!");
-        return false;
-    }
     
-    currlayer->multicoloricons = MultiColorImage(allicons);
+    // extension should be .bmp or .icons (might not be in wxGolly if user changed an algo's default icons!!!)
+    // std::string ext = path.substr(path.rfind('.')+1);
     
-    // first extract 15x15 icons
-    int numicons = wd / 15;
-    if (numicons > 255) numicons = 255;     // play safe
-    
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
-    if (iconptr) {
-        for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-        for (int i = 0; i < numicons; i++) {
-            // add 1 to skip iconptr[0] (ie. dead state)
-            iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 0, 15, 15));
+    // forget this bmp approach -- scaled down icons are still too ugly!!! remove code eventually!!!
+    if (false /* strcasecmp(ext.c_str(),"bmp") == 0 */) {
+        // check dimensions of .bmp format
+        if (ht < 31) {
+            Warning("Bitmap height in .bmp file must be at least 31.");
+            return false;
         }
-        if (numicons < maxstate && iconptr[numicons]) {
-            // duplicate last icon
-            for (int i = numicons; i < maxstate; i++) {
-                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 0, 15, 15));
-            }
+        if (wd % ht != 0) {
+            Warning("Bitmap width in .bmp file must be multiple of height.");
+            return false;
         }
         
-        // if there is an extra icon at the right end of the multi-color icons then
-        // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
-        // to set the color of state 0
-        if (currlayer->multicoloricons && (wd / 15) > maxstate) {
-            iconptr[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*15, 0, 15, 15));
+        currlayer->multicoloricons = MultiColorImage(allicons);
+        
+        // first extract the big icons (each is ht x ht pixels)
+        int numicons = wd / ht;
+        if (numicons > 255) numicons = 255;     // play safe
+        
+        CGImageRef* bigicons = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+        if (bigicons) {
+            for (int i = 0; i < 256; i++) bigicons[i] = NULL;
+            for (int i = 0; i < numicons; i++) {
+                // add 1 to skip bigicons[0] (ie. dead state)
+                bigicons[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*ht, 0, ht, ht));
+            }
+            if (numicons < maxstate && bigicons[numicons]) {
+                // duplicate last icon
+                for (int i = numicons; i < maxstate; i++) {
+                    bigicons[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*ht, 0, ht, ht));
+                }
+            }
+            
+            // if there is an extra icon at the right end of the multi-color icons then
+            // store it in bigicons[0] -- it will be used later in UpdateCurrentColors()
+            // to set the color of state 0
+            if (currlayer->multicoloricons && (wd / ht) > maxstate) {
+                bigicons[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*ht, 0, ht, ht));
+            }
+            
+            // create required icons by scaling down the big versions
+            *out31x31 = ScaleIconBitmaps(bigicons, 31);
+            *out15x15 = ScaleIconBitmaps(bigicons, 15);
+            *out7x7 = ScaleIconBitmaps(bigicons, 7);
+            
+            for (int i = 0; i < 256; i++) CGImageRelease(bigicons[i]);
+            free(bigicons);
+        } else {
+            *out31x31 = NULL;
+            *out15x15 = NULL;
+            *out7x7 = NULL;
         }
-    }
-    *out15x15 = iconptr;
-    
-    if (ht == 22) {
-        // extract 7x7 icons (at bottom left corner of each 15x15 icon)
-        iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+
+    } else {
+        // check dimensions of .icons format
+        if (ht != 15 && ht != 22) {
+            Warning("Wrong bitmap height in .icons file (must be 15 or 22).");
+            return false;
+        }
+        if (wd % 15 != 0) {
+            Warning("Wrong bitmap width in .icons file (must be multiple of 15).");
+            return false;
+        }
+        
+        currlayer->multicoloricons = MultiColorImage(allicons);
+        
+        // first extract 15x15 icons
+        int numicons = wd / 15;
+        if (numicons > 255) numicons = 255;     // play safe
+        
+        CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
         if (iconptr) {
             for (int i = 0; i < 256; i++) iconptr[i] = NULL;
             for (int i = 0; i < numicons; i++) {
                 // add 1 to skip iconptr[0] (ie. dead state)
-                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 15, 7, 7));
+                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 0, 15, 15));
             }
             if (numicons < maxstate && iconptr[numicons]) {
                 // duplicate last icon
                 for (int i = numicons; i < maxstate; i++) {
-                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 15, 7, 7));
+                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 0, 15, 15));
                 }
             }
+            
+            // if there is an extra icon at the right end of the multi-color icons then
+            // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
+            // to set the color of state 0
+            if (currlayer->multicoloricons && (wd / 15) > maxstate) {
+                iconptr[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*15, 0, 15, 15));
+            }
         }
-        *out7x7 = iconptr;
-    } else {
-        // create 7x7 icons by scaling down 15x15 icons
-        *out7x7 = ScaleIconBitmaps(*out15x15, 7);
-    }
+        *out15x15 = iconptr;
+        
+        if (ht == 22) {
+            // extract 7x7 icons (at bottom left corner of each 15x15 icon)
+            iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+            if (iconptr) {
+                for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+                for (int i = 0; i < numicons; i++) {
+                    // add 1 to skip iconptr[0] (ie. dead state)
+                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 15, 7, 7));
+                }
+                if (numicons < maxstate && iconptr[numicons]) {
+                    // duplicate last icon
+                    for (int i = numicons; i < maxstate; i++) {
+                        iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 15, 7, 7));
+                    }
+                }
+            }
+            *out7x7 = iconptr;
+        } else {
+            // create 7x7 icons by scaling down 15x15 icons
+            *out7x7 = ScaleIconBitmaps(*out15x15, 7);
+        }
 
-    // create 31x31 icons by scaling up 15x15 icons
-    *out31x31 = ScaleIconBitmaps(*out15x15, 31);
+        // create 31x31 icons by scaling up 15x15 icons
+        *out31x31 = ScaleIconBitmaps(*out15x15, 31);
+    }
     
     return true;
 }

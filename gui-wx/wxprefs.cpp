@@ -1704,6 +1704,19 @@ void CheckVisibility(int* x, int* y, int* wd, int* ht)
 
 // -----------------------------------------------------------------------------
 
+char* ReplaceDeprecatedAlgo(char* algoname)
+{
+    if (strcmp(algoname, "RuleTable") == 0 ||
+        strcmp(algoname, "RuleTree") == 0) {
+        // RuleTable and RuleTree algos have been replaced by RuleLoader
+        return (char*)"RuleLoader";
+    } else {
+        return algoname;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void InitPaths()
 {
 #ifdef __WXGTK__
@@ -1945,6 +1958,11 @@ void GetPrefs()
             algoinfo[HLIFE_ALGO]->defbase = base;
             
         } else if (strcmp(keyword, "algorithm") == 0) {
+            if (strcmp(value, "RuleTable") == 0) {
+                // use deprecated RuleTable settings for RuleLoader
+                // (deprecated RuleTree settings will simply be ignored)
+                value = (char*)"RuleLoader";
+            }
             algoindex = -1;
             for (int i = 0; i < NumAlgos(); i++) {
                 if (strcmp(value, GetAlgoName(i)) == 0) {
@@ -2028,6 +2046,7 @@ void GetPrefs()
             initalgo = value[0] == '1' ? HLIFE_ALGO : QLIFE_ALGO;
             
         } else if (strcmp(keyword, "init_algo") == 0) {
+            value = ReplaceDeprecatedAlgo(value);
             int i = staticAlgoInfo::nameToIndex(value);
             if (i >= 0 && i < NumAlgos())
                 initalgo = i;

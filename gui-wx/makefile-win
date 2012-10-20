@@ -80,11 +80,12 @@ OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
    $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
    $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
-   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h
+   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
+   $(BASEDIR)/ruleloaderalgo.h
 BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
-   $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj \
+   $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
    $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
@@ -397,6 +398,9 @@ $(OBJDIR)/qlifedraw.obj: $(BASEDIR)/qlifedraw.cpp
 
 $(OBJDIR)/jvnalgo.obj: $(BASEDIR)/jvnalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/jvnalgo.cpp
+
+$(OBJDIR)/ruleloaderalgo.obj: $(BASEDIR)/ruleloaderalgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruleloaderalgo.cpp
 
 $(OBJDIR)/ruletable_algo.obj: $(BASEDIR)/ruletable_algo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruletable_algo.cpp

@@ -29,6 +29,7 @@ set(BASE_SOURCES
    ../gollybase/qlifealgo.h         ../gollybase/qlifealgo.cpp
                                     ../gollybase/qlifedraw.cpp
    ../gollybase/readpattern.h       ../gollybase/readpattern.cpp
+   ../gollybase/ruleloaderalgo.h    ../gollybase/ruleloaderalgo.cpp
    ../gollybase/ruletable_algo.h    ../gollybase/ruletable_algo.cpp
    ../gollybase/ruletreealgo.h      ../gollybase/ruletreealgo.cpp
    ../gollybase/util.h              ../gollybase/util.cpp
